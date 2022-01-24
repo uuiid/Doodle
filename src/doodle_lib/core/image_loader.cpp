@@ -366,11 +366,12 @@ std::shared_ptr<void> image_loader::screenshot() {
 
   HRESULT k_r{};
   IDXGIOutputDuplication* l_duplication{};
+#if 0
   {
     ID3D11Device* lDevice{};
     ID3D11DeviceContext* lImmediateContext{};
     IDXGIFactory* lDxgiFactory;
-    k_r = CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&lDxgiFactory);
+    k_r = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&lDxgiFactory);
     IDXGIAdapter* lDxgiAdapter;
     k_r = lDxgiFactory->EnumAdapters(0, &lDxgiAdapter);
     lDxgiFactory->Release();
@@ -395,18 +396,21 @@ std::shared_ptr<void> image_loader::screenshot() {
     k_r = lDxgiOutput->QueryInterface(IID_PPV_ARGS(&lDxgiOutput1));
     lDxgiOutput->Release();
     k_r = lDxgiOutput1->DuplicateOutput(lDevice, &l_duplication);
+    lDevice->Release();
+    lDxgiOutput1->Release();
   }
+#endif
 
   /// \brief 这个获取 IDXGIOutputDuplication 方法没有成功
-#if 0
+#if 1
   {
     IDXGIDevice* l_dx_deve{};
-    k_r = k_d3d->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&l_dx_deve));
+    k_r = k_d3d->QueryInterface(IID_PPV_ARGS(&l_dx_deve));
     chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 转换异常");
     guard_win_ptr_delete _guard_win_ptr_delete1{l_dx_deve};
 
     IDXGIAdapter* l_adapter{};
-    k_r = l_dx_deve->GetParent(__uuidof(IDXGIAdapter), reinterpret_cast<void**>(&l_adapter));
+    k_r = l_dx_deve->GetParent(IID_PPV_ARGS(&l_adapter));
     chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 转换异常");
     guard_win_ptr_delete _guard_win_ptr_delete2{l_adapter};
 
@@ -415,21 +419,21 @@ std::shared_ptr<void> image_loader::screenshot() {
     chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 转换异常");
     guard_win_ptr_delete _guard_win_ptr_delete3{l_output};
 
-    DXGI_OUTPUT_DESC l_desc{};
-    k_r = l_output->GetDesc(&l_desc);
+    //    DXGI_OUTPUT_DESC l_desc{};
+    //    k_r = l_output->GetDesc(&l_desc);
 
     IDXGIOutput1* l_output_1{};
-    k_r = l_output->QueryInterface(__uuidof(IDXGIOutput1), reinterpret_cast<void**>(&l_output_1));
+    k_r = l_output->QueryInterface(IID_PPV_ARGS(&l_output_1));
     chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 转换异常");
     guard_win_ptr_delete _guard_win_ptr_delete4{l_output_1};
 
-    k_r = l_output_1->DuplicateOutput(l_dx_deve, &l_duplication);
+    k_r = l_output_1->DuplicateOutput(k_d3d, &l_duplication);
     chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
   }
 #endif
   guard_win_ptr_delete _guard_win_ptr_delete5{l_duplication};
 
-#if 0
+#if 1
   DXGI_OUTDUPL_DESC l_dxgi_outdupl_desc{};
   l_duplication->GetDesc(&l_dxgi_outdupl_desc);
   D3D11_TEXTURE2D_DESC l_d_desc{};
@@ -446,23 +450,33 @@ std::shared_ptr<void> image_loader::screenshot() {
   l_d_desc.Usage              = D3D11_USAGE_DEFAULT;
 #endif
 
+  ID3D11Texture2D* l_tex{};
+  k_r = k_d3d->CreateTexture2D(&l_d_desc, nullptr, &l_tex);
+  guard_win_ptr_delete _guard_win_ptr_delete7{l_tex};
+
   DXGI_OUTDUPL_FRAME_INFO l_frame_info;
   IDXGIResource* DesktopResource{};
-  k_r = l_duplication->AcquireNextFrame(1, &l_frame_info, &DesktopResource);
-  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
+  k_r = l_duplication->AcquireNextFrame(INFINITE, &l_frame_info, &DesktopResource);
+  chick_true<doodle_error>(k_r >= 0, DOODLE_LOC, "windows com 异常 {}", k_r);
   guard_win_ptr_delete _guard_win_ptr_delete6{DesktopResource};
 
   /// \brief 创建保存
   ID3D11Texture2D* l_image{};
-  k_r = DesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&l_image));
+  k_r = DesktopResource->QueryInterface(IID_PPV_ARGS(&l_image));
   chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
   guard_win_ptr_delete _guard_win_ptr_delete{l_image};
 
   D3D11_TEXTURE2D_DESC ThisDesc;
   l_image->GetDesc(&ThisDesc);
 
-  //  k_r = DirectX::SaveWICTextureToFile(k_ctx, l_image, GUID_ContainerFormatPng, L"D:/tmp/test_1_24.png");
-  //  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
+
+
+  k_ctx->CopyResource(l_tex, l_image);
+  l_image->Release();
+
+  /// \brief 保存图片
+  k_r = DirectX::SaveWICTextureToFile(k_ctx, l_tex, GUID_ContainerFormatPng, L"D:/tmp/test_1_24.png");
+  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
 
   /// \brief 这里创建gpu资源返回给imgui
   D3D11_SHADER_RESOURCE_VIEW_DESC k_srv{};
@@ -472,7 +486,7 @@ std::shared_ptr<void> image_loader::screenshot() {
   k_srv.Texture2D.MipLevels       = ThisDesc.MipLevels;
 
   ID3D11ShaderResourceView* k_out_{nullptr};
-  k_r = k_d3d->CreateShaderResourceView(l_image, &k_srv, &(k_out_));
+  k_r = k_d3d->CreateShaderResourceView(l_tex, &k_srv, &(k_out_));
   chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
 
   return std::shared_ptr<void>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
