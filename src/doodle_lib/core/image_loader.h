@@ -19,6 +19,16 @@ class DOODLELIB_API image_loader {
    * @return 是否加载成功
    */
   bool load(const entt::handle& in_handle);
+  /**
+   * @brief 保存图片
+   * @param in_handle 将句柄中添加 image_icon
+   * @return 是否保存成功
+   */
   bool save(const entt::handle& in_handle);
+  /**
+   * @brief 从屏幕加载图片(截图)
+   * @return 本机指针
+   */
+  [[nodiscard]] std::shared_ptr<void> screenshot();
 };
 }  // namespace doodle
