@@ -95,6 +95,7 @@ app::app(const win::wnd_instance& in_instance)
   ImGui_ImplWin32_Init(p_hwnd);
   ImGui_ImplDX11_Init(d3d_deve->g_pd3dDevice, d3d_deve->g_pd3dDeviceContext);
   d3dDevice = d3d_deve->g_pd3dDevice;
+  d3dDeviceContext = d3d_deve->g_pd3dDeviceContext;
   /// 初始化文件拖拽
   //  DragAcceptFiles(p_impl->p_hwnd, true);
   //  OleInitialize(nullptr);
