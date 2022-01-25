@@ -7,6 +7,8 @@
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
+#include <boost/logic/tribool.hpp>
+
 namespace doodle {
 
 class screenshot_widget::impl {
@@ -14,6 +16,8 @@ class screenshot_widget::impl {
   std::vector<std::function<void()>> begen_loop;
   std::shared_ptr<void> image_gui;
   cv::Rect2f virtual_screen;
+  cv::Rect2f mouse_rect;
+  bool mouse_state{};
 };
 
 screenshot_widget::screenshot_widget()
@@ -96,13 +100,37 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoMove} &&
       [&]() {
-        ImGui::Image(p_i->image_gui.get(), {p_i->virtual_screen.size().width,
-                                            p_i->virtual_screen.size().height});
+        ImGui::ImageButton(p_i->image_gui.get(),
+                           {p_i->virtual_screen.size().width,
+                            p_i->virtual_screen.size().height});
+        if (imgui::IsItemClicked() && !p_i->mouse_state) {
+          p_i->mouse_rect.x = imgui::GetIO().MousePos.x;
+          p_i->mouse_rect.y = imgui::GetIO().MousePos.y;
+          p_i->mouse_state  = true;
+        }
+        if (imgui::IsItemActive() && p_i->mouse_state) {
+          p_i->mouse_rect.width  = imgui::GetIO().MousePos.x /*- p_i->mouse_rect.x*/;
+          p_i->mouse_rect.height = imgui::GetIO().MousePos.y /*- p_i->mouse_rect.y*/;
+        }
+        if (imgui::IsItemDeactivated() && p_i->mouse_state) {
+          this->succeed();
+        }
+
         ImGui::GetWindowDrawList()
-            ->AddRectFilled({p_i->virtual_screen.x, p_i->virtual_screen.y},
+            ->AddRectFilled({p_i->virtual_screen.x,
+                             p_i->virtual_screen.y},
                             {p_i->virtual_screen.size().width,
                              p_i->virtual_screen.size().height},
-                            ImGui::ColorConvertFloat4ToU32({0.2f, 0.3f, 0.2f, 0.2f}));
+                            ImGui::ColorConvertFloat4ToU32({0.1f, 0.4f, 0.5f, 0.2f}));
+        if (!p_i->mouse_rect.empty()) {
+          ImGui::GetWindowDrawList()
+              ->AddRectFilled({p_i->mouse_rect.x,
+                               p_i->mouse_rect.y},
+                              {p_i->mouse_rect.size().width,
+                               p_i->mouse_rect.size().height},
+                              ImGui::ColorConvertFloat4ToU32({1.0f, 1.0f, 1.0f, 0.4f}));
+        }
+
         if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_Escape))) {
           imgui::CloseCurrentPopup();
           this->fail();
