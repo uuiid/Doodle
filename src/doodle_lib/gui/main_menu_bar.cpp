@@ -59,6 +59,7 @@ void main_menu_bar::menu_file() {
           k_h.emplace<database>();
           k_h.patch<database>(database::save{});
           g_reg()->set<project>(k_h.get<project>());
+          core_set::getSet().add_recent_project(k_h.get<project>().get_path());
           s();
         });
   }
