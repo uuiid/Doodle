@@ -391,7 +391,7 @@ database_task_install::~database_task_install() = default;
 void database_task_install::init() {
   p_i->handle_.patch<process_message>([](process_message& in) {
                 in.set_state(in.run);
-                in.set_name("删除数据");
+                in.set_name("插入数据");
               })
       .aborted_function = [self = this]() { if (self) self->abort(); };
 
