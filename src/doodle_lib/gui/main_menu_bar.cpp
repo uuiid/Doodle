@@ -25,6 +25,8 @@
 #include <gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/long_task/database_task.h>
+#include <doodle_lib/thread_pool/long_term.h>
 
 namespace doodle {
 class main_menu_bar::impl {
@@ -44,6 +46,8 @@ void main_menu_bar::menu_file() {
   if (dear::MenuItem("新项目"s)) {
     auto k_h = make_handle();
     k_h.emplace<project>();
+    auto k_msg = make_handle();
+    k_msg.emplace<process_message>();
     g_main_loop().attach<file_dialog>(
                      [=](const FSys::path &in_path) {
                        core::client{}.add_project(in_path);
@@ -57,9 +61,12 @@ void main_menu_bar::menu_file() {
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([=]() {
           k_h.emplace<database>();
-          k_h.patch<database>(database::save{});
           g_reg()->set<project>(k_h.get<project>());
           core_set::getSet().add_recent_project(k_h.get<project>().get_path());
+        })
+        .then<database_task_install>(k_msg, std::vector<entt::handle>{k_h})
+        .then<one_process_t>([=]() {
+          core::client{}.open_project(k_h.get<project>().get_path());
         });
   }
   if (dear::MenuItem("打开项目"s)) {
