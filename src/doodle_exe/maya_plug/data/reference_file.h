@@ -6,15 +6,27 @@
 #include <maya/MSelectionList.h>
 namespace doodle::maya_plug {
 
+/**
+ * @brief 一个类似的引用文件使用名称空间作为引用的定位,
+ * 而不是ref节点,
+ * 这样我们可以在文件中创建出一个类似的引用, 但不是引用,
+ * 并且具有一定引用概念的类
+ */
 class reference_file {
-  uuid prj_ref;
   string ref_file_uuid;
-  MObject p_m_object;
+  std::string file_namespace;
 
-  void chick_mobject();
   void chick_mobject() const;
 
+  /**
+   * @brief
+   * @warning 这个是一个兼容性函数， 小心使用,会被删除
+   * @param in_ref_uuid
+   */
+  void find_ref_node(const std::string &in_ref_uuid);
+
  public:
+  MObject p_m_object;
   string path;
   bool use_sim;
   bool high_speed_sim;
@@ -22,29 +34,26 @@ class reference_file {
   std::vector<string> collision_model_show_str;
 
   reference_file();
-  explicit reference_file(const entt::handle &in_uuid, const MObject &in_ref_node);
-
+  explicit reference_file(const entt::handle &in_project, const std::string &in_maya_namespace);
   void init_show_name();
   void set_path(const MObject &in_ref_node);
 
   [[nodiscard]] entt::handle get_prj() const;
-  [[nodiscard]] bool has_ref_project() const;
 
   void generate_cloth_proxy() const;
 
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] string get_namespace() const;
-  [[nodiscard]] string get_namespace();
 
   bool has_node(const MSelectionList &in_list);
+  bool has_node(const MObject &in_node) const;
 
-  [[nodiscard]] string get_unique_name() const;
   bool has_sim_cloth();
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
-  bool replace_sim_assets_file() const;
+  bool replace_sim_assets_file();
   /**
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return
@@ -78,13 +87,10 @@ class reference_file {
     j["use_sim"]         = p.use_sim;
     j["high_speed_sim"]  = p.high_speed_sim;
     j["collision_model"] = p.collision_model;
-    j["prj_ref"]         = p.prj_ref;
-    j["ref_file_uuid"]   = p.ref_file_uuid;
   }
   friend void from_json(const nlohmann::json &j, reference_file &p) {
     j.at("path").get_to(p.path);
     j.at("use_sim").get_to(p.use_sim);
-    j.at("prj_ref").get_to(p.prj_ref);
     j.at("high_speed_sim").get_to(p.high_speed_sim);
     j.at("collision_model").get_to(p.collision_model);
     j.at("ref_file_uuid").get_to(p.ref_file_uuid);

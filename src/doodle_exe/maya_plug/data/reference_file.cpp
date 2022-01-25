@@ -18,6 +18,7 @@
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
 #include <maya/MItDag.h>
+#include <maya/MNamespace.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
@@ -25,27 +26,28 @@
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
-    : prj_ref(boost::uuids::nil_uuid()),
-      path(),
+    : path(),
       use_sim(false),
       high_speed_sim(false),
       collision_model(),
-      ref_file_uuid(),
-      p_m_object(){};
+      p_m_object(),
+      file_namespace(){
 
-reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_ref_node)
-    : reference_file() {
-  set_path(in_ref_node);
+      };
+
+
+reference_file::reference_file(const entt::handle &in_project,
+                               const string &in_maya_namespace) {
+  file_namespace = in_maya_namespace;
 }
-
 void reference_file::set_path(const MObject &in_ref_node) {
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
   DOODLE_CHICK(k_s);
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
   DOODLE_CHICK(k_s);
-  ref_file_uuid = d_str{k_ref.uuid().asString()};
-  p_m_object    = in_ref_node;
+  file_namespace = d_str{k_ref.associatedNamespace(false, &k_s)};
+  DOODLE_CHICK(k_s);
 }
 
 MSelectionList reference_file::get_collision_model() const {
@@ -55,25 +57,21 @@ MSelectionList reference_file::get_collision_model() const {
   }
   return l_list;
 }
-
-void reference_file::chick_mobject() {
-  if (p_m_object.isNull()) {
-    if (!ref_file_uuid.empty()) {
-      MStatus k_s;
-      MFnReference k_file;
-      for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-        k_s = k_file.setObject(refIter.thisNode());
-        DOODLE_CHICK(k_s);
-        if (k_file.uuid().asString().asUTF8() == ref_file_uuid) {
-          p_m_object = refIter.thisNode();
-        }
-      }
+void reference_file::find_ref_node(const string &in_ref_uuid) {
+  MStatus k_s;
+  MFnReference k_file;
+  for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+    k_s = k_file.setObject(refIter.thisNode());
+    DOODLE_CHICK(k_s);
+    if (k_file.uuid().asString().asUTF8() == in_ref_uuid) {
+      p_m_object = refIter.thisNode();
+      set_path(p_m_object);
     }
-    chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_SOURCE_LOC, "无法找到引用");
   }
 }
+
 void reference_file::chick_mobject() const {
-  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "没有初始化mobject");
+  chick_true<doodle_error>(!file_namespace.empty(), DOODLE_SOURCE_LOC, "名称空间为空");
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -120,27 +118,19 @@ void reference_file::init_show_name() {
   }
 }
 string reference_file::get_namespace() const {
-  chick_mobject();
-  chick_true<maya_error>(is_loaded(), DOODLE_LOC, "必须先加载才可以获得名称空间");
-  MFnReference k_ref{p_m_object};
-  MStatus k_s{};
-  string k_r = d_str{k_ref.associatedNamespace(false, &k_s)};
-  DOODLE_CHICK(k_s);
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  chick_true<doodle_error>(!k_r.empty(), DOODLE_LOC, "名称空间为空, 可能是引用时未使用时未使用");
-  return k_r;
+  chick_true<doodle_error>(!file_namespace.empty(), DOODLE_LOC, "名称空间为空");
+  return file_namespace;
 }
-string reference_file::get_namespace() {
-  chick_mobject();
-  return std::as_const(*this).get_namespace();
-}
-bool reference_file::replace_sim_assets_file() const {
+
+bool reference_file::replace_sim_assets_file() {
   if (!use_sim) {
     DOODLE_LOG_WARN("跳过不解算的文件 {}", path);
     return false;
   }
 
   chick_mobject();
+  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "缺失引用");
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -177,22 +167,15 @@ entt::handle reference_file::get_prj() const {
   auto k_prj_view = g_reg()->view<project>();
   for (auto k_e : k_prj_view) {
     auto k_h = make_handle(k_e);
-    break;
+    return k_h;
   }
   return entt::handle{};
-}
-
-bool reference_file::has_ref_project() const {
-  return !prj_ref.is_nil();
 }
 
 bool reference_file::rename_material() const {
   chick_mobject();
   MStatus k_s{};
-  MFnReference k_ref{p_m_object, &k_s};
-  MObjectArray k_list{};
-  k_ref.nodes(k_list, &k_s);
-  DOODLE_CHICK(k_s);
+  MObjectArray k_list = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   MFnDependencyNode k_node;
   for (auto i = 0; i < k_list.length(); ++i) {
     auto k_obj = k_list[i];
@@ -297,15 +280,6 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
   DOODLE_CHICK(k_s);
   return true;
 }
-string reference_file::get_unique_name() const {
-  chick_mobject();
-  MFnReference k_ref{p_m_object};
-  MStatus k_s{};
-
-  auto k_name = k_ref.fileName(false, false, true, &k_s);
-  DOODLE_CHICK(k_s);
-  return d_str{k_name};
-}
 bool reference_file::add_collision() const {
   if (collision_model.empty())
     return true;
@@ -334,8 +308,7 @@ void reference_file::generate_cloth_proxy() const {
     auto k_obj = i.thisNode(&k_s);
     DOODLE_CHICK(k_s);
     MFnDependencyNode k_dep{k_obj};
-    MFnReference k_ref{p_m_object};
-    if (k_dep.typeName(&k_s) == "qlClothShape" && k_ref.containsNode(k_obj, &k_s)) {
+    if (k_dep.typeName(&k_s) == "qlClothShape" && has_node(k_obj)) {
       DOODLE_CHICK(k_s);
       auto k_h = make_handle();
       k_h.emplace<qcloth_shape>(make_handle(*this), k_obj);
@@ -434,7 +407,6 @@ bakeResults
 }
 bool reference_file::has_node(const MSelectionList &in_list) {
   chick_mobject();
-  MFnReference k_ref{p_m_object};
   MStatus k_s{};
   MObject k_node{};
   for (MItSelectionList k_iter{in_list, MFn::Type::kDependencyNode, &k_s};
@@ -442,15 +414,27 @@ bool reference_file::has_node(const MSelectionList &in_list) {
        k_iter.next()) {
     k_s = k_iter.getDependNode(k_node);
     DOODLE_CHICK(k_s);
-    if (k_ref.containsNode(k_node, &k_s)) {
+
+    if (has_node(k_node))
       return true;
-      DOODLE_CHICK(k_s);
-    }
   }
+  return false;
+}
+
+bool reference_file::has_node(const MObject &in_node) const {
+  chick_mobject();
+  MStatus k_s{};
+  auto k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+    if (k_objs[l_i] == in_node)
+      return true;
+  }
+
   return false;
 }
 bool reference_file::is_loaded() const {
   chick_mobject();
+  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "空引用");
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
   auto k_r = k_ref.isLoaded(&k_s);
@@ -459,10 +443,8 @@ bool reference_file::is_loaded() const {
 }
 bool reference_file::has_sim_cloth() {
   chick_mobject();
-  MFnReference k_ref{p_m_object};
   MStatus k_s{};
-  MObjectArray k_objs{};
-  k_ref.nodes(k_objs, &k_s);
+  MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
   MFnDependencyNode k_node{};
   for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
