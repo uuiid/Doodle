@@ -30,8 +30,8 @@ TEST_CASE("convert", "[metadata]") {
 
   auto& k_d2 = k_s.get<database>();
   metadata_database k_data2;
-  k_data2     = k_d2;
-  std::cout << k_data2.user_data <<std::endl;
+  k_data2 = k_d2;
+  std::cout << k_data2.user_data << std::endl;
   auto k_tmp2 = make_handle(reg->create());
   auto& k_d3  = k_tmp2.get_or_emplace<database>();
   k_d3        = k_data2;
@@ -91,7 +91,7 @@ class name_data {
     auto& set  = core_set::getSet();
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
-    k_prj.get<database_stauts>().set<need_save>();
+    k_prj.patch<database>(database::save{});
     g_reg()->set<project>(k_prj.get<project>());
 
     for (size_t i = 0; i < 20; ++i) {
@@ -99,12 +99,12 @@ class name_data {
         for (size_t k = 0; k < 20; ++k) {
           auto k_ass = make_handle();
           k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
-          k_ass.get<database_stauts>().set<need_save>();
+          k_ass.patch<database>(database::save{});
         }
       } else {
         entt::handle k_i1 = make_handle();
         k_i1.emplace<season>(std::int32_t(i % 5));
-        k_i1.get<database_stauts>().set<need_save>();
+        k_i1.patch<database>(database::save{});
         k_i1.emplace<episodes>(i);
 
         for (size_t k = 0; k < 30; ++k) {
@@ -117,7 +117,7 @@ class name_data {
             k_sho.set_shot_ab(shot::shot_ab_enum::B);
           }
           k_i2.emplace<assets_file>();
-          k_i2.get<database_stauts>().set<need_save>();
+          k_i2.patch<database>(database::save{});
           k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));

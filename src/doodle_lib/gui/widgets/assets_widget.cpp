@@ -365,7 +365,7 @@ assets_widget::~assets_widget() = default;
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
   auto k_h = make_handle(in_ptr);
-  chick_true<doodle_error>(k_h.all_of<database_root, database, database_stauts>(),
+  chick_true<doodle_error>(k_h.all_of<database_root, database>(),
                            DOODLE_LOC,
                            "缺失组件");
 
@@ -382,8 +382,7 @@ void assets_widget::aborted() {
 }
 void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   /// 加载数据
-  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
-    p_impl->p_root.patch<database_stauts>(database_set_stauts<need_root_load>{});
+  //  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
   /// 渲染数据
   p_impl->render();
 }
