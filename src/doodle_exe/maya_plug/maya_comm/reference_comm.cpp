@@ -78,7 +78,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
     auto&& k_name = k_names[l_i];
     reference_file k_ref{};
 
-    if (k_ref.set_namespace(d_str{k_name}) &&) {
+    if (k_ref.set_namespace(d_str{k_name})) {
       if (k_ref.is_loaded()) {
         DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
         auto k_h = make_handle();
