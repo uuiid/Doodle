@@ -44,25 +44,16 @@ class image_loader::impl {
 image_loader::image_loader()
     : p_i() {
 }
-bool image_loader::load(const entt::handle& in_handle) {
-  chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
-  auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
-
-  auto k_image      = cv::imread(l_local_path.generic_string());
-  chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
-
+std::shared_ptr<void> cv_mat_to_d3d_texture(const cv::Mat& in_mat) {
   // 获得全局GPU渲染对象
   auto k_g = app::Get().d3dDevice;
-
   /// \brief 转换图像
-  cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
+  cv::cvtColor(in_mat, in_mat, cv::COLOR_BGR2RGBA);
 
   D3D11_TEXTURE2D_DESC k_tex_desc{};
-  k_tex_desc.Width            = k_image.cols;
-  k_tex_desc.Height           = k_image.rows;
+  k_tex_desc.Width            = in_mat.cols;
+  k_tex_desc.Height           = in_mat.rows;
   k_tex_desc.MipLevels        = 1;
   k_tex_desc.ArraySize        = 1;
   k_tex_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -74,7 +65,7 @@ bool image_loader::load(const entt::handle& in_handle) {
   ID3D11Texture2D* k_com_tex{};
 
   D3D11_SUBRESOURCE_DATA k_sub_resource;
-  k_sub_resource.pSysMem          = k_image.data;
+  k_sub_resource.pSysMem          = in_mat.data;
   k_sub_resource.SysMemPitch      = k_tex_desc.Width * 4;
   k_sub_resource.SysMemSlicePitch = 0;
   auto k_r                        = k_g->CreateTexture2D(&k_tex_desc, &k_sub_resource, &k_com_tex);
@@ -90,10 +81,22 @@ bool image_loader::load(const entt::handle& in_handle) {
 
   ID3D11ShaderResourceView* k_out_{nullptr};
   k_r = k_g->CreateShaderResourceView(k_com_tex, &k_srv, &(k_out_));
-  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
-  //  winrt::com_ptr<ID3D11ShaderResourceView> k_l;
+  return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
+}
+
+bool image_loader::load(const entt::handle& in_handle) {
+  chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
+  auto k_reg = g_reg();
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+
+  auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
+
+  auto k_image      = cv::imread(l_local_path.generic_string());
+  chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+
+  auto k_sh = cv_mat_to_d3d_texture(k_image);
   in_handle.patch<image_icon>([&](image_icon& in) {
-    in.image = std::shared_ptr<ID3D11ShaderResourceView>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
+    in.image = k_sh;
   });
 
   return false;
@@ -107,30 +110,8 @@ bool image_loader::save(const entt::handle& in_handle) {
   return false;
 }
 
-BITMAPINFOHEADER createBitmapHeader(int width, int height) {
-  BITMAPINFOHEADER bi;
 
-  // create a bitmap
-  bi.biSize          = sizeof(BITMAPINFOHEADER);
-  bi.biWidth         = width;
-  bi.biHeight        = -height;  // this is the line that makes it draw upside down or not
-  bi.biPlanes        = 1;
-  bi.biBitCount      = 32;
-  bi.biCompression   = BI_RGB;
-  bi.biSizeImage     = 0;
-  bi.biXPelsPerMeter = 0;
-  bi.biYPelsPerMeter = 0;
-  bi.biClrUsed       = 0;
-  bi.biClrImportant  = 0;
-
-  return bi;
-}
 std::shared_ptr<void> image_loader::screenshot() {
-  // 获得全局GPU渲染对象
-  auto k_d3d     = app::Get().d3dDevice;
-  auto k_ctx     = app::Get().d3dDeviceContext;
-  auto k_ded_swp = win::d3d_device::Get().g_pSwapChain;
-
 #if 0
   HRESULT k_r{};
   IDXGIOutputDuplication* l_duplication{};
@@ -258,43 +239,10 @@ std::shared_ptr<void> image_loader::screenshot() {
 
   return std::shared_ptr<void>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
 #endif
-  auto hwnd = GetDesktopWindow();
-  cv::Mat src{};
-  // get handles to a device context (DC)
-  HDC hwindowDC           = GetDC(hwnd);
-  HDC hwindowCompatibleDC = CreateCompatibleDC(hwindowDC);
-  SetStretchBltMode(hwindowCompatibleDC, COLORONCOLOR);
-  // define scale, height and width
-  int screenx = GetSystemMetrics(SM_XVIRTUALSCREEN);
-  int screeny = GetSystemMetrics(SM_YVIRTUALSCREEN);
-  int width   = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-  int height  = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+  auto k_src = win::get_screenshot();
 
-  // create mat object
-  src.create(height, width, CV_8UC4);
-
-  // create a bitmap
-  HBITMAP hbwindow    = CreateCompatibleBitmap(hwindowDC, width, height);
-  BITMAPINFOHEADER bi = createBitmapHeader(width, height);
-
-  // use the previously created device context with the bitmap
-  SelectObject(hwindowCompatibleDC, hbwindow);
-
-  // copy from the window device context to the bitmap device context
-  StretchBlt(hwindowCompatibleDC, 0, 0, width, height,
-             hwindowDC, screenx, screeny, width, height,
-             SRCCOPY);  // change SRCCOPY to NOTSRCCOPY for wacky colors !
-  GetDIBits(hwindowCompatibleDC, hbwindow,
-            0, height, src.data,
-            (BITMAPINFO*)&bi, DIB_RGB_COLORS);  // copy from hwindowCompatibleDC to hbwindow
-
-  // avoid memory leak
-  DeleteObject(hbwindow);
-  DeleteDC(hwindowCompatibleDC);
-  ReleaseDC(hwnd, hwindowDC);
-
-  cv::imwrite("D:/tmp/test_1_24.png", src);
-  return {};
+  cv::imwrite("D:/tmp/test_1_24.png", k_src);
+  return cv_mat_to_d3d_texture(k_src);
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle

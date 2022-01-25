@@ -102,6 +102,9 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoMove} &&
       [&]() {
+        ImGui::Image(p_i->image_gui.get(), {500, 500});
+        ImGui::GetWindowDrawList()
+            ->AddRectFilled({-1920, 0}, {500, 500}, ImGui::ColorConvertFloat4ToU32({0.2f, 0.3f, 0.2f, 0.2f}));
         if (imgui::Button("ok")) {
           imgui::CloseCurrentPopup();
           this->succeed();

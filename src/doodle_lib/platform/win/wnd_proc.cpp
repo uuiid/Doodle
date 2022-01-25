@@ -165,6 +165,70 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
+cv::Rect get_system_metrics_VIRTUALSCREEN() {
+  //  int screenx = GetSystemMetrics(SM_XVIRTUALSCREEN);
+  //  int screeny = GetSystemMetrics(SM_YVIRTUALSCREEN);
+  //  int width   = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+  //  int height  = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+  return cv::Rect{GetSystemMetrics(SM_XVIRTUALSCREEN),
+                  GetSystemMetrics(SM_YVIRTUALSCREEN),
+                  GetSystemMetrics(SM_CXVIRTUALSCREEN),
+                  GetSystemMetrics(SM_CYVIRTUALSCREEN)};
+}
+
+namespace {
+BITMAPINFOHEADER createBitmapHeader(int width, int height) {
+  BITMAPINFOHEADER bi;
+
+  // create a bitmap
+  bi.biSize          = sizeof(BITMAPINFOHEADER);
+  bi.biWidth         = width;
+  bi.biHeight        = -height;  // this is the line that makes it draw upside down or not
+  bi.biPlanes        = 1;
+  bi.biBitCount      = 32;
+  bi.biCompression   = BI_RGB;
+  bi.biSizeImage     = 0;
+  bi.biXPelsPerMeter = 0;
+  bi.biYPelsPerMeter = 0;
+  bi.biClrUsed       = 0;
+  bi.biClrImportant  = 0;
+
+  return bi;
+}
+}  // namespace
+cv::Mat get_screenshot() {
+  auto hwnd = GetDesktopWindow();
+  cv::Mat src{};
+  // get handles to a device context (DC)
+  HDC hwindowDC           = GetDC(hwnd);
+  HDC hwindowCompatibleDC = CreateCompatibleDC(hwindowDC);
+  SetStretchBltMode(hwindowCompatibleDC, COLORONCOLOR);
+  // define scale, height and width
+  auto k_rot = win::get_system_metrics_VIRTUALSCREEN();
+
+  // create mat object
+  src.create(k_rot.height, k_rot.width, CV_8UC4);
+
+  // create a bitmap
+  HBITMAP hbwindow    = CreateCompatibleBitmap(hwindowDC, k_rot.width, k_rot.height);
+  BITMAPINFOHEADER bi = createBitmapHeader(k_rot.width, k_rot.height);
+
+  // use the previously created device context with the bitmap
+  SelectObject(hwindowCompatibleDC, hbwindow);
+
+  // copy from the window device context to the bitmap device context
+  StretchBlt(hwindowCompatibleDC, 0, 0, k_rot.width, k_rot.height,
+             hwindowDC, k_rot.x, k_rot.y, k_rot.width, k_rot.height,
+             SRCCOPY);  // change SRCCOPY to NOTSRCCOPY for wacky colors !
+  GetDIBits(hwindowCompatibleDC, hbwindow,
+            0, k_rot.height, src.data,
+            (BITMAPINFO*)&bi, DIB_RGB_COLORS);  // copy from hwindowCompatibleDC to hbwindow
+
+  // avoid memory leak
+  DeleteObject(hbwindow);
+  DeleteDC(hwindowCompatibleDC);
+  ReleaseDC(hwnd, hwindowDC);
+}
 
 d3d_device::d3d_device(wnd_handle const& in_handle) {
   CreateDeviceD3D(in_handle);
