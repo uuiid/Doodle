@@ -17,6 +17,10 @@ class screenshot_widget::impl {
   std::shared_ptr<void> image_gui;
   cv::Rect2f virtual_screen;
   cv::Rect2f mouse_rect;
+
+  cv::Point2f mouse_begin;
+  cv::Point2f mouse_end;
+
   bool mouse_state{};
 };
 
@@ -103,32 +107,42 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
         ImGui::ImageButton(p_i->image_gui.get(),
                            {p_i->virtual_screen.size().width,
                             p_i->virtual_screen.size().height});
-        if (imgui::IsItemClicked() && !p_i->mouse_state) {
-          p_i->mouse_rect.x = imgui::GetIO().MousePos.x;
-          p_i->mouse_rect.y = imgui::GetIO().MousePos.y;
-          p_i->mouse_state  = true;
-        }
         if (imgui::IsItemActive() && p_i->mouse_state) {
-          p_i->mouse_rect.width  = imgui::GetIO().MousePos.x /*- p_i->mouse_rect.x*/;
-          p_i->mouse_rect.height = imgui::GetIO().MousePos.y /*- p_i->mouse_rect.y*/;
+          p_i->mouse_end.x = imgui::GetIO().MousePos.x;
+          p_i->mouse_end.y = imgui::GetIO().MousePos.y;
+          p_i->mouse_rect  = {p_i->mouse_begin, p_i->mouse_end};
+        }
+        if (imgui::IsItemClicked() && !p_i->mouse_state) {
+          p_i->mouse_begin.x = imgui::GetIO().MousePos.x;
+          p_i->mouse_begin.y = imgui::GetIO().MousePos.y;
+          p_i->mouse_state   = true;
         }
         if (imgui::IsItemDeactivated() && p_i->mouse_state) {
           this->succeed();
         }
 
         ImGui::GetWindowDrawList()
-            ->AddRectFilled({p_i->virtual_screen.x,
-                             p_i->virtual_screen.y},
-                            {p_i->virtual_screen.size().width,
-                             p_i->virtual_screen.size().height},
+            ->AddRectFilled({p_i->virtual_screen.tl().x,
+                             p_i->virtual_screen.tl().y},
+                            {p_i->virtual_screen.br().x,
+                             p_i->virtual_screen.br().y},
                             ImGui::ColorConvertFloat4ToU32({0.1f, 0.4f, 0.5f, 0.2f}));
         if (!p_i->mouse_rect.empty()) {
           ImGui::GetWindowDrawList()
-              ->AddRectFilled({p_i->mouse_rect.x,
-                               p_i->mouse_rect.y},
-                              {p_i->mouse_rect.size().width,
-                               p_i->mouse_rect.size().height},
-                              ImGui::ColorConvertFloat4ToU32({1.0f, 1.0f, 1.0f, 0.4f}));
+              ->AddRectFilled({p_i->mouse_rect.tl().x,
+                               p_i->mouse_rect.tl().y},
+                              {p_i->mouse_rect.br().x,
+                               p_i->mouse_rect.br().y},
+                              ImGui::ColorConvertFloat4ToU32({1.0f, 1.0f, 1.0f, 0.4f}),
+                              0.f);
+          ImGui::GetWindowDrawList()
+              ->AddRect({p_i->mouse_rect.tl().x,
+                         p_i->mouse_rect.tl().y},
+                        {p_i->mouse_rect.br().x,
+                         p_i->mouse_rect.br().y},
+                        ImGui::ColorConvertFloat4ToU32({1.0f, 0.2f, 0.2f, 0.4f}),
+                        0.f,
+                        5.f);
         }
 
         if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_Escape))) {
