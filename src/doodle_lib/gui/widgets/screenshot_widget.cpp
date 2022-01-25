@@ -6,13 +6,14 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/image_loader.h>
-
+#include <doodle_lib/platform/win/wnd_proc.h>
 namespace doodle {
 
 class screenshot_widget::impl {
  public:
   std::vector<std::function<void()>> begen_loop;
   std::shared_ptr<void> image_gui;
+  cv::Rect2f virtual_screen;
 };
 
 screenshot_widget::screenshot_widget()
@@ -55,19 +56,12 @@ void screenshot_widget::init() {
     //    imgui::SetNextWindowSize(io.DisplaySize);
     ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-    auto hDesktop           = ::GetDesktopWindow();
-    RECT desktop{
-        GetSystemMetrics(SM_XVIRTUALSCREEN),
-        GetSystemMetrics(SM_YVIRTUALSCREEN),
-        GetSystemMetrics(SM_CXVIRTUALSCREEN),
-        GetSystemMetrics(SM_CYVIRTUALSCREEN)};
-    //    ::GetWindowRect(hDesktop, &desktop);
-    ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(desktop.right - desktop.left),
-                              boost::numeric_cast<std::float_t>(desktop.bottom - desktop.top)});
+    auto k_rect             = win::get_system_metrics_VIRTUALSCREEN();
+    auto k_size             = k_rect.size();
+    ImGui::SetNextWindowSize({k_size.width, k_size.height});
     //    ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CXVIRTUALSCREEN)),
     //                              boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CYVIRTUALSCREEN))});
-    imgui::SetNextWindowPos({boost::numeric_cast<std::float_t>(desktop.left),
-                             boost::numeric_cast<std::float_t>(desktop.top)});
+    imgui::SetNextWindowPos({k_rect.x, k_rect.y});
 
     //    POINT l_point{0, 0};
     //    ::MapWindowPoints(HWND_DESKTOP, app::Get().p_hwnd, (LPPOINT)&l_point, 1);
@@ -78,8 +72,8 @@ void screenshot_widget::init() {
     //        ImGui::SetNextWindowSize(viewport->Size);
 
     ImGui::SetNextWindowViewport(viewport->ID);
-    p_i->image_gui = image_loader{}.screenshot();
-
+    p_i->image_gui      = image_loader{}.screenshot();
+    p_i->virtual_screen = win::get_system_metrics_VIRTUALSCREEN();
     //    ImGui::SetNextWindowBgAlpha(0.1f);
     //    imgui::OpenPopup(name.data());
   });
@@ -102,12 +96,16 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoMove} &&
       [&]() {
-        ImGui::Image(p_i->image_gui.get(), {500, 500});
+        ImGui::Image(p_i->image_gui.get(), {p_i->virtual_screen.size().width,
+                                            p_i->virtual_screen.size().height});
         ImGui::GetWindowDrawList()
-            ->AddRectFilled({-1920, 0}, {500, 500}, ImGui::ColorConvertFloat4ToU32({0.2f, 0.3f, 0.2f, 0.2f}));
-        if (imgui::Button("ok")) {
+            ->AddRectFilled({p_i->virtual_screen.x, p_i->virtual_screen.y},
+                            {p_i->virtual_screen.size().width,
+                             p_i->virtual_screen.size().height},
+                            ImGui::ColorConvertFloat4ToU32({0.2f, 0.3f, 0.2f, 0.2f}));
+        if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_Escape))) {
           imgui::CloseCurrentPopup();
-          this->succeed();
+          this->fail();
         }
       };
   //  ImGui::PopStyleColor();

@@ -38,6 +38,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
  * 2 GetSystemMetrics(SM_CXVIRTUALSCREEN);
  * 3 GetSystemMetrics(SM_CYVIRTUALSCREEN);
  */
-cv::Rect get_system_metrics_VIRTUALSCREEN();
+cv::Rect2f get_system_metrics_VIRTUALSCREEN();
 cv::Mat get_screenshot();
 }  // namespace doodle::win

@@ -165,7 +165,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
-cv::Rect get_system_metrics_VIRTUALSCREEN() {
+cv::Rect2f get_system_metrics_VIRTUALSCREEN() {
   //  int screenx = GetSystemMetrics(SM_XVIRTUALSCREEN);
   //  int screeny = GetSystemMetrics(SM_YVIRTUALSCREEN);
   //  int width   = GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -228,6 +228,7 @@ cv::Mat get_screenshot() {
   DeleteObject(hbwindow);
   DeleteDC(hwindowCompatibleDC);
   ReleaseDC(hwnd, hwindowDC);
+  return src;
 }
 
 d3d_device::d3d_device(wnd_handle const& in_handle) {
