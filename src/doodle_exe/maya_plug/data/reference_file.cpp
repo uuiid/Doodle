@@ -35,10 +35,9 @@ reference_file::reference_file()
 
       };
 
-
-reference_file::reference_file(const entt::handle &in_project,
-                               const string &in_maya_namespace) {
-  file_namespace = in_maya_namespace;
+reference_file::reference_file(
+    const string &in_maya_namespace) {
+  set_namespace(in_maya_namespace);
 }
 void reference_file::set_path(const MObject &in_ref_node) {
   MStatus k_s{};
@@ -456,6 +455,29 @@ bool reference_file::has_sim_cloth() {
     }
   }
   return false;
+}
+bool reference_file::set_namespace(const string &in_namespace) {
+  file_namespace = in_namespace;
+  chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
+  return find_ref_node();
+}
+bool reference_file::find_ref_node() {
+  chick_mobject();
+  MStatus k_s{};
+  MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  DOODLE_CHICK(k_s);
+  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+    if (k_objs[l_i].apiType() == MFn::kReference)
+      p_m_object = k_objs[l_i];
+  }
+  if (p_m_object.isNull())
+    return false;
+
+  MFnReference k_ref{p_m_object, &k_s};
+  DOODLE_CHICK(k_s);
+  path = d_str{k_ref.fileName(false, true, true, &k_s)};
+
+  return true;
 }
 
 }  // namespace doodle::maya_plug

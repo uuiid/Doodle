@@ -24,6 +24,7 @@ class reference_file {
    * @param in_ref_uuid
    */
   void find_ref_node(const std::string &in_ref_uuid);
+  bool find_ref_node();
 
  public:
   MObject p_m_object;
@@ -34,9 +35,10 @@ class reference_file {
   std::vector<string> collision_model_show_str;
 
   reference_file();
-  explicit reference_file(const entt::handle &in_project, const std::string &in_maya_namespace);
+  explicit reference_file(const std::string &in_maya_namespace);
   void init_show_name();
   void set_path(const MObject &in_ref_node);
+  bool set_namespace(const std::string &in_namespace);
 
   [[nodiscard]] entt::handle get_prj() const;
 
