@@ -55,12 +55,11 @@ void main_menu_bar::menu_file() {
                      },
                      "选择目录"s)
         .then<get_input_project_dialog>(k_h)
-        .then([=](auto, auto, auto s, auto) {
+        .then<one_process_t>([=]() {
           k_h.emplace<database>();
           k_h.patch<database>(database::save{});
           g_reg()->set<project>(k_h.get<project>());
           core_set::getSet().add_recent_project(k_h.get<project>().get_path());
-          s();
         });
   }
   if (dear::MenuItem("打开项目"s)) {
