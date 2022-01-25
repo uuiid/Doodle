@@ -42,7 +42,6 @@ class database::impl {
         p_type(metadata_type::unknown_file),
         p_uuid_(core_set::getSet().get_uuid()),
         p_uuid(boost::uuids::to_string(p_uuid_)) {
-
   }
   mutable std::uint64_t p_id;
   mutable string p_id_str;
@@ -157,10 +156,11 @@ database::operator metadata_database() const {
   }
 
   k_tmp.user_data = k_json.dump();
-  k_tmp.parent    = p_i->p_parent_id;
+  if (auto k_data = g_reg()->try_ctx<database>(); k_data)
+    k_tmp.parent = k_data->get_id();
 
   ///设置类型id
-  k_tmp.m_type    = get_meta_type_int();
+  k_tmp.m_type = get_meta_type_int();
   /// 设置可索引数据
   if (k_h.any_of<season>()) {
     k_tmp.season = k_h.get<season>().get_season();
