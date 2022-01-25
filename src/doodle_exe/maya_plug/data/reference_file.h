@@ -89,13 +89,21 @@ class reference_file {
     j["use_sim"]         = p.use_sim;
     j["high_speed_sim"]  = p.high_speed_sim;
     j["collision_model"] = p.collision_model;
+    j["file_namespace"]  = p.file_namespace;
   }
   friend void from_json(const nlohmann::json &j, reference_file &p) {
     j.at("path").get_to(p.path);
     j.at("use_sim").get_to(p.use_sim);
     j.at("high_speed_sim").get_to(p.high_speed_sim);
     j.at("collision_model").get_to(p.collision_model);
-    j.at("ref_file_uuid").get_to(p.ref_file_uuid);
+    if (j.contains("file_namespace"))
+      j.at("file_namespace").get_to(p.file_namespace);
+
+    if (j.contains("ref_file_uuid")) {
+      std::string ref_file_uuid;
+      j.at("ref_file_uuid").get_to(ref_file_uuid);
+      p.find_ref_node(ref_file_uuid);
+    }
     p.chick_mobject();
   }
 };
