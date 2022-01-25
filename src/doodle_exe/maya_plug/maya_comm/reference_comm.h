@@ -7,10 +7,11 @@
 
 namespace doodle::maya_plug {
 namespace {
-constexpr char create_ref_file_command_name[] = "doodle_create_ref_file";
-constexpr char ref_file_load_command_name[]   = "doodle_ref_file_load";
-constexpr char ref_file_sim_command_name[]    = "doodle_ref_file_sim";
-constexpr char ref_file_export_command_name[] = "doodle_ref_file_export";
+constexpr char create_ref_file_command_name[]  = "doodle_create_ref_file";
+constexpr char ref_file_load_command_name[]    = "doodle_ref_file_load";
+constexpr char ref_file_sim_command_name[]     = "doodle_ref_file_sim";
+constexpr char ref_file_export_command_name[]  = "doodle_ref_file_export";
+constexpr char ref_file_export_command2_name[] = "doodle_ref_file_export2";
 }  // namespace
 MSyntax create_ref_syntax();
 MSyntax ref_file_sim_syntax();

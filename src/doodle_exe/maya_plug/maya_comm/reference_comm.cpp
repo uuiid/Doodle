@@ -10,7 +10,6 @@
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
-#include <maya/MFnReference.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MUuid.h>
 #include <maya/adskDataAssociations.h>
@@ -18,6 +17,7 @@
 #include <maya/adskDebugPrint.h>
 #include <maya/MArgParser.h>
 #include <maya/MAnimControl.h>
+#include <maya/MNamespace.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -72,26 +72,25 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   auto k_view = g_reg()->view<reference_file>();
   g_reg()->destroy(k_view.begin(), k_view.end());
 
-  std::vector<entt::handle> l_list{};
-  MFnReference k_ref_file{};
-  for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
-    k_s = k_ref_file.setObject(refIter.thisNode());
-    DOODLE_CHICK(k_s);
-    auto k_obj = refIter.thisNode(&k_s);
-    DOODLE_CHICK(k_s);
-    try {
-      reference_file k_ref{k_def_prj, k_obj};
-      if (k_ref.is_loaded()) {
-        auto k_h = make_handle();
-        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
-        k_h.emplace<reference_file>(std::move(k_ref));
-      } else
-        DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+  auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
 
-    } catch (maya_error& err) {
-      DOODLE_LOG_WARN("跳过无效的引用");
+  for (int l_i = 0; l_i < k_names.length(); ++l_i) {
+    auto&& k_name = k_names[l_i];
+    reference_file k_ref{};
+
+    if (k_ref.set_namespace(d_str{k_name}) &&) {
+      if (k_ref.is_loaded()) {
+        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+        auto k_h = make_handle();
+        k_h.emplace<reference_file>(k_ref);
+      } else {
+        DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+      }
+    } else {
+      DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_names);
     }
   }
+
   return k_s;
 }
 MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
