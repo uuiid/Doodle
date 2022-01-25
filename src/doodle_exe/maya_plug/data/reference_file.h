@@ -28,7 +28,6 @@ class reference_file {
   void set_path(const MObject &in_ref_node);
 
   [[nodiscard]] entt::handle get_prj() const;
-  void set_project(const entt::handle &in_prj);
   [[nodiscard]] bool has_ref_project() const;
 
   void generate_cloth_proxy() const;

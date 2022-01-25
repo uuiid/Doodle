@@ -116,11 +116,6 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
     } else {
       l_i.get<reference_file>().use_sim = true;
     }
-    if (!l_i.get<reference_file>().has_ref_project()) {
-      l_i.patch<reference_file>([&](reference_file& in) {
-        in.set_project(k_def_prj);
-      });
-    }
 
     if (!l_i.get<reference_file>().use_sim) {
       DOODLE_LOG_INFO("引用文件{}不解算", l_i.get<reference_file>().path);

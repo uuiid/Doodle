@@ -35,7 +35,6 @@ reference_file::reference_file()
 
 reference_file::reference_file(const entt::handle &in_uuid, const MObject &in_ref_node)
     : reference_file() {
-  set_project(in_uuid);
   set_path(in_ref_node);
 }
 
@@ -178,15 +177,9 @@ entt::handle reference_file::get_prj() const {
   auto k_prj_view = g_reg()->view<project>();
   for (auto k_e : k_prj_view) {
     auto k_h = make_handle(k_e);
-    if (k_h.get<database>() == prj_ref) {
-      return k_h;
-    }
+    break;
   }
   return entt::handle{};
-}
-void reference_file::set_project(const entt::handle &in_prj) {
-  chick_component<database>(in_prj);
-  prj_ref = in_prj.get<database>().uuid();
 }
 
 bool reference_file::has_ref_project() const {

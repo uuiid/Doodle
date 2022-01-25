@@ -86,7 +86,6 @@ bool reference_attr_setting::get_file_info() {
     if (k_j.contains(l_p))
       entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
     l_i.get<reference_file>().init_show_name();
-    l_i.get<reference_file>().set_project(g_reg()->ctx<root_ref>().root_handle());
   }
   return true;
 }
