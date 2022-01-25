@@ -161,38 +161,6 @@ class DOODLELIB_API database {
 void from_json(const nlohmann::json &j, database &p);
 void to_json(nlohmann::json &j, const database &p);
 
-using need_root_load = entt::tag<"need_root_load"_hs>;
-using is_load        = entt::tag<"is_loaded"_hs>;
-using need_save      = entt::tag<"need_save"_hs>;
-using need_delete    = entt::tag<"need_delete"_hs>;
-
-class DOODLELIB_API database_stauts {
-  std::int32_t p_statu;
-
- public:
-  template <class in_statu>
-  void set() {
-    p_statu = in_statu::value;
-  };
-  template <class in_statu>
-  [[nodiscard]] bool is() const {
-    return p_statu == in_statu::value;
-  }
-
-  template <class in_class>
-  class DOODLELIB_API set_status {
-   public:
-    set_status() = default;
-    template <class in_comm>
-    void operator()(in_comm &in) {
-      in.template set<in_class>();
-    };
-  };
-};
-
-template <class in_class>
-using database_set_stauts = database_stauts::set_status<in_class>;
-
 class DOODLELIB_API to_str {
  private:
   mutable std::string p_str;

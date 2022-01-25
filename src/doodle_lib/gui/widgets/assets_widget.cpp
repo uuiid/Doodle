@@ -365,7 +365,7 @@ assets_widget::~assets_widget() = default;
 
 void assets_widget::set_metadata(const entt::entity& in_ptr) {
   auto k_h = make_handle(in_ptr);
-  chick_true<doodle_error>(k_h.all_of<database_root, database>(),
+  chick_true<doodle_error>(k_h.all_of<database>(),
                            DOODLE_LOC,
                            "缺失组件");
 
