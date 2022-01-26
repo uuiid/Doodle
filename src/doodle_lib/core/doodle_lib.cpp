@@ -62,6 +62,7 @@ doodle_lib::doodle_lib()
   k_sig.end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
     g_reg()->set<project>(in_project);
     g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
+    core_set::getSet().add_recent_project(in_project.get_path());
   });
   p_install = this;
 }
