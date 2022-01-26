@@ -457,18 +457,22 @@ bool reference_file::has_sim_cloth() {
   return false;
 }
 bool reference_file::set_namespace(const string &in_namespace) {
-  file_namespace = in_namespace;
   chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
+  file_namespace = in_namespace.substr(1);
   return find_ref_node();
 }
 bool reference_file::find_ref_node() {
   chick_mobject();
-  MStatus k_s{};
-  MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  DOODLE_CHICK(k_s);
-  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
-    if (k_objs[l_i].apiType() == MFn::kReference)
-      p_m_object = k_objs[l_i];
+  MStatus k_s;
+  MFnReference k_file;
+  DOODLE_LOG_INFO("寻找名称空间 {} 的引用", file_namespace);
+  for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
+    k_s = k_file.setObject(refIter.thisNode());
+    DOODLE_CHICK(k_s);
+    const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
+    DOODLE_LOG_INFO("扫描引用名称空间 {}", k_mata_str);
+    if (k_mata_str == file_namespace.c_str())
+      p_m_object = refIter.thisNode();
   }
   if (p_m_object.isNull())
     return false;
