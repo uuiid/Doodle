@@ -449,7 +449,13 @@ bool file_browser::is_ok() const {
 }
 
 FSys::path file_browser::get_select() const {
-  return p_i->path_list.at(p_i->select_index).path;
+  if (std::any_of(p_i->path_list.begin(), p_i->path_list.end(), [](const path_attr& in) {
+        return in.has_select;
+      }))
+    return p_i->path_list.at(p_i->select_index)
+        .path;
+  else
+    return p_i->pwd;
 }
 std::vector<FSys::path> file_browser::get_selects() const {
   std::vector<FSys::path> k_r{};
@@ -461,7 +467,10 @@ std::vector<FSys::path> file_browser::get_selects() const {
                     return in_attr.path;
                   }),
               std::back_inserter(k_r));
-  return k_r;
+  if (!k_r.empty())
+    return k_r;
+  else
+    return {p_i->pwd};
 }
 void file_browser::render_buffer() {
   imgui::InputText("file", &(p_i->buffer));
