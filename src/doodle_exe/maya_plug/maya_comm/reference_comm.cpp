@@ -285,6 +285,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
       app_base::Get().loop_one();
     }
   }
+  return k_s;
 }
 
 }  // namespace doodle::maya_plug
