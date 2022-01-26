@@ -146,8 +146,10 @@ database::operator metadata_database() const {
   ///转换id
   if (p_i->p_id != 0)
     k_tmp.id = p_i->p_id;
-  ///设置序列化数据储存位置
-  k_tmp.uuid_path = get_url_uuid().generic_string();
+
+  /// 储存对应数据字符串的位置
+  if (k_h.any_of<assets_path_vector>())
+    k_tmp.uuid_path = k_h.get<assets_file>().path.generic_string();
 
   nlohmann::json k_json{};
   {
