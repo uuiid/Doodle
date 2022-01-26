@@ -91,8 +91,7 @@ MStatus initializePlugin(MObject obj) {
           nullptr,
           &status);
       CHECK_MSTATUS_AND_RETURN_IT(status);
-      break;
-    }
+    } break;
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
     default:
