@@ -7,20 +7,20 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::details {
+
 class DOODLELIB_API qcloth_arg {
  public:
   FSys::path sim_path;
   FSys::path qcloth_assets_path;
   FSys::path export_path;
-  uuid uuid_p;
   bool only_sim;
+  FSys::path project_;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]               = nlohmann_json_t.sim_path.generic_string();
-    nlohmann_json_j["export_path"]        = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["qcloth_assets_path"] = nlohmann_json_t.qcloth_assets_path.generic_string();
-    nlohmann_json_j["only_sim"]           = nlohmann_json_t.only_sim;
-    nlohmann_json_j["uuid"]               = boost::lexical_cast<string>(nlohmann_json_t.uuid_p);
+    nlohmann_json_j["path"]        = nlohmann_json_t.sim_path.generic_string();
+    nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
+    nlohmann_json_j["project_"]    = nlohmann_json_t.project_;
+    nlohmann_json_j["only_sim"]    = nlohmann_json_t.only_sim;
   };
 };
 
@@ -42,19 +42,19 @@ class DOODLELIB_API export_fbx_arg {
    */
   bool use_all_ref;
 
-  uuid uuid_p;
+  FSys::path project_;
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
     nlohmann_json_j["path"]        = nlohmann_json_t.file_path.generic_string();
     nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
+    nlohmann_json_j["project_"]    = nlohmann_json_t.project_;
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
-    nlohmann_json_j["uuid"]        = boost::lexical_cast<string>(nlohmann_json_t.uuid_p);
   };
 };
 
 class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   class impl;
   std::unique_ptr<impl> p_i;
-  static void add_maya_fun_tool() ;
+  static void add_maya_fun_tool();
 
  public:
   using base_type = process_t<maya_exe>;

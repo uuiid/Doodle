@@ -7,6 +7,9 @@
 #include <doodle_lib/lib_warp/entt_warp.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/metadata/project.h>
+#include <doodle_lib/client/client.h>
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/core/app_base.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -27,23 +30,18 @@
 
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
-#define doodle_default_uuid "-u"
+#define doodle_project_path "-pr"
 #define doodle_export_type "-ef"
 #define doodle_export_use_select "-s"
 
 #define doodle_export_type_long "-exportType"
 #define doodle_export_use_select_long "-select"
-#define doodle_default_uuid_long "-uuid"
+#define doodle_project_path_long "-project"
 #define doodle_startTime_long "-startTime"
 #define doodle_endTime_long "-endTime"
 
 namespace doodle::maya_plug {
 
-MSyntax create_ref_syntax() {
-  MSyntax syntax{};
-  syntax.addFlag(doodle_default_uuid, doodle_default_uuid_long, MSyntax::kString);
-  return syntax;
-};
 MSyntax ref_file_sim_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
@@ -58,6 +56,13 @@ MSyntax ref_file_export_syntax() {
   syntax.addFlag(doodle_export_use_select, doodle_export_use_select_long, MSyntax::kBoolean);
   return syntax;
 }
+
+MSyntax load_project_syntax() {
+  MSyntax syntax{};
+  syntax.addFlag(doodle_project_path, doodle_project_path_long, MSyntax::kString);
+  return syntax;
+}
+
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
@@ -260,11 +265,37 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
 
   return k_s;
 }
+
+MStatus load_project::doIt(const MArgList& in_arg) {
+  MStatus k_s{};
+  MArgParser k_prase{syntax(), in_arg, &k_s};
+  FSys::path k_path{};
+
+  if (k_prase.isFlagSet(doodle_project_path, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MString k_path_M{};
+    k_s    = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
+    k_path = k_path_M.asUTF8();
+  } else {
+    return MStatus{MStatus::kFailure};
+  }
+  core::client{}.open_project(k_path);
+  if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+    while (!g_main_loop().empty()) {
+      app_base::Get().loop_one();
+    }
+  }
+}
+
 }  // namespace doodle::maya_plug
 #undef doodle_startTime
 #undef doodle_endTime
-#undef doodle_default_uuid
+#undef doodle_project_path
+#undef doodle_export_type
+#undef doodle_export_use_select
 
-#undef doodle_default_uuid_long
+#undef doodle_export_type_long
+#undef doodle_export_use_select_long
+#undef doodle_project_path_long
 #undef doodle_startTime_long
 #undef doodle_endTime_long

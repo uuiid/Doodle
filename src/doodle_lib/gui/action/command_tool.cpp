@@ -37,7 +37,7 @@ void comm_maya_tool::failed() {
 void comm_maya_tool::aborted() {
 }
 void comm_maya_tool::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-    this->render();
+  this->render();
 }
 void comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
@@ -73,6 +73,7 @@ void comm_maya_tool::render() {
                     arg.sim_path           = in_path;
                     arg.qcloth_assets_path = p_cloth_path;
                     arg.only_sim           = p_only_sim;
+                    arg.project_           = g_reg()->ctx<project>().p_path;
                     maya->qcloth_sim_file(make_handle(), arg);
                   });
   }
@@ -83,6 +84,7 @@ void comm_maya_tool::render() {
                     auto k_arg        = details::export_fbx_arg{};
                     k_arg.file_path   = i;
                     k_arg.use_all_ref = this->p_use_all_ref;
+                    k_arg.project_    = g_reg()->ctx<project>().p_path;
                     maya->export_fbx_file(make_handle(), k_arg);
                   });
   }
@@ -95,7 +97,6 @@ comm_create_video::comm_create_video()
 }
 void comm_create_video::init() {
   g_reg()->set<comm_create_video&>(*this);
-
 }
 void comm_create_video::succeeded() {
 }
@@ -104,7 +105,7 @@ void comm_create_video::failed() {
 void comm_create_video::aborted() {
 }
 void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-    this->render();
+  this->render();
 }
 void comm_create_video::render() {
   imgui::InputText("输出文件夹", p_out_path.get());
@@ -187,7 +188,6 @@ comm_import_ue_files::comm_import_ue_files()
 }
 void comm_import_ue_files::init() {
   g_reg()->set<comm_import_ue_files&>(*this);
-
 }
 void comm_import_ue_files::succeeded() {
 }
@@ -196,7 +196,7 @@ void comm_import_ue_files::failed() {
 void comm_import_ue_files::aborted() {
 }
 void comm_import_ue_files::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-    this->render();
+  this->render();
 }
 void comm_import_ue_files::render() {
   imgui::InputText("ue项目", p_ue4_show.get());

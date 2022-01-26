@@ -136,6 +136,7 @@ class config(object):
     def __init__(self):
         self._path = pymel.util.path()
         self.export_path = pymel.util.path()
+        self.project = pymel.util.path()
 
     @property
     def path(self):
@@ -151,7 +152,6 @@ class config(object):
 class sim_config(config):
     def __init__(self):
         super(sim_config, self).__init__()
-        self.qcloth_assets_path = pymel.util.path()
         self.only_sim = False
 
 
@@ -162,18 +162,19 @@ class fbx_config(config):
 
 
 def __load_config__(obj):
-    if "qcloth_assets_path" in obj:
+    if "only_sim" in obj:
         k_con = sim_config()
         k_con.path = obj["path"]
-        k_con.qcloth_assets_path = obj["qcloth_assets_path"]
         k_con.export_path = obj["export_path"]
         k_con.only_sim = obj["only_sim"]
+        k_con.project = obj["project_"]
         return k_con
     elif "use_all_ref" in obj:
         k_con = fbx_config()
         k_con.path = obj["path"]
         k_con.export_path = obj["export_path"]
         k_con.use_all_ref = obj["use_all_ref"]
+        k_con.project = obj["project_"]
         return k_con
 
 
@@ -238,6 +239,8 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert(isinstance(self.cfg, sim_config))
+        cmds.doodle_load_project(project=self.cfg.project)
+
         cmds.doodle_create_ref_file()
         if not self.cfg.only_sim:
             cmds.doodle_ref_file_load()
@@ -265,8 +268,9 @@ class open_file(object):
 
         self.load_plug(["fbxmaya"])
         self.open()
+        cmds.doodle_load_project(project=self.cfg.project)
         cmds.doodle_comm_file_save()
-        cmds.doodle_create_ref_file( )
+        cmds.doodle_create_ref_file()
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
