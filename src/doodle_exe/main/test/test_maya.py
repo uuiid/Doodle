@@ -35,6 +35,7 @@ def doodle_test_sim():
 "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
 "qcloth_assets_path":"",
 "project_":"E://tmp"
+}
 ]"""
     k_f()
 
