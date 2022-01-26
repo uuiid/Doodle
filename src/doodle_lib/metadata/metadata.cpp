@@ -156,8 +156,8 @@ database::operator metadata_database() const {
   }
 
   k_tmp.user_data = k_json.dump();
-  if (auto k_data = g_reg()->try_ctx<database>(); k_data)
-    k_tmp.parent = boost::numeric_cast<std::uint32_t>(k_data->get_id());
+  if (auto k_data = g_reg()->try_ctx<database::ref_root>(); k_data)
+    k_tmp.parent = boost::numeric_cast<std::uint32_t>(k_data->id);
 
   ///设置类型id
   k_tmp.m_type = get_meta_type_int();
@@ -248,5 +248,8 @@ void to_json(nlohmann::json &j, const database &p) {
   j["parent_id"] = p.p_i->p_parent_id;
   j["type"]      = p.p_i->p_type;
   j["uuid_"]     = p.p_i->p_uuid_;
+}
+database::ref_root database::get_ref() const {
+  return database::ref_root{get_id(), uuid()};
 }
 }  // namespace doodle

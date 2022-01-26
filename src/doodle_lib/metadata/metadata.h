@@ -75,6 +75,12 @@ class DOODLELIB_API database {
   std::unique_ptr<impl> p_i;
 
  public:
+  class DOODLELIB_API ref_root {
+   public:
+    const std::uint64_t id;
+    const boost::uuids::uuid uuid;
+  };
+
   database();
   //  explicit database(const metadata_database &in_metadata_database);
   ~database();
@@ -94,6 +100,7 @@ class DOODLELIB_API database {
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
   const string &get_id_str() const;
+  ref_root get_ref() const;
 
   const boost::uuids::uuid &uuid() const;
   /**
@@ -102,7 +109,6 @@ class DOODLELIB_API database {
    * @return std::int32_t
    */
   std::uint64_t get_id() const;
-
   /**
    * @brief 设置数据库中的类型
    *
