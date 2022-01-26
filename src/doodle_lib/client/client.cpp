@@ -25,8 +25,7 @@ SQLPP_DECLARE_TABLE(
 
 namespace doodle::core {
 void client::add_project(const std::filesystem::path& in_path) {
-  clear_project();
-  auto k_conn = core_sql::Get().get_connection(in_path / doodle_config::doodle_db_name);
+   auto k_conn = core_sql::Get().get_connection(in_path / doodle_config::doodle_db_name);
   k_conn->execute(R"(
 create table if not exists metadatatab
 (
@@ -95,14 +94,9 @@ create table if not exists doodle_info
                        l_info.version_minor = Doodle_VERSION_MINOR));
 }
 void client::open_project(const FSys::path& in_path) {
-  clear_project();
   auto k_h = make_handle();
   k_h.emplace<process_message>();
   g_main_loop().attach<database_task_select>(k_h, in_path);
-}
-void client::clear_project() {
-  auto k_view = g_reg()->view<database>();
-  g_reg()->destroy(k_view.begin(), k_view.end());
 }
 
 }  // namespace doodle::core
