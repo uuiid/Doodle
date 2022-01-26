@@ -25,7 +25,7 @@ class reference_file {
    */
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
-
+  bool has_ue4_group() const;
  public:
   MObject p_m_object;
   string path;

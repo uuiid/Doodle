@@ -433,12 +433,16 @@ bool reference_file::has_node(const MObject &in_node) const {
 }
 bool reference_file::is_loaded() const {
   chick_mobject();
-  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "空引用");
-  MFnReference k_ref{p_m_object};
-  MStatus k_s{};
-  auto k_r = k_ref.isLoaded(&k_s);
-  DOODLE_CHICK(k_s);
-  return k_r;
+  ///@brief  引用为空的情况下，我们主动测试一下是否有导出组，如果有就可以认为时已加载的
+  if (p_m_object.isNull()) {
+    return has_ue4_group();
+  } else {
+    MFnReference k_ref{p_m_object};
+    MStatus k_s{};
+    auto k_r = k_ref.isLoaded(&k_s);
+    DOODLE_CHICK(k_s);
+    return k_r;
+  }
 }
 bool reference_file::has_sim_cloth() {
   chick_mobject();
@@ -459,7 +463,9 @@ bool reference_file::has_sim_cloth() {
 bool reference_file::set_namespace(const string &in_namespace) {
   chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
   file_namespace = in_namespace.substr(1);
-  return find_ref_node();
+  auto k_r       = find_ref_node();
+  k_r |= has_ue4_group();
+  return k_r;
 }
 bool reference_file::find_ref_node() {
   chick_mobject();
@@ -482,6 +488,24 @@ bool reference_file::find_ref_node() {
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
 
   return true;
+}
+bool reference_file::has_ue4_group() const {
+  chick_mobject();
+  MStatus k_s{};
+  MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  DOODLE_CHICK(k_s);
+  MFnDependencyNode k_node{};
+  auto &k_cfg = get_prj().get<project::cloth_config>();
+  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
+    k_s = k_node.setObject(k_objs[l_i]);
+    DOODLE_CHICK(k_s);
+    std::string k_name{k_node.name(&k_s).asUTF8()};
+    DOODLE_CHICK(k_s);
+    if (k_name.find(k_cfg.export_group) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace doodle::maya_plug
