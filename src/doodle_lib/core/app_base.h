@@ -7,6 +7,10 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/platform/win/windows_alias.h>
 namespace doodle {
+/**
+ * @brief 基本的app类,是个纯虚类
+ *
+ */
 class DOODLELIB_API app_base {
  protected:
   static app_base* self;
@@ -14,6 +18,11 @@ class DOODLELIB_API app_base {
   std::wstring p_title;
   win::wnd_instance instance;
   doodle_lib_ptr p_lib;
+  /**
+   * @brief 这个会在第一个循环中加载
+   *
+   */
+  virtual void load_back_end() = 0;
 
  public:
   explicit app_base();
@@ -43,6 +52,9 @@ class DOODLELIB_API app_base {
 };
 
 class DOODLELIB_API app_command_base : public app_base {
+ protected:
+  void load_back_end() override;
+
  public:
   using app_base::app_base;
 

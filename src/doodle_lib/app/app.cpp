@@ -94,7 +94,7 @@ app::app(const win::wnd_instance& in_instance)
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_hwnd);
   ImGui_ImplDX11_Init(d3d_deve->g_pd3dDevice, d3d_deve->g_pd3dDeviceContext);
-  d3dDevice = d3d_deve->g_pd3dDevice;
+  d3dDevice        = d3d_deve->g_pd3dDevice;
   d3dDeviceContext = d3d_deve->g_pd3dDeviceContext;
   /// 初始化文件拖拽
   //  DragAcceptFiles(p_impl->p_hwnd, true);
@@ -137,7 +137,6 @@ app::app(const win::wnd_instance& in_instance)
 
   g_main_loop().attach<one_process_t>([this]() {
     this->load_windows();
-    this->load_back_end();
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
@@ -254,13 +253,13 @@ app::~app() {
   //  OleUninitialize();
 }
 void app::load_back_end() {
-  g_main_loop().attach<null_process_t>().then([](auto, auto, auto s, auto) {
-                                          core_set_init{}.init_default_project();
-                                          s();
-                                        })
-      .then([](auto, auto, auto s, auto) {
+  g_main_loop()
+      .attach<null_process_t>()
+      .then<one_process_t>([]() {
+        core_set_init{}.init_default_project();
+      })
+      .then<one_process_t>([]() {
         g_main_loop().template attach<database_task_obs>();
-        s();
       });
 }
 

@@ -35,7 +35,11 @@ app_base::app_base()
   k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
-  g_bounded_pool().set_bounded(boost::numeric_cast<std::uint16_t>(core_set::getSet().p_max_thread));
+  g_bounded_pool()
+      .set_bounded(boost::numeric_cast<std::uint16_t>(core_set::getSet().p_max_thread));
+  g_main_loop().attach<one_process_t>([this]() {
+    this->load_back_end();
+  });
 }
 app_base::app_base(win::wnd_instance const& in_instance)
     : app_base() {
@@ -81,6 +85,9 @@ void app_base::command_line_parser(const LPSTR& in_arg) {
   return command_line_parser(k_str);
 }
 app_base::~app_base() = default;
+
+void app_command_base::load_back_end() {
+}
 
 void app_command_base::loop_one() {
   static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};

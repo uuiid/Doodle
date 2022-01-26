@@ -31,7 +31,7 @@ class DOODLELIB_API app : public app_command_base {
 
  protected:
   virtual void load_windows();
-  virtual void load_back_end();
+  void load_back_end() override;
 
   void set_imgui_dock_space(const FSys::path& in_path) const;
 };
