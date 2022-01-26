@@ -33,7 +33,7 @@ doodle_lib::doodle_lib()
       reg(new_object<entt::registry>()) {
   /// 创建依赖性
   reg->on_construct<database>().connect<&database::set_enum>();
- 
+
   auto& k_sig = reg->set<core_sig>();
   k_sig.begin_open.connect([=](const FSys::path& in_path) {
     auto k_reg = g_reg();
@@ -51,6 +51,7 @@ doodle_lib::doodle_lib()
     g_reg()->set<project>(in_project);
     g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
     core_set::getSet().add_recent_project(in_project.get_path());
+    g_reg()->set<root_ref>(in_handle);
   });
   p_install = this;
 }
