@@ -138,7 +138,8 @@
 			"xutility": "cpp",
 			"*.ipp": "cpp",
 			"ranges": "cpp",
-			"span": "cpp"
+			"span": "cpp",
+			"cfenv": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
