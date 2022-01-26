@@ -48,14 +48,15 @@ void main_menu_bar::menu_file() {
     k_h.emplace<project>();
     auto k_msg = make_handle();
     k_msg.emplace<process_message>();
-    g_main_loop().attach<file_dialog>(
-                     [=](const FSys::path &in_path) {
-                       core::client{}.add_project(in_path);
-                       k_h.patch<project>([&](project &in) {
-                         in.p_path = in_path;
-                       });
-                     },
-                     "选择目录"s)
+    g_main_loop()
+        .attach<file_dialog>(
+            [=](const FSys::path &in_path) {
+              core::client{}.add_project(in_path);
+              k_h.patch<project>([&](project &in) {
+                in.p_path = in_path;
+              });
+            },
+            "选择目录"s)
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([=]() {
           k_h.emplace<database>();
@@ -63,7 +64,8 @@ void main_menu_bar::menu_file() {
         })
         .then<database_task_install>(k_msg, std::vector<entt::handle>{k_h})
         .then<one_process_t>([=]() {
-          core::client{}.open_project(k_h.get<project>().get_path());
+          auto k_prj = k_h.get<project>();
+          core::client{}.open_project(k_prj.p_path);
         });
   }
   if (dear::MenuItem("打开项目"s)) {
