@@ -337,7 +337,7 @@
  *
  * @subsubsection updata_log_3146 版本3.1.46
  * @li 无法保存时跳过不保存
- * -->
+ *
  *
  * @subsubsection updata_log_3147 版本3.1.47
  * @li 更改maya插件加载方式（pymel 加载插件会出现回调错误）
@@ -438,7 +438,7 @@
  *
  * @subsubsection updata_log_3227 版本3.2.27
  * @li 添加解锁全局着色器节点
- *
+ * -->
  * @subsubsection updata_log_3228 版本3.2.28
  * @li 添加解锁全局着色器节点
  *
