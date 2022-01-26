@@ -12,33 +12,18 @@
 #include <metadata/time_point_wrap.h>
 #include <pin_yin/convert.h>
 
-
 namespace doodle {
 
 assets_file::assets_file()
-    : p_name(),
-      p_ShowName(),
-      p_user(core_set::getSet().get_user()),
-      p_department(core_set::getSet().get_department_enum()),
-      p_version(1),
-      p_need_time(false) {
+    : assets_file({}) {
 }
 
-assets_file::assets_file(std::string showName, std::string name)
-    : p_name(std::move(name)),
-      p_ShowName(std::move(showName)),
+assets_file::assets_file(std::string in_show_name)
+    : p_name(std::move(in_show_name)),
+      p_ShowName(convert::Get().toEn(p_name)),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_version(1),
-      p_need_time(false) {
-  if (p_name.empty())
-    p_name = convert::Get().toEn(p_ShowName);
-}
-
-// AssetsFile::~AssetsFile() {
-//   if (p_metadata_flctory_ptr_)
-//     updata_db(p_metadata_flctory_ptr_);
-// }
+      p_version(1) {}
 
 std::string assets_file::str() const {
   return p_name;

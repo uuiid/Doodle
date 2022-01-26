@@ -19,16 +19,14 @@ enum class assets_file_type : std::uint32_t {
  */
 class DOODLELIB_API assets_file {
  public:
- private:
   std::string p_name;
-  std::string p_ShowName;
   std::string p_user;
   department p_department;
   std::uint64_t p_version;
+  FSys::path path;
 
-  bool p_need_time;
-
-  void serialize_check();
+ private:
+  std::string p_ShowName;
 
  public:
   /**
@@ -46,7 +44,7 @@ class DOODLELIB_API assets_file {
    * @param name 名称
    * @param showName 显示名称
    */
-  explicit assets_file(std::string showName, std::string Name = {});
+  explicit assets_file(std::string in_show_name);
   // ~AssetsFile();
 
   [[nodiscard]] std::string str() const;
@@ -76,14 +74,13 @@ class DOODLELIB_API assets_file {
   bool operator>=(const assets_file& in_rhs) const;
 
  private:
-
-
   friend void to_json(nlohmann::json& j, const assets_file& p) {
     j["name"]       = p.p_name;
     j["ShowName"]   = p.p_ShowName;
     j["user"]       = p.p_user;
     j["department"] = p.p_department;
     j["version"]    = p.p_version;
+    j["path"]       = p.path;
   }
   friend void from_json(const nlohmann::json& j, assets_file& p) {
     j.at("name").get_to(p.p_name);
@@ -91,10 +88,9 @@ class DOODLELIB_API assets_file {
     j.at("user").get_to(p.p_user);
     j.at("department").get_to(p.p_department);
     j.at("version").get_to(p.p_version);
+    if (j.contains("path"))
+      j.at("path").get_to(p.path);
   }
 };
 
-
 }  // namespace doodle
-
-
