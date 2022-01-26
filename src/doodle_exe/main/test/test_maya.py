@@ -6,7 +6,7 @@ curr_dir = os.path.dirname(os.path.realpath(__file__))
 doodle_src = os.path.dirname(os.path.dirname(os.path.dirname(curr_dir)))
 res_dir = doodle_src + """/doodle_lib/resource"""
 sys.path.append(res_dir)
-print (res_dir)
+print(res_dir)
 
 import maya_fun_tool
 
@@ -34,7 +34,7 @@ def doodle_test_sim():
 "only_sim":false,
 "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
 "qcloth_assets_path":"",
-"uuid":"00000000-0000-0000-0000-000000000000"}
+"project_":"E://tmp"
 ]"""
     k_f()
 
@@ -45,11 +45,12 @@ def doodle_test_fbx():
     k_f.config_ = """[{
         "export_path":"",
         "use_all_ref":false,
-        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma"
+        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
+        "project_":"E://tmp"
         }]"""
     k_f()
 
 
 if __name__ == '__main__':
-    # doodle_test_sim()
-    doodle_test_fbx()
+    doodle_test_sim()
+    # doodle_test_fbx()
