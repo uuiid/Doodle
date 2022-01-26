@@ -34,11 +34,6 @@ add_library(doodle_lib
         ${DOODLELIB_HEADER}
         ${DOODLELIB_SOURCE}
         ${OUT_LISTS_sqlpp}
-        ${PROJECT_SOURCE_DIR}/stl.natvis
-        external/service-base/ServiceBase.cpp
-        external/service-base/ServiceBase.h
-        external/service-base/ServiceInstaller.cpp
-        external/service-base/ServiceInstaller.h
         )
 
 target_precompile_headers(doodle_lib

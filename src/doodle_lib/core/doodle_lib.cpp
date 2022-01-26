@@ -22,7 +22,7 @@
 #ifdef DOODLE_GRPC
 #include <grpcpp/grpcpp.h>
 #endif
-
+#include <doodle_lib/core/core_sig.h>
 namespace doodle {
 
 doodle_lib* doodle_lib::p_install = nullptr;

@@ -6,7 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/long_task/process_pool.h>
-#include <doodle_lib/core/core_sig.h>
+
 
 namespace doodle {
 

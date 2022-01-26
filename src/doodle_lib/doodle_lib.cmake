@@ -92,7 +92,6 @@ set(
         thread_pool/long_term.h
         thread_pool/thread_pool.h
         toolkit/toolkit.h
-        server/doodle_server.h
         exe_warp/maya_exe.h
         exe_warp/ue4_exe.h
         long_task/image_to_move.h
@@ -182,7 +181,6 @@ set(
 
         thread_pool/long_term.cpp
         toolkit/toolkit.cpp
-        server/doodle_server.cpp
         exe_warp/maya_exe.cpp
         exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
