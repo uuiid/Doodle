@@ -446,4 +446,10 @@
  * @subsubsection updata_log_330 版本3.3.0
  * @li 取消服务器的使用, 使用文件型服务器
  * @li 修正导出abc不是引用的问题
+ *
+ * @subsubsection updata_log_331 版本3.3.1
+ * @li 更新文件选择器返回函数
+ * @li maya序列化json更新
+ * @li 写入配置文件时机更新
+ * @li 最近添加项目设置更新
  */
