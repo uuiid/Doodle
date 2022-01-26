@@ -52,6 +52,7 @@ doodle_lib::doodle_lib()
     g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
     core_set::getSet().add_recent_project(in_project.get_path());
     g_reg()->set<root_ref>(in_handle);
+    core_set_init{}.write_file();
   });
   p_install = this;
 }
