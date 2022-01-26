@@ -252,32 +252,21 @@ class core_sql;
 class assets_file;
 class time_point_wrap;
 class comment;
-
-class rpc_metadata_client;
-class rpc_metadaata_server;
-class ProjectManage;
 class rpc_server_handle;
-class rpc_file_system_client;
-class rpc_file_system_server;
 class doodle_lib;
 class thread_pool;
 class attribute_factory_interface;
 class season;
-class ue4_project;
 class setting_windows;
-class base_widget;
 class comment_vector;
 class assets_path_vector;
-
-using base_widget_ptr = std::shared_ptr<base_widget>;
+class project_sig;
 class command_base;
 class rpc_trans_path;
 class app;
-
 class program_options;
 class logger_ctrl;
 class comm_video;
-
 class comm_project_add;
 class comm_ass_eps;
 class comm_ass_shot;
@@ -288,47 +277,25 @@ class opencv_read_player;
 class opencv_player_widget;
 class image_icon;
 
-using handle_list                = std::vector<entt::handle>;
-using logger_ctr_ptr             = std::shared_ptr<logger_ctrl>;
-using program_options_ptr        = std::shared_ptr<program_options>;
-
-using conn_ptr                   = std::unique_ptr<sqlpp::sqlite3::connection>;
-
-using ue4_project_ptr            = std::shared_ptr<ue4_project>;
-using string_list                = std::vector<std::string>;
-
-using string_matrix2             = std::vector<string_list>;
-
-using string_matrix2_ptr         = std::shared_ptr<string_matrix2>;
-
-using string_list_ptr            = std::shared_ptr<string_list>;
-
-using rpc_metadata_client_ptr    = std::shared_ptr<rpc_metadata_client>;
-
-using rpc_metadata_server_ptr    = std::shared_ptr<rpc_metadaata_server>;
-
-using rpc_server_handle_ptr      = std::shared_ptr<rpc_server_handle>;
-
-using rpc_file_system_server_ptr = std::shared_ptr<rpc_file_system_server>;
-
-using rpc_file_system_client_ptr = std::shared_ptr<rpc_file_system_client>;
-
-using season_ref                 = std::reference_wrapper<season>;
-using project_ref                = std::reference_wrapper<project>;
-using episodes_ref               = std::reference_wrapper<episodes>;
-using shot_ref                   = std::reference_wrapper<shot>;
-using assets_ref                 = std::reference_wrapper<assets>;
-using assets_file_ref            = std::reference_wrapper<assets_file>;
-
-using command_ptr                = std::shared_ptr<command_base>;
-
-using doodle_lib_ptr             = std::shared_ptr<doodle_lib>;
-
-using thread_pool_ptr            = std::shared_ptr<thread_pool>;
-
-using attribute_factory_ptr      = std::shared_ptr<attribute_factory_interface>;
-
-using registry_ptr               = std::shared_ptr<entt::registry>;
+using handle_list           = std::vector<entt::handle>;
+using logger_ctr_ptr        = std::shared_ptr<logger_ctrl>;
+using program_options_ptr   = std::shared_ptr<program_options>;
+using conn_ptr              = std::unique_ptr<sqlpp::sqlite3::connection>;
+using string_list           = std::vector<std::string>;
+using string_matrix2        = std::vector<string_list>;
+using string_matrix2_ptr    = std::shared_ptr<string_matrix2>;
+using string_list_ptr       = std::shared_ptr<string_list>;
+using season_ref            = std::reference_wrapper<season>;
+using project_ref           = std::reference_wrapper<project>;
+using episodes_ref          = std::reference_wrapper<episodes>;
+using shot_ref              = std::reference_wrapper<shot>;
+using assets_ref            = std::reference_wrapper<assets>;
+using assets_file_ref       = std::reference_wrapper<assets_file>;
+using command_ptr           = std::shared_ptr<command_base>;
+using doodle_lib_ptr        = std::shared_ptr<doodle_lib>;
+using thread_pool_ptr       = std::shared_ptr<thread_pool>;
+using attribute_factory_ptr = std::shared_ptr<attribute_factory_interface>;
+using registry_ptr          = std::shared_ptr<entt::registry>;
 class time_widget;
 
 using uuid = boost::uuids::uuid;
@@ -348,6 +315,7 @@ DOODLELIB_API registry_ptr &g_reg();
 DOODLELIB_API scheduler_t &g_main_loop();
 DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
+DOODLELIB_API project_sig &g_sig();
 
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>

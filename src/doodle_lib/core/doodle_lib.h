@@ -6,11 +6,12 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/core/project_sig.h>
+
 namespace doodle {
 
 class DOODLELIB_API doodle_lib : public details::no_copy {
   static doodle_lib* p_install;
-
 
  public:
   doodle_lib();
@@ -25,7 +26,7 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   scheduler_t loop;
   bounded_pool_t loop_bounded_pool;
-
+  project_sig project_sig_;
   registry_ptr reg;
 };
 DOODLELIB_API inline registry_ptr& g_reg() {
@@ -36,6 +37,9 @@ DOODLELIB_API inline scheduler_t& g_main_loop() {
 }
 DOODLELIB_API inline bounded_pool_t& g_bounded_pool() {
   return doodle_lib::Get().loop_bounded_pool;
+}
+DOODLELIB_API inline project_sig& g_sig() {
+  return doodle_lib::Get().project_sig_;
 }
 
 }  // namespace doodle
