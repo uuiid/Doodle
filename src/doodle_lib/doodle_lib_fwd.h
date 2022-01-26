@@ -260,7 +260,7 @@ class season;
 class setting_windows;
 class comment_vector;
 class assets_path_vector;
-class project_sig;
+class core_sig;
 class command_base;
 class rpc_trans_path;
 class app;
@@ -315,7 +315,7 @@ DOODLELIB_API registry_ptr &g_reg();
 DOODLELIB_API scheduler_t &g_main_loop();
 DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
-DOODLELIB_API project_sig &g_sig();
+DOODLELIB_API core_sig &g_sig();
 
 template <class Component,
           std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>

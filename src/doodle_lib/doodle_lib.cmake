@@ -16,7 +16,7 @@ set(
         core/ue4_setting.h
         core/util.h
         core/image_loader.h
-        core/project_sig.h
+        core/core_sig.h
 
         exception/exception.h
         file_warp/image_sequence.h
@@ -126,7 +126,7 @@ set(
         core/ue4_setting.cpp
         core/util.cpp
         core/image_loader.cpp
-        core/project_sig.cpp
+        core/core_sig.cpp
 
         file_warp/image_sequence.cpp
         file_warp/maya_file.cpp

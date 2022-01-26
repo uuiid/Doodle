@@ -7,7 +7,7 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API project_sig {
+class DOODLELIB_API core_sig {
  public:
   boost::signals2::signal<void(const FSys::path&)> begin_open;
   boost::signals2::signal<void(const entt::handle&, const project&)> end_open;
