@@ -8,24 +8,6 @@ add_custom_target(
 
 include(DoodleGui.cmake)
 
-add_executable(
-        DoodleServerExe
-        main/SERVER/main.cpp
-        main/doodle.manifest
-        main/icon.ico
-        main/win_exe.rc
-)
-set_target_properties(DoodleServerExe
-        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(DoodleServerExe
-        PUBLIC
-        doodle_lib
-        )
-target_compile_definitions(DoodleServerExe
-        PUBLIC
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
-        # ENTT_API_IMPORT
-        )
 
 add_executable(
         DoodleExe
