@@ -15,7 +15,7 @@
 namespace doodle {
 
 assets_file::assets_file()
-    : assets_file({}) {
+    : assets_file(std::string{}) {
 }
 
 assets_file::assets_file(std::string in_show_name)
