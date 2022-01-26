@@ -15,7 +15,7 @@
 
 namespace doodle::maya_plug {
 
-void maya_menu_bar::menu_edit() {
+void maya_menu_bar::menu_tool() {
   if (dear::MenuItem("引用工具")) {
     make_windows<reference_attr_setting>();
   }
