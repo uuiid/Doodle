@@ -69,7 +69,7 @@ bool reference_attr_setting::get_file_info() {
       k_h.emplace<reference_file>(k_ref);
       p_handle.push_back(k_h);
     } else {
-      DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_names);
+      DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_name);
     }
   }
 
