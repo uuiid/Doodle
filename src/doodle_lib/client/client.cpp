@@ -10,6 +10,7 @@
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/metadata/project.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
