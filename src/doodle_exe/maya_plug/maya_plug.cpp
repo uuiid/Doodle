@@ -145,6 +145,7 @@ MStatus initializePlugin(MObject obj) {
   status = ::doodle::maya_plug::create_hud_node_maya::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
+  /// 注册一些引用命令
   status = ::doodle::maya_plug::create_ref_file_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   status = ::doodle::maya_plug::ref_file_load_command::registerCommand(k_plugin);
@@ -153,6 +154,9 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS_AND_RETURN_IT(status);
   status = ::doodle::maya_plug::ref_file_export_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = ::doodle::maya_plug::load_project::registerCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
+
   /// 导出相机命令注册
   status = ::doodle::maya_plug::export_camera_command::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -211,6 +215,8 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 去除解算命令
+  status = ::doodle::maya_plug::load_project::deregisterCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
   status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   status = ::doodle::maya_plug::ref_file_load_command::deregisterCommand(k_plugin);
