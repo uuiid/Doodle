@@ -231,7 +231,7 @@ void database_task_update::update_db() {
 void database_task_update::succeeded() {
   p_i->handle_.patch<process_message>([](process_message& in) {
     in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
+    in.message("成功完成数据更新", in.warning);
   });
 }
 void database_task_update::failed() {
@@ -381,14 +381,14 @@ database_task_install::database_task_install(
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
-  p_i->handle_  = in_handle;
-  p_i->list     = in_list;
+  p_i->handle_ = in_handle;
+  p_i->list    = in_list;
 }
 
 database_task_install::~database_task_install() = default;
 
 void database_task_install::init() {
+  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
   p_i->handle_.patch<process_message>([](process_message& in) {
                 in.set_state(in.run);
                 in.set_name("插入数据");
@@ -400,7 +400,7 @@ void database_task_install::init() {
 void database_task_install::succeeded() {
   p_i->handle_.patch<process_message>([](process_message& in) {
     in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
+    in.message("成功完成数据插入", in.warning);
   });
 }
 void database_task_install::failed() {
@@ -451,7 +451,7 @@ void database_task_obs::init() {
 void database_task_obs::succeeded() {
   p_i->handle_.patch<process_message>([](process_message& in) {
     in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
+    in.message("数据观察器成功结束", in.warning);
   });
 }
 void database_task_obs::failed() {
