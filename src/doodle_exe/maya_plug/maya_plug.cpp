@@ -101,7 +101,8 @@ MStatus initializePlugin(MObject obj) {
   clear_callback_id = MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
-        app::Get().stop();
+        if (MGlobal::mayaState() == MGlobal::kInteractive)
+          app::Get().stop();
         p_doodle_app.reset();
       },
       nullptr,
