@@ -28,25 +28,6 @@
                 "-noAutoloadPlugins",
                 "-batch",
                 "-script",
-                "${workspaceFolder}/src/doodle_exe/main/test/test_maya.mel"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
-                }
-            ],
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "mayapy_release_cmd",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2019/bin/mayapy.exe",
-            "args": [
                 "${workspaceFolder}/src/doodle_exe/main/test/test_maya.py"
             ],
             "stopAtEntry": false,
@@ -55,27 +36,10 @@
                 {
                     "name": "MAYA_MODULE_PATH",
                     "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
-                },
-                {
-                    "name": "PYTHONPATH",
-                    "value": "${env:PYTHONPATH};${workspaceFolder}/src/doodle_lib/resource;"
                 }
             ],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "Python maya debug",
-            "type": "python",
-            "request": "launch",
-            "python": "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "MAYA_MODULE_PATH": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
-            }
         },
         {
             "name": "Doodle_debug",
@@ -85,7 +49,12 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
+                }
+            ],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
