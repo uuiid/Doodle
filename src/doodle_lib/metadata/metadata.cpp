@@ -156,8 +156,8 @@ database::operator metadata_database() const {
   }
 
   k_tmp.user_data = k_json.dump();
-  if (auto k_data = g_reg()->try_ctx<database::ref_root>(); k_data)
-    k_tmp.parent = boost::numeric_cast<std::uint32_t>(k_data->id);
+  if (p_i->p_type != metadata_type::project_root)
+    k_tmp.parent = boost::numeric_cast<std::uint32_t>(g_reg()->ctx<ref_root>().id);
 
   ///设置类型id
   k_tmp.m_type = get_meta_type_int();
