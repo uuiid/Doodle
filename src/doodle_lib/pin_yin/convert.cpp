@@ -23,6 +23,7 @@ convert::convert() {
 convert::~convert() = default;
 
 std::string convert::toEn(const std::string &conStr) {
+  if (conStr.empty()) return {};
   auto datas = boost::locale::conv::to_utf<wchar_t>(conStr, "UTF-8");
   std::string result{};
   for (auto data : datas) {
@@ -32,11 +33,13 @@ std::string convert::toEn(const std::string &conStr) {
       result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
   }
-  DOODLE_LOG_INFO(fmt::format("{} to {}", conStr, result));
+  // DOODLE_LOG_INFO(fmt::format("{} to {}", conStr, result));
   return result;
 }
 
 std::string convert::toEn(const std::wstring &conStr) {
+  if (conStr.empty()) return {};
+
   std::string result{};
   for (auto data : conStr) {
     if (data >= 0x4e00 && data <= 0x9fa5) {
@@ -45,7 +48,7 @@ std::string convert::toEn(const std::wstring &conStr) {
       result.append(boost::locale::conv::utf_to_utf<char>(std::wstring{data}));
     }
   }
-  DOODLE_LOG_INFO(fmt::format("{} to {}", boost::locale::conv::utf_to_utf<char>(conStr), result));
+  // DOODLE_LOG_INFO(fmt::format("{} to {}", boost::locale::conv::utf_to_utf<char>(conStr), result));
   return result;
 }
 
