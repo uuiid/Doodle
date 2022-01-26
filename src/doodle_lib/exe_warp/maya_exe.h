@@ -19,7 +19,7 @@ class DOODLELIB_API qcloth_arg {
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
     nlohmann_json_j["path"]        = nlohmann_json_t.sim_path.generic_string();
     nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["project_"]    = nlohmann_json_t.project_;
+    nlohmann_json_j["project_"]    = nlohmann_json_t.project_.generic_string();
     nlohmann_json_j["only_sim"]    = nlohmann_json_t.only_sim;
   };
 };
@@ -46,7 +46,7 @@ class DOODLELIB_API export_fbx_arg {
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
     nlohmann_json_j["path"]        = nlohmann_json_t.file_path.generic_string();
     nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["project_"]    = nlohmann_json_t.project_;
+    nlohmann_json_j["project_"]    = nlohmann_json_t.project_.generic_string();
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
   };
 };
