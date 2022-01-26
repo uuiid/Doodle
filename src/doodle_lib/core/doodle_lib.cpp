@@ -54,7 +54,15 @@ doodle_lib::doodle_lib()
   //  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   //  reg->on_construct<database>().connect<&entt::registry::get_or_emplace<database_stauts>>();
-  reg->set<core_sig>();
+  auto& k_sig = reg->set<core_sig>();
+  k_sig.begin_open.connect([=](const FSys::path& in_path) {
+    auto k_v = g_reg()->view<database>();
+    g_reg()->destroy(k_v.begin(), k_v.end());
+  });
+  k_sig.end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
+    g_reg()->set<project>(in_project);
+    g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
+  });
   p_install = this;
 }
 
