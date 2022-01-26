@@ -356,7 +356,12 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j.at("project_root").get_to(p.project_root);
 }
 void core_set::add_recent_project(const FSys::path &in) {
-  std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());
-  project_root[0] = in;
+  auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
+  if (k_find_root != project_root.end())
+    std::swap(project_root[0], *k_find_root);
+  else {
+    std::rotate(project_root.rbegin(), project_root.rbegin() + 1, project_root.rend());
+    project_root[0] = in;
+  }
 }
 }  // namespace doodle
