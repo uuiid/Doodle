@@ -119,7 +119,7 @@ class name_data : public app_command_base {
           }
           k_i2.emplace<assets_file>(fmt::format("test_{}_{}", i, k));
           k_i2.emplace<database>();
-          k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+          k_i2.get_or_emplace<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));
           k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
