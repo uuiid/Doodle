@@ -19,8 +19,8 @@ assets_file::assets_file()
 }
 
 assets_file::assets_file(std::string in_show_name)
-    : p_name(std::move(in_show_name)),
-      p_ShowName(convert::Get().toEn(p_name)),
+    : p_name(convert::Get().toEn(in_show_name)),
+      p_ShowName(in_show_name),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
       p_version(1) {}
