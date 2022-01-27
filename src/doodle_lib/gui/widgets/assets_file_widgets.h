@@ -118,6 +118,12 @@ class column_shot : public table_column {
 };
 
 using table_column_ptr = std::shared_ptr<table_column>;
+
+class icon_render {
+ public:
+  void render(const entt::handle& in);
+};
+
 }  // namespace details
 
 /**
@@ -135,7 +141,7 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
 
   void set_select(const entt::handle& in_);
 
- public:
+  public:
   entt::entity p_current_select;
 
   assets_file_widgets();

@@ -11,7 +11,6 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 
-
 #include <entt/entt.hpp>
 
 namespace doodle {
@@ -98,6 +97,9 @@ bool column_shot::frame_render(const entt::handle& in_ptr) {
   return true;
 }
 
+void icon_render::render(const entt::handle& in) {
+}
+
 }  // namespace details
 
 void assets_file_widgets::set_select(const entt::handle& in) {
@@ -138,6 +140,26 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
 
   if (k_ && k_->front().valid()) {
     auto& k_list = *k_;
+    const auto size{5u};
+    ImGui::Columns(5, "assets_file_widgets");
+
+    for (auto& i : k_list) {
+      std::shared_ptr<void> l_image{};
+      std::string name{};
+      if (i.any_of<image_icon>()) {
+        /// @brief 如果有图标就渲染
+      } else {
+        /// @brief 否则默认图标
+      }
+      if (i.all_of<assets_file>()) {
+        /// @brief 渲染名称
+      } else {
+        /// @brief 否则渲染id
+      }
+      imgui::ImageButton(l_image.get(), {64.f, 64.f});
+      dear::Text(name);
+    }
+
     dear::Table{"attribute_widgets",
                 boost::numeric_cast<std::int32_t>(p_colum_list.size()),
                 flags} &&
