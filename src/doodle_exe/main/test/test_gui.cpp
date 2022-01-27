@@ -60,9 +60,10 @@ class test_screenshot_widget_app : public app {
  public:
  protected:
   void load_windows() override {
+    auto k_h = make_handle();
     g_main_loop()
         .attach<null_process_t>()
-        .then<screenshot_widget>()
+        .then<screenshot_widget>(k_h)
         .then<one_process_t>([]() {
           app::Get().stop();
         });
