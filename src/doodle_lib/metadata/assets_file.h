@@ -24,10 +24,9 @@ class DOODLELIB_API assets_file {
   department p_department;
   std::uint64_t p_version;
   FSys::path path;
-
- private:
   std::string p_ShowName;
 
+ private:
  public:
   /**
    * @brief 默认构造
