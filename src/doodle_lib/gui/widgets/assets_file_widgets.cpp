@@ -168,6 +168,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
       }
       imgui::ImageButton(l_image.get(), {64.f, 64.f});
       dear::Text(name);
+      imgui::NextColumn();
     }
   }
 }
