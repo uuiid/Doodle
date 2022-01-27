@@ -445,7 +445,8 @@ TEST_CASE("path iter", "[core]") {
 #include <doodle_lib/core/image_loader.h>
 
 TEST_CASE_METHOD(app, "load default image") {
-  auto k_i = image_loader{}.default_image();
+  auto k_i  = image_loader{}.default_image();
+  auto k_i2 = image_loader{}.error_image();
 }
 
 //#include <boost/algorithm/string.hpp>
