@@ -4,6 +4,8 @@
 
 #include "image_loader.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include <metadata/project.h>
 #include <metadata/image_icon.h>
 #include <app/app.h>
@@ -109,7 +111,6 @@ bool image_loader::save(const entt::handle& in_handle) {
 
   return false;
 }
-
 
 std::shared_ptr<void> image_loader::screenshot() {
 #if 0
@@ -244,5 +245,18 @@ std::shared_ptr<void> image_loader::screenshot() {
   cv::imwrite("D:/tmp/test_1_24.png", k_src);
   return cv_mat_to_d3d_texture(k_src);
 }
+
+std::shared_ptr<void> image_loader::default_image() const {
+  int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+  double fontScale = 1;
+  int thickness    = 2;
+  int baseline     = 0;
+  auto textSize    = cv::getTextSize({"none"}, fontFace, fontScale, thickness, &baseline);
+  cv::Mat k_mat{64, 64, CV_8U};
+  cv::putText(k_mat, "no", {32, 32}, fontFace, fontScale,
+              {255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+  return cv_mat_to_d3d_texture(k_mat);
+}
+
 image_loader::~image_loader() = default;
 }  // namespace doodle

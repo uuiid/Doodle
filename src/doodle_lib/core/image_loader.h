@@ -30,5 +30,6 @@ class DOODLELIB_API image_loader {
    * @return 本机指针
    */
   [[nodiscard]] std::shared_ptr<void> screenshot();
+  [[nodiscard]] std::shared_ptr<void> default_image() const;
 };
 }  // namespace doodle
