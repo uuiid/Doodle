@@ -95,13 +95,18 @@ bool image_loader::load(const entt::handle& in_handle) {
 
   auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
 
-  auto k_image      = cv::imread(l_local_path.generic_string());
-  chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
-
-  auto k_sh = cv_mat_to_d3d_texture(k_image);
-  in_handle.patch<image_icon>([&](image_icon& in) {
-    in.image = k_sh;
-  });
+  if (exists(l_local_path)) {
+    auto k_image = cv::imread(l_local_path.generic_string());
+    chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+    auto k_sh = cv_mat_to_d3d_texture(k_image);
+    in_handle.patch<image_icon>([&](image_icon& in) {
+      in.image = k_sh;
+    });
+  } else {
+    in_handle.patch<image_icon>([&](image_icon& in) {
+      in.image = error_image();
+    });
+  }
 
   return false;
 }
@@ -243,8 +248,6 @@ std::shared_ptr<void> image_loader::screenshot() {
   return std::shared_ptr<void>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
 #endif
   auto k_src = win::get_screenshot();
-
-  cv::imwrite("D:/tmp/test_1_24.png", k_src);
   return cv_mat_to_d3d_texture(k_src);
 }
 
