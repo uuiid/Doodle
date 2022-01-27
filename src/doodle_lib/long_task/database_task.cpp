@@ -93,11 +93,11 @@ void database_task_select::select_db() {
     if (!row.assetsP.is_null())
       l_data.assets = row.assetsP.value();
     if (!row.season.is_null())
-      l_data.season = row.season.value();
+      l_data.season = boost::numeric_cast<std::int32_t>(row.season.value());
     if (!row.episode.is_null())
-      l_data.episode = row.episode.value();
+      l_data.episode = boost::numeric_cast<std::int32_t>(row.episode.value());
     if (!row.shot.is_null())
-      l_data.shot = row.shot.value();
+      l_data.shot = boost::numeric_cast<std::int32_t>(row.shot.value());
     if (!row.parent.is_null())
       l_data.parent = boost::numeric_cast<decltype(l_data.parent)::value_type>(row.parent.value());
   }
