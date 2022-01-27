@@ -10,6 +10,12 @@ class DOODLELIB_API image_loader {
   std::unique_ptr<impl> p_i;
 
  public:
+  class cache {
+   public:
+    std::shared_ptr<void> default_image;
+    std::shared_ptr<void> error_image;
+  };
+
   image_loader();
   virtual ~image_loader();
 
@@ -31,5 +37,6 @@ class DOODLELIB_API image_loader {
    */
   [[nodiscard]] std::shared_ptr<void> screenshot();
   [[nodiscard]] std::shared_ptr<void> default_image() const;
+  [[nodiscard]] std::shared_ptr<void> error_image() const;
 };
 }  // namespace doodle
