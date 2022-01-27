@@ -183,7 +183,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   if (dear::MenuItem("打开") && in_.all_of<assets_file>()) {
-    auto k_path = in_.get<assets_file>().path;
+    auto k_path = g_reg()->ctx<project>().get_path() / in_.get<assets_file>().path;
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
