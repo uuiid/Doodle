@@ -89,6 +89,8 @@ bool image_loader::save(const entt::handle& in_handle,
 
   cv::imwrite(k_icon.path.generic_string(), k_image);
   k_icon.image = cv_to_d3d(k_image);
+
+  in_handle.replace<image_icon>(k_icon);
   return true;
 }
 
