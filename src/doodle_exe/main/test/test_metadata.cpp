@@ -84,16 +84,13 @@ class name_data : public app_command_base {
     std::random_device rd;
     mt.discard(rd());
   }
-  string_list user_list;
   std::uniform_int_distribution<int> dist{1, 30};
   std::mt19937 mt;
 
-  void crete_prj() {
+  void crete_data() {
     auto& set  = core_set::getSet();
-    auto k_prj = make_handle();
-    k_prj.emplace<project>("D:/tmp", "case_tset");
-    k_prj.emplace<database>();
-    g_reg()->set<project>(k_prj.get<project>());
+
+    auto k_prj = make_handle(g_reg()->view<project>()[0]);
 
     for (size_t i = 0; i < 20; ++i) {
       if (i > 15) {
@@ -127,13 +124,35 @@ class name_data : public app_command_base {
       }
     }
   }
+
+  void create_project_and_open() {
+    auto k_prj = make_handle();
+    k_prj.emplace<project>("D:/tmp", "case_tset");
+    k_prj.emplace<database>();
+    g_reg()->set<project>(k_prj.get<project>());
+    auto k_msg = make_handle();
+    k_msg.emplace<process_message>();
+    core::client{}.add_project(k_prj.get<project>().p_path);
+    g_main_loop()
+        .attach<database_task_install>(k_msg, std::vector<entt::handle>{k_prj})
+        .then<one_process_t>([=]() {
+          auto k_p = k_prj.get<project>().p_path;
+          core::client{}.open_project(k_p);
+        });
+    while (!g_main_loop().empty())
+      doodle::app_command_base::loop_one();
+  }
 };
 
 TEST_CASE_METHOD(name_data, "create project data") {
-  crete_prj();
+  auto k_h = make_handle();
+  k_h.emplace<project>();
+  crete_data();
 }
 TEST_CASE_METHOD(name_data, "install project data") {
-  crete_prj();
+  create_project_and_open();
+
+  crete_data();
   auto k_h = make_handle();
   k_h.emplace<process_message>();
   std::vector<entt::handle> k_l{};
