@@ -124,6 +124,8 @@ database &database::operator=(const metadata_database &in_) {
 
   /// 转换id
   set_id(in_.id);
+  if (in_.parent)
+    p_i->p_parent_id = *in_.parent;
   /// 转化类型
   p_i->p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                     .value_or(metadata_type::unknown_file);
