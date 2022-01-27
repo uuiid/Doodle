@@ -8,6 +8,7 @@
 
 #include <metadata/project.h>
 #include <metadata/image_icon.h>
+#include <core/core_set.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
 
@@ -110,13 +111,22 @@ bool image_loader::load(const entt::handle& in_handle) {
 
   return false;
 }
-bool image_loader::save(const entt::handle& in_handle) {
+bool image_loader::save(const entt::handle& in_handle,
+                        const cv::Mat& in_image,
+                        const cv::Rect2f& in_rect) {
   auto k_reg = g_reg();
   chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  in_handle.get_or_emplace<image_icon>();
+  auto k_icon  = in_handle.get_or_emplace<image_icon>();
 
-  return false;
+  auto k_image = in_image(in_rect);
+
+  k_icon.path  = k_reg->ctx<project>().make_path("image") /
+                (core_set::getSet().get_uuid_str() + ".png");
+
+  cv::imwrite(k_icon.path.generic_string(), k_image);
+  k_icon.image = cv_mat_to_d3d_texture(k_image);
+  return true;
 }
 
 std::shared_ptr<void> image_loader::screenshot() {
