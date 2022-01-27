@@ -12,7 +12,11 @@ class DOODLELIB_API screenshot_widget : public process_t<screenshot_widget> {
   std::unique_ptr<impl> p_i;
 
  public:
-  screenshot_widget();
+  /**
+   * @brief 这个会将 iamge_icon组件附加到传入的 handle 上
+   * @param in_handle
+   */
+  screenshot_widget(const entt::handle& in_handle);
   ~screenshot_widget() override;
   constexpr static std::string_view name{"screenshot_widget"};
   [[maybe_unused]] void init();

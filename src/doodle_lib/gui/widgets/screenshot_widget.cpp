@@ -7,8 +7,7 @@
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
-#include <boost/logic/tribool.hpp>
-
+#include <doodle_lib/metadata/image_icon.h>
 namespace doodle {
 
 class screenshot_widget::impl {
@@ -22,71 +21,35 @@ class screenshot_widget::impl {
   cv::Point2f mouse_end;
 
   bool mouse_state{};
+
+  entt::handle handle;
 };
 
-screenshot_widget::screenshot_widget()
+screenshot_widget::screenshot_widget(const entt::handle& in_handle)
     : p_i(std::make_unique<impl>()) {
+  p_i->handle = in_handle;
 }
 screenshot_widget::~screenshot_widget() = default;
 void screenshot_widget::init() {
-  //  auto hwnd                = app::Get().p_hwnd;
-  //  auto dwStyle             = GetWindowLong(hwnd, GWL_STYLE);
-  //  WINDOWPLACEMENT g_wpPrev = {sizeof(g_wpPrev)};
-  //  if (dwStyle & WS_OVERLAPPEDWINDOW) {
-  //    MONITORINFO mi = {sizeof(mi)};
-  //    if (GetWindowPlacement(hwnd, &g_wpPrev) &&
-  //        GetMonitorInfo(MonitorFromWindow(hwnd,
-  //                                         MONITOR_DEFAULTTOPRIMARY),
-  //                       &mi)) {
-  //      auto hDesktop = ::GetDesktopWindow();
-  //      RECT desktop;
-  //      ::GetWindowRect(hDesktop, &desktop);
-  //      SetWindowLong(hwnd, GWL_STYLE,
-  //                    dwStyle & ~WS_OVERLAPPEDWINDOW);  // WS_EX_NOREDIRECTIONBITMAP
-  //      ::SetWindowLongW(hwnd, GWL_EXSTYLE, WS_EX_LAYERED);
-  //      SetWindowPos(hwnd, HWND_TOP,
-  //                   desktop.left, desktop.top, desktop.right - desktop.left, desktop.bottom - desktop.top,
-  //                   SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-  ////      SetLayeredWindowAttributes(hwnd, NULL, 0, LWA_ALPHA);
-  //    }
-  //  } else {
-  //    SetWindowLong(hwnd, GWL_STYLE,
-  //                  dwStyle | WS_OVERLAPPEDWINDOW);
-  //    SetWindowPlacement(hwnd, &g_wpPrev);
-  //    SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
-  //                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-  //                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-  //  }
+  if (!p_i->handle.all_of<image_icon>())
+    p_i->handle.emplace<image_icon>();
 
   p_i->begen_loop.emplace_back([&]() {
-    //    auto& io      = imgui::GetIO();
-
-    //    imgui::SetNextWindowSize(io.DisplaySize);
     ImGuiViewport* viewport = ImGui::GetMainViewport();
 
     auto k_rect             = win::get_system_metrics_VIRTUALSCREEN();
     auto k_size             = k_rect.size();
     ImGui::SetNextWindowSize({k_size.width, k_size.height});
-    //    ImGui::SetNextWindowSize({boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CXVIRTUALSCREEN)),
-    //                              boost::numeric_cast<std::float_t>(GetSystemMetrics(SM_CYVIRTUALSCREEN))});
     imgui::SetNextWindowPos({k_rect.x, k_rect.y});
-
-    //    POINT l_point{0, 0};
-    //    ::MapWindowPoints(HWND_DESKTOP, app::Get().p_hwnd, (LPPOINT)&l_point, 1);
-    //    ImGui::SetNextWindowPos({boost::numeric_cast<std::float_t>(l_point.x), boost::numeric_cast<std::float_t>(l_point.y)});
-    //    ImGui::SetNextWindowPos({0, 0});
-
-    //        ImGui::SetNextWindowPos(viewport->Pos);
-    //        ImGui::SetNextWindowSize(viewport->Size);
-
     ImGui::SetNextWindowViewport(viewport->ID);
     p_i->image_gui      = image_loader{}.screenshot();
     p_i->virtual_screen = win::get_system_metrics_VIRTUALSCREEN();
-    //    ImGui::SetNextWindowBgAlpha(0.1f);
-    //    imgui::OpenPopup(name.data());
   });
 }
 void screenshot_widget::succeeded() {
+
+
+
 }
 void screenshot_widget::failed() {
 }
