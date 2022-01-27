@@ -140,8 +140,9 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   std::vector<details::table_column_ptr> p_colum_list;
 
   void set_select(const entt::handle& in_);
+  void render_context_menu(const entt::handle& in_);
 
-  public:
+ public:
   entt::entity p_current_select;
 
   assets_file_widgets();

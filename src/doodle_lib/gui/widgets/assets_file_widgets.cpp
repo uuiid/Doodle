@@ -142,7 +142,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   if (k_ && k_->front().valid()) {
     auto& k_list = *k_;
     const auto size{5u};
-    ImGui::Columns(5, "assets_file_widgets");
+    ImGui::Columns(5, "assets_file_widgets", false);
 
     image_loader k_load{};
     for (auto& i : k_list) {
@@ -166,12 +166,26 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
         if (i.all_of<database>())
           name = i.get<database>().get_id_str();
       }
-      imgui::ImageButton(l_image.get(), {64.f, 64.f});
-      dear::Text(name);
+      dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
+        if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
+          p_current_select = i;
+        dear::PopupContextItem{} && [this, i]() {
+          render_context_menu(i);
+        };
+        dear::Text(name);
+      };
       imgui::NextColumn();
     }
   }
 }
+
+void assets_file_widgets::render_context_menu(const entt::handle& in_) {
+  if (dear::MenuItem("打开")) {
+  }
+  if (dear::MenuItem("截图")) {
+  }
+}
+
 assets_file_widgets::~assets_file_widgets() = default;
 
 }  // namespace doodle
