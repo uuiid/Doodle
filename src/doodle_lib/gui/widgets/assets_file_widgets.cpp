@@ -187,7 +187,8 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
-    g_main_loop().attach<screenshot_widget>(in_);
+    g_main_loop()
+        .attach<screenshot_widget>(in_);
   }
 }
 
