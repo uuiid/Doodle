@@ -10,7 +10,7 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
-
+#include <doodle_lib/metadata/image_icon.h>
 #include <entt/entt.hpp>
 
 namespace doodle {
