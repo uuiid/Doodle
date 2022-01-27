@@ -57,7 +57,9 @@ bool image_loader::load(const entt::handle& in_handle) {
 
   auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
 
-  if (exists(l_local_path)) {
+  if (exists(l_local_path) &&
+      is_regular_file(l_local_path) &&
+      l_local_path.extension() == ".png") {
     auto k_image = cv::imread(l_local_path.generic_string());
     chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
     auto k_sh = cv_to_d3d(k_image);
