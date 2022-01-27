@@ -45,7 +45,8 @@ class image_loader::impl {
 
 image_loader::image_loader()
     : p_i() {
-  g_reg()->ctx_or_set<cache>();
+  if (auto k_ctx = g_reg()->try_ctx<cache>(); !k_ctx)
+    g_reg()->set<cache>();
 }
 
 std::shared_ptr<void> cv_mat_to_d3d_texture(const cv::Mat& in_mat) {
