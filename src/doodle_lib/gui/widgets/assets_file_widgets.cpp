@@ -12,6 +12,8 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/metadata/image_icon.h>
+#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <entt/entt.hpp>
 
 namespace doodle {
@@ -180,9 +182,12 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
 }
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
-  if (dear::MenuItem("打开")) {
+  if (dear::MenuItem("打开") && in_.all_of<assets_file>()) {
+    auto k_path = in_.get<assets_file>().path;
+    FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
+    g_main_loop().attach<screenshot_widget>(in_);
   }
 }
 
