@@ -10,6 +10,7 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/metadata/image_icon.h>
 #include <entt/entt.hpp>
 
@@ -143,45 +144,31 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
     const auto size{5u};
     ImGui::Columns(5, "assets_file_widgets");
 
+    image_loader k_load{};
     for (auto& i : k_list) {
       std::shared_ptr<void> l_image{};
       std::string name{};
       if (i.any_of<image_icon>()) {
         /// @brief 如果有图标就渲染
+        auto&& k_icon = i.get<image_icon>();
+        if (!k_icon.image)
+          k_load.load(i);
+        l_image = k_icon.image;
       } else {
+        l_image = k_load.default_image();
         /// @brief 否则默认图标
       }
       if (i.all_of<assets_file>()) {
         /// @brief 渲染名称
+        name = i.get<assets_file>().show_str();
       } else {
         /// @brief 否则渲染id
+        if (i.all_of<database>())
+          name = i.get<database>().get_id_str();
       }
       imgui::ImageButton(l_image.get(), {64.f, 64.f});
       dear::Text(name);
     }
-
-    dear::Table{"attribute_widgets",
-                boost::numeric_cast<std::int32_t>(p_colum_list.size()),
-                flags} &&
-        [this, &k_list]() {
-          /// 添加表头
-          for (auto& i : p_colum_list) {
-            if (i->p_width != 0)
-              imgui::TableSetupColumn(i->p_name.c_str(), 0, imgui::GetFontSize() * i->p_width);
-            else
-              imgui::TableSetupColumn(i->p_name.c_str());
-          }
-
-          imgui::TableHeadersRow();
-
-          for (auto& k_h : k_list) {
-            if (k_h && k_h.all_of<database>()) {
-              imgui::TableNextRow();
-              for (auto& l_i : p_colum_list)
-                l_i->render(k_h);
-            }
-          }
-        };
   }
 }
 assets_file_widgets::~assets_file_widgets() = default;
