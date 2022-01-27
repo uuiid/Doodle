@@ -4,6 +4,7 @@
 #include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/database_task.h>
+#include <doodle_lib/app/app.h>
 
 #include <catch.hpp>
 
@@ -77,7 +78,7 @@ TEST_CASE("load project data") {
   }
 }
 
-class name_data {
+class name_data : public app_command_base {
  public:
   name_data() {
     std::random_device rd;
@@ -91,7 +92,7 @@ class name_data {
     auto& set  = core_set::getSet();
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
-    k_prj.patch<database>(database::save{});
+    k_prj.emplace<database>();
     g_reg()->set<project>(k_prj.get<project>());
 
     for (size_t i = 0; i < 20; ++i) {
@@ -99,12 +100,12 @@ class name_data {
         for (size_t k = 0; k < 20; ++k) {
           auto k_ass = make_handle();
           k_ass.emplace<assets>(fmt::format("ues{}/a{}/test{}", i, k, i));
-          k_ass.patch<database>(database::save{});
+          k_ass.emplace<database>();
         }
       } else {
         entt::handle k_i1 = make_handle();
         k_i1.emplace<season>(std::int32_t(i % 5));
-        k_i1.patch<database>(database::save{});
+        k_i1.emplace<database>();
         k_i1.emplace<episodes>(i);
 
         for (size_t k = 0; k < 30; ++k) {
@@ -116,8 +117,8 @@ class name_data {
           if (i % 2 == 0) {
             k_sho.set_shot_ab(shot::shot_ab_enum::B);
           }
-          k_i2.emplace<assets_file>();
-          k_i2.patch<database>(database::save{});
+          k_i2.emplace<assets_file>(fmt::format("test_{}_{}", i, k));
+          k_i2.emplace<database>();
           k_i2.get<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));
