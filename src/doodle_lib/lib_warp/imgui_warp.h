@@ -65,6 +65,29 @@ struct ScopeWrapper {
   ScopeWrapper& operator=(const ScopeWrapper&) = delete;
 };
 
+struct IDScope : public ScopeWrapper<IDScope, true> {
+  IDScope(const char* str_id)
+      : ScopeWrapper(true) {
+    ImGui::PushID(str_id);
+  }
+
+  IDScope(const char* str_id_begin, const char* str_id_end)
+      : ScopeWrapper(true) {
+    ImGui::PushID(str_id_begin,
+                  str_id_end);
+  }
+  IDScope(const void* ptr_id)
+      : ScopeWrapper(true) {
+    ImGui::PushID(ptr_id);
+  }
+  IDScope(int int_id)
+      : ScopeWrapper(true) {
+    ImGui::PushID(int_id);
+  }
+
+  static void dtor() noexcept { ImGui::PopID(); }
+};
+
 // Wrapper for ImGui::Begin ... End, which will always call End.
 struct Begin : public ScopeWrapper<Begin, true> {
   // Invoke Begin and guarantee that 'End' will be called.
@@ -205,6 +228,13 @@ struct Popup : public ScopeWrapper<Popup> {
 struct PopupModal : public ScopeWrapper<PopupModal> {
   PopupModal(const char* name, bool* p_open = nullptr, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginPopupModal(name, p_open, flags)) {}
+  static void dtor() noexcept { ImGui::EndPopup(); }
+};
+
+struct PopupContextItem : public ScopeWrapper<PopupContextItem> {
+  PopupContextItem(const char* str_id = NULL, ImGuiPopupFlags popup_flags = 1)
+      : ScopeWrapper(ImGui::BeginPopupContextItem(str_id, popup_flags)) {}
+
   static void dtor() noexcept { ImGui::EndPopup(); }
 };
 
