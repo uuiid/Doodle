@@ -5,7 +5,6 @@
 #include <metadata/project.h>
 #include <pin_yin/convert.h>
 
-
 namespace doodle {
 project::cloth_config::cloth_config()
     : vfx_cloth_sim_path("C:/"),
@@ -100,6 +99,12 @@ bool project::operator!=(const project& in_rhs) const {
 project::cloth_config& project::get_vfx_cloth_config() const {
   auto k_h = make_handle(*this);
   return k_h.get_or_emplace<cloth_config>();
+}
+FSys::path project::make_path(const FSys::path& in_path) const {
+  auto path = p_path / in_path;
+  if (!exists(path))
+    create_directories(path);
+  return path;
 }
 
 }  // namespace doodle

@@ -30,6 +30,7 @@ class DOODLELIB_API project {
 
   std::string p_name;
   FSys::path p_path;
+
  private:
   std::string p_en_str;
   std::string p_shor_str;
@@ -43,6 +44,7 @@ class DOODLELIB_API project {
   void set_name(const std::string& Name) noexcept;
 
   [[nodiscard]] const FSys::path& get_path() const noexcept;
+  [[nodiscard]] FSys::path make_path(const FSys::path& in_path) const;
   void set_path(const FSys::path& Path);
 
   [[nodiscard]] std::string str() const;
@@ -72,6 +74,5 @@ class DOODLELIB_API project {
     p.init_name();
   }
 };
-
 
 }  // namespace doodle
