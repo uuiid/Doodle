@@ -6,6 +6,28 @@
 #include <doodle_lib/core/app_base.h>
 
 namespace doodle {
+/**
+ * @brief
+ * # 主工具
+ * * 辅助安装maya插件
+ * * 辅助安装ue4插件
+ * * 清除ue4缓存
+ * * 修改ue4缓存位置
+ * * 批量导出fbx
+ * * 批量进行布料解算
+ * * 创建ue4关卡
+ * * 导入ue4 fbx和abc文件
+ * * 创建拍屏并合成水印
+ * * 连接拍屏
+ * * 模型库工具（正在开发）
+ * 
+ * # ue工具
+ * * 批量修正材质名称和材质属性
+ * * 导入fbx和abc
+ * * 传递材质
+ * * 
+ * 
+ */
 class DOODLELIB_API app : public app_command_base {
  protected:
   win::wnd_class p_win_class;

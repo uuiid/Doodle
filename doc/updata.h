@@ -3,7 +3,7 @@
 /**
  * @page doodle_updata_log 更新日志
  * @tableofcontents
- * <!--
+ *
  *
  * @section updata_log_3 版本3
  * @subsection updata_log_30 版本3.0
@@ -263,7 +263,7 @@
  * @subsubsection updata_log_3125 版本3.1.25
  * @li 更新maya插件在批处理模式下正确运行
  *
- * @subsubsection updata_log_3125 版本3.1.25
+ * @subsubsection updata_log_3126 版本3.1.26
  * @li 完成了基本的项目视图方案
  * @li 更新服务器
  *
@@ -438,13 +438,14 @@
  *
  * @subsubsection updata_log_3227 版本3.2.27
  * @li 添加解锁全局着色器节点
- * -->
+ *
  * @subsubsection updata_log_3228 版本3.2.28
  * @li 添加解锁全局着色器节点
  *
  *
  * @subsubsection updata_log_330 版本3.3.0
  * @li 取消服务器的使用, 使用文件型服务器
+ * @li 将服务器更新为文件服务器， 并添加新项目功能和打开项目最近项目
  * @li 修正导出abc不是引用的问题
  *
  * @subsubsection updata_log_331 版本3.3.1
