@@ -300,7 +300,7 @@ std::shared_ptr<void> image_loader::error_image() const {
                         (k_mat.rows + textSize.height) * 0.5);
 
       cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
-                  {255, 0, 0, 255}, thickness, cv::LineTypes::LINE_AA);
+                  {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
       auto k_def                        = cv_to_d3d(k_mat);
       g_reg()->ctx<cache>().error_image = k_def;
     }
