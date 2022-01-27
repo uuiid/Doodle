@@ -50,7 +50,47 @@ image_loader::image_loader()
     g_reg()->set<cache>();
 }
 
-std::shared_ptr<void> cv_mat_to_d3d_texture(const cv::Mat& in_mat) {
+bool image_loader::load(const entt::handle& in_handle) {
+  chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
+  auto k_reg = g_reg();
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+
+  auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
+
+  if (exists(l_local_path)) {
+    auto k_image = cv::imread(l_local_path.generic_string());
+    chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+    auto k_sh = cv_to_d3d(k_image);
+    in_handle.patch<image_icon>([&](image_icon& in) {
+      in.image = k_sh;
+    });
+  } else {
+    in_handle.patch<image_icon>([&](image_icon& in) {
+      in.image = error_image();
+    });
+  }
+
+  return false;
+}
+bool image_loader::save(const entt::handle& in_handle,
+                        const cv::Mat& in_image,
+                        const cv::Rect2f& in_rect) {
+  auto k_reg = g_reg();
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+
+  auto k_icon  = in_handle.get_or_emplace<image_icon>();
+
+  auto k_image = in_image(in_rect);
+
+  k_icon.path  = k_reg->ctx<project>().make_path("image") /
+                (core_set::getSet().get_uuid_str() + ".png");
+
+  cv::imwrite(k_icon.path.generic_string(), k_image);
+  k_icon.image = cv_to_d3d(k_image);
+  return true;
+}
+
+std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const {
   // 获得全局GPU渲染对象
   auto k_g = app::Get().d3dDevice;
   /// \brief 转换图像
@@ -89,47 +129,7 @@ std::shared_ptr<void> cv_mat_to_d3d_texture(const cv::Mat& in_mat) {
   return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
 }
 
-bool image_loader::load(const entt::handle& in_handle) {
-  chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
-  auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-
-  auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
-
-  if (exists(l_local_path)) {
-    auto k_image = cv::imread(l_local_path.generic_string());
-    chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
-    auto k_sh = cv_mat_to_d3d_texture(k_image);
-    in_handle.patch<image_icon>([&](image_icon& in) {
-      in.image = k_sh;
-    });
-  } else {
-    in_handle.patch<image_icon>([&](image_icon& in) {
-      in.image = error_image();
-    });
-  }
-
-  return false;
-}
-bool image_loader::save(const entt::handle& in_handle,
-                        const cv::Mat& in_image,
-                        const cv::Rect2f& in_rect) {
-  auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-
-  auto k_icon  = in_handle.get_or_emplace<image_icon>();
-
-  auto k_image = in_image(in_rect);
-
-  k_icon.path  = k_reg->ctx<project>().make_path("image") /
-                (core_set::getSet().get_uuid_str() + ".png");
-
-  cv::imwrite(k_icon.path.generic_string(), k_image);
-  k_icon.image = cv_mat_to_d3d_texture(k_image);
-  return true;
-}
-
-std::shared_ptr<void> image_loader::screenshot() {
+cv::Mat image_loader::screenshot() {
 #if 0
   HRESULT k_r{};
   IDXGIOutputDuplication* l_duplication{};
@@ -257,8 +257,7 @@ std::shared_ptr<void> image_loader::screenshot() {
 
   return std::shared_ptr<void>(k_out_, win_ptr_delete<ID3D11ShaderResourceView>{});
 #endif
-  auto k_src = win::get_screenshot();
-  return cv_mat_to_d3d_texture(k_src);
+  return win::get_screenshot();
 }
 
 std::shared_ptr<void> image_loader::default_image() const {
@@ -277,7 +276,7 @@ std::shared_ptr<void> image_loader::default_image() const {
 
       cv::putText(k_mat, "no", textOrg, fontFace, fontScale,
                   {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-      auto k_def                          = cv_mat_to_d3d_texture(k_mat);
+      auto k_def                          = cv_to_d3d(k_mat);
       g_reg()->ctx<cache>().default_image = k_def;
       return k_def;
     }
@@ -300,7 +299,7 @@ std::shared_ptr<void> image_loader::error_image() const {
 
       cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
                   {255, 0, 0, 255}, thickness, cv::LineTypes::LINE_AA);
-      auto k_def                        = cv_mat_to_d3d_texture(k_mat);
+      auto k_def                        = cv_to_d3d(k_mat);
       g_reg()->ctx<cache>().error_image = k_def;
     }
   }

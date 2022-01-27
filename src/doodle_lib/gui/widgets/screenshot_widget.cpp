@@ -14,6 +14,7 @@ class screenshot_widget::impl {
  public:
   std::vector<std::function<void()>> begen_loop;
   std::shared_ptr<void> image_gui;
+  cv::Mat image_mat;
   cv::Rect2f virtual_screen;
   cv::Rect2f mouse_rect;
 
@@ -42,14 +43,13 @@ void screenshot_widget::init() {
     ImGui::SetNextWindowSize({k_size.width, k_size.height});
     imgui::SetNextWindowPos({k_rect.x, k_rect.y});
     ImGui::SetNextWindowViewport(viewport->ID);
-    p_i->image_gui      = image_loader{}.screenshot();
+    p_i->image_mat      = image_loader{}.screenshot();
+    p_i->image_gui      = image_loader{}.cv_to_d3d(p_i->image_mat);
     p_i->virtual_screen = win::get_system_metrics_VIRTUALSCREEN();
   });
 }
 void screenshot_widget::succeeded() {
-
-
-
+  image_loader{}.save(p_i->handle, p_i->image_mat, p_i->mouse_rect);
 }
 void screenshot_widget::failed() {
 }
