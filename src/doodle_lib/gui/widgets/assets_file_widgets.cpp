@@ -15,6 +15,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <entt/entt.hpp>
+#include <doodle_lib/long_task/drop_file_data.h>
 
 namespace doodle {
 namespace details {
@@ -133,6 +134,13 @@ void assets_file_widgets::aborted() {
 }
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   auto k_ = g_reg()->try_ctx<handle_list>();
+  imgui::Button("drop");
+  dear::DragDropTarget{} && []() {
+    if (auto* l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
+      auto list = *reinterpret_cast<drop_file_data::files*>(l_pay->Data);
+      DOODLE_LOG_INFO(fmt::to_string(fmt::join(list.file_list, ",")));
+    }
+  };
 
   if (k_ && k_->front().valid()) {
     auto& k_list = *k_;

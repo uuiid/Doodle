@@ -22,6 +22,10 @@ class DOODLELIB_API drop_file_data : public process_t<drop_file_data> {
   ~drop_file_data() override;
 
   void drag_leave();
+  /**
+   * @brief 设置拖拽上下文, 并在下一个循环析构, 本次循环是不可以析构的
+   * @param in_paths 传入的路径
+   */
   void set_files(const std::vector<FSys::path>& in_paths);
 
   [[maybe_unused]] void init();
