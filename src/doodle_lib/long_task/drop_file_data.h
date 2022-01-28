@@ -12,12 +12,6 @@ class DOODLELIB_API drop_file_data : public process_t<drop_file_data> {
 
  public:
   std::vector<FSys::path> files_;
-  class DOODLELIB_API files {
-   public:
-    explicit files(std::vector<FSys::path> in_vector)
-        : file_list(std::move(in_vector)) {}
-    std::vector<FSys::path> file_list;
-  };
   drop_file_data();
   ~drop_file_data() override;
 
