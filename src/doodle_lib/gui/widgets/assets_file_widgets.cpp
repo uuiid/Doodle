@@ -132,13 +132,6 @@ void assets_file_widgets::failed() {
 void assets_file_widgets::aborted() {
 }
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
-                    ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-                    ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
-                    ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody |
-                    ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
-                    ImGuiTableFlags_::ImGuiTableFlags_ScrollY};
   auto k_ = g_reg()->try_ctx<handle_list>();
 
   if (k_ && k_->front().valid()) {
