@@ -8,6 +8,9 @@
 #include <Windows.h>
 #include <shellapi.h>
 
+#include <long_task/process_pool.h>
+#include <long_task/drop_file_data.h>
+
 namespace doodle::win {
 
 ULONG drop_manager::AddRef() {
@@ -28,26 +31,41 @@ STDMETHODIMP drop_manager::QueryInterface(const IID &riid, void **ppv) {
   *ppv = nullptr;
   return E_NOINTERFACE;
 }
-//当我们将文件拖入我们的应用程序视图时发生
-STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
+
+STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto,
+                                     DWORD grfKeyState,
+                                     POINTL ptl,
+                                     DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");
+  g_main_loop().attach<drop_file_data>();
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
-//当我们在携带文件的同时将鼠标拖到我们的应用程序视图上时发生（回车后，离开前）
-STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
-  DOODLE_LOG_INFO("开始 DragOver");
+
+STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
+                                    POINTL ptl,
+                                    DWORD *pdwEffect) {
+  //  DOODLE_LOG_INFO("开始 DragOver");
+
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
-//当我们从应用程序视图中拖出文件时发生
+
 STDMETHODIMP drop_manager::DragLeave() {
   DOODLE_LOG_INFO("开始 DragLeave");
+
+  if (auto k_drop = g_reg()->try_ctx<drop_file_data>(); k_drop) {
+    k_drop->drag_leave();
+  }
+
   return S_OK;
 }
-//当我们释放鼠标按钮完成拖放操作时发生
-STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
+
+STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
+                                DWORD grfKeyState,
+                                POINTL ptl,
+                                DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 Drop");
 
   //使用 fmte
@@ -72,6 +90,9 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
     ReleaseStgMedium(&stgm);
 
     //以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
+    if (auto k_drop = g_reg()->try_ctx<drop_file_data>(); k_drop) {
+      k_drop->set_files(l_vector);
+    }
   }
 
   //为 ImGui 中的按钮 1 触发 MouseUp
