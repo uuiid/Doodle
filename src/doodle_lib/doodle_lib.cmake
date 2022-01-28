@@ -52,6 +52,7 @@ set(
         gui/widgets/time_widget.h
         gui/widgets/tool_box_widget.h
         gui/widgets/screenshot_widget.h
+        gui/widgets/drag_widget.h
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
@@ -160,6 +161,7 @@ set(
         gui/widgets/time_widget.cpp
         gui/widgets/tool_box_widget.cpp
         gui/widgets/screenshot_widget.cpp
+        gui/widgets/drag_widget.cpp
 
         lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
