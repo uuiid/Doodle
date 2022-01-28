@@ -10,17 +10,23 @@
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/long_task/database_task.h>
+#include <doodle_lib/platform/win/drop_manager.h>
 
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
+// 启用窗口拖拽导入头文件
 #include <shellapi.h>
 
-#include <imgui_impl_win32.h>
-#include <imgui_impl_dx11.h>
 #include <imgui.h>
 
 namespace doodle {
+class app::impl {
+  /// \brief 初始化 com
+  win::ole_guard _guard;
+
+ public:
+};
 app::app()
     : app(GetModuleHandle(nullptr)) {
 }
@@ -31,7 +37,8 @@ app::app(const win::wnd_instance& in_instance)
       d3d_deve(),
       p_show_err(false),
       d3dDevice(nullptr),
-      d3dDeviceContext(nullptr) {
+      d3dDeviceContext(nullptr),
+      p_i(std::make_unique<impl>()) {
   p_win_class =
       {sizeof(WNDCLASSEX),
        CS_CLASSDC,
@@ -96,11 +103,11 @@ app::app(const win::wnd_instance& in_instance)
   ImGui_ImplDX11_Init(d3d_deve->g_pd3dDevice, d3d_deve->g_pd3dDeviceContext);
   d3dDevice        = d3d_deve->g_pd3dDevice;
   d3dDeviceContext = d3d_deve->g_pd3dDeviceContext;
-  /// 初始化文件拖拽
-  //  DragAcceptFiles(p_impl->p_hwnd, true);
-  //  OleInitialize(nullptr);
-  //  auto k_r = RegisterDragDrop(p_impl->p_hwnd, new win::drop_manager{});
-  //  chick_true<doodle_error>(k_r == S_OK, DOODLE_LOC, "无法注册拖拽com");
+  /// 启用文件拖拽
+  DragAcceptFiles(p_hwnd, true);
+  /// \brief 注册拖放对象
+  auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
+  chick_true<doodle_error>(k_r == S_OK, DOODLE_LOC, "无法注册拖拽com");
 
   //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
@@ -250,7 +257,6 @@ app::~app() {
 
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
-  //  OleUninitialize();
 }
 void app::load_back_end() {
   g_main_loop()

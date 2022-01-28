@@ -20,13 +20,13 @@ namespace doodle {
  * * 创建拍屏并合成水印
  * * 连接拍屏
  * * 模型库工具（正在开发）
- * 
+ *
  * # ue工具
  * * 批量修正材质名称和材质属性
  * * 导入fbx和abc
  * * 传递材质
- * * 
- * 
+ * *
+ *
  */
 class DOODLELIB_API app : public app_command_base {
  protected:
@@ -34,6 +34,10 @@ class DOODLELIB_API app : public app_command_base {
 
   std::shared_ptr<win::d3d_device> d3d_deve;
   bool p_show_err;
+
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
 
  public:
   explicit app(const win::wnd_instance& in_instance);
