@@ -87,8 +87,7 @@ bool image_loader::save(const entt::handle& in_handle,
   k_icon.path  = k_reg->ctx<project>().make_path("image") /
                 (core_set::getSet().get_uuid_str() + ".png");
 
-  /// \brief 转换图像
-  cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGRA);
+
   cv::imwrite(k_icon.path.generic_string(), k_image);
   k_icon.image = cv_to_d3d(k_image);
 
@@ -313,7 +312,11 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
 
   ID3D11ShaderResourceView* k_out_{nullptr};
   k_r = k_g->CreateShaderResourceView(k_com_tex, &k_srv, &(k_out_));
+  if (convert_toRGBA)
+    /// \brief 转换图像
+    cv::cvtColor(in_mat, in_mat, cv::COLOR_RGB2BGRA);
   return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
+
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle
