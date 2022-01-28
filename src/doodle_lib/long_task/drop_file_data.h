@@ -6,9 +6,19 @@
 namespace doodle {
 
 class DOODLELIB_API drop_file_data : public process_t<drop_file_data> {
+  std::vector<FSys::path> files_;
+  bool has_files;
  public:
+  class DOODLELIB_API files {
+   public:
+    std::vector<FSys::path> files;
+  };
   drop_file_data();
   ~drop_file_data() override;
+
+  void drag_leave();
+  void set_files(const std::vector<FSys::path>& in_paths);
+
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
