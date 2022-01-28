@@ -430,6 +430,25 @@ struct Disabled : public ScopeWrapper<HelpMarker> {
     imgui::EndDisabled();
   };
 };
+
+struct DragDropSource : public ScopeWrapper<DragDropSource> {
+ public:
+  DragDropSource(ImGuiDragDropFlags flags = 0)
+      : ScopeWrapper<DragDropSource>(ImGui::BeginDragDropSource(flags)) {}
+  static void dtor() noexcept {
+    ImGui::EndDragDropSource();
+  }
+};
+
+struct DragDropTarget : public ScopeWrapper<DragDropTarget> {
+ public:
+  DragDropTarget()
+      : ScopeWrapper<DragDropTarget>(ImGui::BeginDragDropTarget()) {}
+  static void dtor() noexcept {
+    ImGui::EndDragDropTarget();
+  }
+};
+
 // bool InputText(const char* label,
 //                std::filesystem::path* str,
 //                ImGuiInputTextFlags flags       = 0,
