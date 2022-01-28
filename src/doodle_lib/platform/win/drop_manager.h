@@ -8,6 +8,13 @@
 
 void OpenFilesFromDataObject(IDataObject *pdto);
 namespace doodle::win {
+
+class DOODLELIB_API ole_guard {
+ public:
+  ole_guard();
+  ~ole_guard();
+};
+
 class DOODLELIB_API drop_manager : public IDropTarget {
  private:
   LONG m_RefCount;

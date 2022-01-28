@@ -79,4 +79,26 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
+ole_guard::ole_guard() {
+  auto k_r = ::OleInitialize(nullptr);
+  switch (k_r) {
+    case S_OK:
+      DOODLE_LOG_INFO("COM 库已在此线程上成功初始化");
+      break;
+    case S_FALSE:
+      DOODLE_LOG_INFO("COM 库已在此线程上初始化");
+      break;
+    case RPC_E_CHANGED_MODE:
+      chick_true<doodle_error>(
+          false, DOODLE_LOC,
+          "之前对CoInitializeEx的调用将此线程的并发模型指定为多线程单元 (MTA),"
+          "这也可能表明发生了从中性线程单元到单线程单元的更改");
+      break;
+    default:
+      break;
+  }
+}
+ole_guard::~ole_guard() {
+  ::OleUninitialize();
+}
 }  // namespace doodle::win
