@@ -137,7 +137,6 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   imgui::Button("drop");
   dear::DragDropTarget{} && []() {
     if (auto* l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
-
     }
   };
 
@@ -147,36 +146,44 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
     ImGui::Columns(5, "assets_file_widgets", false);
 
     image_loader k_load{};
-    for (auto& i : k_list) {
-      std::shared_ptr<void> l_image{};
-      std::string name{};
-      if (i.any_of<image_icon>()) {
-        /// @brief 如果有图标就渲染
-        auto&& k_icon = i.get<image_icon>();
-        if (!k_icon.image)
-          k_load.load(i);
-        l_image = k_icon.image;
-      } else {
-        l_image = k_load.default_image();
-        /// @brief 否则默认图标
+
+    ImGuiListClipper clipper{};
+    clipper.Begin((k_list.size() / 5) + 1);
+    while (clipper.Step()) {
+      for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
+        for (int l_j = 0; (l_j < 5 && ((l_i * 5 + l_j) < k_list.size())); ++l_j) {
+          auto&& i = k_list[l_i * 5 + l_j];
+          std::shared_ptr<void> l_image{};
+          std::string name{};
+          if (i.any_of<image_icon>()) {
+            /// @brief 如果有图标就渲染
+            auto&& k_icon = i.get<image_icon>();
+            if (!k_icon.image)
+              k_load.load(i);
+            l_image = k_icon.image;
+          } else {
+            l_image = k_load.default_image();
+            /// @brief 否则默认图标
+          }
+          if (i.all_of<assets_file>()) {
+            /// @brief 渲染名称
+            name = i.get<assets_file>().show_str();
+          } else {
+            /// @brief 否则渲染id
+            if (i.all_of<database>())
+              name = i.get<database>().get_id_str();
+          }
+          dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
+            if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
+              p_current_select = i;
+            dear::PopupContextItem{} && [this, i]() {
+              render_context_menu(i);
+            };
+            dear::Text(name);
+          };
+          imgui::NextColumn();
+        }
       }
-      if (i.all_of<assets_file>()) {
-        /// @brief 渲染名称
-        name = i.get<assets_file>().show_str();
-      } else {
-        /// @brief 否则渲染id
-        if (i.all_of<database>())
-          name = i.get<database>().get_id_str();
-      }
-      dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
-        if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
-          p_current_select = i;
-        dear::PopupContextItem{} && [this, i]() {
-          render_context_menu(i);
-        };
-        dear::Text(name);
-      };
-      imgui::NextColumn();
     }
   }
 }
