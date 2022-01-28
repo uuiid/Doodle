@@ -8,10 +8,10 @@
 namespace doodle {
 
 class DOODLELIB_API drop_file_data : public process_t<drop_file_data> {
-  std::vector<FSys::path> files_;
   bool has_files;
 
  public:
+  std::vector<FSys::path> files_;
   class DOODLELIB_API files {
    public:
     explicit files(std::vector<FSys::path> in_vector)
