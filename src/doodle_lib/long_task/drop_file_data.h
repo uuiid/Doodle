@@ -3,15 +3,20 @@
 //
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <utility>
+
 namespace doodle {
 
 class DOODLELIB_API drop_file_data : public process_t<drop_file_data> {
   std::vector<FSys::path> files_;
   bool has_files;
+
  public:
   class DOODLELIB_API files {
    public:
-    std::vector<FSys::path> files;
+    explicit files(std::vector<FSys::path> in_vector)
+        : file_list(std::move(in_vector)) {}
+    std::vector<FSys::path> file_list;
   };
   drop_file_data();
   ~drop_file_data() override;

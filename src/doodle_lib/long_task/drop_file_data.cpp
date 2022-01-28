@@ -16,6 +16,7 @@ void drop_file_data::drag_leave() {
 void drop_file_data::set_files(const std::vector<FSys::path> &in_paths) {
   files_    = in_paths;
   has_files = true;
+  this->succeed();
 }
 void drop_file_data::init() {
   g_reg()->set<drop_file_data &>(*this);
