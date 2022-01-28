@@ -82,11 +82,13 @@ bool image_loader::save(const entt::handle& in_handle,
 
   auto k_icon  = in_handle.get_or_emplace<image_icon>();
 
-  auto k_image = in_image(in_rect);
+  auto k_image = in_image(in_rect).clone();
 
   k_icon.path  = k_reg->ctx<project>().make_path("image") /
                 (core_set::getSet().get_uuid_str() + ".png");
 
+  /// \brief 转换图像
+  cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGRA);
   cv::imwrite(k_icon.path.generic_string(), k_image);
   k_icon.image = cv_to_d3d(k_image);
 
@@ -95,42 +97,7 @@ bool image_loader::save(const entt::handle& in_handle,
 }
 
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const {
-  // 获得全局GPU渲染对象
-  auto k_g = app::Get().d3dDevice;
-  /// \brief 转换图像
-  cv::cvtColor(in_mat, in_mat, cv::COLOR_BGR2RGBA);
-
-  D3D11_TEXTURE2D_DESC k_tex_desc{};
-  k_tex_desc.Width            = in_mat.cols;
-  k_tex_desc.Height           = in_mat.rows;
-  k_tex_desc.MipLevels        = 1;
-  k_tex_desc.ArraySize        = 1;
-  k_tex_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
-  k_tex_desc.SampleDesc.Count = 1;
-  k_tex_desc.Usage            = D3D11_USAGE_DEFAULT;
-  k_tex_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
-  k_tex_desc.CPUAccessFlags   = 0;
-
-  ID3D11Texture2D* k_com_tex{};
-
-  D3D11_SUBRESOURCE_DATA k_sub_resource;
-  k_sub_resource.pSysMem          = in_mat.data;
-  k_sub_resource.SysMemPitch      = k_tex_desc.Width * 4;
-  k_sub_resource.SysMemSlicePitch = 0;
-  auto k_r                        = k_g->CreateTexture2D(&k_tex_desc, &k_sub_resource, &k_com_tex);
-  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
-  guard_win_ptr_delete l_a_delete{k_com_tex};
-
-  D3D11_SHADER_RESOURCE_VIEW_DESC k_srv;
-  ZeroMemory(&k_srv, sizeof(k_srv));
-  k_srv.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM;
-  k_srv.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-  k_srv.Texture2D.MipLevels       = k_tex_desc.MipLevels;
-  k_srv.Texture2D.MostDetailedMip = 0;
-
-  ID3D11ShaderResourceView* k_out_{nullptr};
-  k_r = k_g->CreateShaderResourceView(k_com_tex, &k_srv, &(k_out_));
-  return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
+  return cv_to_d3d(in_mat, true);
 }
 
 cv::Mat image_loader::screenshot() {
@@ -308,6 +275,45 @@ std::shared_ptr<void> image_loader::error_image() const {
     }
   }
   return g_reg()->ctx<cache>().error_image;
+}
+std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
+  // 获得全局GPU渲染对象
+  auto k_g = app::Get().d3dDevice;
+  if (convert_toRGBA)
+    /// \brief 转换图像
+    cv::cvtColor(in_mat, in_mat, cv::COLOR_BGR2RGBA);
+
+  D3D11_TEXTURE2D_DESC k_tex_desc{};
+  k_tex_desc.Width            = in_mat.cols;
+  k_tex_desc.Height           = in_mat.rows;
+  k_tex_desc.MipLevels        = 1;
+  k_tex_desc.ArraySize        = 1;
+  k_tex_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
+  k_tex_desc.SampleDesc.Count = 1;
+  k_tex_desc.Usage            = D3D11_USAGE_DEFAULT;
+  k_tex_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
+  k_tex_desc.CPUAccessFlags   = 0;
+
+  ID3D11Texture2D* k_com_tex{};
+
+  D3D11_SUBRESOURCE_DATA k_sub_resource;
+  k_sub_resource.pSysMem          = in_mat.data;
+  k_sub_resource.SysMemPitch      = k_tex_desc.Width * 4;
+  k_sub_resource.SysMemSlicePitch = 0;
+  auto k_r                        = k_g->CreateTexture2D(&k_tex_desc, &k_sub_resource, &k_com_tex);
+  chick_true<doodle_error>(k_r == 0, DOODLE_LOC, "windows com 异常 {}", k_r);
+  guard_win_ptr_delete l_a_delete{k_com_tex};
+
+  D3D11_SHADER_RESOURCE_VIEW_DESC k_srv;
+  ZeroMemory(&k_srv, sizeof(k_srv));
+  k_srv.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM;
+  k_srv.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+  k_srv.Texture2D.MipLevels       = k_tex_desc.MipLevels;
+  k_srv.Texture2D.MostDetailedMip = 0;
+
+  ID3D11ShaderResourceView* k_out_{nullptr};
+  k_r = k_g->CreateShaderResourceView(k_com_tex, &k_srv, &(k_out_));
+  return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle

@@ -39,6 +39,7 @@ class DOODLELIB_API image_loader {
    */
 
   [[nodiscard]] std::shared_ptr<void> cv_to_d3d(const cv::Mat& in_mat) const;
+  [[nodiscard]] std::shared_ptr<void> cv_to_d3d(const cv::Mat& in_mat,bool convert_toRGBA) const;
   [[nodiscard]] cv::Mat screenshot();
   [[nodiscard]] std::shared_ptr<void> default_image() const;
   [[nodiscard]] std::shared_ptr<void> error_image() const;
