@@ -49,7 +49,9 @@ void screenshot_widget::init() {
   });
 }
 void screenshot_widget::succeeded() {
-  image_loader{}.save(p_i->handle, p_i->image_mat, p_i->mouse_rect);
+  cv::Rect2f l_rect_2_f{p_i->mouse_rect.tl() - p_i->virtual_screen.tl(),
+                        p_i->mouse_rect.br() - p_i->virtual_screen.tl()};
+  image_loader{}.save(p_i->handle, p_i->image_mat, l_rect_2_f);
 }
 void screenshot_widget::failed() {
 }
