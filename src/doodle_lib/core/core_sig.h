@@ -9,7 +9,7 @@ namespace doodle {
 
 class DOODLELIB_API core_sig {
  public:
-  boost::signals2::signal<void(const FSys::path&)> begin_open;
-  boost::signals2::signal<void(const entt::handle&, const project&)> end_open;
+  boost::signals2::signal<void(const FSys::path&)> project_begin_open;
+  boost::signals2::signal<void(const entt::handle&, const project&)> project_end_open;
 };
 }  // namespace doodle

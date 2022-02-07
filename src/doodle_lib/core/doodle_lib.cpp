@@ -35,7 +35,7 @@ doodle_lib::doodle_lib()
   reg->on_construct<database>().connect<&database::set_enum>();
 
   auto& k_sig = reg->set<core_sig>();
-  k_sig.begin_open.connect([=](const FSys::path& in_path) {
+  k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
     auto k_reg = g_reg();
     /// @brief 清除所有数据库实体
     auto k_v   = k_reg->view<database>();
@@ -47,7 +47,7 @@ doodle_lib::doodle_lib()
       }
     });
   });
-  k_sig.end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
+  k_sig.project_end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
     g_reg()->set<project>(in_project);
     g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
     core_set::getSet().add_recent_project(in_project.get_path());

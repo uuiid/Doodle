@@ -97,7 +97,7 @@ create table if not exists doodle_info
                        l_info.version_minor = Doodle_VERSION_MINOR));
 }
 void client::open_project(const FSys::path& in_path) {
-  g_reg()->ctx<core_sig>().begin_open(in_path);
+  g_reg()->ctx<core_sig>().project_begin_open(in_path);
 
   g_main_loop()
       .attach<database_task_select>(in_path)
@@ -105,7 +105,7 @@ void client::open_project(const FSys::path& in_path) {
         auto& k_reg = *g_reg();
         auto k_prj  = k_reg.view<project>();
         for (auto&& [e, p] : k_prj.each()) {
-          k_reg.ctx<core_sig>().end_open(make_handle(e), p);
+          k_reg.ctx<core_sig>().project_end_open(make_handle(e), p);
           return;
         }
         chick_true<doodle_error>(false, DOODLE_LOC, "在这个库中找不到项目");
