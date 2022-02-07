@@ -148,7 +148,7 @@ class assets_widget::impl {
     }
     render_shot(k_l);
     render_assets();
-    observer_main();
+    // observer_main();
 
     p_all_old_selected = p_all_selected;
   }
