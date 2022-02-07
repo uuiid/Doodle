@@ -11,8 +11,10 @@
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <exception/exception.h>
 #include <google/protobuf/util/time_util.h>
+
 // clang-format off
 #include <metadata/metadata_cpp.h>
+#include <metadata/image_icon.h>
 #include <doodle_lib/lib_warp/entt_warp.h>
 // clang-format on
 
@@ -100,16 +102,17 @@ bool database::is_install() const {
   return p_i->p_id > 0;
 }
 
-#define DOODLE_SERIALIZATION project,            \
-                             episodes,           \
-                             shot,               \
-                             season,             \
-                             assets,             \
-                             assets_file,        \
-                             assets_path_vector, \
-                             time_point_wrap,    \
-                             comment_vector,     \
-                             project::cloth_config
+#define DOODLE_SERIALIZATION project,               \
+                             episodes,              \
+                             shot,                  \
+                             season,                \
+                             assets,                \
+                             assets_file,           \
+                             assets_path_vector,    \
+                             time_point_wrap,       \
+                             comment_vector,        \
+                             project::cloth_config, \
+                             image_icon
 
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
