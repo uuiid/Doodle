@@ -143,7 +143,7 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   void render_context_menu(const entt::handle& in_);
 
  public:
-  entt::entity p_current_select;
+  entt::handle p_current_select;
 
   assets_file_widgets();
   ~assets_file_widgets() override;
@@ -156,7 +156,7 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
 
-  boost::signals2::signal<void(const entt::entity&)> select_change;
+  boost::signals2::signal<void(const entt::handle&)> select_change;
 };
 
 }  // namespace doodle

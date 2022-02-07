@@ -31,6 +31,6 @@ class DOODLELIB_API project_widget : public process_t<project_widget> {
   void render();
   entt::handle p_c;
 
-  boost::signals2::signal<void(const entt::entity&)> select_change;
+  boost::signals2::signal<void(const entt::handle&)> select_change;
 };
 }  // namespace doodle

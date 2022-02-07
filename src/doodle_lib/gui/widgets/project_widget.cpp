@@ -69,9 +69,6 @@ void project_widget::render() {
     }
     if (k_chick) {
       auto k_reg = g_reg();
-
-      command_list<comm_project_add, comm_assets_add> k_comm{};
-      k_comm.set_data(p_c);
       k_reg->set<root_ref>(p_c);
     }
   };

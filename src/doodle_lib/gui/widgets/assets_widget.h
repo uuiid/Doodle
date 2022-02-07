@@ -36,6 +36,6 @@ class DOODLELIB_API assets_widget : public process_t<assets_widget> {
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
 
-  boost::signals2::signal<void(const entt::entity&)> select_change;
+  boost::signals2::signal<void(const entt::handle&)> select_change;
 };
 }  // namespace doodle

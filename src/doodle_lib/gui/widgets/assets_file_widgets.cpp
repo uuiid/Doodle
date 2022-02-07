@@ -25,7 +25,6 @@ void table_column::render(const entt::handle& in_ptr) {
 }
 void table_column::set_select(const entt::handle& in_) {
   table->p_current_select = in_;
-
   table->select_change(in_);
 }
 
@@ -155,8 +154,10 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
                 l_name = i.get<database>().get_id_str();
             }
             dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
-              if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
+              if (imgui::ImageButton(l_image.get(), {64.f, 64.f})) {
                 p_current_select = i;
+                select_change(p_current_select);
+              }
               dear::PopupContextItem{} && [this, i]() {
                 render_context_menu(i);
               };
