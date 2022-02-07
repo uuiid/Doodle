@@ -54,13 +54,13 @@ auto make_windows(Args&&... args) {
     g_main_loop().attach<base_window<Panel>>(std::forward<Args>(args)...);
 }
 
-BOOST_TYPE_ERASURE_MEMBER(render);
+// BOOST_TYPE_ERASURE_MEMBER(render);
 
-using widget_ = boost::type_erasure::any<
-    boost::mpl::vector<
-        has_render<bool()>,
-        boost::type_erasure::copy_constructible<>,
-        boost::type_erasure::typeid_<>,
-        boost::type_erasure::relaxed>>;
+// using widget_ = boost::type_erasure::any<
+//     boost::mpl::vector<
+//         has_render<bool()>,
+//         boost::type_erasure::copy_constructible<>,
+//         boost::type_erasure::typeid_<>,
+//         boost::type_erasure::relaxed>>;
 
 }  // namespace doodle

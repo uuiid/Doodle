@@ -15,11 +15,7 @@ namespace doodle {
 
 project_widget::project_widget()
     : p_c() {
-  comm_project_add k_{};
   auto k_reg = g_reg();
-  k_reg->set<widget_>(k_);
-  if (k_reg->try_ctx<root_ref>())
-    p_c = k_reg->ctx<root_ref>().root_handle();
 }
 
 project_widget::~project_widget() = default;
@@ -77,7 +73,6 @@ void project_widget::render() {
       command_list<comm_project_add, comm_assets_add> k_comm{};
       k_comm.set_data(p_c);
       k_reg->set<root_ref>(p_c);
-      k_reg->set<widget_>(k_comm);
     }
   };
 }

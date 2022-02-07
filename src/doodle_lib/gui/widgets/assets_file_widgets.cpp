@@ -25,10 +25,6 @@ void table_column::render(const entt::handle& in_ptr) {
 }
 void table_column::set_select(const entt::handle& in_) {
   table->p_current_select = in_;
-  auto k_reg              = g_reg();
-  command_list<comm_assets_add, comm_files_select> k_comm{};
-  k_comm.set_data(in_);
-  k_reg->set<widget_>(k_comm);
 
   table->select_change(in_);
 }

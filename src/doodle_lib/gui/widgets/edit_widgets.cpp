@@ -27,8 +27,7 @@ void edit_widgets::failed() {
 void edit_widgets::aborted() {
 }
 void edit_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
-  if (auto k_ctx = g_reg()->try_ctx<widget_>(); k_ctx)
-    k_ctx->render();
+ 
 }
 
 }  // namespace doodle
