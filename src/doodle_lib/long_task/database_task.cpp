@@ -104,6 +104,9 @@ void database_task_select::select_db() {
 }
 
 void database_task_select::init() {
+  auto& k_msg = g_reg()->set<process_message>();
+  k_msg.set_name("加载数据");
+  k_msg.set_state(k_msg.run);
   p_i->result = doodle_lib::Get().get_thread_pool()->enqueue([this]() { this->select_db(); });
 }
 void database_task_select::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -143,10 +146,13 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
 }
 
 void database_task_select::succeeded() {
+  g_reg()->ctx<process_message>().set_state(process_message::success);
 }
 void database_task_select::failed() {
+  g_reg()->ctx<process_message>().set_state(process_message::fail);
 }
 void database_task_select::aborted() {
+  g_reg()->ctx<process_message>().set_state(process_message::fail);
   p_i->stop = true;
 }
 
