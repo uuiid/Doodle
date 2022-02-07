@@ -148,39 +148,41 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
     image_loader k_load{};
 
     ImGuiListClipper clipper{};
-    clipper.Begin((k_list.size() / 5) + 1);
+    clipper.Begin((boost::numeric_cast<std::int32_t>(k_list.size()) / 5) + 1);
     while (clipper.Step()) {
       for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
-        for (int l_j = 0; (l_j < 5 && ((l_i * 5 + l_j) < k_list.size())); ++l_j) {
-          auto&& i = k_list[l_i * 5 + l_j];
-          std::shared_ptr<void> l_image{};
-          std::string name{};
-          if (i.any_of<image_icon>()) {
-            /// @brief 如果有图标就渲染
-            auto&& k_icon = i.get<image_icon>();
-            if (!k_icon.image)
-              k_load.load(i);
-            l_image = k_icon.image;
-          } else {
-            l_image = k_load.default_image();
-            /// @brief 否则默认图标
-          }
-          if (i.all_of<assets_file>()) {
-            /// @brief 渲染名称
-            name = i.get<assets_file>().show_str();
-          } else {
-            /// @brief 否则渲染id
-            if (i.all_of<database>())
-              name = i.get<database>().get_id_str();
-          }
-          dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
-            if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
-              p_current_select = i;
-            dear::PopupContextItem{} && [this, i]() {
-              render_context_menu(i);
+        for (int l_j = 0; l_j < 5; ++l_j) {
+          if ((l_i * 5 + l_j) < k_list.size()) {
+            auto&& i = k_list[l_i * 5 + l_j];
+            std::shared_ptr<void> l_image{};
+            std::string l_name{};
+            if (i.any_of<image_icon>()) {
+              /// @brief 如果有图标就渲染
+              auto&& k_icon = i.get<image_icon>();
+              if (!k_icon.image)
+                k_load.load(i);
+              l_image = k_icon.image;
+            } else {
+              l_image = k_load.default_image();
+              /// @brief 否则默认图标
+            }
+            if (i.all_of<assets_file>()) {
+              /// @brief 渲染名称
+              l_name = i.get<assets_file>().show_str();
+            } else {
+              /// @brief 否则渲染id
+              if (i.all_of<database>())
+                l_name = i.get<database>().get_id_str();
+            }
+            dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
+              if (imgui::ImageButton(l_image.get(), {64.f, 64.f}))
+                p_current_select = i;
+              dear::PopupContextItem{} && [this, i]() {
+                render_context_menu(i);
+              };
+              dear::Text(l_name);
             };
-            dear::Text(name);
-          };
+          }
           imgui::NextColumn();
         }
       }
