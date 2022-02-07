@@ -98,10 +98,9 @@ create table if not exists doodle_info
 }
 void client::open_project(const FSys::path& in_path) {
   g_reg()->ctx<core_sig>().begin_open(in_path);
-  auto k_h = make_handle();
-  k_h.emplace<process_message>();
+
   g_main_loop()
-      .attach<database_task_select>(k_h, in_path)
+      .attach<database_task_select>(in_path)
       .then<one_process_t>([=]() {
         auto& k_reg = *g_reg();
         auto k_prj  = k_reg.view<project>();
