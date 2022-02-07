@@ -7,6 +7,7 @@
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/client/client.h>
 
 #ifdef _WIN32
 #include <ShlObj.h>
@@ -316,16 +317,7 @@ bool core_set_init::config_to_user() {
 }
 bool core_set_init::init_default_project() {
   if (!p_set.project_root.empty() && !p_set.project_root[0].empty())
-    g_main_loop()
-        .attach<database_task_select>(p_set.project_root[0])
-        .then<one_process_t>([]() {
-          auto k_prj = g_reg()->view<project>();
-          if (!k_prj.empty()) {
-            g_reg()->set<project>(k_prj.get<project>(k_prj[0]));
-            g_reg()->set<root_ref>(k_prj[0]);
-          }
-        });
-
+    core::client{}.open_project(p_set.project_root[0]);
   return true;
 }
 
