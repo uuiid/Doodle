@@ -111,5 +111,17 @@ void client::open_project(const FSys::path& in_path) {
         chick_true<doodle_error>(false, DOODLE_LOC, "在这个库中找不到项目");
       });
 }
+void client::new_project(const entt::handle& in_handle) {
+  chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
+
+  auto k_path = in_handle.get<project>().p_path;
+  add_project(k_path);
+  g_reg()->set<project>(in_handle.get<project>());
+  g_main_loop()
+      .attach<database_task_install>(in_handle)
+      .then<one_process_t>([k_path, this]() {
+        open_project(k_path);
+      });
+}
 
 }  // namespace doodle::core
