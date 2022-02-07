@@ -51,14 +51,14 @@ class DOODLELIB_API database_task_select : public process_t<database_task_select
    * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
    *
    */
-  explicit database_task_select(const entt::handle& in_handle, const database_n::filter& in_filter);
+  explicit database_task_select(const database_n::filter& in_filter);
   /**
    * @brief 获取项目这个是比较特殊的， 直接打开数据库，并开始直接获取项目的元数据
    *
    * @param in_handle in_handle 具有消息组件,
    * @param in_prj_root 项目元数据的根目录
    */
-  explicit database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root);
+  explicit database_task_select(const FSys::path& in_prj_root);
 
   ~database_task_select() override;
   [[maybe_unused]] void init();
@@ -86,7 +86,7 @@ class DOODLELIB_API database_task_update : public process_t<database_task_update
    * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
    *
    */
-  explicit database_task_update(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+  explicit database_task_update(const std::vector<entt::handle>& in_list);
 
   ~database_task_update() override;
   [[maybe_unused]] void init();
@@ -114,7 +114,7 @@ class DOODLELIB_API database_task_delete : public process_t<database_task_delete
    * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
    *
    */
-  explicit database_task_delete(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+  explicit database_task_delete(const std::vector<entt::handle>& in_list);
 
   ~database_task_delete() override;
   [[maybe_unused]] void init();
@@ -142,7 +142,7 @@ class DOODLELIB_API database_task_install : public process_t<database_task_insta
    * @note 由于这个使用上下文获取项目, 所以使用这个获取项目本身时要小心
    *
    */
-  explicit database_task_install(const entt::handle& in_handle, const std::vector<entt::handle>& in_list);
+  explicit database_task_install(const std::vector<entt::handle>& in_list);
 
   ~database_task_install() override;
   [[maybe_unused]] void init();

@@ -35,27 +35,22 @@ filter::filter()
 class database_task_select::impl {
  public:
   database_n::filter filter_;
-  entt::handle handle_;
   std::vector<metadata_database> list;
   std::future<void> result;
   std::atomic_bool stop = false;
   FSys::path prj_root;
-  std::size_t size;
+  std::size_t size{};
   std::vector<entt::handle> create_handle;
 };
-database_task_select::database_task_select(const entt::handle& in_handle, const database_n::filter& in_filter)
+database_task_select::database_task_select(const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   p_i->filter_  = in_filter;
-  p_i->handle_  = in_handle;
   p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
 }
 
-database_task_select::database_task_select(const entt::handle& in_handle, const FSys::path& in_prj_root)
+database_task_select::database_task_select(const FSys::path& in_prj_root)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   //  p_i->filter_._meta_type = metadata_type::project_root;
-  p_i->handle_  = in_handle;
   p_i->prj_root = in_prj_root / doodle_config::doodle_db_name;
 }
 
@@ -109,15 +104,6 @@ void database_task_select::select_db() {
 }
 
 void database_task_select::init() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-                in.set_name("加载文件");
-                in.set_state(in.run);
-              })
-      .aborted_function = [self = this]() {
-    if (self) {
-      self->abort();
-    }
-  };
   p_i->result = doodle_lib::Get().get_thread_pool()->enqueue([this]() { this->select_db(); });
 }
 void database_task_select::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -147,9 +133,9 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       auto& k_data               = p_i->create_handle.back();
       k_data.emplace<database>() = p_i->list.back();
       k_data.patch<database>(database::sync{});
-      p_i->handle_.patch<process_message>([this](process_message& in) {
-        in.progress_step({1, p_i->size});
-      });
+
+      g_reg()->ctx<process_message>().progress_step({1, p_i->size});
+
       p_i->create_handle.pop_back();
       p_i->list.pop_back();
     }
@@ -157,50 +143,30 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
 }
 
 void database_task_select::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
-  });
 }
 void database_task_select::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
 }
 void database_task_select::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
 }
 
 class database_task_update::impl {
  public:
   std::vector<entt::handle> list;
-  entt::handle handle_;
+
   FSys::path prj_root;
   std::atomic_bool stop;
   std::future<void> result;
 };
 
-database_task_update::database_task_update(const entt::handle& in_handle, const std::vector<entt::handle>& in_list)
+database_task_update::database_task_update(const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
-  p_i->handle_  = in_handle;
   p_i->list     = in_list;
 }
 database_task_update::~database_task_update() = default;
 void database_task_update::init() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-                in.set_state(in.run);
-                in.set_name("更新数据");
-              })
-      .aborted_function = [self = this]() { if (self) self->abort(); };
-
-  p_i->result           = g_thread_pool().enqueue([this]() { this->update_db(); });
+  p_i->result = g_thread_pool().enqueue([this]() { this->update_db(); });
 }
 void database_task_update::update_db() {
   auto k_conn = core_sql::Get().get_connection(p_i->prj_root);
@@ -229,23 +195,11 @@ void database_task_update::update_db() {
   }
 }
 void database_task_update::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("成功完成数据更新", in.warning);
-  });
 }
 void database_task_update::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
 }
 void database_task_update::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
 }
 void database_task_update::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   switch (p_i->result.wait_for(0ns)) {
@@ -266,7 +220,6 @@ void database_task_update::update(chrono::duration<chrono::system_clock::rep, ch
 
 class database_task_delete::impl {
  public:
-  entt::handle handle_;
   std::vector<entt::handle> list;
   std::future<void> result;
   std::atomic_bool stop = false;
@@ -280,45 +233,25 @@ void database_task_delete::delete_db() {
     if (p_i->stop)
       return;
     auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == in.get<database>().get_id()));
+    DOODLE_LOG_WARN("删除了数据id {}", k_r);
   }
 }
 database_task_delete::database_task_delete(
-    const entt::handle& in_handle,
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
   p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
-  p_i->handle_  = in_handle;
   p_i->list     = in_list;
 }
 database_task_delete::~database_task_delete() = default;
 void database_task_delete::init() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-                in.set_state(in.run);
-                in.set_name("删除数据");
-              })
-      .aborted_function = [self = this]() { if (self) self->abort(); };
-
-  p_i->result           = g_thread_pool().enqueue([this]() { this->delete_db(); });
+  p_i->result = g_thread_pool().enqueue([this]() { this->delete_db(); });
 }
 void database_task_delete::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("成功完成数据读取", in.warning);
-  });
 }
 void database_task_delete::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
 }
 void database_task_delete::aborted() {
   p_i->stop = true;
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
 }
 void database_task_delete::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   switch (p_i->result.wait_for(0ns)) {
@@ -377,44 +310,23 @@ void database_task_install::install_db() {
   }
 }
 database_task_install::database_task_install(
-    const entt::handle& in_handle,
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<process_message>(), DOODLE_LOC, "缺失消息组件");
-  p_i->handle_ = in_handle;
-  p_i->list    = in_list;
+  p_i->list = in_list;
 }
 
 database_task_install::~database_task_install() = default;
 
 void database_task_install::init() {
   p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
-  p_i->handle_.patch<process_message>([](process_message& in) {
-                in.set_state(in.run);
-                in.set_name("插入数据");
-              })
-      .aborted_function = [self = this]() { if (self) self->abort(); };
 
-  p_i->result           = g_thread_pool().enqueue([this]() { this->install_db(); });
+  p_i->result   = g_thread_pool().enqueue([this]() { this->install_db(); });
 }
 void database_task_install::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("成功完成数据插入", in.warning);
-  });
 }
 void database_task_install::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
 }
 void database_task_install::aborted() {
-  p_i->stop = true;
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
 }
 void database_task_install::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   switch (p_i->result.wait_for(0ns)) {
@@ -445,27 +357,13 @@ database_task_obs::~database_task_obs() = default;
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database>());
   g_reg()->set<database_task_obs&>(*this);
-  p_i->handle_ = make_handle();
-  p_i->handle_.emplace<process_message>();
 }
 void database_task_obs::succeeded() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.success);
-    in.message("数据观察器成功结束", in.warning);
-  });
 }
 void database_task_obs::failed() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("任务失败", in.warning);
-  });
   p_i->obs.disconnect();
 }
 void database_task_obs::aborted() {
-  p_i->handle_.patch<process_message>([](process_message& in) {
-    in.set_state(in.fail);
-    in.message("用户主动结束任务", in.warning);
-  });
   p_i->obs.disconnect();
 }
 void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -484,7 +382,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return k_data.status_ == database::status::need_save && !k_data.is_install();
                  });
     if (!k_h.empty())
-      g_main_loop().attach<database_task_install>(p_i->handle_, k_h);
+      g_main_loop().attach<database_task_install>(k_h);
   }
   {
     std::vector<entt::handle> k_h{};
@@ -494,7 +392,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return k_data.status_ == database::status::need_save && k_data.is_install();
                  });
     if (!k_h.empty())
-      g_main_loop().attach<database_task_update>(p_i->handle_, k_h);
+      g_main_loop().attach<database_task_update>(k_h);
   }
   {
     std::vector<entt::handle> k_h{};
@@ -503,7 +401,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return in_handle.get<database>().status_ == database::status::need_delete;
                  });
     if (!k_h.empty())
-      g_main_loop().attach<database_task_delete>(p_i->handle_, k_h);
+      g_main_loop().attach<database_task_delete>(k_h);
   }
   k_obs.clear();
 }
