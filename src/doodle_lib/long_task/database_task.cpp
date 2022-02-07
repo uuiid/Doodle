@@ -223,6 +223,10 @@ void database_task_update::update(chrono::duration<chrono::system_clock::rep, ch
       break;
   }
 }
+database_task_update::database_task_update(const entt::handle& in_handle)
+  : database_task_update(std::vector<entt::handle>{in_handle}){
+
+}
 
 class database_task_delete::impl {
  public:
@@ -274,6 +278,9 @@ void database_task_delete::update(chrono::duration<chrono::system_clock::rep, ch
     default:
       break;
   }
+}
+database_task_delete::database_task_delete(const entt::handle& in_handle)
+    : database_task_delete(std::vector<entt::handle>{in_handle}) {
 }
 
 class database_task_install::impl {
@@ -349,6 +356,9 @@ void database_task_install::update(chrono::duration<chrono::system_clock::rep, c
     default:
       break;
   }
+}
+database_task_install::database_task_install(const entt::handle& in_handle)
+    : database_task_install(std::vector<entt::handle>{in_handle}) {
 }
 class database_task_obs::impl {
  public:
