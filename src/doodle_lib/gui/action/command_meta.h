@@ -19,7 +19,7 @@ class DOODLELIB_API comm_project_add : public command_base {
  protected:
  public:
   comm_project_add();
-  ~comm_project_add() noexcept;
+  ~comm_project_add();
   comm_project_add(const comm_project_add& in_add) noexcept;
   comm_project_add& operator=(const comm_project_add& in_add) noexcept;
 
