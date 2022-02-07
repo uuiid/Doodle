@@ -7,8 +7,9 @@
 
 namespace doodle::core {
 class DOODLELIB_API client {
- public:
   void add_project(const FSys::path& in_path);
+
+ public:
   /**
    * @brief 创建一个新的项目并打开
    * @param in_handle 传入的 句柄， 必须具有 project 组件
