@@ -134,11 +134,6 @@ void assets_file_widgets::aborted() {
 }
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   auto k_ = g_reg()->try_ctx<handle_list>();
-  imgui::Button("drop");
-  dear::DragDropTarget{} && []() {
-    if (auto* l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
-    }
-  };
 
   if (k_ && k_->front().valid()) {
     auto& k_list = *k_;
