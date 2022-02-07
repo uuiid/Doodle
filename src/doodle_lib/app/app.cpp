@@ -255,6 +255,7 @@ app::~app() {
   ImGui_ImplWin32_Shutdown();
   ImGui::DestroyContext();
 
+  ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
 }
