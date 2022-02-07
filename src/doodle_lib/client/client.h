@@ -8,7 +8,7 @@
 namespace doodle::core {
 class DOODLELIB_API client {
  public:
-   void add_project(const FSys::path& in_path);
+  void add_project(const FSys::path& in_path);
   void open_project(const FSys::path& in_path);
 };
 }  // namespace doodle::core
