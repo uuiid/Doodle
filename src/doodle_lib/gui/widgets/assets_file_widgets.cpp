@@ -110,21 +110,10 @@ void assets_file_widgets::set_select(const entt::handle& in) {
 }
 
 assets_file_widgets::assets_file_widgets()
-    : p_current_select(),
-      p_colum_list() {
+    : p_current_select() {
 }
 void assets_file_widgets::init() {
   g_reg()->set<assets_file_widgets&>(*this);
-  p_colum_list.emplace_back(new_object<details::column_id>(this));
-  p_colum_list.emplace_back(new_object<details::column_assets>(this));
-  p_colum_list.emplace_back(new_object<details::column_season>(this));
-  p_colum_list.emplace_back(new_object<details::column_episodes>(this));
-  p_colum_list.emplace_back(new_object<details::column_shot>(this));
-  p_colum_list.emplace_back(new_object<details::column_version>(this));
-  p_colum_list.emplace_back(new_object<details::column_comment>(this));
-  p_colum_list.emplace_back(new_object<details::column_path>(this));
-  p_colum_list.emplace_back(new_object<details::column_time>(this));
-  p_colum_list.emplace_back(new_object<details::column_user>(this));
 }
 void assets_file_widgets::succeeded() {
 }
@@ -135,20 +124,20 @@ void assets_file_widgets::aborted() {
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   auto k_ = g_reg()->try_ctx<handle_list>();
 
-  if (k_ && k_->front().valid()) {
+  if (k_) {
     auto& k_list = *k_;
-    const auto size{5u};
-    ImGui::Columns(5, "assets_file_widgets", false);
+    const static auto l_size{5u};
+    ImGui::Columns(l_size, "assets_file_widgets", false);
 
     image_loader k_load{};
 
     ImGuiListClipper clipper{};
-    clipper.Begin((boost::numeric_cast<std::int32_t>(k_list.size()) / 5) + 1);
+    clipper.Begin((boost::numeric_cast<std::int32_t>(k_list.size()) / l_size) + 1);
     while (clipper.Step()) {
       for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
-        for (int l_j = 0; l_j < 5; ++l_j) {
-          if ((l_i * 5 + l_j) < k_list.size()) {
-            auto&& i = k_list[l_i * 5 + l_j];
+        for (int l_j = 0; l_j < l_size; ++l_j) {
+          if ((l_i * l_size + l_j) < k_list.size()) {
+            auto&& i = k_list[l_i * l_size + l_j];
             std::shared_ptr<void> l_image{};
             std::string l_name{};
             if (i.any_of<image_icon>()) {

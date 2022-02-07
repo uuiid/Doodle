@@ -137,7 +137,7 @@ class icon_render {
 class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> {
   friend details::table_column_ptr;
 
-  std::vector<details::table_column_ptr> p_colum_list;
+ 
 
   void set_select(const entt::handle& in_);
   void render_context_menu(const entt::handle& in_);
