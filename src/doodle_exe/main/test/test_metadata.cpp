@@ -66,10 +66,7 @@ TEST_CASE("install project") {
     g_main_loop().update({}, nullptr);
 }
 TEST_CASE("load project data") {
-  auto k_h = make_handle();
-  k_h.emplace<process_message>();
-
-  g_main_loop().attach<database_task_select>(k_h, "D:/tmp");
+  g_main_loop().attach<database_task_select>("D:/tmp");
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);
 
