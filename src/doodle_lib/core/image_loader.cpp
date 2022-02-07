@@ -55,14 +55,15 @@ bool image_loader::load(const entt::handle& in_handle) {
   auto k_reg = g_reg();
   chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  auto l_local_path = k_reg->ctx<project>().p_path / in_handle.get<image_icon>().path;
+  auto l_local_path = k_reg->ctx<project>().p_path / "image" / in_handle.get<image_icon>().path;
 
   if (exists(l_local_path) &&
       is_regular_file(l_local_path) &&
       l_local_path.extension() == ".png") {
     auto k_image = cv::imread(l_local_path.generic_string());
     chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
-    auto k_sh = cv_to_d3d(k_image);
+    cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
+    auto k_sh = cv_to_d3d(k_image, false);
     in_handle.patch<image_icon>([&](image_icon& in) {
       in.image = k_sh;
     });
@@ -84,11 +85,10 @@ bool image_loader::save(const entt::handle& in_handle,
 
   auto k_image = in_image(in_rect).clone();
 
-  k_icon.path  = k_reg->ctx<project>().make_path("image") /
-                (core_set::getSet().get_uuid_str() + ".png");
+  k_icon.path  = core_set::getSet().get_uuid_str() + ".png";
+  auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
 
-
-  cv::imwrite(k_icon.path.generic_string(), k_image);
+  cv::imwrite(k_path.generic_string(), k_image);
   k_icon.image = cv_to_d3d(k_image);
 
   in_handle.replace<image_icon>(k_icon);
@@ -316,7 +316,6 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
     /// \brief 转换图像
     cv::cvtColor(in_mat, in_mat, cv::COLOR_RGB2BGRA);
   return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
-
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle
