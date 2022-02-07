@@ -164,6 +164,16 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
               dear::Text(l_name);
             };
           }
+          // else {
+          //   dear::IDScope(l_j) && [&]() {
+          //     if (imgui::ImageButton(k_load.default_image().get(), {64.f, 64.f})) {
+          //     }
+          //     dear::PopupContextItem{} && [this]() {
+          //       DOODLE_LOG_INFO("ok");
+          //     };
+          //     dear::Text("null");
+          //   };
+          // }
           imgui::NextColumn();
         }
       }
