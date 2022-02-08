@@ -21,6 +21,63 @@
 
 namespace doodle {
 
+class assets_edit {
+  class gui_chache {
+   public:
+    gui_chache(std::string in_name)
+        : edit(in_name),
+          button_name(fmt::format("删除##{}", fmt::ptr(this))),
+          input_label(fmt::format("##编辑{}", fmt::ptr(this))),
+          clear(false){};
+
+    std::string edit;
+    std::string button_name;
+    std::string input_label;
+    bool clear;
+  };
+
+ public:
+  assets p_ass;
+
+  std::vector<gui_chache> p_cache;
+
+  void init(const entt::handle &in) {
+    if (in.all_of<assets>()) {
+      p_ass = in.get<assets>();
+    } else {
+      p_ass.set_path("root");
+    }
+    p_cache.clear();
+    for (auto &&i : p_ass.get_path_component()) {
+      p_cache.emplace_back(i);
+    }
+  };
+  void render(const entt::handle &in) {
+    bool l_edit{false};
+    if (ImGui::Button("添加")) {
+      p_cache.emplace_back("none");
+    }
+
+    bool l_clear{false};
+
+    dear::ListBox{"资产类别"} && [&]() {
+      for (auto &&i : p_cache) {
+        dear::InputText(i.input_label.c_str(), &i.edit);
+        ImGui::SameLine();
+        if (dear::Button(i.button_name.c_str())) {
+          i.clear = true;
+          l_clear = true;
+        }
+      }
+    };
+    if (l_clear) {
+      boost::remove_erase_if(p_cache, [](const gui_chache &in) { return in.clear; });
+    }
+
+   
+  };
+};
+
 class edit_widgets::impl {
  public:
   boost::signals2::scoped_connection p_sc;
@@ -39,6 +96,12 @@ class edit_widgets::impl {
    *
    */
   entt::handle p_h;
+
+  assets_edit p_ass_edit;
+  season p_eason;
+  episodes p_eps;
+  shot p_shot;
+  assets_file p_ass_file;
 };
 
 edit_widgets::edit_widgets()
@@ -53,6 +116,7 @@ void edit_widgets::init() {
                   .select_handle.connect(
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
+                        p_i->p_ass_edit.init(in);
                       });
 }
 void edit_widgets::succeeded() {
@@ -79,6 +143,10 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 }
 
 void edit_widgets::edit_handle() {
+  /// @brief 资产编辑
+  dear::TreeNode{"资产编辑"} && [&]() {
+    p_i->p_ass_edit.render(p_i->p_h);
+  };
 }
 
 void edit_widgets::add_handle() {
@@ -108,7 +176,7 @@ void edit_widgets::add_handle() {
         if (i.all_of<assets_file>()) {
           dear::Text(i.get<assets_file>().p_name);
           ImGui::SameLine();
-          if (ImGui::Button("删除")) {
+          if (ImGui::Button(fmt::format("删除##{}", i.entity()).c_str())) {
             i.destroy();
             l_clear = true;
           }
