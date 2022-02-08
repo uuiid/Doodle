@@ -16,7 +16,7 @@ class DOODLELIB_API project_edit : public process_t<project_edit> {
  public:
   project_edit();
   ~project_edit();
-
+  constexpr static std::string_view name{"项目设置"};
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();

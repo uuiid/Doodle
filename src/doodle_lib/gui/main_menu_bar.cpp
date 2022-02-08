@@ -27,6 +27,7 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/gui/widgets/project_edit.h>
 
 namespace doodle {
 class main_menu_bar::impl {
@@ -130,6 +131,11 @@ void main_menu_bar::menu_windows() {
     auto k_win = g_reg()->try_ctx<base_window<opencv_player_widget>>();
     if (dear::MenuItem(opencv_player_widget::name.data(), k_win ? &(k_win->show) : nullptr))
       make_windows<opencv_player_widget>();
+  }
+  {
+    auto k_win = g_reg()->try_ctx<base_window<project_edit>>();
+    if (dear::MenuItem(project_edit::name.data(), k_win ? &(k_win->show) : nullptr))
+      make_windows<project_edit>();
   }
 }
 void main_menu_bar::menu_edit() {
