@@ -105,6 +105,8 @@ void client::open_project(const FSys::path& in_path) {
         auto& k_reg = *g_reg();
         auto k_prj  = k_reg.view<project>();
         for (auto&& [e, p] : k_prj.each()) {
+          /// @brief 这里我们强制将项目路径更改为项目所在路径
+          p.p_path = in_path;
           k_reg.ctx<core_sig>().project_end_open(make_handle(e), p);
           return;
         }

@@ -55,14 +55,11 @@ class get_input_project_dialog::impl {
 };
 
 void get_input_project_dialog::render() {
+  dear::Text(fmt::format("路径: {}", p_i->path));
+  
   if (dear::InputText("名称", &(p_i->prj.p_name)))
     prj.patch<project>([&](project &in) {
       in.set_name(p_i->prj.p_name);
-    });
-
-  if (dear::InputText("路径", &p_i->path))
-    prj.patch<project>([&](project &in) {
-      in.p_path = p_i->path;
     });
 
   if (imgui::Button("ok")) {
