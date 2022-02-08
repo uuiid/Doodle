@@ -17,6 +17,7 @@
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/gui/widgets/drag_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
 
 namespace doodle {
 
@@ -125,15 +126,33 @@ void edit_widgets::add_handle() {
       auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
       boost::transform(k_list->files_,
                        std::back_inserter(p_i->add_handles),
-                       [&](const FSys::path &in_path) { 
-                         auto k_h  = make_handle();
-                         auto& k_ass =  k_h.emplace<assets_file>(in_path.stem().generic_string());
-                         k_ass.path = in_path;
-                         return k_h; });
+                       [&](const FSys::path &in_path) {
+                         auto k_h    = make_handle();
+                         auto &k_ass = k_h.emplace<assets_file>(in_path.stem().generic_string());
+                         k_ass.path  = in_path;
+                         k_h.emplace<assets>("root");
+                         return k_h;
+                       });
       DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(k_list->files_, "\n"));
       this->notify_file_list();
     }
   };
+
+  if (ImGui::Button("保存")) {
+    std::for_each(p_i->add_handles.begin(),
+                  p_i->add_handles.end(),
+                  [](entt::handle &in) {
+                    if (!in.any_of<assets_file, assets, episodes, shot, season>()) {
+                      in.destroy();
+                    } else {
+                      in.emplace_or_replace<database>();
+                      in.patch<database>(database::save{});
+                    }
+                  });
+    boost::remove_erase_if(p_i->add_handles,
+                           [](const entt::handle &in) { return !in.valid(); });
+    this->notify_file_list();
+  }
 }
 
 void edit_widgets::clear_handle() {
