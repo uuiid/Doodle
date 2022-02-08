@@ -10,6 +10,7 @@
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/core/core_sig.h>
 
 #include <boost/hana/ext/std.hpp>
 #include <boost/range/any_range.hpp>
@@ -93,7 +94,7 @@ class assets_widget::impl {
     // p_all_selected.insert(in_obj);
     auto k_reg     = g_reg();
     p_ctx_list     = in_ptr;
-    k_reg->set<handle_list>(p_ctx_list);
+    g_reg()->ctx<core_sig>().filter_handle(p_ctx_list);
     // auto comm  = command_list<comm_ass_eps,
     //                          comm_ass_shot,
     //                          comm_assets,
@@ -121,10 +122,6 @@ class assets_widget::impl {
         set_ctx = true;
         p_ctx_list.push_back(make_handle(k_h));
       }
-    }
-    /// 测试成功后添加到上下文中
-    if (set_ctx) {
-      g_reg()->set<handle_list>(p_ctx_list);
     }
 
     in_obs.clear();
