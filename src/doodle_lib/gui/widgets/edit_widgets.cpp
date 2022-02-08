@@ -16,6 +16,7 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/gui/widgets/drag_widget.h>
+#include <doodle_lib/long_task/drop_file_data.h>
 
 namespace doodle {
 
@@ -100,19 +101,6 @@ void edit_widgets::add_handle() {
 
   {
     dear::ListBox k_list{"文件列表"};
-
-    drag_widget{[this](const std::vector<FSys::path> &in) {
-      boost::transform(in,
-                       std::back_inserter(p_i->add_handles),
-                       [&](const FSys::path &in_path) { 
-                         auto k_h  = make_handle();
-                         auto& k_ass =  k_h.emplace<assets_file>(in_path.stem().generic_string());
-                         k_ass.path = in_path;
-                         return k_h; });
-      DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in, "\n"));
-      this->notify_file_list();
-    }};
-
     k_list &&[this]() {
       for (auto &&i : p_i->add_handles) {
         if (i.all_of<assets_file>())
@@ -120,17 +108,32 @@ void edit_widgets::add_handle() {
       }
     };
   }
+  dear::DragDropTarget{} && [&]() {
+    if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
+      auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
+      boost::transform(k_list->files_,
+                       std::back_inserter(p_i->add_handles),
+                       [&](const FSys::path &in_path) { 
+                         auto k_h  = make_handle();
+                         auto& k_ass =  k_h.emplace<assets_file>(in_path.stem().generic_string());
+                         k_ass.path = in_path;
+                         return k_h; });
+      DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(k_list->files_, "\n"));
+      this->notify_file_list();
+    }
+  };
 }
 
 void edit_widgets::clear_handle() {
+  std::for_each(p_i->add_handles.begin(),
+                p_i->add_handles.end(),
+                [](entt::handle &in) {
+                  if (in.orphan()) {
+                    in.destroy();
+                  }
+                });
+  boost::remove_erase_if(p_i->add_handles, [](const entt::handle &in) { return !in.valid(); });
   if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
-    std::for_each(p_i->add_handles.begin(),
-                  p_i->add_handles.end(),
-                  [](entt::handle &in) {
-                    if (in.orphan()) {
-                      in.destroy();
-                    }
-                  });
     auto &k_list_h = k_w->get_handle_list();
     std::vector<entt::handle> k_list{};
     auto k_rang = boost::sort(k_list_h) |
