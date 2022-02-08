@@ -7,6 +7,8 @@
 #include <DoodleConfig.h>
 
 #include <entt/entt.hpp>
+#include <fmt/format.h>
+
 namespace doodle {
 namespace entt_tool {
 
@@ -63,3 +65,15 @@ class scoped_function {
 }  // namespace entt_tool
 using scoped_function = entt_tool::scoped_function;
 }  // namespace doodle
+
+// namespace fmt {
+// template <>
+// struct fmt::formatter<::entt::entity> : fmt::formatter<fmt::string_view> {
+//   template <typename FormatContext>
+//   auto format(const ::entt::entity &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+//     return formatter<string_view>::format(
+//         in_.str(),
+//         ctx);
+//   }
+// };
+// }  // namespace fmt
