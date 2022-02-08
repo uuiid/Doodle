@@ -90,16 +90,7 @@ void edit_widgets::add_handle() {
     for (std::int32_t i = 0; i < p_i->p_add_size; ++i) {
       p_i->add_handles.emplace_back(make_handle());
     }
-    if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
-      auto k_list_h = k_w->get_handle_list();
-      k_w->get_handle_list().clear();
-
-      boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
-      auto k_rang = boost::unique(boost::sort(k_list_h));
-
-      boost::copy(boost::unique(boost::sort(k_list_h)),
-                  std::back_inserter(k_w->get_handle_list()));
-    }
+    this->notify_file_list();
   }
 
   /**
@@ -111,7 +102,15 @@ void edit_widgets::add_handle() {
     dear::ListBox k_list{"文件列表"};
 
     drag_widget{[this](const std::vector<FSys::path> &in) {
-      DOODLE_LOG_INFO("{}", fmt::join(in, "\n"));
+      boost::transform(in,
+                       std::back_inserter(p_i->add_handles),
+                       [&](const FSys::path &in_path) { 
+                         auto k_h  = make_handle();
+                         auto& k_ass =  k_h.emplace<assets_file>(in_path.stem().generic_string());
+                         k_ass.path = in_path;
+                         return k_h; });
+      DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in, "\n"));
+      this->notify_file_list();
     }};
 
     k_list &&[this]() {
@@ -139,6 +138,19 @@ void edit_widgets::clear_handle() {
                       [](const entt::handle &in) { return in.valid(); });
     boost::copy(k_rang, std::back_inserter(k_list));
     k_list_h = k_list;
+  }
+}
+
+void edit_widgets::notify_file_list() const {
+  if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
+    auto k_list_h = k_w->get_handle_list();
+    k_w->get_handle_list().clear();
+
+    boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
+    auto k_rang = boost::unique(boost::sort(k_list_h));
+
+    boost::copy(boost::unique(boost::sort(k_list_h)),
+                std::back_inserter(k_w->get_handle_list()));
   }
 }
 }  // namespace doodle

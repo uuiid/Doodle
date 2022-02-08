@@ -16,7 +16,8 @@ class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
   void edit_handle();
   void add_handle();
   void clear_handle();
-  
+  void notify_file_list() const;
+
  public:
   edit_widgets();
   ~edit_widgets();
