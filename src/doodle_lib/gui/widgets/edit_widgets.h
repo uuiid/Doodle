@@ -10,10 +10,16 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
+  class impl;
+  std::unique_ptr<impl> p_i;
 
-
+  void edit_handle();
+  void add_handle();
+  void clear_handle();
+  
  public:
   edit_widgets();
+  ~edit_widgets();
 
   constexpr static std::string_view name{"编辑"};
 
