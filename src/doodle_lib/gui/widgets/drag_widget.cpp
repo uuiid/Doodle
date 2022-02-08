@@ -24,8 +24,7 @@ drag_widget::drag_widget(const drag_widget::mult_sig& in_sig) {
   dear::DragDropTarget{} && [&]() {
     if (auto* l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
       auto k_list = reinterpret_cast<drop_file_data*>(l_pay->Data);
-      decltype(k_list->files_) l_list{};
-      in_sig(l_list);
+      in_sig(k_list->files_);
     }
   };
 }
