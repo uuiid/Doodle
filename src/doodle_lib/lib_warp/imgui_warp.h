@@ -4,15 +4,15 @@
 
 #pragma once
 
-#include <imgui.h>
+#include <ImGui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include <imgui_stdlib.h>
 namespace doodle {
-namespace imgui {
+namespace ImGui {
 using namespace ::ImGui;
-}  // namespace imgui
+}  // namespace ImGui
 
 namespace dear {
 using namespace ::ImGui;
@@ -306,7 +306,7 @@ MenuItem(const std::string& text, bool* selected, bool enabled = true) noexcept 
 }
 #endif
 
-// static inline bool Selectable(const char *text) noexcept { return imgui::Selectable(text); }
+// static inline bool Selectable(const char *text) noexcept { return ImGui::Selectable(text); }
 static inline bool
 Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0,
            const ImVec2& size = Zero) noexcept {
@@ -406,7 +406,7 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
     ImGui::TextDisabled(in_show_str);
     ItemTooltip{} && [&in_args]() {
       TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() {
-        imgui::TextUnformatted(in_args);
+        ImGui::TextUnformatted(in_args);
       };
     };
   }
@@ -423,11 +423,11 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
 struct Disabled : public ScopeWrapper<HelpMarker> {
   Disabled(bool in_disabled = true) noexcept
       : ScopeWrapper<HelpMarker>(in_disabled) {
-    imgui::BeginDisabled(in_disabled);
+    ImGui::BeginDisabled(in_disabled);
   };
 
   static void dtor() noexcept {
-    imgui::EndDisabled();
+    ImGui::EndDisabled();
   };
 };
 
