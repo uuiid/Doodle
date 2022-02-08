@@ -46,11 +46,13 @@ void project_edit::update(const chrono::duration<chrono::system_clock::rep,
     p_i->p_h.patch<project>([&](project& in) {
       in.set_name(p_i->p_prj.p_name);
     });
+    g_reg()->set<project>(p_i->p_h.get<project>());
   }
   if (ImGui::InputText("路径", &p_i->path)) {
     p_i->p_h.patch<project>([&](project& in) {
       in.p_path = p_i->path;
     });
+    g_reg()->set<project>(p_i->p_h.get<project>());
   }
   dear::TreeNode{"解算配置"} && [&]() {
     if (imgui::InputText("解算路径", &(p_i->cloth_config_path))) {
