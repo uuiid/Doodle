@@ -391,35 +391,18 @@ namespace gui {
 template <class T>
 struct adl_render {};
 
-template <class T>
-struct adl_render_data {
-  T data;
-  adl_render_data() = default;
-  explicit adl_render_data(const entt::handle &in_handle)
-      : data(in_handle.template get<T>()) {}
-};
-
-template <class T,
-          std::enable_if_t<!std::is_same_v<entt::handle, T>, bool> = true>
-bool render(T &in_data) {
-  return adl_render<T>::render(in_data);
-};
-
-template <class T>
-using render_ = adl_render<T>;
-
-template <class T>
-bool render(const entt::handle &in_handle) {
-  if (in_handle.template any_of<T>()) {
-    if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
-      return adl_render<T>::render(in_handle, in_handle.template get<T>());
-    else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
-      return adl_render<T>::render(in_handle);
-    else
-      return adl_render<T>::render(in_handle.template get<T>());
-  }
-  return false;
-};
+//template <class T>
+//bool render(const entt::handle &in_handle) {
+//  if (in_handle.template any_of<T>()) {
+//    if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
+//      return adl_render<T>::render(in_handle, in_handle.template get<T>());
+//    else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
+//      return adl_render<T>::render(in_handle);
+//    else
+//      return adl_render<T>::render(in_handle.template get<T>());
+//  }
+//  return false;
+//};
 }  // namespace gui
 
 namespace details {
