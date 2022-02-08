@@ -34,6 +34,7 @@ set(
         gui/factory/attribute_factory_interface.h
         gui/gui_ref/path.h
         gui/gui_ref/project.h
+        gui/gui_ref/ref_base.h
 
         gui/action/command.h
         gui/action/command_down_file.h
