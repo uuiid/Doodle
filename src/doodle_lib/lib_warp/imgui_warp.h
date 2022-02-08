@@ -423,7 +423,9 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
 struct Disabled : public ScopeWrapper<HelpMarker> {
   Disabled(bool in_disabled = true) noexcept
       : ScopeWrapper<HelpMarker>(in_disabled) {
-    ImGui::BeginDisabled(in_disabled);
+    if (in_disabled) {
+      ImGui::BeginDisabled(in_disabled);
+    }
   };
 
   static void dtor() noexcept {
