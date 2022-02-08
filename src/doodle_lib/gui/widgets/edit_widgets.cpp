@@ -102,9 +102,21 @@ void edit_widgets::add_handle() {
   {
     dear::ListBox k_list{"文件列表"};
     k_list &&[this]() {
+      bool l_clear{false};
       for (auto &&i : p_i->add_handles) {
-        if (i.all_of<assets_file>())
+        if (i.all_of<assets_file>()) {
           dear::Text(i.get<assets_file>().p_name);
+          ImGui::SameLine();
+          if (ImGui::Button("删除")) {
+            i.destroy();
+            l_clear = true;
+          }
+        }
+      }
+      if (l_clear) {
+        boost::remove_erase_if(p_i->add_handles,
+                               [](const entt::handle &in) { return !in.valid(); });
+        this->notify_file_list();
       }
     };
   }
@@ -132,16 +144,9 @@ void edit_widgets::clear_handle() {
                     in.destroy();
                   }
                 });
-  boost::remove_erase_if(p_i->add_handles, [](const entt::handle &in) { return !in.valid(); });
-  if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
-    auto &k_list_h = k_w->get_handle_list();
-    std::vector<entt::handle> k_list{};
-    auto k_rang = boost::sort(k_list_h) |
-                  boost::adaptors::filtered(
-                      [](const entt::handle &in) { return in.valid(); });
-    boost::copy(k_rang, std::back_inserter(k_list));
-    k_list_h = k_list;
-  }
+  boost::remove_erase_if(p_i->add_handles,
+                         [](const entt::handle &in) { return !in.valid(); });
+  this->notify_file_list();
 }
 
 void edit_widgets::notify_file_list() const {
@@ -150,10 +155,13 @@ void edit_widgets::notify_file_list() const {
     k_w->get_handle_list().clear();
 
     boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
-    auto k_rang = boost::unique(boost::sort(k_list_h));
 
-    boost::copy(boost::unique(boost::sort(k_list_h)),
-                std::back_inserter(k_w->get_handle_list()));
+    boost::copy(
+        boost::unique(boost::sort(k_list_h)) |
+            boost::adaptors::filtered([](const entt::handle &in) -> bool {
+              return in.valid();
+            }),
+        std::back_inserter(k_w->get_handle_list()));
   }
 }
 }  // namespace doodle
