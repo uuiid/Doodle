@@ -10,7 +10,7 @@
 #include <imgui_impl_win32.h>
 #include <imgui_stdlib.h>
 namespace doodle {
-namespace ImGui {
+namespace imgui {
 using namespace ::ImGui;
 }  // namespace ImGui
 
@@ -420,9 +420,9 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
   static void dtor() noexcept {};
 };
 
-struct Disabled : public ScopeWrapper<HelpMarker> {
+struct Disabled : public ScopeWrapper<Disabled> {
   Disabled(bool in_disabled = true) noexcept
-      : ScopeWrapper<HelpMarker>(in_disabled) {
+      : ScopeWrapper (in_disabled) {
     if (in_disabled) {
       ImGui::BeginDisabled(in_disabled);
     }
