@@ -42,30 +42,28 @@ void project_edit::update(const chrono::duration<chrono::system_clock::rep,
                                                  chrono::system_clock::period>&,
                           void* data) {
   ImGui::Text("基本配置");
+  dear::Text(fmt::format("路径: {}", p_i->path));
+
   if (ImGui::InputText("名称", &p_i->p_prj.p_name)) {
     p_i->p_h.patch<project>([&](project& in) {
       in.set_name(p_i->p_prj.p_name);
     });
     g_reg()->set<project>(p_i->p_h.get<project>());
   }
-  if (ImGui::InputText("路径", &p_i->path)) {
-    p_i->p_h.patch<project>([&](project& in) {
-      in.p_path = p_i->path;
-    });
-    g_reg()->set<project>(p_i->p_h.get<project>());
-  }
-  dear::TreeNode{"解算配置"} && [&]() {
-    if (imgui::InputText("解算路径", &(p_i->cloth_config_path))) {
-      p_i->p_h.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.vfx_cloth_sim_path = p_i->cloth_config_path;
-      });
-    }
 
-    if (imgui::InputText("导出节点", &(p_i->cloth_config.export_group))) {
-      p_i->p_h.patch<project::cloth_config>([&](project::cloth_config& in) {
-        in.export_group = p_i->cloth_config.export_group;
-      });
-    }
-  };
+  dear::TreeNode{"解算配置"} &&
+      [&]() {
+        if (imgui::InputText("解算路径", &(p_i->cloth_config_path))) {
+          p_i->p_h.patch<project::cloth_config>([&](project::cloth_config& in) {
+            in.vfx_cloth_sim_path = p_i->cloth_config_path;
+          });
+        }
+
+        if (imgui::InputText("导出节点", &(p_i->cloth_config.export_group))) {
+          p_i->p_h.patch<project::cloth_config>([&](project::cloth_config& in) {
+            in.export_group = p_i->cloth_config.export_group;
+          });
+        }
+      };
 }
 }  // namespace doodle
