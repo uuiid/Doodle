@@ -135,6 +135,9 @@ void assets_file_widgets::aborted() {
   g_reg()->unset<assets_file_widgets&>();
 }
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+  if (p_i->handle_list.empty())
+    return;
+
   const static auto l_size{5u};
   ImGui::Columns(l_size, "assets_file_widgets", false);
 
@@ -170,7 +173,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           dear::IDScope(magic_enum::enum_integer(i.entity())) && [&]() {
             if (imgui::ImageButton(l_image.get(), {64.f, 64.f})) {
               p_current_select = i;
-              select_change(p_current_select);
+              g_reg()->ctx<core_sig>().select_handle(p_current_select);
             }
             dear::PopupContextItem{} && [this, i]() {
               render_context_menu(i);
