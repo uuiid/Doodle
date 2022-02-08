@@ -14,6 +14,8 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/metadata/assets_file.h>
+#include <doodle_lib/gui/widgets/drag_widget.h>
 
 namespace doodle {
 
@@ -78,19 +80,42 @@ void edit_widgets::edit_handle() {
 }
 
 void edit_widgets::add_handle() {
+  /**
+   * @brief 添加多个
+   *
+   */
   ImGui::InputInt("添加个数", &p_i->p_add_size);
+  ImGui::SameLine();
   if (ImGui::Button("添加")) {
     for (std::int32_t i = 0; i < p_i->p_add_size; ++i) {
       p_i->add_handles.emplace_back(make_handle());
     }
     if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
       auto &k_list_h = k_w->get_handle_list();
-      std::for_each(p_i->add_handles.begin(),
-                    p_i->add_handles.end(),
-                    std::back_inserter(k_list_h));
+      boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
       auto k_rang = boost::unique(boost::sort(k_list_h));
       boost::erase(k_list_h, k_rang);
     }
+  }
+
+  /**
+   * @brief 拖拽文件添加
+   *
+   */
+
+  {
+    dear::ListBox k_list{"文件列表"};
+
+    drag_widget{[this](const std::vector<FSys::path> &in) {
+      DOODLE_LOG_INFO("{}", fmt::join(in, "\n"));
+    }};
+
+    k_list &&[this]() {
+      for (auto &&i : p_i->add_handles) {
+        if (i.all_of<assets_file>())
+          dear::Text(i.get<assets_file>().p_name);
+      }
+    };
   }
 }
 
@@ -108,7 +133,7 @@ void edit_widgets::clear_handle() {
     auto k_rang = boost::sort(k_list_h) |
                   boost::adaptors::filtered(
                       [](const entt::handle &in) { return in.valid(); });
-    boost::copy(k_rang, k_list);
+    boost::copy(k_rang, std::back_inserter(k_list));
     k_list_h = k_list;
   }
 }
