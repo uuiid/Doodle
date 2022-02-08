@@ -107,4 +107,15 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   return path;
 }
 
+entt::handle project::get_current() {
+  chick_true<doodle_error>(g_reg()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  auto k_prj = g_reg()->ctx<project>();
+  for (auto&& [e, p] : g_reg()->view<project>().each()) {
+    if (p == k_prj)
+      return make_handle(e);
+  }
+  chick_true<doodle_error>(false, DOODLE_LOC, "缺失项目");
+  return {};
+}
+
 }  // namespace doodle

@@ -54,6 +54,7 @@ class DOODLELIB_API project {
 
   [[nodiscard]] cloth_config& get_vfx_cloth_config() const;
 
+  static entt::handle get_current();
   virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
   bool operator<(const project& in_rhs) const;
