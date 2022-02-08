@@ -91,10 +91,14 @@ void edit_widgets::add_handle() {
       p_i->add_handles.emplace_back(make_handle());
     }
     if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
-      auto &k_list_h = k_w->get_handle_list();
+      auto k_list_h = k_w->get_handle_list();
+      k_w->get_handle_list().clear();
+
       boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
       auto k_rang = boost::unique(boost::sort(k_list_h));
-      boost::erase(k_list_h, k_rang);
+
+      boost::copy(boost::unique(boost::sort(k_list_h)),
+                  std::back_inserter(k_w->get_handle_list()));
     }
   }
 
