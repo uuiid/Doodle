@@ -48,6 +48,9 @@ class assets_widget::impl {
   entt::observer p_assets_obs;
 
   assets_widget* self;
+
+  bool only_rand{false};
+
   impl(assets_widget* in)
       : self(in),
         p_root() {
@@ -66,19 +69,19 @@ class assets_widget::impl {
   }
 
   void check_item(const select_obj& in_ptr) {
-    // if (imgui::IsItemHovered()) {
+    // if (ImGui::IsItemHovered()) {
     //   DOODLE_LOG_DEBUG("ok");
     // }
-    if (imgui::GetIO().KeyShift && imgui::IsItemHovered()) {
+    if (ImGui::GetIO().KeyShift && ImGui::IsItemHovered()) {
       p_all_selected.insert(in_ptr);
     }
-    // if (imgui::GetIO().KeyCtrl && imgui::IsItemHovered()) {
+    // if (ImGui::GetIO().KeyCtrl && ImGui::IsItemHovered()) {
     //   p_all_selected.erase(in_ptr);
     // }
   }
   void check_item_clicked(const select_obj& in_ptr) {
-    if (imgui::IsItemClicked()) {
-      if (!imgui::GetIO().KeyCtrl) {
+    if (ImGui::IsItemClicked()) {
+      if (!ImGui::GetIO().KeyCtrl) {
         p_all_selected.clear();
         p_all_old_selected.clear();
       } else {
@@ -191,7 +194,7 @@ class assets_widget::impl {
         dear::TreeNodeEx k_node{k_ass_str.c_str(),
                                 k_f,
                                 k_ass_str.c_str()};
-        if (imgui::IsItemClicked()) {
+        if (ImGui::IsItemClicked()) {
           auto k_r = k_map.equal_range(k_ass_str);
           handle_list k_h_list{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_h_list),
@@ -237,7 +240,7 @@ class assets_widget::impl {
                                 k_f,
                                 k_season.str().c_str()};
 
-        if (imgui::IsItemClicked()) {
+        if (ImGui::IsItemClicked()) {
           auto k_r = k_map.equal_range(k_season);
           handle_list k_list{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
@@ -279,7 +282,7 @@ class assets_widget::impl {
         dear::TreeNodeEx k_node{k_episodes.str().c_str(),
                                 k_f,
                                 k_episodes.str().c_str()};
-        if (imgui::IsItemClicked()) {
+        if (ImGui::IsItemClicked()) {
           auto k_r = k_map.equal_range(k_episodes);
           handle_list k_list{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_list),
@@ -334,7 +337,7 @@ class assets_widget::impl {
             k_shot.str().c_str(),
             k_f,
             k_shot.str().c_str()};
-        if (imgui::IsItemClicked()) {
+        if (ImGui::IsItemClicked()) {
           auto k_r = k_map.equal_range(k_shot);
           handle_list k_list_s{};
           std::transform(k_r.first, k_r.second, std::back_inserter(k_list_s),
@@ -370,6 +373,10 @@ void assets_widget::set_metadata(const entt::entity& in_ptr) {
 }
 void assets_widget::init() {
   g_reg()->set<assets_widget&>(*this);
+  g_reg()->ctx<core_sig>().project_begin_open.connect(
+      [&](const std::filesystem::path&) { p_impl->only_rand = true; });
+  g_reg()->ctx<core_sig>().project_end_open.connect(
+      [&](const entt::handle&, const doodle::project&) { p_impl->only_rand = false; });
 }
 void assets_widget::succeeded() {
 }
@@ -381,7 +388,11 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   /// 加载数据
   //  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
   /// 渲染数据
-  p_impl->render();
+  dear::Disabled{p_impl->only_rand} && [&]() {
+    p_impl->render();
+  };
+  if (!p_impl->only_rand)
+    p_impl->render();
 }
 
 }  // namespace doodle
