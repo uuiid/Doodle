@@ -241,18 +241,23 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
+  ImGui::SetNextItemOpen(true);
   dear::TreeNode{"资产编辑"} && [&]() {
     p_i->p_ass_edit.render(p_i->p_h);
   };
+  ImGui::SetNextItemOpen(true);
   dear::TreeNode{"季数编辑"} && [&]() {
     p_i->p_eason_edit.render(p_i->p_h);
   };
+  ImGui::SetNextItemOpen(true);
   dear::TreeNode{"集数编辑"} && [&]() {
     p_i->p_eps_edit.render(p_i->p_h);
   };
+  ImGui::SetNextItemOpen(true);
   dear::TreeNode{"镜头编辑"} && [&]() {
     p_i->p_shot_edit.render(p_i->p_h);
   };
+  ImGui::SetNextItemOpen(true);
   dear::TreeNode{"文件编辑"} && [&]() {
     p_i->p_ass_file_edit.render(p_i->p_h);
   };
