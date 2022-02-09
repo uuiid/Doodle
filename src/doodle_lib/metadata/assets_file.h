@@ -38,9 +38,9 @@ class DOODLELIB_API assets_file {
   explicit assets_file(FSys::path in_path,
                        std::string in_name,
                        std::uint64_t in_version);
+  explicit assets_file(FSys::path in_path );
 
   DOODLE_MOVE(assets_file);
- 
 
   [[nodiscard]] std::string str() const;
   [[nodiscard]] std::string show_str() const;
@@ -61,7 +61,6 @@ class DOODLELIB_API assets_file {
 
   int find_max_version() const;
 
- 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;
   bool operator<=(const assets_file& in_rhs) const;

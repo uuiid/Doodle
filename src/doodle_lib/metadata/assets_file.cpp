@@ -16,6 +16,9 @@ namespace doodle {
 assets_file::assets_file()
     : assets_file(FSys::path{}, std::string{}, 0) {
 }
+assets_file::assets_file(FSys::path in_path)
+    : assets_file(in_path, in_path.stem().generic_string(), 0) {
+}
 
 assets_file::assets_file(FSys::path in_path,
                          std::string in_name,
@@ -27,6 +30,7 @@ assets_file::assets_file(FSys::path in_path,
       p_department(core_set::getSet().get_department_enum()),
       p_ShowName(path.stem().generic_string()) {
 }
+
 std::string assets_file::str() const {
   return p_name;
 }
@@ -75,5 +79,4 @@ void assets_file::set_department(department in_department) {
   p_department = in_department;
 }
 
- 
 }  // namespace doodle

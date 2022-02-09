@@ -291,8 +291,7 @@ void edit_widgets::add_handle() {
                        std::back_inserter(p_i->add_handles),
                        [&](const FSys::path &in_path) {
                          auto k_h    = make_handle();
-                         auto &k_ass = k_h.emplace<assets_file>(in_path.stem().generic_string());
-                         k_ass.path  = in_path;
+                         auto &k_ass = k_h.emplace<assets_file>(in_path);
                          k_h.emplace<assets>("root");
                          return k_h;
                        });
