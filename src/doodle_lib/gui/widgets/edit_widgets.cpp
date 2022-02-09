@@ -18,10 +18,11 @@
 #include <doodle_lib/gui/widgets/drag_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/gui/gui_ref/ref_base.h>
 
 namespace doodle {
 
-class assets_edit {
+class assets_edit : public gui::base_edit {
  public:
   class gui_chache {
    public:
@@ -38,8 +39,6 @@ class assets_edit {
   };
 
   std::vector<gui_chache> p_cache;
-
-  bool is_modify{false};
 
   void init(const entt::handle &in) {
     assets l_ass{"root"};
@@ -90,18 +89,23 @@ class assets_edit {
   }
 };
 
-class season_edit {
+class season_edit : public gui::base_edit {
  public:
   std::int32_t p_season;
 
   void init(const entt::handle &in) {
-    if(in.any_of<season>())
+    if (in.any_of<season>())
       p_season = in.get<season>().get_season();
+    else
+      p_season = 1;
   }
-  void render(const entt::handle &in) {}
+  void render(const entt::handle &in) {
+    if (imgui::InputInt("季数", &p_season, 1, 9999))
+      ;
+  }
   void save(const entt::handle &in) const {}
 };
-class episodes_edit {
+class episodes_edit : public gui::base_edit {
  public:
   std::int32_t p_eps;
 
@@ -109,7 +113,7 @@ class episodes_edit {
   void render(const entt::handle &in) {}
   void save(const entt::handle &in) const {}
 };
-class shot_edit {
+class shot_edit : public gui::base_edit {
  public:
   std::int32_t p_shot;
 
@@ -117,7 +121,7 @@ class shot_edit {
   void render(const entt::handle &in) {}
   void save(const entt::handle &in) const {}
 };
-class assets_file_edit {
+class assets_file_edit : public gui::base_edit {
  public:
   FSys::path p_path;
   std::string p_path_cache;
