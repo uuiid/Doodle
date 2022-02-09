@@ -35,6 +35,7 @@ set(
         gui/gui_ref/path.h
         gui/gui_ref/project.h
         gui/gui_ref/ref_base.h
+        gui/gui_ref/ref_base.cpp
 
         gui/action/command.h
         gui/action/command_down_file.h

@@ -17,7 +17,7 @@ base_render make_render() {
 class base_edit {
  public:
   bool is_modify{false};
-  virtual void init(const entt::handle &in)       = 0;
+  virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in)     = 0;
   virtual void save(const entt::handle &in) const = 0;
 };
