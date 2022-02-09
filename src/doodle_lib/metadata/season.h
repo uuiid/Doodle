@@ -8,9 +8,9 @@
 namespace doodle {
 
 class DOODLELIB_API season {
-  std::int32_t p_int;
 
  public:
+  std::int32_t p_int;
   season();
   explicit season( std::int32_t in_);
 
