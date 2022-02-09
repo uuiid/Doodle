@@ -8,6 +8,18 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
+namespace details_assets_widget_n {
+class DOODLELIB_API filter_base {
+ public:
+  virtual bool operator()(const entt::handle& in) const = 0;
+};
+class DOODLELIB_API filter_factory_base {
+ public:
+  virtual bool render() = 0;
+  std::unique_ptr<filter_base> make_filter();
+};
+}  // namespace details_assets_widget_n
+
 /**
  * @brief 资产显示树
  * @image html attr_project.jpg 资产树

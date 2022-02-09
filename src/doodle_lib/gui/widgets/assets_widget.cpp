@@ -5,7 +5,7 @@
 #include "assets_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/gui/action/command.h> 
+#include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_sig.h>
@@ -48,6 +48,7 @@ class assets_widget::impl {
   assets_widget* self;
 
   bool only_rand{false};
+  std::vector<std::unique_ptr<details_assets_widget_n::filter_base>> filter_list;
 
   impl(assets_widget* in)
       : self(in),
@@ -96,7 +97,6 @@ class assets_widget::impl {
     auto k_reg     = g_reg();
     p_ctx_list     = in_ptr;
     g_reg()->ctx<core_sig>().filter_handle(p_ctx_list);
- 
   }
 
   void observer_main() {
@@ -352,6 +352,8 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
                                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                                    ImGuiTreeNodeFlags_SpanAvailWidth};
 
+
+
 assets_widget::assets_widget()
     : p_impl(std::make_unique<impl>(this)) {
 }
@@ -383,7 +385,6 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   //  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
   /// 渲染数据
   dear::Disabled l_d{p_impl->only_rand};
-  p_impl->render();
 }
 
 }  // namespace doodle
