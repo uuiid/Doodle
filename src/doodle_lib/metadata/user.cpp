@@ -3,9 +3,7 @@
 //
 
 #include <Metadata/user.h>
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <pin_yin/convert.h>
-
 
 namespace doodle {
 user::user()

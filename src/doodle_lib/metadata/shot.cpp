@@ -1,7 +1,6 @@
 #include "shot.h"
 
 
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/episodes.h>
 
 namespace doodle {

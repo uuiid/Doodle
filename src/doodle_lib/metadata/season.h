@@ -18,8 +18,7 @@ class DOODLELIB_API season {
   std::int32_t get_season() const;
 
   virtual std::string str() const ;
-  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr) ;
-  bool operator<(const season& in_rhs) const;
+   bool operator<(const season& in_rhs) const;
   bool operator>(const season& in_rhs) const;
   bool operator<=(const season& in_rhs) const;
   bool operator>=(const season& in_rhs) const;

@@ -7,37 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
 
-class DOODLELIB_API attribute_factory_interface
-    : public details::no_copy,
-      public std::enable_shared_from_this<attribute_factory_interface> {
- public:
-  virtual void render() = 0;
-
-  virtual void show_attribute(const episodes* in){};
-  virtual void show_attribute(const project* in){};
-  virtual void show_attribute(const shot* in){};
-  virtual void show_attribute(const assets* in){};
-  virtual void show_attribute(const season* in){};
-  virtual void show_attribute(const assets_file* in){};
-};
-
-/**
- * @brief 产生编辑项目动作命令类
- * @image html attr_project.jpg 编辑项目
- * @li 添加项目 直接添加项目
- * @li 修改项目 修改改项目的一些属性(路径和名称)
- * @li 删除项目 删除项目只有在项目为空的时候才可以使用
- */
-class DOODLELIB_API attr_project : public attribute_factory_interface {
-  project* p_prj;
-  command_ptr p_comm;
-
- public:
-  attr_project();
-
-  void render() override;
-  void show_attribute(const project*  in) override;
-};
+ 
 /**
  * @brief 产生编辑资产动作命令类
  * @image html attr_assets.jpg 编辑资产的一些属性或者添加资产
@@ -76,20 +46,7 @@ class DOODLELIB_API attr_project : public attribute_factory_interface {
  *  * 注意选择的资产, 会从子项中寻找所有的镜头
  *
  */
-class DOODLELIB_API attr_assets : public attribute_factory_interface {
-  entt::entity p_data;
-  command_ptr p_comm;
- public:
-  attr_assets();
-
-  void render() override;
-  void show_attribute(const episodes*  in) override;
-  void show_attribute(const project*  in) override;
-  void show_attribute(const shot*  in) override;
-  void show_attribute(const assets*  in) override;
-  void show_attribute(const season*  in) override;
-};
-
+ 
 /**
  * @brief 产生修改资产的命令
  * @image html comm_ass_file_attr.jpg 编辑面板
@@ -136,19 +93,6 @@ class DOODLELIB_API attr_assets : public attribute_factory_interface {
  * 上传源文件 \n
  *
  */
-class DOODLELIB_API attr_assets_file : public attribute_factory_interface {
-  assets_file* p_data;
-  command_ptr p_comm;
-
- public:
-  attr_assets_file();
-
-  void render() override;
-  // void show_attribute(const episodes*  in) override;
-  // void show_attribute(const shot*  in) override;
-  // void show_attribute(const assets*  in) override;
-  // void show_attribute(const season*  in) override;
-  void show_attribute(const assets_file*  in) override;
-};
+ 
 
 }  // namespace  doodle

@@ -61,8 +61,7 @@ class DOODLELIB_API assets_file {
 
   int find_max_version() const;
 
-  virtual void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
-
+ 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;
   bool operator<=(const assets_file& in_rhs) const;

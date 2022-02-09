@@ -31,7 +31,6 @@ set(
         gui/main_menu_bar.h
         gui/main_status_bar.h
         gui/get_input_dialog.h
-        gui/factory/attribute_factory_interface.h
         gui/gui_ref/path.h
         gui/gui_ref/project.h
         gui/gui_ref/ref_base.h
@@ -144,7 +143,6 @@ set(
         gui/main_menu_bar.cpp
         gui/main_status_bar.cpp
         gui/get_input_dialog.cpp
-        gui/factory/attribute_factory_interface.cpp
         gui/gui_ref/path.cpp
         gui/gui_ref/project.cpp
         gui/action/command.cpp

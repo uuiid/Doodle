@@ -4,7 +4,6 @@
 
 #include "season.h"
 
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 
 
 namespace doodle {
@@ -26,9 +25,7 @@ std::int32_t season::get_season() const {
 std::string season::str() const {
   return fmt::format("seas_{}", p_int);
 }
-void season::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+ 
 bool season::operator<(const season& in_rhs) const {
   return p_int < in_rhs.p_int;
 }

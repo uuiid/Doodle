@@ -1,5 +1,4 @@
 #include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 
@@ -64,9 +63,7 @@ std::optional<episodes> episodes::analysis_static(const std::string& in_path) {
     return {};
 }
 
-void episodes::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+ 
 bool episodes::operator==(const episodes& in_rhs) const {
   return p_episodes == in_rhs.p_episodes;
 }

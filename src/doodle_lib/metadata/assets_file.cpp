@@ -6,7 +6,6 @@
 #include <doodle_lib/metadata/assets_path.h>
 #include <doodle_lib/metadata/comment.h>
 ///这个工厂类必须在所有导入的后面
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <google/protobuf/util/time_util.h>
 #include <metadata/time_point_wrap.h>
@@ -76,7 +75,5 @@ void assets_file::set_department(department in_department) {
   p_department = in_department;
 }
 
-void assets_file::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+ 
 }  // namespace doodle

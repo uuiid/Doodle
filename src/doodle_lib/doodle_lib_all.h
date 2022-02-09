@@ -25,8 +25,7 @@
 #include <doodle_lib/gui/base_windwos.h>
 #include <doodle_lib/gui/main_windwos.h>
 #include <doodle_lib/gui/setting_windows.h>
-#include <doodle_lib/gui/widget_register.h>
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
+#include <doodle_lib/gui/widget_register.h> 
 #include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/gui/action/command_down_file.h>
 #include <doodle_lib/gui/action/command_files.h>

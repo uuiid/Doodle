@@ -15,8 +15,7 @@ class DOODLELIB_API episodes {
 
   [[nodiscard]] std::string str() const;
 
-  void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
-
+ 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;
   bool operator<=(const episodes &in_rhs) const;

@@ -1,5 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <exception/exception.h>
 #include <metadata/metadata_factory.h>
 #include <metadata/project.h>
@@ -73,9 +72,7 @@ const std::string& project::get_name() const {
   return p_name;
 }
 
-void project::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+ 
 void project::init_name() {
   p_en_str = boost::algorithm::to_lower_copy(
       convert::Get().toEn(this->p_name));

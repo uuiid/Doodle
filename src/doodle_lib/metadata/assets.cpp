@@ -2,7 +2,6 @@
 // Created by teXiao on 2021/4/27.
 //
 
-#include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/assets.h>
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/pin_yin/convert.h>
@@ -59,9 +58,7 @@ bool assets::operator>=(const assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
-void assets::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+ 
 bool assets::operator==(const assets& in_rhs) const {
   return std::tie(p_path) == std::tie(in_rhs.p_path);
 }

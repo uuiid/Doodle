@@ -45,8 +45,7 @@ class DOODLELIB_API assets {
   bool operator>=(const assets& in_rhs) const;
   bool operator==(const assets& in_rhs) const;
   bool operator!=(const assets& in_rhs) const;
-  void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
-
+ 
  private:
   friend void to_json(nlohmann::json& j, const assets& p) {
     j["path"]          = p.p_path;
