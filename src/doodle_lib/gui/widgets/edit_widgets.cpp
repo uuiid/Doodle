@@ -53,7 +53,6 @@ class assets_edit {
     }
   };
   void render(const entt::handle &in) {
-    bool l_edit{false};
     if (ImGui::Button("添加")) {
       p_cache.emplace_back("none");
     }
@@ -62,7 +61,8 @@ class assets_edit {
 
     dear::ListBox{"资产类别"} && [&]() {
       for (auto &&i : p_cache) {
-        dear::InputText(i.input_label.c_str(), &i.edit);
+        if (dear::InputText(i.input_label.c_str(), &i.edit))
+          ;
         ImGui::SameLine();
         if (dear::Button(i.button_name.c_str())) {
           i.clear = true;
@@ -73,8 +73,17 @@ class assets_edit {
     if (l_clear) {
       boost::remove_erase_if(p_cache, [](const gui_chache &in) { return in.clear; });
     }
+    if (ImGui::Button("保存")) {
+      std::vector<std::string> l_list;
+      boost::transform(p_cache,
+                       std::back_inserter(l_list),
+                       [](const gui_chache &in)
+                           -> std::string {
+                         return in.edit;
+                       });
 
-   
+      in.emplace_or_replace<assets>(FSys::path{fmt::to_string(fmt::join(l_list, "/"))});
+    }
   };
 };
 
