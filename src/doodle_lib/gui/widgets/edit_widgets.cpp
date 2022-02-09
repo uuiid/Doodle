@@ -195,10 +195,23 @@ class edit_widgets::impl {
   episodes_edit p_eps_edit;
   shot_edit p_shot_edit;
   assets_file_edit p_ass_file_edit;
+
+  class gui_cache {
+   public:
+    std::string name;
+    std::unique_ptr<gui::base_edit> edit;
+  };
+
+  std::vector<gui_cache> p_edit;
 };
 
 edit_widgets::edit_widgets()
     : p_i(std::make_unique<impl>()) {
+  p_i->p_edit.emplace_back("资产编辑", std::make_unique<assets_edit>());
+  p_i->p_edit.emplace_back("季数编辑", std::make_unique<season_edit>());
+  p_i->p_edit.emplace_back("集数编辑", std::make_unique<episodes_edit>());
+  p_i->p_edit.emplace_back("镜头编辑", std::make_unique<shot_edit>());
+  p_i->p_edit.emplace_back("文件编辑", std::make_unique<assets_file_edit>());
 }
 edit_widgets::~edit_widgets() = default;
 
@@ -209,11 +222,9 @@ void edit_widgets::init() {
                   .select_handle.connect(
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
-                        p_i->p_ass_edit.init(in);
-                        p_i->p_eason_edit.init(in);
-                        p_i->p_eps_edit.init(in);
-                        p_i->p_shot_edit.init(in);
-                        p_i->p_ass_file_edit.init(in);
+                        boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
+                          in_edit.edit->init(in);
+                        });
                       });
 }
 void edit_widgets::succeeded() {
@@ -241,26 +252,13 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
-  ImGui::SetNextItemOpen(true);
-  dear::TreeNode{"资产编辑"} && [&]() {
-    p_i->p_ass_edit.render(p_i->p_h);
-  };
-  ImGui::SetNextItemOpen(true);
-  dear::TreeNode{"季数编辑"} && [&]() {
-    p_i->p_eason_edit.render(p_i->p_h);
-  };
-  ImGui::SetNextItemOpen(true);
-  dear::TreeNode{"集数编辑"} && [&]() {
-    p_i->p_eps_edit.render(p_i->p_h);
-  };
-  ImGui::SetNextItemOpen(true);
-  dear::TreeNode{"镜头编辑"} && [&]() {
-    p_i->p_shot_edit.render(p_i->p_h);
-  };
-  ImGui::SetNextItemOpen(true);
-  dear::TreeNode{"文件编辑"} && [&]() {
-    p_i->p_ass_file_edit.render(p_i->p_h);
-  };
+  boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
+    ImGui::SetNextItemOpen(true);
+    dear::TreeNode{in_edit.name.c_str()} && [&]() {
+      in_edit.edit->render(p_i->p_h);
+    };
+    in_edit.edit->save(p_i->p_h);
+  });
 }
 
 void edit_widgets::add_handle() {
