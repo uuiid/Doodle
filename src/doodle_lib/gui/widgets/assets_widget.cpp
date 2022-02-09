@@ -387,11 +387,8 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   /// 加载数据
   //  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
   /// 渲染数据
-  dear::Disabled{p_impl->only_rand} && [&]() {
-    p_impl->render();
-  };
-  if (!p_impl->only_rand)
-    p_impl->render();
+  dear::Disabled l_d{p_impl->only_rand};
+  p_impl->render();
 }
 
 }  // namespace doodle
