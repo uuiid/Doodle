@@ -6,7 +6,6 @@
 
 #include <doodle_lib/core/doodle_lib.h>
 #include <gui/open_file_dialog.h>
-#include <doodle_lib/doodle_app.h>
 #include <doodle_lib/gui/widgets/assets_widget.h>
 #include <doodle_lib/gui/widgets/time_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>

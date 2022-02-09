@@ -108,7 +108,6 @@ set(
         platform/win/windows_alias.h
         platform/win/wnd_proc.h
         core/app_base.h
-        doodle_app.h
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
@@ -198,6 +197,5 @@ set(
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
         platform/win/wnd_proc.cpp
-        core/app_base.cpp
-        doodle_app.cpp
+        core/app_base.cpp 
         doodle_lib_all.cpp)

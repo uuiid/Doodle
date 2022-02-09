@@ -90,7 +90,6 @@
 #include <doodle_lib/long_task/restricted_task.h>
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/platform/win/list_drive.h>
-#include <doodle_lib/doodle_app.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_lib/doodle_macro.h>

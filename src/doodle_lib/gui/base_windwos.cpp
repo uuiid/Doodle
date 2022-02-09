@@ -4,7 +4,6 @@
 
 #include "base_windwos.h"
 
-#include <doodle_app.h>
 #include <doodle_lib/gui/widget_register.h>
 namespace doodle {
 

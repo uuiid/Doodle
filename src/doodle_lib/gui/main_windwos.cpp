@@ -4,7 +4,6 @@
 
 #include "main_windwos.h"
 
-#include <doodle_lib/doodle_app.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/setting_windows.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
