@@ -23,6 +23,6 @@ class base_edit {
   bool is_modify{false};
   void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
-  void save(const entt::handle &in) const;
+  void save(const entt::handle &in);
 };
 }  // namespace doodle::gui
