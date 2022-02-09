@@ -37,8 +37,7 @@ set(
 
         gui/action/command.h
         gui/action/command_down_file.h
-        gui/action/command_files.h
-        gui/action/command_meta.h
+        gui/action/command_files.h 
         gui/action/command_tool.h
         gui/action/command_ue4.h
         gui/action/command_video.h

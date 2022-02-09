@@ -12,8 +12,7 @@
 #include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
 #include <gui/action/command_tool.h>
-#include <gui/action/command_video.h>
-#include <gui/action/command_meta.h>
+#include <gui/action/command_video.h> 
 #include <gui/widgets/project_widget.h>
 #include <gui/widgets/assets_widget.h>
 #include <gui/setting_windows.h>

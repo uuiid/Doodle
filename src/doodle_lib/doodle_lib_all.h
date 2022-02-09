@@ -22,13 +22,12 @@
 #include <doodle_lib/file_warp/opencv_read_player.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/file_warp/video_sequence.h>
-#include <doodle_lib/gui/base_windwos.h> 
+#include <doodle_lib/gui/base_windwos.h>
 #include <doodle_lib/gui/setting_windows.h>
-#include <doodle_lib/gui/widget_register.h> 
+#include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/gui/action/command_down_file.h>
 #include <doodle_lib/gui/action/command_files.h>
-#include <doodle_lib/gui/action/command_meta.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>

@@ -266,12 +266,7 @@ class app;
 class program_options;
 class logger_ctrl;
 class comm_video;
-class comm_project_add;
-class comm_ass_eps;
-class comm_ass_shot;
-class comm_assets;
-class comm_ass_season;
-class comm_ass_file_attr;
+
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;

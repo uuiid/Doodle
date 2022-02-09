@@ -5,8 +5,7 @@
 #include "assets_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/gui/action/command.h>
-#include <doodle_lib/gui/action/command_meta.h>
+#include <doodle_lib/gui/action/command.h> 
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_sig.h>
@@ -97,11 +96,7 @@ class assets_widget::impl {
     auto k_reg     = g_reg();
     p_ctx_list     = in_ptr;
     g_reg()->ctx<core_sig>().filter_handle(p_ctx_list);
-    // auto comm  = command_list<comm_ass_eps,
-    //                          comm_ass_shot,
-    //                          comm_assets,
-    //                          comm_ass_season,
-    //                          comm_ass_ue4_create_shot>{};
+ 
   }
 
   void observer_main() {
