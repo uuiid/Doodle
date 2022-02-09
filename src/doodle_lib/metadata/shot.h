@@ -35,7 +35,6 @@ class DOODLELIB_API shot {
   };
 
   [[nodiscard]] std::string str() const;
-  virtual void attribute_widget(const attribute_factory_ptr &in_factoryPtr);
   bool operator<(const shot &rhs) const;
   bool operator>(const shot &rhs) const;
   bool operator<=(const shot &rhs) const;

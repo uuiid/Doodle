@@ -1,10 +1,8 @@
 #include "shot.h"
 
-#include <doodle_lib/Exception/exception.h>
-#include <doodle_lib/core/doodle_lib.h>
+
 #include <doodle_lib/gui/factory/attribute_factory_interface.h>
 #include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 
 namespace doodle {
 
@@ -81,9 +79,7 @@ std::optional<shot> shot::analysis_static(const std::string& in_path) {
     return {};
 }
 
-void shot::attribute_widget(const attribute_factory_ptr& in_factoryPtr) {
-  in_factoryPtr->show_attribute(this);
-}
+
 bool shot::operator==(const shot& in_rhs) const {
   return p_shot == in_rhs.p_shot &&
          p_shot_enum == in_rhs.p_shot_enum;
