@@ -40,7 +40,8 @@ class assets_edit : public gui::base_edit {
 
   std::vector<gui_chache> p_cache;
 
-  void init(const entt::handle &in) {
+  void init_(const entt::handle &in) {
+    gui::base_edit::init(in);
     assets l_ass{"root"};
     if (in.all_of<assets>()) {
       l_ass = in.get<assets>();
@@ -74,18 +75,16 @@ class assets_edit : public gui::base_edit {
     }
   };
 
-  void save(const entt::handle &in) const {
-    if (is_modify) {
-      std::vector<std::string> l_list;
-      boost::transform(p_cache,
-                       std::back_inserter(l_list),
-                       [](const gui_chache &in)
-                           -> std::string {
-                         return in.edit;
-                       });
+  void save_(const entt::handle &in) const {
+    std::vector<std::string> l_list;
+    boost::transform(p_cache,
+                     std::back_inserter(l_list),
+                     [](const gui_chache &in)
+                         -> std::string {
+                       return in.edit;
+                     });
 
-      in.emplace_or_replace<assets>(FSys::path{fmt::to_string(fmt::join(l_list, "/"))});
-    }
+    in.emplace_or_replace<assets>(FSys::path{fmt::to_string(fmt::join(l_list, "/"))});
   }
 };
 
@@ -93,7 +92,9 @@ class season_edit : public gui::base_edit {
  public:
   std::int32_t p_season;
 
-  void init(const entt::handle &in) {
+  void init_(const entt::handle &in) {
+    gui::base_edit::init(in);
+
     if (in.any_of<season>())
       p_season = in.get<season>().get_season();
     else
@@ -101,34 +102,46 @@ class season_edit : public gui::base_edit {
   }
   void render(const entt::handle &in) {
     if (imgui::InputInt("季数", &p_season, 1, 9999))
-      ;
+      is_modify = true;
   }
-  void save(const entt::handle &in) const {}
+  void save_(const entt::handle &in) const {
+    in.emplace_or_replace<season>(p_season);
+  }
 };
 class episodes_edit : public gui::base_edit {
  public:
-  std::int32_t p_eps;
+  std::int32_t p_eps{1};
 
-  void init(const entt::handle &in) {}
-  void render(const entt::handle &in) {}
-  void save(const entt::handle &in) const {}
+  void init_(const entt::handle &in) {
+    gui::base_edit::init(in);
+    if (in.all_of<episodes>())
+      p_eps = in.get<episodes>().p_episodes;
+    else
+      p_eps = 1;
+  }
+  void render(const entt::handle &in) {
+    imgui::InputInt("集数", &p_eps, 1, 9999);
+  }
+  void save_(const entt::handle &in) const {
+    in.emplace_or_replace<episodes>(p_eps);
+  }
 };
 class shot_edit : public gui::base_edit {
  public:
   std::int32_t p_shot;
 
-  void init(const entt::handle &in) {}
+  void init_(const entt::handle &in) {}
   void render(const entt::handle &in) {}
-  void save(const entt::handle &in) const {}
+  void save_(const entt::handle &in) const {}
 };
 class assets_file_edit : public gui::base_edit {
  public:
   FSys::path p_path;
   std::string p_path_cache;
 
-  void init(const entt::handle &in) {}
+  void init_(const entt::handle &in) {}
   void render(const entt::handle &in) {}
-  void save(const entt::handle &in) const {}
+  void save_(const entt::handle &in) const {}
 };
 
 class edit_widgets::impl {

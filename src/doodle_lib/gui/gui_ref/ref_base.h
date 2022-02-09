@@ -15,10 +15,14 @@ base_render make_render() {
 }
 
 class base_edit {
+ protected:
+  virtual void init_(const entt::handle &in)       = 0;
+  virtual void save_(const entt::handle &in) const = 0;
+
  public:
   bool is_modify{false};
-  virtual void init(const entt::handle &in);
-  virtual void render(const entt::handle &in)     = 0;
-  virtual void save(const entt::handle &in) const = 0;
+  void init(const entt::handle &in);
+  virtual void render(const entt::handle &in) = 0;
+  void save(const entt::handle &in) const;
 };
 }  // namespace doodle::gui
