@@ -90,6 +90,19 @@ class assets_edit {
   }
 };
 
+class season_edit {
+ public:
+};
+class episodes_edit {
+ public:
+};
+class shot_edit {
+ public:
+};
+class assets_file_edit {
+ public:
+};
+
 class edit_widgets::impl {
  public:
   boost::signals2::scoped_connection p_sc;
