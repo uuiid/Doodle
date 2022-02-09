@@ -37,20 +37,17 @@ class assets_edit {
   };
 
  public:
-  assets p_ass;
-
   std::vector<gui_chache> p_cache;
 
   bool is_modify{false};
 
   void init(const entt::handle &in) {
+    assets l_ass{"root"};
     if (in.all_of<assets>()) {
-      p_ass = in.get<assets>();
-    } else {
-      p_ass.set_path("root");
+      l_ass = in.get<assets>();
     }
     p_cache.clear();
-    for (auto &&i : p_ass.get_path_component()) {
+    for (auto &&i : l_ass.get_path_component()) {
       p_cache.emplace_back(i);
     }
   };
