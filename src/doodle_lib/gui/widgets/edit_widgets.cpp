@@ -40,7 +40,6 @@ class assets_edit : public gui::base_edit {
   std::vector<gui_chache> p_cache;
 
   void init_(const entt::handle &in) {
-    gui::base_edit::init(in);
     assets l_ass{"root"};
     if (in.all_of<assets>()) {
       l_ass = in.get<assets>();
@@ -92,8 +91,6 @@ class season_edit : public gui::base_edit {
   std::int32_t p_season;
 
   void init_(const entt::handle &in) {
-    gui::base_edit::init(in);
-
     if (in.any_of<season>())
       p_season = in.get<season>().get_season();
     else
@@ -112,7 +109,6 @@ class episodes_edit : public gui::base_edit {
   std::int32_t p_eps{1};
 
   void init_(const entt::handle &in) {
-    gui::base_edit::init(in);
     if (in.all_of<episodes>())
       p_eps = in.get<episodes>().p_episodes;
     else
