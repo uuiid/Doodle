@@ -25,7 +25,6 @@ set(
         file_warp/ue4_project.h
         file_warp/video_sequence.h
         gui/base_windwos.h
-        gui/main_windwos.h
         gui/setting_windows.h
         gui/widget_register.h
         gui/main_menu_bar.h
@@ -135,8 +134,7 @@ set(
         file_warp/opencv_read_player.cpp
         file_warp/ue4_project.cpp
         file_warp/video_sequence.cpp
-        gui/base_windwos.cpp
-        gui/main_windwos.cpp
+        gui/base_windwos.cpp 
         gui/setting_windows.cpp
         gui/widget_register.cpp
         gui/main_menu_bar.cpp
