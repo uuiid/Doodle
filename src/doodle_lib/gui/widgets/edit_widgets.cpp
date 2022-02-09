@@ -198,6 +198,10 @@ class edit_widgets::impl {
 
   class gui_cache {
    public:
+    explicit gui_cache(std::string in_name,
+                       std::unique_ptr<gui::base_edit> in_edit)
+        : name(std::move(in_name)),
+          edit(std::move(in_edit)) {}
     std::string name;
     std::unique_ptr<gui::base_edit> edit;
   };
