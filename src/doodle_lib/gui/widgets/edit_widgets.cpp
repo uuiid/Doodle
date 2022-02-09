@@ -119,7 +119,7 @@ class episodes_edit : public gui::base_edit {
       p_eps = 1;
   }
   void render(const entt::handle &in) {
-    imgui::InputInt("集数", &p_eps, 1, 9999);
+    is_modify = imgui::InputInt("集数", &p_eps, 1, 9999);
   }
   void save_(const entt::handle &in) const {
     in.emplace_or_replace<episodes>(p_eps);
@@ -141,12 +141,14 @@ class shot_edit : public gui::base_edit {
     }
   }
   void render(const entt::handle &in) {
-    imgui::InputInt("镜头", &p_shot, 1, 9999);
+    is_modify = imgui::InputInt("镜头", &p_shot, 1, 9999);
     dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
       static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
       for (auto &i : shot_enum) {
-        if (imgui::Selectable(i.data(), i == p_shot_ab_str))
+        if (imgui::Selectable(i.data(), i == p_shot_ab_str)) {
           p_shot_ab_str = i;
+          is_modify     = true;
+        }
       }
     };
   }
@@ -166,7 +168,7 @@ class assets_file_edit : public gui::base_edit {
     }
   }
   void render(const entt::handle &in) {
-    ImGui::InputText("路径", &p_path_cache);
+    is_modify = ImGui::InputText("路径", &p_path_cache);
   }
   void save_(const entt::handle &in) const {
     in.emplace_or_replace<assets_file>().path = p_path_cache;
@@ -193,10 +195,10 @@ class edit_widgets::impl {
   entt::handle p_h;
 
   assets_edit p_ass_edit;
-  season p_eason;
-  episodes p_eps;
-  shot p_shot;
-  assets_file p_ass_file;
+  season_edit p_eason_edit;
+  episodes_edit p_eps_edit;
+  shot_edit p_shot_edit;
+  assets_file_edit p_ass_file_edit;
 };
 
 edit_widgets::edit_widgets()
@@ -212,6 +214,10 @@ void edit_widgets::init() {
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
                         p_i->p_ass_edit.init(in);
+                        p_i->p_eason_edit.init(in);
+                        p_i->p_eps_edit.init(in);
+                        p_i->p_shot_edit.init(in);
+                        p_i->p_ass_file_edit.init(in);
                       });
 }
 void edit_widgets::succeeded() {
@@ -241,6 +247,18 @@ void edit_widgets::edit_handle() {
   /// @brief 资产编辑
   dear::TreeNode{"资产编辑"} && [&]() {
     p_i->p_ass_edit.render(p_i->p_h);
+  };
+  dear::TreeNode{"季数编辑"} && [&]() {
+    p_i->p_eason_edit.render(p_i->p_h);
+  };
+  dear::TreeNode{"集数编辑"} && [&]() {
+    p_i->p_eps_edit.render(p_i->p_h);
+  };
+  dear::TreeNode{"镜头编辑"} && [&]() {
+    p_i->p_shot_edit.render(p_i->p_h);
+  };
+  dear::TreeNode{"文件编辑"} && [&]() {
+    p_i->p_ass_file_edit.render(p_i->p_h);
   };
 }
 
