@@ -144,7 +144,6 @@ set(
         gui/action/command.cpp
         gui/action/command_down_file.cpp
         gui/action/command_files.cpp
-        gui/action/command_meta.cpp
         gui/action/command_tool.cpp
         gui/action/command_ue4.cpp
         gui/action/command_video.cpp
