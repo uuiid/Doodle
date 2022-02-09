@@ -11,11 +11,15 @@ class DOODLELIB_API shot {
 
  private:
   int64_t p_shot;
-  std::string p_shot_ab;
   shot_ab_enum p_shot_enum;
 
  public:
+  std::string p_shot_ab;
   shot();
+  explicit shot(std::int64_t in_shot,
+                shot_ab_enum in_ab);
+  explicit shot(std::int64_t in_shot,
+                std::string in_ab);
 
   // clang-format off
   enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
