@@ -22,6 +22,7 @@
 namespace doodle {
 
 class assets_edit {
+ public:
   class gui_chache {
    public:
     gui_chache(std::string in_name)
@@ -36,7 +37,6 @@ class assets_edit {
     bool clear;
   };
 
- public:
   std::vector<gui_chache> p_cache;
 
   bool is_modify{false};
@@ -92,15 +92,39 @@ class assets_edit {
 
 class season_edit {
  public:
+  std::int32_t p_season;
+
+  void init(const entt::handle &in) {
+    if(in.any_of<season>())
+      p_season = in.get<season>().get_season();
+  }
+  void render(const entt::handle &in) {}
+  void save(const entt::handle &in) const {}
 };
 class episodes_edit {
  public:
+  std::int32_t p_eps;
+
+  void init(const entt::handle &in) {}
+  void render(const entt::handle &in) {}
+  void save(const entt::handle &in) const {}
 };
 class shot_edit {
  public:
+  std::int32_t p_shot;
+
+  void init(const entt::handle &in) {}
+  void render(const entt::handle &in) {}
+  void save(const entt::handle &in) const {}
 };
 class assets_file_edit {
  public:
+  FSys::path p_path;
+  std::string p_path_cache;
+
+  void init(const entt::handle &in) {}
+  void render(const entt::handle &in) {}
+  void save(const entt::handle &in) const {}
 };
 
 class edit_widgets::impl {
