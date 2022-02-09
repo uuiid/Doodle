@@ -13,8 +13,8 @@ shot::shot()
 }
 shot::shot(std::int64_t in_shot,
            shot_ab_enum in_ab)
-    : p_shot(in_shot),
-      p_shot_enum(in_ab),
+    : p_shot(std::move(in_shot)),
+      p_shot_enum(std::move(in_ab)),
       p_shot_ab(magic_enum::enum_name(p_shot_enum)) {
 }
 shot::shot(std::int64_t in_shot,

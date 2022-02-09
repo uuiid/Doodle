@@ -19,11 +19,12 @@ enum class assets_file_type : std::uint32_t {
  */
 class DOODLELIB_API assets_file {
  public:
+  FSys::path path;
   std::string p_name;
+  std::uint64_t p_version;
+
   std::string p_user;
   department p_department;
-  std::uint64_t p_version;
-  FSys::path path;
   std::string p_ShowName;
 
  private:
@@ -33,18 +34,13 @@ class DOODLELIB_API assets_file {
    *
    */
   assets_file();
+
+  explicit assets_file(FSys::path in_path,
+                       std::string in_name,
+                       std::uint64_t in_version);
+
   DOODLE_MOVE(assets_file);
-  /**
-   * @brief 构造一个条目并添加一些必要的属性
-   *
-   * @param in_metadata 父条目,这个是必须的
-   * @param in_path 本地路径,这个在创建时会自动生成一个服务器路径(基本上是一个uuid路径)
-   *                基本是调用 AssetsPath::set_path(const FSys::path &in_path, const MetadataConstPtr &in_metadata)
-   * @param name 名称
-   * @param showName 显示名称
-   */
-  explicit assets_file(std::string in_show_name);
-  // ~AssetsFile();
+ 
 
   [[nodiscard]] std::string str() const;
   [[nodiscard]] std::string show_str() const;

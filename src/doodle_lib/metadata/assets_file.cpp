@@ -15,16 +15,19 @@
 namespace doodle {
 
 assets_file::assets_file()
-    : assets_file(std::string{}) {
+    : assets_file(FSys::path{}, std::string{}, 0) {
 }
 
-assets_file::assets_file(std::string in_show_name)
-    : p_name(convert::Get().toEn(in_show_name)),
-      p_ShowName(in_show_name),
+assets_file::assets_file(FSys::path in_path,
+                         std::string in_name,
+                         std::uint64_t in_version)
+    : path(std::move(in_path)),
+      p_name(std::move(in_name)),
+      p_version(std::move(in_version)),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_version(1) {}
-
+      p_ShowName(path.stem().generic_string()) {
+}
 std::string assets_file::str() const {
   return p_name;
 }
