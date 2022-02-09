@@ -9,7 +9,6 @@ class DOODLELIB_API shot {
  public:
   enum class shot_ab_enum;
 
- private:
   int64_t p_shot;
   shot_ab_enum p_shot_enum;
 
