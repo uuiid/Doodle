@@ -129,19 +129,49 @@ class episodes_edit : public gui::base_edit {
 class shot_edit : public gui::base_edit {
  public:
   std::int32_t p_shot;
+  std::string p_shot_ab_str;
 
-  void init_(const entt::handle &in) {}
-  void render(const entt::handle &in) {}
-  void save_(const entt::handle &in) const {}
+  void init_(const entt::handle &in) {
+    if (in.all_of<shot>()) {
+      auto &l_s     = in.get<shot>();
+      p_shot        = l_s.get_shot();
+      p_shot_ab_str = l_s.get_shot_ab();
+    } else {
+      p_shot        = 1;
+      p_shot_ab_str = "None";
+    }
+  }
+  void render(const entt::handle &in) {
+    imgui::InputInt("镜头", &p_shot, 1, 9999);
+    dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
+      static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
+      for (auto &i : shot_enum) {
+        if (imgui::Selectable(i.data(), i == p_shot_ab_str))
+          p_shot_ab_str = i;
+      }
+    };
+  }
+  void save_(const entt::handle &in) const {
+    in.emplace_or_replace<shot>(p_shot, p_shot_ab_str);
+  }
 };
 class assets_file_edit : public gui::base_edit {
  public:
-  FSys::path p_path;
   std::string p_path_cache;
 
-  void init_(const entt::handle &in) {}
-  void render(const entt::handle &in) {}
-  void save_(const entt::handle &in) const {}
+  void init_(const entt::handle &in) {
+    if (in.all_of<assets_file>()) {
+      p_path_cache = in.get<assets_file>().path.generic_string();
+    } else {
+      p_path_cache = g_reg()->ctx<project>().p_path.generic_string();
+    }
+  }
+  void render(const entt::handle &in) {
+    ImGui::InputText("路径", &p_path_cache);
+  }
+  void save_(const entt::handle &in) const {
+    in.emplace_or_replace<assets_file>().path = p_path_cache;
+  }
 };
 
 class edit_widgets::impl {
