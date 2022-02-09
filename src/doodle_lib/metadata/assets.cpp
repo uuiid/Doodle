@@ -7,8 +7,12 @@
 #include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/pin_yin/convert.h>
 
-
 namespace doodle {
+
+void assets::set_path_fun::operator()(assets& in) const {
+  in.set_path(fmt::to_string(fmt::join(p_comm, "/")));
+}
+
 assets::assets()
     : p_path(),
       p_name_show_str() {

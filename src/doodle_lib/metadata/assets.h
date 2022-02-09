@@ -15,6 +15,14 @@ class DOODLELIB_API assets {
   std::vector<string> p_component;
 
  public:
+  class DOODLELIB_API set_path_fun {
+   public:
+    std::vector<std::string>& p_comm;
+    explicit set_path_fun(std::vector<std::string>& in_comm)
+        : p_comm(in_comm){};
+    void operator()(assets& in) const;
+  };
+
   std::string p_name_show_str;
   assets();
   explicit assets(FSys::path in_name);
@@ -22,7 +30,7 @@ class DOODLELIB_API assets {
 
   [[nodiscard]] std::string str() const;
 
-  const std::vector<string>& get_path_component() {
+  const std::vector<std::string>& get_path_component() {
     return p_component;
   };
 
@@ -40,8 +48,6 @@ class DOODLELIB_API assets {
   void attribute_widget(const attribute_factory_ptr& in_factoryPtr);
 
  private:
-
-
   friend void to_json(nlohmann::json& j, const assets& p) {
     j["path"]          = p.p_path;
     j["name_show_str"] = p.p_name_show_str;
@@ -53,5 +59,3 @@ class DOODLELIB_API assets {
   }
 };
 }  // namespace doodle
-
-
