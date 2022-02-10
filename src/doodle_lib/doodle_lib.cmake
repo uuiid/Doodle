@@ -101,6 +101,8 @@ set(
         long_task/restricted_task.h
         long_task/database_task.h
         long_task/drop_file_data.h
+        long_task/short_cut.h
+
         platform/win/drop_manager.h
         platform/win/list_drive.h
         platform/win/windows_alias.h
@@ -189,6 +191,7 @@ set(
         long_task/restricted_task.cpp
         long_task/database_task.cpp
         long_task/drop_file_data.cpp
+        long_task/short_cut.cpp
 
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
