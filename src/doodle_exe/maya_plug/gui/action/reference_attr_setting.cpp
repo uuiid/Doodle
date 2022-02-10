@@ -126,13 +126,6 @@ bool reference_attr_setting::render() {
         dear::Text(k_f);
       gui::render<sim_overr_attr>(make_handle(k_e));
 
-      // if (imgui::Button("test")) {
-      //   try {
-      //     k_ref.replace_sim_assets_file();
-      //   } catch (const maya_error& e) {
-      //     std::cerr << e.what() << '\n';
-      //   }
-      // }
     };
   }
 
