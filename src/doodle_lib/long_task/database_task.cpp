@@ -378,7 +378,7 @@ database_task_obs::~database_task_obs() = default;
 void database_task_obs::save() {
   auto k_then = g_main_loop().attach<null_process_t>();
   if (!p_i->need_save.empty()) {
-    k_then = g_main_loop().attach<database_task_install>(p_i->need_save);
+    k_then = k_then.then<database_task_install>(p_i->need_save);
   }
   if (!p_i->need_updata.empty()) {
     k_then = k_then.then<database_task_update>(p_i->need_updata);
