@@ -124,8 +124,13 @@ bool reference_attr_setting::render() {
       dear::Text("解算碰撞: ");
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
-      gui::render<sim_overr_attr>(make_handle(k_e));
 
+      auto& in_attr = make_handle(k_e).get<maya_plug::sim_overr_attr>();
+      dear::Checkbox("精密解算", &in_attr.simple_subsampling);
+      dear::SliderFloat("帧样本", &in_attr.frame_samples, 0.1f, 50.f);
+      dear::SliderFloat("时间尺度", &in_attr.time_scale, 0.1f, 10.f);
+      dear::SliderFloat("长度尺度", &in_attr.length_scale, 0.1f, 10.f);
+      dear::Checkbox("尖锐碰撞", &in_attr.sharp_feature);
     };
   }
 

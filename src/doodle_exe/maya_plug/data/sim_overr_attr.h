@@ -61,11 +61,5 @@ class sim_overr_attr {
   //  }
 };
 }  // namespace maya_plug
-namespace gui {
-template <>
-struct adl_render<maya_plug::sim_overr_attr> {
-  static bool render(const entt::handle& in_handle);
-};
 
-}  // namespace gui
 }  // namespace doodle
