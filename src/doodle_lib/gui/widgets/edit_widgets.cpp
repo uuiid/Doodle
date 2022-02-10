@@ -6,7 +6,7 @@
 #include "edit_widgets.h"
 
 #include <doodle_lib/gui/action/command.h>
-#include <doodle_lib/gui/action/command_files.h> 
+#include <doodle_lib/gui/action/command_files.h>
 #include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>
 #include <doodle_lib/metadata/metadata.h>
@@ -173,6 +173,7 @@ class assets_file_edit : public gui::base_edit {
 class edit_widgets::impl {
  public:
   boost::signals2::scoped_connection p_sc;
+  boost::signals2::scoped_connection p_sc_save;
 
  public:
   /**
@@ -229,6 +230,9 @@ void edit_widgets::init() {
                           in_edit.edit->init(in);
                         });
                       });
+  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([]() {
+    DOODLE_LOG_INFO("save");
+  });
 }
 void edit_widgets::succeeded() {
   g_reg()->unset<edit_widgets &>();
