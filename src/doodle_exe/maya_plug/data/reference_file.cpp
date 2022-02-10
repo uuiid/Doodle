@@ -240,19 +240,26 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
     }
   }
 
-  MStringArray k_r_s{};
-  auto k_name = fmt::format("{}_export_abc", get_namespace());
-  k_s         = MGlobal::executeCommand(
-              d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
-                                k_name,
-                                fmt::join(l_names, " "))},
-              k_r_s,
-              true);
-  DOODLE_CHICK(k_s);
+  if (l_names.size() > 1) {
+    MStringArray k_r_s{};
+    auto k_name = fmt::format("{}_export_abc", get_namespace());
+    k_s         = MGlobal::executeCommand(
+                d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
+                                  k_name,
+                                  fmt::join(l_names, " "))},
+                k_r_s,
+                true);
+    DOODLE_CHICK(k_s);
 
-  k_select.clear();
-  k_s = k_select.add(k_r_s[0], true);
-  DOODLE_CHICK(k_s);
+    k_select.clear();
+    k_s = k_select.add(k_r_s[0], true);
+    DOODLE_CHICK(k_s);
+  } else {
+    k_select.clear();
+    k_s = k_select.add(d_str{l_names[0]}, true);
+    DOODLE_CHICK(k_s);
+  }
+
   if (k_select.isEmpty()) {
     DOODLE_LOG_INFO("没有找到合并对象")
     return false;
@@ -502,7 +509,7 @@ bool reference_file::has_ue4_group() const {
   MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
   MFnDependencyNode k_node{};
-  auto &k_cfg = get_prj().get<project::cloth_config>();
+  auto &k_cfg = get_prj().get_or_emplace<project::cloth_config>();
   for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
     k_s = k_node.setObject(k_objs[l_i]);
     DOODLE_CHICK(k_s);
