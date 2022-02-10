@@ -397,8 +397,8 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return k_data.status_ == database::status::need_save && !k_data.is_install();
                  });
     if (!k_h.empty())
-      ;
-    // g_main_loop().attach<database_task_install>(k_h);
+      // ;
+      g_main_loop().attach<database_task_install>(k_h);
   }
   {
     std::vector<entt::handle> k_h{};
@@ -408,8 +408,8 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return k_data.status_ == database::status::need_save && k_data.is_install();
                  });
     if (!k_h.empty())
-      ;
-    // g_main_loop().attach<database_task_update>(k_h);
+      // ;
+      g_main_loop().attach<database_task_update>(k_h);
   }
   {
     std::vector<entt::handle> k_h{};
@@ -418,8 +418,8 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                    return in_handle.get<database>().status_ == database::status::need_delete;
                  });
     if (!k_h.empty())
-      ;
-    // g_main_loop().attach<database_task_delete>(k_h);
+      // ;
+      g_main_loop().attach<database_task_delete>(k_h);
   }
   k_obs.clear();
 }
