@@ -164,12 +164,15 @@ file -loadReference "{}" "{}";
 }
 
 entt::handle reference_file::get_prj() const {
-  auto k_prj_view = g_reg()->view<project>();
-  for (auto k_e : k_prj_view) {
-    auto k_h = make_handle(k_e);
-    return k_h;
-  }
-  return entt::handle{};
+  return project::get_current();
+  // entt::handle l_h_r{};
+  // auto k_prj_view = g_reg()->view<project>();
+  // for (auto k_e : k_prj_view) {
+  //   l_h_r = make_handle(k_e);
+  //   break;
+  // }
+  // chick_true<doodle_error>(l_h_r, DOODLE_LOC, "无法找到项目");
+  // return l_h_r;
 }
 
 bool reference_file::rename_material() const {
