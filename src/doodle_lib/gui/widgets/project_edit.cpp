@@ -6,6 +6,7 @@
 #include <metadata/project.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/gui_ref/project.h>
+#include <core/core_sig.h>
 
 namespace doodle {
 
@@ -36,5 +37,7 @@ void project_edit::update(const chrono::duration<chrono::system_clock::rep,
                           void* data) {
   p_i->p_edit.render(p_i->p_h);
   p_i->p_edit.save(p_i->p_h);
+  if (ImGui::Button("保存"))
+    g_reg()->ctx<core_sig>().save();
 }
 }  // namespace doodle
