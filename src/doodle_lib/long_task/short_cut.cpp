@@ -19,7 +19,7 @@ void short_cut::aborted() {
 void short_cut::update(const std::chrono::duration<std::chrono::system_clock::rep,
                                                    std::chrono::system_clock::period> &,
                        void *data) {
-  if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl))
+  if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
     g_reg()->ctx<core_sig>().save();
 }
 }  // namespace doodle
