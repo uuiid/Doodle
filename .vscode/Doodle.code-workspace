@@ -145,7 +145,7 @@
 		"testMate.cpp.test.advancedExecutables": [
 			{
 				"name": "doodle_test",
-				"pattern": "build/Ninja_debug/**/doodle_test.exe",
+				"pattern": "build/Ninja_debug/bin/doodle_test_*.exe",
 				"cwd": "${absDirpath}"
 			}
 		],

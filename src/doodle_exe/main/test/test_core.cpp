@@ -128,6 +128,10 @@ class test_path_ {
   FSys::path source_path{L"F:/测试文件.mp4"};
   FSys::path root{"D:/"};
   FSys::path p1{L"D:\\9-houqi\\Content\\Character"};
+
+  FSys::path p_1{"das/ddd/1111"};
+  FSys::path p_2{"das/ddd"};
+  FSys::path p_3{"das/ddd/"};
 };
 
 class test_path_2 : public test_path_ {
@@ -143,6 +147,12 @@ TEST_CASE_METHOD(test_path_2, "test_path_1", "[fun][path]") {
   FSys::path tmp(root / subdir / cfgfile);
   REQUIRE(tmp.generic_string() == FSys::path{"D:/tmp/test/ttt/../configuration/instance/../instance/myfile.cfg"}.generic_string());
   REQUIRE(tmp.lexically_normal() == FSys::path{"D:/tmp/test/configuration/instance/myfile.cfg"}.generic_string());
+}
+
+TEST_CASE_METHOD(test_path_, "test 比较") {
+  std::cout << std::boolalpha
+            << "(p_1 > p_2): "<< (p_1 > p_2) << "\n"
+            << "(p_1 > p_3): "<< (p_1 > p_3);
 }
 
 TEST_CASE_METHOD(test_path_, "test_path_2_time", "[fun][path]") {
