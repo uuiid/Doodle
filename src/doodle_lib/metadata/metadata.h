@@ -140,25 +140,25 @@ class DOODLELIB_API database {
 
   class DOODLELIB_API fun_save_ {
    public:
-    void operator()(database &in) {
+    void operator()(database &in) const {
       in.status_ = status::need_save;
     }
   };
   class DOODLELIB_API fun_delete_ {
    public:
-    void operator()(database &in) {
+    void operator()(database &in) const {
       in.status_ = status::need_delete;
     }
   };
   class DOODLELIB_API fun_load_ {
    public:
-    void operator()(database &in) {
+    void operator()(database &in) const {
       in.status_ = status::need_load;
     }
   };
   class DOODLELIB_API fun_sync_ {
    public:
-    void operator()(database &in) {
+    void operator()(database &in) const {
       in.status_ = status::is_sync;
     }
   };
