@@ -160,6 +160,7 @@ class DOODLELIB_API database_task_obs : public process_t<database_task_obs> {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void save();
  public:
   using base_type = process_t<database_task_install>;
   database_task_obs();

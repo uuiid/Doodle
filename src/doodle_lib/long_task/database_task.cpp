@@ -10,6 +10,8 @@
 #include <generate/core/metadatatab_sql.h>
 #include <core/doodle_lib.h>
 
+#include <doodle_lib/core/core_sig.h>
+
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 
@@ -362,16 +364,33 @@ database_task_install::database_task_install(const entt::handle& in_handle)
 class database_task_obs::impl {
  public:
   entt::observer obs;
-  entt::handle handle_;
+  std::vector<entt::handle> need_save;
+  std::vector<entt::handle> need_updata;
+  std::vector<entt::handle> need_delete;
+
+  boost::signals2::scoped_connection p_sc_save;
 };
 database_task_obs::database_task_obs()
     : p_i(std::make_unique<impl>()) {
 }
 database_task_obs::~database_task_obs() = default;
 
+void database_task_obs::save() {
+  if (!p_i->need_save.empty()) {
+    auto k_then = g_main_loop().attach<database_task_install>(p_i->need_save);
+    if (!p_i->need_updata.empty()) {
+      k_then = k_then.then<database_task_update>(p_i->need_updata);
+    }
+    if (!p_i->need_delete.empty()) {
+      k_then.then<database_task_delete>(p_i->need_delete);
+    }
+  }
+}
+
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database>());
   g_reg()->set<database_task_obs&>(*this);
+  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([this]() { this->save(); });
 }
 void database_task_obs::succeeded() {
 }
@@ -387,40 +406,24 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
   std::vector<entt::handle> k_handle_list{};
   auto& k_obs = p_i->obs;
   std::transform(k_obs.begin(), k_obs.end(), std::back_inserter(k_handle_list), [](auto& in_item) { return make_handle(in_item); });
-  {
-    /// \brief 必须首先保证没有需要插入的, 然后才开始更新和插入
+  /// \brief 必须首先保证没有需要插入的, 然后才开始更新和插入
 
-    std::vector<entt::handle> k_h{};
-    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
-                 [](const entt::handle& in_handle) {
-                   auto&& k_data = in_handle.get<database>();
-                   return k_data.status_ == database::status::need_save && !k_data.is_install();
-                 });
-    if (!k_h.empty())
-      // ;
-      g_main_loop().attach<database_task_install>(k_h);
-  }
-  {
-    std::vector<entt::handle> k_h{};
-    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
-                 [](const entt::handle& in_handle) {
-                   auto&& k_data = in_handle.get<database>();
-                   return k_data.status_ == database::status::need_save && k_data.is_install();
-                 });
-    if (!k_h.empty())
-      // ;
-      g_main_loop().attach<database_task_update>(k_h);
-  }
-  {
-    std::vector<entt::handle> k_h{};
-    std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(k_h),
-                 [](const entt::handle& in_handle) {
-                   return in_handle.get<database>().status_ == database::status::need_delete;
-                 });
-    if (!k_h.empty())
-      // ;
-      g_main_loop().attach<database_task_delete>(k_h);
-  }
+  std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(p_i->need_save),
+               [](const entt::handle& in_handle) {
+                 auto&& k_data = in_handle.get<database>();
+                 return k_data.status_ == database::status::need_save && !k_data.is_install();
+               });
+
+  std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(p_i->need_updata),
+               [](const entt::handle& in_handle) {
+                 auto&& k_data = in_handle.get<database>();
+                 return k_data.status_ == database::status::need_save && k_data.is_install();
+               });
+
+  std::copy_if(k_handle_list.begin(), k_handle_list.end(), std::back_inserter(p_i->need_delete),
+               [](const entt::handle& in_handle) {
+                 return in_handle.get<database>().status_ == database::status::need_delete;
+               });
   k_obs.clear();
 }
 }  // namespace doodle
