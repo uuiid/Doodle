@@ -453,4 +453,8 @@
  * @li maya序列化json更新
  * @li 写入配置文件时机更新
  * @li 最近添加项目设置更新
+ * 
+ * @subsubsection updata_log_332 版本3.3.2
+ * @li 添加自动项目信号和回调
+ * @li 更改maya名称空间寻找方案,更加优秀
  */
