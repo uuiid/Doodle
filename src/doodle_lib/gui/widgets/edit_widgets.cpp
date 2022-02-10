@@ -190,13 +190,7 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-  assets_edit p_ass_edit;
-  season_edit p_eason_edit;
-  episodes_edit p_eps_edit;
-  shot_edit p_shot_edit;
-  assets_file_edit p_ass_file_edit;
-
-  class gui_cache {
+   class gui_cache {
    public:
     explicit gui_cache(std::string in_name,
                        std::unique_ptr<gui::base_edit> in_edit)
@@ -230,9 +224,6 @@ void edit_widgets::init() {
                           in_edit.edit->init(in);
                         });
                       });
-  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([]() {
-    DOODLE_LOG_INFO("save");
-  });
 }
 void edit_widgets::succeeded() {
   g_reg()->unset<edit_widgets &>();
