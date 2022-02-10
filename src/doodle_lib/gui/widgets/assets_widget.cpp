@@ -48,7 +48,7 @@ class assets_widget::impl {
   assets_widget* self;
 
   bool only_rand{false};
-  std::vector<std::unique_ptr<details_assets_widget_n::filter_base>> filter_list;
+  std::vector<std::unique_ptr<gui::filter_base>> filter_list;
 
   impl(assets_widget* in)
       : self(in),
@@ -352,64 +352,48 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
                                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                                    ImGuiTreeNodeFlags_SpanAvailWidth};
 
-class season_filter : public details_assets_widget_n::filter_base {
- public:
-  season p_season;
-  explicit season_filter(season in_season){};
-  bool operator()(const entt::handle& in) const override;
-};
-class episodes_filter : public details_assets_widget_n::filter_base {
- public:
-  episodes p_episodes;
-  explicit episodes_filter(episodes in_eps){};
-  bool operator()(const entt::handle& in) const override;
-};
-
-class shot_filter : public details_assets_widget_n::filter_base {
- public:
-  shot p_shot;
-  explicit shot_filter(shot in_shot){};
-  bool operator()(const entt::handle& in) const override;
-};
-
-class path_filter : public details_assets_widget_n::filter_base {
+class path_filter : public gui::filter_base {
  public:
   FSys::path p_assets;
   explicit path_filter(FSys::path in_assets){};
-  bool operator()(const entt::handle& in) const override;
+  bool operator()(const entt::handle& in) const override{
+
+  };
 };
 
-class time_filter : public details_assets_widget_n::filter_base {
+class time_filter : public gui::filter_base {
  public:
   explicit time_filter(chrono::sys_time_pos in_begin, chrono::sys_time_pos in_end){};
-  bool operator()(const entt::handle& in) const override;
+  bool operator()(const entt::handle& in) const override{
+
+  };
 };
 
-class season_filter_factory : public details_assets_widget_n::filter_factory_base {
-  std::unique_ptr<details_assets_widget_n::filter_base> make_filter_() override;
+class season_filter_factory : public gui::filter_factory_base {
+  std::unique_ptr<gui::filter_base> make_filter_() override;
 
  public:
 };
-class episodes_filter_factory : public details_assets_widget_n::filter_factory_base {
-  std::unique_ptr<details_assets_widget_n::filter_base> make_filter_() override;
-
- public:
-};
-
-class shot_filter_factory : public details_assets_widget_n::filter_factory_base {
-  std::unique_ptr<details_assets_widget_n::filter_base> make_filter_() override;
+class episodes_filter_factory : public gui::filter_factory_base {
+  std::unique_ptr<gui::filter_base> make_filter_() override;
 
  public:
 };
 
-class assets_filter_factory : public details_assets_widget_n::filter_factory_base {
-  std::unique_ptr<details_assets_widget_n::filter_base> make_filter_() override;
+class shot_filter_factory : public gui::filter_factory_base {
+  std::unique_ptr<gui::filter_base> make_filter_() override;
 
  public:
 };
 
-class time_filter_factory : public details_assets_widget_n::filter_factory_base {
-  std::unique_ptr<details_assets_widget_n::filter_base> make_filter_() override;
+class assets_filter_factory : public gui::filter_factory_base {
+  std::unique_ptr<gui::filter_base> make_filter_() override;
+
+ public:
+};
+
+class time_filter_factory : public gui::filter_factory_base {
+  std::unique_ptr<gui::filter_base> make_filter_() override;
 
  public:
 };

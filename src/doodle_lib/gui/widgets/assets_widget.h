@@ -9,6 +9,9 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 namespace details_assets_widget_n {
+}  // namespace details_assets_widget_n
+
+namespace gui {
 class DOODLELIB_API filter_base {
  public:
   virtual bool operator()(const entt::handle& in) const = 0;
@@ -22,7 +25,17 @@ class DOODLELIB_API filter_factory_base {
   virtual bool render() = 0;
   std::unique_ptr<filter_base> make_filter();
 };
-}  // namespace details_assets_widget_n
+
+template <class T>
+class filter : public filter_base {
+ public:
+  const T p_data;
+  explicit filter(T in_t) : p_data(std::move(in_t)){};
+  bool operator()(const entt::handle& in) const override {
+    return in.all_of<T>() && in.get<T>() == p_data;
+  }
+};
+}  // namespace gui
 
 /**
  * @brief 资产显示树
