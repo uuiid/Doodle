@@ -322,7 +322,7 @@ void edit_widgets::add_handle() {
                       in.destroy();
                     } else {
                       in.emplace_or_replace<database>();
-                      in.patch<database>(database::save{});
+                      in.patch<database>(database::save);
                     }
                   });
     boost::remove_erase_if(p_i->add_handles,

@@ -137,7 +137,7 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
         return;
       auto& k_data               = p_i->create_handle.back();
       k_data.emplace<database>() = p_i->list.back();
-      k_data.patch<database>(database::sync{});
+      k_data.patch<database>(database::sync);
 
       g_reg()->ctx<process_message>().progress_step({1, p_i->size});
 
@@ -320,7 +320,7 @@ void database_task_install::install_db() {
     in.patch<database>([&](database& in) {
       in.set_id(id);
     });
-    in.patch<database>(database::sync{});
+    in.patch<database>(database::sync);
   }
 }
 database_task_install::database_task_install(

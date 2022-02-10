@@ -122,7 +122,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     g_main_loop()
         .attach<screenshot_widget>(in_)
         .then<one_process_t>([=]() {
-          in_.patch<database>(database::save{});
+          in_.patch<database>(database::save);
         });
   }
 }

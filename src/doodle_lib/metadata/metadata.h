@@ -138,30 +138,35 @@ class DOODLELIB_API database {
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);
 
-  class DOODLELIB_API save {
+  class DOODLELIB_API fun_save_ {
    public:
     void operator()(database &in) {
       in.status_ = status::need_save;
     }
   };
-  class DOODLELIB_API delete_ {
+  class DOODLELIB_API fun_delete_ {
    public:
     void operator()(database &in) {
       in.status_ = status::need_delete;
     }
   };
-  class DOODLELIB_API load {
+  class DOODLELIB_API fun_load_ {
    public:
     void operator()(database &in) {
       in.status_ = status::need_load;
     }
   };
-  class DOODLELIB_API sync {
+  class DOODLELIB_API fun_sync_ {
    public:
     void operator()(database &in) {
       in.status_ = status::is_sync;
     }
   };
+
+  constexpr const static fun_save_ save{};
+  constexpr const static fun_delete_ delete_{};
+  constexpr const static fun_load_ load{};
+  constexpr const static fun_sync_ sync{};
 };
 
 void from_json(const nlohmann::json &j, database &p);
