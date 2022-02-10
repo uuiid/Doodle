@@ -110,7 +110,7 @@ void screenshot_widget::update(chrono::duration<chrono::system_clock::rep, chron
                         5.f);
         }
 
-        if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_Escape))) {
+        if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
           imgui::CloseCurrentPopup();
           this->fail();
         }
