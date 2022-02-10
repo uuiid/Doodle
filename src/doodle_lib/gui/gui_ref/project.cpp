@@ -32,8 +32,7 @@ void project_edit::init_(const entt::handle& in) {
   p_i->cloth_config_path = p_i->cloth_config.vfx_cloth_sim_path.generic_string();
 }
 void project_edit::save_(const entt::handle& in) const {
-  in.emplace_or_replace<project>(p_i->p_prj);
-  in.emplace_or_replace<project::cloth_config>(p_i->cloth_config);
+  in.emplace_or_replace<project>(p_i->p_prj); 
   g_reg()->set<project>(in.get<project>());
 }
 void project_edit::render(const entt::handle& in) {
@@ -50,12 +49,14 @@ void project_edit::render(const entt::handle& in) {
           in.patch<project::cloth_config>([&](project::cloth_config& in) {
             in.vfx_cloth_sim_path = p_i->cloth_config_path;
           });
+          is_modify = true;
         }
 
         if (imgui::InputText("导出节点", &(p_i->cloth_config.export_group))) {
           in.patch<project::cloth_config>([&](project::cloth_config& in) {
             in.export_group = p_i->cloth_config.export_group;
           });
+          is_modify = true;
         }
       };
 }
