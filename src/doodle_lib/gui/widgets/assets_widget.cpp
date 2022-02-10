@@ -356,8 +356,8 @@ class path_filter : public gui::filter_base {
  public:
   FSys::path p_assets;
   explicit path_filter(FSys::path in_assets){};
-  bool operator()(const entt::handle& in) const override{
-
+  bool operator()(const entt::handle& in) const override {
+    return in.all_of<assets>() && (in.get<assets>().get_path() > p_assets);
   };
 };
 
