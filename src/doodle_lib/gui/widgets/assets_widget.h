@@ -14,7 +14,11 @@ class DOODLELIB_API filter_base {
   virtual bool operator()(const entt::handle& in) const = 0;
 };
 class DOODLELIB_API filter_factory_base {
+ protected:
+  virtual std::unique_ptr<filter_base> make_filter_() = 0;
+
  public:
+  entt::observer p_obs;
   virtual bool render() = 0;
   std::unique_ptr<filter_base> make_filter();
 };
