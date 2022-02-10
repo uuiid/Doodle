@@ -27,6 +27,7 @@
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/gui/widgets/project_edit.h>
+#include <doodle_lib/core/core_sig.h>
 
 namespace doodle {
 class main_menu_bar::impl {
@@ -79,9 +80,10 @@ void main_menu_bar::menu_file() {
   };
 
   ImGui::Separator();
-  
+
   if (dear::MenuItem("调试"s, "Ctrl+S"))
-    DOODLE_LOG_INFO("save");
+    g_reg()->ctx<core_sig>().save();
+
   ImGui::Separator();
   dear::MenuItem("调试"s, &p_i->p_debug_show);
   dear::MenuItem("样式设置"s, &p_i->p_style_show);
