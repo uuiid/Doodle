@@ -129,7 +129,8 @@ bool reference_file::replace_sim_assets_file() {
   }
 
   chick_mobject();
-  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "缺失引用");
+
+  chick_true<doodle_error>(this->find_ref_node(), DOODLE_LOC, "缺失引用");
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -469,6 +470,9 @@ bool reference_file::set_namespace(const string &in_namespace) {
 }
 bool reference_file::find_ref_node() {
   chick_mobject();
+  if (!p_m_object.isNull())
+    return true;
+
   MStatus k_s;
   MFnReference k_file;
   DOODLE_LOG_INFO("寻找名称空间 {} 的引用", file_namespace);
