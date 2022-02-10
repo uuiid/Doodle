@@ -266,7 +266,7 @@ class app;
 class program_options;
 class logger_ctrl;
 class comm_video;
-
+class short_cut;
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;

@@ -11,6 +11,7 @@
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/platform/win/drop_manager.h>
+#include <doodle_lib/long_task/short_cut.h>
 
 // Helper functions
 #include <d3d11.h>
@@ -266,7 +267,8 @@ void app::load_back_end() {
         core_set_init{}.init_default_project();
       })
       .then<one_process_t>([]() {
-        g_main_loop().template attach<database_task_obs>();
+        g_main_loop().attach<database_task_obs>();
+        g_main_loop().attach<short_cut>();
       });
 }
 
