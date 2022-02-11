@@ -243,7 +243,7 @@ void edit_widgets::edit_handle() {
   /// @brief 资产编辑
   boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
     ImGui::SetNextItemOpen(true);
-    dear::TreeNode{in_edit.name.c_str()} && [&]() {
+    dear::TreeNode{in_edit.name_id.c_str()} && [&]() {
       in_edit.data->render(p_i->p_h);
     };
     in_edit.data->save(p_i->p_h);
