@@ -16,6 +16,7 @@
 #include <gui/gui_ref/ref_base.h>
 
 namespace doodle {
+#ifdef DOODLE_DEPRECATED
 class assets_widget::impl {
  public:
   static ImGuiTreeNodeFlags base_flags;
@@ -354,6 +355,7 @@ class assets_widget::impl {
 ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
                                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                                    ImGuiTreeNodeFlags_SpanAvailWidth};
+#endif
 
 namespace gui {
 std::unique_ptr<filter_base> filter_factory_base::make_filter() {
@@ -412,11 +414,12 @@ class time_filter : public gui::filter_base {
 
 class season_filter_factory : public gui::filter_factory_base {
  public:
-  using gui_cache = gui::details::gui_cache<season>;
+  using data_type = season;
+  using gui_cache = gui::details::gui_cache<data_type>;
 
   std::unique_ptr<gui::filter_base> make_filter_() override {
     if (p_cur_select) {
-      return std::make_unique<gui::filter<season>>(p_cur_select->data);
+      return std::make_unique<gui::filter<data_type>>(p_cur_select->data);
     } else {
       return {};
     }
@@ -425,7 +428,7 @@ class season_filter_factory : public gui::filter_factory_base {
   bool refresh_() {
     for (auto&& i : p_obs) {
       auto k_h = make_handle();
-      p_edit.emplace_back(k_h.get<season>());
+      p_edit.emplace_back(k_h.get<data_type>());
     }
     boost::unique_erase(boost::sort(p_edit));
   }
@@ -447,25 +450,114 @@ class season_filter_factory : public gui::filter_factory_base {
     };
   }
 };
+
 class episodes_filter_factory : public gui::filter_factory_base {
+ public:
+  using data_type = episodes;
+  using gui_cache = gui::details::gui_cache<data_type>;
+
   std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (p_cur_select) {
+      return std::make_unique<gui::filter<data_type>>(p_cur_select->data);
+    } else {
+      return {};
+    }
+  }
+
+  bool refresh_() {
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle();
+      p_edit.emplace_back(k_h.get<data_type>());
+    }
+    boost::unique_erase(boost::sort(p_edit));
   }
 
  public:
+  std::vector<gui_cache> p_edit;
+  gui_cache* p_cur_select;
+
+  std::string select_name{"null"};
+
+  bool render() {
+    dear::Combo{"集数", select_name.c_str()} && [&]() {
+      for (auto&& i : p_edit) {
+        if (ImGui::Selectable(i.name_id.c_str())) {
+          select_name  = i.name;
+          p_cur_select = &i;
+        }
+      }
+    };
+  }
 };
 
 class shot_filter_factory : public gui::filter_factory_base {
+ public:
+  using data_type = shot;
+  using gui_cache = gui::details::gui_cache<data_type>;
+
   std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (p_cur_select) {
+      return std::make_unique<gui::filter<data_type>>(p_cur_select->data);
+    } else {
+      return {};
+    }
+  }
+
+  bool refresh_() {
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle();
+      p_edit.emplace_back(k_h.get<data_type>());
+    }
+    boost::unique_erase(boost::sort(p_edit));
   }
 
  public:
+  std::vector<gui_cache> p_edit;
+  gui_cache* p_cur_select;
+
+  std::string select_name{"null"};
+
+  bool render() {
+    dear::Combo{"镜头", select_name.c_str()} && [&]() {
+      for (auto&& i : p_edit) {
+        if (ImGui::Selectable(i.name_id.c_str())) {
+          select_name  = i.name;
+          p_cur_select = &i;
+        }
+      }
+    };
+  }
 };
 
 class assets_filter_factory : public gui::filter_factory_base {
+ public:
+  using data_type = assets;
+  using gui_cache = gui::details::gui_cache<FSys::path>;
+
   std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (p_cur_select) {
+      return std::make_unique<path_filter>(p_cur_select->data);
+    } else {
+      return {};
+    }
+  }
+
+  bool refresh_() {
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle();
+      p_edit.emplace_back(k_h.get<data_type>());
+    }
+    boost::unique_erase(boost::sort(p_edit));
   }
 
  public:
+  std::vector<gui_cache> p_edit;
+  gui_cache* p_cur_select;
+
+  std::string select_name{"null"};
+
+  bool render() {
+  }
 };
 
 class time_filter_factory : public gui::filter_factory_base {
@@ -475,17 +567,29 @@ class time_filter_factory : public gui::filter_factory_base {
  public:
 };
 
+class assets_widget::impl {
+ public:
+  bool only_rand{false};
+  std::vector<boost::signals2::scoped_connection> p_conns;
+};
+
 assets_widget::assets_widget()
-    : p_impl(std::make_unique<impl>(this)) {
+    : p_impl(std::make_unique<impl>()) {
 }
 assets_widget::~assets_widget() = default;
 
 void assets_widget::init() {
   g_reg()->set<assets_widget&>(*this);
-  g_reg()->ctx<core_sig>().project_begin_open.connect(
-      [&](const std::filesystem::path&) { p_impl->only_rand = true; });
-  g_reg()->ctx<core_sig>().project_end_open.connect(
-      [&](const entt::handle&, const doodle::project&) { p_impl->only_rand = false; });
+  p_impl->p_conns.emplace_back(
+      g_reg()->ctx<core_sig>().project_begin_open.connect(
+          [&](const std::filesystem::path&) {
+            p_impl->only_rand = true;
+          }));
+  p_impl->p_conns.emplace_back(
+      g_reg()->ctx<core_sig>().project_end_open.connect(
+          [&](const entt::handle&, const doodle::project&) {
+            p_impl->only_rand = false;
+          }));
 }
 void assets_widget::succeeded() {
 }
