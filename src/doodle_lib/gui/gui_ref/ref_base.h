@@ -42,19 +42,26 @@ template <class T, class BaseType = gui_cache_null_data>
 class gui_cache : public BaseType {
  public:
   using base_type = BaseType;
-  std::string name;
+  std::string name_id;
+  std::string_view name;
   T data;
   template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, const IN_T &in_data)
       : base_type(),
-        name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
-        data(in_data){};
+        name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+        data(in_data) {
+    std::string_view k_v{name_id};
+    name = k_v.substr(0, k_v.find_last_of("##"));
+  };
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, IN_T &in_data)
       : base_type(),
-        name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
-        data(std::move(in_data)){};
+        name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+        data(std::move(in_data)) {
+    std::string_view k_v{name_id};
+    name = k_v.substr(0, k_v.find_last_of("##"));
+  };
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(IN_T &in_data)
