@@ -27,17 +27,26 @@ class base_edit {
 };
 
 namespace details {
+/// , std::enable_if_t<!doodle::details::is_smart_pointer<T>::value, bool> = true
 template <class T>
 class gui_cache {
  public:
-  T data;
   std::string name;
-  explicit gui_cache(const T &in_data, const std::string &in_name)
-      : data(in_data),
-        name(fmt::format("{}##{}", in_name, fmt::ptr(this))){};
+  T data;
+  template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
+  explicit gui_cache(const std::string &in_name, const IN_T &in_data)
+      : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+        data(in_data){};
 
-  explicit gui_cache(const T &in_data)
-      : gui_cache(in_data, fmt::to_string(in_data)) {}
+
+  template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
+  explicit gui_cache(const std::string &in_name, const IN_T &in_data)
+      : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+        data(std::move(in_data)){};
+
+  template <class IN_T>
+  explicit gui_cache(const IN_T &in_data)
+      : gui_cache(fmt::to_string(in_data), in_data) {}
 
   bool operator<(const gui_cache &in_rhs) const {
     return data < in_rhs.data;
