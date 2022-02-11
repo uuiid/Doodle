@@ -28,19 +28,27 @@ class base_edit {
 
 namespace details {
 /// , std::enable_if_t<!doodle::details::is_smart_pointer<T>::value, bool> = true
-template <class T>
-class gui_cache {
+
+class gui_cache_null_data {
  public:
+};
+
+template <class T, class BaseType = gui_cache_null_data>
+class gui_cache : public BaseType {
+ public:
+  using base_type = BaseType;
   std::string name;
   T data;
   template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, const IN_T &in_data)
-      : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+      : base_type(),
+        name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(in_data){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, IN_T &in_data)
-      : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+      : base_type(),
+        name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(std::move(in_data)){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
