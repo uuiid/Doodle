@@ -51,7 +51,7 @@ class gui_cache : public BaseType {
         name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(in_data) {
     std::string_view k_v{name_id};
-    name = k_v.substr(0, k_v.find_last_of("##"));
+    name = k_v.substr(0, in_name.size());
   };
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
@@ -60,7 +60,7 @@ class gui_cache : public BaseType {
         name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(std::move(in_data)) {
     std::string_view k_v{name_id};
-    name = k_v.substr(0, k_v.find_last_of("##"));
+    name = k_v.substr(0, in_name.size());
   };
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
