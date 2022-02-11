@@ -8,8 +8,6 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
-namespace details_assets_widget_n {
-}  // namespace details_assets_widget_n
 
 namespace gui {
 class DOODLELIB_API filter_base {
