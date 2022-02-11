@@ -8,13 +8,12 @@
 
 namespace doodle {
 class DOODLELIB_API assets {
-  FSys::path p_path;
-
   void set_path_component();
 
   std::vector<string> p_component;
 
  public:
+  FSys::path p_path;
   class DOODLELIB_API set_path_fun {
    public:
     std::vector<std::string>& p_comm;
@@ -45,7 +44,7 @@ class DOODLELIB_API assets {
   bool operator>=(const assets& in_rhs) const;
   bool operator==(const assets& in_rhs) const;
   bool operator!=(const assets& in_rhs) const;
- 
+
  private:
   friend void to_json(nlohmann::json& j, const assets& p) {
     j["path"]          = p.p_path;
@@ -58,3 +57,14 @@ class DOODLELIB_API assets {
   }
 };
 }  // namespace doodle
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::assets> : fmt::formatter<std::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::assets& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<std::string_view>::format(
+        in_.p_path.generic_string(),
+        ctx);
+  }
+};
+}  // namespace fmt

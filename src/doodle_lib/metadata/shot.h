@@ -66,12 +66,17 @@ class DOODLELIB_API shot {
 
 namespace fmt {
 template <>
-struct fmt::formatter<::doodle::shot> : fmt::formatter<fmt::string_view> {
+struct fmt::formatter<::doodle::shot> : fmt::formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const ::doodle::shot &in_, FormatContext &ctx) -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.str(),
+    format_to(ctx.out(), "sc_");
+
+    formatter<std::int64_t>::format(
+        in_.p_shot,
         ctx);
+    if (in_.p_shot_enum != doodle::shot::shot_ab_enum::None)
+      format_to(ctx.out(), magic_enum::enum_name(in_.p_shot_enum));
+    return ctx.out();
   }
 };
 }  // namespace fmt

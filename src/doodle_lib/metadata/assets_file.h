@@ -38,7 +38,7 @@ class DOODLELIB_API assets_file {
   explicit assets_file(FSys::path in_path,
                        std::string in_name,
                        std::uint64_t in_version);
-  explicit assets_file(FSys::path in_path );
+  explicit assets_file(FSys::path in_path);
 
   DOODLE_MOVE(assets_file);
 
@@ -87,3 +87,14 @@ class DOODLELIB_API assets_file {
 };
 
 }  // namespace doodle
+namespace fmt {
+template <>
+struct fmt::formatter<::doodle::assets_file> : fmt::formatter<std::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::assets_file& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<std::string_view>::format(
+        in_.p_name,
+        ctx);
+  }
+};
+}  // namespace fmt
