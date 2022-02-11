@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/gui/gui_ref/ref_base.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -15,17 +16,62 @@ class DOODLELIB_API filter_base {
   virtual bool operator()(const entt::handle& in) const = 0;
 };
 class DOODLELIB_API filter_factory_base {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+  void connection_sig();
+
  protected:
   virtual std::unique_ptr<filter_base> make_filter_() = 0;
-  virtual bool refresh_()                             = 0;
-  virtual bool connection_sig_()                      = 0;
+  virtual void refresh_()                             = 0;
+  virtual void init()                                 = 0;
+
+  bool is_disabled;
 
  public:
+  filter_factory_base();
+  ~filter_factory_base();
   entt::observer p_obs;
-  virtual bool connection_sig();
+  bool is_edit;
   virtual bool render() = 0;
-  virtual bool refresh();
+  virtual void refresh();
   std::unique_ptr<filter_base> make_filter();
+};
+template <class T>
+class filter_factory_t : public filter_factory_base {
+ public:
+  using data_type = T;
+  using gui_cache = details::gui_cache<data_type>;
+
+  gui_cache p_cur_select;
+  std::string select_name;
+  std::vector<gui_cache> p_edit;
+
+ protected:
+  std::unique_ptr<filter_base> make_filter_() override {
+    return std::make_unique<filter<data_type>>(p_cur_select.data);
+  }
+  void init() override {
+    for (auto&& [e, i] : g_reg()->view<data_type>().each()) {
+      p_edit.emplace_back(i);
+    }
+    select_name.clear();
+  }
+  void refresh_() override {
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle();
+      p_edit.emplace_back(k_h.get<data_type>());
+    }
+    boost::unique_erase(boost::sort(p_edit));
+  }
+
+ public:
+  filter_factory_t()
+      : p_cur_select(data_type{}),
+        select_name(p_cur_select.name),
+        p_edit() {
+    p_obs.connect(*g_reg(), entt::collector.update<data_type>());
+  }
 };
 
 template <class T>
