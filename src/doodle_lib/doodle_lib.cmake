@@ -54,8 +54,7 @@ set(
         gui/widgets/project_edit.h
 
         lib_warp/WinReg.hpp
-        lib_warp/boost_locale_warp.h
-        lib_warp/boost_serialization_warp.h
+        lib_warp/boost_locale_warp.h 
         lib_warp/boost_uuid_warp.h
         lib_warp/cache.hpp
         lib_warp/cache_policy.hpp
