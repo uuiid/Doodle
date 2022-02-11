@@ -12,6 +12,9 @@
 
 #include <boost/hana/ext/std.hpp>
 #include <boost/range/any_range.hpp>
+
+#include <gui/gui_ref/ref_base.h>
+
 namespace doodle {
 class assets_widget::impl {
  public:
@@ -410,20 +413,27 @@ class time_filter : public gui::filter_base {
 class season_filter_factory : public gui::filter_factory_base {
   std::unique_ptr<gui::filter_base> make_filter_() override {
   }
+
   bool refresh_() {
     for (auto&& i : p_obs) {
       auto k_h = make_handle();
-      p_season_list.emplace_back(k_h.get<season>().get_season());
+      p_edit.emplace_back(k_h.get<season>());
     }
-    boost::unique_erase(boost::sort(p_season_list));
+    boost::unique_erase(boost::sort(p_edit));
   }
 
  public:
-  std::vector<std::int32_t> p_season_list;
-  std::string show_name;
+  using gui_cache = gui::details::gui_cache<season, gui::details::gui_cache_select>;
+  std::vector<gui_cache> p_edit;
+
+  std::string select_name;
+
   bool render() {
-    dear::Combo{"季数", show_name.c_str()} && [&]() {
-      
+    dear::Combo{"季数", select_name.c_str()} && [&]() {
+      for (auto&& i : p_edit) {
+        if (ImGui::Selectable(i.name_id.c_str(), &i.select))
+          select_name = i.name;
+      }
     };
   }
 };
