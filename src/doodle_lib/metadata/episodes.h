@@ -15,7 +15,6 @@ class DOODLELIB_API episodes {
 
   [[nodiscard]] std::string str() const;
 
- 
   bool operator<(const episodes &in_rhs) const;
   bool operator>(const episodes &in_rhs) const;
   bool operator<=(const episodes &in_rhs) const;
@@ -33,7 +32,6 @@ class DOODLELIB_API episodes {
   };
 
  private:
-
   friend void to_json(nlohmann::json &j, const episodes &p) {
     j["episodes"] = p.p_episodes;
   }
@@ -42,18 +40,17 @@ class DOODLELIB_API episodes {
   }
 };
 
-
 }  // namespace doodle
 
 namespace fmt {
 template <>
-struct fmt::formatter<::doodle::episodes> : fmt::formatter<fmt::string_view> {
+struct fmt::formatter<::doodle::episodes> : fmt::formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes &in_, FormatContext &ctx) -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.str(),
+    format_to(ctx.out(), "ep_");
+    return formatter<std::int64_t>::format(
+        in_.p_episodes,
         ctx);
   }
 };
 }  // namespace fmt
-
