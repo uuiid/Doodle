@@ -377,6 +377,19 @@ class path_filter : public gui::filter_base {
 };
 
 class time_filter : public gui::filter_base {
+  class fun_min {
+   public:
+    time_filter operator()(chrono::sys_time_pos in_time) {
+      return time_filter{std::move(in_time), chrono::sys_time_pos::max()};
+    }
+  };
+  class fun_max {
+   public:
+    time_filter operator()(chrono::sys_time_pos in_time) {
+      return time_filter{chrono::sys_time_pos::min(), std::move(in_time)};
+    }
+  };
+
  public:
   chrono::sys_time_pos p_begin;
   chrono::sys_time_pos p_end;
@@ -386,7 +399,9 @@ class time_filter : public gui::filter_base {
       : p_begin(std::move(in_begin)),
         p_end(std::move(in_end)){};
 
-  
+  constexpr const static fun_min set_for_min{};
+  constexpr const static fun_max set_for_max{};
+
   bool operator()(const entt::handle& in) const override{
 
   };
