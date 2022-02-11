@@ -90,6 +90,14 @@ create table if not exists doodle_info
     version_minor integer not null
 );
 )");
+  /// @brief 创建触发器
+  k_conn->execute(R"(
+create trigger UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
+    ON metadatatab
+begin
+    update metadatatab set update_time =CURRENT_TIMESTAMP where id = old.id;
+end;
+)");
   doodle_info::doodle_info l_info{};
   if (((*k_conn)(sqlpp::select(all_of(l_info)).from(l_info).unconditionally())).empty())
     (*k_conn)(sqlpp::insert_into(l_info)
