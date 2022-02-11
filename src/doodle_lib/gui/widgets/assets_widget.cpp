@@ -408,30 +408,49 @@ class time_filter : public gui::filter_base {
 };
 
 class season_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override;
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+  }
+  bool refresh_() {
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle();
+      p_season_list.emplace_back(k_h.get<season>().get_season());
+    }
+    boost::unique_erase(boost::sort(p_season_list));
+  }
 
  public:
+  std::vector<std::int32_t> p_season_list;
+  std::string show_name;
+  bool render() {
+    dear::Combo{"季数", show_name.c_str()} && [&]() {
+      
+    };
+  }
 };
 class episodes_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override;
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+  }
 
  public:
 };
 
 class shot_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override;
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+  }
 
  public:
 };
 
 class assets_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override;
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+  }
 
  public:
 };
 
 class time_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override;
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+  }
 
  public:
 };
