@@ -115,10 +115,8 @@ bool is_class(const RT &in_rt) {
   }
 }
 
-template <class less_type>
-bool less(const less_type &in_r, const less_type &in_l) {
-  return *in_r < in_l;
-};
+/// to boost::less_pointees_t;
+
 }  // namespace details
 
 namespace chrono {
@@ -254,7 +252,7 @@ class time_point_wrap;
 class comment;
 class rpc_server_handle;
 class doodle_lib;
-class thread_pool; 
+class thread_pool;
 class season;
 class setting_windows;
 class comment_vector;
@@ -271,24 +269,24 @@ class opencv_read_player;
 class opencv_player_widget;
 class image_icon;
 
-using handle_list           = std::vector<entt::handle>;
-using logger_ctr_ptr        = std::shared_ptr<logger_ctrl>;
-using program_options_ptr   = std::shared_ptr<program_options>;
-using conn_ptr              = std::unique_ptr<sqlpp::sqlite3::connection>;
-using string_list           = std::vector<std::string>;
-using string_matrix2        = std::vector<string_list>;
-using string_matrix2_ptr    = std::shared_ptr<string_matrix2>;
-using string_list_ptr       = std::shared_ptr<string_list>;
-using season_ref            = std::reference_wrapper<season>;
-using project_ref           = std::reference_wrapper<project>;
-using episodes_ref          = std::reference_wrapper<episodes>;
-using shot_ref              = std::reference_wrapper<shot>;
-using assets_ref            = std::reference_wrapper<assets>;
-using assets_file_ref       = std::reference_wrapper<assets_file>;
-using command_ptr           = std::shared_ptr<command_base>;
-using doodle_lib_ptr        = std::shared_ptr<doodle_lib>;
-using thread_pool_ptr       = std::shared_ptr<thread_pool>; 
-using registry_ptr          = std::shared_ptr<entt::registry>;
+using handle_list         = std::vector<entt::handle>;
+using logger_ctr_ptr      = std::shared_ptr<logger_ctrl>;
+using program_options_ptr = std::shared_ptr<program_options>;
+using conn_ptr            = std::unique_ptr<sqlpp::sqlite3::connection>;
+using string_list         = std::vector<std::string>;
+using string_matrix2      = std::vector<string_list>;
+using string_matrix2_ptr  = std::shared_ptr<string_matrix2>;
+using string_list_ptr     = std::shared_ptr<string_list>;
+using season_ref          = std::reference_wrapper<season>;
+using project_ref         = std::reference_wrapper<project>;
+using episodes_ref        = std::reference_wrapper<episodes>;
+using shot_ref            = std::reference_wrapper<shot>;
+using assets_ref          = std::reference_wrapper<assets>;
+using assets_file_ref     = std::reference_wrapper<assets_file>;
+using command_ptr         = std::shared_ptr<command_base>;
+using doodle_lib_ptr      = std::shared_ptr<doodle_lib>;
+using thread_pool_ptr     = std::shared_ptr<thread_pool>;
+using registry_ptr        = std::shared_ptr<entt::registry>;
 class time_widget;
 
 using uuid = boost::uuids::uuid;
@@ -384,18 +382,18 @@ namespace gui {
 template <class T>
 struct adl_render {};
 
-//template <class T>
-//bool render(const entt::handle &in_handle) {
-//  if (in_handle.template any_of<T>()) {
-//    if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
-//      return adl_render<T>::render(in_handle, in_handle.template get<T>());
-//    else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
-//      return adl_render<T>::render(in_handle);
-//    else
-//      return adl_render<T>::render(in_handle.template get<T>());
-//  }
-//  return false;
-//};
+// template <class T>
+// bool render(const entt::handle &in_handle) {
+//   if (in_handle.template any_of<T>()) {
+//     if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
+//       return adl_render<T>::render(in_handle, in_handle.template get<T>());
+//     else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
+//       return adl_render<T>::render(in_handle);
+//     else
+//       return adl_render<T>::render(in_handle.template get<T>());
+//   }
+//   return false;
+// };
 }  // namespace gui
 
 namespace details {
