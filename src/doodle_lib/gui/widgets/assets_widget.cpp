@@ -480,14 +480,6 @@ assets_widget::assets_widget()
 }
 assets_widget::~assets_widget() = default;
 
-void assets_widget::set_metadata(const entt::entity& in_ptr) {
-  auto k_h = make_handle(in_ptr);
-  chick_true<doodle_error>(k_h.all_of<database>(),
-                           DOODLE_LOC,
-                           "缺失组件");
-
-  p_impl->p_root = k_h;
-}
 void assets_widget::init() {
   g_reg()->set<assets_widget&>(*this);
   g_reg()->ctx<core_sig>().project_begin_open.connect(
