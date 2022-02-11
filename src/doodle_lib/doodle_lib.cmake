@@ -11,8 +11,7 @@ set(
         gui/open_file_dialog.h
         core/program_options.h
         core/static_value.h
-        core/tools_setting.h
-        core/tree_container.h
+        core/tools_setting.h 
         core/ue4_setting.h
         core/util.h
         core/image_loader.h
@@ -123,8 +122,7 @@ set(
         core/filesystem_extend.cpp
         gui/open_file_dialog.cpp
         core/program_options.cpp
-        core/static_value.cpp
-        core/tree_container.cpp
+        core/static_value.cpp 
         core/ue4_setting.cpp
         core/util.cpp
         core/image_loader.cpp

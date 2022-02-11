@@ -12,8 +12,7 @@
 #include <doodle_lib/gui/open_file_dialog.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/static_value.h>
-#include <doodle_lib/core/tools_setting.h>
-#include <doodle_lib/core/tree_container.h>
+#include <doodle_lib/core/tools_setting.h> 
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/core/util.h>
 #include <doodle_lib/exception/exception.h>
