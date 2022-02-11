@@ -355,7 +355,8 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
 class path_filter : public gui::filter_base {
  public:
   FSys::path p_assets;
-  explicit path_filter(FSys::path in_assets){};
+  explicit path_filter(FSys::path in_assets)
+      : p_assets(std::move(in_assets)){};
   bool operator()(const entt::handle& in) const override {
     return in.all_of<assets>() && (in.get<assets>().get_path() > p_assets);
   };
@@ -363,7 +364,15 @@ class path_filter : public gui::filter_base {
 
 class time_filter : public gui::filter_base {
  public:
-  explicit time_filter(chrono::sys_time_pos in_begin, chrono::sys_time_pos in_end){};
+  chrono::sys_time_pos p_begin;
+  chrono::sys_time_pos p_end;
+  explicit time_filter(
+      chrono::sys_time_pos in_begin,
+      chrono::sys_time_pos in_end)
+      : p_begin(std::move(in_begin)),
+        p_end(std::move(in_end)){};
+
+  
   bool operator()(const entt::handle& in) const override{
 
   };

@@ -29,7 +29,7 @@ class DOODLELIB_API filter_factory_base {
 template <class T>
 class filter : public filter_base {
  public:
-  const T p_data;
+  T p_data;
   explicit filter(T in_t) : p_data(std::move(in_t)){};
   bool operator()(const entt::handle& in) const override {
     return in.all_of<T>() && in.get<T>() == p_data;
