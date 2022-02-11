@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-#ifdef DOODLE_DEPRECATED
+#ifdef DOODLE_DIS_FUN
 class DOODLELIB_API widget_register : public details::no_copy {
  public:
   using widget_map = std::map<std::type_index, std::weak_ptr<base_widget> >;

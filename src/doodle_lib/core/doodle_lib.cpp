@@ -18,7 +18,7 @@
 #include <long_task/database_task.h>
 #include <thread_pool/long_term.h>
 
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
 #include <grpcpp/grpcpp.h>
 #endif
 #include <doodle_lib/core/core_sig.h>

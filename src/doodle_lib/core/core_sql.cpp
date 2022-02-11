@@ -5,7 +5,7 @@
 #include <doodle_lib/metadata/project.h>
 #include <sqlpp11/sqlpp11.h>
 
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
 #include <sqlpp11/mysql/mysql.h>
 #endif
 

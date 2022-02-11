@@ -8,7 +8,7 @@
 #include <ostream>
 namespace doodle {
 
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
 /**
  * 父亲负责加载孩子，在加载父亲时，孩子会同时加载完成， 这样， 父亲会知道是否加载玩成孩子
  * 在保存时，保存路径是： prjRoot /父亲的root（uuid）/孩子的（root）uuid（文件）

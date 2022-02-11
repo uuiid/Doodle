@@ -12,7 +12,7 @@
 
 #include <long_task/database_task.h>
 
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
 #include <doodle_lib/rpc/rpc_metadata_client.h>
 #include <grpcpp/grpcpp.h>
 #endif
@@ -21,10 +21,10 @@
 namespace doodle {
 
 
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
 class metadata_serialize::impl {
  public:
-#ifdef DOODLE_GRPC
+#ifdef DOODLE_DIS_FUN
   std::weak_ptr<rpc_metadata_client> p_rpcClien;
 #endif
 };

@@ -16,7 +16,7 @@
 #include <gui/gui_ref/ref_base.h>
 
 namespace doodle {
-#ifdef DOODLE_DEPRECATED
+#ifdef DOODLE_DIS_FUN
 class assets_widget::impl {
  public:
   static ImGuiTreeNodeFlags base_flags;
