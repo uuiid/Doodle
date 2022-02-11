@@ -72,12 +72,16 @@ struct adl_serializer<std::optional<T>> {
 template <>
 struct adl_serializer<boost::uuids::uuid> {
   static void to_json(json& j, const boost::uuids::uuid& in_uuid) {
-    j["uuid"] = in_uuid.data;
+    j["uuid"] = boost::uuids::to_string(in_uuid);
   }
 
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
-    auto k_arr = j["uuid"].get<std::array<std::uint8_t,boost::uuids::uuid::static_size()>>();
-    std::copy(k_arr.begin(), k_arr.end(), std::begin(in_uuid.data));
+    if (j["uuid"].is_string()) {
+      in_uuid = boost::lexical_cast<boost::uuids::uuid>(j["uuid"].get<std::string>());
+    } else {
+      auto k_arr = j["uuid"].get<std::array<std::uint8_t, boost::uuids::uuid::static_size()>>();
+      std::copy(k_arr.begin(), k_arr.end(), std::begin(in_uuid.data));
+    }
   }
 };
 
