@@ -38,13 +38,16 @@ class gui_cache {
       : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(in_data){};
 
-
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(const std::string &in_name, const IN_T &in_data)
+  explicit gui_cache(const std::string &in_name, IN_T &in_data)
       : name(fmt::format("{}##{}", in_name, fmt::ptr(this))),
         data(std::move(in_data)){};
 
-  template <class IN_T>
+  template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
+  explicit gui_cache(IN_T &in_data)
+      : gui_cache(fmt::to_string(*in_data), in_data) {}
+
+  template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const IN_T &in_data)
       : gui_cache(fmt::to_string(in_data), in_data) {}
 
