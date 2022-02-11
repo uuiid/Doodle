@@ -33,6 +33,11 @@ class gui_cache_null_data {
  public:
 };
 
+class gui_cache_select {
+ public:
+  bool select;
+};
+
 template <class T, class BaseType = gui_cache_null_data>
 class gui_cache : public BaseType {
  public:
