@@ -189,15 +189,7 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-   class gui_cache {
-   public:
-    explicit gui_cache(std::string in_name,
-                       std::unique_ptr<gui::base_edit> in_edit)
-        : name(std::move(in_name)),
-          edit(std::move(in_edit)) {}
-    std::string name;
-    std::unique_ptr<gui::base_edit> edit;
-  };
+  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::base_edit>>;
 
   std::vector<gui_cache> p_edit;
 };
@@ -220,7 +212,7 @@ void edit_widgets::init() {
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
                         boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
-                          in_edit.edit->init(in);
+                          in_edit.data->init(in);
                         });
                       });
 }
@@ -252,9 +244,9 @@ void edit_widgets::edit_handle() {
   boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
     ImGui::SetNextItemOpen(true);
     dear::TreeNode{in_edit.name.c_str()} && [&]() {
-      in_edit.edit->render(p_i->p_h);
+      in_edit.data->render(p_i->p_h);
     };
-    in_edit.edit->save(p_i->p_h);
+    in_edit.data->save(p_i->p_h);
   });
 }
 
