@@ -17,10 +17,14 @@ class DOODLELIB_API filter_base {
 class DOODLELIB_API filter_factory_base {
  protected:
   virtual std::unique_ptr<filter_base> make_filter_() = 0;
+  virtual bool refresh_()                             = 0;
+  virtual bool connection_sig_()                      = 0;
 
  public:
   entt::observer p_obs;
+  virtual bool connection_sig();
   virtual bool render() = 0;
+  virtual bool refresh();
   std::unique_ptr<filter_base> make_filter();
 };
 

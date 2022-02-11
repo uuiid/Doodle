@@ -352,6 +352,20 @@ ImGuiTreeNodeFlags assets_widget::impl::base_flags{ImGuiTreeNodeFlags_OpenOnArro
                                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                                    ImGuiTreeNodeFlags_SpanAvailWidth};
 
+namespace gui {
+std::unique_ptr<filter_base> filter_factory_base::make_filter() {
+  return make_filter_();
+}
+bool filter_factory_base::refresh() {
+  auto k_r = refresh_();
+  p_obs.clear();
+  return k_r;
+}
+bool filter_factory_base::connection_sig() {
+  return connection_sig_();
+}
+}  // namespace gui
+
 class path_filter : public gui::filter_base {
  public:
   FSys::path p_assets;
