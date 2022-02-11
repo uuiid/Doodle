@@ -411,7 +411,15 @@ class time_filter : public gui::filter_base {
 };
 
 class season_filter_factory : public gui::filter_factory_base {
+ public:
+  using gui_cache = gui::details::gui_cache<season>;
+
   std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (p_cur_select) {
+      return std::make_unique<gui::filter<season>>(p_cur_select->data);
+    } else {
+      return {};
+    }
   }
 
   bool refresh_() {
@@ -423,16 +431,18 @@ class season_filter_factory : public gui::filter_factory_base {
   }
 
  public:
-  using gui_cache = gui::details::gui_cache<season, gui::details::gui_cache_select>;
   std::vector<gui_cache> p_edit;
+  gui_cache* p_cur_select;
 
-  std::string select_name;
+  std::string select_name{"null"};
 
   bool render() {
     dear::Combo{"季数", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
-        if (ImGui::Selectable(i.name_id.c_str(), &i.select))
-          select_name = i.name;
+        if (ImGui::Selectable(i.name_id.c_str())) {
+          select_name  = i.name;
+          p_cur_select = &i;
+        }
       }
     };
   }
