@@ -90,6 +90,7 @@ create table if not exists doodle_info
     version_minor integer not null
 );
 )");
+
   /// @brief 创建触发器
   k_conn->execute(R"(
 create trigger UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
