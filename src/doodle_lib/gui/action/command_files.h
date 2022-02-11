@@ -6,7 +6,6 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/action/command.h>
-//#include <boost/hana/transform.hpp>
 
 namespace doodle {
 

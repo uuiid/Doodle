@@ -6,11 +6,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
-#include <boost/hana/experimental/printable.hpp>
-#include <boost/type_erasure/any.hpp>
-#include <boost/type_erasure/free.hpp>
-#include <boost/type_erasure/member.hpp>
-
 namespace doodle {
 template <class Panel>
 class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
