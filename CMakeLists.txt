@@ -196,11 +196,10 @@ set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_ALIASES
         "doodle_exe_file=${DOODLE_PACKAGE_NAME}"
         )
-set(DOXYGEN_EXAMPLE_PATH ${PROJECT_SOURCE_DIR}/src)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/doc
+        src
+        doc
         )
 
 #file(GLOB _DOODLE_LIST_7Z

@@ -13,6 +13,8 @@
  * <a href="file/@doodle_exe_file.msi">下载开发版安装包(  @doodle_exe_file.msi )</a> \n
  * <a href="file/@doodle_exe_file.7z">下载开发版7z存档(  @doodle_exe_file.7z )</a> \n
  *
+ * @ref doc/schedule.md "描述" \n
+ *
  * @section main_management_tool 主要窗口
  * @image html doodle_image/main_windows.jpg 主要面板 width=30%
  *
