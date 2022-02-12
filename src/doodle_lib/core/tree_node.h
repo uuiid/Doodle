@@ -4,9 +4,10 @@
 
 namespace doodle {
 
+#if 1
 namespace details {
 template <typename It>
-class iterable_adaptor final {
+class iterable_adaptor /*final*/ {
  public:
   /**
    * @brief 获取迭代器返回值
@@ -29,19 +30,19 @@ class iterable_adaptor final {
       : first{from},
         last{to} {}
 
-  [[nodiscard]] const_iterator begin() const ENTT_NOEXCEPT {
+  [[nodiscard]] iterator begin() const noexcept {
     return first;
   }
 
-  [[nodiscard]] const_iterator end() const ENTT_NOEXCEPT {
+  [[nodiscard]] iterator end() const noexcept {
     return last;
   }
 
-  [[nodiscard]] const_iterator cbegin() const ENTT_NOEXCEPT {
+  [[nodiscard]] const_iterator cbegin() const noexcept {
     return begin();
   }
 
-  [[nodiscard]] const_iterator cend() const ENTT_NOEXCEPT {
+  [[nodiscard]] const_iterator cend() const noexcept {
     return end();
   }
 
@@ -52,15 +53,17 @@ class iterable_adaptor final {
 }  // namespace details
 
 template <class T>
-class DOODLELIB_API tree_node {
+class tree_node {
  public:
   using data_type           = T;
   using data_type_ptr       = data_type*;
   using data_type_ref       = data_type&;
   using const_data_type_ref = const data_type&;
+  using child_type          = std::shared_ptr<tree_node>;
+  using child_list_type     = std::vector<std::shared_ptr<tree_node>>;
 
   tree_node* parent;
-  std::vector<std::shared_ptr<tree_node>> child;
+  child_list_type child;
   T data;
 
   struct iterator_up {
@@ -70,7 +73,7 @@ class DOODLELIB_API tree_node {
     using pointer           = data_type_ptr;  // or also value_type*
     using reference         = data_type_ref;  // or also value_type&
 
-    iterator_up(tree_node* in_ptr) : m_ptr(in_ptr) {}
+    explicit iterator_up(tree_node* in_ptr) : m_ptr(in_ptr) {}
     reference operator*() const { return m_ptr->data; };
     pointer operator->() const { return &(m_ptr->data); };
 
@@ -92,8 +95,7 @@ class DOODLELIB_API tree_node {
     tree_node m_ptr;
   };
 
-
-  tree_node(T in_data)
+  explicit tree_node(T in_data)
       : parent(),
         child(),
         data(std::move(in_data)) {}
@@ -108,17 +110,16 @@ class DOODLELIB_API tree_node {
     return {this, nullptr};
   }
 
-  details::iterable_adaptor<decltype(child)::iterator> each_child() {
+  details::iterable_adaptor<typename child_list_type::iterator> each_child() {
     return {child.begin(), child.end()};
   }
 
-  details::iterable_adaptor<decltype(child)::iterator> each_current_layer() {
+  details::iterable_adaptor<typename child_list_type::iterator> each_current_layer() {
     if (is_root())
       return {};
     else
       return {parent->child.begin(), parent->child.end()};
   }
-
 
   constexpr operator const T&() const {
     return data;
@@ -129,4 +130,5 @@ class DOODLELIB_API tree_node {
 
  private:
 };
+#endif
 }  // namespace doodle
