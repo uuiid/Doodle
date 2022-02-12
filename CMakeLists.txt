@@ -193,9 +193,12 @@ set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
 # set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
+set(DOXYGEN_QUIET YES)
+set(DOXYGEN_PROJECT_LOGO src/doodle_exe/main/icon.ico)
 set(DOXYGEN_ALIASES
         "doodle_exe_file=${DOODLE_PACKAGE_NAME}"
         )
+set(DOXYGEN_NUM_PROC_THREADS 0)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen
         src
