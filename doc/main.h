@@ -2,7 +2,6 @@
  * @mainpage doodle 工具包
  * @tableofcontents
  *
- * @ref doodle_windwos \n
  * @ref doodle_windwos_setting \n
  * @ref doodle_main_boolbox \n
  * @ref doodle_updata_log \n
