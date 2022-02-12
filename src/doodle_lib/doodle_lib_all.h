@@ -12,7 +12,6 @@
 #include <doodle_lib/gui/open_file_dialog.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/static_value.h>
-#include <doodle_lib/core/tools_setting.h> 
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/core/util.h>
 #include <doodle_lib/exception/exception.h>
@@ -40,7 +39,7 @@
 #include <doodle_lib/gui/widgets/time_widget.h>
 #include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/lib_warp/WinReg.hpp>
-#include <doodle_lib/lib_warp/boost_locale_warp.h> 
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
 #include <doodle_lib/lib_warp/cache.hpp>
 #include <doodle_lib/lib_warp/cache_policy.hpp>

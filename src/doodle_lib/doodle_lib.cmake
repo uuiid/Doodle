@@ -10,8 +10,7 @@ set(
         core/observable_container.h
         gui/open_file_dialog.h
         core/program_options.h
-        core/static_value.h
-        core/tools_setting.h 
+        core/static_value.h 
         core/ue4_setting.h
         core/util.h
         core/image_loader.h
