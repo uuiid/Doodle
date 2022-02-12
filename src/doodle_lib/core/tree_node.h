@@ -48,7 +48,7 @@ class iterable_adaptor final {
  private:
   iterator first;
   iterator last;
-}
+};
 }  // namespace details
 
 template <class T>
@@ -70,7 +70,7 @@ class DOODLELIB_API tree_node {
     using pointer           = data_type_ptr;  // or also value_type*
     using reference         = data_type_ref;  // or also value_type&
 
-    Iterator_up(tree_node* in_ptr) : m_ptr(in_ptr) {}
+    iterator_up(tree_node* in_ptr) : m_ptr(in_ptr) {}
     reference operator*() const { return m_ptr->data; };
     pointer operator->() const { return &(m_ptr->data); };
 
@@ -85,8 +85,8 @@ class DOODLELIB_API tree_node {
       return l_tmp;
     }
 
-    friend bool operator==(const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
-    friend bool operator!=(const Iterator& a, const Iterator& b) { return !(a == b); };
+    friend bool operator==(const iterator_up& a, const iterator_up& b) { return a.m_ptr == b.m_ptr; };
+    friend bool operator!=(const iterator_up& a, const iterator_up& b) { return !(a == b); };
 
    private:
     tree_node m_ptr;
