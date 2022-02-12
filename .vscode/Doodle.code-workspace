@@ -190,7 +190,7 @@
 		"editor.formatOnSaveMode": "modifications",
 		"todo-tree.regex.regexCaseSensitive": false,
 		"todo-tree.regex.regex": "((@|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
-		"todo-tree.tree.showBadges": true,
+		"todo-tree.tree.showBadges": false,
 		"markdownlint.config": {
 			"MD033": false
 		},
@@ -225,7 +225,8 @@
 			"**/external/**",
 			"**/resource/**",
 			"**/.venv/**"
-		]
+		],
+		"todo-tree.tree.disableCompactFolders": true
 	},
 	"launch": {
 		"version": "0.2.0",

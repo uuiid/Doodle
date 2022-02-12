@@ -173,7 +173,6 @@ class DOODLELIB_API core_set_init {
 };
 
 namespace win {
-/// @todo 添加一个字体目录获得函数
 /// FOLDERID_Fonts
 FSys::path DOODLELIB_API get_font();
 FSys::path DOODLELIB_API get_pwd();
