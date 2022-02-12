@@ -34,9 +34,7 @@ filter_factory_base::filter_factory_base()
   connection_sig();
 }
 
-filter_factory_base::~filter_factory_base() {
-  p_obs.disconnect();
-};
+filter_factory_base::~filter_factory_base() = default;
 
 std::unique_ptr<filter_base> filter_factory_base::make_filter() {
   is_edit = false;
@@ -125,6 +123,7 @@ class season_filter_factory : public gui::filter_factory_t<season> {
         }
       }
     };
+    return is_edit;
   }
 };
 
@@ -140,6 +139,7 @@ class episodes_filter_factory : public gui::filter_factory_t<episodes> {
         }
       }
     };
+    return is_edit;
   }
 };
 
@@ -155,9 +155,11 @@ class shot_filter_factory : public gui::filter_factory_t<shot> {
         }
       }
     };
+    return is_edit;
   }
 };
 
+#if 1
 class assets_filter_factory : public gui::filter_factory_base {
  public:
   constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
@@ -188,13 +190,13 @@ class assets_filter_factory : public gui::filter_factory_base {
       else
         l_p /= j;
 
-      if (auto it = boost::find_if(root->child, [&](const gui_cache& in) {
-            in == j;
+      if (auto it = boost::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
+            return in->data == j;
           });
           it != root->child.end()) {
         root = it->get();
       } else {
-        auto it1 = root->child.emplace_back(gui_cache{j.generic_string(), l_p});
+        auto it1 = root->child.emplace_back(std::make_shared<tree_node_type>(gui_cache{j.generic_string(), l_p}));
         root     = it1.get();
       }
     }
@@ -207,7 +209,7 @@ class assets_filter_factory : public gui::filter_factory_base {
         k_f = base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
 
       {
-        dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f, i->data.name.data()};
+        dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f};
         if (ImGui::IsItemClicked())
           p_cur_select = i.get();
 
@@ -229,7 +231,6 @@ class assets_filter_factory : public gui::filter_factory_base {
       auto k_h = make_handle();
       add_tree_node(&p_tree, k_h.get<data_type>().get_path());
     }
-    boost::unique_erase(boost::sort(p_edit));
   }
 
  public:
@@ -237,7 +238,7 @@ class assets_filter_factory : public gui::filter_factory_base {
       : p_cur_select(),
         select_name(),
         p_edit(),
-        p_tree(gui_cache{""s, FSys::path{}}) {
+        p_tree(gui_cache{"root"s, FSys::path{}}) {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
   tree_node_type* p_cur_select;
@@ -246,9 +247,13 @@ class assets_filter_factory : public gui::filter_factory_base {
   std::vector<gui_cache> p_edit;
 
   bool render() {
-    this->render_node(&p_tree);
+    dear::TreeNode{p_tree.data.name_id.c_str()} && [&]() {
+      this->render_node(&p_tree);
+    };
+    return is_edit;
   }
 };
+#endif
 
 class time_filter_factory : public gui::filter_factory_base {
   std::unique_ptr<gui::filter_base> make_filter_() override {
@@ -306,6 +311,7 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   dear::Disabled l_d{p_impl->only_rand};
 
   for (auto&& i : p_impl->p_filter_factorys) {
+    i.data->refresh();
     ImGui::Checkbox(i.name_id.c_str(), &i.select);
     if (i.select)
       i.data->render();
