@@ -4,6 +4,6 @@
 
 namespace doodle {
 
-class DOODLELIB_API tools_setting {
+class DOODLELIB_API tree_node {
 };
 }  // namespace doodle
