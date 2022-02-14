@@ -170,6 +170,12 @@ class assets_file_edit : public gui::base_edit {
   }
 };
 
+class time_edit : public gui::base_edit {
+ public:
+ public:
+ 
+};
+
 class edit_widgets::impl {
  public:
   boost::signals2::scoped_connection p_sc;
