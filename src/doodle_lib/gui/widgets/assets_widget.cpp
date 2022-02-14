@@ -211,8 +211,10 @@ class assets_filter_factory : public gui::filter_factory_base {
 
       {
         dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f};
-        if (ImGui::IsItemClicked())
-          p_cur_select = i.get();
+        if (ImGui::IsItemClicked()) {
+          p_cur_select  = i.get();
+          this->is_edit = true;
+        }
 
         l_node&& [this, i]() {
           render_node(i.get());
@@ -237,15 +239,10 @@ class assets_filter_factory : public gui::filter_factory_base {
  public:
   assets_filter_factory()
       : p_cur_select(),
-        select_name(),
-        p_edit(),
         p_tree(gui_cache{"root"s, FSys::path{}}) {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
   tree_node_type* p_cur_select;
-
-  std::string select_name{"null"};
-  std::vector<gui_cache> p_edit;
 
   bool render() {
     dear::TreeNode{p_tree.data.name_id.c_str()} && [&]() {
