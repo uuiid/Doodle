@@ -9,6 +9,9 @@
 #include <entt/entt.hpp>
 #include <fmt/format.h>
 
+#include <boost/range.hpp>
+#include <iterator>
+
 namespace doodle {
 namespace entt_tool {
 
@@ -77,3 +80,39 @@ using scoped_function = entt_tool::scoped_function;
 //   }
 // };
 // }  // namespace fmt
+
+namespace boost {
+template <class E, class Get, class Exclude>
+struct range_mutable_iterator<entt::basic_view<E, Get, Exclude>> {
+  using entt_view = entt::basic_view<E, Get, Exclude>;
+  using type      = typename entt_view::iterator;
+};
+
+template <class E, class Get, class Exclude>
+struct range_const_iterator<entt::basic_view<E, Get, Exclude>> {
+  using entt_view = entt::basic_view<E, Get, Exclude>;
+  using type      = typename entt_view::iterator;
+};
+}  // namespace boost
+
+namespace entt {
+template <class E, class Get, class Exclude>
+inline auto range_begin(basic_view<E, Get, Exclude> &x) {
+  return x.begin();
+}
+
+template <class E, class Get, class Exclude>
+inline auto range_begin(const basic_view<E, Get, Exclude> &x) {
+  return x.begin();
+}
+
+template <class E, class Get, class Exclude>
+inline auto range_end(basic_view<E, Get, Exclude> &x) {
+  return x.end();
+}
+
+template <class E, class Get, class Exclude>
+inline auto range_end(const basic_view<E, Get, Exclude> &x) {
+  return x.end();
+}
+}  // namespace entt
