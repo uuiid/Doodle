@@ -462,16 +462,16 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
   time_point_wrap l_3{2020, 1, 2, 10, 3, 4};
   using namespace date;
 
-  std::cout << "time_point_wrap l_1{t1}.get_local_time();                    " << (l_1.p_local_time.get_local_time()) << "\n";
-  std::cout << "time_point_wrap l_2{t2}.get_local_time();                    " << (l_2.p_local_time.get_local_time()) << "\n";
-  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_local_time();  " << (l_3.p_local_time.get_local_time()) << "\n";
-  std::cout << "time_point_wrap l_1{t1}.get_sys_time();                      " << (l_1.p_local_time.get_sys_time()) << "\n";
-  std::cout << "time_point_wrap l_2{t2}.get_sys_time();                      " << (l_2.p_local_time.get_sys_time()) << "\n";
-  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_sys_time();    " << (l_3.p_local_time.get_sys_time()) << "\n";
+  std::cout << "time_point_wrap l_1{t1}.get_local_time();                    " << (l_1.zoned_time_.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_2{t2}.get_local_time();                    " << (l_2.zoned_time_.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_local_time();  " << (l_3.zoned_time_.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_1{t1}.get_sys_time();                      " << (l_1.zoned_time_.get_sys_time()) << "\n";
+  std::cout << "time_point_wrap l_2{t2}.get_sys_time();                      " << (l_2.zoned_time_.get_sys_time()) << "\n";
+  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_sys_time();    " << (l_3.zoned_time_.get_sys_time()) << "\n";
 
-  REQUIRE(l_1.p_local_time == l_2.p_local_time);
-  REQUIRE(l_1.p_local_time == l_3.p_local_time);
-  REQUIRE(l_1.p_local_time == l_3.p_local_time);
+  REQUIRE(l_1.zoned_time_ == l_2.zoned_time_);
+  REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
+  REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
 }
 
 //#include <boost/algorithm/string.hpp>
