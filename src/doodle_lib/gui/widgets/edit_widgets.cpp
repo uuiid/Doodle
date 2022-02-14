@@ -172,8 +172,15 @@ class assets_file_edit : public gui::base_edit {
 
 class time_edit : public gui::base_edit {
  public:
+  std::int16_t p_year;
+  std::int16_t p_month;
+  std::int16_t p_day;
+
+  std::int16_t p_hours;
+  std::int16_t p_minutes;
+  std::int16_t p_seconds;
+
  public:
- 
 };
 
 class edit_widgets::impl {
