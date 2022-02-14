@@ -10,18 +10,19 @@
 namespace doodle {
 
 time_point_wrap::time_point_wrap()
-    : p_time(),
-      p_time_zone(date::current_zone()) {
+    : time_point_wrap(time_point::clock::now()) {
 }
-
+time_point_wrap::time_point_wrap(const time_point_wrap::time_zoned& in_time_zoned)
+    : p_time_zone(in_time_zoned.get_time_zone()),
+      p_time(in_time_zoned.get_sys_time()),
+      p_local_time(in_time_zoned) {
+}
 time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
-    : p_time_zone(date::current_zone()),
-      p_time(in_utc_timePoint),
-      p_local_time(chrono::make_zoned(chrono::current_zone(), in_utc_timePoint)) {
+    : time_point_wrap(chrono::make_zoned(date::current_zone(), in_utc_timePoint)) {
 }
 
 time_point_wrap::time_point_wrap(time_local_point in_local_time_point)
-    : time_point_wrap(chrono::current_zone()->to_sys(in_local_time_point)) {
+    : time_point_wrap(chrono::make_zoned(date::current_zone(), in_local_time_point)) {
 }
 
 time_point_wrap::time_point_wrap(
@@ -162,8 +163,6 @@ chrono::days time_point_wrap::work_days(const time_point_wrap::time_point& in_be
   });
   return chrono::days{k_s};
 }
-void time_point_wrap::set_local_time(const date::local_time<chrono::seconds>& in_time) {
-  auto k_time = chrono::make_zoned(p_time_zone, in_time);
-}
+
 
 }  // namespace doodle

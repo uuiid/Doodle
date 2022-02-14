@@ -17,9 +17,10 @@ namespace doodle {
  */
 class DOODLELIB_API time_point_wrap {
  public:
-  using time_point    = chrono::sys_time_pos;
-  using time_duration = time_point::duration;
+  using time_point       = chrono::sys_time_pos;
+  using time_duration    = time_point::duration;
   using time_local_point = chrono::local_time<time_duration>;
+  using time_zoned       = chrono::zoned_time<time_duration>;
 
  private:
   /**
@@ -40,6 +41,7 @@ class DOODLELIB_API time_point_wrap {
  public:
   chrono::zoned_time<time_duration> p_local_time;
   time_point_wrap();
+  explicit time_point_wrap(const time_zoned& in_time_zoned);
   explicit time_point_wrap(time_point in_utc_timePoint);
   explicit time_point_wrap(time_local_point in_utc_timePoint);
   explicit time_point_wrap(
@@ -55,9 +57,6 @@ class DOODLELIB_API time_point_wrap {
 
   [[nodiscard]] std::string show_str() const;
 
-  void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
-  void set_time(const chrono::sys_time_pos& in_time);
-  void set_time(const chrono::local_time_pos& in_time);
   /**
    *
    * @param in 结束的时间
