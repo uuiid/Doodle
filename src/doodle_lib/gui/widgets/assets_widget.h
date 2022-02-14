@@ -43,13 +43,16 @@ class filter_factory_t : public filter_factory_base {
   using data_type = T;
   using gui_cache = details::gui_cache<data_type>;
 
-  gui_cache p_cur_select;
+  std::optional<gui_cache> p_cur_select;
   std::string select_name;
   std::vector<gui_cache> p_edit;
 
  protected:
   std::unique_ptr<filter_base> make_filter_() override {
-    return std::make_unique<filter<data_type>>(p_cur_select.data);
+    if (p_cur_select)
+      return std::make_unique<filter<data_type>>(p_cur_select->data);
+    else
+      return {};
   }
   void init() override {
     for (auto&& [e, i] : g_reg()->view<data_type>().each()) {
@@ -67,8 +70,8 @@ class filter_factory_t : public filter_factory_base {
 
  public:
   filter_factory_t()
-      : p_cur_select(data_type{}),
-        select_name(p_cur_select.name),
+      : p_cur_select(),
+        select_name(),
         p_edit() {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }

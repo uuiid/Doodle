@@ -178,7 +178,9 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
 
   std::unique_ptr<gui::filter_base> make_filter_() override {
-    return std::make_unique<path_filter>(p_cur_select->data.data);
+    if (p_cur_select)
+      return std::make_unique<path_filter>(p_cur_select->data.data);
+    return {};
   }
 
   static void add_tree_node(tree_node_type* in_root, const FSys::path& in_path) {
@@ -186,9 +188,10 @@ class assets_filter_factory : public gui::filter_factory_base {
     FSys::path l_p{};
     bool is_begin{true};
     for (auto&& j : in_path) {
-      if (is_begin)
-        l_p = j;
-      else
+      if (is_begin) {
+        l_p      = j;
+        is_begin = false;
+      } else
         l_p /= j;
 
       if (auto it = boost::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
@@ -208,6 +211,8 @@ class assets_filter_factory : public gui::filter_factory_base {
       ImGuiTreeNodeFlags k_f{base_flags};
       if (is_select(i.get()))
         k_f = base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+      if (i->child.empty())
+        k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
 
       {
         dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f};
@@ -272,6 +277,7 @@ class assets_widget::impl {
 
   std::vector<factory_gui_cache> p_filter_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
+  bool is_edit{false};
 };
 
 assets_widget::assets_widget()
@@ -310,7 +316,8 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
 
   for (auto&& i : p_impl->p_filter_factorys) {
     i.data->refresh();
-    ImGui::Checkbox(i.name_id.c_str(), &i.select);
+    if (ImGui::Checkbox(i.name_id.c_str(), &i.select))
+      p_impl->is_edit = true;
     if (i.select)
       i.data->render();
   }
@@ -318,7 +325,9 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   if (boost::algorithm::any_of(p_impl->p_filter_factorys,
                                [](const impl::factory_gui_cache& in) {
                                  return in.select && in.data->is_edit;
-                               })) {
+                               }) ||
+      p_impl->is_edit) {
+    p_impl->is_edit = false;
     p_impl->p_filters.clear();
     boost::copy(p_impl->p_filter_factorys |
                     boost::adaptors::filtered([](const impl::factory_gui_cache& in) -> bool {
@@ -327,6 +336,10 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
                     boost::adaptors::transformed([](const impl::factory_gui_cache& in)
                                                      -> std::unique_ptr<gui::filter_base> {
                       return in.data->make_filter();
+                    }) |
+                    boost::adaptors::filtered([](const std::unique_ptr<gui::filter_base>& in)
+                                                  -> bool {
+                      return (bool)in;
                     }),
                 std::back_inserter(p_impl->p_filters));
     std::vector<entt::handle> list{};
