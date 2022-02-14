@@ -32,6 +32,7 @@ doodle_lib::doodle_lib()
       reg(new_object<entt::registry>()) {
   /// 创建依赖性
   reg->on_construct<database>().connect<&database::set_enum>();
+  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   auto& k_sig = reg->set<core_sig>();
   k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
