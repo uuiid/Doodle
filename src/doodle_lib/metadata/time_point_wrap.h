@@ -16,62 +16,45 @@ namespace doodle {
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
 class DOODLELIB_API time_point_wrap {
-  /**
-   * @brief 这个是内部的utc时间
-   *
-   */
-  chrono::sys_time_pos p_time;
-  /**
-   * @brief 这里是本地日期的年组件之一
-   *
-   */
-  date::year p_year;
-  date::month p_month;
-  date::day p_day;
+ public:
+  using time_point    = chrono::sys_time_pos;
+  using time_duration = chrono::sys_time_pos::duration;
+  using time_local_point = chrono::local_time<time_duration>;
 
-  std::chrono::hours p_hours;
-  std::chrono::minutes p_minutes;
-  std::chrono::seconds p_seconds;
-
+ private:
   /**
    * @brief 这个是指向时区的指针
    *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间
    */
   const date::time_zone* p_time_zone;
+  /**
+   * @brief 这个是内部的utc时间
+   *
+   */
+  time_point p_time;
+  /**
+   * @brief 本地时间
+   *
+   */
 
  public:
-  using time_point = chrono::sys_time_pos;
-
+  chrono::zoned_time<time_duration> p_local_time;
   time_point_wrap();
   explicit time_point_wrap(time_point in_utc_timePoint);
-
-  [[nodiscard]] std::uint16_t get_year() const;
-  void set_year(std::uint16_t in_year);
-
-  [[nodiscard]] std::uint16_t get_month() const;
-  void set_month(std::uint16_t in_month);
-
-  [[nodiscard]] std::uint16_t get_day() const;
-  void set_day(std::uint16_t in_day);
-
-  [[nodiscard]] std::uint16_t get_hour() const;
-  void set_hour(std::uint16_t in_hour);
-
-  [[nodiscard]] std::uint16_t get_minutes() const;
-  void set_minutes(std::uint16_t in_minutes);
-
-  [[nodiscard]] std::uint16_t get_second() const;
-  void set_second(std::uint16_t in_second);
+  explicit time_point_wrap(time_local_point in_utc_timePoint);
+  explicit time_point_wrap(
+      std::uint16_t in_year,
+      std::uint16_t in_month,
+      std::uint16_t in_day,
+      std::uint16_t in_hours,
+      std::uint16_t in_minutes,
+      std::uint16_t in_seconds);
 
   [[nodiscard]] std::string get_week_s() const;
-
   [[nodiscard]] std::int32_t get_week_int() const;
 
   [[nodiscard]] std::string show_str() const;
-  [[nodiscard]] time_point get_utc_time() const;
-  [[nodiscard]] chrono::local_time<chrono::seconds> get_local_time() const;
-  [[nodiscard]] std::time_t get_local_time_t() const;
-  [[nodiscard]] std::time_t get_utc_time_t() const;
+
   void set_local_time(const chrono::local_time<chrono::seconds>& in_time);
   void set_time(const chrono::sys_time_pos& in_time);
   void set_time(const chrono::local_time_pos& in_time);
@@ -108,8 +91,6 @@ class DOODLELIB_API time_point_wrap {
   chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;
 
   void disassemble();
-
-  void disassemble(const chrono::sys_time_pos& in_utc_timePoint);
 
   //这里是序列化的代码
 
