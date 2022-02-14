@@ -16,6 +16,7 @@
 #include <gui/gui_ref/ref_base.h>
 #include <core/tree_node.h>
 #include <lib_warp/imgui_warp.h>
+#include <lib_warp/entt_warp.h>
 
 namespace doodle {
 
@@ -315,6 +316,36 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
     ImGui::Checkbox(i.name_id.c_str(), &i.select);
     if (i.select)
       i.data->render();
+  }
+
+  if (boost::algorithm::any_of(p_impl->p_filter_factorys,
+                               [](const impl::factory_gui_cache& in) {
+                                 return in.select && in.data->is_edit;
+                               })) {
+    p_impl->p_filters.clear();
+    boost::copy(p_impl->p_filter_factorys |
+                    boost::adaptors::filtered([](const impl::factory_gui_cache& in) -> bool {
+                      return in.select;
+                    }) |
+                    boost::adaptors::transformed([](const impl::factory_gui_cache& in)
+                                                     -> std::unique_ptr<gui::filter_base> {
+                      return in.data->make_filter();
+                    }),
+                std::back_inserter(p_impl->p_filters));
+    std::vector<entt::handle> list{};
+    boost::copy(g_reg()->view<database>() |
+                    boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
+                      return make_handle(in);
+                    }) |
+                    boost::adaptors::filtered([&](const entt::handle& in) -> bool {
+                      return boost::algorithm::all_of(
+                          p_impl->p_filters,
+                          [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
+                            return (*in_f)(in);
+                          });
+                    }),
+                std::back_inserter(list));
+    g_reg()->ctx<core_sig>().filter_handle(list);
   }
 }
 
