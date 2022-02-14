@@ -142,8 +142,8 @@ TEST_CASE_METHOD(test_path_2, "test_path_1", "[fun][path]") {
 
 TEST_CASE_METHOD(test_path_, "test 比较") {
   std::cout << std::boolalpha
-            << "(p_1 > p_2): "<< (p_1 > p_2) << "\n"
-            << "(p_1 > p_3): "<< (p_1 > p_3);
+            << "(p_1 > p_2): " << (p_1 > p_2) << "\n"
+            << "(p_1 > p_3): " << (p_1 > p_3);
 }
 
 TEST_CASE_METHOD(test_path_, "test_path_2_time", "[fun][path]") {
@@ -448,6 +448,19 @@ TEST_CASE("path iter", "[core]") {
 TEST_CASE_METHOD(app, "load default image") {
   auto k_i  = image_loader{}.default_image();
   auto k_i2 = image_loader{}.error_image();
+}
+
+class test_time_warp {
+ public:
+  chrono::sys_time_pos t1{chrono::sys_days{2020_y / 1 / 2} + 2h + 3min + 4s};
+  chrono::local_time_pos t2{chrono::local_days{2020_y / 1 / 2} + 10h + 3min + 4s};
+};
+
+TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
+  time_point_wrap l_1{t1};
+  time_point_wrap l_2{t2};
+  std::cout << "chrono::sys_time_pos" << fmt::to_string(l_1.p_local_time.get_sys_time());
+  std::cout << "chrono::local_time_pos" << fmt::to_string(l_2.p_local_time.get_sys_time());
 }
 
 //#include <boost/algorithm/string.hpp>
