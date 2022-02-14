@@ -126,6 +126,8 @@ void client::new_project(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
 
   auto k_path = in_handle.get<project>().p_path;
+  if (in_handle.all_of<database>())
+    in_handle.emplace<database>();
   add_project(k_path);
   g_reg()->set<project>(in_handle.get<project>());
   g_main_loop()
