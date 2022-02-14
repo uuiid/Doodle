@@ -18,7 +18,7 @@ namespace doodle {
 class DOODLELIB_API time_point_wrap {
  public:
   using time_point    = chrono::sys_time_pos;
-  using time_duration = chrono::sys_time_pos::duration;
+  using time_duration = time_point::duration;
   using time_local_point = chrono::local_time<time_duration>;
 
  private:

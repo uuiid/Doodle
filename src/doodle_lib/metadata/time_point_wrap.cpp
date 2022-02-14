@@ -17,12 +17,11 @@ time_point_wrap::time_point_wrap()
 time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
     : p_time_zone(date::current_zone()),
       p_time(in_utc_timePoint),
-      p_local_time(chrono::make_zoned(p_time_zone, p_time)) {
+      p_local_time(chrono::make_zoned(chrono::current_zone(), in_utc_timePoint)) {
 }
 
 time_point_wrap::time_point_wrap(time_local_point in_local_time_point)
-  :time_point_wrap(chrono::clock_cast<chrono::system_clock>(in_local_time_point)){
-
+    : time_point_wrap(chrono::current_zone()->to_sys(in_local_time_point)) {
 }
 
 time_point_wrap::time_point_wrap(
