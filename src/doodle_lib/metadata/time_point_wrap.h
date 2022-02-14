@@ -37,6 +37,14 @@ class DOODLELIB_API time_point_wrap {
       std::uint16_t in_minutes,
       std::uint16_t in_seconds);
 
+  std::tuple<std::uint16_t,  // year
+             std::uint16_t,  // month
+             std::uint16_t,  // day
+             std::uint16_t,  // hours
+             std::uint16_t,  // minutes
+             std::uint16_t>  // seconds
+  compose() const;
+
   [[nodiscard]] std::string get_week_s() const;
   [[nodiscard]] std::int32_t get_week_int() const;
 

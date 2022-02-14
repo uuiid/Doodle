@@ -112,8 +112,6 @@ chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) c
   return {};
 }
 
-
-
 chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const {
   /// 获得当天的日期后制作工作时间
   auto k_day     = chrono::floor<chrono::days>(in_point);
@@ -158,6 +156,24 @@ chrono::days time_point_wrap::work_days(const time_point_wrap::time_point& in_be
     return !chrono::is_rest_day(in);
   });
   return chrono::days{k_s};
+}
+std::tuple<std::uint16_t,  // year
+           std::uint16_t,  // month
+           std::uint16_t,  // day
+           std::uint16_t,  // hours
+           std::uint16_t,  // minutes
+           std::uint16_t>
+time_point_wrap::compose() const {
+  auto k_local = zoned_time_.get_local_time();
+  auto k_dp    = date::floor<date::days>(k_local);
+  date::year_month_day k_day{k_dp};
+  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
+  return std::make_tuple(boost::numeric_cast<std::uint16_t>(k_day.year()),
+                         boost::numeric_cast<std::uint16_t>(k_day.month()),
+                         boost::numeric_cast<std::uint16_t>(k_day.day()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.hours()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds()));
 }
 
 }  // namespace doodle
