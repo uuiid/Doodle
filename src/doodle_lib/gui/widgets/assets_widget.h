@@ -37,6 +37,7 @@ class DOODLELIB_API filter_factory_base {
   virtual void refresh();
   std::unique_ptr<filter_base> make_filter();
 };
+
 template <class T>
 class filter_factory_t : public filter_factory_base {
  public:
@@ -86,6 +87,14 @@ class filter : public filter_base {
     return in.all_of<T>() && in.get<T>() == p_data;
   }
 };
+
+class DOODLELIB_API sort_entt {
+ public:
+
+ public:
+  virtual bool operator()(const entt::handle& in_r,const entt::handle& in_l) const = 0;
+};
+
 }  // namespace gui
 
 /**
