@@ -27,12 +27,12 @@ void time_widget::frame_render() {
     imgui::SliderInt("分", &p_minutes, 0, 59);
     imgui::SliderInt("秒", &p_second, 0, 59);
     if (imgui::Button("设置") && p_time) {
-      p_time.get<time_point_wrap>().set_year(p_year);
-      p_time.get<time_point_wrap>().set_month(p_month);
-      p_time.get<time_point_wrap>().set_day(p_day);
-      p_time.get<time_point_wrap>().set_hour(p_hour);
-      p_time.get<time_point_wrap>().set_minutes(p_minutes);
-      p_time.get<time_point_wrap>().set_second(p_second);
+      // p_time.get<time_point_wrap>().set_year(p_year);
+      // p_time.get<time_point_wrap>().set_month(p_month);
+      // p_time.get<time_point_wrap>().set_day(p_day);
+      // p_time.get<time_point_wrap>().set_hour(p_hour);
+      // p_time.get<time_point_wrap>().set_minutes(p_minutes);
+      // p_time.get<time_point_wrap>().set_second(p_second);
     }
   };
 
@@ -48,12 +48,12 @@ void time_widget::frame_render() {
 void time_widget::set_time(const entt::handle& in_time) {
   if (in_time.any_of<time_point_wrap>()) {
     p_time    = in_time;
-    p_year    = p_time.get<time_point_wrap>().get_year();
-    p_month   = p_time.get<time_point_wrap>().get_month();
-    p_day     = p_time.get<time_point_wrap>().get_day();
-    p_hour    = p_time.get<time_point_wrap>().get_hour();
-    p_minutes = p_time.get<time_point_wrap>().get_minutes();
-    p_second  = p_time.get<time_point_wrap>().get_second();
+    // p_year    = p_time.get<time_point_wrap>().get_year();
+    // p_month   = p_time.get<time_point_wrap>().get_month();
+    // p_day     = p_time.get<time_point_wrap>().get_day();
+    // p_hour    = p_time.get<time_point_wrap>().get_hour();
+    // p_minutes = p_time.get<time_point_wrap>().get_minutes();
+    // p_second  = p_time.get<time_point_wrap>().get_second();
   }
 }
 }  // namespace doodle
