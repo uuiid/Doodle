@@ -168,12 +168,12 @@ time_point_wrap::compose() const {
   auto k_dp    = date::floor<date::days>(k_local);
   date::year_month_day k_day{k_dp};
   date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
-  return std::make_tuple(boost::numeric_cast<std::uint16_t>(k_day.year()),
-                         boost::numeric_cast<std::uint16_t>(k_day.month()),
-                         boost::numeric_cast<std::uint16_t>(k_day.day()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.hours()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds()));
+  return std::make_tuple(boost::numeric_cast<std::uint16_t>((std::int32_t)k_day.year()),
+                         boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.month()),
+                         boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.day()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.hours().count()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes().count()),
+                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds().count()));
 }
 
 }  // namespace doodle
