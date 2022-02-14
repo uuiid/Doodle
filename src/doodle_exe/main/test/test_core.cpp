@@ -450,7 +450,7 @@ TEST_CASE_METHOD(app, "load default image") {
   auto k_i2 = image_loader{}.error_image();
 }
 
-class test_time_warp {
+class test_time_warp : public app_command_base {
  public:
   chrono::sys_time_pos t1{chrono::sys_days{2020_y / 1 / 2} + 2h + 3min + 4s};
   chrono::local_time_pos t2{chrono::local_days{2020_y / 1 / 2} + 10h + 3min + 4s};
@@ -459,8 +459,19 @@ class test_time_warp {
 TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
   time_point_wrap l_1{t1};
   time_point_wrap l_2{t2};
-  std::cout << "chrono::sys_time_pos" << fmt::to_string(l_1.p_local_time.get_sys_time());
-  std::cout << "chrono::local_time_pos" << fmt::to_string(l_2.p_local_time.get_sys_time());
+  time_point_wrap l_3{2020, 1, 2, 10, 3, 4};
+  using namespace date;
+
+  std::cout << "time_point_wrap l_1{t1}.get_local_time();                    " << (l_1.p_local_time.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_2{t2}.get_local_time();                    " << (l_2.p_local_time.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_local_time();  " << (l_3.p_local_time.get_local_time()) << "\n";
+  std::cout << "time_point_wrap l_1{t1}.get_sys_time();                      " << (l_1.p_local_time.get_sys_time()) << "\n";
+  std::cout << "time_point_wrap l_2{t2}.get_sys_time();                      " << (l_2.p_local_time.get_sys_time()) << "\n";
+  std::cout << "time_point_wrap l_3{2020, 1, 2, 10, 3, 4}.get_sys_time();    " << (l_3.p_local_time.get_sys_time()) << "\n";
+
+  REQUIRE(l_1.p_local_time == l_2.p_local_time);
+  REQUIRE(l_1.p_local_time == l_3.p_local_time);
+  REQUIRE(l_1.p_local_time == l_3.p_local_time);
 }
 
 //#include <boost/algorithm/string.hpp>
