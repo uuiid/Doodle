@@ -362,8 +362,6 @@ using bool_ptr                = std::shared_ptr<bool>;
 using string                  = std::string;
 using string_ptr              = std::shared_ptr<string>;
 
-using time_widget_ptr         = std::shared_ptr<time_widget>;
-
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 
