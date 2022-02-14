@@ -9,7 +9,7 @@ namespace doodle {
 namespace maya_plug {
 
 sim_overr_attr::sim_overr_attr()
-    : simple_subsampling(true),
+    : simple_subsampling(false),
       frame_samples(10),
       time_scale(1),
       length_scale(1),

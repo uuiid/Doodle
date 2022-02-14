@@ -482,4 +482,7 @@
  * @li 添加资产树搜素过滤器
  * @li 修复maya 添加碰撞时组件缺失引起的崩溃问题
  *
+ * @subsubsection updata_log_334 版本3.3.4
+ * @li 添加maya碰撞体输出日志
+ * @li maya插件解算初始化值更新
  */

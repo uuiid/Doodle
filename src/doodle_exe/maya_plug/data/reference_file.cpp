@@ -52,6 +52,7 @@ void reference_file::set_path(const MObject &in_ref_node) {
 MSelectionList reference_file::get_collision_model() const {
   MSelectionList l_list{};
   for (const auto &str : collision_model) {
+    DOODLE_LOG_INFO("添加碰撞体: {}", str);
     l_list.add(str.c_str(), true);
   }
   return l_list;
