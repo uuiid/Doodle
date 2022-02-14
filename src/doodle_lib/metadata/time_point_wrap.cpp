@@ -13,9 +13,7 @@ time_point_wrap::time_point_wrap()
     : time_point_wrap(time_point::clock::now()) {
 }
 time_point_wrap::time_point_wrap(const time_point_wrap::time_zoned& in_time_zoned)
-    : p_time_zone(in_time_zoned.get_time_zone()),
-      p_time(in_time_zoned.get_sys_time()),
-      p_local_time(in_time_zoned) {
+    : zoned_time_(in_time_zoned) {
 }
 time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
     : time_point_wrap(chrono::make_zoned(date::current_zone(), in_utc_timePoint)) {
@@ -73,12 +71,12 @@ std::string time_point_wrap::get_week_s() const {
 }
 
 std::int32_t time_point_wrap::get_week_int() const {
-  date::weekday k_weekday{chrono::time_point_cast<date::days>(p_local_time.get_local_time())};
+  date::weekday k_weekday{chrono::time_point_cast<date::days>(zoned_time_.get_local_time())};
   return k_weekday.c_encoding();
 }
 
 std::string time_point_wrap::show_str() const {
-  return date::format("%Y/%m/%d %H:%M:%S", p_local_time.get_local_time());
+  return date::format("%Y/%m/%d %H:%M:%S", zoned_time_.get_local_time());
 }
 
 chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) const {
@@ -114,9 +112,7 @@ chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) c
   return {};
 }
 
-time_point_wrap::operator time_point() {
-  return p_time;
-}
+
 
 chrono::hours_double time_point_wrap::one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const {
   /// 获得当天的日期后制作工作时间
@@ -163,6 +159,5 @@ chrono::days time_point_wrap::work_days(const time_point_wrap::time_point& in_be
   });
   return chrono::days{k_s};
 }
-
 
 }  // namespace doodle

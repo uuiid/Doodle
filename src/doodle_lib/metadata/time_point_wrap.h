@@ -23,23 +23,8 @@ class DOODLELIB_API time_point_wrap {
   using time_zoned       = chrono::zoned_time<time_duration>;
 
  private:
-  /**
-   * @brief 这个是指向时区的指针
-   *  每次创建时都会重新获取当前的时区，并和系统时间组合为本地时间
-   */
-  const date::time_zone* p_time_zone;
-  /**
-   * @brief 这个是内部的utc时间
-   *
-   */
-  time_point p_time;
-  /**
-   * @brief 本地时间
-   *
-   */
-
  public:
-  chrono::zoned_time<time_duration> p_local_time;
+  chrono::zoned_time<time_duration> zoned_time_;
   time_point_wrap();
   explicit time_point_wrap(const time_zoned& in_time_zoned);
   explicit time_point_wrap(time_point in_utc_timePoint);
@@ -67,16 +52,6 @@ class DOODLELIB_API time_point_wrap {
    */
   [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
 
-  /**
-   * 这里返回系统时钟 系统时钟我们始终假定为 utc时钟 (system_clock跟踪的时区（未指定但事实上的标准）)
-   * @warning 这里一定要注意, 在库中还存在一种用来表示本地时间的系统时钟,
-   * 将 system_clock 用于表示本地时间的原因主要是为了和其他库进行快速的接口使用
-   *
-   * TODO: 这里我们因该将上面的表示为系统时钟的本地时间进行重构
-   * @return
-   */
-  operator time_point();
-
  private:
   /**
    * 这个是计算开始时到一天结束时的工作时长
@@ -89,15 +64,13 @@ class DOODLELIB_API time_point_wrap {
   chrono::hours_double one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const;
   chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;
 
-  void disassemble();
-
   //这里是序列化的代码
 
   friend void to_json(nlohmann::json& j, const time_point_wrap& p) {
-    j["time"] = p.p_time;
+    j["time"] = p.zoned_time_.get_sys_time();
   }
   friend void from_json(const nlohmann::json& j, time_point_wrap& p) {
-    j.at("time").get_to(p.p_time);
+    p.zoned_time_ = j.at("time").get<time_point>();
   }
 };
 
