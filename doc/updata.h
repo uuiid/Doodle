@@ -485,4 +485,7 @@
  * @subsubsection updata_log_334 版本3.3.4
  * @li 添加maya碰撞体输出日志
  * @li maya插件解算初始化值更新
+ *
+ * @subsubsection updata_log_335 版本3.3.5
+ * @li 添加项目路径存在性检查
  */

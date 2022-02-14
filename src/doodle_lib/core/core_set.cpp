@@ -316,7 +316,9 @@ bool core_set_init::config_to_user() {
   return true;
 }
 bool core_set_init::init_default_project() {
-  if (!p_set.project_root.empty() && !p_set.project_root[0].empty())
+  if (!p_set.project_root.empty() &&
+      !p_set.project_root[0].empty() &&
+      FSys::exists(p_set.project_root[0] / doodle_config::doodle_db_name))
     core::client{}.open_project(p_set.project_root[0]);
   return true;
 }
