@@ -51,7 +51,7 @@ class assets_edit : public gui::database_edit {
   void render(const entt::handle &in) {
     if (ImGui::Button("添加")) {
       p_cache.emplace_back("none");
-      is_modify = true;
+      set_modify(true);
     }
 
     bool l_clear{false};
@@ -59,7 +59,7 @@ class assets_edit : public gui::database_edit {
     dear::ListBox{"资产类别"} && [&]() {
       for (auto &&i : p_cache) {
         if (dear::InputText(i.input_label.c_str(), &i.edit))
-          is_modify = true;
+          set_modify(true);
         ImGui::SameLine();
         if (dear::Button(i.button_name.c_str())) {
           i.clear = true;
@@ -97,7 +97,7 @@ class season_edit : public gui::database_edit {
   }
   void render(const entt::handle &in) {
     if (imgui::InputInt("季数", &p_season, 1, 9999))
-      is_modify = true;
+      set_modify(true);
   }
   void save_(const entt::handle &in) const {
     in.emplace_or_replace<season>(p_season);
@@ -114,7 +114,9 @@ class episodes_edit : public gui::database_edit {
       p_eps = 1;
   }
   void render(const entt::handle &in) {
-    is_modify = imgui::InputInt("集数", &p_eps, 1, 9999);
+    if (imgui::InputInt("集数", &p_eps, 1, 9999))
+      set_modify(true);
+    ;
   }
   void save_(const entt::handle &in) const {
     in.emplace_or_replace<episodes>(p_eps);
@@ -136,13 +138,14 @@ class shot_edit : public gui::database_edit {
     }
   }
   void render(const entt::handle &in) {
-    is_modify = imgui::InputInt("镜头", &p_shot, 1, 9999);
+    if (imgui::InputInt("镜头", &p_shot, 1, 9999)) set_modify(true);
+
     dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
       static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
       for (auto &i : shot_enum) {
         if (imgui::Selectable(i.data(), i == p_shot_ab_str)) {
           p_shot_ab_str = i;
-          is_modify     = true;
+          set_modify(true);
         }
       }
     };
@@ -163,7 +166,7 @@ class assets_file_edit : public gui::database_edit {
     }
   }
   void render(const entt::handle &in) {
-    is_modify = ImGui::InputText("路径", &p_path_cache);
+    if (ImGui::InputText("路径", &p_path_cache)) set_modify(true);
   }
   void save_(const entt::handle &in) const {
     in.emplace_or_replace<assets_file>().path = p_path_cache;

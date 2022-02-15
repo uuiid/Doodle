@@ -10,13 +10,23 @@ class DOODLELIB_API base_render {
   virtual bool operator()(const entt::handle &in_handle){};
 };
 
+class gui_data_interface {
+ public:
+  bool is_modify{false};
+};
+
 class DOODLELIB_API edit_interface {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
   virtual void save_(const entt::handle &in) const = 0;
 
+  void set_modify(bool is_modify);
+
  public:
-  bool is_modify{false};
+  edit_interface();
+  ~edit_interface();
+  std::unique_ptr<gui_data_interface> data;
+
   virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
   virtual void save(const entt::handle &in);
