@@ -24,15 +24,15 @@ time_point_wrap::time_point_wrap(time_local_point in_local_time_point)
 }
 
 time_point_wrap::time_point_wrap(
-    std::uint16_t in_year,
-    std::uint16_t in_month,
-    std::uint16_t in_day,
-    std::uint16_t in_hours,
-    std::uint16_t in_minutes,
-    std::uint16_t in_seconds)
-    : time_point_wrap(chrono::local_time_pos{chrono::local_days{chrono::year{in_year} /
-                                                                chrono::month{in_month} /
-                                                                chrono::day{in_day}} +
+    std::int32_t in_year,
+    std::int32_t in_month,
+    std::int32_t in_day,
+    std::int32_t in_hours,
+    std::int32_t in_minutes,
+    std::int32_t in_seconds)
+    : time_point_wrap(chrono::local_time_pos{chrono::local_days{chrono::year{boost::numeric_cast<std::int32_t>(in_year)} /
+                                                                chrono::month{boost::numeric_cast<std::uint32_t>(in_month)} /
+                                                                chrono::day{boost::numeric_cast<std::uint32_t>(in_day)}} +
                                              chrono::hours{in_hours} +
                                              chrono::minutes{in_minutes} +
                                              chrono::seconds{in_seconds}}) {

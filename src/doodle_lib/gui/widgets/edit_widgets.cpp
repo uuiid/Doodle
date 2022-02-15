@@ -170,16 +170,23 @@ class assets_file_edit : public gui::database_edit {
 
 class time_edit : public gui::database_edit {
  public:
-  gui::gui_cache<std::int16_t> p_year;
-  gui::gui_cache<std::int16_t> p_month;
-  gui::gui_cache<std::int16_t> p_day;
+  gui::gui_cache<std::int32_t> p_year;
+  gui::gui_cache<std::int32_t> p_month;
+  gui::gui_cache<std::int32_t> p_day;
 
-  gui::gui_cache<std::int16_t> p_hours;
-  gui::gui_cache<std::int16_t> p_minutes;
-  gui::gui_cache<std::int16_t> p_seconds;
+  gui::gui_cache<std::int32_t> p_hours;
+  gui::gui_cache<std::int32_t> p_minutes;
+  gui::gui_cache<std::int32_t> p_seconds;
 
  public:
-  void init_(const entt::handle &in) {
+  time_edit()
+      : p_year("年"s, 0),
+        p_month("月"s, 0),
+        p_day("天"s, 0),
+        p_hours("时"s, 0),
+        p_minutes("分"s, 0),
+        p_seconds("秒"s, 0) {}
+  void init_(const entt::handle &in) override {
     std::tie(p_year,
              p_month,
              p_day,
@@ -188,9 +195,27 @@ class time_edit : public gui::database_edit {
              p_seconds) = in.get_or_emplace<time_point_wrap>().compose();
   }
 
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
+    if (ImGui::InputInt(p_year.name_id.c_str(), &p_year.data))
+      set_modify(true);
+    if (ImGui::InputInt(p_month.name_id.c_str(), &p_month.data))
+      set_modify(true);
+    if (ImGui::InputInt(p_day.name_id.c_str(), &p_day.data))
+      set_modify(true);
+    if (ImGui::InputInt(p_hours.name_id.c_str(), &p_hours.data))
+      set_modify(true);
+    if (ImGui::InputInt(p_minutes.name_id.c_str(), &p_minutes.data))
+      set_modify(true);
+    if (ImGui::InputInt(p_seconds.name_id.c_str(), &p_seconds.data))
+      set_modify(true);
   }
-  void save_(const entt::handle &in) const {
+  void save_(const entt::handle &in) const override {
+    in.emplace_or_replace<time_point_wrap>(p_year,
+                                           p_month,
+                                           p_day,
+                                           p_hours,
+                                           p_minutes,
+                                           p_seconds);
   }
 };
 

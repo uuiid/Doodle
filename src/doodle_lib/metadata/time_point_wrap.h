@@ -50,12 +50,12 @@ class DOODLELIB_API time_point_wrap {
   explicit time_point_wrap(time_point in_utc_timePoint);
   explicit time_point_wrap(time_local_point in_utc_timePoint);
   explicit time_point_wrap(
-      std::uint16_t in_year,
-      std::uint16_t in_month,
-      std::uint16_t in_day,
-      std::uint16_t in_hours,
-      std::uint16_t in_minutes,
-      std::uint16_t in_seconds);
+      std::int32_t in_year,
+      std::int32_t in_month,
+      std::int32_t in_day,
+      std::int32_t in_hours,
+      std::int32_t in_minutes,
+      std::int32_t in_seconds);
   explicit time_point_wrap(const gui_data& in_data);
 
   [[nodiscard]] std::tuple<std::uint16_t,  // year
