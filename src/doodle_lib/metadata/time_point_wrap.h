@@ -24,6 +24,16 @@ class DOODLELIB_API time_point_wrap {
 
  private:
  public:
+  class DOODLELIB_API gui_data {
+   public:
+    std::uint16_t year_;
+    std::uint16_t month_;
+    std::uint16_t day_;
+    std::uint16_t hours_;
+    std::uint16_t minutes_;
+    std::uint16_t seconds_;
+  };
+
   chrono::zoned_time<time_duration> zoned_time_;
   time_point_wrap();
   explicit time_point_wrap(const time_zoned& in_time_zoned);
@@ -37,12 +47,12 @@ class DOODLELIB_API time_point_wrap {
       std::uint16_t in_minutes,
       std::uint16_t in_seconds);
 
-  std::tuple<std::uint16_t,  // year
-             std::uint16_t,  // month
-             std::uint16_t,  // day
-             std::uint16_t,  // hours
-             std::uint16_t,  // minutes
-             std::uint16_t>  // seconds
+  [[nodiscard]] std::tuple<std::uint16_t,  // year
+                           std::uint16_t,  // month
+                           std::uint16_t,  // day
+                           std::uint16_t,  // hours
+                           std::uint16_t,  // minutes
+                           std::uint16_t>  // seconds
   compose() const;
 
   [[nodiscard]] std::string get_week_s() const;
