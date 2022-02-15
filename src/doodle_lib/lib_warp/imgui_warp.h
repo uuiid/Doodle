@@ -12,7 +12,7 @@
 namespace doodle {
 namespace imgui {
 using namespace ::ImGui;
-}  // namespace ImGui
+}  // namespace imgui
 
 namespace dear {
 using namespace ::ImGui;
@@ -61,7 +61,7 @@ struct ScopeWrapper {
   constexpr operator bool() const noexcept { return ok_; }
 
  protected:
-  ScopeWrapper(const ScopeWrapper&) = delete;
+  ScopeWrapper(const ScopeWrapper&)            = delete;
   ScopeWrapper& operator=(const ScopeWrapper&) = delete;
 };
 
@@ -283,6 +283,9 @@ struct ItemTooltip : public ScopeWrapper<ItemTooltip> {
 static inline void Text(const std::string& str) noexcept {
   ImGui::TextUnformatted(str.c_str(), str.c_str() + str.length());
 }
+static inline void Text(const std::string_view & str) noexcept {
+  ImGui::TextUnformatted(str.data(), str.data() + str.length());
+}
 inline void TextUnformatted(const std::string& str) noexcept {
   ImGui::TextUnformatted(str.c_str(), str.c_str() + str.length());
 }
@@ -422,7 +425,7 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
 
 struct Disabled : public ScopeWrapper<Disabled> {
   Disabled(bool in_disabled = true) noexcept
-      : ScopeWrapper (in_disabled) {
+      : ScopeWrapper(in_disabled) {
     if (in_disabled) {
       ImGui::BeginDisabled(in_disabled);
     }
