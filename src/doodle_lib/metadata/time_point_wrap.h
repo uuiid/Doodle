@@ -32,6 +32,16 @@ class DOODLELIB_API time_point_wrap {
     std::uint16_t hours_;
     std::uint16_t minutes_;
     std::uint16_t seconds_;
+
+    gui_data() : gui_data(time_point_wrap{}) {}
+    gui_data(const time_point_wrap& in_wrap) {
+      std::tie(year_,
+               month_,
+               day_,
+               hours_,
+               minutes_,
+               seconds_) = in_wrap.compose();
+    }
   };
 
   chrono::zoned_time<time_duration> zoned_time_;
@@ -46,6 +56,7 @@ class DOODLELIB_API time_point_wrap {
       std::uint16_t in_hours,
       std::uint16_t in_minutes,
       std::uint16_t in_seconds);
+  explicit time_point_wrap(const gui_data& in_data);
 
   [[nodiscard]] std::tuple<std::uint16_t,  // year
                            std::uint16_t,  // month
@@ -97,4 +108,12 @@ class DOODLELIB_API time_point_wrap {
 //   time_point(){
 //   };
 // }
+
+namespace gui {
+template <>
+class adl_traits<time_point_wrap> {
+ public:
+  using gui_data = time_point_wrap::gui_data;
+};
+}  // namespace gui
 }  // namespace doodle

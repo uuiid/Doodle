@@ -175,5 +175,13 @@ time_point_wrap::compose() const {
                          boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes().count()),
                          boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds().count()));
 }
+time_point_wrap::time_point_wrap(const time_point_wrap::gui_data& in_data)
+    : time_point_wrap(in_data.year_,
+                      in_data.month_,
+                      in_data.day_,
+                      in_data.hours_,
+                      in_data.minutes_,
+                      in_data.seconds_) {
+}
 
 }  // namespace doodle
