@@ -250,6 +250,7 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("集数编辑", std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑", std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑", std::make_unique<assets_file_edit>());
+  p_i->p_edit.emplace_back("时间编辑", std::make_unique<time_point_wrap>());
 }
 edit_widgets::~edit_widgets() = default;
 
