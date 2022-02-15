@@ -196,17 +196,17 @@ class time_edit : public gui::database_edit {
   }
 
   void render(const entt::handle &in) override {
-    if (ImGui::InputInt(p_year.name_id.c_str(), &p_year.data))
+    if (ImGui::SliderInt(p_year.name_id.c_str(), &p_year.data, 0, 2050))
       set_modify(true);
-    if (ImGui::InputInt(p_month.name_id.c_str(), &p_month.data))
+    if (ImGui::SliderInt(p_month.name_id.c_str(), &p_month.data, 1, 12))
       set_modify(true);
-    if (ImGui::InputInt(p_day.name_id.c_str(), &p_day.data))
+    if (ImGui::SliderInt(p_day.name_id.c_str(), &p_day.data, 0, 31))
       set_modify(true);
-    if (ImGui::InputInt(p_hours.name_id.c_str(), &p_hours.data))
+    if (ImGui::SliderInt(p_hours.name_id.c_str(), &p_hours.data, 0, 23))
       set_modify(true);
-    if (ImGui::InputInt(p_minutes.name_id.c_str(), &p_minutes.data))
+    if (ImGui::SliderInt(p_minutes.name_id.c_str(), &p_minutes.data, 0, 59))
       set_modify(true);
-    if (ImGui::InputInt(p_seconds.name_id.c_str(), &p_seconds.data))
+    if (ImGui::SliderInt(p_seconds.name_id.c_str(), &p_seconds.data, 0, 59))
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
