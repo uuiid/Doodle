@@ -10,7 +10,7 @@ set(
         core/observable_container.h
         gui/open_file_dialog.h
         core/program_options.h
-        core/static_value.h 
+        core/static_value.h
         core/ue4_setting.h
         core/util.h
         core/image_loader.h
@@ -31,11 +31,11 @@ set(
         gui/gui_ref/path.h
         gui/gui_ref/project.h
         gui/gui_ref/ref_base.h
-        gui/gui_ref/ref_base.cpp
+        gui/gui_ref/database_edit.h
 
         gui/action/command.h
         gui/action/command_down_file.h
-        gui/action/command_files.h 
+        gui/action/command_files.h
         gui/action/command_tool.h
         gui/action/command_ue4.h
         gui/action/command_video.h
@@ -53,7 +53,7 @@ set(
         gui/widgets/project_edit.h
 
         lib_warp/WinReg.hpp
-        lib_warp/boost_locale_warp.h 
+        lib_warp/boost_locale_warp.h
         lib_warp/boost_uuid_warp.h
         lib_warp/cache.hpp
         lib_warp/cache_policy.hpp
@@ -120,7 +120,7 @@ set(
         core/filesystem_extend.cpp
         gui/open_file_dialog.cpp
         core/program_options.cpp
-        core/static_value.cpp 
+        core/static_value.cpp
         core/ue4_setting.cpp
         core/util.cpp
         core/image_loader.cpp
@@ -131,7 +131,7 @@ set(
         file_warp/opencv_read_player.cpp
         file_warp/ue4_project.cpp
         file_warp/video_sequence.cpp
-        gui/base_windwos.cpp 
+        gui/base_windwos.cpp
         gui/setting_windows.cpp
         gui/widget_register.cpp
         gui/main_menu_bar.cpp
@@ -139,6 +139,8 @@ set(
         gui/get_input_dialog.cpp
         gui/gui_ref/path.cpp
         gui/gui_ref/project.cpp
+        gui/gui_ref/ref_base.cpp
+        gui/gui_ref/database_edit.cpp
         gui/action/command.cpp
         gui/action/command_down_file.cpp
         gui/action/command_files.cpp
@@ -192,5 +194,5 @@ set(
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
         platform/win/wnd_proc.cpp
-        core/app_base.cpp 
+        core/app_base.cpp
         doodle_lib_all.cpp)

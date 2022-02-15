@@ -31,10 +31,9 @@ doodle_sqlpp_generate(
 add_library(doodle_lib
         #        SHARED
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
-        ${DOODLELIB_HEADER}
-        ${DOODLELIB_SOURCE}
-        ${OUT_LISTS_sqlpp}
         )
+target_sources(doodle_lib PRIVATE ${DOODLELIB_SOURCE})
+target_sources(doodle_lib PUBLIC ${DOODLELIB_HEADER} ${OUT_LISTS_sqlpp})
 
 target_precompile_headers(doodle_lib
         PUBLIC [[<doodle_lib/doodle_lib_pch.h>]])
