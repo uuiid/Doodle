@@ -127,6 +127,7 @@ class gui_cache : public gui_cache_name_id, public BaseType {
 
   gui_cache &operator=(const T &in) {
     data = in;
+    return *this;
   }
   operator T &() {
     return data;

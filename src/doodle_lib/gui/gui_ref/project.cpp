@@ -59,7 +59,7 @@ void cloth_config_edit::init_(const entt::handle& in) {
 }
 void cloth_config_edit::save_(const entt::handle& in) const {
   auto& l_c              = in.get_or_emplace<project::cloth_config>();
-  l_c.vfx_cloth_sim_path = p_i->path_;
+  l_c.vfx_cloth_sim_path = p_i->path_.data;
   l_c.export_group       = p_i->ue4_name;
 }
 cloth_config_edit::cloth_config_edit()
