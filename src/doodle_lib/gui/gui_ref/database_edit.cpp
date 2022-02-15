@@ -10,6 +10,7 @@ namespace doodle::gui {
 class database_edit::impl {
  public:
   std::string show_text;
+  std::vector<boost::signals2::scoped_connection> scoped_connection_;
 };
 void database_edit::init_(const entt::handle& in) {
   auto&& l_item = in.get_or_emplace<database>();
@@ -47,5 +48,10 @@ database_edit::database_edit()
 database_edit::~database_edit() = default;
 void database_edit::render(const entt::handle& in) {
   dear::Text(p_i->show_text);
+}
+void database_edit::link_sig(const std::unique_ptr<edit_interface>& in_unique_ptr) {
+  p_i->scoped_connection_.emplace_back(in_unique_ptr->data_->edited.connect([this]() {
+    this->data_->is_modify = true;
+  }));
 }
 }  // namespace doodle::gui

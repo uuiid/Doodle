@@ -18,6 +18,7 @@ class DOODLELIB_API database_edit : public edit_interface {
   database_edit();
   ~database_edit();
   void render(const entt::handle &in) override;
+  void link_sig(const std::unique_ptr<edit_interface> &in_unique_ptr);
 };
 
 }  // namespace doodle::gui
