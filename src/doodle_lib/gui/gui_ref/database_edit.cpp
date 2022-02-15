@@ -38,9 +38,8 @@ void database_edit::init_(const entt::handle& in) {
               l_item.get_id(), l_status);
 }
 void database_edit::save_(const entt::handle& in) const {
-  if (in.all_of<database>()) {
-    in.patch<database>(database::save);
-  }
+  chick_true<doodle_error>(in.all_of<database>(), DOODLE_LOC, "缺失数据库组件");
+  in.patch<database>(database::save);
 }
 database_edit::database_edit()
     : p_i(std::make_unique<impl>()) {
