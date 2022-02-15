@@ -2,6 +2,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/signals2.hpp>
+
 namespace doodle::gui {
 
 class DOODLELIB_API base_render {
@@ -10,9 +12,10 @@ class DOODLELIB_API base_render {
   virtual bool operator()(const entt::handle &in_handle){};
 };
 
-class gui_data_interface {
+class gui_data {
  public:
   bool is_modify{false};
+  boost::signals2::signal<void()> edited;
 };
 
 class DOODLELIB_API edit_interface {
@@ -26,7 +29,7 @@ class DOODLELIB_API edit_interface {
   edit_interface();
   ~edit_interface();
 
-  std::unique_ptr<gui_data_interface> data_;
+  std::unique_ptr<gui_data> data_;
 
   virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
@@ -49,7 +52,6 @@ class interface_help_t {
   interface_help_t(const Self_T *in_self_t) : self(in_self_t){};
   ~interface_help_t() = default;
 };
-
 
 class gui_cache_null_data {
  public:
@@ -132,18 +134,4 @@ class gui_cache : public gui_cache_name_id, public BaseType {
     return data;
   }
 };
-
-template <class T>
-class gui_data : public gui_data_interface {
- public:
-  using show_type     = T;
-  using adl_find      = adl_traits<show_type>;
-  using gui_data_type = typename adl_find::gui_data;
-
-  gui_data_type data_;
-
-  gui_data() = default;
-  explicit gui_data(const T &in_t) : data_(in_t){};
-};
-
 }  // namespace doodle::gui
