@@ -3,12 +3,21 @@
 //
 
 #pragma once
+#include <doodle_lib/gui/gui_ref/ref_base.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
-class database_edit {
+class DOODLELIB_API database_edit : public edit_interface {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+  void init_(const entt::handle &in) override;
+  void save_(const entt::handle &in) const override;
+
+ public:
+  database_edit();
+  ~database_edit();
+  void render(const entt::handle &in) override;
 };
 
-}  // namespace gui
-}  // namespace doodle
+}  // namespace doodle::gui
