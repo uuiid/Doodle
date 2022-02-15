@@ -10,7 +10,11 @@ class DOODLELIB_API base_render {
   virtual bool operator()(const entt::handle &in_handle){};
 };
 
-class base_edit {
+
+
+
+
+class database_edit {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
   virtual void save_(const entt::handle &in) const = 0;
@@ -93,6 +97,19 @@ class gui_cache : public BaseType {
     return data;
   }
 };
+
+template <class T, class cache_base = gui_cache_null_data>
+class gui_data {
+ public:
+  using show_type     = T;
+  using adl_find      = adl_traits<show_type>;
+  using gui_data_type = typename adl_find::gui_data;
+
+  gui_cache<show_type, cache_base> cache_data;
+  gui_data_type data_;
+  bool is_modify{false};
+};
+
 }  // namespace details
 
 }  // namespace doodle::gui

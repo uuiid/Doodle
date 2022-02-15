@@ -20,7 +20,7 @@
 
 namespace doodle {
 
-class assets_edit : public gui::base_edit {
+class assets_edit : public gui::database_edit {
  public:
   class gui_chache {
    public:
@@ -85,7 +85,7 @@ class assets_edit : public gui::base_edit {
   }
 };
 
-class season_edit : public gui::base_edit {
+class season_edit : public gui::database_edit {
  public:
   std::int32_t p_season;
 
@@ -103,7 +103,7 @@ class season_edit : public gui::base_edit {
     in.emplace_or_replace<season>(p_season);
   }
 };
-class episodes_edit : public gui::base_edit {
+class episodes_edit : public gui::database_edit {
  public:
   std::int32_t p_eps{1};
 
@@ -120,7 +120,7 @@ class episodes_edit : public gui::base_edit {
     in.emplace_or_replace<episodes>(p_eps);
   }
 };
-class shot_edit : public gui::base_edit {
+class shot_edit : public gui::database_edit {
  public:
   std::int32_t p_shot;
   std::string p_shot_ab_str;
@@ -151,7 +151,7 @@ class shot_edit : public gui::base_edit {
     in.emplace_or_replace<shot>(p_shot, p_shot_ab_str);
   }
 };
-class assets_file_edit : public gui::base_edit {
+class assets_file_edit : public gui::database_edit {
  public:
   std::string p_path_cache;
 
@@ -170,7 +170,7 @@ class assets_file_edit : public gui::base_edit {
   }
 };
 
-class time_edit : public gui::base_edit {
+class time_edit : public gui::database_edit {
  public:
   std::int16_t p_year;
   std::int16_t p_month;
@@ -202,7 +202,7 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::base_edit>>;
+  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::database_edit>>;
 
   std::vector<gui_cache> p_edit;
 };
