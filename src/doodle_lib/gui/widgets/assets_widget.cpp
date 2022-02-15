@@ -236,7 +236,7 @@ class assets_filter_factory : public gui::filter_factory_base {
 
   void refresh_() {
     for (auto&& i : p_obs) {
-      auto k_h = make_handle();
+      auto k_h = make_handle(i);
       add_tree_node(&p_tree, k_h.get<data_type>().get_path());
     }
   }
@@ -315,11 +315,12 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   dear::Disabled l_d{p_impl->only_rand};
 
   for (auto&& i : p_impl->p_filter_factorys) {
-    i.data->refresh();
     if (ImGui::Checkbox(i.name_id.c_str(), &i.select))
       p_impl->is_edit = true;
-    if (i.select)
+    if (i.select) {
+      i.data->refresh();
       i.data->render();
+    }
   }
 
   if (boost::algorithm::any_of(p_impl->p_filter_factorys,

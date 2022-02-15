@@ -63,7 +63,7 @@ class filter_factory_t : public filter_factory_base {
   }
   void refresh_() override {
     for (auto&& i : p_obs) {
-      auto k_h = make_handle();
+      auto k_h = make_handle(i);
       p_edit.emplace_back(k_h.get<data_type>());
     }
     boost::unique_erase(boost::sort(p_edit));
