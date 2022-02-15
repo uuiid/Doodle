@@ -202,7 +202,7 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::database_edit>>;
+  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::edit_interface>>;
 
   std::vector<gui_cache> p_edit;
 };
