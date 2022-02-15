@@ -10,15 +10,14 @@
 
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 class project_edit::impl {
  public:
   gui_cache<std::string> project_path;
   gui_cache<std::string> project_name;
   impl()
-      : project_path(""),
-        project_name("") {}
+      : project_path("路径"s, ""s),
+        project_name("名称"s, ""s) {}
   project p_prj;
   std::string path;
   project::cloth_config cloth_config;
@@ -67,5 +66,4 @@ void project_edit::render(const entt::handle& in) {
 }
 
 project_edit::~project_edit() = default;
-}  // namespace gui
 }  // namespace doodle
