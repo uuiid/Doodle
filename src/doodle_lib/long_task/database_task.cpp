@@ -376,7 +376,14 @@ database_task_obs::database_task_obs()
 database_task_obs::~database_task_obs() = default;
 
 void database_task_obs::save() {
-  auto k_then = g_main_loop().attach<null_process_t>();
+  std::vector<entt::handle> l_list{};
+  boost::copy(p_i->need_save, std::back_inserter(l_list));
+  boost::copy(p_i->need_updata, std::back_inserter(l_list));
+  boost::copy(p_i->need_delete, std::back_inserter(l_list));
+
+  auto k_then = g_main_loop().attach<one_process_t>([=]() {
+    g_reg()->ctx<core_sig>().save_begin(l_list);
+  });
   if (!p_i->need_save.empty()) {
     k_then = k_then.then<database_task_install>(p_i->need_save);
   }
@@ -384,8 +391,15 @@ void database_task_obs::save() {
     k_then = k_then.then<database_task_update>(p_i->need_updata);
   }
   if (!p_i->need_delete.empty()) {
-    k_then.then<database_task_delete>(p_i->need_delete);
+    k_then = k_then.then<database_task_delete>(p_i->need_delete);
   }
+  k_then.then<one_process_t>([=]() {
+    g_reg()->ctx<core_sig>().save_end(l_list);
+  });
+
+  p_i->need_save.clear();
+  p_i->need_updata.clear();
+  p_i->need_delete.clear();
 }
 
 void database_task_obs::init() {
