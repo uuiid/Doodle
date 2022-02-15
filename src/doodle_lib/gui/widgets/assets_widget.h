@@ -42,7 +42,7 @@ template <class T>
 class filter_factory_t : public filter_factory_base {
  public:
   using data_type = T;
-  using gui_cache = details::gui_cache<data_type>;
+  using gui_cache = gui_cache<data_type>;
 
   std::optional<gui_cache> p_cur_select;
   std::string select_name;

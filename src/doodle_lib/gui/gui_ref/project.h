@@ -7,7 +7,7 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API project_edit : public database_edit {
+class DOODLELIB_API project_edit : public edit_interface {
   class impl;
   std::unique_ptr<impl> p_i;
 

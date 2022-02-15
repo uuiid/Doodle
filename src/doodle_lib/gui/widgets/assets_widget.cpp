@@ -168,7 +168,7 @@ class assets_filter_factory : public gui::filter_factory_base {
                                                        ImGuiTreeNodeFlags_SpanAvailWidth};
 
   using data_type      = assets;
-  using gui_cache      = gui::details::gui_cache<FSys::path>;
+  using gui_cache      = gui::gui_cache<FSys::path>;
   using tree_node_type = tree_node<gui_cache>;
 
   tree_node_type p_tree;
@@ -271,9 +271,9 @@ class assets_widget::impl {
   std::vector<boost::signals2::scoped_connection> p_conns;
 
   using factory_gui_cache =
-      gui::details::gui_cache<
+      gui::gui_cache<
           std::unique_ptr<gui::filter_factory_base>,
-          gui::details::gui_cache_select>;
+          gui::gui_cache_select>;
 
   std::vector<factory_gui_cache> p_filter_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;

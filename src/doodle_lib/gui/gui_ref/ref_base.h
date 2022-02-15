@@ -15,7 +15,6 @@ class gui_data_interface {
   bool is_modify{false};
 };
 
-
 class DOODLELIB_API edit_interface {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
@@ -55,9 +54,6 @@ class DOODLELIB_API database_edit : public edit_interface {
  public:
   void save(const entt::handle &in) override;
 };
-
-namespace details {
-/// , std::enable_if_t<!doodle::details::is_smart_pointer<T>::value, bool> = true
 
 class gui_cache_null_data {
  public:
@@ -142,7 +138,5 @@ class gui_data : public gui_data_interface {
   gui_data() = default;
   explicit gui_data(const T &in_t) : data_(in_t){};
 };
-
-}  // namespace details
 
 }  // namespace doodle::gui

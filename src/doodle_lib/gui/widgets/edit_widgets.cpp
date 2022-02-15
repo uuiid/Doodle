@@ -20,16 +20,15 @@
 
 namespace doodle {
 
-class assets_edit : public gui::database_edit {
+class assets_edit : public gui::edit_interface {
  public:
-
   class impl {
    public:
     explicit impl(const std::string &in_name)
         : edit(std::string{}, in_name),
           button("删除", false) {}
-    gui::details::gui_cache<std::string> edit;
-    gui::details::gui_cache<bool> button;
+    gui_cache<std::string> edit;
+    gui_cache<bool> button;
   };
 
   std::vector<impl> p_cache;
@@ -201,9 +200,9 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-  using gui_cache = gui::details::gui_cache<std::unique_ptr<gui::edit_interface>>;
+  using gui_cache_t = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
 
-  std::vector<gui_cache> p_edit;
+  std::vector<gui_cache_t> p_edit;
 };
 
 edit_widgets::edit_widgets()
@@ -223,7 +222,7 @@ void edit_widgets::init() {
                   .select_handle.connect(
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
-                        boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
+                        boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
                           in_edit.data->init(in);
                         });
                       });
@@ -253,7 +252,7 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
-  boost::for_each(p_i->p_edit, [&](impl::gui_cache &in_edit) {
+  boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
     ImGui::SetNextItemOpen(true);
     dear::TreeNode{in_edit.name_id.c_str()} && [&]() {
       in_edit.data->render(p_i->p_h);

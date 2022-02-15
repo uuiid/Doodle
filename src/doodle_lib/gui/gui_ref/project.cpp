@@ -14,6 +14,11 @@ namespace doodle {
 namespace gui {
 class project_edit::impl {
  public:
+  gui_cache<std::string> project_path;
+  gui_cache<std::string> project_name;
+  impl()
+      : project_path(""),
+        project_name("") {}
   project p_prj;
   std::string path;
   project::cloth_config cloth_config;
