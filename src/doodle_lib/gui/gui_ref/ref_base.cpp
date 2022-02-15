@@ -24,9 +24,8 @@ void database_edit::save(const entt::handle &in) {
     if (in.all_of<database>()) {
       in.patch<database>(database::save);
     }
-    save_(in);
-    data_->is_modify = false;
   }
+  edit_interface::save(in);
 }
 
 }  // namespace doodle::gui
