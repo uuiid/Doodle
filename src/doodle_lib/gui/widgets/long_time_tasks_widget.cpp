@@ -67,7 +67,7 @@ void long_time_tasks_widget::update(chrono::duration<chrono::system_clock::rep, 
       dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
     }
   };
-  dear::Text("主要日志");
+  dear::Text("主要日志"s);
   dear::Child{"main_log", ImVec2{0, 266}, true} && [this]() {
     if (p_current_select && p_current_select.any_of<process_message>()) {
       auto msg_str = p_current_select.get<process_message>().err();
@@ -76,7 +76,7 @@ void long_time_tasks_widget::update(chrono::duration<chrono::system_clock::rep, 
     // dear::TextWrapPos{0.0f} && [this]() {
     // };
   };
-  dear::Text("全部信息");
+  dear::Text("全部信息"s);
   dear::Child{"info_log", ImVec2{0, 266}, true} && [this]() {
     if (p_current_select && p_current_select.any_of<process_message>()) {
       auto msg_str = p_current_select.get<process_message>().log();
