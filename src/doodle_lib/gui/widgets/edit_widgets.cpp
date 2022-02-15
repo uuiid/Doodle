@@ -22,23 +22,19 @@ namespace doodle {
 
 class assets_edit : public gui::database_edit {
  public:
-  class gui_chache {
-   public:
-    gui_chache(std::string in_name)
-        : edit(in_name),
-          button_name(fmt::format("删除##{}", fmt::ptr(this))),
-          input_label(fmt::format("##编辑{}", fmt::ptr(this))),
-          clear(false){};
 
-    std::string edit;
-    std::string button_name;
-    std::string input_label;
-    bool clear;
+  class impl {
+   public:
+    explicit impl(const std::string &in_name)
+        : edit(std::string{}, in_name),
+          button("删除", false) {}
+    gui::details::gui_cache<std::string> edit;
+    gui::details::gui_cache<bool> button;
   };
 
-  std::vector<gui_chache> p_cache;
+  std::vector<impl> p_cache;
 
-  void init_(const entt::handle &in) {
+  void init_(const entt::handle &in) override {
     assets l_ass{"root"};
     if (in.all_of<assets>()) {
       l_ass = in.get<assets>();
@@ -48,7 +44,7 @@ class assets_edit : public gui::database_edit {
       p_cache.emplace_back(i);
     }
   };
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
     if (ImGui::Button("添加")) {
       p_cache.emplace_back("none");
       set_modify(true);
@@ -58,17 +54,17 @@ class assets_edit : public gui::database_edit {
 
     dear::ListBox{"资产类别"} && [&]() {
       for (auto &&i : p_cache) {
-        if (dear::InputText(i.input_label.c_str(), &i.edit))
+        if (dear::InputText(i.edit.name_id.c_str(), &i.edit.data))
           set_modify(true);
         ImGui::SameLine();
-        if (dear::Button(i.button_name.c_str())) {
-          i.clear = true;
-          l_clear = true;
+        if (dear::Button(i.button.name_id.c_str())) {
+          i.button.data = true;
+          l_clear       = true;
         }
       }
     };
     if (l_clear) {
-      boost::remove_erase_if(p_cache, [](const gui_chache &in) { return in.clear; });
+      boost::remove_erase_if(p_cache, [](const impl &in) { return in.button.data; });
     }
   };
 
@@ -76,9 +72,9 @@ class assets_edit : public gui::database_edit {
     std::vector<std::string> l_list;
     boost::transform(p_cache,
                      std::back_inserter(l_list),
-                     [](const gui_chache &in)
+                     [](const impl &in)
                          -> std::string {
-                       return in.edit;
+                       return in.edit.data;
                      });
 
     in.emplace_or_replace<assets>(FSys::path{fmt::to_string(fmt::join(l_list, "/"))});
