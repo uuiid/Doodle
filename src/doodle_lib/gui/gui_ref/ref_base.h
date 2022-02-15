@@ -15,6 +15,7 @@ class gui_data_interface {
   bool is_modify{false};
 };
 
+
 class DOODLELIB_API edit_interface {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
@@ -25,11 +26,29 @@ class DOODLELIB_API edit_interface {
  public:
   edit_interface();
   ~edit_interface();
-  std::unique_ptr<gui_data_interface> data;
+
+  std::unique_ptr<gui_data_interface> data_;
 
   virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
   virtual void save(const entt::handle &in);
+};
+
+template <class Self_T, class data_t, class cache_t>
+class interface_help_t {
+ private:
+  Self_T *self;
+
+ protected:
+  data_t &data() { return *std::dynamic_pointer_cast<data_t>(self->data_); };
+  const data_t &data() const { return *std::dynamic_pointer_cast<data_t>(self->data_); };
+
+  cache_t &cache() { return *std::dynamic_pointer_cast<cache_t>(self->cache_); };
+  const cache_t &cache() const { return *std::dynamic_pointer_cast<cache_t>(self->cache_); };
+
+ public:
+  interface_help_t(const Self_T *in_self_t) : self(in_self_t){};
+  ~interface_help_t() = default;
 };
 
 class DOODLELIB_API database_edit : public edit_interface {
@@ -49,30 +68,39 @@ class gui_cache_select {
   bool select;
 };
 
-template <class T, class BaseType = gui_cache_null_data>
-class gui_cache : public BaseType {
+class gui_cache_name_id {
  public:
-  using base_type = BaseType;
   std::string name_id;
   std::string_view name;
+
+  gui_cache_name_id()
+      : gui_cache_name_id(std::string{}) {
+  }
+
+  explicit gui_cache_name_id(const std::string &in_name)
+      : name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
+        name() {
+    std::string_view k_v{name_id};
+    name = k_v.substr(0, in_name.size());
+  }
+};
+
+template <class T, class BaseType = gui_cache_null_data>
+class gui_cache : public gui_cache_name_id, public BaseType {
+ public:
+  using base_type = BaseType;
   T data;
   template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, const IN_T &in_data)
-      : base_type(),
-        name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
-        data(in_data) {
-    std::string_view k_v{name_id};
-    name = k_v.substr(0, in_name.size());
-  };
+      : gui_cache_name_id(in_name),
+        base_type(),
+        data(in_data){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(const std::string &in_name, IN_T &in_data)
-      : base_type(),
-        name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
-        data(std::move(in_data)) {
-    std::string_view k_v{name_id};
-    name = k_v.substr(0, in_name.size());
-  };
+      : gui_cache_name_id(in_name),
+        base_type(),
+        data(std::move(in_data)){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(IN_T &in_data)
@@ -100,25 +128,19 @@ class gui_cache : public BaseType {
   bool operator!=(const gui_cache &in_rhs) const {
     return !(in_rhs == *this);
   }
-
-  constexpr operator T &() {
-    return data;
-  }
-  constexpr operator const T &() const {
-    return data;
-  }
 };
 
-template <class T, class cache_base = gui_cache_null_data>
-class gui_data {
+template <class T>
+class gui_data : public gui_data_interface {
  public:
   using show_type     = T;
   using adl_find      = adl_traits<show_type>;
   using gui_data_type = typename adl_find::gui_data;
 
-  gui_cache<show_type, cache_base> cache_data;
   gui_data_type data_;
-  bool is_modify{false};
+
+  gui_data() = default;
+  explicit gui_data(const T &in_t) : data_(in_t){};
 };
 
 }  // namespace details
