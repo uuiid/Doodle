@@ -7,8 +7,9 @@ void edit_interface::init(const entt::handle &in) {
   init_(in);
 }
 void edit_interface::save(const entt::handle &in) {
+  if (data_->is_modify)
+    save_(in);
   data_->is_modify = false;
-  save_(in);
 }
 void edit_interface::set_modify(bool is_modify) {
   data_->is_modify = is_modify;
