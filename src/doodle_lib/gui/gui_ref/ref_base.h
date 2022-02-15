@@ -10,10 +10,6 @@ class DOODLELIB_API base_render {
   virtual bool operator()(const entt::handle &in_handle){};
 };
 
-template <class T>
-base_render make_render() {
-}
-
 class base_edit {
  protected:
   virtual void init_(const entt::handle &in)       = 0;

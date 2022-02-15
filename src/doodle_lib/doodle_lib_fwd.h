@@ -365,33 +365,10 @@ using string_ptr              = std::shared_ptr<string>;
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 
-namespace rpc_trans {
-class down_file;
-class down_dir;
-class up_file;
-class up_dir;
-class trans_file;
-class trans_files;
-using trans_file_ptr = std::shared_ptr<trans_file>;
-}  // namespace rpc_trans
 
 namespace gui {
-
 template <class T>
 struct adl_render {};
-
-// template <class T>
-// bool render(const entt::handle &in_handle) {
-//   if (in_handle.template any_of<T>()) {
-//     if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle), decltype(in_handle.template get<T>())>)
-//       return adl_render<T>::render(in_handle, in_handle.template get<T>());
-//     else if constexpr (std::is_invocable_v<decltype(&(adl_render<T>::render)), decltype(in_handle)>)
-//       return adl_render<T>::render(in_handle);
-//     else
-//       return adl_render<T>::render(in_handle.template get<T>());
-//   }
-//   return false;
-// };
 }  // namespace gui
 
 namespace details {
