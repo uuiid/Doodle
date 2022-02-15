@@ -368,7 +368,7 @@ using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
 
 namespace gui {
 template <class T>
-struct adl_render {};
+struct adl_traits {};
 }  // namespace gui
 
 namespace details {
