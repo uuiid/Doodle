@@ -20,4 +20,16 @@ class DOODLELIB_API project_edit : public edit_interface {
   void render(const entt::handle &in) override;
 };
 
-}  // namespace doodle
+class DOODLELIB_API cloth_config_edit : public edit_interface {
+  class impl;
+  std::unique_ptr<impl> p_i;
+  void init_(const entt::handle &in) override;
+  void save_(const entt::handle &in) const override;
+
+ public:
+  cloth_config_edit();
+  ~cloth_config_edit();
+  void render(const entt::handle &in) override;
+};
+
+}  // namespace doodle::gui

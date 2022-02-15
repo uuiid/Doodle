@@ -124,6 +124,16 @@ class gui_cache : public gui_cache_name_id, public BaseType {
   bool operator!=(const gui_cache &in_rhs) const {
     return !(in_rhs == *this);
   }
+
+  gui_cache &operator=(const T &in) {
+    data = in;
+  }
+  operator T &() {
+    return data;
+  }
+  operator const T &() const {
+    return data;
+  }
 };
 
 template <class T>

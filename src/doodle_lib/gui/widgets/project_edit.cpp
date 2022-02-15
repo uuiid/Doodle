@@ -12,19 +12,26 @@ namespace doodle {
 
 class project_edit::impl {
  public:
+  using cache = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
+
+  std::vector<cache> p_edits;
   gui::project_edit p_edit;
   entt::handle p_h;
 };
 
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
+  p_i->p_edits.emplace_back("项目编辑", std::make_unique<gui::project_edit>());
+  p_i->p_edits.emplace_back("解算配置", std::make_unique<gui::cloth_config_edit>());
 }
 project_edit::~project_edit() = default;
 
 void project_edit::init() {
   p_i->p_h = project::get_current();
 
-  p_i->p_edit.init(p_i->p_h);
+  boost::for_each(p_i->p_edits, [this](impl::cache& in) {
+    in.data->init(p_i->p_h);
+  });
 }
 void project_edit::succeeded() {
 }
@@ -35,8 +42,10 @@ void project_edit::aborted() {
 void project_edit::update(const chrono::duration<chrono::system_clock::rep,
                                                  chrono::system_clock::period>&,
                           void* data) {
-  p_i->p_edit.render(p_i->p_h);
-  p_i->p_edit.save(p_i->p_h);
+  boost::for_each(p_i->p_edits, [this](impl::cache& in) {
+    in.data->render(p_i->p_h);
+    in.data->save(p_i->p_h);
+  });
   if (ImGui::Button("保存"))
     g_reg()->ctx<core_sig>().save();
 }
