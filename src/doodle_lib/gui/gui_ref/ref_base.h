@@ -10,20 +10,21 @@ class DOODLELIB_API base_render {
   virtual bool operator()(const entt::handle &in_handle){};
 };
 
-
-
-
-
-class database_edit {
+class DOODLELIB_API edit_interface {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
   virtual void save_(const entt::handle &in) const = 0;
 
  public:
   bool is_modify{false};
-  void init(const entt::handle &in);
+  virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
-  void save(const entt::handle &in);
+  virtual void save(const entt::handle &in);
+};
+
+class DOODLELIB_API database_edit : public edit_interface {
+ public:
+  void save(const entt::handle &in) override;
 };
 
 namespace details {
