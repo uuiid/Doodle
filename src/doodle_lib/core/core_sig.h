@@ -17,5 +17,7 @@ class DOODLELIB_API core_sig {
   boost::signals2::signal<void(const std::vector<entt::handle>&)> select_handles;
 
   boost::signals2::signal<void()> save;
+  boost::signals2::signal<void()> begin_save;
+  boost::signals2::signal<void()> end_save;
 };
 }  // namespace doodle
