@@ -50,10 +50,6 @@ class interface_help_t {
   ~interface_help_t() = default;
 };
 
-class DOODLELIB_API database_edit : public edit_interface {
- public:
-  void save(const entt::handle &in) override;
-};
 
 class gui_cache_null_data {
  public:
