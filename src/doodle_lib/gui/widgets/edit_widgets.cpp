@@ -27,8 +27,8 @@ class assets_edit : public gui::edit_interface {
     explicit impl(const std::string &in_name)
         : edit(std::string{}, in_name),
           button("删除", false) {}
-    gui_cache<std::string> edit;
-    gui_cache<bool> button;
+    gui::gui_cache<std::string> edit;
+    gui::gui_cache<bool> button;
   };
 
   std::vector<impl> p_cache;
@@ -170,15 +170,28 @@ class assets_file_edit : public gui::database_edit {
 
 class time_edit : public gui::database_edit {
  public:
-  std::int16_t p_year;
-  std::int16_t p_month;
-  std::int16_t p_day;
+  gui::gui_cache<std::int16_t> p_year;
+  gui::gui_cache<std::int16_t> p_month;
+  gui::gui_cache<std::int16_t> p_day;
 
-  std::int16_t p_hours;
-  std::int16_t p_minutes;
-  std::int16_t p_seconds;
+  gui::gui_cache<std::int16_t> p_hours;
+  gui::gui_cache<std::int16_t> p_minutes;
+  gui::gui_cache<std::int16_t> p_seconds;
 
  public:
+  void init_(const entt::handle &in) {
+    std::tie(p_year,
+             p_month,
+             p_day,
+             p_hours,
+             p_minutes,
+             p_seconds) = in.get_or_emplace<time_point_wrap>().compose();
+  }
+
+  void render(const entt::handle &in) {
+  }
+  void save_(const entt::handle &in) const {
+  }
 };
 
 class edit_widgets::impl {
