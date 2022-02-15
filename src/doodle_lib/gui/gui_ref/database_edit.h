@@ -14,6 +14,7 @@ class DOODLELIB_API database_edit : public edit_interface {
   void init_(const entt::handle &in) override;
   void save_(const entt::handle &in) const override;
 
+  void format_();
  public:
   database_edit();
   ~database_edit();

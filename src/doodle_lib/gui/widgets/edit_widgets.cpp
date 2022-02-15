@@ -17,6 +17,7 @@
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_lib/gui/gui_ref/database_edit.h>
 
 namespace doodle {
 
@@ -80,7 +81,7 @@ class assets_edit : public gui::edit_interface {
   }
 };
 
-class season_edit : public gui::database_edit {
+class season_edit : public gui::edit_interface {
  public:
   std::int32_t p_season;
 
@@ -98,7 +99,7 @@ class season_edit : public gui::database_edit {
     in.emplace_or_replace<season>(p_season);
   }
 };
-class episodes_edit : public gui::database_edit {
+class episodes_edit : public gui::edit_interface {
  public:
   std::int32_t p_eps{1};
 
@@ -117,7 +118,7 @@ class episodes_edit : public gui::database_edit {
     in.emplace_or_replace<episodes>(p_eps);
   }
 };
-class shot_edit : public gui::database_edit {
+class shot_edit : public gui::edit_interface {
  public:
   std::int32_t p_shot;
   std::string p_shot_ab_str;
@@ -149,7 +150,7 @@ class shot_edit : public gui::database_edit {
     in.emplace_or_replace<shot>(p_shot, p_shot_ab_str);
   }
 };
-class assets_file_edit : public gui::database_edit {
+class assets_file_edit : public gui::edit_interface {
  public:
   std::string p_path_cache;
 
@@ -168,7 +169,7 @@ class assets_file_edit : public gui::database_edit {
   }
 };
 
-class time_edit : public gui::database_edit {
+class time_edit : public gui::edit_interface {
  public:
   gui::gui_cache<std::int32_t> p_year;
   gui::gui_cache<std::int32_t> p_month;
@@ -238,8 +239,9 @@ class edit_widgets::impl {
    */
   entt::handle p_h;
 
-  using gui_cache_t = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
+  gui::database_edit data_edit;
 
+  using gui_cache_t = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
   std::vector<gui_cache_t> p_edit;
 };
 
@@ -251,6 +253,9 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
+  boost::for_each(p_i->p_edit, [this](impl::gui_cache_t &in_edit) {
+    p_i->data_edit.link_sig(in_edit.data);
+  });
 }
 edit_widgets::~edit_widgets() = default;
 
@@ -261,6 +266,7 @@ void edit_widgets::init() {
                   .select_handle.connect(
                       [&](const entt::handle &in) {
                         p_i->p_h = in;
+                        p_i->data_edit.init(p_i->p_h);
                         boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
                           in_edit.data->init(in);
                         });
@@ -291,11 +297,13 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
+  p_i->data_edit.render(p_i->p_h);
   boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
     dear::Text(in_edit.name);
     in_edit.data->render(p_i->p_h);
     in_edit.data->save(p_i->p_h);
   });
+  //  p_i->data_edit.save(p_i->p_h);
 }
 
 void edit_widgets::add_handle() {
