@@ -405,7 +405,12 @@ void database_task_obs::save() {
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database>());
   g_reg()->set<database_task_obs&>(*this);
-  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([this]() { this->save(); });
+  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([this]() {
+    if (!p_i->need_save.empty() ||
+        !p_i->need_updata.empty() ||
+        !p_i->need_delete.empty())
+      this->save();
+  });
 }
 void database_task_obs::succeeded() {
 }
