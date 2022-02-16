@@ -222,7 +222,7 @@ class time_edit : public gui::edit_interface {
 
 class edit_widgets::impl {
  public:
-  boost::signals2::scoped_connection p_sc;
+  std::vector<boost::signals2::scoped_connection> p_sc;
 
  public:
   /**
@@ -243,6 +243,8 @@ class edit_widgets::impl {
 
   using gui_cache_t = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
   std::vector<gui_cache_t> p_edit;
+
+  bool only_rand{false};
 };
 
 edit_widgets::edit_widgets()
@@ -261,16 +263,25 @@ edit_widgets::~edit_widgets() = default;
 
 void edit_widgets::init() {
   g_reg()->set<edit_widgets &>(*this);
-  p_i->p_sc = g_reg()
-                  ->ctx<core_sig>()
-                  .select_handle.connect(
-                      [&](const entt::handle &in) {
-                        p_i->p_h = in;
-                        p_i->data_edit.init(p_i->p_h);
-                        boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
-                          in_edit.data->init(in);
-                        });
-                      });
+  auto &l_sig = g_reg()->ctx<core_sig>();
+  p_i->p_sc.emplace_back(l_sig.select_handle.connect(
+      [&](const entt::handle &in) {
+        p_i->p_h = in;
+        p_i->data_edit.init(p_i->p_h);
+        boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
+          in_edit.data->init(in);
+        });
+      }));
+  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
+      [&](const std::filesystem::path &) {
+        this->p_i->add_handles.clear();
+        this->p_i->p_h       = {};
+        this->p_i->only_rand = true;
+      }));
+  p_i->p_sc.emplace_back(
+      l_sig.project_end_open.connect([&](const entt::handle &, const doodle::project &) {
+        this->p_i->only_rand = false;
+      }));
 }
 void edit_widgets::succeeded() {
   g_reg()->unset<edit_widgets &>();
@@ -287,6 +298,8 @@ void edit_widgets::aborted() {
 void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
                                            chrono::system_clock::period>,
                           void *data) {
+  dear::Disabled _l_rand{p_i->only_rand};
+
   dear::TreeNode{"添加"} && [this]() {
     this->add_handle();
   };
@@ -297,12 +310,16 @@ void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
-  p_i->data_edit.render(p_i->p_h);
-  boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
-    dear::Text(in_edit.name);
-    in_edit.data->render(p_i->p_h);
-    in_edit.data->save(p_i->p_h);
-  });
+  if (p_i->p_h) {
+    p_i->data_edit.render(p_i->p_h);
+    boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
+      dear::Text(in_edit.name);
+      in_edit.data->render(p_i->p_h);
+      in_edit.data->save(p_i->p_h);
+    });
+    p_i->data_edit.save(p_i->p_h);
+  }
+
   //  p_i->data_edit.save(p_i->p_h);
 }
 
