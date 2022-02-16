@@ -53,21 +53,21 @@ void filter_factory_base::refresh() {
   }
 }
 void filter_factory_base::connection_sig() {
-  auto k_conn = g_reg()
-                    ->ctx<core_sig>()
-                    .project_begin_open.connect(
-                        [&](const std::filesystem::path&) {
-                          this->is_disabled = true;
-                        });
-  p_i->p_conns.push_back(std::move(k_conn));
-  k_conn = g_reg()
-               ->ctx<core_sig>()
-               .project_end_open.connect(
-                   [&](const entt::handle&, const doodle::project&) {
-                     this->is_disabled = false;
-                     p_i->need_init    = true;
-                   });
-  p_i->p_conns.push_back(std::move(k_conn));
+  auto& l_sig = g_reg()->ctx<core_sig>();
+
+  p_i->p_conns.emplace_back(l_sig.project_begin_open.connect(
+      [&](const std::filesystem::path&) {
+        this->is_disabled = true;
+      }));
+  p_i->p_conns.emplace_back(l_sig.project_end_open.connect(
+      [&](const entt::handle&, const doodle::project&) {
+        this->is_disabled = false;
+        p_i->need_init    = true;
+      }));
+  p_i->p_conns.emplace_back(l_sig.save_end.connect(
+      [&](const std::vector<entt::handle>&) {
+        p_i->need_init    = true;
+      }));
 }
 }  // namespace gui
 
