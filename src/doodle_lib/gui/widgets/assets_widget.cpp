@@ -5,17 +5,12 @@
 #include "assets_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/gui/action/command.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_sig.h>
 
-#include <boost/hana/ext/std.hpp>
-#include <boost/range/any_range.hpp>
 
-#include <gui/gui_ref/ref_base.h>
 #include <core/tree_node.h>
-#include <lib_warp/imgui_warp.h>
 #include <lib_warp/entt_warp.h>
 
 namespace doodle {
@@ -114,7 +109,7 @@ class time_filter : public gui::filter_base {
 
 class season_filter_factory : public gui::filter_factory_t<season> {
  public:
-  bool render() {
+  bool render() override {
     dear::Combo{"季数", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
         if (ImGui::Selectable(i.name_id.c_str())) {
@@ -130,7 +125,7 @@ class season_filter_factory : public gui::filter_factory_t<season> {
 
 class episodes_filter_factory : public gui::filter_factory_t<episodes> {
  public:
-  bool render() {
+  bool render() override {
     dear::Combo{"集数", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
         if (ImGui::Selectable(i.name_id.c_str())) {
@@ -146,7 +141,7 @@ class episodes_filter_factory : public gui::filter_factory_t<episodes> {
 
 class shot_filter_factory : public gui::filter_factory_t<shot> {
  public:
-  bool render() {
+  bool render() override {
     dear::Combo{"镜头", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
         if (ImGui::Selectable(i.name_id.c_str())) {
@@ -173,7 +168,7 @@ class assets_filter_factory : public gui::filter_factory_base {
 
   tree_node_type p_tree;
 
-  bool is_select(tree_node_type* in_root) {
+  bool is_select(tree_node_type* in_root) const {
     return in_root == p_cur_select;
   }
 
