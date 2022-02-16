@@ -111,7 +111,7 @@ class DOODLELIB_API assets_widget : public process_t<assets_widget> {
   assets_widget();
   ~assets_widget() override;
 
-  constexpr static std::string_view name{"资产"};
+  constexpr static std::string_view name{"过滤"};
 
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
