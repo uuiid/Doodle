@@ -22,15 +22,19 @@ class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
   bool show{true};
   [[maybe_unused]] virtual void init() {
     g_reg()->template set<self_type&>(*this);
+    core_set::getSet().widget_show.emplace(std::string{panel_.name}, show);
     panel_.init();
   }
   [[maybe_unused]] virtual void succeeded() {
+    g_reg()->template unset<self_type>();
     panel_.succeeded();
   }
   [[maybe_unused]] virtual void failed() {
+    g_reg()->template unset<self_type>();
     panel_.failed();
   }
   [[maybe_unused]] virtual void aborted() {
+    g_reg()->template unset<self_type>();
     panel_.aborted();
   }
   [[maybe_unused]] virtual void update(typename base_type::delta_type in_dalta, void* in_data) {
