@@ -71,12 +71,7 @@ class gui_cache_name_id {
       : gui_cache_name_id(std::string{}) {
   }
 
-  explicit gui_cache_name_id(const std::string &in_name)
-      : name_id(fmt::format("{}##{}", in_name, fmt::ptr(this))),
-        name() {
-    std::string_view k_v{name_id};
-    name = k_v.substr(0, in_name.size());
-  }
+  explicit gui_cache_name_id(const std::string &in_name);
 };
 
 template <class T, class BaseType = gui_cache_null_data>
