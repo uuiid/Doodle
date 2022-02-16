@@ -99,48 +99,66 @@ void main_menu_bar::menu_windows() {
 
   {
     auto k_win = g_reg()->try_ctx<base_window<project_widget>>();
-    if (dear::MenuItem(project_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(project_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<project_widget>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<assets_widget>>();
-    if (dear::MenuItem(assets_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(assets_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<assets_widget>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<assets_file_widgets>>();
-    if (dear::MenuItem(assets_file_widgets::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(assets_file_widgets::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<assets_file_widgets>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<setting_windows>>();
-    if (dear::MenuItem(setting_windows::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(setting_windows::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<setting_windows>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<long_time_tasks_widget>>();
-    if (dear::MenuItem(long_time_tasks_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(long_time_tasks_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<long_time_tasks_widget>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<edit_widgets>>();
-    if (dear::MenuItem(edit_widgets::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(edit_widgets::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<edit_widgets>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<tool_box_widget>>();
-    if (dear::MenuItem(tool_box_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(tool_box_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<tool_box_widget>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<opencv_player_widget>>();
-    if (dear::MenuItem(opencv_player_widget::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(opencv_player_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<opencv_player_widget>();
+      core_set_init{}.write_file();
+    }
   }
   {
     auto k_win = g_reg()->try_ctx<base_window<project_edit>>();
-    if (dear::MenuItem(project_edit::name.data(), k_win ? &(k_win->show) : nullptr))
+    if (dear::MenuItem(project_edit::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<project_edit>();
+      core_set_init{}.write_file();
+    }
   }
 }
 void main_menu_bar::menu_edit() {
