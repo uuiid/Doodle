@@ -9,7 +9,6 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/core_sig.h>
 
-
 #include <core/tree_node.h>
 #include <lib_warp/entt_warp.h>
 
@@ -61,7 +60,7 @@ void filter_factory_base::connection_sig() {
       }));
   p_i->p_conns.emplace_back(l_sig.save_end.connect(
       [&](const std::vector<entt::handle>&) {
-        p_i->need_init    = true;
+        p_i->need_init = true;
       }));
 }
 }  // namespace gui
@@ -298,10 +297,13 @@ void assets_widget::init() {
   p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
 }
 void assets_widget::succeeded() {
+  g_reg()->unset<assets_widget>();
 }
 void assets_widget::failed() {
+  g_reg()->unset<assets_widget>();
 }
 void assets_widget::aborted() {
+  g_reg()->unset<assets_widget>();
 }
 void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   /// 加载数据
