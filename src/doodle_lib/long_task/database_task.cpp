@@ -439,6 +439,9 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                [](const entt::handle& in_handle) {
                  return in_handle.get<database>().status_ == database::status::need_delete;
                });
+  boost::unique_erase(p_i->need_save);
+  boost::unique_erase(p_i->need_updata);
+  boost::unique_erase(p_i->need_delete);
   k_obs.clear();
 }
 }  // namespace doodle
