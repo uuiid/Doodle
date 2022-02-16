@@ -411,8 +411,8 @@ void edit_widgets::clear_handle() {
 
 void edit_widgets::notify_file_list() const {
   if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
-    auto k_list_h = k_w->get_handle_list();
-    k_w->get_handle_list().clear();
+    std::vector<entt::handle> l_vector{};
+    std::vector<entt::handle> k_list_h{};
 
     boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
 
@@ -421,7 +421,8 @@ void edit_widgets::notify_file_list() const {
             boost::adaptors::filtered([](const entt::handle &in) -> bool {
               return in.valid();
             }),
-        std::back_inserter(k_w->get_handle_list()));
+        std::back_inserter(l_vector));
+    g_reg()->ctx<core_sig>().filter_handle(l_vector);
   }
 }
 }  // namespace doodle
