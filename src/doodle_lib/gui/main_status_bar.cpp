@@ -6,6 +6,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/thread_pool/long_term.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <core/status_info.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901
 namespace ImGui {
@@ -104,10 +105,13 @@ void main_status_bar::init() {
   g_reg()->set<main_status_bar&>(*this);
 }
 void main_status_bar::succeeded() {
+  g_reg()->unset<main_status_bar>();
 }
 void main_status_bar::failed() {
+  g_reg()->unset<main_status_bar>();
 }
 void main_status_bar::aborted() {
+  g_reg()->unset<main_status_bar>();
 }
 void main_status_bar::update(
     chrono::duration<chrono::system_clock::rep,
@@ -117,21 +121,25 @@ void main_status_bar::update(
   float height                  = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
     dear::MenuBar{} && [&]() {
+      /// \brief 渲染信息
+      if (auto l_s = g_reg()->try_ctx<status_info>(); l_s) {
+        if (l_s->need_save) {
+          dear::Text("需要保存"s);
+          ImGui::SameLine();
+        }
+        if (!l_s->message.empty()) {
+          dear::Text(l_s->message);
+          ImGui::SameLine();
+        }
+      }
+
+      /// \brief 渲染进度条
       if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
         dear::Text(l_msg->get_name());
-        dear::SameLine();
-        dear::ProgressBar(boost::rational_cast<std::float_t>(l_msg->get_progress()),
-                          ImVec2{-FLT_MIN, 0.0f},
-                          fmt::format("{:04f}%", l_msg->get_progress_f()).c_str());
-        //        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-        //        const ImU32 bg  = ImGui::GetColorU32(ImGuiCol_Button);
-        //        imgui::BufferingBar("long_time",
-        //                            boost::rational_cast<std::float_t>(l_msg->get_progress()),
-        //                            ImVec2(600, 5),
-        //                            bg,
-        //                            col);
-        if (l_msg->is_success())
-          g_reg()->unset<process_message>();
+        ImGui::SameLine();
+        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg->get_progress()),
+                           ImVec2{-FLT_MIN, 0.0f},
+                           fmt::format("{:04f}%", l_msg->get_progress_f()).c_str());
       }
     };
   };

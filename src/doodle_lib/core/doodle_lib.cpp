@@ -22,6 +22,7 @@
 #include <grpcpp/grpcpp.h>
 #endif
 #include <doodle_lib/core/core_sig.h>
+#include <core/status_info.h>
 namespace doodle {
 
 doodle_lib* doodle_lib::p_install = nullptr;
@@ -35,6 +36,7 @@ doodle_lib::doodle_lib()
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   auto& k_sig = reg->set<core_sig>();
+  reg->set<status_info>();
   k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
     auto k_reg = g_reg();
     /// @brief 清除所有数据库实体
@@ -53,6 +55,9 @@ doodle_lib::doodle_lib()
     core_set::getSet().add_recent_project(in_project.get_path());
     g_reg()->set<root_ref>(in_handle);
     core_set_init{}.write_file();
+  });
+  k_sig.save_end.connect([](const std::vector<entt::handle>&) {
+    g_reg()->ctx<status_info>().need_save = false;
   });
   p_install = this;
 }

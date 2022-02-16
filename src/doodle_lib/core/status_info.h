@@ -10,6 +10,8 @@ namespace doodle {
 class DOODLELIB_API status_info final {
  public:
   bool need_save;
+  std::string message;
+
 };
 
 }  // namespace doodle

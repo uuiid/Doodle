@@ -9,6 +9,7 @@
 #include <thread_pool/long_term.h>
 #include <generate/core/metadatatab_sql.h>
 #include <core/doodle_lib.h>
+#include <core/status_info.h>
 
 #include <doodle_lib/core/core_sig.h>
 
@@ -148,13 +149,13 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
 }
 
 void database_task_select::succeeded() {
-  g_reg()->ctx<process_message>().set_state(process_message::success);
+  g_reg()->unset<process_message>();
 }
 void database_task_select::failed() {
-  g_reg()->ctx<process_message>().set_state(process_message::fail);
+  g_reg()->unset<process_message>();
 }
 void database_task_select::aborted() {
-  g_reg()->ctx<process_message>().set_state(process_message::fail);
+  g_reg()->unset<process_message>();
   p_i->stop = true;
 }
 
@@ -174,6 +175,9 @@ database_task_update::database_task_update(const std::vector<entt::handle>& in_l
 }
 database_task_update::~database_task_update() = default;
 void database_task_update::init() {
+  auto& k_msg = g_reg()->set<process_message>();
+  k_msg.set_name("更新数据");
+  k_msg.set_state(k_msg.run);
   p_i->result = g_thread_pool().enqueue([this]() { this->update_db(); });
 }
 void database_task_update::update_db() {
@@ -203,10 +207,13 @@ void database_task_update::update_db() {
   }
 }
 void database_task_update::succeeded() {
+  g_reg()->unset<process_message>();
 }
 void database_task_update::failed() {
+  g_reg()->unset<process_message>();
 }
 void database_task_update::aborted() {
+  g_reg()->unset<process_message>();
   p_i->stop = true;
 }
 void database_task_update::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -255,13 +262,19 @@ database_task_delete::database_task_delete(
 }
 database_task_delete::~database_task_delete() = default;
 void database_task_delete::init() {
+  auto& k_msg = g_reg()->set<process_message>();
+  k_msg.set_name("删除数据");
+  k_msg.set_state(k_msg.run);
   p_i->result = g_thread_pool().enqueue([this]() { this->delete_db(); });
 }
 void database_task_delete::succeeded() {
+  g_reg()->unset<process_message>();
 }
 void database_task_delete::failed() {
+  g_reg()->unset<process_message>();
 }
 void database_task_delete::aborted() {
+  g_reg()->unset<process_message>();
   p_i->stop = true;
 }
 void database_task_delete::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -334,13 +347,20 @@ database_task_install::~database_task_install() = default;
 void database_task_install::init() {
   p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
 
-  p_i->result   = g_thread_pool().enqueue([this]() { this->install_db(); });
+  auto& k_msg   = g_reg()->set<process_message>();
+  k_msg.set_name("保存数据");
+  k_msg.set_state(k_msg.run);
+
+  p_i->result = g_thread_pool().enqueue([this]() { this->install_db(); });
 }
 void database_task_install::succeeded() {
+  g_reg()->unset<process_message>();
 }
 void database_task_install::failed() {
+  g_reg()->unset<process_message>();
 }
 void database_task_install::aborted() {
+  g_reg()->unset<process_message>();
 }
 void database_task_install::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   switch (p_i->result.wait_for(0ns)) {
@@ -448,5 +468,6 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
   boost::unique_erase(p_i->need_updata);
   boost::unique_erase(p_i->need_delete);
   k_obs.clear();
+  g_reg()->ctx<status_info>().need_save = true;
 }
 }  // namespace doodle
