@@ -25,7 +25,7 @@ assets_file::assets_file(FSys::path in_path,
                          std::uint64_t in_version)
     : path(std::move(in_path)),
       p_name(std::move(in_name)),
-      p_version(std::move(in_version)),
+      p_version(in_version),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
       p_ShowName(path.stem().generic_string()) {
