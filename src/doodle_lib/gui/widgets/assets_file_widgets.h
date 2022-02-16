@@ -34,8 +34,6 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
  public:
   entt::handle p_current_select;
 
-  std::vector<entt::handle>& get_handle_list();
-
   assets_file_widgets();
   ~assets_file_widgets() override;
 

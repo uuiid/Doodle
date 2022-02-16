@@ -143,10 +143,6 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
 }
 
-std::vector<entt::handle>& assets_file_widgets::get_handle_list() {
-  return p_i->handle_list;
-}
-
 assets_file_widgets::~assets_file_widgets() = default;
 
 }  // namespace doodle
