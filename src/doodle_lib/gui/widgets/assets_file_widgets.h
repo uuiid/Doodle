@@ -11,11 +11,6 @@ namespace doodle {
 
 class assets_file_widgets;
 
-class icon_render {
- public:
-  void render(const entt::handle& in);
-};
-
 /**
  * @brief 文件列表显示
  * @image html assets_file_widgets.jpg  显示的文件
