@@ -65,6 +65,7 @@ class assets_file_widgets::impl {
     };
   };
   std::vector<data> lists;
+  std::size_t select_index;
 };
 
 void assets_file_widgets::set_select(const entt::handle& in) {
@@ -112,11 +113,49 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
     for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
       for (int l_j = 0; l_j < l_size; ++l_j) {
         if ((l_i * l_size + l_j) < p_i->lists.size()) {
-          auto&& i = p_i->lists[l_i * l_size + l_j];
+          std::size_t l_index{l_i * l_size + l_j};
+          auto&& i = p_i->lists[l_index];
+
           i.load_image();
           auto l_pos = ImGui::GetCursorPos();
-          if (ImGui::Selectable(i.select.name_id.c_str(), i.select.data, ImGuiSelectableFlags_None, {66.f, 66.f}))
-            i.select.data ^= 1;
+          if (ImGui::Selectable(i.select.name_id.c_str(), i.select.data, ImGuiSelectableFlags_None, {66.f, 66.f})) {
+            auto& k_io = imgui::GetIO();
+            if (k_io.KeyCtrl) {
+              i.select.data ^= 1;
+              std::vector<entt::handle> l_h{};
+              boost::copy(
+                  p_i->lists |
+                      boost::adaptors::filtered([](impl::data& in) {
+                        return in.select;
+                      }) |
+                      boost::adaptors::transformed([](impl::data& in) {
+                        return in.handle_;
+                      }),
+                  std::back_inserter(l_h));
+              g_reg()->ctx<core_sig>().select_handles(l_h);
+            } else if (k_io.KeyShift) {
+              std::vector<entt::handle> l_h{};
+              boost::copy(
+                  p_i->lists |
+                      boost::adaptors::sliced(std::min(p_i->select_index, l_index),
+                                              std::max(p_i->select_index, l_index) + 1) |
+                      boost::adaptors::transformed([](impl::data& in) {
+                        in.select = true;
+                        return in.handle_;
+                      }),
+                  std::back_inserter(l_h));
+              g_reg()->ctx<core_sig>().select_handles(l_h);
+            } else {
+              boost::for_each(p_i->lists,
+                              [](impl::data& in) {
+                                in.select = false;
+                              });
+              i.select = true;
+            }
+
+            p_i->select_index = l_index;
+            g_reg()->ctx<core_sig>().select_handle(i.handle_);
+          }
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
           };
