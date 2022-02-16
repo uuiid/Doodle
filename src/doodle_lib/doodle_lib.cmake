@@ -15,6 +15,8 @@ set(
         core/util.h
         core/image_loader.h
         core/core_sig.h
+        core/status_info.h
+
 
         exception/exception.h
         file_warp/image_sequence.h
@@ -118,13 +120,14 @@ set(
         core/core_sql.cpp
         core/doodle_lib.cpp
         core/filesystem_extend.cpp
-        gui/open_file_dialog.cpp
         core/program_options.cpp
         core/static_value.cpp
         core/ue4_setting.cpp
         core/util.cpp
         core/image_loader.cpp
         core/core_sig.cpp
+        core/status_info.cpp
+
 
         file_warp/image_sequence.cpp
         file_warp/maya_file.cpp
@@ -159,6 +162,8 @@ set(
         gui/widgets/screenshot_widget.cpp
         gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp
+        gui/open_file_dialog.cpp
+
 
         lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
