@@ -113,7 +113,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
       for (int l_j = 0; l_j < l_size; ++l_j) {
         if ((l_i * l_size + l_j) < p_i->lists.size()) {
           auto&& i   = p_i->lists[l_i * l_size + l_j];
-
+          i.load_image();
           auto l_pos = ImGui::GetCursorPos();
           ImGui::Selectable(i.select.name_id.c_str(), &i.select.data, ImGuiSelectableFlags_AllowItemOverlap, {66.f, 66.f});
           dear::PopupContextItem{} && [this, i]() {
