@@ -52,6 +52,7 @@ set(
         gui/widgets/screenshot_widget.h
         gui/widgets/drag_widget.h
         gui/widgets/project_edit.h
+        gui/widgets/csv_export_widgets.h
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
@@ -160,6 +161,8 @@ set(
         gui/widgets/screenshot_widget.cpp
         gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp
+        gui/widgets/csv_export_widgets.cpp
+
         gui/open_file_dialog.cpp
 
 
