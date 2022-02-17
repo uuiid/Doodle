@@ -49,7 +49,6 @@ set(
         gui/widgets/opencv_player_widget.h
         gui/widgets/project_widget.h
         gui/widgets/time_widget.h
-        gui/widgets/tool_box_widget.h
         gui/widgets/screenshot_widget.h
         gui/widgets/drag_widget.h
         gui/widgets/project_edit.h
@@ -158,7 +157,6 @@ set(
         gui/widgets/opencv_player_widget.cpp
         gui/widgets/project_widget.cpp
         gui/widgets/time_widget.cpp
-        gui/widgets/tool_box_widget.cpp
         gui/widgets/screenshot_widget.cpp
         gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp

@@ -210,9 +210,6 @@ void main_menu_bar::init() {
   if (k_windows_setting.find(std::string{edit_widgets::name}) != k_windows_setting.end())
     if (k_windows_setting[std::string{edit_widgets::name}])
       make_windows<edit_widgets>();
-  if (k_windows_setting.find(std::string{tool_box_widget::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{tool_box_widget::name}])
-      make_windows<tool_box_widget>();
   if (k_windows_setting.find(std::string{opencv_player_widget::name}) != k_windows_setting.end())
     if (k_windows_setting[std::string{opencv_player_widget::name}])
       make_windows<opencv_player_widget>();

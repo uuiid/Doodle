@@ -37,7 +37,6 @@
 #include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
 #include <doodle_lib/gui/widgets/time_widget.h>
-#include <doodle_lib/gui/widgets/tool_box_widget.h>
 #include <doodle_lib/lib_warp/WinReg.hpp>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
