@@ -19,7 +19,6 @@
 #include <gui/get_input_dialog.h>
 #include <gui/widgets/long_time_tasks_widget.h>
 #include <gui/widgets/edit_widgets.h>
-#include <gui/widgets/tool_box_widget.h>
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/metadata/project.h>
@@ -136,13 +135,6 @@ void main_menu_bar::menu_windows() {
     auto k_win = g_reg()->try_ctx<base_window<edit_widgets>>();
     if (dear::MenuItem(edit_widgets::name.data(), k_win ? &(k_win->show) : nullptr)) {
       make_windows<edit_widgets>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<tool_box_widget>>();
-    if (dear::MenuItem(tool_box_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<tool_box_widget>();
       core_set_init{}.write_file();
     }
   }

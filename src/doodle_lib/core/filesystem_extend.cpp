@@ -30,5 +30,9 @@ FSys::path write_tmp_file(const std::string& in_falg,
   }
   return k_tmp_path;
 }
+std::vector<path> FSys::list_files(const path& in_dir, const path& in_ext_name) {
+  std::vector<path> l_r{};
+  return std::vector<path>();
+}
 }  // namespace FSys
 }  // namespace doodle

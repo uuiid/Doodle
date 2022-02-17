@@ -17,6 +17,7 @@ class DOODLELIB_API d3d_device {
   ID3D11DeviceContext* g_pd3dDeviceContext       = nullptr;
   IDXGISwapChain* g_pSwapChain                   = nullptr;
   ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
+  wnd_handle handle_wnd;
 
   explicit d3d_device(const wnd_handle& in_handle);
   virtual ~d3d_device();
@@ -40,4 +41,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
  */
 cv::Rect2f get_system_metrics_VIRTUALSCREEN();
 cv::Mat get_screenshot();
+
+
+
 }  // namespace doodle::win
