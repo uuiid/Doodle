@@ -20,11 +20,9 @@ class DOODLELIB_API comment {
   void set_comment(const std::string& in_comment);
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
-  DOODLE_MOVE(comment);
+  // DOODLE_MOVE(comment);
 
  private:
-
-
   friend void to_json(nlohmann::json& j, const comment& p) {
     j["comment"] = p.p_comment;
     j["user"]    = p.p_user;
@@ -57,7 +55,6 @@ class DOODLELIB_API comment_vector {
   DOODLE_MOVE(comment_vector);
 
  private:
-
   friend void to_json(nlohmann::json& j, const comment_vector& p) {
     j["vector"] = p.comm;
   }
