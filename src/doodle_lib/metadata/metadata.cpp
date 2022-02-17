@@ -110,6 +110,8 @@ bool database::is_install() const {
                              assets_file,           \
                              assets_path_vector,    \
                              time_point_wrap,       \
+                             comment,               \
+                             std::vector<comment>,  \
                              comment_vector,        \
                              project::cloth_config, \
                              image_icon
