@@ -68,9 +68,6 @@ class assets_file_widgets::impl {
   std::size_t select_index;
 };
 
-void assets_file_widgets::set_select(const entt::handle& in) {
-}
-
 assets_file_widgets::assets_file_widgets()
     : p_current_select(),
       p_i(std::make_unique<impl>()) {
@@ -105,7 +102,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   const static auto l_size{5u};
   ImGui::Columns(l_size, "assets_file_widgets", false);
 
-  image_loader k_load{};
+  auto k_l = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
 
   ImGuiListClipper clipper{};
   clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size()) / l_size) + 1);
@@ -115,52 +112,15 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
         if ((l_i * l_size + l_j) < p_i->lists.size()) {
           std::size_t l_index{l_i * l_size + l_j};
           auto&& i = p_i->lists[l_index];
-
           i.load_image();
           auto l_pos = ImGui::GetCursorPos();
-          if (ImGui::Selectable(i.select.name_id.c_str(), i.select.data, ImGuiSelectableFlags_None, {66.f, 66.f})) {
-            auto& k_io = imgui::GetIO();
-            if (k_io.KeyCtrl) {
-              i.select.data ^= 1;
-              std::vector<entt::handle> l_h{};
-              boost::copy(
-                  p_i->lists |
-                      boost::adaptors::filtered([](impl::data& in) {
-                        return in.select;
-                      }) |
-                      boost::adaptors::transformed([](impl::data& in) {
-                        return in.handle_;
-                      }),
-                  std::back_inserter(l_h));
-              g_reg()->ctx<core_sig>().select_handles(l_h);
-            } else if (k_io.KeyShift) {
-              std::vector<entt::handle> l_h{};
-              boost::copy(
-                  p_i->lists |
-                      boost::adaptors::sliced(std::min(p_i->select_index, l_index),
-                                              std::max(p_i->select_index, l_index) + 1) |
-                      boost::adaptors::transformed([](impl::data& in) {
-                        in.select = true;
-                        return in.handle_;
-                      }),
-                  std::back_inserter(l_h));
-              g_reg()->ctx<core_sig>().select_handles(l_h);
-            } else {
-              boost::for_each(p_i->lists,
-                              [](impl::data& in) {
-                                in.select = false;
-                              });
-              i.select = true;
-            }
-
-            p_i->select_index = l_index;
-            g_reg()->ctx<core_sig>().select_handle(i.handle_);
-          }
+          if (ImGui::Selectable(i.select.name_id.c_str(), i.select.data, ImGuiSelectableFlags_None, {k_l, k_l}))
+            set_select(l_index);
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
           };
           ImGui::SetCursorPos(l_pos);
-          ImGui::Image(i.image.data.get(), {64.f, 64.f});
+          ImGui::Image(i.image.data.get(), {k_l - 2, k_l - 2});
           dear::Text(i.name);
         }
         imgui::NextColumn();
@@ -181,6 +141,45 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
           in_.patch<database>(database::save);
         });
   }
+}
+void assets_file_widgets::set_select(std::size_t in_size) {
+  auto&& i   = p_i->lists[in_size];
+  auto& k_io = imgui::GetIO();
+  if (k_io.KeyCtrl) {
+    i.select.data ^= 1;
+    std::vector<entt::handle> l_h{};
+    boost::copy(
+        p_i->lists |
+            boost::adaptors::filtered([](impl::data& in) {
+              return in.select;
+            }) |
+            boost::adaptors::transformed([](impl::data& in) {
+              return in.handle_;
+            }),
+        std::back_inserter(l_h));
+    g_reg()->ctx<core_sig>().select_handles(l_h);
+  } else if (k_io.KeyShift) {
+    std::vector<entt::handle> l_h{};
+    boost::copy(
+        p_i->lists |
+            boost::adaptors::sliced(std::min(p_i->select_index, in_size),
+                                    std::max(p_i->select_index, in_size) + 1) |
+            boost::adaptors::transformed([](impl::data& in) {
+              in.select = true;
+              return in.handle_;
+            }),
+        std::back_inserter(l_h));
+    g_reg()->ctx<core_sig>().select_handles(l_h);
+  } else {
+    boost::for_each(p_i->lists,
+                    [](impl::data& in) {
+                      in.select = false;
+                    });
+    i.select = true;
+  }
+
+  p_i->select_index = in_size;
+  g_reg()->ctx<core_sig>().select_handle(i.handle_);
 }
 
 assets_file_widgets::~assets_file_widgets() = default;

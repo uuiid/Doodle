@@ -23,9 +23,8 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   class impl;
   std::unique_ptr<impl> p_i;
 
-  void set_select(const entt::handle& in_);
   void render_context_menu(const entt::handle& in_);
-
+  void set_select(std::size_t in_size);
 
  public:
   entt::handle p_current_select;
