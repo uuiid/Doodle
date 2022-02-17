@@ -20,7 +20,7 @@ class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
+  [[maybe_unused]] void update(const delta_type&, void* data);
 };
 
 }  // namespace gui

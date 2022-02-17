@@ -157,6 +157,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
               return in.handle_;
             }),
         std::back_inserter(l_h));
+    g_reg()->set<std::vector<entt::handle>>(l_h);
     g_reg()->ctx<core_sig>().select_handles(l_h);
   } else if (k_io.KeyShift) {
     std::vector<entt::handle> l_h{};
@@ -169,6 +170,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
               return in.handle_;
             }),
         std::back_inserter(l_h));
+    g_reg()->set<std::vector<entt::handle>>(l_h);
     g_reg()->ctx<core_sig>().select_handles(l_h);
   } else {
     boost::for_each(p_i->lists,
