@@ -13,9 +13,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install",
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-      },
+      "toolchainFile": "E:/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -28,7 +26,7 @@
           "disableExternalAnalysis": true
         }
       },
-      "cmakeExecutable": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+      "cmakeExecutable": "C:/Program Files/CMake/bin/cmake.exe",
       "hidden": true
     },
     {
