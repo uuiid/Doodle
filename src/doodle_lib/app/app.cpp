@@ -135,13 +135,17 @@ app::app(const win::wnd_instance& in_instance)
   // io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
   // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   // IM_ASSERT(font != NULL);
-  static string imgui_file_path{(core_set::getSet().get_cache_root("imgui") / "imgui.ini").generic_string()};
-  set_imgui_dock_space(imgui_file_path);
+  auto imgui_file_path = core_set::getSet().get_cache_root("imgui") / "imgui.ini";
+  static std::string _l_p{imgui_file_path.generic_string()};
+  io.IniFilename = _l_p.c_str();
+  if(!exists(imgui_file_path)){
+    auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
+    ImGui::LoadIniSettingsFromMemory(k_f.begin(), k_f.size());
+  }
 
   //  ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-  io.IniFilename = imgui_file_path.c_str();
 
   g_main_loop().attach<one_process_t>([this]() {
     this->load_windows();
@@ -241,14 +245,6 @@ void app::show_windows() {
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-}
-void app::set_imgui_dock_space(const FSys::path& in_path) const {
-  auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
-  if (FSys::exists(in_path))
-    return;
-  FSys::ofstream l_ofs{in_path, std::ios::out | std::ios::binary};
-  if (l_ofs)
-    l_ofs.write(k_f.begin(), k_f.size());
 }
 app::~app() {
   // Cleanup
