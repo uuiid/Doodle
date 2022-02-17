@@ -173,10 +173,10 @@ database::operator metadata_database() const {
     k_tmp.season = k_h.get<season>().get_season();
   }
   if (k_h.any_of<episodes>()) {
-    k_tmp.episode = boost::numeric_cast<std::int64_t>(k_h.get<episodes>().get_episodes());
+    k_tmp.episode = boost::numeric_cast<std::int32_t>(k_h.get<episodes>().get_episodes());
   }
   if (k_h.any_of<shot>()) {
-    k_tmp.shot = k_h.get<shot>().get_shot();
+    k_tmp.shot = boost::numeric_cast<std::int32_t>(k_h.get<shot>().get_shot());
   }
   if (k_h.any_of<assets>()) {
     k_tmp.assets = k_h.get<assets>().get_path().generic_string();
