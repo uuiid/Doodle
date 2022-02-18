@@ -5,7 +5,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <utility>
-//#include <opencv2/core.hpp>
+#include <opencv2/core.hpp>
 
 namespace doodle {
 class DOODLELIB_API image_icon {
@@ -22,6 +22,7 @@ class DOODLELIB_API image_icon {
   FSys::path path;
   std::shared_ptr<void> image;
 
+  cv::Size2d size2d_;
   friend void to_json(nlohmann::json &j, const image_icon &p);
   friend void from_json(const nlohmann::json &j, image_icon &p);
 };
