@@ -112,7 +112,6 @@ bool database::is_install() const {
                              time_point_wrap,       \
                              comment,               \
                              std::vector<comment>,  \
-                             comment_vector,        \
                              project::cloth_config, \
                              image_icon
 
