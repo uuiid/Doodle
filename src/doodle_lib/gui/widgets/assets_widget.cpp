@@ -87,13 +87,13 @@ class time_filter : public gui::filter_base {
   class fun_min {
    public:
     time_filter operator()(chrono::sys_time_pos in_time) {
-      return time_filter{std::move(in_time), chrono::sys_time_pos::max()};
+      return time_filter{in_time, chrono::sys_time_pos::max()};
     }
   };
   class fun_max {
    public:
     time_filter operator()(chrono::sys_time_pos in_time) {
-      return time_filter{chrono::sys_time_pos::min(), std::move(in_time)};
+      return time_filter{chrono::sys_time_pos::min(), in_time};
     }
   };
 
@@ -103,8 +103,8 @@ class time_filter : public gui::filter_base {
   explicit time_filter(
       chrono::sys_time_pos in_begin,
       chrono::sys_time_pos in_end)
-      : p_begin(std::move(in_begin)),
-        p_end(std::move(in_end)){};
+      : p_begin(in_begin),
+        p_end(in_end){};
 
   constexpr const static fun_min set_for_min{};
   constexpr const static fun_max set_for_max{};
@@ -266,7 +266,7 @@ class assets_filter_factory : public gui::filter_factory_base {
     }
   }
 
-  void refresh_() {
+  void refresh_() override {
     for (auto&& i : p_obs) {
       auto k_h = make_handle(i);
       add_tree_node(&p_tree, k_h.get<data_type>().get_path());
@@ -282,7 +282,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
   tree_node_type* p_cur_select;
 
-  bool render() {
+  bool render() override {
     {
       dear::TreeNode l_node{p_tree.data.name_id.c_str()};
       dear::PopupContextItem{} && [this]() {
