@@ -83,6 +83,15 @@
 #include <boost/range/irange.hpp>
 #include <boost/range.hpp>
 
+#include <range/v3/action.hpp>
+#include <range/v3/algorithm.hpp>
+#include <range/v3/functional.hpp>
+#include <range/v3/iterator.hpp>
+#include <range/v3/numeric.hpp>
+#include <range/v3/range.hpp>
+#include <range/v3/utility.hpp>
+#include <range/v3/view.hpp>
+
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <chrono>
