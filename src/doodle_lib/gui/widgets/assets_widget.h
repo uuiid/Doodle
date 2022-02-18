@@ -13,6 +13,7 @@ namespace doodle {
 namespace gui {
 class DOODLELIB_API filter_base {
  public:
+  virtual ~filter_base()                                = default;
   virtual bool operator()(const entt::handle& in) const = 0;
 };
 class DOODLELIB_API filter_factory_base {
@@ -30,7 +31,7 @@ class DOODLELIB_API filter_factory_base {
 
  public:
   filter_factory_base();
-  ~filter_factory_base();
+  virtual ~filter_factory_base();
   entt::observer p_obs;
   bool is_edit;
   virtual bool render() = 0;
@@ -90,9 +91,8 @@ class filter_factory_t : public filter_factory_base {
 
 class DOODLELIB_API sort_entt {
  public:
-
  public:
-  virtual bool operator()(const entt::handle& in_r,const entt::handle& in_l) const = 0;
+  virtual bool operator()(const entt::handle& in_r, const entt::handle& in_l) const = 0;
 };
 
 }  // namespace gui
