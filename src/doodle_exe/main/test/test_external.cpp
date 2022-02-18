@@ -6,7 +6,7 @@
 #include <catch.hpp>
 
 TEST_CASE("date time", "[time]") {
-  using namespace doodle; 
+  using namespace doodle;
   date::current_zone();
 }
 #include <boost/type_erasure/any.hpp>
@@ -112,4 +112,21 @@ TEST_CASE("entt stripped_type_name", "[entt]") {
   std::cout << k_l << std::endl;
   auto k_l2 = stripped_type_name<doodle::project>();
   std::cout << k_l2 << std::endl;
+}
+
+#include <boost/range/combine.hpp>
+#include <boost/iterator.hpp>
+
+TEST_CASE("boost combine") {
+  std::vector<std::string> list_1{"1_a", "2_a", "3_a", "4_a", "5_a", "6_a", "7_a", "8_a"};
+  std::vector<std::string> list_2{"1_b", "2_b", "3_b", "4_b", "5_b"};
+
+  std::cout << " boost::combine(list_1, list_2):"
+            << "\n";
+  for (auto [tup1, tup2] : boost::combine(list_1, list_2))
+    std::cout << tup1 << " ," << tup2 << "\n";
+
+  //  std::cout << " boost::zip(list_1, list_2):"
+  //            << "\n";
+  // boost::make_zip_iterator(std::make_tuple())
 }
