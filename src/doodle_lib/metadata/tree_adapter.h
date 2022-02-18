@@ -7,10 +7,10 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
 
-template <class container_type, class self_type>
-auto make_vector_adapter(container_type& vector, self_type& self) {
-  return vector_adapter<container_type, self_type>{vector, self};
-};
+// template <class container_type, class self_type>
+// auto make_vector_adapter(container_type& vector, self_type& self) {
+//   return vector_adapter<container_type, self_type>{vector, self};
+// };
 
 template <class container_type, class self_type>
 class DOODLELIB_API vector_adapter {
