@@ -107,6 +107,7 @@ class DOODLELIB_API assets_widget : public process_t<assets_widget> {
   class impl;
   std::unique_ptr<impl> p_impl;
 
+  void refresh_(bool force);
  public:
   assets_widget();
   ~assets_widget() override;
@@ -120,5 +121,7 @@ class DOODLELIB_API assets_widget : public process_t<assets_widget> {
   [[maybe_unused]] void update(delta_type, void* data);
 
   boost::signals2::signal<void(const entt::handle&)> select_change;
+
+  void refresh(bool force);
 };
 }  // namespace doodle

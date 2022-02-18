@@ -279,6 +279,7 @@ class assets_filter_factory : public gui::filter_factory_base {
             for (auto&& l_h : *l_list) {
               l_h.emplace_or_replace<assets>(i->data.data);
             }
+            g_reg()->ctx<assets_widget>().refresh(false);
           }
         };
         l_node&& [this, i]() {
@@ -399,36 +400,42 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
                                  return in.select && in.data->is_edit;
                                }) ||
       p_impl->is_edit) {
-    p_impl->is_edit = false;
-    p_impl->p_filters.clear();
-    boost::copy(p_impl->p_filter_factorys |
-                    boost::adaptors::filtered([](const impl::factory_gui_cache& in) -> bool {
-                      return in.select;
-                    }) |
-                    boost::adaptors::transformed([](const impl::factory_gui_cache& in)
-                                                     -> std::unique_ptr<gui::filter_base> {
-                      return in.data->make_filter();
-                    }) |
-                    boost::adaptors::filtered([](const std::unique_ptr<gui::filter_base>& in)
-                                                  -> bool {
-                      return (bool)in;
-                    }),
-                std::back_inserter(p_impl->p_filters));
-    std::vector<entt::handle> list{};
-    boost::copy(g_reg()->view<database>() |
-                    boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
-                      return make_handle(in);
-                    }) |
-                    boost::adaptors::filtered([&](const entt::handle& in) -> bool {
-                      return boost::algorithm::all_of(
-                          p_impl->p_filters,
-                          [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
-                            return (*in_f)(in);
-                          });
-                    }),
-                std::back_inserter(list));
-    g_reg()->ctx<core_sig>().filter_handle(list);
+    refresh(false);
   }
+}
+void assets_widget::refresh(bool force) {
+  g_main_loop().attach<one_process_t>([this, force]() { this->refresh_(force); });
+}
+void assets_widget::refresh_(bool force) {
+  p_impl->is_edit = false;
+  p_impl->p_filters.clear();
+  boost::copy(p_impl->p_filter_factorys |
+                  boost::adaptors::filtered([](const impl::factory_gui_cache& in) -> bool {
+                    return in.select;
+                  }) |
+                  boost::adaptors::transformed([](const impl::factory_gui_cache& in)
+                                                   -> std::unique_ptr<gui::filter_base> {
+                    return in.data->make_filter();
+                  }) |
+                  boost::adaptors::filtered([](const std::unique_ptr<gui::filter_base>& in)
+                                                -> bool {
+                    return (bool)in;
+                  }),
+              std::back_inserter(p_impl->p_filters));
+  std::vector<entt::handle> list{};
+  boost::copy(g_reg()->view<database>() |
+                  boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
+                    return make_handle(in);
+                  }) |
+                  boost::adaptors::filtered([&](const entt::handle& in) -> bool {
+                    return boost::algorithm::all_of(
+                        p_impl->p_filters,
+                        [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
+                          return (*in_f)(in);
+                        });
+                  }),
+              std::back_inserter(list));
+  g_reg()->ctx<core_sig>().filter_handle(list);
 }
 
 }  // namespace doodle
