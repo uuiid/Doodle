@@ -71,7 +71,15 @@ class path_filter : public gui::filter_base {
   explicit path_filter(FSys::path in_assets)
       : p_assets(std::move(in_assets)){};
   bool operator()(const entt::handle& in) const override {
-    return in.all_of<assets>() && (in.get<assets>().get_path() > p_assets);
+    // boost::make_zip_iterator();
+    //    auto l_r = ;
+
+    return in.all_of<assets>() &&
+           ranges::any_of(ranges::views::zip(in.get<assets>().get_path(), p_assets),
+                          [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
+                            auto& [l_r, l_l] = in;
+                            return l_r == l_l;
+                          });
   };
 };
 
