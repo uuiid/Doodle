@@ -92,7 +92,7 @@ class tree_node {
     friend bool operator!=(const iterator_up& a, const iterator_up& b) { return !(a == b); };
 
    private:
-    tree_node m_ptr;
+    tree_node* m_ptr;
   };
 
   explicit tree_node(T in_data)
@@ -107,7 +107,7 @@ class tree_node {
   }
 
   details::iterable_adaptor<iterator_up> each_up() {
-    return {this, nullptr};
+    return {iterator_up{this}, iterator_up{nullptr}};
   }
 
   details::iterable_adaptor<typename child_list_type::iterator> each_child() {
