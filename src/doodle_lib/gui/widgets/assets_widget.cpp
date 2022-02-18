@@ -35,13 +35,13 @@ std::unique_ptr<filter_base> filter_factory_base::make_filter() {
   is_edit = false;
   return make_filter_();
 }
-void filter_factory_base::refresh() {
+void filter_factory_base::refresh(bool force) {
   if (!is_disabled)
     refresh_();
 
   p_obs.clear();
 
-  if (p_i->need_init) {
+  if (p_i->need_init || force) {
     this->init();
     p_i->need_init = false;
   }
@@ -312,10 +312,11 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   dear::Disabled l_d{p_impl->only_rand};
 
   for (auto&& i : p_impl->p_filter_factorys) {
-    if (ImGui::Checkbox(i.name_id.c_str(), &i.select))
+    if (ImGui::Checkbox(i.name_id.c_str(), &i.select)) {
       p_impl->is_edit = true;
+    }
     if (i.select) {
-      i.data->refresh();
+      i.data->refresh(p_impl->is_edit);
       i.data->render();
     }
   }

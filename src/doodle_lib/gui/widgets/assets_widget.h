@@ -34,7 +34,7 @@ class DOODLELIB_API filter_factory_base {
   entt::observer p_obs;
   bool is_edit;
   virtual bool render() = 0;
-  virtual void refresh();
+  virtual void refresh(bool force);
   std::unique_ptr<filter_base> make_filter();
 };
 
