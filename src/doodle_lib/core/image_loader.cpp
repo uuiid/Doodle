@@ -5,6 +5,7 @@
 #include "image_loader.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
+//#include <opencv2/core/directx.hpp>
 
 #include <metadata/project.h>
 #include <metadata/image_icon.h>
@@ -322,12 +323,14 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
   chick_true<doodle_error>(exists(in_path), DOODLE_LOC, "文件不存在");
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
-  k_icon.path  = core_set::getSet().get_uuid_str() + in_path.extension();
+  k_icon.path  = core_set::getSet().get_uuid_str() + in_path.extension().generic_string();
   auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
 
   FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);
-  auto l_mat     = cv::imread(k_path.generic_string());
-  k_icon.image   = cv_to_d3d(l_mat);
+  auto l_mat = cv::imread(k_path.generic_string());
+  cv::cvtColor(l_mat, l_mat, cv::COLOR_BGR2RGBA);
+
+  k_icon.image   = cv_to_d3d(l_mat, false);
   k_icon.size2d_ = l_mat.size();
   return true;
 }
