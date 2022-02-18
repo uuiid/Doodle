@@ -18,68 +18,9 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
+#include <doodle_lib/metadata/image_icon.h>
 
 namespace doodle {
-
-class assets_edit : public gui::edit_interface {
- public:
-  class impl {
-   public:
-    explicit impl(const std::string &in_name)
-        : edit(std::string{}, in_name),
-          button("删除", false) {}
-    gui::gui_cache<std::string> edit;
-    gui::gui_cache<bool> button;
-  };
-
-  std::vector<impl> p_cache;
-
-  void init_(const entt::handle &in) override {
-    assets l_ass{"root"};
-    if (in.all_of<assets>()) {
-      l_ass = in.get<assets>();
-    }
-    p_cache.clear();
-    for (auto &&i : l_ass.get_path_component()) {
-      p_cache.emplace_back(i);
-    }
-  };
-  void render(const entt::handle &in) override {
-    if (ImGui::Button("添加")) {
-      p_cache.emplace_back("none");
-      set_modify(true);
-    }
-
-    bool l_clear{false};
-
-    dear::ListBox{"资产类别"} && [&]() {
-      for (auto &&i : p_cache) {
-        if (dear::InputText(i.edit.name_id.c_str(), &i.edit.data))
-          set_modify(true);
-        ImGui::SameLine();
-        if (dear::Button(i.button.name_id.c_str())) {
-          i.button.data = true;
-          l_clear       = true;
-        }
-      }
-    };
-    if (l_clear) {
-      boost::remove_erase_if(p_cache, [](const impl &in) { return in.button.data; });
-    }
-  };
-
-  void save_(const entt::handle &in) const {
-    std::vector<std::string> l_list;
-    boost::transform(p_cache,
-                     std::back_inserter(l_list),
-                     [](const impl &in)
-                         -> std::string {
-                       return in.edit.data;
-                     });
-
-    in.emplace_or_replace<assets>(FSys::path{fmt::to_string(fmt::join(l_list, "/"))});
-  }
-};
 
 class season_edit : public gui::edit_interface {
  public:
@@ -219,6 +160,59 @@ class time_edit : public gui::edit_interface {
                                            p_seconds);
   }
 };
+
+namespace gui {
+
+class add_assets_for_file : public base_render {
+  std::vector<entt::handle> list;
+
+  void add_assets(const std::vector<FSys::path> &in_list) {
+    list = ranges::to_vector(in_list | ranges::views::transform([](const FSys::path &in_path) {
+                               auto k_h    = make_handle();
+                               auto &k_ass = k_h.emplace<assets_file>(in_path);
+                               k_h.emplace<assets>("null");
+
+                               auto k_imghe_path = ranges::find_if(
+                                   ranges::make_subrange(
+                                       FSys::directory_iterator{
+                                           is_directory(in_path) ? in_path : in_path.parent_path()},
+                                       FSys::directory_iterator{}),
+                                   [](const FSys::path &in_file) {
+                                     auto &&l_ext = in_file.extension();
+                                     return l_ext == ".png" || l_ext == ".jpg";
+                                   });
+                               if (k_imghe_path != FSys::directory_iterator{}) {
+                                 k_h.emplace<image_icon>();
+                               }
+
+                               return k_h;
+                             }));
+
+    DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
+  }
+
+ public:
+  void render(const entt::handle &) override {
+    dear::ListBox k_list{"文件列表"};
+    k_list &&[this]() {
+      bool l_clear{false};
+      for (auto &&i : list) {
+        if (i.all_of<assets_file>()) {
+          dear::Text(i.get<assets_file>().p_name);
+        }
+      }
+    };
+
+    dear::DragDropTarget{} && [&]() {
+      if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
+        auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
+        add_assets(k_list->files_);
+      }
+    };
+  };
+};
+
+}  // namespace gui
 
 class edit_widgets::impl {
  public:
