@@ -36,11 +36,22 @@ class DOODLELIB_API image_loader {
    */
   bool save(const entt::handle& in_handle, const cv::Mat& in_image, const cv::Rect2f& in_rect);
   /**
-   * @brief 从屏幕加载图片(截图)
-   * @return 本机指针
+   * @brief 从路径中加载缩略图 并保存到库
+   * @param in_handle  传入的句柄
+   * @param in_path 传入的路径
+   * @return 是否加载成功
    */
-
+  bool save(const entt::handle& in_handle, const FSys::path& in);
+  /**
+   * @brief 将cv mat转换为本机指针
+   * @param in_mat
+   * @return
+   */
   [[nodiscard]] std::shared_ptr<void> cv_to_d3d(const cv::Mat& in_mat) const;
+  /**
+   * @brief 从屏幕加载图片(截图)
+   * @return opencv mat
+   */
   [[nodiscard]] cv::Mat screenshot();
   [[nodiscard]] std::shared_ptr<void> default_image() const;
   [[nodiscard]] std::shared_ptr<void> error_image() const;

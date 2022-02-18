@@ -81,7 +81,7 @@ bool image_loader::save(const entt::handle& in_handle,
   auto k_reg = g_reg();
   chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  auto k_icon  = in_handle.get_or_emplace<image_icon>();
+  auto& k_icon = in_handle.get_or_emplace<image_icon>();
 
   auto k_image = in_image(in_rect).clone();
 
@@ -89,9 +89,8 @@ bool image_loader::save(const entt::handle& in_handle,
   auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
 
   cv::imwrite(k_path.generic_string(), k_image);
-  k_icon.image = cv_to_d3d(k_image);
-
-  in_handle.replace<image_icon>(k_icon);
+  k_icon.image   = cv_to_d3d(k_image);
+  k_icon.size2d_ = in_rect.size();
   return true;
 }
 
@@ -316,6 +315,21 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
     /// \brief 转换图像
     cv::cvtColor(in_mat, in_mat, cv::COLOR_RGB2BGRA);
   return std::shared_ptr<void>{k_out_, win_ptr_delete<ID3D11ShaderResourceView>{}};
+}
+bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path) {
+  auto k_reg = g_reg();
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  chick_true<doodle_error>(exists(in_path), DOODLE_LOC, "文件不存在");
+
+  auto& k_icon = in_handle.get_or_emplace<image_icon>();
+  k_icon.path  = core_set::getSet().get_uuid_str() + ".png";
+  auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
+
+  FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);
+  auto l_mat   = cv::imread(k_path.generic_string());
+  k_icon.image = cv_to_d3d(l_mat);
+  k_icon.size2d_ = l_mat.size();
+  return true;
 }
 image_loader::~image_loader() = default;
 }  // namespace doodle
