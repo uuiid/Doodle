@@ -33,35 +33,6 @@ class DOODLELIB_API comment {
   }
 };
 
-class DOODLELIB_API comment_vector {
- public:
-  comment_vector() : comm(){};
-
-  std::vector<comment> comm;
-
-  void end_push_back(const comment& in){
-      // p_meta.lock()->saved(true);
-  };
-
-  void end_erase(const comment& in){};
-  void end_clear(){};
-
-  inline vector_adapter<std::vector<comment>, comment_vector> get() {
-    return make_vector_adapter(comm, *this);
-  };
-  // inline const vector_adapter<comment, comment_vector> get() const {
-  //   return vector_adapter<comment, comment_vector>{comm, *this};
-  // };
-  DOODLE_MOVE(comment_vector);
-
- private:
-  friend void to_json(nlohmann::json& j, const comment_vector& p) {
-    j["vector"] = p.comm;
-  }
-  friend void from_json(const nlohmann::json& j, comment_vector& p) {
-    j.at("vector").get_to(p.comm);
-  }
-};
 }  // namespace doodle
 
 namespace fmt {
