@@ -256,8 +256,8 @@ class assets_filter_factory : public gui::filter_factory_base {
         };
         dear::DragDropTarget{} && [this, &i]() {
           if (auto l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
-            auto& l_list = *reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
-            for (auto&& l_h : l_list) {
+            auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
+            for (auto&& l_h : g_reg()->ctx<std::vector<entt::handle>>()) {
               l_h.emplace_or_replace<assets>(i->data.data);
             }
           }

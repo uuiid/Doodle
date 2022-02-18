@@ -81,9 +81,11 @@ void assets_file_widgets::init() {
                       [this](const std::vector<entt::handle>& in) {
                         p_i->handle_list = in;
                         p_i->lists.clear();
-                        boost::transform(in, std::back_inserter(p_i->lists), [](const entt::handle& in) -> impl::data {
-                          return impl::data{in};
-                        });
+                        boost::transform(
+                            in, std::back_inserter(p_i->lists),
+                            [](const entt::handle& in) -> impl::data {
+                              return impl::data{in};
+                            });
                       });
 }
 void assets_file_widgets::succeeded() {
@@ -122,12 +124,18 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
             render_context_menu(i.handle_);
           };
           dear::DragDropSource{} && [this]() {
-            // std::vector<entt::handle> l_lists{
-            //     this->p_i->lists |
-            //     ranges::views::filter([](const impl::data& in) {
-            //       return in.select;
-            //     })};
-            auto l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
+            std::vector<entt::handle> l_lists{};
+            l_lists = ranges::to_vector(
+                this->p_i->lists |
+                ranges::views::filter([](const impl::data& in) -> bool {
+                  return in.select;
+                }) |
+                ranges::views::transform(
+                    [](const impl::data& in) -> entt::handle {
+                      return in.handle_;
+                    }));
+            g_reg()->set<std::vector<entt::handle>>(l_lists);
+            auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
 
             ImGui::SetDragDropPayload(
                 doodle_config::drop_handle_list.data(), l_h, sizeof(l_h));
