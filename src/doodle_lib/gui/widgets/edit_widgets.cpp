@@ -19,6 +19,7 @@
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
 #include <doodle_lib/metadata/image_icon.h>
+#include <doodle_lib/core/image_loader.h>
 
 namespace doodle {
 
@@ -167,7 +168,8 @@ class add_assets_for_file : public base_render {
   std::vector<entt::handle> list;
 
   void add_assets(const std::vector<FSys::path> &in_list) {
-    list = ranges::to_vector(in_list | ranges::views::transform([](const FSys::path &in_path) {
+    image_loader l_image_load{};
+    list = ranges::to_vector(in_list | ranges::views::transform([&](const FSys::path &in_path) {
                                auto k_h    = make_handle();
                                auto &k_ass = k_h.emplace<assets_file>(in_path);
                                k_h.emplace<assets>("null");
@@ -182,13 +184,13 @@ class add_assets_for_file : public base_render {
                                      return l_ext == ".png" || l_ext == ".jpg";
                                    });
                                if (k_imghe_path != FSys::directory_iterator{}) {
-                                 k_h.emplace<image_icon>();
+                                 l_image_load.save(k_h, k_imghe_path->path());
                                }
-
                                return k_h;
                              }));
 
     DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
+    g_reg()->ctx<core_sig>().filter_handle(list);
   }
 
  public:
