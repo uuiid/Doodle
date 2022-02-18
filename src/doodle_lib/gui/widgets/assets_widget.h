@@ -39,6 +39,16 @@ class DOODLELIB_API filter_factory_base {
 };
 
 template <class T>
+class filter : public filter_base {
+ public:
+  T p_data;
+  explicit filter(T in_t) : p_data(std::move(in_t)){};
+  bool operator()(const entt::handle& in) const override {
+    return in.all_of<T>() && in.get<T>() == p_data;
+  }
+};
+
+template <class T>
 class filter_factory_t : public filter_factory_base {
  public:
   using data_type = T;
@@ -75,16 +85,6 @@ class filter_factory_t : public filter_factory_base {
         select_name(),
         p_edit() {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
-  }
-};
-
-template <class T>
-class filter : public filter_base {
- public:
-  T p_data;
-  explicit filter(T in_t) : p_data(std::move(in_t)){};
-  bool operator()(const entt::handle& in) const override {
-    return in.all_of<T>() && in.get<T>() == p_data;
   }
 };
 
