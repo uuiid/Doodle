@@ -165,40 +165,43 @@ class time_edit : public gui::edit_interface {
 namespace gui {
 
 class add_assets_for_file : public base_render {
-  std::vector<entt::handle> list;
-
   void add_assets(const std::vector<FSys::path> &in_list) {
     image_loader l_image_load{};
-    list = ranges::to_vector(in_list | ranges::views::transform([&](const FSys::path &in_path) {
-                               auto k_h    = make_handle();
-                               auto &k_ass = k_h.emplace<assets_file>(in_path);
-                               k_h.emplace<assets>("null");
+    p_list.data = ranges::to_vector(in_list | ranges::views::transform([&](const FSys::path &in_path) {
+                                      auto k_h    = make_handle();
+                                      auto &k_ass = k_h.emplace<assets_file>(in_path);
+                                      k_h.emplace<assets>("null");
 
-                               auto k_imghe_path = ranges::find_if(
-                                   ranges::make_subrange(
-                                       FSys::directory_iterator{
-                                           is_directory(in_path) ? in_path : in_path.parent_path()},
-                                       FSys::directory_iterator{}),
-                                   [](const FSys::path &in_file) {
-                                     auto &&l_ext = in_file.extension();
-                                     return l_ext == ".png" || l_ext == ".jpg";
-                                   });
-                               if (k_imghe_path != FSys::directory_iterator{}) {
-                                 l_image_load.save(k_h, k_imghe_path->path());
-                               }
-                               return k_h;
-                             }));
+                                      auto k_imghe_path = ranges::find_if(
+                                          ranges::make_subrange(
+                                              FSys::directory_iterator{
+                                                  is_directory(in_path) ? in_path : in_path.parent_path()},
+                                              FSys::directory_iterator{}),
+                                          [](const FSys::path &in_file) {
+                                            auto &&l_ext = in_file.extension();
+                                            return l_ext == ".png" || l_ext == ".jpg";
+                                          });
+                                      if (k_imghe_path != FSys::directory_iterator{}) {
+                                        l_image_load.save(k_h, k_imghe_path->path());
+                                      }
+                                      return k_h;
+                                    }));
 
     DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
-    g_reg()->ctx<core_sig>().filter_handle(list);
+    g_reg()->ctx<core_sig>().filter_handle(p_list.data);
   }
 
+  gui_cache<std::vector<entt::handle>> p_list;
+
  public:
+  add_assets_for_file()
+      : p_list("文件列表"s, std::vector<entt::handle>{}) {}
+
   void render(const entt::handle &) override {
-    dear::ListBox k_list{"文件列表"};
+    dear::ListBox k_list{p_list.name_id.c_str()};
     k_list &&[this]() {
       bool l_clear{false};
-      for (auto &&i : list) {
+      for (auto &&i : p_list.data) {
         if (i.all_of<assets_file>()) {
           dear::Text(i.get<assets_file>().p_name);
         }
@@ -237,8 +240,10 @@ class edit_widgets::impl {
 
   gui::database_edit data_edit;
 
-  using gui_cache_t = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
-  std::vector<gui_cache_t> p_edit;
+  using gui_edit_cache = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
+  using gui_add_cache  = gui::gui_cache<std::unique_ptr<gui::base_render>>;
+  std::vector<gui_edit_cache> p_edit;
+  std::vector<gui_add_cache> p_add;
 
   bool only_rand{false};
 };
@@ -250,9 +255,11 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
-  boost::for_each(p_i->p_edit, [this](impl::gui_cache_t &in_edit) {
+  boost::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
     p_i->data_edit.link_sig(in_edit.data);
   });
+
+  p_i->p_add.emplace_back("文件添加"s, std::make_unique<gui::add_assets_for_file>());
 }
 edit_widgets::~edit_widgets() = default;
 
@@ -263,7 +270,7 @@ void edit_widgets::init() {
       [&](const entt::handle &in) {
         p_i->p_h = in;
         p_i->data_edit.init(p_i->p_h);
-        boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
+        boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
           in_edit.data->init(in);
         });
       }));
@@ -307,7 +314,7 @@ void edit_widgets::edit_handle() {
   /// @brief 资产编辑
   if (p_i->p_h) {
     p_i->data_edit.render(p_i->p_h);
-    boost::for_each(p_i->p_edit, [&](impl::gui_cache_t &in_edit) {
+    boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
       dear::Text(in_edit.name);
       in_edit.data->render(p_i->p_h);
       in_edit.data->save(p_i->p_h);
@@ -332,62 +339,9 @@ void edit_widgets::add_handle() {
     this->notify_file_list();
   }
 
-  /**
-   * @brief 拖拽文件添加
-   *
-   */
-
-  {
-    dear::ListBox k_list{"文件列表"};
-    k_list &&[this]() {
-      bool l_clear{false};
-      for (auto &&i : p_i->add_handles) {
-        if (i.all_of<assets_file>()) {
-          dear::Text(i.get<assets_file>().p_name);
-          ImGui::SameLine();
-          if (ImGui::Button(fmt::format("删除##{}", i.entity()).c_str())) {
-            i.destroy();
-            l_clear = true;
-          }
-        }
-      }
-      if (l_clear) {
-        boost::remove_erase_if(p_i->add_handles,
-                               [](const entt::handle &in) { return !in.valid(); });
-        this->notify_file_list();
-      }
-    };
-  }
-  dear::DragDropTarget{} && [&]() {
-    if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
-      auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
-      boost::transform(k_list->files_,
-                       std::back_inserter(p_i->add_handles),
-                       [&](const FSys::path &in_path) {
-                         auto k_h    = make_handle();
-                         auto &k_ass = k_h.emplace<assets_file>(in_path);
-                         k_h.emplace<assets>("root");
-                         return k_h;
-                       });
-      DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(k_list->files_, "\n"));
-      this->notify_file_list();
-    }
-  };
-
-  if (ImGui::Button("保存")) {
-    std::for_each(p_i->add_handles.begin(),
-                  p_i->add_handles.end(),
-                  [](entt::handle &in) {
-                    if (!in.any_of<assets_file, assets, episodes, shot, season>()) {
-                      in.destroy();
-                    } else {
-                      in.emplace_or_replace<database>();
-                      in.patch<database>(database::save);
-                    }
-                  });
-    boost::remove_erase_if(p_i->add_handles,
-                           [](const entt::handle &in) { return !in.valid(); });
-    this->notify_file_list();
+  for (auto &&l_add : p_i->p_add) {
+    dear::Text(l_add.name);
+    l_add.data->render();
   }
 }
 
