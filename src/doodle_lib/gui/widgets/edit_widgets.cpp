@@ -198,15 +198,16 @@ class add_assets_for_file : public base_render {
       : p_list("文件列表"s, std::vector<entt::handle>{}) {}
 
   void render(const entt::handle &) override {
-    dear::ListBox k_list{p_list.name_id.c_str()};
-    k_list &&[this]() {
-      bool l_clear{false};
-      for (auto &&i : p_list.data) {
-        if (i.all_of<assets_file>()) {
-          dear::Text(i.get<assets_file>().p_name);
+    {
+      dear::ListBox k_list{p_list.name_id.c_str()};
+      k_list &&[this]() {
+        for (auto &&i : p_list.data) {
+          if (i.all_of<assets_file>()) {
+            dear::Text(i.get<assets_file>().p_name);
+          }
         }
-      }
-    };
+      };
+    }
 
     dear::DragDropTarget{} && [&]() {
       if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
