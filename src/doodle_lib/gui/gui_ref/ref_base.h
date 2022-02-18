@@ -9,7 +9,8 @@ namespace doodle::gui {
 class DOODLELIB_API base_render {
  public:
   base_render() = default;
-  virtual bool operator()(const entt::handle &in_handle){};
+  virtual ~base_render();
+  virtual void render(const entt::handle &in = {}) = 0;
 };
 
 class gui_data {
@@ -34,23 +35,6 @@ class DOODLELIB_API edit_interface {
   virtual void init(const entt::handle &in);
   virtual void render(const entt::handle &in) = 0;
   virtual void save(const entt::handle &in);
-};
-
-template <class Self_T, class data_t, class cache_t>
-class interface_help_t {
- private:
-  Self_T *self;
-
- protected:
-  data_t &data() { return *std::dynamic_pointer_cast<data_t>(self->data_); };
-  const data_t &data() const { return *std::dynamic_pointer_cast<data_t>(self->data_); };
-
-  cache_t &cache() { return *std::dynamic_pointer_cast<cache_t>(self->cache_); };
-  const cache_t &cache() const { return *std::dynamic_pointer_cast<cache_t>(self->cache_); };
-
- public:
-  interface_help_t(const Self_T *in_self_t) : self(in_self_t){};
-  ~interface_help_t() = default;
 };
 
 class gui_cache_null_data {
