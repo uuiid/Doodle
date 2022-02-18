@@ -166,6 +166,32 @@ class assets_filter_factory : public gui::filter_factory_base {
   using tree_node_type = tree_node<gui_cache>;
 
   tree_node_type p_tree;
+  using popen_cache = gui::gui_cache<std::string>;
+  popen_cache p_popen;
+
+  void popen_menu(tree_node_type& in_node) {
+    ImGui::InputText(p_popen.name_id.c_str(), &p_popen.data);
+    if (ImGui::Button("编辑")) {
+      // in_node.data.data.replace_filename(p_popen.data);
+      in_node.data = gui_cache{p_popen.data, in_node.data.data.replace_filename(p_popen.data)};
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("添加")) {
+      if (auto it = boost::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
+            return in->data.name == p_popen.data;
+          });
+          it == in_node.child.end()) {
+        auto k_path = in_node.data.data / p_popen.data;
+        in_node.child.emplace_back(
+            std::make_shared<tree_node_type>(
+                gui_cache{
+                    p_popen.data,
+                    k_path}));
+        ImGui::CloseCurrentPopup();
+      }
+    }
+  }
 
   bool is_select(tree_node_type* in_root) const {
     return in_root == p_cur_select;
@@ -212,8 +238,12 @@ class assets_filter_factory : public gui::filter_factory_base {
         dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f};
         if (ImGui::IsItemClicked()) {
           p_cur_select  = i.get();
+          p_popen.data  = i->data.name;
           this->is_edit = true;
         }
+        dear::PopupContextItem{} && [this, &i]() {
+          popen_menu(*i);
+        };
 
         l_node&& [this, i]() {
           render_node(i.get());
@@ -238,15 +268,22 @@ class assets_filter_factory : public gui::filter_factory_base {
  public:
   assets_filter_factory()
       : p_cur_select(),
-        p_tree(gui_cache{"root"s, FSys::path{}}) {
+        p_tree(gui_cache{"root"s, FSys::path{}}),
+        p_popen("name"s, "null"s) {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
   tree_node_type* p_cur_select;
 
   bool render() {
-    dear::TreeNode{p_tree.data.name_id.c_str()} && [&]() {
-      this->render_node(&p_tree);
-    };
+    {
+      dear::TreeNode l_node{p_tree.data.name_id.c_str()};
+      dear::PopupContextItem{} && [this]() {
+        popen_menu(p_tree);
+      };
+      l_node&& [&]() {
+        this->render_node(&p_tree);
+      };
+    }
     return is_edit;
   }
 };
