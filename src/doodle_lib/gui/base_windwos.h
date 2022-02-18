@@ -27,14 +27,17 @@ class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
   }
   [[maybe_unused]] virtual void succeeded() {
     g_reg()->template unset<self_type>();
+    core_set::getSet().widget_show.emplace(std::string{panel_.name}, show);
     panel_.succeeded();
   }
   [[maybe_unused]] virtual void failed() {
     g_reg()->template unset<self_type>();
+    core_set::getSet().widget_show.emplace(std::string{panel_.name}, show);
     panel_.failed();
   }
   [[maybe_unused]] virtual void aborted() {
     g_reg()->template unset<self_type>();
+    core_set::getSet().widget_show.emplace(std::string{panel_.name}, show);
     panel_.aborted();
   }
   [[maybe_unused]] virtual void update(typename base_type::delta_type in_dalta, void* in_data) {

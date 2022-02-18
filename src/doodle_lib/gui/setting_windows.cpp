@@ -42,12 +42,15 @@ void setting_windows::init() {
   g_reg()->set<setting_windows&>(*this);
 }
 void setting_windows::succeeded() {
+  g_reg()->unset<setting_windows&>();
   save();
 }
 void setting_windows::failed() {
+  g_reg()->unset<setting_windows&>();
   save();
 }
 void setting_windows::aborted() {
+  g_reg()->unset<setting_windows&>();
   save();
 }
 void setting_windows::update(
