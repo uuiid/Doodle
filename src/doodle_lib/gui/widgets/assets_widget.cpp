@@ -254,7 +254,14 @@ class assets_filter_factory : public gui::filter_factory_base {
         dear::PopupContextItem{} && [this, &i]() {
           popen_menu(*i);
         };
-
+        dear::DragDropTarget{} && [this, &i]() {
+          if (auto l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
+            auto& l_list = *reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
+            for (auto&& l_h : l_list) {
+              l_h.emplace_or_replace<assets>(i->data.data);
+            }
+          }
+        };
         l_node&& [this, i]() {
           render_node(i.get());
         };
