@@ -217,7 +217,7 @@ class bounded_pool {
   void update(const Delta delta, void *data = nullptr) {
     auto sz = handlers.size();
 
-    for (std::size_t pos = ((max_process > sz) ? sz : max_process); pos; --pos) {
+    for (std::size_t pos = (((std::int64_t)max_process > sz) ? sz : (std::int64_t)max_process); pos; --pos) {
       auto &handler = handlers[pos - 1];
 
       if (const auto dead = handler.update(handler, delta, data); dead) {
