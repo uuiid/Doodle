@@ -134,7 +134,6 @@ set(
         file_warp/opencv_read_player.cpp
         file_warp/ue4_project.cpp
         file_warp/video_sequence.cpp
-        gui/base_windwos.cpp
         gui/setting_windows.cpp
         gui/widget_register.cpp
         gui/main_menu_bar.cpp
