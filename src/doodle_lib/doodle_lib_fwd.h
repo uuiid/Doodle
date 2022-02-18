@@ -241,6 +241,7 @@ DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
+
 class core_set;
 class project;
 class episodes;
@@ -255,7 +256,6 @@ class doodle_lib;
 class thread_pool;
 class season;
 class setting_windows;
-class comment_vector;
 class assets_path_vector;
 class core_sig;
 class command_base;
