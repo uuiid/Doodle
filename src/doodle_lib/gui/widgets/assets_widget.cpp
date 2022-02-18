@@ -68,20 +68,39 @@ void filter_factory_base::connection_sig() {
 class path_filter : public gui::filter_base {
  public:
   FSys::path p_assets;
+  std::size_t len{};
   explicit path_filter(FSys::path in_assets)
-      : p_assets(std::move(in_assets)){};
+      : p_assets(std::move(in_assets)),
+        len(ranges::distance(p_assets)){};
   bool operator()(const entt::handle& in) const override {
     // boost::make_zip_iterator();
     //    auto l_r = ;
+    if (in.all_of<assets>()) {
+      auto& l_ass = in.get<assets>();
+      auto dis_1  = ranges::distance(l_ass.p_path);
+      return len <= dis_1 &&
+             ranges::all_of(
+                 ranges::views::zip(
+                     l_ass.p_path,
+                     p_assets),
+                 [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
+                   auto& [l_r, l_l] = in;
+                   return l_r == l_l;
+                 });
 
-    return in.all_of<assets>() &&
-           ranges::any_of(
-               ranges::views::zip(in.get<assets>().get_path(),
-                                  p_assets),
-               [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
-                 auto& [l_r, l_l] = in;
-                 return l_r == l_l;
-               });
+    } else {
+      return false;
+    }
+
+    //    return in.all_of<assets>() &&
+    //           ranges::distance(p_assets) > ranges::distance(in.get<assets>().get_path()) &&
+    //           ranges::all_of(
+    //               ranges::views::zip(in.get<assets>().get_path(),
+    //                                  p_assets),
+    //               [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
+    //                 auto& [l_r, l_l] = in;
+    //                 return l_r == l_l;
+    //               });
   };
 };
 
@@ -225,7 +244,7 @@ class assets_filter_factory : public gui::filter_factory_base {
         l_p /= j;
 
       if (auto it = boost::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data == j;
+            return in->data.name == j;
           });
           it != root->child.end()) {
         root = it->get();
@@ -257,7 +276,7 @@ class assets_filter_factory : public gui::filter_factory_base {
         dear::DragDropTarget{} && [this, &i]() {
           if (auto l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
-            for (auto&& l_h : g_reg()->ctx<std::vector<entt::handle>>()) {
+            for (auto&& l_h : *l_list) {
               l_h.emplace_or_replace<assets>(i->data.data);
             }
           }
@@ -276,10 +295,10 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
 
   void refresh_() override {
-    for (auto&& i : p_obs) {
-      auto k_h = make_handle(i);
-      add_tree_node(&p_tree, k_h.get<data_type>().get_path());
-    }
+    // for (auto&& i : p_obs) {
+    //   auto k_h = make_handle(i);
+    //   add_tree_node(&p_tree, k_h.get<data_type>().get_path());
+    // }
   }
 
  public:
@@ -287,7 +306,7 @@ class assets_filter_factory : public gui::filter_factory_base {
       : p_cur_select(),
         p_tree(gui_cache{"root"s, FSys::path{}}),
         p_popen("name"s, "null"s) {
-    p_obs.connect(*g_reg(), entt::collector.update<data_type>());
+    // p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
   tree_node_type* p_cur_select;
 

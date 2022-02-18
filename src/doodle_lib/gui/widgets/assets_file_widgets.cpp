@@ -117,13 +117,13 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           i.load_image();
           auto l_pos = ImGui::GetCursorPos();
           if (ImGui::Selectable(i.select.name_id.c_str(),
-                                i.select.data,
+                                &i.select.data,
                                 ImGuiSelectableFlags_None, {k_l, k_l}))
             set_select(l_index);
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
           };
-          dear::DragDropSource{} && [this]() {
+          dear::DragDropSource{} && [this,i]() {
             std::vector<entt::handle> l_lists{};
             l_lists = ranges::to_vector(
                 this->p_i->lists |
@@ -134,11 +134,12 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
                     [](const impl::data& in) -> entt::handle {
                       return in.handle_;
                     }));
+            l_lists.emplace_back(i.handle_);
             g_reg()->set<std::vector<entt::handle>>(l_lists);
             auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
 
             ImGui::SetDragDropPayload(
-                doodle_config::drop_handle_list.data(), l_h, sizeof(l_h));
+                doodle_config::drop_handle_list.data(), l_h, sizeof(*l_h));
             ImGui::Text("拖拽实体");
           };
           ImGui::SetCursorPos(l_pos);
