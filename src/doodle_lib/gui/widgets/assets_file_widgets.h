@@ -25,6 +25,7 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
 
   void render_context_menu(const entt::handle& in_);
   void set_select(std::size_t in_size);
+  void open_drag(std::size_t in_size);
 
  public:
   entt::handle p_current_select;

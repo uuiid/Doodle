@@ -123,24 +123,8 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
           };
-          dear::DragDropSource{} && [this,i]() {
-            std::vector<entt::handle> l_lists{};
-            l_lists = ranges::to_vector(
-                this->p_i->lists |
-                ranges::views::filter([](const impl::data& in) -> bool {
-                  return in.select;
-                }) |
-                ranges::views::transform(
-                    [](const impl::data& in) -> entt::handle {
-                      return in.handle_;
-                    }));
-            l_lists.emplace_back(i.handle_);
-            g_reg()->set<std::vector<entt::handle>>(l_lists);
-            auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
-
-            ImGui::SetDragDropPayload(
-                doodle_config::drop_handle_list.data(), l_h, sizeof(*l_h));
-            ImGui::Text("拖拽实体");
+          dear::DragDropSource{} && [this, l_index]() {
+            this->open_drag(l_index);
           };
           ImGui::SetCursorPos(l_pos);
           ImGui::Image(i.image.data.get(), {k_l - 2, k_l - 2});
@@ -205,6 +189,25 @@ void assets_file_widgets::set_select(std::size_t in_size) {
 
   p_i->select_index = in_size;
   g_reg()->ctx<core_sig>().select_handle(i.handle_);
+}
+void assets_file_widgets::open_drag(std::size_t in_size) {
+  auto l_item = p_i->lists[in_size];
+  std::vector<entt::handle> l_lists{};
+  l_lists = ranges::to_vector(
+      this->p_i->lists |
+      ranges::views::filter([](const impl::data& in) -> bool {
+        return in.select;
+      }) |
+      ranges::views::transform(
+          [](const impl::data& in) -> entt::handle {
+            return in.handle_;
+          }));
+  l_lists.emplace_back(l_item.handle_);
+  g_reg()->set<std::vector<entt::handle>>(l_lists);
+  auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
+  ImGui::SetDragDropPayload(
+      doodle_config::drop_handle_list.data(), l_h, sizeof(*l_h));
+  ImGui::Text("拖拽实体");
 }
 
 assets_file_widgets::~assets_file_widgets() = default;
