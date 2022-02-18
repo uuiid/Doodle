@@ -17,19 +17,21 @@ namespace entt_tool {
 
 namespace detail {
 template <class Component, class Archive>
-void _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
+bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   auto &&k_comm      = in_handle.template get<Component>();
   in_archive["data"] = k_comm;
+  return true;
 }
 
 template <class Component, class Archive>
-void _load_(entt::handle &in_handle, Archive &in_archive) {
+bool _load_(entt::handle &in_handle, Archive &in_archive) {
   Component l_component{};
   if (in_archive.contains(typeid(Component).name()))
     in_archive.at(typeid(Component).name()).get_to(l_component);
   else if (in_archive.contains("data"))
     in_archive.at("data").get_to(l_component);
   in_handle.template emplace_or_replace<Component>(std::move(l_component));
+  return true;
 }
 
 template <class... Component, class Archive, std::size_t... Index>
