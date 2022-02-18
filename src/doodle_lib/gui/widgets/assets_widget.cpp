@@ -75,11 +75,13 @@ class path_filter : public gui::filter_base {
     //    auto l_r = ;
 
     return in.all_of<assets>() &&
-           ranges::any_of(ranges::views::zip(in.get<assets>().get_path(), p_assets),
-                          [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
-                            auto& [l_r, l_l] = in;
-                            return l_r == l_l;
-                          });
+           ranges::any_of(
+               ranges::views::zip(in.get<assets>().get_path(),
+                                  p_assets),
+               [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
+                 auto& [l_r, l_l] = in;
+                 return l_r == l_l;
+               });
   };
 };
 
