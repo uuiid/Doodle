@@ -8,8 +8,8 @@ namespace doodle::gui {
 
 class DOODLELIB_API base_render {
  public:
-  base_render() = default;
-  virtual ~base_render();
+  base_render()                                    = default;
+  virtual ~base_render()                           = default;
   virtual void render(const entt::handle &in = {}) = 0;
 };
 
