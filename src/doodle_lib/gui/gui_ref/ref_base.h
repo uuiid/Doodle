@@ -79,17 +79,12 @@ class gui_cache : public gui_cache_name_id, public BaseType {
  public:
   using base_type = BaseType;
   T data;
-  template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(const std::string &in_name, const IN_T &in_data)
-      : gui_cache_name_id(in_name),
-        base_type(),
-        data(in_data){};
 
-  template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(const std::string &in_name, IN_T &in_data)
+  template <class IN_T>
+  explicit gui_cache(const std::string &in_name, IN_T &&in_data)
       : gui_cache_name_id(in_name),
         base_type(),
-        data(std::move(in_data)){};
+        data(std::forward<IN_T>(in_data)){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
   explicit gui_cache(IN_T &in_data)
