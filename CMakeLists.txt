@@ -65,15 +65,18 @@ find_package(imgui CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
-find_package(cereal CONFIG REQUIRED)
+# 序列化库
+# find_package(cereal CONFIG REQUIRED) 
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(Sqlpp11 CONFIG REQUIRED
         COMPONENTS
         sqlite3)
-
+find_package(range-v3 CONFIG REQUIRED)
+# 压缩库
 find_package(cryptopp CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+# rpc 库
+# find_package(gRPC CONFIG REQUIRED)
 
 # 寻找d3d辅助工具库
 
