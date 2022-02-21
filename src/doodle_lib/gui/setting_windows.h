@@ -62,6 +62,7 @@ class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   std::string p_ue_version;
   std::int32_t p_batch_max;
   std::int32_t p_timeout;
+  std::int32_t p_max_reg;
 
  public:
   setting_windows();

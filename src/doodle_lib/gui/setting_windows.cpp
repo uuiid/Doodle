@@ -21,7 +21,8 @@ setting_windows::setting_windows()
       p_ue_path(core_set::getSet().get_ue4_setting().get_path().generic_string()),
       p_ue_version(core_set::getSet().get_ue4_setting().get_version()),
       p_batch_max(core_set::getSet().p_max_thread),
-      p_timeout(core_set::getSet().timeout) {
+      p_timeout(core_set::getSet().timeout),
+      p_max_reg(core_set::getSet().max_install_reg_entt) {
 }
 
 void setting_windows::save() {
@@ -32,7 +33,8 @@ void setting_windows::save() {
   set.set_max_tread(p_batch_max);
   set.get_ue4_setting().set_path(p_ue_path);
   set.get_ue4_setting().set_version(p_ue_version);
-  set.timeout = p_timeout;
+  set.max_install_reg_entt = boost::numeric_cast<std::uint16_t>(p_max_reg);
+  set.timeout              = p_timeout;
   g_bounded_pool().set_bounded(boost::numeric_cast<std::int16_t>(p_batch_max));
   core_set_init{}.write_file();
 }
@@ -74,9 +76,10 @@ void setting_windows::update(
   imgui::InputText("UE路径", &(p_ue_path));
   imgui::InputText("UE版本", &(p_ue_version));
   imgui::InputInt("batch 操作线程数", &(p_batch_max));
-  imgui::SameLine();
-  dear::HelpMarker{"更改线程池大小需要一定时间,以及风险"};
+  dear::Tooltip{} && []() { dear::Text("更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s); };
   imgui::InputInt("超时结束", &(p_timeout));
+  imgui::InputInt("注册表创建数", &p_max_reg);
+  dear::Tooltip{} && []() { dear::Text("这个选项影响项目的加载速度"s); };
 
   if (imgui::Button("save"))
     save();

@@ -115,6 +115,7 @@ class DOODLELIB_API core_set : public details::no_copy {
   uuid default_project;
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path& in);
+  std::uint16_t max_install_reg_entt;
 
  private:
   /**

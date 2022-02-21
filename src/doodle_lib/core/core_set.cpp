@@ -99,7 +99,8 @@ core_set::core_set()
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
       _root_data(p_root / "data"),
-      timeout(3600) {
+      timeout(3600),
+      max_install_reg_entt(8) {
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -346,6 +347,8 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j.at("default_project").get_to(p.default_project);
   if (j.contains("project_root"))
     j.at("project_root").get_to(p.project_root);
+  if (j.contains("max_install_reg_entt"))
+    j.at("max_install_reg_entt").get_to(p.max_install_reg_entt);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);

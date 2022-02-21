@@ -133,7 +133,7 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       return;
     }
     //    make_handle().emplace<database>() = p_i->list.back();
-    for (int l_i = 0; l_i < 3; ++l_i) {
+    for (int l_i = 0; l_i < core_set::getSet().max_install_reg_entt; ++l_i) {
       if (p_i->create_handle.empty())
         return;
       auto& k_data               = p_i->create_handle.back();
