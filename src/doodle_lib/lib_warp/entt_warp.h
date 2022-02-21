@@ -7,23 +7,23 @@
 #include <DoodleConfig.h>
 
 #include <entt/entt.hpp>
+// #include <boost/range.hpp>
 #include <fmt/format.h>
 
-#include <boost/range.hpp>
 #include <iterator>
 
 namespace doodle {
 namespace entt_tool {
 
 namespace detail {
-template <class Component, class Archive>
+template <typename Component, typename Archive>
 bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   auto &&k_comm      = in_handle.template get<Component>();
   in_archive["data"] = k_comm;
   return true;
 }
 
-template <class Component, class Archive>
+template <typename Component, typename Archive>
 bool _load_(entt::handle &in_handle, Archive &in_archive) {
   Component l_component{};
   if (in_archive.contains(typeid(Component).name()))
@@ -34,16 +34,16 @@ bool _load_(entt::handle &in_handle, Archive &in_archive) {
   return true;
 }
 
-template <class... Component, class Archive, std::size_t... Index>
+template <typename... Component, typename Archive, std::size_t... Index>
 void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
-  ((size[Index] ? _save_<Component>(in_handle, size[Index], in_archive[typeid(Component).name()]) : 0u), ...);
+  ((size[Index] ? _save_<Component>(in_handle, size[Index], in_archive[std::to_string(entt::type_id<Component>().hash())]) : 0u), ...);
 }
 
-template <class... Component, class Archive, std::size_t... Index>
+template <typename... Component, typename Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  ((in_archive.contains(typeid(Component).name())
+  (((in_archive.contains(typeid(Component).name()) || in_archive.contains(std::to_string(entt::type_id<Component>().hash())))
         ? _load_<Component>(in_handle, in_archive.at(typeid(Component).name()))
         : 0U),
    ...);
@@ -51,46 +51,27 @@ void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 }  // namespace detail
 
-template <class... Component, class Archive>
+template <typename... Component, typename Archive>
 void save_comm(entt::handle &in_handle, Archive &in_archive) {
   detail::_save_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
 }
 
-template <class... Component, class Archive>
+template <typename... Component, typename Archive>
 void load_comm(entt::handle &in_handle, Archive &in_archive) {
   detail::_load_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
 }
 
-class scoped_function {
- public:
-  std::vector<std::function<void()>> fun_list;
-  scoped_function() = default;
-  ~scoped_function();
-};
 }  // namespace entt_tool
-using scoped_function = entt_tool::scoped_function;
 }  // namespace doodle
 
-// namespace fmt {
-// template <>
-// struct fmt::formatter<::entt::entity> : fmt::formatter<fmt::string_view> {
-//   template <typename FormatContext>
-//   auto format(const ::entt::entity &in_, FormatContext &ctx) -> decltype(ctx.out()) {
-//     return formatter<string_view>::format(
-//         in_.str(),
-//         ctx);
-//   }
-// };
-// }  // namespace fmt
-
 namespace boost {
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 struct range_mutable_iterator<entt::basic_view<E, Get, Exclude>> {
   using entt_view = entt::basic_view<E, Get, Exclude>;
   using type      = typename entt_view::iterator;
 };
 
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 struct range_const_iterator<entt::basic_view<E, Get, Exclude>> {
   using entt_view = entt::basic_view<E, Get, Exclude>;
   using type      = typename entt_view::iterator;
@@ -98,22 +79,22 @@ struct range_const_iterator<entt::basic_view<E, Get, Exclude>> {
 }  // namespace boost
 
 namespace entt {
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 inline auto range_begin(basic_view<E, Get, Exclude> &x) {
   return x.begin();
 }
 
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 inline auto range_begin(const basic_view<E, Get, Exclude> &x) {
   return x.begin();
 }
 
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 inline auto range_end(basic_view<E, Get, Exclude> &x) {
   return x.end();
 }
 
-template <class E, class Get, class Exclude>
+template <typename E, typename Get, typename Exclude>
 inline auto range_end(const basic_view<E, Get, Exclude> &x) {
   return x.end();
 }

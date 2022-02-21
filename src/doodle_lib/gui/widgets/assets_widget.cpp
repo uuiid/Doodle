@@ -421,6 +421,17 @@ void assets_widget::refresh_(bool force) {
                   }),
               std::back_inserter(p_impl->p_filters));
   std::vector<entt::handle> list{};
+
+  // list = ranges::to_vector(
+  //     g_reg()->view<database>() |
+  //     ranges::views::transform([](const entt::entity& in) -> entt::handle {
+  //       return make_handle(in);
+  //     }) |
+  //     ranges::views::filter([&](const entt::handle& in) -> bool {
+  //       return ranges::all_of(p_impl->p_filters, [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
+  //         return (*in_f)(in);
+  //       });
+  //     }));
   boost::copy(g_reg()->view<database>() |
                   boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
                     return make_handle(in);
