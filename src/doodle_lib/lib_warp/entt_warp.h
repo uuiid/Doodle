@@ -43,8 +43,13 @@ void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 template <typename... Component, typename Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-  (((in_archive.contains(typeid(Component).name()) || in_archive.contains(std::to_string(entt::type_id<Component>().hash())))
+
+  ((in_archive.contains(typeid(Component).name())
         ? _load_<Component>(in_handle, in_archive.at(typeid(Component).name()))
+        : 0U),
+   ...);
+  ((in_archive.contains(std::to_string(entt::type_id<Component>().hash()))
+        ? _load_<Component>(in_handle, in_archive.at(std::to_string(entt::type_id<Component>().hash())))
         : 0U),
    ...);
 }
