@@ -325,15 +325,16 @@ bool core_set_init::init_default_project() {
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
-  j["user_"]           = p.p_user_;
-  j["department_"]     = p.p_department_;
-  j["ue4_setting"]     = p.p_ue4_setting;
-  j["mayaPath"]        = p.p_mayaPath;
-  j["max_thread"]      = p.p_max_thread;
-  j["widget_show"]     = p.widget_show;
-  j["timeout"]         = p.timeout;
-  j["default_project"] = p.default_project;
-  j["project_root"]    = p.project_root;
+  j["user_"]                = p.p_user_;
+  j["department_"]          = p.p_department_;
+  j["ue4_setting"]          = p.p_ue4_setting;
+  j["mayaPath"]             = p.p_mayaPath;
+  j["max_thread"]           = p.p_max_thread;
+  j["widget_show"]          = p.widget_show;
+  j["timeout"]              = p.timeout;
+  j["default_project"]      = p.default_project;
+  j["project_root"]         = p.project_root;
+  j["max_install_reg_entt"] = p.max_install_reg_entt;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
