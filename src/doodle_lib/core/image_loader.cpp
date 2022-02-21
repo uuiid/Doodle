@@ -67,6 +67,7 @@ bool image_loader::load(const entt::handle& in_handle) {
     auto k_sh = cv_to_d3d(k_image, false);
     in_handle.patch<image_icon>([&](image_icon& in) {
       in.image = k_sh;
+      in.size2d_ = k_image.size();
     });
   } else {
     in_handle.patch<image_icon>([&](image_icon& in) {

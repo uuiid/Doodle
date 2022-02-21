@@ -25,7 +25,14 @@ class assets_file_widgets::impl {
   boost::signals2::scoped_connection p_sc;
   std::vector<entt::handle> handle_list;
 
-  using cache_image  = gui::gui_cache<std::shared_ptr<void>>;
+  class image_data {
+   public:
+    cv::Size2f size2d_;
+    cv::Size2f icon_size2d_;
+    std::float_t max_;
+  };
+
+  using cache_image  = gui::gui_cache<std::shared_ptr<void>, image_data>;
   using cache_name   = gui::gui_cache<std::string>;
   using cache_select = gui::gui_cache<bool>;
   class data {
@@ -50,6 +57,21 @@ class assets_file_widgets::impl {
       }
     };
 
+    void compute_size(float max_length) {
+      if (image.max_ == max_length)
+        return;
+      else if (image.size2d_.empty()) {  /// 加载默认图标时大小为空， 直接指定大小
+        image.icon_size2d_ = {max_length, max_length};
+      } else {  /// 非默认图标直接计算大小
+        if (image.size2d_.aspectRatio() >= 1) {
+          image.icon_size2d_ = image.size2d_ * (max_length / image.size2d_.width);
+        } else {
+          image.icon_size2d_ = image.size2d_ * (max_length / image.size2d_.height);
+        }
+      }
+      image.max_ = max_length;
+    };
+
     void load_image() {
       image_loader k_load{};
       if (handle_.any_of<image_icon>()) {
@@ -57,7 +79,8 @@ class assets_file_widgets::impl {
         auto&& k_icon = handle_.get<image_icon>();
         if (!k_icon.image)
           k_load.load(handle_);
-        image = k_icon.image;
+        image         = k_icon.image;
+        image.size2d_ = k_icon.size2d_;
       } else {
         /// @brief 否则默认图标
         image = k_load.default_image();
@@ -66,6 +89,8 @@ class assets_file_widgets::impl {
   };
   std::vector<data> lists;
   std::size_t select_index;
+
+  // std::float_t windows_width{0};
 };
 
 assets_file_widgets::assets_file_widgets()
@@ -104,7 +129,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   const static auto l_size{5u};
   ImGui::Columns(l_size, "assets_file_widgets", false);
 
-  auto k_l = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
+  auto k_length = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
 
   ImGuiListClipper clipper{};
   clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size()) / l_size) + 1);
@@ -115,10 +140,12 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           std::size_t l_index{l_i * l_size + l_j};
           auto&& i = p_i->lists[l_index];
           i.load_image();
+          i.compute_size(k_length);
           auto l_pos = ImGui::GetCursorPos();
           if (ImGui::Selectable(i.select.name_id.c_str(),
                                 &i.select.data,
-                                ImGuiSelectableFlags_None, {k_l, k_l}))
+                                ImGuiSelectableFlags_None,
+                                {k_length, k_length}))
             set_select(l_index);
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
@@ -127,7 +154,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
             this->open_drag(l_index);
           };
           ImGui::SetCursorPos(l_pos);
-          ImGui::Image(i.image.data.get(), {k_l - 2, k_l - 2});
+          ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
           dear::Text(i.name);
         }
         imgui::NextColumn();
