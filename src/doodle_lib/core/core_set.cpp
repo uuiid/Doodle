@@ -317,7 +317,9 @@ bool core_set_init::config_to_user() {
   return true;
 }
 bool core_set_init::init_default_project() {
-  if (!p_set.project_root[0].empty() && FSys::exists(p_set.project_root[0])) {
+  if (!p_set.project_root[0].empty() &&
+      FSys::exists(p_set.project_root[0]) &&
+      FSys::is_regular_file(p_set.project_root[0])) {
     core::client{}.open_project(p_set.project_root[0]);
   }
   return true;
