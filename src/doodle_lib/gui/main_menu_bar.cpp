@@ -65,7 +65,8 @@ void main_menu_bar::menu_file() {
         [](const FSys::path &in_path) {
           core::client{}.open_project(in_path);
         },
-        "选择目录"s);
+        "选择文件"s,
+        std::vector<std::string>{std::string{doodle_config::doodle_db_name}});
   }
   dear::Menu{"最近的项目"} && []() {
     auto &k_list = core_set::getSet().project_root;

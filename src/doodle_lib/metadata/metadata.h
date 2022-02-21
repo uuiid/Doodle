@@ -54,8 +54,6 @@ class DOODLELIB_API root_ref {
 class DOODLELIB_API database_info {
  public:
   FSys::path path_;
- 
-
 };
 
 class DOODLELIB_API database {

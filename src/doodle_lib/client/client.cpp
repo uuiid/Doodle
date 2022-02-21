@@ -28,7 +28,7 @@ SQLPP_DECLARE_TABLE(
 
 namespace doodle::core {
 void client::add_project(const std::filesystem::path& in_path) {
-  auto k_conn = core_sql::Get().get_connection(in_path / doodle_config::doodle_db_name);
+  auto k_conn = core_sql::Get().get_connection(in_path);
   k_conn->execute(R"(
 create table if not exists metadatatab
 (
@@ -125,7 +125,9 @@ void client::open_project(const FSys::path& in_path) {
 void client::new_project(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
 
-  auto k_path = in_handle.get<project>().p_path;
+  auto k_prj  = in_handle.get<project>();
+
+  auto k_path = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
   if (!in_handle.all_of<database>())
     in_handle.emplace<database>();
   add_project(k_path);

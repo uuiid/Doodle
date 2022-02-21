@@ -48,13 +48,13 @@ class database_task_select::impl {
 database_task_select::database_task_select(const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
   p_i->filter_  = in_filter;
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
+  p_i->prj_root = g_reg()->ctx<database_info>().path_;
 }
 
 database_task_select::database_task_select(const FSys::path& in_prj_root)
     : p_i(std::make_unique<impl>()) {
   //  p_i->filter_._meta_type = metadata_type::project_root;
-  p_i->prj_root = in_prj_root / doodle_config::doodle_db_name;
+  p_i->prj_root = in_prj_root ;
 }
 
 database_task_select::~database_task_select() = default;
@@ -170,7 +170,7 @@ class database_task_update::impl {
 
 database_task_update::database_task_update(const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
+  p_i->prj_root = g_reg()->ctx<database_info>().path_;
   p_i->list     = in_list;
 }
 database_task_update::~database_task_update() = default;
@@ -257,7 +257,7 @@ void database_task_delete::delete_db() {
 database_task_delete::database_task_delete(
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
+  p_i->prj_root = g_reg()->ctx<database_info>().path_;
   p_i->list     = in_list;
 }
 database_task_delete::~database_task_delete() = default;
@@ -345,7 +345,7 @@ database_task_install::database_task_install(
 database_task_install::~database_task_install() = default;
 
 void database_task_install::init() {
-  p_i->prj_root = g_reg()->ctx<project>().get_path() / doodle_config::doodle_db_name;
+  p_i->prj_root = g_reg()->ctx<database_info>().path_;
 
   auto& k_msg   = g_reg()->set<process_message>();
   k_msg.set_name("保存数据");

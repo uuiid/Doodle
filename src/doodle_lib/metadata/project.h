@@ -31,9 +31,9 @@ class DOODLELIB_API project {
   std::string p_name;
   FSys::path p_path;
 
- private:
   std::string p_en_str;
   std::string p_shor_str;
+ private:
   void init_name();
 
  public:

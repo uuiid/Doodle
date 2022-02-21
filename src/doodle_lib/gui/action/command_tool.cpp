@@ -73,7 +73,7 @@ void comm_maya_tool::render() {
                     arg.sim_path           = in_path;
                     arg.qcloth_assets_path = p_cloth_path;
                     arg.only_sim           = p_only_sim;
-                    arg.project_           = g_reg()->ctx<project>().p_path;
+                    arg.project_           = g_reg()->ctx<database_info>().path_;
                     maya->qcloth_sim_file(make_handle(), arg);
                   });
   }
@@ -84,7 +84,7 @@ void comm_maya_tool::render() {
                     auto k_arg        = details::export_fbx_arg{};
                     k_arg.file_path   = i;
                     k_arg.use_all_ref = this->p_use_all_ref;
-                    k_arg.project_    = g_reg()->ctx<project>().p_path;
+                    k_arg.project_    = g_reg()->ctx<database_info>().path_;
                     maya->export_fbx_file(make_handle(), k_arg);
                   });
   }
