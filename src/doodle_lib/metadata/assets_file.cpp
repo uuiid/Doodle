@@ -12,9 +12,8 @@
 
 namespace doodle {
 
-assets_file::assets_file()
-    : assets_file(FSys::path{}, std::string{}, 0) {
-}
+assets_file::assets_file() = default;
+
 assets_file::assets_file(FSys::path in_path)
     : assets_file(in_path, in_path.stem().generic_string(), 0) {
 }
@@ -22,12 +21,14 @@ assets_file::assets_file(FSys::path in_path)
 assets_file::assets_file(FSys::path in_path,
                          std::string in_name,
                          std::uint64_t in_version)
-    : path(in_path.lexically_relative(g_reg()->ctx<project>().p_path)),
+    : path(),
       p_name(std::move(in_name)),
       p_version(in_version),
       p_user(core_set::getSet().get_user()),
       p_department(core_set::getSet().get_department_enum()),
-      p_ShowName(path.stem().generic_string()) {
+      p_ShowName(in_path.stem().generic_string()) {
+  if (auto l_prj = g_reg()->try_ctx<project>(); l_prj)
+    path = in_path.lexically_relative(l_prj->p_path);
 }
 
 std::string assets_file::str() const {
