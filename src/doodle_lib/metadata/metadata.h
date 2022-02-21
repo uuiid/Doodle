@@ -62,9 +62,9 @@ class DOODLELIB_API database {
   std::unique_ptr<impl> p_i;
 
  public:
-  class DOODLELIB_API ref_root {
+  class DOODLELIB_API ref_data {
    public:
-    explicit ref_root(const database &in);
+    explicit ref_data(const database &in);
     const std::uint64_t id;
     const boost::uuids::uuid uuid;
   };
@@ -110,8 +110,8 @@ class DOODLELIB_API database {
   bool operator==(const database &in_rhs) const;
   bool operator!=(const database &in_rhs) const;
 
-  bool operator==(const ref_root &in_rhs) const;
-  bool operator!=(const ref_root &in_rhs) const;
+  bool operator==(const ref_data &in_rhs) const;
+  bool operator!=(const ref_data &in_rhs) const;
 
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;

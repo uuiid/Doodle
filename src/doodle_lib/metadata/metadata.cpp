@@ -38,7 +38,7 @@ class database::impl {
   FSys::path p_uuid;
 };
 
-database::ref_root::ref_root(const database &in)
+database::ref_data::ref_data(const database &in)
     : id(in.p_i->p_id),
       uuid(in.p_i->p_uuid_) {
 }
@@ -155,7 +155,7 @@ database::operator metadata_database() const {
 
   k_tmp.user_data = k_json.dump();
   if (p_i->p_type != metadata_type::project_root)
-    k_tmp.parent = boost::numeric_cast<std::uint32_t>(g_reg()->ctx<ref_root>().id);
+    k_tmp.parent = boost::numeric_cast<std::uint32_t>(g_reg()->ctx<ref_data>().id);
 
   ///设置类型id
   k_tmp.m_type = get_meta_type_int();
@@ -248,10 +248,10 @@ void to_json(nlohmann::json &j, const database &p) {
   j["uuid_"]     = p.p_i->p_uuid_;
 }
 
-bool database::operator==(const ref_root &in_rhs) const {
+bool database::operator==(const ref_data &in_rhs) const {
   return std::tie(p_i->p_id, p_i->p_uuid_) == std::tie(in_rhs.id, in_rhs.uuid);
 }
-bool database::operator!=(const ref_root &in_rhs) const {
+bool database::operator!=(const ref_data &in_rhs) const {
   return !(*this == in_rhs);
 }
 
