@@ -35,7 +35,7 @@ using namespace doodle;
 //   k_app->run();
 // }
 
-class test_app : public app {
+class test_input_project : public app {
  public:
  protected:
   void load_windows() override {
@@ -52,7 +52,7 @@ class test_app : public app {
   }
 };
 
-TEST_CASE_METHOD(test_app, "test get input") {
+TEST_CASE_METHOD(test_input_project, "test get input") {
   app::Get().run();
 }
 
