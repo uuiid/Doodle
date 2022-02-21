@@ -52,8 +52,6 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-  [[nodiscard]] cloth_config& get_vfx_cloth_config() const;
-
   static entt::handle get_current();
  
   bool operator<(const project& in_rhs) const;

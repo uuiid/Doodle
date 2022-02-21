@@ -56,7 +56,7 @@ bool image_loader::load(const entt::handle& in_handle) {
   auto k_reg = g_reg();
   chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  auto l_local_path = k_reg->ctx<project>().p_path / "image" / in_handle.get<image_icon>().path;
+  auto l_local_path = k_reg->ctx<project>().make_path("image") / in_handle.get<image_icon>().path;
 
   if (exists(l_local_path) &&
       is_regular_file(l_local_path) &&

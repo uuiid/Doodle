@@ -27,7 +27,7 @@ void comm_maya_tool::init() {
   auto k_prj = g_reg()->try_ctx<root_ref>();
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
-  p_text = k_prj->root_handle().get<project>().get_vfx_cloth_config().vfx_cloth_sim_path.generic_string();
+  p_text = k_prj->root_handle().get_or_emplace<project::cloth_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->set<comm_maya_tool&>(*this);
 }
 void comm_maya_tool::succeeded() {

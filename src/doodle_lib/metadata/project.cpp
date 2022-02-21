@@ -71,7 +71,6 @@ const std::string& project::get_name() const {
   return p_name;
 }
 
- 
 void project::init_name() {
   p_en_str = boost::algorithm::to_lower_copy(
       convert::Get().toEn(this->p_name));
@@ -92,10 +91,6 @@ bool project::operator!=(const project& in_rhs) const {
   return !(in_rhs == *this);
 }
 
-project::cloth_config& project::get_vfx_cloth_config() const {
-  auto k_h = make_handle(*this);
-  return k_h.get_or_emplace<cloth_config>();
-}
 FSys::path project::make_path(const FSys::path& in_path) const {
   auto path = p_path / in_path;
   if (!exists(path))
