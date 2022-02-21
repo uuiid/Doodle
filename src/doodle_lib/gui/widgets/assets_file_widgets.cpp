@@ -141,7 +141,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           auto&& i = p_i->lists[l_index];
           i.load_image();
           i.compute_size(k_length);
-          auto l_pos = ImGui::GetCursorPos();
+          auto l_pos_image = ImGui::GetCursorPos();
           if (ImGui::Selectable(i.select.name_id.c_str(),
                                 &i.select.data,
                                 ImGuiSelectableFlags_None,
@@ -153,8 +153,10 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           dear::DragDropSource{} && [this, l_index]() {
             this->open_drag(l_index);
           };
-          ImGui::SetCursorPos(l_pos);
+          auto l_pos_select = ImGui::GetCursorPos();
+          ImGui::SetCursorPos(l_pos_image);
           ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
+          ImGui::SetCursorPos(l_pos_select);
           dear::Text(i.name);
         }
         imgui::NextColumn();
