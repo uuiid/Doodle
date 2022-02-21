@@ -76,10 +76,10 @@ void setting_windows::update(
   imgui::InputText("UE路径", &(p_ue_path));
   imgui::InputText("UE版本", &(p_ue_version));
   imgui::InputInt("batch 操作线程数", &(p_batch_max));
-  dear::ItemTooltip{} && []() { dear::Text("更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s); };
+  dear::HelpMarker{"更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s};
   imgui::InputInt("超时结束", &(p_timeout));
   imgui::InputInt("注册表创建数", &p_max_reg);
-  dear::ItemTooltip{} && []() { dear::Text("这个选项影响项目的加载速度"s); };
+  dear::HelpMarker{"这个选项影响项目的加载速度"s};
 
   if (imgui::Button("save"))
     save();
