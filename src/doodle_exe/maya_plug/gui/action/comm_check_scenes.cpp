@@ -355,20 +355,16 @@ bool comm_check_scenes::render() {
     CHECK_MSTATUS(k_s);
   }
   dear::Text(fmt::format("错误 (1) {}", p_err_1));
-  imgui::SameLine();
-  dear::HelpMarker("(1)", "大纲错误");
+  dear::HelpMarker{"大纲错误"};
 
   dear::Text(fmt::format("错误 (2) {}", p_err_2));
-  imgui::SameLine();
-  dear::HelpMarker("(1)", "onModelChange3dc 错误");
+  dear::HelpMarker{"onModelChange3dc 错误"};
 
   dear::Text(fmt::format("错误 (3) {}", p_err_3));
-  imgui::SameLine();
-  dear::HelpMarker("(1)", "CgAbBlastPanelOptChangeCallback 错误");
+  dear::HelpMarker{"CgAbBlastPanelOptChangeCallback 错误"};
 
   dear::Text(fmt::format("错误 (4) {}", p_err_4));
-  imgui::SameLine();
-  dear::HelpMarker("(1)", "贼健康问题");
+  dear::HelpMarker{"贼健康问题"};
 
   // dear::Disabled{!p_duplicate_name} && [&]() {
   // };
