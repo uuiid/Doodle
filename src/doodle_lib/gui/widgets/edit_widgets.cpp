@@ -165,27 +165,41 @@ class time_edit : public gui::edit_interface {
 namespace gui {
 
 class add_assets_for_file : public base_render {
+  void add_time(const entt::handle &in_handle, const FSys::path &in_path) {
+    if (FSys::exists(in_path)) {
+      in_handle.emplace<time_point_wrap>(FSys::last_write_time_point(in_path));
+    }
+  };
+
+  void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
+    image_loader l_image_load{};
+    auto k_imghe_path = ranges::find_if(
+        ranges::make_subrange(
+            FSys::directory_iterator{
+                is_directory(in_path) ? in_path : in_path.parent_path()},
+            FSys::directory_iterator{}),
+        [](const FSys::path &in_file) {
+          auto &&l_ext = in_file.extension();
+          return l_ext == ".png" || l_ext == ".jpg";
+        });
+    if (k_imghe_path != FSys::directory_iterator{}) {
+      l_image_load.save(in_handle, k_imghe_path->path());
+    }
+  };
+
   void add_assets(const std::vector<FSys::path> &in_list) {
     image_loader l_image_load{};
-    p_list.data = ranges::to_vector(in_list | ranges::views::transform([&](const FSys::path &in_path) {
-                                      auto k_h    = make_handle();
-                                      auto &k_ass = k_h.emplace<assets_file>(in_path);
-                                      k_h.emplace<assets>("null");
-
-                                      auto k_imghe_path = ranges::find_if(
-                                          ranges::make_subrange(
-                                              FSys::directory_iterator{
-                                                  is_directory(in_path) ? in_path : in_path.parent_path()},
-                                              FSys::directory_iterator{}),
-                                          [](const FSys::path &in_file) {
-                                            auto &&l_ext = in_file.extension();
-                                            return l_ext == ".png" || l_ext == ".jpg";
-                                          });
-                                      if (k_imghe_path != FSys::directory_iterator{}) {
-                                        l_image_load.save(k_h, k_imghe_path->path());
-                                      }
-                                      return k_h;
-                                    }));
+    p_list.data = ranges::to_vector(
+        in_list | ranges::views::transform([&](const FSys::path &in_path) {
+          auto k_h    = make_handle();
+          auto &k_ass = k_h.emplace<assets_file>(in_path);
+          k_h.emplace<assets>("null");
+          if (use_time.data)
+            this->add_time(k_h, in_path);
+          if (use_icon.data)
+            this->find_icon(k_h, in_path);
+          return k_h;
+        }));
 
     DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
     g_reg()->ctx<core_sig>().filter_handle(p_list.data);
@@ -193,11 +207,19 @@ class add_assets_for_file : public base_render {
 
   gui_cache<std::vector<entt::handle>> p_list;
 
+  gui_cache<bool> use_time;
+  gui_cache<bool> use_icon;
+
  public:
   add_assets_for_file()
-      : p_list("文件列表"s, std::vector<entt::handle>{}) {}
+      : p_list("文件列表"s, std::vector<entt::handle>{}),
+        use_time("检查时间"s, false),
+        use_icon("寻找图标"s, true) {}
 
   void render(const entt::handle &) override {
+    ImGui::Checkbox(use_time.name_id.c_str(), &use_time.data);
+    ImGui::Checkbox(use_icon.name_id.c_str(), &use_icon.data);
+
     {
       dear::ListBox k_list{p_list.name_id.c_str()};
       k_list &&[this]() {
