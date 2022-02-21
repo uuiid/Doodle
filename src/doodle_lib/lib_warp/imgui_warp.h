@@ -61,7 +61,7 @@ struct ScopeWrapper {
   constexpr operator bool() const noexcept { return ok_; }
 
  protected:
-  ScopeWrapper(const ScopeWrapper&)            = delete;
+  ScopeWrapper(const ScopeWrapper&) = delete;
   ScopeWrapper& operator=(const ScopeWrapper&) = delete;
 };
 
@@ -283,7 +283,7 @@ struct ItemTooltip : public ScopeWrapper<ItemTooltip> {
 static inline void Text(const std::string& str) noexcept {
   ImGui::TextUnformatted(str.c_str(), str.c_str() + str.length());
 }
-static inline void Text(const std::string_view & str) noexcept {
+static inline void Text(const std::string_view& str) noexcept {
   ImGui::TextUnformatted(str.data(), str.data() + str.length());
 }
 inline void TextUnformatted(const std::string& str) noexcept {
@@ -404,21 +404,23 @@ struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
 };
 
 struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
+ private:
   HelpMarker(const char* in_show_str, const char* in_args) noexcept
       : ScopeWrapper<HelpMarker, true>(false) {
-    ImGui::TextDisabled(in_show_str);
+    ::ImGui::SameLine();
+    ::ImGui::TextDisabled(in_show_str);
     ItemTooltip{} && [&in_args]() {
       TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() {
         ImGui::TextUnformatted(in_args);
       };
     };
   }
-  HelpMarker(const char* in_args) noexcept
-      : HelpMarker("(?)", in_args) {}
-  HelpMarker(const std::string& in_args) noexcept
-      : HelpMarker(in_args.c_str()){};
 
-  HelpMarker(const std::string& in_show_str, const std::string& in_args) noexcept
+ public:
+  explicit HelpMarker(const std::string& in_args) noexcept
+      : HelpMarker("(?)", in_args.c_str()){};
+
+  explicit HelpMarker(const std::string& in_show_str, const std::string& in_args) noexcept
       : HelpMarker(in_show_str.c_str(), in_args.c_str()){};
   static void dtor() noexcept {};
 };
