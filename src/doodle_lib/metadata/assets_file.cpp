@@ -22,7 +22,7 @@ assets_file::assets_file(FSys::path in_path)
 assets_file::assets_file(FSys::path in_path,
                          std::string in_name,
                          std::uint64_t in_version)
-    : path(std::move(in_path)),
+    : path(in_path.lexically_relative(g_reg()->ctx<project>().p_path)),
       p_name(std::move(in_name)),
       p_version(in_version),
       p_user(core_set::getSet().get_user()),

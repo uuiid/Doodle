@@ -34,7 +34,13 @@ class DOODLELIB_API assets_file {
    *
    */
   assets_file();
-
+  /**
+   * @brief 这是相对于上下文的根目录构建的
+   *
+   * @param in_path 路径（相对于项目根目录）
+   * @param in_name 名称
+   * @param in_version 版本
+   */
   explicit assets_file(FSys::path in_path,
                        std::string in_name,
                        std::uint64_t in_version);
