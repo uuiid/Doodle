@@ -8,7 +8,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/logger/logger.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 #include <exception/exception.h>
 #include <google/protobuf/util/time_util.h>
 

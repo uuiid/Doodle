@@ -3,7 +3,6 @@
 //
 
 #include <doodle_lib/metadata/assets.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/pin_yin/convert.h>
 
 namespace doodle {

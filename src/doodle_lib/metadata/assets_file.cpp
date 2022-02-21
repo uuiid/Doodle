@@ -5,8 +5,7 @@
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/assets_path.h>
 #include <doodle_lib/metadata/comment.h>
-///这个工厂类必须在所有导入的后面
-#include <doodle_lib/metadata/metadata_factory.h>
+
 #include <google/protobuf/util/time_util.h>
 #include <metadata/time_point_wrap.h>
 #include <pin_yin/convert.h>

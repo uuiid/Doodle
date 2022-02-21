@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <exception/exception.h>
-#include <metadata/metadata_factory.h>
 #include <metadata/project.h>
 #include <pin_yin/convert.h>
 

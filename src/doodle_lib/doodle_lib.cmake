@@ -78,7 +78,6 @@ set(
         metadata/leaf_meta.h
         metadata/metadata.h
         metadata/metadata_cpp.h
-        metadata/metadata_factory.h
         metadata/metadata_state.h
         metadata/project.h
         metadata/season.h
@@ -175,7 +174,6 @@ set(
         metadata/episodes.cpp
         metadata/leaf_meta.cpp
         metadata/metadata.cpp
-        metadata/metadata_factory.cpp
         metadata/project.cpp
         metadata/season.cpp
         metadata/shot.cpp

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 
 #include <boost/signals2.hpp>
 #include <optional>

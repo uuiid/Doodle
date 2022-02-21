@@ -11,7 +11,6 @@
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>

@@ -380,8 +380,6 @@ void assets_widget::aborted() {
   g_reg()->unset<assets_widget>();
 }
 void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  /// 加载数据
-  //  if (p_impl->p_root && !p_impl->p_root.get<database_root>().is_end())
   /// 渲染数据
   dear::Disabled l_d{p_impl->only_rand};
 

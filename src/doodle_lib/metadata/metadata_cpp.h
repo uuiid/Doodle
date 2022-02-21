@@ -15,6 +15,5 @@
 #include <doodle_lib/metadata/shot.h>
 
 #include <doodle_lib/metadata/time_point_wrap.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 #include <doodle_lib/metadata/user.h>
 // clang-format on

@@ -1,6 +1,5 @@
 #include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/metadata_factory.h>
 
 namespace doodle {
 
