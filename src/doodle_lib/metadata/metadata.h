@@ -51,20 +51,11 @@ class DOODLELIB_API root_ref {
   }
 };
 
-class DOODLELIB_API database_root {
+class DOODLELIB_API database_info {
  public:
-  std::uint64_t p_current_id;
-  std::uint64_t p_cout_rows;
+  FSys::path path_;
+ 
 
-  bool p_end;
-  database_root()
-      : p_current_id(0),
-        p_cout_rows(0),
-        p_end(false) {}
-
-  [[nodiscard]] bool is_end() const;
-  [[nodiscard]] const std::uint64_t &get_current_id() const;
-  void reset();
 };
 
 class DOODLELIB_API database {

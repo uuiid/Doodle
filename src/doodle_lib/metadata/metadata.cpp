@@ -20,20 +20,6 @@
 #include <boost/hana/ext/std.hpp>
 namespace doodle {
 
-const std::uint64_t &database_root::get_current_id() const {
-  return p_current_id;
-}
-
-bool database_root::is_end() const {
-  return p_end;
-}
-
-void database_root::reset() {
-  p_current_id = 0;
-  p_cout_rows  = 0;
-  p_end        = false;
-}
-
 class database::impl {
  public:
   impl()
