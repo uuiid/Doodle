@@ -139,7 +139,7 @@ class time_edit : public gui::edit_interface {
   }
 
   void render(const entt::handle &in) override {
-    if (ImGui::SliderInt(p_year.name_id.c_str(), &p_year.data, 0, 2050))
+    if (ImGui::SliderInt(p_year.name_id.c_str(), &p_year.data, 2020, 2050))
       set_modify(true);
     if (ImGui::SliderInt(p_month.name_id.c_str(), &p_month.data, 1, 12))
       set_modify(true);
@@ -167,7 +167,7 @@ namespace gui {
 class add_assets_for_file : public base_render {
   void add_time(const entt::handle &in_handle, const FSys::path &in_path) {
     if (FSys::exists(in_path)) {
-      in_handle.emplace<time_point_wrap>(FSys::last_write_time_point(in_path));
+      in_handle.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
     }
   };
 
@@ -191,13 +191,15 @@ class add_assets_for_file : public base_render {
     image_loader l_image_load{};
     p_list.data = ranges::to_vector(
         in_list | ranges::views::transform([&](const FSys::path &in_path) {
-          auto k_h    = make_handle();
-          auto &k_ass = k_h.emplace<assets_file>(in_path);
+          auto k_h = make_handle();
+          k_h.emplace<assets_file>(in_path);
           k_h.emplace<assets>("null");
           if (use_time.data)
             this->add_time(k_h, in_path);
           if (use_icon.data)
             this->find_icon(k_h, in_path);
+          k_h.emplace<database>();
+          k_h.patch<database>(database::save);
           return k_h;
         }));
 
