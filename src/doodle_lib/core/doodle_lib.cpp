@@ -34,12 +34,15 @@ doodle_lib::doodle_lib()
   reg->on_construct<database>().connect<&database::set_enum>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
+  reg->set<database_info>();
   auto& k_sig = reg->set<core_sig>();
   reg->set<status_info>();
   k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
-    auto k_reg = g_reg();
+    auto k_reg                        = g_reg();
+    /// @brief 设置数据库路径
+    k_reg->ctx<database_info>().path_ = in_path;
     /// @brief 清除所有数据库实体
-    auto k_v   = k_reg->view<database>();
+    auto k_v                          = k_reg->view<database>();
     k_reg->destroy(k_v.begin(), k_v.end());
     /// @brief 清除所有孤立的实体
     k_reg->each([&k_reg](auto entity) {
@@ -51,7 +54,7 @@ doodle_lib::doodle_lib()
   k_sig.project_end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
     g_reg()->set<project>(in_project);
     g_reg()->set<database::ref_root>(in_handle.get<database>().get_ref());
-    core_set::getSet().add_recent_project(in_project.get_path());
+    core_set::getSet().add_recent_project(g_reg()->ctx<database_info>().path_);
     g_reg()->set<root_ref>(in_handle);
     core_set_init{}.write_file();
   });
