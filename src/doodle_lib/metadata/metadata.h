@@ -178,6 +178,4 @@ class DOODLELIB_API handle_warp {
 };
 
 }  // namespace doodle
-
-// CEREAL_REGISTER_TYPE(doodle::metadata)
-// CEREAL_REGISTER_POLYMORPHIC_RELATION(std::enable_shared_from_this<doodle::metadata>, doodle::metadata)
+ 
