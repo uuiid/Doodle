@@ -10,40 +10,49 @@
 
 using namespace doodle;
 
-TEST_CASE("convert", "[metadata]") {
-  using namespace doodle;
-  auto reg   = g_reg();
-  auto k_prj = make_handle(reg->create());
-  auto& k_p  = k_prj.emplace<project>();
-  k_prj.emplace<database>();
-  REQUIRE(k_prj.all_of<project, database>());
+class test_convert : public app {
+ public:
+  void run_test() {
+    auto reg                = g_reg();
+    
+    auto k_prj              = make_handle(reg->create());
+    auto& k_p               = k_prj.emplace<project>();
+    reg->set<database::ref_root>(k_prj.emplace<database>().get_ref());
+    REQUIRE(k_prj.all_of<project, database>());
 
-  auto& k_d = k_prj.get<database>();
+    auto& k_d = k_prj.get<database>();
 
-  auto k_s  = make_handle(reg->create());
-  auto& s   = k_s.emplace<shot>();
-  k_s.emplace<database>();
+    auto k_s  = make_handle(reg->create());
+    auto& s   = k_s.emplace<shot>();
+    k_s.emplace<database>();
 
-  s.set_shot(1);
-  s.set_shot_ab(shot::shot_ab_enum::A);
+    s.set_shot(1);
+    s.set_shot_ab(shot::shot_ab_enum::A);
 
-  REQUIRE(k_s.all_of<shot, database>());
+    REQUIRE(k_s.all_of<shot, database>());
 
-  auto& k_d2 = k_s.get<database>();
-  metadata_database k_data2;
-  k_data2 = k_d2;
-  std::cout << k_data2.user_data << std::endl;
-  auto k_tmp2 = make_handle(reg->create());
-  auto& k_d3  = k_tmp2.get_or_emplace<database>();
-  k_d3        = k_data2;
+    auto& k_d2 = k_s.get<database>();
+    metadata_database k_data2;
+    k_data2 = k_d2;
+    std::cout << k_data2.user_data << std::endl;
+    auto k_tmp2 = make_handle(reg->create());
+    auto& k_d3  = k_tmp2.get_or_emplace<database>();
+    k_d3        = k_data2;
 
-  std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
-  std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
-  REQUIRE(k_d3 == k_d2);
+    std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
+    std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
+    REQUIRE(k_d3 == k_d2);
+  };
+};
+
+TEST_CASE_METHOD(test_convert, "convert") {
+  this->run_test();
 }
 
 TEST_CASE("create_prj") {
-  core::client{}.add_project("D:/tmp");
+  auto k_prj = make_handle();
+  k_prj.emplace<project>("D:/tmp", "case_tset");
+  core::client{}.new_project(k_prj);
 }
 
 TEST_CASE("open project") {
@@ -60,7 +69,7 @@ TEST_CASE("install project") {
   auto& k_prj  = k_prj_h.emplace<project>("D:/tmp", "test1");
   g_reg()->set<project>(k_prj);
   k_l.push_back(k_prj_h);
-  g_main_loop().attach<database_task_install>(k_h, k_l);
+  g_main_loop().attach<database_task_install>(k_l);
 
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);
@@ -113,7 +122,7 @@ class name_data : public app_command_base {
           }
           k_i2.emplace<assets_file>(fmt::format("test_{}_{}", i, k));
           k_i2.emplace<database>();
-          k_i2.get_or_emplace<time_point_wrap>().set_time(chrono::system_clock::now() - 3h * i);
+          k_i2.get_or_emplace<time_point_wrap>(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));
           k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
@@ -129,9 +138,9 @@ class name_data : public app_command_base {
     g_reg()->set<project>(k_prj.get<project>());
     auto k_msg = make_handle();
     k_msg.emplace<process_message>();
-    core::client{}.add_project(k_prj.get<project>().p_path);
+    core::client{}.new_project(k_prj);
     g_main_loop()
-        .attach<database_task_install>(k_msg, std::vector<entt::handle>{k_prj})
+        .attach<database_task_install>(k_prj)
         .then<one_process_t>([=]() {
           auto k_p = k_prj.get<project>().p_path;
           core::client{}.open_project(k_p);
@@ -158,7 +167,7 @@ TEST_CASE_METHOD(name_data, "install project data") {
                  [](auto& in) {
                    return make_handle(in);
                  });
-  g_main_loop().attach<database_task_install>(k_h, k_l);
+  g_main_loop().attach<database_task_install>(k_l);
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);
 }
@@ -178,51 +187,51 @@ TEST_CASE("time duration", "[metadata]") {
 
   doodle::time_point_wrap my_t{};
   doodle::time_point_wrap my_t2{};
-  SECTION("time set") {
-    my_t.set_year(2021);
-    my_t.set_month(6);
-    my_t.set_day(16);
-    my_t.set_hour(10);
-    my_t.set_minutes(34);
-    my_t.set_second(37);
-    REQUIRE(my_t.get_year() == 2021);
-    REQUIRE(my_t.get_month() == 6);
-    REQUIRE(my_t.get_day() == 16);
-    REQUIRE(my_t.get_hour() == 10);
-    REQUIRE(my_t.get_minutes() == 34);
-    REQUIRE(my_t.get_second() == 37);
+  // SECTION("time set") {
+  //   my_t.set_year(2021);
+  //   my_t.set_month(6);
+  //   my_t.set_day(16);
+  //   my_t.set_hour(10);
+  //   my_t.set_minutes(34);
+  //   my_t.set_second(37);
+  //   REQUIRE(my_t.get_year() == 2021);
+  //   REQUIRE(my_t.get_month() == 6);
+  //   REQUIRE(my_t.get_day() == 16);
+  //   REQUIRE(my_t.get_hour() == 10);
+  //   REQUIRE(my_t.get_minutes() == 34);
+  //   REQUIRE(my_t.get_second() == 37);
 
-    REQUIRE(my_t.get_local_time() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
-  }
+  //   REQUIRE(my_t.get_local_time() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
+  // }
 
-  SECTION("set local") {
-    my_t.set_local_time(k_local);
-    REQUIRE(my_t.get_utc_time() == k_new);
-  }
-  SECTION("time duration") {
-    auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
-    auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
-    my_t.set_local_time(k_sys_time1);
-    my_t2.set_local_time(k_sys_time2);
-    using namespace Catch::literals;
-    //    auto k_matcher = Catch::Approx(5.1);
+  // SECTION("set local") {
+  //   my_t.set_local_time(k_local);
+  //   REQUIRE(my_t.get_utc_time() == k_new);
+  // }
+  // SECTION("time duration") {
+  //   auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
+  //   auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
+  //   my_t.set_local_time(k_sys_time1);
+  //   my_t2.set_local_time(k_sys_time2);
+  //   using namespace Catch::literals;
+  //   //    auto k_matcher = Catch::Approx(5.1);
 
-    REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
-    SECTION("time works durtion") {
-      k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
-      k_sys_time2 = chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s;
-      my_t.set_local_time(k_sys_time1);
-      my_t2.set_local_time(k_sys_time2);
-      REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
-    }
-    SECTION("ond day time") {
-      k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
-      k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
-      my_t.set_local_time(k_sys_time1);
-      my_t2.set_local_time(k_sys_time2);
-      REQUIRE(my_t.work_duration(my_t2).count() == (0.86_a).epsilon(0.01));
-    }
-  }
+  //   REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
+  //   SECTION("time works durtion") {
+  //     k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
+  //     k_sys_time2 = chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s;
+  //     my_t.set_local_time(k_sys_time1);
+  //     my_t2.set_local_time(k_sys_time2);
+  //     REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
+  //   }
+  //   SECTION("ond day time") {
+  //     k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
+  //     k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
+  //     my_t.set_local_time(k_sys_time1);
+  //     my_t2.set_local_time(k_sys_time2);
+  //     REQUIRE(my_t.work_duration(my_t2).count() == (0.86_a).epsilon(0.01));
+  //   }
+  // }
 }
 
 // TEST(DSTD, map_netDir) {
