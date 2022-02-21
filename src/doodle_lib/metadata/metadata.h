@@ -64,6 +64,7 @@ class DOODLELIB_API database {
  public:
   class DOODLELIB_API ref_root {
    public:
+    explicit ref_root(const database &in);
     const std::uint64_t id;
     const boost::uuids::uuid uuid;
   };
@@ -87,7 +88,6 @@ class DOODLELIB_API database {
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
   const string &get_id_str() const;
-  ref_root get_ref() const;
 
   const boost::uuids::uuid &uuid() const;
   /**
@@ -108,8 +108,12 @@ class DOODLELIB_API database {
   database &operator=(const metadata_database &in);
   operator metadata_database() const;
   bool operator==(const database &in_rhs) const;
-  bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const database &in_rhs) const;
+
+  bool operator==(const ref_root &in_rhs) const;
+  bool operator!=(const ref_root &in_rhs) const;
+
+  bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;
 
   enum class status : std::uint8_t {
@@ -178,4 +182,3 @@ class DOODLELIB_API handle_warp {
 };
 
 }  // namespace doodle
- 

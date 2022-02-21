@@ -38,6 +38,11 @@ class database::impl {
   FSys::path p_uuid;
 };
 
+database::ref_root::ref_root(const database &in)
+    : id(in.p_i->p_id),
+      uuid(in.p_i->p_uuid_) {
+}
+
 database::database()
     : p_i(std::make_unique<impl>()),
       status_(status::none) {
@@ -242,7 +247,12 @@ void to_json(nlohmann::json &j, const database &p) {
   j["type"]      = p.p_i->p_type;
   j["uuid_"]     = p.p_i->p_uuid_;
 }
-database::ref_root database::get_ref() const {
-  return database::ref_root{get_id(), uuid()};
+
+bool database::operator==(const ref_root &in_rhs) const {
+  return std::tie(p_i->p_id, p_i->p_uuid_) == std::tie(in_rhs.id, in_rhs.uuid);
 }
+bool database::operator!=(const ref_root &in_rhs) const {
+  return !(*this == in_rhs);
+}
+
 }  // namespace doodle

@@ -2,6 +2,7 @@
 #include <exception/exception.h>
 #include <metadata/project.h>
 #include <pin_yin/convert.h>
+#include <metadata/metadata.h>
 
 namespace doodle {
 project::cloth_config::cloth_config()
@@ -99,10 +100,10 @@ FSys::path project::make_path(const FSys::path& in_path) const {
 }
 
 entt::handle project::get_current() {
-  chick_true<doodle_error>(g_reg()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto k_prj = g_reg()->ctx<project>();
-  for (auto&& [e, p] : g_reg()->view<project>().each()) {
-    if (p == k_prj)
+  chick_true<doodle_error>(g_reg()->try_ctx<database::ref_root>(), DOODLE_LOC, "缺失项目上下文");
+  auto& l_ref = g_reg()->ctx<database::ref_root>();
+  for (auto&& [e, l_p, l_d] : g_reg()->view<project, database>().each()) {
+    if (l_d == l_ref)
       return make_handle(e);
   }
   chick_true<doodle_error>(false, DOODLE_LOC, "缺失项目");
