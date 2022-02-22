@@ -26,7 +26,7 @@ class csv_export_widgets::impl {
       : list(),
         list_sort_time(),
         con(),
-        export_path("导出路径"s) {}
+        export_path("导出路径"s, ""s) {}
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
   std::vector<boost::signals2::scoped_connection> con;
@@ -48,6 +48,7 @@ void csv_export_widgets::init() {
           [this](const std::vector<entt::handle> &in) {
             p_i->list = in;
           }));
+  p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
 }
 void csv_export_widgets::succeeded() {
   g_reg()->unset<csv_export_widgets>();
@@ -108,7 +109,8 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          ","
          "文件存在"
          ","
-         "文件路径";  /// @brief 标题
+         "文件路径"
+      << "\n";  /// @brief 标题
   std::vector<entt::handle> l_h{in_list};
   boost::stable_sort(
       boost::stable_sort(
@@ -140,9 +142,9 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
 
   l_r << g_reg()->ctx<project>().p_name << ","
       << magic_enum::enum_name(k_ass.p_department) << ","
-      << fmt::to_string(in.get<episodes>()) << ","
-      << fmt::to_string(in.get<shot>()) << ","
-      << in.get<assets>().p_name_show_str << ","
+      << (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s) << ","
+      << (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s) << ","
+      << (in.all_of<assets>() ? in.get<assets>().p_name_show_str : ""s) << ","
       << k_ass.p_user << ","
       << fmt::format(R"("{}")", in.get<time_point_wrap>().show_str()) << ","
       << fmt::format(R"("{}")", l_next.get<time_point_wrap>().show_str()) << ","
