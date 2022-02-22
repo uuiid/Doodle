@@ -183,5 +183,23 @@ time_point_wrap::time_point_wrap(const time_point_wrap::gui_data& in_data)
                       in_data.minutes_,
                       in_data.seconds_) {
 }
+bool time_point_wrap::operator==(const time_point_wrap& in_rhs) const {
+  return zoned_time_ == in_rhs.zoned_time_;
+}
+bool time_point_wrap::operator!=(const time_point_wrap& in_rhs) const {
+  return !(in_rhs == *this);
+}
+bool time_point_wrap::operator<(const time_point_wrap& in_rhs) const {
+  return zoned_time_.get_sys_time() < in_rhs.zoned_time_.get_sys_time();
+}
+bool time_point_wrap::operator>(const time_point_wrap& in_rhs) const {
+  return in_rhs < *this;
+}
+bool time_point_wrap::operator<=(const time_point_wrap& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool time_point_wrap::operator>=(const time_point_wrap& in_rhs) const {
+  return !(*this < in_rhs);
+}
 
 }  // namespace doodle

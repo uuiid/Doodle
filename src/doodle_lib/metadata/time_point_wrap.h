@@ -81,6 +81,13 @@ class DOODLELIB_API time_point_wrap {
    */
   [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
 
+  bool operator==(const time_point_wrap& in_rhs) const;
+  bool operator!=(const time_point_wrap& in_rhs) const;
+  bool operator<(const time_point_wrap& in_rhs) const;
+  bool operator>(const time_point_wrap& in_rhs) const;
+  bool operator<=(const time_point_wrap& in_rhs) const;
+  bool operator>=(const time_point_wrap& in_rhs) const;
+
  private:
   /**
    * 这个是计算开始时到一天结束时的工作时长
