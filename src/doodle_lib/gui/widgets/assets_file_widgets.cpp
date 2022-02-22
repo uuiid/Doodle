@@ -12,7 +12,6 @@
 #include <doodle_lib/metadata/image_icon.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
-#include <entt/entt.hpp>
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/core/core_sig.h>
 

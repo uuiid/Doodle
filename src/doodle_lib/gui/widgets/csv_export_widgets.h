@@ -38,6 +38,9 @@ class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
   csv_export_widgets();
   ~csv_export_widgets();
 
+  constexpr static std::string_view name{"导出csv表格"};
+  
+
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();

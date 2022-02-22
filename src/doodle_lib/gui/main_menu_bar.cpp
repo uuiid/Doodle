@@ -11,6 +11,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
+
 #include <gui/action/command_tool.h>
 #include <gui/action/command_video.h>
 #include <gui/widgets/project_widget.h>
@@ -21,6 +22,8 @@
 #include <gui/widgets/edit_widgets.h>
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
+#include <gui/widgets/csv_export_widgets.h>
+
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/long_task/database_task.h>
@@ -34,6 +37,36 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
+
+  template <typename Widget_T>
+  void _make_widget_() {
+    // using win  = typename base_window<Widget_T>;
+
+    auto k_win = g_reg()->template try_ctx<base_window<Widget_T>>();
+    if (dear::MenuItem(Widget_T::name.data(), k_win ? &(k_win->show) : nullptr)) {
+      make_windows<Widget_T>();
+      core_set_init{}.write_file();
+    }
+  };
+
+  template <typename... Args>
+  void make_widget() {
+    (this->_make_widget_<Args>(), ...);
+  }
+
+  template <typename Widget_T>
+  void _find_show_() {
+    auto &&k_windows_setting = core_set::getSet().widget_show;
+
+    if (k_windows_setting.find(std::string{Widget_T::name}) != k_windows_setting.end())
+      if (k_windows_setting[std::string{Widget_T::name}])
+        make_windows<Widget_T>();
+  }
+
+  template <typename... Args>
+  void find_show() {
+    (this->_find_show_<Args>(), ...);
+  }
 };
 
 main_menu_bar::main_menu_bar()
@@ -96,63 +129,15 @@ void main_menu_bar::menu_file() {
 
 void main_menu_bar::menu_windows() {
   //  auto k_prj = g_reg()->try_ctx<project_widget>();
-
-  {
-    auto k_win = g_reg()->try_ctx<base_window<project_widget>>();
-    if (dear::MenuItem(project_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<project_widget>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<assets_widget>>();
-    if (dear::MenuItem(assets_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<assets_widget>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<assets_file_widgets>>();
-    if (dear::MenuItem(assets_file_widgets::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<assets_file_widgets>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<setting_windows>>();
-    if (dear::MenuItem(setting_windows::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<setting_windows>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<long_time_tasks_widget>>();
-    if (dear::MenuItem(long_time_tasks_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<long_time_tasks_widget>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<edit_widgets>>();
-    if (dear::MenuItem(edit_widgets::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<edit_widgets>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<opencv_player_widget>>();
-    if (dear::MenuItem(opencv_player_widget::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<opencv_player_widget>();
-      core_set_init{}.write_file();
-    }
-  }
-  {
-    auto k_win = g_reg()->try_ctx<base_window<project_edit>>();
-    if (dear::MenuItem(project_edit::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<project_edit>();
-      core_set_init{}.write_file();
-    }
-  }
+  this->p_i->make_widget<project_widget,
+                         assets_widget,
+                         assets_file_widgets,
+                         setting_windows,
+                         long_time_tasks_widget,
+                         edit_widgets,
+                         opencv_player_widget,
+                         gui::csv_export_widgets,
+                         project_edit>();
 }
 void main_menu_bar::menu_edit() {
   if (dear::MenuItem(u8"maya 工具"))
@@ -183,29 +168,15 @@ void main_menu_bar::menu_tool() {
 
 void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
-  auto k_windows_setting = core_set::getSet().widget_show;
 
-  if (k_windows_setting.find(std::string{project_widget::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{project_widget::name}])
-      make_windows<project_widget>();
-  if (k_windows_setting.find(std::string{assets_widget::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{assets_widget::name}])
-      make_windows<assets_widget>();
-  if (k_windows_setting.find(std::string{assets_file_widgets::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{assets_file_widgets::name}])
-      make_windows<assets_file_widgets>();
-  if (k_windows_setting.find(std::string{setting_windows::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{setting_windows::name}])
-      make_windows<setting_windows>();
-  if (k_windows_setting.find(std::string{long_time_tasks_widget::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{long_time_tasks_widget::name}])
-      make_windows<long_time_tasks_widget>();
-  if (k_windows_setting.find(std::string{edit_widgets::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{edit_widgets::name}])
-      make_windows<edit_widgets>();
-  if (k_windows_setting.find(std::string{opencv_player_widget::name}) != k_windows_setting.end())
-    if (k_windows_setting[std::string{opencv_player_widget::name}])
-      make_windows<opencv_player_widget>();
+  p_i->find_show<project_widget,
+                 assets_widget,
+                 assets_file_widgets,
+                 setting_windows,
+                 long_time_tasks_widget,
+                 edit_widgets,
+                 gui::csv_export_widgets,
+                 opencv_player_widget>();
 }
 void main_menu_bar::succeeded() {
 }
