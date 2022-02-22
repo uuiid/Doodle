@@ -46,6 +46,11 @@ class gui_cache_select {
   bool select;
 };
 
+class gui_cache_path {
+ public:
+  FSys::path path;
+};
+
 class gui_cache_name_id {
  public:
   std::string name_id;
