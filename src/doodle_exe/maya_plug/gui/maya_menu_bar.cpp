@@ -5,13 +5,14 @@
 #include "maya_menu_bar.h"
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/core/core_set.h>
 
 #include <maya_plug/gui/action/comm_check_scenes.h>
 #include <maya_plug/gui/action/comm_play_blast.h>
 #include <maya_plug/gui/action/reference_attr_setting.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>
-#include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle::maya_plug {
 

@@ -89,7 +89,7 @@ bool create_sim_cloth::render() {
     };
   }
 
-  dear::Text("碰撞物体");
+  dear::Text("碰撞物体"s);
   if (p_coll.any_of<qcloth_shape_n::shape_list>()) {
     for (auto&& l_obj : p_coll.get<qcloth_shape_n::shape_list>()) {
       dear::Text(l_obj.p_name);
