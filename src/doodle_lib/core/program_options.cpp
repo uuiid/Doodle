@@ -21,6 +21,9 @@ program_options::program_options()
       p_max_thread(std::make_pair(false, std::thread::hardware_concurrency() - 2)),
       p_root(std::make_pair(false, "C:/")) {
   DOODLE_LOG_INFO("开始构建命令行");
+
+  p_opt_positional.add(input_project, 0);
+
   p_opt_general.add_options()(
       help_,
       boost::program_options::bool_switch(&p_help),
@@ -50,9 +53,12 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   DOODLE_LOG_INFO("开始解析命令行");
   boost::program_options::command_line_parser k_p{in_arg};
 
-  k_p.options(p_opt_all).allow_unregistered().style(
-      boost::program_options::command_line_style::default_style |
-      boost::program_options::command_line_style::allow_slash_for_short);
+  k_p.positional(p_opt_positional)
+      .options(p_opt_all)
+      .allow_unregistered()
+      .style(
+          boost::program_options::command_line_style::default_style |
+          boost::program_options::command_line_style::allow_slash_for_short);
 
   auto k_opt = k_p.run();
   boost::program_options::store(k_opt, p_vm);
@@ -69,12 +75,25 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   p_root.first       = p_vm.count(root);
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
+
+  if (p_vm.count(input_project)) {
+    p_project_path.first  = true;
+    p_project_path.second = p_vm[input_project].as<std::string>();
+  } else {
+    p_project_path.first = false;
+  }
+
   using namespace std::literals;
 
   std::cout
       << (p_config_file.empty()
               ? "没有传入配置文件选项"s
               : fmt::format("使用配置 config_file : {}", p_config_file))
+      << "\n"
+      << (p_project_path.first
+              ? "没有项目文件传入"s
+              : fmt::format("使用项目配置 {}", p_project_path.second))
+
       << "\n"
       << (p_max_thread.first
               ? "没有传入线程池大小"s

@@ -14,24 +14,25 @@ class DOODLELIB_API program_options {
   FSys::path p_config_file;
   std::pair<bool, std::int32_t> p_max_thread;
   std::pair<bool, FSys::path> p_root;
+  std::pair<bool, FSys::path> p_project_path;
 
   bool p_help;
   bool p_version;
 
   std::vector<string> p_arg;
 
-
  private:
-  static constexpr char help[]         = "help";
-  static constexpr char help_[]        = "help,h";
-  static constexpr char version[]      = "version";
-  static constexpr char version_[]     = "version,v";
-  static constexpr char config_file[]  = "config_file";
-  static constexpr char config_file_[] = "config_file";
-  static constexpr char root[]         = "root";
-  static constexpr char root_[]        = "root";
-  static constexpr char thread_max[]   = "thread_max";
-  static constexpr char thread_max_[]  = "thread_max";
+  static constexpr char input_project[] = "input_project";
+  static constexpr char help[]          = "help";
+  static constexpr char help_[]         = "help,h";
+  static constexpr char version[]       = "version";
+  static constexpr char version_[]      = "version,v";
+  static constexpr char config_file[]   = "config_file";
+  static constexpr char config_file_[]  = "config_file";
+  static constexpr char root[]          = "root";
+  static constexpr char root_[]         = "root";
+  static constexpr char thread_max[]    = "thread_max";
+  static constexpr char thread_max_[]   = "thread_max";
   /**
    * @brief 所有选项， 命令行选项
    *
@@ -58,6 +59,11 @@ class DOODLELIB_API program_options {
    *
    */
   boost::program_options::options_description p_opt_advanced;
+  /**
+   * @brief 位置选项
+   *
+   */
+  boost::program_options::positional_options_description p_opt_positional;
 
   boost::program_options::variables_map p_vm;
 
