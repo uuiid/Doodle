@@ -3,5 +3,13 @@
 //
 #pragma once
 
+namespace doodle {
+
 class register_file_type {
+ public:
+  register_file_type();
+
+  void register_type();
 };
+
+}  // namespace dppdle

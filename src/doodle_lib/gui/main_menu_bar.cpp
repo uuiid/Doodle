@@ -164,6 +164,10 @@ void main_menu_bar::menu_tool() {
     toolkit::deleteUeCache();
   if (dear::MenuItem("修改ue4缓存位置"))
     toolkit::modifyUeCachePath();
+  // if (ImGui::MenuItem("创建文件关联")) {
+
+  // }
+  // dear::HelpMarker{"需要管理员权限"};
 }
 
 void main_menu_bar::init() {
