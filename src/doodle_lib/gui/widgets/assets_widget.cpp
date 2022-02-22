@@ -278,6 +278,7 @@ class assets_filter_factory : public gui::filter_factory_base {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
             for (auto&& l_h : *l_list) {
               l_h.emplace_or_replace<assets>(i->data.data);
+              l_h.patch<database>(database::save);
             }
             g_reg()->ctx<assets_widget>().refresh(false);
           }
@@ -290,6 +291,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
 
   void init() override {
+    p_tree.child.clear();
     for (auto&& [e, i] : g_reg()->view<data_type>().each()) {
       add_tree_node(&p_tree, i.get_path());
     }
