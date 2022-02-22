@@ -21,7 +21,7 @@ namespace doodle {
 
 class assets_file_widgets::impl {
  public:
-  boost::signals2::scoped_connection p_sc;
+  std::vector<boost::signals2::scoped_connection> p_sc;
   std::vector<entt::handle> handle_list;
 
   class image_data {
@@ -99,18 +99,23 @@ assets_file_widgets::assets_file_widgets()
 
 void assets_file_widgets::init() {
   g_reg()->set<assets_file_widgets&>(*this);
-  p_i->p_sc = g_reg()
-                  ->ctx<core_sig>()
-                  .filter_handle.connect(
-                      [this](const std::vector<entt::handle>& in) {
-                        p_i->handle_list = in;
-                        p_i->lists.clear();
-                        boost::transform(
-                            in, std::back_inserter(p_i->lists),
-                            [](const entt::handle& in) -> impl::data {
-                              return impl::data{in};
-                            });
-                      });
+  auto& l_sig = g_reg()->ctx<core_sig>();
+  p_i->p_sc.emplace_back(l_sig.filter_handle.connect(
+      [this](const std::vector<entt::handle>& in) {
+        p_i->handle_list = in;
+        p_i->lists.clear();
+        boost::transform(
+            in, std::back_inserter(p_i->lists),
+            [](const entt::handle& in) -> impl::data {
+              return impl::data{in};
+            });
+      }));
+  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
+      [&](const std::filesystem::path&) {
+        p_i->handle_list.clear();
+        p_i->lists.clear();
+        p_i->select_index = 0;
+      }));
 }
 void assets_file_widgets::succeeded() {
   g_reg()->unset<assets_file_widgets&>();
