@@ -4,8 +4,14 @@
   <Fragment>
     <DirectoryRef Id="TARGETDIR">
       <Component Id="RegistryEntries" Guid="*">
-        <RegistryKey Root="HKEY_LOCAL_MACHINE" Key="SOFTWARE\Classes\doodle.main.1\shell\open\command" Action="createAndRemoveOnUninstall">
-          <RegistryValue Type="string" Value="Default Value" />
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main.1\shell\open\command" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="&quot;[INSTALLLOCATION]\bin\DoodleExe.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main.1\DefaultIcon" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="&quot;[INSTALLLOCATION]\bin\DoodleExe.exe&quot;" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\.doodle_db" ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="doodle.main" />
         </RegistryKey>
       </Component>
     </DirectoryRef>

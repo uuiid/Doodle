@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 
 project(Doodle
-        VERSION 3.3.4.0
+        VERSION 3.3.5.0
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -159,7 +159,8 @@ set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
 set(CPACK_WIX_TEMPLATE ${PROJECT_SOURCE_DIR}/CMake/WIX.template.in)
 set(CPACK_ARCHIVE_THREADS 0)
 # set(CPACK_WIX_PROPERTY_Schedule afterInstallValidate)
-# set(CPACK_WIX_PATCH_FILE ${PROJECT_SOURCE_DIR}/CMake/doodle_wix_patch.xml)
+set(CPACK_WIX_PATCH_FILE ${PROJECT_SOURCE_DIR}/CMake/doodle_wix_patch.xml)
+set(CPACK_WIX_EXTRA_SOURCES ${PROJECT_SOURCE_DIR}/CMake/doodle_registry.wxs)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 set(CPACK_WIX_CULTURES zh-CN)
@@ -169,16 +170,16 @@ set(DOODLE_PACKAGE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_S
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
-add_custom_command(
-        TARGET cpack_${PROJECT_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
-        #        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
-)
-add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
+# add_custom_command(
+#         TARGET cpack_${PROJECT_NAME}
+#         POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
+#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
+#         #        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
+# )
+# add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
 
 
 #=====================文档过程===============================
