@@ -105,6 +105,7 @@ set(
         platform/win/list_drive.h
         platform/win/windows_alias.h
         platform/win/wnd_proc.h
+        platform/win/register_file_type.h
         core/app_base.h
         doodle_lib_all.h
         doodle_lib_fwd.h
@@ -197,5 +198,8 @@ set(
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
         platform/win/wnd_proc.cpp
+        platform/win/register_file_type.cpp
+
+
         core/app_base.cpp
         doodle_lib_all.cpp)
