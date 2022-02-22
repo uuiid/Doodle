@@ -15,15 +15,23 @@
 #include <metadata/comment.h>
 
 #include <lib_warp/imgui_warp.h>
+#include <gui/gui_ref/ref_base.h>
 
 namespace doodle {
 namespace gui {
 
 class csv_export_widgets::impl {
  public:
+  impl()
+      : list(),
+        list_sort_time(),
+        con(),
+        export_path("导出路径"s) {}
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
   std::vector<boost::signals2::scoped_connection> con;
+
+  gui_cache<std::string, gui_cache_path> export_path;
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -54,16 +62,25 @@ void csv_export_widgets::update(const chrono::duration<
                                     chrono::system_clock::rep,
                                     chrono::system_clock::period> &,
                                 void *data) {
+  if (ImGui::InputText(p_i->export_path.name_id.c_str(), &p_i->export_path.data))
+    p_i->export_path.path = p_i->export_path.data;
+
   if (ImGui::Button("导出")) {
-    p_i->list_sort_time =
-        ranges::copy(p_i->list) |
-        ranges::views::filter([](const entt::handle &in_h) {
-          return in_h.all_of<time_point_wrap>();
-        }) |
-        ranges::actions::sort(
-            [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
-              return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
-            });
+    p_i->list = p_i->list |
+                ranges::views::filter([](const entt::handle &in_h) {
+                  return in_h.all_of<time_point_wrap, assets_file>();
+                }) |
+                ranges::to_vector;
+    p_i->list_sort_time = ranges::copy(p_i->list) |
+                          ranges::actions::sort(
+                              [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
+                                return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
+                              });
+    p_i->list |= ranges::actions::stable_sort(
+        [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
+          return in_r.get<assets_file>().p_user < in_l.get<assets_file>().p_user;
+        });
+    this->export_csv(p_i->list, p_i->export_path.path);
   }
 }
 void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
