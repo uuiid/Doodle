@@ -14,6 +14,8 @@
 #include <metadata/time_point_wrap.h>
 #include <metadata/comment.h>
 
+#include <lib_warp/imgui_warp.h>
+
 namespace doodle {
 namespace gui {
 
@@ -52,10 +54,17 @@ void csv_export_widgets::update(const chrono::duration<
                                     chrono::system_clock::rep,
                                     chrono::system_clock::period> &,
                                 void *data) {
-                
-
-
-
+  if (ImGui::Button("导出")) {
+    p_i->list_sort_time =
+        ranges::copy(p_i->list) |
+        ranges::views::filter([](const entt::handle &in_h) {
+          return in_h.all_of<time_point_wrap>();
+        }) |
+        ranges::actions::sort(
+            [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
+              return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
+            });
+  }
 }
 void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
                                     const FSys::path &in_export_file_path) {
