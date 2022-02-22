@@ -13,4 +13,6 @@
  *
  * @todo 需要注册 doodle_db 文件类型
  * @todo 双击图标打开图标
+ * @todo 创建检查maya 场景工具架
+ * @todo 添加只输出abc功能
  */
