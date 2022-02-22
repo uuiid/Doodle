@@ -114,7 +114,7 @@ void main_menu_bar::menu_file() {
 
   ImGui::Separator();
 
-  if (dear::MenuItem("调试"s, "Ctrl+S"))
+  if (dear::MenuItem("保存"s, "Ctrl+S"))
     g_reg()->ctx<core_sig>().save();
 
   ImGui::Separator();
