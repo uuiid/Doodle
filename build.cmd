@@ -19,13 +19,8 @@ echo -----------------build--------------------
 --clean-first
 
 echo -----------------copy file--------------------
+robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /e /NFL /NDL
 mkdir %my_pwd%build\html\file
-robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /mir
 copy %my_pwd%build\Ninja_release\*.msi %my_pwd%build\html\file /y
 copy %my_pwd%build\Ninja_release\*.7z %my_pwd%build\html\file /y
 
-
-echo -----------------clear file--------------------
-"C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---target clean
