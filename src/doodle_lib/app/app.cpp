@@ -13,6 +13,8 @@
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
 
+#include <doodle_lib/core/program_options.h>
+
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -138,7 +140,7 @@ app::app(const win::wnd_instance& in_instance)
   auto imgui_file_path = core_set::getSet().get_cache_root("imgui") / "imgui.ini";
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
-  if(!exists(imgui_file_path)){
+  if (!exists(imgui_file_path)) {
     auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
     ImGui::LoadIniSettingsFromMemory(k_f.begin(), k_f.size());
   }
@@ -259,8 +261,8 @@ app::~app() {
 void app::load_back_end() {
   g_main_loop()
       .attach<null_process_t>()
-      .then<one_process_t>([]() {
-        core_set_init{}.init_default_project();
+      .then<one_process_t>([this]() {
+        core_set_init{}.init_project(this->options_->p_project_path);
       })
       .then<one_process_t>([]() {
         g_main_loop().attach<database_task_obs>();

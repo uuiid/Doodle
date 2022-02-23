@@ -77,10 +77,9 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   boost::program_options::notify(p_vm);
 
   if (p_vm.count(input_project)) {
-    p_project_path.first  = true;
-    p_project_path.second = p_vm[input_project].as<std::string>();
+    p_project_path = p_vm[input_project].as<std::string>();
   } else {
-    p_project_path.first = false;
+    p_project_path = core_set::getSet().project_root[0];
   }
 
   using namespace std::literals;
