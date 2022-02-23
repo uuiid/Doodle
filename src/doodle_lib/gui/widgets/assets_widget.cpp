@@ -434,7 +434,7 @@ void assets_widget::refresh_(bool force) {
   //         return (*in_f)(in);
   //       });
   //     }));
-  boost::copy(g_reg()->view<database>() |
+  boost::copy(g_reg()->view<database>(entt::exclude<project>) |
                   boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
                     return make_handle(in);
                   }) |
