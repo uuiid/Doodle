@@ -148,7 +148,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           auto l_pos_image = ImGui::GetCursorPos();
           if (ImGui::Selectable(i.select.name_id.c_str(),
                                 &i.select.data,
-                                ImGuiSelectableFlags_None,
+                                ImGuiSelectableFlags_AllowDoubleClick,
                                 {k_length, k_length}))
             set_select(l_index);
           dear::PopupContextItem{} && [this, i]() {
@@ -185,39 +185,44 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
 void assets_file_widgets::set_select(std::size_t in_size) {
   auto&& i   = p_i->lists[in_size];
   auto& k_io = imgui::GetIO();
-  if (k_io.KeyCtrl) {
-    i.select.data ^= 1;
-    std::vector<entt::handle> l_h{};
-    boost::copy(
-        p_i->lists |
-            boost::adaptors::filtered([](impl::data& in) {
-              return in.select;
-            }) |
-            boost::adaptors::transformed([](impl::data& in) {
-              return in.handle_;
-            }),
-        std::back_inserter(l_h));
-    g_reg()->set<std::vector<entt::handle>>(l_h);
-    g_reg()->ctx<core_sig>().select_handles(l_h);
-  } else if (k_io.KeyShift) {
-    std::vector<entt::handle> l_h{};
-    boost::copy(
-        p_i->lists |
-            boost::adaptors::sliced(std::min(p_i->select_index, in_size),
-                                    std::max(p_i->select_index, in_size) + 1) |
-            boost::adaptors::transformed([](impl::data& in) {
-              in.select = true;
-              return in.handle_;
-            }),
-        std::back_inserter(l_h));
-    g_reg()->set<std::vector<entt::handle>>(l_h);
-    g_reg()->ctx<core_sig>().select_handles(l_h);
-  } else {
-    boost::for_each(p_i->lists,
-                    [](impl::data& in) {
-                      in.select = false;
-                    });
-    i.select = true;
+  if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {  /// 双击鼠标时
+    if (i.handle_.all_of<image_icon>())
+      FSys::open_explorer(g_reg()->ctx<project>().make_path("image") / i.handle_.get<image_icon>().path);
+  } else {  /// 单击鼠标时
+    if (k_io.KeyCtrl) {
+      i.select.data ^= 1;
+      std::vector<entt::handle> l_h{};
+      boost::copy(
+          p_i->lists |
+              boost::adaptors::filtered([](impl::data& in) {
+                return in.select;
+              }) |
+              boost::adaptors::transformed([](impl::data& in) {
+                return in.handle_;
+              }),
+          std::back_inserter(l_h));
+      g_reg()->set<std::vector<entt::handle>>(l_h);
+      g_reg()->ctx<core_sig>().select_handles(l_h);
+    } else if (k_io.KeyShift) {
+      std::vector<entt::handle> l_h{};
+      boost::copy(
+          p_i->lists |
+              boost::adaptors::sliced(std::min(p_i->select_index, in_size),
+                                      std::max(p_i->select_index, in_size) + 1) |
+              boost::adaptors::transformed([](impl::data& in) {
+                in.select = true;
+                return in.handle_;
+              }),
+          std::back_inserter(l_h));
+      g_reg()->set<std::vector<entt::handle>>(l_h);
+      g_reg()->ctx<core_sig>().select_handles(l_h);
+    } else {
+      boost::for_each(p_i->lists,
+                      [](impl::data& in) {
+                        in.select = false;
+                      });
+      i.select = true;
+    }
   }
 
   p_i->select_index = in_size;
