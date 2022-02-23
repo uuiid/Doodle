@@ -22,7 +22,7 @@ program_options::program_options()
       p_root(std::make_pair(false, "C:/")) {
   DOODLE_LOG_INFO("开始构建命令行");
 
-  p_opt_positional.add(input_project, 0);
+  p_opt_positional.add(input_project, 1);
 
   p_opt_general.add_options()(
       help_,
@@ -31,6 +31,9 @@ program_options::program_options()
       version_,
       boost::program_options::bool_switch(&p_version),
       "显示版本")(
+      input_project,
+      boost::program_options::value(&p_project_path),
+      "初始打开的项目文件")(
       config_file_,
       boost::program_options::value(&p_config_file),
       "配置文件的路径");
@@ -76,10 +79,12 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
 
-  if (p_vm.count(input_project)) {
-    p_project_path = p_vm[input_project].as<std::string>();
+  if (!p_vm.count(input_project)) {
+    p_project_path = core_set::getSet().project_root[0].generic_string();
   } else {
-    p_project_path = core_set::getSet().project_root[0];
+    if (p_project_path.front() = '"') {
+      p_project_path = p_project_path.substr(1, p_project_path.size() - 2);
+    }
   }
 
   using namespace std::literals;

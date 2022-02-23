@@ -14,7 +14,7 @@ class DOODLELIB_API program_options {
   FSys::path p_config_file;
   std::pair<bool, std::int32_t> p_max_thread;
   std::pair<bool, FSys::path> p_root;
-  FSys::path p_project_path;
+  std::string p_project_path;
 
   bool p_help;
   bool p_version;
