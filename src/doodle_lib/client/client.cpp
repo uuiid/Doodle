@@ -29,14 +29,43 @@ SQLPP_DECLARE_TABLE(
 namespace doodle::core {
 class client::impl {
  public:
-  void add_trigger(){
-
+  FSys::path data_path;
+  void add_trigger() {
+    auto k_conn = core_sql::Get().get_connection(data_path);
+    k_conn->execute(R"(
+create trigger UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
+    ON metadatatab
+begin
+    update metadatatab set update_time =CURRENT_TIMESTAMP where id = old.id;
+end;
+)");
   };
   void add_uuid_row() {
+    auto k_conn = core_sql::Get().get_connection(data_path);
+    k_conn->execute(
+        R"(alter table metadatatab
+add uuid_data text;)");
   }
 
   std::tuple<std::uint32_t, std::uint32_t> get_version() {
-    return std::make_tuple(0, 0);
+    auto k_con = core_sql::Get().get_connection_const(data_path);
+    doodle_info::doodle_info l_info{};
+
+    for (auto&& row : (*k_con)(
+             sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
+      return std::make_tuple(row.version_major.value(),
+                             row.version_minor.value());
+    }
+    chick_true<doodle_error>(false, DOODLE_LOC, "无法检查到数据库 路径{}", data_path);
+  }
+
+  void set_version() {
+    auto k_conn = core_sql::Get().get_connection(data_path);
+    doodle_info::doodle_info l_info{};
+
+    (*k_conn)(sqlpp::update(l_info).set(
+        l_info.version_major = Doodle_VERSION_MAJOR,
+        l_info.version_minor = Doodle_VERSION_MINOR));
   }
 
   void up_data() {
@@ -44,21 +73,20 @@ class client::impl {
     switch (l_main_v) {
       case 3: {
         switch (l_s_v) {
-          case 2: {
+          case 3: {
             add_trigger();
             add_uuid_row();
           };
-          case 3: {
-          };
           case 4: {
-          };
-          case 5: {
           };
         }
       };
       default:
         break;
     }
+
+    if (l_main_v != Doodle_VERSION_MAJOR || l_s_v != Doodle_VERSION_MINOR)
+      set_version();
   };
 };
 
@@ -143,6 +171,7 @@ end;
 }
 void client::open_project(const FSys::path& in_path) {
   g_reg()->ctx<core_sig>().project_begin_open(in_path);
+  p_i->up_data();
 
   g_main_loop()
       .attach<database_task_select>(in_path)
