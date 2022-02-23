@@ -486,7 +486,7 @@
  * @li 添加maya碰撞体输出日志
  * @li maya插件解算初始化值更新
  *
- * @subsubsection updata_log_335 版本3.4.0
+ * @subsubsection updata_log_340 版本3.4.0
  * @li 添加项目路径存在性检查
  * @li 进一步压缩项目的大小
  * @li 添加双击打开 .doodle_db文件类型的快捷方式
