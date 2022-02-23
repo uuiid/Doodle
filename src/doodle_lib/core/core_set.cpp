@@ -316,9 +316,6 @@ bool core_set_init::config_to_user() {
   }
   return true;
 }
-bool core_set_init::init_default_project() {
-  return init_project(p_set.project_root[0]);
-}
 
 bool core_set_init::init_project(const FSys::path &in_path) {
   if (!in_path.empty() &&
