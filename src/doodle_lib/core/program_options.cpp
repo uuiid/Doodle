@@ -89,9 +89,7 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
               ? "没有传入配置文件选项"s
               : fmt::format("使用配置 config_file : {}", p_config_file))
       << "\n"
-      << (p_project_path.first
-              ? "没有项目文件传入"s
-              : fmt::format("使用项目配置 {}", p_project_path.second))
+      << (fmt::format("使用项目配置 {}", p_project_path))
 
       << "\n"
       << (p_max_thread.first
