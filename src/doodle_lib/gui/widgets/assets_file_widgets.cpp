@@ -181,6 +181,9 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
           in_.patch<database>(database::save);
         });
   }
+  ImGui::Separator();
+  if (dear::MenuItem("删除"))
+    in_.patch<database>(database::delete_);
 }
 void assets_file_widgets::set_select(std::size_t in_size) {
   auto&& i   = p_i->lists[in_size];
