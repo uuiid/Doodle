@@ -27,6 +27,41 @@ SQLPP_DECLARE_TABLE(
 #pragma warning(default : 4003)
 
 namespace doodle::core {
+class client::impl {
+ public:
+  void add_trigger(){
+
+  };
+  void add_uuid_row() {
+  }
+
+  std::tuple<std::uint32_t, std::uint32_t> get_version() {
+    return std::make_tuple(0, 0);
+  }
+
+  void up_data() {
+    auto [l_main_v, l_s_v] = get_version();
+    switch (l_main_v) {
+      case 3: {
+        switch (l_s_v) {
+          case 2: {
+            add_trigger();
+            add_uuid_row();
+          };
+          case 3: {
+          };
+          case 4: {
+          };
+          case 5: {
+          };
+        }
+      };
+      default:
+        break;
+    }
+  };
+};
+
 void client::add_project(const std::filesystem::path& in_path) {
   auto k_conn = core_sql::Get().get_connection(in_path);
   k_conn->execute(R"(
@@ -42,6 +77,7 @@ create table if not exists metadatatab
     shot        int                null,
     season      int                null,
     assets_p    text               null,
+    uuid_data   text               null,
     constraint fk_test_id
         foreign key (parent) references metadatatab (id)
             on delete cascade
