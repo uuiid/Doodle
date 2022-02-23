@@ -17,6 +17,8 @@ class DOODLELIB_API metadata_database {
   std::optional<std::uint32_t> parent;
   std::int32_t m_type;
   std::string uuid_path;
+  boost::uuids::uuid uuid_;
+
   std::optional<std::int32_t> season;
   std::optional<std::int32_t> episode;
   std::optional<std::int32_t> shot;
@@ -58,9 +60,10 @@ class DOODLELIB_API database_info {
 
 class DOODLELIB_API database {
  private:
+  friend class database_task_install;
   class impl;
   std::unique_ptr<impl> p_i;
-
+  void set_id(std::uint64_t in_id) const;
  public:
   class DOODLELIB_API ref_data {
    public:
@@ -74,7 +77,6 @@ class DOODLELIB_API database {
   ~database();
 
   bool has_components() const;
-  void set_id(std::uint64_t in_id) const;
 
   database(database &&) noexcept;
   database &operator            =(database &&) noexcept;
@@ -84,10 +86,8 @@ class DOODLELIB_API database {
 
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
 
-  const FSys::path &get_url_uuid() const;
   std::int32_t get_meta_type_int() const;
   bool is_install() const;
-  const string &get_id_str() const;
 
   const boost::uuids::uuid &uuid() const;
   /**
@@ -160,20 +160,6 @@ class DOODLELIB_API database {
   constexpr const static fun_sync_ sync{};
 };
 
-void from_json(const nlohmann::json &j, database &p);
-void to_json(nlohmann::json &j, const database &p);
-
-class DOODLELIB_API to_str {
- private:
-  mutable std::string p_str;
-
- public:
-  to_str() = default;
-  DOODLE_MOVE(to_str);
-
-  const string &get() const;
-  operator string() const;
-};
 
 template <class in_class>
 class DOODLELIB_API handle_warp {

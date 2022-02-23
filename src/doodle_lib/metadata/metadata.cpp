@@ -24,18 +24,14 @@ class database::impl {
  public:
   impl()
       : p_id(0),
-        p_id_str("id 0"),
         p_parent_id(),
         p_type(metadata_type::unknown_file),
-        p_uuid_(core_set::getSet().get_uuid()),
-        p_uuid(boost::uuids::to_string(p_uuid_)) {
+        p_uuid_(core_set::getSet().get_uuid()) {
   }
-  mutable std::uint64_t p_id;
-  mutable string p_id_str;
+  mutable std::uint64_t p_id; 
   std::optional<uint32_t> p_parent_id;
   metadata_type p_type;
   boost::uuids::uuid p_uuid_;
-  FSys::path p_uuid;
 };
 
 database::ref_data::ref_data(const database &in)
@@ -60,10 +56,6 @@ void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {
     k_data.p_i->p_type = metadata_type::file;
   } else
     k_data.p_i->p_type = metadata_type::folder;
-}
-
-const FSys::path &database::get_url_uuid() const {
-  return p_i->p_uuid;
 }
 
 void database::set_meta_type(const metadata_type &in_meta) {
@@ -110,7 +102,6 @@ database &database::operator=(const metadata_database &in_) {
   /// 转换序列化数据
   try {
     auto k_json = nlohmann::json ::parse(in_.user_data);
-    k_json["database"].get_to(*this);
     entt_tool::load_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   } catch (const nlohmann::json::parse_error &e) {
     DOODLE_LOG_ERROR(e.what());
@@ -123,7 +114,7 @@ database &database::operator=(const metadata_database &in_) {
   /// 转化类型
   p_i->p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                     .value_or(metadata_type::unknown_file);
-  /// 确认转换可索引数据
+  p_i->p_uuid_ = in_.uuid_;
 
   return *this;
 }
@@ -187,15 +178,11 @@ bool database::operator!=(const database &in_rhs) const {
 }
 void database::set_id(std::uint64_t in_id) const {
   p_i->p_id     = in_id;
-  p_i->p_id_str = fmt::format("id {}", p_i->p_id);
 }
 const boost::uuids::uuid &database::uuid() const {
   return p_i->p_uuid_;
 }
 
-const string &database::get_id_str() const {
-  return p_i->p_id_str;
-}
 bool database::operator==(const boost::uuids::uuid &in_rhs) const {
   return p_i->p_uuid_ == in_rhs;
 }
@@ -211,41 +198,6 @@ database &database::operator=(database &&in) noexcept {
   p_i.swap(in.p_i);
   this->status_ = in.status_.load();
   return *this;
-}
-// database::database(const metadata_database &in_metadata_database) {
-// }
-
-const string &to_str::get() const {
-  auto k_h   = make_handle(*this);
-  auto k_tup = k_h.try_get<project,
-                           episodes,
-                           shot,
-                           season,
-                           assets,
-                           assets_file>();
-
-  boost::hana::for_each(k_tup, [&](auto ptr) {
-    if (ptr)
-      p_str = ptr->str();
-  });
-  return p_str;
-}
-
-to_str::operator string() const {
-  return get();
-}
-void from_json(const nlohmann::json &j, database &p) {
-  j.at("id").get_to(p.p_i->p_id);
-  j.at("parent_id").get_to(p.p_i->p_parent_id);
-  j.at("type").get_to(p.p_i->p_type);
-  j.at("uuid_").get_to(p.p_i->p_uuid_);
-  p.p_i->p_uuid = boost::uuids::to_string(p.p_i->p_uuid_);
-}
-void to_json(nlohmann::json &j, const database &p) {
-  j["id"]        = p.p_i->p_id;
-  j["parent_id"] = p.p_i->p_parent_id;
-  j["type"]      = p.p_i->p_type;
-  j["uuid_"]     = p.p_i->p_uuid_;
 }
 
 bool database::operator==(const ref_data &in_rhs) const {
