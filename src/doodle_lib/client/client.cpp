@@ -33,7 +33,7 @@ class client::impl {
   void add_trigger() {
     auto k_conn = core_sql::Get().get_connection(data_path);
     k_conn->execute(R"(
-create trigger UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
+create trigger if not exists UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
     ON metadatatab
 begin
     update metadatatab set update_time =CURRENT_TIMESTAMP where id = old.id;
@@ -177,6 +177,7 @@ end;
 }
 void client::open_project(const FSys::path& in_path) {
   g_reg()->ctx<core_sig>().project_begin_open(in_path);
+  p_i->data_path = in_path;
   p_i->up_data();
 
   g_main_loop()
@@ -195,10 +196,10 @@ void client::open_project(const FSys::path& in_path) {
 }
 void client::new_project(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
-
   auto k_prj  = in_handle.get<project>();
 
   auto k_path = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
+  p_i->data_path = k_path;
   if (!in_handle.all_of<database>())
     in_handle.emplace<database>();
   add_project(k_path);
