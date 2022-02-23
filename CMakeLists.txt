@@ -66,7 +66,7 @@ find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
 # 序列化库
-# find_package(cereal CONFIG REQUIRED) 
+# find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(Sqlpp11 CONFIG REQUIRED
@@ -150,7 +150,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
         DESTINATION plug)
 
 
-set(CPACK_GENERATOR "WIX;7Z")
+set(CPACK_GENERATOR "WIX;External")
 set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
 set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
 set(CPACK_PACKAGE_VENDOR uuiid)
@@ -164,22 +164,16 @@ set(CPACK_WIX_EXTRA_SOURCES ${PROJECT_SOURCE_DIR}/CMake/doodle_registry.wxs)
 # set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 # set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/resource/inco/inco128_128.png)
 set(CPACK_WIX_CULTURES zh-CN)
+set(CPACK_EXTERNAL_ENABLE_STAGING True)
+set(CPACK_EXTERNAL_PACKAGE_SCRIPT ${PROJECT_SOURCE_DIR}/CMake/cpack_7z_doodle.cmake)
+
 include(CPack REQUIRED)
 set(DOODLE_PACKAGE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
 
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
-# add_custom_command(
-#         TARGET cpack_${PROJECT_NAME}
-#         POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.msi ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.msi
-#         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.7z ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.7z
-#         #        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DOODLE_PACKAGE_NAME}.zip ${PROJECT_SOURCE_DIR}/build/html/file/${DOODLE_PACKAGE_NAME}.zip
-#         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
-#         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
-# )
-add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
+# add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
 
 
 #=====================文档过程===============================
