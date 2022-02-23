@@ -87,8 +87,9 @@ void database_task_select::select_db() {
     l_data.user_data = row.userData.value();
     l_data.id        = row.id.value();
     l_data.uuid_path = row.uuidPath.value();
-    l_data.uuid_     = boost::lexical_cast<boost::uuids::uuid>(row.uuidData.value());
-    l_data.m_type    = boost::numeric_cast<decltype(l_data.m_type)>(row.metaType.value());
+    if (!row.uuidData.is_null())
+      l_data.uuid_ = boost::lexical_cast<boost::uuids::uuid>(row.uuidData.value());
+    l_data.m_type = boost::numeric_cast<decltype(l_data.m_type)>(row.metaType.value());
 
     if (!row.assetsP.is_null())
       l_data.assets = row.assetsP.value();

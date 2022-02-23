@@ -28,7 +28,7 @@ class database::impl {
         p_type(metadata_type::unknown_file),
         p_uuid_(core_set::getSet().get_uuid()) {
   }
-  mutable std::uint64_t p_id; 
+  mutable std::uint64_t p_id;
   std::optional<uint32_t> p_parent_id;
   metadata_type p_type;
   boost::uuids::uuid p_uuid_;
@@ -114,7 +114,8 @@ database &database::operator=(const metadata_database &in_) {
   /// 转化类型
   p_i->p_type = magic_enum::enum_cast<metadata_type>(in_.m_type)
                     .value_or(metadata_type::unknown_file);
-  p_i->p_uuid_ = in_.uuid_;
+  if (!in_.uuid_.is_nil())
+    p_i->p_uuid_ = in_.uuid_;
 
   return *this;
 }
@@ -176,7 +177,7 @@ bool database::operator!=(const database &in_rhs) const {
   return !(*this == in_rhs);
 }
 void database::set_id(std::uint64_t in_id) const {
-  p_i->p_id     = in_id;
+  p_i->p_id = in_id;
 }
 const boost::uuids::uuid &database::uuid() const {
   return p_i->p_uuid_;
