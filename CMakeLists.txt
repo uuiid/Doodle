@@ -173,7 +173,7 @@ set(DOODLE_PACKAGE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_S
 
 add_custom_target(cpack_${PROJECT_NAME}
         COMMAND ${CMAKE_CPACK_COMMAND} --build ${PROJECT_BINARY_DIR} --target package)
-# add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
+add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
 
 
 #=====================文档过程===============================
