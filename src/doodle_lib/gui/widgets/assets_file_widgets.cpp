@@ -52,7 +52,7 @@ class assets_file_widgets::impl {
       } else {
         /// @brief 否则渲染id
         if (handle_.all_of<database>())
-          name = handle_.get<database>().get_id_str();
+          name = fmt::to_string(handle_.get<database>().get_id());
       }
     };
 
