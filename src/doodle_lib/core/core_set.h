@@ -171,6 +171,7 @@ class DOODLELIB_API core_set_init {
   bool find_cache_dir();
   bool config_to_user();
   bool init_default_project();
+  bool init_project(const FSys::path &in_path);
 };
 
 namespace win {

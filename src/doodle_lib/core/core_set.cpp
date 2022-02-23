@@ -317,12 +317,18 @@ bool core_set_init::config_to_user() {
   return true;
 }
 bool core_set_init::init_default_project() {
-  if (!p_set.project_root[0].empty() &&
-      FSys::exists(p_set.project_root[0]) &&
-      FSys::is_regular_file(p_set.project_root[0])) {
-    core::client{}.open_project(p_set.project_root[0]);
+  return init_project(p_set.project_root[0]);
+}
+
+bool core_set_init::init_project(const FSys::path &in_path) {
+  if (!in_path.empty() &&
+      FSys::exists(in_path) &&
+      FSys::is_regular_file(in_path) &&
+      in_path.extension() == doodle_config::doodle_db_name) {
+    core::client{}.open_project(in_path);
+    return true;
   }
-  return true;
+  return false;
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
