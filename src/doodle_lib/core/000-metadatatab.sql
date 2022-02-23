@@ -11,6 +11,7 @@ create table if not exists metadatatab
     shot        int                null,
     season      int                null,
     assets_p    text               null,
+    uuid_data   text               null,
     constraint fk_test_id
         foreign key (parent) references metadatatab (id)
             on delete cascade

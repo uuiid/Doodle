@@ -54,7 +54,7 @@ database_task_select::database_task_select(const database_n::filter& in_filter)
 database_task_select::database_task_select(const FSys::path& in_prj_root)
     : p_i(std::make_unique<impl>()) {
   //  p_i->filter_._meta_type = metadata_type::project_root;
-  p_i->prj_root = in_prj_root ;
+  p_i->prj_root = in_prj_root;
 }
 
 database_task_select::~database_task_select() = default;
@@ -87,8 +87,9 @@ void database_task_select::select_db() {
     l_data.user_data = row.userData.value();
     l_data.id        = row.id.value();
     l_data.uuid_path = row.uuidPath.value();
+    l_data.uuid_     = boost::lexical_cast<boost::uuids::uuid>(row.uuidData.value());
     l_data.m_type    = boost::numeric_cast<decltype(l_data.m_type)>(row.metaType.value());
-    
+
     if (!row.assetsP.is_null())
       l_data.assets = row.assetsP.value();
     if (!row.season.is_null())
@@ -319,6 +320,7 @@ void database_task_install::install_db() {
     k_sql.insert_list.add(l_metadatatab.metaType = k_data.m_type);
     k_sql.insert_list.add(l_metadatatab.uuidPath = k_data.uuid_path);
     k_sql.insert_list.add(l_metadatatab.userData = k_data.user_data);
+    k_sql.insert_list.add(l_metadatatab.uuidData = boost::uuids::to_string(k_data.uuid_));
 
     if (k_data.parent)
       k_sql.insert_list.add(l_metadatatab.parent = *k_data.parent);

@@ -140,7 +140,6 @@ database::operator metadata_database() const {
 
   nlohmann::json k_json{};
   {
-    k_json["database"] = *this;
     entt_tool::save_comm<DOODLE_SERIALIZATION>(k_h, k_json);
   }
 

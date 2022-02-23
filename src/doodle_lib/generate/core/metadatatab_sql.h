@@ -170,6 +170,22 @@ namespace doodle
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
     };
+    struct UuidData
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "uuid_data";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T uuidData;
+            T& operator()() { return uuidData; }
+            const T& operator()() const { return uuidData; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
   } // namespace Metadatatab_
 
   struct Metadatatab: sqlpp::table_t<Metadatatab,
@@ -182,7 +198,8 @@ namespace doodle
                Metadatatab_::Episode,
                Metadatatab_::Shot,
                Metadatatab_::Season,
-               Metadatatab_::AssetsP>
+               Metadatatab_::AssetsP,
+               Metadatatab_::UuidData>
   {
     struct _alias_t
     {
