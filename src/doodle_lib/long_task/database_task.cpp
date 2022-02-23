@@ -207,6 +207,7 @@ void database_task_update::update_db() {
     if (k_data.assets)
       k_sql.assignments.add(l_metadatatab.assetsP = *k_data.assets);
     (*k_conn)(k_sql);
+    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 void database_task_update::succeeded() {
@@ -255,6 +256,7 @@ void database_task_delete::delete_db() {
       return;
     auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == in.get<database>().get_id()));
     DOODLE_LOG_WARN("删除了数据id {}", k_r);
+    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_delete::database_task_delete(
@@ -338,6 +340,7 @@ void database_task_install::install_db() {
       in.set_id(id);
     });
     in.patch<database>(database::sync);
+    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_install::database_task_install(
