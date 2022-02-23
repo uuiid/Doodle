@@ -57,6 +57,7 @@ add uuid_data text;)");
                              row.version_minor.value());
     }
     chick_true<doodle_error>(false, DOODLE_LOC, "无法检查到数据库 路径{}", data_path);
+    return {};
   }
 
   void set_version() {
