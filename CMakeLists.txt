@@ -179,7 +179,7 @@ add_custom_target(cpack_${PROJECT_NAME}
 #         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/build/doodle/bin
 #         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${PROJECT_SOURCE_DIR}/docker/doodle_server/bin
 # )
-# add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
+add_dependencies(cpack_${PROJECT_NAME} DoodleExe Doxygen ${PROJECT_NAME}_maya_plug)
 
 
 #=====================文档过程===============================
