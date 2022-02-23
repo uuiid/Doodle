@@ -82,7 +82,7 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
   if (!p_vm.count(input_project)) {
     p_project_path = core_set::getSet().project_root[0].generic_string();
   } else {
-    if (p_project_path.front() = '"') {
+    if (p_project_path.front() == '"') {
       p_project_path = p_project_path.substr(1, p_project_path.size() - 2);
     }
   }
