@@ -90,6 +90,11 @@ add uuid_data text;)");
   };
 };
 
+client::client()
+    : p_i(std::make_unique<impl>()) {
+}
+client::~client() = default;
+
 void client::add_project(const std::filesystem::path& in_path) {
   auto k_conn = core_sql::Get().get_connection(in_path);
   k_conn->execute(R"(

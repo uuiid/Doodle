@@ -11,7 +11,10 @@ class DOODLELIB_API client {
 
   class impl;
   std::unique_ptr<impl> p_i;
+
  public:
+  client();
+  ~client();
   /**
    * @brief 创建一个新的项目并打开
    * @param in_handle 传入的 句柄， 必须具有 project 组件
