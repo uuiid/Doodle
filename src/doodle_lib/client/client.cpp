@@ -63,7 +63,7 @@ add uuid_data text;)");
     auto k_conn = core_sql::Get().get_connection(data_path);
     doodle_info::doodle_info l_info{};
 
-    (*k_conn)(sqlpp::update(l_info).set(
+    (*k_conn)(sqlpp::update(l_info).unconditionally().set(
         l_info.version_major = Doodle_VERSION_MAJOR,
         l_info.version_minor = Doodle_VERSION_MINOR));
   }
