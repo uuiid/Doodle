@@ -3,7 +3,6 @@
  * @tableofcontents
  *
  * @ref doodle_windwos_setting \n
- * @ref doodle_main_boolbox \n
  * @ref doodle_updata_log \n
  *
  * 基本上是按照版本控制语义来的 <https://semver.org/>
@@ -14,6 +13,15 @@
  *
  * @ref doc/schedule.md "描述" \n
  *
+ * @todo 模型库快速排列
+ * @todo ue4 导入使用元数据格式解析
+ * @todo ue4 导入添加道具搜素
+ * @todo ue4 火光复制功能添加
+ * @todo 创建检查maya 场景工具架
+ * @todo 添加只输出abc功能
+ * @todo ue4 gpu超时更新
+ *
+ *
  * @section main_management_tool 主要窗口
  * @image html doodle_image/main_windows.jpg 主要面板 width=30%
  *
@@ -22,7 +30,7 @@
  * @section installation_steps 安装步骤
  *
  * @image html doodle_image/install.jpg 安装图像 width=30%
- * 基本上直接安装， 中途不会有问题， 但是要注意使用时需要联网
+ * 基本上直接安装， 中途不会有问题
  * @warning 尽量在安装路径中不要出现中文
  *
  *

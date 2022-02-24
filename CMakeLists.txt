@@ -137,8 +137,13 @@ set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
 set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
-set(DOXYGEN_EXCLUDE_PATTERNS
-        */external)
+set(DOXYGEN_EXCLUDE
+        src/doodle_lib/external
+        src/doodle_lib/resource
+        src/doodle_lib/generate
+
+        src/doodle_exe/main/test
+        )
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 # set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 # set(DOXYGEN_DISABLE_INDEX YES)
