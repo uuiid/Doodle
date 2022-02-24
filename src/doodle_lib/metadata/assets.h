@@ -34,9 +34,23 @@ class DOODLELIB_API assets {
    */
   class DOODLELIB_API set_path_fun {
    public:
+    /**
+     * @brief 路径组件的引用
+     *
+     */
     std::vector<std::string>& p_comm;
+    /**
+     * @brief 初始化函数
+     *
+     * @param in_comm 路径标签
+     */
     explicit set_path_fun(std::vector<std::string>& in_comm)
         : p_comm(in_comm){};
+    /**
+     * @brief 函子调用
+     *
+     * @param in 资产
+     */
     void operator()(assets& in) const;
   };
 
@@ -70,6 +84,11 @@ class DOODLELIB_API assets {
    * @param in_path 传入的标签路径
    */
   void set_path(const FSys::path& in_path);
+  /**
+   * @brief Get the path object
+   *
+   * @return const FSys::path& p_path
+   */
   const FSys::path& get_path() const;
   /**
    * @brief 弃用
@@ -114,7 +133,7 @@ class DOODLELIB_API assets {
     j["path"] = p.p_path;
   }
   /**
-   * @copybrief void to_json(nlohmann::json& j, const assets& p)
+   * @copybrief to_json(nlohmann::json& j, const assets& p)
    */
   friend void from_json(const nlohmann::json& j, assets& p) {
     j.at("path").get_to(p.p_path);
@@ -126,10 +145,18 @@ namespace fmt {
 /**
  * @brief 格式化资产类
  * 这个使用资产的路径属性格式化
- * @tparam
+ * @tparam 资产类
  */
 template <>
 struct formatter<::doodle::assets> : formatter<std::string_view> {
+  /**
+   * @brief 格式化函数
+   *
+   * @tparam FormatContext fmt上下文类
+   * @param in_ 传入的资产类
+   * @param ctx 上下文
+   * @return decltype(ctx.out()) 基本上时 std::string
+   */
   template <typename FormatContext>
   auto format(const ::doodle::assets& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
