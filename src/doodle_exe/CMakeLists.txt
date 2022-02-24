@@ -1,10 +1,5 @@
 include(doodle_exe)
 
-add_custom_target(
-        create_list_doodle_gui_cmake
-        COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P ListFile.cmake
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-)
 
 include(DoodleGui.cmake)
 

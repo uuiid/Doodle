@@ -8,12 +8,6 @@ include(doodle_lib.cmake)
 
 include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
 
-add_custom_target(
-        create_list_doodle_cmake
-        COMMAND ${CMAKE_COMMAND} -DDOODLE_INCLUDE_CMAKE=${PROJECT_SOURCE_DIR} -P list_file.cmake
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-)
-
 doodle_sqlpp_generate(
         OUT_LISTS_sqlpp
         LISTS_FILES

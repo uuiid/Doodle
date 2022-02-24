@@ -55,18 +55,11 @@ find_package(Doxygen)
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-#find_package(imguiwrap CONFIG REQUIRED)
-
-#这两个是我自己写的寻找库的方法
-#    find_package(SqlppMySql REQUIRED)
-#find_package(SqlppSqlite REQUIRED)
 
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
-# 序列化库
-# find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(Sqlpp11 CONFIG REQUIRED
@@ -75,51 +68,12 @@ find_package(Sqlpp11 CONFIG REQUIRED
 find_package(range-v3 CONFIG REQUIRED)
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)
-# rpc 库
-# find_package(gRPC CONFIG REQUIRED)
+
 
 # 寻找d3d辅助工具库
-
 find_package(directxtk CONFIG REQUIRED)
 
 
-#服务器库
-#应该会用其中一个
-#find_package(cppzmq CONFIG REQUIRED)
-
-#find_package(cppnetlib CONFIG REQUIRED)
-#find_package(civetweb CONFIG REQUIRED)
-
-#google序列化库
-# find_package(protobuf CONFIG REQUIRED)
-# target_link_libraries(main
-# PRIVATE protobuf::libprotoc
-# protobuf::libprotobuf
-# protobuf::libprotobuf-lite)
-#Google rpc库
-#find_package(gRPC CONFIG REQUIRED)
-## Note: 8 target(s) were omitted.
-#target_link_libraries(main PRIVATE gRPC::gpr gRPC::upb gRPC::grpc gRPC::grpc++)
-#
-#find_package(modules CONFIG REQUIRED)
-#target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
-#target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
-#target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
-
-#搜索qt 安装辅助程序
-# find_program(WINQT qt5::windeployqt REQUIRED)
-
-#下载自定义嵌入文件
-include(ExternalProject)
-include(FetchContent)
-
-add_subdirectory(${PROJECT_SOURCE_DIR}/external/csv-parser)
-
-
-add_custom_target(
-        tzdata_file
-        COMMAND ${CMAKE_COMMAND} -DROOT_DIR=${PROJECT_SOURCE_DIR} -P ${PROJECT_SOURCE_DIR}/CMake/update_Time_Zone_Database.cmake
-)
 add_custom_target(
         update_doc_and_cmrc
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/doc/css
@@ -202,35 +156,6 @@ doxygen_add_docs(Doxygen
         src
         doc
         )
-
-#file(GLOB _DOODLE_LIST_7Z
-#        LIST_DIRECTORIES false
-#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
-#        ${PROJECT_SOURCE_DIR}/build/html/file/*.7z)
-#file(GLOB _DOODLE_LIST_ZIP
-#        LIST_DIRECTORIES false
-#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
-#        ${PROJECT_SOURCE_DIR}/build/html/file/*.zip)
-#file(GLOB _DOODLE_LIST_MSI
-#        LIST_DIRECTORIES false
-#        RELATIVE ${PROJECT_SOURCE_DIR}/build/html/file
-#        ${PROJECT_SOURCE_DIR}/build/html/file/*.msi)
-#
-#set(DOODLE_FILE_DOWN " * \n")
-#
-#foreach (_DOODLE_EXE_FILE IN ZIP_LISTS _DOODLE_LIST_7Z _DOODLE_LIST_ZIP _DOODLE_LIST_MSI)
-#    if (DEFINED _DOODLE_EXE_FILE_0)
-#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_0}\">下载(  ${_DOODLE_EXE_FILE_0} )</a> \\n\n")
-#    endif ()
-#
-#    if (DEFINED _DOODLE_EXE_FILE_1)
-#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_1}\">下载(  ${_DOODLE_EXE_FILE_1} )</a> \\n\n")
-#    endif ()
-#
-#    if (DEFINED _DOODLE_EXE_FILE_2)
-#        string(APPEND DOODLE_FILE_DOWN " * <a href=\"${_DOODLE_EXE_FILE_2}\">下载(  ${_DOODLE_EXE_FILE_2} )</a> \\n\n")
-#    endif ()
-#endforeach ()
 
 #[==[
 一些杂项工具和命令
