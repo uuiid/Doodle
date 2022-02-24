@@ -94,14 +94,17 @@ class gui_cache_name_id {
  public:
   std::string name_id;
   std::string_view name;
-
   gui_cache_name_id()
-      : gui_cache_name_id(std::string{}) {
-  }
+      : gui_cache_name_id(std::string{}) {}
 
   explicit gui_cache_name_id(const std::string &in_name);
 
   const char *operator*() const noexcept;
+
+  gui_cache_name_id(gui_cache_name_id &&in_r) noexcept;
+  gui_cache_name_id &operator=(gui_cache_name_id &&in_r) noexcept;
+  gui_cache_name_id(gui_cache_name_id &in_r) noexcept;
+  gui_cache_name_id &operator=(gui_cache_name_id &in_r) noexcept;
 };
 
 /**
@@ -127,8 +130,8 @@ class gui_cache : public BaseType {
    */
   template <class IN_T>
   explicit gui_cache(const std::string &in_name, IN_T &&in_data)
-      : gui_name(in_name),
-        base_type(),
+      : base_type(),
+        gui_name(in_name),
         data(std::forward<IN_T>(in_data)){};
 
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>

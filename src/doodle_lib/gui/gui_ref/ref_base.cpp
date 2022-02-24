@@ -24,13 +24,36 @@ edit_interface::~edit_interface() = default;
 gui_cache_name_id::gui_cache_name_id(const string &in_name)
     : name_id(),
       name() {
-  name_id = fmt::format("{}##{}", in_name, doodle::core::identifier::get().id());
-  std::string_view k_v{name_id};
-  name = k_v.substr(0, in_name.size());
+  auto l_size = in_name.size();
+  name_id     = fmt::format("{}##{}", in_name, doodle::core::identifier::get().id());
+  name        = {in_name.c_str(), l_size};
+  // name = k_v.substr(0, l_size);
 }
 
 const char *gui_cache_name_id::operator*() const noexcept {
   return name_id.c_str();
+}
+gui_cache_name_id::gui_cache_name_id(gui_cache_name_id &&in_r) noexcept {
+  auto l_size = in_r.name.size();
+  name_id     = std::move(in_r.name_id);
+  name        = {name_id.c_str(), l_size};
+}
+gui_cache_name_id &gui_cache_name_id::operator=(gui_cache_name_id &&in_r) noexcept {
+  auto l_size = in_r.name.size();
+  name_id     = std::move(in_r.name_id);
+  name        = {name_id.c_str(), l_size};
+  return *this;
+}
+gui_cache_name_id::gui_cache_name_id(gui_cache_name_id &in_r) noexcept {
+  auto l_size = in_r.name.size();
+  name_id     = in_r.name_id;
+  name        = {name_id.c_str(), l_size};
+}
+gui_cache_name_id &gui_cache_name_id::operator=(gui_cache_name_id &in_r) noexcept {
+  auto l_size = in_r.name.size();
+  name_id     = in_r.name_id;
+  name        = {name_id.c_str(), l_size};
+  return *this;
 }
 
 }  // namespace doodle::gui
