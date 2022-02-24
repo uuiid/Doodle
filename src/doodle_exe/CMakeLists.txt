@@ -1,14 +1,9 @@
 include(doodle_exe)
 
-
-include(DoodleGui.cmake)
-
-
 add_executable(
         DoodleExe
         WIN32
-        ${DOODLELIB_GUI_HEADER}
-        ${DOODLELIB_GUI_SOURCE}
+        DoodleGui_fwd.h
         main/GUI/main.cpp
         main/doodle.manifest
         main/icon.ico
@@ -28,11 +23,6 @@ target_compile_definitions(DoodleExe
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         # ENTT_API_IMPORT
         )
-#if (unofficial-nana_FOUND)
-#
-#else ()
-#    #    add_executable(doodle_exe ALIAS DoodleServerExe )
-#endif ()
 add_subdirectory(maya_plug)
 add_subdirectory(main/test)
 
