@@ -1,52 +1,6 @@
 {
   "version": "2.0.0",
   "tasks": [
-    {
-      "label": "show all test",
-      "type": "shell",
-      "command": "${command:cmake.launchTargetPath} -l",
-      "options": {
-        "cwd": "${command:cmake.getLaunchTargetDirectory}"
-      },
-      "group": "test"
-    },
-    {
-      "label": "run test",
-      "type": "shell",
-      "command": "${command:cmake.launchTargetPath} -r console --order lex type_erasure",
-      "options": {
-        "cwd": "${command:cmake.getLaunchTargetDirectory}"
-      },
-      "group": "test"
-    },
-    {
-      "label": "run py19",
-      "type": "shell",
-      "command": "C:/Program Files/Autodesk/Maya2019/bin/mayapy.exe",
-      "args": [
-        "${file}"
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": {
-        "owner": "py",
-        "fileLocation":"autoDetect",
-        "pattern":[
-          {
-            "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
-            "file": 1,
-            "location": 2,
-            "message": 3
-          }
-        ]
-      }
-    }
   ],
   "inputs": [
     {
