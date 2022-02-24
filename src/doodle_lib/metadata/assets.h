@@ -102,15 +102,15 @@ class DOODLELIB_API assets {
    */
   bool operator<(const assets& in_rhs) const;
   /**
-   * @copybrief operator<(const assets& in_rhs) const
+   * @copydoc operator<(const assets& in_rhs) const
    */
   bool operator>(const assets& in_rhs) const;
   /**
-   * @copybrief operator<(const assets& in_rhs) const
+   * @copydoc operator<(const assets& in_rhs) const
    */
   bool operator<=(const assets& in_rhs) const;
   /**
-   * @copybrief operator<(const assets& in_rhs) const
+   * @copydoc operator<(const assets& in_rhs) const
    */
   bool operator>=(const assets& in_rhs) const;
   /**
@@ -118,7 +118,7 @@ class DOODLELIB_API assets {
    */
   bool operator==(const assets& in_rhs) const;
   /**
-   * @copybrief operator==(const assets& in_rhs) const
+   * @copydoc operator==(const assets& in_rhs) const
    */
   bool operator!=(const assets& in_rhs) const;
 
@@ -133,7 +133,7 @@ class DOODLELIB_API assets {
     j["path"] = p.p_path;
   }
   /**
-   * @copybrief to_json(nlohmann::json& j, const assets& p)
+   * @copydoc to_json(nlohmann::json& j, const assets& p)
    */
   friend void from_json(const nlohmann::json& j, assets& p) {
     j.at("path").get_to(p.p_path);

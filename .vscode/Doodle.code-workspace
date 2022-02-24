@@ -141,7 +141,8 @@
 			"span": "cpp",
 			"cfenv": "cpp",
 			"*.rh": "cpp",
-			"*.inc": "cpp"
+			"*.inc": "cpp",
+			"csetjmp": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
