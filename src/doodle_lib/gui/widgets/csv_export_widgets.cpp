@@ -63,7 +63,7 @@ void csv_export_widgets::update(const chrono::duration<
                                     chrono::system_clock::rep,
                                     chrono::system_clock::period> &,
                                 void *data) {
-  if (ImGui::InputText(p_i->export_path.name_id.c_str(), &p_i->export_path.data))
+  if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data))
     p_i->export_path.path = p_i->export_path.data;
 
   if (ImGui::Button("导出")) {

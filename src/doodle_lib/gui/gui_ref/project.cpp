@@ -34,9 +34,9 @@ void project_edit::save_(const entt::handle& in) const {
 }
 void project_edit::render(const entt::handle& in) {
   ImGui::Text("基本配置");
-  dear::Text(fmt::format("{}: {}", p_i->project_path.name, p_i->project_path.data));
+  dear::Text(fmt::format("{}: {}", p_i->project_path.gui_name.name, p_i->project_path.data));
 
-  if (ImGui::InputText(p_i->project_name.name_id.c_str(), &p_i->project_name.data)) {
+  if (ImGui::InputText(*p_i->project_name.gui_name, &p_i->project_name.data)) {
     set_modify(true);
   }
 }
@@ -66,10 +66,10 @@ cloth_config_edit::cloth_config_edit()
     : p_i(std::make_unique<impl>()) {
 }
 void cloth_config_edit::render(const entt::handle& in) {
-  if (imgui::InputText(p_i->path_.name_id.c_str(), &(p_i->path_.data))) {
+  if (imgui::InputText(*p_i->path_.gui_name, &(p_i->path_.data))) {
     set_modify(true);
   }
-  if (imgui::InputText(p_i->ue4_name.name_id.c_str(), &(p_i->ue4_name.data))) {
+  if (imgui::InputText(*p_i->ue4_name.gui_name, &(p_i->ue4_name.data))) {
     set_modify(true);
   };
 }

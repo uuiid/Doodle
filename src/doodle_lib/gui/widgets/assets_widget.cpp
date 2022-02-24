@@ -140,8 +140,8 @@ class season_filter_factory : public gui::filter_factory_t<season> {
   bool render() override {
     dear::Combo{"季数", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
-        if (ImGui::Selectable(i.name_id.c_str())) {
-          select_name  = i.name;
+        if (ImGui::Selectable(*i.gui_name)) {
+          select_name  = i.gui_name.name;
           p_cur_select = i;
           is_edit      = true;
         }
@@ -156,8 +156,8 @@ class episodes_filter_factory : public gui::filter_factory_t<episodes> {
   bool render() override {
     dear::Combo{"集数", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
-        if (ImGui::Selectable(i.name_id.c_str())) {
-          select_name  = i.name;
+        if (ImGui::Selectable(*i.gui_name)) {
+          select_name  = i.gui_name.name;
           p_cur_select = i;
           is_edit      = true;
         }
@@ -172,8 +172,8 @@ class shot_filter_factory : public gui::filter_factory_t<shot> {
   bool render() override {
     dear::Combo{"镜头", select_name.c_str()} && [&]() {
       for (auto&& i : p_edit) {
-        if (ImGui::Selectable(i.name_id.c_str())) {
-          select_name  = i.name;
+        if (ImGui::Selectable(*i.gui_name)) {
+          select_name  = i.gui_name.name;
           p_cur_select = i;
           is_edit      = true;
         }
@@ -199,7 +199,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   popen_cache p_popen;
 
   void popen_menu(tree_node_type& in_node) {
-    ImGui::InputText(p_popen.name_id.c_str(), &p_popen.data);
+    ImGui::InputText(*p_popen.gui_name, &p_popen.data);
     if (ImGui::Button("编辑")) {
       // in_node.data.data.replace_filename(p_popen.data);
       in_node.data = gui_cache{p_popen.data, in_node.data.data.replace_filename(p_popen.data)};
@@ -208,7 +208,7 @@ class assets_filter_factory : public gui::filter_factory_base {
     ImGui::SameLine();
     if (ImGui::Button("添加")) {
       if (auto it = boost::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data.name == p_popen.data;
+            return in->data.gui_name.name == p_popen.data;
           });
           it == in_node.child.end()) {
         auto k_path = in_node.data.data / p_popen.data;
@@ -244,7 +244,7 @@ class assets_filter_factory : public gui::filter_factory_base {
         l_p /= j;
 
       if (auto it = boost::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data.name == j;
+            return in->data.gui_name.name == j;
           });
           it != root->child.end()) {
         root = it->get();
@@ -264,10 +264,10 @@ class assets_filter_factory : public gui::filter_factory_base {
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
 
       {
-        dear::TreeNodeEx l_node{i->data.name_id.c_str(), k_f};
+        dear::TreeNodeEx l_node{*i->data.gui_name, k_f};
         if (ImGui::IsItemClicked()) {
           p_cur_select  = i.get();
-          p_popen.data  = i->data.name;
+          p_popen.data  = i->data.gui_name.name;
           this->is_edit = true;
         }
         dear::PopupContextItem{} && [this, &i]() {
@@ -315,7 +315,7 @@ class assets_filter_factory : public gui::filter_factory_base {
 
   bool render() override {
     {
-      dear::TreeNode l_node{p_tree.data.name_id.c_str()};
+      dear::TreeNode l_node{*p_tree.data.gui_name};
       dear::PopupContextItem{} && [this]() {
         popen_menu(p_tree);
       };
@@ -386,7 +386,7 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
   dear::Disabled l_d{p_impl->only_rand};
 
   for (auto&& i : p_impl->p_filter_factorys) {
-    if (ImGui::Checkbox(i.name_id.c_str(), &i.select)) {
+    if (ImGui::Checkbox(*i.gui_name, &i.select)) {
       p_impl->is_edit = true;
     }
     if (i.select) {

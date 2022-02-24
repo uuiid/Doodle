@@ -141,17 +141,17 @@ class time_edit : public gui::edit_interface {
   }
 
   void render(const entt::handle &in) override {
-    if (ImGui::SliderInt(p_year.name_id.c_str(), &p_year.data, 2020, 2050))
+    if (ImGui::SliderInt(*p_year.gui_name, &p_year.data, 2020, 2050))
       set_modify(true);
-    if (ImGui::SliderInt(p_month.name_id.c_str(), &p_month.data, 1, 12))
+    if (ImGui::SliderInt(*p_month.gui_name, &p_month.data, 1, 12))
       set_modify(true);
-    if (ImGui::SliderInt(p_day.name_id.c_str(), &p_day.data, 0, 31))
+    if (ImGui::SliderInt(*p_day.gui_name, &p_day.data, 0, 31))
       set_modify(true);
-    if (ImGui::SliderInt(p_hours.name_id.c_str(), &p_hours.data, 0, 23))
+    if (ImGui::SliderInt(*p_hours.gui_name, &p_hours.data, 0, 23))
       set_modify(true);
-    if (ImGui::SliderInt(p_minutes.name_id.c_str(), &p_minutes.data, 0, 59))
+    if (ImGui::SliderInt(*p_minutes.gui_name, &p_minutes.data, 0, 59))
       set_modify(true);
-    if (ImGui::SliderInt(p_seconds.name_id.c_str(), &p_seconds.data, 0, 59))
+    if (ImGui::SliderInt(*p_seconds.gui_name, &p_seconds.data, 0, 59))
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
@@ -221,11 +221,11 @@ class add_assets_for_file : public base_render {
         use_icon("寻找图标"s, true) {}
 
   void render(const entt::handle &) override {
-    ImGui::Checkbox(use_time.name_id.c_str(), &use_time.data);
-    ImGui::Checkbox(use_icon.name_id.c_str(), &use_icon.data);
+    ImGui::Checkbox(*use_time.gui_name, &use_time.data);
+    ImGui::Checkbox(*use_icon.gui_name, &use_icon.data);
 
     {
-      dear::ListBox k_list{p_list.name_id.c_str()};
+      dear::ListBox k_list{*p_list.gui_name};
       k_list &&[this]() {
         for (auto &&i : p_list.data) {
           if (i.all_of<assets_file>()) {
@@ -343,7 +343,7 @@ void edit_widgets::edit_handle() {
   if (p_i->p_h) {
     p_i->data_edit.render(p_i->p_h);
     boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
-      dear::Text(in_edit.name);
+      dear::Text(in_edit.gui_name.name);
       in_edit.data->render(p_i->p_h);
       in_edit.data->save(p_i->p_h);
     });
@@ -368,7 +368,7 @@ void edit_widgets::add_handle() {
   }
 
   for (auto &&l_add : p_i->p_add) {
-    dear::Text(l_add.name);
+    dear::Text(l_add.gui_name.name);
     l_add.data->render();
   }
 }

@@ -100,6 +100,8 @@ class gui_cache_name_id {
   }
 
   explicit gui_cache_name_id(const std::string &in_name);
+
+  const char *operator*() const noexcept;
 };
 
 /**
@@ -110,14 +112,22 @@ class gui_cache_name_id {
  * 或者自定义 , 默认是 空类
  */
 template <class T, class BaseType = gui_cache_null_data>
-class gui_cache : public gui_cache_name_id, public BaseType {
+class gui_cache : public BaseType {
  public:
   using base_type = BaseType;
+  gui_cache_name_id gui_name;
   T data;
 
+  /**
+   * @brief 构建数据
+   *
+   * @tparam IN_T 传入的自定义构建数据类
+   * @param in_name gui 的显示名称
+   * @param in_data gui 数据初始化构建
+   */
   template <class IN_T>
   explicit gui_cache(const std::string &in_name, IN_T &&in_data)
-      : gui_cache_name_id(in_name),
+      : gui_name(in_name),
         base_type(),
         data(std::forward<IN_T>(in_data)){};
 

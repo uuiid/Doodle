@@ -28,4 +28,9 @@ gui_cache_name_id::gui_cache_name_id(const string &in_name)
   std::string_view k_v{name_id};
   name = k_v.substr(0, in_name.size());
 }
+
+const char *gui_cache_name_id::operator*() const noexcept {
+  return name_id.c_str();
+}
+
 }  // namespace doodle::gui

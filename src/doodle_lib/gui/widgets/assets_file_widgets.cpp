@@ -145,7 +145,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           i.load_image();
           i.compute_size(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
-          if (ImGui::Selectable(i.select.name_id.c_str(),
+          if (ImGui::Selectable(*i.select.gui_name,
                                 &i.select.data,
                                 ImGuiSelectableFlags_AllowDoubleClick,
                                 {k_length, k_length}))
