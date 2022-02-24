@@ -17,7 +17,7 @@ namespace fmt {
    * @tparam  ::boost::uuids::uuid
    */
 template <>
-struct fmt::formatter<::boost::uuids::uuid> : fmt::formatter<fmt::string_view> {
+struct formatter<::boost::uuids::uuid> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const ::boost::uuids::uuid &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     return formatter<fmt::string_view>::format(

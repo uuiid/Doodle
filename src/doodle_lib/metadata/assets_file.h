@@ -100,7 +100,7 @@ namespace fmt {
    * @tparam  
    */
 template <>
-struct fmt::formatter<::doodle::assets_file> : fmt::formatter<std::string_view> {
+struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::assets_file& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(

@@ -16,6 +16,17 @@ namespace doodle {
 namespace entt_tool {
 
 namespace detail {
+/**
+ * @brief json保存函数
+ *
+ * @tparam Component 组件类型
+ * @tparam Archive 存档类型 需要 operator [std::string]
+ * @param in_handle 传入的实体
+ * @param in_size 无用的
+ * @param in_archive 传入的存档
+ * @return true 只有返回值 true
+ * @return false 无
+ */
 template <typename Component, typename Archive>
 bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   auto &&k_comm      = in_handle.template get<Component>();
@@ -23,6 +34,16 @@ bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   return true;
 }
 
+/**
+ * @brief json加载函数
+ *
+ * @tparam Component 组件类型
+ * @tparam Archive 存档类型 需要 operator [std::string]  contains(std::string) at() get_to() 函数
+ * @param in_handle 传入的实体
+ * @param in_archive 传入的存档
+ * @return true 只有返回值 true
+ * @return false 无
+ */
 template <typename Component, typename Archive>
 bool _load_(entt::handle &in_handle, Archive &in_archive) {
   Component l_component{};
@@ -34,16 +55,32 @@ bool _load_(entt::handle &in_handle, Archive &in_archive) {
   return true;
 }
 
+/**
+ * @brief json保存函数
+ *
+ * @tparam Component 多个实体
+ * @tparam Archive  存档类型
+ * @tparam Index
+ * @param in_handle 传入的句柄
+ * @param in_archive 存档
+ */
 template <typename... Component, typename Archive, std::size_t... Index>
 void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
   ((size[Index] ? _save_<Component>(in_handle, size[Index], in_archive[std::to_string(entt::type_id<Component>().hash())]) : 0u), ...);
 }
-
+/**
+ * @brief json加载函数
+ *
+ * @tparam Component  多个实体
+ * @tparam Archive 存档类型
+ * @tparam Index
+ * @param in_handle 传入的句柄
+ * @param in_archive 存档
+ */
 template <typename... Component, typename Archive, std::size_t... Index>
 void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
-
   ((in_archive.contains(typeid(Component).name())
         ? _load_<Component>(in_handle, in_archive.at(typeid(Component).name()))
         : 0U),
@@ -56,11 +93,27 @@ void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
 
 }  // namespace detail
 
+/**
+ * @brief json保存函数
+ *
+ * @tparam Component 多个组件
+ * @tparam Archive 存档类型
+ * @param in_handle 句柄
+ * @param in_archive 存档
+ */
 template <typename... Component, typename Archive>
 void save_comm(entt::handle &in_handle, Archive &in_archive) {
   detail::_save_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
 }
 
+/**
+ * @brief json加载函数
+ *
+ * @tparam Component 多个组件
+ * @tparam Archive 存档类型
+ * @param in_handle 句柄
+ * @param in_archive 存档
+ */
 template <typename... Component, typename Archive>
 void load_comm(entt::handle &in_handle, Archive &in_archive) {
   detail::_load_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
@@ -70,12 +123,25 @@ void load_comm(entt::handle &in_handle, Archive &in_archive) {
 }  // namespace doodle
 
 namespace boost {
+/**
+ * @brief boost range 库范围适配器
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ */
 template <typename E, typename Get, typename Exclude>
 struct range_mutable_iterator<entt::basic_view<E, Get, Exclude>> {
   using entt_view = entt::basic_view<E, Get, Exclude>;
   using type      = typename entt_view::iterator;
 };
-
+/**
+ * @brief boost range 库范围适配器(常量迭代器)
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ */
 template <typename E, typename Get, typename Exclude>
 struct range_const_iterator<entt::basic_view<E, Get, Exclude>> {
   using entt_view = entt::basic_view<E, Get, Exclude>;
@@ -84,23 +150,56 @@ struct range_const_iterator<entt::basic_view<E, Get, Exclude>> {
 }  // namespace boost
 
 namespace entt {
+/**
+ * @brief boost rang 范围适配器 获取开始迭代器
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ * @param x 传入的entt视图
+ * @return auto 开始迭代器
+ */
 template <typename E, typename Get, typename Exclude>
-inline auto range_begin(basic_view<E, Get, Exclude> &x) {
+inline auto range_begin(entt::basic_view<E, Get, Exclude> &x) {
   return x.begin();
 }
-
+/**
+ * @brief boost rang 范围适配器 获取开始迭代器(常量版本)
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ * @param x 传入的entt视图
+ * @return auto 开始迭代器
+ */
 template <typename E, typename Get, typename Exclude>
-inline auto range_begin(const basic_view<E, Get, Exclude> &x) {
+inline auto range_begin(const entt::basic_view<E, Get, Exclude> &x) {
   return x.begin();
 }
-
+/**
+ * @brief boost rang 范围适配器 获取结束迭代器
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ * @param x 传入的entt视图
+ * @return auto 结束迭代器
+ */
 template <typename E, typename Get, typename Exclude>
-inline auto range_end(basic_view<E, Get, Exclude> &x) {
+inline auto range_end(entt::basic_view<E, Get, Exclude> &x) {
   return x.end();
 }
-
+/**
+ * @brief boost rang 范围适配器 获取结束迭代器(常量版本)
+ *
+ * @tparam E 实体类型
+ * @tparam Get 获取类
+ * @tparam Exclude 排除类
+ * @param x 传入的entt视图
+ * @return auto 结束迭代器
+ */
 template <typename E, typename Get, typename Exclude>
-inline auto range_end(const basic_view<E, Get, Exclude> &x) {
+inline auto range_end(const entt::basic_view<E, Get, Exclude> &x) {
   return x.end();
 }
 }  // namespace entt

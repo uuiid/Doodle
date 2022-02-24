@@ -65,8 +65,13 @@ class DOODLELIB_API shot {
 }  // namespace doodle
 
 namespace fmt {
+/**
+ * @brief 镜头格式化程序
+ *
+ * @tparam
+ */
 template <>
-struct fmt::formatter<::doodle::shot> : fmt::formatter<std::int64_t> {
+struct formatter<::doodle::shot> : formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const ::doodle::shot &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     format_to(ctx.out(), "sc_");

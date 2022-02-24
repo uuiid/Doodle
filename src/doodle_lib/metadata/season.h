@@ -36,8 +36,13 @@ class DOODLELIB_API season {
 }  // namespace doodle
 
 namespace fmt {
+/**
+ * @brief 季数格式化程序
+ *
+ * @tparam
+ */
 template <>
-struct fmt::formatter<::doodle::season> : fmt::formatter<std::int32_t> {
+struct formatter<::doodle::season> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::season& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     format_to(ctx.out(), "seas_");

@@ -15,7 +15,7 @@ namespace fmt {
  * @tparam
  */
 template <>
-struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
+struct formatter<MString> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const MString& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     std::string k_str = in_.asUTF8();

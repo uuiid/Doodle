@@ -43,8 +43,13 @@ class DOODLELIB_API episodes {
 }  // namespace doodle
 
 namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
 template <>
-struct fmt::formatter<::doodle::episodes> : fmt::formatter<std::int64_t> {
+struct formatter<::doodle::episodes> : formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     format_to(ctx.out(), "ep_");
