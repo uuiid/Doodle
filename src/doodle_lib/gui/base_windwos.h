@@ -7,6 +7,11 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 namespace doodle {
+/**
+ * @brief 基本的窗口类
+ *
+ * @tparam Panel 窗口内容渲染过程
+ */
 template <class Panel>
 class DOODLELIB_API base_window : public process_t<base_window<Panel>> {
  public:
