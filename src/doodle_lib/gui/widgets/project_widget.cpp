@@ -22,16 +22,13 @@ void project_widget::init() {
   g_reg()->set<project_widget&>(*this);
 }
 void project_widget::succeeded() {
-  if (p_c)
-    core_set::getSet().default_project = p_c.get<database>().uuid();
+  g_reg()->unset<project_widget>();
 }
 void project_widget::failed() {
-  if (p_c)
-    core_set::getSet().default_project = p_c.get<database>().uuid();
+  g_reg()->unset<project_widget>();
 }
 void project_widget::aborted() {
-  if (p_c)
-    core_set::getSet().default_project = p_c.get<database>().uuid();
+  g_reg()->unset<project_widget>();
 }
 void project_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (!show)

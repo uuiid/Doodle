@@ -71,18 +71,6 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 
-  [[nodiscard]] int get_sql_port() const;
-  void set_sql_port(int in_sqlPort);
-  [[nodiscard]] const std::string &get_sql_host() const;
-  void set_sql_host(const std::string &in_sqlHost);
-  [[nodiscard]] const std::string &get_sql_user() const;
-  void set_sql_user(const std::string &in_sqlUser);
-  [[nodiscard]] const std::string &get_sql_password() const;
-  void set_sql_password(const std::string &in_sqlPassword);
-  [[nodiscard]] int get_meta_rpc_port() const;
-  void set_meta_rpc_port(int in_metaRpcPort);
-  [[nodiscard]] int get_file_rpc_port() const;
-  void set_file_rpc_port(int in_fileRpcPort);
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
@@ -97,22 +85,9 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
   void set_max_tread(std::uint16_t in);
-  /**
-   * @brief 全局是否停止， 服务器使用
-   */
-  std::atomic_bool p_stop;
-  /**
-   * @brief 全局锁,服务器使用
-   */
-  std::mutex p_mutex;
-  /**
-   * @brief 全局条件变量,服务器使用
-   */
-  std::condition_variable p_condition;
 
   std::map<string, bool> widget_show;
 
-  uuid default_project;
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path& in);
   std::uint16_t max_install_reg_entt;
@@ -142,16 +117,8 @@ class DOODLELIB_API core_set : public details::no_copy {
   ue4_setting &p_ue4_setting;
 
   FSys::path p_mayaPath;
-  std::string p_server_host;  ///< 我们自己的服务器ip
 
-  int p_sql_port;       ///< mysql 端口
-  int p_meta_rpc_port;  ///< 元数据端口
-  int p_file_rpc_port;  ///< filesys 文件传输端口
-
-  std::string p_sql_host;      ///< mysql数据库ip
-  std::string p_sql_user;      ///< mysql 用户名称
-  std::string p_sql_password;  ///< mysql 用户密码
-
+ private:
   //这里是序列化的代码
   friend void to_json(nlohmann::json &j, const core_set &p);
   friend void from_json(const nlohmann::json &j, core_set &p);

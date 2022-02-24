@@ -77,25 +77,7 @@ core_set::core_set()
       p_uuid_gen(),
       p_ue4_setting(ue4_setting::Get()),
       p_mayaPath(),
-#ifdef NDEBUG
-      p_server_host("rpc.server.doodle.com"),
-#else
-      p_server_host("dev.rpc.server.doodle.com"),
-#endif
-      p_sql_port(3306),
-      p_meta_rpc_port(10999),
-      p_file_rpc_port(10998),
-#ifdef NDEBUG
-      p_sql_host("mysql.server.doodle.com"),
-#else
-      p_sql_host("dev.mysql.server.doodle.com"),
-#endif
-      p_sql_user("deve"),
-      p_sql_password("deve"),
       p_max_thread(std::thread::hardware_concurrency() - 2),
-      p_stop(false),
-      p_mutex(),
-      p_condition(),
       p_root(FSys::temp_directory_path() / "Doodle"),
       _root_cache(p_root / "cache"),
       _root_data(p_root / "data"),
@@ -137,9 +119,6 @@ FSys::path core_set::get_config_file() const {
   return p_doc / config_file_name();
 }
 
-void core_set::set_server_host(const string &in_host) {
-  p_server_host = in_host;
-}
 
 FSys::path core_set::get_root() const {
   return p_root;
@@ -178,46 +157,6 @@ std::string core_set::config_file_name() {
 }
 std::string core_set::get_uuid_str() {
   return boost::uuids::to_string(get_uuid());
-}
-
-int core_set::get_sql_port() const {
-  return p_sql_port;
-}
-void core_set::set_sql_port(int in_sqlPort) {
-  p_sql_port = in_sqlPort;
-}
-const std::string &core_set::get_sql_host() const {
-  return p_sql_host;
-}
-void core_set::set_sql_host(const std::string &in_sqlHost) {
-  p_sql_host = in_sqlHost;
-}
-const std::string &core_set::get_sql_user() const {
-  return p_sql_user;
-}
-void core_set::set_sql_user(const std::string &in_sqlUser) {
-  p_sql_user = in_sqlUser;
-}
-const std::string &core_set::get_sql_password() const {
-  return p_sql_password;
-}
-void core_set::set_sql_password(const std::string &in_sqlPassword) {
-  p_sql_password = in_sqlPassword;
-}
-int core_set::get_meta_rpc_port() const {
-  return p_meta_rpc_port;
-}
-void core_set::set_meta_rpc_port(int in_metaRpcPort) {
-  p_meta_rpc_port = in_metaRpcPort;
-}
-int core_set::get_file_rpc_port() const {
-  return p_file_rpc_port;
-}
-void core_set::set_file_rpc_port(int in_fileRpcPort) {
-  p_file_rpc_port = in_fileRpcPort;
-}
-std::string core_set::get_server_host() {
-  return p_server_host;
 }
 
 void core_set::set_max_tread(const std::uint16_t in) {
@@ -336,7 +275,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["max_thread"]           = p.p_max_thread;
   j["widget_show"]          = p.widget_show;
   j["timeout"]              = p.timeout;
-  j["default_project"]      = p.default_project;
   j["project_root"]         = p.project_root;
   j["max_install_reg_entt"] = p.max_install_reg_entt;
 }
@@ -348,8 +286,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("widget_show").get_to(p.widget_show);
   j.at("timeout").get_to(p.timeout);
-  if (j.contains("default_project"))
-    j.at("default_project").get_to(p.default_project);
   if (j.contains("project_root"))
     j.at("project_root").get_to(p.project_root);
   if (j.contains("max_install_reg_entt"))
