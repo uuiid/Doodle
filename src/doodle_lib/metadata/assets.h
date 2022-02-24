@@ -41,31 +41,81 @@ class DOODLELIB_API assets {
   };
 
   assets();
+  /**
+   * @brief 初始化时的标签
+   *
+   * @param in_name
+   */
   explicit assets(FSys::path in_name);
-  // ~Assets();
 
+  /**
+   * @brief 返回字符串表示
+   *
+   * @return std::string p_path.generic_string()
+   */
   [[nodiscard]] std::string str() const;
 
+  /**
+   * @brief 获取标签, 使用 std::vector<std::string> 获取标签
+   *
+   * @return const std::vector<std::string>&
+   */
   const std::vector<std::string>& get_path_component() {
     return p_component;
   };
 
+  /**
+   * @brief 设置标签路径, 同时会分解路径
+   *
+   * @param in_path 传入的标签路径
+   */
   void set_path(const FSys::path& in_path);
   const FSys::path& get_path() const;
-
+  /**
+   * @brief 弃用
+   *
+   * @return std::string
+   */
   [[deprecated("返回始终为空")]] std::string show_str() const;
 
+  /**
+   * @brief 排序类, 使用 p_paht 排序
+   */
   bool operator<(const assets& in_rhs) const;
+  /**
+   * @copybrief operator<(const assets& in_rhs) const
+   */
   bool operator>(const assets& in_rhs) const;
+  /**
+   * @copybrief operator<(const assets& in_rhs) const
+   */
   bool operator<=(const assets& in_rhs) const;
+  /**
+   * @copybrief operator<(const assets& in_rhs) const
+   */
   bool operator>=(const assets& in_rhs) const;
+  /**
+   * @brief 相等函数 使用 p_path 判断
+   */
   bool operator==(const assets& in_rhs) const;
+  /**
+   * @copybrief operator==(const assets& in_rhs) const
+   */
   bool operator!=(const assets& in_rhs) const;
 
  private:
+  /**
+   * @brief 序列化函数
+   *
+   * @param j json
+   * @param p 资产
+   */
   friend void to_json(nlohmann::json& j, const assets& p) {
     j["path"] = p.p_path;
   }
+  /**
+   * @copybrief void to_json(nlohmann::json& j, const assets& p)
+   */
   friend void from_json(const nlohmann::json& j, assets& p) {
     j.at("path").get_to(p.p_path);
     p.set_path_component();
