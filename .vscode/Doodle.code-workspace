@@ -139,7 +139,9 @@
 			"*.ipp": "cpp",
 			"ranges": "cpp",
 			"span": "cpp",
-			"cfenv": "cpp"
+			"cfenv": "cpp",
+			"*.rh": "cpp",
+			"*.inc": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
