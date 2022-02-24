@@ -1,6 +1,6 @@
 #include "ref_base.h"
 #include <metadata/metadata.h>
-#include <core/core_set.h>
+#include <core/util.h>
 namespace doodle::gui {
 
 void edit_interface::init(const entt::handle &in) {
@@ -24,7 +24,7 @@ edit_interface::~edit_interface() = default;
 gui_cache_name_id::gui_cache_name_id(const string &in_name)
     : name_id(),
       name() {
-  name_id = fmt::format("{}##{}", in_name, core_set::getSet().get_uuid());
+  name_id = fmt::format("{}##{}", in_name, doodle::core::identifier::get().id());
   std::string_view k_v{name_id};
   name = k_v.substr(0, in_name.size());
 }
