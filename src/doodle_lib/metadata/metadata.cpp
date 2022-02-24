@@ -90,7 +90,6 @@ bool database::is_install() const {
                              season,                \
                              assets,                \
                              assets_file,           \
-                             assets_path_vector,    \
                              time_point_wrap,       \
                              comment,               \
                              std::vector<comment>,  \
@@ -136,7 +135,7 @@ database::operator metadata_database() const {
     k_tmp.id = p_i->p_id;
 
   /// 储存对应数据字符串的位置
-  if (k_h.any_of<assets_path_vector>())
+  if (k_h.any_of<assets_file>())
     k_tmp.uuid_path = k_h.get<assets_file>().path.generic_string();
 
   nlohmann::json k_json{};

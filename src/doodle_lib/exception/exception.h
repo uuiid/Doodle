@@ -46,6 +46,11 @@ class DOODLELIB_API file_error : public doodle_error {
 
 #include <fmt/format.h>
 namespace fmt {
+/**
+ * @brief 格式化库异常
+ * 
+ * @tparam  
+ */
 template <>
 struct fmt::formatter<::doodle::doodle_error> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>

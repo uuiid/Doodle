@@ -90,6 +90,11 @@ class d_str {
 }  // namespace doodle::maya_plug
 
 namespace fmt {
+/**
+ * @brief 格式化和maya异常
+ * 
+ * @tparam  
+ */
 template <>
 struct fmt::formatter<::doodle::maya_plug::maya_error> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>

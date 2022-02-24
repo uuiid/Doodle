@@ -9,6 +9,11 @@
 #include <maya/MString.h>
 
 namespace fmt {
+/**
+ * @brief 格式化maya字符串
+ *
+ * @tparam
+ */
 template <>
 struct fmt::formatter<MString> : fmt::formatter<fmt::string_view> {
   template <typename FormatContext>

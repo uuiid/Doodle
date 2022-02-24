@@ -94,6 +94,11 @@ class DOODLELIB_API assets_file {
 
 }  // namespace doodle
 namespace fmt {
+  /**
+   * @brief 格式化资产文件, 使用name属性
+   * 
+   * @tparam  
+   */
 template <>
 struct fmt::formatter<::doodle::assets_file> : fmt::formatter<std::string_view> {
   template <typename FormatContext>

@@ -14,7 +14,6 @@
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/core/util.h>
 #include <doodle_lib/exception/exception.h>
-#include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/opencv_read_player.h>
 #include <doodle_lib/file_warp/ue4_project.h>
@@ -23,8 +22,6 @@
 #include <doodle_lib/gui/setting_windows.h>
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/gui/action/command.h>
-#include <doodle_lib/gui/action/command_down_file.h>
-#include <doodle_lib/gui/action/command_files.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>
@@ -56,7 +53,6 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/metadata/assets.h>
 #include <doodle_lib/metadata/assets_file.h>
-#include <doodle_lib/metadata/assets_path.h>
 #include <doodle_lib/metadata/comment.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/leaf_meta.h>

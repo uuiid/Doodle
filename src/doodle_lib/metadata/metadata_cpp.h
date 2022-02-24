@@ -7,7 +7,6 @@
 
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/comment.h>
-#include <doodle_lib/metadata/assets_path.h>
 
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/season.h>

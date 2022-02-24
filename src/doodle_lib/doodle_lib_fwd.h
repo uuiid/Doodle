@@ -256,7 +256,6 @@ class doodle_lib;
 class thread_pool;
 class season;
 class setting_windows;
-class assets_path_vector;
 class core_sig;
 class command_base;
 class rpc_trans_path;

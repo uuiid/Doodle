@@ -8,8 +8,8 @@
  * 基本上是按照版本控制语义来的 <https://semver.org/>
  *
  * <a href="file/Doodle-3.4.1-win64.msi">下载稳定版(  Doodle-3.4.1-win64.msi )</a> \n
- * <a href="file/@doodle_exe_file.msi">下载开发版安装包(  @doodle_exe_file.msi )</a> \n
- * <a href="file/@doodle_exe_file.7z">下载开发版7z存档(  @doodle_exe_file.7z )</a> \n
+ * <a href="file/@doodle_exe_file.msi">下载开发版-安装包(  @doodle_exe_file.msi )</a> \n
+ * <a href="file/@doodle_exe_file.7z">下载开发版-7z存档(  @doodle_exe_file.7z )</a> \n
  *
  * @ref doc/schedule.md "描述" \n
  *

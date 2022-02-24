@@ -18,18 +18,13 @@ comm_video::comm_video()
 bool comm_video::render() {
   if (p_root) {
     if (imgui::Button(p_show_str["观看拍屏"].c_str())) {
-      auto& k_f   = p_root.get<assets_path_vector>();
 
     }
   }
   return false;
 }
 bool comm_video::set_data(const entt::handle& in_any) {
-  if (in_any.all_of<assets_path_vector>()) {
-    p_root = in_any;
-  } else {
-    p_root = entt::handle{};
-  }
+
 
   return false;
 }

@@ -19,7 +19,6 @@ set(
 
 
         exception/exception.h
-        file_warp/image_sequence.h
         file_warp/maya_file.h
         file_warp/opencv_read_player.h
         file_warp/ue4_project.h
@@ -36,8 +35,6 @@ set(
         gui/gui_ref/database_edit.h
 
         gui/action/command.h
-        gui/action/command_down_file.h
-        gui/action/command_files.h
         gui/action/command_tool.h
         gui/action/command_ue4.h
         gui/action/command_video.h
@@ -72,7 +69,6 @@ set(
         logger/logger.h
         metadata/assets.h
         metadata/assets_file.h
-        metadata/assets_path.h
         metadata/comment.h
         metadata/episodes.h
         metadata/leaf_meta.h
@@ -129,7 +125,6 @@ set(
         core/status_info.cpp
 
 
-        file_warp/image_sequence.cpp
         file_warp/maya_file.cpp
         file_warp/opencv_read_player.cpp
         file_warp/ue4_project.cpp
@@ -144,8 +139,6 @@ set(
         gui/gui_ref/ref_base.cpp
         gui/gui_ref/database_edit.cpp
         gui/action/command.cpp
-        gui/action/command_down_file.cpp
-        gui/action/command_files.cpp
         gui/action/command_tool.cpp
         gui/action/command_ue4.cpp
         gui/action/command_video.cpp
@@ -170,7 +163,6 @@ set(
         logger/logger.cpp
         metadata/assets.cpp
         metadata/assets_file.cpp
-        metadata/assets_path.cpp
         metadata/comment.cpp
         metadata/episodes.cpp
         metadata/leaf_meta.cpp
