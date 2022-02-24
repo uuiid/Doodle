@@ -5,7 +5,6 @@
 #include "command_tool.h"
 
 #include <gui/open_file_dialog.h>
-#include <doodle_lib/file_warp/image_sequence.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/file_warp/video_sequence.h>
