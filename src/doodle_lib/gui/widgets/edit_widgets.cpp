@@ -21,7 +21,10 @@
 #include <doodle_lib/core/image_loader.h>
 
 namespace doodle {
-
+/**
+ * @brief 季数编辑
+ *
+ */
 class season_edit : public gui::edit_interface {
  public:
   std::int32_t p_season;
@@ -321,8 +324,9 @@ void edit_widgets::aborted() {
   g_reg()->unset<edit_widgets &>();
   this->clear_handle();
 }
-void edit_widgets::update(chrono::duration<chrono::system_clock::rep,
-                                           chrono::system_clock::period>,
+void edit_widgets::update(const chrono::duration<
+                              chrono::system_clock::rep,
+                              chrono::system_clock::period> &,
                           void *data) {
   dear::Disabled _l_rand{p_i->only_rand};
 

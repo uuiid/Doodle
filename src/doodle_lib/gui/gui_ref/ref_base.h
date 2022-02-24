@@ -5,20 +5,44 @@
 #include <boost/signals2.hpp>
 
 namespace doodle::gui {
-
+/**
+ * @brief 基本的渲染基类, render(const entt::handle & )必须每帧调用
+ *
+ */
 class DOODLELIB_API base_render {
  public:
+  /**
+   * @brief Construct a new base render object
+   *
+   */
   base_render()                                    = default;
+  /**
+   * @brief Destroy the base render object
+   *
+   */
   virtual ~base_render()                           = default;
+  /**
+   * @brief 渲染函数, 每帧调用, 不要再这里添加太多的逻辑运行方法, 最好只有渲染方法
+   *
+   * @param in
+   */
   virtual void render(const entt::handle &in = {}) = 0;
 };
 
+/**
+ * @brief gui 缓存类的数据
+ *
+ */
 class gui_data {
  public:
   bool is_modify{false};
   boost::signals2::signal<void()> edited;
 };
 
+/**
+ * @brief 编辑类的接口
+ *
+ */
 class DOODLELIB_API edit_interface {
  protected:
   virtual void init_(const entt::handle &in)       = 0;
@@ -37,20 +61,35 @@ class DOODLELIB_API edit_interface {
   virtual void save(const entt::handle &in);
 };
 
+/**
+ * @brief 空类
+ *
+ */
 class gui_cache_null_data {
  public:
 };
-
+/**
+ * @brief 可选择的缓存类
+ *
+ */
 class gui_cache_select {
  public:
   bool select;
 };
 
+/**
+ * @brief gui 额外的路径类
+ *
+ */
 class gui_cache_path {
  public:
   FSys::path path;
 };
 
+/**
+ * @brief gui 名称,使用uuid 作为id
+ *
+ */
 class gui_cache_name_id {
  public:
   std::string name_id;
@@ -63,6 +102,13 @@ class gui_cache_name_id {
   explicit gui_cache_name_id(const std::string &in_name);
 };
 
+/**
+ * @brief gui缓存模板类
+ *
+ * @tparam T 数据
+ * @tparam BaseType 基类, 可以时gui_cache_null_data gui_cache_select gui_cache_path gui_cache_name_id
+ * 或者自定义 , 默认是 空类
+ */
 template <class T, class BaseType = gui_cache_null_data>
 class gui_cache : public gui_cache_name_id, public BaseType {
  public:
