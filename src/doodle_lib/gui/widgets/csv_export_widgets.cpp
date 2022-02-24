@@ -144,7 +144,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
       << magic_enum::enum_name(k_ass.p_department) << ","
       << (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s) << ","
       << (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s) << ","
-      << (in.all_of<assets>() ? in.get<assets>().p_name_show_str : ""s) << ","
+      << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
       << k_ass.p_user << ","
       << fmt::format(R"("{}")", in.get<time_point_wrap>().show_str()) << ","
       << fmt::format(R"("{}")", l_next.get<time_point_wrap>().show_str()) << ","

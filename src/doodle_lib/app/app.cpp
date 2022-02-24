@@ -24,6 +24,10 @@
 #include <imgui.h>
 
 namespace doodle {
+/**
+ * @brief 内部类
+ * 
+ */
 class app::impl {
   /// \brief 初始化 com
   win::ole_guard _guard;

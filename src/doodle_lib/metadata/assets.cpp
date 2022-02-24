@@ -12,13 +12,11 @@ void assets::set_path_fun::operator()(assets& in) const {
 }
 
 assets::assets()
-    : p_path(),
-      p_name_show_str() {
+    : p_path() {
 }
 
 assets::assets(FSys::path in_name)
-    : p_path(std::move(in_name)),
-      p_name_show_str() {
+    : p_path(std::move(in_name)) {
   set_path_component();
 }
 
@@ -40,7 +38,7 @@ const FSys::path& assets::get_path() const {
 }
 
 std::string assets::show_str() const {
-  return p_name_show_str;
+  return {};
 }
 
 bool assets::operator<(const assets& in_rhs) const {

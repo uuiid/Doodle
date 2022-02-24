@@ -14,18 +14,9 @@
 
 namespace doodle {
 namespace entt_tool {
-
 namespace detail {
 /**
- * @brief json保存函数
- *
- * @tparam Component 组件类型
- * @tparam Archive 存档类型 需要 operator [std::string]
- * @param in_handle 传入的实体
- * @param in_size 无用的
- * @param in_archive 传入的存档
- * @return true 只有返回值 true
- * @return false 无
+ * @copydoc save_comm(entt::handle &in_handle, Archive &in_archive)
  */
 template <typename Component, typename Archive>
 bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
@@ -35,14 +26,7 @@ bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
 }
 
 /**
- * @brief json加载函数
- *
- * @tparam Component 组件类型
- * @tparam Archive 存档类型 需要 operator [std::string]  contains(std::string) at() get_to() 函数
- * @param in_handle 传入的实体
- * @param in_archive 传入的存档
- * @return true 只有返回值 true
- * @return false 无
+ * @copydoc load_comm
  */
 template <typename Component, typename Archive>
 bool _load_(entt::handle &in_handle, Archive &in_archive) {

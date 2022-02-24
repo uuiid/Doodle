@@ -19,6 +19,13 @@ namespace doodle {
 inline MSyntax null_syntax_t() { return {}; };
 
 using CreateSyntaxFunction = std::add_pointer_t<MSyntax()>;
+/**
+ * @brief maya 命令模板
+ * 
+ * @tparam ActionClass 动作类
+ * @tparam CommandName 命令名称
+ * @tparam CommandSyntax 命令标志
+ */
 template <class ActionClass, const char* CommandName, CreateSyntaxFunction CommandSyntax = null_syntax_t>
 class TemplateAction : public MPxCommand {
  public:

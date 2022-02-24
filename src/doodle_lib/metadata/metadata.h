@@ -24,11 +24,15 @@ class DOODLELIB_API metadata_database {
   std::optional<std::int32_t> shot;
   std::optional<std::string> assets;
 };
+/**
+ * @brief 元数据代表的类型
+ * 
+ */
 enum class metadata_type : std::int32_t {
   unknown_file       = 0,
-  project_root       = 1,
-  file               = 2,
-  folder             = 3,
+  project_root       = 1, /// 项目的根
+  file               = 2, /// 文件, 基本可以说具有 assets_file 类组件
+  folder             = 3, /// 没有文件,没有 assets_file 组件
   derive_file        = 4,
   animation_lib_root = 5,
   maya_file          = 6,

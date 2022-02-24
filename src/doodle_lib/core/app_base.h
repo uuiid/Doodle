@@ -51,6 +51,10 @@ class DOODLELIB_API app_base {
   static app_base& Get();
 };
 
+/**
+ * @brief 基本的命令行类
+ * 
+ */
 class DOODLELIB_API app_command_base : public app_base {
  protected:
   void load_back_end() override;

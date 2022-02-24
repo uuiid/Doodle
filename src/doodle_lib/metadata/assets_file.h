@@ -8,6 +8,10 @@
 #include <doodle_lib/metadata/metadata.h>
 
 namespace doodle {
+/**
+ * @brief 文件代表的类型
+ *
+ */
 enum class assets_file_type : std::uint32_t {
   none = 0,
 
@@ -94,11 +98,11 @@ class DOODLELIB_API assets_file {
 
 }  // namespace doodle
 namespace fmt {
-  /**
-   * @brief 格式化资产文件, 使用name属性
-   * 
-   * @tparam  
-   */
+/**
+ * @brief 格式化资产文件, 使用name属性
+ *
+ * @tparam
+ */
 template <>
 struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   template <typename FormatContext>
