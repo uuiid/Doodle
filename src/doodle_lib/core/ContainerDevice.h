@@ -146,6 +146,14 @@ class container_device {
   size_type pos_;
 };
 
+/**
+ * @brief 读std::vector 流
+ *
+ * @tparam CharT char 类
+ * @tparam Container 容器
+ * @tparam Device 后端类
+ * @tparam Buffer 缓冲区类
+ */
 template <class CharT     = char,
           class Container = std::vector<CharT>,
           class Device    = container_source<Container>,
@@ -159,6 +167,14 @@ class base_vector_istream : public std::istream {
         _vector_buffer(Device(cnt)) {}
 };
 
+/**
+ * @brief 写std::vector 流
+ *
+ * @tparam CharT char 类
+ * @tparam Container 容器
+ * @tparam Device 后端类
+ * @tparam Buffer 缓冲区类
+ */
 template <class CharT     = char,
           class Container = std::vector<CharT>,
           class Device    = container_sink<Container>,
@@ -172,6 +188,14 @@ class base_vector_ostream : public std::ostream {
         std::ostream(std::addressof(_vector_buffer)) {}
 };
 
+/**
+ * @brief 读写std::vector 流
+ *
+ * @tparam CharT char 类
+ * @tparam Container 容器
+ * @tparam Device 后端类
+ * @tparam Buffer 缓冲区类
+ */
 template <class CharT     = char,
           class Container = std::vector<CharT>,
           class Device    = container_device<Container>,
@@ -184,8 +208,15 @@ class base_vector_iostream : public std::iostream {
       : _vector_buffer(Device(cnt)),
         std::iostream(std::addressof(_vector_buffer)) {}
 };
+/**
+ * @brief std char 容器
+ * 
+ */
 using vector_container = std::vector<char>;
+/// std vector 读流
 using vector_istream   = base_vector_istream<char>;
+/// std vector 写流
 using vector_ostream   = base_vector_ostream<char>;
+/// std vector 读写流
 using vector_iostream  = base_vector_iostream<char>;
 }  // namespace doodle
