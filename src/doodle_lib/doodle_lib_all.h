@@ -66,7 +66,7 @@
 #include <doodle_lib/metadata/tree_adapter.h>
 #include <doodle_lib/metadata/user.h>
 #include <doodle_lib/pin_yin/convert.h>
-#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/toolkit/toolkit.h>
 #include <doodle_lib/server/doodle_server.h>

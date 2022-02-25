@@ -3,7 +3,7 @@
 //
 
 #include "image_to_move.h"
-#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/core/core_set.h>

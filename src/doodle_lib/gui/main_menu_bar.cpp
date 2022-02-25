@@ -27,7 +27,7 @@
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/gui/widgets/project_edit.h>
 #include <doodle_lib/core/core_sig.h>
 

@@ -15,7 +15,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <long_task/database_task.h>
-#include <thread_pool/long_term.h>
+#include <thread_pool/process_message.h>
 
 #ifdef DOODLE_DIS_FUN
 #include <grpcpp/grpcpp.h>

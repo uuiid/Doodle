@@ -84,7 +84,7 @@ set(
         metadata/image_icon.h
         pin_yin/convert.h
 
-        thread_pool/long_term.h
+        thread_pool/process_message.h
         thread_pool/thread_pool.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
@@ -175,7 +175,7 @@ set(
         metadata/image_icon.cpp
         pin_yin/convert.cpp
 
-        thread_pool/long_term.cpp
+        thread_pool/process_message.cpp
         toolkit/toolkit.cpp
         exe_warp/maya_exe.cpp
         exe_warp/ue4_exe.cpp

@@ -6,13 +6,13 @@
 #include <doodle_lib/platform/win/list_drive.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/long_task/process_pool.h>
-#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/client/client.h>
 
 #ifdef _WIN32
 #include <ShlObj.h>
 #include <metadata/metadata.h>
-#include <thread_pool/long_term.h>
+#include <thread_pool/process_message.h>
 #else
 #include <pwd.h>
 #include <sys/types.h>

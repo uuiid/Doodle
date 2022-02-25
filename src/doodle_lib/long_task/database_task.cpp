@@ -6,7 +6,7 @@
 #include <metadata/metadata_cpp.h>
 #include <core/core_sql.h>
 #include <thread_pool/thread_pool.h>
-#include <thread_pool/long_term.h>
+#include <thread_pool/process_message.h>
 #include <generate/core/metadatatab_sql.h>
 #include <core/doodle_lib.h>
 #include <core/status_info.h>

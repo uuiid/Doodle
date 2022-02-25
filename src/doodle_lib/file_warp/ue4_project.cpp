@@ -7,7 +7,7 @@
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/shot.h>
-#include <doodle_lib/thread_pool/long_term.h>
+#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 
 #include <boost/locale.hpp>
