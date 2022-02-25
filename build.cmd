@@ -19,8 +19,8 @@ echo -----------------build--------------------
 --clean-first
 
 echo -----------------copy file--------------------
-robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /e /NFL /NDL
+robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
-copy %my_pwd%build\Ninja_release\*.msi %my_pwd%build\html\file /y
-copy %my_pwd%build\Ninja_release\*.7z %my_pwd%build\html\file /y
+robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.msi /NFL /NDL
+robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.7z /NFL /NDL
 
