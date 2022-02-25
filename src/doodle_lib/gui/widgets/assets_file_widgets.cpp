@@ -13,6 +13,7 @@
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/long_task/image_load_task.h>
 
 #include <gui/gui_ref/ref_base.h>
 
@@ -74,11 +75,7 @@ class assets_file_widgets::impl {
       image_loader k_load{};
       if (handle_.any_of<image_icon>()) {
         /// @brief 如果有图标就渲染
-        auto&& k_icon = handle_.get<image_icon>();
-        if (!k_icon.image)
-          k_load.load(handle_);
-        image         = k_icon.image;
-        image.size2d_ = k_icon.size2d_;
+        g_main_loop().attach<image_load_task>(handle_);
       } else {
         /// @brief 否则默认图标
         image = k_load.default_image();
