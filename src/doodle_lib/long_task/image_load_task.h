@@ -14,7 +14,7 @@ class DOODLELIB_API image_load_task : public process_t<image_load_task> {
 
  public:
   explicit image_load_task(const entt::handle& in_handle);
-  ~image_load_task();
+  ~image_load_task() override;
 
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();

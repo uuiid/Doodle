@@ -28,7 +28,7 @@ class DOODLELIB_API image_loader {
    * @param in_path 路径. 相对于 project::p_path / "image" 的路径
    * @return cv 图片 和 显卡资源句柄
    */
-  std::tuple<cv::Mat, std::shared_ptr<void>> load_mat(const FSys::path& in_path);
+  [[nodiscard("扔掉了加载的图片")]] std::tuple<cv::Mat, std::shared_ptr<void>> load_mat(const FSys::path& in_path);
 
   /**
    * @brief 加载图片
@@ -36,6 +36,9 @@ class DOODLELIB_API image_loader {
    * @return 是否加载成功
    */
   bool load(const entt::handle& in_handle);
+
+  bool load(image_icon& in_icon);
+
   /**
    * @brief 保存图片
    * @param in_handle 将句柄中添加 image_icon
