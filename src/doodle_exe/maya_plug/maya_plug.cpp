@@ -1,6 +1,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
- 
+
 #include <doodle_lib/lib_warp/std_warp.h>
 
 #include <maya/MDrawRegistry.h>
@@ -56,6 +56,7 @@ MStatus initializePlugin(MObject obj) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
       p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
+      p_doodle_app->command_line_parser(std::vector<std::string>{});
       app::Get().hide_windows();
 
       //注册命令
@@ -94,9 +95,9 @@ MStatus initializePlugin(MObject obj) {
     } break;
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
-    default:
+    default: {
       p_doodle_app = std::make_shared<doodle::app_command_base>();
-      break;
+    } break;
   }
   clear_callback_id = MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
