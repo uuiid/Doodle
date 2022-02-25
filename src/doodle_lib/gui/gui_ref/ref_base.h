@@ -183,9 +183,9 @@ class gui_cache_name_id {
   /// @copydoc gui_cache_name_id(gui_cache_name_id &&in_r)
   gui_cache_name_id &operator=(gui_cache_name_id &&in_r) noexcept;
   /// @copydoc gui_cache_name_id(gui_cache_name_id &&in_r)
-  gui_cache_name_id(gui_cache_name_id &in_r) noexcept;
+  gui_cache_name_id(const gui_cache_name_id &in_r) noexcept;
   /// @copydoc gui_cache_name_id(gui_cache_name_id &&in_r)
-  gui_cache_name_id &operator=(gui_cache_name_id &in_r) noexcept;
+  gui_cache_name_id &operator=(const gui_cache_name_id &in_r) noexcept;
 };
 
 /**

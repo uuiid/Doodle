@@ -44,12 +44,12 @@ gui_cache_name_id &gui_cache_name_id::operator=(gui_cache_name_id &&in_r) noexce
   name        = {name_id.c_str(), l_size};
   return *this;
 }
-gui_cache_name_id::gui_cache_name_id(gui_cache_name_id &in_r) noexcept {
+gui_cache_name_id::gui_cache_name_id(const gui_cache_name_id &in_r) noexcept {
   auto l_size = in_r.name.size();
   name_id     = in_r.name_id;
   name        = {name_id.c_str(), l_size};
 }
-gui_cache_name_id &gui_cache_name_id::operator=(gui_cache_name_id &in_r) noexcept {
+gui_cache_name_id &gui_cache_name_id::operator=(const gui_cache_name_id &in_r) noexcept {
   auto l_size = in_r.name.size();
   name_id     = in_r.name_id;
   name        = {name_id.c_str(), l_size};
