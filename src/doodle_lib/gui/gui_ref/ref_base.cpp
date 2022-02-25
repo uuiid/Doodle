@@ -26,7 +26,7 @@ gui_cache_name_id::gui_cache_name_id(const string &in_name)
       name() {
   auto l_size = in_name.size();
   name_id     = fmt::format("{}##{}", in_name, doodle::core::identifier::get().id());
-  name        = {in_name.c_str(), l_size};
+  name        = {name_id.c_str(), l_size};
   // name = k_v.substr(0, l_size);
 }
 
