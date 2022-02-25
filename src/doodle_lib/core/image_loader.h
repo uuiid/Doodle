@@ -24,6 +24,13 @@ class DOODLELIB_API image_loader {
   virtual ~image_loader();
 
   /**
+   * @brief 加载图片, 返回一个opencv对象和一个显卡资源句柄
+   * @param in_path 路径. 相对于 project::p_path / "image" 的路径
+   * @return cv 图片 和 显卡资源句柄
+   */
+  std::tuple<cv::Mat, std::shared_ptr<void>> load_mat(const FSys::path& in_path);
+
+  /**
    * @brief 加载图片
    * @param in_handle 具有 image_icon 组件的句柄
    * @return 是否加载成功

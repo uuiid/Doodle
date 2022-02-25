@@ -53,22 +53,13 @@ image_loader::image_loader()
 
 bool image_loader::load(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
-  auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
 
-  auto l_local_path = k_reg->ctx<project>().make_path("image") / in_handle.get<image_icon>().path;
-
-  if (exists(l_local_path) &&
-      is_regular_file(l_local_path) &&
-      (l_local_path.extension() == ".png" ||
-       l_local_path.extension() == ".jpg")) {
-    auto k_image = cv::imread(l_local_path.generic_string());
-    chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
-    cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
-    auto k_sh = cv_to_d3d(k_image, false);
+  auto [l_cv, l_sh] = load_mat(in_handle.get<image_icon>().path);
+  
+  if (!l_cv.empty()) {
     in_handle.patch<image_icon>([&](image_icon& in) {
       in.image   = k_sh;
-      in.size2d_ = k_image.size();
+      in.size2d_ = l_cv.size();
     });
   } else {
     in_handle.patch<image_icon>([&](image_icon& in) {
@@ -336,5 +327,23 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
   k_icon.size2d_ = l_mat.size();
   return true;
 }
+std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
+  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  auto l_local_path = k_reg->ctx<project>().make_path("image") / in_handle.get<image_icon>().path;
+
+  if (exists(l_local_path) &&
+      is_regular_file(l_local_path) &&
+      (l_local_path.extension() == ".png" ||
+       l_local_path.extension() == ".jpg")) {
+    auto k_image = cv::imread(l_local_path.generic_string());
+    chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+    cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
+    auto k_sh = cv_to_d3d(k_image, false);
+    cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGR);
+    return std::make_tuple(k_image, k_sh);
+  }
+  return std::tuple<cv::Mat, std::shared_ptr<void>>();
+}
+
 image_loader::~image_loader() = default;
 }  // namespace doodle
