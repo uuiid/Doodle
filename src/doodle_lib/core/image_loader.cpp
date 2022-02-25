@@ -51,8 +51,8 @@ image_loader::image_loader()
     g_reg()->set<cache>();
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto l_local_path = k_reg->ctx<project>().make_path("image") / in_handle.get<image_icon>().path;
+  chick_true<doodle_error>(g_reg()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  auto l_local_path = g_reg()->ctx<project>().make_path("image") / in_path;
 
   if (exists(l_local_path) &&
       is_regular_file(l_local_path) &&

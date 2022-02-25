@@ -71,14 +71,31 @@ class assets_file_widgets::impl {
       image.max_ = max_length;
     };
 
-    void load_image() {
+    void load_image(float max_length) {
       image_loader k_load{};
       if (handle_.any_of<image_icon>()) {
         /// @brief 如果有图标就渲染
-        g_main_loop().attach<image_load_task>(handle_);
+        if (!handle_.get<image_icon>().image)
+          g_main_loop()
+              .attach<image_load_task>(handle_)
+              .then<one_process_t>([self = this, h = handle_, max_length]() {
+                if (self) {
+                  auto& l_i           = h.get<image_icon>();
+                  self->image         = l_i.image;
+                  self->image.size2d_ = l_i.size2d_;
+                  self->compute_size(max_length);
+                }
+              });
+        else {
+          auto&& k_icon = handle_.get<image_icon>();
+          image         = k_icon.image;
+          image.size2d_ = k_icon.size2d_;
+          compute_size(max_length);
+        }
       } else {
         /// @brief 否则默认图标
         image = k_load.default_image();
+        compute_size(max_length);
       }
     };
   };
@@ -139,8 +156,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
         if ((l_i * l_size + l_j) < p_i->lists.size()) {
           std::size_t l_index{l_i * l_size + l_j};
           auto&& i = p_i->lists[l_index];
-          i.load_image();
-          i.compute_size(k_length);
+          i.load_image(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
           if (ImGui::Selectable(*i.select.gui_name,
                                 &i.select.data,
