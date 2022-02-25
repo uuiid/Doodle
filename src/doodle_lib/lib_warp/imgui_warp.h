@@ -284,7 +284,7 @@ static inline void Text(const std::string& str) noexcept {
   ImGui::TextUnformatted(str.c_str(), str.c_str() + str.length());
 }
 static inline void Text(const std::string_view& str) noexcept {
-  ImGui::TextUnformatted(str.data(), str.data() + str.length());
+  ImGui::TextUnformatted(str.data(), str.data() + str.size());
 }
 inline void TextUnformatted(const std::string& str) noexcept {
   ImGui::TextUnformatted(str.c_str(), str.c_str() + str.length());
