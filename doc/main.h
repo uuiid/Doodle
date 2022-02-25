@@ -21,6 +21,9 @@
  * @todo 添加只输出abc功能
  * @todo ue4 gpu超时更新
  *
+ * @todo 搜素功能（）
+ * @todo 图片识别（正则表达）
+ *
  *
  * @section main_management_tool 主要窗口
  * @image html doodle_image/main_windows.jpg 主要面板 width=30%
