@@ -279,7 +279,8 @@ MStatus load_project::doIt(const MArgList& in_arg) {
   } else {
     return MStatus{MStatus::kFailure};
   }
-  core::client{}.open_project(k_path);
+  core::client l_c{};
+  l_c.open_project(k_path);
   if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
     while (!g_main_loop().empty()) {
       app_base::Get().loop_one();

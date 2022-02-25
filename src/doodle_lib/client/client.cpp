@@ -29,7 +29,9 @@ SQLPP_DECLARE_TABLE(
 namespace doodle::core {
 class client::impl {
  public:
+  impl() : data_path() {}
   FSys::path data_path;
+
   void add_trigger() {
     auto k_conn = core_sql::Get().get_connection(data_path);
     k_conn->execute(R"(
@@ -93,6 +95,7 @@ add uuid_data text;)");
 
 client::client()
     : p_i(std::make_unique<impl>()) {
+  p_i->data_path = "null";
 }
 client::~client() = default;
 
@@ -196,9 +199,9 @@ void client::open_project(const FSys::path& in_path) {
 }
 void client::new_project(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
-  auto k_prj  = in_handle.get<project>();
+  auto k_prj     = in_handle.get<project>();
 
-  auto k_path = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
+  auto k_path    = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
   p_i->data_path = k_path;
   if (!in_handle.all_of<database>())
     in_handle.emplace<database>();
@@ -208,7 +211,7 @@ void client::new_project(const entt::handle& in_handle) {
   g_main_loop()
       .attach<database_task_install>(in_handle)
       .then<one_process_t>([k_path, this]() {
-        open_project(k_path);
+        client{}.open_project(k_path);
       });
 }
 

@@ -90,13 +90,15 @@ void main_menu_bar::menu_file() {
             "选择目录"s)
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([=]() {
-          core::client{}.new_project(k_h);
+          core::client l_c{};
+          l_c.new_project(k_h);
         });
   }
   if (dear::MenuItem("打开项目"s)) {
     g_main_loop().attach<file_dialog>(
         [](const FSys::path &in_path) {
-          core::client{}.open_project(in_path);
+          core::client l_c{};
+          l_c.open_project(in_path);
         },
         "选择文件"s,
         std::vector<std::string>{std::string{doodle_config::doodle_db_name}});
@@ -107,7 +109,8 @@ void main_menu_bar::menu_file() {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
-          core::client{}.open_project(l_p);
+          core::client l_c{};
+          l_c.open_project(l_p);
         }
     }
   };

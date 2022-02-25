@@ -119,7 +119,6 @@ FSys::path core_set::get_config_file() const {
   return p_doc / config_file_name();
 }
 
-
 FSys::path core_set::get_root() const {
   return p_root;
 }
@@ -261,7 +260,8 @@ bool core_set_init::init_project(const FSys::path &in_path) {
       FSys::exists(in_path) &&
       FSys::is_regular_file(in_path) &&
       in_path.extension() == doodle_config::doodle_db_name) {
-    core::client{}.open_project(in_path);
+    core::client l_c{};
+    l_c.open_project(in_path);
     return true;
   }
   return false;
