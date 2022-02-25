@@ -506,4 +506,12 @@
  * @li 添加右键删除动作
  * @li 添加右键打开动作
  * @li 添加右键截图动作
+ * 
+ * @subsubsection updata_log_341 版本3.4.1
+ * @li 修复命令行检查带空格的路径
+ * 
+ * @subsubsection updata_log_342 版本3.4.2
+ * @li 修复新建项目时的崩溃
+ * @li 修复项目无法保存的问题
+ * 
  */
