@@ -149,7 +149,7 @@ class scheduler {
    * @return Number of processes currently scheduled.
    */
   [[nodiscard]] size_type size() const ENTT_NOEXCEPT {
-    std::lock_guard l_g{mutex_};
+    //    std::lock_guard l_g{mutex_};
     return handlers.size();
   }
 
@@ -158,7 +158,7 @@ class scheduler {
    * @return True if there are scheduled processes, false otherwise.
    */
   [[nodiscard]] bool empty() const ENTT_NOEXCEPT {
-    std::lock_guard l_g{mutex_};
+    //    std::lock_guard l_g{mutex_};
     return handlers.empty() && handlers_next.empty();
   }
 
@@ -319,6 +319,15 @@ class scheduler {
   }
 
   Timiter timiter_;
+
+  template <typename Proc, typename... Args>
+  static void wait(Args &&...args) {
+    scheduler k_b{};
+    k_b.timiter_ = std::thread::hardware_concurrency();
+    k_b.template attach<Proc>(std::forward<Args>(args)...);
+    while (!k_b.empty())
+      k_b.update({}, nullptr);
+  };
 
  private:
   std::vector<process_handler> handlers{};
