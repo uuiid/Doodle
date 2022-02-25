@@ -11,6 +11,7 @@
 
 #include <core/tree_node.h>
 #include <lib_warp/entt_warp.h>
+#include <lib_warp/imgui_warp.h>
 
 namespace doodle {
 
@@ -102,6 +103,20 @@ class path_filter : public gui::filter_base {
     //                 return l_r == l_l;
     //               });
   };
+};
+
+class file_path_filter : public gui::filter_base {
+ public:
+  explicit file_path_filter(const std::string& in_string) : file_path_(in_string) {}
+  std::string file_path_;
+
+  bool operator()(const entt::handle& in) const override {
+    if (in.any_of<assets_file>()) {
+      auto l_str = in.get<assets_file>().path.generic_string();
+      return boost::algorithm::icontains(l_str, file_path_);
+    } else
+      return false;
+  }
 };
 
 class time_filter : public gui::filter_base {
@@ -335,6 +350,35 @@ class time_filter_factory : public gui::filter_factory_base {
  public:
 };
 
+class file_path_filter_factory : public gui::filter_factory_base {
+ private:
+  gui::gui_cache<std::string> edit;
+
+ public:
+  file_path_filter_factory() : edit("路径过滤"s, ""s){};
+  std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (!edit.data.empty()) {
+      return std::make_unique<file_path_filter>(edit.data);
+    } else {
+      return {};
+    }
+  }
+  bool render() override {
+    if (ImGui::InputText(*edit.gui_name, &edit.data, ImGuiInputTextFlags_EnterReturnsTrue)) {
+      this->is_edit = true;
+    }
+    dear::HelpMarker{"使用 enter 建开始搜素"};
+    return false;
+  }
+
+ protected:
+  void refresh_() override {
+  }
+  void init() override {
+    edit.data.clear();
+  }
+};
+
 class assets_filter_widget::impl {
  public:
   bool only_rand{false};
@@ -371,6 +415,7 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back("集数过滤"s, std::make_unique<episodes_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("镜头过滤"s, std::make_unique<shot_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back("路径过滤"s, std::make_unique<file_path_filter_factory>());
 }
 void assets_filter_widget::succeeded() {
   g_reg()->unset<assets_filter_widget>();

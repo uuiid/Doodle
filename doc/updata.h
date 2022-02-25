@@ -516,4 +516,8 @@
  *
  * @subsubsection updata_log_343 版本3.4.3
  * @li 修复maya 插件加载默认项目不成功的问题
+ *
+ * @subsubsection updata_log_344 版本3.4.4
+ * @li 搜素功能 使用字符串匹配(非正则表达式只是 @b 子字符串)
+ *
  */

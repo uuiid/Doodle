@@ -2,37 +2,24 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
+namespace project_config {
+class base_config;
+class cloth_config;
+}  // namespace project_config
+
 /**
  * 项目信息类
  */
 class DOODLELIB_API project {
  public:
-  class DOODLELIB_API cloth_config {
-   public:
-    cloth_config();
-    FSys::path vfx_cloth_sim_path;
-
-    /**
-     * @brief 导出整个解算文件所需要的选择组
-     * 我们使用这个组导出整个解算结果
-     */
-    std::string export_group;
-
-    friend void to_json(nlohmann::json& j, const cloth_config& p) {
-      j["vfx_cloth_sim_path"] = p.vfx_cloth_sim_path;
-      j["export_group"]       = p.export_group;
-    }
-    friend void from_json(const nlohmann::json& j, cloth_config& p) {
-      j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
-      j.at("export_group").get_to(p.export_group);
-    }
-  };
+  using cloth_config = project_config::cloth_config;
 
   std::string p_name;
   FSys::path p_path;
 
   std::string p_en_str;
   std::string p_shor_str;
+
  private:
   void init_name();
 
@@ -53,7 +40,7 @@ class DOODLELIB_API project {
   [[nodiscard]] std::string short_str() const;
 
   static entt::handle get_current();
- 
+
   bool operator<(const project& in_rhs) const;
   bool operator>(const project& in_rhs) const;
   bool operator<=(const project& in_rhs) const;
@@ -72,5 +59,31 @@ class DOODLELIB_API project {
     p.init_name();
   }
 };
+namespace project_config {
+class DOODLELIB_API base_config {
+ public:
+  std::string find_icon_regex;
+};
 
+class DOODLELIB_API cloth_config {
+ public:
+  cloth_config();
+  FSys::path vfx_cloth_sim_path;
+
+  /**
+   * @brief 导出整个解算文件所需要的选择组
+   * 我们使用这个组导出整个解算结果
+   */
+  std::string export_group;
+
+  friend void to_json(nlohmann::json& j, const cloth_config& p) {
+    j["vfx_cloth_sim_path"] = p.vfx_cloth_sim_path;
+    j["export_group"]       = p.export_group;
+  }
+  friend void from_json(const nlohmann::json& j, cloth_config& p) {
+    j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
+    j.at("export_group").get_to(p.export_group);
+  }
+};
+}  // namespace project_config
 }  // namespace doodle
