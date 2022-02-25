@@ -149,7 +149,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   auto k_length = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
 
   ImGuiListClipper clipper{};
-  clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size()) / l_size) + 1);
+  clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
   while (clipper.Step()) {
     for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
       for (int l_j = 0; l_j < l_size; ++l_j) {
