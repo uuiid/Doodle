@@ -6,7 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
-  
+
 namespace pool_n {
 class bounded_limiter {
  private:
@@ -36,7 +36,6 @@ class null_limiter {
   }
 };
 }  // namespace pool_n
-
 
 /**
  * @brief Cooperative scheduler for processes.
@@ -79,11 +78,13 @@ class scheduler {
   };
 
   struct continuation {
-    continuation(process_handler *ref)
-        : handler{ref} {}
+    continuation(scheduler *in_self, process_handler *ref)
+        : handler{ref},
+          self_{in_self} {}
 
     template <typename Proc, typename... Args>
     continuation then(Args &&...args) {
+      std::lock_guard l_g{self_->mutex_};
       //      static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
       auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &scheduler::deleter<Proc>};
       handler->next.reset(new process_handler{std::move(proc), &scheduler::update<Proc>, &scheduler::abort<Proc>, nullptr});
@@ -98,6 +99,7 @@ class scheduler {
 
    private:
     process_handler *handler;
+    scheduler *self_;
   };
 
   template <typename Proc>
@@ -148,6 +150,7 @@ class scheduler {
    * @return Number of processes currently scheduled.
    */
   [[nodiscard]] size_type size() const ENTT_NOEXCEPT {
+    std::lock_guard l_g{mutex_};
     return handlers.size();
   }
 
@@ -156,6 +159,7 @@ class scheduler {
    * @return True if there are scheduled processes, false otherwise.
    */
   [[nodiscard]] bool empty() const ENTT_NOEXCEPT {
+    std::lock_guard l_g{mutex_};
     return handlers.empty() && handlers_next.empty();
   }
 
@@ -166,6 +170,7 @@ class scheduler {
    * and never executed again.
    */
   void clear() {
+    std::lock_guard l_g{mutex_};
     handlers.clear();
   }
 
@@ -196,12 +201,13 @@ class scheduler {
    */
   template <typename Proc, typename... Args>
   auto attach(Args &&...args) {
+    std::lock_guard l_g{mutex_};
     //    static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
     auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &scheduler::deleter<Proc>};
     process_handler handler{std::move(proc), &scheduler::update<Proc>, &scheduler::abort<Proc>, nullptr};
     // forces the process to exit the uninitialized state
-    handler.update(handler, {}, nullptr);
-    return continuation{&handlers_next.emplace_back(std::move(handler))};
+    // handler.update(handler, {}, nullptr);
+    return continuation{this, &handlers_next.emplace_back(std::move(handler))};
   }
 
   /**
@@ -273,6 +279,7 @@ class scheduler {
    * @param data Optional data.
    */
   void update(const Delta delta, void *data = nullptr) {
+    std::lock_guard l_g{mutex_};
     auto sz = handlers.size();
 
     for (auto pos = timiter_(handlers); pos; --pos) {
@@ -300,6 +307,7 @@ class scheduler {
    * @param immediately Requests an immediate operation.
    */
   void abort(const bool immediately = false) {
+    std::lock_guard l_g{mutex_};
     decltype(handlers) exec;
     exec.swap(handlers);
 
@@ -316,6 +324,7 @@ class scheduler {
  private:
   std::vector<process_handler> handlers{};
   decltype(handlers) handlers_next{};
+  std::recursive_mutex mutex_;
 };
 
 class DOODLELIB_API null_process_t : public process_t<null_process_t> {
