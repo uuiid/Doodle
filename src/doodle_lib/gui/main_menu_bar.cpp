@@ -15,7 +15,7 @@
 #include <gui/action/command_tool.h>
 #include <gui/action/command_video.h>
 #include <gui/widgets/project_widget.h>
-#include <gui/widgets/assets_widget.h>
+#include <gui/widgets/assets_filter_widget.h>
 #include <gui/setting_windows.h>
 #include <gui/get_input_dialog.h>
 #include <gui/widgets/long_time_tasks_widget.h>
@@ -133,7 +133,7 @@ void main_menu_bar::menu_file() {
 void main_menu_bar::menu_windows() {
   //  auto k_prj = g_reg()->try_ctx<project_widget>();
   this->p_i->make_widget<project_widget,
-                         assets_widget,
+                         assets_filter_widget,
                          assets_file_widgets,
                          setting_windows,
                          long_time_tasks_widget,
@@ -177,7 +177,7 @@ void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
 
   p_i->find_show<project_widget,
-                 assets_widget,
+                 assets_filter_widget,
                  assets_file_widgets,
                  setting_windows,
                  long_time_tasks_widget,

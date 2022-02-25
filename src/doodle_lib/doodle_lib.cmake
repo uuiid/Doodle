@@ -39,7 +39,7 @@ set(
         gui/action/command_ue4.h
         gui/action/command_video.h
         gui/widgets/assets_file_widgets.h
-        gui/widgets/assets_widget.h
+        gui/widgets/assets_filter_widget.h
         gui/widgets/edit_widgets.h
         gui/widgets/file_browser.h
         gui/widgets/long_time_tasks_widget.h
@@ -145,7 +145,7 @@ set(
         gui/action/command_ue4.cpp
         gui/action/command_video.cpp
         gui/widgets/assets_file_widgets.cpp
-        gui/widgets/assets_widget.cpp
+        gui/widgets/assets_filter_widget.cpp
         gui/widgets/edit_widgets.cpp
         gui/widgets/file_browser.cpp
         gui/widgets/long_time_tasks_widget.cpp

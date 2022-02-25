@@ -103,14 +103,14 @@ class DOODLELIB_API sort_entt {
  * @li 这里只显示资产树, 可以类比为文件夹树
  *
  */
-class DOODLELIB_API assets_widget : public process_t<assets_widget> {
+class DOODLELIB_API assets_filter_widget : public process_t<assets_filter_widget> {
   class impl;
   std::unique_ptr<impl> p_impl;
 
   void refresh_(bool force);
  public:
-  assets_widget();
-  ~assets_widget() override;
+  assets_filter_widget();
+  ~assets_filter_widget() override;
 
   constexpr static std::string_view name{"过滤"};
 

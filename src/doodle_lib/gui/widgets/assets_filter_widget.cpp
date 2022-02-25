@@ -2,7 +2,7 @@
 // Created by TD on 2021/9/16.
 //
 
-#include "assets_widget.h"
+#include "assets_filter_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
 
@@ -280,7 +280,7 @@ class assets_filter_factory : public gui::filter_factory_base {
               l_h.emplace_or_replace<assets>(i->data.data);
               l_h.patch<database>(database::save);
             }
-            g_reg()->ctx<assets_widget>().refresh(false);
+            g_reg()->ctx<assets_filter_widget>().refresh(false);
           }
         };
         l_node&& [this, i]() {
@@ -335,7 +335,7 @@ class time_filter_factory : public gui::filter_factory_base {
  public:
 };
 
-class assets_widget::impl {
+class assets_filter_widget::impl {
  public:
   bool only_rand{false};
   std::vector<boost::signals2::scoped_connection> p_conns;
@@ -350,13 +350,13 @@ class assets_widget::impl {
   bool is_edit{false};
 };
 
-assets_widget::assets_widget()
+assets_filter_widget::assets_filter_widget()
     : p_impl(std::make_unique<impl>()) {
 }
-assets_widget::~assets_widget() = default;
+assets_filter_widget::~assets_filter_widget() = default;
 
-void assets_widget::init() {
-  g_reg()->set<assets_widget&>(*this);
+void assets_filter_widget::init() {
+  g_reg()->set<assets_filter_widget&>(*this);
   p_impl->p_conns.emplace_back(
       g_reg()->ctx<core_sig>().project_begin_open.connect(
           [&](const std::filesystem::path&) {
@@ -372,16 +372,16 @@ void assets_widget::init() {
   p_impl->p_filter_factorys.emplace_back("镜头过滤"s, std::make_unique<shot_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
 }
-void assets_widget::succeeded() {
-  g_reg()->unset<assets_widget>();
+void assets_filter_widget::succeeded() {
+  g_reg()->unset<assets_filter_widget>();
 }
-void assets_widget::failed() {
-  g_reg()->unset<assets_widget>();
+void assets_filter_widget::failed() {
+  g_reg()->unset<assets_filter_widget>();
 }
-void assets_widget::aborted() {
-  g_reg()->unset<assets_widget>();
+void assets_filter_widget::aborted() {
+  g_reg()->unset<assets_filter_widget>();
 }
-void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   /// 渲染数据
   dear::Disabled l_d{p_impl->only_rand};
 
@@ -403,10 +403,10 @@ void assets_widget::update(chrono::duration<chrono::system_clock::rep, chrono::s
     refresh(false);
   }
 }
-void assets_widget::refresh(bool force) {
+void assets_filter_widget::refresh(bool force) {
   g_main_loop().attach<one_process_t>([this, force]() { this->refresh_(force); });
 }
-void assets_widget::refresh_(bool force) {
+void assets_filter_widget::refresh_(bool force) {
   p_impl->is_edit = false;
   p_impl->p_filters.clear();
   boost::copy(p_impl->p_filter_factorys |
