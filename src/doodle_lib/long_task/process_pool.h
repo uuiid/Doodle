@@ -39,15 +39,12 @@ class null_limiter {
 
 /**
  * @brief Cooperative scheduler for processes.
+ * 协作调度器运行进程并帮助管理它们的生命周期。
+ * 每个进程更新异常。如果一个进程终止，它将被自动从调度程序中删除，并且不再调用它
  *
- * A cooperative scheduler runs processes and helps managing their life cycles.
+ * 一个过程也可以有一个孩子。在这种情况下，该过程被替换为
  *
- * Each process is invoked once per tick. If a process terminates, it's
- * removed automatically from the scheduler and it's never invoked again.<br/>
- * A process can also have a child. In this case, the process is replaced with
- * its child when it terminates if it returns with success. In case of errors,
- * both the process and its child are discarded.
- *
+ * 如果成功返回，则终止。如果出现错误， 进程及其子进程都将被丢弃。
  * Example of use (pseudocode):
  *
  * @code{.cpp}
@@ -56,12 +53,10 @@ class null_limiter {
  * }).then<my_process>(arguments...);
  * @endcode
  *
- * In order to invoke all scheduled processes, call the `update` member function
- * passing it the elapsed time to forward to the tasks.
+ * 为了调用所有计划的进程，调用'update'成员函数，将转发到任务所用的时间传递给它。
  *
- * @sa process
- *
- * @tparam Delta Type to use to provide elapsed time.
+ * @tparam 时间类
+ * @tparam Timiter 限制器类
  */
 template <typename Delta, typename Timiter>
 class scheduler {
@@ -77,6 +72,10 @@ class scheduler {
     next_type next;
   };
 
+  /**
+   * @brief 匿名连接对象
+   *
+   */
   struct continuation {
     continuation(scheduler *in_self, process_handler *ref)
         : handler{ref},
@@ -155,7 +154,7 @@ class scheduler {
   }
 
   /**
-   * @brief Returns true if at least a process is currently scheduled.
+   * @brief 测试是否为空, 会测试所有的列表
    * @return True if there are scheduled processes, false otherwise.
    */
   [[nodiscard]] bool empty() const ENTT_NOEXCEPT {
