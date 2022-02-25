@@ -68,18 +68,11 @@ class path_attr {
     return !(in_rhs == *this);
   }
   bool operator<(const path_attr& in_rhs) const {
-    return std::tie(  //
-               is_dir,
-               last_time,
-               size,
+    return std::tie(
                path
                //
-               ) < std::tie(  //
-                       in_rhs.is_dir,
-                       in_rhs.last_time,
-                       in_rhs.size,
-                       in_rhs.path
-                       //
+               ) < std::tie(in_rhs.path
+                            //
                    );
   }
   bool operator>(const path_attr& in_rhs) const {
