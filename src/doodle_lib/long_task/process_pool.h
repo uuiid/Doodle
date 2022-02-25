@@ -6,8 +6,8 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
+  
 namespace pool_n {
-
 class bounded_limiter {
  private:
   std::atomic_int16_t max_process{};
