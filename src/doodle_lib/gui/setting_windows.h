@@ -74,7 +74,7 @@ class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
+  [[maybe_unused]] void update(const delta_type&, void* data);
 
   void save();
 };

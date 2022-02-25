@@ -33,8 +33,8 @@ void setting_windows::save() {
   set.set_max_tread(p_batch_max);
   set.get_ue4_setting().set_path(p_ue_path);
   set.get_ue4_setting().set_version(p_ue_version);
-  set.max_install_reg_entt = boost::numeric_cast<std::uint16_t>(p_max_reg);
-  set.timeout              = p_timeout;
+  set.max_install_reg_entt  = boost::numeric_cast<std::uint16_t>(p_max_reg);
+  set.timeout               = p_timeout;
   g_bounded_pool().timiter_ = p_batch_max;
   core_set_init{}.write_file();
 }
@@ -56,8 +56,8 @@ void setting_windows::aborted() {
   save();
 }
 void setting_windows::update(
-    chrono::duration<chrono::system_clock::rep,
-                     chrono::system_clock::period>,
+    const chrono::duration<chrono::system_clock::rep,
+                           chrono::system_clock::period>&,
     void* data) {
   dear::Combo{"部门", p_dep_list[p_cur_dep_index].data()} && [this]() {
     for (int k_i = 0; k_i < p_dep_list.size(); ++k_i) {
