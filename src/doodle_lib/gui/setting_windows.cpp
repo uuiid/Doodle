@@ -35,7 +35,7 @@ void setting_windows::save() {
   set.get_ue4_setting().set_version(p_ue_version);
   set.max_install_reg_entt = boost::numeric_cast<std::uint16_t>(p_max_reg);
   set.timeout              = p_timeout;
-  g_bounded_pool().set_bounded(boost::numeric_cast<std::int16_t>(p_batch_max));
+  g_bounded_pool().timiter_ = p_batch_max;
   core_set_init{}.write_file();
 }
 setting_windows::~setting_windows() = default;

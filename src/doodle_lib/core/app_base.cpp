@@ -35,8 +35,7 @@ app_base::app_base()
   k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
-  g_bounded_pool()
-      .set_bounded(boost::numeric_cast<std::uint16_t>(core_set::getSet().p_max_thread));
+  g_bounded_pool().timiter_ = core_set::getSet().p_max_thread;
   g_main_loop().attach<one_process_t>([this]() {
     this->load_back_end();
   });
