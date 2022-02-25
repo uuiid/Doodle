@@ -139,10 +139,10 @@ class scheduler {
   scheduler()             = default;
 
   /*! @brief Default move constructor. */
-  scheduler(scheduler &&) = default;
+  scheduler(scheduler &&)  noexcept = default;
 
   /*! @brief Default move assignment operator. @return This scheduler. */
-  scheduler &operator=(scheduler &&) = default;
+  scheduler &operator=(scheduler &&)  noexcept = default;
 
   /**
    * @brief Number of processes currently scheduled.
