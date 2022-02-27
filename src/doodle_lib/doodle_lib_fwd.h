@@ -11,6 +11,7 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib_export.h>
 #include <doodle_lib/core/static_value.h>
+#include <doodle_lib/core/core_help_impl.h>
 //开始我们的名称空间
 namespace doodle {
 namespace details {
@@ -92,71 +93,11 @@ using istream  = std::istream;
 using ifstream = std::ifstream;
 using ofstream = std::ofstream;
 using ostream  = std::ostream;
-
-// class path : public ::std::filesystem::path{
-//  public:
-//
-// };
-
-// using std::filesystem::filesystem_error;
-// using std::filesystem::directory_entry;
-// using std::filesystem::directory_iteratorr;
-// using std::filesystem::recursive_directory_iterator;
-// using std::filesystem::file_status;
-// using std::filesystem::space_info;
-// using std::filesystem::file_type;
-// using std::filesystem::perms;
-// using std::filesystem::perm_options;
-// using std::filesystem::copy_options;
-// using std::filesystem::directory_options;
-// using std::filesystem::file_time_type;
-//
-// using std::filesystem::absolute;
-// using std::filesystem::canonical;
-// using std::filesystem::weakly_canonical;
-// using std::filesystem::copy;
-// using std::filesystem::copy_file;
-// using std::filesystem::copy_symlink;
-// using std::filesystem::create_directories;
-// using std::filesystem::create_directory;
-// using std::filesystem::create_hard_link;
-// using std::filesystem::create_symlink;
-// using std::filesystem::create_directory_symlink;
-// using std::filesystem::current_path;
-// using std::filesystem::exists;
-// using std::filesystem::equivalent;
-// using std::filesystem::file_size;
-// using std::filesystem::hard_link_count;
-// using std::filesystem::last_write_time;
-// using std::filesystem::permissions;
-// using std::filesystem::read_symlink;
-// using std::filesystem::remove;
-// using std::filesystem::remove_all;
-// using std::filesystem::rename;
-// using std::filesystem::resize_file;
-// using std::filesystem::space;
-// using std::filesystem::status;
-// using std::filesystem::symlink_status;
-// using std::filesystem::temp_directory_path;
-//
-// using std::filesystem::is_block_file;
-// using std::filesystem::is_character_file;
-// using std::filesystem::is_directory;
-// using std::filesystem::is_empty;
-// using std::filesystem::is_fifo;
-// using std::filesystem::is_other;
-// using std::filesystem::is_regular_file;
-// using std::filesystem::is_socket;
-// using std::filesystem::is_symlink;
-// using std::filesystem::status;
 DOODLELIB_API inline path make_path(const std::string &in_string) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
   return path{convert.from_bytes(in_string)};
 }
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
-// DOODLELIB_API inline chrono::sys_time_pos last_write_time_point(const path &in_path) {
-//   return std::chrono::system_clock::from_time_t(last_write_time_t(in_path));
-// }
 DOODLELIB_API chrono::sys_time_pos last_write_time_point(const path &in_path);
 DOODLELIB_API void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point);
 DOODLELIB_API path add_time_stamp(const path &in_path);
@@ -166,6 +107,9 @@ DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
+
+
+
 
 using namespace entt::literals;
 using namespace std::literals;
@@ -207,20 +151,10 @@ using logger_ctr_ptr      = std::shared_ptr<logger_ctrl>;
 using program_options_ptr = std::shared_ptr<program_options>;
 using conn_ptr            = std::unique_ptr<sqlpp::sqlite3::connection>;
 using string_list         = std::vector<std::string>;
-using string_matrix2      = std::vector<string_list>;
-using string_matrix2_ptr  = std::shared_ptr<string_matrix2>;
-using string_list_ptr     = std::shared_ptr<string_list>;
-using season_ref          = std::reference_wrapper<season>;
-using project_ref         = std::reference_wrapper<project>;
-using episodes_ref        = std::reference_wrapper<episodes>;
-using shot_ref            = std::reference_wrapper<shot>;
-using assets_ref          = std::reference_wrapper<assets>;
-using assets_file_ref     = std::reference_wrapper<assets_file>;
-using command_ptr         = std::shared_ptr<command_base>;
+
 using doodle_lib_ptr      = std::shared_ptr<doodle_lib>;
 using thread_pool_ptr     = std::shared_ptr<thread_pool>;
 using registry_ptr        = std::shared_ptr<entt::registry>;
-class time_widget;
 
 using uuid = boost::uuids::uuid;
 

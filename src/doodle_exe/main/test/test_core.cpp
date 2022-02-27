@@ -136,12 +136,7 @@ class test_hash {
     return 1;
   }
 };
-template <typename Type>
-struct entt::type_hash<Type, std::void_t<decltype(Type::class_hash())>> {
-  static entt::id_type value() ENTT_NOEXCEPT {
-    return Type::class_hash();
-  }
-};
+
 TEST_CASE("test entt hash") {
   std::cout << entt::type_id<test_hash>().hash() << std::endl;
   std::cout << entt::type_id<project>().hash() << std::endl;

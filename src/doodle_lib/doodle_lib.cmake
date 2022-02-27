@@ -45,7 +45,6 @@ set(
         gui/widgets/long_time_tasks_widget.h
         gui/widgets/opencv_player_widget.h
         gui/widgets/project_widget.h
-        gui/widgets/time_widget.h
         gui/widgets/screenshot_widget.h
         gui/widgets/drag_widget.h
         gui/widgets/project_edit.h
@@ -97,7 +96,7 @@ set(
         long_task/drop_file_data.h
         long_task/short_cut.h
         long_task/image_load_task.h
-
+        core/core_help_impl.h
 
         platform/win/drop_manager.h
         platform/win/list_drive.h
@@ -151,7 +150,6 @@ set(
         gui/widgets/long_time_tasks_widget.cpp
         gui/widgets/opencv_player_widget.cpp
         gui/widgets/project_widget.cpp
-        gui/widgets/time_widget.cpp
         gui/widgets/screenshot_widget.cpp
         gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp
