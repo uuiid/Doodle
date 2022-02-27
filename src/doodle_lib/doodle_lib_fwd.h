@@ -31,89 +31,18 @@ class no_copy {
  * @brief 判断是否是智能指针
  *
  * @tparam T 需要判断的类型
- * @tparam Enable 辅助类
  */
-template <typename T, typename Enable = void>
-struct is_smart_pointer {
-  /**
-   * @brief 不是智能指针
-   *
-   */
-  static const auto value = std::false_type::value;
-};
+template <typename T, typename = void>
+struct is_smart_pointer : public std::false_type {};
 /**
  * @brief 判断是否是智能指针
  *
  * @tparam T 需要判断的类型
  * @tparam Enable 辅助类
  */
-template <typename T>
-struct is_smart_pointer<T,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<T>::type,
-                                std::shared_ptr<typename T::element_type>>::value>::type> {
-  /**
-   * @brief 是智能指针
-   *
-   */
-  static const auto value = std::true_type::value;
-};
-/**
- * @brief 判断是否是智能指针
- *
- * @tparam T 需要判断的类型
- * @tparam Enable 辅助类
- */
-template <typename T>
-struct is_smart_pointer<T,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<T>::type,
-                                std::unique_ptr<typename T::element_type>>::value>::type> {
-  /**
-   * @brief 是智能指针
-   *
-   */
-  static const auto value = std::true_type::value;
-};
-/**
- * @brief 判断是否是智能指针
- *
- * @tparam T 需要判断的类型
- * @tparam Enable 辅助类
- */
-template <typename T>
-struct is_smart_pointer<T,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<T>::type,
-                                std::weak_ptr<typename T::element_type>>::value>::type> {
-  /**
-   * @brief 是智能指针
-   *
-   */
-  static const auto value = std::true_type::value;
-};
 
-/**
- * 这个是判断指针或者共享指针是什么类的帮助函数
- * @tparam T 是否是这个类
- * @tparam RT 传入的类型
- * @param in_rt 输入的
- * @return 是否是可以转换的
- */
-template <class T, class RT>
-bool is_class(const RT &in_rt) {
-  if constexpr (is_smart_pointer<RT>::value) {
-    if (!in_rt)
-      return false;
-    const auto &k_item = *in_rt;
-    return typeid(T) == typeid(k_item);
-  } else {
-    return typeid(T) == typeid(in_rt);
-  }
-}
+template <typename T>
+struct is_smart_pointer<T, std::void_t<decltype(T::element_type)>> : public std::true_type {};
 
 /// to boost::less_pointees_t;
 
@@ -295,19 +224,18 @@ class time_widget;
 
 using uuid = boost::uuids::uuid;
 
+namespace pool_n {
+class bounded_limiter;
+class null_limiter;
+}  // namespace pool_n
 
-namespace pool_n{
-  class bounded_limiter ;
-  class null_limiter ;
-}
-
-template <typename Delta,typename Timiter = pool_n::null_limiter>
+template <typename Delta, typename Timiter = pool_n::null_limiter>
 class DOODLELIB_API scheduler;
 
 template <class Derived>
 using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
 using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
-using bounded_pool_t = scheduler<std::chrono::system_clock::duration,pool_n::bounded_limiter>;
+using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
 DOODLELIB_API registry_ptr &g_reg();
 DOODLELIB_API scheduler_t &g_main_loop();
@@ -371,7 +299,6 @@ using string_ptr              = std::shared_ptr<string>;
 
 using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
 using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
-
 
 namespace gui {
 template <class T>
