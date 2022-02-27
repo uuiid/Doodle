@@ -62,7 +62,13 @@ class DOODLELIB_API project {
 namespace project_config {
 class DOODLELIB_API base_config {
  public:
+  base_config() = default;
   std::string find_icon_regex;
+
+  friend void to_json(nlohmann::json& j, const base_config& p) {
+  }
+  friend void from_json(const nlohmann::json& j, base_config& p) {
+  }
 };
 
 class DOODLELIB_API cloth_config {
