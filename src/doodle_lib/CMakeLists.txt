@@ -48,25 +48,18 @@ target_link_libraries(doodle_lib
         PUBLIC
         date::date
         date::date-tz
-        #        SqlppSqlite
         DoodleLibResource
-        # RTTR::Core
-        # cereal
         magic_enum::magic_enum
         Boost::locale
-        Boost::filesystem
         Boost::program_options
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         EnTT::EnTT
         spdlog::spdlog
-        # csv
         Catch2::Catch2
-        #        SqlppMySql #这个是我们自己寻找的mysql sqlpp连接器
         sqlpp11::sqlite3
         sqlpp11::sqlpp11
         imgui::imgui
-        #        gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_reflection
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp-static
         PRIVATE

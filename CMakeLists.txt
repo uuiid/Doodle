@@ -41,12 +41,8 @@ list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
 find_package(Boost 1.75 REQUIRED COMPONENTS
-        filesystem
-        date_time
-        log
         locale
         iostreams
-        serialization
         program_options
         )
 
