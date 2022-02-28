@@ -90,6 +90,9 @@ class DOODLELIB_API cloth_config {
     j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
     j.at("export_group").get_to(p.export_group);
   }
+  constexpr static std::uint32_t class_hash() {
+    return "class doodle::project::cloth_config"_hs;
+  }
 };
 }  // namespace project_config
 }  // namespace doodle

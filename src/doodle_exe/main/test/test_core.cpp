@@ -132,7 +132,7 @@ class test_path_2 : public test_path_ {
 };
 class test_hash {
  public:
-  constexpr static std::int32_t class_hash() {
+  constexpr static std::uint32_t class_hash() {
     return 1;
   }
 };
@@ -143,6 +143,7 @@ TEST_CASE("test entt hash") {
   std::cout << entt::type_id<episodes>().hash() << std::endl;
   std::cout << "class doodle::episodes"_hs << std::endl;
   REQUIRE(entt::type_id<episodes>().hash() == "class doodle::episodes"_hs);
+  REQUIRE(648452978 == "class doodle::project::cloth_config"_hs);
 }
 
 TEST_CASE_METHOD(test_path_2, "test_path_1", "[fun][path]") {
