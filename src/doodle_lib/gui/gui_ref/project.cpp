@@ -74,4 +74,37 @@ void cloth_config_edit::render(const entt::handle& in) {
   };
 }
 cloth_config_edit::~cloth_config_edit() = default;
+
+class modle_config_edit::impl {
+ public:
+  impl() : regex_("正则表达式"s, ""s) {}
+  gui_cache<std::string> regex_;
+  std::string err_str;
+};
+
+modle_config_edit::modle_config_edit()
+    : p_i(std::make_unique<impl>()) {}
+
+void modle_config_edit::init_(const entt::handle& in) {
+  p_i->regex_ = in.get_or_emplace<project_config::model_config>().find_icon_regex;
+}
+void modle_config_edit::render(const entt::handle& in) {
+  if (ImGui::InputText(*p_i->regex_.gui_name, &p_i->regex_.data, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    try {
+      std::regex l_regex{p_i->regex_.data};
+      set_modify(true);
+      p_i->err_str.clear();
+    } catch (const std::regex_error& error) {
+      p_i->err_str = fmt::format("错误的正则表达式 {}", p_i->regex_.data);
+      DOODLE_LOG_ERROR(p_i->err_str)
+    }
+  };
+  if (!p_i->err_str.empty()) {
+    dear::Text(p_i->err_str);
+  }
+}
+void modle_config_edit::save_(const entt::handle& in) const {
+  in.get<project_config::model_config>().find_icon_regex = p_i->regex_;
+}
+modle_config_edit::~modle_config_edit() = default;
 }  // namespace doodle::gui
