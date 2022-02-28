@@ -54,6 +54,11 @@ class assets_file_widgets::impl {
         if (handle_.all_of<database>())
           name = fmt::to_string(handle_.get<database>().get_id());
       }
+
+      if (handle_.all_of<image_icon>() && !handle_.get<image_icon>().image) {
+        g_main_loop()
+            .attach<image_load_task>(handle_);
+      }
     };
 
     void compute_size(float max_length) {
@@ -74,24 +79,11 @@ class assets_file_widgets::impl {
     void load_image(float max_length) {
       image_loader k_load{};
       if (handle_.any_of<image_icon>()) {
-        /// @brief 如果有图标就渲染
-        if (!handle_.get<image_icon>().image)
-          g_main_loop()
-              .attach<image_load_task>(handle_)
-              .then<one_process_t>([self = this, h = handle_, max_length]() {
-                if (self) {
-                  auto& l_i           = h.get<image_icon>();
-                  self->image         = l_i.image;
-                  self->image.size2d_ = l_i.size2d_;
-                  self->compute_size(max_length);
-                }
-              });
-        else {
-          auto&& k_icon = handle_.get<image_icon>();
-          image         = k_icon.image;
-          image.size2d_ = k_icon.size2d_;
-          compute_size(max_length);
-        }
+        /// @brief 如果有图标就获取
+        auto&& k_icon = handle_.get<image_icon>();
+        image         = k_icon.image;
+        image.size2d_ = k_icon.size2d_;
+        compute_size(max_length);
       } else {
         /// @brief 否则默认图标
         image = k_load.default_image();
