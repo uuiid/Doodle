@@ -61,9 +61,9 @@ MStatus comm_check_scenes::unlock_normal() {
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
 
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
-    k_s = run_maya_py_script(R"(import pymel.core
-pymel.core.polyNormalPerVertex(unFreezeNormal=True)
-pymel.core.polySoftEdge(angle=180, constructionHistory=True)
+    k_s = run_maya_py_script(R"(import maya.cmds
+maya.cmds.polyNormalPerVertex(unFreezeNormal=True)
+maya.cmds.polySoftEdge(angle=180, constructionHistory=True)
     )");
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
