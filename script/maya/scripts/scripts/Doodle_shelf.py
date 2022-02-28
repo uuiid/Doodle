@@ -14,9 +14,7 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 
-import pymel.core
-import pymel.core.system
-import pymel.core.nodetypes
+
 import maya_fun_tool as Doodle_fun_tool
 
 
@@ -47,7 +45,7 @@ class DlsShelf(shelfBase._shelf):
                       command=self.randomColor)
         self.addButon("hud", "icons/create_hud.png",
                       command=cmds.create_hud_node_maya)
-        self.addButon("af","icons/doodle_afterimage.png",
+        self.addButon("af", "icons/doodle_afterimage.png",
                       command=cmds.doodle_afterimage)
 
     def polyremesh(self):
