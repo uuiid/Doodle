@@ -238,7 +238,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
 
   bool is_select(tree_node_type* in_root) const {
-    return in_root == p_cur_select;
+    return in_root == p_cur_select.get();
   }
 
   std::unique_ptr<gui::filter_base> make_filter_() override {
@@ -281,7 +281,7 @@ class assets_filter_factory : public gui::filter_factory_base {
       {
         dear::TreeNodeEx l_node{*i->data.gui_name, k_f};
         if (ImGui::IsItemClicked()) {
-          p_cur_select  = i.get();
+          p_cur_select  = i;
           p_popen.data  = i->data.gui_name.name;
           this->is_edit = true;
         }
@@ -326,7 +326,7 @@ class assets_filter_factory : public gui::filter_factory_base {
         p_popen("name"s, "null"s) {
     // p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
-  tree_node_type* p_cur_select;
+  tree_node_type::child_type p_cur_select;
 
   bool render() override {
     {
@@ -391,7 +391,7 @@ class assets_filter_widget::impl {
 
   std::vector<factory_gui_cache> p_filter_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
-  bool is_edit{false};
+  bool run_edit{false};
 };
 
 assets_filter_widget::assets_filter_widget()
@@ -430,12 +430,15 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
   /// 渲染数据
   dear::Disabled l_d{p_impl->only_rand};
 
+  bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {
+    bool l_refresh{false};
     if (ImGui::Checkbox(*i.gui_name, &i.select)) {
-      p_impl->is_edit = true;
+      l_is_edit = true;
+      l_refresh = i.select;
     }
     if (i.select) {
-      i.data->refresh(p_impl->is_edit);
+      i.data->refresh(l_refresh);
       i.data->render();
     }
   }
@@ -444,15 +447,19 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
                                [](const impl::factory_gui_cache& in) {
                                  return in.select && in.data->is_edit;
                                }) ||
-      p_impl->is_edit) {
+      l_is_edit) {
     refresh(false);
   }
 }
 void assets_filter_widget::refresh(bool force) {
-  g_main_loop().attach<one_process_t>([this, force]() { this->refresh_(force); });
+  if (!p_impl->run_edit)
+    g_main_loop().attach<one_process_t>([this, force]() {
+      p_impl->run_edit = true;
+      this->refresh_(force);
+      p_impl->run_edit = false;
+    });
 }
 void assets_filter_widget::refresh_(bool force) {
-  p_impl->is_edit = false;
   p_impl->p_filters.clear();
   boost::copy(p_impl->p_filter_factorys |
                   boost::adaptors::filtered([](const impl::factory_gui_cache& in) -> bool {
