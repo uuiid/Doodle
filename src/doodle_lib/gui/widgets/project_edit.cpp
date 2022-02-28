@@ -24,6 +24,7 @@ class project_edit::impl {
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
   p_i->p_edits.emplace_back("项目编辑", std::make_unique<gui::project_edit>());
+  p_i->p_edits.emplace_back("模型配置", std::make_unique<gui::modle_config_edit>());
   p_i->p_edits.emplace_back("解算配置", std::make_unique<gui::cloth_config_edit>());
 
   ranges::for_each(p_i->p_edits, [this](impl::cache& in_edit) {
@@ -49,7 +50,9 @@ void project_edit::update(const chrono::duration<chrono::system_clock::rep,
                                                  chrono::system_clock::period>&,
                           void* data) {
   p_i->data_edit.render(p_i->p_h);
+  ImGui::Separator();
   boost::for_each(p_i->p_edits, [this](impl::cache& in) {
+    dear::Text(in.gui_name.name);
     in.data->render(p_i->p_h);
     in.data->save(p_i->p_h);
   });
