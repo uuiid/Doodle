@@ -33,7 +33,6 @@ void project_edit::save_(const entt::handle& in) const {
   g_reg()->set<project>(in.get<project>());
 }
 void project_edit::render(const entt::handle& in) {
-  ImGui::Text("基本配置");
   dear::Text(fmt::format("{}: {}", p_i->project_path.gui_name.name, p_i->project_path.data));
 
   if (ImGui::InputText(*p_i->project_name.gui_name, &p_i->project_name.data)) {
