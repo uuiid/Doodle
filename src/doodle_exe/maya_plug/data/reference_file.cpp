@@ -354,7 +354,7 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
   /**
    *
    * @brief
-   * pymel.core.bakeResults(simulation=True,
+   * bakeResults(simulation=True,
    *  time=(doodle_work_space.raneg.start,
    *        doodle_work_space.raneg.end),
    *  hierarchy="below",
