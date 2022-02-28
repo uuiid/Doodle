@@ -65,7 +65,7 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
     cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGR);
     return std::make_tuple(k_image, k_sh);
   }
-  return std::tuple<cv::Mat, std::shared_ptr<void>>();
+  return {};
 }
 bool image_loader::load(image_icon& in_icon) {
   auto [l_cv, l_sh] = load_mat(in_icon.path);
