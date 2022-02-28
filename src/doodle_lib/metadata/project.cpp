@@ -110,4 +110,7 @@ entt::handle project::get_current() {
   return {};
 }
 
+project_config::model_config::model_config()
+    : find_icon_regex("UE4") {
+}
 }  // namespace doodle

@@ -62,7 +62,7 @@ class DOODLELIB_API project {
 namespace project_config {
 class DOODLELIB_API model_config {
  public:
-  model_config() = default;
+  model_config() ;
   /**
    * @brief 寻找拖入文件时的图标的正则表达式
    */
