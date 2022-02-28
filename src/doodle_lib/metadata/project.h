@@ -3,7 +3,7 @@
 
 namespace doodle {
 namespace project_config {
-class base_config;
+class model_config;
 class cloth_config;
 }  // namespace project_config
 
@@ -60,14 +60,19 @@ class DOODLELIB_API project {
   }
 };
 namespace project_config {
-class DOODLELIB_API base_config {
+class DOODLELIB_API model_config {
  public:
-  base_config() = default;
+  model_config() = default;
+  /**
+   * @brief 寻找拖入文件时的图标的正则表达式
+   */
   std::string find_icon_regex;
 
-  friend void to_json(nlohmann::json& j, const base_config& p) {
+  friend void to_json(nlohmann::json& j, const model_config& p) {
+    j["find_icon_regex"] = p.find_icon_regex;
   }
-  friend void from_json(const nlohmann::json& j, base_config& p) {
+  friend void from_json(const nlohmann::json& j, model_config& p) {
+    j.at("find_icon_regex").get_to(p.find_icon_regex);
   }
 };
 

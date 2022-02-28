@@ -92,9 +92,8 @@ bool database::is_install() const {
                              assets_file,                  \
                              time_point_wrap,              \
                              comment,                      \
-                             std::vector<comment>,         \
                              project_config::cloth_config, \
-                             project_config::base_config,  \
+                             project_config::model_config,  \
                              image_icon
 
 database &database::operator=(const metadata_database &in_) {
