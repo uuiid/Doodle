@@ -13,15 +13,12 @@
  *
  * @ref doc/schedule.md "描述" \n
  *
- * @todo 模型库快速排列
  * @todo ue4 导入使用元数据格式解析
  * @todo ue4 导入添加道具搜素
  * @todo ue4 火光复制功能添加
  * @todo 创建检查maya 场景工具架
  * @todo 添加只输出abc功能
  * @todo ue4 gpu超时更新
- *
- * @todo 图片识别（正则表达）
  *
  *
  * @section main_management_tool 主要窗口
