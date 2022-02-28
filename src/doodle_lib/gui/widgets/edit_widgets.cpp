@@ -185,7 +185,7 @@ class add_assets_for_file : public base_render {
             FSys::directory_iterator{}),
         [&](const FSys::path &in_file) {
           auto &&l_ext = in_file.extension();
-          return (l_ext == ".png" || l_ext == ".jpg") && std::regex_match(in_file.filename().generic_string(),l_regex);
+          return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(),l_regex);
         });
     if (k_imghe_path != FSys::directory_iterator{}) {
       l_image_load.save(in_handle, k_imghe_path->path());
