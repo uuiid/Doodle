@@ -5,7 +5,7 @@ import maya.cmds as cmds
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
 import scripts.Doodle_deleteSurplusWeight as deleteWeight
-import scripts.Doodle_deleteAttr as deleteAttr
+# import scripts.Doodle_deleteAttr as deleteAttr
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -32,8 +32,8 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("remesh", icon="icons/remesh.png",
                       command=self.polyremesh)
 
-        self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
-                      command=self.deleteWeightPoint)
+        # self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
+        #               command=self.deleteWeightPoint)
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
 
@@ -65,9 +65,9 @@ class DlsShelf(shelfBase._shelf):
         self.re()
         deleteWeight.deleteSurplusWeight().show()
 
-    def deleteAttr(self):
-        self.re()
-        deleteAttr.deleteShape().show()
+    # def deleteAttr(self):
+    #     self.re()
+    #     deleteAttr.deleteShape().show()
 
     def randomColor(self):
         import pymel.core
@@ -85,7 +85,7 @@ class DlsShelf(shelfBase._shelf):
             reload(Doodle_PolyRemesh)
             reload(Doodle_clear)
             reload(deleteWeight)
-            reload(deleteAttr)
+            # reload(deleteAttr)
             reload(Doodle_fun_tool)
 
 

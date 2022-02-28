@@ -1,4 +1,3 @@
-from pickle import TRUE
 import maya.cmds
 import maya.mel
 from PySide2 import QtCore
