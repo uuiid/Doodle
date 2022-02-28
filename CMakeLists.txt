@@ -171,7 +171,7 @@ doxygen_add_docs(Doxygen
 "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
 "D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=C:\Users\TD\Source\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=C:\Users\TD\Source\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-.\vcpkg.exe install eigen boost sqlpp11 directxtk catch2 opencv date cereal spdlog cryptopp magic-enum nlohmann-json  opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
+.\vcpkg.exe install eigen boost sqlpp11 directxtk catch2 date cereal spdlog cryptopp magic-enum nlohmann-json  opencv[ffmpeg,contrib] imgui[win32-binding,dx11-binding,docking-experimental]
 imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
