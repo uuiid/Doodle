@@ -55,6 +55,8 @@ set(doodle_maya_plug_cpp
         maya_comm/afterimage_comm.cpp
         data/sim_overr_attr.h
         data/sim_overr_attr.cpp
+        data/maya_clear_scenes.cpp
+        data/maya_clear_scenes.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
