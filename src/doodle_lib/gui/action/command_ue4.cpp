@@ -9,7 +9,6 @@
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
-#include <doodle_lib/gui/widgets/time_widget.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 namespace doodle {
