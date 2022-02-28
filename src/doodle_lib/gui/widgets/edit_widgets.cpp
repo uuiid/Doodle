@@ -176,7 +176,7 @@ class add_assets_for_file : public base_render {
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
 
-    std::regex l_regex{project::get_current().get<project_config::model_config>().find_icon_regex};
+    std::regex l_regex{project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex};
 
     auto k_imghe_path = ranges::find_if(
         ranges::make_subrange(
