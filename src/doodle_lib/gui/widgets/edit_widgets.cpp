@@ -175,14 +175,17 @@ class add_assets_for_file : public base_render {
 
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
+
+    std::regex l_regex{project::get_current().get<project_config::model_config>().find_icon_regex};
+
     auto k_imghe_path = ranges::find_if(
         ranges::make_subrange(
             FSys::directory_iterator{
                 is_directory(in_path) ? in_path : in_path.parent_path()},
             FSys::directory_iterator{}),
-        [](const FSys::path &in_file) {
+        [&](const FSys::path &in_file) {
           auto &&l_ext = in_file.extension();
-          return l_ext == ".png" || l_ext == ".jpg";
+          return (l_ext == ".png" || l_ext == ".jpg") && std::regex_match(in_file.filename().generic_string(),l_regex);
         });
     if (k_imghe_path != FSys::directory_iterator{}) {
       l_image_load.save(in_handle, k_imghe_path->path());
@@ -238,7 +241,7 @@ class add_assets_for_file : public base_render {
     dear::DragDropTarget{} && [&]() {
       if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
         auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
-        add_assets(k_list->files_);
+        this->add_assets(k_list->files_);
       }
     };
   };

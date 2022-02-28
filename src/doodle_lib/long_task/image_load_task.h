@@ -22,4 +22,7 @@ class DOODLELIB_API image_load_task : public process_t<image_load_task> {
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(const delta_type&, void* data);
 };
+
+
+
 }  // namespace doodle
