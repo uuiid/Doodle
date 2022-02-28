@@ -3,13 +3,9 @@ import shelfBase
 import maya.cmds as cmds
 
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
-import scripts.Doodle_exportUe as Doodle_exportUe
-import scripts.Doodle_cam as Doodle_cam
 import scripts.Doodle_clear as Doodle_clear
-import scripts.Doodle_dem_bone as Doodle_dem_bone
 import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
-import scripts.export_usd as export_usd
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -87,13 +83,9 @@ class DlsShelf(shelfBase._shelf):
         key = QtWidgets.QApplication.keyboardModifiers()
         if key == QtCore.Qt.ShiftModifier:
             reload(Doodle_PolyRemesh)
-            reload(Doodle_exportUe)
-            reload(Doodle_cam)
             reload(Doodle_clear)
-            reload(Doodle_dem_bone)
             reload(deleteWeight)
             reload(deleteAttr)
-            reload(export_usd)
             reload(Doodle_fun_tool)
 
 

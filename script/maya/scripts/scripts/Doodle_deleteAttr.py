@@ -1,4 +1,6 @@
-import pymel.core
+from pickle import TRUE
+import maya.cmds
+import maya.mel
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -25,7 +27,8 @@ class deleButten(QtWidgets.QPushButton):
 
     def deleteAttrDef(self):
         # print(self.index)
-        pymel.core.evalEcho("blendShapeDeleteTargetGroup {} {}".format(self.node, self.index))
+        maya.mel.eval("blendShapeDeleteTargetGroup {} {}".format(
+            self.node, self.index))
         print("delete : {}--> {}".format(self.node, self.deleteAttr.getAlias()))
         self.deleteLater()
 
@@ -74,11 +77,14 @@ class deleteShape(QtWidgets.QMainWindow):
                 self.deletebutten[i].clicked.connect(self.deletebutten[i].deleteAttrDef)
                 self.Hbox.addWidget(self.deletebutten[i])
         except:
-            pymel.core.warning("Please select deformation node")
+            maya.cmds.warning("Please select deformation node")
 
     def getSelectNode(self):
-        self.node = pymel.core.ls(sl=True)[0]
-        self.adddeleteButten()
+        l_select_ = maya.cmds.ls(sl=True)
+        for i in l_select_:
+            self.node = i
+            self.adddeleteButten()
+            break
 
 
 
