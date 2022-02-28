@@ -111,6 +111,6 @@ entt::handle project::get_current() {
 }
 
 project_config::model_config::model_config()
-    : find_icon_regex("UE4") {
+    : find_icon_regex(R"(_UE4\.)") {
 }
 }  // namespace doodle
