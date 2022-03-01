@@ -64,41 +64,14 @@ void filter_factory_base::connection_sig() {
         p_i->need_init = true;
       }));
 }
-std::unique_ptr<sort_entt> sort_entt_factory_base::make_sort() {
-  return make_sort_();
-}
+//std::unique_ptr<sort_entt> sort_entt_factory_base::make_sort() {
+//  return make_sort_();
+//}
+//void sort_entt_factory_base::refresh(bool force) {
+//  is_edit = false;
+//  this->refresh_();
+//}
 
-class name_sort_entt : public sort_entt {
- public:
-  bool reverse;
-  explicit name_sort_entt(bool in_reverse = false) : reverse(in_reverse){};
-  virtual bool operator()(const entt::handle& in_r, const entt::handle& in_l) const override {
-    bool l_r{false};
-    if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>()) {
-      l_r = in_r.get<assets_file>() < in_l.get<assets_file>();
-    }
-    l_r = reverse ? !l_r : l_r;
-    return l_r;
-  }
-};
-
-class name_sort_factory : public sort_entt_factory_base,
-                          public base_render {
- private:
-  gui_cache<bool> reverse;
-
- public:
-  name_sort_factory() : reverse("反向", false){};
-
-  void render(const entt::handle& in) override {
-    ImGui::Checkbox(*reverse.gui_name, &reverse.data);
-  }
-
- protected:
-  std::unique_ptr<sort_entt> make_sort_() override {
-    return std::make_unique<name_sort_entt>(reverse.data);
-  }
-};
 }  // namespace gui
 
 class path_filter : public gui::filter_base {
@@ -416,6 +389,12 @@ class file_path_filter_factory : public gui::filter_factory_base {
 
 class assets_filter_widget::impl {
  public:
+  impl() : only_rand(),
+           p_conns(),
+           p_filter_factorys(),
+           p_filters(),
+           p_sorts({gui::gui_cache<bool>{"名称排序"s, true}, gui::gui_cache<bool>{"反向"s, false}}) {}
+
   bool only_rand{false};
   std::vector<boost::signals2::scoped_connection> p_conns;
 
@@ -423,14 +402,10 @@ class assets_filter_widget::impl {
       gui::gui_cache<
           std::unique_ptr<gui::filter_factory_base>,
           gui::gui_cache_select>;
-  using sort_gui_cahce = gui::gui_cache<
-      std::unique_ptr<gui::sort_entt_factory_base>,
-      gui::gui_cache_select>;
 
   std::vector<factory_gui_cache> p_filter_factorys;
-  std::vector<sort_gui_cahce> p_sort_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
-  std::vector<std::unique_ptr<gui::sort_entt>> p_sorts;
+  std::array<gui::gui_cache<bool>, 2> p_sorts;
   bool run_edit{false};
 };
 
@@ -467,7 +442,7 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("路径过滤"s, std::make_unique<file_path_filter_factory>());
 
-  p_impl->p_sort_factorys.emplace_back("名称排序"s, std::make_unique<gui::name_sort_factory>()).select = true;
+  //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
 }
 void assets_filter_widget::succeeded() {
   g_reg()->unset<assets_filter_widget>();
@@ -497,12 +472,11 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
 
   ImGui::Separator();
 
-  for (auto&& i : p_impl->p_sort_factorys) {
-    if (ImGui::Checkbox(*i.gui_name, &i.select)) {
+  for (auto&& i : p_impl->p_sorts) {
+    bool l_refresh{false};
+
+    if (ImGui::Checkbox(*i.gui_name, &i.data)) {
       l_is_edit = true;
-    }
-    if (i.select) {
-      dynamic_cast<gui::base_render*>(i.data.get())->render();
     }
   }
 
@@ -510,6 +484,7 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
                                [](const impl::factory_gui_cache& in) {
                                  return in.select && in.data->is_edit;
                                }) ||
+
       l_is_edit) {
     refresh(false);
   }
@@ -539,20 +514,6 @@ void assets_filter_widget::refresh_(bool force) {
                       }) |
                       ranges::to_vector;
 
-  p_impl->p_sorts = p_impl->p_sort_factorys |
-                    ranges::views::filter([](const impl::sort_gui_cahce& in_sort_gui_cahce) {
-                      return in_sort_gui_cahce.select;
-                    }) |
-                    ranges::views::transform([](const impl::sort_gui_cahce& in_sort_gui_cahce)
-                                                 -> std::unique_ptr<gui::sort_entt> {
-                      return in_sort_gui_cahce.data->make_sort();
-                    }) |
-                    ranges::views::filter([](const auto& in)
-                                              -> bool {
-                      return (bool)in;
-                    }) |
-                    ranges::to_vector;
-
   std::vector<entt::handle> list{};
 
   // list = ranges::to_vector(
@@ -575,15 +536,21 @@ void assets_filter_widget::refresh_(bool force) {
                     });
               }),
               std::back_inserter(list));
+  //  for (auto&& in_sort_entt : p_impl->p_sorts) {
+  //    std::sort(list.begin(), list.end(),[&](const entt::handle& in_r, const entt::handle& in_l) -> bool { return (*in_sort_entt)(in_r, in_l); } );
+  //  }
 
   //  auto l_v = ranges::views::all(g_reg()->view<database>(entt::exclude<project>));
-  ranges::for_each(p_impl->p_sorts, [&](const std::unique_ptr<gui::sort_entt>& in_sort_entt) {
-    ranges::stable_sort(list, [&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
-      return (*in_sort_entt)(in_r, in_l);
-    });  //*in_sort_entt
-         //    ranges::stable_sort(list, (*in_sort_entt)(entt::handle{}, entt::handle{}));
-    //    (*in_sort_entt)(entt::handle{}, entt::handle{});
-  });
+  if (p_impl->p_sorts[0].data) {
+    list |= ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+      if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
+        return in_r.get<assets_file>() < in_l.get<assets_file>();
+      return false;
+    });
+  }
+  if (p_impl->p_sorts[1].data) {
+    list |= ranges::action::reverse;
+  }
   g_reg()->ctx<core_sig>().filter_handle(list);
 }
 

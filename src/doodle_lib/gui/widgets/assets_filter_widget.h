@@ -89,21 +89,6 @@ class filter_factory_t : public filter_factory_base {
   }
 };
 
-class DOODLELIB_API sort_entt {
- public:
- public:
-  virtual ~sort_entt()                                                              = default;
-  virtual bool operator()(const entt::handle& in_r, const entt::handle& in_l) const = 0;
-};
-class DOODLELIB_API sort_entt_factory_base {
- private:
- protected:
-  virtual std::unique_ptr<sort_entt> make_sort_() = 0;
-
- public:
-  ~sort_entt_factory_base()                         = default;
-  std::unique_ptr<sort_entt> make_sort();
-};
 }  // namespace gui
 
 /**
