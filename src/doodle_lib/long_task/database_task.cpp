@@ -273,6 +273,9 @@ void database_task_delete::init() {
   p_i->result = g_thread_pool().enqueue([this]() { this->delete_db(); });
 }
 void database_task_delete::succeeded() {
+  ranges::for_each(p_i->list, [](entt::handle& in) {
+    in.destroy();
+  });
   g_reg()->unset<process_message>();
 }
 void database_task_delete::failed() {

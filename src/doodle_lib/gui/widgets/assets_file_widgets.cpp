@@ -186,8 +186,19 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         });
   }
   ImGui::Separator();
-  if (dear::MenuItem("删除"))
+  if (dear::MenuItem("删除")) {
     in_.patch<database>(database::delete_);
+    p_i->p_sc.emplace_back(
+        g_reg()->ctx<core_sig>().save_begin.connect([this, in_](const std::vector<entt::handle>&) {
+          g_main_loop().attach<one_process_t>(
+              [this, in_]() {
+                p_i->lists = p_i->lists | ranges::views::remove_if([in_](const impl::data& in_data) {
+                               return in_data.handle_ == in_;
+                             }) |
+                             ranges::to_vector;
+              });
+        }));
+  }
 }
 void assets_file_widgets::set_select(std::size_t in_size) {
   auto&& i   = p_i->lists[in_size];
