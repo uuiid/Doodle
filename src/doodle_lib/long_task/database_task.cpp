@@ -492,9 +492,9 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
   boost::unique_erase(p_i->need_updata);
   boost::unique_erase(p_i->need_delete);
   k_obs.clear();
-  if (!p_i->need_save.empty() ||
-      !p_i->need_updata.empty() ||
-      !p_i->need_delete.empty())
-    g_reg()->ctx<status_info>().need_save = true;
+
+  g_reg()->ctx<status_info>().need_save = !(p_i->need_save.empty() &&
+                                            p_i->need_updata.empty() &&
+                                            p_i->need_delete.empty());
 }
 }  // namespace doodle

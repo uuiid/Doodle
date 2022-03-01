@@ -414,7 +414,7 @@ void assets_filter_widget::init() {
   p_impl->p_conns.emplace_back(
       g_reg()->ctx<core_sig>().save_begin.connect(
           [&](const std::vector<entt::handle> &) {
-            p_impl->only_rand = false;
+            p_impl->only_rand = true;
           }));
   p_impl->p_conns.emplace_back(
       g_reg()->ctx<core_sig>().save_end.connect(
