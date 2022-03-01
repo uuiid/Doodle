@@ -551,6 +551,7 @@ void assets_filter_widget::refresh_(bool force) {
   if (p_impl->p_sorts[1].data) {
     list |= ranges::action::reverse;
   }
+
   g_reg()->ctx<core_sig>().filter_handle(list);
 }
 

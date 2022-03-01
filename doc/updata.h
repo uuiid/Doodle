@@ -530,4 +530,5 @@
  * @subsubsection updata_log_346 版本3.4.6
  * @li 加减选功能
  * @li 全选删除功能
+ * @li 按名称排序
  */

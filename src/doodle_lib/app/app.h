@@ -34,7 +34,6 @@ namespace doodle {
  * @todo 添加只输出abc功能
  * @todo 文件列表的排序功能
  *
- * @todo 按名称排序
  *
  * @todo ue4 gpu超时更新
  * @todo ue4 abc解算和fbx分开
