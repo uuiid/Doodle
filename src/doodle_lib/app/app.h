@@ -32,7 +32,11 @@ namespace doodle {
  * @todo ue4 导入添加道具搜素
  * @todo 创建检查maya 场景工具架
  * @todo 添加只输出abc功能
+ * @todo 文件列表的排序功能
  *
+ * @todo 按名称排序
+ * @todo 全选删除功能
+ * @todo 加减选功能
  *
  * @todo ue4 gpu超时更新
  * @todo ue4 abc解算和fbx分开
