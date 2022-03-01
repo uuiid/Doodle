@@ -578,7 +578,11 @@ void assets_filter_widget::refresh_(bool force) {
 
   //  auto l_v = ranges::views::all(g_reg()->view<database>(entt::exclude<project>));
   ranges::for_each(p_impl->p_sorts, [&](const std::unique_ptr<gui::sort_entt>& in_sort_entt) {
-    ranges::stable_sort(list, *in_sort_entt);
+    ranges::stable_sort(list, [&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+      return (*in_sort_entt)(in_r, in_l);
+    });  //*in_sort_entt
+         //    ranges::stable_sort(list, (*in_sort_entt)(entt::handle{}, entt::handle{}));
+    //    (*in_sort_entt)(entt::handle{}, entt::handle{});
   });
   g_reg()->ctx<core_sig>().filter_handle(list);
 }

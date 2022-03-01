@@ -98,10 +98,10 @@ class DOODLELIB_API sort_entt {
 class DOODLELIB_API sort_entt_factory_base {
  private:
  protected:
-  ~sort_entt_factory_base()                         = default;
   virtual std::unique_ptr<sort_entt> make_sort_() = 0;
 
  public:
+  ~sort_entt_factory_base()                         = default;
   std::unique_ptr<sort_entt> make_sort();
 };
 }  // namespace gui
