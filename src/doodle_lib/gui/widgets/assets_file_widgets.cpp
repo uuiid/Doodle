@@ -165,7 +165,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           i.load_image(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
           if (ImGui::Selectable(*i.select.gui_name,
-                                &i.select.data,
+                                i.select.data,
                                 ImGuiSelectableFlags_AllowDoubleClick,
                                 {k_length, k_length}))
             set_select(l_index);
@@ -201,12 +201,26 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {
-    in_.patch<database>(database::delete_);
-    g_reg()->ctx<core_sig>().save_begin.connect([this, in_](const std::vector<entt::handle>&) {
+    std::vector<entt::handle> l_list = p_i->lists | ranges::views::filter([](const impl::data& in_data) {
+                                         return in_data.select && in_data.handle_;
+                                       }) |
+                                       ranges::views::transform([](const impl::data& in_data) -> entt::handle {
+                                         return in_data.handle_;
+                                       }) |
+                                       ranges::to_vector |
+                                       ranges::actions::push_back(in_) |
+                                       ranges::actions::unique |
+                                       ranges::to_vector;
+    ranges::for_each(l_list, [](const entt::handle& in_handle) {
+      in_handle.patch<database>(database::delete_);
+    });
+
+    g_reg()->ctx<core_sig>().save_begin.connect([this, in_, l_list](const std::vector<entt::handle>&) {
       g_main_loop().attach<one_process_t>(
-          [this, in_]() {
-            p_i->lists = p_i->lists | ranges::views::remove_if([in_](const impl::data& in_data) {
-                           return in_data.handle_ == in_;
+          [this, in_, l_list]() {
+            p_i->lists = p_i->lists | ranges::views::remove_if([in_, l_list](const impl::data& in_data) {
+                           return ranges::contains(l_list, in_data.handle_);
+                           //                           return in_data.handle_ == in_;
                          }) |
                          ranges::to_vector;
           });
@@ -221,7 +235,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
       FSys::open_explorer(g_reg()->ctx<project>().make_path("image") / i.handle_.get<image_icon>().path);
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
-      i.select.data ^= 1;
+      i.select.data = !i.select.data;
       std::vector<entt::handle> l_h{};
       boost::copy(
           p_i->lists |

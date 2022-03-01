@@ -526,4 +526,8 @@
  * @li 添加删除时的gui清除
  * @li 添加ue4胶片滤镜
  * @li 加速maya插件加载速度
+ *
+ * @subsubsection updata_log_346 版本3.4.6
+ * @li 加减选功能
+ * @li 全选删除功能
  */
