@@ -13,4 +13,4 @@
 
 [项目辅助管理程序](doc/doodle_exe.md)  
 
-![exe程序](doc/doodle_image/main_windows.jpg)  
+![exe程序](doc/doodle_image/new_prj.gif)  

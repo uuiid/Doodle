@@ -27,13 +27,13 @@
  * @todo ue4 灯光配置父子关系添加
  *
  * @section main_management_tool 主要窗口
- * @image html doodle_image/main_windows.jpg 主要面板 width=30%
+ * @image html doodle_image/new_prj.gif 主要面板 width=90%
  *
  *
  *
  * @section installation_steps 安装步骤
  *
- * @image html doodle_image/install.jpg 安装图像 width=30%
+ * @image html doodle_image/install.gif 安装图像 width=90%
  * 基本上直接安装， 中途不会有问题
  * @warning 尽量在安装路径中不要出现中文
  *
