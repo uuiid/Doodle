@@ -152,6 +152,7 @@ bool maya_clear_scenes::uv_set(bool use_select) {
 }
 bool maya_clear_scenes::err_1() {
   bool l_r{false};
+  MStatus k_s{};
   k_s = MGlobal::executePythonCommand(d_str{R"(import pymel.core
 import re
 for p in pymel.core.lsUI(panels=True):
