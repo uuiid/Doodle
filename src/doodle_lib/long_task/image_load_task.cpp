@@ -19,16 +19,19 @@ image_load_task::image_load_task(const entt::handle &in_handle)
   p_i->handle_ = in_handle;
 }
 void image_load_task::init() {
-  chick_true<doodle_error>(p_i->handle_.any_of<image_icon>(), DOODLE_LOC, "缺失图片组件");
-  p_i->image_  = p_i->handle_.get<image_icon>();
-  if(!p_i->image_.image){
-    p_i->result_ = g_thread_pool().enqueue([this]() {
-      image_loader{}.load(p_i->image_);
-    });
+  if (p_i->handle_) {
+    chick_true<doodle_error>(p_i->handle_.any_of<image_icon>(), DOODLE_LOC, "缺失图片组件");
+    p_i->image_ = p_i->handle_.get<image_icon>();
+    if (!p_i->image_.image) {
+      p_i->result_ = g_thread_pool().enqueue([this]() {
+        image_loader{}.load(p_i->image_);
+      });
+    }
   }
 }
 void image_load_task::succeeded() {
-  p_i->handle_.replace<image_icon>(p_i->image_);
+  if (p_i->handle_)
+    p_i->handle_.replace<image_icon>(p_i->image_);
 }
 void image_load_task::failed() {
 }
