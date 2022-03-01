@@ -13,18 +13,6 @@
  *
  * @ref doc/schedule.md "描述" \n
  *
- * @todo ue4 导入使用元数据格式解析
- * @todo ue4 导入添加道具搜素
- * @todo 创建检查maya 场景工具架
- * @todo 添加只输出abc功能
- * @todo ue4 gpu超时更新
- *
- * @todo ue4 abc解算和fbx分开
- * @todo ue4 火光复制功能添加
- * @todo ue4 路人走路时的脚本固定组件开发
- * @todo @b 火光 属性记录动画帧元数据
- * @todo @b 灯光 球属性记录动画帧元数据
- * @todo ue4 灯光配置父子关系添加
  *
  * @section main_management_tool 主要窗口
  * @image html doodle_image/new_prj.gif 主要面板 width=90%
