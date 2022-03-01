@@ -143,7 +143,7 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       k_data.emplace<database>() = p_i->list.back();
       k_data.patch<database>(database::sync);
 
-      g_reg()->ctx<process_message>().progress_step({1, p_i->size});
+      g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->size});
 
       p_i->create_handle.pop_back();
       p_i->list.pop_back();
@@ -207,7 +207,7 @@ void database_task_update::update_db() {
     if (k_data.assets)
       k_sql.assignments.add(l_metadatatab.assetsP = *k_data.assets);
     (*k_conn)(k_sql);
-    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 void database_task_update::succeeded() {
@@ -256,7 +256,7 @@ void database_task_delete::delete_db() {
       return;
     auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == in.get<database>().get_id()));
     DOODLE_LOG_WARN("删除了数据id {}", k_r);
-    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_delete::database_task_delete(
@@ -343,7 +343,7 @@ void database_task_install::install_db() {
       in.set_id(id);
     });
     in.patch<database>(database::sync);
-    g_reg()->ctx<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_install::database_task_install(
@@ -398,7 +398,9 @@ class database_task_obs::impl {
   std::vector<entt::handle> need_updata;
   std::vector<entt::handle> need_delete;
 
-  boost::signals2::scoped_connection p_sc_save;
+  std::vector<boost::signals2::scoped_connection> p_sc_save;
+
+  bool is_save{false};
 };
 database_task_obs::database_task_obs()
     : p_i(std::make_unique<impl>()) {
@@ -435,12 +437,24 @@ void database_task_obs::save() {
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database>());
   g_reg()->set<database_task_obs&>(*this);
-  p_i->p_sc_save = g_reg()->ctx<core_sig>().save.connect([this]() {
-    if (!p_i->need_save.empty() ||
-        !p_i->need_updata.empty() ||
-        !p_i->need_delete.empty())
+
+  p_i->p_sc_save.emplace_back(g_reg()->ctx<core_sig>().save.connect([this]() {
+    if ((!p_i->need_save.empty() ||
+         !p_i->need_updata.empty() ||
+         !p_i->need_delete.empty()) &&
+        !p_i->is_save)
       this->save();
-  });
+  }));
+  p_i->p_sc_save.emplace_back(
+      g_reg()->ctx<core_sig>().save_begin.connect(
+          [this](const std::vector<entt::handle>&) {
+            p_i->is_save = true;
+          }));
+  p_i->p_sc_save.emplace_back(
+      g_reg()->ctx<core_sig>().save_end.connect(
+          [this](const std::vector<entt::handle>&) {
+            p_i->is_save = false;
+          }));
 }
 void database_task_obs::succeeded() {
 }
