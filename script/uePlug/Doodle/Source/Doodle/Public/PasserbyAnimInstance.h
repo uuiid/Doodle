@@ -10,8 +10,7 @@
  * 
  */
 UCLASS()
-class DOODLE_PLUG_API UPasserbyAnimInstance : public UAnimInstance
-{
+class DOODLE_API UPasserbyAnimInstance : public UAnimInstance {
 	GENERATED_BODY()
 	
 };
