@@ -63,6 +63,7 @@ public class doodle : ModuleRules
                 // "Engine",
                 // "Slate",
                 // "SlateCore",
+                // "ContentBrowserAssetDataSource"
 
 
 				// ... add private dependencies that you statically link with here ...	
