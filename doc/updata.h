@@ -533,4 +533,7 @@
  * @li 按名称排序
  * @li maya插件工具架更新
  *
+ * @subsubsection updata_log_347 版本3.4.7
+ * @li 更新导出csv表格美化
+ * @li 更加准确的文件存在判断
  */
