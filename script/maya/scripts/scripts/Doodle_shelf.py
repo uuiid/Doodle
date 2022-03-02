@@ -4,7 +4,7 @@ import maya.cmds as cmds
 
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
-import scripts.Doodle_deleteSurplusWeight as deleteWeight
+# import scripts.Doodle_deleteSurplusWeight as deleteWeight
 # import scripts.Doodle_deleteAttr as deleteAttr
 from PySide2 import QtCore
 from PySide2 import QtGui
@@ -34,8 +34,8 @@ class DlsShelf(shelfBase._shelf):
 
         # self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
         #               command=self.deleteWeightPoint)
-        self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
-                      command=self.deleteAttr)
+        # self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
+        #               command=self.deleteAttr)
 
         self.addButon("randomColor", icon="icons/randomColor.png",
                       command=self.randomColor)
@@ -61,30 +61,31 @@ class DlsShelf(shelfBase._shelf):
         cmds.doodle_ref_file_export(
             startTime=1001, exportType="fbx", select=True)
 
-    def deleteWeightPoint(self):
-        self.re()
-        deleteWeight.deleteSurplusWeight().show()
+    # def deleteWeightPoint(self):
+    #     self.re()
+    #     deleteWeight.deleteSurplusWeight().show()
 
     # def deleteAttr(self):
     #     self.re()
     #     deleteAttr.deleteShape().show()
 
     def randomColor(self):
-        import pymel.core
         import random
-        select_lists = pymel.core.ls(sl=True)
+        select_lists = cmds.ls(sl=True)
         for select_obj in select_lists:
-            pymel.core.select(select_obj)
-            pymel.core.polyColorPerVertex(
+            cmds.select(select_obj)
+            cmds.polyColorPerVertex(
                 colorDisplayOption=True,
-                rgb=(random.random() * .5, random.random() * .5, random.random() * .5))
+                colorR=random.random() * .5,
+                colorG=random.random() * .5,
+                colorB=random.random() * .5)
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
         if key == QtCore.Qt.ShiftModifier:
             reload(Doodle_PolyRemesh)
             reload(Doodle_clear)
-            reload(deleteWeight)
+            # reload(deleteWeight)
             # reload(deleteAttr)
             reload(Doodle_fun_tool)
 
