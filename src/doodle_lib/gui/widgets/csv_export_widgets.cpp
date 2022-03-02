@@ -104,7 +104,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          ","
          "结束时间"
          ","
-         "持续时间"
+         "持续时间/h"
          ","
          "备注"
          ","
@@ -136,8 +136,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   auto project_root = g_reg()->ctx<project>().p_path;
   auto l_next       = get_user_next_time(in);
   auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
-  auto k_time       = chrono::floor<chrono::days_double>(
-      in.get<time_point_wrap>().work_duration(end_time));
+  auto k_time       = in.get<time_point_wrap>().work_duration(end_time);
   auto l_file_path = project_root / k_ass.path;
 
   comment k_comm{};
