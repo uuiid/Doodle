@@ -6,7 +6,10 @@
 
 #include <entt/entt.hpp>
 namespace doodle {
-
+/**
+ * @brief entt 中自定义hash检查
+ * @tparam Type doodle metadata 中的类
+ */
 template <typename Type>
 [[maybe_unused]] struct entt::type_hash<
     Type,

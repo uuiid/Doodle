@@ -343,6 +343,8 @@
  * @li 更改maya插件加载方式（pymel 加载插件会出现回调错误）
  * @li 更改maya自定义拍屏方案（pymel 关键字会无故传递出错）
  *
+ * @subsection updata_log_320_ 版本3.2
+ *
  * @subsubsection updata_log_320 版本3.2.0
  * @li 更改maya插件加载方式
  * @li 更改拍屏使用方式（使用eval回调）
@@ -486,6 +488,8 @@
  * @li 添加maya碰撞体输出日志
  * @li maya插件解算初始化值更新
  *
+ * @subsection updata_log_340_ 版本3.4
+ *
  * @subsubsection updata_log_340 版本3.4.0
  * @li 添加项目路径存在性检查
  * @li 进一步压缩项目的大小
@@ -536,4 +540,5 @@
  * @subsubsection updata_log_347 版本3.4.7
  * @li 更新导出csv表格美化
  * @li 更加准确的文件存在判断
+ *
  */

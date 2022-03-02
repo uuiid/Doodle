@@ -9,9 +9,7 @@
 
 namespace doodle {
 /**
- *
- * @page doodle_windwos_setting 设置窗口
- * @tableofcontents
+ * @addtogroup 设置窗口
  * @image html doodle_setting.jpg 设置窗口
  *
  * @li @b 部门 所在部门 (默认为 None_)
