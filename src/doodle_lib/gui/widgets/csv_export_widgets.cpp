@@ -138,6 +138,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
   auto k_time       = chrono::floor<chrono::days_double>(
       in.get<time_point_wrap>().work_duration(end_time));
+  auto l_file_path = project_root / k_ass.path;
 
   comment k_comm{};
   if (auto l_c = in.try_get<std::vector<comment>>(); l_c)
@@ -153,8 +154,8 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
       << fmt::format(R"("{}")", l_next ? l_next.get<time_point_wrap>().show_str() : end_time.show_str()) << ","
       << fmt::format("{:3f}", k_time.count()) << ","
       << fmt::format("{}", k_comm.get_comment()) << ","
-      << fmt::to_string(FSys::exists(project_root / k_ass.path)) << ","
-      << k_ass.path;
+      << fmt::to_string(FSys::exists(l_file_path)) << ","
+      << l_file_path.generic_string();
 
   return l_r.str();
 }
