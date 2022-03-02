@@ -27,57 +27,57 @@ namespace doodle {
  */
 class season_edit : public gui::edit_interface {
  public:
-  std::int32_t p_season;
+  std::int32_t p_season{};
 
-  void init_(const entt::handle &in) {
+  void init_(const entt::handle &in) override {
     if (in.any_of<season>())
       p_season = in.get<season>().get_season();
     else
       p_season = 1;
   }
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
     if (imgui::InputInt("季数", &p_season, 1, 9999))
       set_modify(true);
   }
-  void save_(const entt::handle &in) const {
+  void save_(const entt::handle &in) const override {
     in.emplace_or_replace<season>(p_season);
   }
 };
 class episodes_edit : public gui::edit_interface {
  public:
-  std::int32_t p_eps{1};
+  std::int32_t p_eps{};
 
-  void init_(const entt::handle &in) {
+  void init_(const entt::handle &in) override {
     if (in.all_of<episodes>())
-      p_eps = in.get<episodes>().p_episodes;
+      p_eps = boost::numeric_cast<std::int32_t>(in.get<episodes>().p_episodes);
     else
       p_eps = 1;
   }
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
     if (imgui::InputInt("集数", &p_eps, 1, 9999))
       set_modify(true);
     ;
   }
-  void save_(const entt::handle &in) const {
+  void save_(const entt::handle &in) const override {
     in.emplace_or_replace<episodes>(p_eps);
   }
 };
 class shot_edit : public gui::edit_interface {
  public:
-  std::int32_t p_shot;
-  std::string p_shot_ab_str;
+  std::int32_t p_shot{};
+  std::string p_shot_ab_str{};
 
-  void init_(const entt::handle &in) {
+  void init_(const entt::handle &in) override {
     if (in.all_of<shot>()) {
       auto &l_s     = in.get<shot>();
-      p_shot        = l_s.get_shot();
+      p_shot        = boost::numeric_cast<std::int32_t>(l_s.get_shot());
       p_shot_ab_str = l_s.get_shot_ab();
     } else {
       p_shot        = 1;
       p_shot_ab_str = "None";
     }
   }
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
     if (imgui::InputInt("镜头", &p_shot, 1, 9999)) set_modify(true);
 
     dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
@@ -90,7 +90,7 @@ class shot_edit : public gui::edit_interface {
       }
     };
   }
-  void save_(const entt::handle &in) const {
+  void save_(const entt::handle &in) const override {
     in.emplace_or_replace<shot>(p_shot, p_shot_ab_str);
   }
 };
@@ -98,17 +98,17 @@ class assets_file_edit : public gui::edit_interface {
  public:
   std::string p_path_cache;
 
-  void init_(const entt::handle &in) {
+  void init_(const entt::handle &in) override {
     if (in.all_of<assets_file>()) {
       p_path_cache = in.get<assets_file>().path.generic_string();
     } else {
       p_path_cache = g_reg()->ctx<project>().p_path.generic_string();
     }
   }
-  void render(const entt::handle &in) {
+  void render(const entt::handle &in) override {
     if (ImGui::InputText("路径", &p_path_cache)) set_modify(true);
   }
-  void save_(const entt::handle &in) const {
+  void save_(const entt::handle &in) const override {
     in.emplace_or_replace<assets_file>().path = p_path_cache;
   }
 };
@@ -185,7 +185,7 @@ class add_assets_for_file : public base_render {
             FSys::directory_iterator{}),
         [&](const FSys::path &in_file) {
           auto &&l_ext = in_file.extension();
-          return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(),l_regex);
+          return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
         });
     if (k_imghe_path != FSys::directory_iterator{}) {
       l_image_load.save(in_handle, k_imghe_path->path());
