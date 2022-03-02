@@ -79,6 +79,13 @@ add_custom_target(
 
 enable_testing()
 add_subdirectory(src)
+target_sources(doodle_lib
+        PRIVATE
+        doc/main.h
+        doc/todo_file.h
+        doc/updata.h
+        doc/often_ask_questions.h)
+
 
 #=====================安装打包过程===============================
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
