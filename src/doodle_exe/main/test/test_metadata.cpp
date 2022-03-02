@@ -177,8 +177,29 @@ class test_time_duration : public app {
   chrono::sys_seconds p_new     = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
   chrono::local_seconds p_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
 
-  void test_work_time() {
-  }
+  time_point_wrap time_1_a{chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s};
+  time_point_wrap time_1_b{chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s};
+
+  time_point_wrap time_2_a{chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s};
+  time_point_wrap time_2_b{chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s};
+
+  time_point_wrap time_3_a{chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s};
+  time_point_wrap time_3_b{chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s};
+
+  time_point_wrap time_4_a{chrono::sys_days(2021_y / 7 / 21_d) + 2h + 45min + 30s};
+  time_point_wrap time_4_b{chrono::sys_days(2021_y / 7 / 23_d) + 8h + 20min + 30s};
+
+  time_point_wrap time_5_a{chrono::sys_days(2021_y / 7 / 21_d) + 2h + 45min + 30s};
+  time_point_wrap time_5_b{chrono::sys_days(2021_y / 7 / 27_d) + 8h + 20min + 30s};
+
+  time_point_wrap time_6_a{chrono::sys_days(2021_y / 6 / 23_d) + 9h + 8min + 48s};
+  time_point_wrap time_6_b{chrono::sys_days(2021_y / 6 / 23_d) + 12h + 8min + 48s};
+
+  //  time_point_wrap time_7_a;
+  //  time_point_wrap time_7_b;
+  //
+  //  time_point_wrap time_8_a;
+  //  time_point_wrap time_8_b;
 };
 
 TEST_CASE_METHOD(test_time_duration, "test_time_duration1") {
@@ -189,64 +210,15 @@ TEST_CASE_METHOD(test_time_duration, "test_time_duration1") {
 TEST_CASE_METHOD(test_time_duration, "test_time_duration2") {
   auto k_time = chrono::make_zoned(chrono::current_zone(), p_new);
   REQUIRE(k_time.get_local_time() == p_local);
-
-  doodle::time_point_wrap my_t{};
-  doodle::time_point_wrap my_t2{};
-  // SECTION("time set") {
-  //   my_t.set_year(2021);
-  //   my_t.set_month(6);
-  //   my_t.set_day(16);
-  //   my_t.set_hour(10);
-  //   my_t.set_minutes(34);
-  //   my_t.set_second(37);
-  //   REQUIRE(my_t.get_year() == 2021);
-  //   REQUIRE(my_t.get_month() == 6);
-  //   REQUIRE(my_t.get_day() == 16);
-  //   REQUIRE(my_t.get_hour() == 10);
-  //   REQUIRE(my_t.get_minutes() == 34);
-  //   REQUIRE(my_t.get_second() == 37);
-
-  //   REQUIRE(my_t.get_local_time() == doodle::chrono::clock_cast<doodle::chrono::local_t>(k_new));
-  // }
-
-  // SECTION("set local") {
-  //   my_t.set_local_time(k_local);
-  //   REQUIRE(my_t.get_utc_time() == k_new);
-  // }
-  // SECTION("time duration") {
-  //   auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
-  //   auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
-  //   my_t.set_local_time(k_sys_time1);
-  //   my_t2.set_local_time(k_sys_time2);
-  //   using namespace Catch::literals;
-  //   //    auto k_matcher = Catch::Approx(5.1);
-
-  //   REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
-  //   SECTION("time works durtion") {
-  //     k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
-  //     k_sys_time2 = chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s;
-  //     my_t.set_local_time(k_sys_time1);
-  //     my_t2.set_local_time(k_sys_time2);
-  //     REQUIRE(my_t.work_duration(my_t2).count() == (36.583_a).epsilon(0.01));
-  //   }
-  //   SECTION("ond day time") {
-  //     k_sys_time1 = chrono::local_days(2021_y / 6 / 23_d) + 17h + 8min + 48s;
-  //     k_sys_time2 = chrono::local_days(2021_y / 6 / 23_d) + 20h + 8min + 48s;
-  //     my_t.set_local_time(k_sys_time1);
-  //     my_t2.set_local_time(k_sys_time2);
-  //     REQUIRE(my_t.work_duration(my_t2).count() == (0.86_a).epsilon(0.01));
-  //   }
-  // }
 }
-
+using namespace Catch::literals;
 TEST_CASE_METHOD(test_time_duration, "work_time") {
-  auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
-  auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
-
-  time_point_wrap my_t{k_sys_time1};
-  time_point_wrap my_t2{k_sys_time2};
-  using namespace Catch::literals;
-  REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
+  REQUIRE(time_1_a.work_duration(time_1_b).count() == (20.583_a).epsilon(0.01));
+  REQUIRE(time_2_a.work_duration(time_2_b).count() == (36.583_a).epsilon(0.01));
+  REQUIRE(time_3_a.work_duration(time_3_b).count() == (0.86_a).epsilon(0.01));
+  REQUIRE(time_4_a.work_duration(time_4_b).count() == (20.583_a).epsilon(0.01));
+  REQUIRE(time_5_a.work_duration(time_5_b).count() == (36.583_a).epsilon(0.01));
+  REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
 }
 
 // TEST(DSTD, map_netDir) {
