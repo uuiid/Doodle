@@ -19,15 +19,13 @@
 #define LOCTEXT_NAMESPACE "doodle"
 
 ADoodleConfigLightActor::ADoodleConfigLightActor()
-    : p_skin_mesh(), use_clear(true), p_light() {
+    : p_skin_mesh(), use_clear(true) {
   auto rootComponent =
       CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
   rootComponent->SetMobility(EComponentMobility::Stationary);
   rootComponent->SetupAttachment(RootComponent);
   SetRootComponent(rootComponent);
 
-  p_light =
-      CreateDefaultSubobject<UDoodleConfigLight>(FName{"UDoodleConfigLight"});
   p_solt = "Root_M";
 }
 
@@ -61,6 +59,33 @@ bool ADoodleConfigLightActor::OpenSaveDialog(const FString& InDefaultPath,
   }
 
   return false;
+}
+
+UObject* ADoodleConfigLightActor::OpenDialog(
+    const FString& InDefaultPath, const FString& InNewNameSuggestion) {
+  FOpenAssetDialogConfig OpenAssetDialogConfig;
+  {
+    OpenAssetDialogConfig.DefaultPath = InDefaultPath;
+    OpenAssetDialogConfig.AssetClassNames.Add(
+        UDoodleConfigLight::StaticClass()->GetFName());
+    OpenAssetDialogConfig.bAllowMultipleSelection = false;
+    OpenAssetDialogConfig.DialogTitleOverride =
+        LOCTEXT("OpenConfigPresetDialogTitle", "Open Doodle light Config");
+  }
+
+  FContentBrowserModule& ContentBrowserModule =
+      FModuleManager::LoadModuleChecked<FContentBrowserModule>(
+          "ContentBrowser");
+  TArray<FAssetData> l_AssetData_ =
+      ContentBrowserModule.Get().CreateModalOpenAssetDialog(
+          OpenAssetDialogConfig);
+
+  if (l_AssetData_.IsValidIndex(0)) {
+    // OutObjName = FPackageName::ObjectPathToPackageName(l_AssetData_[0]);
+    return l_AssetData_[0].GetAsset();
+  }
+
+  return {};
 }
 
 #endif  // WITH_EDITOR
@@ -102,7 +127,7 @@ void ADoodleConfigLightActor::SaveConfig() {
   UPackage* NewPackage = CreatePackage(*NewPackageName);
 
 #else if ENGINE_MINOR_VERSION < 26
-  UPackage* NewPackage = CreatePackage(nullptr,*NewPackageName);
+  UPackage* NewPackage = CreatePackage(nullptr, *NewPackageName);
 #endif
 
   UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
@@ -123,13 +148,49 @@ void ADoodleConfigLightActor::SaveConfig() {
 #if ENGINE_MINOR_VERSION >= 26
     FAssetRegistryModule::AssetCreated(NewPreset);
 #endif
-    p_light = NewPreset;
   }
 #endif  // WITH_EDITOR
 }
 
+void ADoodleConfigLightActor::LoadConfig() {
 #if WITH_EDITOR
+  FString DialogStartPath{TEXT("/Game")};
+  FString DefaultName{"doodle"};
+  auto* l_config =
+      Cast<UDoodleConfigLight>(OpenDialog(DefaultName / DefaultName, TEXT("")));
+  if (l_config) {
+    UE_LOG(LogTemp, Log, TEXT("load file name: %s"), *l_config->GetPathName());
+  }
+  if (use_clear) {
+    for (auto it = p_light_list.CreateIterator(); it; ++it) {
+      if ((*it).IsValid()) {
+        (*it)->Destroy();
+      }
+    }
+    p_light_list.Empty();
+  }
 
+  for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
+    if (*it) {
+      auto ft = (*it)->GetTransform();
+      // UE_LOG(LogTemp, Log, TEXT("tran: %s"), *(ft.ToString()));
+      FActorSpawnParameters k_t{};
+      k_t.Template = *it;
+      // UE_LOG(LogTemp, Log, TEXT("rgb: %s"),
+      //       *((*it)->GetLightColor().ToString()));
+      FTransform k_f = (*it)->GetTransform();
+      ALight* k_a = GWorld->SpawnActor<ALight>((*it)->GetClass(), k_f, k_t);
+      k_a->AttachToActor(this,
+                         FAttachmentTransformRules::KeepRelativeTransform);
+      p_light_list.Add(k_a);
+      // LoadObject<ALight>();
+    }
+  }
+
+#endif  // WITH_EDITOR
+}
+
+#if WITH_EDITOR
 void ADoodleConfigLightActor::PostEditChangeProperty(
     struct FPropertyChangedEvent& PropertyChangeEvent) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
@@ -141,35 +202,7 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
   // UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"),
   // *(name2.ToString()));
 
-  if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light)) {
-    if (!p_light) return;
-    if (use_clear) {
-      for (auto it = p_light_list.CreateIterator(); it; ++it) {
-        if ((*it).IsValid()) {
-          (*it)->Destroy();
-        }
-      }
-      p_light_list.Empty();
-    }
-
-    for (auto it = p_light->p_light.CreateIterator(); it; ++it) {
-      if (*it) {
-        auto ft = (*it)->GetTransform();
-        // UE_LOG(LogTemp, Log, TEXT("tran: %s"), *(ft.ToString()));
-        FActorSpawnParameters k_t{};
-        k_t.Template = *it;
-        // UE_LOG(LogTemp, Log, TEXT("rgb: %s"),
-        //       *((*it)->GetLightColor().ToString()));
-        FTransform k_f = (*it)->GetTransform();
-        ALight* k_a = GWorld->SpawnActor<ALight>((*it)->GetClass(), k_f, k_t);
-        k_a->AttachToActor(this,
-                           FAttachmentTransformRules::KeepRelativeTransform);
-        p_light_list.Add(k_a);
-        // LoadObject<ALight>();
-      }
-    }
-    // UE_LOG(LogTemp, Log, TEXT("set property: %s"), *(name.ToString()));
-  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_skin_mesh) ||
+ if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_skin_mesh) ||
              name == GET_MEMBER_NAME_CHECKED(ThisClass, p_solt)) {
     if (p_skin_mesh && p_solt.IsValid() && !p_solt.IsNone())
       this->AttachToActor(
@@ -177,7 +210,15 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
   } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light_list)) {
     for (auto it = p_light_list.CreateIterator(); it; ++it) {
       if ((*it).IsValid()) {
-        if ((*it)->GetParentActor() != this) {
+        auto* l_p = (*it)->GetParentActor();
+        if (l_p != this) {
+          if (l_p->GetClass() == ADoodleConfigLightActor::StaticClass()) {
+            auto* l_p_config = Cast<ADoodleConfigLightActor>(l_p);
+            if (l_p_config) {
+              l_p_config->p_light_list.Remove(*it);
+            }
+          }
+
           (*it)->AttachToActor(this,
                                FAttachmentTransformRules::KeepWorldTransform);
         }

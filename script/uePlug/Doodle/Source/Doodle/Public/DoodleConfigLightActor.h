@@ -21,6 +21,8 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
   bool OpenSaveDialog(const FString& InDefaultPath,
                       const FString& InNewNameSuggestion,
                       FString& OutPackageName);
+  UObject* OpenDialog(const FString& InDefaultPath,
+                  const FString& InNewNameSuggestion);
 #endif  // WITH_EDITOR
  public:
   ADoodleConfigLightActor();
@@ -38,13 +40,15 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
                     Category = "Doodle", Tooltip = "保存灯光预设"))
   virtual void SaveConfig();
 
+  UFUNCTION(BlueprintCallable,
+            meta = (CallInEditor = "true", OverrideNativeName = "加载",
+                    Category = "Doodle", Tooltip = "加载灯光预设"))
+  virtual void LoadConfig();
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
             DisplayName = "重新附加时清除")
   bool use_clear;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
-            DisplayName = "灯光配置文件")
-  UDoodleConfigLight* p_light;
 
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
   TArray<TWeakObjectPtr<ALight>> p_light_list;
