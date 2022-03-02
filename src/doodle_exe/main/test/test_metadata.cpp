@@ -13,11 +13,11 @@ using namespace doodle;
 class test_convert : public app {
  public:
   void run_test() {
-    auto reg                = g_reg();
-    
-    auto k_prj              = make_handle(reg->create());
-    auto& k_p               = k_prj.emplace<project>();
-    reg->set<database::ref_root>(k_prj.emplace<database>().get_ref());
+    auto reg   = g_reg();
+
+    auto k_prj = make_handle(reg->create());
+    auto& k_p  = k_prj.emplace<project>();
+    reg->set<database::ref_data>(k_prj.emplace<database>());
     REQUIRE(k_prj.all_of<project, database>());
 
     auto& k_d = k_prj.get<database>();
@@ -39,8 +39,8 @@ class test_convert : public app {
     auto& k_d3  = k_tmp2.get_or_emplace<database>();
     k_d3        = k_data2;
 
-    std::cout << "k_d3 id: " << k_d3.get_url_uuid() << std::endl;
-    std::cout << "k_d2 id: " << k_d2.get_url_uuid() << std::endl;
+    std::cout << "k_d3 id: " << k_d3.uuid() << std::endl;
+    std::cout << "k_d2 id: " << k_d2.uuid() << std::endl;
     REQUIRE(k_d3 == k_d2);
   };
 };
@@ -172,18 +172,23 @@ TEST_CASE_METHOD(name_data, "install project data") {
     g_main_loop().update({}, nullptr);
 }
 
-TEST_CASE("time duration", "[metadata]") {
-  auto k_new   = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
-  auto k_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
-  //  REQUIRE(doodle::TimeDuration{}.getUTCTime() == chrono::system_clock::now());
-  SECTION("date time sys") {
-    auto k_time = chrono::make_zoned(chrono::current_zone(), k_new);
-    REQUIRE(k_time.get_local_time() == k_local);
+class test_time_duration : public app {
+ public:
+  chrono::sys_seconds p_new     = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
+  chrono::local_seconds p_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
+
+  void test_work_time() {
   }
-  SECTION("date time local") {
-    auto k_time = chrono::make_zoned(chrono::current_zone(), k_local);
-    REQUIRE(k_time.get_sys_time() == k_new);
-  }
+};
+
+TEST_CASE_METHOD(test_time_duration, "test_time_duration1") {
+  auto k_time = chrono::make_zoned(chrono::current_zone(), p_local);
+  REQUIRE(k_time.get_sys_time() == p_new);
+}
+
+TEST_CASE_METHOD(test_time_duration, "test_time_duration2") {
+  auto k_time = chrono::make_zoned(chrono::current_zone(), p_new);
+  REQUIRE(k_time.get_local_time() == p_local);
 
   doodle::time_point_wrap my_t{};
   doodle::time_point_wrap my_t2{};
@@ -232,6 +237,16 @@ TEST_CASE("time duration", "[metadata]") {
   //     REQUIRE(my_t.work_duration(my_t2).count() == (0.86_a).epsilon(0.01));
   //   }
   // }
+}
+
+TEST_CASE_METHOD(test_time_duration, "work_time") {
+  auto k_sys_time1 = chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s;
+  auto k_sys_time2 = chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s;
+
+  time_point_wrap my_t{k_sys_time1};
+  time_point_wrap my_t2{k_sys_time2};
+  using namespace Catch::literals;
+  REQUIRE(my_t.work_duration(my_t2).count() == (20.583_a).epsilon(0.01));
 }
 
 // TEST(DSTD, map_netDir) {
