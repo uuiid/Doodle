@@ -97,8 +97,8 @@ class DOODLELIB_API time_point_wrap {
    *
    * @todo: 这里我们要添加设置， 而不是静态变量
    */
-  chrono::hours_double one_day_works_hours(const chrono::local_time<chrono::seconds>& in_point) const;
-  chrono::days work_days(const time_point& in_begin, const time_point& in_end) const;
+  chrono::hours_double one_day_works_hours(const time_local_point& in_point) const;
+  chrono::days work_days(const time_local_point& in_begin, const time_local_point& in_end) const;
 
   //这里是序列化的代码
 

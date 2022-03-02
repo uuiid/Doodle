@@ -16,6 +16,7 @@
 
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
+#include <fmt/chrono.h>
 
 namespace doodle {
 namespace gui {
@@ -131,10 +132,12 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
 std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
   std::stringstream l_r{};
-  auto &k_ass = in.get<assets_file>();
-  auto l_next = get_user_next_time(in);
-  auto k_time = chrono::floor<chrono::days_double>(
-      in.get<time_point_wrap>().work_duration(l_next.get<time_point_wrap>()));
+  auto &k_ass       = in.get<assets_file>();
+  auto project_root = g_reg()->ctx<project>().p_path;
+  auto l_next       = get_user_next_time(in);
+  auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
+  auto k_time       = chrono::floor<chrono::days_double>(
+      in.get<time_point_wrap>().work_duration(end_time));
 
   comment k_comm{};
   if (auto l_c = in.try_get<std::vector<comment>>(); l_c)
@@ -147,17 +150,17 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
       << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
       << k_ass.p_user << ","
       << fmt::format(R"("{}")", in.get<time_point_wrap>().show_str()) << ","
-      << fmt::format(R"("{}")", l_next.get<time_point_wrap>().show_str()) << ","
-      << fmt::format("{}", k_time.count()) << ","
+      << fmt::format(R"("{}")", l_next ? l_next.get<time_point_wrap>().show_str() : end_time.show_str()) << ","
+      << fmt::format("{:3f}", k_time.count()) << ","
       << fmt::format("{}", k_comm.get_comment()) << ","
-      << fmt::to_string(FSys::exists(k_ass.path)) << ","
+      << fmt::to_string(FSys::exists(project_root / k_ass.path)) << ","
       << k_ass.path;
 
   return l_r.str();
 }
 
 entt::handle csv_export_widgets::get_user_next_time(const entt::handle &in_handle) {
-  auto end_it = boost::find_if(std::make_pair(boost::range::find(p_i->list_sort_time, in_handle), p_i->list_sort_time.end()),
+  auto end_it = boost::find_if(std::make_pair(boost::range::find(p_i->list_sort_time, in_handle) + 1, p_i->list_sort_time.end()),
                                [&](const entt::handle &in_l) {
                                  return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
                                });
