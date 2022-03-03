@@ -142,12 +142,19 @@ void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chron
   this->render();
 }
 void comm_create_video::render() {
-  ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data);
+  if(ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)){
+    ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
+      in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
+    });
+  };
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     g_main_loop().attach<file_dialog>(
         [this](const FSys::path& in_p) {
           p_i->out_path.data = in_p.generic_string();
+          ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
+            in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
+          });
         },
         "选择目录");
   }
@@ -198,7 +205,7 @@ void comm_create_video::render() {
       g_main_loop().attach<image_to_move>(
                        in_cache.out_handle,
                        in_cache.image_attr)
-          .then<one_process_t>([this]() {
+          .then<one_process_t>([this]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
 
           });
     });
@@ -235,8 +242,10 @@ entt::handle comm_create_video::create_image_to_move_handle(
   season::analysis_static(l_h, in_path);
   episodes::analysis_static(l_h, in_path);
   shot::analysis_static(l_h, in_path);
+  l_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
   return l_h;
 }
+comm_create_video::~comm_create_video() = default;
 
 comm_import_ue_files::comm_import_ue_files()
     : p_ue4_prj(),

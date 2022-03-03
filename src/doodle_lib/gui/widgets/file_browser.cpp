@@ -142,18 +142,18 @@ class file_browser::impl {
   bool is_ok;
   string buffer;
 
-  void set_multiple_select(path_attr& k_p) {
+  void set_multiple_select(const std::size_t& l_index) {
     auto& k_io = imgui::GetIO();
     if (k_io.KeyCtrl)
-      k_p.has_select = !(k_p.has_select) && this->select_match_filter(k_p);
+      path_list[l_index].has_select = !(path_list[l_index].has_select) && this->select_match_filter(path_list[l_index]);
     else if (k_io.KeyShift) {
-      std::for_each(path_list.begin() + boost::numeric_cast<int64_t>(select_index),
-                    std::find(path_list.begin(), path_list.end(), k_p),
+      std::for_each(path_list.begin() + boost::numeric_cast<int64_t>(std::min(l_index, select_index)),
+                    path_list.begin() + boost::numeric_cast<int64_t>(std::max(l_index, select_index)),
                     [this](path_attr& in_attr) {
                       in_attr.has_select = this->select_match_filter(in_attr);
                     });
     } else
-      this->set_one_select(k_p);
+      this->set_one_select(path_list[l_index]);
   }
   void set_one_select(path_attr& k_p) {
     std::for_each(path_list.begin(), path_list.end(), [](auto& in) {
@@ -379,6 +379,8 @@ void file_browser::render_file_list() {
           /// \brief 设置文件名序列
           imgui::TableNextColumn();
           if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
+            auto l_index = std::distance(p_i->path_list.begin(), std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p));
+
             if (imgui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) && k_p.is_dir) {  /// \brief 双击函数
               p_i->begin_fun_list.emplace_back(
                   [=, in_path = k_p.path]() {
@@ -387,12 +389,12 @@ void file_browser::render_file_list() {
             } else /*(imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))*/ {  /// \brief 单击函数
               /// \brief 多选时的方法
               if (p_i->enum_flags & flags_::file_browser_flags_MultipleSelection) {
-                p_i->set_multiple_select(k_p);
+                p_i->set_multiple_select(l_index);
               } else {
                 p_i->set_one_select(k_p);
               }
               p_i->generate_buffer();
-              p_i->select_index = std::distance(p_i->path_list.begin(), std::find(p_i->path_list.begin(), p_i->path_list.end(), k_p));
+              p_i->select_index = l_index;
             }
           }
           /// \brief 文件大小

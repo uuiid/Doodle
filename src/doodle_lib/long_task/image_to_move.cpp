@@ -32,7 +32,7 @@ void watermark_add_image(cv::Mat &in_image, const image_watermark &in_watermark)
   // draw the box
   cv::rectangle(l_image, textOrg + cv::Point(0, baseline),
                 textOrg + cv::Point(textSize.width, -textSize.height),
-                cv::Scalar(0, 0, 0), -1);
+                cv::Scalar(0, 0, 0, 100), -1);
 
   cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
   // then put the text itself
@@ -102,9 +102,10 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
                if (in_handle.any_of<shot>())
                  l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<shot>()), 0.1, 0.1, rgb_default);
                if (in_handle.any_of<episodes>())
-                 l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.13, rgb_default);
-               l_attribute.watermarks.emplace_back(core_set::getSet().get_user_en(), 0.1, 0.15, rgb_default);
-               l_attribute.watermarks.emplace_back(core_set::getSet().get_department(), 0.1, 0.17, rgb_default);
+                 l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::getSet().get_user_en(), 0.1, 0.2, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::getSet().get_department(), 0.1, 0.25, rgb_default);
+               return l_attribute;
              }) |
          ranges::to_vector;
   image_file_attribute::extract_num(list);
@@ -113,7 +114,7 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
     in_attribute.watermarks.emplace_back(fmt::format("{}/{}", in_attribute.num, l_size), 0.8, 0.1, rgb_default);
     in_attribute.watermarks.emplace_back(
         fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
-        0.8, 0.4, rgb_default);
+        0.8, 0.2, rgb_default);
   });
 
   return list;
@@ -125,7 +126,7 @@ void image_to_move::init() {
   /// \brief 这里排序组件
   image_file_attribute::extract_num(p_i->p_image);
   std::sort(p_i->p_image.begin(), p_i->p_image.end());
-  DOODLE_LOG_INFO("获得图片路径 {}", p_i->p_image.front().file_path.parent_path());
+
   /// \brief 这里进行消息初始化
   auto &l_mag = p_i->p_h.patch<process_message>();
   l_mag.set_state(l_mag.run);
@@ -135,20 +136,25 @@ void image_to_move::init() {
       self->abort();
     }
   };
+  l_mag.message(fmt::format("获得图片路径 {}", p_i->p_image.front().file_path.parent_path()));
 
   /// \brief 这里我们检查 shot，episode 进行路径的组合
-  if (!p_i->p_out_path.has_extension())
+  if (!p_i->p_out_path.has_extension() && p_i->p_h.any_of<episodes, shot>())
     p_i->p_out_path /= fmt::format(
         "{}_{}.mp4",
         p_i->p_h.any_of<episodes>() ? fmt::to_string(p_i->p_h.get<episodes>()) : "eps_none"s,
         p_i->p_h.any_of<shot>() ? fmt::to_string(p_i->p_h.get<shot>()) : "sh_none"s);
-  else
+  else if (!p_i->p_out_path.has_extension()) {
+    p_i->p_out_path /= fmt::format(
+        "{}.mp4", core_set::getSet().get_uuid());
+  } else
     chick_true<doodle_error>(p_i->p_out_path.extension() == ".mp4", DOODLE_LOC, "扩展名称不是MP4");
 
   if (exists(p_i->p_out_path.parent_path()))
     create_directories(p_i->p_out_path.parent_path());
 
-  DOODLE_LOG_INFO("开始创建视频 {}", p_i->p_out_path);
+  l_mag.message(fmt::format("开始创建视频 {}", p_i->p_out_path));
+  l_mag.set_name(p_i->p_out_path.filename().generic_string());
 
   auto k_fun = [&]() -> void {
     const static cv::Size k_size{1920, 1080};
@@ -161,6 +167,9 @@ void image_to_move::init() {
     for (auto &l_image : p_i->p_image) {
       if (p_i->stop)
         return;
+      p_i->p_h.patch<process_message>([&](process_message &in_message) {
+        in_message.message(fmt::format("开始读取图片 {}", l_image.file_path));
+      });
       k_image = cv::imread(l_image.file_path.generic_string());
       chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
@@ -203,6 +212,7 @@ void image_to_move::succeeded() {
     auto k_str = fmt::format("成功完成任务\n");
     in.message(k_str, in.warning);
   });
+  p_i->p_h.emplace_or_replace<FSys::path>(p_i->p_out_path);
 }
 void image_to_move::failed() {
   p_i->p_h.patch<process_message>([&](process_message &in) {
@@ -275,15 +285,20 @@ void image_file_attribute::extract_num(std::vector<image_file_attribute> &in_ima
                     return in.num_list.size() == k_size;
                   }),
       DOODLE_LOC, "序列不匹配");
+  chick_true<doodle_error>(in_image_list.size() >= 2, DOODLE_LOC, "单个文件, 无法搜索帧号");
+  auto &one   = in_image_list[0].num_list;
+  auto &tow   = in_image_list[1].num_list;
+  auto l_item = ranges::views::ints(std::size_t{0}, k_size) |
+                ranges::views::filter([&](const std::size_t &in_tuple) {
+                  return one[in_tuple] != tow[in_tuple];
+                }) |
+                ranges::to_vector;
 
-  auto &one   = in_image_list[0];
-  auto &tow   = in_image_list[1];
-  auto k_diff = std::mismatch(one.num_list.begin(), one.num_list.end(), tow.num_list.begin());
-  chick_true<doodle_error>(k_diff.first != k_diff.second, DOODLE_LOC, "没有找到帧索引");
-  auto k_dis = std::distance(one.num_list.begin(), k_diff.first);
+  chick_true<doodle_error>(!l_item.empty(), DOODLE_LOC, "没有找到帧索引");
+  auto l_index = l_item.front();
   std::for_each(in_image_list.begin(), in_image_list.end(),
                 [&](image_file_attribute &in_attribute) {
-                  in_attribute.num = in_attribute.num_list[k_dis];
+                  in_attribute.num = in_attribute.num_list[l_index];
                 });
 }
 image_file_attribute::image_file_attribute() : num(){};

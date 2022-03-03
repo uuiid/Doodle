@@ -85,6 +85,7 @@ class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
 
  public:
   comm_create_video();
+  ~comm_create_video();
   constexpr static std::string_view name{"创建视频"};
   bool show{false};
   [[maybe_unused]] void init();

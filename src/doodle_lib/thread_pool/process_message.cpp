@@ -36,6 +36,10 @@ void process_message::message(const string& in_string, const level& in_level_enu
       p_str_end = in_string;
       break;
   }
+  if (in_string.back() != '\n') {
+    p_log += '\n';
+    p_err += '\n';
+  }
 }
 void process_message::set_state(state in_state) {
   std::lock_guard _lock{_mutex};
