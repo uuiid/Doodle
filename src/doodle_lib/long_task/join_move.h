@@ -30,6 +30,10 @@ class DOODLELIB_API move_attr {
 
 namespace details {
 
+/**
+ * @todo 连接视频实现
+ * @brief
+ */
 class DOODLELIB_API join_move : public process_t<join_move> {
   class impl;
   std::unique_ptr<impl> p_i;

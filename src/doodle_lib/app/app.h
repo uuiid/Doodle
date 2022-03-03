@@ -34,6 +34,9 @@ namespace doodle {
  * @todo 添加只输出abc功能
  * @todo 文件列表的排序功能
  *
+ * @todo maya 解算使用拓扑结构寻找原始物体
+ * @todo maya 解算前添加吸附指令
+ * @todo maya 制作布料解算工具断掉skin 和 cloth之间的连接
  *
  * @todo ue4 gpu超时更新
  * @todo ue4 abc解算和fbx分开
@@ -41,7 +44,9 @@ namespace doodle {
  * @todo ue4 路人走路时的脚本固定组件开发
  * @todo @b 火光 属性记录动画帧元数据
  * @todo @b 灯光 球属性记录动画帧元数据
- * @todo ue4 灯光配置父子关系添加
+ *
+ * @todo ue4 灯光配置父子关系添加(not)
+ *
  *
  */
 class DOODLELIB_API app : public app_command_base {
