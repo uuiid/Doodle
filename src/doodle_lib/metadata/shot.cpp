@@ -1,6 +1,5 @@
 #include "shot.h"
 
-
 #include <doodle_lib/metadata/episodes.h>
 
 namespace doodle {
@@ -70,14 +69,13 @@ bool shot::analysis(const std::string& in_path) {
   return k_r;
 }
 
-std::optional<shot> shot::analysis_static(const std::string& in_path) {
-  auto k_shot = shot{};
-  if (k_shot.analysis(in_path))
-    return k_shot;
-  else
-    return {};
+void shot::analysis_static(const entt::handle& in_handle,
+                           const FSys::path& in_path) {
+  shot l_shot{};
+  if (l_shot.analysis(in_path)) {
+    in_handle.emplace_or_replace<shot>(l_shot);
+  }
 }
-
 
 bool shot::operator==(const shot& in_rhs) const {
   return p_shot == in_rhs.p_shot &&

@@ -24,6 +24,10 @@ class DOODLELIB_API season {
   bool operator==(const season& in_rhs) const;
   bool operator!=(const season& in_rhs) const;
 
+  bool analysis(const std::string &in_path);
+
+  static void analysis_static(const entt::handle& in_handle,
+                              const FSys::path& in_path);
  private:
   friend void to_json(nlohmann::json& j, const season& p) {
     j["season"] = p.p_int;

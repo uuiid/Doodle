@@ -46,10 +46,7 @@ class DOODLELIB_API shot {
   };
   bool analysis(const std::string &in_path);
 
-  static std::optional<shot> analysis_static(const std::string &in_path);
-  inline static std::optional<shot> analysis_static(const FSys::path &in_path) {
-    return analysis_static(in_path.generic_string());
-  };
+  static void analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
  private:
   friend void to_json(nlohmann::json &j, const shot &p) {
