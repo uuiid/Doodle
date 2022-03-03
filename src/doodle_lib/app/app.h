@@ -45,7 +45,7 @@ namespace doodle {
  * @todo @b 火光 属性记录动画帧元数据
  * @todo @b 灯光 球属性记录动画帧元数据
  *
- * @todo ue4 灯光配置父子关系添加(not)
+ * @todo <strike> ue4 灯光配置父子关系添加 </strike>
  *
  *
  */
