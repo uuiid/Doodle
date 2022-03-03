@@ -17,7 +17,6 @@
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/opencv_read_player.h>
 #include <doodle_lib/file_warp/ue4_project.h>
-#include <doodle_lib/file_warp/video_sequence.h>
 #include <doodle_lib/gui/base_windwos.h>
 #include <doodle_lib/gui/setting_windows.h>
 #include <doodle_lib/gui/widget_register.h>
