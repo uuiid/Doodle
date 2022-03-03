@@ -27,7 +27,7 @@ class DOODLELIB_API episodes {
   bool analysis(const std::string &in_path);
 
   static void analysis_static(const entt::handle &in_handle,
-                              const std::string &in_path);
+                              const FSys::path &in_path);
 
  private:
   friend void to_json(nlohmann::json &j, const episodes &p) {

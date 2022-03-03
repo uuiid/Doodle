@@ -55,7 +55,7 @@ bool episodes::analysis(const std::string& in_path) {
 }
 
 void episodes::analysis_static(const entt::handle& in_handle,
-                               const std::string& in_path) {
+                               const FSys::path& in_path) {
   episodes k_eps{};
   if (k_eps.analysis(in_path))
     in_handle.emplace<episodes>(k_eps);
