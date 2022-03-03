@@ -77,15 +77,11 @@ class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
  *
  */
 class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
-  struct image_paths {
-    std::vector<FSys::path> p_path_list;
-    FSys::path p_out_path;
-    std::string p_show_name;
-    bool use_dir;
-  };
-  std::vector<FSys::path> p_video_path;
-  std::vector<image_paths> p_image_path;
-  std::shared_ptr<std::string> p_out_path;
+  class impl;
+  class image_arg;
+  std::unique_ptr<impl> p_i;
+
+  entt::handle create_image_to_move_handle(const FSys::path& in_path);
 
  public:
   comm_create_video();
@@ -120,7 +116,7 @@ class DOODLELIB_API comm_import_ue_files : public process_t<comm_import_ue_files
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
-  void render() ;
+  void render();
 };
 
 }  // namespace doodle

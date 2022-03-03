@@ -8,10 +8,17 @@
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/season.h>
+#include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <long_task/image_to_move.h>
+#include <gui/gui_ref/ref_base.h>
+
+#include <utility>
+
 namespace doodle {
 
 comm_maya_tool::comm_maya_tool()
@@ -91,10 +98,33 @@ void comm_maya_tool::render() {
   }
 }
 
+class comm_create_video::image_arg : public gui::gui_cache<std::string> {
+ public:
+  using base_type = gui::gui_cache<std::string>;
+  explicit image_arg(const entt::handle& in_handle,
+                     std::vector<FSys::path> in_image_attr,
+                     const std::string& in_show_str)
+      : base_type(in_show_str),
+        out_handle(in_handle),
+        image_attr(std::move(in_image_attr)){};
+
+  entt::handle out_handle;
+  std::vector<FSys::path> image_attr;
+};
+
+class comm_create_video::impl {
+ public:
+  gui::gui_cache<std::string> out_path{"输出路径"s, ""s};
+
+  using image_cache = comm_create_video::image_arg;
+  using video_cache = gui::gui_cache<std::string>;
+
+  std::vector<image_cache> image_to_video_list;
+  std::vector<video_cache> video_list;
+};
+
 comm_create_video::comm_create_video()
-    : p_video_path(),
-      p_image_path(),
-      p_out_path(new_object<std::string>()) {
+    : p_i(std::make_unique<impl>()) {
 }
 void comm_create_video::init() {
   g_reg()->set<comm_create_video&>(*this);
@@ -112,12 +142,12 @@ void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chron
   this->render();
 }
 void comm_create_video::render() {
-  imgui::InputText("输出文件夹", p_out_path.get());
-  imgui::SameLine();
-  if (imgui::Button("选择")) {
+  ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data);
+  ImGui::SameLine();
+  if (ImGui::Button("选择")) {
     g_main_loop().attach<file_dialog>(
         [this](const FSys::path& in_p) {
-          *p_out_path = in_p.generic_string();
+          p_i->out_path.data = in_p.generic_string();
         },
         "选择目录");
   }
@@ -125,11 +155,11 @@ void comm_create_video::render() {
   if (imgui::Button("选择图片")) {
     g_main_loop().attach<file_dialog>(
         [this](const std::vector<FSys::path>& in) {
-          image_paths k_image_paths{};
-          k_image_paths.use_dir     = false;
-          k_image_paths.p_path_list = in;
-          k_image_paths.p_show_name = k_image_paths.p_path_list.front().parent_path().generic_string();
-          p_image_path.emplace_back(std::move(k_image_paths));
+          if (!in.empty())
+            p_i->image_to_video_list.emplace_back(
+                create_image_to_move_handle(in.front()),
+                in,
+                in.front().generic_string());
         },
         "选择序列",
         string_list{".png", ".jpg"});
@@ -138,39 +168,52 @@ void comm_create_video::render() {
   if (imgui::Button("选择文件夹")) {
     g_main_loop().attach<file_dialog>(
         [this](const std::vector<FSys::path>& in) {
-          boost::copy(in | boost::adaptors::transformed(
-                               [](const FSys::path& in_path) {
-                                 image_paths k_image_paths{};
-                                 k_image_paths.use_dir = true;
-                                 k_image_paths.p_path_list.emplace_back(in_path);
-                                 k_image_paths.p_show_name = fmt::format("{}##{}",
-                                                                         k_image_paths.p_path_list.back().generic_string(),
-                                                                         fmt::ptr(&k_image_paths));
-                                 return k_image_paths;
-                               }),
-                      std::back_inserter(p_image_path));
+          ranges::for_each(in, [this](const FSys::path& in_path) {
+            std::vector<FSys::path> list =
+                ranges::make_subrange(FSys::directory_iterator{in_path},
+                                      FSys::directory_iterator{}) |
+                ranges::views::filter([](const FSys::directory_entry& in_file) {
+                  return in_file.is_regular_file();
+                }) |
+                ranges::view::transform([](const FSys::directory_entry& in_file) -> FSys::path {
+                  return in_file.path();
+                }) |
+                ranges::to_vector;
+            p_i->image_to_video_list.emplace_back(
+                create_image_to_move_handle(in_path),
+                list,
+                in_path.generic_string());
+          });
         },
         "select dir");
   }
 
   imgui::SameLine();
   if (imgui::Button("清除")) {
-    p_image_path.clear();
+    p_i->image_to_video_list.clear();
   }
   imgui::SameLine();
   if (imgui::Button("创建视频")) {
+    ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
+      g_main_loop().attach<image_to_move>(
+                       in_cache.out_handle,
+                       in_cache.image_attr)
+          .then<one_process_t>([this]() {
+
+          });
+    });
   }
 
   dear::ListBox{"image_list"} && [this]() {
-    for (const auto& i : p_image_path) {
-      dear::Selectable(i.p_show_name);
+    for (const auto& i : p_i->image_to_video_list) {
+      dear::Selectable(*i.gui_name);
     }
   };
 
   if (imgui::Button("选择视频")) {
     g_main_loop().attach<file_dialog>(
         [this](const std::vector<FSys::path>& in) {
-          p_video_path = in;
+          //          p_video_path = in;
         },
         "select mp4 file",
         string_list{".mp4"});
@@ -180,10 +223,19 @@ void comm_create_video::render() {
   }
 
   dear::ListBox{"video_list"} && [this]() {
-    for (const auto& i : p_video_path) {
-      dear::Selectable(i.filename().generic_string());
+    for (const auto& i : p_i->video_list) {
+      dear::Selectable(*i.gui_name);
     }
   };
+}
+entt::handle comm_create_video::create_image_to_move_handle(
+    const FSys::path& in_path) {
+  auto l_h = make_handle();
+  l_h.emplace<process_message>();
+  season::analysis_static(l_h, in_path);
+  episodes::analysis_static(l_h, in_path);
+  shot::analysis_static(l_h, in_path);
+  return l_h;
 }
 
 comm_import_ue_files::comm_import_ue_files()
