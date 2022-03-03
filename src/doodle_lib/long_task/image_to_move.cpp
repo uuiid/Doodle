@@ -52,24 +52,24 @@ class image_to_move::impl {
   std::atomic_bool stop{false};
 };
 
-image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
-    : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-  chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
-  p_i->p_out_path = in_handle.get<FSys::path>();
-  std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
-    chick_true<doodle_error>(in.any_of<image_file_attribute>(), DOODLE_LOC, "缺失文件属性");
-  });
-  p_i->p_h = in_handle;
-  std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
-                 [](const entt::handle &in) -> image_file_attribute {
-                   return in.get<image_file_attribute>();
-                 });
-  std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
-    chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
-  });
-  chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
-}
+// image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
+//     : p_i(std::make_unique<impl>()) {
+//   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
+//   chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
+//   p_i->p_out_path = in_handle.get<FSys::path>();
+//   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
+//     chick_true<doodle_error>(in.any_of<image_file_attribute>(), DOODLE_LOC, "缺失文件属性");
+//   });
+//   p_i->p_h = in_handle;
+//   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
+//                  [](const entt::handle &in) -> image_file_attribute {
+//                    return in.get<image_file_attribute>();
+//                  });
+//   std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
+//     chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
+//   });
+//   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
+// }
 image_to_move::image_to_move(const entt::handle &in_handle,
                              const std::vector<image_file_attribute> &in_vector)
     : p_i(std::make_unique<impl>()) {
@@ -84,6 +84,41 @@ image_to_move::image_to_move(const entt::handle &in_handle,
 
   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
 }
+
+image_to_move::image_to_move(const entt::handle &in_handle,
+                             const std::vector<FSys::path> &in_vector)
+    : image_to_move(in_handle, make_default_attr(in_handle, in_vector)) {
+}
+
+std::vector<image_file_attribute> image_to_move::make_default_attr(
+    const entt::handle &in_handle,
+    const std::vector<FSys::path> &in_path_list) {
+  std::vector<image_file_attribute> list{};
+  list = in_path_list |
+         ranges::views::transform(
+             [&](const FSys::path &in_path) -> image_file_attribute {
+               image_file_attribute l_attribute{};
+               l_attribute.file_path = in_path;
+               if (in_handle.any_of<shot>())
+                 l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<shot>()), 0.1, 0.1, rgb_default);
+               if (in_handle.any_of<episodes>())
+                 l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.13, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::getSet().get_user_en(), 0.1, 0.15, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::getSet().get_department(), 0.1, 0.17, rgb_default);
+             }) |
+         ranges::to_vector;
+  image_file_attribute::extract_num(list);
+  const auto l_size = in_path_list.size();
+  ranges::for_each(list, [&](image_file_attribute &in_attribute) {
+    in_attribute.watermarks.emplace_back(fmt::format("{}/{}", in_attribute.num, l_size), 0.8, 0.1, rgb_default);
+    in_attribute.watermarks.emplace_back(
+        fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
+        0.8, 0.4, rgb_default);
+  });
+
+  return list;
+}
+
 image_to_move::~image_to_move() = default;
 
 void image_to_move::init() {
