@@ -29,10 +29,13 @@ void comm_maya_tool::init() {
   g_reg()->set<comm_maya_tool&>(*this);
 }
 void comm_maya_tool::succeeded() {
+  g_reg()->unset<comm_maya_tool>();
 }
 void comm_maya_tool::failed() {
+  g_reg()->unset<comm_maya_tool>();
 }
 void comm_maya_tool::aborted() {
+  g_reg()->unset<comm_maya_tool>();
 }
 void comm_maya_tool::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   this->render();
@@ -97,10 +100,13 @@ void comm_create_video::init() {
   g_reg()->set<comm_create_video&>(*this);
 }
 void comm_create_video::succeeded() {
+  g_reg()->unset<comm_create_video>();
 }
 void comm_create_video::failed() {
+  g_reg()->unset<comm_create_video>();
 }
 void comm_create_video::aborted() {
+  g_reg()->unset<comm_create_video>();
 }
 void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   this->render();
@@ -188,10 +194,13 @@ void comm_import_ue_files::init() {
   g_reg()->set<comm_import_ue_files&>(*this);
 }
 void comm_import_ue_files::succeeded() {
+  g_reg()->unset<comm_import_ue_files>();
 }
 void comm_import_ue_files::failed() {
+  g_reg()->unset<comm_import_ue_files>();
 }
 void comm_import_ue_files::aborted() {
+  g_reg()->unset<comm_import_ue_files>();
 }
 void comm_import_ue_files::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   this->render();
