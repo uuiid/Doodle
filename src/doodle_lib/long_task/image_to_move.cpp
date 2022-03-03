@@ -142,7 +142,10 @@ void image_to_move::init() {
   };
   p_i->result = std::move(g_thread_pool().enqueue(k_fun));
 }
-void image_to_move::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
+void image_to_move::update(
+    const chrono::duration<chrono::system_clock::rep,
+                           chrono::system_clock::period> &,
+    void *data) {
   chick_true<doodle_error>(p_i->result.valid(), DOODLE_LOC, "无效的数据");
   switch (p_i->result.wait_for(0ns)) {
     case std::future_status::ready: {
