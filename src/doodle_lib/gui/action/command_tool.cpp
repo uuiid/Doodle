@@ -142,7 +142,7 @@ void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chron
   this->render();
 }
 void comm_create_video::render() {
-  if(ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)){
+  if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {
     ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
       in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
     });
@@ -201,14 +201,16 @@ void comm_create_video::render() {
   }
   imgui::SameLine();
   if (imgui::Button("创建视频")) {
-    ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
-      g_main_loop().attach<image_to_move>(
-                       in_cache.out_handle,
-                       in_cache.image_attr)
-          .then<one_process_t>([this]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
-
-          });
-    });
+    ranges::for_each(p_i->image_to_video_list,
+                     [this](const impl::image_cache& in_cache) {
+                       g_main_loop().attach<image_to_move>(
+                                        in_cache.out_handle,
+                                        in_cache.image_attr)
+                           .then<one_process_t>([this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
+                             auto l_out_path = l_h.get<FSys::path>();
+                             p_i->video_list.emplace_back(l_out_path.generic_string(), l_out_path.generic_string());
+                           });
+                     });
   }
 
   dear::ListBox{"image_list"} && [this]() {
@@ -220,10 +222,19 @@ void comm_create_video::render() {
   if (imgui::Button("选择视频")) {
     g_main_loop().attach<file_dialog>(
         [this](const std::vector<FSys::path>& in) {
-          //          p_video_path = in;
+          p_i->video_list |= ranges::action::push_back(
+              in |
+              ranges::views::transform([](const FSys::path& in_path)
+                                           -> impl::video_cache {
+                return impl::video_cache{in_path.generic_string()};
+              }));
         },
         "select mp4 file",
         string_list{".mp4"});
+  }
+  imgui::SameLine();
+  if (imgui::Button("清除视频")) {
+    p_i->video_list.clear();
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
