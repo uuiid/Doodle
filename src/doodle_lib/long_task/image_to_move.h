@@ -78,4 +78,5 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
   [[maybe_unused]] void update(const base_type::delta_type &, void *data);
 };
 }  // namespace details
+using image_to_move = details::image_to_move;
 }  // namespace doodle
