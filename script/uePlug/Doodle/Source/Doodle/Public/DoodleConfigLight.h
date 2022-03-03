@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DoodleLightWeight.h"
 
 // clang-format off
 #include "DoodleConfigLight.generated.h"
@@ -13,6 +14,7 @@ class ASkeletalMeshActor;
 class ULightComponent;
 class ALight;
 
+
 UCLASS(EditInlineNew)
 class DOODLE_API UDoodleConfigLight : public UObject {
   GENERATED_BODY()
@@ -21,5 +23,5 @@ class DOODLE_API UDoodleConfigLight : public UObject {
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
             DisplayName = "灯光组")
-  TArray<ALight*> p_light;
+  TArray<FDoodleLightWeight> p_light;
 };
