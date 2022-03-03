@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DoodleLightWeight.h"
 #include "GameFramework/Actor.h"
 
 // clang-format off
@@ -22,7 +23,7 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
                       const FString& InNewNameSuggestion,
                       FString& OutPackageName);
   UObject* OpenDialog(const FString& InDefaultPath,
-                  const FString& InNewNameSuggestion);
+                      const FString& InNewNameSuggestion);
 #endif  // WITH_EDITOR
  public:
   ADoodleConfigLightActor();
@@ -51,9 +52,7 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
 
 
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
-  TArray<TWeakObjectPtr<ALight>> p_light_list;
-  // TWeakObjectPtr<ALight> _p;
-
+  TArray<FDoodleLightWeightWeak> p_light_list;
 #if WITH_EDITOR
   void PostEditChangeProperty(
       FPropertyChangedEvent& PropertyChangeEvent) override;
