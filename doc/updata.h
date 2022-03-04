@@ -550,4 +550,7 @@
  *
  * @subsubsection updata_log_348 版本3.4.8
  * @li 更新寻找图片时的错误
+ *
+ * @subsubsection updata_log_349 版本3.4.9
+ * @li 多个同时编辑
  */
