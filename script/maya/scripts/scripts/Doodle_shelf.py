@@ -49,6 +49,25 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda xx: self.randomColor(
                           self.__gen_color__))
 
+        clear_button = self.addButon("clear", icon="icons/clear.png",
+                                     command=lambda: self.print_r(cmds.doodle_clear_scene(
+                                         dn=True, mu=True, uv=True,
+                                         e1=True, e2=True, e3=True, e4=True)),
+                                     noDefaultPopup_=True)
+        clear_popup_menu = cmds.popupMenu(p=clear_button, b=3)
+        cmds.menuItem(p=clear_popup_menu,
+                      l=u"解锁全部法线",
+                      command=lambda x: self.print_r(cmds.doodle_clear_scene(nn=True)))
+        cmds.menuItem(p=clear_popup_menu,
+                      l=u"选择重名物体",
+                      command=lambda x: self.print_r(cmds.doodle_clear_scene(dn=True, sl=True)))
+        cmds.menuItem(p=clear_popup_menu,
+                      l=u"选择多边面",
+                      command=lambda x: self.print_r(cmds.doodle_clear_scene(mu=True, sl=True)))
+        cmds.menuItem(p=clear_popup_menu,
+                      l=u"选择多uv",
+                      command=lambda x: self.print_r(cmds.doodle_clear_scene(uv=True, sl=True)))
+
         self.addButon("hud", "icons/create_hud.png",
                       command=cmds.create_hud_node_maya)
         self.addButon("af", "icons/doodle_afterimage.png",
@@ -70,6 +89,11 @@ class DlsShelf(shelfBase._shelf):
         cmds.doodle_create_ref_file()
         cmds.doodle_ref_file_export(
             startTime=1001, exportType="fbx", select=True)
+
+    @staticmethod
+    def print_r(str_list):
+        if "1" == str_list[0]:
+            cmds.confirmDialog(b="ok", m=str_list[1])
 
     # def deleteWeightPoint(self):
     #     self.re()
