@@ -10,7 +10,7 @@
 namespace doodle {
 class DOODLELIB_API comm_ass_ue4_create_shot : public command_base {
  private:
-  string_ptr p_ue4_prj_path;
+  string p_ue4_prj_path;
 
   std::vector<entt::handle> p_shot_list;
 

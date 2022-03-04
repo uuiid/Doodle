@@ -55,7 +55,6 @@ using namespace std::chrono_literals;
 using namespace date::literals;
 
 }  // namespace literals
-
 using namespace std::chrono;
 using namespace date;
 
@@ -69,26 +68,14 @@ using local_time_pos = time_point<local_t, seconds>;
  *
  * @todo 这里我们暂时使用周六和周日作为判断, 但是实际上还有各种假期和其他情况要计入
  */
-
-
-
 bool is_rest_day(const sys_days &in_days);
 bool is_rest_day(const local_days &in_days);
 template <class dur>
 std::time_t to_time_t(const time_point<local_t, dur> &in_timePoint) {
   return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
 };
-// template <class Clock>
-// bool is_morning_works(const std::chrono::time_point<Clock, typename Clock::duration>& in_time) {
-// }
 }  // namespace chrono
 
-template <typename IntType = std::int32_t>
-std::vector<IntType> range(IntType start, IntType stop, IntType step = 1) {
-  std::vector<IntType> x{};
-  boost::push_back(x, boost::irange(start, stop, step));
-  return x;
-};
 
 namespace FSys {
 using namespace std::filesystem;
