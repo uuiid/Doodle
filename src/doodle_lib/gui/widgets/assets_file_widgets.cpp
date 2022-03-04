@@ -265,10 +265,12 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   }
 
   p_i->select_index = in_size;
-  g_reg()->set<std::vector<entt::handle>>(l_handle_list);
-  auto& l_sig = g_reg()->ctx<core_sig>();
-  l_sig.select_handles(l_handle_list);
-  l_sig.select_handle(i.handle_);
+  if(!l_handle_list.empty()) {
+    g_reg()->set<std::vector<entt::handle>>(l_handle_list);
+    auto& l_sig = g_reg()->ctx<core_sig>();
+    l_sig.select_handles(l_handle_list);
+    l_sig.select_handle(i.handle_);
+  }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
   auto l_item = p_i->lists[in_size];
