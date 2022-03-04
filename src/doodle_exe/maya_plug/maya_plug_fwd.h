@@ -21,7 +21,7 @@ inline MSyntax null_syntax_t() { return {}; };
 using CreateSyntaxFunction = std::add_pointer_t<MSyntax()>;
 /**
  * @brief maya 命令模板
- * 
+ *
  * @tparam ActionClass 动作类
  * @tparam CommandName 命令名称
  * @tparam CommandSyntax 命令标志
@@ -52,6 +52,10 @@ class TemplateAction : public MPxCommand {
 
 }  // namespace doodle
 
+/**
+ * @brief
+ * @todo 右键选颜色
+ */
 namespace doodle::maya_plug {
 class play_blast;
 using play_blast_ptr = std::shared_ptr<play_blast>;
@@ -99,8 +103,8 @@ class d_str {
 namespace fmt {
 /**
  * @brief 格式化和maya异常
- * 
- * @tparam  
+ *
+ * @tparam
  */
 template <>
 struct formatter<::doodle::maya_plug::maya_error> : formatter<string_view> {

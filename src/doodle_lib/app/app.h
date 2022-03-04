@@ -33,6 +33,8 @@ namespace doodle {
  * @todo 创建检查maya 场景工具架
  * @todo 添加只输出abc功能
  * @todo 文件列表的排序功能
+ * @todo 在文件列表中，显示文件数量，同时，当选择文件时，显示选中文件数量。
+ *
  *
  * @todo maya 解算使用拓扑结构寻找原始物体
  * @todo maya 解算前添加吸附指令
@@ -44,6 +46,7 @@ namespace doodle {
  * @todo ue4 路人走路时的脚本固定组件开发
  * @todo @b 火光 属性记录动画帧元数据
  * @todo @b 灯光 球属性记录动画帧元数据
+ *
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
  *
