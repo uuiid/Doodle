@@ -313,6 +313,9 @@ void edit_widgets::init() {
           in_edit.data->init(in);
         });
       }));
+  /**
+   * @brief 保存时禁用编辑
+   */
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
       [&](const std::filesystem::path &) {
         this->p_i->add_handles.clear();
