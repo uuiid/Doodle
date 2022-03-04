@@ -183,7 +183,9 @@ class add_assets_for_file : public base_render {
         std::regex_search(l_path.filename().generic_string(), l_regex)) {
       l_image_load.save(in_handle, l_path);
       return;
-    } else
+    } else if (FSys::is_regular_file(l_path))
+      l_path = in_path.parent_path();
+    else
       l_path = in_path;
 
     if (FSys::is_directory(l_path)) {
