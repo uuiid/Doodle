@@ -9,6 +9,7 @@ import scripts.Doodle_clear as Doodle_clear
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
+import random
 
 
 import maya_fun_tool as Doodle_fun_tool
@@ -37,8 +38,17 @@ class DlsShelf(shelfBase._shelf):
         # self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
         #               command=self.deleteAttr)
 
-        self.addButon("randomColor", icon="icons/randomColor.png",
-                      command=self.randomColor)
+        button_color = self.addButon("randomColor", icon="icons/randomColor.png",
+                                     command=lambda: self.randomColor(),
+                                     doubleCommand=lambda: self.randomColor(
+                                         self.__gen_color__),
+                                     noDefaultPopup_=True)
+        color_popup_menu = cmds.popupMenu(p=button_color, b=3)
+        cmds.menuItem(label="Select colot",
+                      parent=color_popup_menu,
+                      command=lambda xx: self.randomColor(
+                          self.__gen_color__))
+
         self.addButon("hud", "icons/create_hud.png",
                       command=cmds.create_hud_node_maya)
         self.addButon("af", "icons/doodle_afterimage.png",
@@ -69,16 +79,31 @@ class DlsShelf(shelfBase._shelf):
     #     self.re()
     #     deleteAttr.deleteShape().show()
 
-    def randomColor(self):
-        import random
+    @staticmethod
+    def randomColor(color_random_fun=shelfBase._null):
         select_lists = cmds.ls(sl=True)
+        l_c = color_random_fun()
+
         for select_obj in select_lists:
             cmds.select(select_obj)
+            l_c1 = l_c if l_c else [random.random() * .5,
+                                    random.random() * .5,
+                                    random.random() * .5]
             cmds.polyColorPerVertex(
                 colorDisplayOption=True,
-                colorR=random.random() * .5,
-                colorG=random.random() * .5,
-                colorB=random.random() * .5)
+                colorR=l_c1[0],
+                colorG=l_c1[1],
+                colorB=l_c1[2])
+        cmds.select(select_lists)
+
+    @staticmethod
+    def __gen_color__():
+        l_r = cmds.colorEditor()
+        if '1' == l_r.split()[3]:
+            l_rgb = cmds.colorEditor(query=True, rgb=True)
+            return l_rgb
+        else:
+            return [0.5, 0.5, 0.5]
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()

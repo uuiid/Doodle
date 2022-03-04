@@ -29,12 +29,17 @@ class _shelf():
         elements. Otherwise, nothing is added to the shelf.'''
         pass
 
-    def addButon(self, label, icon="commandButton.png", command=_null, doubleCommand=_null):
+    def addButon(self, label, icon="commandButton.png",
+                 command=_null, doubleCommand=_null,
+                 noDefaultPopup_=False):
         '''Adds a shelf button with the specified label, command, double click command and image.'''
         cmds.setParent(self.name)
         if icon:
             icon = self.iconPath + icon
-        return cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand, imageOverlayLabel=label, olb=self.labelBackground, olc=self.labelColour)
+        return cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand,
+                                imageOverlayLabel=label,
+                                olb=self.labelBackground, olc=self.labelColour,
+                                noDefaultPopup=noDefaultPopup_)
 
     def addMenuItem(self, parent, label, command=_null, icon=""):
         '''Adds a shelf button with the specified label, command, double click command and image.'''
@@ -70,6 +75,7 @@ class _shelf():
                 except RuntimeError:
                     pass
             _shelf._instances.discard(inst)
+
 
 ###################################################################################
 '''This is an example shelf.'''
