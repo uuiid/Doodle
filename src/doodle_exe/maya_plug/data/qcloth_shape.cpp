@@ -376,6 +376,7 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
   p_ref_file = in_ref_file;
   obj        = in_object;
   chick_component<reference_file>(p_ref_file);
+
 }
 bool qcloth_shape::set_cache_folder() const {
   MStatus k_s{};

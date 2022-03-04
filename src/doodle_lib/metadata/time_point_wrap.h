@@ -116,11 +116,4 @@ class DOODLELIB_API time_point_wrap {
 //   };
 // }
 
-namespace gui {
-template <>
-class adl_traits<time_point_wrap> {
- public:
-  using gui_data = time_point_wrap::gui_data;
-};
-}  // namespace gui
 }  // namespace doodle

@@ -144,9 +144,9 @@ bool reference_file::replace_sim_assets_file() {
   auto k_prj = get_prj();
 
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
+  chick_true<doodle_error>(k_prj., DOODLE_LOC, "无法找到项目配置");
 
-  chick_component<project::cloth_config>(k_prj);
-  auto &k_cfg = k_prj.get<project::cloth_config>();
+  auto &k_cfg = k_prj.get_or_emplace<project::cloth_config>();
   FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
   DOODLE_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
@@ -309,10 +309,6 @@ bool reference_file::add_collision() const {
   return true;
 }
 void reference_file::generate_cloth_proxy() const {
-  auto k_prj = get_prj();
-  chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
-
-  chick_component<project::cloth_config>(k_prj);
   /// 这里我们使用节点类名称寻找 qlClothShape ;
   MStatus k_s{};
   for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {

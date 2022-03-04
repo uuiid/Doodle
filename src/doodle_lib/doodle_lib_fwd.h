@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 #include <DoodleConfig.h>
-#include <doodle_lib/doodle_lib_pch.h>
+#include <doodle_lib_export.h>
+
 #include <doodle_lib/doodle_macro.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/lib_warp/cmrcWarp.h>
@@ -9,7 +10,6 @@
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/logger/logger.h>
-#include <doodle_lib_export.h>
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/core/core_help_impl.h>
 //开始我们的名称空间
@@ -99,9 +99,6 @@ DOODLELIB_API std::vector<path> list_files(const path &in_dir);
 
 }  // namespace FSys
 
-
-
-
 using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
@@ -115,14 +112,12 @@ class core_sql;
 class assets_file;
 class time_point_wrap;
 class comment;
-class rpc_server_handle;
 class doodle_lib;
 class thread_pool;
 class season;
 class setting_windows;
 class core_sig;
 class command_base;
-class rpc_trans_path;
 class app;
 class program_options;
 class logger_ctrl;
@@ -167,32 +162,6 @@ DOODLELIB_API scheduler_t &g_main_loop();
 DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
 
-template <class Component,
-          std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
-entt::handle make_handle(const Component &instance) {
-  return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
-};
-template <class Component,
-          std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
-entt::handle make_handle(const Component &instance) {
-  return entt::handle{*(g_reg()), instance};
-};
-
-inline entt::handle make_handle() {
-  return entt::handle{*(g_reg()), g_reg()->create()};
-};
-
-template <class Component>
-entt::entity to_entity(const Component &instance) {
-  return entt::to_entity(*(g_reg()), instance);
-};
-
-template <class Component_to, class Component_From>
-entt::entity to_comm(const Component_From &instance) {
-  auto k_h = make_handle(instance);
-  chick_true<component_error>(k_h.any_of<Component_to>(), DOODLE_LOC, "缺失组件");
-  return entt::to_entity(*(g_reg()), instance);
-};
 
 template <class... Component>
 void chick_component(const entt::handle &t) {
@@ -207,37 +176,6 @@ void chick_ctx() {
       DOODLE_LOC, "缺失上下文");
 }
 
-class DOODLELIB_API null_fun_t {
- public:
-  null_fun_t() = default;
-  template <class in_class>
-  inline void operator()(in_class &in){};
-};
-static null_fun_t null_fun{};
-
-using setting_windows_ptr     = std::shared_ptr<setting_windows>;
-
-using bool_ptr                = std::shared_ptr<bool>;
-
+constexpr static const null_fun_t null_fun{};
 using string                  = std::string;
-using string_ptr              = std::shared_ptr<string>;
-
-using rpc_trans_path_ptr      = std::unique_ptr<rpc_trans_path>;
-using rpc_trans_path_ptr_list = std::vector<rpc_trans_path_ptr>;
-
-namespace gui {
-template <class T>
-struct adl_traits {};
-}  // namespace gui
-
-namespace details {
-template <class in_type>
-std::pair<string, string> make_show_shr(const string &in_key, const in_type *in_ptr) {
-  return std::make_pair(in_key, fmt::format("{}##{}", in_key, typeid(*in_ptr).name()));
-};
-}  // namespace details
-template <class... Args, class in_type>
-std::map<string, string> make_imgui_name(const in_type *in_ptr, Args &&...in_args) {
-  return std::map<string, string>{details::make_show_shr(in_args, in_ptr)...};
-};
 }  // namespace doodle

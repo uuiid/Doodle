@@ -15,12 +15,11 @@ namespace doodle {
 comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
     : p_ue4_prj_path() {
   p_name     = "创建ue4镜头";
-  p_show_str = make_imgui_name(this,
-                               "创建镜头序列",
-                               "ue路径",
-                               "选择",
-                               "获得选择",
-                               "shot列表");
+  p_show_str = {{"创建镜头序列", "创建镜头序列"},
+                {"ue路径", "ue路径"},
+                {"选择", "选择"},
+                {"获得选择", "获得选择"},
+                {"shot列表", "shot列表"}};
 }
 
 bool comm_ass_ue4_create_shot::render() {

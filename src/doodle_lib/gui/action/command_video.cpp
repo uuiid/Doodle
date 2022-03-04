@@ -13,7 +13,7 @@ comm_video::comm_video()
     : command_base(),
       p_root() {
   p_name     = "拍屏";
-  p_show_str = make_imgui_name(this, "观看拍屏");
+//  p_show_str = make_imgui_name(this, "观看拍屏");
 }
 bool comm_video::render() {
   if (p_root) {
