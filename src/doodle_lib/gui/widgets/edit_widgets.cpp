@@ -277,7 +277,7 @@ class edit_widgets::impl {
    * @brief 修改句柄
    *
    */
-  entt::handle p_h;
+  std::vector<entt::handle> p_h;
 
   gui::database_edit data_edit;
 
@@ -307,12 +307,12 @@ edit_widgets::~edit_widgets() = default;
 void edit_widgets::init() {
   g_reg()->set<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx<core_sig>();
-  p_i->p_sc.emplace_back(l_sig.select_handle.connect(
-      [&](const entt::handle &in) {
+  p_i->p_sc.emplace_back(l_sig.select_handles.connect(
+      [&](const std::vector<entt::handle> &in) {
         p_i->p_h = in;
-        p_i->data_edit.init(p_i->p_h);
+        p_i->data_edit.init(p_i->p_h.front());
         boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
-          in_edit.data->init(in);
+          in_edit.data->init(in.front());
         });
       }));
   /**
@@ -357,14 +357,21 @@ void edit_widgets::update(const chrono::duration<
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
-  if (p_i->p_h) {
-    p_i->data_edit.render(p_i->p_h);
-    boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
+  if (!p_i->p_h.empty()) {
+    const auto l_args = p_i->p_h.size();
+    if (l_args > 1)
+      dear::Text(fmt::format("同时编辑了 {}个", l_args));
+    p_i->data_edit.render(p_i->p_h.front());
+    ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
       dear::Text(in_edit.gui_name.name);
-      in_edit.data->render(p_i->p_h);
-      in_edit.data->save(p_i->p_h);
+      in_edit.data->render(p_i->p_h.front());
+      ranges::for_each(p_i->p_h, [&](const entt::handle &in_handle) {
+        in_edit.data->save(in_handle);
+      });
     });
-    p_i->data_edit.save(p_i->p_h);
+    ranges::for_each(p_i->p_h, [&](const entt::handle &in_handle) {
+      p_i->data_edit.save(in_handle);
+    });
   }
 
   //  p_i->data_edit.save(p_i->p_h);
