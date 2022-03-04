@@ -47,7 +47,7 @@ public class doodleEditor : ModuleRules
                 "RenderCore",
                 "RHI",
                 // 资产自定义模块
-                "ContentBrowserAssetDataSource"
+                // "ContentBrowserAssetDataSource"
 
             }
             );
