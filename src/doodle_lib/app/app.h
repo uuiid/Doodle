@@ -35,9 +35,6 @@ namespace doodle {
  * @todo 文件列表的排序功能
  *
  *
- * @todo maya 解算使用拓扑结构寻找原始物体
- * @todo maya 解算前添加吸附指令
- * @todo maya 制作布料解算工具断掉skin 和 cloth之间的连接
  *
  * @todo ue4 gpu超时更新
  * @todo ue4 abc解算和fbx分开

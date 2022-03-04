@@ -56,6 +56,13 @@ class TemplateAction : public MPxCommand {
  * @brief
  *
  * @todo 在工具架上添加自动设置缓存的工具
+ *
+ * @todo 添加 maya 场景清理脚本
+ *
+ * @todo maya 解算使用拓扑结构寻找原始物体
+ * @todo maya 解算前添加吸附指令
+ * @todo maya 制作布料解算工具断掉skin 和 cloth之间的连接
+ *
  */
 namespace doodle::maya_plug {
 class play_blast;
