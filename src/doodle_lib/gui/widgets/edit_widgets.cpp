@@ -184,7 +184,7 @@ class add_assets_for_file : public base_render {
       l_image_load.save(in_handle, l_path);
       return;
     } else
-      l_path = in_path.parent_path();
+      l_path = in_path;
 
     if (FSys::is_directory(l_path)) {
       auto k_imghe_path = ranges::find_if(
