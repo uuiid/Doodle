@@ -131,6 +131,8 @@ void main_status_bar::update(
           dear::Text(l_s->message);
           ImGui::SameLine();
         }
+        dear::Text(fmt::format("{}/{}", l_s->select_size, l_s->show_size));
+        ImGui::SameLine();
       }
 
       /// \brief 渲染进度条
