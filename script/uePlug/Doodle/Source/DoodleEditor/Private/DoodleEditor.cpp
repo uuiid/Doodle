@@ -11,10 +11,10 @@
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
 // #include "DoodleCopySpline.h"
-#include "ContentBrowserAssetDataSource.h"
+//#include "ContentBrowserAssetDataSource.h"
 // #include "IPlacementModeModule.h"
-#include "AssetRegistry/IAssetRegistry.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+//#include "AssetRegistry/IAssetRegistry.h"
+//#include "AssetRegistry/AssetRegistryModule.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -63,7 +63,7 @@ void FdoodleEditorModule::ShutdownModule() {
   FdoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-  AssetDataSource.Reset();
+  //AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs) {

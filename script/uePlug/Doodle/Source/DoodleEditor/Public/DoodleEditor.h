@@ -26,5 +26,5 @@ class FdoodleEditorModule : public IModuleInterface {
 
  private:
   TSharedPtr<class FUICommandList> PluginCommands;
-  TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
+  //TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
 };

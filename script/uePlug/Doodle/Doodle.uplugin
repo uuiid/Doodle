@@ -52,10 +52,6 @@
 		{
 			"Name": "GeometryCache",
 			"Enabled": true
-		},
-		{
-			"Name": "ContentBrowserAssetDataSource",
-			"Enabled": true
 		}
 	]
 }
