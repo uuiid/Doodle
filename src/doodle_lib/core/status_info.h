@@ -12,6 +12,8 @@ class DOODLELIB_API status_info final {
   bool need_save;
   std::string message;
 
+  std::size_t show_size;
+  std::size_t select_size;
 };
 
 }  // namespace doodle

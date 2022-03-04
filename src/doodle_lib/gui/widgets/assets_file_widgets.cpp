@@ -13,6 +13,7 @@
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/core/status_info.h>
 #include <doodle_lib/long_task/image_load_task.h>
 
 #include <gui/gui_ref/ref_base.h>
@@ -185,6 +186,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
       }
     }
   }
+  g_reg()->ctx<status_info>().show_size = p_i->lists.size();
 }
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
@@ -265,11 +267,12 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   }
 
   p_i->select_index = in_size;
-  if(!l_handle_list.empty()) {
+  if (!l_handle_list.empty()) {
     g_reg()->set<std::vector<entt::handle>>(l_handle_list);
     auto& l_sig = g_reg()->ctx<core_sig>();
     l_sig.select_handles(l_handle_list);
     l_sig.select_handle(i.handle_);
+    g_reg()->ctx<status_info>().select_size = l_handle_list.size();
   }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
