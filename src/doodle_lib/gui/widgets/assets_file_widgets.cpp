@@ -28,7 +28,7 @@ class assets_file_widgets::impl {
    public:
     cv::Size2f size2d_;
     cv::Size2f icon_size2d_;
-    std::float_t max_;
+    std::float_t max_{};
   };
 
   using cache_image  = gui::gui_cache<std::shared_ptr<void>, image_data>;
@@ -92,10 +92,10 @@ class assets_file_widgets::impl {
     };
   };
   std::vector<data> lists;
-  std::size_t select_index;
+  std::size_t select_index{};
 
   // std::float_t windows_width{0};
-  bool only_rand;
+  bool only_rand{};
 };
 
 assets_file_widgets::assets_file_widgets()
