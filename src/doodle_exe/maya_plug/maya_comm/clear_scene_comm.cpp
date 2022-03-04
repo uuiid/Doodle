@@ -126,7 +126,6 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
     DOODLE_CHICK(k_s)
     DOODLE_CHICK(MGlobal::setActiveSelectionList(l_list));
   }
-  displayWarning(d_str{k_r.str()});
   MStringArray l_array{2, MString{}};
   l_array[0] = hae_err ? "1" : "0";
   l_array[1] = d_str{k_r.str()};
