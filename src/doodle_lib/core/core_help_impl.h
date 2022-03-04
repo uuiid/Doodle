@@ -18,7 +18,7 @@ struct entt::type_hash<
     return Type::class_hash();
   }
 };
-using registry_ptr        = std::shared_ptr<entt::registry>;
+using registry_ptr = std::shared_ptr<entt::registry>;
 registry_ptr &g_reg();
 
 template <class Component,
@@ -42,4 +42,28 @@ class DOODLELIB_API null_fun_t {
   template <class in_class>
   inline void operator()(in_class &in){};
 };
+
+template <class Component>
+void chick_ctx() {
+  chick_true<component_error>(
+      g_reg()->template try_ctx<Component>(),
+      DOODLE_LOC, "缺失上下文");
+}
+
+namespace details {
+/**
+ * @brief 不可复制类
+ *
+ */
+class no_copy {
+ public:
+  no_copy()                = default;
+  no_copy(const no_copy &) = delete;
+  no_copy &operator=(const no_copy &) = delete;
+
+  no_copy(no_copy &&)                 = default;
+  no_copy &operator=(no_copy &&) = default;
+};
+}  // namespace details
+
 }  // namespace doodle

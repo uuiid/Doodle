@@ -375,8 +375,7 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
     : qcloth_shape() {
   p_ref_file = in_ref_file;
   obj        = in_object;
-  chick_component<reference_file>(p_ref_file);
-
+  chick_true<doodle_error>(p_ref_file.any_of<reference_file>(), DOODLE_LOC, "缺失组件");
 }
 bool qcloth_shape::set_cache_folder() const {
   MStatus k_s{};
@@ -431,7 +430,10 @@ bool qcloth_shape::create_cache() const {
 }
 
 void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
-  chick_component<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(in_handle);
+  chick_true<doodle_error>(
+      in_handle.any_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(),
+      DOODLE_LOC, "缺失组件");
+
   chick_ctx<root_ref>();
 
   auto& k_ref = g_reg()->ctx<root_ref>().root_handle().get<project::cloth_config>();

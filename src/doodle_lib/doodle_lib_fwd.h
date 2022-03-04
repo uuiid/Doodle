@@ -12,43 +12,9 @@
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/core/core_help_impl.h>
+#include <doodle_lib/core/template_util.h>
 //开始我们的名称空间
 namespace doodle {
-namespace details {
-/**
- * @brief 不可复制类
- *
- */
-class no_copy {
- public:
-  no_copy()                = default;
-  no_copy(const no_copy &) = delete;
-  no_copy &operator=(const no_copy &) = delete;
-
-  no_copy(no_copy &&)                 = default;
-  no_copy &operator=(no_copy &&) = default;
-};
-/**
- * @brief 判断是否是智能指针
- *
- * @tparam T 需要判断的类型
- */
-template <typename T, typename = void>
-struct is_smart_pointer : public std::false_type {};
-/**
- * @brief 判断是否是智能指针
- *
- * @tparam T 需要判断的类型
- * @tparam Enable 辅助类
- */
-
-template <typename T>
-struct is_smart_pointer<T, std::void_t<decltype(T::element_type)>> : public std::true_type {};
-
-/// to boost::less_pointees_t;
-
-}  // namespace details
-
 namespace chrono {
 namespace literals {
 using namespace std::chrono_literals;
@@ -76,7 +42,6 @@ std::time_t to_time_t(const time_point<local_t, dur> &in_timePoint) {
 };
 }  // namespace chrono
 
-
 namespace FSys {
 using namespace std::filesystem;
 using fstream  = std::fstream;
@@ -84,10 +49,7 @@ using istream  = std::istream;
 using ifstream = std::ifstream;
 using ofstream = std::ofstream;
 using ostream  = std::ostream;
-DOODLELIB_API inline path make_path(const std::string &in_string) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
-  return path{convert.from_bytes(in_string)};
-}
+
 DOODLELIB_API std::time_t last_write_time_t(const path &in_path);
 DOODLELIB_API chrono::sys_time_pos last_write_time_point(const path &in_path);
 DOODLELIB_API void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point);
@@ -142,7 +104,7 @@ using doodle_lib_ptr      = std::shared_ptr<doodle_lib>;
 using thread_pool_ptr     = std::shared_ptr<thread_pool>;
 using registry_ptr        = std::shared_ptr<entt::registry>;
 
-using uuid = boost::uuids::uuid;
+using uuid                = boost::uuids::uuid;
 
 namespace pool_n {
 class bounded_limiter;
@@ -162,20 +124,6 @@ DOODLELIB_API scheduler_t &g_main_loop();
 DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
 
-
-template <class... Component>
-void chick_component(const entt::handle &t) {
-  chick_true<doodle_error>(t, DOODLE_LOC, "无效句柄");
-  chick_true<component_error>(t.any_of<Component...>(), DOODLE_LOC, "缺失组件");
-}
-
-template <class Component>
-void chick_ctx() {
-  chick_true<component_error>(
-      g_reg()->template try_ctx<Component>(),
-      DOODLE_LOC, "缺失上下文");
-}
-
 constexpr static const null_fun_t null_fun{};
-using string                  = std::string;
+using string = std::string;
 }  // namespace doodle
