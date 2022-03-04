@@ -33,7 +33,6 @@ namespace doodle {
  * @todo 创建检查maya 场景工具架
  * @todo 添加只输出abc功能
  * @todo 文件列表的排序功能
- * @todo 在文件列表中，显示文件数量，同时，当选择文件时，显示选中文件数量。
  *
  *
  * @todo maya 解算使用拓扑结构寻找原始物体
