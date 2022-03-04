@@ -50,13 +50,13 @@ maya.cmds.polySoftEdge(angle=180, constructionHistory=True)
   DOODLE_CHICK(k_s);
   return true;
 }
-bool maya_clear_scenes::duplicate_namel(bool use_select) {
+bool maya_clear_scenes::duplicate_name(MSelectionList& in_select) {
   MStatus k_s{};
   bool l_r{false};
   MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
 
   std::multimap<std::string, MDagPath> k_name_list;
-  MSelectionList k_select{};
+
   for (; !k_iter.isDone(); k_iter.next()) {
     MDagPath k_dag_path{};
 
@@ -73,21 +73,17 @@ bool maya_clear_scenes::duplicate_namel(bool use_select) {
   }
   for (auto& i : k_name_list) {
     if (k_name_list.count(i.first) > 1) {
-      k_select.add(i.second, MObject::kNullObj, true);
+      in_select.add(i.second, MObject::kNullObj, true);
       l_r = true;
     }
   }
-  if (use_select) {
-    k_s = MGlobal::setActiveSelectionList(k_select);
-    DOODLE_CHICK(k_s);
-  }
+
   return l_r;
 }
-bool maya_clear_scenes::multilateral_surface(bool use_select) {
+bool maya_clear_scenes::multilateral_surface(MSelectionList& in_select) {
   MStatus k_s{};
   bool l_r{false};
   MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
-  MSelectionList k_select{};
 
   for (; !k_iter.isDone(); k_iter.next()) {
     MDagPath k_dag_path{};
@@ -106,22 +102,19 @@ bool maya_clear_scenes::multilateral_surface(bool use_select) {
       DOODLE_CHICK(k_s);
       // std::cout << k_iter_poly.getPoints() << std::endl;
       if (k_face_num > 4) {
-        k_s = k_select.add(k_dag_path, k_iter_poly.currentItem());
+        k_s = in_select.add(k_dag_path, k_iter_poly.currentItem());
         DOODLE_CHICK(k_s);
         l_r = true;
       }
     }
   }
-  if (use_select)
-    MGlobal::setActiveSelectionList(k_select);
 
   return l_r;
 }
-bool maya_clear_scenes::uv_set(bool use_select) {
+bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
   MStatus k_s{};
   bool l_r{false};
   MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
-  MSelectionList k_select{};
 
   for (; !k_iter.isDone(); k_iter.next()) {
     MDagPath k_dag_path{};
@@ -139,15 +132,12 @@ bool maya_clear_scenes::uv_set(bool use_select) {
     DOODLE_CHICK(k_s);
 
     if (k_mesh.numUVSets(&k_s) > 1) {
-      k_s = k_select.add(k_dag_path);
+      k_s = in_select.add(k_dag_path);
       DOODLE_CHICK(k_s);
       l_r = true;
     }
   }
-  if (use_select) {
-    k_s = MGlobal::setActiveSelectionList(k_select);
-    DOODLE_CHICK(k_s)
-  }
+
   return l_r;
 }
 bool maya_clear_scenes::err_1() {
