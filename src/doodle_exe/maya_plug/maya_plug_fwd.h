@@ -54,11 +54,16 @@ class TemplateAction : public MPxCommand {
 
 /**
  * @brief
+ *
+ * @todo 在工具架上添加自动设置缓存的工具
  */
 namespace doodle::maya_plug {
 class play_blast;
-using play_blast_ptr = std::shared_ptr<play_blast>;
 
+/**
+ * @brief  字符串转换类
+ * 作为maya字符串和标准库字符串之间的转换
+ */
 class d_str {
  public:
   string p_u8_str{};
@@ -69,7 +74,7 @@ class d_str {
   //  explicit d_str(const MString& in)
   //      : p_u8_str(in.asUTF8()){};
 
-  d_str(const string& in_u8_str)
+  explicit d_str(const string& in_u8_str)
       : p_u8_str(in_u8_str) {
   }
 
@@ -85,16 +90,9 @@ class d_str {
     return p_u8_str;
   }
 };
-
-// inline void chick_maya_status(const MStatus& in_status) {
-//   if (in_status != MStatus::MStatusCode::kSuccess) {
-//     const MString& l_string = in_status.errorString();
-//     MGlobal::displayError(l_string);
-//     DOODLE_LOG_ERROR(l_string.asUTF8());
-//     throw doodle_error{l_string.asUTF8()};
-//   }
-// };
-
+/**
+ * @brief 检查maya的返回状态
+ */
 #define DOODLE_CHICK(in_status) \
   throw_maya_exception(in_status, DOODLE_SOURCE_LOC);
 }  // namespace doodle::maya_plug
