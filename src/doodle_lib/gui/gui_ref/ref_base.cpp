@@ -18,6 +18,13 @@ void edit_interface::set_modify(bool is_modify) {
 }
 edit_interface::edit_interface()
     : data_(std::make_unique<gui_data>()) {}
+void edit_interface::save(const std::vector<entt::handle> &in) {
+  if (data_->is_modify)
+    ranges::for_each(in, [this](const entt::handle &in_handle) {
+      save_(in_handle);
+    });
+  data_->is_modify = false;
+}
 
 edit_interface::~edit_interface() = default;
 

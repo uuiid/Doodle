@@ -365,13 +365,9 @@ void edit_widgets::edit_handle() {
     ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
       dear::Text(in_edit.gui_name.name);
       in_edit.data->render(p_i->p_h.front());
-      ranges::for_each(p_i->p_h, [&](const entt::handle &in_handle) {
-        in_edit.data->save(in_handle);
-      });
+      in_edit.data->save(p_i->p_h);
     });
-    ranges::for_each(p_i->p_h, [&](const entt::handle &in_handle) {
-      p_i->data_edit.save(in_handle);
-    });
+    p_i->data_edit.save(p_i->p_h);
   }
 
   //  p_i->data_edit.save(p_i->p_h);
