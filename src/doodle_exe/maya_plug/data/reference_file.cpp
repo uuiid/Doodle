@@ -144,7 +144,6 @@ bool reference_file::replace_sim_assets_file() {
   auto k_prj = get_prj();
 
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
-  chick_true<doodle_error>(k_prj., DOODLE_LOC, "无法找到项目配置");
 
   auto &k_cfg = k_prj.get_or_emplace<project::cloth_config>();
   FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
