@@ -54,7 +54,6 @@ class TemplateAction : public MPxCommand {
 
 /**
  * @brief
- * @todo 右键选颜色
  */
 namespace doodle::maya_plug {
 class play_blast;
