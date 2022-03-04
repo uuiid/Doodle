@@ -230,48 +230,45 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
 void assets_file_widgets::set_select(std::size_t in_size) {
   auto&& i   = p_i->lists[in_size];
   auto& k_io = imgui::GetIO();
+  std::vector<entt::handle> l_handle_list{};
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {  /// 双击鼠标时
     if (i.handle_.all_of<image_icon>())
       FSys::open_explorer(g_reg()->ctx<project>().make_path("image") / i.handle_.get<image_icon>().path);
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
-      std::vector<entt::handle> l_h{};
-      boost::copy(
-          p_i->lists |
-              boost::adaptors::filtered([](impl::data& in) {
-                return in.select;
-              }) |
-              boost::adaptors::transformed([](impl::data& in) {
-                return in.handle_;
-              }),
-          std::back_inserter(l_h));
-      g_reg()->set<std::vector<entt::handle>>(l_h);
-      g_reg()->ctx<core_sig>().select_handles(l_h);
+      l_handle_list = p_i->lists | ranges::views::filter([](impl::data& in) {
+                        return in.select;
+                      }) |
+                      ranges::views::transform([](impl::data& in) {
+                        return in.handle_;
+                      }) |
+                      ranges::to_vector;
     } else if (k_io.KeyShift) {
-      std::vector<entt::handle> l_h{};
-      boost::copy(
-          p_i->lists |
-              boost::adaptors::sliced(std::min(p_i->select_index, in_size),
-                                      std::max(p_i->select_index, in_size) + 1) |
-              boost::adaptors::transformed([](impl::data& in) {
-                in.select = true;
-                return in.handle_;
-              }),
-          std::back_inserter(l_h));
-      g_reg()->set<std::vector<entt::handle>>(l_h);
-      g_reg()->ctx<core_sig>().select_handles(l_h);
+      l_handle_list = p_i->lists |
+                      ranges::views::slice(
+                          std::min(p_i->select_index, in_size),
+                          std::max(p_i->select_index, in_size) + 1) |
+                      ranges::views::transform([](impl::data& in) {
+                        in.select = true;
+                        return in.handle_;
+                      }) |
+                      ranges::to_vector;
     } else {
       boost::for_each(p_i->lists,
                       [](impl::data& in) {
                         in.select = false;
                       });
       i.select = true;
+      l_handle_list.push_back(i.handle_);
     }
   }
 
   p_i->select_index = in_size;
-  g_reg()->ctx<core_sig>().select_handle(i.handle_);
+  g_reg()->set<std::vector<entt::handle>>(l_handle_list);
+  auto& l_sig = g_reg()->ctx<core_sig>();
+  l_sig.select_handles(l_handle_list);
+  l_sig.select_handle(i.handle_);
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
   auto l_item = p_i->lists[in_size];
