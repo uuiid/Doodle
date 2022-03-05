@@ -146,6 +146,21 @@ TEST_CASE("test entt hash") {
   REQUIRE(648452978 == "class doodle::project::cloth_config"_hs);
 }
 
+TEST_CASE_METHOD(test_path_2, "test ranges") {
+  std::regex l_regex{"UE4"};
+
+  auto it = ranges::find_if(ranges::make_subrange(
+                                FSys::directory_iterator{root / "tmp"},
+                                FSys::directory_iterator{}),
+                            [&](const FSys::path& in_file) {
+                              auto&& l_ext = in_file.extension();
+                              std::cout << in_file << std::endl;
+                              return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
+                            });
+  if(it !=  FSys::directory_iterator{})
+    std::cout << (*it).path();
+}
+
 TEST_CASE_METHOD(test_path_2, "test_path_1", "[fun][path]") {
   root /= "tmp";
   root /= "test";

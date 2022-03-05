@@ -13,7 +13,7 @@ class clear_scene_comm : public TemplateAction<clear_scene_comm,
                                                doodle_clear_scene,
                                                clear_scene_comm_syntax> {
  public:
-  MStatus doIt(const MArgList&) override;
+  MStatus doIt(const MArgList& in_arg) override;
 };
 
 }  // namespace doodle::maya_plug

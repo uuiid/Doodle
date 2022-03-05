@@ -103,6 +103,7 @@ class DOODLELIB_API edit_interface {
    * @param in 传入的句柄
    */
   virtual void save(const entt::handle &in);
+  virtual void save(const std::vector<entt::handle> &in);
 };
 
 /**

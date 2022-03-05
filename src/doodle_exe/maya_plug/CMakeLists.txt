@@ -59,6 +59,10 @@ set(doodle_maya_plug_cpp
         data/maya_clear_scenes.h
         maya_comm/clear_scene_comm.cpp
         maya_comm/clear_scene_comm.h
+        data/maya_poly_info.cpp
+        data/maya_poly_info.h
+        data/find_duplicate_poly.cpp
+        data/find_duplicate_poly.h
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)

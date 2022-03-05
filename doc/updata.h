@@ -547,4 +547,10 @@
  * @li @b 灯光球属性记录动画帧元数据
  * @li maya插件 右键选颜色
  * @li 在文件列表中，显示文件数量，同时，当选择文件时，显示选中文件数量。
+ *
+ * @subsubsection updata_log_348 版本3.4.8
+ * @li 更新寻找图片时的错误
+ *
+ * @subsubsection updata_log_349 版本3.4.9
+ * @li 多个同时编辑
  */
