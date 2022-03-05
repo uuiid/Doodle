@@ -28,19 +28,22 @@
 
 #include <magic_enum.hpp>
 
-#define doodle_startTime "-st"
-#define doodle_endTime "-et"
-#define doodle_project_path "-pr"
-#define doodle_export_type "-ef"
-#define doodle_export_use_select "-s"
-
-#define doodle_export_type_long "-exportType"
-#define doodle_export_use_select_long "-select"
-#define doodle_project_path_long "-project"
-#define doodle_startTime_long "-startTime"
-#define doodle_endTime_long "-endTime"
 
 namespace doodle::maya_plug {
+namespace {
+constexpr static const char doodle_startTime[]              = "-st";
+constexpr static const char doodle_endTime[]                = "-et";
+constexpr static const char doodle_project_path[]           = "-pr";
+constexpr static const char doodle_export_type[]            = "-ef";
+constexpr static const char doodle_export_use_select[]      = "-s";
+
+constexpr static const char doodle_export_type_long[]       = "-exportType";
+constexpr static const char doodle_export_use_select_long[] = "-select";
+constexpr static const char doodle_project_path_long[]      = "-project";
+constexpr static const char doodle_startTime_long[]         = "-startTime";
+constexpr static const char doodle_endTime_long[]           = "-endTime";
+
+};  // namespace
 
 MSyntax ref_file_sim_syntax() {
   MSyntax syntax{};
@@ -290,14 +293,3 @@ MStatus load_project::doIt(const MArgList& in_arg) {
 }
 
 }  // namespace doodle::maya_plug
-#undef doodle_startTime
-#undef doodle_endTime
-#undef doodle_project_path
-#undef doodle_export_type
-#undef doodle_export_use_select
-
-#undef doodle_export_type_long
-#undef doodle_export_use_select_long
-#undef doodle_project_path_long
-#undef doodle_startTime_long
-#undef doodle_endTime_long
