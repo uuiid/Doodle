@@ -254,8 +254,11 @@ void database_task_delete::delete_db() {
   for (auto& in : p_i->list) {
     if (p_i->stop)
       return;
-    auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == in.get<database>().get_id()));
-    DOODLE_LOG_WARN("删除了数据id {}", k_r);
+    auto& l_d = in.get<database>();
+    if (l_d.is_install()) {
+      auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == l_d.get_id()));
+      DOODLE_LOG_WARN("删除了数据id {}", k_r);
+    }
     g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
   }
 }
