@@ -429,8 +429,13 @@ void database_task_obs::save() {
     k_then = k_then.then<database_task_delete>(p_i->need_delete);
   }
   k_then.then<one_process_t>([=]() {
-    g_reg()->ctx<core_sig>().save_end(l_list);
-  });
+          ranges::for_each(l_list, [](entt::handle& in) {
+            in.patch<database>(database::sync);
+          });
+        })
+      .then<one_process_t>([=]() {
+        g_reg()->ctx<core_sig>().save_end(l_list);
+      });
 
   p_i->need_save.clear();
   p_i->need_updata.clear();
