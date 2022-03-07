@@ -67,7 +67,6 @@
 #include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/toolkit/toolkit.h>
-#include <doodle_lib/server/doodle_server.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue4_exe.h>
 #include <doodle_lib/long_task/image_to_move.h>

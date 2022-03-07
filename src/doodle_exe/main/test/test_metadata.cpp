@@ -45,16 +45,36 @@ class test_convert : public app {
   };
   void make_josn() {
     auto l_h = make_handle();
+    l_h.emplace<database>();
     l_h.emplace<assets_file>();
     l_h.emplace<episodes>();
     l_h.emplace<shot>();
     l_h.emplace<season>();
     l_h.emplace<assets>("test/ass");
+
+    auto l_h_ref = make_handle();
+
+    l_h.emplace<ref_meta>().ref_list.emplace_back(l_h_ref.emplace<database>());
+
+    nlohmann::json l_json{};
+    entt_tool::save_comm<
+        assets_file,
+        episodes,
+        shot,
+        season,
+        assets,
+        ref_meta>(l_h, l_json);
+    FSys::ofstream{"out_json.json"}
+        << l_json.dump();
   }
 };
 
 TEST_CASE_METHOD(test_convert, "convert") {
   this->run_test();
+}
+
+TEST_CASE_METHOD(test_convert, "test_out_json") {
+  this->make_josn();
 }
 
 TEST_CASE("create_prj") {
