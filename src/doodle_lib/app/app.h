@@ -73,10 +73,12 @@ namespace doodle {
  *
  * @subsection 编辑组件
  * @warning 编辑后需求使用 ctrl + s 键保存
+ *
  * @image html doodle_image/edit_entt.gif 选择 width=90%
  *
  * @subsection 导出为csv
  * @warning 导出时实体必须有文件路径组件, 所有不具有文件路径组件的实体都将被忽略
+ *
  * @image html doodle_image/export_csv.gif 选择 width=90%
  *
  *

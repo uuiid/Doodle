@@ -553,4 +553,6 @@
  *
  * @subsubsection updata_log_349 版本3.4.9
  * @li 多个同时编辑
+ * @li 导出csv添加选择路径按钮
+ * @li maya插件清理场景功能更新, 添加右键菜单和回调提示
  */
