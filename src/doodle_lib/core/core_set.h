@@ -13,14 +13,13 @@ namespace doodle {
 
 enum class department {
   None_,
-  Executive,
   Light,
   VFX,
   modle,
   rig,
   Anm,
-  direct,
-  paint
+  paint,
+  clip
 };
 
 class core_set_init;
