@@ -266,6 +266,26 @@ class add_assets_for_file : public base_render {
   };
 };
 
+class add_entt_base : public base_render {
+ private:
+  gui_cache<std::int32_t> add_size;
+  gui_cache<std::vector<entt::handle>> list_handle;
+
+ public:
+  add_entt_base()
+      : add_size("添加个数", 1),
+        list_handle("添加"s, std::vector<entt::handle>{}){};
+  virtual void render(const entt::handle &in) override {
+    ImGui::InputInt(*add_size.gui_name, &add_size.data);
+    ImGui::SameLine();
+    if (ImGui::Button(*list_handle.gui_name)) {
+      for (std::int32_t i = 0; i < add_size; ++i) {
+        list_handle.data.emplace_back(make_handle());
+      }
+      g_reg()->ctx<core_sig>().filter_handle(list_handle);
+    }
+  }
+};
 }  // namespace gui
 
 class edit_widgets::impl {
@@ -308,6 +328,7 @@ edit_widgets::edit_widgets()
     p_i->data_edit.link_sig(in_edit.data);
   });
 
+  p_i->p_add.emplace_back("添加"s, std::make_unique<gui::add_entt_base>());
   p_i->p_add.emplace_back("文件添加"s, std::make_unique<gui::add_assets_for_file>());
 }
 edit_widgets::~edit_widgets() = default;
@@ -386,15 +407,6 @@ void edit_widgets::add_handle() {
    * @brief 添加多个
    *
    */
-  ImGui::InputInt("添加个数", &p_i->p_add_size);
-  ImGui::SameLine();
-  if (ImGui::Button("添加")) {
-    for (std::int32_t i = 0; i < p_i->p_add_size; ++i) {
-      p_i->add_handles.emplace_back(make_handle());
-    }
-    this->notify_file_list();
-  }
-
   for (auto &&l_add : p_i->p_add) {
     dear::Text(l_add.gui_name.name);
     l_add.data->render();
