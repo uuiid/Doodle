@@ -38,7 +38,59 @@ database::ref_data::ref_data(const database &in)
     : id(in.p_i->p_id),
       uuid(in.p_i->p_uuid_) {
 }
+void from_json(const nlohmann::json &j, database::ref_data &p) {
+  if (j.contains("uuid"))
+    j["uuid"].get_to(p.uuid);
+  else if (j.contains("uuid_path")) {
+    chick_true<doodle_error>(p.find_for_path(j["uuid_path"].get<FSys::path>()),DOODLE_LOC,"没有寻找到引用");
+  }
+}
+void to_json(nlohmann::json &j, const database::ref_data &p) {
+  j["uuid"] = p.uuid;
+}
+bool database::ref_data::operator==(const database::ref_data &in_rhs) const {
+  return uuid == in_rhs.uuid;
+}
+bool database::ref_data::operator!=(const database::ref_data &in_rhs) const {
+  return !(in_rhs == *this);
+}
+database::ref_data::operator bool() const {
+  bool l_r{false};
 
+  //  ranges::make_subrange(g_reg()->view<database>().each());
+
+  for (auto &&[e, d] : g_reg()->view<database>().each())
+    if (d == uuid) {
+      l_r = true;
+      break;
+    }
+  return l_r;
+}
+
+entt::handle database::ref_data::handle() const {
+  entt::handle l_r{};
+
+  //  ranges::make_subrange(g_reg()->view<database>().each());
+
+  for (auto &&[e, d] : g_reg()->view<database>().each())
+    if (d == uuid) {
+      l_r = entt::handle{*g_reg(), e};
+      break;
+    }
+  return l_r;
+}
+bool database::ref_data::find_for_path(const FSys::path &in_path) {
+  bool l_r{false};
+  for (auto &&[e, a] : g_reg()->view<assets_file>().each()) {
+    if (a.path == in_path) {
+      uuid = make_handle(e).get<database>().uuid();
+      l_r  = true;
+      break;
+    }
+  }
+  return l_r;
+}
+database::ref_data::ref_data() = default;
 database::database()
     : p_i(std::make_unique<impl>()),
       status_(status::none) {
@@ -93,7 +145,7 @@ bool database::is_install() const {
                              time_point_wrap,              \
                              comment,                      \
                              project_config::cloth_config, \
-                             project_config::model_config,  \
+                             project_config::model_config, \
                              image_icon
 
 database &database::operator=(const metadata_database &in_) {
@@ -146,7 +198,7 @@ database::operator metadata_database() const {
   k_tmp.user_data = k_json.dump();
   if (p_i->p_type != metadata_type::project_root)
     k_tmp.parent = boost::numeric_cast<std::uint32_t>(g_reg()->ctx<ref_data>().id);
-  k_tmp.uuid_ = this->p_i->p_uuid_;
+  k_tmp.uuid_  = this->p_i->p_uuid_;
   ///设置类型id
   k_tmp.m_type = get_meta_type_int();
   /// 设置可索引数据

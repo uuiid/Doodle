@@ -15,7 +15,7 @@ class test_convert : public app {
   void run_test() {
     auto reg   = g_reg();
 
-    auto k_prj = make_handle(reg->create());
+    auto k_prj = make_handle();
     auto& k_p  = k_prj.emplace<project>();
     reg->set<database::ref_data>(k_prj.emplace<database>());
     REQUIRE(k_prj.all_of<project, database>());
@@ -43,6 +43,14 @@ class test_convert : public app {
     std::cout << "k_d2 id: " << k_d2.uuid() << std::endl;
     REQUIRE(k_d3 == k_d2);
   };
+  void make_josn() {
+    auto l_h = make_handle();
+    l_h.emplace<assets_file>();
+    l_h.emplace<episodes>();
+    l_h.emplace<shot>();
+    l_h.emplace<season>();
+    l_h.emplace<assets>("test/ass");
+  }
 };
 
 TEST_CASE_METHOD(test_convert, "convert") {

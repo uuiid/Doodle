@@ -26,13 +26,13 @@ class DOODLELIB_API metadata_database {
 };
 /**
  * @brief 元数据代表的类型
- * 
+ *
  */
 enum class metadata_type : std::int32_t {
   unknown_file       = 0,
-  project_root       = 1, /// 项目的根
-  file               = 2, /// 文件, 基本可以说具有 assets_file 类组件
-  folder             = 3, /// 没有文件,没有 assets_file 组件
+  project_root       = 1,  /// 项目的根
+  file               = 2,  /// 文件, 基本可以说具有 assets_file 类组件
+  folder             = 3,  /// 没有文件,没有 assets_file 组件
   derive_file        = 4,
   animation_lib_root = 5,
   maya_file          = 6,
@@ -68,12 +68,24 @@ class DOODLELIB_API database {
   class impl;
   std::unique_ptr<impl> p_i;
   void set_id(std::uint64_t in_id) const;
+
  public:
   class DOODLELIB_API ref_data {
+    friend void to_json(nlohmann::json &j, const ref_data &p);
+    friend void from_json(const nlohmann::json &j, ref_data &p);
+
+    bool find_for_path(const FSys::path& in_path);
    public:
+    ref_data();
     explicit ref_data(const database &in);
-    const std::uint64_t id;
-    const boost::uuids::uuid uuid;
+    std::uint64_t id;
+    boost::uuids::uuid uuid;
+
+    operator bool() const;
+    entt::handle handle() const;
+
+    bool operator==(const ref_data &in_rhs) const;
+    bool operator!=(const ref_data &in_rhs) const;
   };
 
   database();
@@ -163,7 +175,6 @@ class DOODLELIB_API database {
   constexpr const static fun_load_ load{};
   constexpr const static fun_sync_ sync{};
 };
-
 
 template <class in_class>
 class DOODLELIB_API handle_warp {

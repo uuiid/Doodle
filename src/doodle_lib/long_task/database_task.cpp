@@ -429,7 +429,7 @@ void database_task_obs::save() {
     k_then = k_then.then<database_task_delete>(p_i->need_delete);
   }
   k_then.then<one_process_t>([=]() {
-          ranges::for_each(l_list, [](entt::handle& in) {
+          ranges::for_each(l_list, [](const entt::handle& in) {
             in.patch<database>(database::sync);
           });
         })
