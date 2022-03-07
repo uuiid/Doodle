@@ -13,7 +13,6 @@ class assets_file_widgets;
 
 /**
  * @brief 文件列表显示
- * @image html assets_file_widgets.jpg  显示的文件
  * 文件列表显示了在资产项目下所有的文件文件
  * 在显示的文件中，路径并不是所有的， 而是最主要的一条
  * @note 每次上传文件都会递增版本号， 如果需要新的条目请创建新条目
