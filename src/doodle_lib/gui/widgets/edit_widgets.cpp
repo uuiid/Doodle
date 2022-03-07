@@ -176,7 +176,7 @@ class add_assets_for_file : public base_render {
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
 
-    std::regex l_regex{project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex};
+    std::regex l_regex{project_config::base_config::get_current_find_icon_regex_()};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
         (l_path.extension() == ".png" || l_path.extension() == ".jpg") &&
@@ -210,6 +210,14 @@ class add_assets_for_file : public base_render {
           auto k_h = make_handle();
           k_h.emplace<assets_file>(in_path);
           k_h.emplace<assets>("null");
+
+          /**
+           * @brief 从路径中寻找各个组件
+           */
+          season::analysis_static(k_h, in_path);
+          episodes::analysis_static(k_h, in_path);
+          shot::analysis_static(k_h, in_path);
+
           if (use_time.data)
             this->add_time(k_h, in_path);
           if (use_icon.data)

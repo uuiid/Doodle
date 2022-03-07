@@ -3,6 +3,7 @@
 
 namespace doodle {
 namespace project_config {
+class base_config;
 class model_config;
 class cloth_config;
 }  // namespace project_config
@@ -60,9 +61,14 @@ class DOODLELIB_API project {
   }
 };
 namespace project_config {
+class DOODLELIB_API base_config {
+ public:
+  [[nodiscard]] static std::string get_current_find_icon_regex_();
+};
+
 class DOODLELIB_API model_config {
  public:
-  model_config() ;
+  model_config();
   /**
    * @brief 寻找拖入文件时的图标的正则表达式
    */

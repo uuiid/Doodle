@@ -3,6 +3,7 @@
 #include <metadata/project.h>
 #include <pin_yin/convert.h>
 #include <metadata/metadata.h>
+#include <core/core_set.h>
 
 namespace doodle {
 project::cloth_config::cloth_config()
@@ -112,5 +113,16 @@ entt::handle project::get_current() {
 
 project_config::model_config::model_config()
     : find_icon_regex(R"(_UE4\.)") {
+}
+std::string project_config::base_config::get_current_find_icon_regex_() {
+  std::string l_regex{};
+  switch (core_set::getSet().get_department_enum()) {
+    case department::modle:
+      l_regex = project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex;
+    default:
+      l_regex = ".";
+      break;
+  }
+  return l_regex;
 }
 }  // namespace doodle
