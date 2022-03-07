@@ -75,6 +75,11 @@ namespace doodle {
  * @warning 编辑后需求使用 ctrl + s 键保存
  * @image html doodle_image/edit_entt.gif 选择 width=90%
  *
+ * @subsection 导出为csv
+ * @warning 导出时实体必须有文件路径组件, 所有不具有文件路径组件的实体都将被忽略
+ * @image html doodle_image/export_csv.gif 选择 width=90%
+ *
+ *
  * @section 插件系统
  * @li @b maya插件 将自身集成到maya中,同时会显示一些maya特有的功能
  * @li @b ue4插件 将自身的一部分集成到ue4中, 提供一些ue4特有的功能
