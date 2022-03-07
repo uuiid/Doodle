@@ -32,7 +32,7 @@ class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
    * @brief Destroy the edit widgets object
    *
    */
-  ~edit_widgets();
+  ~edit_widgets() override;
   /**
    * @brief 窗口显示名称
    *
