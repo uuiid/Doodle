@@ -38,7 +38,6 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   //获得运行程序目录
   static FSys::path program_location();
-  static FSys::path program_location(const FSys::path &path);
 
   [[nodiscard]] bool has_maya() const noexcept;
   [[nodiscard]] const FSys::path &maya_path() const noexcept;
@@ -60,13 +59,12 @@ class DOODLELIB_API core_set : public details::no_copy {
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
-  FSys::path get_data_root() const;
+  [[nodiscard]] FSys::path get_data_root() const;
 
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
   // 配置文件的路径
   [[nodiscard]] FSys::path get_config_file() const;
-  void set_server_host(const string &in_host);
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 

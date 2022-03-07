@@ -147,9 +147,6 @@ FSys::path core_set::get_data_root() const {
 FSys::path core_set::program_location() {
   return FSys::current_path();
 }
-FSys::path core_set::program_location(const FSys::path &path) {
-  return program_location() / path;
-}
 std::string core_set::config_file_name() {
   static std::string str{"doodle_config"};
   return str;
