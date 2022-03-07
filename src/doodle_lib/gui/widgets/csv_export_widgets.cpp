@@ -4,6 +4,7 @@
 
 #include "csv_export_widgets.h"
 #include <core/core_sig.h>
+#include <core/doodle_lib.h>
 #include <metadata/project.h>
 #include <metadata/assets.h>
 #include <metadata/assets_file.h>
@@ -16,6 +17,7 @@
 
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
+#include <gui/open_file_dialog.h>
 #include <fmt/chrono.h>
 
 namespace doodle {
@@ -66,6 +68,16 @@ void csv_export_widgets::update(const chrono::duration<
                                 void *data) {
   if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data))
     p_i->export_path.path = p_i->export_path.data;
+  ImGui::SameLine();
+  if (ImGui::Button("选择")) {
+    auto l_file = std::make_shared<FSys::path>();
+    g_main_loop()
+        .attach<file_dialog>(l_file, "选择目录")
+        .then<one_process_t>([=]() {
+          p_i->export_path.path = *l_file / "tmp.csv";
+          p_i->export_path.data = p_i->export_path.path.generic_string();
+        });
+  }
 
   if (ImGui::Button("导出")) {
     p_i->list = p_i->list |
@@ -137,7 +149,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   auto l_next       = get_user_next_time(in);
   auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
   auto k_time       = in.get<time_point_wrap>().work_duration(end_time);
-  auto l_file_path = project_root / k_ass.path;
+  auto l_file_path  = project_root / k_ass.path;
 
   comment k_comm{};
   if (auto l_c = in.try_get<std::vector<comment>>(); l_c)
