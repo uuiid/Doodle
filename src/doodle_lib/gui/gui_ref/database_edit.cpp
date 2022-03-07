@@ -10,7 +10,7 @@ namespace doodle::gui {
 class database_edit::impl {
  public:
   std::string show_text;
-  std::uint64_t id;
+  std::uint64_t id{};
   std::string status;
   std::string is_edit;
 
