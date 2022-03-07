@@ -47,9 +47,22 @@ class assets_file_widgets::impl {
           image("image"s, nullptr),
           name("null"s, "name"s),
           select(std::string{}, false) {
-      if (handle_.all_of<assets_file>()) {
+      if (handle_.any_of<assets_file, episodes, shot>()) {
         /// @brief 渲染名称
-        name = handle_.get<assets_file>().show_str();
+        if (auto [l_ass, l_ep, l_shot] =
+                handle_.try_get<assets_file, episodes, shot>();
+            l_ass || l_ep || l_shot) {
+          if (l_ass)
+            name.data += l_ass->show_str();
+          if (l_ep) {
+            name.data.append('_');
+            name.data += fmt::to_string(*l_ep);
+          }
+          if (l_shot) {
+            name.data.append('_');
+            name.data += fmt::to_string(*l_shot);
+          }
+        }
       } else {
         /// @brief 否则渲染id
         if (handle_.all_of<database>())
