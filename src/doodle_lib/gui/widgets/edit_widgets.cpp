@@ -281,8 +281,8 @@ class add_entt_base : public base_render {
     if (ImGui::Button(*list_handle.gui_name)) {
       for (std::int32_t i = 0; i < add_size; ++i) {
         auto l_h = list_handle.data.emplace_back(make_handle());
-        l_h.get_or_emplace<database>();
-        l_h.patch<database>(database::save)
+        l_h.emplace<database>();
+        l_h.patch<database>(database::save);
       }
       g_reg()->ctx<core_sig>().filter_handle(list_handle);
     }
