@@ -275,12 +275,14 @@ class add_entt_base : public base_render {
   add_entt_base()
       : add_size("添加个数", 1),
         list_handle("添加"s, std::vector<entt::handle>{}){};
-  virtual void render(const entt::handle &in) override {
+  void render(const entt::handle &in) override {
     ImGui::InputInt(*add_size.gui_name, &add_size.data);
     ImGui::SameLine();
     if (ImGui::Button(*list_handle.gui_name)) {
       for (std::int32_t i = 0; i < add_size; ++i) {
-        list_handle.data.emplace_back(make_handle());
+        auto l_h = list_handle.data.emplace_back(make_handle());
+        l_h.get_or_emplace<database>();
+        l_h.patch<database>(database::save)
       }
       g_reg()->ctx<core_sig>().filter_handle(list_handle);
     }
