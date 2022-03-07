@@ -1,12 +1,6 @@
 [submodule "external/cmrc"]
 	path = external/cmrc
 	url = https://github.com/vector-of-bool/cmrc.git
-[submodule "external/csv-parser"]
-	path = external/csv-parser
-	url = https://github.com/vincentlaucsb/csv-parser.git
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "src/doodle_lib/external/service-base"]
-	path = src/doodle_lib/external/service-base
-	url = https://github.com/tromgy/service-base.git
