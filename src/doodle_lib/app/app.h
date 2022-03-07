@@ -54,6 +54,27 @@ namespace doodle {
  *
  * @ref 项目设置窗口 关于项目的设置将在这个窗口中进行, 其中每个项目的设置各不相同,可以分别设置
  *
+ * @section 基本操作
+ * @subsection 打开项目
+ * 打开的项目可以在最近的项目中显示 或者之间双击储存库文件
+ * @image html doodle_image/open_prj.gif 打开项目 width=90%
+ * @image html doodle_image/open_prj2.gif 打开项目 width=90%
+ *
+ * @subsection 搜索实体
+ * 搜索实体时, 可以多个过滤器进行叠加
+ * @image html doodle_image/filter_win.gif 搜索 width=90%
+ *
+ * @subsection 选择实体
+ * 选择实体中 按shift 进行多选 按ctrl反选
+ * @image html doodle_image/select_entt.gif 选择 width=90%
+ *
+ * @subsection 添加实体
+ * @image html doodle_image/add_entt.gif 选择 width=90%
+ *
+ * @subsection 编辑组件
+ * @warning 编辑后需求使用 ctrl + s 键保存
+ * @image html doodle_image/edit_entt.gif 选择 width=90%
+ *
  * @section 插件系统
  * @li @b maya插件 将自身集成到maya中,同时会显示一些maya特有的功能
  * @li @b ue4插件 将自身的一部分集成到ue4中, 提供一些ue4特有的功能
