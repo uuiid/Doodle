@@ -6,7 +6,6 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/server/doodle_server.h>
 
 namespace doodle {
 program_options::program_options()

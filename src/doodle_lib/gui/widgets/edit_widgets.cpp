@@ -330,15 +330,15 @@ void edit_widgets::init() {
       }));
 }
 void edit_widgets::succeeded() {
-  g_reg()->unset<edit_widgets &>();
+  g_reg()->unset<edit_widgets>();
   this->clear_handle();
 }
 void edit_widgets::failed() {
-  g_reg()->unset<edit_widgets &>();
+  g_reg()->unset<edit_widgets>();
   this->clear_handle();
 }
 void edit_widgets::aborted() {
-  g_reg()->unset<edit_widgets &>();
+  g_reg()->unset<edit_widgets>();
   this->clear_handle();
 }
 void edit_widgets::update(const chrono::duration<

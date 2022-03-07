@@ -24,10 +24,13 @@ void long_time_tasks_widget::init() {
   g_reg()->set<long_time_tasks_widget&>(*this);
 }
 void long_time_tasks_widget::succeeded() {
+  g_reg()->unset<long_time_tasks_widget>();
 }
 void long_time_tasks_widget::failed() {
+  g_reg()->unset<long_time_tasks_widget>();
 }
 void long_time_tasks_widget::aborted() {
+  g_reg()->unset<long_time_tasks_widget>();
 }
 void long_time_tasks_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
