@@ -23,19 +23,19 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
     ImGuiFileBrowserFlags_MultipleSelection = 1 << 7,  // allow user to select multiple files. this will hide ImGuiFileBrowserFlags_EnterNewFilename
   };
   using base_type  = process_t<file_dialog>;
-  using one_sig    = std::function<void(const FSys::path& in_select_path)>;
-  using mult_sig   = std::function<void(const std::vector<FSys::path>& in_select_path)>;
+  using one_sig    = std::shared_ptr<FSys::path>;
+  using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
   using select_sig = std::variant<one_sig, mult_sig>;
 
   /**
    * @brief 最为齐全的参数
-   * @param in_sig 信号
+   * @param in_sig 传入的指针
    * @param in_title 标题
    * @param in_flags 标志
    * @param in_filters 过滤器
    * @param in_pwd 当前路径
    */
-  explicit file_dialog(const select_sig& in_sig,
+  explicit file_dialog(const select_sig& in_ptr,
                        const std::string& in_title,
                        std::int32_t in_flags,
                        const std::vector<string>& in_filters,
@@ -44,7 +44,7 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
   /**
    * @brief 这个是传入时 使用单个文件并且使用目录的对话框, 所以不需要传入过滤器
    * 并且使用 ImGuiFileBrowserFlags_SelectDirectory
-   * @param in_function 传入的回调函数
+   * @param in_function 传入的指针
    * @param in_title 传入的标题
    * @param in_pwd 打开时的路径
    */
@@ -54,7 +54,7 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
 
   /**
    * @brief 传入时使用单文件目录选择, 默认过滤器
-   * @param in_function
+   * @param in_function 传入的指针
    * @param in_title
    * @param in_filters
    * @param in_pwd

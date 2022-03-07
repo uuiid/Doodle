@@ -62,11 +62,11 @@ void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::sys
   if (p_i->p_file_dialog.is_ok()) {
     std::visit(entt::overloaded{
                    [&](const one_sig &in_sig) -> void {
-                     in_sig(p_i->p_file_dialog.get_select());
+                     *in_sig = p_i->p_file_dialog.get_select();
                      this->succeed();
                    },
                    [&](const mult_sig &in_sig) -> void {
-                     in_sig(p_i->p_file_dialog.get_selects());
+                     *in_sig = p_i->p_file_dialog.get_selects();
                      this->succeed();
                    }},
                p_i->p_sig);

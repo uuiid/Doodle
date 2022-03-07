@@ -25,13 +25,16 @@ comm_ass_ue4_create_shot::comm_ass_ue4_create_shot()
 bool comm_ass_ue4_create_shot::render() {
   imgui::InputText(p_show_str["ue路径"].c_str(), &p_ue4_prj_path);
   imgui::SameLine();
-  if (imgui::Button(p_show_str["选择"].c_str()))
-    g_main_loop().attach<file_dialog>(
-        [this](const std::vector<FSys::path>& in_path) {
-          p_ue4_prj_path = in_path.front().generic_string();
-        },
-        "打开文件路径",
-        string_list{".uproject"});
+  if (imgui::Button(p_show_str["选择"].c_str())) {
+    auto l_ptr = std::make_shared<std::vector<FSys::path>>();
+    g_main_loop().attach<file_dialog>(l_ptr,
+                                      "打开文件路径",
+                                      string_list{".uproject"})
+        .then<one_process_t>(
+            [this, l_ptr]() {
+              p_ue4_prj_path = l_ptr->front().generic_string();
+            });
+  }
   if (imgui::Button(p_show_str["获得选择"].c_str())) {
   }
   imgui::SameLine();

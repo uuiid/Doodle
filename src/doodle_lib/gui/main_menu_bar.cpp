@@ -79,15 +79,14 @@ void main_menu_bar::menu_file() {
   if (dear::MenuItem("新项目"s)) {
     auto k_h = make_handle();
     k_h.emplace<project>();
-
+    auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
-        .attach<file_dialog>(
-            [=](const FSys::path &in_path) {
-              k_h.patch<project>([&](project &in) {
-                in.p_path = in_path;
-              });
-            },
-            "选择目录"s)
+        .attach<file_dialog>(l_ptr, "选择目录"s)
+        .then<one_process_t>([=]() {
+          k_h.patch<project>([=](project &in) {
+            in.p_path = *l_ptr;
+          });
+        })
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([=]() {
           core::client l_c{};
@@ -95,13 +94,15 @@ void main_menu_bar::menu_file() {
         });
   }
   if (dear::MenuItem("打开项目"s)) {
-    g_main_loop().attach<file_dialog>(
-        [](const FSys::path &in_path) {
+    auto l_ptr = std::make_shared<FSys::path>();
+    g_main_loop()
+        .attach<file_dialog>(l_ptr,
+                             "选择文件"s,
+                             std::vector<std::string>{std::string{doodle_config::doodle_db_name}})
+        .then<one_process_t>([=]() {
           core::client l_c{};
-          l_c.open_project(in_path);
-        },
-        "选择文件"s,
-        std::vector<std::string>{std::string{doodle_config::doodle_db_name}});
+          l_c.open_project(*l_ptr);
+        });
   }
   dear::Menu{"最近的项目"} && []() {
     auto &k_list = core_set::getSet().project_root;
@@ -156,12 +157,14 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4插件"))
     toolkit::installUePath(core_set::getSet().get_ue4_setting().get_path() / "Engine");
   if (dear::MenuItem("安装ue4项目插件")) {
-    g_main_loop().attach<file_dialog>(
-        [](const FSys::path &in_path) {
-          toolkit::installUePath(in_path.parent_path());
-        },
-        "select_ue_project",
-        string_list{".uproject"});
+    auto l_ptr = std::make_shared<FSys::path>();
+    g_main_loop()
+        .attach<file_dialog>(l_ptr,
+                             "select_ue_project",
+                             string_list{".uproject"})
+        .then<one_process_t>([=]() {
+          toolkit::installUePath(*l_ptr);
+        });
   }
   if (dear::MenuItem("删除ue4缓存"))
     toolkit::deleteUeCache();
