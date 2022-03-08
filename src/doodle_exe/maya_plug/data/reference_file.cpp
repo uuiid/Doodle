@@ -487,9 +487,10 @@ bool reference_file::find_ref_node() {
     k_s = k_file.setObject(refIter.thisNode());
     DOODLE_CHICK(k_s);
     const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
-    DOODLE_LOG_INFO("扫描引用名称空间 {}", k_mata_str);
-    if (k_mata_str == file_namespace.c_str())
+    if (k_mata_str == file_namespace.c_str()) {
+      DOODLE_LOG_INFO("扫描引用名称空间 {}", k_mata_str);
       p_m_object = refIter.thisNode();
+    }
   }
   if (p_m_object.isNull())
     return false;

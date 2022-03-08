@@ -53,7 +53,7 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
           DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
         }
       } else {
-        DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_names);
+        DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_name);
       }
     }
   }

@@ -72,6 +72,8 @@ class DlsShelf(shelfBase._shelf):
                       command=cmds.create_hud_node_maya)
         self.addButon("af", "icons/doodle_afterimage.png",
                       command=cmds.doodle_afterimage)
+        self.addButon("ql_rest", "icons/ql_rest.png",
+                      command=cmds.doodle_duplicate_poly)
 
     def polyremesh(self):
         self.re()
