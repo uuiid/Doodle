@@ -63,6 +63,8 @@ set(doodle_maya_plug_cpp
         data/maya_poly_info.h
         data/find_duplicate_poly.cpp
         data/find_duplicate_poly.h
+        maya_comm/find_duplicate_poly_comm.h
+        maya_comm/find_duplicate_poly_comm.cpp
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
 foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
