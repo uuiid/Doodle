@@ -455,14 +455,14 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   auto l_high_mesh         = make_high_node(k_maya_high_mesh, l_group.export_grp);
 
   MDagPath l_path{};
-  {  /// 创建动画网格和解算网络的输入
-    /// 连接两个属性的输入和输出
-    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
-                             get_plug(k_proxy_node_input, "inMesh"));
-    DOODLE_CHICK(k_s);
-    k_s = l_modifier.doIt();
-    DOODLE_CHICK(k_s);
-  }
+//  {  /// 创建动画网格和解算网络的输入
+//    /// 连接两个属性的输入和输出
+//    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
+//                             get_plug(k_proxy_node_input, "inMesh"));
+//    DOODLE_CHICK(k_s);
+//    k_s = l_modifier.doIt();
+//    DOODLE_CHICK(k_s);
+//  }
 
   auto [l_ql, l_mesh_out] = qlCreateCloth(k_proxy_node_input);
   {  /// 整理层级关系
