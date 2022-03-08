@@ -555,4 +555,9 @@
  * @li 多个同时编辑
  * @li 导出csv添加选择路径按钮
  * @li maya插件清理场景功能更新, 添加右键菜单和回调提示
+ *
+ * @subsubsection updata_log_3410 版本3.4.10
+ * @li 添加 maya 重置ql解算体初始状态工具架
+ * @li 在批量解算中添加maya 初始化解算体状态命令 ::doodle::maya_plug::find_duplicate_poly_comm
+ *
  */
