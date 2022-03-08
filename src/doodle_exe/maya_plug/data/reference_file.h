@@ -43,7 +43,7 @@ class reference_file {
   [[nodiscard]] entt::handle get_prj() const;
 
   void generate_cloth_proxy() const;
-
+  void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] string get_namespace() const;

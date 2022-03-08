@@ -162,8 +162,12 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
+    /// \brief 生成需要的 布料实体
     k_ref.generate_cloth_proxy();
+    /// \brief 添加碰撞体
     k_ref.add_collision();
+    /// \brief 更新ql初始化状态
+    k_ref.qlUpdateInitialPose();
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")

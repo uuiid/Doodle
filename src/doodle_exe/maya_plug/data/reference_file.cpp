@@ -23,6 +23,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/maya_plug_fwd.h>
+#include <maya_plug/data/find_duplicate_poly.h>
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
@@ -516,6 +517,25 @@ bool reference_file::has_ue4_group() const {
     }
   }
   return false;
+}
+void reference_file::qlUpdateInitialPose() const {
+  DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
+  MStatus l_status{};
+  auto l_v = find_duplicate_poly{}(
+      MNamespace::getNamespaceObjects(d_str{this->get_namespace()}, false, &l_status));
+  DOODLE_CHICK(l_status);
+
+  for (auto &&[l_obj1, l_obj2] : l_v) {
+    MSelectionList l_list{};
+    DOODLE_CHICK(l_list.add(l_obj1));
+    DOODLE_CHICK(l_list.add(l_obj2));
+    DOODLE_CHICK(MGlobal::setActiveSelectionList(l_list));
+    DOODLE_CHICK(
+        MGlobal::executeCommand(
+            d_str{
+                "qlUpdateInitialPose"},
+            true, true));
+  }
 }
 
 }  // namespace doodle::maya_plug

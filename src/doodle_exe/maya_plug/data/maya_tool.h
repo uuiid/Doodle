@@ -27,5 +27,5 @@ MObject get_transform(const MObject& in_object);
 void add_child(const MObject& in_praent, MObject& in_child);
 
 void add_mat(const MObject& in_obj, MObject& in_ref_obj);
-
+std::string node_name(const MObject& in_obj);
 }  // namespace doodle::maya_plug
