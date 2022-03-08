@@ -28,20 +28,19 @@
 
 #include <magic_enum.hpp>
 
-
 namespace doodle::maya_plug {
 namespace {
-constexpr static const char doodle_startTime[]              = "-st";
-constexpr static const char doodle_endTime[]                = "-et";
-constexpr static const char doodle_project_path[]           = "-pr";
-constexpr static const char doodle_export_type[]            = "-ef";
-constexpr static const char doodle_export_use_select[]      = "-s";
+constexpr const char doodle_startTime[]              = "-st";
+constexpr const char doodle_endTime[]                = "-et";
+constexpr const char doodle_project_path[]           = "-pr";
+constexpr const char doodle_export_type[]            = "-ef";
+constexpr const char doodle_export_use_select[]      = "-s";
 
-constexpr static const char doodle_export_type_long[]       = "-exportType";
-constexpr static const char doodle_export_use_select_long[] = "-select";
-constexpr static const char doodle_project_path_long[]      = "-project";
-constexpr static const char doodle_startTime_long[]         = "-startTime";
-constexpr static const char doodle_endTime_long[]           = "-endTime";
+constexpr const char doodle_export_type_long[]       = "-exportType";
+constexpr const char doodle_export_use_select_long[] = "-select";
+constexpr const char doodle_project_path_long[]      = "-project";
+constexpr const char doodle_startTime_long[]         = "-startTime";
+constexpr const char doodle_endTime_long[]           = "-endTime";
 
 };  // namespace
 
