@@ -560,4 +560,5 @@
  * @li 添加 maya 重置ql解算体初始状态工具架
  * @li 在批量解算中添加maya 初始化解算体状态命令 ::doodle::maya_plug::find_duplicate_poly_comm
  * @li 将maya中创建布料资产的工具断开连接
+ * @li 添加寻找当前部门的图片寻找过滤器
  */
