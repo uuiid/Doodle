@@ -181,34 +181,18 @@ find_package_handle_standard_args(Maya
         REQUIRED_VARS MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}
         REASON_FAILURE_MESSAGE "maya 库中的组件没有找到"
         )
-
+# 这些宏选项都在 maya devkit.cmake 文件中有, 需要复制过来
 target_compile_definitions(
         maya_${Maya_FIND_VERSION}_all
         INTERFACE
-        -DPARTIO_WIN32
-        -DNT_PLUGIN
+        -DNT_PLUGIN # maya dev开发包中指定的不同平台的插件标志(win)
         -D_WIN32
         -DOSWin_
         -DUSERDLL
         -DCRT_SECURE_NO_DEPRECATE
         -D_HAS_ITERATOR_DEBUGGING=0
         -D_CRT_SECURE_NO_WARNINGS
+        -DPARTIO_WIN32
 )
-#add_library(maya_${Maya_FIND_VERSION} SHARED IMPORTED)
-#target_include_directories(maya_${Maya_FIND_VERSION} INTERFACE ${MAYA_INCLUDE_DIR})
-##target_link_libraries(maya_${Maya_FIND_VERSION} INTERFACE ${MAYA_LIBRARY})
-#
-#set_property(TARGET maya_${Maya_FIND_VERSION} APPEND PROPERTY
-#        IMPORTED_CONFIGURATIONS RELEASE)
-#set_property(TARGET maya_${Maya_FIND_VERSION} APPEND PROPERTY
-#        IMPORTED_CONFIGURATIONS DEBUG)
-#
-#set_target_properties(maya_${Maya_FIND_VERSION} PROPERTIES
-#        IMPORTED_LOCATION_DEBUG "F:/src/Autodesk_Maya_2020_DEVKIT_Windows_Hotfix_1/devkitBase/lib/OpenMaya.lib"
-#        IMPORTED_IMPLIB_DEBUG "F:/src/Autodesk_Maya_2020_DEVKIT_Windows_Hotfix_1/devkitBase/lib/OpenMaya.lib"
-#        )
-#set_target_properties(maya_${Maya_FIND_VERSION} PROPERTIES
-#        IMPORTED_LOCATION_RELEASE "F:/src/Autodesk_Maya_2020_DEVKIT_Windows_Hotfix_1/devkitBase/lib/OpenMaya.lib"
-#        IMPORTED_IMPLIB_RELEASE "F:/src/Autodesk_Maya_2020_DEVKIT_Windows_Hotfix_1/devkitBase/lib/OpenMaya.lib"
-#        )
+
 add_library(maya::maya_${Maya_FIND_VERSION}_all ALIAS maya_${Maya_FIND_VERSION}_all)
