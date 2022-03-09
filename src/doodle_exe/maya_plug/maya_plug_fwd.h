@@ -14,6 +14,8 @@
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
+
+#include <utility>
 namespace doodle {
 
 inline MSyntax null_syntax_t() { return {}; };
@@ -76,8 +78,8 @@ class d_str {
   //  explicit d_str(const MString& in)
   //      : p_u8_str(in.asUTF8()){};
 
-  explicit d_str(const string& in_u8_str)
-      : p_u8_str(in_u8_str) {
+  explicit d_str(string  in_u8_str)
+      : p_u8_str(std::move(in_u8_str)) {
   }
 
   inline operator MString() const {
@@ -88,7 +90,7 @@ class d_str {
   inline operator string() const {
     return p_u8_str;
   }
-  inline string str() const {
+  [[nodiscard]] inline string str() const {
     return p_u8_str;
   }
 };
