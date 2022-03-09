@@ -44,25 +44,27 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     this->has_skin  = has_skin_cluster(maya_obj);
     this->has_cloth = has_cloth_link(maya_obj);
 
+    node_org_name   = boost::erase_head_copy(
+          node_name,
+          boost::numeric_cast<std::int32_t>(
+            this->node_name.find_last_of(':')));
+
     std::string l_find_str{};
     if (has_cloth) {
       l_find_str = project::get_current()
                        .get_or_emplace<project_config::cloth_config>()
                        .cloth_proxy_;
+      boost::ends_with(node_org_name, l_find_str);
+      has_cloth = boost::ends_with(node_org_name, l_find_str);
     } else if (has_skin) {
       l_find_str = project::get_current()
                        .get_or_emplace<project_config::cloth_config>()
                        .simple_module_proxy_;
+      boost::ends_with(node_org_name, l_find_str);
+      has_skin = boost::ends_with(node_org_name, l_find_str);
     }
-    if (!l_find_str.empty()) {
-      node_org_name = boost::erase_head_copy(
-          node_name,
-          boost::numeric_cast<std::int32_t>(
-              this->node_name.find_last_of(':')));
-      has_skin = !boost::find_last(node_org_name, l_find_str).empty();
-      if (has_skin) {
-        boost::erase_last(node_org_name, l_find_str);
-      }
+    if (!l_find_str.empty() && has_skin) {
+      boost::erase_last(node_org_name, l_find_str);
     }
   }
 }
