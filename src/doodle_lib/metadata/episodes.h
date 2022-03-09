@@ -26,7 +26,7 @@ class DOODLELIB_API episodes {
   };
   bool analysis(const std::string &in_path);
 
-  static void analysis_static(const entt::handle &in_handle,
+  static bool analysis_static(const entt::handle &in_handle,
                               const FSys::path &in_path);
 
  private:

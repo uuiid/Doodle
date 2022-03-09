@@ -46,7 +46,7 @@ class DOODLELIB_API shot {
   };
   bool analysis(const std::string &in_path);
 
-  static void analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
+  static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
  private:
   friend void to_json(nlohmann::json &j, const shot &p) {

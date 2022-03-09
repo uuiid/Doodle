@@ -54,11 +54,14 @@ bool episodes::analysis(const std::string& in_path) {
   return k_r;
 }
 
-void episodes::analysis_static(const entt::handle& in_handle,
+bool episodes::analysis_static(const entt::handle& in_handle,
                                const FSys::path& in_path) {
   episodes k_eps{};
-  if (k_eps.analysis(in_path))
+  if (k_eps.analysis(in_path)) {
     in_handle.emplace<episodes>(k_eps);
+    return true;
+  }
+  return false;
 }
 
 bool episodes::operator==(const episodes& in_rhs) const {
