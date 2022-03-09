@@ -42,14 +42,8 @@ include(CMakePrintHelpers)
 if (WIN32)
     # 现在的使用默认的maya安装路径寻找， 由于工作是在 win 平台上的， 并没有兼容其他的平台
     set(MAYA_DEFAULT_LOCATION "C:/Program Files/Autodesk/Maya${Maya_FIND_VERSION}")
-    set(MAYA_FBX_LOCATION "C:/Program Files/Autodesk/FBX/FBX SDK/${Maya_FIND_VERSION}.0.1")
     set(OPEN_MAYA OpenMaya)
 endif ()
-
-# 取消maya 的一些缓存变量
-unset(MAYA_BASE_DIR CACHE)
-unset(MAYA_INCLUDE_DIR CACHE)
-unset(MAYA_LIBRARY_DIR CACHE)
 
 # 寻找maya 中的基本路径 使用 ${Maya_FIND_VERSION} 添加版本
 find_path(MAYA_BASE_DIR_${Maya_FIND_VERSION}
