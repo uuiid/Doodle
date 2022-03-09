@@ -561,4 +561,11 @@
  * @li 在批量解算中添加maya 初始化解算体状态命令 ::doodle::maya_plug::find_duplicate_poly_comm
  * @li 将maya中创建布料资产的工具断开连接
  * @li 添加寻找当前部门的图片寻找过滤器
+ *
+ * @subsubsection updata_log_3411 版本3.4.11
+ * @li 拖入文件时, 同时分析文件路径,打上集数季数和镜头标记 053b147e
+ * @li 更新maya寻找解算物体的优化
+ * @li [ue4_插件] 优化ue4 灯光配置文件类
+ * @li 添加连接视频功能
+ * @li
  */
