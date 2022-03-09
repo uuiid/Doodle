@@ -131,6 +131,8 @@ comm_create_video::comm_create_video()
     : p_i(std::make_unique<impl>()) {
 }
 void comm_create_video::init() {
+  p_i->out_video_h = make_handle();
+
   g_reg()->set<comm_create_video&>(*this);
 }
 void comm_create_video::succeeded() {
@@ -245,10 +247,16 @@ void comm_create_video::render() {
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
-    auto l_list = p_i->video_list | ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path {
+    auto l_list = p_i->video_list | ranges::views::transform([this](impl::video_cache& in_cache) -> FSys::path {
                     return in_cache.data;
                   }) |
                   ranges::to_vector;
+
+    p_i->out_video_h.remove<episodes>();
+    ranges::find_if(p_i->video_list, [this](impl::video_cache& in_cache) -> bool {
+      return episodes::analysis_static(p_i->out_video_h, in_cache.data);
+    });
+
     p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
     p_i->out_video_h.emplace_or_replace<process_message>();
     g_bounded_pool().attach<details::join_move>(p_i->out_video_h, l_list);
