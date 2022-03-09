@@ -44,7 +44,7 @@ void join_move::link_move() {
   auto k_video_input = cv::VideoCapture{};
   const static cv::Size k_size{1920, 1080};
   auto k_video_out     = cv::VideoWriter{p_i->out_path_.generic_string(),
-                                     cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+                                     cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
                                      25,
                                      k_size};
   auto k_image         = cv::Mat{};
