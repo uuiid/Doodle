@@ -56,12 +56,13 @@ void join_move::link_move() {
       return;
     chick_true<doodle_error>(k_video_input.open(path.generic_string()), DOODLE_LOC, "文件 {} 的格式不支持", path);
     //获得总帧数
-    std::size_t k_frame_count = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
+    auto k_frame_count = boost::numeric_cast<std::size_t>(
+        k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT));
 
     while (k_video_input.read(k_image)) {
       if (p_i->stop_)
         return;
-      std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
+      //      std::size_t k_frame = k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image_resized, k_size);
       else
