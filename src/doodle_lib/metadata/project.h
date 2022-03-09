@@ -104,9 +104,9 @@ class DOODLELIB_API cloth_config {
   std::string simple_module_proxy_;
 
   friend void to_json(nlohmann::json& j, const cloth_config& p) {
-    j["vfx_cloth_sim_path"]  = p.vfx_cloth_sim_path;
-    j["export_group"]        = p.export_group;
-    j["cloth_proxy_"]  = p.cloth_proxy_;
+    j["vfx_cloth_sim_path"]   = p.vfx_cloth_sim_path;
+    j["export_group"]         = p.export_group;
+    j["cloth_proxy_"]         = p.cloth_proxy_;
     j["simple_module_proxy_"] = p.simple_module_proxy_;
   }
   friend void from_json(const nlohmann::json& j, cloth_config& p) {

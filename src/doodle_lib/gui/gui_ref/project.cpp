@@ -46,20 +46,29 @@ class cloth_config_edit::impl {
  public:
   impl()
       : path_("解算路径"s, ""s),
-        ue4_name("导出组名称"s, ""s) {}
+        ue4_name("导出组名称"s, ""s),
+        cloth_proxy_("布料解算后缀名", ""s),
+        simple_module_proxy_("动画后缀名", ""s) {}
   gui_cache<std::string> path_;
   gui_cache<std::string> ue4_name;
+  gui_cache<std::string> cloth_proxy_;
+  gui_cache<std::string> simple_module_proxy_;
 };
 
 void cloth_config_edit::init_(const entt::handle& in) {
-  auto& l_c     = in.get_or_emplace<project::cloth_config>();
-  p_i->path_    = l_c.vfx_cloth_sim_path.generic_string();
-  p_i->ue4_name = l_c.export_group;
+  auto& l_c                 = in.get_or_emplace<project::cloth_config>();
+
+  p_i->path_                = l_c.vfx_cloth_sim_path.generic_string();
+  p_i->ue4_name             = l_c.export_group;
+  p_i->cloth_proxy_         = l_c.cloth_proxy_;
+  p_i->simple_module_proxy_ = l_c.simple_module_proxy_;
 }
 void cloth_config_edit::save_(const entt::handle& in) const {
-  auto& l_c              = in.get_or_emplace<project::cloth_config>();
-  l_c.vfx_cloth_sim_path = p_i->path_.data;
-  l_c.export_group       = p_i->ue4_name;
+  auto& l_c                = in.get_or_emplace<project::cloth_config>();
+  l_c.vfx_cloth_sim_path   = p_i->path_.data;
+  l_c.export_group         = p_i->ue4_name;
+  l_c.cloth_proxy_         = p_i->cloth_proxy_;
+  l_c.simple_module_proxy_ = p_i->simple_module_proxy_;
 }
 cloth_config_edit::cloth_config_edit()
     : p_i(std::make_unique<impl>()) {
@@ -69,6 +78,12 @@ void cloth_config_edit::render(const entt::handle& in) {
     set_modify(true);
   }
   if (imgui::InputText(*p_i->ue4_name.gui_name, &(p_i->ue4_name.data))) {
+    set_modify(true);
+  };
+  if (imgui::InputText(*p_i->cloth_proxy_.gui_name, &(p_i->cloth_proxy_.data))) {
+    set_modify(true);
+  };
+  if (imgui::InputText(*p_i->simple_module_proxy_.gui_name, &(p_i->simple_module_proxy_.data))) {
     set_modify(true);
   };
 }

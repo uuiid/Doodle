@@ -567,4 +567,7 @@
  * @li 更新maya寻找解算物体的优化
  * @li [ue4_插件] 优化ue4 灯光配置文件类
  * @li 添加连接视频功能
+ *
+ * @subsubsection updata_log_3412 版本3.4.12
+ * @li 将maya_plug 按照名称寻找
  */

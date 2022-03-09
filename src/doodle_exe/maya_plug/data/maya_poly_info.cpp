@@ -55,7 +55,6 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
                        .simple_module_proxy_;
     }
     if (!l_find_str.empty()) {
-      //      l_find_str += "Shape";
       node_org_name = boost::erase_head_copy(
           node_name,
           boost::numeric_cast<std::int32_t>(
