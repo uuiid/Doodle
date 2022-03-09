@@ -46,13 +46,14 @@ class DOODLELIB_API join_move : public process_t<join_move> {
    * @param in_vector 视频序列的句柄, 不需要排序, 会根据名称自动排序
    */
   join_move(const entt::handle &in_handle,
-            const std::vector<entt::handle> &in_vector);
-
+            const std::vector<FSys::path> &in_vector);
+  virtual ~join_move();
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(base_type::delta_type, void *data);
+  [[maybe_unused]] void update(const base_type::delta_type &, void *data);
+  void link_move();
 };
 }  // namespace details
 
