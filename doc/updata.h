@@ -570,4 +570,9 @@
  *
  * @subsubsection updata_log_3412 版本3.4.12
  * @li 将maya_plug 按照名称寻找
+ *
+ * @subsubsection updata_log_3413 版本3.4.13
+ * @li 将maya_plug 按照名称寻找(二次确认 skin 模式是否带有 simple_module_proxy_ 后缀)
+ *
+ *
  */
