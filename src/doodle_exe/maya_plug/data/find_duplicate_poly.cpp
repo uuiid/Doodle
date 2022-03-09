@@ -48,18 +48,13 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
                                      return in_object == in_object_sk;
                                    }) |
                                    ranges::to_vector;
-                   auto l_item =
-                       ranges::max_element(
-                           l_v_list,
-                           [](const maya_poly_info& in_info_l,
-                              const maya_poly_info& in_info_r) -> bool {
-                             return in_info_l.skin_priority < in_info_r.skin_priority;
-                           });
-                   DOODLE_LOG_INFO("选中解算体 {} 优先级为 {}\n选中skin物体 {} 优先级是 {}",
-                                   in_object.node_name, in_object.cloth_priority,
-                                   l_item->node_name, l_item->skin_priority);
-                   return std::make_pair(l_item->maya_obj, in_object.maya_obj);
+                   return std::make_pair(
+                       l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj,
+                       in_object.maya_obj);
                  }) |
+             ranges::views::filter([](const std::pair<MObject, MObject>& in_pair) -> bool {
+               return !in_pair.first.isNull() && !in_pair.second.isNull();
+             }) |
              ranges::to_vector;
 
   //  auto l_v = l_multimap |
