@@ -63,7 +63,7 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
       boost::ends_with(node_org_name, l_find_str);
       has_skin = boost::ends_with(node_org_name, l_find_str);
     }
-    if (!l_find_str.empty() && has_skin) {
+    if (!l_find_str.empty()) {
       boost::erase_last(node_org_name, l_find_str);
     }
   }
