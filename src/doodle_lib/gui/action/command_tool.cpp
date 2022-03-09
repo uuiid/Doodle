@@ -16,6 +16,7 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <long_task/image_to_move.h>
 #include <gui/gui_ref/ref_base.h>
+#include <long_task/join_move.h>
 
 #include <utility>
 
@@ -123,6 +124,7 @@ class comm_create_video::impl {
 
   std::vector<image_cache> image_to_video_list;
   std::vector<video_cache> video_list;
+  entt::handle out_video_h;
 };
 
 comm_create_video::comm_create_video()
@@ -177,8 +179,8 @@ void comm_create_video::render() {
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop().attach<file_dialog>(l_ptr,
-                                      "select dir")
+    g_bounded_pool().attach<file_dialog>(l_ptr,
+                                         "select dir")
         .then<one_process_t>([=]() {
           ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
             std::vector<FSys::path> list =
@@ -243,6 +245,13 @@ void comm_create_video::render() {
   }
   imgui::SameLine();
   if (imgui::Button("连接视频")) {
+    auto l_list = p_i->video_list | ranges::views::transform([](impl::video_cache& in_cache) -> FSys::path {
+                    return in_cache.data;
+                  }) |
+                  ranges::to_vector;
+    p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
+    p_i->out_video_h.emplace_or_replace<process_message>();
+    g_bounded_pool().attach<details::join_move>(p_i->out_video_h, l_list);
   }
 
   dear::ListBox{"video_list"} && [this]() {
