@@ -93,13 +93,40 @@ class DOODLELIB_API cloth_config {
    */
   std::string export_group;
 
+  /**
+   * @brief 计算maya qcloth 布料中 初始化位置时 绑定皮肤簇网格 优先级
+   */
+  std::vector<std::pair<std::string, std::int32_t>> skin_priority_list;
+
+  /**
+   * @brief 计算maya qcloth 布料中 qcloth布料 优先级
+   */
+  std::vector<std::pair<std::string, std::int32_t>> cloth_priority_list;
+
+  /**
+   * @brief 获取 skin_priority_list ，当为空时， 填充返回默认值
+   * @return skin_priority_list
+   */
+  std::vector<std::pair<std::string, std::int32_t>> get_skin_priority_list() const;
+  /**
+   * @brief 获取 cloth_priority_list ，当为空时， 填充返回默认值
+   * @return cloth_priority_list
+   */
+  std::vector<std::pair<std::string, std::int32_t>> get_cloth_priority_list() const;
+
   friend void to_json(nlohmann::json& j, const cloth_config& p) {
-    j["vfx_cloth_sim_path"] = p.vfx_cloth_sim_path;
-    j["export_group"]       = p.export_group;
+    j["vfx_cloth_sim_path"]  = p.vfx_cloth_sim_path;
+    j["export_group"]        = p.export_group;
+    j["skin_priority_list"]  = p.skin_priority_list;
+    j["cloth_priority_list"] = p.cloth_priority_list;
   }
   friend void from_json(const nlohmann::json& j, cloth_config& p) {
     j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
     j.at("export_group").get_to(p.export_group);
+    if (j.contains("skin_priority_list"))
+      j.at("skin_priority_list").get_to(p.skin_priority_list);
+    if (j.contains("cloth_priority_list"))
+      j.at("cloth_priority_list").get_to(p.cloth_priority_list);
   }
   constexpr static std::uint32_t class_hash() {
     return "class doodle::project::cloth_config"_hs;

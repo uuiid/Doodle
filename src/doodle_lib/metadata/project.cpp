@@ -9,6 +9,23 @@ namespace doodle {
 project::cloth_config::cloth_config()
     : vfx_cloth_sim_path("C:/"),
       export_group("UE4") {}
+std::vector<std::pair<std::string, std::int32_t>> project_config::cloth_config::get_skin_priority_list() const {
+  if (skin_priority_list.empty())
+    return {{"UE4"s, -100}, {"JianMo"s, 20}};
+  else
+    return skin_priority_list;
+}
+std::vector<std::pair<std::string, std::int32_t>> project_config::cloth_config::get_cloth_priority_list() const {
+  if (cloth_priority_list.empty())
+    return {
+        {"cfx_grp"s, 20},
+        {"deform_grp"s, -100},
+        {"export_grp"s, -100},
+        {"solver_grp"s, 30},
+        {"anim_grp"s, -100}};
+  else
+    return cloth_priority_list;
+}
 
 project::project()
     : p_name("none"),

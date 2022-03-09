@@ -19,7 +19,7 @@ class maya_poly_info {
   std::int32_t numPolygons;
   /// \brief 面顶点数量
   std::int32_t numFaceVertices;
-  //  std::int32_t polygonVertexCount;
+  //  std::int32_t polygonVertexCount
   /// \brief uv点数量
   std::int32_t numUVs;
   /// \brief uv 集数量
@@ -32,6 +32,11 @@ class maya_poly_info {
   bool is_intermediate_obj;
   /// \brief 使用可以在下游查找到ql布料解算节点
   bool has_cloth;
+
+  std::int32_t skin_priority;
+  std::int32_t cloth_priority;
+
+  std::string node_name;
   //  std::int32_t numColors;
   //  std::int32_t numColorSets;
   /**
@@ -75,6 +80,13 @@ class maya_poly_info {
    * @return true 有 ql 布料节点
    */
   bool has_cloth_link(const MObject& in_object);
+
+  /**
+   * @brief 根据路径计算优先级
+   * @param in_path 传入的maya路径
+   * @return
+   */
+  void compute_priority(const std::string& in_path);
 };
 
 }  // namespace doodle::maya_plug

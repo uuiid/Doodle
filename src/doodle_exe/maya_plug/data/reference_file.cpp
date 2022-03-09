@@ -534,7 +534,7 @@ void reference_file::qlUpdateInitialPose() const {
     DOODLE_CHICK(
         MGlobal::executeCommand(
             d_str{
-                "qlUpdateInitialPose"},
+                "qlUpdateInitialPose;"},
             true, true));
   }
 }

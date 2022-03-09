@@ -25,34 +25,81 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
                ranges::views::filter([](const maya_poly_info& l_info) -> bool {
                  return !l_info.maya_obj.isNull() && !l_info.is_intermediate_obj;
                }) |
+               ranges::views::filter([](const maya_poly_info& l_info) -> bool {
+                 return l_info.has_cloth || l_info.has_skin;
+               }) |
                ranges::to_vector;
-  auto l_v = l_multimap |
-             ranges::views::group_by(std::equal_to<maya_poly_info>{}) |
-             ranges::to_vector;
-  //  decltype(l_v)::value_type
-  l_vector = l_v |
-             ranges::views::filter([](const decltype(l_v)::value_type& in_vector) -> bool {
-               return in_vector.size() > 1;
-             }) |
-             ranges::views::filter([this](const decltype(l_v)::value_type& in_vector) -> bool {
-               return ranges::any_of(in_vector, [this](const maya_poly_info& in_info) -> bool {
-                        return in_info.has_skin;
-                      }) &&
-                      ranges::any_of(in_vector, [this](const maya_poly_info& in_info) -> bool {
-                        return in_info.has_cloth;
-                      });
-             }) |
-             ranges::views::transform([this](const decltype(l_v)::value_type& in_vector) -> std::pair<MObject, MObject> {
-               auto l_m_1 = ranges::find_if(in_vector, [this](const maya_poly_info& in_info) -> bool {
-                 return in_info.has_skin;
-               });
-               auto l_m_2 = ranges::find_if(in_vector, [this](const maya_poly_info& in_info) -> bool {
-                 return !in_info.has_cloth;
-               });
+  auto l_cloth = l_multimap |
+                 ranges::views::filter([](const maya_poly_info& l_info) -> bool {
+                   return l_info.has_cloth;
+                 }) |
+                 ranges::to_vector;
+  auto l_skin = l_multimap |
+                ranges::views::filter([](const maya_poly_info& l_info) -> bool {
+                  return l_info.has_skin && !l_info.has_cloth;
+                }) |
+                ranges::to_vector;
 
-               return std::make_pair(l_m_1->maya_obj, l_m_2->maya_obj);
-             }) |
+  l_vector = l_cloth |
+             ranges::views::transform(
+                 [&](const maya_poly_info& in_object) -> std::pair<MObject, MObject> {
+                   auto l_v_list = l_skin |
+                                   ranges::views::filter([&](const maya_poly_info& in_object_sk) -> bool {
+                                     return in_object == in_object_sk;
+                                   }) |
+                                   ranges::to_vector;
+                   auto l_item =
+                       ranges::max_element(
+                           l_v_list,
+                           [](const maya_poly_info& in_info_l,
+                              const maya_poly_info& in_info_r) -> bool {
+                             return in_info_l.skin_priority < in_info_r.skin_priority;
+                           });
+                   DOODLE_LOG_INFO("选中解算体 {} 优先级为 {}\n选中skin物体 {} 优先级是 {}",
+                                   in_object.node_name, in_object.cloth_priority,
+                                   l_item->node_name, l_item->skin_priority);
+                   return std::make_pair(l_item->maya_obj, in_object.maya_obj);
+                 }) |
              ranges::to_vector;
+
+  //  auto l_v = l_multimap |
+  //             ranges::views::group_by(std::equal_to<maya_poly_info>{}) |
+  //             ranges::to_vector;
+  //  //  decltype(l_v)::value_type
+  //  l_vector = l_v |
+  //             ranges::views::filter([](const decltype(l_v)::value_type& in_vector) -> bool {
+  //               return in_vector.size() > 1;
+  //             }) |
+  //             ranges::views::filter([this](const decltype(l_v)::value_type& in_vector) -> bool {
+  //               return ranges::any_of(in_vector, [this](const maya_poly_info& in_info) -> bool {
+  //                        return in_info.has_skin;
+  //                      }) &&
+  //                      ranges::any_of(in_vector, [this](const maya_poly_info& in_info) -> bool {
+  //                        return in_info.has_cloth;
+  //                      });
+  //             }) |
+  //             ranges::views::transform([this](const decltype(l_v)::value_type& in_vector)
+  //                                          -> std::pair<MObject, MObject> {
+  //               auto l_m_1 =
+  //                   ranges::max_element(
+  //                       in_vector,
+  //                       [](const maya_poly_info& in_info_l,
+  //                          const maya_poly_info& in_info_r) -> bool {
+  //                         return in_info_l.skin_priority < in_info_r.skin_priority;
+  //                       });
+  //               auto l_m_2 =
+  //                   ranges::max_element(
+  //                       in_vector,
+  //                       [](const maya_poly_info& in_info_l,
+  //                          const maya_poly_info& in_info_r) -> bool {
+  //                         return in_info_l.cloth_priority < in_info_r.cloth_priority;
+  //                       });
+  //               DOODLE_LOG_INFO("cloth_p {} skin {}", l_m_1->cloth_priority, l_m_1->skin_priority)
+  //               DOODLE_LOG_INFO("cloth_p {} skin {}", l_m_2->cloth_priority, l_m_2->skin_priority)
+  //
+  //               return std::make_pair(l_m_1->maya_obj, l_m_2->maya_obj);
+  //             }) |
+  //             ranges::to_vector;
 
   return l_vector;
 }
