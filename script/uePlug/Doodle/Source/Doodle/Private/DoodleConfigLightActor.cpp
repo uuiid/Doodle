@@ -139,7 +139,13 @@ void ADoodleConfigLightActor::SaveConfig() {
         /// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
         /// </summary>
         ALight* k_l = DuplicateObject(it->light.Get(), NewPackage);
-        NewPreset->p_light.Add({k_l, it->weight});
+        k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+
+        UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
+               *k_l->GetTransform().ToString());
+
+        auto l_f = it->weight;
+        NewPreset->p_light.Add({k_l, l_f});
       }
     }
     NewPreset->MarkPackageDirty();
@@ -158,30 +164,35 @@ void ADoodleConfigLightActor::LoadConfig() {
       Cast<UDoodleConfigLight>(OpenDialog(DefaultName / DefaultName, TEXT("")));
   if (l_config) {
     UE_LOG(LogTemp, Log, TEXT("load file name: %s"), *l_config->GetPathName());
-  }
-  if (use_clear) {
-    for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      if (it->light.IsValid()) {
-        GetWorld()->EditorDestroyActor(it->light.Get(), true);
+    if (use_clear) {
+      for (auto it = p_light_list.CreateIterator(); it; ++it) {
+        if (it->light.IsValid()) {
+          GetWorld()->EditorDestroyActor(it->light.Get(), true);
+        }
       }
+      p_light_list.Empty();
     }
-    p_light_list.Empty();
-  }
 
-  for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
-    if (it->light) {
-      auto ft = it->light->GetTransform();
-      // UE_LOG(LogTemp, Log, TEXT("tran: %s"), *(ft.ToString()));
-      FActorSpawnParameters k_t{};
-      k_t.Template = it->light;
-      // UE_LOG(LogTemp, Log, TEXT("rgb: %s"),
-      //       *((*it)->GetLightColor().ToString()));
-      FTransform k_f = it->light->GetTransform();
-      ALight* k_a = GWorld->SpawnActor<ALight>(it->light->GetClass(), k_f, k_t);
-      k_a->AttachToActor(this,
-                         FAttachmentTransformRules::KeepRelativeTransform);
-      p_light_list.Add({k_a, it->weight});
-      // LoadObject<ALight>();
+    for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
+      if (it->light) {
+        // auto ft = it->light->GetTransform();
+        FActorSpawnParameters k_t{};
+        k_t.Template = it->light;
+        // UE_LOG(LogTemp, Log, TEXT("rgb: %s"),
+        //       *((*it)->GetLightColor().ToString()));
+        FTransform k_f = it->light->GetTransform();
+        UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
+               *(it->light->GetTransform().ToString()));
+        ALight* k_a =
+            GWorld->SpawnActor<ALight>(it->light->GetClass(), k_f, k_t);
+        UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
+               *(k_a->GetTransform().ToString()));
+        k_a->SetActorTransform(k_f);
+        k_a->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        auto l_w = it->weight;
+        p_light_list.Add({k_a, l_w});
+        // LoadObject<ALight>();
+      }
     }
   }
 
@@ -209,17 +220,16 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
     for (auto it = p_light_list.CreateIterator(); it; ++it) {
       if (it->light.IsValid()) {
         auto* l_p = it->light->GetParentActor();
-        if (l_p != this) {
+        if (l_p && l_p != this) {
           if (l_p->GetClass() == ADoodleConfigLightActor::StaticClass()) {
             auto* l_p_config = Cast<ADoodleConfigLightActor>(l_p);
             if (l_p_config) {
               l_p_config->p_light_list.Remove(*it);
             }
           }
-
-          it->light->AttachToActor(
-              this, FAttachmentTransformRules::KeepWorldTransform);
         }
+        it->light->AttachToActor(this,
+                                 FAttachmentTransformRules::KeepWorldTransform);
       }
     }
   }
