@@ -81,7 +81,8 @@ public class doodleEditor : ModuleRules
                 "AssetRegistry",//资源注册表模块
                 "JsonUtilities",// 批量导入需要读取json
                 "Json",// 批量导入需要读取json
-                "SourceControl"//源代码管理
+                "SourceControl",//源代码管理,
+                "LevelSequence"
             }
             );
 
