@@ -54,15 +54,14 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(
       auto k_group = k_root->TryGetField("groups");
       if (k_group) {
         for (auto& i : k_group->AsArray()) {
-          auto import_setting = NewObject<UDoodleAssetImportData>(this);
-          import_setting->initialize(i->AsObject());
-          if (import_setting->is_valid())
-            import_setting_list.Add(import_setting);
+          FDoodleAssetImportData import_setting{};
+          import_setting.initialize(i->AsObject());
+          import_setting_list.Add(import_setting);
         }
       } else {
-        auto import_setting = NewObject<UDoodleAssetImportData>(this);
-        import_setting->initialize(k_root);
-        if (import_setting->is_valid()) import_setting_list.Add(import_setting);
+        FDoodleAssetImportData import_setting{};
+
+        if (import_setting.is_valid()) import_setting_list.Add(import_setting);
       }
     }
   }
@@ -71,13 +70,13 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(
     UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
     auto k_setting = NewObject<UAutomatedAssetImportData>(this);
     k_setting->bSkipReadOnly = true;
-    k_setting->Filenames.Add(i->import_file_path);
-    k_setting->DestinationPath = i->import_file_save_dir;
+    k_setting->Filenames.Add(i.import_file_path);
+    k_setting->DestinationPath = i.import_file_save_dir;
     k_setting->bReplaceExisting = true;
-    UE_LOG(LogTemp, Log, TEXT("导入目标路径为 %s"), *(i->import_file_save_dir));
-    switch (i->import_type) {
-      case UDoodleAssetImportData::import_file_type::Abc: {
-        UE_LOG(LogTemp, Log, TEXT("读取到abc文件 %s"), *(i->import_file_path));
+    UE_LOG(LogTemp, Log, TEXT("导入目标路径为 %s"), *(i.import_file_save_dir));
+    switch (i.import_type) {
+      case EDoodleImportType::Abc: {
+        UE_LOG(LogTemp, Log, TEXT("读取到abc文件 %s"), *(i.import_file_path));
         k_setting->FactoryName = "AlembicImportFactory";
         k_setting->Initialize(nullptr);
         auto k_abc_stting = UAbcImportSettings::Get();
@@ -99,9 +98,9 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(
 
         k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;  //合并轨道
         k_abc_stting->SamplingSettings.bSkipEmpty = true;  // 跳过空白帧
-        k_abc_stting->SamplingSettings.FrameStart = i->start_frame;  //开始帧
-        k_abc_stting->SamplingSettings.FrameEnd = i->end_frame;      //结束帧
-        k_abc_stting->SamplingSettings.FrameSteps = 1;               //帧步数
+        k_abc_stting->SamplingSettings.FrameStart = i.start_frame;  //开始帧
+        k_abc_stting->SamplingSettings.FrameEnd = i.end_frame;      //结束帧
+        k_abc_stting->SamplingSettings.FrameSteps = 1;              //帧步数
         k_assetImportTask->bAutomated = true;
         k_assetImportTask->bReplaceExisting = true;
         k_assetImportTask->bSave = true;
@@ -110,17 +109,17 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(
         ImportDataList.Add(k_setting);
         break;
       }
-      case UDoodleAssetImportData::import_file_type::Fbx: {
-        UE_LOG(LogTemp, Log, TEXT("读取到fbx文件 %s"), *(i->import_file_path));
+      case EDoodleImportType::Fbx: {
+        UE_LOG(LogTemp, Log, TEXT("读取到fbx文件 %s"), *(i.import_file_path));
         k_setting->FactoryName = "FbxFactory";
         k_setting->Initialize(nullptr);
 
         UFbxFactory* k_fbx_f = Cast<UFbxFactory>(k_setting->Factory);
         if (!k_fbx_f) break;
-        FString k_fbx_dir = i->fbx_skeleton_dir.IsEmpty()
+        FString k_fbx_dir = i.fbx_skeleton_dir.IsEmpty()
                                 ? FString{TEXT("/Game/Character/")}
-                                : i->fbx_skeleton_dir;
-        FString k_fbx_name = i->fbx_skeleton_file_name;
+                                : i.fbx_skeleton_dir;
+        FString k_fbx_name = i.fbx_skeleton_file_name;
         if (k_fbx_name.IsEmpty())  // 名称为空的情况下直接导入几何体和网格
         {
           UE_LOG(LogTemp, Log, TEXT("没有指定骨骼名称, 直接导入骨骼和动画"));
@@ -162,7 +161,7 @@ bool UDoodleAssCreateCommandlet::parse_import_setting(
         ImportDataList.Add(k_setting);
         break;
       }
-      case UDoodleAssetImportData::import_file_type::None: {
+      case EDoodleImportType::None: {
         UE_LOG(LogTemp, Log, TEXT("未知导入类型， 跳过"));
         k_setting->Initialize(nullptr);
         break;
@@ -201,6 +200,7 @@ static bool SavePackage(UPackage* Package, const FString& PackageFilename) {
   return GEditor->SavePackage(Package, nullptr, RF_Standalone, *PackageFilename,
                               GWarn);
 }
+
 bool UDoodleAssCreateCommandlet::import_and_save(
     const TArray<UAutomatedAssetImportData*>& assets_import_list) {
   UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
@@ -237,6 +237,7 @@ bool UDoodleAssCreateCommandlet::import_and_save(
   }
   return true;
 }
+
 void UDoodleAssCreateCommandlet::ClearDirtyPackages() {
   TArray<UPackage*> DirtyPackages;
   FEditorFileUtils::GetDirtyContentPackages(DirtyPackages);
@@ -246,10 +247,38 @@ void UDoodleAssCreateCommandlet::ClearDirtyPackages() {
     Package->SetDirtyFlag(false);
   }
 }
+void UDoodleAssCreateCommandlet::save_temp_json(const FString& out_path) {
+  FDoodleAssetImportData l_data{};
+  l_data.import_file_path = "import_file_path.abc(or fbx)";
+  l_data.import_file_save_dir = "ue4 file save path";
+  l_data.fbx_skeleton_dir = "ue4_skeleton_path_dir";
+  l_data.fbx_skeleton_file_name = "ue4_skeleton_path_dir";
+  l_data.import_type = EDoodleImportType::Abc;
+  l_data.start_frame = 1001;
+  l_data.end_frame = 1200;
+  FString l_josn{};
+  FJsonObjectConverter::UStructToJsonObjectString<FDoodleAssetImportData>(
+      l_data, l_josn, CPF_None, CPF_None);
+  FFileHelper::SaveStringToFile(l_josn,
+                                *(out_path / "doodle_import_data.json"));
+
+  FDoodleAssetImportDataGroup l_list{};
+  l_list.groups.Add(l_data);
+  l_list.groups.Add(l_data);
+  FJsonObjectConverter::UStructToJsonObjectString<FDoodleAssetImportDataGroup>(
+      l_list, l_josn, CPF_None, CPF_None);
+  FFileHelper::SaveStringToFile(l_josn,
+                                *(out_path / "doodle_import_data_2.json"));
+
+  return;
+}
+
 int32 UDoodleAssCreateCommandlet::Main(const FString& Params) {
-  bool bSuccess = false;
   UE_LOG(LogTemp, Log, TEXT("开始解析参数"));
-  if (!parse_params(Params)) return 0;
+  if (!parse_params(Params)) {
+    save_temp_json(FPaths::ProjectDir());
+    return 0;
+  }
 
   UE_LOG(LogTemp, Log, TEXT("解析参数完成"));
   if (!parse_import_setting(import_setting_path)) return 0;

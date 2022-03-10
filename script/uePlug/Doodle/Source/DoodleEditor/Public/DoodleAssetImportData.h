@@ -4,46 +4,56 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
+///
+///
 #include "DoodleAssetImportData.generated.h"
-
-
 class UFactory;
 class FJsonObject;
 
+UENUM()
+enum class EDoodleImportType : uint8 { None = 0, Abc, Fbx };
+
 /**
- * 
+ *
  */
-UCLASS()
-class DOODLEEDITOR_API UDoodleAssetImportData : public UObject
-{
-	GENERATED_BODY()
-public:
-    enum class import_file_type : uint8 {
-        None,
-        Abc,
-        Fbx
-    };
+USTRUCT()
+struct FDoodleAssetImportData {
+  GENERATED_BODY()
+ public:
+  bool is_valid() const;
 
-    bool is_valid() const;
+  void initialize(TSharedPtr<FJsonObject> InImportGroupJsonData);
 
-    void initialize(TSharedPtr<FJsonObject> InImportGroupJsonData);
-public:
-    /* 导入文件的路径(文件名称) */
-    FString import_file_path;
-    /* 保存文件的路径(目录) */
-    FString import_file_save_dir;
+ public:
+  /* 导入文件的路径(文件名称) */
+  UPROPERTY()
+  FString import_file_path;
+  /* 保存文件的路径(目录) */
+  UPROPERTY()
+  FString import_file_save_dir;
 
-    /* 导入文件时fbx skeleton 所在文件夹*/
-    FString fbx_skeleton_dir;
-    /* 导入文件时fbx skeleton 文件名称 */
-    FString fbx_skeleton_file_name;
+  /* 导入文件时fbx skeleton 所在文件夹*/
+  UPROPERTY()
+  FString fbx_skeleton_dir;
+  /* 导入文件时fbx skeleton 文件名称 */
+  UPROPERTY()
+  FString fbx_skeleton_file_name;
 
+  /* 导入文件时的json 数据 */
+  TSharedPtr<FJsonObject> ImportGroupJsonData;
+  UPROPERTY()
+  EDoodleImportType import_type;
+  UPROPERTY()
+  uint64 start_frame;
+  UPROPERTY()
+  uint64 end_frame;
+};
 
-    /* 导入文件时的json 数据 */
-    TSharedPtr<FJsonObject> ImportGroupJsonData;
+USTRUCT()
+struct FDoodleAssetImportDataGroup {
+  GENERATED_BODY()
 
-    import_file_type import_type;
-
-    std::uint64_t start_frame;
-    std::uint64_t end_frame;
+  UPROPERTY()
+  TArray<FDoodleAssetImportData> groups;
 };

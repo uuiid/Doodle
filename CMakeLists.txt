@@ -181,4 +181,9 @@ install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="
 .\vcpkg.exe upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
 .\vcpkg.exe upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports" --no-dry-run
 sqlpp11[sqlite3-connector]
+
+
+"$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="F:\Users\teXiao\Documents\Unreal_Projects\doodle_plug_dev\test_file\test_fbx.json"
+
+"$(SolutionDir)doodle_plug.uproject"
 ]==]

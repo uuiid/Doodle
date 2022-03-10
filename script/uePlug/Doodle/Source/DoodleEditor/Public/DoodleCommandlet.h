@@ -3,6 +3,9 @@
 #include "Commandlets/Commandlet.h"
 #include "CoreMinimal.h"
 #include "DoodleAssetImportData.h"
+
+///
+/// 
 #include "DoodleCommandlet.generated.h"
 
 class UFactory;
@@ -26,6 +29,28 @@ class Shot {
 };
 }  // namespace
 
+USTRUCT()
+struct FDoodleEpisodes {
+  GENERATED_BODY()
+ public:
+  uint64 eps;
+};
+
+USTRUCT()
+struct FDoodleShot {
+  GENERATED_BODY()
+ public:
+  uint64 shot;
+  TOptional<FString> shot_ab;
+};
+
+USTRUCT()
+struct FDoodleSeason {
+  GENERATED_BODY()
+ public:
+  std::int32_t season;
+};
+
 UCLASS()
 class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
   GENERATED_UCLASS_BODY()
@@ -48,7 +73,7 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
   TArray<UAutomatedAssetImportData*> ImportDataList;
 
   UPROPERTY()
-  TArray<UDoodleAssetImportData*> import_setting_list;
+  TArray<FDoodleAssetImportData> import_setting_list;
 
   FString import_setting_path;
 
@@ -61,6 +86,9 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
       const TArray<UAutomatedAssetImportData*>& assets_import_list);
   void ClearDirtyPackages();
   // static bool SavePackage(UPackage* Package, const FString& PackageFilename)
+
+  void save_temp_json(const FString& out_path);
+
  public:
   virtual int32 Main(const FString& Params) override;
 };
