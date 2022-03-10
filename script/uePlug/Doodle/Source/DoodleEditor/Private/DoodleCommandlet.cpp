@@ -45,24 +45,21 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString& in_params) {
 bool UDoodleAssCreateCommandlet::parse_import_setting(
     const FString& in_import_setting_file) {
   FString k_json_str;
+  TArray<FDoodleAssetImportData> import_setting_list;
   if (FFileHelper::LoadFileToString(k_json_str, *in_import_setting_file)) {
-    TSharedRef<TJsonReader<>> k_json_r =
-        TJsonReaderFactory<>::Create(k_json_str);
-    TSharedPtr<FJsonObject> k_root;
-    if (FJsonSerializer::Deserialize(k_json_r, k_root) && k_root.IsValid()) {
-      UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
-      auto k_group = k_root->TryGetField("groups");
-      if (k_group) {
-        for (auto& i : k_group->AsArray()) {
-          FDoodleAssetImportData import_setting{};
-          import_setting.initialize(i->AsObject());
-          import_setting_list.Add(import_setting);
-        }
-      } else {
-        FDoodleAssetImportData import_setting{};
-
-        if (import_setting.is_valid()) import_setting_list.Add(import_setting);
-      }
+    UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
+    FDoodleAssetImportDataGroup l_data_list{};
+    UE_LOG(LogTemp, Log, TEXT("开始测试是 FDoodleAssetImportDataGroup"));
+    if (FJsonObjectConverter::JsonObjectStringToUStruct<
+            FDoodleAssetImportDataGroup>(k_json_str, &l_data_list, CPF_None,
+                                         CPF_None)) {
+      import_setting_list = l_data_list.groups;
+    }
+    UE_LOG(LogTemp, Log, TEXT("开始测试 FDoodleAssetImportData"));
+    FDoodleAssetImportData l_data{};
+    if (FJsonObjectConverter::JsonObjectStringToUStruct<FDoodleAssetImportData>(
+            k_json_str, &l_data, CPF_None, CPF_None)) {
+      import_setting_list.Add(l_data);
     }
   }
 

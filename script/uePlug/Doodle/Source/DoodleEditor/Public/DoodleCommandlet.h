@@ -5,7 +5,7 @@
 #include "DoodleAssetImportData.h"
 
 ///
-/// 
+///
 #include "DoodleCommandlet.generated.h"
 
 class UFactory;
@@ -71,9 +71,6 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
   /** */
   UPROPERTY()
   TArray<UAutomatedAssetImportData*> ImportDataList;
-
-  UPROPERTY()
-  TArray<FDoodleAssetImportData> import_setting_list;
 
   FString import_setting_path;
 
