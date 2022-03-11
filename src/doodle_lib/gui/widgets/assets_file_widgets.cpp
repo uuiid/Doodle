@@ -52,10 +52,11 @@ class assets_file_widgets::impl {
         if (auto [l_ass, l_ep, l_shot] =
                 handle_.try_get<assets_file, episodes, shot>();
             l_ass || l_ep || l_shot) {
-          if (l_ass)
-            name.data += l_ass->show_str();
-          if (l_ass && (l_ep || l_shot))
-            name.data.push_back('\n');
+          if (l_ass) {
+            name.data = l_ass->show_str();
+            if (l_ep || l_shot)
+              name.data.push_back('\n');
+          }
 
           if (l_ep) {
             name.data += fmt::to_string(*l_ep);
