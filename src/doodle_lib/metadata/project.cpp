@@ -121,6 +121,8 @@ std::string project_config::base_config::get_current_find_icon_regex_() {
   switch (core_set::getSet().get_department_enum()) {
     case department::modle:
       l_regex = project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex;
+      break;
+
     default:
       l_regex = ".";
       break;
