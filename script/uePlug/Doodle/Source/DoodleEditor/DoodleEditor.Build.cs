@@ -82,7 +82,12 @@ public class doodleEditor : ModuleRules
                 "JsonUtilities",// 批量导入需要读取json
                 "Json",// 批量导入需要读取json
                 "SourceControl",//源代码管理,
-                "LevelSequence"
+
+                "LevelSequence",//创建定序器
+                "Sequencer",//修改定序器
+                "MovieScene",//更新定序器场景
+                "CinematicCamera",// 相机模块
+                "MovieSceneTools"// /更新定序器场景
             }
             );
 

@@ -36,6 +36,9 @@
 // 更改材质属性时的委托发布
 #include "EditorSupportDelegates.h"
 
+// 我们在测试时使用
+#include "DoodleCreateLevel.h"
+
 void DoodleCopyMat::Construct(const FArguments &Arg) {
   //这个是ue界面的创建方法
 
@@ -129,18 +132,17 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
        SHorizontalBox::Slot()
            .AutoWidth()
            .HAlign(HAlign_Left)
-           .Padding(FMargin{
-               1.f,
-               1.f})[SNew(SButton)
-                         .OnClicked_Lambda([this]() -> FReply {
-                           return this->set_marteral_deep();
-                         })[SNew(STextBlock)
-                                .Text(FText::FromString(TEXT("景深后渲染")))]
-                         .ToolTipText_Lambda([]() -> FText {
-                           return FText::FromString(
-                               TEXT("将选中的粒子系统的材质属性->景深后渲染,"
-                                    "改为前方复选框状态"));
-                         })]];
+           .Padding(FMargin{1.f, 1.f})
+               [SNew(SButton)
+                    .OnClicked_Lambda([this]() -> FReply {
+                      doodle::init_ue4_project{}.tmp();
+                      return FReply::Handled();
+                    })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
+                    .ToolTipText_Lambda([]() -> FText {
+                      return FText::FromString(
+                          TEXT("将选中的粒子系统的材质属性->景深后渲染,"
+                               "改为前方复选框状态"));
+                    })]];
 }
 
 void DoodleCopyMat::AddReferencedObjects(FReferenceCollector &collector) {
