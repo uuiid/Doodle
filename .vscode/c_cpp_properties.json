@@ -37,7 +37,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
-            }
+            },
+            "configurationProvider": "ms-vscode.cmake-tools"
         },
         {
             "name": "Win32_Maya",
@@ -76,7 +77,7 @@
             "intelliSenseMode": "windows-msvc-x64",
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": "${workspaceFolder}/.vscode/browse_maya.vc.db",
+                "databaseFilename": "${workspaceFolder}/.vscode/browse_maya.vc.db"
             }
         }
     ],
