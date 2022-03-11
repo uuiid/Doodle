@@ -202,4 +202,12 @@ bool time_point_wrap::operator>=(const time_point_wrap& in_rhs) const {
   return !(*this < in_rhs);
 }
 
+time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
+  auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
+  auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;
+  // chrono::local_days k_{l_mo};
+  // time_local_point l{k_};
+  return time_point_wrap{chrono::local_days{l_mo}};
+}
+
 }  // namespace doodle

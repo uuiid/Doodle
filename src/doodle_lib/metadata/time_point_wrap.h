@@ -71,6 +71,8 @@ class DOODLELIB_API time_point_wrap {
 
   [[nodiscard]] std::string show_str() const;
 
+  static time_point_wrap current_month_end(const time_point_wrap& in_time);
+
   /**
    *
    * @param in 结束的时间

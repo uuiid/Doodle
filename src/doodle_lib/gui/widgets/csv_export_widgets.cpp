@@ -146,7 +146,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   std::stringstream l_r{};
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx<project>().p_path;
-  auto l_next       = get_user_next_time(in);
+  auto l_next       = get_user_up_time(in);
   auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
   auto k_time       = in.get<time_point_wrap>().work_duration(end_time);
   auto l_file_path  = project_root / k_ass.path;
@@ -171,13 +171,17 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   return l_r.str();
 }
 
-entt::handle csv_export_widgets::get_user_next_time(const entt::handle &in_handle) {
-  auto end_it = boost::find_if(std::make_pair(boost::range::find(p_i->list_sort_time, in_handle) + 1, p_i->list_sort_time.end()),
-                               [&](const entt::handle &in_l) {
-                                 return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
-                               });
+time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
+  auto end_it = boost::find_if(
+      std::make_pair(p_i->list_sort_time.begin(),
+                     boost::range::find(p_i->list_sort_time, in_handle) - 1),
+      [&](const entt::handle &in_l) {
+        return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
+      });
 
-  return end_it == p_i->list_sort_time.end() ? entt::handle{} : *end_it;
+  return end_it == p_i->list_sort_time.end()
+             ? time_point_wrap::current_month_end(in_handle.get<time_point_wrap>())
+             : end_it->get<time_point_wrap>();
 }
 }  // namespace gui
 }  // namespace doodle
