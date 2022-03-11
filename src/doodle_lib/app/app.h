@@ -126,7 +126,8 @@ namespace doodle {
  * @todo ue4 abc解算和fbx分开
  * @todo ue4 路人走路时的脚本固定组件开发
  *
- * @todo 导入ue4功能重新添加进去
+ * @todo 添加ue4灯光配置功能
+ * @todo 导入ue4功能重新添加进去（更新道具导入）
  *
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
