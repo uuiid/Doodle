@@ -146,8 +146,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   std::stringstream l_r{};
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx<project>().p_path;
-  auto l_next       = get_user_up_time(in);
-  auto end_time     = l_next ? l_next.get<time_point_wrap>() : time_point_wrap{};
+  auto end_time     = get_user_up_time(in);
   auto k_time       = in.get<time_point_wrap>().work_duration(end_time);
   auto l_file_path  = project_root / k_ass.path;
 
@@ -162,7 +161,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
       << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
       << k_ass.p_user << ","
       << fmt::format(R"("{}")", in.get<time_point_wrap>().show_str()) << ","
-      << fmt::format(R"("{}")", l_next ? l_next.get<time_point_wrap>().show_str() : end_time.show_str()) << ","
+      << fmt::format(R"("{}")", end_time.show_str()) << ","
       << fmt::format("{:3f}", k_time.count()) << ","
       << fmt::format("{}", k_comm.get_comment()) << ","
       << fmt::to_string(FSys::exists(l_file_path)) << ","
