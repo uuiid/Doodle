@@ -48,6 +48,7 @@ set(
         gui/widgets/drag_widget.h
         gui/widgets/project_edit.h
         gui/widgets/csv_export_widgets.h
+        gui/widgets/time_sequencer_widget.h
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
@@ -152,6 +153,7 @@ set(
         gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp
         gui/widgets/csv_export_widgets.cpp
+        gui/widgets/time_sequencer_widget.cpp
 
         gui/open_file_dialog.cpp
 
@@ -185,6 +187,7 @@ set(
         long_task/drop_file_data.cpp
         long_task/short_cut.cpp
         long_task/image_load_task.cpp
+
 
         platform/win/drop_manager.cpp
         platform/win/list_drive.cpp
