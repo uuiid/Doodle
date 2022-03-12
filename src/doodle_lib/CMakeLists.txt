@@ -38,6 +38,8 @@ generate_export_header(doodle_lib
         EXPORT_MACRO_NAME DOODLELIB_API
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 
+add_subdirectory(external)
+
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # 如果使用mysql mariadb  连接器则需要这个函数
