@@ -4,3 +4,7 @@
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
+[submodule "external/im-neo-sequencer"]
+	path = external/im-neo-sequencer
+	url = https://gitlab.com/GroGy/im-neo-sequencer.git
+	branch = main
