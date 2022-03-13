@@ -2,5 +2,6 @@
     "files.associations": {
         ".clang-format": "yaml",
         "xstring": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }
