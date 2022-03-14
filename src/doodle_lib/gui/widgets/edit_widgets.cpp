@@ -96,20 +96,38 @@ class shot_edit : public gui::edit_interface {
 };
 class assets_file_edit : public gui::edit_interface {
  public:
-  std::string p_path_cache;
+  gui::gui_cache<std::string> p_path_cache;
+  gui::gui_cache<std::string> p_name_cache;
+  gui::gui_cache<std::int32_t> p_version_cache;
+  assets_file_edit()
+      : p_path_cache("路径"s, ""s),
+        p_name_cache("名称"s, ""s),
+        p_version_cache("版本"s, 0){};
 
   void init_(const entt::handle &in) override {
     if (in.all_of<assets_file>()) {
-      p_path_cache = in.get<assets_file>().path.generic_string();
+      auto &l_ass     = in.get<assets_file>();
+      p_path_cache    = l_ass.path.generic_string();
+      p_name_cache    = l_ass.show_str();
+      p_version_cache = l_ass.get_version();
     } else {
       p_path_cache = g_reg()->ctx<project>().p_path.generic_string();
     }
   }
   void render(const entt::handle &in) override {
-    if (ImGui::InputText("路径", &p_path_cache)) set_modify(true);
+    if (ImGui::InputText(*p_path_cache.gui_name, &p_path_cache.data))
+      set_modify(true);
+    if (ImGui::InputText(*p_name_cache.gui_name, &p_name_cache.data))
+      set_modify(true);
+    if (ImGui::InputInt(*p_version_cache.gui_name, &p_version_cache.data))
+      set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<assets_file>().path = p_path_cache;
+    in.patch<assets_file>([](assets_file &l_ass) {
+      l_ass.path       = p_path_cache;
+      l_ass.p_ShowName = p_name_cache;
+      l_ass.p_version  = p_version_cache;
+    });
   }
 };
 
