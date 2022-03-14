@@ -141,10 +141,12 @@ namespace doodle {
  * @todo 导入ue4功能重新添加进去（更新道具导入）
  *
  * @todo 显示选中明显
- * @todo 使用绝对路径
+ * @todo 绝对路径
  * @todo 更新过滤器时，更新实体类
  * @todo 时间过滤器
  * @todo 排序导出表格
+ *
+ * @todo 选中路径器可以 copy
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
  *
