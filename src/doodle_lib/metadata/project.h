@@ -64,6 +64,7 @@ namespace project_config {
 class DOODLELIB_API base_config {
  public:
   [[nodiscard]] static std::string get_current_find_icon_regex_();
+  [[nodiscard]] static std::vector<std::string> get_assets_paths();
 };
 
 class DOODLELIB_API model_config {
@@ -74,11 +75,20 @@ class DOODLELIB_API model_config {
    */
   std::string find_icon_regex;
 
+  /**
+   * @brief 本组的各种分类
+   *
+   */
+  std::vector<std::string> assets_list;
+
   friend void to_json(nlohmann::json& j, const model_config& p) {
     j["find_icon_regex"] = p.find_icon_regex;
+    j["assets_list"]     = p.assets_list;
   }
   friend void from_json(const nlohmann::json& j, model_config& p) {
     j.at("find_icon_regex").get_to(p.find_icon_regex);
+    if (j.contains("assets_list"))
+      j.at("assets_list").get_to(p.assets_list);
   }
 };
 

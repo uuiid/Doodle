@@ -423,13 +423,11 @@ bool qcloth_shape::create_cache() const {
   MStatus k_s{};
   MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
-  /// \brief 不使用这种方式评估网格
-  k_plug.asMObject(&k_s);
-
-  return true;
+  /// \brief 使用这种方式评估网格
+  return !k_plug.asMObject(&k_s).isNull();
 }
 
-void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
+std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   chick_true<doodle_error>(
       in_handle.any_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(),
       DOODLE_LOC, "缺失组件");
@@ -455,14 +453,6 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   auto l_high_mesh         = make_high_node(k_maya_high_mesh, l_group.export_grp);
 
   MDagPath l_path{};
-//  {  /// 创建动画网格和解算网络的输入
-//    /// 连接两个属性的输入和输出
-//    k_s = l_modifier.connect(get_plug(k_anim_mesh.obj, "outMesh"),
-//                             get_plug(k_proxy_node_input, "inMesh"));
-//    DOODLE_CHICK(k_s);
-//    k_s = l_modifier.doIt();
-//    DOODLE_CHICK(k_s);
-//  }
 
   auto [l_ql, l_mesh_out] = qlCreateCloth(k_proxy_node_input);
   {  /// 整理层级关系
@@ -486,6 +476,7 @@ void qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
       transfer_dynamic(l_high_mesh[l_i], k_maya_high_mesh[l_i].obj);
     }
   }
+  return {};
 }
 
 qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
@@ -536,10 +527,6 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
   return k_r;
 }
 
-void qcloth_shape::set_all_active(bool in_active) {
-}
-void qcloth_shape::set_all_attraction_method(bool in_) {
-}
 void qcloth_shape::add_collider(const entt::handle& in_handle) {
   chick_true<component_error>(
       in_handle.any_of<qcloth_shape_n::shape_list>(), DOODLE_LOC, "缺失组件");

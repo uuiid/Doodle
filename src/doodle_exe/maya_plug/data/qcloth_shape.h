@@ -52,9 +52,14 @@ class qcloth_shape {
    */
   MObject obj;
 
-
  public:
   qcloth_shape();
+  /**
+   * @brief Construct a new qcloth shape object
+   *
+   * @param in_ref_file 在哪个引用文件中
+   * @param in_object 传入的maya obj
+   */
   explicit qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object);
 
   /**
@@ -62,6 +67,16 @@ class qcloth_shape {
    * @return 完成设置
    */
   bool set_cache_folder() const;
+  /**
+   * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
+   * 没有gui的情况下包装解算的正常
+   *
+   *
+   * @throw maya_error 有可能找不到需要评估的属性, 抛出异常
+   * @throw doodle_error 也可能属性 mobj 为空, 抛出异常
+   * @return true MObject 不空
+   * @return false 空mobj(有可能没有完成评估)
+   */
   bool create_cache() const;
   /**
    * @brief 从传入的实体创建一个绑定节点
@@ -78,11 +93,10 @@ class qcloth_shape {
    *
    *  需要读取配置文件中的各个属性, 进行标准的重命名
    */
-  void create_sim_cloth(const entt::handle& in_handle);
+  static std::vector<entt::handle> create_sim_cloth(
+      const entt::handle& in_handle);
 
   void add_collider(const entt::handle& in_handle);
-
-  static void set_all_active(bool in_active);
-  static void set_all_attraction_method(bool in_);
 };
+
 }  // namespace doodle::maya_plug
