@@ -13,6 +13,7 @@
 class ASkeletalMeshActor;
 class ALight;
 class UDoodleConfigLight;
+class ULightComponent;
 
 UCLASS()
 class DOODLE_API ADoodleConfigLightActor : public AActor {
@@ -52,7 +53,7 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
 
 
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
-  TArray<FDoodleLightWeightWeak> p_light_list;
+  TArray<ULightComponent*> p_light_list;
 #if WITH_EDITOR
   void PostEditChangeProperty(
       FPropertyChangedEvent& PropertyChangeEvent) override;

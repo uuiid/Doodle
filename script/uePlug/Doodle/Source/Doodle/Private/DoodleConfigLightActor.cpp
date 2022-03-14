@@ -133,20 +133,18 @@ void ADoodleConfigLightActor::SaveConfig() {
       RF_Public | RF_Standalone | RF_Transactional);
   if (NewPreset) {
     for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      if (it->light.IsValid()) {
-        /// <summary>
-        /// 这里要复制出去obj,
-        /// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
-        /// </summary>
-        ALight* k_l = DuplicateObject(it->light.Get(), NewPackage);
-        k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+      /// <summary>
+      /// 这里要复制出去obj,
+      /// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
+      /// </summary>
+      ULightComponent* k_l = DuplicateObject(*it, NewPackage);
+      //k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 
-        UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
-               *k_l->GetTransform().ToString());
+      //UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
+      //       *k_l->GetTransform().ToString());
 
-        auto l_f = it->weight;
-        NewPreset->p_light.Add({k_l, l_f});
-      }
+      auto l_f = it->weight;
+      NewPreset->p_light.Add({k_l, l_f});
     }
     NewPreset->MarkPackageDirty();
 #if ENGINE_MINOR_VERSION >= 26
@@ -188,7 +186,8 @@ void ADoodleConfigLightActor::LoadConfig() {
         UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
                *(k_a->GetTransform().ToString()));
         k_a->SetActorTransform(k_f);
-        k_a->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        k_a->AttachToActor(this,
+                           FAttachmentTransformRules::KeepRelativeTransform);
         auto l_w = it->weight;
         p_light_list.Add({k_a, l_w});
         // LoadObject<ALight>();
