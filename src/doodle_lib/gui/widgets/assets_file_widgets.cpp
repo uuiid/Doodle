@@ -180,6 +180,9 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           auto&& i = p_i->lists[l_index];
           i.load_image(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
+
+          ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
+
           if (ImGui::Selectable(*i.select.gui_name,
                                 i.select.data,
                                 ImGuiSelectableFlags_AllowDoubleClick,
@@ -188,6 +191,8 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
           dear::PopupContextItem{} && [this, i]() {
             render_context_menu(i.handle_);
           };
+          ImGui::PopStyleColor();
+
           dear::DragDropSource{} && [this, l_index]() {
             this->open_drag(l_index);
           };
