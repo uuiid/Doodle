@@ -31,8 +31,7 @@ class DOODLELIB_API move_attr {
 namespace details {
 
 /**
- * @todo 连接视频实现
- * @brief
+ * @brief 连接视频实现
  */
 class DOODLELIB_API join_move : public process_t<join_move> {
   class impl;
