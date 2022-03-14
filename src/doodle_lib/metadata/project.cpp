@@ -129,4 +129,19 @@ std::string project_config::base_config::get_current_find_icon_regex_() {
   }
   return l_regex;
 }
+
+std::vector<std::string> project_config::base_config::get_assets_paths() {
+  std::vector<std::string> list;
+  switch (core_set::getSet().get_department_enum()) {
+    case department::modle:
+      list = project::get_current().get_or_emplace<project_config::model_config>().assets_list;
+      break;
+
+    default:
+      list = {"null"};
+      break;
+  }
+
+  return list;
+}
 }  // namespace doodle

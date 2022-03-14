@@ -8,18 +8,19 @@
 #include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>
-#include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
-#include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/gui/widgets/drag_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
-#include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
-#include <doodle_lib/metadata/image_icon.h>
 #include <doodle_lib/core/image_loader.h>
 
+#include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/metadata/assets_file.h>
+#include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/metadata/image_icon.h>
+#include <doodle_lib/metadata/project.h>
 namespace doodle {
 /**
  * @brief 季数编辑
@@ -123,8 +124,8 @@ class assets_file_edit : public gui::edit_interface {
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.patch<assets_file>([](assets_file &l_ass) {
-      l_ass.path       = p_path_cache;
+    in.patch<assets_file>([this](assets_file &l_ass) {
+      l_ass.path       = p_path_cache.data;
       l_ass.p_ShowName = p_name_cache;
       l_ass.p_version  = p_version_cache;
     });
@@ -227,7 +228,7 @@ class add_assets_for_file : public base_render {
         in_list | ranges::views::transform([&](const FSys::path &in_path) {
           auto k_h = make_handle();
           k_h.emplace<assets_file>(in_path);
-          k_h.emplace<assets>("null");
+          k_h.emplace<assets>(assets_list.show_name);
 
           /**
            * @brief 从路径中寻找各个组件
@@ -249,20 +250,57 @@ class add_assets_for_file : public base_render {
     g_reg()->ctx<core_sig>().filter_handle(p_list.data);
   }
 
+  class combox_show_name {
+   public:
+    std::string show_name;
+  };
+
   gui_cache<std::vector<entt::handle>> p_list;
 
   gui_cache<bool> use_time;
   gui_cache<bool> use_icon;
+  gui_cache<std::vector<std::string>, combox_show_name> assets_list;
 
  public:
   add_assets_for_file()
       : p_list("文件列表"s, std::vector<entt::handle>{}),
         use_time("检查时间"s, false),
-        use_icon("寻找图标"s, true) {}
+        use_icon("寻找图标"s, true),
+        assets_list("分类"s, std::vector<std::string>{}) {
+    auto &l_sig = g_reg()->ctx<core_sig>();
+    l_sig.project_end_open.connect(
+        [this](const entt::handle &in_prj, const doodle::project &) {
+          auto l = in_prj.get_or_emplace<doodle::project_config::base_config>();
+          l.
+
+          this->assets_list = project::get_current()
+                                  .get_or_emplace<doodle::project_config::base_config>()
+                                  .get_assets_paths();
+          this->assets_list.show_name =
+              this->assets_list.data.empty()
+                  ? "null"s
+                  : this->assets_list.data.front();
+        });
+    l_sig.save_end.connect([this](const doodle::handle_list &) {
+      this->assets_list = project::get_current()
+                              .get_or_emplace<project_config::base_config>()
+                              .get_assets_paths();
+      this->assets_list.show_name =
+          this->assets_list.data.empty()
+              ? "null"s
+              : this->assets_list.data.front();
+    });
+  }
 
   void render(const entt::handle &) override {
     ImGui::Checkbox(*use_time.gui_name, &use_time.data);
     ImGui::Checkbox(*use_icon.gui_name, &use_icon.data);
+
+    dear::Combo{*assets_list.gui_name, assets_list.show_name.data()} && [this]() {
+      for (auto &&i : assets_list.data)
+        if (ImGui::Selectable(i.data()))
+          assets_list.show_name = i;
+    };
 
     {
       dear::ListBox k_list{*p_list.gui_name};
