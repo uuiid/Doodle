@@ -116,8 +116,7 @@ class assets_file_widgets::impl {
 };
 
 assets_file_widgets::assets_file_widgets()
-    : p_current_select(),
-      p_i(std::make_unique<impl>()) {
+    : p_i(std::make_unique<impl>()) {
 }
 
 void assets_file_widgets::init() {

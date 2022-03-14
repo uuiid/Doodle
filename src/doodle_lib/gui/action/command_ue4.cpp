@@ -50,8 +50,7 @@ bool comm_ass_ue4_create_shot::render() {
   return true;
 }
 
-comm_ass_ue4_import::comm_ass_ue4_import() {
-}
+comm_ass_ue4_import::comm_ass_ue4_import() = default;
 
 bool comm_ass_ue4_import::render() {
   return true;
