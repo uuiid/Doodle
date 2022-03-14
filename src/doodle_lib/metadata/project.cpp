@@ -144,4 +144,5 @@ std::vector<std::string> project_config::base_config::get_assets_paths() {
 
   return list;
 }
+project_config::base_config::base_config() =default;
 }  // namespace doodle

@@ -270,9 +270,6 @@ class add_assets_for_file : public base_render {
     auto &l_sig = g_reg()->ctx<core_sig>();
     l_sig.project_end_open.connect(
         [this](const entt::handle &in_prj, const doodle::project &) {
-          auto l = in_prj.get_or_emplace<doodle::project_config::base_config>();
-          l.
-
           this->assets_list = project::get_current()
                                   .get_or_emplace<doodle::project_config::base_config>()
                                   .get_assets_paths();

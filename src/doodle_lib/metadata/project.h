@@ -63,6 +63,9 @@ class DOODLELIB_API project {
 namespace project_config {
 class DOODLELIB_API base_config {
  public:
+  std::int32_t p_{};
+ public:
+  base_config();
   [[nodiscard]] static std::string get_current_find_icon_regex_();
   [[nodiscard]] static std::vector<std::string> get_assets_paths();
 };
