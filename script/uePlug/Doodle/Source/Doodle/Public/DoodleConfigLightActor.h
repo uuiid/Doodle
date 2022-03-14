@@ -39,8 +39,8 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
                     Category = "Doodle", Tooltip = "加载灯光预设"))
   virtual void LoadConfig();
 
-  UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
-  TArray<FDoodleLightWeight> p_light_list;
+  UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光权重")
+  TArray<float> p_light_list;
 
   /// 这个底下是提升的参数, 复制来源是 ULightComponentBase
   /**
@@ -95,6 +95,115 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
    **/
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Light)
   uint32 CastShadows : 1;
+
+  /**
+   * Channels that this light should affect.
+   * These channels only apply to opaque materials, direct lighting, and dynamic
+   * lighting and shadowing.
+   */
+  UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly, Category = Light)
+  FLightingChannels LightingChannels;
+
+  /** Whether the light affects translucency or not.  Disabling this can save
+   * GPU time when there are many small lights. */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Light, AdvancedDisplay)
+  uint32 bAffectTranslucentLighting : 1;
+
+  /**
+   * How far Cascaded Shadow Map dynamic shadows will cover for a movable light,
+   * measured from the camera. A value of 0 disables the dynamic shadow.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "20000",
+                    DisplayName = "Dynamic Shadow Distance MovableLight"))
+  float DynamicShadowDistanceMovableLight;
+
+  /**
+   * How far Cascaded Shadow Map dynamic shadows will cover for a stationary
+   * light, measured from the camera. A value of 0 disables the dynamic shadow.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "20000",
+                    DisplayName = "Dynamic Shadow Distance StationaryLight"))
+  float DynamicShadowDistanceStationaryLight;
+
+  /**
+   * Number of cascades to split the view frustum into for the whole scene
+   * dynamic shadow. More cascades result in better shadow resolution, but adds
+   * significant rendering cost.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "4",
+                    DisplayName = "Num Dynamic Shadow Cascades"))
+  int32 DynamicShadowCascades;
+
+  /**
+   * Controls whether the cascades are distributed closer to the camera (larger
+   * exponent) or further from the camera (smaller exponent). An exponent of 1
+   * means that cascade transitions will happen at a distance proportional to
+   * their resolution.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "1", UIMax = "4",
+                    DisplayName = "Distribution Exponent"))
+  float CascadeDistributionExponent;
+
+  /**
+   * Proportion of the fade region between cascades.
+   * Pixels within the fade region of two cascades have their shadows blended to
+   * avoid hard transitions between quality levels. A value of zero eliminates
+   * the fade region, creating hard transitions. Higher values increase the size
+   * of the fade region, creating a more gradual transition between cascades.
+   * The value is expressed as a percentage proportion (i.e. 0.1 = 10% overlap).
+   * Ideal values are the smallest possible which still hide the transition.
+   * An increased fade region size causes an increase in shadow rendering cost.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "0.3",
+                    DisplayName = "Transition Fraction"))
+  float CascadeTransitionFraction;
+
+  /**
+   * Controls the size of the fade out region at the far extent of the dynamic
+   * shadow's influence. This is specified as a fraction of
+   * DynamicShadowDistance.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "1.0",
+                    DisplayName = "Distance Fadeout Fraction"))
+  float ShadowDistanceFadeoutFraction;
+
+  /**
+   * Stationary lights only: Whether to use per-object inset shadows for movable
+   * components, even though cascaded shadow maps are enabled. This allows
+   * dynamic objects to have a shadow even when they are outside of the cascaded
+   * shadow map, which is important when DynamicShadowDistanceStationaryLight is
+   * small. If DynamicShadowDistanceStationaryLight is large (currently > 8000),
+   * this will be forced off. Disabling this can reduce shadowing cost
+   * significantly with many movable objects.
+   */
+  UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly,
+            Category = CascadedShadowMaps,
+            DisplayName = "Inset Shadows For Movable Objects")
+  uint32 bUseInsetShadowsForMovableObjects : 1;
+
+  /** 0: no DistantShadowCascades, otherwise the count of cascades between
+   * WholeSceneDynamicShadowRadius and DistantShadowDistance that are covered by
+   * distant shadow cascades. */
+  UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly,
+            Category = CascadedShadowMaps, meta = (UIMin = "0", UIMax = "4"),
+            DisplayName = "Far Shadow Cascade Count")
+  int32 FarShadowCascadeCount;
+
+  /**
+   * Distance at which the far shadow cascade should end.  Far shadows will
+   * cover the range between 'Dynamic Shadow Distance' and this distance.
+   */
+  UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly,
+            Category = CascadedShadowMaps,
+            meta = (UIMin = "0", UIMax = "800000"),
+            DisplayName = "Far Shadow Distance")
+  float FarShadowDistance;
 
 #if WITH_EDITOR
   void PostEditChangeProperty(

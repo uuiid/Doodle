@@ -3,6 +3,7 @@
 #include "DoodleConfigLightActor.h"
 
 #include "Animation/SkeletalMeshActor.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Components/LightComponent.h"
 #include "DoodleConfigLight.h"
 #include "Engine/Light.h"
@@ -126,24 +127,26 @@ void ADoodleConfigLightActor::SaveConfig() {
   UPackage* NewPackage = CreatePackage(nullptr, *NewPackageName);
 #endif
 
-  UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
-      NewPackage, UDoodleConfigLight::StaticClass(), *NewAssetName,
-      RF_Public | RF_Standalone | RF_Transactional);
+  ADoodleConfigLightActor* NewPreset = NewObject<ADoodleConfigLightActor>(
+      NewPackage, ADoodleConfigLightActor::StaticClass(), *NewAssetName,
+      RF_Public | RF_Standalone | RF_Transactional, this
+    );
   if (NewPreset) {
-    for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      /// <summary>
-      /// 这里要复制出去obj,
-      /// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
-      /// </summary>
-      ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
-      // k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+    //for (auto it = p_light_list.CreateIterator(); it; ++it) {
+    //  ///// <summary>
+    //  ///// 这里要复制出去obj,
+    //  ///// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
+    //  ///// </summary>
+    //  // ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
+    //  ////
+    //  /// k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 
-      // UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
-      //       *k_l->GetTransform().ToString());
+    //  //// UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
+    //  ////       *k_l->GetTransform().ToString());
 
-      auto l_f = it->weight;
-      NewPreset->p_light.Add({k_l, l_f});
-    }
+    //  // auto l_f = it->weight;
+    //  // NewPreset->p_light.Add({k_l, l_f});
+    //}
     NewPreset->MarkPackageDirty();
 #if ENGINE_MINOR_VERSION >= 26
     FAssetRegistryModule::AssetCreated(NewPreset);
@@ -158,28 +161,29 @@ void ADoodleConfigLightActor::LoadConfig() {
   FString DefaultName{"doodle"};
   auto* l_config =
       Cast<UDoodleConfigLight>(OpenDialog(DefaultName / DefaultName, TEXT("")));
-  if (l_config) {
-    UE_LOG(LogTemp, Log, TEXT("load file name: %s"), *l_config->GetPathName());
-    for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      it->light->UnregisterComponent();
-      it->light->DestroyComponent();
-    }
-    p_light_list.Empty();
+  // if (l_config) {
+  //  UE_LOG(LogTemp, Log, TEXT("load file name: %s"),
+  //  *l_config->GetPathName()); for (auto it = p_light_list.CreateIterator();
+  //  it; ++it) {
+  //    it->light->UnregisterComponent();
+  //    it->light->DestroyComponent();
+  //  }
+  //  p_light_list.Empty();
 
-    for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
-      auto l_com = DuplicateObject(it->light, this);
-      l_com->RegisterComponent();
-      l_com->AttachToComponent(
-          RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-      p_light_list.Add({l_com, it->weight});
-      // UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
-      //       *(it->light->GetTransform().ToString()));
-      // UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
-      //       *(k_a->GetTransform().ToString()));
+  //  for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
+  //    auto l_com = DuplicateObject(it->light, this);
+  //    l_com->RegisterComponent();
+  //    l_com->AttachToComponent(
+  //        RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+  //    p_light_list.Add({l_com, it->weight});
+  //    // UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
+  //    //       *(it->light->GetTransform().ToString()));
+  //    // UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
+  //    //       *(k_a->GetTransform().ToString()));
 
-      // LoadObject<ALight>();
-    }
-  }
+  //    // LoadObject<ALight>();
+  //  }
+  //}
 
 #endif  // WITH_EDITOR
 }
@@ -195,8 +199,12 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
   UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *name.ToString());
 
   if (name == GET_MEMBER_NAME_CHECKED(ThisClass, Intensity)) {
-    for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      it->light->SetIntensity(Intensity * it->weight);
+    TArray<UDirectionalLightComponent*> out_list;
+    this->GetComponents<UDirectionalLightComponent>(out_list);
+    for (auto it = out_list.CreateIterator(); it; ++it) {
+      (*it)->SetIntensity(Intensity * (p_light_list.IsValidIndex(it.GetIndex())
+                                        ? p_light_list[it.GetIndex()]
+                                        : 1));
     }
   }
 }
