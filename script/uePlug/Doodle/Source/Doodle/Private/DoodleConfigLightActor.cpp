@@ -3,6 +3,7 @@
 #include "DoodleConfigLightActor.h"
 
 #include "Animation/SkeletalMeshActor.h"
+#include "Components/LightComponent.h"
 #include "DoodleConfigLight.h"
 #include "Engine/Light.h"
 #include "Engine/World.h"
@@ -18,13 +19,10 @@
 
 #define LOCTEXT_NAMESPACE "doodle"
 
-ADoodleConfigLightActor::ADoodleConfigLightActor()
-    : p_skin_mesh(), use_clear(true) {
+ADoodleConfigLightActor::ADoodleConfigLightActor() : p_light_list() {
   RootComponent = CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
   RootComponent->SetMobility(EComponentMobility::Movable);
   // RootComponent->SetupAttachment(RootComponent);
-
-  p_solt = "Root_M";
 }
 
 #if WITH_EDITOR
@@ -137,10 +135,10 @@ void ADoodleConfigLightActor::SaveConfig() {
       /// 这里要复制出去obj,
       /// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
       /// </summary>
-      ULightComponent* k_l = DuplicateObject(*it, NewPackage);
-      //k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+      ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
+      // k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 
-      //UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
+      // UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
       //       *k_l->GetTransform().ToString());
 
       auto l_f = it->weight;
@@ -162,36 +160,24 @@ void ADoodleConfigLightActor::LoadConfig() {
       Cast<UDoodleConfigLight>(OpenDialog(DefaultName / DefaultName, TEXT("")));
   if (l_config) {
     UE_LOG(LogTemp, Log, TEXT("load file name: %s"), *l_config->GetPathName());
-    if (use_clear) {
-      for (auto it = p_light_list.CreateIterator(); it; ++it) {
-        if (it->light.IsValid()) {
-          GetWorld()->EditorDestroyActor(it->light.Get(), true);
-        }
-      }
-      p_light_list.Empty();
+    for (auto it = p_light_list.CreateIterator(); it; ++it) {
+      it->light->UnregisterComponent();
+      it->light->DestroyComponent();
     }
+    p_light_list.Empty();
 
     for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
-      if (it->light) {
-        // auto ft = it->light->GetTransform();
-        FActorSpawnParameters k_t{};
-        k_t.Template = it->light;
-        // UE_LOG(LogTemp, Log, TEXT("rgb: %s"),
-        //       *((*it)->GetLightColor().ToString()));
-        FTransform k_f = it->light->GetTransform();
-        UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
-               *(it->light->GetTransform().ToString()));
-        ALight* k_a =
-            GWorld->SpawnActor<ALight>(it->light->GetClass(), k_f, k_t);
-        UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
-               *(k_a->GetTransform().ToString()));
-        k_a->SetActorTransform(k_f);
-        k_a->AttachToActor(this,
-                           FAttachmentTransformRules::KeepRelativeTransform);
-        auto l_w = it->weight;
-        p_light_list.Add({k_a, l_w});
-        // LoadObject<ALight>();
-      }
+      auto l_com = DuplicateObject(it->light, this);
+      l_com->RegisterComponent();
+      l_com->AttachToComponent(
+          RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+      p_light_list.Add({l_com, it->weight});
+      // UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
+      //       *(it->light->GetTransform().ToString()));
+      // UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
+      //       *(k_a->GetTransform().ToString()));
+
+      // LoadObject<ALight>();
     }
   }
 
@@ -206,30 +192,11 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
   auto name = PropertyChangeEvent.MemberProperty
                   ? PropertyChangeEvent.MemberProperty->GetFName()
                   : NAME_None;
-  // UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *(name.ToString()));
-  // UE_LOG(LogTemp, Log, TEXT("chick MemberProperty: %s"),
-  // *(name2.ToString()));
+  UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *name.ToString());
 
-  if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_skin_mesh) ||
-      name == GET_MEMBER_NAME_CHECKED(ThisClass, p_solt)) {
-    if (p_skin_mesh && p_solt.IsValid() && !p_solt.IsNone())
-      this->AttachToActor(
-          p_skin_mesh, FAttachmentTransformRules::KeepWorldTransform, p_solt);
-  } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_light_list)) {
+  if (name == GET_MEMBER_NAME_CHECKED(ThisClass, Intensity)) {
     for (auto it = p_light_list.CreateIterator(); it; ++it) {
-      if (it->light.IsValid()) {
-        auto* l_p = it->light->GetParentActor();
-        if (l_p && l_p != this) {
-          if (l_p->GetClass() == ADoodleConfigLightActor::StaticClass()) {
-            auto* l_p_config = Cast<ADoodleConfigLightActor>(l_p);
-            if (l_p_config) {
-              l_p_config->p_light_list.Remove(*it);
-            }
-          }
-        }
-        it->light->AttachToActor(this,
-                                 FAttachmentTransformRules::KeepWorldTransform);
-      }
+      it->light->SetIntensity(Intensity * it->weight);
     }
   }
 }

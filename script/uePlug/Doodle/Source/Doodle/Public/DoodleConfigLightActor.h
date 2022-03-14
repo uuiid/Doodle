@@ -18,7 +18,7 @@ class ULightComponent;
 UCLASS()
 class DOODLE_API ADoodleConfigLightActor : public AActor {
   GENERATED_BODY()
-
+ public:
 #if WITH_EDITOR
   bool OpenSaveDialog(const FString& InDefaultPath,
                       const FString& InNewNameSuggestion,
@@ -28,14 +28,6 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
 #endif  // WITH_EDITOR
  public:
   ADoodleConfigLightActor();
-
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
-            DisplayName = "骨骼物体")
-  ASkeletalMeshActor* p_skin_mesh;
-
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
-            DisplayName = "骨骼插槽名称")
-  FName p_solt;
 
   UFUNCTION(BlueprintCallable,
             meta = (CallInEditor = "true", OverrideNativeName = "保存",
@@ -47,13 +39,63 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
                     Category = "Doodle", Tooltip = "加载灯光预设"))
   virtual void LoadConfig();
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle",
-            DisplayName = "重新附加时清除")
-  bool use_clear;
-
-
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光组")
-  TArray<ULightComponent*> p_light_list;
+  TArray<FDoodleLightWeight> p_light_list;
+
+  /// 这个底下是提升的参数, 复制来源是 ULightComponentBase
+  /**
+   * Total energy that the light emits.
+   */
+  UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+            meta = (DisplayName = "Intensity", UIMin = "0.0", UIMax = "20.0"))
+  float Intensity;
+
+  /**
+   * Filter color of the light.
+   * Note that this can change the light's effective intensity.
+   */
+  UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+            meta = (HideAlphaChannel))
+  FColor LightColor;
+
+  /**
+   * Color temperature in Kelvin of the blackbody illuminant.
+   * White (D65) is 6500K.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, interp, Category = Light,
+            meta = (UIMin = "1700.0", UIMax = "12000.0"))
+  float Temperature;
+
+  /** false: use white (D65) as illuminant. */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Light,
+            meta = (DisplayName = "Use Temperature"))
+  uint32 bUseTemperature : 1;
+
+  /**
+   * Angle subtended by light source in degrees (also known as angular
+   * diameter). Defaults to 0.5357 which is the angle for our sun.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, interp, Category = Light,
+            meta = (UIMin = "0", UIMax = "5"), DisplayName = "Source Angle")
+  float LightSourceAngle;
+
+  /**
+   * Angle subtended by soft light source in degrees.
+   */
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, interp, Category = Light,
+            meta = (UIMin = "0", UIMax = "5"),
+            DisplayName = "Source Soft Angle")
+  float LightSourceSoftAngle;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Light)
+  uint32 bAffectsWorld : 1;
+
+  /**
+   * Whether the light should cast any shadows.
+   **/
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Light)
+  uint32 CastShadows : 1;
+
 #if WITH_EDITOR
   void PostEditChangeProperty(
       FPropertyChangedEvent& PropertyChangeEvent) override;
