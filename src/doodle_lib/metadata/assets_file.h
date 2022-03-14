@@ -25,7 +25,7 @@ class DOODLELIB_API assets_file {
  public:
   FSys::path path;
   std::string p_name;
-  std::uint64_t p_version;
+  std::uint64_t p_version{};
 
   std::string p_user;
   department p_department;
@@ -48,7 +48,7 @@ class DOODLELIB_API assets_file {
   explicit assets_file(FSys::path in_path,
                        std::string in_name,
                        std::uint64_t in_version);
-  explicit assets_file(FSys::path in_path);
+  explicit assets_file(const FSys::path& in_path);
 
   DOODLE_MOVE(assets_file);
 
@@ -58,18 +58,12 @@ class DOODLELIB_API assets_file {
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
 
-  department get_department() const;
+  [[nodiscard]] department get_department() const;
   void set_department(department in_department);
 
-  const std::uint64_t& get_version() const noexcept;
-  std::string get_version_str() const;
+  [[nodiscard]] const std::uint64_t& get_version() const noexcept;
   void set_version(const std::uint64_t& in_Version) noexcept;
 
-  inline void up_version() noexcept {
-    set_version(get_version() + 1);
-  };
-
-  int find_max_version() const;
 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;

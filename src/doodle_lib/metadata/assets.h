@@ -89,7 +89,7 @@ class DOODLELIB_API assets {
    *
    * @return const FSys::path& p_path
    */
-  const FSys::path& get_path() const;
+  [[nodiscard]] const FSys::path& get_path() const;
   /**
    * @brief 弃用
    *

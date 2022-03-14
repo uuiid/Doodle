@@ -19,7 +19,6 @@ namespace doodle::maya_plug {
 class afterimage_comm::impl {
  public:
   MObject p_util_obj;
-  MDagModifier p_modifier;
   MSelectionList p_select_list;
   MSelectionList p_copy_list;
 };
@@ -131,7 +130,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
   return MStatus::kSuccess;
 }
-MStatus afterimage_comm::undoIt() {
+[[maybe_unused]] MStatus afterimage_comm::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus afterimage_comm::redoIt() {

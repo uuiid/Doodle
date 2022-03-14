@@ -17,12 +17,12 @@ class afterimage_comm : public TemplateAction<
 
  public:
   afterimage_comm();
-  ~afterimage_comm();
+  ~afterimage_comm() override;
 
   MStatus doIt(const MArgList&) override;
-  MStatus undoIt() override;
+  [[maybe_unused]] MStatus undoIt() override;
   MStatus redoIt() override;
-  bool isUndoable() const override;
+  [[nodiscard]] bool isUndoable() const override;
 
 };
 

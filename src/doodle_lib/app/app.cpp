@@ -26,11 +26,11 @@
 namespace doodle {
 /**
  * @brief 内部类
- * 
+ *
  */
 class app::impl {
   /// \brief 初始化 com
-  win::ole_guard _guard;
+  [[maybe_unused]] win::ole_guard _guard;
 
  public:
 };

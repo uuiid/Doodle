@@ -11,15 +11,6 @@
 
 namespace doodle {
 
-namespace details {
-enum class command_type {
-  simple,
-  async,
-  composite
-};
-
-}  // namespace details
-
 class DOODLELIB_API command_base /* : public details::no_copy  */ {
  protected:
   std::string p_name;

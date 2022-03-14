@@ -114,8 +114,6 @@ class DOODLELIB_API assets_filter_widget : public process_t<assets_filter_widget
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
 
-  boost::signals2::signal<void(const entt::handle&)> select_change;
-
   void refresh(bool force);
 };
 }  // namespace doodle

@@ -13,7 +13,7 @@ namespace doodle {
 
 assets_file::assets_file() = default;
 
-assets_file::assets_file(FSys::path in_path)
+assets_file::assets_file(const FSys::path& in_path)
     : assets_file(in_path, in_path.stem().generic_string(), 0) {
 }
 
@@ -62,10 +62,6 @@ void assets_file::set_user(const std::string& in_user) {
 
 const std::uint64_t& assets_file::get_version() const noexcept {
   return p_version;
-}
-
-std::string assets_file::get_version_str() const {
-  return fmt::format("v{:04d}", p_version);
 }
 
 void assets_file::set_version(const std::uint64_t& in_Version) noexcept {

@@ -291,28 +291,6 @@ if 'leukocyte' in globals():
   return MStatus::kSuccess;
 }
 
-MStatus comm_check_scenes::print_mfn() {
-  MStatus k_s{};
-  MSelectionList k_select{};
-  k_s = MGlobal::getActiveSelectionList(k_select);
-  CHECK_MSTATUS_AND_RETURN_IT(k_s);
-  if (!k_select.isEmpty()) {
-    MFnDependencyNode k_dag_path{};
-    MObject k_dag_obj{};
-    k_s = k_select.getDependNode(0, k_dag_obj);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    k_s = k_dag_path.setObject(k_dag_obj);
-    CHECK_MSTATUS_AND_RETURN_IT(k_s);
-
-    std::cout << k_dag_path.type() << std::endl;
-    std::cout << k_dag_path.typeId().className() << std::endl;
-    std::cout << k_dag_path.typeId().id() << std::endl;
-    std::cout << k_dag_path.typeName() << std::endl;
-  }
-  return k_s;
-}
-
 bool comm_check_scenes::render() {
   if (imgui::Button("检查所有")) {
     DOODLE_LOG_INFO("开始解锁法线");

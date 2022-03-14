@@ -32,7 +32,7 @@ class client::impl {
   impl() : data_path() {}
   FSys::path data_path;
 
-  void add_trigger() {
+  void add_trigger() const {
     auto k_conn = core_sql::Get().get_connection(data_path);
     k_conn->execute(R"(
 create trigger if not exists UpdataLastTime AFTER UPDATE OF user_data,uuidPath,parent
@@ -42,7 +42,7 @@ begin
 end;
 )");
   };
-  void add_uuid_row() {
+  void add_uuid_row() const {
     auto k_conn = core_sql::Get().get_connection(data_path);
     k_conn->execute(
         R"(alter table metadatatab
@@ -62,7 +62,7 @@ add uuid_data text;)");
     return {};
   }
 
-  void set_version() {
+  void set_version() const {
     auto k_conn = core_sql::Get().get_connection(data_path);
     doodle_info::doodle_info l_info{};
 

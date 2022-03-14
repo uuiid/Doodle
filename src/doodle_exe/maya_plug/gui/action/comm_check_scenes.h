@@ -42,8 +42,6 @@ class comm_check_scenes : public process_t<comm_check_scenes> {
   MStatus err_3();  // (3)CgAbBlastPanelOptChangeCallback
   MStatus err_4();  // (4)贼健康
 
-  MStatus print_mfn();
-
  public:
   comm_check_scenes();
   constexpr static std::string_view name{"检查工具"};

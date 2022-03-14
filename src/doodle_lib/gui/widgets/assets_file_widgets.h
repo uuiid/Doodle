@@ -28,8 +28,6 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   void open_drag(std::size_t in_size);
 
  public:
-  entt::handle p_current_select;
-
   assets_file_widgets();
   ~assets_file_widgets() override;
 
@@ -40,8 +38,6 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(delta_type, void* data);
-
-  boost::signals2::signal<void(const entt::handle&)> select_change;
 };
 
 }  // namespace doodle
