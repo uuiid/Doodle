@@ -123,8 +123,8 @@ class assets_file_edit : public gui::edit_interface {
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.patch<assets_file>([](assets_file &l_ass) {
-      l_ass.path       = p_path_cache;
+    in.patch<assets_file>([this](assets_file &l_ass) {
+      l_ass.path       = p_path_cache.data;
       l_ass.p_ShowName = p_name_cache;
       l_ass.p_version  = p_version_cache;
     });
