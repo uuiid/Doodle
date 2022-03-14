@@ -12,6 +12,8 @@ namespace doodle {
 /**
  * @brief 各种编辑组件和创建句柄的窗口
  *
+ * 在没有计算出文件路径的时候, 其中,名称为空
+ *
  */
 class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
   class impl;

@@ -30,6 +30,11 @@
       "hidden": true
     },
     {
+      "name": "vs2022",
+      "inherits": "Ninja_build",
+      "generator": "Visual Studio 17 2022"
+    },
+    {
       "name": "Ninja_release",
       "inherits": "Ninja_build",
       "cacheVariables": {
