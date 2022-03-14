@@ -171,16 +171,23 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
 }
 
 time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
-  auto end_it = boost::find_if(
-      std::make_pair(p_i->list_sort_time.begin(),
-                     boost::range::find(p_i->list_sort_time, in_handle) - 1),
-      [&](const entt::handle &in_l) {
-        return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
-      });
+  time_point_wrap l_r{};
 
-  return end_it == p_i->list_sort_time.end()
-             ? time_point_wrap::current_month_end(in_handle.get<time_point_wrap>())
-             : end_it->get<time_point_wrap>();
+  auto l_it = boost::range::find(p_i->list_sort_time, in_handle);
+  if (l_it == p_i->list_sort_time.begin()) {
+    return time_point_wrap::current_month_end(in_handle.get<time_point_wrap>());
+  } else {
+    auto end_it = boost::find_if(
+        std::make_pair(p_i->list_sort_time.begin(),
+                       l_it - 1),
+        [&](const entt::handle &in_l) {
+          return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
+        });
+
+    return end_it == p_i->list_sort_time.end()
+               ? time_point_wrap::current_month_end(in_handle.get<time_point_wrap>())
+               : end_it->get<time_point_wrap>();
+  }
 }
 }  // namespace gui
 }  // namespace doodle
