@@ -91,8 +91,10 @@ cloth_config_edit::~cloth_config_edit() = default;
 
 class modle_config_edit::impl {
  public:
-  impl() : regex_("正则表达式"s, ""s) {}
+  impl() : regex_("正则表达式"s, ""s), list_name("分类列表"s) {}
   gui_cache<std::string> regex_;
+  gui_cache_name_id list_name;
+  std::vector<gui_cache<std::string>> assets_list;
   std::string err_str;
 };
 
@@ -103,6 +105,7 @@ void modle_config_edit::init_(const entt::handle& in) {
   p_i->regex_ = in.get_or_emplace<project_config::model_config>().find_icon_regex;
 }
 void modle_config_edit::render(const entt::handle& in) {
+  /// @brief 正则表达式编辑
   if (ImGui::InputText(*p_i->regex_.gui_name, &p_i->regex_.data, ImGuiInputTextFlags_EnterReturnsTrue)) {
     try {
       std::regex l_regex{p_i->regex_.data};
