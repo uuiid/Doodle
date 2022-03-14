@@ -45,7 +45,7 @@ class DOODLELIB_API assets_file {
    * @param in_name 名称
    * @param in_version 版本
    */
-  explicit assets_file(FSys::path in_path,
+  explicit assets_file(const FSys::path& in_path,
                        std::string in_name,
                        std::uint64_t in_version);
   explicit assets_file(const FSys::path& in_path);
