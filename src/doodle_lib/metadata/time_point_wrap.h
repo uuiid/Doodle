@@ -5,9 +5,7 @@
 #pragma once
 #include <date/date.h>
 #include <date/tz.h>
-#include <doodle_lib/Exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/leaf_meta.h>
 
 namespace doodle {
 
@@ -34,7 +32,7 @@ class DOODLELIB_API time_point_wrap {
     std::uint16_t seconds_;
 
     gui_data() : gui_data(time_point_wrap{}) {}
-    gui_data(const time_point_wrap& in_wrap) {
+    explicit gui_data(const time_point_wrap& in_wrap) {
       std::tie(year_,
                month_,
                day_,
@@ -83,7 +81,15 @@ class DOODLELIB_API time_point_wrap {
    */
   [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
 
+  /**
+   * @brief 最小时间
+   * @return
+   */
   static time_point_wrap min();
+  /**
+   * @brief 最大时间
+   * @return
+   */
   static time_point_wrap max();
 
   bool operator==(const time_point_wrap& in_rhs) const;
