@@ -29,12 +29,12 @@ class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;
   using gui_assets_list    = gui_cache<std::vector<gui_list_item_type>>;
   gui_assets_list path_list;
-  std::vector<entt::handle> handle_list_;
+
   edit_widgets_ns::edit_assets_data edit_data;
 
  public:
   assets_edit()
-      : path_list("标签列表"s, std::vector<std::string>{}) {
+      : path_list("标签列表"s, std::vector<gui_list_item_type>{}) {
     // p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
 
@@ -72,7 +72,7 @@ class assets_edit : public edit_interface {
   void render(const entt::handle &in) override {
     dear::ListBox{*path_list.gui_name} && [&]() {
       ranges::for_each(path_list.data,
-                       [](
+                       [this](
                            gui_list_item_type &in_list) {
                          if (ImGui::InputText(*in_list.gui_name, &in_list.data)) {
                            edit_data.old_path = in_list.path;
@@ -83,36 +83,17 @@ class assets_edit : public edit_interface {
     };
   }
 
-  bool edit(const edit_widgets_ns::edit_assets_data &in_data) {
-    auto new_path = in_data.old_path;
-    new_path.replace_filename(in_data.new_name);
-    ranges::for_each(
-        handle_list_ |
-            ranges::views::filter([&](const entt::handle &in_handle) {
-              return in_handle &&
-                     in_handle.any_of<assets>() &&
-                     FSys::is_sub_path(in_data.old_path, in_handle.get<assets>().get_path());
-            }),
-        [&](
-            const entt::handle &in_handle) {
-          in_handle.patch<assets>([&](assets &in_assets) {
-            auto l_p = in_assets.p_path.lexically_relative(in_data.old_path);
-            in_assets.set_path(new_path / l_p);
-          });
-        });
-    return true;
-  }
-
  protected:
   void init_(const entt::handle &in) override {}
 
   void save_(const entt::handle &in) const override {
     auto &l_ass = in.get<assets>();
     if (FSys::is_sub_path(l_ass.p_path, edit_data.old_path)) {
-      auto l_p      = in_assets.p_path.lexically_relative(edit_data.old_path);
+      auto l_p      = l_ass.p_path.lexically_relative(edit_data.old_path);
       auto new_path = edit_data.old_path;
       new_path.replace_filename(edit_data.new_name);
-      in_assets.set_path(new_path / l_p);
+      l_ass.set_path(new_path / l_p);
+      in.patch<assets>();
     }
   }
 };
@@ -481,7 +462,9 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
-  p_i->assets_edit = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<gui::assets_edit>()).get();
+  auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<gui::assets_edit>()).data.get();
+
+  p_i->assets_edit = dynamic_cast<gui::assets_edit *>(l_edit);
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
   boost::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
@@ -602,7 +585,5 @@ void edit_widgets::notify_file_list() const {
     g_reg()->ctx<core_sig>().filter_handle(l_vector);
   }
 }
-bool edit_widgets::edit_assets(const edit_widgets_ns::edit_assets_data &in_data) {
-  return p_i->assets_edit->edit(in_data);
-}
+
 }  // namespace doodle

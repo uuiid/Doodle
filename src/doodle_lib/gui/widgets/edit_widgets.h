@@ -35,8 +35,6 @@ class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
   void notify_file_list() const;
 
  public:
-  bool edit_assets(const edit_widgets_ns::edit_assets_data& in_data);
-
   /**
    * @brief Construct a new edit widgets object
    *
