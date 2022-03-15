@@ -53,9 +53,9 @@ class DOODLELIB_API time_point_wrap {
       std::int32_t in_year,
       std::int32_t in_month,
       std::int32_t in_day,
-      std::int32_t in_hours,
-      std::int32_t in_minutes,
-      std::int32_t in_seconds);
+      std::int32_t in_hours   = 0,
+      std::int32_t in_minutes = 0,
+      std::int32_t in_seconds = 0);
   explicit time_point_wrap(const gui_data& in_data);
 
   [[nodiscard]] std::tuple<std::uint16_t,  // year
@@ -82,6 +82,9 @@ class DOODLELIB_API time_point_wrap {
    *
    */
   [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
+
+  static time_point_wrap min();
+  static time_point_wrap max();
 
   bool operator==(const time_point_wrap& in_rhs) const;
   bool operator!=(const time_point_wrap& in_rhs) const;

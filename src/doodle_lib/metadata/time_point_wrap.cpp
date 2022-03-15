@@ -209,5 +209,11 @@ time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_tim
   // time_local_point l{k_};
   return time_point_wrap{chrono::local_days{l_mo}};
 }
+time_point_wrap time_point_wrap::min() {
+  return time_point_wrap{time_point::min()};
+}
+time_point_wrap time_point_wrap::max() {
+  return time_point_wrap{time_point::max()};
+}
 
 }  // namespace doodle
