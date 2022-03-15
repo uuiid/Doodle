@@ -86,10 +86,15 @@ void file_dialog::failed() {
 void file_dialog::aborted() {
   p_i->p_file_dialog.close();
 }
+class file_panel::impl {
+ public:
+};
+
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title,
                        const std::vector<string> &in_filters,
-                       const FSys::path &in_pwd) {
+                       const FSys::path &in_pwd)
+    : p_i(std::make_unique<impl>()) {
 }
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title) {
@@ -105,6 +110,8 @@ void file_panel::failed() {
 }
 void file_panel::aborted() {
 }
-void file_panel::update(const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &, void *data) {
+void file_panel::update(const chrono::duration<chrono::system_clock::rep,
+                                               chrono::system_clock::period> &,
+                        void *data) {
 }
 }  // namespace doodle
