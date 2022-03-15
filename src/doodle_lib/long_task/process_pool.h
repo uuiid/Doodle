@@ -287,7 +287,7 @@ class scheduler {
     std::lock_guard l_g{mutex_};
     auto l_erase_benin = handlers.end();
     l_erase_benin      = std::remove_if(handlers.begin(), handlers.begin() + timiter_(handlers),
-                                        [](decltype(this->handlers)::value_type &handler) {
+                                        [&](typename decltype(this->handlers)::value_type &handler) {
                                      return handler.update(handler, delta, data);
                                         });
 
