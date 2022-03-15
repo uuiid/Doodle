@@ -205,7 +205,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   using data_type      = assets;
   using gui_cache      = gui::gui_cache<FSys::path>;
   using tree_node_type = tree_node<gui_cache>;
-  using popen_cache = gui::gui_cache<std::string>;
+  using popen_cache    = gui::gui_cache<std::string>;
 
   tree_node_type p_tree;
   popen_cache p_popen;
