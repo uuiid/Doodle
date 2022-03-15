@@ -62,7 +62,7 @@ class assets_edit : public edit_interface {
     auto l_list = l_r.front();
     FSys::path l_p_root{};
     ranges::for_each(l_list, [&](const std::string &in_string) {
-      auto l_p = path_list.data.emplace_back("##ass_edit"s, in_string);
+      auto &l_p = path_list.data.emplace_back("##ass_edit"s, in_string);
       if (l_p_root.empty())
         l_p_root = in_string;
       else
