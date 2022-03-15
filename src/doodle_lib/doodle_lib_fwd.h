@@ -58,6 +58,7 @@ DOODLELIB_API void open_explorer(const path &in_path);
 DOODLELIB_API void backup_file(const path &source);
 DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 DOODLELIB_API std::vector<path> list_files(const path &in_dir);
+DOODLELIB_API bool is_sub_path(const path &in_parent, const path &in_child);
 
 }  // namespace FSys
 

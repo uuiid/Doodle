@@ -131,6 +131,11 @@ std::vector<path> list_files(const path &in_dir) {
       directory_iterator{in_dir},
       directory_iterator{}};
 }
+bool is_sub_path(const path &in_parent, const path &in_child){
+  return boost::istarts_with(in_parent.generic_string(),in_child.generic_string());
+}
+
+
 }  // namespace FSys
 }  // namespace doodle
 
