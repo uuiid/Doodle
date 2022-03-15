@@ -304,10 +304,10 @@ class assets_filter_factory : public gui::filter_factory_base {
   }
 
   void refresh_() override {
-    // for (auto&& i : p_obs) {
-    //   auto k_h = make_handle(i);
-    //   add_tree_node(&p_tree, k_h.get<data_type>().get_path());
-    // }
+    for (auto&& i : p_obs) {
+      auto k_h = make_handle(i);
+      add_tree_node(&p_tree, k_h.get<data_type>().get_path());
+    }
   }
 
  public:
@@ -315,7 +315,7 @@ class assets_filter_factory : public gui::filter_factory_base {
       : p_cur_select(),
         p_tree(gui_cache{"root"s, FSys::path{}}),
         p_popen("name"s, "null"s) {
-    // p_obs.connect(*g_reg(), entt::collector.update<data_type>());
+    p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
   tree_node_type::child_type p_cur_select;
 
