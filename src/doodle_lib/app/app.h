@@ -140,7 +140,6 @@ namespace doodle {
  *
  * @todo 导入ue4功能重新添加进去（更新道具导入）
  *
- * @todo 更新过滤器时，更新实体类
  * @todo 排序导出表格
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
