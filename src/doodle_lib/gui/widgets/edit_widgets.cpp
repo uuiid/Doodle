@@ -22,6 +22,23 @@
 #include <doodle_lib/metadata/image_icon.h>
 #include <doodle_lib/metadata/project.h>
 namespace doodle {
+
+namespace gui {
+class assets_edit : public edit_interface {
+ public:
+  void init(const std::vector<entt::handle> &in) override {
+    edit_interface::init(in);
+  }
+  void render(const entt::handle &in) override {
+  }
+
+ protected:
+  void init_(const entt::handle &in) override {}
+
+  void save_(const entt::handle &in) const override {
+  }
+};
+}  // namespace gui
 /**
  * @brief 季数编辑
  *

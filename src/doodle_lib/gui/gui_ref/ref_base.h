@@ -94,7 +94,8 @@ class DOODLELIB_API edit_interface {
   /**
    * @brief 初始化接口
    *
-   * @param in 传入的句柄
+   * @param in 传入的句柄列表， 当使用多个 实体初始化时，覆盖这个接口， 否则
+   * 调用 这个接口和调用 init(const entt::handle &in) 相同
    */
   virtual void init(const std::vector<entt::handle> &in);
   /**
