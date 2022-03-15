@@ -13,11 +13,6 @@ namespace doodle {
 
 class file_dialog::impl {
  public:
-
-
-
-
-
   file_browser p_file_dialog;
 
   /// 返回值
@@ -29,10 +24,6 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
                          const std::vector<string> &in_filters,
                          const FSys::path &in_pwd)
     : p_i(std::make_unique<impl>()) {
-
-
-
-
   p_i->p_sig = in_sig;
   p_i->p_file_dialog.set_flags(in_flags);
   p_i->p_file_dialog.set_title(in_title);
@@ -94,5 +85,26 @@ void file_dialog::failed() {
 }
 void file_dialog::aborted() {
   p_i->p_file_dialog.close();
+}
+file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
+                       const string &in_title,
+                       const std::vector<string> &in_filters,
+                       const FSys::path &in_pwd) {
+}
+file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
+                       const string &in_title) {
+}
+std::string file_panel::title() const {
+  return std::string();
+}
+void file_panel::init() {
+}
+void file_panel::succeeded() {
+}
+void file_panel::failed() {
+}
+void file_panel::aborted() {
+}
+void file_panel::update(const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &, void *data) {
 }
 }  // namespace doodle
