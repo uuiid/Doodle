@@ -105,4 +105,46 @@ auto make_windows(Args&&... args) {
     g_main_loop().attach<base_window<Panel>>(std::forward<Args>(args)...);
 }
 
+/**
+ * @brief 基本的窗口类
+ *
+ * @tparam Panel 窗口内容渲染过程
+ */
+template <class Panel>
+class DOODLELIB_API modal_window : public process_t<base_window<Panel>>{
+ private:
+  Panel* This() {
+    return dynamic_cast<Panel*>(this);
+  }
+  std::vector<std::function<void()>> begin_fun;
+
+ public:
+  modal_window()
+      : show{true} {
+    begin_fun.template emplace_back([this]() {
+      ImGui::OpenPopup(This()->title().data());
+      ImGui::SetNextWindowSize({640, 360});
+    });
+  };
+  virtual ~modal_window(){};
+  bool show;
+  /**
+   * @brief 渲染函数
+   *
+   * @param in_dalta 传入的间隔时间
+   * @param in_data 用户数据
+   */
+  template <class delta_type>
+  [[maybe_unused]] void update(const delta_type& in_dalta, void* in_data) {
+    for (auto&& i : begin_fun) {
+      i();
+    }
+    begin_fun.clear();
+
+    ImGui::PopupModal{This()->title().data(), &show} &&
+        [&]() {
+          This()->update(in_dalta, in_data);
+        };
+  }
+};
 }  // namespace doodle
