@@ -73,7 +73,10 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
-
+/**
+ * @brief
+ * @todo 重构 file_dialog 类
+ */
 class DOODLELIB_API file_panel : public modal_window<file_panel> {
   class impl;
   std::unique_ptr<impl> p_i;
