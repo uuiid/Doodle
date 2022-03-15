@@ -9,6 +9,16 @@
 
 #include <boost/signals2.hpp>
 namespace doodle {
+
+namespace edit_widgets_ns {
+class edit_assets_data {
+ public:
+  FSys::path old_path;
+  std::string new_name;
+};
+
+}  // namespace edit_widgets_ns
+
 /**
  * @brief 各种编辑组件和创建句柄的窗口
  *
@@ -25,6 +35,8 @@ class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
   void notify_file_list() const;
 
  public:
+  bool edit_assets(const edit_widgets_ns::edit_assets_data& in_data);
+
   /**
    * @brief Construct a new edit widgets object
    *
