@@ -212,12 +212,6 @@ class assets_filter_factory : public gui::filter_factory_base {
 
   void popen_menu(tree_node_type& in_node) {
     ImGui::InputText(*p_popen.gui_name, &p_popen.data);
-    if (ImGui::Button("编辑")) {
-      // in_node.data.data.replace_filename(p_popen.data);
-      in_node.data = gui_cache{p_popen.data, in_node.data.data.replace_filename(p_popen.data)};
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::SameLine();
     if (ImGui::Button("添加")) {
       if (auto it = boost::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
             return in->data.gui_name.name == p_popen.data;
