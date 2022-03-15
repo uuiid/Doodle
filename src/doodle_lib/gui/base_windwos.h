@@ -121,7 +121,7 @@ class DOODLELIB_API modal_window : public process_t<modal_window<Panel>>{
  public:
   modal_window()
       : show{true} {
-    begin_fun.template emplace_back([this]() {
+    begin_fun.emplace_back([this]() {
       ImGui::OpenPopup(This()->title().data());
       ImGui::SetNextWindowSize({640, 360});
     });
