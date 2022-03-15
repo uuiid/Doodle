@@ -14,6 +14,7 @@
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/core/image_loader.h>
 
 #include <doodle_lib/metadata/metadata.h>
@@ -100,6 +101,7 @@ class assets_edit : public edit_interface {
 
       l_ass.set_path(l_out);
       in.patch<assets>();
+      g_reg()->ctx<assets_filter_widget>().refresh(false);
     }
   }
 };
