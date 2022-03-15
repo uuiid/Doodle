@@ -100,7 +100,7 @@ file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title) {
 }
 std::string file_panel::title() const {
-  return std::string();
+  return {};
 }
 void file_panel::init() {
 }
