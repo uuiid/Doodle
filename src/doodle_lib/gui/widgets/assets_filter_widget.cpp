@@ -64,13 +64,13 @@ void filter_factory_base::connection_sig() {
         p_i->need_init = true;
       }));
 }
-//std::unique_ptr<sort_entt> sort_entt_factory_base::make_sort() {
-//  return make_sort_();
-//}
-//void sort_entt_factory_base::refresh(bool force) {
-//  is_edit = false;
-//  this->refresh_();
-//}
+// std::unique_ptr<sort_entt> sort_entt_factory_base::make_sort() {
+//   return make_sort_();
+// }
+// void sort_entt_factory_base::refresh(bool force) {
+//   is_edit = false;
+//   this->refresh_();
+// }
 
 }  // namespace gui
 
@@ -128,33 +128,22 @@ class file_path_filter : public gui::filter_base {
 };
 
 class time_filter : public gui::filter_base {
-  class fun_min {
-   public:
-    time_filter operator()(chrono::sys_time_pos in_time) {
-      return time_filter{in_time, chrono::sys_time_pos::max()};
-    }
-  };
-  class fun_max {
-   public:
-    time_filter operator()(chrono::sys_time_pos in_time) {
-      return time_filter{chrono::sys_time_pos::min(), in_time};
-    }
-  };
-
  public:
-  chrono::sys_time_pos p_begin;
-  chrono::sys_time_pos p_end;
+  time_point_wrap p_begin;
+  time_point_wrap p_end;
   explicit time_filter(
-      chrono::sys_time_pos in_begin,
-      chrono::sys_time_pos in_end)
+      time_point_wrap in_begin,
+      time_point_wrap in_end)
       : p_begin(in_begin),
         p_end(in_end){};
 
-  constexpr const static fun_min set_for_min{};
-  constexpr const static fun_max set_for_max{};
-
-  bool operator()(const entt::handle& in) const override{
-
+  bool operator()(const entt::handle& in) const override {
+    if (in.any_of<time_point_wrap>()) {
+      auto&& l_time = in.get<time_point_wrap>();
+      return l_time > p_begin && l_time < p_end;
+    } else {
+      return false;
+    }
   };
 };
 
@@ -353,9 +342,63 @@ class assets_filter_factory : public gui::filter_factory_base {
 
 class time_filter_factory : public gui::filter_factory_base {
   std::unique_ptr<gui::filter_base> make_filter_() override {
+    if (use_begin.data && use_end.data)
+      return std::make_unique<time_filter>(
+          time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
+          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]});
+    else if (use_begin.data) {
+      return std::make_unique<time_filter>(
+          time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
+          time_point_wrap::max());
+    } else if (use_end.data) {
+      return std::make_unique<time_filter>(
+          time_point_wrap::min(),
+          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]});
+    } else {
+      return {};
+    }
   }
 
+ private:
+  gui::gui_cache<bool> use_begin;
+  gui::gui_cache<bool> use_end;
+  gui::gui_cache<std::array<std::int32_t, 3>> time_begin;
+  gui::gui_cache<std::array<std::int32_t, 3>> time_end;
+
  public:
+  time_filter_factory()
+      : use_begin("使用开始时间"s, false),
+        use_end("使用结束世界级"s, false),
+        time_begin("开始"s, std::array<std::int32_t, 3>{0, 0, 0}),
+        time_end("结束"s, std::array<std::int32_t, 3>{0, 0, 0}) {}
+  bool render() override {
+    if (ImGui::Checkbox(*use_begin.gui_name, &use_begin.data))
+      this->is_edit = true;
+    if (use_begin.data) {
+      if (ImGui::InputInt3(*time_begin.gui_name, time_begin.data.data())) {
+        this->is_edit = true;
+      }
+      dear::HelpMarker{"使用开始时间过滤任务"};
+    }
+    if (ImGui::Checkbox(*use_end.gui_name, &use_end.data))
+      this->is_edit = true;
+    if (use_end.data) {
+      if (ImGui::InputInt3(*time_end.gui_name, time_end.data.data())) {
+        this->is_edit = true;
+      }
+      dear::HelpMarker{"使用结束时间过滤任务"};
+    }
+    return false;
+  }
+  void refresh_() override {
+  }
+  void init() override {
+    use_begin.data                     = false;
+    use_begin.data                     = false;
+    auto&& [l_y, l_m, l_d, l1, l2, l3] = time_point_wrap{}.compose();
+    time_begin.data                    = {l_y, l_m, l_d};
+    time_end.data                      = {l_y, l_m, l_d};
+  }
 };
 
 class file_path_filter_factory : public gui::filter_factory_base {
@@ -441,6 +484,7 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back("镜头过滤"s, std::make_unique<shot_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back("路径过滤"s, std::make_unique<file_path_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back("时间过滤"s, std::make_unique<time_filter_factory>());
 
   //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
 }
