@@ -141,6 +141,8 @@ class file_browser::impl {
 
   bool is_ok;
   string buffer;
+  bool input_path{false};
+  std::string input_path_text{};
 
   void set_multiple_select(const std::size_t& l_index) {
     auto& k_io = imgui::GetIO();
@@ -248,6 +250,11 @@ void file_browser::render() {
                        return path_attr{in_path};
                      });
     }
+    imgui::SameLine();
+    if (ImGui::Button("E")) {
+      p_i->input_path_text.clear();
+      p_i->input_path = true;
+    }
 
     this->render_path();
     this->render_file_list();
@@ -267,11 +274,22 @@ void file_browser::render() {
   };
 }
 void file_browser::render_path() {
-  if (!p_i->pwd.empty()) {
+  if (!p_i->input_path) {
+    if (!p_i->pwd.empty()) {
+      imgui::SameLine();
+      if (imgui::Button(p_i->pwd.root_path().generic_string().c_str())) {
+        p_i->begin_fun_list.emplace_back([this, in_path = p_i->pwd.root_path()]() {
+          this->scan_director(in_path);
+        });
+      }
+    }
+  } else {
     imgui::SameLine();
-    if (imgui::Button(p_i->pwd.root_path().generic_string().c_str())) {
-      p_i->begin_fun_list.emplace_back([this, in_path = p_i->pwd.root_path()]() {
-        this->scan_director(in_path);
+    if (ImGui::InputText("路径", &p_i->input_path_text, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
+      p_i->pwd        = p_i->input_path_text;
+      p_i->input_path = false;
+      p_i->begin_fun_list.emplace_back([this]() {
+        this->scan_director(p_i->pwd);
       });
     }
   }
