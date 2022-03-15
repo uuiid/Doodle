@@ -70,6 +70,12 @@ class scheduler {
     update_fn_type *update;
     abort_fn_type *abort;
     next_type next;
+    bool operator==(const process_handler &in_rhs) const {
+      return std::tie(instance, update, abort, next) == std::tie(in_rhs.instance, in_rhs.update, in_rhs.abort, in_rhs.next);
+    }
+    bool operator!=(const process_handler &in_rhs) const {
+      return !(in_rhs == *this);
+    }
   };
 
   /**
@@ -133,16 +139,16 @@ class scheduler {
 
  public:
   /*! @brief Unsigned integer type. */
-  using size_type         = std::size_t;
+  using size_type                  = std::size_t;
 
   /*! @brief Default constructor. */
-  scheduler()             = default;
+  scheduler()                      = default;
 
   /*! @brief Default move constructor. */
-  scheduler(scheduler &&)  noexcept = default;
+  scheduler(scheduler &&) noexcept = default;
 
   /*! @brief Default move assignment operator. @return This scheduler. */
-  scheduler &operator=(scheduler &&)  noexcept = default;
+  scheduler &operator=(scheduler &&) noexcept = default;
 
   /**
    * @brief Number of processes currently scheduled.
@@ -279,17 +285,13 @@ class scheduler {
    */
   void update(const Delta delta, void *data = nullptr) {
     std::lock_guard l_g{mutex_};
-    auto sz = handlers.size();
+    auto l_erase_benin = handlers.end();
+    l_erase_benin      = std::remove_if(handlers.begin(), handlers.begin() + timiter_(handlers),
+                                        [](decltype(this->handlers)::value_type &handler) {
+                                     return handler.update(handler, delta, data);
+                                        });
 
-    for (auto pos = timiter_(handlers); pos; --pos) {
-      auto &handler = handlers[pos - 1];
-
-      if (const auto dead = handler.update(handler, delta, data); dead) {
-        std::swap(handler, handlers[--sz]);
-      }
-    }
-
-    handlers.erase(handlers.begin() + sz, handlers.end());
+    handlers.erase(l_erase_benin, handlers.end());
 
     std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
     handlers_next.clear();
