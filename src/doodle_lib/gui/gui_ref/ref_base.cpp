@@ -37,7 +37,7 @@ gui_cache_name_id::gui_cache_name_id(const string &in_name)
 
   name_id     = fmt::format("{}{}{}",
                             in_name,
-                        (in_name.front() == '#')
+                        (in_name.find_first_of('#') != std::string::npos)
                                 ? ""s
                                 : "##"s,
                             doodle::core::identifier::get().id());
