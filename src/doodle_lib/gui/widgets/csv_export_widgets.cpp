@@ -108,7 +108,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          ","
          "镜头"
          ","
-         "名称"
+         "类别"
          ","
          "制作人"
          ","
