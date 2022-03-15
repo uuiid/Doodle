@@ -91,10 +91,14 @@ class assets_edit : public edit_interface {
   void save_(const entt::handle &in) const override {
     auto &l_ass = in.get<assets>();
     if (FSys::is_sub_path(l_ass.p_path, edit_data.old_path)) {
-      auto l_p      = l_ass.p_path.lexically_relative(edit_data.old_path);
+      std::string l_out{l_ass.p_path.generic_string()};
       auto new_path = edit_data.old_path;
       new_path.replace_filename(edit_data.new_name);
-      l_ass.set_path(new_path / l_p);
+      boost::replace_all(l_out,
+                         edit_data.old_path.generic_string(),
+                         new_path.generic_string());
+
+      l_ass.set_path(l_out);
       in.patch<assets>();
     }
   }
@@ -484,9 +488,9 @@ void edit_widgets::init() {
   p_i->p_sc.emplace_back(l_sig.select_handles.connect(
       [&](const std::vector<entt::handle> &in) {
         p_i->p_h = in;
-        p_i->data_edit.init(p_i->p_h.front());
+        p_i->data_edit.init(p_i->p_h);
         boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
-          in_edit.data->init(in.front());
+          in_edit.data->init(p_i->p_h);
         });
       }));
   /**
