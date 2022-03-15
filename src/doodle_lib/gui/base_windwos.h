@@ -111,7 +111,7 @@ auto make_windows(Args&&... args) {
  * @tparam Panel 窗口内容渲染过程
  */
 template <class Panel>
-class DOODLELIB_API modal_window : public process_t<base_window<Panel>>{
+class DOODLELIB_API modal_window : public process_t<modal_window<Panel>>{
  private:
   Panel* This() {
     return dynamic_cast<Panel*>(this);
@@ -141,7 +141,7 @@ class DOODLELIB_API modal_window : public process_t<base_window<Panel>>{
     }
     begin_fun.clear();
 
-    ImGui::PopupModal{This()->title().data(), &show} &&
+    dear::PopupModal{This()->title().data(), &show} &&
         [&]() {
           This()->update(in_dalta, in_data);
         };
