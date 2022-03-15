@@ -92,6 +92,12 @@ class DOODLELIB_API edit_interface {
    */
   virtual void init(const entt::handle &in);
   /**
+   * @brief 初始化接口
+   *
+   * @param in 传入的句柄
+   */
+  virtual void init(const std::vector<entt::handle> &in);
+  /**
    * @brief 渲染接口
    *
    * @param in 传入的句柄

@@ -25,6 +25,11 @@ void edit_interface::save(const std::vector<entt::handle> &in) {
     });
   data_->is_modify = false;
 }
+void edit_interface::init(const std::vector<entt::handle> &in) {
+  data_->is_modify = false;
+  if (!in.empty())
+    init_(in.front());
+}
 
 edit_interface::~edit_interface() = default;
 
