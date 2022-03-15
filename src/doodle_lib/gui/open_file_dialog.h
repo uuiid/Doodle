@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle {
 using ImGuiFileBrowserFlags = int;
@@ -42,8 +43,7 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
                        const FSys::path& in_pwd);
 
   /**
-   * @brief 这个是传入时 使用单个文件并且使用目录的对话框, 所以不需要传入过滤器
-   * 并且使用 ImGuiFileBrowserFlags_SelectDirectory
+   * @brief 使用目录选择
    * @param in_function 传入的指针
    * @param in_title 传入的标题
    * @param in_pwd 打开时的路径
@@ -53,7 +53,7 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
       const std::string& in_title);
 
   /**
-   * @brief 传入时使用单文件目录选择, 默认过滤器
+   * @brief 使用文件选择, 需要过滤器过滤器
    * @param in_function 传入的指针
    * @param in_title
    * @param in_filters
@@ -74,4 +74,42 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
 
+class DOODLELIB_API file_panel : public modal_window<file_panel> {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ public:
+  using one_sig    = std::shared_ptr<FSys::path>;
+  using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
+  using select_sig = std::variant<one_sig, mult_sig>;
+
+  /**
+   * @brief 使用文件选择, 需要过滤器过滤器
+   * @param in_select_ptr 传入的指针
+   * @param in_title
+   * @param in_filters
+   * @param in_pwd
+   */
+  explicit file_panel(
+      const select_sig& out_select_ptr,
+      const std::string& in_title,
+      const std::vector<string>& in_filters,
+      const FSys::path& in_pwd = {});
+  /**
+   * @brief 使用目录选择
+   * @param out_select_ptr 传入的指针
+   * @param in_title 传入的标题
+   * @param in_pwd 打开时的路径
+   */
+  explicit file_panel(
+      const select_sig& out_select_ptr,
+      const std::string& in_title);
+
+  [[maybe_unused]] std::string title() const;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(const delta_type&, void* data);
+};
 }  // namespace doodle

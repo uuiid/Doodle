@@ -13,8 +13,14 @@ namespace doodle {
 
 class file_dialog::impl {
  public:
-  //  explicit impl() : p_file_dialog(in_flags){};
+
+
+
+
+
   file_browser p_file_dialog;
+
+  /// 返回值
   select_sig p_sig;
 };
 file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
@@ -23,6 +29,10 @@ file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
                          const std::vector<string> &in_filters,
                          const FSys::path &in_pwd)
     : p_i(std::make_unique<impl>()) {
+
+
+
+
   p_i->p_sig = in_sig;
   p_i->p_file_dialog.set_flags(in_flags);
   p_i->p_file_dialog.set_title(in_title);
