@@ -40,6 +40,8 @@ class assets_edit : public edit_interface {
 
   void init(const std::vector<entt::handle> &in) override {
     edit_interface::init(in);
+    path_list.data.clear();
+    edit_data = {};
 
     auto l_r =
         in |
