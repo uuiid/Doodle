@@ -7,6 +7,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <gui/widgets/file_browser.h>
+#include <gui/gui_ref/ref_base.h>
 namespace doodle {
 
 ;
@@ -86,8 +87,117 @@ void file_dialog::failed() {
 void file_dialog::aborted() {
   p_i->p_file_dialog.close();
 }
-class file_panel::impl {
+
+class file_panel::path_info {
  public:
+  explicit path_info(const FSys::path &in_path)
+      : path(in_path),
+        is_dir(is_directory(in_path)),
+        show_name(
+            fmt::format("{} {}",
+                        is_directory(in_path) ? "[dir]"s : "[file]"s,
+                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
+        size(is_regular_file(in_path) ? file_size(in_path) : 0u),
+        size_string(),
+        last_time(FSys::last_write_time_point(in_path)),
+        has_select(false) {
+    set_size_str();
+  };
+
+  explicit path_info(const FSys::directory_iterator &in_iterator)
+      : path(in_iterator->path()),
+        is_dir(in_iterator->is_directory()),
+        show_name(
+            fmt::format("{} {}",
+                        in_iterator->is_directory() ? "[dir]"s : "file"s,
+                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
+        size(in_iterator->is_regular_file() ? in_iterator->file_size() : 0u),
+        size_string(),
+        last_time(FSys::last_write_time_point(path)),
+        has_select(false) {
+    set_size_str();
+  };
+
+  FSys::path path;
+  bool is_dir;
+  string show_name;
+  std::size_t size;
+  string size_string;
+  doodle::chrono::sys_time_pos last_time;
+  bool has_select;
+
+  void set_size_str() {
+    std::int16_t i{};
+    std::double_t mantissa = size;
+    for (; mantissa >= 1024.; mantissa /= 1024., ++i) {
+    }
+    mantissa    = std::ceil(mantissa * 10.) / 10.;
+    size_string = fmt::format("{} {}B", mantissa, i == 0 ? ""s : string{"BKMGTPE"[i]});
+  }
+
+  operator bool() const {
+    return !show_name.empty() && !path.empty();
+  }
+  bool operator==(const path_info &in_rhs) const {
+    return path == in_rhs.path;
+  }
+  bool operator!=(const path_info &in_rhs) const {
+    return !(in_rhs == *this);
+  }
+  bool operator<(const path_info &in_rhs) const {
+    return std::tie(path) < std::tie(in_rhs.path);
+  }
+  bool operator>(const path_info &in_rhs) const {
+    return in_rhs < *this;
+  }
+  bool operator<=(const path_info &in_rhs) const {
+    return !(in_rhs < *this);
+  }
+  bool operator>=(const path_info &in_rhs) const {
+    return !(*this < in_rhs);
+  }
+};
+
+class file_panel::impl {
+  class filter_show {
+   public:
+    std::string show_str;
+  };
+
+ public:
+  impl()
+      : title_p(),
+        drive_button("drive"s),
+        edit_button("E"s, false),
+        edit_input("##input_"),
+        path_button_list(),
+        path_list(),
+        buffer("##info"),
+        filter_list("过滤器"s, std::vector<std::string>{}),
+        begin_fun_list(),
+        is_ok(false),
+        p_flags_(file_panel::None){};
+
+  enum sort_by : std::int16_t {
+    none = 0,
+    name = 1,
+    size = 2,
+    time = 3,
+  };
+
+  std::string title_p;
+  gui::gui_cache_name_id drive_button;
+  gui::gui_cache<bool> edit_button;
+  gui::gui_cache<std::string> edit_input;
+  std::vector<gui::gui_cache<std::string, gui::gui_cache_path>> path_button_list;
+  std::vector<path_info> path_list;
+  gui::gui_cache<std::string> buffer;
+  gui::gui_cache<std::vector<std::string>, filter_show> filter_list;
+
+  std::vector<std::function<void()>> begin_fun_list;
+  std::size_t select_index{};
+  bool is_ok;
+  dialog_flags p_flags_;
 };
 
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
@@ -99,8 +209,8 @@ file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title) {
 }
-std::string file_panel::title() const {
-  return {};
+std::string &file_panel::title() const {
+  return p_i->title_p;
 }
 void file_panel::init() {
 }

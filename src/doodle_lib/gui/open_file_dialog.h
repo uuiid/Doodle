@@ -79,9 +79,15 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
  */
 class DOODLELIB_API file_panel : public modal_window<file_panel> {
   class impl;
+  class path_info;
   std::unique_ptr<impl> p_i;
 
  public:
+  enum dialog_flags{
+    None = 0,
+    Use_dir,
+    Create_Name
+  };
   using one_sig    = std::shared_ptr<FSys::path>;
   using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
   using select_sig = std::variant<one_sig, mult_sig>;
@@ -108,7 +114,7 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
       const select_sig& out_select_ptr,
       const std::string& in_title);
 
-  [[maybe_unused]] std::string title() const;
+  [[maybe_unused]] [[nodiscard]] std::string& title() const ;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
