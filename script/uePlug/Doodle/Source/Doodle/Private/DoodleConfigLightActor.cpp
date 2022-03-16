@@ -127,19 +127,19 @@ void ADoodleConfigLightActor::SaveConfig() {
   UPackage* NewPackage = CreatePackage(nullptr, *NewPackageName);
 #endif
 
-  ADoodleConfigLightActor* NewPreset = NewObject<ADoodleConfigLightActor>(
-      NewPackage, ADoodleConfigLightActor::StaticClass(), *NewAssetName,
-      RF_Public | RF_Standalone | RF_Transactional, this
-    );
+  UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
+      NewPackage, UDoodleConfigLight::StaticClass(), *NewAssetName,
+      RF_Public | RF_Standalone | RF_Transactional);
   if (NewPreset) {
-    //for (auto it = p_light_list.CreateIterator(); it; ++it) {
+    // for (auto it = p_light_list.CreateIterator(); it; ++it) {
     //  ///// <summary>
-    //  ///// 这里要复制出去obj,
-    //  ///// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
+    //  ///// 锟斤拷锟斤拷要锟斤拷锟狡筹拷去obj,
+    //  ///// 锟斤拷锟斤拷锟斤拷使锟矫关匡拷锟叫碉拷指锟斤拷,要锟斤拷然锟斤拷锟铰达拷锟斤拷锟截匡拷时锟斤拷锟节达拷泄露
     //  ///// </summary>
     //  // ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
     //  ////
-    //  /// k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+    //  ///
+    //  k_l->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 
     //  //// UE_LOG(LogTemp, Log, TEXT("save tran: %s"),
     //  ////       *k_l->GetTransform().ToString());
@@ -147,6 +147,7 @@ void ADoodleConfigLightActor::SaveConfig() {
     //  // auto l_f = it->weight;
     //  // NewPreset->p_light.Add({k_l, l_f});
     //}
+    NewPreset->p_Actor = DuplicateObject(this, NewPackage);
     NewPreset->MarkPackageDirty();
 #if ENGINE_MINOR_VERSION >= 26
     FAssetRegistryModule::AssetCreated(NewPreset);
