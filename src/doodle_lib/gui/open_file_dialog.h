@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/base_windwos.h>
-
+#include <bitset>
 namespace doodle {
 using ImGuiFileBrowserFlags = int;
 class DOODLELIB_API file_dialog : public process_t<file_dialog> {
@@ -82,16 +82,42 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
   class path_info;
   std::unique_ptr<impl> p_i;
 
- public:
-  enum dialog_flags{
-    None = 0,
-    Use_dir,
-    Create_Name
+  void scan_director(const FSys::path& in_dir);
+  class default_pwd {
+   public:
+    default_pwd();
+    FSys::path pwd;
   };
+
+ public:
+  using dialog_flags = std::bitset<2>;
+
+  constexpr const static dialog_flags flags_Use_dir{0x1};
+  constexpr const static dialog_flags flags_Create_Name{0x2};
+
   using one_sig    = std::shared_ptr<FSys::path>;
   using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
   using select_sig = std::variant<one_sig, mult_sig>;
 
+  class dialog_args {
+    friend file_panel;
+    select_sig out_ptr;
+    dialog_flags p_flags;
+    std::vector<std::string> filter;
+    std::string title;
+    FSys::path pwd;
+
+   public:
+    explicit dialog_args(select_sig in_out_ptr);
+
+    dialog_args& set_use_dir(bool use_dir = true);
+    dialog_args& create_file_module(bool use_create = true);
+    dialog_args& set_title(std::string in_title);
+    dialog_args& set_filter(const std::vector<std::string>& in_filters);
+    dialog_args& add_filter(const std::string& in_filter);
+    dialog_args& set_pwd(const FSys::path& in_pwd);
+    dialog_args& use_default_pwd();
+  };
   /**
    * @brief 使用文件选择, 需要过滤器过滤器
    * @param in_select_ptr 传入的指针
@@ -99,11 +125,7 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
    * @param in_filters
    * @param in_pwd
    */
-  explicit file_panel(
-      const select_sig& out_select_ptr,
-      const std::string& in_title,
-      const std::vector<string>& in_filters,
-      const FSys::path& in_pwd = {});
+  explicit file_panel(const dialog_args& in_args);
   /**
    * @brief 使用目录选择
    * @param out_select_ptr 传入的指针
@@ -114,7 +136,7 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
       const select_sig& out_select_ptr,
       const std::string& in_title);
 
-  [[maybe_unused]] [[nodiscard]] std::string& title() const ;
+  [[maybe_unused]] [[nodiscard]] std::string& title() const;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();

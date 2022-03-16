@@ -176,7 +176,7 @@ class file_panel::impl {
         filter_list("过滤器"s, std::vector<std::string>{}),
         begin_fun_list(),
         is_ok(false),
-        p_flags_(file_panel::None){};
+        p_flags_(){};
 
   enum sort_by : std::int16_t {
     none = 0,
@@ -198,13 +198,19 @@ class file_panel::impl {
   std::size_t select_index{};
   bool is_ok;
   dialog_flags p_flags_;
+
+  file_panel::select_sig out_;
 };
 
-file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
-                       const string &in_title,
-                       const std::vector<string> &in_filters,
-                       const FSys::path &in_pwd)
+file_panel::default_pwd::default_pwd() : pwd(FSys::current_path()) {}
+
+file_panel::file_panel(const dialog_args &in_args)
     : p_i(std::make_unique<impl>()) {
+  p_i->title_p          = in_args.title;
+  /// \brief 放置过滤器
+  p_i->filter_list.data = in_args.filter;
+  p_i->filter_list.data.emplace_back("*.*");
+  p_i->filter_list.show_str = p_i->filter_list.data.front();
 }
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title) {
@@ -223,5 +229,41 @@ void file_panel::aborted() {
 void file_panel::update(const chrono::duration<chrono::system_clock::rep,
                                                chrono::system_clock::period> &,
                         void *data) {
+}
+file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
+    : out_ptr(std::move(in_out_ptr)),
+      p_flags(),
+      filter(),
+      title("get file"),
+      pwd() {
+  use_default_pwd();
+}
+file_panel::dialog_args &file_panel::dialog_args::set_use_dir(bool use_dir) {
+  p_flags[0] = use_dir;
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::create_file_module(bool use_create) {
+  p_flags[1] = use_create;
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::set_title(std::string in_title) {
+  title = std::move(in_title);
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::set_filter(const std::vector<std::string> &in_filters) {
+  filter = in_filters;
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::add_filter(const string &in_filter) {
+  filter.emplace_back(in_filter);
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::set_pwd(const FSys::path &in_pwd) {
+  pwd = in_pwd;
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::use_default_pwd() {
+  pwd = g_reg()->ctx_or_set<default_pwd>().pwd;
+  return *this;
 }
 }  // namespace doodle
