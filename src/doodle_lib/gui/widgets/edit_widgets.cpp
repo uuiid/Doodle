@@ -312,8 +312,10 @@ class add_assets_for_file : public base_render {
         in_list | ranges::views::transform([&](const FSys::path &in_path) {
           auto k_h = make_handle();
           FSys::path l_path{in_path};
-          if (!use_abs_path.data)
+          auto l_prj_path = g_reg()->ctx<project>().p_path;
+          if (!use_abs_path.data && l_prj_path.root_path() == in_path.root_path()) {
             l_path = in_path.lexically_relative(g_reg()->ctx<project>().p_path);
+          }
 
           k_h.emplace<assets_file>(l_path);
           k_h.emplace<assets>(assets_list.show_name);
