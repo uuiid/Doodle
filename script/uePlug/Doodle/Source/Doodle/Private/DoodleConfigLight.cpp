@@ -2,4 +2,4 @@
 
 #include "DoodleConfigLight.h"
 
-UDoodleConfigLight::UDoodleConfigLight() : p_light() {}
+UDoodleConfigLight::UDoodleConfigLight() : p_Actor() {}
