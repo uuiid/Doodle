@@ -362,7 +362,7 @@ class time_filter_factory : public gui::filter_factory_base {
  public:
   time_filter_factory()
       : use_begin("使用开始时间"s, false),
-        use_end("使用结束世界级"s, false),
+        use_end("使用结束时间"s, false),
         time_begin("开始"s, std::array<std::int32_t, 3>{0, 0, 0}),
         time_end("结束"s, std::array<std::int32_t, 3>{0, 0, 0}) {}
   bool render() override {
