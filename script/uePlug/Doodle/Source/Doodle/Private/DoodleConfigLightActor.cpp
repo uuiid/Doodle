@@ -165,29 +165,31 @@ void ADoodleConfigLightActor::LoadConfig() {
   FString DefaultName{"doodle"};
   auto* l_config =
       Cast<UDoodleConfigLight>(OpenDialog(DefaultName / DefaultName, TEXT("")));
-  // if (l_config) {
-  //  UE_LOG(LogTemp, Log, TEXT("load file name: %s"),
-  //  *l_config->GetPathName()); for (auto it = p_light_list.CreateIterator();
-  //  it; ++it) {
-  //    it->light->UnregisterComponent();
-  //    it->light->DestroyComponent();
-  //  }
-  //  p_light_list.Empty();
+  if (l_config) {
+    UE_LOG(LogTemp, Log, TEXT("load file name: %s"), *l_config->GetPathName());
+    FActorSpawnParameters l_par{};
+    l_par.Template = l_config->p_Actor;
+    GWorld->SpawnActor<ADoodleConfigLightActor>(l_par);
 
-  //  for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
-  //    auto l_com = DuplicateObject(it->light, this);
-  //    l_com->RegisterComponent();
-  //    l_com->AttachToComponent(
-  //        RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-  //    p_light_list.Add({l_com, it->weight});
-  //    // UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
-  //    //       *(it->light->GetTransform().ToString()));
-  //    // UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
-  //    //       *(k_a->GetTransform().ToString()));
-
-  //    // LoadObject<ALight>();
-  //  }
-  //}
+    // for (auto it = p_light_list.CreateIterator();
+    // it; ++it) {
+    //  it->light->UnregisterComponent();
+    //  it->light->DestroyComponent();
+    //}
+    // p_light_list.Empty();
+    // for (auto it = l_config->p_light.CreateIterator(); it; ++it) {
+    //  auto l_com = DuplicateObject(it->light, this);
+    //  l_com->RegisterComponent();
+    //  l_com->AttachToComponent(
+    //      RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+    //  p_light_list.Add({l_com, it->weight});
+    //  // UE_LOG(LogTemp, Log, TEXT("load org tran: %s"),
+    //  //       *(it->light->GetTransform().ToString()));
+    //  // UE_LOG(LogTemp, Log, TEXT("load tran: %s"),
+    //  //       *(k_a->GetTransform().ToString()));
+    //  // LoadObject<ALight>();
+    //}
+  }
 
 #endif  // WITH_EDITOR
 }
