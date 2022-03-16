@@ -487,6 +487,7 @@
  * @subsubsection updata_log_334 版本3.3.4
  * @li 添加maya碰撞体输出日志
  * @li maya插件解算初始化值更新
+ * @li 更新maya烘培帧时出的问题
  *
  * @subsection updata_log_340_ 版本3.4
  *
