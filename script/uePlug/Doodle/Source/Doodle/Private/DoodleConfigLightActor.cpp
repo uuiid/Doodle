@@ -133,8 +133,8 @@ void ADoodleConfigLightActor::SaveConfig() {
   if (NewPreset) {
     // for (auto it = p_light_list.CreateIterator(); it; ++it) {
     //  ///// <summary>
-    //  ///// 锟斤拷锟斤拷要锟斤拷锟狡筹拷去obj,
-    //  ///// 锟斤拷锟斤拷锟斤拷使锟矫关匡拷锟叫碉拷指锟斤拷,要锟斤拷然锟斤拷锟铰达拷锟斤拷锟截匡拷时锟斤拷锟节达拷泄露
+    //  ///// 这里要复制出去obj,
+    //  ///// 不可以使用关卡中的指针,要不然重新创建关卡时会内存泄露
     //  ///// </summary>
     //  // ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
     //  ////
@@ -148,6 +148,9 @@ void ADoodleConfigLightActor::SaveConfig() {
     //  // NewPreset->p_light.Add({k_l, l_f});
     //}
     NewPreset->p_Actor = DuplicateObject(this, NewPackage);
+    NewPreset->p_Actor->DetachFromActor(
+        FDetachmentTransformRules::KeepRelativeTransform);
+
     NewPreset->MarkPackageDirty();
 #if ENGINE_MINOR_VERSION >= 26
     FAssetRegistryModule::AssetCreated(NewPreset);
@@ -194,20 +197,97 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
     struct FPropertyChangedEvent& PropertyChangeEvent) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
   // auto name2 = PropertyChangeEvent.GetPropertyName();
-  auto name = PropertyChangeEvent.MemberProperty
-                  ? PropertyChangeEvent.MemberProperty->GetFName()
-                  : NAME_None;
+  FName name = PropertyChangeEvent.MemberProperty
+                   ? PropertyChangeEvent.MemberProperty->GetFName()
+                   : NAME_None;
   UE_LOG(LogTemp, Log, TEXT("chick name: %s"), *name.ToString());
+
+#define DOODLE_SET_VALUE(set_fun, value)                        \
+  else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, value)) { \
+    TArray<UDirectionalLightComponent*> out_list;               \
+    this->GetComponents<UDirectionalLightComponent>(out_list);  \
+    for (auto it = out_list.CreateIterator(); it; ++it) {       \
+      (*it)->set_fun(value);                                    \
+      (*it)->PostEditChangeProperty(PropertyChangeEvent);       \
+    }                                                           \
+  }
+
+#define DOODLE_ASSIGN_VALUE(value)                              \
+  else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, value)) { \
+    TArray<UDirectionalLightComponent*> out_list;               \
+    this->GetComponents<UDirectionalLightComponent>(out_list);  \
+    for (auto it = out_list.CreateIterator(); it; ++it) {       \
+      (*it)->value = value;                                     \
+      (*it)->PostEditChangeProperty(PropertyChangeEvent);       \
+    }                                                           \
+  }
 
   if (name == GET_MEMBER_NAME_CHECKED(ThisClass, Intensity)) {
     TArray<UDirectionalLightComponent*> out_list;
     this->GetComponents<UDirectionalLightComponent>(out_list);
     for (auto it = out_list.CreateIterator(); it; ++it) {
       (*it)->SetIntensity(Intensity * (p_light_list.IsValidIndex(it.GetIndex())
-                                        ? p_light_list[it.GetIndex()]
-                                        : 1));
+                                           ? p_light_list[it.GetIndex()]
+                                           : 1));
+      //(*it)->SetLightColor(LightColor);
+      //(*it)->SetTemperature(Temperature);
+      //(*it)->SetUseTemperature(bUseTemperature);
+      //(*it)->LightSourceAngle = LightSourceAngle;
+      //(*it)->LightSourceSoftAngle = LightSourceSoftAngle;
+      //(*it)->bAffectsWorld = bAffectsWorld;
+      //(*it)->SetCastShadows(CastShadows);
+      //(*it)->SetLightingChannels(LightingChannels.bChannel0,
+      //                           LightingChannels.bChannel1,
+      //                           LightingChannels.bChannel2);
+      //(*it)->SetAffectTranslucentLighting(bAffectTranslucentLighting);
+      //(*it)->SetDynamicShadowDistanceMovableLight(
+      //    DynamicShadowDistanceMovableLight);
+      //(*it)->SetDynamicShadowDistanceStationaryLight(
+      //    DynamicShadowDistanceStationaryLight);
+      //(*it)->SetDynamicShadowCascades(DynamicShadowCascades);
+      //(*it)->SetCascadeDistributionExponent(CascadeDistributionExponent);
+      //(*it)->SetCascadeTransitionFraction(CascadeTransitionFraction);
+      //(*it)->SetShadowDistanceFadeoutFraction(ShadowDistanceFadeoutFraction);
+      //(*it)->bUseInsetShadowsForMovableObjects =
+      //    bUseInsetShadowsForMovableObjects;
+      //(*it)->FarShadowCascadeCount = FarShadowCascadeCount;
+      //(*it)->FarShadowDistance = FarShadowDistance;
     }
   }
+  DOODLE_SET_VALUE(SetLightColor, LightColor)
+  DOODLE_SET_VALUE(SetTemperature, Temperature)
+  DOODLE_SET_VALUE(SetUseTemperature, bUseTemperature)
+
+  DOODLE_ASSIGN_VALUE(LightSourceAngle)
+  DOODLE_ASSIGN_VALUE(LightSourceSoftAngle)
+  DOODLE_ASSIGN_VALUE(bAffectsWorld)
+
+  DOODLE_SET_VALUE(SetCastShadows, CastShadows)
+
+  else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, LightingChannels)) {
+    TArray<UDirectionalLightComponent*> out_list;
+    this->GetComponents<UDirectionalLightComponent>(out_list);
+    for (auto it = out_list.CreateIterator(); it; ++it) {
+      (*it)->SetLightingChannels(LightingChannels.bChannel0,
+                                 LightingChannels.bChannel1,
+                                 LightingChannels.bChannel2);
+      (*it)->PostEditChangeProperty(PropertyChangeEvent);
+    }
+  }
+
+  DOODLE_SET_VALUE(SetAffectTranslucentLighting, bAffectTranslucentLighting)
+  DOODLE_SET_VALUE(SetDynamicShadowDistanceMovableLight,
+                   DynamicShadowDistanceMovableLight)
+  DOODLE_SET_VALUE(SetDynamicShadowDistanceStationaryLight,
+                   DynamicShadowDistanceStationaryLight)
+  DOODLE_SET_VALUE(SetDynamicShadowCascades, DynamicShadowCascades)
+  DOODLE_SET_VALUE(SetCascadeDistributionExponent, CascadeDistributionExponent)
+  DOODLE_SET_VALUE(SetCascadeTransitionFraction, CascadeTransitionFraction)
+  DOODLE_SET_VALUE(SetShadowDistanceFadeoutFraction,
+                   ShadowDistanceFadeoutFraction)
+  DOODLE_ASSIGN_VALUE(bUseInsetShadowsForMovableObjects)
+  DOODLE_ASSIGN_VALUE(FarShadowCascadeCount)
+  DOODLE_ASSIGN_VALUE(FarShadowDistance)
 }
 
 #endif  // WITH_EDITOR
