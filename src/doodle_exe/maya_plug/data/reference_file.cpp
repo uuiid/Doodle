@@ -361,7 +361,7 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
    *
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
-  auto l_comm = fmt::format(R"(
+  static std::string maya_bakeResults_str{R"(
 bakeResults
  -simulation true
  -t "{}:{}"
@@ -369,7 +369,7 @@ bakeResults
  -sampleBy 1
  -oversamplingRate 1
  -disableImplicitControl true
- -preserveOutsideKeys false
+ -preserveOutsideKeys {}
  -sparseAnimCurveBake false
  -removeBakedAttributeFromLayer false
  -removeBakedAnimFromLayer false
@@ -378,12 +378,21 @@ bakeResults
  -controlPoints false
  -shape true
  "{}:*{}";
-)",
-                            in_start.value(), in_end.value(), get_namespace(), k_cfg.export_group);
-  DOODLE_LOG_INFO("开始主动烘培动画帧");
-
-  k_s = MGlobal::executeCommand(d_str{l_comm});
-  DOODLE_CHICK(k_s);
+)"};
+  auto l_comm = fmt::format(maya_bakeResults_str,
+                            in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
+  DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+  try {
+    k_s = MGlobal::executeCommand(d_str{l_comm});
+    DOODLE_CHICK(k_s);
+    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试");
+  } catch (const maya_Failure &in) {
+    auto l_comm_back = fmt::format(maya_bakeResults_str,
+                                   in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
+    DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm_back);
+    k_s = MGlobal::executeCommand(d_str{l_comm});
+    DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
+  }
 
   k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
                              maya_file_io::get_current_path().stem().generic_string(),
