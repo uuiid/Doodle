@@ -211,6 +211,11 @@ file_panel::file_panel(const dialog_args &in_args)
   p_i->filter_list.data = in_args.filter;
   p_i->filter_list.data.emplace_back("*.*");
   p_i->filter_list.show_str = p_i->filter_list.data.front();
+  /// \brief 设置标志
+  p_i->p_flags_ = in_args.p_flags;
+  /// \brief 设置输出
+  p_i->out_ = in_args.out_ptr;
+
 }
 file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
                        const string &in_title) {
