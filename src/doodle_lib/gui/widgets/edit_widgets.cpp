@@ -181,9 +181,9 @@ class shot_edit : public gui::edit_interface {
 };
 class assets_file_edit : public gui::edit_interface {
  public:
-  gui::gui_cache<std::string> p_path_cache;
-  gui::gui_cache<std::string> p_name_cache;
-  gui::gui_cache<std::int32_t> p_version_cache;
+  gui::gui_cache<std::string, gui::gui_cache_select> p_path_cache;
+  gui::gui_cache<std::string, gui::gui_cache_select> p_name_cache;
+  gui::gui_cache<std::int32_t, gui::gui_cache_select> p_version_cache;
   assets_file_edit()
       : p_path_cache("路径"s, ""s),
         p_name_cache("名称"s, ""s),
@@ -200,18 +200,33 @@ class assets_file_edit : public gui::edit_interface {
     }
   }
   void render(const entt::handle &in) override {
-    if (ImGui::InputText(*p_path_cache.gui_name, &p_path_cache.data))
+    if (ImGui::InputText(*p_path_cache.gui_name, &p_path_cache.data)) {
       set_modify(true);
-    if (ImGui::InputText(*p_name_cache.gui_name, &p_name_cache.data))
+      p_path_cache.select = true;
+    }
+    if (ImGui::InputText(*p_name_cache.gui_name, &p_name_cache.data)) {
       set_modify(true);
-    if (ImGui::InputInt(*p_version_cache.gui_name, &p_version_cache.data))
+      p_name_cache.select = true;
+    }
+    if (ImGui::InputInt(*p_version_cache.gui_name, &p_version_cache.data)) {
       set_modify(true);
+      p_version_cache.select = true;
+    }
   }
   void save_(const entt::handle &in) const override {
     in.patch<assets_file>([this](assets_file &l_ass) {
-      l_ass.path       = p_path_cache.data;
-      l_ass.p_ShowName = p_name_cache;
-      l_ass.p_version  = p_version_cache;
+      if (p_path_cache.select) {
+        l_ass.path          = p_path_cache.data;
+        p_path_cache.select = false;
+      }
+      if (p_name_cache.select) {
+        l_ass.p_ShowName    = p_name_cache;
+        p_name_cache.select = false;
+      }
+      if (p_version_cache.select) {
+        l_ass.p_version        = p_version_cache;
+        p_version_cache.select = false;
+      }
     });
   }
 };
@@ -397,7 +412,7 @@ class add_assets_for_file : public base_render {
       dear::ListBox k_list{*p_list.gui_name};
       k_list &&[this]() {
         for (auto &&i : p_list.data) {
-          if(i) {
+          if (i) {
             if (i.all_of<assets_file>()) {
               dear::Text(i.get<assets_file>().p_name);
             }
