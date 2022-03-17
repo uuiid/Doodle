@@ -276,4 +276,8 @@ void app::load_back_end() {
       });
 }
 
+bool app::set_parent(win::wnd_handle in_parent) {
+  ::SetWindowLongW(p_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CHILD);
+  return ::SetParent(p_hwnd, in_parent) != nullptr;
+}
 }  // namespace doodle

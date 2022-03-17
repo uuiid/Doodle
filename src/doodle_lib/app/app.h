@@ -177,6 +177,7 @@ class DOODLELIB_API app : public app_command_base {
 
   virtual void hide_windows();
   virtual void show_windows();
+  virtual bool set_parent(win::wnd_handle in_parent);
 
  protected:
   virtual void load_windows();
