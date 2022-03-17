@@ -10,10 +10,10 @@
 namespace doodle {
 
 class DOODLELIB_API comment {
+ public:
   std::string p_comment;
   std::string p_user;
 
- public:
   comment();
   explicit comment(std::string in_str);
   [[nodiscard]] const std::string& get_comment() const;
