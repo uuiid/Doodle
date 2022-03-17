@@ -397,8 +397,10 @@ class add_assets_for_file : public base_render {
       dear::ListBox k_list{*p_list.gui_name};
       k_list &&[this]() {
         for (auto &&i : p_list.data) {
-          if (i.all_of<assets_file>()) {
-            dear::Text(i.get<assets_file>().p_name);
+          if(i) {
+            if (i.all_of<assets_file>()) {
+              dear::Text(i.get<assets_file>().p_name);
+            }
           }
         }
       };
