@@ -599,4 +599,8 @@
  * @li exe 导出csv的列 名称更正为类别
  * @il exe 更新过程池为顺序执行任务, 更加方便的任务控制
  * @li exe 创建时更加智能的路径分辨方法
+ *
+ * @subsubsection updata_log_3417 版本3.4.17
+ * @li 修复ui错误
+ * @li 添加maya 烘培动画帧重试命令
  */
