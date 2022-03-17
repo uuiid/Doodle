@@ -144,7 +144,7 @@ namespace doodle {
  *
  * @bug 表格合并到一个中
  * @bug 时间计算(在多个项目中存在相同的制作人)
- * @bug 导入时文件重复(未发现错误)
+ * @bug <strike> 导入时文件重复(未发现错误) </strike>
  *
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
