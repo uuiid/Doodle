@@ -18,12 +18,28 @@
 #include "IContentBrowserSingleton.h"
 #endif
 
+//Ìí¼Ó±à¼­Æ÷ÏÔÊ¾Í¼±ê
+#include "Components/ArrowComponent.h"
+
 #define LOCTEXT_NAMESPACE "doodle"
 
 ADoodleConfigLightActor::ADoodleConfigLightActor() : p_light_list() {
   RootComponent = CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
   RootComponent->SetMobility(EComponentMobility::Movable);
   // RootComponent->SetupAttachment(RootComponent);
+
+  for (int i = 0; i < 3; i++) {
+    auto com_1 = CreateDefaultSubobject<UArrowComponent>("com_1" + i);
+
+    auto l_en = com_1->ArrowLength * 3;
+    com_1->ArrowLength = l_en;
+    com_1->AttachToComponent(RootComponent,
+                             FAttachmentTransformRules::KeepRelativeTransform);
+    com_1->SetArrowColor({1, 0, 0});
+    com_1->SetWorldRotation({0, 0, 0});
+    com_1->SetWorldLocation({-(l_en / 2), (float)((i - 1) * 20), 0});
+    // com_1->SetEditorScale(2);
+  }
 }
 
 #if WITH_EDITOR
@@ -170,6 +186,7 @@ void ADoodleConfigLightActor::LoadConfig() {
     FActorSpawnParameters l_par{};
     l_par.Template = l_config->p_Actor;
     GWorld->SpawnActor<ADoodleConfigLightActor>(l_par);
+    this->NotifyActorOnClicked();
 
     // for (auto it = p_light_list.CreateIterator();
     // it; ++it) {
