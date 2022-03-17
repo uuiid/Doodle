@@ -70,6 +70,7 @@ class DOODLELIB_API time_point_wrap {
   [[nodiscard]] std::string show_str() const;
 
   static time_point_wrap current_month_end(const time_point_wrap& in_time);
+  static time_point_wrap current_month_start(const time_point_wrap& in_time);
 
   /**
    *
