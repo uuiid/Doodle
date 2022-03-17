@@ -104,6 +104,8 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          ","
          "所属部门"
          ","
+         "季数"
+         ","
          "集数"
          ","
          "镜头"
@@ -125,17 +127,20 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          "文件路径"
       << "\n";  /// @brief 标题
   std::vector<entt::handle> l_h{in_list};
-  boost::stable_sort(
-      boost::stable_sort(
-          l_h,
-          [](const entt::handle &in_r, const entt::handle &in_l) {
-            return (in_r.all_of<episodes>() && in_l.all_of<episodes>()) &&
-                   (in_r.get<episodes>() > in_l.get<episodes>());
-          }),
-      [](const entt::handle &in_r, const entt::handle &in_l) {
-        return (in_r.all_of<shot>() && in_l.all_of<shot>()) &&
-               (in_r.get<shot>() > in_l.get<shot>());
-      });
+  /// 按照 季数 -> 集数 -> 镜头 排序
+  l_h |= ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
+           return (in_r.all_of<season>() && in_l.all_of<season>()) &&
+                  (in_r.get<season>() > in_l.get<season>());
+         }) |
+         ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
+           return (in_r.all_of<episodes>() && in_l.all_of<episodes>()) &&
+                  (in_r.get<episodes>() > in_l.get<episodes>());
+         }) |
+         ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
+           return (in_r.all_of<shot>() && in_l.all_of<shot>()) &&
+                  (in_r.get<shot>() > in_l.get<shot>());
+         });
+
   for (auto &&h : in_list) {
     l_f << to_csv_line(h) << "\n";
   }
@@ -157,6 +162,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
 
   l_r << g_reg()->ctx<project>().p_name << ","
       << magic_enum::enum_name(k_ass.p_department) << ","
+      << (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s) << ","
       << (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s) << ","
       << (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s) << ","
       << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
