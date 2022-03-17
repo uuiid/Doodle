@@ -7,7 +7,7 @@
 #include "Components/LightComponent.h"
 #include "DoodleConfigLight.h"
 #include "Engine/Light.h"
-#include "Engine/World.h"
+#include "Engine/World.h" 
 
 #if WITH_EDITOR
 #if ENGINE_MINOR_VERSION >= 26
@@ -18,7 +18,7 @@
 #include "IContentBrowserSingleton.h"
 #endif
 
-//Ìí¼Ó±à¼­Æ÷ÏÔÊ¾Í¼±ê
+//æ·»åŠ ç¼–è¾‘å™¨æ˜¾ç¤ºå›¾æ ‡
 #include "Components/ArrowComponent.h"
 
 #define LOCTEXT_NAMESPACE "doodle"
@@ -31,7 +31,7 @@ ADoodleConfigLightActor::ADoodleConfigLightActor() : p_light_list() {
   for (int i = 0; i < 3; i++) {
     auto com_1 = CreateDefaultSubobject<UArrowComponent>("com_1" + i);
 
-    auto l_en = com_1->ArrowLength * 3;
+    auto l_en          = com_1->ArrowLength * 2;
     com_1->ArrowLength = l_en;
     com_1->AttachToComponent(RootComponent,
                              FAttachmentTransformRules::KeepRelativeTransform);
@@ -149,8 +149,8 @@ void ADoodleConfigLightActor::SaveConfig() {
   if (NewPreset) {
     // for (auto it = p_light_list.CreateIterator(); it; ++it) {
     //  ///// <summary>
-    //  ///// ÕâÀïÒª¸´ÖÆ³öÈ¥obj,
-    //  ///// ²»¿ÉÒÔÊ¹ÓÃ¹Ø¿¨ÖĞµÄÖ¸Õë,Òª²»È»ÖØĞÂ´´½¨¹Ø¿¨Ê±»áÄÚ´æĞ¹Â¶
+    //  ///// è¿™é‡Œè¦å¤åˆ¶å‡ºå»obj,
+    //  ///// ä¸å¯ä»¥ä½¿ç”¨å…³å¡ä¸­çš„æŒ‡é’ˆ,è¦ä¸ç„¶é‡æ–°åˆ›å»ºå…³å¡æ—¶ä¼šå†…å­˜æ³„éœ²
     //  ///// </summary>
     //  // ULightComponent* k_l = DuplicateObject(it->light, NewPackage);
     //  ////
