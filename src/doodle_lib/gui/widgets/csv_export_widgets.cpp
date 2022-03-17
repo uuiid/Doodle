@@ -176,16 +176,17 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
 
   auto l_it = boost::range::find(p_i->list_sort_time, in_handle);
   if (l_it == p_i->list_sort_time.begin()) {
-    return time_point_wrap::current_month_end(in_handle.get<time_point_wrap>());
+    return time_point_wrap::current_month_start(in_handle.get<time_point_wrap>());
   } else {
+    auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
     auto end_it = boost::find_if(
-        std::make_pair(p_i->list_sort_time.begin(),
-                       l_it - 1),
+        std::make_pair(p_i->list_sort_time.rbegin() + l_dis,
+                       p_i->list_sort_time.rend()),
         [&](const entt::handle &in_l) {
           return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
         });
 
-    return end_it == p_i->list_sort_time.end()
+    return end_it == p_i->list_sort_time.rend()
                ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
                : end_it->get<time_point_wrap>();
   }
