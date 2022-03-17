@@ -34,9 +34,6 @@ class DOODLE_API ADoodleConfigLightActor : public AActor {
                     Category = "Doodle", Tooltip = "保存灯光预设"))
   virtual void SaveConfig();
 
-  UFUNCTION(BlueprintCallable,
-            meta = (CallInEditor = "true", OverrideNativeName = "加载",
-                    Category = "Doodle", Tooltip = "加载灯光预设"))
   virtual void LoadConfig();
 
   UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "灯光权重")
