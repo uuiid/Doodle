@@ -356,7 +356,7 @@ class add_assets_for_file : public base_render {
  public:
   add_assets_for_file()
       : p_list("文件列表"s, std::vector<entt::handle>{}),
-        use_time("检查时间"s, false),
+        use_time("检查时间"s, true),
         use_icon("寻找图标"s, true),
         use_abs_path("使用绝对路径", false),
         assets_list("分类"s, std::vector<std::string>{}) {
