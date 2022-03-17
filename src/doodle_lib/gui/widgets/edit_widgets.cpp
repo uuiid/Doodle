@@ -308,33 +308,34 @@ class add_assets_for_file : public base_render {
 
   void add_assets(const std::vector<FSys::path> &in_list) {
     image_loader l_image_load{};
-    p_list.data = ranges::to_vector(
-        in_list | ranges::views::transform([&](const FSys::path &in_path) {
-          auto k_h = make_handle();
-          FSys::path l_path{in_path};
-          auto l_prj_path = g_reg()->ctx<project>().p_path;
-          if (!use_abs_path.data && l_prj_path.root_path() == in_path.root_path()) {
-            l_path = in_path.lexically_relative(g_reg()->ctx<project>().p_path);
-          }
+    p_list.data = in_list |
+                  ranges::views::transform([&](const FSys::path &in_path) {
+                    auto k_h = make_handle();
+                    FSys::path l_path{in_path};
+                    auto l_prj_path = g_reg()->ctx<project>().p_path;
+                    if (!use_abs_path.data && l_prj_path.root_path() == in_path.root_path()) {
+                      l_path = in_path.lexically_relative(g_reg()->ctx<project>().p_path);
+                    }
 
-          k_h.emplace<assets_file>(l_path);
-          k_h.emplace<assets>(assets_list.show_name);
+                    k_h.emplace<assets_file>(l_path);
+                    k_h.emplace<assets>(assets_list.show_name);
 
-          /**
-           * @brief 从路径中寻找各个组件
-           */
-          season::analysis_static(k_h, in_path);
-          episodes::analysis_static(k_h, in_path);
-          shot::analysis_static(k_h, in_path);
+                    /**
+                     * @brief 从路径中寻找各个组件
+                     */
+                    season::analysis_static(k_h, in_path);
+                    episodes::analysis_static(k_h, in_path);
+                    shot::analysis_static(k_h, in_path);
 
-          if (use_time.data)
-            this->add_time(k_h, in_path);
-          if (use_icon.data)
-            this->find_icon(k_h, in_path);
-          k_h.emplace<database>();
-          k_h.patch<database>(database::save);
-          return k_h;
-        }));
+                    if (use_time.data)
+                      this->add_time(k_h, in_path);
+                    if (use_icon.data)
+                      this->find_icon(k_h, in_path);
+                    k_h.emplace<database>();
+                    k_h.patch<database>(database::save);
+                    return k_h;
+                  }) |
+                  ranges::to_vector;
 
     DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
     g_reg()->ctx<core_sig>().filter_handle(p_list.data);
