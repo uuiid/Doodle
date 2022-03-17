@@ -146,8 +146,9 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   std::stringstream l_r{};
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx<project>().p_path;
-  auto end_time     = get_user_up_time(in);
-  auto k_time       = in.get<time_point_wrap>().work_duration(end_time);
+  auto start_time   = get_user_up_time(in);
+  auto end_time     = in.get<time_point_wrap>();
+  auto k_time       = start_time.work_duration(end_time);
   auto l_file_path  = project_root / k_ass.path;
 
   comment k_comm{};
@@ -160,7 +161,7 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
       << (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s) << ","
       << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
       << k_ass.p_user << ","
-      << fmt::format(R"("{}")", in.get<time_point_wrap>().show_str()) << ","
+      << fmt::format(R"("{}")", start_time.show_str()) << ","
       << fmt::format(R"("{}")", end_time.show_str()) << ","
       << fmt::format("{:3f}", k_time.count()) << ","
       << fmt::format("{}", k_comm.get_comment()) << ","
@@ -185,7 +186,7 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
         });
 
     return end_it == p_i->list_sort_time.end()
-               ? time_point_wrap::current_month_end(in_handle.get<time_point_wrap>())
+               ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
                : end_it->get<time_point_wrap>();
   }
 }
