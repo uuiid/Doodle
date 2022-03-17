@@ -38,7 +38,7 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
             },
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json"
         },
         {
             "name": "Win32_Maya",
@@ -78,7 +78,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "${workspaceFolder}/.vscode/browse_maya.vc.db"
-            }
+            },
+            "compileCommands": "${workspaceFolder}/build/Ninja_release_plug/compile_commands.json"
         }
     ],
     "version": 4
