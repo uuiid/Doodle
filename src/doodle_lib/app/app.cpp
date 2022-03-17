@@ -12,6 +12,7 @@
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
+#include <doodle_lib/core/image_loader.h>
 
 #include <doodle_lib/core/program_options.h>
 
@@ -271,6 +272,7 @@ void app::load_back_end() {
       .then<one_process_t>([]() {
         g_main_loop().attach<database_task_obs>();
         g_main_loop().attach<short_cut>();
+        image_loader{};
       });
 }
 
