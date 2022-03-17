@@ -19,10 +19,10 @@ class UDoodleLightActorFactory : public UActorFactory {
   virtual bool CanCreateActorFrom(const FAssetData& AssetData,
                                   FText& OutErrorMsg) override;
   //virtual void PostSpawnActor(UObject* Asset, AActor* NewActor) override;
-  //virtual AActor* SpawnActor(
-  //    UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
-  //    const FActorSpawnParameters& InSpawnParams) override;
-  //AActor* GetDefaultActor(const FAssetData& AssetData) override;
+  virtual AActor* SpawnActor(
+      UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
+      const FActorSpawnParameters& InSpawnParams) override;
+  AActor* GetDefaultActor(const FAssetData& AssetData) override;
 
   // 结束 UActorFactory 接口
 };
