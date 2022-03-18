@@ -81,6 +81,7 @@ set(
         metadata/tree_adapter.h
         metadata/user.h
         metadata/image_icon.h
+        metadata/importance.h
         pin_yin/convert.h
 
         thread_pool/process_message.h
@@ -173,6 +174,8 @@ set(
         metadata/time_point_wrap.cpp
         metadata/user.cpp
         metadata/image_icon.cpp
+        metadata/importance.cpp
+
         pin_yin/convert.cpp
 
         thread_pool/process_message.cpp
