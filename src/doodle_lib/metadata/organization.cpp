@@ -2,6 +2,7 @@
 
 #include "organization.h"
 #include <doodle_lib/metadata/project.h>
+#include <doodle_lib/core/core_set.h>
 namespace doodle {
 organization::organization()
     : organization(std::string{}) {
@@ -12,10 +13,16 @@ organization::organization(std::string in_org_p)
 }
 organization::~organization() = default;
 
-project_config::base_config& organization::get_config() {
-  if (project::has_prj())
-    *p_config = project::get_current().get<project_config::base_config>();
-  return std::as_const(*this).get_config();
+organization& organization::get_current_organization() {
+  static const organization def_value{};
+  if (project::has_prj()) {
+    auto& list = project::get_current().get<organization_list>().config_list;
+    if (auto l_it = list.find(core_set::getSet().organization_name;
+                              l_it != list.end())) {
+      return *l_it;
+    }
+  }
+  return def_value;
 }
 
 project_config::base_config& organization::get_config() const {

@@ -20,7 +20,8 @@ class organization {
   organization(std::string in_org_p);
   ~organization();
 
-  project_config::base_config &get_config();
+  static organization &get_current_organization();
+
   project_config::base_config &get_config() const;
 
   bool operator==(const organization &in_rhs) const;
@@ -30,4 +31,13 @@ class organization {
   bool operator<=(const organization &in_rhs) const;
   bool operator>=(const organization &in_rhs) const;
 };
+
+class organization_list {
+ private:
+ public:
+  std::set<organization> config_list;
+  organization_list();
+  ~organization_list();
+};
+
 }  // namespace doodle
