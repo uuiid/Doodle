@@ -14,6 +14,7 @@
 // clang-format off
 #include <metadata/metadata_cpp.h>
 #include <metadata/image_icon.h>
+#include <metadata/importance.h>
 #include <doodle_lib/lib_warp/entt_warp.h>
 // clang-format on
 
@@ -42,7 +43,7 @@ void from_json(const nlohmann::json &j, database::ref_data &p) {
   if (j.contains("uuid"))
     j["uuid"].get_to(p.uuid);
   else if (j.contains("uuid_path")) {
-    chick_true<doodle_error>(p.find_for_path(j["uuid_path"].get<FSys::path>()),DOODLE_LOC,"没有寻找到引用");
+    chick_true<doodle_error>(p.find_for_path(j["uuid_path"].get<FSys::path>()), DOODLE_LOC, "没有寻找到引用");
   }
 }
 void to_json(nlohmann::json &j, const database::ref_data &p) {
@@ -146,8 +147,8 @@ bool database::is_install() const {
                              comment,                      \
                              project_config::cloth_config, \
                              project_config::model_config, \
-                             image_icon
-
+                             image_icon,                   \
+                             importance
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
   /// 转换序列化数据
