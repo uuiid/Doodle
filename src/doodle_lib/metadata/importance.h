@@ -8,6 +8,9 @@
 namespace doodle {
 class importance {
  private:
+  friend void to_json(nlohmann::json &j, const importance &p);
+  friend void from_json(const nlohmann::json &j, importance &p);
+
  public:
   std::string cutoff_p;
   importance();
