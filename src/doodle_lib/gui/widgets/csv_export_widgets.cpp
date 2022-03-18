@@ -14,6 +14,7 @@
 #include <metadata/user.h>
 #include <metadata/time_point_wrap.h>
 #include <metadata/comment.h>
+#include <metadata/importance.h>
 
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
@@ -29,12 +30,14 @@ class csv_export_widgets::impl {
       : list(),
         list_sort_time(),
         con(),
-        export_path("导出路径"s, ""s) {}
+        export_path("导出路径"s, ""s),
+        use_first_as_project_name("分类作为项目名称", false) {}
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
   std::vector<boost::signals2::scoped_connection> con;
 
   gui_cache<std::string, gui_cache_path> export_path;
+  gui_cache<bool> use_first_as_project_name;
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -52,6 +55,7 @@ void csv_export_widgets::init() {
             p_i->list = in;
           }));
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
+  p_i->export_path.data = p_i->export_path.path.generic_string();
 }
 void csv_export_widgets::succeeded() {
   g_reg()->unset<csv_export_widgets>();
@@ -78,6 +82,7 @@ void csv_export_widgets::update(const chrono::duration<
           p_i->export_path.data = p_i->export_path.path.generic_string();
         });
   }
+  ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
 
   if (ImGui::Button("导出")) {
     p_i->list = p_i->list |
@@ -137,7 +142,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
   }
   DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);
 }
-table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
+csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx<project>().p_path;
@@ -147,23 +152,30 @@ table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   auto l_file_path  = project_root / k_ass.path;
 
   comment k_comm{};
-  if (auto l_c = in.try_get<std::vector<comment>>(); l_c)
-    k_comm = l_c->empty() ? l_c->front() : comment{};
-  table_line l_line {
-    g_reg()->ctx<project>().p_name,
-        magic_enum::enum_name(k_ass.p_department),
-        (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
-        (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
-        (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
-        (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s),
-        k_ass.p_user,
-        fmt::format(R"("{}")", start_time.show_str()),
-        fmt::format(R"("{}")", end_time.show_str()),
-        fmt::format("{:3f}", k_time.count()),
-        fmt::format("{}", k_comm.get_comment()),
-        fmt::to_string(FSys::exists(l_file_path)),
-        l_file_path.generic_string()
-  }
+  if (auto l_c = in.try_get<comment>(); l_c)
+    k_comm = *l_c;
+
+  auto l_prj_name = g_reg()->ctx<project>().p_name;
+  if (p_i->use_first_as_project_name.data)
+    l_prj_name = in.all_of<assets>() ? in.get<assets>().p_path.begin()->generic_string() : ""s;
+
+  table_line l_line{
+      l_prj_name,
+      std::string{magic_enum::enum_name(k_ass.p_department)},
+      (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
+      (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
+      (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
+      (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s),
+      k_ass.p_user,
+      fmt::format(R"("{}")", start_time.show_str()),
+      fmt::format(R"("{}")", end_time.show_str()),
+      fmt::format("{:3f}", k_time.count()),
+      fmt::format("{}", k_comm.get_comment()),
+      fmt::to_string(FSys::exists(l_file_path)),
+      l_file_path.generic_string(),
+      (in.all_of<importance>() ? in.get<importance>().cutoff_p : ""s)
+
+  };
 
   return l_line;
 }
