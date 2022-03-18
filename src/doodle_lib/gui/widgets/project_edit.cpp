@@ -24,8 +24,8 @@ class project_edit::impl {
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
   p_i->p_edits.emplace_back("项目编辑", std::make_unique<gui::project_edit>());
-  p_i->p_edits.emplace_back("模型配置", std::make_unique<gui::modle_config_edit>());
-  p_i->p_edits.emplace_back("解算配置", std::make_unique<gui::cloth_config_edit>());
+  // p_i->p_edits.emplace_back("模型配置", std::make_unique<gui::modle_config_edit>());
+  p_i->p_edits.emplace_back("解算配置", std::make_unique<gui::base_config_edit>());
 
   ranges::for_each(p_i->p_edits, [this](impl::cache& in_edit) {
     p_i->data_edit.link_sig(in_edit.data);

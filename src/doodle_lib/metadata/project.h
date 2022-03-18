@@ -4,8 +4,7 @@
 namespace doodle {
 namespace project_config {
 class base_config;
-class model_config;
-class cloth_config;
+
 }  // namespace project_config
 
 class organization;
@@ -15,9 +14,7 @@ class organization;
  */
 class DOODLELIB_API project {
  public:
-  using cloth_config = project_config::cloth_config;
-
-  std::string p_name;
+   std::string p_name;
   FSys::path p_path;
 
   std::string p_en_str;
@@ -46,7 +43,7 @@ class DOODLELIB_API project {
   [[nodiscard]] bool has_organization() const;
 
   static entt::handle get_current();
-  static entt::handle has_prj();
+  static bool has_prj();
 
   bool operator<(const project& in_rhs) const;
   bool operator>(const project& in_rhs) const;

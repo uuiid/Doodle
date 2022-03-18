@@ -7,11 +7,6 @@
 #include "organization.h"
 
 namespace doodle {
-project::cloth_config::cloth_config()
-    : vfx_cloth_sim_path("C:/"),
-      export_group("UE4"),
-      cloth_proxy_("_cloth_proxy"),
-      simple_module_proxy_("_proxy") {}
 
 project::project()
     : p_name("none"),
@@ -102,7 +97,20 @@ FSys::path project::make_path(const FSys::path& in_path) const {
     create_directories(path);
   return path;
 }
-entt::handle project::has_prj() {
+
+organization& project::current_organization() const {
+  auto&& l_name = core_set::getSet().organization_name;
+  chick_true<doodle_error>(has_organization(), DOODLE_LOC, "缺失 {} 部门配置", l_name);
+  return make_handle(*this)
+      .get<organization_list>()
+      .config_list[l_name];
+}
+bool project::has_organization() const {
+  auto& list = make_handle(*this).get<organization_list>().config_list;
+  auto l_it  = list.find(core_set::getSet().organization_name);
+  return l_it != list.end();
+}
+bool project::has_prj() {
   if (auto l_rot = g_reg()->try_ctx<database::ref_data>(); l_rot) {
     auto& l_ref = g_reg()->ctx<database::ref_data>();
     for (auto&& [e, l_p, l_d] : g_reg()->view<project, database>().each()) {
@@ -124,13 +132,9 @@ entt::handle project::get_current() {
   return {};
 }
 
-project_config::model_config::model_config()
-    : find_icon_regex(R"(_UE4\.)") {
-}
-
 project_config::base_config::base_config() = default;
 
-void to_json(nlohmann::json& j, const base_config& p) {
+void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]      = p.find_icon_regex;
   j["assets_list"]          = p.assets_list;
   j["vfx_cloth_sim_path"]   = p.vfx_cloth_sim_path;
@@ -138,7 +142,7 @@ void to_json(nlohmann::json& j, const base_config& p) {
   j["cloth_proxy_"]         = p.cloth_proxy_;
   j["simple_module_proxy_"] = p.simple_module_proxy_;
 }
-void from_json(const nlohmann::json& j, base_config& p) {
+void project_config::from_json(const nlohmann::json& j, base_config& p) {
   j.at("find_icon_regex").get_to(p.find_icon_regex);
   j.at("assets_list").get_to(p.assets_list);
   j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);

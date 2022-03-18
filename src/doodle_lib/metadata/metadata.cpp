@@ -146,7 +146,7 @@ bool database::is_install() const {
                              assets_file,                  \
                              time_point_wrap,              \
                              comment,                      \
-                             project_config::base_config,  \ 
+                             project_config::base_config,  \
                              image_icon,                   \
                              importance,                   \
                              organization_list

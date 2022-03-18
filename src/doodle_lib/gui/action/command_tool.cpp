@@ -14,6 +14,8 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/metadata/organization.h>
+
 #include <long_task/image_to_move.h>
 #include <gui/gui_ref/ref_base.h>
 #include <long_task/join_move.h>
@@ -33,7 +35,9 @@ void comm_maya_tool::init() {
   auto k_prj = g_reg()->try_ctx<root_ref>();
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
-  p_text = k_prj->root_handle().get_or_emplace<project::cloth_config>().vfx_cloth_sim_path.generic_string();
+  if (project::has_prj()) {
+    p_text = organization::get_current_organization().get_config().vfx_cloth_sim_path.generic_string();
+  }
   g_reg()->set<comm_maya_tool&>(*this);
 }
 void comm_maya_tool::succeeded() {

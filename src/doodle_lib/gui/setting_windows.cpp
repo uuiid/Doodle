@@ -36,7 +36,7 @@ class setting_windows::impl {
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
   gui::gui_cache<std::int32_t> p_max_reg;
-}
+};
 
 setting_windows::setting_windows()
     : p_i(std::make_unique<impl>()) {
