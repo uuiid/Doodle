@@ -161,7 +161,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
 
   table_line l_line{
       l_prj_name,
-      std::string{magic_enum::enum_name(k_ass.p_department)},
+      k_ass.organization_p,
       (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
       (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
       (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
