@@ -9,9 +9,9 @@
  * @ref doodle_often_ask_questions \n
  * @ref doc/schedule.md "描述" \n
  * \n
- * <a href="file/Doodle-3.4.1-win64.msi">下载稳定版(  Doodle-3.4.1-win64.msi )</a> \n
- * <a href="file/@doodle_exe_file.msi">下载开发版-安装包(  @doodle_exe_file.msi )</a> \n
- * <a href="file/@doodle_exe_file.7z">下载开发版-7z存档(  @doodle_exe_file.7z )</a> \n
+ * 
+ * <a href="file/@doodle_exe_file.msi" download>下载-安装包(  @doodle_exe_file.msi )</a> \n
+ * <a href="file/@doodle_exe_file.7z" download>下载-7z存档(  @doodle_exe_file.7z )</a> \n
  *
  *
  *
@@ -28,7 +28,7 @@
  *
  * @defgroup 主要程序 主要程序
  * @tableofcontents
- * @brief 主要的程序逻辑  
+ * @brief 主要的程序逻辑
  * @defgroup 主要菜单栏 主要菜单栏
  * @brief 所有的功能入口
  * @defgroup 主要状态栏 主要状态栏
