@@ -72,7 +72,7 @@ void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
 
 core_set::core_set()
     : p_user_("user"),
-      p_department_(department::None_),
+      organization_name(),
       p_doc(FSys::current_path()),
       p_uuid_gen(),
       p_ue4_setting(ue4_setting::Get()),
@@ -87,18 +87,6 @@ core_set::core_set()
 
 boost::uuids::uuid core_set::get_uuid() {
   return p_uuid_gen();
-}
-
-std::string core_set::get_department() const {
-  return std::string{magic_enum::enum_name(p_department_)};
-}
-
-const department &core_set::get_department_enum() const {
-  return p_department_;
-}
-
-void core_set::set_department(const std::string &value) {
-  p_department_ = magic_enum::enum_cast<department>(value).value_or(department::None_);
 }
 
 std::string core_set::get_user() const { return p_user_; }
@@ -157,9 +145,6 @@ std::string core_set::get_uuid_str() {
 
 void core_set::set_max_tread(const std::uint16_t in) {
   p_max_thread = in;
-}
-void core_set::set_department(const department &value) {
-  p_department_ = value;
 }
 
 core_set_init::core_set_init()
@@ -266,7 +251,7 @@ bool core_set_init::init_project(const FSys::path &in_path) {
 
 void to_json(nlohmann::json &j, const core_set &p) {
   j["user_"]                = p.p_user_;
-  j["department_"]          = p.p_department_;
+  j["organization_name"]    = p.organization_name;
   j["ue4_setting"]          = p.p_ue4_setting;
   j["mayaPath"]             = p.p_mayaPath;
   j["max_thread"]           = p.p_max_thread;
@@ -277,7 +262,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
-  j.at("department_").get_to(p.p_department_);
+  j.at("organization_name").get_to(p.organization_name);
   j.at("ue4_setting").get_to(p.p_ue4_setting);
   j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);

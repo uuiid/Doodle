@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
@@ -48,12 +47,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] std::string get_user_en() const;
   void set_user(const std::string &value);
 
-  //部门设置
-  [[nodiscard]] std::string get_department() const;
-  [[nodiscard]] const department &get_department_enum() const;
-  void set_department(const std::string &value);
-  void set_department(const department &value);
-
   //缓存路径
   [[nodiscard]] FSys::path get_root() const;
   void set_root(const FSys::path &in_root);
@@ -67,7 +60,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] FSys::path get_config_file() const;
 
   [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
-
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
@@ -86,8 +78,12 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::map<string, bool> widget_show;
 
   std::array<FSys::path, 10> project_root;
-  void add_recent_project(const FSys::path& in);
+  void add_recent_project(const FSys::path &in);
   std::uint16_t max_install_reg_entt;
+  //用户名称
+  std::string p_user_;
+  //部门
+  std::string organization_name;
 
  private:
   /**
@@ -100,11 +96,6 @@ class DOODLELIB_API core_set : public details::no_copy {
 
  private:
   boost::uuids::random_generator p_uuid_gen;
-
-  //用户名称
-  std::string p_user_;
-  //部门
-  department p_department_;
 
   FSys::path p_root;
   FSys::path _root_cache;
