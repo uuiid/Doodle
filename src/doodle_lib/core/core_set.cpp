@@ -262,7 +262,8 @@ void to_json(nlohmann::json &j, const core_set &p) {
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
-  j.at("organization_name").get_to(p.organization_name);
+  if (j.count("organization_name"))
+    j.at("organization_name").get_to(p.organization_name);
   j.at("ue4_setting").get_to(p.p_ue4_setting);
   j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);
