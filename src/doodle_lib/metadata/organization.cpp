@@ -41,4 +41,13 @@ bool organization::operator>=(const organization& in_rhs) const {
   return !(*this < in_rhs);
 }
 
+void to_json(nlohmann::json& j, const organization& p) {
+  j["name"] = p.org_p;
+  j["ptr"]  = *p.p_config;
+}
+void from_json(const nlohmann::json& j, organization& p) {
+  j.at("name").get_to(p.org_p);
+  j.at("ptr").get_to(*p.p_config);
+}
+
 }  // namespace doodle
