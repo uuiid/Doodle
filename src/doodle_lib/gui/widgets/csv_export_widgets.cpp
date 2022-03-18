@@ -158,6 +158,10 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto l_prj_name = g_reg()->ctx<project>().p_name;
   if (p_i->use_first_as_project_name.data)
     l_prj_name = in.all_of<assets>() ? in.get<assets>().p_path.begin()->generic_string() : ""s;
+  auto k_ass_path = in.all_of<assets>() ? in.get<assets>().p_path : FSys::path{};
+  if (p_i->use_first_as_project_name.data && !k_ass_path.empty()) {
+    k_ass_path = fmt::to_string(fmt::join(++k_ass_path.begin(), k_ass_path.end(), "/"));
+  }
 
   table_line l_line{
       l_prj_name,
@@ -165,7 +169,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
       (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
       (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
       (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
-      (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s),
+      k_ass_path.generic_string(),
       k_ass.p_user,
       fmt::format(R"("{}")", start_time.show_str()),
       fmt::format(R"("{}")", end_time.show_str()),
