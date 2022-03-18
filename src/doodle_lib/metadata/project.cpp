@@ -127,34 +127,7 @@ entt::handle project::get_current() {
 project_config::model_config::model_config()
     : find_icon_regex(R"(_UE4\.)") {
 }
-std::string project_config::base_config::get_current_find_icon_regex_() {
-  std::string l_regex{};
-  switch (core_set::getSet().get_department_enum()) {
-    case department::modle:
-      // l_regex = project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex;
-      break;
 
-    default:
-      l_regex = ".";
-      break;
-  }
-  return l_regex;
-}
-
-std::vector<std::string> project_config::base_config::get_assets_paths() {
-  std::vector<std::string> list;
-  switch (core_set::getSet().get_department_enum()) {
-    case department::modle:
-      // list = project::get_current().get_or_emplace<project_config::model_config>().assets_list;
-      break;
-
-    default:
-      list = {"null"};
-      break;
-  }
-
-  return list;
-}
 project_config::base_config::base_config() = default;
 
 void to_json(nlohmann::json& j, const base_config& p) {

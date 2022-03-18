@@ -8,6 +8,8 @@ class model_config;
 class cloth_config;
 }  // namespace project_config
 
+class organization;
+
 /**
  * 项目信息类
  */
@@ -39,6 +41,9 @@ class DOODLELIB_API project {
   [[nodiscard]] std::string show_str() const;
 
   [[nodiscard]] std::string short_str() const;
+
+  [[nodiscard]] organization& current_organization() const;
+  [[nodiscard]] bool has_organization() const;
 
   static entt::handle get_current();
   static entt::handle has_prj();
@@ -99,10 +104,7 @@ class DOODLELIB_API base_config {
   std::vector<std::string> assets_list;
 
   base_config();
-  [[nodiscard]] static std::string get_current_find_icon_regex_();
-  [[nodiscard]] static std::vector<std::string> get_assets_paths();
 };
-
 
 }  // namespace project_config
 }  // namespace doodle
