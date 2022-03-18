@@ -23,6 +23,7 @@
 #include <doodle_lib/metadata/image_icon.h>
 #include <doodle_lib/metadata/importance.h>
 #include <doodle_lib/metadata/project.h>
+#include <doodle_lib/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle {
 
@@ -348,7 +349,8 @@ class add_assets_for_file : public base_render {
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
 
-    std::regex l_regex{project_config::base_config::get_current_find_icon_regex_()};
+    auto l_reg = organization::get_current_organization().get_config().find_icon_regex;
+    std::regex l_regex{l_reg};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
         (l_path.extension() == ".png" || l_path.extension() == ".jpg") &&
@@ -432,18 +434,20 @@ class add_assets_for_file : public base_render {
     auto &l_sig = g_reg()->ctx<core_sig>();
     l_sig.project_end_open.connect(
         [this](const entt::handle &in_prj, const doodle::project &) {
-          this->assets_list = in_prj
-                                  .get_or_emplace<doodle::project_config::base_config>()
-                                  .get_assets_paths();
+          auto &prj = in_prj.get<project>();
+          if (prj.has_organization()) {
+            this->assets_list = prj.current_organization().get_config().assets_list;
+          }
           this->assets_list.show_name =
               this->assets_list.data.empty()
                   ? "null"s
                   : this->assets_list.data.front();
         });
     l_sig.save_end.connect([this](const doodle::handle_list &) {
-      this->assets_list = project::get_current()
-                              .get_or_emplace<project_config::base_config>()
-                              .get_assets_paths();
+      auto &prj = project::get_current().get<project>();
+      if (prj.has_organization()) {
+        this->assets_list = prj.current_organization().get_config().assets_list;
+      }
       this->assets_list.show_name =
           this->assets_list.data.empty()
               ? "null"s
