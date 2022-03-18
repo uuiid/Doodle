@@ -57,8 +57,7 @@ class base_config_edit::impl {
         simple_module_proxy_("动画后缀名", ""s),
         regex_("正则表达式"s, ""s),
         list_name("分类列表"s),
-        add_list_name_button("添加"s),
-        combox_list("配置分类"s, std::vector<std::string>{}) {}
+        add_list_name_button("添加"s) {}
   gui_cache<std::string> path_;
   gui_cache<std::string> ue4_name;
   gui_cache<std::string> cloth_proxy_;
