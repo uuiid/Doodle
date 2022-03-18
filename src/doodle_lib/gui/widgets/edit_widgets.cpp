@@ -434,7 +434,7 @@ class add_assets_for_file : public base_render {
     auto &l_sig = g_reg()->ctx<core_sig>();
     l_sig.project_end_open.connect(
         [this](const entt::handle &in_prj, const doodle::project &) {
-          auto &prj         = in_prj.get<project_config::base_config>();
+          auto &prj         = in_prj.get_or_emplace<project_config::base_config>();
           this->assets_list = prj.assets_list;
 
           this->assets_list.show_name =
@@ -443,7 +443,7 @@ class add_assets_for_file : public base_render {
                   : this->assets_list.data.front();
         });
     l_sig.save_end.connect([this](const doodle::handle_list &) {
-      auto &prj         = project::get_current().get<project_config::base_config>();
+      auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
       this->assets_list = prj.assets_list;
 
       this->assets_list.show_name =
