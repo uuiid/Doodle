@@ -50,17 +50,8 @@ namespace doodle {
  *
  */
 class DOODLELIB_API setting_windows : public process_t<setting_windows> {
-  decltype(magic_enum::enum_names<department>()) p_dep_list;
-  std::int32_t p_cur_dep_index;
-  std::string p_user;
-  std::string p_cache;
-  std::string p_doc;
-  std::string p_maya_path;
-  std::string p_ue_path;
-  std::string p_ue_version;
-  std::int32_t p_batch_max;
-  std::int32_t p_timeout;
-  std::int32_t p_max_reg;
+   class impl;
+  std::unique_ptr<impl> p_i;
 
  public:
   setting_windows();
