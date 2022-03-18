@@ -28,7 +28,7 @@ class DOODLELIB_API assets_file {
   std::uint64_t p_version{};
 
   std::string p_user;
-  department p_department;
+  std::string organization_p;
   std::string p_ShowName;
 
  private:
@@ -58,12 +58,8 @@ class DOODLELIB_API assets_file {
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
 
-  [[nodiscard]] department get_department() const;
-  void set_department(department in_department);
-
   [[nodiscard]] const std::uint64_t& get_version() const noexcept;
   void set_version(const std::uint64_t& in_Version) noexcept;
-
 
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;
@@ -72,19 +68,20 @@ class DOODLELIB_API assets_file {
 
  private:
   friend void to_json(nlohmann::json& j, const assets_file& p) {
-    j["name"]       = p.p_name;
-    j["ShowName"]   = p.p_ShowName;
-    j["user"]       = p.p_user;
-    j["department"] = p.p_department;
-    j["version"]    = p.p_version;
-    j["path"]       = p.path;
+    j["name"]           = p.p_name;
+    j["ShowName"]       = p.p_ShowName;
+    j["user"]           = p.p_user;
+    j["organization_p"] = p.organization_p;
+    j["version"]        = p.p_version;
+    j["path"]           = p.path;
   }
   friend void from_json(const nlohmann::json& j, assets_file& p) {
     j.at("name").get_to(p.p_name);
     j.at("ShowName").get_to(p.p_ShowName);
     j.at("user").get_to(p.p_user);
-    j.at("department").get_to(p.p_department);
     j.at("version").get_to(p.p_version);
+    if (j.contains("organization_p"))
+      j.at("organization_p").get_to(p.organization_p);
     if (j.contains("path"))
       j.at("path").get_to(p.path);
   }

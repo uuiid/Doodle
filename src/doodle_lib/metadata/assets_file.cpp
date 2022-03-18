@@ -24,7 +24,7 @@ assets_file::assets_file(const FSys::path& in_path,
       p_name(std::move(in_name)),
       p_version(in_version),
       p_user(core_set::getSet().get_user()),
-      p_department(core_set::getSet().get_department_enum()),
+      organization_p(core_set::getSet().organization_name),
       p_ShowName(in_path.stem().generic_string()) {
 }
 
@@ -66,11 +66,6 @@ void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
 
-department assets_file::get_department() const {
-  return p_department;
-}
-void assets_file::set_department(department in_department) {
-  p_department = in_department;
-}
+ 
 
 }  // namespace doodle
