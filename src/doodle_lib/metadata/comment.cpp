@@ -8,8 +8,7 @@
 
 namespace doodle {
 comment::comment()
-    : p_comment(),
-      p_user(core_set::getSet().get_user()) {
+    : comment(std::string{}) {
 }
 
 comment::comment(std::string in_str)
@@ -29,6 +28,5 @@ const std::string& comment::get_user() const {
 void comment::set_user(const std::string& in_user) {
   p_user = in_user;
 }
-
 
 }  // namespace doodle
