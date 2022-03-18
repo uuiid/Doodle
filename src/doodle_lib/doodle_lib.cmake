@@ -82,6 +82,8 @@ set(
         metadata/user.h
         metadata/image_icon.h
         metadata/importance.h
+        metadata/organization.h
+
         pin_yin/convert.h
 
         thread_pool/process_message.h
@@ -175,6 +177,7 @@ set(
         metadata/user.cpp
         metadata/image_icon.cpp
         metadata/importance.cpp
+        metadata/organization.cpp
 
         pin_yin/convert.cpp
 
