@@ -100,32 +100,23 @@ void csv_export_widgets::update(const chrono::duration<
 void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
                                     const FSys::path &in_export_file_path) {
   FSys::ofstream l_f{in_export_file_path};
-  l_f << "项目"
-         ","
-         "所属部门"
-         ","
-         "季数"
-         ","
-         "集数"
-         ","
-         "镜头"
-         ","
-         "类别"
-         ","
-         "制作人"
-         ","
-         "开始时间"
-         ","
-         "结束时间"
-         ","
-         "持续时间/h"
-         ","
-         "备注"
-         ","
-         "文件存在"
-         ","
-         "文件路径"
-      << "\n";  /// @brief 标题
+  static const table_line l_tile{
+      "项目"s,
+      "所属部门"s,
+      "季数"s,
+      "集数"s,
+      "镜头"s,
+      "类别"s,
+      "制作人"s,
+      "开始时间"s,
+      "结束时间"s,
+      "持续时间/h"s,
+      "备注"s,
+      "文件存在"s,
+      "文件路径"s,
+      "等级"s};
+  l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
+
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
   l_h |= ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
@@ -142,13 +133,12 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
          });
 
   for (auto &&h : in_list) {
-    l_f << to_csv_line(h) << "\n";
+    l_f << fmt::format("{}\n", fmt::join(to_csv_line(h), ","));
   }
   DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);
 }
-std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
+table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
-  std::stringstream l_r{};
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx<project>().p_path;
   auto start_time   = get_user_up_time(in);
@@ -159,22 +149,23 @@ std::string csv_export_widgets::to_csv_line(const entt::handle &in) {
   comment k_comm{};
   if (auto l_c = in.try_get<std::vector<comment>>(); l_c)
     k_comm = l_c->empty() ? l_c->front() : comment{};
+  table_line l_line {
+    g_reg()->ctx<project>().p_name,
+        magic_enum::enum_name(k_ass.p_department),
+        (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
+        (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
+        (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
+        (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s),
+        k_ass.p_user,
+        fmt::format(R"("{}")", start_time.show_str()),
+        fmt::format(R"("{}")", end_time.show_str()),
+        fmt::format("{:3f}", k_time.count()),
+        fmt::format("{}", k_comm.get_comment()),
+        fmt::to_string(FSys::exists(l_file_path)),
+        l_file_path.generic_string()
+  }
 
-  l_r << g_reg()->ctx<project>().p_name << ","
-      << magic_enum::enum_name(k_ass.p_department) << ","
-      << (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s) << ","
-      << (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s) << ","
-      << (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s) << ","
-      << (in.all_of<assets>() ? in.get<assets>().p_path.generic_string() : ""s) << ","
-      << k_ass.p_user << ","
-      << fmt::format(R"("{}")", start_time.show_str()) << ","
-      << fmt::format(R"("{}")", end_time.show_str()) << ","
-      << fmt::format("{:3f}", k_time.count()) << ","
-      << fmt::format("{}", k_comm.get_comment()) << ","
-      << fmt::to_string(FSys::exists(l_file_path)) << ","
-      << l_file_path.generic_string();
-
-  return l_r.str();
+  return l_line;
 }
 
 time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {

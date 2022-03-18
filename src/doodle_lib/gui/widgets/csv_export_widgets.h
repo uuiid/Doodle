@@ -11,7 +11,7 @@ namespace gui {
 class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
-
+  using table_line = std::array<std::string, 14>;
   /**
    * @brief Get the user next time object 获取下一次人物提交时的实体文件
    *
@@ -23,9 +23,9 @@ class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
    * @brief 导出单行使用的函数
    *
    * @param in 传入的一行实体
-   * @return std::string 返回的一行
+   * @return table_line 返回的一行
    */
-  std::string to_csv_line(const entt::handle& in);
+  table_line to_csv_line(const entt::handle& in);
   /**
    * @brief 导出单张表使用的函数
    *
