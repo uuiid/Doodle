@@ -120,7 +120,7 @@ std::string project_config::base_config::get_current_find_icon_regex_() {
   std::string l_regex{};
   switch (core_set::getSet().get_department_enum()) {
     case department::modle:
-      l_regex = project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex;
+      // l_regex = project::get_current().get_or_emplace<project_config::model_config>().find_icon_regex;
       break;
 
     default:
@@ -134,7 +134,7 @@ std::vector<std::string> project_config::base_config::get_assets_paths() {
   std::vector<std::string> list;
   switch (core_set::getSet().get_department_enum()) {
     case department::modle:
-      list = project::get_current().get_or_emplace<project_config::model_config>().assets_list;
+      // list = project::get_current().get_or_emplace<project_config::model_config>().assets_list;
       break;
 
     default:
@@ -144,5 +144,23 @@ std::vector<std::string> project_config::base_config::get_assets_paths() {
 
   return list;
 }
-project_config::base_config::base_config() =default;
+project_config::base_config::base_config() = default;
+
+void to_json(nlohmann::json& j, const base_config& p) {
+  j["find_icon_regex"]      = p.find_icon_regex;
+  j["assets_list"]          = p.assets_list;
+  j["vfx_cloth_sim_path"]   = p.vfx_cloth_sim_path;
+  j["export_group"]         = p.export_group;
+  j["cloth_proxy_"]         = p.cloth_proxy_;
+  j["simple_module_proxy_"] = p.simple_module_proxy_;
+}
+void from_json(const nlohmann::json& j, base_config& p) {
+  j.at("find_icon_regex").get_to(p.find_icon_regex);
+  j.at("assets_list").get_to(p.assets_list);
+  j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
+  j.at("export_group").get_to(p.export_group);
+  j.at("cloth_proxy_").get_to(p.cloth_proxy_);
+  j.at("simple_module_proxy_").get_to(p.simple_module_proxy_);
+}
+
 }  // namespace doodle

@@ -15,6 +15,7 @@
 #include <metadata/metadata_cpp.h>
 #include <metadata/image_icon.h>
 #include <metadata/importance.h>
+#include <metadata/organization.h>
 #include <doodle_lib/lib_warp/entt_warp.h>
 // clang-format on
 
@@ -145,10 +146,12 @@ bool database::is_install() const {
                              assets_file,                  \
                              time_point_wrap,              \
                              comment,                      \
-                             project_config::cloth_config, \
-                             project_config::model_config, \
+                             project_config::base_config,  \ 
                              image_icon,                   \
-                             importance
+                             importance,                   \
+                             organization
+
+                             
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
   /// 转换序列化数据
