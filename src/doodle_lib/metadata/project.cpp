@@ -98,18 +98,6 @@ FSys::path project::make_path(const FSys::path& in_path) const {
   return path;
 }
 
-organization& project::current_organization() const {
-  auto&& l_name = core_set::getSet().organization_name;
-  chick_true<doodle_error>(has_organization(), DOODLE_LOC, "缺失 {} 部门配置", l_name);
-  return make_handle(*this)
-      .get<organization_list>()
-      .config_list[l_name];
-}
-bool project::has_organization() const {
-  auto& list = make_handle(*this).get<organization_list>().config_list;
-  auto l_it  = list.find(core_set::getSet().organization_name);
-  return l_it != list.end();
-}
 bool project::has_prj() {
   if (auto l_rot = g_reg()->try_ctx<database::ref_data>(); l_rot) {
     auto& l_ref = g_reg()->ctx<database::ref_data>();

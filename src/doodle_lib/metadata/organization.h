@@ -34,10 +34,6 @@ class organization {
   /// @copydoc organization(organization &&in_r)
   organization &operator=(const organization &in_r) noexcept;
 
-  static organization &get_current_organization();
-
-  project_config::base_config &get_config() const;
-
   bool operator==(const organization &in_rhs) const;
   bool operator!=(const organization &in_rhs) const;
   bool operator<(const organization &in_rhs) const;

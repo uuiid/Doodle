@@ -26,13 +26,13 @@ class DOODLELIB_API base_config_edit : public edit_interface {
   void init_(const entt::handle &in) override;
   void save_(const entt::handle &in) const override;
 
+  void set_config_init(const entt::handle &in, const std::string &in_name);
+
  public:
   base_config_edit();
   ~base_config_edit();
   void render(const entt::handle &in) override;
 };
-
-
 
 // class DOODLELIB_API modle_config_edit : public edit_interface{
 //  private:

@@ -39,9 +39,6 @@ class DOODLELIB_API project {
 
   [[nodiscard]] std::string short_str() const;
 
-  [[nodiscard]] organization& current_organization() const;
-  [[nodiscard]] bool has_organization() const;
-
   static entt::handle get_current();
   static bool has_prj();
 

@@ -13,22 +13,6 @@ organization::organization(std::string in_org_p)
 }
 organization::~organization() = default;
 
-organization& organization::get_current_organization() {
-  static organization def_value{};
-  if (project::has_prj()) {
-    auto& list = project::get_current().get<organization_list>().config_list;
-    auto l_it  = list.find(core_set::getSet().organization_name);
-    if (l_it != list.end()) {
-      return l_it->second;
-    }
-  }
-  return def_value;
-}
-
-project_config::base_config& organization::get_config() const {
-  return *p_config;
-}
-
 bool organization::operator==(const organization& in_rhs) const {
   return org_p == in_rhs.org_p;
 }

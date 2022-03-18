@@ -36,7 +36,7 @@ void comm_maya_tool::init() {
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
   if (project::has_prj()) {
-    p_text = organization::get_current_organization().get_config().vfx_cloth_sim_path.generic_string();
+    p_text = project::get_current().get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   }
   g_reg()->set<comm_maya_tool&>(*this);
 }
