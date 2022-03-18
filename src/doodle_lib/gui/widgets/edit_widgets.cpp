@@ -297,6 +297,25 @@ class time_edit : public gui::edit_interface {
 };
 
 namespace gui {
+class command_edit : public edit_interface {
+  gui_cache<std::string> p_command;
+
+ public:
+  command_edit()
+      : p_command("备注"s, ""s) {}
+  void init_(const entt::handle &in) override {
+    if (in.any_of<comment>())
+      p_command.data = in.get<comment>().get_comment();
+  }
+  void render(const entt::handle &in) override {
+    if (ImGui::InputText(*p_command.gui_name, &p_command.data)) {
+      set_modify(true);
+    }
+  }
+  void save_(const entt::handle &in) const override {
+    in.emplace_or_replace<comment>(p_command.data);
+  }
+};
 
 class add_assets_for_file : public base_render {
   void add_time(const entt::handle &in_handle, const FSys::path &in_path) {
@@ -504,6 +523,7 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
+  p_i->p_edit.emplace_back("备注"s, std::make_unique<gui::command_edit>());
   auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<gui::assets_edit>()).data.get();
 
   p_i->assets_edit = dynamic_cast<gui::assets_edit *>(l_edit);
