@@ -142,13 +142,7 @@ void ue4_project::create_shot_folder(const std::vector<entt::handle>& inShotList
   if (!FSys::exists(k_episodes_path))
     FSys::create_directory(k_episodes_path);
 
-  // auto k_dep = set.get_department();
-  // //创建特效专用文件夹
-  // if (set.get_department_enum() == department::VFX) {
-  //   auto p_episodes_vfx_name = k_episodes_path / k_dep / set.get_user_en();
-  //   if (!FSys::exists(p_episodes_vfx_name))
-  //     FSys::create_directories(p_episodes_vfx_name);
-  // }
+  // @todo 创建特效专用文件夹
 
   auto k_tmp_file_path = core_set::getSet().get_cache_root("ue4_lev") / boost::uuids::to_string(core_set::getSet().get_uuid()).append(".py");
 
