@@ -180,14 +180,33 @@ class shot_edit : public gui::edit_interface {
   }
 };
 class assets_file_edit : public gui::edit_interface {
+  class fun_cache {
+   public:
+    bool select;
+    std::function<void(assets_file &l_ass)> patch;
+  };
+
  public:
-  gui::gui_cache<std::string, gui::gui_cache_select> p_path_cache;
-  gui::gui_cache<std::string, gui::gui_cache_select> p_name_cache;
-  gui::gui_cache<std::int32_t, gui::gui_cache_select> p_version_cache;
+  gui::gui_cache<std::string, fun_cache> p_path_cache;
+  gui::gui_cache<std::string, fun_cache> p_name_cache;
+  gui::gui_cache<std::int32_t, fun_cache> p_version_cache;
   assets_file_edit()
       : p_path_cache("路径"s, ""s),
         p_name_cache("名称"s, ""s),
-        p_version_cache("版本"s, 0){};
+        p_version_cache("版本"s, 0) {
+    p_path_cache.patch = [this](assets_file &l_ass) {
+      l_ass.path          = p_path_cache.data;
+      p_path_cache.select = false;
+    };
+    p_name_cache.patch = [this](assets_file &l_ass) {
+      l_ass.p_ShowName    = p_name_cache;
+      p_name_cache.select = false;
+    };
+    p_version_cache.patch = [this](assets_file &l_ass) {
+      l_ass.p_version        = p_version_cache;
+      p_version_cache.select = false;
+    };
+  };
 
   void init_(const entt::handle &in) override {
     if (in.all_of<assets_file>()) {
@@ -214,20 +233,15 @@ class assets_file_edit : public gui::edit_interface {
     }
   }
   void save_(const entt::handle &in) const override {
-    in.patch<assets_file>([this](assets_file &l_ass) {
-      if (p_path_cache.select) {
-        l_ass.path          = p_path_cache.data;
-        p_path_cache.select = false;
-      }
-      if (p_name_cache.select) {
-        l_ass.p_ShowName    = p_name_cache;
-        p_name_cache.select = false;
-      }
-      if (p_version_cache.select) {
-        l_ass.p_version        = p_version_cache;
-        p_version_cache.select = false;
-      }
-    });
+    if (p_path_cache.select) {
+      in.patch<assets_file>(p_path_cache.patch);
+    }
+    if (p_name_cache.select) {
+      in.patch<assets_file>(p_name_cache.patch);
+    }
+    if (p_version_cache.select) {
+      in.patch<assets_file>(p_version_cache.patch);
+    }
   }
 };
 
