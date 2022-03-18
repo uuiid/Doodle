@@ -41,6 +41,7 @@ class DOODLELIB_API project {
   [[nodiscard]] std::string short_str() const;
 
   static entt::handle get_current();
+  static entt::handle has_prj();
 
   bool operator<(const project& in_rhs) const;
   bool operator>(const project& in_rhs) const;
