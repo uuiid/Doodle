@@ -149,9 +149,9 @@ bool database::is_install() const {
                              project_config::base_config,  \ 
                              image_icon,                   \
                              importance,                   \
-                             organization
+                             organization_list
 
-                             
+
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
   /// 转换序列化数据
