@@ -44,6 +44,7 @@ find_package(Boost 1.75 REQUIRED COMPONENTS
         locale
         iostreams
         program_options
+        contract
         )
 
 find_package(Catch2 CONFIG)
