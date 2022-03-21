@@ -9,6 +9,8 @@
 #include <thread_pool/process_message.h>
 #include <generate/core/metadatatab_sql.h>
 #include <core/doodle_lib.h>
+#include <core/init_register.h>
+
 #include <core/status_info.h>
 
 #include <doodle_lib/core/core_sig.h>
@@ -510,4 +512,15 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                                             p_i->need_updata.empty() &&
                                             p_i->need_delete.empty());
 }
+
+class [[maybe_unused]] init_database_abs
+    : public init_register::registrar<init_database_abs> {
+ public:
+  constexpr static const std::int32_t priority{1};
+  init_database_abs() = default;
+  void operator()() const {
+    g_main_loop().attach<database_task_obs>();
+  }
+};
+
 }  // namespace doodle

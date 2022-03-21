@@ -6,10 +6,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 //#include <opencv2/core/directx.hpp>
-
 #include <metadata/project.h>
 #include <metadata/image_icon.h>
 #include <core/core_set.h>
+#include <core/init_register.h>
+#include <long_task/process_pool.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
 
@@ -227,4 +228,58 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 }
 
 image_loader::~image_loader() = default;
+
+class [[maybe_unused]] image_loader::init_image_loader
+    : public init_register::registrar<init_image_loader> {
+ public:
+  constexpr static const std::int32_t priority{2};
+  init_image_loader(){};
+  void operator()() const {
+    g_main_loop().attach<one_process_t>([]() {
+      image_loader l_loader{};
+      image_loader::cache l_cache{};
+      {
+        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+        double fontScale = 1;
+        int thickness    = 2;
+        int baseline     = 0;
+        {
+          /// @brief 加载默认图片
+          auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
+          cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+
+          cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
+                            (k_mat.rows + textSize.height) * 0.5);
+
+          cv::putText(k_mat, "no", textOrg, fontFace, fontScale,
+                      {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+          auto k_def            = l_loader.cv_to_d3d(k_mat);
+          l_cache.default_image = k_def;
+        }
+      }
+
+      {
+        int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+        double fontScale = 1;
+        int thickness    = 2;
+        int baseline     = 0;
+        {
+          /// @brief 加载错误图片
+          auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
+          cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+
+          cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
+                            (k_mat.rows + textSize.height) * 0.5);
+
+          cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
+                      {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+          auto k_def          = l_loader.cv_to_d3d(k_mat);
+          l_cache.error_image = k_def;
+        }
+      }
+      g_reg()->set<image_loader::cache>(l_cache);
+    });
+  }
+};
+
 }  // namespace doodle

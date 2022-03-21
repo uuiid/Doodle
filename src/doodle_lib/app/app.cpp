@@ -272,9 +272,6 @@ void app::load_back_end() {
       })
       .then<one_process_t>([]() {
         init_register::begin_init();
-        g_main_loop().attach<database_task_obs>();
-        g_main_loop().attach<short_cut>();
-        image_loader{};
       });
 }
 
