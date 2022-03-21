@@ -151,8 +151,8 @@ app::app(const win::wnd_instance& in_instance)
   }
 
   //  ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simhei.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  io.Fonts->AddFontFromFileTTF(doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
   g_main_loop().attach<one_process_t>([this]() {
     this->load_windows();

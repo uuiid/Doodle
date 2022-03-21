@@ -4,13 +4,11 @@
 
 #pragma once
 #include <string>
-namespace doodle {
-namespace doodle_config {
+namespace doodle::doodle_config {
 constexpr const std::string_view doodle_db_name{".doodle_db"};
 constexpr const std::string_view ue_path_obj{"Engine/Binaries/Win64/UE4Editor.exe"};
 constexpr const std::string_view drop_imgui_id{"drop_imgui_id"};
 constexpr const std::string_view drop_handle_list{"drop_handle_list"};
 constexpr const std::size_t rand_block{256};
-
-}  // namespace doodle_config
-}  // namespace doodle
+constexpr const std::string_view font_default{R"(C:/Windows/Fonts/simhei.ttf)"};
+}  // namespace doodle::doodle_config
