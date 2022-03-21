@@ -7,7 +7,7 @@
 #include <boost/contract.hpp>
 
 namespace doodle {
-FSys::path image_icon::image_root(const entt::handle& in_handle) {
+FSys::path image_icon::image_root(const entt::handle& in_handle) const {
   FSys::path result;
   boost::contract::check l_c =
       boost::contract::public_function(this)

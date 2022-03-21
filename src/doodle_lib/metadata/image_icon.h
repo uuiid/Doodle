@@ -23,7 +23,7 @@ class DOODLELIB_API image_icon {
   std::shared_ptr<void> image;
 
   cv::Size2d size2d_;
-  FSys::path image_root(const entt::handle &in_handle);
+  FSys::path image_root(const entt::handle &in_handle) const;
 
  private:
   friend void to_json(nlohmann::json &j, const image_icon &p);
