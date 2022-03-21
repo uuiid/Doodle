@@ -8,6 +8,7 @@
 
 namespace doodle {
 class DOODLELIB_API image_loader {
+ private:
   class impl;
   std::unique_ptr<impl> p_i;
 
