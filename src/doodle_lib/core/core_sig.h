@@ -10,6 +10,11 @@ namespace doodle {
 class DOODLELIB_API core_sig {
  public:
   /**
+   * @brief 软件初始化完成
+   */
+  boost::signals2::signal<void()> init_end;
+
+  /**
    * @brief 开始打开项目时发出的信号
    */
   boost::signals2::signal<void(const FSys::path&)> project_begin_open;

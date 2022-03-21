@@ -13,6 +13,7 @@
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
+#include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/core/init_register.h>
 
 #include <doodle_lib/core/program_options.h>
@@ -155,8 +156,11 @@ app::app(const win::wnd_instance& in_instance)
   //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   io.Fonts->AddFontFromFileTTF(doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
 
-  g_main_loop().attach<one_process_t>([this]() {
-    this->load_windows();
+  g_reg()->ctx<core_sig>().init_end.connect([this]() {
+    g_main_loop().attach<one_process_t>([this]() {
+      this->load_windows();
+      core_set_init{}.init_project(this->options_->p_project_path);
+    });
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
@@ -267,11 +271,9 @@ app::~app() {
 void app::load_back_end() {
   g_main_loop()
       .attach<null_process_t>()
-      .then<one_process_t>([this]() {
-        core_set_init{}.init_project(this->options_->p_project_path);
-      })
       .then<one_process_t>([]() {
         init_register::begin_init();
+
       });
 }
 

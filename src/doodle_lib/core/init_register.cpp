@@ -1,4 +1,5 @@
 #include "init_register.h"
+#include <core/core_sig.h>
 #include <long_task/process_pool.h>
 namespace doodle {
 
@@ -18,6 +19,7 @@ void init_register::begin_init() {
   }
   l_then.then<one_process_t>([&]() {
     DOODLE_LOG_INFO("结束初始化");
+    g_reg()->ctx<core_sig>().init_end();
   });
 }
 init_register::init_register()  = default;
