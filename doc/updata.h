@@ -625,4 +625,5 @@
  *
  * @subsubsection updata_log_3418 版本3.4.18
  * @li 视频合成添加中文支持
+ * @li 更新版本兼容性
  */
