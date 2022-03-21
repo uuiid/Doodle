@@ -513,7 +513,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                                             p_i->need_delete.empty());
 }
 
-class [[maybe_unused]] init_database_abs
+class init_database_abs
     : public init_register::registrar<init_database_abs> {
  public:
   constexpr static const std::int32_t priority{1};
@@ -522,5 +522,4 @@ class [[maybe_unused]] init_database_abs
     g_main_loop().attach<database_task_obs>();
   }
 };
-
 }  // namespace doodle

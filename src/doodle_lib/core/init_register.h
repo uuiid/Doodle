@@ -8,34 +8,49 @@
 namespace doodle {
 
 class init_register {
+  std::multimap<std::int32_t,
+                std::function<void()>>
+      init_p;
+
  public:
-  static std::multimap<std::int32_t,
-                       std::function<void()>>&
+  std::multimap<std::int32_t,
+                std::function<void()>>&
   registered_functions();
 
-  static void begin_init();
+  void begin_init();
 
   template <class T>
   struct registrar {
-    friend T;
-
-    static bool register_() {
+   private:
+    static T& register_() {
       const auto l_priority = T::priority;
-      registered_functions().emplace(l_priority, T{});
-      return true;
+      static T l_t{};
+      (void)registered;
+      instance().registered_functions().insert(
+          std::make_pair(l_priority, [&]() { l_t(); }));
+      return l_t;
     }
-    [[maybe_unused]] static bool registered;
+
+   public:
+    friend T;
+    static T& getInstance() {
+      return register_();
+    }
+    inline static T& registered = getInstance();
+
+    registrar() { (void)registered; }
 
    private:
-    registrar() { (void)registered; }
   };
 
  private:
- public:
   init_register();
+
+ public:
   virtual ~init_register();
+  static init_register& instance() noexcept;
 };
-template <typename T>
-bool init_register::registrar<T>::registered =
-    init_register::registrar<T>::register_();
+// template <typename T>
+// T& init_register::registrar<T>::registered =
+//     init_register::registrar<T>::getInstance();
 }  // namespace doodle

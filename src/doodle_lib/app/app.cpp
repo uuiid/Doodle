@@ -272,8 +272,8 @@ void app::load_back_end() {
   g_main_loop()
       .attach<null_process_t>()
       .then<one_process_t>([]() {
-        init_register::begin_init();
-
+        init_register::instance().begin_init();
+        short_cut{};
       });
 }
 

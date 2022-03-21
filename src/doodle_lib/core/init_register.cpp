@@ -4,8 +4,7 @@
 namespace doodle {
 
 std::multimap<std::int32_t, std::function<void()>>& init_register::registered_functions() {
-  static std::multimap<std::int32_t, std::function<void()>> rel{};
-  return rel;
+  return init_p;
 }
 void init_register::begin_init() {
   auto l_then = g_main_loop().attach<one_process_t>([]() {
@@ -21,6 +20,10 @@ void init_register::begin_init() {
     DOODLE_LOG_INFO("结束初始化");
     g_reg()->ctx<core_sig>().init_end();
   });
+}
+init_register& init_register::instance() noexcept {
+  static init_register l_r{};
+  return l_r;
 }
 init_register::init_register()  = default;
 init_register::~init_register() = default;
