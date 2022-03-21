@@ -21,7 +21,7 @@ class init_register {
 
     static bool register_() {
       const auto l_priority = T::priority;
-      registered_functions().insert(l_priority, T{});
+      registered_functions().emplace(l_priority, T{});
       return true;
     }
     [[maybe_unused]] static bool registered;

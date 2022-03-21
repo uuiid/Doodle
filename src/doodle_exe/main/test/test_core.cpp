@@ -422,9 +422,10 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
 #include <doodle_lib/core/init_register.h>
 class test_init_impl : public init_register::registrar<test_init_impl> {
  public:
+  constexpr static const std::int32_t priority{1};
   test_init_impl(){};
-  void operator()() {
-    DOODLE_LOG_INFO("初始化注册完成");
+  void operator()() const {
+    std::cout << ("初始化注册完成");
   }
 };
 
@@ -432,6 +433,7 @@ class test_init_ : public app {
  public:
 };
 TEST_CASE_METHOD(test_init_, "test_init_") {
+  run();
 }
 
 //#include <boost/algorithm/string.hpp>
