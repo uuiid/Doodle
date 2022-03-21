@@ -16,6 +16,7 @@ set(
         core/image_loader.h
         core/core_sig.h
         core/status_info.h
+        core/init_register.h
 
 
         exception/exception.h
@@ -127,6 +128,7 @@ set(
         core/image_loader.cpp
         core/core_sig.cpp
         core/status_info.cpp
+        core/init_register.cpp
 
 
         file_warp/maya_file.cpp
