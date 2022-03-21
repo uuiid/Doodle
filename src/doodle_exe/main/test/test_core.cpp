@@ -157,7 +157,7 @@ TEST_CASE_METHOD(test_path_2, "test ranges") {
                               std::cout << in_file << std::endl;
                               return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
                             });
-  if(it !=  FSys::directory_iterator{})
+  if (it != FSys::directory_iterator{})
     std::cout << (*it).path();
 }
 
@@ -417,6 +417,21 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
   REQUIRE(l_1.zoned_time_ == l_2.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
+}
+
+#include <doodle_lib/core/init_register.h>
+class test_init_impl : public init_register::registrar<test_init_impl> {
+ public:
+  test_init_impl(){};
+  void operator()() {
+    DOODLE_LOG_INFO("初始化注册完成");
+  }
+};
+
+class test_init_ : public app {
+ public:
+};
+TEST_CASE_METHOD(test_init_, "test_init_") {
 }
 
 //#include <boost/algorithm/string.hpp>
