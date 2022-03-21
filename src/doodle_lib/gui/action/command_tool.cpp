@@ -185,7 +185,7 @@ void comm_create_video::render() {
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_bounded_pool().attach<file_dialog>(l_ptr,
+    g_main_loop().attach<file_dialog>(l_ptr,
                                          "select dir")
         .then<one_process_t>([=]() {
           ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
@@ -215,7 +215,7 @@ void comm_create_video::render() {
   if (imgui::Button("创建视频")) {
     ranges::for_each(p_i->image_to_video_list,
                      [this](const impl::image_cache& in_cache) {
-                       g_main_loop().attach<image_to_move>(
+                       g_bounded_pool().attach<image_to_move>(
                                         in_cache.out_handle,
                                         in_cache.image_attr)
                            .then<one_process_t>([this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
