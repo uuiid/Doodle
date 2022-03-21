@@ -11,6 +11,9 @@
 
 #include <opencv2/opencv.hpp>
 #include <utility>
+
+#include <opencv2/freetype.hpp>
+
 namespace doodle {
 namespace details {
 namespace {
@@ -18,11 +21,16 @@ void watermark_add_image(cv::Mat &in_image, const image_watermark &in_watermark)
   auto l_image     = in_image;
   int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
   double fontScale = 1;
-  int thickness    = 2;
+  int thickness    = -1;
   int baseline     = 0;
-  auto textSize    = cv::getTextSize(in_watermark.p_text, fontFace,
-                                     fontScale, thickness, &baseline);
-  baseline += thickness;
+  int fontHeight   = 60;
+  int linestyle    = 8;
+  cv::Ptr<cv::freetype::FreeType2> ft2{cv::freetype::createFreeType2()};
+  ft2->loadFontData(std::string{doodle_config::font_default}, 0);
+  auto textSize = ft2->getTextSize(in_watermark.p_text, fontHeight,
+                                   thickness, &baseline);
+  if (thickness > 0)
+    baseline += thickness;
   textSize.width += baseline;
   textSize.height += baseline;
   // center the text
@@ -36,8 +44,9 @@ void watermark_add_image(cv::Mat &in_image, const image_watermark &in_watermark)
 
   cv::addWeighted(l_image, 0.7, in_image, 0.3, 0, in_image);
   // then put the text itself
-  cv::putText(in_image, in_watermark.p_text, textOrg, fontFace, fontScale,
-              in_watermark.rgba, thickness, cv::LineTypes::LINE_AA);
+  ft2->putText(in_image, in_watermark.p_text, textOrg,
+               fontHeight, in_watermark.rgba,
+               thickness, cv::LineTypes::LINE_AA, true);
 }
 }  // namespace
 
