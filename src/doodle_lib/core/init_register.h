@@ -9,32 +9,33 @@ namespace doodle {
 
 class init_register {
  public:
- private:
-  std::multimap<std::int32_t,
-                std::function<void()>>&
-  egistered_functions();
+  static std::multimap<std::int32_t,
+                       std::function<void()>>&
+  registered_functions();
 
-  template <std::int32_t PRIORITY, typename FUN>
-  class init_fun {
-    constexpr static const std::int32_t p_pri{PRIORITY};
+  static void begin_init();
 
-   public:
-    init_fun() {
-      (void)registered;
-    };
-    static bool register_fun() {
-      egistered_functions().insert(p_pri, FUN);
+  template <class T>
+  struct registrar {
+    friend T;
+
+    static bool register_() {
+      const auto l_priority = T::priority;
+      registered_functions().insert(l_priority, T{});
       return true;
-    };
-    static bool registered;
+    }
+    [[maybe_unused]] static bool registered;
+
+   private:
+    registrar() { (void)registered; }
   };
 
+ private:
  public:
   init_register();
   virtual ~init_register();
 };
-template <typename FUN>
-bool init_register::init_fun<FUN>::registered =
-    init_register::init_fun<FUN>::register_fun();
-
+template <typename T>
+bool init_register::registrar<T>::registered =
+    init_register::registrar<T>::register_();
 }  // namespace doodle
