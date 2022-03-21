@@ -385,7 +385,7 @@ bool qcloth_shape::set_cache_folder() const {
   string k_name{d_str{k_node.name(&k_s)}};
   DOODLE_CHICK(k_s);
   string k_namespace = p_ref_file.get<reference_file>().get_namespace();
-  auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project::cloth_config>();
+  auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project_config::base_config>();
 
   DOODLE_CHICK(k_s);
   string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
@@ -434,7 +434,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
 
   chick_ctx<root_ref>();
 
-  auto& k_ref = g_reg()->ctx<root_ref>().root_handle().get<project::cloth_config>();
+  auto& k_ref = g_reg()->ctx<root_ref>().root_handle().get<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 

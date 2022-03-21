@@ -146,7 +146,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "无法找到项目配置");
 
-  auto &k_cfg = k_prj.get_or_emplace<project::cloth_config>();
+  auto &k_cfg = k_prj.get_or_emplace<project_config::base_config>();
   FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
   DOODLE_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
@@ -216,7 +216,7 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   rename_material();
   MSelectionList k_select{};
   MStatus k_s{};
-  auto &k_cfg = get_prj().get<project::cloth_config>();
+  auto &k_cfg = get_prj().get<project_config::base_config>();
   k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
   DOODLE_CHICK(k_s);
 
@@ -326,7 +326,7 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
   chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
   MSelectionList k_select{};
   MStatus k_s{};
-  auto &k_cfg = get_prj().get<project::cloth_config>();
+  auto &k_cfg = get_prj().get<project_config::base_config>();
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_CHICK(k_s);
@@ -516,7 +516,7 @@ bool reference_file::has_ue4_group() const {
   MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
   MFnDependencyNode k_node{};
-  auto &k_cfg = get_prj().get_or_emplace<project::cloth_config>();
+  auto &k_cfg = get_prj().get_or_emplace<project_config::base_config>();
   for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
     k_s = k_node.setObject(k_objs[l_i]);
     DOODLE_CHICK(k_s);
