@@ -112,7 +112,7 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
                  l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<shot>()), 0.1, 0.1, rgb_default);
                if (in_handle.any_of<episodes>())
                  l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, rgb_default);
-               l_attribute.watermarks.emplace_back(core_set::getSet().get_user_en(), 0.1, 0.2, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::getSet().get_user(), 0.1, 0.2, rgb_default);
                l_attribute.watermarks.emplace_back(core_set::getSet().organization_name, 0.1, 0.25, rgb_default);
                return l_attribute;
              }) |

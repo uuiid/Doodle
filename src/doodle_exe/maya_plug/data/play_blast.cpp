@@ -208,7 +208,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
           cv::Scalar{25, 220, 2});
       /// \brief 制作人姓名
       k_image.watermarks.emplace_back(
-          core_set::getSet().get_user_en(),
+          core_set::getSet().get_user(),
           0.5, 0.91,
           cv::Scalar{25, 220, 2});
       l_handle_list.push_back(std::move(k_image));
