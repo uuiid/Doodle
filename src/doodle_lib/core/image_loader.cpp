@@ -233,7 +233,7 @@ class [[maybe_unused]] image_loader::init_image_loader
     : public init_register::registrar<init_image_loader> {
  public:
   constexpr static const std::int32_t priority{2};
-  init_image_loader(){};
+  init_image_loader()= default;
   void operator()() const {
     g_main_loop().attach<one_process_t>([]() {
       image_loader l_loader{};
