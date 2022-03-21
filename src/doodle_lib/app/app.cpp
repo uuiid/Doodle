@@ -273,7 +273,8 @@ void app::load_back_end() {
       .attach<null_process_t>()
       .then<one_process_t>([]() {
         init_register::instance().begin_init();
-        short_cut{};
+        /// \brief 在其他的编译单元中声明一下这个类, 防止优化
+        short_cut t{};
       });
 }
 
@@ -281,4 +282,5 @@ bool app::set_parent(win::wnd_handle in_parent) {
   ::SetWindowLongW(p_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CHILD);
   return ::SetParent(p_hwnd, in_parent) != nullptr;
 }
+
 }  // namespace doodle
