@@ -51,9 +51,7 @@ image_loader::image_loader()
     g_reg()->set<cache>();
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
-  chick_true<doodle_error>(g_reg()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto l_local_path = g_reg()->ctx<project>().make_path("image") / in_path;
-
+  const auto& l_local_path = in_path;
   if (exists(l_local_path) &&
       is_regular_file(l_local_path) &&
       (l_local_path.extension() == ".png" ||
@@ -67,8 +65,10 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
   }
   return {};
 }
-bool image_loader::load(image_icon& in_icon) {
-  auto [l_cv, l_sh] = load_mat(in_icon.path);
+bool image_loader::load(image_icon& in_icon, const FSys::path& in_root) {
+  auto l_local_path = in_root / in_icon.path;
+
+  auto [l_cv, l_sh] = load_mat(l_local_path);
 
   if (!l_cv.empty()) {
     in_icon.image   = l_sh;
@@ -81,7 +81,10 @@ bool image_loader::load(image_icon& in_icon) {
 }
 bool image_loader::load(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
-  load(in_handle.get<image_icon>());
+  chick_true<doodle_error>(in_handle.registry()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  auto l_local_path = in_handle.registry()->ctx<project>().make_path("image");
+
+  load(in_handle.get<image_icon>(), l_local_path);
   in_handle.patch<image_icon>();
 
   return false;

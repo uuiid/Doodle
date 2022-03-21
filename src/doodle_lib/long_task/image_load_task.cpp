@@ -7,6 +7,7 @@
 #include <metadata/image_icon.h>
 #include <thread_pool/thread_pool.h>
 #include <core/image_loader.h>
+#include <metadata/project.h>
 namespace doodle {
 class image_load_task::impl {
  public:
@@ -23,8 +24,8 @@ void image_load_task::init() {
     chick_true<doodle_error>(p_i->handle_.any_of<image_icon>(), DOODLE_LOC, "缺失图片组件");
     p_i->image_ = p_i->handle_.get<image_icon>();
     if (!p_i->image_.image) {
-      p_i->result_ = g_thread_pool().enqueue([this]() {
-        image_loader{}.load(p_i->image_);
+      p_i->result_ = g_thread_pool().enqueue([this, l_p = p_i->handle_.registry()->ctx<project>().p_path]() {
+        image_loader{}.load(p_i->image_, l_p);
       });
     }
   }
