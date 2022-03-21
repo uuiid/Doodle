@@ -136,9 +136,12 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("assets_list"))
     j.at("assets_list").get_to(p.assets_list);
   j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
-  j.at("export_group").get_to(p.export_group);
-  j.at("cloth_proxy_").get_to(p.cloth_proxy_);
-  j.at("simple_module_proxy_").get_to(p.simple_module_proxy_);
+  if (j.contains("export_group"))
+    j.at("export_group").get_to(p.export_group);
+  if (j.contains("cloth_proxy_"))
+    j.at("cloth_proxy_").get_to(p.cloth_proxy_);
+  if (j.contains("simple_module_proxy_"))
+    j.at("simple_module_proxy_").get_to(p.simple_module_proxy_);
 }
 
 }  // namespace doodle
