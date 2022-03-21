@@ -43,12 +43,55 @@ struct guard_win_ptr_delete {
 
 class image_loader::impl {
  public:
+  cache cache_p;
 };
 
 image_loader::image_loader()
-    : p_i() {
-  if (auto k_ctx = g_reg()->try_ctx<cache>(); !k_ctx)
-    g_reg()->set<cache>();
+    : p_i(std::make_unique<impl>()) {
+  if (auto k_ctx = g_reg()->try_ctx<cache>(); !k_ctx) {
+    {
+      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+      double fontScale = 1;
+      int thickness    = 2;
+      int baseline     = 0;
+      {
+        /// @brief 加载默认图片
+        auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
+        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+
+        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
+                          (k_mat.rows + textSize.height) * 0.5);
+
+        cv::putText(k_mat, "no", textOrg, fontFace, fontScale,
+                    {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+        auto k_def                 = cv_to_d3d(k_mat);
+        p_i->cache_p.default_image = k_def;
+      }
+    }
+
+    {
+      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+      double fontScale = 1;
+      int thickness    = 2;
+      int baseline     = 0;
+      {
+        /// @brief 加载错误图片
+        auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
+        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+
+        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
+                          (k_mat.rows + textSize.height) * 0.5);
+
+        cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
+                    {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+        auto k_def               = cv_to_d3d(k_mat);
+        p_i->cache_p.error_image = k_def;
+      }
+    }
+    g_reg()->set<cache>(p_i->cache_p);
+  } else {
+    p_i->cache_p = *k_ctx;
+  }
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
   const auto& l_local_path = in_path;
@@ -82,7 +125,8 @@ bool image_loader::load(image_icon& in_icon, const FSys::path& in_root) {
 bool image_loader::load(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
   chick_true<doodle_error>(in_handle.registry()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto l_local_path = in_handle.registry()->ctx<project>().make_path("image");
+  auto& l_image     = in_handle.get<image_icon>();
+  auto l_local_path = l_image.image_root(in_handle);
 
   load(in_handle.get<image_icon>(), l_local_path);
   in_handle.patch<image_icon>();
@@ -113,53 +157,14 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const {
 }
 
 cv::Mat image_loader::screenshot() {
-   return win::get_screenshot();
+  return win::get_screenshot();
 }
 
 std::shared_ptr<void> image_loader::default_image() const {
-  if (auto k_c = g_reg()->ctx<cache>().default_image; !k_c) {
-    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-    double fontScale = 1;
-    int thickness    = 2;
-    int baseline     = 0;
-    {
-      /// @brief 加载默认图片
-      auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
-      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
-
-      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
-                        (k_mat.rows + textSize.height) * 0.5);
-
-      cv::putText(k_mat, "no", textOrg, fontFace, fontScale,
-                  {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-      auto k_def                          = cv_to_d3d(k_mat);
-      g_reg()->ctx<cache>().default_image = k_def;
-      return k_def;
-    }
-  }
-  return g_reg()->ctx<cache>().default_image;
+  return p_i->cache_p.default_image;
 }
 std::shared_ptr<void> image_loader::error_image() const {
-  if (auto k_c = g_reg()->ctx<cache>().error_image; !k_c) {
-    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-    double fontScale = 1;
-    int thickness    = 2;
-    int baseline     = 0;
-    {
-      /// @brief 加载错误图片
-      auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
-      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
-
-      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
-                        (k_mat.rows + textSize.height) * 0.5);
-
-      cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
-                  {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-      auto k_def                        = cv_to_d3d(k_mat);
-      g_reg()->ctx<cache>().error_image = k_def;
-    }
-  }
-  return g_reg()->ctx<cache>().error_image;
+  return p_i->cache_p.error_image;
 }
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
   // 获得全局GPU渲染对象
