@@ -15,6 +15,7 @@
 #include <metadata/time_point_wrap.h>
 #include <metadata/comment.h>
 #include <metadata/importance.h>
+#include <boost/contract.hpp>
 
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
@@ -46,6 +47,19 @@ csv_export_widgets::csv_export_widgets()
 csv_export_widgets::~csv_export_widgets() = default;
 
 void csv_export_widgets::init() {
+  boost::contract::old_ptr<FSys::path> l_old_ptr = BOOST_CONTRACT_OLDOF(p_i->export_path.path);
+  boost::contract::check l_check                 = boost::contract::public_function(this)
+                                       .precondition([&]() {
+                                         BOOST_CONTRACT_CHECK(p_i->con.empty());
+                                       })
+                                       .old([&]() {
+
+                                       })
+                                       .postcondition([&]() {
+                                         BOOST_CONTRACT_CHECK(p_i->export_path.path.extension() == ".csv");
+                                         BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
+                                       });
+
   g_reg()->set<csv_export_widgets &>(*this);
   if (auto l_l = g_reg()->try_ctx<std::vector<entt::handle>>(); l_l)
     p_i->list = *l_l;
