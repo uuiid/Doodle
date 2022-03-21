@@ -75,15 +75,23 @@ namespace doodle {
  * @image html doodle_image/select_entt.gif 选择 width=90%
  *
  * @subsection 添加实体
+ * @note 在添加实体时, 最好打开扫描文件时间的选项, 计算时间修正提交时间
+ *
  * @image html doodle_image/add_entt.gif 选择 width=90%
  *
  * @subsection 编辑组件
  * @warning 编辑后需求使用 ctrl + s 键保存
+ * @note
+ * @li 在设置中, 需要填入自己所属的部门, 而不是选择,
+ * @li 在编辑中, 可以修正和调整提交的时间,  同时可以记录备注和等级等等
  *
  * @image html doodle_image/edit_entt.gif 选择 width=90%
  *
  * @subsection 导出为csv
  * @warning 导出时实体必须有文件路径组件, 所有不具有文件路径组件的实体都将被忽略
+ * @note
+ * @li 在导出为csv 中, 可以使用顶级的分类作为 项目名称, 然后在导出时去除分类的最上层
+ *
  *
  * @image html doodle_image/export_csv.gif 选择 width=90%
  *
