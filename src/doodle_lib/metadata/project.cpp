@@ -131,8 +131,10 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["simple_module_proxy_"] = p.simple_module_proxy_;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
-  j.at("find_icon_regex").get_to(p.find_icon_regex);
-  j.at("assets_list").get_to(p.assets_list);
+  if (j.contains("find_icon_regex"))
+    j.at("find_icon_regex").get_to(p.find_icon_regex);
+  if (j.contains("assets_list"))
+    j.at("assets_list").get_to(p.assets_list);
   j.at("vfx_cloth_sim_path").get_to(p.vfx_cloth_sim_path);
   j.at("export_group").get_to(p.export_group);
   j.at("cloth_proxy_").get_to(p.cloth_proxy_);

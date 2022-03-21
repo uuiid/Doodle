@@ -49,6 +49,7 @@ class DOODLELIB_API project {
   bool operator==(const project& in_rhs) const;
   bool operator!=(const project& in_rhs) const;
 
+
  private:
   friend void to_json(nlohmann::json& j, const project& p) {
     j["name"] = p.p_name;
@@ -67,6 +68,9 @@ class DOODLELIB_API base_config {
   friend void from_json(const nlohmann::json& j, base_config& p);
 
  public:
+  constexpr static std::uint32_t class_hash() {
+    return "class doodle::project::cloth_config"_hs;
+  }
  public:
   FSys::path vfx_cloth_sim_path;
 
