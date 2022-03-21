@@ -285,12 +285,13 @@ class scheduler {
    */
   void update(const Delta delta, void *data = nullptr) {
     std::lock_guard l_g{mutex_};
-    auto l_erase_benin      = std::remove_if(handlers.begin(), handlers.begin() + timiter_(handlers),
+    auto l_end         = handlers.begin() + timiter_(handlers);
+    auto l_erase_benin = std::remove_if(handlers.begin(), l_end,
                                         [&](typename decltype(this->handlers)::value_type &handler) {
-                                     return handler.update(handler, delta, data);
+                                          return handler.update(handler, delta, data);
                                         });
 
-    handlers.erase(l_erase_benin, handlers.end());
+    handlers.erase(l_erase_benin, l_end);
 
     std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
     handlers_next.clear();
