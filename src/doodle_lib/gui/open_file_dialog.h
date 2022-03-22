@@ -80,12 +80,28 @@ class DOODLELIB_API file_dialog : public process_t<file_dialog> {
 class DOODLELIB_API file_panel : public modal_window<file_panel> {
   class impl;
   class path_info;
+  enum class sort_by : std::int16_t {
+    none = 0,
+    name = 1,
+    size = 2,
+    time = 3,
+  };
+
   std::unique_ptr<impl> p_i;
 
   void scan_director(const FSys::path& in_dir);
+  void sort_file_attr(sort_by in_sort_by,  bool in_reverse = false);
+  void render_path(bool edit);
+  void render_list_path();
+  void render_buffer();
+  void render_filter();
+  void button_ok();
+  void button_cancel();
+
   class default_pwd {
    public:
     default_pwd();
+    default_pwd(FSys::path in_pwd);
     FSys::path pwd;
   };
 
@@ -119,22 +135,11 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
     dialog_args& use_default_pwd();
   };
   /**
-   * @brief 使用文件选择, 需要过滤器过滤器
-   * @param in_select_ptr 传入的指针
-   * @param in_title
-   * @param in_filters
-   * @param in_pwd
+   * @brief 创建文件选择对话框
+   *
+   * @param in_args 传入的参数类
    */
   explicit file_panel(const dialog_args& in_args);
-  /**
-   * @brief 使用目录选择
-   * @param out_select_ptr 传入的指针
-   * @param in_title 传入的标题
-   * @param in_pwd 打开时的路径
-   */
-  explicit file_panel(
-      const select_sig& out_select_ptr,
-      const std::string& in_title);
 
   [[maybe_unused]] [[nodiscard]] std::string& title() const;
   [[maybe_unused]] void init();

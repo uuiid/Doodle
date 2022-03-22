@@ -4,13 +4,14 @@
 
 #include "open_file_dialog.h"
 
+#include <boost/contract.hpp>
+
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <gui/widgets/file_browser.h>
 #include <gui/gui_ref/ref_base.h>
-namespace doodle {
 
-;
+namespace doodle {
 
 class file_dialog::impl {
  public:
@@ -176,14 +177,8 @@ class file_panel::impl {
         filter_list("过滤器"s, std::vector<std::string>{}),
         begin_fun_list(),
         is_ok(false),
-        p_flags_(){};
-
-  enum sort_by : std::int16_t {
-    none = 0,
-    name = 1,
-    size = 2,
-    time = 3,
-  };
+        p_flags_(),
+        sort_by_p(sort_by::none){};
 
   std::string title_p;
   gui::gui_cache_name_id drive_button;
@@ -200,9 +195,14 @@ class file_panel::impl {
   dialog_flags p_flags_;
 
   file_panel::select_sig out_;
+  FSys::path p_pwd;
+  sort_by sort_by_p;
 };
 
-file_panel::default_pwd::default_pwd() : pwd(FSys::current_path()) {}
+file_panel::default_pwd::default_pwd()
+    : default_pwd(FSys::current_path()) {}
+file_panel::default_pwd::default_pwd(FSys::path in_pwd)
+    : pwd(std::move(in_pwd)) {}
 
 file_panel::file_panel(const dialog_args &in_args)
     : p_i(std::make_unique<impl>()) {
@@ -212,29 +212,142 @@ file_panel::file_panel(const dialog_args &in_args)
   p_i->filter_list.data.emplace_back("*.*");
   p_i->filter_list.show_str = p_i->filter_list.data.front();
   /// \brief 设置标志
-  p_i->p_flags_ = in_args.p_flags;
+  p_i->p_flags_             = in_args.p_flags;
   /// \brief 设置输出
-  p_i->out_ = in_args.out_ptr;
+  p_i->out_                 = in_args.out_ptr;
+  p_i->p_pwd                = in_args.pwd;
+}
 
-}
-file_panel::file_panel(const file_panel::select_sig &out_select_ptr,
-                       const string &in_title) {
-}
 std::string &file_panel::title() const {
   return p_i->title_p;
 }
 void file_panel::init() {
+  this->scan_director(p_i->p_pwd);
 }
 void file_panel::succeeded() {
+  g_reg()->ctx_or_set<default_pwd>(p_i->p_pwd);
 }
 void file_panel::failed() {
 }
 void file_panel::aborted() {
 }
+
 void file_panel::update(const chrono::duration<chrono::system_clock::rep,
                                                chrono::system_clock::period> &,
                         void *data) {
+  for (auto &&i : p_i->begin_fun_list)
+    i();
+  p_i->begin_fun_list.clear();
+
+  /// 返回根目录按钮
+  if (ImGui::Button(*p_i->drive_button)) {
+    auto k_dir = win::list_drive();
+    p_i->path_list.clear();
+    p_i->p_pwd.clear();
+    p_i->path_list = k_dir | ranges::view::transform([](auto &in_path) -> path_info {
+                       return path_info{in_path};
+                     }) |
+                     ranges::to_vector;
+  }
+  /// 输入路径按钮
+  ImGui::SameLine();
+  if (ImGui::Button(*p_i->edit_button.gui_name)) {
+    p_i->edit_button.data = true;
+  }
+
+  /// 渲染路径
+  this->render_path(p_i->edit_button.data);
+  /// 渲染文件列表
+  this->render_list_path();
+  /// 渲染缓冲区
+  this->render_buffer();
+  /// 完成按钮
+  this->button_ok();
+  /// 取消按钮
+  this->button_cancel();
+  /// 过滤器按钮
+  this->render_filter();
 }
+void file_panel::scan_director(const FSys::path &in_dir) {
+  // boost::contract::check l_check = boost::contract::public_function
+  if (!FSys::is_directory(in_dir))
+    return;
+
+  p_i->p_pwd        = in_dir;
+  p_i->select_index = 0;
+  p_i->buffer.data.clear();
+
+  p_i->path_list = ranges::make_subrange(
+                       FSys::directory_iterator{in_dir},
+                       FSys::directory_iterator{}) |
+                   ranges::views::transform([](const auto &in) {
+                     try {
+                       return path_info{in};
+                     } catch (const FSys::filesystem_error &err) {
+                       DOODLE_LOG_ERROR(error.what());
+                     }
+                   }) |  /// 过滤无效
+                   ranges::views::filter([](const auto &in_info) -> bool {
+                     return in_info;
+                   }) |  /// 过滤不符合过滤器的
+                   ranges::views::filter([this](const path_info &in_info) -> bool {
+                     /// 进行目录过滤
+                     if (p_i->p_flags_ ^ flags_Use_dir) {
+                       if (p_i->filter_list.show_str != "*.*") {
+                         return in_info.is_dir ||
+                                in_info.path.extension() == p_i->filter_list.show_str;
+                       }
+                     }
+
+                     return true;
+                   }) |
+                   ranges::to_vector;
+  sort_by_attr(p_i->sort_by_p);
+}
+
+void file_panel::sort_file_attr(sort_by in_sort_by) {
+  p_i->path_list |=
+      ranges::actions::sort(
+          [&](const path_info &in_l, const path_info &in_r) -> bool {
+            bool result;
+            switch (in_sort_by) {
+              case sort_by::name:
+                result = in_l.path.filename() < in_r.path.filename();
+                break;
+              case sort_by::size:
+                result = in_l.size < in_r.size;
+                break;
+              case sort_by::time:
+                result = in_l.last_time < in_r.last_time;
+                break;
+              default:
+                result = in_l < in_r;
+                break;
+            }
+            return result;
+          });
+  /// \brief 将目录和文件进行分区
+  ranges::stable_partition(
+      p_i->path_list,
+      [](const path_info &in) -> bool { return in.is_dir; });
+  if (in_reverse)
+    ranges::reverse(p_i->path_list);
+  p_i->select_index = 0;
+}
+
+void file_panel::render_path(bool edit) {
+}
+void file_panel::render_list_path() {
+}
+void file_panel::render_buffer() {
+}
+void file_panel::render_filter() {
+}
+void file_panel::button_ok() {
+}
+void file_panel::button_cancel() {
+}
+
 file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
     : out_ptr(std::move(in_out_ptr)),
       p_flags(),
@@ -243,30 +356,37 @@ file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
       pwd() {
   use_default_pwd();
 }
+
 file_panel::dialog_args &file_panel::dialog_args::set_use_dir(bool use_dir) {
   p_flags[0] = use_dir;
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::create_file_module(bool use_create) {
   p_flags[1] = use_create;
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::set_title(std::string in_title) {
   title = std::move(in_title);
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::set_filter(const std::vector<std::string> &in_filters) {
   filter = in_filters;
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::add_filter(const string &in_filter) {
   filter.emplace_back(in_filter);
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::set_pwd(const FSys::path &in_pwd) {
   pwd = in_pwd;
   return *this;
 }
+
 file_panel::dialog_args &file_panel::dialog_args::use_default_pwd() {
   pwd = g_reg()->ctx_or_set<default_pwd>().pwd;
   return *this;
