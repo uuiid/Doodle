@@ -32,14 +32,4 @@ void short_cut::update(const std::chrono::duration<std::chrono::system_clock::re
 }
 short_cut::~short_cut() = default;
 
-class init_short_cut
-    : public init_register::registrar<init_short_cut> {
- public:
-  constexpr static const std::int32_t priority{1};
-  init_short_cut(){};
-  void operator()() const {
-    g_main_loop().attach<short_cut>();
-  }
-};
-
 }  // namespace doodle
