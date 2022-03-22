@@ -142,11 +142,17 @@ class DOODLELIB_API modal_window : public process_t<modal_window<Panel>> {
       i();
     }
     begin_fun.clear();
+    if (!show)
+      This()->fail();
 
     dear::PopupModal{This()->title().data(), &show} &&
         [&]() {
           This()->update(in_dalta, in_data);
         };
+  }
+
+  void close() {
+    imgui::CloseCurrentPopup();
   }
 };
 }  // namespace doodle

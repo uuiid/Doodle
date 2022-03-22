@@ -90,26 +90,31 @@ class DOODLELIB_API file_panel : public modal_window<file_panel> {
   std::unique_ptr<impl> p_i;
 
   void scan_director(const FSys::path& in_dir);
-  void sort_file_attr(sort_by in_sort_by,  bool in_reverse = false);
+  void sort_file_attr(sort_by in_sort_by, bool in_reverse = false);
+  void set_select(std::size_t in_index);
   void render_path(bool edit);
   void render_list_path();
   void render_buffer();
   void render_filter();
   void button_ok();
   void button_cancel();
+  void generate_buffer(std::size_t in_index);
+  FSys::path get_select();
+  std::vector<FSys::path> get_selects();
 
   class default_pwd {
    public:
     default_pwd();
-    default_pwd(FSys::path in_pwd);
+    explicit default_pwd(FSys::path in_pwd);
     FSys::path pwd;
   };
 
  public:
-  using dialog_flags = std::bitset<2>;
+  using dialog_flags = std::bitset<3>;
 
   constexpr const static dialog_flags flags_Use_dir{0x1};
   constexpr const static dialog_flags flags_Create_Name{0x2};
+  constexpr const static dialog_flags flags_Multiple_Selection{0x4};
 
   using one_sig    = std::shared_ptr<FSys::path>;
   using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
