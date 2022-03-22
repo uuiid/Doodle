@@ -4,6 +4,7 @@
 
 #include "app_base.h"
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/init_register.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/program_options.h>
@@ -37,6 +38,7 @@ app_base::app_base()
   k_init.read_file();
   g_bounded_pool().timiter_ = core_set::getSet().p_max_thread;
   g_main_loop().attach<one_process_t>([this]() {
+    init_register::instance().reg_class();
     this->load_back_end();
   });
 }

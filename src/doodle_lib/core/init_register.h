@@ -17,7 +17,8 @@ class init_register {
                 std::function<void()>>&
   registered_functions();
 
-  void begin_init();
+  void reg_class();
+  void init_run();
 
   using reg_fun = void (*)();
   template <reg_fun Fun, std::int32_t priority_t>
@@ -44,7 +45,8 @@ class init_register {
 
   class base_registrar {
    public:
-    virtual ~base_registrar(){};
+    virtual ~base_registrar() = default;
+    ;
     virtual void init() const = 0;
   };
 

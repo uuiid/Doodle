@@ -6,7 +6,7 @@ namespace doodle {
 std::multimap<std::int32_t, std::function<void()>>& init_register::registered_functions() {
   return init_p;
 }
-void init_register::begin_init() {
+void init_register::reg_class() {
   auto l_then = g_main_loop().attach<one_process_t>([]() {
     DOODLE_LOG_INFO("开始反射注册");
   });
@@ -27,25 +27,26 @@ void init_register::begin_init() {
   l_then.then<one_process_t>([&]() {
     DOODLE_LOG_INFO("结束开始反射注册");
     g_reg()->ctx<core_sig>().init_end();
-
-    for (auto&& ref_ : entt::resolve()) {
-      bool is_ch{false};
-      for (auto&& l_base : ref_.base()) {
-        if (l_base == entt::resolve<base_registrar>()) {
-          is_ch = true;
-          break;
-        }
-      }
-      if (is_ch) {
-        auto l_i = ref_.construct();
-        l_i.cast<base_registrar&>().init();
-      }
-    }
   });
 }
 init_register& init_register::instance() noexcept {
   static init_register l_r{};
   return l_r;
+}
+void init_register::init_run() {
+  for (auto&& ref_ : entt::resolve()) {
+    bool is_ch{false};
+    for (auto&& l_base : ref_.base()) {
+      if (l_base == entt::resolve<base_registrar>()) {
+        is_ch = true;
+        break;
+      }
+    }
+    if (is_ch) {
+      auto l_i = ref_.construct();
+      l_i.cast<base_registrar&>().init();
+    }
+  }
 }
 init_register::init_register()  = default;
 init_register::~init_register() = default;

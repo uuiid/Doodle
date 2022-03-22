@@ -272,8 +272,7 @@ void app::load_back_end() {
   g_main_loop()
       .attach<one_process_t>([]() {
         g_main_loop().attach<short_cut>();
-        init_register::instance().begin_init();
-        /// \brief 在其他的编译单元中声明一下这个类, 防止优化
+        init_register::instance().init_run();
       });
 }
 
