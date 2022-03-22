@@ -14,84 +14,15 @@
 
 namespace doodle {
 
-class file_dialog::impl {
- public:
-  file_browser p_file_dialog;
-
-  /// 返回值
-  select_sig p_sig;
-};
-file_dialog::file_dialog(const file_dialog::select_sig &in_sig,
-                         const string &in_title,
-                         std::int32_t in_flags,
-                         const std::vector<string> &in_filters,
-                         const FSys::path &in_pwd)
-    : p_i(std::make_unique<impl>()) {
-  p_i->p_sig = in_sig;
-  p_i->p_file_dialog.set_flags(in_flags);
-  p_i->p_file_dialog.set_title(in_title);
-  p_i->p_file_dialog.set_filter(in_filters);
-  p_i->p_file_dialog.set_pwd_path(in_pwd);
-}
-file_dialog::file_dialog(const file_dialog::select_sig &in_function,
-                         const string &in_title)
-    : file_dialog(in_function,
-                  in_title,
-                  (in_function.index() == 1
-                       ? flags::ImGuiFileBrowserFlags_MultipleSelection
-                       : flags::ImGuiFileBrowserFlags_SelectDirectory) |
-                      flags::ImGuiFileBrowserFlags_SelectDirectory,
-                  {},
-                  FSys::current_path()) {
-}
-file_dialog::file_dialog(const file_dialog::select_sig &in_function,
-                         const string &in_title,
-                         const std::vector<string> &in_filters,
-                         const FSys::path &in_pwd)
-    : file_dialog(in_function,
-                  in_title,
-                  (in_function.index() == 1
-                       ? flags::ImGuiFileBrowserFlags_MultipleSelection
-                       : 0),
-                  in_filters,
-                  in_pwd) {
-}
-file_dialog::~file_dialog() = default;
-
-void file_dialog::init() {
-  p_i->p_file_dialog.open();
-}
-void file_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
-  p_i->p_file_dialog.render();
-  if (p_i->p_file_dialog.is_ok()) {
-    std::visit(entt::overloaded{
-                   [&](const one_sig &in_sig) -> void {
-                     *in_sig = p_i->p_file_dialog.get_select();
-                     this->succeed();
-                   },
-                   [&](const mult_sig &in_sig) -> void {
-                     *in_sig = p_i->p_file_dialog.get_selects();
-                     this->succeed();
-                   }},
-               p_i->p_sig);
-  }
-
-  if (!p_i->p_file_dialog.is_open()) {
-    this->fail();
-  }
-}
-void file_dialog::succeeded() {
-  p_i->p_file_dialog.close();
-}
-void file_dialog::failed() {
-  p_i->p_file_dialog.close();
-}
-void file_dialog::aborted() {
-  p_i->p_file_dialog.close();
-}
-
 class file_panel::path_info {
  public:
+  path_info() : path(),
+                is_dir(),
+                show_name(),
+                size(),
+                size_string(),
+                last_time(),
+                has_select(){};
   explicit path_info(const FSys::path &in_path)
       : path(in_path),
         is_dir(is_directory(in_path)),
@@ -174,7 +105,7 @@ class file_panel::impl {
         edit_input("##input_"),
         path_button_list(),
         path_list(),
-        buffer("##info"),
+        buffer("##info", ""s),
         filter_list("过滤器"s, std::vector<std::string>{}),
         begin_fun_list(),
         is_ok(false),
@@ -238,8 +169,10 @@ void file_panel::succeeded() {
              p_i->out_);
 }
 void file_panel::failed() {
+  g_reg()->set<default_pwd>(p_i->p_pwd);
 }
 void file_panel::aborted() {
+  g_reg()->set<default_pwd>(p_i->p_pwd);
 }
 
 void file_panel::update(const chrono::duration<chrono::system_clock::rep,
@@ -293,24 +226,27 @@ void file_panel::scan_director(const FSys::path &in_dir) {
                        FSys::directory_iterator{in_dir},
                        FSys::directory_iterator{}) |
                    ranges::views::transform([](const auto &in) {
+                     path_info l_info{};
                      try {
-                       return path_info{in};
+                       l_info = path_info{in};
                      } catch (const FSys::filesystem_error &err) {
                        DOODLE_LOG_ERROR(err.what());
                      }
+                     return l_info;
                    }) |  /// 过滤无效
                    ranges::views::filter([](const auto &in_info) -> bool {
                      return in_info;
                    }) |  /// 过滤不符合过滤器的
                    ranges::views::filter([this](const path_info &in_info) -> bool {
                      /// 进行目录过滤
-                     if (p_i->p_flags_[0]) {
+                     if (!p_i->p_flags_[0]) {
                        if (p_i->filter_list.show_str != "*.*") {
                          return in_info.is_dir ||
                                 in_info.path.extension() == p_i->filter_list.show_str;
                        }
+                     } else {
+                       return in_info.is_dir;
                      }
-
                      return true;
                    }) |
                    ranges::to_vector;
@@ -460,7 +396,9 @@ void file_panel::set_select(std::size_t in_index) {
                 ranges::views::slice(boost::numeric_cast<std::size_t>(
                                          std::min(in_index, p_i->select_index)),
                                      boost::numeric_cast<std::size_t>(
-                                         std::max(in_index, p_i->select_index))),
+                                         std::min(
+                                             std::max(in_index, p_i->select_index) + 1,
+                                             p_i->path_list.size()))),
             [](path_info &in_attr) {
               in_attr.has_select = true;
             });
@@ -568,6 +506,7 @@ file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
       title("get file"),
       pwd() {
   use_default_pwd();
+  p_flags[2] = out_ptr.index() == 1;
 }
 
 file_panel::dialog_args &file_panel::dialog_args::set_use_dir(bool use_dir) {

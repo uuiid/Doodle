@@ -27,9 +27,9 @@ bool comm_ass_ue4_create_shot::render() {
   imgui::SameLine();
   if (imgui::Button(p_show_str["选择"].c_str())) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop().attach<file_dialog>(l_ptr,
-                                      "打开文件路径",
-                                      string_list{".uproject"})
+    g_main_loop().attach<file_dialog>(file_dialog::dialog_args{l_ptr}
+                                          .set_title("打开文件路径"s)
+                                          .add_filter(".uproject"s))
         .then<one_process_t>(
             [this, l_ptr]() {
               p_ue4_prj_path = l_ptr->front().generic_string();

@@ -81,7 +81,9 @@ void main_menu_bar::menu_file() {
     k_h.emplace<project>();
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
-        .attach<file_dialog>(l_ptr, "选择目录"s)
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
+                                 .set_title("选择目录"s)
+                                 .set_use_dir())
         .then<one_process_t>([=]() {
           k_h.patch<project>([=](project &in) {
             in.p_path = *l_ptr;
@@ -96,9 +98,9 @@ void main_menu_bar::menu_file() {
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
-        .attach<file_dialog>(l_ptr,
-                             "选择文件"s,
-                             std::vector<std::string>{std::string{doodle_config::doodle_db_name}})
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
+                                 .set_title("选择文件")
+                                 .add_filter(std::string{doodle_config::doodle_db_name}))
         .then<one_process_t>([=]() {
           core::client l_c{};
           l_c.open_project(*l_ptr);
@@ -159,9 +161,9 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4项目插件")) {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
-        .attach<file_dialog>(l_ptr,
-                             "select_ue_project",
-                             string_list{".uproject"})
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
+                                 .set_title("select_ue_project"s)
+                                 .add_filter(".uproject"))
         .then<one_process_t>([=]() {
           toolkit::installUePath(*l_ptr);
         });

@@ -111,7 +111,7 @@ auto make_windows(Args&&... args) {
  * @tparam Panel 窗口内容渲染过程
  */
 template <class Panel>
-class DOODLELIB_API modal_window : public process_t<modal_window<Panel>> {
+class DOODLELIB_API modal_window {
  private:
   Panel* This() {
     return dynamic_cast<Panel*>(this);
@@ -136,14 +136,13 @@ class DOODLELIB_API modal_window : public process_t<modal_window<Panel>> {
    * @param in_dalta 传入的间隔时间
    * @param in_data 用户数据
    */
-  template <class delta_type>
-  [[maybe_unused]] void update(const delta_type& in_dalta, void* in_data) {
+  [[maybe_unused]] virtual void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) {
     for (auto&& i : begin_fun) {
       i();
     }
     begin_fun.clear();
-    if (!show)
-      This()->fail();
+    //    if (!show)
+    //      This()->fail();
 
     dear::PopupModal{This()->title().data(), &show} &&
         [&]() {

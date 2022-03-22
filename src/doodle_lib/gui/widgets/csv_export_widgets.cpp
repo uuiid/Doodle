@@ -90,7 +90,9 @@ void csv_export_widgets::update(const chrono::duration<
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<FSys::path>();
     g_main_loop()
-        .attach<file_dialog>(l_file, "选择目录")
+        .attach<file_dialog>(file_dialog::dialog_args{l_file}
+                                 .set_title("选择目录"s)
+                                 .set_use_dir())
         .then<one_process_t>([=]() {
           p_i->export_path.path = *l_file / "tmp.csv";
           p_i->export_path.data = p_i->export_path.path.generic_string();
