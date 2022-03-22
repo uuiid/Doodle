@@ -523,7 +523,7 @@ class database_task_init : public init_register::base_registrar {
 namespace {
 constexpr auto init_database_abs_l = []() {
   entt::meta<database_task_init>()
-      .type("doodle::database_task_init"_hs)
+      .type()
       .base<init_register::base_registrar>()
       .func<&database_task_init::init>("init"_hs);
 };

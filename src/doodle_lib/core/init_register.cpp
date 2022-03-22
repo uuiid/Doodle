@@ -52,7 +52,7 @@ init_register::~init_register() = default;
 namespace {
 constexpr auto meta_init_registrar_lab = []() {
   entt::meta<init_register::base_registrar>()
-      .type("doodle::init_register::base_registrar"_hs)
+      .type()
       .func<&init_register::base_registrar::init>("init"_hs);
 };
 class meta_init_registrar
