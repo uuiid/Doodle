@@ -16,7 +16,7 @@ foreach (_file_ IN LISTS doodle_test_list)
     add_executable(
             doodle_${_file_}
             ${_file_}
-            ../doodle.manifest
+            ../DoodleExe.manifest
             ../icon.ico
             ../win_exe.rc
             main.cpp

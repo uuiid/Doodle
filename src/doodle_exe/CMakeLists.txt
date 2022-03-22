@@ -5,7 +5,7 @@ add_executable(
         WIN32
         DoodleGui_fwd.h
         main/GUI/main.cpp
-        main/doodle.manifest
+        main/DoodleExe.manifest
         main/icon.ico
         main/win_exe.rc
 )
@@ -20,6 +20,7 @@ target_compile_definitions(DoodleExe
         PUBLIC
         #            _WIN32_WINNT=0x0A00
         #            WIN32_LEAN_AND_MEAN
+        ISOLATION_AWARE_ENABLED
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         # ENTT_API_IMPORT
         )
