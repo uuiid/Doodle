@@ -19,28 +19,33 @@ class init_register {
 
   void begin_init();
 
-  template <class T>
-  struct registrar {
+  using reg_fun = void (*)();
+  template <reg_fun Fun, std::int32_t priority_t>
+  struct registrar_lambda {
+    constexpr static const std::int32_t priority{priority_t};
+
    private:
-    static T& register_() {
-      const auto l_priority = T::priority;
-      static T l_t{};
+    static registrar_lambda& register_() {
+      static registrar_lambda l_t{};
       (void)registered;
       instance().registered_functions().insert(
-          std::make_pair(l_priority, [&]() { l_t(); }));
+          std::make_pair(priority, [&]() { Fun(); }));
       return l_t;
     }
 
    public:
-    friend T;
-    static T& getInstance() {
+    static registrar_lambda& getInstance() {
       return register_();
     }
-    inline static T& registered = getInstance();
+    inline static registrar_lambda& registered = getInstance();
 
-    registrar() { (void)registered; }
+    registrar_lambda() { (void)registered; }
+  };
 
-   private:
+  class base_registrar {
+   public:
+    virtual ~base_registrar(){};
+    virtual void init() const = 0;
   };
 
  private:

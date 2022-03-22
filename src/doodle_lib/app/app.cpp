@@ -270,8 +270,7 @@ app::~app() {
 }
 void app::load_back_end() {
   g_main_loop()
-      .attach<null_process_t>()
-      .then<one_process_t>([]() {
+      .attach<one_process_t>([]() {
         g_main_loop().attach<short_cut>();
         init_register::instance().begin_init();
         /// \brief 在其他的编译单元中声明一下这个类, 防止优化

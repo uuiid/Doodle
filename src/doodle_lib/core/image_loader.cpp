@@ -187,13 +187,9 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 }
 
 image_loader::~image_loader() = default;
-
-class init_image_loader
-    : public init_register::registrar<init_image_loader> {
+class image_loader_init : public init_register::base_registrar {
  public:
-  constexpr static const std::int32_t priority{2};
-  init_image_loader() = default;
-  void operator()() const {
+  void init() const override {
     g_main_loop().attach<one_process_t>([]() {
       image_loader l_loader{};
       image_loader::cache l_cache{};
@@ -240,5 +236,18 @@ class init_image_loader
     });
   }
 };
-//init_image_loader& init_image_loader::registered = init_image_loader::getInstance();
+
+namespace {
+
+constexpr auto reg_image_loader = []() {
+  entt::meta<image_loader_init>()
+      .type("doodle::image_loader_init"_hs)
+      .base<init_register::base_registrar>()
+      .func<&image_loader_init::init>("init"_hs);
+};
+
+class reg_image_loader
+    : public init_register::registrar_lambda<reg_image_loader, 2> {};
+}  // namespace
+
 }  // namespace doodle

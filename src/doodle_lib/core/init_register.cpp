@@ -8,17 +8,39 @@ std::multimap<std::int32_t, std::function<void()>>& init_register::registered_fu
 }
 void init_register::begin_init() {
   auto l_then = g_main_loop().attach<one_process_t>([]() {
-    DOODLE_LOG_INFO("开始初始化队列");
+    DOODLE_LOG_INFO("开始反射注册");
   });
-  for (auto&& i : registered_functions()) {
-    l_then = l_then.then<one_process_t>([&]() {
-      DOODLE_LOG_INFO("初始化优先级 {}", i.first);
-      i.second();
+  auto& l_map = registered_functions();
+  for (auto it = l_map.begin(), end = l_map.end();
+       it != end;
+       it = l_map.upper_bound(it->first)) {
+    DOODLE_LOG_INFO("初始化优先级 {}", it->first);
+    l_then = l_then.then<one_process_t>([key = it->first, this]() {
+      auto l_p = registered_functions().equal_range(key);
+      std::for_each(l_p.first, l_p.second,
+                    [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
+                      i.second();
+                    });
+      ;
     });
   }
   l_then.then<one_process_t>([&]() {
-    DOODLE_LOG_INFO("结束初始化");
+    DOODLE_LOG_INFO("结束开始反射注册");
     g_reg()->ctx<core_sig>().init_end();
+
+    for (auto&& ref_ : entt::resolve()) {
+      bool is_ch{false};
+      for (auto&& l_base : ref_.base()) {
+        if (l_base == entt::resolve<base_registrar>()) {
+          is_ch = true;
+          break;
+        }
+      }
+      if (is_ch) {
+        auto l_i = ref_.construct();
+        l_i.cast<base_registrar&>().init();
+      }
+    }
   });
 }
 init_register& init_register::instance() noexcept {
@@ -27,5 +49,13 @@ init_register& init_register::instance() noexcept {
 }
 init_register::init_register()  = default;
 init_register::~init_register() = default;
-
+namespace {
+constexpr auto meta_init_registrar_lab = []() {
+  entt::meta<init_register::base_registrar>()
+      .type("doodle::init_register::base_registrar"_hs)
+      .func<&init_register::base_registrar::init>("init"_hs);
+};
+class meta_init_registrar
+    : public init_register::registrar_lambda<meta_init_registrar_lab, 1> {};
+}  // namespace
 }  // namespace doodle

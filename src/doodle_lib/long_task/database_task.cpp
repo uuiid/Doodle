@@ -513,13 +513,22 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                                             p_i->need_delete.empty());
 }
 
-class init_database_abs
-    : public init_register::registrar<init_database_abs> {
+class database_task_init : public init_register::base_registrar {
  public:
-  constexpr static const std::int32_t priority{1};
-  init_database_abs() = default;
-  void operator()() const {
+  void init() const override {
     g_main_loop().attach<database_task_obs>();
   }
 };
+
+namespace {
+constexpr auto init_database_abs_l = []() {
+  entt::meta<database_task_init>()
+      .type("doodle::database_task_init"_hs)
+      .base<init_register::base_registrar>()
+      .func<&database_task_init::init>("init"_hs);
+};
+class init_database_abs
+    : public init_register::registrar_lambda<init_database_abs_l, 2> {};
+}  // namespace
+
 }  // namespace doodle
