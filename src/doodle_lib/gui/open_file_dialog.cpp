@@ -8,7 +8,6 @@
 #include <magic_enum.hpp>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
-#include <gui/widgets/file_browser.h>
 #include <gui/gui_ref/ref_base.h>
 #include <platform/win/list_drive.h>
 

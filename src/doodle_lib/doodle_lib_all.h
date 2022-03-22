@@ -27,7 +27,6 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/edit_widgets.h>
-#include <doodle_lib/gui/widgets/file_browser.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
 #include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_widget.h>
