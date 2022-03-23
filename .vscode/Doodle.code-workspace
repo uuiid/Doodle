@@ -229,7 +229,11 @@
 			"**/resource/**",
 			"**/.venv/**"
 		],
-		"todo-tree.tree.disableCompactFolders": true
+		"todo-tree.tree.disableCompactFolders": true,
+		"C_Cpp.autocompleteAddParentheses": true,
+		"C_Cpp.experimentalFeatures": "Enabled",
+		"redhat.telemetry.enabled": false,
+		"C_Cpp.errorSquiggles": "Enabled"
 	},
 	"launch": {
 		"version": "0.2.0",
