@@ -15,7 +15,7 @@
 namespace doodle {
 class authorization::impl {
   friend void to_json(nlohmann::json& j, const impl& p) {
-    j["time"] = p.l_time
+    j["time"] = p.l_time;
   }
   friend void from_json(const nlohmann::json& j, impl& p) {
     p.l_time = j.at("time").get<time_point_wrap>();
@@ -24,10 +24,7 @@ class authorization::impl {
  public:
   time_point_wrap l_time{};
 };
-authorization::authorization(FSys::path in_path)
-    : authorization(std::string{std::istreambuf_iterator(FSys::ifstream{in_path}),
-                                std::istreambuf_iterator<char>()}) {
-}
+
 authorization::authorization(std::string in_data)
     : p_i(std::make_unique<impl>()) {
   std::string ciphertext{in_data};

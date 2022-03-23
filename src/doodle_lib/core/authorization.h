@@ -11,7 +11,6 @@ class DOODLELIB_API authorization {
   std::unique_ptr<impl> p_i;
 
  public:
-  explicit authorization(FSys::path in_path);
   explicit authorization(std::string in_data);
   ~authorization();
 
