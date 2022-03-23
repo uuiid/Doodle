@@ -10,6 +10,7 @@
 
 #include <cryptopp/modes.h>
 #include <cryptopp/aes.h>
+#include <cryptopp/gcm.h>
 #include <cryptopp/filters.h>
 
 using namespace doodle;
@@ -27,6 +28,8 @@ TEST_CASE("Crypto_aes") {
   CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH], iv[CryptoPP::AES::BLOCKSIZE];
   memset(key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH);
   memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE);
+  std::string a_data{"a_data"};
+  const int TAG_SIZE    = 16;
 
   //
   // String and Sink setup
@@ -46,25 +49,50 @@ TEST_CASE("Crypto_aes") {
   //
   // Create Cipher Text
   //
-  CryptoPP::AES::Encryption aesEncryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
-  CryptoPP::CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
-  CryptoPP::StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(ciphertext));
-  stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
-  stfEncryptor.MessageEnd();
+  {
+    CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
+    aes_Encryption.SetKeyWithIV(key, CryptoPP::AES::DEFAULT_KEYLENGTH, iv, CryptoPP::AES::BLOCKSIZE);
+    CryptoPP::AuthenticatedEncryptionFilter l_authenticated_encryption_filter{
+        aes_Encryption,
+        new CryptoPP::StringSink{ciphertext},
+        false,
+        TAG_SIZE};
+
+    l_authenticated_encryption_filter.ChannelPut(CryptoPP::AAD_CHANNEL,
+                                                 (const byte*)a_data.data(), a_data.size());
+    l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
+
+    l_authenticated_encryption_filter.ChannelPut(CryptoPP::DEFAULT_CHANNEL,
+                                                 (const byte*)plaintext.data(), plaintext.size());
+    l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
+  }
+  //  ciphertext.clear();
+
+#ifdef DOODLE_
+  {
+    CryptoPP::AES::Encryption aesEncryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
+    CryptoPP::CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
+
+    CryptoPP::StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(ciphertext));
+    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
+    stfEncryptor.MessageEnd();
+  }
+#endif
 
   //
   // Dump Cipher Text
   //
   std::cout << "Cipher Text (" << ciphertext.size() << " bytes)" << std::endl;
 
-  for (int i = 0; i < ciphertext.size(); i++) {
-    std::cout << "0x" << std::hex << (0xFF & static_cast<CryptoPP::byte>(ciphertext[i])) << " ";
+  for (char i : ciphertext) {
+    std::cout << "0x" << std::hex << (0xFF & static_cast<CryptoPP::byte>(i)) << " ";
   }
 
   std::cout << std::endl
             << std::endl;
 
+#ifdef DOODLE_
   //
   // Decrypt
   //
@@ -74,6 +102,30 @@ TEST_CASE("Crypto_aes") {
   CryptoPP::StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decryptedtext));
   stfDecryptor.Put(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.size());
   stfDecryptor.MessageEnd();
+#endif
+  {
+    CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
+    l_decryption.SetKeyWithIV(key, CryptoPP::AES::DEFAULT_KEYLENGTH, iv, CryptoPP::AES::BLOCKSIZE);
+
+    const string& enc = ciphertext.substr(0, ciphertext.length() - TAG_SIZE);
+    const string& mac = ciphertext.substr(ciphertext.length() - TAG_SIZE);
+
+    assert(ciphertext.size() == enc.size() + mac.size());
+    assert(enc.size() == plaintext.size());
+    assert(TAG_SIZE == mac.size());
+
+    CryptoPP::AuthenticatedDecryptionFilter df{l_decryption, new CryptoPP::StringSink(decryptedtext),
+                                               CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
+                                                   CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
+                                               TAG_SIZE};
+
+    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const byte*)mac.data(), mac.size());
+    df.ChannelPut(CryptoPP::AAD_CHANNEL, (const byte*)a_data.data(), a_data.size());
+    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const byte*)enc.data(), enc.size());
+
+    df.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
+    df.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
+  }
 
   //
   // Dump Decrypted Text
