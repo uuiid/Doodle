@@ -21,7 +21,6 @@ void init_register::reg_class() {
                     [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
                       i.second();
                     });
-      ;
     });
   }
   l_then.then<one_process_t>([&]() {

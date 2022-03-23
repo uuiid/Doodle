@@ -272,7 +272,9 @@ void app::load_back_end() {
   g_main_loop()
       .attach<one_process_t>([]() {
         g_main_loop().attach<short_cut>();
-        init_register::instance().init_run();
+        g_reg()->ctx<core_sig>().init_end.connect([]() {
+          init_register::instance().init_run();
+        });
       });
 }
 
