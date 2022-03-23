@@ -6,6 +6,7 @@
 
 #include <doodle_lib/metadata/time_point_wrap.h>
 #include <boost/contract.hpp>
+#include <utility>
 
 #include <cryptopp/modes.h>
 #include <cryptopp/aes.h>
@@ -27,7 +28,7 @@ class authorization::impl {
 
 authorization::authorization(std::string in_data)
     : p_i(std::make_unique<impl>()) {
-  std::string ciphertext{in_data};
+  std::string ciphertext{std::move(in_data)};
   std::string decryptedtext{};
 
   {
