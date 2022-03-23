@@ -44,7 +44,9 @@ set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # 如果使用mysql mariadb  连接器则需要这个函数
 #fix_mariadb_plug(NAME doodle_lib)
-
+#string(TIMESTAMP doodle_time "(%Y_y/ %m/ %d_d) + %Hh +%Mmin+ %Ss" UTC)
+#
+#message("doodle_time=${doodle_time}")
 
 target_link_libraries(doodle_lib
         PUBLIC

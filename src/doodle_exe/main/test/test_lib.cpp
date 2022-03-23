@@ -91,7 +91,6 @@ TEST_CASE("Crypto_aes") {
 
   std::cout << std::endl
             << std::endl;
-
 #ifdef DOODLE_
   //
   // Decrypt
