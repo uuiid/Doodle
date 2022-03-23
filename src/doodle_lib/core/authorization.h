@@ -12,6 +12,7 @@ class DOODLELIB_API authorization {
 
  public:
   explicit authorization(FSys::path in_path);
+  explicit authorization(std::string in_data);
   ~authorization();
 
   bool is_expire() const;

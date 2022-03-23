@@ -25,18 +25,12 @@ class authorization::impl {
   time_point_wrap l_time{};
 };
 authorization::authorization(FSys::path in_path)
+    : authorization(std::string{std::istreambuf_iterator(FSys::ifstream{in_path}),
+                                std::istreambuf_iterator<char>()}) {
+}
+authorization::authorization(std::string in_data)
     : p_i(std::make_unique<impl>()) {
-  boost::contract::check l_c =
-      boost::contract::public_function(this)
-          .precondition([&]() {
-            chick_true<doodle_error>(!in_path.empty(), DOODLE_LOC, "传入路径为空");
-            chick_true<doodle_error>(FSys::is_directory(in_path),
-                                     DOODLE_LOC,
-                                     "传入路径不是文件或者不存在");
-          });
-
-  FSys::ifstream l_ifstream{in_path};
-  std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
+  std::string ciphertext{in_data};
   std::string decryptedtext{};
 
   {
@@ -82,7 +76,7 @@ void authorization::generate_token(const FSys::path& in_path) {
           });
 
   impl l_impl{};
-  l_impl.l_time = time_point_wrap(chrono::system_clock::now() + chrono::months {3});
+  l_impl.l_time = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
 
   /**
    * @brief 加密后输出的数据
@@ -121,4 +115,5 @@ void authorization::generate_token(const FSys::path& in_path) {
 
   FSys::ofstream{in_path} << out_data;
 }
+
 }  // namespace doodle
