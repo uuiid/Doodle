@@ -201,7 +201,42 @@ bool time_point_wrap::operator<=(const time_point_wrap& in_rhs) const {
 bool time_point_wrap::operator>=(const time_point_wrap& in_rhs) const {
   return !(*this < in_rhs);
 }
-
+bool time_point_wrap::operator<(const time_point_wrap::time_point& in_rhs) const {
+  return zoned_time_.get_sys_time() < in_rhs;
+}
+bool time_point_wrap::operator>(const time_point_wrap::time_point& in_rhs) const {
+  return zoned_time_.get_sys_time() > in_rhs;
+}
+bool time_point_wrap::operator<=(const time_point_wrap::time_point& in_rhs) const {
+  return zoned_time_.get_sys_time() <= in_rhs;
+}
+bool time_point_wrap::operator>=(const time_point_wrap::time_point& in_rhs) const {
+  return zoned_time_.get_sys_time() >= in_rhs;
+}
+bool time_point_wrap::operator<(const time_point_wrap::time_local_point& in_rhs) const {
+  return zoned_time_.get_local_time() < in_rhs;
+}
+bool time_point_wrap::operator>(const time_point_wrap::time_local_point& in_rhs) const {
+  return zoned_time_.get_local_time() > in_rhs;
+}
+bool time_point_wrap::operator<=(const time_point_wrap::time_local_point& in_rhs) const {
+  return zoned_time_.get_local_time() <= in_rhs;
+}
+bool time_point_wrap::operator>=(const time_point_wrap::time_local_point& in_rhs) const {
+  return zoned_time_.get_local_time() >= in_rhs;
+}
+bool time_point_wrap::operator<(const time_point_wrap::time_zoned& in_rhs) const {
+  return zoned_time_.get_sys_time() < in_rhs.get_sys_time();
+}
+bool time_point_wrap::operator>(const time_point_wrap::time_zoned& in_rhs) const {
+  return zoned_time_.get_sys_time() > in_rhs.get_sys_time();
+}
+bool time_point_wrap::operator<=(const time_point_wrap::time_zoned& in_rhs) const {
+  return zoned_time_.get_sys_time() <= in_rhs.get_sys_time();
+}
+bool time_point_wrap::operator>=(const time_point_wrap::time_zoned& in_rhs) const {
+  return zoned_time_.get_sys_time() >= in_rhs.get_sys_time();
+}
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;

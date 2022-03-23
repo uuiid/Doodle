@@ -95,10 +95,26 @@ class DOODLELIB_API time_point_wrap {
 
   bool operator==(const time_point_wrap& in_rhs) const;
   bool operator!=(const time_point_wrap& in_rhs) const;
+
   bool operator<(const time_point_wrap& in_rhs) const;
   bool operator>(const time_point_wrap& in_rhs) const;
   bool operator<=(const time_point_wrap& in_rhs) const;
   bool operator>=(const time_point_wrap& in_rhs) const;
+
+  bool operator<(const time_point& in_rhs) const;
+  bool operator>(const time_point& in_rhs) const;
+  bool operator<=(const time_point& in_rhs) const;
+  bool operator>=(const time_point& in_rhs) const;
+
+  bool operator<(const time_local_point& in_rhs) const;
+  bool operator>(const time_local_point& in_rhs) const;
+  bool operator<=(const time_local_point& in_rhs) const;
+  bool operator>=(const time_local_point& in_rhs) const;
+
+  bool operator<(const time_zoned& in_rhs) const;
+  bool operator>(const time_zoned& in_rhs) const;
+  bool operator<=(const time_zoned& in_rhs) const;
+  bool operator>=(const time_zoned& in_rhs) const;
 
  private:
   /**
