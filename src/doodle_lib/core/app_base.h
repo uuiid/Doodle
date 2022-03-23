@@ -28,6 +28,7 @@ class DOODLELIB_API app_base {
   explicit app_base();
   explicit app_base(const win::wnd_instance& in_instance);
   virtual ~app_base();
+  bool chick_authorization(const FSys::path& in_path);
 
   inline void command_line_parser(int argc, char* argv[]) {
     std::vector<std::string> l_str{argv, argv + argc};
@@ -53,7 +54,7 @@ class DOODLELIB_API app_base {
 
 /**
  * @brief 基本的命令行类
- * 
+ *
  */
 class DOODLELIB_API app_command_base : public app_base {
  protected:

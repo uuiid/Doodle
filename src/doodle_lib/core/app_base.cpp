@@ -9,6 +9,15 @@
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/thread_pool/thread_pool.h>
+#include <doodle_lib/core/authorization.h>
+
+#include <boost/contract.hpp>
+
+#include <cryptopp/modes.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/gcm.h>
+#include <cryptopp/filters.h>
+
 namespace doodle {
 app_base* app_base::self = nullptr;
 app_base::app_base()
@@ -84,6 +93,25 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
 void app_base::command_line_parser(const LPSTR& in_arg) {
   auto k_str = boost::program_options::split_winmain(in_arg);
   return command_line_parser(k_str);
+}
+bool app_base::chick_authorization(const FSys::path& in_path) {
+  bool result{false};
+  boost::contract::check l_c =
+      boost::contract::public_function(this)
+          .precondition([&]() {
+            chick_true<doodle_error>(!in_path.empty(), DOODLE_LOC, "传入路径为空");
+            chick_true<doodle_error>(FSys::is_directory(in_path),
+                                     DOODLE_LOC,
+                                     "传入路径不是文件或者不存在");
+          })
+          .postcondition([&]() {
+            chick_true<doodle_error>(result, DOODLE_LOC, "验证授权失败");
+          });
+  FSys::ifstream l_ifstream{in_path};
+  std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
+  authorization l_authorization{ciphertext};
+
+  return result = l_authorization.is_expire();
 }
 app_base::~app_base() = default;
 
