@@ -7,5 +7,15 @@
 
 namespace doodle {
 class DOODLELIB_API authorization {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ public:
+  explicit authorization(FSys::path in_path);
+  ~authorization();
+
+  bool is_expire() const;
+
+  static void generate_token(const FSys::path& in_path);
 };
 }  // namespace doodle

@@ -3,6 +3,122 @@
 //
 
 #include "authorization.h"
-namespace doodle{
 
+#include <doodle_lib/metadata/time_point_wrap.h>
+#include <boost/contract.hpp>
+
+#include <cryptopp/modes.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/gcm.h>
+#include <cryptopp/filters.h>
+
+namespace doodle {
+class authorization::impl {
+  friend void to_json(nlohmann::json& j, const impl& p) {
+    j["time"] = p.l_time
+  }
+  friend void from_json(const nlohmann::json& j, impl& p) {
+    p.l_time = j.at("time").get<time_point_wrap>();
+  }
+
+ public:
+  time_point_wrap l_time{};
+};
+authorization::authorization(FSys::path in_path)
+    : p_i(std::make_unique<impl>()) {
+  boost::contract::check l_c =
+      boost::contract::public_function(this)
+          .precondition([&]() {
+            chick_true<doodle_error>(!in_path.empty(), DOODLE_LOC, "传入路径为空");
+            chick_true<doodle_error>(FSys::is_directory(in_path),
+                                     DOODLE_LOC,
+                                     "传入路径不是文件或者不存在");
+          });
+
+  FSys::ifstream l_ifstream{in_path};
+  std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
+  std::string decryptedtext{};
+
+  {
+    CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
+    l_decryption.SetKeyWithIV(doodle_config::cryptopp_key.data(),
+                              CryptoPP::AES::DEFAULT_KEYLENGTH,
+                              doodle_config::cryptopp_iv.data(),
+                              CryptoPP::AES::BLOCKSIZE);
+
+    const string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
+    const string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
+
+    chick_true<doodle_error>(ciphertext.size() == enc.size() + mac.size(), DOODLE_LOC, "授权码解码失误");
+    chick_true<doodle_error>(doodle_config::cryptopp_tag_size == mac.size(), DOODLE_LOC, "授权码解码失误");
+
+    CryptoPP::AuthenticatedDecryptionFilter df{
+        l_decryption, new CryptoPP::StringSink(decryptedtext),
+        CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
+            CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
+        doodle_config::cryptopp_tag_size};
+
+    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL,
+                  (const CryptoPP::byte*)mac.data(), mac.size());
+    df.ChannelPut(CryptoPP::AAD_CHANNEL,
+                  (const CryptoPP::byte*)doodle_config::authorization_data.data(),
+                  doodle_config::authorization_data.size());
+    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)enc.data(), enc.size());
+
+    df.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
+    df.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
+  }
+  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
 }
+authorization::~authorization() = default;
+bool authorization::is_expire() const {
+  return p_i->l_time > chrono::system_clock::now();
+}
+void authorization::generate_token(const FSys::path& in_path) {
+  boost::contract::check l_c =
+      boost::contract::function()
+          .precondition([&]() {
+            chick_true<doodle_error>(!in_path.empty(), DOODLE_LOC, "传入路径为空");
+          });
+
+  impl l_impl{};
+  l_impl.l_time = time_point_wrap(chrono::system_clock::now() + chrono::months {3});
+
+  /**
+   * @brief 加密后输出的数据
+   */
+  std::string out_data{};
+  /**
+   * @brief 需要加密的json数据
+   */
+  std::string in_data{nlohmann::json{l_impl}.dump()};
+  {
+    CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
+    aes_Encryption.SetKeyWithIV(doodle_config::cryptopp_key.data(),
+                                CryptoPP::AES::DEFAULT_KEYLENGTH,
+                                doodle_config::cryptopp_iv.data(),
+                                CryptoPP::AES::BLOCKSIZE);
+    CryptoPP::AuthenticatedEncryptionFilter l_authenticated_encryption_filter{
+        aes_Encryption,
+        new CryptoPP::StringSink{out_data},
+        false,
+        doodle_config::cryptopp_tag_size};
+
+    l_authenticated_encryption_filter
+        .ChannelPut(CryptoPP::AAD_CHANNEL,
+                    (const CryptoPP::byte*)doodle_config::authorization_data.data(),
+                    doodle_config::authorization_data.size());
+    l_authenticated_encryption_filter
+        .ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
+
+    l_authenticated_encryption_filter
+        .ChannelPut(CryptoPP::DEFAULT_CHANNEL,
+                    (const CryptoPP::byte*)in_data.data(), in_data.size());
+    l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
+  }
+  if (exists(in_path.parent_path()))
+    create_directories(in_path.parent_path());
+
+  FSys::ofstream{in_path} << out_data;
+}
+}  // namespace doodle

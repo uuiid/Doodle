@@ -17,6 +17,7 @@ set(
         core/core_sig.h
         core/status_info.h
         core/init_register.h
+        core/authorization.h
 
 
         exception/exception.h
@@ -128,6 +129,7 @@ set(
         core/core_sig.cpp
         core/status_info.cpp
         core/init_register.cpp
+        core/authorization.cpp
 
 
         file_warp/maya_file.cpp
