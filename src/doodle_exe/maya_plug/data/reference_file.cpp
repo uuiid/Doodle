@@ -308,20 +308,7 @@ bool reference_file::add_collision() const {
   DOODLE_CHICK(k_s);
   return true;
 }
-void reference_file::generate_cloth_proxy() const {
-  /// 这里我们使用节点类名称寻找 qlClothShape ;
-  MStatus k_s{};
-  for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
-    auto k_obj = i.thisNode(&k_s);
-    DOODLE_CHICK(k_s);
-    MFnDependencyNode k_dep{k_obj};
-    if (k_dep.typeName(&k_s) == "qlClothShape" && has_node(k_obj)) {
-      DOODLE_CHICK(k_s);
-      auto k_h = make_handle();
-      k_h.emplace<qcloth_shape>(make_handle(*this), k_obj);
-    }
-  }
-}
+
 void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
   MSelectionList k_select{};

@@ -67,6 +67,7 @@ class qcloth_shape {
    * @return 完成设置
    */
   bool set_cache_folder() const;
+  bool set_cache_folder(const FSys::path &in_path) const;
   /**
    * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
    * 没有gui的情况下包装解算的正常
@@ -97,6 +98,14 @@ class qcloth_shape {
       const entt::handle& in_handle);
 
   void add_collider(const entt::handle& in_handle);
+
+  /**
+   * @brief 根据引用文件创建布料句柄
+   * @param in_ref_file 传入的引用文件句柄
+   * @return
+   */
+  static std::vector<entt::handle> create(
+      const entt::handle& in_ref_file);
 };
 
 }  // namespace doodle::maya_plug

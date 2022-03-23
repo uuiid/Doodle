@@ -10,6 +10,7 @@
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -21,6 +22,8 @@
 #include <maya/MArgParser.h>
 #include <maya/MAnimControl.h>
 #include <maya/MNamespace.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MItSelectionList.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -64,6 +67,13 @@ MSyntax load_project_syntax() {
   syntax.addFlag(doodle_project_path, doodle_project_path_long, MSyntax::kString);
   return syntax;
 }
+MSyntax set_cloth_cache_path_syntax() {
+  MSyntax l_syntax{};
+  l_syntax.addArg(MSyntax::MArgType::kSelectionItem);
+  l_syntax.useSelectionAsDefault(true);
+  l_syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList);
+  return l_syntax;
+}
 
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
@@ -76,8 +86,10 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   DOODLE_LOG_INFO(
       "获得默认项目 {}", bool(k_def_prj));
   DOODLE_LOG_INFO("开始清除引用实体")
-  auto k_view = g_reg()->view<reference_file>();
-  g_reg()->destroy(k_view.begin(), k_view.end());
+  auto k_ref_view   = g_reg()->view<reference_file>();
+  auto k_cloth_view = g_reg()->view<qcloth_shape>();
+  g_reg()->destroy(k_ref_view.begin(), k_ref_view.end());
+  g_reg()->destroy(k_cloth_view.begin(), k_cloth_view.end());
 
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
 
@@ -102,9 +114,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
 }
 MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   MStatus k_s{};
-  chick_ctx<root_ref>();
-  auto k_def_prj = g_reg()->ctx<root_ref>().root_handle();
-  auto k_j_str   = maya_file_io::get_channel_date();
+  auto k_j_str = maya_file_io::get_channel_date();
   std::vector<entt::entity> k_delete{};
 
   nlohmann::json k_j{};
@@ -162,7 +172,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
     /// \brief 生成需要的 布料实体
-    k_ref.generate_cloth_proxy();
+    qcloth_shape::create(make_handle(k_e));
     /// \brief 添加碰撞体
     k_ref.add_collision();
     /// \brief 更新ql初始化状态
@@ -285,6 +295,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
   } else {
     return MStatus{MStatus::kFailure};
   }
+  DOODLE_LOG_INFO("开始打开项目 {}", k_path);
   core::client l_c{};
   l_c.open_project(k_path);
   if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
@@ -295,4 +306,29 @@ MStatus load_project::doIt(const MArgList& in_arg) {
   return k_s;
 }
 
+MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
+  MStatus l_status{};
+  MArgDatabase k_prase{syntax(), in_list, &l_status};
+  MSelectionList l_list{};
+  DOODLE_CHICK(k_prase.getObjects(l_list));
+
+  MObject l_object{};
+  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+    DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path)
+    /// \brief 生成需要的 布料实体
+    if (!l_list.isEmpty())
+      for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
+        DOODLE_CHICK(l_i.getDependNode(l_object));
+        if (k_ref.has_node(l_object))
+          qcloth_shape::create(make_handle(k_e));
+      }
+    else
+      qcloth_shape::create(make_handle(k_e));
+  }
+  for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
+    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
+    k_qs.set_cache_folder(core_set::getSet().get_user_en());
+  }
+  return l_status;
+}
 }  // namespace doodle::maya_plug

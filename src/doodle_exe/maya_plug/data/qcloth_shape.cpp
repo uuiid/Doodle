@@ -378,44 +378,7 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
   chick_true<doodle_error>(p_ref_file.any_of<reference_file>(), DOODLE_LOC, "缺失组件");
 }
 bool qcloth_shape::set_cache_folder() const {
-  MStatus k_s{};
-  /// \brief 获得解算节点fn
-  MFnDependencyNode k_node{obj, &k_s};
-  DOODLE_CHICK(k_s);
-  string k_name{d_str{k_node.name(&k_s)}};
-  DOODLE_CHICK(k_s);
-  string k_namespace = p_ref_file.get<reference_file>().get_namespace();
-  auto& k_cfg        = p_ref_file.get<reference_file>().get_prj().get<project_config::base_config>();
-
-  DOODLE_CHICK(k_s);
-  string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
-  DOODLE_CHICK(k_s);
-  {
-    auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);
-    DOODLE_CHICK(k_s);
-    auto k_file_name       = maya_file_io::get_current_path();
-    /// \brief 使用各种信息确认缓存相对路径
-    const string& l_string = fmt::format("cache/{}/{}/{}",
-                                         k_file_name.stem().generic_string(),
-                                         k_namespace,
-                                         k_node_name);
-    DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
-    /// \brief 删除已经缓存的目录
-    auto k_path = maya_file_io::work_path(l_string);
-    if (FSys::exists(k_path)) {
-      DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
-      FSys::remove_all(k_path);
-    }
-    FSys::create_directories(k_path);
-    k_s = k_cache.setString(d_str{l_string});
-    DOODLE_CHICK(k_s);
-  }
-  {
-    auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
-    DOODLE_CHICK(k_s);
-    k_cache.setString(d_str{k_node_name});
-  }
-  return true;
+  return set_cache_folder(FSys::path{});
 }
 
 bool qcloth_shape::create_cache() const {
@@ -546,6 +509,62 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
     add_child(l_group.collider_grp, l_col_tran);
     add_child(l_group.collider_grp, l_col_off_tran);
   }
+}
+std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) {
+  /// 这里我们使用节点类名称寻找 qlClothShape ;
+  MStatus k_s{};
+  std::vector<entt::handle> result{};
+  auto&& l_ref = in_ref_file.get<reference_file>();
+  for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
+    auto k_obj = i.thisNode(&k_s);
+    DOODLE_CHICK(k_s);
+    MFnDependencyNode k_dep{k_obj};
+    if (k_dep.typeName(&k_s) == "qlClothShape" && l_ref.has_node(k_obj)) {
+      DOODLE_CHICK(k_s);
+      auto k_h = make_handle();
+      k_h.emplace<qcloth_shape>(in_ref_file, k_obj);
+      result.emplace_back(k_h);
+    }
+  }
+  return result;
+}
+bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
+  MStatus k_s{};
+  /// \brief 获得解算节点fn
+  MFnDependencyNode k_node{obj, &k_s};
+  DOODLE_CHICK(k_s);
+  string k_namespace = p_ref_file.get<reference_file>().get_namespace();
+
+  DOODLE_CHICK(k_s);
+  string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
+  DOODLE_CHICK(k_s);
+  {
+    auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);
+    DOODLE_CHICK(k_s);
+    auto k_file_name    = maya_file_io::get_current_path();
+    /// \brief 使用各种信息确认缓存相对路径
+    FSys::path l_string = fmt::format("cache/{}/{}/{}",
+                                      k_file_name.stem().generic_string(),
+                                      k_namespace,
+                                      k_node_name);
+    l_string /= in_path;
+    DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
+    /// \brief 删除已经缓存的目录
+    auto k_path = maya_file_io::work_path(l_string);
+    if (FSys::exists(k_path)) {
+      DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
+      FSys::remove_all(k_path);
+    }
+    FSys::create_directories(k_path);
+    k_s = k_cache.setString(d_str{l_string.generic_string()});
+    DOODLE_CHICK(k_s);
+  }
+  {
+    auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
+    DOODLE_CHICK(k_s);
+    k_cache.setString(d_str{k_node_name});
+  }
+  return true;
 }
 
 }  // namespace doodle::maya_plug

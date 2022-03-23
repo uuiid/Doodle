@@ -11,7 +11,6 @@ from PySide2 import QtGui
 from PySide2 import QtWidgets
 import random
 
-
 import maya_fun_tool as Doodle_fun_tool
 
 
@@ -74,6 +73,8 @@ class DlsShelf(shelfBase._shelf):
                       command=cmds.doodle_afterimage)
         self.addButon("ql_rest", "icons/ql_rest.png",
                       command=cmds.doodle_duplicate_poly)
+        self.addButon("set cache", "icons/set_cache.png",
+                      command=lambda: self.set_cache())
 
     def polyremesh(self):
         self.re()
@@ -92,18 +93,14 @@ class DlsShelf(shelfBase._shelf):
         cmds.doodle_ref_file_export(
             startTime=1001, exportType="fbx", select=True)
 
+    def set_cache(self):
+        cmds.doodle_create_ref_file()
+        cmds.doodle_set_cloth_cache_path()
+
     @staticmethod
     def print_r(str_list):
         if "1" == str_list[0]:
             cmds.confirmDialog(b="ok", m=str_list[1])
-
-    # def deleteWeightPoint(self):
-    #     self.re()
-    #     deleteWeight.deleteSurplusWeight().show()
-
-    # def deleteAttr(self):
-    #     self.re()
-    #     deleteAttr.deleteShape().show()
 
     @staticmethod
     def randomColor(color_random_fun=shelfBase._null):

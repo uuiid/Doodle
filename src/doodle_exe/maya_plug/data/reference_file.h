@@ -13,7 +13,6 @@ namespace doodle::maya_plug {
  * 并且具有一定引用概念的类
  */
 class reference_file {
-  string ref_file_uuid;
   std::string file_namespace;
 
   void chick_mobject() const;
@@ -42,7 +41,7 @@ class reference_file {
 
   [[nodiscard]] entt::handle get_prj() const;
 
-  void generate_cloth_proxy() const;
+
   void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
