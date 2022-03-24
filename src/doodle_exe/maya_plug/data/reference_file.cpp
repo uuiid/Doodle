@@ -212,7 +212,8 @@ bool reference_file::rename_material() const {
   return true;
 }
 
-bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
+FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
+  FSys::path out_{};
   rename_material();
   MSelectionList k_select{};
   MStatus k_s{};
@@ -220,9 +221,10 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
   k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
   DOODLE_CHICK(k_s);
 
-  if (k_select.isEmpty())
-    return false;
-
+  if (k_select.isEmpty()) {
+    DOODLE_LOG_INFO("没有找到合并对象")
+    return out_;
+  }
   /// \brief 进行dag遍历提取需要的节点
   std::vector<std::string> l_names{};
   {
@@ -263,7 +265,7 @@ bool reference_file::export_abc(const MTime &in_start, const MTime &in_endl) con
 
   if (k_select.isEmpty()) {
     DOODLE_LOG_INFO("没有找到合并对象")
-    return false;
+    return out_;
   }
 
   MDagPath k_mesh_path{};
@@ -289,7 +291,7 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
                                                 k_path.generic_string())},
                                 true);  /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_CHICK(k_s);
-  return true;
+  return k_path;
 }
 bool reference_file::add_collision() const {
   if (collision_model.empty())
@@ -309,7 +311,9 @@ bool reference_file::add_collision() const {
   return true;
 }
 
-void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
+FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
+  FSys::path out_{};
+
   chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
   MSelectionList k_select{};
   MStatus k_s{};
@@ -319,12 +323,12 @@ void reference_file::export_fbx(const MTime &in_start, const MTime &in_end) cons
     DOODLE_CHICK(k_s);
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
-    return;
+    return out_;
   }
 
   if (k_select.isEmpty()) {
     DOODLE_LOG_WARN("没有选中的物体, 不进行输出")
-    return;
+    return out_;
   }
 
   k_s = MGlobal::setActiveSelectionList(k_select);
@@ -407,6 +411,7 @@ bakeResults
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
+  return k_file_path;
 }
 bool reference_file::has_node(const MSelectionList &in_list) {
   chick_mobject();
