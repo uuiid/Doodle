@@ -4,8 +4,11 @@
 
 #include "reference_file.h"
 
-#include "doodle_lib/metadata/metadata.h"
-#include "doodle_lib/metadata/project.h"
+#include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/metadata/project.h>
+#include <doodle_lib/metadata/episodes.h>
+#include <doodle_lib/metadata/shot.h>
+#include <doodle_lib/metadata/export_file_info.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -37,7 +40,8 @@ reference_file::reference_file()
       };
 
 reference_file::reference_file(
-    const string &in_maya_namespace) {
+    const string &in_maya_namespace)
+    : reference_file() {
   set_namespace(in_maya_namespace);
 }
 void reference_file::set_path(const MObject &in_ref_node) {
@@ -540,17 +544,31 @@ void reference_file::qlUpdateInitialPose() const {
   }
 }
 entt::handle reference_file::export_file(const reference_file::export_arg &in_arg) {
-  FSys::path out_path{};
+  entt::handle out_{};
+  FSys::path l_path{};
   switch (in_arg.export_type_p) {
     case export_type::abc:
-      out_path = export_abc(in_arg.start_p, in_arg.end_p);
+      l_path = export_abc(in_arg.start_p, in_arg.end_p);
       break;
     case export_type::fbx:
-      out_path = export_fbx(in_arg.start_p, in_arg.end_p);
+      l_path = export_fbx(in_arg.start_p, in_arg.end_p);
       break;
   }
-
-  return {};
+  if (!l_path.empty()) {
+    out_ = make_handle();
+    FSys::path l_ref_file{this->path};
+    if (l_ref_file.empty()) {
+      l_ref_file = this->get_namespace();
+    }
+    episodes::analysis_static(out_, l_path);
+    shot::analysis_static(out_, l_path);
+    out_.emplace<export_file_info>(l_path,
+                                   in_arg.start_p.value(),
+                                   in_arg.end_p.value(),
+                                   l_ref_file);
+    export_file_info::write_file(out_);
+  }
+  return out_;
 }
 
 }  // namespace doodle::maya_plug

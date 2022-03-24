@@ -23,6 +23,6 @@ class export_file_info {
   std::int32_t end_frame;
   FSys::path ref_file;
 
-  
+  static void write_file(const entt::handle& in_handle);
 };
 }  // namespace doodle
