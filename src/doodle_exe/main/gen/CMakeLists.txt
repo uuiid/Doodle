@@ -16,8 +16,9 @@ target_compile_definitions(generate_token
         ISOLATION_AWARE_ENABLED
         )
 
-add_custom_command(
-        TARGET generate_token
+add_custom_target(
+        generate_token_run
         POST_BUILD
         COMMAND $<TARGET_FILE:generate_token> ${CMAKE_CURRENT_BINARY_DIR}/bin/
+        DEPENDS generate_token
 )
