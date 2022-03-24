@@ -73,6 +73,9 @@ std::int32_t app_base::run() {
   return 0;
 }
 void app_base::command_line_parser(const std::vector<string>& in_arg) {
+  if (!chick_authorization())
+    stop_ = true;
+
   options_->command_line_parser(in_arg);
 
   auto& set = core_set::getSet();
@@ -95,7 +98,6 @@ void app_base::command_line_parser(const LPSTR& in_arg) {
   return command_line_parser(k_str);
 }
 bool app_base::chick_authorization(const FSys::path& in_path) {
-  bool result{false};
   boost::contract::check l_c =
       boost::contract::public_function(this)
           .precondition([&]() {
@@ -103,15 +105,24 @@ bool app_base::chick_authorization(const FSys::path& in_path) {
             chick_true<doodle_error>(FSys::is_directory(in_path),
                                      DOODLE_LOC,
                                      "传入路径不是文件或者不存在");
-          })
-          .postcondition([&]() {
-            chick_true<doodle_error>(result, DOODLE_LOC, "验证授权失败");
           });
   FSys::ifstream l_ifstream{in_path};
   std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
   authorization l_authorization{ciphertext};
 
-  return result = l_authorization.is_expire();
+  return l_authorization.is_expire();
+}
+bool app_base::chick_authorization() {
+  auto l_p = core_set::getSet().get_doc() / doodle_config::token_name;
+  if (!exists(l_p)) {
+    l_p = FSys::current_path() / doodle_config::token_name;
+  }
+  if (!exists(l_p)) {
+    DOODLE_LOG_ERROR("无法找到授权文件")
+    return false;
+  }
+
+  return chick_authorization(l_p);
 }
 app_base::~app_base() = default;
 

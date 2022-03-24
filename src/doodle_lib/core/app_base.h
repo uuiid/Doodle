@@ -24,6 +24,8 @@ class DOODLELIB_API app_base {
    */
   virtual void load_back_end() = 0;
 
+  virtual bool chick_authorization();
+
  public:
   explicit app_base();
   explicit app_base(const win::wnd_instance& in_instance);
