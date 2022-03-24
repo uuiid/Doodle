@@ -14,9 +14,9 @@ class DOODLELIB_API authorization {
   explicit authorization(std::string in_data);
   ~authorization();
 
-  bool is_expire() const;
-  void save(const FSys::path& in_path);
-  void save();
+  [[nodiscard]] bool is_expire() const;
+  void save(const FSys::path& in_path) const;
+  void save() const;
 
   static void generate_token(const FSys::path& in_path);
 };
