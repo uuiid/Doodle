@@ -84,6 +84,7 @@ set(
         metadata/image_icon.h
         metadata/importance.h
         metadata/organization.h
+        metadata/export_file_info.h
 
         pin_yin/convert.h
 
@@ -180,6 +181,7 @@ set(
         metadata/image_icon.cpp
         metadata/importance.cpp
         metadata/organization.cpp
+        metadata/export_file_info.cpp
 
         pin_yin/convert.cpp
 
