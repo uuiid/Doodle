@@ -5,6 +5,7 @@
 #include "authorization.h"
 
 #include <doodle_lib/metadata/time_point_wrap.h>
+#include <doodle_lib/core/core_set.h>
 #include <boost/contract.hpp>
 #include <utility>
 
@@ -24,6 +25,7 @@ class authorization::impl {
 
  public:
   time_point_wrap l_time{};
+  std::string ciphertext_data{};
 };
 
 authorization::authorization(std::string in_data)
@@ -60,9 +62,12 @@ authorization::authorization(std::string in_data)
     df.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
     df.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
   }
-  *p_i = nlohmann::json::parse(decryptedtext).get<impl>();
+  *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
+  p_i->ciphertext_data = std::move(ciphertext);
 }
-authorization::~authorization() = default;
+authorization::~authorization() {
+  save();
+}
 bool authorization::is_expire() const {
   return p_i->l_time > chrono::system_clock::now();
 }
@@ -112,6 +117,14 @@ void authorization::generate_token(const FSys::path& in_path) {
     create_directories(in_path.parent_path());
 
   FSys::ofstream{in_path} << out_data;
+}
+void authorization::save(const FSys::path& in_path) {
+  if (exists(in_path.parent_path()))
+    create_directories(in_path.parent_path());
+  FSys::ofstream{in_path} << p_i->ciphertext_data;
+}
+void authorization::save() {
+  save(win::get_pwd() / doodle_config::token_name);
 }
 
 }  // namespace doodle
