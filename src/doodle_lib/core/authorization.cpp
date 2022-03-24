@@ -118,12 +118,12 @@ void authorization::generate_token(const FSys::path& in_path) {
   FSys::ofstream{in_path / doodle_config::token_name} << out_data;
 }
 void authorization::save(const FSys::path& in_path) const {
-  if (exists(in_path.parent_path()))
+  if (!exists(in_path.parent_path()))
     create_directories(in_path.parent_path());
   FSys::ofstream{in_path} << p_i->ciphertext_data;
 }
 void authorization::save() const {
-  save(win::get_pwd() / doodle_config::token_name);
+  save(core_set::getSet().get_doc() / doodle_config::token_name);
 }
 
 }  // namespace doodle
