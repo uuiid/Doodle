@@ -539,5 +539,18 @@ void reference_file::qlUpdateInitialPose() const {
             true, true));
   }
 }
+entt::handle reference_file::export_file(const reference_file::export_arg &in_arg) {
+  FSys::path out_path{};
+  switch (in_arg.export_type_p) {
+    case export_type::abc:
+      out_path = export_abc(in_arg.start_p, in_arg.end_p);
+      break;
+    case export_type::fbx:
+      out_path = export_fbx(in_arg.start_p, in_arg.end_p);
+      break;
+  }
+
+  return {};
+}
 
 }  // namespace doodle::maya_plug

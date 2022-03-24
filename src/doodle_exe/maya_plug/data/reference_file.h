@@ -25,6 +25,7 @@ class reference_file {
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
   bool has_ue4_group() const;
+
  public:
   MObject p_m_object;
   string path;
@@ -40,7 +41,6 @@ class reference_file {
   bool set_namespace(const std::string &in_namespace);
 
   [[nodiscard]] entt::handle get_prj() const;
-
 
   void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
@@ -72,6 +72,21 @@ class reference_file {
   FSys::path export_abc(const MTime &in_start, const MTime &in_end) const;
 
   FSys::path export_fbx(const MTime &in_start, const MTime &in_end) const;
+
+  enum class export_type : std::uint32_t {
+    abc = 1,
+    fbx = 2,
+  };
+
+  class export_arg {
+   public:
+    export_type export_type_p{};
+    MTime& start_p;
+    MTime& end_p;
+  };
+
+  entt::handle export_file(const export_arg &in_arg);
+
   /**
    * @brief 在这个解算引用中添加一些标记的碰撞
    * @return 返回值只有true , 就算标记碰撞体为空也会返回true 这种情况我们认为正常
