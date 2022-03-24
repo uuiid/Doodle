@@ -211,7 +211,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   MTime k_start{MAnimControl::minTime()};
   MTime k_end = MAnimControl::maxTime();
   bool use_select{false};
-  export_type k_export_type{};
+  reference_file::export_type k_export_type{};
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -228,7 +228,9 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     MString k_k_export_type_s{};
     k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
     DOODLE_CHICK(k_s);
-    k_export_type = magic_enum::enum_cast<export_type>(d_str{k_k_export_type_s}.str()).value();
+    k_export_type = magic_enum::enum_cast<reference_file::export_type>(
+                        d_str{k_k_export_type_s}.str())
+                        .value();
   }
   if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -246,36 +248,15 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     k_s = MGlobal::getActiveSelectionList(k_select);
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
       if (k_r.has_node(k_select)) {
-        switch (k_export_type) {
-          case export_type::abc:
-            k_r.export_abc(k_start, k_end);
-            break;
-          case export_type::fbx:
-            k_r.export_fbx(k_start, k_end);
-            break;
-          default:
-            chick_true<doodle_error>(false, DOODLE_LOC, "未知类型");
-            break;
-        }
+        reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+        k_r.export_file(l_export_arg);
       }
     }
   } else {
     DOODLE_LOG_INFO("全部的引用文件导出")
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      switch (k_export_type) {
-        case export_type::abc: {
-          if (k_r.has_sim_cloth())
-            k_r.export_abc(k_start, k_end);
-          break;
-        }
-        case export_type::fbx:
-          if (k_r.is_loaded())
-            k_r.export_fbx(k_start, k_end);
-          break;
-        default:
-          chick_true<doodle_error>(false, DOODLE_LOC, "未知类型");
-          break;
-      }
+      reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+      k_r.export_file(l_export_arg);
     }
   }
 
