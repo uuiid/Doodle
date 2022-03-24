@@ -1,5 +1,7 @@
 include(doodle_exe)
 
+add_subdirectory(main/gen)
+
 add_executable(
         DoodleExe
         WIN32

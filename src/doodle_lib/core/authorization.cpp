@@ -112,10 +112,10 @@ void authorization::generate_token(const FSys::path& in_path) {
                     (const CryptoPP::byte*)in_data.data(), in_data.size());
     l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
   }
-  if (exists(in_path.parent_path()))
-    create_directories(in_path.parent_path());
+  if (exists(in_path))
+    create_directories(in_path);
 
-  FSys::ofstream{in_path} << out_data;
+  FSys::ofstream{in_path / doodle_config::token_name} << out_data;
 }
 void authorization::save(const FSys::path& in_path) const {
   if (exists(in_path.parent_path()))
