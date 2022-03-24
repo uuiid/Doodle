@@ -26,6 +26,7 @@ target_compile_definitions(DoodleExe
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         # ENTT_API_IMPORT
         )
+add_dependencies(DoodleExe generate_token_run)
 add_subdirectory(maya_plug)
 add_subdirectory(main/test)
 

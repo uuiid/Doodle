@@ -18,7 +18,6 @@ target_compile_definitions(generate_token
 
 add_custom_target(
         generate_token_run
-        POST_BUILD
-        COMMAND $<TARGET_FILE:generate_token> ${CMAKE_CURRENT_BINARY_DIR}/bin/
+        COMMAND $<TARGET_FILE:generate_token> ${PROJECT_BINARY_DIR}/bin/
         DEPENDS generate_token
 )

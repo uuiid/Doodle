@@ -79,7 +79,7 @@ void authorization::generate_token(const FSys::path& in_path) {
 
   impl l_impl{};
   l_impl.l_time = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
-
+  nlohmann::json out_json = l_impl;
   /**
    * @brief 加密后输出的数据
    */
@@ -87,7 +87,7 @@ void authorization::generate_token(const FSys::path& in_path) {
   /**
    * @brief 需要加密的json数据
    */
-  std::string in_data{nlohmann::json{l_impl}.dump()};
+  std::string in_data{out_json.dump()};
   {
     CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
     aes_Encryption.SetKeyWithIV(doodle_config::cryptopp_key.data(),
