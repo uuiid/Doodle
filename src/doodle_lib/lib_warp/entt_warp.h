@@ -19,7 +19,7 @@ namespace detail {
  * @copydoc save_comm(entt::handle &in_handle, Archive &in_archive)
  */
 template <typename Component, typename Archive>
-bool _save_(entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
+bool _save_(const entt::handle &in_handle, std::size_t in_size, Archive &in_archive) {
   auto &&k_comm      = in_handle.template get<Component>();
   in_archive["data"] = k_comm;
   return true;
@@ -49,7 +49,7 @@ bool _load_(entt::handle &in_handle, Archive &in_archive) {
  * @param in_archive 存档
  */
 template <typename... Component, typename Archive, std::size_t... Index>
-void _save_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
+void _save_comm_(const entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
   ((size[Index] ? _save_<Component>(in_handle, size[Index], in_archive[std::to_string(entt::type_id<Component>().hash())]) : 0u), ...);
@@ -86,7 +86,7 @@ void _load_comm_(entt::handle &in_handle, Archive &in_archive, std::index_sequen
  * @param in_archive 存档
  */
 template <typename... Component, typename Archive>
-void save_comm(entt::handle &in_handle, Archive &in_archive) {
+void save_comm(const entt::handle &in_handle, Archive &in_archive) {
   detail::_save_comm_<Component...>(in_handle, in_archive, std::index_sequence_for<Component...>{});
 }
 
