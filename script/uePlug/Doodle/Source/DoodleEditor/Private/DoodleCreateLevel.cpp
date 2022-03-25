@@ -76,7 +76,7 @@ namespace doodle
     return true;
   }
 
-  bool init_ue4_project::create_world(const FString &in_path)
+  bool init_ue4_project::create_level(const FString &in_path)
   {
     p_save_level_path = in_path;
     auto &l_ass_tool = FModuleManager::Get()
@@ -108,7 +108,7 @@ namespace doodle
 
     return p_level_ != nullptr;
   }
-  bool init_ue4_project::create_level(const FString &in_path)
+  bool init_ue4_project::create_world(const FString &in_path)
   {
     p_save_world_path = in_path;
     auto &l_ass_tool = FModuleManager::Get()
@@ -198,7 +198,7 @@ namespace doodle
     save();
   }
 
-  bool init_ue4_project::import_ass_data(const FString &in_path, UObject* Outer)
+  bool init_ue4_project::import_ass_data(const FString &in_path, UObject *Outer)
   {
     if (!FPaths::FileExists(in_path))
       return false;
