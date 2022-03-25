@@ -1,5 +1,8 @@
 #include "UDoodleImportUilt.h"
 
+/// UDoodleImportUilt::add_movie_scene_track
+#include "MovieSceneTrack.h"
+
 UDoodleImportUilt *UDoodleImportUilt::Get()
 {
     TArray<UClass *> ImportUiltClasses;

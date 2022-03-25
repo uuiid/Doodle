@@ -28,6 +28,11 @@
 #include "CineCameraActor.h"
 #include "CineCameraComponent.h"
 #include "MovieSceneObjectBindingID.h"
+/**
+ * @brief 我们使用c++ 辅助调用蓝图类的头文件
+ *
+ */
+#include "UDoodleImportUilt.h"
 
 namespace doodle
 {
@@ -85,8 +90,12 @@ namespace doodle
         TRange<FFrameNumber>{in_start, in_end}, true);
     l_eve->Modify();
 
+    ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
+    UDoodleImportUilt::Get()->create_camera(
+        l_eve,
+        l_cam);
+
     /// 绑定轨道
-    // ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
     // l_eve->GetMovieScene()->AddMasterTrack();
 
     // l_eve->GetMovieScene()->AddTrack();
@@ -111,18 +120,18 @@ namespace doodle
     // }
 
     // 设置相机属性
-    // l_cam->GetCineCameraComponent()->Filmback.SensorHeight = 20.25;
-    // l_cam->GetCineCameraComponent()->Filmback.SensorWidth = 36.0;
-    // l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod =
-    //     ECameraFocusMethod::Disable;
+    l_cam->GetCineCameraComponent()->Filmback.SensorHeight = 20.25;
+    l_cam->GetCineCameraComponent()->Filmback.SensorWidth = 36.0;
+    l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod =
+        ECameraFocusMethod::Disable;
 
-    // auto l_cam_task = l_eve->MovieScene->GetCameraCutTrack();
+    auto l_cam_task = l_eve->MovieScene->GetCameraCutTrack();
 
-    // for (auto &&i : l_cam_task->GetAllSections())
-    // {
-    //   i->SetRange(TRange<FFrameNumber>{in_start, in_end});
-    //   i->Modify();
-    // }
+    for (auto &&i : l_cam_task->GetAllSections())
+    {
+      i->SetRange(TRange<FFrameNumber>{in_start, in_end});
+      i->Modify();
+    }
 
     return false;
   }

@@ -20,8 +20,7 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent)
     void create_camera(
-        const ULevelSequence *in_level,
-        const UWorld *in_world,
+        const ULevelSequence *in_level, 
         const ACineCameraActor *in_camera) const;
 
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
