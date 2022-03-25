@@ -12,20 +12,22 @@ class UFactory;
 class FJsonObject;
 
 UENUM()
-enum class EDoodleImportType : uint8 { None = 0, Abc, Fbx };
+enum class EDoodleImportType : uint8
+{
+  None = 0,
+  Abc,
+  Fbx
+};
 
 /**
  *
  */
 USTRUCT()
-struct FDoodleAssetImportData {
+struct FDoodleAssetImportData
+{
   GENERATED_BODY()
- public:
-  bool is_valid() const;
-
-  void initialize(TSharedPtr<FJsonObject> InImportGroupJsonData);
-
- public:
+public:
+public:
   /* 导入文件的路径(文件名称) */
   UPROPERTY()
   FString import_file_path;
@@ -51,7 +53,8 @@ struct FDoodleAssetImportData {
 };
 
 USTRUCT()
-struct FDoodleAssetImportDataGroup {
+struct FDoodleAssetImportDataGroup
+{
   GENERATED_BODY()
 
   UPROPERTY()
