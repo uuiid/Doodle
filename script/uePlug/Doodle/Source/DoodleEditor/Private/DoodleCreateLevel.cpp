@@ -139,33 +139,13 @@ namespace doodle
     // GEditor->Bluep;
     // StaticLoadObject
 
+    /**
+     * @brief 使用ue4反射添加相机轨道什么的
+     *
+     */
     UDoodleImportUilt::Get()->create_camera(
         l_eve,
         l_cam);
-
-    /// 绑定轨道
-    // l_eve->GetMovieScene()->AddMasterTrack();
-
-    // l_eve->GetMovieScene()->AddTrack();
-
-    // FGuid l_cam_poss_Guid =
-    //     l_eve->MovieScene->AddPossessable(l_cam->GetName(), l_cam->GetClass());
-    // l_eve->BindPossessableObject(l_cam_poss_Guid, *l_cam, p_world_);
-
-    // // 添加相机绑定
-    // // 创建相机轨道
-    // MovieSceneToolHelpers::CreateCameraCutSectionForCamera(
-    //     l_eve->MovieScene, l_cam_poss_Guid, FFrameNumber{in_end - in_start});
-
-    // { /// 添加子组件
-    //   UCineCameraComponent *l_cam_com = l_cam->GetCineCameraComponent();
-    //   FGuid l_guid = l_eve->MovieScene->AddPossessable(l_cam_com->GetName(), l_cam_com->GetClass());
-    //   l_eve->MovieScene->FindPossessable(l_guid)->SetParent(l_cam_poss_Guid);
-    //   l_eve->BindPossessableObject(l_guid, *l_cam_com, l_cam);
-    // }
-    // { /// 添加当前焦距
-
-    // }
 
     // 设置相机属性
     l_cam->GetCineCameraComponent()->Filmback.SensorHeight = 20.25;
@@ -173,22 +153,22 @@ namespace doodle
     l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod =
         ECameraFocusMethod::Disable;
 
-    // auto l_cam_task = l_eve->MovieScene->GetCameraCutTrack();
-    // for (auto &&i : l_cam_task->GetAllSections())
-    // {
-    //   i->SetRange(TRange<FFrameNumber>{in_start, in_end});
-    //   i->Modify();
-    // }
+    for (auto &&i : l_eve->MovieScene->GetAllSections())
+    {
+      i->SetStartFrame(TRangeBound<FFrameNumber>{});
+      i->SetEndFrame(TRangeBound<FFrameNumber>{});
+      i->SetRange(TRange<FFrameNumber>{in_start, in_end});
+      i->Modify();
+    }
 
-    return false;
+    return true;
   }
   bool init_ue4_project::save()
   {
     // UEditorLoadingAndSavingUtils::SaveMap(CastChecked<UWorld>(p_world_),
     //                                      p_save_world_path);
     UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
-
-    return false;
+    return true;
   }
   void init_ue4_project::tmp()
   {
