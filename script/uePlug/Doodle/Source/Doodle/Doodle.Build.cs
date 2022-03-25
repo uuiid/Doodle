@@ -39,7 +39,7 @@ public class doodle : ModuleRules
                 "RHI",
                 //几何缓存依赖
                 "GeometryCache",
-                
+
             }
             );
 
@@ -56,7 +56,12 @@ public class doodle : ModuleRules
                 "RenderCore",
                 "RHI",
 
-                "AIModule"//我们需要AI模块
+                "AIModule",//我们需要AI模块
+                "MovieScene",//更新定序器场景
+                "LevelSequence",//创建定序器
+                "Sequencer",//修改定序器
+                "MovieScene",//更新定序器场景
+                "CinematicCamera",// 相机模块
                 // "Projects",
                 // "InputCore",
                 // "CoreUObject",

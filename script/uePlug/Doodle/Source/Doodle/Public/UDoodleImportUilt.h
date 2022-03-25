@@ -11,16 +11,16 @@ class UWorld;
 class UMovieSceneTrack;
 
 UCLASS(Blueprintable)
-class DOODLEEDITOR_API UDoodleImportUilt : public UObject
+class DOODLE_API UDoodleImportUilt : public UObject
 {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable)
     static UDoodleImportUilt *Get();
 
-    UFUNCTION(BlueprintImplementableEvent)
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
     void create_camera(
-        const ULevelSequence *in_level, 
+        const ULevelSequence *in_level,
         const ACineCameraActor *in_camera) const;
 
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
