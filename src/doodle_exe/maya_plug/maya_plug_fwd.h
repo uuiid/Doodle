@@ -58,7 +58,8 @@ class TemplateAction : public MPxCommand {
  * @brief
  *
  * @todo 在工具架上添加自动设置缓存的工具
- *
+ * @todo 添加maya 布料制作工具中的 解锁全局节点
+ * @todo 查看doc需求文档
  *
  */
 namespace doodle::maya_plug {
