@@ -48,22 +48,17 @@ void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
   k_fbx_f->ImportUI->TextureImportData->MaterialSearchLocation =
       EMaterialSearchLocation::UnderRoot;
 
-  FString k_fbx_dir = fbx_skeleton_dir.IsEmpty()
-                          ? FString{TEXT("/Game/Character/")}
-                          : fbx_skeleton_dir;
-  FString k_fbx_name = fbx_skeleton_file_name;
-
-  if (!k_fbx_name.IsEmpty()) // 名称不为空的情况下直接导入几何体和网格
+  if (!fbx_skeleton_file_name.IsEmpty()) // 名称不为空的情况下直接导入几何体和网格
   {
     UE_LOG(LogTemp, Log, TEXT("找到骨骼名称，开始尝试加载 %s"),
-           *k_fbx_name);
+           *fbx_skeleton_file_name);
     USkeleton *skinObj =
-        LoadObject<USkeleton>(USkeleton::StaticClass(), *k_fbx_name,
+        LoadObject<USkeleton>(USkeleton::StaticClass(), *fbx_skeleton_file_name,
                               nullptr, LOAD_ResolvingDeferredExports);
     if (skinObj)
     {
       UE_LOG(LogTemp, Log, TEXT("加载 %s 成功， 只导入动画"),
-             *k_fbx_name);
+             *fbx_skeleton_file_name);
       k_fbx_f->ImportUI->Skeleton = skinObj;
       k_fbx_f->ImportUI->MeshTypeToImport = FBXIT_Animation;
       k_fbx_f->ImportUI->OriginalImportType = FBXIT_SkeletalMesh;
@@ -85,7 +80,7 @@ void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
     }
     else
       UE_LOG(LogTemp, Log, TEXT("加载 %s 失败， 导入骨骼网格体和动画"),
-             *k_fbx_name);
+             *fbx_skeleton_file_name);
   }
   else
     UE_LOG(LogTemp, Log, TEXT("没有指定骨骼名称, 直接导入骨骼和动画"));
