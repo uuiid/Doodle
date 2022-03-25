@@ -123,17 +123,17 @@ bool UDoodleAssCreateCommandlet::import_and_save(
   return true;
 }
 
-void UDoodleAssCreateCommandlet::ClearDirtyPackages()
-{
-  TArray<UPackage *> DirtyPackages;
-  FEditorFileUtils::GetDirtyContentPackages(DirtyPackages);
-  FEditorFileUtils::GetDirtyWorldPackages(DirtyPackages);
+// void UDoodleAssCreateCommandlet::ClearDirtyPackages()
+// {
+//   TArray<UPackage *> DirtyPackages;
+//   FEditorFileUtils::GetDirtyContentPackages(DirtyPackages);
+//   FEditorFileUtils::GetDirtyWorldPackages(DirtyPackages);
 
-  for (UPackage *Package : DirtyPackages)
-  {
-    Package->SetDirtyFlag(false);
-  }
-}
+//   for (UPackage *Package : DirtyPackages)
+//   {
+//     Package->SetDirtyFlag(false);
+//   }
+// }
 
 void UDoodleAssCreateCommandlet::save_temp_json(const FString &out_path)
 {
