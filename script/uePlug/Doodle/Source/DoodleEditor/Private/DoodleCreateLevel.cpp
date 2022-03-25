@@ -38,6 +38,8 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 /// 编译蓝图
 #include "Kismet2/KismetEditorUtilities.h"
+/// 编辑器脚本
+#include "EditorAssetLibrary.h"
 
 namespace doodle
 {
@@ -87,17 +89,19 @@ namespace doodle
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-
-    // UFactory::StaticClass()->GetDefaultSubobjects()
-    for (TObjectIterator<UClass> it{}; it; ++it)
+    if (!UEditorAssetLibrary::DoesAssetExist(in_path / in_name))
     {
-      if (it->IsChildOf(UFactory::StaticClass()))
+      // UFactory::StaticClass()->GetDefaultSubobjects()
+      for (TObjectIterator<UClass> it{}; it; ++it)
       {
-        if (it->GetName() == "LevelSequenceFactoryNew")
+        if (it->IsChildOf(UFactory::StaticClass()))
         {
-          p_level_ = l_ass_tool.CreateAsset(in_name, in_path,
-                                            ULevelSequence::StaticClass(),
-                                            it->GetDefaultObject<UFactory>());
+          if (it->GetName() == "LevelSequenceFactoryNew")
+          {
+            p_level_ = l_ass_tool.CreateAsset(in_name, in_path,
+                                              ULevelSequence::StaticClass(),
+                                              it->GetDefaultObject<UFactory>());
+          }
         }
       }
     }
@@ -110,16 +114,20 @@ namespace doodle
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-
-    p_world_ = l_ass_tool.CreateAsset(
-        in_name, in_path, UWorld::StaticClass(),
-        UWorldFactory::StaticClass()->GetDefaultObject<UFactory>());
-    UEditorLevelLibrary::LoadLevel(in_path / in_name);
+    if (!UEditorAssetLibrary::DoesAssetExist(in_path / in_name))
+    {
+      p_world_ = l_ass_tool.CreateAsset(
+          in_name, in_path, UWorld::StaticClass(),
+          UWorldFactory::StaticClass()->GetDefaultObject<UFactory>());
+      UEditorLevelLibrary::LoadLevel(in_path / in_name);
+    }
     return p_world_ != nullptr;
   }
   bool init_ue4_project::set_level_info(int32 in_start, int32 in_end)
   {
     check(p_level_);
+    if (l_eve->GetMovieScene()->GetCameraCutTrack() != nullptr)
+      return true;
 
     auto l_eve = CastChecked<ULevelSequence>(p_level_);
     l_eve->GetMovieScene()->SetDisplayRate(FFrameRate{25, 1});
