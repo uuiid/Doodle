@@ -37,20 +37,19 @@ public:
   /* 导入文件的路径(文件名称) */
   UPROPERTY()
   FString import_file_path;
-  /* 保存文件的路径(目录) */
+  /* 保存文件的路径(目录 + 文件名) */
   UPROPERTY()
   FString import_file_save_dir;
 
-  /* 导入文件时fbx skeleton 所在文件夹*/
-  UPROPERTY()
-  FString fbx_skeleton_dir;
-  /* 导入文件时fbx skeleton 文件名称 */
+  /* 导入文件时fbx skeleton 路径 + 文件名称 */
   UPROPERTY()
   FString fbx_skeleton_file_name;
 
-  /* 导入文件时的json 数据 */
-  TSharedPtr<FJsonObject> ImportGroupJsonData;
   UPROPERTY()
+  /**
+   * @brief 导入的类型
+   *
+   */
   EDoodleImportType import_type;
   UPROPERTY()
   uint64 start_frame;
@@ -65,4 +64,13 @@ struct FDoodleAssetImportDataGroup
 
   UPROPERTY()
   TArray<FDoodleAssetImportData> groups;
+
+  UPROPERTY()
+  uint64 start_frame;
+  UPROPERTY()
+  uint64 end_frame;
+  UPROPERTY()
+  FString world_path;
+  UPROPERTY()
+  FString level_path;
 };
