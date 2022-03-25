@@ -1,37 +1,25 @@
 #include "DoodleCreateLevel.h"
 
-/**
- * 创建world
- */
+//// 创建world
 #include "AssetToolsModule.h"
 #include "EditorLevelLibrary.h"
 #include "Factories/WorldFactory.h"
 #include "IAssetTools.h"
 #include "LevelSequence.h"
 #include "Modules/ModuleManager.h"
-/**
- * 定序器使用
- */
+/// 定序器使用
 #include "MovieSceneToolHelpers.h"
 #include "SequencerSettings.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
 #include "Misc/OutputDeviceNull.h"
 
-/**
- * 保存操作使用
- *
- */
+//// 保存操作使用
 #include "FileHelpers.h"
-/**
- * 相机导入
- */
+/// 相机导入
 #include "CineCameraActor.h"
 #include "CineCameraComponent.h"
 #include "MovieSceneObjectBindingID.h"
-/**
- * @brief 我们使用c++ 辅助调用蓝图类的头文件
- *
- */
+/// @brief 我们使用c++ 辅助调用蓝图类的头文件
 #include "UDoodleImportUilt.h"
 
 /// 资产注册表
@@ -40,6 +28,11 @@
 #include "Kismet2/KismetEditorUtilities.h"
 /// 编辑器脚本
 #include "EditorAssetLibrary.h"
+
+/// 自动导入类需要
+#include "AutomatedAssetImportData.h"
+/// 导入我们的自定义数据
+#include "DoodleAssetImportData.h"
 
 namespace doodle
 {
@@ -83,13 +76,13 @@ namespace doodle
     return true;
   }
 
-  bool init_ue4_project::create_world(const FString &in_path,
-                                      const FString &in_name)
+  bool init_ue4_project::create_world(const FString &in_path)
   {
+    p_save_level_path = in_path;
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-    if (!UEditorAssetLibrary::DoesAssetExist(in_path / in_name))
+    if (!UEditorAssetLibrary::DoesAssetExist(in_path))
     {
       // UFactory::StaticClass()->GetDefaultSubobjects()
       for (TObjectIterator<UClass> it{}; it; ++it)
@@ -98,38 +91,54 @@ namespace doodle
         {
           if (it->GetName() == "LevelSequenceFactoryNew")
           {
-            p_level_ = l_ass_tool.CreateAsset(in_name, in_path,
+            p_level_ = l_ass_tool.CreateAsset(FPaths::GetBaseFilename(in_path), in_path,
                                               ULevelSequence::StaticClass(),
                                               it->GetDefaultObject<UFactory>());
           }
         }
       }
     }
+    else
+    {
+      p_level_ = LoadObject<ULevelSequence>(nullptr, *in_path);
+    }
+
+    if (p_level_ != nullptr)
+      p_save_level_path = p_level_->GetPathName();
 
     return p_level_ != nullptr;
   }
-  bool init_ue4_project::create_level(const FString &in_path,
-                                      const FString &in_name)
+  bool init_ue4_project::create_level(const FString &in_path)
   {
+    p_save_world_path = in_path;
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-    if (!UEditorAssetLibrary::DoesAssetExist(in_path / in_name))
+    if (!UEditorAssetLibrary::DoesAssetExist(in_path))
     {
       p_world_ = l_ass_tool.CreateAsset(
-          in_name, in_path, UWorld::StaticClass(),
+          FPaths::GetBaseFilename(in_path), in_path, UWorld::StaticClass(),
           UWorldFactory::StaticClass()->GetDefaultObject<UFactory>());
-      UEditorLevelLibrary::LoadLevel(in_path / in_name);
+      UEditorLevelLibrary::LoadLevel(in_path);
     }
+    else
+    {
+      UEditorLevelLibrary::LoadLevel(in_path);
+      p_world_ = GWorld;
+    }
+    if (p_world_ != nullptr)
+      p_save_world_path = p_world_->GetPathName();
+
     return p_world_ != nullptr;
   }
   bool init_ue4_project::set_level_info(int32 in_start, int32 in_end)
   {
     check(p_level_);
+
+    auto l_eve = CastChecked<ULevelSequence>(p_level_);
     if (l_eve->GetMovieScene()->GetCameraCutTrack() != nullptr)
       return true;
 
-    auto l_eve = CastChecked<ULevelSequence>(p_level_);
     l_eve->GetMovieScene()->SetDisplayRate(FFrameRate{25, 1});
     l_eve->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{25, 1});
     l_eve->GetMovieScene()->Modify();
@@ -173,8 +182,7 @@ namespace doodle
   }
   bool init_ue4_project::save()
   {
-    // UEditorLoadingAndSavingUtils::SaveMap(CastChecked<UWorld>(p_world_),
-    //                                      p_save_world_path);
+
     UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
     return true;
   }
@@ -184,9 +192,57 @@ namespace doodle
     load_all_blueprint();
     build_all_blueprint();
 
-    create_world(TEXT("/Game/tmp/test"), TEXT("doodle_test_word"));
-    create_level(TEXT("/Game/tmp/test"), TEXT("doodle_test_level"));
+    create_world(TEXT("/Game/tmp/test"));
+    create_level(TEXT("/Game/tmp/test"));
     set_level_info(1001, 1200);
     save();
+  }
+
+  bool init_ue4_project::import_ass_data(const FString &in_path, UObject* Outer)
+  {
+    if (!FPaths::FileExists(in_path))
+      return false;
+
+    TArray<UAutomatedAssetImportData *> ImportDataList{};
+
+    { /// 解码导入的json数据
+      TArray<FDoodleAssetImportData> import_setting_list;
+      FString k_json_str;
+      FDoodleAssetImportDataGroup l_data_list{};
+      if (FFileHelper::LoadFileToString(k_json_str, *in_path))
+      {
+        UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
+        UE_LOG(LogTemp, Log, TEXT("开始测试 数组"));
+        if (FJsonObjectConverter::JsonObjectStringToUStruct<
+                FDoodleAssetImportDataGroup>(k_json_str, &l_data_list, CPF_None,
+                                             CPF_None))
+        {
+          import_setting_list = l_data_list.groups;
+        }
+      }
+      UE_LOG(LogTemp, Log, TEXT("开始直接读取字符串作为json"));
+      if (FJsonObjectConverter::JsonObjectStringToUStruct<
+              FDoodleAssetImportDataGroup>(in_path, &l_data_list, CPF_None,
+                                           CPF_None))
+      {
+        import_setting_list = l_data_list.groups;
+      }
+
+      if (l_data_list.groups.Num() == 0)
+      {
+        return false;
+      }
+
+      create_world(l_data_list.world_path);
+      create_level(l_data_list.level_path);
+      set_level_info(l_data_list.start_frame, l_data_list.end_frame);
+
+      for (auto &i : import_setting_list)
+      {
+        UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
+        ImportDataList.Add(i.get_input(Outer));
+      }
+    }
+    return true;
   }
 } // namespace doodle

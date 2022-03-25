@@ -2,25 +2,30 @@
 
 #include "CoreMinimal.h"
 
-namespace doodle {
-class init_ue4_project {
- public:
-  UObject* p_world_;
-  UObject* p_level_;
-  FString p_save_world_path;
-  FString p_save_level_path;
-  TArray< FAssetData > blueprint_list;
+namespace doodle
+{
+  class init_ue4_project
+  {
+  public:
+    static TArray<UObject *> find_sk();
 
-  bool load_all_blueprint();
-  bool build_all_blueprint();
+    UObject *p_world_;
+    UObject *p_level_;
+    FString p_save_world_path;
+    FString p_save_level_path;
+    TArray<FAssetData> blueprint_list;
 
-  bool create_world(const FString& in_path, const FString& in_name);
-  bool create_level(const FString& in_path, const FString& in_name);
-  bool set_level_info(int32 in_start, int32 in_end);
-  bool save();
+    bool load_all_blueprint();
+    bool build_all_blueprint();
 
+    bool create_world(const FString &in_path);
+    bool create_level(const FString &in_path);
+    bool set_level_info(int32 in_start, int32 in_end);
+    bool save();
 
-  void tmp();
-};
+    bool import_ass_data(const FString &in_path, UObject* Outer);
 
-}  // namespace doodle
+    void tmp();
+  };
+
+} // namespace doodle
