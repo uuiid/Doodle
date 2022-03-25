@@ -12,23 +12,6 @@ class UFactory;
 class FJsonObject;
 class UFbxFactory;
 
-namespace {
-class Episodes {
- public:
-  Episodes() = default;
-  ~Episodes() = default;
-  uint64 eps;
-};
-
-class Shot {
- public:
-  Shot() = default;
-  ~Shot() = default;
-  uint64 shot;
-  TOptional<FString> shot_ab;
-};
-}  // namespace
-
 USTRUCT()
 struct FDoodleEpisodes {
   GENERATED_BODY()
