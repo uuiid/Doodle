@@ -38,6 +38,8 @@
 
 // 我们在测试时使用
 #include "DoodleCreateLevel.h"
+// 编辑器脚本
+#include "EditorAssetLibrary.h"
 
 void DoodleCopyMat::Construct(const FArguments &Arg)
 {
@@ -133,6 +135,8 @@ void DoodleCopyMat::Construct(const FArguments &Arg)
                [SNew(SButton)
                     .OnClicked_Lambda([this]() -> FReply
                                       {
+                                        GEditor->NewMap();
+                                        UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test"));
                       doodle::init_ue4_project{}.tmp();
                       return FReply::Handled(); })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText
