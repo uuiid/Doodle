@@ -2,12 +2,17 @@
 
 #include "CoreMinimal.h"
 
+class USkeletalMesh;
+class UGeometryCache;
+
+
 namespace doodle
 {
   class init_ue4_project
   {
   public:
-    static TArray<UObject *> find_sk();
+    static TArray<UObject *> find_skeletal_mesh(const TArray<UObject *>& in_obj);
+    static TArray<UObject *> find_geometry_cache(const TArray<UObject *>& in_obj);
 
     UObject *p_world_;
     UObject *p_level_;

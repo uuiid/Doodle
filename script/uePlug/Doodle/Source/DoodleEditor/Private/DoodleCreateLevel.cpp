@@ -33,6 +33,11 @@
 #include "AutomatedAssetImportData.h"
 /// 导入我们的自定义数据
 #include "DoodleAssetImportData.h"
+/// 检查包名称存在
+#include "Misc/PackageName.h"
+
+/// 生成骨架网格体
+#include "Animation/SkeletalMeshActor.h"
 
 namespace doodle
 {
@@ -82,16 +87,16 @@ namespace doodle
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-    if (!UEditorAssetLibrary::DoesAssetExist(in_path))
+    UE_LOG(LogTemp, Log, TEXT("关卡路径 %s"), *(FPaths::GetPath(in_path) / FPaths::GetBaseFilename(in_path)));
+    if (!FPackageName::DoesPackageExist(in_path))
     {
-      // UFactory::StaticClass()->GetDefaultSubobjects()
       for (TObjectIterator<UClass> it{}; it; ++it)
       {
         if (it->IsChildOf(UFactory::StaticClass()))
         {
           if (it->GetName() == "LevelSequenceFactoryNew")
           {
-            p_level_ = l_ass_tool.CreateAsset(FPaths::GetBaseFilename(in_path), in_path,
+            p_level_ = l_ass_tool.CreateAsset(FPaths::GetBaseFilename(in_path), FPaths::GetPath(in_path),
                                               ULevelSequence::StaticClass(),
                                               it->GetDefaultObject<UFactory>());
           }
@@ -114,10 +119,12 @@ namespace doodle
     auto &l_ass_tool = FModuleManager::Get()
                            .LoadModuleChecked<FAssetToolsModule>("AssetTools")
                            .Get();
-    if (!UEditorAssetLibrary::DoesAssetExist(in_path))
+    UE_LOG(LogTemp, Log, TEXT("世界路径 %s"), *(FPaths::GetPath(in_path) / FPaths::GetBaseFilename(in_path)));
+
+    if (!FPackageName::DoesPackageExist(in_path))
     {
       p_world_ = l_ass_tool.CreateAsset(
-          FPaths::GetBaseFilename(in_path), in_path, UWorld::StaticClass(),
+          FPaths::GetBaseFilename(in_path), FPaths::GetPath(in_path), UWorld::StaticClass(),
           UWorldFactory::StaticClass()->GetDefaultObject<UFactory>());
       UEditorLevelLibrary::LoadLevel(in_path);
     }
@@ -192,8 +199,8 @@ namespace doodle
     load_all_blueprint();
     build_all_blueprint();
 
-    create_world(TEXT("/Game/tmp/test"));
-    create_level(TEXT("/Game/tmp/test"));
+    create_world(TEXT("/Game/tmp/test/doodle_world"));
+    create_level(TEXT("/Game/tmp/test/doodle_level"));
     set_level_info(1001, 1200);
     save();
   }
@@ -242,6 +249,33 @@ namespace doodle
         UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
         ImportDataList.Add(i.get_input(Outer));
       }
+
+      UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
+      FAssetToolsModule &AssetToolsModule =
+          FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+      TArray<UObject *> import_obj_list{};
+      for (auto &ImportData : ImportDataList)
+      {
+        UE_LOG(LogTemp, Log, TEXT("Importing group %s"),
+               *ImportData->GetDisplayName());
+
+        TArray<UObject *> ImportedAssets =
+            AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
+        if (ImportedAssets.Num() > 0)
+        {
+          UE_LOG(LogTemp, Log, TEXT("导入完成， 开始保存"));
+          UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+        }
+        else
+        {
+          UE_LOG(LogTemp, Error, TEXT("Failed to import all assets in group %s"),
+                 *ImportData->GetDisplayName());
+        }
+        import_obj_list.Append(ImportDataList);
+      }
+
+      // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
+      // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
     }
     return true;
   }
