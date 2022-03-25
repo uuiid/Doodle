@@ -136,7 +136,8 @@ void DoodleCopyMat::Construct(const FArguments &Arg)
                     .OnClicked_Lambda([this]() -> FReply
                                       {
                                         GEditor->NewMap();
-                                        UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test"));
+                                        UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_level"));
+                                        UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_word"));
                       doodle::init_ue4_project{}.tmp();
                       return FReply::Handled(); })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText
