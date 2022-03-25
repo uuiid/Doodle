@@ -9,6 +9,10 @@ class init_ue4_project {
   UObject* p_level_;
   FString p_save_world_path;
   FString p_save_level_path;
+  TArray< FAssetData > blueprint_list;
+
+  bool load_all_blueprint();
+  bool build_all_blueprint();
 
   bool create_world(const FString& in_path, const FString& in_name);
   bool create_level(const FString& in_path, const FString& in_name);

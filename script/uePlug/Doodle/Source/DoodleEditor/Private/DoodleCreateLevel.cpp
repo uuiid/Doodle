@@ -34,8 +34,53 @@
  */
 #include "UDoodleImportUilt.h"
 
+/// 资产注册表
+#include "AssetRegistry/AssetRegistryModule.h"
+/// 编译蓝图
+#include "Kismet2/KismetEditorUtilities.h"
+
 namespace doodle
 {
+  bool init_ue4_project::load_all_blueprint()
+  {
+    UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
+    FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+    AssetRegistryModule.Get().SearchAllAssets(/*bSynchronousSearch =*/true);
+    UE_LOG(LogTemp, Log, TEXT("Finished Loading Asset Registry."));
+
+    UE_LOG(LogTemp, Log, TEXT("Gathering All Blueprints From Asset Registry..."));
+
+    return AssetRegistryModule.Get().GetAssetsByClass(UBlueprint::StaticClass()->GetFName(),
+                                                      blueprint_list, true);
+  }
+
+  bool init_ue4_project::build_all_blueprint()
+  {
+
+    for (auto &&i : blueprint_list)
+    {
+      FString const AssetPath = i.ObjectPath.ToString();
+      UE_LOG(LogTemp, Log, TEXT("Loading and Compiling: '%s'..."), *AssetPath);
+
+      UBlueprint *l_b =
+          Cast<UBlueprint>(
+              StaticLoadObject(
+                  i.GetClass(),
+                  nullptr,
+                  *AssetPath,
+                  nullptr,
+                  LOAD_NoWarn | LOAD_DisableCompileOnLoad));
+
+      if (l_b != nullptr)
+      {
+        if (l_b->ParentClass.Get() == UDoodleImportUilt::StaticClass())
+          FKismetEditorUtilities::CompileBlueprint(l_b,
+                                                   EBlueprintCompileOptions::SkipGarbageCollection);
+      }
+    }
+    return true;
+  }
+
   bool init_ue4_project::create_world(const FString &in_path,
                                       const FString &in_name)
   {
@@ -91,6 +136,9 @@ namespace doodle
     l_eve->Modify();
 
     ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
+    // GEditor->Bluep;
+    // StaticLoadObject
+
     UDoodleImportUilt::Get()->create_camera(
         l_eve,
         l_cam);
@@ -125,13 +173,12 @@ namespace doodle
     l_cam->GetCineCameraComponent()->FocusSettings.FocusMethod =
         ECameraFocusMethod::Disable;
 
-    auto l_cam_task = l_eve->MovieScene->GetCameraCutTrack();
-
-    for (auto &&i : l_cam_task->GetAllSections())
-    {
-      i->SetRange(TRange<FFrameNumber>{in_start, in_end});
-      i->Modify();
-    }
+    // auto l_cam_task = l_eve->MovieScene->GetCameraCutTrack();
+    // for (auto &&i : l_cam_task->GetAllSections())
+    // {
+    //   i->SetRange(TRange<FFrameNumber>{in_start, in_end});
+    //   i->Modify();
+    // }
 
     return false;
   }
@@ -146,6 +193,8 @@ namespace doodle
   void init_ue4_project::tmp()
   {
     // UE_LOG(LogTemp, Log, TEXT("工厂名称 %s"), *(it->GetName()));
+    load_all_blueprint();
+    build_all_blueprint();
 
     create_world(TEXT("/Game/tmp/test"), TEXT("doodle_test_word"));
     create_level(TEXT("/Game/tmp/test"), TEXT("doodle_test_level"));
