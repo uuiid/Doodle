@@ -140,6 +140,7 @@ UAutomatedAssetImportData *FDoodleAssetImportData::get_input(UObject *Outer)
   k_setting->Filenames.Add(import_file_path);
   k_setting->DestinationPath = import_file_save_dir;
   k_setting->bReplaceExisting = true;
+  k_setting->GroupName = import_file_save_dir;
   UE_LOG(LogTemp, Log, TEXT("导入目标路径为 %s"), *(import_file_save_dir));
   switch (import_type)
   {
