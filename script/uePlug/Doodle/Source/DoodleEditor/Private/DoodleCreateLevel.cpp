@@ -44,6 +44,8 @@
 #include "Serialization/JsonSerializer.h"
 /// 几何缓存体使用
 #include "GeometryCache.h"
+/// 导入的fbx动画
+#include "Animation/AnimSequence.h"
 
 namespace doodle
 {
@@ -269,7 +271,6 @@ namespace doodle
           FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
       TArray<FString> import_Paths{};
       AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
-      UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
       for (auto &ImportData : ImportDataList)
       {
 
@@ -287,19 +288,34 @@ namespace doodle
           UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
         }
       }
+      UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+
       TArray<UObject *> import_obj{};
       for (FString &i : import_Paths)
       {
         auto l_load = LoadObject<UObject>(p_level_, *i);
-        import_obj.Add(l_load);
+        if (l_load != nullptr)
+          import_obj.Add(l_load);
       }
 
-      TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
-      TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
+      TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj);
+      TArray<UAnimSequence *> l_anim = this->filter_by_type<UAnimSequence>(import_obj);
+      this->obj_add_level(l_geo);
+      this->obj_add_level(l_anim);
 
       // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
     }
     return true;
   }
+
+  bool init_ue4_project::obj_add_level(const TArray<UGeometryCache *> in_obj)
+  {
+    return false;
+  }
+  bool init_ue4_project::obj_add_level(const TArray<UAnimSequence *> in_obj)
+  {
+    return false;
+  }
+
 } // namespace doodle

@@ -4,6 +4,7 @@
 
 class USkeletalMesh;
 class UGeometryCache;
+class UAnimSequence;
 
 namespace doodle
 {
@@ -25,7 +26,7 @@ namespace doodle
     }
 
     bool obj_add_level(const  TArray<UGeometryCache *> in_obj);
-    bool obj_add_level(const  TArray<USkeletalMesh *> in_obj);
+    bool obj_add_level(const  TArray<UAnimSequence *> in_obj);
 
     UObject *p_world_;
     UObject *p_level_;
