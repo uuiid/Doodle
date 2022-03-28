@@ -38,6 +38,9 @@
 
 /// 生成骨架网格体
 #include "Animation/SkeletalMeshActor.h"
+/// 动画
+#include "Animation/AnimationAsset.h"
+
 /// json需要
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonReader.h"
@@ -46,6 +49,12 @@
 #include "GeometryCache.h"
 /// 导入的fbx动画
 #include "Animation/AnimSequence.h"
+/// 几何缓存actor 导入
+#include "GeometryCacheActor.h"
+#include "GeometryCacheComponent.h"
+
+/// 电影 Section
+#include "MovieSceneSection.h"
 
 namespace doodle
 {
@@ -139,7 +148,7 @@ namespace doodle
     else
     {
       UEditorLevelLibrary::LoadLevel(in_path);
-      p_world_ = GWorld;
+      p_world_ = GEditor->GetEditorWorldContext().World();
     }
     if (p_world_ != nullptr)
       p_save_world_path = p_world_->GetPathName();
@@ -149,6 +158,8 @@ namespace doodle
   bool init_ue4_project::set_level_info(int32 in_start, int32 in_end)
   {
     check(p_level_);
+    start_frame = in_start;
+    end_frame = in_end;
 
     auto l_eve = CastChecked<ULevelSequence>(p_level_);
     if (l_eve->GetMovieScene()->GetCameraCutTrack() != nullptr)
@@ -167,8 +178,6 @@ namespace doodle
         TRange<FFrameNumber>{in_start, in_end}, true);
     l_eve->Modify();
     ///
-
-    
 
     ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
     // GEditor->Bluep;
@@ -206,9 +215,25 @@ namespace doodle
   }
   void init_ue4_project::tmp()
   {
-    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
-                    GetTransientPackage());
-    save();
+    // import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
+    //                 GetTransientPackage());
+    // save();
+
+    /// 加载蓝图
+    load_all_blueprint();
+    build_all_blueprint();
+    create_world(TEXT("/Game/tmp/1/world_"));
+    create_level(TEXT("/Game/tmp/1/level_"));
+    set_level_info(1001, 1096);
+
+    auto l_load_sk = LoadObject<UAnimSequence>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP029_SC008_AN_Ch001D_Rig_LX_1001-1096"));
+    auto l_load_geo = LoadObject<UGeometryCache>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP053_SC056_AN_Ch115A_Rig_jfm_1000-1119"));
+    TArray<UAnimSequence *> l_load_sks{};
+    l_load_sks.Add(l_load_sk);
+    obj_add_level(l_load_sks);
+    TArray<UGeometryCache *> l_load_geos{};
+    l_load_geos.Add(l_load_geo);
+    obj_add_level(l_load_geos);
   }
 
   bool init_ue4_project::import_ass_data(const FString &in_path, UObject *Outer)
@@ -314,6 +339,25 @@ namespace doodle
 
   bool init_ue4_project::obj_add_level(const TArray<UGeometryCache *> in_obj)
   {
+    check(p_level_);
+
+    auto *l_eve = CastChecked<ULevelSequence>(p_level_);
+    auto *l_tool = UDoodleImportUilt::Get();
+    for (auto &i : in_obj)
+    {
+      AGeometryCacheActor *l_actor = GWorld->SpawnActor<AGeometryCacheActor>();
+      UGeometryCacheComponent *l_com = l_actor->GetGeometryCacheComponent();
+      l_com->SetGeometryCache(i);
+      auto l_task = l_tool->add_geo_cache_scene(l_eve, l_actor);
+      if (l_task)
+      {
+        l_task->SetStartFrame(TRangeBound<FFrameNumber>{});
+        l_task->SetEndFrame(TRangeBound<FFrameNumber>{});
+        l_task->SetRange(TRange<FFrameNumber>{(int32)start_frame, (int32)end_frame});
+        l_task->Modify();
+      }
+    }
+
     return false;
   }
   bool init_ue4_project::obj_add_level(const TArray<UAnimSequence *> in_obj)
@@ -326,9 +370,23 @@ namespace doodle
     {
       ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       USkeletalMeshComponent *l_com = l_actor->GetSkeletalMeshComponent();
-      l_com->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-      l_com->SetAnimation(i);
-      l_tool->add_skin_scene(l_eve, l_actor, i);
+      USkeleton *l_sk = i->GetSkeleton();
+      auto l_sk_mesh_path = l_sk->GetPathName().Replace(TEXT("_Skeleton"), TEXT(""));
+      auto l_sk_mesh = LoadObject<USkeletalMesh>(i, *l_sk_mesh_path);
+      if (l_sk_mesh)
+      {
+        l_com->SetSkeletalMesh(l_sk_mesh);
+        l_com->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+        l_com->SetAnimation(i);
+        auto l_task = l_tool->add_skin_scene(l_eve, l_actor, i);
+        if (l_task)
+        {
+          l_task->SetStartFrame(TRangeBound<FFrameNumber>{});
+          l_task->SetEndFrame(TRangeBound<FFrameNumber>{});
+          l_task->SetRange(TRange<FFrameNumber>{(int32)start_frame, (int32)end_frame});
+          l_task->Modify();
+        }
+      }
     }
     return false;
   }

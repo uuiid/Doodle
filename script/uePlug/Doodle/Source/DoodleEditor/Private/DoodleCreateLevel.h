@@ -32,6 +32,9 @@ namespace doodle
     UObject *p_level_;
     FString p_save_world_path;
     FString p_save_level_path;
+      uint64 start_frame;
+  uint64 end_frame;
+
     TArray<FAssetData> blueprint_list;
 
     bool load_all_blueprint();
