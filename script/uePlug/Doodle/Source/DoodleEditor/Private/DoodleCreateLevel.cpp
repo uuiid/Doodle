@@ -204,7 +204,7 @@ namespace doodle
       i->SetRange(TRange<FFrameNumber>{in_start, in_end});
       i->Modify();
     }
-
+    l_cam->ConditionalBeginDestroy();
     return true;
   }
   bool init_ue4_project::save()
