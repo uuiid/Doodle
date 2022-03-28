@@ -356,6 +356,7 @@ namespace doodle
         l_task->SetRange(TRange<FFrameNumber>{(int32)start_frame, (int32)end_frame});
         l_task->Modify();
       }
+      l_actor->ConditionalBeginDestroy();
     }
 
     return false;
@@ -387,6 +388,7 @@ namespace doodle
           l_task->Modify();
         }
       }
+      l_actor->ConditionalBeginDestroy();
     }
     return false;
   }
