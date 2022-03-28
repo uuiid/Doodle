@@ -38,10 +38,16 @@
 
 /// 生成骨架网格体
 #include "Animation/SkeletalMeshActor.h"
+/// json需要
+#include "JsonObjectConverter.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+/// 几何缓存体使用
+#include "GeometryCache.h"
 
 namespace doodle
 {
-  bool init_ue4_project::load_all_blueprint()
+    bool init_ue4_project::load_all_blueprint()
   {
     UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
     FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
@@ -273,6 +279,8 @@ namespace doodle
         }
         import_obj_list.Append(ImportDataList);
       }
+      TArray<UGeometryCache*> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
+      TArray<USkeletalMesh*> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
 
       // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()

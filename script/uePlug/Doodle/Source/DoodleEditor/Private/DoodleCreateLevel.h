@@ -5,14 +5,24 @@
 class USkeletalMesh;
 class UGeometryCache;
 
-
 namespace doodle
 {
   class init_ue4_project
   {
   public:
-    static TArray<UObject *> find_skeletal_mesh(const TArray<UObject *>& in_obj);
-    static TArray<UObject *> find_geometry_cache(const TArray<UObject *>& in_obj);
+    template <typename TSubClass>
+    static TArray<TSubClass *> filter_by_type(const TArray<UObject *> &in_obj)
+    {
+      TArray<TSubClass *> l_out{};
+      for (auto &&i : in_obj)
+      {
+        if (i->GetClass()->IsChildOf<TSubClass>())
+        {
+          l_out.Add(CastChecked<TSubClass>(i));
+        }
+      }
+      return l_out;
+    }
 
     UObject *p_world_;
     UObject *p_level_;
@@ -28,7 +38,7 @@ namespace doodle
     bool set_level_info(int32 in_start, int32 in_end);
     bool save();
 
-    bool import_ass_data(const FString &in_path, UObject* Outer);
+    bool import_ass_data(const FString &in_path, UObject *Outer);
 
     void tmp();
   };
