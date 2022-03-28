@@ -30,7 +30,7 @@
 #include "EditorAssetLibrary.h"
 
 /// 自动导入类需要
-#include "AutomatedAssetImportData.h"
+#include "AssetImportTask.h"
 /// 导入我们的自定义数据
 #include "DoodleAssetImportData.h"
 /// 检查包名称存在
@@ -215,7 +215,7 @@ namespace doodle
     if (!FPaths::FileExists(in_path))
       return false;
 
-    TArray<UAutomatedAssetImportData *> ImportDataList{};
+    TArray<UAssetImportTask *> ImportDataList{};
 
     { /// 解码导入的json数据
       TArray<FDoodleAssetImportData> import_setting_list;
@@ -268,27 +268,23 @@ namespace doodle
       FAssetToolsModule &AssetToolsModule =
           FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
       TArray<UObject *> import_obj_list{};
+      AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
       for (auto &ImportData : ImportDataList)
       {
-        UE_LOG(LogTemp, Log, TEXT("Importing group %s"),
-               *ImportData->GetDisplayName());
 
-        TArray<UObject *> ImportedAssets =
-            AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
-        if (ImportedAssets.Num() > 0)
+        if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0)
         {
-          UE_LOG(LogTemp, Log, TEXT("导入完成， 开始保存"));
+          UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *ImportData->Filename);
           UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
         }
         else
         {
-          UE_LOG(LogTemp, Error, TEXT("Failed to import all assets in group %s"),
-                 *ImportData->GetDisplayName());
+          UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
         }
-        import_obj_list.Append(ImportDataList);
+        import_obj_list.Append(ImportData->Result);
       }
-      TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
-      TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
+      // TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
+      // TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
 
       // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
