@@ -23,11 +23,10 @@
 void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
 {
   UE_LOG(LogTemp, Log, TEXT("读取到fbx文件 %s"), *(import_file_path));
-  in_import_data->FactoryName = "FbxFactory";
+  // in_import_data->FactoryName = "FbxFactory";
+  in_import_data->Factory = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), in_import_data);
 
   UFbxFactory *k_fbx_f = Cast<UFbxFactory>(in_import_data->Factory);
-  if (!k_fbx_f)
-    return;
 
   k_fbx_f->ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
   k_fbx_f->ImportUI->OriginalImportType = FBXIT_SkeletalMesh;
@@ -89,7 +88,19 @@ void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
 void FDoodleAssetImportData::set_abc(UAutomatedAssetImportData *in_import_data)
 {
   UE_LOG(LogTemp, Log, TEXT("读取到abc文件 %s"), *(import_file_path));
-  in_import_data->FactoryName = "AlembicImportFactory";
+  // in_import_data->FactoryName = "AlembicImportFactory";
+
+  for (TObjectIterator<UClass> it{}; it; ++it)
+  {
+    if (it->IsChildOf(UFactory::StaticClass()))
+    {
+      if (it->GetName() == "AlembicImportFactory")
+      {
+        in_import_data->Factory = DuplicateObject<UFactory>(it->GetDefaultObject<UFactory>(),
+                                                            in_import_data);
+      }
+    }
+  }
 
   /// 获取abc默认设置并修改
   UAbcImportSettings *k_abc_stting = DuplicateObject<
