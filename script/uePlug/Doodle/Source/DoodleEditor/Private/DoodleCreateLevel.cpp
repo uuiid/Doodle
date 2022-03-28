@@ -267,24 +267,35 @@ namespace doodle
       UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
       FAssetToolsModule &AssetToolsModule =
           FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-      TArray<UObject *> import_obj_list{};
+      TArray<FString> import_Paths{};
       AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
+      UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
       for (auto &ImportData : ImportDataList)
       {
 
         if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0)
         {
-          UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *ImportData->Filename);
-          UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+          for (FString &i : ImportData->ImportedObjectPaths)
+          {
+            FString pr{i};
+            import_Paths.AddUnique(i);
+            UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *pr);
+          }
         }
         else
         {
           UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
         }
-        import_obj_list.Append(ImportData->Result);
       }
-      // TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
-      // TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
+      TArray<UObject *> import_obj{};
+      for (FString &i : import_Paths)
+      {
+        auto l_load = LoadObject<UObject>(p_level_, *i);
+        import_obj.Add(l_load);
+      }
+
+      TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
+      TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
 
       // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
