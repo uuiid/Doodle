@@ -132,7 +132,10 @@ UAssetImportTask *FDoodleAssetImportData::get_input(UObject *Outer)
   l_task->bAutomated = true;
   l_task->bReplaceExisting = true;
   l_task->bReplaceExistingSettings = true;
-  l_task->bSave = true;
+  /// @fix 此处不需要自动保存, 否则会出现一个ue4.27中发现的bug 会将 
+  /// UAssetImportTask::ImportedObjectPaths 值转换为乱码
+  
+  // l_task->bSave = true;
   l_task->DestinationPath = import_file_save_dir;
   l_task->Filename = import_file_path;
 
