@@ -24,6 +24,9 @@ namespace doodle
       return l_out;
     }
 
+    bool obj_add_level(const  TArray<UGeometryCache *> in_obj);
+    bool obj_add_level(const  TArray<USkeletalMesh *> in_obj);
+
     UObject *p_world_;
     UObject *p_level_;
     FString p_save_world_path;

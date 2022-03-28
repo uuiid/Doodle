@@ -47,7 +47,7 @@
 
 namespace doodle
 {
-    bool init_ue4_project::load_all_blueprint()
+  bool init_ue4_project::load_all_blueprint()
   {
     UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
     FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
@@ -253,7 +253,16 @@ namespace doodle
       for (auto &i : import_setting_list)
       {
         UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
-        ImportDataList.Add(i.get_input(Outer));
+        switch (i.import_type)
+        {
+        case EDoodleImportType::Abc:
+        case EDoodleImportType::Fbx:
+          ImportDataList.Add(i.get_input(Outer));
+          break;
+        case EDoodleImportType::Camera:
+        default:
+          break;
+        }
       }
 
       UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
@@ -279,8 +288,8 @@ namespace doodle
         }
         import_obj_list.Append(ImportDataList);
       }
-      TArray<UGeometryCache*> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
-      TArray<USkeletalMesh*> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
+      TArray<UGeometryCache *> l_geo = this->filter_by_type<UGeometryCache>(import_obj_list);
+      TArray<USkeletalMesh *> l_skin = this->filter_by_type<USkeletalMesh>(import_obj_list);
 
       // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
       // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
