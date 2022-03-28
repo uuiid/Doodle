@@ -13,6 +13,8 @@ class UGeometryCache;
 class UAnimSequence;
 class AGeometryCacheActor;
 class ASkeletalMeshActor;
+class UMovieSceneSkeletalAnimationTrack;
+class UMovieSceneGeometryCacheTrack;
 
 UCLASS(Blueprintable)
 class DOODLE_API UDoodleImportUilt : public UObject
@@ -34,13 +36,13 @@ public:
         const FString &in_path) const;
 
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (DefaultToSelf, HideSelfPin))
-    bool add_skin_scene(
+    UMovieSceneSkeletalAnimationTrack* add_skin_scene(
         const ULevelSequence *in_level,
         const ASkeletalMeshActor *in_anim,
         const UAnimSequence *in_anim_sequence);
 
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (DefaultToSelf, HideSelfPin))
-    bool add_geo_cache_scene(
+    UMovieSceneGeometryCacheTrack* add_geo_cache_scene(
         const ULevelSequence *in_level,
         const AGeometryCacheActor *in_geo);
 };
