@@ -166,6 +166,9 @@ namespace doodle
     l_eve->GetMovieScene()->SetPlaybackRange(
         TRange<FFrameNumber>{in_start, in_end}, true);
     l_eve->Modify();
+    ///
+
+    
 
     ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
     // GEditor->Bluep;
@@ -315,6 +318,18 @@ namespace doodle
   }
   bool init_ue4_project::obj_add_level(const TArray<UAnimSequence *> in_obj)
   {
+    check(p_level_);
+
+    auto *l_eve = CastChecked<ULevelSequence>(p_level_);
+    auto *l_tool = UDoodleImportUilt::Get();
+    for (auto &i : in_obj)
+    {
+      ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
+      USkeletalMeshComponent *l_com = l_actor->GetSkeletalMeshComponent();
+      l_com->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+      l_com->SetAnimation(i);
+      l_tool->add_skin_scene(l_eve, l_actor, i);
+    }
     return false;
   }
 
