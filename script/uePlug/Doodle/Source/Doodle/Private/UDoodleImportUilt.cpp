@@ -2,10 +2,7 @@
 
 /// UDoodleImportUilt::add_movie_scene_track
 #include "MovieSceneTrack.h"
-/// 几何缓存注册需要
-#include "MovieSceneGeometryCacheTrack.h"
-/// 骨骼物体注册需要
-#include "Tracks/MovieSceneSkeletalAnimationTrack.h"
+#include "MovieSceneSection.h"
 
 UDoodleImportUilt *UDoodleImportUilt::Get()
 {
