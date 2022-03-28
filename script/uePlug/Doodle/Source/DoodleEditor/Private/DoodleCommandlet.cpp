@@ -37,39 +37,7 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString &in_params)
 
   return !import_setting_path.IsEmpty();
 }
-bool UDoodleAssCreateCommandlet::parse_import_setting(
-    const FString &in_import_setting_file)
-{
-  FString k_json_str;
-  TArray<FDoodleAssetImportData> import_setting_list;
-  if (FFileHelper::LoadFileToString(k_json_str, *in_import_setting_file))
-  {
-    UE_LOG(LogTemp, Log, TEXT("开始读取json配置文件"));
-    FDoodleAssetImportDataGroup l_data_list{};
-    UE_LOG(LogTemp, Log, TEXT("开始测试是 FDoodleAssetImportDataGroup"));
-    if (FJsonObjectConverter::JsonObjectStringToUStruct<
-            FDoodleAssetImportDataGroup>(k_json_str, &l_data_list, CPF_None,
-                                         CPF_None))
-    {
-      import_setting_list = l_data_list.groups;
-    }
-    UE_LOG(LogTemp, Log, TEXT("开始测试 FDoodleAssetImportData"));
-    FDoodleAssetImportData l_data{};
-    if (FJsonObjectConverter::JsonObjectStringToUStruct<FDoodleAssetImportData>(
-            k_json_str, &l_data, CPF_None, CPF_None))
-    {
-      import_setting_list.Add(l_data);
-    }
-  }
-
-  for (auto &i : import_setting_list)
-  {
-    UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
-    ImportDataList.Add(i.get_input(this));
-  }
-
-  return import_setting_list.Num() != 0 && ImportDataList.Num() != 0;
-}
+ 
 
 static bool SavePackage(UPackage *Package, const FString &PackageFilename)
 {
@@ -77,43 +45,7 @@ static bool SavePackage(UPackage *Package, const FString &PackageFilename)
                               GWarn);
 }
 
-bool UDoodleAssCreateCommandlet::import_and_save(
-    const TArray<UAutomatedAssetImportData *> &assets_import_list)
-{
-  UE_LOG(LogTemp, Log, TEXT("开始导入文件"));
-  FAssetToolsModule &AssetToolsModule =
-      FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-  for (auto ImportData : assets_import_list)
-  {
-    UE_LOG(LogTemp, Log, TEXT("Importing group %s"),
-           *ImportData->GetDisplayName());
-
-    TArray<UObject *> ImportedAssets =
-        AssetToolsModule.Get().ImportAssetsAutomated(ImportData);
-    if (ImportedAssets.Num() > 0)
-    {
-      UE_LOG(LogTemp, Log, TEXT("导入完成， 开始保存"));
-      UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
-      // TArray<UPackage *> DirtyPackages;
-      // TArray<FSourceControlStateRef> PackageStates;
-      // FEditorFileUtils::GetDirtyContentPackages(DirtyPackages);
-      // FEditorFileUtils::GetDirtyWorldPackages(DirtyPackages);
-      // for (int32 PackageIndex = 0; PackageIndex < DirtyPackages.Num();
-      //      ++PackageIndex)
-      // {
-      //   UPackage *PackageToSave = DirtyPackages[PackageIndex];
-      //   FString PackageFilename =
-      //       SourceControlHelpers::PackageFilename(PackageToSave);
-      // }
-    }
-    else
-    {
-      UE_LOG(LogTemp, Error, TEXT("Failed to import all assets in group %s"),
-             *ImportData->GetDisplayName());
-    }
-  }
-  return true;
-}
+ 
 
 // void UDoodleAssCreateCommandlet::ClearDirtyPackages()
 // {
@@ -163,12 +95,12 @@ int32 UDoodleAssCreateCommandlet::Main(const FString &Params)
   }
 
   UE_LOG(LogTemp, Log, TEXT("解析参数完成"));
-  if (!parse_import_setting(import_setting_path))
-    return 0;
+  // if (!parse_import_setting(import_setting_path))
+  //   return 0;
 
   UE_LOG(LogTemp, Log, TEXT("开始导入和保存文件"));
-  if (!import_and_save(ImportDataList))
-    return 1;
+  // if (!import_and_save(ImportDataList))
+  //   return 1;
 
   return 0;
 }

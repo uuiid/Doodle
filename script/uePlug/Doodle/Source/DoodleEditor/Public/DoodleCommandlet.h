@@ -60,12 +60,9 @@ private:
   FString import_setting_path;
 
 private:
-  bool parse_params(const FString &in_params);
-  bool parse_import_setting(const FString &in_import_setting_file);
+  bool parse_params(const FString &in_params); 
   void setting_import_fbx_is_skobj(UFbxFactory *k_fbx_f);
-
-  bool import_and_save(
-      const TArray<UAutomatedAssetImportData *> &assets_import_list);
+ 
   // void ClearDirtyPackages();
   // static bool SavePackage(UPackage* Package, const FString& PackageFilename)
 
