@@ -11,6 +11,7 @@
 class UFactory;
 class FJsonObject;
 class UAssetImportTask;
+class UAnimSequence;
 
 UENUM()
 enum class EDoodleImportType : uint8
