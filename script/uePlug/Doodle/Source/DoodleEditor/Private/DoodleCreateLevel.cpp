@@ -201,18 +201,17 @@ namespace doodle
   }
   void init_ue4_project::tmp()
   {
-    // UE_LOG(LogTemp, Log, TEXT("工厂名称 %s"), *(it->GetName()));
-    load_all_blueprint();
-    build_all_blueprint();
-
-    create_world(TEXT("/Game/tmp/test/doodle_world"));
-    create_level(TEXT("/Game/tmp/test/doodle_level"));
-    set_level_info(1001, 1200);
+    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
+                    GetTransientPackage());
     save();
   }
 
   bool init_ue4_project::import_ass_data(const FString &in_path, UObject *Outer)
   {
+    /// 加载蓝图
+    load_all_blueprint();
+    build_all_blueprint();
+
     if (!FPaths::FileExists(in_path))
       return false;
 
