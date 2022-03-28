@@ -10,7 +10,7 @@
 #include "DoodleAssetImportData.generated.h"
 class UFactory;
 class FJsonObject;
-class UAutomatedAssetImportData;
+class UAssetImportTask;
 
 UENUM()
 enum class EDoodleImportType : uint8
@@ -29,10 +29,10 @@ struct FDoodleAssetImportData
 {
   GENERATED_BODY()
 public:
-  void set_fbx(UAutomatedAssetImportData *in_import_data);
-  void set_abc(UAutomatedAssetImportData *in_import_data);
+  void set_fbx(UAssetImportTask *in_import_data);
+  void set_abc(UAssetImportTask *in_import_data);
 
-  UAutomatedAssetImportData *get_input(UObject *Outer);
+  UAssetImportTask *get_input(UObject *Outer);
 
 public:
   /* 导入文件的路径(文件名称) */

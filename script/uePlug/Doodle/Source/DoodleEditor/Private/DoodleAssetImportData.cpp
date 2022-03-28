@@ -20,7 +20,7 @@
 #include "Factories/ImportSettings.h"
 #include "Factories/MaterialImportHelpers.h"
 
-void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
+void FDoodleAssetImportData::set_fbx(UAssetImportTask *in_import_data)
 {
   UE_LOG(LogTemp, Log, TEXT("读取到fbx文件 %s"), *(import_file_path));
   // in_import_data->FactoryName = "FbxFactory";
@@ -85,10 +85,9 @@ void FDoodleAssetImportData::set_fbx(UAutomatedAssetImportData *in_import_data)
     UE_LOG(LogTemp, Log, TEXT("没有指定骨骼名称, 直接导入骨骼和动画"));
 }
 
-void FDoodleAssetImportData::set_abc(UAutomatedAssetImportData *in_import_data)
+void FDoodleAssetImportData::set_abc(UAssetImportTask *in_import_data)
 {
   UE_LOG(LogTemp, Log, TEXT("读取到abc文件 %s"), *(import_file_path));
-  // in_import_data->FactoryName = "AlembicImportFactory";
 
   for (TObjectIterator<UClass> it{}; it; ++it)
   {
@@ -96,8 +95,7 @@ void FDoodleAssetImportData::set_abc(UAutomatedAssetImportData *in_import_data)
     {
       if (it->GetName() == "AlembicImportFactory")
       {
-        in_import_data->Factory = DuplicateObject<UFactory>(it->GetDefaultObject<UFactory>(),
-                                                            in_import_data);
+        in_import_data->Factory = it->GetDefaultObject<UFactory>();
       }
     }
   }
@@ -124,34 +122,37 @@ void FDoodleAssetImportData::set_abc(UAutomatedAssetImportData *in_import_data)
   k_abc_stting->SamplingSettings.FrameStart = start_frame;   //开始帧
   k_abc_stting->SamplingSettings.FrameEnd = end_frame;       //结束帧
   k_abc_stting->SamplingSettings.FrameSteps = 1;             //帧步数
-
-  UAssetImportTask *k_assetImportTask = NewObject<UAssetImportTask>(in_import_data);
-  in_import_data->Factory->AssetImportTask = k_assetImportTask;
-  k_assetImportTask->bAutomated = true;
-  k_assetImportTask->bReplaceExisting = true;
-  k_assetImportTask->bSave = true;
-  k_assetImportTask->Options = k_abc_stting;
+ 
+  in_import_data->Options = k_abc_stting;
 }
 
-UAutomatedAssetImportData *FDoodleAssetImportData::get_input(UObject *Outer)
+UAssetImportTask *FDoodleAssetImportData::get_input(UObject *Outer)
 {
-  UAutomatedAssetImportData *k_setting = NewObject<UAutomatedAssetImportData>(Outer);
-  k_setting->bSkipReadOnly = true;
-  k_setting->Filenames.Add(import_file_path);
-  k_setting->DestinationPath = import_file_save_dir;
-  k_setting->bReplaceExisting = true;
-  k_setting->GroupName = import_file_save_dir;
+  UAssetImportTask *l_task = NewObject<UAssetImportTask>(Outer);
+  l_task->bAutomated = true;
+  l_task->bReplaceExisting = true;
+  l_task->bReplaceExistingSettings = true;
+  l_task->bSave = true;
+  l_task->DestinationPath = import_file_save_dir;
+  l_task->Filename = import_file_path;
+
+  // UAutomatedAssetImportData *k_setting = NewObject<UAutomatedAssetImportData>(Outer);
+  // k_setting->bSkipReadOnly = true;
+  // k_setting->Filenames.Add(import_file_path);
+  // k_setting->DestinationPath = import_file_save_dir;
+  // k_setting->bReplaceExisting = true;
+  // k_setting->GroupName = import_file_save_dir;
   UE_LOG(LogTemp, Log, TEXT("导入目标路径为 %s"), *(import_file_save_dir));
   switch (import_type)
   {
   case EDoodleImportType::Abc:
-    set_abc(k_setting);
+    set_abc(l_task);
     break;
   case EDoodleImportType::Fbx:
-    set_fbx(k_setting);
+    set_fbx(l_task);
     break;
   default:
     break;
   }
-  return k_setting;
+  return l_task;
 }
