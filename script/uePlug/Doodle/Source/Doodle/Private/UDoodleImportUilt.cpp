@@ -14,6 +14,8 @@ UDoodleImportUilt *UDoodleImportUilt::Get()
     {
         // i->GetName();
         UE_LOG(LogTemp, Log, TEXT("get class name %s"), *i->GetName());
+        if (i->GetName() == "doodleInportimpl_C")
+            return Cast<UDoodleImportUilt>(i->GetDefaultObject());
     }
     if (NumClasses > 0)
     {
