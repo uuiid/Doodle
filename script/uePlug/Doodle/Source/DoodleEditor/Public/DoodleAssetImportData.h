@@ -17,7 +17,8 @@ enum class EDoodleImportType : uint8
 {
   None = 0,
   Abc,
-  Fbx
+  Fbx,
+  Camera
 };
 
 /**
