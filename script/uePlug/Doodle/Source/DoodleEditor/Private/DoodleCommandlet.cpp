@@ -31,7 +31,7 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString &in_params)
   const TCHAR *ParamStr = *in_params;
   TMap<FString, FString> ParamsMap;
   ParseCommandLine(ParamStr, CmdLineTokens, CmdLineSwitches, ParamsMap);
-  import_setting_path = ParamsMap.FindRef("path");
+  import_setting_path = ParamsMap.FindRef(TEXT("path"));
   UE_LOG(LogTemp, Log, TEXT("导入设置路径 %s"),
          import_setting_path.IsEmpty() ? (*import_setting_path) : TEXT("空"));
 
@@ -95,8 +95,7 @@ int32 UDoodleAssCreateCommandlet::Main(const FString &Params)
   }
 
   UE_LOG(LogTemp, Log, TEXT("解析参数完成"));
-  // if (!parse_import_setting(import_setting_path))
-  //   return 0;
+  doodle::init_ue4_project{}.import_ass_data(import_setting_path, this);
 
   UE_LOG(LogTemp, Log, TEXT("开始导入和保存文件"));
   // if (!import_and_save(ImportDataList))
