@@ -30,5 +30,5 @@ public:
         const ULevelSequence *in_level,
         const UMovieSceneUserImportFBXSettings *in_setting,
         const FString &InImportFilename,
-        const ACineCameraActor *in_camera);
+        const FGuid &in_camera);
 };
