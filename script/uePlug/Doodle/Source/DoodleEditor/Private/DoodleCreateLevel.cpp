@@ -208,7 +208,7 @@ namespace doodle
       i->SetRange(TRange<FFrameNumber>{in_start, in_end});
       i->Modify();
     }
-    l_cam->ConditionalBeginDestroy();
+    // l_cam->ConditionalBeginDestroy();
     return true;
   }
   bool init_ue4_project::save()
@@ -219,8 +219,8 @@ namespace doodle
   }
   void init_ue4_project::tmp()
   {
-    // import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
-    //                 GetTransientPackage());
+    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
+                    GetTransientPackage());
     // save();
 
     /// test2
@@ -431,6 +431,17 @@ namespace doodle
         break;
       }
     }
+
+    for (auto i = 0; i < l_move->GetPossessableCount(); i++)
+    {
+      
+      if (l_move->GetPossessable(i).GetPossessedObjectClass()->IsChildOf(ACameraActor::StaticClass()))
+      {
+        l_cam_guid = l_move->GetPossessable(i).GetGuid();
+        break;
+      }
+    }
+
     if (l_cam_guid.IsValid())
     {
       auto *l_setting = NewObject<UMovieSceneUserImportFBXSettings>(p_world_);
