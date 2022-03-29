@@ -108,6 +108,8 @@ class DOODLELIB_API base_config {
   std::vector<std::string> icon_extensions;
 
   base_config();
+
+  bool match_icon_extensions(const FSys::path& in_path) const;
 };
 
 }  // namespace project_config
