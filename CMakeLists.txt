@@ -184,7 +184,7 @@ upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports" --no-dry-ru
 sqlpp11[sqlite3-connector]
 
 
-"$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="F:\Users\teXiao\Documents\Unreal_Projects\doodle_plug_dev\test_file\test_fbx.json"
+"$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json"
 
 "$(SolutionDir)doodle_plug.uproject"
 ]==]
