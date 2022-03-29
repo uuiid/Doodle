@@ -62,7 +62,7 @@ public class doodle : ModuleRules
                 "Sequencer",//修改定序器
                 "MovieScene",//更新定序器场景
                 "CinematicCamera",// 相机模块
-                "GeometryCacheTracks", // 几何缓存轨道需要
+                // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
                 // "Projects",
                 // "InputCore",
