@@ -55,6 +55,10 @@
 
 /// 电影 Section
 #include "MovieSceneSection.h"
+/// 我们自定义的工具
+#include "DoodleImportUiltEditor.h"
+/// 导入相机的设置
+#include "MovieSceneToolsUserSettings.h"
 
 namespace doodle
 {
@@ -177,7 +181,7 @@ namespace doodle
     l_eve->GetMovieScene()->SetPlaybackRange(
         TRange<FFrameNumber>{in_start, in_end}, true);
     l_eve->Modify();
-    ///
+    // l_eve->GetMovieScene()->FindMasterTrack<>()
 
     ACineCameraActor *l_cam = GWorld->SpawnActor<ACineCameraActor>();
     // GEditor->Bluep;
@@ -219,21 +223,21 @@ namespace doodle
     //                 GetTransientPackage());
     // save();
 
-    /// 加载蓝图
-    load_all_blueprint();
-    build_all_blueprint();
-    create_world(TEXT("/Game/tmp/1/world_"));
-    create_level(TEXT("/Game/tmp/1/level_"));
-    set_level_info(1001, 1096);
-
-    auto l_load_sk = LoadObject<UAnimSequence>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP029_SC008_AN_Ch001D_Rig_LX_1001-1096"));
-    auto l_load_geo = LoadObject<UGeometryCache>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP053_SC056_AN_Ch115A_Rig_jfm_1000-1119"));
-    TArray<UAnimSequence *> l_load_sks{};
-    l_load_sks.Add(l_load_sk);
-    obj_add_level(l_load_sks);
-    TArray<UGeometryCache *> l_load_geos{};
-    l_load_geos.Add(l_load_geo);
-    obj_add_level(l_load_geos);
+    /// test2
+    // load_all_blueprint();
+    // build_all_blueprint();
+    // create_world(TEXT("/Game/tmp/1/world_"));
+    // create_level(TEXT("/Game/tmp/1/level_"));
+    // set_level_info(1001, 1096);
+    // auto l_load_sk = LoadObject<UAnimSequence>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP029_SC008_AN_Ch001D_Rig_LX_1001-1096"));
+    // auto l_load_geo = LoadObject<UGeometryCache>(p_level_, TEXT("/Game/tmp/1/ch_/RJ_EP053_SC056_AN_Ch115A_Rig_jfm_1000-1119"));
+    // TArray<UAnimSequence *> l_load_sks{};
+    // l_load_sks.Add(l_load_sk);
+    // obj_add_level(l_load_sks);
+    // TArray<UGeometryCache *> l_load_geos{};
+    // l_load_geos.Add(l_load_geo);
+    // obj_add_level(l_load_geos);
+    // camera_fbx_to_level(TEXT("D:/Autodesk/RJ_EP029_SC008_AN_camera_1001-1096.fbx"));
   }
 
   bool init_ue4_project::import_ass_data(const FString &in_path, UObject *Outer)
@@ -289,6 +293,8 @@ namespace doodle
           ImportDataList.Add(i.get_input(Outer));
           break;
         case EDoodleImportType::Camera:
+          camera_fbx_to_level(i.import_file_path);
+          break;
         default:
           break;
         }
@@ -393,4 +399,59 @@ namespace doodle
     return false;
   }
 
+  bool init_ue4_project::has_obj(const UObject *in_obj)
+  {
+    check(p_level_);
+
+    auto *l_eve = CastChecked<ULevelSequence>(p_level_);
+    auto *l_move = l_eve->GetMovieScene();
+    for (auto i = 0; i < l_move->GetSpawnableCount(); i++)
+    {
+      FMovieSceneSpawnable &l_f = l_move->GetSpawnable(i);
+      if (l_f.GetObjectTemplate()->GetPathName() == in_obj->GetPathName())
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool init_ue4_project::camera_fbx_to_level(const FString &in_fbx_path)
+  {
+    check(p_level_);
+
+    auto *l_eve = CastChecked<ULevelSequence>(p_level_);
+    auto *l_move = l_eve->GetMovieScene();
+    FGuid l_cam_guid{};
+    for (auto i = 0; i < l_move->GetSpawnableCount(); i++)
+    {
+      if (l_move->GetSpawnable(i).GetObjectTemplate()->GetClass()->IsChildOf(ACameraActor::StaticClass()))
+      {
+        l_cam_guid = l_move->GetSpawnable(i).GetGuid();
+        break;
+      }
+    }
+    if (l_cam_guid.IsValid())
+    {
+      auto *l_setting = NewObject<UMovieSceneUserImportFBXSettings>(p_world_);
+      l_setting->bMatchByNameOnly = false;
+      l_setting->bForceFrontXAxis = false;
+      l_setting->bConvertSceneUnit = true;
+      l_setting->ImportUniformScale = 1;
+      l_setting->bCreateCameras = false;
+      l_setting->bReplaceTransformTrack = true;
+      l_setting->bReduceKeys = false;
+      l_setting->ReduceKeysTolerance = 0;
+
+      UDoodleImportUiltEditor::Get()->add_camera_fbx_scene(
+          Cast<UWorld>(p_world_),
+          l_eve,
+          l_setting,
+          in_fbx_path,
+          l_cam_guid);
+    }
+
+    return true;
+    // UnFbx::FFbxImporter *FbxImporter = UnFbx::FFbxImporter::GetInstance();
+  }
 } // namespace doodle
