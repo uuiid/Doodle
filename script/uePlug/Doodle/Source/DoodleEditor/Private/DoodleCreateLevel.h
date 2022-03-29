@@ -25,15 +25,16 @@ namespace doodle
       return l_out;
     }
 
-    bool obj_add_level(const  TArray<UGeometryCache *> in_obj);
-    bool obj_add_level(const  TArray<UAnimSequence *> in_obj);
+    bool obj_add_level(const TArray<UGeometryCache *> in_obj);
+    bool obj_add_level(const TArray<UAnimSequence *> in_obj);
+    bool camera_fbx_to_level();
 
     UObject *p_world_;
     UObject *p_level_;
     FString p_save_world_path;
     FString p_save_level_path;
-      uint64 start_frame;
-  uint64 end_frame;
+    uint64 start_frame;
+    uint64 end_frame;
 
     TArray<FAssetData> blueprint_list;
 
