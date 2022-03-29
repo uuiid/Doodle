@@ -40,6 +40,8 @@
 #include "DoodleCreateLevel.h"
 // 编辑器脚本
 #include "EditorAssetLibrary.h"
+/// 打开exe需要
+#include "GenericPlatform/GenericPlatformProcess.h"
 
 void DoodleCopyMat::Construct(const FArguments &Arg)
 {
@@ -136,7 +138,7 @@ void DoodleCopyMat::Construct(const FArguments &Arg)
 
 void DoodleCopyMat::AddReferencedObjects(FReferenceCollector &collector)
 {
-  // collector.AddReferencedObjects()
+  // collector.AddReferencedObjects();
 }
 
 FReply DoodleCopyMat::getSelect()
@@ -266,8 +268,21 @@ FReply DoodleCopyMat::CopyMateral()
 }
 
 FReply DoodleCopyMat::BathImport()
-{
- 
+{ 
+  
+  FProcHandle l_h =  FPlatformProcess::CreateProc(
+    TEXT("C:\\Users\\TD\\Source\\Doodle\\build\\Ninja_debug\\bin\\DoodleExe.exe"),
+    TEXT(""),
+    true,
+    false,
+    false,
+    nullptr,
+    0,
+    nullptr,
+    nullptr,
+    nullptr
+  );
+  FPlatformProcess::WaitForProc(l_h);
   return FReply::Handled();
 }
 
@@ -352,7 +367,6 @@ FReply DoodleCopyMat::BathReameAss()
   }
   return FReply::Handled();
 }
-
 
 FReply DoodleCopyMat::set_marteral_deep()
 {

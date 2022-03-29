@@ -10,7 +10,7 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   SLATE_END_ARGS()
   //这里是内容创建函数
   void Construct(const FArguments& Arg);
-  //这个暂时不知道什么意思,但是不加就几把编译不过去
+  // 知道了原因, 感觉用不到(垃圾回收)
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
 
  private:
