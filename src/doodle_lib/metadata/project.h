@@ -101,6 +101,12 @@ class DOODLELIB_API base_config {
    */
   std::vector<std::string> assets_list;
 
+    /**
+   * @brief 本组的各种分类
+   *
+   */
+  std::vector<std::string> icon_extensions;
+
   base_config();
 };
 

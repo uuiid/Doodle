@@ -120,7 +120,14 @@ entt::handle project::get_current() {
   return {};
 }
 
-project_config::base_config::base_config() = default;
+project_config::base_config::base_config()
+    : vfx_cloth_sim_path(),
+      export_group("UE4"),
+      cloth_proxy_("_cloth_proxy"),
+      simple_module_proxy_("_proxy"),
+      find_icon_regex(),
+      assets_list(),
+      icon_extensions({".png"s,".jpg"s}) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]      = p.find_icon_regex;
