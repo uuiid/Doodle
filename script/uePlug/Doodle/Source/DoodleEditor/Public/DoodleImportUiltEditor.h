@@ -14,9 +14,10 @@ class UAnimSequence;
 class AGeometryCacheActor;
 class ASkeletalMeshActor;
 class UMovieSceneSection;
+class UMovieSceneUserImportFBXSettings;
 
 UCLASS(Blueprintable)
-class DOODLE_API UDoodleImportUiltEditor : public UObject
+class DOODLEEDITOR_API UDoodleImportUiltEditor : public UObject
 {
     GENERATED_BODY()
 public:
@@ -27,5 +28,7 @@ public:
     UMovieSceneSection *add_camera_fbx_scene(
         UWorld *InWorld,
         const ULevelSequence *in_level,
-        const FString &InImportFilename);
+        const UMovieSceneUserImportFBXSettings *in_setting,
+        const FString &InImportFilename,
+        const ACineCameraActor *in_camera);
 };
