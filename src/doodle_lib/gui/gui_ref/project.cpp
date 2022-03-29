@@ -205,11 +205,12 @@ void base_config_edit::render(const entt::handle& in) {
                         [](const decltype(p_i->assets_list)::value_type& in_part) -> bool {
                           return in_part.second.data;
                         });
-  p_i->assets_list.erase(l_r, p_i->assets_list.end());
+  if (l_r != p_i->assets_list.end())
+    p_i->assets_list.erase(l_r, p_i->assets_list.end());
   /// @brief 后缀名编辑
   if (ImGui::Button(*p_i->icon_list.button_name)) {
     p_i->icon_list.list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s},
-                                                 gui_cache<bool>{"删除", false}));
+                                                    gui_cache<bool>{"删除", false}));
     set_modify(true);
   }
   dear::ListBox{*p_i->icon_list.name} && [&]() {
@@ -223,12 +224,13 @@ void base_config_edit::render(const entt::handle& in) {
       }
     }
   };
-  const auto l_r =
+  const auto l_r_ =
       ranges::remove_if(p_i->icon_list.list,
                         [](const decltype(p_i->icon_list.list)::value_type& in_part) -> bool {
                           return in_part.second.data;
                         });
-  p_i->icon_list.list.erase(l_r, p_i->icon_list.list.end());
+  if (l_r_ != p_i->icon_list.list.end())
+    p_i->icon_list.list.erase(l_r_, p_i->icon_list.list.end());
 }
 
 base_config_edit::~base_config_edit() = default;
