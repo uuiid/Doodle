@@ -55,7 +55,7 @@ class base_config_edit::impl {
         ue4_name("导出组名称"s, ""s),
         cloth_proxy_("布料解算后缀名", ""s),
         simple_module_proxy_("动画后缀名", ""s),
-        regex_("正则表达式"s, ""s),
+        regex_("后缀名识别(正则表达式)"s, ""s),
         list_name("分类列表"s),
         add_list_name_button("添加"s) {}
   gui_cache<std::string> path_;
