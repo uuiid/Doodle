@@ -49,6 +49,16 @@ class base_config_edit::impl {
     std::string show_name;
   };
 
+  struct icon_extensions {
+    gui_cache_name_id name;
+    gui_cache_name_id button_name;
+    std::vector<std::pair<gui_cache<std::string>, gui_cache<bool>>> list;
+    icon_extensions()
+        : name("后缀名列表"s),
+          button_name("添加"s),
+          list() {}
+  };
+
  public:
   impl()
       : path_("解算路径"s, ""s),
@@ -57,7 +67,8 @@ class base_config_edit::impl {
         simple_module_proxy_("动画后缀名", ""s),
         regex_("后缀名识别(正则表达式)"s, ""s),
         list_name("分类列表"s),
-        add_list_name_button("添加"s) {}
+        add_list_name_button("添加"s),
+        icon_list() {}
   gui_cache<std::string> path_;
   gui_cache<std::string> ue4_name;
   gui_cache<std::string> cloth_proxy_;
@@ -68,6 +79,8 @@ class base_config_edit::impl {
   gui_cache_name_id add_list_name_button;
   std::vector<std::pair<gui_cache<std::string>, gui_cache<bool>>> assets_list;
   std::string err_str;
+
+  icon_extensions icon_list;
 
   entt::handle handle_{};
 };
@@ -87,6 +100,14 @@ void base_config_edit::init_(const entt::handle& in) {
                                                  gui_cache<bool>{"删除", false});
                          }) |
                      ranges::to_vector;
+
+  p_i->icon_list.list = l_config.icon_extensions |
+                        ranges::views::transform(
+                            [](const std::string& in_str) {
+                              return std::make_pair(gui_cache<std::string>{""s, in_str},
+                                                    gui_cache<bool>{"删除", false});
+                            }) |
+                        ranges::to_vector;
 }
 
 void base_config_edit::set_config_init(const entt::handle& in, const string& in_name) {
@@ -117,6 +138,14 @@ void base_config_edit::save_(const entt::handle& in) const {
       p_i->assets_list |
       ranges::views::transform(
           [](const decltype(p_i->assets_list)::value_type& in_part) -> std::string {
+            return in_part.first.data;
+          }) |
+      ranges::to_vector;
+
+  l_c.icon_extensions =
+      p_i->icon_list.list |
+      ranges::views::transform(
+          [](const decltype(p_i->icon_list.list)::value_type& in_part) -> std::string {
             return in_part.first.data;
           }) |
       ranges::to_vector;
@@ -177,6 +206,29 @@ void base_config_edit::render(const entt::handle& in) {
                           return in_part.second.data;
                         });
   p_i->assets_list.erase(l_r, p_i->assets_list.end());
+  /// @brief 后缀名编辑
+  if (ImGui::Button(*p_i->icon_list.button_name)) {
+    p_i->icon_list.list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s},
+                                                 gui_cache<bool>{"删除", false}));
+    set_modify(true);
+  }
+  dear::ListBox{*p_i->icon_list.name} && [&]() {
+    for (auto&& i : p_i->icon_list.list) {
+      if (ImGui::InputText(*i.first.gui_name, &i.first.data))
+        set_modify(true);
+      ImGui::SameLine();
+      if (ImGui::Button(*i.second.gui_name)) {
+        i.second.data = true;
+        set_modify(true);
+      }
+    }
+  };
+  const auto l_r =
+      ranges::remove_if(p_i->icon_list.list,
+                        [](const decltype(p_i->icon_list.list)::value_type& in_part) -> bool {
+                          return in_part.second.data;
+                        });
+  p_i->icon_list.list.erase(l_r, p_i->icon_list.list.end());
 }
 
 base_config_edit::~base_config_edit() = default;
