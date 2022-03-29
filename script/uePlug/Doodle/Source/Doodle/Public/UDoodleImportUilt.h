@@ -13,7 +13,7 @@ class UGeometryCache;
 class UAnimSequence;
 class AGeometryCacheActor;
 class ASkeletalMeshActor;
-class UMovieSceneSection ;
+class UMovieSceneSection;
 
 UCLASS(Blueprintable)
 class DOODLE_API UDoodleImportUilt : public UObject
@@ -44,4 +44,10 @@ public:
     UMovieSceneSection *add_geo_cache_scene(
         const ULevelSequence *in_level,
         const AGeometryCacheActor *in_geo);
+
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (DefaultToSelf, HideSelfPin))
+    UMovieSceneSection *add_camera_fbx_scene(
+        UWorld* InWorld,
+        const ULevelSequence *in_level,
+        const FString& InImportFilename);
 };
