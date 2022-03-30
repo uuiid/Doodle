@@ -35,18 +35,22 @@ class assets_file_widgets::impl {
   using cache_image  = gui::gui_cache<std::shared_ptr<void>, image_data>;
   using cache_name   = gui::gui_cache<std::string>;
   using cache_select = gui::gui_cache<bool>;
-  class data {
+  class icon_data {
    public:
     entt::handle handle_;
     cache_image image;
     cache_name name;
     cache_select select;
 
-    explicit data(const entt::handle& in_h)
+    explicit icon_data(const entt::handle& in_h)
         : handle_(in_h),
           image("image"s, nullptr),
           name("null"s, "name"s),
           select(std::string{}, false) {
+      this->init(in_h);
+    };
+
+    void init(const entt::handle& in_h) {
       if (handle_.any_of<assets_file, episodes, shot>()) {
         /// @brief 渲染名称
         if (auto [l_ass, l_ep, l_shot] =
@@ -76,7 +80,7 @@ class assets_file_widgets::impl {
         g_main_loop()
             .attach<image_load_task>(handle_);
       }
-    };
+    }
 
     void compute_size(float max_length) {
       if (image.max_ == max_length)
@@ -108,15 +112,24 @@ class assets_file_widgets::impl {
       }
     };
   };
-  std::vector<data> lists;
+  std::vector<icon_data> lists;
   std::size_t select_index{};
 
   // std::float_t windows_width{0};
   bool only_rand{};
+
+  bool render_icon{true};
+
+  std::function<void()> render_list;
+  entt::observer observer_h{};
 };
 
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
+  p_i->render_list = [this]() { this->render_by_icon() };
+}
+
+void assets_file_widgets::refresh(const std::vector<entt::handle>& in_list) {
 }
 
 void assets_file_widgets::init() {
@@ -128,8 +141,8 @@ void assets_file_widgets::init() {
         p_i->lists.clear();
         boost::transform(
             in, std::back_inserter(p_i->lists),
-            [](const entt::handle& in) -> impl::data {
-              return impl::data{in};
+            [](const entt::handle& in) -> impl::icon_data {
+              return impl::icon_data{in};
             });
       }));
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
@@ -148,14 +161,18 @@ void assets_file_widgets::init() {
           [&](const std::vector<entt::handle>&) {
             p_i->only_rand = false;
           }));
+  p_i->observer_h.connect(*g_reg(), entt::collector.update<database>());
 }
 void assets_file_widgets::succeeded() {
+  p_i->observer_h.disconnect();
   g_reg()->unset<assets_file_widgets&>();
 }
 void assets_file_widgets::failed() {
+  p_i->observer_h.disconnect();
   g_reg()->unset<assets_file_widgets&>();
 }
 void assets_file_widgets::aborted() {
+  p_i->observer_h.disconnect();
   g_reg()->unset<assets_file_widgets&>();
 }
 void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -168,8 +185,8 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
     if (p_i->lists.empty())
       return;
-
-    ImGui::Columns(l_size, "assets_file_widgets", false);
+    if (p_i->render_icon)
+      ImGui::Columns(l_size, "assets_file_widgets", false);
 
     ImGuiListClipper clipper{};
     clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
@@ -210,7 +227,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   };
 
   if (ImGui::Button(ICON_FA_BATTERY_QUARTER)) {
-    DOODLE_LOG_DEBUG("das");
+    p_i->render_icon = !p_i->render_icon;
   }
   g_reg()->ctx<status_info>().show_size = p_i->lists.size();
 }
@@ -229,10 +246,10 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {
-    std::vector<entt::handle> l_list = p_i->lists | ranges::views::filter([](const impl::data& in_data) {
+    std::vector<entt::handle> l_list = p_i->lists | ranges::views::filter([](const impl::icon_data& in_data) {
                                          return in_data.select && in_data.handle_;
                                        }) |
-                                       ranges::views::transform([](const impl::data& in_data) -> entt::handle {
+                                       ranges::views::transform([](const impl::icon_data& in_data) -> entt::handle {
                                          return in_data.handle_;
                                        }) |
                                        ranges::to_vector |
@@ -246,7 +263,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     g_reg()->ctx<core_sig>().save_begin.connect([this, in_, l_list](const std::vector<entt::handle>&) {
       g_main_loop().attach<one_process_t>(
           [this, in_, l_list]() {
-            p_i->lists = p_i->lists | ranges::views::remove_if([in_, l_list](const impl::data& in_data) {
+            p_i->lists = p_i->lists | ranges::views::remove_if([in_, l_list](const impl::icon_data& in_data) {
                            return ranges::contains(l_list, in_data.handle_);
                            //                           return in_data.handle_ == in_;
                          }) |
@@ -265,10 +282,10 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
-      l_handle_list = p_i->lists | ranges::views::filter([](impl::data& in) {
+      l_handle_list = p_i->lists | ranges::views::filter([](impl::icon_data& in) {
                         return in.select;
                       }) |
-                      ranges::views::transform([](impl::data& in) {
+                      ranges::views::transform([](impl::icon_data& in) {
                         return in.handle_;
                       }) |
                       ranges::to_vector;
@@ -277,14 +294,14 @@ void assets_file_widgets::set_select(std::size_t in_size) {
                       ranges::views::slice(
                           std::min(p_i->select_index, in_size),
                           std::max(p_i->select_index, in_size) + 1) |
-                      ranges::views::transform([](impl::data& in) {
+                      ranges::views::transform([](impl::icon_data& in) {
                         in.select = true;
                         return in.handle_;
                       }) |
                       ranges::to_vector;
     } else {
       boost::for_each(p_i->lists,
-                      [](impl::data& in) {
+                      [](impl::icon_data& in) {
                         in.select = false;
                       });
       i.select = true;
@@ -306,11 +323,11 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
   std::vector<entt::handle> l_lists{};
   l_lists = ranges::to_vector(
       this->p_i->lists |
-      ranges::views::filter([](const impl::data& in) -> bool {
+      ranges::views::filter([](const impl::icon_data& in) -> bool {
         return in.select;
       }) |
       ranges::views::transform(
-          [](const impl::data& in) -> entt::handle {
+          [](const impl::icon_data& in) -> entt::handle {
             return in.handle_;
           }));
   l_lists.emplace_back(l_item.handle_);
@@ -319,6 +336,18 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
   ImGui::SetDragDropPayload(
       doodle_config::drop_handle_list.data(), l_h, sizeof(*l_h));
   ImGui::Text("拖拽实体");
+}
+
+void assets_file_widgets::render_by_icon() {
+}
+void assets_file_widgets::render_by_icon(std::size_t in_index) {
+
+}
+void assets_file_widgets::render_by_info() {
+
+}
+void assets_file_widgets::render_by_info(std::size_t in_index) {
+
 }
 
 assets_file_widgets::~assets_file_widgets() = default;
