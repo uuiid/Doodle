@@ -1,4 +1,6 @@
 add_subdirectory(resource)
+
+
 cmrc_add_resource_library(
         DoodleLibResource
         ${DOODLE_RE_FILES_LIST}
@@ -6,7 +8,7 @@ cmrc_add_resource_library(
 include(doodle_exe)
 include(doodle_lib.cmake)
 
-include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
+# include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
 
 doodle_sqlpp_generate(
         OUT_LISTS_sqlpp
