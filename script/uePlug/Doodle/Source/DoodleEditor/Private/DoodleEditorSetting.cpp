@@ -7,6 +7,10 @@ UDoodleEditorSetting::UDoodleEditorSetting()
 #if WITH_EDITOR
 FText UDoodleEditorSetting::GetSectionText() const
 {
-	return FText::FromString(TEXT("doodle setting"));
+    return FText::FromString(TEXT("doodle setting"));
 }
-#endif	// WITH_EDITOR
+FName UDoodleEditorSetting::GetCategoryName() const
+{
+    return TEXT("Plugins");
+}
+#endif // WITH_EDITOR

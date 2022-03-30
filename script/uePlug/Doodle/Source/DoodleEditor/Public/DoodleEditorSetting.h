@@ -14,6 +14,7 @@ class UDoodleEditorSetting : public UDeveloperSettings
 #if WITH_EDITOR
 
 	//~ UDeveloperSettings interface
+	virtual FName GetCategoryName() const override;
 	virtual FText GetSectionText() const override;
 #endif
 	UPROPERTY(config, EditAnywhere, Category=Doodle, meta=(DisplayName="doodle 路径"))
