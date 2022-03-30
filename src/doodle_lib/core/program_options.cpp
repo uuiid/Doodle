@@ -18,7 +18,8 @@ program_options::program_options()
       p_version(false),
       p_config_file(),
       p_max_thread(std::make_pair(false, std::thread::hardware_concurrency() - 2)),
-      p_root(std::make_pair(false, "C:/")) {
+      p_root(std::make_pair(false, "C:/")),
+      p_ue4outpath(FSys::temp_directory_path().generic_string()) {
   DOODLE_LOG_INFO("开始构建命令行");
 
   p_opt_positional.add(input_project, 1);
@@ -35,7 +36,10 @@ program_options::program_options()
       "初始打开的项目文件")(
       config_file_,
       boost::program_options::value(&p_config_file),
-      "配置文件的路径");
+      "配置文件的路径")(
+      ue4outpath,
+      boost::program_options::value(&p_ue4outpath),
+      "导出ue4导入配置文件的路径");
 
   p_opt_gui.add_options()(
       root_,
@@ -84,35 +88,6 @@ bool program_options::command_line_parser(const std::vector<string>& in_arg) {
     if (p_project_path.front() == '"') {
       p_project_path = p_project_path.substr(1, p_project_path.size() - 2);
     }
-  }
-
-  std::cout
-      << (p_config_file.empty()
-              ? "没有传入配置文件选项"s
-              : fmt::format("使用配置 config_file : {}", p_config_file))
-      << "\n"
-      << (fmt::format("使用项目配置 {}", p_project_path))
-
-      << "\n"
-      << (p_max_thread.first
-              ? "没有传入线程池大小"s
-              : fmt::format("使用配置 max_thread : {}", p_max_thread.second))
-      << "\n"
-      << (p_root.first ? "没有传入缓存根路径"s : fmt::format("使用配置 root : {}", p_root.second)) << "\n"
-      << "开始初始化库基础(日志类和程序日期数据库)"
-      << "\n"
-      << std::endl;
-
-  if (p_help) {
-    std::cout << p_opt_all << std::endl;
-  }
-  if (p_version) {
-    std::cout << fmt::format("doodle 版本是 {}.{}.{}.{} ",
-                             Doodle_VERSION_MAJOR,
-                             Doodle_VERSION_MINOR,
-                             Doodle_VERSION_PATCH,
-                             Doodle_VERSION_TWEAK)
-              << std::endl;
   }
 
   if (!p_config_file.empty())
