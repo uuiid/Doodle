@@ -304,7 +304,7 @@ FReply DoodleCopyMat::BathImport()
         FString l_path{in_path};
         if (FPaths::FileExists(l_path) && FPaths::GetExtension(l_path, true) == TEXT(".json_doodle"))
         {
-          l_import_tool.import_ass_data(l_path,nullptr);
+          l_import_tool.import_ass_data(l_path);
         }
         return true;
       });
