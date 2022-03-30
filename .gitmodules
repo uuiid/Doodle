@@ -8,3 +8,7 @@
 	path = src/doodle_lib/external/im-neo-sequencer
 	url = https://gitlab.com/GroGy/im-neo-sequencer.git
 	branch = main
+[submodule "src/doodle_lib/external/IconFontCppHeaders"]
+	path = src/doodle_lib/external/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+	branch = main
