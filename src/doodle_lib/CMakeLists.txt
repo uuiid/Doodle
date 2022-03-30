@@ -3,6 +3,9 @@ add_subdirectory(resource)
 
 cmrc_add_resource_library(
         DoodleLibResource
+        resource/fa-brands-400.ttf
+        resource/fa-regular-400.ttf
+        resource/fa-solid-900.ttf
         ${DOODLE_RE_FILES_LIST}
 )
 include(doodle_exe)

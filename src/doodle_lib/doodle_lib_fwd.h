@@ -13,6 +13,8 @@
 #include <doodle_lib/core/static_value.h>
 #include <doodle_lib/core/core_help_impl.h>
 #include <doodle_lib/core/template_util.h>
+#include <doodle_lib/lib_warp/icon_font_macro.h>
+
 //开始我们的名称空间
 namespace doodle {
 namespace chrono {

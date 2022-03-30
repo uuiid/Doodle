@@ -17,6 +17,7 @@
 #include <doodle_lib/core/init_register.h>
 
 #include <doodle_lib/core/program_options.h>
+#include <doodle_lib/lib_warp/icon_font_macro.h>
 
 // Helper functions
 #include <d3d11.h>
@@ -154,7 +155,18 @@ app::app(const win::wnd_instance& in_instance)
 
   //  ImGuiIO& io = ImGui::GetIO();
   //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
-  io.Fonts->AddFontFromFileTTF(doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  {
+    // io.Fonts->AddFontDefault();
+    io.Fonts->AddFontFromFileTTF(doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+    auto l_font                         = cmrc::DoodleLibResource::get_filesystem().open("resource/fa-solid-900.ttf");
+    static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    ImFontConfig icons_config;
+    icons_config.MergeMode            = true;
+    icons_config.PixelSnapH           = true;
+    icons_config.FontDataOwnedByAtlas = false;
+    // io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
+    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(), l_font.size(), 16.0f, &icons_config, icons_ranges);
+  }
 
   g_reg()->ctx<core_sig>().init_end.connect([this]() {
     g_main_loop().attach<one_process_t>([this]() {
