@@ -219,8 +219,7 @@ namespace doodle
   }
   void init_ue4_project::tmp()
   {
-    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)",
-                    GetTransientPackage());
+    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)");
     // save();
 
     /// test2
@@ -240,7 +239,7 @@ namespace doodle
     // camera_fbx_to_level(TEXT("D:/Autodesk/RJ_EP029_SC008_AN_camera_1001-1096.fbx"));
   }
 
-  bool init_ue4_project::import_ass_data(const FString &in_path, UObject *Outer)
+  bool init_ue4_project::import_ass_data(const FString &in_path)
   {
     /// 加载蓝图
     load_all_blueprint();
@@ -290,7 +289,7 @@ namespace doodle
         {
         case EDoodleImportType::Abc:
         case EDoodleImportType::Fbx:
-          ImportDataList.Add(i.get_input(Outer));
+          ImportDataList.Add(i.get_input(p_world_));
           break;
         case EDoodleImportType::Camera:
           camera_fbx_to_level(i.import_file_path);
@@ -434,7 +433,7 @@ namespace doodle
 
     for (auto i = 0; i < l_move->GetPossessableCount(); i++)
     {
-      
+
       if (l_move->GetPossessable(i).GetPossessedObjectClass()->IsChildOf(ACameraActor::StaticClass()))
       {
         l_cam_guid = l_move->GetPossessable(i).GetGuid();

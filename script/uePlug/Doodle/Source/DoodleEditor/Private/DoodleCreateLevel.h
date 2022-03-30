@@ -27,9 +27,9 @@ namespace doodle
 
     bool obj_add_level(const TArray<UGeometryCache *> in_obj);
     bool obj_add_level(const TArray<UAnimSequence *> in_obj);
-    bool camera_fbx_to_level(const FString& in_fbx_path);
-    bool has_obj(const UObject* in_obj);
-    
+    bool camera_fbx_to_level(const FString &in_fbx_path);
+    bool has_obj(const UObject *in_obj);
+
     UObject *p_world_;
     UObject *p_level_;
     FString p_save_world_path;
@@ -47,7 +47,7 @@ namespace doodle
     bool set_level_info(int32 in_start, int32 in_end);
     bool save();
 
-    bool import_ass_data(const FString &in_path, UObject *Outer);
+    bool import_ass_data(const FString &in_path);
 
     void tmp();
   };
