@@ -209,7 +209,7 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
     }
   };
 
-  if (ImGui::Button("S")) {
+  if (ImGui::Button(ICON_FA_BATTERY_QUARTER)) {
     DOODLE_LOG_DEBUG("das");
   }
   g_reg()->ctx<status_info>().show_size = p_i->lists.size();
