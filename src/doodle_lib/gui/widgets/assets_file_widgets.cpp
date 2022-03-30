@@ -162,49 +162,55 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
   /// 渲染数据
   dear::Disabled l_d{p_i->only_rand};
 
-  if (p_i->lists.empty())
-    return;
-
   const static auto l_size{5u};
-  ImGui::Columns(l_size, "assets_file_widgets", false);
+  auto k_length                        = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
+  const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
+    if (p_i->lists.empty())
+      return;
 
-  auto k_length = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
+    ImGui::Columns(l_size, "assets_file_widgets", false);
 
-  ImGuiListClipper clipper{};
-  clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
-  while (clipper.Step()) {
-    for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
-      for (int l_j = 0; l_j < l_size; ++l_j) {
-        if ((l_i * l_size + l_j) < p_i->lists.size()) {
-          std::size_t l_index{l_i * l_size + l_j};
-          auto&& i = p_i->lists[l_index];
-          i.load_image(k_length);
-          auto l_pos_image = ImGui::GetCursorPos();
+    ImGuiListClipper clipper{};
+    clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
+    while (clipper.Step()) {
+      for (int l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
+        for (int l_j = 0; l_j < l_size; ++l_j) {
+          if ((l_i * l_size + l_j) < p_i->lists.size()) {
+            std::size_t l_index{l_i * l_size + l_j};
+            auto&& i = p_i->lists[l_index];
+            i.load_image(k_length);
+            auto l_pos_image = ImGui::GetCursorPos();
 
-          ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
+            ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
 
-          if (ImGui::Selectable(*i.select.gui_name,
-                                i.select.data,
-                                ImGuiSelectableFlags_AllowDoubleClick,
-                                {k_length, k_length}))
-            set_select(l_index);
-          dear::PopupContextItem{} && [this, i]() {
-            render_context_menu(i.handle_);
-          };
-          ImGui::PopStyleColor();
+            if (ImGui::Selectable(*i.select.gui_name,
+                                  i.select.data,
+                                  ImGuiSelectableFlags_AllowDoubleClick,
+                                  {k_length, k_length}))
+              set_select(l_index);
+            dear::PopupContextItem{} && [this, i]() {
+              render_context_menu(i.handle_);
+            };
+            ImGui::PopStyleColor();
 
-          dear::DragDropSource{} && [this, l_index]() {
-            this->open_drag(l_index);
-          };
-          auto l_pos_select = ImGui::GetCursorPos();
-          ImGui::SetCursorPos(l_pos_image);
-          ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
-          ImGui::SetCursorPos(l_pos_select);
-          dear::Text(i.name);
+            dear::DragDropSource{} && [this, l_index]() {
+              this->open_drag(l_index);
+            };
+            auto l_pos_select = ImGui::GetCursorPos();
+            ImGui::SetCursorPos(l_pos_image);
+            ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
+            ImGui::SetCursorPos(l_pos_select);
+            dear::Text(i.name);
+          }
+          imgui::NextColumn();
         }
-        imgui::NextColumn();
       }
     }
+  };
+
+  if (ImGui::Button("S")) {
+    DOODLE_LOG_DEBUG("das");
   }
   g_reg()->ctx<status_info>().show_size = p_i->lists.size();
 }
