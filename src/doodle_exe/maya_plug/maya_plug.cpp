@@ -204,6 +204,9 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  
+  //这里要停止app
+  p_doodle_app->stop();
 
   ///先删除工具架
   switch (k_st) {
@@ -301,10 +304,8 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
   }
   // 卸载命令
-
-  //这里要关闭窗口或者清理库
-  p_doodle_app->stop();
   p_doodle_app.reset();
+
 
   return status;
 }
