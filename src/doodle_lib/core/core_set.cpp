@@ -1,12 +1,7 @@
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/static_value.h>
+
 #include <doodle_lib/pin_yin/convert.h>
 #include <doodle_lib/platform/win/list_drive.h>
-#include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/long_task/process_pool.h>
-#include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/client/client.h>
 
 #ifdef _WIN32
