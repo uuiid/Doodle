@@ -220,6 +220,7 @@ void file_panel::scan_director(const FSys::path &in_dir) {
   p_i->p_pwd        = in_dir;
   p_i->select_index = 0;
   p_i->buffer.data.clear();
+  p_i->edit_input.data = in_dir.generic_string();
 
   p_i->path_list = ranges::make_subrange(
                        FSys::directory_iterator{in_dir},
