@@ -22,6 +22,8 @@
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 
+/// 设置使用
+#include "DoodleEditorSetting.h"
 //重命名资产
 #include "EditorAssetLibrary.h"
 //保存包需要
@@ -268,21 +270,45 @@ FReply DoodleCopyMat::CopyMateral()
 }
 
 FReply DoodleCopyMat::BathImport()
-{ 
-  
-  FProcHandle l_h =  FPlatformProcess::CreateProc(
-    TEXT("C:\\Users\\TD\\Source\\Doodle\\build\\Ninja_debug\\bin\\DoodleExe.exe"),
-    TEXT(""),
-    true,
-    false,
-    false,
-    nullptr,
-    0,
-    nullptr,
-    nullptr,
-    nullptr
-  );
+{
+  const UDoodleEditorSetting *l_setting = GetDefault<UDoodleEditorSetting>();
+  if (!FPaths::FileExists(l_setting->DoodleExePath))
+  {
+    FText l_t = FText::FromString(TEXT("错误"));
+    FMessageDialog::Open(EAppMsgType::OkCancel, FText::FromString(TEXT("没有找到DoodleExe.exe运行文件,请在设置中输入正确的路径")), &l_t);
+    return FReply::Handled();
+  }
+
+  FString l_temp_dir = FPaths::Combine(FPaths::ProjectSavedDir(), FPaths::CreateTempFilename(TEXT("doodle"), TEXT("import"), TEXT("")));
+  FString l_abs_path = FPaths::ConvertRelativePathToFull(l_temp_dir);
+  FString l_com = FString::Format(TEXT(R"(-ue4outpath="{0}")"), TArray<FStringFormatArg>{FStringFormatArg{l_abs_path}});
+  FString l_start_dir = FPaths::GetPath(l_setting->DoodleExePath);
+  FProcHandle l_h = FPlatformProcess::CreateProc(
+      *l_setting->DoodleExePath,
+      *l_com,
+      true,
+      false,
+      false,
+      nullptr,
+      0,
+      *l_start_dir,
+      nullptr,
+      nullptr);
   FPlatformProcess::WaitForProc(l_h);
+
+  doodle::init_ue4_project l_import_tool{};
+  IFileManager::Get().IterateDirectory(
+      *l_abs_path,
+      [&l_import_tool](const TCHAR *in_path, bool in_) -> bool
+      {
+        FString l_path{in_path};
+        if (FPaths::FileExists(l_path) && FPaths::GetExtension(l_path, true) == TEXT(".json_doodle"))
+        {
+          l_import_tool.import_ass_data(l_path,nullptr);
+        }
+        return true;
+      });
+
   return FReply::Handled();
 }
 
