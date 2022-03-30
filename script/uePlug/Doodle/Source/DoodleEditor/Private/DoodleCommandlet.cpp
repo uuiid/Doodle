@@ -37,15 +37,12 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString &in_params)
 
   return !import_setting_path.IsEmpty();
 }
- 
 
 static bool SavePackage(UPackage *Package, const FString &PackageFilename)
 {
   return GEditor->SavePackage(Package, nullptr, RF_Standalone, *PackageFilename,
                               GWarn);
 }
-
- 
 
 // void UDoodleAssCreateCommandlet::ClearDirtyPackages()
 // {
@@ -94,12 +91,5 @@ int32 UDoodleAssCreateCommandlet::Main(const FString &Params)
     return 0;
   }
 
-  UE_LOG(LogTemp, Log, TEXT("解析参数完成"));
-  doodle::init_ue4_project{}.import_ass_data(import_setting_path, this);
-
-  UE_LOG(LogTemp, Log, TEXT("开始导入和保存文件"));
-  // if (!import_and_save(ImportDataList))
-  //   return 1;
-
-  return 0;
+   return 0;
 }
