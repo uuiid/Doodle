@@ -217,14 +217,14 @@ void file_panel::scan_director(const FSys::path &in_dir) {
   if (!FSys::is_directory(in_dir))
     return;
 
-  p_i->p_pwd        = in_dir;
+  p_i->p_pwd        = in_dir.generic_string();
   p_i->select_index = 0;
   p_i->buffer.data.clear();
   p_i->edit_input.data = in_dir.generic_string();
 
-  p_i->path_list = ranges::make_subrange(
-                       FSys::directory_iterator{in_dir},
-                       FSys::directory_iterator{}) |
+  p_i->path_list       = ranges::make_subrange(
+                             FSys::directory_iterator{in_dir},
+                             FSys::directory_iterator{}) |
                    ranges::views::transform([](const auto &in) {
                      path_info l_info{};
                      try {
@@ -296,6 +296,9 @@ void file_panel::render_path(bool edit) {
 
     std::int32_t k_i{0};
     for (auto &k_p : p_i->p_pwd.relative_path()) {
+      auto l_str = k_p.generic_string();
+      if (l_str.empty())
+        break;
       imgui::SameLine();
       if (imgui::Button(fmt::format("{0}##{1}", k_p.generic_string(), k_i).c_str())) {
         auto k_r = p_i->p_pwd.root_path();
@@ -313,8 +316,8 @@ void file_panel::render_path(bool edit) {
     }
   } else {
     imgui::SameLine();
-    if (ImGui::InputText(*p_i->edit_input.gui_name, &p_i->edit_input.data, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
-      p_i->p_pwd            = p_i->edit_input.data;
+    if (ImGui::InputText(*p_i->edit_input.gui_name, &p_i->edit_input.data,
+                         ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
       p_i->edit_button.data = false;
       p_i->begin_fun_list.emplace_back([this]() {
         this->scan_director(p_i->edit_input.data);

@@ -9,7 +9,6 @@
  * @subsection updata_log_30 版本3.0
  *
  * @subsubsection updata_log_309 版本3.0.9
- *
  * @li 更新maya自动解算组件： 导出拍屏位置为mov文件夹
  * @li 更新maya自动解算组件： 拍屏优先使用quicktime h264解码
  * @li 更新maya自动解算组件： 保存文件位置为文件名称所在文件夹
@@ -17,7 +16,6 @@
  * @li 更新ue4 批量导入功能： 导入时启用多进程导入
  *
  * @subsubsection updata_log_3010 版本3.0.10
- *
  * @li 更新maya插件：添加maya 动画解算标记工具
  * @li 更新maya插件：修改maya插件安装位置安装冲突
  * @li 更新maya插件：修改maya场景清理工具，删除maya文件健康处理脚本功能
@@ -35,42 +33,33 @@
  *
  *
  * @subsubsection updata_log_3011 版本3.0.11
- *
  * @li 更新maya自动解算组件：更新maya 解算资产替换规则
  *
  * @subsubsection updata_log_3013 版本3.0.13
- *
  * @li 更新maya自动解算组件：更新maya解算文件abc导出规则
  *
  * @subsubsection updata_log_3014 版本3.0.14
- *
  * @li 更新maya工具: 解算导出是提取路径功能
  *
  * @subsubsection updata_log_3015 版本3.0.15
- *
  * @li 更新maya工具: 导出时创建连续的目录
  *
  * @subsubsection updata_log_3016 版本3.0.16
- *
  * @li 更新maya 自动导出fbx工具 : 更新导出fbx 摄像机无法导出时导出问题
  *
  * @subsubsection updata_log_3017 版本3.0.17
- *
  * @li 更新maya 自动导出fbx工具 : 添加fbx导出筛选， 没有加载的不导出
  * @li 更新盘符映射改为系统连接
  *
  * @subsubsection updata_log_3018 版本3.0.18
- *
  * @li 更新maya 解算工具: 添加z直接解算选项
  * @warning  这个版本不能正确的设置布料缓存路径（没有选中）
  *
  * @subsubsection updata_log_3019 版本3.0.19
- *
  * @li 更新maya 导出fbx工具: 正确的进度条和析构节点
  *
  *
  * @subsubsection updata_log_3020 版本3.0.20
- *
  * @li 更新maya 解算工具: 正确的创建文件夹和选中导出物体
  * @li 更新maya 解算工具: 正确的解算起始时间
  *
@@ -626,4 +615,42 @@
  * @subsubsection updata_log_3418 版本3.4.18
  * @li 视频合成添加中文支持
  * @li 更新版本兼容性
+ *
+ * @subsubsection updata_log_3419 版本3.4.19
+ * @li 为添加多项目做准备将加载图标更新为句柄上下文
+ * @li 更新image组件获取根目录方法
+ * @li 更新默认图标加载时间, 去除多线程问题
+ * @li 添加初始化列表的注册方法, 并且添加自动注册类
+ * @li 添加初始化注册结束
+ * @li 添加新的文件对话框, 添加输入选项优化
+ * @li 更新清单文件, 指定为默认清单, 修复个别电脑上的输入乱码问题
+ * @li 添加新的maya插件设置缓存命令
+ * @li 更新了初始化的方法
+ * @li 添加了授权方法
+ * @li 添加了授权加密方法
+ * @li 添加了授权自动保存
+ * @li 添加了导出文件的新方法, 为自动化做了初期的准备
+ * @li 添加了导出新组件
+ * @li 添加了导出写出新文件
+ * @li 更新了导出函数
+ * @li @b ue4 添加了新的定序器辅助工具蓝图
+ * @li @b ue4 添加了自动化导入时自动检查ue4关卡存在性
+ * @li @b ue4 添加了自动化导入时自动检查ue4定序器存在性
+ * @li @b ue4 添加了自动设置相机剪裁绑定相机
+ * @li @b ue4 添加了自动添加相机方法
+ * @li @b ue4 添加了自动设置工作范围
+ * @li @b ue4 添加了导入时在定序器中生成绑定的方法
+ * @li @b ue4tool 更新导入按钮
+ * @li @b ue4tool 添加了导入设置和配置文件
+ * @li @b ue4tool 添加了导入创建相机方法
+ * @li @b ue4tool 添加了导入分析fbx和abc以及相机方案
+ * @li @b ue4tool 更新了导入相机时的设置
+ * @li 添加了自动识别图片时的逻辑判断
+ * @li 添加了自动识别图片的后缀名设置
+ *
+ *
+ *
+ *
+ * @todo 文件对话框输入默认值更改
+ * @todo maya插件崩溃问寻找
  */
