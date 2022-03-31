@@ -353,7 +353,7 @@ class add_assets_for_file : public base_render {
     std::regex l_regex{l_config.find_icon_regex};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
-            (l_config.match_icon_extensions(l_path)) &&
+        (l_config.match_icon_extensions(l_path)) &&
         std::regex_search(l_path.filename().generic_string(), l_regex)) {
       l_image_load.save(in_handle, l_path);
       return;
@@ -453,7 +453,9 @@ class add_assets_for_file : public base_render {
     });
   }
 
-  void render(const entt::handle &) override {
+  bool render(const entt::handle &) override {
+    bool result{false};
+
     ImGui::Checkbox(*use_time.gui_name, &use_time.data);
     ImGui::Checkbox(*use_icon.gui_name, &use_icon.data);
     ImGui::Checkbox(*use_abs_path.gui_name, &use_abs_path.data);
@@ -483,6 +485,7 @@ class add_assets_for_file : public base_render {
         this->add_assets(k_list->files_);
       }
     };
+    return result;
   };
 };
 
@@ -495,7 +498,8 @@ class add_entt_base : public base_render {
   add_entt_base()
       : add_size("添加个数", 1),
         list_handle("添加"s, std::vector<entt::handle>{}){};
-  void render(const entt::handle &in) override {
+  bool render(const entt::handle &in) override {
+    bool result{false};
     ImGui::InputInt(*add_size.gui_name, &add_size.data);
     ImGui::SameLine();
     if (ImGui::Button(*list_handle.gui_name)) {
@@ -506,6 +510,7 @@ class add_entt_base : public base_render {
       }
       g_reg()->ctx<core_sig>().filter_handle(list_handle);
     }
+    return result;
   }
 };
 }  // namespace gui

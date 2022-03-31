@@ -26,7 +26,7 @@ class DOODLELIB_API base_render {
    *
    * @param in
    */
-  virtual void render(const entt::handle &in = {}) = 0;
+  virtual bool render(const entt::handle &in = {}) = 0;
 };
 
 /**
