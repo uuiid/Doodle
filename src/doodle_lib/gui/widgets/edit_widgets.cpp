@@ -349,11 +349,11 @@ class add_assets_for_file : public base_render {
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
 
-    auto& l_config = project::get_current().get_or_emplace<project_config::base_config>();
+    auto &l_config = project::get_current().get_or_emplace<project_config::base_config>();
     std::regex l_regex{l_config.find_icon_regex};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
-        (l_config.match_icon_extensions(l_path)) ||
+            (l_config.match_icon_extensions(l_path)) &&
         std::regex_search(l_path.filename().generic_string(), l_regex)) {
       l_image_load.save(in_handle, l_path);
       return;
@@ -368,8 +368,8 @@ class add_assets_for_file : public base_render {
               FSys::directory_iterator{l_path},
               FSys::directory_iterator{}),
           [&](const FSys::path &in_file) {
-            auto &&l_ext = in_file.extension();
-            return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
+            return l_config.match_icon_extensions(in_file) &&
+                   std::regex_search(in_file.filename().generic_string(), l_regex);
           });
       if (k_imghe_path != FSys::directory_iterator{}) {
         l_image_load.save(in_handle, k_imghe_path->path());
