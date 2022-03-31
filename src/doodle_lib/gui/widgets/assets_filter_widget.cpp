@@ -426,6 +426,36 @@ class file_path_filter_factory : public gui::filter_factory_base {
 
 class assets_filter_widget::impl {
  public:
+  using factory_gui_cache =
+      gui::gui_cache<
+          std::unique_ptr<gui::filter_factory_base>,
+          gui::gui_cache_select>;
+
+  class factory_chick : public gui::base_render {
+   public:
+    const bool p_chick;
+    factory_gui_cache p_factory;
+    factory_chick(bool use_chick, std::string&& in_name, std::unique_ptr<gui::filter_factory_base>&& in_factory_base)
+        : p_chick(use_chick),
+          p_factory(in_name, in_factory_base) {}
+
+    bool render(const entt::handle& in) override {
+      bool result{false};
+      bool l_refresh{false};
+      if (p_chick) {
+        if (ImGui::Checkbox(*p_factory.gui_name, &p_factory.select)) {
+          result    = true;
+          l_refresh = p_factory.select;
+        }
+      }
+      if (p_factory.select) {
+        p_factory.data->refresh(l_refresh);
+        p_factory.data->render();
+      }
+      return result;
+    };
+  };
+
   impl() : only_rand(),
            p_conns(),
            p_filter_factorys(),
@@ -435,12 +465,7 @@ class assets_filter_widget::impl {
   bool only_rand{false};
   std::vector<boost::signals2::scoped_connection> p_conns;
 
-  using factory_gui_cache =
-      gui::gui_cache<
-          std::unique_ptr<gui::filter_factory_base>,
-          gui::gui_cache_select>;
-
-  std::vector<factory_gui_cache> p_filter_factorys;
+  std::vector<factory_chick> p_filter_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
   std::array<gui::gui_cache<bool>, 2> p_sorts;
   bool run_edit{false};
@@ -473,12 +498,12 @@ void assets_filter_widget::init() {
           [&](const std::vector<entt::handle>&) {
             p_impl->only_rand = false;
           }));
-  p_impl->p_filter_factorys.emplace_back("季数过滤"s, std::make_unique<season_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back("集数过滤"s, std::make_unique<episodes_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back("镜头过滤"s, std::make_unique<shot_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back("资产过滤"s, std::make_unique<assets_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back("路径过滤"s, std::make_unique<file_path_filter_factory>());
-  p_impl->p_filter_factorys.emplace_back("时间过滤"s, std::make_unique<time_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(false, "路径过滤"s, std::make_unique<file_path_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "季数过滤"s, std::make_unique<season_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "集数过滤"s, std::make_unique<episodes_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "镜头过滤"s, std::make_unique<shot_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "时间过滤"s, std::make_unique<time_filter_factory>());
 
   //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
 }
@@ -497,30 +522,20 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
 
   bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {
-    bool l_refresh{false};
-    if (ImGui::Checkbox(*i.gui_name, &i.select)) {
-      l_is_edit = true;
-      l_refresh = i.select;
-    }
-    if (i.select) {
-      i.data->refresh(l_refresh);
-      i.data->render();
-    }
+    l_is_edit |= i.render({});
   }
 
   ImGui::Separator();
 
   for (auto&& i : p_impl->p_sorts) {
-    bool l_refresh{false};
-
     if (ImGui::Checkbox(*i.gui_name, &i.data)) {
       l_is_edit = true;
     }
   }
 
   if (boost::algorithm::any_of(p_impl->p_filter_factorys,
-                               [](const impl::factory_gui_cache& in) {
-                                 return in.select && in.data->is_edit;
+                               [](const impl::factory_chick& in) {
+                                 return in.p_factory.select && in.p_factory.data->is_edit;
                                }) ||
 
       l_is_edit) {
@@ -539,12 +554,12 @@ void assets_filter_widget::refresh_(bool force) {
   p_impl->p_filters.clear();
 
   p_impl->p_filters = p_impl->p_filter_factorys |
-                      ranges::views::filter([](const impl::factory_gui_cache& in) -> bool {
-                        return in.select;
+                      ranges::views::filter([](const impl::factory_chick& in) -> bool {
+                        return in.p_factory.select;
                       }) |
-                      ranges::views::transform([](const impl::factory_gui_cache& in)
+                      ranges::views::transform([](const impl::factory_chick& in)
                                                    -> std::unique_ptr<gui::filter_base> {
-                        return in.data->make_filter();
+                        return in.p_factory.data->make_filter();
                       }) |
                       ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in)
                                                 -> bool {
