@@ -37,8 +37,7 @@ option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 option(USE_RPC_SERVER "use grpc build doodle" OFF)
 
 
-#配置版本文件
-configure_file(DoodleConfig.h.in ${CMAKE_BINARY_DIR}/configure/DoodleConfig.h)
+
 include_directories(${CMAKE_BINARY_DIR}/configure)
 
 #首先搜索我们的自定义函数
