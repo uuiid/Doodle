@@ -1,7 +1,15 @@
 ﻿cmake_minimum_required(VERSION 3.20)
+#添加模块文件
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+include(GetGitVersion)
+
+get_git_version(
+        WORK_DIR ${CMAKE_SOURCE_DIR}
+)
+
 
 project(Doodle
-        VERSION 3.4.19.0
+        VERSION "${v_short}"
         DESCRIPTION "动画制作中的一些辅助工具"
         LANGUAGES CXX
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
@@ -14,9 +22,6 @@ add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-#添加模块文件
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 
 #使用中文
