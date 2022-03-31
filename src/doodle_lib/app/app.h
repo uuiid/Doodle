@@ -154,7 +154,6 @@ namespace doodle {
  * @bug 时间计算(在多个项目中存在相同的制作人)
  * @bug <strike> 导入时文件重复(未发现错误) </strike>
  *
- * @bug 拖入后缀名没有识别
  * @bug 路径直接显示
  * @bug 分类多选
  *
