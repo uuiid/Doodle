@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DoodleConfig.h>
+#include <doodle_lib/configure/config.h>
 #include <doodle_lib_export.h>
 
 #include <filesystem>
@@ -48,8 +48,8 @@ class DOODLELIB_API file_error : public doodle_error {
 namespace fmt {
 /**
  * @brief 格式化库异常
- * 
- * @tparam  
+ *
+ * @tparam
  */
 template <>
 struct formatter<::doodle::doodle_error> : formatter<string_view> {

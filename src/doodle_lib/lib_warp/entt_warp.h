@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <DoodleConfig.h>
+#include <doodle_lib/configure/config.h>
 
 #include <entt/entt.hpp>
 // #include <boost/range.hpp>

@@ -8,7 +8,7 @@
  */
 #pragma once
 
-#include <DoodleConfig.h>
+#include <doodle_lib/configure/config.h>
 #include <doodle_lib_export.h>
 #include <spdlog/spdlog.h>
 
