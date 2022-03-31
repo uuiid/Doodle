@@ -159,6 +159,16 @@ namespace doodle {
  *
  * @todo <strike> ue4 灯光配置父子关系添加 </strike>
  *
+ * 3.31 需求
+ * @todo 编辑集数时，  需要数据库组件模糊检查
+ * @todo csv列数排序调整
+ * @todo 季(集,镜)数 默认值 0
+ * @todo 导出默认分类 默认打开
+ * @todo 导出表时, 格式化为中文
+ * @todo 文件存在和文件路径 去除
+ * @todo 添加csv 文件名称列
+ * @todo 保存时保持分类选择
+ * @todo 时间编辑gui更新
  *
  */
 class DOODLELIB_API app : public app_command_base {
