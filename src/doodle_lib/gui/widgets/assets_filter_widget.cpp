@@ -409,11 +409,13 @@ class file_path_filter_factory : public gui::filter_factory_base {
     }
   }
   bool render() override {
+    bool result{false};
     if (ImGui::InputText(*edit.gui_name, &edit.data, ImGuiInputTextFlags_EnterReturnsTrue)) {
       this->is_edit = true;
+      result        = true;
     }
     dear::HelpMarker{"使用 enter 建开始搜素"};
-    return false;
+    return result;
   }
 
  protected:
@@ -437,7 +439,7 @@ class assets_filter_widget::impl {
     factory_gui_cache p_factory;
     factory_chick(bool use_chick, std::string&& in_name, std::unique_ptr<gui::filter_factory_base>&& in_factory_base)
         : p_chick(use_chick),
-          p_factory(in_name, in_factory_base) {}
+          p_factory(in_name, std::move(in_factory_base)) {}
 
     bool render(const entt::handle& in) override {
       bool result{false};
@@ -447,10 +449,15 @@ class assets_filter_widget::impl {
           result    = true;
           l_refresh = p_factory.select;
         }
-      }
-      if (p_factory.select) {
+        if (p_factory.select) {
+          p_factory.data->refresh(l_refresh);
+          p_factory.data->render();
+        }
+      } else {
         p_factory.data->refresh(l_refresh);
-        p_factory.data->render();
+        result = p_factory.data->render();
+        if (result)
+          p_factory.select = result;
       }
       return result;
     };
