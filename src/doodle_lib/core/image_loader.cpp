@@ -56,9 +56,7 @@ image_loader::image_loader()
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
   const auto& l_local_path = in_path;
   if (exists(l_local_path) &&
-      is_regular_file(l_local_path) &&
-      (l_local_path.extension() == ".png" ||
-       l_local_path.extension() == ".jpg")) {
+      is_regular_file(l_local_path)) {
     auto k_image = cv::imread(l_local_path.generic_string());
     chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
     cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
