@@ -11,7 +11,7 @@
 // clang-format on
 #include <cstdint>
 #include <string>
-namespace doodle{
+namespace doodle::version{
 extern const std::int16_t version_major;
 extern const std::int16_t version_minor;
 extern const std::int16_t version_patch;

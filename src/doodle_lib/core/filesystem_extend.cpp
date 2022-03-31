@@ -20,9 +20,9 @@ FSys::path write_tmp_file(const std::string& in_falg,
   auto tmp_path = core_set::getSet().get_cache_root(
       fmt::format("{}/v{}{}{}",
                   in_falg,
-                  Doodle_VERSION_MAJOR,
-                  Doodle_VERSION_MINOR,
-                  Doodle_VERSION_PATCH));
+                  version::version_major,
+                  version::version_minor,
+                  version::version_patch));
   auto k_tmp_path = tmp_path / (boost::uuids::to_string(core_set::getSet().get_uuid()) + in_extension);
   {  //写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out};

@@ -2,7 +2,7 @@
 
 #include <doodle_lib/configure/config.h>
 
-namespace doodle{
+namespace doodle::version{
 const std::int16_t version_major = @Doodle_VERSION_MAJOR@;
 const std::int16_t version_minor = @Doodle_VERSION_MINOR@;
 const std::int16_t version_patch = @Doodle_VERSION_PATCH@;

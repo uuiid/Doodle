@@ -116,9 +116,9 @@ maya_exe::~maya_exe() = default;
 void maya_exe::add_maya_fun_tool() {
   const auto tmp_path = core_set::getSet().get_cache_root(
       fmt::format("maya\\v{}{}{}",
-                  Doodle_VERSION_MAJOR,
-                  Doodle_VERSION_MINOR,
-                  Doodle_VERSION_PATCH));
+                  version::version_major,
+                  version::version_minor,
+                  version::version_patch));
   auto k_tmp_path = tmp_path / "maya_fun_tool.py";
   if (!exists(k_tmp_path)) {
     auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");

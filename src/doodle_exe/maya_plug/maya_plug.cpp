@@ -42,12 +42,7 @@ MStatus initializePlugin(MObject obj) {
    * @brief 添加插件注册方法
    */
   MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "doodle",
-                     fmt::format("{}.{}.{}.{}",
-                                 Doodle_VERSION_MAJOR,
-                                 Doodle_VERSION_MINOR,
-                                 Doodle_VERSION_PATCH,
-                                 Doodle_VERSION_TWEAK)
+  MFnPlugin k_plugin{obj, "doodle",version::version_str.c_str())
                          .c_str(),
                      fmt::format("{}", MAYA_API_VERSION).c_str()};
 
@@ -204,7 +199,7 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  
+
   //这里要停止app
   p_doodle_app->stop();
 

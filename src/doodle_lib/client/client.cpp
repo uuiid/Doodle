@@ -67,8 +67,8 @@ add uuid_data text;)");
     doodle_info::doodle_info l_info{};
 
     (*k_conn)(sqlpp::update(l_info).unconditionally().set(
-        l_info.version_major = Doodle_VERSION_MAJOR,
-        l_info.version_minor = Doodle_VERSION_MINOR));
+        l_info.version_major = version::version_major,
+        l_info.version_minor = version::version_minor));
   }
 
   void up_data() {
@@ -88,7 +88,7 @@ add uuid_data text;)");
         break;
     }
 
-    if (l_main_v != Doodle_VERSION_MAJOR || l_s_v != Doodle_VERSION_MINOR)
+    if (l_main_v != version::version_major || l_s_v != version::version_minor)
       set_version();
   };
 };
@@ -175,8 +175,8 @@ end;
   doodle_info::doodle_info l_info{};
   if (((*k_conn)(sqlpp::select(all_of(l_info)).from(l_info).unconditionally())).empty())
     (*k_conn)(sqlpp::insert_into(l_info)
-                  .set(l_info.version_major = Doodle_VERSION_MAJOR,
-                       l_info.version_minor = Doodle_VERSION_MINOR));
+                  .set(l_info.version_major = version::version_major,
+                       l_info.version_minor = version::version_minor));
 }
 void client::open_project(const FSys::path& in_path) {
   g_reg()->ctx<core_sig>().project_begin_open(in_path);

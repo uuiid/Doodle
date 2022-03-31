@@ -22,11 +22,7 @@ namespace doodle {
 app_base* app_base::self = nullptr;
 app_base::app_base()
     : p_title(conv::utf_to_utf<wchar_t>(fmt::format(
-          "doodle {}.{}.{}.{}",
-          Doodle_VERSION_MAJOR,
-          Doodle_VERSION_MINOR,
-          Doodle_VERSION_PATCH,
-          Doodle_VERSION_TWEAK))),
+          "doodle {}", version::version_str))),
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
       p_lib(std::make_shared<doodle_lib>()),
