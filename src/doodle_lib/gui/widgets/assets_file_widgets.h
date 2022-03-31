@@ -28,6 +28,7 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   void render_by_info();
   void render_by_info(std::size_t in_index);
   void switch_rander();
+  void generate_lists(const std::vector<entt::handle>& in_list);
 
   void set_select(std::size_t in_size);
   void open_drag(std::size_t in_size);

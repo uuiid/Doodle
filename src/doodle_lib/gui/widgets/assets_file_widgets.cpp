@@ -187,18 +187,7 @@ void assets_file_widgets::init() {
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect(
       [this](const std::vector<entt::handle>& in) {
         p_i->handle_list = in;
-        if (p_i->render_icon)
-          p_i->lists =
-              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
-                return std::make_shared<impl::icon_data>(in);
-              }) |
-              ranges::to_vector;
-        else
-          p_i->lists =
-              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
-                return std::make_shared<impl::info_data>(in);
-              }) |
-              ranges::to_vector;
+        generate_lists(p_i->handle_list);
       }));
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
       [&](const std::filesystem::path&) {
@@ -243,7 +232,8 @@ void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chr
 
   if (ImGui::Button(ICON_FA_BATTERY_QUARTER)) {
     p_i->render_icon = !p_i->render_icon;
-    void switch_rander();
+    generate_lists(p_i->handle_list);
+    switch_rander();
   }
   g_reg()->ctx<status_info>().show_size = p_i->lists.size();
 }
@@ -460,6 +450,20 @@ void assets_file_widgets::render_by_info() {
   };
 }
 void assets_file_widgets::render_by_info(std::size_t in_index) {
+}
+void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_list) {
+  if (p_i->render_icon)
+    p_i->lists =
+        in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+          return std::make_shared<impl::icon_data>(in);
+        }) |
+        ranges::to_vector;
+  else
+    p_i->lists =
+        in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+          return std::make_shared<impl::info_data>(in);
+        }) |
+        ranges::to_vector;
 }
 
 assets_file_widgets::~assets_file_widgets() = default;
