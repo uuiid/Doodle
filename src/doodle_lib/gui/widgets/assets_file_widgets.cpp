@@ -44,7 +44,7 @@ class assets_file_widgets::impl {
     explicit base_data(const entt::handle& in_h)
         : handle_(in_h),
           select(std::string{}, false) {}
-    explicit base_data(const entt::handle& in_h, , std::string in_string)
+    explicit base_data(const entt::handle& in_h, std::string in_string)
         : handle_(in_h),
           select(std::move(in_string), false) {}
     virtual ~base_data() = default;
