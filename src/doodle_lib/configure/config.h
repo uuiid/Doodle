@@ -15,7 +15,7 @@ namespace doodle{
 extern const std::int16_t version_major;
 extern const std::int16_t version_minor;
 extern const std::int16_t version_patch;
-extern const std::string version_tweak;
+extern const std::int16_t version_tweak;
 extern const std::string version_str;
 }
 
