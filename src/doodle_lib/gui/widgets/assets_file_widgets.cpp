@@ -22,6 +22,14 @@ namespace doodle {
 
 class assets_file_widgets::impl {
  public:
+  class base_data;
+  class image_data;
+
+  using cache_image   = gui::gui_cache<std::shared_ptr<void>, image_data>;
+  using cache_name    = gui::gui_cache<std::string>;
+  using cache_select  = gui::gui_cache<bool>;
+  using base_data_ptr = std::shared_ptr<base_data>;
+
   std::vector<boost::signals2::scoped_connection> p_sc;
   std::vector<entt::handle> handle_list;
 
@@ -31,17 +39,15 @@ class assets_file_widgets::impl {
     cv::Size2f icon_size2d_;
     std::float_t max_{};
   };
-
-  using cache_image  = gui::gui_cache<std::shared_ptr<void>, image_data>;
-  using cache_name   = gui::gui_cache<std::string>;
-  using cache_select = gui::gui_cache<bool>;
-
   class base_data {
    public:
     explicit base_data(const entt::handle& in_h)
         : handle_(in_h),
           select(std::string{}, false) {}
-    virtual ~base_data(){};
+    explicit base_data(const entt::handle& in_h, , std::string in_string)
+        : handle_(in_h),
+          select(std::move(in_string), false) {}
+    virtual ~base_data() = default;
     entt::handle handle_;
     cache_select select;
   };
@@ -124,7 +130,7 @@ class assets_file_widgets::impl {
   class info_data : public base_data {
    public:
     explicit info_data(const entt::handle& in_h)
-        : base_data(in_h) {
+        : base_data(in_h, fmt::to_string(in_h.get<database>().get_id())) {
       init(in_h);
     }
     template <typename T>
@@ -136,20 +142,18 @@ class assets_file_widgets::impl {
     }
 
     void init(const entt::handle& in_h) {
-      id = fmt::to_string(in_h.get<database>().get_id());
       to_s<assets>(ass_p, in_h);
       to_s<episodes>(eps_p, in_h);
       to_s<shot>(shot_p, in_h);
       to_s<assets_file>(file_path_p, in_h);
     }
 
-    std::string id;
     std::string ass_p;
     std::string eps_p;
     std::string shot_p;
     std::string file_path_p;
   };
-  std::vector<base_data> lists;
+  std::vector<base_data_ptr> lists;
   std::size_t select_index{};
 
   // std::float_t windows_width{0};
@@ -185,14 +189,14 @@ void assets_file_widgets::init() {
         p_i->handle_list = in;
         if (p_i->render_icon)
           p_i->lists =
-              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data {
-                return impl::icon_data{in};
+              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+                return std::make_shared<impl::icon_data>(in);
               }) |
               ranges::to_vector;
         else
           p_i->lists =
-              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data {
-                return impl::info_data{in};
+              in | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+                return std::make_shared<impl::info_data>(in);
               }) |
               ranges::to_vector;
       }));
@@ -260,6 +264,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   if (dear::MenuItem("删除")) {
     std::vector<entt::handle> l_list =
         p_i->lists |
+        ranges::views::indirect |
         ranges::views::filter([](const impl::base_data& in_data) {
           return in_data.select && in_data.handle_;
         }) |
@@ -279,8 +284,8 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
           g_main_loop().attach<one_process_t>(
               [this, in_, l_list]() {
                 p_i->lists = p_i->lists |
-                             ranges::views::remove_if([in_, l_list](const impl::base_data& in_data) {
-                               return ranges::contains(l_list, in_data.handle_);
+                             ranges::views::remove_if([in_, l_list](const impl::base_data_ptr& in_data) {
+                               return ranges::contains(l_list, in_data->handle_);
                                //                           return in_data.handle_ == in_;
                              }) |
                              ranges::to_vector;
@@ -289,7 +294,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
 }
 void assets_file_widgets::set_select(std::size_t in_size) {
-  auto&& i   = p_i->lists[in_size];
+  auto&& i   = *p_i->lists[in_size];
   auto& k_io = imgui::GetIO();
   std::vector<entt::handle> l_handle_list{};
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {  /// 双击鼠标时
@@ -298,7 +303,9 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
-      l_handle_list = p_i->lists | ranges::views::filter([](impl::base_data& in) {
+      l_handle_list = p_i->lists |
+                      ranges::views::indirect |
+                      ranges::views::filter([](impl::base_data& in) {
                         return in.select;
                       }) |
                       ranges::views::transform([](impl::base_data& in) {
@@ -310,16 +317,17 @@ void assets_file_widgets::set_select(std::size_t in_size) {
                       ranges::views::slice(
                           std::min(p_i->select_index, in_size),
                           std::max(p_i->select_index, in_size) + 1) |
+                      ranges::views::indirect |
                       ranges::views::transform([](impl::base_data& in) {
                         in.select = true;
                         return in.handle_;
                       }) |
                       ranges::to_vector;
     } else {
-      boost::for_each(p_i->lists,
-                      [](impl::base_data& in) {
-                        in.select = false;
-                      });
+      ranges::for_each(p_i->lists | ranges::views::indirect,
+                       [](impl::base_data& in) {
+                         in.select = false;
+                       });
       i.select = true;
       l_handle_list.push_back(i.handle_);
     }
@@ -335,10 +343,11 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
-  auto l_item = p_i->lists[in_size];
+  auto&& l_item = *p_i->lists[in_size];
   std::vector<entt::handle> l_lists{};
   l_lists = ranges::to_vector(
       this->p_i->lists |
+      ranges::views::indirect |
       ranges::views::filter([](const impl::base_data& in) -> bool {
         return in.select;
       }) |
@@ -365,7 +374,7 @@ void assets_file_widgets::render_by_icon() {
       for (int l_j = 0; l_j < l_size; ++l_j) {
         if ((l_i * l_size + l_j) < p_i->lists.size()) {
           std::size_t l_index{l_i * l_size + l_j};
-          auto&& i = dynamic_cast<impl::icon_data&>(p_i->lists[l_index]);
+          auto&& i = *std::dynamic_pointer_cast<impl::icon_data>(p_i->lists[l_index]);
           i.load_image(k_length);
           auto l_pos_image = ImGui::GetCursorPos();
 
@@ -374,9 +383,10 @@ void assets_file_widgets::render_by_icon() {
           if (ImGui::Selectable(*i.select.gui_name,
                                 i.select.data,
                                 ImGuiSelectableFlags_AllowDoubleClick,
-                                {k_length, k_length}))
+                                {k_length, k_length})) {
             set_select(l_index);
-          dear::PopupContextItem{} && [this, i]() {
+          }
+          dear::PopupContextItem{} && [this, &i]() {
             render_context_menu(i.handle_);
           };
           ImGui::PopStyleColor();
@@ -419,7 +429,34 @@ void assets_file_widgets::render_by_info() {
     ImGui::TableSetupColumn("路径", ImGuiTableColumnFlags_None);
     ImGui::TableHeadersRow();
 
-      ImGuiListClipper clipper{};
+    ImGuiListClipper clipper{};
+    clipper.Begin(boost::numeric_cast<std::int32_t>(p_i->lists.size()));
+    while (clipper.Step()) {
+      for (auto l_i = clipper.DisplayStart; l_i < clipper.DisplayEnd; ++l_i) {
+        std::size_t l_index{boost::numeric_cast<std::size_t>(l_i)};
+        auto&& i = *std::dynamic_pointer_cast<impl::info_data>(p_i->lists[l_index]);
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        if (ImGui::Selectable(*i.select.gui_name,
+                              i.select.data,
+                              ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns |
+                                  ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick)) {
+          set_select(l_index);
+        }
+        dear::PopupContextItem{} && [this, &i]() {
+          render_context_menu(i.handle_);
+        };
+
+        ImGui::TableNextColumn();
+        dear::Text(i.ass_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.eps_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.shot_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.file_path_p);
+      }
+    }
   };
 }
 void assets_file_widgets::render_by_info(std::size_t in_index) {
