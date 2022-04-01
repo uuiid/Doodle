@@ -271,7 +271,7 @@ class assets_filter_factory : public gui::filter_factory_base {
 
       {
         dear::TreeNodeEx l_node{*i->data.gui_name, k_f};
-        if (ImGui::IsItemClicked()) {
+        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
           p_cur_select  = i;
           p_popen.data  = i->data.gui_name.name;
           this->is_edit = true;
