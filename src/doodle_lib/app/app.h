@@ -130,7 +130,6 @@ namespace doodle {
  *
  * @todo ue4 导入使用元数据格式解析
  * @todo ue4 导入添加道具搜素
- * @todo 创建检查maya 场景工具架
  * @todo 添加只输出abc功能
  * @todo 文件列表的排序功能
  *
@@ -140,35 +139,7 @@ namespace doodle {
  * @todo ue4 abc解算和fbx分开
  * @todo ue4 路人走路时的脚本固定组件开发
  *
- * @todo 添加ue4灯光配置功能
- *  权重只影响强度
- *  全部的光源选项
- *  阴影量， 通道， 影响半透明光照关闭
- *  级联阴影贴图类
  *
- * @todo 导入ue4功能重新添加进去（更新道具导入）
- *
- * @todo 排序导出表格
- *
- * @bug 表格合并到一个中
- * @bug 时间计算(在多个项目中存在相同的制作人)
- * @bug <strike> 导入时文件重复(未发现错误) </strike>
- *
- * @bug 路径直接显示
- * @bug 分类多选
- *
- * @todo <strike> ue4 灯光配置父子关系添加 </strike>
- *
- * 3.31 需求
- * @todo 编辑集数时，  需要数据库组件模糊检查
- * @todo csv列数排序调整
- * @todo 季(集,镜)数 默认值 0
- * @todo 导出默认分类 默认打开
- * @todo 导出表时, 格式化为中文
- * @todo 文件存在和文件路径 去除
- * @todo 添加csv 文件名称列
- * @todo 保存时保持分类选择
- * @todo 时间编辑gui更新
  *
  */
 class DOODLELIB_API app : public app_command_base {
