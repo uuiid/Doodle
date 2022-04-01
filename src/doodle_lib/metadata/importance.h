@@ -14,7 +14,7 @@ class importance {
  public:
   std::string cutoff_p;
   importance();
-  importance(std::string in_cutoff_p);
+  explicit importance(std::string in_cutoff_p);
   ~importance();
 };
 }  // namespace doodle
