@@ -21,10 +21,10 @@ class DOODLEEDITOR_API UDoodleImportUiltEditor : public UObject
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Doodle Editor")
     static UDoodleImportUiltEditor *Get();
 
-    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (DefaultToSelf, HideSelfPin))
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Doodle Editor", meta = (DefaultToSelf, HideSelfPin))
     UMovieSceneSection *add_camera_fbx_scene(
         UWorld *InWorld,
         const ULevelSequence *in_level,

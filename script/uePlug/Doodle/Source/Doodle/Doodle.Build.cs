@@ -59,7 +59,7 @@ public class doodle : ModuleRules
                 "AIModule",//我们需要AI模块
                 "MovieScene",//更新定序器场景
                 "LevelSequence",//创建定序器
-                "Sequencer",//修改定序器
+                // "Sequencer",//修改定序器(这个模块不可以被核心依赖)
                 "MovieScene",//更新定序器场景
                 "CinematicCamera",// 相机模块
                 // "SequencerScriptingEditor", // 编辑器
