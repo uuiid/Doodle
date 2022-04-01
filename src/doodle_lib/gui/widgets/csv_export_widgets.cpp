@@ -32,13 +32,19 @@ class csv_export_widgets::impl {
         list_sort_time(),
         con(),
         export_path("导出路径"s, ""s),
-        use_first_as_project_name("分类作为项目名称", false) {}
+        use_first_as_project_name("分类作为项目名称", true),
+        season_fmt_str("季数格式化"s, "第 {} 季"s),
+        episodes_fmt_str("集数格式化"s, "ep {}"s),
+        shot_fmt_str("镜头格式化"s, "sc {}{}"s) {}
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
   std::vector<boost::signals2::scoped_connection> con;
 
   gui_cache<std::string, gui_cache_path> export_path;
   gui_cache<bool> use_first_as_project_name;
+  gui_cache<std::string> season_fmt_str;
+  gui_cache<std::string> episodes_fmt_str;
+  gui_cache<std::string> shot_fmt_str;
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -99,6 +105,9 @@ void csv_export_widgets::update(const chrono::duration<
         });
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
+  ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
+  ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
+  ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
 
   if (ImGui::Button("导出")) {
     p_i->list = p_i->list |
@@ -122,19 +131,18 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
                                     const FSys::path &in_export_file_path) {
   FSys::ofstream l_f{in_export_file_path};
   static const table_line l_tile{
+      "部门"s,
+      "制作人"s,
       "项目"s,
-      "所属部门"s,
       "季数"s,
       "集数"s,
       "镜头"s,
-      "类别"s,
-      "制作人"s,
       "开始时间"s,
       "结束时间"s,
       "持续时间/h"s,
       "备注"s,
-      "文件存在"s,
-      "文件路径"s,
+      "类别"s
+      "名称"s,
       "等级"s};
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
 
@@ -180,21 +188,25 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   }
 
   table_line l_line{
-      l_prj_name,
-      k_ass.organization_p,
-      (in.all_of<season>() ? fmt::to_string(in.get<season>()) : ""s),
-      (in.all_of<episodes>() ? fmt::to_string(in.get<episodes>()) : ""s),
-      (in.all_of<shot>() ? fmt::to_string(in.get<shot>()) : ""s),
-      k_ass_path.generic_string(),
-      k_ass.p_user,
-      fmt::format(R"("{}")", start_time.show_str()),
-      fmt::format(R"("{}")", end_time.show_str()),
-      fmt::format("{:3f}", k_time.count()),
-      fmt::format("{}", k_comm.get_comment()),
-      fmt::to_string(FSys::exists(l_file_path)),
-      l_file_path.generic_string(),
-      (in.all_of<importance>() ? in.get<importance>().cutoff_p : ""s)
-
+      k_ass.organization_p,                                                                            //"部门"
+      k_ass.p_user,                                                                                    //"制作人"
+      l_prj_name,                                                                                      //"项目"
+      (in.all_of<season>()                                                                             //
+           ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)                             //
+           : ""s),                                                                                     //"季数"
+      (in.all_of<episodes>()                                                                           //
+           ? fmt::format(p_i->episodes_fmt_str.data, in.get<episodes>().p_episodes)                    //
+           : ""s),                                                                                     //"集数"
+      (in.all_of<shot>()                                                                               //
+           ? fmt::format(p_i->shot_fmt_str.data, in.get<shot>().p_shot, in.get<shot>().get_shot_ab())  //
+           : ""s),                                                                                     //"镜头"
+      fmt::format(R"("{}")", start_time.show_str()),                                                   //"开始时间"
+      fmt::format(R"("{}")", end_time.show_str()),                                                     //"结束时间"
+      fmt::format("{:3f}", k_time.count()),                                                            //"持续时间"
+      fmt::format("{}", k_comm.get_comment()),                                                         //"备注"
+      k_ass_path.generic_string(),                                                                     //"类别"
+      k_ass.p_name,                                                                                    //"名称"
+      in.any_of<importance>() ? in.get<importance>().cutoff_p : ""s                                    //"等级"
   };
 
   return l_line;
