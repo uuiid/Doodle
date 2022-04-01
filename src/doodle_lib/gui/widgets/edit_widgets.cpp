@@ -123,7 +123,7 @@ class season_edit : public gui::edit_interface {
       p_season = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("季数", &p_season, 0, 9999))
+    if (imgui::InputInt("季数", &p_season, 1, 9999))
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
@@ -141,7 +141,7 @@ class episodes_edit : public gui::edit_interface {
       p_eps = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("集数", &p_eps, 0, 9999))
+    if (imgui::InputInt("集数", &p_eps, 1, 9999))
       set_modify(true);
     ;
   }
@@ -165,7 +165,7 @@ class shot_edit : public gui::edit_interface {
     }
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("镜头", &p_shot, 0, 9999)) set_modify(true);
+    if (imgui::InputInt("镜头", &p_shot, 1, 9999)) set_modify(true);
 
     dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
       static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
