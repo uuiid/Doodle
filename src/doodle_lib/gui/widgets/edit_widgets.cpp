@@ -336,8 +336,7 @@ class add_assets_for_file : public base_render {
     std::regex l_regex{l_config.find_icon_regex};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
-        (l_config.match_icon_extensions(l_path)) &&
-        std::regex_search(l_path.filename().generic_string(), l_regex)) {
+        l_config.match_icon_extensions(l_path)) {
       l_image_load.save(in_handle, l_path);
       return;
     } else if (FSys::is_regular_file(l_path))
