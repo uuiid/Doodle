@@ -445,7 +445,9 @@ class add_assets_for_file : public base_render {
     l_sig.save_end.connect([this](const doodle::handle_list &) {
       auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
       this->assets_list = prj.assets_list;
-      if (!ranges::any_of(this->assets_list.data, this->assets_list.show_name)) {
+      if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
+            return this->assets_list.show_name == in;
+          })) {
         this->assets_list.show_name =
             this->assets_list.data.empty()
                 ? "null"s
