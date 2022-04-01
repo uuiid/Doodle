@@ -42,7 +42,7 @@ MStatus initializePlugin(MObject obj) {
    * @brief 添加插件注册方法
    */
   MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "doodle",version::version_str.c_str())
+  MFnPlugin k_plugin{obj, "doodle",version::version_str
                          .c_str(),
                      fmt::format("{}", MAYA_API_VERSION).c_str()};
 
