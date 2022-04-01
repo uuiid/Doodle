@@ -81,4 +81,25 @@ struct formatter<::doodle::shot> : formatter<std::int64_t> {
     return ctx.out();
   }
 };
+
+/**
+ * @brief 镜头枚举格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::shot::shot_ab_enum &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    switch (in_) {
+      case ::doodle::shot::shot_ab_enum::None:
+        break;
+      default:
+        formatter<fmt::string_view>::format(magic_enum::enum_name(in_), ctx);
+        break;
+    }
+
+    return ctx.out();
+  }
+};
 }  // namespace fmt
