@@ -51,6 +51,7 @@ set(
         gui/widgets/project_edit.h
         gui/widgets/csv_export_widgets.h
         gui/widgets/time_sequencer_widget.h
+        gui/widgets/ue4_widget.h
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
@@ -162,6 +163,7 @@ set(
         gui/widgets/project_edit.cpp
         gui/widgets/csv_export_widgets.cpp
         gui/widgets/time_sequencer_widget.cpp
+        gui/widgets/ue4_widget.cpp
 
         gui/open_file_dialog.cpp
 
