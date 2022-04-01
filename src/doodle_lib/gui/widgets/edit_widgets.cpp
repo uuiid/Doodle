@@ -6,7 +6,6 @@
 #include "edit_widgets.h"
 
 #include <doodle_lib/gui/action/command.h>
-#include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>
 #include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>

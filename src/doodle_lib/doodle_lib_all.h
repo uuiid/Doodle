@@ -22,7 +22,6 @@
 #include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/gui/action/command_tool.h>
-#include <doodle_lib/gui/action/command_ue4.h>
 #include <doodle_lib/gui/action/command_video.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
