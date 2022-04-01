@@ -141,7 +141,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "结束时间"s,
       "持续时间/h"s,
       "备注"s,
-      "类别"s
+      "类别"s,
       "名称"s,
       "等级"s};
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
