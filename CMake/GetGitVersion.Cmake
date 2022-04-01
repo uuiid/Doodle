@@ -46,7 +46,7 @@ function(get_git_version)
         set(v_patch ${CMAKE_MATCH_3} PARENT_SCOPE)
         set(v_tweak ${CMAKE_MATCH_4} PARENT_SCOPE)
         set(v_sha1 ${CMAKE_MATCH_5} PARENT_SCOPE)
-        set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}" PARENT_SCOPE)
+        set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}.${CMAKE_MATCH_4}" PARENT_SCOPE)
 
     endif ()
 endfunction()
