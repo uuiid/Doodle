@@ -4,9 +4,13 @@
 
 #pragma once
 
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <chrono>
+
 namespace doodle {
 
-class work_clock {
+struct DOODLELIB_API work_clock {
+
 };
 
 }  // namespace doodle
