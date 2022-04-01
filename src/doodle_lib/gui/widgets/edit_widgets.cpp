@@ -120,10 +120,10 @@ class season_edit : public gui::edit_interface {
     if (in.any_of<season>())
       p_season = in.get<season>().get_season();
     else
-      p_season = 1;
+      p_season = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("季数", &p_season, 1, 9999))
+    if (imgui::InputInt("季数", &p_season, 0, 9999))
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
@@ -138,10 +138,10 @@ class episodes_edit : public gui::edit_interface {
     if (in.all_of<episodes>())
       p_eps = boost::numeric_cast<std::int32_t>(in.get<episodes>().p_episodes);
     else
-      p_eps = 1;
+      p_eps = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("集数", &p_eps, 1, 9999))
+    if (imgui::InputInt("集数", &p_eps, 0, 9999))
       set_modify(true);
     ;
   }
@@ -160,12 +160,12 @@ class shot_edit : public gui::edit_interface {
       p_shot        = boost::numeric_cast<std::int32_t>(l_s.get_shot());
       p_shot_ab_str = l_s.get_shot_ab();
     } else {
-      p_shot        = 1;
+      p_shot        = 0;
       p_shot_ab_str = "None";
     }
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("镜头", &p_shot, 1, 9999)) set_modify(true);
+    if (imgui::InputInt("镜头", &p_shot, 0, 9999)) set_modify(true);
 
     dear::Combo{"ab镜头", p_shot_ab_str.c_str()} && [this]() {
       static auto shot_enum{magic_enum::enum_names<shot::shot_ab_enum>()};
@@ -184,7 +184,7 @@ class shot_edit : public gui::edit_interface {
 class assets_file_edit : public gui::edit_interface {
   class fun_cache {
    public:
-    bool select;
+    bool select{};
     std::function<void(assets_file &l_ass)> patch;
   };
 
@@ -249,52 +249,35 @@ class assets_file_edit : public gui::edit_interface {
 
 class time_edit : public gui::edit_interface {
  public:
-  gui::gui_cache<std::int32_t> p_year;
-  gui::gui_cache<std::int32_t> p_month;
-  gui::gui_cache<std::int32_t> p_day;
-
-  gui::gui_cache<std::int32_t> p_hours;
-  gui::gui_cache<std::int32_t> p_minutes;
-  gui::gui_cache<std::int32_t> p_seconds;
+  gui::gui_cache<std::array<std::int32_t, 3>> time_ymd;
+  gui::gui_cache<std::array<std::int32_t, 3>> time_hms;
 
  public:
   time_edit()
-      : p_year("年"s, 0),
-        p_month("月"s, 0),
-        p_day("天"s, 0),
-        p_hours("时"s, 0),
-        p_minutes("分"s, 0),
-        p_seconds("秒"s, 0) {}
+      : time_ymd("年月日"s, std::array<std::int32_t, 3>{0, 0, 0}),
+        time_hms("时分秒"s, std::array<std::int32_t, 3>{0, 0, 0}) {}
   void init_(const entt::handle &in) override {
-    std::tie(p_year,
-             p_month,
-             p_day,
-             p_hours,
-             p_minutes,
-             p_seconds) = in.get_or_emplace<time_point_wrap>().compose();
+    std::tie(time_ymd.data[0],
+             time_ymd.data[1],
+             time_ymd.data[2],
+             time_hms.data[0],
+             time_hms.data[1],
+             time_hms.data[2]) = in.get_or_emplace<time_point_wrap>().compose();
   }
 
   void render(const entt::handle &in) override {
-    if (ImGui::SliderInt(*p_year.gui_name, &p_year.data, 2020, 2050))
+    if (ImGui::InputInt3(*time_ymd.gui_name, time_ymd.data.data()))
       set_modify(true);
-    if (ImGui::SliderInt(*p_month.gui_name, &p_month.data, 1, 12))
-      set_modify(true);
-    if (ImGui::SliderInt(*p_day.gui_name, &p_day.data, 0, 31))
-      set_modify(true);
-    if (ImGui::SliderInt(*p_hours.gui_name, &p_hours.data, 0, 23))
-      set_modify(true);
-    if (ImGui::SliderInt(*p_minutes.gui_name, &p_minutes.data, 0, 59))
-      set_modify(true);
-    if (ImGui::SliderInt(*p_seconds.gui_name, &p_seconds.data, 0, 59))
+    if (ImGui::InputInt3(*time_hms.gui_name, time_hms.data.data()))
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<time_point_wrap>(p_year,
-                                           p_month,
-                                           p_day,
-                                           p_hours,
-                                           p_minutes,
-                                           p_seconds);
+    in.emplace_or_replace<time_point_wrap>(time_ymd.data[0],
+                                           time_ymd.data[1],
+                                           time_ymd.data[2],
+                                           time_hms.data[0],
+                                           time_hms.data[1],
+                                           time_hms.data[2]);
   }
 };
 
