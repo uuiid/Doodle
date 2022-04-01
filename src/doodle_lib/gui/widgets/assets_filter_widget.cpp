@@ -100,17 +100,20 @@ class path_filter : public gui::filter_base {
     } else {
       return false;
     }
-
-    //    return in.all_of<assets>() &&
-    //           ranges::distance(p_assets) > ranges::distance(in.get<assets>().get_path()) &&
-    //           ranges::all_of(
-    //               ranges::views::zip(in.get<assets>().get_path(),
-    //                                  p_assets),
-    //               [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
-    //                 auto& [l_r, l_l] = in;
-    //                 return l_r == l_l;
-    //               });
   };
+};
+
+class path_filters : public gui::filter_base {
+ public:
+  std::vector<path_filter> filters;
+  explicit path_filters(std::vector<path_filter> in)
+      : filters(std::move(in)) {}
+
+  bool operator()(const entt::handle& in) const override {
+    return ranges::any_of(filters, [&in](const auto& in_f) {
+      return in_f(in);
+    });
+  }
 };
 
 class file_path_filter : public gui::filter_base {
@@ -202,12 +205,13 @@ class assets_filter_factory : public gui::filter_factory_base {
                                                        ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                                        ImGuiTreeNodeFlags_SpanAvailWidth};
 
-  using data_type      = assets;
-  using gui_cache      = gui::gui_cache<FSys::path>;
-  using tree_node_type = tree_node<gui_cache>;
-  using popen_cache    = gui::gui_cache<std::string>;
+  using data_type          = assets;
+  using gui_cache          = gui::gui_cache<FSys::path>;
+  using tree_node_type     = tree_node<gui_cache>;
+  using tree_node_type_ptr = tree_node<gui_cache>::child_type;
+  using popen_cache        = gui::gui_cache<std::string>;
 
-  tree_node_type p_tree;
+  tree_node_type::child_type p_tree;
   popen_cache p_popen;
 
   void popen_menu(tree_node_type& in_node) {
@@ -228,14 +232,32 @@ class assets_filter_factory : public gui::filter_factory_base {
     }
   }
 
-  bool is_select(tree_node_type* in_root) const {
-    return in_root == p_cur_select.get();
+
+  bool is_select(const tree_node_type::child_type& in_node) const {
+    return p_cur_selects.count(in_node) == 1;
+  }
+
+  void add_select(const tree_node_type::child_type& in_node) {
+    if (ImGui::GetIO().KeyCtrl) {
+      if (is_select(in_node)) {
+        p_cur_selects.erase(in_node);
+      } else {
+        p_cur_selects.insert(in_node);
+      }
+    } else {
+      p_cur_selects = {in_node};
+    }
   }
 
   std::unique_ptr<gui::filter_base> make_filter_() override {
-    if (p_cur_select)
-      return std::make_unique<path_filter>(p_cur_select->data.data);
-    return {};
+    std::vector<path_filter> in_list =
+        p_cur_selects |
+        ranges::views::transform(
+            [](const tree_node_type::child_type& in_node) -> path_filter {
+              return path_filter{in_node->data};
+            }) |
+        ranges::to_vector;
+    return std::make_unique<path_filters>(in_list);
   }
 
   static void add_tree_node(tree_node_type* in_root, const FSys::path& in_path) {
@@ -261,10 +283,10 @@ class assets_filter_factory : public gui::filter_factory_base {
     }
   };
 
-  void render_node(tree_node_type* in_root) {
+  void render_node(const tree_node_type_ptr& in_root) {
     for (auto&& i : in_root->child) {
       ImGuiTreeNodeFlags k_f{base_flags};
-      if (is_select(i.get()))
+      if (is_select(i))
         k_f = base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
       if (i->child.empty())
         k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
@@ -272,7 +294,7 @@ class assets_filter_factory : public gui::filter_factory_base {
       {
         dear::TreeNodeEx l_node{*i->data.gui_name, k_f};
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-          p_cur_select  = i;
+          this->add_select(i);
           p_popen.data  = i->data.gui_name.name;
           this->is_edit = true;
         }
@@ -290,43 +312,43 @@ class assets_filter_factory : public gui::filter_factory_base {
           }
         };
         l_node&& [this, i]() {
-          render_node(i.get());
+          render_node(i);
         };
       }
     }
   }
 
   void init() override {
-    p_tree.child.clear();
+    p_tree->child.clear();
     for (auto&& [e, i] : g_reg()->view<data_type>().each()) {
-      add_tree_node(&p_tree, i.get_path());
+      add_tree_node(p_tree.get(), i.get_path());
     }
   }
 
   void refresh_() override {
     for (auto&& i : p_obs) {
       auto k_h = make_handle(i);
-      add_tree_node(&p_tree, k_h.get<data_type>().get_path());
+      add_tree_node(p_tree.get(), k_h.get<data_type>().get_path());
     }
   }
 
  public:
   assets_filter_factory()
-      : p_cur_select(),
-        p_tree(gui_cache{"root"s, FSys::path{}}),
+      : p_cur_selects(),
+        p_tree(std::make_shared<tree_node_type>(gui_cache{"root"s, FSys::path{}})),
         p_popen("name"s, "null"s) {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
-  tree_node_type::child_type p_cur_select;
+  std::set<tree_node_type::child_type> p_cur_selects;
 
   bool render() override {
     {
-      dear::TreeNode l_node{*p_tree.data.gui_name};
+      dear::TreeNode l_node{*p_tree->data.gui_name};
       dear::PopupContextItem{} && [this]() {
-        popen_menu(p_tree);
+        popen_menu(*p_tree);
       };
       l_node&& [&]() {
-        this->render_node(&p_tree);
+        this->render_node(p_tree);
       };
     }
     return is_edit;
