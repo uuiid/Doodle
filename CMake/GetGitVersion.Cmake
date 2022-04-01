@@ -29,25 +29,24 @@ function(get_git_version)
 #            GIT_DESCRIBE_VERSION)
 
     if (NOT GIT_DESCRIBE_ERROR_CODE)
-        string(REGEX REPLACE "^v([0-9]+)\\..*" "\\1" VERSION_MAJOR "${GIT_DESCRIBE_VERSION}")
-        string(REGEX REPLACE "^v[0-9]+\\.([0-9]+).*" "\\1" VERSION_MINOR "${GIT_DESCRIBE_VERSION}")
-        string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" VERSION_PATCH "${GIT_DESCRIBE_VERSION}")
-        string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+-([0-9]+).*" "\\1" VERSION_TWEAK "${GIT_DESCRIBE_VERSION}")
-        string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-(.*)" "\\1" VERSION_SHA1 "${GIT_DESCRIBE_VERSION}")
+        string(REGEX MATCH [[^v([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)?(.*)]] _ "${GIT_DESCRIBE_VERSION}")
         set(VERSION_SHORT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_TWEAK}")
 #        cmake_print_variables(
-#                VERSION_MAJOR
-#                VERSION_MINOR
-#                VERSION_PATCH
-#                VERSION_SHA1
-#                VERSION_SHORT
-#                VERSION_TWEAK)
-        set(v_major ${VERSION_MAJOR} PARENT_SCOPE)
-        set(v_minor ${VERSION_MINOR} PARENT_SCOPE)
-        set(v_patch ${VERSION_PATCH} PARENT_SCOPE)
-        set(v_tweak ${VERSION_TWEAK} PARENT_SCOPE)
-        set(v_sha1 ${VERSION_SHA1} PARENT_SCOPE)
-        set(v_short ${VERSION_SHORT} PARENT_SCOPE)
+#                GIT_DESCRIBE_VERSION
+#                DOODLE_TEST
+#                CMAKE_MATCH_COUNT
+#                CMAKE_MATCH_0
+#                CMAKE_MATCH_1
+#                CMAKE_MATCH_2
+#                CMAKE_MATCH_3
+#                CMAKE_MATCH_4
+#                CMAKE_MATCH_5)
+        set(v_major ${CMAKE_MATCH_1} PARENT_SCOPE)
+        set(v_minor ${CMAKE_MATCH_2} PARENT_SCOPE)
+        set(v_patch ${CMAKE_MATCH_3} PARENT_SCOPE)
+        set(v_tweak ${CMAKE_MATCH_4} PARENT_SCOPE)
+        set(v_sha1 ${CMAKE_MATCH_5} PARENT_SCOPE)
+        set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}" PARENT_SCOPE)
 
     endif ()
 endfunction()
