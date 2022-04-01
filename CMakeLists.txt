@@ -36,10 +36,6 @@ option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 option(USE_RPC_SERVER "use grpc build doodle" OFF)
 
-
-
-include_directories(${CMAKE_BINARY_DIR}/configure)
-
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
