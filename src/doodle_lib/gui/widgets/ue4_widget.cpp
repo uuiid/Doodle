@@ -78,7 +78,6 @@ void ue4_widget::update(
     auto l_p = std::make_shared<FSys::path>();
     g_main_loop().attach<file_dialog>(
                      file_dialog::dialog_args{l_p}
-                         .set_use_dir()
                          .add_filter(".uproject"s))
         .then<one_process_t>([this, l_p]() {
           this->p_i->ue4_prj.data = l_p->generic_string();
