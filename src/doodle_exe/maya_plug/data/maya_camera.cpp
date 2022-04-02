@@ -11,7 +11,9 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnCamera.h>
 
-#include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/metadata/export_file_info.h>
+#include <doodle_lib/metadata/shot.h>
+#include <doodle_lib/metadata/episodes.h>
 
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -73,6 +75,17 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
+  auto l_h = make_handle();
+
+  episodes::analysis_static(l_h, k_file_path);
+  shot::analysis_static(l_h, k_file_path);
+
+  l_h.emplace<export_file_info>(k_file_path,
+                                in_start.value(),
+                                in_end.value(),
+                                FSys::path{},
+                                export_file_info::export_type::camera);
+  export_file_info::write_file(l_h);
   return true;
 }
 bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {

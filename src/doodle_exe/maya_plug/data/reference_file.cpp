@@ -546,13 +546,17 @@ void reference_file::qlUpdateInitialPose() const {
 entt::handle reference_file::export_file(const reference_file::export_arg &in_arg) {
   entt::handle out_{};
   FSys::path l_path{};
+
+  export_file_info::export_type l_type{};
   switch (in_arg.export_type_p) {
-    case export_type::abc:
+    case export_type::abc: {
+      l_type = export_file_info::export_type::abc;
       l_path = export_abc(in_arg.start_p, in_arg.end_p);
-      break;
-    case export_type::fbx:
+    } break;
+    case export_type::fbx: {
+      l_type = export_file_info::export_type::fbx;
       l_path = export_fbx(in_arg.start_p, in_arg.end_p);
-      break;
+    } break;
   }
   if (!l_path.empty()) {
     out_ = make_handle();
@@ -566,7 +570,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
                                    in_arg.start_p.value(),
                                    in_arg.end_p.value(),
                                    l_ref_file,
-                                   export_file_info::export_type::camera);
+                                   l_type);
     export_file_info::write_file(out_);
   }
   return out_;
