@@ -565,7 +565,8 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
     out_.emplace<export_file_info>(l_path,
                                    in_arg.start_p.value(),
                                    in_arg.end_p.value(),
-                                   l_ref_file);
+                                   l_ref_file,
+                                   export_file_info::export_type::camera);
     export_file_info::write_file(out_);
   }
   return out_;
