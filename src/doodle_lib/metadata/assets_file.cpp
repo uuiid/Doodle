@@ -24,15 +24,11 @@ assets_file::assets_file(const FSys::path& in_path,
       p_name(std::move(in_name)),
       p_version(in_version),
       p_user(core_set::getSet().get_user()),
-      organization_p(core_set::getSet().organization_name),
-      p_ShowName(in_path.stem().generic_string()) {
+      organization_p(core_set::getSet().organization_name) {
 }
 
 std::string assets_file::str() const {
   return p_name;
-}
-std::string assets_file::show_str() const {
-  return p_ShowName;
 }
 
 bool assets_file::operator<(const assets_file& in_rhs) const {
@@ -65,7 +61,5 @@ const std::uint64_t& assets_file::get_version() const noexcept {
 void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
-
- 
 
 }  // namespace doodle

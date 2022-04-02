@@ -29,7 +29,6 @@ class DOODLELIB_API assets_file {
 
   std::string p_user;
   std::string organization_p;
-  std::string p_ShowName;
 
  private:
  public:
@@ -53,7 +52,6 @@ class DOODLELIB_API assets_file {
   DOODLE_MOVE(assets_file);
 
   [[nodiscard]] std::string str() const;
-  [[nodiscard]] std::string show_str() const;
 
   [[nodiscard]] const std::string& get_user() const;
   void set_user(const std::string& in_user);
@@ -69,7 +67,6 @@ class DOODLELIB_API assets_file {
  private:
   friend void to_json(nlohmann::json& j, const assets_file& p) {
     j["name"]           = p.p_name;
-    j["ShowName"]       = p.p_ShowName;
     j["user"]           = p.p_user;
     j["organization_p"] = p.organization_p;
     j["version"]        = p.p_version;
@@ -77,7 +74,6 @@ class DOODLELIB_API assets_file {
   }
   friend void from_json(const nlohmann::json& j, assets_file& p) {
     j.at("name").get_to(p.p_name);
-    j.at("ShowName").get_to(p.p_ShowName);
     j.at("user").get_to(p.p_user);
     j.at("version").get_to(p.p_version);
     if (j.contains("organization_p"))

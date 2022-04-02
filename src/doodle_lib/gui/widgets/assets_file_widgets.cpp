@@ -71,7 +71,7 @@ class assets_file_widgets::impl {
                 handle_.try_get<assets_file, episodes, shot>();
             l_ass || l_ep || l_shot) {
           if (l_ass) {
-            name.data = l_ass->show_str();
+            name.data = l_ass->p_name;
             if (l_ep || l_shot)
               name.data.push_back('\n');
           }

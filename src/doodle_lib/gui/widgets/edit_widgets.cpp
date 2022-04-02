@@ -200,7 +200,7 @@ class assets_file_edit : public gui::edit_interface {
       p_path_cache.select = false;
     };
     p_name_cache.patch = [this](assets_file &l_ass) {
-      l_ass.p_ShowName    = p_name_cache;
+      l_ass.p_name    = p_name_cache;
       p_name_cache.select = false;
     };
     p_version_cache.patch = [this](assets_file &l_ass) {
@@ -213,7 +213,7 @@ class assets_file_edit : public gui::edit_interface {
     if (in.all_of<assets_file>()) {
       auto &l_ass     = in.get<assets_file>();
       p_path_cache    = l_ass.path.generic_string();
-      p_name_cache    = l_ass.show_str();
+      p_name_cache    = l_ass.p_name;
       p_version_cache = l_ass.get_version();
     } else {
       p_path_cache = g_reg()->ctx<project>().p_path.generic_string();
