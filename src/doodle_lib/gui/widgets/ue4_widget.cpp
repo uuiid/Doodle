@@ -157,7 +157,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
       ranges::views::transform([this, &l_h](const FSys::path &in_path) -> ue4_import_data {
         l_h = export_file_info::read_file(in_path);
         ue4_import_data l_r{l_h.get<export_file_info>(), p_i->ue4_content_dir};
-        l_r.import_file_save_dir = l_r.set_save_dir(l_f);
+        l_r.import_file_save_dir = l_r.set_save_dir(l_h);
         return l_r;
       }) |
       ranges::to_vector;
