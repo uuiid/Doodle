@@ -6,6 +6,7 @@
 #include <string>
 namespace doodle::doodle_config {
 constexpr const std::string_view doodle_db_name{".doodle_db"};
+constexpr const std::string_view doodle_json_extension{".json_doodle"};
 constexpr const std::string_view token_name{"token.doodle_token"};
 constexpr const std::string_view authorization_data{"doodle"};
 constexpr const std::array<unsigned char, 32> cryptopp_key{"cryptopp_key.uuiid.doodle.v.3.1"};
