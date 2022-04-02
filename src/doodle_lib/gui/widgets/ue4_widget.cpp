@@ -40,6 +40,7 @@ class ue4_widget::impl {
 
  public:
   FSys::path ue4_content_dir{};
+  std::vector<entt::handle> l_handle_temp{};
 };
 
 ue4_widget::ue4_widget()
@@ -108,6 +109,7 @@ void ue4_widget::update(
   /// 开始导入
   if (ImGui::Button(*p_i->import_)) {
     this->import_ue4_prj();
+    app::Get().stop_ = p_i->quit_.data;
   }
 }
 void ue4_widget::import_ue4_prj() {
@@ -140,6 +142,10 @@ void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
       ranges::to_vector;
 }
 void ue4_widget::plan_file_path(const FSys::path &in_path) {
+  for (auto &&h : p_i->l_handle_temp)
+    if (h)
+      h.destroy();
+
   using namespace ue4_widget_n;
   ue4_import_group l_group{};
   entt::handle l_h{};
@@ -161,6 +167,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
         return l_r;
       }) |
       ranges::to_vector;
+  p_i->l_handle_temp.push_back(l_h);
   /// 如果搜索不到就返回
   if (l_group.groups.empty())
     return;
