@@ -57,8 +57,7 @@ class DOODLELIB_API ue4_widget : public process_t<ue4_widget> {
 
   void import_ue4_prj();
   void accept_handle(const std::vector<entt::handle>& in_list);
-  void plan_file_path(const FSys::path& in_path,
-                      const entt::handle& in_handle);
+  void plan_file_path(const FSys::path& in_path);
 
  public:
   ue4_widget();

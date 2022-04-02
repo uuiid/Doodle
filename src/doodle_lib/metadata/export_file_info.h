@@ -38,6 +38,6 @@ class export_file_info {
   export_type export_type_;
 
   static void write_file(const entt::handle& in_handle);
-  static export_file_info read_file(const FSys::path& in_path);
+  static entt::handle read_file(const FSys::path& in_path);
 };
 }  // namespace doodle

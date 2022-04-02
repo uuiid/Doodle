@@ -64,4 +64,18 @@ void export_file_info::write_file(const entt::handle& in_handle) {
 
   FSys::ofstream{l_out_path} << l_json.dump();
 }
+entt::handle export_file_info::read_file(const FSys::path& in_path) {
+  boost::contract::check l_check =
+      boost::contract::function()
+          .precondition([&]() {
+            chick_true<doodle_error>(exists(in_path),
+                                     DOODLE_LOC,
+                                     "文件不存在 {}",
+                                     in_path);
+          });
+  auto l_json = nlohmann::json::parse(FSys::ifstream{in_path});
+  auto l_h = make_handle();
+  entt_tool::load_comm<export_file_info, episodes, shot>(l_h, l_json);
+  return l_h;
+}
 }  // namespace doodle

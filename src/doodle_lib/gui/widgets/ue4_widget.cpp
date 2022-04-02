@@ -14,7 +14,6 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/filesystem_extend.h>
 
-
 #include <boost/contract.hpp>
 
 namespace doodle {
@@ -123,7 +122,7 @@ void ue4_widget::import_ue4_prj() {
       ranges::to_vector;
   ranges::for_each(l_list,
                    [this](const entt::handle &in_handle) {
-                     this->plan_file_path(in_handle.get<assets_file>().path, in_handle);
+                     this->plan_file_path(in_handle.get<assets_file>().path);
                    });
 }
 void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
@@ -140,10 +139,10 @@ void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
       }) |
       ranges::to_vector;
 }
-void ue4_widget::plan_file_path(const FSys::path &in_path,
-                                const entt::handle &in_handle) {
+void ue4_widget::plan_file_path(const FSys::path &in_path) {
   using namespace ue4_widget_n;
   ue4_import_group l_group{};
+  entt::handle l_h{};
   l_group.groups =
       ranges::make_subrange(
           FSys::directory_iterator{in_path},
@@ -155,10 +154,10 @@ void ue4_widget::plan_file_path(const FSys::path &in_path,
       ranges::views::transform([](const FSys::directory_entry &in_entry) -> FSys::path {
         return in_entry.path();
       }) |
-      ranges::views::transform([this, in_handle](const FSys::path &in_path) -> ue4_import_data {
-        auto l_f = export_file_info::read_file(in_path);
-        ue4_import_data l_r{l_f, p_i->ue4_content_dir};
-        l_r.import_file_save_dir = l_r.set_save_dir(in_handle);
+      ranges::views::transform([this, &l_h](const FSys::path &in_path) -> ue4_import_data {
+        l_h = export_file_info::read_file(in_path);
+        ue4_import_data l_r{l_h.get<export_file_info>(), p_i->ue4_content_dir};
+        l_r.import_file_save_dir = l_r.set_save_dir(l_f);
         return l_r;
       }) |
       ranges::to_vector;
@@ -176,16 +175,16 @@ void ue4_widget::plan_file_path(const FSys::path &in_path,
     l_group.start_frame = l_group.groups.front().start_frame;
     l_group.end_frame   = l_group.groups.front().end_frame;
   }
-  l_group.world_path = l_group.set_level_dir(in_handle, "_world");
-  l_group.level_path = l_group.set_level_dir(in_handle, "_lev");
+  l_group.world_path    = l_group.set_level_dir(l_h, "_world");
+  l_group.level_path    = l_group.set_level_dir(l_h, "_lev");
 
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
-  if(!FSys::exists(l_out_path)){
+  if (!FSys::exists(l_out_path)) {
     FSys::create_directories(l_out_path);
   }
   nlohmann::json l_json{};
   l_json = l_group;
-  FSys::ofstream{l_out_path/core_set::getSet().get_uuid_str(".json_doodle")}
+  FSys::ofstream{l_out_path / core_set::getSet().get_uuid_str(".json_doodle")}
       << l_json.dump();
 }
 namespace ue4_widget_n {
@@ -257,7 +256,7 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
 }
 std::string ue4_import_group::set_level_dir(
     const entt::handle &in_handle,
-    const std::string &in_e  ) const {
+    const std::string &in_e) const {
   std::string result{};
   boost::contract::check l_ =
       boost::contract::public_function(this)
@@ -283,5 +282,37 @@ std::string ue4_import_group::set_level_dir(
                          in_e);
   return result = l_p.generic_string();
 }
+
+void to_json(nlohmann::json &j, const ue4_import_data &p) {
+  j["import_file_path"]       = p.import_file_path;
+  j["import_file_save_dir"]   = p.import_file_save_dir;
+  j["import_type"]            = p.import_type;
+  j["fbx_skeleton_file_name"] = p.fbx_skeleton_file_name;
+  j["start_frame"]            = p.start_frame;
+  j["end_frame"]              = p.end_frame;
+}
+void from_json(const nlohmann::json &j, ue4_import_data &p) {
+  j.at("import_file_path").get_to(p.import_file_path);
+  j.at("import_file_save_dir").get_to(p.import_file_save_dir);
+  j.at("import_type").get_to(p.import_type);
+  j.at("fbx_skeleton_file_name").get_to(p.fbx_skeleton_file_name);
+  j.at("start_frame").get_to(p.start_frame);
+  j.at("end_frame").get_to(p.end_frame);
+}
+void to_json(nlohmann::json &j, const ue4_import_group &p) {
+  j["start_frame"] = p.start_frame;
+  j["end_frame"]   = p.end_frame;
+  j["world_path"]  = p.world_path;
+  j["level_path"]  = p.level_path;
+  j["groups"]      = p.groups;
+}
+void from_json(const nlohmann::json &j, ue4_import_group &p) {
+  j.at("start_frame").get_to(p.start_frame);
+  j.at("end_frame").get_to(p.end_frame);
+  j.at("world_path").get_to(p.world_path);
+  j.at("level_path").get_to(p.level_path);
+  j.at("groups").get_to(p.groups);
+}
+
 }  // namespace ue4_widget_n
 }  // namespace doodle
