@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_lib/gui/action/command.h>
 
 namespace doodle::maya_plug {
 class reference_file;

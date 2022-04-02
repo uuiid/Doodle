@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <doodle_lib/gui/action/command.h>
 namespace doodle::maya_plug {
 class create_sim_cloth : public process_t<create_sim_cloth> {
   std::vector<entt::handle> p_list;

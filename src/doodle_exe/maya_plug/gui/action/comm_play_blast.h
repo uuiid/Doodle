@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_lib/gui/action/command.h>
 #include <maya_plug/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {

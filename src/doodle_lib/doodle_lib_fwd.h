@@ -82,7 +82,6 @@ class thread_pool;
 class season;
 class setting_windows;
 class core_sig;
-class command_base;
 class app;
 class program_options;
 class logger_ctrl;

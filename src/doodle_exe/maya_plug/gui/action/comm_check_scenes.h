@@ -2,7 +2,6 @@
 // Created by TD on 2021/11/2.
 //
 
-#include <doodle_lib/gui/action/command.h>
 #include <maya/MStatus.h>
 #include <maya/MSelectionList.h>
 namespace doodle::maya_plug {

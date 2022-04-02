@@ -5,7 +5,6 @@
 
 #include "edit_widgets.h"
 
-#include <doodle_lib/gui/action/command.h>
 #include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/drag_widget.h>

@@ -36,7 +36,6 @@ set(
         gui/gui_ref/ref_base.h
         gui/gui_ref/database_edit.h
 
-        gui/action/command.h
         gui/action/command_tool.h
         gui/widgets/assets_file_widgets.h
         gui/widgets/assets_filter_widget.h
@@ -146,7 +145,6 @@ set(
         gui/gui_ref/project.cpp
         gui/gui_ref/ref_base.cpp
         gui/gui_ref/database_edit.cpp
-        gui/action/command.cpp
         gui/action/command_tool.cpp
         gui/widgets/assets_file_widgets.cpp
         gui/widgets/assets_filter_widget.cpp

@@ -19,7 +19,6 @@
 namespace doodle::maya_plug {
 
 // comm_play_blast::comm_play_blast()
-//     : command_base(),
 //       use_conjecture_cam(true),
 //       p_save_path(core_set::getSet().get_cache_root("maya_play_blast").generic_string()),
 //       p_play_balst(new_object<play_blast>()) {
