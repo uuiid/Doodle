@@ -287,11 +287,11 @@ namespace doodle
         UE_LOG(LogTemp, Log, TEXT("开始开始创建导入配置"));
         switch (i.import_type)
         {
-        case EDoodleImportType::Abc:
-        case EDoodleImportType::Fbx:
+        case EDoodleImportType::abc:
+        case EDoodleImportType::fbx:
           ImportDataList.Add(i.get_input(p_world_));
           break;
-        case EDoodleImportType::Camera:
+        case EDoodleImportType::camera:
           camera_fbx_to_level(i.import_file_path);
           break;
         default:
