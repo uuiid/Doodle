@@ -14,19 +14,29 @@ class export_file_info {
 
  public:
   enum class export_type : std::uint32_t {
+    none   = 0,
     abc    = 1,
     fbx    = 2,
     camera = 3
   };
+
+ private:
+  friend void to_json(nlohmann::json& j, const export_type& p);
+  friend void from_json(const nlohmann::json& j, export_type& p);
+//  NLOHMANN_JSON_SERIALIZE_ENUM(export_type, {{export_type::abc, "abc"}});
+
+ public:
   export_file_info();
   explicit export_file_info(FSys::path in_path,
                             std::int32_t in_start_frame,
                             std::int32_t in_end_frame,
-                            FSys::path in_ref_path);
+                            FSys::path in_ref_path,
+                            export_type in_export_type);
   FSys::path file_path;
   std::int32_t start_frame;
   std::int32_t end_frame;
   FSys::path ref_file;
+  export_type export_type_;
 
   static void write_file(const entt::handle& in_handle);
 };
