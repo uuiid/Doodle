@@ -203,7 +203,8 @@ ue4_import_data::ue4_import_data(const export_file_info &in_info,
       fbx_skeleton_file_name(),
       start_frame(in_info.start_frame),
       end_frame(in_info.end_frame) {
-  fbx_skeleton_file_name = find_ue4_skin(in_info.ref_file, in_ue4_content_dir);
+  if (in_info.export_type_ == decltype(in_info.export_type_)::fbx)
+    fbx_skeleton_file_name = find_ue4_skin(in_info.ref_file, in_ue4_content_dir);
 }
 std::string ue4_import_data::find_ue4_skin(const FSys::path &in_ref_file,
                                            const FSys::path &in_ue4_content_dir) const {
