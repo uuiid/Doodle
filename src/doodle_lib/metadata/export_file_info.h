@@ -13,6 +13,11 @@ class export_file_info {
   friend void from_json(const nlohmann::json& j, export_file_info& p);
 
  public:
+  enum class export_type : std::uint32_t {
+    abc    = 1,
+    fbx    = 2,
+    camera = 3
+  };
   export_file_info();
   explicit export_file_info(FSys::path in_path,
                             std::int32_t in_start_frame,
