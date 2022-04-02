@@ -22,6 +22,7 @@
 #include <gui/widgets/opencv_player_widget.h>
 #include <gui/widgets/assets_file_widgets.h>
 #include <gui/widgets/csv_export_widgets.h>
+#include <gui/widgets/ue4_widget.h>
 
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/metadata.h>
@@ -149,6 +150,8 @@ void main_menu_bar::menu_edit() {
     make_windows<comm_maya_tool>();
   if (dear::MenuItem(u8"创建视频"))
     make_windows<comm_create_video>();
+  if (dear::MenuItem(u8"ue4 工具"))
+    make_windows<ue4_widget>();
 }
 void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))
