@@ -23,7 +23,6 @@ class export_file_info {
  private:
   friend void to_json(nlohmann::json& j, const export_type& p);
   friend void from_json(const nlohmann::json& j, export_type& p);
-//  NLOHMANN_JSON_SERIALIZE_ENUM(export_type, {{export_type::abc, "abc"}});
 
  public:
   export_file_info();
@@ -39,5 +38,6 @@ class export_file_info {
   export_type export_type_;
 
   static void write_file(const entt::handle& in_handle);
+  static void read_file(const FSys::path& in_path);
 };
 }  // namespace doodle
