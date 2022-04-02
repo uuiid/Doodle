@@ -82,6 +82,7 @@ void ue4_widget::update(
         .then<one_process_t>([this, l_p]() {
           this->p_i->ue4_prj.data = l_p->generic_string();
           this->p_i->ue4_prj.path = *l_p;
+          p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
         });
   }
   /// 列出文件
