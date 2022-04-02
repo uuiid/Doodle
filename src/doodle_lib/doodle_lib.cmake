@@ -38,7 +38,6 @@ set(
 
         gui/action/command.h
         gui/action/command_tool.h
-        gui/action/command_video.h
         gui/widgets/assets_file_widgets.h
         gui/widgets/assets_filter_widget.h
         gui/widgets/edit_widgets.h
@@ -149,7 +148,6 @@ set(
         gui/gui_ref/database_edit.cpp
         gui/action/command.cpp
         gui/action/command_tool.cpp
-        gui/action/command_video.cpp
         gui/widgets/assets_file_widgets.cpp
         gui/widgets/assets_filter_widget.cpp
         gui/widgets/edit_widgets.cpp

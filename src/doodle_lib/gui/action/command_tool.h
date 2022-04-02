@@ -95,29 +95,6 @@ class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
   [[maybe_unused]] void update(delta_type, void* data);
   void render();
 };
-/**
- * @brief 将abc和fbx导入ue4 项目中
- * @image html comm_import_ue_files.jpg 导入ue
- * @li @b ue项目 选择ue4项目
- * @li @b 选择导入 选择ue4 项目中
- *
- */
-class DOODLELIB_API comm_import_ue_files : public process_t<comm_import_ue_files> {
-  FSys::path p_ue4_prj;
-  std::shared_ptr<std::string> p_ue4_show;
-  std::vector<FSys::path> p_import_list;
 
- public:
-  comm_import_ue_files();
-  constexpr static std::string_view name{"ue工具"};
-  bool show{false};
-
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
-  void render();
-};
 
 }  // namespace doodle

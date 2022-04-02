@@ -13,7 +13,6 @@
 #include <toolkit/toolkit.h>
 
 #include <gui/action/command_tool.h>
-#include <gui/action/command_video.h>
 #include <gui/widgets/project_widget.h>
 #include <gui/widgets/assets_filter_widget.h>
 #include <gui/setting_windows.h>
@@ -150,8 +149,6 @@ void main_menu_bar::menu_edit() {
     make_windows<comm_maya_tool>();
   if (dear::MenuItem(u8"创建视频"))
     make_windows<comm_create_video>();
-  if (dear::MenuItem(u8"ue工具"))
-    make_windows<comm_import_ue_files>();
 }
 void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))
