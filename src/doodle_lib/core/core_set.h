@@ -63,6 +63,7 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
+  std::string get_uuid_str(const std::string &in_add);
 
   static std::size_t get_block_size() {
     static std::size_t l_k_i{64 * 1024};
