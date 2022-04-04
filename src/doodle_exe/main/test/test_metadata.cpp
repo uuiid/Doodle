@@ -5,6 +5,7 @@
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/app/app.h>
+#include <doodle_lib/core/core_sig.h>
 
 #include <catch.hpp>
 
@@ -248,6 +249,41 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_5_a.work_duration(time_5_b).count() == (36.583_a).epsilon(0.01));
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
+}
+
+class test_o_snapshot {
+ public:
+  test_o_snapshot() = default;
+  void operator()(const entt::entity& in_e) {
+    std::cout << fmt::format("get entt::entity: {}", in_e) << std::endl;
+  };
+  void operator()(const std::underlying_type_t<entt::entity>& in_v) {
+    std::cout << fmt::format("get std::underlying_type_t<entt::entity>: {}", in_v) << std::endl;
+  };
+  template <class T>
+  void operator()(const entt::entity& in_entity, const T& in_t) {
+    nlohmann::json l_j{};
+    l_j["entt"]   = in_entity;
+    l_j["t_data"] = in_t;
+    std::cout << l_j.dump() << std::endl;
+  };
+};
+
+class test_metadata_install : public app {
+ public:
+  void make_install() {
+    test_o_snapshot l_out{};
+    std::cout << fmt::format("entt::tombstone_t: {}", (entt::entity)entt::tombstone) << std::endl;
+    entt::snapshot{*g_reg()}
+        .entities(l_out)
+        .component<project, season, episodes, shot, assets, assets_file, time_point_wrap>(l_out);
+  };
+};
+
+TEST_CASE_METHOD(test_metadata_install, "test_metadata_install") {
+  g_reg()->ctx<core_sig>().project_end_open.connect([this](auto...) { this->make_install(); });
+  //  this->command_line_parser();
+  this->run();
 }
 
 // TEST(DSTD, map_netDir) {
