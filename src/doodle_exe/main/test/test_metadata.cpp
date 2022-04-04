@@ -150,10 +150,10 @@ class name_data : public app_command_base {
           }
           k_i2.emplace<assets_file>(fmt::format("test_{}_{}", i, k));
           k_i2.emplace<database>();
-          k_i2.get_or_emplace<time_point_wrap>(chrono::system_clock::now() - 3h * i);
+          k_i2.replace<time_point_wrap>(chrono::system_clock::now() - 3h * i);
           auto k_u_i = dist(mt);
           k_i2.get<assets_file>().set_user(fmt::format("user_{}", k_u_i));
-          k_i2.get<assets_file>().set_department(magic_enum::enum_cast<department>(k_u_i % 8).value());
+          k_i2.get<assets_file>().organization_p = fmt::to_string(k_u_i);
         }
       }
     }
@@ -239,8 +239,8 @@ TEST_CASE_METHOD(test_time_duration, "test_time_duration2") {
   auto k_time = chrono::make_zoned(chrono::current_zone(), p_new);
   REQUIRE(k_time.get_local_time() == p_local);
 }
-using namespace Catch::literals;
 TEST_CASE_METHOD(test_time_duration, "work_time") {
+  using namespace Catch::literals;
   REQUIRE(time_1_a.work_duration(time_1_b).count() == (20.583_a).epsilon(0.01));
   REQUIRE(time_2_a.work_duration(time_2_b).count() == (36.583_a).epsilon(0.01));
   REQUIRE(time_3_a.work_duration(time_3_b).count() == (0.86_a).epsilon(0.01));
