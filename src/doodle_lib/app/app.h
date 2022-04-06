@@ -139,6 +139,7 @@ namespace doodle {
  * @todo ue4 abc解算和fbx分开
  * @todo ue4 路人走路时的脚本固定组件开发
  *
+ * @bug 在有的电脑上, 无法显示配置中的分类
  *
  *
  */
