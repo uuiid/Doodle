@@ -260,7 +260,7 @@ std::string ue4_import_data::find_ue4_skin(
               });
           if (l_path_it != FSys::recursive_directory_iterator{}) {
             auto l_p = l_path_it->path().lexically_relative(in_ue4_content_dir);
-            l_p      = FSys::path{doodle_config::ue4_game} / l_p;
+            l_p      = FSys::path{doodle_config::ue4_game} / l_p.parent_path() / l_p.stem();
             result   = l_p.generic_string();
           }
         }
