@@ -51,6 +51,8 @@ ue4_widget::ue4_widget()
 ue4_widget::~ue4_widget() = default;
 
 void ue4_widget::init() {
+  p_i->ue4_prj.data = app::Get().options_->p_ue4Project;
+  p_i->ue4_prj.path = app::Get().options_->p_ue4Project;
   g_reg()->set<ue4_widget &>(*this);
 }
 
