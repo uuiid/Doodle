@@ -128,6 +128,14 @@ void ue4_widget::import_ue4_prj() {
         return in_handle && in_handle.any_of<assets_file>();
       }) |
       ranges::to_vector;
+  /// \brief 导出前清除目录
+  FSys::path l_out_path = app::Get().options_->p_ue4outpath;
+  if (FSys::exists(l_out_path))
+    for (auto &l_p : FSys::directory_iterator{l_out_path}) {
+      if (l_p.is_regular_file())
+        FSys::remove(l_p.path());
+    }
+
   ranges::for_each(l_list,
                    [this](const entt::handle &in_handle) {
                      this->plan_file_path(in_handle.get<assets_file>().path);
@@ -199,11 +207,6 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
     FSys::create_directories(l_out_path);
-  } else {
-    for (auto &l_p : FSys::directory_iterator{l_out_path}) {
-      if (l_p.is_regular_file())
-        FSys::remove(l_p.path());
-    }
   }
   nlohmann::json l_json{};
   l_json = l_group;
