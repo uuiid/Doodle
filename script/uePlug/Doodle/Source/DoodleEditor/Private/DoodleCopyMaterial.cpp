@@ -280,8 +280,12 @@ FReply DoodleCopyMat::BathImport()
   }
 
   FString l_temp_dir = FPaths::Combine(FPaths::ProjectSavedDir(), FPaths::CreateTempFilename(TEXT("doodle"), TEXT("import"), TEXT("")));
+  FString l_prj = FPaths::GetProjectFilePath();
   FString l_abs_path = FPaths::ConvertRelativePathToFull(l_temp_dir);
-  FString l_com = FString::Format(TEXT(R"(--ue4outpath="{0}")"), TArray<FStringFormatArg>{FStringFormatArg{l_abs_path}});
+  FString l_com = FString::Format(TEXT(R"(--ue4outpath="{0}" --ue4Project="{1}")"),
+                                  TArray<FStringFormatArg>{
+                                      FStringFormatArg{l_abs_path},
+                                      FStringFormatArg{l_prj}});
   FString l_start_dir = FPaths::GetPath(l_setting->DoodleExePath);
   FProcHandle l_h = FPlatformProcess::CreateProc(
       *l_setting->DoodleExePath,
