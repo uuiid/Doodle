@@ -219,7 +219,8 @@ namespace doodle
   }
   void init_ue4_project::tmp()
   {
-    import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)");
+    init_ue4_project{}.import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json)");
+    init_ue4_project{}.import_ass_data(R"(E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main2.json)");
     // save();
 
     /// test2
@@ -447,7 +448,7 @@ namespace doodle
       l_setting->bConvertSceneUnit = true;
       l_setting->ImportUniformScale = 1;
       l_setting->bCreateCameras = false;
-      l_setting->bReplaceTransformTrack = true;
+      l_setting->bReplaceTransformTrack = false;
       l_setting->bReduceKeys = false;
       l_setting->ReduceKeysTolerance = 0;
 

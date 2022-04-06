@@ -49,7 +49,7 @@ namespace doodle
 
     bool import_ass_data(const FString &in_path);
 
-    void tmp();
+    static void tmp();
   };
 
 } // namespace doodle
