@@ -101,8 +101,9 @@ void FDoodleAssetImportData::set_abc(UAssetImportTask *in_import_data)
   }
 
   /// 获取abc默认设置并修改
-  UAbcImportSettings *k_abc_stting = DuplicateObject<
-      UAbcImportSettings>(UAbcImportSettings::Get(), in_import_data);
+  UAbcImportSettings *k_abc_stting = UAbcImportSettings::Get();
+  // UAbcImportSettings *k_abc_stting = DuplicateObject<
+  //     UAbcImportSettings>(UAbcImportSettings::Get(), in_import_data);
   k_abc_stting->ImportType =
       EAlembicImportType::GeometryCache;                   //导入为几何缓存
   k_abc_stting->MaterialSettings.bCreateMaterials = false; //不创建材质
@@ -122,7 +123,7 @@ void FDoodleAssetImportData::set_abc(UAssetImportTask *in_import_data)
   k_abc_stting->SamplingSettings.FrameStart = start_frame;   //开始帧
   k_abc_stting->SamplingSettings.FrameEnd = end_frame;       //结束帧
   k_abc_stting->SamplingSettings.FrameSteps = 1;             //帧步数
- 
+
   in_import_data->Options = k_abc_stting;
 }
 
@@ -132,9 +133,9 @@ UAssetImportTask *FDoodleAssetImportData::get_input(UObject *Outer)
   l_task->bAutomated = true;
   l_task->bReplaceExisting = true;
   l_task->bReplaceExistingSettings = true;
-  /// @fix 此处不需要自动保存, 否则会出现一个ue4.27中发现的bug 会将 
+  /// @fix 此处不需要自动保存, 否则会出现一个ue4.27中发现的bug 会将
   /// UAssetImportTask::ImportedObjectPaths 值转换为乱码
-  
+
   // l_task->bSave = true;
   l_task->DestinationPath = import_file_save_dir;
   l_task->Filename = import_file_path;
