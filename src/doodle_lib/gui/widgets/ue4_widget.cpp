@@ -34,6 +34,8 @@ class ue4_widget::impl {
   gui::gui_cache<bool> import_cam{"导入cam"s, true};
   gui::gui_cache<bool> import_abc{"导入abc"s, true};
   gui::gui_cache<bool> import_fbx{"导入fbx"s, true};
+  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"(([a-zA-Z_]+)_rig)"s};
+  gui::gui_cache<std::string> ue4_sk_fmt{"格式化结果"s, "SK_{}_Skeleton"s};
   gui::gui_cache<bool> quit_{"生成并退出"s, true};
   gui::gui_cache_name_id import_{"导入"s};
   gui::gui_cache_name_id open_file_dig{"选择"s};
@@ -105,6 +107,10 @@ void ue4_widget::update(
   ImGui::Checkbox(*p_i->import_fbx.gui_name, &p_i->import_fbx.data);
   ImGui::Checkbox(*p_i->import_abc.gui_name, &p_i->import_abc.data);
   ImGui::Checkbox(*p_i->quit_.gui_name, &p_i->quit_.data);
+  ImGui::InputText(*p_i->ue4_rig_regex.gui_name, &p_i->ue4_rig_regex.data);
+  dear::HelpMarker{"使用正则表达式修正maya骨骼动画的引用文件名称"};
+  ImGui::InputText(*p_i->ue4_sk_fmt.gui_name, &p_i->ue4_sk_fmt.data);
+  dear::HelpMarker{"使用格式化方法,对正则表达式捕获组进行格式化,生成最终查找结果"};
 
   /// 开始导入
   if (ImGui::Button(*p_i->import_)) {
@@ -196,44 +202,59 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
 }
 namespace ue4_widget_n {
 ue4_import_data::ue4_import_data() = default;
-ue4_import_data::ue4_import_data(const export_file_info &in_info,
-                                 const FSys::path &in_ue4_content_dir)
+ue4_import_data::ue4_import_data(const export_file_info &in_info)
     : import_file_path(in_info.file_path.generic_string()),
       import_file_save_dir(),
       import_type(in_info.export_type_),
       fbx_skeleton_file_name(),
       start_frame(in_info.start_frame),
       end_frame(in_info.end_frame) {
-  if (in_info.export_type_ == decltype(in_info.export_type_)::fbx)
-    fbx_skeleton_file_name = find_ue4_skin(in_info.ref_file, in_ue4_content_dir);
 }
-std::string ue4_import_data::find_ue4_skin(const FSys::path &in_ref_file,
-                                           const FSys::path &in_ue4_content_dir) const {
+std::string ue4_import_data::find_ue4_skin(
+    const FSys::path &in_ref_file,
+    const FSys::path &in_ue4_content_dir,
+    const std::string &in_regex,
+    const std::string &in_fmt) const {
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
             chick_true<doodle_error>(FSys::is_directory(in_ue4_content_dir), DOODLE_LOC,
                                      "无法找到ue4 content 文件夹");
+            chick_true<doodle_error>(!in_fmt.empty(), DOODLE_LOC,
+                                     "格式化字符串不可为空");
+            chick_true<doodle_error>(!in_regex.empty(), DOODLE_LOC,
+                                     "正则表达式不可为空");
           });
 
   std::string result{};
 
   switch (import_type) {
     case export_file_info::export_type::fbx: {
-      auto l_fbx_skeleton = in_ref_file.stem();
-      l_fbx_skeleton += "_Skeleton";
-      auto l_path_it = ranges::find_if(
-          ranges::make_subrange(
-              FSys::recursive_directory_iterator{in_ue4_content_dir},
-              FSys::recursive_directory_iterator{}),
-          [&](const FSys::directory_entry &in_entry) -> bool {
-            return in_entry.path().stem() == l_fbx_skeleton;
-          });
-      if (l_path_it != FSys::recursive_directory_iterator{}) {
-        auto l_p = l_path_it->path().lexically_relative(in_ue4_content_dir);
-        l_p      = FSys::path{doodle_config::ue4_game} / l_p;
-        result   = l_p.generic_string();
+      std::regex l_regex{in_regex};
+      std::smatch l_smatch{};
+      std::string l_token{};
+      if (std::regex_match(in_ref_file.stem().generic_string(),
+                           l_smatch,
+                           l_regex)) {
+        if (l_smatch.size() == 2) {
+          l_token = l_smatch[1].str();
+
+          FSys::path l_fbx_skeleton{fmt::format(in_fmt, l_token)};
+          auto l_path_it = ranges::find_if(
+              ranges::make_subrange(
+                  FSys::recursive_directory_iterator{in_ue4_content_dir},
+                  FSys::recursive_directory_iterator{}),
+              [&](const FSys::directory_entry &in_entry) -> bool {
+                return in_entry.path().stem() == l_fbx_skeleton;
+              });
+          if (l_path_it != FSys::recursive_directory_iterator{}) {
+            auto l_p = l_path_it->path().lexically_relative(in_ue4_content_dir);
+            l_p      = FSys::path{doodle_config::ue4_game} / l_p;
+            result   = l_p.generic_string();
+          }
+        }
       }
+
     } break;
     default:
       break;
