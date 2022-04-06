@@ -344,7 +344,8 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
           [](const impl::base_data& in) -> entt::handle {
             return in.handle_;
           }));
-  l_lists.emplace_back(l_item.handle_);
+  if (ranges::find(l_lists, l_item.handle_) == l_lists.end())
+    l_lists.emplace_back(l_item.handle_);
   g_reg()->set<std::vector<entt::handle>>(l_lists);
   auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
   ImGui::SetDragDropPayload(
