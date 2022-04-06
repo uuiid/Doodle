@@ -148,10 +148,10 @@ UAssetImportTask *FDoodleAssetImportData::get_input(UObject *Outer)
   UE_LOG(LogTemp, Log, TEXT("导入目标路径为 %s"), *(import_file_save_dir));
   switch (import_type)
   {
-  case EDoodleImportType::Abc:
+  case EDoodleImportType::abc:
     set_abc(l_task);
     break;
-  case EDoodleImportType::Fbx:
+  case EDoodleImportType::fbx:
     set_fbx(l_task);
     break;
   default:

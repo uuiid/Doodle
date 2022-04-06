@@ -62,7 +62,7 @@ void UDoodleAssCreateCommandlet::save_temp_json(const FString &out_path)
   l_data.import_file_path = "import_file_path.abc(or fbx)";
   l_data.import_file_save_dir = "ue4 file save path";
   l_data.fbx_skeleton_file_name = "ue4_skeleton_path_dir";
-  l_data.import_type = EDoodleImportType::Abc;
+  l_data.import_type = EDoodleImportType::abc;
   l_data.start_frame = 1001;
   l_data.end_frame = 1200;
   FString l_josn{};
