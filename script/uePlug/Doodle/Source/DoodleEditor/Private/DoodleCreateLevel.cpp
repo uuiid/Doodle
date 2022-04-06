@@ -335,9 +335,7 @@ namespace doodle
       TArray<UAnimSequence *> l_anim = this->filter_by_type<UAnimSequence>(import_obj);
       this->obj_add_level(l_geo);
       this->obj_add_level(l_anim);
-
-      // ASkeletalMeshActor *l_actor = GWorld->SpawnActor<ASkeletalMeshActor>();
-      // l_actor->GetSkeletalMeshComponent()->SetSkeletalMesh()
+      this->save();
     }
     return true;
   }
