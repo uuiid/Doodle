@@ -34,7 +34,7 @@ class ue4_widget::impl {
   gui::gui_cache<bool> import_cam{"导入cam"s, true};
   gui::gui_cache<bool> import_abc{"导入abc"s, true};
   gui::gui_cache<bool> import_fbx{"导入fbx"s, true};
-  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"(([a-zA-Z_]+)_rig_.*)"s};
+  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"((\w+)_rig_.*)"s};
   gui::gui_cache<std::string> ue4_sk_fmt{"格式化结果"s, "SK_{}_Skeleton"s};
   gui::gui_cache<bool> quit_{"生成并退出"s, true};
   gui::gui_cache_name_id import_{"导入"s};
@@ -199,6 +199,11 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
     FSys::create_directories(l_out_path);
+  } else {
+    for (auto &l_p : FSys::directory_iterator{l_out_path}) {
+      if (l_p.is_regular_file())
+        FSys::remove(l_p.path());
+    }
   }
   nlohmann::json l_json{};
   l_json = l_group;
