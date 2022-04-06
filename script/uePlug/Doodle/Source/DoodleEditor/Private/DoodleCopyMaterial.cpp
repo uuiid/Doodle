@@ -131,7 +131,7 @@ void DoodleCopyMat::Construct(const FArguments &Arg)
                                         // GEditor->NewMap();
                                         // UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_level"));
                                         // UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_word"));
-                      doodle::init_ue4_project{}.tmp();
+                      doodle::init_ue4_project::tmp();
                       return FReply::Handled(); })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText
                                         { return FText::FromString(
@@ -280,7 +280,7 @@ FReply DoodleCopyMat::BathImport()
   }
 
   FString l_temp_dir = FPaths::Combine(FPaths::ProjectSavedDir(), FPaths::CreateTempFilename(TEXT("doodle"), TEXT("import"), TEXT("")));
-  FString l_prj = FPaths::GetProjectFilePath();
+  FString l_prj = FPaths::ConvertRelativePathToFull(FPaths::GetProjectFilePath());
   FString l_abs_path = FPaths::ConvertRelativePathToFull(l_temp_dir);
   FString l_com = FString::Format(TEXT(R"(--ue4outpath="{0}" --ue4Project="{1}")"),
                                   TArray<FStringFormatArg>{
@@ -300,11 +300,11 @@ FReply DoodleCopyMat::BathImport()
       nullptr);
   FPlatformProcess::WaitForProc(l_h);
 
-  doodle::init_ue4_project l_import_tool{};
   IFileManager::Get().IterateDirectory(
       *l_abs_path,
-      [&l_import_tool](const TCHAR *in_path, bool in_) -> bool
+      [](const TCHAR *in_path, bool in_) -> bool
       {
+        doodle::init_ue4_project l_import_tool{};
         FString l_path{in_path};
         if (FPaths::FileExists(l_path) && FPaths::GetExtension(l_path, true) == TEXT(".json_doodle"))
         {
