@@ -289,7 +289,7 @@ namespace doodle
         {
         case EDoodleImportType::abc:
         case EDoodleImportType::fbx:
-          ImportDataList.Add(i.get_input(p_world_));
+          ImportDataList.Add(i.get_input(GetTransientPackage()));
           break;
         case EDoodleImportType::camera:
           camera_fbx_to_level(i.import_file_path);
