@@ -198,7 +198,7 @@ class assets_file_edit : public gui::edit_interface {
       p_path_cache.select = false;
     };
     p_name_cache.patch = [this](assets_file &l_ass) {
-      l_ass.p_name    = p_name_cache;
+      l_ass.p_name        = p_name_cache;
       p_name_cache.select = false;
     };
     p_version_cache.patch = [this](assets_file &l_ass) {
@@ -433,6 +433,18 @@ class add_assets_for_file : public base_render {
                 : this->assets_list.data.front();
       }
     });
+    if (project::has_prj()) {
+      auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
+      this->assets_list = prj.assets_list;
+      if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
+            return this->assets_list.show_name == in;
+          })) {
+        this->assets_list.show_name =
+            this->assets_list.data.empty()
+                ? "null"s
+                : this->assets_list.data.front();
+      }
+    }
   }
 
   bool render(const entt::handle &) override {
