@@ -21,5 +21,5 @@ constexpr const std::string_view image_folder_name{R"(image)"};
 constexpr const std::string_view ue_path_obj{"Engine/Binaries/Win64/UE4Editor.exe"};
 constexpr const std::string_view ue4_content{R"(Content)"};
 constexpr const std::string_view ue4_game{R"(/Game)"};
-constexpr const std::string_view ue4_shot{R"(/Shot)"};
+constexpr const std::string_view ue4_shot{R"(Shot)"};
 }  // namespace doodle::doodle_config
