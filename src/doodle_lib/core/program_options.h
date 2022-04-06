@@ -16,6 +16,7 @@ class DOODLELIB_API program_options {
   std::pair<bool, FSys::path> p_root;
   std::string p_project_path;
   std::string p_ue4outpath;
+  std::string p_ue4Project;
 
   bool p_help;
   bool p_version;
@@ -35,6 +36,7 @@ class DOODLELIB_API program_options {
   static constexpr char thread_max[]    = "thread_max";
   static constexpr char thread_max_[]   = "thread_max";
   static constexpr char ue4outpath[]    = "ue4outpath";
+  static constexpr char ue4Project[]    = "ue4Project";
   /**
    * @brief 所有选项， 命令行选项
    *
