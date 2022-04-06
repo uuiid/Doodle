@@ -34,7 +34,7 @@ class ue4_widget::impl {
   gui::gui_cache<bool> import_cam{"导入cam"s, true};
   gui::gui_cache<bool> import_abc{"导入abc"s, true};
   gui::gui_cache<bool> import_fbx{"导入fbx"s, true};
-  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"(([a-zA-Z_]+)_rig)"s};
+  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"(([a-zA-Z_]+)_rig_.*)"s};
   gui::gui_cache<std::string> ue4_sk_fmt{"格式化结果"s, "SK_{}_Skeleton"s};
   gui::gui_cache<bool> quit_{"生成并退出"s, true};
   gui::gui_cache_name_id import_{"导入"s};
@@ -168,7 +168,12 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
       }) |
       ranges::views::transform([this, &l_h](const FSys::path &in_path) -> ue4_import_data {
         l_h = export_file_info::read_file(in_path);
-        ue4_import_data l_r{l_h.get<export_file_info>(), p_i->ue4_content_dir};
+        ue4_import_data l_r{l_h.get<export_file_info>()};
+        l_r.fbx_skeleton_file_name = l_r.find_ue4_skin(
+            l_h.get<export_file_info>().ref_file,
+            p_i->ue4_content_dir,
+            p_i->ue4_rig_regex.data,
+            p_i->ue4_sk_fmt.data);
         l_r.import_file_save_dir = l_r.set_save_dir(l_h);
         return l_r;
       }) |
@@ -233,7 +238,8 @@ std::string ue4_import_data::find_ue4_skin(
       std::regex l_regex{in_regex};
       std::smatch l_smatch{};
       std::string l_token{};
-      if (std::regex_match(in_ref_file.stem().generic_string(),
+      std::string l_stem{in_ref_file.stem().generic_string()};
+      if (std::regex_match(l_stem,
                            l_smatch,
                            l_regex)) {
         if (l_smatch.size() == 2) {

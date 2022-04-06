@@ -13,7 +13,7 @@ namespace ue4_widget_n {
 class ue4_import_data {
  public:
   ue4_import_data();
-  ue4_import_data(const export_file_info& in_info);
+  explicit ue4_import_data(const export_file_info& in_info);
   std::string import_file_path{};
   std::string import_file_save_dir{};
   export_file_info::export_type import_type{};
