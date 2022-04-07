@@ -1,6 +1,6 @@
 
 
-set(MAYA_VERSION_LIST 2018 2019 2020 )
+set(MAYA_VERSION_LIST 2018 2019 2020)
 
 
 set(doodle_maya_plug_cpp
@@ -67,34 +67,27 @@ set(doodle_maya_plug_cpp
         maya_comm/find_duplicate_poly_comm.cpp
         )
 add_custom_target(${PROJECT_NAME}_maya_plug)
-foreach (MAYA_VERSION IN ITEMS 2018 2019 2020)
-    message("build maya version ${MAYA_VERSION}")
-    find_package(Maya ${MAYA_VERSION} REQUIRED)
+find_package(Maya ${Maya_Version} REQUIRED)
 
-    add_library(doodle_plug_${MAYA_VERSION} MODULE
-            ${doodle_maya_plug_cpp}
-            ${PROJECT_SOURCE_DIR}/stl.natvis
-            )
-    set_target_properties(doodle_plug_${MAYA_VERSION} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-            )
-    target_link_libraries(doodle_plug_${MAYA_VERSION} PRIVATE doodle_lib maya::maya_${MAYA_VERSION}_all)
-    target_include_directories(doodle_plug_${MAYA_VERSION} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
-    #设置maya插件后缀名
-    set_target_properties(
-            doodle_plug_${MAYA_VERSION} PROPERTIES SUFFIX ".mll"
-    )
-    #    if (NOT RUN_COPY)
-    #        target_compile_options(doodle_plug_${MAYA_VERSION} PRIVATE /Zi)
-    #        target_link_options(doodle_plug_${MAYA_VERSION} PRIVATE /INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF)
-    #    endif ()
-    add_dependencies(${PROJECT_NAME}_maya_plug doodle_plug_${MAYA_VERSION})
-endforeach ()
+add_library(doodle_plug_${Maya_Version} MODULE
+        ${doodle_maya_plug_cpp}
+        ${PROJECT_SOURCE_DIR}/stl.natvis
+        )
+set_target_properties(doodle_plug_${Maya_Version} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+        )
+target_link_libraries(doodle_plug_${Maya_Version} PRIVATE doodle_lib maya::maya_all)
+target_include_directories(doodle_plug_${Maya_Version} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
+#设置maya插件后缀名
+set_target_properties(
+        doodle_plug_${Maya_Version} PROPERTIES SUFFIX ".mll"
+)
+
 
 configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
 add_custom_command(
-        TARGET ${PROJECT_NAME}_maya_plug
+        TARGET doodle_plug_${Maya_Version}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
         COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/

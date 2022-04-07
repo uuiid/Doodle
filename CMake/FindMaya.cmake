@@ -45,29 +45,32 @@ if (WIN32)
     set(OPEN_MAYA OpenMaya)
 endif ()
 
-# 寻找maya 中的基本路径 使用 ${Maya_FIND_VERSION} 添加版本
-find_path(MAYA_BASE_DIR_${Maya_FIND_VERSION}
+# 寻找maya 中的基本路径 使用 添加版本
+find_path(MAYA_BASE_DIR
         include/maya/MFn.h
         HINTS
+        "${MAYA_LOCATION}"
+        "$ENV{MAYA_LOCATION}"
+        "${Maya_ROOT_DIR}"
         ${MAYA_DEFAULT_LOCATION}
         DOC
         "maya 基本路径"
         )
 
-# 寻找maya 中的基本导入路径 使用 ${Maya_FIND_VERSION} 添加版本
-find_path(MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}
+# 寻找maya 中的基本导入路径 使用 添加版本
+find_path(MAYA_INCLUDE_DIR
         maya/MFn.h
         HINTS
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
-        "include/"
+        "include"
         REQUIRED
         DOC
         "maya 导入路径"
         )
 
-# 寻找maya 中的库路径 使用 ${Maya_FIND_VERSION} 添加版本
-find_path(MAYA_LIBRARY_DIR_${Maya_FIND_VERSION}
+# 寻找maya 中的库路径 使用 添加版本
+find_path(MAYA_LIBRARY_DIR
         ${OPEN_MAYA}.lib
         HINTS
         ${MAYA_DEFAULT_LOCATION}
@@ -78,8 +81,8 @@ find_path(MAYA_LIBRARY_DIR_${Maya_FIND_VERSION}
         "maya 连接库"
         )
 
-# 寻找maya 中的动态库路径 使用 ${Maya_FIND_VERSION} 添加版本
-find_path(MAYA_DLL_LIBRARY_DIR_${Maya_FIND_VERSION}
+# 寻找maya 中的动态库路径 使用 添加版本
+find_path(MAYA_DLL_LIBRARY_DIR
         ${OPEN_MAYA}.dll
         HINTS
         ${MAYA_DEFAULT_LOCATION}
@@ -105,47 +108,47 @@ set(MAYA_LIBS_TO_FIND
         clew
         )
 # 添加maya 接口库
-add_library(maya_${Maya_FIND_VERSION}_all INTERFACE IMPORTED)
+add_library(maya_all INTERFACE IMPORTED)
 # 循环查找maya 库列表
 foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
-    find_library(MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION}
+    find_library(MAYA_${MAYA_LIB}_LIBRARY
             ${MAYA_LIB}
             HINTS
-            ${MAYA_LIBRARY_DIR_${Maya_FIND_VERSION}}
+            ${MAYA_LIBRARY_DIR}
             REQUIRED
             DOC
             "寻找maya ${MAYA_LIB}库"
             NO_CMAKE_SYSTEM_PATH
             )
     find_file(
-            MAYA_${MAYA_LIB}_LIBRARY_dll_${Maya_FIND_VERSION}
+            MAYA_${MAYA_LIB}_LIBRARY_dll
             ${MAYA_LIB}.dll
             HINTS
-            ${MAYA_DLL_LIBRARY_DIR_${Maya_FIND_VERSION}}
+            ${MAYA_DLL_LIBRARY_DIR}
             REQUIRED
             DOC
             "寻找maya ${MAYA_LIB} dll库"
             NO_CMAKE_SYSTEM_PATH
     )
 
-    if (MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION})
-        list(APPEND MAYA_LIBRARY ${MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION}})
+    if (MAYA_${MAYA_LIB}_LIBRARY)
+        list(APPEND MAYA_LIBRARY ${MAYA_${MAYA_LIB}_LIBRARY})
         # 添加基础库
-        add_library(maya_${Maya_FIND_VERSION}_${MAYA_LIB} SHARED IMPORTED)
+        add_library(maya_${MAYA_LIB} SHARED IMPORTED)
         # 添加基础库的别名
-        add_library(maya::maya_${Maya_FIND_VERSION}_${MAYA_LIB} ALIAS maya_${Maya_FIND_VERSION}_${MAYA_LIB})
+        add_library(maya::maya_${MAYA_LIB} ALIAS maya_${MAYA_LIB})
         # 设置属性
-        set_property(TARGET maya_${Maya_FIND_VERSION}_${MAYA_LIB} APPEND PROPERTY
+        set_property(TARGET maya_${MAYA_LIB} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS RELEASE)
-        set_property(TARGET maya_${Maya_FIND_VERSION}_${MAYA_LIB} APPEND PROPERTY
+        set_property(TARGET maya_${MAYA_LIB} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS DEBUG)
-        target_include_directories(maya_${Maya_FIND_VERSION}_${MAYA_LIB} INTERFACE ${MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}})
+        target_include_directories(maya_${MAYA_LIB} INTERFACE ${MAYA_INCLUDE_DIR})
 
-        set_target_properties(maya_${Maya_FIND_VERSION}_${MAYA_LIB} PROPERTIES
-                IMPORTED_LOCATION "${MAYA_${MAYA_LIB}_LIBRARY_dll_${Maya_FIND_VERSION}}"
-                IMPORTED_IMPLIB "${MAYA_${MAYA_LIB}_LIBRARY_${Maya_FIND_VERSION}}"
+        set_target_properties(maya_${MAYA_LIB} PROPERTIES
+                IMPORTED_LOCATION "${MAYA_${MAYA_LIB}_LIBRARY_dll}"
+                IMPORTED_IMPLIB "${MAYA_${MAYA_LIB}_LIBRARY}"
                 )
-        target_link_libraries(maya_${Maya_FIND_VERSION}_all INTERFACE maya_${Maya_FIND_VERSION}_${MAYA_LIB})
+        target_link_libraries(maya_all INTERFACE maya_${MAYA_LIB})
     endif ()
 endforeach ()
 
@@ -172,12 +175,13 @@ include(FindPackageHandleStandardArgs)
 
 
 find_package_handle_standard_args(Maya
-        REQUIRED_VARS MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}
+        REQUIRED_VARS
+        MAYA_INCLUDE_DIR MAYA_LIBRARY_DIR
         REASON_FAILURE_MESSAGE "maya 库中的组件没有找到"
         )
 # 这些宏选项都在 maya devkit.cmake 文件中有, 需要复制过来
 target_compile_definitions(
-        maya_${Maya_FIND_VERSION}_all
+        maya_all
         INTERFACE
         -DNT_PLUGIN # maya dev开发包中指定的不同平台的插件标志(win)
         -D_WIN32
@@ -189,4 +193,4 @@ target_compile_definitions(
         -DPARTIO_WIN32
 )
 
-add_library(maya::maya_${Maya_FIND_VERSION}_all ALIAS maya_${Maya_FIND_VERSION}_all)
+add_library(maya::maya_all ALIAS maya_all)

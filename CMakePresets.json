@@ -13,7 +13,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install",
-      "toolchainFile": "$env{VCPKG_ROOT}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "toolchainFile": "$env{VCPKG_ROOT}vcpkg/scripts/buildsystems/vcpkg.cmake",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -30,6 +30,36 @@
       "hidden": true
     },
     {
+      "name": "maya_2018",
+      "inherits": "Ninja_build",
+      "displayName": "maya 2018",
+      "description": "构建maya 2018插件",
+      "cacheVariables": {
+        "Maya_Version": "2018",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "maya_2019",
+      "inherits": "Ninja_build",
+      "displayName": "maya 2019",
+      "description": "构建maya 2019插件",
+      "cacheVariables": {
+        "Maya_Version": "2019",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "maya_2020",
+      "inherits": "Ninja_build",
+      "displayName": "maya 2020",
+      "description": "构建maya 2020插件",
+      "cacheVariables": {
+        "Maya_Version": "2020",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "vs2022",
       "inherits": "Ninja_build",
       "generator": "Visual Studio 17 2022"
@@ -42,10 +72,24 @@
       }
     },
     {
-      "name": "Ninja_release_plug",
-      "inherits": "Ninja_build",
+      "name": "Ninja_release_maya_2018",
+      "inherits": "maya_2018",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "Ninja_release_maya_2019",
+      "inherits": "maya_2019",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "Ninja_release_maya_2020",
+      "inherits": "maya_2020",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -53,6 +97,16 @@
       "inherits": "Ninja_build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "ue4_27",
+      "inherits": "Ninja_build",
+      "displayName": "ue4.27",
+      "description": "ue4.27插件",
+      "cacheVariables": {
+        "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -68,59 +122,51 @@
       "description": "调试 exe",
       "displayName": "调试 doodle exe",
       "inherits": "debug",
-      "targets": "DoodleExe"
+      "targets": [
+        "DoodleExe",
+        "Doxygen"
+      ]
     },
     {
-      "name": "debug_test",
-      "description": "调试 test",
-      "displayName": "调试 doodle test",
+      "name": "debug_maya2018_plug",
+      "description": "调试 maya 2018 插件(maya插件只能使用release调试)",
+      "displayName": "调试 doodle 2018 maya",
+      "configurePreset": "maya_2018",
       "inherits": "debug",
-      "targets": "doodle_test"
+      "targets": "doodle_maya_2018"
     },
     {
-      "name": "debug_maya_plug",
-      "description": "调试 maya 插件",
-      "displayName": "调试 doodle maya",
-      "inherits": "debug",
-      "targets": "Doodle_maya_plug"
-    },
-    {
-      "name": "doxy",
-      "description": "生成文档",
-      "displayName": "文档",
-      "inherits": "debug",
-      "targets": "Doxygen"
-    },
-    {
-      "name": "list_file",
-      "description": "列出lib文件",
-      "displayName": "列出文件",
-      "inherits": "debug",
-      "targets": "create_list_doodle_cmake"
-    },
-    {
-      "name": "release",
+      "name": "release_exe",
       "configurePreset": "Ninja_release",
-      "jobs": 10
+      "jobs": 10,
+      "targets": [
+        "Doxygen",
+        "DoodleExe"
+      ]
     },
     {
-      "name": "release_plug",
-      "configurePreset": "Ninja_release_plug",
-      "jobs": 10
+      "name": "release_maya_plug_2018",
+      "configurePreset": "Ninja_release_maya_2018",
+      "jobs": 10,
+      "targets": "doodle_maya_2018"
     },
     {
-      "name": "cpack_doodle",
-      "description": "使用cpack打包",
-      "displayName": "打包",
-      "inherits": "release",
-      "targets": "cpack_Doodle"
+      "name": "release_maya_plug_2019",
+      "configurePreset": "Ninja_release_maya_2019",
+      "jobs": 10,
+      "targets": "doodle_maya_2019"
     },
     {
-      "name": "doodle_maya_plug",
-      "description": "maya插件只能使用release调试",
-      "displayName": "debug maya plug",
-      "inherits": "release_plug",
-      "targets": "Doodle_maya_plug"
+      "name": "release_maya_plug_2020",
+      "configurePreset": "Ninja_release_maya_2020",
+      "jobs": 10,
+      "targets": "doodle_maya_2020"
+    },
+    {
+      "name": "release_ue4_27",
+      "configurePreset": "ue4_27",
+      "jobs": 10,
+      "targets": "doodle_ue4_27"
     }
   ],
   "testPresets": [
