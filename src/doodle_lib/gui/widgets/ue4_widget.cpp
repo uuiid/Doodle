@@ -141,7 +141,7 @@ void ue4_widget::import_ue4_prj() {
 
   ranges::for_each(l_list,
                    [this](const entt::handle &in_handle) {
-                     this->plan_file_path(in_handle.get<assets_file>().path);
+                     this->plan_file_path(in_handle.get<assets_file>().get_path_normal());
                    });
 }
 void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
