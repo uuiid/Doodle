@@ -63,3 +63,4 @@ mkdir %my_pwd%build\html\file
 robocopy %my_pwd%build %my_pwd%build\html\file *.msi /NFL /NDL
 robocopy %my_pwd%build %my_pwd%build\html\file *.7z /NFL /NDL
 
+Exit 0

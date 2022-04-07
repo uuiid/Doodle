@@ -62,32 +62,34 @@ set(doodle_maya_plug_cpp
         maya_comm/find_duplicate_poly_comm.h
         maya_comm/find_duplicate_poly_comm.cpp
         )
+if (DEFINED Maya_Version)
+    find_package(Maya ${Maya_Version} MODULE)
+    if (TARGET maya::maya_all)
 
-find_package(Maya ${Maya_Version} MODULE)
-if (TARGET maya::maya_all)
-
-    add_library(doodle_maya_${Maya_Version} MODULE
-            ${doodle_maya_plug_cpp}
-            ${PROJECT_SOURCE_DIR}/stl.natvis
-            )
-    set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
-            )
-    target_link_libraries(doodle_maya_${Maya_Version} PRIVATE doodle_lib maya::maya_all)
-    target_include_directories(doodle_maya_${Maya_Version} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
-    #设置maya插件后缀名
-    set_target_properties(
-            doodle_maya_${Maya_Version} PROPERTIES SUFFIX ".mll"
-    )
+        add_library(doodle_maya_${Maya_Version} MODULE
+                ${doodle_maya_plug_cpp}
+                ${PROJECT_SOURCE_DIR}/stl.natvis
+                )
+        set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+                LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
+                )
+        target_link_libraries(doodle_maya_${Maya_Version} PRIVATE doodle_lib maya::maya_all)
+        target_include_directories(doodle_maya_${Maya_Version} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
+        #设置maya插件后缀名
+        set_target_properties(
+                doodle_maya_${Maya_Version} PROPERTIES SUFFIX ".mll"
+        )
 
 
-    configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
-    add_custom_command(
-            TARGET doodle_maya_${Maya_Version}
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
-    )
+        configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
+        add_custom_command(
+                TARGET doodle_maya_${Maya_Version}
+                PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
+                COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
+        )
+    endif ()
+
 endif ()
 
