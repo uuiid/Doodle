@@ -58,8 +58,8 @@ cd %my_pwd%/build
 --config ./MultiCPackConfig.cmake
 
 echo -----------------copy file--------------------
-@REM robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
-@REM mkdir %my_pwd%build\html\file
-@REM robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.msi /NFL /NDL
-@REM robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.7z /NFL /NDL
+robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
+mkdir %my_pwd%build\html\file
+robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.msi /NFL /NDL
+robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.7z /NFL /NDL
 

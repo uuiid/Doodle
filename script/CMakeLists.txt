@@ -4,11 +4,17 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.25
         DESTINATION plug/uePlug
-        COMPONENT ue4_plug)
+        COMPONENT ue4_plug
+        PATTERN "Intermediate" EXCLUDE
+        )
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.26
         DESTINATION plug/uePlug
-        COMPONENT ue4_plug)
+        COMPONENT ue4_plug
+        PATTERN "Intermediate" EXCLUDE
+        )
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.27
         DESTINATION plug/uePlug
-        COMPONENT ue4_plug)
-add_custom_target(doodle_ue4_27 )
+        COMPONENT ue4_plug
+        PATTERN "Intermediate" EXCLUDE
+        )
+add_custom_target(doodle_ue4_27)
