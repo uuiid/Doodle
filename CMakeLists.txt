@@ -6,7 +6,7 @@ include(GetGitVersion)
 get_git_version(
         WORK_DIR ${CMAKE_SOURCE_DIR}
 )
-
+MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
 
 project(Doodle
         VERSION "${v_short}"
