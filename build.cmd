@@ -6,17 +6,51 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary
 
 cd %my_pwd%
 
-echo -----------------config--------------------
-
+echo -----------------config main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
 --preset Ninja_release
 
-echo -----------------build--------------------
+echo -----------------build main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
 --preset release_exe
 @REM --clean-first
+
+
+echo -----------------config maya --------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release_maya_2018
+
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release_maya_2019
+
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release_maya_2020
+
+echo -----------------build maya --------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_maya_plug_2018
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_maya_plug_2019
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_maya_plug_2020
+
+echo -----------------config ue4 --------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset ue4_release_27
+echo -----------------build ue4 --------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_ue4_27
+
 
 echo -----------------pack---------------------
 cd %my_pwd%/build

@@ -118,7 +118,8 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
         COMPONENT main_exe
         )
 install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
-        DESTINATION plug)
+        DESTINATION plug
+        COMPONENT maya_plug)
 
 
 set(CPACK_GENERATOR "WIX;External")

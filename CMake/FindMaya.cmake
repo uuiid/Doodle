@@ -64,7 +64,6 @@ find_path(MAYA_INCLUDE_DIR
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "include"
-        REQUIRED
         DOC
         "maya 导入路径"
         )
@@ -76,7 +75,6 @@ find_path(MAYA_LIBRARY_DIR
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "lib"
-        REQUIRED
         DOC
         "maya 连接库"
         )
@@ -88,7 +86,6 @@ find_path(MAYA_DLL_LIBRARY_DIR
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "bin"
-        REQUIRED
         DOC
         "maya dll 位置"
         )
@@ -115,7 +112,6 @@ foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
             ${MAYA_LIB}
             HINTS
             ${MAYA_LIBRARY_DIR}
-            REQUIRED
             DOC
             "寻找maya ${MAYA_LIB}库"
             NO_CMAKE_SYSTEM_PATH
@@ -125,7 +121,6 @@ foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
             ${MAYA_LIB}.dll
             HINTS
             ${MAYA_DLL_LIBRARY_DIR}
-            REQUIRED
             DOC
             "寻找maya ${MAYA_LIB} dll库"
             NO_CMAKE_SYSTEM_PATH
@@ -157,7 +152,6 @@ endforeach ()
 #  ${MAYA_QT5_LIB}
 #  HINTS
 #   ${MAYA_LIBRARY_DIR}
-#  REQUIRED
 #  DOC
 #   "寻找maya qt ${MAYA_QT5_LIB} 组件"
 #  NO_CMAKE_PATH

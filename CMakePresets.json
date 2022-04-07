@@ -100,7 +100,7 @@
       }
     },
     {
-      "name": "ue4_27",
+      "name": "ue4_release_27",
       "inherits": "Ninja_build",
       "displayName": "ue4.27",
       "description": "ue4.27插件",
@@ -140,7 +140,8 @@
       "configurePreset": "Ninja_release",
       "jobs": 10,
       "targets": [
-        "DoodleExe"
+        "DoodleExe",
+        "Doxygen"
       ]
     },
     {
@@ -163,7 +164,7 @@
     },
     {
       "name": "release_ue4_27",
-      "configurePreset": "ue4_27",
+      "configurePreset": "ue4_release_27",
       "jobs": 10,
       "targets": "doodle_ue4_27"
     }
