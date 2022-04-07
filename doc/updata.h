@@ -682,5 +682,7 @@
  * @li 修复了导入ue4时的创建camera实现
  * @li 更新了导入ue4时的子过程解析方法
  *
- *doc
+ * @subsubsection updata_log_3422 版本3.4.22
+ * @li 修正相对路径和绝对路径之间的问题
+ * @li 修正导入路径
  */
