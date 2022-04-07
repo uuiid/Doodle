@@ -401,7 +401,7 @@ void assets_file_widgets::render_by_icon() {
 void assets_file_widgets::render_by_icon(std::size_t in_index) {
 }
 void assets_file_widgets::render_by_info() {
-  const static auto l_size{5u};
+  const static auto l_size{6u};
 
   dear::Table{
       "list",
@@ -419,8 +419,8 @@ void assets_file_widgets::render_by_info() {
     ImGui::TableSetupColumn("分类", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("集数", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("镜头", ImGuiTableColumnFlags_None);
-    ImGui::TableSetupColumn("名称", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("路径", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn("名称", ImGuiTableColumnFlags_None);
     ImGui::TableHeadersRow();
 
     ImGuiListClipper clipper{};
@@ -451,9 +451,9 @@ void assets_file_widgets::render_by_info() {
         ImGui::TableNextColumn();
         dear::Text(i.shot_p);
         ImGui::TableNextColumn();
-        dear::Text(i.name_p);
-        ImGui::TableNextColumn();
         dear::Text(i.file_path_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.name_p);
       }
     }
   };
