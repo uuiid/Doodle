@@ -10,6 +10,7 @@
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/shot.h>
+#include <doodle_lib/metadata/project.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/filesystem_extend.h>
@@ -51,8 +52,8 @@ ue4_widget::ue4_widget()
 ue4_widget::~ue4_widget() = default;
 
 void ue4_widget::init() {
-  p_i->ue4_prj.data = app::Get().options_->p_ue4Project;
-  p_i->ue4_prj.path = app::Get().options_->p_ue4Project;
+  p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
+  p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
   p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
   g_reg()->set<ue4_widget &>(*this);
 }
@@ -204,8 +205,8 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
     l_group.start_frame = l_group.groups.front().start_frame;
     l_group.end_frame   = l_group.groups.front().end_frame;
   }
-  l_group.world_path    = l_group.set_level_dir(l_h, "_world");
-  l_group.level_path    = l_group.set_level_dir(l_h, "_lev");
+  l_group.world_path    = l_group.set_level_dir(l_h, "_" + core_set::getSet().organization_name.front());
+  l_group.level_path    = l_group.set_level_dir(l_h, "lev_" + core_set::getSet().organization_name.front());
 
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
@@ -293,10 +294,12 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
           });
   auto l_p = FSys::path{doodle_config::ue4_game} /
              doodle_config::ue4_shot /
-             fmt::format("{}", in_handle.get_or_emplace<episodes>()) /
-             fmt::format("{}_{}",
-                         in_handle.get_or_emplace<episodes>(),
-                         in_handle.get_or_emplace<shot>()) /
+             fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
+             fmt::format("{}{:04d}_{:04d}{}",
+                         g_reg()->ctx<project>().short_str(),
+                         in_handle.get_or_emplace<episodes>().p_episodes,
+                         in_handle.get_or_emplace<shot>().p_shot,
+                         in_handle.get_or_emplace<shot>().p_shot_enum) /
              core_set::getSet().organization_name;
   return result = l_p.generic_string();
 }
@@ -316,15 +319,18 @@ std::string ue4_import_group::set_level_dir(
           });
   auto l_p = FSys::path{doodle_config::ue4_game} /
              doodle_config::ue4_shot /
-             fmt::format("{}", in_handle.get_or_emplace<episodes>()) /
-             fmt::format("{}_{}",
-                         in_handle.get_or_emplace<episodes>(),
-                         in_handle.get_or_emplace<shot>()) /
+             fmt::format("{:04d}", in_handle.get_or_emplace<episodes>()) /
+             fmt::format("{}{:04d}_{:04d}{}",
+                         g_reg()->ctx<project>().short_str(),
+                         in_handle.get_or_emplace<episodes>().p_episodes,
+                         in_handle.get_or_emplace<shot>().p_shot,
+                         in_handle.get_or_emplace<shot>().p_shot_enum) /
              core_set::getSet().organization_name /
-             fmt::format("{}_{}_{}_{}",
-                         in_handle.get_or_emplace<episodes>(),
-                         in_handle.get_or_emplace<shot>(),
-                         core_set::getSet().organization_name,
+             fmt::format("{}{}_sc{}{}_{}",
+                         g_reg()->ctx<project>().short_str(),
+                         in_handle.get_or_emplace<episodes>().p_episodes,
+                         in_handle.get_or_emplace<shot>().p_shot,
+                         in_handle.get_or_emplace<shot>().p_shot_enum,
                          in_e);
   return result = l_p.generic_string();
 }
