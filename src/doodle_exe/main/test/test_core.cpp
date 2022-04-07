@@ -425,7 +425,7 @@ namespace {
 constexpr auto test_reg_l = []() {
   std::cout << ("初始化注册完成");
 };
-class test_init_impl public init_register::registrar_lambda<test_reg_l, 1>{};
+class test_init_impl :public init_register::registrar_lambda<test_reg_l, 1>{};
 }  // namespace
 
 class test_init_ : public app {
