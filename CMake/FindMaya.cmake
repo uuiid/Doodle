@@ -30,9 +30,9 @@ Cache Variables
 
 The following cache variables may also be set:
 
-``MAYA_INCLUDE_DIR_${Maya_FIND_VERSION}``
+``MAYA_INCLUDE_DIR``
   The directory containing ``Maya.h``.
-`` maya_${Maya_FIND_VERSION}_all ``
+`` maya_all ``
   The path to the Maya library.
 
 #]=======================================================================]

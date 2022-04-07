@@ -1,8 +1,4 @@
 
-
-set(MAYA_VERSION_LIST 2018 2019 2020)
-
-
 set(doodle_maya_plug_cpp
         maya_plug.cpp
         maya_plug_fwd.h
@@ -66,7 +62,7 @@ set(doodle_maya_plug_cpp
         maya_comm/find_duplicate_poly_comm.h
         maya_comm/find_duplicate_poly_comm.cpp
         )
-add_custom_target(${PROJECT_NAME}_maya_plug)
+
 find_package(Maya ${Maya_Version} REQUIRED)
 
 add_library(doodle_plug_${Maya_Version} MODULE
