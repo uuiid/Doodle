@@ -59,6 +59,8 @@ class DOODLELIB_API assets_file {
   [[nodiscard]] const std::uint64_t& get_version() const noexcept;
   void set_version(const std::uint64_t& in_Version) noexcept;
 
+  [[nodiscard]] FSys::path get_path_normal() const;
+
   bool operator<(const assets_file& in_rhs) const;
   bool operator>(const assets_file& in_rhs) const;
   bool operator<=(const assets_file& in_rhs) const;
