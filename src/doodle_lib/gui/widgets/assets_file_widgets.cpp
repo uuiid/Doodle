@@ -436,6 +436,9 @@ void assets_file_widgets::render_by_info() {
         dear::PopupContextItem{} && [this, &i]() {
           render_context_menu(i.handle_);
         };
+        dear::DragDropSource{} && [this, l_index]() {
+          this->open_drag(l_index);
+        };
 
         ImGui::TableNextColumn();
         dear::Text(i.ass_p);
