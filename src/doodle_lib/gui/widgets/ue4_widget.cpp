@@ -205,8 +205,10 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
     l_group.start_frame = l_group.groups.front().start_frame;
     l_group.end_frame   = l_group.groups.front().end_frame;
   }
-  l_group.world_path    = l_group.set_level_dir(l_h, "_" + core_set::getSet().organization_name.front());
-  l_group.level_path    = l_group.set_level_dir(l_h, "lev_" + core_set::getSet().organization_name.front());
+  l_group.world_path    = l_group.set_level_dir(l_h,
+                                                fmt::format("{}", core_set::getSet().organization_name.front()));
+  l_group.level_path    = l_group.set_level_dir(l_h,
+                                                fmt::format("lev_{}", core_set::getSet().organization_name.front()));
 
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
@@ -326,7 +328,7 @@ std::string ue4_import_group::set_level_dir(
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum) /
              core_set::getSet().organization_name /
-             fmt::format("{}{}_sc{}{}_{}",
+             fmt::format("{}{:04d}_sc{:04d}{}_{}",
                          g_reg()->ctx<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
