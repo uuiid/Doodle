@@ -60,6 +60,6 @@ cd %my_pwd%/build
 echo -----------------copy file--------------------
 robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
-robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.msi /NFL /NDL
-robocopy %my_pwd%build\Ninja_release %my_pwd%build\html\file *.7z /NFL /NDL
+robocopy %my_pwd%build %my_pwd%build\html\file *.msi /NFL /NDL
+robocopy %my_pwd%build %my_pwd%build\html\file *.7z /NFL /NDL
 
