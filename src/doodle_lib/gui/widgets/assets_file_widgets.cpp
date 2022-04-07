@@ -144,12 +144,15 @@ class assets_file_widgets::impl {
       to_s<assets>(ass_p, in_h);
       to_s<episodes>(eps_p, in_h);
       to_s<shot>(shot_p, in_h);
-      to_s<assets_file>(file_path_p, in_h);
+      to_s<assets_file>(name_p, in_h);
+      if (in_h.any_of<assets_file>())
+        file_path_p = in_h.get<assets_file>().get_path_normal().generic_string();
     }
 
     std::string ass_p;
     std::string eps_p;
     std::string shot_p;
+    std::string name_p;
     std::string file_path_p;
   };
   std::vector<base_data_ptr> lists;
@@ -416,6 +419,7 @@ void assets_file_widgets::render_by_info() {
     ImGui::TableSetupColumn("分类", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("集数", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("镜头", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn("名称", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("路径", ImGuiTableColumnFlags_None);
     ImGui::TableHeadersRow();
 
@@ -446,6 +450,8 @@ void assets_file_widgets::render_by_info() {
         dear::Text(i.eps_p);
         ImGui::TableNextColumn();
         dear::Text(i.shot_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.name_p);
         ImGui::TableNextColumn();
         dear::Text(i.file_path_p);
       }
