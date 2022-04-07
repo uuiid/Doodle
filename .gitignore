@@ -71,7 +71,6 @@ cmake-build-debug/
 #忽略python文件
 *.pyc
 .vscode/**.VC.**
-build
 *.mll
 /imgui.ini
 *.sqlite
