@@ -9,6 +9,9 @@
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Debug" />
       <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Release" />
       <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/build/html" />
+      <file path="$PROJECT_DIR$/build/install" />
+      <file path="$PROJECT_DIR$/build/vs2022" />
       <file path="$PROJECT_DIR$/external" />
       <file path="$PROJECT_DIR$/external/csv-parser/tests" />
       <file path="$PROJECT_DIR$/src/doodle_lib/resource/tzdata" />

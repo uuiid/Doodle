@@ -1,6 +1,6 @@
-include(Ninja_release/CPackConfig.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/Ninja_release/CPackConfig.cmake)
 
 set(CPACK_INSTALL_CMAKE_PROJECTS
-        "Ninja_release;Doodle;DoodleExe;/"
-        "Ninja_release;Doodle;Doxygen;/"
+        "${CMAKE_CURRENT_LIST_DIR}/Ninja_release;Doodle;main_exe;/"
+#        "Ninja_release;Doodle;Doxygen;/"
         )

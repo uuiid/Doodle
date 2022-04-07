@@ -92,7 +92,9 @@ target_sources(doodle_lib
 
 
 #=====================安装打包过程===============================
+# 设置 InstallRequiredSystemLibraries 变量
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT main_exe)
 include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
@@ -103,9 +105,17 @@ add_subdirectory(script)
 install(CODE "
         include(BundleUtilities)
         fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
-        ")
+        "
+        COMPONENT main_exe
+        )
+#install(TARGETS DoodleExe
+#        COMPONENT main_exe
+#        RUNTIME_DEPENDENCIES
+#        )
+
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
         DESTINATION bin
+        COMPONENT main_exe
         )
 install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
         DESTINATION plug)

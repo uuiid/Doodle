@@ -12,7 +12,7 @@
       "description": "Ninja build using vcpkg",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "installDir": "${sourceDir}/install",
+      "installDir": "${sourceDir}/build/install",
       "toolchainFile": "$env{VCPKG_ROOT}vcpkg/scripts/buildsystems/vcpkg.cmake",
       "architecture": {
         "value": "x64",
@@ -140,7 +140,6 @@
       "configurePreset": "Ninja_release",
       "jobs": 10,
       "targets": [
-        "Doxygen",
         "DoodleExe"
       ]
     },
