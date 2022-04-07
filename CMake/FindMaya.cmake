@@ -179,18 +179,20 @@ find_package_handle_standard_args(Maya
         MAYA_INCLUDE_DIR MAYA_LIBRARY_DIR
         REASON_FAILURE_MESSAGE "maya 库中的组件没有找到"
         )
-# 这些宏选项都在 maya devkit.cmake 文件中有, 需要复制过来
-target_compile_definitions(
-        maya_all
-        INTERFACE
-        -DNT_PLUGIN # maya dev开发包中指定的不同平台的插件标志(win)
-        -D_WIN32
-        -DOSWin_
-        -DUSERDLL
-        -DCRT_SECURE_NO_DEPRECATE
-        -D_HAS_ITERATOR_DEBUGGING=0
-        -D_CRT_SECURE_NO_WARNINGS
-        -DPARTIO_WIN32
-)
+if (MAYA_FOUND)
+    # 这些宏选项都在 maya devkit.cmake 文件中有, 需要复制过来
+    target_compile_definitions(
+            maya_all
+            INTERFACE
+            -DNT_PLUGIN # maya dev开发包中指定的不同平台的插件标志(win)
+            -D_WIN32
+            -DOSWin_
+            -DUSERDLL
+            -DCRT_SECURE_NO_DEPRECATE
+            -D_HAS_ITERATOR_DEBUGGING=0
+            -D_CRT_SECURE_NO_WARNINGS
+            -DPARTIO_WIN32
+    )
 
-add_library(maya::maya_all ALIAS maya_all)
+    add_library(maya::maya_all ALIAS maya_all)
+endif ()
