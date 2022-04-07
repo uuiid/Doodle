@@ -276,7 +276,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
           g_main_loop().attach<one_process_t>(
               [this, in_, l_list]() {
                 p_i->lists = p_i->lists |
-                             ranges::views::remove_if([in_, l_list](const impl::base_data_ptr& in_data) {
+                             ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
                                return ranges::contains(l_list, in_data->handle_);
                                //                           return in_data.handle_ == in_;
                              }) |
