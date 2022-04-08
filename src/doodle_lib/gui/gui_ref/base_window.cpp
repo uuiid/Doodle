@@ -51,8 +51,6 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
     i();
   }
   begin_fun.clear();
-  //    if (!show)
-  //      This()->fail();
 
   dear::PopupModal{title().data(), &show} &&
       [&]() {
@@ -60,9 +58,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
       };
 }
 void modal_window::close() {
-  {
-    imgui::CloseCurrentPopup();
-  }
+  imgui::CloseCurrentPopup();
 }
 
 }  // namespace doodle::gui
