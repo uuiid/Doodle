@@ -9,6 +9,12 @@ namespace doodle::gui {
  * @brief 基本窗口
  */
 class DOODLELIB_API base_window {
+ protected:
+  std::vector<std::function<void()>> begin_fun;
+  bool show{false};
+
+  void virtual render() = 0;
+
  public:
   base_window()                                   = default;
   virtual ~base_window()                          = default;
@@ -40,7 +46,7 @@ class DOODLELIB_API base_window {
    */
   virtual void update(
       const chrono::system_clock::duration& in_duration,
-      void* in_data) = 0;
+      void* in_data);
 };
 
 class DOODLELIB_API window_panel : public base_window {
@@ -50,7 +56,6 @@ class DOODLELIB_API window_panel : public base_window {
  public:
   window_panel()           = default;
   ~window_panel() override = default;
-  bool show{false};
 
   virtual void read_setting();
   virtual void save_setting() const;
@@ -59,47 +64,19 @@ class DOODLELIB_API window_panel : public base_window {
   void succeeded() override;
   void aborted() override;
 };
-template <class Panel>
+
 class DOODLELIB_API modal_window : public base_window {
- private:
-  Panel* This() {
-    return dynamic_cast<Panel*>(this);
-  }
-
- protected:
-  std::vector<std::function<void()>> begin_fun;
-
  public:
-  modal_window()
-      : show{true} {
-    begin_fun.emplace_back([this]() {
-      ImGui::OpenPopup(This()->title().data());
-      ImGui::SetNextWindowSize({640, 360});
-    });
-  };
+  modal_window();
   ~modal_window() override = default;
   /**
    * @brief 模态窗口是否显示
    */
   bool show;
 
-  virtual void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override {
-    for (auto&& i : begin_fun) {
-      i();
-    }
-    begin_fun.clear();
-    //    if (!show)
-    //      This()->fail();
+  void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override;
 
-    dear::PopupModal{This()->title().data(), &show} &&
-        [&]() {
-          This()->update(in_dalta, in_data);
-        };
-  }
-
-  void close() {
-    imgui::CloseCurrentPopup();
-  }
+  void close();
 };
 
 }  // namespace doodle::gui
