@@ -180,7 +180,7 @@ def __load_config__(obj):
 
 class open_file(object):
     maya_version = str(cmds.about(api=True))[0:4]
-    doodle_plug = "doodle_plug_{}".format(str(cmds.about(api=True))[0:4])
+    doodle_plug = "doodle_maya_{}".format(str(cmds.about(api=True))[0:4])
     qcloth = "qualoth_{}_x64".format(str(cmds.about(api=True))[0:4])
 
     def __init__(self, in_config=None):
