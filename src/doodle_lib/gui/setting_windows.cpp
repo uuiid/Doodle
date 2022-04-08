@@ -64,7 +64,7 @@ void setting_windows::init() {
   p_i->p_cache.data      = core_set::getSet().get_cache_root().generic_string();
   p_i->p_doc.data        = core_set::getSet().get_doc().generic_string();
   p_i->p_maya_path.data  = core_set::getSet().maya_path().generic_string();
-  p_i->p_ue_path.data    = core_set::getSet().ue4_path;
+  p_i->p_ue_path.data    = core_set::getSet().ue4_path.generic_string();
   p_i->p_ue_version.data = core_set::getSet().ue4_version;
   p_i->p_batch_max.data  = core_set::getSet().p_max_thread;
   p_i->p_timeout.data    = core_set::getSet().timeout;
