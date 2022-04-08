@@ -54,7 +54,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
 
-
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
   std::string get_uuid_str(const std::string &in_add);
@@ -79,7 +78,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   FSys::path _root_cache;
   FSys::path _root_data;
   FSys::path p_doc;
-
 
   FSys::path p_mayaPath;
   FSys::path ue4_path;
@@ -121,8 +119,13 @@ class DOODLELIB_API core_set_init {
   bool init_project(const FSys::path &in_path);
 
   template <typename T>
-  bool save_setting(const std::string &in_key, const T &in_t) {
+  void save_setting(const std::string &in_key, const T &in_t) {
     json_value()[in_key] = in_t;
+  };
+  template <typename T>
+  void read_setting(const std::string &in_key, T &in_t) {
+    if (json_value().count(in_key))
+      json_value()[in_key].template get_to(in_t);
   };
 };
 

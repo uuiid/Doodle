@@ -78,7 +78,7 @@ core_set::core_set()
       _root_data(p_root / "data"),
       timeout(3600),
       max_install_reg_entt(8),
-      json_data(std::make_shared<nlohmann::json>()){
+      json_data(std::make_shared<nlohmann::json>()) {
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -172,8 +172,8 @@ bool core_set_init::read_file() {
     FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
 
     try {
-      auto k_j = nlohmann::json::parse(l_in_josn);
-      k_j.at("setting").get_to(p_set);
+      *p_set.json_data = nlohmann::json::parse(l_in_josn);
+      p_set.json_data->at("setting").get_to(p_set);
     } catch (const nlohmann::json::parse_error &err) {
       DOODLE_LOG_DEBUG(err.what());
       return false;
@@ -185,17 +185,9 @@ bool core_set_init::read_file() {
 bool core_set_init::write_file() {
   DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
 
-  if (p_set.p_ue4_setting.has_path() && !FSys::exists(p_set.p_ue4_setting.get_path() / doodle_config::ue_path_obj)) {
-    p_set.p_ue4_setting.set_path({});
-    DOODLE_LOG_INFO("在路径中没有找到ue");
-  }
-  if (!FSys::exists(p_set.p_mayaPath / "maya.exe")) {
-    DOODLE_LOG_INFO("在路径中没有找到maya");
-  }
   FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
-  nlohmann::json k_j{};
-  k_j["setting"] = p_set;
-  l_ofstream << k_j.dump();
+  (*p_set.json_data)["setting"] = p_set;
+  l_ofstream << p_set.json_data->dump();
   return true;
 }
 bool core_set_init::find_cache_dir() {
@@ -238,23 +230,34 @@ bool core_set_init::init_project(const FSys::path &in_path) {
   }
   return false;
 }
+nlohmann::json &core_set_init::json_value() {
+  return *p_set.json_data;
+}
 
 void to_json(nlohmann::json &j, const core_set &p) {
   j["user_"]                = p.p_user_;
   j["organization_name"]    = p.organization_name;
-  j["ue4_setting"]          = p.p_ue4_setting;
   j["mayaPath"]             = p.p_mayaPath;
   j["max_thread"]           = p.p_max_thread;
   j["widget_show"]          = p.widget_show;
   j["timeout"]              = p.timeout;
   j["project_root"]         = p.project_root;
   j["max_install_reg_entt"] = p.max_install_reg_entt;
+  j["ue4_path"]             = p.ue4_path;
+  j["ue4_version"]          = p.ue4_version;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
   if (j.count("organization_name"))
     j.at("organization_name").get_to(p.organization_name);
-  j.at("ue4_setting").get_to(p.p_ue4_setting);
+  if (j.count("ue4_setting")) {
+    j["ue4_setting"].at("ue4_path").get_to(p.ue4_path);
+    j["ue4_setting"].at("ue4_version").get_to(p.ue4_version);
+  }
+  if (j.count("ue4_path"))
+    j["ue4_path"].get_to(p.ue4_path);
+  if (j.count("ue4_version"))
+    j["ue4_version"].get_to(p.ue4_version);
   j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("widget_show").get_to(p.widget_show);
