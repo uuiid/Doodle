@@ -21,6 +21,14 @@ class DOODLELIB_API base_window {
       void* in_data) = 0;
 };
 
+class DOODLELIB_API window_panel : base_window {
+ protected:
+  std::map<std::string, std::string> setting{};
 
+ public:
+  window_panel() = default;
+  virtual void read_setting();
+  virtual void save_setting() const;
+};
 
 }  // namespace doodle::gui

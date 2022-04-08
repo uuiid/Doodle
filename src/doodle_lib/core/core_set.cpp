@@ -77,7 +77,8 @@ core_set::core_set()
       _root_cache(p_root / "cache"),
       _root_data(p_root / "data"),
       timeout(3600),
-      max_install_reg_entt(8) {
+      max_install_reg_entt(8),
+      json_data(std::make_shared<nlohmann::json>()){
 }
 
 boost::uuids::uuid core_set::get_uuid() {
@@ -98,13 +99,7 @@ void core_set::set_user(const std::string &value) {
 FSys::path core_set::get_doc() const {
   return p_doc;
 }
-FSys::path core_set::get_config_file() const {
-  return p_doc / config_file_name();
-}
 
-FSys::path core_set::get_root() const {
-  return p_root;
-}
 void core_set::set_root(const FSys::path &in_path) {
   p_root      = in_path;
   _root_cache = p_root / "cache";

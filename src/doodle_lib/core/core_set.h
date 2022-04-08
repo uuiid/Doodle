@@ -108,6 +108,8 @@ void from_json(const nlohmann::json &j, core_set &p);
 class DOODLELIB_API core_set_init {
   core_set &p_set;
 
+  nlohmann::json &json_value();
+
  public:
   core_set_init();
 
@@ -117,6 +119,11 @@ class DOODLELIB_API core_set_init {
   bool find_cache_dir();
   bool config_to_user();
   bool init_project(const FSys::path &in_path);
+
+  template <typename T>
+  bool save_setting(const std::string &in_key, const T &in_t) {
+    json_value()[in_key] = in_t;
+  };
 };
 
 namespace win {
