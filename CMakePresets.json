@@ -136,6 +136,14 @@
       "targets": "doodle_maya_2018"
     },
     {
+      "name": "debug_maya2019_plug",
+      "description": "调试 maya 2019 插件(maya插件只能使用release调试)",
+      "displayName": "调试 doodle 2019 maya",
+      "configurePreset": "maya_2019",
+      "inherits": "debug",
+      "targets": "doodle_maya_2019"
+    },
+    {
       "name": "release_exe",
       "configurePreset": "Ninja_release",
       "jobs": 10,
