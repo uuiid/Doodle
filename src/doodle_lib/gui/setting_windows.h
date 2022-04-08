@@ -6,6 +6,8 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
+#include <doodle_lib/gui/gui_ref/base_windows_factory.h>
 
 namespace doodle {
 /**
@@ -49,8 +51,9 @@ namespace doodle {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows : public process_t<setting_windows> {
-   class impl;
+class DOODLELIB_API setting_windows : public process_t<setting_windows>,
+                                      public gui::window_panel {
+  class impl;
   std::unique_ptr<impl> p_i;
 
  public:
@@ -58,13 +61,12 @@ class DOODLELIB_API setting_windows : public process_t<setting_windows> {
   ~setting_windows() override;
 
   constexpr static std::string_view name{"设置窗口"};
-
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  virtual string title() const override;
+  [[maybe_unused]] void init() override;
+  [[maybe_unused]] void succeeded() override;
+  [[maybe_unused]] void update(const delta_type&, void* data) override;
 
   void save();
 };
+
 }  // namespace doodle

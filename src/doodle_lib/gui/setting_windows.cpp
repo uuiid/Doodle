@@ -9,6 +9,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_lib/long_task/process_pool.h>
 
 #include <magic_enum.hpp>
 namespace doodle {
@@ -46,11 +47,11 @@ void setting_windows::save() {
   auto& set = core_set::getSet();
 
   set.set_user(p_i->p_user.data);
-  set.organization_name = p_i->p_org_name.data;
-  set.p_mayaPath = p_i->p_maya_path.data;
-  set.p_max_thread = p_i->p_batch_max.data;
-  set.ue4_path = p_i->p_ue_path.data;
-  set.ue4_version = p_i->p_ue_version.data;
+  set.organization_name     = p_i->p_org_name.data;
+  set.p_mayaPath            = p_i->p_maya_path.data;
+  set.p_max_thread          = p_i->p_batch_max.data;
+  set.ue4_path              = p_i->p_ue_path.data;
+  set.ue4_version           = p_i->p_ue_version.data;
   set.max_install_reg_entt  = boost::numeric_cast<std::uint16_t>(p_i->p_max_reg.data);
   set.timeout               = p_i->p_timeout.data;
   g_bounded_pool().timiter_ = p_i->p_batch_max.data;
@@ -69,20 +70,12 @@ void setting_windows::init() {
   p_i->p_batch_max.data  = core_set::getSet().p_max_thread;
   p_i->p_timeout.data    = core_set::getSet().timeout;
   p_i->p_max_reg.data    = core_set::getSet().max_install_reg_entt;
-  g_reg()->set<setting_windows&>(*this);
 }
 void setting_windows::succeeded() {
-  g_reg()->unset<setting_windows&>();
+  gui::window_panel::succeeded();
   save();
 }
-void setting_windows::failed() {
-  g_reg()->unset<setting_windows&>();
-  save();
-}
-void setting_windows::aborted() {
-  g_reg()->unset<setting_windows&>();
-  save();
-}
+
 void setting_windows::update(
     const chrono::duration<chrono::system_clock::rep,
                            chrono::system_clock::period>&,
@@ -103,4 +96,8 @@ void setting_windows::update(
   if (imgui::Button("save"))
     save();
 }
+string setting_windows::title() const {
+  return std::string{name};
+}
+
 }  // namespace doodle
