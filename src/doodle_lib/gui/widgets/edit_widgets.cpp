@@ -552,7 +552,7 @@ edit_widgets::edit_widgets()
   p_i->assets_edit = dynamic_cast<gui::assets_edit *>(l_edit);
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
-  boost::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
+  ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
     p_i->data_edit.link_sig(in_edit.data);
   });
 
@@ -568,7 +568,7 @@ void edit_widgets::init() {
       [&](const std::vector<entt::handle> &in) {
         p_i->p_h = in;
         p_i->data_edit.init(p_i->p_h);
-        boost::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
+        ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
           in_edit.data->init(p_i->p_h);
         });
       }));
@@ -649,24 +649,23 @@ void edit_widgets::clear_handle() {
                     in.destroy();
                   }
                 });
-  boost::remove_erase_if(p_i->add_handles,
-                         [](const entt::handle &in) { return !in.valid(); });
+  ranges::actions::remove_if(p_i->add_handles,
+                             [](const entt::handle &in) { return !in.valid(); });
   this->notify_file_list();
 }
 
 void edit_widgets::notify_file_list() const {
   if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
     std::vector<entt::handle> l_vector{};
-    std::vector<entt::handle> k_list_h{};
+    std::vector<entt::handle> k_list_h{p_i->add_handles};
+    k_list_h |= ranges::actions::sort |
+                ranges::actions::unique;
+    l_vector = k_list_h |
+               ranges::views::filter([](const entt::handle &in) -> bool {
+                 return in.valid();
+               }) |
+               ranges::to_vector;
 
-    boost::copy(p_i->add_handles, std::back_inserter(k_list_h));
-
-    boost::copy(
-        boost::unique(boost::sort(k_list_h)) |
-            boost::adaptors::filtered([](const entt::handle &in) -> bool {
-              return in.valid();
-            }),
-        std::back_inserter(l_vector));
     g_reg()->ctx<core_sig>().filter_handle(l_vector);
   }
 }

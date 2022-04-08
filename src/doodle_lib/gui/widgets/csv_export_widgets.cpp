@@ -188,25 +188,25 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   }
 
   table_line l_line{
-      k_ass.organization_p,                                                                            //"部门"
-      k_ass.p_user,                                                                                    //"制作人"
-      l_prj_name,                                                                                      //"项目"
-      (in.all_of<season>()                                                                             //
-           ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)                             //
-           : ""s),                                                                                     //"季数"
-      (in.all_of<episodes>()                                                                           //
-           ? fmt::format(p_i->episodes_fmt_str.data, in.get<episodes>().p_episodes)                    //
-           : ""s),                                                                                     //"集数"
-      (in.all_of<shot>()                                                                               //
+      k_ass.organization_p,                                                                          //"部门"
+      k_ass.p_user,                                                                                  //"制作人"
+      l_prj_name,                                                                                    //"项目"
+      (in.all_of<season>()                                                                           //
+           ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)                           //
+           : ""s),                                                                                   //"季数"
+      (in.all_of<episodes>()                                                                         //
+           ? fmt::format(p_i->episodes_fmt_str.data, in.get<episodes>().p_episodes)                  //
+           : ""s),                                                                                   //"集数"
+      (in.all_of<shot>()                                                                             //
            ? fmt::format(p_i->shot_fmt_str.data, in.get<shot>().p_shot, in.get<shot>().p_shot_enum)  //
-           : ""s),                                                                                     //"镜头"
-      fmt::format(R"("{}")", start_time.show_str()),                                                   //"开始时间"
-      fmt::format(R"("{}")", end_time.show_str()),                                                     //"结束时间"
-      fmt::format("{:3f}", k_time.count()),                                                            //"持续时间"
-      fmt::format("{}", k_comm.get_comment()),                                                         //"备注"
-      k_ass_path.generic_string(),                                                                     //"类别"
-      k_ass.p_name,                                                                                    //"名称"
-      in.any_of<importance>() ? in.get<importance>().cutoff_p : ""s                                    //"等级"
+           : ""s),                                                                                   //"镜头"
+      fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
+      fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
+      fmt::format("{:3f}", k_time.count()),                                                          //"持续时间"
+      fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
+      k_ass_path.generic_string(),                                                                   //"类别"
+      k_ass.p_name,                                                                                  //"名称"
+      in.any_of<importance>() ? in.get<importance>().cutoff_p : ""s                                  //"等级"
   };
 
   return l_line;
@@ -215,14 +215,14 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
 time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
   time_point_wrap l_r{};
 
-  auto l_it = boost::range::find(p_i->list_sort_time, in_handle);
+  auto l_it = ranges::find(p_i->list_sort_time, in_handle);
   if (l_it == p_i->list_sort_time.begin()) {
     return time_point_wrap::current_month_start(in_handle.get<time_point_wrap>());
   } else {
     auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
-    auto end_it = boost::find_if(
-        std::make_pair(p_i->list_sort_time.rbegin() + l_dis,
-                       p_i->list_sort_time.rend()),
+    auto end_it = ranges::find_if(
+        ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
+                              p_i->list_sort_time.rend()),
         [&](const entt::handle &in_l) {
           return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
         });

@@ -9,7 +9,7 @@
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/detail/ios.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
-
+#include <boost/iostreams/stream_buffer.hpp>
 namespace doodle {
 
 /**
@@ -210,7 +210,7 @@ class base_vector_iostream : public std::iostream {
 };
 /**
  * @brief std char 容器
- * 
+ *
  */
 using vector_container = std::vector<char>;
 /// std vector 读流

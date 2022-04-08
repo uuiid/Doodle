@@ -414,9 +414,9 @@ database_task_obs::~database_task_obs() = default;
 
 void database_task_obs::save() {
   std::vector<entt::handle> l_list{};
-  boost::copy(p_i->need_save, std::back_inserter(l_list));
-  boost::copy(p_i->need_updata, std::back_inserter(l_list));
-  boost::copy(p_i->need_delete, std::back_inserter(l_list));
+  l_list |= ranges::actions::push_back(p_i->need_save) |
+            ranges::actions::push_back(p_i->need_updata) |
+            ranges::actions::push_back(p_i->need_delete);
 
   auto k_then = g_main_loop().attach<one_process_t>([=]() {
     g_reg()->ctx<core_sig>().save_begin(l_list);
@@ -503,9 +503,10 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                [](const entt::handle& in_handle) {
                  return in_handle.get<database>().status_ == database::status::need_delete;
                });
-  boost::unique_erase(p_i->need_save);
-  boost::unique_erase(p_i->need_updata);
-  boost::unique_erase(p_i->need_delete);
+  p_i->need_save |= ranges::actions::unique;
+  p_i->need_updata |= ranges::actions::unique;
+  p_i->need_delete |= ranges::actions::unique;
+
   k_obs.clear();
 
   g_reg()->ctx<status_info>().need_save = !(p_i->need_save.empty() &&

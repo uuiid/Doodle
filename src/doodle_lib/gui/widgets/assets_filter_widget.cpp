@@ -125,6 +125,7 @@ class file_path_filter : public gui::filter_base {
     if (in.any_of<assets_file>()) {
       auto l_str = in.get<assets_file>().path.generic_string();
       return boost::algorithm::icontains(l_str, file_path_);
+
     } else
       return false;
   }
@@ -217,7 +218,7 @@ class assets_filter_factory : public gui::filter_factory_base {
   void popen_menu(tree_node_type& in_node) {
     ImGui::InputText(*p_popen.gui_name, &p_popen.data);
     if (ImGui::Button("添加")) {
-      if (auto it = boost::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
+      if (auto it = ranges::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
             return in->data.gui_name.name == p_popen.data;
           });
           it == in_node.child.end()) {
@@ -231,7 +232,6 @@ class assets_filter_factory : public gui::filter_factory_base {
       }
     }
   }
-
 
   bool is_select(const tree_node_type::child_type& in_node) const {
     return p_cur_selects.count(in_node) == 1;
@@ -271,9 +271,10 @@ class assets_filter_factory : public gui::filter_factory_base {
       } else
         l_p /= j;
 
-      if (auto it = boost::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data.gui_name.name == j;
-          });
+      if (auto it = ranges::find_if(root->child,
+                                    [&](const tree_node_type::child_type& in) -> bool {
+                                      return in->data.gui_name.name == j;
+                                    });
           it != root->child.end()) {
         root = it->get();
       } else {
@@ -562,10 +563,10 @@ void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, ch
     }
   }
 
-  if (boost::algorithm::any_of(p_impl->p_filter_factorys,
-                               [](const impl::factory_chick& in) {
-                                 return in.p_factory.select && in.p_factory.data->is_edit;
-                               }) ||
+  if (ranges::any_of(p_impl->p_filter_factorys,
+                     [](const impl::factory_chick& in) {
+                       return in.p_factory.select && in.p_factory.data->is_edit;
+                     }) ||
 
       l_is_edit) {
     refresh(false);
@@ -608,16 +609,19 @@ void assets_filter_widget::refresh_(bool force) {
   //         return (*in_f)(in);
   //       });
   //     }));
-  boost::copy(g_reg()->view<database>(entt::exclude<project>) | boost::adaptors::transformed([](const entt::entity& in) -> entt::handle {
-                return make_handle(in);
-              }) | boost::adaptors::filtered([&](const entt::handle& in) -> bool {
-                return boost::algorithm::all_of(
-                    p_impl->p_filters,
-                    [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
-                      return (*in_f)(in);
-                    });
-              }),
-              std::back_inserter(list));
+  auto l_v = g_reg()->view<database>(entt::exclude<project>);
+  list     = l_v |
+         ranges::views::transform([](const entt::entity& in) -> entt::handle {
+           return make_handle(in);
+         }) |
+         ranges::views::filter([&](const entt::handle& in) -> bool {
+           return ranges::all_of(
+               p_impl->p_filters,
+               [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
+                 return (*in_f)(in);
+               });
+         }) |
+         ranges::to_vector;
   //  for (auto&& in_sort_entt : p_impl->p_sorts) {
   //    std::sort(list.begin(), list.end(),[&](const entt::handle& in_r, const entt::handle& in_l) -> bool { return (*in_sort_entt)(in_r, in_l); } );
   //  }

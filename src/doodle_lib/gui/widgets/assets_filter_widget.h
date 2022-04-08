@@ -77,7 +77,7 @@ class filter_factory_t : public filter_factory_base {
       auto k_h = make_handle(i);
       p_edit.emplace_back(k_h.template get<data_type>());
     }
-    boost::unique_erase(boost::sort(p_edit));
+    p_edit |= ranges::actions::sort | ranges::actions::unique;
   }
 
  public:
