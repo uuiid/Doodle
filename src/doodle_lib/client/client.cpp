@@ -55,8 +55,8 @@ add uuid_data text;)");
 
     for (auto&& row : (*k_con)(
              sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
-      return std::make_tuple(row.version_major.value(),
-                             row.version_minor.value());
+      return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.version_major.value()),
+                             boost::numeric_cast<std::uint32_t>(row.version_minor.value()));
     }
     chick_true<doodle_error>(false, DOODLE_LOC, "无法检查到数据库 路径{}", data_path);
     return {};
