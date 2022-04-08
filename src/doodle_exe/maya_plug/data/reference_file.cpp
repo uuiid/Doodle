@@ -567,8 +567,8 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
     episodes::analysis_static(out_, l_path);
     shot::analysis_static(out_, l_path);
     out_.emplace<export_file_info>(l_path,
-                                   in_arg.start_p.value(),
-                                   in_arg.end_p.value(),
+                                   boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
+                                   boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
                                    l_ref_file,
                                    l_type);
     export_file_info::write_file(out_);
