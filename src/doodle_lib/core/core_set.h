@@ -125,7 +125,7 @@ class DOODLELIB_API core_set_init {
   template <typename T>
   void read_setting(const std::string &in_key, T &in_t) {
     if (json_value().count(in_key))
-      json_value()[in_key].template get_to(in_t);
+      json_value()[in_key].get_to(in_t);
   };
 };
 
