@@ -35,6 +35,8 @@ set(
         gui/gui_ref/project.h
         gui/gui_ref/ref_base.h
         gui/gui_ref/database_edit.h
+        gui/gui_ref/base_windows_factory.h
+        gui/gui_ref/base_window.h
 
         gui/action/command_tool.h
         gui/widgets/assets_file_widgets.h
@@ -145,6 +147,9 @@ set(
         gui/gui_ref/project.cpp
         gui/gui_ref/ref_base.cpp
         gui/gui_ref/database_edit.cpp
+        gui/gui_ref/base_windows_factory.cpp
+        gui/gui_ref/base_window.cpp
+
         gui/action/command_tool.cpp
         gui/widgets/assets_file_widgets.cpp
         gui/widgets/assets_filter_widget.cpp
