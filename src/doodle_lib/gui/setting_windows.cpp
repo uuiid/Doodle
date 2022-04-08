@@ -76,10 +76,7 @@ void setting_windows::succeeded() {
   save();
 }
 
-void setting_windows::update(
-    const chrono::duration<chrono::system_clock::rep,
-                           chrono::system_clock::period>&,
-    void* data) {
+void setting_windows::render() {
   ImGui::InputText(*p_i->p_org_name.gui_name, &p_i->p_org_name.data);
   imgui::InputText(*p_i->p_user.gui_name, &(p_i->p_user.data));
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);

@@ -64,7 +64,7 @@ class DOODLELIB_API setting_windows : public process_t<setting_windows>,
   virtual string title() const override;
   [[maybe_unused]] void init() override;
   [[maybe_unused]] void succeeded() override;
-  [[maybe_unused]] void update(const delta_type&, void* data) override;
+  [[maybe_unused]] void render() override;
 
   void save();
 };
