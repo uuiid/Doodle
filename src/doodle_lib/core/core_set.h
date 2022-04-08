@@ -117,16 +117,7 @@ class DOODLELIB_API core_set_init {
   bool find_cache_dir();
   bool config_to_user();
   bool init_project(const FSys::path &in_path);
-
-  template <typename T>
-  void save_setting(const std::string &in_key, const T &in_t) {
-    json_value()[in_key] = in_t;
-  };
-  template <typename T>
-  void read_setting(const std::string &in_key, T &in_t) {
-    if (json_value().count(in_key))
-      json_value()[in_key].get_to(in_t);
-  };
+  bool init_project();
 };
 
 namespace win {

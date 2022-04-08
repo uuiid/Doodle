@@ -45,6 +45,7 @@ class DOODLELIB_API app_base {
    * @return
    */
   virtual std::int32_t run();
+
   virtual void loop_one() = 0;
   std::atomic_bool& stop();
   std::atomic_bool stop_;

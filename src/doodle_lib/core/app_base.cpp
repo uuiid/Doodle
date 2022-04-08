@@ -63,11 +63,14 @@ app_base& app_base::Get() {
   return *self;
 }
 std::int32_t app_base::run() {
-  while (!stop_) {
+  while ((!g_main_loop().empty() ||
+         !g_bounded_pool().empty()) &&
+         !stop_) {
     loop_one();
   }
   return 0;
 }
+
 void app_base::command_line_parser(const std::vector<string>& in_arg) {
   if (!chick_authorization())
     stop_ = true;
@@ -120,6 +123,7 @@ bool app_base::chick_authorization() {
 
   return chick_authorization(l_p);
 }
+
 app_base::~app_base() = default;
 
 void app_command_base::load_back_end() {

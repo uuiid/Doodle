@@ -5,6 +5,8 @@
 #include "project_widget.h"
 
 #include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/app/app.h>
+#include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 
@@ -12,31 +14,19 @@ namespace doodle {
 
 project_widget::project_widget()
     : p_c() {
-  auto k_reg = g_reg();
 }
 
 project_widget::~project_widget() = default;
 
 void project_widget::init() {
-  g_reg()->set<project_widget&>(*this);
+  gui::window_panel::init();
+  /// 在这里我们加载项目
+  core_set_init{}.init_project(app::Get().options_->p_project_path);
 }
-void project_widget::succeeded() {
-  g_reg()->unset<project_widget>();
-}
-void project_widget::failed() {
-  g_reg()->unset<project_widget>();
-}
-void project_widget::aborted() {
-  g_reg()->unset<project_widget>();
-}
-void project_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  if (!show)
-    this->succeed();
 
-  dear::Begin{name.data(), &show} && [&]() {
-    this->render();
-  };
+void project_widget::failed() {
 }
+
 void project_widget::render() {
   dear::Table{"project", 3} && [this]() {
     imgui::TableSetupColumn("名称");
@@ -66,6 +56,9 @@ void project_widget::render() {
       k_reg->set<root_ref>(p_c);
     }
   };
+}
+string project_widget::title() const {
+  return std::string{name};
 }
 
 }  // namespace doodle

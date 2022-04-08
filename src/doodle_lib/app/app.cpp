@@ -171,7 +171,6 @@ app::app(const win::wnd_instance& in_instance)
   g_reg()->ctx<core_sig>().init_end.connect([this]() {
     g_main_loop().attach<one_process_t>([this]() {
       this->load_windows();
-      core_set_init{}.init_project(this->options_->p_project_path);
     });
   });
 

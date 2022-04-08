@@ -273,12 +273,11 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     MString k_path_M{};
     k_s    = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
     k_path = k_path_M.asUTF8();
+    core_set_init{}.init_project(k_path);
   } else {
-    return MStatus{MStatus::kFailure};
+    core_set_init{}.init_project();
   }
   DOODLE_LOG_INFO("开始打开项目 {}", k_path);
-  core::client l_c{};
-  l_c.open_project(k_path);
   if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
     while (!g_main_loop().empty()) {
       app_base::Get().loop_one();

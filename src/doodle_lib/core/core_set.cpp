@@ -232,6 +232,9 @@ bool core_set_init::init_project(const FSys::path &in_path) {
 nlohmann::json &core_set_init::json_value() {
   return *p_set.json_data;
 }
+bool core_set_init::init_project() {
+  return init_project(p_set.project_root[0]);
+}
 
 void to_json(nlohmann::json &j, const core_set &p) {
   j["user_"]                = p.p_user_;
