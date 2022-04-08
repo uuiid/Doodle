@@ -687,4 +687,10 @@
  * @li 修正导入路径
  * @li 获取路径方法改变,更加方便
  *
+ * @subsubsection updata_log_3423 版本3.4.23
+ * @li 去除boost ranges 库依赖
+ * @li 添加界面保存状态函数
+ * @li 添加获得句柄方法
+ * @li 添加新的窗口基类
+ * @li 修正maya插件加载错误
  */
