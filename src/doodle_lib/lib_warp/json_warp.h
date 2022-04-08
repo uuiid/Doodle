@@ -102,20 +102,38 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
     if (l_index >= std::variant_size_v<var_t>) {
       throw std::runtime_error{"变体值索引错误"};
     }
+    get_variant_value(j, in_variant, l_index, std::index_sequence_for<Types...>{});
   }
-  template <int N, std::enable_if_t<N == std::variant_size_v<var_t>, void> = 0>
-  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
-    throw std::runtime_error{"变体值读取错误"};
-  };
-
-  template <int N, std::enable_if_t<(N < std::variant_size_v<var_t>), void> = 0>
-  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
-    if (N == in_index) {
-      j["data"].template get_to(std::get<N>(in_var));
-    } else {
-      variant_value<N + 1>(j, in_var, in_index);
-    }
+  /**
+   * @brief 使用c++编译时索引序列进行变体数据读取
+   * @tparam Index 编译时数
+   * @param j json 对象
+   * @param in_var 传入的联合体
+   * @param in_index 传入的运行时索引
+   */
+  template <index_t... Index>
+  static void get_variant_value(const json& j,
+                                var_t& in_var,
+                                const index_t& in_index,
+                                std::index_sequence<Index...>) {
+    (((in_index == Index)
+          ? (void)j["data"].get_to(std::get<Index>(in_var))
+          : void()),
+     ...);
   }
+  //  template <int N, std::enable_if_t<N == std::variant_size_v<var_t>, void> = 0>
+  //  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
+  //    throw std::runtime_error{"变体值读取错误"};
+  //  };
+  //
+  //  template <int N, std::enable_if_t<(N < std::variant_size_v<var_t>), void> = 0>
+  //  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
+  //    if (N == in_index) {
+  //      j["data"].template get_to(std::get<N>(in_var));
+  //    } else {
+  //      variant_value<N + 1>(j, in_var, in_index);
+  //    }
+  //  }
 };
 
 }  // namespace nlohmann
