@@ -11,7 +11,7 @@ namespace doodle {
  * @brief
  */
 class DOODLELIB_API file_panel
-    : public modal_window<file_panel>,
+    :
       public process_t<file_panel> {
   class impl;
   class path_info;
@@ -86,7 +86,7 @@ class DOODLELIB_API file_panel
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data) override;
+  [[maybe_unused]] void update(const delta_type&, void* data) ;
 };
 
 using file_dialog = file_panel;
