@@ -4,7 +4,5 @@
 
 #include "base_windows_factory.h"
 namespace doodle::gui {
-bool base_windows_factory::is_show() {
-  return window_;
-}
+
 }  // namespace doodle::gui
