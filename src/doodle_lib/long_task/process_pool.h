@@ -101,9 +101,16 @@ class scheduler {
     continuation then(Func &&func) {
       return then<entt::process_adaptor<std::decay_t<Func>, Delta>>(std::forward<Func>(func));
     }
+    /**
+     * @brief 初始化时的过程句柄
+     */
+    template <typename Proc>
+    Proc *get() {
+      return static_cast<Proc *>(handler->instance.get());
+    }
+    process_handler *handler;
 
    private:
-    process_handler *handler;
     scheduler *self_;
   };
 
