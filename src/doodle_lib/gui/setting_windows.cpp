@@ -47,10 +47,10 @@ void setting_windows::save() {
 
   set.set_user(p_i->p_user.data);
   set.organization_name = p_i->p_org_name.data;
-  set.set_maya_path(p_i->p_maya_path.data);
-  set.set_max_tread(p_i->p_batch_max.data);
-  set.get_ue4_setting().set_path(p_i->p_ue_path.data);
-  set.get_ue4_setting().set_version(p_i->p_ue_version.data);
+  set.p_mayaPath = p_i->p_maya_path.data;
+  set.p_max_thread = p_i->p_batch_max.data;
+  set.ue4_path = p_i->p_ue_path.data;
+  set.ue4_version = p_i->p_ue_version.data;
   set.max_install_reg_entt  = boost::numeric_cast<std::uint16_t>(p_i->p_max_reg.data);
   set.timeout               = p_i->p_timeout.data;
   g_bounded_pool().timiter_ = p_i->p_batch_max.data;
@@ -64,8 +64,8 @@ void setting_windows::init() {
   p_i->p_cache.data      = core_set::getSet().get_cache_root().generic_string();
   p_i->p_doc.data        = core_set::getSet().get_doc().generic_string();
   p_i->p_maya_path.data  = core_set::getSet().maya_path().generic_string();
-  p_i->p_ue_path.data    = core_set::getSet().get_ue4_setting().get_path().generic_string();
-  p_i->p_ue_version.data = core_set::getSet().get_ue4_setting().get_version();
+  p_i->p_ue_path.data    = core_set::getSet().ue4_path;
+  p_i->p_ue_version.data = core_set::getSet().ue4_version;
   p_i->p_batch_max.data  = core_set::getSet().p_max_thread;
   p_i->p_timeout.data    = core_set::getSet().timeout;
   p_i->p_max_reg.data    = core_set::getSet().max_install_reg_entt;

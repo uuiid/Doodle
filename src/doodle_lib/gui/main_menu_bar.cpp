@@ -157,7 +157,7 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))
     toolkit::installMayaPath();
   if (dear::MenuItem("安装ue4插件"))
-    toolkit::installUePath(core_set::getSet().get_ue4_setting().get_path() / "Engine");
+    toolkit::installUePath(core_set::getSet().ue4_path / "Engine");
   if (dear::MenuItem("安装ue4项目插件")) {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()

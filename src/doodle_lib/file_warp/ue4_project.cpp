@@ -2,7 +2,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
-#include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/metadata/episodes.h>

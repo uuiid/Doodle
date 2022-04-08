@@ -1,6 +1,5 @@
 #pragma once
 
-#include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_uuid_warp.h>
 #include <doodle_lib/metadata/project.h>
@@ -47,8 +46,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   [[nodiscard]] std::string get_user_en() const;
   void set_user(const std::string &value);
 
-  //缓存路径
-  [[nodiscard]] FSys::path get_root() const;
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
@@ -56,21 +53,11 @@ class DOODLELIB_API core_set : public details::no_copy {
 
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
-  // 配置文件的路径
-  [[nodiscard]] FSys::path get_config_file() const;
 
-  [[nodiscard]] ue4_setting &get_ue4_setting() const { return p_ue4_setting; };
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
   std::string get_uuid_str(const std::string &in_add);
-
-  static std::size_t get_block_size() {
-    static std::size_t l_k_i{64 * 1024};
-    return l_k_i;
-  };
-
-  std::string get_server_host();
 
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
@@ -86,6 +73,18 @@ class DOODLELIB_API core_set : public details::no_copy {
   //部门
   std::string organization_name;
 
+  std::shared_ptr<nlohmann::json> json_data;
+
+  FSys::path p_root;
+  FSys::path _root_cache;
+  FSys::path _root_data;
+  FSys::path p_doc;
+
+
+  FSys::path p_mayaPath;
+  FSys::path ue4_path;
+  std::string ue4_version;
+
  private:
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
@@ -97,15 +96,6 @@ class DOODLELIB_API core_set : public details::no_copy {
 
  private:
   boost::uuids::random_generator p_uuid_gen;
-
-  FSys::path p_root;
-  FSys::path _root_cache;
-  FSys::path _root_data;
-  FSys::path p_doc;
-
-  ue4_setting &p_ue4_setting;
-
-  FSys::path p_mayaPath;
 
  private:
   //这里是序列化的代码

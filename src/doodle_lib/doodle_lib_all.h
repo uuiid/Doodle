@@ -11,7 +11,6 @@
 #include <doodle_lib/gui/open_file_dialog.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/static_value.h>
-#include <doodle_lib/core/ue4_setting.h>
 #include <doodle_lib/core/util.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/maya_file.h>
