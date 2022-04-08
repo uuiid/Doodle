@@ -70,7 +70,6 @@ core_set::core_set()
       organization_name(),
       p_doc(FSys::current_path()),
       p_uuid_gen(),
-      p_ue4_setting(ue4_setting::Get()),
       p_mayaPath(),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
