@@ -86,7 +86,7 @@ class DOODLELIB_API file_panel
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  [[maybe_unused]] void update(const delta_type&, void* data) override;
 };
 
 using file_dialog = file_panel;
