@@ -22,7 +22,7 @@ namespace nlohmann {
 //   }
 // };
 template <class Rep, class Period>
-struct adl_serializer<std::chrono::duration<Rep, Period>> {
+struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
   using time_duration = std::chrono::duration<Rep, Period>;
   static void to_json(json& j, const time_duration& in_duration) {
     auto count = in_duration.count();
@@ -36,7 +36,7 @@ struct adl_serializer<std::chrono::duration<Rep, Period>> {
 };
 
 template <class Clock, class Duration>
-struct adl_serializer<std::chrono::time_point<Clock, Duration>> {
+struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>> {
   using time_point = std::chrono::time_point<Clock, Duration>;
   static void to_json(json& j, const time_point& in_time) {
     j["time_since_epoch"] = in_time.time_since_epoch();
@@ -50,7 +50,7 @@ struct adl_serializer<std::chrono::time_point<Clock, Duration>> {
 };
 
 template <class T>
-struct adl_serializer<std::optional<T>> {
+struct [[maybe_unused]] adl_serializer<std::optional<T>> {
   using opt = std::optional<T>;
   static void to_json(json& j, const opt& in_opt) {
     if (!in_opt) {
@@ -70,7 +70,7 @@ struct adl_serializer<std::optional<T>> {
   }
 };
 template <>
-struct adl_serializer<boost::uuids::uuid> {
+struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
   static void to_json(json& j, const boost::uuids::uuid& in_uuid) {
     j["uuid"] = boost::uuids::to_string(in_uuid);
   }
@@ -81,6 +81,39 @@ struct adl_serializer<boost::uuids::uuid> {
     } else {
       auto k_arr = j["uuid"].get<std::array<std::uint8_t, boost::uuids::uuid::static_size()>>();
       std::copy(k_arr.begin(), k_arr.end(), std::begin(in_uuid.data));
+    }
+  }
+};
+
+template <class... Types>
+struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
+  using var_t   = std::variant<Types...>;
+  using index_t = std::size_t;
+  static void to_json(json& j, const var_t& in_variant) {
+    j["index"] = in_variant.index();
+    std::visit([&](const auto& in_item) {
+      j["data"] = in_item;
+    },
+               in_variant);
+  }
+
+  static void from_json(const json& j, var_t& in_variant) {
+    auto l_index = j["index"].template get<index_t>();
+    if (l_index >= std::variant_size_v<var_t>) {
+      throw std::runtime_error{"变体值索引错误"};
+    }
+  }
+  template <int N, std::enable_if_t<N == std::variant_size_v<var_t>, void> = 0>
+  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
+    throw std::runtime_error{"变体值读取错误"};
+  };
+
+  template <int N, std::enable_if_t<(N < std::variant_size_v<var_t>), void> = 0>
+  static void variant_value(const json& j, var_t& in_var, const index_t& in_index) {
+    if (N == in_index) {
+      j["data"].template get_to(std::get<N>(in_var));
+    } else {
+      variant_value<N + 1>(j, in_var, in_index);
     }
   }
 };
