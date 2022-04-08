@@ -13,6 +13,16 @@ void window_panel::read_setting() {
 }
 void window_panel::save_setting() const {
   (*core_set::getSet().json_data)[title()] = setting;
-//  core_set_init{}.save_setting(title(), setting);
+  //  core_set_init{}.save_setting(title(), setting);
+}
+void window_panel::init() {
+  read_setting();
+}
+void window_panel::succeeded() {
+  save_setting();
+}
+
+void window_panel::aborted() {
+  save_setting();
 }
 }  // namespace doodle::gui
