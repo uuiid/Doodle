@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -18,7 +18,9 @@ class assets_file_widgets;
  * @note 每次上传文件都会递增版本号， 如果需要新的条目请创建新条目
  *
  */
-class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> {
+class DOODLELIB_API assets_file_widgets
+    : public process_t<assets_file_widgets>,
+      public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -40,12 +42,10 @@ class DOODLELIB_API assets_file_widgets : public process_t<assets_file_widgets> 
   constexpr static std::string_view name{"文件列表"};
 
   void refresh(const std::vector<entt::handle>& in_list);
-
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
+  virtual string title() const override;
+  void init() override;
+  void failed() override;
+  void render() override;
 };
 
 }  // namespace doodle

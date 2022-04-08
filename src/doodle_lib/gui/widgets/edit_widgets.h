@@ -5,7 +5,8 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
+
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -25,7 +26,9 @@ class edit_assets_data {
  * 在没有计算出文件路径的时候, 其中,名称为空
  *
  */
-class DOODLELIB_API edit_widgets : public process_t<edit_widgets> {
+class DOODLELIB_API edit_widgets
+    : public process_t<edit_widgets>,
+      public gui::window_panel{
   class impl;
   std::unique_ptr<impl> p_i;
 

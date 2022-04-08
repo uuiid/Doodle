@@ -507,6 +507,7 @@ assets_filter_widget::assets_filter_widget()
 assets_filter_widget::~assets_filter_widget() = default;
 
 void assets_filter_widget::init() {
+  gui::window_panel::init();
   g_reg()->set<assets_filter_widget&>(*this);
   p_impl->p_conns.emplace_back(
       g_reg()->ctx<core_sig>().project_begin_open.connect(
@@ -537,16 +538,12 @@ void assets_filter_widget::init() {
 
   //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
 }
-void assets_filter_widget::succeeded() {
-  g_reg()->unset<assets_filter_widget>();
-}
+
 void assets_filter_widget::failed() {
   g_reg()->unset<assets_filter_widget>();
 }
-void assets_filter_widget::aborted() {
-  g_reg()->unset<assets_filter_widget>();
-}
-void assets_filter_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+
+void assets_filter_widget::render() {
   /// 渲染数据
   dear::Disabled l_d{p_impl->only_rand};
 
@@ -639,6 +636,9 @@ void assets_filter_widget::refresh_(bool force) {
   }
 
   g_reg()->ctx<core_sig>().filter_handle(list);
+}
+string assets_filter_widget::title() const {
+  return std::string{name};
 }
 
 }  // namespace doodle

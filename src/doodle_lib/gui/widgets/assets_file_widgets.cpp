@@ -184,6 +184,8 @@ void assets_file_widgets::refresh(const std::vector<entt::handle>& in_list) {
 }
 
 void assets_file_widgets::init() {
+  gui::window_panel::init();
+
   g_reg()->set<assets_file_widgets&>(*this);
   auto& l_sig = g_reg()->ctx<core_sig>();
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect(
@@ -209,19 +211,11 @@ void assets_file_widgets::init() {
           }));
   p_i->observer_h.connect(*g_reg(), entt::collector.update<database>());
 }
-void assets_file_widgets::succeeded() {
-  p_i->observer_h.disconnect();
-  g_reg()->unset<assets_file_widgets&>();
-}
+
 void assets_file_widgets::failed() {
-  p_i->observer_h.disconnect();
-  g_reg()->unset<assets_file_widgets&>();
 }
-void assets_file_widgets::aborted() {
-  p_i->observer_h.disconnect();
-  g_reg()->unset<assets_file_widgets&>();
-}
-void assets_file_widgets::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+
+void assets_file_widgets::render() {
   /// 渲染数据
   dear::Disabled l_d{p_i->only_rand};
 
@@ -473,6 +467,9 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
           return std::make_shared<impl::info_data>(in);
         }) |
         ranges::to_vector;
+}
+string assets_file_widgets::title() const {
+  return std::string{name};
 }
 
 assets_file_widgets::~assets_file_widgets() = default;

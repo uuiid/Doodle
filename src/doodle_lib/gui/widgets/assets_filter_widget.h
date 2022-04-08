@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/base_windwos.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 
 #include <boost/signals2.hpp>
@@ -96,7 +96,9 @@ class filter_factory_t : public filter_factory_base {
  * @li 这里只显示资产树, 可以类比为文件夹树
  *
  */
-class DOODLELIB_API assets_filter_widget : public process_t<assets_filter_widget> {
+class DOODLELIB_API assets_filter_widget
+    : public process_t<assets_filter_widget>,
+      public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_impl;
 
@@ -108,11 +110,10 @@ class DOODLELIB_API assets_filter_widget : public process_t<assets_filter_widget
 
   constexpr static std::string_view name{"过滤"};
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
+  void init() override;
+  void failed() override;
+  virtual string title() const override;
+  void render() override;
 
   void refresh(bool force);
 };

@@ -20,18 +20,16 @@ long_time_tasks_widget::long_time_tasks_widget()
 }
 
 void long_time_tasks_widget::init() {
-  g_reg()->set<long_time_tasks_widget&>(*this);
+  gui::window_panel::init();
 }
-void long_time_tasks_widget::succeeded() {
-  g_reg()->unset<long_time_tasks_widget>();
-}
+
 void long_time_tasks_widget::failed() {
-  g_reg()->unset<long_time_tasks_widget>();
 }
-void long_time_tasks_widget::aborted() {
-  g_reg()->unset<long_time_tasks_widget>();
+string long_time_tasks_widget::title() const {
+  return std::string{name};
 }
-void long_time_tasks_widget::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+
+void long_time_tasks_widget::render() {
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |

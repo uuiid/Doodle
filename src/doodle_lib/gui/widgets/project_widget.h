@@ -24,7 +24,7 @@ class DOODLELIB_API project_widget
 
   constexpr static std::string_view name{"项目"};
 
-  std::string title() const override;
+  [[nodiscard]] std::string title() const override;
   void init() override;
   void render() override;
   void failed() override;
