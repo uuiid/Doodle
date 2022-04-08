@@ -25,4 +25,5 @@ void window_panel::succeeded() {
 void window_panel::aborted() {
   save_setting();
 }
+void base_window::failed() {}
 }  // namespace doodle::gui

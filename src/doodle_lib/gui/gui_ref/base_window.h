@@ -28,11 +28,11 @@ class DOODLELIB_API base_window {
   /**
    * @brief 失败结束后调用
    */
-  virtual void failed()                           = 0;
+  virtual void failed();
   /**
    * @brief 主动结束后调用
    */
-  virtual void aborted()                          = 0;
+  virtual void aborted() = 0;
   /**
    * @brief 每帧渲染调用
    * @param in_duration 传入的时间间隔
@@ -50,6 +50,8 @@ class DOODLELIB_API window_panel : public base_window {
  public:
   window_panel()           = default;
   ~window_panel() override = default;
+  bool show{false};
+
   virtual void read_setting();
   virtual void save_setting() const;
 
@@ -75,7 +77,7 @@ class DOODLELIB_API modal_window : public base_window {
       ImGui::SetNextWindowSize({640, 360});
     });
   };
-  virtual ~modal_window() override = default;
+  ~modal_window() override = default;
   /**
    * @brief 模态窗口是否显示
    */
