@@ -116,7 +116,6 @@ class DOODLELIB_API modal_window : public base_window {
 
   void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override;
 
-  void close();
 };
 
 }  // namespace doodle::gui

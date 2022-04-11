@@ -42,6 +42,8 @@ void window_panel::read_setting() {
     (*l_json)[title()].get_to(setting);
   if (setting.count("show"))
     show = std::get<bool>(setting["show"]);
+  if (!show)
+    close();
   //  core_set_init{}.read_setting(title(), setting);
 }
 void window_panel::save_setting() const {
@@ -68,6 +70,9 @@ modal_window::modal_window()
   begin_fun.emplace_back([this]() {
     ImGui::OpenPopup(title().data());
     ImGui::SetNextWindowSize({640, 360});
+    close.connect([]() {
+      ImGui::CloseCurrentPopup();
+    });
   });
 }
 void modal_window::update(const chrono::system_clock::duration &in_dalta, void *in_data) {
@@ -81,7 +86,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
         render();
       };
 }
- 
+
 namespace {
 constexpr auto init_base_windows = []() {
   entt::meta<base_window>().type();
@@ -101,6 +106,9 @@ class init_windows_panel_
 
 void windows_proc::init() {
   g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
+  windows_->close.connect([this]() {
+    this->succeed();
+  });
   windows_->init();
 }
 void windows_proc::succeeded() {
@@ -115,8 +123,6 @@ void windows_proc::aborted() {
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
   windows_->update(in_duration, in_data);
-  if (!windows_->is_show())
-    succeed();
 }
 windows_proc::~windows_proc() {
   g_reg()->set<base_window::list>().erase(windows_);
