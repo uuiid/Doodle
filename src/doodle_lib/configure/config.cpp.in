@@ -7,5 +7,5 @@ const std::int16_t version_major = {@Doodle_VERSION_MAJOR@};
 const std::int16_t version_minor = {@Doodle_VERSION_MINOR@};
 const std::int16_t version_patch = {@Doodle_VERSION_PATCH@};
 const std::int16_t version_tweak = {@Doodle_VERSION_TWEAK@};
-const std::string version_str="@v_short@";
+const std::string version_str= {"@v_short@"};
 }
