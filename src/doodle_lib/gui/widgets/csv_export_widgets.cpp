@@ -20,10 +20,23 @@
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
 #include <gui/open_file_dialog.h>
+#include <doodle_lib/core/init_register.h>
+
+
 #include <fmt/chrono.h>
 
 namespace doodle {
 namespace gui {
+
+namespace {
+constexpr auto init = []() {
+  entt::meta<csv_export_widgets>()
+      .type()
+      .base<gui::base_window>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 
 class csv_export_widgets::impl {
  public:

@@ -17,7 +17,19 @@
 
 #include <gui/gui_ref/ref_base.h>
 
+#include <doodle_lib/core/init_register.h>
 namespace doodle {
+
+namespace {
+constexpr auto init = []() {
+  entt::meta<assets_file_widgets>()
+      .type()
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+
+}  // namespace
 
 class assets_file_widgets::impl {
  public:
@@ -43,9 +55,9 @@ class assets_file_widgets::impl {
     explicit base_data(const entt::handle& in_h)
         : handle_(in_h),
           select(std::string{}, false) {}
-    explicit base_data(const entt::handle& in_h, std::string in_string)
+    explicit base_data(const entt::handle& in_h, const std::string& in_string)
         : handle_(in_h),
-          select(std::move(in_string), false) {}
+          select(in_string, false) {}
     virtual ~base_data() = default;
     entt::handle handle_;
     cache_select select;
@@ -469,7 +481,6 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
         }) |
         ranges::to_vector;
 }
-
 
 assets_file_widgets::~assets_file_widgets() = default;
 

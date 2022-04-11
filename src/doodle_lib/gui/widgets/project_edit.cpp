@@ -8,8 +8,17 @@
 #include <doodle_lib/gui/gui_ref/project.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
 #include <core/core_sig.h>
-
+#include <doodle_lib/core/init_register.h>
 namespace doodle {
+namespace {
+constexpr auto init = []() {
+  entt::meta<project_edit>()
+      .type()
+      .base<gui::base_window>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 
 class project_edit::impl {
  public:

@@ -10,9 +10,19 @@
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/long_task/process_pool.h>
+#include <doodle_lib/core/init_register.h>
 
 #include <magic_enum.hpp>
 namespace doodle {
+namespace {
+constexpr auto init = []() {
+  entt::meta<setting_windows>()
+      .type()
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace
 
 class setting_windows::impl {
  public:

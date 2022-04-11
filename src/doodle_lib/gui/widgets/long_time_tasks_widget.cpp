@@ -12,8 +12,18 @@
 #include <boost/range.hpp>
 #include <boost/range/algorithm_ext.hpp>
 #include <fmt/chrono.h>
+#include <doodle_lib/core/init_register.h>
 
 namespace doodle {
+namespace {
+constexpr auto init = []() {
+  entt::meta<long_time_tasks_widget>()
+      .type()
+      .base<gui::base_window>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 
 long_time_tasks_widget::long_time_tasks_widget()
     : p_current_select() {

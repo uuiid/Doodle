@@ -9,6 +9,7 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_lib/core/init_register.h>
 
 namespace doodle {
 
@@ -58,5 +59,14 @@ void project_widget::render() {
     }
   };
 }
+
+namespace {
+constexpr auto prj_init = []() {
+  entt::meta<project_widget>().type().base<gui::window_panel>();
+};
+class prj_init_
+    : public init_register::registrar_lambda<prj_init, 3> {};
+
+}  // namespace
 
 }  // namespace doodle

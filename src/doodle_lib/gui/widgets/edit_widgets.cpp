@@ -13,6 +13,7 @@
 #include <doodle_lib/gui/gui_ref/database_edit.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/core/image_loader.h>
+#include <doodle_lib/core/init_register.h>
 
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/metadata/assets_file.h>
@@ -24,6 +25,16 @@
 #include <core/tree_node.h>
 namespace doodle {
 
+namespace {
+constexpr auto init = []() {
+  entt::meta<edit_widgets>()
+      .type()
+      .base<gui::base_window>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+
+}
 namespace gui {
 class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;

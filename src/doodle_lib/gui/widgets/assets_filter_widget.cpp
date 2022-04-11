@@ -13,9 +13,21 @@
 #include <lib_warp/entt_warp.h>
 #include <lib_warp/imgui_warp.h>
 
+#include <doodle_lib/core/init_register.h>
 namespace doodle {
 
 namespace gui {
+
+namespace {
+constexpr auto init = []() {
+  entt::meta<assets_filter_widget>()
+      .type()
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace
+
 class filter_factory_base::impl {
  public:
   std::vector<boost::signals2::scoped_connection> p_conns;
