@@ -27,9 +27,8 @@ void window_panel::read_setting() {
   //  core_set_init{}.read_setting(title(), setting);
 }
 void window_panel::save_setting() const {
-  auto l_json = core_set::getSet().json_data;
-  if (l_json->count(title()))
-    (*l_json)[title()] = setting;
+  auto l_json        = core_set::getSet().json_data;
+  (*l_json)[title()] = setting;
   //  core_set_init{}.save_setting(title(), setting);
 }
 void window_panel::init() {

@@ -597,16 +597,6 @@ void assets_filter_widget::refresh_(bool force) {
 
   std::vector<entt::handle> list{};
 
-  // list = ranges::to_vector(
-  //     g_reg()->view<database>() |
-  //     ranges::views::transform([](const entt::entity& in) -> entt::handle {
-  //       return make_handle(in);
-  //     }) |
-  //     ranges::views::filter([&](const entt::handle& in) -> bool {
-  //       return ranges::all_of(p_impl->p_filters, [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
-  //         return (*in_f)(in);
-  //       });
-  //     }));
   auto l_v = g_reg()->view<database>(entt::exclude<project>);
   list     = l_v |
          ranges::views::transform([](const entt::entity& in) -> entt::handle {
@@ -620,11 +610,7 @@ void assets_filter_widget::refresh_(bool force) {
                });
          }) |
          ranges::to_vector;
-  //  for (auto&& in_sort_entt : p_impl->p_sorts) {
-  //    std::sort(list.begin(), list.end(),[&](const entt::handle& in_r, const entt::handle& in_l) -> bool { return (*in_sort_entt)(in_r, in_l); } );
-  //  }
 
-  //  auto l_v = ranges::views::all(g_reg()->view<database>(entt::exclude<project>));
   if (p_impl->p_sorts[0].data) {
     list |= ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
       if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
@@ -638,6 +624,5 @@ void assets_filter_widget::refresh_(bool force) {
 
   g_reg()->ctx<core_sig>().filter_handle(list);
 }
-
 
 }  // namespace doodle
