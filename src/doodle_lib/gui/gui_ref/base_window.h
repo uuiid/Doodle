@@ -13,7 +13,7 @@ class DOODLELIB_API base_window {
   std::vector<std::function<void()>> begin_fun;
   bool show{false};
 
-  virtual void virtual render() = 0;
+  virtual void render() = 0;
 
  public:
   base_window()                                     = default;
