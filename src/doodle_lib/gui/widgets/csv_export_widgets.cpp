@@ -49,6 +49,7 @@ class csv_export_widgets::impl {
 
 csv_export_widgets::csv_export_widgets()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 csv_export_widgets::~csv_export_widgets() = default;
 
@@ -224,8 +225,6 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
                : end_it->get<time_point_wrap>();
   }
 }
-string csv_export_widgets::title() const {
-  return std::string{name};
-}
+
 }  // namespace gui
 }  // namespace doodle

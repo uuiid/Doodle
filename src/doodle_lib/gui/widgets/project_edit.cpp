@@ -23,6 +23,7 @@ class project_edit::impl {
 
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
   p_i->p_edits.emplace_back("项目编辑", std::make_unique<gui::project_edit>());
   // p_i->p_edits.emplace_back("模型配置", std::make_unique<gui::modle_config_edit>());
   p_i->p_edits.emplace_back("解算配置", std::make_unique<gui::base_config_edit>());
@@ -42,9 +43,6 @@ void project_edit::init() {
 }
 
 void project_edit::failed() {
-}
-string project_edit::title() const {
-  return std::string{name};
 }
 
 void project_edit::render() {

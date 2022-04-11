@@ -42,7 +42,6 @@ class DOODLELIB_API csv_export_widgets
 
   constexpr static std::string_view name{"导出csv表格"};
 
-  [[nodiscard]] string title() const override;
   void init() override;
   void failed() override;
   void render() override;

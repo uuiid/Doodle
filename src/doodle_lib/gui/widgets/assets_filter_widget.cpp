@@ -503,6 +503,7 @@ class assets_filter_widget::impl {
 
 assets_filter_widget::assets_filter_widget()
     : p_impl(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 assets_filter_widget::~assets_filter_widget() = default;
 
@@ -637,8 +638,6 @@ void assets_filter_widget::refresh_(bool force) {
 
   g_reg()->ctx<core_sig>().filter_handle(list);
 }
-string assets_filter_widget::title() const {
-  return std::string{name};
-}
+
 
 }  // namespace doodle

@@ -20,7 +20,6 @@ class DOODLELIB_API long_time_tasks_widget
   long_time_tasks_widget();
 
   constexpr static std::string_view name{"队列"};
-  [[nodiscard]] string title() const override;
   void init() override;
   void failed() override;
   void render() override;

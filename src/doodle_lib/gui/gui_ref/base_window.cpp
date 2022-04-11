@@ -38,6 +38,9 @@ void window_panel::succeeded() {
 void window_panel::aborted() {
   save_setting();
 }
+const string &window_panel::title() const {
+  return title_name_;
+}
 
 modal_window::modal_window()
     : show{true} {

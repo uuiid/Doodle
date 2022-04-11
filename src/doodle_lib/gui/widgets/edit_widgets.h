@@ -53,7 +53,6 @@ class DOODLELIB_API edit_widgets
    */
   constexpr static std::string_view name{"编辑"};
 
-  [[nodiscard]] string title() const override;
   /**
    * @brief 初始化窗口
    *
@@ -63,19 +62,19 @@ class DOODLELIB_API edit_widgets
    *
    *
    */
-  [[maybe_unused]] void init() override;
+  void init() override;
 
   /**
    * @brief 失败结束任务
    *
    */
-  [[maybe_unused]] void failed() override;
+  void failed() override;
 
   /**
    * @brief 每帧刷新函数
    *
    * @param data 自定义数据
    */
-  [[maybe_unused]] void render() override;
+  void render() override;
 };
 }  // namespace doodle

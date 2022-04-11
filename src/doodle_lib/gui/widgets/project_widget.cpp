@@ -14,6 +14,7 @@ namespace doodle {
 
 project_widget::project_widget()
     : p_c() {
+  title_name_ = std::string{name};
 }
 
 project_widget::~project_widget() = default;
@@ -56,9 +57,6 @@ void project_widget::render() {
       k_reg->set<root_ref>(p_c);
     }
   };
-}
-string project_widget::title() const {
-  return std::string{name};
 }
 
 }  // namespace doodle

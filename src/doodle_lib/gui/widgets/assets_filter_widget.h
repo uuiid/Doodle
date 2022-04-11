@@ -112,7 +112,6 @@ class DOODLELIB_API assets_filter_widget
 
   void init() override;
   void failed() override;
-  virtual string title() const override;
   void render() override;
 
   void refresh(bool force);

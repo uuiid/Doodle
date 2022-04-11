@@ -61,7 +61,6 @@ class DOODLELIB_API setting_windows : public process_t<setting_windows>,
   ~setting_windows() override;
 
   constexpr static std::string_view name{"设置窗口"};
-  virtual string title() const override;
   void init() override;
   void succeeded() override;
   void render() override;

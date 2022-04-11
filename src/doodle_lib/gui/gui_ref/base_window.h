@@ -16,21 +16,21 @@ class DOODLELIB_API base_window {
   virtual void virtual render() = 0;
 
  public:
-  base_window()                                   = default;
-  virtual ~base_window()                          = default;
+  base_window()                                     = default;
+  virtual ~base_window()                            = default;
   /**
    * @brief 获取窗口标识
    * @return 窗口标识
    */
-  [[nodiscard]] virtual std::string title() const = 0;
+  [[nodiscard]] virtual const string& title() const = 0;
   /**
    * @brief (构造函数后)初始化
    */
-  virtual void init()                             = 0;
+  virtual void init()                               = 0;
   /**
    * @brief 成功结束后调用
    */
-  virtual void succeeded()                        = 0;
+  virtual void succeeded()                          = 0;
   /**
    * @brief 失败结束后调用
    */
@@ -52,6 +52,7 @@ class DOODLELIB_API base_window {
 class DOODLELIB_API window_panel : public base_window {
  protected:
   std::map<std::string, std::variant<std::string, bool, std::int64_t>> setting{};
+  std::string title_name_{};
 
  public:
   window_panel()           = default;
@@ -60,6 +61,7 @@ class DOODLELIB_API window_panel : public base_window {
   virtual void read_setting();
   virtual void save_setting() const;
 
+  virtual const string& title() const override;
   void init() override;
   void succeeded() override;
   void aborted() override;

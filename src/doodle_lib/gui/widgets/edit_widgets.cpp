@@ -541,6 +541,8 @@ class edit_widgets::impl {
 
 edit_widgets::edit_widgets()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
+
   p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
@@ -658,9 +660,6 @@ void edit_widgets::notify_file_list() const {
 
     g_reg()->ctx<core_sig>().filter_handle(l_vector);
   }
-}
-string edit_widgets::title() const {
-  return std::string{name};
 }
 
 }  // namespace doodle

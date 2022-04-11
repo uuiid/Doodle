@@ -41,6 +41,7 @@ class setting_windows::impl {
 
 setting_windows::setting_windows()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 
 void setting_windows::save() {
@@ -92,9 +93,6 @@ void setting_windows::render() {
 
   if (imgui::Button("save"))
     save();
-}
-string setting_windows::title() const {
-  return std::string{name};
 }
 
 }  // namespace doodle

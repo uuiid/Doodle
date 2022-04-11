@@ -42,7 +42,6 @@ class DOODLELIB_API assets_file_widgets
   constexpr static std::string_view name{"文件列表"};
 
   void refresh(const std::vector<entt::handle>& in_list);
-  virtual string title() const override;
   void init() override;
   void failed() override;
   void render() override;

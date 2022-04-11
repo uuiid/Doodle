@@ -17,6 +17,7 @@ namespace doodle {
 
 long_time_tasks_widget::long_time_tasks_widget()
     : p_current_select() {
+  title_name_ = std::string{name};
 }
 
 void long_time_tasks_widget::init() {
@@ -24,9 +25,6 @@ void long_time_tasks_widget::init() {
 }
 
 void long_time_tasks_widget::failed() {
-}
-string long_time_tasks_widget::title() const {
-  return std::string{name};
 }
 
 void long_time_tasks_widget::render() {

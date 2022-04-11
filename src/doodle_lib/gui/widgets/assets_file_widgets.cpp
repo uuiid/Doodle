@@ -169,6 +169,7 @@ class assets_file_widgets::impl {
 
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
   this->switch_rander();
 }
 
@@ -468,9 +469,7 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
         }) |
         ranges::to_vector;
 }
-string assets_file_widgets::title() const {
-  return std::string{name};
-}
+
 
 assets_file_widgets::~assets_file_widgets() = default;
 
