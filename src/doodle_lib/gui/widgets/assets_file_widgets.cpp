@@ -24,6 +24,7 @@ namespace {
 constexpr auto init = []() {
   entt::meta<assets_file_widgets>()
       .type()
+      .prop("name"_hs, std::string{assets_file_widgets::name})
       .base<gui::window_panel>();
 };
 class init_class

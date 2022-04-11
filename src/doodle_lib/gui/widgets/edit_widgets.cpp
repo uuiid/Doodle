@@ -29,7 +29,8 @@ namespace {
 constexpr auto init = []() {
   entt::meta<edit_widgets>()
       .type()
-      .base<gui::base_window>();
+      .prop("name"_hs, std::string{edit_widgets::name})
+      .base<gui::window_panel>();
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};

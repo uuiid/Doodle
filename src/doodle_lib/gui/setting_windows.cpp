@@ -18,6 +18,7 @@ namespace {
 constexpr auto init = []() {
   entt::meta<setting_windows>()
       .type()
+      .prop("name"_hs, std::string{setting_windows::name})
       .base<gui::window_panel>();
 };
 class init_class

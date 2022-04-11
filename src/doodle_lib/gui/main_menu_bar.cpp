@@ -39,7 +39,7 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
-  std::vector<gui::base_window *> windows_;
+  std::map<std::string, gui::base_window *> windows_;
 
   template <typename Widget_T>
   void _make_widget_() {
@@ -137,6 +137,19 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
+  for (auto &l_win : p_i->windows_) {
+    if (dear::MenuItem(l_win.first.c_str(), l_win.second ? true : false)) {
+      if (!l_win.second) {
+        for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+          if (l_item.prop("name"_hs).value() == l_win.first) {
+            auto l_w = g_main_loop().attach<gui::windows_proc>(l_item.construct()).get<gui::window_panel>();
+            p_i->windows_.emplace(l_w->title(), l_w);
+          }
+        }
+      }
+    }
+  }
+
   this->p_i->make_widget<project_widget,
                          assets_filter_widget,
                          assets_file_widgets,
@@ -179,7 +192,7 @@ void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
   for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
     auto l_w = g_main_loop().attach<gui::windows_proc>(l_item.construct()).get<gui::window_panel>();
-    p_i->windows_.push_back(l_w);
+    p_i->windows_.emplace(l_w->title(), l_w);
   }
 }
 void main_menu_bar::succeeded() {

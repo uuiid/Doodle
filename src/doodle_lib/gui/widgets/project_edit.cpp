@@ -14,7 +14,8 @@ namespace {
 constexpr auto init = []() {
   entt::meta<project_edit>()
       .type()
-      .base<gui::base_window>();
+      .prop("name"_hs, std::string{project_edit::name})
+      .base<gui::window_panel>();
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};

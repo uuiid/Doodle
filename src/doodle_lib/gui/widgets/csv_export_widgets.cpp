@@ -32,7 +32,8 @@ namespace {
 constexpr auto init = []() {
   entt::meta<csv_export_widgets>()
       .type()
-      .base<gui::base_window>();
+      .prop("name"_hs, std::string{csv_export_widgets::name})
+      .base<gui::window_panel>();
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};

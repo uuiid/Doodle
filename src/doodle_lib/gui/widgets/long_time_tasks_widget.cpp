@@ -19,7 +19,8 @@ namespace {
 constexpr auto init = []() {
   entt::meta<long_time_tasks_widget>()
       .type()
-      .base<gui::base_window>();
+      .prop("name"_hs, std::string{long_time_tasks_widget::name})
+      .base<gui::window_panel>();
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
