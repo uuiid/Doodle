@@ -4,6 +4,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/long_task/process_pool.h>
 namespace doodle::gui {
 /**
  * @brief 基本窗口
@@ -45,6 +46,22 @@ class DOODLELIB_API base_window {
    * @param in_data 传入的自定义数据
    */
   virtual void update(
+      const chrono::system_clock::duration& in_duration,
+      void* in_data);
+};
+
+class DOODLELIB_API windows_proc : public process_t<windows_proc> {
+ public:
+  std::unique_ptr<base_window> windows_;
+
+  explicit windows_proc(std::unique_ptr<base_window>&& in_ptr)
+      : windows_(std::move(in_ptr)) {}
+
+ [[maybe_unused]] void init();
+ [[maybe_unused]] void succeeded();
+ [[maybe_unused]] void failed();
+ [[maybe_unused]] void aborted();
+ [[maybe_unused]] void update(
       const chrono::system_clock::duration& in_duration,
       void* in_data);
 };

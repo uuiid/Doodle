@@ -83,4 +83,20 @@ class init_windows_panel_
 
 }  // namespace
 
+void windows_proc::init() {
+  windows_->init();
+}
+void windows_proc::succeeded() {
+  windows_->succeeded();
+}
+void windows_proc::failed() {
+  windows_->failed();
+}
+void windows_proc::aborted() {
+  windows_->aborted();
+}
+void windows_proc::update(const chrono::system_clock::duration &in_duration,
+                          void *in_data) {
+  windows_->update(in_duration, in_data);
+}
 }  // namespace doodle::gui
