@@ -4,7 +4,7 @@
 
 #include "base_window.h"
 #include <doodle_lib/core/core_set.h>
-
+#include <doodle_lib/core/init_register.h>
 namespace doodle::gui {
 
 void base_window::failed() {}
@@ -21,11 +21,15 @@ void base_window::update(const chrono::system_clock::duration &in_duration, void
 }
 
 void window_panel::read_setting() {
-  (*core_set::getSet().json_data)[title()].get_to(setting);
+  auto l_json = core_set::getSet().json_data;
+  if (l_json->count(title()))
+    (*l_json)[title()].get_to(setting);
   //  core_set_init{}.read_setting(title(), setting);
 }
 void window_panel::save_setting() const {
-  (*core_set::getSet().json_data)[title()] = setting;
+  auto l_json = core_set::getSet().json_data;
+  if (l_json->count(title()))
+    (*l_json)[title()] = setting;
   //  core_set_init{}.save_setting(title(), setting);
 }
 void window_panel::init() {
@@ -63,5 +67,21 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
 void modal_window::close() {
   imgui::CloseCurrentPopup();
 }
+namespace {
+constexpr auto init_base_windows = []() {
+  entt::meta<base_window>().type();
+};
+
+class init_base_windows_
+    : public init_register::registrar_lambda<init_base_windows, 1> {};
+
+constexpr auto init_windows_panel = []() {
+  entt::meta<window_panel>().type().base<base_window>();
+};
+
+class init_windows_panel_
+    : public init_register::registrar_lambda<init_windows_panel, 2> {};
+
+}  // namespace
 
 }  // namespace doodle::gui
