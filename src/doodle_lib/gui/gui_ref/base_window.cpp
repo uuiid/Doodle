@@ -32,11 +32,16 @@ base_window *base_window::find_window_by_title(const string &in_title) {
   else
     return nullptr;
 }
+bool base_window::is_show() const {
+  return show;
+}
 
 void window_panel::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
     (*l_json)[title()].get_to(setting);
+  if (setting.count("show"))
+    show = std::get<bool>(setting["show"]);
   //  core_set_init{}.read_setting(title(), setting);
 }
 void window_panel::save_setting() const {
@@ -76,9 +81,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
         render();
       };
 }
-void modal_window::close() {
-  imgui::CloseCurrentPopup();
-}
+ 
 namespace {
 constexpr auto init_base_windows = []() {
   entt::meta<base_window>().type();
@@ -112,6 +115,8 @@ void windows_proc::aborted() {
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
   windows_->update(in_duration, in_data);
+  if (!windows_->is_show())
+    succeed();
 }
 windows_proc::~windows_proc() {
   g_reg()->set<base_window::list>().erase(windows_);

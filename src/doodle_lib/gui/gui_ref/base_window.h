@@ -5,6 +5,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/long_task/process_pool.h>
+#include <boost/signals2.hpp>
 namespace doodle::gui {
 
 /**
@@ -51,6 +52,19 @@ class DOODLELIB_API base_window {
   virtual void update(
       const chrono::system_clock::duration& in_duration,
       void* in_data);
+  /**
+   * @brief 判断是否显示
+   * @return
+   */
+  [[nodiscard]] bool is_show() const;
+
+  boost::signals2::signal<void()> close;
+
+  /**
+   * @brief 安装窗口名称寻找窗口
+   * @param in_title
+   * @return
+   */
   static base_window* find_window_by_title(const std::string& in_title);
 };
 
@@ -85,7 +99,7 @@ class DOODLELIB_API window_panel : public base_window {
   virtual void read_setting();
   virtual void save_setting() const;
 
-  const string& title() const override;
+  [[nodiscard]] const string& title() const override;
   void init() override;
   void succeeded() override;
   void aborted() override;
