@@ -321,7 +321,11 @@ class assets_filter_factory : public gui::filter_factory_base {
               l_h.emplace_or_replace<assets>(i->data.data);
               l_h.patch<database>(database::save);
             }
-            g_reg()->ctx<assets_filter_widget>().refresh(false);
+            if (auto* l_win = gui::base_window::find_window_by_title(
+                    std::string{assets_filter_widget::name});
+                l_win) {
+              dynamic_cast<assets_filter_widget*>(l_win)->refresh(false);
+            };
           }
         };
         l_node&& [this, i]() {

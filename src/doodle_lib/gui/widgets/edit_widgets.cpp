@@ -34,7 +34,7 @@ constexpr auto init = []() {
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
 
-}
+}  // namespace
 namespace gui {
 class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;
@@ -111,7 +111,12 @@ class assets_edit : public edit_interface {
 
       l_ass.set_path(l_out);
       in.patch<assets>();
-      g_reg()->ctx<assets_filter_widget>().refresh(false);
+      if (auto *l_win = gui::base_window::find_window_by_title(
+              std::string{assets_filter_widget::name});
+          l_win) {
+        dynamic_cast<assets_filter_widget *>(l_win)->refresh(false);
+      };
+
     }
   }
 };
