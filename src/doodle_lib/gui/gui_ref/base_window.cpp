@@ -102,18 +102,18 @@ void windows_proc::init() {
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::failed() {
   windows_->failed();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::aborted() {
   windows_->aborted();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
   windows_->update(in_duration, in_data);
+}
+windows_proc::~windows_proc() {
+  g_reg()->set<base_window::list>().erase(windows_);
 }
 }  // namespace doodle::gui

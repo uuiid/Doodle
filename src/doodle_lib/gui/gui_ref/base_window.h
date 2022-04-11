@@ -63,7 +63,7 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
       : owner_(std::move(in_windows)),
         windows_(&entt::any_cast<base_window&>(owner_)) {
   }
-
+  ~windows_proc() override;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
