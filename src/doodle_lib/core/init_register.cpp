@@ -33,18 +33,9 @@ init_register& init_register::instance() noexcept {
   return l_r;
 }
 void init_register::init_run() {
-  for (auto&& ref_ : entt::resolve()) {
-    bool is_ch{false};
-    for (auto&& l_base : ref_.base()) {
-      if (l_base == entt::resolve<base_registrar>()) {
-        is_ch = true;
-        break;
-      }
-    }
-    if (is_ch) {
-      auto l_i = ref_.construct();
-      l_i.cast<base_registrar&>().init();
-    }
+  for (auto&& ref_ : get_derived_class<base_registrar>()) {
+    auto l_i = ref_.construct();
+    l_i.cast<base_registrar&>().init();
   }
 }
 init_register::init_register()  = default;

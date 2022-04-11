@@ -56,6 +56,20 @@ class init_register {
  public:
   virtual ~init_register();
   static init_register& instance() noexcept;
+
+  template <typename Base_T>
+  std::vector<entt::meta_type> get_derived_class() {
+    std::vector<entt::meta_type> derived_list{};
+    for (auto&& ref_ : entt::resolve()) {
+      for (auto&& l_base : ref_.base()) {
+        if (l_base == entt::resolve<Base_T>()) {
+          derived_list.push_back(ref_);
+          break;
+        }
+      }
+    }
+    return derived_list;
+  }
 };
 // template <typename T>
 // T& init_register::registrar<T>::registered =
