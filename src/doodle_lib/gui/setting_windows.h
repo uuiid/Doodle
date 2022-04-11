@@ -51,8 +51,7 @@ namespace doodle {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows : public process_t<setting_windows>,
-                                      public gui::window_panel {
+class DOODLELIB_API setting_windows : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 

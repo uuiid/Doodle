@@ -19,8 +19,7 @@ class assets_file_widgets;
  *
  */
 class DOODLELIB_API assets_file_widgets
-    : public process_t<assets_file_widgets>,
-      public gui::window_panel {
+    : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 

@@ -12,8 +12,7 @@
 namespace doodle {
 
 class DOODLELIB_API long_time_tasks_widget
-    : public process_t<long_time_tasks_widget>,
-      public gui::window_panel {
+    : public gui::window_panel {
   entt::handle p_current_select;
 
  public:

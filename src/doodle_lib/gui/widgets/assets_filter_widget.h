@@ -97,8 +97,7 @@ class filter_factory_t : public filter_factory_base {
  *
  */
 class DOODLELIB_API assets_filter_widget
-    : public process_t<assets_filter_widget>,
-      public gui::window_panel {
+    : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_impl;
 

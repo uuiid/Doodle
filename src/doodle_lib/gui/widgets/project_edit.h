@@ -10,8 +10,7 @@
 namespace doodle {
 
 class DOODLELIB_API project_edit
-    : public process_t<project_edit>,
-      public gui::window_panel {
+    : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 

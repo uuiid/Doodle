@@ -26,8 +26,7 @@ class edit_assets_data {
  *
  */
 class DOODLELIB_API edit_widgets
-    : public process_t<edit_widgets>,
-      public gui::window_panel{
+    : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 

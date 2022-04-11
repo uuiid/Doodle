@@ -16,8 +16,7 @@ namespace doodle {
  *
  */
 class DOODLELIB_API project_widget
-    : public process_t<project_widget>,
-      public gui::window_panel {
+    : public gui::window_panel {
  public:
   project_widget();
   ~project_widget() override;

@@ -9,8 +9,7 @@ namespace doodle {
 namespace gui {
 
 class DOODLELIB_API csv_export_widgets
-    : public process_t<csv_export_widgets>,
-      public window_panel {
+    : public window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
   using table_line = std::array<std::string, 13>;
