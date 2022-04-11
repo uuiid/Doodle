@@ -586,22 +586,12 @@ void edit_widgets::init() {
         this->p_i->only_rand = false;
       }));
 }
-void edit_widgets::succeeded() {
-  g_reg()->unset<edit_widgets>();
-  this->clear_handle();
-}
+
 void edit_widgets::failed() {
-  g_reg()->unset<edit_widgets>();
   this->clear_handle();
 }
-void edit_widgets::aborted() {
-  g_reg()->unset<edit_widgets>();
-  this->clear_handle();
-}
-void edit_widgets::update(const chrono::duration<
-                              chrono::system_clock::rep,
-                              chrono::system_clock::period> &,
-                          void *data) {
+
+void edit_widgets::render() {
   dear::Disabled _l_rand{p_i->only_rand};
 
   dear::TreeNode{"添加"} && [this]() {
@@ -668,6 +658,9 @@ void edit_widgets::notify_file_list() const {
 
     g_reg()->ctx<core_sig>().filter_handle(l_vector);
   }
+}
+string edit_widgets::title() const {
+  return std::string{name};
 }
 
 }  // namespace doodle

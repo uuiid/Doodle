@@ -77,19 +77,11 @@ void csv_export_widgets::init() {
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
   p_i->export_path.data = p_i->export_path.path.generic_string();
 }
-void csv_export_widgets::succeeded() {
-  g_reg()->unset<csv_export_widgets>();
-}
+
 void csv_export_widgets::failed() {
-  g_reg()->unset<csv_export_widgets>();
 }
-void csv_export_widgets::aborted() {
-  g_reg()->unset<csv_export_widgets>();
-}
-void csv_export_widgets::update(const chrono::duration<
-                                    chrono::system_clock::rep,
-                                    chrono::system_clock::period> &,
-                                void *data) {
+
+void csv_export_widgets::render() {
   if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data))
     p_i->export_path.path = p_i->export_path.data;
   ImGui::SameLine();
@@ -231,6 +223,9 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
                ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
                : end_it->get<time_point_wrap>();
   }
+}
+string csv_export_widgets::title() const {
+  return std::string{name};
 }
 }  // namespace gui
 }  // namespace doodle

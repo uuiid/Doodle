@@ -40,15 +40,14 @@ void project_edit::init() {
     in.data->init(p_i->p_h);
   });
 }
-void project_edit::succeeded() {
-}
+
 void project_edit::failed() {
 }
-void project_edit::aborted() {
+string project_edit::title() const {
+  return std::string{name};
 }
-void project_edit::update(const chrono::duration<chrono::system_clock::rep,
-                                                 chrono::system_clock::period>&,
-                          void* data) {
+
+void project_edit::render() {
   p_i->data_edit.render(p_i->p_h);
   ImGui::Separator();
   ranges::for_each(p_i->p_edits, [this](impl::cache& in) {

@@ -4,11 +4,13 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_lib/gui/gui_ref/base_window.h>
 namespace doodle {
 namespace gui {
 
-class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
+class DOODLELIB_API csv_export_widgets
+    : public process_t<csv_export_widgets>,
+      public window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
   using table_line = std::array<std::string, 13>;
@@ -34,20 +36,16 @@ class DOODLELIB_API csv_export_widgets : public process_t<csv_export_widgets> {
   void export_csv(const std::vector<entt::handle>& in_list,
                   const FSys::path& in_export_file_path);
 
-
-
  public:
   csv_export_widgets();
   ~csv_export_widgets();
 
   constexpr static std::string_view name{"导出csv表格"};
 
-
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  [[nodiscard]] string title() const override;
+  void init() override;
+  void failed() override;
+  void render() override;
 };
 
 }  // namespace gui

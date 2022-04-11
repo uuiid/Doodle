@@ -7,7 +7,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-
 #include <boost/signals2.hpp>
 namespace doodle {
 
@@ -54,6 +53,7 @@ class DOODLELIB_API edit_widgets
    */
   constexpr static std::string_view name{"编辑"};
 
+  [[nodiscard]] string title() const override;
   /**
    * @brief 初始化窗口
    *
@@ -63,27 +63,19 @@ class DOODLELIB_API edit_widgets
    *
    *
    */
-  [[maybe_unused]] void init();
-  /**
-   * @brief 成功结束任务
-   *
-   */
-  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void init() override;
+
   /**
    * @brief 失败结束任务
    *
    */
-  [[maybe_unused]] void failed();
-  /**
-   * @brief 用户中止时结束任务
-   *
-   */
-  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void failed() override;
+
   /**
    * @brief 每帧刷新函数
    *
    * @param data 自定义数据
    */
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  [[maybe_unused]] void render() override;
 };
 }  // namespace doodle

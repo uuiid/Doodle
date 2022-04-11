@@ -5,11 +5,13 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <entt/entt.hpp>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle {
 
-class DOODLELIB_API project_edit : public process_t<project_edit> {
+class DOODLELIB_API project_edit
+    : public process_t<project_edit>,
+      public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -17,11 +19,10 @@ class DOODLELIB_API project_edit : public process_t<project_edit> {
   project_edit();
   ~project_edit() override;
   constexpr static std::string_view name{"项目设置"};
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  virtual string title() const override;
+  void init() override;
+  void failed() override;
+  void render() override;
 };
 
 }  // namespace doodle

@@ -141,7 +141,6 @@ void main_menu_bar::menu_windows() {
                          setting_windows,
                          long_time_tasks_widget,
                          edit_widgets,
-                         opencv_player_widget,
                          gui::csv_export_widgets,
                          project_edit>();
 }
