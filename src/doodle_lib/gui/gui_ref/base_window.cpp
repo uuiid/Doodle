@@ -20,6 +20,19 @@ void base_window::update(const chrono::system_clock::duration &in_duration, void
       };
 }
 
+base_window *base_window::find_window_by_title(const string &in_title) {
+  auto &l_list = g_reg()->ctx_or_set<base_window::list>();
+  auto it      = ranges::find_if(
+           l_list,
+           [&](const base_window *in_window) -> bool {
+        return in_window->title() == in_title;
+           });
+  if (it != l_list.end())
+    return *it;
+  else
+    return nullptr;
+}
+
 void window_panel::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
@@ -84,16 +97,20 @@ class init_windows_panel_
 }  // namespace
 
 void windows_proc::init() {
+  g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
   windows_->init();
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::failed() {
   windows_->failed();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::aborted() {
   windows_->aborted();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {

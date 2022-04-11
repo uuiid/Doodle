@@ -30,6 +30,8 @@
 #include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/gui/widgets/project_edit.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/core/init_register.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle {
 class main_menu_bar::impl {
@@ -37,6 +39,7 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
+  std::vector<gui::base_window *> windows_;
 
   template <typename Widget_T>
   void _make_widget_() {
@@ -134,7 +137,6 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  //  auto k_prj = g_reg()->try_ctx<project_widget>();
   this->p_i->make_widget<project_widget,
                          assets_filter_widget,
                          assets_file_widgets,
@@ -171,23 +173,14 @@ void main_menu_bar::menu_tool() {
     toolkit::deleteUeCache();
   if (dear::MenuItem("修改ue4缓存位置"))
     toolkit::modifyUeCachePath();
-  // if (ImGui::MenuItem("创建文件关联")) {
-
-  // }
-  // dear::HelpMarker{"需要管理员权限"};
 }
 
 void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
-
-  p_i->find_show<project_widget,
-                 assets_filter_widget,
-                 assets_file_widgets,
-                 setting_windows,
-                 long_time_tasks_widget,
-                 edit_widgets,
-                 gui::csv_export_widgets,
-                 opencv_player_widget>();
+  for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+    auto l_w = g_main_loop().attach<gui::windows_proc>(l_item.construct()).get<gui::window_panel>();
+    p_i->windows_.push_back(l_w);
+  }
 }
 void main_menu_bar::succeeded() {
 }

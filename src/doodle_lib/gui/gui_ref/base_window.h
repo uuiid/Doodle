@@ -6,6 +6,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/long_task/process_pool.h>
 namespace doodle::gui {
+
 /**
  * @brief 基本窗口
  */
@@ -17,6 +18,8 @@ class DOODLELIB_API base_window {
   virtual void render() = 0;
 
  public:
+  using list                                        = std::set<base_window*>;
+
   base_window()                                     = default;
   virtual ~base_window()                            = default;
   /**
@@ -48,20 +51,24 @@ class DOODLELIB_API base_window {
   virtual void update(
       const chrono::system_clock::duration& in_duration,
       void* in_data);
+  static base_window* find_window_by_title(const std::string& in_title);
 };
 
 class DOODLELIB_API windows_proc : public process_t<windows_proc> {
  public:
-  std::unique_ptr<base_window> windows_;
+  entt::any owner_;
+  base_window* windows_;
 
-  explicit windows_proc(std::unique_ptr<base_window>&& in_ptr)
-      : windows_(std::move(in_ptr)) {}
+  explicit windows_proc(entt::any&& in_windows)
+      : owner_(std::move(in_windows)),
+        windows_(&entt::any_cast<base_window&>(owner_)) {
+  }
 
- [[maybe_unused]] void init();
- [[maybe_unused]] void succeeded();
- [[maybe_unused]] void failed();
- [[maybe_unused]] void aborted();
- [[maybe_unused]] void update(
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(
       const chrono::system_clock::duration& in_duration,
       void* in_data);
 };
@@ -78,7 +85,7 @@ class DOODLELIB_API window_panel : public base_window {
   virtual void read_setting();
   virtual void save_setting() const;
 
-  virtual const string& title() const override;
+  const string& title() const override;
   void init() override;
   void succeeded() override;
   void aborted() override;
