@@ -26,7 +26,6 @@ set(
         file_warp/ue4_project.h
         gui/base_windwos.h
         gui/setting_windows.h
-        gui/widget_register.h
         gui/main_menu_bar.h
         gui/main_status_bar.h
         gui/get_input_dialog.h
@@ -137,7 +136,6 @@ set(
         file_warp/opencv_read_player.cpp
         file_warp/ue4_project.cpp
         gui/setting_windows.cpp
-        gui/widget_register.cpp
         gui/main_menu_bar.cpp
         gui/main_status_bar.cpp
         gui/get_input_dialog.cpp

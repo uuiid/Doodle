@@ -18,7 +18,6 @@
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/gui/base_windwos.h>
 #include <doodle_lib/gui/setting_windows.h>
-#include <doodle_lib/gui/widget_register.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
