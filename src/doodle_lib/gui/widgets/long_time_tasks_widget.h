@@ -13,17 +13,16 @@ namespace doodle {
 
 class DOODLELIB_API long_time_tasks_widget
     : public process_t<long_time_tasks_widget>,
-      public gui::window_panel{
+      public gui::window_panel {
   entt::handle p_current_select;
 
  public:
   long_time_tasks_widget();
 
-
   constexpr static std::string_view name{"队列"};
-  virtual string title() const override;
-  [[maybe_unused]] void init() override;
-  [[maybe_unused]] void failed() override;
-  [[maybe_unused]] void render() override;
+  [[nodiscard]] string title() const override;
+  void init() override;
+  void failed() override;
+  void render() override;
 };
 }  // namespace doodle
