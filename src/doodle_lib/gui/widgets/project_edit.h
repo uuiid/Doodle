@@ -19,7 +19,7 @@ class DOODLELIB_API project_edit
   project_edit();
   ~project_edit() override;
   constexpr static std::string_view name{"项目设置"};
-  virtual string title() const override;
+  [[nodiscard]] string title() const override;
   void init() override;
   void failed() override;
   void render() override;
