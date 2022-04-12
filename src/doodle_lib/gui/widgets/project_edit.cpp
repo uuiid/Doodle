@@ -35,11 +35,14 @@ project_edit::project_edit()
 project_edit::~project_edit() = default;
 
 void project_edit::init() {
-  p_i->p_h = project::get_current();
-  p_i->data_edit.init(p_i->p_h);
-  ranges::for_each(p_i->p_edits, [this](impl::cache& in) {
-    in.data->init(p_i->p_h);
-  });
+  if(project::has_prj()) {
+    p_i->p_h = project::get_current();
+    p_i->data_edit.init(p_i->p_h);
+    ranges::for_each(p_i->p_edits, [this](impl::cache& in) {
+      in.data->init(p_i->p_h);
+    });
+  }else
+    close();
 }
 
 void project_edit::failed() {
