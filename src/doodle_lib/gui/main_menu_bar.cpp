@@ -90,48 +90,33 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  boost::hana::for_each(gui::config::menu_w::menu_list, [this](const std::string_view &in_view) {
-    std::string key{in_view};
-    auto &&l_win = p_i->windows_[key];
-    if (dear::MenuItem(in_view.data(), l_win->is_show())) {
-      if (!l_win->is_show()) {
-        for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-          if (l_item.prop("name"_hs).value() == key) {
-            auto l_win_obj  = l_item.construct();
-            auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
-            auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
-            g_main_loop().attach<gui::windows_proc>(l_wrap_win,
-                                                    l_win_ptr,
-                                                    std::move(l_win_obj),
-                                                    true);
-            p_i->windows_[l_win_ptr->title()] = l_wrap_win;
-          }
+  std::apply([this](const auto&... in_item) {
+    (this->open_by_name_widget(in_item), ...);
+  },
+             gui::config::menu_w::menu_list);
+}
+
+void main_menu_bar::open_by_name_widget(const std::string_view &in_view) {
+  std::string key{in_view};
+  auto &&l_win = this->p_i->windows_[key];
+  if (dear::MenuItem(in_view.data(), l_win->is_show())) {
+    if (!l_win->is_show()) {
+      for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+        if (l_item.prop("name"_hs).value() == key) {
+          auto l_win_obj  = l_item.construct();
+          auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
+          auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
+          g_main_loop().attach<gui::windows_proc>(l_wrap_win,
+                                                  l_win_ptr,
+                                                  std::move(l_win_obj),
+                                                  true);
+          this->p_i->windows_[l_win_ptr->title()] = l_wrap_win;
         }
-      } else {
-        l_win->close();
       }
+    } else {
+      l_win->close();
     }
-  });
-  //    for (auto &l_win : p_i->windows_) {
-  //      if (dear::MenuItem(l_win.first.c_str(), l_win.second->is_show())) {
-  //        if (!l_win.second->is_show()) {
-  //          for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-  //            if (l_item.prop("name"_hs).value() == l_win.first) {
-  //              auto l_win_obj  = l_item.construct();
-  //              auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
-  //              auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
-  //              g_main_loop().attach<gui::windows_proc>(l_wrap_win,
-  //                                                      l_win_ptr,
-  //                                                      std::move(l_win_obj),
-  //                                                      true);
-  //              p_i->windows_[l_win_ptr->title()] = l_wrap_win;
-  //            }
-  //          }
-  //        } else {
-  //          l_win.second->close();
-  //        }
-  //      }
-  //    }
+  }
 }
 
 void main_menu_bar::menu_tool() {
@@ -157,7 +142,8 @@ void main_menu_bar::menu_tool() {
 
 void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
-  for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+  auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
+  for (auto &&l_item : k_list) {
     if (auto l_win = l_item.construct(); l_win) {
       auto l_win_ptr  = l_win.try_cast<gui::base_window>();
       auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();

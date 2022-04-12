@@ -12,6 +12,7 @@ class DOODLELIB_API main_menu_bar : public process_t<main_menu_bar> {
   std::unique_ptr<impl> p_i;
 
  protected:
+  void open_by_name_widget(const std::string_view& in_view);
   virtual void menu_file();
   virtual void menu_windows();
   virtual void menu_edit();

@@ -39,17 +39,20 @@ constexpr const std::string_view csv_export{"导出csv表格"};
 constexpr const std::string_view ue4_widget{"ue4工具"};
 constexpr const std::string_view comm_maya_tool{"maya工具"};
 constexpr const std::string_view comm_create_video{"创建视频"};
-constexpr const auto menu_list = std::make_tuple(project_widget,
-                                                 edit_,
-                                                 assets_filter,
-                                                 assets_file,
-                                                 long_time_tasks,
-                                                 setting,
-                                                 project_edit,
-                                                 csv_export,
-                                                 ue4_widget,
-                                                 comm_maya_tool,
-                                                 comm_create_video);
+constexpr const auto menu_base =
+    std::make_tuple(project_widget,
+                    edit_,
+                    assets_filter,
+                    assets_file,
+                    long_time_tasks,
+                    setting,
+                    project_edit);
+constexpr const auto menu_list =
+    std::tuple_cat(menu_base,
+                   std::make_tuple(csv_export,
+                                   ue4_widget,
+                                   comm_maya_tool,
+                                   comm_create_video));
 
 }  // namespace gui::config::menu_w
 }  // namespace doodle

@@ -13,16 +13,14 @@
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>
 
+#include <boost/hana/ext/std/tuple.hpp>
+#include <maya_plug/configure/static_value.h>
 namespace doodle::maya_plug {
 
 void maya_menu_bar::menu_tool() {
-  if (dear::MenuItem("引用工具")) {
-    make_windows<reference_attr_setting>();
-  }
-  if (dear::MenuItem("场景检查工具"))
-    make_windows<comm_check_scenes>();
-
-  if (dear::MenuItem("qcloth布料制作"))
-    make_windows<create_sim_cloth>();
+  std::apply([this](const auto&... in_item) {
+    (this->open_by_name_widget(in_item), ...);
+  },
+             gui::config::maya_plug::menu::menu_maya);
 }
 }  // namespace doodle::maya_plug

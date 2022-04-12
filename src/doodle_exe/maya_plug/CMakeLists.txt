@@ -61,6 +61,7 @@ set(doodle_maya_plug_cpp
         data/find_duplicate_poly.h
         maya_comm/find_duplicate_poly_comm.h
         maya_comm/find_duplicate_poly_comm.cpp
+        configure/static_value.h
         )
 if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
