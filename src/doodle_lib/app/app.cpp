@@ -193,7 +193,7 @@ void app::loop_one() {
       stop_app();
     }
   }
-  if (stop_)
+  if (is_stop())
     return;
 
   // Start the Dear ImGui frame
@@ -263,7 +263,7 @@ void app::hide_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
 void app::show_windows() {
-  if (!stop_)
+  if (!is_stop())
     ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {

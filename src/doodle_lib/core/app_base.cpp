@@ -63,9 +63,7 @@ app_base& app_base::Get() {
   return *self;
 }
 std::int32_t app_base::run() {
-  while ((!g_main_loop().empty() ||
-          !g_bounded_pool().empty()) ||
-         !stop_) {
+  while (!is_stop()) {
     loop_one();
   }
   return 0;
@@ -134,6 +132,11 @@ void app_base::stop_app(bool in_stop) {
 }
 void app_base::post_quit_message() {
   ::PostQuitMessage(0);
+}
+bool app_base::is_stop() const {
+  return g_main_loop().empty() &&
+         g_bounded_pool().empty() &&
+         stop_;
 }
 
 app_base::~app_base() = default;

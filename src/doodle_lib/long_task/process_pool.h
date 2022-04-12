@@ -316,15 +316,12 @@ class scheduler {
    */
   void abort(const bool immediately = false) {
     std::lock_guard l_g{mutex_};
-    decltype(handlers) exec;
-    exec.swap(handlers);
-
-    for (auto &&handler : exec) {
+    for (auto &&handler : handlers) {
       handler.abort(handler, immediately);
     }
-
-    std::move(handlers.begin(), handlers.end(), std::back_inserter(exec));
-    handlers.swap(exec);
+    for (auto &&handler : handlers_next) {
+      handler.abort(handler, immediately);
+    }
   }
 
   Timiter timiter_;

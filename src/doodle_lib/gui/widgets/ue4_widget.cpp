@@ -105,7 +105,7 @@ void ue4_widget::render() {
   /// 开始导入
   if (ImGui::Button(*p_i->import_)) {
     this->import_ue4_prj();
-    app::Get().stop_ = p_i->quit_.data;
+    app::Get().stop_app();
   }
 }
 void ue4_widget::import_ue4_prj() {
