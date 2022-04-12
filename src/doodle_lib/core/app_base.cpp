@@ -64,7 +64,7 @@ app_base& app_base::Get() {
 }
 std::int32_t app_base::run() {
   while ((!g_main_loop().empty() ||
-          !g_bounded_pool().empty()) &&
+          !g_bounded_pool().empty()) ||
          !stop_) {
     loop_one();
   }
@@ -126,10 +126,11 @@ bool app_base::chick_authorization() {
 void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);
-  g_main_loop().attach<one_process_t>([this]() {
-    core_set_init{}.write_file();
-    this->stop_ = true;
-  });
+  if (!stop_)
+    g_main_loop().attach<one_process_t>([this]() {
+      core_set_init{}.write_file();
+    });
+  this->stop_ = true;
 }
 void app_base::post_quit_message() {
   ::PostQuitMessage(0);

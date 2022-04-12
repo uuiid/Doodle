@@ -190,9 +190,7 @@ void app::loop_one() {
     /// 如果时退出消息, 直接设置停止
     if (msg.message == WM_QUIT) {
       DOODLE_LOG_INFO("开始退出");
-      g_main_loop().abort();
-      g_bounded_pool().abort();
-      //      stop_ = true;
+      stop_app();
     }
   }
   if (stop_)
