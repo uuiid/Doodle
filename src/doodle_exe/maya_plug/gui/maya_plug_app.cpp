@@ -19,4 +19,6 @@ void maya_plug_app::load_windows() {
 void maya_plug_app::hide_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
+void maya_plug_app::post_quit_message() {
+}
 }  // namespace doodle::maya_plug
