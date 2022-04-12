@@ -83,7 +83,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
   }
   begin_fun.clear();
 
-  dear::PopupModal{title().data(), &show} &&
+  dear::PopupModal{title().data(), &show, ImGuiWindowFlags_NoSavedSettings} &&
       [&]() {
         render();
       };
