@@ -16,7 +16,7 @@ namespace doodle {
 project_widget::project_widget()
     : p_c() {
   title_name_ = std::string{name};
-  show = true;
+  show_       = true;
 
 }
 

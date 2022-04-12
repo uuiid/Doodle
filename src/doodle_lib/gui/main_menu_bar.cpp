@@ -114,7 +114,7 @@ void main_menu_bar::menu_windows() {
           if (l_item.prop("name"_hs).value() == l_win.first) {
             auto l_win_obj                        = l_item.construct();
             auto l_win_ptr                        = l_win_obj.try_cast<gui::base_window>();
-
+            l_win_ptr->show();
             auto l_w                              = g_main_loop().attach<gui::windows_proc>(l_win_ptr, std::move(l_win_obj)).get<gui::windows_proc>();
             p_i->windows_[l_w->windows_->title()] = l_w->warp_proc_;
           }

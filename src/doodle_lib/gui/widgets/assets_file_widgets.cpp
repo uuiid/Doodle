@@ -173,7 +173,7 @@ class assets_file_widgets::impl {
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
-  show = true;
+  show_       = true;
 
   this->switch_rander();
 }

@@ -15,7 +15,7 @@ namespace doodle::gui {
 class DOODLELIB_API base_window {
  protected:
   std::vector<std::function<void()>> begin_fun;
-  bool show{false};
+  bool show_{false};
 
   virtual void render() = 0;
 

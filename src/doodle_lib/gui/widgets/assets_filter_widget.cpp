@@ -510,7 +510,7 @@ class assets_filter_widget::impl {
 assets_filter_widget::assets_filter_widget()
     : p_impl(std::make_unique<impl>()) {
   title_name_ = std::string{name};
-  show = true;
+  show_       = true;
 
 }
 assets_filter_widget::~assets_filter_widget() = default;

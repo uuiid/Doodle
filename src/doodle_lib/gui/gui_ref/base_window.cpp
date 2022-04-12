@@ -14,7 +14,7 @@ void base_window::update(const chrono::system_clock::duration &in_duration, void
   }
   begin_fun.clear();
 
-  dear::Begin{title().c_str(), &show} &&
+  dear::Begin{title().c_str(), &show_} &&
       [&]() {
         this->render();
       };
@@ -33,20 +33,20 @@ base_window *base_window::find_window_by_title(const string &in_title) {
     return nullptr;
 }
 bool base_window::is_show() const {
-  return show;
+  return show_;
 }
 void base_window::show(bool in_show) {
-  show = true;
+  show_ = true;
 }
 
 void window_panel::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
     (*l_json)[title()].get_to(setting);
-  if (!setting.count("show"))
-    setting["show"] = show;
+  if (!setting.count("show_"))
+    setting["show_"] = show_;
 
-  show = std::get<bool>(setting["show"]);
+  show_ = std::get<bool>(setting["show_"]);
 
   //  core_set_init{}.read_setting(title(), setting);
 }
@@ -104,6 +104,10 @@ void windows_proc::init() {
   });
   if (windows_->is_show())
     windows_->init();
+  else if(auto l_d = dynamic_cast<window_panel*>(windows_);l_d){
+    l_d->read_setting();
+  }
+
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
