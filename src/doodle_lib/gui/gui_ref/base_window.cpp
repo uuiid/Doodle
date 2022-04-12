@@ -40,10 +40,10 @@ void window_panel::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
     (*l_json)[title()].get_to(setting);
-  if (setting.count("show"))
-    show = std::get<bool>(setting["show"]);
-  else
-    show = true;
+  if (!setting.count("show"))
+    setting["show"] = true;
+
+  show = std::get<bool>(setting["show"]);
   if (!show)
     close();
   //  core_set_init{}.read_setting(title(), setting);
