@@ -77,7 +77,6 @@ void setting_windows::init() {
 }
 void setting_windows::succeeded() {
   gui::window_panel::succeeded();
-  save();
 }
 
 void setting_windows::render() {

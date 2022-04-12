@@ -55,7 +55,6 @@ doodle_lib::doodle_lib()
     g_reg()->set<database::ref_data>(in_handle.get<database>());
     core_set::getSet().add_recent_project(g_reg()->ctx<database_info>().path_);
     g_reg()->set<root_ref>(in_handle);
-    core_set_init{}.write_file();
   });
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {
     g_reg()->ctx<status_info>().need_save = false;

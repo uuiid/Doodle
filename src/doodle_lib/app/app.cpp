@@ -187,8 +187,13 @@ void app::loop_one() {
   while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
-    if (msg.message == WM_QUIT)
-      stop_app();
+    /// 如果时退出消息, 直接设置停止
+    if (msg.message == WM_QUIT) {
+      DOODLE_LOG_INFO("开始退出");
+      g_main_loop().abort();
+      g_bounded_pool().abort();
+      //      stop_ = true;
+    }
   }
   if (stop_)
     return;
@@ -258,7 +263,6 @@ bool app::valid() const {
 }
 void app::hide_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
-  stop_app();
   ::DestroyWindow(p_hwnd);
 }
 void app::show_windows() {
