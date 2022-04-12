@@ -263,7 +263,6 @@ bool app::valid() const {
 }
 void app::hide_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
-  ::DestroyWindow(p_hwnd);
 }
 void app::show_windows() {
   if (!stop_)
