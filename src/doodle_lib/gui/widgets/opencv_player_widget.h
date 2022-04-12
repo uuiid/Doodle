@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/base_windwos.h>
 
 namespace doodle {
 class DOODLELIB_API opencv_player_widget : public process_t<opencv_player_widget> {

@@ -24,7 +24,6 @@ set(
         file_warp/maya_file.h
         file_warp/opencv_read_player.h
         file_warp/ue4_project.h
-        gui/base_windwos.h
         gui/setting_windows.h
         gui/main_menu_bar.h
         gui/main_status_bar.h
