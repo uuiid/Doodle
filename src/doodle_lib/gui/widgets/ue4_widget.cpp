@@ -48,33 +48,19 @@ class ue4_widget::impl {
 
 ue4_widget::ue4_widget()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 ue4_widget::~ue4_widget() = default;
 
 void ue4_widget::init() {
+  gui::window_panel::init();
   p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
   p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
   p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
   g_reg()->set<ue4_widget &>(*this);
 }
 
-void ue4_widget::succeeded() {
-  g_reg()->unset<ue4_widget>();
-}
-
-void ue4_widget::failed() {
-  g_reg()->unset<ue4_widget>();
-}
-
-void ue4_widget::aborted() {
-  g_reg()->unset<ue4_widget>();
-}
-
-void ue4_widget::update(
-    const std::chrono::duration<
-        std::chrono::system_clock::rep,
-        std::chrono::system_clock::period> &,
-    void *data) {
+void ue4_widget::render() {
   if (ImGui::InputText(*p_i->ue4_prj.gui_name, &p_i->ue4_prj.data)) {
     p_i->ue4_prj.path    = p_i->ue4_prj.data;
     p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;

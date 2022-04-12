@@ -125,12 +125,6 @@ void main_menu_bar::menu_windows() {
   }
 }
 void main_menu_bar::menu_edit() {
-  if (dear::MenuItem(u8"maya 工具"))
-    make_windows<comm_maya_tool>();
-  if (dear::MenuItem(u8"创建视频"))
-    make_windows<comm_create_video>();
-  if (dear::MenuItem(u8"ue4 工具"))
-    make_windows<ue4_widget>();
 }
 void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))

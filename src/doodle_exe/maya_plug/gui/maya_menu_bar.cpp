@@ -22,9 +22,6 @@ void maya_menu_bar::menu_tool() {
   if (dear::MenuItem("场景检查工具"))
     make_windows<comm_check_scenes>();
 
-  // if (dear::MenuItem("拍屏工具"))
-  //   make_windows<comm_play_blast>();
-
   if (dear::MenuItem("qcloth布料制作"))
     make_windows<create_sim_cloth>();
 }

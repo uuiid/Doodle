@@ -6,6 +6,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/metadata/export_file_info.h>
+#include <doodle_lib/core/init_register.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle {
 
@@ -52,7 +54,8 @@ class ue4_import_group {
 
 }  // namespace ue4_widget_n
 
-class DOODLELIB_API ue4_widget : public process_t<ue4_widget> {
+class DOODLELIB_API ue4_widget
+    : public gui::window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -65,11 +68,19 @@ class DOODLELIB_API ue4_widget : public process_t<ue4_widget> {
   ~ue4_widget() override;
   constexpr static std::string_view name{"ue4工具"};
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  void init() override;
+  void render() override;
 };
+
+namespace ue4_widget_ns{
+constexpr auto init = []() {
+  entt::meta<ue4_widget>()
+      .type()
+      .prop("name"_hs, std::string{ue4_widget::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 
 }  // namespace doodle

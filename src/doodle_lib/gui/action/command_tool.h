@@ -5,6 +5,8 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/core/init_register.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 namespace doodle {
 
 /**
@@ -32,7 +34,8 @@ namespace doodle {
  *
  *
  */
-class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
+class DOODLELIB_API comm_maya_tool
+    : public gui::window_panel {
   FSys::path p_cloth_path;
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
@@ -44,14 +47,21 @@ class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
   bool show{true};
   constexpr static std::string_view name{"maya工具"};
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
-  void render();
+  [[maybe_unused]] void init() override;
+  [[maybe_unused]] void failed() override;
+  void render() override;
 };
 
+namespace comm_maya_tool_ns{
+constexpr auto init = []() {
+  entt::meta<comm_maya_tool>()
+      .type()
+      .prop("name"_hs, std::string{comm_maya_tool::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 /**
  * @brief 创建视频工具类
  * @image html comm_create_video.jpg 创建视频工具
@@ -74,7 +84,8 @@ class DOODLELIB_API comm_maya_tool : public process_t<comm_maya_tool> {
  * 选择视频, 后点击连接视频进行连接
  *
  */
-class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
+class DOODLELIB_API comm_create_video
+    : public gui::window_panel {
   class impl;
   class image_arg;
   std::unique_ptr<impl> p_i;
@@ -86,13 +97,17 @@ class DOODLELIB_API comm_create_video : public process_t<comm_create_video> {
   ~comm_create_video() override;
   constexpr static std::string_view name{"创建视频"};
   bool show{false};
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
-  void render();
+  [[maybe_unused]] void init() override;
+  void render() override;
 };
-
-
+namespace comm_create_video_ns{
+constexpr auto init = []() {
+  entt::meta<comm_create_video>()
+      .type()
+      .prop("name"_hs, std::string{comm_create_video::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 }  // namespace doodle

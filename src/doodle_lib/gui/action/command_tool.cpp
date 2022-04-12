@@ -30,8 +30,10 @@ comm_maya_tool::comm_maya_tool()
       p_sim_path(),
       p_only_sim(false),
       p_use_all_ref(false) {
+  title_name_ = std::string{name};
 }
 void comm_maya_tool::init() {
+  gui::window_panel ::init();
   auto k_prj = g_reg()->try_ctx<root_ref>();
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 
@@ -40,18 +42,10 @@ void comm_maya_tool::init() {
   }
   g_reg()->set<comm_maya_tool&>(*this);
 }
-void comm_maya_tool::succeeded() {
-  g_reg()->unset<comm_maya_tool>();
-}
+
 void comm_maya_tool::failed() {
-  g_reg()->unset<comm_maya_tool>();
 }
-void comm_maya_tool::aborted() {
-  g_reg()->unset<comm_maya_tool>();
-}
-void comm_maya_tool::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  this->render();
-}
+
 void comm_maya_tool::render() {
   if (imgui::Button("maya文件")) {
     p_sim_path.clear();
@@ -134,24 +128,15 @@ class comm_create_video::impl {
 
 comm_create_video::comm_create_video()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 void comm_create_video::init() {
+  gui::window_panel::init();
   p_i->out_video_h = make_handle();
 
   g_reg()->set<comm_create_video&>(*this);
 }
-void comm_create_video::succeeded() {
-  g_reg()->unset<comm_create_video>();
-}
-void comm_create_video::failed() {
-  g_reg()->unset<comm_create_video>();
-}
-void comm_create_video::aborted() {
-  g_reg()->unset<comm_create_video>();
-}
-void comm_create_video::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
-  this->render();
-}
+
 void comm_create_video::render() {
   if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {
     ::ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
