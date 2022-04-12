@@ -2,7 +2,7 @@
 // Created by TD on 2022/1/11.
 //
 #include <doodle_lib/doodle_lib_fwd.h>
-//#include <doodle_lib/metadata/metadata.h>
+#include <doodle_lib/core/init_register.h>
 namespace doodle {
 
 enum class metadata_type;
@@ -161,6 +161,7 @@ class DOODLELIB_API database_task_obs : public process_t<database_task_obs> {
   std::unique_ptr<impl> p_i;
 
   void save();
+
  public:
   using base_type = process_t<database_task_install>;
   database_task_obs();
@@ -171,4 +172,19 @@ class DOODLELIB_API database_task_obs : public process_t<database_task_obs> {
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
+
+namespace database_task_ns {
+class database_task_init : public init_register::base_registrar {
+ public:
+  void init() const override;
+};
+constexpr auto init_database_abs_l = []() {
+  entt::meta<database_task_init>()
+      .type()
+      .base<init_register::base_registrar>()
+      .func<&database_task_init::init>("init"_hs);
+};
+class init_database_abs
+    : public init_register::registrar_lambda<init_database_abs_l, 2> {};
+}  // namespace database_task_ns
 }  // namespace doodle

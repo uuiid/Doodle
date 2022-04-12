@@ -40,13 +40,5 @@ void init_register::init_run() {
 }
 init_register::init_register()  = default;
 init_register::~init_register() = default;
-namespace {
-constexpr auto meta_init_registrar_lab = []() {
-  entt::meta<init_register::base_registrar>()
-      .type()
-      .func<&init_register::base_registrar::init>("init"_hs);
-};
-class meta_init_registrar
-    : public init_register::registrar_lambda<meta_init_registrar_lab, 1> {};
-}  // namespace
+
 }  // namespace doodle

@@ -20,17 +20,7 @@
 #include <doodle_lib/core/init_register.h>
 namespace doodle {
 
-namespace {
-constexpr auto init = []() {
-  entt::meta<assets_file_widgets>()
-      .type()
-      .prop("name"_hs, std::string{assets_file_widgets::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
 
-}  // namespace
 
 class assets_file_widgets::impl {
  public:

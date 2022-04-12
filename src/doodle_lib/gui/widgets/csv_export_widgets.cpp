@@ -28,17 +28,6 @@
 namespace doodle {
 namespace gui {
 
-namespace {
-constexpr auto init = []() {
-  entt::meta<csv_export_widgets>()
-      .type()
-      .prop("name"_hs, std::string{csv_export_widgets::name})
-      .base<gui::window_panel>();
-};
-class [[maybe_unused]] init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}
-
 class csv_export_widgets::impl {
  public:
   impl()

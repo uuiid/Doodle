@@ -23,4 +23,15 @@ class DOODLELIB_API long_time_tasks_widget
   void failed() override;
   void render() override;
 };
+
+namespace long_time_tasks_widget_ns{
+constexpr auto init = []() {
+  entt::meta<long_time_tasks_widget>()
+      .type()
+      .prop("name"_hs, std::string{long_time_tasks_widget::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}
 }  // namespace doodle

@@ -14,16 +14,6 @@
 
 #include <magic_enum.hpp>
 namespace doodle {
-namespace {
-constexpr auto init = []() {
-  entt::meta<setting_windows>()
-      .type()
-      .prop("name"_hs, std::string{setting_windows::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace
 
 class setting_windows::impl {
  public:

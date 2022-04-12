@@ -31,4 +31,16 @@ class DOODLELIB_API project_widget
 
   boost::signals2::signal<void(const entt::handle&)> select_change;
 };
+
+namespace project_widget_ns {
+constexpr auto prj_init = []() {
+  entt::meta<project_widget>()
+      .type()
+      .prop("name"_hs, std::string{project_widget::name})
+      .base<gui::window_panel>();
+};
+class prj_init_
+    : public init_register::registrar_lambda<prj_init, 3> {};
+
+}  // namespace project_widget_ns
 }  // namespace doodle

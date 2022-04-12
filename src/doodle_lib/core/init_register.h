@@ -75,6 +75,16 @@ class init_register {
     return derived_list;
   }
 };
+
+namespace init_register_ns {
+constexpr auto meta_init_registrar_lab = []() {
+  entt::meta<init_register::base_registrar>()
+      .type()
+      .func<&init_register::base_registrar::init>("init"_hs);
+};
+class meta_init_registrar
+    : public init_register::registrar_lambda<meta_init_registrar_lab, 1> {};
+}  // namespace init_register_ns
 // template <typename T>
 // T& init_register::registrar<T>::registered =
 //     init_register::registrar<T>::getInstance();

@@ -45,6 +45,15 @@ class DOODLELIB_API csv_export_widgets
   void failed() override;
   void render() override;
 };
-
+namespace csv_export_widgets_ns {
+constexpr auto init = []() {
+  entt::meta<csv_export_widgets>()
+      .type()
+      .prop("name"_hs, std::string{csv_export_widgets::name})
+      .base<gui::window_panel>();
+};
+class [[maybe_unused]] init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace csv_export_widgets_ns
 }  // namespace gui
 }  // namespace doodle

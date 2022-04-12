@@ -15,16 +15,7 @@
 #include <doodle_lib/core/init_register.h>
 
 namespace doodle {
-namespace {
-constexpr auto init = []() {
-  entt::meta<long_time_tasks_widget>()
-      .type()
-      .prop("name"_hs, std::string{long_time_tasks_widget::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}
+
 
 long_time_tasks_widget::long_time_tasks_widget()
     : p_current_select() {

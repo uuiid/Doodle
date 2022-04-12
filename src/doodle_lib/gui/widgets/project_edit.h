@@ -22,5 +22,15 @@ class DOODLELIB_API project_edit
   void failed() override;
   void render() override;
 };
+namespace project_edit_ns {
+constexpr auto init = []() {
+  entt::meta<project_edit>()
+      .type()
+      .prop("name"_hs, std::string{project_edit::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace project_edit_ns
 
 }  // namespace doodle

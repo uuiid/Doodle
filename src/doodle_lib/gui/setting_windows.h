@@ -67,4 +67,14 @@ class DOODLELIB_API setting_windows : public gui::window_panel {
   void save();
 };
 
+namespace setting_windows_ns {
+constexpr auto init = []() {
+  entt::meta<setting_windows>()
+      .type()
+      .prop("name"_hs, std::string{setting_windows::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace setting_windows_ns
 }  // namespace doodle

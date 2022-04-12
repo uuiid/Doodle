@@ -45,5 +45,15 @@ class DOODLELIB_API assets_file_widgets
   void failed() override;
   void render() override;
 };
+namespace assets_file_widgets_ns {
+constexpr auto init = []() {
+  entt::meta<assets_file_widgets>()
+      .type()
+      .prop("name"_hs, std::string{assets_file_widgets::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
 
+}  // namespace assets_file_widgets_ns
 }  // namespace doodle

@@ -514,22 +514,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
                                             p_i->need_delete.empty());
 }
 
-class database_task_init : public init_register::base_registrar {
- public:
-  void init() const override {
-    g_main_loop().attach<database_task_obs>();
-  }
-};
-
-namespace {
-constexpr auto init_database_abs_l = []() {
-  entt::meta<database_task_init>()
-      .type()
-      .base<init_register::base_registrar>()
-      .func<&database_task_init::init>("init"_hs);
-};
-class init_database_abs
-    : public init_register::registrar_lambda<init_database_abs_l, 2> {};
-}  // namespace
-
+void database_task_ns::database_task_init::init() const {
+  g_main_loop().attach<database_task_obs>();
+}
 }  // namespace doodle
