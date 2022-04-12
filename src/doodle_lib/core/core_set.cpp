@@ -241,7 +241,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["organization_name"]    = p.organization_name;
   j["mayaPath"]             = p.p_mayaPath;
   j["max_thread"]           = p.p_max_thread;
-  j["widget_show"]          = p.widget_show;
   j["timeout"]              = p.timeout;
   j["project_root"]         = p.project_root;
   j["max_install_reg_entt"] = p.max_install_reg_entt;
@@ -262,7 +261,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j["ue4_version"].get_to(p.ue4_version);
   j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);
-  j.at("widget_show").get_to(p.widget_show);
   j.at("timeout").get_to(p.timeout);
   if (j.contains("project_root"))
     j.at("project_root").get_to(p.project_root);

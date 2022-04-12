@@ -62,7 +62,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::uint16_t p_max_thread;
   void set_max_tread(std::uint16_t in);
 
-  std::map<string, bool> widget_show;
 
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);
