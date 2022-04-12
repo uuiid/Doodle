@@ -112,11 +112,14 @@ void main_menu_bar::menu_windows() {
       if (!l_win.second->is_show()) {
         for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
           if (l_item.prop("name"_hs).value() == l_win.first) {
-            auto l_win_obj                        = l_item.construct();
-            auto l_win_ptr                        = l_win_obj.try_cast<gui::base_window>();
-            l_win_ptr->show();
-            auto l_w                              = g_main_loop().attach<gui::windows_proc>(l_win_ptr, std::move(l_win_obj)).get<gui::windows_proc>();
-            p_i->windows_[l_w->windows_->title()] = l_w->warp_proc_;
+            auto l_win_obj  = l_item.construct();
+            auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
+            auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
+            g_main_loop().attach<gui::windows_proc>(l_wrap_win,
+                                                    l_win_ptr,
+                                                    std::move(l_win_obj),
+                                                    true);
+            p_i->windows_[l_win_ptr->title()] = l_wrap_win;
           }
         }
       } else {
@@ -151,9 +154,12 @@ void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
   for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
     if (auto l_win = l_item.construct(); l_win) {
-      auto l_win_ptr = l_win.try_cast<gui::base_window>();
-      auto l_w       = g_main_loop().attach<gui::windows_proc>(l_win_ptr, std::move(l_win)).get<gui::windows_proc>();
-      p_i->windows_.emplace(l_w->windows_->title(), l_w->warp_proc_);
+      auto l_win_ptr  = l_win.try_cast<gui::base_window>();
+      auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
+      g_main_loop().attach<gui::windows_proc>(l_wrap_win,
+                                              l_win_ptr,
+                                              std::move(l_win));
+      p_i->windows_.emplace(l_win_ptr->title(), l_wrap_win);
     }
   }
 }

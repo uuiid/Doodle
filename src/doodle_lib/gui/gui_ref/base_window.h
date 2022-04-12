@@ -7,6 +7,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/init_register.h>
 #include <boost/signals2.hpp>
+#include <utility>
 namespace doodle::gui {
 
 /**
@@ -73,10 +74,12 @@ class DOODLELIB_API base_window {
 };
 
 class DOODLELIB_API windows_proc : public process_t<windows_proc> {
+  std::optional<bool> optional_show{};
+
  public:
   class DOODLELIB_API warp_proc {
    public:
-    bool show;
+    bool show{};
     std::function<void()> close;
 
     [[nodiscard]] inline bool is_show() const {
@@ -88,10 +91,14 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
   entt::meta_any owner_;
   std::shared_ptr<warp_proc> warp_proc_;
 
-  explicit windows_proc(base_window* in_windows, entt::meta_any&& in_meta_any)
-      : windows_(in_windows),
+  explicit windows_proc(warp_proc_ptr in_ptr,
+                        base_window* in_windows,
+                        entt::meta_any&& in_meta_any,
+                        std::optional<bool> show = {})
+      : optional_show(std::move(show)),
+        windows_(in_windows),
         owner_(std::move(in_meta_any)),
-        warp_proc_(std::make_shared<warp_proc>()) {
+        warp_proc_(std::move(in_ptr)) {
   }
   ~windows_proc() override;
 
@@ -133,6 +140,7 @@ class DOODLELIB_API modal_window : public base_window {
   bool show;
 
   void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override;
+  virtual void aborted() override;
 };
 
 namespace base_windows_ns {

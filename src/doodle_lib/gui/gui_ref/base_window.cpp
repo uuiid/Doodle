@@ -59,6 +59,7 @@ void window_panel::init() {
   read_setting();
 }
 void window_panel::succeeded() {
+  setting["show_"] = show_;
   save_setting();
 }
 
@@ -90,6 +91,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
         render();
       };
 }
+void modal_window::aborted() {}
 
 void windows_proc::init() {
   chick_true<doodle_error>(owner_.owner(), DOODLE_LOC, "未获得窗口所有权");
@@ -102,12 +104,14 @@ void windows_proc::init() {
     this->succeed();
     this->warp_proc_->show = false;
   });
-  if (windows_->is_show())
+
+  if (windows_->is_show() || optional_show)
     windows_->init();
-  else if(auto l_d = dynamic_cast<window_panel*>(windows_);l_d){
+  else if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
     l_d->read_setting();
   }
-
+  if (optional_show)
+    windows_->show(*optional_show);
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
