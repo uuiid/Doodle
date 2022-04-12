@@ -10,7 +10,7 @@
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_lib/lib_warp/std_warp.h>
 #include <doodle_lib/logger/logger.h>
-#include <doodle_lib/core/static_value.h>
+#include <doodle_lib/configure/static_value.h>
 #include <doodle_lib/core/core_help_impl.h>
 #include <doodle_lib/core/template_util.h>
 #include <doodle_lib/lib_warp/icon_font_macro.h>

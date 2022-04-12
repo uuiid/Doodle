@@ -10,7 +10,7 @@ set(
         core/observable_container.h
         gui/open_file_dialog.h
         core/program_options.h
-        core/static_value.h
+        configure/static_value.h
         core/util.h
         core/image_loader.h
         core/core_sig.h
@@ -121,7 +121,6 @@ set(
         core/doodle_lib.cpp
         core/filesystem_extend.cpp
         core/program_options.cpp
-        core/static_value.cpp
         core/util.cpp
         core/image_loader.cpp
         core/core_sig.cpp

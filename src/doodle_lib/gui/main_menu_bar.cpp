@@ -6,32 +6,12 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_lib/app/app.h>
 
-#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/client/client.h>
-#include <doodle_lib/long_task/process_pool.h>
 #include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
-
-#include <gui/action/command_tool.h>
-#include <gui/widgets/project_widget.h>
-#include <gui/widgets/assets_filter_widget.h>
 #include <gui/setting_windows.h>
 #include <gui/get_input_dialog.h>
-#include <gui/widgets/long_time_tasks_widget.h>
-#include <gui/widgets/edit_widgets.h>
-#include <gui/widgets/opencv_player_widget.h>
-#include <gui/widgets/assets_file_widgets.h>
-#include <gui/widgets/csv_export_widgets.h>
-#include <gui/widgets/ue4_widget.h>
-
-#include <doodle_lib/metadata/project.h>
-#include <doodle_lib/metadata/metadata.h>
-#include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/thread_pool/process_message.h>
-#include <doodle_lib/gui/widgets/project_edit.h>
 #include <doodle_lib/core/core_sig.h>
-#include <doodle_lib/core/init_register.h>
-#include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle {
 class main_menu_bar::impl {

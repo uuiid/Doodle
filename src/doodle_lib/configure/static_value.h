@@ -4,6 +4,8 @@
 
 #pragma once
 #include <string>
+#include <array>
+
 namespace doodle::doodle_config {
 constexpr const std::string_view doodle_db_name{".doodle_db"};
 constexpr const std::string_view doodle_json_extension{".json_doodle"};
