@@ -63,6 +63,7 @@ void setting_windows::save() {
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
+  gui::window_panel::init();
   p_i->p_user.data       = core_set::getSet().get_user();
   p_i->p_org_name.data   = core_set::getSet().organization_name;
   p_i->p_cache.data      = core_set::getSet().get_cache_root().generic_string();
