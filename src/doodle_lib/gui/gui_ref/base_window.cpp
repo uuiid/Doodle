@@ -35,17 +35,19 @@ base_window *base_window::find_window_by_title(const string &in_title) {
 bool base_window::is_show() const {
   return show;
 }
+void base_window::show(bool in_show) {
+  show = true;
+}
 
 void window_panel::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
     (*l_json)[title()].get_to(setting);
   if (!setting.count("show"))
-    setting["show"] = true;
+    setting["show"] = show;
 
   show = std::get<bool>(setting["show"]);
-  if (!show)
-    close();
+
   //  core_set_init{}.read_setting(title(), setting);
 }
 void window_panel::save_setting() const {
@@ -100,7 +102,8 @@ void windows_proc::init() {
     this->succeed();
     this->warp_proc_->show = false;
   });
-  windows_->init();
+  if (windows_->is_show())
+    windows_->init();
 }
 void windows_proc::succeeded() {
   windows_->succeeded();

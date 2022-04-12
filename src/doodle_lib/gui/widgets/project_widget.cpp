@@ -16,6 +16,8 @@ namespace doodle {
 project_widget::project_widget()
     : p_c() {
   title_name_ = std::string{name};
+  show = true;
+
 }
 
 project_widget::~project_widget() = default;
@@ -26,8 +28,6 @@ void project_widget::init() {
   core_set_init{}.init_project(app::Get().options_->p_project_path);
 }
 
-void project_widget::failed() {
-}
 
 void project_widget::render() {
   dear::Table{"project", 3} && [this]() {

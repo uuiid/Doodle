@@ -25,7 +25,6 @@ class DOODLELIB_API project_widget
 
   void init() override;
   void render() override;
-  void failed() override;
 
   entt::handle p_c;
 

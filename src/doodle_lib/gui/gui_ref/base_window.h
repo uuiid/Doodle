@@ -62,6 +62,7 @@ class DOODLELIB_API base_window {
    * @return
    */
   [[nodiscard]] bool is_show() const;
+  void show(bool in_show = true);
 
   /**
    * @brief 安装窗口名称寻找窗口

@@ -551,6 +551,7 @@ class edit_widgets::impl {
 edit_widgets::edit_widgets()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
+  show = true;
 
   p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());

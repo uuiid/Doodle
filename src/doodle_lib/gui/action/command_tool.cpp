@@ -33,7 +33,7 @@ comm_maya_tool::comm_maya_tool()
   title_name_ = std::string{name};
 }
 void comm_maya_tool::init() {
-  gui::window_panel ::init();
+  gui::window_panel::init();
   auto k_prj = g_reg()->try_ctx<root_ref>();
   chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
 

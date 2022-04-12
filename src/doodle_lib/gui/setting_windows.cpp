@@ -43,6 +43,7 @@ class setting_windows::impl {
 setting_windows::setting_windows()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
+  show = true;
 }
 
 void setting_windows::save() {
