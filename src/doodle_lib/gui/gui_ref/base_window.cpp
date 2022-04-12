@@ -110,8 +110,12 @@ void windows_proc::init() {
   else if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
     l_d->read_setting();
   }
-  if (optional_show)
+  if (optional_show) {
     windows_->show(*optional_show);
+    if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
+      l_d->save_setting();
+    }
+  }
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
