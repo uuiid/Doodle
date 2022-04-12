@@ -58,7 +58,7 @@ class DOODLELIB_API setting_windows : public gui::window_panel {
   setting_windows();
   ~setting_windows() override;
 
-  constexpr static std::string_view name{"设置窗口"};
+  constexpr static std::string_view name{gui::config::menu_w::setting};
   void init() override;
   void succeeded() override;
   void render() override;

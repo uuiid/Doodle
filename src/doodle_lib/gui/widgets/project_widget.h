@@ -21,7 +21,7 @@ class DOODLELIB_API project_widget
   project_widget();
   ~project_widget() override;
 
-  constexpr static std::string_view name{"项目"};
+  constexpr static std::string_view name{gui::config::menu_w::project_widget};
 
   void init() override;
   void render() override;

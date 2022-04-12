@@ -38,7 +38,7 @@ class DOODLELIB_API assets_file_widgets
   assets_file_widgets();
   ~assets_file_widgets() override;
 
-  constexpr static std::string_view name{"文件列表"};
+  constexpr static std::string_view name{gui::config::menu_w::assets_file};
 
   void refresh(const std::vector<entt::handle>& in_list);
   void init() override;

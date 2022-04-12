@@ -50,7 +50,7 @@ class DOODLELIB_API edit_widgets
    * @brief 窗口显示名称
    *
    */
-  constexpr static std::string_view name{"编辑"};
+  constexpr static std::string_view name{gui::config::menu_w::edit_};
 
   /**
    * @brief 初始化窗口

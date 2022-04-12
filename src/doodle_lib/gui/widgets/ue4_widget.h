@@ -66,13 +66,13 @@ class DOODLELIB_API ue4_widget
  public:
   ue4_widget();
   ~ue4_widget() override;
-  constexpr static std::string_view name{"ue4工具"};
+  constexpr static std::string_view name{gui::config::menu_w::ue4_widget};
 
   void init() override;
   void render() override;
 };
 
-namespace ue4_widget_ns{
+namespace ue4_widget_ns {
 constexpr auto init = []() {
   entt::meta<ue4_widget>()
       .type()
@@ -81,6 +81,6 @@ constexpr auto init = []() {
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
-}
+}  // namespace ue4_widget_ns
 
 }  // namespace doodle

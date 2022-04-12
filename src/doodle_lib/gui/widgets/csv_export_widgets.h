@@ -39,7 +39,7 @@ class DOODLELIB_API csv_export_widgets
   csv_export_widgets();
   ~csv_export_widgets();
 
-  constexpr static std::string_view name{"导出csv表格"};
+  constexpr static std::string_view name{gui::config::menu_w::csv_export};
 
   void init() override;
   void failed() override;

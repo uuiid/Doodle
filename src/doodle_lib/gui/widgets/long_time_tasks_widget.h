@@ -18,13 +18,13 @@ class DOODLELIB_API long_time_tasks_widget
  public:
   long_time_tasks_widget();
 
-  constexpr static std::string_view name{"队列"};
+  constexpr static std::string_view name{gui::config::menu_w::long_time_tasks};
   void init() override;
   void failed() override;
   void render() override;
 };
 
-namespace long_time_tasks_widget_ns{
+namespace long_time_tasks_widget_ns {
 constexpr auto init = []() {
   entt::meta<long_time_tasks_widget>()
       .type()
@@ -33,5 +33,5 @@ constexpr auto init = []() {
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
-}
+}  // namespace long_time_tasks_widget_ns
 }  // namespace doodle

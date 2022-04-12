@@ -108,7 +108,7 @@ class DOODLELIB_API assets_filter_widget
   assets_filter_widget();
   ~assets_filter_widget() override;
 
-  constexpr static std::string_view name{"过滤"};
+  constexpr static std::string_view name{gui::config::menu_w::assets_filter};
 
   void init() override;
   void failed() override;

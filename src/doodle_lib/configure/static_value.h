@@ -6,7 +6,8 @@
 #include <string>
 #include <array>
 
-namespace doodle::doodle_config {
+namespace doodle {
+namespace doodle_config {
 constexpr const std::string_view doodle_db_name{".doodle_db"};
 constexpr const std::string_view doodle_json_extension{".json_doodle"};
 constexpr const std::string_view token_name{"token.doodle_token"};
@@ -24,4 +25,31 @@ constexpr const std::string_view ue_path_obj{"Engine/Binaries/Win64/UE4Editor.ex
 constexpr const std::string_view ue4_content{R"(Content)"};
 constexpr const std::string_view ue4_game{R"(/Game)"};
 constexpr const std::string_view ue4_shot{R"(Shot)"};
-}  // namespace doodle::doodle_config
+
+}  // namespace doodle_config
+namespace gui::config::menu_w {
+constexpr const std::string_view project_widget{"项目"};
+constexpr const std::string_view edit_{"编辑"};
+constexpr const std::string_view assets_filter{"过滤"};
+constexpr const std::string_view assets_file{"文件列表"};
+constexpr const std::string_view long_time_tasks{"队列"};
+constexpr const std::string_view setting{"设置窗口"};
+constexpr const std::string_view project_edit{"项目设置"};
+constexpr const std::string_view csv_export{"导出csv表格"};
+constexpr const std::string_view ue4_widget{"ue4工具"};
+constexpr const std::string_view comm_maya_tool{"maya工具"};
+constexpr const std::string_view comm_create_video{"创建视频"};
+constexpr const auto menu_list = std::make_tuple(project_widget,
+                                                 edit_,
+                                                 assets_filter,
+                                                 assets_file,
+                                                 long_time_tasks,
+                                                 setting,
+                                                 project_edit,
+                                                 csv_export,
+                                                 ue4_widget,
+                                                 comm_maya_tool,
+                                                 comm_create_video);
+
+}  // namespace gui::config::menu_w
+}  // namespace doodle

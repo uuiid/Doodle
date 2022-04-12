@@ -45,14 +45,14 @@ class DOODLELIB_API comm_maya_tool
  public:
   comm_maya_tool();
   bool show{true};
-  constexpr static std::string_view name{"maya工具"};
+  constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
   [[maybe_unused]] void init() override;
   [[maybe_unused]] void failed() override;
   void render() override;
 };
 
-namespace comm_maya_tool_ns{
+namespace comm_maya_tool_ns {
 constexpr auto init = []() {
   entt::meta<comm_maya_tool>()
       .type()
@@ -61,7 +61,7 @@ constexpr auto init = []() {
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
-}
+}  // namespace comm_maya_tool_ns
 /**
  * @brief 创建视频工具类
  * @image html comm_create_video.jpg 创建视频工具
@@ -95,12 +95,12 @@ class DOODLELIB_API comm_create_video
  public:
   comm_create_video();
   ~comm_create_video() override;
-  constexpr static std::string_view name{"创建视频"};
+  constexpr static std::string_view name{gui::config::menu_w::comm_create_video};
   bool show{false};
   [[maybe_unused]] void init() override;
   void render() override;
 };
-namespace comm_create_video_ns{
+namespace comm_create_video_ns {
 constexpr auto init = []() {
   entt::meta<comm_create_video>()
       .type()
@@ -109,5 +109,5 @@ constexpr auto init = []() {
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
-}
+}  // namespace comm_create_video_ns
 }  // namespace doodle
