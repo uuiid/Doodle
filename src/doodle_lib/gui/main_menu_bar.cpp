@@ -124,8 +124,7 @@ void main_menu_bar::menu_windows() {
     }
   }
 }
-void main_menu_bar::menu_edit() {
-}
+
 void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))
     toolkit::installMayaPath();

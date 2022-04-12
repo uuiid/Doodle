@@ -31,6 +31,7 @@ comm_check_scenes::comm_check_scenes()
       p_err_2(),
       p_err_3(),
       p_err_4() {
+  title_name_ = std::string{name};
 }
 MStatus comm_check_scenes::run_maya_py_script(const string& in_script) {
   MString l_script{};
@@ -291,7 +292,7 @@ if 'leukocyte' in globals():
   return MStatus::kSuccess;
 }
 
-bool comm_check_scenes::render() {
+void comm_check_scenes::render() {
   if (imgui::Button("检查所有")) {
     DOODLE_LOG_INFO("开始解锁法线");
     unlock_normal();
@@ -346,20 +347,6 @@ bool comm_check_scenes::render() {
 
   // dear::Disabled{!p_duplicate_name} && [&]() {
   // };
-
-  return false;
-}
-
-void comm_check_scenes::init() {
-}
-void comm_check_scenes::succeeded() {
-}
-void comm_check_scenes::failed() {
-}
-void comm_check_scenes::aborted() {
-}
-void comm_check_scenes::update(delta_type, void* data) {
-  render();
 }
 
 }  // namespace doodle::maya_plug

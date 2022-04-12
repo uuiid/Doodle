@@ -6,6 +6,7 @@
 #include <maya/MSelectionList.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle::maya_plug {
 /**
@@ -23,7 +24,8 @@ namespace doodle::maya_plug {
  * * 去除贼健康错误
  *
  */
-class comm_check_scenes : public process_t<comm_check_scenes> {
+class comm_check_scenes
+    : public gui::window_panel {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;
@@ -48,11 +50,17 @@ class comm_check_scenes : public process_t<comm_check_scenes> {
   comm_check_scenes();
   constexpr static std::string_view name{"检查工具"};
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
-  virtual bool render();
+  void render() override;
 };
+
+namespace comm_check_scenes_ns {
+constexpr auto init = []() {
+  entt::meta<comm_check_scenes>()
+      .type()
+      .prop("name"_hs, std::string{comm_check_scenes::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace comm_check_scenes_ns
 }  // namespace doodle::maya_plug

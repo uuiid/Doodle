@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_lib/gui/gui_ref/base_window.h>
 namespace doodle::maya_plug {
 class reference_file;
 
@@ -34,7 +34,8 @@ using data_ptr = std::shared_ptr<data>;
  * @li 在没有引用文件标记时， 使用所有载入的应用进行解算
  *
  */
-class reference_attr_setting : public process_t<reference_attr_setting> {
+class reference_attr_setting
+    : public gui::window_panel{
   std::vector<entt::handle> p_handle;
 
   bool get_file_info();
@@ -42,15 +43,19 @@ class reference_attr_setting : public process_t<reference_attr_setting> {
 
  public:
   reference_attr_setting();
+  ~reference_attr_setting() override;
   constexpr static std::string_view name{"引用编辑"};
-
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(delta_type, void* data);
-
-  bool render();
+  void render() override;
 };
 
+namespace reference_attr_setting_ns {
+constexpr auto init = []() {
+  entt::meta<reference_attr_setting>()
+      .type()
+      .prop("name"_hs, std::string{reference_attr_setting::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace reference_attr_setting_ns
 }  // namespace doodle::maya_plug

@@ -40,6 +40,7 @@ bool data::operator!=(const data& in_rhs) const {
 
 reference_attr_setting::reference_attr_setting()
     : p_handle() {
+  title_name_     = std::string{name};
   auto k_ref_view = g_reg()->view<reference_file>();
   std::transform(k_ref_view.begin(), k_ref_view.end(),
                  std::back_inserter(p_handle),
@@ -88,7 +89,7 @@ bool reference_attr_setting::get_file_info() {
   return true;
 }
 
-bool reference_attr_setting::render() {
+void reference_attr_setting::render() {
   if (imgui::Button("解析引用")) {
     get_file_info();
   }
@@ -145,7 +146,7 @@ bool reference_attr_setting::render() {
     maya_file_io::replace_channel_date(k_j.dump());
   }
 
-  return true;
+  return;
 }
 
 void reference_attr_setting::clear() {
@@ -153,20 +154,8 @@ void reference_attr_setting::clear() {
     if (i) i.destroy();
   }
 }
-
-void reference_attr_setting::init() {
-}
-void reference_attr_setting::succeeded() {
+reference_attr_setting::~reference_attr_setting() {
   clear();
-}
-void reference_attr_setting::failed() {
-  clear();
-}
-void reference_attr_setting::aborted() {
-  clear();
-}
-void reference_attr_setting::update(delta_type, void* data) {
-  render();
 }
 
 }  // namespace maya_plug

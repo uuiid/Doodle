@@ -21,12 +21,13 @@ namespace doodle::maya_plug {
 
 create_sim_cloth::create_sim_cloth()
     : p_coll(make_handle()) {
+  title_name_ = std::string{name};
   auto k_view = g_reg()->view<qcloth_shape>();
   std::transform(k_view.begin(), k_view.end(),
                  std::back_inserter(p_list),
                  [](auto& in) -> entt::handle { return make_handle(in); });
 }
-bool create_sim_cloth::render() {
+void create_sim_cloth::render() {
   if (imgui::Button("获得低模")) {
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
@@ -103,7 +104,6 @@ bool create_sim_cloth::render() {
     if (p_coll.any_of<qcloth_shape_n::shape_list>() && !p_list.empty())
       p_list.front().get<qcloth_shape>().add_collider(p_coll);
   }
-  return false;
 }
 create_sim_cloth::~create_sim_cloth() {
   p_coll.destroy();
@@ -112,15 +112,5 @@ create_sim_cloth::~create_sim_cloth() {
       h.destroy();
   }
 }
-void create_sim_cloth::init() {
-}
-void create_sim_cloth::succeeded() {
-}
-void create_sim_cloth::failed() {
-}
-void create_sim_cloth::aborted() {
-}
-void create_sim_cloth::update(delta_type, void* data) {
-  render();
-}
+
 }  // namespace doodle::maya_plug
