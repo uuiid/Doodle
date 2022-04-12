@@ -24,26 +24,18 @@ class init_register {
   template <reg_fun Fun, std::int32_t priority_t>
   struct registrar_lambda {
     constexpr static const std::int32_t priority{priority_t};
-
-   private:
-    static registrar_lambda& register_() {
-      static registrar_lambda l_t{};
-      (void)registered;
-      //      instance().registered_functions().insert(
-      //          std::make_pair(priority, [&]() { Fun(); }));
-      return l_t;
-    }
-
    public:
-    static registrar_lambda& getInstance() {
-      return register_();
-    }
-    inline static registrar_lambda& registered = getInstance();
+    static bool getInstance() {
 
-    registrar_lambda() {
-      (void)registered;
+      registered;
       instance().registered_functions().insert(
           std::make_pair(priority, [&]() { Fun(); }));
+      return true;
+    }
+    inline static bool registered = getInstance();
+
+    registrar_lambda() {
+      registered;
     }
   };
 
@@ -85,7 +77,7 @@ constexpr auto meta_init_registrar_lab = []() {
 class meta_init_registrar
     : public init_register::registrar_lambda<meta_init_registrar_lab, 1> {};
 }  // namespace init_register_ns
-// template <typename T>
-// T& init_register::registrar<T>::registered =
-//     init_register::registrar<T>::getInstance();
+// template <init_register::reg_fun Fun, std::int32_t priority_t>
+// bool init_register::registrar_lambda<Fun, priority_t>::registered =
+//     init_register::registrar_lambda<Fun, priority_t>::getInstance();
 }  // namespace doodle

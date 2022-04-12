@@ -25,6 +25,8 @@ void init_register::reg_class() {
   }
   l_then.then<one_process_t>([&]() {
     DOODLE_LOG_INFO("结束开始反射注册");
+    for (auto&& mat : entt::resolve())
+      DOODLE_LOG_INFO(fmt::format("{}", mat.info().name()));
     g_reg()->ctx<core_sig>().init_end();
   });
 }
