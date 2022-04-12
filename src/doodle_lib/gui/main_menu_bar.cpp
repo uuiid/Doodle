@@ -13,6 +13,9 @@
 #include <gui/get_input_dialog.h>
 #include <doodle_lib/core/core_sig.h>
 
+#include <boost/hana.hpp>
+#include <boost/hana/ext/std/tuple.hpp>
+
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -87,11 +90,13 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  for (auto &l_win : p_i->windows_) {
-    if (dear::MenuItem(l_win.first.c_str(), l_win.second->is_show())) {
-      if (!l_win.second->is_show()) {
+  boost::hana::for_each(gui::config::menu_w::menu_list, [this](const std::string_view &in_view) {
+    std::string key{in_view};
+    auto &&l_win = p_i->windows_[key];
+    if (dear::MenuItem(in_view.data(), l_win->is_show())) {
+      if (!l_win->is_show()) {
         for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-          if (l_item.prop("name"_hs).value() == l_win.first) {
+          if (l_item.prop("name"_hs).value() == key) {
             auto l_win_obj  = l_item.construct();
             auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
             auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
@@ -103,10 +108,30 @@ void main_menu_bar::menu_windows() {
           }
         }
       } else {
-        l_win.second->close();
+        l_win->close();
       }
     }
-  }
+  });
+  //    for (auto &l_win : p_i->windows_) {
+  //      if (dear::MenuItem(l_win.first.c_str(), l_win.second->is_show())) {
+  //        if (!l_win.second->is_show()) {
+  //          for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+  //            if (l_item.prop("name"_hs).value() == l_win.first) {
+  //              auto l_win_obj  = l_item.construct();
+  //              auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
+  //              auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
+  //              g_main_loop().attach<gui::windows_proc>(l_wrap_win,
+  //                                                      l_win_ptr,
+  //                                                      std::move(l_win_obj),
+  //                                                      true);
+  //              p_i->windows_[l_win_ptr->title()] = l_wrap_win;
+  //            }
+  //          }
+  //        } else {
+  //          l_win.second->close();
+  //        }
+  //      }
+  //    }
 }
 
 void main_menu_bar::menu_tool() {
