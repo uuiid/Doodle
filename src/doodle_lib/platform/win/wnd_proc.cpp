@@ -108,8 +108,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
       break;
     case WM_DESTROY: {
-      doodle::app_base::Get().stop();
-      // ::PostQuitMessage(0);
+      doodle::app_base::Get().post_quit_message();
       return 0;
     }
     case WM_DPICHANGED:
@@ -122,8 +121,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     case WM_CLOSE: {
       //      doodle::doodle_app::Get()->p_done = true;
+      doodle::app_base::Get().stop_app();
       doodle::app::Get().hide_windows();
-      //      ::DestroyWindow(doodle::doodle_app::Get().)
+      ::DestroyWindow(doodle::app::Get().p_hwnd);
       return 0;
     }
       //    case WM_DROPFILES: {

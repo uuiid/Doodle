@@ -188,7 +188,7 @@ void app::loop_one() {
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
     if (msg.message == WM_QUIT)
-      stop_ = true;
+      stop_app();
   }
   if (stop_)
     return;
@@ -258,7 +258,7 @@ bool app::valid() const {
 }
 void app::hide_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
-  stop_ = true;
+  stop_app();
   ::DestroyWindow(p_hwnd);
 }
 void app::show_windows() {

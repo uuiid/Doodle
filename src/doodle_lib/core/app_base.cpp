@@ -64,7 +64,7 @@ app_base& app_base::Get() {
 }
 std::int32_t app_base::run() {
   while ((!g_main_loop().empty() ||
-         !g_bounded_pool().empty()) &&
+          !g_bounded_pool().empty()) &&
          !stop_) {
     loop_one();
   }
@@ -73,7 +73,7 @@ std::int32_t app_base::run() {
 
 void app_base::command_line_parser(const std::vector<string>& in_arg) {
   if (!chick_authorization())
-    stop_ = true;
+    stop_app();
 
   options_->command_line_parser(in_arg);
 
@@ -89,7 +89,7 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
   }
 
   if (options_->p_help || options_->p_version)
-    stop_ = true;
+    stop_app();
 }
 
 void app_base::command_line_parser(const LPSTR& in_arg) {
@@ -122,6 +122,17 @@ bool app_base::chick_authorization() {
   }
 
   return chick_authorization(l_p);
+}
+void app_base::stop_app(bool in_stop) {
+  g_main_loop().abort(in_stop);
+  g_bounded_pool().abort(in_stop);
+  g_main_loop().attach<one_process_t>([this]() {
+    core_set_init{}.write_file();
+    this->stop_ = true;
+  });
+}
+void app_base::post_quit_message() {
+  ::PostQuitMessage(0);
 }
 
 app_base::~app_base() = default;

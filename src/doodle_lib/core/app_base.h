@@ -48,11 +48,14 @@ class DOODLELIB_API app_base {
 
   virtual void loop_one() = 0;
   std::atomic_bool& stop();
+  void stop_app(bool in_stop = false);
   std::atomic_bool stop_;
   virtual bool valid() const;
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
+
+  virtual void post_quit_message();
 };
 
 /**
