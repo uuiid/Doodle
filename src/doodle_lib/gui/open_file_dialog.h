@@ -4,13 +4,15 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
+
 #include <bitset>
 namespace doodle {
 /**
  * @brief
  */
 class DOODLELIB_API file_panel
-    :
+    : public gui::modal_window,
       public process_t<file_panel> {
   class impl;
   class path_info;
@@ -80,12 +82,10 @@ class DOODLELIB_API file_panel
    */
   explicit file_panel(const dialog_args& in_args);
 
-  [[maybe_unused]] [[nodiscard]] std::string& title() const;
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data) ;
+  [[nodiscard]] std::string& title() const override;
+  void init() override;
+  void succeeded() override;
+  void render() override;
 };
 
 using file_dialog = file_panel;

@@ -167,16 +167,9 @@ void file_panel::succeeded() {
                  }},
              p_i->out_);
 }
-void file_panel::failed() {
-  g_reg()->set<default_pwd>(p_i->p_pwd);
-}
-void file_panel::aborted() {
-  g_reg()->set<default_pwd>(p_i->p_pwd);
-}
 
-void file_panel::update(const chrono::duration<chrono::system_clock::rep,
-                                               chrono::system_clock::period> &,
-                        void *data) {
+
+void file_panel::render() {
   for (auto &&i : p_i->begin_fun_list)
     i();
   p_i->begin_fun_list.clear();
