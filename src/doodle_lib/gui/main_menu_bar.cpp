@@ -39,37 +39,7 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
-  std::map<std::string, gui::base_window *> windows_;
-
-  template <typename Widget_T>
-  void _make_widget_() {
-    // using win  = typename base_window<Widget_T>;
-
-    auto k_win = g_reg()->template try_ctx<base_window<Widget_T>>();
-    if (dear::MenuItem(Widget_T::name.data(), k_win ? &(k_win->show) : nullptr)) {
-      make_windows<Widget_T>();
-      core_set_init{}.write_file();
-    }
-  };
-
-  template <typename... Args>
-  void make_widget() {
-    (this->_make_widget_<Args>(), ...);
-  }
-
-  template <typename Widget_T>
-  void _find_show_() {
-    auto &&k_windows_setting = core_set::getSet().widget_show;
-
-    if (k_windows_setting.find(std::string{Widget_T::name}) != k_windows_setting.end())
-      if (k_windows_setting[std::string{Widget_T::name}])
-        make_windows<Widget_T>();
-  }
-
-  template <typename... Args>
-  void find_show() {
-    (this->_find_show_<Args>(), ...);
-  }
+  std::map<std::string, gui::windows_proc::warp_proc_ptr> windows_;
 };
 
 main_menu_bar::main_menu_bar()
@@ -138,26 +108,21 @@ void main_menu_bar::menu_file() {
 
 void main_menu_bar::menu_windows() {
   for (auto &l_win : p_i->windows_) {
-    if (dear::MenuItem(l_win.first.c_str(), l_win.second ? true : false)) {
-      if (!l_win.second) {
+    if (dear::MenuItem(l_win.first.c_str(), l_win.second->is_show())) {
+      if (!l_win.second->is_show()) {
         for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
           if (l_item.prop("name"_hs).value() == l_win.first) {
-            auto l_w = g_main_loop().attach<gui::windows_proc>(l_item.construct()).get<gui::window_panel>();
-            p_i->windows_.emplace(l_w->title(), l_w);
+            auto l_win_obj                        = l_item.construct();
+            auto l_win_ptr                        = l_win_obj.try_cast<gui::base_window>();
+            auto l_w                              = g_main_loop().attach<gui::windows_proc>(l_win_ptr, std::move(l_win_obj)).get<gui::windows_proc>();
+            p_i->windows_[l_w->windows_->title()] = l_w->warp_proc_;
           }
         }
+      } else {
+        l_win.second->close();
       }
     }
   }
-
-  this->p_i->make_widget<project_widget,
-                         assets_filter_widget,
-                         assets_file_widgets,
-                         setting_windows,
-                         long_time_tasks_widget,
-                         edit_widgets,
-                         gui::csv_export_widgets,
-                         project_edit>();
 }
 void main_menu_bar::menu_edit() {
   if (dear::MenuItem(u8"maya 工具"))
@@ -191,8 +156,11 @@ void main_menu_bar::menu_tool() {
 void main_menu_bar::init() {
   g_reg()->set<main_menu_bar &>(*this);
   for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-    auto l_w = g_main_loop().attach<gui::windows_proc>(l_item.construct()).get<gui::window_panel>();
-    p_i->windows_.emplace(l_w->title(), l_w);
+    if (auto l_win = l_item.construct(); l_win) {
+      auto l_win_ptr = l_win.try_cast<gui::base_window>();
+      auto l_w       = g_main_loop().attach<gui::windows_proc>(l_win_ptr, std::move(l_win)).get<gui::windows_proc>();
+      p_i->windows_.emplace(l_w->windows_->title(), l_w->warp_proc_);
+    }
   }
 }
 void main_menu_bar::succeeded() {

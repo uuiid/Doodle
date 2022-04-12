@@ -24,18 +24,10 @@
 #include <doodle_lib/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle {
+namespace edit_widgets_ns{
 
-namespace {
-constexpr auto init = []() {
-  entt::meta<edit_widgets>()
-      .type()
-      .prop("name"_hs, std::string{edit_widgets::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
+}
 
-}  // namespace
 namespace gui {
 class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;
@@ -581,6 +573,8 @@ edit_widgets::edit_widgets()
 edit_widgets::~edit_widgets() = default;
 
 void edit_widgets::init() {
+  window_panel::init();
+
   g_reg()->set<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx<core_sig>();
   p_i->p_sc.emplace_back(l_sig.select_handles.connect(

@@ -35,7 +35,7 @@ constexpr auto init = []() {
       .prop("name"_hs, std::string{csv_export_widgets::name})
       .base<gui::window_panel>();
 };
-class init_class
+class [[maybe_unused]] init_class
     : public init_register::registrar_lambda<init, 3> {};
 }
 

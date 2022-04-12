@@ -29,8 +29,8 @@ class init_register {
     static registrar_lambda& register_() {
       static registrar_lambda l_t{};
       (void)registered;
-      instance().registered_functions().insert(
-          std::make_pair(priority, [&]() { Fun(); }));
+      //      instance().registered_functions().insert(
+      //          std::make_pair(priority, [&]() { Fun(); }));
       return l_t;
     }
 
@@ -40,7 +40,11 @@ class init_register {
     }
     inline static registrar_lambda& registered = getInstance();
 
-    registrar_lambda() { (void)registered; }
+    registrar_lambda() {
+      (void)registered;
+      instance().registered_functions().insert(
+          std::make_pair(priority, [&]() { Fun(); }));
+    }
   };
 
   class base_registrar {

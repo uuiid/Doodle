@@ -76,4 +76,17 @@ class DOODLELIB_API edit_widgets
    */
   void render() override;
 };
+
+namespace edit_widgets_ns {
+constexpr auto init = []() {
+  entt::meta<edit_widgets>()
+      .type()
+      .prop("name"_hs, std::string{edit_widgets::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+
+
+}  // namespace edit_widgets_ns
 }  // namespace doodle

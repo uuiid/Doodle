@@ -18,17 +18,6 @@ namespace doodle {
 
 namespace gui {
 
-namespace {
-constexpr auto init = []() {
-  entt::meta<assets_filter_widget>()
-      .type()
-      .prop("name"_hs, std::string{assets_filter_widget::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace
-
 class filter_factory_base::impl {
  public:
   std::vector<boost::signals2::scoped_connection> p_conns;

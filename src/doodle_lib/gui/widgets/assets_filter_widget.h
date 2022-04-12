@@ -6,6 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_lib/core/init_register.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -115,4 +116,16 @@ class DOODLELIB_API assets_filter_widget
 
   void refresh(bool force);
 };
+
+namespace assets_filter_widget_ns {
+constexpr auto init = []() {
+  entt::meta<assets_filter_widget>()
+      .type()
+      .prop("name"_hs, std::string{assets_filter_widget::name})
+      .base<gui::window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace assets_filter_widget_ns
+
 }  // namespace doodle

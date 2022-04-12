@@ -42,6 +42,8 @@ void window_panel::read_setting() {
     (*l_json)[title()].get_to(setting);
   if (setting.count("show"))
     show = std::get<bool>(setting["show"]);
+  else
+    show = true;
   if (!show)
     close();
   //  core_set_init{}.read_setting(title(), setting);
@@ -87,44 +89,36 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
       };
 }
 
-namespace {
-constexpr auto init_base_windows = []() {
-  entt::meta<base_window>().type();
-};
-
-class init_base_windows_
-    : public init_register::registrar_lambda<init_base_windows, 1> {};
-
-constexpr auto init_windows_panel = []() {
-  entt::meta<window_panel>().type().base<base_window>();
-};
-
-class init_windows_panel_
-    : public init_register::registrar_lambda<init_windows_panel, 2> {};
-
-}  // namespace
-
 void windows_proc::init() {
+  chick_true<doodle_error>(owner_.owner(), DOODLE_LOC, "未获得窗口所有权");
   g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
+  this->warp_proc_->show  = true;
+  this->warp_proc_->close = [this]() {
+    this->windows_->close();
+  };
   windows_->close.connect([this]() {
     this->succeed();
+    this->warp_proc_->show = false;
   });
   windows_->init();
 }
 void windows_proc::succeeded() {
   windows_->succeeded();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::failed() {
   windows_->failed();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::aborted() {
   windows_->aborted();
+  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
 }
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
   windows_->update(in_duration, in_data);
+  if (!windows_->is_show())
+    windows_->close();
 }
-windows_proc::~windows_proc() {
-  g_reg()->set<base_window::list>().erase(windows_);
-}
+windows_proc::~windows_proc() = default;
 }  // namespace doodle::gui
