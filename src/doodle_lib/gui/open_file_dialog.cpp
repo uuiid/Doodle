@@ -433,14 +433,14 @@ void file_panel::render_filter() {
 void file_panel::button_ok() {
   if (imgui::Button("ok")) {
     p_i->is_ok = true;
-    ImGui::CloseCurrentPopup();
+    close();
     this->succeed();
   }
 }
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
     p_i->is_ok = false;
-    ImGui::CloseCurrentPopup();
+    close();
     this->fail();
   }
 }
