@@ -9,17 +9,6 @@
 #include <nlohmann/json_fwd.hpp>
 namespace doodle {
 
-enum class department {
-  None_,
-  Light,
-  VFX,
-  modle,
-  rig,
-  Anm,
-  paint,
-  clip
-};
-
 class core_set_init;
 
 /**
@@ -61,7 +50,6 @@ class DOODLELIB_API core_set : public details::no_copy {
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
   void set_max_tread(std::uint16_t in);
-
 
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);
