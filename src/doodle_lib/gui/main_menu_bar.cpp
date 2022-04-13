@@ -11,16 +11,56 @@
 #include <toolkit/toolkit.h>
 #include <gui/setting_windows.h>
 #include <gui/get_input_dialog.h>
+#include <gui/gui_ref/ref_base.h>
 #include <doodle_lib/core/core_sig.h>
 
 namespace doodle {
+namespace main_menu_bar_ns {
+void to_json(nlohmann::json &j, const layout_data &p) {
+  j["imgui_data"]   = p.imgui_data;
+  j["windows_show"] = p.windows_show;
+  j["name"]         = p.name;
+}
+void from_json(const nlohmann::json &j, layout_data &p) {
+  j["imgui_data"].get_to(p.imgui_data);
+  j["windows_show"].get_to(p.windows_show);
+  j["name"].get_to(p.name);
+}
+bool layout_data::operator==(const layout_data &in_rhs) const {
+  return name == in_rhs.name;
+}
+bool layout_data::operator!=(const layout_data &in_rhs) const {
+  return !(in_rhs == *this);
+}
+bool layout_data::operator==(const string &in_rhs) const {
+  return name == in_rhs;
+}
+bool layout_data::operator!=(const string &in_rhs) const {
+  return !(*this == in_rhs);
+}
+}  // namespace main_menu_bar_ns
+
 class main_menu_bar::impl {
  public:
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
   std::map<std::string, gui::windows_proc::warp_proc_ptr> windows_;
+
+  gui::gui_cache<std::string> layout_name_{"##name"s, "layout_name"s};
+  gui::gui_cache_name_id button_save_layout_name_{"保存"};
+  gui::gui_cache_name_id button_delete_layout_name_{"删除当前布局"};
+
+  std::vector<main_menu_bar_ns::layout_data> layout_list;
 };
+
+void to_json(nlohmann::json &j, const main_menu_bar &p) {
+  j["layout_list"] = p.p_i->layout_list;
+}
+void from_json(const nlohmann::json &j, main_menu_bar &p) {
+  if (j.count("layout_list"))
+    j["layout_list"].get_to(p.p_i->layout_list);
+}
 
 main_menu_bar::main_menu_bar()
     : p_i(std::make_unique<impl>()) {
@@ -93,12 +133,18 @@ void main_menu_bar::menu_windows() {
   },
              gui::config::menu_w::menu_list);
 }
-
-void main_menu_bar::open_by_name_widget(const std::string_view &in_view) {
+void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
   std::string key{in_view};
   auto &&l_win = this->p_i->windows_[key];
   if (dear::MenuItem(in_view.data(), l_win->is_show())) {
-    if (!l_win->is_show()) {
+    open_by_name_widget(in_view);
+  }
+}
+void main_menu_bar::open_by_name_widget(const std::string_view &in_view, bool force_show) {
+  std::string key{in_view};
+  auto &&l_win = this->p_i->windows_[key];
+  if (!l_win->is_show()) {
+    if (force_show) {
       for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
         if (l_item.prop("name"_hs).value() == key) {
           auto l_win_obj  = l_item.construct();
@@ -111,6 +157,11 @@ void main_menu_bar::open_by_name_widget(const std::string_view &in_view) {
           this->p_i->windows_[l_win_ptr->title()] = l_wrap_win;
         }
       }
+    } else {
+      l_win->close();
+    }
+  } else {
+    if (force_show) {
     } else {
       l_win->close();
     }
@@ -168,14 +219,21 @@ void main_menu_bar::update(
   };
 }
 void main_menu_bar::menu_edit() {
-  dear::MenuBar{} && [this]() {
-    dear::Menu{"布局"} && [this]() { this->menu_layout(); };
-  };
+  dear::Menu{"布局"} && [this]() { this->menu_layout(); };
+  //  dear::MenuBar{} && [this]() {
+  //  };
 }
 void main_menu_bar::menu_layout() {
-  ImGui::InputText("##name", nullptr);
+  ImGui::InputText(*p_i->layout_name_.gui_name, &p_i->layout_name_.data);
   ImGui::SameLine();
-  ImGui::Button("save");
+  if (ImGui::Button(*p_i->button_save_layout_name_))
+    layout_save();
+
+  for (auto &&i : p_i->layout_list) {
+    if (ImGui::MenuItem(i.name.c_str())) {
+      layout_load(i);
+    };
+  }
 }
 void main_menu_bar::succeeded() {
   show_ = true;
@@ -188,6 +246,45 @@ const string &main_menu_bar::title() const {
 void main_menu_bar::aborted() {
   base_window::aborted();
   save_setting();
+}
+void main_menu_bar::layout_save() const {
+  std::size_t l_size;
+  auto *l_char = ImGui::SaveIniSettingsToMemory(&l_size);
+  std::string l_string{l_char, l_size};
+
+  main_menu_bar_ns::layout_data l_data{};
+  l_data.name         = p_i->layout_name_.data;
+  l_data.imgui_data   = {l_char, l_size};
+  l_data.windows_show = p_i->windows_ |
+                        ranges::views::transform(
+                            [](const decltype(p_i->windows_)::value_type &in_type)
+                                -> std::pair<std::string, bool> {
+                              return std::make_pair(in_type.first, in_type.second->show);
+                            }) |
+                        ranges::to<decltype(l_data.windows_show)>;
+
+  if (auto it = ranges::find(p_i->layout_list, l_data);
+      it != p_i->layout_list.end()) {
+    *it = l_data;
+  } else {
+    p_i->layout_list.emplace_back(l_data);
+  }
+}
+void main_menu_bar::layout_load(const main_menu_bar_ns::layout_data &in_data) {
+  p_i->layout_name_.data = in_data.name;
+
+  for (auto &&i : in_data.windows_show) {
+    open_by_name_widget(i.first, i.second);
+  }
+  ImGui::LoadIniSettingsFromMemory(in_data.imgui_data.c_str(), in_data.imgui_data.size());
+}
+void main_menu_bar::layout_delete(const std::string &in_name) {
+  if (auto it = ranges::find_if(p_i->layout_list, [&](const auto &in) -> bool {
+        return in == in_name;
+      });
+      it != p_i->layout_list.end()) {
+    p_i->layout_list.erase(it);
+  }
 }
 
 }  // namespace doodle
