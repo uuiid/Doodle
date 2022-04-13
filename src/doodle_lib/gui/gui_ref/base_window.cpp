@@ -8,17 +8,6 @@
 namespace doodle::gui {
 
 void base_window::failed() {}
-void base_window::update(const chrono::system_clock::duration &in_duration, void *in_data) {
-  for (auto &&i : begin_fun) {
-    i();
-  }
-  begin_fun.clear();
-
-  dear::Begin{title().c_str(), &show_} &&
-      [&]() {
-        this->render();
-      };
-}
 
 base_window *base_window::find_window_by_title(const string &in_title) {
   auto &l_list = g_reg()->ctx_or_set<base_window::list>();
@@ -36,10 +25,9 @@ bool base_window::is_show() const {
   return show_;
 }
 void base_window::show(bool in_show) {
-  show_ = true;
+  show_ = in_show;
 }
-
-void window_panel::read_setting() {
+void base_window::read_setting() {
   auto l_json = core_set::getSet().json_data;
   if (l_json->count(title()))
     (*l_json)[title()].get_to(setting);
@@ -50,11 +38,13 @@ void window_panel::read_setting() {
 
   //  core_set_init{}.read_setting(title(), setting);
 }
-void window_panel::save_setting() const {
+void base_window::save_setting() const {
   auto l_json        = core_set::getSet().json_data;
   (*l_json)[title()] = setting;
   //  core_set_init{}.save_setting(title(), setting);
 }
+void base_window::aborted() {}
+
 void window_panel::init() {
   read_setting();
 }
@@ -62,16 +52,26 @@ void window_panel::succeeded() {
   setting["show_"] = show_;
   save_setting();
 }
-
 void window_panel::aborted() {
   save_setting();
 }
 const string &window_panel::title() const {
   return title_name_;
 }
+void window_panel::update(const chrono::system_clock::duration &in_duration, void *in_data) {
+  for (auto &&i : begin_fun) {
+    i();
+  }
+  begin_fun.clear();
 
-modal_window::modal_window()
-    : show{true} {
+  dear::Begin{title().c_str(), &show_} &&
+      [&]() {
+        this->render();
+      };
+}
+
+modal_window::modal_window() {
+  show = true;
   begin_fun.emplace_back([this]() {
     ImGui::OpenPopup(title().data());
     ImGui::SetNextWindowSize({640, 360});
@@ -91,7 +91,6 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
         render();
       };
 }
-void modal_window::aborted() {}
 
 void windows_proc::init() {
   chick_true<doodle_error>(owner_.owner(), DOODLE_LOC, "未获得窗口所有权");

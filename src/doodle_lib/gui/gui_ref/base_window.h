@@ -17,8 +17,8 @@ class DOODLELIB_API base_window {
  protected:
   std::vector<std::function<void()>> begin_fun;
   bool show_{false};
+  std::map<std::string, std::variant<std::string, bool, std::int64_t>> setting{};
 
-  virtual void render() = 0;
 
  public:
   boost::signals2::signal<void()> close{};
@@ -29,6 +29,8 @@ class DOODLELIB_API base_window {
   virtual ~base_window() = default;
   DOODLE_DIS_COPY(base_window)
 
+  virtual void read_setting();
+  virtual void save_setting() const;
   /**
    * @brief 获取窗口标识
    * @return 窗口标识
@@ -49,7 +51,7 @@ class DOODLELIB_API base_window {
   /**
    * @brief 主动结束后调用
    */
-  virtual void aborted() = 0;
+  virtual void aborted();
   /**
    * @brief 每帧渲染调用
    * @param in_duration 传入的时间间隔
@@ -57,7 +59,7 @@ class DOODLELIB_API base_window {
    */
   virtual void update(
       const chrono::system_clock::duration& in_duration,
-      void* in_data);
+      void* in_data) = 0;
   /**
    * @brief 判断是否显示
    * @return
@@ -114,33 +116,27 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
 
 class DOODLELIB_API window_panel : public base_window {
  protected:
-  std::map<std::string, std::variant<std::string, bool, std::int64_t>> setting{};
   std::string title_name_{};
-
+  virtual void render() = 0;
  public:
   window_panel()           = default;
   ~window_panel() override = default;
-
-  virtual void read_setting();
-  virtual void save_setting() const;
 
   [[nodiscard]] const string& title() const override;
   void init() override;
   void succeeded() override;
   void aborted() override;
+  void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override;
 };
 
 class DOODLELIB_API modal_window : public base_window {
+ protected:
+  virtual void render() = 0;
  public:
   modal_window();
   ~modal_window() override = default;
-  /**
-   * @brief 模态窗口是否显示
-   */
-  bool show;
 
   void update(const std::chrono::system_clock::duration& in_dalta, void* in_data) override;
-  virtual void aborted() override;
 };
 
 namespace base_windows_ns {
