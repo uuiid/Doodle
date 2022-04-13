@@ -32,4 +32,5 @@
 ::
 ::
 ::978f952a14a936cc963da21a135fa983
+powershell -command "& {Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force}"
 powershell.exe -file "%b2eincfilepath%/map_sys_dir_gui.ps1"
