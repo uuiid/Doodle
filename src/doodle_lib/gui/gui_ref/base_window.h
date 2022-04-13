@@ -30,7 +30,7 @@ class DOODLELIB_API base_window {
   virtual ~base_window() = default;
   DOODLE_DIS_COPY(base_window)
 
-  nlohmann::json& get_setting() const;
+  [[nodiscard]] nlohmann::json& get_setting() const;
   virtual void read_setting();
   virtual void save_setting() const;
   /**
