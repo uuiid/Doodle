@@ -129,7 +129,7 @@ void main_menu_bar::menu_file() {
 
 void main_menu_bar::menu_windows() {
   std::apply([this](const auto &...in_item) {
-    (this->open_by_name_widget(in_item), ...);
+    (this->widget_menu_item(in_item), ...);
   },
              gui::config::menu_w::menu_list);
 }
@@ -140,31 +140,25 @@ void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
     open_by_name_widget(in_view);
   }
 }
-void main_menu_bar::open_by_name_widget(const std::string_view &in_view, bool force_show) {
+void main_menu_bar::open_by_name_widget(const std::string_view &in_view) {
   std::string key{in_view};
   auto &&l_win = this->p_i->windows_[key];
   if (!l_win->is_show()) {
-    if (force_show) {
-      for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-        if (l_item.prop("name"_hs).value() == key) {
-          auto l_win_obj  = l_item.construct();
-          auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
-          auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
-          g_main_loop().attach<gui::windows_proc>(l_wrap_win,
-                                                  l_win_ptr,
-                                                  std::move(l_win_obj),
-                                                  true);
-          this->p_i->windows_[l_win_ptr->title()] = l_wrap_win;
-        }
+    for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
+      if (l_item.prop("name"_hs).value() == key) {
+        auto l_win_obj  = l_item.construct();
+        auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
+        auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
+        g_main_loop().attach<gui::windows_proc>(l_wrap_win,
+                                                l_win_ptr,
+                                                std::move(l_win_obj),
+                                                true);
+        this->p_i->windows_[l_win_ptr->title()] = l_wrap_win;
       }
-    } else {
-      l_win->close();
     }
+
   } else {
-    if (force_show) {
-    } else {
-      l_win->close();
-    }
+    l_win->close();
   }
 }
 
@@ -274,7 +268,13 @@ void main_menu_bar::layout_load(const main_menu_bar_ns::layout_data &in_data) {
   p_i->layout_name_.data = in_data.name;
 
   for (auto &&i : in_data.windows_show) {
-    open_by_name_widget(i.first, i.second);
+    if (p_i->windows_.count(i.first)) {
+      if (i.second && !p_i->windows_[i.first]->is_show()) {
+        open_by_name_widget(i.first);
+      }
+      if (!i.second && p_i->windows_[i.first]->is_show())
+        p_i->windows_[i.first]->close();
+    }
   }
   ImGui::LoadIniSettingsFromMemory(in_data.imgui_data.c_str(), in_data.imgui_data.size());
 }

@@ -33,7 +33,7 @@ class DOODLELIB_API main_menu_bar
   friend void from_json(const nlohmann::json& j, main_menu_bar& p);
 
  protected:
-  void open_by_name_widget(const std::string_view& in_view, bool force_show = true);
+  void open_by_name_widget(const std::string_view& in_view);
   void widget_menu_item(const std::string_view& in_view);
   virtual void menu_file();
   virtual void menu_windows();
