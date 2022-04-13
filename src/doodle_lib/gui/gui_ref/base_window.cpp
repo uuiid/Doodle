@@ -7,6 +7,14 @@
 #include <doodle_lib/core/init_register.h>
 namespace doodle::gui {
 
+void to_json(nlohmann::json &j, const base_window &p) {
+  j["show"] = p.show_;
+}
+void from_json(const nlohmann::json &j, base_window &p) {
+  if (j.count("show"))
+    j["show"].get_to(p.show_);
+}
+
 void base_window::failed() {}
 
 base_window *base_window::find_window_by_title(const string &in_title) {
@@ -28,28 +36,20 @@ void base_window::show(bool in_show) {
   show_ = in_show;
 }
 void base_window::read_setting() {
-  auto l_json = core_set::getSet().json_data;
-  if (l_json->count(title()))
-    (*l_json)[title()].get_to(setting);
-  if (!setting.count("show_"))
-    setting["show_"] = show_;
-
-  show_ = std::get<bool>(setting["show_"]);
-
-  //  core_set_init{}.read_setting(title(), setting);
+  get_setting().get_to(*this);
 }
 void base_window::save_setting() const {
-  auto l_json        = core_set::getSet().json_data;
-  (*l_json)[title()] = setting;
-  //  core_set_init{}.save_setting(title(), setting);
+  get_setting() = *this;
 }
 void base_window::aborted() {}
+nlohmann::json &base_window::get_setting() const {
+  return (*core_set::getSet().json_data)[title()];
+}
 
 void window_panel::init() {
   read_setting();
 }
 void window_panel::succeeded() {
-  setting["show_"] = show_;
   save_setting();
 }
 void window_panel::aborted() {

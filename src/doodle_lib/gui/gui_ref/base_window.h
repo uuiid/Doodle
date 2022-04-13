@@ -17,8 +17,9 @@ class DOODLELIB_API base_window {
  protected:
   std::vector<std::function<void()>> begin_fun;
   bool show_{false};
-  std::map<std::string, std::variant<std::string, bool, std::int64_t>> setting{};
 
+  friend void to_json(nlohmann::json& j, const base_window& p);
+  friend void from_json(const nlohmann::json& j, base_window& p);
 
  public:
   boost::signals2::signal<void()> close{};
@@ -29,6 +30,7 @@ class DOODLELIB_API base_window {
   virtual ~base_window() = default;
   DOODLE_DIS_COPY(base_window)
 
+  nlohmann::json& get_setting() const;
   virtual void read_setting();
   virtual void save_setting() const;
   /**
@@ -118,6 +120,7 @@ class DOODLELIB_API window_panel : public base_window {
  protected:
   std::string title_name_{};
   virtual void render() = 0;
+
  public:
   window_panel()           = default;
   ~window_panel() override = default;
@@ -132,6 +135,7 @@ class DOODLELIB_API window_panel : public base_window {
 class DOODLELIB_API modal_window : public base_window {
  protected:
   virtual void render() = 0;
+
  public:
   modal_window();
   ~modal_window() override = default;
