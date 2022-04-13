@@ -195,6 +195,11 @@ void app::loop_one() {
   }
   if (is_stop())
     return;
+  /// \brief 在设置停止后不更新gui, 直接开始基本循环并返回
+  if (stop_) {
+    app_command_base::loop_one();
+    return;
+  }
 
   // Start the Dear ImGui frame
   ImGui_ImplDX11_NewFrame();
