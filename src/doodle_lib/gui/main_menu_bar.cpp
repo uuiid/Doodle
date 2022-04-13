@@ -13,9 +13,6 @@
 #include <gui/get_input_dialog.h>
 #include <doodle_lib/core/core_sig.h>
 
-#include <boost/hana.hpp>
-#include <boost/hana/ext/std/tuple.hpp>
-
 namespace doodle {
 class main_menu_bar::impl {
  public:
@@ -27,6 +24,7 @@ class main_menu_bar::impl {
 
 main_menu_bar::main_menu_bar()
     : p_i(std::make_unique<impl>()) {
+  this->show_ = true;
 }
 
 main_menu_bar::~main_menu_bar() = default;
@@ -90,7 +88,7 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  std::apply([this](const auto&... in_item) {
+  std::apply([this](const auto &...in_item) {
     (this->open_by_name_widget(in_item), ...);
   },
              gui::config::menu_w::menu_list);
@@ -141,6 +139,7 @@ void main_menu_bar::menu_tool() {
 }
 
 void main_menu_bar::init() {
+  this->read_setting();
   g_reg()->set<main_menu_bar &>(*this);
   auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
   for (auto &&l_item : k_list) {
@@ -154,15 +153,10 @@ void main_menu_bar::init() {
     }
   }
 }
-void main_menu_bar::succeeded() {
-}
-void main_menu_bar::failed() {
-}
-void main_menu_bar::aborted() {
-}
+
 void main_menu_bar::update(
-    std::chrono::duration<std::chrono::system_clock::rep, std::chrono::system_clock::period>,
-    void *data) {
+    const chrono::system_clock::duration &in_duration,
+    void *in_data) {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
@@ -174,6 +168,26 @@ void main_menu_bar::update(
   };
 }
 void main_menu_bar::menu_edit() {
+  dear::MenuBar{} && [this]() {
+    dear::Menu{"布局"} && [this]() { this->menu_layout(); };
+  };
+}
+void main_menu_bar::menu_layout() {
+  ImGui::InputText("##name", nullptr);
+  ImGui::SameLine();
+  ImGui::Button("save");
+}
+void main_menu_bar::succeeded() {
+  show_ = true;
+  save_setting();
+}
+const string &main_menu_bar::title() const {
+  static std::string name{"main_menu"};
+  return name;
+}
+void main_menu_bar::aborted() {
+  base_window::aborted();
+  save_setting();
 }
 
 }  // namespace doodle

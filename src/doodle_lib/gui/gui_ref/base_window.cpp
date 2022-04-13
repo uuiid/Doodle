@@ -71,7 +71,7 @@ void window_panel::update(const chrono::system_clock::duration &in_duration, voi
 }
 
 modal_window::modal_window() {
-  show = true;
+  show_ = true;
   begin_fun.emplace_back([this]() {
     ImGui::OpenPopup(title().data());
     ImGui::SetNextWindowSize({640, 360});
@@ -86,7 +86,7 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
   }
   begin_fun.clear();
 
-  dear::PopupModal{title().data(), &show, ImGuiWindowFlags_NoSavedSettings} &&
+  dear::PopupModal{title().data(), &show_, ImGuiWindowFlags_NoSavedSettings} &&
       [&]() {
         render();
       };
