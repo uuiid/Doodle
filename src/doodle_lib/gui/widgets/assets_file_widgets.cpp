@@ -26,7 +26,9 @@ class assets_file_widgets::impl {
  public:
   class base_data;
   class image_data;
-
+  virtual ~impl(){
+      observer_h.disconnect();
+  };
   using cache_image   = gui::gui_cache<std::shared_ptr<void>, image_data>;
   using cache_name    = gui::gui_cache<std::string>;
   using cache_select  = gui::gui_cache<bool>;
@@ -169,6 +171,7 @@ class assets_file_widgets::impl {
   std::function<void()> render_list;
   entt::observer observer_h{};
 };
+
 
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
