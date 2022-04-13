@@ -288,11 +288,12 @@ void main_menu_bar::layout_delete(const std::string &in_name) {
 }
 void main_menu_bar::read_setting() {
   base_window::read_setting();
-  get_setting().get_to(*this);
+  if (auto &&l_j = get_setting(); l_j.count("main_menu_bar"))
+    l_j["main_menu_bar"].get_to(*this);
 }
 void main_menu_bar::save_setting() const {
   base_window::save_setting();
-  get_setting() = *this;
+  get_setting()["main_menu_bar"] = *this;
 }
 
 }  // namespace doodle
