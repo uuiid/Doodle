@@ -45,6 +45,10 @@ class DOODLELIB_API main_menu_bar
   void layout_delete(const std::string& in_name);
 
  public:
+  virtual void read_setting() override;
+  virtual void save_setting() const override;
+
+ public:
   main_menu_bar();
   ~main_menu_bar() override;
 
