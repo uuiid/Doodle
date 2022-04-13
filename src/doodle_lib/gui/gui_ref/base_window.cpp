@@ -114,10 +114,11 @@ void windows_proc::init() {
       l_d->save_setting();
     }
   }
-  if (!windows_->is_show())
-    windows_ = nullptr;
-  else {
+  if (windows_->is_show()) {
     g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
+  } else {
+    this->warp_proc_->show = false;
+    windows_ = nullptr;
   }
 }
 void windows_proc::succeeded() {
