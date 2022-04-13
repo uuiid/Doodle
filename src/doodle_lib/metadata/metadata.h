@@ -74,7 +74,8 @@ class DOODLELIB_API database {
     friend void to_json(nlohmann::json &j, const ref_data &p);
     friend void from_json(const nlohmann::json &j, ref_data &p);
 
-    bool find_for_path(const FSys::path& in_path);
+    bool find_for_path(const FSys::path &in_path);
+
    public:
     ref_data();
     explicit ref_data(const database &in);
@@ -147,24 +148,28 @@ class DOODLELIB_API database {
 
   class DOODLELIB_API fun_save_ {
    public:
+    constexpr fun_save_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_save;
     }
   };
   class DOODLELIB_API fun_delete_ {
    public:
+    constexpr fun_delete_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_delete;
     }
   };
   class DOODLELIB_API fun_load_ {
    public:
+    constexpr fun_load_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_load;
     }
   };
   class DOODLELIB_API fun_sync_ {
    public:
+    constexpr fun_sync_() = default;
     void operator()(database &in) const {
       in.status_ = status::is_sync;
     }

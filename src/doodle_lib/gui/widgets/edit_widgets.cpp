@@ -24,7 +24,7 @@
 #include <doodle_lib/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle {
-namespace edit_widgets_ns{
+namespace edit_widgets_ns {
 
 }
 
@@ -109,7 +109,6 @@ class assets_edit : public edit_interface {
           l_win) {
         dynamic_cast<assets_filter_widget *>(l_win)->refresh(false);
       };
-
     }
   }
 };
