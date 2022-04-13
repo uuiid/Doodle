@@ -99,7 +99,7 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
                         base_window* in_windows,
                         entt::meta_any&& in_meta_any,
                         std::optional<bool> show = {})
-      : optional_show(std::move(show)),
+      : optional_show(show),
         windows_(in_windows),
         owner_(std::move(in_meta_any)),
         warp_proc_(std::move(in_ptr)) {

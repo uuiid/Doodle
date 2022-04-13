@@ -94,7 +94,6 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
 
 void windows_proc::init() {
   chick_true<doodle_error>(owner_.owner(), DOODLE_LOC, "未获得窗口所有权");
-  g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
   this->warp_proc_->show  = true;
   this->warp_proc_->close = [this]() {
     this->windows_->close();
@@ -115,24 +114,39 @@ void windows_proc::init() {
       l_d->save_setting();
     }
   }
+  if (!windows_->is_show())
+    windows_ = nullptr;
+  else {
+    g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
+  }
 }
 void windows_proc::succeeded() {
-  windows_->succeeded();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  if (windows_) {
+    windows_->succeeded();
+    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  }
 }
 void windows_proc::failed() {
-  windows_->failed();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  if (windows_) {
+    windows_->failed();
+    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  }
 }
 void windows_proc::aborted() {
-  windows_->aborted();
-  g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  if (windows_) {
+    windows_->aborted();
+    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+  }
 }
 void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
-  windows_->update(in_duration, in_data);
-  if (!windows_->is_show())
-    windows_->close();
+  if (windows_) {
+    windows_->update(in_duration, in_data);
+    if (!windows_->is_show())
+      windows_->close();
+  } else {
+    succeed();
+  }
 }
 windows_proc::~windows_proc() = default;
 }  // namespace doodle::gui
