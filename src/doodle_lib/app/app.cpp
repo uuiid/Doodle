@@ -9,6 +9,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
+#include <doodle_lib/gui/gui_ref/layout_window.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
@@ -274,6 +275,7 @@ void app::show_windows() {
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
+  g_main_loop().attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup

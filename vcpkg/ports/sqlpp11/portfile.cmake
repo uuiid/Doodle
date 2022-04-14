@@ -1,13 +1,13 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO rbock/sqlpp11
-        REF 2bc89b34ad3cc37b6bca9a44a3529ff2d8fe211f # 0.60
-        SHA512 6e2496959749422987aca21f333abb01648702b85e02acc711bbac398ca6a67d8be93a3d89fc1f8bad5446865725ff9bcc053e6229cb34627120b59469426266
+        REF b50cc454b62e88bf03d681f731cdd98c23a42ffb # 0.60
+        SHA512 168baa5d5dd6a4119623cc832243c5d7d33ab9d165f5922997d612f34d6e829764f3d4d0ab7dac780f560e7ce6b92aa1632f42afd65227cae6e584c06a52f9f0
         HEAD_REF master
         PATCHES
         0001-fix_ddl.patch
-        0001-fix-sqlite3.patch
-        0001-fix-sqlite3-config.patch
+        0002-fix-sqlite3.patch
+        0003-fix-sqlite3-config.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
