@@ -53,7 +53,7 @@ template <class F, class... Args>
     -> std::future<typename std::invoke_result<F, Args...>::type> {
   using return_type = typename std::invoke_result<F, Args...>::type;
 
-  auto task         = new_object<std::packaged_task<return_type()> >(
+  auto task         = std::make_shared<std::packaged_task<return_type()> >(
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
   std::future<return_type> res = task->get_future();
   boost::asio::post(io_context, [task]() { (*task)(); });
