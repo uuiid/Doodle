@@ -232,7 +232,7 @@ void assets_file_widgets::render() {
     p_i->render_list();
   };
 
-  if (ImGui::Button(ICON_FA_BATTERY_QUARTER)) {
+  if (ImGui::Button(ICON_FA_ATOM)) {
     p_i->render_icon = !p_i->render_icon;
     generate_lists(p_i->handle_list);
     switch_rander();
