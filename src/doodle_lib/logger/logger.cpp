@@ -2,6 +2,7 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <Windows.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -43,6 +44,7 @@ logger_ctrl *logger_ctrl::_self = nullptr;
 logger_ctrl::logger_ctrl()
     : p_log_path(core_set::getSet().get_cache_root() / "log"),
       p_log_name("tmp_logfile" + date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()) + ".txt") {
+  _self = this;
   init_temp_log();
 }
 void logger_ctrl::init_temp_log() {
