@@ -94,7 +94,6 @@ class file_panel::impl {
         buffer("##info", ""s),
         filter_list("过滤器"s, std::vector<std::string>{}),
         begin_fun_list(),
-        is_ok(false),
         p_flags_(),
         sort_by_p(sort_by::none){};
 
@@ -109,7 +108,6 @@ class file_panel::impl {
 
   std::vector<std::function<void()>> begin_fun_list;
   std::size_t select_index{};
-  bool is_ok;
   dialog_flags p_flags_;
 
   file_panel::select_sig out_;
@@ -419,14 +417,12 @@ void file_panel::render_filter() {
 }
 void file_panel::button_ok() {
   if (imgui::Button("ok")) {
-    p_i->is_ok = true;
     close();
     this->succeed();
   }
 }
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
-    p_i->is_ok = false;
     close();
     this->fail();
   }
