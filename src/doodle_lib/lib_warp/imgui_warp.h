@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <ImGui.h>
+#include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
@@ -24,21 +24,36 @@ static const ImVec2 Zero(0.0f, 0.0f);
 //
 // On its own, it does nothing but call the supplied function when it is
 // destroyed;
+struct call_wrapper {
+ protected:
+  const bool ok_;
+
+ public:
+  constexpr explicit call_wrapper(bool ok) noexcept : ok_{ok} {}
+  virtual ~call_wrapper() noexcept = default;
+
+  template <typename Fun_T>
+  constexpr bool operator&&(Fun_T in_fun) const {
+    if (ok_)
+      in_fun();
+    return ok_;
+  }
+
+  constexpr operator bool() const noexcept { return ok_; }
+};
+
 template <typename Base, bool ForceDtor = false>
-struct ScopeWrapper {
+struct ScopeWrapper : public call_wrapper {
   using wrapped_type               = Base;
   using self_type                  = ScopeWrapper<Base>;
 
   static constexpr bool force_dtor = ForceDtor;
 
- protected:
-  const bool ok_;
-
  public:
   // constructor takes a predicate that may be used to determine if
   // additional calls can be made, and a function/lambda/callable to
   // be invoked from the destructor.
-  constexpr explicit ScopeWrapper(bool ok) noexcept : ok_{ok} {}
+  constexpr explicit ScopeWrapper(bool ok) noexcept : call_wrapper{ok} {}
 
   // destructor always invokes the supplied destructor function.
   ~ScopeWrapper() noexcept {
@@ -49,19 +64,8 @@ struct ScopeWrapper {
     wrapped_type::dtor();
   }
 
-  // operator&& will excute 'code' if the predicate supplied during
-  // construction was true.
-  template <typename PassthruFn>
-  constexpr bool operator&&(PassthruFn passthru) const {
-    if (ok_)
-      passthru();
-    return ok_;
-  }
-
-  constexpr operator bool() const noexcept { return ok_; }
-
  protected:
-  ScopeWrapper(const ScopeWrapper&) = delete;
+  ScopeWrapper(const ScopeWrapper&)            = delete;
   ScopeWrapper& operator=(const ScopeWrapper&) = delete;
 };
 
