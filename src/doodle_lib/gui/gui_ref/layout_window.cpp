@@ -6,6 +6,7 @@
 namespace doodle::gui {
 class layout_window::impl {
  public:
+  std::vector<warp_w> list_windows;
 };
 layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {}
