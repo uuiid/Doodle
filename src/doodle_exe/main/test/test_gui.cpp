@@ -60,7 +60,7 @@ class test_screenshot_widget_app : public app {
  public:
  protected:
   void load_windows() override {
-    g_reg()->set<project>("D:/tmp", "test");
+    g_reg()->ctx().emplace<project>("D:/tmp", "test");
     auto k_h = make_handle();
     g_main_loop()
         .attach<null_process_t>()

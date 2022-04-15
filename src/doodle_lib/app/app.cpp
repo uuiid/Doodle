@@ -169,7 +169,7 @@ app::app(const win::wnd_instance& in_instance)
     io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(), l_font.size(), 16.0f, &icons_config, icons_ranges);
   }
 
-  g_reg()->ctx<core_sig>().init_end.connect([this]() {
+  g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     g_main_loop().attach<one_process_t>([this]() {
       this->load_windows();
     });
@@ -291,7 +291,7 @@ void app::load_back_end() {
   g_main_loop()
       .attach<one_process_t>([]() {
         g_main_loop().attach<short_cut>();
-        g_reg()->ctx<core_sig>().init_end.connect([]() {
+        g_reg()->ctx().at<core_sig>().init_end.connect([]() {
           init_register::instance().init_run();
         });
       });

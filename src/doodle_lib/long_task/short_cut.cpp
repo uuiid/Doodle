@@ -16,7 +16,7 @@ class short_cut::impl {
 
 short_cut::short_cut() : p_i(std::make_unique<impl>()){};
 void short_cut::init() {
-  g_reg()->set<short_cut &>(*this);
+  g_reg()->ctx().emplace<short_cut &>(*this);
 }
 void short_cut::succeeded() {
 }
@@ -28,7 +28,7 @@ void short_cut::update(const std::chrono::duration<std::chrono::system_clock::re
                                                    std::chrono::system_clock::period> &,
                        void *data) {
   if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
-    g_reg()->ctx<core_sig>().save();
+    g_reg()->ctx().at<core_sig>().save();
 }
 short_cut::~short_cut() = default;
 

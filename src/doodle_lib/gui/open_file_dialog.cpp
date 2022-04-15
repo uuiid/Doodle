@@ -156,7 +156,7 @@ void file_panel::init() {
   this->scan_director(p_i->p_pwd);
 }
 void file_panel::succeeded() {
-  g_reg()->set<default_pwd>(p_i->p_pwd);
+  g_reg()->ctx().emplace<default_pwd>(p_i->p_pwd);
 
   std::visit(entt::overloaded{
                  [&](const one_sig &in_sig) -> void {
@@ -536,7 +536,7 @@ file_panel::dialog_args &file_panel::dialog_args::set_pwd(const FSys::path &in_p
 }
 
 file_panel::dialog_args &file_panel::dialog_args::use_default_pwd() {
-  pwd = g_reg()->ctx_or_set<default_pwd>().pwd;
+  pwd = g_reg()->ctx().emplace<default_pwd>().pwd;
   return *this;
 }
 }  // namespace doodle

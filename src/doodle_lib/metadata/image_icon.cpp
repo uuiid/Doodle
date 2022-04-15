@@ -20,7 +20,7 @@ FSys::path image_icon::image_root(const entt::handle& in_handle) const {
 
   return result = in_handle
                       .registry()
-                      ->ctx<project>()
+                      ->ctx().at<project>()
                       .make_path(
                           std::string{doodle_config::image_folder_name});
 }

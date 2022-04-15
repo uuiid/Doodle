@@ -58,6 +58,6 @@ void project_edit::render() {
   });
   p_i->data_edit.save(p_i->p_h);
   if (ImGui::Button("保存"))
-    g_reg()->ctx<core_sig>().save();
+    g_reg()->ctx().at<core_sig>().save();
 }
 }  // namespace doodle

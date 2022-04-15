@@ -49,8 +49,8 @@ class image_loader::impl {
 
 image_loader::image_loader()
     : p_i(std::make_unique<impl>()) {
-  if (auto k_ctx = g_reg()->try_ctx<cache>(); k_ctx) {
-    p_i->cache_p = *k_ctx;
+  if (g_reg()->ctx().contains<cache>()) {
+    p_i->cache_p = g_reg()->ctx().at<cache>();
   }
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
@@ -82,7 +82,7 @@ bool image_loader::load(image_icon& in_icon, const FSys::path& in_root) {
 }
 bool image_loader::load(const entt::handle& in_handle) {
   chick_true<doodle_error>(in_handle.any_of<image_icon>(), DOODLE_LOC, "缺失图标组件");
-  chick_true<doodle_error>(in_handle.registry()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  chick_true<doodle_error>(in_handle.registry()->ctx().contains<project>(), DOODLE_LOC, "缺失项目上下文");
   auto& l_image     = in_handle.get<image_icon>();
   auto l_local_path = l_image.image_root(in_handle);
 
@@ -95,14 +95,14 @@ bool image_loader::save(const entt::handle& in_handle,
                         const cv::Mat& in_image,
                         const cv::Rect2f& in_rect) {
   auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  chick_true<doodle_error>(k_reg->ctx().contains<project>(), DOODLE_LOC, "缺失项目上下文");
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
 
   auto k_image = in_image(in_rect).clone();
 
   k_icon.path  = core_set::getSet().get_uuid_str() + ".png";
-  auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
+  auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
 
   cv::imwrite(k_path.generic_string(), k_image);
   k_icon.image   = cv_to_d3d(k_image);
@@ -168,12 +168,12 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
 }
 bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path) {
   auto k_reg = g_reg();
-  chick_true<doodle_error>(k_reg->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
+  chick_true<doodle_error>(k_reg->ctx().contains<project>(), DOODLE_LOC, "缺失项目上下文");
   chick_true<doodle_error>(exists(in_path), DOODLE_LOC, "文件不存在");
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
   k_icon.path  = core_set::getSet().get_uuid_str() + in_path.extension().generic_string();
-  auto k_path  = k_reg->ctx<project>().make_path("image") / k_icon.path;
+  auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
 
   FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);
   auto l_mat = cv::imread(k_path.generic_string());
@@ -228,7 +228,7 @@ void image_loader_ns::image_loader_init::init() const {
         l_cache.error_image = k_def;
       }
     }
-    g_reg()->set<image_loader::cache>(l_cache);
+    g_reg()->ctx().emplace<image_loader::cache>(l_cache);
   });
 }
 

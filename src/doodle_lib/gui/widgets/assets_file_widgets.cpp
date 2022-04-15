@@ -20,14 +20,12 @@
 #include <doodle_lib/core/init_register.h>
 namespace doodle {
 
-
-
 class assets_file_widgets::impl {
  public:
   class base_data;
   class image_data;
-  virtual ~impl(){
-      observer_h.disconnect();
+  virtual ~impl() {
+    observer_h.disconnect();
   };
   using cache_image   = gui::gui_cache<std::shared_ptr<void>, image_data>;
   using cache_name    = gui::gui_cache<std::string>;
@@ -172,7 +170,6 @@ class assets_file_widgets::impl {
   entt::observer observer_h{};
 };
 
-
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
@@ -195,8 +192,8 @@ void assets_file_widgets::refresh(const std::vector<entt::handle>& in_list) {
 void assets_file_widgets::init() {
   gui::window_panel::init();
 
-  g_reg()->set<assets_file_widgets&>(*this);
-  auto& l_sig = g_reg()->ctx<core_sig>();
+  g_reg()->ctx().emplace<assets_file_widgets&>(*this);
+  auto& l_sig = g_reg()->ctx().at<core_sig>();
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect(
       [this](const std::vector<entt::handle>& in) {
         p_i->handle_list = in;
@@ -240,12 +237,12 @@ void assets_file_widgets::render() {
     generate_lists(p_i->handle_list);
     switch_rander();
   }
-  g_reg()->ctx<status_info>().show_size = p_i->lists.size();
+  g_reg()->ctx().at<status_info>().show_size = p_i->lists.size();
 }
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   if (dear::MenuItem("打开") && in_.all_of<assets_file>()) {
-    auto k_path = g_reg()->ctx<project>().get_path() / in_.get<assets_file>().path;
+    auto k_path = g_reg()->ctx().at<project>().get_path() / in_.get<assets_file>().path;
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
@@ -274,7 +271,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
       in_handle.patch<database>(database::delete_);
     });
 
-    g_reg()->ctx<core_sig>().save_begin.connect(
+    g_reg()->ctx().at<core_sig>().save_begin.connect(
         [this, in_, l_list](const std::vector<entt::handle>&) {
           g_main_loop().attach<one_process_t>(
               [this, in_, l_list]() {
@@ -294,7 +291,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   std::vector<entt::handle> l_handle_list{};
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {  /// 双击鼠标时
     if (i.handle_.all_of<image_icon>())
-      FSys::open_explorer(g_reg()->ctx<project>().make_path("image") / i.handle_.get<image_icon>().path);
+      FSys::open_explorer(g_reg()->ctx().at<project>().make_path("image") / i.handle_.get<image_icon>().path);
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
@@ -330,11 +327,11 @@ void assets_file_widgets::set_select(std::size_t in_size) {
 
   p_i->select_index = in_size;
   if (!l_handle_list.empty()) {
-    g_reg()->set<std::vector<entt::handle>>(l_handle_list);
-    auto& l_sig = g_reg()->ctx<core_sig>();
+    g_reg()->ctx().emplace<std::vector<entt::handle>>(l_handle_list);
+    auto& l_sig = g_reg()->ctx().at<core_sig>();
     l_sig.select_handles(l_handle_list);
     l_sig.select_handle(i.handle_);
-    g_reg()->ctx<status_info>().select_size = l_handle_list.size();
+    g_reg()->ctx().at<status_info>().select_size = l_handle_list.size();
   }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
@@ -352,11 +349,14 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
           }));
   if (ranges::find(l_lists, l_item.handle_) == l_lists.end())
     l_lists.emplace_back(l_item.handle_);
-  g_reg()->set<std::vector<entt::handle>>(l_lists);
-  auto* l_h = g_reg()->try_ctx<std::vector<entt::handle>>();
-  ImGui::SetDragDropPayload(
-      doodle_config::drop_handle_list.data(), l_h, sizeof(*l_h));
-  ImGui::Text("拖拽实体");
+  g_reg()->ctx().emplace<std::vector<entt::handle>>(l_lists);
+  if (g_reg()->ctx().contains<std::vector<entt::handle>>()) {
+    ImGui::SetDragDropPayload(
+        doodle_config::drop_handle_list.data(),
+        &(g_reg()->ctx().at<std::vector<entt::handle>>()),
+        sizeof(g_reg()->ctx().at<std::vector<entt::handle>>()));
+    ImGui::Text("拖拽实体");
+  }
 }
 
 void assets_file_widgets::render_by_icon() {

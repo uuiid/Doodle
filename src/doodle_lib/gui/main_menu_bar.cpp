@@ -115,7 +115,7 @@ void main_menu_bar::menu_file() {
   ImGui::Separator();
 
   if (dear::MenuItem("保存"s, "Ctrl+S"))
-    g_reg()->ctx<core_sig>().save();
+    g_reg()->ctx().at<core_sig>().save();
 
   ImGui::Separator();
   dear::MenuItem("调试"s, &p_i->p_debug_show);
@@ -185,7 +185,7 @@ void main_menu_bar::menu_tool() {
 
 void main_menu_bar::init() {
   this->read_setting();
-  g_reg()->set<main_menu_bar &>(*this);
+  g_reg()->ctx().emplace<main_menu_bar &>(*this);
   auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
   for (auto &&l_item : k_list) {
     if (auto l_win = l_item.construct(); l_win) {

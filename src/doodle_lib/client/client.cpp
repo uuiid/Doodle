@@ -179,7 +179,7 @@ end;
                        l_info.version_minor = version::version_minor));
 }
 void client::open_project(const FSys::path& in_path) {
-  g_reg()->ctx<core_sig>().project_begin_open(in_path);
+  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
   p_i->data_path = in_path;
   p_i->up_data();
 
@@ -191,7 +191,7 @@ void client::open_project(const FSys::path& in_path) {
         for (auto&& [e, p] : k_prj.each()) {
           /// @brief 这里我们强制将项目路径更改为项目所在路径
           p.p_path = in_path.parent_path();
-          k_reg.ctx<core_sig>().project_end_open(make_handle(e), p);
+          k_reg.ctx().at<core_sig>().project_end_open(make_handle(e), p);
           return;
         }
         chick_true<doodle_error>(false, DOODLE_LOC, "在这个库中找不到项目");
@@ -206,8 +206,8 @@ void client::new_project(const entt::handle& in_handle) {
   if (!in_handle.all_of<database>())
     in_handle.emplace<database>();
   add_project(k_path);
-  g_reg()->set<project>(in_handle.get<project>());
-  g_reg()->ctx<database_info>().path_ = k_path;
+  g_reg()->ctx().emplace<project>(in_handle.get<project>());
+  g_reg()->ctx().at<database_info>().path_ = k_path;
   g_main_loop()
       .attach<database_task_install>(in_handle)
       .then<one_process_t>([k_path, this]() {

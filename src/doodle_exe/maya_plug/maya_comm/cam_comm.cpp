@@ -35,7 +35,7 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
     DOODLE_CHICK(k_s);
   }
-  auto &k_cam = g_reg()->ctx_or_set<maya_camera>();
+  auto &k_cam = g_reg()->ctx().emplace<maya_camera>();
   k_cam.conjecture();
   k_cam.unlock_attr();
   k_cam.back_camera(k_start, k_end);

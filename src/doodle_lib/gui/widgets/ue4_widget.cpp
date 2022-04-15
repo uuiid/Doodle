@@ -57,7 +57,7 @@ void ue4_widget::init() {
   p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
   p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
   p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
-  g_reg()->set<ue4_widget &>(*this);
+  g_reg()->ctx().emplace<ue4_widget &>(*this);
 }
 
 void ue4_widget::render() {
@@ -284,7 +284,7 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
              doodle_config::ue4_shot /
              fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
              fmt::format("{}{:04d}_{:04d}{}",
-                         g_reg()->ctx<project>().short_str(),
+                         g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum) /
@@ -309,13 +309,13 @@ std::string ue4_import_group::set_level_dir(
              doodle_config::ue4_shot /
              fmt::format("{:04d}", in_handle.get_or_emplace<episodes>()) /
              fmt::format("{}{:04d}_{:04d}{}",
-                         g_reg()->ctx<project>().short_str(),
+                         g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum) /
              core_set::getSet().organization_name /
              fmt::format("{}{:04d}_sc{:04d}{}_{}",
-                         g_reg()->ctx<project>().short_str(),
+                         g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum,

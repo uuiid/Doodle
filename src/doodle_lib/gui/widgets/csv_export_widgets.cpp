@@ -70,11 +70,11 @@ void csv_export_widgets::init() {
                                          BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
                                        });
 
-  g_reg()->set<csv_export_widgets &>(*this);
-  if (auto l_l = g_reg()->try_ctx<std::vector<entt::handle>>(); l_l)
-    p_i->list = *l_l;
+  g_reg()->ctx().emplace<csv_export_widgets &>(*this);
+  if (g_reg()->ctx().contains<std::vector<entt::handle>>())
+    p_i->list = g_reg()->ctx().at<std::vector<entt::handle>>();
   p_i->con.emplace_back(
-      g_reg()->ctx<core_sig>().select_handles.connect(
+      g_reg()->ctx().at<core_sig>().select_handles.connect(
           [this](const std::vector<entt::handle> &in) {
             p_i->list = in;
           }));
@@ -165,7 +165,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
 csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
   auto &k_ass       = in.get<assets_file>();
-  auto project_root = g_reg()->ctx<project>().p_path;
+  auto project_root = g_reg()->ctx().at<project>().p_path;
   auto start_time   = get_user_up_time(in);
   auto end_time     = in.get<time_point_wrap>();
   auto k_time       = start_time.work_duration(end_time);
@@ -175,7 +175,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   if (auto l_c = in.try_get<comment>(); l_c)
     k_comm = *l_c;
 
-  auto l_prj_name = g_reg()->ctx<project>().p_name;
+  auto l_prj_name = g_reg()->ctx().at<project>().p_name;
   if (p_i->use_first_as_project_name.data)
     l_prj_name = in.all_of<assets>() ? in.get<assets>().p_path.begin()->generic_string() : ""s;
   auto k_ass_path = in.all_of<assets>() ? in.get<assets>().p_path : FSys::path{};

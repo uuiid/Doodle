@@ -25,7 +25,7 @@ void drop_file_data::set_files(const std::vector<FSys::path> &in_paths) {
   });
 }
 void drop_file_data::init() {
-  g_reg()->set<drop_file_data &>(*this);
+  g_reg()->ctx().emplace<drop_file_data &>(*this);
 }
 void drop_file_data::succeeded() {
 }

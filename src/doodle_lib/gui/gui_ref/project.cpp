@@ -31,7 +31,7 @@ void project_edit::init_(const entt::handle& in) {
 }
 void project_edit::save_(const entt::handle& in) const {
   in.emplace_or_replace<project>(p_i->project_path.data, p_i->project_name.data);
-  g_reg()->set<project>(in.get<project>());
+  g_reg()->ctx().emplace<project>(in.get<project>());
 }
 void project_edit::render(const entt::handle& in) {
   dear::Text(fmt::format("{}: {}", p_i->project_path.gui_name.name, p_i->project_path.data));

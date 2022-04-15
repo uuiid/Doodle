@@ -62,8 +62,8 @@ void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
   p_version = in_Version;
 }
 FSys::path assets_file::get_path_normal() const {
-  chick_true<doodle_error>(g_reg()->try_ctx<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto l_p = g_reg()->ctx<project>().p_path / path;
+  chick_true<doodle_error>(g_reg()->ctx().contains<project>(), DOODLE_LOC, "缺失项目上下文");
+  auto l_p = g_reg()->ctx().at<project>().p_path / path;
   return l_p.lexically_normal();
 }
 

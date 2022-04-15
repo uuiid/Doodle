@@ -18,7 +18,7 @@ class test_convert : public app {
 
     auto k_prj = make_handle();
     auto& k_p  = k_prj.emplace<project>();
-    reg->set<database::ref_data>(k_prj.emplace<database>());
+    reg->ctx().emplace<database::ref_data>(k_prj.emplace<database>());
     REQUIRE(k_prj.all_of<project, database>());
 
     auto& k_d = k_prj.get<database>();
@@ -96,7 +96,7 @@ TEST_CASE("install project") {
   std::vector<entt::handle> k_l{};
   auto k_prj_h = make_handle();
   auto& k_prj  = k_prj_h.emplace<project>("D:/tmp", "test1");
-  g_reg()->set<project>(k_prj);
+  g_reg()->ctx().emplace<project>(k_prj);
   k_l.push_back(k_prj_h);
   g_main_loop().attach<database_task_install>(k_l);
 
@@ -164,7 +164,7 @@ class name_data : public app_command_base {
     auto k_prj = make_handle();
     k_prj.emplace<project>("D:/tmp", "case_tset");
     k_prj.emplace<database>();
-    g_reg()->set<project>(k_prj.get<project>());
+    g_reg()->ctx().emplace<project>(k_prj.get<project>());
     auto k_msg = make_handle();
     k_msg.emplace<process_message>();
     core::client{}.new_project(k_prj);
@@ -281,7 +281,7 @@ class test_metadata_install : public app {
 };
 
 TEST_CASE_METHOD(test_metadata_install, "test_metadata_install") {
-  g_reg()->ctx<core_sig>().project_end_open.connect([this](auto...) { this->make_install(); });
+  g_reg()->ctx().at<core_sig>().project_end_open.connect([this](auto...) { this->make_install(); });
   //  this->command_line_parser();
   this->run();
 }

@@ -55,8 +55,8 @@ STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
 STDMETHODIMP drop_manager::DragLeave() {
   DOODLE_LOG_INFO("开始 DragLeave");
 
-  if (auto k_drop = g_reg()->try_ctx<drop_file_data>(); k_drop) {
-    k_drop->drag_leave();
+  if (g_reg()->ctx().contains<drop_file_data>()) {
+    g_reg()->ctx().at<drop_file_data>().drag_leave();
   }
 
   return S_OK;
@@ -90,8 +90,8 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
     ReleaseStgMedium(&stgm);
 
     //以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
-    if (auto k_drop = g_reg()->try_ctx<drop_file_data>(); k_drop) {
-      k_drop->set_files(l_vector);
+    if (g_reg()->ctx().contains<drop_file_data>()) {
+      g_reg()->ctx().at<drop_file_data>().set_files(l_vector);
     }
   }
 

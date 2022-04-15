@@ -18,7 +18,7 @@ void from_json(const nlohmann::json &j, base_window &p) {
 void base_window::failed() {}
 
 base_window *base_window::find_window_by_title(const string &in_title) {
-  auto &l_list = g_reg()->ctx_or_set<base_window::list>();
+  auto &l_list = g_reg()->ctx().emplace<base_window::list>();
   auto it      = ranges::find_if(
            l_list,
            [&](const base_window *in_window) -> bool {
@@ -115,7 +115,7 @@ void windows_proc::init() {
     }
   }
   if (windows_->is_show()) {
-    g_reg()->ctx_or_set<base_window::list>().emplace(windows_);
+    g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
   } else {
     this->warp_proc_->show = false;
     windows_ = nullptr;
@@ -124,19 +124,19 @@ void windows_proc::init() {
 void windows_proc::succeeded() {
   if (windows_) {
     windows_->succeeded();
-    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
   }
 }
 void windows_proc::failed() {
   if (windows_) {
     windows_->failed();
-    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
   }
 }
 void windows_proc::aborted() {
   if (windows_) {
     windows_->aborted();
-    g_reg()->ctx_or_set<base_window::list>().erase(windows_);
+    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
   }
 }
 void windows_proc::update(const chrono::system_clock::duration &in_duration,

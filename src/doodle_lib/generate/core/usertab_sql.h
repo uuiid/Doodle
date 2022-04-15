@@ -24,7 +24,7 @@ namespace doodle
             const T& operator()() const { return id; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::bigint_unsigned, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::integer_unsigned, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
     };
     struct UserName
     {
@@ -72,7 +72,7 @@ namespace doodle
             const T& operator()() const { return permissionGroup; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::bigint>;
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
     };
   } // namespace Usertab_
 

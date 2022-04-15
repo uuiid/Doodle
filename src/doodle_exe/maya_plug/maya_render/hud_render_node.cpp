@@ -121,8 +121,8 @@ void doodle_info_node_draw_override::addUIDrawables(
     k_s = k_view.getCamera(k_cam);
     DOODLE_CHICK(k_s);
   } else {
-    if (g_reg()->try_ctx<maya_camera>())
-      k_cam = g_reg()->ctx<maya_camera>().p_path;
+    if (g_reg()->ctx().contains<maya_camera>())
+      k_cam = g_reg()->ctx().at<maya_camera>().p_path;
     else
       return;
   }

@@ -222,7 +222,7 @@ class assets_file_edit : public gui::edit_interface {
       p_name_cache    = l_ass.p_name;
       p_version_cache = l_ass.get_version();
     } else {
-      p_path_cache = g_reg()->ctx<project>().p_path.generic_string();
+      p_path_cache = g_reg()->ctx().at<project>().p_path.generic_string();
     }
   }
   void render(const entt::handle &in) override {
@@ -370,9 +370,9 @@ class add_assets_for_file : public base_render {
                   ranges::views::transform([&](const FSys::path &in_path) {
                     auto k_h = make_handle();
                     FSys::path l_path{in_path};
-                    auto l_prj_path = g_reg()->ctx<project>().p_path;
+                    auto l_prj_path = g_reg()->ctx().at<project>().p_path;
                     if (!use_abs_path.data) {
-                      l_path = in_path.lexically_proximate(g_reg()->ctx<project>().p_path);
+                      l_path = in_path.lexically_proximate(g_reg()->ctx().at<project>().p_path);
                     }
 
                     k_h.emplace<assets_file>(l_path);
@@ -396,7 +396,7 @@ class add_assets_for_file : public base_render {
                   ranges::to_vector;
 
     DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
-    g_reg()->ctx<core_sig>().filter_handle(p_list.data);
+    g_reg()->ctx().at<core_sig>().filter_handle(p_list.data);
   }
 
   class combox_show_name {
@@ -418,7 +418,7 @@ class add_assets_for_file : public base_render {
         use_icon("寻找图标"s, true),
         use_abs_path("使用绝对路径", false),
         assets_list("分类"s, std::vector<std::string>{}) {
-    auto &l_sig = g_reg()->ctx<core_sig>();
+    auto &l_sig = g_reg()->ctx().at<core_sig>();
     l_sig.project_end_open.connect(
         [this](const entt::handle &in_prj, const doodle::project &) {
           auto &prj         = in_prj.get_or_emplace<project_config::base_config>();
@@ -510,7 +510,7 @@ class add_entt_base : public base_render {
         l_h.emplace<database>();
         l_h.patch<database>(database::save);
       }
-      g_reg()->ctx<core_sig>().filter_handle(list_handle);
+      g_reg()->ctx().at<core_sig>().filter_handle(list_handle);
     }
     return result;
   }
@@ -575,8 +575,8 @@ edit_widgets::~edit_widgets() = default;
 void edit_widgets::init() {
   window_panel::init();
 
-  g_reg()->set<edit_widgets &>(*this);
-  auto &l_sig = g_reg()->ctx<core_sig>();
+  g_reg()->ctx().emplace<edit_widgets &>(*this);
+  auto &l_sig = g_reg()->ctx().at<core_sig>();
   p_i->p_sc.emplace_back(l_sig.select_handles.connect(
       [&](const std::vector<entt::handle> &in) {
         p_i->p_h = in;
@@ -658,7 +658,7 @@ void edit_widgets::clear_handle() {
 }
 
 void edit_widgets::notify_file_list() const {
-  if (auto k_w = g_reg()->try_ctx<assets_file_widgets>(); k_w) {
+  if (g_reg()->ctx().contains<assets_file_widgets>()) {
     std::vector<entt::handle> l_vector{};
     std::vector<entt::handle> k_list_h{p_i->add_handles};
     k_list_h |= ranges::actions::sort |
@@ -669,7 +669,7 @@ void edit_widgets::notify_file_list() const {
                }) |
                ranges::to_vector;
 
-    g_reg()->ctx<core_sig>().filter_handle(l_vector);
+    g_reg()->ctx().at<core_sig>().filter_handle(l_vector);
   }
 }
 

@@ -33,13 +33,13 @@ doodle_lib::doodle_lib()
   reg->on_construct<database>().connect<&database::set_enum>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  reg->set<database_info>();
-  auto& k_sig = reg->set<core_sig>();
-  reg->set<status_info>();
+  reg->ctx().emplace<database_info>();
+  auto& k_sig = reg->ctx().emplace<core_sig>();
+  reg->ctx().emplace<status_info>();
   k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
     auto k_reg                        = g_reg();
     /// @brief 设置数据库路径
-    k_reg->ctx<database_info>().path_ = in_path;
+    k_reg->ctx().at<database_info>().path_ = in_path;
     /// @brief 清除所有数据库实体
     auto k_v                          = k_reg->view<database>();
     k_reg->destroy(k_v.begin(), k_v.end());
@@ -51,13 +51,13 @@ doodle_lib::doodle_lib()
     });
   });
   k_sig.project_end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
-    g_reg()->set<project>(in_project);
-    g_reg()->set<database::ref_data>(in_handle.get<database>());
-    core_set::getSet().add_recent_project(g_reg()->ctx<database_info>().path_);
-    g_reg()->set<root_ref>(in_handle);
+    g_reg()->ctx().emplace<project>(in_project);
+    g_reg()->ctx().emplace<database::ref_data>(in_handle.get<database>());
+    core_set::getSet().add_recent_project(g_reg()->ctx().at<database_info>().path_);
+    g_reg()->ctx().emplace<root_ref>(in_handle);
   });
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {
-    g_reg()->ctx<status_info>().need_save = false;
+    g_reg()->ctx().at<status_info>().need_save = false;
   });
   p_install = this;
 }

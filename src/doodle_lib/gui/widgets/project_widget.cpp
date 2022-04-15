@@ -55,7 +55,7 @@ void project_widget::render() {
     }
     if (k_chick) {
       auto k_reg = g_reg();
-      k_reg->set<root_ref>(p_c);
+      k_reg->ctx().emplace<root_ref>(p_c);
     }
   };
 }

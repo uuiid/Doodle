@@ -7,6 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/program_options.hpp>
+//#include <Windows.h>
 namespace doodle {
 
 class DOODLELIB_API program_options {
@@ -87,7 +88,7 @@ class DOODLELIB_API program_options {
     return command_line_parser(k_str);
   };
   bool command_line_parser(const std::vector<string>& in_arg);
-  inline bool command_line_parser(const LPSTR& in_arg) {
+  inline bool command_line_parser(const std::string& in_arg) {
     auto k_str = boost::program_options::split_winmain(in_arg);
     return command_line_parser(k_str);
   };

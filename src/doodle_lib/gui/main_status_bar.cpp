@@ -102,16 +102,16 @@ main_status_bar::main_status_bar()
     : p_i(std::make_unique<impl>()) {}
 
 void main_status_bar::init() {
-  g_reg()->set<main_status_bar&>(*this);
+  g_reg()->ctx().emplace<main_status_bar&>(*this);
 }
 void main_status_bar::succeeded() {
-  g_reg()->unset<main_status_bar>();
+  g_reg()->ctx().erase<main_status_bar>();
 }
 void main_status_bar::failed() {
-  g_reg()->unset<main_status_bar>();
+  g_reg()->ctx().erase<main_status_bar>();
 }
 void main_status_bar::aborted() {
-  g_reg()->unset<main_status_bar>();
+  g_reg()->ctx().erase<main_status_bar>();
 }
 void main_status_bar::update(
     chrono::duration<chrono::system_clock::rep,
@@ -122,26 +122,28 @@ void main_status_bar::update(
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
     dear::MenuBar{} && [&]() {
       /// \brief 渲染信息
-      if (auto l_s = g_reg()->try_ctx<status_info>(); l_s) {
-        if (l_s->need_save) {
+      if (g_reg()->ctx().contains<status_info>()) {
+        auto l_s = g_reg()->ctx().at<status_info>();
+        if (l_s.need_save) {
           dear::Text("需要保存"s);
           ImGui::SameLine();
         }
-        if (!l_s->message.empty()) {
-          dear::Text(l_s->message);
+        if (!l_s.message.empty()) {
+          dear::Text(l_s.message);
           ImGui::SameLine();
         }
-        dear::Text(fmt::format("{}/{}", l_s->select_size, l_s->show_size));
+        dear::Text(fmt::format("{}/{}", l_s.select_size, l_s.show_size));
         ImGui::SameLine();
       }
 
       /// \brief 渲染进度条
-      if (auto l_msg = g_reg()->try_ctx<process_message>(); l_msg) {
-        dear::Text(l_msg->get_name());
+      if (g_reg()->ctx().contains<process_message>()) {
+        auto& l_msg = g_reg()->ctx().at<process_message>();
+        dear::Text(l_msg.get_name());
         ImGui::SameLine();
-        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg->get_progress()),
+        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg.get_progress()),
                            ImVec2{-FLT_MIN, 0.0f},
-                           fmt::format("{:04f}%", l_msg->get_progress_f()).c_str());
+                           fmt::format("{:04f}%", l_msg.get_progress_f()).c_str());
       }
     };
   };

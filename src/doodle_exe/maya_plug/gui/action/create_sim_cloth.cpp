@@ -63,7 +63,7 @@ void create_sim_cloth::render() {
     }
     p_list.clear();
     p_coll.remove<qcloth_shape_n::shape_list>();
-    g_reg()->unset<qcloth_shape::cloth_group>();
+    g_reg()->ctx().erase<qcloth_shape::cloth_group>();
   }
 
   for (auto& l_h : p_list) {

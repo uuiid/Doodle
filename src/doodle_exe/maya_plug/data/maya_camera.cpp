@@ -209,12 +209,11 @@ void maya_camera::conjecture() {
 
   chick_true<doodle_error>(!k_list.empty(), DOODLE_SOURCE_LOC, "没有找到任何相机");
 
-  auto k_cam_ptr = g_reg()->try_ctx<maya_camera>();
-  if (k_cam_ptr) {
-    k_cam_ptr->p_path = k_list.front().p_dag_path;
+  if (g_reg()->ctx().contains<maya_camera>()) {
+    g_reg()->ctx().at<maya_camera>().p_path = k_list.front().p_dag_path;
   } else {
     this->p_path = k_list.front().p_dag_path;
-    g_reg()->set<maya_camera>(*this);
+    g_reg()->ctx().emplace<maya_camera>(*this);
   }
 }
 void maya_camera::set_render_cam() const {

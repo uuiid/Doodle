@@ -24,7 +24,7 @@ namespace doodle
             const T& operator()() const { return id; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::bigint_unsigned, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::integer_unsigned, sqlpp::tag::must_not_insert, sqlpp::tag::must_not_update, sqlpp::tag::can_be_null>;
     };
     struct Parent
     {
@@ -40,7 +40,7 @@ namespace doodle
             const T& operator()() const { return parent; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::bigint_unsigned, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::integer_unsigned, sqlpp::tag::can_be_null>;
     };
     struct UuidPath
     {
@@ -88,7 +88,7 @@ namespace doodle
             const T& operator()() const { return updateTime; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::time_point>;
+      using _traits = sqlpp::make_traits<sqlpp::time_point, sqlpp::tag::can_be_null>;
     };
     struct MetaType
     {
@@ -104,7 +104,7 @@ namespace doodle
             const T& operator()() const { return metaType; }
           };
       };
-      using _traits = sqlpp::make_traits<sqlpp::bigint, sqlpp::tag::can_be_null>;
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
     };
     struct Episode
     {

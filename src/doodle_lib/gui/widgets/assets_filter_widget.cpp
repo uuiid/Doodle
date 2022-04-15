@@ -50,7 +50,7 @@ void filter_factory_base::refresh(bool force) {
   }
 }
 void filter_factory_base::connection_sig() {
-  auto& l_sig = g_reg()->ctx<core_sig>();
+  auto& l_sig = g_reg()->ctx().at<core_sig>();
 
   p_i->p_conns.emplace_back(l_sig.project_begin_open.connect(
       [&](const std::filesystem::path&) {
@@ -517,24 +517,24 @@ assets_filter_widget::~assets_filter_widget() = default;
 
 void assets_filter_widget::init() {
   gui::window_panel::init();
-  g_reg()->set<assets_filter_widget&>(*this);
+  g_reg()->ctx().emplace<assets_filter_widget&>(*this);
   p_impl->p_conns.emplace_back(
-      g_reg()->ctx<core_sig>().project_begin_open.connect(
+      g_reg()->ctx().at<core_sig>().project_begin_open.connect(
           [&](const std::filesystem::path&) {
             p_impl->only_rand = true;
           }));
   p_impl->p_conns.emplace_back(
-      g_reg()->ctx<core_sig>().project_end_open.connect(
+      g_reg()->ctx().at<core_sig>().project_end_open.connect(
           [&](const entt::handle&, const doodle::project&) {
             p_impl->only_rand = false;
           }));
   p_impl->p_conns.emplace_back(
-      g_reg()->ctx<core_sig>().save_begin.connect(
+      g_reg()->ctx().at<core_sig>().save_begin.connect(
           [&](const std::vector<entt::handle>&) {
             p_impl->only_rand = true;
           }));
   p_impl->p_conns.emplace_back(
-      g_reg()->ctx<core_sig>().save_end.connect(
+      g_reg()->ctx().at<core_sig>().save_end.connect(
           [&](const std::vector<entt::handle>&) {
             p_impl->only_rand = false;
           }));
@@ -549,7 +549,7 @@ void assets_filter_widget::init() {
 }
 
 void assets_filter_widget::failed() {
-  g_reg()->unset<assets_filter_widget>();
+  g_reg()->ctx().erase<assets_filter_widget>();
 }
 
 void assets_filter_widget::render() {
@@ -630,7 +630,7 @@ void assets_filter_widget::refresh_(bool force) {
     list |= ranges::action::reverse;
   }
 
-  g_reg()->ctx<core_sig>().filter_handle(list);
+  g_reg()->ctx().at<core_sig>().filter_handle(list);
 }
 
 }  // namespace doodle

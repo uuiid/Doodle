@@ -34,13 +34,12 @@ comm_maya_tool::comm_maya_tool()
 }
 void comm_maya_tool::init() {
   gui::window_panel::init();
-  auto k_prj = g_reg()->try_ctx<root_ref>();
-  chick_true<doodle_error>(k_prj, DOODLE_LOC, "没有项目选中");
+  chick_true<doodle_error>(g_reg()->ctx().contains<root_ref>(), DOODLE_LOC, "没有项目选中");
 
   if (project::has_prj()) {
     p_text = project::get_current().get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   }
-  g_reg()->set<comm_maya_tool&>(*this);
+  g_reg()->ctx().emplace<comm_maya_tool&>(*this);
 }
 
 void comm_maya_tool::failed() {
@@ -83,7 +82,7 @@ void comm_maya_tool::render() {
                     arg.sim_path           = in_path;
                     arg.qcloth_assets_path = p_cloth_path;
                     arg.only_sim           = p_only_sim;
-                    arg.project_           = g_reg()->ctx<database_info>().path_;
+                    arg.project_           = g_reg()->ctx().at<database_info>().path_;
                     maya->qcloth_sim_file(make_handle(), arg);
                   });
   }
@@ -94,7 +93,7 @@ void comm_maya_tool::render() {
                     auto k_arg        = details::export_fbx_arg{};
                     k_arg.file_path   = i;
                     k_arg.use_all_ref = this->p_use_all_ref;
-                    k_arg.project_    = g_reg()->ctx<database_info>().path_;
+                    k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
                     maya->export_fbx_file(make_handle(), k_arg);
                   });
   }
@@ -134,7 +133,7 @@ void comm_create_video::init() {
   gui::window_panel::init();
   p_i->out_video_h = make_handle();
 
-  g_reg()->set<comm_create_video&>(*this);
+  g_reg()->ctx().emplace<comm_create_video&>(*this);
 }
 
 void comm_create_video::render() {

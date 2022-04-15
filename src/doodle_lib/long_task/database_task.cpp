@@ -50,7 +50,7 @@ class database_task_select::impl {
 database_task_select::database_task_select(const database_n::filter& in_filter)
     : p_i(std::make_unique<impl>()) {
   p_i->filter_  = in_filter;
-  p_i->prj_root = g_reg()->ctx<database_info>().path_;
+  p_i->prj_root = g_reg()->ctx().at<database_info>().path_;
 }
 
 database_task_select::database_task_select(const FSys::path& in_prj_root)
@@ -112,7 +112,7 @@ void database_task_select::select_db() {
 }
 
 void database_task_select::init() {
-  auto& k_msg = g_reg()->set<process_message>();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   p_i->result = doodle_lib::Get().get_thread_pool()->enqueue([this]() { this->select_db(); });
@@ -145,7 +145,7 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
       k_data.emplace<database>() = p_i->list.back();
       k_data.patch<database>(database::sync);
 
-      g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->size});
+      g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->size});
 
       p_i->create_handle.pop_back();
       p_i->list.pop_back();
@@ -154,13 +154,13 @@ void database_task_select::update(chrono::duration<chrono::system_clock::rep, ch
 }
 
 void database_task_select::succeeded() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_select::failed() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_select::aborted() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
 
@@ -175,12 +175,12 @@ class database_task_update::impl {
 
 database_task_update::database_task_update(const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  p_i->prj_root = g_reg()->ctx<database_info>().path_;
+  p_i->prj_root = g_reg()->ctx().at<database_info>().path_;
   p_i->list     = in_list;
 }
 database_task_update::~database_task_update() = default;
 void database_task_update::init() {
-  auto& k_msg = g_reg()->set<process_message>();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("更新数据");
   k_msg.set_state(k_msg.run);
   p_i->result = g_thread_pool().enqueue([this]() { this->update_db(); });
@@ -209,17 +209,17 @@ void database_task_update::update_db() {
     if (k_data.assets)
       k_sql.assignments.add(l_metadatatab.assetsP = *k_data.assets);
     (*k_conn)(k_sql);
-    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 void database_task_update::succeeded() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_update::failed() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_update::aborted() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
 void database_task_update::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -261,18 +261,18 @@ void database_task_delete::delete_db() {
       auto k_r = (*k_conn)(sqlpp::remove_from(l_metadatatab).where(l_metadatatab.id == l_d.get_id()));
       DOODLE_LOG_WARN("删除了数据id {}", k_r);
     }
-    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_delete::database_task_delete(
     const std::vector<entt::handle>& in_list)
     : p_i(std::make_unique<impl>()) {
-  p_i->prj_root = g_reg()->ctx<database_info>().path_;
+  p_i->prj_root = g_reg()->ctx().at<database_info>().path_;
   p_i->list     = in_list;
 }
 database_task_delete::~database_task_delete() = default;
 void database_task_delete::init() {
-  auto& k_msg = g_reg()->set<process_message>();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("删除数据");
   k_msg.set_state(k_msg.run);
   p_i->result = g_thread_pool().enqueue([this]() { this->delete_db(); });
@@ -281,13 +281,13 @@ void database_task_delete::succeeded() {
   ranges::for_each(p_i->list, [](entt::handle& in) {
     in.destroy();
   });
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_delete::failed() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_delete::aborted() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
 void database_task_delete::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
@@ -348,7 +348,7 @@ void database_task_install::install_db() {
       in.set_id(id);
     });
     in.patch<database>(database::sync);
-    g_reg()->ctx_or_set<process_message>().progress_step({1, p_i->list.size()});
+    g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->list.size()});
   }
 }
 database_task_install::database_task_install(
@@ -360,22 +360,22 @@ database_task_install::database_task_install(
 database_task_install::~database_task_install() = default;
 
 void database_task_install::init() {
-  p_i->prj_root = g_reg()->ctx<database_info>().path_;
+  p_i->prj_root = g_reg()->ctx().at<database_info>().path_;
 
-  auto& k_msg   = g_reg()->set<process_message>();
+  auto& k_msg   = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
 
   p_i->result = g_thread_pool().enqueue([this]() { this->install_db(); });
 }
 void database_task_install::succeeded() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_install::failed() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_install::aborted() {
-  g_reg()->unset<process_message>();
+  g_reg()->ctx().erase<process_message>();
 }
 void database_task_install::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   switch (p_i->result.wait_for(0ns)) {
@@ -419,7 +419,7 @@ void database_task_obs::save() {
             ranges::actions::push_back(p_i->need_delete);
 
   auto k_then = g_main_loop().attach<one_process_t>([=]() {
-    g_reg()->ctx<core_sig>().save_begin(l_list);
+    g_reg()->ctx().at<core_sig>().save_begin(l_list);
   });
   if (!p_i->need_save.empty()) {
     k_then = k_then.then<database_task_install>(p_i->need_save);
@@ -441,7 +441,7 @@ void database_task_obs::save() {
               });
         })
       .then<one_process_t>([=]() {
-        g_reg()->ctx<core_sig>().save_end(l_list);
+        g_reg()->ctx().at<core_sig>().save_end(l_list);
       });
 
   p_i->need_save.clear();
@@ -451,9 +451,9 @@ void database_task_obs::save() {
 
 void database_task_obs::init() {
   p_i->obs.connect(*g_reg(), entt::collector.update<database>());
-  g_reg()->set<database_task_obs&>(*this);
+  g_reg()->ctx().emplace<database_task_obs&>(*this);
 
-  p_i->p_sc_save.emplace_back(g_reg()->ctx<core_sig>().save.connect([this]() {
+  p_i->p_sc_save.emplace_back(g_reg()->ctx().at<core_sig>().save.connect([this]() {
     if ((!p_i->need_save.empty() ||
          !p_i->need_updata.empty() ||
          !p_i->need_delete.empty()) &&
@@ -461,12 +461,12 @@ void database_task_obs::init() {
       this->save();
   }));
   p_i->p_sc_save.emplace_back(
-      g_reg()->ctx<core_sig>().save_begin.connect(
+      g_reg()->ctx().at<core_sig>().save_begin.connect(
           [this](const std::vector<entt::handle>&) {
             p_i->is_save = true;
           }));
   p_i->p_sc_save.emplace_back(
-      g_reg()->ctx<core_sig>().save_end.connect(
+      g_reg()->ctx().at<core_sig>().save_end.connect(
           [this](const std::vector<entt::handle>&) {
             p_i->is_save = false;
           }));
@@ -509,7 +509,7 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
 
   k_obs.clear();
 
-  g_reg()->ctx<status_info>().need_save = !(p_i->need_save.empty() &&
+  g_reg()->ctx().at<status_info>().need_save = !(p_i->need_save.empty() &&
                                             p_i->need_updata.empty() &&
                                             p_i->need_delete.empty());
 }

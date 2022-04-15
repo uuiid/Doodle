@@ -100,7 +100,7 @@ FSys::path play_blast::get_out_path() const {
 }
 
 bool play_blast::conjecture_camera() {
-  auto& k_cam = g_reg()->ctx_or_set<maya_camera>();
+  auto& k_cam = g_reg()->ctx().emplace<maya_camera>();
   k_cam.conjecture();
   return true;
 }
@@ -112,9 +112,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   try {
     chick_ctx<maya_camera>();
   } catch (const doodle_error& err) {
-    g_reg()->set<maya_camera>().conjecture();
+    g_reg()->ctx().emplace<maya_camera>().conjecture();
   }
-  auto& k_cam = g_reg()->ctx<maya_camera>();
+  auto& k_cam = g_reg()->ctx().at<maya_camera>();
   k_cam.conjecture();
   k_cam.set_render_cam();
   k_cam.set_play_attr();

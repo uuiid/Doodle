@@ -397,7 +397,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
 
   chick_ctx<root_ref>();
 
-  auto& k_ref = g_reg()->ctx<root_ref>().root_handle().get<project_config::base_config>();
+  auto& k_ref = g_reg()->ctx().at<root_ref>().root_handle().get<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 
@@ -448,8 +448,8 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
   MFnDagNode k_node{};
 
   auto k_reg = g_reg();
-  if (k_reg->try_ctx<qcloth_shape::cloth_group>()) {
-    return k_reg->ctx<qcloth_shape::cloth_group>();
+  if (k_reg->ctx().contains<qcloth_shape::cloth_group>()) {
+    return k_reg->ctx().at<qcloth_shape::cloth_group>();
   }
 
   for (MItDag i{MItDag::kDepthFirst, MFn::Type::kTransform, &k_s}; !i.isDone(); i.next()) {
@@ -486,7 +486,7 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
   if (k_r.export_grp.isNull())
     k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
 
-  k_reg->set<qcloth_shape::cloth_group>(k_r);
+  k_reg->ctx().emplace<qcloth_shape::cloth_group>(k_r);
   return k_r;
 }
 
