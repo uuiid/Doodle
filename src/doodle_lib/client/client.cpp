@@ -206,7 +206,7 @@ void client::new_project(const entt::handle& in_handle) {
   if (!in_handle.all_of<database>())
     in_handle.emplace<database>();
   add_project(k_path);
-  g_reg()->ctx().emplace<project>(in_handle.get<project>());
+  g_reg()->ctx().emplace<project>() = in_handle.get<project>();
   g_reg()->ctx().at<database_info>().path_ = k_path;
   g_main_loop()
       .attach<database_task_install>(in_handle)

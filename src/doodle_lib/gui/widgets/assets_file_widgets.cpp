@@ -327,6 +327,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
 
   p_i->select_index = in_size;
   if (!l_handle_list.empty()) {
+    g_reg()->ctx().erase<std::vector<entt::handle>>();
     g_reg()->ctx().emplace<std::vector<entt::handle>>(l_handle_list);
     auto& l_sig = g_reg()->ctx().at<core_sig>();
     l_sig.select_handles(l_handle_list);
@@ -349,6 +350,7 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
           }));
   if (ranges::find(l_lists, l_item.handle_) == l_lists.end())
     l_lists.emplace_back(l_item.handle_);
+  g_reg()->ctx().erase<std::vector<entt::handle>>();
   g_reg()->ctx().emplace<std::vector<entt::handle>>(l_lists);
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) {
     ImGui::SetDragDropPayload(

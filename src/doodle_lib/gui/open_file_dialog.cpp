@@ -156,6 +156,7 @@ void file_panel::init() {
   this->scan_director(p_i->p_pwd);
 }
 void file_panel::succeeded() {
+  g_reg()->ctx().erase<default_pwd>();
   g_reg()->ctx().emplace<default_pwd>(p_i->p_pwd);
 
   std::visit(entt::overloaded{
@@ -167,7 +168,6 @@ void file_panel::succeeded() {
                  }},
              p_i->out_);
 }
-
 
 void file_panel::render() {
   for (auto &&i : p_i->begin_fun_list)
