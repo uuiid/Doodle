@@ -22,33 +22,20 @@ class file_panel::path_info {
                 size_string(),
                 last_time(),
                 has_select(){};
-  explicit path_info(const FSys::path &in_path)
-      : path(in_path),
-        is_dir(is_directory(in_path)),
-        show_name(
-            fmt::format("{} {}",
-                        is_directory(in_path) ? "[dir]"s : "[file]"s,
-                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
-        size(is_regular_file(in_path) ? file_size(in_path) : 0u),
-        size_string(),
-        last_time(FSys::last_write_time_point(in_path)),
-        has_select(false) {
-    set_size_str();
-  };
 
-  explicit path_info(const FSys::directory_iterator &in_iterator)
-      : path(in_iterator->path()),
-        is_dir(in_iterator->is_directory()),
-        show_name(
-            fmt::format("{} {}",
-                        in_iterator->is_directory() ? "[dir]"s : "file"s,
-                        path.has_filename() ? path.filename().generic_string() : path.generic_string())),
-        size(in_iterator->is_regular_file() ? in_iterator->file_size() : 0u),
-        size_string(),
-        last_time(FSys::last_write_time_point(path)),
-        has_select(false) {
+  path_info &init(const FSys::path &in_path) {
+    path   = in_path;
+    is_dir = is_directory(in_path);
+    show_name =
+        fmt::format("{} {}",
+                    is_directory(in_path) ? "[dir]"s : "[file]"s,
+                    path.has_filename() ? path.filename().generic_string() : path.generic_string());
+    size       = is_regular_file(in_path) ? file_size(in_path) : 0u;
+    last_time  = FSys::last_write_time_point(in_path);
+    has_select = false;
     set_size_str();
-  };
+    return *this;
+  }
 
   FSys::path path;
   bool is_dir;
@@ -180,7 +167,7 @@ void file_panel::render() {
     p_i->path_list.clear();
     p_i->p_pwd.clear();
     p_i->path_list = k_dir | ranges::view::transform([](auto &in_path) -> path_info {
-                       return path_info{in_path};
+                       return path_info{}.init(in_path);
                      }) |
                      ranges::to_vector;
   }
@@ -221,7 +208,7 @@ void file_panel::scan_director(const FSys::path &in_dir) {
                    ranges::views::transform([](const auto &in) {
                      path_info l_info{};
                      try {
-                       l_info = path_info{in};
+                       l_info.init(in.path());
                      } catch (const FSys::filesystem_error &err) {
                        DOODLE_LOG_ERROR(err.what());
                      }
