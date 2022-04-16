@@ -45,6 +45,9 @@ void base_window::aborted() {}
 nlohmann::json &base_window::get_setting() const {
   return (*core_set::getSet().json_data)[title()];
 }
+const ImVec2 &base_window::size() const {
+  return size_;
+}
 
 void window_panel::init() {
   read_setting();
@@ -69,6 +72,7 @@ void window_panel::update(const chrono::system_clock::duration &in_duration, voi
         this->render();
       };
 }
+
 
 modal_window::modal_window() {
   show_ = true;

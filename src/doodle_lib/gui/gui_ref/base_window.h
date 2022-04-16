@@ -17,7 +17,7 @@ class DOODLELIB_API base_window {
  protected:
   std::vector<std::function<void()>> begin_fun;
   bool show_{false};
-
+  ImVec2 size_{};
   friend void to_json(nlohmann::json& j, const base_window& p);
   friend void from_json(const nlohmann::json& j, base_window& p);
 
@@ -68,7 +68,7 @@ class DOODLELIB_API base_window {
    */
   [[nodiscard]] bool is_show() const;
   void show(bool in_show = true);
-
+  [[nodiscard]] virtual const ImVec2& size() const;
   /**
    * @brief 安装窗口名称寻找窗口
    * @param in_title
@@ -119,11 +119,13 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
 class DOODLELIB_API window_panel : public base_window {
  protected:
   std::string title_name_{};
+
   virtual void render() = 0;
 
  public:
   window_panel()           = default;
   ~window_panel() override = default;
+
 
   [[nodiscard]] const string& title() const override;
   void init() override;
