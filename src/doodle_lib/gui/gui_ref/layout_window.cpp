@@ -6,7 +6,7 @@
 namespace doodle::gui {
 class layout_window::impl {
  public:
-  std::vector<warp_w> list_windows;
+  std::map<std::string, warp_w> list_windows;
 };
 layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {}
@@ -29,8 +29,15 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
                   ImGuiWindowFlags_NoMove |
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoSavedSettings) &&
-      []() {
-
+      [&, this]() {
+        std::string prj{gui::config::menu_w::project_widget};
+        dear::Child{gui::config::menu_w::project_widget.data(),
+                    p_i->list_windows[prj].windows_->size()} &&
+            [&, this]() {
+              p_i->list_windows[prj]
+                  .windows_->update(in_duration,
+                                    in_data);
+            };
       };
 }
 layout_window::~layout_window() = default;

@@ -16,12 +16,12 @@ class DOODLELIB_API layout_window
    public:
     entt::meta_any owner_;
     base_window *windows_;
-
-
-
+    warp_w() = default;
     explicit warp_w(entt::meta_any &&in_meta_any)
         : owner_(std::move(in_meta_any)),
-          windows_(owner_.cast<base_window *>()){};
+          windows_() {
+      windows_ = owner_.try_cast<base_window>();
+    };
   };
 
  public:
