@@ -174,8 +174,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
                              get_file_path().generic_string(),
                              in_start.value(),
                              in_end.value());
-    DOODLE_LOG_INFO("开始生成图片序列 {}", get_file_path());
-    k_s = MGlobal::executeCommand(k_mel.c_str());
+    DOODLE_LOG_INFO("开始生成图片序列 {}\n{}", get_file_path(), k_mel);
+    k_s = MGlobal::executeCommand(k_mel.c_str(), true, false);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
 
@@ -218,7 +218,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_msg.emplace<episodes>(p_eps);
     k_msg.emplace<shot>(p_shot);
 
-    DOODLE_LOG_INFO("开始视频合成 {}");
     if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
       DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
       g_bounded_pool().wait<details::image_to_move>(k_msg, l_handle_list);
