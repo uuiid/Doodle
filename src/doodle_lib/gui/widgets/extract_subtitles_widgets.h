@@ -15,6 +15,9 @@ class DOODLELIB_API extract_subtitles_widgets
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void write_subtitles(const FSys::path& in_soure_file,
+                       const FSys::path& out_subtitles_file);
+
  public:
   extract_subtitles_widgets();
   ~extract_subtitles_widgets() override;
@@ -34,4 +37,4 @@ constexpr auto init = []() {
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
 }  // namespace extract_subtitles_widgets_ns
-}  // namespace doodle
+}  // namespace doodle::gui
