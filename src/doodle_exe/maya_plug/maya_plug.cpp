@@ -187,7 +187,7 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
     default:
       break;
   }
-  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 0;)");
+  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
   CHECK_MSTATUS(status);
   return status;
 }
