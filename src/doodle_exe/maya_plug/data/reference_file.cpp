@@ -249,13 +249,14 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
   if (l_names.size() > 1) {
     MStringArray k_r_s{};
-    auto k_name = fmt::format("{}_export_abc", get_namespace());
-    k_s         = MGlobal::executeCommand(
-                d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
-                                  k_name,
-                                  fmt::join(l_names, " "))},
-                k_r_s,
-                true);
+    auto k_name       = fmt::format("{}_export_abc", get_namespace());
+    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
+                                    k_name,
+                                    fmt::join(l_names, " "));
+    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
+    k_s = MGlobal::executeCommand(d_str{l_mel},
+                                  k_r_s,
+                                  true);
     DOODLE_CHICK(k_s);
 
     k_select.clear();
