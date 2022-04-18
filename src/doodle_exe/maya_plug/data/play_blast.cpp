@@ -109,11 +109,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   p_uuid = core_set::getSet().get_uuid_str();
   MStatus k_s{};
 
-  try {
-    chick_ctx<maya_camera>();
-  } catch (const doodle_error& err) {
+  if (!g_reg()->ctx().contains<maya_camera>()) {
     g_reg()->ctx().emplace<maya_camera>().conjecture();
   }
+
   auto& k_cam = g_reg()->ctx().at<maya_camera>();
   k_cam.conjecture();
   k_cam.set_render_cam();

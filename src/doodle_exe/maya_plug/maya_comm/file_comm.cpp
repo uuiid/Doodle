@@ -32,7 +32,7 @@ MStatus comm_file_save::doIt(const MArgList& in_arg) {
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     maya_file_io::save_file(d_str{k_path}.str());
   } else {
-    chick_ctx<root_ref>();
+    chick_true<doodle_error>(g_reg()->ctx().contains<root_ref>(), DOODLE_LOC, "缺失项目上下文");
     maya_file_io::save_file(maya_file_io::work_path("fbx") /
                             maya_file_io::get_current_path().stem() /
                             maya_file_io::get_current_path().filename());
