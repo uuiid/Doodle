@@ -62,6 +62,8 @@ class DOODLELIB_API project {
   }
 };
 namespace project_config {
+void to_json(nlohmann::json& j, const base_config& p);
+void from_json(const nlohmann::json& j, base_config& p);
 class DOODLELIB_API base_config {
  private:
   friend void to_json(nlohmann::json& j, const base_config& p);

@@ -40,7 +40,7 @@ option(USE_RPC_SERVER "use grpc build doodle" OFF)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 include(CMakeRC)
 
-find_package(Boost 1.75 REQUIRED COMPONENTS
+find_package(Boost REQUIRED COMPONENTS
         locale
         iostreams
         program_options

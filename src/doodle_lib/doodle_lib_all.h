@@ -84,4 +84,5 @@
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/action/command_tool.h>

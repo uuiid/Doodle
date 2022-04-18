@@ -21,7 +21,7 @@ class DOODLELIB_API extract_subtitles_widgets
  public:
   extract_subtitles_widgets();
   ~extract_subtitles_widgets() override;
-  constexpr static std::string_view name{gui::config::menu_w::long_time_tasks};
+  constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
 
  protected:
   void render() override;
@@ -32,7 +32,7 @@ constexpr auto init = []() {
   entt::meta<extract_subtitles_widgets>()
       .type()
       .prop("name"_hs, std::string{extract_subtitles_widgets::name})
-      .base<gui::window_panel>();
+      .base<window_panel>();
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
