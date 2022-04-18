@@ -142,6 +142,10 @@ namespace doodle {
  * @bug 在有的电脑上, 无法显示配置中的分类
  *
  *
+ * @todo 绝对路径保存到项目配置中
+ * @todo 文件排序(按集数排序)
+ *
+ *
  */
 class DOODLELIB_API app : public app_command_base {
  protected:
