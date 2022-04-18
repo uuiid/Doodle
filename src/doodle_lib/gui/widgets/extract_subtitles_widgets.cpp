@@ -33,8 +33,12 @@ void extract_subtitles_widgets::render() {
   ImGui::InputText(*p_i->regex_.gui_name, &p_i->regex_.data);
 
   if (ImGui::Button(*p_i->export_)) {
-    ranges::for_each(p_i->file_list_.data, [&](const std::string& in_string) {
-
+    ranges::for_each(p_i->file_list_.data, [&](const FSys::path& in_string) {
+      FSys::path l_out{p_i->export_file_path_.data / in_string.filename()};
+      if (l_out.empty())
+        l_out = in_string;
+      l_out.replace_extension(".srt");
+      write_subtitles(in_string, l_out);
     });
   };
 }
