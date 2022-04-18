@@ -10,11 +10,10 @@ print(res_dir)
 
 import maya_fun_tool
 
-
 class doodle_main(object):
     maya_version = str(maya.cmds.about(api=True))[0:4]
-    doodle_plug = "doodle_plug_{}".format(str(maya.cmds.about(api=True))[0:4])
-    qcloth = "qualoth_{}_x64".format(str(maya.cmds.about(api=True))[0:4])
+    doodle_plug = "doodle_maya_{}".format(str(cmds.about(api=True))[0:4])
+    qcloth = "qualoth_{}_x64".format(str(cmds.about(api=True))[0:4])
 
     def __init__(self):
         super().__init__()
@@ -30,11 +29,11 @@ def doodle_test_sim():
     k_f = maya_fun_tool.open_file()
     k_f.config_ = """
 [
-{"export_path":"",
-"only_sim":false,
-"path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
-"qcloth_assets_path":"",
-"project_":"E://tmp"
+{
+"export_path":"",
+"only_sim":true,
+"path":"E:/tmp/test_sim_4_11/WY_EP057_SC005_AN.ma",
+"project_":"D:/tmp/test4.doodle_dbjs"
 }
 ]"""
     k_f()
@@ -43,12 +42,15 @@ def doodle_test_sim():
 def doodle_test_fbx():
     print("run test")
     k_f = maya_fun_tool.open_file()
-    k_f.config_ = """[{
-        "export_path":"",
-        "use_all_ref":false,
-        "path":"E:/tmp/cloth_test/TEST_EP001_SC001_AN.ma",
-        "project_":"E://tmp"
-        }]"""
+    k_f.config_ =  """
+[
+{
+"export_path":"",
+"only_sim":true,
+"path":"E:/tmp/test_sim_4_11/WY_EP057_SC005_AN.ma",
+"project_":"D:/tmp/test4.doodle_dbjs"
+}
+]"""
     k_f()
 
 

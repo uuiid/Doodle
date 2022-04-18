@@ -69,7 +69,6 @@ if (DEFINED Maya_Version)
 
         add_library(doodle_maya_${Maya_Version} MODULE
                 ${doodle_maya_plug_cpp}
-                ${PROJECT_SOURCE_DIR}/stl.natvis
                 )
         set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
