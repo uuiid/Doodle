@@ -14,8 +14,8 @@ class DOODLELIB_API layout_window
   std::unique_ptr<impl> p_i;
   class warp_w {
    public:
-    entt::meta_any owner_;
-    base_window *windows_;
+    entt::meta_any owner_{};
+    base_window *windows_{};
     warp_w() = default;
     explicit warp_w(entt::meta_any &&in_meta_any)
         : owner_(std::move(in_meta_any)),
