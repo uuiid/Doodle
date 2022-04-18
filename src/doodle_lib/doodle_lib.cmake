@@ -20,6 +20,7 @@ set(
         core/work_clock.h
 
 
+
         exception/exception.h
         file_warp/maya_file.h
         file_warp/opencv_read_player.h
@@ -49,6 +50,7 @@ set(
         gui/widgets/csv_export_widgets.h
         gui/widgets/time_sequencer_widget.h
         gui/widgets/ue4_widget.h
+        gui/widgets/extract_subtitles_widgets.h
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
@@ -159,6 +161,7 @@ set(
         gui/widgets/csv_export_widgets.cpp
         gui/widgets/time_sequencer_widget.cpp
         gui/widgets/ue4_widget.cpp
+        gui/widgets/extract_subtitles_widgets.cpp
 
         gui/open_file_dialog.cpp
 
