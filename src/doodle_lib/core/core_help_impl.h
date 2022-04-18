@@ -5,7 +5,8 @@
 #pragma once
 
 #include <entt/entt.hpp>
-namespace doodle {
+
+namespace entt{
 /**
  * @brief entt 中自定义hash检查
  * @tparam Type doodle metadata 中的类
@@ -18,6 +19,9 @@ struct [[maybe_unused]] entt::type_hash<
     return Type::class_hash();
   }
 };
+}
+
+namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 registry_ptr &g_reg();
 
