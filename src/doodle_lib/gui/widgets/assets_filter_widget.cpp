@@ -88,16 +88,17 @@ class path_filter : public gui::filter_base {
     //    auto l_r = ;
     if (in.all_of<assets>()) {
       auto& l_ass = in.get<assets>();
-      auto dis_1  = ranges::distance(l_ass.p_path);
-      return len <= dis_1 &&
-             ranges::all_of(
-                 ranges::views::zip(
-                     l_ass.p_path,
-                     p_assets),
-                 [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
-                   auto& [l_r, l_l] = in;
-                   return l_r == l_l;
-                 });
+      //      auto dis_1  = ranges::distance(l_ass.p_path);
+      //      return len <= dis_1 &&
+      //             ranges::all_of(
+      //                 ranges::views::zip(
+      //                     l_ass.p_path,
+      //                     p_assets),
+      //                 [](const std::tuple<FSys::path, FSys::path>& in) -> bool {
+      //                   auto& [l_r, l_l] = in;
+      //                   return l_r == l_l;
+      //                 });
+      return l_ass.p_path == p_assets;
 
     } else {
       return false;
