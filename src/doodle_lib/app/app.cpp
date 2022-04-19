@@ -268,16 +268,17 @@ bool app::valid() const {
   return this->p_hwnd != nullptr;
 }
 void app::hide_windows() {
+  doodle::app_base::Get().stop_app();
   ::ShowWindow(p_hwnd, SW_HIDE);
+  ::DestroyWindow(doodle::app::Get().p_hwnd);
 }
 void app::show_windows() {
-  if (!is_stop())
-    ::ShowWindow(p_hwnd, SW_SHOW);
+  ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-//  g_main_loop().attach<gui::layout_window>();
+  //  g_main_loop().attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup
