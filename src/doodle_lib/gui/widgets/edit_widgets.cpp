@@ -368,12 +368,10 @@ class add_assets_for_file : public base_render {
     image_loader l_image_load{};
     p_list.data = in_list |
                   ranges::views::transform([&](const FSys::path &in_path) {
-                    auto k_h = make_handle();
-                    FSys::path l_path{in_path};
+                    auto k_h        = make_handle();
                     auto l_prj_path = g_reg()->ctx().at<project>().p_path;
-                    if (!use_abs_path.data) {
-                      l_path = in_path.lexically_proximate(g_reg()->ctx().at<project>().p_path);
-                    }
+                    /// \brief 这里使用 lexically_proximate 防止相对路径失败
+                    auto l_path     = in_path.lexically_proximate(l_prj_path);
 
                     k_h.emplace<assets_file>(l_path);
                     k_h.emplace<assets>(assets_list.show_name);
@@ -408,7 +406,6 @@ class add_assets_for_file : public base_render {
 
   gui_cache<bool> use_time;
   gui_cache<bool> use_icon;
-  gui_cache<bool> use_abs_path;
   gui_cache<std::vector<std::string>, combox_show_name> assets_list;
 
  public:
@@ -416,7 +413,6 @@ class add_assets_for_file : public base_render {
       : p_list("文件列表"s, std::vector<entt::handle>{}),
         use_time("检查时间"s, true),
         use_icon("寻找图标"s, true),
-        use_abs_path("使用绝对路径", false),
         assets_list("分类"s, std::vector<std::string>{}) {
     auto &l_sig = g_reg()->ctx().at<core_sig>();
     l_sig.project_end_open.connect(
@@ -463,7 +459,6 @@ class add_assets_for_file : public base_render {
 
     ImGui::Checkbox(*use_time.gui_name, &use_time.data);
     ImGui::Checkbox(*use_icon.gui_name, &use_icon.data);
-    ImGui::Checkbox(*use_abs_path.gui_name, &use_abs_path.data);
 
     dear::Combo{*assets_list.gui_name, assets_list.show_name.data()} && [this]() {
       for (auto &&i : assets_list.data)
