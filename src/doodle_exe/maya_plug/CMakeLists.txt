@@ -69,6 +69,10 @@ if (DEFINED Maya_Version)
 
         add_library(doodle_maya_${Maya_Version} MODULE
                 ${doodle_maya_plug_cpp}
+                ../main/GUI/main.cpp
+                ../main/DoodleExe.manifest
+                ../main/icon.ico
+                ../main/win_exe.rc
                 )
         set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
