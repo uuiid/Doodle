@@ -38,13 +38,19 @@ std::shared_ptr<app_base> p_doodle_app = nullptr;
 
 }  // namespace
 
+namespace doodle::maya_plug {
+void open_windows() {
+  p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
+  p_doodle_app->command_line_parser(std::vector<std::string>{});
+}
+}  // namespace doodle::maya_plug
+
 MStatus initializePlugin(MObject obj) {
   /**
    * @brief 添加插件注册方法
    */
   MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "doodle",version::version_str
-                         .c_str(),
+  MFnPlugin k_plugin{obj, "doodle", version::version_str.c_str(),
                      fmt::format("{}", MAYA_API_VERSION).c_str()};
 
   auto k_st = MGlobal::mayaState(&status);
@@ -53,15 +59,14 @@ MStatus initializePlugin(MObject obj) {
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
-      p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
-      p_doodle_app->command_line_parser(std::vector<std::string>{});
+      doodle::maya_plug::open_windows();
       app::Get().hide_windows();
 
-      //注册命令
+      // 注册命令
       status = ::doodle::maya_plug::open_doodle_main::registerCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      //添加菜单项
+      // 添加菜单项
       k_plugin.addMenuItem(doodle_windows.data(),
                            doodle_win_path.data(),
                            ::doodle::maya_plug::doodleCreate_name,
@@ -201,10 +206,10 @@ MStatus uninitializePlugin(MObject obj) {
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //这里要停止app
+  // 这里要停止app
   p_doodle_app->stop();
 
-  ///先删除工具架
+  /// 先删除工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
       status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
@@ -269,7 +274,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   status = MMessage::removeCallback(app_run_id);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
-  //删除清除回调回调
+  // 删除清除回调回调
   status = MMessage::removeCallback(clear_callback_id);
   CHECK_MSTATUS_AND_RETURN_IT(status);
 
@@ -282,13 +287,13 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       status = MMessage::removeCallback(create_hud_id_2);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      //这一部分是删除菜单项的
+      // 这一部分是删除菜单项的
       MStringArray menuItems{};
       menuItems.append(doodle_windows.data());
       status = k_plugin.removeMenuItem(menuItems);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      ///去除命令
+      /// 去除命令
       status = ::doodle::maya_plug::open_doodle_main::deregisterCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
       break;
@@ -301,7 +306,6 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   }
   // 卸载命令
   p_doodle_app.reset();
-
 
   return status;
 }

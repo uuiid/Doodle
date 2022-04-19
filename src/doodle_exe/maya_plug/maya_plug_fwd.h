@@ -100,6 +100,10 @@ class d_str {
  */
 #define DOODLE_CHICK(in_status) \
   throw_maya_exception(in_status, DOODLE_SOURCE_LOC);
+
+void open_windows();
+
+
 }  // namespace doodle::maya_plug
 
 namespace fmt {
