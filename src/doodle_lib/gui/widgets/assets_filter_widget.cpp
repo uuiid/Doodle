@@ -497,14 +497,16 @@ class assets_filter_widget::impl {
            p_conns(),
            p_filter_factorys(),
            p_filters(),
-           p_sorts({gui::gui_cache<bool>{"名称排序"s, true}, gui::gui_cache<bool>{"反向"s, false}}) {}
+           p_sorts({gui::gui_cache<bool>{"名称排序"s, true},
+                    gui::gui_cache<bool>{"集数排序"s, false},
+                    gui::gui_cache<bool>{"反向"s, false}}) {}
 
   bool only_rand{false};
   std::vector<boost::signals2::scoped_connection> p_conns;
 
   std::vector<factory_chick> p_filter_factorys;
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
-  std::array<gui::gui_cache<bool>, 2> p_sorts;
+  std::array<gui::gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
 };
 
@@ -512,7 +514,6 @@ assets_filter_widget::assets_filter_widget()
     : p_impl(std::make_unique<impl>()) {
   title_name_ = std::string{name};
   show_       = true;
-
 }
 assets_filter_widget::~assets_filter_widget() = default;
 
@@ -621,6 +622,9 @@ void assets_filter_widget::refresh_(bool force) {
          ranges::to_vector;
 
   if (p_impl->p_sorts[0].data) {
+    ranges::partition(list, [](const entt::handle& in) -> bool {
+      return in.any_of<assets_file>();
+    });
     list |= ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
       if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
         return in_r.get<assets_file>() < in_l.get<assets_file>();
@@ -628,6 +632,17 @@ void assets_filter_widget::refresh_(bool force) {
     });
   }
   if (p_impl->p_sorts[1].data) {
+    ranges::partition(list, [](const entt::handle& in) -> bool {
+      return in.any_of<episodes>();
+    });
+    list |=
+        ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+          if (in_r.any_of<episodes>() && in_l.any_of<episodes>())
+            return in_r.get<episodes>() < in_l.get<episodes>();
+          return false;
+        });
+  }
+  if (p_impl->p_sorts[2].data) {
     list |= ranges::action::reverse;
   }
 
