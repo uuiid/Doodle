@@ -19,7 +19,7 @@ namespace doodle::maya_plug {
 
 void maya_menu_bar::menu_windows() {
   std::apply([this](const auto&... in_item) {
-    (this->open_by_name_widget(in_item), ...);
+    (this->widget_menu_item(in_item), ...);
   },
              gui::config::maya_plug::menu::menu_maya);
 }
