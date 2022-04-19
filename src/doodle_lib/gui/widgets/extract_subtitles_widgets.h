@@ -21,6 +21,9 @@ class DOODLELIB_API extract_subtitles_widgets
  public:
   extract_subtitles_widgets();
   ~extract_subtitles_widgets() override;
+
+  virtual void init() override;
+
   constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
 
  protected:
