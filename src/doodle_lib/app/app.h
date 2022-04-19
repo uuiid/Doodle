@@ -166,7 +166,7 @@ class DOODLELIB_API app : public app_command_base {
 
   void loop_one() override;
 
-  virtual void hide_windows();
+  virtual void close_windows();
   virtual void show_windows();
   virtual bool set_parent(win::wnd_handle in_parent);
 
