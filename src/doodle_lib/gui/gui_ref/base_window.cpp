@@ -118,11 +118,9 @@ void windows_proc::init() {
   if (windows_->is_show()) {
     try {
       windows_->init();
-    } catch (doodle_error &error) {
+    } catch (const doodle_error &error) {
       DOODLE_LOG_WARN(error.what())
-      this->warp_proc_->show = false;
       windows_->close();
-      windows_               = nullptr;
       return;
     }
     g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
