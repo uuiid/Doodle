@@ -23,7 +23,7 @@ base_window *base_window::find_window_by_title(const string &in_title) {
            l_list,
            [&](const base_window *in_window) -> bool {
         return in_window->title() == in_title;
-           });
+      });
   if (it != l_list.end())
     return *it;
   else
@@ -73,7 +73,6 @@ void window_panel::update(const chrono::system_clock::duration &in_duration, voi
       };
 }
 
-
 modal_window::modal_window() {
   show_ = true;
   begin_fun.emplace_back([this]() {
@@ -107,9 +106,7 @@ void windows_proc::init() {
     this->warp_proc_->show = false;
   });
 
-  if (windows_->is_show() || optional_show)
-    windows_->init();
-  else if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
+  if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
     l_d->read_setting();
   }
   if (optional_show) {
@@ -119,10 +116,20 @@ void windows_proc::init() {
     }
   }
   if (windows_->is_show()) {
+    try {
+      windows_->init();
+    } catch (doodle_error &error) {
+      DOODLE_LOG_WARN(error.what())
+      this->warp_proc_->show = false;
+      windows_->close();
+      windows_               = nullptr;
+      return;
+    }
     g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
+
   } else {
     this->warp_proc_->show = false;
-    windows_ = nullptr;
+    windows_               = nullptr;
   }
 }
 void windows_proc::succeeded() {
