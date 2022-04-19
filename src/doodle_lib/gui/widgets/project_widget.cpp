@@ -24,8 +24,6 @@ project_widget::~project_widget() = default;
 
 void project_widget::init() {
   gui::window_panel::init();
-  /// 在这里我们加载项目
-  core_set_init{}.init_project(app::Get().options_->p_project_path);
 }
 
 
