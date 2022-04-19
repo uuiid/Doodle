@@ -10,6 +10,8 @@
 
 #include <long_task/process_pool.h>
 #include <long_task/drop_file_data.h>
+#include <core/core_sig.h>
+#include <lib_warp/imgui_warp.h>
 
 namespace doodle::win {
 
@@ -37,7 +39,7 @@ STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto,
                                      POINTL ptl,
                                      DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");
-  g_main_loop().attach<drop_file_data>();
+  //  g_main_loop().attach<drop_file_data>();
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
@@ -47,7 +49,18 @@ STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
                                     POINTL ptl,
                                     DWORD *pdwEffect) {
   //  DOODLE_LOG_INFO("开始 DragOver");
-
+  //  g_main_loop().attach<one_process_t>([this]() {
+  //    dear::DragDropSource{
+  //        ImGuiDragDropFlags_SourceExtern} &&
+  //        [this]() {
+  //          ImGui::SetDragDropPayload(doodle_config::drop_imgui_id.data(),
+  //                                    nullptr, sizeof(nullptr));
+  //
+  //          ImGui::Text("开始拖拽文件");
+  //        };
+  ////    dear::IDScope{"das"} && [this]() {
+  ////    };
+  //  });
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
@@ -55,9 +68,9 @@ STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
 STDMETHODIMP drop_manager::DragLeave() {
   DOODLE_LOG_INFO("开始 DragLeave");
 
-  if (g_reg()->ctx().contains<drop_file_data>()) {
-    g_reg()->ctx().at<drop_file_data>().drag_leave();
-  }
+  //  if (g_reg()->ctx().contains<drop_file_data>()) {
+  //    g_reg()->ctx().at<drop_file_data>().drag_leave();
+  //  }
 
   return S_OK;
 }
@@ -68,7 +81,7 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
                                 DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 Drop");
 
-  //使用 fmte
+  // 使用 fmte
   FORMATETC fmte = {CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
   STGMEDIUM stgm{};
 
@@ -76,7 +89,7 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
     auto hdrop     = reinterpret_cast<HDROP>(stgm.hGlobal);
     auto file_size = DragQueryFile(hdrop, 0xFFFFFFFF, nullptr, 0);
     std::vector<doodle::FSys::path> l_vector{};
-    //我们可以同时拖动多个文件，所以我们必须在这里循环
+    // 我们可以同时拖动多个文件，所以我们必须在这里循环
     for (UINT i = 0; i < file_size; i++) {
       std::size_t l_len = DragQueryFile(hdrop, i, nullptr, 0) + 1;
       std::unique_ptr<wchar_t[]> varbuf{new wchar_t[l_len]};
@@ -89,13 +102,11 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
     // 完成后我们必须释放数据
     ReleaseStgMedium(&stgm);
 
-    //以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
-    if (g_reg()->ctx().contains<drop_file_data>()) {
-      g_reg()->ctx().at<drop_file_data>().set_files(l_vector);
-    }
+    // 以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
+    g_reg()->ctx().at<core_sig>().drop_files(l_vector);
   }
 
-  //为 ImGui 中的按钮 1 触发 MouseUp
+  // 为 ImGui 中的按钮 1 触发 MouseUp
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;

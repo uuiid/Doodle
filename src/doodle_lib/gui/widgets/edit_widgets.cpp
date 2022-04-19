@@ -441,6 +441,9 @@ class add_assets_for_file : public base_render {
                 : this->assets_list.data.front();
       }
     });
+    l_sig.drop_files.connect([this](const auto &in_file_list) {
+      this->add_assets(in_file_list);
+    });
     if (project::has_prj()) {
       auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
       this->assets_list = prj.assets_list;
@@ -480,13 +483,6 @@ class add_assets_for_file : public base_render {
         }
       };
     }
-
-    dear::DragDropTarget{} && [&]() {
-      if (auto *l_pay = ImGui::AcceptDragDropPayload(doodle_config::drop_imgui_id.data()); l_pay) {
-        auto k_list = reinterpret_cast<drop_file_data *>(l_pay->Data);
-        this->add_assets(k_list->files_);
-      }
-    };
     return result;
   };
 };
