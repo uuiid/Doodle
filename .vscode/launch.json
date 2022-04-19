@@ -13,7 +13,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
+                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -35,7 +35,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
+                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -52,7 +52,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_release_plug/plug/maya"
+                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
                 }
             ],
             "console": "internalConsole",
