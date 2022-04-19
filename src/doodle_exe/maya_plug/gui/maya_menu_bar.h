@@ -9,7 +9,7 @@
 namespace doodle::maya_plug {
 class maya_menu_bar : public main_menu_bar {
  protected:
-  void menu_tool() override;
+  void menu_windows() override;
 
  public:
 };

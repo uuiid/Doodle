@@ -17,7 +17,7 @@
 #include <maya_plug/configure/static_value.h>
 namespace doodle::maya_plug {
 
-void maya_menu_bar::menu_tool() {
+void maya_menu_bar::menu_windows() {
   std::apply([this](const auto&... in_item) {
     (this->open_by_name_widget(in_item), ...);
   },

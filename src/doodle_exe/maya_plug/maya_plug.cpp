@@ -1,3 +1,4 @@
+#include <doodle_lib/doodle_lib_all.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 

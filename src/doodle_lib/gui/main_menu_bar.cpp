@@ -186,15 +186,19 @@ void main_menu_bar::menu_tool() {
 void main_menu_bar::init() {
   this->read_setting();
   g_reg()->ctx().emplace<main_menu_bar &>(*this);
+  load_windows();
+}
+
+void main_menu_bar::load_windows() {
   auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
   for (auto &&l_item : k_list) {
     if (auto l_win = l_item.construct(); l_win) {
-      auto l_win_ptr  = l_win.try_cast<gui::base_window>();
+      auto l_win_ptr  = l_win.try_cast<base_window>();
       auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
       g_main_loop().attach<gui::windows_proc>(l_wrap_win,
                                               l_win_ptr,
                                               std::move(l_win));
-      p_i->windows_.emplace(l_win_ptr->title(), l_wrap_win);
+      this->p_i->windows_.emplace(l_win_ptr->title(), l_wrap_win);
     }
   }
 }
