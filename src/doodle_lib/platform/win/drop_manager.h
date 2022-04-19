@@ -19,8 +19,6 @@ class DOODLELIB_API drop_manager : public IDropTarget {
  private:
   LONG m_RefCount;
 
-  void begin_drag();
-
  public:
   drop_manager() : m_RefCount(0){};
   STDMETHODIMP_(ULONG)
