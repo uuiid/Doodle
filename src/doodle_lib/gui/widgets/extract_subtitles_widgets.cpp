@@ -18,7 +18,7 @@ class extract_subtitles_widgets::impl {
   gui_cache_name_id export_{"导出"s};
   gui_cache<std::string> export_file_path_{"导出路径", ""s};
 
-  gui_cache<std::string> regex_{"正则表达式"s, R"(([^\x00-\xff]+[:|：][^\x00-\xff]+)$)"s};
+  gui_cache<std::string> regex_{"正则表达式"s, R"((.+?[:|：].+?)$)"s};
 };
 
 extract_subtitles_widgets::extract_subtitles_widgets()
