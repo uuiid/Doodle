@@ -7,7 +7,7 @@
 namespace doodle::gui {
 /**
  * @brief 使用正则表达式提取字幕文本
- * ([^\x00-\xff]+[:|：][^\x00-\xff]+)\n
+ * (.+?[:|：].+?)$
  *
  */
 class DOODLELIB_API extract_subtitles_widgets
@@ -22,7 +22,7 @@ class DOODLELIB_API extract_subtitles_widgets
   extract_subtitles_widgets();
   ~extract_subtitles_widgets() override;
 
-  virtual void init() override;
+  void init() override;
 
   constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
 
