@@ -24,9 +24,8 @@ class assets_file_widgets::impl {
  public:
   class base_data;
   class image_data;
-  virtual ~impl() {
-    observer_h.disconnect();
-  };
+  impl()              = default;
+  virtual ~impl()     = default;
   using cache_image   = gui::gui_cache<std::shared_ptr<void>, image_data>;
   using cache_name    = gui::gui_cache<std::string>;
   using cache_select  = gui::gui_cache<bool>;
@@ -167,7 +166,7 @@ class assets_file_widgets::impl {
   bool render_icon{true};
 
   std::function<void()> render_list;
-  entt::observer observer_h{};
+  entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
 };
 
 assets_file_widgets::assets_file_widgets()
@@ -215,10 +214,11 @@ void assets_file_widgets::init() {
           [&](const std::vector<entt::handle>&) {
             p_i->only_rand = false;
           }));
-  p_i->observer_h.connect(*g_reg(), entt::collector.update<database>());
+  //  p_i->observer_h.connect();
 }
 
 void assets_file_widgets::failed() {
+  p_i->observer_h.disconnect();
 }
 
 void assets_file_widgets::render() {
