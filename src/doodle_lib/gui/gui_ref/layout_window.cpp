@@ -87,10 +87,13 @@ void layout_window::call_render(const string &in_name) {
     l_win->tick(p_i->duration_,
                 p_i->data_);
 }
+
 std::shared_ptr<windows_proc::warp_proc>
 layout_window::render_main(const string &in_name) {
   if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
     l_i->windows_->close();
+    call_render(in_name);
+    clear_windows();
   }
 
   auto l_show = std::make_shared<windows_proc::warp_proc>();
@@ -98,7 +101,7 @@ layout_window::render_main(const string &in_name) {
 
   auto l_it   = ranges::find_if(k_list, [&](const entt::meta_type &in_item) -> bool {
     return in_item.prop("name"_hs).value() == in_name;
-    });
+  });
   if (l_it != k_list.end()) {
     if (auto l_win = l_it->construct(); l_win) {
       p_i->list_windows[in_name] = std::make_unique<windows_proc>(
