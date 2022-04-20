@@ -69,13 +69,16 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
         };
         ImGui::SameLine();
         dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
-          dear::TabBar{"##tool", ImGuiTabBarFlags_None} && [&, this]() {
-            dear::TabItem{menu_w::csv_export.data()} && [&]() { call_render(std::string{menu_w::csv_export}); };
-            dear::TabItem{menu_w::ue4_widget.data()} && [&]() { call_render(std::string{menu_w::ue4_widget}); };
-            dear::TabItem{menu_w::comm_maya_tool.data()} && [&]() { call_render(std::string{menu_w::comm_maya_tool}); };
-            dear::TabItem{menu_w::comm_create_video.data()} && [&]() { call_render(std::string{menu_w::comm_create_video}); };
-            dear::TabItem{menu_w::extract_subtitles.data()} && [&]() { call_render(std::string{menu_w::extract_subtitles}); };
-          };
+          dear::TabBar{"##tool",
+                       ImGuiTabBarFlags_Reorderable |
+                           ImGuiTabBarFlags_FittingPolicyResizeDown} &&
+              [&, this]() {
+                dear::TabItem{menu_w::csv_export.data()} && [&]() { call_render(std::string{menu_w::csv_export}); };
+                dear::TabItem{menu_w::ue4_widget.data()} && [&]() { call_render(std::string{menu_w::ue4_widget}); };
+                dear::TabItem{menu_w::comm_maya_tool.data()} && [&]() { call_render(std::string{menu_w::comm_maya_tool}); };
+                dear::TabItem{menu_w::comm_create_video.data()} && [&]() { call_render(std::string{menu_w::comm_create_video}); };
+                dear::TabItem{menu_w::extract_subtitles.data()} && [&]() { call_render(std::string{menu_w::extract_subtitles}); };
+              };
         };
       };
   clear_windows();
