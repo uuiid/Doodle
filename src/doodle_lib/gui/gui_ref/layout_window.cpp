@@ -64,7 +64,7 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
           dear::Child{"ll3"} && [&]() { call_render(std::string{menu_w::edit_}); };
         };
         ImGui::SameLine();
-        dear::Child{"l2", ImVec2{viewport->WorkSize.x / 2, 0}, true} && [&, this]() {
+        dear::Child{"l2", ImVec2{viewport->WorkSize.x / 3, 0}, true} && [&, this]() {
           p_i->main_render();
         };
         ImGui::SameLine();
