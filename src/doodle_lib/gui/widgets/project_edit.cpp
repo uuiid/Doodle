@@ -53,9 +53,6 @@ void project_edit::init() {
       });
 }
 
-void project_edit::failed() {
-}
-
 void project_edit::render() {
   p_i->data_edit.render(p_i->p_h);
   ImGui::Separator();
