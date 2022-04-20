@@ -9,6 +9,7 @@
 #include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/season.h>
+#include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
@@ -40,28 +41,29 @@ void comm_maya_tool::init() {
       [this](const entt::handle& in_handle, const doodle::project&) {
         p_text = in_handle.get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
       });
+  g_reg()->ctx().at<core_sig>().select_handles.connect(
+      [this](const std::vector<entt::handle>& in_list) {
+        p_sim_path = in_list |
+                     ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                       return in_handle &&
+                              in_handle.any_of<assets_file>();
+                     }) |
+                     ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                       auto l_ex = in_handle.get<assets_file>().path.extension();
+                       return l_ex == ".ma" ||
+                              l_ex == ".mb";
+                     }) |
+                     ranges::views::transform([](const entt::handle& in_handle) -> FSys::path {
+                       return in_handle.get<assets_file>().get_path_normal();
+                     }) |
+                     ranges::to_vector;
+      });
   if (project::has_prj())
     p_text = project::get_current().get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->ctx().emplace<comm_maya_tool&>(*this);
 }
 
-void comm_maya_tool::failed() {
-}
-
 void comm_maya_tool::render() {
-  if (imgui::Button("maya文件")) {
-    p_sim_path.clear();
-    auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop().attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                          .set_title("select_maya_file"s)
-                                          .add_filter(".ma")
-                                          .add_filter(".mb"))
-        .then<one_process_t>(
-            [this, l_ptr]() {
-              p_sim_path = *l_ptr;
-            });
-  }
-
   dear::ListBox{"file_list"} && [this]() {
     for (const auto& f : p_sim_path) {
       dear::Selectable(f.generic_string());
