@@ -6,10 +6,11 @@
 namespace doodle::gui {
 class layout_window::impl {
  public:
-  std::map<std::string, warp_w> list_windows;
+  impl() = default;
+  std::map<std::string, warp_w> list_windows{};
 
-  chrono::system_clock::duration &duration_;
-  void *data_;
+  chrono::system_clock::duration duration_{};
+  void *data_{};
 };
 layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {}
@@ -48,33 +49,24 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
                   ImGuiWindowFlags_NoResize |
                   ImGuiWindowFlags_NoSavedSettings} &&
       [&, this]() {
+        namespace menu_w = gui::config::menu_w;
         dear::Child{"l1", ImVec2{viewport->WorkSize.x / 3, 0}, false} && [&, this]() {
-          dear::Child{"ll1", ImVec2{0, viewport->WorkSize.y / 6}} && [&]() { call_render(std::string{gui::config::menu_w::project_widget}); };
-          dear::Child{"ll2", ImVec2{0, viewport->WorkSize.y / 3}} && [&]() { call_render(std::string{gui::config::menu_w::assets_filter}); };
-          dear::Child{"ll3"} && [&]() { call_render(std::string{gui::config::menu_w::edit_}); };
+          dear::Child{"ll1", ImVec2{0, viewport->WorkSize.y / 6}} && [&]() { call_render(std::string{menu_w::project_widget}); };
+          dear::Child{"ll2", ImVec2{0, viewport->WorkSize.y / 3}} && [&]() { call_render(std::string{menu_w::assets_filter}); };
+          dear::Child{"ll3"} && [&]() { call_render(std::string{menu_w::edit_}); };
         };
         ImGui::SameLine();
         dear::Child{"l2", ImVec2{viewport->WorkSize.x / 3, 0}, true} && [&, this]() {
-          call_render(std::string{gui::config::menu_w::assets_file});
+          call_render(std::string{menu_w::assets_file});
         };
         ImGui::SameLine();
         dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
           dear::TabBar{"##tool", ImGuiTabBarFlags_None} && [&, this]() {
-            dear::TabItem{gui::config::menu_w::csv_export.data()} && [&]() {
-              call_render(std::string{gui::config::menu_w::csv_export});
-            };
-            dear::TabItem{gui::config::menu_w::ue4_widget.data()} && [&]() {
-              call_render(std::string{gui::config::menu_w::ue4_widget});
-            };
-            dear::TabItem{gui::config::menu_w::comm_maya_tool.data()} && [&]() {
-              call_render(std::string{gui::config::menu_w::comm_maya_tool});
-            };
-            dear::TabItem{gui::config::menu_w::comm_create_video.data()} && [&]() {
-              call_render(std::string{gui::config::menu_w::comm_create_video});
-            };
-            dear::TabItem{gui::config::menu_w::extract_subtitles.data()} && [&]() {
-              call_render(std::string{gui::config::menu_w::extract_subtitles});
-            };
+            dear::TabItem{menu_w::csv_export.data()} && [&]() { call_render(std::string{menu_w::csv_export}); };
+            dear::TabItem{menu_w::ue4_widget.data()} && [&]() { call_render(std::string{menu_w::ue4_widget}); };
+            dear::TabItem{menu_w::comm_maya_tool.data()} && [&]() { call_render(std::string{menu_w::comm_maya_tool}); };
+            dear::TabItem{menu_w::comm_create_video.data()} && [&]() { call_render(std::string{menu_w::comm_create_video}); };
+            dear::TabItem{menu_w::extract_subtitles.data()} && [&]() { call_render(std::string{menu_w::extract_subtitles}); };
           };
         };
       };
