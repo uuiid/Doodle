@@ -24,8 +24,7 @@ class DOODLELIB_API layout_window
     };
   };
 
-  void call_render(const std::string &in_name );
-
+  base_window *call_render(const std::string &in_name);
 
  public:
   layout_window();
@@ -35,5 +34,11 @@ class DOODLELIB_API layout_window
   void succeeded() override;
   void update(const chrono::system_clock::duration &in_duration,
               void *in_data) override;
+  /**
+   * @brief
+   * @param in_name 需要显示的name
+   * @return 是否显示
+   */
+  std::shared_ptr<bool> render_main(const std::string &in_name);
 };
 }  // namespace doodle::gui
