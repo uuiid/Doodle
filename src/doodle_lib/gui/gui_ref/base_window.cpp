@@ -48,6 +48,9 @@ nlohmann::json &base_window::get_setting() const {
 const ImVec2 &base_window::size() const {
   return size_;
 }
+void base_window::size(const ImVec2 &in_size) {
+  size_ = in_size;
+}
 
 void window_panel::init() {
   read_setting();
@@ -67,10 +70,10 @@ void window_panel::update(const chrono::system_clock::duration &in_duration, voi
   }
   begin_fun.clear();
 
-  dear::Begin{title().c_str(), &show_} &&
-      [&]() {
-        this->render();
-      };
+  this->render();
+//  dear::Begin{title().c_str(), &show_} &&
+//      [&]() {
+//      };
 }
 
 modal_window::modal_window() {

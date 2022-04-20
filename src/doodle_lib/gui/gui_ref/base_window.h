@@ -69,6 +69,7 @@ class DOODLELIB_API base_window {
   [[nodiscard]] bool is_show() const;
   void show(bool in_show = true);
   [[nodiscard]] virtual const ImVec2& size() const;
+  virtual void size(const ImVec2& in_size);
   /**
    * @brief 安装窗口名称寻找窗口
    * @param in_title
@@ -125,7 +126,6 @@ class DOODLELIB_API window_panel : public base_window {
  public:
   window_panel()           = default;
   ~window_panel() override = default;
-
 
   [[nodiscard]] const string& title() const override;
   void init() override;
