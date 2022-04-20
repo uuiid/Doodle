@@ -13,6 +13,7 @@
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/metadata/organization.h>
 
@@ -34,11 +35,13 @@ comm_maya_tool::comm_maya_tool()
 }
 void comm_maya_tool::init() {
   gui::window_panel::init();
-  chick_true<doodle_error>(g_reg()->ctx().contains<root_ref>(), DOODLE_LOC, "没有项目选中");
 
-  if (project::has_prj()) {
+  g_reg()->ctx().at<core_sig>().project_end_open.connect(
+      [this](const entt::handle& in_handle, const doodle::project&) {
+        p_text = in_handle.get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+      });
+  if (project::has_prj())
     p_text = project::get_current().get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
-  }
   g_reg()->ctx().emplace<comm_maya_tool&>(*this);
 }
 
