@@ -24,6 +24,9 @@ class DOODLELIB_API layout_window
     };
   };
 
+  void call_render(const std::string &in_name );
+
+
  public:
   layout_window();
   ~layout_window() override;
