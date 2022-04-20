@@ -7,7 +7,7 @@ namespace doodle::gui {
 class layout_window::impl {
  public:
   impl() = default;
-  std::map<std::string, warp_w> list_windows{};
+  std::map<std::string, std::unique_ptr<windows_proc>> list_windows{};
 
   chrono::system_clock::duration duration_{};
   void *data_{};
@@ -16,7 +16,6 @@ class layout_window::impl {
 };
 layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {
-  render_main(std::string{gui::config::menu_w::assets_file});
 }
 
 const string &layout_window::title() const {
@@ -29,12 +28,16 @@ void layout_window::init() {
   for (auto &&l_item : k_list) {
     if (auto l_win = l_item.construct(); l_win) {
       auto l_win_ptr = l_win.try_cast<base_window>();
-      this->p_i->list_windows.emplace(l_win_ptr->title(), warp_w{std::move(l_win)});
-    }
+      auto l_ptr     = std::make_shared<windows_proc::warp_proc>();
+      this->p_i->list_windows.emplace(
+          l_win_ptr->title(),
+          std::make_unique<windows_proc>(
+              l_ptr,
+              l_win_ptr,
+              std::move(l_win)));
+    };
   }
-  for (auto &&[l_t, l_ptr] : p_i->list_windows) {
-    l_ptr.windows_->init();
-  }
+  p_i->main_render = [this]() { call_render(std::string{gui::config::menu_w::assets_file}); };
   g_reg()->ctx().emplace<layout_window &>(*this);
 }
 
@@ -75,20 +78,56 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
           };
         };
       };
+  clear_windows();
 }
 
-base_window *layout_window::call_render(const string &in_name) {
+void layout_window::call_render(const string &in_name) {
   auto &&l_win = p_i->list_windows[in_name];
-  l_win.windows_->update(p_i->duration_,
-                         p_i->data_);
-  return l_win.windows_;
+  if (l_win)
+    l_win->tick(p_i->duration_,
+                p_i->data_);
 }
-std::shared_ptr<bool> layout_window::render_main(const string &in_name) {
-  auto l_show      = std::make_shared<bool>(true);
+std::shared_ptr<windows_proc::warp_proc>
+layout_window::render_main(const string &in_name) {
+  if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
+    l_i->windows_->close();
+  }
+
+  auto l_show = std::make_shared<windows_proc::warp_proc>();
+  auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
+
+  auto l_it   = ranges::find_if(k_list, [&](const entt::meta_type &in_item) -> bool {
+    return in_item.prop("name"_hs).value() == in_name;
+    });
+  if (l_it != k_list.end()) {
+    if (auto l_win = l_it->construct(); l_win) {
+      p_i->list_windows[in_name] = std::make_unique<windows_proc>(
+          l_show,
+          l_win.try_cast<base_window>(),
+          std::move(l_win));
+    }
+  }
+
+  if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
+    l_i->windows_->close.connect([this]() {
+      p_i->main_render = [this]() { call_render(std::string{gui::config::menu_w::assets_file}); };
+    });
+    l_show = l_i->warp_proc_;
+  }
+
   p_i->main_render = [this, l_show, in_name]() {
-    *l_show = call_render(in_name)->is_show();
+    call_render(in_name);
   };
   return l_show;
+}
+void layout_window::clear_windows() {
+  for (auto it = p_i->list_windows.begin(); it != p_i->list_windows.end();) {
+    if (!it->second || it->second->finished() || it->second->rejected()) {
+      it = p_i->list_windows.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui

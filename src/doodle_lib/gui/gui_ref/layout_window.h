@@ -12,19 +12,10 @@ class DOODLELIB_API layout_window
       public process_t<layout_window> {
   class impl;
   std::unique_ptr<impl> p_i;
-  class warp_w {
-   public:
-    entt::meta_any owner_{};
-    base_window *windows_{};
-    warp_w() = default;
-    explicit warp_w(entt::meta_any &&in_meta_any)
-        : owner_(std::move(in_meta_any)),
-          windows_() {
-      windows_ = owner_.try_cast<base_window>();
-    };
-  };
 
-  base_window *call_render(const std::string &in_name);
+  void call_render(const std::string &in_name);
+
+  void clear_windows();
 
  public:
   layout_window();
@@ -39,6 +30,6 @@ class DOODLELIB_API layout_window
    * @param in_name 需要显示的name
    * @return 是否显示
    */
-  std::shared_ptr<bool> render_main(const std::string &in_name);
+  std::shared_ptr<windows_proc::warp_proc> render_main(const std::string &in_name);
 };
 }  // namespace doodle::gui

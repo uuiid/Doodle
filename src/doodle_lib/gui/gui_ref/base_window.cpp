@@ -71,9 +71,9 @@ void window_panel::update(const chrono::system_clock::duration &in_duration, voi
   begin_fun.clear();
 
   this->render();
-//  dear::Begin{title().c_str(), &show_} &&
-//      [&]() {
-//      };
+  //  dear::Begin{title().c_str(), &show_} &&
+  //      [&]() {
+  //      };
 }
 
 modal_window::modal_window() {
@@ -108,30 +108,8 @@ void windows_proc::init() {
     this->succeed();
     this->warp_proc_->show = false;
   });
-
-  if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
-    l_d->read_setting();
-  }
-  if (optional_show) {
-    windows_->show(*optional_show);
-    if (auto l_d = dynamic_cast<window_panel *>(windows_); l_d) {
-      l_d->save_setting();
-    }
-  }
-  if (windows_->is_show()) {
-    try {
-      windows_->init();
-    } catch (const doodle_error &error) {
-      DOODLE_LOG_WARN(error.what())
-      windows_->close();
-      return;
-    }
-    g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
-
-  } else {
-    this->warp_proc_->show = false;
-    windows_               = nullptr;
-  }
+  windows_->init();
+  g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
 }
 void windows_proc::succeeded() {
   if (windows_) {
@@ -155,8 +133,8 @@ void windows_proc::update(const chrono::system_clock::duration &in_duration,
                           void *in_data) {
   if (windows_) {
     windows_->update(in_duration, in_data);
-    if (!windows_->is_show())
-      windows_->close();
+//    if (!windows_->is_show())
+//      windows_->close();
   } else {
     succeed();
   }

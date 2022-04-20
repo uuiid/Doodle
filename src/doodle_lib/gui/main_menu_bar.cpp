@@ -46,7 +46,7 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
-  std::map<std::string, std::shared_ptr<bool>> windows_;
+  std::map<std::string, std::shared_ptr<gui::windows_proc::warp_proc>> windows_;
 
   gui::gui_cache<std::string> layout_name_{"##name"s, "layout_name"s};
   gui::gui_cache_name_id button_save_layout_name_{"保存"};
@@ -136,9 +136,14 @@ void main_menu_bar::menu_windows() {
 }
 void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
   std::string key{in_view};
-  auto &&l_win = this->p_i->windows_[key];
-  if (dear::MenuItem(in_view.data(), l_win ? *l_win : false)) {
-    this->p_i->windows_[key] = g_reg()->ctx().at<gui::layout_window>().render_main(key);
+  auto &&l_win      = this->p_i->windows_[key];
+  const auto l_show = l_win ? l_win->is_show() : false;
+  if (dear::MenuItem(in_view.data(), l_show)) {
+    if (l_show) {
+      l_win->close();
+    } else {
+      this->p_i->windows_[key] = g_reg()->ctx().at<gui::layout_window>().render_main(key);
+    }
   }
 }
 
