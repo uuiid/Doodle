@@ -146,6 +146,8 @@ namespace doodle {
  * @todo 所有括号和括号内内容删除
  * @todo 超过字符数，按照标点切断
  *
+ * @todo 添加fbx资产替换
+ *
  */
 class DOODLELIB_API app : public app_command_base {
  protected:

@@ -278,7 +278,7 @@ void app::show_windows() {
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-  //  g_main_loop().attach<gui::layout_window>();
+  g_main_loop().attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup
