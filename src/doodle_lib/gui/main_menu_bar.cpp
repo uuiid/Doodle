@@ -13,6 +13,7 @@
 #include <gui/get_input_dialog.h>
 #include <gui/gui_ref/ref_base.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/gui/gui_ref/layout_window.h>
 
 namespace doodle {
 namespace main_menu_bar_ns {
@@ -45,7 +46,7 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
-  std::map<std::string, gui::windows_proc::warp_proc_ptr> windows_;
+  std::map<std::string, std::shared_ptr<bool>> windows_;
 
   gui::gui_cache<std::string> layout_name_{"##name"s, "layout_name"s};
   gui::gui_cache_name_id button_save_layout_name_{"保存"};
@@ -131,34 +132,13 @@ void main_menu_bar::menu_windows() {
   std::apply([this](const auto &...in_item) {
     (this->widget_menu_item(in_item), ...);
   },
-             gui::config::menu_w::menu_list);
+             std::make_tuple(gui::config::menu_w::setting, gui::config::menu_w::project_edit));
 }
 void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
   std::string key{in_view};
   auto &&l_win = this->p_i->windows_[key];
-  if (dear::MenuItem(in_view.data(), l_win->is_show())) {
-    open_by_name_widget(in_view);
-  }
-}
-void main_menu_bar::open_by_name_widget(const std::string_view &in_view) {
-  std::string key{in_view};
-  auto &&l_win = this->p_i->windows_[key];
-  if (!l_win->is_show()) {
-    for (auto &&l_item : init_register::instance().get_derived_class<gui::window_panel>()) {
-      if (l_item.prop("name"_hs).value() == key) {
-        auto l_win_obj  = l_item.construct();
-        auto l_win_ptr  = l_win_obj.try_cast<gui::base_window>();
-        auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
-        g_main_loop().attach<gui::windows_proc>(l_wrap_win,
-                                                l_win_ptr,
-                                                std::move(l_win_obj),
-                                                true);
-        this->p_i->windows_[l_win_ptr->title()] = l_wrap_win;
-      }
-    }
-
-  } else {
-    l_win->close();
+  if (dear::MenuItem(in_view.data(), l_win ? *l_win : false)) {
+    this->p_i->windows_[key] = g_reg()->ctx().at<gui::layout_window>().render_main(key);
   }
 }
 
@@ -186,23 +166,7 @@ void main_menu_bar::menu_tool() {
 void main_menu_bar::init() {
   this->read_setting();
   g_reg()->ctx().emplace<main_menu_bar &>(*this);
-  load_windows();
 }
-
-void main_menu_bar::load_windows() {
-  auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
-  for (auto &&l_item : k_list) {
-    if (auto l_win = l_item.construct(); l_win) {
-      auto l_win_ptr  = l_win.try_cast<base_window>();
-      auto l_wrap_win = std::make_shared<gui::windows_proc::warp_proc>();
-      g_main_loop().attach<gui::windows_proc>(l_wrap_win,
-                                              l_win_ptr,
-                                              std::move(l_win));
-      this->p_i->windows_.emplace(l_win_ptr->title(), l_wrap_win);
-    }
-  }
-}
-
 void main_menu_bar::update(
     const chrono::system_clock::duration &in_duration,
     void *in_data) {
@@ -218,20 +182,18 @@ void main_menu_bar::update(
 }
 void main_menu_bar::menu_edit() {
   dear::Menu{"布局"} && [this]() { this->menu_layout(); };
-  //  dear::MenuBar{} && [this]() {
-  //  };
 }
 void main_menu_bar::menu_layout() {
-  ImGui::InputText(*p_i->layout_name_.gui_name, &p_i->layout_name_.data);
-  ImGui::SameLine();
-  if (ImGui::Button(*p_i->button_save_layout_name_))
-    layout_save();
+  //  ImGui::InputText(*p_i->layout_name_.gui_name, &p_i->layout_name_.data);
+  //  ImGui::SameLine();
+  //  if (ImGui::Button(*p_i->button_save_layout_name_))
 
-  for (auto &&i : p_i->layout_list) {
-    if (ImGui::MenuItem(i.name.c_str())) {
-      layout_load(i);
-    };
-  }
+  //
+  //  for (auto &&i : p_i->layout_list) {
+  //    if (ImGui::MenuItem(i.name.c_str())) {
+
+  //    };
+  //  }
 }
 void main_menu_bar::succeeded() {
   show_ = true;
@@ -244,51 +206,6 @@ const string &main_menu_bar::title() const {
 void main_menu_bar::aborted() {
   base_window::aborted();
   save_setting();
-}
-void main_menu_bar::layout_save() const {
-  std::size_t l_size;
-  auto *l_char = ImGui::SaveIniSettingsToMemory(&l_size);
-  std::string l_string{l_char, l_size};
-
-  main_menu_bar_ns::layout_data l_data{};
-  l_data.name         = p_i->layout_name_.data;
-  l_data.imgui_data   = {l_char, l_size};
-  l_data.windows_show = p_i->windows_ |
-                        ranges::views::transform(
-                            [](const decltype(p_i->windows_)::value_type &in_type)
-                                -> std::pair<std::string, bool> {
-                              return std::make_pair(in_type.first, in_type.second->show);
-                            }) |
-                        ranges::to<decltype(l_data.windows_show)>;
-
-  if (auto it = ranges::find(p_i->layout_list, l_data);
-      it != p_i->layout_list.end()) {
-    *it = l_data;
-  } else {
-    p_i->layout_list.emplace_back(l_data);
-  }
-}
-void main_menu_bar::layout_load(const main_menu_bar_ns::layout_data &in_data) {
-  p_i->layout_name_.data = in_data.name;
-
-  for (auto &&i : in_data.windows_show) {
-    if (p_i->windows_.count(i.first)) {
-      if (i.second && !p_i->windows_[i.first]->is_show()) {
-        open_by_name_widget(i.first);
-      }
-      if (!i.second && p_i->windows_[i.first]->is_show())
-        p_i->windows_[i.first]->close();
-    }
-  }
-  ImGui::LoadIniSettingsFromMemory(in_data.imgui_data.c_str(), in_data.imgui_data.size());
-}
-void main_menu_bar::layout_delete(const std::string &in_name) {
-  if (auto it = ranges::find_if(p_i->layout_list, [&](const auto &in) -> bool {
-        return in == in_name;
-      });
-      it != p_i->layout_list.end()) {
-    p_i->layout_list.erase(it);
-  }
 }
 void main_menu_bar::read_setting() {
   base_window::read_setting();
