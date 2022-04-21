@@ -15,7 +15,9 @@ namespace doodle::gui {
  */
 class DOODLELIB_API base_window {
  protected:
-  std::vector<std::function<void()>> begin_fun;
+  std::vector<std::function<void()>> begin_fun{};
+  std::vector<boost::signals2::scoped_connection> sig_scoped{};
+
   bool show_{false};
   ImVec2 size_{};
   friend void to_json(nlohmann::json& j, const base_window& p);
