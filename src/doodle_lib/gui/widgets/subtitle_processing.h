@@ -6,17 +6,26 @@
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle::gui {
-
+/**
+ * @brief 使用正则去除一些东西
+ *
+ * [^\u4e00-\u9fa5|\(|\)|（|）|：|:]
+ */
 class DOODLELIB_API subtitle_processing : public window_panel {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  class subtitle_srt_line;
+
+  void run(const FSys::path& in_path);
+
  public:
   subtitle_processing();
   ~subtitle_processing() override;
+  void init() override;
 
  protected:
-  virtual void render() override;
+  void render() override;
 };
 
 }  // namespace doodle::gui
