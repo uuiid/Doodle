@@ -25,7 +25,7 @@ class subtitle_processing::subtitle_srt_line {
     /// 00:00:12,000 --> 00:00:15,000
     /// 0123456789
     auto l_beg = in_string.substr(0, 12);
-    auto l_end = in_string.substr(16);
+    auto l_end = in_string.substr(17);
     time_begin = chrono::hours{std::stoi(l_beg.substr(0, 2))} +
                  chrono::minutes{std::stoi(l_beg.substr(3, 2))} +
                  chrono::seconds{std::stoi(l_beg.substr(6, 2))} +
@@ -38,7 +38,6 @@ class subtitle_processing::subtitle_srt_line {
   };
 
   const std::string& get_time_str() {
-    boost::locale::generator()("fr_FR.UTF-8");
     time_str     = fmt::format("{:%H:%M:%S} --> {:%H:%M:%S}", time_begin, time_end);
     time_str[8]  = ',';
     time_str[25] = ',';
@@ -60,13 +59,14 @@ class subtitle_processing::impl {
   gui_cache<bool> remove_brackets_content{"去除括号内内容"s, false};
   gui_cache<bool> remove_colon_front{"去除冒号前内容"s, false};
   gui_cache<bool> cut_off_line{"切断行"s, false};
-  gui_cache<std::int32_t> cut_off_line_size{"切断行大小"s, 14};
+  gui_cache<std::int32_t> cut_off_line_size{"切断行大小"s, 28};
 
   gui_cache_name_id run_button{"开始处理"s};
 };
 
 subtitle_processing::subtitle_processing()
     : p_i(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 void subtitle_processing::init() {
   window_panel::init();
@@ -106,7 +106,9 @@ void subtitle_processing::render() {
   if (ImGui::Button(*p_i->run_button)) {
     ranges::for_each(p_i->list_srt_file.data,
                      [this](const FSys::path& in_path) {
-                       this->run(in_path, in_path);
+                       auto l_out = in_path;
+                       l_out.replace_filename(l_out.stem() += "_m.srt");
+                       this->run(in_path, l_out);
                      });
   }
 }
@@ -134,30 +136,38 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
         l_b.parse_time(l_string);
         /// \brief 读取字幕
         while (!l_string.empty()) {
-          chick_true<doodle_error>(std::getline(l_ifstream, l_string), DOODLE_LOC, "文件 {} 解析错误", in_path);
-          l_b.subtitle += l_string;
+          if (std::getline(l_ifstream, l_string)) {
+            l_b.subtitle += l_string;
+          } else
+            break;
         }
       }
     }
   }
 
-  for (auto l_line : l_vector) {
+  for (auto& l_line : l_vector) {
     /// \brief 开始去除所有的标点符号,  不包括括号和冒号
     std::wstring l_str = conv::utf_to_utf<wchar_t>(l_line.subtitle);
 
     if (p_i->remove_all_punctuation.data) {
       static std::wregex l_wregex{LR"([^\u4e00-\u9fa5|\(|\)|（|）|：|:])"};
       l_str = std::regex_replace(l_str, l_wregex, L" ");
+      while (l_str.find(L"  ") != decltype(l_str)::npos) {
+        boost::replace_all(l_str, L"  ", L" ");
+      }
+      if (!l_str.empty() && l_str.front() == L' ') {
+        l_str.erase(0, 1);
+      }
     }
     /// \brief 去除括号内的内容
     if (p_i->remove_brackets_content.data) {
       static std::wregex l_wregex{LR"(([\(|（].*?[\)|）]))"};
-      l_str = std::regex_replace(l_str, l_wregex, L" ");
+      l_str = std::regex_replace(l_str, l_wregex, L"");
     }
     /// \brief 去除冒号前的内容
     if (p_i->remove_colon_front.data) {
       static std::wregex l_wregex{LR"((.*?[：|:]))"};
-      l_str = std::regex_replace(l_str, l_wregex, L" ");
+      l_str = std::regex_replace(l_str, l_wregex, L"");
     }
     l_line.subtitle = conv::utf_to_utf<char>(l_str);
   }
@@ -166,36 +176,40 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
     for (auto it = l_vector.begin();
          it != l_vector.end();) {
       if (it->subtitle.size() > p_i->cut_off_line_size.data) {
-        //        std::wstring l_str = conv::utf_to_utf<wchar_t>(it->subtitle);
-        //        const auto l_size  = p_i->cut_off_line_size.data *
-        //                            sizeof(decltype(l_str)::value_type) /
-        //                            sizeof(decltype(it->subtitle)::value_type);
-        const auto l_size = p_i->cut_off_line_size.data;
+        std::wstring l_str = conv::utf_to_utf<wchar_t>(it->subtitle);
+        const auto l_size  = p_i->cut_off_line_size.data *
+                            sizeof(decltype(l_str)::value_type) /
+                            sizeof(decltype(it->subtitle)::value_type);
+        //        const auto l_size = p_i->cut_off_line_size.data;
         std::vector<subtitle_srt_line> l_sub_list{};
 
         /// \brief 开始分割字符串
-        std::string l_sub{};
-        std::vector<std::string> l_str_list{};
-        boost::split(l_str_list, it->subtitle, boost::is_any_of(" "));
+        std::wstring l_sub{};
+        std::vector<std::wstring> l_str_list{};
+        boost::split(l_str_list, l_str, boost::is_any_of(L" "));
         /// \brief 没有空格不拆分
         if (l_sub_list.size() == 1)
           break;
+        l_str_list |= ranges::actions::remove_if([](auto& in) { return in.empty(); });
         for (const auto& l_item : l_str_list) {
           if (l_item.size() > l_size && l_sub.empty()) {
             /// \brief 首先查看分裂字符串 大于限制 并且没有上一个的剩余字符串后, 直接加入序列并进行 @b 下次循环
-            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = l_item;
+            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_item);
             break;
           } else if ((l_sub.size() + l_item.size()) > l_size && !l_sub.empty()) {
             /// \brief 如果上一个剩余和本次字符串之和超过限制,并且剩余不空, 直接将剩余字符串添加到字幕
-            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = l_sub;
+            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
             l_sub.clear();
           }
           /// \brief 最后将剩余字符串保存
+          if (!l_sub.empty())
+            l_sub += L' ';
+
           l_sub += l_item;
         }
         /// \brief 在最有一次循环中如果还有剩余字符串直接加入字幕
         if (!l_sub.empty())
-          l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = std::move(l_sub);
+          l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
 
         /// \brief 设置时间
         auto l_du = (it->time_end - it->time_begin) / l_sub_list.size();
@@ -205,6 +219,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
         }
         it = l_vector.erase(it);
         it = l_vector.insert(it, l_sub_list.begin(), l_sub_list.end());
+        it = it + l_sub_list.size();
       } else {
         ++it;
       }
