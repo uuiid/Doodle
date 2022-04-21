@@ -78,6 +78,7 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
                 dear::TabItem{menu_w::comm_maya_tool.data()} && [&]() { call_render(std::string{menu_w::comm_maya_tool}); };
                 dear::TabItem{menu_w::comm_create_video.data()} && [&]() { call_render(std::string{menu_w::comm_create_video}); };
                 dear::TabItem{menu_w::extract_subtitles.data()} && [&]() { call_render(std::string{menu_w::extract_subtitles}); };
+                dear::TabItem{menu_w::subtitle_processing.data()} && [&]() { call_render(std::string{menu_w::subtitle_processing}); };
               };
         };
       };
