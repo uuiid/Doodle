@@ -40,6 +40,7 @@ constexpr const std::string_view ue4_widget{"ue4工具"};
 constexpr const std::string_view comm_maya_tool{"maya工具"};
 constexpr const std::string_view comm_create_video{"创建视频"};
 constexpr const std::string_view extract_subtitles{"提取字幕"};
+constexpr const std::string_view subtitle_processing{"修改字幕"};
 constexpr const auto menu_base =
     std::make_tuple(project_widget,
                     edit_,
@@ -54,7 +55,8 @@ constexpr const auto menu_list =
                                    ue4_widget,
                                    comm_maya_tool,
                                    comm_create_video,
-                                   extract_subtitles));
+                                   extract_subtitles,
+                                   subtitle_processing));
 
 }  // namespace gui::config::menu_w
 }  // namespace doodle

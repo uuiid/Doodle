@@ -25,8 +25,21 @@ class DOODLELIB_API subtitle_processing : public window_panel {
   ~subtitle_processing() override;
   void init() override;
 
+  constexpr static std::string_view name{gui::config::menu_w::subtitle_processing};
+
  protected:
   void render() override;
 };
+
+namespace subtitle_processing_ns {
+constexpr auto init = []() {
+  entt::meta<subtitle_processing>()
+      .type()
+      .prop("name"_hs, std::string{subtitle_processing::name})
+      .base<window_panel>();
+};
+class init_class
+    : public init_register::registrar_lambda<init, 3> {};
+}  // namespace subtitle_processing_ns
 
 }  // namespace doodle::gui
