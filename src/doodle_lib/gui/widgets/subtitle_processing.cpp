@@ -17,11 +17,10 @@ class subtitle_processing::subtitle_srt_line {
         time_begin(),
         time_end(),
         subtitle() {
-    parse_time();
+    parse_time(time_str);
   };
   std::string time_str{};
 
-  void parse_time() { parse_time(time_str); };
   void parse_time(const std::string& in_string) {
     /// 00:00:12,000 --> 00:00:15,000
     /// 0123456789
@@ -35,7 +34,16 @@ class subtitle_processing::subtitle_srt_line {
                chrono::minutes{std::stoi(l_end.substr(3, 2))} +
                chrono::seconds{std::stoi(l_end.substr(6, 2))} +
                chrono::milliseconds{std::stoi(l_end.substr(9, 3))};
+    time_str = in_string;
   };
+
+  const std::string& get_time_str() {
+    boost::locale::generator()("fr_FR.UTF-8");
+    time_str     = fmt::format("{:%H:%M:%S} --> {:%H:%M:%S}", time_begin, time_end);
+    time_str[8]  = ',';
+    time_str[25] = ',';
+    return time_str;
+  }
 
   chrono::milliseconds time_begin{};
   chrono::milliseconds time_end{};
@@ -98,11 +106,11 @@ void subtitle_processing::render() {
   if (ImGui::Button(*p_i->run_button)) {
     ranges::for_each(p_i->list_srt_file.data,
                      [this](const FSys::path& in_path) {
-                       this->run(in_path);
+                       this->run(in_path, in_path);
                      });
   }
 }
-void subtitle_processing::run(const FSys::path& in_path) {
+void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_subtitles_file) {
   boost::contract::check l_ =
       boost::contract::function()
           .precondition([&]() {
@@ -110,23 +118,25 @@ void subtitle_processing::run(const FSys::path& in_path) {
             chick_true<doodle_error>(in_path.extension() == ".srt", DOODLE_LOC, "文件 {} 扩展名错误", in_path);
           });
 
-  FSys::ifstream l_ifstream{in_path};
-
   std::vector<subtitle_srt_line> l_vector{};
   {
-    /// \brief 使用循环解析字幕文件
-    std::string l_string{};
-    while (std::getline(l_ifstream, l_string)) {
-      auto& l_b = l_vector.emplace_back(subtitle_srt_line{});
+    FSys::ifstream l_ifstream{in_path};
 
-      /// \brief 读取时间字符串
-      chick_true<doodle_error>(std::getline(l_ifstream, l_string), DOODLE_LOC, "文件 {} 解析错误", in_path);
+    {
+      /// \brief 使用循环解析字幕文件
+      std::string l_string{};
+      while (std::getline(l_ifstream, l_string)) {
+        auto& l_b = l_vector.emplace_back(subtitle_srt_line{});
 
-      l_b.time_str = l_string;
-      /// \brief 读取字幕
-      while (!l_string.empty()) {
+        /// \brief 读取时间字符串
         chick_true<doodle_error>(std::getline(l_ifstream, l_string), DOODLE_LOC, "文件 {} 解析错误", in_path);
-        l_b.subtitle += l_string;
+
+        l_b.parse_time(l_string);
+        /// \brief 读取字幕
+        while (!l_string.empty()) {
+          chick_true<doodle_error>(std::getline(l_ifstream, l_string), DOODLE_LOC, "文件 {} 解析错误", in_path);
+          l_b.subtitle += l_string;
+        }
       }
     }
   }
@@ -200,15 +210,27 @@ void subtitle_processing::run(const FSys::path& in_path) {
       }
     }
   }
-  //  if (p_i->cut_off_line.data) {
-  //    auto l_cut_ = p_i->cut_off_line_size.data;
-  //    for (
-  //        auto l_it = l_str.find_last_of(L' ', l_cut_);
-  //        l_it != decltype(l_str)::npos;
-  //        l_it = l_str.find_last_of(L' ', l_cut_ + l_it)) {
-  //      l_str[l_it] = L'\n';
-  //    }
-  //  }
+  ranges::for_each(l_vector, [](auto& in_item) { in_item.get_time_str(); });
+
+  std::vector<std::string> l_sub_str_list =
+      l_vector |
+      ranges::views::enumerate |
+      ranges::views::transform(
+          [&](const std::pair<std::size_t, subtitle_srt_line>& in_pair) -> std::string {
+            auto l_str = fmt::format(
+                R"({}
+{}
+{})",
+                in_pair.first + 1,
+                in_pair.second.time_str,
+                in_pair.second.subtitle);
+            return l_str;
+          }) |
+      ranges::to_vector;
+  if (!FSys::exists(out_subtitles_file.parent_path()))
+    FSys::create_directories(out_subtitles_file.parent_path());
+  DOODLE_LOG_INFO("输出文件 {}", out_subtitles_file);
+  FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_sub_str_list, "\n\n"));
 }
 subtitle_processing::~subtitle_processing() = default;
 }  // namespace doodle::gui

@@ -17,7 +17,8 @@ class DOODLELIB_API subtitle_processing : public window_panel {
 
   class subtitle_srt_line;
 
-  void run(const FSys::path& in_path);
+  void run(const FSys::path& in_path,
+           const FSys::path& out_subtitles_file);
 
  public:
   subtitle_processing();
