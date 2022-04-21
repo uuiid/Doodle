@@ -167,13 +167,36 @@ void subtitle_processing::run(const FSys::path& in_path) {
         std::string l_sub{};
         std::vector<std::string> l_str_list{};
         boost::split(l_str_list, it->subtitle, boost::is_any_of(" "));
-        for (auto l_item : l_str_list) {
-          if ((l_sub.size() + l_item.size()) > l_size) {
-            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = std::move(l_sub);
+        /// \brief 没有空格不拆分
+        if (l_sub_list.size() == 1)
+          break;
+        for (const auto& l_item : l_str_list) {
+          if (l_item.size() > l_size && l_sub.empty()) {
+            /// \brief 首先查看分裂字符串 大于限制 并且没有上一个的剩余字符串后, 直接加入序列并进行 @b 下次循环
+            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = l_item;
+            break;
+          } else if ((l_sub.size() + l_item.size()) > l_size && !l_sub.empty()) {
+            /// \brief 如果上一个剩余和本次字符串之和超过限制,并且剩余不空, 直接将剩余字符串添加到字幕
+            l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = l_sub;
+            l_sub.clear();
           }
+          /// \brief 最后将剩余字符串保存
           l_sub += l_item;
         }
+        /// \brief 在最有一次循环中如果还有剩余字符串直接加入字幕
+        if (!l_sub.empty())
+          l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = std::move(l_sub);
 
+        /// \brief 设置时间
+        auto l_du = (it->time_end - it->time_begin) / l_sub_list.size();
+        for (auto&& [l_index, l_line] : l_sub_list | ranges::views::enumerate) {
+          l_line.time_begin = it->time_begin + (l_du * l_index);
+          l_line.time_end   = it->time_begin + (l_du * (l_index + 1));
+        }
+        it = l_vector.erase(it);
+        it = l_vector.insert(it, l_sub_list.begin(), l_sub_list.end());
+      } else {
+        ++it;
       }
     }
   }
