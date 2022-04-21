@@ -55,6 +55,7 @@ class subtitle_processing::impl {
   impl() = default;
 
   gui_cache<std::vector<std::string>> list_srt_file{"##list"s, std::vector<std::string>{}};
+  gui_cache<std::string> file_suffix{"输出后缀"s, ""s};
   gui_cache<bool> remove_all_punctuation{"去除所有标点(不包括括号和冒号)"s, false};
   gui_cache<bool> remove_brackets_content{"去除括号内内容"s, false};
   gui_cache<bool> remove_colon_front{"去除冒号前内容"s, false};
@@ -96,6 +97,8 @@ void subtitle_processing::render() {
     }
   };
 
+  ImGui::InputText(*p_i->file_suffix.gui_name, &p_i->file_suffix.data);
+
   ImGui::Checkbox(*p_i->remove_all_punctuation.gui_name, &p_i->remove_all_punctuation.data);
   ImGui::Checkbox(*p_i->remove_brackets_content.gui_name, &p_i->remove_brackets_content.data);
   ImGui::Checkbox(*p_i->remove_colon_front.gui_name, &p_i->remove_colon_front.data);
@@ -107,7 +110,7 @@ void subtitle_processing::render() {
     ranges::for_each(p_i->list_srt_file.data,
                      [this](const FSys::path& in_path) {
                        auto l_out = in_path;
-                       l_out.replace_filename(l_out.stem() += "_m.srt");
+                       l_out.replace_filename(l_out.stem() += p_i->file_suffix.data);
                        this->run(in_path, l_out);
                      });
   }
