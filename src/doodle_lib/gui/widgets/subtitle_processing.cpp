@@ -55,7 +55,7 @@ class subtitle_processing::impl {
   impl() = default;
 
   gui_cache<std::vector<std::string>> list_srt_file{"##list"s, std::vector<std::string>{}};
-  gui_cache<std::string> file_suffix{"输出后缀"s, ""s};
+  gui_cache<std::string> file_suffix{"输出后缀"s, "_m"s};
   gui_cache<bool> remove_all_punctuation{"去除所有标点(不包括括号和冒号)"s, false};
   gui_cache<bool> remove_brackets_content{"去除括号内内容"s, false};
   gui_cache<bool> remove_colon_front{"去除冒号前内容"s, false};
