@@ -247,7 +247,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     MSelectionList k_select{};
     k_s = MGlobal::getActiveSelectionList(k_select);
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      if (k_r.has_node(k_select) && k_r.has_sim_cloth()) {
+      if (k_r.has_node(k_select)) {
         reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
         k_r.export_file(l_export_arg);
       }
@@ -255,10 +255,8 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   } else {
     DOODLE_LOG_INFO("全部的引用文件导出")
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      if(k_r.has_sim_cloth()) {
-        reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-        k_r.export_file(l_export_arg);
-      }
+      reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+      k_r.export_file(l_export_arg);
     }
   }
 
