@@ -18,7 +18,8 @@ class extract_subtitles_widgets::impl {
   gui_cache_name_id export_{"导出"s};
   gui_cache<std::string> export_file_path_{"导出路径", ""s};
 
-  gui_cache<std::string> regex_{"正则表达式"s, R"(([^\x00-\xff]+[:|：][^\x00-\xff]+)$)"s};
+  gui_cache<std::string> regex_find_subtitles{"正则表达式"s, R"((.+?[:|：].+?)$)"s};
+  gui_cache<std::string> regex1{"正则表达式"s, R"(.+?[:|：](.+?))"s};
 };
 
 extract_subtitles_widgets::extract_subtitles_widgets()
@@ -32,7 +33,7 @@ void extract_subtitles_widgets::render() {
     }
   };
   ImGui::InputText(*p_i->export_file_path_.gui_name, &p_i->export_file_path_.data);
-  ImGui::InputText(*p_i->regex_.gui_name, &p_i->regex_.data);
+  ImGui::InputText(*p_i->regex_find_subtitles.gui_name, &p_i->regex_find_subtitles.data);
 
   if (ImGui::Button(*p_i->export_)) {
     ranges::for_each(p_i->file_list_.data, [&](const FSys::path& in_string) {
@@ -58,7 +59,7 @@ void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file
           });
   FSys::ifstream l_in_f{in_source_file};
 
-  std::wregex l_regex{conv::utf_to_utf<wchar_t>(p_i->regex_.data)};
+  std::wregex l_regex{conv::utf_to_utf<wchar_t>(p_i->regex_find_subtitles.data)};
   std::vector<std::string> l_subtitles{};
   for (std::string l_string{}; std::getline(l_in_f, l_string);) {
     if (std::regex_match(conv::utf_to_utf<wchar_t>(l_string), l_regex))
@@ -82,6 +83,7 @@ void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file
 
   if (!FSys::exists(out_subtitles_file.parent_path()))
     FSys::create_directories(out_subtitles_file.parent_path());
+  DOODLE_LOG_INFO("输出文件 {}",out_subtitles_file);
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_subtitles, "\n\n"));
 }
 void extract_subtitles_widgets::init() {

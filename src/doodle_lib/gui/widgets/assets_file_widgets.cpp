@@ -226,11 +226,14 @@ void assets_file_widgets::render() {
   dear::Disabled l_d{p_i->only_rand};
 
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
-    if (p_i->lists.empty())
-      return;
-    p_i->render_list();
-  };
+  dear::Child{"ScrollingRegion",
+              ImVec2(0, -footer_height_to_reserve),
+              false} &&
+      [&]() {
+        if (p_i->lists.empty())
+          return;
+        p_i->render_list();
+      };
 
   if (ImGui::Button(ICON_FA_ATOM)) {
     p_i->render_icon = !p_i->render_icon;
@@ -412,6 +415,7 @@ void assets_file_widgets::render_by_info() {
       "list",
       l_size,
       ImGuiTableFlags_::ImGuiTableFlags_ScrollY |
+          ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
           ImGuiTableFlags_::ImGuiTableFlags_RowBg |
           ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
           ImGuiTableFlags_::ImGuiTableFlags_BordersV |

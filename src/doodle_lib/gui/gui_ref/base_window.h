@@ -15,7 +15,9 @@ namespace doodle::gui {
  */
 class DOODLELIB_API base_window {
  protected:
-  std::vector<std::function<void()>> begin_fun;
+  std::vector<std::function<void()>> begin_fun{};
+  std::vector<boost::signals2::scoped_connection> sig_scoped{};
+
   bool show_{false};
   ImVec2 size_{};
   friend void to_json(nlohmann::json& j, const base_window& p);
@@ -69,6 +71,7 @@ class DOODLELIB_API base_window {
   [[nodiscard]] bool is_show() const;
   void show(bool in_show = true);
   [[nodiscard]] virtual const ImVec2& size() const;
+  virtual void size(const ImVec2& in_size);
   /**
    * @brief 安装窗口名称寻找窗口
    * @param in_title
@@ -97,16 +100,14 @@ class DOODLELIB_API windows_proc : public process_t<windows_proc> {
 
   explicit windows_proc(warp_proc_ptr in_ptr,
                         base_window* in_windows,
-                        entt::meta_any&& in_meta_any,
-                        std::optional<bool> show = {})
-      : optional_show(show),
-        windows_(in_windows),
+                        entt::meta_any&& in_meta_any)
+      : windows_(in_windows),
         owner_(std::move(in_meta_any)),
         warp_proc_(std::move(in_ptr)) {
   }
   ~windows_proc() override;
 
-  DOODLE_DIS_COPY(windows_proc)
+  DOODLE_MOVE(windows_proc)
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();
@@ -125,7 +126,6 @@ class DOODLELIB_API window_panel : public base_window {
  public:
   window_panel()           = default;
   ~window_panel() override = default;
-
 
   [[nodiscard]] const string& title() const override;
   void init() override;

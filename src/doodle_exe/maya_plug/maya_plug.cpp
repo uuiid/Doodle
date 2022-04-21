@@ -60,7 +60,7 @@ MStatus initializePlugin(MObject obj) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
       doodle::maya_plug::open_windows();
-      app::Get().hide_windows();
+      app::Get().close_windows();
 
       // 注册命令
       status = ::doodle::maya_plug::open_doodle_main::registerCommand(k_plugin);

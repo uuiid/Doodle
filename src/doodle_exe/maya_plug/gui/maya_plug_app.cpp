@@ -16,7 +16,7 @@ void maya_plug_app::load_windows() {
   g_main_loop().attach<maya_menu_bar>();
   g_main_loop().attach<main_status_bar>();
 }
-void maya_plug_app::hide_windows() {
+void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
 void maya_plug_app::post_quit_message() {

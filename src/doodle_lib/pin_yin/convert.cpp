@@ -1,9 +1,7 @@
-#include <Logger/logger.h>
 #include <pin_yin/convert.h>
 
 #include <boost/locale.hpp>
 #include <regex>
-#include <stdexcept>
 
 namespace doodle {
 static std::vector<std::string> pinyin_list{};
@@ -24,7 +22,7 @@ convert::~convert() = default;
 
 std::string convert::toEn(const std::string &conStr) {
   if (conStr.empty()) return {};
-  auto datas = boost::locale::conv::to_utf<wchar_t>(conStr, "UTF-8");
+  auto datas = boost::locale::conv::utf_to_utf<wchar_t>(conStr);
   std::string result{};
   for (auto data : datas) {
     if (data >= 0x4e00 && data <= 0x9fa5) {

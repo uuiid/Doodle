@@ -19,7 +19,6 @@ class DOODLELIB_API project_edit
   ~project_edit() override;
   constexpr static std::string_view name{gui::config::menu_w::project_edit};
   void init() override;
-  void failed() override;
   void render() override;
 };
 namespace project_edit_ns {

@@ -267,7 +267,7 @@ app& app::Get() {
 bool app::valid() const {
   return this->p_hwnd != nullptr;
 }
-void app::hide_windows() {
+void app::close_windows() {
   doodle::app_base::Get().stop_app();
   ::ShowWindow(p_hwnd, SW_HIDE);
   ::DestroyWindow(doodle::app::Get().p_hwnd);
@@ -278,7 +278,7 @@ void app::show_windows() {
 void app::load_windows() {
   g_main_loop().attach<main_menu_bar>();
   g_main_loop().attach<main_status_bar>();
-  //  g_main_loop().attach<gui::layout_window>();
+  g_main_loop().attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup

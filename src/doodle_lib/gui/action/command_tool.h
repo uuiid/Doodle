@@ -44,11 +44,10 @@ class DOODLELIB_API comm_maya_tool
 
  public:
   comm_maya_tool();
-  bool show{true};
+
   constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
-  [[maybe_unused]] void init() override;
-  [[maybe_unused]] void failed() override;
+  void init() override;
   void render() override;
 };
 

@@ -141,6 +141,13 @@ namespace doodle {
  *
  * @bug 在有的电脑上, 无法显示配置中的分类
  *
+ * @todo 冒号后面，所有标点转化成空格（不包括冒号和括号）
+ * @todo 冒号前面所有东西删除（包括冒号）
+ * @todo 所有括号和括号内内容删除
+ * @todo 超过字符数，按照标点切断
+ *
+ * @todo 添加fbx资产替换
+ *
  */
 class DOODLELIB_API app : public app_command_base {
  protected:
@@ -166,7 +173,7 @@ class DOODLELIB_API app : public app_command_base {
 
   void loop_one() override;
 
-  virtual void hide_windows();
+  virtual void close_windows();
   virtual void show_windows();
   virtual bool set_parent(win::wnd_handle in_parent);
 

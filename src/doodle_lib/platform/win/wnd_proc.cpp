@@ -121,7 +121,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     case WM_CLOSE: {
       //      doodle::doodle_app::Get()->p_done = true;
-      doodle::app::Get().hide_windows();
+      doodle::app::Get().close_windows();
       return 0;
     }
       //    case WM_DROPFILES: {

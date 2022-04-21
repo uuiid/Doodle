@@ -13,7 +13,7 @@ class maya_plug_app : public app {
 
  public:
   using app::app;
-  virtual void hide_windows() override;
+  virtual void close_windows() override;
   virtual void post_quit_message() override;
 };
 }  // namespace doodle::maya_plug
