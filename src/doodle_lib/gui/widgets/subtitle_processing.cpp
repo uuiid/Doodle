@@ -110,7 +110,9 @@ void subtitle_processing::render() {
     ranges::for_each(p_i->list_srt_file.data,
                      [this](const FSys::path& in_path) {
                        auto l_out = in_path;
-                       l_out.replace_filename(l_out.stem() += p_i->file_suffix.data);
+                       auto l_f   = (l_out.stem() += p_i->file_suffix.data);
+                       l_f += in_path.extension();
+                       l_out.replace_filename(l_f);
                        this->run(in_path, l_out);
                      });
   }
