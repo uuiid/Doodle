@@ -83,5 +83,3 @@ inline void chick_false(const bool& in, const ::spdlog::source_loc& in_loc, cons
 
 #define DOODLE_LOG_ERROR(...) \
   SPDLOG_ERROR(__VA_ARGS__);
-#define DOODLE_CHICK_TRUE(exp, ...) \
-  ::doodle::chick_true<doodle::doodle_error>(exp, DOODLE_SOURCE_LOC, __VA_ARGS__)
