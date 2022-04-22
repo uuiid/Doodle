@@ -22,12 +22,12 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   thread_pool_ptr p_thread_pool;
   logger_ctr_ptr p_log;
-  thread_pool_ptr get_thread_pool();
+  registry_ptr reg;
 
   scheduler_t loop;
   bounded_pool_t loop_bounded_pool;
 
-  registry_ptr reg;
+  thread_pool_ptr get_thread_pool();
 };
 DOODLELIB_API inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;

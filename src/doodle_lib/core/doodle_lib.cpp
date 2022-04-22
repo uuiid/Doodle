@@ -28,7 +28,9 @@ doodle_lib* doodle_lib::p_install = nullptr;
 doodle_lib::doodle_lib()
     : p_thread_pool(new_object<thread_pool>(std::thread::hardware_concurrency() - 1)),
       p_log(new_object<logger_ctrl>()),
-      reg(new_object<entt::registry>()) {
+      reg(new_object<entt::registry>()),
+      loop(),
+      loop_bounded_pool() {
   /// 创建依赖性
   reg->on_construct<database>().connect<&database::set_enum>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
