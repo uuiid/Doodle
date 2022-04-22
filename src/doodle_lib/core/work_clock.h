@@ -11,13 +11,15 @@ namespace doodle {
 
 namespace business {
 
-class DOODLELIB_API adjust_work {
- public:
-  chrono::local_time_pos start_;
-  chrono::local_time_pos end_;
-};
+namespace work_attr {
+using time_state = std::bitset<2>;
+constexpr const static time_state work_begin{0b11};
+constexpr const static time_state work_end{0b10};
+constexpr const static time_state rest_begin{0b01};
+constexpr const static time_state rest_end{0b00};
+}  // namespace work_attr
 
-class DOODLELIB_API adjust_rest {
+class DOODLELIB_API adjust {
  public:
   chrono::local_time_pos start_;
   chrono::local_time_pos end_;
@@ -35,11 +37,11 @@ class DOODLELIB_API time_attr {
   /**
    * @brief 时间状态
    */
-  std::bitset<2> state_{};
-  constexpr const static std::bitset<2> work_begin{0b11};
-  constexpr const static std::bitset<2> work_end{0b10};
-  constexpr const static std::bitset<2> rest_begin{0b01};
-  constexpr const static std::bitset<2> rest_end{0b00};
+  work_attr::time_state state_{};
+  constexpr const static work_attr::time_state work_begin = work_attr::work_begin;
+  constexpr const static work_attr::time_state work_end   = work_attr::work_end;
+  constexpr const static work_attr::time_state rest_begin = work_attr::rest_begin;
+  constexpr const static work_attr::time_state rest_end   = work_attr::rest_end;
   bool operator<(const time_attr& in_rhs) const;
   bool operator>(const time_attr& in_rhs) const;
   bool operator<=(const time_attr& in_rhs) const;
@@ -51,25 +53,38 @@ class DOODLELIB_API time_attr {
 class DOODLELIB_API rules {
  public:
   /// \brief 工作日 从周一到周日
-  std::bitset<7> work_weekdays;
-  std::set<
-      std::pair<
-          chrono::seconds,
-          chrono::seconds>>
-      work_pair;
-  std::vector<adjust_work> extra_work;
-  std::vector<adjust_rest> extra_rest;
-  chrono::local_time_pos get_work_time(const chrono::local_time_pos& in_s);
+  std::bitset<7> work_weekdays{};
+  std::set<std::pair<
+      chrono::seconds,
+      chrono::seconds>>
+      work_pair{};
+  std::vector<adjust> extra_work{};
+  std::vector<adjust> extra_rest{};
+  std::optional<chrono::local_time_pos> get_work_time(const chrono::local_time_pos& in_s);
 
   /**
    * @brief 获取当天的工作时间段
    * @param in_day 传入的天数
    * @return
    */
-  std::vector<std::pair<
-      chrono::seconds,
-      chrono::seconds>>
-  operator()(const chrono::year_month_day& in_day);
+  std::vector<time_attr> operator()(const chrono::year_month_day& in_day) const;
+};
+
+class DOODLELIB_API work_clock {
+ public:
+  explicit work_clock(chrono::local_time_pos in_pos)
+      : time_point(std::move(in_pos)),
+        work_time_(),
+        state_list(){};
+  chrono::local_time_pos time_point{};
+  chrono::seconds work_time_;
+  std::vector<work_attr::time_state> state_list{};
+
+  void set_work_limit(const chrono::local_time_pos& in_pos,
+                      const chrono::seconds& in_work_du);
+  chrono::seconds work_time() const;
+  work_clock& operator+=(const time_attr& in_attr);
+  bool ok();
 };
 
 }  // namespace business
