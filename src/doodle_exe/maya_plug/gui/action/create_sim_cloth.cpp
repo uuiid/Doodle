@@ -106,7 +106,8 @@ void create_sim_cloth::render() {
   }
 }
 create_sim_cloth::~create_sim_cloth() {
-  p_coll.destroy();
+  if (p_coll)
+    p_coll.destroy();
   for (auto& h : p_list) {
     if (h)
       h.destroy();
