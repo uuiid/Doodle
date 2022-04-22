@@ -48,63 +48,56 @@ rules::operator()(const chrono::year_month_day& in_day) {
                      time_list.emplace_back(in_rest.end_, time_attr::rest_end);
                    });
 
-  /// \brief 添加加班时间
-  for (const auto& i : extra_work) {
-    const auto l_to = chrono::floor<chrono::days>(i.start_);
-    chrono::year_month_day l_day{l_to};
-    /// \brief 判断加班时间是否在当天
-    if (l_day == in_day) {
-      auto l_ss      = chrono::floor<chrono::milliseconds>(i.start_ - l_to);
-      /// \brief 寻找加班时间和工作时间重叠
-      auto l_work_it = ranges::find_if(
-          result,
-          [&](const std::pair<chrono::seconds,
-                              chrono::seconds>& in_pair) -> bool {
-            return in_pair.second > l_ss;
-          });
-      /// \brief 重叠延长工作时间
-      if (l_work_it != result.end()) {
-        if (l_work_it->first < i.start_) {
-          l_work_it->first = i.start_;
-        }
-        l_work_it->second = i.end_ - l_to;
-      } else {
-        /// \brief 非重叠加入加班时间
-        result.emplace_back(std::make_pair(i.start_ - l_to, i.end_ - l_to));
-      }
-    }
-  }
-  /// \brief 添加调休时间
-  for (const auto& i : extra_rest) {
-    const auto l_to = chrono::floor<chrono::days>(i.start_);
-    chrono::year_month_day l_day{l_to};
-    /// \brief 判断调休时间是否在当天
-    if (l_day == in_day) {
-      /// \brief 开始寻找调休重叠时间
-      auto l_ss      = chrono::floor<chrono::milliseconds>(i.start_ - l_to);
-      auto l_rest_it = ranges::find_if(
-          result,
-          [&](const std::pair<chrono::seconds,
-                              chrono::seconds>& in_pair) -> bool {
-            return in_pair.second > l_ss;
-          });
+  time_list |= ranges::actions::sort;
+  const chrono::local_days l_days{in_day};
 
-      /// \brief 如果有重叠 work(13-18)
-      if (l_rest_it != result.end()) {
-        /// \brief 调休时间大于工作时间 12-19
-        if (l_rest_it->first > i.start_ && l_rest_it->second < i.end_) {
-        } else if (l_rest_it->first < i.start_ && l_rest_it->second > i.end_) {
-          /// \brief 包含重叠 14-15
-        } else if (l_rest_it->first < i.start_ && l_rest_it->second < i.end_) {
-          /// \brief 部分重叠 14-20
-        } else if (l_rest_it) {
-        }
-        /// \brief 部分重叠2 12:30-14
-      }
+  /// \brief 对时间进行整理
+  for (auto l_item : time_list) {
+    auto l_time = chrono::floor<chrono::seconds>(l_item.time_point - l_days);
+    std::optional<chrono::seconds> start{};
+    std::optional<chrono::seconds> end{};
+
+    if (l_item.state_ == time_attr::work_begin) {
+      if (!start)
+        *start = l_time;
+    } else if (l_item.state_ == time_attr::work_end) {
+      if (!end)
+        *end = l_time;
+
+    } else if (l_item.state_ == time_attr::rest_begin) {
+      if (!end)
+        *end = l_time;
+    } else if (l_item.state_ == time_attr::rest_end) {
+      if (!start)
+        *start = l_time;
+    }
+    if (start && end) {
+      result.emplace_back(*start, *end);
+      start.reset();
+      end.reset();
     }
   }
 
   return result;
+}
+bool time_attr::operator<(const time_attr& in_rhs) const {
+  return time_point < in_rhs.time_point;
+}
+bool time_attr::operator>(const time_attr& in_rhs) const {
+  return in_rhs < *this;
+}
+bool time_attr::operator<=(const time_attr& in_rhs) const {
+  return !(in_rhs < *this);
+}
+bool time_attr::operator>=(const time_attr& in_rhs) const {
+  return !(*this < in_rhs);
+}
+bool time_attr::operator==(const time_attr& in_rhs) const {
+  return time_point == in_rhs.time_point &&
+         state_ == in_rhs.state_;
+}
+bool time_attr::operator!=(const time_attr& in_rhs) const {
+  return !(in_rhs == *this);
 }
 }  // namespace business
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,

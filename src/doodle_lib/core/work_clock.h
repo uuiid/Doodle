@@ -40,6 +40,12 @@ class DOODLELIB_API time_attr {
   constexpr const static std::bitset<2> work_end{0b10};
   constexpr const static std::bitset<2> rest_begin{0b01};
   constexpr const static std::bitset<2> rest_end{0b00};
+  bool operator<(const time_attr& in_rhs) const;
+  bool operator>(const time_attr& in_rhs) const;
+  bool operator<=(const time_attr& in_rhs) const;
+  bool operator>=(const time_attr& in_rhs) const;
+  bool operator==(const time_attr& in_rhs) const;
+  bool operator!=(const time_attr& in_rhs) const;
 };
 
 class DOODLELIB_API rules {
