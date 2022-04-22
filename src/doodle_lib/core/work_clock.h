@@ -23,6 +23,25 @@ class DOODLELIB_API adjust_rest {
   chrono::local_time_pos end_;
 };
 
+class DOODLELIB_API time_attr {
+ public:
+  time_attr() = default;
+  explicit time_attr(const chrono::local_time_pos& in_pos,
+                     const std::bitset<2>& in_state)
+      : time_point(in_pos),
+        state_(in_state){};
+  chrono::local_time_pos time_point{};
+
+  /**
+   * @brief 时间状态
+   */
+  std::bitset<2> state_{};
+  constexpr const static std::bitset<2> work_begin{0b11};
+  constexpr const static std::bitset<2> work_end{0b10};
+  constexpr const static std::bitset<2> rest_begin{0b01};
+  constexpr const static std::bitset<2> rest_end{0b00};
+};
+
 class DOODLELIB_API rules {
  public:
   /// \brief 工作日 从周一到周日
