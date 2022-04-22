@@ -1,17 +1,17 @@
 //
 // Created by TD on 2022/4/22.
 //
-
-#ifndef DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_LAYOUT_H_
-#define DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_LAYOUT_H_
-
+#pragma once
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/gui_ref/layout_window.h>
 namespace doodle {
 namespace maya_plug {
 
-class maya_layout {
+class maya_layout
+    : public doodle::gui::layout_window {
+ public:
+  virtual void update(const chrono::system_clock::duration &in_duration, void *in_data) override;
 };
 
 }  // namespace maya_plug
 }  // namespace doodle
-
-#endif  // DOODLE_SRC_DOODLE_EXE_MAYA_PLUG_GUI_MAYA_LAYOUT_H_

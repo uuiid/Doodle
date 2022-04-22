@@ -13,10 +13,11 @@ class DOODLELIB_API layout_window
   class impl;
   std::unique_ptr<impl> p_i;
 
+ protected:
   void call_render(const std::string &in_name);
 
   void clear_windows();
-
+  void main_render();
  public:
   layout_window();
   ~layout_window() override;

@@ -139,5 +139,8 @@ void layout_window::clear_windows() {
     }
   }
 }
+void layout_window::main_render() {
+  p_i->main_render();
+}
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui
