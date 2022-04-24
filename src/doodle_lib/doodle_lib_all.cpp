@@ -90,7 +90,8 @@ void last_write_time_point(const path &in_path, const std::chrono::system_clock:
 }
 void open_explorer(const path &in_path) {
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
-  ShellExecute(nullptr, _T("open"), in_path.generic_wstring().c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+
+  ShellExecute(nullptr, _T("open"), _T("EXPLORER.EXE"), in_path.lexically_normal().native().c_str(), nullptr, SW_SHOWDEFAULT);
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
 }
 void backup_file(const path &source) {
@@ -131,10 +132,9 @@ std::vector<path> list_files(const path &in_dir) {
       directory_iterator{in_dir},
       directory_iterator{}};
 }
-bool is_sub_path(const path &in_parent, const path &in_child){
-  return boost::istarts_with(in_parent.generic_string(),in_child.generic_string());
+bool is_sub_path(const path &in_parent, const path &in_child) {
+  return boost::istarts_with(in_parent.generic_string(), in_child.generic_string());
 }
-
 
 }  // namespace FSys
 }  // namespace doodle

@@ -721,4 +721,9 @@
  * @li 修正maya析构函数
  *
  *
+ * @subsubsection updata_log_3426 版本3.4.26
+ * @li 修正windwos explorer.exe打开ip路径时发生的无反应现象
+ *
+ * @subsubsection updata_log_3427 版本3.4.27
+ *
  */
