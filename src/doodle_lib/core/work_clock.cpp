@@ -119,6 +119,10 @@ chrono::seconds work_clock::work_time() const {
   return work_time_;
 }
 work_clock& work_clock::operator+=(const time_attr& in_attr) {
+  /// \brief 优先检查时间点是否比时钟时间点早
+  if (in_attr.time_point < time_point)
+    return *this;
+
   auto up_state = state_list.empty() ? work_attr::normal_work_end : state_list.back();
   if (up_state == work_attr::normal_work_end ||
       up_state == work_attr::adjust_rest_end ||
@@ -185,6 +189,29 @@ chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
     }
   }
   return in_s;
+}
+chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
+                                   const chrono::local_time_pos& in_e,
+                                   const business::rules& in_rules) {
+  business::work_clock l_clock{in_s};
+  auto l_day   = chrono::floor<chrono::days>(in_s);
+  auto l_day_1 = chrono::year_month_day{l_day};
+  chrono::year_month_day_last l_day_end{l_day_1.year(),
+                                        chrono::month_day_last{l_day_1.month()}};
+
+  for (;
+       l_day < chrono::local_days{l_day_end};
+       l_day += chrono::days{1}) {
+    auto l_r = in_rules(chrono::year_month_day{l_day});
+    for (auto&& i : l_r) {
+      if (i.time_point <= in_e) {
+        l_clock += i;
+      } else {
+        return l_clock.work_time();
+      }
+    }
+  }
+  return chrono::hours_double{0};
 }
 
 }  // namespace doodle
