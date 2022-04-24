@@ -151,10 +151,10 @@ chrono::hours_double work_duration(
       in_rules);
 };
 
-template <typename Duration_>
+template <typename Duration_,typename Duration2_>
 chrono::time_point<chrono::local_t, Duration_> next_time(
     const chrono::time_point<chrono::local_t, Duration_>& in_s,
-    const Duration_& in_du_time,
+    const Duration2_& in_du_time,
     const business::rules& in_rules) {
   return detail::next_time(
       chrono::floor<chrono::seconds>(in_s),

@@ -148,8 +148,11 @@ work_clock& work_clock::operator+=(const time_attr& in_attr) {
       auto l_time_long = in_attr.time_point - time_point;
       if (work_limit_) {
         if ((work_time_ + l_time_long) > *work_limit_) {
-          time_point += (*work_limit_ - l_time_long);
+          time_point += (*work_limit_ - work_time_);
           work_time_ = *work_limit_;
+        } else {
+          time_point = in_attr.time_point;
+          work_time_ += l_time_long;
         }
       } else {
         time_point = in_attr.time_point;
@@ -179,14 +182,16 @@ namespace detail {
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const std::chrono::milliseconds& in_du_time,
                                  const business::rules& in_rules) {
-  auto l_day   = chrono::floor<chrono::days>(in_s);
-  auto l_day_1 = chrono::year_month_day{l_day};
-  chrono::year_month_day_last l_day_end{l_day_1.year(),
-                                        chrono::month_day_last{l_day_1.month()}};
+  auto l_day_1   = chrono::year_month_day{chrono::floor<chrono::days>(in_s)};
+  auto l_day_end = chrono::local_days{chrono::year_month_day_last{
+                       l_day_1.year(),
+                       chrono::month_day_last{l_day_1.month()}}} +
+                   720h;
+
   business::work_clock l_clock{in_s};
   l_clock.set_work_limit(in_s, chrono::floor<chrono::seconds>(in_du_time));
-  for (;
-       l_day < chrono::local_days{l_day_end};
+  for (auto l_day = chrono::floor<chrono::days>(in_s);
+       l_day < l_day_end;
        l_day += chrono::days{1}) {
     auto l_r = in_rules(chrono::year_month_day{l_day});
     for (auto&& i : l_r) {
@@ -196,7 +201,7 @@ chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
       }
     }
   }
-  return in_s;
+  return l_clock.time_point;
 }
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,

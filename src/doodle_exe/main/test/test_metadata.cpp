@@ -286,6 +286,31 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
                                 doodle::business::rules{})
               .count() ==
           (33.691_a).epsilon(0.01));
+
+#define DOODLE_T_M_1(time_index, time_du)                                                                                                              \
+  REQUIRE(doodle::work_duration(                                                                                                                       \
+              time_##time_index##_a.zoned_time_.get_local_time(),                                                                                      \
+              doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(),                                                                    \
+                                doodle::chrono::hours_double{time_du},                                                                                 \
+                                doodle::business::rules{}),                                                                                            \
+              doodle::business::rules{})                                                                                                               \
+              .count() ==                                                                                                                              \
+          Approx{time_du}.epsilon(0.01));                                                                                                              \
+  std::cout << "\n"                                                                                                                                    \
+            << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                              \
+            << "next " << doodle::chrono::hours_double{time_du}.count() << "\n"                                                                        \
+            << doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(), doodle::chrono::hours_double{time_du}, doodle::business::rules{}) \
+            << std::endl;
+
+  DOODLE_T_M_1(1, 20.583);
+  DOODLE_T_M_1(2, 36.583);
+  DOODLE_T_M_1(3, 0.86);
+  DOODLE_T_M_1(4, 20.583);
+  DOODLE_T_M_1(5, 36.583);
+  DOODLE_T_M_1(6, 0.86);
+  DOODLE_T_M_1(7, 33.691);
+
+#undef DOODLE_T_M_1
 }
 
 class test_o_snapshot {
