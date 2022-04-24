@@ -46,16 +46,16 @@ std::vector<time_attr> rules::operator()(
     });
   }
   /// 开始加入调休和加班
-//  ranges::for_each(extra_work,
-//                   [&](const decltype(extra_work)::value_type& in_work) {
-//                     time_list.emplace_back(in_work.start_, work_attr::adjust_work_begin);
-//                     time_list.emplace_back(in_work.end_, work_attr::adjust_work_end);
-//                   });
-//  ranges::for_each(extra_rest,
-//                   [&](const decltype(extra_rest)::value_type& in_rest) {
-//                     time_list.emplace_back(in_rest.start_, work_attr::adjust_rest_begin);
-//                     time_list.emplace_back(in_rest.end_, work_attr::adjust_rest_end);
-//                   });
+  //  ranges::for_each(extra_work,
+  //                   [&](const decltype(extra_work)::value_type& in_work) {
+  //                     time_list.emplace_back(in_work.start_, work_attr::adjust_work_begin);
+  //                     time_list.emplace_back(in_work.end_, work_attr::adjust_work_end);
+  //                   });
+  //  ranges::for_each(extra_rest,
+  //                   [&](const decltype(extra_rest)::value_type& in_rest) {
+  //                     time_list.emplace_back(in_rest.start_, work_attr::adjust_rest_begin);
+  //                     time_list.emplace_back(in_rest.end_, work_attr::adjust_rest_end);
+  //                   });
 
   time_list |= ranges::actions::sort;
   return time_list;
@@ -124,10 +124,10 @@ work_clock& work_clock::operator+=(const time_attr& in_attr) {
       up_state == work_attr::adjust_rest_end ||
       up_state == work_attr::adjust_work_begin)  /// 开始进入工作
   {
-//    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
-//    {
-//
-//    }
+    //    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
+    //    {
+    //
+    //    }
   } else if (up_state == work_attr::normal_work_begin ||
              up_state == work_attr::adjust_work_begin)  /// \brief 可以结束工作计算时间
   {
@@ -171,20 +171,20 @@ chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
   auto l_day_1 = chrono::year_month_day{l_day};
   chrono::year_month_day_last l_day_end{l_day_1.year(),
                                         chrono::month_day_last{l_day_1.month()}};
-  std::chrono::milliseconds l_minutes{in_du_time};
+  business::work_clock l_clock{in_s};
+  l_clock.set_work_limit(in_s, chrono::floor<chrono::seconds>(in_du_time));
   for (;
        l_day < chrono::local_days{l_day_end};
        l_day += chrono::days{1}) {
     auto l_r = in_rules(chrono::year_month_day{l_day});
-    auto it  = ranges::find_if(l_r, [&](const decltype(l_r)::value_type& in_attr) -> bool {
-      return (in_attr.state_ == decltype(l_r)::value_type::work_begin ||
-              in_attr.state_ == decltype(l_r)::value_type::rest_end) &&
-             in_attr.time_point < in_s;
-    });
-    if (it != l_r.end()) {
-      return it->time_point;
+    for (auto&& i : l_r) {
+      l_clock += i;
+      if (l_clock) {
+        return l_clock.time_point;
+      }
     }
   }
+  return in_s;
 }
 
 }  // namespace doodle
