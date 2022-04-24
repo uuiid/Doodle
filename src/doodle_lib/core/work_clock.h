@@ -6,6 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <bitset>
+#include <utility>
 
 namespace doodle {
 
@@ -60,9 +61,29 @@ class DOODLELIB_API time_attr {
 
 class DOODLELIB_API rules {
  public:
+  constexpr static std::bitset<7> work_Monday_to_Friday{0b1111100};
+  constexpr static std::pair<chrono::seconds,
+                             chrono::seconds>
+      work_9_12{9h, 12h};
+  constexpr static std::pair<chrono::seconds,
+                             chrono::seconds>
+      work_13_18{13h, 18h};
+
+  explicit rules(const std::bitset<7>& in_work_day = work_Monday_to_Friday,
+                 const std::vector<std::pair<
+                     chrono::seconds,
+                     chrono::seconds>>&
+                     in_work_time = std::vector<std::pair<
+                         chrono::seconds,
+                         chrono::seconds>>{work_9_12, work_13_18})
+      : work_weekdays(in_work_day),
+        work_pair(in_work_time),
+        extra_work(),
+        extra_rest() {}
+
   /// \brief 工作日 从周一到周日
   std::bitset<7> work_weekdays{};
-  std::set<std::pair<
+  std::vector<std::pair<
       chrono::seconds,
       chrono::seconds>>
       work_pair{};
