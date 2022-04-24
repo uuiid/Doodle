@@ -15,14 +15,19 @@ namespace work_attr {
 /**
  * @brief
  *  - true, false
+ *  - 正常,  调整
  *  - 工作,  休息
+ *  - 开始,  结束
  */
-using time_state = std::bitset<1>;
+using time_state = std::bitset<3>;
 
-constexpr const static time_state work_begin{0b1};
-constexpr const static time_state work_end{0b0};
-constexpr const static time_state rest_begin{0b0};
-constexpr const static time_state rest_end{0b1};
+constexpr const static time_state normal_work_begin{0b11};
+constexpr const static time_state normal_work_end{0b10};
+constexpr const static time_state adjust_work_begin{0b11};
+constexpr const static time_state adjust_work_end{0b10};
+
+constexpr const static time_state adjust_rest_begin{0b01};
+constexpr const static time_state adjust_rest_end{0b00};
 }  // namespace work_attr
 
 class DOODLELIB_API adjust {
@@ -44,10 +49,7 @@ class DOODLELIB_API time_attr {
    * @brief 时间状态
    */
   work_attr::time_state state_{};
-  constexpr const static work_attr::time_state work_begin = work_attr::work_begin;
-  constexpr const static work_attr::time_state work_end   = work_attr::work_end;
-  constexpr const static work_attr::time_state rest_begin = work_attr::rest_begin;
-  constexpr const static work_attr::time_state rest_end   = work_attr::rest_end;
+
   bool operator<(const time_attr& in_rhs) const;
   bool operator>(const time_attr& in_rhs) const;
   bool operator<=(const time_attr& in_rhs) const;

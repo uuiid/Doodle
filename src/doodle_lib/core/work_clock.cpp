@@ -41,21 +41,21 @@ std::vector<time_attr> rules::operator()(
   if (work_weekdays[l_weekday.c_encoding() - 1]) {
     ranges::for_each(work_pair, [&](const std::pair<chrono::seconds,
                                                     chrono::seconds>& in_pair) {
-      time_list.emplace_back(l_local_days + in_pair.first, time_attr::work_begin);
-      time_list.emplace_back(l_local_days + in_pair.second, time_attr::work_end);
+      time_list.emplace_back(l_local_days + in_pair.first, work_attr::normal_work_begin);
+      time_list.emplace_back(l_local_days + in_pair.second, work_attr::normal_work_end);
     });
   }
   /// 开始加入调休和加班
-  ranges::for_each(extra_work,
-                   [&](const decltype(extra_work)::value_type& in_work) {
-                     time_list.emplace_back(in_work.start_, time_attr::work_begin);
-                     time_list.emplace_back(in_work.end_, time_attr::work_end);
-                   });
-  ranges::for_each(extra_rest,
-                   [&](const decltype(extra_rest)::value_type& in_rest) {
-                     time_list.emplace_back(in_rest.start_, time_attr::rest_begin);
-                     time_list.emplace_back(in_rest.end_, time_attr::rest_end);
-                   });
+//  ranges::for_each(extra_work,
+//                   [&](const decltype(extra_work)::value_type& in_work) {
+//                     time_list.emplace_back(in_work.start_, work_attr::adjust_work_begin);
+//                     time_list.emplace_back(in_work.end_, work_attr::adjust_work_end);
+//                   });
+//  ranges::for_each(extra_rest,
+//                   [&](const decltype(extra_rest)::value_type& in_rest) {
+//                     time_list.emplace_back(in_rest.start_, work_attr::adjust_rest_begin);
+//                     time_list.emplace_back(in_rest.end_, work_attr::adjust_rest_end);
+//                   });
 
   time_list |= ranges::actions::sort;
   return time_list;
@@ -119,11 +119,21 @@ chrono::seconds work_clock::work_time() const {
   return work_time_;
 }
 work_clock& work_clock::operator+=(const time_attr& in_attr) {
-  bool is_work = state_list.empty() ? false : state_list.back()[0];
-  state_list.emplace_back(in_attr.state_);
-  if (is_work)  /// 已经是工作状态
+  auto up_state = state_list.empty() ? work_attr::normal_work_end : state_list.back();
+  if (up_state == work_attr::normal_work_end ||
+      up_state == work_attr::adjust_rest_end ||
+      up_state == work_attr::adjust_work_begin)  /// 开始进入工作
   {
-    if (in_attr.state_ == work_attr::work_end)  /// \brief 传入工作结束
+//    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
+//    {
+//
+//    }
+  } else if (up_state == work_attr::normal_work_begin ||
+             up_state == work_attr::adjust_work_begin)  /// \brief 可以结束工作计算时间
+  {
+    if (in_attr.state_ == work_attr::normal_work_end ||
+        in_attr.state_ == work_attr::adjust_work_end ||
+        in_attr.state_ == work_attr::adjust_rest_begin)  /// \brief 传入工作结束
     {
       auto l_time_long = in_attr.time_point - time_point;
       if (work_limit_) {
@@ -144,6 +154,7 @@ work_clock& work_clock::operator+=(const time_attr& in_attr) {
   //    }
   //  }
 
+  state_list.emplace_back(in_attr.state_);
   return *this;
 }
 bool work_clock::ok() const {
