@@ -61,8 +61,7 @@ class DOODLELIB_API time_attr {
 
 class DOODLELIB_API rules {
  public:
-  /// \brief 周六 ->周日
-  /// \brief 6->0
+  /// \brief 周六 ->周日(index 6->0)
   constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
   constexpr static std::pair<chrono::seconds,
                              chrono::seconds>
