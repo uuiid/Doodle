@@ -715,4 +715,9 @@
  * @li 字幕处理: 输出文件名称后缀设置
  * @li 固定了基本布局
  *
+ * @subsubsection updata_log_3426 版本3.4.26
+ * @li 修正windwos explorer.exe打开ip路径时发生的无反应现象
+ *
+ * @subsubsection updata_log_3427 版本3.4.27
+ *
  */
