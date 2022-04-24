@@ -10,6 +10,7 @@
 #include <catch2/catch.hpp>
 
 #include <doodle_lib/app/app.h>
+#include <doodle_lib/core/work_clock.h>
 
 using namespace doodle;
 
@@ -141,7 +142,6 @@ TEST_CASE("test entt hash") {
   std::cout << entt::type_id<test_hash>().hash() << std::endl;
   std::cout << entt::type_id<project>().hash() << std::endl;
   std::cout << entt::type_id<episodes>().hash() << std::endl;
-  std::cout << "class doodle::episodes"_hs << std::endl;
   REQUIRE(entt::type_id<episodes>().hash() == "class doodle::episodes"_hs);
   REQUIRE(648452978 == "class doodle::project::cloth_config"_hs);
 }
@@ -417,6 +417,9 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
   REQUIRE(l_1.zoned_time_ == l_2.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
+
+
+
 }
 
 #include <doodle_lib/core/init_register.h>

@@ -22,13 +22,13 @@ namespace work_attr {
  */
 using time_state = std::bitset<3>;
 
-constexpr const static time_state normal_work_begin{0b11};
-constexpr const static time_state normal_work_end{0b10};
-constexpr const static time_state adjust_work_begin{0b11};
-constexpr const static time_state adjust_work_end{0b10};
+constexpr const static time_state normal_work_begin{0b111};
+constexpr const static time_state normal_work_end{0b110};
+constexpr const static time_state adjust_work_begin{0b011};
+constexpr const static time_state adjust_work_end{0b010};
 
-constexpr const static time_state adjust_rest_begin{0b01};
-constexpr const static time_state adjust_rest_end{0b00};
+constexpr const static time_state adjust_rest_begin{0b001};
+constexpr const static time_state adjust_rest_end{0b000};
 }  // namespace work_attr
 
 class DOODLELIB_API adjust {

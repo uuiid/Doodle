@@ -25,6 +25,7 @@ std::optional<chrono::local_time_pos> rules::get_work_time(const chrono::local_t
   //      ranges::to_vector;
 
   //  return l_r.empty() ? {} : l_r.front();
+  return {};
 }
 std::vector<time_attr> rules::operator()(
     const chrono::year_month_day& in_day) const {
@@ -128,6 +129,7 @@ work_clock& work_clock::operator+=(const time_attr& in_attr) {
       up_state == work_attr::adjust_rest_end ||
       up_state == work_attr::adjust_work_begin)  /// 开始进入工作
   {
+    time_point = in_attr.time_point;
     //    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
     //    {
     //

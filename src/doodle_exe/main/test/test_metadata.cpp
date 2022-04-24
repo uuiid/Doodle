@@ -6,6 +6,7 @@
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/core_sig.h>
+#include <doodle_lib/core/work_clock.h>
 
 #include <catch.hpp>
 
@@ -206,8 +207,8 @@ class test_time_duration : public app {
   chrono::sys_seconds p_new     = chrono::sys_days{2021_y / 06 / 16} + 10h + 34min + 37s;
   chrono::local_seconds p_local = chrono::local_days{2021_y / 06 / 16} + 18h + 34min + 37s;
 
-  time_point_wrap time_1_a{chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s};
-  time_point_wrap time_1_b{chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s};
+  time_point_wrap time_1_a{chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s};  /// \brief 周三
+  time_point_wrap time_1_b{chrono::local_days(2021_y / 7 / 23_d) + 16h + 20min + 30s};  /// \brief 周五
 
   time_point_wrap time_2_a{chrono::local_days(2021_y / 7 / 21_d) + 10h + 45min + 30s};
   time_point_wrap time_2_b{chrono::local_days(2021_y / 7 / 27_d) + 16h + 20min + 30s};
@@ -249,13 +250,22 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_5_a.work_duration(time_5_b).count() == (36.583_a).epsilon(0.01));
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
+
+  REQUIRE(doodle::work_duration(
+              doodle::chrono::floor<doodle::chrono::seconds>(
+                  time_1_a.zoned_time_.get_local_time()),
+              doodle::chrono::floor<doodle::chrono::seconds>(
+                  time_1_b.zoned_time_.get_local_time()),
+              doodle::business::rules{})
+              .count() ==
+          (20.583_a).epsilon(0.01));
 }
 
 class test_o_snapshot {
  public:
   test_o_snapshot() = default;
-  void operator()(const entt::entity& in_e) {
-    std::cout << fmt::format("get entt::entity: {}", in_e) << std::endl;
+  void operator()(const entt::entity& in_e){
+      //    std::cout << fmt::format("get entt::entity: {}", in_e) << std::endl;
   };
   void operator()(const std::underlying_type_t<entt::entity>& in_v) {
     std::cout << fmt::format("get std::underlying_type_t<entt::entity>: {}", in_v) << std::endl;
@@ -273,7 +283,7 @@ class test_metadata_install : public app {
  public:
   void make_install() {
     test_o_snapshot l_out{};
-    std::cout << fmt::format("entt::tombstone_t: {}", (entt::entity)entt::tombstone) << std::endl;
+    //    std::cout << fmt::format("entt::tombstone_t: {}", (entt::entity)entt::tombstone) << std::endl;
     entt::snapshot{*g_reg()}
         .entities(l_out)
         .component<project, season, episodes, shot, assets, assets_file, time_point_wrap>(l_out);
