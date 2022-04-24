@@ -12,11 +12,17 @@ namespace doodle {
 namespace business {
 
 namespace work_attr {
-using time_state = std::bitset<2>;
-constexpr const static time_state work_begin{0b11};
-constexpr const static time_state work_end{0b10};
-constexpr const static time_state rest_begin{0b01};
-constexpr const static time_state rest_end{0b00};
+/**
+ * @brief
+ *  - true, false
+ *  - 工作,  休息
+ */
+using time_state = std::bitset<1>;
+
+constexpr const static time_state work_begin{0b1};
+constexpr const static time_state work_end{0b0};
+constexpr const static time_state rest_begin{0b0};
+constexpr const static time_state rest_end{0b1};
 }  // namespace work_attr
 
 class DOODLELIB_API adjust {
@@ -29,7 +35,7 @@ class DOODLELIB_API time_attr {
  public:
   time_attr() = default;
   explicit time_attr(const chrono::local_time_pos& in_pos,
-                     const std::bitset<2>& in_state)
+                     const work_attr::time_state& in_state)
       : time_point(in_pos),
         state_(in_state){};
   chrono::local_time_pos time_point{};
@@ -73,9 +79,15 @@ class DOODLELIB_API rules {
 class DOODLELIB_API work_clock {
  public:
   explicit work_clock(chrono::local_time_pos in_pos)
-      : time_point(std::move(in_pos)),
+      : time_point(in_pos),
         work_time_(),
-        state_list(){};
+        state_list(),
+        work_limit_(){};
+
+ private:
+  std::optional<chrono::seconds> work_limit_;
+
+ public:
   chrono::local_time_pos time_point{};
   chrono::seconds work_time_;
   std::vector<work_attr::time_state> state_list{};
@@ -84,7 +96,10 @@ class DOODLELIB_API work_clock {
                       const chrono::seconds& in_work_du);
   chrono::seconds work_time() const;
   work_clock& operator+=(const time_attr& in_attr);
-  bool ok();
+  bool ok() const;
+  inline explicit operator bool() const {
+    return ok();
+  }
 };
 
 }  // namespace business

@@ -109,6 +109,49 @@ bool time_attr::operator==(const time_attr& in_rhs) const {
 bool time_attr::operator!=(const time_attr& in_rhs) const {
   return !(in_rhs == *this);
 }
+void work_clock::set_work_limit(
+    const chrono::local_time_pos& in_pos,
+    const chrono::seconds& in_work_du) {
+  work_limit_ = in_work_du;
+  time_point  = in_pos;
+}
+chrono::seconds work_clock::work_time() const {
+  return work_time_;
+}
+work_clock& work_clock::operator+=(const time_attr& in_attr) {
+  bool is_work = state_list.empty() ? false : state_list.back()[0];
+  state_list.emplace_back(in_attr.state_);
+  if (is_work)  /// 已经是工作状态
+  {
+    if (in_attr.state_ == work_attr::work_end)  /// \brief 传入工作结束
+    {
+      auto l_time_long = in_attr.time_point - time_point;
+      if (work_limit_) {
+        if ((work_time_ + l_time_long) > *work_limit_) {
+          time_point += (*work_limit_ - l_time_long);
+          work_time_ = *work_limit_;
+        }
+      } else {
+        time_point = in_attr.time_point;
+        work_time_ += l_time_long;
+      }
+    }
+  }
+  //  else  /// \brief 已经是休息状态
+  //  {
+  //    if (in_attr.state_ == work_attr::work_begin)  /// \brief 传入工作开始
+  //    {
+  //    }
+  //  }
+
+  return *this;
+}
+bool work_clock::ok() const {
+  if (work_limit_) {
+    return *work_limit_ == work_time_;
+  } else
+    return !state_list.empty();
+}
 }  // namespace business
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const std::chrono::milliseconds& in_du_time,
