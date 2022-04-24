@@ -225,8 +225,8 @@ class test_time_duration : public app {
   time_point_wrap time_6_a{chrono::sys_days(2021_y / 6 / 23_d) + 9h + 8min + 48s};
   time_point_wrap time_6_b{chrono::sys_days(2021_y / 6 / 23_d) + 12h + 8min + 48s};
 
-  time_point_wrap time_7_a{chrono::local_days(2022_y / 2 / 22_d) + 3h + 41min + 29s};
-  time_point_wrap time_7_b{chrono::local_days(2022_y / 2 / 28_d) + 10h + 41min + 28s};
+  time_point_wrap time_7_a{chrono::local_days(2022_y / 2 / 22_d) + 3h + 41min + 29s};   /// \brief 周二
+  time_point_wrap time_7_b{chrono::local_days(2022_y / 2 / 28_d) + 10h + 41min + 28s};  /// \brief 周一
   //
   //  time_point_wrap time_8_a;
   //  time_point_wrap time_8_b;
@@ -251,14 +251,41 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
 
-  REQUIRE(doodle::work_duration(
-              doodle::chrono::floor<doodle::chrono::seconds>(
-                  time_1_a.zoned_time_.get_local_time()),
-              doodle::chrono::floor<doodle::chrono::seconds>(
-                  time_1_b.zoned_time_.get_local_time()),
-              doodle::business::rules{})
+  REQUIRE(doodle::work_duration(time_1_a.zoned_time_.get_local_time(),
+                                time_1_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
               .count() ==
           (20.583_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_2_a.zoned_time_.get_local_time(),
+                                time_2_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (36.583_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_3_a.zoned_time_.get_local_time(),
+                                time_3_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (0.86_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_4_a.zoned_time_.get_local_time(),
+                                time_4_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (20.583_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_5_a.zoned_time_.get_local_time(),
+                                time_5_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (36.583_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_6_a.zoned_time_.get_local_time(),
+                                time_6_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (0.86_a).epsilon(0.01));
+  REQUIRE(doodle::work_duration(time_7_a.zoned_time_.get_local_time(),
+                                time_7_b.zoned_time_.get_local_time(),
+                                doodle::business::rules{})
+              .count() ==
+          (33.691_a).epsilon(0.01));
 }
 
 class test_o_snapshot {

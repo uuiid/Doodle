@@ -61,7 +61,9 @@ class DOODLELIB_API time_attr {
 
 class DOODLELIB_API rules {
  public:
-  constexpr static std::bitset<7> work_Monday_to_Friday{0b1111100};
+  /// \brief 周六 ->周日
+  /// \brief 6->0
+  constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
   constexpr static std::pair<chrono::seconds,
                              chrono::seconds>
       work_9_12{9h, 12h};
@@ -126,6 +128,7 @@ class DOODLELIB_API work_clock {
 };
 
 }  // namespace business
+namespace detail {
 
 chrono::hours_double work_duration(
     const chrono::local_time_pos& in_s,
@@ -136,4 +139,27 @@ chrono::local_time_pos next_time(
     const chrono::local_time_pos& in_s,
     const chrono::milliseconds& in_du_time,
     const business::rules& in_rules);
+}  // namespace detail
+
+template <typename Duration_>
+chrono::hours_double work_duration(
+    const chrono::time_point<chrono::local_t, Duration_>& in_s,
+    const chrono::time_point<chrono::local_t, Duration_>& in_e,
+    const business::rules& in_rules) {
+  return detail::work_duration(
+      chrono::floor<chrono::seconds>(in_s),
+      chrono::floor<chrono::seconds>(in_e),
+      in_rules);
+};
+
+template <typename Duration_>
+chrono::time_point<chrono::local_t, Duration_> next_time(
+    const chrono::time_point<chrono::local_t, Duration_>& in_s,
+    const Duration_& in_du_time,
+    const business::rules& in_rules) {
+  return detail::next_time(
+      chrono::floor<chrono::seconds>(in_s),
+      chrono::floor<chrono::seconds>(in_du_time),
+      in_rules);
+};
 }  // namespace doodle

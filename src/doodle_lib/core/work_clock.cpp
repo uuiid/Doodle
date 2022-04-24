@@ -39,13 +39,14 @@ std::vector<time_attr> rules::operator()(
   //  std::vector<std::pair<chrono::seconds, chrono::seconds>> result{};
   /// \brief 加入工作日规定时间
   chrono::local_days l_local_days{in_day};
-  if (work_weekdays[l_weekday.c_encoding() - 1]) {
+  if (work_weekdays[l_weekday.c_encoding()]) {
     ranges::for_each(work_pair, [&](const std::pair<chrono::seconds,
                                                     chrono::seconds>& in_pair) {
       time_list.emplace_back(l_local_days + in_pair.first, work_attr::normal_work_begin);
       time_list.emplace_back(l_local_days + in_pair.second, work_attr::normal_work_end);
     });
   }
+
   /// 开始加入调休和加班
   //  ranges::for_each(extra_work,
   //                   [&](const decltype(extra_work)::value_type& in_work) {
@@ -121,15 +122,18 @@ chrono::seconds work_clock::work_time() const {
 }
 work_clock& work_clock::operator+=(const time_attr& in_attr) {
   /// \brief 优先检查时间点是否比时钟时间点早
-  if (in_attr.time_point < time_point)
+  if (in_attr.time_point < time_point) {
+    state_list.emplace_back(in_attr.state_);
     return *this;
+  }
 
   auto up_state = state_list.empty() ? work_attr::normal_work_end : state_list.back();
   if (up_state == work_attr::normal_work_end ||
       up_state == work_attr::adjust_rest_end ||
       up_state == work_attr::adjust_work_begin)  /// 开始进入工作
   {
-    time_point = in_attr.time_point;
+    if (in_attr.state_ == work_attr::normal_work_begin)
+      time_point = in_attr.time_point;
     //    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
     //    {
     //
@@ -170,6 +174,8 @@ bool work_clock::ok() const {
     return !state_list.empty();
 }
 }  // namespace business
+namespace detail {
+
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const std::chrono::milliseconds& in_du_time,
                                  const business::rules& in_rules) {
@@ -196,24 +202,23 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
                                    const business::rules& in_rules) {
   business::work_clock l_clock{in_s};
-  auto l_day   = chrono::floor<chrono::days>(in_s);
-  auto l_day_1 = chrono::year_month_day{l_day};
-  chrono::year_month_day_last l_day_end{l_day_1.year(),
-                                        chrono::month_day_last{l_day_1.month()}};
+  const auto l_day_end = chrono::floor<chrono::days>(in_e);
 
-  for (;
-       l_day < chrono::local_days{l_day_end};
+  for (auto l_day = chrono::floor<chrono::days>(in_s);
+       l_day <= l_day_end;
        l_day += chrono::days{1}) {
     auto l_r = in_rules(chrono::year_month_day{l_day});
     for (auto&& i : l_r) {
       if (i.time_point <= in_e) {
         l_clock += i;
       } else {
+        l_clock += business::time_attr{in_e, i.state_};
         return l_clock.work_time();
       }
     }
   }
-  return chrono::hours_double{0};
+  return l_clock.work_time();
 }
+}  // namespace detail
 
 }  // namespace doodle
