@@ -720,5 +720,7 @@
  * @li 修正maya插件布局
  * @li 修正maya析构函数
  *
+ * @subsubsection updata_log_3427 版本3.4.27
+ * @li 修正windwos explorer.exe打开ip路径时发生的无反应现象
  *
  */
