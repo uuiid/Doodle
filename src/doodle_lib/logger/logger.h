@@ -73,7 +73,7 @@ inline void chick_false(const bool& in, const ::spdlog::source_loc& in_loc, cons
 }
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) \
-  SPDLOG_INFO(__VA_ARGS__);
+  SPDLOG_DEBUG(__VA_ARGS__);
 
 #define DOODLE_LOG_INFO(...) \
   SPDLOG_INFO(__VA_ARGS__);
