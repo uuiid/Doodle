@@ -90,7 +90,6 @@ class DOODLELIB_API rules {
       work_pair{};
   std::vector<adjust> extra_work{};
   std::vector<adjust> extra_rest{};
-  std::optional<chrono::local_time_pos> get_work_time(const chrono::local_time_pos& in_s);
 
   /**
    * @brief 获取当天的工作时间段

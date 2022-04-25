@@ -10,23 +10,6 @@ namespace doodle {
 
 namespace business {
 
-std::optional<chrono::local_time_pos> rules::get_work_time(const chrono::local_time_pos& in_s) {
-  //  auto l_time = chrono::make_zoned(chrono::current_zone(), in_s);
-  /// \brief 首先查看在那天开始工作
-  //  auto l_r = (*this)(chrono::year_month_day{chrono::floor<chrono::days>(in_s)});
-  //  auto l_r_v =
-  //      l_r |
-  //      ranges::views::transform([](const decltype(l_r)::value_type& in_type) -> chrono::seconds {
-  //        return in_type.first - in_type.second;
-  //      }) |
-  //      ranges::views::partial_sum([](const chrono::seconds& in_r, const chrono::seconds& in_l) {
-  //        return in_r + in_l;
-  //      }) |
-  //      ranges::to_vector;
-
-  //  return l_r.empty() ? {} : l_r.front();
-  return {};
-}
 std::vector<time_attr> rules::operator()(
     const chrono::year_month_day& in_day) const {
   //  ::boost::contract::check _l_c =
