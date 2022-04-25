@@ -192,7 +192,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
                   (in_r.get<shot>() > in_l.get<shot>());
          });
 
-  for (auto &&h : in_list) {
+  for (auto &&h : l_h) {
     l_f << fmt::format("{}\n", fmt::join(to_csv_line(h), ","));
   }
   DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);

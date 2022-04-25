@@ -37,7 +37,7 @@ class DOODLELIB_API csv_export_widgets
 
  public:
   csv_export_widgets();
-  ~csv_export_widgets();
+  ~csv_export_widgets() override;
 
   constexpr static std::string_view name{gui::config::menu_w::csv_export};
 
