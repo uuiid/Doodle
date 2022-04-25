@@ -21,7 +21,7 @@
 #include <gui/gui_ref/ref_base.h>
 #include <gui/open_file_dialog.h>
 #include <doodle_lib/core/init_register.h>
-
+#include <doodle_lib/core/work_clock.h>
 
 #include <fmt/chrono.h>
 
@@ -41,6 +41,9 @@ class csv_export_widgets::impl {
         shot_fmt_str("镜头格式化"s, "sc {}{}"s) {}
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
+  std::map<entt::handle, time_point_wrap> time_map;
+  std::map<std::string, std::vector<entt::handle>> user_map;
+
   std::vector<boost::signals2::scoped_connection> con;
 
   gui_cache<std::string, gui_cache_path> export_path;
@@ -48,6 +51,7 @@ class csv_export_widgets::impl {
   gui_cache<std::string> season_fmt_str;
   gui_cache<std::string> episodes_fmt_str;
   gui_cache<std::string> shot_fmt_str;
+  gui_cache<bool> average_time{"平均时间"s, false};
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -101,6 +105,7 @@ void csv_export_widgets::render() {
         });
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
+  ImGui::Checkbox(*p_i->average_time.gui_name, &p_i->average_time.data);
   ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
   ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
   ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
@@ -120,6 +125,49 @@ void csv_export_widgets::render() {
         [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
           return in_r.get<assets_file>().p_user < in_l.get<assets_file>().p_user;
         });
+    if (p_i->list.empty()) {
+      DOODLE_LOG_INFO("选择为空, 不导出");
+      return;
+    }
+
+    p_i->time_map = p_i->list_sort_time |
+                    ranges::view::transform([](const entt::handle &in_handle) -> std::pair<entt::handle, time_point_wrap> {
+                      return std::make_pair(in_handle, in_handle.get<time_point_wrap>());
+                    }) |
+                    ranges::to<std::map<entt::handle, time_point_wrap>>();
+    p_i->user_map.clear();
+    p_i->time_map.clear();
+    if (p_i->average_time.data) {  /// \brief 如果需要平均时间, 现在我们就要平均一下
+      /// \brief 获取人物名称列表
+      ranges::for_each(p_i->list_sort_time, [&](const entt::handle &in_handle) {
+        p_i->user_map[in_handle.get<assets_file>().p_user].push_back(in_handle);
+      });
+
+      for (auto &&i : p_i->user_map) {
+        auto l_beg  = i.second.front().get<time_point_wrap>().zoned_time_.get_local_time();
+        auto l_end  = i.second.back().get<time_point_wrap>().zoned_time_.get_local_time();
+
+        auto l_size = i.second.size();
+        auto l_time = doodle::work_duration(
+                          time_point_wrap::current_month_start(i.second.front().get<time_point_wrap>()).zoned_time_.get_local_time(),
+                          time_point_wrap::current_month_end(i.second.back().get<time_point_wrap>()).zoned_time_.get_local_time(),
+                          doodle::business::rules{}) /
+                      l_size;
+
+        for (auto j = 0; j < l_size; ++j) {
+          auto l_t                   = doodle::next_time(l_beg, l_time * j, doodle::business::rules{});
+          p_i->time_map[i.second[j]] = time_point_wrap{l_t};
+        }
+      }
+      /// \brief 获取大小
+      /// \brief 开始平均
+    } else {
+      p_i->time_map = p_i->list_sort_time |
+                      ranges::views::transform([](const entt::handle &in_handle) {
+                        return std::make_pair(in_handle, in_handle.get<time_point_wrap>());
+                      }) |
+                      ranges::to<std::map<entt::handle, time_point_wrap>>()
+    }
     this->export_csv(p_i->list, p_i->export_path.path);
   }
 }
@@ -215,17 +263,30 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
   if (l_it == p_i->list_sort_time.begin()) {
     return time_point_wrap::current_month_start(in_handle.get<time_point_wrap>());
   } else {
-    auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
-    auto end_it = ranges::find_if(
-        ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
-                              p_i->list_sort_time.rend()),
-        [&](const entt::handle &in_l) {
-          return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
-        });
+    /// \brief 直接计算平均时间
+    if (p_i->average_time.data) {
+      auto l_user     = in_handle.get<assets_file>().p_user;
+      auto l_size     = ranges::count_if(p_i->list, [&](const entt::handle &in_handle_1) {
+        return in_handle_1.get<assets_file>().p_user == l_user;
+      });
+      auto l_all_time = doodle::work_duration(
+          time_point_wrap::current_month_start(in_handle.get<time_point_wrap>()).zoned_time_.get_local_time(),
+          time_point_wrap::current_month_end(in_handle.get<time_point_wrap>()).zoned_time_.get_local_time(),
+          doodle::business::rules{});
 
-    return end_it == p_i->list_sort_time.rend()
-               ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
-               : end_it->get<time_point_wrap>();
+    } else {
+      auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
+      auto end_it = ranges::find_if(
+          ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
+                                p_i->list_sort_time.rend()),
+          [&](const entt::handle &in_l) {
+            return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
+          });
+
+      return end_it == p_i->list_sort_time.rend()
+                 ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
+                 : end_it->get<time_point_wrap>();
+    }
   }
 }
 
