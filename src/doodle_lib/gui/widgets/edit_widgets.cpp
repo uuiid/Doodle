@@ -63,6 +63,8 @@ class assets_edit : public edit_interface {
                const std::vector<std::string> &l_r) -> bool {
               return l_l.size() < l_r.size();
             });
+    if (l_r.empty())
+      return;
     auto l_list = l_r.front();
     FSys::path l_p_root{};
     ranges::for_each(l_list, [&](const std::string &in_string) {
