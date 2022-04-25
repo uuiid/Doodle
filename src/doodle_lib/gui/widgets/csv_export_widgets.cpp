@@ -38,7 +38,7 @@ class csv_export_widgets::impl {
 
   std::vector<boost::signals2::scoped_connection> con;
 
-  gui_cache<std::string, gui_cache_path> export_path{"导出路径"s, ""s)};
+  gui_cache<std::string, gui_cache_path> export_path{"导出路径"s, ""s};
   gui_cache<bool> use_first_as_project_name{"分类作为项目名称", true};
   gui_cache<std::string> season_fmt_str{"季数格式化"s, "第 {} 季"s};
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "ep {}"s};
@@ -158,7 +158,7 @@ void csv_export_widgets::render() {
                       ranges::views::transform([](const entt::handle &in_handle) {
                         return std::make_pair(in_handle, in_handle.get<time_point_wrap>());
                       }) |
-                      ranges::to<std::map<entt::handle, time_point_wrap>>()
+                      ranges::to<std::map<entt::handle, time_point_wrap>>();
     }
     this->export_csv(p_i->list, p_i->export_path.path);
   }
