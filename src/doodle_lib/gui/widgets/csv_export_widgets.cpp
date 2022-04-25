@@ -215,7 +215,8 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx().at<project>().p_path;
   auto start_time   = get_user_up_time(in);
-  auto end_time     = in.get<time_point_wrap>();
+  /// \brief 将时间转换为我们使用的调整时间
+  auto end_time     = p_i->time_map[in];  // in.get<time_point_wrap>();
   auto k_time       = start_time.work_duration(end_time);
   auto l_file_path  = project_root / k_ass.path;
 
@@ -263,30 +264,17 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
   if (l_it == p_i->list_sort_time.begin()) {
     return time_point_wrap::current_month_start(in_handle.get<time_point_wrap>());
   } else {
-    /// \brief 直接计算平均时间
-    if (p_i->average_time.data) {
-      auto l_user     = in_handle.get<assets_file>().p_user;
-      auto l_size     = ranges::count_if(p_i->list, [&](const entt::handle &in_handle_1) {
-        return in_handle_1.get<assets_file>().p_user == l_user;
-      });
-      auto l_all_time = doodle::work_duration(
-          time_point_wrap::current_month_start(in_handle.get<time_point_wrap>()).zoned_time_.get_local_time(),
-          time_point_wrap::current_month_end(in_handle.get<time_point_wrap>()).zoned_time_.get_local_time(),
-          doodle::business::rules{});
+    auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
+    auto end_it = ranges::find_if(
+        ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
+                              p_i->list_sort_time.rend()),
+        [&](const entt::handle &in_l) {
+          return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
+        });
 
-    } else {
-      auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
-      auto end_it = ranges::find_if(
-          ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
-                                p_i->list_sort_time.rend()),
-          [&](const entt::handle &in_l) {
-            return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
-          });
-
-      return end_it == p_i->list_sort_time.rend()
-                 ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
-                 : end_it->get<time_point_wrap>();
-    }
+    return end_it == p_i->list_sort_time.rend()
+               ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
+               : p_i->time_map[*end_it];  /// \brief 这里也是转换为我们调整过的时间
   }
 }
 
