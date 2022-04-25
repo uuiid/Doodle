@@ -251,42 +251,6 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
 
-  REQUIRE(doodle::work_duration(time_1_a.zoned_time_.get_local_time(),
-                                time_1_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (20.583_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_2_a.zoned_time_.get_local_time(),
-                                time_2_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (36.583_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_3_a.zoned_time_.get_local_time(),
-                                time_3_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (0.86_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_4_a.zoned_time_.get_local_time(),
-                                time_4_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (20.583_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_5_a.zoned_time_.get_local_time(),
-                                time_5_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (36.583_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_6_a.zoned_time_.get_local_time(),
-                                time_6_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (0.86_a).epsilon(0.01));
-  REQUIRE(doodle::work_duration(time_7_a.zoned_time_.get_local_time(),
-                                time_7_b.zoned_time_.get_local_time(),
-                                doodle::business::rules{})
-              .count() ==
-          (33.691_a).epsilon(0.01));
-
 #define DOODLE_T_M_1(time_index, time_du)                                                                                                              \
   REQUIRE(doodle::work_duration(                                                                                                                       \
               time_##time_index##_a.zoned_time_.get_local_time(),                                                                                      \
