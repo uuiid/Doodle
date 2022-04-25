@@ -38,8 +38,9 @@ void image_load_task::succeeded() {
 void image_load_task::failed() {
 }
 void image_load_task::aborted() {
-  if (p_i->result_.valid())
+  if (p_i->result_.valid()) {
     p_i->result_.get();
+  }
 }
 void image_load_task::update(const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &, void *data) {
   if (p_i->result_.valid())
