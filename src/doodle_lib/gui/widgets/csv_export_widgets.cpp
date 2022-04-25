@@ -205,7 +205,6 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   /// \brief 将时间转换为我们使用的调整时间
   auto end_time     = p_i->time_map[in];  // in.get<time_point_wrap>();
   auto k_time       = start_time.work_duration(end_time);
-  auto l_file_path  = project_root / k_ass.path;
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)
