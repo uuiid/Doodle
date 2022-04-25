@@ -64,12 +64,8 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
           dear::Child{"ll3"} && [&]() { call_render(std::string{menu_w::edit_}); };
         };
         ImGui::SameLine();
-        dear::Child{"l2", ImVec2{viewport->WorkSize.x / 3, 0}, true} && [&, this]() {
-          p_i->main_render();
-        };
-        ImGui::SameLine();
-        dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
-          dear::Child{"l33", ImVec2{0, viewport->WorkSize.y / 3}, false} && [&, this]() {
+        dear::Child{"l4"} && [&]() {
+          dear::Child{"l2", ImVec2{0, viewport->WorkSize.y / 4}, true} && [&, this]() {
             dear::TabBar{"##tool",
                          ImGuiTabBarFlags_Reorderable |
                              ImGuiTabBarFlags_FittingPolicyResizeDown} &&
@@ -82,7 +78,13 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
                   dear::TabItem{menu_w::subtitle_processing.data()} && [&]() { call_render(std::string{menu_w::subtitle_processing}); };
                 };
           };
-          call_render(std::string{menu_w::long_time_tasks});
+          //        ImGui::SameLine();
+          dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
+            dear::TabBar{"##main"} && [&]() {
+              dear::TabItem{menu_w::assets_file.data()} && [&]() { p_i->main_render(); };
+              dear::TabItem{menu_w::long_time_tasks.data()} && [&]() { call_render(std::string{menu_w::long_time_tasks}); };
+            };
+          };
         };
       };
   clear_windows();
