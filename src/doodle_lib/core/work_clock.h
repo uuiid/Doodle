@@ -71,14 +71,14 @@ class DOODLELIB_API rules {
       work_13_18{13h, 18h};
 
   explicit rules(const std::bitset<7>& in_work_day = work_Monday_to_Friday,
-                 const std::vector<std::pair<
+                 std::vector<std::pair<
                      chrono::seconds,
-                     chrono::seconds>>&
+                     chrono::seconds>>
                      in_work_time = std::vector<std::pair<
                          chrono::seconds,
                          chrono::seconds>>{work_9_12, work_13_18})
       : work_weekdays(in_work_day),
-        work_pair(in_work_time),
+        work_pair(std::move(in_work_time)),
         extra_work(),
         extra_rest() {}
 
@@ -117,9 +117,9 @@ class DOODLELIB_API work_clock {
 
   void set_work_limit(const chrono::local_time_pos& in_pos,
                       const chrono::seconds& in_work_du);
-  chrono::seconds work_time() const;
+  [[nodiscard]] chrono::seconds work_time() const;
   work_clock& operator+=(const time_attr& in_attr);
-  bool ok() const;
+  [[nodiscard]] bool ok() const;
   inline explicit operator bool() const {
     return ok();
   }
@@ -150,7 +150,7 @@ chrono::hours_double work_duration(
       in_rules);
 };
 
-template <typename Duration_,typename Duration2_>
+template <typename Duration_, typename Duration2_>
 chrono::time_point<chrono::local_t, Duration_> next_time(
     const chrono::time_point<chrono::local_t, Duration_>& in_s,
     const Duration2_& in_du_time,
