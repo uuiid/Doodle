@@ -128,37 +128,32 @@ void csv_export_widgets::render() {
                     }) |
                     ranges::to<std::map<entt::handle, time_point_wrap>>();
     p_i->user_map.clear();
-    p_i->time_map.clear();
     if (p_i->average_time.data) {  /// \brief 如果需要平均时间, 现在我们就要平均一下
       /// \brief 获取人物名称列表
       ranges::for_each(p_i->list_sort_time, [&](const entt::handle &in_handle) {
         p_i->user_map[in_handle.get<assets_file>().p_user].push_back(in_handle);
       });
 
+      /// \brief 获取大小
+      /// \brief 开始平均
       for (auto &&i : p_i->user_map) {
-        auto l_beg  = i.second.front().get<time_point_wrap>().zoned_time_.get_local_time();
-        auto l_end  = i.second.back().get<time_point_wrap>().zoned_time_.get_local_time();
+        auto l_beg = time_point_wrap::current_month_start(i.second.front().get<time_point_wrap>()).zoned_time_.get_local_time();
+        auto l_end = time_point_wrap::current_month_end(i.second.back().get<time_point_wrap>()).zoned_time_.get_local_time();
+        DOODLE_LOG_INFO("获取开始时间 {}, 结束时间 {}", l_beg, l_end);
 
         auto l_size = i.second.size();
         auto l_time = doodle::work_duration(
-                          time_point_wrap::current_month_start(i.second.front().get<time_point_wrap>()).zoned_time_.get_local_time(),
-                          time_point_wrap::current_month_end(i.second.back().get<time_point_wrap>()).zoned_time_.get_local_time(),
+                          l_beg,
+                          l_end,
                           doodle::business::rules{}) /
                       l_size;
 
         for (auto j = 0; j < l_size; ++j) {
-          auto l_t                   = doodle::next_time(l_beg, l_time * j, doodle::business::rules{});
+          auto l_t                   = doodle::next_time(l_beg, l_time * (j + 1), doodle::business::rules{});
           p_i->time_map[i.second[j]] = time_point_wrap{l_t};
+          DOODLE_LOG_DEBUG("平均时间 {}", l_t);
         }
       }
-      /// \brief 获取大小
-      /// \brief 开始平均
-    } else {
-      p_i->time_map = p_i->list_sort_time |
-                      ranges::views::transform([](const entt::handle &in_handle) {
-                        return std::make_pair(in_handle, in_handle.get<time_point_wrap>());
-                      }) |
-                      ranges::to<std::map<entt::handle, time_point_wrap>>();
     }
     this->export_csv(p_i->list, p_i->export_path.path);
   }
