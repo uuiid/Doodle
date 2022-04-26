@@ -180,18 +180,16 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
   if (p_i->cut_off_line.data) {
     for (auto it = l_vector.begin();
          it != l_vector.end();) {
-      if (it->subtitle.size() > p_i->cut_off_line_size.data) {
-        std::wstring l_str = conv::utf_to_utf<wchar_t>(it->subtitle);
-        const auto l_size  = p_i->cut_off_line_size.data *
-                            sizeof(decltype(l_str)::value_type) /
-                            sizeof(decltype(it->subtitle)::value_type);
+      std::wstring l_str = conv::utf_to_utf<wchar_t>(it->subtitle);
+      const auto l_size  = p_i->cut_off_line_size.data * (sizeof(decltype(it->subtitle)::value_type) / sizeof(decltype(l_str)::value_type));
+      if (l_str.size() > l_size) {
         //        const auto l_size = p_i->cut_off_line_size.data;
         std::vector<subtitle_srt_line> l_sub_list{};
 
         /// \brief 开始分割字符串
         std::wstring l_sub{};
         std::vector<std::wstring> l_str_list{};
-        boost::split(l_str_list, l_str, boost::is_any_of(L" "));
+        boost::split(l_str_list, l_str, boost::is_any_of(L" "s));
         /// \brief 没有空格不拆分
         if (l_sub_list.size() == 1)
           break;
