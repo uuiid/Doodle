@@ -56,7 +56,6 @@ class DOODLELIB_API app_base {
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
 
-  virtual void post_quit_message();
 };
 
 /**

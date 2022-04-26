@@ -94,6 +94,7 @@ void d3d_device::CleanupRenderTarget() {
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
     return true;
+  static auto l_fun = doodle::app::Get().post_quit_message();
 
   switch (msg) {
     case WM_SIZE:
@@ -108,7 +109,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
       break;
     case WM_DESTROY: {
-      doodle::app_base::Get().post_quit_message();
+      l_fun();
       return 0;
     }
     case WM_DPICHANGED:

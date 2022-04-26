@@ -290,6 +290,9 @@ app::~app() {
   ::DestroyWindow(p_hwnd);
   ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
 }
+std::function<void()> app::post_quit_message() {
+  return []() { ::PostQuitMessage(0); };
+}
 void app::load_back_end() {
   g_main_loop()
       .attach<one_process_t>([]() {

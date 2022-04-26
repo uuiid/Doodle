@@ -130,9 +130,7 @@ void app_base::stop_app(bool in_stop) {
     });
   this->stop_ = true;
 }
-void app_base::post_quit_message() {
-  ::PostQuitMessage(0);
-}
+
 bool app_base::is_stop() const {
   return g_main_loop().empty() &&
          g_bounded_pool().empty() &&

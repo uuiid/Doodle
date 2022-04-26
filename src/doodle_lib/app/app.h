@@ -170,6 +170,8 @@ class DOODLELIB_API app : public app_command_base {
   virtual void show_windows();
   virtual bool set_parent(win::wnd_handle in_parent);
 
+  virtual std::function<void()> post_quit_message();
+
  protected:
   virtual void load_windows();
   void load_back_end() override;
