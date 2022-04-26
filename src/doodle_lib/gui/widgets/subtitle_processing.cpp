@@ -12,7 +12,7 @@ namespace doodle::gui {
 class subtitle_processing::subtitle_srt_line {
  public:
   subtitle_srt_line() = default;
-  subtitle_srt_line(std::string in_time)
+  explicit subtitle_srt_line(std::string in_time)
       : time_str(std::move(in_time)),
         time_begin(),
         time_end(),
