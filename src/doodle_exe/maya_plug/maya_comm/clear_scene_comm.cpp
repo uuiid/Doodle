@@ -6,6 +6,8 @@
 
 #include <maya/MArgParser.h>
 #include <maya/MSelectionList.h>
+#include <maya/MAnimControl.h>
+#include <maya/MTime.h>
 
 #include <maya_plug/data/maya_clear_scenes.h>
 
@@ -131,5 +133,38 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
   l_array[1] = d_str{k_r.str()};
   setResult(l_array);
   return k_s;
+}
+bool clear_scene_comm::show_save_mag() {
+  MTime l_start{};
+  l_start.setValue(1001);
+  std::vector<std::string> l_msg{
+      "请检查一下几项:"s,
+      ""s,
+      fmt::format(R"(开始帧为 1001  --> {})",
+                  MAnimControl::minTime() == l_start ? "正确"s : "错误"s),
+      fmt::format(R"(总帧数为       --> {} 请确认)",
+                  (MAnimControl::maxTime() - MAnimControl::minTime()).value() + 1),
+      "5. 帧率(25)"s,
+      "1. 检查950帧 TPost"s,
+      "2. 摄像机: 命名(项目缩写_ep集数_sc镜头_开始帧_结束帧), 是否有多余"s,
+      "3. 摄像机命名"s,
+      "4. 多余的引用角色"s,
+      "6. 相机名称和结束帧"s};
+
+  MString l_com_r{};
+  MGlobal::executeCommand(d_str{fmt::format(R"(
+confirmDialog
+-button "保存"
+-button "No"
+-defaultButton "保存"
+-cancelButton "不保存"
+-dismissString "不保存"
+-icon "warning"
+-message "{}"
+;
+)"s,
+                                            fmt::join(l_msg, R"(\n)"))},
+                          l_com_r, false, false);
+  return l_com_r == d_str{"保存"};
 }
 }  // namespace doodle::maya_plug

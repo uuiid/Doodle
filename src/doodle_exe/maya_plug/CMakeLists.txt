@@ -63,8 +63,15 @@ set(doodle_maya_plug_cpp
         maya_comm/find_duplicate_poly_comm.cpp
         configure/static_value.h
         gui/maya_layout.cpp gui/maya_layout.h maya_comm/auto_chick_call_back.cpp maya_comm/auto_chick_call_back.h)
+
 if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
+
+    cmake_print_variables(MAYA_DEFAULT_LOCATION)
+#    find_package(Qt5 COMPONENTS Core Widgets REQUIRED
+#            HINTS ${MAYA_DEFAULT_LOCATION})
+
+
     if (TARGET maya::maya_all)
 
         add_library(doodle_maya_${Maya_Version} MODULE

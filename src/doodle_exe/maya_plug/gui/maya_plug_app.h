@@ -8,6 +8,9 @@
 namespace doodle::maya_plug {
 class maya_plug_app : public app {
  protected:
+ public:
+  maya_plug_app();
+
  private:
   virtual void load_windows() override;
 

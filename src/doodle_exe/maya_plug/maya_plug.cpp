@@ -96,6 +96,16 @@ MStatus initializePlugin(MObject obj) {
               nullptr,
               &status));
       CHECK_MSTATUS_AND_RETURN_IT(status);
+      maya_call_back_id.emplace(
+          MSceneMessage::addCheckCallback(
+              MSceneMessage::Message::kBeforeSaveCheck,
+              [](bool* retCode, void* clientData) {
+                *retCode = maya_plug::clear_scene_comm::show_save_mag();
+              },
+              nullptr,
+              &status));
+      CHECK_MSTATUS_AND_RETURN_IT(status);
+
     } break;
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
@@ -194,7 +204,7 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
     default:
       break;
   }
-  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 0;)");
+  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
   CHECK_MSTATUS(status);
   return status;
 }

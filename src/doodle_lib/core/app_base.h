@@ -48,7 +48,7 @@ class DOODLELIB_API app_base {
 
   virtual void loop_one() = 0;
   std::atomic_bool& stop();
-  bool  is_stop() const;
+  bool is_stop() const;
   void stop_app(bool in_stop = false);
   std::atomic_bool stop_;
   virtual bool valid() const;
