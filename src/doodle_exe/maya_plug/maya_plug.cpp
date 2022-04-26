@@ -23,6 +23,7 @@
 #include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
+#include <stack>
 namespace {
 const constexpr std::string_view doodle_windows{"doodle_windows"};
 const constexpr std::string_view doodle_win_path{"MayaWindow|mainWindowMenu"};
@@ -30,8 +31,7 @@ const constexpr std::string_view doolde_hud_render_node{"doolde_hud_render_node"
 
 MCallbackId clear_callback_id{0};
 MCallbackId app_run_id{0};
-MCallbackId create_hud_id{0};
-MCallbackId create_hud_id_2{0};
+std::stack<MCallbackId> maya_call_back_id{};
 
 using namespace doodle;
 std::shared_ptr<app_base> p_doodle_app = nullptr;
@@ -77,23 +77,24 @@ MStatus initializePlugin(MObject obj) {
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       /// \brief  自定义hud回调
-      create_hud_id = MSceneMessage::addCallback(
+      maya_call_back_id.emplace(MSceneMessage::addCallback(
           MSceneMessage::Message::kAfterOpen,
           [](void* clientData) {
             ::doodle::maya_plug::create_hud_node k_c{};
             k_c();
           },
           nullptr,
-          &status);
+          &status));
       CHECK_MSTATUS_AND_RETURN_IT(status);
-      create_hud_id_2 = MSceneMessage::addCallback(
-          MSceneMessage::Message::kAfterNew,
-          [](void* clientData) {
-            ::doodle::maya_plug::create_hud_node k_c{};
-            k_c();
-          },
-          nullptr,
-          &status);
+      maya_call_back_id.emplace(
+          MSceneMessage::addCallback(
+              MSceneMessage::Message::kAfterNew,
+              [](void* clientData) {
+                ::doodle::maya_plug::create_hud_node k_c{};
+                k_c();
+              },
+              nullptr,
+              &status));
       CHECK_MSTATUS_AND_RETURN_IT(status);
     } break;
     case MGlobal::MMayaState::kBatch:
@@ -193,7 +194,7 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
     default:
       break;
   }
-  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
+  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 0;)");
   CHECK_MSTATUS(status);
   return status;
 }
@@ -282,10 +283,11 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
       /// 去除hud回调
-      status = MMessage::removeCallback(create_hud_id);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-      status = MMessage::removeCallback(create_hud_id_2);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
+      while (!maya_call_back_id.empty()) {
+        status = MMessage::removeCallback(maya_call_back_id.top());
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        maya_call_back_id.pop();
+      }
 
       // 这一部分是删除菜单项的
       MStringArray menuItems{};
