@@ -725,4 +725,7 @@
  *
  * @subsubsection updata_log_3428 版本3.4.28
  * @li 修正布局
+ * @li 添加事件平均
+ * @li 修正字幕表达式匹配
+ *
  */
