@@ -155,6 +155,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
     std::wstring l_str = conv::utf_to_utf<wchar_t>(l_line.subtitle);
 
     if (p_i->remove_all_punctuation.data) {
+//      static std::wregex l_wregex{LR"([\u4e00-\u9fa5\]+([\(（\][\u4e00-\u9fa5|\w\]+[\)）\])?[：:\]?)"};
       static std::wregex l_wregex{LR"([^\u4e00-\u9fa5|\(|\)|（|）|：|:|\w])"};
       l_str = std::regex_replace(l_str, l_wregex, L" ");
       while (l_str.find(L"  ") != decltype(l_str)::npos) {
