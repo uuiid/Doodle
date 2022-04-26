@@ -155,7 +155,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
     std::wstring l_str = conv::utf_to_utf<wchar_t>(l_line.subtitle);
 
     if (p_i->remove_all_punctuation.data) {
-//      static std::wregex l_wregex{LR"([\u4e00-\u9fa5\]+([\(（\][\u4e00-\u9fa5|\w\]+[\)）\])?[：:\]?)"};
+      //      static std::wregex l_wregex{LR"([\u4e00-\u9fa5]+([\(（][\u4e00-\u9fa5|\w]+[\)）])?[：:]?)"};
       static std::wregex l_wregex{LR"([^\u4e00-\u9fa5|\(|\)|（|）|：|:|\w])"};
       l_str = std::regex_replace(l_str, l_wregex, L" ");
       while (l_str.find(L"  ") != decltype(l_str)::npos) {
@@ -199,7 +199,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
           if (l_item.size() > l_size && l_sub.empty()) {
             /// \brief 首先查看分裂字符串 大于限制 并且没有上一个的剩余字符串后, 直接加入序列并进行 @b 下次循环
             l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_item);
-            break;
+            continue;
           } else if ((l_sub.size() + l_item.size()) > l_size && !l_sub.empty()) {
             /// \brief 如果上一个剩余和本次字符串之和超过限制,并且剩余不空, 直接将剩余字符串添加到字幕
             l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
