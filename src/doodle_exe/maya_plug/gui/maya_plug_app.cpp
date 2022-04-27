@@ -21,9 +21,7 @@ void maya_plug_app::load_windows() {
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-std::function<void()> maya_plug_app::post_quit_message() {
-  return {};
-}
+
 maya_plug_app::maya_plug_app() {
   gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
   gui::main_proc_handle::get().win_destroy = []() {};
