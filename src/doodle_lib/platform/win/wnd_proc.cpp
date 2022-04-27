@@ -95,8 +95,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
     return true;
 
-  static auto l_fun{dynamic_cast<app*>(doodle::app::self)->post_quit_message()};
-
   switch (msg) {
     case WM_SIZE:
       if (d3d_device::Get().g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
@@ -110,7 +108,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
       break;
     case WM_DESTROY: {
-      l_fun();
+      doodle::gui::main_proc_handle::get().win_destroy();
       return 0;
     }
     case WM_DPICHANGED:
