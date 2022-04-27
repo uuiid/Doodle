@@ -20,9 +20,10 @@ void maya_plug_app::load_windows() {
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-void maya_plug_app::post_quit_message() {
+std::function<void()> maya_plug_app::post_quit_message() {
+  return {};
 }
 maya_plug_app::maya_plug_app() {
-  self     = this;
+  self = this;
 }
 }  // namespace doodle::maya_plug
