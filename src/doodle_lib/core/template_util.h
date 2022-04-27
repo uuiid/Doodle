@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <type_traits>
+#include <entt/fwd.hpp>
 
 namespace doodle::details {
 
@@ -22,6 +23,15 @@ struct is_smart_pointer : public std::false_type {};
 
 template <typename T>
 struct is_smart_pointer<T, std::void_t<decltype(T::element_type)>> : public std::true_type {};
+
+template <typename T, typename = void>
+struct is_handle_container : public std::false_type {};
+
+template <typename T>
+struct is_handle_container<T,
+                           std::enable_if_t<
+                               std::is_same_v<entt::handle, typename T::value_type>, void>>
+    : public std::true_type {};
 
 /// to boost::less_pointees_t;
 

@@ -5,8 +5,8 @@
 #pragma once
 
 #include <entt/entt.hpp>
-
-namespace entt{
+#include <doodle_lib/core/template_util.h>
+namespace entt {
 /**
  * @brief entt 中自定义hash检查
  * @tparam Type doodle metadata 中的类
@@ -19,7 +19,7 @@ struct [[maybe_unused]] entt::type_hash<
     return Type::class_hash();
   }
 };
-}
+}  // namespace entt
 
 namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
@@ -39,6 +39,19 @@ entt::handle make_handle(const Component &instance) {
 inline entt::handle make_handle() {
   return entt::handle{*(g_reg()), g_reg()->create()};
 };
+
+template <typename Handle_, std::enable_if_t<std::is_same_v<entt::handle, Handle_>, bool> = true>
+void destroy_handle(Handle_ &in_handle) {
+  if (in_handle)
+    in_handle.destroy();
+}
+
+template <typename Container_, std::enable_if_t<details::is_handle_container<Container_>::value, bool> = true>
+void destroy_handle(Container_ &in_handles) {
+  for (auto &&i : in_handles)
+    destroy_handle(i);
+  in_handles.clear();
+}
 
 class DOODLELIB_API null_fun_t {
  public:

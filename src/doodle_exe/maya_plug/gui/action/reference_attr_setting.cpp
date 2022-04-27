@@ -53,10 +53,7 @@ bool reference_attr_setting::get_file_info() {
   adsk::Debug::Print k_p{std::cout};
   MStatus k_status{};
   DOODLE_CHICK(k_status);
-  for (auto& k_h : p_handle) {
-    k_h.destroy();
-  }
-  p_handle.clear();
+  destroy_handle(p_handle);
 
   MStatus k_s{};
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_status);
@@ -150,9 +147,7 @@ void reference_attr_setting::render() {
 }
 
 void reference_attr_setting::clear() {
-  for (auto&& i : p_handle) {
-    if (i) i.destroy();
-  }
+  destroy_handle(p_handle);
 }
 reference_attr_setting::~reference_attr_setting() {
   clear();

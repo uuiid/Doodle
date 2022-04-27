@@ -61,14 +61,8 @@ class TemplateAction : public MPxCommand {
  * @todo 添加maya 布料制作工具中的 解锁全局节点
  * @todo 查看doc需求文档
  *
- * 开始帧1001
- * 检查相机和结束帧
- *
- * 1. 检查950帧 TPost
- * 2. 多余摄像机
- * 3. 摄像机命名
- * 4. 多余的引用角色
- * 5. 帧率(25)
+ * @todo 检查引用是否加载, 不加载就不显示
+ * @todo 引用清除会出现问题, 要查
  *
  */
 namespace doodle::maya_plug {
