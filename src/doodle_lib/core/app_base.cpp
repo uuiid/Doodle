@@ -13,9 +13,6 @@
 
 #include <boost/contract.hpp>
 
-#include <cryptopp/modes.h>
-#include <cryptopp/aes.h>
-#include <cryptopp/gcm.h>
 #include <cryptopp/filters.h>
 
 namespace doodle {
@@ -77,7 +74,7 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
 
   auto& set = core_set::getSet();
   DOODLE_LOG_INFO("初始化gui日志");
-  logger_ctrl::get_log().set_log_name("doodle_gui.txt");
+  logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
   auto& l_set = core_set::getSet();
   if (options_->p_root.first)
     l_set.set_root(options_->p_root.second);
