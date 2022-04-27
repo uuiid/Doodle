@@ -6,5 +6,12 @@
 
 namespace doodle {
 namespace gui {
+main_proc_handle::main_proc_handle() = delete;
+
+main_proc_handle& main_proc_handle::get() {
+  static main_proc_handle l_handle{};
+  return l_handle;
+}
+main_proc_handle::~main_proc_handle() = default;
 }  // namespace gui
 }  // namespace doodle

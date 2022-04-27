@@ -10,6 +10,7 @@
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/core_set.h>
 #include <maya_plug/gui/maya_layout.h>
+#include <doodle_lib/gui/main_proc_handle.h>
 namespace doodle::maya_plug {
 
 void maya_plug_app::load_windows() {
@@ -24,6 +25,8 @@ std::function<void()> maya_plug_app::post_quit_message() {
   return {};
 }
 maya_plug_app::maya_plug_app() {
-  self = this;
+  gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
+  gui::main_proc_handle::get().win_destroy = []() {};
+  self                                     = this;
 }
 }  // namespace doodle::maya_plug

@@ -16,6 +16,7 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/core/core_sig.h>
 #include <doodle_lib/core/init_register.h>
+#include <doodle_lib/gui/main_proc_handle.h>
 
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/icon_font_macro.h>
@@ -178,6 +179,9 @@ app::app(const win::wnd_instance& in_instance)
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
+  /// \brief 设置窗口句柄处理
+  gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
+  gui::main_proc_handle::get().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
 }
 
 void app::loop_one() {

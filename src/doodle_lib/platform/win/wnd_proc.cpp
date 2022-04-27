@@ -3,7 +3,7 @@
 //
 
 #include "wnd_proc.h"
-
+#include <gui/main_proc_handle.h>
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -95,7 +95,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
     return true;
 
-  static auto l_fun { dynamic_cast<app*>(doodle::app::self)->post_quit_message() };
+  static auto l_fun{dynamic_cast<app*>(doodle::app::self)->post_quit_message()};
 
   switch (msg) {
     case WM_SIZE:
@@ -123,7 +123,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     case WM_CLOSE: {
       //      doodle::doodle_app::Get()->p_done = true;
-      doodle::app::Get().close_windows();
+      doodle::gui::main_proc_handle::get().win_close();
       return 0;
     }
       //    case WM_DROPFILES: {

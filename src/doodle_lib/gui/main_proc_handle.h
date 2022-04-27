@@ -8,8 +8,15 @@
 namespace doodle {
 namespace gui {
 
-class DOODLELIB_API main_proc_handle {
+class DOODLELIB_API main_proc_handle : public details::no_copy {
+  main_proc_handle();
 
+ public:
+  virtual ~main_proc_handle();
+  static main_proc_handle& get();
+
+  std::function<void()> win_destroy{[]() {}};
+  std::function<void()> win_close{[]() {}};
 };
 
 }  // namespace gui
