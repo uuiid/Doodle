@@ -395,9 +395,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
       in_handle.any_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(),
       DOODLE_LOC, "缺失组件");
 
-  chick_true<doodle_error>(g_reg()->ctx().contains<root_ref>(), DOODLE_LOC, "缺失上下文");
-
-  auto& k_ref = g_reg()->ctx().at<root_ref>().root_handle().get<project_config::base_config>();
+  auto& k_ref = project::get_current().get<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 

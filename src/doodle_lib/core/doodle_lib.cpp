@@ -56,12 +56,10 @@ doodle_lib::doodle_lib()
     auto& l_ctx = g_reg()->ctx();
     l_ctx.erase<project>();
     l_ctx.erase<database::ref_data>();
-    l_ctx.erase<root_ref>();
 
     g_reg()->ctx().emplace<project>(in_project);
     g_reg()->ctx().emplace<database::ref_data>(in_handle.get<database>());
     core_set::getSet().add_recent_project(g_reg()->ctx().at<database_info>().path_);
-    g_reg()->ctx().emplace<root_ref>(in_handle);
   });
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {
     g_reg()->ctx().at<status_info>().need_save = false;

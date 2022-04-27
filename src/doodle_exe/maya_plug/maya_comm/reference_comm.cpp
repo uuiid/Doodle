@@ -78,10 +78,7 @@ MSyntax set_cloth_cache_path_syntax() {
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
-  entt::handle k_def_prj;
-
-  chick_true<doodle_error>(g_reg()->ctx().contains<root_ref>(), DOODLE_LOC, "没有获取到项目");
-  k_def_prj = g_reg()->ctx().at<root_ref>().root_handle();
+  entt::handle k_def_prj{project::get_current()};
 
   DOODLE_LOG_INFO(
       "获得默认项目 {}", bool(k_def_prj));

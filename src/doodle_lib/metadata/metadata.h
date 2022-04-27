@@ -44,19 +44,6 @@ enum class metadata_type : std::int32_t {
 
 };
 
-class DOODLELIB_API root_ref {
- public:
-  entt::entity p_root;
-
-  inline entt::handle root_handle() {
-    return make_handle(p_root);
-  }
-
-  inline void set_root(entt::entity in_root) {
-    p_root = in_root;
-  }
-};
-
 class DOODLELIB_API database_info {
  public:
   FSys::path path_;
