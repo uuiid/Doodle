@@ -5,8 +5,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API main_proc_handle : public details::no_copy {
   main_proc_handle();
@@ -19,5 +18,4 @@ class DOODLELIB_API main_proc_handle : public details::no_copy {
   std::function<void()> win_close{[]() {}};
 };
 
-}  // namespace gui
 }  // namespace doodle

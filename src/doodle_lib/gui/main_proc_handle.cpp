@@ -4,8 +4,7 @@
 
 #include "main_proc_handle.h"
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 main_proc_handle::main_proc_handle() = default;
 
 main_proc_handle& main_proc_handle::get() {
@@ -13,5 +12,4 @@ main_proc_handle& main_proc_handle::get() {
   return l_handle;
 }
 main_proc_handle::~main_proc_handle() = default;
-}  // namespace gui
 }  // namespace doodle
