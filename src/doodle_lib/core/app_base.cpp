@@ -90,8 +90,8 @@ void app_base::command_line_parser(const std::vector<string>& in_arg) {
     stop_app();
 }
 
-void app_base::command_line_parser(const LPSTR& in_arg) {
-  auto k_str = boost::program_options::split_winmain(in_arg);
+void app_base::command_line_parser(const PWSTR& in_arg) {
+  auto k_str = boost::program_options::split_winmain(conv::utf_to_utf<char>(in_arg));
   return command_line_parser(k_str);
 }
 bool app_base::chick_authorization(const FSys::path& in_path) {

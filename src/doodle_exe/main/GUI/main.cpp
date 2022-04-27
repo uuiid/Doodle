@@ -11,10 +11,10 @@
 //#include <doodle_lib/DoodleApp.h>
 //#include <boost/locale.hpp>
 
-extern "C" int WINAPI WinMain(HINSTANCE hInstance,
-                              HINSTANCE hPrevInstance,
-                              LPSTR strCmdLine,
-                              int nCmdShow) try {
+extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
+                               HINSTANCE hPrevInstance,
+                               PWSTR strCmdLine,
+                               int nCmdShow) try {
   //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
   //  std::locale::global(std::locale{".UTF8"});
   //  std::locale::global(std::locale::classic());
