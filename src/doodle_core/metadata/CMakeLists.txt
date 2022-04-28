@@ -1,37 +1,39 @@
 target_sources(
         doodle_core
         PUBLIC
-        assets.cpp
         assets.h
-        assets_file.cpp
         assets_file.h
-        comment.cpp
         comment.h
-        episodes.cpp
         episodes.h
-        export_file_info.cpp
         export_file_info.h
-        image_icon.cpp
         image_icon.h
-        importance.cpp
         importance.h
-        leaf_meta.cpp
         leaf_meta.h
-        metadata.cpp
         metadata.h
-        metadata_cpp.h
         metadata_state.h
-        organization.cpp
         organization.h
-        project.cpp
         project.h
-        season.cpp
         season.h
-        shot.cpp
         shot.h
-        time_point_wrap.cpp
         time_point_wrap.h
         tree_adapter.h
-        user.cpp
         user.h
+        PRIVATE
+        assets.cpp
+        assets_file.cpp
+        comment.cpp
+        episodes.cpp
+        export_file_info.cpp
+        image_icon.cpp
+        importance.cpp
+        leaf_meta.cpp
+        metadata.cpp
+        metadata_cpp.h
+        organization.cpp
+        project.cpp
+        season.cpp
+        shot.cpp
+        time_point_wrap.cpp
+        user.cpp
+
 )
