@@ -10,7 +10,8 @@ cmrc_add_resource_library(
         ${DOODLE_RE_FILES_LIST}
 )
 add_library(doodle_core)
-
+include(GenerateExportHeader)
+generate_export_header(doodle_core)
 # 添加库目录
 target_include_directories(doodle_core
         PUBLIC
@@ -27,15 +28,18 @@ target_sources(doodle_core
 configure_file(configure/config.cpp.in ${CMAKE_CURRENT_LIST_DIR}/configure/config.cpp)
 # 添加子目录
 add_subdirectory(configure)
+add_subdirectory(core)
 add_subdirectory(exception)
 add_subdirectory(lib_warp)
 add_subdirectory(logger)
 add_subdirectory(metadata)
 add_subdirectory(pin_yin)
 
-include(GenerateExportHeader)
-generate_export_header(doodle_core)
 
+target_include_directories(doodle_core
+        PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
+        )
 # 连接库
 target_link_libraries(
         doodle_core
@@ -46,6 +50,7 @@ target_link_libraries(
         magic_enum::magic_enum
         Boost::locale
         Boost::contract
+        #        Boost::uuid
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
         spdlog::spdlog

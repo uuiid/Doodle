@@ -6,7 +6,7 @@
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <metadata/assets_file.h>
-#include <core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <boost/contract.hpp>
 
 namespace doodle::gui {

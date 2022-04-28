@@ -3,7 +3,7 @@ set(
         app/app.h
         client/client.h
         core/ContainerDevice.h
-        core/core_set.h
+        ../doodle_core/core/core_set.h
         core/core_sql.h
         core/doodle_lib.h
         core/filesystem_extend.h
@@ -13,7 +13,7 @@ set(
         configure/static_value.h
         core/util.h
         core/image_loader.h
-        core/core_sig.h
+        ../doodle_core/core/core_sig.h
         core/status_info.h
         core/init_register.h
         core/authorization.h
@@ -55,13 +55,13 @@ set(
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
-        lib_warp/boost_uuid_warp.h
+        ../doodle_core/lib_warp/boost_uuid_warp.h
         lib_warp/cache.hpp
         lib_warp/cache_policy.hpp
-        lib_warp/entt_warp.h
+        ../doodle_core/lib_warp/entt_warp.h
         lib_warp/fifo_cache_policy.hpp
         lib_warp/imgui_warp.h
-        lib_warp/json_warp.h
+        ../doodle_core/lib_warp/json_warp.h
         lib_warp/lfu_cache_policy.hpp
         lib_warp/lru_cache_policy.hpp
         lib_warp/sqlppWarp.h
@@ -100,7 +100,7 @@ set(
         long_task/drop_file_data.h
         long_task/short_cut.h
         long_task/image_load_task.h
-        core/core_help_impl.h
+        ../doodle_core/core/core_help_impl.h
 
         platform/win/drop_manager.h
         platform/win/list_drive.h
@@ -111,20 +111,20 @@ set(
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
-        doodle_macro.h)
+        ../doodle_core/doodle_macro.h)
 
 set(
         DOODLELIB_SOURCE
         app/app.cpp
         client/client.cpp
-        core/core_set.cpp
+        ../doodle_core/core/core_set.cpp
         core/core_sql.cpp
         core/doodle_lib.cpp
         core/filesystem_extend.cpp
         core/program_options.cpp
         core/util.cpp
         core/image_loader.cpp
-        core/core_sig.cpp
+        ../doodle_core/core/core_sig.cpp
         core/status_info.cpp
         core/init_register.cpp
         core/authorization.cpp
@@ -166,7 +166,7 @@ set(
         gui/open_file_dialog.cpp
 
 
-        lib_warp/entt_warp.cpp
+        ../doodle_core/lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
         ../doodle_core/logger/logger.cpp
         ../doodle_core/metadata/assets.cpp

@@ -10,7 +10,7 @@
 
 #include <long_task/process_pool.h>
 #include <long_task/drop_file_data.h>
-#include <core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <lib_warp/imgui_warp.h>
 
 namespace doodle::win {

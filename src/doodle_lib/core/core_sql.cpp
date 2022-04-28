@@ -1,6 +1,6 @@
 
 #include <doodle_lib/exception/exception.h>
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/metadata/project.h>
 #include <sqlpp11/sqlpp11.h>

@@ -6,9 +6,9 @@
 #include <metadata/project.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/gui_ref/project.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
-#include <core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/core/init_register.h>
 namespace doodle {
 

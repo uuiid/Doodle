@@ -5,7 +5,7 @@
 #include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/app/app.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/core/work_clock.h>
 
 #include <catch.hpp>

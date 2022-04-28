@@ -3,11 +3,12 @@
 //
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
+#include <entt/entt.hpp>
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLELIB_API core_sig {
+class DOODLE_CORE_EXPORT core_sig {
  public:
   /**
    * @brief 软件初始化完成

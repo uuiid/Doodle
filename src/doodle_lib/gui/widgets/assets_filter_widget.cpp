@@ -7,10 +7,10 @@
 #include <doodle_lib/core/doodle_lib.h>
 
 #include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 
 #include <core/tree_node.h>
-#include <lib_warp/entt_warp.h>
+#include <doodle_core/lib_warp/entt_warp.h>
 #include <lib_warp/imgui_warp.h>
 
 #include <doodle_lib/core/init_register.h>

@@ -5,7 +5,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include <doodle_lib/core/template_util.h>
+#include <core/template_util.h>
 namespace entt {
 /**
  * @brief entt 中自定义hash检查
@@ -53,7 +53,7 @@ void destroy_handle(Container_ &in_handles) {
   in_handles.clear();
 }
 
-class DOODLELIB_API null_fun_t {
+class DOODLE_CORE_EXPORT null_fun_t {
  public:
   null_fun_t() = default;
   template <class in_class>

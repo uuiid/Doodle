@@ -1,4 +1,4 @@
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/file_warp/maya_file.h>

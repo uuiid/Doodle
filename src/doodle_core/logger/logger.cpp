@@ -1,7 +1,6 @@
 #include "logger.h"
 
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <core/core_set.h>
 #include <Windows.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -56,11 +55,11 @@ void logger_ctrl::init_temp_log() {
   try {
     using namespace std::chrono_literals;
     spdlog::init_thread_pool(8192, 1);
-    auto l_file   = new_object<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
-    auto l_logger = new_object<spdlog::async_logger>(
+    auto l_file   = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
+    auto l_logger = std::make_shared<spdlog::async_logger>(
         "doodle_lib", l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 #if !defined(NDEBUG)
-    auto l_k_debug = new_object<msvc_doodle_sink_mt>();
+    auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
     l_logger->sinks().push_back(l_k_debug);
 #endif
 
@@ -93,7 +92,7 @@ bool logger_ctrl::set_log_name(const std::string &in_name) {
   auto &l_v   = l_log->sinks();
   auto l_path = p_log_path / p_log_name;
   /// 去除掉临时的的文件记录器
-  l_v[0]      = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
+  l_v[0]      = std::make_shared<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
   return true;
 }
 

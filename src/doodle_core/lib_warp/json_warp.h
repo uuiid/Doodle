@@ -4,6 +4,8 @@
 
 #pragma once
 
+
+#include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <boost/uuid/uuid.hpp>
 #include <chrono>
 #include <filesystem>

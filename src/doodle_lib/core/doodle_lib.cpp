@@ -6,7 +6,7 @@
 
 #include <date/tz.h>
 #include <doodle_lib/logger/logger.h>
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_lib/exception/exception.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
@@ -19,7 +19,7 @@
 #ifdef DOODLE_DIS_FUN
 #include <grpcpp/grpcpp.h>
 #endif
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <core/status_info.h>
 namespace doodle {
 

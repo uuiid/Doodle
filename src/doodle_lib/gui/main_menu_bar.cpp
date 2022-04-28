@@ -12,7 +12,7 @@
 #include <gui/setting_windows.h>
 #include <gui/get_input_dialog.h>
 #include <gui/gui_ref/ref_base.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
 
 namespace doodle {

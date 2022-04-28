@@ -4,7 +4,7 @@
 
 #include "maya_clear_scenes.h"
 
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <maya/MCallbackIdArray.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnMesh.h>

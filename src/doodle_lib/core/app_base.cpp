@@ -3,7 +3,7 @@
 //
 
 #include "app_base.h"
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/core/init_register.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/core/doodle_lib.h>

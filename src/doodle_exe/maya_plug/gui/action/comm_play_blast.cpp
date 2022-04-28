@@ -5,7 +5,7 @@
 #include "comm_play_blast.h"
 
 #include "data/play_blast.h"
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <maya/MAnimControl.h>

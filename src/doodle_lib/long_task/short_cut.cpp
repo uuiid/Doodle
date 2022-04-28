@@ -4,7 +4,7 @@
 
 #include "short_cut.h"
 #include <imgui.h>
-#include <core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <core/init_register.h>
 #include <long_task/process_pool.h>
 

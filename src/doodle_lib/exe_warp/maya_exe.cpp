@@ -5,7 +5,7 @@
 #include "maya_exe.h"
 #include "thread_pool/process_message.h"
 #include <doodle_lib/core/filesystem_extend.h>
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 
 #include <doodle_lib/thread_pool/thread_pool.h>
 //#include <type_traits>

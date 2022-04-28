@@ -4,7 +4,7 @@
 
 #include "app.h"
 #include <platform/win/wnd_proc.h>
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/long_task/process_pool.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
@@ -14,7 +14,7 @@
 #include <doodle_lib/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/core/init_register.h>
 #include <doodle_lib/gui/main_proc_handle.h>
 

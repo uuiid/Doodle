@@ -3,7 +3,7 @@
 
 #include <doodle_lib/Logger/logger.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/lib_warp/json_warp.h>
+#include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_lib/thread_pool/process_message.h>
 
 namespace doodle {

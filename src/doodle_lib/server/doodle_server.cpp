@@ -4,7 +4,7 @@
 
 #include "doodle_server.h"
 
-#include <doodle_lib/core/core_set.h>
+#include <core/core_set.h>
 #include <doodle_lib/external/service-base/ServiceInstaller.h>
 #include <doodle_lib/rpc/rpc_server_handle.h>
 

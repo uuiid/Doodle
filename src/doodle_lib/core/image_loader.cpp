@@ -8,7 +8,7 @@
 //#include <opencv2/core/directx.hpp>
 #include <metadata/project.h>
 #include <metadata/image_icon.h>
-#include <core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <core/init_register.h>
 #include <long_task/process_pool.h>
 #include <app/app.h>

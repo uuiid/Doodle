@@ -13,7 +13,7 @@
 
 #include <core/status_info.h>
 
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_sig.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>

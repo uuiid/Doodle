@@ -1,7 +1,7 @@
 #include "shot.h"
 
 #include <doodle_core/metadata/episodes.h>
-
+#include <doodle_core/logger/logger.h>
 namespace doodle {
 
 shot::shot()

@@ -13,8 +13,8 @@
 #include <doodle_lib/metadata/shot.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/core_sig.h>
+#include <doodle_core/core/core_set.h>
+#include <doodle_core/core/core_sig.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/metadata/organization.h>
 

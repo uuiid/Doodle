@@ -4,7 +4,7 @@
 
 #include "hud_render_node.h"
 
-#include <doodle_lib/core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <fmt/chrono.h>
 

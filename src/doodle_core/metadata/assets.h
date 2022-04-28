@@ -20,7 +20,7 @@ class DOODLE_CORE_EXPORT assets {
    */
   void set_path_component();
 
-  std::vector<string> p_component;
+  std::vector<std::string> p_component;
 
  public:
   /**

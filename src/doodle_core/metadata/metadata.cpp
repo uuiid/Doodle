@@ -3,14 +3,12 @@
 //
 
 #include "metadata.h"
-#include <doodle_lib/core/doodle_lib.h>
-// clang-format off
+
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/organization.h>
-#include <doodle_lib/lib_warp/entt_warp.h>
-// clang-format on
+#include <doodle_core/lib_warp/entt_warp.h>
 
 #include <boost/hana/ext/std.hpp>
 namespace doodle {
@@ -131,19 +129,18 @@ bool database::is_install() const {
   return p_i->p_id > 0;
 }
 
-#define DOODLE_SERIALIZATION project,                      \
-                             episodes,                     \
-                             shot,                         \
-                             season,                       \
-                             assets,                       \
-                             assets_file,                  \
-                             time_point_wrap,              \
-                             comment,                      \
-                             project_config::base_config,  \
-                             image_icon,                   \
-                             importance,                   \
+#define DOODLE_SERIALIZATION project,                     \
+                             episodes,                    \
+                             shot,                        \
+                             season,                      \
+                             assets,                      \
+                             assets_file,                 \
+                             time_point_wrap,             \
+                             comment,                     \
+                             project_config::base_config, \
+                             image_icon,                  \
+                             importance,                  \
                              organization_list
-
 
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
@@ -179,7 +176,7 @@ database::operator metadata_database() const {
   chick_true<serialization_error>(k_h.any_of<DOODLE_SERIALIZATION>(), DOODLE_LOC, "组件缺失");
 
   metadata_database k_tmp{};
-  ///转换id
+  /// 转换id
   if (p_i->p_id != 0)
     k_tmp.id = p_i->p_id;
 
@@ -196,7 +193,7 @@ database::operator metadata_database() const {
   if (p_i->p_type != metadata_type::project_root)
     k_tmp.parent = boost::numeric_cast<std::uint32_t>(g_reg()->ctx().at<ref_data>().id);
   k_tmp.uuid_  = this->p_i->p_uuid_;
-  ///设置类型id
+  /// 设置类型id
   k_tmp.m_type = get_meta_type_int();
   /// 设置可索引数据
   if (k_h.any_of<season>()) {

@@ -3,9 +3,6 @@
 //
 
 #pragma once
-
-#include <doodle_lib/configure/config.h>
-
 #include <entt/entt.hpp>
 // #include <boost/range.hpp>
 #include <fmt/format.h>

@@ -5,6 +5,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <core/core_set.h>
 #include "organization.h"
+#include <doodle_core/logger/logger.h>
 
 namespace doodle {
 
