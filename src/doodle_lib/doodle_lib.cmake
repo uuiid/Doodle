@@ -65,7 +65,7 @@ set(
         lib_warp/lfu_cache_policy.hpp
         lib_warp/lru_cache_policy.hpp
         lib_warp/sqlppWarp.h
-        lib_warp/std_warp.h
+        ../doodle_core/lib_warp/std_warp.h
         ../doodle_core/logger/logger.h
         ../doodle_core/metadata/assets.h
         ../doodle_core/metadata/assets_file.h

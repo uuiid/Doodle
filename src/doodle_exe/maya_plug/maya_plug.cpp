@@ -2,7 +2,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 
-#include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/std_warp.h>
 
 #include <maya/MDrawRegistry.h>
 #include <maya/MFnPlugin.h>

@@ -4,6 +4,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
+#include <spdlog/spdlog.h>
 namespace doodle {
 
 process_message::process_message()

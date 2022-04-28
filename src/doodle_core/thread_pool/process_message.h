@@ -1,6 +1,6 @@
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/rational.hpp>
 #include <boost/signals2.hpp>
@@ -8,7 +8,7 @@ namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
 
-class DOODLELIB_API process_message {
+class DOODLE_CORE_EXPORT process_message {
  public:
   enum level {
     info    = 0,

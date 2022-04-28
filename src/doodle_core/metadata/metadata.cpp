@@ -10,6 +10,8 @@
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 
+#include <core/core_set.h>
+
 #include <boost/hana/ext/std.hpp>
 namespace doodle {
 

@@ -12,7 +12,9 @@
 #include <entt/entt.hpp>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/lib_warp/entt_warp.h>
+#include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/configure/static_value.h>
+#include <doodle_core/lib_warp/std_warp.h>
 //#include <>
 namespace doodle {
 class convert;
@@ -30,6 +32,7 @@ using namespace date::literals;
 }  // namespace literals
 using namespace std::chrono;
 using namespace date;
+
 
 using hours_double   = duration<std::double_t, std::ratio<3600>>;
 using days_double    = duration<std::double_t, std::ratio<28800>>;
@@ -68,5 +71,39 @@ DOODLE_CORE_EXPORT std::vector<path> list_files(const path &in_dir);
 DOODLE_CORE_EXPORT bool is_sub_path(const path &in_parent, const path &in_child);
 
 }  // namespace FSys
+
+using namespace std::literals;
+using namespace date::literals;
+
+class logger_ctrl;
+class doodle_lib;
+class thread_pool;
+using handle_list     = std::vector<entt::handle>;
+using logger_ctr_ptr  = std::shared_ptr<logger_ctrl>;
+using string_list     = std::vector<std::string>;
+
+using doodle_lib_ptr  = std::shared_ptr<doodle_lib>;
+using thread_pool_ptr = std::shared_ptr<thread_pool>;
+using registry_ptr    = std::shared_ptr<entt::registry>;
+
+using uuid            = boost::uuids::uuid;
+
+namespace pool_n {
+class bounded_limiter;
+class null_limiter;
+}  // namespace pool_n
+
+template <typename Delta, typename Timiter = pool_n::null_limiter>
+class DOODLE_CORE_EXPORT scheduler;
+
+template <class Derived>
+using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
+using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
+using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
+
+DOODLE_CORE_EXPORT registry_ptr &g_reg();
+DOODLE_CORE_EXPORT scheduler_t &g_main_loop();
+DOODLE_CORE_EXPORT bounded_pool_t &g_bounded_pool();
+DOODLE_CORE_EXPORT thread_pool &g_thread_pool();
 
 }  // namespace doodle

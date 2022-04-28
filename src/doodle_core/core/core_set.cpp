@@ -3,7 +3,6 @@
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/logger/logger.h>
 
-
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/logger/logger.h>
 
@@ -215,7 +214,7 @@ bool core_set_init::init_project(const FSys::path &in_path) {
   //    l_c.open_project(in_path);
   //    return true;
   //  }
-  //  return false;
+  return false;
 }
 nlohmann::json &core_set_init::json_value() {
   return *p_set.json_data;

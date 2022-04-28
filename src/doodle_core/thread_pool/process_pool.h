@@ -2,9 +2,7 @@
 // Created by TD on 2021/12/28.
 //
 #pragma once
-
-#include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
 
 namespace pool_n {
@@ -343,7 +341,7 @@ class scheduler {
   std::recursive_mutex mutex_;
 };
 
-class DOODLELIB_API null_process_t : public process_t<null_process_t> {
+class DOODLE_CORE_EXPORT null_process_t : public process_t<null_process_t> {
  public:
   null_process_t() = default;
   using base_type  = process_t<null_process_t>;
@@ -355,7 +353,7 @@ class DOODLELIB_API null_process_t : public process_t<null_process_t> {
     this->succeed();
   };
 };
-class DOODLELIB_API one_process_t : public process_t<one_process_t> {
+class DOODLE_CORE_EXPORT one_process_t : public process_t<one_process_t> {
  public:
   std::function<void()> one_loop;
   explicit one_process_t(const std::function<void()> &in_function)

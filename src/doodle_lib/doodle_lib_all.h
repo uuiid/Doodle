@@ -38,7 +38,7 @@
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/lib_warp/protobuf_warp_cpp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>
-#include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_lib/logger/LoggerTemplate.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/metadata/assets.h>

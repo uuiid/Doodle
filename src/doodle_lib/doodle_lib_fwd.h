@@ -8,7 +8,7 @@
 #include <doodle_core/lib_warp/cmrcWarp.h>
 #include <lib_warp/json_warp.h>
 #include <doodle_lib/lib_warp/sqlppWarp.h>
-#include <doodle_lib/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/std_warp.h>
 
 #include <doodle_lib/configure/static_value.h>
 #include <core/core_help_impl.h>
@@ -82,6 +82,6 @@ DOODLELIB_API scheduler_t &g_main_loop();
 DOODLELIB_API bounded_pool_t &g_bounded_pool();
 DOODLELIB_API thread_pool &g_thread_pool();
 
-constexpr static const null_fun_t null_fun{};
-using string = std::string;
+
+
 }  // namespace doodle

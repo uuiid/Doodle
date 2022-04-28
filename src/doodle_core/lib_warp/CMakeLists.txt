@@ -4,4 +4,5 @@ target_sources(doodle_core
         boost_uuid_warp.h
         entt_warp.cpp
         entt_warp.h
-        json_warp.h)
+        json_warp.h
+        std_warp.h)

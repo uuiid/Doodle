@@ -1,6 +1,6 @@
 #pragma once
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/exception/exception.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/asio.hpp>
 #include <condition_variable>
@@ -16,7 +16,7 @@
 namespace doodle {
 
 // namespace details {
-class DOODLELIB_API thread_pool : public details::no_copy {
+class DOODLE_CORE_EXPORT thread_pool : public details::no_copy {
  public:
   explicit thread_pool(size_t);
   template <class F, class... Args>
