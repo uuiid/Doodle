@@ -3,7 +3,7 @@
 //
 #include "imgui_warp.h"
 
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::dear {

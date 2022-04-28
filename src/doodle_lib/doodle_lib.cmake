@@ -5,7 +5,7 @@ set(
         core/ContainerDevice.h
         ../doodle_core/core/core_set.h
         core/core_sql.h
-        core/doodle_lib.h
+        ../doodle_core/core/doodle_lib.h
         core/filesystem_extend.h
         core/observable_container.h
         gui/open_file_dialog.h
@@ -119,7 +119,7 @@ set(
         client/client.cpp
         ../doodle_core/core/core_set.cpp
         core/core_sql.cpp
-        core/doodle_lib.cpp
+        ../doodle_core/core/doodle_lib.cpp
         core/filesystem_extend.cpp
         core/program_options.cpp
         core/util.cpp

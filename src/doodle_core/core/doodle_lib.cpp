@@ -5,12 +5,12 @@
 #include "doodle_lib.h"
 
 #include <date/tz.h>
-#include <doodle_lib/logger/logger.h>
+#include <logger/logger.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_lib/core/core_sql.h>
-#include <doodle_lib/exception/exception.h>
-#include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
+#include <exception/exception.h>
+#include <metadata/metadata_cpp.h>
+#include <thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <long_task/database_task.h>
@@ -26,9 +26,9 @@ namespace doodle {
 doodle_lib* doodle_lib::p_install = nullptr;
 
 doodle_lib::doodle_lib()
-    : p_thread_pool(new_object<thread_pool>(std::thread::hardware_concurrency() - 1)),
-      p_log(new_object<logger_ctrl>()),
-      reg(new_object<entt::registry>()),
+    : p_thread_pool(std::make_shared<thread_pool>(std::thread::hardware_concurrency() - 1)),
+      p_log(std::make_shared<logger_ctrl>()),
+      reg(std::make_shared<entt::registry>()),
       loop(),
       loop_bounded_pool() {
   /// 创建依赖性

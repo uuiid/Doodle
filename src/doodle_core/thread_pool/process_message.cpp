@@ -1,6 +1,6 @@
 #include "process_message.h"
 
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>

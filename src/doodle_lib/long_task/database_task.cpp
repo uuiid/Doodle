@@ -8,7 +8,7 @@
 #include <thread_pool/thread_pool.h>
 #include <thread_pool/process_message.h>
 #include <generate/core/metadatatab_sql.h>
-#include <core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <core/init_register.h>
 
 #include <core/status_info.h>

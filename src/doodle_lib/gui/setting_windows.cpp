@@ -5,7 +5,7 @@
 #include "setting_windows.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>

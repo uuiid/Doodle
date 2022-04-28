@@ -5,7 +5,7 @@
 #define CATCH_CONFIG_RUNNER
 #include <catch2/catch.hpp>
 #include <doodle_lib/app/app.h>
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 
 #include <boost/locale.hpp>
 // struct init_main : public Catch::TestEventListenerBase {

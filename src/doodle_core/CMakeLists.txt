@@ -34,6 +34,7 @@ add_subdirectory(lib_warp)
 add_subdirectory(logger)
 add_subdirectory(metadata)
 add_subdirectory(pin_yin)
+add_subdirectory(thread_pool)
 
 
 target_include_directories(doodle_core

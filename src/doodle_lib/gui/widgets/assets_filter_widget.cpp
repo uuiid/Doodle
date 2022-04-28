@@ -4,7 +4,7 @@
 
 #include "assets_filter_widget.h"
 
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_core/core/core_sig.h>

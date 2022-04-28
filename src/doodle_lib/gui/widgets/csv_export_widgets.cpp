@@ -4,7 +4,7 @@
 
 #include "csv_export_widgets.h"
 #include <doodle_core/core/core_sig.h>
-#include <core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <metadata/project.h>
 #include <metadata/assets.h>
 #include <metadata/assets_file.h>

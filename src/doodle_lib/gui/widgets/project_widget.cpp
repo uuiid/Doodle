@@ -4,7 +4,7 @@
 
 #include "project_widget.h"
 
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>

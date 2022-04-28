@@ -5,7 +5,7 @@
 #include "program_options.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_core/core/doodle_lib.h>
 
 namespace doodle {
 program_options::program_options()
