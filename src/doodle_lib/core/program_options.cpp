@@ -58,7 +58,7 @@ program_options::program_options()
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
   p_opt_file.add(p_opt_gui).add(p_opt_advanced);
 }
-bool program_options::command_line_parser(const std::vector<string>& in_arg) {
+bool program_options::command_line_parser(const std::vector<std::string>& in_arg) {
   p_arg = in_arg;
   DOODLE_LOG_INFO("开始解析命令行 {}", fmt::join(in_arg, "\n"));
   boost::program_options::command_line_parser k_p{in_arg};

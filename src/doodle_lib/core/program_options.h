@@ -22,7 +22,7 @@ class DOODLELIB_API program_options {
   bool p_help;
   bool p_version;
 
-  std::vector<string> p_arg;
+  std::vector<std::string> p_arg;
 
  private:
   static constexpr char input_project[] = "input_project";
@@ -88,7 +88,7 @@ class DOODLELIB_API program_options {
     string_list k_str{argv, argv + argc};
     return command_line_parser(k_str);
   };
-  bool command_line_parser(const std::vector<string>& in_arg);
+  bool command_line_parser(const std::vector<std::string>& in_arg);
   //  inline bool command_line_parser(const std::wstring& in_arg) {
   //    auto k_str = boost::program_options::split_winmain(in_arg);
   //    return command_line_parser(k_str);

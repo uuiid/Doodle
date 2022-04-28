@@ -37,7 +37,7 @@ class DOODLELIB_API app_base {
     command_line_parser(l_str);
   };
   void command_line_parser(const PWSTR& in_arg);
-  virtual void command_line_parser(const std::vector<string>& in_arg);
+  virtual void command_line_parser(const std::vector<std::string>& in_arg);
   program_options_ptr options_;
 
   /**

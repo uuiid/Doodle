@@ -33,10 +33,10 @@ bool layout_data::operator==(const layout_data &in_rhs) const {
 bool layout_data::operator!=(const layout_data &in_rhs) const {
   return !(in_rhs == *this);
 }
-bool layout_data::operator==(const string &in_rhs) const {
+bool layout_data::operator==(const std::string &in_rhs) const {
   return name == in_rhs;
 }
-bool layout_data::operator!=(const string &in_rhs) const {
+bool layout_data::operator!=(const std::string &in_rhs) const {
   return !(*this == in_rhs);
 }
 }  // namespace main_menu_bar_ns
@@ -204,7 +204,7 @@ void main_menu_bar::succeeded() {
   show_ = true;
   save_setting();
 }
-const string &main_menu_bar::title() const {
+const std::string &main_menu_bar::title() const {
   static std::string name{"main_menu"};
   return name;
 }

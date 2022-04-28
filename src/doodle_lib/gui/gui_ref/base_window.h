@@ -127,7 +127,7 @@ class DOODLELIB_API window_panel : public base_window {
   window_panel()           = default;
   ~window_panel() override = default;
 
-  [[nodiscard]] const string& title() const override;
+  [[nodiscard]] const std::string& title() const override;
   void init() override;
   void succeeded() override;
   void aborted() override;

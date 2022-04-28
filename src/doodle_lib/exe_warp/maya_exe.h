@@ -70,7 +70,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * 检查 process_message 和 core_set::getSet().has_maya()
    *
    */
-  explicit maya_exe(const entt::handle &in_handle, const string &in_file);
+  explicit maya_exe(const entt::handle &in_handle, const std::string &in_file);
   /**
    * @brief 使用配置进行qcloth操作
    * @param in_handle 具有消息组件的的句柄

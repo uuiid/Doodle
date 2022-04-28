@@ -21,7 +21,7 @@ class DOODLELIB_API layout_window
  public:
   layout_window();
   ~layout_window() override;
-  [[nodiscard]] const string &title() const override;
+  [[nodiscard]] const std::string &title() const override;
   void init() override;
   void succeeded() override;
   void update(const chrono::system_clock::duration &in_duration,

@@ -39,8 +39,8 @@ authorization::authorization(std::string in_data)
                               doodle_config::cryptopp_iv.data(),
                               CryptoPP::AES::BLOCKSIZE);
 
-    const string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
-    const string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
+    const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
+    const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
 
     chick_true<doodle_error>(ciphertext.size() == enc.size() + mac.size(), DOODLE_LOC, "授权码解码失误");
     chick_true<doodle_error>(doodle_config::cryptopp_tag_size == mac.size(), DOODLE_LOC, "授权码解码失误");

@@ -48,7 +48,7 @@ class DOODLELIB_API main_menu_bar
   main_menu_bar();
   ~main_menu_bar() override;
 
-  const string& title() const override;
+  const std::string& title() const override;
   void init() override;
   void succeeded() override;
   virtual void aborted() override;

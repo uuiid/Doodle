@@ -6,8 +6,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 //#include <opencv2/core/directx.hpp>
-#include <metadata/project.h>
-#include <metadata/image_icon.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/core/core_set.h>
 #include <core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
