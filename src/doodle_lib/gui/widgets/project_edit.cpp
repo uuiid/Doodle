@@ -3,7 +3,7 @@
 //
 
 #include "project_edit.h"
-#include <metadata/project.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/gui_ref/project.h>
 #include <doodle_core/core/core_sig.h>

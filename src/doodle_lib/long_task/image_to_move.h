@@ -13,7 +13,7 @@ class DOODLELIB_API image_watermark {
                   double_t in_p_width_proportion,
                   double_t in_p_height_proportion,
                   cv::Scalar in_rgba);
-  string p_text;
+  std::string p_text;
   std::double_t p_width_proportion;
   std::double_t p_height_proportion;
   cv::Scalar rgba;

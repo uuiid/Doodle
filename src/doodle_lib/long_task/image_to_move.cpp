@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
+#include <doodle_core/thread_pool/thread_pool.h>
 
 #include <opencv2/opencv.hpp>
 #include <utility>

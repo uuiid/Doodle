@@ -5,16 +5,16 @@
 #include "csv_export_widgets.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <metadata/project.h>
-#include <metadata/assets.h>
-#include <metadata/assets_file.h>
-#include <metadata/season.h>
-#include <metadata/episodes.h>
-#include <metadata/shot.h>
-#include <metadata/user.h>
-#include <metadata/time_point_wrap.h>
-#include <metadata/comment.h>
-#include <metadata/importance.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/assets.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/season.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/comment.h>
+#include <doodle_core/metadata/importance.h>
 #include <boost/contract.hpp>
 
 #include <lib_warp/imgui_warp.h>
