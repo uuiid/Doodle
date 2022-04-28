@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-class DOODLELIB_API doodle_lib : public details::no_copy {
+class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
   static doodle_lib* p_install;
 
  public:
@@ -28,13 +28,13 @@ class DOODLELIB_API doodle_lib : public details::no_copy {
 
   thread_pool_ptr get_thread_pool();
 };
-DOODLELIB_API inline registry_ptr& g_reg() {
+DOODLE_CORE_EXPORT inline registry_ptr& g_reg() {
   return doodle_lib::Get().reg;
 }
-DOODLELIB_API inline scheduler_t& g_main_loop() {
+DOODLE_CORE_EXPORT inline scheduler_t& g_main_loop() {
   return doodle_lib::Get().loop;
 }
-DOODLELIB_API inline bounded_pool_t& g_bounded_pool() {
+DOODLE_CORE_EXPORT inline bounded_pool_t& g_bounded_pool() {
   return doodle_lib::Get().loop_bounded_pool;
 }
 }  // namespace doodle
