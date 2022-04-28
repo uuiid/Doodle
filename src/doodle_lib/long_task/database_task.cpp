@@ -11,7 +11,7 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <core/init_register.h>
 
-#include <core/status_info.h>
+#include <doodle_core/core/status_info.h>
 
 #include <doodle_core/core/core_sig.h>
 

@@ -30,5 +30,25 @@ FSys::path write_tmp_file(const std::string& in_falg,
   }
   return k_tmp_path;
 }
+
+std::string file_hash_sha224(const path &in_file) {
+  chick_true<doodle_error>(
+      exists(in_file) && is_regular_file(in_file),
+      DOODLE_LOC,
+      "{} 文件不存在或者不是文件", in_file);
+  CryptoPP::SHA224 k_sha_224;
+  std::string k_string;
+  ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
+  chick_true<doodle_error>(k_ifstream, DOODLE_LOC, "{} 无法打开", in_file);
+
+  CryptoPP::FileSource k_file{
+      k_ifstream,
+      true,
+      new CryptoPP::HashFilter{
+          k_sha_224,
+          new CryptoPP::HexEncoder{
+              new CryptoPP::StringSink{k_string}}}};
+  return k_string;
+}
 }  // namespace FSys
 }  // namespace doodle

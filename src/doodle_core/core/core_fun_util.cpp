@@ -11,12 +11,12 @@
 #include <cryptopp/sha.h>
 
 #include <boost/locale.hpp>
+#include <boost/algorithm/string.hpp>
 
-#ifdef _WIN32
 #include <Windows.h>
 #include <shellapi.h>
 #include <tchar.h>
-#endif
+
 namespace doodle {
 
 namespace chrono {
@@ -106,25 +106,7 @@ path add_time_stamp(const path &in_path) {
   auto k_path = in_path.parent_path() / k_fn;
   return k_path;
 }
-std::string file_hash_sha224(const path &in_file) {
-  chick_true<doodle_error>(
-      exists(in_file) && is_regular_file(in_file),
-      DOODLE_LOC,
-      "{} 文件不存在或者不是文件", in_file);
-  CryptoPP::SHA224 k_sha_224;
-  std::string k_string;
-  ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
-  chick_true<doodle_error>(k_ifstream, DOODLE_LOC, "{} 无法打开", in_file);
 
-  CryptoPP::FileSource k_file{
-      k_ifstream,
-      true,
-      new CryptoPP::HashFilter{
-          k_sha_224,
-          new CryptoPP::HexEncoder{
-              new CryptoPP::StringSink{k_string}}}};
-  return k_string;
-}
 std::vector<path> list_files(const path &in_dir) {
   return std::vector<path>{
       directory_iterator{in_dir},
@@ -138,4 +120,3 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
 }  // namespace doodle
 
 // namespace doodle::FSys
-

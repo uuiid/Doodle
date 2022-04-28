@@ -1,15 +1,11 @@
 ﻿#pragma once
 
-#include <doodle_lib/configure/config.h>
 #include <doodle_lib_export.h>
-
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
 
 #include <doodle_lib/lib_warp/sqlppWarp.h>
 #include <doodle_core/lib_warp/std_warp.h>
-
-#include <doodle_lib/configure/static_value.h>
 
 #include <doodle_lib/lib_warp/icon_font_macro.h>
 
@@ -17,6 +13,11 @@
 
 // 开始我们的名称空间
 namespace doodle {
+
+namespace FSys {
+DOODLE_API std::string file_hash_sha224(const path &in_file);
+
+}
 
 using namespace entt::literals;
 using namespace std::literals;

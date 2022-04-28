@@ -3,11 +3,11 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_c>
 
 namespace doodle {
 
-class DOODLELIB_API status_info final {
+class DOODLE_CORE_EXPORT status_info final {
  public:
   bool need_save;
   std::string message;

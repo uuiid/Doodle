@@ -6,7 +6,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <core/status_info.h>
+#include <doodle_core/core/status_info.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901
 namespace ImGui {

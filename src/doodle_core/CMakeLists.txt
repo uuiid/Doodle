@@ -44,10 +44,6 @@ add_subdirectory(pin_yin)
 add_subdirectory(thread_pool)
 
 
-target_include_directories(doodle_core
-        PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}
-        )
 # 连接库
 target_link_libraries(
         doodle_core

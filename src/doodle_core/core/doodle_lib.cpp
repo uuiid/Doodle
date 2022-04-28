@@ -7,14 +7,14 @@
 #include <date/tz.h>
 #include <logger/logger.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/core_sql.h>
 #include <exception/exception.h>
 #include <metadata/metadata_cpp.h>
 #include <thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
-#include <long_task/database_task.h>
+#include <thread_pool//database_task.h>
 #include <thread_pool/process_message.h>
+#include <metadata/assets_file.h>
 
 
 #include <doodle_core/core/core_sig.h>
