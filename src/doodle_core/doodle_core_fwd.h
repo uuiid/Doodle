@@ -2,7 +2,7 @@
 // Created by TD on 2022/4/28.
 //
 #pragma once
-#include <doodle_core_export.h>
+#include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/configure/config.h>
@@ -32,7 +32,6 @@ using namespace date::literals;
 }  // namespace literals
 using namespace std::chrono;
 using namespace date;
-
 
 using hours_double   = duration<std::double_t, std::ratio<3600>>;
 using days_double    = duration<std::double_t, std::ratio<28800>>;

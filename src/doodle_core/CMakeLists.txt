@@ -12,8 +12,7 @@ cmrc_add_resource_library(
 # 添加配置
 
 add_library(doodle_core)
-include(GenerateExportHeader)
-generate_export_header(doodle_core)
+
 # 添加库目录
 target_include_directories(doodle_core
         PUBLIC
@@ -27,9 +26,11 @@ target_sources(doodle_core
         PUBLIC
         doodle_core_fwd.h
         doodle_core.h
+        doodle_core_pch.h
+        doodle_macro.h
+        PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp
         )
-
 
 
 # 添加子目录
@@ -68,7 +69,10 @@ target_link_libraries(
 target_compile_definitions(doodle_core
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,STATIC_LIBRARY>:DOODLE_CORE_STATIC_DEFINE>
         PRIVATE
+
+        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:doodle_core_EXPORTS>
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 

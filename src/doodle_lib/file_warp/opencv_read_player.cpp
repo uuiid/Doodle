@@ -6,7 +6,7 @@
 
 #include <d3d11.h>
 #include <doodle_lib/app/app.h>
-#include <doodle_lib/exception/exception.h>
+#include <doodle_core/exception/exception.h>
 
 #include <opencv2/opencv.hpp>
 

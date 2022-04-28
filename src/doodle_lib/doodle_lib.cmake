@@ -3,27 +3,21 @@ set(
         app/app.h
         client/client.h
         core/ContainerDevice.h
-        ../doodle_core/core/core_set.h
         core/core_sql.h
-        ../doodle_core/core/doodle_lib.h
         core/filesystem_extend.h
         core/observable_container.h
         gui/open_file_dialog.h
         core/program_options.h
-        configure/static_value.h
         core/util.h
         core/image_loader.h
-        ../doodle_core/core/core_sig.h
         core/status_info.h
         core/init_register.h
         core/authorization.h
         core/work_clock.h
 
 
-        ../doodle_core/exception/exception.h
         file_warp/maya_file.h
         file_warp/opencv_read_player.h
-        file_warp/ue4_project.h
         gui/setting_windows.h
         gui/main_menu_bar.h
         gui/main_status_bar.h
@@ -55,52 +49,25 @@ set(
 
         lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
-        ../doodle_core/lib_warp/boost_uuid_warp.h
         lib_warp/cache.hpp
         lib_warp/cache_policy.hpp
-        ../doodle_core/lib_warp/entt_warp.h
         lib_warp/fifo_cache_policy.hpp
         lib_warp/imgui_warp.h
-        ../doodle_core/lib_warp/json_warp.h
         lib_warp/lfu_cache_policy.hpp
         lib_warp/lru_cache_policy.hpp
         lib_warp/sqlppWarp.h
-        ../doodle_core/lib_warp/std_warp.h
-        ../doodle_core/logger/logger.h
-        ../doodle_core/metadata/assets.h
-        ../doodle_core/metadata/assets_file.h
-        ../doodle_core/metadata/comment.h
-        ../doodle_core/metadata/episodes.h
-        ../doodle_core/metadata/leaf_meta.h
-        ../doodle_core/metadata/metadata.h
-        ../doodle_core/metadata/metadata_cpp.h
-        ../doodle_core/metadata/metadata_state.h
-        ../doodle_core/metadata/project.h
-        ../doodle_core/metadata/season.h
-        ../doodle_core/metadata/shot.h
-        ../doodle_core/metadata/time_point_wrap.h
-        ../doodle_core/metadata/tree_adapter.h
-        ../doodle_core/metadata/user.h
-        ../doodle_core/metadata/image_icon.h
-        ../doodle_core/metadata/importance.h
-        ../doodle_core/metadata/organization.h
-        ../doodle_core/metadata/export_file_info.h
 
 
-        ../doodle_core/thread_pool/process_message.h
-        ../doodle_core/thread_pool/thread_pool.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
         exe_warp/ue4_exe.h
         long_task/image_to_move.h
         long_task/join_move.h
-        ../doodle_core/thread_pool/process_pool.h
         long_task/restricted_task.h
         long_task/database_task.h
         long_task/drop_file_data.h
         long_task/short_cut.h
         long_task/image_load_task.h
-        ../doodle_core/core/core_help_impl.h
 
         platform/win/drop_manager.h
         platform/win/list_drive.h
@@ -111,20 +78,16 @@ set(
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
-        ../doodle_core/doodle_macro.h)
 
-set(
+        set (
         DOODLELIB_SOURCE
         app/app.cpp
         client/client.cpp
-        ../doodle_core/core/core_set.cpp
         core/core_sql.cpp
-        ../doodle_core/core/doodle_lib.cpp
         core/filesystem_extend.cpp
         core/program_options.cpp
         core/util.cpp
         core/image_loader.cpp
-        ../doodle_core/core/core_sig.cpp
         core/status_info.cpp
         core/init_register.cpp
         core/authorization.cpp
@@ -133,7 +96,6 @@ set(
 
         file_warp/maya_file.cpp
         file_warp/opencv_read_player.cpp
-        file_warp/ue4_project.cpp
         gui/setting_windows.cpp
         gui/main_menu_bar.cpp
         gui/main_status_bar.cpp
@@ -166,33 +128,14 @@ set(
         gui/open_file_dialog.cpp
 
 
-        ../doodle_core/lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
-        ../doodle_core/logger/logger.cpp
-        ../doodle_core/metadata/assets.cpp
-        ../doodle_core/metadata/assets_file.cpp
-        ../doodle_core/metadata/comment.cpp
-        ../doodle_core/metadata/episodes.cpp
-        ../doodle_core/metadata/leaf_meta.cpp
-        ../doodle_core/metadata/metadata.cpp
-        ../doodle_core/metadata/project.cpp
-        ../doodle_core/metadata/season.cpp
-        ../doodle_core/metadata/shot.cpp
-        ../doodle_core/metadata/time_point_wrap.cpp
-        ../doodle_core/metadata/user.cpp
-        ../doodle_core/metadata/image_icon.cpp
-        ../doodle_core/metadata/importance.cpp
-        ../doodle_core/metadata/organization.cpp
-        ../doodle_core/metadata/export_file_info.cpp
 
 
-        ../doodle_core/thread_pool/process_message.cpp
         toolkit/toolkit.cpp
         exe_warp/maya_exe.cpp
         exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
         long_task/join_move.cpp
-        ../doodle_core/thread_pool/process_pool.cpp
         long_task/restricted_task.cpp
         long_task/database_task.cpp
         long_task/drop_file_data.cpp

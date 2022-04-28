@@ -12,10 +12,8 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/configure/static_value.h>
 #include <doodle_lib/core/util.h>
-#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/file_warp/opencv_read_player.h>
-#include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/gui/setting_windows.h>
 #include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>

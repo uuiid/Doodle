@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_lib/exception/exception.h>
+#include <doodle_core/exception/exception.h>
 #include <doodle_lib/logger/logger.h>
 #include <maya_plug/fmt/fmt_warp.h>
 

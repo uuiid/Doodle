@@ -19,8 +19,7 @@ doodle_sqlpp_generate(
 #        rpc/file_system_server.proto
 #        rpc/user_message.proto
 #)
-#配置版本文件
-configure_file(configure/config.cpp.in ${CMAKE_CURRENT_LIST_DIR}/configure/config.cpp)
+
 
 add_library(doodle_lib
         #        SHARED
@@ -40,7 +39,7 @@ generate_export_header(doodle_lib
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 
 add_subdirectory(external)
-add_subdirectory(configure)
+
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # 如果使用mysql mariadb  连接器则需要这个函数

@@ -6,7 +6,6 @@
 
 #include <gui/open_file_dialog.h>
 #include <doodle_lib/file_warp/maya_file.h>
-#include <doodle_lib/file_warp/ue4_project.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/season.h>
 #include <doodle_lib/metadata/assets_file.h>

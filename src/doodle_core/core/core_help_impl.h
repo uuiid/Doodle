@@ -5,7 +5,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include <core/template_util.h>
+#include <doodle_core/core/template_util.h>
 namespace entt {
 /**
  * @brief entt 中自定义hash检查
