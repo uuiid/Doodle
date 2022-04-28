@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 namespace doodle {
-class DOODLELIB_API ref_meta {
+class DOODLE_CORE_EXPORT ref_meta {
  private:
   friend void to_json(nlohmann::json &j, const ref_meta &p);
   friend void from_json(const nlohmann::json &j, ref_meta &p);

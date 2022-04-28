@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/exception/exception.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
 
 // template <class container_type, class self_type>
@@ -13,7 +13,7 @@ namespace doodle {
 // };
 
 template <class container_type, class self_type>
-class DOODLELIB_API vector_adapter {
+class DOODLE_CORE_EXPORT vector_adapter {
  public:
   using value_type             = typename container_type::value_type;
   using value_list             = container_type;

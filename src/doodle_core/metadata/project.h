@@ -1,5 +1,5 @@
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
 namespace project_config {
@@ -12,7 +12,7 @@ class organization;
 /**
  * 项目信息类
  */
-class DOODLELIB_API project {
+class DOODLE_CORE_EXPORT project {
  public:
    std::string p_name;
   FSys::path p_path;
@@ -64,7 +64,7 @@ class DOODLELIB_API project {
 namespace project_config {
 void to_json(nlohmann::json& j, const base_config& p);
 void from_json(const nlohmann::json& j, base_config& p);
-class DOODLELIB_API base_config {
+class DOODLE_CORE_EXPORT base_config {
  private:
   friend void to_json(nlohmann::json& j, const base_config& p);
   friend void from_json(const nlohmann::json& j, base_config& p);

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/signals2.hpp>
 #include <optional>
 
 namespace doodle {
-class DOODLELIB_API metadata_database {
+class DOODLE_CORE_EXPORT metadata_database {
  public:
   std::string user_data;
   std::uint64_t id;
@@ -44,12 +44,12 @@ enum class metadata_type : std::int32_t {
 
 };
 
-class DOODLELIB_API database_info {
+class DOODLE_CORE_EXPORT database_info {
  public:
   FSys::path path_;
 };
 
-class DOODLELIB_API database {
+class DOODLE_CORE_EXPORT database {
  private:
   friend class database_task_install;
   class impl;
@@ -57,7 +57,7 @@ class DOODLELIB_API database {
   void set_id(std::uint64_t in_id) const;
 
  public:
-  class DOODLELIB_API ref_data {
+  class DOODLE_CORE_EXPORT ref_data {
     friend void to_json(nlohmann::json &j, const ref_data &p);
     friend void from_json(const nlohmann::json &j, ref_data &p);
 
@@ -133,28 +133,28 @@ class DOODLELIB_API database {
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);
 
-  class DOODLELIB_API fun_save_ {
+  class DOODLE_CORE_EXPORT fun_save_ {
    public:
     constexpr fun_save_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_save;
     }
   };
-  class DOODLELIB_API fun_delete_ {
+  class DOODLE_CORE_EXPORT fun_delete_ {
    public:
     constexpr fun_delete_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_delete;
     }
   };
-  class DOODLELIB_API fun_load_ {
+  class DOODLE_CORE_EXPORT fun_load_ {
    public:
     constexpr fun_load_() = default;
     void operator()(database &in) const {
       in.status_ = status::need_load;
     }
   };
-  class DOODLELIB_API fun_sync_ {
+  class DOODLE_CORE_EXPORT fun_sync_ {
    public:
     constexpr fun_sync_() = default;
     void operator()(database &in) const {
@@ -169,7 +169,7 @@ class DOODLELIB_API database {
 };
 
 template <class in_class>
-class DOODLELIB_API handle_warp {
+class DOODLE_CORE_EXPORT handle_warp {
  public:
   entt::handle handle_;
 };

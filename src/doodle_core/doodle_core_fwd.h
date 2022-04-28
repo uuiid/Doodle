@@ -8,4 +8,10 @@
 #include <doodle_core/lib_warp/cmrcWarp.h>
 namespace doodle {
 class convert;
-}
+class doodle_error;
+class error_iterator;
+class nullptr_error;
+class serialization_error;
+class component_error;
+class file_error;
+}  // namespace doodle

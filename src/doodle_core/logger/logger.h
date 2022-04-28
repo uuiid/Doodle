@@ -8,8 +8,9 @@
  */
 #pragma once
 
-#include <doodle_lib/configure/config.h>
-#include <doodle_lib_export.h>
+#include <doodle_core/configure/config.h>
+#include <doodle_core_export.h>
+#include <doodle_core/doodle_core_pch.h>
 #include <spdlog/spdlog.h>
 
 #define DOODLE_SOURCE_LOC \
@@ -23,7 +24,7 @@ namespace doodle {
 /**
  * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
  */
-class DOODLELIB_API logger_ctrl {
+class DOODLE_CORE_EXPORT logger_ctrl {
   std::filesystem::path p_log_path;
   std::string p_log_name;
 
@@ -50,7 +51,6 @@ class DOODLELIB_API logger_ctrl {
    */
   bool set_log_name(const std::string& in_name);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr);
-  virtual void post_constructor();
 };
 
 template <class throw_T,

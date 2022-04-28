@@ -5,7 +5,7 @@
 #pragma once
 #include <date/date.h>
 #include <date/tz.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
 
@@ -13,7 +13,7 @@ namespace doodle {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLELIB_API time_point_wrap {
+class DOODLE_CORE_EXPORT time_point_wrap {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -22,7 +22,7 @@ class DOODLELIB_API time_point_wrap {
 
  private:
  public:
-  class DOODLELIB_API gui_data {
+  class DOODLE_CORE_EXPORT gui_data {
    public:
     std::uint16_t year_;
     std::uint16_t month_;

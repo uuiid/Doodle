@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
 /**
@@ -13,7 +13,7 @@ namespace doodle {
  * 使用path表示资产的分类, 其中每段路径代表一个标签, 标签越靠前权重越高
  *
  */
-class DOODLELIB_API assets {
+class DOODLE_CORE_EXPORT assets {
   /**
    * @brief 分解路径,转换为向量缓存
    *
@@ -32,7 +32,7 @@ class DOODLELIB_API assets {
    * @brief 使用函子设置文件标签
    *
    */
-  class DOODLELIB_API set_path_fun {
+  class DOODLE_CORE_EXPORT set_path_fun {
    public:
     /**
      * @brief 路径组件的引用

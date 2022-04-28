@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <metadata/metadata.h>
 
 namespace doodle {
@@ -21,7 +21,7 @@ enum class assets_file_type : std::uint32_t {
  * @brief 这个类代表着服务端的文件条目
  *
  */
-class DOODLELIB_API assets_file {
+class DOODLE_CORE_EXPORT assets_file {
  public:
   FSys::path path;
   std::string p_name;

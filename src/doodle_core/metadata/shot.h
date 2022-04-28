@@ -1,11 +1,11 @@
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
 #include <magic_enum.hpp>
 namespace doodle {
-class DOODLELIB_API shot {
+class DOODLE_CORE_EXPORT shot {
  public:
   enum class shot_ab_enum;
 

@@ -8,6 +8,8 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
 
+#include <boost/locale.hpp>
+#include <date/date.h>
 namespace doodle {
 namespace details {
 template <class Mutex>
@@ -42,7 +44,7 @@ using msvc_doodle_sink_mt       = details::msvc_doodle_sink<std::mutex>;
 logger_ctrl *logger_ctrl::_self = nullptr;
 
 logger_ctrl::logger_ctrl()
-    : p_log_path(core_set::getSet().get_cache_root() / "log"),
+    : p_log_path(FSys::temp_directory_path() / "doodle" / "log"),
       p_log_name("tmp_logfile" + date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()) + ".txt") {
   _self = this;
   init_temp_log();
@@ -76,7 +78,7 @@ void logger_ctrl::init_temp_log() {
   SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
 }
 void logger_ctrl::init_log() {
-  p_log_path = core_set::getSet().get_cache_root() / "log";
+  p_log_path = FSys::temp_directory_path() / "doodle" / "log";
   if (!FSys::exists(p_log_path))
     FSys::create_directories(p_log_path);
 }
@@ -91,12 +93,10 @@ bool logger_ctrl::set_log_name(const std::string &in_name) {
   auto &l_v   = l_log->sinks();
   auto l_path = p_log_path / p_log_name;
   /// 去除掉临时的的文件记录器
-  l_v[0] = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
+  l_v[0]      = new_object<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
   return true;
 }
-void logger_ctrl::post_constructor() {
-  _self = this;
-}
+
 logger_ctrl::~logger_ctrl() {
   spdlog::shutdown();
 }

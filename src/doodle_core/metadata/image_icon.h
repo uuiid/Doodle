@@ -2,13 +2,13 @@
 // Created by TD on 2022/1/21.
 //
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <utility>
 #include <opencv2/core.hpp>
 
 namespace doodle {
-class DOODLELIB_API image_icon {
+class DOODLE_CORE_EXPORT image_icon {
  public:
   /**
    * @brief 这个路径是相对于根目录的

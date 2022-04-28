@@ -1,10 +1,10 @@
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
 namespace doodle {
 
-class DOODLELIB_API episodes {
+class DOODLE_CORE_EXPORT episodes {
  public:
   int64_t p_episodes;
   episodes();
