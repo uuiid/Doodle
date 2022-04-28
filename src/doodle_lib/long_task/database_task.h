@@ -24,7 +24,7 @@ class DOODLELIB_API filter {
   std::optional<std::string> _uuid_path;
   std::optional<std::int64_t> _episodes;
   std::optional<std::int64_t> _shot;
-  std::optional<string> _assets;
+  std::optional<std::string> _assets;
 
   std::uint64_t _beg_off_id;
   /**

@@ -4,11 +4,10 @@
 
 #include "reference_file.h"
 
-#include <doodle_lib/metadata/metadata.h>
-#include <doodle_lib/metadata/project.h>
-#include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/shot.h>
-#include <doodle_lib/metadata/export_file_info.h>
+#include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/export_file_info.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

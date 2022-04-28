@@ -1,6 +1,11 @@
 #include <doodle_core/core/core_set.h>
 #include <core/filesystem_extend.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/files.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/sha.h>
 
+#include <boost/locale.hpp>
 namespace doodle {
 namespace FSys {
 std::tuple<std::uint64_t, std::uint64_t> find_path_frame(const path& in_path) {

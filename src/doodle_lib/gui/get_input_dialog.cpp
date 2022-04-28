@@ -5,7 +5,7 @@
 #include "get_input_dialog.h"
 #include <lib_warp/imgui_warp.h>
 #include <metadata/project.h>
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 
 namespace doodle {
 class get_input_dialog::impl {
@@ -56,7 +56,7 @@ class get_input_project_dialog::impl {
 
 void get_input_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path));
-  
+
   if (dear::InputText("名称", &(p_i->prj.p_name)))
     prj.patch<project>([&](project &in) {
       in.set_name(p_i->prj.p_name);

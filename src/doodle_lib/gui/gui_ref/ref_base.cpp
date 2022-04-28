@@ -1,5 +1,5 @@
 #include "ref_base.h"
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 #include <core/util.h>
 namespace doodle::gui {
 

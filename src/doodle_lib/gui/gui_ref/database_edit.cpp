@@ -3,7 +3,7 @@
 //
 
 #include "database_edit.h"
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 #include <lib_warp/imgui_warp.h>
 
 namespace doodle::gui {

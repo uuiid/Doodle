@@ -6,7 +6,7 @@
 
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/thread_pool/process_pool.h>
 

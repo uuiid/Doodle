@@ -6,8 +6,7 @@
 #include <maya/MArgParser.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/project.h>
-#include <doodle_lib/metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 
 #include <maya_plug/data/maya_file_io.h>
 

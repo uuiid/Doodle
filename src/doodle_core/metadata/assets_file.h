@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 
 namespace doodle {
 /**

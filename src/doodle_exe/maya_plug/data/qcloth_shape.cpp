@@ -3,9 +3,8 @@
 //
 
 #include "qcloth_shape.h"
-#include "doodle_lib/metadata/metadata.h"
+#include "doodle_core/metadata/metadata.h"
 
-#include <doodle_lib/metadata/project.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

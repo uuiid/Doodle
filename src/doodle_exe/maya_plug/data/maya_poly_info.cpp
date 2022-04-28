@@ -6,7 +6,6 @@
 #include <maya/MFnMesh.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MDagPath.h>
-#include <doodle_lib/metadata/project.h>
 namespace doodle::maya_plug {
 
 maya_poly_info::maya_poly_info()

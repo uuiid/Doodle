@@ -10,7 +10,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_lib/long_task/image_to_move.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_lib/thread_pool/process_message.h>
 
 #include <maya_plug/data/maya_camera.h>
 #include <maya/M3dView.h>

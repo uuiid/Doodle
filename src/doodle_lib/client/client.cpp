@@ -7,10 +7,7 @@
 #include <doodle_lib/core/core_sql.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/thread_pool/process_message.h>
-#include <doodle_lib/metadata/metadata.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_lib/metadata/project.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>

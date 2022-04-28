@@ -4,7 +4,7 @@
 
 #include "authorization.h"
 
-#include <doodle_lib/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/core/core_set.h>
 #include <boost/contract.hpp>
 

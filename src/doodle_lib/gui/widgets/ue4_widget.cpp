@@ -10,7 +10,6 @@
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/episodes.h>
 #include <doodle_lib/metadata/shot.h>
-#include <doodle_lib/metadata/project.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/filesystem_extend.h>

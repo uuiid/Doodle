@@ -12,10 +12,9 @@
 #include <thread_pool/thread_pool.h>
 
 #include <boost/numeric/conversion/cast.hpp>
-#include <thread_pool//database_task.h>
+
 #include <thread_pool/process_message.h>
 #include <metadata/assets_file.h>
-
 
 #include <doodle_core/core/core_sig.h>
 #include <core/status_info.h>

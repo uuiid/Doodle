@@ -15,12 +15,11 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/core/init_register.h>
 
-#include <doodle_lib/metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 #include <doodle_lib/metadata/assets_file.h>
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/metadata/image_icon.h>
 #include <doodle_lib/metadata/importance.h>
-#include <doodle_lib/metadata/project.h>
 #include <doodle_lib/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle {

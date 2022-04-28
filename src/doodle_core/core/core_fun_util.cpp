@@ -5,12 +5,7 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/logger/logger.h>
 
-#include <cryptopp/base64.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/sha.h>
 
-#include <boost/locale.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <Windows.h>

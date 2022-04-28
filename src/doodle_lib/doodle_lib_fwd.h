@@ -15,7 +15,7 @@
 namespace doodle {
 
 namespace FSys {
-DOODLE_API std::string file_hash_sha224(const path &in_file);
+DOODLELIB_API std::string file_hash_sha224(const path &in_file);
 
 }
 
@@ -52,5 +52,6 @@ class database_task_install;
 class database_task_obs;
 
 using program_options_ptr = std::shared_ptr<program_options>;
+using conn_ptr            = std::unique_ptr<sqlpp::sqlite3::connection>;
 
 }  // namespace doodle

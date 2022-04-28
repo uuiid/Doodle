@@ -1,7 +1,7 @@
 #pragma once
 
 // clang-format off
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 
 #include <metadata/assets.h>
 
