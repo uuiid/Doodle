@@ -30,7 +30,7 @@ void edit_interface::init(const std::vector<entt::handle> &in) {
 
 edit_interface::~edit_interface() = default;
 
-gui_cache_name_id::gui_cache_name_id(const string &in_name)
+gui_cache_name_id::gui_cache_name_id(const std::string &in_name)
     : name_id(),
       name() {
   auto l_size = in_name.size();

@@ -248,7 +248,7 @@ void image_to_move::aborted() {
 }
 
 }  // namespace details
-image_watermark::image_watermark(string in_p_text,
+image_watermark::image_watermark(std::string in_p_text,
                                  double_t in_p_width_proportion,
                                  double_t in_p_height_proportion,
                                  cv::Scalar in_rgba)

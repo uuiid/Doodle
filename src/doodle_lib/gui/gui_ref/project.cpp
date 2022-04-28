@@ -5,8 +5,8 @@
 #include "project.h"
 
 #include <lib_warp/imgui_warp.h>
-#include <metadata/project.h>
-#include <metadata/organization.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/organization.h>
 
 #include <doodle_lib/lib_warp/imgui_warp.h>
 

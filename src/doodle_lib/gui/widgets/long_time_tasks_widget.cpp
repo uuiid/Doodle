@@ -59,7 +59,7 @@ void long_time_tasks_widget::render() {
       dear::Text(msg.message_back());
 
       imgui::TableNextColumn();
-      dear::Text(string{magic_enum::enum_name(msg.get_state())});
+      dear::Text(std::string{magic_enum::enum_name(msg.get_state())});
 
       imgui::TableNextColumn();
       using namespace std::literals;

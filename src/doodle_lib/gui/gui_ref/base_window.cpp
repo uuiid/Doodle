@@ -17,7 +17,7 @@ void from_json(const nlohmann::json &j, base_window &p) {
 
 void base_window::failed() {}
 
-base_window *base_window::find_window_by_title(const string &in_title) {
+base_window *base_window::find_window_by_title(const std::string &in_title) {
   auto &l_list = g_reg()->ctx().emplace<base_window::list>();
   auto it      = ranges::find_if(
            l_list,
@@ -61,7 +61,7 @@ void window_panel::succeeded() {
 void window_panel::aborted() {
   save_setting();
 }
-const string &window_panel::title() const {
+const std::string &window_panel::title() const {
   return title_name_;
 }
 void window_panel::update(const chrono::system_clock::duration &in_duration, void *in_data) {

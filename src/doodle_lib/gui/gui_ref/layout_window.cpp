@@ -18,7 +18,7 @@ layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {
 }
 
-const string &layout_window::title() const {
+const std::string &layout_window::title() const {
   static std::string l_title{"layout_window"};
   return l_title;
 }
@@ -90,7 +90,7 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
   clear_windows();
 }
 
-void layout_window::call_render(const string &in_name) {
+void layout_window::call_render(const std::string &in_name) {
   auto &&l_win = p_i->list_windows[in_name];
   if (l_win)
     l_win->tick(p_i->duration_,
@@ -98,7 +98,7 @@ void layout_window::call_render(const string &in_name) {
 }
 
 std::shared_ptr<windows_proc::warp_proc>
-layout_window::render_main(const string &in_name) {
+layout_window::render_main(const std::string &in_name) {
   if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
     l_i->windows_->close();
     call_render(in_name);
