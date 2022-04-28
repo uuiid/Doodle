@@ -4,9 +4,8 @@
 #include <doodle_lib/file_warp/maya_file.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_core/lib_warp/std_warp.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
+#include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
 #include <boost/locale.hpp>
 #include <boost/process.hpp>
 #ifdef _WIN32
