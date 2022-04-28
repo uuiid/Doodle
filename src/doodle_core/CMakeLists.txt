@@ -9,6 +9,8 @@ cmrc_add_resource_library(
         resource/fa-solid-900.ttf
         ${DOODLE_RE_FILES_LIST}
 )
+# 添加配置
+
 add_library(doodle_core)
 include(GenerateExportHeader)
 generate_export_header(doodle_core)
@@ -19,13 +21,17 @@ target_include_directories(doodle_core
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         )
+
+configure_file(configure/config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp)
 target_sources(doodle_core
         PUBLIC
         doodle_core_fwd.h
-        doodle_core.h)
+        doodle_core.h
+        ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp
+        )
 
 
-configure_file(configure/config.cpp.in ${CMAKE_CURRENT_LIST_DIR}/configure/config.cpp)
+
 # 添加子目录
 add_subdirectory(configure)
 add_subdirectory(core)
