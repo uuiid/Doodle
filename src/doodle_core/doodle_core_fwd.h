@@ -65,7 +65,7 @@ DOODLE_CORE_EXPORT void last_write_time_point(const path &in_path, const std::ch
 DOODLE_CORE_EXPORT path add_time_stamp(const path &in_path);
 DOODLE_CORE_EXPORT void open_explorer(const path &in_path);
 DOODLE_CORE_EXPORT void backup_file(const path &source);
-DOODLE_CORE_EXPORT std::string file_hash_sha224(const path &in_file);
+// DOODLE_CORE_EXPORT std::string file_hash_sha224(const path &in_file);
 DOODLE_CORE_EXPORT std::vector<path> list_files(const path &in_dir);
 DOODLE_CORE_EXPORT bool is_sub_path(const path &in_parent, const path &in_child);
 

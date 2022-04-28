@@ -78,8 +78,8 @@ set(
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
-
-        set (
+)
+set(
         DOODLELIB_SOURCE
         app/app.cpp
         client/client.cpp
@@ -150,4 +150,5 @@ set(
 
 
         core/app_base.cpp
-        doodle_lib_all.cpp)
+        doodle_lib_all.cpp
+)
