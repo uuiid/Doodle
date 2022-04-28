@@ -3,7 +3,6 @@
 //
 
 #include <doodle_lib/metadata/assets.h>
-#include <doodle_lib/pin_yin/convert.h>
 
 namespace doodle {
 
@@ -55,7 +54,6 @@ bool assets::operator>=(const assets& in_rhs) const {
   return !(*this < in_rhs);
 }
 
- 
 bool assets::operator==(const assets& in_rhs) const {
   return std::tie(p_path) == std::tie(in_rhs.p_path);
 }

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle{
-class DOODLELIB_API convert {
+class DOODLE_CORE_EXPORT convert {
  public:
   std::string toEn(const std::string &conStr);
   std::string toEn(const std::wstring &conStr);

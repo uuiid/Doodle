@@ -1,6 +1,6 @@
 #include <doodle_lib/core/core_set.h>
 
-#include <doodle_lib/pin_yin/convert.h>
+#include <doodle_core/pin_yin/convert.h>
 #include <doodle_lib/platform/win/list_drive.h>
 #include <doodle_lib/client/client.h>
 
