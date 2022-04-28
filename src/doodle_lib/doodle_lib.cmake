@@ -20,7 +20,7 @@ set(
         core/work_clock.h
 
 
-        exception/exception.h
+        ../doodle_core/exception/exception.h
         file_warp/maya_file.h
         file_warp/opencv_read_player.h
         file_warp/ue4_project.h
@@ -66,26 +66,25 @@ set(
         lib_warp/lru_cache_policy.hpp
         lib_warp/sqlppWarp.h
         lib_warp/std_warp.h
-        logger/LoggerTemplate.h
-        logger/logger.h
-        metadata/assets.h
-        metadata/assets_file.h
-        metadata/comment.h
-        metadata/episodes.h
-        metadata/leaf_meta.h
-        metadata/metadata.h
-        metadata/metadata_cpp.h
-        metadata/metadata_state.h
-        metadata/project.h
-        metadata/season.h
-        metadata/shot.h
-        metadata/time_point_wrap.h
-        metadata/tree_adapter.h
-        metadata/user.h
-        metadata/image_icon.h
-        metadata/importance.h
-        metadata/organization.h
-        metadata/export_file_info.h
+        ../doodle_core/logger/logger.h
+        ../doodle_core/metadata/assets.h
+        ../doodle_core/metadata/assets_file.h
+        ../doodle_core/metadata/comment.h
+        ../doodle_core/metadata/episodes.h
+        ../doodle_core/metadata/leaf_meta.h
+        ../doodle_core/metadata/metadata.h
+        ../doodle_core/metadata/metadata_cpp.h
+        ../doodle_core/metadata/metadata_state.h
+        ../doodle_core/metadata/project.h
+        ../doodle_core/metadata/season.h
+        ../doodle_core/metadata/shot.h
+        ../doodle_core/metadata/time_point_wrap.h
+        ../doodle_core/metadata/tree_adapter.h
+        ../doodle_core/metadata/user.h
+        ../doodle_core/metadata/image_icon.h
+        ../doodle_core/metadata/importance.h
+        ../doodle_core/metadata/organization.h
+        ../doodle_core/metadata/export_file_info.h
 
 
         thread_pool/process_message.h
@@ -169,22 +168,22 @@ set(
 
         lib_warp/entt_warp.cpp
         lib_warp/imgui_warp.cpp
-        logger/logger.cpp
-        metadata/assets.cpp
-        metadata/assets_file.cpp
-        metadata/comment.cpp
-        metadata/episodes.cpp
-        metadata/leaf_meta.cpp
-        metadata/metadata.cpp
-        metadata/project.cpp
-        metadata/season.cpp
-        metadata/shot.cpp
-        metadata/time_point_wrap.cpp
-        metadata/user.cpp
-        metadata/image_icon.cpp
-        metadata/importance.cpp
-        metadata/organization.cpp
-        metadata/export_file_info.cpp
+        ../doodle_core/logger/logger.cpp
+        ../doodle_core/metadata/assets.cpp
+        ../doodle_core/metadata/assets_file.cpp
+        ../doodle_core/metadata/comment.cpp
+        ../doodle_core/metadata/episodes.cpp
+        ../doodle_core/metadata/leaf_meta.cpp
+        ../doodle_core/metadata/metadata.cpp
+        ../doodle_core/metadata/project.cpp
+        ../doodle_core/metadata/season.cpp
+        ../doodle_core/metadata/shot.cpp
+        ../doodle_core/metadata/time_point_wrap.cpp
+        ../doodle_core/metadata/user.cpp
+        ../doodle_core/metadata/image_icon.cpp
+        ../doodle_core/metadata/importance.cpp
+        ../doodle_core/metadata/organization.cpp
+        ../doodle_core/metadata/export_file_info.cpp
 
 
         thread_pool/process_message.cpp

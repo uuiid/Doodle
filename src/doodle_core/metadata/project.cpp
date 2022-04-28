@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include <exception/exception.h>
-#include <metadata/project.h>
-#include <pin_yin/convert.h>
-#include <metadata/metadata.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/pin_yin/convert.h>
+#include <doodle_core/metadata/metadata.h>
 #include <core/core_set.h>
 #include "organization.h"
 

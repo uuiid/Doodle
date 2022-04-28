@@ -3,19 +3,12 @@
 //
 
 #include "metadata.h"
-
-#include <doodle_lib/core/ContainerDevice.h>
-#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/logger/logger.h>
-#include <exception/exception.h>
-#include <google/protobuf/util/time_util.h>
-
 // clang-format off
-#include <metadata/metadata_cpp.h>
-#include <metadata/image_icon.h>
-#include <metadata/importance.h>
-#include <metadata/organization.h>
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/organization.h>
 #include <doodle_lib/lib_warp/entt_warp.h>
 // clang-format on
 

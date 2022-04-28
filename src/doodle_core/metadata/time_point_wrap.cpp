@@ -2,10 +2,10 @@
 // Created by TD on 2021/5/17.
 //
 
-#include <Metadata/metadata.h>
+#include <doodle_core/metadata/metadata.h>
 #include <date/date.h>
 #include <date/tz.h>
-#include <doodle_lib/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 
 namespace doodle {
 

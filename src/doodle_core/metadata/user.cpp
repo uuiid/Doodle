@@ -2,7 +2,7 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <Metadata/user.h>
+#include <doodle_core/metadata/user.h>
 #include <pin_yin/convert.h>
 
 namespace doodle {

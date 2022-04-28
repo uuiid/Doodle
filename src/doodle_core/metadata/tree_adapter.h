@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_lib/Exception/exception.h>
+#include <doodle_lib/exception/exception.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
 

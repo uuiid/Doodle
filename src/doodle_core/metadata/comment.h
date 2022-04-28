@@ -4,8 +4,8 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/leaf_meta.h>
-#include <doodle_lib/metadata/tree_adapter.h>
+#include <metadata/leaf_meta.h>
+#include <metadata/tree_adapter.h>
 
 namespace doodle {
 

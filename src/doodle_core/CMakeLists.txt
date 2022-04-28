@@ -23,11 +23,15 @@ target_sources(doodle_core
         doodle_core_fwd.h
         doodle_core.h)
 
-# 添加子目录
-add_subdirectory(pin_yin)
 
 configure_file(configure/config.cpp.in ${CMAKE_CURRENT_LIST_DIR}/configure/config.cpp)
+# 添加子目录
 add_subdirectory(configure)
+add_subdirectory(exception)
+add_subdirectory(lib_warp)
+add_subdirectory(logger)
+add_subdirectory(metadata)
+add_subdirectory(pin_yin)
 
 include(GenerateExportHeader)
 generate_export_header(doodle_core)

@@ -1,6 +1,6 @@
 #include "shot.h"
 
-#include <doodle_lib/metadata/episodes.h>
+#include <doodle_core/metadata/episodes.h>
 
 namespace doodle {
 

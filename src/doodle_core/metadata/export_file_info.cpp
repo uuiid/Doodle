@@ -5,9 +5,8 @@
 #include "export_file_info.h"
 #include <boost/contract.hpp>
 #include <doodle_lib/lib_warp/entt_warp.h>
-#include <metadata/shot.h>
-#include <metadata/episodes.h>
-//#include <doodle_lib/core
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/episodes.h>
 
 namespace doodle {
 export_file_info::export_file_info()

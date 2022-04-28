@@ -2,12 +2,12 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <doodle_lib/metadata/assets_file.h>
-#include <doodle_lib/metadata/comment.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/comment.h>
 
 #include <google/protobuf/util/time_util.h>
-#include <metadata/time_point_wrap.h>
-#include <pin_yin/convert.h>
+#include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/doodle_core/pin_yin/convert.h>
 
 namespace doodle {
 

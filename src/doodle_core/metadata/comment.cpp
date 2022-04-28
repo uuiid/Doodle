@@ -3,8 +3,8 @@
 //
 
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/metadata/comment.h>
-#include <doodle_lib/metadata/metadata.h>
+#include <doodle_core/metadata/comment.h>
+#include <doodle_core/metadata/metadata.h>
 
 namespace doodle {
 comment::comment()

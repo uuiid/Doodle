@@ -1,7 +1,7 @@
 
 
 #include "organization.h"
-#include <doodle_lib/metadata/project.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_lib/core/core_set.h>
 namespace doodle {
 organization::organization()

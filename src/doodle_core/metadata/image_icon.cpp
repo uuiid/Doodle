@@ -3,7 +3,7 @@
 //
 
 #include "image_icon.h"
-#include <metadata/project.h>
+#include <doodle_core/metadata/project.h>
 #include <boost/contract.hpp>
 
 namespace doodle {
