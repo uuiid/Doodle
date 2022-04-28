@@ -88,7 +88,6 @@ set(
         metadata/organization.h
         metadata/export_file_info.h
 
-        pin_yin/convert.h
 
         thread_pool/process_message.h
         thread_pool/thread_pool.h
@@ -188,7 +187,6 @@ set(
         metadata/organization.cpp
         metadata/export_file_info.cpp
 
-        pin_yin/convert.cpp
 
         thread_pool/process_message.cpp
         toolkit/toolkit.cpp

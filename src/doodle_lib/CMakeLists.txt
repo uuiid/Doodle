@@ -1,13 +1,6 @@
-add_subdirectory(resource)
 
 
-cmrc_add_resource_library(
-        DoodleLibResource
-        resource/fa-brands-400.ttf
-        resource/fa-regular-400.ttf
-        resource/fa-solid-900.ttf
-        ${DOODLE_RE_FILES_LIST}
-)
+
 include(doodle_exe)
 include(doodle_lib.cmake)
 
@@ -69,7 +62,6 @@ target_link_libraries(doodle_lib
         ${OpenCV_LIBS}
         EnTT::EnTT
         spdlog::spdlog
-        Catch2::Catch2
         sqlpp11::sqlite3
         sqlpp11::sqlpp11
         imgui::imgui

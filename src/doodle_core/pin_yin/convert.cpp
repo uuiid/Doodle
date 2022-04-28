@@ -1,4 +1,4 @@
-#include <pin_yin/convert.h>
+#include <doodle_core/pin_yin/convert.h>
 
 #include <boost/locale.hpp>
 #include <regex>

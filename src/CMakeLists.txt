@@ -1,8 +1,9 @@
 # set(RESOURCE_SOURCE
 #         core_resource.qrc)
 # qt5_add_resources(RESOURE_FILE ${RESOURCE_SOURCE})
-add_subdirectory(doodle_exe)
+add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
+add_subdirectory(doodle_exe)
 #add_subdirectory(doodle_server)
 #add_subdirectory(plug)
 

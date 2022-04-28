@@ -38,6 +38,7 @@ class DOODLELIB_API program_options {
   static constexpr char thread_max_[]   = "thread_max";
   static constexpr char ue4outpath[]    = "ue4outpath";
   static constexpr char ue4Project[]    = "ue4Project";
+  static constexpr char rpc_server[]    = "rpc_server";
   /**
    * @brief 所有选项， 命令行选项
    *
