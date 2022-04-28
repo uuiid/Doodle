@@ -5,7 +5,7 @@
 #include "client.h"
 
 #include <doodle_lib/core/core_sql.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/thread_pool/process_message.h>
 #include <doodle_lib/metadata/metadata.h>

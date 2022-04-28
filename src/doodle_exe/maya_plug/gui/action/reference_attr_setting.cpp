@@ -8,7 +8,7 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_core/lib_warp/entt_warp.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 
 #include <maya/MTime.h>
 #include <maya/MDagPath.h>

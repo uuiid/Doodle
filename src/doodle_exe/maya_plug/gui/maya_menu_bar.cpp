@@ -4,7 +4,7 @@
 
 #include "maya_menu_bar.h"
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
 
 #include <maya_plug/gui/action/comm_check_scenes.h>

@@ -7,7 +7,7 @@
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
 #include <maya_plug/gui/maya_layout.h>
 #include <doodle_lib/gui/main_proc_handle.h>

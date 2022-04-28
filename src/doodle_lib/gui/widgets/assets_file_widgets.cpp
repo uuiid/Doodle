@@ -8,7 +8,7 @@
 #include <doodle_lib/metadata/metadata_cpp.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/metadata/image_icon.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
 #include <doodle_core/core/core_sig.h>

@@ -8,7 +8,7 @@
 #include <doodle_lib/metadata/metadata.h>
 #include <doodle_lib/metadata/project.h>
 #include <doodle_lib/client/client.h>
-#include <doodle_lib/long_task/process_pool.h>
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_core/core/core_set.h>
 

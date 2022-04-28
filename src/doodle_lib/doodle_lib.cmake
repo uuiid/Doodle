@@ -87,14 +87,14 @@ set(
         ../doodle_core/metadata/export_file_info.h
 
 
-        thread_pool/process_message.h
-        thread_pool/thread_pool.h
+        ../doodle_core/thread_pool/process_message.h
+        ../doodle_core/thread_pool/thread_pool.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
         exe_warp/ue4_exe.h
         long_task/image_to_move.h
         long_task/join_move.h
-        long_task/process_pool.h
+        ../doodle_core/thread_pool/process_pool.h
         long_task/restricted_task.h
         long_task/database_task.h
         long_task/drop_file_data.h
@@ -186,13 +186,13 @@ set(
         ../doodle_core/metadata/export_file_info.cpp
 
 
-        thread_pool/process_message.cpp
+        ../doodle_core/thread_pool/process_message.cpp
         toolkit/toolkit.cpp
         exe_warp/maya_exe.cpp
         exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
         long_task/join_move.cpp
-        long_task/process_pool.cpp
+        ../doodle_core/thread_pool/process_pool.cpp
         long_task/restricted_task.cpp
         long_task/database_task.cpp
         long_task/drop_file_data.cpp
