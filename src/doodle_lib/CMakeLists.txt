@@ -75,6 +75,7 @@ target_link_libraries(doodle_lib
 target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+        WIN32_LEAN_AND_MEAN
         PRIVATE
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )

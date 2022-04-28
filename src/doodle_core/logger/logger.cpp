@@ -1,6 +1,6 @@
 #include "logger.h"
 
-#include <core/core_set.h>
+#include <doodle_core/core/core_set.h>
 #include <Windows.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>

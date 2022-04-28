@@ -4,11 +4,12 @@
 
 #include "app_base.h"
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/thread_pool/thread_pool.h>
+
+#include <doodle_lib/core/init_register.h>
 #include <doodle_lib/core/program_options.h>
-#include <doodle_lib/thread_pool/thread_pool.h>
 #include <doodle_lib/core/authorization.h>
 
 #include <boost/contract.hpp>
@@ -66,7 +67,7 @@ std::int32_t app_base::run() {
   return 0;
 }
 
-void app_base::command_line_parser(const std::vector<string>& in_arg) {
+void app_base::command_line_parser(const std::vector<std::string>& in_arg) {
   if (!chick_authorization())
     stop_app();
 

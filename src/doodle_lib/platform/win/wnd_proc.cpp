@@ -5,12 +5,11 @@
 #include "wnd_proc.h"
 #include <gui/main_proc_handle.h>
 // Helper functions
+#include <Windows.h>
 #include <d3d11.h>
 #include <tchar.h>
 #include <shellapi.h>
 #include <imgui_impl_win32.h>
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/app/app.h>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

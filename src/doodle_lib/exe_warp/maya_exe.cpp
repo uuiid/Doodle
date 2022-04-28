@@ -7,7 +7,7 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_core/core/core_set.h>
 
-#include <doodle_lib/thread_pool/thread_pool.h>
+#include <doodle_core/thread_pool/thread_pool.h>
 //#include <type_traits>
 
 #include <boost/process.hpp>
@@ -42,7 +42,7 @@ class maya_exe::impl {
   entt::handle p_mess;
   chrono::sys_time_pos p_time;
 };
-maya_exe::maya_exe(const entt::handle &in_handle, const string &in_comm)
+maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm)
     : p_i(std::make_unique<impl>()) {
   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
   chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
@@ -155,7 +155,7 @@ void maya_exe::add_maya_fun_tool() {
 void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
   using namespace chrono::literals;
 
-  string k_out{};
+  std::string k_out{};
   if (p_i->p_out_str.valid()) {  /// 异步有效, 是否可以读取
     switch (p_i->p_out_str.wait_for(0ns)) {
       case std::future_status::ready: {
@@ -181,8 +181,8 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   sub_out:
     if (p_i->p_out)
       p_i->p_out_str = std::move(g_thread_pool().enqueue(
-          [self = p_i.get()]() -> string {
-            string k_str{};
+          [self = p_i.get()]() -> std::string {
+            std::string k_str{};
             if (self && self->p_out)
               getline(self->p_out, k_str);
             return k_str;
@@ -224,8 +224,8 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   sub_err:
     if (p_i->p_err)
       p_i->p_err_str = std::move(g_thread_pool().enqueue(
-          [self = p_i.get()]() -> string {
-            string k_str{};
+          [self = p_i.get()]() -> std::string {
+            std::string k_str{};
             if (self && self->p_err)
               getline(self->p_err, k_str);
             return k_str;

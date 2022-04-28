@@ -39,9 +39,9 @@ class file_panel::path_info {
 
   FSys::path path;
   bool is_dir;
-  string show_name;
+  std::string show_name;
   std::size_t size;
-  string size_string;
+  std::string size_string;
   doodle::chrono::sys_time_pos last_time;
   bool has_select;
 
@@ -51,7 +51,7 @@ class file_panel::path_info {
     for (; mantissa >= 1024.; mantissa /= 1024., ++i) {
     }
     mantissa    = std::ceil(mantissa * 10.) / 10.;
-    size_string = fmt::format("{} {}B", mantissa, i == 0 ? ""s : string{"BKMGTPE"[i]});
+    size_string = fmt::format("{} {}B", mantissa, i == 0 ? ""s : std::string{"BKMGTPE"[i]});
   }
 
   operator bool() const {
@@ -508,7 +508,7 @@ file_panel::dialog_args &file_panel::dialog_args::set_filter(const std::vector<s
   return *this;
 }
 
-file_panel::dialog_args &file_panel::dialog_args::add_filter(const string &in_filter) {
+file_panel::dialog_args &file_panel::dialog_args::add_filter(const std::string &in_filter) {
   filter.emplace_back(in_filter);
   return *this;
 }

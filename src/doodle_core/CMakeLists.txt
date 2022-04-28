@@ -64,6 +64,7 @@ target_link_libraries(
 
 target_compile_definitions(doodle_core
         PUBLIC
+        WIN32_LEAN_AND_MEAN
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,STATIC_LIBRARY>:DOODLE_CORE_STATIC_DEFINE>
         PRIVATE

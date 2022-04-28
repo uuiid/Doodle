@@ -5,7 +5,8 @@
 #include "join_move.h"
 #include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/thread_pool/thread_pool.h>
-#include <metadata/episodes.h>
+#include <doodle_core/metadata/episodes.h>
+
 #include <core/util.h>
 
 #include <opencv2/opencv.hpp>

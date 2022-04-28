@@ -4,10 +4,11 @@
 
 #include "image_load_task.h"
 
-#include <metadata/image_icon.h>
-#include <thread_pool/thread_pool.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/thread_pool/thread_pool.h>
+#include <doodle_core/metadata/project.h>
+
 #include <core/image_loader.h>
-#include <metadata/project.h>
 namespace doodle {
 class image_load_task::impl {
  public:
