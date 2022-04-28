@@ -4,7 +4,7 @@
 
 #include "get_input_dialog.h"
 #include <lib_warp/imgui_warp.h>
-#include <metadata/project.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/metadata.h>
 
 namespace doodle {

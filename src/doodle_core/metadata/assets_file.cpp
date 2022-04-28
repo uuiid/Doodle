@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/pin_yin/convert.h>
 #include <core/core_set.h>
-#include <metadata/project.h>
+#include <doodle_core/metadata/project.h>
 
 namespace doodle {
 
