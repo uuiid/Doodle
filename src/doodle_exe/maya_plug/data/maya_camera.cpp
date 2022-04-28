@@ -11,9 +11,9 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnCamera.h>
 
-#include <doodle_lib/metadata/export_file_info.h>
-#include <doodle_lib/metadata/shot.h>
-#include <doodle_lib/metadata/episodes.h>
+#include <doodle_core/metadata/export_file_info.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/episodes.h>
 
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>

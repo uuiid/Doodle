@@ -7,7 +7,7 @@
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
-#include <doodle_lib/metadata/image_icon.h>
+#include <doodle_core/metadata/image_icon.h>
 namespace doodle {
 
 class screenshot_widget::impl {

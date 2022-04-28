@@ -16,11 +16,11 @@
 #include <doodle_lib/core/init_register.h>
 
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_lib/metadata/assets_file.h>
-#include <doodle_lib/metadata/metadata_cpp.h>
-#include <doodle_lib/metadata/image_icon.h>
-#include <doodle_lib/metadata/importance.h>
-#include <doodle_lib/metadata/organization.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle {
 namespace edit_widgets_ns {

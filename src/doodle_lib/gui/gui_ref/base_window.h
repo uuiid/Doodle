@@ -39,7 +39,7 @@ class DOODLELIB_API base_window {
    * @brief 获取窗口标识
    * @return 窗口标识
    */
-  [[nodiscard]] virtual const string& title() const = 0;
+  [[nodiscard]] virtual const std::string& title() const = 0;
   /**
    * @brief (构造函数后)初始化
    */

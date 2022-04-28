@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/metadata/export_file_info.h>
+#include <doodle_core/metadata/export_file_info.h>
 #include <doodle_lib/core/init_register.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 

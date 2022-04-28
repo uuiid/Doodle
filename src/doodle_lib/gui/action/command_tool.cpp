@@ -6,15 +6,15 @@
 
 #include <gui/open_file_dialog.h>
 #include <doodle_lib/file_warp/maya_file.h>
-#include <doodle_lib/metadata/episodes.h>
-#include <doodle_lib/metadata/season.h>
-#include <doodle_lib/metadata/assets_file.h>
-#include <doodle_lib/metadata/shot.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/season.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/organization.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_lib/metadata/organization.h>
 
 #include <long_task/image_to_move.h>
 #include <gui/gui_ref/ref_base.h>

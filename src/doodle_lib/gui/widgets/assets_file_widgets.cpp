@@ -5,9 +5,9 @@
 #include "assets_file_widgets.h"
 
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/image_icon.h>
 #include <doodle_lib/core/image_loader.h>
-#include <doodle_lib/metadata/image_icon.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/long_task/drop_file_data.h>
