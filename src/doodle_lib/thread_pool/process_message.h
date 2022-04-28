@@ -46,7 +46,7 @@ class DOODLELIB_API process_message {
   void set_name(const std::string& in_string);
 
   void progress_step(const rational_int& in_rational_int);
-  void message(const string& in_string, const level& in_level_enum = level::warning);
+  void message(const std::string& in_string, const level& in_level_enum = level::warning);
   [[nodiscard]] const std::string& message_back() const;
 
   void set_state(state in_state);

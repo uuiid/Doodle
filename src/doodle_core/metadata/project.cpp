@@ -6,6 +6,8 @@
 #include <core/core_set.h>
 #include "organization.h"
 #include <doodle_core/logger/logger.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/locale.hpp>
 
 namespace doodle {
 

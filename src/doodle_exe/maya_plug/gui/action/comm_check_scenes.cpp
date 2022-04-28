@@ -33,7 +33,7 @@ comm_check_scenes::comm_check_scenes()
       p_err_4() {
   title_name_ = std::string{name};
 }
-MStatus comm_check_scenes::run_maya_py_script(const string& in_script) {
+MStatus comm_check_scenes::run_maya_py_script(const std::string& in_script) {
   MString l_script{};
   l_script.setUTF8(in_script.c_str());
   auto k_s = MGlobal::executePythonCommand(l_script);

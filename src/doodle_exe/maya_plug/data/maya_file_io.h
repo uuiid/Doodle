@@ -15,7 +15,7 @@ class maya_file_io {
   static FSys::path work_path(const FSys::path& in_path = ".");
   static string get_channel_date();
   static bool chick_channel();
-  static bool replace_channel_date(const string& in_string);
+  static bool replace_channel_date(const std::string& in_string);
   static bool save_file(const FSys::path& in_file_path);
 };
 

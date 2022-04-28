@@ -336,7 +336,7 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
  * @return 不符合名称的话返回空节点, 否则返回传入节点
  */
 MObject chick_group(const MFnDagNode& in_node,
-                    const string& in_name) {
+                    const std::string& in_name) {
   MStatus l_s{};
   auto l_name = in_node.name(&l_s);
   DOODLE_CHICK(l_s);
@@ -356,7 +356,7 @@ MObject chick_group(const MFnDagNode& in_node,
  * @return 创建的maya组节点
  */
 MObject make_group(MDagModifier& in_modifier,
-                   const string& in_name,
+                   const std::string& in_name,
                    const MObject& in_parent) {
   MStatus l_s{};
   auto l_r = in_modifier.createNode(d_str{"transform"}, in_parent, &l_s);

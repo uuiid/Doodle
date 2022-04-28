@@ -7,6 +7,7 @@
 #include <lib_warp/entt_warp.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/logger/logger.h>
 
 namespace doodle {
 export_file_info::export_file_info()

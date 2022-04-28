@@ -11,6 +11,8 @@
 #include <date/date.h>
 #include <entt/entt.hpp>
 #include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/lib_warp/entt_warp.h>
+#include <doodle_core/configure/static_value.h>
 //#include <>
 namespace doodle {
 class convert;

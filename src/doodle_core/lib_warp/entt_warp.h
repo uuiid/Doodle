@@ -10,6 +10,7 @@
 #include <iterator>
 
 namespace doodle {
+using namespace entt::literals;
 namespace entt_tool {
 namespace detail {
 /**

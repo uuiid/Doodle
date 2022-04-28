@@ -3,6 +3,7 @@
 //
 
 #include "season.h"
+#include <doodle_core/logger/logger.h>
 
 namespace doodle {
 season::season()
@@ -41,7 +42,7 @@ bool season::operator==(const season& in_rhs) const {
 bool season::operator!=(const season& in_rhs) const {
   return !(in_rhs == *this);
 }
-bool season::analysis(const string& in_path) {
+bool season::analysis(const std::string& in_path) {
   static std::regex reg{R"(seas_?(\d+))", std::regex_constants::icase};
   std::smatch k_match{};
   const auto& k_r = std::regex_search(in_path, k_match, reg);

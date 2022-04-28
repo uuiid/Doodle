@@ -35,7 +35,7 @@ class comm_check_scenes
   bool p_err_3;
   bool p_err_4;
 
-  static MStatus run_maya_py_script(const string& in_script);
+  static MStatus run_maya_py_script(const std::string& in_script);
 
   MStatus unlock_normal();
   MStatus duplicate_namel(bool use_select);

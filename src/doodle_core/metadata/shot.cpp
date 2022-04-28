@@ -27,7 +27,7 @@ void shot::set_shot(const int64_t& in_shot) {
 }
 
 std::string shot::get_shot_ab() const noexcept {
-  return string{magic_enum::enum_name(p_shot_enum)};
+  return std::string{magic_enum::enum_name(p_shot_enum)};
 }
 
 shot::shot_ab_enum shot::get_shot_ab_enum() const noexcept {

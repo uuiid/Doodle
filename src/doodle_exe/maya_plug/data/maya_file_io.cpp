@@ -55,7 +55,7 @@ bool maya_file_io::chick_channel() {
   }
   return true;
 }
-bool maya_file_io::replace_channel_date(const string& in_string) {
+bool maya_file_io::replace_channel_date(const std::string& in_string) {
   chick_channel();
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};

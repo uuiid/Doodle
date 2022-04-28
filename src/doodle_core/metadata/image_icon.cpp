@@ -5,6 +5,7 @@
 #include "image_icon.h"
 #include <doodle_core/metadata/project.h>
 #include <boost/contract.hpp>
+#include <doodle_core/logger/logger.h>
 
 namespace doodle {
 FSys::path image_icon::image_root(const entt::handle& in_handle) const {

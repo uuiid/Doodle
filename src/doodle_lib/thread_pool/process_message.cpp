@@ -16,7 +16,7 @@ const std::string& process_message::get_name() const {
   //  std::lock_guard _lock{_mutex};
   return p_name;
 }
-void process_message::set_name(const string& in_string) {
+void process_message::set_name(const std::string& in_string) {
   std::lock_guard _lock{_mutex};
   p_name    = in_string;
   p_name_id = fmt::format("{}##{}", get_name(), fmt::ptr(this));
@@ -25,7 +25,7 @@ void process_message::progress_step(const rational_int& in_rational_int) {
   std::lock_guard _lock{_mutex};
   p_progress += in_rational_int;
 }
-void process_message::message(const string& in_string, const level& in_level_enum) {
+void process_message::message(const std::string& in_string, const level& in_level_enum) {
   spdlog::info(in_string);
   std::lock_guard _lock{_mutex};
   switch (in_level_enum) {

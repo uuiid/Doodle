@@ -6,7 +6,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <entt/entt.hpp>
 #include <boost/signals2.hpp>
+
 namespace doodle {
+class project;
 
 class DOODLE_CORE_EXPORT core_sig {
  public:

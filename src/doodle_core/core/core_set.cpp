@@ -264,7 +264,7 @@ void core_set::add_recent_project(const FSys::path &in) {
     project_root[0] = in;
   }
 }
-std::string core_set::get_uuid_str(const string &in_add) {
+std::string core_set::get_uuid_str(const std::string &in_add) {
   return get_uuid_str() + in_add;
 }
 }  // namespace doodle

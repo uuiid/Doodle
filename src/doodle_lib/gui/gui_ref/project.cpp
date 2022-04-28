@@ -113,7 +113,7 @@ void base_config_edit::init_(const entt::handle& in) {
                         ranges::to_vector;
 }
 
-void base_config_edit::set_config_init(const entt::handle& in, const string& in_name) {
+void base_config_edit::set_config_init(const entt::handle& in, const std::string& in_name) {
   auto& l_config            = in.get_or_emplace<project_config::base_config>();
   p_i->path_                = l_config.vfx_cloth_sim_path.generic_string();
   p_i->ue4_name             = l_config.export_group;

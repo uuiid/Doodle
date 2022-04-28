@@ -7,7 +7,7 @@
 
 #include <google/protobuf/util/time_util.h>
 #include <doodle_core/metadata/time_point_wrap.h>
-#include <doodle_core/doodle_core/pin_yin/convert.h>
+#include <doodle_core/pin_yin/convert.h>
 
 namespace doodle {
 

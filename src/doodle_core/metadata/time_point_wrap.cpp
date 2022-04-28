@@ -6,6 +6,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/logger/logger.h>
 
 namespace doodle {
 
