@@ -6,7 +6,6 @@ class map_dir {
 }
 
 $map_item = @(
-    [map_dir]@{link = "C:\sy\ChangAnHuanJie_8"; source = "\\192.168.10.250\public\changanhuanjie"; name = "长安幻街_250" },
     [map_dir]@{link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
     [map_dir]@{link = "C:\sy\ChengXv_8"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
     [map_dir]@{link = "C:\sy\donghuagongxiang_8"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
@@ -15,6 +14,7 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\MeiYiGiao_8"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
     [map_dir]@{link = "C:\sy\jianji_250"; source = "\\192.168.10.250\public\11-剪辑" ; name = "剪辑_250" },
     
+    [map_dir]@{link = "C:\sy\ChangAnHuanJie_8"; source = "\\192.168.10.240\public\changanhuanjie"; name = "长安幻街_240" },
     [map_dir]@{link = "C:\sy\WuJinShenYu_8"; source = "\\192.168.10.240\public\WuJinShenYu"; name = "无尽神域_240" },
     [map_dir]@{link = "C:\sy\WuDiJianHun_8"; source = "\\192.168.10.240\public\WuDiJianHun"; name = "无敌剑魂_240" },
     [map_dir]@{link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
@@ -121,4 +121,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 
 Add-SyDir;
 Add-SymLink;
-# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sysDir.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run4.3.exe -requireAdmin
+# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sysDir.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run4.4.exe -requireAdmin
