@@ -258,7 +258,7 @@ std::double_t maya_camera::focalLength() const {
   DOODLE_CHICK(k_s);
   return k_r;
 }
-string maya_camera::get_transform_name() const {
+std::string maya_camera::get_transform_name() const {
   MStatus k_s{};
   auto k_obj = p_path.transform(&k_s);
   DOODLE_CHICK(k_s);

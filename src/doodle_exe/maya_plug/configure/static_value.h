@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_lib/configure/static_value.h>
+#include <doodle_core/configure/static_value.h>
 
 #include <string>
 #include <array>

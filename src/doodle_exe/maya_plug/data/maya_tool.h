@@ -6,6 +6,7 @@
 #include <maya/MApiNamespace.h>
 #include <maya/MPlug.h>
 #include <maya_plug/maya_plug_fwd.h>
+#include <maya_plug/exception/exception.h>
 namespace doodle::maya_plug {
 /**
  * @brief 这个插件会寻找节点的属性, 并在找到时返回
@@ -22,14 +23,16 @@ void set_attribute(const MObject& in_node,
                    const std::string& in_name,
                    const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
-  DOODLE_CHICK(l_s);
+  throw_maya_exception(l_s,DOODLE_LOC);
+//  DOODLE_CHICK(l_s);
 }
 template <typename T>
 T get_attribute(const MObject& in_node,
                 const std::string& in_name) {
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
-  DOODLE_CHICK(l_s);
+  throw_maya_exception(l_s,DOODLE_LOC);
+//  DOODLE_CHICK(l_s);
   return result;
 }
 
@@ -43,5 +46,7 @@ MObject get_transform(const MObject& in_object);
 void add_child(const MObject& in_praent, MObject& in_child);
 
 void add_mat(const MObject& in_obj, MObject& in_ref_obj);
-std::string node_name(const MObject& in_obj);
+std::string node_full_name(const MObject& in_obj);
+std::string get_node_name(const MObject& in_obj);
+std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 }  // namespace doodle::maya_plug

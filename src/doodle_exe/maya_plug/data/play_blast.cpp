@@ -19,7 +19,7 @@
 #include <maya/MGlobal.h>
 namespace doodle::maya_plug {
 
-string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
+std::string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
 
 // void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
 //   MStatus k_s{};

@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_core/exception/exception.h>
-#include <doodle_lib/logger/logger.h>
+#include <doodle_core/logger/logger.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include <maya/MStatus.h>

@@ -150,9 +150,27 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   DOODLE_CHICK(l_s);
   l_set.addMember(in_object);
 }
-std::string node_name(const MObject& in_obj) {
+std::string node_full_name(const MObject& in_obj) {
   MFnDependencyNode l_node{};
   DOODLE_CHICK(l_node.setObject(in_obj));
   return d_str{l_node.absoluteName()};
+}
+std::string get_node_name(const MObject& in_obj) {
+  MFnDependencyNode l_node{};
+  DOODLE_CHICK(l_node.setObject(in_obj));
+  MStatus l_s{};
+  auto l_name = l_node.name(&l_s);
+  DOODLE_CHICK(l_s);
+  return d_str{l_name};
+}
+std::string set_node_name(const MObject& in_obj, const std::string& in_name) {
+  MFnDependencyNode l_node{};
+  DOODLE_CHICK(l_node.setObject(in_obj));
+  MStatus l_s{};
+  l_node.setName(d_str{in_name}, true, &l_s);
+  DOODLE_CHICK(l_s);
+  auto l_name = l_node.name(&l_s);
+  DOODLE_CHICK(l_s);
+  return d_str{l_name};
 }
 }  // namespace doodle::maya_plug

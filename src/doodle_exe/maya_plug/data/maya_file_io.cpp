@@ -24,7 +24,7 @@ FSys::path maya_file_io::work_path(const FSys::path& in_path) {
   k_obj.setResolveMethod(MFileObject::MFileResolveMethod::kNone);
   return k_obj.resolvedFullName().asUTF8();
 }
-string maya_file_io::get_channel_date() {
+std::string maya_file_io::get_channel_date() {
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
   DOODLE_CHICK(k_status);
