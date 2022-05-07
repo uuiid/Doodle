@@ -551,10 +551,9 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
   export_file_info::export_type l_type{};
   switch (in_arg.export_type_p) {
     case export_type::abc: {
-      if (has_sim_cloth()) {
-        l_type = export_file_info::export_type::abc;
-        l_path = export_abc(in_arg.start_p, in_arg.end_p);
-      }
+      l_type = export_file_info::export_type::abc;
+      l_path = export_abc(in_arg.start_p, in_arg.end_p);
+
     } break;
     case export_type::fbx: {
       l_type = export_file_info::export_type::fbx;
