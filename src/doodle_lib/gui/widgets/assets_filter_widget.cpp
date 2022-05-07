@@ -6,12 +6,12 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <core/tree_node.h>
 #include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
+#include <gui/widgets/assets_filter_widgets/name_filter_factory.h>
 #include <gui/widgets/assets_filter_widgets/filter_factory_template.h>
 #include <gui/widgets/assets_filter_widgets/filter_base.h>
 
 #include <utility>
 namespace doodle {
-
 
 class path_filter : public gui::filter_base {
  public:
@@ -58,7 +58,7 @@ class path_filters : public gui::filter_base {
 
 class file_path_filter : public gui::filter_base {
  public:
-  explicit file_path_filter(std::string  in_string) : file_path_(std::move(in_string)) {}
+  explicit file_path_filter(std::string in_string) : file_path_(std::move(in_string)) {}
   std::string file_path_;
 
   bool operator()(const entt::handle& in) const override {
@@ -483,6 +483,7 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back(true, "镜头过滤"s, std::make_unique<shot_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "时间过滤"s, std::make_unique<time_filter_factory>());
+  p_impl->p_filter_factorys.emplace_back(true, "制作人过滤"s, std::make_unique<gui::name_filter_factory>());
 
   //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
 }

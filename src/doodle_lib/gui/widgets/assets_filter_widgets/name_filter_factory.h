@@ -5,8 +5,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/widgets/assets_filter_widgets/filter_factory_base.h>
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API name_filter_factory : public filter_factory_base {
  private:
@@ -14,13 +13,12 @@ class DOODLELIB_API name_filter_factory : public filter_factory_base {
   std::unique_ptr<impl> ptr;
 
  public:
-  virtual bool render() override;
+  bool render() override;
 
  protected:
-  virtual std::unique_ptr<filter_base> make_filter_() override;
-  virtual void refresh_() override;
-  virtual void init() override;
+  std::unique_ptr<filter_base> make_filter_() override;
+  void refresh_() override;
+  void init() override;
 };
 
-}  // namespace gui
-}  // namespace doodle
+}  // namespace doodle::gui

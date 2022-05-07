@@ -7,8 +7,7 @@
 #include <gui/gui_ref/ref_base.h>
 #include <lib_warp/imgui_warp.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class name_filter_factory::impl {
  public:
@@ -32,5 +31,4 @@ void name_filter_factory::refresh_() {
 void name_filter_factory::init() {
   ptr->name_.data.clear();
 }
-}  // namespace gui
 }  // namespace doodle
