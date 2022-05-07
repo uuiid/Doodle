@@ -38,7 +38,6 @@ set(
         gui/widgets/opencv_player_widget.h
         gui/widgets/project_widget.h
         gui/widgets/screenshot_widget.h
-        gui/widgets/drag_widget.h
         gui/widgets/project_edit.h
         gui/widgets/csv_export_widgets.h
         gui/widgets/time_sequencer_widget.h
@@ -116,7 +115,6 @@ set(
         gui/widgets/opencv_player_widget.cpp
         gui/widgets/project_widget.cpp
         gui/widgets/screenshot_widget.cpp
-        gui/widgets/drag_widget.cpp
         gui/widgets/project_edit.cpp
         gui/widgets/csv_export_widgets.cpp
         gui/widgets/time_sequencer_widget.cpp
