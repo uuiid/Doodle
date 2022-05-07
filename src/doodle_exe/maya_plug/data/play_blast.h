@@ -22,9 +22,9 @@ class play_blast {
   shot p_shot;
 
   MTime p_current_time;
-  string p_uuid;
+  std::string p_uuid;
 
-  static string p_post_render_notification_name;
+  static std::string p_post_render_notification_name;
 //  static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
 
   FSys::path get_file_path(const MTime& in_time) const;

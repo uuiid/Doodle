@@ -63,11 +63,11 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
-  k_comm = string{"FBXExportBakeComplexAnimation -v true;"};
+  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
-  k_comm = string{"FBXExportConstraints -v true;"};
+  k_comm = std::string{"FBXExportConstraints -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
@@ -187,7 +187,7 @@ void maya_camera::conjecture() {
     MDagPath k_path{};
     k_s = k_it.getPath(k_path);
     DOODLE_CHICK(k_s);
-    string k_path_str = d_str{k_path.fullPathName(&k_s)};
+    std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
     DOODLE_CHICK(k_s);
 
     camera k_cam{k_path, 0};

@@ -50,7 +50,7 @@ class maya_camera {
   void set_render_cam() const;
   void set_play_attr();
   std::double_t focalLength() const;
-  string get_transform_name() const;
+  std::string get_transform_name() const;
 };
 
 }  // namespace doodle::maya_plug

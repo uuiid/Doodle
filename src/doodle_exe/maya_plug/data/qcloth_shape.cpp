@@ -62,7 +62,7 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent, const 
   // 设置复制节点的名称
   l_s = l_node.setObject(l_r);
   DOODLE_CHICK(l_s);
-  string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+  std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
   DOODLE_CHICK(l_s);
   l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, in_suffix)}, false, &l_s);
   DOODLE_CHICK(l_s);
@@ -109,7 +109,7 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
 
                    // 设置复制节点的名称
                    l_node.setObject(l_r);
-                   string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+                   std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
                    DOODLE_CHICK(l_s);
                    l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
                    DOODLE_CHICK(l_s);
@@ -145,7 +145,7 @@ void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node)
   /// 创建包裹变形(maya的包裹变形需要先选择高模, 可以多个, 然后选中低模) 包裹时需要添加独占式绑定参数
   MSelectionList k_select{};
   MFnDependencyNode l_node{};
-  string l_string{"添加 "};
+  std::string l_string{"添加 "};
   /// 添加高模
   std::for_each(in_high_node.begin(), in_high_node.end(),
                 [&](const MObject& in_obj) -> void {
@@ -207,13 +207,13 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   ///  获得名称进行格式化命令
   MFnDagNode l_node{in_anim_node, &l_s};
   DOODLE_CHICK(l_s);
-  string l_aim_name = d_str{l_node.name(&l_s)};
+  std::string l_aim_name = d_str{l_node.name(&l_s)};
   DOODLE_CHICK(l_s);
 
   l_s = l_node.setObject(in_sim_node);
   DOODLE_CHICK(l_s);
 
-  string l_sim_name = d_str{l_node.name(&l_s)};
+  std::string l_sim_name = d_str{l_node.name(&l_s)};
   DOODLE_CHICK(l_s);
   DOODLE_LOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name)
   /// 这个设置包裹
@@ -530,10 +530,10 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
   /// \brief 获得解算节点fn
   MFnDependencyNode k_node{obj, &k_s};
   DOODLE_CHICK(k_s);
-  string k_namespace = p_ref_file.get<reference_file>().get_namespace();
+  std::string k_namespace = p_ref_file.get<reference_file>().get_namespace();
 
   DOODLE_CHICK(k_s);
-  string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
+  std::string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
   DOODLE_CHICK(k_s);
   {
     auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);

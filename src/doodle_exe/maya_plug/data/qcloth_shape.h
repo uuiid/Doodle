@@ -20,7 +20,7 @@ class maya_obj {
   maya_obj();
   explicit maya_obj(const MObject& in_object);
   MObject obj;
-  string p_name;
+  std::string p_name;
 };
 
 /**

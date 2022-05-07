@@ -10,7 +10,7 @@ namespace doodle::maya_plug {
 
 // class comm_play_blast : public process_t<comm_play_blast> {
 //   bool use_conjecture_cam;
-//   string p_save_path;
+//   std::string p_save_path;
 //   MString p_camera_path;
 
 //   play_blast_ptr p_play_balst;

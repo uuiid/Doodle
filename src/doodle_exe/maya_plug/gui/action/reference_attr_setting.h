@@ -11,7 +11,7 @@ class reference_file;
 namespace reference_attr {
 class data {
  public:
-  string path;
+  std::string path;
   bool use_sim;
   bool operator==(const data& in_rhs) const;
   bool operator!=(const data& in_rhs) const;

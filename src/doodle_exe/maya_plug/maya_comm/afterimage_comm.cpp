@@ -35,7 +35,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
   MFnDagNode k_node{};
   MObject k_obj{};
-  std::vector<string> k_name_s{};
+  std::vector<std::string> k_name_s{};
   for (MItSelectionList l_it{p_i->p_select_list};
        !l_it.isDone(&k_s);
        l_it.next()) {

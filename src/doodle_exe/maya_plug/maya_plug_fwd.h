@@ -74,7 +74,7 @@ class play_blast;
  */
 class d_str {
  public:
-  string p_u8_str{};
+  std::string p_u8_str{};
   template <class MStr, std::enable_if_t<std::is_same_v<MString, MStr>, bool> = true>
   explicit d_str(const MStr& in)
       : p_u8_str(in.asUTF8()){};
@@ -82,7 +82,7 @@ class d_str {
   //  explicit d_str(const MString& in)
   //      : p_u8_str(in.asUTF8()){};
 
-  explicit d_str(string  in_u8_str)
+  explicit d_str(std::string in_u8_str)
       : p_u8_str(std::move(in_u8_str)) {
   }
 
@@ -91,10 +91,10 @@ class d_str {
     k_r.setUTF8(p_u8_str.c_str());
     return k_r;
   }
-  inline operator string() const {
+  inline operator std::string() const {
     return p_u8_str;
   }
-  [[nodiscard]] inline string str() const {
+  [[nodiscard]] inline std::string str() const {
     return p_u8_str;
   }
 };
@@ -105,7 +105,6 @@ class d_str {
   throw_maya_exception(in_status, DOODLE_SOURCE_LOC);
 
 void open_windows();
-
 
 }  // namespace doodle::maya_plug
 

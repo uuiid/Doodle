@@ -28,11 +28,11 @@ class reference_file {
 
  public:
   MObject p_m_object;
-  string path;
+  std::string path;
   bool use_sim;
   bool high_speed_sim;
-  std::vector<string> collision_model;
-  std::vector<string> collision_model_show_str;
+  std::vector<std::string> collision_model;
+  std::vector<std::string> collision_model_show_str;
 
   reference_file();
   explicit reference_file(const std::string &in_maya_namespace);
@@ -45,7 +45,7 @@ class reference_file {
   void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
-  [[nodiscard]] string get_namespace() const;
+  [[nodiscard]] std::string get_namespace() const;
 
   bool has_node(const MSelectionList &in_list);
   bool has_node(const MObject &in_node) const;

@@ -39,7 +39,7 @@ reference_file::reference_file()
       };
 
 reference_file::reference_file(
-    const string &in_maya_namespace)
+    const std::string &in_maya_namespace)
     : reference_file() {
   set_namespace(in_maya_namespace);
 }
@@ -61,7 +61,7 @@ MSelectionList reference_file::get_collision_model() const {
   }
   return l_list;
 }
-void reference_file::find_ref_node(const string &in_ref_uuid) {
+void reference_file::find_ref_node(const std::string &in_ref_uuid) {
   MStatus k_s;
   MFnReference k_file;
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
@@ -121,7 +121,7 @@ void reference_file::init_show_name() {
     DOODLE_CHICK(k_s);
   }
 }
-string reference_file::get_namespace() const {
+std::string reference_file::get_namespace() const {
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
   chick_true<doodle_error>(!file_namespace.empty(), DOODLE_LOC, "名称空间为空");
   return file_namespace;
@@ -201,7 +201,7 @@ bool reference_file::rename_material() const {
       DOODLE_CHICK(k_s);
       MFnDependencyNode k_mat_node{};
       k_mat_node.setObject(k_mat);
-      string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
+      std::string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
       DOODLE_CHICK(k_s);
       /// \brief 重命名材质名称
       k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
@@ -404,11 +404,11 @@ bakeResults
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
-  k_comm = string{"FBXExportBakeComplexAnimation -v true;"};
+  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
-  k_comm = string{"FBXExportConstraints -v true;"};
+  k_comm = std::string{"FBXExportConstraints -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
 
@@ -473,7 +473,7 @@ bool reference_file::has_sim_cloth() {
   }
   return false;
 }
-bool reference_file::set_namespace(const string &in_namespace) {
+bool reference_file::set_namespace(const std::string &in_namespace) {
   chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
   file_namespace = in_namespace.substr(1);
   auto k_r       = find_ref_node();

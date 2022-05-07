@@ -65,7 +65,7 @@ bool maya_file_io::replace_channel_date(const std::string& in_string) {
 
   adsk::Data::Handle k_h{k_stream->structure()};
 
-  string str_err{};
+  std::string str_err{};
   DOODLE_LOG_INFO(in_string);
   if (k_h.fromStr(in_string, 0, str_err) != 0)
     DOODLE_LOG_ERROR(str_err);
