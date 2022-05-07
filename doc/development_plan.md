@@ -27,28 +27,6 @@
 - 头发着色器制作和修改
 - 头发效果提升
 
-## v3.4.30 更新计划
-
-### 基本
-
-- 人名过滤
-- 显示制作人名称
-- 显示时间
-- 空标签检查
-
-### maya解算类别
-
-- 解算器设置更新
-    - Frame Samples 6
-    - Cg Accuracy 9
-    - Self Collision True
-    - Shape Feature True
-    - qcloth Collider 0.05
-- 解算名称修改
-    - 简模后缀 _proxy
-    - 解算节点后缀 _cloth
-    - 布料后缀 _cloth_proxy
-
 ## 基本计划
 
 - 文件列表的排序功能
