@@ -169,14 +169,6 @@ file -loadReference "{}" "{}";
 
 entt::handle reference_file::get_prj() const {
   return project::get_current();
-  // entt::handle l_h_r{};
-  // auto k_prj_view = g_reg()->view<project>();
-  // for (auto k_e : k_prj_view) {
-  //   l_h_r = make_handle(k_e);
-  //   break;
-  // }
-  // chick_true<doodle_error>(l_h_r, DOODLE_LOC, "无法找到项目");
-  // return l_h_r;
 }
 
 bool reference_file::rename_material() const {
@@ -237,12 +229,21 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     MItDag k_it{};
     k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
     DOODLE_CHICK(k_s);
+    MFnDagNode l_fn_dag_node{};
     for (; !k_it.isDone(&k_s); k_it.next()) {
       DOODLE_CHICK(k_s);
       k_s = k_it.getPath(k_root);
       DOODLE_CHICK(k_s);
-      l_names.push_back(d_str{k_root.fullPathName(&k_s)});
+
+      k_s = l_fn_dag_node.setObject(k_root);
       DOODLE_CHICK(k_s);
+      /// \brief 检查一下是否是中间对象
+      if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
+        DOODLE_CHICK(k_s)
+
+        l_names.push_back(d_str{k_root.fullPathName(&k_s)});
+        DOODLE_CHICK(k_s);
+      }
     }
   }
 
@@ -550,7 +551,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
   export_file_info::export_type l_type{};
   switch (in_arg.export_type_p) {
     case export_type::abc: {
-      if(has_sim_cloth()) {
+      if (has_sim_cloth()) {
         l_type = export_file_info::export_type::abc;
         l_path = export_abc(in_arg.start_p, in_arg.end_p);
       }
