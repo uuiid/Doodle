@@ -3,10 +3,16 @@
 //
 #pragma once
 
+#include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle {
 namespace gui {
 
-class name_filter_factory {
+class DOODLELIB_API name_filter_factory {
+ private:
+  class impl;
+ public:
+
 };
 
 }  // namespace gui
