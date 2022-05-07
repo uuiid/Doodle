@@ -128,18 +128,7 @@ namespace doodle {
  * * 传递材质
  * *
  *
- * @todo ue4 导入使用元数据格式解析
- * @todo ue4 导入添加道具搜素
- * @todo 添加只输出abc功能
- * @todo 文件列表的排序功能
  *
- *
- * @b ue4_todo:\n
- * @todo ue4 gpu超时更新
- * @todo ue4 abc解算和fbx分开
- * @todo ue4 路人走路时的脚本固定组件开发
- *
- * @todo 添加fbx资产替换
  *
  */
 class DOODLELIB_API app : public app_command_base {
@@ -169,8 +158,6 @@ class DOODLELIB_API app : public app_command_base {
   virtual void close_windows();
   virtual void show_windows();
   virtual bool set_parent(win::wnd_handle in_parent);
-
-
 
  protected:
   virtual void load_windows();
