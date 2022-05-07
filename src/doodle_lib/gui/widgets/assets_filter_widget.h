@@ -13,13 +13,6 @@
 
 namespace doodle {
 
-namespace gui {
-
-
-
-
-}  // namespace gui
-
 /**
  * @brief 资产显示树
  * @li 这里只显示资产树, 可以类比为文件夹树

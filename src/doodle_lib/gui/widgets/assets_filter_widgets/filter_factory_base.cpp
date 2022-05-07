@@ -3,6 +3,7 @@
 //
 
 #include "filter_factory_base.h"
+#include <gui/widgets/assets_filter_widgets/filter_base.h>
 
 namespace doodle::gui {
 class filter_factory_base::impl {

@@ -3,19 +3,10 @@
 //
 
 #include "assets_filter_widget.h"
-
-#include <doodle_core/core/doodle_lib.h>
-
 #include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/core/core_sig.h>
-
 #include <core/tree_node.h>
-#include <doodle_core/lib_warp/entt_warp.h>
-#include <lib_warp/imgui_warp.h>
-
-#include <doodle_lib/core/init_register.h>
-
 #include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
+#include <gui/widgets/assets_filter_widgets/filter_factory_template.h>
 #include <gui/widgets/assets_filter_widgets/filter_base.h>
 
 #include <utility>
