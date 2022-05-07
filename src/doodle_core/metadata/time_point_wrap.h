@@ -142,8 +142,8 @@ class DOODLE_CORE_EXPORT time_point_wrap {
 
 namespace fmt {
 /**
- * @brief 格式化资产类
- * 这个使用资产的路径属性格式化
+ * @brief 格式化时间包裹类
+ *
  * @tparam 资产类
  */
 template <>
