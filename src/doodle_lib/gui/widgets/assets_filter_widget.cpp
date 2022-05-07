@@ -288,10 +288,14 @@ class assets_filter_factory : public gui::filter_factory_base {
 
   bool render() override {
     {
-      dear::TreeNode l_node{*p_tree->data.gui_name};
+      dear::TreeNodeEx l_node{*p_tree->data.gui_name, ImGuiTreeNodeFlags_OpenOnArrow};
       dear::PopupContextItem{} && [this]() {
         popen_menu(*p_tree);
       };
+      if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+        this->p_cur_selects = {p_tree};
+        this->is_edit       = true;
+      }
       l_node&& [&]() {
         this->render_node(p_tree);
       };
