@@ -203,22 +203,8 @@ bool core_set_init::config_to_user() {
   return true;
 }
 
-bool core_set_init::init_project(const FSys::path &in_path) {
-  //  if (!in_path.empty() &&
-  //      FSys::exists(in_path) &&
-  //      FSys::is_regular_file(in_path) &&
-  //      in_path.extension() == doodle_config::doodle_db_name) {
-  //    core::client l_c{};
-  //    l_c.open_project(in_path);
-  //    return true;
-  //  }
-  return false;
-}
 nlohmann::json &core_set_init::json_value() {
   return *p_set.json_data;
-}
-bool core_set_init::init_project() {
-  return init_project(p_set.project_root[0]);
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {

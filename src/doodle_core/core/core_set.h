@@ -98,8 +98,6 @@ class DOODLE_CORE_EXPORT core_set_init {
   bool write_file();
   bool find_cache_dir();
   bool config_to_user();
-  bool init_project(const FSys::path &in_path);
-  bool init_project();
 };
 
 namespace win {
