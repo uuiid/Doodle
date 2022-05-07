@@ -147,8 +147,12 @@ class assets_file_widgets::impl {
       to_s<episodes>(eps_p, in_h);
       to_s<shot>(shot_p, in_h);
       to_s<assets_file>(name_p, in_h);
-      if (in_h.any_of<assets_file>())
-        file_path_p = in_h.get<assets_file>().get_path_normal().generic_string();
+      to_s<time_point_wrap>(time_p, in_h);
+      if (in_h.any_of<assets_file>()) {
+        auto&& l_ass = in_h.get<assets_file>();
+        user_p       = l_ass.p_user;
+        file_path_p  = in_h.get<assets_file>().get_path_normal().generic_string();
+      }
     }
 
     std::string ass_p;
@@ -156,6 +160,8 @@ class assets_file_widgets::impl {
     std::string shot_p;
     std::string name_p;
     std::string file_path_p;
+    std::string time_p;
+    std::string user_p;
   };
   std::vector<base_data_ptr> lists;
   std::size_t select_index{};
@@ -409,7 +415,7 @@ void assets_file_widgets::render_by_icon() {
 void assets_file_widgets::render_by_icon(std::size_t in_index) {
 }
 void assets_file_widgets::render_by_info() {
-  const static auto l_size{6u};
+  const static auto l_size{8u};
 
   dear::Table{
       "list",
@@ -430,6 +436,8 @@ void assets_file_widgets::render_by_info() {
     ImGui::TableSetupColumn("镜头", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("路径", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("名称", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn("时间", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn("制作人", ImGuiTableColumnFlags_None);
     ImGui::TableHeadersRow();
 
     ImGuiListClipper clipper{};
@@ -463,6 +471,10 @@ void assets_file_widgets::render_by_info() {
         dear::Text(i.file_path_p);
         ImGui::TableNextColumn();
         dear::Text(i.name_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.time_p);
+        ImGui::TableNextColumn();
+        dear::Text(i.user_p);
       }
     }
   };
