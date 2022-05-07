@@ -420,9 +420,9 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   auto [l_ql, l_mesh_out] = qlCreateCloth(k_proxy_node_input);
 
   {  /// @brief 设置名称
-    set_node_name(l_ql, fmt::format("{}_cloth", k_anim_mesh.p_name));
+    set_node_name(get_transform(l_ql), fmt::format("{}_cloth", k_anim_mesh.p_name));
     /// \brief 获取ql 创建布料时的附带创建出现的网格
-    set_node_name(l_mesh_out, fmt::format("{}_cloth_proxy", k_anim_mesh.p_name));
+    set_node_name(get_transform(l_mesh_out), fmt::format("{}_cloth_proxy", k_anim_mesh.p_name));
   }
 
   auto l_ql_core = get_ql_solver();
