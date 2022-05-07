@@ -6,3 +6,4 @@
 # And then add an exception for this specifc file (so that we can commit it).
 !.gitignore
 !MultiCPackConfig.cmake
+!index.html
