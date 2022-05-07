@@ -128,7 +128,7 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   chrono::hours_double one_day_works_hours(const time_local_point& in_point) const;
   chrono::days work_days(const time_local_point& in_begin, const time_local_point& in_end) const;
 
-  //这里是序列化的代码
+  // 这里是序列化的代码
 
   friend void to_json(nlohmann::json& j, const time_point_wrap& p) {
     j["time"] = p.zoned_time_.get_sys_time();
@@ -138,10 +138,29 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   }
 };
 
-// class time_point : public std::chrono::time_point<std::chrono::system_clock> {
-//  public:
-//   time_point(){
-//   };
-// }
-
 }  // namespace doodle
+
+namespace fmt {
+/**
+ * @brief 格式化资产类
+ * 这个使用资产的路径属性格式化
+ * @tparam 资产类
+ */
+template <>
+struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
+  /**
+   * @brief 格式化函数
+   *
+   * @tparam FormatContext fmt上下文类
+   * @param in_ 传入的资产类
+   * @param ctx 上下文
+   * @return decltype(ctx.out()) 基本上时 std::string
+   */
+  template <typename FormatContext>
+  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<std::string_view>::format(
+        in_.show_str(),
+        ctx);
+  }
+};
+}  // namespace fmt
