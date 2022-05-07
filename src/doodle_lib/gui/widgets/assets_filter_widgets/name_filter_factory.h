@@ -13,6 +13,8 @@ class DOODLELIB_API name_filter_factory : public filter_factory_base {
   std::unique_ptr<impl> ptr;
 
  public:
+  name_filter_factory();
+  ~name_filter_factory() override;
   bool render() override;
 
  protected:

@@ -430,7 +430,7 @@ void assets_file_widgets::render_by_info() {
           ImGuiTableFlags_::ImGuiTableFlags_Hideable,
   } && [&]() {
     ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-    ImGui::TableSetupColumn("id", ImGuiTableColumnFlags_None);
+    ImGui::TableSetupColumn("id", ImGuiTableColumnFlags_NoHide);
     ImGui::TableSetupColumn("分类", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("集数", ImGuiTableColumnFlags_None);
     ImGui::TableSetupColumn("镜头", ImGuiTableColumnFlags_None);

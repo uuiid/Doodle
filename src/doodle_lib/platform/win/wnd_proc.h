@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <doodle_lib_export.h>
 #include <doodle_lib/platform/win/windows_alias.h>
 #include <eigen3/Eigen/Core>
 #include <opencv2/core.hpp>

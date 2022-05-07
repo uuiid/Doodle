@@ -3,17 +3,19 @@
 //
 #pragma once
 #include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
+
 #include <doodle_core/configure/config.h>
 #include <doodle_core/doodle_core_pch.h>
-#include <doodle_core/lib_warp/cmrcWarp.h>
 #include <date/date.h>
 #include <entt/entt.hpp>
 #include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/lib_warp/cmrcWarp.h>
 #include <doodle_core/lib_warp/entt_warp.h>
+
 #include <doodle_core/core/core_help_impl.h>
-#include <doodle_core/configure/static_value.h>
 #include <doodle_core/lib_warp/std_warp.h>
 //#include <>
 namespace doodle {

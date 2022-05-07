@@ -13,11 +13,11 @@
 namespace fmt {
   /**
    * @brief 格式化boost uuid
-   * 
+   *
    * @tparam  ::boost::uuids::uuid
    */
 template <>
-struct formatter<::boost::uuids::uuid> : formatter<string_view> {
+struct formatter<::boost::uuids::uuid> : formatter<fmt::string_view> {
   template <typename FormatContext>
   auto format(const ::boost::uuids::uuid &in_, FormatContext &ctx) -> decltype(ctx.out()) {
     return formatter<fmt::string_view>::format(

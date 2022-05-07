@@ -3,9 +3,7 @@
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/logger/logger.h>
 
-#include <doodle_core/metadata/metadata.h>
-#include <doodle_core/logger/logger.h>
-
+#include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <boost/algorithm/string.hpp>
 
 #ifdef _WIN32

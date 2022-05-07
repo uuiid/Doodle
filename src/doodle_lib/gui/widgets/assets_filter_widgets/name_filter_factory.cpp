@@ -8,11 +8,12 @@
 #include <lib_warp/imgui_warp.h>
 
 namespace doodle::gui {
-
 class name_filter_factory::impl {
  public:
   gui_cache<std::string> name_{"制作人"s, ""s};
 };
+
+name_filter_factory::name_filter_factory() : ptr(std::make_unique<impl>()){};
 
 bool name_filter_factory::render() {
   bool result{false};
@@ -31,4 +32,6 @@ void name_filter_factory::refresh_() {
 void name_filter_factory::init() {
   ptr->name_.data.clear();
 }
-}  // namespace doodle
+name_filter_factory::~name_filter_factory() = default;
+
+}  // namespace doodle::gui
