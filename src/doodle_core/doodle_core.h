@@ -21,5 +21,4 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/thread_pool/process_message.h>

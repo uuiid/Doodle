@@ -13,7 +13,7 @@ namespace doodle::maya_plug {
 class doodle_info_node : public MPxLocatorNode {
  public:
   doodle_info_node();
-  ~doodle_info_node();
+  ~doodle_info_node() override;
 
   static void* creator();
   static MStatus initialize();
@@ -26,12 +26,12 @@ class doodle_info_node : public MPxLocatorNode {
 class doodle_info_node_data : public MUserData {
  public:
   doodle_info_node_data();
-  ~doodle_info_node_data();
+  ~doodle_info_node_data() override;
 };
 
 class doodle_info_node_draw_override : public MPxDrawOverride {
   doodle_info_node_draw_override(const MObject& obj);
-  
+
  public:
   static MPxDrawOverride* Creator(const MObject& obj);
 

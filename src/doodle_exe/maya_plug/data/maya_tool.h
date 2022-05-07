@@ -5,7 +5,7 @@
 #pragma once
 #include <maya/MApiNamespace.h>
 #include <maya/MPlug.h>
-#include <maya_plug/maya_plug_fwd.h>
+
 #include <maya_plug/exception/exception.h>
 namespace doodle::maya_plug {
 /**
