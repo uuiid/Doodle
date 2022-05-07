@@ -53,6 +53,8 @@ class DOODLELIB_API app_base {
   std::atomic_bool stop_;
   virtual bool valid() const;
 
+  void load_project(const FSys::path& in_path) const;
+
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
 

@@ -12,6 +12,8 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/authorization.h>
 
+#include <client/client.h>
+
 #include <boost/contract.hpp>
 
 #include <cryptopp/filters.h>
@@ -133,6 +135,20 @@ bool app_base::is_stop() const {
   return g_main_loop().empty() &&
          g_bounded_pool().empty() &&
          stop_;
+}
+void app_base::load_project(const FSys::path& in_path) const {
+  auto l_path = in_path.empty()
+                    ? (options_->p_project_path.empty()
+                           ? core_set::getSet().project_root[0]
+                           : options_->p_project_path)
+                    : in_path;
+  if (!l_path.empty() &&
+      FSys::exists(l_path) &&
+      FSys::is_regular_file(l_path) &&
+      l_path.extension() == doodle_config::doodle_db_name) {
+    core::client l_c{};
+    l_c.open_project(l_path);
+  }
 }
 
 app_base::~app_base() = default;

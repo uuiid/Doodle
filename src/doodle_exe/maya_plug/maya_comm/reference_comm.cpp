@@ -6,10 +6,12 @@
 
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_lib/client/client.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_lib/core/app_base.h>
 #include <doodle_core/core/core_set.h>
+
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/app/app.h>
+#include <doodle_lib/client/client.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -269,9 +271,9 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     MString k_path_M{};
     k_s    = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
     k_path = k_path_M.asUTF8();
-    core_set_init{}.init_project(k_path);
+    app::Get().load_project(k_path);
   } else {
-    core_set_init{}.init_project();
+    app::Get().load_project({});
   }
   DOODLE_LOG_INFO("开始打开项目 {}", k_path);
   if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
