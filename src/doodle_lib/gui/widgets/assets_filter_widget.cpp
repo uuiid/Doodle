@@ -14,6 +14,8 @@
 #include <lib_warp/imgui_warp.h>
 
 #include <doodle_lib/core/init_register.h>
+
+#include <utility>
 namespace doodle {
 
 namespace gui {
@@ -66,13 +68,9 @@ void filter_factory_base::connection_sig() {
         p_i->need_init = true;
       }));
 }
-// std::unique_ptr<sort_entt> sort_entt_factory_base::make_sort() {
-//   return make_sort_();
-// }
-// void sort_entt_factory_base::refresh(bool force) {
-//   is_edit = false;
-//   this->refresh_();
-// }
+
+
+
 
 }  // namespace gui
 
@@ -121,7 +119,7 @@ class path_filters : public gui::filter_base {
 
 class file_path_filter : public gui::filter_base {
  public:
-  explicit file_path_filter(const std::string& in_string) : file_path_(in_string) {}
+  explicit file_path_filter(std::string  in_string) : file_path_(std::move(in_string)) {}
   std::string file_path_;
 
   bool operator()(const entt::handle& in) const override {

@@ -39,6 +39,7 @@ generate_export_header(doodle_lib
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 
 add_subdirectory(external)
+add_subdirectory(gui/widgets/assets_filter_widgets)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
