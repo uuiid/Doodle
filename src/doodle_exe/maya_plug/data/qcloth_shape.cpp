@@ -5,7 +5,6 @@
 #include "qcloth_shape.h"
 #include "doodle_core/metadata/metadata.h"
 
-
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnMesh.h>
@@ -312,6 +311,7 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
   l_status = l_list.getDependNode(0, l_collider);
 
   MObject l_collider_offset{};
+  set_attribute(l_collider, "offset", 0.03);
 
   auto l_out_plug = get_plug(l_collider, "output");
   MPlugArray l_plug_array{};
@@ -415,6 +415,11 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   MDagPath l_path{};
 
   auto [l_ql, l_mesh_out] = qlCreateCloth(k_proxy_node_input);
+  auto l_ql_core          = get_ql_solver();
+  set_attribute(l_ql_core, "frameSamples", 6);
+  set_attribute(l_ql_core, "cgAccuracy", 9);
+  set_attribute(l_ql_core, "selfCollision", true);
+  set_attribute(l_ql_core, "sharpFeature", true);
   {  /// 整理层级关系
     auto l_ql_tran       = get_transform(l_ql);
     auto l_mesh_out_tran = get_transform(l_mesh_out);
