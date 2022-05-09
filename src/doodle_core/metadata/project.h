@@ -110,8 +110,6 @@ class DOODLE_CORE_EXPORT base_config {
    */
   std::vector<std::string> icon_extensions;
 
-  std::vector<redirection_path_info> redirection_path_info_list;
-
   base_config();
 
   bool match_icon_extensions(const FSys::path& in_path) const;

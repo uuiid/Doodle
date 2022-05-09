@@ -133,14 +133,13 @@ project_config::base_config::base_config()
       icon_extensions({".png"s, ".jpg"s}) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
-  j["find_icon_regex"]            = p.find_icon_regex;
-  j["assets_list"]                = p.assets_list;
-  j["vfx_cloth_sim_path"]         = p.vfx_cloth_sim_path;
-  j["export_group"]               = p.export_group;
-  j["cloth_proxy_"]               = p.cloth_proxy_;
-  j["simple_module_proxy_"]       = p.simple_module_proxy_;
-  j["icon_extensions"]            = p.icon_extensions;
-  j["redirection_path_info_list"] = p.redirection_path_info_list;
+  j["find_icon_regex"]      = p.find_icon_regex;
+  j["assets_list"]          = p.assets_list;
+  j["vfx_cloth_sim_path"]   = p.vfx_cloth_sim_path;
+  j["export_group"]         = p.export_group;
+  j["cloth_proxy_"]         = p.cloth_proxy_;
+  j["simple_module_proxy_"] = p.simple_module_proxy_;
+  j["icon_extensions"]      = p.icon_extensions;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -156,8 +155,6 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("simple_module_proxy_").get_to(p.simple_module_proxy_);
   if (j.contains("icon_extensions"))
     j.at("icon_extensions").get_to(p.icon_extensions);
-  if (j.contains("redirection_path_info_list"))
-    j.at("redirection_path_info_list").get_to(p.redirection_path_info_list);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {
