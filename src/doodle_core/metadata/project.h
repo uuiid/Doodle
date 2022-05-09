@@ -1,5 +1,6 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 
 namespace doodle {
 namespace project_config {
@@ -14,7 +15,7 @@ class organization;
  */
 class DOODLE_CORE_EXPORT project {
  public:
-   std::string p_name;
+  std::string p_name;
   FSys::path p_path;
 
   std::string p_en_str;
@@ -49,7 +50,6 @@ class DOODLE_CORE_EXPORT project {
   bool operator==(const project& in_rhs) const;
   bool operator!=(const project& in_rhs) const;
 
-
  private:
   friend void to_json(nlohmann::json& j, const project& p) {
     j["name"] = p.p_name;
@@ -73,6 +73,7 @@ class DOODLE_CORE_EXPORT base_config {
   constexpr static std::uint32_t class_hash() {
     return "class doodle::project::cloth_config"_hs;
   }
+
  public:
   FSys::path vfx_cloth_sim_path;
 
@@ -103,11 +104,13 @@ class DOODLE_CORE_EXPORT base_config {
    */
   std::vector<std::string> assets_list;
 
-    /**
+  /**
    * @brief 本组的各种分类
    *
    */
   std::vector<std::string> icon_extensions;
+
+  std::vector<redirection_path_info> redirection_path_info_list;
 
   base_config();
 
