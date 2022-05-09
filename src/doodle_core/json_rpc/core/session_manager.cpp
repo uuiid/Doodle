@@ -5,6 +5,7 @@
 #include "session_manager.h"
 #include <json_rpc/core/server.h>
 
+namespace doodle::json_rpc {
 session_manager::session_manager() = default;
 
 void session_manager::stop(const std::shared_ptr<session>& in_session) {
@@ -17,3 +18,4 @@ void session_manager::stop_all() {
   }
   session_list_.clear();
 }
+}  // namespace doodle::json_rpc

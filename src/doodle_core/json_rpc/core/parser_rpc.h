@@ -11,6 +11,9 @@
 #include <optional>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <json_rpc/core/rpc_reply.h>
+
+namespace doodle::json_rpc {
+
 using namespace std::literals;
 class rpc_request {
   class identifier {
@@ -76,3 +79,4 @@ class parser_rpc {
 
   std::string operator()(const rpc_server_ref& in_server);
 };
+}  // namespace doodle::json_rpc

@@ -11,6 +11,8 @@
 #include <json_rpc/core/parser_rpc.h>
 #include <type_traits>
 
+namespace doodle::json_rpc {
+
 class rpc_client {
   boost::asio::ip::tcp::socket client_socket;
 
@@ -67,3 +69,4 @@ class rpc_client {
     return this->call_fun<true, void>("rpc.close"s);
   }
 };
+}  // namespace doodle::json_rpc

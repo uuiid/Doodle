@@ -8,9 +8,11 @@
 
 #include <exception>
 #include <fmt/format.h>
+#include <doodle_core/exception/exception.h>
 using namespace std::literals;
 
-class rpc_error_exception : public std::runtime_error {
+namespace doodle::json_rpc {
+class rpc_error_exception : public doodle_error {
  public:
   const std::int64_t code{};
   const std::string message{};
@@ -18,7 +20,7 @@ class rpc_error_exception : public std::runtime_error {
   rpc_error_exception(const std::int64_t& in_code,
                       const std::string& in_msg,
                       const std::string& in_data = {})
-      : std::runtime_error(fmt::format("error code {}, msg {}, {}", in_code, in_msg, in_data)),
+      : doodle_error(fmt::format("error code {}, msg {}, {}", in_code, in_msg, in_data)),
         code(in_code),
         message(in_msg),
         data(in_data) {
@@ -102,3 +104,5 @@ inline const static rpc_error invalid_request{-32600, "Invalid Request无效请�
 inline const static rpc_error method_not_found{-32601, "Method not found找不到方法"s, "该方法不存在或无效"s};
 inline const static rpc_error invalid_params{-32602, "Invalid params无效的参数"s, "无效的方法参数"s};
 inline const static rpc_error internal_error{-32603, "Internal error内部错误"s, "JSON-RPC内部错误"s};
+
+}  // namespace doodle::json_rpc

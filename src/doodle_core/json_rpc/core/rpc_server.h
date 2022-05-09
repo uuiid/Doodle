@@ -18,6 +18,7 @@
 #include <boost/callable_traits.hpp>
 #include <boost/mpl/erase.hpp>
 
+namespace doodle::json_rpc {
 namespace detail {
 template <class ParamSequence, std::size_t... Indices>
 auto unpack_params(ParamSequence, std::index_sequence<Indices...>) -> std::tuple<boost::mpl::at_c<ParamSequence, Indices>...>;
@@ -112,3 +113,4 @@ class rpc_server_ref {
   rpc_reply operator()(const std::string& in_name,
                        const std::optional<nlohmann::json>& in_parm) const;
 };
+}  // namespace doodle::json_rpc

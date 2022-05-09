@@ -6,6 +6,8 @@
 #include <json_rpc/core/session_manager.h>
 #include <nlohmann/json.hpp>
 #include <utility>
+
+namespace doodle::json_rpc {
 server::server(boost::asio::io_context &in_io_context,
                std::uint16_t in_port)
     : acceptor_(in_io_context,
@@ -90,3 +92,4 @@ void session::stop() {
   std::cout << "close rpc " << socket_.remote_endpoint() << std::endl;
   socket_.close();
 }
+}  // namespace doodle::json_rpc

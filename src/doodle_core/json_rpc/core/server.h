@@ -2,6 +2,8 @@
 
 #include <boost/asio.hpp>
 
+namespace doodle::json_rpc {
+
 class parser_rpc;
 class rpc_server;
 class rpc_server_ref;
@@ -42,3 +44,4 @@ class session : public std::enable_shared_from_this<session> {
   boost::asio::streambuf data_{};
   std::string msg_{};
 };
+}  // namespace doodle::json_rpc

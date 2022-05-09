@@ -4,6 +4,9 @@
 
 #include "parser_rpc.h"
 #include <json_rpc/core/rpc_server.h>
+
+namespace doodle::json_rpc {
+
 std::string parser_rpc::operator()(const rpc_server_ref& in_server) {
   auto rpc_requrst_json = nlohmann::json::parse(json_data_);
   nlohmann::json result{};
@@ -48,3 +51,4 @@ std::uint64_t rpc_request::identifier::id() {
   return ++id_;
   ;
 }
+}  // namespace doodle::json_rpc

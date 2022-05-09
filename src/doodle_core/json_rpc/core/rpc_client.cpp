@@ -4,6 +4,8 @@
 
 #include "rpc_client.h"
 #include <json_rpc/core/server.h>
+
+namespace doodle::json_rpc {
 std::string rpc_client::call_server(const std::string& in_string, bool is_notice) {
   boost::asio::write(client_socket, boost::asio::buffer(in_string + session::end_string));
   if (is_notice)
@@ -18,3 +20,4 @@ std::string rpc_client::call_server(const std::string& in_string, bool is_notice
 rpc_client::~rpc_client() {
   close();
 }
+}  // namespace doodle::json_rpc
