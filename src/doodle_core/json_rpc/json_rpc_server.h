@@ -18,7 +18,7 @@ class DOODLE_CORE_EXPORT json_rpc_server : public json_rpc::rpc_server {
   using json_rpc::rpc_server::rpc_server;
 
  public:
-  virtual void init_register() override;
+  void init_register() override;
 
   virtual void open_project(const FSys::path& in_path) = 0;
   virtual void create_movie()                          = 0;

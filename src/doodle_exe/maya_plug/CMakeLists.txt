@@ -62,7 +62,14 @@ set(doodle_maya_plug_cpp
         maya_comm/find_duplicate_poly_comm.h
         maya_comm/find_duplicate_poly_comm.cpp
         configure/static_value.h
-        gui/maya_layout.cpp gui/maya_layout.h maya_comm/auto_chick_call_back.cpp maya_comm/auto_chick_call_back.h)
+        gui/maya_layout.cpp
+        gui/maya_layout.h
+        maya_comm/auto_chick_call_back.cpp
+        maya_comm/auto_chick_call_back.h
+        maya_comm/replace_rig_file_command.h
+        maya_comm/replace_rig_file_command.cpp
+
+        )
 
 if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
