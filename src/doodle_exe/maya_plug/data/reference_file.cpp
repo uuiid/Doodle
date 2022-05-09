@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/export_file_info.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -158,7 +159,7 @@ bool reference_file::replace_sim_assets_file() {
   auto k_comm = fmt::format(R"(
 file -loadReference "{}" "{}";
 )",
-                            d_str{k_ref.name()}.str(), k_vfx_path.generic_string(), true);
+                            d_str{k_ref.name()}.str(), k_vfx_path.generic_string());
   k_s         = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_CHICK(k_s);
   return true;
@@ -481,13 +482,12 @@ bool reference_file::find_ref_node() {
 
   MStatus k_s;
   MFnReference k_file;
-  DOODLE_LOG_INFO("寻找名称空间 {} 的引用", file_namespace);
+  DOODLE_LOG_INFO("名称空间 {} 开始寻找的引用", file_namespace);
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_file.setObject(refIter.thisNode());
     DOODLE_CHICK(k_s);
     const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
     if (k_mata_str == file_namespace.c_str()) {
-      DOODLE_LOG_INFO("扫描引用名称空间 {}", k_mata_str);
       p_m_object = refIter.thisNode();
     }
   }
@@ -497,7 +497,7 @@ bool reference_file::find_ref_node() {
   MFnReference k_ref{p_m_object, &k_s};
   DOODLE_CHICK(k_s);
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
-
+  DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
   return true;
 }
 bool reference_file::has_ue4_group() const {
@@ -569,6 +569,26 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
     export_file_info::write_file(out_);
   }
   return out_;
+}
+bool reference_file::replace_file(const entt::handle &in_handle) {
+  chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), DOODLE_LOC, "缺失替换引用信息");
+
+  auto l_path = in_handle.get<redirection_path_info>().get_replace_path();
+  if (l_path) {
+    MStatus k_s{};
+    DOODLE_LOG_INFO("开始替换文件 {} 到 {}", path, *l_path);
+    MFnReference k_ref{p_m_object};
+    /// \brief 替换引用文件
+    auto k_comm = fmt::format(R"(
+file -loadReference "{}" "{}";
+)",
+                              d_str{k_ref.name()}.str(), l_path->generic_string());
+    k_s         = MGlobal::executeCommand(d_str{k_comm}, true);
+    DOODLE_CHICK(k_s);
+    return true;
+  }
+  DOODLE_LOG_INFO("未发现引用文件");
+  return false;
 }
 
 }  // namespace doodle::maya_plug

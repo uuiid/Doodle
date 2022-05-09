@@ -23,4 +23,11 @@ redirection_path_info::redirection_path_info(
       search_path_(std::move(in_search_path)),
       file_name_(std::move(in_file_name)) {
 }
+std::optional<FSys::path> redirection_path_info::get_replace_path() const {
+  for (auto&& i : search_path_) {
+    if (FSys::exists(i / file_name_))
+      return i / file_name_;
+  }
+  return {};
+}
 }  // namespace doodle

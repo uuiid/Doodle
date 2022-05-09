@@ -54,6 +54,11 @@ class reference_file {
    */
   bool replace_sim_assets_file();
   /**
+   * @brief 替换引用 需要组件 redirection_path_info
+   */
+  bool replace_file(const entt::handle &in_handle);
+
+  /**
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return
    */
@@ -79,8 +84,8 @@ class reference_file {
   class export_arg {
    public:
     export_type export_type_p{};
-    MTime& start_p;
-    MTime& end_p;
+    MTime &start_p;
+    MTime &end_p;
   };
 
   entt::handle export_file(const export_arg &in_arg);
