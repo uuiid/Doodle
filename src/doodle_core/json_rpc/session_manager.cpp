@@ -3,7 +3,7 @@
 //
 
 #include "session_manager.h"
-#include <server/server.h>
+#include <doodle_core/json_rpc/server.h>
 
 session_manager::session_manager() = default;
 

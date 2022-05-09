@@ -3,7 +3,7 @@
 //
 
 #include "rpc_server.h"
-#include <server/server.h>
+#include <doodle_core/json_rpc/server.h>
 void rpc_server::register_fun(const std::string& in_name, const rpc_server::call_fun& in_call) {
   fun_list_.emplace(in_name, in_call);
 }

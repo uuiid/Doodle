@@ -8,8 +8,8 @@
 #include <functional>
 #include <optional>
 
-#include <server/exception/json_rpc_error.h>
-#include <server/rpc_reply.h>
+#include <doodle_core/json_rpc/exception/json_rpc_error.h>
+#include <doodle_core/json_rpc/rpc_reply.h>
 
 #include <boost/function_types/function_type.hpp>
 #include <boost/function_types/function_arity.hpp>

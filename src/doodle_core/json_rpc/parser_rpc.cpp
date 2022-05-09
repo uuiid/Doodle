@@ -3,7 +3,7 @@
 //
 
 #include "parser_rpc.h"
-#include <server/rpc_server.h>
+#include <doodle_core/json_rpc/rpc_server.h>
 std::string parser_rpc::operator()(const rpc_server_ref& in_server) {
   auto rpc_requrst_json = nlohmann::json::parse(json_data_);
   nlohmann::json result{};

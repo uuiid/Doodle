@@ -8,7 +8,7 @@
 
 #include <variant>
 #include <optional>
-#include <server/exception/json_rpc_error.h>
+#include <doodle_core/json_rpc/exception/json_rpc_error.h>
 
 namespace detail {
 // helper type for the visitor

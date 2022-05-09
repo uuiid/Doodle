@@ -3,7 +3,7 @@
 //
 
 #include "rpc_client.h"
-#include <server/server.h>
+#include <doodle_core/json_rpc/server.h>
 std::string rpc_client::call_server(const std::string& in_string, bool is_notice) {
   boost::asio::write(client_socket, boost::asio::buffer(in_string + session::end_string));
   if (is_notice)

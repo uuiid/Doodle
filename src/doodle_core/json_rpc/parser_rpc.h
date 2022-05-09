@@ -9,8 +9,8 @@
 
 #include <variant>
 #include <optional>
-#include <server/exception/json_rpc_error.h>
-#include <server/rpc_reply.h>
+#include <doodle_core/json_rpc/exception/json_rpc_error.h>
+#include <doodle_core/json_rpc/rpc_reply.h>
 using namespace std::literals;
 class rpc_request {
   class identifier {
