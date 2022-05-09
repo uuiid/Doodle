@@ -7,6 +7,7 @@
 #include <boost/asio.hpp>
 #include <json_rpc/core/rpc_reply.h>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
+#include <json_rpc/core/session.h>
 
 namespace doodle::json_rpc {
 

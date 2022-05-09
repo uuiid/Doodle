@@ -4,6 +4,8 @@
 
 #include "session.h"
 #include <boost/asio.hpp>
+#include <doodle_core/json_rpc/core/parser_rpc.h>
+
 namespace doodle {
 namespace json_rpc {
 
@@ -14,7 +16,7 @@ class session_manager;
 class session::impl {
  public:
   explicit impl(
-      boost::asio::ip::tcp::socket& in_socket)
+      boost::asio::ip::tcp::socket in_socket)
       : socket_(std::move(in_socket)),
         data_(),
         rpc_server_(){
@@ -29,8 +31,8 @@ class session::impl {
   std::string msg_{};
 };
 
-session::session(boost::asio::ip::tcp::socket& in_socket)
-    : ptr(std::make_unique<impl>(in_socket)){
+session::session(boost::asio::ip::tcp::socket in_socket)
+    : ptr(std::make_unique<impl>(std::move(in_socket))){
 
       };
 
@@ -78,6 +80,7 @@ void session::do_write() {
 void session::stop() {
   ptr->socket_.close();
 }
+session::~session() = default;
 
 }  // namespace json_rpc
 }  // namespace doodle

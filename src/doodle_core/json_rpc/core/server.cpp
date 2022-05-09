@@ -1,8 +1,9 @@
-#include <json_rpc/core/server.h>
+#include "server.h"
 #include <iostream>
 
 #include <json_rpc/core/parser_rpc.h>
 #include <json_rpc/core/rpc_server.h>
+#include <json_rpc/core/session.h>
 #include <json_rpc/core/session_manager.h>
 #include <nlohmann/json.hpp>
 #include <utility>
@@ -31,7 +32,7 @@ server::server(boost::asio::io_context &in_io_context,
 }
 void server::do_accept() {
   ptr->acceptor_.async_accept(
-      [this](boost::system::error_code in_err, boost::asio::ip::tcp::socket &in_socket) {
+      [this](boost::system::error_code in_err, boost::asio::ip::tcp::socket in_socket) {
         if (!in_err) {
           auto l_session = std::make_shared<session>(std::move(in_socket));
           ptr->session_manager_ptr->start(
@@ -51,6 +52,7 @@ void server::set_rpc_server(const std::shared_ptr<rpc_server> &in_server) {
   in_server->init_register();
   ptr->rpc_server_ptr_ = in_server;
 }
-
+server::server(server &&) noexcept            = default;
+server &server::operator=(server &&) noexcept = default;
 
 }  // namespace doodle::json_rpc

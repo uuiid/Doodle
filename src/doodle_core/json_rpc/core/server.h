@@ -1,7 +1,6 @@
 #pragma once
-
-
 #include <memory>
+
 namespace boost::asio {
 class io_context;
 }
@@ -18,14 +17,18 @@ class server {
   std::unique_ptr<impl> ptr;
 
  public:
-  explicit server(boost::asio::io_context& in_io_context,
+  explicit server(boost::asio::io_context &in_io_context,
                   std::uint16_t in_port);
 
-  void set_rpc_server(const std::shared_ptr<rpc_server>& in_server);
+  void set_rpc_server(const std::shared_ptr<rpc_server> &in_server);
+
+  server(const server &) noexcept            = delete;
+  server &operator=(const server &) noexcept = delete;
+  server(server &&) noexcept;
+  server &operator=(server &&) noexcept;
 
  private:
   void do_accept();
 };
-
 
 }  // namespace doodle::json_rpc
