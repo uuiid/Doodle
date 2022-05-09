@@ -187,4 +187,8 @@ sqlpp11[sqlite3-connector] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\port
 "$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json"
 
 "$(SolutionDir)doodle_plug.uproject"
+
+    find_package(Simbody CONFIG REQUIRED)
+    # note: 1 targets were omitted.
+    target_link_libraries(main PRIVATE blas lapack SimTKmath SimTKcommon)
 ]==]

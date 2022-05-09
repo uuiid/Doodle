@@ -337,7 +337,7 @@ class add_assets_for_file : public base_render {
   void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
     image_loader l_image_load{};
 
-    auto &l_config = project::get_current().get_or_emplace<project_config::base_config>();
+    auto &l_config = g_reg()->ctx().at<project_config::base_config>();
     std::regex l_regex{l_config.find_icon_regex};
     FSys::path l_path{in_path};
     if (FSys::is_regular_file(l_path) &&
@@ -426,7 +426,7 @@ class add_assets_for_file : public base_render {
                   : this->assets_list.data.front();
         });
     l_sig.save_end.connect([this](const doodle::handle_list &) {
-      auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
+      auto &prj         = g_reg()->ctx().at<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
             return this->assets_list.show_name == in;
@@ -441,7 +441,7 @@ class add_assets_for_file : public base_render {
       this->add_assets(in_file_list);
     });
     if (project::has_prj()) {
-      auto &prj         = project::get_current().get_or_emplace<project_config::base_config>();
+      auto &prj         = g_reg()->ctx().at<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
             return this->assets_list.show_name == in;

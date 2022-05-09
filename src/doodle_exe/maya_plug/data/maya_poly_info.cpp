@@ -50,14 +50,12 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
 
     std::string l_find_str{};
     if (has_cloth) {
-      l_find_str = project::get_current()
-                       .get_or_emplace<project_config::base_config>()
+      l_find_str = g_reg()->ctx().at<project_config::base_config>()
                        .cloth_proxy_;
       boost::ends_with(node_org_name, l_find_str);
       has_cloth = boost::ends_with(node_org_name, l_find_str);
     } else if (has_skin) {
-      l_find_str = project::get_current()
-                       .get_or_emplace<project_config::base_config>()
+      l_find_str = g_reg()->ctx().at<project_config::base_config>()
                        .simple_module_proxy_;
       boost::ends_with(node_org_name, l_find_str);
       has_skin = boost::ends_with(node_org_name, l_find_str);

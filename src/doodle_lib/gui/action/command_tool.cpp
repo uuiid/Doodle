@@ -56,8 +56,8 @@ void comm_maya_tool::init() {
                      }) |
                      ranges::to_vector;
       });
-  if (project::has_prj())
-    p_text = project::get_current().get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+
+  p_text = g_reg()->ctx().at<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->ctx().emplace<comm_maya_tool&>(*this);
 }
 

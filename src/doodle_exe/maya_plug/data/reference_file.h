@@ -40,8 +40,6 @@ class reference_file {
   void set_path(const MObject &in_ref_node);
   bool set_namespace(const std::string &in_namespace);
 
-  [[nodiscard]] entt::handle get_prj() const;
-
   void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);

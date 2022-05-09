@@ -79,10 +79,9 @@ MSyntax set_cloth_cache_path_syntax() {
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
-  entt::handle k_def_prj{project::get_current()};
 
-  DOODLE_LOG_INFO(
-      "获得默认项目 {}", bool(k_def_prj));
+
+
   DOODLE_LOG_INFO("开始清除引用实体")
   auto k_ref_view   = g_reg()->view<reference_file>();
   auto k_cloth_view = g_reg()->view<qcloth_shape>();

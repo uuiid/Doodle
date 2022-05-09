@@ -28,6 +28,9 @@ doodle_lib::doodle_lib()
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   reg->ctx().emplace<database_info>();
+  reg->ctx().emplace<project>("C:/", "tmp_project");
+  reg->ctx().emplace<project_config::base_config>();
+
   auto& k_sig = reg->ctx().emplace<core_sig>();
   reg->ctx().emplace<status_info>();
   k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
@@ -48,9 +51,15 @@ doodle_lib::doodle_lib()
     auto& l_ctx = g_reg()->ctx();
     l_ctx.erase<project>();
     l_ctx.erase<database::ref_data>();
+    l_ctx.erase<project_config::base_config>();
 
-    g_reg()->ctx().emplace<project>(in_project);
-    g_reg()->ctx().emplace<database::ref_data>(in_handle.get<database>());
+    l_ctx.emplace<project>(in_project);
+    l_ctx.emplace<database::ref_data>(in_handle.get<database>());
+    if (in_handle.any_of<project_config::base_config>()) {
+      l_ctx.emplace<project_config::base_config>(in_handle.get<project_config::base_config>());
+    }else
+      l_ctx.emplace<project_config::base_config>();
+
     core_set::getSet().add_recent_project(g_reg()->ctx().at<database_info>().path_);
   });
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {
