@@ -18,6 +18,8 @@ target_sources(
         time_point_wrap.h
         tree_adapter.h
         user.h
+        redirection_path_info.h
+
         PRIVATE
         assets.cpp
         assets_file.cpp
@@ -35,5 +37,6 @@ target_sources(
         shot.cpp
         time_point_wrap.cpp
         user.cpp
+        redirection_path_info.cpp
 
 )
