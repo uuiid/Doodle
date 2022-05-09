@@ -6,9 +6,9 @@
 #include <boost/asio.hpp>
 #include <nlohmann/json.hpp>
 
-#include <doodle_core/json_rpc/rpc_reply.h>
+#include <json_rpc/core/rpc_reply.h>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
-#include <doodle_core/json_rpc/parser_rpc.h>
+#include <json_rpc/core/parser_rpc.h>
 #include <type_traits>
 
 class rpc_client {

@@ -10,7 +10,7 @@
 #include <variant>
 #include <optional>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
-#include <doodle_core/json_rpc/rpc_reply.h>
+#include <json_rpc/core/rpc_reply.h>
 using namespace std::literals;
 class rpc_request {
   class identifier {

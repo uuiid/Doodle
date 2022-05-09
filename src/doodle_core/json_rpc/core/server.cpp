@@ -1,9 +1,9 @@
-#include <doodle_core/json_rpc/server.h>
+#include <json_rpc/core/server.h>
 #include <iostream>
 
-#include <doodle_core/json_rpc/parser_rpc.h>
-#include <doodle_core/json_rpc/rpc_server.h>
-#include <doodle_core/json_rpc/session_manager.h>
+#include <json_rpc/core/parser_rpc.h>
+#include <json_rpc/core/rpc_server.h>
+#include <json_rpc/core/session_manager.h>
 #include <nlohmann/json.hpp>
 #include <utility>
 server::server(boost::asio::io_context &in_io_context,
