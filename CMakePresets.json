@@ -153,6 +153,14 @@
       ]
     },
     {
+      "name": "doxygen",
+      "configurePreset": "Ninja_release",
+      "jobs": 10,
+      "targets": [
+        "Doxygen"
+      ]
+    },
+    {
       "name": "release_maya_plug_2018",
       "configurePreset": "Ninja_release_maya_2018",
       "jobs": 10,
