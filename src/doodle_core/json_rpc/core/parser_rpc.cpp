@@ -49,6 +49,5 @@ rpc_request::identifier& rpc_request::identifier::get() {
 }
 std::uint64_t rpc_request::identifier::id() {
   return ++id_;
-  ;
 }
 }  // namespace doodle::json_rpc
