@@ -347,3 +347,4 @@
 * 简模后缀 _proxy
 * 解算节点后缀 _cloth
 * 布料后缀 _cloth_proxy
+* maya插件组合abc时取消中间物体的选择(错误修正)
