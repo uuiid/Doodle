@@ -7,10 +7,6 @@
 
 session_manager::session_manager() = default;
 
-void session_manager::start(const std::shared_ptr<session>& in_session) {
-  session_list_.insert(in_session);
-  in_session->start();
-}
 void session_manager::stop(const std::shared_ptr<session>& in_session) {
   session_list_.erase(in_session);
   in_session->stop();

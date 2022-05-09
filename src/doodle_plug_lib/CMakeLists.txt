@@ -11,7 +11,6 @@ target_sources(
 )
 
 add_subdirectory(configure)
-add_subdirectory(json_rpc)
 
 
 target_link_libraries(

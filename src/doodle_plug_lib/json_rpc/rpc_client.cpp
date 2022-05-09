@@ -1,9 +1,0 @@
-//
-// Created by TD on 2022/4/29.
-//
-
-#include "rpc_client.h"
-
-namespace doodle::rpc{
-
-}

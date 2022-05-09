@@ -37,6 +37,7 @@ target_sources(doodle_core
 add_subdirectory(configure)
 add_subdirectory(core)
 add_subdirectory(exception)
+add_subdirectory(json_rpc)
 add_subdirectory(lib_warp)
 add_subdirectory(logger)
 add_subdirectory(metadata)
