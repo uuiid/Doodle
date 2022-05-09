@@ -4,6 +4,8 @@
 
 #include "rpc_server.h"
 #include <json_rpc/core/server.h>
+
+namespace doodle::json_rpc {
 void rpc_server::register_fun(const std::string& in_name, const rpc_server::call_fun& in_call) {
   fun_list_.emplace(in_name, in_call);
 }
@@ -39,3 +41,4 @@ rpc_reply rpc_server_ref::operator()(const std::string& in_name, const std::opti
   }
   return reply;
 }
+}  // namespace doodle::json_rpc

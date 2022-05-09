@@ -3,28 +3,25 @@
 //
 
 #pragma once
-#include <boost/asio.hpp>
+
 #include <nlohmann/json.hpp>
 
-#include <json_rpc/core/rpc_reply.h>
-#include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <json_rpc/core/parser_rpc.h>
-#include <type_traits>
+
+namespace boost::asio {
+class io_context;
+}
 
 namespace doodle::json_rpc {
 
 class rpc_client {
-  boost::asio::ip::tcp::socket client_socket;
+  class impl;
+  std::unique_ptr<impl> ptr;
 
  public:
-  rpc_client(boost::asio::io_context& in_context,
-             const std::string& in_host,
-             std::uint16_t in_post)
-      : client_socket(in_context) {
-    client_socket.connect(boost::asio::ip::tcp::endpoint{
-        boost::asio::ip::address::from_string(in_host),
-        in_post});
-  };
+  explicit rpc_client(boost::asio::io_context& in_context,
+                      const std::string& in_host,
+                      std::uint16_t in_post);
   ~rpc_client();
 
  protected:
@@ -65,8 +62,6 @@ class rpc_client {
     if constexpr (!std::is_same_v<void, Result_Type>)
       return Result_Type{};
   }
-  void close() {
-    return this->call_fun<true, void>("rpc.close"s);
-  }
+  void close();
 };
 }  // namespace doodle::json_rpc
