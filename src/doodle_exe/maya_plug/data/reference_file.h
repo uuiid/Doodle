@@ -33,6 +33,7 @@ class reference_file {
    */
   MObject p_m_object;
   std::string path;
+
   bool use_sim;
   bool high_speed_sim;
   std::vector<std::string> collision_model;
@@ -51,7 +52,11 @@ class reference_file {
 
   bool has_node(const MSelectionList &in_list);
   bool has_node(const MObject &in_node) const;
-
+  /**
+   * @brief 获取真正的路径
+   * @return
+   */
+  [[nodiscard]] FSys::path get_path() const;
   bool has_sim_cloth();
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况

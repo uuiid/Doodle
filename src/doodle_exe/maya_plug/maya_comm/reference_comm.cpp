@@ -103,7 +103,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
         DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
       }
     } else {
-      DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_name);
+      DOODLE_LOG_INFO("命名空间 {} 中无有效引用", k_name);
     }
   }
 

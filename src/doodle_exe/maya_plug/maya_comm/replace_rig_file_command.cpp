@@ -4,17 +4,23 @@
 
 #include "replace_rig_file_command.h"
 //#include <doodle_lib/doodle_lib_all.h>
-
+#include <maya_plug/data/reference_file.h>
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/redirection_path_info.h>
+#include <doodle_core/metadata/assets_file.h>
 namespace doodle::maya_plug {
 MSyntax replace_rig_file_command_ns::replace_rig_file_syntax() {
   return MSyntax{};
 }
 
-MStatus replace_rig_file_command::doIt(const MArgList &) {
-  chick_true<doodle_error>(
-      project::has_prj(),
-      DOODLE_LOC,
-      "缺失project上下文");
+MStatus replace_rig_file_command::doIt(const MArgList&) {
+  for (auto&& [e_, ass, re] : g_reg()->view<assets_file, redirection_path_info>().each()) {
+    for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      if (ass.path.filename() == ref.get_path().filename()) {
+        ref.replace_file(make_handle(e_));
+      }
+    }
+  }
 
   return MStatus{};
 }

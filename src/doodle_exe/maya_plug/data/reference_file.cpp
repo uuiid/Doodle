@@ -164,7 +164,7 @@ bool reference_file::replace_sim_assets_file() {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self = reinterpret_cast<reference_file*>(clientData);
+          auto *self = reinterpret_cast<reference_file *>(clientData);
           file.setRawFullName(d_str{self->path});
           *retCode = file.exists();
         },
@@ -590,7 +590,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self  = reinterpret_cast<reference_file*>(clientData);
+          auto *self  = reinterpret_cast<reference_file *>(clientData);
           auto l_path = self->search_file_info.get<redirection_path_info>().get_replace_path();
           if (l_path) {
             MStatus k_s{};
@@ -608,6 +608,14 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
   return false;
+}
+FSys::path reference_file::get_path() const {
+  MStatus k_s{};
+  MFnReference k_ref{p_m_object, &k_s};
+  DOODLE_CHICK(k_s);
+  FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
+  DOODLE_CHICK(k_s);
+  return l_path;
 }
 
 }  // namespace doodle::maya_plug
