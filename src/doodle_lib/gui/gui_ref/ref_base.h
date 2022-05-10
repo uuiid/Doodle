@@ -77,7 +77,7 @@ class DOODLELIB_API edit_interface {
    * @brief Destroy the edit interface object
    *
    */
-  ~edit_interface();
+  virtual ~edit_interface();
 
   /**
    * @brief 数据指针
