@@ -18,6 +18,7 @@
 #include <maya_plug/data/create_hud_node.h>
 #include <maya_plug/maya_comm/afterimage_comm.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
+#include <maya_plug/maya_comm/replace_rig_file_command.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -192,6 +193,9 @@ MStatus initializePlugin(MObject obj) {
   /// 添加设置缓存命令
   status = ::doodle::maya_plug::set_cloth_cache_path::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 添加替换文件命令
+  status = ::doodle::maya_plug::replace_rig_file_command::registerCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {
@@ -231,6 +235,9 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
+  /// 取消替换命令
+  status = ::doodle::maya_plug::replace_rig_file_command::deregisterCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 取消设置缓存命令
   status = ::doodle::maya_plug::set_cloth_cache_path::deregisterCommand(k_plugin);

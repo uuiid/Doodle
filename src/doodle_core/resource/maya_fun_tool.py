@@ -271,6 +271,7 @@ class open_file(object):
         cmds.doodle_load_project(project=self.cfg.project)
         cmds.doodle_comm_file_save()
         cmds.doodle_create_ref_file()
+        cmds.doodle_replace_rig_file()
         cmds.comm_play_blast_maya(startTime=doodle_work_space.raneg.start,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
