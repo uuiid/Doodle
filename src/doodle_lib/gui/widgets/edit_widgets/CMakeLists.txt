@@ -3,6 +3,6 @@ target_sources(doodle_lib
         redirection_path_info_edit.h
 
         PRIVATE
-        redirection_path_info.cpp
+        redirection_path_info_edit.cpp
 
         )

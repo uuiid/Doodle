@@ -6,8 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API redirection_path_info_edit : public edit_interface {
  private:
@@ -27,5 +26,4 @@ class DOODLELIB_API redirection_path_info_edit : public edit_interface {
   virtual void save_(const entt::handle& in) const override;
 };
 
-}  // namespace gui
 }  // namespace doodle

@@ -6,8 +6,7 @@
 
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class redirection_path_info_edit::impl {
  public:
@@ -51,5 +50,4 @@ void redirection_path_info_edit::save_(const entt::handle& in) const {
 }
 
 redirection_path_info_edit::~redirection_path_info_edit() = default;
-}  // namespace gui
 }  // namespace doodle
