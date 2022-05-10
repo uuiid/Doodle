@@ -40,7 +40,7 @@ class maya_file():
         pass
 
     def __str__(self):
-        return "maya file path : {} maya name :"\
+        return "maya file path : {} maya name :" \
             .format(self.abs_path,
                     self.file_name)
 
@@ -70,7 +70,7 @@ class maya_workspace():
     def set_workspace_static(path):
         # type: (str)->pymel.util.path
         k_work = pymel.util.path(path).dirname() / \
-            "workspace.mel"  # type: pymel.util.path
+                 "workspace.mel"  # type: pymel.util.path
         k_work2 = pymel.util.path(path) / "workspace.mel"
 
         if k_work.exists():
@@ -99,14 +99,14 @@ class maya_workspace():
     def get_abc_folder(self):
         # type: () -> pymel.util.path
         path = self.work.path / "abc" / \
-            self.maya_file.name_not_ex  # type: pymel.util.path
+               self.maya_file.name_not_ex  # type: pymel.util.path
         path.makedirs_p()
         return path
 
     def get_fbx_folder(self):
         # type: () -> pymel.util.path
         path = self.work.path / "fbx" / \
-            self.maya_file.name_not_ex  # type: pymel.util.path
+               self.maya_file.name_not_ex  # type: pymel.util.path
         path.makedirs_p()
         return path
 
@@ -161,20 +161,33 @@ class fbx_config(config):
         self.use_all_ref = False
 
 
+class replace_file(config):
+    def __init__(self):
+        super(replace_file, self).__init__()
+        self.replace_file_all = False
+
+
 def __load_config__(obj):
     if "only_sim" in obj:
         k_con = sim_config()
         k_con.path = obj["path"]
         k_con.export_path = obj["export_path"]
-        k_con.only_sim = obj["only_sim"]
         k_con.project = obj["project_"]
+        k_con.only_sim = obj["only_sim"]
         return k_con
     elif "use_all_ref" in obj:
         k_con = fbx_config()
         k_con.path = obj["path"]
         k_con.export_path = obj["export_path"]
-        k_con.use_all_ref = obj["use_all_ref"]
         k_con.project = obj["project_"]
+        k_con.use_all_ref = obj["use_all_ref"]
+        return k_con
+    elif "replace_file_all" in obj:
+        k_con = replace_file()
+        k_con.path = obj["path"]
+        k_con.export_path = obj["export_path"]
+        k_con.project = obj["project_"]
+        k_con.use_all_ref = obj["replace_file_all"]
         return k_con
 
 
@@ -238,7 +251,7 @@ class open_file(object):
         cmds.currentTime(950)
         doodle_work_space.reset()
 
-        assert(isinstance(self.cfg, sim_config))
+        assert (isinstance(self.cfg, sim_config))
         cmds.doodle_load_project(project=self.cfg.project)
 
         cmds.doodle_create_ref_file()
@@ -264,7 +277,7 @@ class open_file(object):
 
     def get_fbx_export(self):
         # type: () -> None
-        assert(isinstance(self.cfg, fbx_config))
+        assert (isinstance(self.cfg, fbx_config))
 
         self.load_plug(["fbxmaya"])
         self.open()
@@ -288,10 +301,22 @@ class open_file(object):
         cmds.doodle_export_camera(startTime=1001,
                                   endTime=doodle_work_space.raneg.end)
 
+    def replace_file_fun(self):
+        # type: () -> None
+        assert (isinstance(self.cfg, replace_file))
+        self.load_plug(["fbxmaya"])
+        self.open()
+        cmds.doodle_load_project(project=self.cfg.project)
+        cmds.doodle_create_ref_file()
+        cmds.doodle_replace_rig_file()
+        cmds.doodle_comm_file_save()
+
     def __call__(self):
         if isinstance(self.cfg, sim_config):
             self.get_cloth_sim()
         elif isinstance(self.cfg, fbx_config):
             self.get_fbx_export()
+        elif isinstance(self.cfg, replace_file):
+            self.replace_file_fun()
         else:
             print("not config")

@@ -52,5 +52,16 @@ void maya_file_async::qcloth_sim_file(const entt::handle& in_handle, const detai
   chick_true<doodle_error>(!in_arg.sim_path.empty(), DOODLE_LOC, "没有文件");
   g_bounded_pool().attach<details::maya_exe>(in_handle, in_arg);
 }
+void maya_file_async::replace_file_fun(const entt::handle& in_handle, const details::replace_file_arg& in_arg) {
+  if (!in_handle.any_of<process_message>())
+    in_handle.emplace<process_message>();
+
+  in_handle.patch<process_message>([&](process_message& in) {
+    in.set_name(in_arg.file_path.filename().generic_string());
+  });
+
+  chick_true<doodle_error>(!in_arg.file_path.empty(), DOODLE_LOC, "没有文件");
+  g_bounded_pool().attach<details::maya_exe>(in_handle, in_arg);
+}
 
 }  // namespace doodle

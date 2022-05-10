@@ -51,6 +51,33 @@ class DOODLELIB_API export_fbx_arg {
   };
 };
 
+class DOODLELIB_API replace_file_arg {
+ public:
+  /**
+   * @brief maya文件源路径(文件路径)
+   *
+   */
+  FSys::path file_path;
+  /**
+   * @brief 导出文件的路径(目录)
+   *
+   */
+  FSys::path export_path;
+  /**
+   * @brief 是否导出所有引用
+   *
+   */
+  bool replace_file_all;
+
+  FSys::path project_;
+  friend void to_json(nlohmann::json &nlohmann_json_j, const replace_file_arg &nlohmann_json_t) {
+    nlohmann_json_j["path"]             = nlohmann_json_t.file_path.generic_string();
+    nlohmann_json_j["export_path"]      = nlohmann_json_t.export_path.generic_string();
+    nlohmann_json_j["project_"]         = nlohmann_json_t.project_.generic_string();
+    nlohmann_json_j["replace_file_all"] = nlohmann_json_t.replace_file_all;
+  };
+};
+
 class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   class impl;
   std::unique_ptr<impl> p_i;
@@ -89,6 +116,15 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg);
+  /**
+   * @brief 使用配置进行文件替换
+   * @param in_handle 具有消息组件的的句柄
+   * @param in_arg 导出 文件替换 配置类
+   *
+   * 检查 process_message 和 core_set::getSet().has_maya()
+   *
+   */
+  explicit maya_exe(const entt::handle &in_handle, const replace_file_arg &in_arg);
   ~maya_exe() override;
 
   [[maybe_unused]] void init();

@@ -8,6 +8,8 @@ namespace doodle {
 namespace details {
 class qcloth_arg;
 class export_fbx_arg;
+class replace_file_arg;
+
 }  // namespace details
 
 class DOODLELIB_API maya_file_async : public details::no_copy {
@@ -22,6 +24,7 @@ class DOODLELIB_API maya_file_async : public details::no_copy {
    * @param in_arg 传入的解算参数
    */
   void qcloth_sim_file(const entt::handle& in_handle, const details::qcloth_arg& in_arg);
+  void replace_file_fun(const entt::handle& in_handle, const details::replace_file_arg& in_arg);
 };
 
 }  // namespace doodle

@@ -89,6 +89,7 @@ void comm_maya_tool::render() {
                     maya->qcloth_sim_file(make_handle(), arg);
                   });
   }
+  ImGui::SameLine();
   if (imgui::Button("fbx导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
@@ -98,6 +99,18 @@ void comm_maya_tool::render() {
                     k_arg.use_all_ref = this->p_use_all_ref;
                     k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
                     maya->export_fbx_file(make_handle(), k_arg);
+                  });
+  }
+  ImGui::SameLine();
+  if (imgui::Button("引用文件替换")) {
+    auto maya = new_object<maya_file_async>();
+    std::for_each(p_sim_path.begin(), p_sim_path.end(),
+                  [maya, this](const auto& i) {
+                    auto k_arg             = details::replace_file_arg{};
+                    k_arg.file_path        = i;
+                    k_arg.replace_file_all = true;
+                    k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
+                    maya->replace_file_fun(make_handle(), k_arg);
                   });
   }
 }
