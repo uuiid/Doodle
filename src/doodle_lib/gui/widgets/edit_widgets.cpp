@@ -555,10 +555,11 @@ edit_widgets::edit_widgets()
   p_i->assets_edit = dynamic_cast<gui::assets_edit *>(l_edit);
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
+  p_i->p_edit.emplace_back("替换规则"s, std::make_unique<gui::redirection_path_info_edit>());
+  /// \brief 连接信号
   ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
     p_i->data_edit.link_sig(in_edit.data);
   });
-  p_i->p_edit.emplace_back("替换规则"s, std::make_unique<gui::redirection_path_info_edit>());
 
   p_i->p_add.emplace_back("添加"s, std::make_unique<gui::add_entt_base>());
   p_i->p_add.emplace_back("文件添加"s, std::make_unique<gui::add_assets_for_file>());
