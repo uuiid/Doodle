@@ -68,6 +68,8 @@ set(doodle_maya_plug_cpp
         maya_comm/auto_chick_call_back.h
         maya_comm/replace_rig_file_command.h
         maya_comm/replace_rig_file_command.cpp
+        data/maya_call_guard.h
+        data/maya_call_guard.cpp
 
         )
 
@@ -75,8 +77,8 @@ if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
 
     cmake_print_variables(MAYA_DEFAULT_LOCATION)
-#    find_package(Qt5 COMPONENTS Core Widgets REQUIRED
-#            HINTS ${MAYA_DEFAULT_LOCATION})
+    #    find_package(Qt5 COMPONENTS Core Widgets REQUIRED
+    #            HINTS ${MAYA_DEFAULT_LOCATION})
 
 
     if (TARGET maya::maya_all)
