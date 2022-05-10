@@ -10,7 +10,6 @@ set(
         core/program_options.h
         core/util.h
         core/image_loader.h
-        core/init_register.h
         core/authorization.h
         core/work_clock.h
 
@@ -86,7 +85,6 @@ set(
         core/program_options.cpp
         core/util.cpp
         core/image_loader.cpp
-        core/init_register.cpp
         core/authorization.cpp
         core/work_clock.cpp
 

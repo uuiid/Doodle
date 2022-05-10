@@ -4,7 +4,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <opencv2/core.hpp>
 
 namespace doodle {

@@ -5,7 +5,7 @@
 #include "short_cut.h"
 #include <imgui.h>
 #include <doodle_core/core/core_sig.h>
-#include <core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
 
 namespace doodle {

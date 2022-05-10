@@ -7,6 +7,7 @@ target_sources(
         doodle_lib.h
         template_util.h
         status_info.h
+        init_register.h
 
         PRIVATE
         core_set.cpp
@@ -14,4 +15,5 @@ target_sources(
         core_fun_util.cpp
         doodle_lib.cpp
         status_info.cpp
+        init_register.cpp
 )

@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/core/core_set.h>
-#include <core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>

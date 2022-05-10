@@ -4,7 +4,7 @@
 
 #include "base_window.h"
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 namespace doodle::gui {
 
 void to_json(nlohmann::json &j, const base_window &p) {

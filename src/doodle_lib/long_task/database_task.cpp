@@ -12,8 +12,7 @@
 #include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/thread_pool/process_message.h>
 #include <generate/core/metadatatab_sql.h>
-#include <core/init_register.h>
-
+#include <doodle_core/core/init_register.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>

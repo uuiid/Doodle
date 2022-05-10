@@ -2,7 +2,7 @@
 // Created by TD on 2022/1/11.
 //
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 namespace doodle {
 
 enum class metadata_type;

@@ -3,7 +3,9 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
+
+#include <map>
 
 namespace doodle {
 
@@ -24,9 +26,9 @@ class init_register {
   template <reg_fun Fun, std::int32_t priority_t>
   struct registrar_lambda {
     constexpr static const std::int32_t priority{priority_t};
+
    public:
     static bool getInstance() {
-
       registered;
       instance().registered_functions().insert(
           std::make_pair(priority, [&]() { Fun(); }));
@@ -77,7 +79,17 @@ constexpr auto meta_init_registrar_lab = []() {
 class meta_init_registrar
     : public init_register::registrar_lambda<meta_init_registrar_lab, 1> {};
 }  // namespace init_register_ns
-// template <init_register::reg_fun Fun, std::int32_t priority_t>
-// bool init_register::registrar_lambda<Fun, priority_t>::registered =
-//     init_register::registrar_lambda<Fun, priority_t>::getInstance();
 }  // namespace doodle
+
+#define DOODLE_REGISTER_BEGEN(class_name) \
+  namespace class_name##_ns {             \
+    constexpr auto meta_init_registrar_lab = []() {                              \
+      entt::meta<class_name::class_name>()                                       \
+          .type()
+#define DOODLE_REGISTER_END(index)                                                 \
+  }                                                                                \
+  ;                                                                                \
+  class meta_init_registrar                                                        \
+      : public init_register::registrar_lambda<meta_init_registrar_lab, index> {}; \
+  }
+

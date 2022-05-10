@@ -17,7 +17,7 @@
 
 #include <gui/gui_ref/ref_base.h>
 
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 namespace doodle {
 
 class assets_file_widgets::impl {

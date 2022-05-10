@@ -9,7 +9,7 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 
 namespace doodle {
 

@@ -20,7 +20,7 @@
 #include <lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
 #include <gui/open_file_dialog.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_lib/core/work_clock.h>
 
 #include <fmt/chrono.h>

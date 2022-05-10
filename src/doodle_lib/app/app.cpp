@@ -15,7 +15,7 @@
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/main_proc_handle.h>
 
 #include <doodle_lib/core/program_options.h>

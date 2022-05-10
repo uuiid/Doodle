@@ -11,7 +11,7 @@
 #include <boost/range.hpp>
 #include <boost/range/algorithm_ext.hpp>
 #include <fmt/chrono.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 
 namespace doodle {
 

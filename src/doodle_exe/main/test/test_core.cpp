@@ -422,7 +422,7 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
 
 }
 
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 
 namespace {
 constexpr auto test_reg_l = []() {

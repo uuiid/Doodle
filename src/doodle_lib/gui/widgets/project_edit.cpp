@@ -9,7 +9,7 @@
 #include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/gui_ref/database_edit.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 namespace doodle {
 
 class project_edit::impl {

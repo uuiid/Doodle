@@ -8,7 +8,7 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/authorization.h>
 

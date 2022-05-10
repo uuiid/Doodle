@@ -12,7 +12,7 @@
 #include <doodle_lib/gui/gui_ref/database_edit.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/core/image_loader.h>
-#include <doodle_lib/core/init_register.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
 
 #include <doodle_core/metadata/metadata.h>
@@ -556,6 +556,7 @@ edit_widgets::edit_widgets()
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
   p_i->p_edit.emplace_back("替换规则"s, std::make_unique<gui::redirection_path_info_edit>());
+
   /// \brief 连接信号
   ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
     p_i->data_edit.link_sig(in_edit.data);
