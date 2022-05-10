@@ -82,14 +82,16 @@ if (DEFINED Maya_Version)
 
 
     if (TARGET maya::maya_all)
-
+        set(maya_plug_name doodle_maya_${Maya_Version})
+        configure_file(DoodleExe.manifest.in doodle_maya_${Maya_Version}.manifest)
+        configure_file(maya_plug.rc.in doodle_maya_${Maya_Version}.rc)
         add_library(doodle_maya_${Maya_Version} MODULE
                 ${doodle_maya_plug_cpp}
-                ../main/GUI/main.cpp
-                ../main/DoodleExe.manifest
+                doodle_maya_${Maya_Version}.manifest
+                doodle_maya_${Maya_Version}.rc
                 ../main/icon.ico
-                ../main/win_exe.rc
                 )
+        target_include_directories(doodle_maya_${Maya_Version} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
         set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
