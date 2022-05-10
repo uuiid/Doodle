@@ -585,7 +585,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
   chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), DOODLE_LOC, "缺失替换引用信息");
   chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "没有引用文件, 无法替换");
   search_file_info = in_handle;
-
+  MStatus k_s{};
   {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
@@ -595,7 +595,8 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
           if (l_path) {
             MStatus k_s{};
             DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, *l_path);
-            file.setRawFullName(d_str{l_path->generic_string()});
+            k_s = file.setRawFullName(d_str{l_path->generic_string()});
+            DOODLE_CHICK(k_s);
             *retCode = file.exists();
 
           } else {
@@ -603,10 +604,24 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
           }
         },
         this)};
-    MStatus k_s{};
+
     std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
+    DOODLE_CHICK(k_s);
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
+  auto l_name   = get_path().stem().generic_string();
+  auto l_name_d = l_name;
+  for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
+    l_name_d = fmt::format("{}{}", l_name, l_i);
+  }
+  DOODLE_LOG_INFO("确认名称空间 {}", l_name_d);
+
+  DOODLE_LOG_INFO("开始重命名名称空间 {} 到 {}", get_namespace(), l_name_d);
+  k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
+  DOODLE_CHICK(k_s);
+  file_namespace = l_name_d;
+  chick_true<doodle_error>(find_ref_node(), DOODLE_LOC, "没有在新的名称空间中查询到引用节点");
+  chick_true<doodle_error>(has_ue4_group(), DOODLE_LOC, "没有在引用文件中找到 导出 组");
   return false;
 }
 FSys::path reference_file::get_path() const {

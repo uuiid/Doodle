@@ -33,6 +33,9 @@ void redirection_path_info_edit::init_(const entt::handle& in) {
                                                        return in_path.generic_string();
                                                      }),
                                                  "\n"));
+  } else {
+    ptr->file_name_.data.clear();
+    ptr->search_path_.data.clear();
   }
 }
 void redirection_path_info_edit::save_(const entt::handle& in) const {
