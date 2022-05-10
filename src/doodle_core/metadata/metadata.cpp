@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/organization.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 
 #include <core/core_set.h>
@@ -142,8 +143,8 @@ bool database::is_install() const {
                              project_config::base_config, \
                              image_icon,                  \
                              importance,                  \
-                             organization_list
-
+                             organization_list,           \
+                             redirection_path_info
 database &database::operator=(const metadata_database &in_) {
   auto k_h = make_handle(*this);
   /// 转换序列化数据
