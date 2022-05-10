@@ -58,7 +58,7 @@ class reference_file {
    */
   bool replace_sim_assets_file();
   /**
-   * @brief 替换引用 需要组件 redirection_path_info
+   * @brief 替换引用 需要组件 redirection_path_info_edit
    */
   bool replace_file(const entt::handle &in_handle);
 

@@ -9,15 +9,15 @@
 namespace doodle {
 namespace gui {
 
-class DOODLELIB_API redirection_path_info : public edit_interface {
+class DOODLELIB_API redirection_path_info_edit : public edit_interface {
  private:
   class impl;
 
   std::unique_ptr<impl> ptr;
 
  public:
-  redirection_path_info();
-  ~redirection_path_info() override;
+  redirection_path_info_edit();
+  ~redirection_path_info_edit() override;
 
  public:
   virtual void render(const entt::handle& in) override;
