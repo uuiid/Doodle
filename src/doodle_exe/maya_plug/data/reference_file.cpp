@@ -164,7 +164,7 @@ bool reference_file::replace_sim_assets_file() {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self = reinterpret_cast<decltype(this)>(clientData);
+          auto *self = reinterpret_cast<reference_file*>(clientData);
           file.setRawFullName(d_str{self->path});
           *retCode = file.exists();
         },
@@ -590,7 +590,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self  = reinterpret_cast<decltype(this)>(clientData);
+          auto *self  = reinterpret_cast<reference_file*>(clientData);
           auto l_path = self->search_file_info.get<redirection_path_info>().get_replace_path();
           if (l_path) {
             MStatus k_s{};
