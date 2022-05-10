@@ -151,7 +151,7 @@ bool reference_file::replace_sim_assets_file() {
   }
 
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
-  FSys::path k_m_str{d_str{k_ref.fileName(true, true, false, &k_s)}.str()};
+  FSys::path k_m_str{get_path()};
   DOODLE_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
