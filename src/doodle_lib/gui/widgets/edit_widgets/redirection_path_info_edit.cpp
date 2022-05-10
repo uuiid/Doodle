@@ -36,17 +36,16 @@ void redirection_path_info_edit::init_(const entt::handle& in) {
   }
 }
 void redirection_path_info_edit::save_(const entt::handle& in) const {
-  auto&& l_info       = in.get_or_emplace<redirection_path_info>();
-
-  l_info.file_name_   = ptr->file_name_.data;
-  l_info.search_path_ = ptr->search_path_.data |
-                        ranges::views::split('\n') |
-                        ranges::views::cache1 |
-                        ranges::views::transform([](const auto in) -> FSys::path {
-                          auto c = in | ranges::views::common;
-                          return FSys::path{c.begin(), c.end()};
-                        }) |
-                        ranges::to_vector;
+  in.emplace_or_replace<redirection_path_info>(
+      ptr->search_path_.data |
+          ranges::views::split('\n') |
+          ranges::views::cache1 |
+          ranges::views::transform([](const auto in) -> FSys::path {
+            auto c = in | ranges::views::common;
+            return FSys::path{c.begin(), c.end()};
+          }) |
+          ranges::to_vector,
+      ptr->file_name_.data);
 }
 
 redirection_path_info_edit::~redirection_path_info_edit() = default;

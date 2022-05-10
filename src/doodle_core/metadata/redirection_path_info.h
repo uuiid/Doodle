@@ -21,7 +21,7 @@ class DOODLE_CORE_EXPORT redirection_path_info {
   std::vector<FSys::path> search_path_;
   FSys::path file_name_;
 
-  std::optional<FSys::path> get_replace_path() const;
+  [[nodiscard]] std::optional<FSys::path> get_replace_path() const;
 
  private:
   friend void to_json(nlohmann::json& j, const redirection_path_info& p);
