@@ -9,7 +9,6 @@
 namespace doodle {
 namespace maya_plug {
 
-// template <typename T>
 class maya_call_guard {
  public:
   MCallbackId call_id{};

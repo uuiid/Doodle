@@ -14,6 +14,7 @@ namespace doodle::maya_plug {
  */
 class reference_file {
   std::string file_namespace;
+  entt::handle search_file_info;
 
   void chick_mobject() const;
 
@@ -27,6 +28,9 @@ class reference_file {
   bool has_ue4_group() const;
 
  public:
+  /**
+   * @brief 引用maya obj 节点
+   */
   MObject p_m_object;
   std::string path;
   bool use_sim;

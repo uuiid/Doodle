@@ -22,11 +22,14 @@
 #include <maya/MUuid.h>
 #include <maya/MItDag.h>
 #include <maya/MNamespace.h>
+#include <maya/MFileObject.h>
+#include <maya/MSceneMessage.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/find_duplicate_poly.h>
+#include <maya_plug/data/maya_call_guard.h>
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
@@ -156,12 +159,20 @@ bool reference_file::replace_sim_assets_file() {
     return false;
 
   /// \brief 替换引用文件
-  auto k_comm = fmt::format(R"(
-file -loadReference "{}" "{}";
-)",
-                            d_str{k_ref.name()}.str(), k_vfx_path.generic_string());
-  k_s         = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  {
+    path = k_vfx_path.generic_string();
+    maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
+        MSceneMessage::kBeforeLoadReferenceCheck,
+        [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
+          auto *self = reinterpret_cast<decltype(this)>(clientData);
+          file.setRawFullName(d_str{self->path});
+          *retCode = file.exists();
+        },
+        this)};
+
+    std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
+    DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
+  }
   return true;
 }
 
@@ -572,22 +583,30 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
 }
 bool reference_file::replace_file(const entt::handle &in_handle) {
   chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), DOODLE_LOC, "缺失替换引用信息");
+  chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "没有引用文件, 无法替换");
+  search_file_info = in_handle;
 
-  auto l_path = in_handle.get<redirection_path_info>().get_replace_path();
-  if (l_path) {
+  {
+    maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
+        MSceneMessage::kBeforeLoadReferenceCheck,
+        [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
+          auto *self  = reinterpret_cast<decltype(this)>(clientData);
+          auto l_path = self->search_file_info.get<redirection_path_info>().get_replace_path();
+          if (l_path) {
+            MStatus k_s{};
+            DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, *l_path);
+            file.setRawFullName(d_str{l_path->generic_string()});
+            *retCode = file.exists();
+
+          } else {
+            *retCode = false;
+          }
+        },
+        this)};
     MStatus k_s{};
-    DOODLE_LOG_INFO("开始替换文件 {} 到 {}", path, *l_path);
-    MFnReference k_ref{p_m_object};
-    /// \brief 替换引用文件
-    auto k_comm = fmt::format(R"(
-file -loadReference "{}" "{}";
-)",
-                              d_str{k_ref.name()}.str(), l_path->generic_string());
-    k_s         = MGlobal::executeCommand(d_str{k_comm}, true);
-    DOODLE_CHICK(k_s);
-    return true;
+    std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
+    DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
-  DOODLE_LOG_INFO("未发现引用文件");
   return false;
 }
 
