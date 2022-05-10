@@ -80,8 +80,6 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
 
-
-
   DOODLE_LOG_INFO("开始清除引用实体")
   auto k_ref_view   = g_reg()->view<reference_file>();
   auto k_cloth_view = g_reg()->view<qcloth_shape>();
@@ -268,16 +266,16 @@ MStatus load_project::doIt(const MArgList& in_arg) {
   if (k_prase.isFlagSet(doodle_project_path, &k_s)) {
     DOODLE_CHICK(k_s);
     MString k_path_M{};
-    k_s    = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
-    k_path = k_path_M.asUTF8();
-    app::Get().load_project(k_path);
-  } else {
-    app::Get().load_project({});
-  }
-  DOODLE_LOG_INFO("开始打开项目 {}", k_path);
-  if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-    while (!g_main_loop().empty()) {
-      app_base::Get().loop_one();
+    k_s = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
+    DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
+    if (k_path_M.numChars() > 0) {
+      k_path = k_path_M.asUTF8();
+      app::Get().load_project(k_path);
+      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+        while (!g_main_loop().empty()) {
+          app_base::Get().loop_one();
+        }
+      }
     }
   }
   return k_s;
