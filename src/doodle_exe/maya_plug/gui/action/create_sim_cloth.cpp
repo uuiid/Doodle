@@ -103,6 +103,7 @@ void create_sim_cloth::render() {
     }
     if (p_coll.any_of<qcloth_shape_n::shape_list>() && !p_list.empty())
       qcloth_shape::add_collider(p_coll);
+    qcloth_shape::sort_group();
   }
 }
 create_sim_cloth::~create_sim_cloth() {

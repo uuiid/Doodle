@@ -578,7 +578,7 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
   }
   return true;
 }
-void qcloth_shape::sort_group(const entt::handle& in_handle) {
+void qcloth_shape::sort_group() {
   auto l_group = get_cloth_group();
   MStatus k_s{};
   auto l_ql = get_ql_solver();

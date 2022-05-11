@@ -67,7 +67,7 @@ class qcloth_shape {
    * @return 完成设置
    */
   bool set_cache_folder() const;
-  bool set_cache_folder(const FSys::path &in_path) const;
+  bool set_cache_folder(const FSys::path& in_path) const;
   /**
    * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
    * 没有gui的情况下包装解算的正常
@@ -98,7 +98,7 @@ class qcloth_shape {
       const entt::handle& in_handle);
 
   static void add_collider(const entt::handle& in_handle);
-  static void sort_group(const entt::handle& in_handle);
+  static void sort_group();
 
   /**
    * @brief 根据引用文件创建布料句柄
