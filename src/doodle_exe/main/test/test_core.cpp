@@ -257,7 +257,7 @@ TEST_CASE("core opencv", "[fun]") {
   auto video = cv::VideoWriter("D:/test.mp4", cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), (double)25, cv::Size{1280, 720});
   cv::Mat image{};
   for (auto&& it_p : FSys::directory_iterator(path)) {
-    if (it_p.is_regular_file()) {
+    if (FSys::is_regular_file(it_p)) {
       image = cv::imread(it_p.path().string());
       video << image;
     }

@@ -108,9 +108,9 @@ bool app_base::chick_authorization(const FSys::path& in_path) {
   return l_authorization.is_expire();
 }
 bool app_base::chick_authorization() {
-  auto l_p = core_set::getSet().get_doc() / doodle_config::token_name;
+  auto l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
   if (!exists(l_p)) {
-    l_p = FSys::current_path() / doodle_config::token_name;
+    l_p = FSys::current_path() / doodle_config::token_name.data();
   }
   if (!exists(l_p)) {
     DOODLE_LOG_ERROR("无法找到授权文件")
@@ -143,7 +143,7 @@ void app_base::load_project(const FSys::path& in_path) const {
   if (!l_path.empty() &&
       FSys::exists(l_path) &&
       FSys::is_regular_file(l_path) &&
-      l_path.extension() == doodle_config::doodle_db_name) {
+      l_path.extension() == doodle_config::doodle_db_name.data()) {
     core::client l_c{};
     l_c.open_project(l_path);
   }

@@ -55,14 +55,14 @@ void ue4_widget::init() {
   gui::window_panel::init();
   p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
   p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
-  p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
+  p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
   g_reg()->ctx().emplace<ue4_widget &>(*this);
 }
 
 void ue4_widget::render() {
   if (ImGui::InputText(*p_i->ue4_prj.gui_name, &p_i->ue4_prj.data)) {
     p_i->ue4_prj.path    = p_i->ue4_prj.data;
-    p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
+    p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->open_file_dig)) {
@@ -73,7 +73,7 @@ void ue4_widget::render() {
         .then<one_process_t>([this, l_p]() {
           this->p_i->ue4_prj.data = l_p->generic_string();
           this->p_i->ue4_prj.path = *l_p;
-          p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content;
+          p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
         });
   }
   /// 列出文件
@@ -121,7 +121,7 @@ void ue4_widget::import_ue4_prj() {
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (FSys::exists(l_out_path))
     for (auto &l_p : FSys::directory_iterator{l_out_path}) {
-      if (l_p.is_regular_file())
+      if (FSys::is_regular_file(l_p))
         FSys::remove(l_p.path());
     }
 
@@ -158,7 +158,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
           FSys::directory_iterator{}) |
       ranges::views::filter(
           [](const FSys::directory_entry &in_entry) -> bool {
-            return in_entry.path().extension() == doodle_config::doodle_json_extension;
+            return in_entry.path().extension() == doodle_config::doodle_json_extension.data();
           }) |
       ranges::views::transform([](const FSys::directory_entry &in_entry) -> FSys::path {
         return in_entry.path();
@@ -254,7 +254,7 @@ std::string ue4_import_data::find_ue4_skin(
               });
           if (l_path_it != FSys::recursive_directory_iterator{}) {
             auto l_p = l_path_it->path().lexically_relative(in_ue4_content_dir);
-            l_p      = FSys::path{doodle_config::ue4_game} / l_p.parent_path() / l_p.stem();
+            l_p      = FSys::path{doodle_config::ue4_game.data()} / l_p.parent_path() / l_p.stem();
             result   = l_p.generic_string();
           }
         }
@@ -279,8 +279,8 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
             chick_true<doodle_error>(!result.empty(), DOODLE_LOC,
                                      "设置路径为空");
           });
-  auto l_p = FSys::path{doodle_config::ue4_game} /
-             doodle_config::ue4_shot /
+  auto l_p = FSys::path{doodle_config::ue4_game.data()} /
+             doodle_config::ue4_shot.data() /
              fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
              fmt::format("{}{:04d}_{:04d}{}",
                          g_reg()->ctx().at<project>().short_str(),
@@ -304,8 +304,8 @@ std::string ue4_import_group::set_level_dir(
             chick_true<doodle_error>(!result.empty(), DOODLE_LOC,
                                      "设置路径为空");
           });
-  auto l_p = FSys::path{doodle_config::ue4_game} /
-             doodle_config::ue4_shot /
+  auto l_p = FSys::path{doodle_config::ue4_game.data()} /
+             doodle_config::ue4_shot.data() /
              fmt::format("{:04d}", in_handle.get_or_emplace<episodes>()) /
              fmt::format("{}{:04d}_{:04d}{}",
                          g_reg()->ctx().at<project>().short_str(),
