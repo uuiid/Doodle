@@ -25,11 +25,7 @@ doodle_lib::doodle_lib()
       reg(std::make_shared<entt::registry>()),
       loop(),
       loop_bounded_pool() {
-  boost::locale::generator k_gen{};
-  k_gen.categories(boost::locale::all_categories ^
-                   boost::locale::formatting_facet ^
-                   boost::locale::parsing_facet);
-  FSys::path_u8::locale_u8 = k_gen("zh_CN.UTF-8");
+
   /// 创建依赖性
   reg->on_construct<database>().connect<&database::set_enum>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
