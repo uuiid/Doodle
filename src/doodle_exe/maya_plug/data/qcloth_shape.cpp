@@ -443,6 +443,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
     k_s = l_modifier.doIt();
     DOODLE_CHICK(k_s);
   }
+  /// \brief 使用低模包裹高模
   warp_model(k_proxy_node_output, l_high_mesh);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
@@ -581,11 +582,26 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
 void qcloth_shape::sort_group() {
   auto l_group = get_cloth_group();
   MStatus k_s{};
-  auto l_ql = get_ql_solver();
+  auto l_ql = get_transform(get_ql_solver());
   {  /// \brief 开始排序
     MFnDagNode l_p{};
     k_s = l_p.setObject(l_group.cfx_grp);
     DOODLE_CHICK(k_s);
+
+    /// \brief 必须先取消掉父物体
+    k_s = l_p.removeChild(l_ql);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.removeChild(l_group.anim_grp);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.removeChild(l_group.solver_grp);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.removeChild(l_group.constraint_grp);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.removeChild(l_group.deform_grp);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.removeChild(l_group.export_grp);
+    DOODLE_CHICK(k_s);
+
     /**
      * @brief 排序组
      * - cfx_grp 顺序
