@@ -9,6 +9,7 @@ target_sources(
         status_info.h
         init_register.h
         file_sys.h
+        chrono_.h
 
         PRIVATE
         core_set.cpp
