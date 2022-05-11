@@ -57,35 +57,27 @@ inline void throw_maya_exception(const MStatus& in_status, const ::spdlog::sourc
     case MStatus::MStatusCode::kSuccess:
       break;
     case MStatus::MStatusCode::kFailure: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_Failure>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kInsufficientMemory: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_InsufficientMemory>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kInvalidParameter: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_InvalidParameter>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kLicenseFailure: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_LicenseFailure>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kUnknownParameter: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_UnknownParameter>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kNotImplemented: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_NotImplemented>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kNotFound: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_NotFound>(false, in_location, in_status.errorString());
     }
     case MStatus::MStatusCode::kEndOfFile: {
-      ::spdlog::log(in_location, spdlog::level::err, in_status.errorString());
       chick_true<maya_EndOfFile>(false, in_location, in_status.errorString());
     }
     default:
