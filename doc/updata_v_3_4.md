@@ -360,4 +360,26 @@
 
 ## 版本3.4.33
 
-- 修正打开空项目时的错误  
+- 修正打开空项目时的错误
+
+## 版本3.4.34
+
+- cfx_grp 顺序调整
+    - qlsolver
+    - anim_grp
+    - solver_grp
+        - xxx_cloth
+            - xxx_cloth_proxy
+    - constraint_grp
+    - collider_grp
+    - deform_grp  (包裹的模型)
+        - xxx_output
+        - deformBase_grp
+            - 包裹的base节点
+    - export_grp
+
+- 解算工作 清除多边面, 解锁法线
+- 检查工作
+    - 简模没有蒙皮就结束
+    - 有重名也不要开始
+    - 有多边面也不要开始
