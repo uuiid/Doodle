@@ -167,9 +167,7 @@ bool core_set_init::read_file() {
   FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
   DOODLE_LOG_INFO("读取配置文件 {}", l_k_setting_file_name);
   if (FSys::exists(l_k_setting_file_name)) {
-    FSys::path l_str_file(l_k_setting_file_name);
     FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
-
     try {
       *p_set.json_data = nlohmann::json::parse(l_in_josn);
       p_set.json_data->at("setting").get_to(p_set);
