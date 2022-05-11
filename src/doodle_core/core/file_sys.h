@@ -4,9 +4,18 @@
 
 #pragma once
 #include <filesystem>
+
+#include <fmt/format.h>
+
+#include <nlohmann/json_fwd.hpp>
+
 namespace doodle::FSys {
 using namespace std::filesystem;
 class path_u8 : public path {
+ private:
+  friend void to_json(nlohmann::json& j, const path_u8& p);
+  friend void from_json(const nlohmann::json& j, path_u8& p);
+
  public:
   inline static std::locale locale_u8{};
   template <class Source>
@@ -94,3 +103,19 @@ class path_u8 : public path {
 };
 
 }  // namespace doodle::FSys
+namespace fmt {
+/**
+ * @brief 路径格式化
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::FSys::path_u8> : formatter<fmt::string_view> {
+  template <typename FormatContext>
+  auto format(const ::doodle::FSys::path_u8& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<fmt::string_view>::format(
+        in_.generic_string(),
+        ctx);
+  }
+};
+}  // namespace fmt

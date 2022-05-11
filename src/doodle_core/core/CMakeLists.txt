@@ -17,4 +17,5 @@ target_sources(
         doodle_lib.cpp
         status_info.cpp
         init_register.cpp
+        file_sys.cpp
 )
