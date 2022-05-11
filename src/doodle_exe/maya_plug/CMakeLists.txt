@@ -37,6 +37,7 @@ set(doodle_maya_plug_cpp
         maya_comm/reference_comm.h
         maya_comm/play_blash_comm.h
         maya_comm/play_blash_comm.cpp
+        fmt/fmt_select_list.h
         data/sim_cloth_tools.cpp
         data/sim_cloth_tools.h
         maya_comm/file_comm.cpp
