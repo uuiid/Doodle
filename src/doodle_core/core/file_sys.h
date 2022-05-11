@@ -7,9 +7,8 @@
 namespace doodle::FSys {
 using namespace std::filesystem;
 class path_u8 : public path {
-  inline static std::locale locale_u8{};
-
  public:
+  inline static std::locale locale_u8{};
   template <class Source>
   path_u8(const Source& source, format fmt = auto_format)
       : path(source, locale_u8){};
