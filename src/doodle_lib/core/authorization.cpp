@@ -78,7 +78,7 @@ void authorization::generate_token(const FSys::path& in_path) {
           });
 
   impl l_impl{};
-  l_impl.l_time = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
+  l_impl.l_time           = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
   nlohmann::json out_json = l_impl;
   /**
    * @brief 加密后输出的数据
@@ -115,7 +115,7 @@ void authorization::generate_token(const FSys::path& in_path) {
   if (exists(in_path))
     create_directories(in_path);
 
-  FSys::ofstream{in_path / doodle_config::token_name} << out_data;
+  FSys::ofstream{in_path / FSys::path{doodle_config::token_name}} << out_data;
 }
 void authorization::save(const FSys::path& in_path) const {
   if (!exists(in_path.parent_path()))
@@ -123,7 +123,7 @@ void authorization::save(const FSys::path& in_path) const {
   FSys::ofstream{in_path} << p_i->ciphertext_data;
 }
 void authorization::save() const {
-  save(core_set::getSet().get_doc() / doodle_config::token_name);
+  save(core_set::getSet().get_doc() / FSys::path{doodle_config::token_name});
 }
 
 }  // namespace doodle

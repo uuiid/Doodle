@@ -205,7 +205,7 @@ void assets_file_widgets::init() {
         generate_lists(p_i->handle_list);
       }));
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
-      [&](const std::filesystem::path&) {
+      [&](const FSys::::path&) {
         p_i->handle_list.clear();
         p_i->lists.clear();
         p_i->select_index = 0;

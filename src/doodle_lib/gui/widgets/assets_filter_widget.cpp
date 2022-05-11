@@ -463,7 +463,7 @@ void assets_filter_widget::init() {
   g_reg()->ctx().emplace<assets_filter_widget&>(*this);
   p_impl->p_conns.emplace_back(
       g_reg()->ctx().at<core_sig>().project_begin_open.connect(
-          [&](const std::filesystem::path&) {
+          [&](const FSys::::path&) {
             p_impl->only_rand = true;
           }));
   p_impl->p_conns.emplace_back(

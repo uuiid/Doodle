@@ -115,3 +115,17 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
 }
 
 }  // namespace doodle::FSys
+
+namespace nlohmann {
+// template <>
+void adl_serializer<boost::filesystem::path>::to_json(
+    json &j,
+    const boost::filesystem::path &in_path) {
+  j = in_path.generic_string();
+}
+void adl_serializer<boost::filesystem::path>::from_json(
+    const json &j,
+    boost::filesystem::path &in_path) {
+  in_path = j.get<std::string>();
+}
+}  // namespace nlohmann

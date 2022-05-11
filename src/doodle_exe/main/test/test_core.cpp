@@ -264,7 +264,7 @@ TEST_CASE("core opencv", "[fun]") {
   }
 }
 TEST_CASE("core opencv image", "[fun]") {
-  const std::filesystem::path path{R"(D:\image_test\DB0106_sc0078_V.1001.png)"};
+  const FSys::::path path{R"(D:\image_test\DB0106_sc0078_V.1001.png)"};
   auto k_mat = cv::imread(path.generic_string());
   auto k_gbr = k_mat.row(1).col(1);
   std::cout

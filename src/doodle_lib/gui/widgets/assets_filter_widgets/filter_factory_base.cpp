@@ -39,7 +39,7 @@ void filter_factory_base::connection_sig() {
   auto& l_sig = g_reg()->ctx().at<core_sig>();
 
   p_i->p_conns.emplace_back(l_sig.project_begin_open.connect(
-      [&](const std::filesystem::path&) {
+      [&](const FSys::::path&) {
         this->is_disabled = true;
       }));
   p_i->p_conns.emplace_back(l_sig.project_end_open.connect(
