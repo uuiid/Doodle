@@ -313,7 +313,7 @@ bool app::chick_authorization() {
   if (!app_base::chick_authorization()) {
     auto show_str = fmt::format(L"授权失败\n请见授权文件放入 {} ",
                                 core_set::getSet().get_doc() /
-                                    doodle_config::token_name);
+                                    doodle_config::token_name.data());
     ::MessageBoxExW(p_hwnd, show_str.c_str(), L"错误", MB_OK, 0);
     return false;
   }

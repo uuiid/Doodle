@@ -197,7 +197,7 @@ void comm_create_video::render() {
                 ranges::make_subrange(FSys::directory_iterator{in_path},
                                       FSys::directory_iterator{}) |
                 ranges::views::filter([](const FSys::directory_entry& in_file) {
-                  return in_file.is_regular_file();
+                  return FSys::is_regular_file(in_file);
                 }) |
                 ranges::view::transform([](const FSys::directory_entry& in_file) -> FSys::path {
                   return in_file.path();

@@ -87,7 +87,7 @@ FSys::path play_blast::set_save_dir(const FSys::path& in_save_dir) {
 }
 
 FSys::path play_blast::set_save_filename(const FSys::path& in_save_filename) {
-  p_save_path.replace_filename(in_save_filename);
+  p_save_path.remove_filename() /= in_save_filename;
   return get_out_path();
 }
 

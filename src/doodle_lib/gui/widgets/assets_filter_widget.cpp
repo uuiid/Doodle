@@ -213,7 +213,7 @@ class assets_filter_factory : public gui::filter_factory_base {
 
       if (auto it = ranges::find_if(root->child,
                                     [&](const tree_node_type::child_type& in) -> bool {
-                                      return in->data.gui_name.name == j;
+                                      return in->data.gui_name.name == j.string();
                                     });
           it != root->child.end()) {
         root = it->get();

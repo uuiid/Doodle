@@ -98,7 +98,7 @@ class assets_edit : public edit_interface {
     if (FSys::is_sub_path(l_ass.p_path, edit_data.old_path)) {
       std::string l_out{l_ass.p_path.generic_string()};
       auto new_path = edit_data.old_path;
-      new_path.replace_filename(edit_data.new_name);
+      new_path.remove_filename() /= edit_data.new_name;
       boost::replace_all(l_out,
                          edit_data.old_path.generic_string(),
                          new_path.generic_string());

@@ -112,7 +112,7 @@ void subtitle_processing::render() {
                        auto l_out = in_path;
                        auto l_f   = (l_out.stem() += p_i->file_suffix.data);
                        l_f += in_path.extension();
-                       l_out.replace_filename(l_f);
+                       l_out.remove_filename() /= l_f;
                        this->run(in_path, l_out);
                      });
   }
