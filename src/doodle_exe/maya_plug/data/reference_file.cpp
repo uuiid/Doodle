@@ -516,18 +516,16 @@ bool reference_file::has_ue4_group() const {
   MStatus k_s{};
   MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
-  MFnDependencyNode k_node{};
+  MSelectionList k_select{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
-  for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
-    k_s = k_node.setObject(k_objs[l_i]);
+  try {
+    k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_CHICK(k_s);
-    std::string k_name{k_node.name(&k_s).asUTF8()};
-    DOODLE_CHICK(k_s);
-    if (k_name.find(k_cfg.export_group) != std::string::npos) {
-      return true;
-    }
+    return true;
+  } catch (const maya_InvalidParameter &err) {
+    DOODLE_LOG_INFO("没有配置中指定的 {} 导出组", k_cfg.export_group);
+    return false;
   }
-  return false;
 }
 void reference_file::qlUpdateInitialPose() const {
   DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
