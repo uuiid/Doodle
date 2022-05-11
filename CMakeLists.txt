@@ -45,6 +45,7 @@ find_package(Boost REQUIRED COMPONENTS
         iostreams
         program_options
         contract
+        filesystem
         )
 
 find_package(Catch2 CONFIG)

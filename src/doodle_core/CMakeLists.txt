@@ -55,7 +55,7 @@ target_link_libraries(
         magic_enum::magic_enum
         Boost::locale
         Boost::contract
-        #        Boost::uuid
+        Boost::filesystem
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
         spdlog::spdlog
