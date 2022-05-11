@@ -96,7 +96,7 @@ client::client()
 }
 client::~client() = default;
 
-void client::add_project(const FSys::::path& in_path) {
+void client::add_project(const FSys::path& in_path) {
   auto k_conn = core_sql::Get().get_connection(in_path);
   k_conn->execute(R"(
 create table if not exists metadatatab

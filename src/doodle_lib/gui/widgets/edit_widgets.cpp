@@ -584,7 +584,7 @@ void edit_widgets::init() {
    * @brief 保存时禁用编辑
    */
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
-      [&](const FSys::::path &) {
+      [&](const FSys::path &) {
         this->p_i->add_handles.clear();
         this->p_i->p_h       = {};
         this->p_i->only_rand = true;
