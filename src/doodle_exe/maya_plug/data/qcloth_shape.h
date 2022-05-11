@@ -96,6 +96,13 @@ class qcloth_shape {
    */
   static std::vector<entt::handle> create_sim_cloth(
       const entt::handle& in_handle);
+  /**
+   * @brief 检查所有传入的简模是否进行了蒙皮
+   * @param in_handle 传入的一个实体,
+   * 必须具备 qcloth_shape_n::maya_mesh
+   * @return 具有蒙皮
+   */
+  static bool chick_low_skin(const entt::handle& in_handle);
 
   static void add_collider(const entt::handle& in_handle);
   static void sort_group();

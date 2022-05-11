@@ -617,5 +617,23 @@ void qcloth_shape::sort_group() {
     DOODLE_CHICK(k_s);
   }
 }
+bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
+  chick_true<doodle_error>(
+      in_handle.any_of<qcloth_shape_n::maya_obj>(),
+      DOODLE_LOC, "缺失组件");
+  MStatus l_s{};
+  auto l_shape = get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
+  /// 寻找高模的皮肤簇
+  for (MItDependencyGraph i{l_shape,
+                            MFn::kSkinClusterFilter,
+                            MItDependencyGraph::Direction::kUpstream};
+       !i.isDone();
+       i.next()) {
+    DOODLE_CHICK(l_s);
+    return true;
+  }
+
+  return false;
+}
 
 }  // namespace doodle::maya_plug
