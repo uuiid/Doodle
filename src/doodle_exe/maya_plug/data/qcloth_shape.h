@@ -41,6 +41,7 @@ class qcloth_shape {
     MObject collider_grp;
     MObject deform_grp;
     MObject export_grp;
+    MObject deformBase_grp;
   };
 
   static cloth_group get_cloth_group();

@@ -139,6 +139,10 @@ void add_child(const MObject& in_praent, MObject& in_child) {
   MStatus k_s{};
   MFnDagNode k_node{in_praent, &k_s};
   DOODLE_CHICK(k_s);
+  if (k_node.hasChild(in_child, &k_s)) {
+    DOODLE_CHICK(k_s);
+    k_node.removeChild(in_child);
+  }
   k_s = k_node.addChild(in_child);
   DOODLE_CHICK(k_s);
 }

@@ -138,7 +138,7 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
  * @param in_low 传入的低模节点
  * @param in_high_node 传入的高模节点
  */
-void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node) {
+MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node) {
   MStatus l_s{};
 
   /// 创建包裹变形(maya的包裹变形需要先选择高模, 可以多个, 然后选中低模) 包裹时需要添加独占式绑定参数
@@ -168,6 +168,18 @@ void warp_model(const MObject& in_low, const std::vector<MObject>& in_high_node)
   DOODLE_CHICK(l_s);
   l_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "7" {"1","0","1", "2","1","1","0","0"};)"});
   DOODLE_CHICK(l_s);
+
+  auto l_name = get_node_name(get_transform(in_low));
+  l_s         = k_select.clear();
+  DOODLE_CHICK(l_s);
+
+  l_s = k_select.add(d_str{fmt::format("{}Base*", l_name)});
+  DOODLE_CHICK(l_s);
+  chick_true<doodle_error>(k_select.length() > 0, DOODLE_LOC, "无法找到包裹生成的网格");
+  MObject l_r{};
+  l_s = k_select.getDependNode(0, l_r);
+  DOODLE_CHICK(l_s);
+  return l_r;
 }
 
 /**
@@ -405,7 +417,8 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   /// \brief 主要的动画输出节点(需要输入到解算输入端)
   auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
   {
-    set_node_name(k_anim_mesh.obj, fmt::format("{}_proxy", k_anim_mesh.p_name));
+    if (get_node_name(k_anim_mesh.obj).find("_proxy") == std::string::npos)
+      set_node_name(k_anim_mesh.obj, fmt::format("{}_proxy", k_anim_mesh.p_name));
   }
   /// \brief 主要的输入节点
   auto k_proxy_node_input  = make_low_node(k_anim_mesh.obj, l_group.anim_grp, "input");
@@ -444,7 +457,8 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
     DOODLE_CHICK(k_s);
   }
   /// \brief 使用低模包裹高模
-  warp_model(k_proxy_node_output, l_high_mesh);
+  auto k_warp = warp_model(k_proxy_node_output, l_high_mesh);
+  add_child(l_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
     chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(), DOODLE_SOURCE_LOC, "节点数量不一致");
@@ -476,6 +490,7 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
     k_r.collider_grp   = chick_group(k_node, "collider_grp");
     k_r.deform_grp     = chick_group(k_node, "deform_grp");
     k_r.export_grp     = chick_group(k_node, "export_grp");
+    k_r.deformBase_grp = chick_group(k_node, "deformBase_grp");
   }
   MDagModifier k_m{};
   if (k_r.cfx_grp.isNull())
@@ -498,6 +513,9 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 
   if (k_r.export_grp.isNull())
     k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
+
+  if (k_r.deformBase_grp.isNull())
+    k_r.deformBase_grp = make_group(k_m, "deformBase_grp", k_r.deform_grp);
 
   k_reg->ctx().emplace<qcloth_shape::cloth_group>(k_r);
   return k_r;
