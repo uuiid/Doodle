@@ -8,6 +8,7 @@ target_sources(
         template_util.h
         status_info.h
         init_register.h
+        file_sys.h
 
         PRIVATE
         core_set.cpp
