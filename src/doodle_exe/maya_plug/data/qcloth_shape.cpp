@@ -403,7 +403,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   MDagModifier l_modifier{};
 
   /// \brief 主要的动画输出节点(需要输入到解算输入端)
-  auto& k_anim_mesh        = in_handle.get<qcloth_shape_n::maya_obj>();
+  auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
   {
     set_node_name(k_anim_mesh.obj, fmt::format("{}_proxy", k_anim_mesh.p_name));
   }
@@ -577,6 +577,45 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
     k_cache.setString(d_str{k_node_name});
   }
   return true;
+}
+void qcloth_shape::sort_group(const entt::handle& in_handle) {
+  auto l_group = get_cloth_group();
+  MStatus k_s{};
+  auto l_ql = get_ql_solver();
+  {  /// \brief 开始排序
+    MFnDagNode l_p{};
+    k_s = l_p.setObject(l_group.cfx_grp);
+    DOODLE_CHICK(k_s);
+    /**
+     * @brief 排序组
+     * - cfx_grp 顺序
+     *     - qlsolver
+     *     - anim_grp
+     *     - solver_grp
+     *         - xxx_cloth
+     *             - xxx_cloth_proxy
+     *     - constraint_grp
+     *     - collider_grp
+     *     - deform_grp  (包裹的模型)
+     *         - xxx_output
+     *         - deformBase_grp
+     *             - 包裹的base节点
+     *     - export_grp
+     */
+
+    k_s = l_p.addChild(l_ql, 0);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.addChild(l_group.anim_grp, 1);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.addChild(l_group.solver_grp, 2);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.addChild(l_group.constraint_grp, 3);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.addChild(l_group.deform_grp, 4);
+    DOODLE_CHICK(k_s);
+    k_s = l_p.addChild(l_group.export_grp, 5);
+    DOODLE_CHICK(k_s);
+  }
 }
 
 }  // namespace doodle::maya_plug

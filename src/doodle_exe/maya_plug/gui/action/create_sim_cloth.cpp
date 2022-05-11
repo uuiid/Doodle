@@ -102,7 +102,7 @@ void create_sim_cloth::render() {
       qcloth_shape::create_sim_cloth(l_h);
     }
     if (p_coll.any_of<qcloth_shape_n::shape_list>() && !p_list.empty())
-      p_list.front().get<qcloth_shape>().add_collider(p_coll);
+      qcloth_shape::add_collider(p_coll);
   }
 }
 create_sim_cloth::~create_sim_cloth() {

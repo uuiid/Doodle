@@ -97,7 +97,8 @@ class qcloth_shape {
   static std::vector<entt::handle> create_sim_cloth(
       const entt::handle& in_handle);
 
-  void add_collider(const entt::handle& in_handle);
+  static void add_collider(const entt::handle& in_handle);
+  static void sort_group(const entt::handle& in_handle);
 
   /**
    * @brief 根据引用文件创建布料句柄
