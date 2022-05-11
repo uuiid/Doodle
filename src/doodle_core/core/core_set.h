@@ -96,7 +96,6 @@ class DOODLE_CORE_EXPORT core_set_init {
   bool find_maya();
   bool read_file();
   bool write_file();
-  bool find_cache_dir();
   bool config_to_user();
 };
 

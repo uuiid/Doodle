@@ -33,8 +33,6 @@ app_base::app_base()
 
   core_set_init k_init{};
 
-  DOODLE_LOG_INFO("寻找缓存目录");
-  k_init.find_cache_dir();
   p_lib->create_time_database();
   DOODLE_LOG_INFO("寻找用户配置文件目录");
   k_init.config_to_user();

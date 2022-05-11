@@ -189,11 +189,6 @@ bool core_set_init::write_file() {
   l_ofstream << p_set.json_data->dump();
   return true;
 }
-bool core_set_init::find_cache_dir() {
-  DOODLE_LOG_INFO("寻找缓存路径");
-  p_set.set_root(FSys::temp_directory_path());
-  return true;
-}
 
 bool core_set_init::config_to_user() {
   p_set.p_doc = win::get_pwd() / "doodle";
