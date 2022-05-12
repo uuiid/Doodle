@@ -37,6 +37,11 @@ class export_file_info {
   FSys::path ref_file;
   export_type export_type_;
 
+  /**
+   * @brief 这个数据时上传需要的路径前缀,
+   * 会和项目设置中的路径进行结合,
+   * 同时每种不同的插件都对这个路径有者不同的解释
+   */
   FSys::path upload_path_;
 
   static void write_file(const entt::handle& in_handle);

@@ -406,16 +406,13 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
     if (episodes::analysis_static(out_, l_path))
       l_eps = fmt::to_string(out_.get<episodes>());
     shot::analysis_static(out_, l_path);
+    auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
     out_.emplace<export_file_info>(l_path,
                                    boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
                                    boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
                                    l_ref_file,
-                                   l_type);
-    export_file_info::write_file(out_);
-    auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
-    maya_file_io::upload_file(l_path, l_upload_prefix);
-    maya_file_io::upload_file(l_path.replace_extension(doodle_config::doodle_json_extension.data()),
-                              l_upload_prefix);
+                                   l_type)
+        .upload_path_ = l_upload_prefix;
   }
   return out_;
 }
@@ -446,17 +443,14 @@ entt::handle reference_file::export_file_select(
     auto l_eps{""s};
     if (episodes::analysis_static(out_, l_path))
       l_eps = fmt::to_string(out_.get<episodes>());
+    auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
     shot::analysis_static(out_, l_path);
     out_.emplace<export_file_info>(l_path,
                                    boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
                                    boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
                                    l_ref_file,
-                                   l_type);
-    export_file_info::write_file(out_);
-    auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
-    maya_file_io::upload_file(l_path, l_upload_prefix);
-    maya_file_io::upload_file(l_path.replace_extension(doodle_config::doodle_json_extension.data()),
-                              l_upload_prefix);
+                                   l_type)
+        .upload_path_ = l_upload_prefix;
   }
   return out_;
 }
