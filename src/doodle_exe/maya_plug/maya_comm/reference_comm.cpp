@@ -39,12 +39,14 @@ constexpr const char doodle_endTime[]                = "-et";
 constexpr const char doodle_project_path[]           = "-pr";
 constexpr const char doodle_export_type[]            = "-ef";
 constexpr const char doodle_export_use_select[]      = "-s";
+constexpr const char doodle_export_force[]           = "-f";
 
 constexpr const char doodle_export_type_long[]       = "-exportType";
-constexpr const char doodle_export_use_select_long[] = "-select";
 constexpr const char doodle_project_path_long[]      = "-project";
 constexpr const char doodle_startTime_long[]         = "-startTime";
 constexpr const char doodle_endTime_long[]           = "-endTime";
+constexpr const char doodle_export_use_select_long[] = "-select";
+constexpr const char doodle_export_force_long[]      = "-force";
 
 };  // namespace
 
@@ -60,6 +62,7 @@ MSyntax ref_file_export_syntax() {
   syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
   syntax.addFlag(doodle_export_type, doodle_export_type_long, MSyntax::kString);
   syntax.addFlag(doodle_export_use_select, doodle_export_use_select_long, MSyntax::kBoolean);
+  syntax.addFlag(doodle_export_force, doodle_export_force_long, MSyntax::kBoolean);
   return syntax;
 }
 
@@ -204,6 +207,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   MTime k_start{MAnimControl::minTime()};
   MTime k_end = MAnimControl::maxTime();
   bool use_select{false};
+  bool is_force{false};
   reference_file::export_type k_export_type{};
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
@@ -231,10 +235,32 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
   }
 
+  if (k_prase.isFlagSet(doodle_export_force, &k_s)) {
+    DOODLE_CHICK(k_s);
+    k_s = k_prase.getFlagArgument(doodle_export_force, 0, is_force);
+    DOODLE_CHICK(k_s);
+    if (!use_select) {
+      DOODLE_LOG_ERROR("错误, 强制导出时必须使用选择标志并选中导出物体");
+      return {MStatus::kFailure};
+    }
+  }
+
   DOODLE_LOG_INFO(
       "导出开始时间 {}  结束时间 {} 导出类型 {} ",
       k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type));
 
+  if (is_force) {
+    DOODLE_LOG_INFO("开始使用交互式导出");
+    MSelectionList k_select{};
+    k_s = MGlobal::getActiveSelectionList(k_select);
+    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+      if (k_r.has_node(k_select)) {
+        reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+        k_r.export_file_select(l_export_arg, k_select);
+        return k_s;
+      }
+    }
+  }
   if (use_select) {
     DOODLE_LOG_INFO("开始使用交互式导出");
     MSelectionList k_select{};
