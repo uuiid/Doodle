@@ -75,6 +75,8 @@ class DlsShelf(shelfBase._shelf):
                       command=cmds.doodle_duplicate_poly)
         self.addButon("set cache", "icons/set_cache.png",
                       command=lambda: self.set_cache())
+        self.addButon("export abc", "icons/OUTabc2.png",
+                      command=lambda: self._export_abc_and_upload_())
 
     def polyremesh(self):
         self.re()
@@ -127,6 +129,12 @@ class DlsShelf(shelfBase._shelf):
             return l_rgb
         else:
             return [0.5, 0.5, 0.5]
+
+    def _export_abc_and_upload_(self):
+        cmds.doodle_create_ref_file()
+        cmds.doodle_ref_file_export(
+            startTime=1000, exportType="abc", select=True, force=True)
+        cmds.doodle_upload_files()
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()

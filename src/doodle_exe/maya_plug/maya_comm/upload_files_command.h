@@ -10,7 +10,7 @@ namespace doodle::maya_plug {
 
 namespace upload_files_command_ns {
 MSyntax syntax();
-constexpr char name[] = "doodle_upload_files_command";
+constexpr char name[] = "doodle_upload_files";
 
 }  // namespace upload_files_command_ns
 

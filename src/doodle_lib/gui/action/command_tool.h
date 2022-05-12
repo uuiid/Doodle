@@ -41,6 +41,7 @@ class DOODLELIB_API comm_maya_tool
   std::vector<FSys::path> p_sim_path;
   bool p_only_sim;
   bool p_use_all_ref;
+  bool p_upload_files;
 
  public:
   comm_maya_tool();

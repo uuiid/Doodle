@@ -30,7 +30,8 @@ comm_maya_tool::comm_maya_tool()
       p_text(),
       p_sim_path(),
       p_only_sim(false),
-      p_use_all_ref(false) {
+      p_use_all_ref(false),
+      p_upload_files(false) {
   title_name_ = std::string{name};
 }
 void comm_maya_tool::init() {
@@ -71,6 +72,7 @@ void comm_maya_tool::render() {
 
   dear::Text(fmt::format("解算资产: {}", p_text));
 
+  imgui::Checkbox("自动上传", &p_upload_files);
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
   };
@@ -80,11 +82,12 @@ void comm_maya_tool::render() {
 
   if (imgui::Button("解算")) {
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [this, maya](const FSys::path& in_path) {
-                    auto k_arg      = maya_exe_ns::qcloth_arg{};
-                    k_arg.file_path = in_path;
-                    k_arg.only_sim  = p_only_sim;
-                    k_arg.project_  = g_reg()->ctx().at<database_info>().path_;
+                  [this](const FSys::path& in_path) {
+                    auto k_arg        = maya_exe_ns::qcloth_arg{};
+                    k_arg.file_path   = in_path;
+                    k_arg.only_sim    = p_only_sim;
+                    k_arg.upload_file = p_upload_files;
+                    k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
                     g_bounded_pool().attach<maya_exe>(
                         make_handle(),
                         k_arg);
@@ -93,10 +96,12 @@ void comm_maya_tool::render() {
   ImGui::SameLine();
   if (imgui::Button("fbx导出")) {
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [maya, this](const FSys::path& i) {
+                  [this](const FSys::path& i) {
                     auto k_arg        = maya_exe_ns::export_fbx_arg{};
                     k_arg.file_path   = i;
                     k_arg.use_all_ref = this->p_use_all_ref;
+                    k_arg.upload_file = p_upload_files;
+
                     k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
                     g_bounded_pool().attach<maya_exe>(
                         make_handle(),
@@ -106,7 +111,7 @@ void comm_maya_tool::render() {
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [maya, this](const FSys::path& i) {
+                  [this](const FSys::path& i) {
                     auto k_arg             = maya_exe_ns::replace_file_arg{};
                     k_arg.file_path        = i;
                     k_arg.replace_file_all = true;

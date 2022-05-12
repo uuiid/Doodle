@@ -153,12 +153,14 @@ class sim_config(config):
     def __init__(self):
         super(sim_config, self).__init__()
         self.only_sim = False
+        self.upload_file = False
 
 
 class fbx_config(config):
     def __init__(self):
         super(fbx_config, self).__init__()
         self.use_all_ref = False
+        self.upload_file = False
 
 
 class replace_file(config):
@@ -171,21 +173,20 @@ def __load_config__(obj):
     if "only_sim" in obj:
         k_con = sim_config()
         k_con.path = obj["path"]
-        k_con.export_path = obj["export_path"]
         k_con.project = obj["project_"]
         k_con.only_sim = obj["only_sim"]
+        k_con.upload_file = obj["upload_file"]
         return k_con
     elif "use_all_ref" in obj:
         k_con = fbx_config()
         k_con.path = obj["path"]
-        k_con.export_path = obj["export_path"]
         k_con.project = obj["project_"]
         k_con.use_all_ref = obj["use_all_ref"]
+        k_con.upload_file = obj["upload_file"]
         return k_con
     elif "replace_file_all" in obj:
         k_con = replace_file()
         k_con.path = obj["path"]
-        k_con.export_path = obj["export_path"]
         k_con.project = obj["project_"]
         k_con.use_all_ref = obj["replace_file_all"]
         return k_con
@@ -274,6 +275,7 @@ class open_file(object):
             startTime=1000,
             endTime=doodle_work_space.raneg.end,
             exportType="abc")
+        cmds.doodle_upload_files(clear=self.cfg.upload_file)
 
     def get_fbx_export(self):
         # type: () -> None
@@ -300,6 +302,7 @@ class open_file(object):
             exportType="fbx")
         cmds.doodle_export_camera(startTime=1001,
                                   endTime=doodle_work_space.raneg.end)
+        cmds.doodle_upload_files(clear=not self.cfg.upload_file)
 
     def replace_file_fun(self):
         # type: () -> None
