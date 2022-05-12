@@ -79,13 +79,12 @@ void comm_maya_tool::render() {
   };
 
   if (imgui::Button("解算")) {
-    auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [this, maya](const FSys::path& in_path) {
-                    auto k_arg               = maya_exe_ns::qcloth_arg{};
-                    k_arg.file_path                  = in_path;
-                    k_arg.only_sim           = p_only_sim;
-                    k_arg.project_           = g_reg()->ctx().at<database_info>().path_;
+                    auto k_arg      = maya_exe_ns::qcloth_arg{};
+                    k_arg.file_path = in_path;
+                    k_arg.only_sim  = p_only_sim;
+                    k_arg.project_  = g_reg()->ctx().at<database_info>().path_;
                     g_bounded_pool().attach<maya_exe>(
                         make_handle(),
                         k_arg);
@@ -93,7 +92,6 @@ void comm_maya_tool::render() {
   }
   ImGui::SameLine();
   if (imgui::Button("fbx导出")) {
-    auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [maya, this](const FSys::path& i) {
                     auto k_arg        = maya_exe_ns::export_fbx_arg{};
@@ -107,7 +105,6 @@ void comm_maya_tool::render() {
   }
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
-    auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [maya, this](const FSys::path& i) {
                     auto k_arg             = maya_exe_ns::replace_file_arg{};
