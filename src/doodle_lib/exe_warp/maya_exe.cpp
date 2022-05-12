@@ -16,7 +16,7 @@
 #elif defined __linux__
 #include <boost/process/posix.hpp>
 #endif
-namespace doodle::details {
+namespace doodle {
 namespace {
 // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
 const std::wregex fatal_error_znch{
@@ -95,11 +95,11 @@ quit()
       run_path.generic_string());
 }
 
-maya_exe::maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg)
+maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg)
     : maya_exe(in_handle, in_arg, 0) {}
-maya_exe::maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg)
+maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::export_fbx_arg &in_arg)
     : maya_exe(in_handle, in_arg, 0) {}
-maya_exe::maya_exe(const entt::handle &in_handle, const replace_file_arg &in_arg)
+maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg)
     : maya_exe(in_handle, in_arg, 0) {}
 
 maya_exe::~maya_exe() = default;
@@ -260,4 +260,4 @@ void maya_exe::aborted() {
   });
 }
 
-}  // namespace doodle::details
+}  // namespace doodle

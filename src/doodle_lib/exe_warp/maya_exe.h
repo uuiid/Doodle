@@ -6,9 +6,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle::details {
+namespace doodle::maya_exe_ns {
 
-namespace maya_exe_ns {
 class arg {
  public:
   arg()          = default;
@@ -20,7 +19,6 @@ class arg {
     nlohmann_json_j["project_"] = nlohmann_json_t.project_.generic_string();
   }
 };
-}  // namespace maya_exe_ns
 
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
  public:
@@ -51,7 +49,8 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
     nlohmann_json_j["replace_file_all"] = nlohmann_json_t.replace_file_all;
   };
 };
-
+}  // namespace doodle::maya_exe_ns
+namespace doodle {
 class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   class impl;
   std::unique_ptr<impl> p_i;
@@ -60,6 +59,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   explicit maya_exe(const entt::handle &in_handle,
                     const T &in_arg,
                     std::int32_t in_arg_tag);
+
  public:
   using base_type = process_t<maya_exe>;
 
@@ -83,7 +83,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * 检查 process_message 和 core_set::getSet().has_maya()
    *
    */
-  explicit maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg);
+  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg);
   /**
    * @brief 使用配置进行fbx导出
    * @param in_handle 具有消息组件的的句柄
@@ -92,7 +92,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * 检查 process_message 和 core_set::getSet().has_maya()
    *
    */
-  explicit maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg);
+  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::export_fbx_arg &in_arg);
   /**
    * @brief 使用配置进行文件替换
    * @param in_handle 具有消息组件的的句柄
@@ -101,7 +101,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * 检查 process_message 和 core_set::getSet().has_maya()
    *
    */
-  explicit maya_exe(const entt::handle &in_handle, const replace_file_arg &in_arg);
+  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg);
   ~maya_exe() override;
 
   [[maybe_unused]] void init();
@@ -110,4 +110,4 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(base_type::delta_type, void *data);
 };
-}  // namespace doodle::details
+}  // namespace doodle

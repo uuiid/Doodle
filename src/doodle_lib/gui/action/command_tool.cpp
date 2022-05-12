@@ -15,6 +15,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <long_task/image_to_move.h>
 #include <gui/gui_ref/ref_base.h>
@@ -81,36 +82,41 @@ void comm_maya_tool::render() {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
                   [this, maya](const FSys::path& in_path) {
-                    auto arg               = details::qcloth_arg{};
-                    arg.sim_path           = in_path;
-                    arg.qcloth_assets_path = p_cloth_path;
-                    arg.only_sim           = p_only_sim;
-                    arg.project_           = g_reg()->ctx().at<database_info>().path_;
-                    maya->qcloth_sim_file(make_handle(), arg);
+                    auto k_arg               = maya_exe_ns::qcloth_arg{};
+                    k_arg.file_path                  = in_path;
+                    k_arg.only_sim           = p_only_sim;
+                    k_arg.project_           = g_reg()->ctx().at<database_info>().path_;
+                    g_bounded_pool().attach<maya_exe>(
+                        make_handle(),
+                        k_arg);
                   });
   }
   ImGui::SameLine();
   if (imgui::Button("fbx导出")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [maya, this](const auto& i) {
-                    auto k_arg        = details::export_fbx_arg{};
+                  [maya, this](const FSys::path& i) {
+                    auto k_arg        = maya_exe_ns::export_fbx_arg{};
                     k_arg.file_path   = i;
                     k_arg.use_all_ref = this->p_use_all_ref;
                     k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
-                    maya->export_fbx_file(make_handle(), k_arg);
+                    g_bounded_pool().attach<maya_exe>(
+                        make_handle(),
+                        k_arg);
                   });
   }
   ImGui::SameLine();
   if (imgui::Button("引用文件替换")) {
     auto maya = new_object<maya_file_async>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(),
-                  [maya, this](const auto& i) {
-                    auto k_arg             = details::replace_file_arg{};
+                  [maya, this](const FSys::path& i) {
+                    auto k_arg             = maya_exe_ns::replace_file_arg{};
                     k_arg.file_path        = i;
                     k_arg.replace_file_all = true;
                     k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
-                    maya->replace_file_fun(make_handle(), k_arg);
+                    g_bounded_pool().attach<maya_exe>(
+                        make_handle(),
+                        k_arg);
                   });
   }
 }
