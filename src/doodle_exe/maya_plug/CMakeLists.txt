@@ -110,7 +110,7 @@ if (DEFINED Maya_Version)
         configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
         add_custom_command(
                 TARGET doodle_maya_${Maya_Version}
-                PRE_BUILD
+                POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
         )

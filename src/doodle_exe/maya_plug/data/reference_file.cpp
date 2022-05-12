@@ -223,6 +223,33 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 不符合配置的文件, 不进行导出")
     return {};
   }
+
+  /// \brief 进行dag遍历提取需要的节点
+  {
+    MDagPath k_root{};
+    k_s = k_select.getDagPath(0, k_root);
+    DOODLE_CHICK(k_s);
+    MItDag k_it{};
+    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
+    DOODLE_CHICK(k_s);
+    MFnDagNode l_fn_dag_node{};
+    k_select.clear();
+    for (; !k_it.isDone(&k_s); k_it.next()) {
+      DOODLE_CHICK(k_s);
+      k_s = k_it.getPath(k_root);
+      DOODLE_CHICK(k_s);
+
+      k_s = l_fn_dag_node.setObject(k_root);
+      DOODLE_CHICK(k_s);
+      /// \brief 检查一下是否是中间对象
+      if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
+        DOODLE_CHICK(k_s)
+        k_s = k_select.add(l_fn_dag_node.object());
+        DOODLE_CHICK(k_s);
+      }
+    }
+  }
+
   return export_abc(in_start, in_endl, k_select);
 }
 bool reference_file::add_collision() const {
@@ -517,33 +544,17 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     return out_;
   }
   /// \brief 进行dag遍历提取需要的节点
-  std::vector<std::string> l_names{};
-  {
-    MDagPath k_root{};
-    k_s = k_select.getDagPath(0, k_root);
-    DOODLE_CHICK(k_s);
-    MItDag k_it{};
-    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
-    DOODLE_CHICK(k_s);
-    MFnDagNode l_fn_dag_node{};
-    for (; !k_it.isDone(&k_s); k_it.next()) {
-      DOODLE_CHICK(k_s);
-      k_s = k_it.getPath(k_root);
-      DOODLE_CHICK(k_s);
 
-      k_s = l_fn_dag_node.setObject(k_root);
-      DOODLE_CHICK(k_s);
-      /// \brief 检查一下是否是中间对象
-      if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
-        DOODLE_CHICK(k_s)
-
-        l_names.push_back(d_str{k_root.fullPathName(&k_s)});
-        DOODLE_CHICK(k_s);
-      }
+  if (k_select.length(&k_s) > 1) {
+    DOODLE_CHICK(k_s);
+    MStringArray k_mearge_names{};
+    k_s = k_select.getSelectionStrings(k_mearge_names);
+    DOODLE_CHICK(k_s);
+    std::vector<std::string> l_names;
+    for (int l_i = 0; l_i < k_mearge_names.length(); ++l_i) {
+      l_names.emplace_back(d_str{k_mearge_names[l_i]});
     }
-  }
 
-  if (l_names.size() > 1) {
     MStringArray k_r_s{};
     auto k_name       = fmt::format("{}_export_abc", get_namespace());
     std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
@@ -557,10 +568,6 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
     k_select.clear();
     k_s = k_select.add(k_r_s[0], true);
-    DOODLE_CHICK(k_s);
-  } else {
-    k_select.clear();
-    k_s = k_select.add(d_str{l_names[0]}, true);
     DOODLE_CHICK(k_s);
   }
 
