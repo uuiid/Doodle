@@ -32,9 +32,17 @@ class reference_file {
    * @brief 引用maya obj 节点
    */
   MObject p_m_object;
+  /**
+   * @brief 这个路径是显示的路径,  带有后缀以区分相同路径的多个引用
+   */
   std::string path;
-
+  /**
+   * @brief 引用文件是否解算
+   */
   bool use_sim;
+  /**
+   * @brief 引用文件是否设置为高速运动
+   */
   bool high_speed_sim;
   std::vector<std::string> collision_model;
   std::vector<std::string> collision_model_show_str;
@@ -44,7 +52,9 @@ class reference_file {
   void init_show_name();
   void set_path(const MObject &in_ref_node);
   bool set_namespace(const std::string &in_namespace);
-
+  /**
+   * @brief 将布料初始化状态, (会寻找特点名称的布料进行状态的重置)
+   */
   void qlUpdateInitialPose() const;
   [[nodiscard]] MSelectionList get_collision_model() const;
   void set_collision_model(const MSelectionList &in_list);
