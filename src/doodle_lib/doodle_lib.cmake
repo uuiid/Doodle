@@ -14,7 +14,6 @@ set(
         core/work_clock.h
 
 
-        file_warp/maya_file.h
         file_warp/opencv_read_player.h
         gui/setting_windows.h
         gui/main_menu_bar.h
@@ -89,7 +88,6 @@ set(
         core/work_clock.cpp
 
 
-        file_warp/maya_file.cpp
         file_warp/opencv_read_player.cpp
         gui/setting_windows.cpp
         gui/main_menu_bar.cpp

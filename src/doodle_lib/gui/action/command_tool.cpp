@@ -5,7 +5,7 @@
 #include "command_tool.h"
 
 #include <gui/open_file_dialog.h>
-#include <doodle_lib/file_warp/maya_file.h>
+
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/assets_file.h>
