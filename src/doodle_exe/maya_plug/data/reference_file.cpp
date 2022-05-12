@@ -213,95 +213,17 @@ bool reference_file::rename_material() const {
 }
 
 FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
-  FSys::path out_{};
-  rename_material();
   MSelectionList k_select{};
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
-  k_s         = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-  DOODLE_CHICK(k_s);
-
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到合并对象")
-    return out_;
-  }
-  /// \brief 进行dag遍历提取需要的节点
-  std::vector<std::string> l_names{};
-  {
-    MDagPath k_root{};
-    k_s = k_select.getDagPath(0, k_root);
+  try {
+    k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_CHICK(k_s);
-    MItDag k_it{};
-    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
-    DOODLE_CHICK(k_s);
-    MFnDagNode l_fn_dag_node{};
-    for (; !k_it.isDone(&k_s); k_it.next()) {
-      DOODLE_CHICK(k_s);
-      k_s = k_it.getPath(k_root);
-      DOODLE_CHICK(k_s);
-
-      k_s = l_fn_dag_node.setObject(k_root);
-      DOODLE_CHICK(k_s);
-      /// \brief 检查一下是否是中间对象
-      if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
-        DOODLE_CHICK(k_s)
-
-        l_names.push_back(d_str{k_root.fullPathName(&k_s)});
-        DOODLE_CHICK(k_s);
-      }
-    }
+  } catch (const maya_InvalidParameter &err) {
+    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 不符合配置的文件, 不进行导出")
+    return {};
   }
-
-  if (l_names.size() > 1) {
-    MStringArray k_r_s{};
-    auto k_name       = fmt::format("{}_export_abc", get_namespace());
-    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
-                                    k_name,
-                                    fmt::join(l_names, " "));
-    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
-    k_s = MGlobal::executeCommand(d_str{l_mel},
-                                  k_r_s,
-                                  true);
-    DOODLE_CHICK(k_s);
-
-    k_select.clear();
-    k_s = k_select.add(k_r_s[0], true);
-    DOODLE_CHICK(k_s);
-  } else {
-    k_select.clear();
-    k_s = k_select.add(d_str{l_names[0]}, true);
-    DOODLE_CHICK(k_s);
-  }
-
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到合并对象")
-    return out_;
-  }
-
-  MDagPath k_mesh_path{};
-  k_s = k_select.getDagPath(0, k_mesh_path);
-  DOODLE_CHICK(k_s);
-
-  auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
-  auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
-
-  if (!exists(k_path)) {
-    create_directories(k_path);
-  }
-  k_path /= fmt::format("{}_{}_{}-{}.abc", k_seance_name, get_namespace(), in_start.as(MTime::uiUnit()), in_endl.as(MTime::uiUnit()));
-
-  /// \brief 导出abc命令
-  k_s = MGlobal::executeCommand(d_str{
-                                    fmt::format(R"(
-AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
-)",
-                                                in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
-                                                in_endl.as(MTime::uiUnit()),                  /// \brief 结束时间
-                                                d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
-                                                k_path.generic_string())},
-                                true);  /// \brief 导出文件路径，包含文件名和文件路径
-  DOODLE_CHICK(k_s);
-  return k_path;
+  return export_abc(in_start, in_endl, k_select);
 }
 bool reference_file::add_collision() const {
   if (collision_model.empty())
@@ -322,9 +244,6 @@ bool reference_file::add_collision() const {
 }
 
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
-  FSys::path out_{};
-
-  chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
   MSelectionList k_select{};
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
@@ -333,95 +252,10 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
     DOODLE_CHICK(k_s);
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
-    return out_;
+    return {};
   }
 
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_WARN("没有选中的物体, 不进行输出")
-    return out_;
-  }
-
-  k_s = MGlobal::setActiveSelectionList(k_select);
-  DOODLE_CHICK(k_s);
-
-  auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
-
-  if (!FSys::exists(k_file_path))
-    FSys::create_directories(k_file_path);
-  /**
-   *
-   * @brief
-   * bakeResults(simulation=True,
-   *  time=(doodle_work_space.raneg.start,
-   *        doodle_work_space.raneg.end),
-   *  hierarchy="below",
-   *  sampleBy=1,
-   *  disableImplicitControl=True,
-   *  preserveOutsideKeys=False,
-   *  sparseAnimCurveBake=False)
-   *
-   *  preserveOutsideKeys 这个选项会导致眼睛出现问题
-   */
-  static std::string maya_bakeResults_str{R"(
-bakeResults
- -simulation true
- -t "{}:{}"
- -hierarchy below
- -sampleBy 1
- -oversamplingRate 1
- -disableImplicitControl true
- -preserveOutsideKeys {}
- -sparseAnimCurveBake false
- -removeBakedAttributeFromLayer false
- -removeBakedAnimFromLayer false
- -bakeOnOverrideLayer false
- -minimizeRotation true
- -controlPoints false
- -shape true
- "{}:*{}";
-)"};
-  auto l_comm = fmt::format(maya_bakeResults_str,
-                            in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
-  DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
-  try {
-    k_s = MGlobal::executeCommand(d_str{l_comm});
-    DOODLE_CHICK(k_s);
-    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试");
-  } catch (const maya_Failure &in) {
-    auto l_comm_back = fmt::format(maya_bakeResults_str,
-                                   in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
-    DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm_back);
-    k_s = MGlobal::executeCommand(d_str{l_comm});
-    DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
-  }
-
-  k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
-                             maya_file_io::get_current_path().stem().generic_string(),
-                             get_namespace(),
-                             in_start.value(),
-                             in_end.value());
-  DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
-
-  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
-  k_s         = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
-
-  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportConstraints -v true;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
-
-  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
-  return k_file_path;
+  return export_fbx(in_start, in_end, k_select);
 }
 bool reference_file::has_node(const MSelectionList &in_list) {
   chick_mobject();
@@ -579,6 +413,41 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
   }
   return out_;
 }
+entt::handle reference_file::export_file_select(
+    const reference_file::export_arg &in_arg,
+    const MSelectionList &in_list) {
+  entt::handle out_{};
+  FSys::path l_path{};
+
+  export_file_info::export_type l_type{};
+  switch (in_arg.export_type_p) {
+    case export_type::abc: {
+      l_type = export_file_info::export_type::abc;
+      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list);
+
+    } break;
+    case export_type::fbx: {
+      l_type = export_file_info::export_type::fbx;
+      l_path = export_fbx(in_arg.start_p, in_arg.end_p, in_list);
+    } break;
+  }
+  if (!l_path.empty()) {
+    out_ = make_handle();
+    FSys::path l_ref_file{this->path};
+    if (l_ref_file.empty()) {
+      l_ref_file = this->get_namespace();
+    }
+    episodes::analysis_static(out_, l_path);
+    shot::analysis_static(out_, l_path);
+    out_.emplace<export_file_info>(l_path,
+                                   boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
+                                   boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
+                                   l_ref_file,
+                                   l_type);
+    export_file_info::write_file(out_);
+  }
+  return out_;
+}
 bool reference_file::replace_file(const entt::handle &in_handle) {
   chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), DOODLE_LOC, "缺失替换引用信息");
   chick_true<doodle_error>(!p_m_object.isNull(), DOODLE_LOC, "没有引用文件, 无法替换");
@@ -629,6 +498,190 @@ FSys::path reference_file::get_path() const {
   FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
   DOODLE_CHICK(k_s);
   return l_path;
+}
+FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
+  FSys::path out_{};
+  rename_material();
+  MSelectionList k_select{in_export_obj};
+  MStatus k_s{};
+  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+
+  if (k_select.isEmpty()) {
+    DOODLE_LOG_INFO("没有找到合并对象")
+    return out_;
+  }
+  /// \brief 进行dag遍历提取需要的节点
+  std::vector<std::string> l_names{};
+  {
+    MDagPath k_root{};
+    k_s = k_select.getDagPath(0, k_root);
+    DOODLE_CHICK(k_s);
+    MItDag k_it{};
+    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
+    DOODLE_CHICK(k_s);
+    MFnDagNode l_fn_dag_node{};
+    for (; !k_it.isDone(&k_s); k_it.next()) {
+      DOODLE_CHICK(k_s);
+      k_s = k_it.getPath(k_root);
+      DOODLE_CHICK(k_s);
+
+      k_s = l_fn_dag_node.setObject(k_root);
+      DOODLE_CHICK(k_s);
+      /// \brief 检查一下是否是中间对象
+      if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
+        DOODLE_CHICK(k_s)
+
+        l_names.push_back(d_str{k_root.fullPathName(&k_s)});
+        DOODLE_CHICK(k_s);
+      }
+    }
+  }
+
+  if (l_names.size() > 1) {
+    MStringArray k_r_s{};
+    auto k_name       = fmt::format("{}_export_abc", get_namespace());
+    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
+                                    k_name,
+                                    fmt::join(l_names, " "));
+    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
+    k_s = MGlobal::executeCommand(d_str{l_mel},
+                                  k_r_s,
+                                  true);
+    DOODLE_CHICK(k_s);
+
+    k_select.clear();
+    k_s = k_select.add(k_r_s[0], true);
+    DOODLE_CHICK(k_s);
+  } else {
+    k_select.clear();
+    k_s = k_select.add(d_str{l_names[0]}, true);
+    DOODLE_CHICK(k_s);
+  }
+
+  if (k_select.isEmpty()) {
+    DOODLE_LOG_INFO("没有找到合并对象")
+    return out_;
+  }
+
+  MDagPath k_mesh_path{};
+  k_s = k_select.getDagPath(0, k_mesh_path);
+  DOODLE_CHICK(k_s);
+
+  auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
+  auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
+
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  k_path /= fmt::format("{}_{}_{}-{}.abc", k_seance_name, get_namespace(), in_start.as(MTime::uiUnit()), in_end.as(MTime::uiUnit()));
+
+  /// \brief 导出abc命令
+  k_s = MGlobal::executeCommand(d_str{
+                                    fmt::format(R"(
+AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
+)",
+                                                in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
+                                                in_end.as(MTime::uiUnit()),                   /// \brief 结束时间
+                                                d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
+                                                k_path.generic_string())},
+                                true);  /// \brief 导出文件路径，包含文件名和文件路径
+  DOODLE_CHICK(k_s);
+  return k_path;
+}
+FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
+  FSys::path out_{};
+
+  chick_true<doodle_error>(is_loaded(), DOODLE_LOC, "需要导出fbx的引用必须加载");
+
+  MStatus k_s{};
+  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+
+  if (in_export_obj.isEmpty()) {
+    DOODLE_LOG_WARN("没有选中的物体, 不进行输出")
+    return out_;
+  }
+
+  k_s = MGlobal::setActiveSelectionList(in_export_obj);
+  DOODLE_CHICK(k_s);
+
+  auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
+
+  if (!FSys::exists(k_file_path))
+    FSys::create_directories(k_file_path);
+  /**
+   *
+   * @brief
+   * bakeResults(simulation=True,
+   *  time=(doodle_work_space.raneg.start,
+   *        doodle_work_space.raneg.end),
+   *  hierarchy="below",
+   *  sampleBy=1,
+   *  disableImplicitControl=True,
+   *  preserveOutsideKeys=False,
+   *  sparseAnimCurveBake=False)
+   *
+   *  preserveOutsideKeys 这个选项会导致眼睛出现问题
+   */
+  static std::string maya_bakeResults_str{R"(
+bakeResults
+ -simulation true
+ -t "{}:{}"
+ -hierarchy below
+ -sampleBy 1
+ -oversamplingRate 1
+ -disableImplicitControl true
+ -preserveOutsideKeys {}
+ -sparseAnimCurveBake false
+ -removeBakedAttributeFromLayer false
+ -removeBakedAnimFromLayer false
+ -bakeOnOverrideLayer false
+ -minimizeRotation true
+ -controlPoints false
+ -shape true
+ "{}:*{}";
+)"};
+  auto l_comm = fmt::format(maya_bakeResults_str,
+                            in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
+  DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+  try {
+    k_s = MGlobal::executeCommand(d_str{l_comm});
+    DOODLE_CHICK(k_s);
+    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试");
+  } catch (const maya_Failure &in) {
+    auto l_comm_back = fmt::format(maya_bakeResults_str,
+                                   in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
+    DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm_back);
+    k_s = MGlobal::executeCommand(d_str{l_comm});
+    DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
+  }
+
+  k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
+                             maya_file_io::get_current_path().stem().generic_string(),
+                             get_namespace(),
+                             in_start.value(),
+                             in_end.value());
+  DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
+
+  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
+  k_s         = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = std::string{"FBXExportConstraints -v true;"};
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+
+  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
+  k_s    = MGlobal::executeCommand(d_str{k_comm});
+  DOODLE_CHICK(k_s);
+  return k_file_path;
 }
 
 }  // namespace doodle::maya_plug
