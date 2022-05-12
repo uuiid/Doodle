@@ -8,72 +8,46 @@
 
 namespace doodle::details {
 
-class DOODLELIB_API qcloth_arg {
+namespace maya_exe_ns {
+class arg {
  public:
-  FSys::path sim_path;
-  FSys::path qcloth_assets_path;
-  FSys::path export_path;
-  bool only_sim;
+  arg()          = default;
+  virtual ~arg() = default;
+  FSys::path file_path;
   FSys::path project_;
+  friend void to_json(nlohmann::json &nlohmann_json_j, const arg &nlohmann_json_t) {
+    nlohmann_json_j["path"]     = nlohmann_json_t.file_path.generic_string();
+    nlohmann_json_j["project_"] = nlohmann_json_t.project_.generic_string();
+  }
+};
+}  // namespace maya_exe_ns
+
+class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
+ public:
+  bool only_sim;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]        = nlohmann_json_t.sim_path.generic_string();
-    nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["project_"]    = nlohmann_json_t.project_.generic_string();
-    nlohmann_json_j["only_sim"]    = nlohmann_json_t.only_sim;
+    to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
+    nlohmann_json_j["only_sim"] = nlohmann_json_t.only_sim;
   };
 };
 
-class DOODLELIB_API export_fbx_arg {
+class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
  public:
-  /**
-   * @brief maya文件源路径(文件路径)
-   *
-   */
-  FSys::path file_path;
-  /**
-   * @brief 导出文件的路径(目录)
-   *
-   */
-  FSys::path export_path;
-  /**
-   * @brief 是否导出所有引用
-   *
-   */
   bool use_all_ref;
 
-  FSys::path project_;
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]        = nlohmann_json_t.file_path.generic_string();
-    nlohmann_json_j["export_path"] = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["project_"]    = nlohmann_json_t.project_.generic_string();
+    to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
   };
 };
 
-class DOODLELIB_API replace_file_arg {
+class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
-  /**
-   * @brief maya文件源路径(文件路径)
-   *
-   */
-  FSys::path file_path;
-  /**
-   * @brief 导出文件的路径(目录)
-   *
-   */
-  FSys::path export_path;
-  /**
-   * @brief 是否导出所有引用
-   *
-   */
   bool replace_file_all;
 
-  FSys::path project_;
   friend void to_json(nlohmann::json &nlohmann_json_j, const replace_file_arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]             = nlohmann_json_t.file_path.generic_string();
-    nlohmann_json_j["export_path"]      = nlohmann_json_t.export_path.generic_string();
-    nlohmann_json_j["project_"]         = nlohmann_json_t.project_.generic_string();
+    to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["replace_file_all"] = nlohmann_json_t.replace_file_all;
   };
 };
@@ -82,7 +56,10 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   class impl;
   std::unique_ptr<impl> p_i;
   static void add_maya_fun_tool();
-
+  template <typename T>
+  explicit maya_exe(const entt::handle &in_handle,
+                    const T &in_arg,
+                    std::int32_t in_arg_tag);
  public:
   using base_type = process_t<maya_exe>;
 

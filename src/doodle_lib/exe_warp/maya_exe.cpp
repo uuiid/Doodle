@@ -54,91 +54,48 @@ maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm)
       core_set::getSet().maya_path().generic_string(),
       in_comm);
 }
+template <typename T>
+maya_exe::maya_exe(const entt::handle &in_handle,
+                   const T &in_arg,
+                   std::int32_t in_arg_tag)
+    : p_i(std::make_unique<impl>()) {
+  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
+  chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
+  p_i->p_mess = in_handle;
+
+  // 生成导出文件
+  nlohmann::json l_json{};
+  l_json          = in_arg;
+  auto str_script = fmt::format(
+      R"(# -*- coding: utf-8 -*-\n
+import maya_fun_tool
+k_f =  maya_fun_tool.open_file()
+k_f.config_ = """{}"""
+k_f()
+quit()
+)",
+      l_json.dump());
+
+  auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
+
+  p_i->p_mess.patch<process_message>([&](process_message &in) {
+    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
+  });
+
+  // 生成命令
+  p_i->in_comm = fmt::format(
+      R"("{}/mayapy.exe" {})",
+      core_set::getSet().maya_path().generic_string(),
+      run_path.generic_string());
+}
+
 maya_exe::maya_exe(const entt::handle &in_handle, const qcloth_arg &in_arg)
-    : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-  chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess     = in_handle;
-
-  // 生成导出文件
-  auto str_script = fmt::format(
-      R"(# -*- coding: utf-8 -*-\n
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
-quit()
-)",
-      nlohmann::json{in_arg}.dump());
-
-  auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
-
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-  });
-
-  // 生成命令
-  p_i->in_comm = fmt::format(
-      R"("{}/mayapy.exe" {})",
-      core_set::getSet().maya_path().generic_string(),
-      run_path.generic_string());
-}
+    : maya_exe(in_handle, in_arg, 0) {}
 maya_exe::maya_exe(const entt::handle &in_handle, const export_fbx_arg &in_arg)
-    : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-  chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess     = in_handle;
-
-  // 生成导出文件
-  auto str_script = fmt::format(
-      R"(# -*- coding: utf-8 -*-\n
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
-quit()
-)",
-      nlohmann::json{in_arg}.dump());
-
-  auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-  });
-
-  // 生成命令
-  p_i->in_comm = fmt::format(
-      R"("{}/mayapy.exe" {})",
-      core_set::getSet().maya_path().generic_string(),
-      run_path.generic_string());
-}
+    : maya_exe(in_handle, in_arg, 0) {}
 maya_exe::maya_exe(const entt::handle &in_handle, const replace_file_arg &in_arg)
-    : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-  chick_true<doodle_error>(core_set::getSet().has_maya(), DOODLE_LOC, "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
-  p_i->p_mess     = in_handle;
+    : maya_exe(in_handle, in_arg, 0) {}
 
-  // 生成导出文件
-  auto str_script = fmt::format(
-      R"(# -*- coding: utf-8 -*-\n
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
-quit()
-)",
-      nlohmann::json{in_arg}.dump());
-
-  auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-  });
-
-  // 生成命令
-  p_i->in_comm = fmt::format(
-      R"("{}/mayapy.exe" {})",
-      core_set::getSet().maya_path().generic_string(),
-      run_path.generic_string());
-}
 maya_exe::~maya_exe() = default;
 
 void maya_exe::add_maya_fun_tool() {
@@ -189,7 +146,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
       case std::future_status::ready: {
         k_out = p_i->p_out_str.get();
         if (!k_out.empty()) {
-          auto k_str = conv::to_utf<char>(k_out, "GBK");
+          auto k_str  = conv::to_utf<char>(k_out, "GBK");
 
           p_i->p_time = chrono::system_clock::now();
           p_i->p_mess.patch<process_message>([&](process_message &in) {
@@ -220,7 +177,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
       case std::future_status::ready: {
         k_out = p_i->p_err_str.get();
         if (!k_out.empty()) {
-          auto k_str = conv::to_utf<char>(k_out, "GBK");
+          auto k_str   = conv::to_utf<char>(k_out, "GBK");
           auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
           if (std::regex_search(k_w_str, fatal_error_znch) ||
               std::regex_search(k_w_str, fatal_error_en_us)) {
