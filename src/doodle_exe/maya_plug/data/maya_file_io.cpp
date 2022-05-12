@@ -88,13 +88,29 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
 }
 bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix) {
   chick_true<doodle_error>(FSys::is_regular_file(in_source_path), DOODLE_LOC, "{} 路径不存在或者不是文件");
+  bool result{false};
+
   auto l_upload_path = g_reg()->ctx().at<project_config::base_config>().get_upload_path();
   l_upload_path /= in_prefix;
   l_upload_path /= maya_file_io::get_current_path().stem();
   if (!FSys::exists(l_upload_path.parent_path()))
     FSys::create_directories(l_upload_path.parent_path());
-  FSys::copy_file(in_source_path,
-                  l_upload_path / in_source_path.filename(),
-                  FSys::copy_option::overwrite_if_exists);
+  try {
+    DOODLE_LOG_INFO("开始备份文件 {}", in_source_path);
+    FSys::backup_file(in_source_path);
+  } catch (const FSys::filesystem_error& error) {
+    DOODLE_LOG_ERROR("备份文件失败, {}", error.what());
+  }
+
+  try {
+    DOODLE_LOG_INFO("开始复制文件 {} -> {}", in_source_path, l_upload_path);
+    FSys::copy_file(in_source_path,
+                    l_upload_path / in_source_path.filename(),
+                    FSys::copy_option::overwrite_if_exists);
+    result = true;
+  } catch (const FSys::filesystem_error& error) {
+    DOODLE_LOG_ERROR("复制文件失败, {}", error.what());
+  }
+  return result;
 }
 }  // namespace doodle::maya_plug

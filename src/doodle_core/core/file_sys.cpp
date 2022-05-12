@@ -95,7 +95,6 @@ void backup_file(const path &source) {
   if (!exists(backup_path.parent_path()))
     create_directories(backup_path.parent_path());
   rename(source, backup_path);
-  chick_true<doodle_error>(exists(source), DOODLE_LOC, "无法备份文件");
 }
 path add_time_stamp(const path &in_path) {
   auto k_fn = in_path.stem();

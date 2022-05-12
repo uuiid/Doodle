@@ -20,5 +20,5 @@ class maya_file_io {
 
   static bool upload_file(const FSys::path& in_source_path,
                           const FSys::path& in_prefix);
-
+};
 }  // namespace doodle::maya_plug
