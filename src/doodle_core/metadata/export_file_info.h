@@ -37,6 +37,8 @@ class export_file_info {
   FSys::path ref_file;
   export_type export_type_;
 
+  FSys::path upload_path_;
+
   static void write_file(const entt::handle& in_handle);
   static entt::handle read_file(const FSys::path& in_path);
 };

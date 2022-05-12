@@ -22,7 +22,8 @@ export_file_info::export_file_info(FSys::path in_path,
       start_frame(in_start_frame),
       end_frame(in_end_frame),
       ref_file(std::move(in_ref_path)),
-      export_type_(in_export_type) {
+      export_type_(in_export_type),
+      upload_path_() {
 }
 
 void to_json(nlohmann::json& j, const export_file_info& p) {
@@ -31,6 +32,7 @@ void to_json(nlohmann::json& j, const export_file_info& p) {
   j["end_frame"]    = p.end_frame;
   j["ref_file"]     = p.ref_file;
   j["export_type_"] = p.export_type_;
+  j["upload_path"]  = p.upload_path_;
 }
 void from_json(const nlohmann::json& j, export_file_info& p) {
   j.at("file_path").get_to(p.file_path);
@@ -38,6 +40,8 @@ void from_json(const nlohmann::json& j, export_file_info& p) {
   j.at("end_frame").get_to(p.end_frame);
   j.at("ref_file").get_to(p.ref_file);
   j.at("export_type_").get_to(p.export_type_);
+  if (j.contains("upload_path"))
+    j.at("upload_path").get_to(p.upload_path_);
 }
 void to_json(nlohmann::json& j, const export_file_info::export_type& p) {
   j = magic_enum::enum_name(p);
@@ -74,7 +78,7 @@ entt::handle export_file_info::read_file(const FSys::path& in_path) {
                                      in_path);
           });
   auto l_json = nlohmann::json::parse(FSys::ifstream{in_path});
-  auto l_h = make_handle();
+  auto l_h    = make_handle();
   entt_tool::load_comm<export_file_info, episodes, shot>(l_h, l_json);
   return l_h;
 }
