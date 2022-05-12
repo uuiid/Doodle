@@ -71,6 +71,8 @@ set(doodle_maya_plug_cpp
         maya_comm/replace_rig_file_command.cpp
         data/maya_call_guard.h
         data/maya_call_guard.cpp
+        maya_comm/upload_files_command.h
+        maya_comm/upload_files_command.cpp
 
         )
 
