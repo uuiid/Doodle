@@ -165,4 +165,10 @@ bool project_config::base_config::match_icon_extensions(const FSys::path& in_pat
   }
   return false;
 }
+FSys::path project_config::base_config::get_upload_path() const {
+  if (upload_path.has_root_path())
+    return upload_path;
+  else
+    return g_reg()->ctx().at<project>().p_path / upload_path;
+}
 }  // namespace doodle

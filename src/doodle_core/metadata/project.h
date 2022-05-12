@@ -109,9 +109,13 @@ class DOODLE_CORE_EXPORT base_config {
    */
   std::vector<std::string> icon_extensions;
 
+  FSys::path upload_path;
+
   base_config();
 
-  bool match_icon_extensions(const FSys::path& in_path) const;
+  [[nodiscard]] bool match_icon_extensions(const FSys::path& in_path) const;
+
+  [[nodiscard]] FSys::path get_upload_path() const;
 };
 
 }  // namespace project_config

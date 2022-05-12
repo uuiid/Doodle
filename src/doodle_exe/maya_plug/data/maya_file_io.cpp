@@ -86,4 +86,15 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
   DOODLE_CHICK(k_s);
   return false;
 }
+bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix) {
+  chick_true<doodle_error>(FSys::is_regular_file(in_source_path), DOODLE_LOC, "{} 路径不存在或者不是文件");
+  auto l_upload_path = g_reg()->ctx().at<project_config::base_config>().get_upload_path();
+  l_upload_path /= in_prefix;
+  l_upload_path /= maya_file_io::get_current_path().stem();
+  if (!FSys::exists(l_upload_path.parent_path()))
+    FSys::create_directories(l_upload_path.parent_path());
+  FSys::copy_file(in_source_path,
+                  l_upload_path / in_source_path.filename(),
+                  FSys::copy_option::overwrite_if_exists);
+}
 }  // namespace doodle::maya_plug
