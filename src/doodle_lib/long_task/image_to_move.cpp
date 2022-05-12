@@ -179,7 +179,10 @@ void image_to_move::init() {
         in_message.message(fmt::format("开始读取图片 {}", l_image.file_path));
       });
       k_image = cv::imread(l_image.file_path.generic_string());
-      chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+      if (k_image.empty()) {
+        DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.file_path);
+        continue;
+      }
       if (k_image.cols != k_size.width || k_image.rows != k_size.height)
         cv::resize(k_image, k_image, k_size);
 
