@@ -78,6 +78,7 @@ class base_config_edit::impl {
   gui_cache<std::string> simple_module_proxy_;
 
   gui_cache<std::string> regex_;
+  gui_cache<std::string> upload_path{"上传路径"s, ""s};
   gui_cache_name_id list_name;
   gui_cache_name_id add_list_name_button;
   std::vector<std::pair<gui_cache<std::string>, gui_cache<bool>>> assets_list;
@@ -111,6 +112,7 @@ void base_config_edit::init_(const entt::handle& in) {
                                                     gui_cache<bool>{"删除", false});
                             }) |
                         ranges::to_vector;
+  p_i->upload_path = l_config.upload_path.generic_string();
 }
 
 void base_config_edit::set_config_init(const entt::handle& in, const std::string& in_name) {
@@ -128,6 +130,7 @@ void base_config_edit::set_config_init(const entt::handle& in, const std::string
                                                  gui_cache<bool>{"删除", false});
                          }) |
                      ranges::to_vector;
+  p_i->upload_path = l_config.upload_path.generic_string();
 }
 
 void base_config_edit::save_(const entt::handle& in) const {
@@ -152,6 +155,7 @@ void base_config_edit::save_(const entt::handle& in) const {
             return in_part.first.data;
           }) |
       ranges::to_vector;
+  l_c.upload_path = p_i->upload_path.data;
 }
 base_config_edit::base_config_edit()
     : p_i(std::make_unique<impl>()) {
@@ -234,6 +238,9 @@ void base_config_edit::render(const entt::handle& in) {
                         });
   if (l_r_ != p_i->icon_list.list.end())
     p_i->icon_list.list.erase(l_r_, p_i->icon_list.list.end());
+
+  if (ImGui::InputText(*p_i->upload_path.gui_name, &p_i->upload_path.data))
+    set_modify(true);
 }
 
 base_config_edit::~base_config_edit() = default;
