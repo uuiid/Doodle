@@ -20,7 +20,7 @@ namespace doodle {
 doodle_lib* doodle_lib::p_install = nullptr;
 
 doodle_lib::doodle_lib()
-    : p_thread_pool(std::make_shared<thread_pool>(std::thread::hardware_concurrency() - 1)),
+    : p_thread_pool(std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2)),
       p_log(std::make_shared<logger_ctrl>()),
       reg(std::make_shared<entt::registry>()),
       loop(),
