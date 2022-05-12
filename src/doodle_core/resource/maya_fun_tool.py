@@ -210,7 +210,7 @@ class open_file(object):
 
     @config_.setter
     def config_(self, in_str):
-        self.cfg = json.loads(in_str, object_hook=__load_config__)[0]
+        self.cfg = json.loads(in_str, object_hook=__load_config__)
         self.file_path = self.cfg.path
 
     def load_plug(self, str_list):
@@ -275,7 +275,7 @@ class open_file(object):
             startTime=1000,
             endTime=doodle_work_space.raneg.end,
             exportType="abc")
-        cmds.doodle_upload_files(clear=self.cfg.upload_file)
+        cmds.doodle_upload_files(clear=not self.cfg.upload_file)
 
     def get_fbx_export(self):
         # type: () -> None
