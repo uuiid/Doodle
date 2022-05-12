@@ -5,11 +5,9 @@
 #include "upload_files_command.h"
 
 #include <doodle_core/metadata/export_file_info.h>
-#include <doodle_core/configure/static_value.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya/MArgParser.h>
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 namespace {
 constexpr auto export_cam_clear      = "-c";
@@ -37,9 +35,8 @@ MStatus upload_files_command::doIt(const MArgList& in_list) {
   if (!is_clear) {
     for (auto&& [e, f] : g_reg()->view<export_file_info>().each()) {
       maya_file_io::upload_file(f.file_path, f.upload_path_);
-      maya_file_io::upload_file(f.file_path.replace_extension(
-                                    doodle_config::doodle_json_extension.data()),
-                                f.upload_path_);
+      f.file_path = f.upload_path_;
+      f.write_file(make_handle(e));
     }
   }
   auto l_v = g_reg()->view<export_file_info>();
@@ -47,5 +44,4 @@ MStatus upload_files_command::doIt(const MArgList& in_list) {
   return k_s;
 }
 
-}  // namespace maya_plug
-}  // namespace doodle
+}  // namespace doodle::maya_plug
