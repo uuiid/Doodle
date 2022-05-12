@@ -205,6 +205,7 @@ MStatus initializePlugin(MObject obj) {
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
       status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
+scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
 scripts.Doodle_shelf.DoodleUIManage.creation()
 )");
       CHECK_MSTATUS(status);

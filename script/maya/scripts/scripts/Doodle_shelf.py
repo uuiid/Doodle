@@ -75,7 +75,7 @@ class DlsShelf(shelfBase._shelf):
                       command=cmds.doodle_duplicate_poly)
         self.addButon("set cache", "icons/set_cache.png",
                       command=lambda: self.set_cache())
-        self.addButon("export abc", "icons/OUTabc2.png",
+        self.addButon("export abc2", "icons/OUTabc2.png",
                       command=lambda: self._export_abc_and_upload_())
 
     def polyremesh(self):
