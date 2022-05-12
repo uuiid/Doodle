@@ -5,7 +5,6 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
 
-
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/pin_yin/convert.h>
 #include <core/core_set.h>
@@ -65,8 +64,12 @@ void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
 }
 FSys::path assets_file::get_path_normal() const {
   chick_true<doodle_error>(g_reg()->ctx().contains<project>(), DOODLE_LOC, "缺失项目上下文");
-  auto l_p = g_reg()->ctx().at<project>().p_path / path;
-  return l_p.lexically_normal();
+  if (path.has_root_path())
+    return path;
+  else {
+    auto l_p = g_reg()->ctx().at<project>().p_path / path;
+    return l_p.lexically_normal();
+  }
 }
 
 }  // namespace doodle
