@@ -190,8 +190,6 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
         k_out = p_i->p_out_str.get();
         if (!k_out.empty()) {
           auto k_str = conv::to_utf<char>(k_out, "GBK");
-          k_str.pop_back();
-          k_str.push_back('\n');
 
           p_i->p_time = chrono::system_clock::now();
           p_i->p_mess.patch<process_message>([&](process_message &in) {
@@ -223,8 +221,6 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
         k_out = p_i->p_err_str.get();
         if (!k_out.empty()) {
           auto k_str = conv::to_utf<char>(k_out, "GBK");
-          k_str.pop_back();
-          k_str.push_back('\n');
           auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
           if (std::regex_search(k_w_str, fatal_error_znch) ||
               std::regex_search(k_w_str, fatal_error_en_us)) {

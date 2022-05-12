@@ -523,7 +523,7 @@ bool reference_file::has_ue4_group() const {
     DOODLE_CHICK(k_s);
     return true;
   } catch (const maya_InvalidParameter &err) {
-    DOODLE_LOG_INFO("没有配置中指定的 {} 导出组", k_cfg.export_group);
+    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
     return false;
   }
 }

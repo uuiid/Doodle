@@ -5,6 +5,9 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
 #include <spdlog/spdlog.h>
+
+#include <range/v3/range.hpp>
+#include <range/v3/all.hpp>
 namespace doodle {
 
 process_message::process_message()
@@ -27,20 +30,24 @@ void process_message::progress_step(const rational_int& in_rational_int) {
   p_progress += in_rational_int;
 }
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
-  spdlog::info(in_string);
   std::lock_guard _lock{_mutex};
+  auto l_msg{in_string};
+  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
+    return in_type == '\n' || in_type == '\r';
+  });
+  if (l_msg.empty())
+    return;
+  l_msg += '\n';
+
+  spdlog::info(l_msg);
   switch (in_level_enum) {
     case level::warning:
-      p_err += in_string;
+      p_err += l_msg;
     default:
-      p_log += in_string;
-      p_str_end = in_string;
+      p_log += l_msg;
+      p_str_end = l_msg;
       break;
   }
-  if (p_log.back() != '\n')
-    p_log += '\n';
-  if (p_err.back() != '\n')
-    p_err += '\n';
 }
 void process_message::set_state(state in_state) {
   std::lock_guard _lock{_mutex};
