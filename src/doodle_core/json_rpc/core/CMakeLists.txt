@@ -7,6 +7,7 @@ target_sources(doodle_core
         server.h
         session_manager.h
         session.h
+        rpc_request.h
 
         PRIVATE
         parser_rpc.cpp
@@ -16,4 +17,5 @@ target_sources(doodle_core
         server.cpp
         session.cpp
         session_manager.cpp
+        rpc_request.cpp
         )
