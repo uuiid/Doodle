@@ -25,7 +25,7 @@ rpc_server_ref::rpc_server_ref(std::weak_ptr<rpc_server> in_server,
                                const std::function<void()>& in_close_fun)
     : rpc_server(),
       server(std::move(in_server)) {
-  fun_list_.emplace("rpc.close", [=](const std::optional<nlohmann::json>&) -> rpc_reply {
+  fun_list_.emplace(rpc_close_name, [=](const std::optional<nlohmann::json>&) -> rpc_reply {
     in_close_fun();
     return {};
   });
@@ -36,5 +36,9 @@ rpc_server_ref::call_ rpc_server_ref::operator()(const std::string& in_name) con
   } else {
     return (*server.lock())(in_name);
   }
+}
+void rpc_server_ref::close_current() {
+  auto l_f = (*this)(rpc_close_name);
+  std::get<call_fun>(l_f)({});
 }
 }  // namespace doodle::json_rpc

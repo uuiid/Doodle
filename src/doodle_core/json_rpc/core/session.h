@@ -21,6 +21,7 @@ class session : public std::enable_shared_from_this<session> {
 
  public:
   inline static const std::string end_string = "\r\n\r\n";
+  inline static const std::string division_string = "\r\n";
   explicit session(
       boost::asio::io_context& in_io_context,
       boost::asio::ip::tcp::socket in_socket);

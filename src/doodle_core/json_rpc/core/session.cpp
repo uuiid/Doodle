@@ -5,6 +5,7 @@
 #include "session.h"
 #include <boost/asio.hpp>
 #include <doodle_core/json_rpc/core/parser_rpc.h>
+#include <doodle_core/json_rpc/core/rpc_server.h>
 
 #include <boost/asio/spawn.hpp>
 
@@ -65,12 +66,17 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                            }};
 
                            for (auto&& fun_str : l_pull_c) {
+                             auto msg = fun_str + division_string;
                              boost::asio::async_write(ptr->socket_,
                                                       boost::asio::buffer(fun_str),
                                                       yield[ec]);
                            }
+                           std::string end{end_string};
+                           boost::asio::async_write(ptr->socket_,
+                                                    boost::asio::buffer(end),
+                                                    yield[ec]);
                          } else {
-                           ptr->socket_.close();
+                           ptr->rpc_server_->close_current();
                            break;
                          }
                        }

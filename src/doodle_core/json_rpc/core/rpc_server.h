@@ -109,6 +109,7 @@ class rpc_server_ref : public rpc_server {
   using call_               = rpc_server::call_;
   using call_fun_coroutines = rpc_server::call_fun_coroutines;
 
+  inline static auto rpc_close_name{"rpc.close"s};
  private:
   std::weak_ptr<rpc_server> server;
   void init_register() override{};
@@ -117,5 +118,6 @@ class rpc_server_ref : public rpc_server {
   explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server,
                           const std::function<void()>& in_close_fun);
   call_ operator()(const std::string& in_name) const override;
+  void close_current();
 };
 }  // namespace doodle::json_rpc
