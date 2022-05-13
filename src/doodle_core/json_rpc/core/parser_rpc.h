@@ -30,32 +30,8 @@ class rpc_request {
 
  private:
   constexpr const static auto jsonrpc_version = "2.0";
-  friend void to_json(nlohmann::json& nlohmann_json_j, const rpc_request& nlohmann_json_t) {
-    nlohmann_json_j["jsonrpc"] = jsonrpc_version;
-    nlohmann_json_j["method"]  = nlohmann_json_t.method_;
-    if (!nlohmann_json_t.is_notice)
-      nlohmann_json_j["id"] = identifier::get().id();
-    if (nlohmann_json_t.params_)
-      nlohmann_json_j["params"] = *nlohmann_json_t.params_;
-  }
-  friend void from_json(const nlohmann::json& nlohmann_json_j, rpc_request& nlohmann_json_t) {
-    nlohmann_json_j.at("jsonrpc").get_to(nlohmann_json_t.jsonrpc_);
-    nlohmann_json_j.at("method").get_to(nlohmann_json_t.method_);
-    if (nlohmann_json_j.contains("id")) {
-      auto&& l_j = nlohmann_json_j.at("id");
-      if (l_j.is_number())
-        nlohmann_json_t.id_ = l_j.get<std::int64_t>();
-      else if (l_j.is_string())
-        nlohmann_json_t.id_ = l_j.get<std::string>();
-      else
-        throw internal_error_exception{};
-    } else {
-      nlohmann_json_t.is_notice = true;
-    }
-
-    if (nlohmann_json_j.contains("params"))
-      nlohmann_json_t.params_ = nlohmann_json_j.at("params");
-  }
+  friend void to_json(nlohmann::json& nlohmann_json_j, const rpc_request& nlohmann_json_t);
+  friend void from_json(const nlohmann::json& nlohmann_json_j, rpc_request& nlohmann_json_t);
 
  public:
   bool is_notice{};
@@ -66,7 +42,6 @@ class rpc_request {
 };
 class rpc_server;
 class rpc_server_ref;
-
 
 class parser_rpc {
  private:
@@ -81,6 +56,7 @@ class parser_rpc {
       const rpc_server_ref& in_server);
 
   using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
+
  public:
   parser_rpc() = default;
   explicit parser_rpc(std::string string)

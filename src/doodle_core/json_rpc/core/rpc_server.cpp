@@ -3,7 +3,6 @@
 //
 
 #include "rpc_server.h"
-#include <json_rpc/core/server.h>
 
 namespace doodle::json_rpc {
 void rpc_server::register_fun(const std::string& in_name, const rpc_server::call_fun& in_call) {
