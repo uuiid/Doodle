@@ -26,10 +26,15 @@ class file_panel::path_info {
   path_info &init(const FSys::path &in_path) {
     path   = in_path;
     is_dir = is_directory(in_path);
+    auto name{""s};
+    if (!path.has_filename() || path.filename() == "/") {
+      name = path.root_path().generic_string();
+    } else
+      name = path.filename().generic_string();
     show_name =
         fmt::format("{} {}",
                     is_directory(in_path) ? "[dir]"s : "[file]"s,
-                    path.has_filename() ? path.filename().generic_string() : path.generic_string());
+                    name);
     size       = is_regular_file(in_path) ? file_size(in_path) : 0u;
     last_time  = FSys::last_write_time_point(in_path);
     has_select = false;
