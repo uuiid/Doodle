@@ -20,6 +20,7 @@ class rpc_client {
   std::unique_ptr<impl> ptr;
 
  public:
+  using string_coroutine = boost::coroutines2::coroutine<std::string>;
   explicit rpc_client(boost::asio::io_context& in_context,
                       const std::string& in_host,
                       std::uint16_t in_post);
@@ -27,6 +28,9 @@ class rpc_client {
 
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
+  void call_server(const std::string& in_string,
+                   bool is_notice,
+                   string_coroutine::push_type& in_skin);
 
   template <typename Result_Type,
             typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
@@ -73,8 +77,8 @@ class rpc_client {
   }
 
   template <typename Result_Type,
-            typename Arg,
             bool is_notice_type,
+            typename Arg,
             std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
     nlohmann::json l_json{};

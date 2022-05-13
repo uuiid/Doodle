@@ -39,10 +39,15 @@ std::string rpc_client::call_server(const std::string &in_string, bool is_notice
 }
 
 void rpc_client::close() {
-  return this->call_fun<true, void>("rpc.close"s);
+  return this->call_fun<void, true>("rpc.close"s);
 }
 
 rpc_client::~rpc_client() {
   close();
+}
+void rpc_client::call_server(const std::string &in_string,
+                             bool is_notice,
+                             string_coroutine::push_type &in_skin) {
+
 }
 }  // namespace doodle::json_rpc
