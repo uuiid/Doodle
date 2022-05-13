@@ -17,6 +17,7 @@
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/callable_traits.hpp>
 #include <boost/mpl/erase.hpp>
+#include <boost/coroutine2/coroutine.hpp>
 
 namespace doodle::json_rpc {
 namespace detail {
@@ -33,11 +34,17 @@ class fun_traits {
 };
 class rpc_server {
  public:
-  using call_fun = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
+  using call_fun            = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
+  using call_fun_coroutines = std::function<nlohmann::json(
+      boost::coroutines2::coroutine<nlohmann::json>::push_type& skin,
+      const std::optional<nlohmann::json>&)>;
+
+  using call_               = std::variant<call_fun, call_fun_coroutines>;
 
  private:
+ protected:
   std::map<std::string,
-           call_fun>
+           call_>
       fun_list_{};
 
   template <typename... Ts>
@@ -50,6 +57,7 @@ class rpc_server {
   virtual void init_register() = 0;
 
   void register_fun(const std::string& in_name, const call_fun& in_call);
+  void register_fun(const std::string& in_name, const call_fun_coroutines& in_call);
 
  protected:
   /**
@@ -92,25 +100,21 @@ class rpc_server {
   };
 
  public:
-  rpc_reply operator()(const std::string& in_name,
-                       const std::optional<nlohmann::json>& in_parm) const;
+  virtual call_ operator()(const std::string& in_name) const;
 };
 class session;
-class rpc_server_ref {
+class rpc_server_ref : public rpc_server {
  public:
-  using call_fun = std::function<rpc_reply(const std::optional<nlohmann::json>&)>;
+  using call_fun            = rpc_server::call_fun;
+  using call_               = rpc_server::call_;
+  using call_fun_coroutines = rpc_server::call_fun_coroutines;
 
  private:
-  std::map<std::string,
-           call_fun>
-      fun_list_{};
-
   std::weak_ptr<rpc_server> server;
 
  public:
   explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server,
                           const std::function<void()>& in_close_fun);
-  rpc_reply operator()(const std::string& in_name,
-                       const std::optional<nlohmann::json>& in_parm) const;
+  call_ operator()(const std::string& in_name) const override;
 };
 }  // namespace doodle::json_rpc

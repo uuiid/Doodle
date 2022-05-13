@@ -23,12 +23,13 @@ class session::impl {
       : io_context_(in_io_context),
         socket_(std::move(in_socket)),
         data_(),
-        rpc_server_(){
+        rpc_server_(),
+        parser_rpc_(){
 
         };
   boost::asio::io_context& io_context_;
   boost::asio::ip::tcp::socket socket_;
-  std::shared_ptr<parser_rpc> parser_rpc_ptr;
+  parser_rpc parser_rpc_;
   std::shared_ptr<rpc_server_ref> rpc_server_;
 
   boost::asio::streambuf data_{};
@@ -54,12 +55,14 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                              end_string,
                              yield[ec]);
                          if (!ec) {
-                           ptr->parser_rpc_ptr = std::make_shared<parser_rpc>(std::string{
+                           ptr->parser_rpc_.json_data_attr(std::string{
                                boost::asio::buffers_begin(ptr->data_.data()),
                                boost::asio::buffers_begin(ptr->data_.data()) + len - end_string.size()});
                            ptr->data_.consume(len);
-                           ptr->msg_ = (*ptr->parser_rpc_ptr)(*ptr->rpc_server_) + end_string;
+
+                           ptr->msg_ = ptr->parser_rpc_(*ptr->rpc_server_) + end_string;
                          } else {
+                           ptr->socket_.close();
                            break;
                          }
 

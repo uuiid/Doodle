@@ -12,6 +12,7 @@
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <json_rpc/core/rpc_reply.h>
 
+#include <boost/coroutine2/coroutine.hpp>
 namespace doodle::json_rpc {
 
 using namespace std::literals;
@@ -72,11 +73,20 @@ class parser_rpc {
   static std::optional<rpc_reply> call_one(
       const rpc_request& in_request,
       const rpc_server_ref& in_server);
+  static std::optional<rpc_reply> call_one(
+      boost::coroutines2::coroutine<std::string>::push_type& sink,
+      const rpc_request& in_request,
+      const rpc_server_ref& in_server);
 
  public:
+  parser_rpc() = default;
   explicit parser_rpc(std::string string)
       : json_data_(std::move(string)) {}
+  void json_data_attr(const std::string& in_string);
 
   std::string operator()(const rpc_server_ref& in_server);
+
+  void operator()(boost::coroutines2::coroutine<std::string>::push_type& sink,
+                  const rpc_server_ref& in_server);
 };
 }  // namespace doodle::json_rpc

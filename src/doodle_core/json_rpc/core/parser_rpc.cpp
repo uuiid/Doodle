@@ -43,6 +43,28 @@ parser_rpc::call_one(const rpc_request& in_request,
   }
   return l_r;
 }
+void parser_rpc::json_data_attr(const std::string& in_string) {
+  json_data_ = in_string;
+}
+void parser_rpc::operator()(boost::coroutines2::coroutine<std::string>::push_type& sink,
+                            const rpc_server_ref& in_server) {
+  auto rpc_requrst_json = nlohmann::json::parse(json_data_);
+  nlohmann::json result{};
+  if (rpc_requrst_json.is_array()) {
+    for (auto&& i : rpc_requrst_json) {
+      auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
+      auto l_r          = call_one(sink, rpc_requrst_, in_server);
+      if (l_r)
+        result.emplace_back(*l_r);
+    }
+  } else {
+    auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
+    auto l_r          = call_one(sink, rpc_requrst_, in_server);
+    if (l_r)
+      result = *l_r;
+  }
+}
+
 rpc_request::identifier& rpc_request::identifier::get() {
   static identifier identifier1;
   return identifier1;
