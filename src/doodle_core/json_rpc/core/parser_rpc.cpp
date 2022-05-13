@@ -7,10 +7,10 @@
 
 namespace doodle::json_rpc {
 void to_json(nlohmann::json& nlohmann_json_j, const rpc_request& nlohmann_json_t) {
-  nlohmann_json_j["jsonrpc"] = jsonrpc_version;
+  nlohmann_json_j["jsonrpc"] = rpc_request::jsonrpc_version;
   nlohmann_json_j["method"]  = nlohmann_json_t.method_;
   if (!nlohmann_json_t.is_notice)
-    nlohmann_json_j["id"] = identifier::get().id();
+    nlohmann_json_j["id"] = rpc_request::identifier::get().id();
   if (nlohmann_json_t.params_)
     nlohmann_json_j["params"] = *nlohmann_json_t.params_;
 }
@@ -35,39 +35,9 @@ void from_json(const nlohmann::json& nlohmann_json_j, rpc_request& nlohmann_json
 std::string parser_rpc::operator()(const rpc_server_ref& in_server) {
   auto rpc_requrst_json = nlohmann::json::parse(json_data_);
   nlohmann::json result{};
-  if (rpc_requrst_json.is_array()) {
-    for (auto&& i : rpc_requrst_json) {
-      auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
-      auto l_r          = call_one(rpc_requrst_, in_server);
-      if (l_r)
-        result.emplace_back(*l_r);
-    }
-  } else {
-    auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
-    auto l_r          = call_one(rpc_requrst_, in_server);
-    if (l_r)
-      result = *l_r;
-  }
-
   return result.dump();
 }
 
-std::optional<rpc_reply>
-parser_rpc::call_one(const rpc_request& in_request,
-                     const rpc_server_ref& in_server) {
-  auto l_r = in_server(in_request.method_, in_request.params_);
-  if (in_request.is_notice) {
-    return {};
-  } else {
-    l_r.jsonrpc_ = in_request.jsonrpc_;
-    if (l_r.result.index() == rpc_reply::err_index) {
-      l_r.id_ = std::monostate{};
-    } else {
-      l_r.id_ = in_request.id_;
-    }
-  }
-  return l_r;
-}
 void parser_rpc::json_data_attr(const std::string& in_string) {
   json_data_ = in_string;
 }

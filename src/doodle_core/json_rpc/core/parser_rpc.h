@@ -47,13 +47,7 @@ class parser_rpc {
  private:
   std::string json_data_{};
 
-  static std::optional<rpc_reply> call_one(
-      const rpc_request& in_request,
-      const rpc_server_ref& in_server);
-  static std::optional<rpc_reply> call_one(
-      boost::coroutines2::coroutine<std::string>::push_type& sink,
-      const rpc_request& in_request,
-      const rpc_server_ref& in_server);
+
 
   using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
 
