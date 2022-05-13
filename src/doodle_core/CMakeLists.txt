@@ -31,7 +31,7 @@ target_sources(doodle_core
         PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp
         )
-
+target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 
 # 添加子目录
 add_subdirectory(configure)
