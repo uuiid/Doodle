@@ -10,6 +10,7 @@
 
 namespace doodle {
 namespace json_rpc {
+using string_coroutine = boost::coroutines2::coroutine<std::string>;
 
 class parser_rpc;
 class rpc_server;
@@ -59,16 +60,19 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                                boost::asio::buffers_begin(ptr->data_.data()),
                                boost::asio::buffers_begin(ptr->data_.data()) + len - end_string.size()});
                            ptr->data_.consume(len);
+                           string_coroutine::pull_type l_pull_c{[&](string_coroutine::push_type& in_skin) {
+                             return ptr->parser_rpc_(in_skin, *ptr->rpc_server_);
+                           }};
 
-                           ptr->msg_ = ptr->parser_rpc_(*ptr->rpc_server_) + end_string;
+                           for (auto&& fun_str : l_pull_c) {
+                             boost::asio::async_write(ptr->socket_,
+                                                      boost::asio::buffer(fun_str),
+                                                      yield[ec]);
+                           }
                          } else {
                            ptr->socket_.close();
                            break;
                          }
-
-                         boost::asio::async_write(ptr->socket_,
-                                                  boost::asio::buffer(ptr->msg_),
-                                                  yield[ec]);
                        }
                      });
 }

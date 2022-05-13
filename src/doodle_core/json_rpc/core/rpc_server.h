@@ -35,7 +35,7 @@ class fun_traits {
 class rpc_server {
  public:
   using call_fun            = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
-  using call_fun_coroutines = std::function<nlohmann::json(
+  using call_fun_coroutines = std::function<void(
       boost::coroutines2::coroutine<nlohmann::json>::push_type& skin,
       const std::optional<nlohmann::json>&)>;
 
@@ -111,6 +111,7 @@ class rpc_server_ref : public rpc_server {
 
  private:
   std::weak_ptr<rpc_server> server;
+  void init_register() override{};
 
  public:
   explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server,

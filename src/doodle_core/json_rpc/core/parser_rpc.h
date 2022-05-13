@@ -66,6 +66,8 @@ class rpc_request {
 };
 class rpc_server;
 class rpc_server_ref;
+
+
 class parser_rpc {
  private:
   std::string json_data_{};
@@ -78,6 +80,7 @@ class parser_rpc {
       const rpc_request& in_request,
       const rpc_server_ref& in_server);
 
+  using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
  public:
   parser_rpc() = default;
   explicit parser_rpc(std::string string)
