@@ -60,7 +60,6 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                            ptr->data_.consume(len);
                            ptr->msg_ = (*ptr->parser_rpc_ptr)(*ptr->rpc_server_) + end_string;
                          } else {
-                           ptr->socket_.close();
                            break;
                          }
 
@@ -71,42 +70,6 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                      });
 }
 
-void session::do_read() {
-  static std::string l_delim{};
-  /// 确保json字符串完全读取完整
-  boost::asio::async_read_until(
-      ptr->socket_,
-      ptr->data_,
-      end_string,
-      [self = shared_from_this(), this](const boost::system::error_code in_err,
-                                        std::size_t in_len) {
-        if (!in_err) {
-          ptr->parser_rpc_ptr = std::make_shared<parser_rpc>(std::string{
-              boost::asio::buffers_begin(ptr->data_.data()),
-              boost::asio::buffers_begin(ptr->data_.data()) + in_len - end_string.size()});
-          ptr->data_.consume(in_len);
-          ptr->msg_ = (*ptr->parser_rpc_ptr)(*ptr->rpc_server_) + end_string;
-          this->do_write();
-        } else {
-          ptr->socket_.close();
-        }
-      });
-}
-
-void session::do_write() {
-  if (ptr->socket_.is_open()) {
-    boost::asio::async_write(
-        ptr->socket_,
-        boost::asio::buffer(ptr->msg_),
-        [self = shared_from_this(), this](boost::system::error_code in_err, std::size_t in_len_) {
-          if (!in_err) {
-            this->do_read();
-          } else {
-            ptr->socket_.close();
-          }
-        });
-  }
-}
 void session::stop() {
   ptr->socket_.close();
 }

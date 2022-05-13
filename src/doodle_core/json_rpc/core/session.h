@@ -29,9 +29,7 @@ class session : public std::enable_shared_from_this<session> {
   void stop();
 
  private:
-  void do_read();
 
-  void do_write();
 };
 
 }  // namespace doodle::json_rpc
