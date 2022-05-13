@@ -47,8 +47,6 @@ class parser_rpc {
  private:
   std::string json_data_{};
 
-
-
   using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
 
  public:
