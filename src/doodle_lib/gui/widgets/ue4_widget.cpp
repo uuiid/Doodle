@@ -306,7 +306,7 @@ std::string ue4_import_group::set_level_dir(
           });
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
              doodle_config::ue4_shot.data() /
-             fmt::format("{:04d}", in_handle.get_or_emplace<episodes>()) /
+             fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
              fmt::format("{}{:04d}_{:04d}{}",
                          g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,

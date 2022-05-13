@@ -10,6 +10,7 @@
 #include <maya/MItDag.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnCamera.h>
+#include <maya/MDGModifier.h>
 
 #include <doodle_core/metadata/export_file_info.h>
 #include <doodle_core/metadata/shot.h>
@@ -136,7 +137,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+//    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -155,7 +156,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -267,6 +268,79 @@ std::string maya_camera::get_transform_name() const {
   auto k_str = k_node.name(&k_s);
   DOODLE_CHICK(k_s);
   return d_str{k_str};
+}
+bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
+  MFnDagNode l_node{};
+  MStatus l_s{};
+  l_s = l_node.setObject(p_path.transform());
+  DOODLE_CHICK(l_s);
+  if (l_node.parentCount() != 0) {
+    DOODLE_LOG_INFO("测量到相机 {} 有组父物体, 开始转换相机", get_transform_name());
+    /// \brief 开始调整相机并创建新相机
+    MFnCamera l_camera{};
+    l_camera.create(&l_s);
+    DOODLE_CHICK(l_s);
+    /// 创建约束
+    auto l_cam_name = get_node_name(get_transform(l_camera.object()));
+    auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
+                                  get_transform_name(),
+                                  l_cam_name);
+    DOODLE_LOG_INFO("运行 {}", l_comm);
+    MStringArray l_constraints{};
+    l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints, false, true);
+    DOODLE_CHICK(l_s);
+    l_s = l_camera.getPath(p_path);
+    DOODLE_CHICK(l_s);
+
+    back_camera(in_start, in_end);
+    /// \brief 删除约束
+    {
+      DOODLE_LOG_INFO("删除约束 {}", l_constraints);
+      MSelectionList l_select{};
+      for (int l_i = 0; l_i < l_constraints.length(); ++l_i) {
+        l_s = l_select.add(l_constraints[l_i]);
+        DOODLE_CHICK(l_s);
+      }
+      MObject l_con{};
+      for (int l_i = 0; l_i < l_select.length(); ++l_i) {
+        l_s = l_select.getDependNode(l_i, l_con);
+        DOODLE_CHICK(l_s);
+        l_s = MGlobal::deleteNode(l_con);
+        DOODLE_CHICK(l_s);
+      }
+    }
+
+    MDGModifier l_dag_modifier{};
+#define DOODLE_CONN_CAM(attr_name)                                    \
+  {                                                                   \
+    auto l_so_plug = get_plug(p_path.node(), #attr_name##s).source(); \
+    auto l_t       = get_plug(l_camera.object(), #attr_name##s);      \
+    l_dag_modifier.connect(l_so_plug, l_t);                           \
+  }
+    DOODLE_CONN_CAM(horizontalFilmAperture)
+    DOODLE_CONN_CAM(verticalFilmAperture)
+    DOODLE_CONN_CAM(centerOfInterest)
+    DOODLE_CONN_CAM(fStop)
+    DOODLE_CONN_CAM(focalLength)
+    DOODLE_CONN_CAM(focusDistance)
+    DOODLE_CONN_CAM(lensSqueezeRatio)
+    DOODLE_CONN_CAM(shutterAngle)
+#undef DOODLE_CONN_CAM
+
+    l_s = l_dag_modifier.doIt();
+    DOODLE_CHICK(l_s);
+
+    return true;
+  }
+
+  return false;
+}
+bool maya_camera::camera_parent_is_word() {
+  MFnDagNode l_node{};
+  MStatus l_s{};
+  l_s = l_node.setObject(p_path.transform());
+  DOODLE_CHICK(l_s);
+  return l_node.parentCount() > 1;
 }
 
 bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {
