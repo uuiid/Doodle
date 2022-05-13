@@ -340,7 +340,7 @@ bool maya_camera::camera_parent_is_word() {
   MStatus l_s{};
   l_s = l_node.setObject(p_path.transform());
   DOODLE_CHICK(l_s);
-  return l_node.parentCount() != 0;
+  return l_node.parentCount() > 1;
 }
 
 bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {
