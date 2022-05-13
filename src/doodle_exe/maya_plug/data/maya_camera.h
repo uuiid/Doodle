@@ -26,9 +26,12 @@ class maya_camera {
   };
 
  public:
+  /**
+   * @brief 这个路径是相机形状的路径而不是相机变换的路径
+   */
   MDagPath p_path;
   maya_camera();
-  maya_camera(const MDagPath& in_path);
+  explicit maya_camera(const MDagPath& in_path);
   /**
    * @brief 将相机导出到文件中,
    * @param in_start 开始时间
@@ -44,6 +47,11 @@ class maya_camera {
    * @return 烘培完成
    */
   bool back_camera(const MTime& in_start, const MTime& in_end);
+
+
+  bool camera_parent_is_word();
+  bool fix_group_camera(const MTime& in_start, const MTime& in_end);
+
   bool unlock_attr();
 
   void conjecture();

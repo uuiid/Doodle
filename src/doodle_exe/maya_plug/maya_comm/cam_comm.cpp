@@ -39,6 +39,10 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
   k_cam.conjecture();
   k_cam.unlock_attr();
   k_cam.back_camera(k_start, k_end);
+  DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", k_cam.get_transform_name());
+  if (k_cam.camera_parent_is_word()) {
+    k_cam.fix_group_camera(k_start, k_end);
+  }
   k_cam.export_file(k_start, k_end);
 
   return k_s;
