@@ -156,7 +156,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -289,11 +289,36 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
 
     l_s = MGlobal::setActiveSelectionList(l_selection_list);
     DOODLE_CHICK(l_s);
-    l_s = MGlobal::executeCommand(d_str{fmt::format("parentConstraint -weight 1;")});
+    auto l_cam_name = get_node_name(get_transform(l_camera.object()));
+    auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
+                                  get_transform_name(),
+                                  l_cam_name);
+    DOODLE_LOG_INFO("运行 {}", l_comm);
+    MStringArray l_constraints{};
+    l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints, false, true);
+    DOODLE_CHICK(l_s);
+    l_s = l_camera.getPath(p_path);
     DOODLE_CHICK(l_s);
 
-    MDGModifier l_dag_modifier{};
     back_camera(in_start, in_end);
+    /// \brief 删除约束
+    {
+      DOODLE_LOG_INFO("删除约束 {}", l_constraints);
+      MSelectionList l_select{};
+      for (int l_i = 0; l_i < l_constraints.length(); ++l_i) {
+        l_s = l_select.add(l_constraints[l_i]);
+        DOODLE_CHICK(l_s);
+      }
+      MObject l_con{};
+      for (int l_i = 0; l_i < l_select.length(); ++l_i) {
+        l_s = l_select.getDependNode(l_i, l_con);
+        DOODLE_CHICK(l_s);
+        l_s = MGlobal::deleteNode(l_con);
+        DOODLE_CHICK(l_s);
+      }
+    }
+
+    MDGModifier l_dag_modifier{};
 #define DOODLE_CONN_CAM(attr_name)                                    \
   {                                                                   \
     auto l_so_plug = get_plug(p_path.node(), #attr_name##s).source(); \
@@ -312,8 +337,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
 
     l_s = l_dag_modifier.doIt();
     DOODLE_CHICK(l_s);
-    l_s = l_camera.getPath(p_path);
-    DOODLE_CHICK(l_s);
+
     return true;
   }
 
