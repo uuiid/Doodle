@@ -137,7 +137,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+//    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -281,14 +281,6 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     l_camera.create(&l_s);
     DOODLE_CHICK(l_s);
     /// 创建约束
-    MSelectionList l_selection_list{};
-    l_s = l_selection_list.add(p_path);
-    DOODLE_CHICK(l_s);
-    l_s = l_selection_list.add(l_camera.object());
-    DOODLE_CHICK(l_s);
-
-    l_s = MGlobal::setActiveSelectionList(l_selection_list);
-    DOODLE_CHICK(l_s);
     auto l_cam_name = get_node_name(get_transform(l_camera.object()));
     auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
                                   get_transform_name(),
