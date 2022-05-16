@@ -7,7 +7,6 @@
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-
 namespace boost::asio {
 class io_context;
 }
@@ -20,8 +19,8 @@ class session : public std::enable_shared_from_this<session> {
   std::unique_ptr<impl> ptr;
 
  public:
-  inline static const std::string end_string = "\r\n\r\n";
-  inline static const std::string division_string = "\r\n";
+  inline static const std::string end_string      = "\n\n";
+  inline static const std::string division_string = "\n";
   explicit session(
       boost::asio::io_context& in_io_context,
       boost::asio::ip::tcp::socket in_socket);
@@ -30,7 +29,6 @@ class session : public std::enable_shared_from_this<session> {
   void stop();
 
  private:
-
 };
 
 }  // namespace doodle::json_rpc

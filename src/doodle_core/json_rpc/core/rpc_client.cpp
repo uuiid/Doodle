@@ -5,6 +5,7 @@
 #include "rpc_client.h"
 #include <json_rpc/core/server.h>
 #include <boost/asio.hpp>
+#include <utility>
 #include <json_rpc/core/rpc_reply.h>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <json_rpc/core/session.h>
@@ -45,22 +46,23 @@ void rpc_client::call_server(const std::string &in_string,
   using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
 
   std::function<std::pair<iter_buff, bool>(iter_buff in_begen, iter_buff in_end)> l_function{
-      [](iter_buff in_begen, iter_buff in_end) -> std::pair<iter_buff, bool> {
-        return {};
+      [](iter_buff in_begin, const iter_buff &in_end) -> std::pair<iter_buff, bool> {
+        iter_buff i = std::move(in_begin);
+        while (i != in_end)
+          if (std::isspace(*i++))
+            return std::make_pair(i, true);
+        return std::make_pair(i, false);
       }};
 
   std::istream l_istream{&l_r};
   while (true) {
-    //    boost::asio::read_until(ptr->client_socket,
-    //                            l_r,
-    //                            [](iter_buff in_begen, iter_buff in_end) -> std::pair<iter_buff, bool> {
-    //                              return {};
-    //                            });
     boost::asio::read_until(ptr->client_socket,
                             l_r,
                             l_function);
     std::string l_out{};
     std::getline(l_istream, l_out);
+    if (l_out.empty())
+      break;
     in_skin(l_out);
   }
 }

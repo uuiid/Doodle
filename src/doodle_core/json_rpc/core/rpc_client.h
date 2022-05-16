@@ -9,6 +9,7 @@
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_request.h>
 
+#include <boost/coroutine2/coroutine.hpp>
 namespace boost::asio {
 class io_context;
 }
@@ -131,6 +132,62 @@ class rpc_client {
     }
   }
 
+  template <typename Result_Type,
+            typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  void call_fun(const std::string& in_name,
+                typename boost::coroutines2::coroutine<Result_Type>::push_type& in_skin,
+                Arg args) {
+    nlohmann::json l_json{};
+
+    rpc_request l_rpc_request{};
+    l_rpc_request.method_   = in_name;
+    l_rpc_request.is_notice = false;
+    l_rpc_request.params_   = args;
+
+    l_json                  = l_rpc_request;
+
+    string_coroutine::pull_type l_pull_type{[this, &in_name](string_coroutine::push_type& in_str_skin) {
+      return call_server(in_name, in_str_skin);
+    }};
+
+    for (auto&& l_json_str : l_pull_type) {
+      nlohmann::json l_r = nlohmann::json::parse(l_json_str);
+      auto l_rpc_r       = l_r.template get<rpc_reply>();
+      if (l_rpc_r.result.index() != rpc_reply::err_index) {
+        in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
+      } else {
+        auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
+        l_err_.to_throw();
+      }
+    }
+  }
+
+  template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  void call_fun(const std::string& in_name,
+                typename boost::coroutines2::coroutine<Result_Type>::push_type& in_skin) {
+    nlohmann::json l_json{};
+
+    rpc_request l_rpc_request{};
+    l_rpc_request.method_   = in_name;
+    l_rpc_request.is_notice = false;
+
+    l_json                  = l_rpc_request;
+
+    string_coroutine::pull_type l_pull_type{[this, &in_name](string_coroutine::push_type& in_str_skin) {
+      return call_server(in_name, in_str_skin);
+    }};
+    for (auto l_json_str   :l_pull_type) {
+      nlohmann::json l_r = nlohmann::json::parse(l_json_str);
+      auto l_rpc_r       = l_r.template get<rpc_reply>();
+      if (l_rpc_r.result.index() != rpc_reply::err_index) {
+        in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
+      } else {
+        auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
+        l_err_.to_throw();
+      }
+    }
+
+  }
   void close();
 };
 }  // namespace doodle::json_rpc
