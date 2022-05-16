@@ -314,7 +314,6 @@ std::string ue4_import_group::set_level_dir(
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum) /
-             core_set::getSet().organization_name /
              fmt::format("{}{:04d}_sc{:04d}{}_{}",
                          g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
