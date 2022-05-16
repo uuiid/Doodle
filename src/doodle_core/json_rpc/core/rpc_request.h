@@ -9,6 +9,8 @@
 #include <variant>
 #include <optional>
 
+
+#include <nlohmann/json.hpp>
 namespace doodle::json_rpc{
 using namespace std::literals;
 class rpc_request {
