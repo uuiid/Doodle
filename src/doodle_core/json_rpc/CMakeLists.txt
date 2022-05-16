@@ -10,4 +10,5 @@ target_sources(doodle_core
         PRIVATE
         json_rpc_client.cpp
         json_rpc_server.cpp
+        json_rpc_static_value.cpp
         )

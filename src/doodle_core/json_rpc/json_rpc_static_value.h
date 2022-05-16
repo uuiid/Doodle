@@ -6,7 +6,7 @@
 
 #include <string>
 
-namespace doodle::json_rpc {
-constexpr static std::string_view d{};
+namespace doodle::json_rpc::rpc_fun_name {
+extern std::string image_to_move;
 
 }
