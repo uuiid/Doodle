@@ -9,6 +9,8 @@ namespace doodle {
 
 class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
  public:
+  
+ public:
 };
 
 }  // namespace doodle
