@@ -34,7 +34,7 @@ class ue4_widget::impl {
   gui::gui_cache<bool> import_cam{"导入cam"s, true};
   gui::gui_cache<bool> import_abc{"导入abc"s, true};
   gui::gui_cache<bool> import_fbx{"导入fbx"s, true};
-  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"((\w+)_rig_.*)"s};
+  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"((\w+)_[Rr]ig.*)"s};
   gui::gui_cache<std::string> ue4_sk_fmt{"格式化结果"s, "SK_{}_Skeleton"s};
   gui::gui_cache<bool> quit_{"生成并退出"s, true};
   gui::gui_cache_name_id import_{"导入"s};
