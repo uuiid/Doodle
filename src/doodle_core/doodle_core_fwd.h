@@ -64,4 +64,8 @@ DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
 DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
 DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
 
+namespace movie {
+class image_attr;
+class image_watermark;
+}  // namespace move
 }  // namespace doodle

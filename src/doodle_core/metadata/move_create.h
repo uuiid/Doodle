@@ -6,7 +6,7 @@
 
 #include <doodle_core_fwd.h>
 
-namespace doodle::move {
+namespace doodle::movie {
 class DOODLE_CORE_EXPORT image_watermark {
  private:
   DOODLE_JSON(image_watermark)

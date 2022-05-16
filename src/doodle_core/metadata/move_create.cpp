@@ -20,7 +20,7 @@
 #include <nlohmann/json.hpp>
 #include <doodle_core/details/json_macro.h>
 
-namespace doodle::move {
+namespace doodle::movie {
 
 DOODLE_JSON_CPP(image_watermark,
                 text_,
