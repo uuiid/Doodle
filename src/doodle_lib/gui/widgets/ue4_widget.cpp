@@ -247,7 +247,8 @@ std::string ue4_import_data::find_ue4_skin(
           FSys::path l_fbx_skeleton{fmt::format(in_fmt, l_token)};
           auto l_path_it = ranges::find_if(
               ranges::make_subrange(
-                  FSys::recursive_directory_iterator{in_ue4_content_dir},
+                  /// \brief 注意, 这里由于项目原因,需要遵循符号链接
+                  FSys::recursive_directory_iterator{in_ue4_content_dir, FSys::directory_options::follow_directory_symlink},
                   FSys::recursive_directory_iterator{}),
               [&](const FSys::directory_entry &in_entry) -> bool {
                 return in_entry.path().stem() == l_fbx_skeleton;
