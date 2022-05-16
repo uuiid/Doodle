@@ -166,6 +166,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
       ranges::views::transform([this, &l_h](const FSys::path &in_path) -> ue4_import_data {
         l_h = export_file_info::read_file(in_path);
         ue4_import_data l_r{l_h.get<export_file_info>()};
+        l_r.redirect_path(in_path);
         l_r.fbx_skeleton_file_name = l_r.find_ue4_skin(
             l_h.get<export_file_info>().ref_file,
             p_i->ue4_content_dir,
@@ -338,6 +339,12 @@ void from_json(const nlohmann::json &j, ue4_import_data &p) {
   j.at("fbx_skeleton_file_name").get_to(p.fbx_skeleton_file_name);
   j.at("start_frame").get_to(p.start_frame);
   j.at("end_frame").get_to(p.end_frame);
+}
+void ue4_import_data::redirect_path(const FSys::path &in_path) {
+  if (FSys::exists(import_file_path))
+    return;
+  FSys::path l_p{import_file_path};
+  import_file_path = (in_path.parent_path() / l_p.filename()).generic_string();
 }
 void to_json(nlohmann::json &j, const ue4_import_group &p) {
   j["start_frame"] = p.start_frame;

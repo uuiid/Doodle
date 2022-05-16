@@ -31,6 +31,12 @@ class ue4_import_data {
   [[nodiscard]] std::string set_save_dir(
       const entt::handle& in_handle) const;
 
+  /**
+   * @brief 传入一个读取出 json_doodle 的文件路径
+   * @param in_path json_doodle 的文件路径
+   */
+  void redirect_path(const FSys::path& in_path);
+
  private:
   friend void to_json(nlohmann::json& j, const ue4_import_data& p);
   friend void from_json(const nlohmann::json& j, ue4_import_data& p);
