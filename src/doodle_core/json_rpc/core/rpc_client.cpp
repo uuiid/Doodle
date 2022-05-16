@@ -37,7 +37,33 @@ std::string rpc_client::call_server(const std::string &in_string, bool is_notice
       boost::asio::buffers_begin(l_r.data()) + l_size - session::end_string.size()};
   return l_str;
 }
+void rpc_client::call_server(const std::string &in_string,
+                             string_coroutine::push_type &in_skin) {
+  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::end_string));
 
+  boost::asio::streambuf l_r{};
+  using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
+
+  std::function<std::pair<iter_buff, bool>(iter_buff in_begen, iter_buff in_end)> l_function{
+      [](iter_buff in_begen, iter_buff in_end) -> std::pair<iter_buff, bool> {
+        return {};
+      }};
+
+  std::istream l_istream{&l_r};
+  while (true) {
+    //    boost::asio::read_until(ptr->client_socket,
+    //                            l_r,
+    //                            [](iter_buff in_begen, iter_buff in_end) -> std::pair<iter_buff, bool> {
+    //                              return {};
+    //                            });
+    boost::asio::read_until(ptr->client_socket,
+                            l_r,
+                            l_function);
+    std::string l_out{};
+    std::getline(l_istream, l_out);
+    in_skin(l_out);
+  }
+}
 void rpc_client::close() {
   return this->call_fun<void, true>("rpc.close"s);
 }
@@ -45,9 +71,5 @@ void rpc_client::close() {
 rpc_client::~rpc_client() {
   close();
 }
-void rpc_client::call_server(const std::string &in_string,
-                             bool is_notice,
-                             string_coroutine::push_type &in_skin) {
 
-}
 }  // namespace doodle::json_rpc

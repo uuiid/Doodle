@@ -29,7 +29,6 @@ class rpc_client {
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
   void call_server(const std::string& in_string,
-                   bool is_notice,
                    string_coroutine::push_type& in_skin);
 
   template <typename Result_Type,
