@@ -1,6 +1,7 @@
 
 add_subdirectory(core)
 add_subdirectory(exception)
+add_subdirectory(args)
 target_sources(doodle_core
         PUBLIC
         json_rpc_client.h

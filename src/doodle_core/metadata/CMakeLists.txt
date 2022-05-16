@@ -19,6 +19,7 @@ target_sources(
         tree_adapter.h
         user.h
         redirection_path_info.h
+        move_create.h
 
         PRIVATE
         assets.cpp
@@ -38,5 +39,6 @@ target_sources(
         time_point_wrap.cpp
         user.cpp
         redirection_path_info.cpp
+        move_create.cpp
 
 )
