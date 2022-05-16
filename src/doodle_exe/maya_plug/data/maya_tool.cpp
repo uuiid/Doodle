@@ -154,7 +154,7 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   DOODLE_CHICK(l_s);
   l_set.addMember(in_object);
 }
-std::string node_full_name(const MObject& in_obj) {
+std::string get_node_full_name(const MObject& in_obj) {
   MFnDependencyNode l_node{};
   DOODLE_CHICK(l_node.setObject(in_obj));
   return d_str{l_node.absoluteName()};
