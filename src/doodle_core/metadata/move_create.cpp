@@ -28,6 +28,11 @@ DOODLE_JSON_CPP(image_watermark,
                 height_proportion_,
                 rgba_)
 
+DOODLE_JSON_CPP(image_attr,
+                path_,
+                watermarks,
+                num)
+
 namespace {
 class image_attr_auxiliary {
  public:
