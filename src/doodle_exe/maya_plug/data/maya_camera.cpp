@@ -137,7 +137,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-//    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -274,7 +274,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
   MStatus l_s{};
   l_s = l_node.setObject(p_path.transform());
   DOODLE_CHICK(l_s);
-  if (l_node.parentCount() != 0) {
+  if (p_path.length() > 1) {
     DOODLE_LOG_INFO("测量到相机 {} 有组父物体, 开始转换相机", get_transform_name());
     /// \brief 开始调整相机并创建新相机
     MFnCamera l_camera{};
@@ -283,8 +283,9 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     /// 创建约束
     auto l_cam_name = get_node_name(get_transform(l_camera.object()));
     auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
-                                  get_transform_name(),
+                                  l_node.fullPathName(),
                                   l_cam_name);
+
     DOODLE_LOG_INFO("运行 {}", l_comm);
     MStringArray l_constraints{};
     l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints, false, true);
@@ -340,7 +341,12 @@ bool maya_camera::camera_parent_is_word() {
   MStatus l_s{};
   l_s = l_node.setObject(p_path.transform());
   DOODLE_CHICK(l_s);
-  return l_node.parentCount() > 1;
+  MDagPath l_path{};
+  l_s = l_node.getPath(l_path);
+  DOODLE_CHICK(l_s);
+
+  DOODLE_LOG_INFO("检查相机级数为 {}", l_path.length())
+  return l_path.length() > 1;
 }
 
 bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {

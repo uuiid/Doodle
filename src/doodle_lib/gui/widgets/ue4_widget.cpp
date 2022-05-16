@@ -34,7 +34,7 @@ class ue4_widget::impl {
   gui::gui_cache<bool> import_cam{"导入cam"s, true};
   gui::gui_cache<bool> import_abc{"导入abc"s, true};
   gui::gui_cache<bool> import_fbx{"导入fbx"s, true};
-  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"((\w+)_rig_.*)"s};
+  gui::gui_cache<std::string> ue4_rig_regex{"正则修正"s, R"((\w+)_[Rr]ig.*)"s};
   gui::gui_cache<std::string> ue4_sk_fmt{"格式化结果"s, "SK_{}_Skeleton"s};
   gui::gui_cache<bool> quit_{"生成并退出"s, true};
   gui::gui_cache_name_id import_{"导入"s};
@@ -166,6 +166,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
       ranges::views::transform([this, &l_h](const FSys::path &in_path) -> ue4_import_data {
         l_h = export_file_info::read_file(in_path);
         ue4_import_data l_r{l_h.get<export_file_info>()};
+        l_r.redirect_path(in_path);
         l_r.fbx_skeleton_file_name = l_r.find_ue4_skin(
             l_h.get<export_file_info>().ref_file,
             p_i->ue4_content_dir,
@@ -247,7 +248,8 @@ std::string ue4_import_data::find_ue4_skin(
           FSys::path l_fbx_skeleton{fmt::format(in_fmt, l_token)};
           auto l_path_it = ranges::find_if(
               ranges::make_subrange(
-                  FSys::recursive_directory_iterator{in_ue4_content_dir},
+                  /// \brief 注意, 这里由于项目原因,需要遵循符号链接
+                  FSys::recursive_directory_iterator{in_ue4_content_dir, FSys::directory_options::follow_directory_symlink},
                   FSys::recursive_directory_iterator{}),
               [&](const FSys::directory_entry &in_entry) -> bool {
                 return in_entry.path().stem() == l_fbx_skeleton;
@@ -312,7 +314,6 @@ std::string ue4_import_group::set_level_dir(
                          in_handle.get_or_emplace<episodes>().p_episodes,
                          in_handle.get_or_emplace<shot>().p_shot,
                          in_handle.get_or_emplace<shot>().p_shot_enum) /
-             core_set::getSet().organization_name /
              fmt::format("{}{:04d}_sc{:04d}{}_{}",
                          g_reg()->ctx().at<project>().short_str(),
                          in_handle.get_or_emplace<episodes>().p_episodes,
@@ -337,6 +338,12 @@ void from_json(const nlohmann::json &j, ue4_import_data &p) {
   j.at("fbx_skeleton_file_name").get_to(p.fbx_skeleton_file_name);
   j.at("start_frame").get_to(p.start_frame);
   j.at("end_frame").get_to(p.end_frame);
+}
+void ue4_import_data::redirect_path(const FSys::path &in_path) {
+  if (FSys::exists(import_file_path))
+    return;
+  FSys::path l_p{import_file_path};
+  import_file_path = (in_path.parent_path() / l_p.filename()).generic_string();
 }
 void to_json(nlohmann::json &j, const ue4_import_group &p) {
   j["start_frame"] = p.start_frame;
