@@ -9,6 +9,9 @@
 namespace doodle::move {
 class DOODLE_CORE_EXPORT image_watermark {
  private:
+  friend void to_json(nlohmann::json& nlohmann_json_j, const image_watermark& nlohmann_json_t);
+  friend void from_json(const nlohmann::json& nlohmann_json_j, image_watermark& nlohmann_json_t);
+
  public:
   using rgba_t      = std::array<std::double_t, 4>;
   image_watermark() = default;

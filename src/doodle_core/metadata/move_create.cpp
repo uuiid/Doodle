@@ -17,7 +17,16 @@
 #include <range/v3/range_for.hpp>
 #include <range/v3/algorithm/for_each.hpp>
 
+#include <nlohmann/json.hpp>
+#include <doodle_core/details/json_macro.h>
+
 namespace doodle::move {
+
+DOODLE_JSON_CPP(image_watermark,
+                text_,
+                width_proportion_,
+                height_proportion_,
+                rgba_)
 
 namespace {
 class image_attr_auxiliary {

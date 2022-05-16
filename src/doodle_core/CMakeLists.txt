@@ -43,6 +43,7 @@ add_subdirectory(logger)
 add_subdirectory(metadata)
 add_subdirectory(pin_yin)
 add_subdirectory(thread_pool)
+add_subdirectory(details)
 
 
 # 连接库
