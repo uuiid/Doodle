@@ -20,7 +20,7 @@ class DOODLE_CORE_EXPORT image_watermark {
       : text_(std::move(in_p_text)),
         width_proportion_(in_p_width_proportion),
         height_proportion_(in_p_height_proportion),
-        rgba_(std::move(in_rgba)) {}
+        rgba_(in_rgba) {}
   std::string text_;
   std::double_t width_proportion_;
   std::double_t height_proportion_;
