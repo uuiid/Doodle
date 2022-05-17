@@ -131,7 +131,7 @@ MStatus initializePlugin(MObject obj) {
   app_run_id = MTimerMessage::addTimerCallback(
       0.001,
       [](float elapsedTime, float lastTime, void* clientData) {
-        if (p_doodle_app->is_stop()) {
+        if (!p_doodle_app || p_doodle_app->is_stop()) {
           return;
         }
         p_doodle_app->loop_one();
