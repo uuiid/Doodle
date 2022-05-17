@@ -7,6 +7,10 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/thread_pool/process_pool.h>
 
+namespace boost::asio {
+class io_context;
+}
+
 namespace doodle {
 
 class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
@@ -25,6 +29,7 @@ class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
 
   scheduler_t loop;
   bounded_pool_t loop_bounded_pool;
+  std::shared_ptr<boost::asio::io_context> io_context_;
 
   thread_pool_ptr get_thread_pool();
 };
@@ -36,5 +41,8 @@ DOODLE_CORE_EXPORT inline scheduler_t& g_main_loop() {
 }
 DOODLE_CORE_EXPORT inline bounded_pool_t& g_bounded_pool() {
   return doodle_lib::Get().loop_bounded_pool;
+}
+DOODLE_CORE_EXPORT inline boost::asio::io_context& g_io_context() {
+  return *doodle_lib::Get().io_context_;
 }
 }  // namespace doodle

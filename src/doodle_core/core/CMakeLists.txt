@@ -10,6 +10,7 @@ target_sources(
         init_register.h
         file_sys.h
         chrono_.h
+        json_rpc_process_t.h
 
         PRIVATE
         core_set.cpp
@@ -19,4 +20,5 @@ target_sources(
         status_info.cpp
         init_register.cpp
         file_sys.cpp
+        json_rpc_process_t.cpp
 )

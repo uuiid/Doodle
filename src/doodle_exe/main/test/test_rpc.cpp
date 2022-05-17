@@ -10,6 +10,5 @@ using namespace doodle;
 TEST_CASE("test json rpc") {
   auto l_app = app{};
 
-
   l_app.run();
 }

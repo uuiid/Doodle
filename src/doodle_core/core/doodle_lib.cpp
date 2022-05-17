@@ -24,7 +24,8 @@ doodle_lib::doodle_lib()
       p_log(std::make_shared<logger_ctrl>()),
       reg(std::make_shared<entt::registry>()),
       loop(),
-      loop_bounded_pool() {
+      loop_bounded_pool(),
+      io_context_(std::make_shared<boost::asio::io_context>()) {
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^
                    boost::locale::formatting_facet ^
