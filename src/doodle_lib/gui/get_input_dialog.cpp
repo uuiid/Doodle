@@ -96,7 +96,7 @@ void get_input_project_dialog::init() {
 namespace gui::input {
 class get_bool_dialog::impl {
  public:
-  impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
+  explicit impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
   std::shared_ptr<bool> quit_;
 };
 void get_bool_dialog::render() {
