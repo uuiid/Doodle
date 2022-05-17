@@ -312,11 +312,13 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     }
 
     MDGModifier l_dag_modifier{};
-#define DOODLE_CONN_CAM(attr_name)                                    \
-  {                                                                   \
-    auto l_so_plug = get_plug(p_path.node(), #attr_name##s).source(); \
-    auto l_t       = get_plug(l_camera.object(), #attr_name##s);      \
-    l_dag_modifier.connect(l_so_plug, l_t);                           \
+#define DOODLE_CONN_CAM(attr_name)                                \
+  {                                                               \
+    auto l_dis_dest = get_plug(p_path.node(), #attr_name##s);     \
+    auto l_so_plug  = l_dis_dest.source();                        \
+    auto l_t        = get_plug(l_camera.object(), #attr_name##s); \
+    l_dag_modifier.disconnect(l_so_plug, l_dis_dest);             \
+    l_dag_modifier.connect(l_so_plug, l_t);                       \
   }
     DOODLE_CONN_CAM(horizontalFilmAperture)
     DOODLE_CONN_CAM(verticalFilmAperture)
