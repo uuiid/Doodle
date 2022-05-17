@@ -28,7 +28,7 @@ void parser_rpc::operator()(boost::coroutines2::coroutine<std::string>::push_typ
       auto rpc_requrst_ = rpc_i.get<rpc_request>();
       auto l_fun        = in_server(rpc_requrst_.method_);
       rpc_reply l_rpc_reply{};
-      json_coroutine::pull_type l_pull_fun{[&](json_coroutine::push_type& in_skin_la) {
+      json_coroutine::pull_type l_pull_fun{[=](json_coroutine::push_type& in_skin_la) {
         std::visit(detail::overloaded{[&](const rpc_server_ref::call_fun& in_call_fun) {
                                         in_skin_la(in_call_fun(rpc_requrst_.params_));
                                       },
@@ -49,7 +49,7 @@ void parser_rpc::operator()(boost::coroutines2::coroutine<std::string>::push_typ
     auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
     auto l_fun        = in_server(rpc_requrst_.method_);
     rpc_reply l_rpc_reply{};
-    json_coroutine::pull_type l_pull_fun{[&](json_coroutine::push_type& in_skin_la) {
+    json_coroutine::pull_type l_pull_fun{[=](json_coroutine::push_type& in_skin_la) {
       std::visit(detail::overloaded{[&](const rpc_server_ref::call_fun& in_call_fun) {
                                       in_skin_la(in_call_fun(rpc_requrst_.params_));
                                     },

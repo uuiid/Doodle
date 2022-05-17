@@ -12,7 +12,7 @@ void json_rpc_server_i::init_register() {
                [this](json_coroutine::push_type& in_skin,
                       const std::optional<nlohmann::json>& in_json) {
                  image_to_move_arg::pull_type l_fun{
-                     [&](image_to_move_arg::push_type& in_skin_arg) {
+                     [this, in_json](image_to_move_arg::push_type& in_skin_arg) {
                        this->create_movie(in_skin_arg,
                                           in_json->get<std::vector<movie::image_attr>>());
                      }};

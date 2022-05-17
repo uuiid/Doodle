@@ -148,8 +148,8 @@ class rpc_client {
 
     l_json                  = l_rpc_request;
 
-    string_coroutine::pull_type l_pull_type{[this, &in_name](string_coroutine::push_type& in_str_skin) {
-      return call_server(in_name, in_str_skin);
+    string_coroutine::pull_type l_pull_type{[this, l_json](string_coroutine::push_type& in_str_skin) {
+      return call_server(l_json.dump(), in_str_skin);
     }};
 
     for (auto&& l_json_str : l_pull_type) {
@@ -175,8 +175,8 @@ class rpc_client {
 
     l_json                  = l_rpc_request;
 
-    string_coroutine::pull_type l_pull_type{[this, &in_name](string_coroutine::push_type& in_str_skin) {
-      return call_server(in_name, in_str_skin);
+    string_coroutine::pull_type l_pull_type{[this, l_json](string_coroutine::push_type& in_str_skin) {
+      return call_server(l_json.dump(), in_str_skin);
     }};
     for (auto l_json_str : l_pull_type) {
       nlohmann::json l_r = nlohmann::json::parse(l_json_str);
