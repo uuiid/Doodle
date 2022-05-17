@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/project.h>
 namespace doodle {
 
-class DOODLE_CORE_EXPORT json_rpc_server : public json_rpc::rpc_server {
+class DOODLE_CORE_EXPORT json_rpc_server_i : public json_rpc::rpc_server {
  public:
   using json_rpc::rpc_server::rpc_server;
 
