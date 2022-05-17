@@ -10,7 +10,7 @@
 #include <variant>
 #include <optional>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
-#include <json_rpc/core/rpc_reply.h>
+#include <doodle_core/json_rpc/core/rpc_reply.h>
 
 #include <boost/coroutine2/coroutine.hpp>
 namespace doodle::json_rpc {

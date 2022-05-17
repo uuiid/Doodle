@@ -7,7 +7,7 @@
 #include <string>
 
 namespace doodle::json_rpc::rpc_fun_name {
-extern std::string image_to_move;
-extern std::string open_project;
+constexpr static auto image_to_move{"image_to_move"};
+constexpr static auto open_project{"open_project"};
 
-}
+}  // namespace doodle::json_rpc::rpc_fun_name
