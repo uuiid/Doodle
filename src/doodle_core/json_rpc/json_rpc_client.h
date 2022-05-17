@@ -14,7 +14,9 @@ namespace doodle {
 
 class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
  public:
-  json_rpc_client(boost::asio::io_context& in_context, const std::string& in_host, uint16_t in_post);
+  json_rpc_client(boost::asio::io_context& in_context,
+                  const std::string& in_host,
+                  std::uint16_t in_post);
   using image_to_move_arg = boost::coroutines2::coroutine<json_rpc::args::rpc_json_progress>;
 
   void image_to_move(image_to_move_arg::push_type& in_skin,
