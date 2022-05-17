@@ -290,6 +290,8 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     MStringArray l_constraints{};
     l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints, false, true);
     DOODLE_CHICK(l_s);
+    auto l_old_path{p_path};
+
     l_s = l_camera.getPath(p_path);
     DOODLE_CHICK(l_s);
 
@@ -314,7 +316,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     MDGModifier l_dag_modifier{};
 #define DOODLE_CONN_CAM(attr_name)                                \
   {                                                               \
-    auto l_dis_dest = get_plug(p_path.node(), #attr_name##s);     \
+    auto l_dis_dest = get_plug(l_old_path.node(), #attr_name##s); \
     auto l_so_plug  = l_dis_dest.source();                        \
     auto l_t        = get_plug(l_camera.object(), #attr_name##s); \
     l_dag_modifier.disconnect(l_so_plug, l_dis_dest);             \
