@@ -1,22 +1,22 @@
 
 set(doodle_test_list
-        test_core.cpp
-        test_external.cpp
-        test_metadata.cpp
-        test_server.cpp
-        test_gui.cpp
-        test_image.cpp
-        test_win.cpp
-        test_std.cpp
-        test_lib.cpp
-        test_rpc.cpp
+        test_core
+        test_external
+        test_metadata
+        test_server
+        test_gui
+        test_image
+        test_win
+        test_std
+        test_lib
+        test_rpc
         )
 include(Catch)
 
 foreach (_file_ IN LISTS doodle_test_list)
     add_executable(
             doodle_${_file_}
-            ${_file_}
+            ${_file_}.cpp
             ../DoodleExe.manifest
             ../icon.ico
             ../win_exe.rc
