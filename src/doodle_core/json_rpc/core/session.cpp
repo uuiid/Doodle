@@ -62,7 +62,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                                boost::asio::buffers_begin(ptr->data_.data()) + len - end_string.size()});
                            ptr->data_.consume(len);
                            string_coroutine::pull_type l_pull_c{[&](string_coroutine::push_type& in_skin) {
-                             return ptr->parser_rpc_(in_skin, *ptr->rpc_server_);
+                             ptr->parser_rpc_(in_skin, *ptr->rpc_server_);
                            }};
 
                            for (auto&& fun_str : l_pull_c) {

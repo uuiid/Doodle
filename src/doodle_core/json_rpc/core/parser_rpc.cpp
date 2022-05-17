@@ -40,7 +40,9 @@ void parser_rpc::operator()(boost::coroutines2::coroutine<std::string>::push_typ
       for (auto&& fun_i : l_pull_fun) {
         l_rpc_reply.result = fun_i;
         l_rpc_reply.id_    = rpc_requrst_.id_;
-        sink(fun_i.dump());
+        nlohmann::json  l_json{};
+        l_json = l_rpc_reply;
+        sink(l_json.dump());
       }
     }
   } else {
@@ -59,7 +61,9 @@ void parser_rpc::operator()(boost::coroutines2::coroutine<std::string>::push_typ
     for (auto&& fun_i : l_pull_fun) {
       l_rpc_reply.result = fun_i;
       l_rpc_reply.id_    = rpc_requrst_.id_;
-      sink(fun_i.dump());
+      nlohmann::json  l_json{};
+      l_json = l_rpc_reply;
+      sink(l_json.dump());
     }
   }
 }

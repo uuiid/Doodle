@@ -6,6 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/app/app.h>
+#include <doodle_lib/json_rpc/json_rpc_server.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 
 #include <doodle_core/json_rpc/core/server.h>
@@ -17,8 +18,8 @@ using namespace std::literals;
 void test_client() {
   boost::asio::io_context io_context{};
   json_rpc_client l_c{io_context, "127.0.0.1"s, std::uint16_t{10223}};
-  auto l_prj = l_c.open_project("D:/");
-  std::cout << l_prj.p_path << std::endl;
+  //  auto l_prj = l_c.open_project("D:/");
+  //  std::cout << l_prj.p_path << std::endl;
 
   std::vector<movie::image_attr> l_vector{};
 
@@ -35,6 +36,7 @@ TEST_CASE("test json rpc") {
   auto l_app = app{};
   g_thread_pool().enqueue([]() {
     json_rpc::server l_server{g_io_context(), 10223};
+    l_server.set_rpc_server(std::make_shared<json_rpc_server>());
     g_io_context().run();
   });
   g_main_loop().attach<one_process_t>([]() {
