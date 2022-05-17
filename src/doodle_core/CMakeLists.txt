@@ -57,6 +57,8 @@ target_link_libraries(
         Boost::locale
         Boost::contract
         Boost::filesystem
+        Boost::coroutine
+
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
         spdlog::spdlog
