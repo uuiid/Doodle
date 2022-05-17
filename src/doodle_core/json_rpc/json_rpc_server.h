@@ -5,13 +5,9 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/json_rpc/core/rpc_server.h>
+#include <doodle_core/json_rpc/args/rpc_json_progress.h>
+#include <doodle_core/metadata/project.h>
 namespace doodle {
-
-namespace json_rpc_server_ns {
-constexpr const std::string_view open_project{"open_project"};
-constexpr const std::string_view create_movie{"create_movie"};
-constexpr const std::string_view get_create_movie_log{"get_create_movie_log"};
-}  // namespace json_rpc_server_ns
 
 class DOODLE_CORE_EXPORT json_rpc_server : public json_rpc::rpc_server {
  public:
@@ -19,10 +15,11 @@ class DOODLE_CORE_EXPORT json_rpc_server : public json_rpc::rpc_server {
 
  public:
   void init_register() override;
+  using image_to_move_arg                                                 = boost::coroutines2::coroutine<json_rpc::args::rpc_json_progress>;
 
-  virtual void open_project(const FSys::path& in_path) = 0;
-  virtual void create_movie()                          = 0;
-  virtual std::string get_create_movie_log()           = 0;
+  virtual project open_project(const FSys::path& in_path)                 = 0;
+  virtual void create_movie(image_to_move_arg::push_type& in_skin,
+                            const std::vector<movie::image_attr>& in_arg) = 0;
 };
 
 }  // namespace doodle

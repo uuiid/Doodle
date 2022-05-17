@@ -33,7 +33,8 @@ class rpc_client {
                    string_coroutine::push_type& in_skin);
 
   template <typename Result_Type,
-            typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+            typename Arg,
+            std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
     nlohmann::json l_json{};
 
@@ -56,7 +57,8 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <typename Result_Type,
+            std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name) {
     nlohmann::json l_json{};
 
@@ -176,7 +178,7 @@ class rpc_client {
     string_coroutine::pull_type l_pull_type{[this, &in_name](string_coroutine::push_type& in_str_skin) {
       return call_server(in_name, in_str_skin);
     }};
-    for (auto l_json_str   :l_pull_type) {
+    for (auto l_json_str : l_pull_type) {
       nlohmann::json l_r = nlohmann::json::parse(l_json_str);
       auto l_rpc_r       = l_r.template get<rpc_reply>();
       if (l_rpc_r.result.index() != rpc_reply::err_index) {
@@ -186,7 +188,6 @@ class rpc_client {
         l_err_.to_throw();
       }
     }
-
   }
   void close();
 };

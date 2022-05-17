@@ -35,8 +35,10 @@ class fun_traits {
 class rpc_server {
  public:
   using call_fun            = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
+  using json_coroutine      = boost::coroutines2::coroutine<nlohmann::json>;
+
   using call_fun_coroutines = std::function<void(
-      boost::coroutines2::coroutine<nlohmann::json>::push_type& skin,
+      json_coroutine::push_type& skin,
       const std::optional<nlohmann::json>&)>;
 
   using call_               = std::variant<call_fun, call_fun_coroutines>;
@@ -110,6 +112,7 @@ class rpc_server_ref : public rpc_server {
   using call_fun_coroutines = rpc_server::call_fun_coroutines;
 
   inline static auto rpc_close_name{"rpc.close"s};
+
  private:
   std::weak_ptr<rpc_server> server;
   void init_register() override{};

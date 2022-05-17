@@ -8,6 +8,8 @@
 
 #include <doodle_core/json_rpc/core/rpc_client.h>
 #include <doodle_core/json_rpc/args/rpc_json_progress.h>
+
+#include <doodle_core/metadata/project.h>
 namespace doodle {
 
 class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
@@ -17,6 +19,8 @@ class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
 
   void image_to_move(image_to_move_arg::push_type& in_skin,
                      const std::vector<movie::image_attr>& in_list);
+
+  project open_project(const FSys::path& in_path);
 
  public:
 };

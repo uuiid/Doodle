@@ -5,5 +5,6 @@
 namespace doodle::json_rpc::rpc_fun_name {
 using namespace std::literals;
 static auto image_to_move{"image_to_move"s};
+static auto open_project{"open_project"s};
 
 }  // namespace doodle::json_rpc::rpc_fun_name
