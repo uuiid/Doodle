@@ -9,19 +9,17 @@
 namespace doodle {
 void json_rpc_server_i::init_register() {
   register_fun(json_rpc::rpc_fun_name::image_to_move,
-               [this](json_sig::push_type& in_skin,
+               [this](const json_sig& in_skin,
                       const std::optional<nlohmann::json>& in_json) {
-                 image_to_move_arg::pull_type l_fun{
-                     [this, in_json](image_to_move_arg::push_type& in_skin_arg) {
-                       this->create_movie(in_skin_arg,
-                                          in_json->get<std::vector<movie::image_attr>>());
-                     }};
-
-                 for (auto&& obj : l_fun) {
+                 image_to_move_sig l_sig{};
+                 l_sig.connect([&](const json_rpc::args::rpc_json_progress& in_progress) {
                    nlohmann::json l_json{};
-                   l_json = obj;
+                   l_json = in_progress;
                    in_skin(l_json);
-                 }
+                 });
+
+                 this->create_movie(l_sig,
+                                    in_json->get<std::vector<movie::image_attr>>());
                });
   register_fun(json_rpc::rpc_fun_name::open_project,
                [this](const std::optional<nlohmann::json>& in_json) {

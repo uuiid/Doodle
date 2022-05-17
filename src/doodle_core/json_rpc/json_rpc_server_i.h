@@ -7,6 +7,8 @@
 #include <doodle_core/json_rpc/core/rpc_server.h>
 #include <doodle_core/json_rpc/args/rpc_json_progress.h>
 #include <doodle_core/metadata/project.h>
+
+#include <boost/signals2.hpp>
 namespace doodle {
 
 class DOODLE_CORE_EXPORT json_rpc_server_i : public json_rpc::rpc_server {
@@ -15,10 +17,10 @@ class DOODLE_CORE_EXPORT json_rpc_server_i : public json_rpc::rpc_server {
 
  public:
   void init_register() override;
-  using image_to_move_arg                                                 = boost::coroutines2::coroutine<json_rpc::args::rpc_json_progress>;
+  using image_to_move_sig                                                 = boost::signals2::signal<void(const json_rpc::args::rpc_json_progress&)>;
 
   virtual project open_project(const FSys::path& in_path)                 = 0;
-  virtual void create_movie(image_to_move_arg::push_type& in_skin,
+  virtual void create_movie(const image_to_move_sig& in_skin,
                             const std::vector<movie::image_attr>& in_arg) = 0;
 };
 
