@@ -39,7 +39,7 @@ std::string rpc_client::call_server(const std::string &in_string, bool is_notice
   return l_str;
 }
 void rpc_client::call_server(const std::string &in_string,
-                             string_coroutine::push_type &in_skin) {
+                             const string_sig &in_skin) {
   boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::end_string));
 
   boost::asio::streambuf l_r{};

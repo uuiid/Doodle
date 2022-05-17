@@ -9,6 +9,7 @@
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_request.h>
 
+#include <boost/signals2.hpp>
 namespace boost::asio {
 class io_context;
 }
@@ -20,7 +21,7 @@ class rpc_client {
   std::unique_ptr<impl> ptr;
 
  public:
-  using string_coroutine = boost::coroutines2::coroutine<std::string>;
+  using string_sig = boost::signals2::signal<void(const std::string&)>;
   explicit rpc_client(boost::asio::io_context& in_context,
                       const std::string& in_host,
                       std::uint16_t in_post);
@@ -29,7 +30,7 @@ class rpc_client {
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
   void call_server(const std::string& in_string,
-                   string_coroutine::push_type& in_skin);
+                   const string_sig& in_skin);
 
   template <typename Result_Type,
             typename Arg,
@@ -136,7 +137,7 @@ class rpc_client {
   template <typename Result_Type,
             typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   void call_fun(const std::string& in_name,
-                typename boost::coroutines2::coroutine<Result_Type>::push_type& in_skin,
+                const typename boost::signals2::signal<void(const Result_Type&)>& in_skin,
                 Arg args) {
     nlohmann::json l_json{};
 
@@ -147,12 +148,9 @@ class rpc_client {
 
     l_json                  = l_rpc_request;
 
-    string_coroutine::pull_type l_pull_type{[this, l_json](string_coroutine::push_type& in_str_skin) {
-      return call_server(l_json.dump(), in_str_skin);
-    }};
-
-    for (auto&& l_json_str : l_pull_type) {
-      nlohmann::json l_r = nlohmann::json::parse(l_json_str);
+    string_sig l_sig{};
+    l_sig.connect([&](const std::string& in_string) {
+      nlohmann::json l_r = nlohmann::json::parse(in_string);
       auto l_rpc_r       = l_r.template get<rpc_reply>();
       if (l_rpc_r.result.index() != rpc_reply::err_index) {
         in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
@@ -160,12 +158,14 @@ class rpc_client {
         auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
         l_err_.to_throw();
       }
-    }
+    });
+
+    call_server(l_json.dump(), l_sig);
   }
 
   template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   void call_fun(const std::string& in_name,
-                typename boost::coroutines2::coroutine<Result_Type>::push_type& in_skin) {
+                const typename boost::signals2::signal<void(const Result_Type&)>& in_skin) {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
@@ -174,11 +174,9 @@ class rpc_client {
 
     l_json                  = l_rpc_request;
 
-    string_coroutine::pull_type l_pull_type{[this, l_json](string_coroutine::push_type& in_str_skin) {
-      return call_server(l_json.dump(), in_str_skin);
-    }};
-    for (auto l_json_str : l_pull_type) {
-      nlohmann::json l_r = nlohmann::json::parse(l_json_str);
+    string_sig l_sig{};
+    l_sig.connect([&](const std::string& in_string) {
+      nlohmann::json l_r = nlohmann::json::parse(in_string);
       auto l_rpc_r       = l_r.template get<rpc_reply>();
       if (l_rpc_r.result.index() != rpc_reply::err_index) {
         in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
@@ -186,7 +184,9 @@ class rpc_client {
         auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
         l_err_.to_throw();
       }
-    }
+    });
+
+    call_server(l_json.dump(), l_sig);
   }
   void close();
 };
