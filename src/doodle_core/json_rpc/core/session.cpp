@@ -54,14 +54,9 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                          if (!ptr->socket_.is_open())
                            return;
 
-                         boost::system::error_code ec{};
-
                          boost::asio::async_write(ptr->socket_,
                                                   boost::asio::buffer(in_string + division_string),
-                                                  yield[ec]);
-                         if (ec) {
-                           ptr->rpc_server_->close_current();
-                         }
+                                                  yield);
                        });
                        while (true) {
                          boost::system::error_code ec{};
