@@ -55,6 +55,7 @@ class rpc_server {
 
  public:
   rpc_server();
+  virtual ~rpc_server();
 
   virtual void init_register() = 0;
 

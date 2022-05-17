@@ -5,5 +5,18 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/json_rpc/json_rpc_server_i.h>
 namespace doodle {
+class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
+ private:
+  class impl;
+  std::unique_ptr<impl> ptr;
 
+ public:
+  json_rpc_server();
+  ~json_rpc_server() override;
+
+  project open_project(const FSys::path& in_path) override;
+  void create_movie(
+      image_to_move_arg::push_type& in_skin,
+      const std::vector<movie::image_attr>& in_arg) override;
+};
 }  // namespace doodle

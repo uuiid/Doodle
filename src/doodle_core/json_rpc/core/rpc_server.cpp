@@ -18,6 +18,8 @@ rpc_server::call_ rpc_server::operator()(const std::string& in_name) const {
 rpc_server::rpc_server()
     : fun_list_() {
 }
+rpc_server::~rpc_server() = default;
+
 void rpc_server::register_fun(const std::string& in_name, const rpc_server::call_fun_coroutines& in_call) {
   fun_list_.emplace(in_name, in_call);
 }

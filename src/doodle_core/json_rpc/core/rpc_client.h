@@ -25,7 +25,7 @@ class rpc_client {
   explicit rpc_client(boost::asio::io_context& in_context,
                       const std::string& in_host,
                       std::uint16_t in_post);
-  ~rpc_client();
+  virtual ~rpc_client();
 
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
