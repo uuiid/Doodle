@@ -9,6 +9,7 @@ set(doodle_test_list
         test_win.cpp
         test_std.cpp
         test_lib.cpp
+        test_rpc.cpp
         )
 include(Catch)
 
