@@ -12,7 +12,6 @@
 
 namespace doodle {
 namespace json_rpc {
-using string_coroutine = boost::coroutines2::coroutine<std::string>;
 
 class parser_rpc;
 class rpc_server;
@@ -61,7 +60,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                        while (true) {
                          boost::system::error_code ec{};
 
-                         auto len = boost::asio::async_read_until(
+                         boost::asio::async_read_until(
                              ptr->socket_,
                              ptr->data_,
                              end_string,

@@ -12,7 +12,6 @@
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <doodle_core/json_rpc/core/rpc_reply.h>
 
-#include <boost/coroutine2/coroutine.hpp>
 #include <boost/signals2.hpp>
 namespace doodle::json_rpc {
 

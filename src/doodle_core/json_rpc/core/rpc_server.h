@@ -17,7 +17,6 @@
 #include <boost/function_types/parameter_types.hpp>
 #include <boost/callable_traits.hpp>
 #include <boost/mpl/erase.hpp>
-#include <boost/coroutine2/coroutine.hpp>
 #include <boost/signals2.hpp>
 
 namespace doodle::json_rpc {

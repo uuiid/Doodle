@@ -9,7 +9,6 @@
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_request.h>
 
-#include <boost/coroutine2/coroutine.hpp>
 namespace boost::asio {
 class io_context;
 }
