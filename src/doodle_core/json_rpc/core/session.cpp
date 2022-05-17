@@ -6,8 +6,9 @@
 #include <boost/asio.hpp>
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_server.h>
-
 #include <boost/asio/spawn.hpp>
+
+#include <string>
 
 namespace doodle {
 namespace json_rpc {
@@ -48,6 +49,20 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
   ptr->rpc_server_ = std::move(in_server);
   boost::asio::spawn(ptr->io_context_,
                      [self = shared_from_this(), this](const boost::asio::yield_context& yield) {
+                       boost::signals2::signal<void(const std::string&)> l_sig{};
+                       l_sig.connect([&](const std::string& in_string) {
+                         if (!ptr->socket_.is_open())
+                           return;
+
+                         boost::system::error_code ec{};
+
+                         boost::asio::async_write(ptr->socket_,
+                                                  boost::asio::buffer(in_string + division_string),
+                                                  yield[ec]);
+                         if (ec) {
+                           ptr->rpc_server_->close_current();
+                         }
+                       });
                        while (true) {
                          boost::system::error_code ec{};
 
@@ -57,20 +72,11 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                              end_string,
                              yield[ec]);
                          if (!ec) {
-                           ptr->parser_rpc_.json_data_attr(std::string{
-                               boost::asio::buffers_begin(ptr->data_.data()),
-                               boost::asio::buffers_begin(ptr->data_.data()) + len - end_string.size()});
-                           ptr->data_.consume(len);
-                           string_coroutine::pull_type l_pull_c{[=](string_coroutine::push_type& in_skin) {
-                             ptr->parser_rpc_(in_skin, *ptr->rpc_server_);
-                           }};
-
-                           for (auto&& fun_str : l_pull_c) {
-                             auto msg = fun_str + division_string;
-                             boost::asio::async_write(ptr->socket_,
-                                                      boost::asio::buffer(fun_str),
-                                                      yield[ec]);
-                           }
+                           std::istream l_istream{&ptr->data_};
+                           std::string l_ine{};
+                           std::getline(l_istream, l_ine);
+                           ptr->parser_rpc_.json_data_attr(l_ine);
+                           ptr->parser_rpc_(l_sig, *ptr->rpc_server_);
                            std::string end{end_string};
                            boost::asio::async_write(ptr->socket_,
                                                     boost::asio::buffer(end),

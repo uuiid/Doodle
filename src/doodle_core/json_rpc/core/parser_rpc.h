@@ -13,6 +13,7 @@
 #include <doodle_core/json_rpc/core/rpc_reply.h>
 
 #include <boost/coroutine2/coroutine.hpp>
+#include <boost/signals2.hpp>
 namespace doodle::json_rpc {
 
 class rpc_request;
@@ -24,6 +25,7 @@ class parser_rpc {
   std::string json_data_{};
 
   using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
+  using string_sig     = boost::signals2::signal<void(const std::string&)>;
 
  public:
   parser_rpc() = default;
@@ -33,7 +35,7 @@ class parser_rpc {
 
   std::string operator()(const rpc_server_ref& in_server);
 
-  void operator()(boost::coroutines2::coroutine<std::string>::push_type& sink,
+  void operator()(const string_sig& sink,
                   const rpc_server_ref& in_server);
 };
 }  // namespace doodle::json_rpc
