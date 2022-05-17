@@ -18,18 +18,18 @@ using namespace std::literals;
 void test_client() {
   boost::asio::io_context io_context{};
   json_rpc_client l_c{io_context, "127.0.0.1"s, std::uint16_t{10223}};
-  //  auto l_prj = l_c.open_project("D:/");
-  //  std::cout << l_prj.p_path << std::endl;
+    auto l_prj = l_c.open_project("D:/");
+    std::cout << l_prj.p_path << std::endl;
 
   std::vector<movie::image_attr> l_vector{};
 
-  boost::coroutines2::coroutine<json_rpc::args::rpc_json_progress>::pull_type
-      l_push_type{[&](boost::coroutines2::coroutine<json_rpc::args::rpc_json_progress>::push_type& in_skin) {
-        l_c.image_to_move(in_skin, l_vector);
-      }};
-  for (auto&& i : l_push_type) {
-    std::cout << i.msg_ << std::endl;
-  }
+  json_rpc_client::image_to_move_sig l_sig{};
+
+  l_sig.connect([](const json_rpc::args::rpc_json_progress& in_progress) {
+    std::cout << in_progress.msg_ << std::endl;
+  });
+
+  l_c.image_to_move(l_sig, l_vector);
 }
 
 TEST_CASE("test json rpc") {
@@ -39,8 +39,10 @@ TEST_CASE("test json rpc") {
     l_server.set_rpc_server(std::make_shared<json_rpc_server>());
     g_io_context().run();
   }};
-  g_main_loop().attach<one_process_t>([]() {
+  g_main_loop().attach<one_process_t>([&]() {
     test_client();
+    g_io_context().stop();
+    l_app.stop_app();
   });
   l_app.run();
 }

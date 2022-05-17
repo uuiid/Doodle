@@ -69,6 +69,9 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                            std::istream l_istream{&ptr->data_};
                            std::string l_ine{};
                            std::getline(l_istream, l_ine);
+                           if (l_ine.empty())
+                             continue;
+
                            ptr->parser_rpc_.json_data_attr(l_ine);
                            ptr->parser_rpc_(l_sig, *ptr->rpc_server_);
                            std::string end{end_string};
