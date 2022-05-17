@@ -25,6 +25,9 @@
 #include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
+
+#include <doodle_lib/gui/main_proc_handle.h>
+
 #include <stack>
 namespace {
 const constexpr std::string_view doodle_windows{"doodle_windows"};
@@ -44,6 +47,8 @@ namespace doodle::maya_plug {
 void open_windows() {
   p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
   p_doodle_app->command_line_parser(std::vector<std::string>{});
+  doodle::gui::main_proc_handle::get().win_close   = []() { doodle::app::Get().close_windows(); };
+  doodle::gui::main_proc_handle::get().win_destroy = []() {};
 }
 }  // namespace doodle::maya_plug
 

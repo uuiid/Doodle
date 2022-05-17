@@ -23,8 +23,6 @@ void maya_plug_app::close_windows() {
 }
 
 maya_plug_app::maya_plug_app() {
-  gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
-  gui::main_proc_handle::get().win_destroy = []() {};
   self                                     = this;
 }
 }  // namespace doodle::maya_plug
