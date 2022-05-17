@@ -7,6 +7,8 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/metadata.h>
 
+#include <utility>
+
 namespace doodle {
 class get_input_dialog::impl {
  public:
@@ -90,4 +92,29 @@ void get_input_project_dialog::init() {
   p_i->prj  = prj.get<project>();
   p_i->path = p_i->prj.p_path.generic_string();
 }
+
+namespace gui::input {
+class get_bool_dialog::impl {
+ public:
+  explicit impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
+  std::shared_ptr<bool> quit_;
+};
+void get_bool_dialog::render() {
+  ImGui::Text("是否退出?");
+
+  if (ImGui::Button("yes")) {
+    *p_i->quit_ = true;
+    succeed();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("no")) {
+    *p_i->quit_ = false;
+    succeed();
+  }
+}
+get_bool_dialog::get_bool_dialog(const std::shared_ptr<bool> &is_quit)
+    : p_i(std::make_unique<impl>(is_quit)) {
+}
+
+}  // namespace gui::input
 }  // namespace doodle

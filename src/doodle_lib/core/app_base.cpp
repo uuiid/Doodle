@@ -148,6 +148,18 @@ void app_base::load_project(const FSys::path& in_path) const {
     l_c.open_project(l_path);
   }
 }
+void app_base::clear_loop() {
+  while (!is_loop_empty()){
+    static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
+    decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
+    g_main_loop().update(l_now - s_now, nullptr);
+    g_bounded_pool().update(l_now - s_now, nullptr);
+    s_now = l_now;
+  }
+}
+bool app_base::is_loop_empty() {
+  return g_main_loop().empty() && g_bounded_pool().empty();
+}
 
 app_base::~app_base() = default;
 

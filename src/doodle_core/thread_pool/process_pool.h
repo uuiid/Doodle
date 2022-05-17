@@ -144,13 +144,13 @@ class scheduler {
 
  public:
   /*! @brief Unsigned integer type. */
-  using size_type                  = std::size_t;
+  using size_type                             = std::size_t;
 
   /*! @brief Default constructor. */
-  scheduler()                      = default;
+  scheduler()                                 = default;
 
   /*! @brief Default move constructor. */
-  scheduler(scheduler &&) noexcept = default;
+  scheduler(scheduler &&) noexcept            = default;
 
   /*! @brief Default move assignment operator. @return This scheduler. */
   scheduler &operator=(scheduler &&) noexcept = default;
@@ -297,8 +297,8 @@ class scheduler {
                                         [&](typename decltype(this->handlers)::value_type &handler) {
                                           return handler.update(handler, delta, data);
                                         });
-
-    handlers.erase(l_erase_benin, l_end);
+    if (l_erase_benin != l_end)
+      handlers.erase(l_erase_benin, l_end);
 
     //    std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
     //    handlers_next.clear();

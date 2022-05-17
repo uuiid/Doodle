@@ -41,4 +41,17 @@ class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
   virtual void failed() override;
   virtual void aborted() override;
 };
+
+namespace gui::input {
+class DOODLELIB_API get_bool_dialog : public get_input_dialog {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ protected:
+  void render() override;
+
+ public:
+  explicit get_bool_dialog(const std::shared_ptr<bool>& is_quit);
+};
+}  // namespace gui::input
 }  // namespace doodle
