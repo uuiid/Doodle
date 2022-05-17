@@ -24,8 +24,7 @@ class parser_rpc {
  private:
   std::string json_data_{};
 
-  using json_coroutine = boost::coroutines2::coroutine<nlohmann::json>;
-  using string_sig     = boost::signals2::signal<void(const std::string&)>;
+  using string_sig = boost::signals2::signal<void(const std::string&)>;
 
  public:
   parser_rpc() = default;

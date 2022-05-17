@@ -9,7 +9,7 @@
 namespace doodle {
 void json_rpc_server_i::init_register() {
   register_fun(json_rpc::rpc_fun_name::image_to_move,
-               [this](json_coroutine::push_type& in_skin,
+               [this](json_sig::push_type& in_skin,
                       const std::optional<nlohmann::json>& in_json) {
                  image_to_move_arg::pull_type l_fun{
                      [this, in_json](image_to_move_arg::push_type& in_skin_arg) {

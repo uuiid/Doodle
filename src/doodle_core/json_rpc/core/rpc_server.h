@@ -18,6 +18,7 @@
 #include <boost/callable_traits.hpp>
 #include <boost/mpl/erase.hpp>
 #include <boost/coroutine2/coroutine.hpp>
+#include <boost/signals2.hpp>
 
 namespace doodle::json_rpc {
 namespace detail {
@@ -35,10 +36,10 @@ class fun_traits {
 class rpc_server {
  public:
   using call_fun            = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
-  using json_coroutine      = boost::coroutines2::coroutine<nlohmann::json>;
+  using json_sig            = boost::signals2::signal<void(const nlohmann::json&)>;
 
   using call_fun_coroutines = std::function<void(
-      json_coroutine::push_type& skin,
+      const json_sig&,
       const std::optional<nlohmann::json>&)>;
 
   using call_               = std::variant<call_fun, call_fun_coroutines>;
