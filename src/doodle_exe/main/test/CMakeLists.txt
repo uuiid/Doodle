@@ -19,7 +19,7 @@ foreach (_file_ IN LISTS doodle_test_list)
             ../DoodleExe.manifest
             ../icon.ico
             ../win_exe.rc
-            main.cpp
+
     )
     set_target_properties(doodle_${_file_}
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

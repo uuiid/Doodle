@@ -2,6 +2,18 @@
 // Created by TD on 2021/7/27.
 //
 
+#include <doodle_core/doodle_core.h>
+#include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/move_create.h>
+#include <doodle_core/metadata/export_file_info.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/season.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/assets.h>
+#include <doodle_core/metadata/user.h>
+
 #include <doodle_lib/doodle_lib_all.h>
 #if defined(_WIN32)
 #elif defined(__linux__)
@@ -186,7 +198,7 @@ TEST_CASE_METHOD(test_path_, "test_path_2_time", "[fun][path]") {
 
   REQUIRE(k_t == k_t2);
 
-  auto k_s2 = source_path.replace_filename("测试文件2");
+  auto k_s2 = source_path.remove_filename() / "测试文件2";
   {
     FSys::ofstream k_f{k_s2};
     k_f << "1";
@@ -352,7 +364,7 @@ TEST_CASE("boost rational", "[boost][rational]") {
 
 TEST_CASE("std regex", "[std][regex]") {
   std::cout.setf(std::ios_base::boolalpha);
-  //致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+  // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
   const static std::wregex fatal_error_znch{
       LR"(致命错误.尝试在 C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma 中保存)"};
 
@@ -417,9 +429,6 @@ TEST_CASE_METHOD(test_time_warp, "test_time_warp") {
   REQUIRE(l_1.zoned_time_ == l_2.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
   REQUIRE(l_1.zoned_time_ == l_3.zoned_time_);
-
-
-
 }
 
 #include <doodle_core/core/init_register.h>

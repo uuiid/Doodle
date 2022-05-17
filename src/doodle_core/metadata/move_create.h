@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_core_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle::movie {
 class DOODLE_CORE_EXPORT image_watermark {
