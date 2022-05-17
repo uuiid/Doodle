@@ -18,8 +18,8 @@ using namespace std::literals;
 void test_client() {
   boost::asio::io_context io_context{};
   json_rpc_client l_c{io_context, "127.0.0.1"s, std::uint16_t{10223}};
-    auto l_prj = l_c.open_project("D:/");
-    std::cout << l_prj.p_path << std::endl;
+  auto l_prj = l_c.open_project("D:/");
+  std::cout << l_prj.p_path << std::endl;
 
   std::vector<movie::image_attr> l_vector{};
 
@@ -34,15 +34,15 @@ void test_client() {
 
 TEST_CASE("test json rpc") {
   auto l_app = app{};
-  std::thread l_thread{[]() {
+  g_thread_pool().enqueue([]() {
     json_rpc::server l_server{g_io_context(), 10223};
     l_server.set_rpc_server(std::make_shared<json_rpc_server>());
     g_io_context().run();
-  }};
+  });
   g_main_loop().attach<one_process_t>([&]() {
     test_client();
     g_io_context().stop();
-    l_app.stop_app();
+    //    l_app.stop_app();
   });
   l_app.run();
 }

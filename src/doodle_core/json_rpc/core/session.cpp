@@ -36,6 +36,8 @@ class session::impl {
 
   boost::asio::streambuf data_{};
   std::string msg_{};
+
+  bool stop_{false};
 };
 
 session::session(boost::asio::io_context& in_io_context,
@@ -57,7 +59,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                                                   boost::asio::buffer(in_string + division_string),
                                                   yield);
                        });
-                       while (true) {
+                       while (!ptr->stop_) {
                          boost::system::error_code ec{};
 
                          boost::asio::async_read_until(
@@ -74,10 +76,12 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
 
                            ptr->parser_rpc_.json_data_attr(l_ine);
                            ptr->parser_rpc_(l_sig, *ptr->rpc_server_);
+
                            std::string end{end_string};
-                           boost::asio::async_write(ptr->socket_,
-                                                    boost::asio::buffer(end),
-                                                    yield[ec]);
+                           if (ptr->socket_.is_open())
+                             boost::asio::async_write(ptr->socket_,
+                                                      boost::asio::buffer(end),
+                                                      yield[ec]);
                          } else {
                            ptr->rpc_server_->close_current();
                            break;
@@ -88,6 +92,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
 
 void session::stop() {
   ptr->socket_.close();
+  ptr->stop_ = true;
 }
 session::~session() = default;
 
