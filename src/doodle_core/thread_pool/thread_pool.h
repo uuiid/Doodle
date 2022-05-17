@@ -3,6 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -33,15 +34,12 @@ class DOODLE_CORE_EXPORT thread_pool : public details::no_copy {
   std::vector<std::thread> workers;
   std::atomic_bool stop;
   boost::asio::io_context io_context;
-  boost::asio::any_io_executor io_work;
+  boost::asio::executor_work_guard<boost::asio::io_context::executor_type> io_work;
 };
 inline thread_pool::thread_pool(size_t threads)
     : stop(false),
       io_context(),
-      io_work(
-          boost::asio::require(
-              io_context.get_executor(),
-              boost::asio::execution::outstanding_work.tracked)) {
+      io_work(boost::asio::make_work_guard(io_context)) {
   for (size_t i = 0; i < threads; ++i)
     workers.emplace_back(
         [this]() {
@@ -60,7 +58,7 @@ template <class F, class... Args>
   return res;
 }
 inline thread_pool::~thread_pool() {
-  io_work = decltype(io_work){};
+  io_work.reset();
   io_context.stop();
   for (auto& worker : workers)
     worker.join();
