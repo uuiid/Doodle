@@ -90,4 +90,18 @@ void get_input_project_dialog::init() {
   p_i->prj  = prj.get<project>();
   p_i->path = p_i->prj.p_path.generic_string();
 }
+
+namespace gui::input {
+class get_bool_dialog::impl {
+ public:
+  impl() = default;
+};
+void get_bool_dialog::render() {
+  ImGui::Text("是否退出?");
+}
+get_bool_dialog::get_bool_dialog()
+    : p_i(std::make_unique<impl>()) {
+}
+
+}  // namespace gui::input
 }  // namespace doodle

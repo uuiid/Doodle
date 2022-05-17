@@ -47,6 +47,9 @@ class DOODLELIB_API app_base {
   virtual std::int32_t run();
 
   virtual void loop_one() = 0;
+  virtual void clear_loop();
+  virtual bool is_loop_empty();
+
   std::atomic_bool& stop();
   bool is_stop() const;
   void stop_app(bool in_stop = false);
@@ -57,7 +60,6 @@ class DOODLELIB_API app_base {
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
-
 };
 
 /**

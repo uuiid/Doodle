@@ -180,8 +180,13 @@ app::app(const win::wnd_instance& in_instance)
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
   /// \brief 设置窗口句柄处理
-  gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
-  gui::main_proc_handle::get().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
+  gui::main_proc_handle::get().win_close = [this]() {
+    this->close_windows();
+  };
+  gui::main_proc_handle::get().win_destroy = [=]() {
+    this->clear_loop();
+    ::DestroyWindow(p_hwnd);
+  };
 }
 
 void app::loop_one() {
@@ -197,15 +202,8 @@ void app::loop_one() {
     /// 如果时退出消息, 直接设置停止
     if (msg.message == WM_QUIT) {
       DOODLE_LOG_INFO("开始退出");
-      stop_app();
+      return;
     }
-  }
-  if (is_stop())
-    return;
-  /// \brief 在设置停止后不更新gui, 直接开始基本循环并返回
-  if (stop_) {
-    app_command_base::loop_one();
-    return;
   }
 
   // Start the Dear ImGui frame
