@@ -36,7 +36,7 @@ void server::do_accept() {
   ptr->acceptor_.async_accept(
       [this](boost::system::error_code in_err, boost::asio::ip::tcp::socket in_socket) {
         if (!in_err) {
-          auto l_session = std::make_shared<session>(ptr->io_context_,std::move(in_socket));
+          auto l_session = std::make_shared<session>(ptr->io_context_, std::move(in_socket));
           ptr->session_manager_ptr->start(
               l_session,
               std::make_shared<rpc_server_ref>(
@@ -54,6 +54,7 @@ void server::set_rpc_server(const std::shared_ptr<rpc_server> &in_server) {
   in_server->init_register();
   ptr->rpc_server_ptr_ = in_server;
 }
+server::~server()                             = default;
 server::server(server &&) noexcept            = default;
 server &server::operator=(server &&) noexcept = default;
 
