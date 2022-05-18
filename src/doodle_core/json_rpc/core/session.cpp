@@ -61,11 +61,22 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
                        });
                        while (!ptr->stop_) {
                          boost::system::error_code ec{};
+                         using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
 
+                         std::function<
+                             std::pair<iter_buff, bool>(iter_buff in_begen, iter_buff in_end)>
+                             l_function{
+                                 [](iter_buff in_begin, const iter_buff& in_end) -> std::pair<iter_buff, bool> {
+                                   iter_buff i = std::move(in_begin);
+                                   while (i != in_end)
+                                     if (std::isspace(*i++))
+                                       return std::make_pair(i, true);
+                                   return std::make_pair(i, false);
+                                 }};
                          boost::asio::async_read_until(
                              ptr->socket_,
                              ptr->data_,
-                             end_string,
+                             l_function,
                              yield[ec]);
                          if (!ec) {
                            std::istream l_istream{&ptr->data_};

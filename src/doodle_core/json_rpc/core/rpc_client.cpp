@@ -28,19 +28,20 @@ rpc_client::rpc_client(boost::asio::io_context &in_context,
 };
 
 std::string rpc_client::call_server(const std::string &in_string, bool is_notice) {
-  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::end_string));
+  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::division_string));
   if (is_notice)
     return {};
   boost::asio::streambuf l_r{};
-  auto l_size = boost::asio::read_until(ptr->client_socket, l_r, session::end_string);
-  std::string l_str{
-      boost::asio::buffers_begin(l_r.data()),
-      boost::asio::buffers_begin(l_r.data()) + l_size - session::end_string.size()};
-  return l_str;
+  boost::asio::read_until(ptr->client_socket, l_r, session::end_string);
+
+  std::istream l_istream{&l_r};
+  std::string l_out{};
+  std::getline(l_istream, l_out);
+  return l_out;
 }
 void rpc_client::call_server(const std::string &in_string,
                              const string_sig &in_skin) {
-  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::end_string));
+  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::division_string));
 
   boost::asio::streambuf l_r{};
   using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;

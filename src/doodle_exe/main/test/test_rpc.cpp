@@ -33,7 +33,7 @@ void test_client() {
 }
 
 TEST_CASE("test json rpc") {
-  auto l_app = app{};
+  auto l_app = app_command_base{};
   g_thread_pool().enqueue([]() {
     json_rpc::server l_server{g_io_context(), 10223};
     l_server.set_rpc_server(std::make_shared<json_rpc_server>());
@@ -42,7 +42,7 @@ TEST_CASE("test json rpc") {
   g_main_loop().attach<one_process_t>([&]() {
     test_client();
     g_io_context().stop();
-    //    l_app.stop_app();
+    l_app.stop_app();
   });
   l_app.run();
 }
