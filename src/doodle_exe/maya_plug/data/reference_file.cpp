@@ -440,6 +440,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
                                    l_ref_file,
                                    l_type)
         .upload_path_ = l_upload_prefix;
+    export_file_info::write_file(out_);
   }
   return out_;
 }
@@ -478,6 +479,7 @@ entt::handle reference_file::export_file_select(
                                    l_ref_file,
                                    l_type)
         .upload_path_ = l_upload_prefix;
+    export_file_info::write_file(out_);
   }
   return out_;
 }
