@@ -34,11 +34,14 @@ void test_client() {
 
 TEST_CASE("test json rpc") {
   auto l_app = app_command_base{};
+  auto l_item = boost::asio::make_strand(g_io_context());
+  auto l_i    = boost::asio::post(l_item, std::packaged_task{[]() -> int { return 1; }});
   g_thread_pool().enqueue([]() {
     json_rpc::server l_server{g_io_context(), 10223};
     l_server.set_rpc_server(std::make_shared<json_rpc_server>());
     g_io_context().run();
   });
+
   g_main_loop().attach<one_process_t>([&]() {
     test_client();
     g_io_context().stop();
