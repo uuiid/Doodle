@@ -50,12 +50,10 @@ template <class F, class... Args>
 [[nodiscard]] auto thread_pool::enqueue(F&& f, Args&&... args)
     -> std::future<typename std::invoke_result<F, Args...>::type> {
   using return_type = typename std::invoke_result<F, Args...>::type;
-
-  auto task         = new_object<std::packaged_task<return_type()> >(
-      std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-  std::future<return_type> res = task->get_future();
-  boost::asio::post(io_context, [task]() { (*task)(); });
-  return res;
+  return boost::asio::post(io_context,
+                           std::packaged_task<return_type()>{
+                               std::bind(std::forward<F>(f),
+                                         std::forward<Args>(args)...)});
 }
 inline thread_pool::~thread_pool() {
   io_work.reset();
