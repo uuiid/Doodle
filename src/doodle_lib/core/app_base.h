@@ -46,7 +46,7 @@ class DOODLELIB_API app_base {
    */
   virtual std::int32_t run();
 
-  virtual void loop_one() = 0;
+  virtual void loop_one();
   virtual void clear_loop();
   virtual bool is_loop_empty();
 
@@ -73,7 +73,6 @@ class DOODLELIB_API app_command_base : public app_base {
  public:
   using app_base::app_base;
 
-  void loop_one() override;
   static app_command_base& Get();
 };
 

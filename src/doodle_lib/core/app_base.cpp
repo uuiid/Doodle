@@ -149,16 +149,25 @@ void app_base::load_project(const FSys::path& in_path) const {
   }
 }
 void app_base::clear_loop() {
-  while (!is_loop_empty()){
+  while (!is_loop_empty()) {
     static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
     decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
     g_main_loop().update(l_now - s_now, nullptr);
     g_bounded_pool().update(l_now - s_now, nullptr);
     s_now = l_now;
   }
+  g_io_context().run();
 }
 bool app_base::is_loop_empty() {
   return g_main_loop().empty() && g_bounded_pool().empty();
+}
+void app_base::loop_one() {
+  static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
+  decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
+  g_main_loop().update(l_now - s_now, nullptr);
+  g_bounded_pool().update(l_now - s_now, nullptr);
+  s_now = l_now;
+  g_io_context().poll();
 }
 
 app_base::~app_base() = default;
@@ -166,13 +175,6 @@ app_base::~app_base() = default;
 void app_command_base::load_back_end() {
 }
 
-void app_command_base::loop_one() {
-  static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
-  decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
-  g_main_loop().update(l_now - s_now, nullptr);
-  g_bounded_pool().update(l_now - s_now, nullptr);
-  s_now = l_now;
-}
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));
 }
