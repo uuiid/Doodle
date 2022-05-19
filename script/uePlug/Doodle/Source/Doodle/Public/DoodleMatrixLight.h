@@ -44,22 +44,39 @@ public:
 	 *
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
-		meta = (DisplayName = "FocalAngleOuter"))
+		meta = (DisplayName = "FocalAngleInner"))
 		float FocalAngleInner;
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
-		meta = (DisplayName = "FocalAngleOuter"))
+		meta = (DisplayName = "AttenuationDistance"))
 		float AttenuationDistance;
 
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "LightWidth"))
+		float LightWidth;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "LightLength"))
+		float LightLength;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "CastShadows"))
+		bool CastShadows;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "LightSamplesSquared"))
+		int LightSamplesSquared;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "SourceRadiusMult"))
+		float SourceRadiusMult;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "CenterOfInterestLength"))
+		float CenterOfInterestLength;
 
-	float LightWidth;
-	float LightLength;
-	bool CastShadows;
-	int LightSamplesSquared;
-	float SourceRadiusMult;
-	float CenterOfInterestLength;
-
-	FLightingChannels Channels;
-	float SoftRadius;
-	float ShadowBias;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "Channels"))
+		FLightingChannels Channels;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "SoftRadius"))
+		float SoftRadius;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+		meta = (DisplayName = "ShadowBias"))
+		float ShadowBias;
 };
