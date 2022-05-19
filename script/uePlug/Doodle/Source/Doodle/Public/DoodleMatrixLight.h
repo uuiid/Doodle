@@ -9,6 +9,7 @@
 #include "DoodleMatrixLight.generated.h"
 
 class USpotLightComponent;
+class USceneComponent;
 
 UCLASS()
 class DOODLE_API ADoodleMatrixLight : public AActor
@@ -24,7 +25,7 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "Intensity", UIMin = "0.0", UIMax = "20.0"))
-	float Intensity;
+	float Intensity{200};
 
 	/**
 	 * Filter color of the light.
@@ -61,9 +62,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "CastShadows"))
 	bool CastShadows;
+
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "LightSamplesSquared"))
-	int LightSamplesSquared;
+	int LightSamplesSquared{3};
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
+			  meta = (DisplayName = "LightSamplesQueue"))
+	int LightSamplesQueue{8};
+
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "SourceRadiusMult"))
 	float SourceRadiusMult;
@@ -81,7 +87,20 @@ public:
 			  meta = (DisplayName = "ShadowBias"))
 	float ShadowBias;
 
+  UFUNCTION(BlueprintCallable,   
+            meta = (CallInEditor = "true", OverrideNativeName = "测试" ))
+  void TEST();
+
 private:
 	UPROPERTY()
-	TArray<USpotLightComponent *> LightList;
+	TArray<USpotLightComponent *> LightList_;
+
+	UPROPERTY()
+	TArray<USceneComponent *> SceneComponentList_;
+
+	void CreateLightSqueue();
+
+	void CreateLightSquare(int InSceneComponentIndex);
+
+	void SetLightAttr();
 };
