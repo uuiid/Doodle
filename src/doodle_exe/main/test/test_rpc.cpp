@@ -1,8 +1,7 @@
 //
 // Created by TD on 2022/5/17.
 //
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/app/app.h>
@@ -33,7 +32,7 @@ void test_client() {
 }
 
 TEST_CASE("test json rpc") {
-  auto l_app = app_command_base{};
+  auto l_app  = app_command_base{};
   auto l_item = boost::asio::make_strand(g_io_context());
   auto l_i    = boost::asio::post(l_item, std::packaged_task{[]() -> int { return 1; }});
   g_thread_pool().enqueue([]() {

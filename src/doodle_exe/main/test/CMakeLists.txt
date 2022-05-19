@@ -27,7 +27,7 @@ foreach (_file_ IN LISTS doodle_test_list)
     target_link_libraries(doodle_${_file_}
             PUBLIC
             doodle_lib
-            Catch2::Catch2
+            Catch2::Catch2WithMain
             )
     target_compile_definitions(doodle_${_file_}
             PUBLIC
