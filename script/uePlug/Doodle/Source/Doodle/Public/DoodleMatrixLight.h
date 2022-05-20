@@ -10,6 +10,7 @@
 
 class USpotLightComponent;
 class USceneComponent;
+class UArrowComponent;
 
 UCLASS()
 class DOODLE_API ADoodleMatrixLight : public AActor
@@ -87,17 +88,19 @@ public:
 			  meta = (DisplayName = "ShadowBias"))
 	float ShadowBias;
 
-  UFUNCTION(BlueprintCallable,   
-            meta = (CallInEditor = "true", OverrideNativeName = "测试" ))
-  void TEST();
+	UFUNCTION(BlueprintCallable,
+			  meta = (CallInEditor = "true", OverrideNativeName = "测试"))
+	void TEST();
 
-private:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TArray<USpotLightComponent *> LightList_;
+	UPROPERTY(VisibleAnywhere)
+	TArray<UArrowComponent *> ArrowList_;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TArray<USceneComponent *> SceneComponentList_;
 
+private:
 	void CreateLightSqueue();
 
 	void CreateLightSquare(int InSceneComponentIndex);

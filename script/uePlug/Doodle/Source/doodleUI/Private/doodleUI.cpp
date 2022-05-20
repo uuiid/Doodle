@@ -4,12 +4,14 @@
 #include "DoodleCopySpline.h"
 #include "DoodleDirectionalLightDome.h"
 #include "IPlacementModeModule.h"
+#include "DoodleMatrixLight.h"
 #include "fireLight.h"
 
 static const FName doodleTabName("doodleUI");
 #define LOCTEXT_NAMESPACE "FdoodleUIModule"
 
-void FdoodleUIModule::StartupModule() {
+void FdoodleUIModule::StartupModule()
+{
   // 在我们这里添加自定义放置类
   FPlacementCategoryInfo info{LOCTEXT("doodle", "doodle"), "DoodleCategoryInfo",
                               TEXT("Adoodle"), 55, true};
@@ -31,11 +33,17 @@ void FdoodleUIModule::StartupModule() {
       info.UniqueHandle,
       MakeShareable(new FPlaceableItem(
           nullptr, FAssetData{ADoodleConfigLightActor::StaticClass()})));
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(
+          nullptr, FAssetData{ADoodleMatrixLight::StaticClass()})));
 }
 
-void FdoodleUIModule::ShutdownModule() {
+void FdoodleUIModule::ShutdownModule()
+{
   //我们的卸载函数
-  if (IPlacementModeModule::IsAvailable()) {
+  if (IPlacementModeModule::IsAvailable())
+  {
     IPlacementModeModule::Get().UnregisterPlacementCategory(
         "DoodleCategoryInfo");
   }
