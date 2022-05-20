@@ -11,6 +11,7 @@
 class USpotLightComponent;
 class USceneComponent;
 class UArrowComponent;
+class USplineComponent;
 
 UCLASS()
 class DOODLE_API ADoodleMatrixLight : public AActor
@@ -18,14 +19,14 @@ class DOODLE_API ADoodleMatrixLight : public AActor
 	GENERATED_BODY()
 public:
 	ADoodleMatrixLight();
-
-	bool Enabled;
+	UPROPERTY(BlueprintReadOnly, interp, Category = Light)
+	bool Enabled{true};
 
 	/**
 	 * Total energy that the light emits.
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
-			  meta = (DisplayName = "Intensity", UIMin = "0.0", UIMax = "20.0"))
+			  meta = (DisplayName = "Intensity", UIMin = "0.0", UIMax = "2000000.0"))
 	float Intensity{200};
 
 	/**
@@ -34,59 +35,61 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (HideAlphaChannel))
-	FColor LightColor;
+	FColor LightColor{FColor::White};
 
 	/**
 	 *
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "FocalAngleOuter"))
-	float FocalAngleOuter;
+	float FocalAngleOuter{15.0};
 
 	/**
 	 *
 	 */
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "FocalAngleInner"))
-	float FocalAngleInner;
+	float FocalAngleInner{1.0};
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "AttenuationDistance"))
-	float AttenuationDistance;
+	float AttenuationDistance{1000.0};
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "LightWidth"))
-	float LightWidth;
+	float LightWidth{20.0};
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "LightLength"))
-	float LightLength;
+	float LightLength{20.0};
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "CastShadows"))
-	bool CastShadows;
+	bool CastShadows{true};
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
-			  meta = (DisplayName = "LightSamplesSquared"))
+			  meta = (DisplayName = "LightSamplesSquared",
+					  UIMin = "1", UIMax = "8"))
 	int LightSamplesSquared{3};
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
-			  meta = (DisplayName = "LightSamplesQueue"))
+			  meta = (DisplayName = "LightSamplesQueue",
+					  UIMin = "1", UIMax = "16"))
 	int LightSamplesQueue{8};
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "SourceRadiusMult"))
-	float SourceRadiusMult;
+	float SourceRadiusMult{1.0};
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "CenterOfInterestLength"))
-	float CenterOfInterestLength;
+	float CenterOfInterestLength{500.0};
 
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "Channels"))
 	FLightingChannels Channels;
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "SoftRadius"))
-	float SoftRadius;
+	float SoftRadius{0};
 	UPROPERTY(BlueprintReadOnly, interp, Category = Light,
 			  meta = (DisplayName = "ShadowBias"))
-	float ShadowBias;
+	float ShadowBias{0.025};
 
 	UFUNCTION(BlueprintCallable,
 			  meta = (CallInEditor = "true", OverrideNativeName = "测试"))
@@ -99,6 +102,14 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<USceneComponent *> SceneComponentList_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USplineComponent *SplineComponen_;
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(
+		FPropertyChangedEvent &PropertyChangeEvent) override;
+#endif // WITH_EDITOR
 
 private:
 	void CreateLightSqueue();
