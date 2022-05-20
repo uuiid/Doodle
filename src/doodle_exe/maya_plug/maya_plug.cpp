@@ -105,7 +105,7 @@ MStatus initializePlugin(MObject obj) {
       CHECK_MSTATUS_AND_RETURN_IT(status);
       maya_call_back_id.emplace(
           MSceneMessage::addCheckCallback(
-              MSceneMessage::Message::kBeforeSaveCheck,
+              MSceneMessage::Message::kBeforeNewCheck,
               [](bool* retCode, void* clientData) {
                 *retCode = maya_plug::clear_scene_comm::show_save_mag();
               },
