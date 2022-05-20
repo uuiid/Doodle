@@ -103,10 +103,11 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<USceneComponent *> SceneComponentList_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere)
 	USplineComponent *SplineComponen_;
 
 	void OnConstruction(const FTransform &Transform) override;
+	void PostActorCreated() override;
 
 #if WITH_EDITOR
 	void PostEditChangeProperty(
