@@ -89,13 +89,13 @@ void ADoodleMatrixLight::CreateLightSquare(
                 LSceneComponent,
                 FAttachmentTransformRules{
                     EAttachmentRule::KeepRelative,
-                    EAttachmentRule::KeepRelative,
+                    EAttachmentRule::SnapToTarget,
                     EAttachmentRule::KeepRelative, false});
             LSpotLightComponent->RegisterComponent();
 
             const int LInt = FMath::Floor((float)i - LSize);
             const int LJnt = FMath::Floor((float)j - LSize);
-            LSpotLightComponent->AddLocalOffset(FVector{0, LLen * LInt, LLen * LJnt});
+            // LSpotLightComponent->AddLocalOffset(FVector{0, LLen * LInt, LLen * LJnt});
             LSpotLightComponent->SetIntensityUnits(ELightUnits::Candelas);
             LightList_.Add(LSpotLightComponent);
         }
@@ -136,8 +136,9 @@ void ADoodleMatrixLight::SetLightAttr()
                         FMath::Min(L_SourceRadius,
                                    L_SourceLength) *
                             2) /
-                       (float)LightSamplesSquared;
+                       (float)(LightSamplesSquared - 1);
     const float LSize = LightSamplesSquared / 2;
+    int Index = 0;
     for (auto i = 0; i < LightSamplesQueue; ++i)
     {
         USceneComponent *LSceneComponent = SceneComponentList_[i];
@@ -158,13 +159,11 @@ void ADoodleMatrixLight::SetLightAttr()
                 const int LJnt = FMath::Floor((float)j - LSize);
                 const int LKnt = FMath::Floor((float)k - LSize);
                 USpotLightComponent *LLight =
-                    LightList_[i * LightSamplesQueue +
-                               j * LightSamplesSquared +
-                               k];
+                    LightList_[Index];
 
-                LLight->SetWorldLocation(
-                    LSceneComponent->GetComponentLocation());
+                LLight->SetRelativeLocation(FVector{0, 0, 0});
                 LLight->AddLocalOffset(FVector{0, LLen * LJnt, LLen * LKnt});
+                ++Index;
             }
         }
     }
