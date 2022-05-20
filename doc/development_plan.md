@@ -37,6 +37,8 @@
 - 将maya插件改为后台rpc服务器
 - 将拍屏功能 提取为选项
 - ui 布局保存
+- 下雪走路的凹陷(F:\tmp_ue4\cha\Content\InfinityWeather)
+- UE4水效果(F:\tmp_ue4\cha\Content\FluidFlux)
 
 ### code
 
