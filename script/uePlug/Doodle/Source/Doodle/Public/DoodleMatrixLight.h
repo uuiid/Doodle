@@ -106,6 +106,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USplineComponent *SplineComponen_;
 
+	void OnConstruction(const FTransform &Transform) override;
+
 #if WITH_EDITOR
 	void PostEditChangeProperty(
 		FPropertyChangedEvent &PropertyChangeEvent) override;

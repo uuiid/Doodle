@@ -6,18 +6,27 @@
 //添加编辑器显示图标
 #include "Components/ArrowComponent.h"
 #include "Math/UnrealMathUtility.h"
+#include "Components/SplineComponent.h"
 
 ADoodleMatrixLight::ADoodleMatrixLight()
 {
     PrimaryActorTick.bCanEverTick = true;
     USceneComponent *LRoot = CreateDefaultSubobject<USceneComponent>("DefaultSceneRoot");
     SetRootComponent(LRoot);
+
+    SplineComponen_ =
+        CreateDefaultSubobject<USplineComponent>("DefaultSplineComponent");
+    SplineComponen_->AttachToComponent(
+        GetRootComponent(),
+        FAttachmentTransformRules::KeepRelativeTransform);
+    SplineComponen_->SetClosedLoop(true);
 }
 
 void ADoodleMatrixLight::CreateLightSqueue()
 {
 
     const float ang{360 / (float)LightSamplesQueue};
+    SplineComponen_->ClearSplinePoints();
 
     for (auto i = 0; i < LightSamplesQueue; ++i)
     {
@@ -27,7 +36,7 @@ void ADoodleMatrixLight::CreateLightSqueue()
         /// 设置旋转方式
         FTransform l_tran{};
         FVector LLocal{FRotator{0, ang * i, 0}.Vector() * CenterOfInterestLength};
-        UE_LOG(LogTemp, Log, TEXT("vector: %s"), *(LLocal.ToString()));
+        // UE_LOG(LogTemp, Log, TEXT("vector: %s"), *(LLocal.ToString()));
         LSceneComponent->AddLocalOffset(LLocal + FVector{0, 0, 30});
 
         /// 添加灯光场景根组件
@@ -36,6 +45,11 @@ void ADoodleMatrixLight::CreateLightSqueue()
             RootComponent,
             FAttachmentTransformRules::KeepRelativeTransform);
         LSceneComponent->RegisterComponent();
+
+        /// 添加曲线点
+        SplineComponen_->AddSplinePoint(
+            LSceneComponent->GetComponentTransform().GetLocation(),
+            ESplineCoordinateSpace::World);
 
         /// 添加箭头指示
         UArrowComponent *LArrowComponent = NewObject<UArrowComponent>(LSceneComponent);
@@ -52,7 +66,6 @@ void ADoodleMatrixLight::CreateLightSqueue()
 
         SceneComponentList_.Add(LSceneComponent);
         ArrowList_.Add(LArrowComponent);
-
         CreateLightSquare(i);
     }
 }
@@ -84,12 +97,12 @@ void ADoodleMatrixLight::CreateLightSquare(
 
 void ADoodleMatrixLight::SetLightAttr()
 {
-    int L_Max = FMath::Max(LightSamplesQueue, 1);
-    int L_Len = FMath::Min(LightLength, LightWidth);
-    float L_SourceRadius = ((L_Len / L_Max) * LightSamplesQueue) / 2 * SourceRadiusMult;
-    float L_SourceLength = (FMath::Max(LightLength, LightWidth) - 1) / 2 * L_SourceRadius;
+    int L_Light_Size = FMath::Max(LightSamplesSquared, 1);
+    int L_SourceSize = FMath::Min(LightLength, LightWidth);
+    float L_SourceRadius = (L_SourceSize / L_Light_Size) * SourceRadiusMult;
+    float L_SourceLength = (FMath::Max(LightLength, LightWidth) / L_Light_Size) * SourceRadiusMult;
 
-    float L_Intensity = Intensity / FMath::Pow(L_Max, 2.0);
+    float L_Intensity = Intensity / FMath::Pow(L_Light_Size, 2.0);
 
     for (auto *LLight : LightList_)
     {
@@ -101,13 +114,46 @@ void ADoodleMatrixLight::SetLightAttr()
         LLight->SetLightColor(LightColor);
         LLight->SetAttenuationRadius(AttenuationDistance);
 
-        LLight->SetSourceRadius(LightLength);
-        LLight->SetSourceLength(LightWidth);
+        LLight->SetSourceRadius(FMath::Min(L_SourceRadius,
+                                           L_SourceLength));
+        LLight->SetSourceLength(FMath::Max(L_SourceRadius,
+                                           L_SourceLength));
 
         LLight->SetCastShadows(CastShadows);
         LLight->SetShadowBias(ShadowBias);
         LLight->SetSoftSourceRadius(SoftRadius);
     }
+    /// 修正位置
+    const float LLen = 30 / (float)LightSamplesSquared;
+    const float LSize = LightSamplesSquared / 2;
+    for (auto i = 0; i < LightSamplesQueue; ++i)
+    {
+        USceneComponent *LSceneComponent = SceneComponentList_[i];
+        FTransform L_Tran = LSceneComponent->GetComponentTransform();
+        /// 先获取曲线的位置
+        FVector LLocal = SplineComponen_->GetLocationAtSplineInputKey(i, ESplineCoordinateSpace::World);
+        FRotator LRotator = FRotationMatrix::MakeFromX(
+                                GetActorLocation() - LSceneComponent->GetComponentLocation())
+                                .Rotator();
+        LSceneComponent->SetWorldRotation(LRotator);
+        LSceneComponent->SetWorldLocation(LLocal);
+        for (auto j = 0; j < LightSamplesSquared; ++j)
+        {
+            for (auto k = 0; k < LightSamplesSquared; ++k)
+            {
+                const int LJnt = FMath::Floor((float)j - LSize);
+                const int LKnt = FMath::Floor((float)k - LSize);
+                USpotLightComponent *LLight = LightList_[i + j + k];
+            }
+        }
+    }
+}
+
+void ADoodleMatrixLight::OnConstruction(const FTransform &Transform)
+{
+
+    CreateLightSqueue();
+    SetLightAttr();
 }
 
 void ADoodleMatrixLight::TEST()
@@ -188,6 +234,10 @@ void ADoodleMatrixLight::PostEditChangeProperty(
             CreateLightSqueue();
             SetLightAttr();
         }
+    }
+    else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, SplineComponen_))
+    {
+        SetLightAttr();
     }
 }
 #endif // WITH_EDITOR
