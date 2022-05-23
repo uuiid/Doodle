@@ -64,7 +64,7 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   //  using handle_list = boost::intrusive::list<process_handler,
   //                                             boost::intrusive::constant_time_size<false>>;
-  using handle_list = std::set<process_handler>;
+  using handle_list = std::vector<process_handler>;
 
   template <typename Executor>
   struct continuation {
@@ -140,8 +140,13 @@ class DOODLE_CORE_EXPORT asio_pool {
              in_executor]() {
               if (in_proc->update(*in_proc, {}, nullptr)) {
                 std::lock_guard l_g{self->mutex_};
-                self->handlers.erase(*in_proc);
+                /// \brief 去除自身
+                if(auto l_end = std::find(self->handlers,*in_proc);
+                    l_end != self->handlers.end()) {
+                  self->handlers.erase(l_end);
+                }
               } else
+                /// \brief 提交下一次更新
                 post_asio<Proc>(self, in_executor, in_proc);
             }));
     return continuation<Executor>{self, in_executor, handler};
@@ -161,6 +166,7 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   template <typename Proc, typename Executor, typename... Args>
   auto attach(Executor in_executor, Args &&...args) {
+    std::lock_guard l_g{this->mutex_};
     //    static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
     auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &asio_pool::deleter<Proc>};
     process_handler handler{std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr};
