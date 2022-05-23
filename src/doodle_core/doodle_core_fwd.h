@@ -20,6 +20,10 @@
 #include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/lib_warp/std_warp.h>
 
+namespace boost::asio {
+class io_context;
+}
+
 //#include <>
 namespace doodle {
 class convert;
@@ -59,13 +63,13 @@ using process_t      = entt::process<Derived, std::chrono::system_clock::duratio
 using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
 using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
-DOODLE_CORE_EXPORT registry_ptr& g_reg();
-DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
-DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
-DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
-
+registry_ptr& g_reg();
+scheduler_t& g_main_loop();
+bounded_pool_t& g_bounded_pool();
+thread_pool& g_thread_pool();
+boost::asio::io_context& g_io_context();
 namespace movie {
 class image_attr;
 class image_watermark;
-}  // namespace move
+}  // namespace movie
 }  // namespace doodle
