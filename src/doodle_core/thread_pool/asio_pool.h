@@ -11,18 +11,18 @@
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/bind_executor.hpp>
 
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/list_hook.hpp>
+//#include <boost/intrusive/list.hpp>
+//#include <boost/intrusive/list_hook.hpp>
 
 namespace doodle {
 template <typename Delta>
 class DOODLE_CORE_EXPORT asio_pool {
  private:
-  using list_base_hook = boost::intrusive::list_base_hook<
-      boost::intrusive::link_mode<
-          boost::intrusive::auto_unlink>>;
+  //  using list_base_hook = boost::intrusive::list_base_hook<
+  //      boost::intrusive::link_mode<
+  //          boost::intrusive::auto_unlink>>;
 
-  struct process_handler : public list_base_hook {
+  struct process_handler {
     using instance_type  = std::unique_ptr<void, void (*)(void *)>;
     using update_fn_type = bool(process_handler &, Delta, void *);
     using abort_fn_type  = void(process_handler &, bool);
@@ -62,13 +62,17 @@ class DOODLE_CORE_EXPORT asio_pool {
     }
   };
 
-  using handle_list = boost::intrusive::list<process_handler,
-                                             boost::intrusive::constant_time_size<false>>;
+  //  using handle_list = boost::intrusive::list<process_handler,
+  //                                             boost::intrusive::constant_time_size<false>>;
+  using handle_list = std::set<process_handler>;
 
   template <typename Executor>
   struct continuation {
-    continuation(asio_pool in_self,Executor *in_executor)
+    continuation(asio_pool in_self,
+                 Executor *in_executor,
+                 process_handler *in_handler)
         : executor_{in_executor},
+          handler{in_handler},
           self_{in_self} {}
 
     template <typename Proc, typename... Args>
@@ -87,6 +91,7 @@ class DOODLE_CORE_EXPORT asio_pool {
     }
 
     Executor executor_;
+    process_handler handler;
 
    private:
     asio_pool *self_;
@@ -121,14 +126,15 @@ class DOODLE_CORE_EXPORT asio_pool {
   }
   template <typename Proc, typename Executor>
   static continuation<Executor>
-  post_asio(const Executor &in_executor, process_handler &handler) {
+  post_asio(asio_pool *in_pool, const Executor &in_executor, process_handler *handler) {
     boost::asio::post(
         boost::asio::bind_executor(
             in_executor,
-            [in_proc = std::move(handler),
+            [in_proc = handler,
+             in_pool,
              in_executor]() {
-              if (in_proc.update(in_proc, {}, nullptr))
-                in_proc.unlink();
+              if (in_proc->update(*in_proc, {}, nullptr))
+                in_pool->handlers.erase(in_proc);
               else
                 post_asio<Proc>(in_executor, in_proc);
             }));
