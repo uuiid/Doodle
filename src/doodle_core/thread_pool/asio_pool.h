@@ -79,8 +79,13 @@ class DOODLE_CORE_EXPORT asio_pool {
     continuation then(Args &&...args) {
       std::lock_guard l_g{self_->mutex_};
       //      static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
-      auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &asio_pool::deleter<Proc>};
-      handler->next.reset(new process_handler{std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr});
+      auto proc = typename process_handler::instance_type{
+          new Proc{std::forward<Args>(args)...},
+          &asio_pool::deleter<Proc>};
+      handler->next.reset(new process_handler{std::move(proc),
+                                              &asio_pool::update<Proc>,
+                                              &asio_pool::abort<Proc>,
+                                              nullptr});
       handler = handler->next.get();
       return *this;
     }
@@ -126,22 +131,25 @@ class DOODLE_CORE_EXPORT asio_pool {
   }
   template <typename Proc, typename Executor>
   static continuation<Executor>
-  post_asio(asio_pool *in_pool, const Executor &in_executor, process_handler *handler) {
+  post_asio(asio_pool *self, const Executor &in_executor, process_handler *handler) {
     boost::asio::post(
         boost::asio::bind_executor(
             in_executor,
             [in_proc = handler,
-             in_pool,
+             self,
              in_executor]() {
-              if (in_proc->update(*in_proc, {}, nullptr))
-                in_pool->handlers.erase(in_proc);
-              else
-                post_asio<Proc>(in_executor, in_proc);
+              if (in_proc->update(*in_proc, {}, nullptr)) {
+                std::lock_guard l_g{self->mutex_};
+                self->handlers.erase(*in_proc);
+              } else
+                post_asio<Proc>(self, in_executor, in_proc);
             }));
+    return continuation<Executor>{self, in_executor, handler};
   }
 
  private:
   handle_list handlers;
+  std::recursive_mutex mutex_;
 
  public:
   /*! @brief Unsigned integer type. */
@@ -158,7 +166,7 @@ class DOODLE_CORE_EXPORT asio_pool {
     process_handler handler{std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr};
     // forces the process to exit the uninitialized state
     // handler.update(handler, {}, nullptr);
-    return continuation{this, nullptr};
+    return post_asio<Executor>(this, in_executor, &handlers.emplace_back(std::move(handler)));
   }
 };
 }  // namespace doodle
