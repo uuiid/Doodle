@@ -114,9 +114,21 @@ if (DEFINED Maya_Version)
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
         )
-        install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
-                DESTINATION plug
-                COMPONENT maya_plug)
+        # 定义安装逻辑
+        set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+        include(InstallRequiredSystemLibraries)
+
+        list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
+
+        install(TARGETS doodle_maya_${Maya_Version}
+                DESTINATION plug/maya/plug-ins
+                RUNTIME_DEPENDENCIES
+                )
+
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya
+                DESTINATION plug/maya)
+        install(FILES ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py
+                DESTINATION plug/maya/scripts/scripts/)
     endif ()
 
 endif ()

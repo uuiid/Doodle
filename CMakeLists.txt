@@ -96,22 +96,8 @@ list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 add_subdirectory(script)
 
 
-#最后实现camke修复
-install(CODE "
-        include(BundleUtilities)
-        fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
-        "
-        COMPONENT main_exe
-        )
-#install(TARGETS DoodleExe
-#        COMPONENT main_exe
-#        RUNTIME_DEPENDENCIES
-#        )
 
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION bin
-        COMPONENT main_exe
-        )
+
 
 
 

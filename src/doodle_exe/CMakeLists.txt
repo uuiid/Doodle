@@ -30,3 +30,20 @@ add_dependencies(DoodleExe generate_token_run)
 add_subdirectory(maya_plug)
 add_subdirectory(main/test)
 
+# 定义安装逻辑
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+include(InstallRequiredSystemLibraries)
+
+list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
+
+install(TARGETS DoodleExe
+        RUNTIME_DEPENDENCIES
+        )
+
+#最后实现camke修复
+install(CODE "
+        include(BundleUtilities)
+        fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
+        "
+        )
+
