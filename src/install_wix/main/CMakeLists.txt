@@ -11,7 +11,7 @@ add_custom_target(get_main_exe_file_list
         COMMAND wix_heat
         dir ${CMAKE_INSTALL_PREFIX}/bin
         -srd
-        -dr doodle_root
+        -dr doodle_root_bin
         -sreg
         -cg doodle_main_list
         -out ${CMAKE_INSTALL_PREFIX}/wix/bin_files.wxs
@@ -20,7 +20,7 @@ add_custom_target(get_main_exe_file_list
         COMMAND wix_heat
         dir ${CMAKE_INSTALL_PREFIX}/maya
         -srd
-        -dr doodle_root
+        -dr doodle_root_maya
         -sreg
         -cg doodle_maya_list
         -out ${CMAKE_INSTALL_PREFIX}/wix/maya_files.wxs
@@ -29,7 +29,7 @@ add_custom_target(get_main_exe_file_list
         COMMAND wix_heat
         dir ${CMAKE_INSTALL_PREFIX}/ue4.25_Plug
         -srd
-        -dr doodle_root
+        -dr doodle_root_ue425
         -sreg
         -cg doodle_ue425_list
         -out ${CMAKE_INSTALL_PREFIX}/wix/ue425.wxs
@@ -38,7 +38,7 @@ add_custom_target(get_main_exe_file_list
         COMMAND wix_heat
         dir ${CMAKE_INSTALL_PREFIX}/ue4.26_Plug
         -srd
-        -dr doodle_root
+        -dr doodle_root_ue426
         -sreg
         -cg doodle_ue426_list
         -out ${CMAKE_INSTALL_PREFIX}/wix/ue426.wxs
@@ -47,7 +47,7 @@ add_custom_target(get_main_exe_file_list
         COMMAND wix_heat
         dir ${CMAKE_INSTALL_PREFIX}/ue4.27_Plug
         -srd
-        -dr doodle_root
+        -dr doodle_root_ue427
         -sreg
         -cg doodle_ue427_list
         -out ${CMAKE_INSTALL_PREFIX}/wix/ue427.wxs

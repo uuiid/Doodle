@@ -2,7 +2,8 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
-        <Feature Id="ProductFeature" Display="expand" Absent="disallow" ConfigurableDirectory="INSTALL_ROOT" Title="Doodle" Level="1">
+        <Feature Id="ProductFeature" Display="expand" Absent="disallow" ConfigurableDirectory="INSTALL_ROOT"
+                 Title="Doodle" Level="1">
             <ComponentRef Id="RegistryEntries"/>
         </Feature>
         <FeatureRef Id="ProductFeature">
