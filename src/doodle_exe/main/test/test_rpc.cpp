@@ -7,6 +7,7 @@
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/json_rpc/json_rpc_server.h>
 #include <doodle_core/thread_pool/thread_pool.h>
+#include <doodle_core/thread_pool/asio_pool.h>
 
 #include <doodle_core/json_rpc/core/server.h>
 #include <doodle_core/json_rpc/json_rpc_client.h>
