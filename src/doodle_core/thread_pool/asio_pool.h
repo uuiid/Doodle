@@ -186,7 +186,8 @@ class DOODLE_CORE_EXPORT asio_pool {
     auto handler = std::make_shared<process_handler>(std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr);
     // forces the process to exit the uninitialized state
     // handler.update(handler, {}, nullptr);
-    return post_asio<Executor>(this, in_executor, handlers.emplace_back(handler));
+    handlers.push_back(handler);
+    return post_asio<Executor>(this, in_executor, handler);
   }
   template <typename Executor, typename Func>
   auto attach(Executor in_executor, Func &&func) {
