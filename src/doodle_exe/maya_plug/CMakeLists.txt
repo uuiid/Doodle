@@ -122,10 +122,10 @@ if (DEFINED Maya_Version)
 
         install(TARGETS doodle_maya_${Maya_Version}
                 DESTINATION plug/maya/plug-ins
-                RUNTIME_DEPENDENCIES
+
                 )
 
-        install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
                 DESTINATION plug/maya)
         install(FILES ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py
                 DESTINATION plug/maya/scripts/scripts/)

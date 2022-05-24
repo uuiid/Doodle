@@ -36,14 +36,14 @@ include(InstallRequiredSystemLibraries)
 
 list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
-install(TARGETS DoodleExe
-        RUNTIME_DEPENDENCIES
-        )
-
 #最后实现camke修复
 install(CODE "
         include(BundleUtilities)
         fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
         "
         )
+install(TARGETS DoodleExe
+#        RUNTIME_DEPENDENCIES
+        )
+
 
