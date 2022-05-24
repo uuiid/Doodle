@@ -32,11 +32,11 @@ class DOODLE_CORE_EXPORT asio_pool {
         instance_type &&in_instance,
         update_fn_type *in_update,
         abort_fn_type *in_abort,
-        next_type in_next)
+        next_type&& in_next)
         : instance(std::move(in_instance)),
           update(in_update),
           abort(in_abort),
-          next(in_next) {}
+          next(std::move(in_next)) {}
 
     process_handler(process_handler &&) noexcept            = default;
     process_handler &operator=(process_handler &&) noexcept = default;
@@ -69,7 +69,7 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   template <typename Executor>
   struct continuation {
-    continuation(asio_pool* in_self,
+    continuation(asio_pool *in_self,
                  Executor in_executor,
                  process_handler *in_handler)
         : executor_{in_executor},
@@ -154,7 +154,10 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   void clear_null() {
     std::lock_guard l_g{this->mutex_};
-    auto l_end = std::remove_if(handlers.begin(), handlers.end(), [](auto in_ptr) { return in_ptr; });
+    auto l_end = std::remove_if(handlers.begin(), handlers.end(),
+                                [](auto in_ptr) -> bool {
+                                  return in_ptr.expired();
+                                });
     if (l_end != handlers.end())
       handlers.erase(
           l_end,
