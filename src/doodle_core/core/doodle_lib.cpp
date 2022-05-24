@@ -25,6 +25,7 @@ doodle_lib::doodle_lib()
       reg(std::make_shared<entt::registry>()),
       loop(),
       loop_bounded_pool(),
+      asio_pool_(),
       io_context_(std::make_shared<boost::asio::io_context>()) {
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^
