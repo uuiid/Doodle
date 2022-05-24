@@ -42,7 +42,7 @@ TEST_CASE("test json rpc") {
     l_context.run();
   });
 
-  g_pool().attach<one_process_t>(g_io_context(),[&]() {
+  g_pool().attach<one_process_t>(g_io_context().get_executor(),[&]() {
     test_client();
     g_io_context().stop();
     l_context.stop();
