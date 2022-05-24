@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Property Id="INSTALL_ROOT" Secure="yes">
+        <RegistrySearch Id="FindInstallLocation" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[WIX_UPGRADE_DETECTED]" Name="InstallLocation" Type="raw"/>
+    </Property>
+    <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
+</Include>
