@@ -69,8 +69,8 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   template <typename Executor>
   struct continuation {
-    continuation(asio_pool in_self,
-                 Executor *in_executor,
+    continuation(asio_pool* in_self,
+                 Executor in_executor,
                  process_handler *in_handler)
         : executor_{in_executor},
           handler{in_handler},
@@ -97,7 +97,7 @@ class DOODLE_CORE_EXPORT asio_pool {
     }
 
     Executor executor_;
-    process_handler handler;
+    process_handler *handler;
 
    private:
     asio_pool *self_;
@@ -145,7 +145,7 @@ class DOODLE_CORE_EXPORT asio_pool {
                 /// \brief 提交下一次更新
                 post_asio<Proc>(self, in_executor, in_proc);
             }));
-    return continuation<Executor>{self, in_executor, handler};
+    return continuation<Executor>{self, in_executor, handler.get()};
   }
 
  private:
