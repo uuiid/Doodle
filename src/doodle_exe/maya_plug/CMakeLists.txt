@@ -121,14 +121,14 @@ if (DEFINED Maya_Version)
         list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
         install(TARGETS doodle_maya_${Maya_Version}
-                DESTINATION plug/maya/plug-ins
+                DESTINATION maya/plug-ins
 
                 )
 
         install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
-                DESTINATION plug/maya)
+                DESTINATION maya)
         install(FILES ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py
-                DESTINATION plug/maya/scripts/scripts/)
+                DESTINATION maya/scripts/scripts/)
     endif ()
 
 endif ()
