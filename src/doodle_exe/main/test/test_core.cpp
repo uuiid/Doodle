@@ -1,7 +1,7 @@
 //
 // Created by TD on 2021/7/27.
 //
-#define CATCH_CONFIG_MAIN
+
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
@@ -15,7 +15,6 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
-
 
 #include <doodle_lib/doodle_lib_all.h>
 #if defined(_WIN32)

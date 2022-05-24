@@ -1,6 +1,8 @@
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
-        DESTINATION plug
-        COMPONENT maya_plug)
+if (DEFINED Maya_Version)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/maya
+            DESTINATION plug
+            COMPONENT maya_plug)
+endif ()
 
 if (DEFINED Ue4_ROOT_DIR)
     add_custom_target(doodle_ue4_27

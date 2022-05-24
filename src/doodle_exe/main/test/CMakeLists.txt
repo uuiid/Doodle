@@ -16,6 +16,7 @@ include(Catch)
 foreach (_file_ IN LISTS doodle_test_list)
     add_executable(
             doodle_${_file_}
+            EXCLUDE_FROM_ALL
             ${_file_}.cpp
             ../DoodleExe.manifest
             ../icon.ico
