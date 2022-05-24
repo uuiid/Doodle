@@ -64,7 +64,8 @@ class DOODLE_CORE_EXPORT asio_pool {
 
   //  using handle_list = boost::intrusive::list<process_handler,
   //                                             boost::intrusive::constant_time_size<false>>;
-  using handle_list = std::vector<process_handler>;
+  using handler_ptr = std::shared_ptr<process_handler>;
+  using handle_list = std::vector<std::weak_ptr<process_handler>>;
 
   template <typename Executor>
   struct continuation {
@@ -131,7 +132,8 @@ class DOODLE_CORE_EXPORT asio_pool {
   }
   template <typename Proc, typename Executor>
   static continuation<Executor>
-  post_asio(asio_pool *self, const Executor &in_executor, process_handler *handler) {
+  post_asio(asio_pool *self, const Executor &in_executor, const handler_ptr &handler) {
+    self->clear_null();
     boost::asio::post(
         boost::asio::bind_executor(
             in_executor,
@@ -139,12 +141,6 @@ class DOODLE_CORE_EXPORT asio_pool {
              self,
              in_executor]() {
               if (in_proc->update(*in_proc, {}, nullptr)) {
-                std::lock_guard l_g{self->mutex_};
-                /// \brief 去除自身
-                if(auto l_end = std::find(self->handlers,*in_proc);
-                    l_end != self->handlers.end()) {
-                  self->handlers.erase(l_end);
-                }
               } else
                 /// \brief 提交下一次更新
                 post_asio<Proc>(self, in_executor, in_proc);
@@ -156,6 +152,15 @@ class DOODLE_CORE_EXPORT asio_pool {
   handle_list handlers;
   std::recursive_mutex mutex_;
 
+  void clear_null() {
+    std::lock_guard l_g{this->mutex_};
+    auto l_end = std::remove_if(handlers.begin(), handlers.end(), [](auto in_ptr) { return in_ptr; });
+    if (l_end != handlers.end())
+      handlers.erase(
+          l_end,
+          handlers.end());
+  }
+
  public:
   /*! @brief Unsigned integer type. */
   using size_type                             = std::size_t;
@@ -164,15 +169,36 @@ class DOODLE_CORE_EXPORT asio_pool {
   asio_pool(asio_pool &&) noexcept            = default;
   asio_pool &operator=(asio_pool &&) noexcept = default;
 
+  [[nodiscard]] bool empty() const noexcept {
+    std::lock_guard l_g{mutex_};
+    return handlers.empty();
+  }
+  void clear() {
+    std::lock_guard l_g{mutex_};
+    handlers.clear();
+  }
+
   template <typename Proc, typename Executor, typename... Args>
   auto attach(Executor in_executor, Args &&...args) {
     std::lock_guard l_g{this->mutex_};
     //    static_assert(std::is_base_of_v<entt::process<Proc, Delta>, Proc>, "Invalid process type");
-    auto proc = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &asio_pool::deleter<Proc>};
-    process_handler handler{std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr};
+    auto proc    = typename process_handler::instance_type{new Proc{std::forward<Args>(args)...}, &asio_pool::deleter<Proc>};
+    auto handler = std::make_shared<process_handler>(std::move(proc), &asio_pool::update<Proc>, &asio_pool::abort<Proc>, nullptr);
     // forces the process to exit the uninitialized state
     // handler.update(handler, {}, nullptr);
-    return post_asio<Executor>(this, in_executor, &handlers.emplace_back(std::move(handler)));
+    return post_asio<Executor>(this, in_executor, handlers.emplace_back(handler));
+  }
+  template <typename Executor, typename Func>
+  auto attach(Executor in_executor, Func &&func) {
+    using Proc = entt::process_adaptor<std::decay_t<Func>, Delta>;
+    return attach<Proc>(in_executor, std::forward<Func>(func));
+  }
+  void abort(const bool immediately = false) {
+    std::lock_guard l_g{mutex_};
+    for (auto &&handler : handlers) {
+      if (!handler.expired())
+        handler.lock()->abort(handler, immediately);
+    }
   }
 };
 }  // namespace doodle
