@@ -117,12 +117,6 @@ if (DEFINED Maya_Version)
         install(DIRECTORY ${CMAKE_BINARY_DIR}/plug/
                 DESTINATION plug
                 COMPONENT maya_plug)
-        install(CODE "
-        include(BundleUtilities)
-        fixup_bundle(\"$<TARGET_FILE:doodle_maya_${Maya_Version}>\"   \"\"   \"${DIRS}\")
-        "
-                COMPONENT main_exe
-                )
     endif ()
 
 endif ()
