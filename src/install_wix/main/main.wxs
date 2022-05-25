@@ -12,7 +12,9 @@
              Manufacturer="$(var.CPACK_PACKAGE_VENDOR)"
              UpgradeCode="$(var.CPACK_WIX_UPGRADE_GUID)">
 
-        <Package InstallerVersion="301" Compressed="yes"/>
+        <Package InstallerVersion="301"
+                 Compressed="yes"
+                 Comments='这是一个动画辅助开发工具包'/>
 
         <Media Id="1" Cabinet="media1.cab" EmbedCab="yes"/>
 
@@ -21,13 +23,12 @@
                 AllowDowngrades="yes"/>
 
         <WixVariable Id="WixUILicenseRtf" Value="$(var.CPACK_WIX_LICENSE_RTF)"/>
-        <Property Id="WIXUI_INSTALLDIR" Value="INSTALL_ROOT"/>
+        <Property Id="WIXUI_INSTALLDIR" Value="DOODLE_ROOT"/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id="ProgramFiles64Folder">
                 <Directory Id="UUIID_DIR" Name="uuiid">
                     <Directory Id="DOODLE_ROOT" Name="doodle">
-
                     </Directory>
                 </Directory>
             </Directory>
@@ -38,8 +39,13 @@
         </Directory>
 
         <UIRef Id="$(var.CPACK_WIX_UI_REF)"/>
-
-        <?include "properties.wxi"?>
-        <?include "product_fragment.wxi"?>
+        <Feature Id="ProductFeature" Display="expand"
+                 Absent="disallow"
+                 ConfigurableDirectory="DOODLE_ROOT"
+                 Title="Doodle"
+                 Level="1">
+            <ComponentGroupRef Id="doodle_main_list">
+            </ComponentGroupRef>
+        </Feature>
     </Product>
 </Wix>

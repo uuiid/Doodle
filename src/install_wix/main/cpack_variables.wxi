@@ -10,4 +10,5 @@
     <?define CPACK_WIX_PROGRAM_MENU_FOLDER="@CMAKE_PROJECT_NAME@"?>
     <?define CPACK_WIX_UI_REF="WixUI_InstallDir"?>
     <?define DOODLE_INSTALL_PREFIX="@CMAKE_INSTALL_PREFIX@"?>
+    <?define doodle_bin_dir="@CMAKE_INSTALL_PREFIX@/bin"?>
 </Include>
