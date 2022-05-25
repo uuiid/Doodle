@@ -34,7 +34,14 @@ add_subdirectory(main/test)
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
-list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
+#list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
+#list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
+
+install(TARGETS DoodleExe
+#        RUNTIME_DEPENDENCIES
+        )
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
+        DESTINATION bin/)
 
 #最后实现camke修复
 install(CODE "
@@ -42,8 +49,6 @@ install(CODE "
         fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
         "
         )
-install(TARGETS DoodleExe
-#        RUNTIME_DEPENDENCIES
-        )
+
 
 
