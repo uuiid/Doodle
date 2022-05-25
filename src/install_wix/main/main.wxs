@@ -39,12 +39,22 @@
         </Directory>
 
         <UIRef Id="$(var.CPACK_WIX_UI_REF)"/>
-        <Feature Id="ProductFeature" Display="expand"
+        <Feature Id="ProductFeature"
+                 Display="expand"
                  Absent="disallow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
             <ComponentGroupRef Id="doodle_main_list">
+            </ComponentGroupRef>
+        </Feature>
+        <Feature Id="MayaPlug"
+                 Display="expand"
+                 Absent="allow"
+                 ConfigurableDirectory="DOODLE_ROOT"
+                 Title="Doodle Maya Plug"
+                 Level="1">
+            <ComponentGroupRef Id="doodle_maya_list">
             </ComponentGroupRef>
         </Feature>
     </Product>
