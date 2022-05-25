@@ -96,7 +96,8 @@
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27"
       }
     },
     {
@@ -126,14 +127,6 @@
         "DoodleExe",
         "Doxygen"
       ]
-    },
-    {
-      "name": "debug_maya2018_plug",
-      "description": "调试 maya 2018 插件(maya插件只能使用release调试)",
-      "displayName": "调试 doodle 2018 maya",
-      "configurePreset": "maya_2018",
-      "inherits": "debug",
-      "targets": "doodle_maya_2018"
     },
     {
       "name": "debug_maya2019_plug",
@@ -177,12 +170,6 @@
       "configurePreset": "Ninja_release_maya_2020",
       "jobs": 10,
       "targets": "doodle_maya_2020"
-    },
-    {
-      "name": "release_ue4_27",
-      "configurePreset": "ue4_release_27",
-      "jobs": 10,
-      "targets": "doodle_ue4_27"
     }
   ],
   "testPresets": [
