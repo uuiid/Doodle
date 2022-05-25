@@ -45,7 +45,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
-            <ComponentGroupRef Id="doodle_main_list">
+            <ComponentGroupRef Id="bin_dir_group">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="MayaPlug"
@@ -54,7 +54,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Maya Plug"
                  Level="1">
-            <ComponentGroupRef Id="doodle_maya_list">
+            <ComponentGroupRef Id="maya_dir_group">
             </ComponentGroupRef>
         </Feature>
     </Product>
