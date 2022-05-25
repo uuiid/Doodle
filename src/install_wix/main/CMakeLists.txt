@@ -1,11 +1,13 @@
 set(CPACK_PACKAGE_VENDOR uuiid)
 configure_file(cpack_variables.wxi cpack_variables.wxi)
 configure_file(main.wxs main.wxs COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/LICENSE LICENSE.rtf COPYONLY)
 #cmake_print_variables(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
 
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cpack_variables.wxi
         ${CMAKE_CURRENT_BINARY_DIR}/main.wxs
+        ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.rtf
         DESTINATION wix)
 find_package(Wix REQUIRED)
 
