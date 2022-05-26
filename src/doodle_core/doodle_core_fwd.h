@@ -67,12 +67,12 @@ using asio_pool_t    = asio_pool<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
-registry_ptr& g_reg();
-scheduler_t& g_main_loop();
-asio_pool_t& g_pool();
-bounded_pool_t& g_bounded_pool();
-thread_pool& g_thread_pool();
-boost::asio::io_context& g_io_context();
+DOODLE_CORE_EXPORT registry_ptr& g_reg();
+DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
+DOODLE_CORE_EXPORT asio_pool_t& g_pool();
+DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
+DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
+DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
 namespace movie {
 class image_attr;
 class image_watermark;

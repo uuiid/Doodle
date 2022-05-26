@@ -1,6 +1,8 @@
 #include "init_register.h"
 #include <doodle_core/core/core_sig.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/process_pool.h>
+#include <doodle_core/thread_pool/asio_pool.h>
 #include <doodle_core/logger/logger.h>
 namespace doodle {
 
@@ -8,9 +10,11 @@ std::multimap<std::int32_t, std::function<void()>>& init_register::registered_fu
   return init_p;
 }
 void init_register::reg_class() {
-  auto l_then = g_main_loop().attach<one_process_t>([]() {
-    DOODLE_LOG_INFO("开始反射注册");
-  });
+  auto l_then = g_pool().attach<one_process_t>(
+      boost::asio::get_associated_executor(g_io_context()),
+      []() {
+        DOODLE_LOG_INFO("开始反射注册");
+      });
   auto& l_map = registered_functions();
   for (auto it = l_map.begin(), end = l_map.end();
        it != end;

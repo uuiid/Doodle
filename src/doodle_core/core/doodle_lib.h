@@ -34,19 +34,9 @@ class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
 
   thread_pool_ptr get_thread_pool();
 };
-DOODLE_CORE_EXPORT inline registry_ptr& g_reg() {
-  return doodle_lib::Get().reg;
-}
-DOODLE_CORE_EXPORT inline scheduler_t& g_main_loop() {
-  return doodle_lib::Get().loop;
-}
-DOODLE_CORE_EXPORT inline bounded_pool_t& g_bounded_pool() {
-  return doodle_lib::Get().loop_bounded_pool;
-}
-DOODLE_CORE_EXPORT inline boost::asio::io_context& g_io_context() {
-  return *doodle_lib::Get().io_context_;
-}
-DOODLE_CORE_EXPORT inline asio_pool_t& g_pool() {
-  return *doodle_lib::Get().asio_pool_;
-}
+DOODLE_CORE_EXPORT registry_ptr& g_reg();
+DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
+DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
+DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
+DOODLE_CORE_EXPORT asio_pool_t& g_pool();
 }  // namespace doodle

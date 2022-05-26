@@ -12,7 +12,6 @@
 #include <thread_pool/thread_pool.h>
 #include <doodle_core/thread_pool/asio_pool.h>
 
-
 #include <doodle_core/core/core_sig.h>
 #include <core/status_info.h>
 
@@ -104,4 +103,20 @@ doodle_lib::~doodle_lib() = default;
 thread_pool& g_thread_pool() {
   return *(doodle_lib::Get().get_thread_pool());
 };
+
+registry_ptr& g_reg() {
+  return doodle_lib::Get().reg;
+}
+scheduler_t& g_main_loop() {
+  return doodle_lib::Get().loop;
+}
+bounded_pool_t& g_bounded_pool() {
+  return doodle_lib::Get().loop_bounded_pool;
+}
+boost::asio::io_context& g_io_context() {
+  return *doodle_lib::Get().io_context_;
+}
+asio_pool_t& g_pool() {
+  return *doodle_lib::Get().asio_pool_;
+}
 }  // namespace doodle

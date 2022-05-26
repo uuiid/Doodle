@@ -294,6 +294,8 @@ class scheduler {
     std::lock_guard l_g{mutex_};
     std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
     handlers_next.clear();
+    if (handlers.empty())
+      return;
     auto l_end         = handlers.begin() + timiter_(handlers);
     auto l_erase_benin = std::remove_if(handlers.begin(), l_end,
                                         [&](typename decltype(this->handlers)::value_type &handler) {
