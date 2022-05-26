@@ -13,29 +13,48 @@ echo -----------------config main exe--------------------
 
 
 
-echo -----------------config maya --------------------
+echo -----------------config maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_maya_2018
+--preset Ninja_release_plug -DMaya_Version=2018
 
+echo -----------------build maya 2018--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_maya_plug
+
+rmdir %my_pwd%build\doodle_maya\src\doodle_exe
+rmdir %my_pwd%build\doodle_maya\plug
+del  %my_pwd%build\doodle_maya\CMakeCache.txt
+
+
+echo -----------------config maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_maya_2019
+--preset Ninja_release_plug -DMaya_Version=2019
 
+echo -----------------build maya 2019--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_maya_plug
+
+rmdir %my_pwd%build\doodle_maya\src\doodle_exe
+rmdir %my_pwd%build\doodle_maya\plug
+del  %my_pwd%build\doodle_maya\CMakeCache.txt
+
+echo -----------------config maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_maya_2020
+--preset Ninja_release_plug -DMaya_Version=2020
 
-echo -----------------build maya --------------------
+echo -----------------build maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_maya_plug_2018
-"C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---preset release_maya_plug_2019
-"C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---preset release_maya_plug_2020
+--preset release_maya_plug
+
+rmdir %my_pwd%build\doodle_maya\src\doodle_exe
+rmdir %my_pwd%build\doodle_maya\plug
+del  %my_pwd%build\doodle_maya\CMakeCache.txt
 
 
 
@@ -51,10 +70,10 @@ robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
 py %my_pwd%build\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
 
-remdir %my_pwd%build\install\bin
-remdir %my_pwd%build\install\maya
-remdir %my_pwd%build\install\ue425_Plug
-remdir %my_pwd%build\install\ue426_Plug
-remdir %my_pwd%build\install\ue427_Plug
+rmdir %my_pwd%build\install\bin
+rmdir %my_pwd%build\install\maya
+rmdir %my_pwd%build\install\ue425_Plug
+rmdir %my_pwd%build\install\ue426_Plug
+rmdir %my_pwd%build\install\ue427_Plug
 
 Exit 0

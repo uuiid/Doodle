@@ -30,32 +30,12 @@
       "hidden": true
     },
     {
-      "name": "maya_2018",
+      "name": "doodle_maya",
       "inherits": "Ninja_build",
-      "displayName": "maya 2018",
-      "description": "构建maya 2018插件",
-      "cacheVariables": {
-        "Maya_Version": "2018",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-      }
-    },
-    {
-      "name": "maya_2019",
-      "inherits": "Ninja_build",
-      "displayName": "maya 2019",
-      "description": "构建maya 2019插件",
+      "displayName": "config maya plug",
+      "description": "构建maya插件 默认版本是2019",
       "cacheVariables": {
         "Maya_Version": "2019",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-      }
-    },
-    {
-      "name": "maya_2020",
-      "inherits": "Ninja_build",
-      "displayName": "maya 2020",
-      "description": "构建maya 2020插件",
-      "cacheVariables": {
-        "Maya_Version": "2020",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
@@ -73,22 +53,8 @@
       }
     },
     {
-      "name": "Ninja_release_maya_2018",
-      "inherits": "maya_2018",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "Ninja_release_maya_2019",
-      "inherits": "maya_2019",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "Ninja_release_maya_2020",
-      "inherits": "maya_2020",
+      "name": "Ninja_release_plug",
+      "inherits": "doodle_maya",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -99,16 +65,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27"
-      }
-    },
-    {
-      "name": "ue4_release_27",
-      "inherits": "Ninja_build",
-      "displayName": "ue4.27",
-      "description": "ue4.27插件",
-      "cacheVariables": {
-        "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
-        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -130,12 +86,14 @@
       ]
     },
     {
-      "name": "debug_maya2019_plug",
-      "description": "调试 maya 2019 插件(maya插件只能使用release调试)",
-      "displayName": "调试 doodle 2019 maya",
-      "configurePreset": "maya_2019",
+      "name": "debug_maya_plug",
+      "description": "调试 maya 插件(maya插件只能使用release调试)",
+      "displayName": "调试 doodle maya",
+      "configurePreset": "doodle_maya",
       "inherits": "debug",
-      "targets": "doodle_maya_2019"
+      "targets": [
+        "doodle_maya"
+      ]
     },
     {
       "name": "release_exe",
@@ -163,22 +121,10 @@
       ]
     },
     {
-      "name": "release_maya_plug_2018",
-      "configurePreset": "Ninja_release_maya_2018",
+      "name": "release_maya_plug",
+      "configurePreset": "Ninja_release_plug",
       "jobs": 10,
-      "targets": "doodle_maya_2018"
-    },
-    {
-      "name": "release_maya_plug_2019",
-      "configurePreset": "Ninja_release_maya_2019",
-      "jobs": 10,
-      "targets": "doodle_maya_2019"
-    },
-    {
-      "name": "release_maya_plug_2020",
-      "configurePreset": "Ninja_release_maya_2020",
-      "jobs": 10,
-      "targets": "doodle_maya_2020"
+      "targets": "doodle_maya"
     }
   ],
   "testPresets": [
