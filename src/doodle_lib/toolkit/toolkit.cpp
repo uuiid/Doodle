@@ -16,7 +16,7 @@ void toolkit::installMayaPath() {
     mayadoc /= "doodle";
 
     auto sourePath = core_set::program_location().parent_path();
-    sourePath /= "plug/maya";
+    sourePath /= "maya";
 
     if (!FSys::exists(mayadoc)) {
       FSys::create_directories(mayadoc);
@@ -45,12 +45,16 @@ PYTHONPATH+:= scripts
 
 void toolkit::installUePath(const FSys::path &path) {
   try {
-    auto &set       = core_set::getSet();
+    auto &set      = core_set::getSet();
 
-    auto sourePath  = FSys::current_path().parent_path();
-    sourePath       = sourePath / "plug" / "uePlug";
-    sourePath       = sourePath / set.ue4_version;
-    sourePath       = sourePath / "Plugins" / "Doodle";
+    auto sourePath = FSys::current_path().parent_path();
+
+    auto l_name{set.ue4_version};
+    if (auto l_f = l_name.find('.');
+        l_f != std::string::npos) {
+      l_name.erase(l_f);
+    }
+    sourePath /= fmt::format("ue{}_Plug", l_name);
     auto targetPath = path / "Plugins" / "Doodle";
 
     if (FSys::exists(targetPath)) {
@@ -67,13 +71,9 @@ void toolkit::installUePath(const FSys::path &path) {
   }
 }
 
-bool toolkit::update() {
-  return false;
-}
-
 void toolkit::modifyUeCachePath() {
   auto ue_path     = core_set::getSet().ue4_path / "Engine/Config/BaseEngine.ini";
-  //做备份
+  // 做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
   FSys::fstream file{ue_path, std::ios::in | std::ios::out | std::ios::binary};
@@ -92,8 +92,8 @@ void toolkit::modifyUeCachePath() {
 
 bool toolkit::deleteUeCache() {
 #if defined(_WIN32)
-  //这里我们手动做一些工作
-  //获取环境变量
+  // 这里我们手动做一些工作
+  // 获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
   chick_true<doodle_error>(pManager, DOODLE_LOC, "无法找到保存路径");

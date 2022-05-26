@@ -5,6 +5,7 @@
 
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/dll.hpp>
 
 #ifdef _WIN32
 #include <ShlObj.h>
@@ -122,7 +123,7 @@ FSys::path core_set::get_data_root() const {
 }
 
 FSys::path core_set::program_location() {
-  return FSys::current_path();
+  return boost::dll::program_location().parent_path();
 }
 std::string core_set::config_file_name() {
   static std::string str{"doodle_config"};
