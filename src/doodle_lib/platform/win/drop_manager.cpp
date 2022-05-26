@@ -39,7 +39,6 @@ STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto,
                                      POINTL ptl,
                                      DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");
-  //  g_main_loop().attach<drop_file_data>();
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
@@ -48,19 +47,6 @@ STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto,
 STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
                                     POINTL ptl,
                                     DWORD *pdwEffect) {
-  //  DOODLE_LOG_INFO("开始 DragOver");
-  //  g_main_loop().attach<one_process_t>([this]() {
-  //    dear::DragDropSource{
-  //        ImGuiDragDropFlags_SourceExtern} &&
-  //        [this]() {
-  //          ImGui::SetDragDropPayload(doodle_config::drop_imgui_id.data(),
-  //                                    nullptr, sizeof(nullptr));
-  //
-  //          ImGui::Text("开始拖拽文件");
-  //        };
-  ////    dear::IDScope{"das"} && [this]() {
-  ////    };
-  //  });
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }

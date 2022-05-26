@@ -417,7 +417,7 @@ void database_task_obs::save() {
             ranges::actions::push_back(p_i->need_updata) |
             ranges::actions::push_back(p_i->need_delete);
 
-  auto k_then = g_main_loop().attach<one_process_t>([=]() {
+  auto k_then = g_pool().post<one_process_t>([=]() {
     g_reg()->ctx().at<core_sig>().save_begin(l_list);
   });
   if (!p_i->need_save.empty()) {
@@ -514,6 +514,6 @@ void database_task_obs::update(chrono::duration<chrono::system_clock::rep, chron
 }
 
 void database_task_ns::database_task_init::init() const {
-  g_main_loop().attach<database_task_obs>();
+  g_pool().post<database_task_obs>();
 }
 }  // namespace doodle

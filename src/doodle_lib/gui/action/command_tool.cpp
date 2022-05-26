@@ -169,9 +169,9 @@ void comm_create_video::render() {
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_ptr = std::make_shared<FSys::path>();
-    g_main_loop().attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                          .set_title("选择目录"s)
-                                          .set_use_dir())
+    g_pool().post<file_dialog>(file_dialog::dialog_args{l_ptr}
+                                   .set_title("选择目录"s)
+                                   .set_use_dir())
         .then<one_process_t>([this, l_ptr]() {
           p_i->out_path.data = l_ptr->generic_string();
           ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
@@ -182,10 +182,10 @@ void comm_create_video::render() {
 
   if (imgui::Button("选择图片")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop()
-        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                 .set_title("选择序列"s)
-                                 .set_filter(string_list{".png", ".jpg"}))
+    g_pool()
+        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+                               .set_title("选择序列"s)
+                               .set_filter(string_list{".png", ".jpg"}))
         .then<one_process_t>([this, l_ptr]() {
           p_i->image_to_video_list.emplace_back(
               create_image_to_move_handle(l_ptr->front()),
@@ -196,9 +196,10 @@ void comm_create_video::render() {
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop().attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                          .set_title("select dir"s)
-                                          .set_use_dir())
+    g_pool()
+        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+                               .set_title("select dir"s)
+                               .set_use_dir())
         .then<one_process_t>([=]() {
           ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
             std::vector<FSys::path> list =
@@ -245,9 +246,10 @@ void comm_create_video::render() {
 
   if (imgui::Button("选择视频")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_main_loop().attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                          .set_title("select mp4 file"s)
-                                          .add_filter(".mp4"))
+    g_pool()
+        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+                               .set_title("select mp4 file"s)
+                               .add_filter(".mp4"))
         .then<one_process_t>([=]() {
           p_i->video_list |= ranges::action::push_back(
               *l_ptr |

@@ -186,7 +186,7 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 
 image_loader::~image_loader() = default;
 void image_loader_ns::image_loader_init::init() const {
-  g_main_loop().attach<one_process_t>([]() {
+  g_pool().post<one_process_t>([]() {
     image_loader l_loader{};
     image_loader::cache l_cache{};
     {

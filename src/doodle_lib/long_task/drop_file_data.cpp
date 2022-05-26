@@ -20,7 +20,7 @@ void drop_file_data::drag_leave() {
 void drop_file_data::set_files(const std::vector<FSys::path> &in_paths) {
   files_    = in_paths;
   has_files = true;
-  g_main_loop().attach<one_process_t>([this]() {
+  g_pool().post<one_process_t>([this]() {
     this->succeed();
   });
 }

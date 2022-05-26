@@ -313,7 +313,7 @@ TEST_CASE("maya get log", "[maya]") {
   scheduler_t k_loop{};
   auto k_mesg = make_handle();
   k_mesg.emplace<process_message>();
-  g_main_loop().attach<maya_exe>(
+  g_pool().post<maya_exe>(
       k_mesg,
       R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
   //  std::int32_t i{0};

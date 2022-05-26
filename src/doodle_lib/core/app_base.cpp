@@ -5,6 +5,7 @@
 #include "app_base.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/thread_pool/process_pool.h>
+#include <doodle_core/thread_pool/asio_pool.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 
@@ -40,7 +41,7 @@ app_base::app_base()
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
   g_bounded_pool().timiter_ = core_set::getSet().p_max_thread;
-  g_main_loop().attach<one_process_t>([this]() {
+  g_pool().post<one_process_t>([this]() {
     init_register::instance().reg_class();
     this->load_back_end();
   });
@@ -122,8 +123,9 @@ bool app_base::chick_authorization() {
 void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);
+  g_pool().abort(in_stop);
   if (!stop_)
-    g_main_loop().attach<one_process_t>([this]() {
+    g_pool().post<one_process_t>([this]() {
       core_set_init{}.write_file();
     });
   this->stop_ = true;
@@ -132,6 +134,7 @@ void app_base::stop_app(bool in_stop) {
 bool app_base::is_stop() const {
   return g_main_loop().empty() &&
          g_bounded_pool().empty() &&
+         g_pool().empty() &&
          stop_;
 }
 void app_base::load_project(const FSys::path& in_path) const {
@@ -159,7 +162,7 @@ void app_base::clear_loop() {
   g_io_context().run();
 }
 bool app_base::is_loop_empty() {
-  return g_main_loop().empty() && g_bounded_pool().empty();
+  return g_main_loop().empty() && g_bounded_pool().empty() && g_pool().empty();
 }
 void app_base::loop_one() {
   static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};

@@ -6,6 +6,7 @@
 #include <platform/win/wnd_proc.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/thread_pool/process_pool.h>
+#include <doodle_core/thread_pool/asio_pool.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
@@ -174,21 +175,20 @@ app::app(const win::wnd_instance& in_instance)
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
     load_project(app::Get().options_->p_project_path);
-    g_main_loop().attach<one_process_t>([this]() {
-      this->load_windows();
-    });
+    g_pool().post<one_process_t>(
+        [this]() {
+          this->load_windows();
+        });
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);
-    g_main_loop()
-        .attach<gui::input::get_bool_dialog>(l_quit)
-        .then<one_process_t>([l_quit, this]() {
-          if (*l_quit)
-            this->close_windows();
-        });
+    g_pool().post<gui::input::get_bool_dialog>(l_quit).then<one_process_t>([l_quit, this]() {
+      if (*l_quit)
+        this->close_windows();
+    });
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
     this->clear_loop();
@@ -285,9 +285,9 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  g_main_loop().attach<main_menu_bar>();
-  g_main_loop().attach<main_status_bar>();
-  g_main_loop().attach<gui::layout_window>();
+  g_pool().post<main_menu_bar>();
+  g_pool().post<main_status_bar>();
+  g_pool().post<gui::layout_window>();
 }
 app::~app() {
   // Cleanup
@@ -301,13 +301,12 @@ app::~app() {
 }
 
 void app::load_back_end() {
-  g_main_loop()
-      .attach<one_process_t>([]() {
-        g_main_loop().attach<short_cut>();
-        g_reg()->ctx().at<core_sig>().init_end.connect([]() {
-          init_register::instance().init_run();
-        });
-      });
+  g_pool().post<one_process_t>([]() {
+    g_pool().post<short_cut>();
+    g_reg()->ctx().at<core_sig>().init_end.connect([]() {
+      init_register::instance().init_run();
+    });
+  });
 }
 
 bool app::set_parent(win::wnd_handle in_parent) {

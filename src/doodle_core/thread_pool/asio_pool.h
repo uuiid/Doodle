@@ -32,7 +32,7 @@ class DOODLE_CORE_EXPORT asio_pool {
         instance_type &&in_instance,
         update_fn_type *in_update,
         abort_fn_type *in_abort,
-        next_type&& in_next)
+        next_type &&in_next)
         : instance(std::move(in_instance)),
           update(in_update),
           abort(in_abort),
@@ -173,7 +173,7 @@ class DOODLE_CORE_EXPORT asio_pool {
   asio_pool &operator=(asio_pool &&) noexcept = default;
 
   [[nodiscard]] bool empty() const noexcept {
-    std::lock_guard l_g{mutex_};
+    //    std::lock_guard l_g{mutex_};
     return handlers.empty();
   }
   void clear() {
@@ -197,11 +197,34 @@ class DOODLE_CORE_EXPORT asio_pool {
     using Proc = entt::process_adaptor<std::decay_t<Func>, Delta>;
     return attach<Proc>(in_executor, std::forward<Func>(func));
   }
-  void abort(const bool immediately = false) {
+  /**
+   * @brief 全局提交省略上下文
+   * @tparam Proc
+   * @tparam Args
+   * @param args
+   * @return
+   */
+  template <typename Proc, typename... Args>
+  auto post(Args &&...args) {
+    return attach<Proc>(boost::asio::get_associated_executor(g_io_context()),
+                        std::forward<Args>(args)...);
+  }
+  /**
+   * @brief 全局提交lab
+   * @tparam Func
+   * @param func
+   * @return
+   */
+  template <typename Func>
+  auto post(Func &&func) {
+    return attach(boost::asio::get_associated_executor(g_io_context()),
+                  std::forward<Func>(func));
+  }
+  void abort(bool immediately = false) {
     std::lock_guard l_g{mutex_};
     for (auto &&handler : handlers) {
       if (!handler.expired())
-        handler.lock()->abort(handler, immediately);
+        handler.lock()->abort(*handler, immediately);
     }
   }
 };
