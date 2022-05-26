@@ -17,16 +17,17 @@ class wix_run():
         self.root_node = et.Element("{http://schemas.microsoft.com/wix/2006/wi}Wix")
 
     def __get_path_id__(self, path: pathlib.Path):
+        str_id = str(path.relative_to(self.root_path.parent)) \
+            .replace(".", "_") \
+            .replace("""\\""", "_") \
+            .replace("-", "_")
+
+        if  len(str_id) > 30 :
+            str_id = str_id[:-35] + str(abs(hash(str(path))))
         if path.is_dir():
-            return "dir_" + str(path.relative_to(self.root_path.parent)) \
-                .replace(".", "_") \
-                .replace("""\\""", "_") \
-                .replace("-", "_")
+            return "dir_" + str_id
         else:
-            return "path_" + str(path.relative_to(self.root_path)) \
-                .replace(".", "_") \
-                .replace("""\\""", "_") \
-                .replace("-", "_")
+            return "path_" + str_id
 
     def make_root_xml(self, path: pathlib.Path):
         self.root_path = path
@@ -61,7 +62,7 @@ class wix_run():
 
     def __add_file__(self, path: pathlib.Path):
         l_com = et.SubElement(self.comm_group, "Component")
-        l_com.attrib["Id"] = "com_" + self.__get_path_id__(path.parent)
+        l_com.attrib["Id"] = "com_" + self.__get_path_id__(path)
         l_com.attrib["Directory"] = self.__get_path_id__(path.parent)
         l_com.attrib["Guid"] = "{{{}}}".format(uuid.uuid4())
 

@@ -40,40 +40,23 @@
             </Directory>
         </Directory>
 
-        <!--桌面快捷方式-->
-        <Component Id="StartMenuShortcuts" Guid="C96D5AEF-4EBB-42E9-A238-69D2459B8740">
-            <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
-
-            <!--菜单快捷方式-->
-            <Shortcut Id="CM_SP_bin.DoodleExe.exe"
-                      Name="Doodle"
-                      Target="[#CM_FP_bin.DoodleExe.exe]"
-                      WorkingDirectory="CM_DP_bin"/>
-
-            <!--注册表-->
-            <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle" Name="installed" Type="integer" Value="1"
-                           KeyPath="yes"/>
-            <!--卸载方式-->
-            <Shortcut Id="UNINSTALL" Name="Uninstall Doodle" Description="Uninstalls Doodle"
-                      Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]"/>
-
-
-        </Component>
         <!--添加主次表支持-->
-        <Component Id="RegistryEntries" Guid="354e2dc2-c36f-4735-a8f0-1204ecd42058">
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\shell\open\command"
-                         ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
-                <RegistryValue Type="string" Value="&quot;[DOODLE_ROOT]\bin\DoodleExe.exe&quot; &quot;%1&quot;"/>
-            </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\DefaultIcon" ForceCreateOnInstall="yes"
-                         ForceDeleteOnUninstall="yes">
-                <RegistryValue Type="string" Value="&quot;[DOODLE_ROOT]\bin\DoodleExe.exe&quot;"/>
-            </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\.doodle_db" ForceCreateOnInstall="yes"
-                         ForceDeleteOnUninstall="yes">
-                <RegistryValue Type="string" Value="doodle.main"/>
-            </RegistryKey>
-        </Component>
+        <DirectoryRef Id="DOODLE_ROOT">
+            <Component Id="RegistryEntries" Guid="354e2dc2-c36f-4735-a8f0-1204ecd42058">
+                <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\shell\open\command"
+                             ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
+                    <RegistryValue Type="string" Value="&quot;[DOODLE_ROOT]\bin\DoodleExe.exe&quot; &quot;%1&quot;"/>
+                </RegistryKey>
+                <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\DefaultIcon" ForceCreateOnInstall="yes"
+                             ForceDeleteOnUninstall="yes">
+                    <RegistryValue Type="string" Value="&quot;[DOODLE_ROOT]\bin\DoodleExe.exe&quot;"/>
+                </RegistryKey>
+                <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\.doodle_db" ForceCreateOnInstall="yes"
+                             ForceDeleteOnUninstall="yes">
+                    <RegistryValue Type="string" Value="doodle.main"/>
+                </RegistryKey>
+            </Component>
+        </DirectoryRef>
 
 
         <Feature Id="ProductFeature"
@@ -82,9 +65,44 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
-            <ComponentGroupRef Id="bin_dir_group"/>
-            <ComponentRef Id="StartMenuShortcuts"/>
+            <ComponentGroupRef Id="com_group_dir_bin"/>
+            <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
+            <!--            <ComponentRef Id="doodle_desktop"/>-->
+            <Component Id="doodle_desktop" Guid="*"
+                       Directory="DesktopFolder">
+                <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
+                          Name="Doodle"
+                          Target="[#path_bin_DoodleExe_exe]"
+                          WorkingDirectory="DesktopFolder"/>
+                <RegistryValue Root="HKCU"
+                               Key="Software\uuiid\Doodle"
+                               Name="installed_desktop" Type="integer" Value="1"
+                               KeyPath="yes"/>
+            </Component>
+            <Component Id="StartMenuShortcuts"
+                       Guid="C96D5AEF-4EBB-42E9-A238-69D2459B8740"
+                       Directory="ProgramMenuDir">
+                <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
+
+                <!--菜单快捷方式-->
+                <Shortcut Id="CM_SP_bin.DoodleExe.exe"
+                          Name="Doodle"
+                          Target="[#path_bin_DoodleExe_exe]"
+                          WorkingDirectory="DesktopFolder"/>
+
+                <!--注册表-->
+                <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle"
+                               Name="installed"
+                               Type="integer"
+                               Value="1"
+                               KeyPath="yes"/>
+                <!--卸载方式-->
+                <Shortcut Id="UNINSTALL" Name="Uninstall Doodle" Description="Uninstalls Doodle"
+                          Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]"/>
+
+
+            </Component>
         </Feature>
         <Feature Id="MayaPlug"
                  Display="expand"
@@ -92,7 +110,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Maya Plug"
                  Level="1">
-            <ComponentGroupRef Id="maya_dir_group">
+            <ComponentGroupRef Id="com_group_dir_maya">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue425"
@@ -101,7 +119,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue425 Plug"
                  Level="1">
-            <ComponentGroupRef Id="ue425_Plug_dir_group">
+            <ComponentGroupRef Id="com_group_dir_ue425_Plug">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue426"
@@ -110,7 +128,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue426 Plug"
                  Level="1">
-            <ComponentGroupRef Id="ue426_Plug_dir_group">
+            <ComponentGroupRef Id="com_group_dir_ue426_Plug">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue427"
@@ -119,7 +137,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue427 Plug"
                  Level="1">
-            <ComponentGroupRef Id="ue427_Plug_dir_group">
+            <ComponentGroupRef Id="com_group_dir_ue427_Plug">
             </ComponentGroupRef>
         </Feature>
 

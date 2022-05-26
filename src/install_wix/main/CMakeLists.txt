@@ -15,14 +15,8 @@ set(gen_wixobj_files)
 
 macro(wix_heat_gen dir work_dir)
     add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
-            COMMAND wix_heat
-            dir ${CMAKE_INSTALL_PREFIX}/${dir}
-            -dr DOODLE_ROOT
-            -sreg
-            -cg ${dir}_dir_group
-            -gg
-            -out ${work_dir}/wix/${dir}.wxs
-            -var var.${dir}_dir
+            COMMAND py ${CMAKE_CURRENT_LIST_DIR}/../fix_main_wxs.py
+            --input_dir ${CMAKE_INSTALL_PREFIX}/${dir}
 
             DEPENDS ${CMAKE_INSTALL_PREFIX}/${dir}
             WORKING_DIRECTORY ${work_dir}
@@ -48,6 +42,8 @@ macro(wix_candle_gen file work_dir)
 endmacro(wix_candle_gen)
 
 wix_heat_gen(bin ${CMAKE_INSTALL_PREFIX})
+
+
 wix_heat_gen(maya ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue425_Plug ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue426_Plug ${CMAKE_INSTALL_PREFIX})
