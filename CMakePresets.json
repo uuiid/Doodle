@@ -147,6 +147,14 @@
       ]
     },
     {
+      "name": "release_pack",
+      "configurePreset": "Ninja_release",
+      "jobs": 10,
+      "targets": [
+        "gen_light_file"
+      ]
+    },
+    {
       "name": "doxygen",
       "configurePreset": "Ninja_release",
       "jobs": 10,

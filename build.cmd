@@ -11,11 +11,6 @@ echo -----------------config main exe--------------------
 -S%my_pwd% ^
 --preset Ninja_release
 
-echo -----------------build main exe--------------------
-"C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---preset release_exe
-@REM --clean-first
 
 
 echo -----------------config maya --------------------
@@ -45,9 +40,9 @@ echo -----------------build maya --------------------
 
 
 echo -----------------pack---------------------
-cd %my_pwd%/build
-"C:\Program Files\CMake\bin\cpack.exe" ^
---config ./MultiCPackConfig.cmake
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset gen_light_file
 
 echo -----------------copy file--------------------
 robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
