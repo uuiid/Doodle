@@ -67,6 +67,7 @@ add_custom_target(gen_light_file
         -cultures:zh-CN
         -ct ${DOODLE_CPU_N}
         #        -b ${CMAKE_INSTALL_PREFIX}/bin
+        -spdb # 取消pdb文件输出
         ${gen_wixobj_files}
 
         COMMAND 7z a -mx2 -mmt8
