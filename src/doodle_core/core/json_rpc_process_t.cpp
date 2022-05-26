@@ -10,8 +10,7 @@
 namespace doodle {
 class json_rpc_process_t::impl {
  public:
-  explicit impl(std::uint16_t in_port) : server_(g_thread_pool().get_io_context(), in_port) {}
-  json_rpc::server server_;
+  explicit impl(std::uint16_t in_port) {}
 };
 
 json_rpc_process_t::json_rpc_process_t(std::uint16_t in_port)

@@ -25,41 +25,24 @@ class DOODLE_CORE_EXPORT thread_pool : public details::no_copy {
       -> std::future<typename std::invoke_result<F, Args...>::type>;
   ~thread_pool();
 
-  boost::asio::io_context& get_io_context() {
-    return io_context;
-  };
-
  private:
   // need to keep track of threads so we can join them
-  std::vector<std::thread> workers;
-  std::atomic_bool stop;
-  boost::asio::io_context io_context;
-  boost::asio::executor_work_guard<boost::asio::io_context::executor_type> io_work;
+  boost::asio::thread_pool pool_;
 };
 inline thread_pool::thread_pool(size_t threads)
-    : stop(false),
-      io_context(),
-      io_work(boost::asio::make_work_guard(io_context)) {
-  for (size_t i = 0; i < threads; ++i)
-    workers.emplace_back(
-        [this]() {
-          this->io_context.run();
-        });
+    : pool_(threads) {
 }
 template <class F, class... Args>
 [[nodiscard]] auto thread_pool::enqueue(F&& f, Args&&... args)
     -> std::future<typename std::invoke_result<F, Args...>::type> {
   using return_type = typename std::invoke_result<F, Args...>::type;
-  return boost::asio::post(io_context,
+  return boost::asio::post(pool_,
                            std::packaged_task<return_type()>{
                                std::bind(std::forward<F>(f),
                                          std::forward<Args>(args)...)});
 }
 inline thread_pool::~thread_pool() {
-  io_work.reset();
-  io_context.stop();
-  for (auto& worker : workers)
-    worker.join();
+  pool_.stop();
 }
 //}  // namespace details
 

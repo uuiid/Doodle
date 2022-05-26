@@ -114,7 +114,7 @@ void database_task_select::init() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
-  p_i->result = doodle_lib::Get().get_thread_pool()->enqueue([this]() { this->select_db(); });
+  p_i->result = g_thread_pool().enqueue([this]() { this->select_db(); });
 }
 void database_task_select::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
   if (p_i->result.valid())

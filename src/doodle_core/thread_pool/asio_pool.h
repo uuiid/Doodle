@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -206,7 +207,7 @@ class DOODLE_CORE_EXPORT asio_pool {
    */
   template <typename Proc, typename... Args>
   auto post(Args &&...args) {
-    return attach<Proc>(boost::asio::get_associated_executor(g_io_context()),
+    return attach<Proc>(g_io_context().get_executor(),
                         std::forward<Args>(args)...);
   }
   /**
@@ -217,14 +218,14 @@ class DOODLE_CORE_EXPORT asio_pool {
    */
   template <typename Func>
   auto post(Func &&func) {
-    return attach(boost::asio::get_associated_executor(g_io_context()),
+    return attach(g_io_context().get_executor(),
                   std::forward<Func>(func));
   }
   void abort(bool immediately = false) {
     std::lock_guard l_g{mutex_};
     for (auto &&handler : handlers) {
       if (!handler.expired())
-        handler.lock()->abort(*handler, immediately);
+        handler.lock()->abort(*(handler.lock()), immediately);
     }
   }
 };

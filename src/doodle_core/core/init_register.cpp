@@ -10,8 +10,7 @@ std::multimap<std::int32_t, std::function<void()>>& init_register::registered_fu
   return init_p;
 }
 void init_register::reg_class() {
-  auto l_then = g_pool().attach<one_process_t>(
-      boost::asio::get_associated_executor(g_io_context()),
+  auto l_then = g_pool().post<one_process_t>(
       []() {
         DOODLE_LOG_INFO("开始反射注册");
       });

@@ -65,6 +65,7 @@ std::int32_t app_base::run() {
   while (!is_stop()) {
     loop_one();
   }
+  clear_loop();
   return 0;
 }
 
