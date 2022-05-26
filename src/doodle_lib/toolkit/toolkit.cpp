@@ -52,7 +52,7 @@ void toolkit::installUePath(const FSys::path &path) {
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.');
         l_f != std::string::npos) {
-      l_name.erase(l_f);
+      l_name.erase(l_f, 1);
     }
     sourePath /= fmt::format("ue{}_Plug", l_name);
     auto targetPath = path / "Plugins" / "Doodle";
