@@ -85,31 +85,31 @@ if (DEFINED Maya_Version)
 
 
     if (TARGET maya::maya_all)
-        set(maya_plug_name doodle_maya_${Maya_Version})
-        configure_file(DoodleExe.manifest.in doodle_maya_${Maya_Version}.manifest)
-        configure_file(maya_plug.rc.in doodle_maya_${Maya_Version}.rc)
-        add_library(doodle_maya_${Maya_Version} MODULE
+        set(maya_plug_name doodle_maya)
+        configure_file(DoodleExe.manifest.in doodle_maya.manifest)
+        configure_file(maya_plug.rc.in doodle_maya.rc)
+        add_library(doodle_maya MODULE
                 ${doodle_maya_plug_cpp}
-                doodle_maya_${Maya_Version}.manifest
-                doodle_maya_${Maya_Version}.rc
+                doodle_maya.manifest
+                doodle_maya.rc
                 ../main/icon.ico
                 )
-        target_include_directories(doodle_maya_${Maya_Version} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-        set_target_properties(doodle_maya_${Maya_Version} PROPERTIES
+        target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+        set_target_properties(doodle_maya PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 )
-        target_link_libraries(doodle_maya_${Maya_Version} PRIVATE doodle_lib maya::maya_all)
-        target_include_directories(doodle_maya_${Maya_Version} PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
+        target_link_libraries(doodle_maya PRIVATE doodle_lib maya::maya_all)
+        target_include_directories(doodle_maya PUBLIC ${PROJECT_SOURCE_DIR}/src/doodle_exe)
         #设置maya插件后缀名
         set_target_properties(
-                doodle_maya_${Maya_Version} PROPERTIES SUFFIX ".mll"
+                doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.mll"
         )
 
 
         configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
         add_custom_command(
-                TARGET doodle_maya_${Maya_Version}
+                TARGET doodle_maya
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
@@ -120,7 +120,7 @@ if (DEFINED Maya_Version)
 
         list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 
-        install(TARGETS doodle_maya_${Maya_Version}
+        install(TARGETS doodle_maya
                 DESTINATION maya/plug-ins
 
                 )
