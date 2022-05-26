@@ -98,4 +98,4 @@ if __name__ == '__main__':
     wix_run_.make_root_xml(arg_root)
     wix_run_.iter_dir()
     # et.dump(wix_run_.root_node)
-    wix_run_.write_xml_file(arg_root.parent / (arg_root.stem + ".xml"))
+    wix_run_.write_xml_file(arg_root.parent / "wix" / (arg_root.stem + ".wxs"))
