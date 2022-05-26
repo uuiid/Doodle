@@ -42,14 +42,6 @@ echo -----------------build maya --------------------
 --build ^
 --preset release_maya_plug_2020
 
-echo -----------------config ue4 --------------------
-"C:\Program Files\CMake\bin\cmake.exe" ^
--S%my_pwd% ^
---preset ue4_release_27
-echo -----------------build ue4 --------------------
-"C:\Program Files\CMake\bin\cmake.exe" ^
---build ^
---preset release_ue4_27
 
 
 echo -----------------pack---------------------
@@ -60,7 +52,14 @@ cd %my_pwd%/build
 echo -----------------copy file--------------------
 robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
-robocopy %my_pwd%build %my_pwd%build\html\file *.msi
-robocopy %my_pwd%build %my_pwd%build\html\file *.7z
+robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
+robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
+py %my_pwd%build\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
+
+remdir %my_pwd%build\install\bin
+remdir %my_pwd%build\install\maya
+remdir %my_pwd%build\install\ue425_Plug
+remdir %my_pwd%build\install\ue426_Plug
+remdir %my_pwd%build\install\ue427_Plug
 
 Exit 0
