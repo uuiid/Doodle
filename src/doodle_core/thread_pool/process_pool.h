@@ -299,7 +299,8 @@ class scheduler {
                                         [&](typename decltype(this->handlers)::value_type &handler) {
                                           return handler.update(handler, delta, data);
                                         });
-    if (l_erase_benin != l_end)
+    if (l_erase_benin != handlers.end() &&
+        l_erase_benin != l_end)
       handlers.erase(l_erase_benin, l_end);
 
     //    std::move(handlers_next.begin(), handlers_next.end(), std::back_inserter(handlers));
