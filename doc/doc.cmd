@@ -18,4 +18,6 @@ echo -----------------build doxygen--------------------
 
 echo -----------------copy file--------------------
 robocopy build\Ninja_release\html build\html /s /NFL /NDL
+
+py .\build\generate_directory_index_caddystyle.py %my_pwd%\..\build\html\file
 Exit 0

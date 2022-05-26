@@ -9,9 +9,8 @@
  * @ref doodle_often_ask_questions \n
  * @ref doc/schedule.md "描述" \n
  * \n
- * 
- * <a href="file/@doodle_exe_file.msi" download>下载-安装包(  @doodle_exe_file.msi )</a> \n
- * <a href="file/@doodle_exe_file.7z" download>下载-7z存档(  @doodle_exe_file.7z )</a> \n
+ *
+ * <a href="./file">下载文件列表</a> \n
  *
  *
  *
