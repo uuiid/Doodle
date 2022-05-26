@@ -23,7 +23,7 @@ class wix_run():
             .replace("-", "_")
 
         if  len(str_id) > 30 :
-            str_id = str_id[:-35] + str(abs(hash(str(path))))
+            str_id = str_id[:-35] + str(hash(str(path))).replace("-","_")
         if path.is_dir():
             return "dir_" + str_id
         else:
