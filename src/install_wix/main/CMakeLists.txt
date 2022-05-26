@@ -62,19 +62,23 @@ ProcessorCount(DOODLE_CPU_N)
 add_custom_target(gen_light_file
         COMMAND wix_light
         -nologo
-        -out "${CMAKE_INSTALL_PREFIX}/Doodle-test.msi"
+        -out "${CMAKE_INSTALL_PREFIX}/${DOODLE_PACKAGE_NAME}.msi"
         -ext "WixUIExtension"
         -cultures:zh-CN
         -ct ${DOODLE_CPU_N}
         #        -b ${CMAKE_INSTALL_PREFIX}/bin
         ${gen_wixobj_files}
 
-
-
+        COMMAND 7z a -mx2 -mmt8
+        "${CMAKE_INSTALL_PREFIX}/${DOODLE_PACKAGE_NAME}.7z"
+        "${CMAKE_INSTALL_PREFIX}/bin"
+        "${CMAKE_INSTALL_PREFIX}/maya"
+        "${CMAKE_INSTALL_PREFIX}/ue425_Plug"
+        "${CMAKE_INSTALL_PREFIX}/ue426_Plug"
+        "${CMAKE_INSTALL_PREFIX}/ue427_Plug"
 
         DEPENDS ${gen_wixobj_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
-
 
 
         )
