@@ -84,39 +84,13 @@ add_custom_target(
 )
 
 enable_testing()
+set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+cmake_print_variables(DOODLE_PACKAGE_NAME)
 add_subdirectory(src)
 
 
 #=====================安装打包过程===============================
-# 设置 InstallRequiredSystemLibraries 变量
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-include(InstallRequiredSystemLibraries)
-
-list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
 add_subdirectory(script)
-
-
-
-
-
-
-
-set(CPACK_GENERATOR "WIX;External")
-set(CPACK_PACKAGE_EXECUTABLES DoodleExe;Doodle)
-set(CPACK_CREATE_DESKTOP_LINKS DoodleExe)
-set(CPACK_PACKAGE_VENDOR uuiid)
-set(CPACK_PACKAGE_INSTALL_DIRECTORY uuiid/doodle${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR})
-set(CPACK_WIX_UPGRADE_GUID 3E490EAC-2FC7-49BF-A521-20F2F93E320A)
-set(CPACK_WIX_TEMPLATE ${PROJECT_SOURCE_DIR}/CMake/WIX.template.in)
-set(CPACK_ARCHIVE_THREADS 0)
-set(CPACK_WIX_PATCH_FILE ${PROJECT_SOURCE_DIR}/CMake/doodle_wix_patch.xml)
-set(CPACK_WIX_EXTRA_SOURCES ${PROJECT_SOURCE_DIR}/CMake/doodle_registry.wxs)
-set(CPACK_WIX_CULTURES zh-CN)
-set(CPACK_EXTERNAL_ENABLE_STAGING True)
-set(CPACK_EXTERNAL_PACKAGE_SCRIPT ${PROJECT_SOURCE_DIR}/CMake/cpack_7z_doodle.cmake)
-
-include(CPack REQUIRED)
-set(DOODLE_PACKAGE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
 
 
 #=====================文档过程===============================

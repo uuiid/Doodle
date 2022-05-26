@@ -1,4 +1,4 @@
-set(CPACK_PACKAGE_VENDOR uuiid)
+set(DOODLE_PACKAGE_VENDOR uuiid)
 configure_file(cpack_variables.wxi cpack_variables.wxi)
 configure_file(main.wxs main.wxs COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/LICENSE LICENSE.rtf COPYONLY)
@@ -69,6 +69,12 @@ add_custom_target(gen_light_file
         #        -b ${CMAKE_INSTALL_PREFIX}/bin
         ${gen_wixobj_files}
 
+
+
+
         DEPENDS ${gen_wixobj_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
+
+
+
         )
