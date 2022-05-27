@@ -15,21 +15,6 @@ extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
                                HINSTANCE hPrevInstance,
                                PWSTR strCmdLine,
                                int nCmdShow) try {
-  //  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF );
-  //  std::locale::global(std::locale{".UTF8"});
-  //  std::locale::global(std::locale::classic());
-  //  std::wcout.imbue(std::locale{".UTF8"});
-  //  boost::locale::generator k_gen{};
-  //  k_gen.categories(boost::locale::all_categories ^
-  //                   boost::locale::formatting_facet ^
-  //                   boost::locale::parsing_facet);
-  //  std::locale::global(k_gen("zh_CN.UTF-8"));
-  //  std::setlocale(LC_NUMERIC, "C");
-  //  std::setlocale(LC_COLLATE, "C");
-  //  std::setlocale(LC_TIME, "C");
-  //  std::setlocale(LC_MONETARY, "C");
-  //  std::setlocale(LC_CTYPE, ".UTF8");
-
   doodle::app app{hInstance};
   app.command_line_parser(strCmdLine);
   return app.run();
