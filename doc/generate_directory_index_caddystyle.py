@@ -27,6 +27,7 @@
 import argparse
 import datetime
 import os
+import pathlib
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -341,7 +342,7 @@ def process_dir(top_dir, opts):
                  """)
 
     # sort dirs first
-    sorted_entries = sorted(path_top_dir.glob(glob_patt), key=lambda p: (p.is_file(), p.name), reverse=True)
+    sorted_entries = sorted(path_top_dir.glob(glob_patt), key=lambda p: p.stat().st_mtime_ns, reverse=True)
 
     entry: Path
     for entry in sorted_entries:
