@@ -84,7 +84,7 @@ del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 echo -----------------pack---------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset gen_light_file
+--preset cmake_pack
 
 echo -----------------copy file--------------------
 robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
