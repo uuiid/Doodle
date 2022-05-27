@@ -71,6 +71,7 @@
                  Title="Doodle"
                  Level="1">
             <ComponentGroupRef Id="com_group_dir_bin"/>
+            <ComponentGroupRef Id="com_path_bin_DoodleExe_exe"/>
             <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
             <!--            <ComponentRef Id="doodle_desktop"/>-->

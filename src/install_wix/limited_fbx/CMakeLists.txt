@@ -8,10 +8,7 @@ install(FILES
 
 set(gen_wixobj_limited_files)
 
-wix_heat_gen(bin_limited ${CMAKE_INSTALL_PREFIX})
-
-wix_candle_gen(main_limited ${CMAKE_INSTALL_PREFIX})
-wix_candle_gen(bin_limited ${CMAKE_INSTALL_PREFIX})
+wix_candle_gen(main_limited ${CMAKE_INSTALL_PREFIX} gen_wixobj_limited_files)
 
 
 include(ProcessorCount)
@@ -28,6 +25,7 @@ add_custom_target(gen_light_file_limited
         -spdb # 取消pdb文件输出
         ${gen_wixobj_limited_files}
         ${CMAKE_INSTALL_PREFIX}/wix/maya.wixobj
+        ${CMAKE_INSTALL_PREFIX}/wix/bin.wixobj
 
 
         COMMAND 7z a -mx2 -mmt8
@@ -35,7 +33,7 @@ add_custom_target(gen_light_file_limited
         "${CMAKE_INSTALL_PREFIX}/bin_limited"
         "${CMAKE_INSTALL_PREFIX}/maya"
 
-        DEPENDS ${gen_wixobj_files}
+        DEPENDS ${gen_wixobj_limited_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
 
 

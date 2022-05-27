@@ -9,7 +9,7 @@ macro(wix_heat_gen dir work_dir)
             )
 endmacro()
 
-macro(wix_candle_gen file work_dir)
+macro(wix_candle_gen file work_dir gen_wixobj_files)
     add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj
             COMMAND wix_candle
             -nologo
@@ -24,7 +24,7 @@ macro(wix_candle_gen file work_dir)
             WORKING_DIRECTORY ${work_dir}
             )
 
-    list(APPEND gen_wixobj_files ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
+    list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
 endmacro(wix_candle_gen)
 
 

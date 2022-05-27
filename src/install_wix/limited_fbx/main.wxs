@@ -70,7 +70,8 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_bin_limited"/>
+            <ComponentGroupRef Id="com_group_dir_bin"/>
+            <ComponentGroupRef Id="com_path_bin_doodle_limited_exe_exe"/>
             <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
             <!--            <ComponentRef Id="doodle_desktop"/>-->
