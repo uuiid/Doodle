@@ -9,6 +9,7 @@
 
 class limited_app : public doodle::app {
  public:
+  using doodle::app::app;
  protected:
   virtual void load_windows() override;
 };

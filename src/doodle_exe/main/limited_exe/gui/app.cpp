@@ -10,6 +10,7 @@
 #include <doodle_lib/core/program_options.h>
 
 #include <gui/window.h>
+#include <doodle_lib/doodle_lib_all.h>
 using namespace doodle;
 void limited_app::load_windows() {
   g_main_loop()
