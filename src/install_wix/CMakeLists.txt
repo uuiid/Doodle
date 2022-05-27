@@ -27,6 +27,13 @@ macro(wix_candle_gen file work_dir gen_wixobj_files)
     list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
 endmacro(wix_candle_gen)
 
+install(CODE [[
+file(COPY  ${CMAKE_INSTALL_PREFIX}/bin/
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/maya/plug-ins
+        FILES_MATCHING PATTERN  *.dll)
+]]
+        COMPONENT exe_com)
+
 
 find_package(Wix REQUIRED)
 
