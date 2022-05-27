@@ -39,8 +39,8 @@ echo -----------------install maya 2018--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2018--------------------
-rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir %my_pwd%build\Ninja_release_plug\plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
 del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 echo -----------------------------------------------------
@@ -57,8 +57,8 @@ echo -----------------install maya 2019--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2019--------------------
-rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir %my_pwd%build\Ninja_release_plug\plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
 del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 echo -----------------------------------------------------
@@ -75,8 +75,8 @@ echo -----------------install maya 2020--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2020--------------------
-rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir %my_pwd%build\Ninja_release_plug\plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
 del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 
@@ -93,11 +93,10 @@ robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
 py %my_pwd%doc\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
 
-rmdir %my_pwd%build\install\bin
-rmdir %my_pwd%build\install\bin_limited
-rmdir %my_pwd%build\install\maya
-rmdir %my_pwd%build\install\ue425_Plug
-rmdir %my_pwd%build\install\ue426_Plug
-rmdir %my_pwd%build\install\ue427_Plug
+rmdir /q /s %my_pwd%build\install\bin
+rmdir /q /s %my_pwd%build\install\maya
+rmdir /q /s %my_pwd%build\install\ue425_Plug
+rmdir /q /s %my_pwd%build\install\ue426_Plug
+rmdir /q /s %my_pwd%build\install\ue427_Plug
 
 Exit 0
