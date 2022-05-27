@@ -12,7 +12,7 @@ add_executable(
 )
 
 set_target_properties(doodle_limited_exe
-        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin_limited)
 target_link_libraries(doodle_limited_exe
         PUBLIC
         doodle_lib
@@ -35,11 +35,12 @@ include(InstallRequiredSystemLibraries)
 #list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
 
 install(TARGETS doodle_limited_exe
+        DESTINATION bin_limited
         COMPONENT exe_com
         #        RUNTIME_DEPENDENCIES
         )
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION bin/
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin_limited/
+        DESTINATION bin_limited/
         COMPONENT exe_com
         )
 
