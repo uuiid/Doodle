@@ -112,7 +112,7 @@ bool app_base::chick_authorization(const FSys::path& in_path) {
 bool app_base::chick_authorization() {
   auto l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
   if (!exists(l_p)) {
-    l_p = FSys::current_path() / doodle_config::token_name.data();
+    l_p = core_set::program_location() / doodle_config::token_name.data();
   }
   if (!exists(l_p)) {
     DOODLE_LOG_ERROR("无法找到授权文件")

@@ -47,7 +47,7 @@ void toolkit::installUePath(const FSys::path &path) {
   try {
     auto &set      = core_set::getSet();
 
-    auto sourePath = FSys::current_path().parent_path();
+    auto sourePath = FSys::program_location().parent_path();
 
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.');

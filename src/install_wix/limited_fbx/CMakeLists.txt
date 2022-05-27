@@ -37,6 +37,8 @@ add_custom_target(gen_light_file_limited
         -x!bin/DoodleExe.exe
 
         DEPENDS ${gen_wixobj_limited_files}
+        ${CMAKE_INSTALL_PREFIX}/wix/maya.wixobj
+        ${CMAKE_INSTALL_PREFIX}/wix/bin.wixobj
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
 
 

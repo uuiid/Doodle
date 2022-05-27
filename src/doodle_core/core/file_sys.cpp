@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/dll.hpp>
 
 #include <Windows.h>
 #include <shellapi.h>
@@ -113,6 +114,9 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
   return boost::istarts_with(in_parent.generic_string(), in_child.generic_string());
 }
 
+path program_location() {
+  return boost::dll::program_location().parent_path();
+}
 }  // namespace doodle::FSys
 
 namespace nlohmann {

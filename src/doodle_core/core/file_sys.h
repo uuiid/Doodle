@@ -38,6 +38,7 @@ DOODLE_CORE_EXPORT void open_explorer(const path& in_path);
 DOODLE_CORE_EXPORT void backup_file(const path& source);
 DOODLE_CORE_EXPORT std::vector<path> list_files(const path& in_dir);
 DOODLE_CORE_EXPORT bool is_sub_path(const path& in_parent, const path& in_child);
+DOODLE_CORE_EXPORT path program_location();
 
 }  // namespace doodle::FSys
 namespace fmt {
