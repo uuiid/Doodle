@@ -49,6 +49,7 @@ add_custom_target(gen_light_file
         "${CMAKE_INSTALL_PREFIX}/ue425_Plug"
         "${CMAKE_INSTALL_PREFIX}/ue426_Plug"
         "${CMAKE_INSTALL_PREFIX}/ue427_Plug"
+        -x!bin/doodle_limited_exe.exe
 
         DEPENDS ${gen_wixobj_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}

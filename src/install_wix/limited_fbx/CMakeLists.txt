@@ -10,7 +10,7 @@ install(FILES
 
 set(gen_wixobj_limited_files)
 
-wix_candle_gen(main_limited ${CMAKE_INSTALL_PREFIX} gen_wixobj_limited_files)
+wix_candle_gen(limited_main ${CMAKE_INSTALL_PREFIX} gen_wixobj_limited_files)
 
 
 include(ProcessorCount)
@@ -32,8 +32,9 @@ add_custom_target(gen_light_file_limited
 
         COMMAND 7z a -mx2 -mmt8
         "${CMAKE_INSTALL_PREFIX}/${DOODLE_PACKAGE_NAME}_limited.7z"
-        "${CMAKE_INSTALL_PREFIX}/bin_limited"
+        "${CMAKE_INSTALL_PREFIX}/bin"
         "${CMAKE_INSTALL_PREFIX}/maya"
+        -x!bin/DoodleExe.exe
 
         DEPENDS ${gen_wixobj_limited_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
