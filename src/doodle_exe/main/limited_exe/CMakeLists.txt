@@ -35,14 +35,18 @@ include(InstallRequiredSystemLibraries)
 #list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
 
 install(TARGETS doodle_limited_exe
+        COMPONENT exe_com
         #        RUNTIME_DEPENDENCIES
         )
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION bin/)
+        DESTINATION bin/
+        COMPONENT exe_com
+        )
 
 #最后实现camke修复
 install(CODE "
-        include(BundleUtilities)
-        fixup_bundle(\"$<TARGET_FILE:doodle_limited_exe>\"   \"\"   \"${DIRS}\")
+include(BundleUtilities)
+fixup_bundle(\"$<TARGET_FILE:doodle_limited_exe>\"   \"\"   \"${DIRS}\")
         "
+        COMPONENT exe_com
         )

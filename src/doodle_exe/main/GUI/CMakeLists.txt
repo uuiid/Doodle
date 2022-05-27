@@ -32,15 +32,19 @@ include(InstallRequiredSystemLibraries)
 
 install(TARGETS DoodleExe
         #        RUNTIME_DEPENDENCIES
+        COMPONENT exe_com
         )
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION bin/)
+        DESTINATION bin/
+        COMPONENT exe_com
+        )
 
 #最后实现camke修复
 install(CODE "
         include(BundleUtilities)
         fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
         "
+        COMPONENT exe_com
         )
 
 

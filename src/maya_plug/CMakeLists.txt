@@ -122,7 +122,7 @@ if (DEFINED Maya_Version)
 
         install(TARGETS doodle_maya
                 DESTINATION maya/plug-ins
-
+                COMPONENT maya_plug_com
                 )
 
         install(DIRECTORY  ${PROJECT_SOURCE_DIR}/script/maya
