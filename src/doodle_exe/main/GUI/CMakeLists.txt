@@ -25,6 +25,7 @@ add_dependencies(DoodleExe generate_token_run)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
 include(InstallRequiredSystemLibraries)
 
 #list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
