@@ -238,6 +238,7 @@ class DOODLE_CORE_EXPORT asio_pool {
       if (!handler.expired())
         handler.lock()->abort(*(handler.lock()), immediately);
     }
+    sub_fun.disconnect_all_slots();
   }
   void sub_next() {
     sub_fun();
