@@ -8,7 +8,8 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/cpack_variables.wxi
         ${CMAKE_CURRENT_BINARY_DIR}/main.wxs
         ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.rtf
-        DESTINATION wix)
+        DESTINATION wix
+        COMPONENT exe_com)
 
 set(gen_wixobj_files)
 

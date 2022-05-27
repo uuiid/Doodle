@@ -3,7 +3,9 @@ configure_file(main.wxs limited_main.wxs COPYONLY)
 
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/limited_main.wxs
-        DESTINATION wix)
+        DESTINATION wix
+        COMPONENT exe_com
+        )
 
 
 set(gen_wixobj_limited_files)
