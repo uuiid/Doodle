@@ -18,8 +18,12 @@ echo -----------------build main exe--------------------
 
 echo -----------------install main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install ^
+--install build\Ninja_release^
 --component exe_com
+
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install build\Ninja_release^
+--component ue4_plug
 
 echo -----------------------------------------------------
 echo -----------------config maya 2018--------------------
@@ -32,7 +36,7 @@ echo -----------------build maya 2018--------------------
 --preset release_maya_plug
 echo -----------------install maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install ^
+--install build\Ninja_release_plug^
 --component maya_plug_com
 echo -----------------clear maya 2018--------------------
 rmdir %my_pwd%build\doodle_maya\src\maya_plug
@@ -50,7 +54,7 @@ echo -----------------build maya 2019--------------------
 --preset release_maya_plug
 echo -----------------install maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install ^
+--install build\Ninja_release_plug^
 --component maya_plug_com
 echo -----------------clear maya 2019--------------------
 rmdir %my_pwd%build\doodle_maya\src\maya_plug
@@ -68,7 +72,7 @@ echo -----------------build maya 2020--------------------
 --preset release_maya_plug
 echo -----------------install maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install ^
+--install build\Ninja_release_plug^
 --component maya_plug_com
 echo -----------------clear maya 2020--------------------
 rmdir %my_pwd%build\doodle_maya\src\maya_plug
@@ -87,7 +91,7 @@ robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
-py %my_pwd%build\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
+py %my_pwd%doc\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
 
 rmdir %my_pwd%build\install\bin
 rmdir %my_pwd%build\install\bin_limited
