@@ -87,8 +87,8 @@ void csv_export_widgets::render() {
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<FSys::path>();
-    g_pool()
-        .post<file_dialog>(file_dialog::dialog_args{l_file}
+    g_main_loop()
+        .attach<file_dialog>(file_dialog::dialog_args{l_file}
                                .set_title("选择目录"s)
                                .set_use_dir())
         .then<one_process_t>([=]() {

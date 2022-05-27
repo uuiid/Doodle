@@ -67,7 +67,8 @@ void ue4_widget::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->open_file_dig)) {
     auto l_p = std::make_shared<FSys::path>();
-    g_pool().post<file_dialog>(
+    g_main_loop()
+        .attach<file_dialog>(
                      file_dialog::dialog_args{l_p}
                          .add_filter(".uproject"s))
         .then<one_process_t>([this, l_p]() {

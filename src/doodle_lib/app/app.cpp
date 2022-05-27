@@ -186,8 +186,8 @@ app::app(const win::wnd_instance& in_instance)
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);
-    g_pool()
-        .post<gui::input::get_bool_dialog>(l_quit)
+    g_main_loop()
+        .attach<gui::input::get_bool_dialog>(l_quit)
         .then<one_process_t>([l_quit, this]() {
           if (*l_quit)
             this->close_windows();
@@ -287,9 +287,12 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  g_pool().post<main_menu_bar>();
-  g_pool().post<main_status_bar>();
-  g_pool().post<gui::layout_window>();
+  g_main_loop()
+      .attach<main_menu_bar>();
+  g_main_loop()
+      .attach<main_status_bar>();
+  g_main_loop()
+      .attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup
@@ -304,7 +307,8 @@ app::~app() {
 
 void app::load_back_end() {
   g_pool().post<one_process_t>([]() {
-    g_pool().post<short_cut>();
+    g_main_loop()
+        .attach<short_cut>();
     g_reg()->ctx().at<core_sig>().init_end.connect([]() {
       init_register::instance().init_run();
     });

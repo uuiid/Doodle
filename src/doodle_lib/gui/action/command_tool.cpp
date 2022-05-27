@@ -169,7 +169,8 @@ void comm_create_video::render() {
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_ptr = std::make_shared<FSys::path>();
-    g_pool().post<file_dialog>(file_dialog::dialog_args{l_ptr}
+    g_main_loop()
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
                                    .set_title("选择目录"s)
                                    .set_use_dir())
         .then<one_process_t>([this, l_ptr]() {
@@ -182,8 +183,8 @@ void comm_create_video::render() {
 
   if (imgui::Button("选择图片")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_pool()
-        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+    g_main_loop()
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
                                .set_title("选择序列"s)
                                .set_filter(string_list{".png", ".jpg"}))
         .then<one_process_t>([this, l_ptr]() {
@@ -196,8 +197,8 @@ void comm_create_video::render() {
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_pool()
-        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+    g_main_loop()
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
                                .set_title("select dir"s)
                                .set_use_dir())
         .then<one_process_t>([=]() {
@@ -246,8 +247,8 @@ void comm_create_video::render() {
 
   if (imgui::Button("选择视频")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    g_pool()
-        .post<file_dialog>(file_dialog::dialog_args{l_ptr}
+    g_main_loop()
+        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
                                .set_title("select mp4 file"s)
                                .add_filter(".mp4"))
         .then<one_process_t>([=]() {
