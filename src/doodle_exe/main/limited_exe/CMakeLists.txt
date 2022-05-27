@@ -2,6 +2,10 @@ add_executable(
         doodle_limited_exe
         WIN32
         main.cpp
+        app.cpp
+        app.h
+        window.h
+        window.cpp
         ../DoodleExe.manifest
         ../icon.ico
         ../win_exe.rc
