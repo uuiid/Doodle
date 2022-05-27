@@ -8,7 +8,16 @@
 #include <doodle_core/core/init_register.h>
 #include <boost/signals2.hpp>
 #include <utility>
+
+#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/list_hook.hpp>
 namespace doodle::gui {
+namespace details {
+using hock_t = boost::intrusive::list_base_hook<
+    boost::intrusive::link_mode<
+        boost::intrusive::auto_unlink>>;
+
+}
 
 /**
  * @brief 基本窗口

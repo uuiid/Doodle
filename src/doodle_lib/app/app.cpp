@@ -37,6 +37,7 @@ namespace doodle {
  *
  */
 class app::impl {
+ public:
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard;
 
@@ -185,13 +186,14 @@ app::app(const win::wnd_instance& in_instance)
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);
-    g_pool().post<gui::input::get_bool_dialog>(l_quit).then<one_process_t>([l_quit, this]() {
-      if (*l_quit)
-        this->close_windows();
-    });
+    g_pool()
+        .post<gui::input::get_bool_dialog>(l_quit)
+        .then<one_process_t>([l_quit, this]() {
+          if (*l_quit)
+            this->close_windows();
+        });
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
-    this->clear_loop();
     ::DestroyWindow(p_hwnd);
   };
 }
@@ -322,6 +324,12 @@ bool app::chick_authorization() {
     return false;
   }
   return true;
+}
+void app::deaw_windows() {
+  for (auto&& i : g_reg()
+                      ->ctx()
+                      .emplace<gui::base_window::window_list>())
+    i->tick({}, nullptr);
 }
 
 }  // namespace doodle

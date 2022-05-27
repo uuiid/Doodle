@@ -143,14 +143,19 @@ class DOODLE_CORE_EXPORT asio_pool {
              in_executor]() {
               if (in_proc->update(*in_proc, {}, nullptr)) {
               } else
-                /// \brief 提交下一次更新
-                post_asio<Proc>(self, in_executor, in_proc);
+                self->sub_fun.connect([in_proc,
+                                       self,
+                                       in_executor]() {
+                  /// \brief 提交下一次更新
+                  post_asio<Proc>(self, in_executor, in_proc);
+                });
             }));
     return continuation<Executor>{self, in_executor, handler.get()};
   }
 
  private:
   handle_list handlers;
+  boost::signals2::signal<void()> sub_fun;
   std::recursive_mutex mutex_;
 
   void clear_null() {
@@ -221,12 +226,22 @@ class DOODLE_CORE_EXPORT asio_pool {
     return attach(g_io_context().get_executor(),
                   std::forward<Func>(func));
   }
+  template <typename Win_Proc, typename... Args>
+  auto post_win(Args &&...args) {
+    static auto l_strands = boost::asio::make_strand(g_io_context());
+    return attach<Win_Proc>(l_strands,
+                            std::forward<Args>(args)...);
+  }
   void abort(bool immediately = false) {
     std::lock_guard l_g{mutex_};
     for (auto &&handler : handlers) {
       if (!handler.expired())
         handler.lock()->abort(*(handler.lock()), immediately);
     }
+  }
+  void sub_next() {
+    sub_fun();
+    sub_fun.disconnect_all_slots();
   }
 };
 }  // namespace doodle

@@ -172,6 +172,7 @@ void app_base::loop_one() {
   g_bounded_pool().update(l_now - s_now, nullptr);
   s_now = l_now;
   g_io_context().poll();
+  g_pool().sub_next();
 }
 
 app_base::~app_base() = default;
