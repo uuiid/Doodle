@@ -9,7 +9,6 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/main.wxs
         ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.rtf
         DESTINATION wix)
-find_package(Wix REQUIRED)
 
 set(gen_wixobj_files)
 

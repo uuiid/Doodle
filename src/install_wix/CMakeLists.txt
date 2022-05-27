@@ -28,6 +28,7 @@ macro(wix_candle_gen file work_dir)
 endmacro(wix_candle_gen)
 
 
+find_package(Wix REQUIRED)
 
 add_subdirectory(limited_fbx)
 add_subdirectory(main)
