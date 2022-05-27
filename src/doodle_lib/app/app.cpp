@@ -329,11 +329,6 @@ bool app::chick_authorization() {
   }
   return true;
 }
-void app::deaw_windows() {
-  for (auto&& i : g_reg()
-                      ->ctx()
-                      .emplace<gui::base_window::window_list>())
-    i->tick({}, nullptr);
-}
+
 
 }  // namespace doodle

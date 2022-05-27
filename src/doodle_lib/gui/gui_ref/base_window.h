@@ -12,12 +12,12 @@
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/list_hook.hpp>
 namespace doodle::gui {
-namespace details {
-using hock_t = boost::intrusive::list_base_hook<
-    boost::intrusive::link_mode<
-        boost::intrusive::auto_unlink>>;
-
-}
+// namespace details {
+// using hock_t = boost::intrusive::list_base_hook<
+//     boost::intrusive::link_mode<
+//         boost::intrusive::auto_unlink>>;
+//
+// }
 
 /**
  * @brief 基本窗口
@@ -36,6 +36,7 @@ class DOODLELIB_API base_window {
   boost::signals2::signal<void()> close{};
 
   using list             = std::set<base_window*>;
+  using window_list      = std::vector<std::shared_ptr<base_window>>;
 
   base_window()          = default;
   virtual ~base_window() = default;
@@ -52,11 +53,11 @@ class DOODLELIB_API base_window {
   /**
    * @brief (构造函数后)初始化
    */
-  virtual void init()                               = 0;
+  virtual void init()                                    = 0;
   /**
    * @brief 成功结束后调用
    */
-  virtual void succeeded()                          = 0;
+  virtual void succeeded()                               = 0;
   /**
    * @brief 失败结束后调用
    */
