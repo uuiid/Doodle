@@ -101,6 +101,7 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
+        "doodle_limited_exe",
         "Doxygen"
       ]
     },
