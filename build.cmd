@@ -39,9 +39,9 @@ echo -----------------install maya 2018--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2018--------------------
-rmdir %my_pwd%build\doodle_maya\src\maya_plug
-rmdir %my_pwd%build\doodle_maya\plug
-del  %my_pwd%build\doodle_maya\CMakeCache.txt
+rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir %my_pwd%build\Ninja_release_plug\plug
+del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 echo -----------------------------------------------------
 echo -----------------config maya 2019--------------------
@@ -57,9 +57,9 @@ echo -----------------install maya 2019--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2019--------------------
-rmdir %my_pwd%build\doodle_maya\src\maya_plug
-rmdir %my_pwd%build\doodle_maya\plug
-del  %my_pwd%build\doodle_maya\CMakeCache.txt
+rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir %my_pwd%build\Ninja_release_plug\plug
+del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 echo -----------------------------------------------------
 echo -----------------config maya 2020--------------------
@@ -75,9 +75,9 @@ echo -----------------install maya 2020--------------------
 --install %my_pwd%\build\Ninja_release_plug ^
 --component maya_plug_com
 echo -----------------clear maya 2020--------------------
-rmdir %my_pwd%build\doodle_maya\src\maya_plug
-rmdir %my_pwd%build\doodle_maya\plug
-del  %my_pwd%build\doodle_maya\CMakeCache.txt
+rmdir %my_pwd%build\Ninja_release_plug\src\maya_plug
+rmdir %my_pwd%build\Ninja_release_plug\plug
+del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
 
 
 
