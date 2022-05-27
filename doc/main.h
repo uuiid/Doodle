@@ -6,7 +6,6 @@
  *
  * 基本上是按照版本控制语义来的 <https://semver.org/>
  * \n
- * @ref doodle_often_ask_questions \n
  * @ref doc/schedule.md "描述" \n
  * \n
  *
