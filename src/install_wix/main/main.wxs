@@ -57,7 +57,12 @@
                 </RegistryKey>
             </Component>
         </DirectoryRef>
-
+        <Property Id="INSTALL_ROOT" Secure="yes">
+            <RegistrySearch Id="FindInstallLocation" Root="HKLM"
+                            Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[WIX_UPGRADE_DETECTED]"
+                            Name="InstallLocation" Type="raw"/>
+        </Property>
+        <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
 
         <Feature Id="ProductFeature"
                  Display="expand"
