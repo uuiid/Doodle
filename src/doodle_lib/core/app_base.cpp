@@ -125,18 +125,14 @@ void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);
   g_pool().abort(in_stop);
-  if (!stop_)
-    g_pool().post<one_process_t>([this]() {
-      core_set_init{}.write_file();
-    });
+  g_pool().post<one_process_t>([this]() {
+    core_set_init{}.write_file();
+  });
   this->stop_ = true;
 }
 
 bool app_base::is_stop() const {
-  return g_main_loop().empty() &&
-         g_bounded_pool().empty() &&
-         g_pool().empty() &&
-         stop_;
+  return stop_;
 }
 void app_base::load_project(const FSys::path& in_path) const {
   auto l_path = in_path.empty()
@@ -163,7 +159,7 @@ void app_base::clear_loop() {
   g_io_context().run();
 }
 bool app_base::is_loop_empty() {
-  return g_main_loop().empty() && g_bounded_pool().empty() && g_pool().empty();
+  return g_main_loop().empty() && g_bounded_pool().empty();
 }
 void app_base::loop_one() {
   static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
