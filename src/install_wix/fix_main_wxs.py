@@ -62,7 +62,8 @@ class wix_run():
 
     def __add_file__(self, path: pathlib.Path):
         if path.is_file() and path.suffix == ".exe":
-            l_com = et.SubElement(self.group_parent, "Component")
+            l_f = et.SubElement(self.root_node, "Fragment")
+            l_com = et.SubElement(l_f, "Component")
         else:
             l_com = et.SubElement(self.comm_group, "Component")
         l_com.attrib["Id"] = "com_" + self.__get_path_id__(path)
