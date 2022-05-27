@@ -11,9 +11,9 @@ et.register_namespace("", "http://schemas.microsoft.com/wix/2006/wi")
 class wix_run():
 
     def __init__(self):
-        pass
         self.root_path = pathlib.Path(__file__).parent
-        self.comm_group = None
+        self.comm_group: et.Element = None
+        self.group_parent: et.Element = None
         self.root_node = et.Element("{http://schemas.microsoft.com/wix/2006/wi}Wix")
 
     def __get_path_id__(self, path: pathlib.Path):
@@ -22,8 +22,8 @@ class wix_run():
             .replace("""\\""", "_") \
             .replace("-", "_")
 
-        if  len(str_id) > 30 :
-            str_id = str_id[:-35] + str(hash(str(path))).replace("-","_")
+        if len(str_id) > 30:
+            str_id = str_id[:-35] + str(hash(str(path))).replace("-", "_")
         if path.is_dir():
             return "dir_" + str_id
         else:
@@ -45,8 +45,8 @@ class wix_run():
         l_tree.write(path, encoding="utf-8", xml_declaration=True)
 
     def iter_dir(self):
-        l_f = et.SubElement(self.root_node, "Fragment")
-        self.comm_group = et.SubElement(l_f, "ComponentGroup")
+        self.group_parent = et.SubElement(self.root_node, "Fragment")
+        self.comm_group = et.SubElement(self.group_parent, "ComponentGroup")
         self.comm_group.attrib["Id"] = "com_group_" + self.__get_path_id__(self.root_path)
         self.__iter__dir__(self.root_path)
 
@@ -61,7 +61,10 @@ class wix_run():
                 print("未知文件", p)
 
     def __add_file__(self, path: pathlib.Path):
-        l_com = et.SubElement(self.comm_group, "Component")
+        if path.is_file() and path.suffix == ".exe":
+            l_com = et.SubElement(self.group_parent, "Component")
+        else:
+            l_com = et.SubElement(self.comm_group, "Component")
         l_com.attrib["Id"] = "com_" + self.__get_path_id__(path)
         l_com.attrib["Directory"] = self.__get_path_id__(path.parent)
         l_com.attrib["Guid"] = "{{{}}}".format(uuid.uuid4())
