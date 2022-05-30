@@ -6,6 +6,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/app/app.h>
 
-TEST_CASE("entt type"){
-  std::cout <<
+TEST_CASE("entt type") {
+  std::cout << entt::type_info<std::vector<std::int32_t>>().name() << std::endl;
 }
