@@ -1,12 +1,8 @@
 
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/core/core_sql.h>
+#include <doodle_core/core/core_sql.h>
 #include <sqlpp11/sqlpp11.h>
-
-#ifdef DOODLE_DIS_FUN
-#include <sqlpp11/mysql/mysql.h>
-#endif
 
 #include <sqlpp11/sqlite3/sqlite3.h>
 

@@ -6,7 +6,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 namespace doodle {
-
+/**
+ * @brief 基础的事件循环类,  只有事件循环可以使用
+ */
 class DOODLE_CORE_EXPORT app_base {
  protected:
   static app_base* self;
@@ -20,21 +22,12 @@ class DOODLE_CORE_EXPORT app_base {
    */
   virtual void load_back_end() = 0;
 
-  virtual bool chick_authorization();
+
 
  public:
   explicit app_base();
   explicit app_base(const win::wnd_instance& in_instance);
   virtual ~app_base();
-  bool chick_authorization(const FSys::path& in_path);
-
-  inline void command_line_parser(int argc, char* argv[]) {
-    std::vector<std::string> l_str{argv, argv + argc};
-    command_line_parser(l_str);
-  };
-  void command_line_parser(const PWSTR& in_arg);
-  virtual void command_line_parser(const std::vector<std::string>& in_arg);
-  program_options_ptr options_;
 
   /**
    * @brief 直接使用默认配置运行

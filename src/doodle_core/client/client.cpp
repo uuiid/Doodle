@@ -4,9 +4,10 @@
 
 #include "client.h"
 
-#include <doodle_lib/core/core_sql.h>
+#include <doodle_core/core/core_sql.h>
+#include <doodle_core/long_task/database_task.h>
+
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_lib/long_task/database_task.h>
 #include <doodle_core/core/core_sig.h>
 
 #include <sqlpp11/sqlpp11.h>

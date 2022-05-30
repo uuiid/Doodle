@@ -12,6 +12,7 @@ target_sources(
         chrono_.h
         json_rpc_process_t.h
         app_base.h
+        core_sql.h
 
         PRIVATE
         core_set.cpp
@@ -23,4 +24,5 @@ target_sources(
         file_sys.cpp
         json_rpc_process_t.cpp
         app_base.cpp
+        core_sql.cpp
 )
