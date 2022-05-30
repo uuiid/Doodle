@@ -54,14 +54,14 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent, const 
   // 复制传入节点
   l_s = l_node.setObject(in_object);
   DOODLE_CHICK(l_s);
-  l_r = l_node.duplicate(false, false, &l_s);
-  DOODLE_LOG_INFO("复制节点 {}", l_node.name(&l_s));
+  std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
   DOODLE_CHICK(l_s);
+  l_r = l_node.duplicate(false, false, &l_s);
+  DOODLE_CHICK(l_s);
+  DOODLE_LOG_INFO("复制节点 {}", k_anim_mesh_name);
 
   // 设置复制节点的名称
   l_s = l_node.setObject(l_r);
-  DOODLE_CHICK(l_s);
-  std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
   DOODLE_CHICK(l_s);
   l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, in_suffix)}, false, &l_s);
   DOODLE_CHICK(l_s);
@@ -101,15 +101,15 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
                    /// 复制模型
                    l_s = l_node.setObject(in_object.obj);
                    DOODLE_CHICK(l_s);
+                   std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+                   DOODLE_CHICK(l_s);
                    auto l_r = l_node.duplicate(false, false, &l_s);
                    DOODLE_CHICK(l_s);
-                   DOODLE_LOG_INFO("复制高模节点 {}", l_node.name(&l_s));
+                   DOODLE_LOG_INFO("复制高模节点 {}", k_anim_mesh_name);
                    DOODLE_CHICK(l_s);
 
                    // 设置复制节点的名称
                    l_node.setObject(l_r);
-                   std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
-                   DOODLE_CHICK(l_s);
                    l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
                    DOODLE_CHICK(l_s);
                    DOODLE_LOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
@@ -417,8 +417,13 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   /// \brief 主要的动画输出节点(需要输入到解算输入端)
   auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
   {
-    if (get_node_name(k_anim_mesh.obj).find("_proxy") == std::string::npos)
+    auto l_node_name = get_node_name(k_anim_mesh.obj);
+    if (auto l_f = l_node_name.find("_proxy");
+        l_f == std::string::npos)
       set_node_name(k_anim_mesh.obj, fmt::format("{}_proxy", k_anim_mesh.p_name));
+    else {
+      k_anim_mesh.p_name = l_node_name.substr(0, l_f);
+    }
   }
   /// \brief 主要的输入节点
   auto k_proxy_node_input  = make_low_node(k_anim_mesh.obj, l_group.anim_grp, "input");
