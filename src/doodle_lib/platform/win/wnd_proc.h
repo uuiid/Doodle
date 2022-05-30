@@ -3,12 +3,12 @@
 //
 
 #pragma once
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
 namespace doodle::win {
 
-class DOODLE_CORE_EXPORT d3d_device {
+class DOODLE_API d3d_device {
   static d3d_device* self;
 
  public:
