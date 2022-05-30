@@ -1,6 +1,8 @@
 
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/season.h>
+#include <doodle_core/metadata/project.h>
 
 namespace doodle {
 
@@ -54,7 +56,22 @@ bool episodes::analysis(const std::string& in_path) {
   }
   return k_r;
 }
+bool episodes::conjecture_season(const entt::handle& in_handle) {
+  if (in_handle.all_of<season>())
+    return true;
 
+  chick_true<doodle_error>(
+      g_reg()->ctx().contains<project_config::base_config>(), DOODLE_LOC, "缺失上下文组件");
+
+  if (in_handle.all_of<episodes>()) {
+    auto l_count = g_reg()->ctx().at<project_config::base_config>().season_count;
+    auto l_eps   = in_handle.get<episodes>().p_episodes;
+    in_handle.emplace<season>((l_eps / l_count) + 1);
+    return true;
+  }
+
+  return false;
+}
 bool episodes::analysis_static(const entt::handle& in_handle,
                                const FSys::path& in_path) {
   episodes k_eps{};

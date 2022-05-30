@@ -85,7 +85,7 @@ class base_config_edit::impl {
   std::string err_str;
 
   icon_extensions icon_list;
-  gui_cache<std::int32_t> season_count;
+  gui_cache<std::int32_t> season_count{"季数计数", 20};
 
   entt::handle handle_{};
 };

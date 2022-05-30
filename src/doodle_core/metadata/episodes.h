@@ -29,6 +29,8 @@ class DOODLE_CORE_EXPORT episodes {
   static bool analysis_static(const entt::handle &in_handle,
                               const FSys::path &in_path);
 
+  static bool conjecture_season(const entt::handle &in_handle);
+
  private:
   friend void to_json(nlohmann::json &j, const episodes &p) {
     j["episodes"] = p.p_episodes;

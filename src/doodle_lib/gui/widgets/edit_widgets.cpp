@@ -383,6 +383,7 @@ class add_assets_for_file : public base_render {
                     season::analysis_static(k_h, in_path);
                     episodes::analysis_static(k_h, in_path);
                     shot::analysis_static(k_h, in_path);
+                    episodes::conjecture_season(k_h);
 
                     if (use_time.data)
                       this->add_time(k_h, in_path);
