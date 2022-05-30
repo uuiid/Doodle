@@ -59,16 +59,11 @@ set(
         exe_warp/ue4_exe.h
         long_task/image_to_move.h
         long_task/join_move.h
-        long_task/restricted_task.h
         long_task/database_task.h
         long_task/short_cut.h
         long_task/image_load_task.h
 
-        platform/win/drop_manager.h
-        platform/win/list_drive.h
-        platform/win/windows_alias.h
-        platform/win/wnd_proc.h
-        platform/win/register_file_type.h
+
         core/app_base.h
         doodle_lib_all.h
         doodle_lib_fwd.h
@@ -127,16 +122,9 @@ set(
         exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
         long_task/join_move.cpp
-        long_task/restricted_task.cpp
         long_task/database_task.cpp
         long_task/short_cut.cpp
         long_task/image_load_task.cpp
-
-
-        platform/win/drop_manager.cpp
-        platform/win/list_drive.cpp
-        platform/win/wnd_proc.cpp
-        platform/win/register_file_type.cpp
 
 
         core/app_base.cpp

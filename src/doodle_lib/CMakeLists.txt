@@ -40,6 +40,7 @@ generate_export_header(doodle_lib
 
 add_subdirectory(external)
 add_subdirectory(json_rpc)
+add_subdirectory(platform/win)
 add_subdirectory(gui/widgets/assets_filter_widgets)
 
 set_target_properties(doodle_lib
