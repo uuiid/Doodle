@@ -10,6 +10,7 @@ set(doodle_test_list
         test_std
         test_lib
         test_rpc
+        test_entt_type
         )
 include(Catch)
 
