@@ -15,7 +15,6 @@
 
 namespace doodle {
 
-
 long_time_tasks_widget::long_time_tasks_widget()
     : p_current_select() {
   title_name_ = std::string{name};
@@ -34,12 +33,13 @@ void long_time_tasks_widget::render() {
                     ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
                     ImGuiTableFlags_::ImGuiTableFlags_BordersV |
                     ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
-  dear::Table{"long_time_tasks_widget", 5, flags} && [this]() {
+  dear::Table{"long_time_tasks_widget", 6, flags} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
     imgui::TableSetupColumn("消息");
     imgui::TableSetupColumn("状态");
     imgui::TableSetupColumn("时间");
+    imgui::TableSetupColumn("动作");
     imgui::TableHeadersRow();
 
     for (const auto&& [e, msg] : g_reg()->view<process_message>().each()) {
@@ -48,7 +48,8 @@ void long_time_tasks_widget::render() {
       imgui::TableNextColumn();
       if (dear::Selectable(msg.get_name_id(),
                            p_current_select == k_h,
-                           ImGuiSelectableFlags_SpanAllColumns)) {
+                           ImGuiSelectableFlags_SpanAllColumns |
+                               ImGuiSelectableFlags_AllowItemOverlap)) {
         p_current_select = k_h;
       }
 
@@ -64,6 +65,11 @@ void long_time_tasks_widget::render() {
       imgui::TableNextColumn();
       using namespace std::literals;
       dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
+
+      ImGui::TableNextColumn();
+      if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str()))
+        msg.aborted_function();
+
     }
   };
   dear::Text("主要日志"s);
