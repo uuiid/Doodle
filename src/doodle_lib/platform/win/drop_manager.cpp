@@ -9,7 +9,6 @@
 #include <shellapi.h>
 
 #include <doodle_core/thread_pool/process_pool.h>
-#include <long_task/drop_file_data.h>
 #include <doodle_core/core/core_sig.h>
 #include <lib_warp/imgui_warp.h>
 
@@ -53,10 +52,6 @@ STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
 
 STDMETHODIMP drop_manager::DragLeave() {
   DOODLE_LOG_INFO("开始 DragLeave");
-
-  //  if (g_reg()->ctx().contains<drop_file_data>()) {
-  //    g_reg()->ctx().at<drop_file_data>().drag_leave();
-  //  }
 
   return S_OK;
 }

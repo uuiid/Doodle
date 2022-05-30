@@ -61,7 +61,6 @@ set(
         long_task/join_move.h
         long_task/restricted_task.h
         long_task/database_task.h
-        long_task/drop_file_data.h
         long_task/short_cut.h
         long_task/image_load_task.h
 
@@ -130,7 +129,6 @@ set(
         long_task/join_move.cpp
         long_task/restricted_task.cpp
         long_task/database_task.cpp
-        long_task/drop_file_data.cpp
         long_task/short_cut.cpp
         long_task/image_load_task.cpp
 
