@@ -13,7 +13,6 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/authorization.h>
 
-#include <client/client.h>
 
 #include <boost/contract.hpp>
 
