@@ -2,7 +2,6 @@ set(
         DOODLELIB_HEADER
         app/app.h
         core/ContainerDevice.h
-        ../doodle_core/core/core_sql.h
         core/filesystem_extend.h
         core/observable_container.h
         gui/open_file_dialog.h
@@ -42,7 +41,6 @@ set(
         gui/widgets/subtitle_processing.h
         gui/main_proc_handle.h
 
-        lib_warp/WinReg.hpp
         lib_warp/boost_locale_warp.h
         lib_warp/cache.hpp
         lib_warp/cache_policy.hpp
@@ -72,7 +70,7 @@ set(
         DOODLELIB_SOURCE
         app/app.cpp
 
-        ../doodle_core/core/core_sql.cpp
+
         core/filesystem_extend.cpp
         core/program_options.cpp
         core/util.cpp
