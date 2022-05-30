@@ -111,6 +111,8 @@ class DOODLE_CORE_EXPORT base_config {
 
   FSys::path upload_path;
 
+  std::int32_t season_count;
+
   base_config();
 
   [[nodiscard]] bool match_icon_extensions(const FSys::path& in_path) const;

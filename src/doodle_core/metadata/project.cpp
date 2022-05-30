@@ -130,7 +130,8 @@ project_config::base_config::base_config()
       simple_module_proxy_("_proxy"),
       find_icon_regex(),
       assets_list(),
-      icon_extensions({".png"s, ".jpg"s}) {}
+      icon_extensions({".png"s, ".jpg"s}),
+      season_count(20) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]      = p.find_icon_regex;
@@ -141,6 +142,7 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["simple_module_proxy_"] = p.simple_module_proxy_;
   j["icon_extensions"]      = p.icon_extensions;
   j["upload_path"]          = p.upload_path;
+  j["season_count"]         = p.season_count;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -158,6 +160,8 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("icon_extensions").get_to(p.icon_extensions);
   if (j.contains("upload_path"))
     j.at("upload_path").get_to(p.upload_path);
+  if (j.contains("season_count"))
+    j.at("season_count").get_to(p.season_count);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {
