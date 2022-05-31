@@ -77,15 +77,16 @@ class DOODLE_CORE_EXPORT database {
   };
 
   database();
+  explicit database(const std::string &in_uuid_str);
   //  explicit database(const metadata_database &in_metadata_database);
   ~database();
 
   bool has_components() const;
 
   database(database &&) noexcept;
-  database &operator            =(database &&) noexcept;
+  database &operator=(database &&) noexcept;
 
-  database(database &) noexcept = delete;
+  database(database &) noexcept            = delete;
   database &operator=(database &) noexcept = delete;
 
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);

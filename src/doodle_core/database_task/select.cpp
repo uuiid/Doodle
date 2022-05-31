@@ -3,16 +3,27 @@
 //
 
 #include "select.h"
-#include <thread_pool/process_message.h>
+#include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <thread_pool/thread_pool.h>
-#include <logger/logger.h>
-#include <core/core_sql.h>
+#include <doodle_core/thread_pool/thread_pool.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/core/core_sql.h>
+
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/organization.h>
+#include <doodle_core/metadata/redirection_path_info.h>
+#include <doodle_core/lib_warp/entt_warp.h>
+#include <doodle_core/database_task/sql_file.h>
+
+#include <doodle_core/generate/core/sql_sql.h>
+#include <doodle_core/generate/core/metadatatab_sql.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/ppgen.h>
-#include <doodle_core/database_task/sql_file.h>
+
 #include <range/v3/range.hpp>
 #include <range/v3/range_for.hpp>
 #include <range/v3/all.hpp>
@@ -23,6 +34,7 @@ SQLPP_DECLARE_TABLE(
 
 namespace doodle {
 namespace database_n {
+namespace sql = doodle_database;
 class select::impl {
  public:
   /**
@@ -31,6 +43,8 @@ class select::impl {
   FSys::path project;
   bool only_ctx{false};
   std::future<void> result;
+
+  registry_ptr local_reg{std::make_shared<entt::registry>()};
 
   static void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_ctx_table});
@@ -80,7 +94,7 @@ class select::impl {
       add_ctx_table(*k_con);
       add_component_table(*k_con);
     }
-    if(l_main_v < version::version_major || l_s_v < version::version_minor){
+    if (l_main_v < version::version_major || l_s_v < version::version_minor) {
       set_version(*k_con);
     }
   }
@@ -97,6 +111,79 @@ class select::impl {
       set_version(*k_con);
     }
   }
+
+  void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+    Metadatatab l_metadatatab{};
+
+    for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
+                                  .from(l_metadatatab)
+                                  .unconditionally())) {
+      database l_database{row.uuidData.value()};
+      entt::entity l_e{};
+      l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
+      entt::handle l_h{in_reg,
+                       in_reg.create(l_e)};
+      auto k_json = nlohmann::json::parse(row.userData.value());
+      entt_tool::load_comm<doodle::project,
+                           doodle::episodes,
+                           doodle::shot,
+                           doodle::season,
+                           doodle::assets,
+                           doodle::assets_file,
+                           doodle::time_point_wrap,
+                           doodle::comment,
+                           doodle::project_config::base_config,
+                           doodle::image_icon,
+                           doodle::importance,
+                           doodle::organization_list,
+                           doodle::redirection_path_info>(l_h, k_json);
+    }
+  }
+
+  template <typename Type>
+  void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+    sql::ComEntity l_com_entity{};
+
+    in_reg.storage<doodle::project>();
+
+    for (auto&& row : in_conn(
+             sqlpp::select(
+                 l_com_entity.entityId,
+                 l_com_entity.jsonData)
+                 .from(l_com_entity)
+                 .where(
+                     l_com_entity.comHash == entt::type_id<Type>().hash()))) {
+      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(row.entityId.value());
+      entt::handle l_h{in_reg, l_e};
+      chick_true<doodle_error>(
+          l_h.valid(),
+          DOODLE_LOC,
+          "无效的实体");
+      auto l_json = nlohmann::json::parse(row.jsonData.value());
+      l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
+    }
+  }
+  template <typename... Type>
+  void select_com(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+    (_select_com_<Type>(in_reg, in_conn), ...);
+  }
+
+  void select_ctx(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+    sql::Context l_context{};
+
+    std::map<std::uint32_t,
+             std::function<void(entt::registry & in_reg)>>
+        l_fun{};
+
+    for (auto&& row : in_conn(
+             sqlpp::select(l_context.comHash,
+                           l_context.comHash)
+                 .from(l_context)
+                 .unconditionally())) {
+      row.comHash.value();
+      //      l_fun.find();
+    }
+  }
 };
 
 select::select(const select::arg& in_arg) : p_i(std::make_unique<impl>()) {
@@ -110,10 +197,7 @@ void select::init() {
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   p_i->result = g_thread_pool().enqueue([this]() {
-    if (!p_i->only_ctx) {
-      this->select_db();
-    }
-    this->select_ctx();
+    this->th_run();
   });
 }
 void select::succeeded() {
@@ -122,16 +206,51 @@ void select::failed() {
 }
 void select::aborted() {
 }
-void select::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void* data) {
+void select::update(chrono::duration<chrono::system_clock::rep,
+                                     chrono::system_clock::period>,
+                    void* data) {
 }
-void select::select_db() {
+void select::th_run() {
+  /// \brief 选中实体
+  auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
+  this->p_i->select_old(*p_i->local_reg, *l_k_con);
+  auto&& l_reg = *p_i->local_reg;
+  {
+    auto&& l_db = *l_k_con;
+    sql::Entity l_entity{};
+
+    for (auto& row : l_db(sqlpp::select(sqlpp::all_of(l_entity))
+                              .from(l_entity)
+                              .unconditionally())) {
+      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
+          row.id.value());
+      entt::handle l_h{l_reg, l_reg.create(l_e)};
+      chick_true<doodle_error>(
+          l_h.valid(), DOODLE_LOC,
+          "失效的实体");
+      l_h.emplace<database>(row.uuidData.value());
+    }
+  }
+  /// @brief 选中组件
+  {
+    p_i->select_com<doodle::project,
+                    doodle::episodes,
+                    doodle::shot,
+                    doodle::season,
+                    doodle::assets,
+                    doodle::assets_file,
+                    doodle::time_point_wrap,
+                    doodle::comment,
+                    doodle::project_config::base_config,
+                    doodle::image_icon,
+                    doodle::importance,
+                    doodle::organization_list,
+                    doodle::redirection_path_info>(l_reg, *l_k_con);
+  }
+  /// \brief 选中上下文
+  {
+  }
 }
-void select::select_ctx() {
-}
-bool select::chick_table() {
-  return false;
-}
-void select::update() {
-}
+
 }  // namespace database_n
 }  // namespace doodle

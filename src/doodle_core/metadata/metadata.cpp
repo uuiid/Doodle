@@ -24,6 +24,12 @@ class database::impl {
         p_type(metadata_type::unknown_file),
         p_uuid_(core_set::getSet().get_uuid()) {
   }
+  impl(const std::string &in_uuid_str)
+      : p_id(0),
+        p_parent_id(),
+        p_type(metadata_type::unknown_file),
+        p_uuid_(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {
+  }
   mutable std::uint64_t p_id;
   std::optional<uint32_t> p_parent_id;
   metadata_type p_type;
@@ -91,7 +97,10 @@ database::database()
     : p_i(std::make_unique<impl>()),
       status_(status::none) {
 }
-
+database::database(const std::string &in_uuid_str)
+    : p_i(std::make_unique<impl>(in_uuid_str)),
+      status_(status::none) {
+}
 database::~database() = default;
 
 void database::set_enum(entt::registry &in_reg, entt::entity in_ent) {

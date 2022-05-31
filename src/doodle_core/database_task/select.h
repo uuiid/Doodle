@@ -31,11 +31,7 @@ class DOODLE_CORE_EXPORT select : public process_t<select> {
   void update(base_type::delta_type, void* data);
 
  private:
-  void select_db();
-  void select_ctx();
-
-  bool chick_table();
-  void update();
+  void th_run();
 };
 
 }  // namespace database_n

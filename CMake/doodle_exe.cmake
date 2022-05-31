@@ -63,7 +63,7 @@ function(doodle_sqlpp_generate out_lists)
     foreach (LIST ${DOODLE_GRPC_GENERATE_LISTS_FILES})
         file(REAL_PATH ${LIST} _PATH)
         get_filename_component(_NAME_WE ${_PATH} NAME_WE)
-        
+
         get_filename_component(_NAME ${_PATH} NAME)
         get_filename_component(_DIRECTORY ${_PATH} DIRECTORY)
         # cmake_print_variables(_PATH _NAME_WE _NAME _DIRECTORY)
@@ -83,7 +83,7 @@ function(doodle_sqlpp_generate out_lists)
                     ARGS $<TARGET_FILE:sqlpp11::ddl2cpp>
                     ${_PATH}
                     ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql
-                    doodle
+                    doodle_database
                     MAIN_DEPENDENCY ${_PATH}
             )
         endif ()
