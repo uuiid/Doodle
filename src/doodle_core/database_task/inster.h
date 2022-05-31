@@ -5,11 +5,21 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle {
-namespace database_n {
+namespace doodle::database_n {
 
-class DOODLE_CORE_EXPORT inster {
+class DOODLE_CORE_EXPORT inster : public process_t<inster> {
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ public:
+  using base_type = process_t<inster>;
+  ~inster() override;
+  [[maybe_unused]] void init();
+  [[maybe_unused]] void succeeded();
+  [[maybe_unused]] void failed();
+  [[maybe_unused]] void aborted();
+  [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
 
-}  // namespace database_n
 }  // namespace doodle
