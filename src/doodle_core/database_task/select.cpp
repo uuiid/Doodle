@@ -28,6 +28,8 @@
 #include <range/v3/range_for.hpp>
 #include <range/v3/all.hpp>
 
+#include <boost/asio.hpp>
+
 SQLPP_DECLARE_TABLE(
     (doodle_info),
     (version_major, int, SQLPP_NULL)(version_minor, int, SQLPP_NULL));
@@ -43,6 +45,10 @@ class select::impl {
   FSys::path project;
   bool only_ctx{false};
   std::future<void> result;
+  std::vector<std::shared_future<void>> results;
+  std::atomic_bool stop{false};
+  boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>
+      strand_{boost::asio::make_strand(g_thread_pool().pool_)};
 
   registry_ptr local_reg{std::make_shared<entt::registry>()};
 
@@ -63,7 +69,7 @@ class select::impl {
     in_conn.execute(std::string{create_com_table_trigger});
   }
 
-  static std::tuple<std::uint32_t, std::uint32_t> get_version(
+  std::tuple<std::uint32_t, std::uint32_t> get_version(
       sqlpp::sqlite3::connection& in_conn) {
     doodle_info::doodle_info l_info{};
 
@@ -112,39 +118,51 @@ class select::impl {
     }
   }
 
-  static void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     Metadatatab l_metadatatab{};
 
     for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
                                   .from(l_metadatatab)
                                   .unconditionally())) {
-      database l_database{row.uuidData.value()};
-      entt::entity l_e{};
-      l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
-      entt::handle l_h{in_reg,
-                       in_reg.create(l_e)};
-      auto k_json = nlohmann::json::parse(row.userData.value());
-      entt_tool::load_comm<doodle::project,
-                           doodle::episodes,
-                           doodle::shot,
-                           doodle::season,
-                           doodle::assets,
-                           doodle::assets_file,
-                           doodle::time_point_wrap,
-                           doodle::comment,
-                           doodle::project_config::base_config,
-                           doodle::image_icon,
-                           doodle::importance,
-                           doodle::organization_list,
-                           doodle::redirection_path_info>(l_h, k_json);
+      auto l_fun =
+          boost::asio::post(
+              strand_,
+              std::packaged_task<void()>{
+                  [in_id   = row.id.value(),
+                   in_str  = row.userData.value(),
+                   in_uuid = row.uuidData.value(),
+                   &in_reg,
+                   this]() {
+                    if (stop)
+                      return;
+                    entt::entity l_e = *magic_enum::enum_cast<entt::entity>(in_id);
+                    entt::handle l_h{in_reg,
+                                     in_reg.create(l_e)};
+                    l_h.emplace<database>(in_uuid);
+                    auto k_json = nlohmann::json::parse(in_str);
+                    entt_tool::load_comm<doodle::project,
+                                         doodle::episodes,
+                                         doodle::shot,
+                                         doodle::season,
+                                         doodle::assets,
+                                         doodle::assets_file,
+                                         doodle::time_point_wrap,
+                                         doodle::comment,
+                                         doodle::project_config::base_config,
+                                         doodle::image_icon,
+                                         doodle::importance,
+                                         doodle::organization_list,
+                                         doodle::redirection_path_info>(l_h, k_json);
+                  }});
+      results.emplace_back(l_fun.share());
+      if (stop)
+        return;
     }
   }
 
   template <typename Type>
-  static void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};
-
-    in_reg.storage<doodle::project>();
 
     for (auto&& row : in_conn(
              sqlpp::select(
@@ -153,14 +171,28 @@ class select::impl {
                  .from(l_com_entity)
                  .where(
                      l_com_entity.comHash == entt::type_id<Type>().hash()))) {
-      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(row.entityId.value());
-      entt::handle l_h{in_reg, l_e};
-      chick_true<doodle_error>(
-          l_h.valid(),
-          DOODLE_LOC,
-          "无效的实体");
-      auto l_json = nlohmann::json::parse(row.jsonData.value());
-      l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
+      if (stop)
+        return;
+      auto l_fut = boost::asio::post(
+          strand_,
+          std::packaged_task<void()>{
+              [in_json = row.jsonData.value(),
+               in_id   = row.entityId.value(),
+               &in_reg,
+               this]() {
+                if (stop)
+                  return;
+                entt::entity l_e = *magic_enum::enum_cast<entt::entity>(in_id);
+                entt::handle l_h{in_reg, l_e};
+                chick_true<doodle_error>(
+                    l_h.valid(),
+                    DOODLE_LOC,
+                    "无效的实体");
+                auto l_json = nlohmann::json::parse(in_json);
+                l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
+              }});
+
+      results.emplace_back(l_fut.share());
     }
   }
   template <typename... Type>
@@ -168,11 +200,11 @@ class select::impl {
     (_select_com_<Type>(in_reg, in_conn), ...);
   }
 
-  static void _select_ctx_(entt::registry& in_reg,
-                           sqlpp::sqlite3::connection& in_conn,
-                           const std::map<std::uint32_t,
-                                          std::function<
-                                              void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
+  void _select_ctx_(entt::registry& in_reg,
+                    sqlpp::sqlite3::connection& in_conn,
+                    const std::map<std::uint32_t,
+                                   std::function<
+                                       void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
     sql::Context l_context{};
 
     for (auto&& row : in_conn(
@@ -180,6 +212,8 @@ class select::impl {
                            l_context.jsonData)
                  .from(l_context)
                  .unconditionally())) {
+      if (stop)
+        return;
       if (auto l_f = in_fun_list.find(row.comHash.value());
           l_f != in_fun_list.end()) {
         in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
@@ -187,8 +221,8 @@ class select::impl {
     }
   }
   template <typename... Type>
-  static void select_ctx(entt::registry& in_reg,
-                         sqlpp::sqlite3::connection& in_conn) {
+  void select_ctx(entt::registry& in_reg,
+                  sqlpp::sqlite3::connection& in_conn) {
     std::map<std::uint32_t,
              std::function<void(entt::registry & in_reg, const std::string& in_str)>>
         l_fun{
@@ -205,23 +239,38 @@ class select::impl {
     _select_ctx_(in_reg, in_conn, l_fun);
   }
 
-  static void select_entt(entt::registry& in_reg,
-                          sqlpp::sqlite3::connection& in_conn) {
+  void select_entt(entt::registry& in_reg,
+                   sqlpp::sqlite3::connection& in_conn) {
     sql::Entity l_entity{};
 
     for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity))
                                  .from(l_entity)
                                  .unconditionally())) {
-      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
-          row.id.value());
-      entt::handle l_h{in_reg, in_reg.valid(l_e) ? l_e : in_reg.create(l_e)};
-      chick_true<doodle_error>(
-          l_h.valid(), DOODLE_LOC,
-          "失效的实体");
-      if(l_h.get<database>() == row.uuidData.value())
-        continue ;
+      if (stop)
+        return;
 
-      l_h.emplace<database>(row.uuidData.value());
+      auto l_fut = boost::asio::post(
+          strand_,
+          std::packaged_task<void()>{
+              [in_json = row.uuidData.value(),
+               in_id   = row.id.value(),
+               &in_reg,
+               this]() {
+                if (stop)
+                  return;
+                entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
+                    in_id);
+                entt::handle l_h{in_reg, in_reg.valid(l_e) ? l_e : in_reg.create(l_e)};
+                chick_true<doodle_error>(
+                    l_h.valid(), DOODLE_LOC,
+                    "失效的实体");
+                if (l_h.get<database>() == in_json)
+                  continue;
+
+                l_h.emplace<database>(in_json);
+              }});
+
+      results.emplace_back(l_fut.share());
     }
   }
 };
@@ -241,14 +290,36 @@ void select::init() {
   });
 }
 void select::succeeded() {
+  g_reg()->ctx().erase<process_message>();
 }
 void select::failed() {
+  g_reg()->ctx().erase<process_message>();
 }
 void select::aborted() {
+  g_reg()->ctx().erase<process_message>();
+  p_i->stop = true;
 }
 void select::update(chrono::duration<chrono::system_clock::rep,
                                      chrono::system_clock::period>,
                     void* data) {
+  if (p_i->result.valid()) {
+    switch (p_i->result.wait_for(0ns)) {
+      case std::future_status::ready: {
+        try {
+          p_i->result.get();
+        } catch (const doodle_error& error) {
+          DOODLE_LOG_ERROR(error.what());
+          this->fail();
+          throw;
+        }
+      } break;
+      default:
+        break;
+    }
+  } else {
+    std::swap(g_reg(), p_i->local_reg);
+    this->succeed();
+  }
 }
 
 void select::th_run() {
