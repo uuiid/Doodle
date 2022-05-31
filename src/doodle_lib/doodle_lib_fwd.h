@@ -5,7 +5,7 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
 
-#include <doodle_lib/lib_warp/sqlppWarp.h>
+#include <doodle_core/lib_warp/sqlppWarp.h>
 #include <doodle_core/lib_warp/std_warp.h>
 
 #include <doodle_lib/lib_warp/icon_font_macro.h>
@@ -53,6 +53,6 @@ class database_task_install;
 class database_task_obs;
 
 using program_options_ptr = std::shared_ptr<program_options>;
-using conn_ptr            = std::unique_ptr<sqlpp::sqlite3::connection>;
+
 
 }  // namespace doodle

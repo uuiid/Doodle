@@ -10,6 +10,7 @@
 
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_sig.h>
+#include <doodle_core/logger/logger.h>
 
 namespace doodle::win {
 

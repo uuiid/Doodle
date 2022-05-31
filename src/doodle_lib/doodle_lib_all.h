@@ -34,7 +34,7 @@
 #include <doodle_lib/lib_warp/lru_cache_policy.hpp>
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/lib_warp/protobuf_warp_cpp.h>
-#include <doodle_lib/lib_warp/sqlppWarp.h>
+#include <doodle_core/lib_warp/sqlppWarp.h>
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_lib/toolkit/toolkit.h>
 #include <doodle_lib/exe_warp/maya_exe.h>

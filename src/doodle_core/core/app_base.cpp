@@ -9,6 +9,7 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/client/client.h>
 #include <doodle_core/logger/logger.h>
 
 #include <boost/locale.hpp>
@@ -16,12 +17,11 @@ namespace doodle {
 
 app_base* app_base::self = nullptr;
 app_base::app_base()
-    : p_title(boost::asio::conv::utf_to_utf<wchar_t>(fmt::format(
+    : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format(
           "doodle {}", version::version_str))),
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
-      p_lib(std::make_shared<doodle_lib>()),
-      options_(std::make_shared<program_options>()) {
+      p_lib(std::make_shared<doodle_lib>()) {
   self = this;
 
   DOODLE_LOG_INFO("开始初始化基本配置");
@@ -62,7 +62,6 @@ std::int32_t app_base::run() {
   clear_loop();
   return 0;
 }
-
 
 void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);

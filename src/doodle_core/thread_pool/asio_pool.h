@@ -12,6 +12,8 @@
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/bind_executor.hpp>
 
+#include <boost/signals2.hpp>
+
 //#include <boost/intrusive/list.hpp>
 //#include <boost/intrusive/list_hook.hpp>
 

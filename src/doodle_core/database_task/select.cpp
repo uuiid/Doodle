@@ -13,6 +13,11 @@
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/ppgen.h>
 
+#include <range/v3/range.hpp>
+#include <range/v3/range_for.hpp>
+#include <range/v3/all.hpp>
+
+
 namespace doodle {
 namespace database_n {
 class select::impl {
@@ -103,7 +108,7 @@ end;
   template <class... Table_Class>
 
   void auto_create_component_table() {
-    std::vector l_com_names{entt::type_name<Table_Class>().value()...};
+    std::vector<std::string> l_com_names{entt::type_name<Table_Class>().value()...};
 
     ranges::for_each(l_com_names,[](std::string& in_name){
       ;

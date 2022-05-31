@@ -8,6 +8,8 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
 #include <doodle_core/metadata/image_icon.h>
+
+#include <platform/win/get_screenshot.h>
 namespace doodle {
 
 class screenshot_widget::impl {

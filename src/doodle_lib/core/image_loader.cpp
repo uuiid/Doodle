@@ -11,6 +11,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
+#include <platform/win/get_screenshot.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
 

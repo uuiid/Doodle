@@ -19,6 +19,7 @@
 
 #include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/sqlppWarp.h>
 
 namespace boost::asio {
 class io_context;
@@ -77,4 +78,6 @@ namespace movie {
 class image_attr;
 class image_watermark;
 }  // namespace movie
+
+using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
 }  // namespace doodle

@@ -5,9 +5,10 @@
 #include "client.h"
 
 #include <doodle_core/core/core_sql.h>
-#include <doodle_core/long_task/database_task.h>
+//#include <doodle_core/long_task/database_task.h>
 
 #include <doodle_core/thread_pool/process_pool.h>
+#include <doodle_core/logger/logger.h>
 #include <doodle_core/core/core_sig.h>
 
 #include <sqlpp11/sqlpp11.h>
@@ -177,36 +178,36 @@ end;
                        l_info.version_minor = version::version_minor));
 }
 void client::open_project(const FSys::path& in_path) {
-  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-  p_i->data_path = in_path;
-  p_i->up_data();
-
-  g_pool().post<database_task_select>(in_path).then<one_process_t>([=]() {
-    auto& k_reg = *g_reg();
-    auto k_prj  = k_reg.view<project>();
-    for (auto&& [e, p] : k_prj.each()) {
-      /// @brief 这里我们强制将项目路径更改为项目所在路径
-      p.p_path = in_path.parent_path();
-      k_reg.ctx().at<core_sig>().project_end_open(make_handle(e), p);
-      return;
-    }
-    chick_true<doodle_error>(false, DOODLE_LOC, "在这个库中找不到项目");
-  });
+//  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
+//  p_i->data_path = in_path;
+//  p_i->up_data();
+//
+//  g_pool().post<database_task_select>(in_path).then<one_process_t>([=]() {
+//    auto& k_reg = *g_reg();
+//    auto k_prj  = k_reg.view<project>();
+//    for (auto&& [e, p] : k_prj.each()) {
+//      /// @brief 这里我们强制将项目路径更改为项目所在路径
+//      p.p_path = in_path.parent_path();
+//      k_reg.ctx().at<core_sig>().project_end_open(make_handle(e), p);
+//      return;
+//    }
+//    chick_true<doodle_error>(false, DOODLE_LOC, "在这个库中找不到项目");
+//  });
 }
 void client::new_project(const entt::handle& in_handle) {
-  chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
-  auto k_prj     = in_handle.get<project>();
-
-  auto k_path    = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
-  p_i->data_path = k_path;
-  if (!in_handle.all_of<database>())
-    in_handle.emplace<database>();
-  add_project(k_path);
-  g_reg()->ctx().emplace<project>()        = in_handle.get<project>();
-  g_reg()->ctx().at<database_info>().path_ = k_path;
-  g_pool().post<database_task_install>(in_handle).then<one_process_t>([k_path, this]() {
-    client{}.open_project(k_path);
-  });
+//  chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
+//  auto k_prj     = in_handle.get<project>();
+//
+//  auto k_path    = k_prj.get_path() / (k_prj.p_en_str + doodle_config::doodle_db_name.data());
+//  p_i->data_path = k_path;
+//  if (!in_handle.all_of<database>())
+//    in_handle.emplace<database>();
+//  add_project(k_path);
+//  g_reg()->ctx().emplace<project>()        = in_handle.get<project>();
+//  g_reg()->ctx().at<database_info>().path_ = k_path;
+//  g_pool().post<database_task_install>(in_handle).then<one_process_t>([k_path, this]() {
+//    client{}.open_project(k_path);
+//  });
 }
 
 }  // namespace doodle::core

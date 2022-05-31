@@ -5,4 +5,7 @@ target_sources(doodle_core
         entt_warp.cpp
         entt_warp.h
         json_warp.h
-        std_warp.h)
+        std_warp.h
+        sqlppWarp.h
+
+        )

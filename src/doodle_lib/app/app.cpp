@@ -12,7 +12,7 @@
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
 #include <doodle_lib/long_task/database_task.h>
-#include <doodle_lib/platform/win/drop_manager.h>
+#include <doodle_core/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_core/core/core_sig.h>
@@ -320,7 +320,7 @@ bool app::set_parent(win::wnd_handle in_parent) {
   return ::SetParent(p_hwnd, in_parent) != nullptr;
 }
 bool app::chick_authorization() {
-  if (!app_base::chick_authorization()) {
+  if (!app_command_base::chick_authorization()) {
     auto show_str = fmt::format(L"授权失败\n请见授权文件放入 {} ",
                                 core_set::getSet().get_doc() /
                                     doodle_config::token_name.data());
