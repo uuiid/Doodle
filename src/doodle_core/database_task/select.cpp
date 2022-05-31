@@ -49,6 +49,7 @@ class select::impl {
   std::atomic_bool stop{false};
   boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>
       strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  std::size_t size_{10};
 
   registry_ptr local_reg{std::make_shared<entt::registry>()};
 
@@ -265,7 +266,7 @@ class select::impl {
                     l_h.valid(), DOODLE_LOC,
                     "失效的实体");
                 if (l_h.get<database>() == in_json)
-                  continue;
+                  return;
 
                 l_h.emplace<database>(in_json);
               }});
@@ -285,9 +286,11 @@ void select::init() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
-  p_i->result = g_thread_pool().enqueue([this]() {
-    this->th_run();
-  });
+  p_i->results.emplace_back(
+      g_thread_pool().enqueue([this]() {
+                       this->th_run();
+                     })
+          .share());
 }
 void select::succeeded() {
   g_reg()->ctx().erase<process_message>();
@@ -302,20 +305,25 @@ void select::aborted() {
 void select::update(chrono::duration<chrono::system_clock::rep,
                                      chrono::system_clock::period>,
                     void* data) {
-  if (p_i->result.valid()) {
-    switch (p_i->result.wait_for(0ns)) {
-      case std::future_status::ready: {
-        try {
-          p_i->result.get();
-        } catch (const doodle_error& error) {
-          DOODLE_LOG_ERROR(error.what());
-          this->fail();
-          throw;
-        }
-      } break;
-      default:
-        break;
-    }
+  if (!p_i->results.empty()) {
+    p_i->size_ = std::max(p_i->size_, p_i->results.size());
+    ranges::remove_if(p_i->results,
+                      [this](const std::shared_future<void>& in_r) {
+                        if (in_r.wait_for(0ns) == std::future_status::ready) {
+                          g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->size_});
+                          try {
+                            in_r.get();
+                          } catch (const doodle_error& error) {
+                            DOODLE_LOG_ERROR(error.what());
+                            this->p_i->stop = true;
+                            this->fail();
+                            throw;
+                          };
+                          return true;
+                        }
+                        return false;
+                      });
+
   } else {
     std::swap(g_reg(), p_i->local_reg);
     this->succeed();
