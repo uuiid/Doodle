@@ -9,9 +9,17 @@ cmrc_add_resource_library(
         resource/fa-solid-900.ttf
         ${DOODLE_RE_FILES_LIST}
 )
-# 添加配置
+include(doodle_exe)
+doodle_sqlpp_generate(
+        OUT_LISTS_sqlpp
+        LISTS_FILES
+        core/sql_file.sql
+)
 
-add_library(doodle_core)
+# 添加配置
+add_library(doodle_core
+        ${OUT_LISTS_sqlpp}
+        )
 
 # 添加库目录
 target_include_directories(doodle_core
@@ -28,6 +36,7 @@ target_sources(doodle_core
         doodle_core.h
         doodle_core_pch.h
         doodle_macro.h
+
         PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp
         )
