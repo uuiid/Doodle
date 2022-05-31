@@ -22,7 +22,7 @@ namespace doodle {
 void app_command_base::command_line_parser(const std::vector<std::string>& in_arg) {
   if (!chick_authorization())
     stop_app();
-
+  options_ = std::make_shared<program_options>();
   options_->command_line_parser(in_arg);
 
   auto& set = core_set::getSet();
