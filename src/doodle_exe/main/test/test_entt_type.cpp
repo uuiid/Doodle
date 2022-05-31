@@ -7,5 +7,5 @@
 #include <doodle_lib/app/app.h>
 
 TEST_CASE("entt type") {
-  std::cout << entt::type_info<std::vector<std::int32_t>>().name() << std::endl;
+  std::cout << entt::type_id<std::vector<std::string>>().name() << std::endl;
 }
