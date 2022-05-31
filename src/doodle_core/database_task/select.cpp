@@ -112,7 +112,7 @@ class select::impl {
     }
   }
 
-  void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  static void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     Metadatatab l_metadatatab{};
 
     for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
@@ -141,7 +141,7 @@ class select::impl {
   }
 
   template <typename Type>
-  void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  static void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};
 
     in_reg.storage<doodle::project>();
@@ -168,20 +168,57 @@ class select::impl {
     (_select_com_<Type>(in_reg, in_conn), ...);
   }
 
-  void select_ctx(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  static void _select_ctx_(entt::registry& in_reg,
+                           sqlpp::sqlite3::connection& in_conn,
+                           const std::map<std::uint32_t,
+                                          std::function<
+                                              void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
     sql::Context l_context{};
-
-    std::map<std::uint32_t,
-             std::function<void(entt::registry & in_reg)>>
-        l_fun{};
 
     for (auto&& row : in_conn(
              sqlpp::select(l_context.comHash,
-                           l_context.comHash)
+                           l_context.jsonData)
                  .from(l_context)
                  .unconditionally())) {
-      row.comHash.value();
-      //      l_fun.find();
+      if (auto l_f = in_fun_list.find(row.comHash.value());
+          l_f != in_fun_list.end()) {
+        in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
+      }
+    }
+  }
+  template <typename... Type>
+  static void select_ctx(entt::registry& in_reg,
+                         sqlpp::sqlite3::connection& in_conn) {
+    std::map<std::uint32_t,
+             std::function<void(entt::registry & in_reg, const std::string& in_str)>>
+        l_fun{
+            std::make_pair(entt::type_id<Type>().hash(),
+                           [](entt::registry& in_reg, const std::string& in_str) {
+                             auto l_json = nlohmann::json::parse(in_str);
+                             if (in_reg.ctx().template contains<Type>())
+                               in_reg.ctx().template erase<Type>();
+
+                             in_reg.ctx().template emplace<Type>(
+                                 std::move(l_json.get<Type>()));
+                           })...};
+
+    _select_ctx_(in_reg, in_conn, l_fun);
+  }
+
+  static void select_entt(entt::registry& in_reg,
+                          sqlpp::sqlite3::connection& in_conn) {
+    sql::Entity l_entity{};
+
+    for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity))
+                                 .from(l_entity)
+                                 .unconditionally())) {
+      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
+          row.id.value());
+      entt::handle l_h{in_reg, in_reg.create(l_e)};
+      chick_true<doodle_error>(
+          l_h.valid(), DOODLE_LOC,
+          "失效的实体");
+      l_h.emplace<database>(row.uuidData.value());
     }
   }
 };
@@ -210,29 +247,16 @@ void select::update(chrono::duration<chrono::system_clock::rep,
                                      chrono::system_clock::period>,
                     void* data) {
 }
+
 void select::th_run() {
-  /// \brief 选中实体
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
-  auto&& l_reg = *p_i->local_reg;
-  {
-    auto&& l_db = *l_k_con;
-    sql::Entity l_entity{};
 
-    for (auto& row : l_db(sqlpp::select(sqlpp::all_of(l_entity))
-                              .from(l_entity)
-                              .unconditionally())) {
-      entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
-          row.id.value());
-      entt::handle l_h{l_reg, l_reg.create(l_e)};
-      chick_true<doodle_error>(
-          l_h.valid(), DOODLE_LOC,
-          "失效的实体");
-      l_h.emplace<database>(row.uuidData.value());
-    }
-  }
-  /// @brief 选中组件
-  {
+  if (!p_i->only_ctx) {
+    /// \brief 选中实体
+    p_i->select_entt(*p_i->local_reg, *l_k_con);
+
+    /// @brief 选中组件
     p_i->select_com<doodle::project,
                     doodle::episodes,
                     doodle::shot,
@@ -241,14 +265,15 @@ void select::th_run() {
                     doodle::assets_file,
                     doodle::time_point_wrap,
                     doodle::comment,
-                    doodle::project_config::base_config,
                     doodle::image_icon,
                     doodle::importance,
                     doodle::organization_list,
-                    doodle::redirection_path_info>(l_reg, *l_k_con);
+                    doodle::redirection_path_info>(*p_i->local_reg, *l_k_con);
   }
   /// \brief 选中上下文
   {
+    p_i->select_ctx<doodle::project,
+                    doodle::project_config::base_config>(*p_i->local_reg, *l_k_con);
   }
 }
 
