@@ -35,7 +35,6 @@ doodle_lib::doodle_lib()
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
   loop_bounded_pool.timiter_ = core_set::getSet().p_max_thread;
   /// 创建依赖性
-  reg->on_construct<database>().connect<&database::set_enum>();
   reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   reg->ctx().emplace<database_info>();

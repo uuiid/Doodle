@@ -91,7 +91,6 @@ class DOODLE_CORE_EXPORT database {
 
   static void set_enum(entt::registry &in_reg, entt::entity in_ent);
 
-  std::int32_t get_meta_type_int() const;
   bool is_install() const;
 
   const boost::uuids::uuid &uuid() const;
@@ -101,22 +100,14 @@ class DOODLE_CORE_EXPORT database {
    * @return std::int32_t
    */
   std::uint64_t get_id() const;
-  /**
-   * @brief 设置数据库中的类型
-   *
-   * @param in_meta 类型
-   */
-  void set_meta_type(const metadata_type &in_meta);
-  void set_meta_type(const std::string &in_meta);
-  void set_meta_type(std::int32_t in_);
 
-  database &operator=(const metadata_database &in);
-  operator metadata_database() const;
   bool operator==(const database &in_rhs) const;
   bool operator!=(const database &in_rhs) const;
 
   bool operator==(const ref_data &in_rhs) const;
   bool operator!=(const ref_data &in_rhs) const;
+  bool operator==(const std::string &in_uuid_str) const;
+  bool operator!=(const std::string &in_uuid_str) const;
 
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;

@@ -218,6 +218,9 @@ class select::impl {
       chick_true<doodle_error>(
           l_h.valid(), DOODLE_LOC,
           "失效的实体");
+      if(l_h.get<database>() == row.uuidData.value())
+        continue ;
+
       l_h.emplace<database>(row.uuidData.value());
     }
   }
