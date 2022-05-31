@@ -14,6 +14,8 @@ class DOODLE_CORE_EXPORT inster : public process_t<inster> {
 
  public:
   using base_type = process_t<inster>;
+  explicit inster(const std::vector<entt::entity>& in_inster);
+
   ~inster() override;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
@@ -22,4 +24,4 @@ class DOODLE_CORE_EXPORT inster : public process_t<inster> {
   [[maybe_unused]] void update(base_type::delta_type, void* data);
 };
 
-}  // namespace doodle
+}  // namespace doodle::database_n
