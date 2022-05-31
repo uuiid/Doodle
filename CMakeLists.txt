@@ -103,7 +103,7 @@ set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
 set(DOXYGEN_EXCLUDE
         src/doodle_lib/external
         src/doodle_lib/resource
-        src/doodle_lib/generate
+        src/doodle_core/generate
         src/doodle_lib/rpc
 
         src/doodle_exe/main/test
