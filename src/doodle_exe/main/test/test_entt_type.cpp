@@ -8,4 +8,6 @@
 
 TEST_CASE("entt type") {
   std::cout << entt::type_id<std::vector<std::string>>().name() << std::endl;
+  std::cout << entt::type_id<std::vector<std::string>>().hash() << std::endl;
+  std::cout << entt::type_id<std::vector<std::string>>().index() << std::endl;
 }
