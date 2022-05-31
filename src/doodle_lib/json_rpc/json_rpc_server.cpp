@@ -6,7 +6,6 @@
 #include <doodle_core/metadata/project.h>
 #include <long_task/image_to_move.h>
 
-#include <client/client.h>
 namespace doodle {
 
 class json_rpc_server::impl {
@@ -18,7 +17,6 @@ json_rpc_server::json_rpc_server()
     : ptr(std::make_unique<impl>()) {
 }
 project json_rpc_server::open_project(const FSys::path& in_path) {
-  core::client{}.open_project(in_path);
   return {};
 }
 void json_rpc_server::create_movie(
