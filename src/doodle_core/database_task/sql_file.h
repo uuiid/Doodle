@@ -44,10 +44,12 @@ create table com_entity
     id        integer auto_increment
         constraint entity_pk
             primary key,
-    entity_id integer
-        constraint entity_id_ref references entity (id),
-    com_hash integer,
-    json_data text
+    entity_id integer,
+    com_hash  integer,
+    json_data text,
+    foreign key (entity_id)
+        references entity (id)
+        on delete cascade
 );
 )";
 constexpr auto create_com_table_index_id   = R"(
@@ -59,7 +61,7 @@ create index if not exists com_entity_index_hash
     on com_entity (com_hash);
 )";
 constexpr auto create_com_table_trigger    = R"(
-create trigger UpdataLastTime_ AFTER UPDATE OF json_data
+create trigger if not exists UpdataLastTime_ AFTER UPDATE OF json_data
     ON com_entity
 begin
     update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
