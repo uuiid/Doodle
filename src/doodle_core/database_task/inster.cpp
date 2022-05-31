@@ -2,7 +2,7 @@
 // Created by TD on 2022/5/30.
 //
 
-#include "install.h"
+#include "inster.h"
 
 namespace doodle {
 namespace database_n {

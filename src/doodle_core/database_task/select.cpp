@@ -32,24 +32,24 @@ class select::impl {
   bool only_ctx{false};
   std::future<void> result;
 
-  void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
+  static void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_ctx_table});
     in_conn.execute(std::string{create_ctx_table_index});
   }
 
-  void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
+  static void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_entity_table});
     in_conn.execute(std::string{create_entity_table_index});
   }
 
-  void add_component_table(sqlpp::sqlite3::connection& in_conn) {
+  static void add_component_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_com_table});
     in_conn.execute(std::string{create_com_table_index_id});
     in_conn.execute(std::string{create_com_table_index_hash});
     in_conn.execute(std::string{create_com_table_trigger});
   }
 
-  std::tuple<std::uint32_t, std::uint32_t> get_version(
+  static std::tuple<std::uint32_t, std::uint32_t> get_version(
       sqlpp::sqlite3::connection& in_conn) {
     doodle_info::doodle_info l_info{};
 
@@ -64,7 +64,7 @@ class select::impl {
     return {};
   }
 
-  void set_version(sqlpp::sqlite3::connection& in_conn) const {
+  static void set_version(sqlpp::sqlite3::connection& in_conn) {
     doodle_info::doodle_info l_info{};
 
     in_conn(sqlpp::update(l_info).unconditionally().set(
@@ -79,6 +79,22 @@ class select::impl {
       add_entity_table(*k_con);
       add_ctx_table(*k_con);
       add_component_table(*k_con);
+    }
+    if(l_main_v < version::version_major || l_s_v < version::version_minor){
+      set_version(*k_con);
+    }
+  }
+
+  void create_db() {
+    if (!FSys::exists(project)) {
+      if (!FSys::exists(project.parent_path()))
+        FSys::create_directories(project.parent_path());
+
+      auto k_con = core_sql::Get().get_connection(project);
+      add_entity_table(*k_con);
+      add_ctx_table(*k_con);
+      add_component_table(*k_con);
+      set_version(*k_con);
     }
   }
 };

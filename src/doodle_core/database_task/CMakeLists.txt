@@ -1,7 +1,7 @@
 target_sources(doodle_core
         PUBLIC
         delete_data.h
-        install.h
+        inster.h
         observe.h
         select.h
         update.h
@@ -9,7 +9,7 @@ target_sources(doodle_core
         PRIVATE
 
         delete_data.cpp
-        install.cpp
+        inster.cpp
         observe.cpp
         select.cpp
         update.cpp

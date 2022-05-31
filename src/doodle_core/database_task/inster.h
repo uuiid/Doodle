@@ -8,7 +8,7 @@
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_EXPORT install {
+class DOODLE_CORE_EXPORT inster {
 };
 
 }  // namespace database_n
