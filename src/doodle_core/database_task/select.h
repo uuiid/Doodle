@@ -15,6 +15,9 @@ class DOODLE_CORE_EXPORT select : public process_t<select> {
   using base_type = process_t<select>;
   class DOODLE_CORE_EXPORT arg {
    public:
+    /**
+     * @brief 这个是指向数据库的绝对路径
+     */
     FSys::path project_path;
     bool only_ctx;
   };

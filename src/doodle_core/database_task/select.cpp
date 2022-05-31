@@ -6,91 +6,80 @@
 #include <thread_pool/process_message.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <thread_pool/thread_pool.h>
-
+#include <logger/logger.h>
 #include <core/core_sql.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/ppgen.h>
-
+#include <doodle_core/database_task/sql_file.h>
 #include <range/v3/range.hpp>
 #include <range/v3/range_for.hpp>
 #include <range/v3/all.hpp>
+
+SQLPP_DECLARE_TABLE(
+    (doodle_info),
+    (version_major, int, SQLPP_NULL)(version_minor, int, SQLPP_NULL));
 
 namespace doodle {
 namespace database_n {
 class select::impl {
  public:
+  /**
+   * 数据库的绝对路径
+   */
   FSys::path project;
-  bool only_ctx;
+  bool only_ctx{false};
   std::future<void> result;
 
   void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
-    in_conn.execute(R"(
-create table entity
-(
-    id          integer auto_increment
-        constraint entity_pk
-            primary key,
-    uuid_data   text,
-    update_time datetime default CURRENT_TIMESTAMP not null
-
-);
-)");
-    in_conn.execute(R"(
-create index if not exists context_index_id
-    on context (id);
-)");
+    in_conn.execute(std::string{create_ctx_table});
+    in_conn.execute(std::string{create_ctx_table_index});
   }
 
   void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
-    in_conn.execute(R"(
-create table entity
-(
-    id          integer auto_increment
-        constraint entity_pk
-            primary key,
-    uuid_data   text,
-    update_time datetime default CURRENT_TIMESTAMP not null
-
-);
-)");
-    in_conn.execute(R"(
-create index if not exists entity_index
-    on entity (id);
-)");
+    in_conn.execute(std::string{create_entity_table});
+    in_conn.execute(std::string{create_entity_table_index});
   }
 
-  void add_component_table(sqlpp::sqlite3::connection& in_conn,
-                           const std::string in_com_name) {
-    in_conn.execute(R"(
-create table com_entity
-(
-    id        integer auto_increment
-        constraint entity_pk
-            primary key,
-    entity_id integer
-        constraint entity_id_ref references entity (id),
-    com_hash integer,
-    json_data text
-);
-)");
+  void add_component_table(sqlpp::sqlite3::connection& in_conn) {
+    in_conn.execute(std::string{create_com_table});
+    in_conn.execute(std::string{create_com_table_index_id});
+    in_conn.execute(std::string{create_com_table_index_hash});
+    in_conn.execute(std::string{create_com_table_trigger});
+  }
 
-    in_conn.execute(R"(
-create index if not exists com_entity_index
-    on com_entity (id);
-)");
-    in_conn.execute(R"(
-create index if not exists com_entity_index_hash
-    on com_entity (com_hash);
-)");
-    in_conn.execute(R"(
-create trigger UpdataLastTime_ AFTER UPDATE OF json_data
-    ON com_entity
-begin
-    update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
-end;
-)");
+  std::tuple<std::uint32_t, std::uint32_t> get_version(
+      sqlpp::sqlite3::connection& in_conn) {
+    doodle_info::doodle_info l_info{};
+
+    for (auto&& row : in_conn(
+             sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
+      return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.version_major.value()),
+                             boost::numeric_cast<std::uint32_t>(row.version_minor.value()));
+    }
+    chick_true<doodle_error>(false,
+                             DOODLE_LOC,
+                             "无法检查到数据库");
+    return {};
+  }
+
+  void set_version(sqlpp::sqlite3::connection& in_conn) const {
+    doodle_info::doodle_info l_info{};
+
+    in_conn(sqlpp::update(l_info).unconditionally().set(
+        l_info.version_major = version::version_major,
+        l_info.version_minor = version::version_minor));
+  }
+
+  void up_data() {
+    auto k_con             = core_sql::Get().get_connection(project);
+    auto [l_main_v, l_s_v] = get_version(*k_con);
+    if (l_main_v <= 3 && l_s_v <= 4) {
+      add_entity_table(*k_con);
+      add_ctx_table(*k_con);
+      add_component_table(*k_con);
+    }
   }
 };
 
