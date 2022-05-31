@@ -17,7 +17,6 @@
 #include <range/v3/range_for.hpp>
 #include <range/v3/all.hpp>
 
-
 namespace doodle {
 namespace database_n {
 class select::impl {
@@ -64,57 +63,35 @@ create index if not exists entity_index
 
   void add_component_table(sqlpp::sqlite3::connection& in_conn,
                            const std::string in_com_name) {
-    in_conn.execute(fmt::format(R"(
-create table com_{}
+    in_conn.execute(R"(
+create table com_entity
 (
     id        integer auto_increment
         constraint entity_pk
             primary key,
     entity_id integer
         constraint entity_id_ref references entity (id),
+    com_hash integer,
     json_data text
 );
-)",
-                                in_com_name));
+)");
 
-    in_conn.execute(fmt::format(R"(
-create index if not exists com_{0}_index
-    on com_{0} (id);
-)",
-                                in_com_name));
-    in_conn.execute(fmt::format(R"(
-create trigger UpdataLastTime_{0} AFTER UPDATE OF json_data
-    ON com_{0}
+    in_conn.execute(R"(
+create index if not exists com_entity_index
+    on com_entity (id);
+)");
+    in_conn.execute(R"(
+create index if not exists com_entity_index_hash
+    on com_entity (com_hash);
+)");
+    in_conn.execute(R"(
+create trigger UpdataLastTime_ AFTER UPDATE OF json_data
+    ON com_entity
 begin
     update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
 end;
-)",
-                                in_com_name));
+)");
   }
-
-  std::vector<std::string> get_tables(sqlpp::sqlite3::connection& in_conn) {
-    auto statement = sqlpp::custom_query(
-                         sqlpp::verbatim(
-                             R"(SELECT name FROM main WHERE type='table' ORDER BY name ;)"))
-                         .with_result_type_of(
-                             sqlpp::select(sqlpp::value("").as(sqlpp::alias::a)));
-
-    std::vector<std::string> l_r{};
-    for (auto& row : in_conn(statement)) {
-      l_r.emplace_back(row.a.value());
-    }
-    return l_r;
-  }
-  template <class... Table_Class>
-
-  void auto_create_component_table() {
-    std::vector<std::string> l_com_names{entt::type_name<Table_Class>().value()...};
-
-    ranges::for_each(l_com_names,[](std::string& in_name){
-      ;
-    });
-
-  };
 };
 
 select::select(const select::arg& in_arg) : p_i(std::make_unique<impl>()) {
