@@ -60,6 +60,12 @@ class entity_data {
 
 }  // namespace
 class insert::impl {
+ private:
+  /**
+   * @brief 线程未来数据获取
+   */
+  std::vector<std::future<void>> futures_;
+
  public:
   /**
    * @brief 传入的实体列表
@@ -86,10 +92,12 @@ class insert::impl {
    * @brief 原子停止指示
    */
   std::atomic_bool stop{false};
+
   /**
    * @brief 线程未来数据获取
    */
-  std::vector<std::future<void>> futures_;
+  std::future<void> future_;
+  std::size_t size;
 
   /**
    * @brief 在注册表中插入实体
@@ -103,8 +111,11 @@ class insert::impl {
                 l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)));
 
     for (auto &&i : main_tabls) {
+      if (stop)
+        return;
       l_pre.params.uuidData = i.second->uuid_data;
       i.second->l_id        = in_db(l_pre);
+      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
     }
   }
   /**
@@ -121,11 +132,14 @@ class insert::impl {
                 l_tabl.comHash  = sqlpp::parameter(l_tabl.comHash),
                 l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)));
     for (auto &&j : com_tabls) {
+      if (stop)
+        return;
       l_pre.params.jsonData = j.json_data;
       l_pre.params.comHash  = j.com_id;
       l_pre.params.entityId = main_tabls.at(j.entt_)->l_id;
       auto l_size           = in_db(l_pre);
       DOODLE_LOG_INFO("插入数据 id {}", l_size);
+      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
     }
   }
 
@@ -141,14 +155,19 @@ class insert::impl {
                  }) |
                  ranges::to<std::map<entt::entity, std::shared_ptr<entity_data>>>();
     ranges::for_each(main_tabls, [this](decltype(main_tabls)::value_type &in) {
+      if (stop)
+        return;
       futures_.emplace_back(
           boost::asio::post(
               g_thread_pool().pool_,
               std::packaged_task<void()>{
                   [=]() {
+                    if (stop)
+                      return;
                     auto l_h = entt::handle{*g_reg(), in.second->entt_};
                     in.second->uuid_data =
                         boost::uuids::to_string(l_h.get<database>().uuid());
+                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
                   }}));
     });
   }
@@ -159,32 +178,40 @@ class insert::impl {
    * @tparam Type_T 组件类型
    */
   template <typename Type_T>
-  void _create_com_data_() {
-    ranges::for_each(entt_list, [this](const entt::entity &in) {
+  void _create_com_data_(std::size_t in_size) {
+    ranges::for_each(entt_list, [this, in_size](const entt::entity &in) {
+      if (stop)
+        return;
       futures_.emplace_back(
           boost::asio::post(
               strand_,
               std::packaged_task<void()>{
                   [=]() {
+                    if (stop)
+                      return;
                     auto l_h = entt::handle{*g_reg(), in};
                     if (l_h.all_of<Type_T>()) {
                       nlohmann::json l_j{};
                       l_j = l_h.get<Type_T>();
                       com_tabls.emplace_back(in, entt::type_id<Type_T>().hash(), l_j.dump());
                     }
+                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size});
                   }}));
     });
   }
   template <typename... Type_T>
   void create_com_data() {
-    (_create_com_data_<Type_T>(), ...);
+    auto l_size = sizeof...(Type_T);
+    (_create_com_data_<Type_T>(l_size), ...);
   }
 
   /**
    * @brief 从主线程开始调用的函数
    */
   void th_insert() {
+    g_reg()->ctx().emplace<process_message>().message("创建实体数据");
     create_entt_data();
+    g_reg()->ctx().emplace<process_message>().message("组件数据...");
     create_com_data<doodle::project,
                     doodle::episodes,
                     doodle::shot,
@@ -199,12 +226,19 @@ class insert::impl {
                     doodle::organization_list,
                     doodle::redirection_path_info>();
 
+    g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
     for (auto &f : futures_) {
+      if (stop)
+        return;
       f.get();
     }
+    g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+    g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
     insert_db_entity(*l_comm);
+    g_reg()->ctx().emplace<process_message>().message("组件插入...");
     insert_db_com(*l_comm);
+    g_reg()->ctx().emplace<process_message>().message("完成");
   }
 };
 insert::insert(const std::vector<entt::entity> &in_inster)
@@ -213,17 +247,40 @@ insert::insert(const std::vector<entt::entity> &in_inster)
 }
 insert::~insert() = default;
 void insert::init() {
-  ;
+  auto &k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("插入数据");
+  k_msg.set_state(k_msg.run);
+  p_i->future_ = g_thread_pool().enqueue([this]() {
+    p_i->th_insert();
+  });
 }
 void insert::succeeded() {
+  g_reg()->ctx().erase<process_message>();
 }
 void insert::failed() {
+  g_reg()->ctx().erase<process_message>();
 }
 void insert::aborted() {
+  g_reg()->ctx().erase<process_message>();
+  p_i->stop = true;
 }
 void insert::update(
     chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>,
     void *data) {
+  switch (p_i->future_.wait_for(0ns)) {
+    case std::future_status::ready: {
+      try {
+        p_i->future_.get();
+        this->succeed();
+      } catch (const doodle_error &error) {
+        DOODLE_LOG_ERROR(error.what());
+        this->fail();
+        throw;
+      }
+    } break;
+    default:
+      break;
+  }
 }
 
 }  // namespace doodle::database_n
