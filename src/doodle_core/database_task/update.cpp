@@ -44,6 +44,10 @@ class update_data::impl {
 
   /// \brief 最终的ji结果
   std::future<void> future_;
+  ///@brief 原子停止指示
+  std::atomic_bool stop{false};
+
+  std::size_t size;
 
   void updata_db(sqlpp::sqlite3::connection &in_db) {
     sql::ComEntity l_tabl{};
@@ -53,10 +57,13 @@ class update_data::impl {
             .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
                    l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
     for (auto &&i : com_tabls) {
+      if (stop)
+        return;
       l_pre.params.jsonData = i.json_data;
       l_pre.params.comHash  = i.com_id;
       l_pre.params.entityId = main_tabls[i.entt_];
       in_db(l_pre);
+      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
     }
   }
 
@@ -70,12 +77,16 @@ class update_data::impl {
 
   template <typename Type_T>
   void _create_com_data_(std::size_t in_size) {
-    ranges::for_each(entt_list, [this](const entt::entity &in_) {
+    ranges::for_each(entt_list, [this, in_size](const entt::entity &in_) {
+      if (stop)
+        return;
       futures_.emplace_back(
           boost::asio::post(
               strand_,
               std::packaged_task<void()>{
                   [=]() {
+                    if (stop)
+                      return;
                     auto l_h = entt::handle{*g_reg(), in_};
                     if (l_h.all_of<Type_T>()) {
                       auto l_json = nlohmann::json{};
@@ -84,6 +95,7 @@ class update_data::impl {
                                              entt::type_id<Type_T>().hash(),
                                              l_json.dump());
                     }
+                    g_reg()->ctx().emplace<process_message>().progress_step({1, in_size * size * 2});
                   }}));
     });
   }
@@ -93,15 +105,22 @@ class update_data::impl {
     auto l_size = sizeof...(Type_T);
     (_create_com_data_<Type_T>(l_size), ...);
   }
+
   void th_updata() {
+    g_reg()->ctx().emplace<process_message>().message("创建实体数据");
     create_entt_data();
 #include "details/macro.h"
+    g_reg()->ctx().emplace<process_message>().message("组件数据...");
     create_com_data<DOODLE_SQLITE_TYPE>();
+
+    g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
     for (auto &f : futures_) {
       f.get();
     }
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+    g_reg()->ctx().emplace<process_message>().message("组件更新...");
     updata_db(*l_comm);
+    g_reg()->ctx().emplace<process_message>().message("完成");
   }
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)
@@ -126,6 +145,7 @@ void update_data::failed() {
 }
 void update_data::aborted() {
   g_reg()->ctx().erase<process_message>();
+  p_i->stop = true;
 }
 void update_data::update(
     chrono::duration<chrono::system_clock::rep,
