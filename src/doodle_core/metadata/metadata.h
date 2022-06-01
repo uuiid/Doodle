@@ -52,6 +52,11 @@ class DOODLE_CORE_EXPORT database_info {
 class DOODLE_CORE_EXPORT database {
  private:
   friend class database_task_install;
+
+  friend class database_n::insert;
+  friend class database_n::select;
+  friend class database_n::update;
+  friend class database_n::delete_data;
   class impl;
   std::unique_ptr<impl> p_i;
   void set_id(std::uint64_t in_id) const;
