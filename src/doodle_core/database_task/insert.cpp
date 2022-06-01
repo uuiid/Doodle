@@ -2,7 +2,7 @@
 // Created by TD on 2022/5/30.
 //
 
-#include "inster.h"
+#include "insert.h"
 #include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
@@ -31,41 +31,33 @@
 #include <boost/asio.hpp>
 namespace doodle::database_n {
 
-class inster::impl {
+class insert::impl {
  public:
   std::vector<entt::entity> entt_list{};
-  registry_ptr local_reg{std::make_shared<entt::registry>()};
 
-  template <typename Type>
-  void _copy_com_() {
-    auto l_v = g_reg()->view<Type>();
-    local_reg->insert<Type>(l_v.data(), l_v.data() + l_v.size(),
-                            l_v.raw(), l_v.raw() + l_v.size());
-  }
+  std::vector<std::pair<std::int32_t, std::string>> entity_tabls;
+  std::vector<std::pair<std::int32_t, std::string>> com_tabls;
+
+  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+
+  std::vector<boost_strand> strands_{};
+  std::atomic_bool stop{false};
 };
-inster::inster(const std::vector<entt::entity> &in_inster)
+insert::insert(const std::vector<entt::entity> &in_inster)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_inster;
 }
-inster::~inster() = default;
-void inster::init() {
-  auto &&l_reg = *g_reg();
-  p_i->local_reg->assign(l_reg.data(), l_reg.data() + l_reg.size(), l_reg.released());
-
-  auto l_v = g_reg()->view<doodle::project>();
-  std::vector<doodle::project> l_lsit{};
-
-  p_i->local_reg->insert<doodle::project>(
-      l_reg.data(), l_reg.data() + l_reg.size(),
-      l_lsit.begin());
+insert::~insert() = default;
+void insert::init() {
+  ;
 }
-void inster::succeeded() {
+void insert::succeeded() {
 }
-void inster::failed() {
+void insert::failed() {
 }
-void inster::aborted() {
+void insert::aborted() {
 }
-void inster::update(
+void insert::update(
     chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>,
     void *data) {
 }
