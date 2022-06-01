@@ -38,6 +38,7 @@ namespace doodle::database_n {
 namespace sql = doodle_database;
 class select::impl {
  public:
+  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
   /**
    * 数据库的绝对路径
    */
@@ -46,8 +47,9 @@ class select::impl {
   std::future<void> result;
   std::vector<std::shared_future<void>> results;
   std::atomic_bool stop{false};
-  boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>
+  boost_strand
       strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  std::vector<boost_strand> strands_{};
   std::size_t size_{10};
 
   registry_ptr local_reg{std::make_shared<entt::registry>()};
@@ -165,7 +167,7 @@ class select::impl {
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};
 
-    auto l_s = boost::asio::make_strand(g_thread_pool().pool_);
+    auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread_pool().pool_));
     for (auto&& row : in_conn(
              sqlpp::select(
                  l_com_entity.entityId,
