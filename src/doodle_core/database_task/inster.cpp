@@ -35,13 +35,29 @@ class inster::impl {
  public:
   std::vector<entt::entity> entt_list{};
   registry_ptr local_reg{std::make_shared<entt::registry>()};
+
+  template <typename Type>
+  void _copy_com_() {
+    auto l_v = g_reg()->view<Type>();
+    local_reg->insert<Type>(l_v.data(), l_v.data() + l_v.size(),
+                            l_v.raw(), l_v.raw() + l_v.size());
+  }
 };
 inster::inster(const std::vector<entt::entity> &in_inster)
     : p_i(std::make_unique<impl>()) {
-  p_i->entt_list  = in_inster;
+  p_i->entt_list = in_inster;
 }
 inster::~inster() = default;
 void inster::init() {
+  auto &&l_reg = *g_reg();
+  p_i->local_reg->assign(l_reg.data(), l_reg.data() + l_reg.size(), l_reg.released());
+
+  auto l_v = g_reg()->view<doodle::project>();
+  std::vector<doodle::project> l_lsit{};
+
+  p_i->local_reg->insert<doodle::project>(
+      l_reg.data(), l_reg.data() + l_reg.size(),
+      l_lsit.begin());
 }
 void inster::succeeded() {
 }
@@ -54,4 +70,4 @@ void inster::update(
     void *data) {
 }
 
-}  // namespace doodle
+}  // namespace doodle::database_n
