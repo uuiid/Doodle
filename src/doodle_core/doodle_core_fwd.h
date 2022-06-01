@@ -79,5 +79,14 @@ class image_attr;
 class image_watermark;
 }  // namespace movie
 
+namespace database_n{
+class insert;
+class select;
+class update;
+class delete_data;
+}
+
+
+
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
 }  // namespace doodle
