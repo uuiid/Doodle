@@ -29,25 +29,12 @@
 #include <range/v3/all.hpp>
 
 #include <boost/asio.hpp>
+
+#include <database_task/details/com_data.h>
 namespace doodle::database_n {
 namespace sql = doodle_database;
 namespace {
-/**
- * @brief 组件数据
- */
-class com_data {
- public:
-  com_data(entt::entity in_entt,
-           std::uint32_t in_id,
-           std::string in_str)
-      : entt_(in_entt),
-        com_id(in_id),
-        json_data(std::move(in_str)) {}
 
-  entt::entity entt_{};
-  std::uint32_t com_id{};
-  std::string json_data{};
-};
 /**
  * @brief 实体数据
  */
@@ -67,6 +54,7 @@ class insert::impl {
   std::vector<std::future<void>> futures_;
 
  public:
+  using com_data = details::com_data;
   /**
    * @brief 传入的实体列表
    */

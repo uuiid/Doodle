@@ -5,13 +5,34 @@
 #include "update.h"
 
 namespace doodle::database_n {
+namespace {
+/**
+ * @brief 组件数据
+ */
+class com_data {
+ public:
+  com_data(entt::entity in_entt,
+           std::uint32_t in_id,
+           std::string in_str)
+      : entt_(in_entt),
+        com_id(in_id),
+        json_data(std::move(in_str)) {}
 
+  entt::entity entt_{};
+  std::uint32_t com_id{};
+  std::string json_data{};
+};
+}  // namespace
 class update_data::impl {
+ public:
+  std::vector<entt::entity> entt_list{};
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
+  p_i->entt_list = in_data;
 }
 update_data::~update_data() = default;
+
 void update_data::init() {
 }
 void update_data::succeeded() {

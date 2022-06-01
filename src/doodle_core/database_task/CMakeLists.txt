@@ -15,3 +15,4 @@ target_sources(doodle_core
         update.cpp
 
         )
+add_subdirectory(details)
