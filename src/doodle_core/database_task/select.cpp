@@ -165,6 +165,7 @@ class select::impl {
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};
 
+    auto l_s = boost::asio::make_strand(g_thread_pool().pool_);
     for (auto&& row : in_conn(
              sqlpp::select(
                  l_com_entity.entityId,
@@ -175,7 +176,7 @@ class select::impl {
       if (stop)
         return;
       auto l_fut = boost::asio::post(
-          strand_,
+          l_s,
           std::packaged_task<void()>{
               [in_json = row.jsonData.value(),
                in_id   = row.entityId.value(),
