@@ -14,21 +14,13 @@
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
-#include <doodle_core/lib_warp/entt_warp.h>
-#include <doodle_core/database_task/sql_file.h>
 
 #include <doodle_core/generate/core/sql_sql.h>
-#include <doodle_core/generate/core/metadatatab_sql.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
-#include <sqlpp11/ppgen.h>
 
-#include <range/v3/range.hpp>
-#include <range/v3/range_for.hpp>
 #include <range/v3/all.hpp>
-
-#include <boost/asio.hpp>
 
 #include <database_task/details/com_data.h>
 namespace doodle::database_n {
@@ -44,46 +36,31 @@ class entity_data {
   std::uint64_t l_id{};
   std::string uuid_data{};
 };
-
 }  // namespace
 class insert::impl {
  private:
-  /**
-   * @brief 线程未来数据获取
-   */
+  /// @brief 线程未来数据获取
   std::vector<std::future<void>> futures_;
 
  public:
   using com_data = details::com_data;
-  /**
-   * @brief 传入的实体列表
-   */
+  /// @brief 传入的实体列表
   std::vector<entt::entity> entt_list{};
-  /**
-   * @brief 实体数据生成
-   */
+  /// @brief 实体数据生成
   std::map<entt::entity, std::shared_ptr<entity_data>> main_tabls;
-  /**
-   * @brief 组件数据生成
-   */
+  /// @brief 组件数据生成
   std::vector<com_data> com_tabls;
 
   std::vector<std::pair<std::int32_t, std::string>> ctx_tabls;
 
   using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
 
-  /**
-   * @brief boost 无锁保护
-   */
+  /// @brief boost 无锁保护
   boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
-  /**
-   * @brief 原子停止指示
-   */
+  ///@brief 原子停止指示
   std::atomic_bool stop{false};
 
-  /**
-   * @brief 线程未来数据获取
-   */
+  ///@brief 线程未来数据获取
   std::future<void> future_;
   std::size_t size;
 
