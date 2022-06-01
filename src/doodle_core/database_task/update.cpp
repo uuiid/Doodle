@@ -4,28 +4,116 @@
 
 #include "update.h"
 
-namespace doodle::database_n {
-namespace {
-/**
- * @brief 组件数据
- */
-class com_data {
- public:
-  com_data(entt::entity in_entt,
-           std::uint32_t in_id,
-           std::string in_str)
-      : entt_(in_entt),
-        com_id(in_id),
-        json_data(std::move(in_str)) {}
+#include <doodle_core/thread_pool/process_message.h>
+#include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/thread_pool/thread_pool.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/core/core_sql.h>
 
-  entt::entity entt_{};
-  std::uint32_t com_id{};
-  std::string json_data{};
-};
-}  // namespace
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/organization.h>
+#include <doodle_core/metadata/redirection_path_info.h>
+
+#include <doodle_core/generate/core/sql_sql.h>
+
+#include <sqlpp11/sqlpp11.h>
+#include <sqlpp11/sqlite3/sqlite3.h>
+
+#include <range/v3/all.hpp>
+
+#include <database_task/details/com_data.h>
+namespace doodle::database_n {
+namespace sql = doodle_database;
+
 class update_data::impl {
+ private:
+  std::vector<std::future<void>> futures_;
+
  public:
+  using com_data = details::com_data;
   std::vector<entt::entity> entt_list{};
+
+  std::vector<com_data> com_tabls;
+  std::map<entt::entity, std::int64_t> main_tabls;
+  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+  ///@brief boost 无锁保护
+  boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  //#define Type_T doodle::project
+
+  std::future<void> future_;
+
+  void updata_db(sqlpp::sqlite3::connection &in_db) {
+    sql::ComEntity l_tabl{};
+    auto l_pre = in_db.prepare(
+        sqlpp::update(l_tabl)
+            .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
+            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
+                   l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
+    for (auto &&i : com_tabls) {
+      l_pre.params.jsonData = i.json_data;
+      l_pre.params.comHash  = i.com_id;
+      l_pre.params.entityId = main_tabls[i.entt_];
+      in_db(l_pre);
+    }
+  }
+
+  void create_entt_data() {
+    main_tabls = entt_list |
+                 ranges::view::transform([](const entt::entity &in) {
+                   return std::make_pair(in, g_reg()->get<database>(in).get_id());
+                 }) |
+                 ranges::to<std::map<entt::entity, std::int64_t>>();
+  }
+
+  template <typename Type_T>
+  void _create_com_data_(std::size_t in_size) {
+    ranges::for_each(entt_list, [this](const entt::entity &in_) {
+      futures_.emplace_back(
+          boost::asio::post(
+              strand_,
+              std::packaged_task<void()>{
+                  [=]() {
+                    auto l_h = entt::handle{*g_reg(), in_};
+                    if (l_h.all_of<Type_T>()) {
+                      auto l_json = nlohmann::json{};
+                      l_json      = l_h.get<Type_T>();
+                      com_tabls.emplace_back(in_,
+                                             entt::type_id<Type_T>().hash(),
+                                             l_json.dump());
+                    }
+                  }}));
+    });
+  }
+
+  template <typename... Type_T>
+  void create_com_data() {
+    auto l_size = sizeof...(Type_T);
+    (_create_com_data_<Type_T>(l_size), ...);
+  }
+
+  void th_updata() {
+    create_entt_data();
+    create_com_data<doodle::project,
+                    doodle::episodes,
+                    doodle::shot,
+                    doodle::season,
+                    doodle::assets,
+                    doodle::assets_file,
+                    doodle::time_point_wrap,
+                    doodle::comment,
+                    doodle::project_config::base_config,
+                    doodle::image_icon,
+                    doodle::importance,
+                    doodle::organization_list,
+                    doodle::redirection_path_info>();
+    for (auto &f : futures_) {
+      f.get();
+    }
+    auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+    updata_db(*l_comm);
+  }
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
@@ -34,13 +122,39 @@ update_data::update_data(const std::vector<entt::entity> &in_data)
 update_data::~update_data() = default;
 
 void update_data::init() {
+  auto &k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("插入数据");
+  k_msg.set_state(k_msg.run);
+  p_i->future_ = g_thread_pool().enqueue([this]() {
+    p_i->th_updata();
+  });
 }
 void update_data::succeeded() {
+  g_reg()->ctx().erase<process_message>();
 }
 void update_data::failed() {
+  g_reg()->ctx().erase<process_message>();
 }
 void update_data::aborted() {
+  g_reg()->ctx().erase<process_message>();
 }
-void update_data::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
+void update_data::update(
+    chrono::duration<chrono::system_clock::rep,
+                     chrono::system_clock::period>,
+    void *data) {
+  switch (p_i->future_.wait_for(0ns)) {
+    case std::future_status::ready: {
+      try {
+        p_i->future_.get();
+        this->succeed();
+      } catch (const doodle_error &error) {
+        DOODLE_LOG_ERROR(error.what());
+        this->fail();
+        throw;
+      }
+    } break;
+    default:
+      break;
+  }
 }
 }  // namespace doodle::database_n
