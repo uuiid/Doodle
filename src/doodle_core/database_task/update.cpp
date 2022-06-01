@@ -126,6 +126,7 @@ class update_data::impl {
 update_data::update_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_data;
+  p_i->size = p_i->entt_list.size();
 }
 update_data::~update_data() = default;
 

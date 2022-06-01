@@ -208,6 +208,7 @@ class insert::impl {
 insert::insert(const std::vector<entt::entity> &in_inster)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_inster;
+  p_i->size = p_i->entt_list.size();
 }
 insert::~insert() = default;
 void insert::init() {
