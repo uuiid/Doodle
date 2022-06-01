@@ -7,5 +7,6 @@ target_sources(doodle_core
         json_warp.h
         std_warp.h
         sqlppWarp.h
+        enum_template_tool.h
 
         )
