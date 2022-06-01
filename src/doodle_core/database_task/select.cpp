@@ -34,8 +34,7 @@ SQLPP_DECLARE_TABLE(
     (doodle_info),
     (version_major, int, SQLPP_NULL)(version_minor, int, SQLPP_NULL));
 
-namespace doodle {
-namespace database_n {
+namespace doodle::database_n {
 namespace sql = doodle_database;
 class select::impl {
  public:
@@ -359,5 +358,4 @@ void select::th_run() {
   }
 }
 
-}  // namespace database_n
 }  // namespace doodle
