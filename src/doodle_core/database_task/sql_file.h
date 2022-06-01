@@ -50,6 +50,7 @@ create table com_entity
     foreign key (entity_id)
         references entity (id)
         on delete cascade
+        on update cascade
 );
 )";
 constexpr auto create_com_table_index_id   = R"(

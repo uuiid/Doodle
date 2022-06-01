@@ -30,6 +30,7 @@ create table com_entity
     foreign key (entity_id)
         references entity (id)
         on delete cascade
+        on update cascade
 );
 create index if not exists com_entity_index
     on com_entity (id);
