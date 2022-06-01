@@ -143,6 +143,12 @@ class insert::impl {
     }
   }
 
+  void set_database_id() {
+    ranges::for_each(entt_list, [this](entt::entity &in_) {
+      entt::handle l_h{*g_reg(), in_};
+      l_h.get<database>().set_id(main_tabls[in_]->l_id);
+    });
+  }
   /**
    * @brief 创建实体数据(多线程)
    */
@@ -238,6 +244,8 @@ class insert::impl {
     insert_db_entity(*l_comm);
     g_reg()->ctx().emplace<process_message>().message("组件插入...");
     insert_db_com(*l_comm);
+    g_reg()->ctx().emplace<process_message>().message("回调设置id");
+    set_database_id();
     g_reg()->ctx().emplace<process_message>().message("完成");
   }
 };
