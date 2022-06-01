@@ -19,6 +19,7 @@
 
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/generate/core/metadatatab_sql.h>
+#include <doodle_core/lib_warp/enum_template_tool.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -126,7 +127,7 @@ class select::impl {
     for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
                                   .from(l_metadatatab)
                                   .unconditionally())) {
-      auto l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
+      auto l_e = num_to_enum<entt::entity>(row.id.value());
       if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
 
       auto l_fun =
@@ -141,7 +142,8 @@ class select::impl {
                     if (stop)
                       return;
                     entt::handle l_h{in_reg, l_e};
-                    l_h.emplace<database>(in_uuid);
+                    l_h.emplace<database>(in_uuid).set_id(
+                        enum_to_num(l_e));
                     auto k_json = nlohmann::json::parse(in_str);
                     entt_tool::load_comm<doodle::project,
                                          doodle::episodes,
@@ -186,7 +188,7 @@ class select::impl {
                this]() {
                 if (stop)
                   return;
-                entt::entity l_e = *magic_enum::enum_cast<entt::entity>(in_id);
+                entt::entity l_e = num_to_enum<entt::entity>(in_id);
                 entt::handle l_h{in_reg, l_e};
                 chick_true<doodle_error>(
                     l_h.valid(),
@@ -252,7 +254,7 @@ class select::impl {
                                  .unconditionally())) {
       if (stop)
         return;
-      auto l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
+      auto l_e = num_to_enum<entt::entity>(row.id.value());
       if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
 
       auto l_fut = boost::asio::post(
