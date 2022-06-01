@@ -58,6 +58,7 @@ class select::impl {
   static void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_ctx_table});
     in_conn.execute(std::string{create_ctx_table_index});
+    in_conn.execute(std::string{create_ctx_table_unique});
   }
 
   static void add_entity_table(sqlpp::sqlite3::connection& in_conn) {

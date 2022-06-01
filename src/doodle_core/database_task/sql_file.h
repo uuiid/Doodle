@@ -21,6 +21,10 @@ constexpr auto create_ctx_table_index      = R"(
 create index if not exists context_index_id
     on context (id);
 )";
+constexpr auto create_ctx_table_unique     = R"(
+create unique index ctx_hash_index
+    on context (com_hash);
+)";
 
 constexpr auto create_entity_table         = R"(
 create table entity

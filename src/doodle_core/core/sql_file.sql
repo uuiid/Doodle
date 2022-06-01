@@ -8,6 +8,9 @@ create table context
 );
 create index if not exists context_index_id
     on context (id);
+create unique index ctx_hash_index
+    on context (com_hash);
+
 create table entity
 (
     id          integer auto_increment
