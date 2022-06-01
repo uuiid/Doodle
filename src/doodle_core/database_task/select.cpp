@@ -124,20 +124,21 @@ class select::impl {
     for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
                                   .from(l_metadatatab)
                                   .unconditionally())) {
+      auto l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
+      if (!in_reg.valid(l_e)) in_reg.create(l_e);
+
       auto l_fun =
           boost::asio::post(
               strand_,
               std::packaged_task<void()>{
-                  [in_id   = row.id.value(),
+                  [l_e,
                    in_str  = row.userData.value(),
                    in_uuid = row.uuidData.value(),
                    &in_reg,
                    this]() {
                     if (stop)
                       return;
-                    entt::entity l_e = *magic_enum::enum_cast<entt::entity>(in_id);
-                    entt::handle l_h{in_reg,
-                                     in_reg.create(l_e)};
+                    entt::handle l_h{in_reg, l_e};
                     l_h.emplace<database>(in_uuid);
                     auto k_json = nlohmann::json::parse(in_str);
                     entt_tool::load_comm<doodle::project,
@@ -358,4 +359,4 @@ void select::th_run() {
   }
 }
 
-}  // namespace doodle
+}  // namespace doodle::database_n
