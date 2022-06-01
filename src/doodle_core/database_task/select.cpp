@@ -125,7 +125,7 @@ class select::impl {
                                   .from(l_metadatatab)
                                   .unconditionally())) {
       auto l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
-      if (!in_reg.valid(l_e)) in_reg.create(l_e);
+      if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
 
       auto l_fun =
           boost::asio::post(
@@ -249,19 +249,20 @@ class select::impl {
                                  .unconditionally())) {
       if (stop)
         return;
+      auto l_e = *magic_enum::enum_cast<entt::entity>(row.id.value());
+      if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
 
       auto l_fut = boost::asio::post(
           strand_,
           std::packaged_task<void()>{
               [in_json = row.uuidData.value(),
-               in_id   = row.id.value(),
+               l_e,
                &in_reg,
                this]() {
                 if (stop)
                   return;
-                entt::entity l_e = *magic_enum::enum_cast<entt::entity>(
-                    in_id);
-                entt::handle l_h{in_reg, in_reg.valid(l_e) ? l_e : in_reg.create(l_e)};
+
+                entt::handle l_h{in_reg, l_e};
                 chick_true<doodle_error>(
                     l_h.valid(), DOODLE_LOC,
                     "失效的实体");
