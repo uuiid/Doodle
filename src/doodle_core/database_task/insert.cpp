@@ -183,19 +183,8 @@ class insert::impl {
     g_reg()->ctx().emplace<process_message>().message("创建实体数据");
     create_entt_data();
     g_reg()->ctx().emplace<process_message>().message("组件数据...");
-    create_com_data<doodle::project,
-                    doodle::episodes,
-                    doodle::shot,
-                    doodle::season,
-                    doodle::assets,
-                    doodle::assets_file,
-                    doodle::time_point_wrap,
-                    doodle::comment,
-                    doodle::project_config::base_config,
-                    doodle::image_icon,
-                    doodle::importance,
-                    doodle::organization_list,
-                    doodle::redirection_path_info>();
+#include "details/macro.h"
+    create_com_data<DOODLE_SQLITE_TYPE>();
 
     g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
     for (auto &f : futures_) {

@@ -42,6 +42,7 @@ class update_data::impl {
   boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
   //#define Type_T doodle::project
 
+  /// \brief 最终的ji结果
   std::future<void> future_;
 
   void updata_db(sqlpp::sqlite3::connection &in_db) {
@@ -92,22 +93,10 @@ class update_data::impl {
     auto l_size = sizeof...(Type_T);
     (_create_com_data_<Type_T>(l_size), ...);
   }
-
   void th_updata() {
     create_entt_data();
-    create_com_data<doodle::project,
-                    doodle::episodes,
-                    doodle::shot,
-                    doodle::season,
-                    doodle::assets,
-                    doodle::assets_file,
-                    doodle::time_point_wrap,
-                    doodle::comment,
-                    doodle::project_config::base_config,
-                    doodle::image_icon,
-                    doodle::importance,
-                    doodle::organization_list,
-                    doodle::redirection_path_info>();
+#include "details/macro.h"
+    create_com_data<DOODLE_SQLITE_TYPE>();
     for (auto &f : futures_) {
       f.get();
     }

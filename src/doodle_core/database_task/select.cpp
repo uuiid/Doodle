@@ -343,20 +343,9 @@ void select::th_run() {
   if (!p_i->only_ctx) {
     /// \brief 选中实体
     p_i->select_entt(*p_i->local_reg, *l_k_con);
-
+#include "details/macro.h"
     /// @brief 选中组件
-    p_i->select_com<doodle::project,
-                    doodle::episodes,
-                    doodle::shot,
-                    doodle::season,
-                    doodle::assets,
-                    doodle::assets_file,
-                    doodle::time_point_wrap,
-                    doodle::comment,
-                    doodle::image_icon,
-                    doodle::importance,
-                    doodle::organization_list,
-                    doodle::redirection_path_info>(*p_i->local_reg, *l_k_con);
+    p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
   }
   /// \brief 选中上下文
   {
