@@ -193,11 +193,13 @@ class insert::impl {
       f.get();
     }
     g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
-    auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
-    g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
-    insert_db_entity(*l_comm);
-    g_reg()->ctx().emplace<process_message>().message("组件插入...");
-    insert_db_com(*l_comm);
+    {
+      auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+      g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
+      insert_db_entity(*l_comm);
+      g_reg()->ctx().emplace<process_message>().message("组件插入...");
+      insert_db_com(*l_comm);
+    }
     g_reg()->ctx().emplace<process_message>().message("回调设置id");
     set_database_id();
     g_reg()->ctx().emplace<process_message>().message("完成");
