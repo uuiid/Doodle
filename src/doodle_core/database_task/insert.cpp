@@ -166,7 +166,7 @@ class insert::impl {
                       l_j = l_h.get<Type_T>();
                       com_tabls.emplace_back(in, entt::type_id<Type_T>().hash(), l_j.dump());
                     }
-                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size});
+                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size * 4});
                   }}));
     });
   }
