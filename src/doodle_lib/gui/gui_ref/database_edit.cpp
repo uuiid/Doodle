@@ -20,23 +20,11 @@ void database_edit::init_(const entt::handle& in) {
   auto&& l_item = in.get_or_emplace<database>();
 
   std::string l_status{};
-  switch (l_item.status_) {
-    case database::status::is_sync:
-      p_i->status = "同步状态";
-      break;
-    case database::status::need_save:
-      p_i->status = "需要保存";
-      break;
-    case database::status::need_load:
-      p_i->status = "需要加载";
-      break;
-    case database::status::need_delete:
-      p_i->status = "需要删除";
-      break;
-    default:
-      p_i->status = "需要保存";
-      break;
-  }
+  if (in.any_of<data_status_save, data_status_delete>())
+    p_i->status = "需要保存";
+  else
+    p_i->status = "已同步";
+
   p_i->id      = l_item.get_id();
   p_i->is_edit = data_->is_modify ? "(已编辑)"s : ""s;
 
