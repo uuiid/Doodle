@@ -11,10 +11,6 @@
 #include <doodle_core/core/core_sql.h>
 
 #include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/metadata/image_icon.h>
-#include <doodle_core/metadata/importance.h>
-#include <doodle_core/metadata/organization.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 
 #include <doodle_core/generate/core/sql_sql.h>
 
@@ -65,6 +61,7 @@ class delete_data::impl {
         return;
       l_pre.params.id = i;
       in_db(l_pre);
+      DOODLE_LOG_INFO("删除数据库id {}", i);
       g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
     }
   }

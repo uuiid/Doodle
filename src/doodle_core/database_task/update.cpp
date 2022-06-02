@@ -64,7 +64,8 @@ class update_data::impl {
       l_pre.params.jsonData = i.json_data;
       l_pre.params.comHash  = i.com_id;
       l_pre.params.entityId = main_tabls[i.entt_];
-      in_db(l_pre);
+      auto l_s              = in_db(l_pre);
+      DOODLE_LOG_INFO("更新数据库id {}", l_s);
       g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
     }
   }
