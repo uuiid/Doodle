@@ -21,7 +21,7 @@
 #include <sqlpp11/sqlite3/sqlite3.h>
 
 #include <range/v3/all.hpp>
-
+#include <database_task/details/update_ctx.h>
 #include <database_task/details/com_data.h>
 namespace doodle::database_n {
 namespace sql = doodle_database;
@@ -199,6 +199,8 @@ class insert::impl {
       insert_db_entity(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("组件插入...");
       insert_db_com(*l_comm);
+      g_reg()->ctx().emplace<process_message>().message("开始上下文插入");
+      doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
     }
     g_reg()->ctx().emplace<process_message>().message("回调设置id");
     set_database_id();
@@ -208,7 +210,7 @@ class insert::impl {
 insert::insert(const std::vector<entt::entity> &in_inster)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_inster;
-  p_i->size = p_i->entt_list.size();
+  p_i->size      = p_i->entt_list.size();
 }
 insert::~insert() = default;
 void insert::init() {

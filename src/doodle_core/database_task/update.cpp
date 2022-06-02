@@ -24,6 +24,8 @@
 #include <range/v3/all.hpp>
 
 #include <database_task/details/com_data.h>
+#include <database_task/details/update_ctx.h>
+
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
@@ -120,13 +122,15 @@ class update_data::impl {
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
     g_reg()->ctx().emplace<process_message>().message("组件更新...");
     updata_db(*l_comm);
+    g_reg()->ctx().emplace<process_message>().message("更新上下文...");
+    doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
     g_reg()->ctx().emplace<process_message>().message("完成");
   }
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_data;
-  p_i->size = p_i->entt_list.size();
+  p_i->size      = p_i->entt_list.size();
 }
 update_data::~update_data() = default;
 
