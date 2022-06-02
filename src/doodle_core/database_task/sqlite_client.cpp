@@ -19,12 +19,13 @@
 
 namespace doodle::database_n {
 
-void sqlite_client::open_sqlite(const FSys::path& in_path) {
-
+void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-
-
-
+  g_pool()
+      .post<database_n::select>(database_n::select::arg{in_path, only_ctx})
+      .then<one_process_t>([]() {
+        g_reg()->ctx().at<core_sig>().project_end_open();
+      });
 }
 
 void sqlite_client::update_entt() {

@@ -331,12 +331,13 @@ void select::update(chrono::duration<chrono::system_clock::rep,
                       });
 
   } else {
-//    std::swap(g_reg(), p_i->local_reg);
+    //    std::swap(g_reg(), p_i->local_reg);
     this->succeed();
   }
 }
 
 void select::th_run() {
+  p_i->create_db();
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   p_i->up_data(*l_k_con);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
