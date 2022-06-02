@@ -53,7 +53,7 @@ class select::impl {
   std::vector<boost_strand> strands_{};
   std::size_t size_{10};
 
-  registry_ptr local_reg{std::make_shared<entt::registry>()};
+  registry_ptr local_reg{g_reg()};
 
   static void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
     in_conn.execute(std::string{create_ctx_table});
@@ -331,7 +331,7 @@ void select::update(chrono::duration<chrono::system_clock::rep,
                       });
 
   } else {
-    std::swap(g_reg(), p_i->local_reg);
+//    std::swap(g_reg(), p_i->local_reg);
     this->succeed();
   }
 }
