@@ -265,7 +265,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         ranges::actions::unique |
         ranges::to_vector;
     ranges::for_each(l_list, [](const entt::handle& in_handle) {
-      in_handle.patch<database>(database::delete_);
+      database::delete_(in_handle);
     });
 
     g_reg()->ctx().at<core_sig>().save_begin.connect(
