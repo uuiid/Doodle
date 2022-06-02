@@ -1,4 +1,4 @@
-create table context
+create table if not exists context
 (
     id        integer auto_increment
         constraint entity_pk
@@ -8,10 +8,10 @@ create table context
 );
 create index if not exists context_index_id
     on context (id);
-create unique index ctx_hash_index
+create unique index if not exists ctx_hash_index
     on context (com_hash);
 
-create table entity
+create table if not exists entity
 (
     id          integer auto_increment
         constraint entity_pk
@@ -22,7 +22,7 @@ create table entity
 );
 create index if not exists entity_index
     on entity (id);
-create table com_entity
+create table if not exists com_entity
 (
     id        integer auto_increment
         constraint entity_pk

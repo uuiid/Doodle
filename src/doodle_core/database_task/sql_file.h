@@ -7,7 +7,7 @@
 #include <string_view>
 namespace doodle::database_n {
 constexpr auto create_ctx_table            = R"(
-create table context
+create table if not exists context
 (
     id          integer auto_increment
         constraint entity_pk
@@ -22,12 +22,12 @@ create index if not exists context_index_id
     on context (id);
 )";
 constexpr auto create_ctx_table_unique     = R"(
-create unique index ctx_hash_index
+create unique index if not exists ctx_hash_index
     on context (com_hash);
 )";
 
 constexpr auto create_entity_table         = R"(
-create table entity
+create table if not exists entity
 (
     id          integer auto_increment
         constraint entity_pk
@@ -43,7 +43,7 @@ create index if not exists entity_index
 )";
 
 constexpr auto create_com_table            = R"(
-create table com_entity
+create table if not exists com_entity
 (
     id        integer auto_increment
         constraint entity_pk
