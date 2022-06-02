@@ -166,7 +166,6 @@ class assets_file_widgets::impl {
   std::size_t select_index{};
 
   // std::float_t windows_width{0};
-  bool only_rand{};
 
   bool render_icon{true};
 
@@ -209,16 +208,7 @@ void assets_file_widgets::init() {
         p_i->lists.clear();
         p_i->select_index = 0;
       }));
-  p_i->p_sc.emplace_back(
-      l_sig.save_begin.connect(
-          [&](const std::vector<entt::handle>&) {
-            p_i->only_rand = true;
-          }));
-  p_i->p_sc.emplace_back(
-      l_sig.save_end.connect(
-          [&](const std::vector<entt::handle>&) {
-            p_i->only_rand = false;
-          }));
+
   //  p_i->observer_h.connect();
 }
 
@@ -228,7 +218,6 @@ void assets_file_widgets::failed() {
 
 void assets_file_widgets::render() {
   /// 渲染数据
-  dear::Disabled l_d{p_i->only_rand};
 
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
   dear::Child{"ScrollingRegion",

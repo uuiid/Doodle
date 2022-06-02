@@ -417,8 +417,8 @@ class add_assets_for_file : public base_render {
         assets_list("分类"s, std::vector<std::string>{}) {
     auto &l_sig = g_reg()->ctx().at<core_sig>();
     l_sig.project_end_open.connect(
-        [this](const entt::handle &in_prj, const doodle::project &) {
-          auto &prj         = in_prj.get_or_emplace<project_config::base_config>();
+        [this]() {
+          auto &prj         = g_reg()->ctx().at<project_config::base_config>();
           this->assets_list = prj.assets_list;
 
           this->assets_list.show_name =
@@ -535,8 +535,6 @@ class edit_widgets::impl {
   using gui_add_cache  = gui::gui_cache<std::unique_ptr<gui::base_render>>;
   std::vector<gui_edit_cache> p_edit;
   std::vector<gui_add_cache> p_add;
-
-  bool only_rand{false};
 };
 
 edit_widgets::edit_widgets()
@@ -586,12 +584,7 @@ void edit_widgets::init() {
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
       [&](const FSys::path &) {
         this->p_i->add_handles.clear();
-        this->p_i->p_h       = {};
-        this->p_i->only_rand = true;
-      }));
-  p_i->p_sc.emplace_back(
-      l_sig.project_end_open.connect([&](const entt::handle &, const doodle::project &) {
-        this->p_i->only_rand = false;
+        this->p_i->p_h = {};
       }));
 }
 
@@ -600,8 +593,6 @@ void edit_widgets::failed() {
 }
 
 void edit_widgets::render() {
-  dear::Disabled _l_rand{p_i->only_rand};
-
   dear::TreeNode{"添加"} && [this]() {
     this->add_handle();
   };

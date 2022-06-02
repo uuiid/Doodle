@@ -24,7 +24,7 @@ class DOODLE_CORE_EXPORT core_sig {
   /**
    * @brief 打开项目完成时发出的信号
    */
-  boost::signals2::signal<void(const entt::handle&, const project&)> project_end_open;
+  boost::signals2::signal<void()> project_end_open;
 
   /**
    * @brief 当使用过滤器过滤时发出的信号

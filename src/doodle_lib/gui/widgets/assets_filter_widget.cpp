@@ -434,15 +434,13 @@ class assets_filter_widget::impl {
     };
   };
 
-  impl() : only_rand(),
-           p_conns(),
+  impl() : p_conns(),
            p_filter_factorys(),
            p_filters(),
            p_sorts({gui::gui_cache<bool>{"名称排序"s, true},
                     gui::gui_cache<bool>{"集数排序"s, false},
                     gui::gui_cache<bool>{"反向"s, false}}) {}
 
-  bool only_rand{false};
   std::vector<boost::signals2::scoped_connection> p_conns;
 
   std::vector<factory_chick> p_filter_factorys;
@@ -461,26 +459,7 @@ assets_filter_widget::~assets_filter_widget() = default;
 void assets_filter_widget::init() {
   gui::window_panel::init();
   g_reg()->ctx().emplace<assets_filter_widget&>(*this);
-  p_impl->p_conns.emplace_back(
-      g_reg()->ctx().at<core_sig>().project_begin_open.connect(
-          [&](const FSys::path&) {
-            p_impl->only_rand = true;
-          }));
-  p_impl->p_conns.emplace_back(
-      g_reg()->ctx().at<core_sig>().project_end_open.connect(
-          [&](const entt::handle&, const doodle::project&) {
-            p_impl->only_rand = false;
-          }));
-  p_impl->p_conns.emplace_back(
-      g_reg()->ctx().at<core_sig>().save_begin.connect(
-          [&](const std::vector<entt::handle>&) {
-            p_impl->only_rand = true;
-          }));
-  p_impl->p_conns.emplace_back(
-      g_reg()->ctx().at<core_sig>().save_end.connect(
-          [&](const std::vector<entt::handle>&) {
-            p_impl->only_rand = false;
-          }));
+
   p_impl->p_filter_factorys.emplace_back(false, "路径过滤"s, std::make_unique<file_path_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "季数过滤"s, std::make_unique<season_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "集数过滤"s, std::make_unique<episodes_filter_factory>());
@@ -498,7 +477,6 @@ void assets_filter_widget::failed() {
 
 void assets_filter_widget::render() {
   /// 渲染数据
-  dear::Disabled l_d{p_impl->only_rand};
 
   bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {

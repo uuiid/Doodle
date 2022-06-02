@@ -51,19 +51,7 @@ doodle_lib::doodle_lib()
     k_reg->clear();
   });
 
-  k_sig.project_end_open.connect([](const entt::handle& in_handle, const doodle::project& in_project) {
-    auto& l_ctx = g_reg()->ctx();
-    l_ctx.erase<project>();
-    l_ctx.erase<database::ref_data>();
-    l_ctx.erase<project_config::base_config>();
-
-    l_ctx.emplace<project>(in_project);
-    l_ctx.emplace<database::ref_data>(in_handle.get<database>());
-    if (in_handle.any_of<project_config::base_config>()) {
-      l_ctx.emplace<project_config::base_config>(in_handle.get<project_config::base_config>());
-    } else
-      l_ctx.emplace<project_config::base_config>();
-
+  k_sig.project_end_open.connect([]() {
     core_set::getSet().add_recent_project(g_reg()->ctx().at<database_info>().path_);
   });
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {

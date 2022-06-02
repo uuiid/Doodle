@@ -38,8 +38,8 @@ void comm_maya_tool::init() {
   gui::window_panel::init();
 
   g_reg()->ctx().at<core_sig>().project_end_open.connect(
-      [this](const entt::handle& in_handle, const doodle::project&) {
-        p_text = in_handle.get_or_emplace<project_config::base_config>().vfx_cloth_sim_path.generic_string();
+      [this]( ) {
+        p_text = g_reg()->ctx().at<project_config::base_config>().vfx_cloth_sim_path.generic_string();
       });
   g_reg()->ctx().at<core_sig>().select_handles.connect(
       [this](const std::vector<entt::handle>& in_list) {

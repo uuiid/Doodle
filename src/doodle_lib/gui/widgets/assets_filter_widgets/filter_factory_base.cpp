@@ -38,14 +38,9 @@ void filter_factory_base::refresh(bool force) {
 void filter_factory_base::connection_sig() {
   auto& l_sig = g_reg()->ctx().at<core_sig>();
 
-  p_i->p_conns.emplace_back(l_sig.project_begin_open.connect(
-      [&](const FSys::path&) {
-        this->is_disabled = true;
-      }));
   p_i->p_conns.emplace_back(l_sig.project_end_open.connect(
-      [&](const entt::handle&, const doodle::project&) {
-        this->is_disabled = false;
-        p_i->need_init    = true;
+      [&]() {
+        p_i->need_init = true;
       }));
   p_i->p_conns.emplace_back(l_sig.save_end.connect(
       [&](const std::vector<entt::handle>&) {
