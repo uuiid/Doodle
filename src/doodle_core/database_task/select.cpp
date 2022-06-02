@@ -99,11 +99,13 @@ class select::impl {
   void up_data(sqlpp::sqlite3::connection& in_conn) {
     auto [l_main_v, l_s_v] = get_version(in_conn);
     if (l_main_v <= 3 && l_s_v <= 4) {
+      auto l_k_con = core_sql::Get().get_connection(project);
       add_entity_table(in_conn);
       add_ctx_table(in_conn);
       add_component_table(in_conn);
     }
     if (l_main_v < version::version_major || l_s_v < version::version_minor) {
+      auto l_k_con = core_sql::Get().get_connection(project);
       set_version(in_conn);
     }
   }
@@ -340,10 +342,8 @@ void select::update(chrono::duration<chrono::system_clock::rep,
 void select::th_run() {
   p_i->create_db();
 
-  {
-    auto l_k_con = core_sql::Get().get_connection(p_i->project);
-    p_i->up_data(*l_k_con);
-  }
+  p_i->up_data();
+
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
 
