@@ -81,7 +81,7 @@ class insert::impl {
       l_pre.params.uuidData = i.second->uuid_data;
       i.second->l_id        = in_db(l_pre);
       DOODLE_LOG_INFO("插入数据 id {}", i.second->l_id);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
+      g_reg()->ctx().emplace<process_message>().progress_step({1, main_tabls.size() * 4});
     }
   }
   /**
@@ -105,7 +105,7 @@ class insert::impl {
       l_pre.params.entityId = main_tabls.at(j.entt_)->l_id;
       auto l_size           = in_db(l_pre);
       DOODLE_LOG_INFO("插入数据 id {}", l_size);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
+      g_reg()->ctx().emplace<process_message>().progress_step({1, com_tabls.size() * 4});
     }
   }
 
