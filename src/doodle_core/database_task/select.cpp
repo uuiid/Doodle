@@ -313,22 +313,23 @@ void select::update(chrono::duration<chrono::system_clock::rep,
                     void* data) {
   if (!p_i->results.empty()) {
     p_i->size_ = std::max(p_i->size_, p_i->results.size());
-    ranges::remove_if(p_i->results,
-                      [this](const std::shared_future<void>& in_r) {
-                        if (in_r.wait_for(0ns) == std::future_status::ready) {
-                          g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->size_});
-                          try {
-                            in_r.get();
-                          } catch (const doodle_error& error) {
-                            DOODLE_LOG_ERROR(error.what());
-                            this->p_i->stop = true;
-                            this->fail();
-                            throw;
-                          };
-                          return true;
-                        }
-                        return false;
-                      });
+    auto l_it  = ranges::remove_if(p_i->results,
+                                   [this](const std::shared_future<void>& in_r) {
+                                    if (in_r.wait_for(0ns) == std::future_status::ready) {
+                                      g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->size_});
+                                      try {
+                                        in_r.get();
+                                      } catch (const doodle_error& error) {
+                                        DOODLE_LOG_ERROR(error.what());
+                                        this->p_i->stop = true;
+                                        this->fail();
+                                        throw;
+                                      };
+                                      return true;
+                                    }
+                                    return false;
+                                  });
+    ranges::erase(p_i->results, l_it, p_i->results.end());
 
   } else {
     //    std::swap(g_reg(), p_i->local_reg);
@@ -338,8 +339,12 @@ void select::update(chrono::duration<chrono::system_clock::rep,
 
 void select::th_run() {
   p_i->create_db();
+
+  {
+    auto l_k_con = core_sql::Get().get_connection(p_i->project);
+    p_i->up_data(*l_k_con);
+  }
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
-  p_i->up_data(*l_k_con);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
 
   if (!p_i->only_ctx) {
