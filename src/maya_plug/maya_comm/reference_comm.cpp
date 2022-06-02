@@ -11,7 +11,6 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/app/app.h>
-#include <doodle_lib/client/client.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

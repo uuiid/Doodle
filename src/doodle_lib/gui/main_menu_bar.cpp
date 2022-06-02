@@ -6,7 +6,6 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_lib/app/app.h>
 
-#include <doodle_core/client/client.h>
 #include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
 #include <gui/setting_windows.h>

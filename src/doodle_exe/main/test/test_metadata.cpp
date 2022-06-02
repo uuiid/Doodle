@@ -2,7 +2,6 @@
 // Created by TD on 2021/7/27.
 //
 #include <doodle_lib/doodle_lib_all.h>
-#include <doodle_lib/client/client.h>
 #include <doodle_lib/long_task/database_task.h>
 #include <doodle_lib/app/app.h>
 #include <doodle_core/core/core_sig.h>

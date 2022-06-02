@@ -9,8 +9,8 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/core/init_register.h>
-#include <doodle_core/client/client.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/database_task/sqlite_client.h>
 
 #include <boost/locale.hpp>
 namespace doodle {
@@ -82,8 +82,7 @@ void app_base::load_project(const FSys::path& in_path) const {
       FSys::exists(l_path) &&
       FSys::is_regular_file(l_path) &&
       l_path.extension() == doodle_config::doodle_db_name.data()) {
-    core::client l_c{};
-    l_c.open_project(l_path);
+    database_n::sqlite_client{}.open_sqlite(l_path);
   }
 }
 void app_base::clear_loop() {
