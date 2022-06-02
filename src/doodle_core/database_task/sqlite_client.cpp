@@ -58,8 +58,6 @@ void sqlite_client::update_entt() {
               ranges::actions::push_back(next_delete_list) |
               ranges::actions::unique;
 
-  if (all_list.empty())
-    return;
 
   auto l_list = all_list | ranges::view::transform([](auto e) {
                   return make_handle(e);
