@@ -55,7 +55,6 @@ set(
         exe_warp/ue4_exe.h
         long_task/image_to_move.h
         long_task/join_move.h
-        long_task/database_task.h
         long_task/short_cut.h
         long_task/image_load_task.h
 
@@ -118,7 +117,6 @@ set(
         exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
         long_task/join_move.cpp
-        long_task/database_task.cpp
         long_task/short_cut.cpp
         long_task/image_load_task.cpp
 

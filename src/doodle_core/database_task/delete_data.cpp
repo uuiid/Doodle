@@ -25,8 +25,7 @@
 
 #include <database_task/details/com_data.h>
 
-namespace doodle {
-namespace database_n {
+namespace doodle::database_n {
 namespace sql = doodle_database;
 
 class delete_data::impl {
@@ -126,5 +125,4 @@ void delete_data::update(
       break;
   }
 }
-}  // namespace database_n
 }  // namespace doodle
