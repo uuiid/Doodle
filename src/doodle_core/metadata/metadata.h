@@ -89,15 +89,11 @@ class DOODLE_CORE_EXPORT database {
   //  explicit database(const metadata_database &in_metadata_database);
   ~database();
 
-  bool has_components() const;
-
   database(database &&) noexcept;
   database &operator=(database &&) noexcept;
 
   database(database &) noexcept            = delete;
   database &operator=(database &) noexcept = delete;
-
-  static void set_enum(entt::registry &in_reg, entt::entity in_ent);
 
   bool is_install() const;
 
@@ -119,16 +115,6 @@ class DOODLE_CORE_EXPORT database {
 
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator!=(const boost::uuids::uuid &in_rhs) const;
-
-  enum class status : std::uint8_t {
-    none        = 0,
-    is_sync     = 1,
-    need_load   = 2,
-    need_save   = 3,
-    need_delete = 4,
-  };
-
-  std::atomic<status> status_;
 
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);
