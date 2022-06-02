@@ -4,8 +4,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle {
-namespace database_n {
+namespace doodle::database_n {
 
 class DOODLE_CORE_EXPORT delete_data: public process_t<delete_data> {
  private:
@@ -24,7 +23,6 @@ class DOODLE_CORE_EXPORT delete_data: public process_t<delete_data> {
   void update(base_type::delta_type, void* data);
 };
 
-}  // namespace database_n
 }  // namespace doodle
 
 
