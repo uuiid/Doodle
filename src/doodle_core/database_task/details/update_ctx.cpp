@@ -51,15 +51,16 @@ void update_ctx::ctx(const entt::registry& in_registry,
 #include "macro.h"
   get_ctx_sql_data<DOODLE_SQLITE_TYPE_CTX>(in_registry, data);
 
-  auto l_conn = core_sql::Get().get_connection(in_registry.ctx().at<database_info>().path_);
-  auto&& l_db = *l_conn;
   sql::Context l_table{};
 
-  auto l_par = l_db.prepare(
+  auto l_par = in_connection.prepare(
       sqlpp::sqlite3::insert_or_replace_into(l_table)
           .set(l_table.comHash  = sqlpp::parameter(l_table.comHash),
                l_table.jsonData = sqlpp::parameter(l_table.jsonData)));
-
-  );
+  for (auto&& i : data) {
+    l_par.params.comHash  = i.first;
+    l_par.params.jsonData = i.second;
+    in_connection(l_par);
+  }
 }
 }  // namespace doodle::database_n::details
