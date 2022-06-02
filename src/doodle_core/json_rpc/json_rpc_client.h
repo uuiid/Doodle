@@ -22,8 +22,6 @@ class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
   void image_to_move(const image_to_move_sig& in_skin,
                      const std::vector<movie::image_attr>& in_list);
 
-  project open_project(const FSys::path& in_path);
-
  public:
 };
 

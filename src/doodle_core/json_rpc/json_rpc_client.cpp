@@ -19,9 +19,6 @@ void json_rpc_client::image_to_move(const image_to_move_sig& in_skin,
                                               in_skin,
                                               in_list);
 }
-project json_rpc_client::open_project(const FSys::path& in_path) {
-  return call_fun<project>(json_rpc::rpc_fun_name::open_project,
-                           in_path);
-}
+
 
 }  // namespace doodle

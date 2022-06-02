@@ -86,9 +86,9 @@ TEST_CASE("create_prj") {
 }
 
 TEST_CASE("open project") {
-  core::client{}.open_project("D:/tmp");
-  while (!g_main_loop().empty())
-    g_main_loop().update({}, nullptr);
+//  core::client{}.open_project("D:/tmp");
+//  while (!g_main_loop().empty())
+//    g_main_loop().update({}, nullptr);
 }
 
 TEST_CASE("install project") {
@@ -173,7 +173,7 @@ class name_data : public app_command_base {
         .attach<database_task_install>(k_prj)
         .then<one_process_t>([=]() {
           auto k_p = k_prj.get<project>().p_path;
-          core::client{}.open_project(k_p);
+//          core::client{}.open_project(k_p);
         });
     while (!g_main_loop().empty())
       doodle::app_command_base::loop_one();

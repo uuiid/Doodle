@@ -43,7 +43,6 @@ target_sources(doodle_core
 target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 
 # 添加子目录
-add_subdirectory(client)
 add_subdirectory(configure)
 add_subdirectory(core)
 add_subdirectory(database_task)

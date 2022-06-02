@@ -15,6 +15,8 @@
 #include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
 
+#include <doodle_core/database_task/sqlite_client.h>
+
 namespace doodle {
 namespace main_menu_bar_ns {
 void to_json(nlohmann::json &j, const layout_data &p) {
@@ -77,28 +79,27 @@ void main_menu_bar::menu_file() {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("选择目录"s)
-                               .set_use_dir())
-        .then<one_process_t>([=]() {
-          k_h.patch<project>([=](project &in) {
-            in.p_path = *l_ptr;
-          });
-        })
+                                 .set_title("选择目录"s)
+                                 .set_use_dir())
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([=]() {
-          core::client l_c{};
-          l_c.new_project(k_h);
+          auto &l_ctx = g_reg()->ctx();
+          if (l_ctx.contains<project>())
+            l_ctx.erase<project>();
+          l_ctx.emplace<project>(k_h.get<project>());
+
+          database_n::sqlite_client{}
+              .open_sqlite(*l_ptr);
         });
   }
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("选择文件")
-                               .add_filter(std::string{doodle_config::doodle_db_name}))
+                                 .set_title("选择文件")
+                                 .add_filter(std::string{doodle_config::doodle_db_name}))
         .then<one_process_t>([=]() {
-          core::client l_c{};
-          l_c.open_project(*l_ptr);
+          database_n::sqlite_client{}.open_sqlite(*l_ptr);
         });
   }
   dear::Menu{"最近的项目"} && []() {
@@ -107,8 +108,8 @@ void main_menu_bar::menu_file() {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
-          core::client l_c{};
-          l_c.open_project(l_p);
+          database_n::sqlite_client{}.open_sqlite(l_p);
+          ;
         }
     }
   };
@@ -156,8 +157,8 @@ void main_menu_bar::menu_tool() {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("select_ue_project"s)
-                               .add_filter(".uproject"))
+                                 .set_title("select_ue_project"s)
+                                 .add_filter(".uproject"))
         .then<one_process_t>([=]() {
           toolkit::installUePath(*l_ptr);
         });

@@ -21,11 +21,5 @@ void json_rpc_server_i::init_register() {
                  this->create_movie(l_sig,
                                     in_json->get<std::vector<movie::image_attr>>());
                });
-  register_fun(json_rpc::rpc_fun_name::open_project,
-               [this](const std::optional<nlohmann::json>& in_json) {
-                 nlohmann::json l_json{};
-                 l_json = open_project(in_json->get<FSys::path>());
-                 return l_json;
-               });
 }
 }  // namespace doodle

@@ -18,8 +18,6 @@ using namespace std::literals;
 void test_client() {
   boost::asio::io_context io_context{};
   json_rpc_client l_c{io_context, "127.0.0.1"s, std::uint16_t{10223}};
-  auto l_prj = l_c.open_project("D:/tmp/test2.doodle_db");
-  std::cout << l_prj.p_path << std::endl;
 
   std::vector<movie::image_attr> l_vector{};
 

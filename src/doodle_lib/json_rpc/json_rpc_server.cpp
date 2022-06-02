@@ -16,9 +16,7 @@ class json_rpc_server::impl {
 json_rpc_server::json_rpc_server()
     : ptr(std::make_unique<impl>()) {
 }
-project json_rpc_server::open_project(const FSys::path& in_path) {
-  return {};
-}
+
 void json_rpc_server::create_movie(
     const image_to_move_sig& in_skin,
     const std::vector<movie::image_attr>& in_arg) {
