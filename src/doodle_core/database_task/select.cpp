@@ -291,11 +291,9 @@ void select::init() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
-  p_i->results.emplace_back(
-      g_thread_pool().enqueue([this]() {
-                       this->th_run();
-                     })
-          .share());
+  p_i->result = g_thread_pool().enqueue([this]() {
+    this->th_run();
+  });
 }
 void select::succeeded() {
   g_reg()->ctx().erase<process_message>();
@@ -310,28 +308,22 @@ void select::aborted() {
 void select::update(chrono::duration<chrono::system_clock::rep,
                                      chrono::system_clock::period>,
                     void* data) {
-  if (!p_i->results.empty()) {
-    p_i->size_ = std::max(p_i->size_, p_i->results.size());
-    auto l_it  = ranges::remove_if(p_i->results,
-                                   [this](const std::shared_future<void>& in_r) {
-                                    if (in_r.wait_for(0ns) == std::future_status::ready) {
-                                      g_reg()->ctx().emplace<process_message>().progress_step({1, p_i->size_});
-                                      try {
-                                        in_r.get();
-                                      } catch (const doodle_error& error) {
-                                        DOODLE_LOG_ERROR(error.what());
-                                        this->p_i->stop = true;
-                                        this->fail();
-                                        throw;
-                                      };
-                                      return true;
-                                    }
-                                    return false;
-                                  });
-    ranges::erase(p_i->results, l_it, p_i->results.end());
-
+  if (p_i->result.valid()) {
+    switch (p_i->result.wait_for(0ns)) {
+      case std::future_status::ready: {
+        try {
+          p_i->result.get();
+        } catch (const doodle_error& error) {
+          DOODLE_LOG_ERROR(error.what());
+          this->fail();
+          throw;
+        }
+      } break;
+      default:
+        break;
+    }
   } else {
-    //    std::swap(g_reg(), p_i->local_reg);
+    std::swap(g_reg(), p_i->local_reg);
     this->succeed();
   }
 }
@@ -359,6 +351,12 @@ void select::th_run() {
     p_i->select_ctx<doodle::project,
                     doodle::project_config::base_config>(*p_i->local_reg, *l_k_con);
   }
+
+  /// \brief 等待所有的任务完成
+
+  ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
+    in_.get();
+  });
 }
 
 }  // namespace doodle::database_n
