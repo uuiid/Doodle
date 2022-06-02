@@ -80,6 +80,7 @@ class insert::impl {
         return;
       l_pre.params.uuidData = i.second->uuid_data;
       i.second->l_id        = in_db(l_pre);
+      DOODLE_LOG_INFO("插入数据 id {}", i.second->l_id);
       g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
     }
   }
@@ -195,12 +196,14 @@ class insert::impl {
     g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
     {
       auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+      auto l_tx   = sqlpp::start_transaction(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
       insert_db_entity(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("组件插入...");
       insert_db_com(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("开始上下文插入");
       doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
+      l_tx.commit();
     }
     g_reg()->ctx().emplace<process_message>().message("回调设置id");
     set_database_id();

@@ -9,8 +9,7 @@ namespace doodle::database_n {
 constexpr auto create_ctx_table            = R"(
 create table if not exists context
 (
-    id          integer auto_increment
-        constraint entity_pk
+    id          integer
             primary key,
     com_hash integer,
     json_data text
@@ -29,8 +28,7 @@ create unique index if not exists ctx_hash_index
 constexpr auto create_entity_table         = R"(
 create table if not exists entity
 (
-    id          integer auto_increment
-        constraint entity_pk
+    id          integer
             primary key,
     uuid_data   text,
     update_time datetime default CURRENT_TIMESTAMP not null
@@ -45,8 +43,7 @@ create index if not exists entity_index
 constexpr auto create_com_table            = R"(
 create table if not exists com_entity
 (
-    id        integer auto_increment
-        constraint entity_pk
+    id        integer
             primary key,
     entity_id integer,
     com_hash  integer,

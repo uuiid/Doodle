@@ -75,7 +75,9 @@ class delete_data::impl {
     {
       g_reg()->ctx().emplace<process_message>().message("删除数据库数据");
       auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+      auto l_tx   = sqlpp::start_transaction(*l_comm);
       delete_db(*l_comm);
+      l_tx.commit();
     }
     g_reg()->ctx().emplace<process_message>().message("清除程序内部注册表");
     g_reg()->destroy(entt_list.begin(), entt_list.end());
@@ -85,7 +87,7 @@ class delete_data::impl {
 delete_data::delete_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_data;
-  p_i->size = p_i->entt_list.size();
+  p_i->size      = p_i->entt_list.size();
 }
 delete_data::~delete_data() = default;
 void delete_data::init() {
@@ -125,4 +127,4 @@ void delete_data::update(
       break;
   }
 }
-}  // namespace doodle
+}  // namespace doodle::database_n

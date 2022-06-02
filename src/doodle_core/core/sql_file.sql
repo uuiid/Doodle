@@ -1,7 +1,6 @@
 create table if not exists context
 (
     id        integer auto_increment
-        constraint entity_pk
             primary key,
     com_hash  integer,
     json_data text
@@ -25,7 +24,6 @@ create index if not exists entity_index
 create table if not exists com_entity
 (
     id        integer auto_increment
-        constraint entity_pk
             primary key,
     entity_id integer,
     com_hash  integer,

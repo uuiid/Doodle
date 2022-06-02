@@ -120,11 +120,13 @@ class update_data::impl {
       f.get();
     }
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+    auto l_tx   = sqlpp::start_transaction(*l_comm);
     g_reg()->ctx().emplace<process_message>().message("组件更新...");
     updata_db(*l_comm);
     g_reg()->ctx().emplace<process_message>().message("更新上下文...");
     doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
     g_reg()->ctx().emplace<process_message>().message("完成");
+    l_tx.commit();
   }
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)

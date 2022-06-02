@@ -270,10 +270,8 @@ class select::impl {
                 chick_true<doodle_error>(
                     l_h.valid(), DOODLE_LOC,
                     "失效的实体");
-                if (l_h.get<database>() == in_json)
-                  return;
 
-                l_h.emplace<database>(in_json);
+                l_h.emplace_or_replace<database>(in_json);
               }});
 
       results.emplace_back(l_fut.share());

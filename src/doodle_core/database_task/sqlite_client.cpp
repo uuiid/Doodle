@@ -45,7 +45,7 @@ void sqlite_client::update_entt() {
   }
 
   auto l_sv = g_reg()->view<data_status_save, database>();
-  for (auto&& [e, d] : l_dv.each()) {
+  for (auto&& [e, d] : l_sv.each()) {
     if (d.is_install()) {
       update_list.push_back(e);
     } else {
