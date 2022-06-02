@@ -74,9 +74,8 @@ void sqlite_client::update_entt() {
   if (!install_list.empty()) {
     l_next.then<database_n::insert>(install_list);
   }
-  if (!update_list.empty()) {
-    l_next.then<database_n::update_data>(update_list);
-  }
+  l_next.then<database_n::update_data>(update_list);
+
   if (!delete_list.empty()) {
     l_next.then<database_n::delete_data>(delete_list);
   }
