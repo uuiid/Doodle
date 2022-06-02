@@ -247,7 +247,7 @@ class assets_filter_factory : public gui::filter_factory_base {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
             for (auto&& l_h : *l_list) {
               l_h.emplace_or_replace<assets>(i->data.data);
-              l_h.patch<database>(database::save);
+              database::save(l_h);
             }
             if (auto* l_win = gui::base_window::find_window_by_title(
                     std::string{assets_filter_widget::name});

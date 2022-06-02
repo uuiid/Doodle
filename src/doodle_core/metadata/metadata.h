@@ -49,6 +49,9 @@ class DOODLE_CORE_EXPORT database_info {
   FSys::path path_;
 };
 
+using data_status_save   = entt::tag<"data_status_save"_hs>;
+using data_status_delete = entt::tag<"data_status_delete"_hs>;
+
 class DOODLE_CORE_EXPORT database {
  private:
   friend class database_task_install;
@@ -133,40 +136,22 @@ class DOODLE_CORE_EXPORT database {
   class DOODLE_CORE_EXPORT fun_save_ {
    public:
     constexpr fun_save_() = default;
-    void operator()(database &in) const {
-      in.status_ = status::need_save;
+    void operator()(const entt::handle &in) const {
+      in.get_or_emplace<data_status_save>();
     }
   };
   class DOODLE_CORE_EXPORT fun_delete_ {
    public:
     constexpr fun_delete_() = default;
-    void operator()(database &in) const {
-      in.status_ = status::need_delete;
-    }
-  };
-  class DOODLE_CORE_EXPORT fun_load_ {
-   public:
-    constexpr fun_load_() = default;
-    void operator()(database &in) const {
-      in.status_ = status::need_load;
-    }
-  };
-  class DOODLE_CORE_EXPORT fun_sync_ {
-   public:
-    constexpr fun_sync_() = default;
-    void operator()(database &in) const {
-      in.status_ = status::is_sync;
+    void operator()(const entt::handle &in) const {
+      in.get_or_emplace<data_status_delete>();
     }
   };
 
   constexpr const static fun_save_ save{};
   constexpr const static fun_delete_ delete_{};
-  constexpr const static fun_load_ load{};
-  constexpr const static fun_sync_ sync{};
 };
 
-using data_status_save   = entt::tag<"data_status_save"_hs>;
-using data_status_delete = entt::tag<"data_status_delete"_hs>;
 // using need_save = entt::tag<"need_save"_hs>;
 
 template <class in_class>

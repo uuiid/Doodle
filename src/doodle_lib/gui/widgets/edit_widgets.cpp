@@ -389,7 +389,7 @@ class add_assets_for_file : public base_render {
                     if (use_icon.data)
                       this->find_icon(k_h, in_path);
                     k_h.emplace<database>();
-                    k_h.patch<database>(database::save);
+                    database::save(k_h);
                     return k_h;
                   }) |
                   ranges::to_vector;
@@ -500,7 +500,7 @@ class add_entt_base : public base_render {
       for (std::int32_t i = 0; i < add_size; ++i) {
         auto l_h = list_handle.data.emplace_back(make_handle());
         l_h.emplace<database>();
-        l_h.patch<database>(database::save);
+        database::save(l_h);
       }
       g_reg()->ctx().at<core_sig>().filter_handle(list_handle);
     }
