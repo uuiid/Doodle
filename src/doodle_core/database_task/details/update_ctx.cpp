@@ -23,7 +23,43 @@
 #include <range/v3/all.hpp>
 
 namespace doodle::database_n::details {
+
+namespace sql = doodle_database;
+
+namespace {
+template <typename Type_T>
+void _get_ctx_sql_data_(
+    const entt::registry& in_registry,
+    std::map<std::uint32_t, std::string>& in_data) {
+  if (in_registry.ctx().contains<Type_T>()) {
+    auto l_json = nlohmann::json{};
+    l_json      = in_registry.ctx().at<Type_T>();
+    in_data.emplace(std::make_pair(entt::type_id<Type_T>().hash(), l_json.dump()));
+  }
+}
+template <typename... Type_T>
+void get_ctx_sql_data(
+    const entt::registry& in_registry,
+    std::map<std::uint32_t, std::string>& in_data) {
+  (_get_ctx_sql_data_<Type_T>(in_registry, in_data), ...);
+}
+}  // namespace
+
 void update_ctx::ctx(const entt::registry& in_registry,
                      sqlpp::sqlite3::connection& in_connection) {
+  std::map<std::uint32_t, std::string> data{};
+#include "macro.h"
+  get_ctx_sql_data<DOODLE_SQLITE_TYPE_CTX>(in_registry, data);
+
+  auto l_conn = core_sql::Get().get_connection(in_registry.ctx().at<database_info>().path_);
+  auto&& l_db = *l_conn;
+  sql::Context l_table{};
+
+  auto l_par = l_db.prepare(
+      sqlpp::sqlite3::insert_or_replace_into(l_table)
+          .set(l_table.comHash  = sqlpp::parameter(l_table.comHash),
+               l_table.jsonData = sqlpp::parameter(l_table.jsonData)));
+
+  );
 }
-}  // namespace doodle
+}  // namespace doodle::database_n::details

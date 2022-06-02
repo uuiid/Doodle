@@ -20,4 +20,4 @@
                                                doodle::redirection_path_info)
 
 #define DOODLE_SQLITE_TYPE_CTX DOODLE_SQLITE_TYPE_(doodle::project, \
-                                                   doodle::project_config::base_config, )
+                                                   doodle::project_config::base_config)
