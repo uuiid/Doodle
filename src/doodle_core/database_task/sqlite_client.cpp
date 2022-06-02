@@ -58,6 +58,17 @@ void sqlite_client::update_entt() {
               ranges::actions::push_back(next_delete_list) |
               ranges::actions::unique;
 
+  if (all_list.empty()) {
+    /// \brief 只更新上下文
+    g_pool().post<doodle::one_process_t>([=]() {
+              g_reg()->ctx().at<core_sig>().save_begin({});
+            })
+        .then<database_n::update_data>(update_list)
+        .then<one_process_t>([]() {
+          g_reg()->ctx().at<core_sig>().save_end({});
+        });
+    return;
+  }
 
   auto l_list = all_list | ranges::view::transform([](auto e) {
                   return make_handle(e);
@@ -72,8 +83,9 @@ void sqlite_client::update_entt() {
   if (!install_list.empty()) {
     l_next.then<database_n::insert>(install_list);
   }
-  l_next.then<database_n::update_data>(update_list);
-
+  if (!update_list.empty()) {
+    l_next.then<database_n::update_data>(update_list);
+  }
   if (!delete_list.empty()) {
     l_next.then<database_n::delete_data>(delete_list);
   }
