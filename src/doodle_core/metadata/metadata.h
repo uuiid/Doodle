@@ -55,7 +55,7 @@ class DOODLE_CORE_EXPORT database {
 
   friend class database_n::insert;
   friend class database_n::select;
-  friend class database_n::update;
+  friend class database_n::update_data;
   friend class database_n::delete_data;
   class impl;
   std::unique_ptr<impl> p_i;
@@ -164,6 +164,10 @@ class DOODLE_CORE_EXPORT database {
   constexpr const static fun_load_ load{};
   constexpr const static fun_sync_ sync{};
 };
+
+using data_status_save   = entt::tag<"data_status_save"_hs>;
+using data_status_delete = entt::tag<"data_status_delete"_hs>;
+// using need_save = entt::tag<"need_save"_hs>;
 
 template <class in_class>
 class DOODLE_CORE_EXPORT handle_warp {
