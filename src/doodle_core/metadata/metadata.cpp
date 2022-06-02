@@ -85,12 +85,10 @@ bool database::ref_data::find_for_path(const FSys::path &in_path) {
 }
 database::ref_data::ref_data() = default;
 database::database()
-    : p_i(std::make_unique<impl>()),
-      status_(status::none) {
+    : p_i(std::make_unique<impl>()) {
 }
 database::database(const std::string &in_uuid_str)
-    : p_i(std::make_unique<impl>(in_uuid_str)),
-      status_(status::none) {
+    : p_i(std::make_unique<impl>(in_uuid_str)) {
 }
 database::~database() = default;
 
@@ -103,7 +101,7 @@ bool database::is_install() const {
 }
 
 bool database::operator==(const database &in_rhs) const {
-  return std::tie(p_i->p_id, p_i->p_uuid_) == std::tie(in_rhs.p_i->p_id, in_rhs.p_i->p_uuid_);
+  return p_i->p_uuid_ == in_rhs.p_i->p_uuid_;
 }
 
 bool database::operator!=(const database &in_rhs) const {
@@ -122,19 +120,12 @@ bool database::operator==(const boost::uuids::uuid &in_rhs) const {
 bool database::operator!=(const boost::uuids::uuid &in_rhs) const {
   return !(*this == in_rhs);
 }
-database::database(database &&in) noexcept
-    : database() {
-  p_i.swap(in.p_i);
-  this->status_ = in.status_.load();
-}
-database &database::operator=(database &&in) noexcept {
-  p_i.swap(in.p_i);
-  this->status_ = in.status_.load();
-  return *this;
-}
+database::database(database &&in) noexcept            = default;
+
+database &database::operator=(database &&in) noexcept = default;
 
 bool database::operator==(const ref_data &in_rhs) const {
-  return std::tie(p_i->p_id, p_i->p_uuid_) == std::tie(in_rhs.id, in_rhs.uuid);
+  return this->p_i->p_uuid_ == in_rhs.uuid;
 }
 bool database::operator!=(const ref_data &in_rhs) const {
   return !(*this == in_rhs);
