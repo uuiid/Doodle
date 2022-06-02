@@ -82,7 +82,7 @@ class image_watermark;
 namespace database_n{
 class insert;
 class select;
-class update;
+class update_data;
 class delete_data;
 }
 
