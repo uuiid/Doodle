@@ -11,7 +11,6 @@
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
-#include <doodle_lib/long_task/database_task.h>
 #include <doodle_core/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
