@@ -21,11 +21,12 @@ $map_item = @(
     [map_dir]@{link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.240\public\LianQiShiWanNian"; name = "炼气十万年_240" },
     [map_dir]@{link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
     [map_dir]@{link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
+    [map_dir]@{link = "C:\sy\WGXD"; source = "\\192.168.10.240\public\WGXD"; name = "万古邪帝_240" },
     
     [map_dir]@{link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
     [map_dir]@{link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
     [map_dir]@{link = "C:\sy\JianJi_9"; source = "\\192.168.10.218\jianji"; name = "剪辑_218" },
-    [map_dir]@{link = "C:\sy\HouQi_9"; source = "\\192.168.10.218\houqi"; name = "后期_218" }
+    [map_dir]@{link = "C:\sy\HouQi_9"; source = "\\192.168.10.218\houqi"; name = "后期_218" },
     [map_dir]@{link = "C:\sy\doodle"; source = "\\192.168.10.240\public\doodle"; name = "软件" }
 )
 function Add-SyDir {
@@ -121,4 +122,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 
 Add-SyDir;
 Add-SymLink;
-# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sysDir.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run4.4.exe -requireAdmin
+# ps2exe c:\Users\TD\Source\Doodle\script\Cmd_tool\map_sysDir.ps1 c:\Users\TD\Source\Doodle\script\Cmd_tool\run4.5.exe -requireAdmin
