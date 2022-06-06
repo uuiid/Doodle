@@ -120,7 +120,7 @@ if (DEFINED Maya_Version)
                 COMPONENT maya_plug_com
                 )
 
-        install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
                 DESTINATION maya
                 COMPONENT maya_plug_com)
         install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
