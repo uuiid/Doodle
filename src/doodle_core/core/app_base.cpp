@@ -79,7 +79,22 @@ std::int32_t app_base::run() {
   clear_loop();
   return 0;
 }
+std::int32_t app_base::poll() {
+  static std::function<void(const boost::system::error_code& in_code)> s_fun{};
+  s_fun = [&](const boost::system::error_code& in_code) {
+    this->loop_one();
+    g_pool().sub_next();
+    if (!stop_) {
+      timer_.expires_after(doodle::chrono::seconds{1} / 60);
+      timer_.async_wait(s_fun);
+    }
+  };
 
+  timer_.expires_after(doodle::chrono::seconds{1} / 60);
+  timer_.async_wait(s_fun);
+  g_io_context().poll_one();
+  return 0;
+}
 void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);

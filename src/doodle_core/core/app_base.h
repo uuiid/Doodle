@@ -36,6 +36,8 @@ class DOODLE_CORE_EXPORT app_base {
    * @return
    */
   virtual std::int32_t run();
+  virtual std::int32_t poll();
+
 
   virtual void loop_one();
   virtual void clear_loop();
