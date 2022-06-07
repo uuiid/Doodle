@@ -63,8 +63,8 @@ app_base& app_base::Get() {
 std::int32_t app_base::run() {
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
-    //    if (in_code == boost::asio::error::operation_aborted)
-    //      return;
+    if (in_code == boost::asio::error::operation_aborted)
+      return;
     this->loop_one();
     g_pool().sub_next();
     if (!stop_) {
