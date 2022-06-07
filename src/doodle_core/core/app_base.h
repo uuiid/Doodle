@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
+
+#include <boost/asio/high_resolution_timer.hpp>
 namespace doodle {
 /**
  * @brief 基础的事件循环类,  只有事件循环可以使用
@@ -21,7 +23,7 @@ class DOODLE_CORE_EXPORT app_base {
    *
    */
   virtual void load_back_end() = 0;
-
+  boost::asio::high_resolution_timer timer_;
 
 
  public:

@@ -13,15 +13,18 @@
 #include <doodle_core/database_task/sqlite_client.h>
 
 #include <boost/locale.hpp>
+#include <boost/asio.hpp>
 namespace doodle {
 
 app_base* app_base::self = nullptr;
+
 app_base::app_base()
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format(
           "doodle {}", version::version_str))),
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
-      p_lib(std::make_shared<doodle_lib>()) {
+      p_lib(std::make_shared<doodle_lib>()),
+      timer_(g_io_context()) {
   self = this;
 
   DOODLE_LOG_INFO("开始初始化基本配置");
@@ -40,6 +43,8 @@ app_base::app_base()
     this->load_back_end();
   });
 }
+app_base::~app_base() = default;
+
 app_base::app_base(win::wnd_instance const& in_instance)
     : app_base() {
   instance = in_instance;
@@ -56,9 +61,21 @@ app_base& app_base::Get() {
   return *self;
 }
 std::int32_t app_base::run() {
-  while (!is_stop()) {
-    loop_one();
-  }
+  static std::function<void(const boost::system::error_code& in_code)> s_fun{};
+  s_fun = [&](const boost::system::error_code& in_code) {
+    //    if (in_code == boost::asio::error::operation_aborted)
+    //      return;
+    this->loop_one();
+    g_pool().sub_next();
+    if (!stop_) {
+      timer_.expires_after(doodle::chrono::seconds{1} / 60);
+      timer_.async_wait(s_fun);
+    }
+  };
+
+  timer_.expires_after(doodle::chrono::seconds{1} / 60);
+  timer_.async_wait(s_fun);
+  g_io_context().run();
   clear_loop();
   return 0;
 }
@@ -104,9 +121,6 @@ void app_base::loop_one() {
   g_main_loop().update(l_now - s_now, nullptr);
   g_bounded_pool().update(l_now - s_now, nullptr);
   s_now = l_now;
-  g_io_context().poll();
-  g_pool().sub_next();
 }
 
-app_base::~app_base() = default;
 }  // namespace doodle
