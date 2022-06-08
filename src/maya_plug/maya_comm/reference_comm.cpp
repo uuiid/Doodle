@@ -248,9 +248,6 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
       "导出开始时间 {}  结束时间 {} 导出类型 {} ",
       k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type));
 
-
-
-
   if (is_force) {
     DOODLE_LOG_INFO("开始使用交互式导出");
     MSelectionList k_select{};
@@ -295,8 +292,19 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
     DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
     if (k_path_M.numChars() > 0) {
-      k_path = k_path_M.asUTF8();
+      k_path      = k_path_M.asUTF8();
+      auto l_open = std::make_shared<bool>(false);
+      boost::signals2::scoped_connection l_comm{
+          g_reg()->ctx().at<core_sig>().project_end_open.connect([l_open]() {
+            *l_open = true;
+          })};
       app::Get().load_project(k_path);
+
+      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+        while (!*l_open) {
+          app_base::Get().poll_one();
+        }
+      }
     }
   }
   return k_s;
