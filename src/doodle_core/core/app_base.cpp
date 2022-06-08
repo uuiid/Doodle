@@ -16,11 +16,10 @@
 #include <boost/asio.hpp>
 namespace doodle {
 
-class app_base::impl{
+class app_base::impl {
  public:
   boost::asio::high_resolution_timer timer_{g_io_context()};
 };
-
 
 app_base* app_base::self = nullptr;
 
@@ -73,10 +72,10 @@ std::int32_t app_base::run() {
   return 0;
 }
 void app_base::begin_loop() {
+  p_i->timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
-    if (in_code == boost::asio::error::operation_aborted &&
-        stop_)
+    if (in_code == boost::asio::error::operation_aborted)
       return;
     this->loop_one();
     if (!stop_) {
