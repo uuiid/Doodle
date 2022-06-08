@@ -16,6 +16,12 @@
 #include <boost/asio.hpp>
 namespace doodle {
 
+class app_base::impl{
+ public:
+  boost::asio::high_resolution_timer timer_{g_io_context()};
+};
+
+
 app_base* app_base::self = nullptr;
 
 app_base::app_base()
@@ -24,7 +30,7 @@ app_base::app_base()
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
       p_lib(std::make_shared<doodle_lib>()),
-      timer_(g_io_context()) {
+      p_i(std::make_unique<impl>()) {
   self = this;
 
   DOODLE_LOG_INFO("开始初始化基本配置");
@@ -61,37 +67,29 @@ app_base& app_base::Get() {
   return *self;
 }
 std::int32_t app_base::run() {
-  static std::function<void(const boost::system::error_code& in_code)> s_fun{};
-  s_fun = [&](const boost::system::error_code& in_code) {
-    if (in_code == boost::asio::error::operation_aborted)
-      return;
-    this->loop_one();
-    g_pool().sub_next();
-    if (!stop_) {
-      timer_.expires_after(doodle::chrono::seconds{1} / 60);
-      timer_.async_wait(s_fun);
-    }
-  };
-
-  timer_.expires_after(doodle::chrono::seconds{1} / 60);
-  timer_.async_wait(s_fun);
+  begin_loop();
   g_io_context().run();
   clear_loop();
   return 0;
 }
-std::int32_t app_base::poll() {
+void app_base::begin_loop() {
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
+    if (in_code == boost::asio::error::operation_aborted &&
+        stop_)
+      return;
     this->loop_one();
-    g_pool().sub_next();
     if (!stop_) {
-      timer_.expires_after(doodle::chrono::seconds{1} / 60);
-      timer_.async_wait(s_fun);
+      p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
+      p_i->timer_.async_wait(s_fun);
     }
   };
 
-  timer_.expires_after(doodle::chrono::seconds{1} / 60);
-  timer_.async_wait(s_fun);
+  p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
+  p_i->timer_.async_wait(s_fun);
+}
+
+std::int32_t app_base::poll_one() {
   g_io_context().poll_one();
   return 0;
 }

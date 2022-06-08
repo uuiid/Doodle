@@ -297,11 +297,6 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     if (k_path_M.numChars() > 0) {
       k_path = k_path_M.asUTF8();
       app::Get().load_project(k_path);
-      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        while (!g_main_loop().empty()) {
-          app_base::Get().loop_one();
-        }
-      }
     }
   }
   return k_s;

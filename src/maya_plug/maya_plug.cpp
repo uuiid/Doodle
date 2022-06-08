@@ -45,8 +45,9 @@ std::shared_ptr<app_base> p_doodle_app = nullptr;
 
 namespace doodle::maya_plug {
 void open_windows() {
-  p_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
-  p_doodle_app->command_line_parser(std::vector<std::string>{});
+  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
+  l_doodle_app->command_line_parser(std::vector<std::string>{});
+  p_doodle_app                                     = l_doodle_app;
   doodle::gui::main_proc_handle::get().win_close   = []() { doodle::app::Get().close_windows(); };
   doodle::gui::main_proc_handle::get().win_destroy = []() {};
 }
@@ -136,10 +137,9 @@ MStatus initializePlugin(MObject obj) {
   app_run_id = MTimerMessage::addTimerCallback(
       0.001,
       [](float elapsedTime, float lastTime, void* clientData) {
-        if (!p_doodle_app || p_doodle_app->is_stop()) {
-          return;
+        if (p_doodle_app) {
+          p_doodle_app->poll_one();
         }
-        p_doodle_app->loop_one();
       },
       nullptr, &status);
 

@@ -6,7 +6,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
-#include <boost/asio/high_resolution_timer.hpp>
 namespace doodle {
 /**
  * @brief 基础的事件循环类,  只有事件循环可以使用
@@ -15,16 +14,21 @@ class DOODLE_CORE_EXPORT app_base {
  protected:
   static app_base* self;
 
+  doodle_lib_ptr p_lib;
   std::wstring p_title;
   win::wnd_instance instance;
-  doodle_lib_ptr p_lib;
+
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ protected:
   /**
    * @brief 这个会在第一个循环中加载
    *
    */
   virtual void load_back_end() = 0;
-  boost::asio::high_resolution_timer timer_;
-
+  virtual void loop_one();
 
  public:
   explicit app_base();
@@ -36,10 +40,11 @@ class DOODLE_CORE_EXPORT app_base {
    * @return
    */
   virtual std::int32_t run();
-  virtual std::int32_t poll();
 
+  virtual void begin_loop();
 
-  virtual void loop_one();
+  virtual std::int32_t poll_one();
+
   virtual void clear_loop();
   virtual bool is_loop_empty();
 
