@@ -355,6 +355,8 @@ void select::th_run() {
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
     in_.get();
   });
+
+  p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
 }
 
 }  // namespace doodle::database_n

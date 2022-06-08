@@ -195,6 +195,19 @@ app::app(const win::wnd_instance& in_instance)
   gui::main_proc_handle::get().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
   };
+
+  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+    auto& l_prj   = g_reg()->ctx().at<project>();
+    auto l_title = conv::utf_to_utf<char>(p_title);
+    auto l_str    = fmt::format("{} 路径: {} 名称: {}({})({})",
+                                l_title,
+                                l_prj.p_path,
+                                l_prj.show_str(),
+                                l_prj.str(),
+                                l_prj.short_str());
+
+    set_title(l_str);
+  });
 }
 
 void app::loop_one() {
@@ -271,6 +284,16 @@ void app::loop_one() {
   d3d_deve->g_pSwapChain->Present(1, 0);  // Present with vsync
                                           // g_pSwapChain->Present(0, 0); // Present without vsync
 }
+
+void app::set_title(const std::string& in_title) {
+  boost::asio::post(g_io_context(),
+                    [&, in_title]() {
+                      auto l_str = conv::utf_to_utf<wchar_t>(in_title);
+                      SetWindowTextW(p_hwnd,
+                                     l_str.c_str());
+                    });
+}
+
 app& app::Get() {
   return *(dynamic_cast<app*>(self));
 }
@@ -328,6 +351,5 @@ bool app::chick_authorization() {
   }
   return true;
 }
-
 
 }  // namespace doodle

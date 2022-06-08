@@ -31,7 +31,6 @@ set(
         gui/widgets/edit_widgets.h
         gui/widgets/long_time_tasks_widget.h
         gui/widgets/opencv_player_widget.h
-        gui/widgets/project_widget.h
         gui/widgets/screenshot_widget.h
         gui/widgets/project_edit.h
         gui/widgets/csv_export_widgets.h
@@ -96,7 +95,6 @@ set(
         gui/widgets/edit_widgets.cpp
         gui/widgets/long_time_tasks_widget.cpp
         gui/widgets/opencv_player_widget.cpp
-        gui/widgets/project_widget.cpp
         gui/widgets/screenshot_widget.cpp
         gui/widgets/project_edit.cpp
         gui/widgets/csv_export_widgets.cpp
