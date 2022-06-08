@@ -20,8 +20,8 @@ void maya_layout::update(const chrono::system_clock::duration &in_duration, void
       [&, this]() {
         namespace menu_w = gui::config::menu_w;
         dear::Child{"l1", ImVec2{viewport->WorkSize.x / 4, 0}, false} && [&, this]() {
-          dear::Child{"ll2", ImVec2{0, viewport->WorkSize.y / 3}} && [&]() { call_render(std::string{menu_w::assets_filter}); };
-          dear::Child{"ll3"} && [&]() { call_render(std::string{menu_w::edit_}); };
+          dear::Child{"ll2", ImVec2{0, viewport->WorkSize.y / 2}} && [&]() { call_render(std::string{menu_w::assets_filter}); };
+          dear::Child{"ll32"} && [&]() { call_render(std::string{menu_w::edit_}); };
         };
         ImGui::SameLine();
         dear::Child{"l2", ImVec2{viewport->WorkSize.x / 3, 0}, true} && [&, this]() {
