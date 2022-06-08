@@ -46,7 +46,6 @@ class DOODLE_CORE_EXPORT app_base {
   virtual std::int32_t poll_one();
 
   virtual void clear_loop();
-  virtual bool is_loop_empty();
 
   std::atomic_bool& stop();
   bool is_stop() const;
