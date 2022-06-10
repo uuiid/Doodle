@@ -351,6 +351,11 @@ void select::th_run() {
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
 
+  /// \brief 等待旧的任务完成
+  ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
+    in_.get();
+  });
+
   if (!p_i->only_ctx) {
     /// \brief 选中实体
     p_i->select_entt(*p_i->local_reg, *l_k_con);
@@ -365,7 +370,6 @@ void select::th_run() {
   }
 
   /// \brief 等待所有的任务完成
-
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
     in_.get();
   });
