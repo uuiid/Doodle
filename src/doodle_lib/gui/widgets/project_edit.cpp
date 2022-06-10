@@ -106,6 +106,10 @@ class project_edit::impl {
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
+}
+project_edit::~project_edit() = default;
+
+void project_edit::init() {
   p_i->config_init();
   p_i->scoped_connections_.emplace_back(
       g_reg()->ctx().at<core_sig>().project_end_open.connect(
@@ -117,10 +121,6 @@ project_edit::project_edit()
         g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
         g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
       }));
-}
-project_edit::~project_edit() = default;
-
-void project_edit::init() {
 }
 
 void project_edit::render() {
