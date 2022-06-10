@@ -65,6 +65,9 @@ find_package(Sqlpp11 CONFIG REQUIRED
         COMPONENTS
         sqlite3)
 find_package(range-v3 CONFIG REQUIRED)
+# this is heuristically generated, and may not be correct
+find_package(implot CONFIG REQUIRED)
+#target_link_libraries(main PRIVATE implot::implot)
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)
 
