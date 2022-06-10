@@ -22,6 +22,9 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/lib_warp/icon_font_macro.h>
 
+#include <implot.h>
+#include <implot_internal.h>
+
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -87,6 +90,7 @@ app::app(const win::wnd_instance& in_instance)
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
+  ImPlot::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
 
   (void)io;
@@ -323,6 +327,7 @@ app::~app() {
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
+  ImPlot::DestroyContext();
   ImGui::DestroyContext();
 
   ::RevokeDragDrop(p_hwnd);
