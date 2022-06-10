@@ -69,6 +69,7 @@ target_link_libraries(doodle_lib
         d3d11.lib
         dxgi.lib
         Microsoft::DirectXTK
+        implot::implot
         )
 target_compile_definitions(doodle_lib
         PUBLIC

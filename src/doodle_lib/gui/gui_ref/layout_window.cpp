@@ -3,6 +3,8 @@
 //
 
 #include "layout_window.h"
+
+#include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 namespace doodle::gui {
 class layout_window::impl {
  public:
@@ -13,6 +15,7 @@ class layout_window::impl {
   void *data_{};
 
   std::function<void()> main_render{};
+  time_sequencer_widget time_r{};
 };
 layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {
@@ -80,6 +83,7 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
           //        ImGui::SameLine();
           dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
             dear::TabBar{"##main"} && [&]() {
+              dear::TabItem{"test"} && [&]() { p_i->time_r.update({},{}); };
               dear::TabItem{menu_w::assets_file.data()} && [&]() { p_i->main_render(); };
               dear::TabItem{menu_w::long_time_tasks.data()} && [&]() { call_render(std::string{menu_w::long_time_tasks}); };
             };
