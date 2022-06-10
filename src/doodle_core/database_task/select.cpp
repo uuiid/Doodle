@@ -172,7 +172,9 @@ class select::impl {
                     auto l_h                               = entt::handle{*local_reg, l_view.front()};
                     local_reg->ctx().at<doodle::project>() = l_h.get<doodle::project>();
                     local_reg->ctx().at<doodle::project_config::base_config>() =
-                        l_h.get<doodle::project_config::base_config>();
+                        l_h.any_of<doodle::project_config::base_config>()
+                            ? l_h.get<doodle::project_config::base_config>()
+                            : doodle::project_config::base_config{};
                   }
                 }});
     results.emplace_back(l_fun.share());

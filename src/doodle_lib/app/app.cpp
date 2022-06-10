@@ -196,18 +196,21 @@ app::app(const win::wnd_instance& in_instance)
     ::DestroyWindow(p_hwnd);
   };
 
-  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
-    auto& l_prj   = g_reg()->ctx().at<project>();
+  static std::function<void()> s_set_title_fun{};
+  s_set_title_fun = [this]() {
+    auto& l_prj  = g_reg()->ctx().at<project>();
     auto l_title = conv::utf_to_utf<char>(p_title);
-    auto l_str    = fmt::format("{} 路径: {} 名称: {}({})({})",
-                                l_title,
-                                l_prj.p_path,
-                                l_prj.show_str(),
-                                l_prj.str(),
-                                l_prj.short_str());
+    auto l_str   = fmt::format("{} 路径: {} 名称: {}({})({})",
+                               l_title,
+                               l_prj.p_path,
+                               l_prj.show_str(),
+                               l_prj.str(),
+                               l_prj.short_str());
 
     set_title(l_str);
-  });
+  };
+  g_reg()->ctx().at<core_sig>().project_end_open.connect(s_set_title_fun);
+  g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
 }
 
 void app::loop_one() {

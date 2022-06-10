@@ -24,7 +24,7 @@ class project_edit::impl {
   };
 
  public:
-  gui::gui_cache<std::string> project_path{"路径"s, ""s};
+  std::string project_path{};
   gui::gui_cache<std::string> project_name{"名称"s, ""s};
 
   gui_cache<std::string> path_{"解算路径"s, ""s};
@@ -42,10 +42,12 @@ class project_edit::impl {
   icon_extensions icon_list;
   gui_cache<std::int32_t> season_count{"季数计数", 20};
 
+  std::vector<boost::signals2::scoped_connection> scoped_connections_;
+
   void config_init() {
     auto&& l_prj         = g_reg()->ctx().at<project>();
     project_name         = l_prj.get_name();
-    project_path         = l_prj.get_path().generic_string();
+    project_path         = fmt::format("项目路径: {}", l_prj.get_path());
 
     auto& l_config       = g_reg()->ctx().at<project_config::base_config>();
     path_                = l_config.vfx_cloth_sim_path.generic_string();
@@ -104,21 +106,27 @@ class project_edit::impl {
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
   title_name_ = std::string{name};
+  p_i->config_init();
+  p_i->scoped_connections_.emplace_back(
+      g_reg()->ctx().at<core_sig>().project_end_open.connect(
+          [this]() {
+            p_i->config_init();
+          }));
+  p_i->scoped_connections_.emplace_back(
+      g_reg()->ctx().at<core_sig>().save.connect(1,[this]() {
+        g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
+        g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
+      }));
 }
 project_edit::~project_edit() = default;
 
 void project_edit::init() {
-  g_reg()->ctx().at<core_sig>().project_end_open.connect(
-      [this]() {
-        p_i->config_init();
-      });
-  g_reg()->ctx().at<core_sig>().save.connect([this]() {
-    g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
-  });
 }
 
 void project_edit::render() {
   ImGui::Text("项目配置");
+  imgui::InputText(*p_i->project_name.gui_name, &(p_i->project_name.data));
+  dear::Text(p_i->project_path);
 
   ImGui::Text("基本配置:");
 
