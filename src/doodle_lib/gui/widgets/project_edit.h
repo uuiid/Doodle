@@ -7,7 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
+namespace doodle::gui {
 
 class DOODLELIB_API project_edit
     : public gui::window_panel {

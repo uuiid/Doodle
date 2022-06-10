@@ -18,7 +18,6 @@ set(
         gui/main_status_bar.h
         gui/get_input_dialog.h
         gui/gui_ref/path.h
-        gui/gui_ref/project.h
         gui/gui_ref/ref_base.h
         gui/gui_ref/database_edit.h
         gui/gui_ref/base_windows_factory.h
@@ -82,7 +81,6 @@ set(
         gui/main_status_bar.cpp
         gui/get_input_dialog.cpp
         gui/gui_ref/path.cpp
-        gui/gui_ref/project.cpp
         gui/gui_ref/ref_base.cpp
         gui/gui_ref/database_edit.cpp
         gui/gui_ref/base_windows_factory.cpp
