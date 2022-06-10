@@ -66,7 +66,8 @@ bool episodes::conjecture_season(const entt::handle& in_handle) {
   if (in_handle.all_of<episodes>()) {
     auto l_count = g_reg()->ctx().at<project_config::base_config>().season_count;
     auto l_eps   = in_handle.get<episodes>().p_episodes;
-    in_handle.emplace<season>((l_eps / l_count) + 1);
+    auto l_season = boost::numeric_cast<std::float_t>(l_eps) / boost::numeric_cast<std::float_t>(l_count);
+    in_handle.emplace<season>(std::ceil(l_season));
     return true;
   }
 
