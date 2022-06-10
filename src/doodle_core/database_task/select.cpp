@@ -162,6 +162,20 @@ class select::impl {
       if (stop)
         return;
     }
+    auto l_fun =
+        boost::asio::post(
+            strand_,
+            std::packaged_task<void()>{
+                [this]() {
+                  auto l_view = local_reg->view<doodle::project>();
+                  if (!l_view.empty()) {
+                    auto l_h                               = entt::handle{*local_reg, l_view.front()};
+                    local_reg->ctx().at<doodle::project>() = l_h.get<doodle::project>();
+                    local_reg->ctx().at<doodle::project_config::base_config>() =
+                        l_h.get<doodle::project_config::base_config>();
+                  }
+                }});
+    results.emplace_back(l_fun.share());
   }
 
   template <typename Type>
