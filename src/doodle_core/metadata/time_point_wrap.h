@@ -116,6 +116,21 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   bool operator<=(const time_zoned& in_rhs) const;
   bool operator>=(const time_zoned& in_rhs) const;
 
+  template <typename Rep_T, typename Period_T>
+  time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur){
+    auto l_sys_time = zoned_time_.get_sys_time();
+    l_sys_time += in_dur;
+    zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
+    return *this;
+  }
+
+  template <typename Rep_T, typename Period_T>
+  time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur){
+    auto l_sys_time = zoned_time_.get_sys_time();
+    l_sys_time += in_dur;
+    return time_point_wrap{doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time)};
+  }
+
  private:
   /**
    * 这个是计算开始时到一天结束时的工作时长
