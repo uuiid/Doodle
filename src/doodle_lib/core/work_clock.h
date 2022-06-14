@@ -184,42 +184,6 @@ class DOODLELIB_API rules {
   std::vector<time_attr> operator()(const chrono::year_month_day& in_day) const;
 };
 
-class DOODLELIB_API work_clock {
- public:
-  explicit work_clock(chrono::local_time_pos in_pos)
-      : time_point(in_pos),
-        work_time_(),
-        state_list(),
-        work_limit_(){};
-
- private:
-  std::optional<chrono::seconds> work_limit_;
-
- public:
-  chrono::local_time_pos time_point{};
-  chrono::seconds work_time_;
-  std::vector<work_attr::time_state> state_list{};
-
-  void set_work_limit(const chrono::local_time_pos& in_pos,
-                      const chrono::seconds& in_work_du);
-  /**
-   * @brief 计算工作时间
-   *
-   * @return
-   */
-  [[nodiscard]] chrono::seconds work_time() const;
-  /**
-   * @brief 将时间属性进行收集
-   * @param in_attr
-   * @return
-   */
-  work_clock& operator+=(const time_attr& in_attr);
-  [[nodiscard]] bool ok() const;
-  inline explicit operator bool() const {
-    return ok();
-  }
-};
-
 }  // namespace business
 namespace detail {
 

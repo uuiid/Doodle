@@ -109,71 +109,6 @@ void time_attr::add_event(boost::msm::back::state_machine<detail::work_machine_f
     in_mfm.process_event(doodle::business::detail::adjust_rest_end{time_point});
   }
 }
-void work_clock::set_work_limit(
-    const chrono::local_time_pos& in_pos,
-    const chrono::seconds& in_work_du) {
-  work_limit_ = in_work_du;
-  time_point  = in_pos;
-}
-chrono::seconds work_clock::work_time() const {
-  return work_time_;
-}
-work_clock& work_clock::operator+=(const time_attr& in_attr) {
-  /// \brief 优先检查时间点是否比时钟时间点早
-  if (in_attr.time_point < time_point) {
-    state_list.emplace_back(in_attr.state_);
-    return *this;
-  }
-
-  auto up_state = state_list.empty() ? work_attr::normal_work_end : state_list.back();
-  if (up_state == work_attr::normal_work_end ||
-      up_state == work_attr::adjust_rest_end ||
-      up_state == work_attr::adjust_work_begin)  /// 开始进入工作
-  {
-    if (in_attr.state_ == work_attr::normal_work_begin)
-      time_point = in_attr.time_point;
-    //    if (up_state == work_attr::adjust_rest_end)  /// 调整结束状态要查看前面几个状态
-    //    {
-    //
-    //    }
-  } else if (up_state == work_attr::normal_work_begin ||
-             up_state == work_attr::adjust_work_begin)  /// \brief 可以结束工作计算时间
-  {
-    if (in_attr.state_ == work_attr::normal_work_end ||
-        in_attr.state_ == work_attr::adjust_work_end ||
-        in_attr.state_ == work_attr::adjust_rest_begin)  /// \brief 传入工作结束
-    {
-      auto l_time_long = in_attr.time_point - time_point;
-      if (work_limit_) {
-        if ((work_time_ + l_time_long) > *work_limit_) {
-          time_point += (*work_limit_ - work_time_);
-          work_time_ = *work_limit_;
-        } else {
-          time_point = in_attr.time_point;
-          work_time_ += l_time_long;
-        }
-      } else {
-        time_point = in_attr.time_point;
-        work_time_ += l_time_long;
-      }
-    }
-  }
-  //  else  /// \brief 已经是休息状态
-  //  {
-  //    if (in_attr.state_ == work_attr::work_begin)  /// \brief 传入工作开始
-  //    {
-  //    }
-  //  }
-
-  state_list.emplace_back(in_attr.state_);
-  return *this;
-}
-bool work_clock::ok() const {
-  if (work_limit_) {
-    return *work_limit_ == work_time_;
-  } else
-    return !state_list.empty();
-}
 void detail::work_machine_front::add_time(const chrono::local_time_pos& in_time) {
   work_time_       = (in_time - time_);
   auto l_time_long = in_time - time_;
@@ -232,7 +167,6 @@ chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
                                    const business::rules& in_rules) {
-  business::work_clock l_clock{in_s};
   const auto l_day_end = chrono::floor<chrono::days>(in_e);
 
   business::detail::work_clock_mfm l_mfm{};
