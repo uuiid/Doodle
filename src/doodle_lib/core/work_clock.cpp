@@ -88,7 +88,7 @@ bool time_attr::operator==(const time_attr& in_rhs) const {
 bool time_attr::operator!=(const time_attr& in_rhs) const {
   return !(in_rhs == *this);
 }
-void time_attr::add_event(doodle::business::detail::work_clock_mfm& in_mfm) {
+void time_attr::add_event(doodle::business::detail::work_clock_mfm_base& in_mfm) {
   if (state_ == work_attr::normal_work_begin) {
     in_mfm.process_event(doodle::business::detail::normal_work_begin{time_point});
   } else if (state_ == work_attr::normal_work_end) {
@@ -132,6 +132,45 @@ chrono::hours_double detail::work_clock_mfm::work_duration(
   return work_time_;
 }
 
+void detail::work_next_clock_mfm::add_time(const chrono::local_time_pos& in_time) {
+  work_time_       = (in_time - time_);
+  auto l_time_long = in_time - time_;
+  if ((work_time_ + l_time_long) > work_limit_) {
+    time_ += (work_limit_ - work_time_);
+    work_time_ = work_limit_;
+  } else {
+    time_ = in_time;
+    work_time_ += l_time_long;
+  }
+}
+chrono::local_time_pos detail::work_next_clock_mfm::next_time(
+    const chrono::milliseconds& in_du_time, const rules& in_rules) {
+  auto l_day_1   = chrono::year_month_day{chrono::floor<chrono::days>(time_)};
+  auto l_day_end = chrono::local_days{chrono::year_month_day_last{
+                       l_day_1.year(),
+                       chrono::month_day_last{l_day_1.month()}}} +
+                   720h;
+  work_limit_ = chrono::floor<chrono::seconds>(in_du_time);
+
+  for (auto l_day = chrono::floor<chrono::days>(time_);
+       l_day < l_day_end;
+       l_day += chrono::days{1}) {
+    auto l_r = in_rules(chrono::year_month_day{l_day});
+    for (auto&& i : l_r) {
+      i.add_event(*this);
+      if (ok()) {
+        return time_;
+      }
+    }
+  }
+  return time_;
+}
+void detail::work_next_clock_mfm::set_time(const chrono::local_time_pos& in_pos) {
+  time_ = in_pos;
+}
+bool detail::work_next_clock_mfm::ok() const {
+  return work_limit_ == work_time_;
+}
 }  // namespace business
 namespace detail {
 
@@ -144,6 +183,14 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   l_mfm.start();
   l_mfm.time_ = in_s;
   return l_mfm.work_duration(in_e, in_rules);
+}
+chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
+                                 const chrono::milliseconds& in_du_time,
+                                 const business::rules& in_rules) {
+  business::detail::work_next_clock_mfm l_mfm{};
+  l_mfm.start();
+  l_mfm.set_time(in_s);
+  return l_mfm.next_time(in_du_time, in_rules);
 }
 }  // namespace detail
 
