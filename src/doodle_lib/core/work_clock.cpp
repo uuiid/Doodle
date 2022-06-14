@@ -164,7 +164,7 @@ chrono::local_time_pos detail::work_next_clock_mfm::next_time(
   }
   return time_;
 }
-void detail::work_next_clock_mfm::set_time(const chrono::local_time_pos& in_pos) {
+void detail::work_machine_front::set_time(const chrono::local_time_pos& in_pos) {
   time_ = in_pos;
 }
 bool detail::work_next_clock_mfm::ok() const {
@@ -180,7 +180,7 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
 
   business::detail::work_clock_mfm l_mfm{};
   l_mfm.start();
-  l_mfm.time_ = in_s;
+  l_mfm.set_time(in_s);
   return l_mfm.work_duration(in_e, in_rules);
 }
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,

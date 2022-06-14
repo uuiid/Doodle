@@ -52,7 +52,7 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   typedef rest_state initial_state;
 
   virtual void add_time(const doodle::chrono::local_time_pos& in_time);
-
+  void set_time(const chrono::local_time_pos& in_pos);
   //  inline explicit operator bool() const {
   //    return ok();
   //  }
@@ -60,9 +60,9 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   struct work_to_rest {
     template <class EVT, class FSM, class SourceState, class TargetState>
     void operator()(EVT const& in_evt, FSM& in_fsm, SourceState&, TargetState&) {
-      if (in_evt.time_ != in_fsm.time_) {
+      if (in_fsm.time_ < in_evt.time_) {
         in_fsm.add_time(in_evt.time_);
-//        in_fsm.time_ = in_evt.time_;
+        //        in_fsm.time_ = in_evt.time_;
       }
     }
   };
@@ -70,7 +70,7 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   struct rest_to_work {
     template <class EVT, class FSM, class SourceState, class TargetState>
     void operator()(EVT const& in_evt, FSM& in_fsm, SourceState&, TargetState&) {
-      if (in_evt.time_ != in_fsm.time_) {
+      if (in_fsm.time_ < in_evt.time_) {
         in_fsm.time_ = in_evt.time_;
       }
     }
@@ -202,7 +202,7 @@ class work_next_clock_mfm : public work_clock_mfm_base {
   void add_time(const doodle::chrono::local_time_pos& in_time) override;
   chrono::local_time_pos next_time(const chrono::milliseconds& in_du_time,
                                    const business::rules& in_rules);
-  void set_time(const chrono::local_time_pos& in_pos);
+
   [[nodiscard]] bool ok() const;
 };
 

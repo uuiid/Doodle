@@ -62,19 +62,18 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
 
-#define DOODLE_T_M_1(time_index, time_du)                                                                                                              \
-  REQUIRE(doodle::work_duration(                                                                                                                       \
-              time_##time_index##_a.zoned_time_.get_local_time(),                                                                                      \
-              doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(),                                                                    \
-                                doodle::chrono::hours_double{time_du},                                                                                 \
-                                doodle::business::rules{}),                                                                                            \
-              doodle::business::rules{})                                                                                                               \
-              .count() ==                                                                                                                              \
-          Catch::Approx{time_du}.epsilon(0.01));                                                                                                              \
-  std::cout << "\n"                                                                                                                                    \
-            << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                              \
-            << "next " << doodle::chrono::hours_double{time_du}.count() << "\n"                                                                        \
-            << doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(), doodle::chrono::hours_double{time_du}, doodle::business::rules{}) \
+#define DOODLE_T_M_1(time_index, time_du)                                                                                                                      \
+  REQUIRE(doodle::work_duration(                                                                                                                               \
+              time_##time_index##_a.zoned_time_.get_local_time(),                                                                                              \
+              time_##time_index##_b.zoned_time_.get_local_time(),                                                                                              \
+              doodle::business::rules{})                                                                                                                       \
+              .count() ==                                                                                                                                      \
+          Catch::Approx{time_du}.epsilon(0.01));                                                                                                               \
+  std::cout << "\n"                                                                                                                                            \
+            << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                                      \
+            << "next " << doodle::chrono::hours_double{time_du}.count() << "/h \n"                                                                             \
+            << doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(), doodle::chrono::hours_double{time_du}, doodle::business::rules{}) << "\n" \
+            << time_##time_index##_b.zoned_time_.get_local_time()                                                                                              \
             << std::endl;
 
   DOODLE_T_M_1(1, 20.583);
