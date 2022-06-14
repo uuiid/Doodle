@@ -41,7 +41,7 @@ struct adjust_rest_end {
 struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   doodle::chrono::local_time_pos time_;
   chrono::seconds work_time_;
-  std::optional<chrono::seconds> work_limit_;
+  //  std::optional<chrono::seconds> work_limit_;
 
   /// \brief 工作状态
   struct work_state : public bmsm::state<> {
@@ -51,10 +51,8 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   };
   typedef work_state initial_state;
 
-  inline void add_time(const doodle::chrono::local_time_pos& in_time);
-  void set_work_limit(const chrono::local_time_pos& in_pos,
-                      const chrono::seconds& in_work_du);
-  [[nodiscard]] bool ok() const;
+  void add_time(const doodle::chrono::local_time_pos& in_time);
+
   //  inline explicit operator bool() const {
   //    return ok();
   //  }
@@ -92,7 +90,8 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
             > {};
 };
 
-using work_clock_mfm = boost::msm::back::state_machine<work_machine_front>;
+// using work_clock_mfm = boost::msm::back::state_machine<work_machine_front>;
+class work_clock_mfm;
 }  // namespace detail
 
 namespace work_attr {
@@ -182,7 +181,19 @@ class DOODLELIB_API rules {
    * @return
    */
   std::vector<time_attr> operator()(const chrono::year_month_day& in_day) const;
+
+  void clamp_time(chrono::local_time_pos& in_time_pos) const;
 };
+
+namespace detail {
+class work_clock_mfm : public boost::msm::back::state_machine<work_machine_front> {
+ public:
+  work_clock_mfm() = default;
+
+  chrono::hours_double work_duration(const chrono::local_time_pos& in_e,
+                                     const business::rules& in_rules);
+};
+}  // namespace detail
 
 }  // namespace business
 namespace detail {
@@ -192,10 +203,6 @@ chrono::hours_double work_duration(
     const chrono::local_time_pos& in_e,
     const business::rules& in_rules);
 
-chrono::local_time_pos next_time(
-    const chrono::local_time_pos& in_s,
-    const chrono::milliseconds& in_du_time,
-    const business::rules& in_rules);
 }  // namespace detail
 
 template <typename Duration_>
@@ -214,9 +221,6 @@ chrono::time_point<chrono::local_t, Duration_> next_time(
     const chrono::time_point<chrono::local_t, Duration_>& in_s,
     const Duration2_& in_du_time,
     const business::rules& in_rules) {
-  return detail::next_time(
-      chrono::floor<chrono::seconds>(in_s),
-      chrono::floor<chrono::seconds>(in_du_time),
-      in_rules);
+  return {};
 };
 }  // namespace doodle
