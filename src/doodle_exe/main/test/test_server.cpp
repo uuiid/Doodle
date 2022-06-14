@@ -9,6 +9,7 @@
 #include <doodle_lib/core/work_clock.h>
 
 #include <catch.hpp>
+#include <catch2/catch_approx.hpp>
 
 using namespace doodle;
 
@@ -69,7 +70,7 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
                                 doodle::business::rules{}),                                                                                            \
               doodle::business::rules{})                                                                                                               \
               .count() ==                                                                                                                              \
-          Approx{time_du}.epsilon(0.01));                                                                                                              \
+          Catch::Approx{time_du}.epsilon(0.01));                                                                                                              \
   std::cout << "\n"                                                                                                                                    \
             << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                              \
             << "next " << doodle::chrono::hours_double{time_du}.count() << "\n"                                                                        \
