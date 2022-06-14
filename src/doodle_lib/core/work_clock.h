@@ -8,9 +8,92 @@
 #include <bitset>
 #include <utility>
 
+#include <boost/msm/front/state_machine_def.hpp>
+#include <boost/msm/back/state_machine.hpp>
+#include <boost/msm/front/functor_row.hpp>
 namespace doodle {
 
 namespace business {
+
+namespace detail {
+namespace bmsm = boost::msm::front;
+
+struct normal_work_begin {
+  doodle::chrono::local_time_pos time_;
+};
+struct normal_work_end {
+  doodle::chrono::local_time_pos time_;
+};
+struct adjust_work_begin {
+  doodle::chrono::local_time_pos time_;
+};
+struct adjust_work_end {
+  doodle::chrono::local_time_pos time_;
+};
+
+struct adjust_rest_begin {
+  doodle::chrono::local_time_pos time_;
+};
+struct adjust_rest_end {
+  doodle::chrono::local_time_pos time_;
+};
+
+struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
+  doodle::chrono::local_time_pos time_;
+  chrono::seconds work_time_;
+  std::optional<chrono::seconds> work_limit_;
+
+  /// \brief 工作状态
+  struct work_state : public bmsm::state<> {
+  };
+  /// \brief 休息状态
+  struct rest_state : public bmsm::state<> {
+  };
+  typedef work_state initial_state;
+
+  inline void add_time(const doodle::chrono::local_time_pos& in_time);
+  void set_work_limit(const chrono::local_time_pos& in_pos,
+                      const chrono::seconds& in_work_du);
+  [[nodiscard]] bool ok() const;
+  //  inline explicit operator bool() const {
+  //    return ok();
+  //  }
+  /// \brief 动作
+  struct work_to_rest {
+    template <class EVT, class FSM, class SourceState, class TargetState>
+    void operator()(EVT const& in_evt, FSM& in_fsm, SourceState&, TargetState&) {
+      if (in_evt.time_ != in_fsm.time_) {
+        in_fsm.add_time(in_evt.time_);
+        in_fsm.time_ = in_evt.time_;
+      }
+    }
+  };
+
+  struct rest_to_work {
+    template <class EVT, class FSM, class SourceState, class TargetState>
+    void operator()(EVT const& in_evt, FSM& in_fsm, SourceState&, TargetState&) {
+      if (in_evt.time_ != in_fsm.time_) {
+        in_fsm.time_ = in_evt.time_;
+      }
+    }
+  };
+
+  struct transition_table
+      : boost::mpl::vector<
+            //            Start          Event         Next      Action               Guard
+            // 正确的转换
+            bmsm::Row<work_state, normal_work_end, rest_state, work_to_rest>,    // 正常工作结束
+            bmsm::Row<work_state, adjust_rest_begin, rest_state, work_to_rest>,  // 调休开始
+            bmsm::Row<work_state, adjust_work_end, rest_state, work_to_rest>,    // 加班结束
+
+            bmsm::Row<rest_state, normal_work_begin, work_state, rest_to_work>,  // 正常工作开始
+            bmsm::Row<rest_state, adjust_rest_end, work_state, rest_to_work>,    // 调休结束
+            bmsm::Row<rest_state, adjust_work_begin, work_state, rest_to_work>   // 加班开始
+            > {};
+};
+
+using work_clock_mfm = boost::msm::back::state_machine<work_machine_front>;
+}  // namespace detail
 
 namespace work_attr {
 /**
@@ -50,6 +133,8 @@ class DOODLELIB_API time_attr {
    * @brief 时间状态
    */
   work_attr::time_state state_{};
+
+  void add_event(doodle::business::detail::work_clock_mfm& in_mfm);
 
   bool operator<(const time_attr& in_rhs) const;
   bool operator>(const time_attr& in_rhs) const;
@@ -93,7 +178,7 @@ class DOODLELIB_API rules {
 
   /**
    * @brief 获取当天的工作时间段
-   * @param in_day 传入的天数
+   * @param in_day 传入的时间(一天)
    * @return
    */
   std::vector<time_attr> operator()(const chrono::year_month_day& in_day) const;
@@ -117,7 +202,17 @@ class DOODLELIB_API work_clock {
 
   void set_work_limit(const chrono::local_time_pos& in_pos,
                       const chrono::seconds& in_work_du);
+  /**
+   * @brief 计算工作时间
+   *
+   * @return
+   */
   [[nodiscard]] chrono::seconds work_time() const;
+  /**
+   * @brief 将时间属性进行收集
+   * @param in_attr
+   * @return
+   */
   work_clock& operator+=(const time_attr& in_attr);
   [[nodiscard]] bool ok() const;
   inline explicit operator bool() const {

@@ -94,6 +94,21 @@ bool time_attr::operator==(const time_attr& in_rhs) const {
 bool time_attr::operator!=(const time_attr& in_rhs) const {
   return !(in_rhs == *this);
 }
+void time_attr::add_event(boost::msm::back::state_machine<detail::work_machine_front>& in_mfm) {
+  if (state_ == work_attr::normal_work_begin) {
+    in_mfm.process_event(doodle::business::detail::normal_work_begin{time_point});
+  } else if (state_ == work_attr::normal_work_end) {
+    in_mfm.process_event(doodle::business::detail::normal_work_end{time_point});
+  } else if (state_ == work_attr::adjust_work_begin) {
+    in_mfm.process_event(doodle::business::detail::adjust_work_begin{time_point});
+  } else if (state_ == work_attr::adjust_work_end) {
+    in_mfm.process_event(doodle::business::detail::adjust_work_end{time_point});
+  } else if (state_ == work_attr::adjust_rest_begin) {
+    in_mfm.process_event(doodle::business::detail::adjust_rest_begin{time_point});
+  } else if (state_ == work_attr::adjust_rest_end) {
+    in_mfm.process_event(doodle::business::detail::adjust_rest_end{time_point});
+  }
+}
 void work_clock::set_work_limit(
     const chrono::local_time_pos& in_pos,
     const chrono::seconds& in_work_du) {
@@ -159,6 +174,32 @@ bool work_clock::ok() const {
   } else
     return !state_list.empty();
 }
+void detail::work_machine_front::add_time(const chrono::local_time_pos& in_time) {
+  work_time_       = (in_time - time_);
+  auto l_time_long = in_time - time_;
+  if (work_limit_) {
+    if ((work_time_ + l_time_long) > *work_limit_) {
+      time_ += (*work_limit_ - work_time_);
+      work_time_ = *work_limit_;
+    } else {
+      time_ = in_time;
+      work_time_ += l_time_long;
+    }
+  } else {
+    time_ = in_time;
+    work_time_ += l_time_long;
+  }
+}
+bool detail::work_machine_front::ok() const {
+  if (work_limit_) {
+    return *work_limit_ == work_time_;
+  } else
+    return true;
+}
+void detail::work_machine_front::set_work_limit(const chrono::local_time_pos& in_pos, const chrono::seconds& in_work_du) {
+  work_limit_ = in_work_du;
+  time_       = in_pos;
+}
 }  // namespace business
 namespace detail {
 
@@ -171,20 +212,22 @@ chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                        chrono::month_day_last{l_day_1.month()}}} +
                    720h;
 
-  business::work_clock l_clock{in_s};
-  l_clock.set_work_limit(in_s, chrono::floor<chrono::seconds>(in_du_time));
+  business::detail::work_clock_mfm l_mfm{};
+  l_mfm.start();
+  l_mfm.set_work_limit(in_s, chrono::floor<chrono::seconds>(in_du_time));
+
   for (auto l_day = chrono::floor<chrono::days>(in_s);
        l_day < l_day_end;
        l_day += chrono::days{1}) {
     auto l_r = in_rules(chrono::year_month_day{l_day});
     for (auto&& i : l_r) {
-      l_clock += i;
-      if (l_clock) {
-        return l_clock.time_point;
+      i.add_event(l_mfm);
+      if (l_mfm.ok()) {
+        return l_mfm.time_;
       }
     }
   }
-  return l_clock.time_point;
+  return l_mfm.time_;
 }
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
@@ -192,20 +235,24 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   business::work_clock l_clock{in_s};
   const auto l_day_end = chrono::floor<chrono::days>(in_e);
 
+  business::detail::work_clock_mfm l_mfm{};
+  l_mfm.start();
   for (auto l_day = chrono::floor<chrono::days>(in_s);
        l_day <= l_day_end;
        l_day += chrono::days{1}) {
     auto l_r = in_rules(chrono::year_month_day{l_day});
     for (auto&& i : l_r) {
       if (i.time_point <= in_e) {
-        l_clock += i;
+        i.add_event(l_mfm);
       } else {
-        l_clock += business::time_attr{in_e, i.state_};
-        return l_clock.work_time();
+        i.time_point = in_e;
+        i.add_event(l_mfm);
+        return l_mfm.work_time_;
       }
     }
   }
-  return l_clock.work_time();
+
+  return l_mfm.work_time_;
 }
 }  // namespace detail
 
