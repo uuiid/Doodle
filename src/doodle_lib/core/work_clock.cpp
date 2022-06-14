@@ -133,9 +133,8 @@ chrono::hours_double detail::work_clock_mfm::work_duration(
 }
 
 void detail::work_next_clock_mfm::add_time(const chrono::local_time_pos& in_time) {
-  work_time_       = (in_time - time_);
   auto l_time_long = in_time - time_;
-  if ((work_time_ + l_time_long) > work_limit_) {
+  if ((work_time_ + l_time_long) >= work_limit_) {
     time_ += (work_limit_ - work_time_);
     work_time_ = work_limit_;
   } else {

@@ -49,7 +49,7 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   /// \brief 休息状态
   struct rest_state : public bmsm::state<> {
   };
-  typedef work_state initial_state;
+  typedef rest_state initial_state;
 
   virtual void add_time(const doodle::chrono::local_time_pos& in_time);
 
@@ -62,7 +62,7 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
     void operator()(EVT const& in_evt, FSM& in_fsm, SourceState&, TargetState&) {
       if (in_evt.time_ != in_fsm.time_) {
         in_fsm.add_time(in_evt.time_);
-        in_fsm.time_ = in_evt.time_;
+//        in_fsm.time_ = in_evt.time_;
       }
     }
   };
