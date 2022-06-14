@@ -4,6 +4,7 @@
 #include <implot_internal.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_lib/core/work_clock.h>
 
 namespace doodle::gui {
 
@@ -42,11 +43,8 @@ class time_sequencer_widget::impl {
   };
 
  public:
-  impl() {
-    p_min_c = doodle::chrono::floor<doodle::chrono::seconds>(
-        p_min.zoned_time_.get_sys_time());
-    p_max_c = doodle::chrono::floor<doodle::chrono::seconds>(
-        p_max.zoned_time_.get_sys_time());
+  impl(){
+
   };
   ~impl() = default;
   std::vector<point_cache> time_list{};
@@ -55,10 +53,12 @@ class time_sequencer_widget::impl {
   time_point_wrap p_min{2021, 1, 1, 0, 0, 0};
   time_point_wrap p_max{2021, 2, 1, 0, 0, 0};
 
-  doodle::chrono::sys_seconds p_min_c{};
-  doodle::chrono::sys_seconds p_max_c{};
   ImPlotRect rect_{};
   ImPlotRect rect_org_{};
+
+  std::vector<doodle::chrono::days_double> work_time;
+
+  doodle::business::rules rules_{};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -92,9 +92,30 @@ class time_sequencer_widget::impl {
                   }) |
                   ranges::to_vector;
   }
+  void refresh_work_time(const decltype(time_list)& in_list) {
+    auto l_list = in_list;
+    l_list |= ranges::actions::sort;
+
+    auto l_begin = l_list.front().time_point_.zoned_time_.get_local_time();
+    work_time    = l_list |
+                ranges::views::transform(
+                    [&](const impl::point_cache& in_time) -> doodle::chrono::days_double {
+                      return doodle::work_duration(l_begin,
+                                                   in_time.time_point_.zoned_time_.get_local_time(),
+                                                   rules_);
+                    }) |
+                ranges::to_vector;
+    
+
+  }
+
+  static std::double_t ImPlotRange_Centre(const ImPlotRange& in) {
+    return in.Min + in.Size() / 2;
+  };
 
   void modify_time_refresh(const ImPlotRect& in_rect) {
-    std::int64_t l_mod_size = in_rect.X.Min - rect_org_.X.Min;
+    auto l_mod_size = boost::numeric_cast<std::int64_t>(
+        ImPlotRange_Centre(in_rect.X) - ImPlotRange_Centre(rect_org_.X));
     if (l_mod_size == 0)
       return;
     auto l_time_list = time_list | ranges::views::transform([&](impl::point_cache in) -> impl::point_cache {
@@ -104,17 +125,12 @@ class time_sequencer_widget::impl {
                          return in;
                        }) |
                        ranges::to_vector;
-    //    ranges::for_each(time_list, [&](impl::point_cache& in) {
-    //      if (in.has_select) {
-    //        in.time_point_ += doodle::chrono::seconds{l_mod_size};
-    //      }
-    //    });
-    //            time_list |= ranges::actions::sort;
     rect_ = in_rect;
     refresh(l_time_list);
   };
   void modify_time() {
-    std::int64_t l_mod_size = rect_.X.Min - rect_org_.X.Min;
+    auto l_mod_size = boost::numeric_cast<std::int64_t>(
+        ImPlotRange_Centre(rect_.X) - ImPlotRange_Centre(rect_org_.X));
     if (l_mod_size == 0)
       return;
     ranges::for_each(time_list, [&](impl::point_cache& in) {
