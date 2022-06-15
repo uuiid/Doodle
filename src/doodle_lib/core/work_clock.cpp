@@ -30,12 +30,20 @@ std::vector<time_attr> rules::operator()(
   }
 
   /// 开始加入调休和加班
-  ranges::for_each(extra_work,
+  ranges::for_each(extra_work |
+                       ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+                         return doodle::chrono::floor<doodle::chrono::days>(in_.start_) == l_local_days ||
+                                doodle::chrono::floor<doodle::chrono::days>(in_.end_) == l_local_days;
+                       }),
                    [&](const decltype(extra_work)::value_type& in_work) {
                      time_list.emplace_back(in_work.start_, work_attr::adjust_work_begin);
                      time_list.emplace_back(in_work.end_, work_attr::adjust_work_end);
                    });
-  ranges::for_each(extra_rest,
+  ranges::for_each(extra_rest |
+                       ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+                         return doodle::chrono::floor<doodle::chrono::days>(in_.start_) == l_local_days ||
+                                doodle::chrono::floor<doodle::chrono::days>(in_.end_) == l_local_days;
+                       }),
                    [&](const decltype(extra_rest)::value_type& in_rest) {
                      time_list.emplace_back(in_rest.start_, work_attr::adjust_rest_begin);
                      time_list.emplace_back(in_rest.end_, work_attr::adjust_rest_end);
@@ -109,7 +117,7 @@ void detail::work_machine_front::add_time(const chrono::local_time_pos& in_time)
   work_time_ += l_time_long;
 }
 
-chrono::hours_double detail::work_clock_mfm::work_duration(
+chrono::hours_double detail::work_clock_mfm::work_duration_(
     const chrono::local_time_pos& in_e,
     const rules& in_rules) {
   const auto l_day_end = chrono::floor<chrono::days>(in_e);
@@ -142,7 +150,7 @@ void detail::work_next_clock_mfm::add_time(const chrono::local_time_pos& in_time
     work_time_ += l_time_long;
   }
 }
-chrono::local_time_pos detail::work_next_clock_mfm::next_time(
+chrono::local_time_pos detail::work_next_clock_mfm::next_time_(
     const chrono::milliseconds& in_du_time, const rules& in_rules) {
   auto l_day_1   = chrono::year_month_day{chrono::floor<chrono::days>(time_)};
   auto l_day_end = chrono::local_days{chrono::year_month_day_last{
@@ -164,7 +172,7 @@ chrono::local_time_pos detail::work_next_clock_mfm::next_time(
   }
   return time_;
 }
-void detail::work_machine_front::set_time(const chrono::local_time_pos& in_pos) {
+void detail::work_machine_front::set_time_(const chrono::local_time_pos& in_pos) {
   time_ = in_pos;
 }
 bool detail::work_next_clock_mfm::ok() const {

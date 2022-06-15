@@ -10,6 +10,7 @@
 
 #include <boost/msm/front/state_machine_def.hpp>
 #include <boost/msm/back/state_machine.hpp>
+#include <boost/msm/back/tools.hpp>
 #include <boost/msm/front/functor_row.hpp>
 namespace doodle {
 
@@ -41,7 +42,6 @@ struct adjust_rest_end {
 struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   doodle::chrono::local_time_pos time_;
   chrono::seconds work_time_;
-  //  std::optional<chrono::seconds> work_limit_;
 
   /// \brief 工作状态
   struct work_state : public bmsm::state<> {
@@ -49,10 +49,35 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   /// \brief 休息状态
   struct rest_state : public bmsm::state<> {
   };
+
   typedef rest_state initial_state;
 
+  /**
+   * @brief 状态机开始
+   * @tparam Event
+   * @tparam FSM
+   */
+  template <class Event, class FSM>
+  void on_entry(Event const&, FSM& in_fsm) {
+    work_time_ = {};
+    in_fsm.set_states(boost::msm::back::states_ << rest_state{});
+  }
+  /**
+   * @brief 状态机结束
+   * @tparam Event
+   * @tparam FSM
+   */
+  template <class Event, class FSM>
+  void on_exit(Event const&, FSM&) {
+  }
+
   virtual void add_time(const doodle::chrono::local_time_pos& in_time);
-  void set_time(const chrono::local_time_pos& in_pos);
+  void set_time_(const chrono::local_time_pos& in_pos);
+
+  template <typename Duration_>
+  void set_time(const chrono::time_point<chrono::local_t, Duration_>& in_time) {
+    set_time_(chrono::floor<chrono::seconds>(in_time));
+  };
   //  inline explicit operator bool() const {
   //    return ok();
   //  }
@@ -88,10 +113,31 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
             bmsm::Row<rest_state, adjust_rest_end, work_state, rest_to_work>,    // 调休结束
             bmsm::Row<rest_state, adjust_work_begin, work_state, rest_to_work>   // 加班开始
             > {};
+
+  //  template <class FSM, class Event>
+  //  void no_transition(Event const&, FSM&, int) {
+  //
+  //  }
 };
 
 using work_clock_mfm_base = boost::msm::back::state_machine<work_machine_front>;
 class work_clock_mfm;
+
+inline void print_work_clock_mfm(const work_clock_mfm_base& in_mfm) {
+  typedef boost::msm::back::generate_state_set<work_clock_mfm_base::stt>::type all_states;  // states
+  static char const* state_names[boost::mpl::size<all_states>::value];
+  // array to fill with names
+  // fill the names of the states defined in the state machine
+  boost::mpl::for_each<all_states, boost::msm::wrap<boost::mpl::placeholders::_1>>(
+      boost::msm::back::fill_state_names<work_clock_mfm_base::stt>(state_names));
+  // display all active states
+  //  for (unsigned int i = 0; i < some_fsm::nr_regions::value; ++i) {
+  //    std::cout << " -> "
+  //              << state_names[my_fsm_instance.current_state()[i]]
+  //              << std::endl;
+  //  }
+  DOODLE_LOG_INFO(state_names[in_mfm.current_state()[0]])
+}
 }  // namespace detail
 
 namespace work_attr {
@@ -190,8 +236,14 @@ class work_clock_mfm : public work_clock_mfm_base {
  public:
   work_clock_mfm() = default;
 
-  chrono::hours_double work_duration(const chrono::local_time_pos& in_e,
-                                     const business::rules& in_rules);
+  chrono::hours_double work_duration_(const chrono::local_time_pos& in_e,
+                                      const business::rules& in_rules);
+
+  template <typename Duration_>
+  chrono::hours_double work_duration(const chrono::time_point<chrono::local_t, Duration_>& in_e,
+                                     const business::rules& in_rules) {
+    return work_duration_(chrono::floor<chrono::seconds>(in_e), in_rules);
+  }
 };
 class work_next_clock_mfm : public work_clock_mfm_base {
   chrono::seconds work_limit_;
@@ -200,13 +252,22 @@ class work_next_clock_mfm : public work_clock_mfm_base {
   work_next_clock_mfm() = default;
 
   void add_time(const doodle::chrono::local_time_pos& in_time) override;
-  chrono::local_time_pos next_time(const chrono::milliseconds& in_du_time,
-                                   const business::rules& in_rules);
 
+  chrono::local_time_pos next_time_(const chrono::milliseconds& in_du_time,
+                                    const business::rules& in_rules);
+  template <typename Duration_>
+  chrono::local_time_pos next_time(const Duration_& in_e,
+                                   const business::rules& in_rules) {
+    return next_time_(chrono::floor<chrono::milliseconds>(in_e), in_rules);
+  }
   [[nodiscard]] bool ok() const;
 };
 
 }  // namespace detail
+
+using work_clock_mfm_base = doodle::business::detail::work_clock_mfm_base;
+using work_clock_mfm      = doodle::business::detail::work_clock_mfm;
+using work_next_clock_mfm = doodle::business::detail::work_next_clock_mfm;
 
 }  // namespace business
 namespace detail {
