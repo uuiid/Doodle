@@ -44,11 +44,12 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
   chrono::seconds work_time_;
 
   /// \brief 工作状态
-  struct work_state : public bmsm::state<> {
-  };
+  struct work_state : public bmsm::state<> {};
   /// \brief 休息状态
-  struct rest_state : public bmsm::state<> {
-  };
+  struct rest_state : public bmsm::state<> {};
+  struct holiday_state : public bmsm::state<> {};
+  struct adjust_state : public bmsm::state<> {};
+  struct overtime_state : public bmsm::state<> {};
 
   typedef rest_state initial_state;
 
@@ -218,8 +219,9 @@ class DOODLELIB_API rules {
       chrono::seconds,
       chrono::seconds>>
       work_pair{};
-  std::vector<adjust> extra_work{};
-  std::vector<adjust> extra_rest{};
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_holidays{};
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_work{};
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_rest{};
 
   /**
    * @brief 获取当天的工作时间段
@@ -229,6 +231,34 @@ class DOODLELIB_API rules {
   std::vector<time_attr> operator()(const chrono::year_month_day& in_day) const;
 
   void clamp_time(chrono::local_time_pos& in_time_pos) const;
+  /// \brief 正常的工作(需要第一步收集)
+  /// \param in_s
+  /// \param in_e
+  /// \return
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+  normal_works(const chrono::year_month_day& in_day);
+  /// \brief 节假日(需要减去)
+  /// \param in_s
+  /// \param in_e
+  /// \return
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+  holidays(const chrono::year_month_day& in_day);
+  /**
+   * @brief 调休
+   * @param in_s
+   * @param in_e
+   * @return
+   */
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+  adjusts(const chrono::year_month_day& in_day);
+  /**
+   * @brief 加班(需要加上)
+   * @param in_s
+   * @param in_e
+   * @return
+   */
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+  overtimes(const chrono::year_month_day& in_day);
 };
 
 namespace detail {
@@ -265,7 +295,6 @@ class work_next_clock_mfm : public work_clock_mfm_base {
 
 }  // namespace detail
 
-using work_clock_mfm_base = doodle::business::detail::work_clock_mfm_base;
 using work_clock_mfm      = doodle::business::detail::work_clock_mfm;
 using work_next_clock_mfm = doodle::business::detail::work_next_clock_mfm;
 

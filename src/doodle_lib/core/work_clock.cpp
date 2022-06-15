@@ -29,26 +29,6 @@ std::vector<time_attr> rules::operator()(
     });
   }
 
-  /// 开始加入调休和加班
-  ranges::for_each(extra_work |
-                       ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
-                         return doodle::chrono::floor<doodle::chrono::days>(in_.start_) == l_local_days ||
-                                doodle::chrono::floor<doodle::chrono::days>(in_.end_) == l_local_days;
-                       }),
-                   [&](const decltype(extra_work)::value_type& in_work) {
-                     time_list.emplace_back(in_work.start_, work_attr::adjust_work_begin);
-                     time_list.emplace_back(in_work.end_, work_attr::adjust_work_end);
-                   });
-  ranges::for_each(extra_rest |
-                       ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
-                         return doodle::chrono::floor<doodle::chrono::days>(in_.start_) == l_local_days ||
-                                doodle::chrono::floor<doodle::chrono::days>(in_.end_) == l_local_days;
-                       }),
-                   [&](const decltype(extra_rest)::value_type& in_rest) {
-                     time_list.emplace_back(in_rest.start_, work_attr::adjust_rest_begin);
-                     time_list.emplace_back(in_rest.end_, work_attr::adjust_rest_end);
-                   });
-
   time_list |= ranges::actions::sort;
   return time_list;
 }
@@ -76,6 +56,60 @@ void rules::clamp_time(chrono::local_time_pos& in_time_pos) const {
       }
     }
   }
+}
+std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+rules::normal_works(const chrono::year_month_day& in_day) {
+  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> l_r{};
+  chick_true<doodle_error>(in_day.ok(), DOODLE_LOC, "无效的日期 {}", in_day);
+  chrono::weekday l_weekday{in_day};
+  /// \brief 加入工作日规定时间
+  chrono::local_days l_local_days{in_day};
+  if (work_weekdays[l_weekday.c_encoding()]) {
+    ranges::for_each(work_pair, [&](const std::pair<chrono::seconds,
+                                                    chrono::seconds>& in_pair) {
+      l_r.emplace_back(std::make_pair(l_local_days + in_pair.first, l_local_days + in_pair.second));
+    });
+  }
+  return l_r;
+}
+std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+rules::holidays(const chrono::year_month_day& in_day) {
+  chrono::local_days l_local_days{in_day};
+  /// 开始加入ji节假日
+  auto l_r = extra_holidays |
+             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
+                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
+             }) |
+             ranges::to_vector;
+
+  return l_r;
+}
+std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+rules::adjusts(const chrono::year_month_day& in_day) {
+  chrono::local_days l_local_days{in_day};
+  /// 开始加入ji节假日
+  auto l_r = extra_work |
+             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
+                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
+             }) |
+             ranges::to_vector;
+
+  return l_r;
+}
+std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
+rules::overtimes(const chrono::year_month_day& in_day) {
+  chrono::local_days l_local_days{in_day};
+  /// 开始加入ji节假日
+  auto l_r = extra_rest |
+             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
+                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
+             }) |
+             ranges::to_vector;
+
+  return l_r;
 }
 bool time_attr::operator<(const time_attr& in_rhs) const {
   return time_point < in_rhs.time_point;
@@ -180,16 +214,143 @@ bool detail::work_next_clock_mfm::ok() const {
 }
 }  // namespace business
 namespace detail {
+using time_pair     = std::pair<chrono::local_time_pos, chrono::local_time_pos>;
+using time_list_v_t = std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>;
+namespace {
+bool sort_time(const time_pair& in_r, const time_pair& in_l) {
+  return in_r.first < in_l.first;
+}
+bool is_time_overlap(const time_pair& in_a, const time_pair& in_b) {
+  return (std::min(in_a.second, in_b.second) - std::max(in_a.first, in_b.first)) > time_pair::first_type::duration{0};
+};
+time_list_v_t time_du_add(const time_pair& in_a, const time_pair& in_b) {
+  time_list_v_t l_r{};
+  if (is_time_overlap(in_a, in_b)) {
+    l_r.emplace_back(std::make_pair(std::min(in_a.first, in_b.first), std::max(in_a.second, in_b.second)));
+  } else {
+    l_r.emplace_back(in_a);
+    l_r.emplace_back(in_b);
+  }
+  return l_r;
+}
+time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
+  time_list_v_t l_r{};
+  if (in_a.first < in_b.first && in_a.second > in_b.second) {
+    /**
+     *  a1----------a2
+     *    b1------b2
+     */
+    l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
+    l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
+  } else if (in_a.first > in_b.first && in_a.second < in_b.second) {
+    /**
+     *        a1-----a2
+     *    b1--------------b2
+     */
+  } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
+    /**
+     * a1-------------a2
+     *        b1--------------b2
+     */
+    l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
+  } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
+    /**
+     *            a1-------------a2
+     *    b1--------------b2
+     */
+    l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
+  } else {
+    /**
+     *                            a1-------------a2
+     *    b1--------------b2
+     *
+     *    or:
+     *
+     *    a1-------------a2
+     *                        b1--------------b2
+     */
+    l_r.emplace_back(in_a);
+  }
+  return l_r;
+};
+}  // namespace
 
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
                                    const business::rules& in_rules) {
   const auto l_day_end = chrono::floor<chrono::days>(in_e);
 
-  business::detail::work_clock_mfm l_mfm{};
-  l_mfm.start();
-  l_mfm.set_time(in_s);
-  return l_mfm.work_duration(in_e, in_rules);
+  time_list_v_t l_normal_works{};
+  time_list_v_t l_normal_rest{std::make_pair(in_s, in_e)};  /// \brief 初始我们传入时间全部休息
+  time_list_v_t l_holidays{};
+  time_list_v_t l_adjusts{};
+  time_list_v_t l_overtimes{};
+  time_list_v_t l_r{std::make_pair(in_s, in_e)};
+  time_list_v_t l_r2{};
+
+  /// \brief 计算休息时间
+  while (!l_normal_works.empty()) {
+    ranges::for_each(l_normal_rest, [&](const time_pair& in_p) {
+      l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_normal_works.back()));
+    });
+    l_normal_rest |= ranges::actions::push_back(l_r2);
+    l_r2.clear();
+    l_normal_works.pop_back();
+  }
+  {
+    l_r2.clear();
+    /// \brief 减去休息时间
+    while (!l_normal_rest.empty()) {
+      ranges::for_each(l_r, [&](const time_pair& in_p) {
+        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_normal_rest.back()));
+      });
+      l_r |= ranges::actions::push_back(l_r2);
+      l_r2.clear();
+      l_normal_rest.pop_back();
+    }
+  }
+  {
+    l_r2.clear();
+    /// \brief 减去节假日
+    while (!l_holidays.empty()) {
+      ranges::for_each(l_r, [&](const time_pair& in_p) {
+        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_holidays.back()));
+      });
+      l_r |= ranges::actions::push_back(l_r2);
+      l_r2.clear();
+      l_holidays.pop_back();
+    }
+  }
+  {
+    l_r2.clear();
+    /// \brief 减去调休
+    while (!l_adjusts.empty()) {
+      ranges::for_each(l_r, [&](const time_pair& in_p) {
+        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_adjusts.back()));
+      });
+      l_r |= ranges::actions::push_back(l_r2);
+      l_r2.clear();
+      l_adjusts.pop_back();
+    }
+  }
+  {
+    l_r2.clear();
+    /// \brief 加入加班
+    while (!l_overtimes.empty()) {
+      ranges::for_each(l_r, [&](const time_pair& in_p) {
+        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_overtimes.back()));
+      });
+      l_r |= ranges::actions::push_back(l_r2);
+      l_r2.clear();
+      l_overtimes.pop_back();
+    }
+  }
+  auto l_i = time_pair ::first_type ::duration{0};
+  ranges::for_each(l_r, [&](const time_pair& in) {
+    l_i = in.second - in.first;
+  });
+
+  return l_i;
 }
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const chrono::milliseconds& in_du_time,
