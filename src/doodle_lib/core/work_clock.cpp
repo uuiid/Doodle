@@ -237,8 +237,8 @@ time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
   time_list_v_t l_r{};
   if (in_a.first < in_b.first && in_a.second > in_b.second) {
     /**
-     *  a1----------a2
-     *    b1------b2
+     *  a1----------------a2
+     *       b1------b2
      */
     l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
     l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
@@ -267,10 +267,13 @@ time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
      *    or:
      *
      *    a1-------------a2
-     *                        b1--------------b2
+     *                            b1--------------b2
      */
     l_r.emplace_back(in_a);
   }
+  ranges::for_each(l_r, [&](const time_pair& in) {
+    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
+  });
   return l_r;
 };
 }  // namespace
@@ -325,21 +328,23 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
       l_adjusts.pop_back();
     }
   }
+
   {
     l_r2.clear();
     /// \brief 加入加班
     while (!l_overtimes.empty()) {
       ranges::for_each(l_r, [&](const time_pair& in_p) {
-        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_overtimes.back()));
+        l_r2 |= ranges::actions::push_back(time_du_add(in_p, l_overtimes.back()));
       });
       l_r = l_r2;
       l_r2.clear();
       l_overtimes.pop_back();
     }
   }
-  auto l_i = time_pair ::first_type ::duration{0};
+  auto l_i = time_pair::first_type::duration{0};
   ranges::for_each(l_r, [&](const time_pair& in) {
-    l_i = in.second - in.first;
+    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
+    l_i += (in.second - in.first);
   });
 
   return l_i;
