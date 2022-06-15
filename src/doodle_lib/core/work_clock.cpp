@@ -58,7 +58,7 @@ void rules::clamp_time(chrono::local_time_pos& in_time_pos) const {
   }
 }
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::normal_works(const chrono::year_month_day& in_day) {
+rules::normal_works(const chrono::year_month_day& in_day) const {
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> l_r{};
   chick_true<doodle_error>(in_day.ok(), DOODLE_LOC, "无效的日期 {}", in_day);
   chrono::weekday l_weekday{in_day};
@@ -73,7 +73,7 @@ rules::normal_works(const chrono::year_month_day& in_day) {
   return l_r;
 }
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::holidays(const chrono::year_month_day& in_day) {
+rules::holidays(const chrono::year_month_day& in_day) const {
   chrono::local_days l_local_days{in_day};
   /// 开始加入ji节假日
   auto l_r = extra_holidays |
@@ -86,7 +86,7 @@ rules::holidays(const chrono::year_month_day& in_day) {
   return l_r;
 }
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::adjusts(const chrono::year_month_day& in_day) {
+rules::adjusts(const chrono::year_month_day& in_day) const {
   chrono::local_days l_local_days{in_day};
   /// 开始加入ji节假日
   auto l_r = extra_work |
@@ -99,7 +99,7 @@ rules::adjusts(const chrono::year_month_day& in_day) {
   return l_r;
 }
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::overtimes(const chrono::year_month_day& in_day) {
+rules::overtimes(const chrono::year_month_day& in_day) const {
   chrono::local_days l_local_days{in_day};
   /// 开始加入ji节假日
   auto l_r = extra_rest |
@@ -287,6 +287,16 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   time_list_v_t l_overtimes{};
   time_list_v_t l_r{std::make_pair(in_s, in_e)};
   time_list_v_t l_r2{};
+
+  for (auto l_day = chrono::floor<chrono::days>(in_s);
+       l_day <= l_day_end;
+       l_day += chrono::days{1}) {
+    auto l_day_1 = chrono::year_month_day{l_day};
+    l_normal_works |= ranges::actions::push_back(in_rules.normal_works(l_day_1));
+    l_holidays |= ranges::actions::push_back(in_rules.holidays(l_day_1));
+    l_adjusts |= ranges::actions::push_back(in_rules.adjusts(l_day_1));
+    l_overtimes |= ranges::actions::push_back(in_rules.overtimes(l_day_1));
+  }
 
   /// \brief 计算休息时间
   while (!l_normal_works.empty()) {

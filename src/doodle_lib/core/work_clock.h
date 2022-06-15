@@ -236,13 +236,13 @@ class DOODLELIB_API rules {
   /// \param in_e
   /// \return
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-  normal_works(const chrono::year_month_day& in_day);
+  normal_works(const chrono::year_month_day& in_day) const;
   /// \brief 节假日(需要减去)
   /// \param in_s
   /// \param in_e
   /// \return
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-  holidays(const chrono::year_month_day& in_day);
+  holidays(const chrono::year_month_day& in_day) const;
   /**
    * @brief 调休
    * @param in_s
@@ -250,7 +250,7 @@ class DOODLELIB_API rules {
    * @return
    */
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-  adjusts(const chrono::year_month_day& in_day);
+  adjusts(const chrono::year_month_day& in_day) const;
   /**
    * @brief 加班(需要加上)
    * @param in_s
@@ -258,7 +258,7 @@ class DOODLELIB_API rules {
    * @return
    */
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-  overtimes(const chrono::year_month_day& in_day);
+  overtimes(const chrono::year_month_day& in_day) const;
 };
 
 namespace detail {
