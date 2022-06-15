@@ -86,8 +86,8 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   doodle::business::rules l_tset_rules_def{};
   doodle::business::rules l_tset_rules{};
   l_tset_rules.extra_rest.emplace_back(
-      doodle::business::adjust{chrono::local_days(2022_y / 2 / 24_d) + 8h,
-                               chrono::local_days(2022_y / 2 / 24_d) + 18h});
+      std::make_pair(chrono::local_days(2022_y / 2 / 24_d) + 8h,
+                     chrono::local_days(2022_y / 2 / 24_d) + 18h));
 
   DOODLE_T_M_1(1, 20.583, l_tset_rules_def);
   DOODLE_T_M_1(2, 36.583, l_tset_rules_def);
