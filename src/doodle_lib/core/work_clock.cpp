@@ -281,12 +281,10 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   const auto l_day_end = chrono::floor<chrono::days>(in_e);
 
   time_list_v_t l_normal_works{};
-  time_list_v_t l_normal_rest{std::make_pair(in_s, in_e)};  /// \brief 初始我们传入时间全部休息
+  time_list_v_t l_normal_rest{};
   time_list_v_t l_holidays{};
   time_list_v_t l_adjusts{};
   time_list_v_t l_overtimes{};
-  time_list_v_t l_r{std::make_pair(in_s, in_e)};
-  time_list_v_t l_r2{};
 
   for (auto l_day = chrono::floor<chrono::days>(in_s);
        l_day <= l_day_end;
@@ -297,28 +295,12 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
     l_adjusts |= ranges::actions::push_back(in_rules.adjusts(l_day_1));
     l_overtimes |= ranges::actions::push_back(in_rules.overtimes(l_day_1));
   }
+  time_list_v_t l_r{l_normal_works};
+  time_list_v_t l_r2{};
+  /// \brief 初始我们传入时间前后两端休息时间
+  l_adjusts.emplace_back(std::make_pair(chrono::floor<chrono::days>(in_s), in_s));
+  l_adjusts.emplace_back(std::make_pair(in_e, chrono::floor<chrono::days>(in_e) + chrono::days{1}));
 
-  /// \brief 计算休息时间
-  while (!l_normal_works.empty()) {
-    ranges::for_each(l_normal_rest, [&](const time_pair& in_p) {
-      l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_normal_works.back()));
-    });
-    l_normal_rest |= ranges::actions::push_back(l_r2);
-    l_r2.clear();
-    l_normal_works.pop_back();
-  }
-  {
-    l_r2.clear();
-    /// \brief 减去休息时间
-    while (!l_normal_rest.empty()) {
-      ranges::for_each(l_r, [&](const time_pair& in_p) {
-        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_normal_rest.back()));
-      });
-      l_r |= ranges::actions::push_back(l_r2);
-      l_r2.clear();
-      l_normal_rest.pop_back();
-    }
-  }
   {
     l_r2.clear();
     /// \brief 减去节假日
@@ -326,7 +308,7 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
       ranges::for_each(l_r, [&](const time_pair& in_p) {
         l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_holidays.back()));
       });
-      l_r |= ranges::actions::push_back(l_r2);
+      l_r = l_r2;
       l_r2.clear();
       l_holidays.pop_back();
     }
@@ -338,7 +320,7 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
       ranges::for_each(l_r, [&](const time_pair& in_p) {
         l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_adjusts.back()));
       });
-      l_r |= ranges::actions::push_back(l_r2);
+      l_r = l_r2;
       l_r2.clear();
       l_adjusts.pop_back();
     }
@@ -350,7 +332,7 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
       ranges::for_each(l_r, [&](const time_pair& in_p) {
         l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_overtimes.back()));
       });
-      l_r |= ranges::actions::push_back(l_r2);
+      l_r = l_r2;
       l_r2.clear();
       l_overtimes.pop_back();
     }
