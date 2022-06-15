@@ -50,8 +50,6 @@ class time_sequencer_widget::impl {
   std::vector<point_cache> time_list{};
   std::vector<double> time_list_x{};
   std::vector<double> time_list_y{};
-  time_point_wrap p_min{2021, 1, 1, 0, 0, 0};
-  time_point_wrap p_max{2021, 2, 1, 0, 0, 0};
 
   ImPlotRect rect_{};
   ImPlotRect rect_org_{};
@@ -59,7 +57,6 @@ class time_sequencer_widget::impl {
   std::vector<doodle::chrono::hours_double> work_time;
   std::vector<std::double_t> work_time_plots;
   std::vector<std::pair<std::double_t, std::double_t>> work_time_plots_drag;
-  std::double_t work_time_plots_max;
 
   /// \brief 时间规则
   doodle::business::rules rules_{};
@@ -168,6 +165,43 @@ class time_sequencer_widget::impl {
     refresh(time_list);
     refresh_work_time(time_list);
   };
+
+  void add_time_du(const std::size_t& in_index, const std::double_t& in_add_time_du) {
+    chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
+
+    work_time_plots[in_index] += in_add_time_du;
+    work_time_plots[in_index]             = std::max(work_time_plots[in_index], std::double_t(0));
+    work_time_plots_drag[in_index].second = std::max(work_time_plots_drag[in_index].second, std::double_t(0));
+    work_next_clock_mfm.start();
+    auto l_start_time = time_list[std::max(in_index - 1, std::size_t(0))].time_point_.zoned_time_.get_local_time();
+    if (in_index == 0)
+      l_start_time = doodle::chrono::floor<doodle::chrono::days>(l_start_time);
+
+    auto l_time_list = time_list;
+
+    ranges::for_each(ranges::views::ints(in_index, l_time_list.size()),
+                     [&](const std::int32_t& in_ints) {
+                       l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
+                           boost::numeric_cast<doodle::chrono::seconds::rep>(in_add_time_du)};
+                     });
+    refresh(l_time_list);
+    boost::asio::post(g_io_context(),
+                      [=]() { refresh_work_time(l_time_list); });
+    //    auto l_size = time_list.size() - in_index;
+    //    auto l_sub = in_add_time_du / l_size;
+    //    ranges::for_each(work_time_plots |
+    //                         ranges::views::slice(in_index + 1, work_time_plots.size()),
+    //                     [&](std::double_t& in) {
+    //                       in -= l_sub;
+    //                       in = std::max(in, std::double_t(0));
+    //                     });
+    //    ranges::for_each(work_time_plots_drag |
+    //                         ranges::views::slice(in_index + 1, work_time_plots_drag.size()),
+    //                     [&](std::pair<std::double_t, std::double_t>& in) {
+    //                       in.second -= l_sub;
+    //                       in.second = std::max(in.second, std::double_t(0));
+    //                     });
+  }
 };
 
 time_sequencer_widget::time_sequencer_widget()
@@ -208,7 +242,7 @@ void time_sequencer_widget::update(
     //    double t_min = p_i->p_min_c.time_since_epoch().count();  // 01/01/2021 @ 12:00:00am (UTC)
     //    double t_max = p_i->p_max_c.time_since_epoch().count();  // 01/01/2022 @ 12:00:00am (UTC)
     //    ImPlot::SetupAxesLimits(t_min, t_max, 0, 1);
-//    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
     if (ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::GetIO().KeyCtrl) {
       auto l_select = ImPlot::GetPlotSelection();
@@ -255,16 +289,18 @@ void time_sequencer_widget::update(
   /// \brief 时间柱状图
   if (ImPlot::BeginPlot("Bar Plot")) {
     //    ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
-    ranges::for_each(p_i->work_time_plots_drag,
-                     [&](std::pair<std::double_t, std::double_t>& in_item) {
-                       auto l_i = in_item.first;
-                       if (ImPlot::DragPoint((std::int32_t)in_item.first,
-                                             &(in_item.first),
-                                             &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
-                         in_item.first                                               = l_i;
-                         p_i->work_time_plots[boost::numeric_cast<std::size_t>(l_i)] = in_item.second;
-                       };
-                     });
+//    ranges::for_each(p_i->work_time_plots_drag,
+//                     [&](std::pair<std::double_t, std::double_t>& in_item) {
+//                       auto l_i   = in_item.first;
+//                       auto l_org = in_item.second;
+//                       if (ImPlot::DragPoint((std::int32_t)in_item.first,
+//                                             &(in_item.first),
+//                                             &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
+//                         in_item.first = l_i;
+//                         p_i->add_time_du(boost::numeric_cast<std::size_t>(l_i),
+//                                          in_item.second - l_org);
+//                       };
+//                     });
 
     ImPlot::PlotBars("Bars",
                      p_i->work_time_plots.data(),
