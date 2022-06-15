@@ -215,11 +215,6 @@ void time_sequencer_widget::update(
                      p_i->time_list_y.data(),
                      p_i->time_list.size());
     if (ImPlot::IsPlotSelected()) {
-      //      ImPlotPoint centroid = FindCentroid(data, select, cnt);
-      //      if (cnt > 0) {
-      //        ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 6);
-      //        ImPlot::PlotScatter("Centroid", &centroid.x, &centroid.y, 1);
-      //      }
       if (ImGui::IsMouseClicked(ImPlot::GetInputMap().SelectCancel)) {
         ImPlot::CancelPlotSelection();
       }
@@ -229,10 +224,6 @@ void time_sequencer_widget::update(
       p_i->modify_time_refresh(p_i->rect_);
       ImPlot::DragRect(2344, &p_i->rect_.X.Min, &p_i->rect_.Y.Min, &p_i->rect_.X.Max, &p_i->rect_.Y.Max, ImVec4(1, 0, 1, 1));
     }
-    //    double t_now = time_point_wrap{}.zoned_time_.get_sys_time().time_since_epoch().count();
-    //    double y_now = HugeTimeData::GetY(t_now);
-    //    ImPlot::PlotScatter("Now", &t_now, &y_now, 1);
-    //    ImPlot::Annotation(t_now, y_now, ImPlot::GetLastItemColor(), ImVec2(10, 10), false, "Now");
     ImPlot::EndPlot();
   }
   /// \brief 时间柱状图
@@ -244,8 +235,8 @@ void time_sequencer_widget::update(
                        if (ImPlot::DragPoint((std::int32_t)in_item.first,
                                              &(in_item.first),
                                              &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
-                         in_item.first             = l_i;
-                         p_i->work_time_plots[l_i] = in_item.second;
+                         in_item.first                                               = l_i;
+                         p_i->work_time_plots[boost::numeric_cast<std::size_t>(l_i)] = in_item.second;
                        };
                      });
 
