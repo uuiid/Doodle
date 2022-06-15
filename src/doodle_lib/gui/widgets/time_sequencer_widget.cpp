@@ -180,6 +180,7 @@ time_sequencer_widget::time_sequencer_widget()
 
   p_i->refresh(p_i->time_list);
   p_i->refresh_work_time(p_i->time_list);
+  ImPlot::GetStyle().UseLocalTime = true;
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -197,13 +198,17 @@ void time_sequencer_widget::update(
     const chrono::duration<chrono::system_clock::rep,
                            chrono::system_clock::period>&,
     void* in_data) {
+  ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
+  ImGui::SameLine();
+  ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
   /// \brief 时间折线
   if (ImPlot::BeginPlot("##time")) {
+    /// 设置州为时间轴
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
     //    double t_min = p_i->p_min_c.time_since_epoch().count();  // 01/01/2021 @ 12:00:00am (UTC)
     //    double t_max = p_i->p_max_c.time_since_epoch().count();  // 01/01/2022 @ 12:00:00am (UTC)
     //    ImPlot::SetupAxesLimits(t_min, t_max, 0, 1);
-    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+//    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
     if (ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::GetIO().KeyCtrl) {
       auto l_select = ImPlot::GetPlotSelection();
@@ -211,7 +216,8 @@ void time_sequencer_widget::update(
       p_i->find_selects(l_select);
     }
 
-    ImPlot::PlotLine("Time Series", p_i->time_list_x.data(),
+    ImPlot::PlotLine("Time Series",
+                     p_i->time_list_x.data(),
                      p_i->time_list_y.data(),
                      p_i->time_list.size());
     if (ImPlot::IsPlotSelected()) {
@@ -221,9 +227,29 @@ void time_sequencer_widget::update(
     }
 
     if (p_i->rect_.X.Size() != 0 && p_i->rect_.Y.Size() != 0) {
-      p_i->modify_time_refresh(p_i->rect_);
-      ImPlot::DragRect(2344, &p_i->rect_.X.Min, &p_i->rect_.Y.Min, &p_i->rect_.X.Max, &p_i->rect_.Y.Max, ImVec4(1, 0, 1, 1));
+      if (ImPlot::DragRect(2344,
+                           &p_i->rect_.X.Min,
+                           &p_i->rect_.Y.Min,
+                           &p_i->rect_.X.Max,
+                           &p_i->rect_.Y.Max,
+                           ImVec4(1, 0, 1, 1)))
+        p_i->modify_time_refresh(p_i->rect_);
     }
+    /// 绘制可调整点
+    //{
+    //  auto l_linm = ImPlot::GetPlotLimits().X;
+    //  ranges::for_each(p_i->time_list_y,
+    //                   [&](std::double_t& in) {
+    //                     std::size_t l_i = in;
+    //                     if (ImPlot::DragPoint((std::int32_t)l_i,
+    //                                           (std::double_t*)&(p_i->time_list_x[l_i]),
+    //                                           &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
+    //                       //                           in_item.first                                               = l_i;
+    //                       //                           p_i->work_time_plots[boost::numeric_cast<std::size_t>(l_i)] = in_item.second;
+    //                     };
+    //                   });
+    //}
+
     ImPlot::EndPlot();
   }
   /// \brief 时间柱状图
