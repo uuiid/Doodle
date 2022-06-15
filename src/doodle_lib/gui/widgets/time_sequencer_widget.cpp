@@ -56,9 +56,16 @@ class time_sequencer_widget::impl {
   ImPlotRect rect_{};
   ImPlotRect rect_org_{};
 
-  std::vector<doodle::chrono::days_double> work_time;
+  std::vector<doodle::chrono::hours_double> work_time;
+  std::vector<std::double_t> work_time_plots;
+  std::double_t work_time_plots_max;
 
+  /// \brief 时间规则
   doodle::business::rules rules_{};
+  /// \brief 工作时间计算
+  doodle::business::work_clock_mfm work_clock_mfm_{};
+  /// \brief
+  doodle::business::work_next_clock_mfm work_next_clock_mfm{};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -93,20 +100,28 @@ class time_sequencer_widget::impl {
                   ranges::to_vector;
   }
   void refresh_work_time(const decltype(time_list)& in_list) {
+    if (in_list.empty())
+      return;
     auto l_list = in_list;
     l_list |= ranges::actions::sort;
 
     auto l_begin = l_list.front().time_point_.zoned_time_.get_local_time();
-    work_time    = l_list |
+    work_clock_mfm_.set_time(doodle::chrono::floor<chrono::days>(l_begin));
+    work_clock_mfm_.set_states(boost::msm::back::states_ << decltype(work_clock_mfm_)::work_state{});
+    work_time = l_list |
                 ranges::views::transform(
-                    [&](const impl::point_cache& in_time) -> doodle::chrono::days_double {
-                      return doodle::work_duration(l_begin,
-                                                   in_time.time_point_.zoned_time_.get_local_time(),
-                                                   rules_);
+                    [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
+                      work_clock_mfm_.start();
+                      return work_clock_mfm_.work_duration(in_time.time_point_.zoned_time_.get_local_time(),
+                                                           rules_);
                     }) |
                 ranges::to_vector;
-    
-
+    work_time_plots = work_time |
+                      ranges::views::transform(
+                          [&](const doodle::chrono::hours_double& in_time) -> std::double_t {
+                            return in_time.count();
+                          }) |
+                      ranges::to_vector;
   }
 
   static std::double_t ImPlotRange_Centre(const ImPlotRange& in) {
@@ -127,6 +142,7 @@ class time_sequencer_widget::impl {
                        ranges::to_vector;
     rect_ = in_rect;
     refresh(l_time_list);
+    refresh_work_time(l_time_list);
   };
   void modify_time() {
     auto l_mod_size = boost::numeric_cast<std::int64_t>(
@@ -140,6 +156,7 @@ class time_sequencer_widget::impl {
     });
     time_list |= ranges::actions::sort;
     refresh(time_list);
+    refresh_work_time(time_list);
   };
 };
 
@@ -152,6 +169,7 @@ time_sequencer_widget::time_sequencer_widget()
                    ranges::to_vector;
 
   p_i->refresh(p_i->time_list);
+  p_i->refresh_work_time(p_i->time_list);
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -169,6 +187,7 @@ void time_sequencer_widget::update(
     const chrono::duration<chrono::system_clock::rep,
                            chrono::system_clock::period>&,
     void* in_data) {
+  /// \brief 时间折线
   if (ImPlot::BeginPlot("##time")) {
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
     //    double t_min = p_i->p_min_c.time_since_epoch().count();  // 01/01/2021 @ 12:00:00am (UTC)
@@ -203,6 +222,12 @@ void time_sequencer_widget::update(
     //    double y_now = HugeTimeData::GetY(t_now);
     //    ImPlot::PlotScatter("Now", &t_now, &y_now, 1);
     //    ImPlot::Annotation(t_now, y_now, ImPlot::GetLastItemColor(), ImVec2(10, 10), false, "Now");
+    ImPlot::EndPlot();
+  }
+  /// \brief 时间柱状图
+  if (ImPlot::BeginPlot("Bar Plot")) {
+//    ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
+    ImPlot::PlotBars("Bars", p_i->work_time_plots.data(), p_i->work_time_plots.size());
     ImPlot::EndPlot();
   }
 }
