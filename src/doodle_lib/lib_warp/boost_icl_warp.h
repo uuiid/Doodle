@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <boost/icl/iterator.hpp>
 #include <boost/icl/discrete_interval.hpp>
-
+#include <boost/icl/split_interval_set.hpp>
 #include <doodle_core/core/chrono_.h>
 namespace boost::icl {
 template <>

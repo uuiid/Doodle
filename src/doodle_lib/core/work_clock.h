@@ -15,6 +15,8 @@
 
 #include <doodle_lib/lib_warp/boost_icl_warp.h>
 #include <boost/icl/split_interval_set.hpp>
+#include <boost/icl/discrete_interval.hpp>
+
 namespace doodle {
 
 namespace business {
@@ -260,7 +262,7 @@ class DOODLELIB_API work_clock {
  public:
   work_clock();
 
-  void set_rules();
+  void set_rules(const rules in_rules);
   void set_interval(const chrono::local_time_pos& in_min,
                     const chrono::local_time_pos& in_max);
 

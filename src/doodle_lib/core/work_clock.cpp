@@ -223,12 +223,18 @@ work_clock::work_clock() = default;
 chrono::hours_double work_clock::operator()(
     const chrono::local_time_pos& in_min,
     const chrono::local_time_pos& in_max) const {
-  return {};
+  auto l_d = discrete_interval_time::right_open(in_min,
+                                                in_max);
+  auto l_l = split_interval_set_time_ & l_d;
+  chrono::hours_double l_len{};
+  for (auto&& l_i : l_l) {
+    l_len += boost::icl::last(l_i) - boost::icl::first(l_i);
+  }
+  return l_len;
 }
 void work_clock::gen_rules_(const discrete_interval_time& in_time) {
-  using split_interval_set_time = boost::icl::split_interval_set<time_d_t>;
-  auto l_begin                  = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
-  auto l_end                    = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
+  auto l_begin = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
+  auto l_end   = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
   split_interval_set_time l_r;
   for (;
        l_begin <= l_end;
@@ -264,9 +270,13 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
       });
   split_interval_set_time_ = l_r;
 }
-void work_clock::set_rules() {
+void work_clock::set_rules(const rules in_rules) {
+  rules_ = in_rules;
 }
-void work_clock::set_interval(const chrono::local_time_pos& in_min, const chrono::local_time_pos& in_max) {
+void work_clock::set_interval(const chrono::local_time_pos& in_min,
+                              const chrono::local_time_pos& in_max) {
+  gen_rules_(discrete_interval_time::right_open(in_min,
+                                                in_max));
 }
 }  // namespace business
 namespace detail {
