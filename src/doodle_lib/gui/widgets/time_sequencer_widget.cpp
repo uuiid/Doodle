@@ -183,23 +183,43 @@ class time_sequencer_widget::impl {
                        l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
                            boost::numeric_cast<doodle::chrono::seconds::rep>(in_add_time_du)};
                      });
+    //    refresh(l_time_list);
+    refresh_work_time(l_time_list);
+  }
+
+  void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
+    chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
+
+    auto l_time_list = time_list;
+
+    ranges::for_each(ranges::views::ints(in_index, l_time_list.size()),
+                     [&](const std::int32_t& in_ints) {
+                       l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
+                           boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)};
+                     });
     refresh(l_time_list);
-    boost::asio::post(g_io_context(),
-                      [=]() { refresh_work_time(l_time_list); });
-    //    auto l_size = time_list.size() - in_index;
-    //    auto l_sub = in_add_time_du / l_size;
-    //    ranges::for_each(work_time_plots |
-    //                         ranges::views::slice(in_index + 1, work_time_plots.size()),
-    //                     [&](std::double_t& in) {
-    //                       in -= l_sub;
-    //                       in = std::max(in, std::double_t(0));
-    //                     });
-    //    ranges::for_each(work_time_plots_drag |
-    //                         ranges::views::slice(in_index + 1, work_time_plots_drag.size()),
-    //                     [&](std::pair<std::double_t, std::double_t>& in) {
-    //                       in.second -= l_sub;
-    //                       in.second = std::max(in.second, std::double_t(0));
-    //                     });
+    refresh_work_time(l_time_list);
+  }
+
+  void average_time() {
+    if (time_list.empty()) return;
+    work_clock_.set_rules(rules_);
+    work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
+                             time_list.back().time_point_ + chrono::days{4});
+    decltype(time_list.front().time_point_)::time_local_point l_begin =
+        doodle::chrono::floor<chrono::days>(time_list.front().time_point_.zoned_time_.get_local_time());
+
+    auto l_all_len  = work_clock_(time_list.front().time_point_,
+                                  time_list.back().time_point_);
+    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+
+    ranges::for_each(time_list,
+                     [&](decltype(time_list)::value_type& in_) {
+                       in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
+                       l_begin         = in_.time_point_.zoned_time_.get_local_time();
+                     });
+    refresh(time_list);
+    refresh_work_time(time_list);
   }
 };
 
@@ -211,11 +231,13 @@ time_sequencer_widget::time_sequencer_widget()
                    }) |
                    ranges::to_vector;
 
-  p_i->refresh(p_i->time_list);
-  p_i->refresh_work_time(p_i->time_list);
-  if (!p_i->time_list.empty())
+  if (!p_i->time_list.empty()) {
+    p_i->work_clock_.set_rules(p_i->rules_);
     p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
                                   p_i->time_list.back().time_point_ + chrono::days{4});
+  }
+  p_i->refresh(p_i->time_list);
+  p_i->refresh_work_time(p_i->time_list);
   ImPlot::GetStyle().UseLocalTime = true;
 }
 
@@ -252,7 +274,7 @@ void time_sequencer_widget::update(
                        .time_since_epoch()
                        .count();  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
-    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+    //    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
     if (ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::GetIO().KeyCtrl) {
       auto l_select = ImPlot::GetPlotSelection();
@@ -279,20 +301,23 @@ void time_sequencer_widget::update(
                            ImVec4(1, 0, 1, 1)))
         p_i->modify_time_refresh(p_i->rect_);
     }
-    /// 绘制可调整点
-    //{
-    //  auto l_linm = ImPlot::GetPlotLimits().X;
-    //  ranges::for_each(p_i->time_list_y,
-    //                   [&](std::double_t& in) {
-    //                     std::size_t l_i = in;
-    //                     if (ImPlot::DragPoint((std::int32_t)l_i,
-    //                                           (std::double_t*)&(p_i->time_list_x[l_i]),
-    //                                           &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
-    //                       //                           in_item.first                                               = l_i;
-    //                       //                           p_i->work_time_plots[boost::numeric_cast<std::size_t>(l_i)] = in_item.second;
-    //                     };
-    //                   });
-    //}
+    // 绘制可调整点
+    {
+      auto l_linm = ImPlot::GetPlotLimits().X;
+      for (int l_i = 0; l_i < p_i->time_list.size(); ++l_i) {
+        auto l_org_x = doodle::chrono::floor<chrono::seconds>(
+                           p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
+                           .time_since_epoch()
+                           .count();
+        if (ImPlot::DragPoint((std::int32_t)l_i,
+                              (std::double_t*)&(p_i->time_list_x[l_i]),
+                              &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
+          //                           in_item.first = l_i;
+          p_i->time_list_y[l_i] = l_i;
+          p_i->set_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
+        };
+      }
+    }
 
     ImPlot::EndPlot();
   }
@@ -319,6 +344,7 @@ void time_sequencer_widget::update(
   }
 
   if (ImGui::Button("平均时间")) {
+    p_i->average_time();
   }
 }
 }  // namespace doodle::gui
