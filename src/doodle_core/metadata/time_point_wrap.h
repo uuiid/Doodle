@@ -74,7 +74,7 @@ class DOODLE_CORE_EXPORT time_point_wrap {
 
   /**
    *
-   * @param in 结束的时间
+   * @param in 开始时间
    * @return
    *
    * @todo 时间选项中去除节假日和个人调休
