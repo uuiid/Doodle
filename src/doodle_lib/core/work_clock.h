@@ -255,10 +255,11 @@ class DOODLELIB_API work_clock {
   rules rules_;
   using time_d_t                = doodle::chrono::local_time_pos;
   using discrete_interval_time  = boost::icl::discrete_interval<time_d_t>;
-  using split_interval_set_time = boost::icl::split_interval_set<time_d_t>;
+  using split_interval_set_time = boost::icl::interval_set<time_d_t>;
 
   void gen_rules_(const discrete_interval_time& in_time);
   split_interval_set_time split_interval_set_time_;
+
  public:
   work_clock();
 
@@ -268,6 +269,9 @@ class DOODLELIB_API work_clock {
 
   chrono::hours_double operator()(const chrono::local_time_pos& in_min,
                                   const chrono::local_time_pos& in_max) const;
+
+  chrono::local_time_pos next_time(const chrono::local_time_pos& in_begin,
+                                   const chrono::local_time_pos::duration& in_du) const;
 };
 
 namespace detail {

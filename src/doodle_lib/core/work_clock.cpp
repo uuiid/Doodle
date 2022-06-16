@@ -232,6 +232,25 @@ chrono::hours_double work_clock::operator()(
   }
   return l_len;
 }
+
+chrono::local_time_pos work_clock::next_time(const chrono::local_time_pos& in_begin,
+                                             const chrono::local_time_pos::duration& in_du) const {
+  auto l_d = discrete_interval_time::right_open(in_begin, in_begin.max());
+  auto l_l = split_interval_set_time_ & l_d;
+  chrono::hours_double l_len{};
+  for (auto&& l_i : l_l) {
+    auto l_en_t = boost::icl::last(l_i) - boost::icl::first(l_i);
+    if ((l_en_t + l_len) > in_du) {
+      return boost::icl::last(l_i) +
+             doodle::chrono::floor<doodle::chrono::seconds>(in_du - l_len);
+    } else {
+      l_len += l_en_t;
+    }
+  }
+
+  return {};
+}
+
 void work_clock::gen_rules_(const discrete_interval_time& in_time) {
   auto l_begin = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
   auto l_end   = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
@@ -278,6 +297,7 @@ void work_clock::set_interval(const chrono::local_time_pos& in_min,
   gen_rules_(discrete_interval_time::right_open(in_min,
                                                 in_max));
 }
+
 }  // namespace business
 namespace detail {
 using time_pair     = std::pair<chrono::local_time_pos, chrono::local_time_pos>;
@@ -381,8 +401,8 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const business::rules& in_rules) {
   business::work_clock l_c{};
   l_c.set_rules(in_rules);
-  l_c.set_interval(in_s,in_e);
-  return l_c(in_s,in_e);
+  l_c.set_interval(in_s, in_e);
+  return l_c(in_s, in_e);
 }
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const chrono::milliseconds& in_du_time,
