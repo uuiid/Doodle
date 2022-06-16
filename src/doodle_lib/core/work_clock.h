@@ -84,9 +84,33 @@ class DOODLELIB_API work_clock {
     return (*this)(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
                    doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
+  template <typename Duration_, std::enable_if_t<
+                                    !std::is_same_v<chrono::time_point<chrono::local_t, Duration_>,
+                                                    chrono::local_time_pos>,
+                                    bool> = true>
+  chrono::hours_double operator()(
+      const chrono::time_point<chrono::local_t, Duration_>& in_s,
+      const chrono::time_point<chrono::local_t, Duration_>& in_e) {
+    return (*this)(
+        chrono::floor<chrono::seconds>(in_s),
+        chrono::floor<chrono::seconds>(in_e));
+  };
 
   chrono::local_time_pos next_time(const chrono::local_time_pos& in_begin,
                                    const chrono::local_time_pos::duration& in_du) const;
+
+  template <typename Duration_, typename Duration2_,
+            std::enable_if_t<
+                !std::is_same_v<chrono::time_point<chrono::local_t, Duration_>,
+                                chrono::local_time_pos>,
+                bool> = true>
+  chrono::time_point<chrono::local_t, Duration_> next_time(
+      const chrono::time_point<chrono::local_t, Duration_>& in_s,
+      const Duration2_& in_du_time) {
+    return next_time(
+        chrono::floor<chrono::seconds>(in_s),
+        chrono::floor<chrono::seconds>(in_du_time));
+  };
 };
 }  // namespace business
 namespace detail {

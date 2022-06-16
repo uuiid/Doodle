@@ -15,68 +15,6 @@ namespace doodle {
 
 namespace business {
 
-chrono::hours_double detail::work_clock_mfm::work_duration_(
-    const chrono::local_time_pos& in_e,
-    const rules& in_rules) {
-  const auto l_day_end = chrono::floor<chrono::days>(in_e);
-
-  for (auto l_day = chrono::floor<chrono::days>(time_);
-       l_day <= l_day_end;
-       l_day += chrono::days{1}) {
-    auto l_r = in_rules(chrono::year_month_day{l_day});
-    for (auto&& i : l_r) {
-      if (i.time_point <= in_e) {
-        i.add_event(*this);
-      } else {
-        i.time_point = in_e;
-        i.add_event(*this);
-        return work_time_;
-      }
-    }
-  }
-
-  return work_time_;
-}
-
-void detail::work_next_clock_mfm::add_time(const chrono::local_time_pos& in_time) {
-  auto l_time_long = in_time - time_;
-  if ((work_time_ + l_time_long) >= work_limit_) {
-    time_ += (work_limit_ - work_time_);
-    work_time_ = work_limit_;
-  } else {
-    time_ = in_time;
-    work_time_ += l_time_long;
-  }
-}
-chrono::local_time_pos detail::work_next_clock_mfm::next_time_(
-    const chrono::milliseconds& in_du_time, const rules& in_rules) {
-  auto l_day_1   = chrono::year_month_day{chrono::floor<chrono::days>(time_)};
-  auto l_day_end = chrono::local_days{chrono::year_month_day_last{
-                       l_day_1.year(),
-                       chrono::month_day_last{l_day_1.month()}}} +
-                   720h;
-  work_limit_ = chrono::floor<chrono::seconds>(in_du_time);
-
-  for (auto l_day = chrono::floor<chrono::days>(time_);
-       l_day < l_day_end;
-       l_day += chrono::days{1}) {
-    auto l_r = in_rules(chrono::year_month_day{l_day});
-    for (auto&& i : l_r) {
-      i.add_event(*this);
-      if (ok()) {
-        return time_;
-      }
-    }
-  }
-  return time_;
-}
-void detail::work_machine_front::set_time_(const chrono::local_time_pos& in_pos) {
-  time_ = in_pos;
-}
-bool detail::work_next_clock_mfm::ok() const {
-  return work_limit_ == work_time_;
-}
-
 work_clock::work_clock() = default;
 
 chrono::hours_double work_clock::operator()(
