@@ -98,5 +98,25 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   DOODLE_T_M_1(7, 33.691, l_tset_rules_def);
   DOODLE_T_M_1(8, 25.691, l_tset_rules);
 
+  l_tset_rules.extra_rest.emplace_back(
+      std::make_pair(chrono::local_days(2022_y / 2 / 25_d) + 8h,
+                     chrono::local_days(2022_y / 2 / 25_d) + 18h));
+  DOODLE_T_M_1(8, 17.691, l_tset_rules);
+
+  l_tset_rules.extra_work.emplace_back(
+      std::make_pair(chrono::local_days(2022_y / 2 / 26_d) + 8h,
+                     chrono::local_days(2022_y / 2 / 26_d) + 18h));
+  DOODLE_T_M_1(8, 27.691, l_tset_rules);
+
+
+  l_tset_rules.extra_work.clear();
+
+  l_tset_rules.extra_work.emplace_back(
+      std::make_pair(chrono::local_days(2022_y / 2 / 26_d) + 8h,
+                     chrono::local_days(2022_y / 2 / 26_d) + 12h));
+  l_tset_rules.extra_work.emplace_back(
+      std::make_pair(chrono::local_days(2022_y / 2 / 26_d) + 13h,
+                     chrono::local_days(2022_y / 2 / 26_d) + 18h));
+  DOODLE_T_M_1(8, 26.691, l_tset_rules);
 #undef DOODLE_T_M_1
 }

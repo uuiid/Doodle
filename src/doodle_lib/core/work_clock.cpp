@@ -88,9 +88,9 @@ rules::holidays(const chrono::year_month_day& in_day) const {
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
 rules::adjusts(const chrono::year_month_day& in_day) const {
   chrono::local_days l_local_days{in_day};
-  /// 开始加入ji节假日
-  auto l_r = extra_work |
-             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
+  /// 开始加入调休
+  auto l_r = extra_rest |
+             ranges::view::filter([&](const decltype(extra_rest)::value_type& in_) -> bool {
                return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
                       doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
              }) |
@@ -101,8 +101,8 @@ rules::adjusts(const chrono::year_month_day& in_day) const {
 std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
 rules::overtimes(const chrono::year_month_day& in_day) const {
   chrono::local_days l_local_days{in_day};
-  /// 开始加入ji节假日
-  auto l_r = extra_rest |
+  /// 开始加入加班
+  auto l_r = extra_work |
              ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
                return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
                       doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
@@ -233,32 +233,62 @@ time_list_v_t time_du_add(const time_pair& in_a, const time_pair& in_b) {
   }
   return l_r;
 }
+time_list_v_t time_du_add(const time_list_v_t& in_a_list, const time_pair& in_b) {
+  time_list_v_t l_r{in_a_list};
+  l_r.push_back(in_b);
+  l_r |= ranges::actions::sort(sort_time);
+  DOODLE_LOG_INFO("time_b {}->{}", in_b.first, in_b.second);
+  DOODLE_LOG_INFO("{}", chrono::hours_double(in_b.second - in_b.first));
+  for (int l_i = 0; l_i < l_r.size();) {
+    if (is_time_overlap(l_r[l_i], in_b)) {
+      auto l_up_index = std::max(0, l_i - 1);
+      l_r[l_i]        = std::make_pair(std::min(l_r[l_i].first, in_b.first), std::max(l_r[l_i].second, in_b.second));
+      if (is_time_overlap(l_r[l_up_index], l_r[l_i])) {
+        l_r[l_up_index] = std::make_pair(std::min(l_r[l_i].first, l_r[l_up_index].first),
+                                         std::max(l_r[l_i].second, l_r[l_up_index].second));
+        l_r.erase(l_r.begin() + l_i);
+      } else {
+        ++l_i;
+      }
+
+    } else {
+      ++l_i;
+    }
+    ranges::for_each(l_r, [&](const time_pair& in) {
+      DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
+      DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
+    });
+  }
+  return l_r;
+}
 time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
   time_list_v_t l_r{};
-  if (in_a.first < in_b.first && in_a.second > in_b.second) {
-    /**
-     *  a1----------------a2
-     *       b1------b2
-     */
-    l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
-    l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
-  } else if (in_a.first > in_b.first && in_a.second < in_b.second) {
-    /**
-     *        a1-----a2
-     *    b1--------------b2
-     */
-  } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
-    /**
-     * a1-------------a2
-     *        b1--------------b2
-     */
-    l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
-  } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
-    /**
-     *            a1-------------a2
-     *    b1--------------b2
-     */
-    l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
+  if (is_time_overlap(in_a, in_b)) {
+    if (in_a.first < in_b.first && in_a.second > in_b.second) {
+      /**
+       *  a1----------------a2
+       *       b1------b2
+       */
+      l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
+      l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
+    } else if (in_a.first > in_b.first && in_a.second < in_b.second) {
+      /**
+       *        a1-----a2
+       *    b1--------------b2
+       */
+    } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
+      /**
+       * a1-------------a2
+       *        b1--------------b2
+       */
+      l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
+    } else if (in_a.first > in_b.first && in_a.second > in_b.second) {
+      /**
+       *            a1-------------a2
+       *    b1--------------b2
+       */
+      l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
+    }
   } else {
     /**
      *                            a1-------------a2
@@ -271,7 +301,9 @@ time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
      */
     l_r.emplace_back(in_a);
   }
+  DOODLE_LOG_INFO("{}->{} {}->{}", in_a.first, in_a.second, in_b.first, in_b.second);
   ranges::for_each(l_r, [&](const time_pair& in) {
+    DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
     DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
   });
   return l_r;
@@ -303,7 +335,9 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   /// \brief 初始我们传入时间前后两端休息时间
   l_adjusts.emplace_back(std::make_pair(chrono::floor<chrono::days>(in_s), in_s));
   l_adjusts.emplace_back(std::make_pair(in_e, chrono::floor<chrono::days>(in_e) + chrono::days{1}));
-
+  //  ranges::for_each(l_adjusts, [&](const time_pair& in) {
+  //    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
+  //  });
   {
     l_r2.clear();
     /// \brief 减去节假日
@@ -330,19 +364,15 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   }
 
   {
-    l_r2.clear();
     /// \brief 加入加班
     while (!l_overtimes.empty()) {
-      ranges::for_each(l_r, [&](const time_pair& in_p) {
-        l_r2 |= ranges::actions::push_back(time_du_add(in_p, l_overtimes.back()));
-      });
-      l_r = l_r2;
-      l_r2.clear();
+      l_r = time_du_add(l_r, l_overtimes.back());
       l_overtimes.pop_back();
     }
   }
   auto l_i = time_pair::first_type::duration{0};
   ranges::for_each(l_r, [&](const time_pair& in) {
+    DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
     DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
     l_i += (in.second - in.first);
   });
