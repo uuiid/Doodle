@@ -64,11 +64,14 @@ class time_sequencer_widget::impl {
   /// \brief 工作时间计算
   doodle::business::work_clock work_clock_{};
 
-  bool into_select{false};
-  bool outto_select{false};
+  bool into_select1{false};
+  bool outto_select1{false};
+  bool into_select2{false};
+  bool outto_select2{false};
   bool set_view1{false};
   bool set_view2{false};
-  ImPlotRect rect_select_{};
+  ImPlotRect rect_select_1{};
+  ImPlotRect rect_select_2{};
 
   std::size_t index_begin_{0};
   std::size_t index_end_{0};
@@ -231,28 +234,26 @@ class time_sequencer_widget::impl {
     refresh_work_time(time_list);
   }
 
-  void refresh_index() {
-    if (into_select && outto_select) {
-      auto l_ben         = ranges::find_if(time_list_x,
+  void refresh_view1_index() {
+    if (into_select1 && outto_select1) {
+      auto l_ben         = ranges::find_if(time_list_y,
                                            [&](const std::double_t& in_) -> bool {
-                                     return rect_select_.X.Contains(in_);
+                                     auto l_index = boost::numeric_cast<std::size_t>(in_);
+                                     return rect_select_1.Contains(time_list_x[l_index], in_);
                                    });
-      auto l_begin_index = ranges::distance(time_list_x.begin(), l_ben);
-      auto l_re_list     = time_list_x | ranges::views::reverse;
-      auto l_end         = ranges::find_if(l_re_list,
-                                           [&](const std::double_t& in_) -> bool {
-                                     return rect_select_.X.Contains(in_);
-                                   });
-      auto l_end_index   = ranges::distance(l_re_list.begin(), l_end);
-      auto l_tmp         = l_begin_index;
-      l_begin_index      = std::min(l_tmp, l_end_index);
-      l_end_index        = std::max(l_tmp, l_end_index);
-      index_begin_       = 0;
-      index_end_         = 0;
+      auto l_begin_index = ranges::distance(time_list_y.begin(), l_ben);
+
       index_begin_       = std::max(std::size_t(0), std::size_t(l_begin_index));
-      index_end_         = std::min(time_list.size(), std::size_t(l_end_index));
-      index_end_         = std::min(index_end_, index_begin_ + 10);
-      into_select = outto_select = false;
+      index_end_         = std::min(time_list.size(), index_begin_ + 10);
+      into_select1 = outto_select1 = false;
+      DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
+    }
+  }
+  void refresh_view2_index() {
+    if (into_select2 && outto_select2) {
+      index_begin_ = std::max(std::size_t(0), std::size_t(rect_select_2.X.Min));
+      index_end_   = std::min(time_list.size(), index_begin_ + 10);
+      into_select2 = outto_select2 = false;
       DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
     }
   }
@@ -322,24 +323,15 @@ void time_sequencer_widget::update(
 
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
-      p_i->rect_select_ = ImPlot::GetPlotSelection();
+      p_i->rect_select_1 = ImPlot::GetPlotSelection();
 
-      p_i->into_select = true;
+      p_i->into_select1 = true;
 
-    } else if (p_i->into_select && !ImPlot::IsPlotSelected()) {
-      p_i->outto_select = true;
+    } else if (p_i->into_select1 && !ImPlot::IsPlotSelected()) {
+      p_i->outto_select1 = true;
     }
-    p_i->refresh_index();
+    p_i->refresh_view1_index();
 
-    //    if (p_i->rect_.X.Size() != 0 && p_i->rect_.Y.Size() != 0) {
-    //      if (ImPlot::DragRect(2344,
-    //                           &p_i->rect_.X.Min,
-    //                           &p_i->rect_.Y.Min,
-    //                           &p_i->rect_.X.Max,
-    //                           &p_i->rect_.Y.Max,
-    //                           ImVec4(1, 0, 1, 1)))
-    //        p_i->modify_time_refresh(p_i->rect_);
-    //    }
     // 绘制可调整点
     {
       auto l_linm = ImPlot::GetPlotLimits().X;
@@ -351,9 +343,9 @@ void time_sequencer_widget::update(
         if (ImPlot::DragPoint((std::int32_t)l_i,
                               (std::double_t*)&(p_i->time_list_x[l_i]),
                               &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
-          //                           in_item.first = l_i;
           p_i->time_list_y[l_i] = l_i;
           p_i->set_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
+
         };
       }
     }
@@ -379,6 +371,17 @@ void time_sequencer_widget::update(
     ImPlot::PlotBars("Bars",
                      p_i->work_time_plots.data(),
                      p_i->work_time_plots.size());
+    if (ImPlot::IsPlotSelected()) {
+      //      auto l_e   = ImPlot::GetPlotLimits().X;
+      p_i->rect_select_2 = ImPlot::GetPlotSelection();
+
+      p_i->into_select2  = true;
+
+    } else if (p_i->into_select2 && !ImPlot::IsPlotSelected()) {
+      p_i->outto_select2 = true;
+    }
+    p_i->refresh_view2_index();
+
     ImPlot::EndPlot();
   }
 
