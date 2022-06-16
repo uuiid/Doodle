@@ -407,10 +407,11 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const chrono::milliseconds& in_du_time,
                                  const business::rules& in_rules) {
-  business::detail::work_next_clock_mfm l_mfm{};
-  l_mfm.start();
-  l_mfm.set_time(in_s);
-  return l_mfm.next_time(in_du_time, in_rules);
+  business::work_clock l_c{};
+  l_c.set_rules(in_rules);
+  l_c.set_interval(in_s, in_s + doodle::chrono::days{33});
+  return l_c.next_time(in_s,
+                       doodle::chrono::floor<chrono::local_time_pos::duration>(in_du_time));
 }
 }  // namespace detail
 
