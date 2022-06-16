@@ -62,9 +62,7 @@ class time_sequencer_widget::impl {
   /// \brief 时间规则
   doodle::business::rules rules_{};
   /// \brief 工作时间计算
-  doodle::business::work_clock_mfm work_clock_mfm_{};
-  /// \brief
-  doodle::business::work_next_clock_mfm work_next_clock_mfm{};
+  doodle::business::work_clock work_clock_{};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -110,7 +108,7 @@ class time_sequencer_widget::impl {
                 ranges::views::transform(
                     [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
                       auto l_end = in_time.time_point_.zoned_time_.get_local_time();
-                      auto l_d   = doodle::work_duration(l_begin, l_end, rules_);
+                      auto l_d   = work_clock_(l_begin, l_end);
                       l_begin    = l_end;
                       return l_d;
                     }) |
@@ -174,8 +172,7 @@ class time_sequencer_widget::impl {
     work_time_plots[in_index] += in_add_time_du;
     work_time_plots[in_index]             = std::max(work_time_plots[in_index], std::double_t(0));
     work_time_plots_drag[in_index].second = std::max(work_time_plots_drag[in_index].second, std::double_t(0));
-    work_next_clock_mfm.start();
-    auto l_start_time = time_list[std::max(in_index - 1, std::size_t(0))].time_point_.zoned_time_.get_local_time();
+    auto l_start_time                     = time_list[std::max(in_index - 1, std::size_t(0))].time_point_.zoned_time_.get_local_time();
     if (in_index == 0)
       l_start_time = doodle::chrono::floor<doodle::chrono::days>(l_start_time);
 
@@ -216,6 +213,8 @@ time_sequencer_widget::time_sequencer_widget()
 
   p_i->refresh(p_i->time_list);
   p_i->refresh_work_time(p_i->time_list);
+  if (!p_i->time_list.empty())
+    p_i->work_clock_.set_interval(p_i->time_list.front() - 4_d, p_i->time_list.back() + 4_d);
   ImPlot::GetStyle().UseLocalTime = true;
 }
 
@@ -318,8 +317,7 @@ void time_sequencer_widget::update(
     ImPlot::EndPlot();
   }
 
-  if(ImGui::Button("平均时间")){
-
+  if (ImGui::Button("平均时间")) {
   }
 }
 }  // namespace doodle::gui

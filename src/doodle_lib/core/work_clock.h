@@ -17,6 +17,7 @@
 #include <boost/icl/split_interval_set.hpp>
 #include <boost/icl/discrete_interval.hpp>
 
+#include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
 
 namespace business {
@@ -70,14 +71,23 @@ class DOODLELIB_API work_clock {
   void set_rules(const rules& in_rules);
   void set_interval(const chrono::local_time_pos& in_min,
                     const chrono::local_time_pos& in_max);
+  inline void set_interval(const doodle::time_point_wrap& in_min,
+                           const doodle::time_point_wrap& in_max) {
+    set_interval(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
+                 doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
+  };
 
   chrono::hours_double operator()(const chrono::local_time_pos& in_min,
                                   const chrono::local_time_pos& in_max) const;
+  inline chrono::hours_double operator()(const doodle::time_point_wrap& in_min,
+                                         const doodle::time_point_wrap& in_max) const {
+    return (*this)(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
+                   doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
+  };
 
   chrono::local_time_pos next_time(const chrono::local_time_pos& in_begin,
                                    const chrono::local_time_pos::duration& in_du) const;
 };
-
 }  // namespace business
 namespace detail {
 chrono::hours_double work_duration(
@@ -87,7 +97,7 @@ chrono::hours_double work_duration(
 
 chrono::local_time_pos next_time(
     const chrono::local_time_pos& in_s,
-    const chrono::local_time_pos::duration & in_du_time,
+    const chrono::local_time_pos::duration& in_du_time,
     const business::rules& in_rules);
 }  // namespace detail
 
