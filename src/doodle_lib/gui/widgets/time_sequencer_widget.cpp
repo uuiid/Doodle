@@ -1,5 +1,6 @@
 #include "time_sequencer_widget.h"
 
+#include <doodle_lib/lib_warp/imgui_warp.h>
 #include <implot.h>
 #include <implot_internal.h>
 
@@ -103,15 +104,15 @@ class time_sequencer_widget::impl {
     auto l_list = in_list;
     l_list |= ranges::actions::sort;
 
-    auto l_begin = l_list.front().time_point_.zoned_time_.get_local_time();
-    work_clock_mfm_.set_time(doodle::chrono::floor<chrono::days>(l_begin));
-    work_clock_mfm_.set_states(boost::msm::back::states_ << decltype(work_clock_mfm_)::work_state{});
+    decltype(l_list.front().time_point_)::time_local_point l_begin =
+        doodle::chrono::floor<chrono::days>(l_list.front().time_point_.zoned_time_.get_local_time());
     work_time = l_list |
                 ranges::views::transform(
                     [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
-                      work_clock_mfm_.start();
-                      return work_clock_mfm_.work_duration(in_time.time_point_.zoned_time_.get_local_time(),
-                                                           rules_);
+                      auto l_end = in_time.time_point_.zoned_time_.get_local_time();
+                      auto l_d   = doodle::work_duration(l_begin, l_end, rules_);
+                      l_begin    = l_end;
+                      return l_d;
                     }) |
                 ranges::to_vector;
     work_time_plots = work_time |
@@ -149,7 +150,8 @@ class time_sequencer_widget::impl {
                        ranges::to_vector;
     rect_ = in_rect;
     refresh(l_time_list);
-    refresh_work_time(l_time_list);
+    boost::asio::post(g_io_context(),
+                      [=]() { refresh_work_time(l_time_list); });
   };
   void modify_time() {
     auto l_mod_size = boost::numeric_cast<std::int64_t>(
@@ -235,13 +237,21 @@ void time_sequencer_widget::update(
   ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
+  if (p_i->time_list.empty())
+    return;
   /// \brief 时间折线
   if (ImPlot::BeginPlot("##time")) {
     /// 设置州为时间轴
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
-    //    double t_min = p_i->p_min_c.time_since_epoch().count();  // 01/01/2021 @ 12:00:00am (UTC)
-    //    double t_max = p_i->p_max_c.time_since_epoch().count();  // 01/01/2022 @ 12:00:00am (UTC)
-    //    ImPlot::SetupAxesLimits(t_min, t_max, 0, 1);
+    double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
+                       p_i->time_list.front().time_point_.zoned_time_.get_sys_time())
+                       .time_since_epoch()
+                       .count();  // 01/01/2021 @ 12:00:00am (UTC)
+    double t_max = doodle::chrono::floor<doodle::chrono::seconds>(
+                       p_i->time_list.back().time_point_.zoned_time_.get_sys_time())
+                       .time_since_epoch()
+                       .count();  // 01/01/2022 @ 12:00:00am (UTC)
+    ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
     ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
     if (ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::GetIO().KeyCtrl) {
@@ -289,23 +299,27 @@ void time_sequencer_widget::update(
   /// \brief 时间柱状图
   if (ImPlot::BeginPlot("Bar Plot")) {
     //    ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
-//    ranges::for_each(p_i->work_time_plots_drag,
-//                     [&](std::pair<std::double_t, std::double_t>& in_item) {
-//                       auto l_i   = in_item.first;
-//                       auto l_org = in_item.second;
-//                       if (ImPlot::DragPoint((std::int32_t)in_item.first,
-//                                             &(in_item.first),
-//                                             &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
-//                         in_item.first = l_i;
-//                         p_i->add_time_du(boost::numeric_cast<std::size_t>(l_i),
-//                                          in_item.second - l_org);
-//                       };
-//                     });
+    //    ranges::for_each(p_i->work_time_plots_drag,
+    //                     [&](std::pair<std::double_t, std::double_t>& in_item) {
+    //                       auto l_i   = in_item.first;
+    //                       auto l_org = in_item.second;
+    //                       if (ImPlot::DragPoint((std::int32_t)in_item.first,
+    //                                             &(in_item.first),
+    //                                             &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
+    //                         in_item.first = l_i;
+    //                         p_i->add_time_du(boost::numeric_cast<std::size_t>(l_i),
+    //                                          in_item.second - l_org);
+    //                       };
+    //                     });
 
     ImPlot::PlotBars("Bars",
                      p_i->work_time_plots.data(),
                      p_i->work_time_plots.size());
     ImPlot::EndPlot();
+  }
+
+  if(ImGui::Button("平均时间")){
+
   }
 }
 }  // namespace doodle::gui
