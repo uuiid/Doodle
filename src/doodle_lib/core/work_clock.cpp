@@ -266,7 +266,7 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
   ranges::for_each(
       rules_.extra_work,
       [&](const decltype(rules_.extra_work)::value_type& in_) {
-        l_r -= discrete_interval_time::right_open(in_.first, in_.second);
+        l_r += discrete_interval_time::right_open(in_.first, in_.second);
       });
   split_interval_set_time_ = l_r;
 }
@@ -379,71 +379,10 @@ time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
                                    const business::rules& in_rules) {
-  const auto l_day_end = chrono::floor<chrono::days>(in_e);
-
-  time_list_v_t l_normal_works{};
-  time_list_v_t l_normal_rest{};
-  time_list_v_t l_holidays{};
-  time_list_v_t l_adjusts{};
-  time_list_v_t l_overtimes{};
-
-  for (auto l_day = chrono::floor<chrono::days>(in_s);
-       l_day <= l_day_end;
-       l_day += chrono::days{1}) {
-    auto l_day_1 = chrono::year_month_day{l_day};
-    l_normal_works |= ranges::actions::push_back(in_rules.normal_works(l_day_1));
-    l_holidays |= ranges::actions::push_back(in_rules.holidays(l_day_1));
-    l_adjusts |= ranges::actions::push_back(in_rules.adjusts(l_day_1));
-    l_overtimes |= ranges::actions::push_back(in_rules.overtimes(l_day_1));
-  }
-  time_list_v_t l_r{l_normal_works};
-  time_list_v_t l_r2{};
-  /// \brief 初始我们传入时间前后两端休息时间
-  l_adjusts.emplace_back(std::make_pair(chrono::floor<chrono::days>(in_s), in_s));
-  l_adjusts.emplace_back(std::make_pair(in_e, chrono::floor<chrono::days>(in_e) + chrono::days{1}));
-  //  ranges::for_each(l_adjusts, [&](const time_pair& in) {
-  //    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
-  //  });
-  {
-    l_r2.clear();
-    /// \brief 减去节假日
-    while (!l_holidays.empty()) {
-      ranges::for_each(l_r, [&](const time_pair& in_p) {
-        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_holidays.back()));
-      });
-      l_r = l_r2;
-      l_r2.clear();
-      l_holidays.pop_back();
-    }
-  }
-  {
-    l_r2.clear();
-    /// \brief 减去调休
-    while (!l_adjusts.empty()) {
-      ranges::for_each(l_r, [&](const time_pair& in_p) {
-        l_r2 |= ranges::actions::push_back(time_du_sub(in_p, l_adjusts.back()));
-      });
-      l_r = l_r2;
-      l_r2.clear();
-      l_adjusts.pop_back();
-    }
-  }
-
-  {
-    /// \brief 加入加班
-    while (!l_overtimes.empty()) {
-      l_r = time_du_add(l_r, l_overtimes.back());
-      l_overtimes.pop_back();
-    }
-  }
-  auto l_i = time_pair::first_type::duration{0};
-  ranges::for_each(l_r, [&](const time_pair& in) {
-    DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
-    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
-    l_i += (in.second - in.first);
-  });
-
-  return l_i;
+  business::work_clock l_c{};
+  l_c.set_rules(in_rules);
+  l_c.set_interval(in_s,in_e);
+  return l_c(in_s,in_e);
 }
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
                                  const chrono::milliseconds& in_du_time,
