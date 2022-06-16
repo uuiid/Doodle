@@ -65,22 +65,22 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
   REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
 
-#define DOODLE_T_M_1(time_index, time_du, rules_)                                                                                                                               \
-  REQUIRE(doodle::work_duration(                                                                                                                                                \
-              time_##time_index##_a.zoned_time_.get_local_time(),                                                                                                               \
-              time_##time_index##_b.zoned_time_.get_local_time(),                                                                                                               \
-              rules_)                                                                                                                                                           \
-              .count() ==                                                                                                                                                       \
-          Catch::Approx{time_du}.epsilon(0.01));                                                                                                                                \
-  std::cout << "\n"                                                                                                                                                             \
-            << "work duration  "                                                                                                                                                \
-            << doodle::work_duration(time_##time_index##_a.zoned_time_.get_local_time(), time_##time_index##_b.zoned_time_.get_local_time(), doodle::business::rules{}).count() \
-            << " = " << #time_du                                                                                                                                                \
-            << "\n"                                                                                                                                                             \
-            << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                                                       \
-            << "next " << doodle::chrono::hours_double{time_du}.count() << "/h \n"                                                                                              \
-            << doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(), doodle::chrono::hours_double{time_du}, doodle::business::rules{}) << "\n"                  \
-            << time_##time_index##_b.zoned_time_.get_local_time()                                                                                                               \
+#define DOODLE_T_M_1(time_index, time_du, rules_)                                                                                                            \
+  REQUIRE(doodle::work_duration(                                                                                                                             \
+              time_##time_index##_a.zoned_time_.get_local_time(),                                                                                            \
+              time_##time_index##_b.zoned_time_.get_local_time(),                                                                                            \
+              rules_)                                                                                                                                        \
+              .count() ==                                                                                                                                    \
+          Catch::Approx{time_du}.epsilon(0.01));                                                                                                             \
+  std::cout << "\n"                                                                                                                                          \
+            << "work duration  "                                                                                                                             \
+            << doodle::work_duration(time_##time_index##_a.zoned_time_.get_local_time(), time_##time_index##_b.zoned_time_.get_local_time(), rules_).count() \
+            << " = " << #time_du                                                                                                                             \
+            << "\n"                                                                                                                                          \
+            << time_##time_index##_a.zoned_time_.get_local_time() << "\n"                                                                                    \
+            << "next " << doodle::chrono::hours_double{time_du}.count() << "/h \n"                                                                           \
+            << doodle::next_time(time_##time_index##_a.zoned_time_.get_local_time(), doodle::chrono::hours_double{time_du}, rules_) << "\n"                  \
+            << time_##time_index##_b.zoned_time_.get_local_time()                                                                                            \
             << std::endl;
 
   doodle::business::rules l_tset_rules_def{};
@@ -89,25 +89,24 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
       std::make_pair(chrono::local_days(2022_y / 2 / 24_d) + 8h,
                      chrono::local_days(2022_y / 2 / 24_d) + 18h));
 
-  DOODLE_T_M_1(1, 20.583, l_tset_rules_def);
-  DOODLE_T_M_1(2, 36.583, l_tset_rules_def);
-  DOODLE_T_M_1(3, 0.86, l_tset_rules_def);
-  DOODLE_T_M_1(4, 20.583, l_tset_rules_def);
-  DOODLE_T_M_1(5, 36.583, l_tset_rules_def);
-  DOODLE_T_M_1(6, 0.86, l_tset_rules_def);
-  DOODLE_T_M_1(7, 33.691, l_tset_rules_def);
-  DOODLE_T_M_1(8, 25.691, l_tset_rules);
+  DOODLE_T_M_1(1, 20.5817, l_tset_rules_def);
+  DOODLE_T_M_1(2, 36.5806, l_tset_rules_def);
+  DOODLE_T_M_1(3, 0.853056, l_tset_rules_def);
+  DOODLE_T_M_1(4, 20.5817, l_tset_rules_def);
+  DOODLE_T_M_1(5, 36.5806, l_tset_rules_def);
+  DOODLE_T_M_1(6, 0.853056, l_tset_rules_def);
+  DOODLE_T_M_1(7, 33.6886, l_tset_rules_def);
+  DOODLE_T_M_1(8, 25.6892, l_tset_rules);
 
   l_tset_rules.extra_rest.emplace_back(
       std::make_pair(chrono::local_days(2022_y / 2 / 25_d) + 8h,
                      chrono::local_days(2022_y / 2 / 25_d) + 18h));
-  DOODLE_T_M_1(8, 17.691, l_tset_rules);
+  DOODLE_T_M_1(8, 17.6897, l_tset_rules);
 
   l_tset_rules.extra_work.emplace_back(
       std::make_pair(chrono::local_days(2022_y / 2 / 26_d) + 8h,
                      chrono::local_days(2022_y / 2 / 26_d) + 18h));
-  DOODLE_T_M_1(8, 27.691, l_tset_rules);
-
+  DOODLE_T_M_1(8, 27.6894, l_tset_rules);
 
   l_tset_rules.extra_work.clear();
 
@@ -117,6 +116,6 @@ TEST_CASE_METHOD(test_time_duration, "work_time") {
   l_tset_rules.extra_work.emplace_back(
       std::make_pair(chrono::local_days(2022_y / 2 / 26_d) + 13h,
                      chrono::local_days(2022_y / 2 / 26_d) + 18h));
-  DOODLE_T_M_1(8, 26.691, l_tset_rules);
+  DOODLE_T_M_1(8, 26.6892, l_tset_rules);
 #undef DOODLE_T_M_1
 }
