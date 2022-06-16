@@ -241,7 +241,7 @@ chrono::local_time_pos work_clock::next_time(const chrono::local_time_pos& in_be
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::last(l_i) - boost::icl::first(l_i);
     if ((l_en_t + l_len) > in_du) {
-      return boost::icl::last(l_i) +
+      return boost::icl::first(l_i) +
              doodle::chrono::floor<doodle::chrono::seconds>(in_du - l_len);
     } else {
       l_len += l_en_t;
@@ -300,101 +300,6 @@ void work_clock::set_interval(const chrono::local_time_pos& in_min,
 
 }  // namespace business
 namespace detail {
-using time_pair     = std::pair<chrono::local_time_pos, chrono::local_time_pos>;
-using time_list_v_t = std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>;
-namespace {
-bool sort_time(const time_pair& in_r, const time_pair& in_l) {
-  return in_r.first < in_l.first;
-}
-bool is_time_overlap(const time_pair& in_a, const time_pair& in_b) {
-  return (std::min(in_a.second, in_b.second) - std::max(in_a.first, in_b.first)) > time_pair::first_type::duration{0};
-};
-time_list_v_t time_du_add(const time_pair& in_a, const time_pair& in_b) {
-  time_list_v_t l_r{};
-  if (is_time_overlap(in_a, in_b)) {
-    l_r.emplace_back(std::make_pair(std::min(in_a.first, in_b.first), std::max(in_a.second, in_b.second)));
-  } else {
-    l_r.emplace_back(in_a);
-    l_r.emplace_back(in_b);
-  }
-  return l_r;
-}
-time_list_v_t time_du_add(const time_list_v_t& in_a_list, const time_pair& in_b) {
-  time_list_v_t l_r{in_a_list};
-  l_r.push_back(in_b);
-  l_r |= ranges::actions::sort(sort_time);
-  DOODLE_LOG_INFO("time_b {}->{}", in_b.first, in_b.second);
-  DOODLE_LOG_INFO("{}", chrono::hours_double(in_b.second - in_b.first));
-  for (int l_i = 0; l_i < l_r.size();) {
-    if (is_time_overlap(l_r[l_i], in_b)) {
-      auto l_up_index = std::max(0, l_i - 1);
-      l_r[l_i]        = std::make_pair(std::min(l_r[l_i].first, in_b.first), std::max(l_r[l_i].second, in_b.second));
-      if (is_time_overlap(l_r[l_up_index], l_r[l_i])) {
-        l_r[l_up_index] = std::make_pair(std::min(l_r[l_i].first, l_r[l_up_index].first),
-                                         std::max(l_r[l_i].second, l_r[l_up_index].second));
-        l_r.erase(l_r.begin() + l_i);
-      } else {
-        ++l_i;
-      }
-
-    } else {
-      ++l_i;
-    }
-    ranges::for_each(l_r, [&](const time_pair& in) {
-      DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
-      DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
-    });
-  }
-  return l_r;
-}
-time_list_v_t time_du_sub(const time_pair& in_a, const time_pair& in_b) {
-  time_list_v_t l_r{};
-  if (is_time_overlap(in_a, in_b)) {
-    if (in_a.first < in_b.first && in_a.second > in_b.second) {
-      /**
-       *  a1----------------a2
-       *       b1------b2
-       */
-      l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
-      l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
-    } else if (in_a.first > in_b.first && in_a.second < in_b.second) {
-      /**
-       *        a1-----a2
-       *    b1--------------b2
-       */
-    } else if (in_a.first < in_b.first && in_a.second < in_b.second) {
-      /**
-       * a1-------------a2
-       *        b1--------------b2
-       */
-      l_r.emplace_back(std::make_pair(in_a.first, in_b.first));
-    } else if (in_a.first > in_b.first && in_a.second > in_b.second) {
-      /**
-       *            a1-------------a2
-       *    b1--------------b2
-       */
-      l_r.emplace_back(std::make_pair(in_b.second, in_a.second));
-    }
-  } else {
-    /**
-     *                            a1-------------a2
-     *    b1--------------b2
-     *
-     *    or:
-     *
-     *    a1-------------a2
-     *                            b1--------------b2
-     */
-    l_r.emplace_back(in_a);
-  }
-  DOODLE_LOG_INFO("{}->{} {}->{}", in_a.first, in_a.second, in_b.first, in_b.second);
-  ranges::for_each(l_r, [&](const time_pair& in) {
-    DOODLE_LOG_INFO("time {}->{}", in.first, in.second);
-    DOODLE_LOG_INFO("{}", chrono::hours_double(in.second - in.first));
-  });
-  return l_r;
-};
-}  // namespace
 
 chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
                                    const chrono::local_time_pos& in_e,
