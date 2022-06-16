@@ -225,7 +225,7 @@ chrono::hours_double work_clock::operator()(
     const chrono::local_time_pos& in_max) const {
   auto l_d = discrete_interval_time::right_open(in_min,
                                                 in_max);
-  auto l_l = split_interval_set_time_ & l_d;
+  auto l_l = interval_set_time_ & l_d;
   chrono::hours_double l_len{};
   for (auto&& l_i : l_l) {
     l_len += boost::icl::last(l_i) - boost::icl::first(l_i);
@@ -236,7 +236,7 @@ chrono::hours_double work_clock::operator()(
 chrono::local_time_pos work_clock::next_time(const chrono::local_time_pos& in_begin,
                                              const chrono::local_time_pos::duration& in_du) const {
   auto l_d = discrete_interval_time::right_open(in_begin, in_begin.max());
-  auto l_l = split_interval_set_time_ & l_d;
+  auto l_l = interval_set_time_ & l_d;
   chrono::hours_double l_len{};
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::last(l_i) - boost::icl::first(l_i);
@@ -254,7 +254,7 @@ chrono::local_time_pos work_clock::next_time(const chrono::local_time_pos& in_be
 void work_clock::gen_rules_(const discrete_interval_time& in_time) {
   auto l_begin = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
   auto l_end   = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
-  split_interval_set_time l_r;
+  interval_set_time l_r;
   for (;
        l_begin <= l_end;
        l_begin += chrono::days{1}) {
@@ -287,7 +287,7 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
       [&](const decltype(rules_.extra_work)::value_type& in_) {
         l_r += discrete_interval_time::right_open(in_.first, in_.second);
       });
-  split_interval_set_time_ = l_r;
+  interval_set_time_ = l_r;
 }
 void work_clock::set_rules(const rules in_rules) {
   rules_ = in_rules;

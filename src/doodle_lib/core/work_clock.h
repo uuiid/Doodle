@@ -255,10 +255,10 @@ class DOODLELIB_API work_clock {
   rules rules_;
   using time_d_t                = doodle::chrono::local_time_pos;
   using discrete_interval_time  = boost::icl::discrete_interval<time_d_t>;
-  using split_interval_set_time = boost::icl::interval_set<time_d_t>;
+  using interval_set_time = boost::icl::interval_set<time_d_t>;
 
   void gen_rules_(const discrete_interval_time& in_time);
-  split_interval_set_time split_interval_set_time_;
+  interval_set_time interval_set_time_;
 
  public:
   work_clock();
