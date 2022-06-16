@@ -24,6 +24,7 @@ set(
         gui/gui_ref/base_window.h
         gui/gui_ref/layout_window.h
 
+
         gui/action/command_tool.h
         gui/widgets/assets_file_widgets.h
         gui/widgets/assets_filter_widget.h
@@ -46,6 +47,7 @@ set(
         lib_warp/imgui_warp.h
         lib_warp/lfu_cache_policy.hpp
         lib_warp/lru_cache_policy.hpp
+        lib_warp/boost_icl_warp.h
 
 
         toolkit/toolkit.h
