@@ -247,6 +247,7 @@ class time_sequencer_widget::impl {
       index_end_         = std::min(time_list.size(), index_begin_ + 10);
       into_select1 = outto_select1 = false;
       DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
+      set_view2 = true;
     }
   }
   void refresh_view2_index() {
@@ -255,7 +256,24 @@ class time_sequencer_widget::impl {
       index_end_   = std::min(time_list.size(), index_begin_ + 10);
       into_select2 = outto_select2 = false;
       DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
+
+      set_view1 = true;
     }
+  }
+  ImPlotRect get_view1_rect() {
+    ImPlotRect l_r{time_list_x[index_begin_] - 360,
+                   time_list_x[index_end_] + 360,
+                   time_list_y[index_begin_] - 1,
+                   time_list_y[index_end_] + 1};
+    return l_r;
+  }
+  ImPlotRect get_view2_rect() {
+    ImPlotRect l_r{
+        std::double_t(index_begin_ - 1),
+        std::double_t(index_end_ + 1),
+        0,
+        work_time_plots[index_end_]};
+    return l_r;
   }
 };
 
@@ -315,7 +333,15 @@ void time_sequencer_widget::update(
                        .count();  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
     //    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
+    if (p_i->set_view1) {
+      auto l_rect = p_i->get_view1_rect();
+      ImPlot::SetupAxesLimits(l_rect.X.Min,
+                              l_rect.X.Max,
+                              l_rect.Y.Min,
+                              l_rect.Y.Max,
+                              ImGuiCond_Always);
+      p_i->set_view1 = false;
+    }
     ImPlot::PlotLine("Time Series",
                      p_i->time_list_x.data(),
                      p_i->time_list_y.data(),
@@ -325,7 +351,7 @@ void time_sequencer_widget::update(
       //      auto l_e   = ImPlot::GetPlotLimits().X;
       p_i->rect_select_1 = ImPlot::GetPlotSelection();
 
-      p_i->into_select1 = true;
+      p_i->into_select1  = true;
 
     } else if (p_i->into_select1 && !ImPlot::IsPlotSelected()) {
       p_i->outto_select1 = true;
@@ -345,7 +371,6 @@ void time_sequencer_widget::update(
                               &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
           p_i->time_list_y[l_i] = l_i;
           p_i->set_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
-
         };
       }
     }
@@ -367,7 +392,15 @@ void time_sequencer_widget::update(
     //                                          in_item.second - l_org);
     //                       };
     //                     });
-
+    if (p_i->set_view2) {
+      auto l_rect = p_i->get_view2_rect();
+      ImPlot::SetupAxesLimits(l_rect.X.Min,
+                              l_rect.X.Max,
+                              l_rect.Y.Min,
+                              l_rect.Y.Max,
+                              ImGuiCond_Always);
+      p_i->set_view2 = false;
+    }
     ImPlot::PlotBars("Bars",
                      p_i->work_time_plots.data(),
                      p_i->work_time_plots.size());
