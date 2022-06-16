@@ -6,6 +6,11 @@
 #include <date/tz.h>
 #include <boost/contract.hpp>
 
+#include <boost/icl/discrete_interval.hpp>
+#include <boost/icl/gregorian.hpp>
+#include <boost/icl/interval_map.hpp>
+#include <boost/icl/split_interval_set.hpp>
+
 namespace doodle {
 
 namespace business {
@@ -211,6 +216,57 @@ void detail::work_machine_front::set_time_(const chrono::local_time_pos& in_pos)
 }
 bool detail::work_next_clock_mfm::ok() const {
   return work_limit_ == work_time_;
+}
+
+work_clock::work_clock() = default;
+
+chrono::hours_double work_clock::operator()(
+    const chrono::local_time_pos& in_min,
+    const chrono::local_time_pos& in_max) const {
+  return {};
+}
+void work_clock::gen_rules_(const discrete_interval_time& in_time) {
+  using split_interval_set_time = boost::icl::split_interval_set<time_d_t>;
+  auto l_begin                  = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
+  auto l_end                    = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
+  split_interval_set_time l_r;
+  for (;
+       l_begin <= l_end;
+       l_begin += chrono::days{1}) {
+    /// \brief 加入工作日规定时间
+    chrono::local_days l_local_days{l_begin};
+    chrono::weekday l_weekday{l_begin};
+    if (rules_.work_weekdays[l_weekday.c_encoding()]) {
+      ranges::for_each(rules_.work_pair, [&](const std::pair<chrono::seconds,
+                                                             chrono::seconds>& in_pair) {
+        l_r += discrete_interval_time::right_open(l_begin + in_pair.first,
+                                                  l_begin + in_pair.second);
+      });
+    }
+  }
+  /// \brief 减去节假日
+  ranges::for_each(
+      rules_.extra_holidays,
+      [&](const decltype(rules_.extra_holidays)::value_type& in_) {
+        l_r -= discrete_interval_time::right_open(in_.first, in_.second);
+      });
+  /// \brief 减去调休
+  ranges::for_each(
+      rules_.extra_rest,
+      [&](const decltype(rules_.extra_rest)::value_type& in_) {
+        l_r -= discrete_interval_time::right_open(in_.first, in_.second);
+      });
+  /// \brief 加上加班
+  ranges::for_each(
+      rules_.extra_work,
+      [&](const decltype(rules_.extra_work)::value_type& in_) {
+        l_r -= discrete_interval_time::right_open(in_.first, in_.second);
+      });
+  split_interval_set_time_ = l_r;
+}
+void work_clock::set_rules() {
+}
+void work_clock::set_interval(const chrono::local_time_pos& in_min, const chrono::local_time_pos& in_max) {
 }
 }  // namespace business
 namespace detail {

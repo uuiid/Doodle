@@ -12,6 +12,9 @@
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/tools.hpp>
 #include <boost/msm/front/functor_row.hpp>
+
+#include <doodle_lib/lib_warp/boost_icl_warp.h>
+#include <boost/icl/split_interval_set.hpp>
 namespace doodle {
 
 namespace business {
@@ -124,21 +127,6 @@ struct work_machine_front : public bmsm::state_machine_def<work_machine_front> {
 using work_clock_mfm_base = boost::msm::back::state_machine<work_machine_front>;
 class work_clock_mfm;
 
-inline void print_work_clock_mfm(const work_clock_mfm_base& in_mfm) {
-  typedef boost::msm::back::generate_state_set<work_clock_mfm_base::stt>::type all_states;  // states
-  static char const* state_names[boost::mpl::size<all_states>::value];
-  // array to fill with names
-  // fill the names of the states defined in the state machine
-  boost::mpl::for_each<all_states, boost::msm::wrap<boost::mpl::placeholders::_1>>(
-      boost::msm::back::fill_state_names<work_clock_mfm_base::stt>(state_names));
-  // display all active states
-  //  for (unsigned int i = 0; i < some_fsm::nr_regions::value; ++i) {
-  //    std::cout << " -> "
-  //              << state_names[my_fsm_instance.current_state()[i]]
-  //              << std::endl;
-  //  }
-  DOODLE_LOG_INFO(state_names[in_mfm.current_state()[0]])
-}
 }  // namespace detail
 
 namespace work_attr {
@@ -259,6 +247,25 @@ class DOODLELIB_API rules {
    */
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
   overtimes(const chrono::year_month_day& in_day) const;
+};
+
+class DOODLELIB_API work_clock {
+  rules rules_;
+  using time_d_t                = doodle::chrono::local_time_pos;
+  using discrete_interval_time  = boost::icl::discrete_interval<time_d_t>;
+  using split_interval_set_time = boost::icl::split_interval_set<time_d_t>;
+
+  void gen_rules_(const discrete_interval_time& in_time);
+  split_interval_set_time split_interval_set_time_;
+ public:
+  work_clock();
+
+  void set_rules();
+  void set_interval(const chrono::local_time_pos& in_min,
+                    const chrono::local_time_pos& in_max);
+
+  chrono::hours_double operator()(const chrono::local_time_pos& in_min,
+                                  const chrono::local_time_pos& in_max) const;
 };
 
 namespace detail {
