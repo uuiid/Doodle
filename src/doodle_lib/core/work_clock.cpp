@@ -15,147 +15,6 @@ namespace doodle {
 
 namespace business {
 
-std::vector<time_attr> rules::operator()(
-    const chrono::year_month_day& in_day) const {
-  //  ::boost::contract::check _l_c =
-  //      ::boost::
-
-  chick_true<doodle_error>(in_day.ok(), DOODLE_LOC, "无效的日期 {}", in_day);
-  chrono::weekday l_weekday{in_day};
-  std::vector<time_attr> time_list{};
-
-  /// \brief 加入工作日规定时间
-  chrono::local_days l_local_days{in_day};
-  if (work_weekdays[l_weekday.c_encoding()]) {
-    ranges::for_each(work_pair, [&](const std::pair<chrono::seconds,
-                                                    chrono::seconds>& in_pair) {
-      time_list.emplace_back(l_local_days + in_pair.first, work_attr::normal_work_begin);
-      time_list.emplace_back(l_local_days + in_pair.second, work_attr::normal_work_end);
-    });
-  }
-
-  time_list |= ranges::actions::sort;
-  return time_list;
-}
-void rules::clamp_time(chrono::local_time_pos& in_time_pos) const {
-  auto l_day = chrono::year_month_day{chrono::floor<chrono::days>(in_time_pos)};
-  chick_true<doodle_error>(l_day.ok(), DOODLE_LOC, "无效的日期 {}", l_day);
-  chrono::weekday l_weekday{l_day};
-
-  /// \brief 加入工作日规定时间
-  chrono::local_days l_local_days{l_day};
-  if (work_weekdays[l_weekday.c_encoding()]) {
-    auto l_r = ranges::any_of(work_pair,
-                              [&](const std::pair<chrono::seconds, chrono::seconds>& in_pair) -> bool {
-                                return in_time_pos >= (l_local_days + in_pair.first) &&
-                                       in_time_pos <= (l_local_days + in_pair.second);
-                              });
-
-    if (!l_r && !work_pair.empty()) {
-      in_time_pos = (l_local_days + work_pair.back().second);
-    }
-  } else {
-    for (auto i = 0; i < work_weekdays.size(); ++i) {
-      if (work_weekdays[l_weekday.c_encoding() + i]) {
-        in_time_pos = ((l_local_days + doodle::chrono::days{i}) + work_pair.front().first);
-      }
-    }
-  }
-}
-std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::normal_works(const chrono::year_month_day& in_day) const {
-  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> l_r{};
-  chick_true<doodle_error>(in_day.ok(), DOODLE_LOC, "无效的日期 {}", in_day);
-  chrono::weekday l_weekday{in_day};
-  /// \brief 加入工作日规定时间
-  chrono::local_days l_local_days{in_day};
-  if (work_weekdays[l_weekday.c_encoding()]) {
-    ranges::for_each(work_pair, [&](const std::pair<chrono::seconds,
-                                                    chrono::seconds>& in_pair) {
-      l_r.emplace_back(std::make_pair(l_local_days + in_pair.first, l_local_days + in_pair.second));
-    });
-  }
-  return l_r;
-}
-std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::holidays(const chrono::year_month_day& in_day) const {
-  chrono::local_days l_local_days{in_day};
-  /// 开始加入ji节假日
-  auto l_r = extra_holidays |
-             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
-               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
-                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
-             }) |
-             ranges::to_vector;
-
-  return l_r;
-}
-std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::adjusts(const chrono::year_month_day& in_day) const {
-  chrono::local_days l_local_days{in_day};
-  /// 开始加入调休
-  auto l_r = extra_rest |
-             ranges::view::filter([&](const decltype(extra_rest)::value_type& in_) -> bool {
-               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
-                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
-             }) |
-             ranges::to_vector;
-
-  return l_r;
-}
-std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>>
-rules::overtimes(const chrono::year_month_day& in_day) const {
-  chrono::local_days l_local_days{in_day};
-  /// 开始加入加班
-  auto l_r = extra_work |
-             ranges::view::filter([&](const decltype(extra_work)::value_type& in_) -> bool {
-               return doodle::chrono::floor<doodle::chrono::days>(in_.first) >= l_local_days &&
-                      doodle::chrono::floor<doodle::chrono::days>(in_.second) <= l_local_days;
-             }) |
-             ranges::to_vector;
-
-  return l_r;
-}
-bool time_attr::operator<(const time_attr& in_rhs) const {
-  return time_point < in_rhs.time_point;
-}
-bool time_attr::operator>(const time_attr& in_rhs) const {
-  return in_rhs < *this;
-}
-bool time_attr::operator<=(const time_attr& in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool time_attr::operator>=(const time_attr& in_rhs) const {
-  return !(*this < in_rhs);
-}
-bool time_attr::operator==(const time_attr& in_rhs) const {
-  return time_point == in_rhs.time_point &&
-         state_ == in_rhs.state_;
-}
-bool time_attr::operator!=(const time_attr& in_rhs) const {
-  return !(in_rhs == *this);
-}
-void time_attr::add_event(doodle::business::detail::work_clock_mfm_base& in_mfm) {
-  if (state_ == work_attr::normal_work_begin) {
-    in_mfm.process_event(doodle::business::detail::normal_work_begin{time_point});
-  } else if (state_ == work_attr::normal_work_end) {
-    in_mfm.process_event(doodle::business::detail::normal_work_end{time_point});
-  } else if (state_ == work_attr::adjust_work_begin) {
-    in_mfm.process_event(doodle::business::detail::adjust_work_begin{time_point});
-  } else if (state_ == work_attr::adjust_work_end) {
-    in_mfm.process_event(doodle::business::detail::adjust_work_end{time_point});
-  } else if (state_ == work_attr::adjust_rest_begin) {
-    in_mfm.process_event(doodle::business::detail::adjust_rest_begin{time_point});
-  } else if (state_ == work_attr::adjust_rest_end) {
-    in_mfm.process_event(doodle::business::detail::adjust_rest_end{time_point});
-  }
-}
-void detail::work_machine_front::add_time(const chrono::local_time_pos& in_time) {
-  auto l_time_long = in_time - time_;
-  time_            = in_time;
-  work_time_ += l_time_long;
-}
-
 chrono::hours_double detail::work_clock_mfm::work_duration_(
     const chrono::local_time_pos& in_e,
     const rules& in_rules) {
@@ -289,7 +148,7 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
       });
   interval_set_time_ = l_r;
 }
-void work_clock::set_rules(const rules in_rules) {
+void work_clock::set_rules(const rules& in_rules) {
   rules_ = in_rules;
 }
 void work_clock::set_interval(const chrono::local_time_pos& in_min,
@@ -310,7 +169,7 @@ chrono::hours_double work_duration(const chrono::local_time_pos& in_s,
   return l_c(in_s, in_e);
 }
 chrono::local_time_pos next_time(const chrono::local_time_pos& in_s,
-                                 const chrono::milliseconds& in_du_time,
+                                 const chrono::local_time_pos::duration& in_du_time,
                                  const business::rules& in_rules) {
   business::work_clock l_c{};
   l_c.set_rules(in_rules);
