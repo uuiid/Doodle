@@ -77,6 +77,7 @@ class time_sequencer_widget::impl {
 
   std::size_t index_begin_{0};
   std::size_t index_end_{0};
+  std::size_t index_view_end{0};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -215,19 +216,23 @@ class time_sequencer_widget::impl {
     refresh_work_time(l_time_list);
   }
 
-  void average_time() {
+  void average_time(std::size_t in_begin,
+                    std::size_t in_end) {
     if (time_list.empty()) return;
-    work_clock_.set_rules(rules_);
-    work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
-                             time_list.back().time_point_ + chrono::days{4});
+
+    auto l_begin_index = std::max(std::size_t(0), std::min(in_begin, in_end));
+    auto l_end_index   = std::min(time_list.size() - 1, std::max(in_begin, in_end));
+    if (l_begin_index == l_end_index) return;
+
     decltype(time_list.front().time_point_)::time_local_point l_begin =
-        doodle::chrono::floor<chrono::days>(time_list.front().time_point_.zoned_time_.get_local_time());
+        doodle::chrono::floor<chrono::days>(
+            time_list[l_begin_index].time_point_.zoned_time_.get_local_time());
 
-    auto l_all_len  = work_clock_(time_list.front().time_point_,
-                                  time_list.back().time_point_);
-    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+    auto l_all_len  = work_clock_(time_list[l_begin_index].time_point_,
+                                  time_list[l_end_index].time_point_);
+    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(l_end_index - l_begin_index + 1);
 
-    ranges::for_each(time_list,
+    ranges::for_each(time_list | ranges::views::slice(l_begin_index, l_end_index + 1),
                      [&](decltype(time_list)::value_type& in_) {
                        in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
                        l_begin         = in_.time_point_.zoned_time_.get_local_time();
@@ -245,36 +250,48 @@ class time_sequencer_widget::impl {
                                    });
       auto l_begin_index = ranges::distance(time_list_y.begin(), l_ben);
 
+      auto l_end         = ranges::find_if(l_ben, time_list_y.end(),
+                                           [&](const std::double_t& in_) -> bool {
+                                     auto l_index = boost::numeric_cast<std::size_t>(in_);
+                                     return !view1_.rect_select_.Contains(time_list_x[l_index], in_);
+                                   });
+      auto l_end_index   = ranges::distance(time_list_y.begin(), l_end);
+
       index_begin_       = std::max(std::size_t(0), std::size_t(l_begin_index));
-      index_end_         = std::min(time_list.size(), index_begin_ + 10);
+      index_end_         = std::min(time_list.size() - 1, index_begin_ + 10);
+      index_view_end     = std::min(time_list.size() - 1, std::size_t(l_end_index));
       view1_.into_select = view1_.outto_select = false;
-      DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
+      DOODLE_LOG_INFO(" index {}->{}->{} ", index_begin_, index_end_, index_view_end);
       view1_.set_other_view = true;
     }
   }
   void refresh_view2_index() {
-    if (view2_.into_select && outto_select2) {
-      index_begin_       = std::max(std::size_t(0), std::size_t(rect_select_2.X.Min));
-      index_end_         = std::min(time_list.size(), index_begin_ + 10);
+    if (view2_.into_select && view2_.outto_select) {
+      index_begin_       = std::max(std::size_t(0), std::size_t(view2_.rect_select_.X.Min));
+      index_end_         = std::min(time_list.size() - 1, index_begin_ + 10);
+      index_view_end     = std::min(time_list.size() - 1, std::size_t(std::size_t(view2_.rect_select_.X.Max)));
       view2_.into_select = view2_.outto_select = false;
-      DOODLE_LOG_INFO(" index {}->{} ", index_begin_, index_end_);
+      DOODLE_LOG_INFO(" index {}->{}->{} ", index_begin_, index_end_, index_view_end);
 
       view2_.set_other_view = true;
     }
   }
   ImPlotRect get_view1_rect() {
     ImPlotRect l_r{time_list_x[index_begin_] - 360,
-                   time_list_x[index_end_] + 360,
+                   time_list_x[index_view_end] + 360,
                    time_list_y[index_begin_] - 1,
-                   time_list_y[index_end_] + 1};
+                   time_list_y[index_view_end] + 1};
     return l_r;
   }
   ImPlotRect get_view2_rect() {
+    auto l_tmp  = work_time_plots;
+    auto l_list = l_tmp | ranges::views::slice(index_begin_, index_view_end);
+    l_list |= ranges::actions::sort;
     ImPlotRect l_r{
-        std::double_t(index_begin_ - 1),
-        std::double_t(index_end_ + 1),
+        std::double_t(index_begin_) - 1,
+        std::double_t(index_view_end + 1),
         0,
-        work_time_plots[index_end_]};
+        l_list.empty() ? std::double_t(8) : l_list.back()};
     return l_r;
   }
 };
@@ -334,7 +351,7 @@ void time_sequencer_widget::update(
                        .time_since_epoch()
                        .count();  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
-    //    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+    ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
     if (p_i->view2_.set_other_view) {
       auto l_rect = p_i->get_view1_rect();
       ImPlot::SetupAxesLimits(l_rect.X.Min,
@@ -408,20 +425,20 @@ void time_sequencer_widget::update(
                      p_i->work_time_plots.size());
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
-      p_i->rect_select_2 = ImPlot::GetPlotSelection();
+      p_i->view2_.rect_select_ = ImPlot::GetPlotSelection();
 
-      p_i->into_select2  = true;
+      p_i->view2_.into_select  = true;
 
-    } else if (p_i->into_select2 && !ImPlot::IsPlotSelected()) {
-      p_i->outto_select2 = true;
+    } else if (p_i->view2_.into_select && !ImPlot::IsPlotSelected()) {
+      p_i->view2_.outto_select = true;
     }
     p_i->refresh_view2_index();
 
     ImPlot::EndPlot();
   }
 
-  if (ImGui::Button("平均时间")) {
-    p_i->average_time();
-  }
+  if (ImGui::Button("平均时间")) p_i->average_time(0, p_i->time_list.size());
+  ImGui::SameLine();
+  if (ImGui::Button("平均视图内时间")) p_i->average_time(p_i->index_begin_, p_i->index_view_end);
 }
 }  // namespace doodle::gui

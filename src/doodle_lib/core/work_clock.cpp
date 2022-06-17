@@ -49,8 +49,12 @@ chrono::local_time_pos work_clock::next_time(const chrono::local_time_pos& in_be
 }
 
 void work_clock::gen_rules_(const discrete_interval_time& in_time) {
+  /// \brief 如果已经包含就直接返回
+  //  if (!boost::icl::contains(boost::icl::hull(interval_set_time_), in_time)) return;
+
   auto l_begin = doodle::chrono::floor<doodle::chrono::days>(boost::icl::first(in_time));
   auto l_end   = doodle::chrono::floor<doodle::chrono::days>(boost::icl::last(in_time));
+
   interval_set_time l_r;
   for (;
        l_begin <= l_end;
@@ -88,6 +92,7 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
 }
 void work_clock::set_rules(const rules& in_rules) {
   rules_ = in_rules;
+  interval_set_time_.clear();
 }
 void work_clock::set_interval(const chrono::local_time_pos& in_min,
                               const chrono::local_time_pos& in_max) {
