@@ -12,6 +12,7 @@ set(doodle_test_list
         test_rpc
         test_entt_type
         test_work_time
+        test_boost_asio
         )
 include(Catch)
 

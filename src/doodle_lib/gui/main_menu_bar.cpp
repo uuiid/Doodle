@@ -19,13 +19,11 @@
 namespace doodle {
 namespace main_menu_bar_ns {
 void to_json(nlohmann::json &j, const layout_data &p) {
-  j["imgui_data"]   = p.imgui_data;
-  j["windows_show"] = p.windows_show;
-  j["name"]         = p.name;
+  j["imgui_data"] = p.imgui_data;
+  j["name"]       = p.name;
 }
 void from_json(const nlohmann::json &j, layout_data &p) {
   j["imgui_data"].get_to(p.imgui_data);
-  j["windows_show"].get_to(p.windows_show);
   j["name"].get_to(p.name);
 }
 bool layout_data::operator==(const layout_data &in_rhs) const {
@@ -47,7 +45,6 @@ class main_menu_bar::impl {
   bool p_debug_show{false};
   bool p_style_show{false};
   bool p_about_show{false};
-  std::map<std::string, std::shared_ptr<gui::windows_proc::warp_proc>> windows_;
 
   gui::gui_cache<std::string> layout_name_{"##name"s, "layout_name"s};
   gui::gui_cache_name_id button_save_layout_name_{"保存"};
@@ -135,16 +132,6 @@ void main_menu_bar::menu_windows() {
              std::make_tuple(gui::config::menu_w::setting, gui::config::menu_w::project_edit));
 }
 void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
-  std::string key{in_view};
-  auto &&l_win      = this->p_i->windows_[key];
-  const auto l_show = l_win ? l_win->is_show() : false;
-  if (dear::MenuItem(in_view.data(), l_show)) {
-    if (l_show) {
-      l_win->close();
-    } else {
-      this->p_i->windows_[key] = g_reg()->ctx().at<gui::layout_window>().render_main(key);
-    }
-  }
 }
 
 void main_menu_bar::menu_tool() {
