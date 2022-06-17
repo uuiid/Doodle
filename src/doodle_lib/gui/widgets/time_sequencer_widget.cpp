@@ -334,7 +334,6 @@ void time_sequencer_widget::update(
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
   if (p_i->time_list.empty())
     return;
-  /// \brief 时间折线
 
   std::size_t l_index_begin{0};
   std::size_t l_index_end{0};
@@ -361,6 +360,7 @@ void time_sequencer_widget::update(
                               ImGuiCond_Always);
       p_i->view2_.set_other_view = false;
     }
+    /// \brief 时间折线
     ImPlot::PlotLine("Time Series",
                      p_i->time_list_x.data(),
                      p_i->time_list_y.data(),
@@ -398,19 +398,6 @@ void time_sequencer_widget::update(
   }
   /// \brief 时间柱状图
   if (ImPlot::BeginPlot("Bar Plot")) {
-    //    ImPlot::SetupAxis(ImAxis_Y1, nullptr, ImPlotAxisFlags_AutoFit);
-    //    ranges::for_each(p_i->work_time_plots_drag,
-    //                     [&](std::pair<std::double_t, std::double_t>& in_item) {
-    //                       auto l_i   = in_item.first;
-    //                       auto l_org = in_item.second;
-    //                       if (ImPlot::DragPoint((std::int32_t)in_item.first,
-    //                                             &(in_item.first),
-    //                                             &(in_item.second), ImVec4{0, 0.9f, 0, 1})) {
-    //                         in_item.first = l_i;
-    //                         p_i->add_time_du(boost::numeric_cast<std::size_t>(l_i),
-    //                                          in_item.second - l_org);
-    //                       };
-    //                     });
     if (p_i->view1_.set_other_view) {
       auto l_rect = p_i->get_view2_rect();
       ImPlot::SetupAxesLimits(l_rect.X.Min,
