@@ -39,6 +39,7 @@ set(
         gui/widgets/extract_subtitles_widgets.h
         gui/widgets/subtitle_processing.h
         gui/main_proc_handle.h
+        gui/main_windows.h
 
         lib_warp/boost_locale_warp.h
         lib_warp/cache.hpp
@@ -103,6 +104,7 @@ set(
         gui/widgets/extract_subtitles_widgets.cpp
         gui/widgets/subtitle_processing.cpp
         gui/main_proc_handle.cpp
+        gui/main_windows.cpp
 
         gui/open_file_dialog.cpp
 
