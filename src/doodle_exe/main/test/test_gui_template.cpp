@@ -216,7 +216,6 @@ static bool update(gui_process_wrap_handler& handler) {
 }
 }  // namespace detail
 
-template <typename Gui_Process>
 class gui_process_t {
  private:
   using instance_type            = detail::instance_type;
@@ -228,7 +227,7 @@ class gui_process_t {
   gui_process_wrap_handler handle;
 
   struct continuation {
-    explicit continuation(gui_process_t& in_self, gui_process_wrap_handler* in_handler)
+    explicit continuation(gui_process_t* in_self, gui_process_wrap_handler* in_handler)
         : gui_process_t(in_self),
           handler(in_handler) {}
 
@@ -238,25 +237,20 @@ class gui_process_t {
   };
 
  public:
-  template <typename... Args>
-  explicit gui_process_t(Args... in_args)
-      : handle{
-            instance_type{new gui_warp_t<Gui_Process>{std::forward<Args>(in_args)...},
-                          &detail::delete_gui_process_t<Gui_Process>},
-            &detail::abort<Gui_Process>,
-            &detail::update<Gui_Process>,
-            nullptr} {}
+  gui_process_t()
+      : handle() {}
 
   template <typename type_t, typename... Args>
   continuation then(Args... in_args) {
     auto l_next = instance_type{
         new gui_warp_t<type_t>{std::forward<Args>(in_args)...},
         &detail::delete_gui_process_t<type_t>};
-    handle.next = gui_process_wrap_handler{
-        std::move(l_next),
-        &detail::abort<Gui_Process>,
-        &detail::update<Gui_Process>,
-        nullptr};
+    handle.next.reset(new gui_process_wrap_handler{
+                          std::move(l_next),
+                          &detail::abort<type_t>,
+                          &detail::update<type_t>,
+                          nullptr},
+                      &detail::delete_gui_process_t<type_t>);
 
     return continuation{this, &(handle.next)};
   };
