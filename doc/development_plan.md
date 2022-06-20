@@ -27,6 +27,13 @@
 - maya 多uv检查,检查整体网格uv名称重叠
 
 
+- 锁定、解锁mesh权重(lock skinCluster weights and rename)
+- 工具架上面添加 手动功能
+- 制作布料资产默认全部锁定
+
+
+
+
 - maya插件(绑定部分)
     - 需要添加选中点的骨骼
     - 并将点上创建最近点约束到骨骼
