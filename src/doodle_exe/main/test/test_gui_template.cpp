@@ -177,31 +177,37 @@ class process_warp_t {
   };
 };
 
-
-
-
 template <typename Gui_Process>
-using gui_warp_t  = process_warp_t<Gui_Process>;
+using gui_warp_t = process_warp_t<Gui_Process>;
 
 template <typename Rear_Process>
-using rear_warp_t  = process_warp_t<Rear_Process>;
+using rear_warp_t = process_warp_t<Rear_Process>;
 
 namespace detail {
 
- template <typename Rear_Process>
- class gui_to_rear_warp_t : public rear_warp_t<Rear_Process> {
-   using base_type = rear_warp_t<Rear_Process>;
+template <typename Rear_Process>
+class gui_to_rear_warp_t : public process_warp_t<Rear_Process> {
+  using base_type = process_warp_t<Rear_Process>;
 
-   std::future<void> future_;
+  std::future<void> future_;
+  //  rear_warp_t<Rear_Process> warp_process{};
 
-  public:
-   template <typename... Args>
-   explicit gui_to_rear_warp_t(Args... in_args)
-       : rear_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
-   process_state operator()() override {
-     if()
-   }
- };
+ public:
+  template <typename... Args>
+  explicit gui_to_rear_warp_t(Args... in_args)
+      : rear_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
+  process_state operator()() override {
+    /// \brief 过程指针有效, 状态为未初始化, 未来无效
+    if (base_type::process_attr &&
+        (base_type::current == decltype(base_type::current)::uninitialized) &&
+        !future_.valid()) {
+      future_ = std::move(boost::asio::post(g_io_context(),
+                                            std::packaged_task<void()>{[]() {
+
+                                            }}));
+    }
+  }
+};
 
 struct gui_process_wrap_handler;
 using instance_type  = std::unique_ptr<void, void (*)(void*)>;
