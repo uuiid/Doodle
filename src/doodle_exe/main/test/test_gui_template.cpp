@@ -20,7 +20,7 @@ enum class process_state : std::uint8_t {
 template <typename Process_t>
 class process_warp_t {
  protected:
-  std::unique_ptr<void> gui_process_attr;
+  std::unique_ptr<void> process_attr;
 
   static void delete_gui_process_t(void* in_ptr) {
     delete static_cast<Process_t*>(in_ptr);
@@ -41,7 +41,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.init();
     current = state::running;
   }
@@ -49,7 +49,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     switch (l_gui.render()) {
       case process_state::run:
         break;
@@ -67,7 +67,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.succeeded();
     current = state::finished;
   }
@@ -75,7 +75,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.failed();
     current = state::rejected;
   }
@@ -83,7 +83,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     current      = state::rejected;
     l_gui.aborted();
   }
@@ -115,7 +115,7 @@ class process_warp_t {
  public:
   template <typename... Args>
   explicit process_warp_t(Args... in_args)
-      : gui_process_attr(
+      : process_attr(
             new Process_t{std::forward<Args>(in_args)...},
             &delete_gui_process_t) {}
   virtual ~process_warp_t() = default;
@@ -177,27 +177,32 @@ class process_warp_t {
   };
 };
 
-// template <typename Rear_Process>
-// class rear_warp_t : public process_warp_t<Rear_Process> {
-//   using base_type = process_warp_t<Rear_Process>;
-//
-//   std::future<void> future_;
-//
-//  public:
-//   template <typename... Args>
-//   explicit rear_warp_t(Args... in_args)
-//       : process_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
-//   process_state operator()() override {
-//   }
-// };
+
+
 
 template <typename Gui_Process>
 using gui_warp_t  = process_warp_t<Gui_Process>;
 
 template <typename Rear_Process>
-using rear_warp_t  = process_warp_t<Gui_Process>;
+using rear_warp_t  = process_warp_t<Rear_Process>;
 
 namespace detail {
+
+ template <typename Rear_Process>
+ class gui_to_rear_warp_t : public rear_warp_t<Rear_Process> {
+   using base_type = rear_warp_t<Rear_Process>;
+
+   std::future<void> future_;
+
+  public:
+   template <typename... Args>
+   explicit gui_to_rear_warp_t(Args... in_args)
+       : rear_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
+   process_state operator()() override {
+     if()
+   }
+ };
+
 struct gui_process_wrap_handler;
 using instance_type  = std::unique_ptr<void, void (*)(void*)>;
 using abort_fn_type  = void(gui_process_wrap_handler&, bool);
