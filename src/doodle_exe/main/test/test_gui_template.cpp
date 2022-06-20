@@ -31,13 +31,6 @@ class process_warp_t {
       : std::true_type {                                         \
   };
 
-  //  template <typename type_t, typename = void>
-  //  struct has_init_fun : std::false_type {};
-  //
-  //  template <typename type_t,
-  //            std::void_t<decltype(std::declval<type_t>().init())>>
-  //  struct has_init_fun : std::true_type {
-  //  };
   DOODLE_TYPE_HASE_MFN(init)
   DOODLE_TYPE_HASE_MFN(succeeded)
   DOODLE_TYPE_HASE_MFN(failed)
@@ -149,8 +142,6 @@ class process_warp_t {
     l_gui.aborted();
   }
 
-  void next(...) const {}
-
   void succeed() {
     if (alive()) {
       current = state::succeeded;
@@ -248,6 +239,45 @@ using gui_warp_t = process_warp_t<Gui_Process>;
 template <typename Rear_Process>
 using rear_warp_t = process_warp_t<Rear_Process>;
 
+template <typename Lambda_Process, typename = void>
+class lambda_process_warp_t : public Lambda_Process {
+ public:
+  lambda_process_warp_t() = default;
+
+  process_state update();
+};
+
+template <typename Lambda_Process>
+class lambda_process_warp_t<
+    Lambda_Process,
+    std::enable_if_t<
+        std::is_same_v<
+            typename std::invoke_result<Lambda_Process>::type, void>>>
+    : public Lambda_Process {
+ public:
+  lambda_process_warp_t() = default;
+
+  process_state update() {
+    Lambda_Process::operator()();
+    return process_state::succeed;
+  }
+};
+
+template <typename Lambda_Process>
+class lambda_process_warp_t<
+    Lambda_Process,
+    std::enable_if_t<
+        std::is_same_v<
+            typename std::invoke_result<Lambda_Process>::type, process_state>>>
+    : public Lambda_Process {
+ public:
+  lambda_process_warp_t() = default;
+
+  process_state update() {
+    return Lambda_Process::operator()();
+  }
+};
+
 namespace detail {
 
 template <typename Rear_Process>
@@ -285,7 +315,7 @@ class gui_to_rear_warp_t {
           break;
       }
     } else {
-      l_state = l_state = process_state::succeed;
+      l_state = process_state::succeed;
     }
     return l_state;
   }
@@ -304,17 +334,15 @@ struct gui_process_wrap_handler {
 };
 template <typename Gui_Process2>
 static void delete_gui_process_t(void* in_ptr) {
-  delete static_cast<gui_warp_t<Gui_Process2>*>(in_ptr);
+  delete static_cast<Gui_Process2*>(in_ptr);
 };
 template <typename Gui_Process2>
 static void abort(gui_process_wrap_handler& handler, const bool immediately) {
-  using gui_warp_process = gui_warp_t<Gui_Process2>;
-  static_cast<gui_warp_process*>(handler.instance.get())->abort(immediately);
+  static_cast<Gui_Process2*>(handler.instance.get())->abort(immediately);
 }
 template <typename Gui_Process2>
 static bool update(gui_process_wrap_handler& handler) {
-  using gui_warp_process = gui_warp_t<Gui_Process2>;
-  auto&& process         = *static_cast<gui_warp_process*>(handler.instance.get());
+  auto&& process = *static_cast<Gui_Process2*>(handler.instance.get());
 
   switch (process()) {
     case process_state::run: {
@@ -336,10 +364,6 @@ static bool update(gui_process_wrap_handler& handler) {
   return false;
 }
 
-template <typename Gui_Process2>
-static bool update_post(gui_process_wrap_handler& handler) {
-}
-
 }  // namespace detail
 
 class gui_process_t {
@@ -351,6 +375,7 @@ class gui_process_t {
   using gui_process_wrap_handler = detail::gui_process_wrap_handler;
 
   gui_process_wrap_handler handle;
+  next_type* auxiliary_next;
 
   struct continuation {
     explicit continuation(gui_process_t* in_self, gui_process_wrap_handler* in_handler)
@@ -362,35 +387,46 @@ class gui_process_t {
     gui_process_wrap_handler* handler;
   };
 
+  template <typename type_t, typename... Args>
+  gui_process_t& _post_(Args... in_args) {
+    auto l_next = instance_type{
+        new type_t{std::forward<Args>(in_args)...},
+        &detail::delete_gui_process_t<type_t>};
+    auxiliary_next->reset(new gui_process_wrap_handler{
+        std::move(l_next),
+        &detail::abort<type_t>,
+        &detail::update<type_t>,
+        nullptr});
+    auxiliary_next = &((*auxiliary_next)->next);
+    return *this;
+  };
+
  public:
   template <typename type_t, typename... Args>
   explicit gui_process_t(Args... in_args)
       : handle{
             instance_type{new gui_warp_t<type_t>{std::forward<Args>(in_args)...},
-                          &detail::delete_gui_process_t<type_t>},
-            &detail::abort<type_t>,
-            &detail::update<type_t>,
+                          &detail::delete_gui_process_t<gui_warp_t<type_t>>},
+            &detail::abort<gui_warp_t<type_t>>,
+            &detail::update<gui_warp_t<type_t>>,
             nullptr} {}
 
   template <typename type_t, typename... Args>
-  continuation then(Args... in_args) {
-    auto l_next = instance_type{
-        new gui_warp_t<type_t>{std::forward<Args>(in_args)...},
-        &detail::delete_gui_process_t<type_t>};
-    handle.next.reset(new gui_process_wrap_handler{
-                          std::move(l_next),
-                          &detail::abort<type_t>,
-                          &detail::update<type_t>,
-                          nullptr},
-                      &detail::delete_gui_process_t<type_t>);
-
-    return continuation{this, handle.next.get()};
+  gui_process_t& then(Args... in_args) {
+    return _post_<gui_warp_t<type_t>>(std::forward<Args>(in_args)...);
   };
   template <typename Func>
-  continuation then(Func&& func){
-
+  gui_process_t& then(Func&& func) {
+    return _post_<gui_warp_t<lambda_process_warp_t<Func>>>();
   };
-
+  template <typename type_t, typename... Args>
+  gui_process_t& post(Args... in_args) {
+    return _post_<detail::gui_to_rear_warp_t<type_t>>(std::forward<Args>(in_args)...);
+  };
+  template <typename Func>
+  gui_process_t& post(Func&& func) {
+    return _post_<detail::gui_to_rear_warp_t<lambda_process_warp_t<Func>>>();
+  };
   // 提交时的渲染过程
   void operator()() {
     handle.update(handle);
