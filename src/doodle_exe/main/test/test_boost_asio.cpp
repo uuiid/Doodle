@@ -82,7 +82,7 @@ class strand_executor_service
   /// \param context 上下文
   explicit strand_executor_service(boost::asio::execution_context& context);
   /// \brief 关机
-  void shutdown();
+  void shutdown(){};
   /// \brief 创建
   implementation_type create_implementation();
 
@@ -109,16 +109,16 @@ class strand_executor_service
   // Request invocation of the given function and return immediately.
   template <typename Executor, typename Function, typename Allocator>
   static void post(const implementation_type& impl, Executor& ex,
-                   BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+                   BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a){};
 
   // Request invocation of the given function and return immediately.
   template <typename Executor, typename Function, typename Allocator>
   static void defer(const implementation_type& impl, Executor& ex,
-                    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+                    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a){};
 
   // Determine whether the strand is running in the current thread.
   static bool running_in_this_thread(
-      const implementation_type& impl);
+      const implementation_type& impl){};
 
  private:
   friend class strand_impl;
@@ -128,14 +128,14 @@ class strand_executor_service
   class invoker;
 
   // 向链添加函数。如果获取锁，则返回true
-  static bool enqueue(const implementation_type& impl,
-                      scheduler_operation* op);
+  //  static bool enqueue(const implementation_type& impl,
+  //                      scheduler_operation* op);
 
   // 将等待处理程序传输到就绪队列。如果传输了一个或多个处理程序，则返回true。
-  static bool push_waiting_to_ready(implementation_type& impl);
+  //  static bool push_waiting_to_ready(implementation_type& impl);
 
   // 调用所有准备运行的处理程序
-  static void run_ready_handlers(implementation_type& impl);
+  //  static void run_ready_handlers(implementation_type& impl);
 
   // Helper函数请求调用给定函数
   template <typename Executor, typename Function, typename Allocator>
@@ -148,6 +148,78 @@ class strand_executor_service
   // The head of a linked list of all implementations.
   strand_impl* impl_list_;
 };
+class std_fenced_block
+    : private boost::noncopyable {
+ public:
+  enum half_t { half };
+  enum full_t { full };
+
+  // Constructor for a half fenced block.
+  explicit std_fenced_block(half_t) {
+  }
+
+  // Constructor for a full fenced block.
+  explicit std_fenced_block(full_t) {
+    std::atomic_thread_fence(std::memory_order_acquire);
+  }
+
+  // Destructor.
+  ~std_fenced_block() {
+    std::atomic_thread_fence(std::memory_order_release);
+  }
+};
+using fenced_block = std_fenced_block;
+
+strand_executor_service::strand_executor_service(boost::asio::execution_context& context)
+    : execution_context_service_base<strand_executor_service>(context) {
+}
+
+template <typename Executor, typename Function>
+void strand_executor_service::execute(
+    const strand_executor_service::implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    typename std::enable_if_t<
+        boost::asio::can_query<Executor,
+                               boost::asio::execution::allocator_t<void>>::value>) {
+  //  return do_execute(
+  //      impl,
+  //      ex,
+  //      BOOST_ASIO_MOVE_CAST(Function)(function),
+  //      std::allocator<void>());
+  return strand_executor_service::do_execute(
+      impl, ex,
+      BOOST_ASIO_MOVE_CAST(Function)(function),
+      boost::asio::query(ex, boost::asio::execution::allocator));
+}
+
+template <typename Executor, typename Function>
+void strand_executor_service::execute(
+    const strand_executor_service::implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    typename std::enable_if_t<
+        !boost::asio::can_query<Executor,
+                                boost::asio::execution::allocator_t<void>>::value>) {
+  return strand_executor_service::do_execute(
+      impl, ex,
+      BOOST_ASIO_MOVE_CAST(Function)(function),
+      std::allocator<void>());
+}
+
+template <typename Executor, typename Function, typename Allocator>
+void strand_executor_service::dispatch(
+    const strand_executor_service::implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
+  using function_type = typename std::decay_t<Function>;
+  // 如果我们已经在链中，那么函数可以立即运行。
+  if (running_in_this_thread(impl)) {
+    // 制作函数的本地非常量副本。
+    function_type tmp(BOOST_ASIO_MOVE_CAST(Function)(function));
+
+    fenced_block b(fenced_block::full);
+    boost_asio_handler_invoke_helpers::invoke(tmp, tmp);
+    return;
+  }
+}
 
 strand_executor_service::strand_impl::~strand_impl() {
   std::lock_guard l_g{service_->mutex_};
@@ -161,14 +233,14 @@ strand_executor_service::create_implementation() {
 
   std::lock_guard l_g{mutex_};
 
-  new_impl->mutex_ = &this->mutex_;
+  new_impl->mutex_   = &this->mutex_;
 
   // Insert implementation into linked list of all implementations.
-  new_impl->next_  = impl_list_;
-  new_impl->prev_  = 0;
-  if (impl_list_)
-    impl_list_->prev_ = new_impl.get();
-  impl_list_         = new_impl.get();
+  new_impl->next_    = impl_list_;
+  new_impl->prev_    = 0;
+  //  if (impl_list_)
+  //    impl_list_->prev_ = new_impl.get();
+  //  impl_list_         = new_impl.get();
   new_impl->service_ = this;
 
   return new_impl;
@@ -365,8 +437,10 @@ class strand_gui {
   template <typename InnerExecutor>
   static implementation_type create_implementation(
       const InnerExecutor& ex,
-      typename std::enable_if_t<
-          boost::asio::can_query<InnerExecutor, boost::asio::execution::context_t>::value> = 0) {
+      typename std::enable_if<
+          boost::asio::can_query<InnerExecutor,
+                                 boost::asio::execution::context_t>::value,
+          std::int32_t>::type = 0) {
     return boost::asio::use_service<detail::strand_executor_service>(
                boost::asio::query(ex, boost::asio::execution::context))
         .create_implementation();
@@ -375,9 +449,10 @@ class strand_gui {
   template <typename InnerExecutor>
   static implementation_type create_implementation(
       const InnerExecutor& ex,
-      typename std::enable_if_t<
+      typename std::enable_if<
           !boost::asio::can_query<InnerExecutor,
-                                  boost::asio::execution::context_t>::value> = 0) {
+                                  boost::asio::execution::context_t>::value,
+          std::int32_t>::type = 0) {
     return boost::asio::use_service<detail::strand_executor_service>(
                ex.context())
         .create_implementation();
@@ -407,4 +482,15 @@ class strand_gui {
 };
 
 TEST_CASE("test boost strand") {
+  boost::asio::io_context l_context{};
+  strand_gui<decltype(l_context)::executor_type> l_gui{l_context.get_executor()};
+  boost::asio::post(l_gui, []() -> bool {
+    DOODLE_LOG_INFO("dasd");
+    return false;
+  });
+  boost::asio::post(l_gui, std::packaged_task<bool()>{[]() -> bool {
+                      DOODLE_LOG_INFO("dasd");
+                      return false;
+                    }});
+  l_context.run();
 }
