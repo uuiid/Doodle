@@ -141,27 +141,14 @@ class process_warp_t {
   [[nodiscard]] bool rejected() const ENTT_NOEXCEPT {
     return current == state::rejected;
   }
-  virtual process_state operator()() = 0;
-};
-
-template <typename Gui_Process>
-class gui_warp_t : public process_warp_t<Gui_Process> {
-  using base_type = process_warp_t<Gui_Process>;
-
- public:
-  template <typename... Args>
-  explicit gui_warp_t(Args... in_args)
-      : process_warp_t<Gui_Process>(std::forward<Args>(in_args)...) {}
-
-  // 提交时的渲染过程
   virtual process_state operator()() {
     process_state l_state{process_state::run};
-    switch (base_type::current) {
-      case base_type::state::uninitialized:
-        next(std::integral_constant<typename base_type::state, base_type::state::uninitialized>{});
+    switch (current) {
+      case state::uninitialized:
+        next(std::integral_constant<state, state::uninitialized>{});
         break;
-      case base_type::state::running:
-        next(std::integral_constant<typename base_type::state, base_type::state::running>{});
+      case state::running:
+        next(std::integral_constant<state, state::running>{});
         break;
       default:
         // suppress warnings
@@ -169,17 +156,17 @@ class gui_warp_t : public process_warp_t<Gui_Process> {
     }
 
     // if it's dead, it must be notified and removed immediately
-    switch (base_type::current) {
-      case base_type::state::succeeded: {
-        next(std::integral_constant<typename base_type::state, base_type::state::succeeded>{});
+    switch (current) {
+      case state::succeeded: {
+        next(std::integral_constant<state, state::succeeded>{});
         l_state = process_state::succeed;
       } break;
-      case base_type::state::failed: {
-        next(std::integral_constant<typename base_type::state, base_type::state::failed>{});
+      case state::failed: {
+        next(std::integral_constant<state, state::failed>{});
         l_state = process_state::fail;
       } break;
-      case base_type::state::aborted: {
-        next(std::integral_constant<typename base_type::state, base_type::state::aborted>{});
+      case state::aborted: {
+        next(std::integral_constant<state, state::aborted>{});
         l_state = process_state::fail;
       } break;
       default:
@@ -187,8 +174,28 @@ class gui_warp_t : public process_warp_t<Gui_Process> {
         break;
     }
     return l_state;
-  }
+  };
 };
+
+// template <typename Rear_Process>
+// class rear_warp_t : public process_warp_t<Rear_Process> {
+//   using base_type = process_warp_t<Rear_Process>;
+//
+//   std::future<void> future_;
+//
+//  public:
+//   template <typename... Args>
+//   explicit rear_warp_t(Args... in_args)
+//       : process_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
+//   process_state operator()() override {
+//   }
+// };
+
+template <typename Gui_Process>
+using gui_warp_t  = process_warp_t<Gui_Process>;
+
+template <typename Rear_Process>
+using rear_warp_t  = process_warp_t<Gui_Process>;
 
 namespace detail {
 struct gui_process_wrap_handler;
