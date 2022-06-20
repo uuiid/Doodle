@@ -11,7 +11,7 @@
 #include <catch.hpp>
 #include <catch2/catch_approx.hpp>
 namespace doodle {
-enum class render_state : std::uint8_t {
+enum class process_state : std::uint8_t {
   run = 1,
   succeed,
   fail
@@ -53,12 +53,12 @@ class gui_warp_t {
       -> decltype(std::declval<Target>().update(), void()) {
     auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
     switch (l_gui.render()) {
-      case render_state::run:
+      case process_state::run:
         break;
-      case render_state::succeed:
+      case process_state::succeed:
         current = state::succeeded;
         break;
-      case render_state::fail:
+      case process_state::fail:
         current = state::finished;
         break;
       default:
@@ -122,7 +122,8 @@ class gui_warp_t {
             &delete_gui_process_t) {}
 
   // 提交时的渲染过程
-  void operator()() {
+  process_state operator()() {
+    process_state l_state{process_state::run};
     switch (current) {
       case state::uninitialized:
         next(std::integral_constant<state, state::uninitialized>{});
@@ -137,19 +138,23 @@ class gui_warp_t {
 
     // if it's dead, it must be notified and removed immediately
     switch (current) {
-      case state::succeeded:
+      case state::succeeded: {
         next(std::integral_constant<state, state::succeeded>{});
-        break;
-      case state::failed:
+        l_state = process_state::succeed;
+      } break;
+      case state::failed: {
         next(std::integral_constant<state, state::failed>{});
-        break;
-      case state::aborted:
+        l_state = process_state::fail;
+      } break;
+      case state::aborted: {
         next(std::integral_constant<state, state::aborted>{});
-        break;
+        l_state = process_state::fail;
+      } break;
       default:
         // suppress warnings
         break;
     }
+    return l_state;
   }
   void abort(const bool immediately = false) {
     if (alive()) {
@@ -199,21 +204,33 @@ template <typename Gui_Process2>
 static bool update(gui_process_wrap_handler& handler) {
   using gui_warp_process = gui_warp_t<Gui_Process2>;
   auto&& process         = *static_cast<gui_warp_process*>(handler.instance.get());
-  process();
 
-  if (process.rejected()) {
-    return true;
-  } else if (process.finished()) {
-    if (process.next) {
-      process = std::move(*process.next);
-      // forces the process to exit the uninitialized state
-      return process.update();
-    }
-    return true;
+  switch (process()) {
+    case process_state::run: {
+    } break;
+    case process_state::succeed: {
+      if (process.next) {
+        process = std::move(*process.next);
+        // forces the process to exit the uninitialized state
+        return process.update(process);
+      }
+    } break;
+    case process_state::fail:
+      return true;
+      break;
+    default:
+      return true;
+      break;
   }
-
   return false;
 }
+
+
+template <typename Gui_Process2>
+static bool update_post(gui_process_wrap_handler& handler) {
+
+}
+
 }  // namespace detail
 
 class gui_process_t {
@@ -228,7 +245,7 @@ class gui_process_t {
 
   struct continuation {
     explicit continuation(gui_process_t* in_self, gui_process_wrap_handler* in_handler)
-        : gui_process_t(in_self),
+        : self_(in_self),
           handler(in_handler) {}
 
    private:
@@ -237,8 +254,14 @@ class gui_process_t {
   };
 
  public:
-  gui_process_t()
-      : handle() {}
+  template <typename type_t, typename... Args>
+  explicit gui_process_t(Args... in_args)
+      : handle{
+            instance_type{new gui_warp_t<type_t>{std::forward<Args>(in_args)...},
+                          &detail::delete_gui_process_t<type_t>},
+            &detail::abort<type_t>,
+            &detail::update<type_t>,
+            nullptr} {}
 
   template <typename type_t, typename... Args>
   continuation then(Args... in_args) {
@@ -252,7 +275,7 @@ class gui_process_t {
                           nullptr},
                       &detail::delete_gui_process_t<type_t>);
 
-    return continuation{this, &(handle.next)};
+    return continuation{this, handle.next.get()};
   };
   template <typename Func>
   continuation then(Func&& func){
