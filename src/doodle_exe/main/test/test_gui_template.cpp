@@ -8,6 +8,8 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_lib/core/work_clock.h>
 
+#include <boost/asio.hpp>
+
 #include <catch.hpp>
 #include <catch2/catch_approx.hpp>
 namespace doodle {
@@ -19,6 +21,30 @@ enum class process_state : std::uint8_t {
 
 template <typename Process_t>
 class process_warp_t {
+#define DOODLE_TYPE_HASE_MFN(mfn_name)                           \
+  template <typename type_t, typename = void>                    \
+  struct has_##mfn_name##_fun : std::false_type {};              \
+  template <typename type_t>                                     \
+  struct has_##mfn_name##_fun<                                   \
+      type_t,                                                    \
+      std::void_t<decltype(std::declval<type_t&>().mfn_name())>> \
+      : std::true_type {                                         \
+  };
+
+  //  template <typename type_t, typename = void>
+  //  struct has_init_fun : std::false_type {};
+  //
+  //  template <typename type_t,
+  //            std::void_t<decltype(std::declval<type_t>().init())>>
+  //  struct has_init_fun : std::true_type {
+  //  };
+  DOODLE_TYPE_HASE_MFN(init)
+  DOODLE_TYPE_HASE_MFN(succeeded)
+  DOODLE_TYPE_HASE_MFN(failed)
+  DOODLE_TYPE_HASE_MFN(aborted)
+
+#undef DOODLE_TYPE_HASE_MFN
+
  protected:
   std::unique_ptr<void> process_attr;
 
@@ -38,19 +64,27 @@ class process_warp_t {
   };
   state current{state::uninitialized};
 
-  template <typename Target = Process_t>
+  template <typename Target                                     = Process_t,
+            std::enable_if_t<has_init_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.init();
     current = state::running;
   }
+  template <typename Target                                      = Process_t,
+            std::enable_if_t<!has_init_fun<Target>::value, bool> = false>
+  auto next(std::integral_constant<state, state::uninitialized>)
+      -> decltype(std::declval<Target>().init(), void()) {
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
+    current      = state::running;
+  }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    switch (l_gui.render()) {
+    switch (l_gui.update()) {
       case process_state::run:
         break;
       case process_state::succeed:
@@ -64,15 +98,24 @@ class process_warp_t {
     }
   }
 
-  template <typename Target = Process_t>
+  template <typename Target                                          = Process_t,
+            std::enable_if_t<has_succeeded_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.succeeded();
     current = state::finished;
   }
+  template <typename Target                                           = Process_t,
+            std::enable_if_t<!has_succeeded_fun<Target>::value, bool> = false>
+  auto next(std::integral_constant<state, state::succeeded>)
+      -> decltype(std::declval<Target>().succeeded(), void()) {
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
+    current      = state::finished;
+  }
 
-  template <typename Target = Process_t>
+  template <typename Target                                       = Process_t,
+            std::enable_if_t<has_failed_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
@@ -80,7 +123,16 @@ class process_warp_t {
     current = state::rejected;
   }
 
-  template <typename Target = Process_t>
+  template <typename Target                                        = Process_t,
+            std::enable_if_t<!has_failed_fun<Target>::value, bool> = false>
+  auto next(std::integral_constant<state, state::failed>)
+      -> decltype(std::declval<Target>().failed(), void()) {
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
+    current      = state::rejected;
+  }
+
+  template <typename Target                                        = Process_t,
+            std::enable_if_t<has_aborted_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
@@ -88,25 +140,34 @@ class process_warp_t {
     l_gui.aborted();
   }
 
-  void next(...) const ENTT_NOEXCEPT {}
+  template <typename Target                                         = Process_t,
+            std::enable_if_t<!has_aborted_fun<Target>::value, bool> = false>
+  auto next(std::integral_constant<state, state::aborted>)
+      -> decltype(std::declval<Target>().aborted(), void()) {
+    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
+    current      = state::rejected;
+    l_gui.aborted();
+  }
 
-  void succeed() ENTT_NOEXCEPT {
+  void next(...) const {}
+
+  void succeed() {
     if (alive()) {
       current = state::succeeded;
     }
   }
 
-  void fail() ENTT_NOEXCEPT {
+  void fail() {
     if (alive()) {
       current = state::failed;
     }
   }
-  void pause() ENTT_NOEXCEPT {
+  void pause() {
     if (current == state::running) {
       current = state::paused;
     }
   }
-  void unpause() ENTT_NOEXCEPT {
+  void unpause() {
     if (current == state::paused) {
       current = state::running;
     }
@@ -129,16 +190,20 @@ class process_warp_t {
       }
     }
   }
-  [[nodiscard]] bool alive() const ENTT_NOEXCEPT {
+  [[nodiscard]] bool is_uninitialized() const {
+    return current == state::uninitialized;
+  }
+
+  [[nodiscard]] bool alive() const {
     return current == state::running || current == state::paused;
   }
-  [[nodiscard]] bool finished() const ENTT_NOEXCEPT {
+  [[nodiscard]] bool finished() const {
     return current == state::finished;
   }
-  [[nodiscard]] bool paused() const ENTT_NOEXCEPT {
+  [[nodiscard]] bool paused() const {
     return current == state::paused;
   }
-  [[nodiscard]] bool rejected() const ENTT_NOEXCEPT {
+  [[nodiscard]] bool rejected() const {
     return current == state::rejected;
   }
   virtual process_state operator()() {
@@ -186,26 +251,43 @@ using rear_warp_t = process_warp_t<Rear_Process>;
 namespace detail {
 
 template <typename Rear_Process>
-class gui_to_rear_warp_t : public process_warp_t<Rear_Process> {
-  using base_type = process_warp_t<Rear_Process>;
-
-  std::future<void> future_;
-  //  rear_warp_t<Rear_Process> warp_process{};
+class gui_to_rear_warp_t {
+  std::future<process_state> future_;
+  rear_warp_t<Rear_Process> warp_process{};
 
  public:
   template <typename... Args>
   explicit gui_to_rear_warp_t(Args... in_args)
-      : rear_warp_t<Rear_Process>(std::forward<Args>(in_args)...) {}
-  process_state operator()() override {
-    /// \brief 过程指针有效, 状态为未初始化, 未来无效
-    if (base_type::process_attr &&
-        (base_type::current == decltype(base_type::current)::uninitialized) &&
-        !future_.valid()) {
-      future_ = std::move(boost::asio::post(g_io_context(),
-                                            std::packaged_task<void()>{[]() {
+      : warp_process(std::forward<Args>(in_args)...) {}
 
-                                            }}));
+  void init() {
+    future_ = boost::asio::post(doodle::g_io_context(),
+                                std::packaged_task<process_state()>{[this]() {
+                                  return this->warp_process();
+                                }});
+  }
+
+  process_state update() {
+    process_state l_state{process_state::run};
+    /// \brief 过程指针有效, 状态为未初始化, 未来无效
+    if (future_.valid()) {
+      switch (future_.wait_for(0ns)) {
+        case std::future_status::ready: {
+          try {
+            future_.get();
+            l_state = process_state::succeed;
+          } catch (const doodle_error& error) {
+            DOODLE_LOG_ERROR(error.what());
+            l_state = process_state::fail;
+          }
+        } break;
+        default:
+          break;
+      }
+    } else {
+      l_state = l_state = process_state::succeed;
     }
+    return l_state;
   }
 };
 
