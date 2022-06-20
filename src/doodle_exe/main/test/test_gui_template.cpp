@@ -17,13 +17,13 @@ enum class process_state : std::uint8_t {
   fail
 };
 
-template <typename Gui_Process>
-class gui_warp_t {
- private:
+template <typename Process_t>
+class process_warp_t {
+ protected:
   std::unique_ptr<void> gui_process_attr;
 
   static void delete_gui_process_t(void* in_ptr) {
-    delete static_cast<Gui_Process*>(in_ptr);
+    delete static_cast<Process_t*>(in_ptr);
   };
 
   enum class state : std::uint8_t {
@@ -36,22 +36,20 @@ class gui_warp_t {
     finished,
     rejected
   };
-
- private:
   state current{state::uninitialized};
 
-  template <typename Target = Gui_Process>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
-    auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
     l_gui.init();
     current = state::running;
   }
 
-  template <typename Target = Gui_Process>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
-    auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
     switch (l_gui.render()) {
       case process_state::run:
         break;
@@ -66,26 +64,26 @@ class gui_warp_t {
     }
   }
 
-  template <typename Target = Gui_Process>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
-    auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
     l_gui.succeeded();
     current = state::finished;
   }
 
-  template <typename Target = Gui_Process>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
-    auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
     l_gui.failed();
     current = state::rejected;
   }
 
-  template <typename Target = Gui_Process>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
-    auto&& l_gui = *static_cast<Gui_Process*>(gui_process_attr.get());
+    auto&& l_gui = *static_cast<Process_t*>(gui_process_attr.get());
     current      = state::rejected;
     l_gui.aborted();
   }
@@ -116,46 +114,12 @@ class gui_warp_t {
 
  public:
   template <typename... Args>
-  explicit gui_warp_t(Args... in_args)
+  explicit process_warp_t(Args... in_args)
       : gui_process_attr(
-            new Gui_Process{std::forward<Args>(in_args)...},
+            new Process_t{std::forward<Args>(in_args)...},
             &delete_gui_process_t) {}
+  virtual ~process_warp_t() = default;
 
-  // 提交时的渲染过程
-  process_state operator()() {
-    process_state l_state{process_state::run};
-    switch (current) {
-      case state::uninitialized:
-        next(std::integral_constant<state, state::uninitialized>{});
-        break;
-      case state::running:
-        next(std::integral_constant<state, state::running>{});
-        break;
-      default:
-        // suppress warnings
-        break;
-    }
-
-    // if it's dead, it must be notified and removed immediately
-    switch (current) {
-      case state::succeeded: {
-        next(std::integral_constant<state, state::succeeded>{});
-        l_state = process_state::succeed;
-      } break;
-      case state::failed: {
-        next(std::integral_constant<state, state::failed>{});
-        l_state = process_state::fail;
-      } break;
-      case state::aborted: {
-        next(std::integral_constant<state, state::aborted>{});
-        l_state = process_state::fail;
-      } break;
-      default:
-        // suppress warnings
-        break;
-    }
-    return l_state;
-  }
   void abort(const bool immediately = false) {
     if (alive()) {
       current = state::aborted;
@@ -176,6 +140,53 @@ class gui_warp_t {
   }
   [[nodiscard]] bool rejected() const ENTT_NOEXCEPT {
     return current == state::rejected;
+  }
+  virtual process_state operator()() = 0;
+};
+
+template <typename Gui_Process>
+class gui_warp_t : public process_warp_t<Gui_Process> {
+  using base_type = process_warp_t<Gui_Process>;
+
+ public:
+  template <typename... Args>
+  explicit gui_warp_t(Args... in_args)
+      : process_warp_t<Gui_Process>(std::forward<Args>(in_args)...) {}
+
+  // 提交时的渲染过程
+  virtual process_state operator()() {
+    process_state l_state{process_state::run};
+    switch (base_type::current) {
+      case base_type::state::uninitialized:
+        next(std::integral_constant<typename base_type::state, base_type::state::uninitialized>{});
+        break;
+      case base_type::state::running:
+        next(std::integral_constant<typename base_type::state, base_type::state::running>{});
+        break;
+      default:
+        // suppress warnings
+        break;
+    }
+
+    // if it's dead, it must be notified and removed immediately
+    switch (base_type::current) {
+      case base_type::state::succeeded: {
+        next(std::integral_constant<typename base_type::state, base_type::state::succeeded>{});
+        l_state = process_state::succeed;
+      } break;
+      case base_type::state::failed: {
+        next(std::integral_constant<typename base_type::state, base_type::state::failed>{});
+        l_state = process_state::fail;
+      } break;
+      case base_type::state::aborted: {
+        next(std::integral_constant<typename base_type::state, base_type::state::aborted>{});
+        l_state = process_state::fail;
+      } break;
+      default:
+        // suppress warnings
+        break;
+    }
+    return l_state;
   }
 };
 
@@ -225,10 +236,8 @@ static bool update(gui_process_wrap_handler& handler) {
   return false;
 }
 
-
 template <typename Gui_Process2>
 static bool update_post(gui_process_wrap_handler& handler) {
-
 }
 
 }  // namespace detail
