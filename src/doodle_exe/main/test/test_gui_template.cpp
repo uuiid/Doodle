@@ -377,16 +377,6 @@ class gui_process_t {
   gui_process_wrap_handler handle;
   next_type* auxiliary_next;
 
-  struct continuation {
-    explicit continuation(gui_process_t* in_self, gui_process_wrap_handler* in_handler)
-        : self_(in_self),
-          handler(in_handler) {}
-
-   private:
-    gui_process_t* self_;
-    gui_process_wrap_handler* handler;
-  };
-
   template <typename type_t, typename... Args>
   gui_process_t& _post_(Args... in_args) {
     auto l_next = instance_type{
@@ -409,7 +399,8 @@ class gui_process_t {
                           &detail::delete_gui_process_t<gui_warp_t<type_t>>},
             &detail::abort<gui_warp_t<type_t>>,
             &detail::update<gui_warp_t<type_t>>,
-            nullptr} {}
+            nullptr},
+        auxiliary_next(&(handle.next)) {}
 
   template <typename type_t, typename... Args>
   gui_process_t& then(Args... in_args) {
@@ -473,15 +464,6 @@ class strand_gui_executor_service
     // Mutex to protect access to internal data.
     std::recursive_mutex* mutex_;
 
-    // Indicates whether the strand is currently "locked" by a handler. This
-    // means that there is a handler upcall in progress, or that the strand
-    // itself has been scheduled in order to invoke some pending handlers.
-    bool locked_;
-
-    // Indicates that the strand has been shut down and will accept no further
-    // handlers.
-    bool shutdown_;
-
     // 正在链上等待但在下次调度链之前不应运行的处理程序。只有在锁定互斥锁时，才能修改此队列
     //    boost::asio::op_queue<scheduler_operation> waiting_queue_;
 
@@ -490,8 +472,9 @@ class strand_gui_executor_service
     std::vector<gui_process_t> handlers_next{};
 
     // The strand service in where the implementation is held.
-    strand_gui_executor_service* service_;
-    boost::asio::detail::strand_service d;
+    strand_gui_executor_service* service_{};
+    //    boost::asio::strand<boost::asio::any_io_executor> strand{};
+    //    boost::asio::high_resolution_timer timer_{};
   };
   using implementation_type = std::shared_ptr<strand_impl>;
 
@@ -561,7 +544,7 @@ class strand_gui_executor_service
   std::recursive_mutex mutex_;
 
   // The head of a linked list of all implementations.
-  strand_impl* impl_list_;
+  std::shared_ptr<strand_impl> impl_list_;
 };
 
 strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_context& context)
@@ -598,7 +581,6 @@ template <typename Executor, typename Function, typename Allocator>
 void strand_gui_executor_service::dispatch(
     const strand_gui_executor_service::implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
-  using function_type = typename std::decay_t<Function>;
 }
 
 strand_gui_executor_service::strand_impl::~strand_impl() {
@@ -607,15 +589,12 @@ strand_gui_executor_service::strand_impl::~strand_impl() {
 
 strand_gui_executor_service::implementation_type
 strand_gui_executor_service::create_implementation() {
-  implementation_type new_impl = std::make_shared<strand_impl>();
-  new_impl->locked_            = false;
-  new_impl->shutdown_          = false;
   std::lock_guard l_g{mutex_};
-  new_impl->mutex_   = &this->mutex_;
-
-  new_impl->service_ = this;
-
-  return new_impl;
+  if (!impl_list_) {
+    impl_list_           = std::make_shared<strand_impl>();
+    impl_list_->service_ = this;
+  }
+  return impl_list_;
 }
 
 }  // namespace detail
@@ -725,11 +704,11 @@ class strand_gui {
   }
 
   void on_work_started() const BOOST_ASIO_NOEXCEPT {
-    executor_.on_work_started();
+    DOODLE_LOG_INFO("开始工作")
   }
 
   void on_work_finished() const BOOST_ASIO_NOEXCEPT {
-    executor_.on_work_finished();
+    DOODLE_LOG_INFO("结束工作工作")
   }
 
   template <typename Function>
@@ -825,4 +804,15 @@ class strand_gui {
 };
 }  // namespace doodle
 TEST_CASE("test gui strand") {
+  boost::asio::io_context l_context{};
+  doodle::strand_gui l_gui{l_context.get_executor()};
+  boost::asio::post(l_gui, []() -> bool {
+    DOODLE_LOG_INFO("dasd");
+    return false;
+  });
+  boost::asio::post(l_gui, std::packaged_task<bool()>{[]() -> bool {
+                      DOODLE_LOG_INFO("dasd");
+                      return false;
+                    }});
+  l_context.run();
 }
