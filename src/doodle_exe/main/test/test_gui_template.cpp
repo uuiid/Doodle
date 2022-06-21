@@ -44,16 +44,16 @@ class test_1 {
 };
 
 TEST_CASE("test gui strand") {
-  boost::asio::io_context l_context{};
-  doodle::strand_gui l_gui{l_context.get_executor()};
+  doodle::app l_app{};
+  doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};
   doodle::gui_process_t l_process{};
   l_process
       .then<test_1>(1)
-      .post<test_1>(l_context, 2)
+      .post<test_1>(doodle::g_io_context(), 2)
       .then([]() {
         DOODLE_LOG_INFO("end");
       })
-      .post(l_context, [&]() {
+      .post(doodle::g_io_context(), [&]() {
         DOODLE_LOG_INFO("end");
         l_gui.stop();
       });
@@ -68,5 +68,5 @@ TEST_CASE("test gui strand") {
   //                      DOODLE_LOG_INFO("dasd");
   //                      return false;
   //                    }});
-  l_context.run();
+  l_app.run();
 }
