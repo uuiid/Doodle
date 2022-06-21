@@ -25,6 +25,7 @@ void strand_gui_executor_service::strand_impl::ready_start() {
   timer_.expires_after(doodle::chrono::seconds{1} / 60);
   timer_.async_wait(s_fun);
 }
+strand_gui_executor_service::strand_impl::~strand_impl() = default;
 
 void strand_gui_executor_service::shutdown() {
   std::lock_guard l_g{mutex_};
@@ -68,6 +69,8 @@ void strand_gui_executor_service::stop(
   in_impl->service_->stop_ = true;
   in_impl->timer_.cancel();
 }
+
+
 }  // namespace detail
 boost::asio::execution_context& strand_gui::context() const BOOST_ASIO_NOEXCEPT {
   return executor_.context();
@@ -87,4 +90,5 @@ void strand_gui::show(gui_process_t&& in_fun) {
 strand_gui::inner_executor_type strand_gui::get_inner_executor() const BOOST_ASIO_NOEXCEPT  {
   return executor_;
 }
+
 }  // namespace doodle

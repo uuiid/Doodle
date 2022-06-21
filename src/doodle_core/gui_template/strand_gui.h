@@ -45,7 +45,9 @@ class strand_gui_executor_service
     ~strand_impl();
     template <typename Executor_T>
     explicit strand_impl(const Executor_T& in_executor)
-        : timer_(in_executor) {}
+        : timer_(in_executor) {
+      ready_start();
+    }
     void ready_start();
 
    private:
@@ -97,7 +99,6 @@ class strand_gui_executor_service
   std::shared_ptr<strand_impl> impl_list_;
 };
 
-strand_gui_executor_service::strand_impl::~strand_impl() = default;
 
 }  // namespace detail
 
