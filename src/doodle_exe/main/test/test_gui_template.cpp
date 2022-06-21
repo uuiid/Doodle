@@ -421,11 +421,11 @@ class gui_process_t {
   };
   template <typename type_t, typename... Args>
   gui_process_t& post(Args... in_args) {
-    return _post_<detail::gui_to_rear_warp_t<type_t>>(std::forward<Args>(in_args)...);
+    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<type_t>>>(std::forward<Args>(in_args)...);
   };
   template <typename Func>
   gui_process_t& post(Func&& func) {
-    return _post_<detail::gui_to_rear_warp_t<lambda_process_warp_t<Func>>>();
+    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<lambda_process_warp_t<Func>>>>();
   };
   // 提交时的渲染过程
   void operator()() {
@@ -833,13 +833,13 @@ class strand_gui {
   template <typename Function, typename Allocator>
   void post(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
     detail::strand_gui__executor_service::post(impl_,
-                                          executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+                                               executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   template <typename Function, typename Allocator>
   void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
     detail::strand_gui__executor_service::defer(impl_,
-                                           executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+                                                executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   bool running_in_this_thread() const BOOST_ASIO_NOEXCEPT {
