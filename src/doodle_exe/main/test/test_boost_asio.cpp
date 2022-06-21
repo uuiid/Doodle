@@ -379,10 +379,12 @@ class strand_gui {
   }
 
   void on_work_started() const BOOST_ASIO_NOEXCEPT {
+    DOODLE_LOG_INFO("开始任务")
     executor_.on_work_started();
   }
 
   void on_work_finished() const BOOST_ASIO_NOEXCEPT {
+    DOODLE_LOG_INFO("结束任务")
     executor_.on_work_finished();
   }
 
@@ -493,4 +495,9 @@ TEST_CASE("test boost strand") {
                       return false;
                     }});
   l_context.run();
+}
+
+TEST_CASE("test boost use service") {
+  boost::asio::io_context l_context{};
+  auto&& l_s = boost::asio::use_service<detail::strand_executor_service>(l_context);
 }
