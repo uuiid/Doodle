@@ -323,13 +323,13 @@ class gui_to_rear_warp_t {
 
 struct gui_process_wrap_handler;
 using instance_type  = std::unique_ptr<void, void (*)(void*)>;
-using abort_fn_type  = void(gui_process_wrap_handler&, bool);
 using next_type      = std::unique_ptr<gui_process_wrap_handler>;
+using abort_fn_type  = void(gui_process_wrap_handler&, bool);
 using update_fn_type = bool(gui_process_wrap_handler&);
 struct gui_process_wrap_handler {
   instance_type instance;
-  update_fn_type* update;
   abort_fn_type* abort;
+  update_fn_type* update;
   next_type next;
 };
 template <typename Gui_Process2>
@@ -368,7 +368,7 @@ class gui_process_t {
   using next_type                = detail::next_type;
   using gui_process_wrap_handler = detail::gui_process_wrap_handler;
 
-  gui_process_wrap_handler handle;
+  next_type handle;
   next_type* auxiliary_next;
 
   template <typename type_t, typename... Args>
@@ -386,15 +386,9 @@ class gui_process_t {
   };
 
  public:
-  template <typename type_t, typename... Args>
-  explicit gui_process_t(Args... in_args)
-      : handle{
-            instance_type{new gui_warp_t<type_t>{std::forward<Args>(in_args)...},
-                          &detail::delete_gui_process_t<gui_warp_t<type_t>>},
-            &detail::abort<gui_warp_t<type_t>>,
-            &detail::update<gui_warp_t<type_t>>,
-            nullptr},
-        auxiliary_next(&(handle.next)) {}
+  explicit gui_process_t()
+      : handle{nullptr},
+        auxiliary_next(&(handle)) {}
 
   template <typename type_t, typename... Args>
   gui_process_t& then(Args... in_args) {
@@ -414,15 +408,11 @@ class gui_process_t {
   };
   // 提交时的渲染过程
   bool operator()() {
-    return handle.update(handle);
+    return handle->update(*handle);
   }
   void abort(bool in_abort = false) {
-    handle.abort(handle, in_abort);
+    handle->abort(*handle, in_abort);
   }
-};
-template <typename type_t, typename... Args>
-gui_process_t make_gui_process_t(Args... in_args){
-    return gui_process_t<type_t>{std::forward<Args>(in_args)...};
 };
 
 namespace detail {
@@ -739,7 +729,6 @@ class strand_gui {
   implementation_type impl_;
 };
 
-
 }  // namespace doodle
 
 class test_1 {
@@ -775,7 +764,11 @@ class test_1 {
 TEST_CASE("test gui strand") {
   boost::asio::io_context l_context{};
   doodle::strand_gui l_gui{l_context.get_executor()};
-  doodle::gui_process_t<test_1> l_process{};
+  doodle::gui_process_t l_process{};
+  l_process.then<test_1>(1).post<test_1>(2).then([]() {
+    DOODLE_LOG_INFO("end")
+  });
+  l_gui.show(std::move(l_process));
   //  boost::asio::post(l_gui, []() -> bool {
   //    DOODLE_LOG_INFO("dasd");
   //    return false;
