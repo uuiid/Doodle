@@ -3,6 +3,8 @@
 //
 
 #include "util.h"
+
+#include <doodle_lib/gui/strand_gui.h>
 namespace doodle::core {
 identifier::identifier()
     : id_(0) {}
@@ -17,3 +19,10 @@ std::uint64_t identifier::id() {
 }
 
 }  // namespace doodle::core
+
+namespace doodle {
+strand_gui g_strand_gui() {
+  return strand_gui{g_io_context().get_executor()};
+}
+
+}  // namespace doodle

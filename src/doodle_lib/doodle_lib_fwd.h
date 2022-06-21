@@ -51,8 +51,10 @@ class database_task_update;
 class database_task_delete;
 class database_task_install;
 class database_task_obs;
+class strand_gui;
+
+strand_gui g_strand_gui();
 
 using program_options_ptr = std::shared_ptr<program_options>;
-
 
 }  // namespace doodle
