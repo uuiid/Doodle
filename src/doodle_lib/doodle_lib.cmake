@@ -40,6 +40,7 @@ set(
         gui/widgets/subtitle_processing.h
         gui/main_proc_handle.h
         gui/main_windows.h
+        gui/strand_gui.h
 
         lib_warp/boost_locale_warp.h
         lib_warp/cache.hpp
@@ -105,6 +106,7 @@ set(
         gui/widgets/subtitle_processing.cpp
         gui/main_proc_handle.cpp
         gui/main_windows.cpp
+        gui/strand_gui.cpp
 
         gui/open_file_dialog.cpp
 
