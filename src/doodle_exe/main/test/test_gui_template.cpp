@@ -460,15 +460,15 @@ template <typename Type>
 service_id<Type> execution_context_service_base<Type>::id;
 
 ///=================================================================
-class strand_gui__executor_service
-    : public execution_context_service_base<strand_gui__executor_service> {
+class strand_gui_executor_service
+    : public execution_context_service_base<strand_gui_executor_service> {
  public:
   class strand_impl {
    public:
     ~strand_impl();
 
    private:
-    friend class strand_gui__executor_service;
+    friend class strand_gui_executor_service;
 
     // Mutex to protect access to internal data.
     std::recursive_mutex* mutex_;
@@ -493,13 +493,13 @@ class strand_gui__executor_service
     strand_impl* prev_;
 
     // The strand service in where the implementation is held.
-    strand_gui__executor_service* service_;
+    strand_gui_executor_service* service_;
   };
   using implementation_type = std::shared_ptr<strand_impl>;
 
   /// \brief 初始化函数
   /// \param context 上下文
-  explicit strand_gui__executor_service(boost::asio::execution_context& context);
+  explicit strand_gui_executor_service(boost::asio::execution_context& context);
   /// \brief 关机
   void shutdown(){};
   /// \brief 创建
@@ -597,13 +597,13 @@ class std_fenced_block
 };
 using fenced_block = std_fenced_block;
 
-strand_gui__executor_service::strand_gui__executor_service(boost::asio::execution_context& context)
-    : execution_context_service_base<strand_gui__executor_service>(context) {
+strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_context& context)
+    : execution_context_service_base<strand_gui_executor_service>(context) {
 }
 
 template <typename Executor, typename Function>
-void strand_gui__executor_service::execute(
-    const strand_gui__executor_service::implementation_type& impl, Executor& ex,
+void strand_gui_executor_service::execute(
+    const strand_gui_executor_service::implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function,
     typename std::enable_if_t<
         boost::asio::can_query<Executor,
@@ -613,28 +613,28 @@ void strand_gui__executor_service::execute(
   //      ex,
   //      BOOST_ASIO_MOVE_CAST(Function)(function),
   //      std::allocator<void>());
-  return strand_gui__executor_service::do_execute(
+  return strand_gui_executor_service::do_execute(
       impl, ex,
       BOOST_ASIO_MOVE_CAST(Function)(function),
       boost::asio::query(ex, boost::asio::execution::allocator));
 }
 
 template <typename Executor, typename Function>
-void strand_gui__executor_service::execute(
-    const strand_gui__executor_service::implementation_type& impl, Executor& ex,
+void strand_gui_executor_service::execute(
+    const strand_gui_executor_service::implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function,
     typename std::enable_if_t<
         !boost::asio::can_query<Executor,
                                 boost::asio::execution::allocator_t<void>>::value>) {
-  return strand_gui__executor_service::do_execute(
+  return strand_gui_executor_service::do_execute(
       impl, ex,
       BOOST_ASIO_MOVE_CAST(Function)(function),
       std::allocator<void>());
 }
 
 template <typename Executor, typename Function, typename Allocator>
-void strand_gui__executor_service::dispatch(
-    const strand_gui__executor_service::implementation_type& impl, Executor& ex,
+void strand_gui_executor_service::dispatch(
+    const strand_gui_executor_service::implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   using function_type = typename std::decay_t<Function>;
   // 如果我们已经在链中，那么函数可以立即运行。
@@ -648,12 +648,12 @@ void strand_gui__executor_service::dispatch(
   }
 }
 
-strand_gui__executor_service::strand_impl::~strand_impl() {
+strand_gui_executor_service::strand_impl::~strand_impl() {
   std::lock_guard l_g{service_->mutex_};
 }
 
-strand_gui__executor_service::implementation_type
-strand_gui__executor_service::create_implementation() {
+strand_gui_executor_service::implementation_type
+strand_gui_executor_service::create_implementation() {
   implementation_type new_impl = std::make_shared<strand_impl>();
   new_impl->locked_            = false;
   new_impl->shutdown_          = false;
@@ -818,32 +818,32 @@ class strand_gui {
       boost::asio::execution::can_execute<const Executor&, Function>::value,
       void>
   execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
-    detail::strand_gui__executor_service::execute(
+    detail::strand_gui_executor_service::execute(
         impl_,
         executor_, BOOST_ASIO_MOVE_CAST(Function)(f));
   }
 
   template <typename Function, typename Allocator>
   void dispatch(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui__executor_service::dispatch(
+    detail::strand_gui_executor_service::dispatch(
         impl_,
         executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   template <typename Function, typename Allocator>
   void post(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui__executor_service::post(impl_,
+    detail::strand_gui_executor_service::post(impl_,
                                                executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   template <typename Function, typename Allocator>
   void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui__executor_service::defer(impl_,
+    detail::strand_gui_executor_service::defer(impl_,
                                                 executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   bool running_in_this_thread() const BOOST_ASIO_NOEXCEPT {
-    return detail::strand_gui__executor_service::running_in_this_thread(impl_);
+    return detail::strand_gui_executor_service::running_in_this_thread(impl_);
   }
 
   friend bool operator==(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
@@ -858,7 +858,7 @@ class strand_gui {
     return executor_;
   }
 
-  typedef detail::strand_gui__executor_service::implementation_type
+  typedef detail::strand_gui_executor_service::implementation_type
       implementation_type;
 
   template <typename InnerExecutor>
@@ -868,7 +868,7 @@ class strand_gui {
           boost::asio::can_query<InnerExecutor,
                                  boost::asio::execution::context_t>::value,
           std::int32_t>::type = 0) {
-    return boost::asio::use_service<detail::strand_gui__executor_service>(
+    return boost::asio::use_service<detail::strand_gui_executor_service>(
                boost::asio::query(ex, boost::asio::execution::context))
         .create_implementation();
   }
@@ -880,7 +880,7 @@ class strand_gui {
           !boost::asio::can_query<InnerExecutor,
                                   boost::asio::execution::context_t>::value,
           std::int32_t>::type = 0) {
-    return boost::asio::use_service<detail::strand_gui__executor_service>(
+    return boost::asio::use_service<detail::strand_gui_executor_service>(
                ex.context())
         .create_implementation();
   }
