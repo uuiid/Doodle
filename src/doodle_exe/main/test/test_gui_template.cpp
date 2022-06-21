@@ -203,6 +203,9 @@ class process_warp_t {
       : process_attr(
             new Process_t{std::forward<Args>(in_args)...},
             &delete_gui_process_t) {}
+  explicit process_warp_t(std::unique_ptr<Process_t>&& in_ptr)
+      : process_attr(std::move(in_ptr)){};
+
   virtual ~process_warp_t() = default;
 
   void abort(const bool immediately = false) {
@@ -275,8 +278,8 @@ using rear_warp_t = process_warp_t<Rear_Process>;
 template <typename Lambda_Process, typename = void>
 class lambda_process_warp_t : private Lambda_Process {
  public:
-//  template <typename... Args>
-//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update();
 };
@@ -289,8 +292,8 @@ class lambda_process_warp_t<
             typename std::invoke_result<Lambda_Process>::type, void>>>
     : private Lambda_Process {
  public:
-//  template <typename... Args>
-//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update() {
     Lambda_Process::operator()();
@@ -306,8 +309,8 @@ class lambda_process_warp_t<
             typename std::invoke_result<Lambda_Process>::type, process_state>>>
     : private Lambda_Process {
  public:
-//  template <typename... Args>
-//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update() {
     return Lambda_Process::operator()();
@@ -316,18 +319,21 @@ class lambda_process_warp_t<
 
 namespace detail {
 
-template <typename Rear_Process>
+template <typename IO_Context, typename Rear_Process>
 class gui_to_rear_warp_t {
-  std::future<process_state> future_;
+  IO_Context& io_con_p;
   rear_warp_t<Rear_Process> warp_process{};
+  std::future<process_state> future_;
 
  public:
   template <typename... Args>
-  explicit gui_to_rear_warp_t(Args&&... in_args)
-      : warp_process(std::forward<Args>(in_args)...) {}
+  explicit gui_to_rear_warp_t(IO_Context& in_io, Args&&... in_args)
+      : io_con_p(in_io),
+        warp_process(std::forward<Args>(in_args)...),
+        future_() {}
 
   void init() {
-    future_ = boost::asio::post(doodle::g_io_context(),
+    future_ = boost::asio::post(io_con_p,
                                 std::packaged_task<process_state()>{[this]() {
                                   return this->warp_process();
                                 }});
@@ -424,7 +430,7 @@ class gui_process_t {
  public:
   explicit gui_process_t()
       : handle{nullptr},
-        auxiliary_next(&(handle)) {}
+        auxiliary_next(&handle) {}
 
   template <typename type_t, typename... Args>
   gui_process_t& then(Args&&... in_args) {
@@ -432,15 +438,17 @@ class gui_process_t {
   };
   template <typename Func>
   gui_process_t& then(Func&& func) {
-    return _post_<gui_warp_t<lambda_process_warp_t<Func>>>();
+    return _post_<gui_warp_t<lambda_process_warp_t<Func>>>(std::forward<Func>(func));
   };
-  template <typename type_t, typename... Args>
-  gui_process_t& post(Args&&... in_args) {
-    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<type_t>>>(std::forward<Args>(in_args)...);
+  template <typename type_t, typename IO_Context, typename... Args>
+  gui_process_t& post(IO_Context& in_io, Args&&... in_args) {
+    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<
+        IO_Context, type_t>>>(in_io, std::forward<Args>(in_args)...);
   };
-  template <typename Func>
-  gui_process_t& post(Func&& func) {
-    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<lambda_process_warp_t<Func>>>>();
+  template <typename IO_Context, typename Func>
+  gui_process_t& post(IO_Context& in_io, Func&& func) {
+    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<
+        IO_Context, lambda_process_warp_t<Func>>>>(in_io, std::forward<Func>(func));
   };
   // 提交时的渲染过程
   bool operator()() {
@@ -555,7 +563,6 @@ class strand_gui_executor_service
   };
 
   void loop_one() {
-    stop_ = true;
     std::lock_guard l_g{mutex_};
     std::move(impl_list_->handlers_next.begin(),
               impl_list_->handlers_next.end(), std::back_inserter(impl_list_->handlers));
@@ -771,10 +778,15 @@ TEST_CASE("test gui strand") {
   boost::asio::io_context l_context{};
   doodle::strand_gui l_gui{l_context.get_executor()};
   doodle::gui_process_t l_process{};
-  l_process.then<test_1>(1).post<test_1>(2).then([]() {
-    DOODLE_LOG_INFO("end")
-  });
+  l_process
+      .then<test_1>(1)
+      .post<test_1>(l_context, 2)
+      .then([]() {
+        DOODLE_LOG_INFO("end")
+      });
   l_gui.show(std::move(l_process));
+
+  doodle::process_warp_t<test_1> l_test{std::make_unique<test_1>(1)};
   //  boost::asio::post(l_gui, []() -> bool {
   //    DOODLE_LOG_INFO("dasd");
   //    return false;
@@ -783,5 +795,5 @@ TEST_CASE("test gui strand") {
   //                      DOODLE_LOG_INFO("dasd");
   //                      return false;
   //                    }});
-  //  l_context.run();
+  l_context.run();
 }
