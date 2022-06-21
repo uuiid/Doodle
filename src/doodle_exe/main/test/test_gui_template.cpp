@@ -599,8 +599,6 @@ void strand_gui_executor_service::dispatch(
     const strand_gui_executor_service::implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   using function_type = typename std::decay_t<Function>;
-
-
 }
 
 strand_gui_executor_service::strand_impl::~strand_impl() {
@@ -622,10 +620,10 @@ strand_gui_executor_service::create_implementation() {
 
 }  // namespace detail
 
-template <typename Executor>
 class strand_gui {
  public:
-  typedef Executor inner_executor_type;
+  typedef boost::asio::any_io_executor inner_executor_type;
+  using Executor = boost::asio::any_io_executor;
 
   strand_gui()
       : executor_(),
@@ -653,24 +651,7 @@ class strand_gui {
         strand_(other.strand_) {
   }
 
-  template <class OtherExecutor>
-  strand_gui(
-      const strand_gui<OtherExecutor>& other) BOOST_ASIO_NOEXCEPT
-      : executor_(other.executor_),
-        impl_(other.impl_),
-        strand_(other.strand_) {
-  }
-
   strand_gui& operator=(const strand_gui& other) BOOST_ASIO_NOEXCEPT {
-    executor_ = other.executor_;
-    impl_     = other.impl_;
-    strand_   = other.strand_;
-    return *this;
-  }
-
-  template <class OtherExecutor>
-  strand_gui& operator=(
-      const strand_gui<OtherExecutor>& other) BOOST_ASIO_NOEXCEPT {
     executor_ = other.executor_;
     impl_     = other.impl_;
     strand_   = other.strand_;
@@ -685,23 +666,8 @@ class strand_gui {
         strand_(BOOST_ASIO_MOVE_CAST(boost::asio::strand<Executor>)(other.strand_)) {
   }
 
-  template <class OtherExecutor>
-  strand_gui(strand_gui<OtherExecutor>&& other) BOOST_ASIO_NOEXCEPT
-      : executor_(BOOST_ASIO_MOVE_CAST(OtherExecutor)(other.executor_)),
-        impl_(BOOST_ASIO_MOVE_CAST(implementation_type)(other.impl_)),
-        strand_(BOOST_ASIO_MOVE_CAST(boost::asio::strand<Executor>)(other.strand_)) {
-  }
-
   strand_gui& operator=(strand_gui&& other) BOOST_ASIO_NOEXCEPT {
     executor_ = BOOST_ASIO_MOVE_CAST(Executor)(other.executor_);
-    impl_     = BOOST_ASIO_MOVE_CAST(implementation_type)(other.impl_);
-    strand_   = BOOST_ASIO_MOVE_CAST(boost::asio::strand<Executor>)(other.strand_);
-    return *this;
-  }
-
-  template <class OtherExecutor>
-  strand_gui& operator=(strand_gui<OtherExecutor>&& other) BOOST_ASIO_NOEXCEPT {
-    executor_ = BOOST_ASIO_MOVE_CAST(OtherExecutor)(other.executor_);
     impl_     = BOOST_ASIO_MOVE_CAST(implementation_type)(other.impl_);
     strand_   = BOOST_ASIO_MOVE_CAST(boost::asio::strand<Executor>)(other.strand_);
     return *this;
@@ -728,14 +694,14 @@ class strand_gui {
 
   template <typename Property>
   typename std::enable_if_t<
-      boost::asio::can_require<const Executor&, Property>::value && !std::is_convertible_v<Property, boost::asio::execution::blocking_t::always_t>,
-      strand_gui<typename std::decay_t<
-          typename boost::asio::require_result<const Executor&, Property>::type>>>
+      boost::asio::can_require<
+          const Executor&, Property>::value &&
+          !std::is_convertible_v<Property, boost::asio::execution::blocking_t::always_t>,
+      strand_gui>
   require(const Property& p) const
       BOOST_ASIO_NOEXCEPT_IF((
           boost::asio::is_nothrow_require<const Executor&, Property>::value)) {
-    return strand_gui<typename std::decay_t<
-        typename boost::asio::require_result<const Executor&, Property>::type>>(boost::asio::require(executor_, p), impl_);
+    return strand_gui(boost::asio::require(executor_, p), impl_);
   }
 
   template <typename Property>
@@ -745,14 +711,11 @@ class strand_gui {
           !std::is_convertible_v<
               Property,
               boost::asio::execution::blocking_t::always_t>,
-      strand_gui<typename std::decay_t<
-          typename boost::asio::prefer_result<const Executor&, Property>::type>>>
+      strand_gui>
   prefer(const Property& p) const
       BOOST_ASIO_NOEXCEPT_IF((
           boost::asio::is_nothrow_prefer<const Executor&, Property>::value)) {
-    return strand_gui<typename std::decay_t<
-        typename boost::asio::prefer_result<
-            const Executor&, Property>::type>>(
+    return strand_gui(
         boost::asio::prefer(executor_, p), impl_);
   }
 #pragma endregion
@@ -796,10 +759,6 @@ class strand_gui {
   void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
     detail::strand_gui_executor_service::defer(impl_,
                                                executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
-  }
-
-  bool running_in_this_thread() const BOOST_ASIO_NOEXCEPT {
-    return detail::strand_gui_executor_service::running_in_this_thread(impl_);
   }
 
   friend bool operator==(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
