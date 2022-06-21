@@ -325,18 +325,32 @@ class gui_to_rear_warp_t {
   rear_warp_t<Rear_Process> warp_process{};
   std::future<process_state> future_;
 
+  std::function<process_state()> fun_sub{};
+
  public:
   template <typename... Args>
   explicit gui_to_rear_warp_t(IO_Context& in_io, Args&&... in_args)
       : io_con_p(in_io),
         warp_process(std::forward<Args>(in_args)...),
-        future_() {}
+        future_(),
+        fun_sub() {}
 
   void init() {
-    future_ = boost::asio::post(io_con_p,
-                                std::packaged_task<process_state()>{[this]() {
-                                  return this->warp_process();
-                                }});
+    fun_sub = [this]() mutable {
+      auto l_s = this->warp_process();
+      switch (l_s) {
+        case process_state::run: {
+          future_ = boost::asio::post(io_con_p, std::packaged_task<process_state()>{this->fun_sub});
+          break;
+        }
+        case process_state::succeed:
+        case process_state::fail:
+        default:
+          break;
+      }
+      return l_s;
+    };
+    future_ = boost::asio::post(io_con_p, std::packaged_task<process_state()>{fun_sub});
   }
 
   process_state update() {
@@ -346,8 +360,7 @@ class gui_to_rear_warp_t {
       switch (future_.wait_for(0ns)) {
         case std::future_status::ready: {
           try {
-            future_.get();
-            l_state = process_state::succeed;
+            l_state = future_.get();
           } catch (const doodle_error& error) {
             DOODLE_LOG_ERROR(error.what());
             l_state = process_state::fail;
@@ -356,8 +369,6 @@ class gui_to_rear_warp_t {
         default:
           break;
       }
-    } else {
-      l_state = process_state::succeed;
     }
     return l_state;
   }
@@ -497,11 +508,11 @@ class strand_gui_executor_service
         : timer_(in_executor) {
       static std::function<void(const boost::system::error_code& in_code)> s_fun{};
       s_fun = [&](const boost::system::error_code& in_code) {
-        if (in_code == boost::asio::error::operation_aborted)
+        if (in_code == boost::asio::error::operation_aborted || service_->stop_)
           return;
-        if (!service_->stop_) {
-          service_->loop_one();
-        }
+
+        service_->loop_one();
+
         timer_.expires_after(doodle::chrono::seconds{1} / 60);
         timer_.async_wait(s_fun);
       };
@@ -560,6 +571,10 @@ class strand_gui_executor_service
                    gui_process_t&& in_gui) {
     std::lock_guard l_g{in_impl->service_->mutex_};
     in_impl->handlers_next.emplace_back(std::move(in_gui));
+  };
+  static void stop(const implementation_type& in_impl) {
+    in_impl->service_->stop_ = true;
+    in_impl->timer_.cancel();
   };
 
   void loop_one() {
@@ -705,6 +720,9 @@ class strand_gui {
   void on_work_finished() const BOOST_ASIO_NOEXCEPT {
     DOODLE_LOG_INFO("结束工作工作")
   }
+  void stop() {
+    detail::strand_gui_executor_service::stop(impl_);
+  }
 
   void show(gui_process_t&& in_fun) {
     detail::strand_gui_executor_service::show(impl_, std::move(in_fun));
@@ -782,11 +800,15 @@ TEST_CASE("test gui strand") {
       .then<test_1>(1)
       .post<test_1>(l_context, 2)
       .then([]() {
-        DOODLE_LOG_INFO("end")
+        DOODLE_LOG_INFO("end");
+      })
+      .post(l_context, [&]() {
+        DOODLE_LOG_INFO("end");
+        l_gui.stop();
       });
   l_gui.show(std::move(l_process));
 
-  doodle::process_warp_t<test_1> l_test{std::make_unique<test_1>(1)};
+  //  doodle::process_warp_t<test_1> l_test{std::make_unique<test_1>(1)};
   //  boost::asio::post(l_gui, []() -> bool {
   //    DOODLE_LOG_INFO("dasd");
   //    return false;
