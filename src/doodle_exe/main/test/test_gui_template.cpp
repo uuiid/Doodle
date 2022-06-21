@@ -12,12 +12,46 @@
 
 #include <catch.hpp>
 #include <catch2/catch_approx.hpp>
+
 namespace doodle {
 enum class process_state : std::uint8_t {
   run = 1,
   succeed,
   fail
 };
+}
+
+class test_1 {
+  std::int32_t p_{};
+  std::int32_t p_max{10};
+
+ public:
+  explicit test_1(std::int32_t in_int) : p_(in_int){};
+
+  void init() {
+    DOODLE_LOG_INFO(" init {}", p_);
+  }
+  void succeeded() {
+    DOODLE_LOG_INFO(" init {}", p_);
+  };
+  void failed() {
+    DOODLE_LOG_INFO(" init {}", p_);
+  };
+  void aborted() {
+    DOODLE_LOG_INFO(" init {}", p_);
+  };
+  doodle::process_state update() {
+    DOODLE_LOG_INFO(" init {}", p_);
+    if (p_ < p_max) {
+      ++p_;
+      return doodle::process_state::run;
+    } else {
+      return doodle::process_state::succeed;
+    }
+  };
+};
+
+namespace doodle {
 
 template <typename Process_t>
 class process_warp_t {
@@ -39,7 +73,7 @@ class process_warp_t {
 #undef DOODLE_TYPE_HASE_MFN
 
  protected:
-  std::unique_ptr<void> process_attr;
+  std::unique_ptr<void, void (*)(void*)> process_attr;
 
   static void delete_gui_process_t(void* in_ptr) {
     delete static_cast<Process_t*>(in_ptr);
@@ -68,7 +102,7 @@ class process_warp_t {
   template <typename Target                                      = Process_t,
             std::enable_if_t<!has_init_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::uninitialized>)
-      -> decltype(std::declval<Target>().init(), void()) {
+      -> decltype(void(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     current      = state::running;
   }
@@ -102,7 +136,7 @@ class process_warp_t {
   template <typename Target                                           = Process_t,
             std::enable_if_t<!has_succeeded_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::succeeded>)
-      -> decltype(std::declval<Target>().succeeded(), void()) {
+      -> decltype(void(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     current      = state::finished;
   }
@@ -119,7 +153,7 @@ class process_warp_t {
   template <typename Target                                        = Process_t,
             std::enable_if_t<!has_failed_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::failed>)
-      -> decltype(std::declval<Target>().failed(), void()) {
+      -> decltype(void(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     current      = state::rejected;
   }
@@ -136,10 +170,9 @@ class process_warp_t {
   template <typename Target                                         = Process_t,
             std::enable_if_t<!has_aborted_fun<Target>::value, bool> = false>
   auto next(std::integral_constant<state, state::aborted>)
-      -> decltype(std::declval<Target>().aborted(), void()) {
+      -> decltype(void(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     current      = state::rejected;
-    l_gui.aborted();
   }
 
   void succeed() {
@@ -166,7 +199,7 @@ class process_warp_t {
 
  public:
   template <typename... Args>
-  explicit process_warp_t(Args... in_args)
+  explicit process_warp_t(Args&&... in_args)
       : process_attr(
             new Process_t{std::forward<Args>(in_args)...},
             &delete_gui_process_t) {}
@@ -242,7 +275,8 @@ using rear_warp_t = process_warp_t<Rear_Process>;
 template <typename Lambda_Process, typename = void>
 class lambda_process_warp_t : public Lambda_Process {
  public:
-  lambda_process_warp_t() = default;
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args){};
 
   process_state update();
 };
@@ -255,7 +289,8 @@ class lambda_process_warp_t<
             typename std::invoke_result<Lambda_Process>::type, void>>>
     : public Lambda_Process {
  public:
-  lambda_process_warp_t() = default;
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args){};
 
   process_state update() {
     Lambda_Process::operator()();
@@ -271,7 +306,8 @@ class lambda_process_warp_t<
             typename std::invoke_result<Lambda_Process>::type, process_state>>>
     : public Lambda_Process {
  public:
-  lambda_process_warp_t() = default;
+  template <typename... Args>
+  lambda_process_warp_t(Args&&... in_args){};
 
   process_state update() {
     return Lambda_Process::operator()();
@@ -287,7 +323,7 @@ class gui_to_rear_warp_t {
 
  public:
   template <typename... Args>
-  explicit gui_to_rear_warp_t(Args... in_args)
+  explicit gui_to_rear_warp_t(Args&&... in_args)
       : warp_process(std::forward<Args>(in_args)...) {}
 
   void init() {
@@ -342,14 +378,14 @@ static void abort(gui_process_wrap_handler& handler, const bool immediately) {
 }
 template <typename Gui_Process2>
 static bool update(gui_process_wrap_handler& handler) {
-  auto&& process = *static_cast<Gui_Process2*>(handler.instance.get());
+  auto&& l_process = *static_cast<Gui_Process2*>(handler.instance.get());
 
-  switch (process()) {
+  switch (l_process()) {
     case process_state::run: {
     } break;
     case process_state::succeed: {
-      if (process.next) {
-        process = std::move(*process.next);
+      if (handler.next) {
+        handler = std::move(*handler.next);
       }
     } break;
     case process_state::fail:
@@ -372,7 +408,7 @@ class gui_process_t {
   next_type* auxiliary_next;
 
   template <typename type_t, typename... Args>
-  gui_process_t& _post_(Args... in_args) {
+  gui_process_t& _post_(Args&&... in_args) {
     auto l_next = instance_type{
         new type_t{std::forward<Args>(in_args)...},
         &detail::delete_gui_process_t<type_t>};
@@ -391,7 +427,7 @@ class gui_process_t {
         auxiliary_next(&(handle)) {}
 
   template <typename type_t, typename... Args>
-  gui_process_t& then(Args... in_args) {
+  gui_process_t& then(Args&&... in_args) {
     return _post_<gui_warp_t<type_t>>(std::forward<Args>(in_args)...);
   };
   template <typename Func>
@@ -399,7 +435,7 @@ class gui_process_t {
     return _post_<gui_warp_t<lambda_process_warp_t<Func>>>();
   };
   template <typename type_t, typename... Args>
-  gui_process_t& post(Args... in_args) {
+  gui_process_t& post(Args&&... in_args) {
     return _post_<rear_warp_t<detail::gui_to_rear_warp_t<type_t>>>(std::forward<Args>(in_args)...);
   };
   template <typename Func>
@@ -730,36 +766,6 @@ class strand_gui {
 };
 
 }  // namespace doodle
-
-class test_1 {
-  std::int32_t p_{};
-  std::int32_t p_max{10};
-
- public:
-  explicit test_1(std::int32_t in_int) : p_(in_int){};
-
-  void init() {
-    DOODLE_LOG_INFO(" init {}", p_);
-  }
-  void succeeded() {
-    DOODLE_LOG_INFO(" init {}", p_);
-  };
-  void failed() {
-    DOODLE_LOG_INFO(" init {}", p_);
-  };
-  void aborted() {
-    DOODLE_LOG_INFO(" init {}", p_);
-  };
-  doodle::process_state update() {
-    DOODLE_LOG_INFO(" init {}", p_);
-    if (p_ < p_max) {
-      ++p_;
-      return doodle::process_state::run;
-    } else {
-      return doodle::process_state::succeed;
-    }
-  };
-};
 
 TEST_CASE("test gui strand") {
   boost::asio::io_context l_context{};
