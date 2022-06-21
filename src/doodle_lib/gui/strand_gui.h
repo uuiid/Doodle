@@ -92,6 +92,8 @@ class strand_gui_executor_service
   void loop_one();
 
  private:
+  void render_begin();
+  void render_end();
   // Mutex to protect access to the service-wide state
   std::recursive_mutex mutex_;
   std::atomic_bool stop_;
