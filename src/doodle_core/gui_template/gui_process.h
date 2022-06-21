@@ -6,6 +6,9 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_core/logger/logger.h>
+#include <boost/asio.hpp>
+
 namespace doodle {
 enum class process_state : std::uint8_t {
   run = 1,

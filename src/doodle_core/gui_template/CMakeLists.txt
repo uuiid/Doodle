@@ -5,4 +5,5 @@ target_sources(doodle_core
 
         PRIVATE
         gui_process.cpp
+        strand_gui.cpp
         )

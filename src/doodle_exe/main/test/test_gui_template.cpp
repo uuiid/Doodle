@@ -7,14 +7,11 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_lib/core/work_clock.h>
-
+#include <doodle_core/gui_template/gui_process.h>
+#include <doodle_lib/core/work_clock.h>
 
 #include <catch.hpp>
 #include <catch2/catch_approx.hpp>
-
-namespace doodle {
-
-}
 
 class test_1 {
   std::int32_t p_{};
@@ -45,13 +42,6 @@ class test_1 {
     }
   };
 };
-
-namespace doodle {
-
-
-
-
-}  // namespace doodle
 
 TEST_CASE("test gui strand") {
   boost::asio::io_context l_context{};

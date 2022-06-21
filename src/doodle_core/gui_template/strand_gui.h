@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-
+#include <doodle_core/gui_template/gui_process.h>
 #include <boost/asio.hpp>
 
 namespace doodle {
@@ -45,20 +45,8 @@ class strand_gui_executor_service
     ~strand_impl();
     template <typename Executor_T>
     explicit strand_impl(const Executor_T& in_executor)
-        : timer_(in_executor) {
-      static std::function<void(const boost::system::error_code& in_code)> s_fun{};
-      s_fun = [&](const boost::system::error_code& in_code) {
-        if (in_code == boost::asio::error::operation_aborted || service_->stop_)
-          return;
-
-        service_->loop_one();
-
-        timer_.expires_after(doodle::chrono::seconds{1} / 60);
-        timer_.async_wait(s_fun);
-      };
-      timer_.expires_after(doodle::chrono::seconds{1} / 60);
-      timer_.async_wait(s_fun);
-    }
+        : timer_(in_executor) {}
+    void ready_start();
 
    private:
     friend class strand_gui_executor_service;
@@ -84,18 +72,7 @@ class strand_gui_executor_service
   /// \param context 上下文
   explicit strand_gui_executor_service(boost::asio::execution_context& context);
   /// \brief 关机
-  void shutdown() {
-    std::lock_guard l_g{mutex_};
-    stop_ = true;
-    for (auto&& i : impl_list_->handlers) {
-      i.abort(true);
-      i();
-    }
-    for (auto&& i : impl_list_->handlers_next) {
-      i.abort(true);
-      i();
-    }
-  };
+  void shutdown() override;
   /// \brief 创建
   template <typename Executor_T>
   implementation_type create_implementation(const Executor_T& in_executor) {
@@ -108,32 +85,9 @@ class strand_gui_executor_service
   };
 
   static void show(const implementation_type& in_impl,
-                   gui_process_t&& in_gui) {
-    std::lock_guard l_g{in_impl->service_->mutex_};
-    in_impl->handlers_next.emplace_back(std::move(in_gui));
-  };
-  static void stop(const implementation_type& in_impl) {
-    in_impl->service_->stop_ = true;
-    in_impl->timer_.cancel();
-  };
-
-  void loop_one() {
-    std::lock_guard l_g{mutex_};
-    std::move(impl_list_->handlers_next.begin(),
-              impl_list_->handlers_next.end(), std::back_inserter(impl_list_->handlers));
-    impl_list_->handlers_next.clear();
-    if (impl_list_->handlers.empty())
-      return;
-    auto l_erase_benin = std::remove_if(
-        impl_list_->handlers.begin(),
-        impl_list_->handlers.end(),
-        [&](typename decltype(this->impl_list_->handlers)::value_type& handler) -> bool {
-          return handler();
-        });
-    if (l_erase_benin != impl_list_->handlers.end())
-      impl_list_->handlers.erase(l_erase_benin,
-                                 impl_list_->handlers.end());
-  }
+                   gui_process_t&& in_gui);
+  static void stop(const implementation_type& in_impl);
+  void loop_one();
 
  private:
   // Mutex to protect access to the service-wide state
@@ -142,12 +96,6 @@ class strand_gui_executor_service
   // The head of a linked list of all implementations.
   std::shared_ptr<strand_impl> impl_list_;
 };
-
-strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_context& context)
-    : execution_context_service_base<strand_gui_executor_service>(context),
-      mutex_(),
-      stop_(false) {
-}
 
 strand_gui_executor_service::strand_impl::~strand_impl() = default;
 
@@ -249,24 +197,14 @@ class strand_gui {
   }
 #pragma endregion
 
-  boost::asio::execution_context& context() const BOOST_ASIO_NOEXCEPT {
-    return executor_.context();
-  }
+  boost::asio::execution_context& context() const BOOST_ASIO_NOEXCEPT;
 
-  void on_work_started() const BOOST_ASIO_NOEXCEPT {
-    DOODLE_LOG_INFO("开始工作")
-  }
+  void on_work_started() const BOOST_ASIO_NOEXCEPT;
 
-  void on_work_finished() const BOOST_ASIO_NOEXCEPT {
-    DOODLE_LOG_INFO("结束工作工作")
-  }
-  void stop() {
-    detail::strand_gui_executor_service::stop(impl_);
-  }
+  void on_work_finished() const BOOST_ASIO_NOEXCEPT ;
+  void stop() ;
 
-  void show(gui_process_t&& in_fun) {
-    detail::strand_gui_executor_service::show(impl_, std::move(in_fun));
-  }
+  void show(gui_process_t&& in_fun);
 
   friend bool operator==(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
     return a.impl_ == b.impl_;
@@ -276,9 +214,7 @@ class strand_gui {
     return a.impl_ != b.impl_;
   }
 
-  inner_executor_type get_inner_executor() const BOOST_ASIO_NOEXCEPT {
-    return executor_;
-  }
+  inner_executor_type get_inner_executor() const BOOST_ASIO_NOEXCEPT;
 
   typedef detail::strand_gui_executor_service::implementation_type
       implementation_type;
