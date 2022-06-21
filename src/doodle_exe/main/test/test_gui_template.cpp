@@ -273,10 +273,10 @@ template <typename Rear_Process>
 using rear_warp_t = process_warp_t<Rear_Process>;
 
 template <typename Lambda_Process, typename = void>
-class lambda_process_warp_t : public Lambda_Process {
+class lambda_process_warp_t : private Lambda_Process {
  public:
-  template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args){};
+//  template <typename... Args>
+//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update();
 };
@@ -287,10 +287,10 @@ class lambda_process_warp_t<
     std::enable_if_t<
         std::is_same_v<
             typename std::invoke_result<Lambda_Process>::type, void>>>
-    : public Lambda_Process {
+    : private Lambda_Process {
  public:
-  template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args){};
+//  template <typename... Args>
+//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update() {
     Lambda_Process::operator()();
@@ -304,10 +304,10 @@ class lambda_process_warp_t<
     std::enable_if_t<
         std::is_same_v<
             typename std::invoke_result<Lambda_Process>::type, process_state>>>
-    : public Lambda_Process {
+    : private Lambda_Process {
  public:
-  template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args){};
+//  template <typename... Args>
+//  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   process_state update() {
     return Lambda_Process::operator()();
