@@ -16,9 +16,9 @@
 namespace doodle {
 template <typename Executor, typename CompletionToken>
 auto async_gui_work(const Executor& ex, CompletionToken&& token) {
-  return async_initiate<CompletionToken, bool()>(
-      [](auto&& in_token) {
-        ex.post(in_token)
+  return boost::asio::async_initiate<CompletionToken, bool(void)>(
+      [&](auto&& in_token) {
+        ex.post(in_token, boost::asio::get_associated_allocator(in_token));
       },
       token);
 }
@@ -56,9 +56,12 @@ class test_1 {
 
 TEST_CASE("test gui strand2") {
   doodle::app l_app{};
-  auto l_work = doodle::async_gui_work(
+  doodle::async_gui_work(
       doodle::g_io_context().get_executor(),
-      []() -> bool {});
+      []() -> bool { return true; });
+  //  auto l_work = doodle::async_gui_work(
+  //      doodle::g_io_context().get_executor(),
+  //      std::function<bool()>{[]() -> bool {}});
 }
 TEST_CASE("test gui strand") {
   doodle::app l_app{};

@@ -65,7 +65,7 @@ class process_warp_t {
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    return l_gui.update();
+    l_gui.update();
   }
 
   template <typename Target = Process_t>

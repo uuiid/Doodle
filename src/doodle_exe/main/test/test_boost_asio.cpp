@@ -520,3 +520,12 @@ TEST_CASE("test boost bind_executor") {
   //      [](auto&& in_handler) -> bool { return false; }, std::packaged_task<bool()>{});
   auto&& l_s = boost::asio::use_service<detail::strand_executor_service>(l_context);
 }
+
+TEST_CASE("test boost strand") {
+  boost::asio::io_context l_context{};
+
+  boost::asio::post(boost::asio::make_strand(l_context), []() {
+    DOODLE_LOG_INFO("开始工作");
+  });
+  l_context.run();
+}
