@@ -222,7 +222,9 @@ class assets_file_edit : public gui::edit_interface {
       p_name_cache    = l_ass.p_name;
       p_version_cache = l_ass.get_version();
     } else {
-      p_path_cache = g_reg()->ctx().at<project>().p_path.generic_string();
+      p_path_cache    = g_reg()->ctx().at<project>().p_path.generic_string();
+      p_name_cache    = {};
+      p_version_cache = {};
     }
   }
   void render(const entt::handle &in) override {
@@ -296,6 +298,8 @@ class importance_edit : public edit_interface {
   void init_(const entt::handle &in) override {
     if (in.any_of<importance>())
       p_importance.data = in.get<importance>().cutoff_p;
+    else
+      p_importance.data = {};
   }
   void render(const entt::handle &in) override {
     if (ImGui::InputText(*p_importance.gui_name, &p_importance.data)) {
@@ -316,6 +320,8 @@ class command_edit : public edit_interface {
   void init_(const entt::handle &in) override {
     if (in.any_of<comment>())
       p_command.data = in.get<comment>().get_comment();
+    else
+      p_command.data = {};
   }
   void render(const entt::handle &in) override {
     if (ImGui::InputText(*p_command.gui_name, &p_command.data)) {
