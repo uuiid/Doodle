@@ -54,89 +54,43 @@ class process_warp_t {
   };
   state current{state::uninitialized};
 
-  template <typename Target                                     = Process_t,
-            std::enable_if_t<has_init_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.init();
-    current = state::running;
-  }
-  template <typename Target                                      = Process_t,
-            std::enable_if_t<!has_init_fun<Target>::value, bool> = false>
-  auto next(std::integral_constant<state, state::uninitialized>)
-      -> decltype(void(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    current      = state::running;
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    switch (l_gui.update()) {
-      case process_state::run:
-        break;
-      case process_state::succeed:
-        current = state::succeeded;
-        break;
-      case process_state::fail:
-        current = state::finished;
-        break;
-      default:
-        break;
-    }
+    return l_gui.update();
   }
 
-  template <typename Target                                          = Process_t,
-            std::enable_if_t<has_succeeded_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.succeeded();
-    current = state::finished;
-  }
-  template <typename Target                                           = Process_t,
-            std::enable_if_t<!has_succeeded_fun<Target>::value, bool> = false>
-  auto next(std::integral_constant<state, state::succeeded>)
-      -> decltype(void(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    current      = state::finished;
   }
 
-  template <typename Target                                       = Process_t,
-            std::enable_if_t<has_failed_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
     l_gui.failed();
-    current = state::rejected;
   }
 
-  template <typename Target                                        = Process_t,
-            std::enable_if_t<!has_failed_fun<Target>::value, bool> = false>
-  auto next(std::integral_constant<state, state::failed>)
-      -> decltype(void(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    current      = state::rejected;
-  }
-
-  template <typename Target                                        = Process_t,
-            std::enable_if_t<has_aborted_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
     auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    current      = state::rejected;
     l_gui.aborted();
   }
 
-  template <typename Target                                         = Process_t,
-            std::enable_if_t<!has_aborted_fun<Target>::value, bool> = false>
-  auto next(std::integral_constant<state, state::aborted>)
-      -> decltype(void(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    current      = state::rejected;
-  }
+  template <typename Target = Process_t>
+  auto next(...) {}
 
   void succeed() {
     if (alive()) {
@@ -201,6 +155,7 @@ class process_warp_t {
     switch (current) {
       case state::uninitialized:
         next(std::integral_constant<state, state::uninitialized>{});
+        current = state::running;
         break;
       case state::running:
         next(std::integral_constant<state, state::running>{});
@@ -214,14 +169,17 @@ class process_warp_t {
     switch (current) {
       case state::succeeded: {
         next(std::integral_constant<state, state::succeeded>{});
+        current = state::finished;
         l_state = process_state::succeed;
       } break;
       case state::failed: {
         next(std::integral_constant<state, state::failed>{});
+        current = state::rejected;
         l_state = process_state::fail;
       } break;
       case state::aborted: {
         next(std::integral_constant<state, state::aborted>{});
+        current = state::rejected;
         l_state = process_state::fail;
       } break;
       default:
