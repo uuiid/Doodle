@@ -239,7 +239,6 @@ void app::loop_one() {
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
 
-  imgui::DockSpaceOverViewport(imgui::GetMainViewport());
   static std::string str{};
 
   try {
@@ -317,11 +316,11 @@ void app::show_windows() {
 }
 void app::load_windows() {
   g_main_loop()
+      .attach<gui::layout_window>();
+  g_main_loop()
       .attach<main_menu_bar>();
   g_main_loop()
       .attach<main_status_bar>();
-  g_main_loop()
-      .attach<gui::layout_window>();
 }
 app::~app() {
   // Cleanup
