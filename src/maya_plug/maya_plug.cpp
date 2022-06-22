@@ -230,7 +230,7 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// \brief 重置为默认的首选项
+  /// \brief
   status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
   // 这里要停止app
   p_doodle_app->stop();
