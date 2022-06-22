@@ -19,17 +19,21 @@ class layout_window::impl {
 
   void builder_dock() {
     // 我们使用ImGuiWindowFlags_NoDocking标志来使窗口不可停靠到父窗口中，因为在彼此之间有两个停靠目标会令人困惑
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags window_flags =  // 没有菜单 ImGuiWindowFlags_MenuBar |
+        ImGuiWindowFlags_NoDocking;
 
-    ImGuiViewport *viewport       = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(viewport->Size);
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
     ImGui::SetNextWindowViewport(viewport->ID);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoTitleBar |
+                    ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize |
+                    ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
     // 如果使用 ImGuiDockNodeFlags_PassthruCentralNode 处理, 那么我们就不使用背景
@@ -40,40 +44,52 @@ class layout_window::impl {
      * 都会丢失父窗口并脱离, 我们将无法保留停靠窗口和非停靠窗口之间的关系, 这将导致窗口被困在边缘,
      * 永远的不可见
      */
-    dear::Begin{
+    ImGui::Begin(
         "Doodle_DockSpace",
         nullptr,
-        window_flags} &&
-        [this, viewport]() {
-          ImGui::PopStyleVar(3);
-          static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
-          ImGuiIO &io                               = ImGui::GetIO();
-          if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
-            ImGuiID dockspace_id = ImGui::GetID("DockSpace_Root");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        window_flags);
+    ImGui::PopStyleVar(3);
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+    ImGuiIO &io                               = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+      ImGuiID dockspace_id = ImGui::GetID("DOODLE_DockSpace_Root");
+      ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-            static auto first_time = true;
-            if (first_time) {
-              first_time = false;
+      static auto first_time = true;
+      if (first_time) {
+        first_time = false;
 
-              ImGui::DockBuilderRemoveNode(dockspace_id);  // clear any previous layout
-              ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
-              ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+        ImGui::DockBuilderRemoveNode(dockspace_id);  // clear any previous layout
+        ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+        ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 
-              // split the dockspace into 2 nodes -- DockBuilderSplitNode takes in the following args in the following order
-              //   window ID to split, direction, fraction (between 0 and 1), the final two setting let's us choose which id we want (which ever one we DON'T set as NULL, will be returned by the function)
-              //                                                              out_id_at_dir is the id of the node in the direction we specified earlier, out_id_at_opposite_dir is in the opposite direction
-              auto dock_id_left = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dockspace_id);
-              auto dock_id_down = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Down, 0.25f, nullptr, &dockspace_id);
+        /**
+         * 分裂给节点 其中 *返回值* 和 out_id_at_dir是相同的, 而另一个是剩下的
+         */
+        auto dock_id_tools = dockspace_id;
+        auto dock_id_filter = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id_tools);
+        auto dock_id_edit   = ImGui::DockBuilderSplitNode(dock_id_filter, ImGuiDir_Down, 0.5f, nullptr, &dock_id_filter);
+        auto dock_id_main   = ImGui::DockBuilderSplitNode(dock_id_tools, ImGuiDir_Down, 0.75f, nullptr, &dock_id_tools);
 
-              // 开始将窗口停靠在创建的窗口中
-              namespace menu_w  = gui::config::menu_w;
-              ImGui::DockBuilderDockWindow(menu_w::assets_filter.data(), dockspace_id);
-              ImGui::DockBuilderDockWindow(menu_w::edit_.data(), dockspace_id);
-              ImGui::DockBuilderFinish(dockspace_id);
-            }
-          }
-        };
+        // 开始将窗口停靠在创建的窗口中
+        namespace menu_w    = gui::config::menu_w;
+        ImGui::DockBuilderDockWindow(menu_w::assets_filter.data(), dock_id_filter);  /// \brief 过滤器的停靠
+        ImGui::DockBuilderDockWindow(menu_w::edit_.data(), dock_id_edit);            /// \brief 编辑的停靠
+
+        ImGui::DockBuilderDockWindow(menu_w::csv_export.data(), dock_id_tools);           /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::ue4_widget.data(), dock_id_tools);           /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::comm_maya_tool.data(), dock_id_tools);       /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::comm_create_video.data(), dock_id_tools);    /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::extract_subtitles.data(), dock_id_tools);    /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::subtitle_processing.data(), dock_id_tools);  /// \brief 工具所在的id
+
+        ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_main);      /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);  /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);  /// \brief 主窗口的停靠
+        ImGui::DockBuilderFinish(dockspace_id);
+      }
+    }
+    ImGui::End();
   }
 };
 layout_window::layout_window()
@@ -110,54 +126,37 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
                            void *in_data) {
   p_i->builder_dock();
 
-  const ImGuiViewport *viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
+  //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
+  //  ImGui::SetNextWindowPos(viewport->WorkPos);
+  //  ImGui::SetNextWindowSize(viewport->WorkSize);
   p_i->duration_   = in_duration;
   p_i->data_       = in_data;
   namespace menu_w = gui::config::menu_w;
+  call_render(std::string{menu_w::edit_});
+  call_render(std::string{menu_w::assets_filter});
 
-  dear::Begin{menu_w::assets_filter.data()} && [this]() { call_render(std::string{menu_w::edit_}); };
-  dear::Begin{menu_w::edit_.data()} && [this]() { call_render(std::string{menu_w::assets_filter}); };
+  call_render(std::string{menu_w::csv_export});
+  call_render(std::string{menu_w::ue4_widget});
+  call_render(std::string{menu_w::comm_maya_tool});
+  call_render(std::string{menu_w::comm_create_video});
+  call_render(std::string{menu_w::extract_subtitles});
+  call_render(std::string{menu_w::subtitle_processing});
 
-  //  dear::Begin{"main_windows", &show_,
-  //              ImGuiWindowFlags_NoDecoration |
-  //                  ImGuiWindowFlags_NoMove |
-  //                  ImGuiWindowFlags_NoResize |
-  //                  ImGuiWindowFlags_NoSavedSettings} &&
-  //      [&, this]() {
-  //        dear::Child{"l4"} && [&]() {
-  //          dear::Child{"l2", ImVec2{0, viewport->WorkSize.y / 4}, true} && [&, this]() {
-  //            dear::TabBar{"##tool",
-  //                         ImGuiTabBarFlags_Reorderable |
-  //                             ImGuiTabBarFlags_FittingPolicyResizeDown} &&
-  //                [&, this]() {
-  //                  dear::TabItem{menu_w::csv_export.data()} && [&]() { call_render(std::string{menu_w::csv_export}); };
-  //                  dear::TabItem{menu_w::ue4_widget.data()} && [&]() { call_render(std::string{menu_w::ue4_widget}); };
-  //                  dear::TabItem{menu_w::comm_maya_tool.data()} && [&]() { call_render(std::string{menu_w::comm_maya_tool}); };
-  //                  dear::TabItem{menu_w::comm_create_video.data()} && [&]() { call_render(std::string{menu_w::comm_create_video}); };
-  //                  dear::TabItem{menu_w::extract_subtitles.data()} && [&]() { call_render(std::string{menu_w::extract_subtitles}); };
-  //                  dear::TabItem{menu_w::subtitle_processing.data()} && [&]() { call_render(std::string{menu_w::subtitle_processing}); };
-  //                };
-  //          };
-  //          //        ImGui::SameLine();
-  //          dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
-  //            dear::TabBar{"##main"} && [&]() {
-  //              dear::TabItem{menu_w::assets_file.data()} && [&]() { p_i->main_render(); };
-  //              dear::TabItem{menu_w::long_time_tasks.data()} && [&]() { call_render(std::string{menu_w::long_time_tasks}); };
-  //              dear::TabItem{"时间编辑"} && [&]() { p_i->time_r.update({}, {}); };
-  //            };
-  //          };
-  //        };
-  //      };
-  //  clear_windows();
+  call_render(std::string{menu_w::assets_file});
+  call_render(std::string{menu_w::long_time_tasks});
+
+  dear::Begin{menu_w::time_edit.data()} && [&, this]() {
+    p_i->time_r.tick({}, {});
+  };
 }
 
 void layout_window::call_render(const std::string &in_name) {
-  auto &&l_win = p_i->list_windows[in_name];
-  if (l_win)
-    l_win->tick(p_i->duration_,
-                p_i->data_);
+  dear::Begin{in_name.data()} && [&, this]() {
+    auto &&l_win = p_i->list_windows[in_name];
+    if (l_win)
+      l_win->tick(p_i->duration_,
+                  p_i->data_);
+  };
 }
 
 std::shared_ptr<windows_proc::warp_proc>

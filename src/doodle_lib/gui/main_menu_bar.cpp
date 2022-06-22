@@ -9,6 +9,7 @@
 #include <gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
 #include <gui/setting_windows.h>
+#include <gui/widgets/project_edit.h>
 #include <gui/get_input_dialog.h>
 #include <gui/gui_ref/ref_base.h>
 #include <doodle_core/core/core_sig.h>
@@ -124,14 +125,38 @@ void main_menu_bar::menu_file() {
     app::Get().stop();
   }
 }
+struct t_setting_windows : public process_t<t_setting_windows>, public setting_windows {
+  bool show_{true};
+  void render() override {
+    dear::Begin{gui::config::menu_w::setting.data(), &show_} && [this]() {
+      setting_windows::render();
+    };
+    if(!show_){
+      this->succeed();
+    }
+  };
+};
+struct t_project_edit : public process_t<t_project_edit>, public gui::project_edit {
+  bool show_{true};
+  void render() override {
+    dear::Begin{gui::config::menu_w::project_edit.data(), &show_} && [this]() {
+      gui::project_edit::render();
+    };
+    if(!show_){
+      this->succeed();
+    }
+  };
+};
 
 void main_menu_bar::menu_windows() {
-  std::apply([this](const auto &...in_item) {
-    (this->widget_menu_item(in_item), ...);
-  },
-             std::make_tuple(gui::config::menu_w::setting, gui::config::menu_w::project_edit));
-}
-void main_menu_bar::widget_menu_item(const std::string_view &in_view) {
+  if (dear::MenuItem(gui::config::menu_w::setting.data())) {
+    //    g_main_loop().attach<gui::windows_proc<setting_windows>>();
+    g_main_loop().attach<t_setting_windows>();
+  }
+  if (dear::MenuItem(gui::config::menu_w::project_edit.data())) {
+    //    g_main_loop().attach<gui::windows_proc<gui::project_edit>>();
+    g_main_loop().attach<t_project_edit>();
+  }
 }
 
 void main_menu_bar::menu_tool() {

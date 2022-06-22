@@ -41,6 +41,7 @@ constexpr const std::string_view comm_maya_tool{"maya工具"};
 constexpr const std::string_view comm_create_video{"创建视频"};
 constexpr const std::string_view extract_subtitles{"提取字幕"};
 constexpr const std::string_view subtitle_processing{"修改字幕"};
+constexpr const std::string_view time_edit{"时间编辑"};
 constexpr const auto menu_base =
     std::make_tuple(project_widget,
                     edit_,
