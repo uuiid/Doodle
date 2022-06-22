@@ -483,7 +483,7 @@ class strand_gui {
   implementation_type impl_;
 };
 
-TEST_CASE("test boost strand") {
+TEST_CASE("test boost gui strand") {
   boost::asio::io_context l_context{};
   strand_gui<decltype(l_context)::executor_type> l_gui{l_context.get_executor()};
   boost::asio::post(l_gui, []() -> bool {
@@ -521,7 +521,7 @@ TEST_CASE("test boost bind_executor") {
   auto&& l_s = boost::asio::use_service<detail::strand_executor_service>(l_context);
 }
 
-TEST_CASE("test boost strand") {
+TEST_CASE("test boost strand2") {
   boost::asio::io_context l_context{};
 
   boost::asio::post(boost::asio::make_strand(l_context), []() {
