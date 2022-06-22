@@ -48,7 +48,6 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
 
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);
-  std::uint16_t max_install_reg_entt;
   // 用户名称
   std::string p_user_;
   // 部门
@@ -64,6 +63,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   FSys::path p_mayaPath;
   FSys::path ue4_path;
   std::string ue4_version;
+  bool maya_replace_save_dialog{false};
 
  private:
   /**

@@ -104,14 +104,15 @@ MStatus initializePlugin(MObject obj) {
               nullptr,
               &status));
       CHECK_MSTATUS_AND_RETURN_IT(status);
-      maya_call_back_id.emplace(
-          MSceneMessage::addCheckCallback(
-              MSceneMessage::Message::kBeforeSaveCheck,
-              [](bool* retCode, void* clientData) {
-                *retCode = maya_plug::clear_scene_comm::show_save_mag();
-              },
-              nullptr,
-              &status));
+      if (doodle::core_set::getSet().maya_replace_save_dialog)
+        maya_call_back_id.emplace(
+            MSceneMessage::addCheckCallback(
+                MSceneMessage::Message::kBeforeSaveCheck,
+                [](bool* retCode, void* clientData) {
+                  *retCode = maya_plug::clear_scene_comm::show_save_mag();
+                },
+                nullptr,
+                &status));
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
     } break;

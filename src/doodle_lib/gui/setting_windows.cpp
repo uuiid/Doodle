@@ -26,8 +26,7 @@ class setting_windows::impl {
         p_ue_path("ue路径"s, ""s),
         p_ue_version("ue版本"s, ""s),
         p_batch_max("最大任务数"s, core_set::getSet().p_max_thread),
-        p_timeout("任务超时时间"s, core_set::getSet().timeout),
-        p_max_reg("并行序列化数"s, core_set::getSet().max_install_reg_entt) {}
+        p_timeout("任务超时时间"s, core_set::getSet().timeout) {}
   gui::gui_cache<std::string> p_user;
   gui::gui_cache<std::string> p_org_name;
   gui::gui_cache<std::string> p_cache;
@@ -37,7 +36,7 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_ue_version;
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
-  gui::gui_cache<std::int32_t> p_max_reg;
+  gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::getSet().maya_replace_save_dialog};
 };
 
 setting_windows::setting_windows()
@@ -50,30 +49,30 @@ void setting_windows::save() {
   auto& set = core_set::getSet();
 
   set.set_user(p_i->p_user.data);
-  set.organization_name     = p_i->p_org_name.data;
-  set.p_mayaPath            = p_i->p_maya_path.data;
-  set.p_max_thread          = p_i->p_batch_max.data;
-  set.ue4_path              = p_i->p_ue_path.data;
-  set.ue4_version           = p_i->p_ue_version.data;
-  set.max_install_reg_entt  = boost::numeric_cast<std::uint16_t>(p_i->p_max_reg.data);
-  set.timeout               = p_i->p_timeout.data;
-  g_bounded_pool().timiter_ = p_i->p_batch_max.data;
+  set.organization_name        = p_i->p_org_name.data;
+  set.p_mayaPath               = p_i->p_maya_path.data;
+  set.p_max_thread             = p_i->p_batch_max.data;
+  set.ue4_path                 = p_i->p_ue_path.data;
+  set.ue4_version              = p_i->p_ue_version.data;
+  set.timeout                  = p_i->p_timeout.data;
+  g_bounded_pool().timiter_    = p_i->p_batch_max.data;
+  set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   core_set_init{}.write_file();
 }
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
   gui::window_panel::init();
-  p_i->p_user.data       = core_set::getSet().get_user();
-  p_i->p_org_name.data   = core_set::getSet().organization_name;
-  p_i->p_cache.data      = core_set::getSet().get_cache_root().generic_string();
-  p_i->p_doc.data        = core_set::getSet().get_doc().generic_string();
-  p_i->p_maya_path.data  = core_set::getSet().maya_path().generic_string();
-  p_i->p_ue_path.data    = core_set::getSet().ue4_path.generic_string();
-  p_i->p_ue_version.data = core_set::getSet().ue4_version;
-  p_i->p_batch_max.data  = core_set::getSet().p_max_thread;
-  p_i->p_timeout.data    = core_set::getSet().timeout;
-  p_i->p_max_reg.data    = core_set::getSet().max_install_reg_entt;
+  p_i->p_user.data                     = core_set::getSet().get_user();
+  p_i->p_org_name.data                 = core_set::getSet().organization_name;
+  p_i->p_cache.data                    = core_set::getSet().get_cache_root().generic_string();
+  p_i->p_doc.data                      = core_set::getSet().get_doc().generic_string();
+  p_i->p_maya_path.data                = core_set::getSet().maya_path().generic_string();
+  p_i->p_ue_path.data                  = core_set::getSet().ue4_path.generic_string();
+  p_i->p_ue_version.data               = core_set::getSet().ue4_version;
+  p_i->p_batch_max.data                = core_set::getSet().p_max_thread;
+  p_i->p_timeout.data                  = core_set::getSet().timeout;
+  p_i->p_maya_replace_save_dialog.data = core_set::getSet().maya_replace_save_dialog;
 }
 void setting_windows::succeeded() {
   gui::window_panel::succeeded();
@@ -90,8 +89,8 @@ void setting_windows::render() {
   imgui::InputInt(*p_i->p_batch_max.gui_name, &(p_i->p_batch_max.data));
   dear::HelpMarker{"更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s};
   imgui::InputInt(*p_i->p_timeout.gui_name, &(p_i->p_timeout.data));
-  imgui::InputInt(*p_i->p_max_reg.gui_name, &p_i->p_max_reg.data);
-  dear::HelpMarker{"这个选项影响项目的加载速度"s};
+  imgui::Checkbox(*p_i->p_maya_replace_save_dialog.gui_name,
+                  &(p_i->p_maya_replace_save_dialog.data));
 
   if (imgui::Button("save"))
     save();

@@ -77,7 +77,6 @@ core_set::core_set()
       _root_cache(p_root / "cache"),
       _root_data(p_root / "data"),
       timeout(3600),
-      max_install_reg_entt(8),
       json_data(std::make_shared<nlohmann::json>()) {
 }
 
@@ -202,15 +201,15 @@ nlohmann::json &core_set_init::json_value() {
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
-  j["user_"]                = p.p_user_;
-  j["organization_name"]    = p.organization_name;
-  j["mayaPath"]             = p.p_mayaPath;
-  j["max_thread"]           = p.p_max_thread;
-  j["timeout"]              = p.timeout;
-  j["project_root"]         = p.project_root;
-  j["max_install_reg_entt"] = p.max_install_reg_entt;
-  j["ue4_path"]             = p.ue4_path;
-  j["ue4_version"]          = p.ue4_version;
+  j["user_"]                    = p.p_user_;
+  j["organization_name"]        = p.organization_name;
+  j["mayaPath"]                 = p.p_mayaPath;
+  j["max_thread"]               = p.p_max_thread;
+  j["timeout"]                  = p.timeout;
+  j["project_root"]             = p.project_root;
+  j["ue4_path"]                 = p.ue4_path;
+  j["ue4_version"]              = p.ue4_version;
+  j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
   j.at("user_").get_to(p.p_user_);
@@ -229,8 +228,8 @@ void from_json(const nlohmann::json &j, core_set &p) {
   j.at("timeout").get_to(p.timeout);
   if (j.contains("project_root"))
     j.at("project_root").get_to(p.project_root);
-  if (j.contains("max_install_reg_entt"))
-    j.at("max_install_reg_entt").get_to(p.max_install_reg_entt);
+  if (j.contains("maya_replace_save_dialog"))
+    j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
