@@ -501,3 +501,22 @@ TEST_CASE("test boost use service") {
   boost::asio::io_context l_context{};
   auto&& l_s = boost::asio::use_service<detail::strand_executor_service>(l_context);
 }
+
+template <typename CompletionToken>
+auto async_wait_callback(CompletionToken&& token) {
+  return boost::asio::async_initiate<CompletionToken, bool(void)>(
+      [](auto&& completion_handler) {
+
+      },
+      token);
+}
+TEST_CASE("test boost bind_executor") {
+  boost::asio::io_context l_context{};
+
+  auto l_e = boost::asio::bind_executor(boost::asio::make_strand(l_context), []() {});
+  async_wait_callback([](std::int32_t in) -> bool { return false; });
+  async_wait_callback([]() {});
+  //  boost::asio::async_initiate<std::packaged_task<bool()>, bool()>(
+  //      [](auto&& in_handler) -> bool { return false; }, std::packaged_task<bool()>{});
+  auto&& l_s = boost::asio::use_service<detail::strand_executor_service>(l_context);
+}

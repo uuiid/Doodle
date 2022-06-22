@@ -74,6 +74,7 @@ DOODLE_CORE_EXPORT asio_pool_t& g_pool();
 DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
 DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
 DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
+
 namespace movie {
 class image_attr;
 class image_watermark;

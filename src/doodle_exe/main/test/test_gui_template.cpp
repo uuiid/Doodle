@@ -13,6 +13,17 @@
 #include <catch.hpp>
 #include <catch2/catch_approx.hpp>
 
+namespace doodle {
+template <typename Executor, typename CompletionToken>
+auto async_gui_work(const Executor& ex, CompletionToken&& token) {
+  return async_initiate<CompletionToken, bool()>(
+      [](auto&& in_token) {
+        ex.post(in_token)
+      },
+      token);
+}
+}  // namespace doodle
+
 class test_1 {
   std::int32_t p_{};
   std::int32_t p_max{10};
@@ -43,6 +54,12 @@ class test_1 {
   };
 };
 
+TEST_CASE("test gui strand2") {
+  doodle::app l_app{};
+  auto l_work = doodle::async_gui_work(
+      doodle::g_io_context().get_executor(),
+      []() -> bool {});
+}
 TEST_CASE("test gui strand") {
   doodle::app l_app{};
   doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};

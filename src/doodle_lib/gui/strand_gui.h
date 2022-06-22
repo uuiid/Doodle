@@ -153,8 +153,7 @@ class strand_gui {
     return *this;
   }
 
-  ~strand_gui() BOOST_ASIO_NOEXCEPT {
-  }
+  ~strand_gui() BOOST_ASIO_NOEXCEPT = default;
 #pragma endregion
 
 #pragma region "自定义点"
