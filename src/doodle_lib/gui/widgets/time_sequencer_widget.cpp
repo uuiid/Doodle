@@ -6,6 +6,7 @@
 
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_lib/core/work_clock.h>
+#include <doodle_core/core/core_sig.h>
 
 namespace doodle::gui {
 
@@ -78,6 +79,7 @@ class time_sequencer_widget::impl {
   std::size_t index_begin_{0};
   std::size_t index_end_{0};
   std::size_t index_view_end{0};
+  boost::signals2::scoped_connection l_select_conn{};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -294,24 +296,45 @@ class time_sequencer_widget::impl {
         l_list.empty() ? std::double_t(8) : l_list.back()};
     return l_r;
   }
+
+  void save() {
+    ranges::for_each(time_list | ranges::views::filter([](const point_cache& in) -> bool {
+                       return in.handle_.valid() && in.handle_.any_of<database>();
+                     }),
+                     [](const point_cache& in) {
+                       in.handle_.replace<time_point_wrap>(in.time_point_);
+                       database::save(in.handle_);
+                     });
+  }
 };
 
 time_sequencer_widget::time_sequencer_widget()
     : p_i(std::make_unique<impl>()) {
-  p_i->time_list = ranges::views::ints(1, 100) |
-                   ranges::views::transform([](auto&& in) -> impl::point_cache {
-                     return impl::point_cache{{}, time_point_wrap{2021, 1, in, 0, 0, 0}};
-                   }) |
-                   ranges::to_vector;
-
-  if (!p_i->time_list.empty()) {
-    p_i->work_clock_.set_rules(p_i->rules_);
-    p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
-                                  p_i->time_list.back().time_point_ + chrono::days{4});
-  }
-  p_i->refresh(p_i->time_list);
-  p_i->refresh_work_time(p_i->time_list);
   ImPlot::GetStyle().UseLocalTime = true;
+
+  p_i->l_select_conn =
+      g_reg()
+          ->ctx()
+          .at<core_sig>()
+          .select_handles.connect(
+              [this](const std::vector<entt::handle>& in_vector) {
+                p_i->time_list = in_vector |
+                                 ranges::views::filter(
+                                     [](const entt::handle& in) -> bool {
+                                       return in.any_of<time_point_wrap>();
+                                     }) |
+                                 ranges::views::transform(
+                                     [](const entt::handle& in) -> impl::point_cache {
+                                       return impl::point_cache{in, in.get<time_point_wrap>()};
+                                     }) |
+                                 ranges::to_vector;
+                p_i->time_list |= ranges::actions::sort;
+                if (!p_i->time_list.empty()) {
+                  p_i->work_clock_.set_rules(p_i->rules_);
+                  p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
+                                                p_i->time_list.back().time_point_ + chrono::days{4});
+                }
+              });
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -427,5 +450,7 @@ void time_sequencer_widget::update(
   if (ImGui::Button("平均时间")) p_i->average_time(0, p_i->time_list.size());
   ImGui::SameLine();
   if (ImGui::Button("平均视图内时间")) p_i->average_time(p_i->index_begin_, p_i->index_view_end);
+  ImGui::SameLine();
+  if (ImGui::Button("提交更新")) p_i->save();
 }
 }  // namespace doodle::gui
