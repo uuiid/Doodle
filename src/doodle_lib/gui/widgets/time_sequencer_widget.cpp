@@ -333,6 +333,8 @@ time_sequencer_widget::time_sequencer_widget()
                   p_i->work_clock_.set_rules(p_i->rules_);
                   p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
                                                 p_i->time_list.back().time_point_ + chrono::days{4});
+                  p_i->refresh(p_i->time_list);
+                  p_i->refresh_work_time(p_i->time_list);
                 }
               });
 }

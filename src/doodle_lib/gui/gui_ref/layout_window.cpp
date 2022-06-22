@@ -83,9 +83,9 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
           //        ImGui::SameLine();
           dear::Child{"l3", ImVec2{0, 0}, true} && [&, this]() {
             dear::TabBar{"##main"} && [&]() {
-              dear::TabItem{"时间编辑"} && [&]() { p_i->time_r.update({}, {}); };
               dear::TabItem{menu_w::assets_file.data()} && [&]() { p_i->main_render(); };
               dear::TabItem{menu_w::long_time_tasks.data()} && [&]() { call_render(std::string{menu_w::long_time_tasks}); };
+              dear::TabItem{"时间编辑"} && [&]() { p_i->time_r.update({}, {}); };
             };
           };
         };
