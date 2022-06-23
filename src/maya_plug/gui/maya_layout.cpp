@@ -61,8 +61,8 @@ void builder_dock() {
        * 分裂给节点 其中 *返回值* 和 out_id_at_dir是相同的, 而另一个是剩下的
        */
       auto dock_id_cloth = dockspace_id;
-      auto dock_id_chick = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id_cloth);
-      auto dock_id_ref   = ImGui::DockBuilderSplitNode(dock_id_chick, ImGuiDir_Down, 0.5f, nullptr, &dock_id_chick);
+      auto dock_id_chick = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.6f, nullptr, &dock_id_cloth);
+      auto dock_id_ref   = ImGui::DockBuilderSplitNode(dock_id_chick, ImGuiDir_Left, 0.5f, nullptr, &dock_id_chick);
 
       // 开始将窗口停靠在创建的窗口中
       namespace menu_w   = gui::config::maya_plug::menu;
@@ -75,16 +75,31 @@ void builder_dock() {
   }
   ImGui::End();
 }
+class comm_check_scenes_process_t : public process_t<comm_check_scenes_process_t>, public comm_check_scenes {
+ public:
+  comm_check_scenes_process_t() = default;
+};
+class reference_attr_setting_process_t : public process_t<reference_attr_setting_process_t>, public reference_attr_setting {
+ public:
+  reference_attr_setting_process_t() = default;
+};
+class create_sim_cloth_process_t : public process_t<create_sim_cloth_process_t>, public create_sim_cloth {
+ public:
+  create_sim_cloth_process_t() = default;
+};
 
 class maya_layout::impl {
  public:
-  comm_check_scenes chick_;
-  reference_attr_setting ref_;
-  create_sim_cloth cloth;
+  comm_check_scenes_process_t chick_;
+  reference_attr_setting_process_t ref_;
+  create_sim_cloth_process_t cloth;
 };
-
+maya_layout::maya_layout()
+    : p_i(std::make_unique<impl>()) {
+}
 void maya_layout::update(const chrono::system_clock::duration &in_duration, void *in_data) {
-  namespace menu_w   = gui::config::maya_plug::menu;
+  builder_dock();
+  namespace menu_w = gui::config::maya_plug::menu;
   dear::Begin{menu_w::comm_check_scenes.data()} && [&, this]() {
     p_i->chick_.tick({}, {});
   };
@@ -94,7 +109,8 @@ void maya_layout::update(const chrono::system_clock::duration &in_duration, void
   dear::Begin{menu_w::create_sim_cloth.data()} && [&, this]() {
     p_i->cloth.tick({}, {});
   };
-
 }
+
+maya_layout::~maya_layout() = default;
 }  // namespace maya_plug
 }  // namespace doodle

@@ -13,6 +13,9 @@ class maya_layout
   std::unique_ptr<impl> p_i;
 
  public:
+  maya_layout();
+  ~maya_layout();
+
   void update(const chrono::system_clock::duration &in_duration, void *in_data) override;
 };
 
