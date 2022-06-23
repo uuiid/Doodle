@@ -143,8 +143,9 @@ class DOODLELIB_API app : public app_command_base {
   std::unique_ptr<impl> p_i;
 
  public:
-  explicit app(const win::wnd_instance& in_instance);
-  explicit app();
+  explicit app(const win::wnd_instance& in_instance = nullptr,
+               const win::wnd_instance& in_parent   = nullptr);
+
   ~app() override;
   win::wnd_handle p_hwnd;
   ::ID3D11Device* d3dDevice;

@@ -78,8 +78,12 @@ if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
 
     cmake_print_variables(MAYA_DEFAULT_LOCATION)
-    #    find_package(Qt5 COMPONENTS Core Widgets REQUIRED
-    #            HINTS ${MAYA_DEFAULT_LOCATION})
+    #    set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release)
+    #    set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE Release)
+    #    set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
+    #    set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
+    find_package(Qt5 COMPONENTS Core Widgets REQUIRED
+            HINTS ${MAYA_DEFAULT_LOCATION})
 
 
     if (TARGET maya::maya_all)
@@ -97,7 +101,7 @@ if (DEFINED Maya_Version)
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 )
-        target_link_libraries(doodle_maya PRIVATE doodle_lib maya::maya_all)
+        target_link_libraries(doodle_maya PRIVATE doodle_lib maya::maya_all Qt5::Core Qt5::Widgets)
         target_include_directories(doodle_maya PUBLIC ../doodle_exe)
         #设置maya插件后缀名
         set_target_properties(
@@ -109,7 +113,7 @@ if (DEFINED Maya_Version)
         add_custom_command(
                 TARGET doodle_maya
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory  ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
+                COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
         )
         # 定义安装逻辑

@@ -28,6 +28,11 @@
 
 #include <doodle_lib/gui/main_proc_handle.h>
 
+#include <QtCore/QtCore>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QWidget>
+#include <maya/MQtUtil.h>
+
 #include <stack>
 namespace {
 const constexpr std::string_view doodle_windows{"doodle_windows"};
@@ -45,7 +50,8 @@ std::shared_ptr<app_base> p_doodle_app = nullptr;
 
 namespace doodle::maya_plug {
 void open_windows() {
-  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin);
+  HWND win_id       = reinterpret_cast<HWND>(MQtUtil::mainWindow()->winId());
+  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin, win_id);
   l_doodle_app->command_line_parser(std::vector<std::string>{});
   p_doodle_app                                     = l_doodle_app;
   doodle::gui::main_proc_handle::get().win_close   = []() { doodle::app::Get().close_windows(); };

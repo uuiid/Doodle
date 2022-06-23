@@ -45,10 +45,8 @@ class app::impl {
 
  public:
 };
-app::app()
-    : app(GetModuleHandle(nullptr)) {
-}
-app::app(const win::wnd_instance& in_instance)
+
+app::app(const win::wnd_instance& in_instance, const win::wnd_instance& in_parent)
     : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
       p_hwnd(),
       p_win_class(),
@@ -76,7 +74,8 @@ app::app(const win::wnd_instance& in_instance)
                                p_title.c_str(),
                                WS_OVERLAPPEDWINDOW,
                                100, 100, 1280, 800,
-                               nullptr, nullptr,
+                               in_parent,
+                               nullptr,
                                p_win_class.hInstance,
                                nullptr);
 
@@ -345,7 +344,7 @@ void app::load_back_end() {
 }
 
 bool app::set_parent(win::wnd_handle in_parent) {
-  ::SetWindowLongW(p_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CHILD);
+  //  ::SetWindowLongW(p_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CHILD);
   return ::SetParent(p_hwnd, in_parent) != nullptr;
 }
 bool app::chick_authorization() {
