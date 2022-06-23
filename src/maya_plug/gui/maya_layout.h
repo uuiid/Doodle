@@ -9,8 +9,11 @@ namespace maya_plug {
 
 class maya_layout
     : public doodle::gui::layout_window {
+  class impl;
+  std::unique_ptr<impl> p_i;
+
  public:
-  virtual void update(const chrono::system_clock::duration &in_duration, void *in_data) override;
+  void update(const chrono::system_clock::duration &in_duration, void *in_data) override;
 };
 
 }  // namespace maya_plug
