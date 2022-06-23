@@ -22,6 +22,14 @@ auto async_gui_work(const Executor& ex, CompletionToken&& token) {
       },
       token);
 }
+template <typename Executor, typename CompletionToken>
+auto async_work(const Executor& ex, CompletionToken&& token) {
+  return boost::asio::async_initiate<CompletionToken, bool(void)>(
+      [&](auto&& in_token) {
+        ex.post(in_token, boost::asio::get_associated_allocator(in_token));
+      },
+      token);
+}
 }  // namespace doodle
 
 class test_1 {

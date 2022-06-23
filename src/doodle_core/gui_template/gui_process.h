@@ -36,7 +36,7 @@ class process_warp_t {
 #undef DOODLE_TYPE_HASE_MFN
 
  protected:
-  std::unique_ptr<void, void (*)(void*)> process_attr;
+  std::any process_p{};
 
   static void delete_gui_process_t(void* in_ptr) {
     delete static_cast<Process_t*>(in_ptr);
@@ -55,38 +55,54 @@ class process_warp_t {
   state current{state::uninitialized};
 
   template <typename Target = Process_t>
+  auto connect()
+      -> decltype(std::declval<Target>().connect(
+                      std::declval<std::function<void(process_state)>>()),
+                  void()) {
+    std::any_cast<Target&>(process_p).connect([this](process_state in_) {
+      switch (in_) {
+        case process_state::run: {
+        } break;
+        case process_state::succeed: {
+          this->succeed();
+        } break;
+        case process_state::fail: {
+          this->fail();
+        }
+        default:
+          break;
+      }
+    });
+  }
+
+  template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    l_gui.init();
+    std::any_cast<Target&>(process_p).init();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    l_gui.update();
+    std::any_cast<Target&>(process_p).update();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    l_gui.succeeded();
+    std::any_cast<Target&>(process_p).succeeded();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    l_gui.failed();
+    std::any_cast<Target&>(process_p).failed();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
-    auto&& l_gui = *static_cast<Process_t*>(process_attr.get());
-    l_gui.aborted();
+    std::any_cast<Target&>(process_p).aborted();
   }
 
   template <typename Target = Process_t>
@@ -117,11 +133,10 @@ class process_warp_t {
  public:
   template <typename... Args>
   explicit process_warp_t(Args&&... in_args)
-      : process_attr(
-            new Process_t{std::forward<Args>(in_args)...},
-            &delete_gui_process_t) {}
-  explicit process_warp_t(std::unique_ptr<Process_t>&& in_ptr)
-      : process_attr(std::move(in_ptr)){};
+      : process_p(Process_t{std::forward<Args>(in_args)...}) {}
+
+  explicit process_warp_t(Process_t&& in_ptr)
+      : process_p(std::move(in_ptr)){};
 
   virtual ~process_warp_t() = default;
 
@@ -203,43 +218,6 @@ class rear_adapter_t : public process_warp_t<Process_t>,
                                  self_ = this->shared_from_this()]() {
       base_type::operator()();
     });
-    switch (base_type::current) {
-      case base_type::state::uninitialized: {
-        next(std::integral_constant<typename base_type::state,
-                                    base_type::state::uninitialized>{});
-        base_type::current = base_type::state::running;
-        break;
-      }
-      case base_type::state::running:
-        next(std::integral_constant<typename base_type::state,
-                                    base_type::state::running>{});
-        break;
-      default:
-        // suppress warnings
-        break;
-    }
-
-    // if it's dead, it must be notified and removed immediately
-    switch (base_type::current) {
-      case base_type::state::succeeded: {
-        next(std::integral_constant<typename base_type::state,
-                                    base_type::state::succeeded>{});
-        base_type::current = base_type::state::finished;
-      } break;
-      case base_type::state::failed: {
-        next(std::integral_constant<typename base_type::state,
-                                    base_type::state::failed>{});
-        base_type::current = base_type::state::rejected;
-      } break;
-      case base_type::state::aborted: {
-        next(std::integral_constant<typename base_type::state,
-                                    base_type::state::aborted>{});
-        base_type::current = base_type::state::rejected;
-      } break;
-      default:
-        // suppress warnings
-        break;
-    }
   }
 };
 }  // namespace detail
