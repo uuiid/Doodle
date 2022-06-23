@@ -199,7 +199,7 @@ class strand_gui {
   }
 #pragma endregion
 
-  boost::asio::execution_context& context() const BOOST_ASIO_NOEXCEPT;
+  [[nodiscard]] boost::asio::execution_context& context() const BOOST_ASIO_NOEXCEPT;
 
   void on_work_started() const BOOST_ASIO_NOEXCEPT;
 

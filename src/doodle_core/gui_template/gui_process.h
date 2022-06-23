@@ -150,8 +150,7 @@ class process_warp_t {
   [[nodiscard]] bool rejected() const {
     return current == state::rejected;
   }
-  virtual process_state operator()() {
-    process_state l_state{process_state::run};
+  virtual void operator()() {
     switch (current) {
       case state::uninitialized:
         next(std::integral_constant<state, state::uninitialized>{});
@@ -170,25 +169,80 @@ class process_warp_t {
       case state::succeeded: {
         next(std::integral_constant<state, state::succeeded>{});
         current = state::finished;
-        l_state = process_state::succeed;
       } break;
       case state::failed: {
         next(std::integral_constant<state, state::failed>{});
         current = state::rejected;
-        l_state = process_state::fail;
       } break;
       case state::aborted: {
         next(std::integral_constant<state, state::aborted>{});
         current = state::rejected;
-        l_state = process_state::fail;
       } break;
       default:
         // suppress warnings
         break;
     }
-    return l_state;
   };
 };
+
+namespace detail {
+template <typename IO_Context, typename Process_t>
+class rear_adapter_t : public process_warp_t<Process_t>,
+                       std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
+  using base_type = process_warp_t<Process_t>;
+  IO_Context& io_con_p;
+
+ public:
+  template <typename... Args>
+  explicit rear_adapter_t(IO_Context& in_io, Args&&... in_args)
+      : io_con_p(in_io),
+        base_type(std::forward<Args>(in_args)...) {}
+
+  void operator()() override {
+    boost::asio::post(io_con_p, [this,
+                                 self_ = this->shared_from_this()]() {
+      base_type::operator()();
+    });
+    switch (base_type::current) {
+      case base_type::state::uninitialized: {
+        next(std::integral_constant<typename base_type::state,
+                                    base_type::state::uninitialized>{});
+        base_type::current = base_type::state::running;
+        break;
+      }
+      case base_type::state::running:
+        next(std::integral_constant<typename base_type::state,
+                                    base_type::state::running>{});
+        break;
+      default:
+        // suppress warnings
+        break;
+    }
+
+    // if it's dead, it must be notified and removed immediately
+    switch (base_type::current) {
+      case base_type::state::succeeded: {
+        next(std::integral_constant<typename base_type::state,
+                                    base_type::state::succeeded>{});
+        base_type::current = base_type::state::finished;
+      } break;
+      case base_type::state::failed: {
+        next(std::integral_constant<typename base_type::state,
+                                    base_type::state::failed>{});
+        base_type::current = base_type::state::rejected;
+      } break;
+      case base_type::state::aborted: {
+        next(std::integral_constant<typename base_type::state,
+                                    base_type::state::aborted>{});
+        base_type::current = base_type::state::rejected;
+      } break;
+      default:
+        // suppress warnings
+        break;
+    }
+  }
+};
+}  // namespace detail
 
 template <typename Gui_Process>
 using gui_warp_t = process_warp_t<Gui_Process>;
