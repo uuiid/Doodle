@@ -25,59 +25,62 @@ echo -----------------install main exe--------------------
 --install %my_pwd%\build\Ninja_release ^
 --component ue4_plug
 
+echo -----------------clear main--------------------
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
+
 echo -----------------------------------------------------
 echo -----------------config maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_plug -DMaya_Version=2018
+--preset Ninja_release -DMaya_Version=2018
 echo -----------------build maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_maya_plug
+--preset release_exe --target doodle_maya
 echo -----------------install maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install %my_pwd%\build\Ninja_release_plug ^
+--install %my_pwd%\build\Ninja_release ^
 --component maya_plug_com
 echo -----------------clear maya 2018--------------------
-rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
-del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
 echo -----------------------------------------------------
 echo -----------------config maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_plug -DMaya_Version=2019
+--preset Ninja_release -DMaya_Version=2019
 echo -----------------build maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_maya_plug
+--preset release_exe --target doodle_maya
 echo -----------------install maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install %my_pwd%\build\Ninja_release_plug ^
+--install %my_pwd%\build\Ninja_release ^
 --component maya_plug_com
 echo -----------------clear maya 2019--------------------
-rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
-del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
 echo -----------------------------------------------------
 echo -----------------config maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release_plug -DMaya_Version=2020
+--preset Ninja_release -DMaya_Version=2020
 echo -----------------build maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_maya_plug
+--preset release_exe --target doodle_maya
 echo -----------------install maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install %my_pwd%\build\Ninja_release_plug ^
+--install %my_pwd%\build\Ninja_release ^
 --component maya_plug_com
 echo -----------------clear maya 2020--------------------
-rmdir /q /s %my_pwd%build\Ninja_release_plug\src\maya_plug
-rmdir /q /s %my_pwd%build\Ninja_release_plug\plug
-del  %my_pwd%build\Ninja_release_plug\CMakeCache.txt
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
 
 

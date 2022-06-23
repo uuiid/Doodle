@@ -53,13 +53,6 @@
       }
     },
     {
-      "name": "Ninja_release_plug",
-      "inherits": "doodle_maya",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
@@ -104,28 +97,6 @@
         "doodle_limited_exe",
         "Doxygen"
       ]
-    },
-    {
-      "name": "release_pack",
-      "configurePreset": "Ninja_release",
-      "jobs": 10,
-      "targets": [
-        "gen_light_file"
-      ]
-    },
-    {
-      "name": "doxygen",
-      "configurePreset": "Ninja_release",
-      "jobs": 10,
-      "targets": [
-        "Doxygen"
-      ]
-    },
-    {
-      "name": "release_maya_plug",
-      "configurePreset": "Ninja_release_plug",
-      "jobs": 10,
-      "targets": "doodle_maya"
     },
     {
       "name": "cmake_pack",
