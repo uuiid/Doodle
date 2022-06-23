@@ -21,7 +21,10 @@ void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
 
-maya_plug_app::maya_plug_app() {
+maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
+                             const win::wnd_handle& in_parent)
+    : app(in_instance,
+          in_parent) {
   self = this;
 }
 }  // namespace doodle::maya_plug

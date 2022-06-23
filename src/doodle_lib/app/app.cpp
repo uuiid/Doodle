@@ -46,7 +46,7 @@ class app::impl {
  public:
 };
 
-app::app(const win::wnd_instance& in_instance, const win::wnd_instance& in_parent)
+app::app(const win::wnd_instance& in_instance, const win::wnd_handle & in_parent)
     : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
       p_hwnd(),
       p_win_class(),

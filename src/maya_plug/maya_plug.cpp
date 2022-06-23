@@ -46,10 +46,23 @@ std::stack<MCallbackId> maya_call_back_id{};
 using namespace doodle;
 std::shared_ptr<app_base> p_doodle_app = nullptr;
 
+// struct enum_windows_struct {
+//   win::wnd_handle handle_;
+//   win::wnd_instance instance_;
+// };
+
 }  // namespace
 
 namespace doodle::maya_plug {
 void open_windows() {
+  //  enum_windows_struct l_struct{nullptr, ::MhInstPlugin};
+  //  ::EnumWindows(
+  //      [](::HWND in_hwnd, LPARAM in_lparam) -> std::int32_t {
+  //        auto* l_struct = reinterpret_cast<enum_windows_struct*>(in_lparam);
+  //        if (l_struct->instance_ ==::GetWindow) {
+  //        }
+  //      },
+  //      (LPARAM)&l_struct);
   HWND win_id       = reinterpret_cast<HWND>(MQtUtil::mainWindow()->winId());
   auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(::MhInstPlugin, win_id);
   l_doodle_app->command_line_parser(std::vector<std::string>{});

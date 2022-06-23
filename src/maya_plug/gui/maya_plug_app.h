@@ -9,7 +9,8 @@ namespace doodle::maya_plug {
 class maya_plug_app : public app {
  protected:
  public:
-  maya_plug_app();
+  maya_plug_app(const win::wnd_instance& in_instance = nullptr,
+                const win::wnd_handle& in_parent   = nullptr);
 
  private:
   virtual void load_windows() override;
