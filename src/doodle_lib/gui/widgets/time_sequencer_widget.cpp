@@ -485,7 +485,9 @@ void time_sequencer_widget::update(
   std::size_t l_index_begin{0};
   std::size_t l_index_end{0};
 
-  if (ImPlot::BeginPlot("##time")) {
+  if (ImGui::Button("提交更新")) p_i->save();
+
+  if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
     double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
@@ -544,7 +546,7 @@ void time_sequencer_widget::update(
     ImPlot::EndPlot();
   }
   /// \brief 时间柱状图
-  if (ImPlot::BeginPlot("Bar Plot")) {
+  if (ImPlot::BeginPlot("工作柱状图")) {
     if (p_i->view1_.set_other_view) {
       auto l_rect = p_i->get_view2_rect();
       ImPlot::SetupAxesLimits(l_rect.X.Min,
@@ -580,31 +582,41 @@ void time_sequencer_widget::update(
   dear::Text(p_i->rules_cache().work_day.gui_name.name_id);
   ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
     ImGui::Checkbox(*in_value, &in_value);
+    ImGui::SameLine();
   });
+  dear::HelpMarker{"按星期去计算工作时间"};
 
   ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
     ImGui::InputInt3(*in_value.first, in_value.first().data());
+    ImGui::SameLine();
     ImGui::InputInt3(*in_value.second, in_value.second().data());
   });
+  dear::HelpMarker{"每天的开始和结束时间段"};
+
   ranges::for_each(p_i->rules_cache().extra_holidays(), [](decltype(p_i->rules_cache().extra_holidays().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
+    ImGui::SameLine();
     ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
+    ImGui::SameLine();
     ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
   });
+  dear::HelpMarker{"节假日"};
+
   ranges::for_each(p_i->rules_cache().extra_work(), [](decltype(p_i->rules_cache().extra_work().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
     ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
     ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
   });
-  ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
+  dear::HelpMarker{"加班时间"};
+  ranges::for_each(p_i->rules_cache().extra_rest(), [](decltype(p_i->rules_cache().extra_rest().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
     ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
     ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
   });
-
-  if (ImGui::Button("提交更新")) p_i->save();
+  dear::HelpMarker{"调休sh时间"};
 }
 }  // namespace doodle::gui
