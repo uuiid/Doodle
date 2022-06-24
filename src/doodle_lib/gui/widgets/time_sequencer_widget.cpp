@@ -160,10 +160,10 @@ class time_sequencer_widget::impl {
 
         for (auto l_i = l_list.begin(); l_i != l_list.end();) {
           ImGui::InputInt3(*(l_i->data).first().first, (l_i->data).first().first().data());
-          ImGui::SliderInt3(*(l_i->data).first().first, (l_i->data).first().second().data(), 0, 59);
+          ImGui::SliderInt3(*(l_i->data).first().second, (l_i->data).first().second().data(), 0, 59);
 
-          ImGui::InputInt3(*(l_i->data).second().first, (l_i->data).first().first().data());
-          ImGui::SliderInt3(*(l_i->data).second().first, (l_i->data).second().second().data(), 0, 59);
+          ImGui::InputInt3(*(l_i->data).second().first, (l_i->data).second().first().data());
+          ImGui::SliderInt3(*(l_i->data).second().second, (l_i->data).second().second().data(), 0, 59);
           if (ImGui::Button(*l_i->button)) {
             l_i = l_list.erase(l_i);
           } else {
@@ -273,6 +273,26 @@ class time_sequencer_widget::impl {
   boost::signals2::scoped_connection l_select_conn{};
 
   gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
+
+  std::vector<std::double_t> shaded_works_time_x{};
+  std::vector<std::double_t> shaded_works_time_y{};
+
+  void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
+    ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
+      // 非工作的点1
+      shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count() - 1);
+      shaded_works_time_y.emplace_back(0);
+      // 工作点1
+      shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count());
+      shaded_works_time_y.emplace_back(time_list.size());
+      // 工作点2
+      shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count());
+      shaded_works_time_y.emplace_back(time_list.size());
+      // 非工作的点2
+      shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count() - 1);
+      shaded_works_time_y.emplace_back(0);
+    });
+  }
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
