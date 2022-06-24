@@ -24,8 +24,6 @@ namespace business {
 
 class DOODLELIB_API rules {
  public:
-
-
  public:
   /// \brief 周六 ->周日(index 6->0)
   constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
@@ -114,6 +112,11 @@ class DOODLELIB_API work_clock {
         chrono::floor<chrono::seconds>(in_s),
         chrono::floor<chrono::seconds>(in_du_time));
   };
+
+  std::vector<std::pair<time_d_t, time_d_t>> get_work_du(
+
+      const chrono::local_time_pos& in_min,
+      const chrono::local_time_pos& in_max);
 };
 }  // namespace business
 namespace detail {

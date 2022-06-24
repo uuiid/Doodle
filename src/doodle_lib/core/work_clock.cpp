@@ -99,6 +99,19 @@ void work_clock::set_interval(const chrono::local_time_pos& in_min,
   gen_rules_(discrete_interval_time::right_open(in_min,
                                                 in_max));
 }
+std::vector<std::pair<work_clock::time_d_t, work_clock::time_d_t>> work_clock::get_work_du(
+
+    const chrono::local_time_pos& in_min,
+    const chrono::local_time_pos& in_max) {
+  std::vector<std::pair<time_d_t, time_d_t>> l_r{};
+  auto l_d = discrete_interval_time::right_open(in_min,
+                                                in_max);
+  auto l_l = interval_set_time_ & l_d;
+  for (auto&& l_i : l_l) {
+    l_r.emplace_back(boost::icl::first(l_i), boost::icl::last(l_i));
+  }
+  return l_r;
+}
 
 }  // namespace business
 namespace detail {
