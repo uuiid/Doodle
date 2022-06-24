@@ -6,6 +6,7 @@
 
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_lib/core/work_clock.h>
+#include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_core/core/core_sig.h>
 
 namespace doodle::gui {
@@ -42,6 +43,48 @@ class time_sequencer_widget::impl {
     bool operator>=(const point_cache& in_rhs) const {
       return !(*this < in_rhs);
     }
+  };
+
+  struct gui_rect_cache {
+    std::array<gui::gui_cache<bool>, 7> work_day{
+        gui::gui_cache<bool>{"星期日"s, false},
+        gui::gui_cache<bool>{"星期一"s, true},
+        gui::gui_cache<bool>{"星期二"s, true},
+        gui::gui_cache<bool>{"星期三"s, true},
+        gui::gui_cache<bool>{"星期四"s, true},
+        gui::gui_cache<bool>{"星期五"s, true},
+        gui::gui_cache<bool>{"星期六"s, false}};
+    using time_du_cache   = std::array<std::int32_t, 3>;
+    using gui_time_pair_t = std::pair<gui::gui_cache<time_du_cache>, gui::gui_cache<time_du_cache>>;
+    std::vector<gui_time_pair_t> work_time;
+    using gui_time_pair_t2 = std::pair<gui::gui_cache<gui_time_pair_t>, gui::gui_cache<gui_time_pair_t>>;
+    std::vector<gui_time_pair_t2> extra_holidays{};
+    std::vector<gui_time_pair_t2> extra_work{};
+    std::vector<gui_time_pair_t2> extra_rest{};
+
+    explicit gui_rect_cache() = default;
+    explicit gui_rect_cache(const doodle::business::rules& in_rules)
+        : work_day{
+              gui::gui_cache<bool>{"星期日"s, in_rules.work_weekdays[0]},
+              gui::gui_cache<bool>{"星期一"s, in_rules.work_weekdays[1]},
+              gui::gui_cache<bool>{"星期二"s, in_rules.work_weekdays[2]},
+              gui::gui_cache<bool>{"星期三"s, in_rules.work_weekdays[3]},
+              gui::gui_cache<bool>{"星期四"s, in_rules.work_weekdays[4]},
+              gui::gui_cache<bool>{"星期五"s, in_rules.work_weekdays[5]},
+              gui::gui_cache<bool>{"星期六"s, in_rules.work_weekdays[6]}},
+          work_time(in_rules.work_pair | ranges::view::transform([](const decltype(in_rules.work_pair)::value_type& in_value) -> gui_time_pair_t {
+                      chrono::hh_mm_ss l_hh_mm_ss{in_value.first};
+                      chrono::hh_mm_ss l_hh_mm_ss2{in_value.second};
+                      return std::make_pair(
+                          gui::gui_cache<time_du_cache>{"开始时间"s,
+                                                        time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss.hours().count()),
+                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss.minutes().count()),
+                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss.seconds().count())}},
+                          gui::gui_cache<time_du_cache>{"结束时间"s,
+                                                        time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.hours().count()),
+                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.minutes().count()),
+                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.seconds().count())}});
+                    } | ranges::to<std::vector<gui_time_pair_t>>())){};
   };
 
   class view_cache {

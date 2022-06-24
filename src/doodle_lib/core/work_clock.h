@@ -24,6 +24,9 @@ namespace business {
 
 class DOODLELIB_API rules {
  public:
+
+
+ public:
   /// \brief 周六 ->周日(index 6->0)
   constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
   constexpr static std::pair<chrono::seconds,
@@ -45,7 +48,7 @@ class DOODLELIB_API rules {
         extra_work(),
         extra_rest() {}
 
-  /// \brief 工作日 从周一到周日
+  /// \brief 工作日 周六 ->周日
   std::bitset<7> work_weekdays{};
   std::vector<std::pair<
       chrono::seconds,

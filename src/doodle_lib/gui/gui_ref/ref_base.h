@@ -213,6 +213,8 @@ class gui_cache : public BaseType {
   /// 数据属性
   T data;
 
+  gui_cache() = default;
+
   /**
    * @brief 构建数据
    *
