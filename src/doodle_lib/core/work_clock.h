@@ -114,9 +114,14 @@ class DOODLELIB_API work_clock {
   };
 
   std::vector<std::pair<time_d_t, time_d_t>> get_work_du(
-
       const chrono::local_time_pos& in_min,
       const chrono::local_time_pos& in_max);
+
+  inline auto get_work_du(const doodle::time_point_wrap& in_min,
+                          const doodle::time_point_wrap& in_max) {
+    return get_work_du(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
+                       doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
+  };
 };
 }  // namespace business
 namespace detail {
