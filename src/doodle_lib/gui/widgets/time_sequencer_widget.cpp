@@ -280,8 +280,8 @@ class time_sequencer_widget::impl {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
       shaded_works_time.emplace_back(
-          in_pair.first.time_since_epoch().count(), 0,                         //(左下角)
-          in_pair.second.time_since_epoch().count(), time_list.size() + 500);  // 右上角
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count(), 0,                         // (左下角)(x,y)
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second).time_since_epoch().count(), time_list.size() + 500);  // (右上角)(x,y)
     });
   }
 
@@ -294,21 +294,6 @@ class time_sequencer_widget::impl {
       set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_ - chrono::days{4},
                                                     time_list.back().time_point_ + chrono::days{4}));
     }
-  }
-
-  bool find_selects(const ImPlotRect& in_rect) {
-    using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
-    auto l_index      = ranges::views::ints(0, (std::int32_t)time_list.size());
-    ranges::for_each(l_index,
-                     [&](const std::int32_t& in) {
-                       time_list[in].has_select = in_rect.Contains(time_list_x[in], time_list_y[in]);
-                     });
-    auto l_r = ranges::any_of(time_list, [](const point_cache& in) {
-      return in.has_select;
-    });
-    if (l_r)
-      rect_org_ = rect_ = in_rect;
-    return l_r;
   }
 
   void refresh(const decltype(time_list)& in_list) {
@@ -365,59 +350,6 @@ class time_sequencer_widget::impl {
   static std::double_t ImPlotRange_Centre(const ImPlotRange& in) {
     return in.Min + in.Size() / 2;
   };
-
-  void modify_time_refresh(const ImPlotRect& in_rect) {
-    auto l_mod_size = boost::numeric_cast<std::int64_t>(
-        ImPlotRange_Centre(in_rect.X) - ImPlotRange_Centre(rect_org_.X));
-    if (l_mod_size == 0)
-      return;
-    auto l_time_list = time_list | ranges::views::transform([&](impl::point_cache in) -> impl::point_cache {
-                         if (in.has_select) {
-                           in.time_point_ += doodle::chrono::seconds{l_mod_size};
-                         }
-                         return in;
-                       }) |
-                       ranges::to_vector;
-    rect_ = in_rect;
-    refresh(l_time_list);
-    boost::asio::post(g_io_context(),
-                      [=]() { refresh_work_time(l_time_list); });
-  };
-  void modify_time() {
-    auto l_mod_size = boost::numeric_cast<std::int64_t>(
-        ImPlotRange_Centre(rect_.X) - ImPlotRange_Centre(rect_org_.X));
-    if (l_mod_size == 0)
-      return;
-    ranges::for_each(time_list, [&](impl::point_cache& in) {
-      if (in.has_select) {
-        in.time_point_ += doodle::chrono::seconds{l_mod_size};
-      }
-    });
-    time_list |= ranges::actions::sort;
-    refresh(time_list);
-    refresh_work_time(time_list);
-  };
-
-  void add_time_du(const std::size_t& in_index, const std::double_t& in_add_time_du) {
-    chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
-
-    work_time_plots[in_index] += in_add_time_du;
-    work_time_plots[in_index]             = std::max(work_time_plots[in_index], std::double_t(0));
-    work_time_plots_drag[in_index].second = std::max(work_time_plots_drag[in_index].second, std::double_t(0));
-    auto l_start_time                     = time_list[std::max(in_index - 1, std::size_t(0))].time_point_.zoned_time_.get_local_time();
-    if (in_index == 0)
-      l_start_time = doodle::chrono::floor<doodle::chrono::days>(l_start_time);
-
-    auto l_time_list = time_list;
-
-    ranges::for_each(ranges::views::ints(in_index, l_time_list.size()),
-                     [&](const std::int32_t& in_ints) {
-                       l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
-                           boost::numeric_cast<doodle::chrono::seconds::rep>(in_add_time_du)};
-                     });
-    //    refresh(l_time_list);
-    refresh_work_time(l_time_list);
-  }
 
   void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
     chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
