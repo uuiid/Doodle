@@ -285,6 +285,34 @@ class gui_cache : public BaseType {
     data = in;
     return *this;
   }
+  /**
+   * @brief 返回 gui id (包括显示名称)
+   * @return
+   */
+  const char *operator*() const {
+    return *gui_name;
+  }
+  const char *operator*() {
+    return *gui_name;
+  }
+  /**
+   * @brief 返回gui 内容
+   * @return
+   */
+  T *operator&() {
+    return &data;
+  }
+  /**
+   * @brief 可调用返回数据(快速方法)
+   * @return
+   */
+  T &operator()() {
+    return data;
+  }
+  T &operator()() const {
+    return data;
+  }
+
   /// @brief 隐式转换 T 运算符
   operator T &() {
     return data;

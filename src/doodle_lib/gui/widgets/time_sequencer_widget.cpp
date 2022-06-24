@@ -46,45 +46,110 @@ class time_sequencer_widget::impl {
   };
 
   struct gui_rect_cache {
-    std::array<gui::gui_cache<bool>, 7> work_day{
-        gui::gui_cache<bool>{"星期日"s, false},
-        gui::gui_cache<bool>{"星期一"s, true},
-        gui::gui_cache<bool>{"星期二"s, true},
-        gui::gui_cache<bool>{"星期三"s, true},
-        gui::gui_cache<bool>{"星期四"s, true},
-        gui::gui_cache<bool>{"星期五"s, true},
-        gui::gui_cache<bool>{"星期六"s, false}};
+    gui::gui_cache<std::array<gui::gui_cache<bool>, 7>> work_day{
+        "工作周"s,
+        std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, false},
+                                            gui::gui_cache<bool>{"星期一"s, true},
+                                            gui::gui_cache<bool>{"星期二"s, true},
+                                            gui::gui_cache<bool>{"星期三"s, true},
+                                            gui::gui_cache<bool>{"星期四"s, true},
+                                            gui::gui_cache<bool>{"星期五"s, true},
+                                            gui::gui_cache<bool>{"星期六"s, false}}};
     using time_du_cache   = std::array<std::int32_t, 3>;
     using gui_time_pair_t = std::pair<gui::gui_cache<time_du_cache>, gui::gui_cache<time_du_cache>>;
-    std::vector<gui_time_pair_t> work_time;
+    gui::gui_cache<std::vector<gui_time_pair_t>> work_time{};
     using gui_time_pair_t2 = std::pair<gui::gui_cache<gui_time_pair_t>, gui::gui_cache<gui_time_pair_t>>;
-    std::vector<gui_time_pair_t2> extra_holidays{};
-    std::vector<gui_time_pair_t2> extra_work{};
-    std::vector<gui_time_pair_t2> extra_rest{};
+    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_holidays{};
+    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_work{};
+    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_rest{};
 
     explicit gui_rect_cache() = default;
+
+    static gui_time_pair_t2 to_gui_time_pair_t2(const decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type& in_value) {
+      time_point_wrap l_time_point{in_value.first};
+      time_point_wrap l_time_point2{in_value.second};
+      return std::make_pair(
+          gui::gui_cache<gui_time_pair_t>{
+              "开始时间"s,
+              std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
+                                                           time_du_cache{}},
+                             gui::gui_cache<time_du_cache>{"时间"s,
+                                                           time_du_cache{}})},
+          gui::gui_cache<gui_time_pair_t>{
+              "结束时间"s,
+              std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
+                                                           time_du_cache{}},
+                             gui::gui_cache<time_du_cache>{"时间"s,
+                                                           time_du_cache{}})});
+    }
+    static decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type form_gui_time_pair_t2(const gui_time_pair_t2& in_value) {
+      doodle::chrono::local_time_pos l_pos{
+          doodle::chrono::year_month_day{
+              doodle::chrono::year{in_value.first.data.first.data[0]},
+              doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])},
+              doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])}} +
+          chrono::hours{in_value.first.data.second.data[0]} +
+          chrono::minutes{in_value.first.data.second.data[1]} +
+          doodle::chrono::seconds{in_value.first.data.second.data[2]}
+
+      };
+
+      doodle::chrono::local_time_pos l_pos2{};
+    }
+
     explicit gui_rect_cache(const doodle::business::rules& in_rules)
         : work_day{
-              gui::gui_cache<bool>{"星期日"s, in_rules.work_weekdays[0]},
-              gui::gui_cache<bool>{"星期一"s, in_rules.work_weekdays[1]},
-              gui::gui_cache<bool>{"星期二"s, in_rules.work_weekdays[2]},
-              gui::gui_cache<bool>{"星期三"s, in_rules.work_weekdays[3]},
-              gui::gui_cache<bool>{"星期四"s, in_rules.work_weekdays[4]},
-              gui::gui_cache<bool>{"星期五"s, in_rules.work_weekdays[5]},
-              gui::gui_cache<bool>{"星期六"s, in_rules.work_weekdays[6]}},
-          work_time(in_rules.work_pair | ranges::view::transform([](const decltype(in_rules.work_pair)::value_type& in_value) -> gui_time_pair_t {
-                      chrono::hh_mm_ss l_hh_mm_ss{in_value.first};
-                      chrono::hh_mm_ss l_hh_mm_ss2{in_value.second};
-                      return std::make_pair(
-                          gui::gui_cache<time_du_cache>{"开始时间"s,
-                                                        time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss.hours().count()),
-                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss.minutes().count()),
-                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss.seconds().count())}},
-                          gui::gui_cache<time_du_cache>{"结束时间"s,
-                                                        time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.hours().count()),
-                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.minutes().count()),
-                                                                      boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.seconds().count())}});
-                    } | ranges::to<std::vector<gui_time_pair_t>>())){};
+              "工作周"s,
+              std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, in_rules.work_weekdays[0]},
+                                                  gui::gui_cache<bool>{"星期一"s, in_rules.work_weekdays[1]},
+                                                  gui::gui_cache<bool>{"星期二"s, in_rules.work_weekdays[2]},
+                                                  gui::gui_cache<bool>{"星期三"s, in_rules.work_weekdays[3]},
+                                                  gui::gui_cache<bool>{"星期四"s, in_rules.work_weekdays[4]},
+                                                  gui::gui_cache<bool>{"星期五"s, in_rules.work_weekdays[5]},
+                                                  gui::gui_cache<bool>{"星期六"s, in_rules.work_weekdays[6]}}},
+          work_time("工作时间"s, in_rules.work_pair | ranges::view::transform([](const decltype(in_rules.work_pair)::value_type& in_value) -> gui_time_pair_t {
+                                   chrono::hh_mm_ss l_hh_mm_ss{in_value.first};
+                                   chrono::hh_mm_ss l_hh_mm_ss2{in_value.second};
+                                   return std::make_pair(
+                                       gui::gui_cache<time_du_cache>{"开始时间"s,
+                                                                     time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss.hours().count()),
+                                                                                   boost::numeric_cast<std::int32_t>(l_hh_mm_ss.minutes().count()),
+                                                                                   boost::numeric_cast<std::int32_t>(l_hh_mm_ss.seconds().count())}},
+                                       gui::gui_cache<time_du_cache>{"结束时间"s,
+                                                                     time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.hours().count()),
+                                                                                   boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.minutes().count()),
+                                                                                   boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.seconds().count())}});
+                                 }) | ranges::to_vector),
+          extra_holidays("节假日"s, in_rules.extra_holidays | ranges::view::transform(to_gui_time_pair_t2) | ranges::to_vector),
+          extra_work("加班时间"s, in_rules.extra_work | ranges::view::transform(to_gui_time_pair_t2) | ranges::to_vector),
+          extra_rest("调休时间"s, in_rules.extra_rest | ranges::view::transform(to_gui_time_pair_t2) | ranges::to_vector){
+
+          };
+
+    explicit operator doodle::business::rules() {
+      doodle::business::rules l_r{};
+      l_r.work_weekdays[0] = work_day.data[0].data;
+      l_r.work_weekdays[1] = work_day.data[1].data;
+      l_r.work_weekdays[2] = work_day.data[2].data;
+      l_r.work_weekdays[3] = work_day.data[3].data;
+      l_r.work_weekdays[4] = work_day.data[4].data;
+      l_r.work_weekdays[5] = work_day.data[5].data;
+      l_r.work_weekdays[6] = work_day.data[6].data;
+
+      l_r.work_pair        = work_time.data |
+                      ranges::views::transform([](const decltype(work_time.data)::value_type& in_value) -> decltype(l_r.work_pair)::value_type {
+                        chrono::hh_mm_ss l_hh_mm_ss{chrono::hours{in_value.first.data[0]} +
+                                                    chrono::minutes{in_value.first.data[1]} +
+                                                    doodle::chrono::seconds{in_value.first.data[2]}};
+                        chrono::hh_mm_ss l_hh_mm_ss2{chrono::hours{in_value.second.data[0]} +
+                                                     chrono::minutes{in_value.second.data[1]} +
+                                                     doodle::chrono::seconds{in_value.second.data[2]}};
+                        return std::make_pair(
+                            l_hh_mm_ss.to_duration(),
+                            l_hh_mm_ss2.to_duration());
+                      }) |
+                      ranges::to_vector;
+    }
   };
 
   class view_cache {
