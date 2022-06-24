@@ -45,7 +45,7 @@ class time_sequencer_widget::impl {
     }
   };
 
-  struct gui_rect_cache {
+  struct gui_rules_cache {
     gui::gui_cache<std::array<gui::gui_cache<bool>, 7>> work_day{
         "工作周"s,
         std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, false},
@@ -63,7 +63,7 @@ class time_sequencer_widget::impl {
     gui::gui_cache<std::vector<gui_time_pair_t2>> extra_work{};
     gui::gui_cache<std::vector<gui_time_pair_t2>> extra_rest{};
 
-    explicit gui_rect_cache() = default;
+    explicit gui_rules_cache() = default;
 
     static gui_time_pair_t2 to_gui_time_pair_t2(const decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type& in_value) {
       time_point_wrap l_time_point{in_value.first};
@@ -84,20 +84,28 @@ class time_sequencer_widget::impl {
     }
     static decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type form_gui_time_pair_t2(const gui_time_pair_t2& in_value) {
       doodle::chrono::local_time_pos l_pos{
-          doodle::chrono::year_month_day{
-              doodle::chrono::year{in_value.first.data.first.data[0]},
-              doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])},
-              doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])}} +
+          doodle::chrono::local_days{
+              doodle::chrono::year_month_day{
+                  doodle::chrono::year{in_value.first.data.first.data[0]},
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])}}} +
           chrono::hours{in_value.first.data.second.data[0]} +
           chrono::minutes{in_value.first.data.second.data[1]} +
-          doodle::chrono::seconds{in_value.first.data.second.data[2]}
+          doodle::chrono::seconds{in_value.first.data.second.data[2]}};
 
-      };
-
-      doodle::chrono::local_time_pos l_pos2{};
+      doodle::chrono::local_time_pos l_pos2{
+          doodle::chrono::local_days{
+              doodle::chrono::year_month_day{
+                  doodle::chrono::year{in_value.second.data.first.data[0]},
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.second.data.first.data[0])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.second.data.first.data[0])}}} +
+          chrono::hours{in_value.second.data.second.data[0]} +
+          chrono::minutes{in_value.second.data.second.data[1]} +
+          doodle::chrono::seconds{in_value.second.data.second.data[2]}};
+      return std::make_pair(l_pos, l_pos2);
     }
 
-    explicit gui_rect_cache(const doodle::business::rules& in_rules)
+    explicit gui_rules_cache(const doodle::business::rules& in_rules)
         : work_day{
               "工作周"s,
               std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, in_rules.work_weekdays[0]},
@@ -149,6 +157,10 @@ class time_sequencer_widget::impl {
                             l_hh_mm_ss2.to_duration());
                       }) |
                       ranges::to_vector;
+      l_r.extra_holidays = extra_holidays | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      l_r.extra_work     = extra_work | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      l_r.extra_rest     = extra_rest | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      return l_r;
     }
   };
 
@@ -188,6 +200,8 @@ class time_sequencer_widget::impl {
   std::size_t index_end_{0};
   std::size_t index_view_end{0};
   boost::signals2::scoped_connection l_select_conn{};
+
+  gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
 
   bool find_selects(const ImPlotRect& in_rect) {
     using tmp_value_t = decltype((time_list | ranges::views::enumerate).begin())::value_type;
@@ -560,7 +574,37 @@ void time_sequencer_widget::update(
   if (ImGui::Button("平均时间")) p_i->average_time(0, p_i->time_list.size());
   ImGui::SameLine();
   if (ImGui::Button("平均视图内时间")) p_i->average_time(p_i->index_begin_, p_i->index_view_end);
-  ImGui::SameLine();
+
+  ImGui::Separator();
+  dear::Text(p_i->rules_cache.gui_name.name_id);
+  dear::Text(p_i->rules_cache().work_day.gui_name.name_id);
+  ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
+    ImGui::Checkbox(*in_value, &in_value);
+  });
+
+  ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
+    ImGui::InputInt3(*in_value.first, in_value.first().data());
+    ImGui::InputInt3(*in_value.second, in_value.second().data());
+  });
+  ranges::for_each(p_i->rules_cache().extra_holidays(), [](decltype(p_i->rules_cache().extra_holidays().front()) in_value) {
+    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+  });
+  ranges::for_each(p_i->rules_cache().extra_work(), [](decltype(p_i->rules_cache().extra_work().front()) in_value) {
+    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+  });
+  ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
+    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
+    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+  });
+
   if (ImGui::Button("提交更新")) p_i->save();
 }
 }  // namespace doodle::gui
