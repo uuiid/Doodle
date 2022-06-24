@@ -57,53 +57,121 @@ class time_sequencer_widget::impl {
                                             gui::gui_cache<bool>{"星期六"s, false}}};
     using time_du_cache   = std::array<std::int32_t, 3>;
     using gui_time_pair_t = std::pair<gui::gui_cache<time_du_cache>, gui::gui_cache<time_du_cache>>;
-    gui::gui_cache<std::vector<gui_time_pair_t>> work_time{};
+
+    struct gui_time_pair_button {
+      gui_time_pair_button(const gui_time_pair_t& in_p) : data(in_p), button("删除") {}
+      gui_time_pair_t data{};
+      gui_cache_name_id button{"删除"};
+    };
+
+    gui::gui_cache<std::vector<gui_time_pair_button>> work_time{};
     using gui_time_pair_t2 = std::pair<gui::gui_cache<gui_time_pair_t>, gui::gui_cache<gui_time_pair_t>>;
-    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_holidays{};
-    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_work{};
-    gui::gui_cache<std::vector<gui_time_pair_t2>> extra_rest{};
+
+    struct gui_time_pair2_button {
+      gui_time_pair2_button(const gui_time_pair_t2& in_p) : data(in_p), button("删除") {}
+      gui_time_pair_t2 data{};
+      gui_cache_name_id button{"删除"};
+    };
+
+    gui::gui_cache<std::vector<gui_time_pair2_button>> extra_holidays{};
+    gui::gui_cache<std::vector<gui_time_pair2_button>> extra_work{};
+    gui::gui_cache<std::vector<gui_time_pair2_button>> extra_rest{};
 
     explicit gui_rules_cache() = default;
 
-    static gui_time_pair_t2 to_gui_time_pair_t2(const decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type& in_value) {
+    static gui_time_pair2_button to_gui_time_pair_t2(const decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type& in_value) {
       time_point_wrap l_time_point{in_value.first};
       time_point_wrap l_time_point2{in_value.second};
-      return std::make_pair(
+
+      auto l_p1 = l_time_point.compose();
+      auto l_p2 = l_time_point2.compose();
+      return gui_time_pair2_button{std::make_pair(
           gui::gui_cache<gui_time_pair_t>{
               "开始时间"s,
               std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
-                                                           time_du_cache{}},
+                                                           time_du_cache{
+                                                               std::get<0>(l_p1),
+                                                               std::get<1>(l_p1),
+                                                               std::get<2>(l_p1)}},
                              gui::gui_cache<time_du_cache>{"时间"s,
-                                                           time_du_cache{}})},
+                                                           time_du_cache{
+                                                               std::get<3>(l_p1),
+                                                               std::get<4>(l_p1),
+                                                               std::get<5>(l_p1)}})},
           gui::gui_cache<gui_time_pair_t>{
               "结束时间"s,
               std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
-                                                           time_du_cache{}},
+                                                           time_du_cache{
+                                                               std::get<0>(l_p2),
+                                                               std::get<1>(l_p2),
+                                                               std::get<2>(l_p2)}},
                              gui::gui_cache<time_du_cache>{"时间"s,
-                                                           time_du_cache{}})});
+                                                           time_du_cache{
+                                                               std::get<3>(l_p2),
+                                                               std::get<4>(l_p2),
+                                                               std::get<5>(l_p2)}})})};
     }
-    static decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type form_gui_time_pair_t2(const gui_time_pair_t2& in_value) {
+    static decltype(std::declval<doodle::business::rules>().extra_holidays)::value_type form_gui_time_pair_t2(const gui_time_pair2_button& in_value) {
       doodle::chrono::local_time_pos l_pos{
           doodle::chrono::local_days{
               doodle::chrono::year_month_day{
-                  doodle::chrono::year{in_value.first.data.first.data[0]},
-                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])},
-                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.first.data.first.data[0])}}} +
-          chrono::hours{in_value.first.data.second.data[0]} +
-          chrono::minutes{in_value.first.data.second.data[1]} +
-          doodle::chrono::seconds{in_value.first.data.second.data[2]}};
+                  doodle::chrono::year{in_value.data.first.data.first.data[0]},
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[0])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[0])}}} +
+          chrono::hours{in_value.data.first.data.second.data[0]} +
+          chrono::minutes{in_value.data.first.data.second.data[1]} +
+          doodle::chrono::seconds{in_value.data.first.data.second.data[2]}};
 
       doodle::chrono::local_time_pos l_pos2{
           doodle::chrono::local_days{
               doodle::chrono::year_month_day{
-                  doodle::chrono::year{in_value.second.data.first.data[0]},
-                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.second.data.first.data[0])},
-                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.second.data.first.data[0])}}} +
-          chrono::hours{in_value.second.data.second.data[0]} +
-          chrono::minutes{in_value.second.data.second.data[1]} +
-          doodle::chrono::seconds{in_value.second.data.second.data[2]}};
+                  doodle::chrono::year{in_value.data.second.data.first.data[0]},
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[0])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[0])}}} +
+          chrono::hours{in_value.data.second.data.second.data[0]} +
+          chrono::minutes{in_value.data.second.data.second.data[1]} +
+          doodle::chrono::seconds{in_value.data.second.data.second.data[2]}};
       return std::make_pair(l_pos, l_pos2);
     }
+
+    static bool render_gui_time_pair2_button(decltype(extra_holidays)& in_data) {
+      dear::CollapsingHeader{*in_data} && [&]() {
+        auto& l_list = in_data();
+        if (imgui::Button("添加")) {
+          l_list.emplace_back(
+              impl::gui_rules_cache::gui_time_pair2_button{
+                  std::make_pair(
+                      gui::gui_cache<gui_time_pair_t>{
+                          "开始时间"s,
+                          std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
+                                                                       time_du_cache{}},
+                                         gui::gui_cache<time_du_cache>{"时间"s,
+                                                                       time_du_cache{}})},
+                      gui::gui_cache<gui_time_pair_t>{
+                          "结束时间"s,
+                          std::make_pair(gui::gui_cache<time_du_cache>{"日期"s,
+                                                                       time_du_cache{}},
+                                         gui::gui_cache<time_du_cache>{"时间"s,
+                                                                       time_du_cache{}})})});
+        }
+
+        for (auto l_i = l_list.begin(); l_i != l_list.end();) {
+          ImGui::InputInt3(*(l_i->data).first().first, (l_i->data).first().first().data());
+          ImGui::SameLine();
+          ImGui::SliderInt3(*(l_i->data).first().first, (l_i->data).first().second().data(), 0, 59);
+
+          ImGui::InputInt3(*(l_i->data).second().first, (l_i->data).first().first().data());
+          ImGui::SameLine();
+          ImGui::SliderInt3(*(l_i->data).second().first, (l_i->data).second().second().data(), 0, 59);
+          if (ImGui::Button(*l_i->button)) {
+            l_i = l_list.erase(l_i);
+          } else {
+            ++l_i;
+          }
+          ImGui::Separator();
+        }
+      };
+    };
 
     explicit gui_rules_cache(const doodle::business::rules& in_rules)
         : work_day{
@@ -115,10 +183,10 @@ class time_sequencer_widget::impl {
                                                   gui::gui_cache<bool>{"星期四"s, in_rules.work_weekdays[4]},
                                                   gui::gui_cache<bool>{"星期五"s, in_rules.work_weekdays[5]},
                                                   gui::gui_cache<bool>{"星期六"s, in_rules.work_weekdays[6]}}},
-          work_time("工作时间"s, in_rules.work_pair | ranges::view::transform([](const decltype(in_rules.work_pair)::value_type& in_value) -> gui_time_pair_t {
+          work_time("工作时间"s, in_rules.work_pair | ranges::view::transform([](const decltype(in_rules.work_pair)::value_type& in_value) -> gui_time_pair_button {
                                    chrono::hh_mm_ss l_hh_mm_ss{in_value.first};
                                    chrono::hh_mm_ss l_hh_mm_ss2{in_value.second};
-                                   return std::make_pair(
+                                   auto l_p = std::make_pair(
                                        gui::gui_cache<time_du_cache>{"开始时间"s,
                                                                      time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss.hours().count()),
                                                                                    boost::numeric_cast<std::int32_t>(l_hh_mm_ss.minutes().count()),
@@ -127,6 +195,7 @@ class time_sequencer_widget::impl {
                                                                      time_du_cache{boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.hours().count()),
                                                                                    boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.minutes().count()),
                                                                                    boost::numeric_cast<std::int32_t>(l_hh_mm_ss2.seconds().count())}});
+                                   return gui_time_pair_button{l_p};
                                  }) | ranges::to_vector),
           extra_holidays("节假日"s, in_rules.extra_holidays | ranges::view::transform(to_gui_time_pair_t2) | ranges::to_vector),
           extra_work("加班时间"s, in_rules.extra_work | ranges::view::transform(to_gui_time_pair_t2) | ranges::to_vector),
@@ -146,12 +215,12 @@ class time_sequencer_widget::impl {
 
       l_r.work_pair        = work_time.data |
                       ranges::views::transform([](const decltype(work_time.data)::value_type& in_value) -> decltype(l_r.work_pair)::value_type {
-                        chrono::hh_mm_ss l_hh_mm_ss{chrono::hours{in_value.first.data[0]} +
-                                                    chrono::minutes{in_value.first.data[1]} +
-                                                    doodle::chrono::seconds{in_value.first.data[2]}};
-                        chrono::hh_mm_ss l_hh_mm_ss2{chrono::hours{in_value.second.data[0]} +
-                                                     chrono::minutes{in_value.second.data[1]} +
-                                                     doodle::chrono::seconds{in_value.second.data[2]}};
+                        chrono::hh_mm_ss l_hh_mm_ss{chrono::hours{in_value.data.first.data[0]} +
+                                                    chrono::minutes{in_value.data.first.data[1]} +
+                                                    doodle::chrono::seconds{in_value.data.first.data[2]}};
+                        chrono::hh_mm_ss l_hh_mm_ss2{chrono::hours{in_value.data.second.data[0]} +
+                                                     chrono::minutes{in_value.data.second.data[1]} +
+                                                     doodle::chrono::seconds{in_value.data.second.data[2]}};
                         return std::make_pair(
                             l_hh_mm_ss.to_duration(),
                             l_hh_mm_ss2.to_duration());
@@ -579,60 +648,43 @@ void time_sequencer_widget::update(
 
   ImGui::Separator();
   dear::Text(p_i->rules_cache.gui_name.name);
-  dear::Text(p_i->rules_cache().work_day.gui_name.name);
-  ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
-    ImGui::Checkbox(*in_value, &in_value);
-    ImGui::SameLine();
-  });
-  dear::HelpMarker{"按星期去计算工作时间"};
+
+  dear::CollapsingHeader{*p_i->rules_cache().work_day} && [this]() {
+    dear::HelpMarker{"按星期去计算工作时间"};
+    ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
+      ImGui::Checkbox(*in_value, &in_value);
+    });
+  };
 
   dear::CollapsingHeader{*p_i->rules_cache().work_time} && [this]() {
     auto& l_list = p_i->rules_cache().work_time();
     dear::HelpMarker{"每天的开始和结束时间段"};
     if (imgui::Button("添加")) {
-      l_list.emplace_back(gui::gui_cache<impl::gui_rules_cache::time_du_cache>{
-                              "开始时间"s,
-                              impl::gui_rules_cache::time_du_cache{0, 0, 0}},
-                          gui::gui_cache<impl::gui_rules_cache::time_du_cache>{"结束时间"s, impl::gui_rules_cache::time_du_cache{0, 0, 0}});
+      l_list.emplace_back(
+          impl::gui_rules_cache::gui_time_pair_button{
+              std::make_pair(
+                  gui::gui_cache<impl::gui_rules_cache::time_du_cache>{
+                      "开始时间"s,
+                      impl::gui_rules_cache::time_du_cache{0, 0, 0}},
+                  gui::gui_cache<impl::gui_rules_cache::time_du_cache>{"结束时间"s, impl::gui_rules_cache::time_du_cache{0, 0, 0}})});
     }
 
-    for (int l_i = 0; l_i < l_list.size(); ++l_i) {
-      ImGui::SliderInt3(*l_list[l_i].first, l_list[l_i].first().data(), 0, 59);
-      ImGui::SliderInt3(*l_list[l_i].second, l_list[l_i].second().data(), 0, 59);
-      ImGui::SameLine();
+    for (auto l_i = l_list.begin(); l_i != l_list.end();) {
+      ImGui::SliderInt3(*(l_i->data).first, (l_i->data).first().data(), 0, 59);
+      ImGui::SliderInt3(*(l_i->data).second, (l_i->data).second().data(), 0, 59);
+      if (ImGui::Button(*l_i->button)) {
+        l_i = l_list.erase(l_i);
+      } else {
+        ++l_i;
+      }
+      ImGui::Separator();
     }
   };
-
-  ranges::for_each(p_i->rules_cache().extra_holidays(), [](decltype(p_i->rules_cache().extra_holidays().front()) in_value) {
-    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
-
-    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
-  });
+  impl::gui_rules_cache::render_gui_time_pair2_button(p_i->rules_cache().extra_holidays);
   dear::HelpMarker{"节假日"};
-
-  ranges::for_each(p_i->rules_cache().extra_work(), [](decltype(p_i->rules_cache().extra_work().front()) in_value) {
-    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
-
-    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
-  });
+  impl::gui_rules_cache::render_gui_time_pair2_button(p_i->rules_cache().extra_work);
   dear::HelpMarker{"加班时间"};
-  ranges::for_each(p_i->rules_cache().extra_rest(), [](decltype(p_i->rules_cache().extra_rest().front()) in_value) {
-    ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
-
-    ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
-    ImGui::SameLine();
-    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
-  });
+  impl::gui_rules_cache::render_gui_time_pair2_button(p_i->rules_cache().extra_rest);
   dear::HelpMarker{"调休sh时间"};
 }
 }  // namespace doodle::gui
