@@ -651,6 +651,17 @@ void time_sequencer_widget::update(
   ImGui::Separator();
   dear::Text(p_i->rules_cache.gui_name.name);
 
+  if (ImGui::Button("应用规则")) {
+    p_i->rules_ = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
+    p_i->work_clock_.set_rules(p_i->rules_);
+    if (!p_i->time_list.empty()) {
+      p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
+                                    p_i->time_list.back().time_point_ + chrono::days{4});
+      p_i->refresh(p_i->time_list);
+      p_i->refresh_work_time(p_i->time_list);
+    }
+  }
+
   dear::CollapsingHeader{*p_i->rules_cache().work_day} && [this]() {
     dear::HelpMarker{"按星期去计算工作时间"};
     ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
