@@ -278,20 +278,33 @@ class time_sequencer_widget::impl {
   std::vector<std::double_t> shaded_works_time_y{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
+    shaded_works_time_x.clear();
+    shaded_works_time_y.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
       // 非工作的点1
       shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count() - 1);
       shaded_works_time_y.emplace_back(0);
       // 工作点1
       shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count());
-      shaded_works_time_y.emplace_back(time_list.size());
+      shaded_works_time_y.emplace_back(time_list.size() + 500);
       // 工作点2
       shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count());
-      shaded_works_time_y.emplace_back(time_list.size());
+      shaded_works_time_y.emplace_back(time_list.size() + 500);
       // 非工作的点2
       shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count() - 1);
       shaded_works_time_y.emplace_back(0);
     });
+  }
+
+  void refresh_work_clock_() {
+    if (!time_list.empty()) {
+      work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
+                               time_list.back().time_point_ + chrono::days{4});
+      refresh(time_list);
+      refresh_work_time(time_list);
+      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_ - chrono::days{4},
+                                                    time_list.back().time_point_ + chrono::days{4}));
+    }
   }
 
   bool find_selects(const ImPlotRect& in_rect) {
@@ -542,13 +555,8 @@ time_sequencer_widget::time_sequencer_widget()
                                      }) |
                                  ranges::to_vector;
                 p_i->time_list |= ranges::actions::sort;
-                if (!p_i->time_list.empty()) {
-                  p_i->work_clock_.set_rules(p_i->rules_);
-                  p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
-                                                p_i->time_list.back().time_point_ + chrono::days{4});
-                  p_i->refresh(p_i->time_list);
-                  p_i->refresh_work_time(p_i->time_list);
-                }
+                p_i->work_clock_.set_rules(p_i->rules_);
+                p_i->refresh_work_clock_();
               });
 }
 
@@ -605,13 +613,19 @@ void time_sequencer_widget::update(
                      p_i->time_list_x.data(),
                      p_i->time_list_y.data(),
                      p_i->time_list.size());
+    ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+    /// \brief 时间背景
+    ImPlot::PlotShaded("Time backup",
+                       p_i->shaded_works_time_x.data(),
+                       p_i->shaded_works_time_y.data(),
+                       p_i->shaded_works_time_x.size());
+    ImPlot::PopStyleVar();
 
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
       p_i->view1_.rect_select_ = ImPlot::GetPlotSelection();
 
       p_i->view1_.into_select  = true;
-
     } else if (p_i->view1_.into_select && !ImPlot::IsPlotSelected()) {
       p_i->view1_.outto_select = true;
     }
@@ -674,12 +688,7 @@ void time_sequencer_widget::update(
   if (ImGui::Button("应用规则")) {
     p_i->rules_ = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
     p_i->work_clock_.set_rules(p_i->rules_);
-    if (!p_i->time_list.empty()) {
-      p_i->work_clock_.set_interval(p_i->time_list.front().time_point_ - chrono::days{4},
-                                    p_i->time_list.back().time_point_ + chrono::days{4});
-      p_i->refresh(p_i->time_list);
-      p_i->refresh_work_time(p_i->time_list);
-    }
+    p_i->refresh_work_clock_();
   }
 
   dear::CollapsingHeader{*p_i->rules_cache().work_day} && [this]() {
