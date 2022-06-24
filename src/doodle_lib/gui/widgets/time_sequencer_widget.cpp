@@ -274,25 +274,14 @@ class time_sequencer_widget::impl {
 
   gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
 
-  std::vector<std::double_t> shaded_works_time_x{};
-  std::vector<std::double_t> shaded_works_time_y{};
+  std::vector<ImRect> shaded_works_time{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
-    shaded_works_time_x.clear();
-    shaded_works_time_y.clear();
+    shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
-      // 非工作的点1
-      shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count() - 1);
-      shaded_works_time_y.emplace_back(0);
-      // 工作点1
-      shaded_works_time_x.emplace_back(in_pair.first.time_since_epoch().count());
-      shaded_works_time_y.emplace_back(time_list.size() + 500);
-      // 工作点2
-      shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count());
-      shaded_works_time_y.emplace_back(time_list.size() + 500);
-      // 非工作的点2
-      shaded_works_time_x.emplace_back(in_pair.second.time_since_epoch().count() - 1);
-      shaded_works_time_y.emplace_back(0);
+      shaded_works_time.emplace_back(
+          in_pair.first.time_since_epoch().count(), 0,                         //(左下角)
+          in_pair.second.time_since_epoch().count(), time_list.size() + 500);  // 右上角
     });
   }
 
@@ -615,10 +604,9 @@ void time_sequencer_widget::update(
                      p_i->time_list.size());
     ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
     /// \brief 时间背景
-    ImPlot::PlotShaded("Time backup",
-                       p_i->shaded_works_time_x.data(),
-                       p_i->shaded_works_time_y.data(),
-                       p_i->shaded_works_time_x.size());
+    ranges::for_each(p_i->shaded_works_time, [](const ImRect& in) {
+      ImPlot::GetPlotDrawList()->AddRectFilled(in.Min, in.Max, IM_COL32(128, 0, 255, 255));
+    });
     ImPlot::PopStyleVar();
 
     if (ImPlot::IsPlotSelected()) {
