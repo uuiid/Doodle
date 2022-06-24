@@ -586,11 +586,22 @@ void time_sequencer_widget::update(
   });
   dear::HelpMarker{"按星期去计算工作时间"};
 
-  ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
-    ImGui::SliderInt3(*in_value.first, in_value.first().data(), 0, 59);
-    ImGui::SliderInt3(*in_value.second, in_value.second().data(), 0, 59);
-  });
-  dear::HelpMarker{"每天的开始和结束时间段"};
+  dear::CollapsingHeader{*p_i->rules_cache().work_time} && [this]() {
+    auto& l_list = p_i->rules_cache().work_time();
+    dear::HelpMarker{"每天的开始和结束时间段"};
+    if (imgui::Button("添加")) {
+      l_list.emplace_back(gui::gui_cache<impl::gui_rules_cache::time_du_cache>{
+                              "开始时间"s,
+                              impl::gui_rules_cache::time_du_cache{0, 0, 0}},
+                          gui::gui_cache<impl::gui_rules_cache::time_du_cache>{"结束时间"s, impl::gui_rules_cache::time_du_cache{0, 0, 0}});
+    }
+
+    for (int l_i = 0; l_i < l_list.size(); ++l_i) {
+      ImGui::SliderInt3(*l_list[l_i].first, l_list[l_i].first().data(), 0, 59);
+      ImGui::SliderInt3(*l_list[l_i].second, l_list[l_i].second().data(), 0, 59);
+      ImGui::SameLine();
+    }
+  };
 
   ranges::for_each(p_i->rules_cache().extra_holidays(), [](decltype(p_i->rules_cache().extra_holidays().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
