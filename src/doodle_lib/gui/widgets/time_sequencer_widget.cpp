@@ -157,9 +157,9 @@ class time_sequencer_widget::impl {
                             l_hh_mm_ss2.to_duration());
                       }) |
                       ranges::to_vector;
-      l_r.extra_holidays = extra_holidays | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
-      l_r.extra_work     = extra_work | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
-      l_r.extra_rest     = extra_rest | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      l_r.extra_holidays = extra_holidays() | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      l_r.extra_work     = extra_work() | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
+      l_r.extra_rest     = extra_rest() | ranges::views::transform(form_gui_time_pair_t2) | ranges::to_vector;
       return l_r;
     }
   };
