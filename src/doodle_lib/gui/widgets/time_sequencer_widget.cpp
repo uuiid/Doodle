@@ -578,8 +578,8 @@ void time_sequencer_widget::update(
   if (ImGui::Button("平均视图内时间")) p_i->average_time(p_i->index_begin_, p_i->index_view_end);
 
   ImGui::Separator();
-  dear::Text(p_i->rules_cache.gui_name.name_id);
-  dear::Text(p_i->rules_cache().work_day.gui_name.name_id);
+  dear::Text(p_i->rules_cache.gui_name.name);
+  dear::Text(p_i->rules_cache().work_day.gui_name.name);
   ranges::for_each(p_i->rules_cache().work_day(), [](decltype(p_i->rules_cache().work_day().front()) in_value) {
     ImGui::Checkbox(*in_value, &in_value);
     ImGui::SameLine();
@@ -587,35 +587,40 @@ void time_sequencer_widget::update(
   dear::HelpMarker{"按星期去计算工作时间"};
 
   ranges::for_each(p_i->rules_cache().work_time(), [](decltype(p_i->rules_cache().work_time().front()) in_value) {
-    ImGui::InputInt3(*in_value.first, in_value.first().data());
-    ImGui::SameLine();
-    ImGui::InputInt3(*in_value.second, in_value.second().data());
+    ImGui::SliderInt3(*in_value.first, in_value.first().data(), 0, 59);
+    ImGui::SliderInt3(*in_value.second, in_value.second().data(), 0, 59);
   });
   dear::HelpMarker{"每天的开始和结束时间段"};
 
   ranges::for_each(p_i->rules_cache().extra_holidays(), [](decltype(p_i->rules_cache().extra_holidays().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
     ImGui::SameLine();
-    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
 
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
     ImGui::SameLine();
-    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
   });
   dear::HelpMarker{"节假日"};
 
   ranges::for_each(p_i->rules_cache().extra_work(), [](decltype(p_i->rules_cache().extra_work().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
-    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::SameLine();
+    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
+
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
-    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+    ImGui::SameLine();
+    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
   });
   dear::HelpMarker{"加班时间"};
   ranges::for_each(p_i->rules_cache().extra_rest(), [](decltype(p_i->rules_cache().extra_rest().front()) in_value) {
     ImGui::InputInt3(*in_value.first().first, in_value.first().first().data());
-    ImGui::InputInt3(*in_value.first().first, in_value.first().second().data());
+    ImGui::SameLine();
+    ImGui::SliderInt3(*in_value.first().first, in_value.first().second().data(), 0, 59);
+
     ImGui::InputInt3(*in_value.second().first, in_value.first().first().data());
-    ImGui::InputInt3(*in_value.second().first, in_value.second().second().data());
+    ImGui::SameLine();
+    ImGui::SliderInt3(*in_value.second().first, in_value.second().second().data(), 0, 59);
   });
   dear::HelpMarker{"调休sh时间"};
 }
