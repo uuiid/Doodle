@@ -119,8 +119,8 @@ class time_sequencer_widget::impl {
           doodle::chrono::local_days{
               doodle::chrono::year_month_day{
                   doodle::chrono::year{in_value.data.first.data.first.data[0]},
-                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[0])},
-                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[0])}}} +
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[1])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.first.data.first.data[2])}}} +
           chrono::hours{in_value.data.first.data.second.data[0]} +
           chrono::minutes{in_value.data.first.data.second.data[1]} +
           doodle::chrono::seconds{in_value.data.first.data.second.data[2]}};
@@ -129,8 +129,8 @@ class time_sequencer_widget::impl {
           doodle::chrono::local_days{
               doodle::chrono::year_month_day{
                   doodle::chrono::year{in_value.data.second.data.first.data[0]},
-                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[0])},
-                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[0])}}} +
+                  doodle::chrono::month{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[1])},
+                  doodle::chrono::day{boost::numeric_cast<std::uint32_t>(in_value.data.second.data.first.data[2])}}} +
           chrono::hours{in_value.data.second.data.second.data[0]} +
           chrono::minutes{in_value.data.second.data.second.data[1]} +
           doodle::chrono::seconds{in_value.data.second.data.second.data[2]}};
@@ -274,14 +274,15 @@ class time_sequencer_widget::impl {
 
   gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
 
-  std::vector<std::array<std::double_t, 4>> shaded_works_time{};
+  std::vector<std::double_t> shaded_works_time{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count(), std::double_t (0),                         // (左下角)(x,y)
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second).time_since_epoch().count(), time_list.size() + 500);  // (右上角)(x,y)
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count());
+      shaded_works_time.emplace_back(
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second).time_since_epoch().count());
     });
   }
 
@@ -289,10 +290,11 @@ class time_sequencer_widget::impl {
     if (!time_list.empty()) {
       work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
                                time_list.back().time_point_ + chrono::days{4});
+      DOODLE_LOG_INFO(work_clock_.debug_print());
       refresh(time_list);
       refresh_work_time(time_list);
-      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_ - chrono::days{4},
-                                                    time_list.back().time_point_ + chrono::days{4}));
+      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_,
+                                                    time_list.back().time_point_));
     }
   }
 
@@ -534,12 +536,7 @@ void time_sequencer_widget::update(
                      p_i->time_list_x.data(),
                      p_i->time_list_y.data(),
                      p_i->time_list.size());
-    ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-    /// \brief 时间背景
-    //    ranges::for_each(p_i->shaded_works_time, [](const std::array<std::double_t,4>& in) {
-    //      ImPlot::GetPlotDrawList()->AddRectFilled({in[0],in[1]}, {in[2], in[3]}, IM_COL32(128, 0, 255, 255));
-    //    });
-    ImPlot::PopStyleVar();
+    ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
 
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
