@@ -274,13 +274,13 @@ class time_sequencer_widget::impl {
 
   gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
 
-  std::vector<ImRect> shaded_works_time{};
+  std::vector<std::array<std::double_t, 4>> shaded_works_time{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count(), 0,                         // (左下角)(x,y)
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count(), std::double_t (0),                         // (左下角)(x,y)
           doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second).time_since_epoch().count(), time_list.size() + 500);  // (右上角)(x,y)
     });
   }
@@ -536,9 +536,9 @@ void time_sequencer_widget::update(
                      p_i->time_list.size());
     ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
     /// \brief 时间背景
-    ranges::for_each(p_i->shaded_works_time, [](const ImRect& in) {
-      ImPlot::GetPlotDrawList()->AddRectFilled(in.Min, in.Max, IM_COL32(128, 0, 255, 255));
-    });
+    //    ranges::for_each(p_i->shaded_works_time, [](const std::array<std::double_t,4>& in) {
+    //      ImPlot::GetPlotDrawList()->AddRectFilled({in[0],in[1]}, {in[2], in[3]}, IM_COL32(128, 0, 255, 255));
+    //    });
     ImPlot::PopStyleVar();
 
     if (ImPlot::IsPlotSelected()) {
