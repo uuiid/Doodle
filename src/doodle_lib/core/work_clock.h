@@ -21,7 +21,9 @@
 namespace doodle {
 
 namespace business {
-
+/**
+ * @brief 这个时间规则是一个本地时间(并非 utc 时间)
+ */
 class DOODLELIB_API rules {
  public:
  public:
@@ -124,6 +126,8 @@ class DOODLELIB_API work_clock {
     return get_work_du(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
                        doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
+
+
 
   std::string debug_print();
 };
