@@ -276,6 +276,9 @@ class time_sequencer_widget::impl {
 
   std::vector<std::double_t> shaded_works_time{};
 
+  std::size_t current_edit_index{};
+  std::double_t current_edit_size{};
+
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
@@ -351,10 +354,16 @@ class time_sequencer_widget::impl {
                            ranges::to_vector;
   }
 
-
   void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
     chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
-
+    if (current_edit_index != in_index && current_edit_size != 0 && current_edit_index > 0) {
+      /// \brief 编辑另一个点之前更新
+      ranges::for_each(ranges::views::ints(current_edit_index, time_list.size()),
+                       [&](const std::int32_t& in_ints) {
+                         time_list[in_ints].time_point_ += doodle::chrono::seconds{
+                             boost::numeric_cast<doodle::chrono::seconds::rep>(current_edit_size)};
+                       });
+    }
     auto l_time_list = time_list;
 
     ranges::for_each(ranges::views::ints(in_index, l_time_list.size()),
@@ -364,6 +373,8 @@ class time_sequencer_widget::impl {
                      });
     refresh_cache(l_time_list);
     refresh_work_time(l_time_list);
+    current_edit_index = in_index;
+    current_edit_size  = in_time_s;
   }
 
   void average_time(std::size_t in_begin,
