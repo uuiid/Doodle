@@ -55,6 +55,8 @@ class DOODLELIB_API rules {
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_holidays{};
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_work{};
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_rest{};
+
+  std::string debug_print();
 };
 
 class DOODLELIB_API work_clock {
@@ -122,6 +124,8 @@ class DOODLELIB_API work_clock {
     return get_work_du(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
                        doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
+
+  std::string debug_print();
 };
 }  // namespace business
 namespace detail {

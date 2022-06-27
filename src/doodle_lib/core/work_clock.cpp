@@ -15,6 +15,11 @@ namespace doodle {
 
 namespace business {
 
+std::string rules::debug_print() {
+  return fmt::format("规则 周六日规则 {}\n每日规则 {} \n节假日规则 {} \n调休规则 {} \n加班规则 {}",
+                     work_weekdays, fmt::join(work_pair, "->"), fmt::join(extra_holidays, "->"), fmt::join(extra_rest, "->"), fmt::join(extra_work, "->"));
+}
+
 work_clock::work_clock() = default;
 
 chrono::hours_double work_clock::operator()(
@@ -113,6 +118,9 @@ std::vector<std::pair<work_clock::time_d_t, work_clock::time_d_t>> work_clock::g
   return l_r;
 }
 
+std::string work_clock::debug_print() {
+  return fmt::format("规则 {} \n时间段 {}", rules_.debug_print(), interval_set_time_);
+}
 }  // namespace business
 namespace detail {
 
