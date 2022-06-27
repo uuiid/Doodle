@@ -279,10 +279,12 @@ class time_sequencer_widget::impl {
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
+      time_point_wrap l_point_1{in_pair.first};
+      time_point_wrap l_point_2{in_pair.second};
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(l_point_1.zoned_time_.get_sys_time()).time_since_epoch().count());
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(l_point_2.zoned_time_.get_sys_time()).time_since_epoch().count());
     });
   }
 
@@ -291,14 +293,14 @@ class time_sequencer_widget::impl {
       work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
                                time_list.back().time_point_ + chrono::days{4});
       DOODLE_LOG_INFO(work_clock_.debug_print());
-      refresh(time_list);
+      refresh_cache(time_list);
       refresh_work_time(time_list);
       set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_,
                                                     time_list.back().time_point_));
     }
   }
 
-  void refresh(const decltype(time_list)& in_list) {
+  void refresh_cache(const decltype(time_list)& in_list) {
     time_list_x = in_list |
                   ranges::views::transform([](const impl::point_cache& in) -> double {
                     return doodle::chrono::floor<doodle::chrono::seconds>(
@@ -349,9 +351,6 @@ class time_sequencer_widget::impl {
                            ranges::to_vector;
   }
 
-  static std::double_t ImPlotRange_Centre(const ImPlotRange& in) {
-    return in.Min + in.Size() / 2;
-  };
 
   void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
     chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
@@ -363,7 +362,7 @@ class time_sequencer_widget::impl {
                        l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
                            boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)};
                      });
-    refresh(l_time_list);
+    refresh_cache(l_time_list);
     refresh_work_time(l_time_list);
   }
 
@@ -388,7 +387,7 @@ class time_sequencer_widget::impl {
                        in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
                        l_begin         = in_.time_point_.zoned_time_.get_local_time();
                      });
-    refresh(time_list);
+    refresh_cache(time_list);
     refresh_work_time(time_list);
   }
 
