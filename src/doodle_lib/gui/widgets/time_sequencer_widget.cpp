@@ -456,6 +456,28 @@ class time_sequencer_widget::impl {
     return l_r;
   }
 
+  std::pair<std::size_t, std::size_t> get_iter_DragPoint(std::double_t in_current) {
+    auto l_current = ranges::find_if(time_list_x, [&](const decltype(time_list_x)::value_type& in) {
+      return in > in_current;
+    });
+
+    std::int64_t l_begin{};
+    std::int64_t l_end{};
+
+    if (l_current != time_list_x.end()) {
+      auto l_dis = std::distance(time_list_x.begin(), l_current);
+      l_begin    = l_dis - 5;
+      l_end      = l_dis + 5;
+    } else {
+      l_end   = time_list_x.size();
+      l_begin = l_end - 11;
+    }
+    l_begin = std::max(std::int64_t(0), l_begin);
+    l_end   = std::min(boost::numeric_cast<std::int64_t>(time_list_x.size()), l_end);
+    return std::make_pair(boost::numeric_cast<std::size_t>(std::min(l_begin, l_end)),
+                          boost::numeric_cast<std::size_t>(std::max(l_begin, l_end)));
+  }
+
   void save() {
     ranges::for_each(time_list | ranges::views::filter([](const point_cache& in) -> bool {
                        return in.handle_.valid() && in.handle_.any_of<database>();
@@ -561,7 +583,13 @@ void time_sequencer_widget::update(
     // 绘制可调整点
     {
       auto l_linm = ImPlot::GetPlotLimits().X;
-      for (int l_i = p_i->index_begin_; l_i < p_i->index_end_; ++l_i) {
+      std::double_t l_current_{};
+      if (ImPlot::IsPlotHovered()) {
+        auto l_point = ImPlot::GetPlotMousePos();
+        l_current_   = l_point.x;
+      }
+      auto [l_begin, l_end] = p_i->get_iter_DragPoint(l_current_);
+      for (int l_i = l_begin; l_i < l_end; ++l_i) {
         std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
                                     p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
                                     .time_since_epoch()
