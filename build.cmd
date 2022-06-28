@@ -82,8 +82,10 @@ rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
 rmdir /q /s %my_pwd%build\Ninja_release\plug
 del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
-
-
+echo -----------------config pack--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release
 echo -----------------pack---------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
