@@ -26,6 +26,12 @@ namespace business {
  */
 class DOODLELIB_API rules {
  public:
+  struct time_pair_info {
+    chrono::local_time_pos first;
+    chrono::local_time_pos second;
+    std::string info;
+  };
+
  public:
   /// \brief 周六 ->周日(index 6->0)
   constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
@@ -55,8 +61,8 @@ class DOODLELIB_API rules {
       chrono::seconds>>
       work_pair{};
   std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_holidays{};
-  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_work{};
-  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_rest{};
+  std::vector<time_pair_info> extra_work{};
+  std::vector<time_pair_info> extra_rest{};
 
   std::string debug_print();
 };
@@ -127,8 +133,6 @@ class DOODLELIB_API work_clock {
                        doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
 
-
-
   std::string debug_print();
 };
 }  // namespace business
@@ -166,3 +170,20 @@ chrono::time_point<chrono::local_t, Duration_> next_time(
       in_rules);
 };
 }  // namespace doodle
+
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::business::rules::time_pair_info> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::business::rules::time_pair_info& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<std::string>::format(
+        fmt::format("{} {} {}", in_.info, in_.first, in_.second),
+        ctx);
+  }
+};
+}  // namespace fmt
