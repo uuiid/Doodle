@@ -5,6 +5,7 @@
 #include <implot_internal.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/comment.h>
 #include <doodle_lib/core/work_clock.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_core/core/core_sig.h>
@@ -198,21 +199,19 @@ class time_sequencer_widget::impl {
         dear::CollapsingHeader{*this->gui_name} && [&]() {
           auto& l_list = data;
           if (imgui::Button(*this->button)) {
-            l_list.emplace_back(
-                impl::gui_rules_cache::gui_time_pair2_button{
-                    std::make_pair(
-                        gui::gui_cache<gui_time_pair_t>{
-                            "开始时间"s,
-                            std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
-                                                                         time_du_cache{}},
-                                           gui::gui_cache<time_du_cache>{"时分秒"s,
-                                                                         time_du_cache{}})},
-                        gui::gui_cache<gui_time_pair_t>{
-                            "结束时间"s,
-                            std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
-                                                                         time_du_cache{}},
-                                           gui::gui_cache<time_du_cache>{"时分秒"s,
-                                                                         time_du_cache{}})})});
+            l_list.emplace_back(std::make_pair(
+                gui::gui_cache<gui_time_pair_t>{
+                    "开始时间"s,
+                    std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
+                                                                 time_du_cache{}},
+                                   gui::gui_cache<time_du_cache>{"时分秒"s,
+                                                                 time_du_cache{}})},
+                gui::gui_cache<gui_time_pair_t>{
+                    "结束时间"s,
+                    std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
+                                                                 time_du_cache{}},
+                                   gui::gui_cache<time_du_cache>{"时分秒"s,
+                                                                 time_du_cache{}})}));
           }
 
           for (auto l_i = l_list.begin(); l_i != l_list.end();) {
@@ -354,6 +353,10 @@ class time_sequencer_widget::impl {
   std::size_t index_begin_{0};
   std::size_t index_end_{0};
   std::size_t index_view_end{0};
+
+  std::int32_t drag_point_begin{0};
+  std::int32_t drag_point_end{0};
+
   boost::signals2::scoped_connection l_select_conn{};
 
   gui_cache<gui_rules_cache> rules_cache{"计算规则", rules_};
@@ -566,8 +569,15 @@ class time_sequencer_widget::impl {
     ranges::for_each(time_list | ranges::views::filter([](const point_cache& in) -> bool {
                        return in.handle_.valid() && in.handle_.any_of<database>();
                      }),
-                     [](const point_cache& in) {
+                     [&](const point_cache& in) {
                        in.handle_.replace<time_point_wrap>(in.time_point_);
+                       if (auto l_info = work_clock_.get_extra_work_info(in.time_point_); l_info) {
+                         in.handle_.get_or_emplace<comment>().p_comment += *l_info;
+                       }
+                       if (auto l_info = work_clock_.get_extra_rest_info(in.time_point_); l_info) {
+                         in.handle_.get_or_emplace<comment>().p_comment += *l_info;
+                       }
+
                        database::save(in.handle_);
                      });
   }
@@ -666,14 +676,11 @@ void time_sequencer_widget::update(
 
     // 绘制可调整点
     {
-      auto l_linm = ImPlot::GetPlotLimits().X;
-      std::double_t l_current_{};
       if (ImPlot::IsPlotHovered()) {
-        auto l_point = ImPlot::GetPlotMousePos();
-        l_current_   = l_point.x;
+        auto l_point                                         = ImPlot::GetPlotMousePos();
+        std::tie(p_i->drag_point_begin, p_i->drag_point_end) = p_i->get_iter_DragPoint(l_point.x);
       }
-      auto [l_begin, l_end] = p_i->get_iter_DragPoint(l_current_);
-      for (int l_i = l_begin; l_i < l_end; ++l_i) {
+      for (int l_i = p_i->drag_point_begin; l_i < p_i->drag_point_end; ++l_i) {
         std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
                                     p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
                                     .time_since_epoch()
