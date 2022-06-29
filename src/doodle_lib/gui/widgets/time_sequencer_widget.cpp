@@ -680,7 +680,9 @@ void time_sequencer_widget::update(
         auto l_point                                         = ImPlot::GetPlotMousePos();
         std::tie(p_i->drag_point_begin, p_i->drag_point_end) = p_i->get_iter_DragPoint(l_point.x);
       }
-      for (int l_i = p_i->drag_point_begin; l_i < p_i->drag_point_end; ++l_i) {
+      for (int l_i = std::max(p_i->drag_point_begin, 0);
+           l_i < std::min(p_i->drag_point_end, (std::int32_t)p_i->time_list.size());
+           ++l_i) {
         std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
                                     p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
                                     .time_since_epoch()
