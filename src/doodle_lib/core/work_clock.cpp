@@ -6,6 +6,8 @@
 #include <date/tz.h>
 #include <boost/contract.hpp>
 
+#include <doodle_core/metadata/comment.h>
+
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
 #include <boost/icl/interval_map.hpp>
@@ -120,6 +122,28 @@ std::vector<std::pair<work_clock::time_d_t, work_clock::time_d_t>> work_clock::g
 
 std::string work_clock::debug_print() {
   return fmt::format("规则 {} \n时间段 {}", rules_.debug_print(), interval_set_time_);
+}
+std::optional<std::string> work_clock::get_extra_rest_info(const time_point_wrap& in_time) {
+  auto l_local = in_time.zoned_time_.get_local_time();
+  auto l_it    = ranges::find_if(this->rules_.extra_rest, [&](const decltype(this->rules_.extra_rest)::value_type& in_type) -> bool {
+    return in_type.first > l_local && in_type.second < l_local;
+  });
+  if (l_it != this->rules_.extra_rest.end()) {
+    return l_it->info;
+  } else {
+    return {};
+  }
+}
+std::optional<std::string> work_clock::get_extra_work_info(const time_point_wrap& in_time) {
+  auto l_local = in_time.zoned_time_.get_local_time();
+  auto l_it    = ranges::find_if(this->rules_.extra_work, [&](const decltype(this->rules_.extra_work)::value_type& in_type) -> bool {
+    return in_type.first > l_local && in_type.second < l_local;
+  });
+  if (l_it != this->rules_.extra_rest.end()) {
+    return l_it->info;
+  } else {
+    return {};
+  }
 }
 }  // namespace business
 namespace detail {

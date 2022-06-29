@@ -133,6 +133,9 @@ class DOODLELIB_API work_clock {
                        doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
 
+  std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& in_time);
+  std::optional<std::string> get_extra_work_info(const doodle::time_point_wrap& in_time);
+
   std::string debug_print();
 };
 }  // namespace business
@@ -181,9 +184,7 @@ template <>
 struct formatter<::doodle::business::rules::time_pair_info> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const ::doodle::business::rules::time_pair_info& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    return formatter<std::string>::format(
-        fmt::format("{} {} {}", in_.info, in_.first, in_.second),
-        ctx);
+    return format_to(ctx.out(), "{} {} {}", in_.info, in_.first, in_.second);
   }
 };
 }  // namespace fmt
