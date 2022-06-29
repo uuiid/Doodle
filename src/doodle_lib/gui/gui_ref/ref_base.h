@@ -309,7 +309,7 @@ class gui_cache : public BaseType {
   T &operator()() {
     return data;
   }
-  T &operator()() const {
+  const T &operator()() const {
     return data;
   }
 
