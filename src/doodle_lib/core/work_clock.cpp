@@ -126,7 +126,7 @@ std::string work_clock::debug_print() {
 std::optional<std::string> work_clock::get_extra_rest_info(const time_point_wrap& in_time) {
   auto l_local = in_time.zoned_time_.get_local_time();
   auto l_it    = ranges::find_if(this->rules_.extra_rest, [&](const decltype(this->rules_.extra_rest)::value_type& in_type) -> bool {
-    return in_type.first > l_local && in_type.second < l_local;
+    return in_type.first < l_local && l_local < in_type.second;
   });
   if (l_it != this->rules_.extra_rest.end()) {
     return l_it->info;
@@ -137,9 +137,9 @@ std::optional<std::string> work_clock::get_extra_rest_info(const time_point_wrap
 std::optional<std::string> work_clock::get_extra_work_info(const time_point_wrap& in_time) {
   auto l_local = in_time.zoned_time_.get_local_time();
   auto l_it    = ranges::find_if(this->rules_.extra_work, [&](const decltype(this->rules_.extra_work)::value_type& in_type) -> bool {
-    return in_type.first > l_local && in_type.second < l_local;
+    return in_type.first < l_local && l_local < in_type.second;
   });
-  if (l_it != this->rules_.extra_rest.end()) {
+  if (l_it != this->rules_.extra_work.end()) {
     return l_it->info;
   } else {
     return {};
