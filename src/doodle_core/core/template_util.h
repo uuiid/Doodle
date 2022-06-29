@@ -40,7 +40,7 @@ namespace doodle::conv{
 template <typename T>
 class form_to{
   template <typename Form_T>
-  T operator(const Form_T& in){
+  T operator()(const Form_T& in){
     return T{in};
   }
 };
