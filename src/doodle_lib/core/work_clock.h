@@ -26,10 +26,13 @@ namespace business {
  */
 class DOODLELIB_API rules {
  public:
-  struct time_pair_info {
-    chrono::local_time_pos first;
-    chrono::local_time_pos second;
-    std::string info;
+  struct time_pair_info : public std::pair<chrono::local_time_pos, chrono::local_time_pos> {
+    using base_type = std::pair<chrono::local_time_pos, chrono::local_time_pos>;
+    std::string info{};
+    using base_type::base_type;
+    explicit time_pair_info(std::string in_info) : info(std::move(in_info)), base_type() {}
+    explicit time_pair_info(std::string in_info, base_type in_base) : info(std::move(in_info)), base_type(std::move(in_base)) {}
+    time_pair_info() = default;
   };
 
  public:
