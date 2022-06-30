@@ -13,6 +13,8 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MComputation.h>
 #include <maya/MFnMesh.h>
+#include <maya/MDGModifier.h>
+#include <maya/MFnIkJoint.h>
 
 namespace doodle::maya_plug {
 
@@ -157,6 +159,11 @@ class dem_bones_comm::impl {
 
   MSelectionList select_list;
   MObject mesh_obj;
+
+  MDGModifier dg_modidier;
+
+  std::vector<MObject> joins{};
+
   void init() {
     MStatus k_s;
     MItSelectionList l_it{select_list, MFn::Type::kMesh, &k_s};
@@ -252,7 +259,7 @@ class dem_bones_comm::impl {
                    globalBindMatrices_p,
                    localBindPoseRotation_p,
                    localBindPoseTranslation_p,
-                   false);
+                   true);
   }
 };
 
@@ -384,12 +391,45 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
   p_i->set_parm();
-
+  p_i->init();
+  p_i->anm_compute();
+  create_joins();
+  create_anm_curve();
+  create_skin();
+  add_widget();
   return MStatus::kSuccess;
 }
 void dem_bones_comm::create_joins() {
+  for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
+    MObject jointObject = p_i->dg_modidier.createNode("joint");
+    p_i->dg_modidier.doIt();
+    MFnIkJoint joint{jointObject};
+    joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
+    p_i->joins.push_back(jointObject);
+  }
 }
 void dem_bones_comm::create_anm_curve() {
+  MFnAnimCurve aim;
+  MFnIkJoint joint{};
+  for (auto &&i:p_i->joins)
+  {
+    joint.setObject(i);
+    MPlug plugtx = joint.findPlug("tx");
+    MPlug plugty = joint.findPlug("ty");
+    MPlug plugtz = joint.findPlug("tz");
+    MPlug plugrx = joint.findPlug("rx");
+    MPlug plugry = joint.findPlug("ry");
+    MPlug plugrz = joint.findPlug("rz");
+    //平移曲线
+    MObject aimTX = aim.create(plugtx, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+    MObject aimTY = aim.create(plugty, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+    MObject aimTZ = aim.create(plugtz, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+    //旋转曲线
+    MObject aimRX = aim.create(plugrx, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
+    MObject aimRY = aim.create(plugry, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
+    MObject aimRZ = aim.create(plugrz, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
+
+  }
 }
 void dem_bones_comm::create_skin() {
 }
