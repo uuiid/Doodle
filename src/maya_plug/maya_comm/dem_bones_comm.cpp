@@ -133,40 +133,107 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
   MArgDatabase k_prase{syntax(), in_arg};
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::startFrame_f, &k_s)) {
+    DOODLE_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::startFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->startFrame_p = l_value.value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::endFrame_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MTime l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::endFrame_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->endFrame_p = l_value.value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::bindFrame_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MTime l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::bindFrame_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->bindFrame_p = l_value.value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nBones_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nBones_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nBones_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nInitIters_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nInitIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nIters_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nIters_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nTransIters_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nTransIters_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nTransIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::isBindUpdate_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::isBindUpdate_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->isBindUpdate_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::transAffine_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::double_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::transAffine_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->transAffine_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::transAffineNorm_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::double_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::transAffineNorm_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->transAffineNorm_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nWeightsIters_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nWeightsIters_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nWeightsIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nonZeroWeightsNum_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::uint32_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nonZeroWeightsNum_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->nonZeroWeightsNum_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::weightsSmooth_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::double_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::weightsSmooth_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->weightsSmooth_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::weightsSmoothStep_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    std::double_t l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::weightsSmoothStep_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->weightsSmoothStep_p = l_value;
   }
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
+  p_i->set_parm();
   return TemplateAction::doIt(in_arg);
 }
 
