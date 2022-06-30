@@ -3,9 +3,39 @@
 //
 
 #include "dem_bones_comm.h"
+#include <DemBones/DemBonesExt.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MTime.h>
 
-#include <maya/MArgParser.h>
 namespace doodle::maya_plug {
+
+class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::float_t> {
+ public:
+  dem_bones_ex()  = default;
+  ~dem_bones_ex() = default;
+  // 初始化中每次分割骨簇之前调用回调函数。
+  void cbInitSplitBegin() override{};
+  // 初始化中每次对骨簇进行分割后都会调用回调函数
+  void cbInitSplitEnd() override{};
+  // 在每次全局迭代更新之前调用回调函数
+  void cbIterBegin() override{};
+  // 在每次全局迭代更新后调用回调函数，如果返回true，则停止迭代。
+  bool cbIterEnd() override { return false; };
+  // 在每个外观权重更新之前调用的回调函数
+  void cbWeightsBegin() override{};
+  // 每次蒙皮权重更新后调用的回调函数
+  void cbWeightsEnd() override{};
+  // 在每次骨骼转换更新之前调用的回调函数
+  void cbTranformationsBegin() override{};
+  // 每次骨骼转换更新后调用的回调函数
+  void cbTransformationsEnd() override{};
+
+  // 每个局部骨骼转换更新迭代后调用的回调函数，如果返回true，则停止迭代
+  void cbWeightsIterBegin() override{};
+  //	在每个局部权重更新迭代后调用的回调函数，如果返回true，则停止迭代。
+  bool cbWeightsIterEnd() override { return false; };
+};
+
 namespace dem_bones_comm_ns {
 
 constexpr char startFrame_f[]         = "sf";
@@ -45,7 +75,7 @@ MSyntax syntax() {
   syntax.addFlag(nInitIters_f, nInitIters_lf, MSyntax::kUnsigned);
   syntax.addFlag(nIters_f, nIters_lf, MSyntax::kUnsigned);
   syntax.addFlag(nTransIters_f, nTransIters_lf, MSyntax::kUnsigned);
-  syntax.addFlag(isBindUpdate_f, isBindUpdate_lf, MSyntax::kBoolean);
+  syntax.addFlag(isBindUpdate_f, isBindUpdate_lf, MSyntax::kUnsigned);
   syntax.addFlag(transAffine_f, transAffine_lf, MSyntax::kDouble);
   syntax.addFlag(transAffineNorm_f, transAffineNorm_lf, MSyntax::kDouble);
   syntax.addFlag(nWeightsIters_f, nWeightsIters_lf, MSyntax::kUnsigned);
@@ -57,29 +87,56 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  std::int32_t startFrame_p;
-  std::int32_t endFrame_p;
-  std::int32_t bindFrame_p;
-  std::int32_t nBones_p;
-  std::int32_t nInitIters_p;
-  std::int32_t nIters_p;
-  std::int32_t nTransIters_p;
-  std::int32_t isBindUpdate_p;
-  std::double_t transAffine_p;
-  std::double_t transAffineNorm_p;
-  std::int32_t nWeightsIters_p;
-  std::int32_t nonZeroWeightsNum_p;
-  std::double_t weightsSmooth_p;
-  std::double_t weightsSmoothStep_p;
+  dem_bones_ex dem;
+  void set_parm() {
+    dem.nB                = nBones_p;
+    dem.nIters            = nIters_p;
+    dem.nTransIters       = nTransIters_p;
+    dem.nWeightsIters     = nWeightsIters_p;
+    dem.bindUpdate        = isBindUpdate_p;
+    dem.transAffine       = transAffine_p;
+    dem.transAffineNorm   = transAffineNorm_p;
+    dem.nnz               = nonZeroWeightsNum_p;
+    dem.weightsSmooth     = weightsSmooth_p;
+    dem.weightsSmoothStep = weightsSmoothStep_p;
+
+    dem.nS                = 1;
+    /// \brief 开始帧结束帧
+    dem.fStart[0]         = startFrame_p;
+    dem.fStart[1]         = endFrame_p;
+    /// \brief 总帧数
+    dem.nF                = endFrame_p - startFrame_p;
+
+    dem.nInitIters        = nInitIters_p;
+  }
+
+  std::int32_t startFrame_p{0};
+  std::int32_t endFrame_p{120};
+  std::int32_t bindFrame_p{0};
+  std::int32_t nBones_p{1};
+  std::int32_t nInitIters_p{10};
+  std::int32_t nIters_p{30};
+  std::int32_t nTransIters_p{1};
+  std::int32_t isBindUpdate_p{};
+  std::double_t transAffine_p{10};
+  std::double_t transAffineNorm_p{4};
+  std::int32_t nWeightsIters_p{3};
+  std::int32_t nonZeroWeightsNum_p{8};
+  std::double_t weightsSmooth_p{1e-4};
+  std::double_t weightsSmoothStep_p{1};
 };
 dem_bones_comm::dem_bones_comm()
     : p_i(std::make_unique<impl>()) {
 }
 void dem_bones_comm::get_arg(const MArgList& in_arg) {
   MStatus k_s;
-  MArgParser k_prase{syntax(), in_arg};
+  MArgDatabase k_prase{syntax(), in_arg};
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::startFrame_f, &k_s)) {
+    MTime l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::startFrame_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->startFrame_p = l_value.value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::endFrame_f, &k_s)) {
   }
