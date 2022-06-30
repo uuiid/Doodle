@@ -1,0 +1,11 @@
+//
+// Created by TD on 2022/6/30.
+//
+
+#ifndef DOODLE_SRC_MAYA_PLUG_MAYA_COMM_DEM_BONES_COMM_H_
+#define DOODLE_SRC_MAYA_PLUG_MAYA_COMM_DEM_BONES_COMM_H_
+
+class dem_bones_comm {
+};
+
+#endif  // DOODLE_SRC_MAYA_PLUG_MAYA_COMM_DEM_BONES_COMM_H_

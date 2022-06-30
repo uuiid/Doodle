@@ -71,7 +71,8 @@ set(doodle_maya_plug_cpp
         data/maya_call_guard.cpp
         maya_comm/upload_files_command.h
         maya_comm/upload_files_command.cpp
-
+        maya_comm/dem_bones_comm.h
+        maya_comm/dem_bones_comm.cpp
         )
 
 if (DEFINED Maya_Version)
