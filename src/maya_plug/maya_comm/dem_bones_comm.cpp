@@ -204,9 +204,9 @@ class dem_bones_comm::impl {
       DOODLE_CHICK(k_s);
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       MItMeshVertex vexpoint{mesh_obj, &k_s};
+      DOODLE_CHICK(k_s);
       {  /// \brief 设置顶点
         dem.fTime(i) = i;
-        DOODLE_CHICK(k_s);
 
         for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
           auto l_index = vexpoint.index();
@@ -232,7 +232,9 @@ class dem_bones_comm::impl {
           std::vector<int> mindex{};
           mindex.resize(vexIndexArray.length());
           vexIndexArray.get(mindex.data());
-
+          //          for (unsigned int vexindex = 0; vexindex < vexIndexArray.length(); vexindex++) {
+          //            mindex.push_back(vexIndexArray[vexindex]);
+          //          }
           dem.fv[index] = mindex;
         }
       }
