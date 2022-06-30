@@ -118,12 +118,12 @@ class dem_bones_comm::impl {
     dem.weightsSmoothStep = weightsSmoothStep_p;
 
     dem.nS                = 1;
+    dem.nF                = endFrame_p - startFrame_p;
     /// \brief 开始帧结束帧
     dem.fStart.resize(2);
-    dem.fStart[0]  = startFrame_p;
-    dem.fStart[1]  = endFrame_p;
+    dem.fStart[0]  = 0;
+    dem.fStart[1]  = dem.fStart[0] + dem.nF;
     /// \brief 总帧数
-    dem.nF         = endFrame_p;
 
     dem.nInitIters = nInitIters_p;
   }
@@ -220,7 +220,7 @@ class dem_bones_comm::impl {
         for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
           int index  = vexpoint.index();
           MPoint pos = vexpoint.position(MSpace::kWorld);
-          dem.u.col(i).segment(0, 3) << pos.x, pos.y, pos.z;
+          dem.u.col(index).segment(0, 3) << pos.x, pos.y, pos.z;
         }
         // 获得相对于polygon obj的顶点
         MItMeshPolygon polyIter{mesh_obj};
@@ -276,7 +276,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::startFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->startFrame_p = l_value.value();
-  }else{
+  } else {
     p_i->startFrame_p = MAnimControl::minTime().value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::endFrame_f, &k_s)) {
@@ -285,7 +285,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::endFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->endFrame_p = l_value.value();
-  }else{
+  } else {
     p_i->endFrame_p = MAnimControl::maxTime().value();
   }
 
@@ -415,24 +415,22 @@ void dem_bones_comm::create_joins() {
 void dem_bones_comm::create_anm_curve() {
   MFnAnimCurve aim;
   MFnIkJoint joint{};
-  for (auto &&i:p_i->joins)
-  {
+  for (auto&& i : p_i->joins) {
     joint.setObject(i);
-    MPlug plugtx = joint.findPlug("tx");
-    MPlug plugty = joint.findPlug("ty");
-    MPlug plugtz = joint.findPlug("tz");
-    MPlug plugrx = joint.findPlug("rx");
-    MPlug plugry = joint.findPlug("ry");
-    MPlug plugrz = joint.findPlug("rz");
-    //平移曲线
+    MPlug plugtx  = joint.findPlug("tx");
+    MPlug plugty  = joint.findPlug("ty");
+    MPlug plugtz  = joint.findPlug("tz");
+    MPlug plugrx  = joint.findPlug("rx");
+    MPlug plugry  = joint.findPlug("ry");
+    MPlug plugrz  = joint.findPlug("rz");
+    // 平移曲线
     MObject aimTX = aim.create(plugtx, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
     MObject aimTY = aim.create(plugty, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
     MObject aimTZ = aim.create(plugtz, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
-    //旋转曲线
+    // 旋转曲线
     MObject aimRX = aim.create(plugrx, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
     MObject aimRY = aim.create(plugry, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
     MObject aimRZ = aim.create(plugrz, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
-
   }
 }
 void dem_bones_comm::create_skin() {
