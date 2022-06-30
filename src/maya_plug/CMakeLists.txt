@@ -84,6 +84,7 @@ if (DEFINED Maya_Version)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
     find_package(Qt5 COMPONENTS Core Widgets REQUIRED
             HINTS ${MAYA_DEFAULT_LOCATION})
+    find_package(dem-bones CONFIG REQUIRED)
 
 
     if (TARGET maya::maya_all)
@@ -101,7 +102,13 @@ if (DEFINED Maya_Version)
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 )
-        target_link_libraries(doodle_maya PRIVATE doodle_lib maya::maya_all Qt5::Core Qt5::Widgets)
+        target_link_libraries(doodle_maya PRIVATE doodle_lib
+                maya::maya_all
+                Qt5::Core
+                Qt5::Widgets
+                DemBones::dem-bones
+                Eigen3::Eigen
+                )
         target_include_directories(doodle_maya PUBLIC ../doodle_exe)
         #设置maya插件后缀名
         set_target_properties(
@@ -128,6 +135,11 @@ if (DEFINED Maya_Version)
         install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
                 DESTINATION maya/scripts/scripts/
                 COMPONENT maya_plug_com)
+
+
+
+
+
     endif ()
 
 endif ()

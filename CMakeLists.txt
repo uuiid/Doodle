@@ -153,4 +153,8 @@ sqlpp11[sqlite3-connector] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\port
     find_package(Simbody CONFIG REQUIRED)
     # note: 1 targets were omitted.
     target_link_libraries(main PRIVATE blas lapack SimTKmath SimTKcommon)
+
+        find_package(dem-bones CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE DemBones::dem-bones)
+
 ]==]
