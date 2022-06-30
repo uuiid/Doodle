@@ -64,6 +64,7 @@ find_package(EnTT CONFIG REQUIRED)
 find_package(Sqlpp11 CONFIG REQUIRED
         COMPONENTS
         sqlite3)
+find_package(Eigen3 CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 # this is heuristically generated, and may not be correct
 find_package(implot CONFIG REQUIRED)
