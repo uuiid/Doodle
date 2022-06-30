@@ -24,12 +24,12 @@ install(TARGETS ${PROJECT_NAME}
         )
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/cmake
         )
 
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}TargetsVersion.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}"
         COMPATIBILITY AnyNewerVersion
 )
@@ -39,13 +39,14 @@ install(EXPORT ${PROJECT_NAME}Targets
         NAMESPACE DemBones::
         )
 install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}TargetsVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/cmake
         )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-export(EXPORT ${PROJECT_NAME}Targets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
-        )
+# export(EXPORT ${PROJECT_NAME}Targets
+# FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+# )
+export(PACKAGE ${PROJECT_NAME})
