@@ -13,7 +13,7 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MComputation.h>
 #include <maya/MFnMesh.h>
-#include <maya/MDGModifier.h>
+#include <maya/MDagModifier.h>
 #include <maya/MFnIkJoint.h>
 
 namespace doodle::maya_plug {
@@ -160,7 +160,7 @@ class dem_bones_comm::impl {
   MSelectionList select_list;
   MObject mesh_obj;
 
-  MDGModifier dg_modidier;
+  MDagModifier dg_modidier;
 
   std::vector<MObject> joins{};
 
@@ -200,7 +200,7 @@ class dem_bones_comm::impl {
     DOODLE_CHICK(k_s);
 
     for (auto i = startFrame_p; i < endFrame_p; ++i) {
-      k_s = MAnimControl::setCurrentTime(MTime{(std::double_t)i, MTime::uiUnit()});
+      k_s = MGlobal::viewFrame((std::double_t)i);
       DOODLE_CHICK(k_s);
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       MItMeshVertex vexpoint{mesh_obj, &k_s};
@@ -405,11 +405,10 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
 }
 void dem_bones_comm::create_joins() {
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-    MObject jointObject = p_i->dg_modidier.createNode("joint");
-    p_i->dg_modidier.doIt();
-    MFnIkJoint joint{jointObject};
+    MFnIkJoint joint{};
+    joint.create();
     joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
-    p_i->joins.push_back(jointObject);
+    p_i->joins.push_back(joint.object());
   }
 }
 void dem_bones_comm::create_anm_curve() {
@@ -432,6 +431,7 @@ void dem_bones_comm::create_anm_curve() {
     MObject aimRY = aim.create(plugry, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
     MObject aimRZ = aim.create(plugrz, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
   }
+  p_i->dg_modidier.doIt();
 }
 void dem_bones_comm::create_skin() {
 }
