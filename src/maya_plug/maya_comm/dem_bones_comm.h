@@ -23,6 +23,10 @@ class dem_bones_comm : public doodle::TemplateAction<
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);
 
+  void create_joins();
+  void create_anm_curve();
+  void create_skin();
+  void add_widget();
  public:
 
   dem_bones_comm();

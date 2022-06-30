@@ -11,6 +11,7 @@
 #include <maya/MAnimControl.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItMeshPolygon.h>
+#include <maya/MComputation.h>
 #include <maya/MFnMesh.h>
 
 namespace doodle::maya_plug {
@@ -140,6 +141,20 @@ class dem_bones_comm::impl {
   std::double_t weightsSmooth_p{1e-4};
   std::double_t weightsSmoothStep_p{1};
 
+  /// \brief 输出结果
+  // 蒙皮权重
+  Eigen::MatrixXd bindWeights_p;
+  // 参考输出
+  Eigen::MatrixXd localRotation_p;
+  // 参考转换
+  Eigen::MatrixXd localTranslation_p;
+  // 全局绑定矩阵输出
+  Eigen::MatrixXd globalBindMatrices_p;
+  // 本地旋转绑定pose
+  Eigen::MatrixXd localBindPoseRotation_p;
+  // 本地输出平移pose
+  Eigen::MatrixXd localBindPoseTranslation_p;
+
   MSelectionList select_list;
   MObject mesh_obj;
   void init() {
@@ -163,6 +178,13 @@ class dem_bones_comm::impl {
       DOODLE_CHICK(k_s);
       dem.subjectID.resize(dem.nF);
       dem.u.resize(dem.nS * 3, dem.nV);
+
+      // 添加子物体的索引
+      for (int s = 0; s < dem.nS; s++) {
+        for (int k = dem.fStart(s); k < dem.fStart(s + 1); k++) {
+          dem.subjectID(k) = s;
+        }
+      }
     }
 
     MFnDagNode l_dag_node{mesh_obj, &k_s};
@@ -208,6 +230,29 @@ class dem_bones_comm::impl {
         }
       }
     }
+  }
+
+  void anm_compute() {
+    MComputation computtation;
+    computtation.beginComputation();
+
+    DOODLE_LOG_INFO("开始计算分布骨骼......请等待");
+    dem.init();
+    if (computtation.isInterruptRequested()) {
+      return;
+    }
+
+    DOODLE_LOG_INFO("开始计算权重......请等待");
+    dem.compute();
+    computtation.endComputation();
+
+    dem.computeRTB(0,
+                   localRotation_p,
+                   localTranslation_p,
+                   globalBindMatrices_p,
+                   localBindPoseRotation_p,
+                   localBindPoseTranslation_p,
+                   false);
   }
 };
 
@@ -341,6 +386,14 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   p_i->set_parm();
 
   return MStatus::kSuccess;
+}
+void dem_bones_comm::create_joins() {
+}
+void dem_bones_comm::create_anm_curve() {
+}
+void dem_bones_comm::create_skin() {
+}
+void dem_bones_comm::add_widget() {
 }
 
 dem_bones_comm::~dem_bones_comm() = default;
