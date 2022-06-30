@@ -6,10 +6,16 @@
 #include <DemBones/DemBonesExt.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MTime.h>
+#include <maya/MSelectionList.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MAnimControl.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MFnMesh.h>
 
 namespace doodle::maya_plug {
 
-class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::float_t> {
+class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::double_t> {
  public:
   dem_bones_ex()  = default;
   ~dem_bones_ex() = default;
@@ -68,6 +74,7 @@ constexpr char weightsSmoothStep_f[]  = "wss";
 constexpr char weightsSmoothStep_lf[] = "weightsSmoothStep";
 MSyntax syntax() {
   MSyntax syntax{};
+  /// \brief 解算参数
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
   syntax.addFlag(endFrame_f, endFrame_lf, MSyntax::kTime);
   syntax.addFlag(bindFrame_f, bindFrame_lf, MSyntax::kTime);
@@ -82,6 +89,13 @@ MSyntax syntax() {
   syntax.addFlag(nonZeroWeightsNum_f, nonZeroWeightsNum_lf, MSyntax::kUnsigned);
   syntax.addFlag(weightsSmooth_f, weightsSmooth_lf, MSyntax::kDouble);
   syntax.addFlag(weightsSmoothStep_f, weightsSmoothStep_lf, MSyntax::kDouble);
+
+  /// \brief 选中的物体
+  syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList, 1);
+
+  syntax.enableEdit(false);
+  syntax.enableQuery(false);
+
   return syntax;
 }
 }  // namespace dem_bones_comm_ns
@@ -102,12 +116,13 @@ class dem_bones_comm::impl {
 
     dem.nS                = 1;
     /// \brief 开始帧结束帧
-    dem.fStart[0]         = startFrame_p;
-    dem.fStart[1]         = endFrame_p;
+    dem.fStart.resize(2);
+    dem.fStart[0]  = startFrame_p;
+    dem.fStart[1]  = endFrame_p;
     /// \brief 总帧数
-    dem.nF                = endFrame_p - startFrame_p;
+    dem.nF         = endFrame_p - startFrame_p;
 
-    dem.nInitIters        = nInitIters_p;
+    dem.nInitIters = nInitIters_p;
   }
 
   std::int32_t startFrame_p{0};
@@ -124,7 +139,78 @@ class dem_bones_comm::impl {
   std::int32_t nonZeroWeightsNum_p{8};
   std::double_t weightsSmooth_p{1e-4};
   std::double_t weightsSmoothStep_p{1};
+
+  MSelectionList select_list;
+  MObject mesh_obj;
+  void init() {
+    MStatus k_s;
+    MItSelectionList l_it{select_list, MFn::Type::kMesh, &k_s};
+    DOODLE_CHICK(k_s);
+    for (; !l_it.isDone(&k_s); l_it.next()) {
+      k_s = l_it.getDependNode(mesh_obj);
+      DOODLE_CHICK(k_s);
+    }
+
+    MFnMesh l_mesh{mesh_obj, &k_s};
+    DOODLE_CHICK(k_s);
+
+    {  /// \brief 设置一些属性并且扩展数组大小
+      dem.nV = l_mesh.numVertices(&k_s);
+      DOODLE_CHICK(k_s);
+      dem.v.resize(3 * dem.nF, dem.nV);
+      dem.fTime.resize(dem.nF);
+      dem.fv.resize(l_mesh.numPolygons(&k_s));
+      DOODLE_CHICK(k_s);
+      dem.subjectID.resize(dem.nF);
+      dem.u.resize(dem.nS * 3, dem.nV);
+    }
+
+    MFnDagNode l_dag_node{mesh_obj, &k_s};
+    DOODLE_CHICK(k_s);
+    auto l_mesh_name = l_dag_node.name(&k_s);
+    DOODLE_CHICK(k_s);
+
+    for (auto i = startFrame_p; i < endFrame_p; ++i) {
+      k_s = MAnimControl::setCurrentTime(MTime{(std::double_t)i, MTime::uiUnit()});
+      DOODLE_CHICK(k_s);
+      DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
+      MItMeshVertex vexpoint{mesh_obj, &k_s};
+      {  /// \brief 设置顶点
+        dem.fTime(i) = i;
+        DOODLE_CHICK(k_s);
+
+        for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
+          auto l_index = vexpoint.index();
+          auto l_point = vexpoint.position(MSpace::kWorld);
+          dem.v.col(l_index).segment(3 * i, 3) << l_point.x, l_point.y, l_point.z;
+        }
+      }
+      if (i == bindFrame_p) {  /// \brief 设置绑定帧
+        DOODLE_LOG_INFO("获取绑定{} 帧 网格 {} 的数据", i, l_mesh_name);
+        // 设置多边形拓扑网格;
+        for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
+          int index  = vexpoint.index();
+          MPoint pos = vexpoint.position(MSpace::kWorld);
+          dem.u.col(i).segment(0, 3) << pos.x, pos.y, pos.z;
+        }
+        // 获得相对于polygon obj的顶点
+        MItMeshPolygon polyIter{mesh_obj};
+        for (polyIter.reset(); !polyIter.isDone(); polyIter.next()) {
+          int index = polyIter.index();
+          MIntArray vexIndexArray;
+          polyIter.getVertices(vexIndexArray);
+
+          std::vector<int> mindex{};
+          mindex.resize(vexIndexArray.length());
+          vexIndexArray.get(mindex.data());
+
+          dem.fv[index] = mindex;
+        }
+      }
+    }
+  }
 };
+
 dem_bones_comm::dem_bones_comm()
     : p_i(std::make_unique<impl>()) {
 }
@@ -146,6 +232,11 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     p_i->endFrame_p = l_value.value();
   }
+
+  chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
+                           DOODLE_LOC, "开始帧 {} 大于结束帧 {}",
+                           p_i->startFrame_p, p_i->endFrame_p);
+
   if (k_prase.isFlagSet(dem_bones_comm_ns::bindFrame_f, &k_s)) {
     DOODLE_CHICK(k_s);
     MTime l_value{};
@@ -153,6 +244,12 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     p_i->bindFrame_p = l_value.value();
   }
+  chick_true<doodle_error>(p_i->startFrame_p <= p_i->bindFrame_p &&
+                               p_i->bindFrame_p < p_i->endFrame_p,
+                           DOODLE_LOC, "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内",
+                           p_i->bindFrame_p,
+                           p_i->startFrame_p,
+                           p_i->endFrame_p);
   if (k_prase.isFlagSet(dem_bones_comm_ns::nBones_f, &k_s)) {
     DOODLE_CHICK(k_s);
     std::uint32_t l_value{};
@@ -160,6 +257,10 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     p_i->nBones_p = l_value;
   }
+
+  chick_true<doodle_error>(p_i->nBones_p > 0,
+                           DOODLE_LOC, "骨骼数小于零 {}", p_i->nBones_p);
+
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
     DOODLE_CHICK(k_s);
     std::uint32_t l_value{};
@@ -230,11 +331,16 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     p_i->weightsSmoothStep_p = l_value;
   }
+
+  k_s = k_prase.getObjects(p_i->select_list);
+  DOODLE_CHICK(k_s);
+  chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
   p_i->set_parm();
-  return TemplateAction::doIt(in_arg);
+
+  return MStatus::kSuccess;
 }
 
 dem_bones_comm::~dem_bones_comm() = default;

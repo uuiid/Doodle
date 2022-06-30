@@ -24,6 +24,7 @@ class dem_bones_comm : public doodle::TemplateAction<
   void get_arg(const MArgList& in_arg);
 
  public:
+
   dem_bones_comm();
   ~dem_bones_comm() override;
   MStatus doIt(const MArgList& in_arg) override;
