@@ -17,7 +17,7 @@ vcpkg_cmake_install()
 if(EXISTS "${CURRENT_PACKAGES_DIR}/cmake")
     vcpkg_cmake_config_fixup(CONFIG_PATH cmake)
 else()
-    vcpkg_cmake_config_fixup(CONFIG_PATH lib/dem_bones/cmake)
+    vcpkg_cmake_config_fixup(CONFIG_PATH lib/dem-bones/cmake)
 endif()
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug" "${CURRENT_PACKAGES_DIR}/lib")
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(dem_bones
+project(dem-bones
         VERSION 1.2.1)
 
 add_library(${PROJECT_NAME} INTERFACE
