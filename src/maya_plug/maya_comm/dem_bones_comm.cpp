@@ -123,7 +123,7 @@ class dem_bones_comm::impl {
     dem.fStart[0]  = startFrame_p;
     dem.fStart[1]  = endFrame_p;
     /// \brief 总帧数
-    dem.nF         = endFrame_p - startFrame_p;
+    dem.nF         = endFrame_p;
 
     dem.nInitIters = nInitIters_p;
   }
@@ -132,16 +132,16 @@ class dem_bones_comm::impl {
   std::int32_t endFrame_p{120};
   std::int32_t bindFrame_p{0};
   std::int32_t nBones_p{1};
-  std::int32_t nInitIters_p{10};
   std::int32_t nIters_p{30};
-  std::int32_t nTransIters_p{1};
-  std::int32_t isBindUpdate_p{};
+  std::int32_t nInitIters_p{10};
+  std::int32_t nTransIters_p{5};
   std::double_t transAffine_p{10};
   std::double_t transAffineNorm_p{4};
   std::int32_t nWeightsIters_p{3};
   std::int32_t nonZeroWeightsNum_p{8};
   std::double_t weightsSmooth_p{1e-4};
   std::double_t weightsSmoothStep_p{1};
+  std::int32_t isBindUpdate_p{0};
 
   /// \brief 输出结果
   // 蒙皮权重
@@ -276,6 +276,8 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::startFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->startFrame_p = l_value.value();
+  }else{
+    p_i->startFrame_p = MAnimControl::minTime().value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::endFrame_f, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -283,6 +285,8 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::endFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->endFrame_p = l_value.value();
+  }else{
+    p_i->endFrame_p = MAnimControl::maxTime().value();
   }
 
   chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
