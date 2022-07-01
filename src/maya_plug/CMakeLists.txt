@@ -73,6 +73,8 @@ set(doodle_maya_plug_cpp
         maya_comm/upload_files_command.cpp
         maya_comm/dem_bones_comm.h
         maya_comm/dem_bones_comm.cpp
+        maya_comm/dem_bones_comm.h
+        maya_comm/dem_bones_comm.cpp
         )
 
 if (DEFINED Maya_Version)
