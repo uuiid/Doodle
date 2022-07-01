@@ -48,7 +48,7 @@ class dem_bones_add_weight::impl {
       k_s = l_it.getDependNode(skin_mesh_obj);
       DOODLE_CHICK(k_s);
     }
-    chick_true<doodle_error>(!skin_mesh_obj.isNull() > 0, DOODLE_LOC, "未获得选中物体");
+    chick_true<doodle_error>(!skin_mesh_obj.isNull(), DOODLE_LOC, "未获得选中物体");
   }
   dem_bones_ex& dem;
   MSelectionList select_list;
