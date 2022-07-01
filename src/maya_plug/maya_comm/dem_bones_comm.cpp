@@ -503,20 +503,17 @@ void dem_bones_comm::create_skin() {
 
   k_s = MGlobal::setActiveSelectionList(l_select);
   DOODLE_CHICK(k_s);
-  k_s = MGlobal::executeCommand("SmoothBindSkin;", true, true);
+  MString l_skin_name{};
+  k_s = MGlobal::executeCommand("skinCluster;", l_skin_name, true, true);
   DOODLE_CHICK(k_s);
 
-  for (MItDependencyGraph l_it_dependency_graph{p_i->skin_mesh_obj,
-                                                MFn::kSkinClusterFilter,
-                                                MItDependencyGraph::kUpstream,
-                                                MItDependencyGraph::kDepthFirst,
-                                                MItDependencyGraph::kNodeLevel, nullptr};
-       !l_it_dependency_graph.isDone();
-       l_it_dependency_graph.next()) {
-    p_i->skin_obj = l_it_dependency_graph.currentItem(&k_s);
-    DOODLE_CHICK(k_s);
-    break;
-  }
+  k_s = l_select.clear();
+  DOODLE_CHICK(k_s);
+  k_s = l_select.add(l_skin_name);
+  DOODLE_CHICK(k_s);
+
+  k_s = l_select.getDependNode(0, p_i->skin_obj);
+  DOODLE_CHICK(k_s);
 };
 void dem_bones_comm::add_widget() {
   chick_true<doodle_error>(
@@ -530,7 +527,7 @@ void dem_bones_comm::add_widget() {
   MFnIkJoint l_fn_joint{};
   MDagPath l_path{};
 
-  std::map<std::int32_t, std::double_t> joins_index{};
+  std::map<std::int32_t, std::int32_t> joins_index{};
 
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     auto l_joint = p_i->joins[ibone];
