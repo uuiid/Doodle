@@ -170,6 +170,7 @@ class dem_bones_comm::impl {
   MObject mesh_obj;
   MObject skin_mesh_obj;
   MObject skin_obj;
+  MObject bind_post;
 
   MDagModifier dg_modidier;
 
@@ -416,11 +417,23 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   return MStatus::kSuccess;
 }
 void dem_bones_comm::create_joins() {
+  MStatus k_s{};
+  MFnDependencyNode l_bind_post{};
+  p_i->bind_post = l_bind_post.create("dagPose", &k_s);
+  DOODLE_CHICK(k_s);
+
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     MFnIkJoint joint{};
-    joint.create();
-    joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
-    p_i->joins.push_back(joint.object());
+    auto l_joint_obj = joint.create(MObject::kNullObj, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
+    DOODLE_CHICK(k_s);
+    p_i->joins.push_back(l_joint_obj);
+    p_i->dg_modidier.connect(get_plug(l_joint_obj, "message"),
+                             get_plug(p_i->bind_post, "members"));
+    p_i->dg_modidier.connect(get_plug(l_joint_obj, "bindPose"),
+                             get_plug(p_i->bind_post, "worldMatrix"));
+    p_i->dg_modidier.doIt();
   }
 }
 void dem_bones_comm::create_anm_curve() {
@@ -479,51 +492,6 @@ void dem_bones_comm::create_anm_curve() {
   p_i->dg_modidier.doIt();
 }
 void dem_bones_comm::create_skin() {
-  MStatus k_s{};
-  k_s = MGlobal::viewFrame(p_i->bindFrame_p);
-  DOODLE_CHICK(k_s);
-  MFnMesh l_mesh{p_i->mesh_obj};
-  /// \brief 复制节点
-  p_i->skin_mesh_obj = l_mesh.duplicate(false, false, &k_s);
-  DOODLE_CHICK(k_s);
-
-  // 设置材质属性
-  MFnSet l_mat{get_shading_engine(p_i->mesh_obj), &k_s};
-  DOODLE_CHICK(k_s);
-  k_s = l_mat.addMember(p_i->skin_mesh_obj);
-  DOODLE_CHICK(k_s);
-
-  MSelectionList l_select{};
-  for (auto&& j : p_i->joins) {
-    k_s = l_select.add(j);
-    DOODLE_CHICK(k_s);
-  }
-  k_s = l_select.add(p_i->skin_mesh_obj);
-  DOODLE_CHICK(k_s);
-
-  MStringArray l_name_list{};
-  k_s = l_select.getSelectionStrings(l_name_list);
-  DOODLE_CHICK(k_s);
-
-  MString l_skin_name{};
-  std::string l_str{"skinCluster"};
-  for (int l_i = 0; l_i < l_name_list.length(); ++l_i) {
-    l_str.push_back(' ');
-    l_str += d_str{l_name_list[l_i]};
-  }
-  l_str.push_back(';');
-
-  DOODLE_LOG_INFO(l_str);
-  k_s = MGlobal::executeCommand(d_str{l_str}, l_skin_name, true, true);
-  DOODLE_CHICK(k_s);
-
-  k_s = l_select.clear();
-  DOODLE_CHICK(k_s);
-  k_s = l_select.add(l_skin_name);
-  DOODLE_CHICK(k_s);
-
-  k_s = l_select.getDependNode(0, p_i->skin_obj);
-  DOODLE_CHICK(k_s);
 };
 void dem_bones_comm::add_widget() {
   chick_true<doodle_error>(
