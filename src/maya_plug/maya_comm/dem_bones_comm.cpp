@@ -145,7 +145,6 @@ class dem_bones_comm::impl {
   MObject mesh_obj;
   MObject skin_mesh_obj;
   MObject skin_obj;
-  MObject bind_post;
 
   MDagModifier dg_modidier;
 

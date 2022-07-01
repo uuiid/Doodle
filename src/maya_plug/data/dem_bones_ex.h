@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DemBones/DemBonesExt.h>
-
+#include <maya_plug/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::double_t> {
  public:
@@ -31,5 +31,7 @@ class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::double_t> {
   void cbWeightsIterBegin() override;
   // 在每个局部权重更新迭代后调用的回调函数
   bool cbWeightsIterEnd() override;
+
+  std::vector<MObject> joins{};
 };
 }  // namespace doodle::maya_plug
