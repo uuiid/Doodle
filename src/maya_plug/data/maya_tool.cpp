@@ -31,7 +31,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
     DOODLE_CHICK(k_s);
     return l_plug;
   } catch (const maya_InvalidParameter& error) {
-    DOODLE_LOG_INFO("没有在这个节点中找到属性")
+    DOODLE_LOG_INFO("没有在这个节点中找到属性 {}", in_name);
   }
 
   if (in_node.hasFn(MFn::kDagNode)) {
