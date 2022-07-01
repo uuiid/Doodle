@@ -17,6 +17,11 @@
 namespace doodle::maya_plug {
 
 MPlug get_plug(const MObject& in_node, const std::string& in_name) {
+  chick_true<doodle_error>(!in_node.isNull(),
+                           DOODLE_SOURCE_LOC,
+                           "传入空节点寻找属性 {}",
+                           in_name);
+
   MStatus k_s{};
   MFnDependencyNode l_node{in_node, &k_s};
   MPlug l_plug{};
