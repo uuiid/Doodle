@@ -77,6 +77,8 @@ set(doodle_maya_plug_cpp
         maya_comm/dem_bones_comm.cpp
         maya_comm/dem_bones_add_weight.h
         maya_comm/dem_bones_add_weight.cpp
+        data/dem_bones_ex.h
+        data/dem_bones_ex.cpp
         )
 
 if (DEFINED Maya_Version)
