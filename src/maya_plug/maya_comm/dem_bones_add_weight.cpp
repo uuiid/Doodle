@@ -49,6 +49,16 @@ class dem_bones_add_weight::impl {
       DOODLE_CHICK(k_s);
     }
     chick_true<doodle_error>(!skin_mesh_obj.isNull(), DOODLE_LOC, "未获得选中物体");
+
+    for (MItDependencyGraph l_it_dependency_graph{skin_mesh_obj, MFn::kSkinClusterFilter,
+                                                  MItDependencyGraph::kUpstream,
+                                                  MItDependencyGraph::kDepthFirst,
+                                                  MItDependencyGraph::kNodeLevel, nullptr};
+         !l_it_dependency_graph.isDone();
+         l_it_dependency_graph.next()) {
+      skin_obj = l_it_dependency_graph.currentItem();
+      break;
+    }
   }
   dem_bones_ex& dem;
   MSelectionList select_list;
