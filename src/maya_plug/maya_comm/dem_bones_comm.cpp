@@ -15,6 +15,7 @@
 #include <maya/MFnMesh.h>
 #include <maya/MDagModifier.h>
 #include <maya/MFnIkJoint.h>
+#include <maya/MDoubleArray.h>
 
 namespace doodle::maya_plug {
 
@@ -131,7 +132,7 @@ class dem_bones_comm::impl {
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
   std::int32_t bindFrame_p{0};
-  std::int32_t nBones_p{1};
+  std::int32_t nBones_p{30};
   std::int32_t nIters_p{30};
   std::int32_t nInitIters_p{10};
   std::int32_t nTransIters_p{5};
@@ -184,7 +185,7 @@ class dem_bones_comm::impl {
       dem.fv.resize(l_mesh.numPolygons(&k_s));
       DOODLE_CHICK(k_s);
       dem.subjectID.resize(dem.nF);
-      dem.u.resize(dem.nS * 3, dem.nV);
+      dem.u.resize(3 * dem.nS, dem.nV);
 
       // 添加子物体的索引
       for (int s = 0; s < dem.nS; s++) {
@@ -205,15 +206,15 @@ class dem_bones_comm::impl {
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       MItMeshVertex vexpoint{mesh_obj, &k_s};
       DOODLE_CHICK(k_s);
-      {  /// \brief 设置顶点
-        dem.fTime(i) = i;
+      /// \brief 设置顶点
+      dem.fTime(i) = i;
 
-        for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
-          auto l_index = vexpoint.index();
-          auto l_point = vexpoint.position(MSpace::kWorld);
-          dem.v.col(l_index).segment(3 * i, 3) << l_point.x, l_point.y, l_point.z;
-        }
+      for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
+        auto l_index = vexpoint.index();
+        auto l_point = vexpoint.position(MSpace::kWorld);
+        dem.v.col(l_index).segment(3 * i, 3) << l_point.x, l_point.y, l_point.z;
       }
+
       if (i == bindFrame_p) {  /// \brief 设置绑定帧
         DOODLE_LOG_INFO("获取绑定{} 帧 网格 {} 的数据", i, l_mesh_name);
         // 设置多边形拓扑网格;
@@ -246,7 +247,6 @@ class dem_bones_comm::impl {
     computtation.beginComputation();
 
     DOODLE_LOG_INFO("开始计算分布骨骼......请等待");
-    dem.init();
     if (computtation.isInterruptRequested()) {
       return;
     }
@@ -414,10 +414,11 @@ void dem_bones_comm::create_joins() {
   }
 }
 void dem_bones_comm::create_anm_curve() {
-  MFnAnimCurve aim;
+  MStatus k_s{};
+  MFnAnimCurve aim{};
   MFnIkJoint joint{};
-  for (auto&& i : p_i->joins) {
-    joint.setObject(i);
+  for (auto l_b = 0; l_b < p_i->dem.nB; ++l_b) {
+    joint.setObject(p_i->joins[l_b]);
     MPlug plugtx  = joint.findPlug("tx");
     MPlug plugty  = joint.findPlug("ty");
     MPlug plugtz  = joint.findPlug("tz");
@@ -432,6 +433,25 @@ void dem_bones_comm::create_anm_curve() {
     MObject aimRX = aim.create(plugrx, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
     MObject aimRY = aim.create(plugry, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
     MObject aimRZ = aim.create(plugrz, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
+#define DOODLE_ADD_ANM_declaration(axis) \
+  MTimeArray l_time_list_##axis{};       \
+  MDoubleArray l_value_list_##axis{};
+
+    DOODLE_ADD_ANM_declaration(x);
+
+    MTimeArray l_time_list{};
+    MDoubleArray l_value_list{};
+    for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
+      auto l_tran = p_i->localTranslation_p.col(l_b).segment<3>(3 * l_f);
+      l_time_list.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
+      l_value_list.append(l_tran.x());
+      auto l_rot = p_i->localRotation_p.col(l_b).segment<3>(3 * l_f);
+    }
+    k_s = aim.setObject(aimTX);
+    DOODLE_CHICK(k_s);
+    k_s = aim.addKeys(&l_time_list, &l_value_list);
+    DOODLE_CHICK(k_s);
+#undef DOODLE_ADD_ANM_declaration
   }
   p_i->dg_modidier.doIt();
 }
