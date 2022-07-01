@@ -504,7 +504,27 @@ void dem_bones_comm::create_skin() {
   p_i->skin_obj = l_skin_cluster.create("skinCluster", &k_s);
   DOODLE_CHICK(k_s);
 
+  /// 连接皮肤簇绑定post
   k_s = p_i->dg_modidier.connect(get_plug(p_i->bind_post, "message"), get_plug(p_i->skin_obj, "bindPose"));
+  DOODLE_CHICK(k_s);
+  for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
+    auto&& l_j = p_i->joins[ibone];
+    k_s        = p_i->dg_modidier.connect(get_plug(l_j, "objectColorRGB"),
+                                          get_plug(p_i->skin_obj, "influenceColor").elementByLogicalIndex(ibone));
+    DOODLE_CHICK(k_s);
+    k_s = p_i->dg_modidier.connect(get_plug(l_j, "lockInfluenceWeights"),
+                                   get_plug(p_i->skin_obj, "lockWeights").elementByLogicalIndex(ibone));
+    DOODLE_CHICK(k_s);
+    k_s = p_i->dg_modidier.connect(get_plug(l_j, "worldMatrix").elementByLogicalIndex(ibone),
+                                   get_plug(p_i->skin_obj, "matrix").elementByLogicalIndex(ibone));
+    DOODLE_CHICK(k_s);
+  }
+
+  k_s = p_i->dg_modidier.connect(get_plug(p_i->skin_obj, "outputGeometry").elementByLogicalIndex(0),
+                                 get_plug(p_i->skin_mesh_obj, "inMesh"));
+  DOODLE_CHICK(k_s);
+
+  k_s = p_i->dg_modidier.doIt();
   DOODLE_CHICK(k_s);
 }
 
