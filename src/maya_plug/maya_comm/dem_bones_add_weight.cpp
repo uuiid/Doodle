@@ -2,7 +2,7 @@
 // Created by TD on 2022/7/1.
 //
 
-#include "dem_bones_add_weiget.h"
+#include "dem_bones_add_weight.h"
 
 namespace doodle {
 namespace maya_plug {
