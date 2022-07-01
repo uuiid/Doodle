@@ -20,6 +20,7 @@
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MEulerRotation.h>
+#include <maya/MQuaternion.h>
 #include <maya/MDagPath.h>
 
 #include <maya_plug/data/maya_tool.h>
@@ -445,13 +446,15 @@ void dem_bones_comm::create_anm_curve() {
 
 #define DOODLE_ADD_ANM_set(axis)             \
   l_value_tran_##axis.append(l_tran.axis()); \
-  l_value_rot_##axis.append(l_rot.axis())
+  l_value_rot_##axis.append(l_erot.axis);
 
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
       auto l_tran = p_i->localTranslation_p.col(l_b).segment<3>(3 * l_f);
       auto l_rot  = p_i->localRotation_p.col(l_b).segment<3>(3 * l_f);
-      MEulerRotation l_erot{};
-      l_erot.
+      MEulerRotation l_erot{l_rot.x(), l_rot.y(), l_rot.z(), MEulerRotation::kXYZ};
+      auto l_qrot = l_erot.asQuaternion();
+      l_erot      = l_qrot.asEulerRotation();
+
       l_time.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
       DOODLE_ADD_ANM_set(y);
