@@ -429,11 +429,18 @@ void dem_bones_comm::create_joins() {
     k_s = joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
     DOODLE_CHICK(k_s);
     p_i->joins.push_back(l_joint_obj);
-    p_i->dg_modidier.connect(get_plug(l_joint_obj, "message"),
-                             get_plug(p_i->bind_post, "members"));
-    p_i->dg_modidier.connect(get_plug(l_joint_obj, "bindPose"),
-                             get_plug(p_i->bind_post, "worldMatrix"));
-    p_i->dg_modidier.doIt();
+    k_s = p_i->dg_modidier.connect(get_plug(l_joint_obj, "message"),
+                                   get_plug(p_i->bind_post, "members").elementByLogicalIndex(ibone));
+    DOODLE_CHICK(k_s);
+    k_s = p_i->dg_modidier.connect(get_plug(l_joint_obj, "bindPose"),
+                                   get_plug(p_i->bind_post, "worldMatrix").elementByLogicalIndex(ibone));
+    DOODLE_CHICK(k_s);
+    k_s = p_i->dg_modidier.connect(get_plug(p_i->bind_post, "world"),
+                                   get_plug(p_i->bind_post, "parents").elementByLogicalIndex(ibone));
+
+    DOODLE_CHICK(k_s);
+    k_s = p_i->dg_modidier.doIt();
+    DOODLE_CHICK(k_s);
   }
 }
 void dem_bones_comm::create_anm_curve() {
@@ -491,8 +498,7 @@ void dem_bones_comm::create_anm_curve() {
   }
   p_i->dg_modidier.doIt();
 }
-void dem_bones_comm::create_skin() {
-};
+void dem_bones_comm::create_skin(){};
 void dem_bones_comm::add_widget() {
   chick_true<doodle_error>(
       !p_i->skin_obj.isNull(),
