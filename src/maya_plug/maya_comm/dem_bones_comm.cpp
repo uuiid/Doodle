@@ -16,6 +16,13 @@
 #include <maya/MDagModifier.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MDoubleArray.h>
+#include <maya/MFnSet.h>
+#include <maya/MFnSkinCluster.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MDagPath.h>
+
+#include <maya_plug/data/maya_tool.h>
 
 namespace doodle::maya_plug {
 
@@ -161,6 +168,7 @@ class dem_bones_comm::impl {
   MSelectionList select_list;
   MObject mesh_obj;
   MObject skin_mesh_obj;
+  MObject skin_obj;
 
   MDagModifier dg_modidier;
 
@@ -262,7 +270,7 @@ class dem_bones_comm::impl {
                    globalBindMatrices_p,
                    localBindPoseRotation_p,
                    localBindPoseTranslation_p,
-                   true);
+                   false);
   }
 };
 
@@ -426,35 +434,35 @@ void dem_bones_comm::create_anm_curve() {
     MPlug plugrx = joint.findPlug("rx");
     MPlug plugry = joint.findPlug("ry");
     MPlug plugrz = joint.findPlug("rz");
+    MTimeArray l_time{};
 #define DOODLE_ADD_ANM_declaration(axis) \
-  MTimeArray l_time_tran_##axis{};       \
   MDoubleArray l_value_tran_##axis{};    \
-  MTimeArray l_time_rot_##axis{};        \
   MDoubleArray l_value_rot_##axis{};
 
     DOODLE_ADD_ANM_declaration(x);
     DOODLE_ADD_ANM_declaration(y);
     DOODLE_ADD_ANM_declaration(z);
 
-#define DOODLE_ADD_ANM_set(axis)                                         \
-  l_time_tran_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()}); \
-  l_value_tran_##axis.append(l_tran.axis());                             \
-  l_time_rot_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()});  \
+#define DOODLE_ADD_ANM_set(axis)             \
+  l_value_tran_##axis.append(l_tran.axis()); \
   l_value_rot_##axis.append(l_rot.axis())
 
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
       auto l_tran = p_i->localTranslation_p.col(l_b).segment<3>(3 * l_f);
       auto l_rot  = p_i->localRotation_p.col(l_b).segment<3>(3 * l_f);
+      MEulerRotation l_erot{};
+      l_erot.
+      l_time.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
       DOODLE_ADD_ANM_set(y);
       DOODLE_ADD_ANM_set(z);
     }
 #define DOODLE_ADD_ANM_set_anm(axis)                                                     \
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
-  k_s = aim.addKeys(&l_time_tran_##axis, &l_value_tran_##axis);                          \
+  k_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
   DOODLE_CHICK(k_s);                                                                     \
   aim.create(plugr##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
-  k_s = aim.addKeys(&l_time_rot_##axis, &l_value_rot_##axis);                            \
+  k_s = aim.addKeys(&l_time, &l_value_rot_##axis);                                       \
   DOODLE_CHICK(k_s);
 
     DOODLE_ADD_ANM_set_anm(x);
@@ -472,8 +480,16 @@ void dem_bones_comm::create_skin() {
   k_s = MGlobal::viewFrame(p_i->bindFrame_p);
   DOODLE_CHICK(k_s);
   MFnMesh l_mesh{p_i->mesh_obj};
+  /// \brief 复制节点
   p_i->skin_mesh_obj = l_mesh.duplicate(false, false, &k_s);
   DOODLE_CHICK(k_s);
+
+  // 设置材质属性
+  MFnSet l_mat{get_shading_engine(p_i->mesh_obj), &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = l_mat.addMember(p_i->skin_mesh_obj);
+  DOODLE_CHICK(k_s);
+
   MSelectionList l_select{};
   for (auto&& j : p_i->joins) {
     k_s = l_select.add(j);
@@ -486,9 +502,56 @@ void dem_bones_comm::create_skin() {
   DOODLE_CHICK(k_s);
   k_s = MGlobal::executeCommand("SmoothBindSkin;", true, true);
   DOODLE_CHICK(k_s);
+
+  for (MItDependencyGraph l_it_dependency_graph{p_i->skin_mesh_obj,
+                                                MFn::kSkinClusterFilter,
+                                                MItDependencyGraph::kUpstream,
+                                                MItDependencyGraph::kDepthFirst,
+                                                MItDependencyGraph::kNodeLevel, nullptr};
+       !l_it_dependency_graph.isDone();
+       l_it_dependency_graph.next()) {
+    p_i->skin_obj = l_it_dependency_graph.currentItem(&k_s);
+    DOODLE_CHICK(k_s);
+    break;
+  }
 };
 void dem_bones_comm::add_widget() {
+  chick_true<doodle_error>(
+      !p_i->skin_obj.isNull(),
+      DOODLE_LOC,
+      "没有找到绑定皮肤簇");
   MStatus k_s{};
+
+  MFnSkinCluster l_skin_cluster{p_i->skin_obj};
+
+  MFnIkJoint l_fn_joint{};
+  MDagPath l_path{};
+
+  std::map<std::int32_t, std::double_t> joins_index{};
+
+  for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
+    auto l_joint = p_i->joins[ibone];
+    k_s          = l_fn_joint.setObject(l_joint);
+    DOODLE_CHICK(k_s);
+    auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
+    joins_index[ibone] = l_joint_index;
+    DOODLE_CHICK(k_s);
+  }
+  MFnMesh l_obj{p_i->skin_mesh_obj};
+  k_s = l_obj.getPath(l_path);
+  DOODLE_CHICK(k_s);
+  MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
+  for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
+    auto l_v_i = iterMeshVertex.index();
+    for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
+      k_s = l_skin_cluster.setWeights(
+          l_path,
+          iterMeshVertex.currentItem(),
+          joins_index[ibone],
+          p_i->dem.w.coeff(ibone, l_v_i), false);
+      DOODLE_CHICK(k_s);
+    }
+  }
 }
 
 dem_bones_comm::~dem_bones_comm() = default;
