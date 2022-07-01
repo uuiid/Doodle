@@ -24,6 +24,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   try {
     l_plug = l_node.findPlug(d_str{in_name}, false, &k_s);
     DOODLE_CHICK(k_s);
+    return l_plug;
   } catch (const maya_InvalidParameter& error) {
     DOODLE_LOG_INFO("没有在这个节点中找到属性")
   }
