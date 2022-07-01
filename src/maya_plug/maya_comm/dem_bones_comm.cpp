@@ -452,7 +452,7 @@ void dem_bones_comm::create_anm_curve() {
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time_tran_##axis, &l_value_tran_##axis);                          \
   DOODLE_CHICK(k_s);                                                                     \
-  aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
+  aim.create(plugr##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time_rot_##axis, &l_value_rot_##axis);                            \
   DOODLE_CHICK(k_s);
 
