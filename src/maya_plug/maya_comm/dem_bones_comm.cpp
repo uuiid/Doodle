@@ -419,12 +419,12 @@ void dem_bones_comm::create_anm_curve() {
   MFnIkJoint joint{};
   for (auto l_b = 0; l_b < p_i->dem.nB; ++l_b) {
     joint.setObject(p_i->joins[l_b]);
-    MPlug plugtx  = joint.findPlug("tx");
-    MPlug plugty  = joint.findPlug("ty");
-    MPlug plugtz  = joint.findPlug("tz");
-    MPlug plugrx  = joint.findPlug("rx");
-    MPlug plugry  = joint.findPlug("ry");
-    MPlug plugrz  = joint.findPlug("rz");
+    MPlug plugtx = joint.findPlug("tx");
+    MPlug plugty = joint.findPlug("ty");
+    MPlug plugtz = joint.findPlug("tz");
+    MPlug plugrx = joint.findPlug("rx");
+    MPlug plugry = joint.findPlug("ry");
+    MPlug plugrz = joint.findPlug("rz");
 #define DOODLE_ADD_ANM_declaration(axis) \
   MTimeArray l_time_tran_##axis{};       \
   MDoubleArray l_value_tran_##axis{};    \
@@ -437,9 +437,9 @@ void dem_bones_comm::create_anm_curve() {
 
 #define DOODLE_ADD_ANM_set(axis)                                         \
   l_time_tran_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()}); \
-  l_value_tran_##axis.append(l_tran.x());                                \
+  l_value_tran_##axis.append(l_tran.axis());                           \
   l_time_rot_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()});  \
-  l_value_rot_##axis.append(l_rot.x())
+  l_value_rot_##axis.append(l_rot.axis())
 
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
       auto l_tran = p_i->localTranslation_p.col(l_b).segment<3>(3 * l_f);
