@@ -104,18 +104,16 @@ void dem_bones_add_weight::add_weight() {
   auto l_w_plug = get_plug(p_i->skin_obj, "weightList");
   for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
     auto l_v_i          = iterMeshVertex.index();
-    auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i,&k_s);
+    auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i, &k_s);
     DOODLE_CHICK(k_s);
+    DOODLE_CHICK(k_s);
+    l_point_w_plug.setNumElements(p_i->dem.nB);
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
       auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
-      if (l_w != 0) {
-        k_s = l_skin_cluster.setWeights(
-            l_path,
-            iterMeshVertex.currentItem(),
-            joins_index[ibone],
-            l_w, false);
-        DOODLE_CHICK(k_s);
-      }
+      auto l_p = l_w_plug.elementByPhysicalIndex(ibone, &k_s);
+      DOODLE_CHICK(k_s);
+      k_s = l_p.setValue(l_w);
+      DOODLE_CHICK(k_s);
     }
   }
 }
