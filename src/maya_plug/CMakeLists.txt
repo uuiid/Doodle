@@ -77,6 +77,7 @@ set(doodle_maya_plug_cpp
 
 if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
+    find_package(OpenMP REQUIRED)
 
     cmake_print_variables(MAYA_DEFAULT_LOCATION)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release)
@@ -109,6 +110,7 @@ if (DEFINED Maya_Version)
                 Qt5::Widgets
                 DemBones::dem-bones
                 Eigen3::Eigen
+                OpenMP::OpenMP_CXX
                 )
         target_include_directories(doodle_maya PUBLIC ../doodle_exe)
         #设置maya插件后缀名
