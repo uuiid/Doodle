@@ -498,7 +498,16 @@ void dem_bones_comm::create_anm_curve() {
   }
   p_i->dg_modidier.doIt();
 }
-void dem_bones_comm::create_skin(){};
+void dem_bones_comm::create_skin() {
+  MStatus k_s{};
+  MFnSkinCluster l_skin_cluster{};
+  p_i->skin_obj = l_skin_cluster.create("skinCluster", &k_s);
+  DOODLE_CHICK(k_s);
+
+  k_s = p_i->dg_modidier.connect(get_plug(p_i->bind_post, "message"), get_plug(p_i->skin_obj, "bindPose"));
+  DOODLE_CHICK(k_s);
+}
+
 void dem_bones_comm::add_widget() {
   chick_true<doodle_error>(
       !p_i->skin_obj.isNull(),
