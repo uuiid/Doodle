@@ -34,9 +34,12 @@ MSyntax dem_bones_add_weight_ns::syntax() {
 
 class dem_bones_add_weight::impl {
  public:
-  dem_bones_ex dem;
-  MObject skin_mesh_obj;
-  MObject skin_obj;
+  impl() {
+    dem = g_reg()->ctx().emplace<dem_bones_ex>();
+  }
+  dem_bones_ex& dem;
+  MObject skin_mesh_obj{};
+  MObject skin_obj{};
 };
 
 dem_bones_add_weight::dem_bones_add_weight()

@@ -88,7 +88,10 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  dem_bones_ex dem;
+  impl() {
+    dem = g_reg()->ctx().emplace<dem_bones_ex>();
+  }
+  dem_bones_ex& dem;
   void set_parm() {
     dem.nB                = nBones_p;
     dem.nIters            = nIters_p;
@@ -386,7 +389,6 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   p_i->anm_compute();
   create_joins();
   create_anm_curve();
-  g_reg()->ctx().emplace<dem_bones_ex>() = p_i->dem;
 
   return MStatus::kSuccess;
 }
@@ -401,6 +403,7 @@ void dem_bones_comm::create_joins() {
     DOODLE_CHICK(k_s);
     p_i->joins.push_back(l_joint_obj);
   }
+  p_i->dem.joins = p_i->joins;
 }
 void dem_bones_comm::create_anm_curve() {
   MStatus k_s{};
