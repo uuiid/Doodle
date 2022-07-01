@@ -21,6 +21,7 @@
 #include <maya_plug/maya_comm/replace_rig_file_command.h>
 #include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
+#include <maya_plug/maya_comm/dem_bones_add_weight.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -229,6 +230,9 @@ MStatus initializePlugin(MObject obj) {
   /// 添加解算骨骼命令
   status = ::doodle::maya_plug::dem_bones_comm::registerCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  /// 添加解算骨骼命令
+  status = ::doodle::maya_plug::dem_bones_add_weight::registerCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {
@@ -270,6 +274,9 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
+  /// 取消解算骨骼命令
+  status = ::doodle::maya_plug::dem_bones_add_weight::deregisterCommand(k_plugin);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 取消解算骨骼命令
   status = ::doodle::maya_plug::dem_bones_comm::deregisterCommand(k_plugin);
   CHECK_MSTATUS_AND_RETURN_IT(status);

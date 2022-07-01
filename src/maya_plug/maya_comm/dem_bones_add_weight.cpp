@@ -40,7 +40,7 @@ class dem_bones_add_weight::impl {
  public:
   impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
 
-  void init(){
+  void init() {
     MStatus k_s;
     MItSelectionList l_it{select_list, MFn::Type::kMesh, &k_s};
     DOODLE_CHICK(k_s);
@@ -49,7 +49,6 @@ class dem_bones_add_weight::impl {
       DOODLE_CHICK(k_s);
     }
     chick_true<doodle_error>(!skin_mesh_obj.isNull() > 0, DOODLE_LOC, "未获得选中物体");
-
   }
   dem_bones_ex& dem;
   MSelectionList select_list;
@@ -82,7 +81,7 @@ void dem_bones_add_weight::add_weight() {
   std::map<std::int32_t, std::int32_t> joins_index{};
 
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-    auto l_joint = p_i->joins[ibone];
+    auto l_joint = p_i->dem.joins[ibone];
     k_s          = l_fn_joint.setObject(l_joint);
     DOODLE_CHICK(k_s);
     auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
@@ -111,7 +110,6 @@ void dem_bones_add_weight::get_arg(const MArgList& in_arg) {
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
   chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
-
 }
 dem_bones_add_weight::~dem_bones_add_weight() = default;
 }  // namespace doodle::maya_plug
