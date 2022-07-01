@@ -501,10 +501,20 @@ void dem_bones_comm::create_skin() {
   k_s = l_select.add(p_i->skin_mesh_obj);
   DOODLE_CHICK(k_s);
 
-  k_s = MGlobal::setActiveSelectionList(l_select);
+  MStringArray l_name_list{};
+  k_s = l_select.getSelectionStrings(l_name_list);
   DOODLE_CHICK(k_s);
+
   MString l_skin_name{};
-  k_s = MGlobal::executeCommand("skinCluster;", l_skin_name, true, true);
+  std::string l_str{"skinCluster"};
+  for (int l_i = 0; l_i < l_name_list.length(); ++l_i) {
+    l_str.push_back(' ');
+    l_str += d_str{l_name_list[l_i]};
+  }
+  l_str.push_back(';');
+
+  DOODLE_LOG_INFO(l_str);
+  k_s = MGlobal::executeCommand(d_str{l_str}, l_skin_name, true, true);
   DOODLE_CHICK(k_s);
 
   k_s = l_select.clear();
