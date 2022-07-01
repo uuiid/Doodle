@@ -49,8 +49,8 @@ class dem_bones_add_weight::impl {
       DOODLE_CHICK(k_s);
     }
     chick_true<doodle_error>(!skin_mesh_obj.isNull(), DOODLE_LOC, "未获得选中物体");
-
-    for (MItDependencyGraph l_it_dependency_graph{skin_mesh_obj, MFn::kSkinClusterFilter,
+    auto l_obj = get_shape(skin_mesh_obj);
+    for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter,
                                                   MItDependencyGraph::kUpstream,
                                                   MItDependencyGraph::kDepthFirst,
                                                   MItDependencyGraph::kNodeLevel, nullptr};
@@ -96,21 +96,26 @@ void dem_bones_add_weight::add_weight() {
     DOODLE_CHICK(k_s);
     auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
     joins_index[ibone] = l_joint_index;
-    DOODLE_CHICK(k_s);
   }
   MFnMesh l_obj{p_i->skin_mesh_obj};
   k_s = l_obj.getPath(l_path);
   DOODLE_CHICK(k_s);
   MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
+  auto l_w_plug = get_plug(p_i->skin_obj, "weightList");
   for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
-    auto l_v_i = iterMeshVertex.index();
+    auto l_v_i          = iterMeshVertex.index();
+    auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i,&k_s);
+    DOODLE_CHICK(k_s);
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-      k_s = l_skin_cluster.setWeights(
-          l_path,
-          iterMeshVertex.currentItem(),
-          joins_index[ibone],
-          p_i->dem.w.coeff(ibone, l_v_i), false);
-      DOODLE_CHICK(k_s);
+      auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
+      if (l_w != 0) {
+        k_s = l_skin_cluster.setWeights(
+            l_path,
+            iterMeshVertex.currentItem(),
+            joins_index[ibone],
+            l_w, false);
+        DOODLE_CHICK(k_s);
+      }
     }
   }
 }
