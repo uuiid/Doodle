@@ -160,6 +160,7 @@ class dem_bones_comm::impl {
 
   MSelectionList select_list;
   MObject mesh_obj;
+  MObject skin_mesh_obj;
 
   MDagModifier dg_modidier;
 
@@ -437,7 +438,7 @@ void dem_bones_comm::create_anm_curve() {
 
 #define DOODLE_ADD_ANM_set(axis)                                         \
   l_time_tran_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()}); \
-  l_value_tran_##axis.append(l_tran.axis());                           \
+  l_value_tran_##axis.append(l_tran.axis());                             \
   l_time_rot_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()});  \
   l_value_rot_##axis.append(l_rot.axis())
 
@@ -467,8 +468,27 @@ void dem_bones_comm::create_anm_curve() {
   p_i->dg_modidier.doIt();
 }
 void dem_bones_comm::create_skin() {
-}
+  MStatus k_s{};
+  k_s = MGlobal::viewFrame(p_i->bindFrame_p);
+  DOODLE_CHICK(k_s);
+  MFnMesh l_mesh{p_i->mesh_obj};
+  p_i->skin_mesh_obj = l_mesh.duplicate(false, false, &k_s);
+  DOODLE_CHICK(k_s);
+  MSelectionList l_select{};
+  for (auto&& j : p_i->joins) {
+    k_s = l_select.add(j);
+    DOODLE_CHICK(k_s);
+  }
+  k_s = l_select.add(p_i->skin_mesh_obj);
+  DOODLE_CHICK(k_s);
+
+  k_s = MGlobal::setActiveSelectionList(l_select);
+  DOODLE_CHICK(k_s);
+  k_s = MGlobal::executeCommand("SmoothBindSkin;", true, true);
+  DOODLE_CHICK(k_s);
+};
 void dem_bones_comm::add_widget() {
+  MStatus k_s{};
 }
 
 dem_bones_comm::~dem_bones_comm() = default;
