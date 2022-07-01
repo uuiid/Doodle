@@ -25,6 +25,8 @@
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
+#include <doodle_core/lib_warp/entt_warp.h>
+
 namespace doodle::maya_plug {
 
 namespace dem_bones_comm_ns {
@@ -385,15 +387,12 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   p_i->anm_compute();
   create_joins();
   create_anm_curve();
-  create_skin();
-  add_widget();
+  g_reg()->ctx().emplace<dem_bones_ex>() = p_i->dem;
+
   return MStatus::kSuccess;
 }
 void dem_bones_comm::create_joins() {
   MStatus k_s{};
-  MFnDependencyNode l_bind_post{};
-  p_i->bind_post = l_bind_post.create("dagPose", &k_s);
-  DOODLE_CHICK(k_s);
 
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     MFnIkJoint joint{};
@@ -402,18 +401,6 @@ void dem_bones_comm::create_joins() {
     k_s = joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
     DOODLE_CHICK(k_s);
     p_i->joins.push_back(l_joint_obj);
-    k_s = p_i->dg_modidier.connect(get_plug(l_joint_obj, "message"),
-                                   get_plug(p_i->bind_post, "members").elementByLogicalIndex(ibone));
-    DOODLE_CHICK(k_s);
-    k_s = p_i->dg_modidier.connect(get_plug(l_joint_obj, "bindPose"),
-                                   get_plug(p_i->bind_post, "worldMatrix").elementByLogicalIndex(ibone));
-    DOODLE_CHICK(k_s);
-    k_s = p_i->dg_modidier.connect(get_plug(p_i->bind_post, "world"),
-                                   get_plug(p_i->bind_post, "parents").elementByLogicalIndex(ibone));
-
-    DOODLE_CHICK(k_s);
-    k_s = p_i->dg_modidier.doIt();
-    DOODLE_CHICK(k_s);
   }
 }
 void dem_bones_comm::create_anm_curve() {
@@ -470,87 +457,6 @@ void dem_bones_comm::create_anm_curve() {
 #undef DOODLE_ADD_ANM_set_anm
   }
   p_i->dg_modidier.doIt();
-}
-void dem_bones_comm::create_skin() {
-  MStatus k_s{};
-  k_s = MGlobal::viewFrame(p_i->bindFrame_p);
-  DOODLE_CHICK(k_s);
-  MFnMesh l_mesh{p_i->mesh_obj};
-  /// \brief 复制节点
-  p_i->skin_mesh_obj = l_mesh.duplicate(false, false, &k_s);
-  DOODLE_CHICK(k_s);
-
-  // 设置材质属性
-  MFnSet l_mat{get_shading_engine(p_i->mesh_obj), &k_s};
-  DOODLE_CHICK(k_s);
-  k_s = l_mat.addMember(p_i->skin_mesh_obj);
-  DOODLE_CHICK(k_s);
-
-  MFnSkinCluster l_skin_cluster{};
-  p_i->skin_obj = l_skin_cluster.create("skinCluster", &k_s);
-  DOODLE_CHICK(k_s);
-
-  /// 连接皮肤簇绑定post
-  k_s = p_i->dg_modidier.connect(get_plug(p_i->bind_post, "message"), get_plug(p_i->skin_obj, "bindPose"));
-  DOODLE_CHICK(k_s);
-  for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-    auto&& l_j = p_i->joins[ibone];
-    k_s        = p_i->dg_modidier.connect(get_plug(l_j, "objectColorRGB"),
-                                          get_plug(p_i->skin_obj, "influenceColor").elementByLogicalIndex(ibone));
-    DOODLE_CHICK(k_s);
-    //    k_s = p_i->dg_modidier.connect(get_plug(l_j, "lockInfluenceWeights"),
-    //                                   get_plug(p_i->skin_obj, "lockWeights").elementByLogicalIndex(ibone));
-    //    DOODLE_CHICK(k_s);
-    k_s = p_i->dg_modidier.connect(get_plug(l_j, "worldMatrix").elementByLogicalIndex(ibone),
-                                   get_plug(p_i->skin_obj, "matrix").elementByLogicalIndex(ibone));
-    DOODLE_CHICK(k_s);
-  }
-
-  k_s = p_i->dg_modidier.connect(get_plug(p_i->skin_obj, "outputGeometry").elementByLogicalIndex(0),
-                                 get_plug(p_i->skin_mesh_obj, "inMesh"));
-  DOODLE_CHICK(k_s);
-
-  k_s = p_i->dg_modidier.doIt();
-  DOODLE_CHICK(k_s);
-}
-
-void dem_bones_comm::add_widget() {
-  chick_true<doodle_error>(
-      !p_i->skin_obj.isNull(),
-      DOODLE_LOC,
-      "没有找到绑定皮肤簇");
-  MStatus k_s{};
-
-  MFnSkinCluster l_skin_cluster{p_i->skin_obj};
-
-  MFnIkJoint l_fn_joint{};
-  MDagPath l_path{};
-
-  std::map<std::int32_t, std::int32_t> joins_index{};
-
-  for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-    auto l_joint = p_i->joins[ibone];
-    k_s          = l_fn_joint.setObject(l_joint);
-    DOODLE_CHICK(k_s);
-    auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
-    joins_index[ibone] = l_joint_index;
-    DOODLE_CHICK(k_s);
-  }
-  MFnMesh l_obj{p_i->skin_mesh_obj};
-  k_s = l_obj.getPath(l_path);
-  DOODLE_CHICK(k_s);
-  MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
-  for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
-    auto l_v_i = iterMeshVertex.index();
-    for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
-      k_s = l_skin_cluster.setWeights(
-          l_path,
-          iterMeshVertex.currentItem(),
-          joins_index[ibone],
-          p_i->dem.w.coeff(ibone, l_v_i), false);
-      DOODLE_CHICK(k_s);
-    }
-  }
 }
 
 dem_bones_comm::~dem_bones_comm() = default;

@@ -6,9 +6,7 @@
 
 #include <maya_plug/maya_plug_fwd.h>
 
-
 namespace doodle::maya_plug {
-
 
 namespace dem_bones_comm_ns {
 constexpr char name[] = "doodle_comm_dem_bones";
@@ -25,13 +23,13 @@ class dem_bones_comm : public doodle::TemplateAction<
 
   void create_joins();
   void create_anm_curve();
-  void create_skin();
-  void add_widget();
- public:
 
+ public:
   dem_bones_comm();
   ~dem_bones_comm() override;
   MStatus doIt(const MArgList& in_arg) override;
 };
+
+class dem_bones_add_wieget ;
 
 }  // namespace doodle::maya_plug
