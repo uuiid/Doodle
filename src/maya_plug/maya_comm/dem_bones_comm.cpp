@@ -88,9 +88,7 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  impl() {
-    dem = g_reg()->ctx().emplace<dem_bones_ex>();
-  }
+  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
   dem_bones_ex& dem;
   void set_parm() {
     dem.nB                = nBones_p;
