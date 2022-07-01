@@ -425,33 +425,44 @@ void dem_bones_comm::create_anm_curve() {
     MPlug plugrx  = joint.findPlug("rx");
     MPlug plugry  = joint.findPlug("ry");
     MPlug plugrz  = joint.findPlug("rz");
-    // 平移曲线
-    MObject aimTX = aim.create(plugtx, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
-    MObject aimTY = aim.create(plugty, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
-    MObject aimTZ = aim.create(plugtz, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
-    // 旋转曲线
-    MObject aimRX = aim.create(plugrx, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
-    MObject aimRY = aim.create(plugry, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
-    MObject aimRZ = aim.create(plugrz, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier);
 #define DOODLE_ADD_ANM_declaration(axis) \
-  MTimeArray l_time_list_##axis{};       \
-  MDoubleArray l_value_list_##axis{};
+  MTimeArray l_time_tran_##axis{};       \
+  MDoubleArray l_value_tran_##axis{};    \
+  MTimeArray l_time_rot_##axis{};        \
+  MDoubleArray l_value_rot_##axis{};
 
     DOODLE_ADD_ANM_declaration(x);
+    DOODLE_ADD_ANM_declaration(y);
+    DOODLE_ADD_ANM_declaration(z);
 
-    MTimeArray l_time_list{};
-    MDoubleArray l_value_list{};
+#define DOODLE_ADD_ANM_set(axis)                                         \
+  l_time_tran_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()}); \
+  l_value_tran_##axis.append(l_tran.x());                                \
+  l_time_rot_##axis.append(MTime{(std::double_t)l_f, MTime::uiUnit()});  \
+  l_value_rot_##axis.append(l_rot.x())
+
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
       auto l_tran = p_i->localTranslation_p.col(l_b).segment<3>(3 * l_f);
-      l_time_list.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
-      l_value_list.append(l_tran.x());
-      auto l_rot = p_i->localRotation_p.col(l_b).segment<3>(3 * l_f);
+      auto l_rot  = p_i->localRotation_p.col(l_b).segment<3>(3 * l_f);
+      DOODLE_ADD_ANM_set(x);
+      DOODLE_ADD_ANM_set(y);
+      DOODLE_ADD_ANM_set(z);
     }
-    k_s = aim.setObject(aimTX);
-    DOODLE_CHICK(k_s);
-    k_s = aim.addKeys(&l_time_list, &l_value_list);
-    DOODLE_CHICK(k_s);
+#define DOODLE_ADD_ANM_set_anm(axis)                                                     \
+  aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
+  k_s = aim.addKeys(&l_time_tran_##axis, &l_value_tran_##axis);                          \
+  DOODLE_CHICK(k_s);                                                                     \
+  aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
+  k_s = aim.addKeys(&l_time_rot_##axis, &l_value_rot_##axis);                            \
+  DOODLE_CHICK(k_s);
+
+    DOODLE_ADD_ANM_set_anm(x);
+    DOODLE_ADD_ANM_set_anm(y);
+    DOODLE_ADD_ANM_set_anm(z);
+
 #undef DOODLE_ADD_ANM_declaration
+#undef DOODLE_ADD_ANM_set
+#undef DOODLE_ADD_ANM_set_anm
   }
   p_i->dg_modidier.doIt();
 }
