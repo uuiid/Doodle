@@ -500,6 +500,20 @@ void dem_bones_comm::create_anm_curve() {
 }
 void dem_bones_comm::create_skin() {
   MStatus k_s{};
+  k_s = MGlobal::viewFrame(p_i->bindFrame_p);
+  DOODLE_CHICK(k_s);
+  MFnMesh l_mesh{p_i->mesh_obj};
+  /// \brief 复制节点
+  p_i->skin_mesh_obj = l_mesh.duplicate(false, false, &k_s);
+  DOODLE_CHICK(k_s);
+
+  // 设置材质属性
+  MFnSet l_mat{get_shading_engine(p_i->mesh_obj), &k_s};
+  DOODLE_CHICK(k_s);
+  k_s = l_mat.addMember(p_i->skin_mesh_obj);
+  DOODLE_CHICK(k_s);
+
+
   MFnSkinCluster l_skin_cluster{};
   p_i->skin_obj = l_skin_cluster.create("skinCluster", &k_s);
   DOODLE_CHICK(k_s);
