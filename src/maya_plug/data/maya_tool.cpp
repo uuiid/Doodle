@@ -45,7 +45,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点")
     }
   }
-  chick_true<doodle_error>(!l_plug.isNull(), DOODLE_SOURCE_LOC, "无法找到属性");
+  chick_true<doodle_error>(!l_plug.isNull(), DOODLE_SOURCE_LOC, " {} 无法找到属性 {}", get_node_name(in_node), in_name);
   return l_plug;
 }
 MObject get_shading_engine(const MObject& in_node) {
