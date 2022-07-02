@@ -101,20 +101,19 @@ void dem_bones_add_weight::add_weight() {
   k_s = l_obj.getPath(l_path);
   DOODLE_CHICK(k_s);
   MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
+  auto l_w_plug = get_plug(p_i->skin_obj, "weightList");
   for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
-    auto l_v_i = iterMeshVertex.index();
+    auto l_v_i          = iterMeshVertex.index();
+    auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i, &k_s);
     DOODLE_CHICK(k_s);
-    MIntArray l_index{};
-    MDoubleArray l_value{};
+    l_point_w_plug.setNumElements(p_i->dem.nB);
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
       auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
-      if (l_w != 0) {
-        l_index.append(joins_index[ibone]);
-        l_value.append(l_w);
-      }
+      auto l_p = l_w_plug.elementByLogicalIndex(ibone, &k_s);
+      DOODLE_CHICK(k_s);
+      k_s = l_p.setValue(l_w);
+      DOODLE_CHICK(k_s);
     }
-    k_s = l_skin_cluster.setWeights(l_path, iterMeshVertex.currentItem(), l_index, l_value, false);
-    DOODLE_CHICK(k_s);
   }
 }
 void dem_bones_add_weight::get_arg(const MArgList& in_arg) {
