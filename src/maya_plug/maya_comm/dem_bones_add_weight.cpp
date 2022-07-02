@@ -109,11 +109,11 @@ void dem_bones_add_weight::add_weight() {
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
       auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
       if (l_w != 0) {
-        l_index.append(ibone);
+        l_index.append(joins_index[ibone]);
         l_value.append(l_w);
       }
     }
-    k_s = l_skin_cluster.setWeights(l_path, iterMeshVertex.currentItem(), l_index, l_value, true);
+    k_s = l_skin_cluster.setWeights(l_path, iterMeshVertex.currentItem(), l_index, l_value, false);
     DOODLE_CHICK(k_s);
   }
 }
