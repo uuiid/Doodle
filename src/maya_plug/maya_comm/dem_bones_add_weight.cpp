@@ -97,7 +97,7 @@ void dem_bones_add_weight::add_weight() {
     k_s = l_fn_joint.getPath(l_path);
     DOODLE_CHICK(k_s);
     auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
-    DOODLE_CHICK(k_s);
+//    DOODLE_CHICK(k_s);
     joins_index[ibone] = l_joint_index;
   }
   MFnMesh l_obj{p_i->skin_mesh_obj};
