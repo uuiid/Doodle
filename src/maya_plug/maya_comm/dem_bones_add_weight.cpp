@@ -94,6 +94,8 @@ void dem_bones_add_weight::add_weight() {
     auto l_joint = p_i->dem.joins[ibone];
     k_s          = l_fn_joint.setObject(l_joint);
     DOODLE_CHICK(k_s);
+    k_s = l_fn_joint.getPath(l_path);
+    DOODLE_CHICK(k_s);
     auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
     joins_index[ibone] = l_joint_index;
   }
@@ -102,14 +104,18 @@ void dem_bones_add_weight::add_weight() {
   DOODLE_CHICK(k_s);
   MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
   auto l_w_plug = get_plug(p_i->skin_obj, "weightList");
+  get_plug(p_i->skin_obj, "normalizeWeights").setValue(false);
   for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
     auto l_v_i          = iterMeshVertex.index();
     auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i, &k_s);
     DOODLE_CHICK(k_s);
-    l_point_w_plug.setNumElements(p_i->dem.nB);
+    auto l_point_w_plug_child = l_point_w_plug.child(0, &k_s);
+    DOODLE_CHICK(k_s);
+    k_s = l_point_w_plug_child.setNumElements(p_i->dem.nB);
+    DOODLE_CHICK(k_s);
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
       auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
-      auto l_p = l_w_plug.elementByLogicalIndex(ibone, &k_s);
+      auto l_p = l_point_w_plug_child.elementByLogicalIndex(joins_index[ibone], &k_s);
       DOODLE_CHICK(k_s);
       k_s = l_p.setValue(l_w);
       DOODLE_CHICK(k_s);
