@@ -23,6 +23,7 @@ class dem_bones_comm : public doodle::TemplateAction<
 
   void create_joins();
   void create_anm_curve();
+  void set_result();
 
  public:
   dem_bones_comm();

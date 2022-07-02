@@ -387,6 +387,7 @@ MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   p_i->anm_compute();
   create_joins();
   create_anm_curve();
+  set_result();
 
   return MStatus::kSuccess;
 }
@@ -457,6 +458,18 @@ void dem_bones_comm::create_anm_curve() {
 #undef DOODLE_ADD_ANM_set_anm
   }
   p_i->dg_modidier.doIt();
+}
+void dem_bones_comm::set_result() {
+  MStatus k_s{};
+  MFnIkJoint l_j{};
+  MDagPath l_path{};
+  for (auto&& i : p_i->joins) {
+    k_s = l_j.setObject(i);
+    DOODLE_CHICK(k_s);
+    k_s = l_j.getPath(l_path);
+    DOODLE_CHICK(k_s);
+    appendToResult(l_path.fullPathName());
+  }
 }
 
 dem_bones_comm::~dem_bones_comm() = default;
