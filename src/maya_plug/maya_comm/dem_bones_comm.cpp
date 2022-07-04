@@ -95,7 +95,8 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
+  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {
+  }
   dem_bones_ex& dem;
   void set_parm() {
     dem.nB                = nBones_p;
@@ -213,8 +214,8 @@ class dem_bones_comm::impl {
     DOODLE_CHICK(k_s);
     tran_inverse_list.clear();
 
-    for (auto i = startFrame_p; i < endFrame_p; ++i) {
-      k_s = MGlobal::viewFrame((std::double_t)i);
+    for (auto i = 0; i < dem.nF; ++i) {
+      k_s = MGlobal::viewFrame((std::double_t)(i + startFrame_p));
       DOODLE_CHICK(k_s);
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       /// \brief 添加当前帧的逆矩阵
@@ -231,7 +232,7 @@ class dem_bones_comm::impl {
         dem.v.col(l_index).segment(3 * i, 3) << l_point.x, l_point.y, l_point.z;
       }
 
-      if (i == bindFrame_p) {  /// \brief 设置绑定帧
+      if (i + startFrame_p == bindFrame_p) {  /// \brief 设置绑定帧
         DOODLE_LOG_INFO("获取绑定{} 帧 网格 {} 的数据", i, l_mesh_name);
         // 设置多边形拓扑网格;
         for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
@@ -282,7 +283,9 @@ class dem_bones_comm::impl {
 };
 
 dem_bones_comm::dem_bones_comm()
-    : p_i(std::make_unique<impl>()) {
+    : p_i() {
+  g_reg()->ctx().erase<dem_bones_ex>();
+  p_i = std::make_unique<impl>();
 }
 void dem_bones_comm::get_arg(const MArgList& in_arg) {
   MStatus k_s;
@@ -495,7 +498,7 @@ void dem_bones_comm::create_anm_curve() {
       //      auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
       //      DOODLE_CHICK(k_s);
 
-      l_time.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
+      l_time.append(MTime{(std::double_t)l_f + p_i->startFrame_p, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
       DOODLE_ADD_ANM_set(y);
       DOODLE_ADD_ANM_set(z);
