@@ -33,7 +33,7 @@ import maya.cmds as cmds
 select_list = cmds.ls(sl=True)
 if select_list:
     j_list = cmds.doodle_comm_dem_bones(select_list[0],
-                                        sf={0},ef={1},bf={2},nb={3},nit={4},niit={5},nti={6})
+                                        sf={0},ef={1},bf={2},nb={3},nit={4},nii={5},nti={6})
     cmds.currentTime({2})
     l_du = cmds.duplicate(select_list[0], rr=True)
     j_list.append(l_du[0])

@@ -34,36 +34,36 @@ namespace doodle::maya_plug {
 
 namespace dem_bones_comm_ns {
 
-constexpr char startFrame_f[]         = "sf";
-constexpr char startFrame_lf[]        = "startFrame";
-constexpr char endFrame_f[]           = "ef";
-constexpr char endFrame_lf[]          = "endFrame";
-constexpr char bindFrame_f[]          = "bf";
-constexpr char bindFrame_lf[]         = "bindFrame";
-constexpr char nBones_f[]             = "nb";
-constexpr char nBones_lf[]            = "nBones";
-constexpr char nInitIters_f[]         = "niit";
-constexpr char nInitIters_lf[]        = "nInitIters";
-constexpr char nIters_f[]             = "nit";
-constexpr char nIters_lf[]            = "nIters";
-constexpr char nTransIters_f[]        = "nti";
-constexpr char nTransIters_lf[]       = "nTransIters";
-constexpr char isBindUpdate_f[]       = "bup";
-constexpr char isBindUpdate_lf[]      = "isBindUpdate";
-constexpr char transAffine_f[]        = "ta";
-constexpr char transAffine_lf[]       = "transAffine";
-constexpr char transAffineNorm_f[]    = "tan";
-constexpr char transAffineNorm_lf[]   = "transAffineNorm";
-constexpr char nWeightsIters_f[]      = "nwi";
-constexpr char nWeightsIters_lf[]     = "nWeightsIters";
-constexpr char nonZeroWeightsNum_f[]  = "nzwn";
-constexpr char nonZeroWeightsNum_lf[] = "nonZeroWeightsNum";
-constexpr char weightsSmooth_f[]      = "ws";
-constexpr char weightsSmooth_lf[]     = "weightsSmooth";
-constexpr char weightsSmoothStep_f[]  = "wss";
-constexpr char weightsSmoothStep_lf[] = "weightsSmoothStep";
-constexpr char parent_f[]             = "p";
-constexpr char parent_lf[]            = "parent";
+constexpr char startFrame_f[]         = "-sf";
+constexpr char startFrame_lf[]        = "-startFrame";
+constexpr char endFrame_f[]           = "-ef";
+constexpr char endFrame_lf[]          = "-endFrame";
+constexpr char bindFrame_f[]          = "-bf";
+constexpr char bindFrame_lf[]         = "-bindFrame";
+constexpr char nBones_f[]             = "-nb";
+constexpr char nBones_lf[]            = "-nBones";
+constexpr char nInitIters_f[]         = "-nii";
+constexpr char nInitIters_lf[]        = "-nInitIters";
+constexpr char nIters_f[]             = "-nit";
+constexpr char nIters_lf[]            = "-nIters";
+constexpr char nTransIters_f[]        = "-nti";
+constexpr char nTransIters_lf[]       = "-nTransIters";
+constexpr char isBindUpdate_f[]       = "-bup";
+constexpr char isBindUpdate_lf[]      = "-isBindUpdate";
+constexpr char transAffine_f[]        = "-ta";
+constexpr char transAffine_lf[]       = "-transAffine";
+constexpr char transAffineNorm_f[]    = "-tan";
+constexpr char transAffineNorm_lf[]   = "-transAffineNorm";
+constexpr char nWeightsIters_f[]      = "-nwi";
+constexpr char nWeightsIters_lf[]     = "-nWeightsIters";
+constexpr char nonZeroWeightsNum_f[]  = "-nzw";
+constexpr char nonZeroWeightsNum_lf[] = "-nonZeroWeightsNum";
+constexpr char weightsSmooth_f[]      = "-ws";
+constexpr char weightsSmooth_lf[]     = "-weightsSmooth";
+constexpr char weightsSmoothStep_f[]  = "-wss";
+constexpr char weightsSmoothStep_lf[] = "-weightsSmoothStep";
+constexpr char parent_f[]             = "-p";
+constexpr char parent_lf[]            = "-parent";
 
 MSyntax syntax() {
   MSyntax syntax{};

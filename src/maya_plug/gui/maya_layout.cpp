@@ -100,7 +100,7 @@ class dem_cloth_to_fbx_process_t
     : public process_t<dem_cloth_to_fbx_process_t>,
       public dem_cloth_to_fbx {
  public:
-  create_sim_cloth_process_t() = default;
+  dem_cloth_to_fbx_process_t() = default;
 };
 
 
