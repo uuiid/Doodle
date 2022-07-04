@@ -16,9 +16,15 @@ class dem_cloth_to_fbx(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.layout = QHBoxLayout(self)
+        self.lable = QLabel().setText("骨骼数")
+        self.layout.addWidget(self.lable)
         self.nbone_w = QSpinBox(self)
         self.nbone_w.setValue(self.nbone)
         self.nbone_w.valueChanged.connect(lambda x: self.set_bones(x))
+        self.layout.addWidget(self.nbone_w)
+
+        self.setLayout(self.layout)
 
     def set_bones(self, n):
         self.nbone = n
