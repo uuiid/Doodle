@@ -69,6 +69,7 @@ void builder_dock() {
       namespace menu_w   = gui::config::maya_plug::menu;
       ImGui::DockBuilderDockWindow(menu_w::comm_check_scenes.data(), dock_id_chick);     /// \brief 过滤器的停靠
       ImGui::DockBuilderDockWindow(menu_w::reference_attr_setting.data(), dock_id_ref);  /// \brief 编辑的停靠
+      ImGui::DockBuilderDockWindow(menu_w::dem_cloth_to_fbx.data(), dock_id_ref);  /// \brief 编辑的停靠
       ImGui::DockBuilderDockWindow(menu_w::create_sim_cloth.data(), dock_id_cloth);      /// \brief 编辑的停靠
 
       ImGui::DockBuilderFinish(dockspace_id);
