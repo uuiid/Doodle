@@ -163,6 +163,8 @@ class dem_bones_comm::impl {
   std::vector<MMatrix> tran_inverse_list;
 
   void push_time_tran_inverse() {
+    if (parent_tran.isNull())
+      return;
     MStatus k_s{};
     MFnTransform l_fn_tran{};
     k_s = l_fn_tran.setObject(parent_tran);
@@ -486,9 +488,10 @@ void dem_bones_comm::create_anm_curve() {
       DOODLE_CHICK(k_s);
       l_tran_mat.setRotationOrientation(l_qrot);
       DOODLE_CHICK(k_s);
-
-      auto l_matrix   = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
-      l_tran_mat      = l_matrix;
+      if (!p_i->tran_inverse_list.empty()) {
+        auto l_matrix = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
+        l_tran_mat    = l_matrix;
+      }
       l_erot          = l_tran_mat.eulerRotation();
       auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
       DOODLE_CHICK(k_s);
