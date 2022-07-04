@@ -136,6 +136,19 @@ class DlsShelf(shelfBase._shelf):
             startTime=1000, exportType="abc", select=True, force=True)
         cmds.doodle_upload_files()
 
+    @staticmethod
+    def _abc_to_fbx_():
+        b_time = cmds.currentTime(q=True)
+        select_list = cmds.ls(sl=True)
+        if not select_list:
+            return
+        j_list = cmds.doodle_comm_dem_bones(select_list[0],bf=b_time)
+        cmds.currentTime(b_time)
+        l_du = cmds.duplicate(select_list[0] ,rr=True)
+        j_list.append(l_du[0])
+        cmds.skinCluster(j_list)
+        cmds.doodle_comm_dem_bones_weiget(l_du)
+
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
         if key == QtCore.Qt.ShiftModifier:
