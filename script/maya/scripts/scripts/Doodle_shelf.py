@@ -78,7 +78,7 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: self.set_cache())
         self.addButon("export abc2", "icons/OUTabc2.png",
                       command=lambda: self._export_abc_and_upload_())
-        self.addButon("abc_to_fbx", "icons/OUTabc2.png", command=lambda: dem_cloth_to_fbx.dem_cloth_to_fbx())
+        self.addButon("abc_to_fbx", "icons/OUTabc2.png", command=lambda: dem_cloth_to_fbx.dem_cloth_to_fbx().show())
 
     def polyremesh(self):
         self.re()
