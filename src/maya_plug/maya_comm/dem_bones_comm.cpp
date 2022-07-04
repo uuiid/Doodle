@@ -442,7 +442,7 @@ void dem_bones_comm::create_joins() {
 
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     MFnIkJoint joint{};
-    auto l_joint_obj = joint.create(MObject::kNullObj, &k_s);
+    auto l_joint_obj = joint.create(p_i->parent_tran, &k_s);
     DOODLE_CHICK(k_s);
     k_s = joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
     DOODLE_CHICK(k_s);
@@ -472,8 +472,8 @@ void dem_bones_comm::create_anm_curve() {
     DOODLE_ADD_ANM_declaration(y);
     DOODLE_ADD_ANM_declaration(z);
 
-#define DOODLE_ADD_ANM_set(axis)               \
-  l_value_tran_##axis.append(l_vex_tran.axis); \
+#define DOODLE_ADD_ANM_set(axis)             \
+  l_value_tran_##axis.append(l_tran.axis()); \
   l_value_rot_##axis.append(l_erot.axis);
 
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
@@ -482,19 +482,18 @@ void dem_bones_comm::create_anm_curve() {
       MEulerRotation l_erot{l_rot.x(), l_rot.y(), l_rot.z(), MEulerRotation::kXYZ};
       auto l_qrot = l_erot.asQuaternion();
       l_erot      = l_qrot.asEulerRotation();
-
-      MTransformationMatrix l_tran_mat{};
-      k_s = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()}, MSpace::Space::kWorld);
-      DOODLE_CHICK(k_s);
-      l_tran_mat.setRotationOrientation(l_qrot);
-      DOODLE_CHICK(k_s);
-      if (!p_i->tran_inverse_list.empty()) {
-        auto l_matrix = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
-        l_tran_mat    = l_matrix;
-      }
-      l_erot          = l_tran_mat.eulerRotation();
-      auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
-      DOODLE_CHICK(k_s);
+      //      MTransformationMatrix l_tran_mat = joint.transformation();
+      //      k_s                              = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()}, MSpace::Space::kWorld);
+      //      DOODLE_CHICK(k_s);
+      //      l_tran_mat.setRotationOrientation(l_qrot);
+      //      DOODLE_CHICK(k_s);
+      //      if (!p_i->tran_inverse_list.empty()) {
+      //        auto l_matrix = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
+      //        l_tran_mat    = l_matrix;
+      //      }
+      //      l_erot          = l_tran_mat.eulerRotation();
+      //      auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
+      //      DOODLE_CHICK(k_s);
 
       l_time.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
