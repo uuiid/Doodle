@@ -142,7 +142,8 @@ class DlsShelf(shelfBase._shelf):
         select_list = cmds.ls(sl=True)
         if not select_list:
             return
-        j_list = cmds.doodle_comm_dem_bones(select_list[0], bf=b_time)
+        j_list = cmds.doodle_comm_dem_bones(select_list[0],
+                                            bf=b_time)
         cmds.currentTime(b_time)
         l_du = cmds.duplicate(select_list[0], rr=True)
         j_list.append(l_du[0])

@@ -79,6 +79,8 @@ set(doodle_maya_plug_cpp
         maya_comm/dem_bones_add_weight.cpp
         data/dem_bones_ex.h
         data/dem_bones_ex.cpp
+        gui/action/dem_cloth_to_fbx.h
+        gui/action/dem_cloth_to_fbx.cpp
         )
 
 if (DEFINED Maya_Version)

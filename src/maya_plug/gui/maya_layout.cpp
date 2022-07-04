@@ -75,18 +75,27 @@ void builder_dock() {
   }
   ImGui::End();
 }
-class comm_check_scenes_process_t : public process_t<comm_check_scenes_process_t>, public comm_check_scenes {
+class comm_check_scenes_process_t
+    : public process_t<comm_check_scenes_process_t>,
+      public comm_check_scenes {
  public:
   comm_check_scenes_process_t() = default;
 };
-class reference_attr_setting_process_t : public process_t<reference_attr_setting_process_t>, public reference_attr_setting {
+class reference_attr_setting_process_t
+    : public process_t<reference_attr_setting_process_t>,
+      public reference_attr_setting {
  public:
   reference_attr_setting_process_t() = default;
 };
-class create_sim_cloth_process_t : public process_t<create_sim_cloth_process_t>, public create_sim_cloth {
+class create_sim_cloth_process_t
+    : public process_t<create_sim_cloth_process_t>,
+      public create_sim_cloth {
  public:
   create_sim_cloth_process_t() = default;
 };
+
+
+
 
 class maya_layout::impl {
  public:
