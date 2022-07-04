@@ -34,7 +34,7 @@ select_list = cmds.ls(sl=True)
 if select_list:
     for obj in select_list:
         j_list = cmds.doodle_comm_dem_bones(obj,
-                                            sf={0},ef={1},bf={2},nb={3},nit={4},nii={5},nti={6})
+                                            sf={0},ef={1},bf={2},nb={3},nit={4},nii={5},nti={6},nwi={7})
         cmds.currentTime({2})
         l_du = cmds.duplicate(obj, rr=True)
         j_list.append(l_du[0])
@@ -47,7 +47,8 @@ if select_list:
                             nBones_p,
                             nIters_p,
                             nInitIters_p,
-                            nTransIters_p);
+                            nTransIters_p,
+                            nWeightsIters_p);
 
 
     MGlobal::executePythonCommandOnIdle(d_str{l_py},
@@ -68,8 +69,9 @@ void dem_cloth_to_fbx::render() {
 
   ImGui::SliderInt("骨骼数", &p_i->nBones_p, 0, 300);
   ImGui::SliderInt("全局迭代数", &p_i->nIters_p, 0, 300);
-  ImGui::SliderInt("初始化迭代数", &p_i->nInitIters_p, 0, 300);
-  ImGui::SliderInt("骨骼迭代数", &p_i->nTransIters_p, 0, 300);
+  ImGui::SliderInt("初始化迭代数", &p_i->nInitIters_p, 0, 100);
+  ImGui::SliderInt("骨骼迭代数", &p_i->nTransIters_p, 0, 100);
+  ImGui::SliderInt("权重迭代数", &p_i->nWeightsIters_p, 0, 100);
 
   if (ImGui::Button("转换")) {
     p_i->run();
