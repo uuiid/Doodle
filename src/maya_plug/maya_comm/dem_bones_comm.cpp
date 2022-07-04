@@ -22,6 +22,9 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MQuaternion.h>
 #include <maya/MDagPath.h>
+#include <maya/MTransformationMatrix.h>
+#include <maya/MMatrix.h>
+
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
@@ -59,6 +62,9 @@ constexpr char weightsSmooth_f[]      = "ws";
 constexpr char weightsSmooth_lf[]     = "weightsSmooth";
 constexpr char weightsSmoothStep_f[]  = "wss";
 constexpr char weightsSmoothStep_lf[] = "weightsSmoothStep";
+constexpr char parent_f[]             = "p";
+constexpr char parent_lf[]            = "parent";
+
 MSyntax syntax() {
   MSyntax syntax{};
   /// \brief 解算参数
@@ -76,6 +82,7 @@ MSyntax syntax() {
   syntax.addFlag(nonZeroWeightsNum_f, nonZeroWeightsNum_lf, MSyntax::kUnsigned);
   syntax.addFlag(weightsSmooth_f, weightsSmooth_lf, MSyntax::kDouble);
   syntax.addFlag(weightsSmoothStep_f, weightsSmoothStep_lf, MSyntax::kDouble);
+  syntax.addFlag(parent_f, parent_lf, MSyntax::kString);
 
   /// \brief 选中的物体
   syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList, 1);
@@ -147,9 +154,24 @@ class dem_bones_comm::impl {
   MObject skin_mesh_obj;
   MObject skin_obj;
 
+  MObject parent_tran;
+
   MDagModifier dg_modidier;
 
   std::vector<MObject> joins{};
+
+  std::vector<MMatrix> tran_inverse_list;
+
+  void push_time_tran_inverse() {
+    MStatus k_s{};
+    MFnTransform l_fn_tran{};
+    k_s = l_fn_tran.setObject(parent_tran);
+    DOODLE_CHICK(k_s);
+    auto l_t = l_fn_tran.transformation(&k_s);
+    DOODLE_CHICK(k_s);
+
+    tran_inverse_list.push_back(l_t.asMatrixInverse());
+  }
 
   void init() {
     MStatus k_s;
@@ -172,6 +194,7 @@ class dem_bones_comm::impl {
       DOODLE_CHICK(k_s);
       dem.subjectID.resize(dem.nF);
       dem.u.resize(3 * dem.nS, dem.nV);
+      //      dem.preMulInv.resize(4 * dem.nS, 4 * dem.nB);
 
       // 添加子物体的索引
       for (int s = 0; s < dem.nS; s++) {
@@ -180,16 +203,21 @@ class dem_bones_comm::impl {
         }
       }
     }
+    // 如果有父物体需要添加转换矩阵
 
     MFnDagNode l_dag_node{mesh_obj, &k_s};
     DOODLE_CHICK(k_s);
     auto l_mesh_name = l_dag_node.name(&k_s);
     DOODLE_CHICK(k_s);
+    tran_inverse_list.clear();
 
     for (auto i = startFrame_p; i < endFrame_p; ++i) {
       k_s = MGlobal::viewFrame((std::double_t)i);
       DOODLE_CHICK(k_s);
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
+      /// \brief 添加当前帧的逆矩阵
+      push_time_tran_inverse();
+
       MItMeshVertex vexpoint{mesh_obj, &k_s};
       DOODLE_CHICK(k_s);
       /// \brief 设置顶点
@@ -375,6 +403,22 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     DOODLE_CHICK(k_s);
     p_i->weightsSmoothStep_p = l_value;
   }
+  if (k_prase.isFlagSet(dem_bones_comm_ns::parent_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MString l_value{};
+    k_s = k_prase.getFlagArgument(dem_bones_comm_ns::parent_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    MSelectionList l_select{};
+    k_s = l_select.add(l_value);
+    DOODLE_CHICK(k_s);
+    MDagPath l_path;
+
+    k_s = l_select.getDagPath(0, l_path);
+    DOODLE_CHICK(k_s);
+
+    p_i->parent_tran = l_path.transform(&k_s);
+    DOODLE_CHICK(k_s);
+  }
 
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
@@ -408,6 +452,7 @@ void dem_bones_comm::create_anm_curve() {
   MStatus k_s{};
   MFnAnimCurve aim{};
   MFnIkJoint joint{};
+
   for (auto l_b = 0; l_b < p_i->dem.nB; ++l_b) {
     joint.setObject(p_i->joins[l_b]);
     MPlug plugtx = joint.findPlug("tx");
@@ -425,8 +470,8 @@ void dem_bones_comm::create_anm_curve() {
     DOODLE_ADD_ANM_declaration(y);
     DOODLE_ADD_ANM_declaration(z);
 
-#define DOODLE_ADD_ANM_set(axis)             \
-  l_value_tran_##axis.append(l_tran.axis()); \
+#define DOODLE_ADD_ANM_set(axis)               \
+  l_value_tran_##axis.append(l_vex_tran.axis); \
   l_value_rot_##axis.append(l_erot.axis);
 
     for (int l_f = 0; l_f < p_i->dem.nF; ++l_f) {
@@ -435,6 +480,18 @@ void dem_bones_comm::create_anm_curve() {
       MEulerRotation l_erot{l_rot.x(), l_rot.y(), l_rot.z(), MEulerRotation::kXYZ};
       auto l_qrot = l_erot.asQuaternion();
       l_erot      = l_qrot.asEulerRotation();
+
+      MTransformationMatrix l_tran_mat{};
+      k_s = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()}, MSpace::Space::kWorld);
+      DOODLE_CHICK(k_s);
+      l_tran_mat.setRotationOrientation(l_qrot);
+      DOODLE_CHICK(k_s);
+
+      auto l_matrix   = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
+      l_tran_mat      = l_matrix;
+      l_erot          = l_tran_mat.eulerRotation();
+      auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
+      DOODLE_CHICK(k_s);
 
       l_time.append(MTime{(std::double_t)l_f, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
