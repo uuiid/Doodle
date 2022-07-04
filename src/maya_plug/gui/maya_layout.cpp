@@ -8,6 +8,7 @@
 #include <maya_plug/gui/action/create_sim_cloth.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
 #include <maya_plug/gui/action/reference_attr_setting.h>
+#include <maya_plug/gui/action/dem_cloth_to_fbx.h>
 namespace doodle {
 namespace maya_plug {
 
@@ -94,6 +95,12 @@ class create_sim_cloth_process_t
   create_sim_cloth_process_t() = default;
 };
 
+class dem_cloth_to_fbx_process_t
+    : public process_t<dem_cloth_to_fbx_process_t>,
+      public dem_cloth_to_fbx {
+ public:
+  create_sim_cloth_process_t() = default;
+};
 
 
 
@@ -102,6 +109,7 @@ class maya_layout::impl {
   comm_check_scenes_process_t chick_;
   reference_attr_setting_process_t ref_;
   create_sim_cloth_process_t cloth;
+  dem_cloth_to_fbx_process_t dem;
 };
 maya_layout::maya_layout()
     : p_i(std::make_unique<impl>()) {
@@ -117,6 +125,9 @@ void maya_layout::update(const chrono::system_clock::duration &in_duration, void
   };
   dear::Begin{menu_w::create_sim_cloth.data()} && [&, this]() {
     p_i->cloth.tick({}, {});
+  };
+  dear::Begin{menu_w::dem_cloth_to_fbx.data()} && [&, this]() {
+    p_i->dem.tick({}, {});
   };
 }
 
