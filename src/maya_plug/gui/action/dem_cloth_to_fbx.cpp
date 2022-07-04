@@ -32,13 +32,14 @@ import maya.cmds as cmds
 
 select_list = cmds.ls(sl=True)
 if select_list:
-    j_list = cmds.doodle_comm_dem_bones(select_list[0],
-                                        sf={0},ef={1},bf={2},nb={3},nit={4},nii={5},nti={6})
-    cmds.currentTime({2})
-    l_du = cmds.duplicate(select_list[0], rr=True)
-    j_list.append(l_du[0])
-    cmds.skinCluster(j_list)
-    cmds.doodle_comm_dem_bones_weiget(l_du)
+    for obj in select_list:
+        j_list = cmds.doodle_comm_dem_bones(obj,
+                                            sf={0},ef={1},bf={2},nb={3},nit={4},nii={5},nti={6})
+        cmds.currentTime({2})
+        l_du = cmds.duplicate(obj, rr=True)
+        j_list.append(l_du[0])
+        cmds.skinCluster(j_list)
+        cmds.doodle_comm_dem_bones_weiget(l_du)
 )",
                             startFrame_p,
                             endFrame_p,
@@ -47,6 +48,7 @@ if select_list:
                             nIters_p,
                             nInitIters_p,
                             nTransIters_p);
+
 
     MGlobal::executePythonCommandOnIdle(d_str{l_py},
                                         true);
