@@ -4,6 +4,7 @@ import maya.cmds as cmds
 
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
+import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
 # import scripts.Doodle_deleteAttr as deleteAttr
 from PySide2 import QtCore
@@ -77,6 +78,7 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: self.set_cache())
         self.addButon("export abc2", "icons/OUTabc2.png",
                       command=lambda: self._export_abc_and_upload_())
+        self.addButon("abc_to_fbx", "icons/OUTabc2.png", command=lambda: dem_cloth_to_fbx.dem_cloth_to_fbx())
 
     def polyremesh(self):
         self.re()
@@ -142,9 +144,9 @@ class DlsShelf(shelfBase._shelf):
         select_list = cmds.ls(sl=True)
         if not select_list:
             return
-        j_list = cmds.doodle_comm_dem_bones(select_list[0],bf=b_time)
+        j_list = cmds.doodle_comm_dem_bones(select_list[0], bf=b_time)
         cmds.currentTime(b_time)
-        l_du = cmds.duplicate(select_list[0] ,rr=True)
+        l_du = cmds.duplicate(select_list[0], rr=True)
         j_list.append(l_du[0])
         cmds.skinCluster(j_list)
         cmds.doodle_comm_dem_bones_weiget(l_du)
