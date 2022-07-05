@@ -42,7 +42,7 @@ void app_command_base::command_line_parser(const std::vector<std::string>& in_ar
 bool app_command_base::chick_authorization() {
   auto l_p = core_set::program_location() / doodle_config::token_name.data();
   if (!exists(l_p)) {
-     l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
+    l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
   }
   if (!exists(l_p)) {
     DOODLE_LOG_ERROR("无法找到授权文件")
@@ -62,9 +62,14 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
           });
   FSys::ifstream l_ifstream{in_path};
   std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
-  authorization l_authorization{ciphertext};
+  try {
+    authorization l_authorization{ciphertext};
 
-  return l_authorization.is_expire();
+    return l_authorization.is_expire();
+  } catch (const std::exception& err) {
+    DOODLE_LOG_INFO(err.what());
+    return true;
+  }
 }
 
 void app_command_base::command_line_parser(const PWSTR& in_arg) {
