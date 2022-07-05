@@ -178,6 +178,8 @@ void main_menu_bar::menu_tool() {
     toolkit::deleteUeCache();
   if (dear::MenuItem("修改ue4缓存位置"))
     toolkit::modifyUeCachePath();
+  if (dear::MenuItem("安装houdini插件"))
+    toolkit::install_houdini_plug();
 }
 
 void main_menu_bar::init() {
