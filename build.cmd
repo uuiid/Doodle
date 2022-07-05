@@ -30,62 +30,62 @@ echo -----------------install main exe--------------------
 --component doodle_houdini_com
 
 
-@REM echo -----------------clear main--------------------
-@REM del  %my_pwd%build\Ninja_release\CMakeCache.txt
+echo -----------------clear main--------------------
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
-@REM echo -----------------------------------------------------
-@REM echo -----------------config maya 2018--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM -S%my_pwd% ^
-@REM --preset Ninja_release -DMaya_Version=2018
-@REM echo -----------------build maya 2018--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --build ^
-@REM --preset release_exe --target doodle_maya
-@REM echo -----------------install maya 2018--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --install %my_pwd%\build\Ninja_release ^
-@REM --component maya_plug_com
-@REM echo -----------------clear maya 2018--------------------
-@REM rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
-@REM rmdir /q /s %my_pwd%build\Ninja_release\plug
-@REM del  %my_pwd%build\Ninja_release\CMakeCache.txt
+echo -----------------------------------------------------
+echo -----------------config maya 2018--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release -DMaya_Version=2018
+echo -----------------build maya 2018--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_exe --target doodle_maya
+echo -----------------install maya 2018--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install %my_pwd%\build\Ninja_release ^
+--component maya_plug_com
+echo -----------------clear maya 2018--------------------
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
-@REM echo -----------------------------------------------------
-@REM echo -----------------config maya 2019--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM -S%my_pwd% ^
-@REM --preset Ninja_release -DMaya_Version=2019
-@REM echo -----------------build maya 2019--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --build ^
-@REM --preset release_exe --target doodle_maya
-@REM echo -----------------install maya 2019--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --install %my_pwd%\build\Ninja_release ^
-@REM --component maya_plug_com
-@REM echo -----------------clear maya 2019--------------------
-@REM rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
-@REM rmdir /q /s %my_pwd%build\Ninja_release\plug
-@REM del  %my_pwd%build\Ninja_release\CMakeCache.txt
+echo -----------------------------------------------------
+echo -----------------config maya 2019--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release -DMaya_Version=2019
+echo -----------------build maya 2019--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_exe --target doodle_maya
+echo -----------------install maya 2019--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install %my_pwd%\build\Ninja_release ^
+--component maya_plug_com
+echo -----------------clear maya 2019--------------------
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
-@REM echo -----------------------------------------------------
-@REM echo -----------------config maya 2020--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM -S%my_pwd% ^
-@REM --preset Ninja_release -DMaya_Version=2020
-@REM echo -----------------build maya 2020--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --build ^
-@REM --preset release_exe --target doodle_maya
-@REM echo -----------------install maya 2020--------------------
-@REM "C:\Program Files\CMake\bin\cmake.exe" ^
-@REM --install %my_pwd%\build\Ninja_release ^
-@REM --component maya_plug_com
-@REM echo -----------------clear maya 2020--------------------
-@REM rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
-@REM rmdir /q /s %my_pwd%build\Ninja_release\plug
-@REM del  %my_pwd%build\Ninja_release\CMakeCache.txt
+echo -----------------------------------------------------
+echo -----------------config maya 2020--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release -DMaya_Version=2020
+echo -----------------build maya 2020--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_exe --target doodle_maya
+echo -----------------install maya 2020--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install %my_pwd%\build\Ninja_release ^
+--component maya_plug_com
+echo -----------------clear maya 2020--------------------
+rmdir /q /s %my_pwd%build\Ninja_release\src\maya_plug
+rmdir /q /s %my_pwd%build\Ninja_release\plug
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
 echo -----------------config pack--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
@@ -96,17 +96,17 @@ echo -----------------pack---------------------
 --build ^
 --preset cmake_pack
 
-@REM echo -----------------copy file--------------------
-@REM robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
-@REM mkdir %my_pwd%build\html\file
-@REM robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
-@REM robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
-@REM py %my_pwd%doc\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
+echo -----------------copy file--------------------
+robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
+mkdir %my_pwd%build\html\file
+robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
+robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
+py %my_pwd%doc\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
 
-@REM rmdir /q /s %my_pwd%build\install\bin
-@REM rmdir /q /s %my_pwd%build\install\maya
-@REM rmdir /q /s %my_pwd%build\install\ue425_Plug
-@REM rmdir /q /s %my_pwd%build\install\ue426_Plug
-@REM rmdir /q /s %my_pwd%build\install\ue427_Plug
+rmdir /q /s %my_pwd%build\install\bin
+rmdir /q /s %my_pwd%build\install\maya
+rmdir /q /s %my_pwd%build\install\ue425_Plug
+rmdir /q /s %my_pwd%build\install\ue426_Plug
+rmdir /q /s %my_pwd%build\install\ue427_Plug
 
 Exit 0
