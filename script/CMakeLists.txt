@@ -22,4 +22,9 @@ if (DEFINED Ue4_ROOT_DIR)
             COMPONENT ue4_plug
             PATTERN "Intermediate" EXCLUDE
             )
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
+            DESTINATION SideFX_Labs
+            COMPONENT ue4_plug
+            PATTERN "Intermediate" EXCLUDE
+            )
 endif ()
