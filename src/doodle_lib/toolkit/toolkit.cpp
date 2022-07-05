@@ -108,17 +108,21 @@ bool toolkit::deleteUeCache() {
   return true;
 }
 void toolkit::install_houdini_plug() {
-  auto l_doc = win::get_pwd();
-  l_doc /= "houdini19.0/plus/doodle";
-  auto l_source = core_set::program_location().parent_path() / "houdini";
-  if (FSys::exists(l_doc)) {
-    FSys::remove_all(l_doc);
-  } else {
-    FSys::create_directories(l_doc);
+  try {
+    auto l_doc = win::get_pwd();
+    l_doc /= "houdini19.0/plus/doodle";
+    auto l_source = core_set::program_location().parent_path() / "houdini";
+    if (FSys::exists(l_doc)) {
+      FSys::remove_all(l_doc);
+    } else {
+      FSys::create_directories(l_doc);
+    }
+    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_source, l_doc));
+    FSys::copy(l_source, l_doc, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+  } catch (FSys::filesystem_error &error) {
+    DOODLE_LOG_ERROR(error.what());
+    throw;
   }
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_source, l_doc));
-  FSys::copy(l_source, l_doc, FSys::copy_options::recursive | FSys::copy_options::update_existing);
-  return true;
 }
 
 }  // namespace doodle
