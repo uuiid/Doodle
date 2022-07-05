@@ -43,12 +43,23 @@ PYTHONPATH+:= scripts
   }
 }
 
+void install_SideFX_Labs(const FSys::path &path) {
+  if (FSys::exists(path)) {
+    FSys::remove_all(path);
+  } else {
+    FSys::create_directories(path);
+  }
+
+  auto sourePath = FSys::program_location().parent_path() / "SideFX_Labs";
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+}
+
 void toolkit::installUePath(const FSys::path &path) {
   try {
+    /// \brief 安装我们自己的插件
     auto &set      = core_set::getSet();
-
     auto sourePath = FSys::program_location().parent_path();
-
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.');
         l_f != std::string::npos) {
@@ -65,6 +76,8 @@ void toolkit::installUePath(const FSys::path &path) {
 
     DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
     copy(sourePath, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+    /// \brief 安装houdini labs 插件
+    install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
   } catch (FSys::filesystem_error &error) {
     DOODLE_LOG_ERROR(error.what());
     throw;
