@@ -147,6 +147,26 @@
             </ComponentGroupRef>
         </Feature>
 
+        <Feature Id="houdini_plug"
+                 Display="expand"
+                 Absent="allow"
+                 ConfigurableDirectory="DOODLE_ROOT"
+                 Title="Doodle houdini Plug"
+                 Level="1">
+            <ComponentGroupRef Id="com_group_dir_houdini">
+            </ComponentGroupRef>
+        </Feature>
+
+
+        <Feature Id="houdini_SideFX_Labs"
+                 Display="expand"
+                 Absent="allow"
+                 ConfigurableDirectory="DOODLE_ROOT"
+                 Title="houdini SideFX Plug"
+                 Level="1">
+            <ComponentGroupRef Id="com_group_dir_SideFX_Labs">
+            </ComponentGroupRef>
+        </Feature>
         <!--        <UIRef Id="$(var.DOODLE_WIX_UI_REF)"/>-->
         <UI Id="DoodleUI">
             <UIRef Id="WixUI_Mondo"/>
