@@ -178,7 +178,7 @@ void main_menu_bar::menu_tool() {
     toolkit::deleteUeCache();
   if (dear::MenuItem("修改ue4缓存位置"))
     toolkit::modifyUeCachePath();
-  if (dear::MenuItem("安装houdini插件"))
+  if (dear::MenuItem("安装houdini 19.0插件"))
     toolkit::install_houdini_plug();
 }
 
