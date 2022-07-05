@@ -16,6 +16,9 @@ class maya_plug_app : public app {
   virtual void load_windows() override;
 
  public:
+  virtual void command_line_parser(const std::vector<std::string>& in_arg) override;
+
+ public:
   using app::app;
   virtual void close_windows() override;
 
