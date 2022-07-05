@@ -166,7 +166,7 @@ bool reference_file::replace_sim_assets_file() {
         [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
           auto *self = reinterpret_cast<reference_file *>(clientData);
           file.setRawFullName(d_str{self->path});
-          *retCode = file.exists();
+          *retCode = FSys::exists(self->path);
         },
         this)};
 
@@ -499,8 +499,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
             DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, *l_path);
             k_s = file.setRawFullName(d_str{l_path->generic_string()});
             DOODLE_CHICK(k_s);
-            *retCode = file.exists();
-
+            *retCode = FSys::exists(self->path);
           } else {
             *retCode = false;
           }

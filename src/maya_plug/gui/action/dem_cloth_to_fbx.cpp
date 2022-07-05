@@ -65,7 +65,7 @@ void dem_cloth_to_fbx::init() {
 }
 void dem_cloth_to_fbx::render() {
   ImGui::InputInt("开始帧", &p_i->startFrame_p);
-  ImGui::InputInt("结束帧", &p_i->startFrame_p);
+  ImGui::InputInt("结束帧", &p_i->endFrame_p);
 
   ImGui::SliderInt("骨骼数", &p_i->nBones_p, 0, 300);
   ImGui::SliderInt("全局迭代数", &p_i->nIters_p, 0, 300);
