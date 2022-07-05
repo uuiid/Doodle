@@ -20,6 +20,7 @@ wix_heat_gen(maya ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue425_Plug ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue426_Plug ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue427_Plug ${CMAKE_INSTALL_PREFIX})
+wix_heat_gen(houdini ${CMAKE_INSTALL_PREFIX})
 
 wix_candle_gen(main ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(bin ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
@@ -27,6 +28,7 @@ wix_candle_gen(maya ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(ue425_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(ue426_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(ue427_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
+wix_candle_gen(houdini ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 
 include(ProcessorCount)
 ProcessorCount(DOODLE_CPU_N)
@@ -49,6 +51,7 @@ add_custom_target(gen_light_file
         "${CMAKE_INSTALL_PREFIX}/ue425_Plug"
         "${CMAKE_INSTALL_PREFIX}/ue426_Plug"
         "${CMAKE_INSTALL_PREFIX}/ue427_Plug"
+        "${CMAKE_INSTALL_PREFIX}/houdini"
         -x!bin/doodle_limited_exe.exe
 
         DEPENDS ${gen_wixobj_files}

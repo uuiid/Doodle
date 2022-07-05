@@ -25,6 +25,11 @@ echo -----------------install main exe--------------------
 --install %my_pwd%\build\Ninja_release ^
 --component ue4_plug
 
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install %my_pwd%\build\Ninja_release ^
+--component doodle_houdini_com
+
+
 echo -----------------clear main--------------------
 del  %my_pwd%build\Ninja_release\CMakeCache.txt
 
