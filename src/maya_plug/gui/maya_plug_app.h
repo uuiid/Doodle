@@ -10,17 +10,14 @@ class maya_plug_app : public app {
  protected:
  public:
   maya_plug_app(const win::wnd_instance& in_instance = nullptr,
-                const win::wnd_handle& in_parent   = nullptr);
+                const win::wnd_handle& in_parent     = nullptr);
 
  private:
   virtual void load_windows() override;
 
  public:
-  virtual void command_line_parser(const std::vector<std::string>& in_arg) override;
-
  public:
   using app::app;
   virtual void close_windows() override;
-
 };
 }  // namespace doodle::maya_plug

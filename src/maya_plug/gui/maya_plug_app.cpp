@@ -27,9 +27,5 @@ maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
           in_parent) {
   self = this;
 }
-void maya_plug_app::command_line_parser(const std::vector<std::string>& in_arg) {
-  auto& set = core_set::getSet();
-  DOODLE_LOG_INFO("初始化gui日志");
-  logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
-}
+
 }  // namespace doodle::maya_plug
