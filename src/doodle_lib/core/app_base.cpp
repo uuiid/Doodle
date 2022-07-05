@@ -13,7 +13,6 @@
 #include <doodle_lib/core/program_options.h>
 #include <doodle_lib/core/authorization.h>
 
-
 #include <boost/contract.hpp>
 
 #include <cryptopp/filters.h>
@@ -41,9 +40,9 @@ void app_command_base::command_line_parser(const std::vector<std::string>& in_ar
 }
 
 bool app_command_base::chick_authorization() {
-  auto l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
+  l_p = core_set::program_location() / doodle_config::token_name.data();
   if (!exists(l_p)) {
-    l_p = core_set::program_location() / doodle_config::token_name.data();
+    auto l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
   }
   if (!exists(l_p)) {
     DOODLE_LOG_ERROR("无法找到授权文件")
