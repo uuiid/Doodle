@@ -64,6 +64,8 @@ class DOODLELIB_API toolkit {
    * @return false
    */
   static bool deleteUeCache();
+
+  static void install_houdini_plug();
 };
 
 }  // namespace doodle
