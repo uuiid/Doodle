@@ -99,11 +99,15 @@ void add_component_table(sqlpp::sqlite3::connection& in_conn) {
 
 void add_version_table(sqlpp::sqlite3::connection& in_conn) {
   in_conn.execute(std::string{::doodle::database_n::create_version_table});
+  sql::DoodleInfo l_info{};
+  in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
+      l_info.versionMajor = version::version_major,
+      l_info.versionMinor = version::version_minor));
 }
 
 void set_version(sqlpp::sqlite3::connection& in_conn) {
   sql::DoodleInfo l_info{};
-  in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
+  in_conn(sqlpp::update(l_info).unconditionally().set(
       l_info.versionMajor = version::version_major,
       l_info.versionMinor = version::version_minor));
 }
