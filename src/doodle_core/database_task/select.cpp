@@ -140,10 +140,9 @@ class select::impl {
                   return;
                 entt::entity l_e = num_to_enum<entt::entity>(in_id);
                 entt::handle l_h{in_reg, l_e};
-                chick_true<doodle_error>(
-                    l_h.valid(),
-                    DOODLE_LOC,
-                    "无效的实体");
+                DOODLE_LOG_ERROR("无效的实体 {}", in_id);
+                database::delete_(l_h);
+
                 auto l_json = nlohmann::json::parse(in_json);
                 l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
               }});
@@ -211,6 +210,7 @@ class select::impl {
           strand_,
           std::packaged_task<void()>{
               [in_json = row.uuidData.value(),
+               in_id   = row.id,
                l_e,
                &in_reg,
                this]() {
@@ -222,7 +222,7 @@ class select::impl {
                     l_h.valid(), DOODLE_LOC,
                     "失效的实体");
 
-                l_h.emplace_or_replace<database>(in_json);
+                l_h.emplace_or_replace<database>(in_json).set_id(in_id);
               }});
 
       results.emplace_back(l_fut.share());
