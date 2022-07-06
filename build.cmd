@@ -107,6 +107,8 @@ rmdir /q /s %my_pwd%build\install\bin
 rmdir /q /s %my_pwd%build\install\maya
 rmdir /q /s %my_pwd%build\install\ue425_Plug
 rmdir /q /s %my_pwd%build\install\ue426_Plug
-rmdir /q /s %my_pwd%build\install\ue427_Plug
+rmdir /q /s %my_pwd%build\install\ue426_Plug
+rmdir /q /s %my_pwd%build\install\houdini
+rmdir /q /s %my_pwd%build\install\SideFX_Labs
 
 Exit 0
