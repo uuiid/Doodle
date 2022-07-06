@@ -52,43 +52,6 @@ class select::impl {
 
   registry_ptr local_reg{g_reg()};
 
-  static void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
-    in_conn.execute(std::string{create_ctx_table});
-    in_conn.execute(std::string{create_ctx_table_index});
-    in_conn.execute(std::string{create_ctx_table_unique});
-  }
-
-  static void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
-    in_conn.execute(std::string{create_entity_table});
-    in_conn.execute(std::string{create_entity_table_index});
-  }
-
-  static void add_component_table(sqlpp::sqlite3::connection& in_conn) {
-    in_conn.execute(std::string{create_com_table});
-    in_conn.execute(std::string{create_com_table_index_id});
-    in_conn.execute(std::string{create_com_table_index_hash});
-    in_conn.execute(std::string{create_com_table_trigger});
-  }
-
-  static void set_version(sqlpp::sqlite3::connection& in_conn) {
-    sql::DoodleInfo l_info{};
-
-    in_conn(sqlpp::update(l_info).unconditionally().set(
-        l_info.versionMajor = version::version_major,
-        l_info.versionMinor = version::version_minor));
-  }
-
-  void up_data(sqlpp::sqlite3::connection& in_conn) {
-    auto [l_main_v, l_s_v] = details::get_version(in_conn);
-    if (l_main_v <= 3 && l_s_v <= 4) {
-      auto l_k_con = core_sql::Get().get_connection(project);
-      add_entity_table(in_conn);
-      add_ctx_table(in_conn);
-      add_component_table(in_conn);
-      set_version(in_conn);
-    }
-  }
-
 
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     Metadatatab l_metadatatab{};
@@ -313,12 +276,10 @@ void select::update(chrono::duration<chrono::system_clock::rep,
 }
 
 void select::th_run() {
-
-
-  {
-    auto l_k_con = core_sql::Get().get_connection(p_i->project);
-    p_i->up_data(*l_k_con);
-  }
+  chick_true<doodle_error>(
+      FSys::exists(p_i->project),
+      DOODLE_LOC,
+      "数据库不存在 {}", p_i->project);
 
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);
