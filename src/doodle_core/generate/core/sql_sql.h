@@ -322,5 +322,58 @@ namespace doodle_database
       };
     };
   };
+  namespace DoodleInfo_
+  {
+    struct VersionMajor
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "version_major";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T versionMajor;
+            T& operator()() { return versionMajor; }
+            const T& operator()() const { return versionMajor; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::require_insert>;
+    };
+    struct VersionMinor
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "version_minor";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T versionMinor;
+            T& operator()() { return versionMinor; }
+            const T& operator()() const { return versionMinor; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::require_insert>;
+    };
+  } // namespace DoodleInfo_
+
+  struct DoodleInfo: sqlpp::table_t<DoodleInfo,
+               DoodleInfo_::VersionMajor,
+               DoodleInfo_::VersionMinor>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "doodle_info";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T doodleInfo;
+        T& operator()() { return doodleInfo; }
+        const T& operator()() const { return doodleInfo; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

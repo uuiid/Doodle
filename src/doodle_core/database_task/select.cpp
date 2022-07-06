@@ -31,10 +31,6 @@
 
 #include <boost/asio.hpp>
 
-SQLPP_DECLARE_TABLE(
-    (doodle_info),
-    (version_major, int, SQLPP_NULL)(version_minor, int, SQLPP_NULL));
-
 namespace doodle::database_n {
 namespace sql = doodle_database;
 class select::impl {
@@ -75,12 +71,12 @@ class select::impl {
 
   std::tuple<std::uint32_t, std::uint32_t> get_version(
       sqlpp::sqlite3::connection& in_conn) {
-    doodle_info::doodle_info l_info{};
+    sql::DoodleInfo l_info{};
 
     for (auto&& row : in_conn(
              sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
-      return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.version_major.value()),
-                             boost::numeric_cast<std::uint32_t>(row.version_minor.value()));
+      return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
+                             boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
     }
     chick_true<doodle_error>(false,
                              DOODLE_LOC,
@@ -89,11 +85,11 @@ class select::impl {
   }
 
   static void set_version(sqlpp::sqlite3::connection& in_conn) {
-    doodle_info::doodle_info l_info{};
+    sql::DoodleInfo l_info{};
 
     in_conn(sqlpp::update(l_info).unconditionally().set(
-        l_info.version_major = version::version_major,
-        l_info.version_minor = version::version_minor));
+        l_info.versionMajor = version::version_major,
+        l_info.versionMinor = version::version_minor));
   }
 
   void up_data(sqlpp::sqlite3::connection& in_conn) {
