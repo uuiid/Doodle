@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string_view>
+
 namespace doodle::database_n {
 constexpr auto create_ctx_table            = R"(
 create table if not exists context
@@ -68,5 +69,13 @@ create trigger if not exists UpdataLastTime_ AFTER UPDATE OF json_data
 begin
     update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
 end;
+)";
+constexpr auto create_version_table    = R"(
+create table if not exists doodle_info
+(
+    version_major integer not null,
+    version_minor integer not null
+);
+
 )";
 }  // namespace doodle::database_n
