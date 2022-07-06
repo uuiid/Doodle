@@ -73,7 +73,6 @@ class insert::impl {
     details::add_ctx_table(in_db);
     details::add_component_table(in_db);
     details::add_version_table(in_db);
-    details::set_version(in_db);
   }
 
   /**
