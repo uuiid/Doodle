@@ -18,29 +18,9 @@ enum class process_state : std::uint8_t {
 
 template <typename Process_t>
 class process_warp_t {
-#define DOODLE_TYPE_HASE_MFN(mfn_name)                           \
-  template <typename type_t, typename = void>                    \
-  struct has_##mfn_name##_fun : std::false_type {};              \
-  template <typename type_t>                                     \
-  struct has_##mfn_name##_fun<                                   \
-      type_t,                                                    \
-      std::void_t<decltype(std::declval<type_t&>().mfn_name())>> \
-      : std::true_type {                                         \
-  };
-
-  DOODLE_TYPE_HASE_MFN(init)
-  DOODLE_TYPE_HASE_MFN(succeeded)
-  DOODLE_TYPE_HASE_MFN(failed)
-  DOODLE_TYPE_HASE_MFN(aborted)
-
-#undef DOODLE_TYPE_HASE_MFN
 
  protected:
   std::any process_p{};
-
-  static void delete_gui_process_t(void* in_ptr) {
-    delete static_cast<Process_t*>(in_ptr);
-  };
 
   enum class state : std::uint8_t {
     uninitialized = 0,
@@ -203,7 +183,7 @@ class process_warp_t {
 namespace detail {
 template <typename IO_Context, typename Process_t>
 class rear_adapter_t : public process_warp_t<Process_t>,
-                       std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
+                       public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
   using base_type = process_warp_t<Process_t>;
   IO_Context& io_con_p;
 

@@ -113,7 +113,6 @@ class select::impl {
                   }});
       results.emplace_back(l_fun.share());
     }
-
   }
 
   template <typename Type>
@@ -292,17 +291,20 @@ void select::th_run() {
     in_.get();
   });
 
-  if (!p_i->only_ctx) {
-    /// \brief 选中实体
-    p_i->select_entt(*p_i->local_reg, *l_k_con);
+  if (auto [l_v, l_i] = doodle::database_n::details::get_version(*l_k_con);
+      l_v >= 3 && l_i > 4) {
+    if (!p_i->only_ctx) {
+      /// \brief 选中实体
+      p_i->select_entt(*p_i->local_reg, *l_k_con);
 #include "details/macro.h"
-    /// @brief 选中组件
-    p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
-  }
-  /// \brief 选中上下文
-  {
-    p_i->select_ctx<doodle::project,
-                    doodle::project_config::base_config>(*p_i->local_reg, *l_k_con);
+      /// @brief 选中组件
+      p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
+    }
+    /// \brief 选中上下文
+    {
+      p_i->select_ctx<doodle::project,
+                      doodle::project_config::base_config>(*p_i->local_reg, *l_k_con);
+    }
   }
 
   /// \brief 等待所有的任务完成
