@@ -1,7 +1,7 @@
 create table if not exists context
 (
     id        integer auto_increment
-            primary key,
+        primary key,
     com_hash  integer,
     json_data text
 );
@@ -24,7 +24,7 @@ create index if not exists entity_index
 create table if not exists com_entity
 (
     id        integer auto_increment
-            primary key,
+        primary key,
     entity_id integer,
     com_hash  integer,
     json_data text,
@@ -63,3 +63,8 @@ begin
     update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
 end;
 
+create table if not exists doodle_info
+(
+    version_major integer not null,
+    version_minor integer not null
+);
