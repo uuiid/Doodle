@@ -140,8 +140,10 @@ class select::impl {
                   return;
                 entt::entity l_e = num_to_enum<entt::entity>(in_id);
                 entt::handle l_h{in_reg, l_e};
-                DOODLE_LOG_ERROR("无效的实体 {}", in_id);
-                database::delete_(l_h);
+                if(!l_h.valid()) {
+                  DOODLE_LOG_ERROR("无效的实体 {}", in_id);
+                  database::delete_(l_h);
+                }
 
                 auto l_json = nlohmann::json::parse(in_json);
                 l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
