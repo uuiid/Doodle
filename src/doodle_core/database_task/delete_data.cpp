@@ -49,10 +49,8 @@ class delete_data::impl {
         ranges::to_vector;
   }
 
-  void delete_db(sqlpp::sqlite3::connection &in_db) {
+  void delete_db_entt(sqlpp::sqlite3::connection &in_db) {
     sql::Entity l_tabl{};
-    if (stop)
-      return;
     auto l_pre = in_db.prepare(
         sqlpp::remove_from(l_tabl)
             .where(l_tabl.id == sqlpp::parameter(l_tabl.id)));
@@ -65,6 +63,20 @@ class delete_data::impl {
       g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
     }
   }
+  void delete_db_com(sqlpp::sqlite3::connection &in_db) {
+    sql::ComEntity l_tabl{};
+    auto l_pre = in_db.prepare(
+        sqlpp::remove_from(l_tabl)
+            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
+    for (auto &&i : delete_id_list) {
+      if (stop)
+        return;
+      l_pre.params.entityId = i;
+      in_db(l_pre);
+      DOODLE_LOG_INFO("删除数据库 com id {}", i);
+      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+    }
+  }
 
   void th_delete() {
     g_reg()->ctx().emplace<process_message>().message("创建实体id");
@@ -73,7 +85,8 @@ class delete_data::impl {
       g_reg()->ctx().emplace<process_message>().message("删除数据库数据");
       auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
       auto l_tx   = sqlpp::start_transaction(*l_comm);
-      delete_db(*l_comm);
+      delete_db_entt(*l_comm);
+      delete_db_com(*l_comm);
       l_tx.commit();
     }
     g_reg()->ctx().emplace<process_message>().message("清除程序内部注册表");
