@@ -56,6 +56,7 @@ class get_input_project_dialog::impl {
   FSys::path path;
   std::string path_gui;
   std::string name;
+  std::shared_ptr<FSys::path> in_path;
 };
 
 void get_input_project_dialog::render() {
@@ -75,9 +76,7 @@ void get_input_project_dialog::render() {
 get_input_project_dialog::get_input_project_dialog(const std::shared_ptr<FSys::path> &in_handle)
     : get_input_dialog(),
       p_i(std::make_unique<impl>()) {
-  p_i->path     = *in_handle;
-  p_i->path_gui = p_i->path.generic_string();
-  p_i->prj.set_path(p_i->path);
+  p_i->in_path = in_handle;
 }
 get_input_project_dialog::~get_input_project_dialog() = default;
 
@@ -94,6 +93,9 @@ void get_input_project_dialog::aborted() {
 }
 void get_input_project_dialog::init() {
   get_input_dialog::init();
+  p_i->path     = *p_i->in_path;
+  p_i->path_gui = p_i->path.generic_string();
+  p_i->prj.set_path(p_i->path);
 }
 
 namespace gui::input {
