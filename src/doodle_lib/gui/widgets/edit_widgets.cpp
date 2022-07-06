@@ -222,9 +222,9 @@ class assets_file_edit : public gui::edit_interface {
       p_name_cache    = l_ass.p_name;
       p_version_cache = l_ass.get_version();
     } else {
-      p_path_cache    = g_reg()->ctx().at<project>().p_path.generic_string();
-      p_name_cache    = {};
-      p_version_cache = {};
+      p_path_cache      = g_reg()->ctx().at<project>().p_path.generic_string();
+      p_name_cache.data = {};
+      p_version_cache   = {};
     }
   }
   void render(const entt::handle &in) override {
