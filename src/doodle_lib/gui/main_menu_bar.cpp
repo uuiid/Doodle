@@ -71,22 +71,15 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("新项目"s)) {
-    auto k_h = make_handle();
-    k_h.emplace<project>();
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
                                  .set_title("选择目录"s)
                                  .set_use_dir())
-        .then<get_input_project_dialog>(k_h)
-        .then<one_process_t>([=]() {
-          auto &l_ctx = g_reg()->ctx();
-          if (l_ctx.contains<project>())
-            l_ctx.erase<project>();
-          l_ctx.emplace<project>(k_h.get<project>());
-
+        .then<get_input_project_dialog>(l_ptr)
+        .then<one_process_t>([]() {
           database_n::sqlite_client{}
-              .open_sqlite(*l_ptr);
+              .create_sqlite();
         });
   }
   if (dear::MenuItem("打开项目"s)) {
@@ -131,7 +124,7 @@ struct t_setting_windows : public process_t<t_setting_windows>, public setting_w
     dear::Begin{gui::config::menu_w::setting.data(), &show_} && [this]() {
       setting_windows::render();
     };
-    if(!show_){
+    if (!show_) {
       this->succeed();
     }
   };
@@ -142,7 +135,7 @@ struct t_project_edit : public process_t<t_project_edit>, public gui::project_ed
     dear::Begin{gui::config::menu_w::project_edit.data(), &show_} && [this]() {
       gui::project_edit::render();
     };
-    if(!show_){
+    if (!show_) {
       this->succeed();
     }
   };

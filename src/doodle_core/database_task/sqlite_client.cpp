@@ -99,4 +99,9 @@ void sqlite_client::update_entt() {
     g_reg()->ctx().at<status_info>().need_save = false;
   });
 }
+void sqlite_client::create_sqlite() {
+  g_pool()
+      .post<database_n::insert>(std::vector<entt::entity>{})
+      .then<database_n::update_data>(std::vector<entt::entity>{});
+}
 }  // namespace doodle::database_n

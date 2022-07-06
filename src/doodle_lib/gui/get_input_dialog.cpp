@@ -53,44 +53,47 @@ class get_input_project_dialog::impl {
  public:
   project prj;
 
-  std::string path;
+  FSys::path path;
+  std::string path_gui;
+  std::string name;
 };
 
 void get_input_project_dialog::render() {
-  dear::Text(fmt::format("路径: {}", p_i->path));
+  dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
-  if (dear::InputText("名称", &(p_i->prj.p_name)))
-    prj.patch<project>([&](project &in) {
-      in.set_name(p_i->prj.p_name);
-    });
+  if (dear::InputText("名称", &(p_i->name))) {
+    p_i->prj.set_name(p_i->name);
+    p_i->path.remove_filename();
+    p_i->path /= (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
+    p_i->path_gui = p_i->path.generic_string();
+  }
 
   if (imgui::Button("ok")) {
     succeed();
   }
 }
-get_input_project_dialog::get_input_project_dialog(const entt::handle &in_handle)
+get_input_project_dialog::get_input_project_dialog(const std::shared_ptr<FSys::path> &in_handle)
     : get_input_dialog(),
-      prj(in_handle),
       p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<project>(), DOODLE_LOC, "缺失组件");
+  p_i->path     = *in_handle;
+  p_i->path_gui = p_i->path.generic_string();
+  p_i->prj.set_path(p_i->path);
 }
 get_input_project_dialog::~get_input_project_dialog() = default;
 
 void get_input_project_dialog::succeeded() {
+  g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
+  g_reg()->ctx().at<project>()                       = p_i->prj;
   get_input_dialog::succeeded();
 }
 void get_input_project_dialog::failed() {
   get_input_dialog::failed();
-  prj.remove<project>();
 }
 void get_input_project_dialog::aborted() {
   get_input_dialog::aborted();
-  prj.remove<project>();
 }
 void get_input_project_dialog::init() {
   get_input_dialog::init();
-  p_i->prj  = prj.get<project>();
-  p_i->path = p_i->prj.p_path.generic_string();
 }
 
 namespace gui::input {

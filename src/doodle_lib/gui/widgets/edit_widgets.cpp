@@ -447,17 +447,15 @@ class add_assets_for_file : public base_render {
     l_sig.drop_files.connect([this](const auto &in_file_list) {
       this->add_assets(in_file_list);
     });
-    if (project::has_prj()) {
-      auto &prj         = g_reg()->ctx().at<project_config::base_config>();
-      this->assets_list = prj.assets_list;
-      if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
-            return this->assets_list.show_name == in;
-          })) {
-        this->assets_list.show_name =
-            this->assets_list.data.empty()
-                ? "null"s
-                : this->assets_list.data.front();
-      }
+    auto &prj         = g_reg()->ctx().at<project_config::base_config>();
+    this->assets_list = prj.assets_list;
+    if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
+          return this->assets_list.show_name == in;
+        })) {
+      this->assets_list.show_name =
+          this->assets_list.data.empty()
+              ? "null"s
+              : this->assets_list.data.front();
     }
   }
 

@@ -39,9 +39,6 @@ class DOODLE_CORE_EXPORT project {
 
   [[nodiscard]] std::string short_str() const;
 
-  static entt::handle get_current();
-  static bool has_prj();
-
   bool operator<(const project& in_rhs) const;
   bool operator>(const project& in_rhs) const;
   bool operator<=(const project& in_rhs) const;

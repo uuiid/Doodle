@@ -25,7 +25,7 @@ class DOODLELIB_API get_input_dialog : public process_t<get_input_dialog> {
 };
 
 class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
-  entt::handle prj;
+
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -33,7 +33,7 @@ class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
   void render() override;
 
  public:
-  explicit get_input_project_dialog(const entt::handle& in_handle);
+  explicit get_input_project_dialog(const std::shared_ptr<FSys::path>& in_handle);
 
   ~get_input_project_dialog() override;
   virtual void init() override;
