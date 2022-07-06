@@ -69,17 +69,11 @@ class insert::impl {
   std::size_t size;
 
   void create_db(sqlpp::sqlite3::connection &in_db) {
-    auto l_path = g_reg()->ctx().at<database_info>().path_;
-    if (!FSys::exists(l_path)) {
-      if (!FSys::exists(l_path.parent_path()))
-        FSys::create_directories(l_path.parent_path());
-
-      details::add_entity_table(in_db);
-      details::add_ctx_table(in_db);
-      details::add_component_table(in_db);
-      details::add_version_table(in_db);
-      details::set_version(in_db);
-    }
+    details::add_entity_table(in_db);
+    details::add_ctx_table(in_db);
+    details::add_component_table(in_db);
+    details::add_version_table(in_db);
+    details::set_version(in_db);
   }
 
   /**
@@ -212,8 +206,11 @@ class insert::impl {
       f.get();
     }
     g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
+    auto l_path = g_reg()->ctx().at<database_info>().path_;
+    if (!FSys::exists(l_path.parent_path()))
+      FSys::create_directories(l_path.parent_path());
     {
-      auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+      auto l_comm = core_sql::Get().get_connection(l_path);
       auto l_tx   = sqlpp::start_transaction(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("检查数据库存在性");
       create_db(*l_comm);
