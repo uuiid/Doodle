@@ -18,7 +18,6 @@ enum class process_state : std::uint8_t {
 
 template <typename Process_t>
 class process_warp_t {
-
  protected:
   std::any process_p{};
 
@@ -182,21 +181,21 @@ class process_warp_t {
 
 namespace detail {
 template <typename IO_Context, typename Process_t>
-class rear_adapter_t : public process_warp_t<Process_t>,
-                       public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
-  using base_type = process_warp_t<Process_t>;
+class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
+  using value_type = process_warp_t<Process_t>;
   IO_Context& io_con_p;
+  value_type process;
 
  public:
   template <typename... Args>
   explicit rear_adapter_t(IO_Context& in_io, Args&&... in_args)
       : io_con_p(in_io),
-        base_type(std::forward<Args>(in_args)...) {}
+        process(std::forward<Args>(in_args)...) {}
 
   void operator()() override {
     boost::asio::post(io_con_p, [this,
                                  self_ = this->shared_from_this()]() {
-      base_type::operator()();
+      process();
     });
   }
 };
@@ -212,43 +211,13 @@ template <typename Lambda_Process, typename = void>
 class lambda_process_warp_t : private Lambda_Process {
  public:
   template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
+  explicit lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
-  process_state update();
-};
-
-template <typename Lambda_Process>
-class lambda_process_warp_t<
-    Lambda_Process,
-    std::enable_if_t<
-        std::is_same_v<
-            typename std::invoke_result<Lambda_Process>::type, void>>>
-    : private Lambda_Process {
- public:
-  template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
-
-  process_state update() {
+  void update() {
     Lambda_Process::operator()();
-    return process_state::succeed;
   }
 };
 
-template <typename Lambda_Process>
-class lambda_process_warp_t<
-    Lambda_Process,
-    std::enable_if_t<
-        std::is_same_v<
-            typename std::invoke_result<Lambda_Process>::type, process_state>>>
-    : private Lambda_Process {
- public:
-  template <typename... Args>
-  lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
-
-  process_state update() {
-    return Lambda_Process::operator()();
-  }
-};
 namespace detail {
 
 template <typename IO_Context, typename Rear_Process>
