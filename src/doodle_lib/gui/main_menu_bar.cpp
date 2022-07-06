@@ -70,7 +70,7 @@ main_menu_bar::main_menu_bar()
 main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
-  if (dear::MenuItem("新项目"s)) {
+  if (dear::MenuItem("创建项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
