@@ -52,65 +52,68 @@ class select::impl {
 
   registry_ptr local_reg{g_reg()};
 
-
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
-    Metadatatab l_metadatatab{};
+    if (auto [l_v, l_i] = doodle::database_n::details::get_version(in_conn);
+        l_v == 3 && l_i == 4) {
+      Metadatatab l_metadatatab{};
 
-    for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
-                                  .from(l_metadatatab)
-                                  .unconditionally())) {
-      auto l_e = num_to_enum<entt::entity>(row.id.value());
-      if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
+      for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
+                                    .from(l_metadatatab)
+                                    .unconditionally())) {
+        auto l_e = num_to_enum<entt::entity>(row.id.value());
+        if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
 
+        auto l_fun =
+            boost::asio::post(
+                strand_,
+                std::packaged_task<void()>{
+                    [l_e,
+                     in_str  = row.userData.value(),
+                     in_uuid = row.uuidData.value(),
+                     &in_reg,
+                     this]() {
+                      if (stop)
+                        return;
+                      entt::handle l_h{in_reg, l_e};
+                      l_h.emplace<database>(in_uuid).set_id(
+                          enum_to_num(l_e));
+                      auto k_json = nlohmann::json::parse(in_str);
+                      entt_tool::load_comm<doodle::project,
+                                           doodle::episodes,
+                                           doodle::shot,
+                                           doodle::season,
+                                           doodle::assets,
+                                           doodle::assets_file,
+                                           doodle::time_point_wrap,
+                                           doodle::comment,
+                                           doodle::project_config::base_config,
+                                           doodle::image_icon,
+                                           doodle::importance,
+                                           doodle::organization_list,
+                                           doodle::redirection_path_info>(l_h, k_json);
+                    }});
+        results.emplace_back(l_fun.share());
+        if (stop)
+          return;
+      }
       auto l_fun =
           boost::asio::post(
               strand_,
               std::packaged_task<void()>{
-                  [l_e,
-                   in_str  = row.userData.value(),
-                   in_uuid = row.uuidData.value(),
-                   &in_reg,
-                   this]() {
-                    if (stop)
-                      return;
-                    entt::handle l_h{in_reg, l_e};
-                    l_h.emplace<database>(in_uuid).set_id(
-                        enum_to_num(l_e));
-                    auto k_json = nlohmann::json::parse(in_str);
-                    entt_tool::load_comm<doodle::project,
-                                         doodle::episodes,
-                                         doodle::shot,
-                                         doodle::season,
-                                         doodle::assets,
-                                         doodle::assets_file,
-                                         doodle::time_point_wrap,
-                                         doodle::comment,
-                                         doodle::project_config::base_config,
-                                         doodle::image_icon,
-                                         doodle::importance,
-                                         doodle::organization_list,
-                                         doodle::redirection_path_info>(l_h, k_json);
+                  [this]() {
+                    auto l_view = local_reg->view<doodle::project>();
+                    if (!l_view.empty()) {
+                      auto l_h                               = entt::handle{*local_reg, l_view.front()};
+                      local_reg->ctx().at<doodle::project>() = l_h.get<doodle::project>();
+                      local_reg->ctx().at<doodle::project_config::base_config>() =
+                          l_h.any_of<doodle::project_config::base_config>()
+                              ? l_h.get<doodle::project_config::base_config>()
+                              : doodle::project_config::base_config{};
+                    }
                   }});
       results.emplace_back(l_fun.share());
-      if (stop)
-        return;
     }
-    auto l_fun =
-        boost::asio::post(
-            strand_,
-            std::packaged_task<void()>{
-                [this]() {
-                  auto l_view = local_reg->view<doodle::project>();
-                  if (!l_view.empty()) {
-                    auto l_h                               = entt::handle{*local_reg, l_view.front()};
-                    local_reg->ctx().at<doodle::project>() = l_h.get<doodle::project>();
-                    local_reg->ctx().at<doodle::project_config::base_config>() =
-                        l_h.any_of<doodle::project_config::base_config>()
-                            ? l_h.get<doodle::project_config::base_config>()
-                            : doodle::project_config::base_config{};
-                  }
-                }});
-    results.emplace_back(l_fun.share());
+
   }
 
   template <typename Type>
