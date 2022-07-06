@@ -51,6 +51,16 @@ class update_data::impl {
 
   std::size_t size;
 
+  void updata_db_table(sqlpp::sqlite3::connection &in_db) {
+    auto [l_main_v, l_s_v] = details::get_version(in_db);
+    if (l_main_v <= 3 && l_s_v <= 4) {
+      details::add_entity_table(in_db);
+      details::add_ctx_table(in_db);
+      details::add_component_table(in_db);
+      details::set_version(in_db);
+    }
+  }
+
   void updata_db(sqlpp::sqlite3::connection &in_db) {
     sql::ComEntity l_tabl{};
     auto l_pre = in_db.prepare(
@@ -122,6 +132,10 @@ class update_data::impl {
     }
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
     auto l_tx   = sqlpp::start_transaction(*l_comm);
+
+    g_reg()->ctx().emplace<process_message>().message("检查数据库架构");
+    updata_db_table(*l_comm);
+
     g_reg()->ctx().emplace<process_message>().message("组件更新...");
     updata_db(*l_comm);
     g_reg()->ctx().emplace<process_message>().message("更新上下文...");

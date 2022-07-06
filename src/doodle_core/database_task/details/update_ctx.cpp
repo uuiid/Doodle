@@ -16,7 +16,7 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 
 #include <doodle_core/generate/core/sql_sql.h>
-
+#include <doodle_core/database_task/sql_file.h>
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 
@@ -63,4 +63,49 @@ void update_ctx::ctx(const entt::registry& in_registry,
     in_connection(l_par);
   }
 }
+
+std::tuple<std::uint32_t, std::uint32_t> get_version(
+    sqlpp::sqlite3::connection& in_conn) {
+  sql::DoodleInfo l_info{};
+
+  for (auto&& row : in_conn(
+           sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
+    return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
+                           boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
+  }
+  chick_true<doodle_error>(false,
+                           DOODLE_LOC,
+                           "无法检查到数据库版本 {}", g_reg()->ctx().at<database_info>().path_);
+  return {};
+}
+
+void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
+  in_conn.execute(std::string{::doodle::database_n::create_ctx_table});
+  in_conn.execute(std::string{::doodle::database_n::create_ctx_table_index});
+  in_conn.execute(std::string{::doodle::database_n::create_ctx_table_unique});
+}
+
+void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
+  in_conn.execute(std::string{::doodle::database_n::create_entity_table});
+  in_conn.execute(std::string{::doodle::database_n::create_entity_table_index});
+}
+
+void add_component_table(sqlpp::sqlite3::connection& in_conn) {
+  in_conn.execute(std::string{::doodle::database_n::create_com_table});
+  in_conn.execute(std::string{::doodle::database_n::create_com_table_index_id});
+  in_conn.execute(std::string{::doodle::database_n::create_com_table_index_hash});
+  in_conn.execute(std::string{::doodle::database_n::create_com_table_trigger});
+}
+
+void add_version_table(sqlpp::sqlite3::connection& in_conn) {
+  in_conn.execute(std::string{::doodle::database_n::create_version_table});
+}
+
+void set_version(sqlpp::sqlite3::connection& in_conn) {
+  sql::DoodleInfo l_info{};
+  in_conn(sqlpp::update(l_info).unconditionally().set(
+      l_info.versionMajor = version::version_major,
+      l_info.versionMinor = version::version_minor));
+}
+
 }  // namespace doodle::database_n::details

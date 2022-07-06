@@ -10,8 +10,17 @@ namespace doodle::database_n::details {
 
 class update_ctx {
  public:
-  static void ctx(const entt::registry& in_registry,
-                  sqlpp::sqlite3::connection& in_connection);
+  static void ctx(const entt::registry &in_registry,
+                  sqlpp::sqlite3::connection &in_connection);
 };
 
-}  // namespace doodle
+static std::tuple<std::uint32_t, std::uint32_t> get_version(
+    sqlpp::sqlite3::connection &in_connection);
+
+static void add_ctx_table(sqlpp::sqlite3::connection &in_conn);
+static void add_entity_table(sqlpp::sqlite3::connection &in_conn);
+static void add_component_table(sqlpp::sqlite3::connection &in_conn);
+static void add_version_table(sqlpp::sqlite3::connection &in_conn);
+static void set_version(sqlpp::sqlite3::connection &in_conn);
+
+}  // namespace doodle::database_n::details

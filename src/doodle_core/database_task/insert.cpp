@@ -20,9 +20,13 @@
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 
+#include <doodle_core/generate/core/sql_sql.h>
+#include <doodle_core/database_task/sql_file.h>
+
 #include <range/v3/all.hpp>
 #include <database_task/details/update_ctx.h>
 #include <database_task/details/com_data.h>
+
 namespace doodle::database_n {
 namespace sql = doodle_database;
 namespace {
@@ -63,6 +67,20 @@ class insert::impl {
   ///@brief 线程未来数据获取
   std::future<void> future_;
   std::size_t size;
+
+  void create_db(sqlpp::sqlite3::connection &in_db) {
+    auto l_path = g_reg()->ctx().at<database_info>().path_;
+    if (!FSys::exists(l_path)) {
+      if (!FSys::exists(l_path.parent_path()))
+        FSys::create_directories(l_path.parent_path());
+
+      details::add_entity_table(in_db);
+      details::add_ctx_table(in_db);
+      details::add_component_table(in_db);
+      details::add_version_table(in_db);
+      details::set_version(in_db);
+    }
+  }
 
   /**
    * @brief 在注册表中插入实体
@@ -197,6 +215,8 @@ class insert::impl {
     {
       auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
       auto l_tx   = sqlpp::start_transaction(*l_comm);
+      g_reg()->ctx().emplace<process_message>().message("检查数据库存在性");
+      create_db(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
       insert_db_entity(*l_comm);
       g_reg()->ctx().emplace<process_message>().message("组件插入...");

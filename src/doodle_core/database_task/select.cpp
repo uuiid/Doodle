@@ -20,6 +20,7 @@
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/generate/core/metadatatab_sql.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
+#include <doodle_core/database_task/details/update_ctx.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -69,21 +70,6 @@ class select::impl {
     in_conn.execute(std::string{create_com_table_trigger});
   }
 
-  std::tuple<std::uint32_t, std::uint32_t> get_version(
-      sqlpp::sqlite3::connection& in_conn) {
-    sql::DoodleInfo l_info{};
-
-    for (auto&& row : in_conn(
-             sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
-      return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
-                             boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
-    }
-    chick_true<doodle_error>(false,
-                             DOODLE_LOC,
-                             "无法检查到数据库");
-    return {};
-  }
-
   static void set_version(sqlpp::sqlite3::connection& in_conn) {
     sql::DoodleInfo l_info{};
 
@@ -93,7 +79,7 @@ class select::impl {
   }
 
   void up_data(sqlpp::sqlite3::connection& in_conn) {
-    auto [l_main_v, l_s_v] = get_version(in_conn);
+    auto [l_main_v, l_s_v] = details::get_version(in_conn);
     if (l_main_v <= 3 && l_s_v <= 4) {
       auto l_k_con = core_sql::Get().get_connection(project);
       add_entity_table(in_conn);
@@ -103,18 +89,6 @@ class select::impl {
     }
   }
 
-  void create_db() {
-    if (!FSys::exists(project)) {
-      if (!FSys::exists(project.parent_path()))
-        FSys::create_directories(project.parent_path());
-
-      auto k_con = core_sql::Get().get_connection(project);
-      add_entity_table(*k_con);
-      add_ctx_table(*k_con);
-      add_component_table(*k_con);
-      set_version(*k_con);
-    }
-  }
 
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     Metadatatab l_metadatatab{};
@@ -339,7 +313,7 @@ void select::update(chrono::duration<chrono::system_clock::rep,
 }
 
 void select::th_run() {
-  p_i->create_db();
+
 
   {
     auto l_k_con = core_sql::Get().get_connection(p_i->project);
