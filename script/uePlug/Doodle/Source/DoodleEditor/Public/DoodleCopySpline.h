@@ -52,4 +52,5 @@ class DOODLEEDITOR_API ADoodleCopySpline : public AActor {
  public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
+
 };
