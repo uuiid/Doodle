@@ -91,19 +91,19 @@ public:
 			  meta = (DisplayName = "ShadowBias"))
 	float ShadowBias{0.025};
 
-	UFUNCTION(BlueprintCallable,
-			  meta = (CallInEditor = "true", OverrideNativeName = "测试"))
-	void TEST();
+	// UFUNCTION(BlueprintCallable,
+	// 		  meta = (CallInEditor = "true", OverrideNativeName = "测试"))
+	// void TEST();
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, Category = Light)
 	TArray<USpotLightComponent *> LightList_;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, Category = Light)
 	TArray<UArrowComponent *> ArrowList_;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, Category = Light)
 	TArray<USceneComponent *> SceneComponentList_;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, Category = Light)
 	USplineComponent *SplineComponen_;
 
 	void OnConstruction(const FTransform &Transform) override;

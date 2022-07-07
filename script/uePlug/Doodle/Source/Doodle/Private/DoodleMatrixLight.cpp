@@ -180,29 +180,29 @@ void ADoodleMatrixLight::PostActorCreated()
     SetLightAttr();
 }
 
-void ADoodleMatrixLight::TEST()
-{
-    for (auto *l_un_reg : SceneComponentList_)
-    {
-        l_un_reg->UnregisterComponent();
-        l_un_reg->DestroyComponent();
-    }
-    for (auto *l_un_reg : ArrowList_)
-    {
-        l_un_reg->UnregisterComponent();
-        l_un_reg->DestroyComponent();
-    }
-    for (auto *l_un_reg : LightList_)
-    {
-        l_un_reg->UnregisterComponent();
-        l_un_reg->DestroyComponent();
-    }
-    SceneComponentList_.Empty();
-    ArrowList_.Empty();
-    LightList_.Empty();
-    CreateLightSqueue();
-    SetLightAttr();
-}
+// void ADoodleMatrixLight::TEST()
+// {
+//     for (auto *l_un_reg : SceneComponentList_)
+//     {
+//         l_un_reg->UnregisterComponent();
+//         l_un_reg->DestroyComponent();
+//     }
+//     for (auto *l_un_reg : ArrowList_)
+//     {
+//         l_un_reg->UnregisterComponent();
+//         l_un_reg->DestroyComponent();
+//     }
+//     for (auto *l_un_reg : LightList_)
+//     {
+//         l_un_reg->UnregisterComponent();
+//         l_un_reg->DestroyComponent();
+//     }
+//     SceneComponentList_.Empty();
+//     ArrowList_.Empty();
+//     LightList_.Empty();
+//     CreateLightSqueue();
+//     SetLightAttr();
+// }
 
 #if WITH_EDITOR
 void ADoodleMatrixLight::PostEditChangeProperty(
