@@ -2,6 +2,8 @@
 #include "Engine/StaticMesh.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Animation/AnimInstance.h"
 
 ADoodleSurroundMeshActor::ADoodleSurroundMeshActor()
     : Super(),
@@ -25,7 +27,7 @@ ADoodleSurroundMeshActor::ADoodleSurroundMeshActor()
 
     p_spline = CreateDefaultSubobject<USplineComponent>("SplineComponent");
     p_spline->SetupAttachment(GetRootComponent());
-    p_spline->bAllowDiscontinuousSpline = false;
+    // p_spline->bAllowDiscontinuousSpline = false;
     p_spline->SetClosedLoop(true);
 
     p_spline->ClearSplinePoints(false);
