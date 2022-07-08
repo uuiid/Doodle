@@ -24,6 +24,14 @@
 			]
 		},
 		{
+			"Name": "DoodleCluster",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
 			"Name": "doodleEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default",

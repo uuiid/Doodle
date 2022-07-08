@@ -246,8 +246,10 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
     default:
       break;
   }
-  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
-  CHECK_MSTATUS(status);
+  if (!::doodle::core_set::getSet().maya_force_resolve_link) {
+    status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
+    CHECK_MSTATUS(status);
+  }
   return status;
 }
 
@@ -258,8 +260,11 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// \brief
-  status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
+  if (!::doodle::core_set::getSet().maya_force_resolve_link) {
+    /// \brief
+    status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
+    CHECK_MSTATUS(status);
+  }
   // 这里要停止app
   p_doodle_app->stop();
 

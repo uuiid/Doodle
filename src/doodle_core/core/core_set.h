@@ -64,6 +64,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   FSys::path ue4_path;
   std::string ue4_version;
   bool maya_replace_save_dialog{false};
+  bool maya_force_resolve_link{false};
 
  private:
   /**

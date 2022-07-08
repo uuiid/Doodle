@@ -37,6 +37,7 @@ class setting_windows::impl {
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
   gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::getSet().maya_replace_save_dialog};
+  gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::getSet().maya_force_resolve_link};
 };
 
 setting_windows::setting_windows()
@@ -57,6 +58,7 @@ void setting_windows::save() {
   set.timeout                  = p_i->p_timeout.data;
   g_bounded_pool().timiter_    = p_i->p_batch_max.data;
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
+  set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
   core_set_init{}.write_file();
 }
 setting_windows::~setting_windows() = default;
@@ -73,6 +75,7 @@ void setting_windows::init() {
   p_i->p_batch_max.data                = core_set::getSet().p_max_thread;
   p_i->p_timeout.data                  = core_set::getSet().timeout;
   p_i->p_maya_replace_save_dialog.data = core_set::getSet().maya_replace_save_dialog;
+  p_i->p_maya_force_resolve_link.data  = core_set::getSet().maya_force_resolve_link;
 }
 void setting_windows::succeeded() {
   gui::window_panel::succeeded();
@@ -91,6 +94,9 @@ void setting_windows::render() {
   imgui::InputInt(*p_i->p_timeout.gui_name, &(p_i->p_timeout.data));
   imgui::Checkbox(*p_i->p_maya_replace_save_dialog.gui_name,
                   &(p_i->p_maya_replace_save_dialog.data));
+  imgui::Checkbox(*p_i->p_maya_force_resolve_link.gui_name,
+                  &(p_i->p_maya_force_resolve_link.data));
+  dear::HelpMarker{"强制maya解析硬链接, 这个是在插件中使用的选项"s};
 
   if (imgui::Button("save"))
     save();
