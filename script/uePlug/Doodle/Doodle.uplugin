@@ -32,6 +32,14 @@
 			]
 		},
 		{
+			"Name": "DoodleClusterSequencer",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
 			"Name": "doodleEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
