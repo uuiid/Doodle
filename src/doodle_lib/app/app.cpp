@@ -46,7 +46,7 @@ class app::impl {
  public:
 };
 
-app::app(const win::wnd_instance& in_instance, const win::wnd_handle & in_parent)
+app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
     : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
       p_hwnd(),
       p_win_class(),
@@ -155,10 +155,6 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle & in_parent
   auto imgui_file_path = core_set::getSet().get_cache_root("imgui") / "imgui.ini";
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
-  if (!exists(imgui_file_path)) {
-    auto k_f = cmrc::DoodleLibResource::get_filesystem().open("resource/imgui.ini");
-    ImGui::LoadIniSettingsFromMemory(k_f.begin(), k_f.size());
-  }
 
   //  ImGuiIO& io = ImGui::GetIO();
   //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
