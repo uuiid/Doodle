@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleInterface.h"
 #include "Modules/ModuleManager.h"
-#include "GeometryCacheTrackEditor.h"
+// #include "GeometryCacheTrackEditor.h"
 
 /**
  * The public interface to this module
@@ -17,7 +17,7 @@ public:
     {
 
         ISequencerModule &SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-        TrackEditorBindingHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FGeometryCacheTrackEditor::CreateTrackEditor));
+        // TrackEditorBindingHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FGeometryCacheTrackEditor::CreateTrackEditor));
     }
 
     virtual void ShutdownModule() override
@@ -26,7 +26,7 @@ public:
         ISequencerModule *SequencerModulePtr = FModuleManager::Get().GetModulePtr<ISequencerModule>("Sequencer");
         if (SequencerModulePtr)
         {
-            SequencerModulePtr->UnRegisterTrackEditor(TrackEditorBindingHandle);
+            // SequencerModulePtr->UnRegisterTrackEditor(TrackEditorBindingHandle);
         }
     }
 

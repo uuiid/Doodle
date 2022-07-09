@@ -37,6 +37,7 @@ public class DoodleClusterSequencer : ModuleRules
                 "InputCore",
                 "RenderCore",
                 "RHI",
+                "Sequencer"//定序器模块公开依赖
 
             }
             );
@@ -62,6 +63,7 @@ public class DoodleClusterSequencer : ModuleRules
                 "CinematicCamera",// 相机模块
                 // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
+                "DoodleCluster"//我们自己的序列
                 // "Projects",
                 // "InputCore",
                 // "CoreUObject",
