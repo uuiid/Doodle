@@ -16,6 +16,24 @@ enum class process_state : std::uint8_t {
   fail
 };
 
+class process_handy_tools {
+  std::function<void(process_state)> p_f;
+
+ public:
+  inline void connect(const std::function<void(process_state)>& in) {
+    p_f = in;
+  }
+
+  inline void succeed() const {
+    if (p_f)
+      p_f(process_state::succeed);
+  }
+  inline void fail() const {
+    if (p_f)
+      p_f(process_state::fail);
+  }
+};
+
 template <typename Process_t>
 class process_warp_t {
  protected:
@@ -178,29 +196,6 @@ class process_warp_t {
     }
   };
 };
-
-namespace detail {
-template <typename IO_Context, typename Process_t>
-class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
-  using value_type = process_warp_t<Process_t>;
-  IO_Context& io_con_p;
-  value_type process;
-
- public:
-  template <typename... Args>
-  explicit rear_adapter_t(IO_Context& in_io, Args&&... in_args)
-      : io_con_p(in_io),
-        process(std::forward<Args>(in_args)...) {}
-
-  void operator()() override {
-    boost::asio::post(io_con_p, [this,
-                                 self_ = this->shared_from_this()]() {
-      process();
-    });
-  }
-};
-}  // namespace detail
-
 template <typename Gui_Process>
 using gui_warp_t = process_warp_t<Gui_Process>;
 
@@ -208,15 +203,73 @@ template <typename Rear_Process>
 using rear_warp_t = process_warp_t<Rear_Process>;
 
 template <typename Lambda_Process, typename = void>
-class lambda_process_warp_t : private Lambda_Process {
+class lambda_process_warp_t : private Lambda_Process, public process_handy_tools {
  public:
+  void connect(const std::function<void(process_state)>& in) {
+  }
+
   template <typename... Args>
   explicit lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
   void update() {
     Lambda_Process::operator()();
+    this->succeed();
   }
 };
+namespace detail {
+template <typename IO_Context, typename Process_t>
+class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
+  using value_type = process_warp_t<Process_t>;
+  IO_Context& io_con_p;
+  value_type process;
+
+  using next_type     = std::shared_ptr<void>;
+  using next_fun_type = std::function<void()>;
+  next_type next_value;
+  next_type* next_ptr;
+  next_fun_type next_fun_value;
+
+ public:
+  template <typename... Args>
+  explicit rear_adapter_t(IO_Context& in_io, Args&&... in_args)
+      : io_con_p(in_io),
+        process(std::forward<Args>(in_args)...),
+        next_value(),
+        next_ptr(&next_value),
+        next_fun_value() {}
+
+  void operator()() override {
+    boost::asio::post(io_con_p, [this,
+                                 self_ = this->shared_from_this()]() {
+      process();
+      if (process.finished()) {
+        if (this->next_fun_value)
+          this->next_fun_value();
+      } else if (process.rejected()) {
+        return;
+      } else {
+        (*this)();
+      }
+    });
+  }
+  template <typename Process_t1, typename IO_Context1, typename... Args1>
+  rear_adapter_t& next(IO_Context1& in_io, Args1&&... in_args) {
+    using rear_adapter_ptr = std::shared_ptr<rear_adapter_t<IO_Context1, Process_t1>>;
+    rear_adapter_ptr l_ptr = std::make_shared<rear_adapter_ptr::element_type>(in_io, std::forward<Args1>(in_args)...);
+    *next_ptr              = l_ptr;
+    next_fun_value         = [l_ptr]() { (*l_ptr)(); };
+    next_ptr               = &(l_ptr->next_value);
+  }
+  template <typename IO_Context1, typename Fun_t>
+  rear_adapter_t& next(IO_Context1& in_io, Fun_t in_fun) {
+    return next<lambda_process_warp_t<Fun_t>>(in_io, in_fun);
+  }
+};
+}  // namespace detail
+
+
+
+
 
 namespace detail {
 
