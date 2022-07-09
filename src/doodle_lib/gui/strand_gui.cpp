@@ -44,31 +44,23 @@ strand_gui_executor_service::strand_impl::~strand_impl() = default;
 void strand_gui_executor_service::shutdown() {
   std::lock_guard l_g{mutex_};
   stop_ = true;
-  for (auto&& i : impl_list_->handlers) {
-    i.abort(true);
-    i();
-  }
-  for (auto&& i : impl_list_->handlers_next) {
-    i.abort(true);
-    i();
-  }
+  impl_list_->handlers.clear();
+  impl_list_->handlers_next.clear();
 }
 void strand_gui_executor_service::loop_one() {
   std::lock_guard l_g{mutex_};
-  std::move(impl_list_->handlers_next.begin(),
-            impl_list_->handlers_next.end(), std::back_inserter(impl_list_->handlers));
-  impl_list_->handlers_next.clear();
+
   if (impl_list_->handlers.empty())
     return;
-  auto l_erase_benin = std::remove_if(
+  std::for_each(
       impl_list_->handlers.begin(),
       impl_list_->handlers.end(),
-      [&](typename decltype(this->impl_list_->handlers)::value_type& handler) -> bool {
-        return handler();
+      [&](typename decltype(this->impl_list_->handlers)::value_type& handler) {
+        handler();
       });
-  if (l_erase_benin != impl_list_->handlers.end())
-    impl_list_->handlers.erase(l_erase_benin,
-                               impl_list_->handlers.end());
+
+  impl_list_->handlers.clear();
+  std::swap(impl_list_->handlers, impl_list_->handlers_next);
 }
 void strand_gui_executor_service::show(
     const strand_gui_executor_service::implementation_type& in_impl,

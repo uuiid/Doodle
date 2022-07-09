@@ -60,8 +60,8 @@ class strand_gui_executor_service
     //    boost::asio::op_queue<scheduler_operation> waiting_queue_;
 
     // 准备运行的处理程序。从逻辑上讲，这些是持有strand锁的处理程序。就绪队列仅从链中修改，因此可以在不锁定互斥锁的情况下访问
-    std::vector<gui_process_t> handlers{};
-    std::vector<gui_process_t> handlers_next{};
+    std::vector<std::function<void()>> handlers{};
+    std::vector<std::function<void()>> handlers_next{};
 
     // The strand service in where the implementation is held.
     strand_gui_executor_service* service_{};
@@ -86,6 +86,36 @@ class strand_gui_executor_service
     return impl_list_;
   };
 
+  // 调用给定的函数
+  template <typename Executor, typename Function>
+  static void execute(const implementation_type& impl, Executor& ex,
+                      BOOST_ASIO_MOVE_ARG(Function) function,
+                      typename std::enable_if_t<
+                          boost::asio::can_query<Executor,
+                                                 boost::asio::execution::allocator_t<void>>::value> = 0);
+
+  template <typename Executor, typename Function>
+  static void execute(const implementation_type& impl, Executor& ex,
+                      BOOST_ASIO_MOVE_ARG(Function) function,
+                      typename std::enable_if_t<
+                          !boost::asio::can_query<Executor,
+                                                  boost::asio::execution::allocator_t<void>>::value> = 0);
+
+  // Request invocation of the given function.
+  template <typename Executor, typename Function, typename Allocator>
+  static void dispatch(const implementation_type& impl, Executor& ex,
+                       BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+
+  // Request invocation of the given function and return immediately.
+  template <typename Executor, typename Function, typename Allocator>
+  static void post(const implementation_type& impl, Executor& ex,
+                   BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+
+  // Request invocation of the given function and return immediately.
+  template <typename Executor, typename Function, typename Allocator>
+  static void defer(const implementation_type& impl, Executor& ex,
+                    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+
   static void show(const implementation_type& in_impl,
                    gui_process_t&& in_gui);
   static void stop(const implementation_type& in_impl);
@@ -94,6 +124,12 @@ class strand_gui_executor_service
  private:
   void render_begin();
   void render_end();
+
+  // Helper函数请求调用给定函数
+  template <typename Executor, typename Function, typename Allocator>
+  static void do_execute(const implementation_type& impl, Executor& ex,
+                         BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
+
   // Mutex to protect access to the service-wide state
   std::recursive_mutex mutex_;
   std::atomic_bool stop_;
@@ -101,7 +137,65 @@ class strand_gui_executor_service
   std::shared_ptr<strand_impl> impl_list_;
 };
 
+template <typename Executor, typename Function>
+void strand_gui_executor_service::execute(
+    const strand_gui_executor_service::implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    typename std::enable_if_t<
+        boost::asio::can_query<Executor,
+                               boost::asio::execution::allocator_t<void>>::value>) {
+  return strand_gui_executor_service::do_execute(
+      impl, ex,
+      BOOST_ASIO_MOVE_CAST(Function)(function),
+      boost::asio::query(ex, boost::asio::execution::allocator));
+}
 
+template <typename Executor, typename Function>
+void strand_gui_executor_service::execute(
+    const strand_gui_executor_service::implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    typename std::enable_if_t<
+        !boost::asio::can_query<Executor,
+                                boost::asio::execution::allocator_t<void>>::value>) {
+  return strand_gui_executor_service::do_execute(
+      impl, ex,
+      BOOST_ASIO_MOVE_CAST(Function)(function),
+      std::allocator<void>());
+}
+
+template <typename Executor, typename Function, typename Allocator>
+void strand_gui_executor_service::do_execute(
+    const implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
+  std::lock_guard l_k{*(impl->mutex_)};
+  impl->handlers_next.template emplace_back(std::move(function));
+}
+// Request invocation of the given function.
+template <typename Executor, typename Function, typename Allocator>
+void strand_gui_executor_service::dispatch(
+    const implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
+  std::lock_guard l_k{*(impl->mutex_)};
+  impl->handlers_next.template emplace_back(std::move(function));
+}
+
+// Request invocation of the given function and return immediately.
+template <typename Executor, typename Function, typename Allocator>
+void strand_gui_executor_service::post(
+    const implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
+  std::lock_guard l_k{*(impl->mutex_)};
+  impl->handlers_next.template emplace_back(std::move(function));
+}
+
+// Request invocation of the given function and return immediately.
+template <typename Executor, typename Function, typename Allocator>
+void strand_gui_executor_service::defer(
+    const implementation_type& impl, Executor& ex,
+    BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
+  std::lock_guard l_k{*(impl->mutex_)};
+  impl->handlers_next.template emplace_back(std::move(function));
+}
 }  // namespace detail
 
 class strand_gui {
@@ -203,8 +297,38 @@ class strand_gui {
 
   void on_work_started() const BOOST_ASIO_NOEXCEPT;
 
-  void on_work_finished() const BOOST_ASIO_NOEXCEPT ;
-  void stop() ;
+  void on_work_finished() const BOOST_ASIO_NOEXCEPT;
+
+  template <typename Function>
+  typename std::enable_if_t<
+      boost::asio::execution::can_execute<const Executor&, Function>::value,
+      void>
+  execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
+    detail::strand_gui_executor_service::execute(
+        impl_,
+        executor_, BOOST_ASIO_MOVE_CAST(Function)(f));
+  }
+
+  template <typename Function, typename Allocator>
+  void dispatch(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
+    detail::strand_gui_executor_service::dispatch(
+        impl_,
+        executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+  }
+
+  template <typename Function, typename Allocator>
+  void post(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
+    detail::strand_gui_executor_service::post(impl_,
+                                              executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+  }
+
+  template <typename Function, typename Allocator>
+  void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
+    detail::strand_gui_executor_service::defer(impl_,
+                                               executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+  }
+
+  void stop();
 
   void show(gui_process_t&& in_fun);
 
