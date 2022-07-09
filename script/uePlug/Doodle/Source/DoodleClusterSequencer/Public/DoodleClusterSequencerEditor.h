@@ -66,14 +66,14 @@ public:
 public:
     // ISequencerSection interface
 
-    virtual UMovieSceneSection *GetSectionObject() override;
-    virtual FText GetSectionTitle() const override;
-    virtual float GetSectionHeight() const override;
-    virtual int32 OnPaintSection(FSequencerSectionPainter &Painter) const override;
-    virtual void BeginResizeSection() override;
-    virtual void ResizeSection(ESequencerSectionResizeMode ResizeMode, FFrameNumber ResizeTime) override;
-    virtual void BeginSlipSection() override;
-    virtual void SlipSection(FFrameNumber SlipTime) override;
-    virtual void BeginDilateSection() override;
-    virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override;
+    virtual UMovieSceneSection *GetSectionObject() override { return {}; };
+    virtual FText GetSectionTitle() const override { return {}; };
+    virtual float GetSectionHeight() const override { return {}; };
+    virtual int32 OnPaintSection(FSequencerSectionPainter &Painter) const override { return {}; };
+    virtual void BeginResizeSection() override{};
+    virtual void ResizeSection(ESequencerSectionResizeMode ResizeMode, FFrameNumber ResizeTime) override{};
+    virtual void BeginSlipSection() override{};
+    virtual void SlipSection(FFrameNumber SlipTime) override{};
+    virtual void BeginDilateSection() override{};
+    virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override{};
 };

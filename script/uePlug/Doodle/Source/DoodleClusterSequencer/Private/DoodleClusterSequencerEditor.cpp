@@ -28,6 +28,7 @@ TSharedPtr<SWidget> FDoodleClusterTrackEditor::BuildOutlinerEditWidget(
     UMovieSceneTrack *Track,
     const FBuildEditWidgetParams &Params)
 {
+    return {};
 }
 
 TSharedRef<ISequencerSection> FDoodleClusterTrackEditor::MakeSectionInterface(
@@ -44,4 +45,10 @@ bool FDoodleClusterTrackEditor::SupportsSequence(UMovieSceneSequence *InSequence
 bool FDoodleClusterTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
 {
     return Type == UMovieSceneDoodleClusterTrack::StaticClass();
+}
+
+FDoodleClusterSection::FDoodleClusterSection(UMovieSceneSection &InSection,
+                                             TWeakPtr<ISequencer> InSequencer)
+    : ISequencerSection()
+{
 }
