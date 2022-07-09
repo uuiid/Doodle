@@ -238,7 +238,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
         next_ptr(&next_value),
         next_fun_value() {}
 
-  void operator()() override {
+  void operator()() {
     boost::asio::post(io_con_p, [this,
                                  self_ = this->shared_from_this()]() {
       process();
@@ -259,6 +259,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
     *next_ptr              = l_ptr;
     next_fun_value         = [l_ptr]() { (*l_ptr)(); };
     next_ptr               = &(l_ptr->next_value);
+    return *this;
   }
   template <typename IO_Context1, typename Fun_t>
   rear_adapter_t& next(IO_Context1& in_io, Fun_t in_fun) {
@@ -266,10 +267,32 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
   }
 };
 }  // namespace detail
+template <typename IO_Context, typename Process_t>
+class process_adapter {
+  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<IO_Context, Process_t>>;
 
+  rear_adapter_ptr p_ptr;
 
+ public:
+  template <typename... Args>
+  explicit process_adapter(Args&&... in_args)
+      : p_ptr(std::make_shared<rear_adapter_ptr::element_type>(std::forward<Args>(in_args)...)) {}
 
+  template <typename Process_t1, typename... Args>
+  process_adapter& next(Args&&... in_args) {
+    p_ptr->template next<Process_t1>(std::forward<Args>(in_args)...);
+    return *this;
+  };
 
+  template <typename... Args>
+  process_adapter& next(Args&&... in_args) {
+    p_ptr->next(std::forward<Args>(in_args)...);
+    return *this;
+  };
+  void operator()() {
+    (*p_ptr)();
+  }
+};
 
 namespace detail {
 
