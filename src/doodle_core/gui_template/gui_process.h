@@ -228,8 +228,9 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
 
   template <typename Executor1, typename... Args,
             std::enable_if_t<
-                std::is_convertible_v<Executor1, boost::asio::execution_context>> = true>
-  explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
+                std::is_convertible_v<Executor1&, boost::asio::execution_context&>,
+                bool> = true>
+  explicit rear_adapter_t(Executor1& in_io, Args&&... in_args)
       : executor(in_io.get_executor()),
         process(std::forward<Args>(in_args)...),
         next_value(),
@@ -239,31 +240,11 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
   template <typename Executor1, typename... Args,
             std::enable_if_t<
                 boost::asio::execution::is_executor<Executor1>::value ||
-                boost::asio::is_executor<Executor1>::value> = true>
-  explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
+                    boost::asio::is_executor<Executor1>::value,
+                bool> = true>
+  explicit rear_adapter_t(const Executor1& in_io, Args&&... in_args)
       : executor(in_io),
         process(std::forward<Args>(in_args)...),
-        next_value(),
-        next_ptr(&next_value),
-        next_fun_value() {}
-
-  template <typename Executor1,
-            std::enable_if_t<
-                std::is_convertible_v<Executor1, boost::asio::execution_context>> = true>
-  explicit rear_adapter_t(Executor1 in_io)
-      : executor(in_io.get_executor()),
-        process(),
-        next_value(),
-        next_ptr(&next_value),
-        next_fun_value() {}
-
-  template <typename Executor1,
-            std::enable_if_t<
-                boost::asio::execution::is_executor<Executor1>::value ||
-                boost::asio::is_executor<Executor1>::value> = true>
-  explicit rear_adapter_t(Executor1 in_io)
-      : executor(in_io),
-        process(),
         next_value(),
         next_ptr(&next_value),
         next_fun_value() {}

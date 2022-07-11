@@ -82,6 +82,7 @@ class strand_gui_executor_service
     if (!impl_list_) {
       impl_list_           = std::make_shared<strand_impl>(in_executor);
       impl_list_->service_ = this;
+      impl_list_->mutex_   = &this->mutex_;
     }
     return impl_list_;
   };
@@ -166,7 +167,7 @@ void strand_gui_executor_service::do_execute(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.template emplace_back(std::move(function));
+  impl->handlers_next.emplace_back(std::move(function));
 }
 // Request invocation of the given function.
 template <typename Executor, typename Function, typename Allocator>
@@ -174,7 +175,7 @@ void strand_gui_executor_service::dispatch(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.template emplace_back(std::move(function));
+  impl->handlers_next.emplace_back(std::move(function));
 }
 
 // Request invocation of the given function and return immediately.
@@ -183,7 +184,7 @@ void strand_gui_executor_service::post(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.template emplace_back(std::move(function));
+  impl->handlers_next.emplace_back(std::move(function));
 }
 
 // Request invocation of the given function and return immediately.
@@ -192,7 +193,7 @@ void strand_gui_executor_service::defer(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.template emplace_back(std::move(function));
+  impl->handlers_next.emplace_back(std::move(function));
 }
 }  // namespace detail
 
