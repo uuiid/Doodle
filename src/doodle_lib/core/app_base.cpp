@@ -86,6 +86,6 @@ app_command_base::app_command_base(win::wnd_instance const& in_instance)
       options_(std::make_shared<program_options>()) {
 }
 app_command_base::app_command_base()
-    : app(::GetModuleHandleW(nullptr)) {
+    : app_base(::GetModuleHandleW(nullptr)) {
 }
 }  // namespace doodle
