@@ -14,13 +14,13 @@ class dem_cloth_to_fbx::impl {
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
   std::int32_t bindFrame_p{0};
-  std::int32_t nBones_p{30};
-  std::int32_t nIters_p{30};
-  std::int32_t nInitIters_p{10};
-  std::int32_t nTransIters_p{5};
+  std::int32_t nBones_p{180};
+  std::int32_t nIters_p{50};
+  std::int32_t nInitIters_p{25};
+  std::int32_t nTransIters_p{10};
   std::double_t transAffine_p{10};
   std::double_t transAffineNorm_p{4};
-  std::int32_t nWeightsIters_p{3};
+  std::int32_t nWeightsIters_p{8};
   std::int32_t nonZeroWeightsNum_p{8};
   std::double_t weightsSmooth_p{1e-4};
   std::double_t weightsSmoothStep_p{1};
@@ -50,7 +50,6 @@ if select_list:
                             nTransIters_p,
                             nWeightsIters_p);
 
-
     MGlobal::executePythonCommandOnIdle(d_str{l_py},
                                         true);
   }
@@ -67,11 +66,11 @@ void dem_cloth_to_fbx::render() {
   ImGui::InputInt("开始帧", &p_i->startFrame_p);
   ImGui::InputInt("结束帧", &p_i->endFrame_p);
 
-  ImGui::SliderInt("骨骼数", &p_i->nBones_p, 0, 300);
-  ImGui::SliderInt("全局迭代数", &p_i->nIters_p, 0, 300);
-  ImGui::SliderInt("初始化迭代数", &p_i->nInitIters_p, 0, 100);
-  ImGui::SliderInt("骨骼迭代数", &p_i->nTransIters_p, 0, 100);
-  ImGui::SliderInt("权重迭代数", &p_i->nWeightsIters_p, 0, 100);
+  ImGui::InputInt("骨骼数", &p_i->nBones_p);
+  ImGui::InputInt("全局迭代数", &p_i->nIters_p);
+  ImGui::InputInt("初始化迭代数", &p_i->nInitIters_p);
+  ImGui::InputInt("骨骼迭代数", &p_i->nTransIters_p);
+  ImGui::InputInt("权重迭代数", &p_i->nWeightsIters_p);
 
   if (ImGui::Button("转换")) {
     p_i->run();
