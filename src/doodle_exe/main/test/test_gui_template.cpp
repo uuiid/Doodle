@@ -72,20 +72,21 @@ TEST_CASE("test gui strand2") {
 }
 TEST_CASE("test gui strand") {
   doodle::app l_app{};
+  l_app.command_line_parser(std::vector<std::string>{});
   doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};
 
-  boost::asio::post(l_gui, []() { return true; });
+  boost::asio::post(l_gui, doodle::make_process_adapter<test_1>(l_gui, 2)
+                               .next<test_1>(l_gui, 5)
+                               .next(l_gui, []() {
+                                 DOODLE_LOG_INFO("end");
+                               })
+                               .next<test_1>(doodle::g_io_context().get_executor(), 10)
+                               .next(doodle::g_io_context().get_executor(), [&l_gui]() {
+                                 DOODLE_LOG_INFO("end");
+                                 l_gui.stop();
+                               }));
 
-  doodle::make_process_adapter<test_1>(l_gui, 2)
-      .next<test_1>(l_gui, 5)
-      .next(l_gui, []() {
-        DOODLE_LOG_INFO("end");
-      })
-      .next<test_1>(doodle::g_io_context().get_executor(), 10)
-      .next(doodle::g_io_context().get_executor(), [&l_gui]() {
-        DOODLE_LOG_INFO("end");
-        l_gui.stop();
-      });
+  ;
   //  doodle::gui_process_t l_process{};
   //  l_process
   //      .then<test_1>(1)

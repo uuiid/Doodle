@@ -202,10 +202,10 @@ class strand_gui {
   typedef boost::asio::any_io_executor inner_executor_type;
   using Executor = boost::asio::any_io_executor;
 
-  //  strand_gui()
-  //      : executor_(),
-  //        impl_(strand_gui::create_implementation(executor_)) {
-  //  }
+    strand_gui()
+        : executor_(),
+          impl_(strand_gui::create_implementation(executor_)) {
+    }
 
   template <typename Executor1>
   explicit strand_gui(const Executor1& in_e,

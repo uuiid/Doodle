@@ -173,7 +173,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
-    load_project(app::Get().options_->p_project_path);
+    load_project(app::Get().options_ ? app::Get().options_->p_project_path : FSys::path{});
     g_pool().post<one_process_t>(
         [this]() {
           this->load_windows();
