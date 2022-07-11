@@ -238,6 +238,12 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
         next_ptr(&next_value),
         next_fun_value() {}
 
+  ~rear_adapter_t() override {
+    if (process.alive()) {
+      process.abort(true);
+    }
+  }
+
   void operator()() {
     boost::asio::post(io_con_p, [this,
                                  self_ = this->shared_from_this()]() {
