@@ -217,10 +217,10 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   }
 };
 namespace detail {
-template <typename IO_Context, typename Process_t>
-class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
+template <typename Executor, typename Process_t>
+class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Executor, Process_t>> {
   using value_type = process_warp_t<Process_t>;
-  IO_Context io_con_p;
+  Executor io_con_p;
   value_type process;
 
   using next_type     = std::shared_ptr<void>;
@@ -230,9 +230,22 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
   next_fun_type next_fun_value;
 
  public:
-  template <typename... Args>
-  explicit rear_adapter_t(IO_Context in_io, Args&&... in_args)
-      : io_con_p(in_io),
+  template <typename Executor1, typename... Args,
+            std::enable_if_t<
+                std::is_convertible_v<Executor1, boost::asio::execution_context>> = true>
+  explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
+      : io_con_p(in_io.get_executor()),
+        process(std::forward<Args>(in_args)...),
+        next_value(),
+        next_ptr(&next_value),
+        next_fun_value() {}
+
+  template <typename Executor1, typename... Args,
+            std::enable_if_t<
+                boost::asio::execution::is_executor<Executor1>::value ||
+                boost::asio::is_executor<Executor1>::value> = true>
+  explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
+      : io_con_p(in_io.get_executor()),
         process(std::forward<Args>(in_args)...),
         next_value(),
         next_ptr(&next_value),
@@ -258,24 +271,25 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
       }
     });
   }
-  template <typename Process_t1, typename IO_Context1, typename... Args1>
-  rear_adapter_t& next(IO_Context1& in_io, Args1&&... in_args) {
-    using rear_adapter_ptr = std::shared_ptr<rear_adapter_t<IO_Context1, Process_t1>>;
+  template <typename Process_t1, typename Executor1, typename... Args1>
+  rear_adapter_t& next(Executor1& in_io, Args1&&... in_args) {
+    using rear_adapter_ptr = std::shared_ptr<rear_adapter_t<Executor1, Process_t1>>;
     rear_adapter_ptr l_ptr = std::make_shared<rear_adapter_ptr::element_type>(in_io, std::forward<Args1>(in_args)...);
     *next_ptr              = l_ptr;
     next_fun_value         = [l_ptr]() { (*l_ptr)(); };
     next_ptr               = &(l_ptr->next_value);
     return *this;
   }
-  template <typename IO_Context1, typename Fun_t>
-  rear_adapter_t& next(IO_Context1& in_io, Fun_t in_fun) {
+  template <typename Executor1, typename Fun_t>
+  rear_adapter_t& next(Executor1& in_io, Fun_t in_fun) {
     return next<lambda_process_warp_t<Fun_t>>(in_io, in_fun);
   }
 };
+
 }  // namespace detail
-template <typename IO_Context, typename Process_t>
+template <typename Executor, typename Process_t>
 class process_adapter {
-  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<IO_Context, Process_t>>;
+  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<Executor, Process_t>>;
 
   rear_adapter_ptr p_ptr;
 
