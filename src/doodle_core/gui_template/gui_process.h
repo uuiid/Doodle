@@ -75,6 +75,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
+    connect();
     std::any_cast<Target&>(process_p).init();
   }
 
