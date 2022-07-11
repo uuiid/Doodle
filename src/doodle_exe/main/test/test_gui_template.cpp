@@ -73,18 +73,21 @@ TEST_CASE("test gui strand2") {
 TEST_CASE("test gui strand") {
   doodle::app l_app{};
   doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};
-  doodle::gui_process_t l_process{};
-  l_process
-      .then<test_1>(1)
-      .post<test_1>(doodle::g_io_context(), 2)
-      .then([]() {
-        DOODLE_LOG_INFO("end");
-      })
-      .post(doodle::g_io_context(), [&]() {
-        DOODLE_LOG_INFO("end");
-        l_gui.stop();
-      });
-  l_gui.show(std::move(l_process));
+  doodle::make_process_adapter<test_1>(l_gui)
+      .next<test_1>(doodle::g_io_context().get_executor())
+      .next<test_1>(doodle::g_io_context().get_executor());
+  //  doodle::gui_process_t l_process{};
+  //  l_process
+  //      .then<test_1>(1)
+  //      .post<test_1>(doodle::g_io_context(), 2)
+  //      .then([]() {
+  //        DOODLE_LOG_INFO("end");
+  //      })
+  //      .post(doodle::g_io_context(), [&]() {
+  //        DOODLE_LOG_INFO("end");
+  //        l_gui.stop();
+  //      });
+  //  l_gui.show(std::move(l_process));
 
   //  doodle::process_warp_t<test_1> l_test{std::make_unique<test_1>(1)};
   //  boost::asio::post(l_gui, []() -> bool {

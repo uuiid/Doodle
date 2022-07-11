@@ -62,14 +62,7 @@ void strand_gui_executor_service::loop_one() {
   impl_list_->handlers.clear();
   std::swap(impl_list_->handlers, impl_list_->handlers_next);
 }
-void strand_gui_executor_service::show(
-    const strand_gui_executor_service::implementation_type& in_impl,
-    gui_process_t&& in_gui) {
-  {
-    std::lock_guard l_g{in_impl->service_->mutex_};
-    in_impl->handlers_next.emplace_back(std::move(in_gui));
-  }
-}
+
 void strand_gui_executor_service::stop(
     const strand_gui_executor_service::implementation_type& in_impl) {
   in_impl->service_->stop_ = true;
@@ -127,9 +120,6 @@ void strand_gui::on_work_finished() const BOOST_ASIO_NOEXCEPT {
 }
 void strand_gui::stop() {
   detail::strand_gui_executor_service::stop(impl_);
-}
-void strand_gui::show(gui_process_t&& in_fun) {
-  detail::strand_gui_executor_service::show(impl_, std::move(in_fun));
 }
 strand_gui::inner_executor_type strand_gui::get_inner_executor() const BOOST_ASIO_NOEXCEPT {
   return executor_;

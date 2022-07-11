@@ -116,8 +116,6 @@ class strand_gui_executor_service
   static void defer(const implementation_type& impl, Executor& ex,
                     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a);
 
-  static void show(const implementation_type& in_impl,
-                   gui_process_t&& in_gui);
   static void stop(const implementation_type& in_impl);
   void loop_one();
 
@@ -329,8 +327,6 @@ class strand_gui {
   }
 
   void stop();
-
-  void show(gui_process_t&& in_fun);
 
   friend bool operator==(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
     return a.impl_ == b.impl_;
