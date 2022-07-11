@@ -32,7 +32,7 @@ auto async_work(const Executor& ex, CompletionToken&& token) {
 }
 }  // namespace doodle
 
-class test_1 {
+class test_1 : public ::doodle::process_handy_tools {
   std::int32_t p_{};
   std::int32_t p_max{10};
 
@@ -51,13 +51,12 @@ class test_1 {
   void aborted() {
     DOODLE_LOG_INFO(" init {}", p_);
   };
-  doodle::process_state update() {
+  void update() {
     DOODLE_LOG_INFO(" init {}", p_);
     if (p_ < p_max) {
       ++p_;
-      return doodle::process_state::run;
     } else {
-      return doodle::process_state::succeed;
+      succeed();
     }
   };
 };

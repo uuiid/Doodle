@@ -220,7 +220,7 @@ namespace detail {
 template <typename IO_Context, typename Process_t>
 class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Context, Process_t>> {
   using value_type = process_warp_t<Process_t>;
-  IO_Context& io_con_p;
+  IO_Context io_con_p;
   value_type process;
 
   using next_type     = std::shared_ptr<void>;
@@ -231,7 +231,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<IO_Con
 
  public:
   template <typename... Args>
-  explicit rear_adapter_t(IO_Context& in_io, Args&&... in_args)
+  explicit rear_adapter_t(IO_Context in_io, Args&&... in_args)
       : io_con_p(in_io),
         process(std::forward<Args>(in_args)...),
         next_value(),
@@ -297,158 +297,6 @@ class process_adapter {
   };
   void operator()() {
     (*p_ptr)();
-  }
-};
-
-namespace detail {
-
-template <typename IO_Context, typename Rear_Process>
-class gui_to_rear_warp_t {
-  IO_Context& io_con_p;
-  rear_warp_t<Rear_Process> warp_process{};
-  std::future<process_state> future_;
-
-  std::function<process_state()> fun_sub{};
-
- public:
-  template <typename... Args>
-  explicit gui_to_rear_warp_t(IO_Context& in_io, Args&&... in_args)
-      : io_con_p(in_io),
-        warp_process(std::forward<Args>(in_args)...),
-        future_(),
-        fun_sub() {}
-
-  void init() {
-    fun_sub = [this]() mutable {
-      auto l_s = this->warp_process();
-      switch (l_s) {
-        case process_state::run: {
-          future_ = boost::asio::post(io_con_p, std::packaged_task<process_state()>{this->fun_sub});
-          break;
-        }
-        case process_state::succeed:
-        case process_state::fail:
-        default:
-          break;
-      }
-      return l_s;
-    };
-    future_ = boost::asio::post(io_con_p, std::packaged_task<process_state()>{fun_sub});
-  }
-
-  process_state update() {
-    process_state l_state{process_state::run};
-    /// \brief 过程指针有效, 状态为未初始化, 未来无效
-    if (future_.valid()) {
-      switch (future_.wait_for(0ns)) {
-        case std::future_status::ready: {
-          try {
-            l_state = future_.get();
-          } catch (const doodle_error& error) {
-            DOODLE_LOG_ERROR(error.what());
-            l_state = process_state::fail;
-          }
-        } break;
-        default:
-          break;
-      }
-    }
-    return l_state;
-  }
-};
-
-struct gui_process_wrap_handler;
-using instance_type  = std::unique_ptr<void, void (*)(void*)>;
-using next_type      = std::unique_ptr<gui_process_wrap_handler>;
-using abort_fn_type  = void(gui_process_wrap_handler&, bool);
-using update_fn_type = bool(gui_process_wrap_handler&);
-struct gui_process_wrap_handler {
-  instance_type instance;
-  abort_fn_type* abort;
-  update_fn_type* update;
-  next_type next;
-};
-template <typename Gui_Process2>
-static void delete_gui_process_t(void* in_ptr) {
-  delete static_cast<Gui_Process2*>(in_ptr);
-};
-template <typename Gui_Process2>
-static void abort(gui_process_wrap_handler& handler, const bool immediately) {
-  static_cast<Gui_Process2*>(handler.instance.get())->abort(immediately);
-}
-template <typename Gui_Process2>
-static bool update(gui_process_wrap_handler& handler) {
-  auto&& l_process = *static_cast<Gui_Process2*>(handler.instance.get());
-
-  switch (l_process()) {
-    case process_state::run: {
-    } break;
-    case process_state::succeed: {
-      if (handler.next) {
-        handler = std::move(*handler.next);
-      }
-    } break;
-    case process_state::fail:
-    default:
-      return true;
-      break;
-  }
-  return false;
-}
-
-}  // namespace detail
-class gui_process_t {
- private:
-  using instance_type            = detail::instance_type;
-  using next_type                = detail::next_type;
-  using gui_process_wrap_handler = detail::gui_process_wrap_handler;
-
-  next_type handle;
-  next_type* auxiliary_next;
-
-  template <typename type_t, typename... Args>
-  gui_process_t& _post_(Args&&... in_args) {
-    auto l_next = instance_type{
-        new type_t{std::forward<Args>(in_args)...},
-        &detail::delete_gui_process_t<type_t>};
-    auxiliary_next->reset(new gui_process_wrap_handler{
-        std::move(l_next),
-        &detail::abort<type_t>,
-        &detail::update<type_t>,
-        nullptr});
-    auxiliary_next = &((*auxiliary_next)->next);
-    return *this;
-  };
-
- public:
-  explicit gui_process_t()
-      : handle{nullptr},
-        auxiliary_next(&handle) {}
-
-  template <typename type_t, typename... Args>
-  gui_process_t& then(Args&&... in_args) {
-    return _post_<gui_warp_t<type_t>>(std::forward<Args>(in_args)...);
-  };
-  template <typename Func>
-  gui_process_t& then(Func&& func) {
-    return _post_<gui_warp_t<lambda_process_warp_t<Func>>>(std::forward<Func>(func));
-  };
-  template <typename type_t, typename IO_Context, typename... Args>
-  gui_process_t& post(IO_Context& in_io, Args&&... in_args) {
-    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<
-        IO_Context, type_t>>>(in_io, std::forward<Args>(in_args)...);
-  };
-  template <typename IO_Context, typename Func>
-  gui_process_t& post(IO_Context& in_io, Func&& func) {
-    return _post_<rear_warp_t<detail::gui_to_rear_warp_t<
-        IO_Context, lambda_process_warp_t<Func>>>>(in_io, std::forward<Func>(func));
-  };
-  // 提交时的渲染过程
-  bool operator()() {
-    return handle->update(*handle);
-  }
-  void abort(bool in_abort = false) {
-    handle->abort(*handle, in_abort);
   }
 };
 }  // namespace doodle
