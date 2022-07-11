@@ -75,7 +75,6 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
-    connect();
     std::any_cast<Target&>(process_p).init();
   }
 
@@ -131,10 +130,14 @@ class process_warp_t {
  public:
   template <typename... Args>
   explicit process_warp_t(Args&&... in_args)
-      : process_p(Process_t{std::forward<Args>(in_args)...}) {}
+      : process_p(Process_t{std::forward<Args>(in_args)...}) {
+    connect();
+  }
 
   explicit process_warp_t(Process_t&& in_ptr)
-      : process_p(std::move(in_ptr)){};
+      : process_p(std::move(in_ptr)) {
+    connect();
+  };
 
   virtual ~process_warp_t() = default;
 
@@ -201,9 +204,6 @@ class process_warp_t {
 template <typename Lambda_Process, typename = void>
 class lambda_process_warp_t : private Lambda_Process, public process_handy_tools {
  public:
-  void connect(const std::function<void(process_state)>& in) {
-  }
-
   template <typename... Args>
   explicit lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 

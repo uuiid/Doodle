@@ -80,9 +80,9 @@ TEST_CASE("test gui strand") {
                                  DOODLE_LOG_INFO("end");
                                })
                                .next<test_1>(doodle::g_io_context().get_executor(), 10)
-                               .next(doodle::g_io_context().get_executor(), [&l_gui]() {
+                               .next(doodle::g_io_context().get_executor(), [&l_app]() {
                                  DOODLE_LOG_INFO("end");
-                                 l_gui.stop();
+                                 l_app.stop();
                                }));
 
   ;
