@@ -59,7 +59,10 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
                                      DOODLE_LOC,
                                      "传入路径不是文件或者不存在");
           });
-  FSys::ifstream l_ifstream{in_path};
+  FSys::ifstream l_ifstream{in_path, FSys::ifstream ::binary | FSys::ifstream ::in};
+  //  l_ifstream.imbue(boost::locale::generator{}(""));
+  //  l_ifstream.imbue(std::locale(std::locale::empty(), new std::codecvt_utf8<char>));
+  //  boost::locale::utf::
   std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
   try {
     authorization l_authorization{ciphertext};
