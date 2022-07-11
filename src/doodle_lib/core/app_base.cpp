@@ -21,7 +21,6 @@ namespace doodle {
 void app_command_base::command_line_parser(const std::vector<std::string>& in_arg) {
   if (!chick_authorization())
     stop_app();
-  options_ = std::make_shared<program_options>();
   options_->command_line_parser(in_arg);
 
   auto& set = core_set::getSet();
@@ -81,5 +80,9 @@ void app_command_base::load_back_end() {
 
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));
+}
+app_command_base::app_command_base(win::wnd_instance const& in_instance)
+    : app_base(in_instance),
+      options_(std::make_shared<program_options>()) {
 }
 }  // namespace doodle
