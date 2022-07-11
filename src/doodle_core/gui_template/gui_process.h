@@ -240,7 +240,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
   template <typename... Args>
   explicit rear_adapter_t(const Executor& in_io, Args&&... in_args)
       : executor(in_io),
-        process(std::forward<Args>(in_args)...),
+        process(Process_t{std::forward<Args>(in_args)...}),
         next_value(),
         next_ptr(&next_value),
         next_fun_value() {}
@@ -292,9 +292,8 @@ class process_adapter {
   rear_adapter_ptr p_ptr;
 
  public:
-  template <typename... Args>
-  explicit process_adapter(Args&&... in_args)
-      : p_ptr(std::make_shared<::doodle::detail::rear_adapter_t<Executor, Process_t>>(std::forward<Args>(in_args)...)) {}
+  explicit process_adapter(const rear_adapter_ptr& in_args)
+      : p_ptr(in_args) {}
 
   template <typename Process_t1, typename... Args>
   process_adapter& next(Args&&... in_args) {
@@ -315,7 +314,8 @@ class process_adapter {
 template <typename Process_t, typename Executor, typename... Args>
 auto make_process_adapter(Executor&& in_io, Args&&... in_args) {
   return process_adapter<std::decay_t<Executor>,
-                         Process_t>{std::forward<Executor>(in_io),
-                                    std::forward<Args>(in_args)...};
+                         Process_t>{
+      std::make_shared<::doodle::detail::rear_adapter_t<std::decay_t<Executor>, Process_t>>(
+          std::forward<Executor>(in_io), std::forward<Args>(in_args)...)};
 }
 }  // namespace doodle
