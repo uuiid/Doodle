@@ -14,40 +14,40 @@ namespace detail {
 
 // Special derived service id type to keep classes header-file only.
 template <typename Type>
-class service_id
+class gui_service_id
     : public boost::asio::execution_context::id {
 };
 
 // Special service base class to keep classes header-file only.
 template <typename Type>
-class execution_context_service_base
+class gui_execution_context_service_base
     : public boost::asio::execution_context::service {
   using base_type_t = boost::asio::execution_context::service;
 
  public:
-  static service_id<Type> id;
+  static gui_service_id<Type> id;
 
   // Constructor.
-  execution_context_service_base(boost::asio::execution_context& e)
+  gui_execution_context_service_base(boost::asio::execution_context& e)
       : base_type_t(e) {
   }
 };
 
 template <typename Type>
-service_id<Type> execution_context_service_base<Type>::id;
+gui_service_id<Type> gui_execution_context_service_base<Type>::id;
 
 ///=================================================================
 class strand_gui_executor_service
-    : public execution_context_service_base<strand_gui_executor_service> {
+    : public gui_execution_context_service_base<strand_gui_executor_service> {
  public:
   class strand_impl {
    public:
-    ~strand_impl();
     template <typename Executor_T>
     explicit strand_impl(const Executor_T& in_executor)
         : timer_(in_executor) {
       ready_start();
     }
+    virtual ~strand_impl();
     void ready_start();
 
    private:
@@ -202,10 +202,10 @@ class strand_gui {
   typedef boost::asio::any_io_executor inner_executor_type;
   using Executor = boost::asio::any_io_executor;
 
-    strand_gui()
-        : executor_(),
-          impl_(strand_gui::create_implementation(executor_)) {
-    }
+  strand_gui()
+      : executor_(),
+        impl_(strand_gui::create_implementation(executor_)) {
+  }
 
   template <typename Executor1>
   explicit strand_gui(const Executor1& in_e,
