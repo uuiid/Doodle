@@ -220,7 +220,7 @@ namespace detail {
 template <typename Executor, typename Process_t>
 class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Executor, Process_t>> {
   using value_type = process_warp_t<Process_t>;
-  Executor io_con_p;
+  Executor executor;
   value_type process;
 
   using next_type     = std::shared_ptr<void>;
@@ -234,7 +234,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
             std::enable_if_t<
                 std::is_convertible_v<Executor1, boost::asio::execution_context>> = true>
   explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
-      : io_con_p(in_io.get_executor()),
+      : executor(in_io.get_executor()),
         process(std::forward<Args>(in_args)...),
         next_value(),
         next_ptr(&next_value),
@@ -245,7 +245,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
                 boost::asio::execution::is_executor<Executor1>::value ||
                 boost::asio::is_executor<Executor1>::value> = true>
   explicit rear_adapter_t(Executor1 in_io, Args&&... in_args)
-      : io_con_p(in_io.get_executor()),
+      : executor(in_io.get_executor()),
         process(std::forward<Args>(in_args)...),
         next_value(),
         next_ptr(&next_value),
@@ -258,7 +258,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
   }
 
   void operator()() {
-    boost::asio::post(io_con_p, [this,
+    boost::asio::post(executor, [this,
                                  self_ = this->shared_from_this()]() {
       process();
       if (process.finished()) {
