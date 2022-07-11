@@ -19,6 +19,7 @@ class DOODLELIB_API app_command_base : public app_base {
   virtual bool chick_authorization();
 
  public:
+  app_command_base();
   app_command_base(const win::wnd_instance& in_instance);
 
   static app_command_base& Get();
