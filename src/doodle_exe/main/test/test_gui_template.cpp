@@ -72,7 +72,6 @@ TEST_CASE("test gui strand2") {
 }
 TEST_CASE("test gui strand") {
   doodle::app l_app{};
-  l_app.command_line_parser(std::vector<std::string>{});
   doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};
 
   boost::asio::post(l_gui, doodle::make_process_adapter<test_1>(l_gui, 2)
