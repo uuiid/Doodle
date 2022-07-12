@@ -34,7 +34,7 @@ class process_bounded_server
  public:
   class strand_impl {
    public:
-    virtual ~strand_impl()= default;;
+    virtual ~strand_impl() = default;
 
    private:
     friend class process_bounded_server;
