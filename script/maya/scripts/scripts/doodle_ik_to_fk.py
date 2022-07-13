@@ -28,7 +28,45 @@ def doodle_create_locator(in_joint):
     return l_list
 
 
+def search(in_layer_list, in_layer, in_depth=0):
+    if not in_layer:
+        return
+
+    children = cmd.animLayer(in_layer, q=True, c=True)
+    if children:
+        in_layer_list.extend(children)
+        for child in children:
+            search(in_layer_list, child, in_depth + 1)
+
+
+def get_all_anim_layer():
+    l_all_layer = [cmd.animLayer(q=1, r=1)]
+    search(l_all_layer, l_all_layer[0])
+    return l_all_layer if l_all_layer[0] else []
+
+
+def exclude_joint_anim_layer(in_joint):
+    cmd.select(in_joint)
+    l_layer = cmd.animLayer(q=1, afl=1)
+    l_root = cmd.animLayer(q=1, r=1)
+    if l_layer:
+        l_layer.remove(l_root)
+        for l in l_layer:
+            print("remove {}".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.scaleX".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.scaleY".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.scaleZ".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.visibility".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.translateX".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.translateY".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.translateZ".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.rotateX".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.rotateY".format(in_joint))
+            cmd.animLayer(l, e=1, ra="{}.rotateZ".format(in_joint))
+
+
 def set_fk_constraint(in_joint, in_loc):
+    exclude_joint_anim_layer(in_joint)
     cmd.parentConstraint(in_loc, in_joint, dr=0)
     return in_joint
 
