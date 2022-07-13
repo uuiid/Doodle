@@ -14,6 +14,8 @@ import random
 
 import maya_fun_tool as Doodle_fun_tool
 
+import scripts.doodle_ik_to_fk
+
 
 class DlsShelf(shelfBase._shelf):
     cloth_to_fbx = None
@@ -78,6 +80,10 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: self.set_cache())
         self.addButon("export abc2", "icons/OUTabc2.png",
                       command=lambda: self._export_abc_and_upload_())
+
+        self.addButon("ik to fk", "icons/mark_ik_to_fk.png",
+                      command=lambda: scripts.doodle_ik_to_fk.doodle_ik_to_fk())
+
     def polyremesh(self):
         self.re()
         Doodle_PolyRemesh.myRemesh()
