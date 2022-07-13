@@ -34,6 +34,10 @@ def set_fk_constraint(in_joint, in_loc):
 
 
 def doodle_ik_to_fk():
+    l_s = cmd.ls(sl=1)
+    if not l_s:
+        cmd.error("not select joint")
+        return
     cmd.select(cmd.ls(sl=1)[0], hi=1)
     l_j_list = cmd.ls(sl=1)
 
