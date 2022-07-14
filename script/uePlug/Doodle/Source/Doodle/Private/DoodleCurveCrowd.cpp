@@ -4,6 +4,9 @@
 #include "AIController.h"
 
 #include "Components/SplineComponent.h"
+#include "AI/NavigationSystemBase.h"
+#include "NavigationSystem.h"
+
 // Sets default values
 ADoodleCurveCrowd::ADoodleCurveCrowd()
     : ACharacter()
@@ -35,8 +38,13 @@ void ADoodleCurveCrowd::Tick(float DeltaTime)
 {
   Super::Tick(DeltaTime);
   // auto controller = Cast<AAIController>(GetController());
-  // if (controller) {
-  //   //   controller->MoveTo();
+  // UNavigationSystemV1 *NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+  // FVector Result;
+  // bool bSuccess = NavSys->K2_GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(), Result, 600);
+  // if (controller && bSuccess)
+  // {
+  //   FAIMoveRequest l_m_q{Result};
+  //   controller->MoveTo(l_m_q);
   // }
 }
 // Called to bind functionality to input

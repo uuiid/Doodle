@@ -39,6 +39,8 @@ public class doodle : ModuleRules
                 "RHI",
                 //几何缓存依赖
                 "GeometryCache",
+                // ai模块
+                "AIModule",
 
             }
             );
@@ -64,6 +66,7 @@ public class doodle : ModuleRules
                 "CinematicCamera",// 相机模块
                 // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
+                "NavigationSystem",// 导航网格
                 // "Projects",
                 // "InputCore",
                 // "CoreUObject",
