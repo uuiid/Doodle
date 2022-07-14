@@ -10,18 +10,15 @@ ADoodleAIController::ADoodleAIController(
           ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(
               TEXT("PathFollowingComponent")))
 {
-    PrimaryActorTick.bCanEverTick = true;
 }
 
 void ADoodleAIController::BeginPlay()
 {
     CastChecked<UCrowdFollowingComponent>(GetPathFollowingComponent())->SetCrowdAvoidanceRangeMultiplier(1);
-    GetPathFollowingComponent()->OnRequestFinished.AddLambda([this](FAIRequestID RequestID,
-                                                                    const FPathFollowingResult &Result)
-                                                             { GoToRandomWaypoint(); });
+
     GoToRandomWaypoint();
 }
- 
+
 void ADoodleAIController::GoToRandomWaypoint()
 {
     FVector Result;
@@ -33,7 +30,6 @@ void ADoodleAIController::GoToRandomWaypoint()
         AIMoveRequest.SetAllowPartialPath(true);
 
         MoveTo(AIMoveRequest);
-        // UAIAsyncTaskBlueprintProxy *AIAsyncTaskBlueprintProxy = UAIBlueprintHelperLibrary::CreateMoveToProxyObject(this, nullptr, Result, nullptr, 50.0f, true);
     }
     GetWorldTimerManager().SetTimer(TimerHandle, this, &ADoodleAIController::GoToRandomWaypoint, 5.0f + FMath::RandRange(-2.0f, 3.0f), false);
 }
@@ -58,6 +54,6 @@ void ADoodleAIController::OnMoveCompleted(FAIRequestID RequestID,
 {
     Super::OnMoveCompleted(RequestID, Result);
     //  UAIBlueprintHelperLibrary::
-    UE_LOG(LogTemp, Warning, TEXT("ADoodleAIController::OnMoveCompleted"));
+    // UE_LOG(LogTemp, Warning, TEXT("ADoodleAIController::OnMoveCompleted"));
     // GoToRandomWaypoint();
 }
