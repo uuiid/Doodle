@@ -18,3 +18,8 @@
   > 项目路径(绝对路径 E:/test/biao 保存的文件的路径) 和 拖入的路径 -> 计算相对路径 -> 相对路径为空
   > E:/file/image.png 和 F:/tmp 相对 -> 空
   > E:/file/image.png 和 E:/tmp 相对 -> ../image.png
+
+### 如果添加 ue4 人群 ai
+
+- 创建一个继承 DoodleCurveCrowd 的蓝图类
+- 将 蓝图类中的骨骼网格体设置为需要的网格体, 将动画资产指定为骨骼网格体对应的混合动画
