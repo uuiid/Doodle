@@ -54,7 +54,7 @@ class select::impl {
 
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     if (auto [l_v, l_i] = doodle::database_n::details::get_version(in_conn);
-        l_v == 3 && l_i == 4) {
+        l_v == 3 && l_i >= 4) {
       Metadatatab l_metadatatab{};
 
       for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
