@@ -73,6 +73,7 @@ class insert::impl {
     details::add_ctx_table(in_db);
     details::add_component_table(in_db);
     details::add_version_table(in_db);
+    doodle::database_n::details::db_compatible::delete_metadatatab_table(in_db);
   }
 
   /**
