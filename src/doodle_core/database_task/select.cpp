@@ -141,7 +141,7 @@ class select::impl {
                   return;
                 entt::entity l_e = num_to_enum<entt::entity>(in_id);
                 entt::handle l_h{in_reg, l_e};
-                if(!l_h.valid()) {
+                if (!l_h.valid()) {
                   DOODLE_LOG_ERROR("无效的实体 {}", in_id);
                   database::delete_(l_h);
                 }
@@ -224,8 +224,10 @@ class select::impl {
                 chick_true<doodle_error>(
                     l_h.valid(), DOODLE_LOC,
                     "失效的实体");
-
-                l_h.emplace_or_replace<database>(in_json).set_id(in_id);
+                if (l_h.any_of<database>()) {
+                  l_h.remove<data_status_save>();
+                } else
+                  l_h.emplace<database>(in_json).set_id(in_id);
               }});
 
       results.emplace_back(l_fut.share());
