@@ -23,4 +23,10 @@ void add_component_table(sqlpp::sqlite3::connection &in_conn);
 void add_version_table(sqlpp::sqlite3::connection &in_conn);
 void set_version(sqlpp::sqlite3::connection &in_conn);
 
+class db_compatible {
+ public:
+  static bool has_metadatatab_table(sqlpp::sqlite3::connection &in_conn);
+  static void delete_metadatatab_table(sqlpp::sqlite3::connection &in_conn);
+};
+
 }  // namespace doodle::database_n::details

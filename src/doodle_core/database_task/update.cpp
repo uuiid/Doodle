@@ -59,6 +59,7 @@ class update_data::impl {
       details::add_component_table(in_db);
       details::set_version(in_db);
     }
+    doodle::database_n::details::db_compatible::delete_metadatatab_table(in_db);
   }
 
   void updata_db(sqlpp::sqlite3::connection &in_db) {

@@ -68,3 +68,12 @@ create table if not exists doodle_info
     version_major integer not null,
     version_minor integer not null
 );
+
+create table sqlite_master
+(
+    type     text,
+    name     text,
+    tbl_name text,
+    rootpage int,
+    sql      text
+);

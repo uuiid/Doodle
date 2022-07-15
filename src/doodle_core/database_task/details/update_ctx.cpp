@@ -112,4 +112,18 @@ void set_version(sqlpp::sqlite3::connection& in_conn) {
       l_info.versionMinor = version::version_minor));
 }
 
+bool db_compatible::has_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {
+  sql::SqliteMaster l_master{};
+  auto l_item = in_conn(
+      sqlpp::select(sqlpp::all_of(l_master))
+          .from(l_master)
+          .where(l_master.type == "table" && l_master.name == "metadatatab"));
+  for (auto&& row : l_item) {
+    return true;
+  }
+  return false;
+}
+void db_compatible::delete_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {
+  in_conn.execute(R"(drop table if exists metadatatab;)");
+}
 }  // namespace doodle::database_n::details
