@@ -1,4 +1,6 @@
 #include "DoodleAIController.h"
+#include "DetourCrowdAIController.h"
+
 #include "Navigation/CrowdFollowingComponent.h"
 #include "AI/NavigationSystemBase.h"
 #include "NavigationSystem.h"

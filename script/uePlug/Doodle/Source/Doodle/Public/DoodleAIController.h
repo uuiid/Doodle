@@ -2,8 +2,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DetourCrowdAIController.h"
-
+	#include "AIController.h"
+#include "TimerManager.h" //定时器
 //这个必须最后导入
 #include "DoodleAIController.generated.h"
 
@@ -20,7 +20,6 @@ public:
     virtual void OnMoveCompleted(FAIRequestID RequestID,
                                  const FPathFollowingResult &Result) override;
 
- 
     void GoToRandomWaypoint();
     bool GetRandomPointInRadius(const FVector &Origin, float Radius, FVector &OutResult);
 
