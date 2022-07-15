@@ -91,6 +91,7 @@ class select::impl {
                                            doodle::importance,
                                            doodle::organization_list,
                                            doodle::redirection_path_info>(l_h, k_json);
+                      database::save(l_h);
                     }});
         results.emplace_back(l_fun.share());
         if (stop)
