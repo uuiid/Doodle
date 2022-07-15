@@ -7,6 +7,9 @@
 #include "AI/NavigationSystemBase.h"
 #include "NavigationSystem.h"
 
+#include "Animation/AnimSingleNodeInstance.h"         //动画实例
+#include "GameFramework/CharacterMovementComponent.h" //角色移动组件
+#include "DoodleAIController.h"
 // Sets default values
 ADoodleCurveCrowd::ADoodleCurveCrowd()
     : ACharacter()
@@ -22,21 +25,50 @@ ADoodleCurveCrowd::ADoodleCurveCrowd()
   // p_instanced->RegisterComponent();
   // p_instanced->SetWorldTransform(GetRootComponent()->GetComponentTransform());
 
-  p_spline = CreateDefaultSubobject<USplineComponent>("Spline");
-  p_spline->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-  p_spline->SetWorldTransform(GetRootComponent()->GetComponentTransform());
+  AIControllerClass = ADoodleAIController::StaticClass();
+
+  UCharacterMovementComponent *CharacterMovementComponent = Cast<UCharacterMovementComponent>(GetMovementComponent());
+
+  if (CharacterMovementComponent)
+  {
+    CharacterMovementComponent->MaxAcceleration = 150.f;
+    CharacterMovementComponent->MaxWalkSpeed = 150.f;
+    CharacterMovementComponent->GroundFriction = 1.f;
+    CharacterMovementComponent->RotationRate = {0.0f, 0.0f, 180.0f};
+    CharacterMovementComponent->bOrientRotationToMovement = true;
+
+    CharacterMovementComponent->bUseRVOAvoidance = true;
+    CharacterMovementComponent->AvoidanceConsiderationRadius = 100.0f;
+    CharacterMovementComponent->AvoidanceWeight = 5.0f;
+  }
 }
 
 // Called when the game starts or when spawned
 void ADoodleCurveCrowd::BeginPlay()
 {
   Super::BeginPlay();
+  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
+  // if (!SkeletalMeshComponent)
+  //   return;
+  // SkeletalMeshComponent->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+  // SkeletalMeshComponent->SetAnimInstanceClass(UAnimSingleNodeInstance::StaticClass());
+  // auto Anim = CastChecked<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  // if (AnimationAsset)
+  // {
+  //   Anim->SetAnimationAsset(AnimationAsset);
+  //   Anim->PlayAnim(true, 1.f, 0.f);
+  // }
 }
 
 // Called every frame
 void ADoodleCurveCrowd::Tick(float DeltaTime)
 {
   Super::Tick(DeltaTime);
+  USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
+  if (!SkeletalMeshComponent)
+    return;
+  // auto Anim = CastChecked<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  // Anim->SetBlendSpaceInput(FVector{GetVelocity().Size(), 0.0f, 0.0f});
   // auto controller = Cast<AAIController>(GetController());
   // UNavigationSystemV1 *NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
   // FVector Result;

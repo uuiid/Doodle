@@ -9,29 +9,32 @@
 #include "DoodleCurveCrowd.generated.h"
 
 class USplineComponent;
+class UAnimationAsset;
 
 UCLASS()
-class DOODLE_API ADoodleCurveCrowd : public ACharacter {
+class DOODLE_API ADoodleCurveCrowd : public ACharacter
+{
   GENERATED_BODY()
 
- public:
+public:
   // Sets default values for this character's properties
   ADoodleCurveCrowd();
 
- protected:
+protected:
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
- public:
+public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
 
   // Called to bind functionality to input
-  virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+  virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
 
-  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Spline")
-  USplineComponent* p_spline;
+ 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Anim")
+  UAnimationAsset *AnimationAsset;
 
- private:
+private:
   FVector p_Point;
 };
