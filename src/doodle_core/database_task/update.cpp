@@ -130,6 +130,8 @@ class update_data::impl {
     for (auto &f : futures_) {
       f.get();
     }
+    if (futures_.empty())
+      return;
     auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
     auto l_tx   = sqlpp::start_transaction(*l_comm);
 

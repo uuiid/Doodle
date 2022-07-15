@@ -75,8 +75,7 @@ class select::impl {
                       if (stop)
                         return;
                       entt::handle l_h{in_reg, l_e};
-                      l_h.emplace<database>(in_uuid).set_id(
-                          enum_to_num(l_e));
+                      l_h.emplace<database>(in_uuid).set_id(0);
                       auto k_json = nlohmann::json::parse(in_str);
                       entt_tool::load_comm<doodle::project,
                                            doodle::episodes,
@@ -139,7 +138,7 @@ class select::impl {
                this]() {
                 if (stop)
                   return;
-                entt::entity l_e = num_to_enum<entt::entity>(in_id);
+                auto l_e = num_to_enum<entt::entity>(in_id);
                 entt::handle l_h{in_reg, l_e};
                 if (!l_h.valid()) {
                   DOODLE_LOG_ERROR("无效的实体 {}", in_id);
@@ -162,7 +161,7 @@ class select::impl {
                     sqlpp::sqlite3::connection& in_conn,
                     const std::map<std::uint32_t,
                                    std::function<
-                                       void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
+                                       void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) const {
     sql::Context l_context{};
 
     for (auto&& row : in_conn(
