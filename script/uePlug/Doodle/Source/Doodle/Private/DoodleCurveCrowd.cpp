@@ -32,9 +32,9 @@ ADoodleCurveCrowd::ADoodleCurveCrowd()
   if (CharacterMovementComponent)
   {
     CharacterMovementComponent->MaxAcceleration = 150.f;
-    CharacterMovementComponent->MaxWalkSpeed = 150.f;
-    CharacterMovementComponent->GroundFriction = 1.f;
-    CharacterMovementComponent->RotationRate = {0.0f, 0.0f, 180.0f};
+    CharacterMovementComponent->MaxWalkSpeed = 200.f;
+    CharacterMovementComponent->GroundFriction = 0.2f;
+    CharacterMovementComponent->RotationRate = {0.0f, 180.0f, 0.0f};
     CharacterMovementComponent->bOrientRotationToMovement = true;
 
     CharacterMovementComponent->bUseRVOAvoidance = true;
@@ -47,17 +47,17 @@ ADoodleCurveCrowd::ADoodleCurveCrowd()
 void ADoodleCurveCrowd::BeginPlay()
 {
   Super::BeginPlay();
-  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
-  // if (!SkeletalMeshComponent)
-  //   return;
-  // SkeletalMeshComponent->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
-  // SkeletalMeshComponent->SetAnimInstanceClass(UAnimSingleNodeInstance::StaticClass());
-  // auto Anim = CastChecked<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
-  // if (AnimationAsset)
-  // {
-  //   Anim->SetAnimationAsset(AnimationAsset);
-  //   Anim->PlayAnim(true, 1.f, 0.f);
-  // }
+  USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
+  if (!SkeletalMeshComponent)
+    return;
+  SkeletalMeshComponent->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+  SkeletalMeshComponent->SetAnimInstanceClass(UAnimSingleNodeInstance::StaticClass());
+  auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  if (AnimationAsset && Anim)
+  {
+    Anim->SetAnimationAsset(AnimationAsset);
+    Anim->PlayAnim(true, 1.f, 0.f);
+  }
 }
 
 // Called every frame
@@ -67,17 +67,13 @@ void ADoodleCurveCrowd::Tick(float DeltaTime)
   USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
   if (!SkeletalMeshComponent)
     return;
-  // auto Anim = CastChecked<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
-  // Anim->SetBlendSpaceInput(FVector{GetVelocity().Size(), 0.0f, 0.0f});
-  // auto controller = Cast<AAIController>(GetController());
-  // UNavigationSystemV1 *NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-  // FVector Result;
-  // bool bSuccess = NavSys->K2_GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(), Result, 600);
-  // if (controller && bSuccess)
-  // {
-  //   FAIMoveRequest l_m_q{Result};
-  //   controller->MoveTo(l_m_q);
-  // }
+  auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  if (Anim)
+  {
+    auto Velocity = GetVelocity();
+    FVector Blend{Velocity.Size(), Anim->CalculateDirection(Velocity, GetBaseAimRotation()), 0.0f};
+    Anim->SetBlendSpaceInput(Blend);
+  }
 }
 // Called to bind functionality to input
 void ADoodleCurveCrowd::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)

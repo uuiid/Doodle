@@ -4,6 +4,8 @@
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Blueprint/AIAsyncTaskBlueprintProxy.h"
+#include "DoodleCurveCrowd.h"
+
 ADoodleAIController::ADoodleAIController(
     const FObjectInitializer &ObjectInitializer)
     : AAIController(
@@ -47,6 +49,11 @@ bool ADoodleAIController::GetRandomPointInRadius(const FVector &Origin, float Ra
 
     // Out
     OutResult = Result;
+    if (auto l_p = Cast<ADoodleCurveCrowd>(GetPawn()); l_p)
+    {
+        OutResult += l_p->Direction;
+    }
+
     return bSuccess;
 }
 void ADoodleAIController::OnMoveCompleted(FAIRequestID RequestID,

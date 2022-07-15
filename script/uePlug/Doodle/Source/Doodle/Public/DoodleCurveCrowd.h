@@ -31,9 +31,10 @@ public:
   // Called to bind functionality to input
   virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
 
- 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Anim")
   UAnimationAsset *AnimationAsset;
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Org")
+  FVector Direction;
 
 private:
   FVector p_Point;
