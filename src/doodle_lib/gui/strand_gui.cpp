@@ -44,7 +44,6 @@ strand_gui_executor_service::strand_impl::~strand_impl() = default;
 
 void strand_gui_executor_service::shutdown() {
   std::lock_guard l_g{mutex_};
-  stop_ = true;
   impl_list_->handlers.clear();
   impl_list_->handlers_next.clear();
 }
@@ -64,7 +63,6 @@ void strand_gui_executor_service::loop_one() {
 
 void strand_gui_executor_service::stop(
     const strand_gui_executor_service::implementation_type& in_impl) {
-  in_impl->service_->stop_ = true;
   in_impl->timer_.cancel();
 }
 void strand_gui_executor_service::render_begin() {

@@ -131,7 +131,6 @@ class strand_gui_executor_service
 
   // Mutex to protect access to the service-wide state
   std::recursive_mutex mutex_;
-  std::atomic_bool stop_;
   // The head of a linked list of all implementations.
   std::shared_ptr<strand_impl> impl_list_;
 };
