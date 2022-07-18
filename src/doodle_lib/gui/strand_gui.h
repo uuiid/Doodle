@@ -81,6 +81,7 @@ class strand_gui_executor_service
     std::lock_guard l_g{mutex_};
     if (!impl_list_) {
       impl_list_           = std::make_shared<strand_impl>(in_executor);
+      boost::asio::get_associated_executor(this->context());
       impl_list_->service_ = this;
       impl_list_->mutex_   = &this->mutex_;
     }

@@ -20,8 +20,7 @@ namespace doodle {
 namespace detail {
 strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_context& context)
     : gui_execution_context_service_base<strand_gui_executor_service>(context),
-      mutex_(),
-      stop_(false) {
+      mutex_() {
 }
 
 void strand_gui_executor_service::strand_impl::ready_start() {

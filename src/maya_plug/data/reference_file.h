@@ -27,7 +27,6 @@ class reference_file {
    */
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
-  bool has_ue4_group() const;
 
   /**
    * @brief 导出到abc文件中
@@ -103,7 +102,7 @@ class reference_file {
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return
    */
-  bool rename_material() const;
+  [[nodiscard]] bool rename_material() const;
   /**
    * @brief 导出到abc文件中
    * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
@@ -139,9 +138,15 @@ class reference_file {
    * @throw maya_error maya返回值非成功
    *
    */
-  bool add_collision() const;
+  [[nodiscard]] bool add_collision() const;
 
-  bool is_loaded() const;
+  [[nodiscard]] bool is_loaded() const;
+
+  /**
+   * @brief 寻找是否有ue4组(作为导出标志)
+   * @return
+   */
+  bool has_ue4_group() const;
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
