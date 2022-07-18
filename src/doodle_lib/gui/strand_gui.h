@@ -54,7 +54,7 @@ class strand_gui_executor_service
     friend class strand_gui_executor_service;
 
     // Mutex to protect access to internal data.
-    std::recursive_mutex* mutex_;
+    std::recursive_mutex* mutex_{};
 
     // 正在链上等待但在下次调度链之前不应运行的处理程序。只有在锁定互斥锁时，才能修改此队列
     //    boost::asio::op_queue<scheduler_operation> waiting_queue_;
