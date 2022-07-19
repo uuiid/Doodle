@@ -30,22 +30,22 @@ public:
         enum ELevelTick TickType,
         FActorComponentTickFunction *ThisTickFunction) override;
 
-    UPROPERTY(EditAnywhere, Category = "Doodle")
+    UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "骨骼名称")
     FName BoneName;
 
-    UPROPERTY(EditAnywhere, Category = "Doodle")
+    UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "残影距离")
     float Distance{30.0f};
 
-    UPROPERTY(EditAnywhere, Category = "Doodle")
+    UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "最大个数")
     int MaxCount{50};
 
-    UPROPERTY(EditAnywhere, Category = "Doodle")
+    UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "残影寿命")
     float Life{1.5f};
 
-    UPROPERTY(EditAnyWhere, BlueprintReadOnly, Interp, Category = "Doodle")
+    UPROPERTY(EditAnyWhere, BlueprintReadOnly, Interp, Category = "Doodle", DisplayName = "透明曲线")
     FRuntimeFloatCurve TransparentCurve;
 
-    UPROPERTY(EditAnywhere, Category = "Doodle")
+    UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "材质透明参数")
     FName TransparentName{TEXT("TransparentName")};
 
 private:

@@ -5,6 +5,7 @@ UDoodleGhostTrailComponent::UDoodleGhostTrailComponent(
     const FObjectInitializer &ObjectInitializer)
     : UActorComponent(ObjectInitializer)
 {
+    BoneName = TEXT("Spine1_M");
     PrimaryComponentTick.bCanEverTick = true;
     FRichCurve *RichCurve = TransparentCurve.GetRichCurve();
     RichCurve->AutoSetTangents();
