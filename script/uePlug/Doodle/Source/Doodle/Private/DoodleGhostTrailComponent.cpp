@@ -71,7 +71,7 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation,
         FVector Stepping = (PreviousLocation - InLocation) / LSize;
 
         for (int i = 0;
-             i <= LSize;
+             i < LSize;
              ++i)
         {
             UPoseableMeshComponent *LPoseableMeshComponent =
