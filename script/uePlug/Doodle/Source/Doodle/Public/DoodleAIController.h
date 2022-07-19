@@ -2,7 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-	#include "AIController.h"
+#include "AIController.h"
 #include "TimerManager.h" //定时器
 //这个必须最后导入
 #include "DoodleAIController.generated.h"
