@@ -48,6 +48,10 @@ public:
     UPROPERTY(EditAnywhere, Category = "Doodle", DisplayName = "材质透明参数")
     FName TransparentName{TEXT("TransparentName")};
 
+    /** If true, this component will be rendered in the CustomDepth pass (usually used for outlines) */
+    UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly, Category = Rendering, meta = (DisplayName = "Render CustomDepth Pass"))
+    uint8 bRenderCustomDepth : 1;
+
 private:
     FVector PreviousLocation;
     FTransform PreviousLocationTransform;

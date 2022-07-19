@@ -112,6 +112,7 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation,
                     LDoodleGhostTrailInfo.Ghost = LPoseableMeshComponent;
                     LDoodleGhostTrailInfo.Life = Life;
                     LDoodleGhostTrailInfo.Age = i * (DeltaTime / (float)LSize);
+                    LPoseableMeshComponent->bRenderCustomDepth = bRenderCustomDepth;
 
                     SetMaterial_Doodle(LPoseableMeshComponent);
 
