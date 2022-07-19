@@ -1,5 +1,6 @@
 #include "DoodleGhostTrailComponent.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 UDoodleGhostTrailComponent::UDoodleGhostTrailComponent(
     const FObjectInitializer &ObjectInitializer)
