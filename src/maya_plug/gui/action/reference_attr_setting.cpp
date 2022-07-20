@@ -87,45 +87,50 @@ bool reference_attr_setting::get_file_info() {
 }
 
 void reference_attr_setting::render() {
-  if (imgui::Button("解析引用")) {
-    get_file_info();
-  }
-  MStatus k_s{};
-  MSelectionList l_select{};
-  auto k_ref_view = g_reg()->view<reference_file>();
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-  for (auto k_e : k_ref_view) {
-    auto& k_ref = k_ref_view.get<reference_file>(k_e);
-    dear::TreeNode{k_ref.path.c_str()} && [&]() {
-      imgui::Checkbox("解算", &(k_ref.use_sim));
-      if (!k_ref.use_sim)
-        return;
-
-      if (imgui::Button("添加碰撞")) {
-        k_s = MGlobal::getActiveSelectionList(l_select);
-        DOODLE_CHICK(k_s);
-        k_ref.set_collision_model(l_select);
-      }
-      ImGui::SameLine();
-      if (imgui::Button("选择已添加")) {
-        MGlobal::setActiveSelectionList(k_ref.get_collision_model());
-      }
-      dear::Text("解算碰撞: "s);
-      for (const auto& k_f : k_ref.collision_model_show_str)
-        dear::Text(k_f);
-
-    };
-  }
-
-  if (imgui::Button("保存")) {
-    maya_file_io::chick_channel();
-    nlohmann::json k_j{};
-    for (auto& k : p_handle) {
-      entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
+  dear::Child{"ref_file", ImVec2{0, viewport->WorkSize.y / 2}} && [&]() {
+    if (imgui::Button("解析引用")) {
+      get_file_info();
     }
-    maya_file_io::replace_channel_date(k_j.dump());
-  }
+    MStatus k_s{};
+    MSelectionList l_select{};
+    auto k_ref_view = g_reg()->view<reference_file>();
 
+    for (auto k_e : k_ref_view) {
+      auto& k_ref = k_ref_view.get<reference_file>(k_e);
+      dear::TreeNode{k_ref.path.c_str()} && [&]() {
+        imgui::Checkbox("解算", &(k_ref.use_sim));
+        if (!k_ref.use_sim)
+          return;
+
+        if (imgui::Button("添加碰撞")) {
+          k_s = MGlobal::getActiveSelectionList(l_select);
+          DOODLE_CHICK(k_s);
+          k_ref.set_collision_model(l_select);
+        }
+        ImGui::SameLine();
+        if (imgui::Button("选择已添加")) {
+          MGlobal::setActiveSelectionList(k_ref.get_collision_model());
+        }
+        dear::Text("解算碰撞: "s);
+        for (const auto& k_f : k_ref.collision_model_show_str)
+          dear::Text(k_f);
+      };
+    }
+
+    if (imgui::Button("保存")) {
+      maya_file_io::chick_channel();
+      nlohmann::json k_j{};
+      for (auto& k : p_handle) {
+        entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
+      }
+      maya_file_io::replace_channel_date(k_j.dump());
+    }
+  };
+  dear::Child{"sim_attr"} && [&]() {
+
+  };
 }
 
 void reference_attr_setting::clear() {

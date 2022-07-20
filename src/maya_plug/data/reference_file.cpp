@@ -343,7 +343,7 @@ bool reference_file::set_namespace(const std::string &in_namespace) {
   chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
   file_namespace = in_namespace.substr(1);
   auto k_r       = find_ref_node();
-  k_r |= has_ue4_group();
+  k_r &= has_ue4_group();
   return k_r;
 }
 bool reference_file::find_ref_node() {
