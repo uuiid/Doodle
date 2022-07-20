@@ -147,6 +147,8 @@ void reference_attr_setting::render() {
   };
   dear::Child{"sim_attr"} && [&]() {
     if (p_i->p_current_select) {
+      dear::Text(p_i->p_current_select.get<reference_file>().path);
+
       if (p_i->p_current_select.any_of<sim_cover_attr>()) {
         if (ImGui::Checkbox(*p_i->simple_subsampling, &p_i->simple_subsampling)) {
           p_i->p_current_select.get<sim_cover_attr>()
@@ -172,7 +174,6 @@ void reference_attr_setting::render() {
           p_i->p_current_select.get<sim_cover_attr>()
               .cg_accuracy = p_i->cg_accuracy;
         }
-
       } else {
         if (ImGui::Button("添加配置")) {
           auto& l_value              = p_i->p_current_select.emplace<sim_cover_attr>();
@@ -186,7 +187,6 @@ void reference_attr_setting::render() {
       }
     }
   };
-
 }
 
 void reference_attr_setting::clear() {
