@@ -4,8 +4,7 @@
 
 #include "create_qcloth_assets.h"
 
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 MSyntax create_qcloth_assets_ns::syntax() {
   return MSyntax();
 }
@@ -22,5 +21,4 @@ bool create_qcloth_assets::isUndoable() const {
   return false;
 }
 
-}  // namespace maya_plug
 }  // namespace doodle

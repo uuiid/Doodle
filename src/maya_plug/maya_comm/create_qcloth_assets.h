@@ -4,8 +4,8 @@
 
 #pragma once
 #include <maya_plug_fwd.h>
-namespace doodle {
-namespace maya_plug {
+
+namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
 constexpr char name[] = "doodle_create_qcloth_assets";
 MSyntax syntax();
@@ -20,5 +20,4 @@ class create_qcloth_assets : public TemplateAction<create_qcloth_assets,
   [[maybe_unused]] bool isUndoable() const override;
 };
 
-}  // namespace maya_plug
 }  // namespace doodle
