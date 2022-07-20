@@ -168,7 +168,13 @@ void reference_attr_setting::render() {
 
       } else {
         if (ImGui::Button("添加配置")) {
-          p_i->p_current_select.emplace<sim_cover_attr>();
+          auto& l_value              = p_i->p_current_select.emplace<sim_cover_attr>();
+          l_value.simple_subsampling = p_i->simple_subsampling;
+          l_value.frame_samples      = p_i->frame_samples;
+          l_value.time_scale         = p_i->time_scale;
+          l_value.length_scale       = p_i->length_scale;
+          l_value.max_cg_iteration   = p_i->max_cg_iteration;
+          l_value.cg_accuracy        = p_i->cg_accuracy;
         }
       }
     }
@@ -177,7 +183,7 @@ void reference_attr_setting::render() {
     maya_file_io::chick_channel();
     nlohmann::json k_j{};
     for (auto& k : p_i->p_handles) {
-      entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
+      entt_tool::save_comm<reference_file, sim_cover_attr>(k, k_j[k.get<reference_file>().path]);
     }
     maya_file_io::replace_channel_date(k_j.dump());
   }
