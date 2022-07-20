@@ -698,10 +698,14 @@ bakeResults
 }
 MSelectionList reference_file::get_all_object() const {
   MStatus k_s{};
+  MSelectionList l_select;
   auto l_r =
       MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
-  return l_r;
+  for (std::uint32_t i = 0u; i < l_r.length(); ++i) {
+    l_select.add(l_r[i], true);
+  }
+  return l_select;
 }
 
 }  // namespace doodle::maya_plug
