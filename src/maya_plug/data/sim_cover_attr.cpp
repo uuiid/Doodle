@@ -5,7 +5,11 @@
 
 #include "sim_cover_attr.h"
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/data/maya_tool.h>
+
 namespace doodle::maya_plug {
 void to_json(nlohmann::json& j, const sim_cover_attr& p) {
   j["simple_subsampling"] = p.simple_subsampling;
@@ -29,4 +33,18 @@ void from_json(const nlohmann::json& j, sim_cover_attr& p) {
   if (j.contains("cg_accuracy"))
     j.at("cg_accuracy").get_to(p.cg_accuracy);
 }
-}  // namespace doodle
+void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
+  if (in_handle && in_handle.any_of<sim_cover_attr, reference_file>()) {
+    auto& self     = in_handle.get<sim_cover_attr>();
+    auto l_ql_core = qcloth_shape::get_ql_solver(
+        in_handle.get<reference_file>().get_all_object());
+    set_attribute(l_ql_core, "simpleSubsampling", self.simple_subsampling);
+    set_attribute(l_ql_core, "frameSamples", self.frame_samples);
+    set_attribute(l_ql_core, "timeScale", self.time_scale);
+    set_attribute(l_ql_core, "lengthScale", self.length_scale);
+    set_attribute(l_ql_core, "maxCGIteration", self.max_cg_iteration);
+    set_attribute(l_ql_core, "cgAccuracy", self.cg_accuracy);
+  }
+}
+
+}  // namespace doodle::maya_plug

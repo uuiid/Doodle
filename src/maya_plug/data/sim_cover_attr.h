@@ -22,8 +22,10 @@ class sim_cover_attr {
   std::int32_t max_cg_iteration{1000};
   std::int32_t cg_accuracy{9};
 
+  static void cover_qcloth_attr(const entt::handle & in_entity);
+
  private:
   friend void to_json(nlohmann::json& j, const sim_cover_attr& p);
   friend void from_json(const nlohmann::json& j, sim_cover_attr& p);
 };
-}  // namespace doodle
+}  // namespace doodle::maya_plug
