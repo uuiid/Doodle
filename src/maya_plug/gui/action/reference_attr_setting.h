@@ -36,8 +36,9 @@ using data_ptr = std::shared_ptr<data>;
  */
 class reference_attr_setting
     : public gui::window_panel {
-  std::vector<entt::handle> p_handle;
-  entt::handle p_current_select;
+  class impl;
+  std::unique_ptr<impl> p_i;
+
   bool get_file_info();
   void clear();
 
