@@ -144,6 +144,8 @@ class reference_file {
    */
   bool has_ue4_group() const;
 
+  MSelectionList get_all_object() const;
+
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
     j["path"]            = p.path;

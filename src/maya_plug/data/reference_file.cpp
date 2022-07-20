@@ -696,5 +696,8 @@ bakeResults
   DOODLE_CHICK(k_s);
   return k_file_path;
 }
+MSelectionList reference_file::get_all_object() const {
+  return MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+}
 
 }  // namespace doodle::maya_plug
