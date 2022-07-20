@@ -34,16 +34,24 @@ void from_json(const nlohmann::json& j, sim_cover_attr& p) {
     j.at("cg_accuracy").get_to(p.cg_accuracy);
 }
 void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
+  DOODLE_LOG_INFO("检查句柄属性")
   if (in_handle && in_handle.any_of<sim_cover_attr, reference_file>()) {
+    DOODLE_LOG_INFO("开始覆盖 {} 的解算配置", in_handle.get<reference_file>().path);
     auto& self     = in_handle.get<sim_cover_attr>();
     auto l_ql_core = qcloth_shape::get_ql_solver(
         in_handle.get<reference_file>().get_all_object());
     set_attribute(l_ql_core, "simpleSubsampling", self.simple_subsampling);
+    DOODLE_LOG_INFO("开始覆盖 simpleSubsampling 值为 {}", self.simpleSubsampling);
     set_attribute(l_ql_core, "frameSamples", self.frame_samples);
+    DOODLE_LOG_INFO("开始覆盖 frameSamples 值为 {}", self.frameSamples);
     set_attribute(l_ql_core, "timeScale", self.time_scale);
+    DOODLE_LOG_INFO("开始覆盖 timeScale 值为 {}", self.timeScale);
     set_attribute(l_ql_core, "lengthScale", self.length_scale);
+    DOODLE_LOG_INFO("开始覆盖 lengthScale 值为 {}", self.lengthScale);
     set_attribute(l_ql_core, "maxCGIteration", self.max_cg_iteration);
+    DOODLE_LOG_INFO("开始覆盖 maxCGIteration 值为 {}", self.maxCGIteration);
     set_attribute(l_ql_core, "cgAccuracy", self.cg_accuracy);
+    DOODLE_LOG_INFO("开始覆盖 cgAccuracy 值为 {}", self.cgAccuracy);
   }
 }
 
