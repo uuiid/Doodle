@@ -33,9 +33,6 @@ class TemplateAction : public MPxCommand {
  public:
   TemplateAction() = default;
 
-  virtual MStatus doIt(const MArgList&) override {
-    return MStatus::kFailure;
-  }
   static void* creator() {
     return new ActionClass;
   }

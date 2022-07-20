@@ -136,8 +136,5 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 MStatus afterimage_comm::redoIt() {
   return MStatus::kSuccess;
 }
-bool afterimage_comm::isUndoable() const {
-  return false;
-}
 
 }  // namespace doodle::maya_plug

@@ -21,9 +21,7 @@ class afterimage_comm : public TemplateAction<
 
   MStatus doIt(const MArgList&) override;
   [[maybe_unused]] MStatus undoIt() override;
-  MStatus redoIt() override;
-  [[nodiscard]] bool isUndoable() const override;
-
+  [[maybe_unused]] MStatus redoIt() override;
 };
 
 }  // namespace doodle::maya_plug
