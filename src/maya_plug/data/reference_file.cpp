@@ -402,8 +402,7 @@ void reference_file::qlUpdateInitialPose() const {
     DOODLE_CHICK(
         MGlobal::executeCommand(
             d_str{
-                "qlUpdateInitialPose;"},
-            true, true));
+                "qlUpdateInitialPose;"}));
   }
 }
 entt::handle reference_file::export_file(const reference_file::export_arg &in_arg) {
@@ -590,14 +589,13 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
   /// \brief 导出abc命令
   k_s = MGlobal::executeCommand(d_str{
-                                    fmt::format(R"(
+      fmt::format(R"(
 AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
 )",
-                                                in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
-                                                in_end.as(MTime::uiUnit()),                   /// \brief 结束时间
-                                                d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
-                                                k_path.generic_string())},
-                                true);  /// \brief 导出文件路径，包含文件名和文件路径
+                  in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
+                  in_end.as(MTime::uiUnit()),                   /// \brief 结束时间
+                  d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
+                  k_path.generic_string())});                   /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_CHICK(k_s);
   return k_path;
 }

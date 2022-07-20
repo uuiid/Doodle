@@ -15,6 +15,7 @@ MStatus create_qcloth_assets::undoIt() {
   return MStatus();
 }
 MStatus create_qcloth_assets::redoIt() {
+  MGlobal::executeCommand();
   return MStatus();
 }
 bool create_qcloth_assets::isUndoable() const {

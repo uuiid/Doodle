@@ -288,7 +288,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
 
     DOODLE_LOG_INFO("运行 {}", l_comm);
     MStringArray l_constraints{};
-    l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints, false, true);
+    l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints);
     DOODLE_CHICK(l_s);
     auto l_old_path{p_path};
 

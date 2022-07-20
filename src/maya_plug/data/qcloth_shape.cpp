@@ -233,7 +233,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   l_s = MGlobal::executeCommand(d_str{
                                     fmt::format(R"(blendShape -automatic {} {};)",
                                                 l_sim_name, l_aim_name)},
-                                l_blend, true);
+                                l_blend);
   DOODLE_CHICK(l_s);
   //      /// 开始设置权重
   MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
