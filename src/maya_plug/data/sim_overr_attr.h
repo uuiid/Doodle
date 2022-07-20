@@ -11,39 +11,23 @@ namespace maya_plug {
 class sim_overr_attr {
  private:
  public:
-  sim_overr_attr();
-  //  /**
-  //   * @brief 调整参数
-  //   */
-  //  bool use_overr_attr;
-  /**
-   * @brief 精密解算
-   */
-  bool simple_subsampling;
-  /**
-   * @brief 帧样本 1.f <-> 50.f
-   */
-  std::float_t frame_samples;
-  /**
-   * @brief 时间尺度 0.1f <-> 10.f
-   */
-  std::float_t time_scale;
-  /**
-   * @brief 长度尺度 0.1f <-> 10.f
-   */
-  std::float_t length_scale;
-  /**
-   * @brief 尖锐碰撞 true
-   */
-  bool sharp_feature{};
+  sim_overr_attr() = default;
+
+  bool simple_subsampling{true};
+
+  std::int32_t frame_samples{6};
+  std::float_t time_scale{1.0f};
+  std::float_t length_scale{1.0f};
+  std::int32_t max_cg_iteration{1000};
+  std::int32_t cg_accuracy{9};
 
  private:
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(sim_overr_attr,
-                                 simple_subsampling,
                                  frame_samples,
                                  time_scale,
                                  length_scale,
-                                 sharp_feature);
+                                 max_cg_iteration,
+                                 cg_accuracy);
   //  friend void to_json(nlohmann::json& j, const sim_overr_attr& p) {
   //    j["simple_subsampling"] = p.simple_subsampling;
   //    j["frame_samples"]      = p.frame_samples;

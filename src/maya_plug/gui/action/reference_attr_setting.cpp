@@ -126,7 +126,6 @@ void reference_attr_setting::render() {
     maya_file_io::replace_channel_date(k_j.dump());
   }
 
-  return;
 }
 
 void reference_attr_setting::clear() {
