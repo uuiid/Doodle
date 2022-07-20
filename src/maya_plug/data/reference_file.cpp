@@ -697,7 +697,11 @@ bakeResults
   return k_file_path;
 }
 MSelectionList reference_file::get_all_object() const {
-  return MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  MStatus k_s{};
+  auto l_r =
+      MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+  DOODLE_CHICK(k_s);
+  return l_r;
 }
 
 }  // namespace doodle::maya_plug
