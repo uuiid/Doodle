@@ -101,15 +101,6 @@ void reference_attr_setting::render() {
       if (!k_ref.use_sim)
         return;
 
-      if (imgui::Checkbox("高精度配置", &(k_ref.high_speed_sim))) {
-        auto k_h = make_handle(k_e);
-        if (!k_ref.high_speed_sim) {
-          g_main_loop().attach([=](auto, auto, auto s, auto f) {
-            k_h.erase<sim_overr_attr>();
-            s();
-          });
-        }
-      }
       if (imgui::Button("添加碰撞")) {
         k_s = MGlobal::getActiveSelectionList(l_select);
         DOODLE_CHICK(k_s);
@@ -123,14 +114,6 @@ void reference_attr_setting::render() {
       for (const auto& k_f : k_ref.collision_model_show_str)
         dear::Text(k_f);
 
-      auto& in_attr = make_handle(k_e).get_or_emplace<maya_plug::sim_overr_attr>();
-      dear::Checkbox("精密解算", &in_attr.simple_subsampling);
-      if (in_attr.simple_subsampling) {
-        dear::SliderFloat("帧样本", &in_attr.frame_samples, 0.1f, 50.f);
-        dear::SliderFloat("时间尺度", &in_attr.time_scale, 0.1f, 10.f);
-        dear::SliderFloat("长度尺度", &in_attr.length_scale, 0.1f, 10.f);
-        dear::Checkbox("尖锐碰撞", &in_attr.sharp_feature);
-      }
     };
   }
 

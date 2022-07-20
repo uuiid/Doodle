@@ -61,10 +61,6 @@ class reference_file {
    * @brief 引用文件是否解算
    */
   bool use_sim;
-  /**
-   * @brief 引用文件是否设置为高速运动
-   */
-  bool high_speed_sim;
   std::vector<std::string> collision_model;
   std::vector<std::string> collision_model_show_str;
 
@@ -152,14 +148,12 @@ class reference_file {
   friend void to_json(nlohmann::json &j, const reference_file &p) {
     j["path"]            = p.path;
     j["use_sim"]         = p.use_sim;
-    j["high_speed_sim"]  = p.high_speed_sim;
     j["collision_model"] = p.collision_model;
     j["file_namespace"]  = p.file_namespace;
   }
   friend void from_json(const nlohmann::json &j, reference_file &p) {
     j.at("path").get_to(p.path);
     j.at("use_sim").get_to(p.use_sim);
-    j.at("high_speed_sim").get_to(p.high_speed_sim);
     j.at("collision_model").get_to(p.collision_model);
     if (j.contains("file_namespace"))
       j.at("file_namespace").get_to(p.file_namespace);

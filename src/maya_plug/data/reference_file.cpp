@@ -35,7 +35,6 @@ namespace doodle::maya_plug {
 reference_file::reference_file()
     : path(),
       use_sim(false),
-      high_speed_sim(false),
       collision_model(),
       p_m_object(),
       file_namespace(){
