@@ -81,6 +81,8 @@ set(doodle_maya_plug_cpp
         data/dem_bones_ex.cpp
         gui/action/dem_cloth_to_fbx.h
         gui/action/dem_cloth_to_fbx.cpp
+        maya_comm/create_qcloth_assets.h
+        maya_comm/create_qcloth_assets.cpp
         )
 
 if (DEFINED Maya_Version)
@@ -146,9 +148,6 @@ if (DEFINED Maya_Version)
         install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
                 DESTINATION maya/scripts/scripts/
                 COMPONENT maya_plug_com)
-
-
-
 
 
     endif ()
