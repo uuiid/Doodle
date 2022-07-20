@@ -670,6 +670,8 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
       break;
     }
   }
+  chick_true<maya_error>(!l_object.isNull(), DOODLE_LOC, "没有找到qlSolver解算核心");
+
   return l_object;
 }
 MObject qcloth_shape::get_ql_solver() {
