@@ -20,7 +20,6 @@ target_sources(
         user.h
         redirection_path_info.h
         move_create.h
-        qcloth_sim_attr.h
 
         PRIVATE
         assets.cpp
@@ -41,6 +40,5 @@ target_sources(
         user.cpp
         redirection_path_info.cpp
         move_create.cpp
-        qcloth_sim_attr.cpp
 
 )
