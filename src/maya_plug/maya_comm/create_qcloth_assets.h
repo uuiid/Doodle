@@ -17,7 +17,7 @@ class create_qcloth_assets : public TemplateAction<create_qcloth_assets,
   [[maybe_unused]] MStatus doIt(const MArgList& in_arg) override;
   [[maybe_unused]] MStatus undoIt() override;
   [[maybe_unused]] MStatus redoIt() override;
-  [[maybe_unused]] bool isUndoable() const override;
+  [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 };
 
 }  // namespace doodle
