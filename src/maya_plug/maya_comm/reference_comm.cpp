@@ -28,6 +28,7 @@
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/data/sim_cover_attr.h>
 
 #include <magic_enum.hpp>
 
@@ -123,7 +124,7 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
     auto l_p = k_ref.path;
     if (k_j.contains(l_p)) {
       DOODLE_LOG_INFO("加载元数据 {}", l_p);
-      entt_tool::load_comm<reference_file>(l_i, k_j.at(l_p));
+      entt_tool::load_comm<reference_file, sim_cover_attr>(l_i, k_j.at(l_p));
     } else {
       l_i.get<reference_file>().use_sim = true;
     }
@@ -172,6 +173,9 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
     k_ref.add_collision();
     /// \brief 更新ql初始化状态
     k_ref.qlUpdateInitialPose();
+    /// \brief 更新元配置数据
+    DOODLE_LOG_INFO("开始测试 {} 覆盖属性", k_ref.path);
+    sim_cover_attr::cover_qcloth_attr(make_handle(k_e));
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
