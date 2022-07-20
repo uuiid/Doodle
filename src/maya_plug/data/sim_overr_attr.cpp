@@ -6,8 +6,7 @@
 #include "sim_overr_attr.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 void to_json(nlohmann::json& j, const sim_overr_attr& p) {
   j["simple_subsampling"] = p.simple_subsampling;
   j["frame_samples"]      = p.frame_samples;
@@ -30,6 +29,4 @@ void from_json(const nlohmann::json& j, sim_overr_attr& p) {
   if (j.contains("cg_accuracy"))
     j.at("cg_accuracy").get_to(p.cg_accuracy);
 }
-}  // namespace maya_plug
-
 }  // namespace doodle
