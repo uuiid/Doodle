@@ -102,7 +102,14 @@ bool reference_attr_setting::get_file_info() {
 
 void reference_attr_setting::render() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-
+  if (imgui::Button("保存")) {
+    maya_file_io::chick_channel();
+    nlohmann::json k_j{};
+    for (auto& k : p_i->p_handles) {
+      entt_tool::save_comm<reference_file, sim_cover_attr>(k, k_j[k.get<reference_file>().path]);
+    }
+    maya_file_io::replace_channel_date(k_j.dump());
+  }
   dear::Child{"ref_file", ImVec2{0, viewport->WorkSize.y / 2}} && [&]() {
     if (imgui::Button("解析引用")) {
       get_file_info();
@@ -179,14 +186,7 @@ void reference_attr_setting::render() {
       }
     }
   };
-  if (imgui::Button("保存")) {
-    maya_file_io::chick_channel();
-    nlohmann::json k_j{};
-    for (auto& k : p_i->p_handles) {
-      entt_tool::save_comm<reference_file, sim_cover_attr>(k, k_j[k.get<reference_file>().path]);
-    }
-    maya_file_io::replace_channel_date(k_j.dump());
-  }
+
 }
 
 void reference_attr_setting::clear() {
