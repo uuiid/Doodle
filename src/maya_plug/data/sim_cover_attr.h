@@ -6,13 +6,13 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::maya_plug {
-class sim_overr_attr;
-void to_json(nlohmann::json& j, const sim_overr_attr& p);
-void from_json(const nlohmann::json& j, sim_overr_attr& p);
-class sim_overr_attr {
+class sim_cover_attr;
+void to_json(nlohmann::json& j, const sim_cover_attr& p);
+void from_json(const nlohmann::json& j, sim_cover_attr& p);
+class sim_cover_attr {
  private:
  public:
-  sim_overr_attr() = default;
+  sim_cover_attr() = default;
 
   bool simple_subsampling{true};
 
@@ -23,7 +23,7 @@ class sim_overr_attr {
   std::int32_t cg_accuracy{9};
 
  private:
-  friend void to_json(nlohmann::json& j, const sim_overr_attr& p);
-  friend void from_json(const nlohmann::json& j, sim_overr_attr& p);
+  friend void to_json(nlohmann::json& j, const sim_cover_attr& p);
+  friend void from_json(const nlohmann::json& j, sim_cover_attr& p);
 };
 }  // namespace doodle

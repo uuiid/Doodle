@@ -48,8 +48,8 @@ set(doodle_maya_plug_cpp
         fmt/fmt_warp.h
         maya_comm/afterimage_comm.h
         maya_comm/afterimage_comm.cpp
-        data/sim_overr_attr.h
-        data/sim_overr_attr.cpp
+        data/sim_cover_attr.h
+        data/sim_cover_attr.cpp
         data/maya_clear_scenes.cpp
         data/maya_clear_scenes.h
         maya_comm/clear_scene_comm.cpp

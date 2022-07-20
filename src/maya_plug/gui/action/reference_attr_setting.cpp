@@ -23,7 +23,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/maya_plug_fwd.h>
-#include <maya_plug/data/sim_overr_attr.h>
+#include <maya_plug/data/sim_cover_attr.h>
 
 namespace doodle {
 namespace maya_plug {
@@ -99,7 +99,12 @@ void reference_attr_setting::render() {
 
     for (auto k_e : k_ref_view) {
       auto& k_ref = k_ref_view.get<reference_file>(k_e);
-      dear::TreeNode{k_ref.path.c_str()} && [&]() {
+
+      dear::TreeNode l_node{k_ref.path.c_str()};
+      if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+        p_current_select = make_handle(k_e);
+      }
+      l_node&& [&]() {
         imgui::Checkbox("解算", &(k_ref.use_sim));
         if (!k_ref.use_sim)
           return;
@@ -118,19 +123,25 @@ void reference_attr_setting::render() {
           dear::Text(k_f);
       };
     }
-
-    if (imgui::Button("保存")) {
-      maya_file_io::chick_channel();
-      nlohmann::json k_j{};
-      for (auto& k : p_handle) {
-        entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
-      }
-      maya_file_io::replace_channel_date(k_j.dump());
-    }
   };
   dear::Child{"sim_attr"} && [&]() {
-
+    if (p_current_select) {
+      if (p_current_select.any_of<sim_cover_attr>()) {
+      } else {
+        if (ImGui::Button("添加配置")) {
+          p_current_select.emplace<sim_cover_attr>();
+        }
+      }
+    }
   };
+  if (imgui::Button("保存")) {
+    maya_file_io::chick_channel();
+    nlohmann::json k_j{};
+    for (auto& k : p_handle) {
+      entt_tool::save_comm<reference_file>(k, k_j[k.get<reference_file>().path]);
+    }
+    maya_file_io::replace_channel_date(k_j.dump());
+  }
 }
 
 void reference_attr_setting::clear() {

@@ -3,11 +3,11 @@
 // Created by TD on 2022/1/7.
 //
 
-#include "sim_overr_attr.h"
+#include "sim_cover_attr.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 namespace doodle::maya_plug {
-void to_json(nlohmann::json& j, const sim_overr_attr& p) {
+void to_json(nlohmann::json& j, const sim_cover_attr& p) {
   j["simple_subsampling"] = p.simple_subsampling;
   j["frame_samples"]      = p.frame_samples;
   j["time_scale"]         = p.time_scale;
@@ -15,7 +15,7 @@ void to_json(nlohmann::json& j, const sim_overr_attr& p) {
   j["max_cg_iteration"]   = p.max_cg_iteration;
   j["cg_accuracy"]        = p.cg_accuracy;
 }
-void from_json(const nlohmann::json& j, sim_overr_attr& p) {
+void from_json(const nlohmann::json& j, sim_cover_attr& p) {
   if (j.contains("simple_subsampling"))
     j.at("simple_subsampling").get_to(p.simple_subsampling);
   if (j.contains("frame_samples"))
