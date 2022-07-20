@@ -12,6 +12,7 @@ class maya_clear_scenes {
   bool unlock_normal();
   bool duplicate_name(MSelectionList& in_select);
   bool multilateral_surface(MSelectionList& in_select);
+  std::tuple<bool, MSelectionList> multilateral_surface_by_select(const MSelectionList& in_select);
   bool uv_set(MSelectionList& in_select);
   /**
    * @brief 开始帧1001

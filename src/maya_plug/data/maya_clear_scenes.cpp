@@ -13,6 +13,7 @@
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MSelectionList.h>
+#include <maya/MItSelectionList.h>
 
 namespace doodle::maya_plug {
 
@@ -100,7 +101,6 @@ bool maya_clear_scenes::multilateral_surface(MSelectionList& in_select) {
     for (; !k_iter_poly.isDone(); k_iter_poly.next()) {
       k_face_num = k_iter_poly.polygonVertexCount(&k_s);
       DOODLE_CHICK(k_s);
-      // std::cout << k_iter_poly.getPoints() << std::endl;
       if (k_face_num > 4) {
         k_s = in_select.add(k_dag_path, k_iter_poly.currentItem());
         DOODLE_CHICK(k_s);
@@ -251,6 +251,39 @@ if 'leukocyte' in globals():
   }
 
   return false;
+}
+std::tuple<bool, MSelectionList> maya_clear_scenes::multilateral_surface_by_select(const MSelectionList& in_select) {
+  MStatus k_s{};
+  bool l_r{false};
+
+  MSelectionList l_r_select{};
+  MItSelectionList l_it_selection_list{in_select, MFn::kMesh, &k_s};
+  DOODLE_CHICK(k_s);
+
+  for (; !l_it_selection_list.isDone(); l_it_selection_list.next()) {
+    MDagPath k_dag_path{};
+
+    k_s = l_it_selection_list.getDagPath(k_dag_path);
+    DOODLE_CHICK(k_s);
+
+    MFnDagNode k_dag_node{k_dag_path, &k_s};
+    DOODLE_CHICK(k_s);
+
+    MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
+    DOODLE_CHICK(k_s);
+    std::uint32_t k_face_num{};
+    for (; !k_iter_poly.isDone(); k_iter_poly.next()) {
+      k_face_num = k_iter_poly.polygonVertexCount(&k_s);
+      DOODLE_CHICK(k_s);
+      if (k_face_num > 4) {
+        k_s = l_r_select.add(k_dag_path, k_iter_poly.currentItem());
+        DOODLE_CHICK(k_s);
+        l_r = true;
+      }
+    }
+  }
+
+  return std::make_tuple(l_r, l_r_select);
 }
 
 }  // namespace doodle::maya_plug
