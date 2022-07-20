@@ -17,6 +17,7 @@
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MAnimControl.h>
+#include <maya/MItSelectionList.h>
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -278,25 +279,6 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
 }
 
 /**
- * @brief 在整个文件中全局搜素 解算核心节点
- * @return 解算核心
- */
-MObject get_ql_solver() {
-  MStatus l_status{};
-  MObject l_object{};
-  for (MItDependencyNodes i{
-           MFn::kPluginLocatorNode, &l_status};
-       !i.isDone(); i.next()) {
-    auto k_obj = i.thisNode(&l_status);
-    MFnDependencyNode k_dep{k_obj};
-    if (k_dep.typeName(&l_status) == "qlSolverShape") {
-      l_object = k_obj;
-    }
-  }
-  chick_true<maya_error>(!l_object.isNull(), DOODLE_LOC, "没有找到qlSolver解算核心");
-  return l_object;
-}
-/**
  * @brief 创建碰撞体
  * @param in_collider 传入要创建碰撞体的 mobj
  * @return 碰撞体和碰撞偏移物体
@@ -304,7 +286,7 @@ MObject get_ql_solver() {
 std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
   MStatus l_status{};
   /// 创建碰撞体
-  auto l_ql_solver = get_ql_solver();
+  auto l_ql_solver = qcloth_shape::get_ql_solver();
   MSelectionList l_list{};
   l_status = l_list.add(l_ql_solver);
   DOODLE_CHICK(l_status);
@@ -673,6 +655,37 @@ bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
   }
 
   return false;
+}
+MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
+  MStatus l_status{};
+  MObject l_object{};
+
+  for (MItSelectionList i{in_selection_list, MFn::kPluginLocatorNode, &l_status};
+       !i.isDone(); i.next()) {
+    DOODLE_CHICK(l_status);
+    l_status = i.getDependNode(l_object);
+    DOODLE_CHICK(l_status);
+    MFnDependencyNode k_dep{l_object};
+    if (k_dep.typeName(&l_status) == "qlSolverShape") {
+      break;
+    }
+  }
+  return l_object;
+}
+MObject qcloth_shape::get_ql_solver() {
+  MStatus l_status{};
+  MObject l_object{};
+  for (MItDependencyNodes i{
+           MFn::kPluginLocatorNode, &l_status};
+       !i.isDone(); i.next()) {
+    auto k_obj = i.thisNode(&l_status);
+    MFnDependencyNode k_dep{k_obj};
+    if (k_dep.typeName(&l_status) == "qlSolverShape") {
+      l_object = k_obj;
+    }
+  }
+  chick_true<maya_error>(!l_object.isNull(), DOODLE_LOC, "没有找到qlSolver解算核心");
+  return l_object;
 }
 
 }  // namespace doodle::maya_plug

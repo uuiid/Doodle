@@ -115,6 +115,9 @@ class qcloth_shape {
    */
   static std::vector<entt::handle> create(
       const entt::handle& in_ref_file);
+
+  static MObject get_ql_solver(const MSelectionList& in_selection_list);
+  static MObject get_ql_solver();
 };
 
 }  // namespace doodle::maya_plug
