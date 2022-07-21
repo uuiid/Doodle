@@ -22,6 +22,7 @@
 #include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
+#include <maya_plug/maya_comm/create_qcloth_assets.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -173,7 +174,7 @@ MStatus initializePlugin(MObject obj) {
       doodle::maya_plug::doodle_info_node::doodle_id,
       &doodle::maya_plug::doodle_info_node::creator,
       &doodle::maya_plug::doodle_info_node::initialize,
-      MPxNode::kLocatorNode,
+      doodle::maya_plug::doodle_info_node::node_type,
       &doodle::maya_plug::doodle_info_node::drawDbClassification);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   /// 注册自定义渲染覆盖显示hud
