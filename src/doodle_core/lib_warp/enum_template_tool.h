@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <type_traits>
 #include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
 template <typename Enum_T, typename Num_T>
