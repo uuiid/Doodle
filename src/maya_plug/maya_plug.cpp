@@ -231,6 +231,10 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::dem_bones_add_weight>(k_plugin);
   CHECK_MSTATUS(status);
 
+  /// 添加创建布料命令
+  status = maya_reg->register_command<::doodle::maya_plug::create_qcloth_assets>(k_plugin);
+  CHECK_MSTATUS(status);
+
   /// 等所有命令完成后加载工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
