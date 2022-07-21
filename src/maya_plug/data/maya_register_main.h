@@ -92,6 +92,7 @@ class maya_register {
     while (!maya_comm_call_back.empty()) {
       l_s = maya_comm_call_back.top()(in);
       CHECK_MSTATUS(l_s);
+      maya_comm_call_back.pop();
     }
     return l_s;
   }
