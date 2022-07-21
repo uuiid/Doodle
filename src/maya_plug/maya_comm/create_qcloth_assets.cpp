@@ -72,6 +72,7 @@ MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
   return redoIt();
 }
 MStatus create_qcloth_assets::undoIt() {
+  DOODLE_LOG_WARN("create_qcloth_assets::undoIt()")
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {

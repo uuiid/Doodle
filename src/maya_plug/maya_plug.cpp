@@ -267,7 +267,8 @@ MStatus uninitializePlugin(MObject obj) {
     CHECK_MSTATUS(status);
   }
   // 这里要停止app
-  p_doodle_app->stop();
+  status = p_doodle_app->stop();
+  CHECK_MSTATUS(status);
   /// 先删除工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
@@ -288,7 +289,7 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       MStringArray menuItems{};
       menuItems.append(doodle_windows.data());
       status = k_plugin.removeMenuItem(menuItems);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
+      CHECK_MSTATUS(status);
       break;
     }
 
@@ -298,6 +299,6 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
       break;
   }
   p_doodle_app.reset();
-
+  maya_reg.reset();
   return status;
 }
