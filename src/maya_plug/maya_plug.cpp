@@ -30,6 +30,7 @@
 #include <maya_plug/logger/maya_logger_info.h>
 
 #include <doodle_lib/gui/main_proc_handle.h>
+#include <maya_plug/data/maya_register_main.h>
 
 #include <QtCore/QtCore>
 #include <QtWidgets/QApplication>
@@ -48,6 +49,7 @@ std::stack<MCallbackId> maya_call_back_id{};
 
 using namespace doodle;
 std::shared_ptr<app_base> p_doodle_app = nullptr;
+std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 // struct enum_windows_struct {
 //   win::wnd_handle handle_;
@@ -85,6 +87,7 @@ MStatus initializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
+  maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
 
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
@@ -93,8 +96,8 @@ MStatus initializePlugin(MObject obj) {
       app::Get().close_windows();
 
       // 注册命令
-      status = ::doodle::maya_plug::open_doodle_main::registerCommand(k_plugin);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
+      status = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
+      CHECK_MSTATUS(status);
 
       // 添加菜单项
       k_plugin.addMenuItem(doodle_windows.data(),
@@ -107,7 +110,7 @@ MStatus initializePlugin(MObject obj) {
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       /// \brief  自定义hud回调
-      maya_call_back_id.emplace(MSceneMessage::addCallback(
+      maya_reg->register_callback(MSceneMessage::addCallback(
           MSceneMessage::Message::kAfterOpen,
           [](void* clientData) {
             ::doodle::maya_plug::create_hud_node k_c{};
@@ -115,19 +118,18 @@ MStatus initializePlugin(MObject obj) {
           },
           nullptr,
           &status));
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-      maya_call_back_id.emplace(
-          MSceneMessage::addCallback(
-              MSceneMessage::Message::kAfterNew,
-              [](void* clientData) {
-                ::doodle::maya_plug::create_hud_node k_c{};
-                k_c();
-              },
-              nullptr,
-              &status));
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-      if (doodle::core_set::getSet().maya_replace_save_dialog)
-        maya_call_back_id.emplace(
+      CHECK_MSTATUS(status);
+      maya_reg->register_callback(MSceneMessage::addCallback(
+          MSceneMessage::Message::kAfterNew,
+          [](void* clientData) {
+            ::doodle::maya_plug::create_hud_node k_c{};
+            k_c();
+          },
+          nullptr,
+          &status));
+      CHECK_MSTATUS(status);
+      if (doodle::core_set::getSet().maya_replace_save_dialog) {
+        maya_reg->register_callback(
             MSceneMessage::addCheckCallback(
                 MSceneMessage::Message::kBeforeSaveCheck,
                 [](bool* retCode, void* clientData) {
@@ -135,8 +137,8 @@ MStatus initializePlugin(MObject obj) {
                 },
                 nullptr,
                 &status));
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-
+        CHECK_MSTATUS(status);
+      }
     } break;
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
@@ -144,7 +146,7 @@ MStatus initializePlugin(MObject obj) {
       p_doodle_app = std::make_shared<doodle::app_command_base>();
     } break;
   }
-  clear_callback_id = MSceneMessage::addCallback(
+  maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
         if (MGlobal::mayaState() == MGlobal::kInteractive)
@@ -152,88 +154,82 @@ MStatus initializePlugin(MObject obj) {
         p_doodle_app.reset();
       },
       nullptr,
-      &status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+      &status));
+  CHECK_MSTATUS(status);
+
   doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
   doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
 
-  app_run_id = MTimerMessage::addTimerCallback(
+  maya_reg->register_callback(MTimerMessage::addTimerCallback(
       0.001,
       [](float elapsedTime, float lastTime, void* clientData) {
         if (p_doodle_app) {
           p_doodle_app->poll_one();
         }
       },
-      nullptr, &status);
-
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+      nullptr, &status));
+  CHECK_MSTATUS(status);
 
   /// 注册自定义hud节点
-  status = k_plugin.registerNode(
-      doolde_hud_render_node.data(),
-      doodle::maya_plug::doodle_info_node::doodle_id,
-      &doodle::maya_plug::doodle_info_node::creator,
-      &doodle::maya_plug::doodle_info_node::initialize,
-      doodle::maya_plug::doodle_info_node::node_type,
-      &doodle::maya_plug::doodle_info_node::drawDbClassification);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_node<doodle::maya_plug::doodle_info_node>(k_plugin);
+  CHECK_MSTATUS(status);
+
   /// 注册自定义渲染覆盖显示hud
-  status = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
-      doodle::maya_plug::doodle_info_node::drawDbClassification,
-      doodle::maya_plug::doodle_info_node::drawRegistrantId,
-      doodle::maya_plug::doodle_info_node_draw_override::Creator);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_draw_overrider<
+      doodle::maya_plug::doodle_info_node,
+      doodle::maya_plug::doodle_info_node_draw_override>();
+  CHECK_MSTATUS(status);
 
   /// 注册拍屏命令
-  status = maya_plug::comm_play_blast_maya::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<maya_plug::comm_play_blast_maya>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 注册创建hud命令
-  status = ::doodle::maya_plug::create_hud_node_maya::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<maya_plug::create_hud_node_maya>(k_plugin);
+  CHECK_MSTATUS(status);
 
   /// 注册一些引用命令
-  status = ::doodle::maya_plug::create_ref_file_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_load_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_sim_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_export_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::load_project::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::create_ref_file_command>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_command<::doodle::maya_plug::ref_file_load_command>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_command<::doodle::maya_plug::ref_file_sim_command>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_command<::doodle::maya_plug::ref_file_export_command>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_command<::doodle::maya_plug::load_project>(k_plugin);
+  CHECK_MSTATUS(status);
 
   /// 导出相机命令注册
-  status = ::doodle::maya_plug::export_camera_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::export_camera_command>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 保存文件命令
-  status = ::doodle::maya_plug::comm_file_save::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::comm_file_save>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加残像命令
-  status = ::doodle::maya_plug::afterimage_comm::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::afterimage_comm>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加清除maya场景命令
-  status = ::doodle::maya_plug::clear_scene_comm::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::clear_scene_comm>(k_plugin);
+  CHECK_MSTATUS(status);
 
   /// 添加寻找重复模型命令
-  status = ::doodle::maya_plug::find_duplicate_poly_comm::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::find_duplicate_poly_comm>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加设置缓存命令
-  status = ::doodle::maya_plug::set_cloth_cache_path::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::set_cloth_cache_path>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加替换文件命令
-  status = ::doodle::maya_plug::replace_rig_file_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::replace_rig_file_command>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加上传文件命令
-  status = ::doodle::maya_plug::upload_files_command::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::upload_files_command>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加解算骨骼命令
-  status = ::doodle::maya_plug::dem_bones_comm::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::dem_bones_comm>(k_plugin);
+  CHECK_MSTATUS(status);
   /// 添加解算骨骼命令
-  status = ::doodle::maya_plug::dem_bones_add_weight::registerCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  status = maya_reg->register_command<::doodle::maya_plug::dem_bones_add_weight>(k_plugin);
+  CHECK_MSTATUS(status);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {
@@ -268,7 +264,6 @@ MStatus uninitializePlugin(MObject obj) {
   }
   // 这里要停止app
   p_doodle_app->stop();
-
   /// 先删除工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
@@ -280,95 +275,15 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
-  /// 取消解算骨骼命令
-  status = ::doodle::maya_plug::dem_bones_add_weight::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 取消解算骨骼命令
-  status = ::doodle::maya_plug::dem_bones_comm::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 取消上传文件命令
-  status = ::doodle::maya_plug::upload_files_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 取消替换命令
-  status = ::doodle::maya_plug::replace_rig_file_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 取消设置缓存命令
-  status = ::doodle::maya_plug::set_cloth_cache_path::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 取消寻找重复模型命令
-  status = ::doodle::maya_plug::find_duplicate_poly_comm::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 取消清除maya场景命令
-  status = ::doodle::maya_plug::clear_scene_comm::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 取消残像命令
-  status = ::doodle::maya_plug::afterimage_comm::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 保存文件命令取消注册
-  status = ::doodle::maya_plug::comm_file_save::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 导出相机命令取消注册
-  status = ::doodle::maya_plug::export_camera_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 去除解算命令
-  status = ::doodle::maya_plug::load_project::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::create_ref_file_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_load_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_sim_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  status = ::doodle::maya_plug::ref_file_export_command::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 去掉hud命令
-  status = ::doodle::maya_plug::create_hud_node_maya::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 去掉拍屏命令
-  status = maya_plug::comm_play_blast_maya::deregisterCommand(k_plugin);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 去掉渲染覆盖命令
-  status = MDrawRegistry::deregisterGeometryOverrideCreator(
-      doodle::maya_plug::doodle_info_node::drawDbClassification,
-      doodle::maya_plug::doodle_info_node::drawRegistrantId);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-  /// 去掉hud节点
-  status = k_plugin.deregisterNode(doodle::maya_plug::doodle_info_node::doodle_id);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  /// 去除运行回调
-  status = MMessage::removeCallback(app_run_id);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
-
-  // 删除清除回调回调
-  status = MMessage::removeCallback(clear_callback_id);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  maya_reg->unregister(k_plugin);
 
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
-      /// 去除hud回调
-      while (!maya_call_back_id.empty()) {
-        status = MMessage::removeCallback(maya_call_back_id.top());
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        maya_call_back_id.pop();
-      }
-
       // 这一部分是删除菜单项的
       MStringArray menuItems{};
       menuItems.append(doodle_windows.data());
       status = k_plugin.removeMenuItem(menuItems);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
-
-      /// 去除命令
-      status = ::doodle::maya_plug::open_doodle_main::deregisterCommand(k_plugin);
       CHECK_MSTATUS_AND_RETURN_IT(status);
       break;
     }
@@ -378,7 +293,6 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
-  // 卸载命令
   p_doodle_app.reset();
 
   return status;

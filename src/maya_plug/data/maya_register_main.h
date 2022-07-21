@@ -65,8 +65,7 @@ class maya_register {
     return l_s;
   }
   template <typename node_type,
-            typename draw_type,
-            typename mfn_plugin_type>
+            typename draw_type>
   MStatus register_draw_overrider() {
     auto l_s = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
         node_type::drawDbClassification,
