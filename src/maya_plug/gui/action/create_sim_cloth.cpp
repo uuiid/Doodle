@@ -133,7 +133,7 @@ void create_sim_cloth::run_comm() {
 doodle_create_qcloth_assets -collision {} -cloth {};
 )",
                                  p_coll, fmt::join(p_list, " -cloth "))};
-  MGlobal::executeCommandOnIdle(d_str{l_comm}, true);
+  MGlobal::executeCommand(d_str{l_comm}, true, true);
 }
 
 }  // namespace doodle::maya_plug
