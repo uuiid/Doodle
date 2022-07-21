@@ -18,12 +18,10 @@ char collision_l[] = {"-collision"};
 
 MSyntax syntax() {
   MSyntax l_syntax{};
-  l_syntax.addFlag(cloth, cloth_l, MSyntax::MArgType::kString);
-  l_syntax.addFlag(high, high_l, MSyntax::MArgType::kString);
-  l_syntax.addFlag(collision, collision_l, MSyntax::MArgType::kString);
+  l_syntax.addFlag(cloth, cloth_l, MSyntax::MArgType::kLong);
+  l_syntax.addFlag(collision, collision_l, MSyntax::MArgType::kLong);
 
   l_syntax.makeFlagMultiUse(cloth);
-  l_syntax.makeFlagMultiUse(high);
   l_syntax.makeFlagMultiUse(collision);
   return l_syntax;
 }
@@ -31,7 +29,7 @@ MSyntax syntax() {
 
 class create_qcloth_assets::impl {
  public:
-  
+
 
 
 
