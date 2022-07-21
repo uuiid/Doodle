@@ -119,17 +119,19 @@ void create_sim_cloth::render() {
         return;
       }
     }
-    for (auto& l_h : p_list) {
-      qcloth_shape::create_sim_cloth(l_h);
-    }
-    if (p_coll.any_of<qcloth_shape_n::shape_list>() && !p_list.empty())
-      qcloth_shape::add_collider(p_coll);
-    qcloth_shape::sort_group();
+    run_comm();
   }
 }
 create_sim_cloth::~create_sim_cloth() {
   destroy_handle(p_coll);
   destroy_handle(p_list);
+}
+void create_sim_cloth::run_comm() {
+  std::string l_comm{fmt::format(R"(
+doodle_create_qcloth_assets -collision {} -cloth {};
+)",
+                                 p_coll, fmt::join(p_list, " -cloth "))};
+  MGlobal::executeCommandOnIdle(d_str{l_comm}, true);
 }
 
 }  // namespace doodle::maya_plug

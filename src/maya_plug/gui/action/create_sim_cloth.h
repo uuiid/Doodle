@@ -13,6 +13,9 @@ class create_sim_cloth
 
   entt::handle p_coll;
 
+  void run_comm();
+
+
  public:
   create_sim_cloth();
   ~create_sim_cloth() override;
