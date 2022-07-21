@@ -12,7 +12,6 @@ from PySide2 import QtGui
 from PySide2 import QtWidgets
 import random
 
-import maya_fun_tool as Doodle_fun_tool
 
 import scripts.doodle_ik_to_fk
 
@@ -163,7 +162,6 @@ class DlsShelf(shelfBase._shelf):
             reload(Doodle_clear)
             # reload(deleteWeight)
             # reload(deleteAttr)
-            reload(Doodle_fun_tool)
 
 
 class DoodleUIManage(object):
