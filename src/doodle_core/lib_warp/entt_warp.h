@@ -8,7 +8,7 @@
 #include <fmt/format.h>
 
 #include <iterator>
-
+#include <doodle_core/lib_warp/enum_template_tool.h>
 namespace doodle {
 using namespace entt::literals;
 namespace entt_tool {
@@ -103,3 +103,38 @@ void load_comm(entt::handle &in_handle, Archive &in_archive) {
 
 }  // namespace entt_tool
 }  // namespace doodle
+
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::entt::entity>
+    : formatter<typename ::entt::entt_traits<::entt::entity>::entity_type> {
+  using base_type = formatter<typename ::entt::entt_traits<::entt::entity>::entity_type>;
+
+  template <typename FormatContext>
+  auto format(const ::entt::entity &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    return base_type::format(
+        ::entt::to_integral(in_),
+        ctx);
+  }
+};
+
+template <typename Entity, typename... Type>
+struct formatter<::entt::basic_handle<Entity, Type...>>
+    : formatter<Entity> {
+  using base_type        = formatter<Entity>;
+  using entt_handle_type = ::entt::basic_handle<Entity, Type...>;
+
+  template <typename FormatContext>
+  auto format(const entt_handle_type &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+    return base_type::format(
+        in_.entity(),
+        ctx);
+  }
+};
+
+}  // namespace fmt
