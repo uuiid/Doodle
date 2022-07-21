@@ -9,6 +9,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDependencyNodes.h>
+#include <maya/MItDag.h>
 #include <maya/MArgList.h>
 #include <maya/MDGModifier.h>
 
@@ -84,7 +85,7 @@ MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
 }
 MStatus create_qcloth_assets::undoIt() {
   // 删除所有的创建成功的层级
-  delete_node(p_i->create_nodes);
+  delete_node();
   // 更新所有的属性
   reset_properties();
 
@@ -101,7 +102,7 @@ MStatus create_qcloth_assets::redoIt() {
     qcloth_shape::sort_group();
   } catch (const doodle_error& in_err) {
     filter_create_node(l_org_list);
-    delete_node(p_i->create_nodes);
+    delete_node();
     return {MStatus::kFailure};
   }
   filter_create_node(l_org_list);
@@ -113,31 +114,34 @@ bool create_qcloth_assets::isUndoable() const {
 std::vector<MObject> create_qcloth_assets::get_all_node() {
   std::vector<MObject> l_r{};
   MStatus l_s{};
-  for (MItDependencyNodes l_it{};
+  for (MItDag l_it{};
        !l_it.isDone();
        l_it.next()) {
-    l_r.emplace_back(l_it.thisNode(&l_s));
+    l_r.emplace_back(l_it.currentItem(&l_s));
     DOODLE_CHICK(l_s);
   }
   return l_r;
 }
-void create_qcloth_assets::delete_node(std::vector<MObject>& in_obj) {
-  MDGModifier l_modifier{};
-  for (auto&& i : p_i->create_nodes) {
-    if (!i.isNull())
-      CHECK_MSTATUS(l_modifier.deleteNode(i));
-  }
-  DOODLE_CHICK(l_modifier.doIt());
+void create_qcloth_assets::delete_node() {
+  //  MDGModifier l_modifier{};
+  //  for (auto&& i : p_i->create_nodes) {
+  //    if (!i.isNull())
+  //      CHECK_MSTATUS(l_modifier.deleteNode(i));
+  //  }
+  //  DOODLE_CHICK(l_modifier.doIt());
+
+  MGlobal::deleteNode(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
 }
 void create_qcloth_assets::filter_create_node(
     const std::vector<MObject>& in_obj) {
-  p_i->create_nodes = get_all_node();
-  p_i->create_nodes |= ranges::action::remove_if([&](const MObject& in) -> bool {
-    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {
-      return in == in_item;
-    });
-    return it != in_obj.end();
-  });
+  //  p_i->create_nodes = get_all_node();
+  //  p_i->create_nodes |= ranges::action::remove_if([&](const MObject& in) -> bool {
+  //    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {
+  //      return in == in_item;
+  //    });
+  //    return it != in_obj.end();
+  //  });
+  p_i->create_nodes.emplace_back(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
 }
 void create_qcloth_assets::reset_properties() {
   for (auto& l_h : p_i->cloth_list) {

@@ -19,7 +19,7 @@ class create_qcloth_assets : public TemplateAction<create_qcloth_assets,
   void parse_arg(const MArgList& in_arg);
   static std::vector<MObject> get_all_node();
 
-  void delete_node(std::vector<MObject>& in_obj);
+  void delete_node();
   void reset_properties();
 
   void filter_create_node(const std::vector<MObject>& in_obj);
