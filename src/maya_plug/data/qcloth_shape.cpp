@@ -193,23 +193,9 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
  */
 void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   MStatus l_s{};
-  MObject l_skin_cluster{};
-  /// \brief 获得组件点上下文
-  auto l_shape = get_shape(in_anim_node);
 
-  /// 寻找高模的皮肤簇
-  for (MItDependencyGraph i{l_shape,
-                            MFn::kSkinClusterFilter,
-                            MItDependencyGraph::Direction::kUpstream};
-       !i.isDone();
-       i.next()) {
-    l_skin_cluster = i.currentItem(&l_s);
-    DOODLE_CHICK(l_s);
-  }
-
-  chick_true<maya_error>(!l_skin_cluster.isNull(), DOODLE_SOURCE_LOC, "没有找到混合变形节点");
   /// 先将高模的皮肤簇权重重置为0;
-  MFnSkinCluster l_fn_skin_cluster{l_skin_cluster, &l_s};
+  MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(0);
   DOODLE_CHICK(l_s);
 
@@ -688,6 +674,40 @@ MObject qcloth_shape::get_ql_solver() {
   }
   chick_true<maya_error>(!l_object.isNull(), DOODLE_LOC, "没有找到qlSolver解算核心");
   return l_object;
+}
+void qcloth_shape::reset_create_node_attribute(const entt::handle& in_handle) {
+  /// \brief 动画高模
+  auto& k_maya_high_mesh = in_handle.get<qcloth_shape_n::shape_list>();
+
+  for (int l_i = 0; l_i < k_maya_high_mesh.size(); ++l_i) {
+    rest_skin_custer_attr(k_maya_high_mesh[l_i].obj);
+  }
+}
+MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
+  MStatus l_s{};
+  MObject l_skin_cluster{};
+  /// \brief 获得组件点上下文
+  auto l_shape = get_shape(in_anim_node);
+
+  /// 寻找高模的皮肤簇
+  for (MItDependencyGraph i{l_shape,
+                            MFn::kSkinClusterFilter,
+                            MItDependencyGraph::Direction::kUpstream};
+       !i.isDone();
+       i.next()) {
+    l_skin_cluster = i.currentItem(&l_s);
+    DOODLE_CHICK(l_s);
+  }
+
+  chick_true<maya_error>(!l_skin_cluster.isNull(), DOODLE_SOURCE_LOC, "没有找到皮肤簇变形节点");
+  return l_skin_cluster;
+}
+void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
+  MStatus l_s{};
+  /// 先将高模的皮肤簇权重重置为1;
+  MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
+  l_s = l_fn_skin_cluster.setEnvelope(1);
+  DOODLE_CHICK(l_s);
 }
 
 }  // namespace doodle::maya_plug

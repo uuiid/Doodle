@@ -7,6 +7,8 @@
 #include <maya_plug/data/qcloth_shape.h>
 
 #include <maya/MArgDatabase.h>
+#include <maya/MGlobal.h>
+#include <maya/MItDependencyNodes.h>
 
 namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
@@ -34,6 +36,8 @@ class create_qcloth_assets::impl {
  public:
   std::vector<entt::handle> cloth_list{};
   entt::handle coll_p;
+
+  std::vector<MObject> create_nodes{};
 };
 
 create_qcloth_assets::create_qcloth_assets()
@@ -72,10 +76,15 @@ MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
   return redoIt();
 }
 MStatus create_qcloth_assets::undoIt() {
-  DOODLE_LOG_WARN("create_qcloth_assets::undoIt()")
+  // 删除所有的创建成功的层级
+  delete_node(p_i->create_nodes);
+  // 更新所有的属性
+
+
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {
+  auto l_org_list = get_all_node();
   try {
     for (auto& l_h : p_i->cloth_list) {
       qcloth_shape::create_sim_cloth(l_h);
@@ -84,12 +93,48 @@ MStatus create_qcloth_assets::redoIt() {
       qcloth_shape::add_collider(p_i->coll_p);
     qcloth_shape::sort_group();
   } catch (const doodle_error& in_err) {
+    filter_create_node(l_org_list);
+    delete_node(p_i->create_nodes);
     return {MStatus::kFailure};
   }
+  filter_create_node(l_org_list);
   return MStatus::kSuccess;
 }
 bool create_qcloth_assets::isUndoable() const {
   return true;
+}
+std::vector<MObject> create_qcloth_assets::get_all_node() {
+  std::vector<MObject> l_r{};
+  MStatus l_s{};
+  for (MItDependencyNodes l_it{};
+       !l_it.isDone();
+       l_it.next()) {
+    l_r.emplace_back(l_it.thisNode(&l_s));
+    DOODLE_CHICK(l_s);
+  }
+  return l_r;
+}
+void create_qcloth_assets::delete_node(const std::vector<MObject>& in_obj) {
+  for (auto&& i : in_obj) {
+    MObject l_obj{i};
+    if (!l_obj.isNull())
+      DOODLE_CHICK(MGlobal::deleteNode(l_obj));
+  }
+}
+void create_qcloth_assets::filter_create_node(
+    const std::vector<MObject>& in_obj) {
+  p_i->create_nodes = get_all_node();
+  p_i->create_nodes |= ranges::action::remove_if([&](const MObject& in) -> bool {
+    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {
+      return in == in_item;
+    });
+    return it != in_obj.end();
+  });
+}
+void create_qcloth_assets::reset_properties() {
+  for (auto& l_h : p_i->cloth_list) {
+    qcloth_shape::reset_create_node_attribute(l_h);
+  }
 }
 
 create_qcloth_assets::~create_qcloth_assets() = default;

@@ -46,6 +46,19 @@ class qcloth_shape {
 
   static cloth_group get_cloth_group();
 
+  /**
+   * @brief 获取传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇
+   * @param in_anim_node 动画[绑定]网格体或者变换节点
+   * @return 寻找到的皮肤簇(不为空)
+   * @throw 为空时抛出异常 maya_error
+   */
+  static MObject get_skin_custer(const MObject& in_anim_node);
+  /**
+   * @brief 重置传入动画节点(动画[绑定]网格体或者变换节点)链接的皮肤簇属性
+   * @param in_anim_node 动画[绑定]网格体或者变换节点
+   */
+  static void rest_skin_custer_attr(const MObject& in_anim_node);
+
  private:
   entt::handle p_ref_file;
   /**
@@ -97,6 +110,8 @@ class qcloth_shape {
    */
   static std::vector<entt::handle> create_sim_cloth(
       const entt::handle& in_handle);
+
+  static void reset_create_node_attribute(const entt::handle& in_handle);
   /**
    * @brief 检查所有传入的简模是否进行了蒙皮
    * @param in_handle 传入的一个实体,
