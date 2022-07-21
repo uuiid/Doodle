@@ -15,7 +15,6 @@ OPENMAYA_NAMESPACE_CLOSE
 
 namespace doodle::maya_plug {
 class maya_register {
-  std::stack<MCallbackId> maya_call_back_id{};
   std::stack<std::function<MStatus(MFnPlugin&)>> maya_comm_call_back{};
 
  public:
