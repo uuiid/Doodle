@@ -52,11 +52,13 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   MArgDatabase l_arg{syntax(), in_arg, &l_s};
   if (l_arg.isFlagSet(create_qcloth_assets_ns::cloth, &l_s)) {
     DOODLE_CHICK(l_s);
-    for (auto i = 0; i < l_arg.numberOfFlagUses(create_qcloth_assets_ns::cloth); ++i) {
-      std::int32_t l_value{};
-      l_s = l_arg.getFlagArgument(create_qcloth_assets_ns::cloth, i, l_value);
+    auto l_num = l_arg.numberOfFlagUses(create_qcloth_assets_ns::cloth);
+    for (auto i = 0; i < l_num; ++i) {
+      MArgList l_arg_list{};
+      l_s = l_arg.getFlagArgumentList(create_qcloth_assets_ns::cloth, i, l_arg_list);
       DOODLE_CHICK(l_s);
-      p_i->cloth_list.emplace_back(make_handle(num_to_enum<entt::entity>(l_value)));
+
+      p_i->cloth_list.emplace_back(make_handle(num_to_enum<entt::entity>(l_arg_list.asInt(0))));
     }
   }
 
