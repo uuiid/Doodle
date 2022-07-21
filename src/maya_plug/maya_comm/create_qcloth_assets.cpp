@@ -10,6 +10,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MArgList.h>
+#include <maya/MDGModifier.h>
 
 namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
@@ -121,11 +122,12 @@ std::vector<MObject> create_qcloth_assets::get_all_node() {
   return l_r;
 }
 void create_qcloth_assets::delete_node(std::vector<MObject>& in_obj) {
-  for (auto&& i : in_obj) {
-    MObject l_obj{i};
-    if (!l_obj.isNull())
-      DOODLE_CHICK(MGlobal::deleteNode(l_obj));
+  MDGModifier l_modifier{};
+  for (auto&& i : p_i->create_nodes) {
+    if (!i.isNull())
+      CHECK_MSTATUS(l_modifier.deleteNode(i));
   }
+  DOODLE_CHICK(l_modifier.doIt());
 }
 void create_qcloth_assets::filter_create_node(
     const std::vector<MObject>& in_obj) {
