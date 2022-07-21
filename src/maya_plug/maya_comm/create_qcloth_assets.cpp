@@ -9,6 +9,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MGlobal.h>
 #include <maya/MItDependencyNodes.h>
+#include <maya/MArgList.h>
 
 namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
@@ -28,6 +29,8 @@ MSyntax syntax() {
   l_syntax.addFlag(collision, collision_l, MSyntax::MArgType::kLong);
 
   l_syntax.makeFlagMultiUse(cloth);
+  l_syntax.enableQuery(false);
+  l_syntax.enableEdit(false);
   return l_syntax;
 }
 }  // namespace create_qcloth_assets_ns
@@ -44,6 +47,7 @@ create_qcloth_assets::create_qcloth_assets()
     : p_i(std::make_unique<impl>()) {
 }
 void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
+  DOODLE_LOG_INFO(in_arg);
   MStatus l_s{};
   MArgDatabase l_arg{syntax(), in_arg, &l_s};
   if (l_arg.isFlagSet(create_qcloth_assets_ns::cloth, &l_s)) {
