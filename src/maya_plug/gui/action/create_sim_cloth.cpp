@@ -128,12 +128,8 @@ void create_sim_cloth::render() {
   }
 }
 create_sim_cloth::~create_sim_cloth() {
-  if (p_coll)
-    p_coll.destroy();
-  for (auto& h : p_list) {
-    if (h)
-      h.destroy();
-  }
+  destroy_handle(p_coll);
+  destroy_handle(p_list);
 }
 
 }  // namespace doodle::maya_plug
