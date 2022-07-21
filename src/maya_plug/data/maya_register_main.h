@@ -26,7 +26,7 @@ class maya_register {
     auto l_s = comm_type::registerCommand(in_);
     CHECK_MSTATUS(l_s);
     if (l_s) {
-      maya_comm_call_back.emplace([](MFnPlugin& in_plugin) {
+      maya_comm_call_back.emplace([](auto& in_plugin) {
         auto l_s = comm_type::deregisterCommand(in_plugin);
         CHECK_MSTATUS(l_s);
         return l_s;
