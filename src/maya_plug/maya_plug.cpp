@@ -267,8 +267,7 @@ MStatus uninitializePlugin(MObject obj) {
     CHECK_MSTATUS(status);
   }
   // 这里要停止app
-  status = p_doodle_app->stop();
-  CHECK_MSTATUS(status);
+  p_doodle_app->stop();
   /// 先删除工具架
   switch (k_st) {
     case MGlobal::MMayaState::kInteractive:
@@ -280,7 +279,8 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
     default:
       break;
   }
-  maya_reg->unregister(k_plugin);
+  status = maya_reg->unregister(k_plugin);
+  CHECK_MSTATUS(status);
 
   switch (k_st) {
     case MGlobal::MMayaState::kBaseUIMode:
