@@ -79,7 +79,7 @@ MStatus create_qcloth_assets::undoIt() {
   // 删除所有的创建成功的层级
   delete_node(p_i->create_nodes);
   // 更新所有的属性
-
+  reset_properties();
 
   return MStatus::kSuccess;
 }
