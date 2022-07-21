@@ -120,7 +120,7 @@ std::vector<MObject> create_qcloth_assets::get_all_node() {
   }
   return l_r;
 }
-void create_qcloth_assets::delete_node(const std::vector<MObject>& in_obj) {
+void create_qcloth_assets::delete_node(std::vector<MObject>& in_obj) {
   for (auto&& i : in_obj) {
     MObject l_obj{i};
     if (!l_obj.isNull())
