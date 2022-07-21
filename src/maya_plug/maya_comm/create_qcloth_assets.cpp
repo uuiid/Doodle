@@ -76,12 +76,16 @@ MStatus create_qcloth_assets::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {
-  for (auto& l_h : p_i->cloth_list) {
-    qcloth_shape::create_sim_cloth(l_h);
+  try {
+    for (auto& l_h : p_i->cloth_list) {
+      qcloth_shape::create_sim_cloth(l_h);
+    }
+    if (p_i->coll_p.any_of<qcloth_shape_n::shape_list>() && !p_i->cloth_list.empty())
+      qcloth_shape::add_collider(p_i->coll_p);
+    qcloth_shape::sort_group();
+  } catch (const doodle_error& in_err) {
+    return {MStatus::kFailure};
   }
-  if (p_i->coll_p.any_of<qcloth_shape_n::shape_list>() && !p_i->cloth_list.empty())
-    qcloth_shape::add_collider(p_i->coll_p);
-  qcloth_shape::sort_group();
   return MStatus::kSuccess;
 }
 bool create_qcloth_assets::isUndoable() const {
