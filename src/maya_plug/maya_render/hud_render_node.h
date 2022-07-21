@@ -21,6 +21,9 @@ class doodle_info_node : public MPxLocatorNode {
   static MTypeId doodle_id;
   static MString drawDbClassification;
   static MString drawRegistrantId;
+  const static constexpr auto node_type = MPxNode::Type::kLocatorNode;
+
+  const static constexpr std::string_view node_name{"doolde_hud_render_node"};
 };
 
 class doodle_info_node_data : public MUserData {
@@ -61,4 +64,4 @@ class doodle_info_node_draw_override : public MPxDrawOverride {
       const MHWRender::MFrameContext& frameContext,
       const MUserData* data) override;
 };
-}  // namespace doodle
+}  // namespace doodle::maya_plug
