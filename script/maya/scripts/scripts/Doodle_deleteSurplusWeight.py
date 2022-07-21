@@ -3,7 +3,7 @@ import sys
 import os
 import json
 import re
-import pymel.core
+
 import maya.mel
 import pickle
 
@@ -69,6 +69,7 @@ class deleteSurplusWeight(QtWidgets.QMainWindow):
     def deleteWight(self):
         limt = self.limitWeight.value()
         print("============start delete weight=========================")
+        import pymel.core
         select = pymel.core.ls(selection=True, flatten=True, type="float3")
         skCluster = None
         for node in select[0]._node.listHistory():
@@ -88,7 +89,7 @@ class deleteSurplusWeight(QtWidgets.QMainWindow):
                 weight_ = sorted(weight.items(), key=lambda item: item[1])
                 deleteWei = weight_[:(weight_.__len__() - limt)]
                 pymel.core.select(vex)
-                pymel.core.skinPercent(skCluster,transformValue=[(i[0],0) for i in deleteWei], normalize=True)
+                pymel.core.skinPercent(skCluster, transformValue=[(i[0], 0) for i in deleteWei], normalize=True)
         print("============end delete weight=========================")
 
     def selectDeleteWeightPoits(self):
