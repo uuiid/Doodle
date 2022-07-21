@@ -60,16 +60,18 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
     p_i->coll_p = make_handle(num_to_enum<entt::entity>(l_value));
   }
 
+  p_i->cloth_list |= ranges::action::remove_if([](const entt::handle& in) {
+    return !in;
+  });
   chick_true<doodle_error>(!p_i->cloth_list.empty(), DOODLE_LOC, "传入了空的布料列表");
+  if (!p_i->coll_p.valid())
+    p_i->coll_p = {};
 }
 MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
   parse_arg(in_arg);
   return redoIt();
 }
 MStatus create_qcloth_assets::undoIt() {
-
-
-
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {

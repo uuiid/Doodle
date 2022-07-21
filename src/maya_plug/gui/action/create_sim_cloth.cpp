@@ -127,6 +127,8 @@ create_sim_cloth::~create_sim_cloth() {
   destroy_handle(p_list);
 }
 void create_sim_cloth::run_comm() {
+  if (p_list.empty())
+    return;
   std::string l_comm{fmt::format(R"(
 doodle_create_qcloth_assets -collision {} -cloth {};
 )",
