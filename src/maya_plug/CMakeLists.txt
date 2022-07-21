@@ -83,6 +83,7 @@ set(doodle_maya_plug_cpp
         gui/action/dem_cloth_to_fbx.cpp
         maya_comm/create_qcloth_assets.h
         maya_comm/create_qcloth_assets.cpp
+        data/maya_register_main.h
         )
 
 if (DEFINED Maya_Version)
