@@ -20,14 +20,14 @@
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
 #include <maya/MNamespace.h>
+#include <maya/MItSelectionList.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/data/sim_cover_attr.h>
 
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 namespace reference_attr {
 
@@ -71,7 +71,7 @@ bool reference_attr_setting::get_file_info() {
 
   MStatus k_s{};
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_status);
-
+  // 获取所有的引用
   for (int l_i = 0; l_i < k_names.length(); ++l_i) {
     auto&& k_name = k_names[l_i];
     reference_file k_ref{};
@@ -84,6 +84,20 @@ bool reference_attr_setting::get_file_info() {
       DOODLE_LOG_WARN("命名空间 {} 中无有效引用", k_name);
     }
   }
+  // 过滤选中
+  {
+    MSelectionList l_selection_list{};
+    k_status = MGlobal::getActiveSelectionList(l_selection_list);
+    DOODLE_CHICK(k_status);
+    MObject l_obj{};
+    p_i->p_handles |= ranges::action::remove_if([&](entt::handle& in) -> bool {
+      if (!in.get<reference_file>().has_node(l_selection_list)) {
+        in.destroy();
+        return true;
+      }
+      return false;
+    });
+  }
 
   auto k_j_str = maya_file_io::get_channel_date();
   if (k_j_str.empty())
@@ -94,7 +108,7 @@ bool reference_attr_setting::get_file_info() {
     auto& k_ref = l_i.get<reference_file>();
     auto l_p    = k_ref.path;
     if (k_j.contains(l_p))
-      entt_tool::load_comm<reference_file,sim_cover_attr>(l_i, k_j.at(l_p));
+      entt_tool::load_comm<reference_file, sim_cover_attr>(l_i, k_j.at(l_p));
     l_i.get<reference_file>().init_show_name();
   }
   return true;
@@ -111,7 +125,7 @@ void reference_attr_setting::render() {
     maya_file_io::replace_channel_date(k_j.dump());
   }
   dear::Child{"ref_file", ImVec2{0, viewport->WorkSize.y / 2}} && [&]() {
-    if (imgui::Button("解析引用")) {
+    if (imgui::Button("解析选中引用")) {
       get_file_info();
     }
     MStatus k_s{};
@@ -196,6 +210,4 @@ reference_attr_setting::~reference_attr_setting() {
   clear();
 }
 
-}  // namespace maya_plug
-
-}  // namespace doodle
+}  // namespace doodle::maya_plug
