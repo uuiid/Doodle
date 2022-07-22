@@ -8,6 +8,7 @@
 #include <database_task/select.h>
 #include <database_task/update.h>
 #include <database_task/delete_data.h>
+#include <database_task/details/update_ctx.h>
 
 #include <thread_pool/asio_pool.h>
 #include <thread_pool/process_pool.h>
@@ -63,7 +64,9 @@ void sqlite_client::update_entt() {
     g_pool().post<doodle::one_process_t>([=]() {
               g_reg()->ctx().at<core_sig>().save_begin({});
             })
-        .then<database_n::update_data>(update_list)
+        .then<doodle::one_process_t>([]() {
+          database_n::details::update_ctx::ctx(*g_reg());
+        })
         .then<one_process_t>([]() {
           g_reg()->ctx().at<core_sig>().save_end({});
         });
