@@ -88,7 +88,9 @@ MStatus create_qcloth_assets::undoIt() {
   delete_node();
   // 更新所有的属性
   reset_properties();
-
+  if(g_reg()->ctx().contains<qcloth_shape::cloth_group>()){
+    g_reg()->ctx().erase<qcloth_shape::cloth_group>();
+  }
   return MStatus::kSuccess;
 }
 MStatus create_qcloth_assets::redoIt() {
