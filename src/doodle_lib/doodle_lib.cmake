@@ -38,6 +38,7 @@ set(
         gui/widgets/ue4_widget.h
         gui/widgets/extract_subtitles_widgets.h
         gui/widgets/subtitle_processing.h
+        gui/widgets/make_link_widget.h
         gui/main_proc_handle.h
         gui/main_windows.h
         gui/strand_gui.h
@@ -104,6 +105,7 @@ set(
         gui/widgets/ue4_widget.cpp
         gui/widgets/extract_subtitles_widgets.cpp
         gui/widgets/subtitle_processing.cpp
+        gui/widgets/make_link_widget.cpp
         gui/main_proc_handle.cpp
         gui/main_windows.cpp
         gui/strand_gui.cpp
