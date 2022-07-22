@@ -63,6 +63,10 @@ void update_ctx::ctx(const entt::registry& in_registry,
     in_connection(l_par);
   }
 }
+void update_ctx::ctx(const entt::registry& in_registry) {
+  auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
+  return ctx(in_registry, *l_comm);
+}
 
 std::tuple<std::uint32_t, std::uint32_t> get_version(
     sqlpp::sqlite3::connection& in_conn) {
