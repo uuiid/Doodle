@@ -118,35 +118,11 @@ void main_menu_bar::menu_file() {
     app::Get().stop();
   }
 }
-struct t_setting_windows : public process_t<t_setting_windows>, public setting_windows {
-  bool show_{true};
-  void render() override {
-    dear::Begin{gui::config::menu_w::setting.data(), &show_} && [this]() {
-      setting_windows::render();
-    };
-    if (!show_) {
-      this->succeed();
-    }
-  };
-};
-struct t_project_edit : public process_t<t_project_edit>, public gui::project_edit {
-  bool show_{true};
-  void render() override {
-    dear::Begin{gui::config::menu_w::project_edit.data(), &show_} && [this]() {
-      gui::project_edit::render();
-    };
-    if (!show_) {
-      this->succeed();
-    }
-  };
-};
 
 void main_menu_bar::menu_windows() {
   if (dear::MenuItem(gui::config::menu_w::setting.data())) {
-    g_main_loop().attach<t_setting_windows>();
   }
   if (dear::MenuItem(gui::config::menu_w::project_edit.data())) {
-    g_main_loop().attach<t_project_edit>();
   }
 }
 
