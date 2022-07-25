@@ -129,11 +129,11 @@ class process_warp_t {
   }
 
  public:
-  template <typename... Args>
-  explicit process_warp_t(Args&&... in_args)
-      : process_p(Process_t{std::forward<Args>(in_args)...}) {
-    connect();
-  }
+  //  template <typename... Args>
+  //  explicit process_warp_t(Args&&... in_args)
+  //      : process_p(Process_t{std::forward<Args>(in_args)...}) {
+  //    connect();
+  //  }
 
   explicit process_warp_t(Process_t&& in_ptr)
       : process_p(std::move(in_ptr)) {
@@ -213,6 +213,18 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
     this->succeed();
   }
 };
+
+//template <typename Process_t>
+//class gui_process_warp : public process_warp_t<Process_t> {
+// public:
+//  explicit gui_process_warp(Process_t&& in_ptr)
+//      : process_warp_t<Process_t>(std::move(in_ptr)){};
+//
+//
+//
+//
+//};
+
 namespace detail {
 
 class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
@@ -307,6 +319,10 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   rear_adapter_t& next(Executor1&& in_io, Fun_t in_fun) {
     return next<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io),
                                               in_fun);
+  }
+
+  inline explicit operator bool() const {
+    return process.process.has_value() && !process.rejected();
   }
 };
 
