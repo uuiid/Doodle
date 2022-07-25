@@ -277,7 +277,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     }
   }
 
-  void operator()() {
+  inline void operator()() {
     boost::asio::post(executor, [this,
                                  self_ = this->shared_from_this()]() {
       process();
@@ -318,7 +318,7 @@ class process_adapter {
   rear_adapter_ptr p_ptr;
 
  public:
-  explicit process_adapter(rear_adapter_ptr  in_args)
+  explicit process_adapter(rear_adapter_ptr in_args)
       : p_ptr(std::move(in_args)) {}
 
   template <typename Process_t1, typename... Args>
