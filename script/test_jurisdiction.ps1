@@ -34,36 +34,29 @@ foreach ($path_i in $Paths) {
     $N = Get-ChildItem -Path $path_i -ErrorAction Stop
   }
   catch {
-    { 
-      $info = [InfoData]::new($path_i, $false, $false, $User)
-      $Infos.Add($info)
-    }
+    $info = [InfoData]::new($path_i, $false, $false, $User)
+    $Infos += $info
     Continue;
   }
 
   try {
     if (Test-Path $path_i) {
-      $n =  New-Item -ItemType "file" -Path $path_i -Name $Name
+      $n = New-Item -ItemType "file" -Path $path_i -Name $Name -ErrorAction Stop
     }
   }
   catch {
-    { 
-      $info = [InfoData]::new($path_i, $false, $false, $User)
-      $Infos.Add($info)
-
-    }
+    $info = [InfoData]::new($path_i, $false, $false, $User)
+    $Infos += $info
     Continue;
   }
 
     
   try {
-    $n = Remove-Item -Path $path_i/$Name
+    $n = Remove-Item -Path $path_i/$Name -ErrorAction Stop
   }
   catch {
-    { 
-      $info = [InfoData]::new($path_i, $false, $true, $User)
-      $Infos.Add($info)
-    }
+    $info = [InfoData]::new($path_i, $false, $true, $User)
+    $Infos += $info
     Continue;
   }
   $info = [InfoData]::new($path_i, $true, $true, $User)
