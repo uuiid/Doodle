@@ -4,19 +4,17 @@
 
 #include "layout_window.h"
 
+#include <doodle_core/gui_template/gui_process.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 namespace doodle::gui {
 class layout_window::impl {
  public:
   impl() = default;
-  std::map<std::string, std::unique_ptr<windows_proc>> list_windows{};
+  std::map<std::string, ::doodle::process_adapter::rear_adapter_ptr> list_windows{};
 
-  chrono::system_clock::duration duration_{};
-  void *data_{};
+  bool init{false};
 
-  time_sequencer_widget time_r{};
-
-  void builder_dock() {
+  static void builder_dock() {
     // 我们使用ImGuiWindowFlags_NoDocking标志来使窗口不可停靠到父窗口中，因为在彼此之间有两个停靠目标会令人困惑
     ImGuiWindowFlags window_flags =  // 没有菜单 ImGuiWindowFlags_MenuBar |
         ImGuiWindowFlags_NoDocking;
@@ -65,7 +63,7 @@ class layout_window::impl {
         /**
          * 分裂给节点 其中 *返回值* 和 out_id_at_dir是相同的, 而另一个是剩下的
          */
-        auto dock_id_tools = dockspace_id;
+        auto dock_id_tools  = dockspace_id;
         auto dock_id_filter = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id_tools);
         auto dock_id_edit   = ImGui::DockBuilderSplitNode(dock_id_filter, ImGuiDir_Down, 0.5f, nullptr, &dock_id_filter);
         auto dock_id_main   = ImGui::DockBuilderSplitNode(dock_id_tools, ImGuiDir_Down, 0.75f, nullptr, &dock_id_tools);
@@ -84,7 +82,7 @@ class layout_window::impl {
 
         ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_main);      /// \brief 主窗口的停靠
         ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);  /// \brief 主窗口的停靠
-        ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);  /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);        /// \brief 主窗口的停靠
         ImGui::DockBuilderFinish(dockspace_id);
       }
     }
@@ -101,19 +99,6 @@ const std::string &layout_window::title() const {
 }
 
 void layout_window::init() {
-  auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
-  for (auto &&l_item : k_list) {
-    if (auto l_win = l_item.construct(); l_win) {
-      auto l_win_ptr = l_win.try_cast<base_window>();
-      auto l_ptr     = std::make_shared<windows_proc::warp_proc>();
-      this->p_i->list_windows.emplace(
-          l_win_ptr->title(),
-          std::make_unique<windows_proc>(
-              l_ptr,
-              l_win_ptr,
-              std::move(l_win)));
-    };
-  }
   g_reg()->ctx().emplace<layout_window &>(*this);
 }
 
@@ -123,38 +108,36 @@ void layout_window::succeeded() {
 void layout_window::update(const chrono::system_clock::duration &in_duration,
                            void *in_data) {
   p_i->builder_dock();
-
+  if (!p_i->init) {
+    /// \brief 这里显示需要的初始化窗口
+  }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);
   //  ImGui::SetNextWindowSize(viewport->WorkSize);
-  p_i->duration_   = in_duration;
-  p_i->data_       = in_data;
+
   namespace menu_w = gui::config::menu_w;
-  call_render(std::string{menu_w::edit_});
-  call_render(std::string{menu_w::assets_filter});
-
-  call_render(std::string{menu_w::csv_export});
-  call_render(std::string{menu_w::ue4_widget});
-  call_render(std::string{menu_w::comm_maya_tool});
-  call_render(std::string{menu_w::comm_create_video});
-  call_render(std::string{menu_w::extract_subtitles});
-  call_render(std::string{menu_w::subtitle_processing});
-
-  call_render(std::string{menu_w::assets_file});
-  call_render(std::string{menu_w::long_time_tasks});
-
-  dear::Begin{menu_w::time_edit.data()} && [&, this]() {
-    p_i->time_r.tick({}, {});
-  };
+  //  call_render(std::string{menu_w::edit_});
+  //  call_render(std::string{menu_w::assets_filter});
+  //
+  //  call_render(std::string{menu_w::csv_export});
+  //  call_render(std::string{menu_w::ue4_widget});
+  //  call_render(std::string{menu_w::comm_maya_tool});
+  //  call_render(std::string{menu_w::comm_create_video});
+  //  call_render(std::string{menu_w::extract_subtitles});
+  //  call_render(std::string{menu_w::subtitle_processing});
+  //
+  //  call_render(std::string{menu_w::assets_file});
+  //  call_render(std::string{menu_w::long_time_tasks});
+  //
+  //  dear::Begin{menu_w::time_edit.data()} && [&, this]() {
+  //    p_i->time_r.tick({}, {});
+  //  };
 }
 
 void layout_window::call_render(const std::string &in_name) {
-  dear::Begin{in_name.data()} && [&, this]() {
-    auto &&l_win = p_i->list_windows[in_name];
-    if (l_win)
-      l_win->tick(p_i->duration_,
-                  p_i->data_);
-  };
+  auto &&l_win = p_i->list_windows[in_name];
+  if (!l_win) {
+  }
 }
 
 layout_window::~layout_window() = default;

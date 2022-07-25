@@ -143,11 +143,9 @@ struct t_project_edit : public process_t<t_project_edit>, public gui::project_ed
 
 void main_menu_bar::menu_windows() {
   if (dear::MenuItem(gui::config::menu_w::setting.data())) {
-    //    g_main_loop().attach<gui::windows_proc<setting_windows>>();
     g_main_loop().attach<t_setting_windows>();
   }
   if (dear::MenuItem(gui::config::menu_w::project_edit.data())) {
-    //    g_main_loop().attach<gui::windows_proc<gui::project_edit>>();
     g_main_loop().attach<t_project_edit>();
   }
 }

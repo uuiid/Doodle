@@ -90,43 +90,6 @@ class DOODLELIB_API base_window {
   static base_window* find_window_by_title(const std::string& in_title);
 };
 
-class DOODLELIB_API windows_proc : public process_t<windows_proc> {
-  std::optional<bool> optional_show{};
-
- public:
-  class DOODLELIB_API warp_proc {
-   public:
-    bool show{};
-    std::function<void()> close;
-
-    [[nodiscard]] inline bool is_show() const {
-      return show;
-    };
-  };
-  using warp_proc_ptr = std::shared_ptr<warp_proc>;
-  base_window* windows_;
-  entt::meta_any owner_;
-  std::shared_ptr<warp_proc> warp_proc_;
-
-  explicit windows_proc(warp_proc_ptr in_ptr,
-                        base_window* in_windows,
-                        entt::meta_any&& in_meta_any)
-      : windows_(in_windows),
-        owner_(std::move(in_meta_any)),
-        warp_proc_(std::move(in_ptr)) {
-  }
-  ~windows_proc() override;
-
-  DOODLE_MOVE(windows_proc)
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(
-      const chrono::system_clock::duration& in_duration,
-      void* in_data);
-};
-
 class DOODLELIB_API window_panel : public base_window {
  protected:
   std::string title_name_{};

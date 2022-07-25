@@ -329,11 +329,11 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
 }  // namespace detail
 
 class process_adapter {
+ public:
   using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t>;
 
   rear_adapter_ptr p_ptr;
 
- public:
   explicit process_adapter(rear_adapter_ptr in_args)
       : p_ptr(std::move(in_args)) {}
 

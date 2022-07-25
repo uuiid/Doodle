@@ -98,46 +98,5 @@ void modal_window::update(const chrono::system_clock::duration &in_dalta, void *
       };
 }
 
-void windows_proc::init() {
-  chick_true<doodle_error>(owner_.owner(), DOODLE_LOC, "未获得窗口所有权");
-  this->warp_proc_->show  = true;
-  this->warp_proc_->close = [this]() {
-    this->windows_->close();
-  };
-  windows_->close.connect([this]() {
-    this->succeed();
-    this->warp_proc_->show = false;
-  });
-  windows_->init();
-  g_reg()->ctx().emplace<base_window::list>().emplace(windows_);
-}
-void windows_proc::succeeded() {
-  if (windows_) {
-    windows_->succeeded();
-    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
-  }
-}
-void windows_proc::failed() {
-  if (windows_) {
-    windows_->failed();
-    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
-  }
-}
-void windows_proc::aborted() {
-  if (windows_) {
-    windows_->aborted();
-    g_reg()->ctx().emplace<base_window::list>().erase(windows_);
-  }
-}
-void windows_proc::update(const chrono::system_clock::duration &in_duration,
-                          void *in_data) {
-  if (windows_) {
-    windows_->update(in_duration, in_data);
-//    if (!windows_->is_show())
-//      windows_->close();
-  } else {
-    succeed();
-  }
-}
 windows_proc::~windows_proc() = default;
 }  // namespace doodle::gui
