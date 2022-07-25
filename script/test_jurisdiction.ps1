@@ -31,7 +31,7 @@ $Infos = @()
 foreach ($path_i in $Paths) {
   $Name = New-Guid
   try {
-    Get-ChildItem -Path $path_i -ErrorAction Stop
+    $N = Get-ChildItem -Path $path_i -ErrorAction Stop
   }
   catch {
     { 
@@ -43,7 +43,7 @@ foreach ($path_i in $Paths) {
 
   try {
     if (Test-Path $path_i) {
-      New-Item -ItemType "file" -Path $path_i -Name $Name
+      $n =  New-Item -ItemType "file" -Path $path_i -Name $Name
     }
   }
   catch {
@@ -57,7 +57,7 @@ foreach ($path_i in $Paths) {
 
     
   try {
-    Remove-Item -Path $path_i/$Name
+    $n = Remove-Item -Path $path_i/$Name
   }
   catch {
     { 
@@ -74,3 +74,6 @@ $value = $Infos | Format-Table -Property User, Path, Read, Remove | Out-String
 
 
 Set-Content -Path "\\192.168.10.250\public\权限检查\$_File_IP_Name_.txt" -Value $value -Encoding "unicode" -Force -ErrorAction Stop
+
+
+# ps2exe c:\Users\TD\Source\Doodle\script\test_jurisdiction.ps1 c:\Users\TD\Source\Doodle\script\test_jurisdiction.ps1.exe -noConsole
