@@ -214,16 +214,13 @@ const std::string &main_menu_bar::title() const {
   return name;
 }
 void main_menu_bar::aborted() {
-  base_window::aborted();
   save_setting();
 }
 void main_menu_bar::read_setting() {
-  base_window::read_setting();
   if (auto &&l_j = get_setting(); l_j.count("main_menu_bar"))
     l_j["main_menu_bar"].get_to(*this);
 }
 void main_menu_bar::save_setting() const {
-  base_window::save_setting();
   get_setting()["main_menu_bar"] = *this;
 }
 
