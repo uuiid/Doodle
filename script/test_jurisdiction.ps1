@@ -11,14 +11,17 @@ class InfoData {
   [bool] $Read;
   [bool] $Remove;
   [string] $User;
+  [string] $Pro;
   InfoData(  [string] $in_Path,
     [bool] $in_Read,
     [bool] $in_Remove,
-    [string] $in_User ) {
+    [string] $in_User,
+    [string] $in_Pro ) {
     $this.Path = $in_Path;
     $this.Read = $in_Read;
     $this.Remove = $in_Remove;
     $this.User = $in_User;
+    $this.Pro = $in_Pro;
   }
 }
 
@@ -34,7 +37,7 @@ foreach ($path_i in $Paths) {
     $N = Get-ChildItem -Path $path_i -ErrorAction Stop
   }
   catch {
-    $info = [InfoData]::new($path_i, $false, $false, $User)
+    $info = [InfoData]::new($path_i, $false, $false, $User, "未知")
     $Infos += $info
     Continue;
   }
@@ -45,7 +48,7 @@ foreach ($path_i in $Paths) {
     }
   }
   catch {
-    $info = [InfoData]::new($path_i, $false, $false, $User)
+    $info = [InfoData]::new($path_i, $false, $false, $User, "未知")
     $Infos += $info
     Continue;
   }
@@ -55,15 +58,15 @@ foreach ($path_i in $Paths) {
     $n = Remove-Item -Path $path_i/$Name -ErrorAction Stop
   }
   catch {
-    $info = [InfoData]::new($path_i, $false, $true, $User)
+    $info = [InfoData]::new($path_i, $true, $false, $User, "组员")
     $Infos += $info
     Continue;
   }
-  $info = [InfoData]::new($path_i, $true, $true, $User)
+  $info = [InfoData]::new($path_i, $true, $true, $User, "组长")
   $Infos += $info
 }
 
-$value = $Infos | Format-Table -Property User, Path, Read, Remove | Out-String
+$value = $Infos | Format-Table -Property User, Path, Read, Remove, Pro | Out-String
 
 
 Set-Content -Path "\\192.168.10.250\public\权限检查\$_File_IP_Name_.txt" -Value $value -Encoding "unicode" -Force -ErrorAction Stop
