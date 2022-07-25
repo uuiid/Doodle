@@ -213,19 +213,35 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   }
 };
 namespace detail {
-template <typename Process_t>
-class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Process_t>> {
+
+class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   class rear_adapter_data {
    public:
+    template <typename Process_t>
+    rear_adapter_data(Process_t&& in)
+        : process(in),
+          abort([this](const bool& in_i) { std::any_cast<Process_t>(process).abort(in_i); }),
+          finished([this]() { std::any_cast<Process_t>(process).finished(); }),
+          rejected([this]() { std::any_cast<Process_t>(process).rejected(); }),
+          alive([this]() { std::any_cast<Process_t>(process).alive(); }),
+          ob([this]() { std::any_cast<Process_t>(process)(); }) {
+    }
+
     std::any process;
     std::function<bool(bool)> abort;
     std::function<bool()> finished;
     std::function<bool()> rejected;
+    std::function<bool()> alive;
+
+    std::function<void()> ob;
+
+    inline void operator()() const {
+      ob();
+    }
   };
 
-  using value_type = process_warp_t<Process_t>;
   boost::asio::any_io_executor executor;
-  value_type process;
+  rear_adapter_data process;
 
   using next_type     = std::shared_ptr<void>;
   using next_fun_type = std::function<void()>;
@@ -246,10 +262,10 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Proces
   //        next_ptr(&next_value),
   //        next_fun_value() {}
 
-  template <typename Executor, typename... Args>
-  explicit rear_adapter_t(const Executor& in_io, Args&&... in_args)
+  template <typename Executor, typename Process_t>
+  explicit rear_adapter_t(const Executor& in_io, Process_t&& in_args)
       : executor(in_io),
-        process(Process_t{std::forward<Args>(in_args)...}),
+        process(std::forward<Process_t>(in_args)),
         next_value(),
         next_ptr(&next_value),
         next_fun_value() {}
@@ -276,7 +292,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Proces
   }
   template <typename Process_t1, typename Executor1, typename... Args1>
   rear_adapter_t& next(Executor1&& in_io, Args1&&... in_args) {
-    using rear_adapter_type = rear_adapter_t<Process_t1>;
+    using rear_adapter_type = rear_adapter_t;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
     rear_adapter_ptr l_ptr  = std::make_shared<rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
@@ -296,7 +312,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Proces
 }  // namespace detail
 template <typename Executor, typename Process_t>
 class process_adapter {
-  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<Process_t>>;
+  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t>;
 
   rear_adapter_ptr p_ptr;
 
@@ -324,7 +340,7 @@ template <typename Process_t, typename Executor, typename... Args>
 auto make_process_adapter(Executor&& in_io, Args&&... in_args) {
   return process_adapter<std::decay_t<Executor>,
                          Process_t>{
-      std::make_shared<::doodle::detail::rear_adapter_t<std::decay_t<Executor>, Process_t>>(
+      std::make_shared<::doodle::detail::rear_adapter_t>(
           std::forward<Executor>(in_io), std::forward<Args>(in_args)...)};
 }
 }  // namespace doodle
