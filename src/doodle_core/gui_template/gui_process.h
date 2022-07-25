@@ -214,16 +214,16 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   }
 };
 
-//template <typename Process_t>
-//class gui_process_warp : public process_warp_t<Process_t> {
-// public:
-//  explicit gui_process_warp(Process_t&& in_ptr)
-//      : process_warp_t<Process_t>(std::move(in_ptr)){};
+// template <typename Process_t>
+// class gui_process_warp : public process_warp_t<Process_t> {
+//  public:
+//   explicit gui_process_warp(Process_t&& in_ptr)
+//       : process_warp_t<Process_t>(std::move(in_ptr)){};
 //
 //
 //
 //
-//};
+// };
 
 namespace detail {
 
@@ -264,6 +264,10 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   next_type* next_ptr;
   next_fun_type next_fun_value;
 
+  using executor_type = boost::asio::any_io_executor;
+  executor_type get_executor() const noexcept {
+    return this->executor;
+  }
   //  template <typename Executor1, typename... Args,
   //            std::enable_if_t<
   //                std::is_convertible_v<Executor1&, boost::asio::execution_context&>,
@@ -330,9 +334,14 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
 
 class process_adapter {
  public:
-  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t>;
+  using rear_adapter_ptr      = std::shared_ptr<::doodle::detail::rear_adapter_t>;
+  using rear_adapter_wark_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t>;
 
   rear_adapter_ptr p_ptr;
+  using executor_type = boost::asio::any_io_executor;
+  executor_type get_executor() const noexcept {
+    return this->p_ptr->get_executor();
+  }
 
   explicit process_adapter(rear_adapter_ptr in_args)
       : p_ptr(std::move(in_args)) {}
