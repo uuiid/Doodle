@@ -8,6 +8,7 @@
 
 #include <doodle_core/logger/logger.h>
 #include <boost/asio.hpp>
+#include <utility>
 
 namespace doodle {
 enum class process_state : std::uint8_t {
@@ -317,8 +318,8 @@ class process_adapter {
   rear_adapter_ptr p_ptr;
 
  public:
-  explicit process_adapter(const rear_adapter_ptr& in_args)
-      : p_ptr(in_args) {}
+  explicit process_adapter(rear_adapter_ptr  in_args)
+      : p_ptr(std::move(in_args)) {}
 
   template <typename Process_t1, typename... Args>
   process_adapter& next(Args&&... in_args) {
