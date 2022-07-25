@@ -41,8 +41,8 @@ class DOODLELIB_API main_menu_bar
   void menu_layout();
 
  public:
-  virtual void read_setting() override;
-  virtual void save_setting() const override;
+  virtual void read_setting();
+  virtual void save_setting() const;
 
  public:
   main_menu_bar();

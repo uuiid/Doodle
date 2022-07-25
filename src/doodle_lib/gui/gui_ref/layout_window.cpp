@@ -6,11 +6,13 @@
 
 #include <doodle_core/gui_template/gui_process.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
+
+#include <doodle_lib/gui/widgets/edit_widgets.h>
 namespace doodle::gui {
 class layout_window::impl {
  public:
   impl() = default;
-  std::map<std::string, ::doodle::process_adapter::rear_adapter_ptr> list_windows{};
+  std::map<std::string, ::doodle::process_adapter::rear_adapter_wark_ptr> list_windows{};
 
   bool init{false};
 
@@ -100,16 +102,22 @@ const std::string &layout_window::title() const {
 
 void layout_window::init() {
   g_reg()->ctx().emplace<layout_window &>(*this);
+  p_i->builder_dock();
 }
 
-void layout_window::succeeded() {
-}
-
-void layout_window::update(const chrono::system_clock::duration &in_duration,
-                           void *in_data) {
+void layout_window::operator()() {
   p_i->builder_dock();
   if (!p_i->init) {
     /// \brief 这里显示需要的初始化窗口
+
+    //    call_render<::doodle::gui::time_sequencer_widget>();
+
+    strand_gui lgui{g_io_context().get_executor()};
+    boost::asio::strand ls{boost::asio::make_strand(g_io_context())};
+
+    auto l_nh = boost::asio::execution::can_execute<boost::asio::any_io_executor, void()>::value;
+
+    boost::asio::any_io_executor l{lgui};
   }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -133,12 +141,12 @@ void layout_window::update(const chrono::system_clock::duration &in_duration,
   //    p_i->time_r.tick({}, {});
   //  };
 }
-
-void layout_window::call_render(const std::string &in_name) {
-  auto &&l_win = p_i->list_windows[in_name];
-  if (!l_win) {
-  }
-}
+// template <typename windows_type>
+// void layout_window::call_render() {
+//   auto &&l_win = p_i->list_windows[""s];
+//   if (!l_win) {
+//   }
+// }
 
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui

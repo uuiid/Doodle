@@ -201,6 +201,7 @@ class strand_gui {
  public:
   typedef boost::asio::any_io_executor inner_executor_type;
   using Executor = boost::asio::any_io_executor;
+  using executor_type = boost::asio::any_io_executor;
 
   strand_gui()
       : executor_(),
@@ -389,3 +390,63 @@ class strand_gui {
   implementation_type impl_;
 };
 }  // namespace doodle
+
+
+namespace boost { namespace asio {
+namespace traits {
+
+#if !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
+
+template <typename F>
+struct execute_member<::doodle::strand_gui, F>
+{
+  static constexpr bool is_valid = true;
+  static constexpr bool is_noexcept = false;
+  typedef void result_type;
+};
+
+#endif // !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
+
+#if !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
+
+template <>
+struct equality_comparable<::doodle::strand_gui>
+{
+  static constexpr bool is_valid = true;
+  static constexpr bool is_noexcept = true;
+};
+
+#endif // !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
+
+#if !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
+
+template <>
+struct query_member<::doodle::strand_gui,
+                    boost::asio::execution::context_t>
+{
+  static constexpr bool is_valid = true;
+  static constexpr bool is_noexcept = true;
+  typedef boost::asio::execution_context& result_type;
+};
+
+#endif // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
+
+template <typename Property>
+struct query_static_constexpr_member<::doodle::strand_gui, Property,
+                                     typename enable_if<
+                                         std::is_convertible<Property, boost::asio::execution::blocking_t>::value
+                                         >::type>
+{
+  static constexpr bool is_valid = true;
+  static constexpr bool is_noexcept = true;
+  typedef boost::asio::execution::blocking_t::never_t result_type;
+  static constexpr result_type value() noexcept { return result_type(); }
+};
+
+#endif // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
+
+} // namespace traits
+} } // namespace boost::asio
+
+
