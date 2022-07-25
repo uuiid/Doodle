@@ -537,3 +537,8 @@ TEST_CASE("test boost strand2") {
   }
   l_context.run();
 }
+
+TEST_CASE("test boost can_exe") {
+  std::cout << std::boolalpha << boost::asio::execution::can_execute<boost::asio::any_io_executor, void()>::value;
+  std::cout << std::boolalpha << boost::asio::query(boost::asio::any_io_executor{}, boost::asio::execution::allocator);
+}

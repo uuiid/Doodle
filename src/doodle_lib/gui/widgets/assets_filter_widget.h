@@ -10,7 +10,6 @@
 
 #include <boost/signals2.hpp>
 
-
 namespace doodle {
 
 /**
@@ -31,8 +30,8 @@ class DOODLELIB_API assets_filter_widget
 
   constexpr static std::string_view name{gui::config::menu_w::assets_filter};
 
-  void init() override;
-  void failed() override;
+  void init();
+  void failed();
   void render() override;
 
   void refresh(bool force);

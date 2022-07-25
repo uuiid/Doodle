@@ -49,11 +49,9 @@ class DOODLELIB_API main_menu_bar
   ~main_menu_bar() override;
 
   const std::string& title() const override;
-  void init() override;
-  void succeeded() override;
-  virtual void aborted() override;
-  void update(
-      const chrono::system_clock::duration& in_duration,
-      void* in_data) override;
+  void init();
+  void succeeded();
+  virtual void aborted();
+  void operator()() override;
 };
 }  // namespace doodle

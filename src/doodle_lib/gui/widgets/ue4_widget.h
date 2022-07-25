@@ -74,7 +74,7 @@ class DOODLELIB_API ue4_widget
   ~ue4_widget() override;
   constexpr static std::string_view name{gui::config::menu_w::ue4_widget};
 
-  void init() override;
+  void init();
   void render() override;
 };
 

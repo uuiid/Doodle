@@ -61,13 +61,13 @@ class DOODLELIB_API edit_widgets
    *
    *
    */
-  void init() override;
+  void init();
 
   /**
    * @brief 失败结束任务
    *
    */
-  void failed() override;
+  void failed();
 
   /**
    * @brief 每帧刷新函数
@@ -86,7 +86,6 @@ constexpr auto init = []() {
 };
 class init_class
     : public init_register::registrar_lambda<init, 3> {};
-
 
 }  // namespace edit_widgets_ns
 }  // namespace doodle

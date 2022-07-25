@@ -22,7 +22,7 @@ class DOODLELIB_API extract_subtitles_widgets
   extract_subtitles_widgets();
   ~extract_subtitles_widgets() override;
 
-  void init() override;
+  void init();
 
   constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
 

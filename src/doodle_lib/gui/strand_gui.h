@@ -80,7 +80,7 @@ class strand_gui_executor_service
   implementation_type create_implementation(const Executor_T& in_executor) {
     std::lock_guard l_g{mutex_};
     if (!impl_list_) {
-      impl_list_           = std::make_shared<strand_impl>(in_executor);
+      impl_list_ = std::make_shared<strand_impl>(in_executor);
       boost::asio::get_associated_executor(this->context());
       impl_list_->service_ = this;
       impl_list_->mutex_   = &this->mutex_;
@@ -94,14 +94,16 @@ class strand_gui_executor_service
                       BOOST_ASIO_MOVE_ARG(Function) function,
                       typename std::enable_if_t<
                           boost::asio::can_query<Executor,
-                                                 boost::asio::execution::allocator_t<void>>::value> = 0);
+                                                 boost::asio::execution::allocator_t<void>>::value,
+                          bool> = 0);
 
   template <typename Executor, typename Function>
   static void execute(const implementation_type& impl, Executor& ex,
                       BOOST_ASIO_MOVE_ARG(Function) function,
                       typename std::enable_if_t<
                           !boost::asio::can_query<Executor,
-                                                  boost::asio::execution::allocator_t<void>>::value> = 0);
+                                                  boost::asio::execution::allocator_t<void>>::value,
+                          bool> = 0);
 
   // Request invocation of the given function.
   template <typename Executor, typename Function, typename Allocator>
@@ -142,11 +144,12 @@ void strand_gui_executor_service::execute(
     BOOST_ASIO_MOVE_ARG(Function) function,
     typename std::enable_if_t<
         boost::asio::can_query<Executor,
-                               boost::asio::execution::allocator_t<void>>::value>) {
+                               boost::asio::execution::allocator_t<void>>::value,
+        bool>) {
   return strand_gui_executor_service::do_execute(
       impl, ex,
       BOOST_ASIO_MOVE_CAST(Function)(function),
-      boost::asio::query(ex, boost::asio::execution::allocator));
+      std::allocator<void>());
 }
 
 template <typename Executor, typename Function>
@@ -155,7 +158,8 @@ void strand_gui_executor_service::execute(
     BOOST_ASIO_MOVE_ARG(Function) function,
     typename std::enable_if_t<
         !boost::asio::can_query<Executor,
-                                boost::asio::execution::allocator_t<void>>::value>) {
+                                boost::asio::execution::allocator_t<void>>::value,
+        bool>) {
   return strand_gui_executor_service::do_execute(
       impl, ex,
       BOOST_ASIO_MOVE_CAST(Function)(function),
@@ -168,6 +172,7 @@ void strand_gui_executor_service::do_execute(
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
   impl->handlers_next.emplace_back(std::move(function));
+  return;
 }
 // Request invocation of the given function.
 template <typename Executor, typename Function, typename Allocator>
@@ -200,7 +205,7 @@ void strand_gui_executor_service::defer(
 class strand_gui {
  public:
   typedef boost::asio::any_io_executor inner_executor_type;
-  using Executor = boost::asio::any_io_executor;
+  using Executor      = boost::asio::any_io_executor;
   using executor_type = boost::asio::any_io_executor;
 
   strand_gui()
@@ -300,11 +305,11 @@ class strand_gui {
   void on_work_finished() const BOOST_ASIO_NOEXCEPT;
 
   template <typename Function>
-  typename std::enable_if_t<
-      boost::asio::execution::can_execute<const Executor&, Function>::value,
-      void>
-  execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
-    detail::strand_gui_executor_service::execute(
+//  typename std::enable_if_t<
+//      boost::asio::execution::can_execute<executor_type, Function>::value,
+//      void>
+  void execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
+    return detail::strand_gui_executor_service::execute(
         impl_,
         executor_, BOOST_ASIO_MOVE_CAST(Function)(f));
   }
@@ -391,62 +396,56 @@ class strand_gui {
 };
 }  // namespace doodle
 
-
-namespace boost { namespace asio {
+namespace boost {
+namespace asio {
 namespace traits {
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
 
 template <typename F>
-struct execute_member<::doodle::strand_gui, F>
-{
-  static constexpr bool is_valid = true;
+struct execute_member<::doodle::strand_gui, F> {
+  static constexpr bool is_valid    = true;
   static constexpr bool is_noexcept = false;
   typedef void result_type;
 };
 
-#endif // !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
+#endif  // !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
 
 template <>
-struct equality_comparable<::doodle::strand_gui>
-{
-  static constexpr bool is_valid = true;
+struct equality_comparable<::doodle::strand_gui> {
+  static constexpr bool is_valid    = true;
   static constexpr bool is_noexcept = true;
 };
 
-#endif // !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
+#endif  // !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
 
 template <>
 struct query_member<::doodle::strand_gui,
-                    boost::asio::execution::context_t>
-{
-  static constexpr bool is_valid = true;
+                    boost::asio::execution::context_t> {
+  static constexpr bool is_valid    = true;
   static constexpr bool is_noexcept = true;
   typedef boost::asio::execution_context& result_type;
 };
 
-#endif // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
+#endif  // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
 #if !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
 
 template <typename Property>
 struct query_static_constexpr_member<::doodle::strand_gui, Property,
                                      typename enable_if<
-                                         std::is_convertible<Property, boost::asio::execution::blocking_t>::value
-                                         >::type>
-{
-  static constexpr bool is_valid = true;
+                                         std::is_convertible<Property, boost::asio::execution::blocking_t>::value>::type> {
+  static constexpr bool is_valid    = true;
   static constexpr bool is_noexcept = true;
   typedef boost::asio::execution::blocking_t::never_t result_type;
   static constexpr result_type value() noexcept { return result_type(); }
 };
 
-#endif // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
+#endif  // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
 
-} // namespace traits
-} } // namespace boost::asio
-
-
+}  // namespace traits
+}  // namespace asio
+}  // namespace boost

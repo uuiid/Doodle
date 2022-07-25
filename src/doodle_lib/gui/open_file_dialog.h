@@ -83,8 +83,8 @@ class DOODLELIB_API file_panel
   explicit file_panel(const dialog_args& in_args);
 
   [[nodiscard]] std::string& title() const override;
-  void init() override;
-  void succeeded() override;
+  void init();
+  void succeeded();
   void render() override;
 };
 

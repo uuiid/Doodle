@@ -18,7 +18,7 @@ class DOODLELIB_API project_edit
   project_edit();
   ~project_edit() override;
   constexpr static std::string_view name{gui::config::menu_w::project_edit};
-  void init() override;
+  void init();
   void render() override;
 };
 namespace project_edit_ns {
@@ -32,4 +32,4 @@ class init_class
     : public init_register::registrar_lambda<init, 3> {};
 }  // namespace project_edit_ns
 
-}  // namespace doodle
+}  // namespace doodle::gui

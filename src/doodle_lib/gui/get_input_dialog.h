@@ -25,7 +25,6 @@ class DOODLELIB_API get_input_dialog : public process_t<get_input_dialog> {
 };
 
 class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
-
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -36,10 +35,10 @@ class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
   explicit get_input_project_dialog(const std::shared_ptr<FSys::path>& in_handle);
 
   ~get_input_project_dialog() override;
-  virtual void init() override;
-  virtual void succeeded() override;
-  virtual void failed() override;
-  virtual void aborted() override;
+  virtual void init();
+  virtual void succeeded();
+  virtual void failed();
+  virtual void aborted();
 };
 
 namespace gui::input {

@@ -116,7 +116,7 @@ void layout_window::operator()() {
     boost::asio::strand ls{boost::asio::make_strand(g_io_context())};
 
     auto l_nh = boost::asio::execution::can_execute<boost::asio::any_io_executor, void()>::value;
-
+    //    boost::asio::detail::executor_function();
     boost::asio::any_io_executor l{lgui};
   }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();

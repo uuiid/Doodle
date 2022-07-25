@@ -15,7 +15,7 @@ class dem_cloth_to_fbx
  public:
   dem_cloth_to_fbx();
   ~dem_cloth_to_fbx() override;
-  virtual void init() override;
+  virtual void init();
   void render() override;
 };
 

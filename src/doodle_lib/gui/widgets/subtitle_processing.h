@@ -23,7 +23,7 @@ class DOODLELIB_API subtitle_processing : public window_panel {
  public:
   subtitle_processing();
   ~subtitle_processing() override;
-  void init() override;
+  void init();
 
   constexpr static std::string_view name{gui::config::menu_w::subtitle_processing};
 

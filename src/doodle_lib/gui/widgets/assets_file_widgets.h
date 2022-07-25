@@ -41,8 +41,8 @@ class DOODLELIB_API assets_file_widgets
   constexpr static std::string_view name{gui::config::menu_w::assets_file};
 
   void refresh(const std::vector<entt::handle>& in_list);
-  void init() override;
-  void failed() override;
+  void init();
+  void failed();
   void render() override;
 };
 namespace assets_file_widgets_ns {

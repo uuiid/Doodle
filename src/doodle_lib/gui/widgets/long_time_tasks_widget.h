@@ -19,8 +19,8 @@ class DOODLELIB_API long_time_tasks_widget
   long_time_tasks_widget();
 
   constexpr static std::string_view name{gui::config::menu_w::long_time_tasks};
-  void init() override;
-  void failed() override;
+  void init();
+  void failed();
   void render() override;
 };
 

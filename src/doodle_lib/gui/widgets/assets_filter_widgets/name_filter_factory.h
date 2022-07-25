@@ -20,7 +20,7 @@ class DOODLELIB_API name_filter_factory : public filter_factory_base {
  protected:
   std::unique_ptr<filter_base> make_filter_() override;
   void refresh_() override;
-  void init() override;
+  void init();
 };
 
 }  // namespace doodle::gui

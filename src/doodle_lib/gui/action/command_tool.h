@@ -48,7 +48,7 @@ class DOODLELIB_API comm_maya_tool
 
   constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
-  void init() override;
+  void init();
   void render() override;
 };
 
@@ -97,7 +97,7 @@ class DOODLELIB_API comm_create_video
   ~comm_create_video() override;
   constexpr static std::string_view name{gui::config::menu_w::comm_create_video};
   bool show{false};
-  [[maybe_unused]] void init() override;
+  void init();
   void render() override;
 };
 namespace comm_create_video_ns {
