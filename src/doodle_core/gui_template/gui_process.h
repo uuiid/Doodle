@@ -213,10 +213,18 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   }
 };
 namespace detail {
-template <typename Executor, typename Process_t>
-class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Executor, Process_t>> {
+template <typename Process_t>
+class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Process_t>> {
+  class rear_adapter_data {
+   public:
+    std::any process;
+    std::function<bool(bool)> abort;
+    std::function<bool()> finished;
+    std::function<bool()> rejected;
+  };
+
   using value_type = process_warp_t<Process_t>;
-  Executor executor;
+  boost::asio::any_io_executor executor;
   value_type process;
 
   using next_type     = std::shared_ptr<void>;
@@ -238,7 +246,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
   //        next_ptr(&next_value),
   //        next_fun_value() {}
 
-  template <typename... Args>
+  template <typename Executor, typename... Args>
   explicit rear_adapter_t(const Executor& in_io, Args&&... in_args)
       : executor(in_io),
         process(Process_t{std::forward<Args>(in_args)...}),
@@ -268,7 +276,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
   }
   template <typename Process_t1, typename Executor1, typename... Args1>
   rear_adapter_t& next(Executor1&& in_io, Args1&&... in_args) {
-    using rear_adapter_type = rear_adapter_t<std::decay_t<Executor1>, Process_t1>;
+    using rear_adapter_type = rear_adapter_t<Process_t1>;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
     rear_adapter_ptr l_ptr  = std::make_shared<rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
@@ -288,7 +296,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t<Execut
 }  // namespace detail
 template <typename Executor, typename Process_t>
 class process_adapter {
-  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<Executor, Process_t>>;
+  using rear_adapter_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t<Process_t>>;
 
   rear_adapter_ptr p_ptr;
 

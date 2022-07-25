@@ -16,8 +16,6 @@ class DOODLELIB_API layout_window
  protected:
   void call_render(const std::string &in_name);
 
-  void clear_windows();
-  void main_render();
  public:
   layout_window();
   ~layout_window() override;
@@ -26,11 +24,5 @@ class DOODLELIB_API layout_window
   void succeeded() override;
   void update(const chrono::system_clock::duration &in_duration,
               void *in_data) override;
-  /**
-   * @brief
-   * @param in_name 需要显示的name
-   * @return 是否显示
-   */
-  std::shared_ptr<windows_proc::warp_proc> render_main(const std::string &in_name);
 };
 }  // namespace doodle::gui

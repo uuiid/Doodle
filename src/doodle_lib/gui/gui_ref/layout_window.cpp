@@ -14,7 +14,6 @@ class layout_window::impl {
   chrono::system_clock::duration duration_{};
   void *data_{};
 
-  std::function<void()> main_render{};
   time_sequencer_widget time_r{};
 
   void builder_dock() {
@@ -115,7 +114,6 @@ void layout_window::init() {
               std::move(l_win)));
     };
   }
-  p_i->main_render = [this]() { call_render(std::string{gui::config::menu_w::assets_file}); };
   g_reg()->ctx().emplace<layout_window &>(*this);
 }
 
@@ -159,52 +157,5 @@ void layout_window::call_render(const std::string &in_name) {
   };
 }
 
-std::shared_ptr<windows_proc::warp_proc>
-layout_window::render_main(const std::string &in_name) {
-  if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
-    l_i->windows_->close();
-    call_render(in_name);
-    clear_windows();
-  }
-
-  auto l_show = std::make_shared<windows_proc::warp_proc>();
-  auto k_list = init_register::instance().get_derived_class<gui::window_panel>();
-
-  auto l_it   = ranges::find_if(k_list, [&](const entt::meta_type &in_item) -> bool {
-    return in_item.prop("name"_hs).value() == in_name;
-  });
-  if (l_it != k_list.end()) {
-    if (auto l_win = l_it->construct(); l_win) {
-      p_i->list_windows[in_name] = std::make_unique<windows_proc>(
-          l_show,
-          l_win.try_cast<base_window>(),
-          std::move(l_win));
-    }
-  }
-
-  if (auto &&l_i = p_i->list_windows[in_name]; l_i) {
-    l_i->windows_->close.connect([this]() {
-      p_i->main_render = [this]() { call_render(std::string{gui::config::menu_w::assets_file}); };
-    });
-    l_show = l_i->warp_proc_;
-  }
-
-  p_i->main_render = [this, l_show, in_name]() {
-    call_render(in_name);
-  };
-  return l_show;
-}
-void layout_window::clear_windows() {
-  for (auto it = p_i->list_windows.begin(); it != p_i->list_windows.end();) {
-    if (!it->second || it->second->finished() || it->second->rejected()) {
-      it = p_i->list_windows.erase(it);
-    } else {
-      ++it;
-    }
-  }
-}
-void layout_window::main_render() {
-  p_i->main_render();
-}
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui
