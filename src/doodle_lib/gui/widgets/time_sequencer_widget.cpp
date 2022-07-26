@@ -585,6 +585,7 @@ class time_sequencer_widget::impl {
 
 time_sequencer_widget::time_sequencer_widget()
     : p_i(std::make_unique<impl>()) {
+  this->title_name_               = std::string{name};
   ImPlot::GetStyle().UseLocalTime = true;
 
   p_i->l_select_conn =
@@ -611,19 +612,7 @@ time_sequencer_widget::time_sequencer_widget()
 
 time_sequencer_widget::~time_sequencer_widget() = default;
 
-void time_sequencer_widget::init() {
-}
-void time_sequencer_widget::succeeded() {
-}
-void time_sequencer_widget::failed() {
-}
-void time_sequencer_widget::aborted() {
-}
-
-void time_sequencer_widget::update(
-    const chrono::duration<chrono::system_clock::rep,
-                           chrono::system_clock::period>&,
-    void* in_data) {
+void time_sequencer_widget::render() {
   ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);

@@ -122,7 +122,7 @@ void layout_window::operator()() {
     call_render<::doodle::assets_filter_widget>();
     call_render<::doodle::gui::csv_export_widgets>();
     call_render<::doodle::comm_maya_tool>();
-    call_render<::doodle::comm_video>();
+    call_render<::doodle::comm_create_video>();
     call_render<::doodle::gui::extract_subtitles_widgets>();
     call_render<::doodle::gui::subtitle_processing>();
     call_render<::doodle::assets_file_widgets>();
