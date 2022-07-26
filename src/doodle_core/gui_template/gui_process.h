@@ -393,5 +393,11 @@ auto make_process_adapter(Executor&& in_io, Args&&... in_args) {
       ::doodle::detail::rear_adapter_t::make_shared<Process_t>(
           std::forward<Executor>(in_io), std::forward<Args>(in_args)...)};
 }
+template <typename Executor, typename Fun_t>
+auto make_process_adapter(Executor&& in_io, Fun_t&& in_args) {
+  return make_process_adapter<lambda_process_warp_t<Fun_t>>(
+      in_io,
+      std::forward<Fun_t>(in_args));
+}
 
 }  // namespace doodle

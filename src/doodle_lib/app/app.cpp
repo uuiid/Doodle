@@ -314,12 +314,12 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  g_main_loop()
-      .attach<gui::layout_window>();
-  g_main_loop()
-      .attach<main_menu_bar>();
-  g_main_loop()
-      .attach<main_status_bar>();
+  boost::asio::post(
+      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
+  boost::asio::post(
+      make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
+  boost::asio::post(
+      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()}));
 }
 app::~app() {
   // Cleanup

@@ -43,7 +43,7 @@ app_base::app_base()
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
   g_bounded_pool().timiter_ = core_set::getSet().p_max_thread;
-  g_pool().post<one_process_t>([this]() {
+  boost::asio::post(g_io_context(), [this]() {
     init_register::instance().reg_class();
     this->load_back_end();
   });
@@ -96,9 +96,7 @@ void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);
   g_pool().abort(in_stop);
-  g_pool().post<one_process_t>([this]() {
-    core_set_init{}.write_file();
-  });
+  core_set_init{}.write_file();
   this->stop_ = true;
 }
 
