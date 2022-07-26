@@ -36,11 +36,11 @@ class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
   friend void from_json(const nlohmann::json& j, base_window& p);
 
  public:
-  using list             = std::set<base_window*>;
-  using window_list      = std::vector<std::shared_ptr<base_window>>;
+  using list        = std::set<base_window*>;
+  using window_list = std::vector<std::shared_ptr<base_window>>;
 
-  base_window()          = default;
-  virtual ~base_window() = default;
+  base_window();
+  virtual ~base_window();
   //  DOODLE_DIS_COPY(base_window)
 
   [[nodiscard]] nlohmann::json& get_setting() const;
