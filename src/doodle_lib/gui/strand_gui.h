@@ -231,6 +231,15 @@ class strand_gui {
       : executor_(in_e),
         impl_(strand_gui::create_implementation(executor_)) {
   }
+  template <typename Executor1>
+  explicit strand_gui(Executor1& in_e,
+                      std::enable_if_t<
+                          !std::is_same_v<Executor1, strand_gui> &&
+                              !std::is_convertible_v<Executor1, Executor>,
+                          bool> = false)
+      : executor_(in_e.get_executor()),
+        impl_(strand_gui::create_implementation(executor_)) {
+  }
 
 #pragma region "复制移动函数"
   /// \brief 复制构造

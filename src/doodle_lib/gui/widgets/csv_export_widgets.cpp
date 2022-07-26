@@ -88,9 +88,11 @@ void csv_export_widgets::render() {
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<FSys::path>();
     boost::asio::post(
-        make_process_adapter<file_dialog>(file_dialog::dialog_args{l_file}
-                                              .set_title("选择目录"s)
-                                              .set_use_dir())
+        make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
+            file_dialog::dialog_args{l_file}
+                .set_title("选择目录"s)
+                .set_use_dir())
             .next([=]() {
               p_i->export_path.path = *l_file / "tmp.csv";
               p_i->export_path.data = p_i->export_path.path.generic_string();

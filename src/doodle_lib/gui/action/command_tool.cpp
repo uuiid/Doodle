@@ -168,6 +168,7 @@ void comm_create_video::render() {
     auto l_ptr = std::make_shared<FSys::path>();
     boost::asio::post(
         make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
             file_dialog::dialog_args{l_ptr}
                 .set_title("选择目录"s)
                 .set_use_dir())
@@ -182,9 +183,11 @@ void comm_create_video::render() {
   if (imgui::Button("选择图片")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     boost::asio::post(
-        make_process_adapter<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                              .set_title("选择序列"s)
-                                              .set_filter(string_list{".png", ".jpg"}))
+        make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
+            file_dialog::dialog_args{l_ptr}
+                .set_title("选择序列"s)
+                .set_filter(string_list{".png", ".jpg"}))
             .next([this, l_ptr]() {
               p_i->image_to_video_list.emplace_back(
                   create_image_to_move_handle(l_ptr->front()),
@@ -196,9 +199,11 @@ void comm_create_video::render() {
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     boost::asio::post(
-        make_process_adapter<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                              .set_title("select dir"s)
-                                              .set_use_dir())
+        make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
+            file_dialog::dialog_args{l_ptr}
+                .set_title("select dir"s)
+                .set_use_dir())
             .next([=]() {
               ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
                 std::vector<FSys::path> list =
@@ -246,9 +251,11 @@ void comm_create_video::render() {
   if (imgui::Button("选择视频")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     boost::asio::post(
-        make_process_adapter<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                              .set_title("select mp4 file"s)
-                                              .add_filter(".mp4"))
+        make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
+            file_dialog::dialog_args{l_ptr}
+                .set_title("select mp4 file"s)
+                .add_filter(".mp4"))
             .next([=]() {
               p_i->video_list |= ranges::action::push_back(
                   *l_ptr |

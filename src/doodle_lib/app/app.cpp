@@ -25,6 +25,8 @@
 #include <implot.h>
 #include <implot_internal.h>
 
+#include <gui/strand_gui.h>
+
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -185,7 +187,9 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);
     boost::asio::post(
-        make_process_adapter<gui::input::get_bool_dialog>(l_quit)
+        make_process_adapter<gui::input::get_bool_dialog>(
+            strand_gui{g_io_context()},
+            l_quit)
             .next([l_quit, this]() {
               if (*l_quit)
                 this->close_windows();

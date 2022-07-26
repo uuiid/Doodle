@@ -68,6 +68,7 @@ void ue4_widget::render() {
     auto l_p = std::make_shared<FSys::path>();
     boost::asio::post(
         make_process_adapter<file_dialog>(
+            strand_gui{g_io_context()},
             file_dialog::dialog_args{l_p}
                 .add_filter(".uproject"s))
             .next([this, l_p]() {
