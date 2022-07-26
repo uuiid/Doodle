@@ -144,7 +144,7 @@ class DOODLELIB_API app : public app_command_base {
 
  public:
   explicit app(const win::wnd_instance& in_instance = nullptr,
-               const win::wnd_handle& in_parent   = nullptr);
+               const win::wnd_handle& in_parent     = nullptr);
 
   ~app() override;
   win::wnd_handle p_hwnd;
@@ -153,8 +153,6 @@ class DOODLELIB_API app : public app_command_base {
 
   static app& Get();
   bool valid() const override;
-
-  void loop_one() override;
 
   void set_title(const std::string& in_title);
 
