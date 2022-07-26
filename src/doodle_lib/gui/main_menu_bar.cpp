@@ -179,17 +179,12 @@ void main_menu_bar::menu_layout() {
   //    };
   //  }
 }
-void main_menu_bar::succeeded() {
-  show_ = true;
-  save_setting();
-}
+
 const std::string &main_menu_bar::title() const {
   static std::string name{"main_menu"};
   return name;
 }
-void main_menu_bar::aborted() {
-  save_setting();
-}
+
 void main_menu_bar::read_setting() {
   if (auto &&l_j = get_setting(); l_j.count("main_menu_bar"))
     l_j["main_menu_bar"].get_to(*this);

@@ -73,6 +73,8 @@ class process_warp_t {
       }
     });
   }
+  template <typename Target = Process_t>
+  auto connect(...) {}
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)

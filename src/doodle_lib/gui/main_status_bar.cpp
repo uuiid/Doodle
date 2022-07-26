@@ -103,19 +103,8 @@ main_status_bar::main_status_bar()
 void main_status_bar::init() {
   g_reg()->ctx().emplace<main_status_bar&>(*this);
 }
-void main_status_bar::succeeded() {
-  g_reg()->ctx().erase<main_status_bar>();
-}
-void main_status_bar::failed() {
-  g_reg()->ctx().erase<main_status_bar>();
-}
-void main_status_bar::aborted() {
-  g_reg()->ctx().erase<main_status_bar>();
-}
-void main_status_bar::update(
-    chrono::duration<chrono::system_clock::rep,
-                     chrono::system_clock::period>,
-    void* data) {
+
+void main_status_bar::operator()(){} {
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
   float height                  = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {

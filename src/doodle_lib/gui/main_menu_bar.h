@@ -24,8 +24,7 @@ class layout_data {
 
 }  // namespace main_menu_bar_ns
 class DOODLELIB_API main_menu_bar
-    : public gui::base_window,
-      public process_t<main_menu_bar> {
+    : public gui::base_window {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -50,8 +49,7 @@ class DOODLELIB_API main_menu_bar
 
   const std::string& title() const override;
   void init();
-  void succeeded();
-  virtual void aborted();
+
   void operator()() override;
 };
 }  // namespace doodle
