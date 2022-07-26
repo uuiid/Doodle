@@ -95,6 +95,8 @@ class DOODLELIB_API modal_window : public base_window {
   modal_window();
   ~modal_window() override = default;
 
+  virtual void succeeded();
+
   void operator()() override;
 };
 

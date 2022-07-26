@@ -10,44 +10,6 @@
 #include <utility>
 
 namespace doodle {
-class get_input_dialog::impl {
- public:
-  explicit impl()
-      : begin_fun(),
-        show(true) {}
-
-  std::vector<std::function<void()>> begin_fun;
-  bool show;
-};
-get_input_dialog::get_input_dialog()
-    : p_i(std::make_unique<impl>()) {
-}
-void get_input_dialog::init() {
-  p_i->begin_fun.emplace_back([]() {
-    imgui::OpenPopup("get_input_dialog");
-    dear::SetNextWindowSize({640, 360});
-  });
-}
-void get_input_dialog::succeeded() {
-  imgui::CloseCurrentPopup();
-}
-void get_input_dialog::failed() {
-  imgui::CloseCurrentPopup();
-}
-void get_input_dialog::aborted() {
-  imgui::CloseCurrentPopup();
-}
-void get_input_dialog::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
-  for (auto &&i : p_i->begin_fun) {
-    i();
-  }
-  p_i->begin_fun.clear();
-
-  dear::PopupModal{"get_input_dialog", &p_i->show} && [this]() {
-    this->render();
-  };
-}
-get_input_dialog::~get_input_dialog() = default;
 
 class get_input_project_dialog::impl {
  public:
@@ -74,23 +36,17 @@ void get_input_project_dialog::render() {
   }
 }
 get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> in_handle)
-    : get_input_dialog(),
-      p_i(std::make_unique<impl>()) {
+    : p_i(std::make_unique<impl>()) {
   p_i->in_path = in_handle;
 }
 get_input_project_dialog::~get_input_project_dialog() = default;
 
 void get_input_project_dialog::succeeded() {
+  gui::modal_window::succeeded();
   g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
   g_reg()->ctx().at<project>()                       = p_i->prj;
-  get_input_dialog::succeeded();
 }
-void get_input_project_dialog::failed() {
-  get_input_dialog::failed();
-}
-void get_input_project_dialog::aborted() {
-  get_input_dialog::aborted();
-}
+
 void get_input_project_dialog::init() {
   p_i->prj.set_path(*p_i->in_path);
 

@@ -74,5 +74,8 @@ void modal_window::operator()() {
     succeed();
   }
 }
+void modal_window::succeeded() {
+  ImGui::CloseCurrentPopup();
+}
 
 }  // namespace doodle::gui

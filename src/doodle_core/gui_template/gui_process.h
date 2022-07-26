@@ -25,11 +25,11 @@ class process_handy_tools {
     p_f = in;
   }
 
-  inline void succeed() const {
+  virtual inline void succeed() const {
     if (p_f)
       p_f(process_state::succeed);
   }
-  inline void fail() const {
+  virtual inline void fail() const {
     if (p_f)
       p_f(process_state::fail);
   }
@@ -135,7 +135,7 @@ class process_warp_t {
   //    connect();
   //  }
 
-  explicit process_warp_t(Process_t&& in_ptr)
+  explicit process_warp_t(std::any&& in_ptr)
       : process_p(std::move(in_ptr)) {
     connect();
   };
@@ -232,7 +232,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
    public:
     template <typename Process_t>
     explicit rear_adapter_data(Process_t&& in)
-        : process(in),
+        : process(std::move(in)),
           abort([this](const bool& in_i) { std::any_cast<Process_t>(process).abort(in_i); }),
           finished([this]() { std::any_cast<Process_t>(process).finished(); }),
           rejected([this]() { std::any_cast<Process_t>(process).rejected(); }),
@@ -314,7 +314,8 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     rear_adapter_ptr l_ptr  = std::make_shared<
         rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
-        Process_t1{std::forward<Args1>(in_args)...});
+        process_warp_t<Process_t1>{
+            std::make_any<Process_t1>(std::forward<Args1>(in_args)...)});
     *next_ptr      = l_ptr;
     next_fun_value = [l_ptr]() { (*l_ptr)(); };
     next_ptr       = &(l_ptr->next_value);
@@ -322,22 +323,13 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   }
   template <typename Executor1, typename Fun_t>
   rear_adapter_t& next_e(Executor1&& in_io, Fun_t in_fun) {
-    return next<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io),
-                                              in_fun);
+    return next_e<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io),
+                                                in_fun);
   }
 
   template <typename Process_t1, typename... Args1>
   rear_adapter_t& next(Args1&&... in_args) {
-    using rear_adapter_type = rear_adapter_t;
-    using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
-    rear_adapter_ptr l_ptr  = std::make_shared<
-        rear_adapter_ptr::element_type>(
-        executor,
-        Process_t1{std::forward<Args1>(in_args)...});
-    *next_ptr      = l_ptr;
-    next_fun_value = [l_ptr]() { (*l_ptr)(); };
-    next_ptr       = &(l_ptr->next_value);
-    return *this;
+    return next_e<Process_t1>(get_executor(), std::forward<Args1>(in_args)...);
   }
   template <typename Fun_t>
   rear_adapter_t& next(Fun_t in_fun) {
@@ -377,7 +369,7 @@ class process_adapter {
     p_ptr->next(std::forward<Args>(in_args)...);
     return *this;
   };
-  void operator()() {
+  void operator()() const {
     (*p_ptr)();
   }
 };

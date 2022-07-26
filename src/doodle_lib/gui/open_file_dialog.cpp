@@ -478,6 +478,7 @@ std::vector<FSys::path> file_panel::get_selects() {
 
   return result;
 }
+file_panel::~file_panel() = default;
 
 file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
     : out_ptr(std::move(in_out_ptr)),

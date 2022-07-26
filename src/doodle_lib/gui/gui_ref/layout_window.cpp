@@ -109,15 +109,6 @@ void layout_window::operator()() {
   p_i->builder_dock();
   if (!p_i->init) {
     /// \brief 这里显示需要的初始化窗口
-
-    //    call_render<::doodle::gui::time_sequencer_widget>();
-
-    strand_gui lgui{g_io_context().get_executor()};
-    boost::asio::strand ls{boost::asio::make_strand(g_io_context())};
-
-    auto l_nh = boost::asio::execution::can_execute<boost::asio::any_io_executor, void()>::value;
-    //    boost::asio::detail::executor_function();
-    boost::asio::any_io_executor l{lgui};
   }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);

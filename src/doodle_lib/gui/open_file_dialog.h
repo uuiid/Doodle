@@ -80,6 +80,7 @@ class DOODLELIB_API file_panel
    * @param in_args 传入的参数类
    */
   explicit file_panel(const dialog_args& in_args);
+  virtual ~file_panel();
 
   [[nodiscard]] std::string& title() const override;
   void init();
