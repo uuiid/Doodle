@@ -40,7 +40,7 @@ class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
 
   base_window()          = default;
   virtual ~base_window() = default;
-  DOODLE_DIS_COPY(base_window)
+  //  DOODLE_DIS_COPY(base_window)
 
   [[nodiscard]] nlohmann::json& get_setting() const;
 

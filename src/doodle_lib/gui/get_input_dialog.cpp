@@ -19,6 +19,8 @@ class get_input_project_dialog::impl {
   std::string path_gui;
   std::string name;
   std::shared_ptr<FSys::path> in_path;
+
+  std::string title{"输入项目"s};
 };
 
 void get_input_project_dialog::render() {
@@ -36,9 +38,10 @@ void get_input_project_dialog::render() {
     close();
   }
 }
+
 get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> in_handle)
     : p_i(std::make_unique<impl>()) {
-  p_i->in_path = in_handle;
+  p_i->in_path = std::move(in_handle);
 }
 get_input_project_dialog::~get_input_project_dialog() = default;
 
@@ -53,12 +56,16 @@ void get_input_project_dialog::init() {
   p_i->path     = *p_i->in_path / ("tmp" + std::string{doodle_config::doodle_db_name});
   p_i->path_gui = p_i->path.generic_string();
 }
+const std::string& get_input_project_dialog::title() const {
+  return p_i->title;
+}
 
 namespace gui::input {
 class get_bool_dialog::impl {
  public:
   explicit impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
   std::shared_ptr<bool> quit_;
+  std::string title{"退出"s};
 };
 void get_bool_dialog::render() {
   ImGui::Text("是否退出?");
@@ -75,8 +82,11 @@ void get_bool_dialog::render() {
     close();
   }
 }
-get_bool_dialog::get_bool_dialog(const std::shared_ptr<bool> &is_quit)
+get_bool_dialog::get_bool_dialog(const std::shared_ptr<bool>& is_quit)
     : p_i(std::make_unique<impl>(is_quit)) {
+}
+const std::string& get_bool_dialog::title() const {
+  return p_i->title;
 }
 
 }  // namespace gui::input

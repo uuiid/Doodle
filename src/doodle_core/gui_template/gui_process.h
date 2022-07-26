@@ -38,6 +38,7 @@ class process_handy_tools {
 template <typename Process_t>
 class process_warp_t {
  protected:
+  std::any owner_p{};
   std::any process_p{};
 
   enum class state : std::uint8_t {
@@ -134,9 +135,14 @@ class process_warp_t {
   //      : process_p(Process_t{std::forward<Args>(in_args)...}) {
   //    connect();
   //  }
+  explicit process_warp_t(Process_t& in_ptr, std::any&& in_owner)
+      : owner_p(std::move(in_owner)),
+        process_p(std::ref(in_ptr)) {
+    connect();
+  };
 
   explicit process_warp_t(std::any&& in_ptr)
-      : process_p(std::move(in_ptr)) {
+      : process_warp_t(std::any_cast<Process_t&>(in_ptr), in_ptr) {
     connect();
   };
 
@@ -311,11 +317,13 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   rear_adapter_t& next_e(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
+    auto l_ptr_owner        = std::make_shared<Process_t1>(std::forward<Args1>(in_args)...);
+
     rear_adapter_ptr l_ptr  = std::make_shared<
         rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
-        process_warp_t<Process_t1>{
-            std::make_any<Process_t1>(std::forward<Args1>(in_args)...)});
+        process_warp_t<Process_t1>{*l_ptr_owner, std::make_any<std::shared_ptr<Process_t1>>(l_ptr_owner)});
+
     *next_ptr      = l_ptr;
     next_fun_value = [l_ptr]() { (*l_ptr)(); };
     next_ptr       = &(l_ptr->next_value);

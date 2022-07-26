@@ -18,8 +18,10 @@ class DOODLELIB_API get_input_project_dialog : public gui::modal_window {
 
  public:
   explicit get_input_project_dialog(std::shared_ptr<FSys::path> in_handle);
+
   ~get_input_project_dialog() override;
   virtual void init();
+  virtual const std::string& title() const override;
   virtual void succeeded();
 };
 
@@ -32,6 +34,7 @@ class DOODLELIB_API get_bool_dialog : public modal_window {
   void render() override;
 
  public:
+  virtual const std::string& title() const override;
   explicit get_bool_dialog(const std::shared_ptr<bool>& is_quit);
 };
 }  // namespace gui::input
