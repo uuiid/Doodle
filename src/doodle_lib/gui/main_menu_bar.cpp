@@ -72,15 +72,15 @@ main_menu_bar::~main_menu_bar() = default;
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
-    g_main_loop()
-        .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                 .set_title("选择目录"s)
-                                 .set_use_dir())
-        .then<get_input_project_dialog>(l_ptr)
-        .then<one_process_t>([]() {
-          database_n::sqlite_client{}
-              .create_sqlite();
-        });
+
+    boost::asio::post(
+        make_process_adapter<file_dialog>(g_io_context().get_executor(),
+                                          file_dialog::dialog_args{l_ptr}
+                                              .set_title("选择目录"s)
+                                              .set_use_dir())
+            .next<get_input_project_dialog>(l_ptr)
+            .next([]() { database_n::sqlite_client{}
+                             .create_sqlite(); }));
   }
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
@@ -153,7 +153,7 @@ void main_menu_bar::init() {
   this->read_setting();
   g_reg()->ctx().emplace<main_menu_bar &>(*this);
 }
-void main_menu_bar::operator()()  {
+void main_menu_bar::operator()() {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };

@@ -311,7 +311,8 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   rear_adapter_t& next(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
-    rear_adapter_ptr l_ptr  = std::make_shared<rear_adapter_ptr::element_type>(
+    rear_adapter_ptr l_ptr  = std::make_shared<
+        rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
         Process_t1{std::forward<Args1>(in_args)...});
     *next_ptr      = l_ptr;

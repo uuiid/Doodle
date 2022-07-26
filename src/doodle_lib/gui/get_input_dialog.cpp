@@ -73,7 +73,7 @@ void get_input_project_dialog::render() {
     succeed();
   }
 }
-get_input_project_dialog::get_input_project_dialog(const std::shared_ptr<FSys::path> &in_handle)
+get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> in_handle)
     : get_input_dialog(),
       p_i(std::make_unique<impl>()) {
   p_i->in_path = in_handle;

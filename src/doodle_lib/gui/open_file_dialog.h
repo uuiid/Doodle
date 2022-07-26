@@ -12,8 +12,7 @@ namespace doodle {
  * @brief
  */
 class DOODLELIB_API file_panel
-    : public gui::modal_window,
-      public process_t<file_panel> {
+    : public gui::modal_window {
   class impl;
   class path_info;
   enum class sort_by : std::int16_t {

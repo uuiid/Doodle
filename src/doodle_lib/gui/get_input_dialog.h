@@ -32,8 +32,7 @@ class DOODLELIB_API get_input_project_dialog : public get_input_dialog {
   void render() override;
 
  public:
-  explicit get_input_project_dialog(const std::shared_ptr<FSys::path>& in_handle);
-
+  explicit get_input_project_dialog(std::shared_ptr<FSys::path> in_handle);
   ~get_input_project_dialog() override;
   virtual void init();
   virtual void succeeded();

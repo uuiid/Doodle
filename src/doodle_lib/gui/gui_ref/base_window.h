@@ -27,6 +27,7 @@ namespace doodle::gui {
 class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
  protected:
   std::vector<std::function<void()>> begin_fun{};
+  std::vector<boost::signals2::scoped_connection> sig_scoped{};
 
   bool show_{true};
 

@@ -171,8 +171,7 @@ void strand_gui_executor_service::do_execute(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.emplace_back(std::move(function));
-  return;
+  impl->handlers_next.push_back(std::function<void()>{std::move(function)});
 }
 // Request invocation of the given function.
 template <typename Executor, typename Function, typename Allocator>
@@ -267,7 +266,7 @@ class strand_gui {
       BOOST_ASIO_NOEXCEPT_IF((
           boost::asio::is_nothrow_query<const Executor&, Property>::value)) {
     return this->query_helper(
-        std::is_convertible_v<Property, boost::asio::execution::blocking_t>(), p);
+        std::is_convertible<Property, boost::asio::execution::blocking_t>(), p);
   }
 
   template <typename Property>
