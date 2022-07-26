@@ -360,7 +360,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
 class process_adapter {
  public:
   using rear_adapter_ptr      = std::shared_ptr<::doodle::detail::rear_adapter_t>;
-  using rear_adapter_wark_ptr = std::shared_ptr<::doodle::detail::rear_adapter_t>;
+  using rear_adapter_weak_ptr = std::weak_ptr<::doodle::detail::rear_adapter_t>;
 
   rear_adapter_ptr p_ptr;
   using executor_type = boost::asio::any_io_executor;

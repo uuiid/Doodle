@@ -12,7 +12,7 @@ namespace doodle::gui {
 class layout_window::impl {
  public:
   impl() = default;
-  std::map<std::string, ::doodle::process_adapter::rear_adapter_wark_ptr> list_windows{};
+  std::map<std::string, ::doodle::process_adapter::rear_adapter_weak_ptr> list_windows{};
 
   bool init{false};
 
@@ -131,6 +131,12 @@ void layout_window::operator()() {
   //  dear::Begin{menu_w::time_edit.data()} && [&, this]() {
   //    p_i->time_r.tick({}, {});
   //  };
+}
+void layout_window::add_windows(const std::string &in_name, process_adapter::rear_adapter_weak_ptr in_ptr) {
+  p_i->list_windows[in_name] = in_ptr;
+}
+bool layout_window::has_windows(const std::string &in_name) {
+  return !p_i->list_windows[in_name].expired();
 }
 // template <typename windows_type>
 // void layout_window::call_render() {
