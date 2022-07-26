@@ -20,13 +20,6 @@ long_time_tasks_widget::long_time_tasks_widget()
   title_name_ = std::string{name};
 }
 
-void long_time_tasks_widget::init() {
-  gui::window_panel::init();
-}
-
-void long_time_tasks_widget::failed() {
-}
-
 void long_time_tasks_widget::render() {
   static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable |
@@ -69,7 +62,6 @@ void long_time_tasks_widget::render() {
       ImGui::TableNextColumn();
       if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str()))
         msg.aborted_function();
-
     }
   };
   dear::Text("主要日志"s);

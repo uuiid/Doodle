@@ -570,8 +570,6 @@ edit_widgets::edit_widgets()
 edit_widgets::~edit_widgets() = default;
 
 void edit_widgets::init() {
-  window_panel::init();
-
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().at<core_sig>();
   p_i->p_sc.emplace_back(l_sig.select_handles.connect(

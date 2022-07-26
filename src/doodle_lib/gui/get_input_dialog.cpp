@@ -92,7 +92,6 @@ void get_input_project_dialog::aborted() {
   get_input_dialog::aborted();
 }
 void get_input_project_dialog::init() {
-  get_input_dialog::init();
   p_i->prj.set_path(*p_i->in_path);
 
   p_i->path     = *p_i->in_path / ("tmp" + std::string{doodle_config::doodle_db_name});

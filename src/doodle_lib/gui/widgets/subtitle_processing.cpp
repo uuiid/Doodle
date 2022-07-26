@@ -70,8 +70,6 @@ subtitle_processing::subtitle_processing()
   title_name_ = std::string{name};
 }
 void subtitle_processing::init() {
-  window_panel::init();
-
   this->sig_scoped.emplace_back(
       g_reg()->ctx().at<core_sig>().select_handles.connect(
           [this](const std::vector<entt::handle>& in_vector) {

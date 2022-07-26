@@ -58,7 +58,6 @@ dem_cloth_to_fbx::dem_cloth_to_fbx()
     : p_i(std::make_unique<impl>()) {
 }
 void dem_cloth_to_fbx::init() {
-  window_panel::init();
   p_i->startFrame_p = MAnimControl::minTime().value();
   p_i->endFrame_p   = MAnimControl::maxTime().value();
 }

@@ -457,7 +457,6 @@ assets_filter_widget::assets_filter_widget()
 assets_filter_widget::~assets_filter_widget() = default;
 
 void assets_filter_widget::init() {
-  gui::window_panel::init();
   g_reg()->ctx().emplace<assets_filter_widget&>(*this);
 
   p_impl->p_filter_factorys.emplace_back(false, "路径过滤"s, std::make_unique<file_path_filter_factory>());

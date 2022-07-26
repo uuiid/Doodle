@@ -60,7 +60,7 @@ class DOODLELIB_API setting_windows : public gui::window_panel {
 
   constexpr static std::string_view name{gui::config::menu_w::setting};
   void init();
-  void succeeded();
+
   void render() override;
 
   void save();

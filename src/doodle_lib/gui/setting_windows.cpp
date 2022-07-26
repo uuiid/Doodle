@@ -64,7 +64,6 @@ void setting_windows::save() {
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  gui::window_panel::init();
   p_i->p_user.data                     = core_set::getSet().get_user();
   p_i->p_org_name.data                 = core_set::getSet().organization_name;
   p_i->p_cache.data                    = core_set::getSet().get_cache_root().generic_string();
@@ -77,9 +76,7 @@ void setting_windows::init() {
   p_i->p_maya_replace_save_dialog.data = core_set::getSet().maya_replace_save_dialog;
   p_i->p_maya_force_resolve_link.data  = core_set::getSet().maya_force_resolve_link;
 }
-void setting_windows::succeeded() {
-  gui::window_panel::succeeded();
-}
+
 
 void setting_windows::render() {
   ImGui::InputText(*p_i->p_org_name.gui_name, &p_i->p_org_name.data);

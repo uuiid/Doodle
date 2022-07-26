@@ -35,10 +35,8 @@ comm_maya_tool::comm_maya_tool()
   title_name_ = std::string{name};
 }
 void comm_maya_tool::init() {
-  gui::window_panel::init();
-
   g_reg()->ctx().at<core_sig>().project_end_open.connect(
-      [this]( ) {
+      [this]() {
         p_text = g_reg()->ctx().at<project_config::base_config>().vfx_cloth_sim_path.generic_string();
       });
   g_reg()->ctx().at<core_sig>().select_handles.connect(
@@ -154,7 +152,6 @@ comm_create_video::comm_create_video()
   title_name_ = std::string{name};
 }
 void comm_create_video::init() {
-  gui::window_panel::init();
   p_i->out_video_h = make_handle();
 
   g_reg()->ctx().emplace<comm_create_video&>(*this);
@@ -171,8 +168,8 @@ void comm_create_video::render() {
     auto l_ptr = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                                   .set_title("选择目录"s)
-                                   .set_use_dir())
+                                 .set_title("选择目录"s)
+                                 .set_use_dir())
         .then<one_process_t>([this, l_ptr]() {
           p_i->out_path.data = l_ptr->generic_string();
           ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
@@ -185,8 +182,8 @@ void comm_create_video::render() {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("选择序列"s)
-                               .set_filter(string_list{".png", ".jpg"}))
+                                 .set_title("选择序列"s)
+                                 .set_filter(string_list{".png", ".jpg"}))
         .then<one_process_t>([this, l_ptr]() {
           p_i->image_to_video_list.emplace_back(
               create_image_to_move_handle(l_ptr->front()),
@@ -199,8 +196,8 @@ void comm_create_video::render() {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("select dir"s)
-                               .set_use_dir())
+                                 .set_title("select dir"s)
+                                 .set_use_dir())
         .then<one_process_t>([=]() {
           ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
             std::vector<FSys::path> list =
@@ -249,8 +246,8 @@ void comm_create_video::render() {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
     g_main_loop()
         .attach<file_dialog>(file_dialog::dialog_args{l_ptr}
-                               .set_title("select mp4 file"s)
-                               .add_filter(".mp4"))
+                                 .set_title("select mp4 file"s)
+                                 .add_filter(".mp4"))
         .then<one_process_t>([=]() {
           p_i->video_list |= ranges::action::push_back(
               *l_ptr |

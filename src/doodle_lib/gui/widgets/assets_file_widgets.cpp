@@ -193,8 +193,6 @@ void assets_file_widgets::refresh(const std::vector<entt::handle>& in_list) {
 }
 
 void assets_file_widgets::init() {
-  gui::window_panel::init();
-
   g_reg()->ctx().emplace<assets_file_widgets&>(*this);
   auto& l_sig = g_reg()->ctx().at<core_sig>();
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect(

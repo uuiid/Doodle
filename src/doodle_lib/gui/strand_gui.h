@@ -396,9 +396,7 @@ class strand_gui {
 };
 }  // namespace doodle
 
-namespace boost {
-namespace asio {
-namespace traits {
+namespace boost::asio::traits {
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
 
@@ -446,6 +444,4 @@ struct query_static_constexpr_member<::doodle::strand_gui, Property,
 
 #endif  // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
 
-}  // namespace traits
-}  // namespace asio
 }  // namespace boost

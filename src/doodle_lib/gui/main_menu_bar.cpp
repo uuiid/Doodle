@@ -153,9 +153,7 @@ void main_menu_bar::init() {
   this->read_setting();
   g_reg()->ctx().emplace<main_menu_bar &>(*this);
 }
-void main_menu_bar::update(
-    const chrono::system_clock::duration &in_duration,
-    void *in_data) {
+void main_menu_bar::operator()()  {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };

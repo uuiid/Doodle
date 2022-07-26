@@ -83,11 +83,10 @@ void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file
 
   if (!FSys::exists(out_subtitles_file.parent_path()))
     FSys::create_directories(out_subtitles_file.parent_path());
-  DOODLE_LOG_INFO("输出文件 {}",out_subtitles_file);
+  DOODLE_LOG_INFO("输出文件 {}", out_subtitles_file);
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_subtitles, "\n\n"));
 }
 void extract_subtitles_widgets::init() {
-  window_panel::init();
   g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
     p_i->file_list_.data =
         in_list |

@@ -52,7 +52,6 @@ ue4_widget::ue4_widget()
 ue4_widget::~ue4_widget() = default;
 
 void ue4_widget::init() {
-  gui::window_panel::init();
   p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
   p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
   p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
@@ -69,8 +68,8 @@ void ue4_widget::render() {
     auto l_p = std::make_shared<FSys::path>();
     g_main_loop()
         .attach<file_dialog>(
-                     file_dialog::dialog_args{l_p}
-                         .add_filter(".uproject"s))
+            file_dialog::dialog_args{l_p}
+                .add_filter(".uproject"s))
         .then<one_process_t>([this, l_p]() {
           this->p_i->ue4_prj.data = l_p->generic_string();
           this->p_i->ue4_prj.path = *l_p;
