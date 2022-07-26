@@ -8,6 +8,15 @@
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 
 #include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
+#include <doodle_lib/gui/widgets/csv_export_widgets.h>
+#include <doodle_lib/gui/action/command_tool.h>
+#include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
+#include <doodle_lib/gui/widgets/subtitle_processing.h>
+#include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+#include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 namespace doodle::gui {
 class layout_window::impl {
  public:
@@ -109,6 +118,16 @@ void layout_window::operator()() {
   p_i->builder_dock();
   if (!p_i->init) {
     /// \brief 这里显示需要的初始化窗口
+    call_render<::doodle::edit_widgets>();
+    call_render<::doodle::assets_filter_widget>();
+    call_render<::doodle::gui::csv_export_widgets>();
+    call_render<::doodle::comm_maya_tool>();
+    call_render<::doodle::comm_video>();
+    call_render<::doodle::gui::extract_subtitles_widgets>();
+    call_render<::doodle::gui::subtitle_processing>();
+    call_render<::doodle::assets_file_widgets>();
+    call_render<::doodle::long_time_tasks_widget>();
+    call_render<::doodle::gui::time_sequencer_widget>();
   }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);
