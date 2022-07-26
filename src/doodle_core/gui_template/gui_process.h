@@ -11,6 +11,11 @@
 #include <utility>
 
 namespace doodle {
+
+class any_ptr {
+ public:
+};
+
 enum class process_state : std::uint8_t {
   run = 1,
   succeed,
@@ -38,8 +43,8 @@ class process_handy_tools {
 template <typename Process_t>
 class process_warp_t {
  protected:
-  std::any owner_p{};
-  std::reference_wrapper<Process_t> process_p{};
+  std::shared_ptr<void> owner_p;
+  std::reference_wrapper<Process_t> process_p;
 
   enum class state : std::uint8_t {
     uninitialized = 0,
@@ -84,8 +89,8 @@ class process_warp_t {
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
-      -> decltype(std::declval<Target>().update(), void()) {
-    process_p.get().update();
+      -> decltype(std::declval<Target>()(), void()) {
+    process_p.get()();
   }
 
   template <typename Target = Process_t>
@@ -137,11 +142,38 @@ class process_warp_t {
   //      : process_p(Process_t{std::forward<Args>(in_args)...}) {
   //    connect();
   //  }
-  explicit process_warp_t(Process_t& in_ptr, std::any&& in_owner)
+  explicit process_warp_t(Process_t& in_ptr, std::shared_ptr<void>&& in_owner)
       : owner_p(std::move(in_owner)),
         process_p(std::ref(in_ptr)) {
     connect();
   };
+
+  process_warp_t(const process_warp_t& in_other) noexcept
+      : owner_p(in_other.owner_p),
+        process_p(in_other.process_p),
+        current(in_other.current) {
+    connect();
+  }
+  process_warp_t& operator=(const process_warp_t& in_other) noexcept {
+    owner_p   = in_other.owner_p;
+    process_p = in_other.process_p;
+    current   = in_other.current;
+    connect();
+    return *this;
+  }
+  process_warp_t(process_warp_t&& in_other) noexcept
+      : owner_p(std::move(in_other.owner_p)),
+        process_p(std::move(in_other.process_p)),
+        current(std::move(in_other.current)) {
+    connect();
+  }
+  process_warp_t& operator=(process_warp_t&& in_other) noexcept {
+    owner_p   = std::move(in_other.owner_p);
+    process_p = std::move(in_other.process_p);
+    current   = std::move(in_other.current);
+    connect();
+    return *this;
+  }
 
   explicit process_warp_t(std::any&& in_ptr)
       : process_warp_t(std::any_cast<Process_t&>(in_ptr), in_ptr) {
@@ -182,7 +214,8 @@ class process_warp_t {
         current = state::running;
         break;
       case state::running:
-        next(std::integral_constant<state, state::running>{});
+        //        next(std::integral_constant<state, state::running>{});
+        process_p();
         break;
       default:
         // suppress warnings
@@ -216,7 +249,7 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   template <typename... Args>
   explicit lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
-  void update() {
+  void operator()() {
     Lambda_Process::operator()();
     this->succeed();
   }
@@ -324,7 +357,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     rear_adapter_ptr l_ptr  = std::make_shared<
         rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
-        process_warp_t<Process_t1>{*l_ptr_owner, std::make_any<std::shared_ptr<Process_t1>>(l_ptr_owner)});
+        process_warp_t<Process_t1>{*l_ptr_owner, l_ptr_owner});
     return l_ptr;
   };
 

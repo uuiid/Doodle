@@ -13,7 +13,9 @@ std::multimap<std::int32_t, std::function<void()>>& init_register::registered_fu
 }
 void init_register::reg_class() {
   auto l_next = make_process_adapter(g_io_context().get_executor(),
-                                     []() { DOODLE_LOG_INFO("开始反射注册"); });
+                                     []() {
+                                       DOODLE_LOG_INFO("开始反射注册");
+                                     });
 
   auto& l_map = registered_functions();
   for (auto it = l_map.begin(), end = l_map.end();
