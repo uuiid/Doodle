@@ -308,7 +308,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     });
   }
   template <typename Process_t1, typename Executor1, typename... Args1>
-  rear_adapter_t& next(Executor1&& in_io, Args1&&... in_args) {
+  rear_adapter_t& next_e(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
     rear_adapter_ptr l_ptr  = std::make_shared<
@@ -321,7 +321,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     return *this;
   }
   template <typename Executor1, typename Fun_t>
-  rear_adapter_t& next(Executor1&& in_io, Fun_t in_fun) {
+  rear_adapter_t& next_e(Executor1&& in_io, Fun_t in_fun) {
     return next<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io),
                                               in_fun);
   }
