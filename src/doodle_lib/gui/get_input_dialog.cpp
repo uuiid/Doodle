@@ -82,8 +82,8 @@ void get_bool_dialog::render() {
     close();
   }
 }
-get_bool_dialog::get_bool_dialog(const std::shared_ptr<bool>& is_quit)
-    : p_i(std::make_unique<impl>(is_quit)) {
+get_bool_dialog::get_bool_dialog(std::shared_ptr<bool> is_quit)
+    : p_i(std::make_unique<impl>(std::move(is_quit))) {
 }
 const std::string& get_bool_dialog::title() const {
   return p_i->title;

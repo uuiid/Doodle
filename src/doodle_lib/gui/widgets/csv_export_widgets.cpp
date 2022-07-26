@@ -87,14 +87,14 @@ void csv_export_widgets::render() {
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<FSys::path>();
-    g_main_loop()
-        .attach<file_dialog>(file_dialog::dialog_args{l_file}
-                               .set_title("选择目录"s)
-                               .set_use_dir())
-        .then<one_process_t>([=]() {
-          p_i->export_path.path = *l_file / "tmp.csv";
-          p_i->export_path.data = p_i->export_path.path.generic_string();
-        });
+    boost::asio::post(
+        make_process_adapter<file_dialog>(file_dialog::dialog_args{l_file}
+                                              .set_title("选择目录"s)
+                                              .set_use_dir())
+            .next([=]() {
+              p_i->export_path.path = *l_file / "tmp.csv";
+              p_i->export_path.data = p_i->export_path.path.generic_string();
+            }));
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
   ImGui::Checkbox(*p_i->average_time.gui_name, &p_i->average_time.data);

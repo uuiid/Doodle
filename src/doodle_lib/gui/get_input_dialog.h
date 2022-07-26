@@ -35,7 +35,7 @@ class DOODLELIB_API get_bool_dialog : public modal_window {
 
  public:
   virtual const std::string& title() const override;
-  explicit get_bool_dialog(const std::shared_ptr<bool>& is_quit);
+  explicit get_bool_dialog(std::shared_ptr<bool> is_quit);
 };
 }  // namespace gui::input
 }  // namespace doodle

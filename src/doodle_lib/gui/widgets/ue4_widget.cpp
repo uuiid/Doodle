@@ -66,15 +66,15 @@ void ue4_widget::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->open_file_dig)) {
     auto l_p = std::make_shared<FSys::path>();
-    g_main_loop()
-        .attach<file_dialog>(
+    boost::asio::post(
+        make_process_adapter<file_dialog>(
             file_dialog::dialog_args{l_p}
                 .add_filter(".uproject"s))
-        .then<one_process_t>([this, l_p]() {
-          this->p_i->ue4_prj.data = l_p->generic_string();
-          this->p_i->ue4_prj.path = *l_p;
-          p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
-        });
+            .next([this, l_p]() {
+              this->p_i->ue4_prj.data = l_p->generic_string();
+              this->p_i->ue4_prj.path = *l_p;
+              p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
+            }));
   }
   /// 列出文件
   dear::ListBox{*p_i->import_list_files.gui_name} && [this]() {

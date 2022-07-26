@@ -184,12 +184,12 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);
-    g_main_loop()
-        .attach<gui::input::get_bool_dialog>(l_quit)
-        .then<one_process_t>([l_quit, this]() {
-          if (*l_quit)
-            this->close_windows();
-        });
+    boost::asio::post(
+        make_process_adapter<gui::input::get_bool_dialog>(l_quit)
+            .next([l_quit, this]() {
+              if (*l_quit)
+                this->close_windows();
+            }));
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
