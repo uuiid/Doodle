@@ -239,15 +239,15 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     template <typename Process_t>
     explicit rear_adapter_data(Process_t&& in)
         : process(std::move(in)),
-          abort([this](const bool& in_i) { std::any_cast<Process_t>(process).abort(in_i); }),
-          finished([this]() { std::any_cast<Process_t>(process).finished(); }),
-          rejected([this]() { std::any_cast<Process_t>(process).rejected(); }),
-          alive([this]() { std::any_cast<Process_t>(process).alive(); }),
-          ob([this]() { std::any_cast<Process_t>(process)(); }) {
+          abort([this](const bool& in_i) { std::any_cast<Process_t&>(process).abort(in_i); }),
+          finished([this]() -> bool { return std::any_cast<Process_t&>(process).finished(); }),
+          rejected([this]() -> bool { return std::any_cast<Process_t&>(process).rejected(); }),
+          alive([this]() -> bool { return std::any_cast<Process_t&>(process).alive(); }),
+          ob([this]() { std::any_cast<Process_t&>(process)(); }) {
     }
 
     std::any process;
-    std::function<bool(bool)> abort;
+    std::function<void(bool)> abort;
     std::function<bool()> finished;
     std::function<bool()> rejected;
     std::function<bool()> alive;
@@ -314,7 +314,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     });
   }
   template <typename Process_t1, typename Executor1, typename... Args1>
-  rear_adapter_t& next_e(Executor1&& in_io, Args1&&... in_args) {
+  static std::shared_ptr<rear_adapter_t> make_shared(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;
     using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
     auto l_ptr_owner        = std::make_shared<Process_t1>(std::forward<Args1>(in_args)...);
@@ -323,7 +323,12 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
         rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
         process_warp_t<Process_t1>{*l_ptr_owner, std::make_any<std::shared_ptr<Process_t1>>(l_ptr_owner)});
+    return l_ptr;
+  };
 
+  template <typename Process_t1, typename Executor1, typename... Args1>
+  rear_adapter_t& next_e(Executor1&& in_io, Args1&&... in_args) {
+    auto l_ptr     = make_shared<Process_t1>(in_io, std::forward<Args1>(in_args)...);
     *next_ptr      = l_ptr;
     next_fun_value = [l_ptr]() { (*l_ptr)(); };
     next_ptr       = &(l_ptr->next_value);
@@ -385,7 +390,7 @@ class process_adapter {
 template <typename Process_t, typename Executor, typename... Args>
 auto make_process_adapter(Executor&& in_io, Args&&... in_args) {
   return process_adapter{
-      std::make_shared<::doodle::detail::rear_adapter_t>(
-          std::forward<Executor>(in_io), Process_t{std::forward<Args>(in_args)...})};
+      ::doodle::detail::rear_adapter_t::make_shared<Process_t>(
+          std::forward<Executor>(in_io), std::forward<Args>(in_args)...)};
 }
 }  // namespace doodle

@@ -171,7 +171,9 @@ void strand_gui_executor_service::do_execute(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.push_back(std::function<void()>{std::move(function)});
+  using function_type = typename std::decay_t<Function>;
+  auto l_ptr          = std::make_shared<function_type>(std::move(function));
+  impl->handlers_next.emplace_back([fun = l_ptr]() { (*fun)(); });
 }
 // Request invocation of the given function.
 template <typename Executor, typename Function, typename Allocator>
@@ -179,7 +181,9 @@ void strand_gui_executor_service::dispatch(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.emplace_back(std::move(function));
+  using function_type = typename std::decay_t<Function>;
+  auto l_ptr          = std::make_shared<function_type>(std::move(function));
+  impl->handlers_next.emplace_back([fun = l_ptr]() { (*fun)(); });
 }
 
 // Request invocation of the given function and return immediately.
@@ -188,7 +192,9 @@ void strand_gui_executor_service::post(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.emplace_back(std::move(function));
+  using function_type = typename std::decay_t<Function>;
+  auto l_ptr          = std::make_shared<function_type>(std::move(function));
+  impl->handlers_next.emplace_back([fun = l_ptr]() { (*fun)(); });
 }
 
 // Request invocation of the given function and return immediately.
@@ -197,7 +203,9 @@ void strand_gui_executor_service::defer(
     const implementation_type& impl, Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function, const Allocator& a) {
   std::lock_guard l_k{*(impl->mutex_)};
-  impl->handlers_next.emplace_back(std::move(function));
+  using function_type = typename std::decay_t<Function>;
+  auto l_ptr          = std::make_shared<function_type>(std::move(function));
+  impl->handlers_next.emplace_back([fun = l_ptr]() { (*fun)(); });
 }
 }  // namespace detail
 
@@ -304,9 +312,9 @@ class strand_gui {
   void on_work_finished() const BOOST_ASIO_NOEXCEPT;
 
   template <typename Function>
-//  typename std::enable_if_t<
-//      boost::asio::execution::can_execute<executor_type, Function>::value,
-//      void>
+  //  typename std::enable_if_t<
+  //      boost::asio::execution::can_execute<executor_type, Function>::value,
+  //      void>
   void execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
     return detail::strand_gui_executor_service::execute(
         impl_,
@@ -443,4 +451,4 @@ struct query_static_constexpr_member<::doodle::strand_gui, Property,
 
 #endif  // !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
 
-}  // namespace boost
+}  // namespace boost::asio::traits
