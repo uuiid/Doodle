@@ -83,7 +83,6 @@ class DOODLELIB_API window_panel : public base_window {
   ~window_panel() override = default;
 
   [[nodiscard]] const std::string& title() const override;
-
   void operator()() override;
 };
 
@@ -95,14 +94,11 @@ class DOODLELIB_API modal_window : public base_window {
   modal_window();
   ~modal_window() override = default;
 
-  virtual void succeeded();
-
   void operator()() override;
 };
 
-template <typename Windows_Type, typename ...Args>
+template <typename Windows_Type, typename... Args>
 auto show_windows() {
-
 }
 
 namespace base_windows_ns {

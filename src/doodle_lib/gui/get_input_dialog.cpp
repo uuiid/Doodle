@@ -33,6 +33,7 @@ void get_input_project_dialog::render() {
 
   if (imgui::Button("ok")) {
     succeed();
+    close();
   }
 }
 get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> in_handle)
@@ -42,7 +43,6 @@ get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> i
 get_input_project_dialog::~get_input_project_dialog() = default;
 
 void get_input_project_dialog::succeeded() {
-  gui::modal_window::succeeded();
   g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
   g_reg()->ctx().at<project>()                       = p_i->prj;
 }
@@ -66,11 +66,13 @@ void get_bool_dialog::render() {
   if (ImGui::Button("yes")) {
     *p_i->quit_ = true;
     succeed();
+    close();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     *p_i->quit_ = false;
-    succeed();
+    this->fail();
+    close();
   }
 }
 get_bool_dialog::get_bool_dialog(const std::shared_ptr<bool> &is_quit)

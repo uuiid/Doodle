@@ -59,6 +59,7 @@ modal_window::modal_window() {
     ImGui::OpenPopup(title().data());
     ImGui::SetNextWindowSize({640, 360});
   });
+  close.connect([this]() { ImGui::CloseCurrentPopup(); });
 }
 void modal_window::operator()() {
   for (auto &&i : begin_fun) {
@@ -73,9 +74,6 @@ void modal_window::operator()() {
   if (!show_) {
     succeed();
   }
-}
-void modal_window::succeeded() {
-  ImGui::CloseCurrentPopup();
 }
 
 }  // namespace doodle::gui
