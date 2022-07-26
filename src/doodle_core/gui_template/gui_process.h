@@ -326,6 +326,25 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
                                               in_fun);
   }
 
+  template <typename Process_t1, typename... Args1>
+  rear_adapter_t& next(Args1&&... in_args) {
+    using rear_adapter_type = rear_adapter_t;
+    using rear_adapter_ptr  = std::shared_ptr<rear_adapter_type>;
+    rear_adapter_ptr l_ptr  = std::make_shared<
+        rear_adapter_ptr::element_type>(
+        executor,
+        Process_t1{std::forward<Args1>(in_args)...});
+    *next_ptr      = l_ptr;
+    next_fun_value = [l_ptr]() { (*l_ptr)(); };
+    next_ptr       = &(l_ptr->next_value);
+    return *this;
+  }
+  template <typename Fun_t>
+  rear_adapter_t& next(Fun_t in_fun) {
+    return next<lambda_process_warp_t<Fun_t>>(
+        in_fun);
+  }
+
   inline explicit operator bool() const {
     return process.process.has_value() && !process.rejected();
   }
