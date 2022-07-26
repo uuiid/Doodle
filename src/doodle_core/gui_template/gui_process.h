@@ -39,7 +39,7 @@ template <typename Process_t>
 class process_warp_t {
  protected:
   std::any owner_p{};
-  std::any process_p{};
+  std::reference_wrapper<Process_t> process_p{};
 
   enum class state : std::uint8_t {
     uninitialized = 0,
@@ -58,7 +58,7 @@ class process_warp_t {
       -> decltype(std::declval<Target>().connect(
                       std::declval<std::function<void(process_state)>>()),
                   void()) {
-    std::any_cast<Target&>(process_p).connect([this](process_state in_) {
+    process_p.get().connect([this](process_state in_) {
       switch (in_) {
         case process_state::run: {
         } break;
@@ -79,31 +79,31 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
       -> decltype(std::declval<Target>().init(), void()) {
-    std::any_cast<Target&>(process_p).init();
+    process_p.get().init();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>().update(), void()) {
-    std::any_cast<Target&>(process_p).update();
+    process_p.get().update();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::succeeded>)
       -> decltype(std::declval<Target>().succeeded(), void()) {
-    std::any_cast<Target&>(process_p).succeeded();
+    process_p.get().succeeded();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::failed>)
       -> decltype(std::declval<Target>().failed(), void()) {
-    std::any_cast<Target&>(process_p).failed();
+    process_p.get().failed();
   }
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::aborted>)
       -> decltype(std::declval<Target>().aborted(), void()) {
-    std::any_cast<Target&>(process_p).aborted();
+    process_p.get().aborted();
   }
 
   template <typename Target = Process_t>

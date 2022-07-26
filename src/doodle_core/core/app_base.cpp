@@ -96,6 +96,7 @@ void app_base::stop_app(bool in_stop) {
   g_main_loop().abort(in_stop);
   g_bounded_pool().abort(in_stop);
   g_pool().abort(in_stop);
+
   core_set_init{}.write_file();
   this->stop_ = true;
 }
