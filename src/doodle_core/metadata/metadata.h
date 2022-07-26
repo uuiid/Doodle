@@ -54,8 +54,6 @@ using data_status_delete = entt::tag<"data_status_delete"_hs>;
 
 class DOODLE_CORE_EXPORT database {
  private:
-  friend class database_task_install;
-
   friend class database_n::insert;
   friend class database_n::select;
   friend class database_n::update_data;

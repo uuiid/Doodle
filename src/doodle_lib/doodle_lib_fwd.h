@@ -41,16 +41,11 @@ class core_sig;
 class app;
 class program_options;
 class logger_ctrl;
-class comm_video;
 class short_cut;
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;
-class database_task_select;
-class database_task_update;
-class database_task_delete;
-class database_task_install;
-class database_task_obs;
+
 class strand_gui;
 
 strand_gui g_strand_gui();
