@@ -1,6 +1,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/configure/static_value.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
 namespace doodle::gui {
@@ -13,7 +14,7 @@ class DOODLELIB_API time_sequencer_widget
   time_sequencer_widget();
   ~time_sequencer_widget() override;
 
-  constexpr static std::string_view name{"时间序列"};
+  constexpr static std::string_view name = config::menu_w::time_edit;
 
   void render() override;
 };
