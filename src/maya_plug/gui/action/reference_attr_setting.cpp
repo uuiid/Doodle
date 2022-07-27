@@ -195,7 +195,13 @@ void reference_attr_setting::render() {
         }
       } else {
         if (ImGui::Button("添加配置")) {
-          p_i->p_current_select.emplace<sim_cover_attr>();
+          auto& l_value           = p_i->p_current_select.emplace<sim_cover_attr>();
+          p_i->simple_subsampling = l_value.simple_subsampling;
+          p_i->frame_samples      = l_value.frame_samples;
+          p_i->time_scale         = l_value.time_scale;
+          p_i->length_scale       = l_value.length_scale;
+          p_i->max_cg_iteration   = l_value.max_cg_iteration;
+          p_i->cg_accuracy        = l_value.cg_accuracy;
         }
       }
     }
