@@ -51,6 +51,15 @@ class reference_attr_setting::impl {
   ::doodle::gui::gui_cache<std::int32_t> max_cg_iteration{"max CGIteration"s, 1000};
   ::doodle::gui::gui_cache<std::int32_t> cg_accuracy{"cg accuracy"s, 9};
   ::doodle::gui::gui_cache<std::array<std::float_t, 3>> gravity{"gravity"s, std::array<std::float_t, 3>{0.0f, -980.0f, 0.0f}};
+
+  void refresh_gui_value(const sim_cover_attr& in_value) {
+    simple_subsampling = in_value.simple_subsampling;
+    frame_samples      = in_value.frame_samples;
+    time_scale         = in_value.time_scale;
+    length_scale       = in_value.length_scale;
+    max_cg_iteration   = in_value.max_cg_iteration;
+    cg_accuracy        = in_value.cg_accuracy;
+  }
 };
 
 reference_attr_setting::reference_attr_setting()
@@ -125,6 +134,7 @@ void reference_attr_setting::render() {
     }
     maya_file_io::replace_channel_date(k_j.dump());
   }
+  bool l_ref_value{false};
   dear::Child{"ref_file", ImVec2{0, viewport->WorkSize.y / 2}} && [&]() {
     if (imgui::Button("解析选中引用")) {
       get_file_info();
@@ -139,6 +149,7 @@ void reference_attr_setting::render() {
       dear::TreeNode l_node{k_ref.path.c_str()};
       if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
         p_i->p_current_select = make_handle(k_e);
+        l_ref_value           = true;
       }
       l_node&& [&]() {
         imgui::Checkbox("解算", &(k_ref.use_sim));
@@ -165,6 +176,9 @@ void reference_attr_setting::render() {
       dear::Text(p_i->p_current_select.get<reference_file>().path);
 
       if (p_i->p_current_select.any_of<sim_cover_attr>()) {
+        if (l_ref_value) {
+          p_i->refresh_gui_value(p_i->p_current_select.get<sim_cover_attr>());
+        }
         if (ImGui::Checkbox(*p_i->simple_subsampling, &p_i->simple_subsampling)) {
           p_i->p_current_select.get<sim_cover_attr>()
               .simple_subsampling = p_i->simple_subsampling;
@@ -195,13 +209,7 @@ void reference_attr_setting::render() {
         }
       } else {
         if (ImGui::Button("添加配置")) {
-          auto& l_value           = p_i->p_current_select.emplace<sim_cover_attr>();
-          p_i->simple_subsampling = l_value.simple_subsampling;
-          p_i->frame_samples      = l_value.frame_samples;
-          p_i->time_scale         = l_value.time_scale;
-          p_i->length_scale       = l_value.length_scale;
-          p_i->max_cg_iteration   = l_value.max_cg_iteration;
-          p_i->cg_accuracy        = l_value.cg_accuracy;
+          p_i->refresh_gui_value(p_i->p_current_select.emplace<sim_cover_attr>());
         }
       }
     }
