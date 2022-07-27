@@ -10,8 +10,7 @@
 namespace doodle::gui {
 
 class DOODLELIB_API layout_window
-    : public base_window,
-      public process_t<layout_window> {
+    : public base_window {
   class impl;
   std::unique_ptr<impl> p_i;
 
