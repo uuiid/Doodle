@@ -90,7 +90,7 @@ class process_warp_t {
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
       -> decltype(std::declval<Target>()(), void()) {
-    process_p.get()();
+    process_p();
   }
 
   template <typename Target = Process_t>

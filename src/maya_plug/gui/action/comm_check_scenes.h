@@ -4,7 +4,7 @@
 
 #include <maya/MStatus.h>
 #include <maya/MSelectionList.h>
-
+#include <maya_plug/configure/static_value.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
@@ -48,8 +48,7 @@ class comm_check_scenes
 
  public:
   comm_check_scenes();
-  constexpr static std::string_view name{"检查工具"};
-
+  constexpr static auto name = ::doodle::gui::config::maya_plug::menu::comm_check_scenes;
   void render() override;
 };
 

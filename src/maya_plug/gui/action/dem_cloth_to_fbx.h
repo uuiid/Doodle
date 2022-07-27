@@ -4,7 +4,9 @@
 
 #pragma
 #include <maya_plug/maya_plug_fwd.h>
+#include <maya_plug/configure/static_value.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
+
 namespace doodle::maya_plug {
 
 class dem_cloth_to_fbx
@@ -13,6 +15,7 @@ class dem_cloth_to_fbx
   std::unique_ptr<impl> p_i;
 
  public:
+  constexpr static auto name = ::doodle::gui::config::maya_plug::menu::dem_cloth_to_fbx;
   dem_cloth_to_fbx();
   ~dem_cloth_to_fbx() override;
   virtual void init();

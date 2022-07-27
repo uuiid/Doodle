@@ -8,8 +8,6 @@ set(doodle_maya_plug_cpp
         gui/action/reference_attr_setting.h
         gui/action/comm_check_scenes.h
         gui/action/comm_check_scenes.cpp
-        gui/action/comm_play_blast.h
-        gui/action/comm_play_blast.cpp
         maya_render/hud_render_override.h
         maya_render/hud_render_override.cpp
         maya_render/hud_render_node.h

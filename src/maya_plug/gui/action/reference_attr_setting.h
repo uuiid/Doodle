@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
+#include <maya_plug/configure/static_value.h>
+
 namespace doodle::maya_plug {
 class reference_file;
 
@@ -45,7 +47,8 @@ class reference_attr_setting
  public:
   reference_attr_setting();
   ~reference_attr_setting() override;
-  constexpr static std::string_view name{"引用编辑"};
+  constexpr static auto name = ::doodle::gui::config::maya_plug::menu::reference_attr_setting;
+
   void render() override;
 };
 

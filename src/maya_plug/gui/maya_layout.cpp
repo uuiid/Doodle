@@ -69,7 +69,7 @@ void builder_dock() {
       namespace menu_w   = gui::config::maya_plug::menu;
       ImGui::DockBuilderDockWindow(menu_w::comm_check_scenes.data(), dock_id_chick);     /// \brief 过滤器的停靠
       ImGui::DockBuilderDockWindow(menu_w::reference_attr_setting.data(), dock_id_ref);  /// \brief 编辑的停靠
-      ImGui::DockBuilderDockWindow(menu_w::dem_cloth_to_fbx.data(), dock_id_ref);  /// \brief 编辑的停靠
+      ImGui::DockBuilderDockWindow(menu_w::dem_cloth_to_fbx.data(), dock_id_ref);        /// \brief 编辑的停靠
       ImGui::DockBuilderDockWindow(menu_w::create_sim_cloth.data(), dock_id_cloth);      /// \brief 编辑的停靠
 
       ImGui::DockBuilderFinish(dockspace_id);
@@ -103,8 +103,6 @@ class dem_cloth_to_fbx_process_t
   dem_cloth_to_fbx_process_t() = default;
 };
 
-
-
 class maya_layout::impl {
  public:
   comm_check_scenes_process_t chick_;
@@ -115,21 +113,12 @@ class maya_layout::impl {
 maya_layout::maya_layout()
     : p_i(std::make_unique<impl>()) {
 }
-void maya_layout::update(const chrono::system_clock::duration &in_duration, void *in_data) {
+void maya_layout::operator()() {
   builder_dock();
-  namespace menu_w = gui::config::maya_plug::menu;
-  dear::Begin{menu_w::comm_check_scenes.data()} && [&, this]() {
-    p_i->chick_.tick({}, {});
-  };
-  dear::Begin{menu_w::reference_attr_setting.data()} && [&, this]() {
-    p_i->ref_.tick({}, {});
-  };
-  dear::Begin{menu_w::create_sim_cloth.data()} && [&, this]() {
-    p_i->cloth.tick({}, {});
-  };
-  dear::Begin{menu_w::dem_cloth_to_fbx.data()} && [&, this]() {
-    p_i->dem.tick({}, {});
-  };
+  call_render<comm_check_scenes>();
+  call_render<reference_attr_setting>();
+  call_render<create_sim_cloth>();
+  call_render<dem_cloth_to_fbx>();
 }
 
 maya_layout::~maya_layout() = default;
