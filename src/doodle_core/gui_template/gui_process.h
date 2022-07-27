@@ -55,9 +55,28 @@ class process_warp_t {
   };
   state current{state::uninitialized};
 
-  template <typename Target = Process_t>
+#define DOODLE_TYPE_HASE_MFN(mfn_name)                           \
+  template <typename type_t, typename = void>                    \
+  struct has_##mfn_name##_fun : std::false_type {};              \
+  template <typename type_t>                                     \
+  struct has_##mfn_name##_fun<                                   \
+      type_t,                                                    \
+      std::void_t<decltype(std::declval<type_t&>().mfn_name())>> \
+      : std::true_type {                                         \
+  };
+
+  DOODLE_TYPE_HASE_MFN(state)
+#undef DOODLE_TYPE_HASE_MFN
+
+  template <typename Target = Process_t,
+            std::enable_if_t<has_state_fun<Target>::value, bool> = false>
   auto chick_state() const -> decltype(std::declval<Target>().state(), process_state()) {
     return process_p.get().state();
+  }
+  template <typename Target = Process_t,
+            std::enable_if_t<!has_state_fun<Target>::value, bool> = false>
+  auto chick_state() const -> decltype(std::declval<Target>().state(), process_state()) {
+    return  return process_state::run;
   }
   //  template <typename Target = Process_t>
   //  auto chick_state(...) const { return process_state::run; }
