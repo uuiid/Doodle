@@ -56,6 +56,7 @@ if select_list:
 };
 dem_cloth_to_fbx::dem_cloth_to_fbx()
     : p_i(std::make_unique<impl>()) {
+  this->title_name_ = std::string{name};
 }
 void dem_cloth_to_fbx::init() {
   p_i->startFrame_p = MAnimControl::minTime().value();
