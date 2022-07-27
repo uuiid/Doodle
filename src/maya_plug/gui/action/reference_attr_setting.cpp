@@ -136,7 +136,7 @@ void reference_attr_setting::render() {
       auto& k_ref = k_ref_view.get<reference_file>(k_e);
 
       dear::TreeNode l_node{k_ref.path.c_str()};
-      if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+      if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
         p_i->p_current_select = make_handle(k_e);
       }
       l_node&& [&]() {
