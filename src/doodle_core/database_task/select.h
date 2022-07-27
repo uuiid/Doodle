@@ -13,7 +13,6 @@ class DOODLE_CORE_EXPORT select : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  using base_type = process_t<select>;
   class DOODLE_CORE_EXPORT arg {
    public:
     /**

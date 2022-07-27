@@ -12,7 +12,6 @@ class DOODLE_CORE_EXPORT update_data : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  using base_type = process_t<update_data>;
   explicit update_data(const std::vector<entt::entity>& in_data);
 
   ~update_data() override;

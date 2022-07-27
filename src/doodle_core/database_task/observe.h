@@ -8,13 +8,12 @@
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_EXPORT observe : public process_t<observe> {
+class DOODLE_CORE_EXPORT observe {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
-  using base_type = process_t<observe>;
   explicit observe(const std::vector<entt::entity>& in_data);
 
   ~observe() override;
@@ -22,9 +21,8 @@ class DOODLE_CORE_EXPORT observe : public process_t<observe> {
   void succeeded();
   void failed();
   void aborted();
-  void update( );
+  void update();
 };
 
 }  // namespace database_n
 }  // namespace doodle
-

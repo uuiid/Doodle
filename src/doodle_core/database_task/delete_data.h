@@ -12,7 +12,6 @@ class DOODLE_CORE_EXPORT delete_data : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  using base_type = process_t<delete_data>;
   explicit delete_data(const std::vector<entt::entity>& in_data);
 
   ~delete_data() override;

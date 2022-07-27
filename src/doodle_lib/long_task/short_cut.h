@@ -8,7 +8,7 @@
 
 namespace doodle {
 
-class short_cut : public process_t<short_cut> {
+class short_cut {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -17,10 +17,7 @@ class short_cut : public process_t<short_cut> {
   virtual ~short_cut() override;
 
   [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(const delta_type&, void* data);
+  [[maybe_unused]] void update();
 };
 
 }  // namespace doodle

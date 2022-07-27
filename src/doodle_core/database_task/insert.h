@@ -13,7 +13,6 @@ class DOODLE_CORE_EXPORT insert : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  using base_type = process_t<insert>;
   explicit insert(const std::vector<entt::entity>& in_inster);
 
   ~insert() override;

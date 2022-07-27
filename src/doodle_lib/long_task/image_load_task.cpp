@@ -43,7 +43,7 @@ void image_load_task::aborted() {
     p_i->result_.get();
   }
 }
-void image_load_task::update(const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &, void *data) {
+void image_load_task::update() {
   if (p_i->result_.valid())
     switch (p_i->result_.wait_for(0ns)) {
       case std::future_status::ready: {

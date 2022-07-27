@@ -15,6 +15,7 @@
 #include <platform/win/get_screenshot.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
+#include <boost/asio.hpp>
 
 //#include <DirectXTK/ScreenGrab.h>
 //#include <wincodec.h>

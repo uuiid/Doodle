@@ -18,12 +18,7 @@ short_cut::short_cut() : p_i(std::make_unique<impl>()){};
 void short_cut::init() {
   g_reg()->ctx().emplace<short_cut &>(*this);
 }
-void short_cut::succeeded() {
-}
-void short_cut::failed() {
-}
-void short_cut::aborted() {
-}
+
 void short_cut::update(const std::chrono::duration<std::chrono::system_clock::rep,
                                                    std::chrono::system_clock::period> &,
                        void *data) {
