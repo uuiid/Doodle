@@ -3,9 +3,9 @@
 //
 
 #pragma
+#include <doodle_lib/gui/gui_ref/layout_window.h>
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/configure/static_value.h>
-#include <doodle_lib/gui/gui_ref/layout_window.h>
 
 namespace doodle::maya_plug {
 

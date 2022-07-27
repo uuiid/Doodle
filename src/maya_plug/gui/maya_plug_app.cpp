@@ -13,14 +13,16 @@
 namespace doodle::maya_plug {
 
 void maya_plug_app::load_windows() {
-  g_main_loop().attach<main_menu_bar>();
-  g_main_loop().attach<main_status_bar>();
-  g_main_loop().attach<maya_layout>();
+  boost::asio::post(
+      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
+  boost::asio::post(
+      make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
+  boost::asio::post(
+      make_process_adapter<maya_layout>(strand_gui{g_io_context()}));
 }
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-
 maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
                              const win::wnd_handle& in_parent)
     : app(in_instance,
