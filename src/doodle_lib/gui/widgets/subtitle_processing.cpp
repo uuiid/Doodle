@@ -131,6 +131,10 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
       /// \brief 使用循环解析字幕文件
       std::string l_string{};
       while (std::getline(l_ifstream, l_string)) {
+        if (l_string.empty()) {
+          continue;
+        }
+
         auto& l_b = l_vector.emplace_back(subtitle_srt_line{});
 
         /// \brief 读取时间字符串
