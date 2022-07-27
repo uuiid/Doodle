@@ -85,10 +85,13 @@ maya_layout::maya_layout()
 }
 void maya_layout::operator()() {
   p_i->builder_dock();
-  call_render<comm_check_scenes>();
+}
+void maya_layout::init() {
+  boost::asio::post(g_io_context(),[this]() {
+    call_render<comm_check_scenes>();
   call_render<reference_attr_setting>();
   call_render<create_sim_cloth>();
-  call_render<dem_cloth_to_fbx>();
+  call_render<dem_cloth_to_fbx>(); });
 }
 
 maya_layout::~maya_layout() = default;

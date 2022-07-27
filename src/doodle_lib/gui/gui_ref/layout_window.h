@@ -22,7 +22,7 @@ class DOODLELIB_API layout_window
   layout_window();
   ~layout_window() override;
   [[nodiscard]] const std::string& title() const override;
-  void init();
+  virtual void init();
 
   void operator()() override;
   template <typename windows_type>
