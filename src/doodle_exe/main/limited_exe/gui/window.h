@@ -8,6 +8,5 @@
 using namespace doodle;
 class limited_layout : public doodle::gui::layout_window {
  public:
-  void update(const chrono::system_clock::duration &in_duration,
-              void *in_data) override;
+  void init() override;
 };
