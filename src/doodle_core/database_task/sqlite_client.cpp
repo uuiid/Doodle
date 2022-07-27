@@ -10,7 +10,6 @@
 #include <database_task/delete_data.h>
 #include <database_task/details/update_ctx.h>
 
-#include <thread_pool/asio_pool.h>
 #include <thread_pool/process_pool.h>
 #include <doodle_core/core/core_sig.h>
 #include <metadata/metadata.h>

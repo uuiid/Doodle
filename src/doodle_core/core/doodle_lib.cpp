@@ -10,7 +10,6 @@
 #include <exception/exception.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <thread_pool/thread_pool.h>
-#include <doodle_core/thread_pool/asio_pool.h>
 
 #include <doodle_core/core/core_sig.h>
 #include <core/status_info.h>

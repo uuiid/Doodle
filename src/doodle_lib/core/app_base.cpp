@@ -5,7 +5,6 @@
 #include "app_base.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_core/thread_pool/asio_pool.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 

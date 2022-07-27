@@ -6,7 +6,6 @@
 #include <platform/win/wnd_proc.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_core/thread_pool/asio_pool.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>

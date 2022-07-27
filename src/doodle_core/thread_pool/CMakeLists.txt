@@ -4,7 +4,6 @@ target_sources(
         thread_pool.h
         process_pool.h
         process_message.h
-        asio_pool.h
         PRIVATE
         process_message.cpp
         process_pool.cpp
