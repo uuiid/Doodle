@@ -83,7 +83,7 @@ class maya_layout::impl {
 maya_layout::maya_layout()
     : p_i(std::make_unique<impl>()) {
 }
-void maya_layout::operator()() {
+void maya_layout::update() {
   p_i->builder_dock();
 }
 void maya_layout::init() {
