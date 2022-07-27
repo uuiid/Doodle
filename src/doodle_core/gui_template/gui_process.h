@@ -23,20 +23,17 @@ enum class process_state : std::uint8_t {
 };
 
 class process_handy_tools {
-  std::function<void(process_state)> p_f;
+  mutable process_state process_state_p{process_state::run};
 
  public:
-  inline void connect(const std::function<void(process_state)>& in) {
-    p_f = in;
-  }
-
   virtual inline void succeed() const {
-    if (p_f)
-      p_f(process_state::succeed);
+    process_state_p = process_state::succeed;
   }
   virtual inline void fail() const {
-    if (p_f)
-      p_f(process_state::fail);
+    process_state_p = process_state::fail;
+  }
+  virtual inline process_state state() const {
+    return process_state_p;
   }
 };
 
@@ -59,27 +56,11 @@ class process_warp_t {
   state current{state::uninitialized};
 
   template <typename Target = Process_t>
-  auto connect()
-      -> decltype(std::declval<Target>().connect(
-                      std::declval<std::function<void(process_state)>>()),
-                  void()) {
-    process_p.get().connect([this](process_state in_) {
-      switch (in_) {
-        case process_state::run: {
-        } break;
-        case process_state::succeed: {
-          this->succeed();
-        } break;
-        case process_state::fail: {
-          this->fail();
-        }
-        default:
-          break;
-      }
-    });
+  auto chick_state() const -> decltype(std::declval<Target>().state(), void()) {
+    return process_p.get().state();
   }
   template <typename Target = Process_t>
-  auto connect(...) {}
+  auto chick_state(...) const {}
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::uninitialized>)
@@ -144,41 +125,35 @@ class process_warp_t {
   //  }
   explicit process_warp_t(Process_t& in_ptr, std::shared_ptr<void>&& in_owner)
       : owner_p(std::move(in_owner)),
-        process_p(std::ref(in_ptr)) {
-    connect();
-  };
+        process_p(std::ref(in_ptr)){
+
+        };
 
   process_warp_t(const process_warp_t& in_other) noexcept
       : owner_p(in_other.owner_p),
         process_p(in_other.process_p),
         current(in_other.current) {
-    connect();
   }
   process_warp_t& operator=(const process_warp_t& in_other) noexcept {
     owner_p   = in_other.owner_p;
     process_p = in_other.process_p;
     current   = in_other.current;
-    connect();
     return *this;
   }
   process_warp_t(process_warp_t&& in_other) noexcept
       : owner_p(std::move(in_other.owner_p)),
         process_p(std::move(in_other.process_p)),
         current(std::move(in_other.current)) {
-    connect();
   }
   process_warp_t& operator=(process_warp_t&& in_other) noexcept {
     owner_p   = std::move(in_other.owner_p);
     process_p = std::move(in_other.process_p);
     current   = std::move(in_other.current);
-    connect();
     return *this;
   }
 
   explicit process_warp_t(std::any&& in_ptr)
-      : process_warp_t(std::any_cast<Process_t&>(in_ptr), in_ptr) {
-    connect();
-  };
+      : process_warp_t(std::any_cast<Process_t&>(in_ptr), in_ptr){};
 
   virtual ~process_warp_t() = default;
 
@@ -216,6 +191,18 @@ class process_warp_t {
       case state::running:
         //        next(std::integral_constant<state, state::running>{});
         process_p();
+        switch (chick_state()) {
+          case process_state::succeed:
+            this->succeed();
+            break;
+
+          case process_state::fail:
+            this->fail();
+            break;
+          case process_state::run:
+          default:
+            break;
+        }
         break;
       default:
         // suppress warnings
