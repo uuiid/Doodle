@@ -49,6 +49,11 @@ void strand_gui_executor_service::shutdown() {
 void strand_gui_executor_service::loop_one() {
   std::lock_guard l_g{mutex_};
 
+  if (!impl_list_->handlers_next.empty()) {
+    impl_list_->handlers |= ranges::action::push_back(impl_list_->handlers_next);
+    impl_list_->handlers_next.clear();
+  }
+
   std::for_each(
       impl_list_->handlers.begin(),
       impl_list_->handlers.end(),
