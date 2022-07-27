@@ -26,6 +26,8 @@ class process_handy_tools {
   mutable process_state process_state_p{process_state::run};
 
  public:
+  process_handy_tools()          = default;
+  virtual ~process_handy_tools() = default;
   virtual inline void succeed() const {
     process_state_p = process_state::succeed;
   }
@@ -89,8 +91,8 @@ class process_warp_t {
 
   template <typename Target = Process_t>
   auto next(std::integral_constant<state, state::running>)
-      -> decltype(std::declval<Target>()(), void()) {
-    process_p();
+      -> decltype(std::declval<Target>().update(), void()) {
+    process_p.get().update();
   }
 
   template <typename Target = Process_t>
@@ -208,8 +210,7 @@ class process_warp_t {
         current = state::running;
         break;
       case state::running:
-        //        next(std::integral_constant<state, state::running>{});
-        process_p();
+        next(std::integral_constant<state, state::running>{});
         switch (chick_state()) {
           case process_state::succeed:
             this->succeed();
@@ -255,7 +256,7 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
   template <typename... Args>
   explicit lambda_process_warp_t(Args&&... in_args) : Lambda_Process{std::forward<Args>(in_args)...} {};
 
-  void operator()() {
+  void update() {
     Lambda_Process::operator()();
     this->succeed();
   }

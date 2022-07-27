@@ -17,6 +17,6 @@ class DOODLELIB_API main_status_bar {
   virtual ~main_status_bar();
 
   [[maybe_unused]] void init();
-  [[maybe_unused]] void operator()();
+  [[maybe_unused]] void update();
 };
 }  // namespace doodle

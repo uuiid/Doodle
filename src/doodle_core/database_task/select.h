@@ -3,10 +3,11 @@
 //
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/gui_template/gui_process.h>
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_EXPORT select : public process_t<select> {
+class DOODLE_CORE_EXPORT select : public process_handy_tools {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -28,7 +29,7 @@ class DOODLE_CORE_EXPORT select : public process_t<select> {
   void succeeded();
   void failed();
   void aborted();
-  void update(base_type::delta_type, void* data);
+  void update();
 
  private:
   void th_run();

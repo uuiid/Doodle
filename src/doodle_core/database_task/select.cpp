@@ -258,9 +258,7 @@ void select::aborted() {
   g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
-void select::update(chrono::duration<chrono::system_clock::rep,
-                                     chrono::system_clock::period>,
-                    void* data) {
+void select::update() {
   if (p_i->result.valid()) {
     switch (p_i->result.wait_for(0ns)) {
       case std::future_status::ready: {

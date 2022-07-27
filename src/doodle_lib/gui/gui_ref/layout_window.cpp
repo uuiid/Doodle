@@ -125,7 +125,7 @@ void layout_window::init() {
   });
 }
 
-void layout_window::operator()() {
+void layout_window::update() {
   p_i->builder_dock();
   //  if (!p_i->init) {
   //    /// \brief 这里显示需要的初始化窗口

@@ -24,7 +24,7 @@ class DOODLELIB_API layout_window
   [[nodiscard]] const std::string& title() const override;
   virtual void init();
 
-  void operator()() override;
+  void update() override;
   template <typename windows_type>
   void call_render() {
     if (!has_windows(std::string{windows_type::name})) {

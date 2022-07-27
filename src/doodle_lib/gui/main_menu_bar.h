@@ -50,6 +50,6 @@ class DOODLELIB_API main_menu_bar
   const std::string& title() const override;
   void init();
 
-  void operator()() override;
+  void update() override;
 };
 }  // namespace doodle

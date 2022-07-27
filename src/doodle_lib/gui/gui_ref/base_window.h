@@ -57,7 +57,7 @@ class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
    * @param in_duration 传入的时间间隔
    * @param in_data 传入的自定义数据
    */
-  virtual void operator()() = 0;
+  virtual void update() = 0;
   /**
    * @brief 判断是否显示
    * @return
@@ -84,7 +84,7 @@ class DOODLELIB_API window_panel : public base_window {
   ~window_panel() override = default;
 
   [[nodiscard]] const std::string& title() const override;
-  void operator()() override;
+  void update() override;
 };
 
 class DOODLELIB_API modal_window : public base_window {
@@ -95,7 +95,7 @@ class DOODLELIB_API modal_window : public base_window {
   modal_window();
   ~modal_window() override = default;
 
-  void operator()() override;
+  void update() override;
 };
 
 template <typename Windows_Type, typename... Args>
