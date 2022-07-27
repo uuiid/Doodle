@@ -16,7 +16,7 @@ class DOODLE_CORE_EXPORT observe {
  public:
   explicit observe(const std::vector<entt::entity>& in_data);
 
-  ~observe() override;
+  virtual ~observe();
   void init();
   void succeeded();
   void failed();
