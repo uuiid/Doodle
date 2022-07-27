@@ -111,7 +111,6 @@ const std::string &layout_window::title() const {
 
 void layout_window::init() {
   g_reg()->ctx().emplace<layout_window &>(*this);
-  p_i->builder_dock();
 }
 
 void layout_window::operator()() {
@@ -128,6 +127,7 @@ void layout_window::operator()() {
     call_render<::doodle::assets_file_widgets>();
     call_render<::doodle::long_time_tasks_widget>();
     call_render<::doodle::gui::time_sequencer_widget>();
+    p_i->init = true;
   }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);
