@@ -18,6 +18,7 @@ void to_json(nlohmann::json& j, const sim_cover_attr& p) {
   j["length_scale"]       = p.length_scale;
   j["max_cg_iteration"]   = p.max_cg_iteration;
   j["cg_accuracy"]        = p.cg_accuracy;
+  j["gravity"]            = p.gravity;
 }
 void from_json(const nlohmann::json& j, sim_cover_attr& p) {
   if (j.contains("simple_subsampling"))
@@ -32,6 +33,8 @@ void from_json(const nlohmann::json& j, sim_cover_attr& p) {
     j.at("max_cg_iteration").get_to(p.max_cg_iteration);
   if (j.contains("cg_accuracy"))
     j.at("cg_accuracy").get_to(p.cg_accuracy);
+  if (j.contains("gravity"))
+    j.at("gravity").get_to(p.gravity);
 }
 void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
   if (in_handle && in_handle.all_of<sim_cover_attr, reference_file>()) {
@@ -51,6 +54,10 @@ void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
     DOODLE_LOG_INFO("开始覆盖 maxCGIteration 值为 {}", self.max_cg_iteration);
     set_attribute(l_ql_core, "cgAccuracy", self.cg_accuracy);
     DOODLE_LOG_INFO("开始覆盖 cgAccuracy 值为 {}", self.cg_accuracy);
+    set_attribute(l_ql_core, "gravity0", self.gravity[0]);
+    set_attribute(l_ql_core, "gravity1", self.gravity[1]);
+    set_attribute(l_ql_core, "gravity2", self.gravity[2]);
+    DOODLE_LOG_INFO("开始覆盖 gravity 值为 {}", self.gravity);
   }
 }
 

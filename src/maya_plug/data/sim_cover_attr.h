@@ -21,8 +21,9 @@ class sim_cover_attr {
   std::float_t length_scale{1.0f};
   std::int32_t max_cg_iteration{1000};
   std::int32_t cg_accuracy{9};
+  std::array<std::float_t, 3> gravity{0.0f, -980.0f, 0.0f};
 
-  static void cover_qcloth_attr(const entt::handle & in_entity);
+  static void cover_qcloth_attr(const entt::handle& in_entity);
 
  private:
   friend void to_json(nlohmann::json& j, const sim_cover_attr& p);

@@ -50,6 +50,7 @@ class reference_attr_setting::impl {
   ::doodle::gui::gui_cache<std::float_t> length_scale{"length scale"s, 1.0f};
   ::doodle::gui::gui_cache<std::int32_t> max_cg_iteration{"max CGIteration"s, 1000};
   ::doodle::gui::gui_cache<std::int32_t> cg_accuracy{"cg accuracy"s, 9};
+  ::doodle::gui::gui_cache<std::array<std::float_t, 3>> gravity{"gravity"s, std::array<std::float_t, 3>{0.0f, -980.0f, 0.0f}};
 };
 
 reference_attr_setting::reference_attr_setting()
@@ -188,15 +189,13 @@ void reference_attr_setting::render() {
           p_i->p_current_select.get<sim_cover_attr>()
               .cg_accuracy = p_i->cg_accuracy;
         }
+        if (ImGui::InputFloat3(*p_i->gravity, p_i->gravity.data.data())) {
+          p_i->p_current_select.get<sim_cover_attr>()
+              .gravity = p_i->gravity;
+        }
       } else {
         if (ImGui::Button("添加配置")) {
-          auto& l_value              = p_i->p_current_select.emplace<sim_cover_attr>();
-          l_value.simple_subsampling = p_i->simple_subsampling;
-          l_value.frame_samples      = p_i->frame_samples;
-          l_value.time_scale         = p_i->time_scale;
-          l_value.length_scale       = p_i->length_scale;
-          l_value.max_cg_iteration   = p_i->max_cg_iteration;
-          l_value.cg_accuracy        = p_i->cg_accuracy;
+          p_i->p_current_select.emplace<sim_cover_attr>();
         }
       }
     }
