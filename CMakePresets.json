@@ -95,7 +95,8 @@
       "targets": [
         "DoodleExe",
         "doodle_limited_exe",
-        "Doxygen"
+        "Doxygen",
+        "generate_token_run"
       ]
     },
     {
