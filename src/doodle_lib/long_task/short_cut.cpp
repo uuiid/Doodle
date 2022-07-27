@@ -19,9 +19,7 @@ void short_cut::init() {
   g_reg()->ctx().emplace<short_cut &>(*this);
 }
 
-void short_cut::update(const std::chrono::duration<std::chrono::system_clock::rep,
-                                                   std::chrono::system_clock::period> &,
-                       void *data) {
+void short_cut::update() {
   if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
     g_reg()->ctx().at<core_sig>().save();
 }
