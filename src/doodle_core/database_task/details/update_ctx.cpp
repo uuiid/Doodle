@@ -102,6 +102,9 @@ void add_component_table(sqlpp::sqlite3::connection& in_conn) {
 }
 
 void add_version_table(sqlpp::sqlite3::connection& in_conn) {
+  if (has_version_table(in_conn)) {
+    return;
+  }
   in_conn.execute(std::string{::doodle::database_n::create_version_table});
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
@@ -114,6 +117,17 @@ void set_version(sqlpp::sqlite3::connection& in_conn) {
   in_conn(sqlpp::update(l_info).unconditionally().set(
       l_info.versionMajor = version::version_major,
       l_info.versionMinor = version::version_minor));
+}
+bool has_version_table(sqlpp::sqlite3::connection& in_conn) {
+  sql::SqliteMaster l_master{};
+  auto l_item = in_conn(
+      sqlpp::select(sqlpp::all_of(l_master))
+          .from(l_master)
+          .where(l_master.type == "table" && l_master.name == "doodle_info"));
+  for (auto&& row : l_item) {
+    return true;
+  }
+  return false;
 }
 
 bool db_compatible::has_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {

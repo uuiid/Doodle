@@ -22,6 +22,7 @@ void add_ctx_table(sqlpp::sqlite3::connection &in_conn);
 void add_entity_table(sqlpp::sqlite3::connection &in_conn);
 void add_component_table(sqlpp::sqlite3::connection &in_conn);
 void add_version_table(sqlpp::sqlite3::connection &in_conn);
+bool has_version_table(sqlpp::sqlite3::connection &in_conn);
 void set_version(sqlpp::sqlite3::connection &in_conn);
 
 class db_compatible {
