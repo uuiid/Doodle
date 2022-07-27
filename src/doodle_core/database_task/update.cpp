@@ -165,10 +165,7 @@ void update_data::init() {
 void update_data::aborted() {
   p_i->stop = true;
 }
-void update_data::update(
-    chrono::duration<chrono::system_clock::rep,
-                     chrono::system_clock::period>,
-    void *data) {
+void update_data::update() {
   switch (p_i->future_.wait_for(0ns)) {
     case std::future_status::ready: {
       try {

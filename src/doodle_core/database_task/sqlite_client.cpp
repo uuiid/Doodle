@@ -22,11 +22,12 @@ namespace doodle::database_n {
 
 void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-  g_pool()
-      .post<database_n::select>(database_n::select::arg{in_path, only_ctx})
-      .then<one_process_t>([]() {
-        g_reg()->ctx().at<core_sig>().project_end_open();
-      });
+  boost::asio::post(
+      make_process_adapter<database_n::select>(
+          g_io_context().get_executor(), database_n::select::arg{in_path, only_ctx})
+          .next([]() {
+            g_reg()->ctx().at<core_sig>().project_end_open();
+          }));
 }
 
 void sqlite_client::update_entt() {
@@ -77,22 +78,22 @@ void sqlite_client::update_entt() {
                   return make_handle(e);
                 }) |
                 ranges::to_vector;
-  auto l_next = g_pool().post<doodle::one_process_t>([=]() {
+  auto l_next = make_process_adapter(g_io_context().get_executor(), [=]() {
     g_reg()->ctx().at<core_sig>().save_begin(l_list);
     /// \brief 删除没有插入的
     g_reg()->destroy(next_delete_list.begin(), next_delete_list.end());
   });
 
   if (!install_list.empty()) {
-    l_next.then<database_n::insert>(install_list);
+    l_next.next<database_n::insert>(install_list);
   }
   if (!update_list.empty()) {
-    l_next.then<database_n::update_data>(update_list);
+    l_next.next<database_n::update_data>(update_list);
   }
   if (!delete_list.empty()) {
-    l_next.then<database_n::delete_data>(delete_list);
+    l_next.next<database_n::delete_data>(delete_list);
   }
-  l_next.then<one_process_t>([=]() {
+  l_next.next([=]() {
     auto l_sv = g_reg()->view<data_status_save>();
     g_reg()->remove<data_status_save>(l_sv.begin(), l_sv.end());
     auto l_dv = g_reg()->view<data_status_delete>();
@@ -101,10 +102,11 @@ void sqlite_client::update_entt() {
 
     g_reg()->ctx().at<status_info>().need_save = false;
   });
+  boost::asio::post(l_next);
 }
 void sqlite_client::create_sqlite() {
-  g_pool()
-      .post<database_n::insert>(std::vector<entt::entity>{})
-      .then<database_n::update_data>(std::vector<entt::entity>{});
+  boost::asio::post(
+      make_process_adapter<database_n::insert>(g_io_context().get_executor(), std::vector<entt::entity>{})
+          .next<database_n::update_data>(std::vector<entt::entity>{}));
 }
 }  // namespace doodle::database_n

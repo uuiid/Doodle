@@ -41,7 +41,7 @@ base_window::~base_window() = default;
 const std::string &window_panel::title() const {
   return title_name_;
 }
-void window_panel::operator()() {
+void window_panel::update() {
   for (auto &&i : begin_fun) {
     i();
   }
@@ -64,7 +64,7 @@ modal_window::modal_window() {
   });
   close.connect([this]() { ImGui::CloseCurrentPopup(); });
 }
-void modal_window::operator()() {
+void modal_window::update() {
   for (auto &&i : begin_fun) {
     i();
   }
