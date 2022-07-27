@@ -56,7 +56,7 @@ class process_warp_t {
   state current{state::uninitialized};
 
   template <typename Target = Process_t>
-  auto chick_state() const -> decltype(std::declval<Target>().state(), void()) {
+  auto chick_state() const -> decltype(std::declval<Target>().state(), process_state()) {
     return process_p.get().state();
   }
   template <typename Target = Process_t>
