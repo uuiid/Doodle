@@ -15,6 +15,7 @@
 #include <doodle_lib/long_task/short_cut.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_core/core/core_sig.h>
+#include <doodle_core/gui_template/gui_process.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/main_proc_handle.h>
 #include <doodle_lib/gui/get_input_dialog.h>
@@ -176,10 +177,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
     load_project(app::Get().options_ ? app::Get().options_->p_project_path : FSys::path{});
-    g_pool().post<one_process_t>(
-        [this]() {
-          this->load_windows();
-        });
+    boost::asio::post(g_io_context(), []() { this->load_windows(); });
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
@@ -246,7 +244,6 @@ void app::load_windows() {
       make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
   boost::asio::post(
       make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
-
 }
 app::~app() {
   // Cleanup
@@ -261,13 +258,11 @@ app::~app() {
 }
 
 void app::load_back_end() {
-  g_pool().post<one_process_t>([]() {
-    g_main_loop()
-        .attach<short_cut>();
-    g_reg()->ctx().at<core_sig>().init_end.connect([]() {
-      init_register::instance().init_run();
-    });
+  g_reg()->ctx().at<core_sig>().init_end.connect([]() {
+    init_register::instance().init_run();
   });
+
+  boost::asio::post(make_process_adapter<short_cut>(strand_gui{g_io_context()}));
 }
 
 bool app::set_parent(win::wnd_handle in_parent) {

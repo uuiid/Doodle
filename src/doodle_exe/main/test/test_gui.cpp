@@ -41,7 +41,7 @@ class test_input_project : public app {
   void load_windows() override {
     auto k_h = make_handle();
     k_h.emplace<project>();
-    g_pool().post<null_process_t>()
+    post<null_process_t>()
         .then<get_input_project_dialog>(k_h)
         .then<one_process_t>([]() {
           app::Get().stop();
@@ -61,11 +61,9 @@ class test_screenshot_widget_app : public app {
   void load_windows() override {
     g_reg()->ctx().emplace<project>("D:/tmp", "test");
     auto k_h = make_handle();
-    g_pool().post<null_process_t>()
-        .then<screenshot_widget>(k_h)
-        .then<one_process_t>([]() {
-          app::Get().stop();
-        });
+     post<null_process_t>().then<screenshot_widget>(k_h).then<one_process_t>([]() {
+      app::Get().stop();
+    });
   }
   void load_back_end() override {
   }

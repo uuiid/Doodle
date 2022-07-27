@@ -59,19 +59,15 @@ class null_limiter;
 
 template <typename Delta, typename Timiter = pool_n::null_limiter>
 class DOODLE_CORE_EXPORT scheduler;
-template <typename Delta>
-class DOODLE_CORE_EXPORT asio_pool;
 
 template <class Derived>
 using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
 using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
-using asio_pool_t    = asio_pool<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
 DOODLE_CORE_EXPORT registry_ptr& g_reg();
 DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
-DOODLE_CORE_EXPORT asio_pool_t& g_pool();
 DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
 DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
 DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
@@ -81,14 +77,12 @@ class image_attr;
 class image_watermark;
 }  // namespace movie
 
-namespace database_n{
+namespace database_n {
 class insert;
 class select;
 class update_data;
 class delete_data;
-}
-
-
+}  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
 }  // namespace doodle

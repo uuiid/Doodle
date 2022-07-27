@@ -28,7 +28,6 @@ doodle_lib::doodle_lib()
       reg(std::make_shared<entt::registry>()),
       loop(),
       loop_bounded_pool(),
-      asio_pool_(std::make_shared<asio_pool_t>()),
       io_context_(std::make_shared<boost::asio::io_context>()) {
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^
@@ -59,7 +58,7 @@ doodle_lib::doodle_lib()
   k_sig.save_end.connect([](const std::vector<entt::handle>&) {
     g_reg()->ctx().at<status_info>().need_save = false;
   });
-  k_sig.save.connect(2,[]() {
+  k_sig.save.connect(2, []() {
     database_n::sqlite_client{}.update_entt();
   });
   p_install = this;
@@ -108,7 +107,5 @@ bounded_pool_t& g_bounded_pool() {
 boost::asio::io_context& g_io_context() {
   return *doodle_lib::Get().io_context_;
 }
-asio_pool_t& g_pool() {
-  return *doodle_lib::Get().asio_pool_;
-}
+
 }  // namespace doodle

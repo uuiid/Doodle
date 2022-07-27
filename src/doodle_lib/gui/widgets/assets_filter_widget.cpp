@@ -501,7 +501,7 @@ void assets_filter_widget::render() {
 }
 void assets_filter_widget::refresh(bool force) {
   if (!p_impl->run_edit)
-    g_pool().post<one_process_t>([this, force]() {
+    boost::asio::post(g_io_context(), [this, force]() {
       p_impl->run_edit = true;
       this->refresh_(force);
       p_impl->run_edit = false;

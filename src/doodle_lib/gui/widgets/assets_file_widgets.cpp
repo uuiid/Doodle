@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_lib/core/image_loader.h>
+#include <doodle_core/gui_template/gui_process.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_core/core/core_sig.h>
@@ -91,8 +92,7 @@ class assets_file_widgets::impl {
       }
 
       if (handle_.all_of<image_icon>() && !handle_.get<image_icon>().image) {
-        g_pool()
-            .post<image_load_task>(handle_);
+        boost::asio::post(make_process_adapter<image_load_task>(g_io_context(), handle_));
       }
     }
 
@@ -268,15 +268,14 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
 
     g_reg()->ctx().at<core_sig>().save_begin.connect(
         [this, in_, l_list](const std::vector<entt::handle>&) {
-          g_pool().post<one_process_t>(
-              [this, in_, l_list]() {
-                p_i->lists = p_i->lists |
-                             ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
-                               return ranges::contains(l_list, in_data->handle_);
-                               //                           return in_data.handle_ == in_;
-                             }) |
-                             ranges::to_vector;
-              });
+          boost::asio::post(g_io_context(), [this, in_, l_list]() {
+            p_i->lists = p_i->lists |
+                         ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
+                           return ranges::contains(l_list, in_data->handle_);
+                           //                           return in_data.handle_ == in_;
+                         }) |
+                         ranges::to_vector;
+          });
         });
   }
 }

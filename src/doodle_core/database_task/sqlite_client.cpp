@@ -62,15 +62,17 @@ void sqlite_client::update_entt() {
 
   if (all_list.empty()) {
     /// \brief 只更新上下文
-    g_pool().post<doodle::one_process_t>([=]() {
-              g_reg()->ctx().at<core_sig>().save_begin({});
-            })
-        .then<doodle::one_process_t>([]() {
-          database_n::details::update_ctx::ctx(*g_reg());
-        })
-        .then<one_process_t>([]() {
-          g_reg()->ctx().at<core_sig>().save_end({});
-        });
+    auto l_s = boost::asio::make_strand(g_io_context());
+    boost::asio::post(l_s, [l_s]() {
+      g_reg()->ctx().at<core_sig>().save_begin({});
+    });
+    boost::asio::post(l_s, [l_s]() {
+      database_n::details::update_ctx::ctx(*g_reg());
+    });
+    boost::asio::post(l_s, [l_s]() {
+      g_reg()->ctx().at<core_sig>().save_end({});
+    });
+
     return;
   }
 

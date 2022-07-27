@@ -11,6 +11,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <platform/win/get_screenshot.h>
 #include <app/app.h>
 #include <platform/win/wnd_proc.h>
@@ -64,7 +65,7 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
     auto k_sh = cv_to_d3d(k_image, false);
     cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGR);
     return std::make_tuple(k_image, k_sh);
-  }else{
+  } else {
     DOODLE_LOG_INFO("无法找到图标 {}", l_local_path);
   }
   return {};
@@ -189,7 +190,7 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 
 image_loader::~image_loader() = default;
 void image_loader_ns::image_loader_init::init() const {
-  g_pool().post<one_process_t>([]() {
+  boost::asio::post(g_io_context(), []() {
     image_loader l_loader{};
     image_loader::cache l_cache{};
     {
