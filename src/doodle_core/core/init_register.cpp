@@ -23,11 +23,12 @@ void init_register::reg_class() {
        it = l_map.upper_bound(it->first)) {
     DOODLE_LOG_INFO("初始化优先级 {}", it->first);
     boost::asio::post(l_s, [key = it->first, l_s]() {
-      auto l_p = init_register::instance().equal_range(key);
+      auto l_p = init_register::instance().registered_functions().equal_range(key);
       std::for_each(l_p.first, l_p.second,
                     [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
                       i.second();
                     });
+
     });
   }
   boost::asio::post(l_s, [l_s]() {
