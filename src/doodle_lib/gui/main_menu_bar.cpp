@@ -16,6 +16,17 @@
 #include <doodle_lib/gui/gui_ref/layout_window.h>
 
 #include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_lib/gui/gui_ref/layout_window.h>
+#include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
+#include <doodle_lib/gui/widgets/csv_export_widgets.h>
+#include <doodle_lib/gui/action/command_tool.h>
+#include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
+#include <doodle_lib/gui/widgets/subtitle_processing.h>
+#include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+#include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 
 namespace doodle {
 namespace main_menu_bar_ns {
@@ -120,10 +131,30 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-  if (dear::MenuItem(gui::config::menu_w::setting.data())) {
-  }
-  if (dear::MenuItem(gui::config::menu_w::project_edit.data())) {
-  }
+  if (dear::MenuItem(gui::config::menu_w::setting.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<setting_windows>();
+  if (dear::MenuItem(gui::config::menu_w::project_edit.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<gui::project_edit>();
+  if (dear::MenuItem(::doodle::edit_widgets::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::edit_widgets>();
+  if (dear::MenuItem(::doodle::assets_filter_widget::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::assets_filter_widget>();
+  if (dear::MenuItem(::doodle::gui::csv_export_widgets::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::csv_export_widgets>();
+  if (dear::MenuItem(::doodle::comm_maya_tool::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::comm_maya_tool>();
+  if (dear::MenuItem(::doodle::comm_create_video::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::comm_create_video>();
+  if (dear::MenuItem(::doodle::gui::extract_subtitles_widgets::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::extract_subtitles_widgets>();
+  if (dear::MenuItem(::doodle::gui::subtitle_processing::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::subtitle_processing>();
+  if (dear::MenuItem(::doodle::assets_file_widgets::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::assets_file_widgets>();
+  if (dear::MenuItem(::doodle::long_time_tasks_widget::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::long_time_tasks_widget>();
+  if (dear::MenuItem(::doodle::gui::time_sequencer_widget::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::time_sequencer_widget>();
 }
 
 void main_menu_bar::menu_tool() {
