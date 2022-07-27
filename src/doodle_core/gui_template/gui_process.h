@@ -70,12 +70,12 @@ class process_warp_t {
 
   template <typename Target                                      = Process_t,
             std::enable_if_t<has_state_fun<Target>::value, bool> = false>
-  auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
+  [[nodiscard]] auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
     return process_p.get().state();
   }
   template <typename Target                                       = Process_t,
             std::enable_if_t<!has_state_fun<Target>::value, bool> = false>
-  auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
+  [[nodiscard]] auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
     return process_state::run;
   }
   //  template <typename Target = Process_t>
