@@ -26,8 +26,6 @@ class DOODLE_CORE_EXPORT select : public process_handy_tools {
 
   ~select() override;
   void init();
-  void succeeded();
-  void failed();
   void aborted();
   void update();
 

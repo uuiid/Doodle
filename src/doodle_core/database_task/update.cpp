@@ -162,14 +162,7 @@ void update_data::init() {
     p_i->th_updata();
   });
 }
-void update_data::succeeded() {
-  g_reg()->ctx().erase<process_message>();
-}
-void update_data::failed() {
-  g_reg()->ctx().erase<process_message>();
-}
 void update_data::aborted() {
-  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
 void update_data::update(
@@ -186,7 +179,9 @@ void update_data::update(
         this->fail();
         throw;
       }
-    } break;
+      g_reg()->ctx().erase<process_message>();
+      break;
+    }
     default:
       break;
   }

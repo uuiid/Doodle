@@ -108,20 +108,11 @@ void delete_data::init() {
     p_i->th_delete();
   });
 }
-void delete_data::succeeded() {
-  g_reg()->ctx().erase<process_message>();
-}
-void delete_data::failed() {
-  g_reg()->ctx().erase<process_message>();
-}
+
 void delete_data::aborted() {
-  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
-void delete_data::update(
-    chrono::duration<chrono::system_clock::rep,
-                     chrono::system_clock::period>,
-    void *data) {
+void delete_data::update() {
   switch (p_i->future_.wait_for(0ns)) {
     case std::future_status::ready: {
       try {
@@ -132,7 +123,9 @@ void delete_data::update(
         this->fail();
         throw;
       }
-    } break;
+      g_reg()->ctx().erase<process_message>();
+      break;
+    }
     default:
       break;
   }

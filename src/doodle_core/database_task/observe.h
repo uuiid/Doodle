@@ -22,7 +22,7 @@ class DOODLE_CORE_EXPORT observe : public process_t<observe> {
   void succeeded();
   void failed();
   void aborted();
-  void update(base_type::delta_type, void* data);
+  void update( );
 };
 
 }  // namespace database_n

@@ -21,7 +21,7 @@ void observe::failed() {
 }
 void observe::aborted() {
 }
-void observe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
+void observe::update() {
 }
 }  // namespace database_n
 }  // namespace doodle

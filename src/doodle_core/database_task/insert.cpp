@@ -241,19 +241,11 @@ void insert::init() {
     p_i->th_insert();
   });
 }
-void insert::succeeded() {
-  g_reg()->ctx().erase<process_message>();
-}
-void insert::failed() {
-  g_reg()->ctx().erase<process_message>();
-}
+
 void insert::aborted() {
-  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
-void insert::update(
-    chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>,
-    void *data) {
+void insert::update() {
   switch (p_i->future_.wait_for(0ns)) {
     case std::future_status::ready: {
       try {
@@ -264,7 +256,9 @@ void insert::update(
         this->fail();
         throw;
       }
-    } break;
+      g_reg()->ctx().erase<process_message>();
+      break;
+    }
     default:
       break;
   }

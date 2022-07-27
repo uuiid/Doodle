@@ -3,10 +3,10 @@
 //
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
-
+#include <doodle_core/gui_template/gui_process.h>
 namespace doodle::database_n {
 
-class DOODLE_CORE_EXPORT delete_data: public process_t<delete_data> {
+class DOODLE_CORE_EXPORT delete_data : public process_handy_tools {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -17,12 +17,9 @@ class DOODLE_CORE_EXPORT delete_data: public process_t<delete_data> {
 
   ~delete_data() override;
   void init();
-  void succeeded();
-  void failed();
+
   void aborted();
-  void update(base_type::delta_type, void* data);
+  void update();
 };
 
-}  // namespace doodle
-
-
+}  // namespace doodle::database_n

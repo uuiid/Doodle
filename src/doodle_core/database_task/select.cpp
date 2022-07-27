@@ -248,14 +248,8 @@ void select::init() {
     this->th_run();
   });
 }
-void select::succeeded() {
-  g_reg()->ctx().erase<process_message>();
-}
-void select::failed() {
-  g_reg()->ctx().erase<process_message>();
-}
+
 void select::aborted() {
-  g_reg()->ctx().erase<process_message>();
   p_i->stop = true;
 }
 void select::update() {
@@ -276,6 +270,7 @@ void select::update() {
   } else {
     std::swap(g_reg(), p_i->local_reg);
     this->succeed();
+    g_reg()->ctx().erase<process_message>();
   }
 }
 
