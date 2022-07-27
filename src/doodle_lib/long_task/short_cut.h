@@ -14,7 +14,7 @@ class short_cut {
 
  public:
   short_cut();
-  virtual ~short_cut() override;
+  virtual ~short_cut();
 
   [[maybe_unused]] void init();
   [[maybe_unused]] void update();

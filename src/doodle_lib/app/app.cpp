@@ -176,7 +176,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
     load_project(app::Get().options_ ? app::Get().options_->p_project_path : FSys::path{});
-    boost::asio::post(g_io_context(), []() { this->load_windows(); });
+    boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
   chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), DOODLE_LOC, "错误的窗口");
