@@ -36,6 +36,8 @@ nlohmann::json &base_window::get_setting() const {
 }
 base_window::base_window()  = default;
 base_window::~base_window() = default;
+
+
 const std::string &window_panel::title() const {
   return title_name_;
 }

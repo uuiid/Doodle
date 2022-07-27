@@ -111,12 +111,7 @@ const std::string &layout_window::title() const {
 
 void layout_window::init() {
   g_reg()->ctx().emplace<layout_window &>(*this);
-}
-
-void layout_window::operator()() {
-  p_i->builder_dock();
-  if (!p_i->init) {
-    /// \brief 这里显示需要的初始化窗口
+  boost::asio::post(g_io_context(), [this]() {
     call_render<::doodle::edit_widgets>();
     call_render<::doodle::assets_filter_widget>();
     call_render<::doodle::gui::csv_export_widgets>();
@@ -127,8 +122,25 @@ void layout_window::operator()() {
     call_render<::doodle::assets_file_widgets>();
     call_render<::doodle::long_time_tasks_widget>();
     call_render<::doodle::gui::time_sequencer_widget>();
-    p_i->init = true;
-  }
+  });
+}
+
+void layout_window::operator()() {
+  p_i->builder_dock();
+  //  if (!p_i->init) {
+  //    /// \brief 这里显示需要的初始化窗口
+  //    call_render<::doodle::edit_widgets>();
+  //    call_render<::doodle::assets_filter_widget>();
+  //    call_render<::doodle::gui::csv_export_widgets>();
+  //    call_render<::doodle::comm_maya_tool>();
+  //    call_render<::doodle::comm_create_video>();
+  //    call_render<::doodle::gui::extract_subtitles_widgets>();
+  //    call_render<::doodle::gui::subtitle_processing>();
+  //    call_render<::doodle::assets_file_widgets>();
+  //    call_render<::doodle::long_time_tasks_widget>();
+  //    call_render<::doodle::gui::time_sequencer_widget>();
+  //    p_i->init = true;
+  //  }
   //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
   //  ImGui::SetNextWindowPos(viewport->WorkPos);
   //  ImGui::SetNextWindowSize(viewport->WorkSize);

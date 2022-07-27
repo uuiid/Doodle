@@ -216,7 +216,6 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
 }
 
-
 void app::set_title(const std::string& in_title) {
   boost::asio::post(g_io_context(),
                     [&, in_title]() {
@@ -242,11 +241,12 @@ void app::show_windows() {
 }
 void app::load_windows() {
   boost::asio::post(
+      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()}));
+  boost::asio::post(
       make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
   boost::asio::post(
       make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
-  boost::asio::post(
-      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()}));
+
 }
 app::~app() {
   // Cleanup
