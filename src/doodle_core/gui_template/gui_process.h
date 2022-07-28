@@ -146,37 +146,16 @@ class process_warp_t {
   //  }
   explicit process_warp_t(Process_t& in_ptr, std::shared_ptr<void>&& in_owner)
       : owner_p(std::move(in_owner)),
-        process_p(std::ref(in_ptr)){
-
-        };
-
-  process_warp_t(const process_warp_t& in_other) noexcept
-      : owner_p(in_other.owner_p),
-        process_p(in_other.process_p),
-        current(in_other.current) {
-  }
-  process_warp_t& operator=(const process_warp_t& in_other) noexcept {
-    owner_p   = in_other.owner_p;
-    process_p = in_other.process_p;
-    current   = in_other.current;
-    return *this;
-  }
-  process_warp_t(process_warp_t&& in_other) noexcept
-      : owner_p(std::move(in_other.owner_p)),
-        process_p(std::move(in_other.process_p)),
-        current(std::move(in_other.current)) {
-  }
-  process_warp_t& operator=(process_warp_t&& in_other) noexcept {
-    owner_p   = std::move(in_other.owner_p);
-    process_p = std::move(in_other.process_p);
-    current   = std::move(in_other.current);
-    return *this;
-  }
-
+        process_p(std::ref(in_ptr)){};
   explicit process_warp_t(std::any&& in_ptr)
       : process_warp_t(std::any_cast<Process_t&>(in_ptr), in_ptr){};
 
-  virtual ~process_warp_t() = default;
+  process_warp_t(const process_warp_t& in_other) noexcept            = default;
+  process_warp_t& operator=(const process_warp_t& in_other) noexcept = default;
+  process_warp_t(process_warp_t&& in_other) noexcept                 = default;
+  process_warp_t& operator=(process_warp_t&& in_other) noexcept      = default;
+
+  virtual ~process_warp_t()                                          = default;
 
   void abort(const bool immediately = false) {
     if (alive()) {
