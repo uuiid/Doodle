@@ -48,50 +48,19 @@ void get_ctx_sql_data(
 void update_ctx::ctx(const entt::registry& in_registry,
                      sqlpp::sqlite3::connection& in_connection) {
   std::map<std::uint32_t, std::string> data{};
-  std::map<std::uint32_t, std::optional<std::uint32_t>> has_install{};
-
 #include "macro.h"
   get_ctx_sql_data<DOODLE_SQLITE_TYPE_CTX>(in_registry, data);
 
   sql::Context l_table{};
 
-  auto l_par_select = in_connection.prepare(
-      sqlpp::select(l_table.id)
-          .from(l_table)
-          .where(l_table.comHash == sqlpp::parameter(l_table.comHash)));
-
-  for (auto&& i : data) {
-    l_par_select.params.comHash = i.first;
-    has_install[i.first]        = {};
-    for (auto& row : in_connection(l_par_select)) {
-      has_install[i.first] = row.id._is_null;
-      break;
-    }
-  }
-
   auto l_par = in_connection.prepare(
-      sqlpp::insert_into(l_table)
+      sqlpp::sqlite3::insert_or_replace_into(l_table)
           .set(l_table.comHash  = sqlpp::parameter(l_table.comHash),
                l_table.jsonData = sqlpp::parameter(l_table.jsonData)));
-  for (auto& i : has_install) {
-    if (i.second) {
-      l_par.params.comHash  = i.first;
-      l_par.params.jsonData = data[i.first];
-      in_connection(l_par);
-    }
-  }
-
-  auto l_par_updata = in_connection.prepare(
-      sqlpp::update(l_table)
-          .set(l_table.jsonData = sqlpp::parameter(l_table.jsonData))
-          .where(l_table.comHash == sqlpp::parameter(l_table.comHash)));
-
-  for (auto& i : has_install) {
-    if (!i.second) {
-      l_par_updata.params.comHash  = i.first;
-      l_par_updata.params.jsonData = data[i.first];
-      in_connection(l_par);
-    }
+  for (auto&& i : data) {
+    l_par.params.comHash  = i.first;
+    l_par.params.jsonData = i.second;
+    in_connection(l_par);
   }
 }
 void update_ctx::ctx(const entt::registry& in_registry) {
