@@ -23,18 +23,14 @@ enum class process_state : std::uint8_t {
 };
 
 class process_handy_tools {
-  mutable process_state process_state_p{process_state::run};
+  process_state process_state_p{process_state::run};
 
  public:
   process_handy_tools()          = default;
   virtual ~process_handy_tools() = default;
-  virtual inline void succeed() const {
-    process_state_p = process_state::succeed;
-  }
-  virtual inline void fail() const {
-    process_state_p = process_state::fail;
-  }
-  virtual inline process_state state() const {
+  virtual void succeed();
+  virtual void fail();
+  virtual inline const process_state& state() const {
     return process_state_p;
   }
 };
