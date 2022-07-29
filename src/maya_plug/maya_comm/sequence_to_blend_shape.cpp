@@ -130,8 +130,8 @@ MStatus sequence_to_blend_shape::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
-//  this->create_mesh();
-//  this->create_anim();
+  //  this->create_mesh();
+  //  this->create_anim();
   this->run_blend_shape_comm();
   return MStatus();
 }
@@ -172,10 +172,8 @@ void sequence_to_blend_shape::create_mesh() {
     DOODLE_CHICK(l_s);
 
     auto l_center = l_bind_box.center();
-    l_s = p_i->create_point_list.append(l_center);
+    l_s           = p_i->create_point_list.append(l_center);
     DOODLE_CHICK(l_s);
-
-
   }
 
   MFnMesh l_obj{};
@@ -197,12 +195,15 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   l_s = l_mesh.setObject(l_mesh_obj);
   DOODLE_CHICK(l_s);
 
-
   MFnTransform l_fn_transform{};
   l_fn_transform.setObject(l_path.transform(&l_s));
   DOODLE_CHICK(l_s);
 
-  l_fn_transform.clearRestPosition();
+  l_s = l_fn_transform.clearRestPosition();
+  DOODLE_CHICK(l_s);
+  l_s = l_fn_transform.resetFromRestPosition();
+  DOODLE_CHICK(l_s);
+  DOODLE_LOG_INFO("完成");
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
