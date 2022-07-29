@@ -57,7 +57,7 @@ function(get_git_version)
 
         message("get version v${v_short}")
         execute_process( # get_git_version
-                COMMAND ${GIT_EXECUTABLE} tags "v${v_short}"
+                COMMAND ${GIT_EXECUTABLE} tag "v${v_short}"
                 WORKING_DIRECTORY ${DOODLE_GIT_WORK_DIR}
                 RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
