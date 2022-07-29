@@ -116,7 +116,8 @@ class assets_file_widgets::impl {
       if (handle_.any_of<image_icon>()) {
         /// @brief 如果有图标就获取
         auto&& k_icon = handle_.get<image_icon>();
-        if (!k_icon.image) {
+        if (!k_icon.image && !handle_.any_of<image_icon::image_load_tag>()) {
+          handle_.emplace_or_replace<image_icon::image_load_tag>();
           boost::asio::post(make_process_adapter<image_load_task>(g_io_context().get_executor(), handle_));
           return;
         }

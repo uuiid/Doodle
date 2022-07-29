@@ -25,6 +25,8 @@ class DOODLE_CORE_EXPORT image_icon {
   cv::Size2d size2d_;
   FSys::path image_root(const entt::handle &in_handle) const;
 
+  using image_load_tag = entt::tag<"image_load_tag"_hs>;
+
  private:
   friend void to_json(nlohmann::json &j, const image_icon &p);
   friend void from_json(const nlohmann::json &j, image_icon &p);
