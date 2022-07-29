@@ -26,6 +26,7 @@
 namespace doodle {
 namespace maya_plug {
 
+namespace sequence_to_blend_shape_ns {
 constexpr char startFrame_f[]  = "-sf";
 constexpr char startFrame_lf[] = "-startFrame";
 constexpr char endFrame_f[]    = "-ef";
@@ -36,7 +37,6 @@ constexpr char bindFrame_lf[]  = "-bindFrame";
 
 constexpr char parent_f[]      = "-p";
 constexpr char parent_lf[]     = "-parent";
-namespace sequence_to_blend_shape_ns {
 MSyntax syntax() {
   MSyntax syntax{};
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
