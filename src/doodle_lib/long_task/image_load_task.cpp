@@ -24,9 +24,11 @@ void image_load_task::init() {
   if (p_i->handle_) {
     chick_true<doodle_error>(p_i->handle_.any_of<image_icon>(), DOODLE_LOC, "缺失图片组件");
     p_i->image_ = p_i->handle_.get<image_icon>();
+    DOODLE_LOG_INFO("准备加载图片 {}", p_i->image_.path);
     if (!p_i->image_.image) {
       auto l_root  = p_i->image_.image_root(p_i->handle_);
       p_i->result_ = g_thread_pool().enqueue([this, l_p = l_root]() {
+        DOODLE_LOG_INFO("后台开始加载图片 {}", p_i->image_.path);
         image_loader{}.load(p_i->image_, l_p);
       });
     }
