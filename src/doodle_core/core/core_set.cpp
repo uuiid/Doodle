@@ -78,6 +78,17 @@ core_set::core_set()
       _root_data(p_root / "data"),
       timeout(3600),
       json_data(std::make_shared<nlohmann::json>()) {
+#ifdef _WIN32
+  auto l_short_path = FSys::temp_directory_path().generic_wstring();
+  auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
+  std::unique_ptr<wchar_t[]> p_buff{new wchar_t[k_buff_size]};
+  auto l_r = GetLongPathNameW(l_short_path.c_str(), p_buff.get(), k_buff_size);
+  if (FAILED(l_r)) {
+    set_root("C:/");
+  } else {
+    set_root(FSys::path{p_buff.get()} / "Doodle");
+  }
+#endif  // _WIN32
 }
 
 boost::uuids::uuid core_set::get_uuid() {
