@@ -44,7 +44,11 @@ function(get_git_version)
 
 
         # 版本递增
-        math(EXPR lv_patch "${CMAKE_MATCH_3} + 1")
+        if (${CMAKE_MATCH_4})
+            math(EXPR lv_patch "${CMAKE_MATCH_3} + 1")
+        else()
+            set(lv_patch ${CMAKE_MATCH_3})
+        endif ()
 
         set(lv_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${lv_patch}")
 
