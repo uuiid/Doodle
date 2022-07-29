@@ -82,6 +82,8 @@ set(doodle_maya_plug_cpp
         maya_comm/create_qcloth_assets.h
         maya_comm/create_qcloth_assets.cpp
         data/maya_register_main.h
+        maya_comm/sequence_to_blend_shape.h
+        maya_comm/sequence_to_blend_shape.cpp
         )
 
 if (DEFINED Maya_Version)
