@@ -31,25 +31,38 @@ function(get_git_version)
     if (NOT GIT_DESCRIBE_ERROR_CODE)
         string(REGEX MATCH [[^v([0-9]+)\.([0-9]+)\.([0-9]+)-?([0-9]+)?(.*)]] _ "${GIT_DESCRIBE_VERSION}")
         #        set(VERSION_SHORT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_TWEAK}")
-#        cmake_print_variables(
-#                GIT_DESCRIBE_VERSION
-#                DOODLE_TEST
-#                CMAKE_MATCH_COUNT
-#                CMAKE_MATCH_0
-#                CMAKE_MATCH_1
-#                CMAKE_MATCH_2
-#                CMAKE_MATCH_3
-#                CMAKE_MATCH_4
-#                CMAKE_MATCH_5)
+        #        cmake_print_variables(
+        #                GIT_DESCRIBE_VERSION
+        #                DOODLE_TEST
+        #                CMAKE_MATCH_COUNT
+        #                CMAKE_MATCH_0
+        #                CMAKE_MATCH_1
+        #                CMAKE_MATCH_2
+        #                CMAKE_MATCH_3
+        #                CMAKE_MATCH_4
+        #                CMAKE_MATCH_5)
         set(v_major ${CMAKE_MATCH_1} PARENT_SCOPE)
         set(v_minor ${CMAKE_MATCH_2} PARENT_SCOPE)
-        set(v_patch ${CMAKE_MATCH_3} PARENT_SCOPE)
+        #        set(v_patch ${CMAKE_MATCH_3} PARENT_SCOPE)
+        # 版本递增
+        math(EXPR v_patch "${CMAKE_MATCH_3} + 1")
+
         set(v_tweak ${CMAKE_MATCH_4} PARENT_SCOPE)
         set(v_sha1 ${CMAKE_MATCH_5} PARENT_SCOPE)
         if (${CMAKE_MATCH_4})
-            set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}.${CMAKE_MATCH_4}" PARENT_SCOPE)
+            set(v_short "${v_major}.${v_minor}.${v_patch}" PARENT_SCOPE)
         else ()
-            set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}" PARENT_SCOPE)
+            set(v_short "${v_major}.${v_minor}.${v_patch}" PARENT_SCOPE)
+        endif ()
+
+        message("get version v${v_short}")
+        execute_process( # get_git_version
+                COMMAND ${GIT_EXECUTABLE} tags "v${v_short}"
+                WORKING_DIRECTORY ${DOODLE_GIT_WORK_DIR}
+                RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if (GIT_DESCRIBE_ERROR_CODE)
+            message(FATAL_ERROR "not set get version v${v_short}")
         endif ()
 
     endif ()
