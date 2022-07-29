@@ -283,7 +283,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   boost::asio::any_io_executor executor;
   rear_adapter_data process;
 
-  using next_type     = std::shared_ptr<void>;
+  using next_type     = std::shared_ptr<rear_adapter_t>;
   using next_fun_type = std::function<void()>;
 
  public:
@@ -292,9 +292,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   next_fun_type next_fun_value;
 
   using executor_type = boost::asio::any_io_executor;
-  executor_type get_executor() const noexcept {
-    return this->executor;
-  }
+  executor_type get_executor() const noexcept;
   //  template <typename Executor1, typename... Args,
   //            std::enable_if_t<
   //                std::is_convertible_v<Executor1&, boost::asio::execution_context&>,
@@ -303,37 +301,19 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   //      : executor(in_io.get_executor()),
   //        process(std::forward<Args>(in_args)...),
   //        next_value(),
-  //        next_ptr(&next_value),
-  //        next_fun_value() {}
+  //        next_ptr(&next_value)  {}
 
   template <typename Executor, typename Process_t>
   explicit rear_adapter_t(const Executor& in_io, Process_t&& in_args)
       : executor(in_io),
         process(std::forward<Process_t>(in_args)),
         next_value(),
-        next_ptr(&next_value),
-        next_fun_value() {}
+        next_ptr(&next_value) {}
 
-  virtual ~rear_adapter_t() {
-    if (process.alive()) {
-      process.abort(true);
-    }
-  }
+  virtual ~rear_adapter_t();
 
-  inline void operator()() {
-    boost::asio::post(executor, [this,
-                                 self_ = this->shared_from_this()]() {
-      process();
-      if (process.finished()) {
-        if (this->next_fun_value)
-          this->next_fun_value();
-      } else if (process.rejected()) {
-        return;
-      } else {
-        (*this)();
-      }
-    });
-  }
+  void operator()();
+
   template <typename Process_t1, typename Executor1, typename... Args1>
   static std::shared_ptr<rear_adapter_t> make_shared(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;
@@ -349,10 +329,9 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
 
   template <typename Process_t1, typename Executor1, typename... Args1>
   rear_adapter_t& next_e(Executor1&& in_io, Args1&&... in_args) {
-    auto l_ptr     = make_shared<Process_t1>(in_io, std::forward<Args1>(in_args)...);
-    *next_ptr      = l_ptr;
-    next_fun_value = [l_ptr]() { (*l_ptr)(); };
-    next_ptr       = &(l_ptr->next_value);
+    auto l_ptr = make_shared<Process_t1>(in_io, std::forward<Args1>(in_args)...);
+    *next_ptr  = l_ptr;
+    next_ptr   = &(l_ptr->next_value);
     return *this;
   }
   template <typename Executor1, typename Fun_t>
