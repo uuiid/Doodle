@@ -18,11 +18,19 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
   class impl;
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);
+
+  void create_mesh();
+  void create_anim();
+  void run_blend_shape_comm();
+
  public:
   sequence_to_blend_shape();
   ~sequence_to_blend_shape() override;
 
   MStatus doIt(const MArgList& in_arg) override;
+  [[maybe_unused]] MStatus undoIt() override;
+  [[maybe_unused]] MStatus redoIt() override;
+  [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 };
 
 }  // namespace maya_plug
