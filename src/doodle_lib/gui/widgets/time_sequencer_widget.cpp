@@ -468,19 +468,18 @@ class time_sequencer_widget::impl {
                     std::size_t in_end) {
     if (time_list.empty()) return;
 
-    auto l_begin_index = std::max(std::size_t(0), std::min(in_begin, in_end));
+    auto l_begin_index = std::max(std::size_t(1), std::min(in_begin, in_end));
     auto l_end_index   = std::min(time_list.size() - 1, std::max(in_begin, in_end));
     if (l_begin_index == l_end_index) return;
 
     decltype(time_list.front().time_point_)::time_local_point l_begin =
-        doodle::chrono::floor<chrono::days>(
-            time_list[l_begin_index].time_point_.zoned_time_.get_local_time());
+        time_list[l_begin_index - 1].time_point_.zoned_time_.get_local_time();
 
-    auto l_all_len  = work_clock_(time_list[l_begin_index].time_point_,
+    auto l_all_len  = work_clock_(time_list[l_begin_index - 1].time_point_,
                                   time_list[l_end_index].time_point_);
     const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(l_end_index - l_begin_index + 1);
 
-    ranges::for_each(time_list | ranges::views::slice(l_begin_index + 1, l_end_index),
+    ranges::for_each(time_list | ranges::views::slice(l_begin_index, l_end_index),
                      [&](decltype(time_list)::value_type& in_) {
                        in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
                        l_begin         = in_.time_point_.zoned_time_.get_local_time();
@@ -723,7 +722,7 @@ void time_sequencer_widget::render() {
   dear::Text(p_i->rules_cache.gui_name.name);
 
   if (ImGui::Button("应用规则")) {
-    p_i->rules_ = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
+    p_i->rules_                                  = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
     g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
     p_i->work_clock_.set_rules(p_i->rules_);
     p_i->refresh_work_clock_();
