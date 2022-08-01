@@ -327,9 +327,7 @@ class time_sequencer_widget::impl {
   };
 
  public:
-  impl(){
-
-  };
+  impl()= default;;
   ~impl() = default;
   std::vector<point_cache> time_list{};
   std::vector<double> time_list_x{};
