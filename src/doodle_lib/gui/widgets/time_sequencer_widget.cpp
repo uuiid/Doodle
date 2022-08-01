@@ -343,7 +343,7 @@ class time_sequencer_widget::impl {
   std::vector<std::pair<std::double_t, std::double_t>> work_time_plots_drag;
 
   /// \brief 时间规则
-  doodle::business::rules rules_{};
+  doodle::business::rules rules_{g_reg()->ctx().emplace<doodle::business::rules>()};
   /// \brief 工作时间计算
   doodle::business::work_clock work_clock_{};
 
@@ -724,6 +724,7 @@ void time_sequencer_widget::render() {
 
   if (ImGui::Button("应用规则")) {
     p_i->rules_ = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
+    g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
     p_i->work_clock_.set_rules(p_i->rules_);
     p_i->refresh_work_clock_();
   }
