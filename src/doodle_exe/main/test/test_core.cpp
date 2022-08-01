@@ -26,6 +26,9 @@
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/work_clock.h>
 
+#include <doodle_lib/gui/gui_ref/cross_frame_check.h>
+
+
 using namespace doodle;
 
 class test_pinyin {
@@ -454,9 +457,7 @@ TEST_CASE_METHOD(test_init_, "test_init_") {
     std::cout << fmt::format("{}\n", mat.info().name());
 }
 
-#include <doodle_lib/gui/gui_ref/cross_frame_check.h>
-
-TEST_CASE("test_cross_frame_check mu1") {
+TEST_CASE("test_cross_frame_check mu1", "[core]") {
   doodle::gui::detail::cross_frame_check<std::int32_t> l_test{};
 
   l_test.connect([](const std::int32_t& in) {
