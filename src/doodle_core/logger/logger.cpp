@@ -6,6 +6,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
 
 #include <boost/locale.hpp>
 #include <date/date.h>
@@ -61,6 +62,8 @@ void logger_ctrl::init_temp_log() {
 #if !defined(NDEBUG)
     auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
     l_logger->sinks().push_back(l_k_debug);
+    auto l_stdout_sink_mt = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+    l_logger->sinks().push_back(l_stdout_sink_mt);
 #endif
 
     spdlog::register_logger(l_logger);
