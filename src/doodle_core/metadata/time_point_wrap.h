@@ -73,16 +73,6 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   static time_point_wrap current_month_start(const time_point_wrap& in_time);
 
   /**
-   *
-   * @param in 开始时间
-   * @return
-   *
-   * @todo 时间选项中去除节假日和个人调休
-   *
-   */
-  [[nodiscard]] chrono::hours_double work_duration(const time_point_wrap& in) const;
-
-  /**
    * @brief 最小时间
    * @return
    */

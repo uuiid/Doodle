@@ -182,7 +182,8 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto start_time   = get_user_up_time(in);
   /// \brief 将时间转换为我们使用的调整时间
   auto end_time     = p_i->time_map[in];  // in.get<time_point_wrap>();
-  auto k_time       = start_time.work_duration(end_time);
+  /// \brief 计算持续时间
+  auto k_time       = end_time - start_time;
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)

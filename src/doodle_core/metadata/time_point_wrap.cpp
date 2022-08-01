@@ -80,39 +80,6 @@ std::string time_point_wrap::show_str() const {
   return date::format("%Y/%m/%d %H:%M:%S", zoned_time_.get_local_time());
 }
 
-chrono::hours_double time_point_wrap::work_duration(const time_point_wrap& in) const {
-  /// @warning 开始时间不能比结束时间大
-  if (zoned_time_.get_sys_time() > in.zoned_time_.get_sys_time())
-    return chrono::hours_double{0};
-
-  auto k_begin                  = chrono::floor<chrono::days>(zoned_time_.get_local_time());
-  auto k_end                    = chrono::floor<chrono::days>(in.zoned_time_.get_local_time());
-
-  auto k_time                   = k_end - k_begin;  /// 总总工作天数()
-  /// 这里要测试工作和休息日
-  chrono::hours_double k_time_h = work_days(k_begin, k_end).count() * chrono::hours_double{8};  /// 总工作小时
-
-  /**
-   *  @warning 首先是加入开始， 并且加入结束
-   *  所以减去开始时多出来的部分， 再减去结束时多出来的部分
-   *  k_time_h = (k_time.count() * chrono::hours_double{8})
-   *  - one_day_works_hours(p_time)
-   *  + one_day_works_hours(in.p_time);
-   *  简化为
-   *  k_time_h = k_time_h + one_day_works_hours(p_time) - one_day_works_hours(in.p_time);
-   */
-  k_time_h                      = k_time_h -
-             (chrono::is_rest_day(k_begin)
-                  ? chrono::hours_double{0}
-                  : one_day_works_hours(zoned_time_.get_local_time())) +
-             (chrono::is_rest_day(k_end)
-                  ? chrono::hours_double{0}
-                  : one_day_works_hours(in.zoned_time_.get_local_time()));
-
-  return k_time_h;
-  //  return {};
-}
-
 chrono::hours_double time_point_wrap::one_day_works_hours(const time_local_point& in_point) const {
   /// 获得当天的日期后制作工作时间
   auto k_day     = chrono::floor<chrono::days>(in_point);
@@ -239,7 +206,7 @@ bool time_point_wrap::operator>=(const time_point_wrap::time_zoned& in_rhs) cons
   return zoned_time_.get_local_time() >= in_rhs.get_local_time();
 }
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
-  
+
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;
   // chrono::local_days k_{l_mo};
