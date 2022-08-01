@@ -44,6 +44,9 @@ class csv_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "ep {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   gui_cache<bool> average_time{"平均时间"s, false};
+
+  /// \brief 工作时间计算
+  doodle::business::work_clock work_clock_{};
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -99,7 +102,6 @@ void csv_export_widgets::render() {
             }));
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
-  ImGui::Checkbox(*p_i->average_time.gui_name, &p_i->average_time.data);
   ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
   ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
   ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
@@ -130,33 +132,7 @@ void csv_export_widgets::render() {
                     }) |
                     ranges::to<std::map<entt::handle, time_point_wrap>>();
     p_i->user_map.clear();
-    if (p_i->average_time.data) {  /// \brief 如果需要平均时间, 现在我们就要平均一下
-      /// \brief 获取人物名称列表
-      ranges::for_each(p_i->list_sort_time, [&](const entt::handle &in_handle) {
-        p_i->user_map[in_handle.get<assets_file>().p_user].push_back(in_handle);
-      });
 
-      /// \brief 获取大小
-      /// \brief 开始平均
-      for (auto &&i : p_i->user_map) {
-        auto l_beg = time_point_wrap::current_month_start(i.second.front().get<time_point_wrap>()).zoned_time_.get_local_time();
-        auto l_end = time_point_wrap::current_month_end(i.second.back().get<time_point_wrap>()).zoned_time_.get_local_time();
-        DOODLE_LOG_INFO("获取开始时间 {}, 结束时间 {}", l_beg, l_end);
-
-        auto l_size = i.second.size();
-        auto l_time = doodle::work_duration(
-                          l_beg,
-                          l_end,
-                          doodle::business::rules{}) /
-                      l_size;
-
-        for (auto j = 0; j < l_size; ++j) {
-          auto l_t                   = doodle::next_time(l_beg, l_time * (j + 1), doodle::business::rules{});
-          p_i->time_map[i.second[j]] = time_point_wrap{l_t};
-          DOODLE_LOG_DEBUG("平均时间 {}", l_t);
-        }
-      }
-    }
     this->export_csv(p_i->list, p_i->export_path.path);
   }
 }
