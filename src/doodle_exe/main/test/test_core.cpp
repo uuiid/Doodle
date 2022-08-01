@@ -28,7 +28,6 @@
 
 #include <doodle_lib/gui/gui_ref/cross_frame_check.h>
 
-
 using namespace doodle;
 
 class test_pinyin {
@@ -466,10 +465,11 @@ TEST_CASE("test_cross_frame_check mu1", "[core]") {
   for (auto i = 0;
        i < 10;
        ++i) {
-    l_test   = i;
+    //    l_test   = i;
     auto l_g = l_test();
     l_g      = (i == 1 || i == 2 || i == 3 || i == 4);
     if (l_g) {
+      l_g ^ i;
       std::cout << i << std::endl;
     }
   }

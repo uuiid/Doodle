@@ -55,6 +55,15 @@ class cross_frame_check {
       flag = in_bool;
       return *this;
     }
+
+    guard_lock& operator^(const Cache_T& in_data) const {
+      check_p = in_data;
+      return *this;
+    }
+    guard_lock& operator^(const Cache_T& in_data) {
+      check_p = in_data;
+      return *this;
+    }
     explicit operator bool() const {
       return flag;
     }
