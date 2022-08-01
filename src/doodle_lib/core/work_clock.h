@@ -85,6 +85,11 @@ class DOODLELIB_API work_clock {
   void set_rules(const rules& in_rules);
   void set_interval(const chrono::local_time_pos& in_min,
                     const chrono::local_time_pos& in_max);
+  /**
+   * @brief 设置工作时间时钟的开始和结束(缓存)
+   * @param in_min
+   * @param in_max
+   */
   inline void set_interval(const doodle::time_point_wrap& in_min,
                            const doodle::time_point_wrap& in_max) {
     set_interval(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
