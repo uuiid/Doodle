@@ -19,6 +19,10 @@ class com_data {
   entt::entity entt_{};
   std::uint32_t com_id{};
   std::string json_data{};
+  bool operator<(const com_data& in_rhs) const;
+  bool operator>(const com_data& in_rhs) const;
+  bool operator<=(const com_data& in_rhs) const;
+  bool operator>=(const com_data& in_rhs) const;
 };
 
 }  // namespace doodle::database_n::details

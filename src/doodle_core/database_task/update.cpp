@@ -42,7 +42,7 @@ class update_data::impl {
   using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
   ///@brief boost 无锁保护
   boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
-  //#define Type_T doodle::project
+  // #define Type_T doodle::project
 
   /// \brief 最终的ji结果
   std::future<void> future_;
@@ -63,21 +63,63 @@ class update_data::impl {
   }
 
   void updata_db(sqlpp::sqlite3::connection &in_db) {
+    using install_map_type = std::map<std::reference_wrapper<details::com_data>, bool, std::less<details::com_data>>;
+
+    install_map_type inster_map{};
+
     sql::ComEntity l_tabl{};
-    auto l_pre = in_db.prepare(
-        sqlpp::update(l_tabl)
-            .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
+    /// \brief 检查是否存在组件
+    auto l_pre_select = in_db.prepare(
+        sqlpp::select(l_tabl.id)
+            .from(l_tabl)
             .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
                    l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
     for (auto &&i : com_tabls) {
-      if (stop)
-        return;
-      l_pre.params.jsonData = i.json_data;
-      l_pre.params.comHash  = i.com_id;
-      l_pre.params.entityId = main_tabls[i.entt_];
-      auto l_s              = in_db(l_pre);
-      DOODLE_LOG_INFO("更新数据库id {}", l_s);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+      l_pre_select.params.comHash  = i.com_id;
+      l_pre_select.params.entityId = main_tabls[i.entt_];
+      inster_map[std::ref(i)]      = false;
+      for (auto &&row : in_db(l_pre_select)) {
+        inster_map[std::ref(i)] = true;
+        break;
+      }
+    }
+
+    /// \brief 不存在就插入
+    for (auto &&i : inster_map) {
+      if (!i.second) {
+        auto l_pre_inster = in_db.prepare(
+            sqlpp::insert_into(l_tabl)
+                .set(l_tabl.entityId = sqlpp::parameter(l_tabl.entityId),
+                     l_tabl.comHash  = sqlpp::parameter(l_tabl.comHash),
+                     l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData)));
+        if (stop)
+          return;
+        l_pre_inster.params.comHash  = i.first.get().com_id;
+        l_pre_inster.params.entityId = main_tabls[i.first.get().entt_];
+        l_pre_inster.params.jsonData = i.first.get().json_data;
+        auto l_s                     = in_db(l_pre_inster);
+        DOODLE_LOG_INFO("检查数据库id {} 存在(不存在时插入)", l_s);
+        g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+      }
+    }
+
+    /// \brief 存在则更新
+    for (auto &&i : inster_map) {
+      if (!i.second) {
+        auto l_pre = in_db.prepare(
+            sqlpp::update(l_tabl)
+                .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
+                .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
+                       l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
+        if (stop)
+          return;
+        l_pre.params.jsonData = i.first.get().json_data;
+        l_pre.params.comHash  = i.first.get().com_id;
+        l_pre.params.entityId = main_tabls[i.first.get().entt_];
+        auto l_s              = in_db(l_pre);
+        DOODLE_LOG_INFO("更新数据库id {}", l_s);
+        g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+      }
     }
   }
 
