@@ -4,6 +4,18 @@
 
 #pragma once
 
-namespace doodle::gui {
+#include <doodle_lib/doodle_lib_fwd.h>
+namespace doodle::gui::detail {
 
-}
+template <typename Cache_T>
+class cross_frame_check {
+ public:
+  Cache_T data;
+
+  //  std::
+
+  cross_frame_check()          = default;
+  virtual ~cross_frame_check() = default;
+};
+
+}  // namespace doodle::gui::detail
