@@ -21,7 +21,7 @@
 #elif defined(__linux__)
 #include <sys/stat.h>
 #endif
-#include <catch2/catch.hpp>
+#include <catch.hpp>
 
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/core/work_clock.h>
@@ -119,7 +119,7 @@ TEST_CASE("core fmt", "[fun][fmt]") {
   auto str = fmt::format("{:04d}", 2);
   REQUIRE(str == "0002");
   str = fmt::format("{}", doodle::FSys::path{"test"});
-  REQUIRE(str == R"("test")");
+  REQUIRE(str == R"(test)");
 
   REQUIRE(fmt::to_string(doodle::episodes{1}) == R"(ep_1)");
   point p = {1, 2};
@@ -454,20 +454,40 @@ TEST_CASE_METHOD(test_init_, "test_init_") {
     std::cout << fmt::format("{}\n", mat.info().name());
 }
 
-//#include <boost/algorithm/string.hpp>
-//#include <boost/archive/iterators/base64_from_binary.hpp>
-//#include <boost/archive/iterators/binary_from_base64.hpp>
-//#include <boost/archive/iterators/transform_width.hpp>
-// std::string encode64(const std::string &val) {
-//  using namespace boost::archive::iterators;
-//  using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
-//  auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
-//  return tmp.append((3 - val.size() % 3) % 3, '=');
-//}
-// std::string decode64(const std::string &val) {
-//  using namespace boost::archive::iterators;
-//  using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
-//  return boost::algorithm::trim_right_copy_if(std::string(It(std::begin(val)), It(std::end(val))), [](char c) {
-//    return c == '\0';
-//  });
-//}
+#include <doodle_lib/gui/gui_ref/cross_frame_check.h>
+
+TEST_CASE("test_cross_frame_check mu1") {
+  doodle::gui::detail::cross_frame_check<std::int32_t> l_test{};
+
+  l_test.connect([](const std::int32_t& in) {
+    std::cout << "call int " << in << std::endl;
+  });
+  for (auto i = 0;
+       i < 10;
+       ++i) {
+    l_test   = i;
+    auto l_g = l_test();
+    l_g      = (i == 1 || i == 2 || i == 3 || i == 4);
+    if (l_g) {
+      std::cout << i << std::endl;
+    }
+  }
+}
+
+// #include <boost/algorithm/string.hpp>
+// #include <boost/archive/iterators/base64_from_binary.hpp>
+// #include <boost/archive/iterators/binary_from_base64.hpp>
+// #include <boost/archive/iterators/transform_width.hpp>
+//  std::string encode64(const std::string &val) {
+//   using namespace boost::archive::iterators;
+//   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
+//   auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
+//   return tmp.append((3 - val.size() % 3) % 3, '=');
+// }
+//  std::string decode64(const std::string &val) {
+//   using namespace boost::archive::iterators;
+//   using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
+//   return boost::algorithm::trim_right_copy_if(std::string(It(std::begin(val)), It(std::end(val))), [](char c) {
+//     return c == '\0';
+//   });
+// }
