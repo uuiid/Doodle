@@ -475,6 +475,25 @@ TEST_CASE("test_cross_frame_check mu1", "[core]") {
   }
 }
 
+TEST_CASE("test_cross_frame_check mu2", "[core]") {
+  doodle::gui::detail::cross_frame_check<std::int32_t> l_test{};
+
+  l_test.connect([](const std::int32_t& in) {
+    std::cout << "call int " << in << std::endl;
+  });
+  for (auto i = 0;
+       i < 10;
+       ++i) {
+    //    l_test   = i;
+    auto l_g = l_test();
+    l_g      = (i == 1 || i == 3);
+    if (l_g) {
+      l_g ^ i;
+      std::cout << i << std::endl;
+    }
+  }
+}
+
 // #include <boost/algorithm/string.hpp>
 // #include <boost/archive/iterators/base64_from_binary.hpp>
 // #include <boost/archive/iterators/binary_from_base64.hpp>
