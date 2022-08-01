@@ -61,9 +61,20 @@ class cross_frame_check {
 
   cross_frame_check()          = default;
   virtual ~cross_frame_check() = default;
+
+  auto connect(const decltype(call_fun)::slot_type& in_slot_type)
+      -> decltype(call_fun.connect(in_slot_type)) {
+    return call_fun.connect(in_slot_type);
+  }
+
   guard_lock operator()() {
     begin_lock();
     return guard_lock{*this};
+  }
+
+  cross_frame_check& operator=(const Cache_T& in) {
+    data = in;
+    return *this;
   }
 };
 
