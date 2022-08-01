@@ -149,6 +149,10 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "名称"s,
       "等级"s};
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
+  /// \brief 这里设置一下时钟规则
+  p_i->work_clock_.set_rules(g_reg()->ctx().at<doodle::business::rules>());
+  p_i->work_clock_.get_work_du(p_i->list_sort_time.front().get<time_point_wrap>(),
+                               p_i->list_sort_time.back().get<time_point_wrap>());
 
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
@@ -177,7 +181,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto start_time   = get_user_up_time(in);
   auto end_time     = in.get<time_point_wrap>();
   /// \brief 计算持续时间
-  auto k_time       = end_time - start_time;
+  auto k_time       = p_i->work_clock_(start_time, end_time);
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)
