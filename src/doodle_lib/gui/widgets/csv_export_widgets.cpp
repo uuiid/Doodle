@@ -33,7 +33,7 @@ class csv_export_widgets::impl {
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
-  std::map<entt::handle, time_point_wrap> time_map;
+
   std::map<std::string, std::vector<entt::handle>> user_map;
 
   std::vector<boost::signals2::scoped_connection> con;
@@ -126,11 +126,6 @@ void csv_export_widgets::render() {
       return;
     }
 
-    p_i->time_map = p_i->list_sort_time |
-                    ranges::view::transform([](const entt::handle &in_handle) -> std::pair<entt::handle, time_point_wrap> {
-                      return std::make_pair(in_handle, in_handle.get<time_point_wrap>());
-                    }) |
-                    ranges::to<std::map<entt::handle, time_point_wrap>>();
     p_i->user_map.clear();
 
     this->export_csv(p_i->list, p_i->export_path.path);
@@ -180,8 +175,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto &k_ass       = in.get<assets_file>();
   auto project_root = g_reg()->ctx().at<project>().p_path;
   auto start_time   = get_user_up_time(in);
-  /// \brief 将时间转换为我们使用的调整时间
-  auto end_time     = p_i->time_map[in];  // in.get<time_point_wrap>();
+  auto end_time     = in.get<time_point_wrap>();
   /// \brief 计算持续时间
   auto k_time       = end_time - start_time;
 
@@ -239,7 +233,7 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
 
     return end_it == p_i->list_sort_time.rend()
                ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
-               : p_i->time_map[*end_it];  /// \brief 这里也是转换为我们调整过的时间
+               : end_it->get<time_point_wrap>();
   }
 }
 
