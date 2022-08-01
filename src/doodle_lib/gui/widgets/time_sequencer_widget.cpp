@@ -354,8 +354,7 @@ class time_sequencer_widget::impl {
   std::size_t index_end_{0};
   std::size_t index_view_end{0};
 
-  std::int32_t drag_point_begin{0};
-  std::int32_t drag_point_end{0};
+  std::int32_t drag_point_current{0};
 
   boost::signals2::scoped_connection l_select_conn{};
 
@@ -542,26 +541,14 @@ class time_sequencer_widget::impl {
     return l_r;
   }
 
-  std::pair<std::size_t, std::size_t> get_iter_DragPoint(std::double_t in_current) {
+  std::size_t get_iter_DragPoint(std::double_t in_current) {
     auto l_current = ranges::find_if(time_list_x, [&](const decltype(time_list_x)::value_type& in) {
-      return in > in_current;
+      return in >= in_current;
     });
-
     std::int64_t l_begin{};
-    std::int64_t l_end{};
-
-    if (l_current != time_list_x.end()) {
-      auto l_dis = std::distance(time_list_x.begin(), l_current);
-      l_begin    = l_dis - 5;
-      l_end      = l_dis + 5;
-    } else {
-      l_end   = time_list_x.size();
-      l_begin = l_end - 11;
-    }
-    l_begin = std::max(std::int64_t(0), l_begin);
-    l_end   = std::min(boost::numeric_cast<std::int64_t>(time_list_x.size()), l_end);
-    return std::make_pair(boost::numeric_cast<std::size_t>(std::min(l_begin, l_end)),
-                          boost::numeric_cast<std::size_t>(std::max(l_begin, l_end)));
+    auto l_dis = std::distance(time_list_x.begin(), l_current);
+    l_begin    = std::max(std::int64_t(0), l_begin);
+    return boost::numeric_cast<std::size_t>(l_begin);
   }
 
   void save() {
@@ -665,23 +652,19 @@ void time_sequencer_widget::render() {
     // 绘制可调整点
     {
       if (ImPlot::IsPlotHovered()) {
-        auto l_point                                         = ImPlot::GetPlotMousePos();
-        std::tie(p_i->drag_point_begin, p_i->drag_point_end) = p_i->get_iter_DragPoint(l_point.x);
+        auto l_point            = ImPlot::GetPlotMousePos();
+        p_i->drag_point_current = p_i->get_iter_DragPoint(l_point.x);
       }
-      for (int l_i = std::max(p_i->drag_point_begin, 0);
-           l_i < std::min(p_i->drag_point_end, (std::int32_t)p_i->time_list.size());
-           ++l_i) {
-        std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
-                                    p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
-                                    .time_since_epoch()
-                                    .count();
-        if (ImPlot::DragPoint((std::int32_t)l_i,
-                              (std::double_t*)&(p_i->time_list_x[l_i]),
-                              &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
-          p_i->time_list_y[l_i] = l_i;
-          p_i->set_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
-        };
-      }
+      std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
+                                  p_i->time_list[p_i->drag_point_current].time_point_.zoned_time_.get_sys_time())
+                                  .time_since_epoch()
+                                  .count();
+      if (ImPlot::DragPoint((std::int32_t)p_i->drag_point_current,
+                            (std::double_t*)&(p_i->time_list_x[p_i->drag_point_current]),
+                            &(p_i->time_list_y[p_i->drag_point_current]), ImVec4{0, 0.9f, 0, 1})) {
+        p_i->time_list_y[p_i->drag_point_current] = p_i->drag_point_current;
+        p_i->set_time_point(p_i->drag_point_current, p_i->time_list_x[p_i->drag_point_current] - l_org_x);
+      };
     }
 
     ImPlot::EndPlot();
