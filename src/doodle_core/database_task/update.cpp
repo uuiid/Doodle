@@ -106,7 +106,7 @@ class update_data::impl {
 
     /// \brief 存在则更新
     for (auto &&i : inster_map) {
-      if (!i.second) {
+      if (i.second) {
         auto l_pre = in_db.prepare(
             sqlpp::update(l_tabl)
                 .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
