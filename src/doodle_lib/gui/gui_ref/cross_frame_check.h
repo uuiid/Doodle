@@ -14,8 +14,9 @@ class cross_frame_check {
  public:
   Cache_T data{};
   std::bitset<3> flag;
-  using sig_type  = boost::signals2::signal<void(const Cache_T&)>;
-  using solt_type = typename sig_type::slot_type;
+  using sig_type     = boost::signals2::signal<void(const Cache_T&)>;
+  using solt_type    = typename sig_type::slot_type;
+  using connect_type = boost::signals2::connection;
 
  private:
   sig_type call_fun{};
@@ -52,6 +53,7 @@ class cross_frame_check {
       if (in_bool)
         check_p.modify_lock();
       flag = in_bool;
+      return *this;
     }
     explicit operator bool() const {
       return flag;
@@ -63,8 +65,7 @@ class cross_frame_check {
   virtual ~cross_frame_check() = default;
   //  DOODLE_MOVE(cross_frame_check);
 
-  auto connect(const solt_type& in_slot_type)
-      -> decltype(call_fun.connect(in_slot_type)) {
+  connect_type connect(const solt_type& in_slot_type) {
     return call_fun.connect(in_slot_type);
   }
 
