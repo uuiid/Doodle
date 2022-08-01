@@ -79,9 +79,9 @@ class time_sequencer_widget::impl {
         auto l_p1 = l_time_point.compose();
         auto l_p2 = l_time_point2.compose();
         data      = std::make_pair(
-                 gui::gui_cache<gui_time_pair_t>{
-                     "开始时间"s,
-                     std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
+            gui::gui_cache<gui_time_pair_t>{
+                "开始时间"s,
+                std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
                                                                   time_du_cache{
                                                                  std::get<0>(l_p1),
                                                                  std::get<1>(l_p1),
@@ -91,9 +91,9 @@ class time_sequencer_widget::impl {
                                                                  std::get<3>(l_p1),
                                                                  std::get<4>(l_p1),
                                                                  std::get<5>(l_p1)}})},
-                 gui::gui_cache<gui_time_pair_t>{
-                     "结束时间"s,
-                     std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
+            gui::gui_cache<gui_time_pair_t>{
+                "结束时间"s,
+                std::make_pair(gui::gui_cache<time_du_cache>{"年月日"s,
                                                                   time_du_cache{
                                                                  std::get<0>(l_p2),
                                                                  std::get<1>(l_p2),
@@ -443,7 +443,7 @@ class time_sequencer_widget::impl {
 
   void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
     chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
-    if (current_edit_index != in_index && current_edit_size != 0 && current_edit_index > 0) {
+    if (current_edit_index != in_index && current_edit_size != 0 && current_edit_index >= 0) {
       /// \brief 编辑另一个点之前更新
       ranges::for_each(ranges::views::ints(current_edit_index, time_list.size()),
                        [&](const std::int32_t& in_ints) {
@@ -480,7 +480,7 @@ class time_sequencer_widget::impl {
                                   time_list[l_end_index].time_point_);
     const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(l_end_index - l_begin_index + 1);
 
-    ranges::for_each(time_list | ranges::views::slice(l_begin_index, l_end_index + 1),
+    ranges::for_each(time_list | ranges::views::slice(l_begin_index + 1, l_end_index),
                      [&](decltype(time_list)::value_type& in_) {
                        in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
                        l_begin         = in_.time_point_.zoned_time_.get_local_time();

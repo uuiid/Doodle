@@ -57,13 +57,6 @@ TEST_CASE_METHOD(test_time_duration, "test_time_duration2") {
 }
 TEST_CASE_METHOD(test_time_duration, "work_time") {
   using namespace Catch::literals;
-  REQUIRE(time_1_a.work_duration(time_1_b).count() == (20.583_a).epsilon(0.01));
-  REQUIRE(time_2_a.work_duration(time_2_b).count() == (36.583_a).epsilon(0.01));
-  REQUIRE(time_3_a.work_duration(time_3_b).count() == (0.86_a).epsilon(0.01));
-  REQUIRE(time_4_a.work_duration(time_4_b).count() == (20.583_a).epsilon(0.01));
-  REQUIRE(time_5_a.work_duration(time_5_b).count() == (36.583_a).epsilon(0.01));
-  REQUIRE(time_6_a.work_duration(time_6_b).count() == (0.86_a).epsilon(0.01));
-  REQUIRE(time_7_a.work_duration(time_7_b).count() == (33.691_a).epsilon(0.01));
 
 #define DOODLE_T_M_1(time_index, time_du, rules_)                                                                                                            \
   REQUIRE(doodle::work_duration(                                                                                                                             \
