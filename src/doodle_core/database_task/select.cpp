@@ -142,7 +142,8 @@ class select::impl {
                 entt::handle l_h{in_reg, l_e};
                 if (!l_h.valid()) {
                   DOODLE_LOG_ERROR("无效的实体 {}", in_id);
-                  database::delete_(l_h);
+                  /// @todo 这里需要删除数据库中的无效实体
+                  return;
                 }
 
                 auto l_json = nlohmann::json::parse(in_json);
@@ -222,7 +223,7 @@ class select::impl {
                 entt::handle l_h{in_reg, l_e};
                 chick_true<doodle_error>(
                     l_h.valid(), DOODLE_LOC,
-                    "失效的实体");
+                    "失效的实体 {}", l_e);
                 if (l_h.any_of<database>()) {
                   l_h.remove<data_status_save>();
                 } else
@@ -287,12 +288,18 @@ void select::th_run() {
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
     in_.get();
   });
+  p_i->results.clear();
 
   if (auto [l_v, l_i] = doodle::database_n::details::get_version(*l_k_con);
       l_v >= 3 && l_i > 4) {
     if (!p_i->only_ctx) {
       /// \brief 选中实体
       p_i->select_entt(*p_i->local_reg, *l_k_con);
+      /// \brief 等待实体创建完成
+      ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
+        in_.get();
+      });
+      p_i->results.clear();
 #include "details/macro.h"
       /// @brief 选中组件
       p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
