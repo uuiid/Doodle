@@ -23,6 +23,7 @@ set(
         gui/gui_ref/base_windows_factory.h
         gui/gui_ref/base_window.h
         gui/gui_ref/layout_window.h
+        gui/gui_ref/cross_frame_check.h
 
 
         gui/action/command_tool.h
