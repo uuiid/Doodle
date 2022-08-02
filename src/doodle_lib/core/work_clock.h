@@ -96,6 +96,12 @@ class DOODLELIB_API work_clock {
                  doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
 
+  /**
+   * @brief 获取两个时间点点工作时间(按照规则获取)
+   * @param in_min 开始时间
+   * @param in_max 结束时间
+   * @return 工作时间
+   */
   chrono::hours_double operator()(const chrono::local_time_pos& in_min,
                                   const chrono::local_time_pos& in_max) const;
   inline chrono::hours_double operator()(const doodle::time_point_wrap& in_min,
@@ -103,6 +109,10 @@ class DOODLELIB_API work_clock {
     return (*this)(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
                    doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
+  /**
+   * @copybrief chrono::hours_double operator()(const chrono::local_time_pos& in_min, const chrono::local_time_pos& in_max) const
+   * @tparam Duration_  模板时间段
+   */
   template <typename Duration_, std::enable_if_t<
                                     !std::is_same_v<chrono::time_point<chrono::local_t, Duration_>,
                                                     chrono::local_time_pos>,
@@ -115,6 +125,12 @@ class DOODLELIB_API work_clock {
         chrono::floor<chrono::seconds>(in_e));
   };
 
+  /**
+   * @brief 根据传入的开始时间和工作时间段获取下一个时间点
+   * @param in_begin 开始时间
+   * @param in_du 时间段
+   * @return 下一个时间点
+   */
   chrono::local_time_pos next_time(const chrono::local_time_pos& in_begin,
                                    const chrono::local_time_pos::duration& in_du) const;
 
@@ -131,17 +147,31 @@ class DOODLELIB_API work_clock {
         chrono::floor<chrono::seconds>(in_du_time));
   };
 
-  std::vector<std::pair<time_d_t, time_d_t>> get_work_du(
+  /**
+   * @brief 获取两个时间点之间点时间分段( 休息时间段 -> 工作时间段)
+   * @param in_min 开始时间
+   * @param in_max 结束时间
+   * @return 时间段
+   */
+  [[nodiscard("")]] std::vector<std::pair<time_d_t, time_d_t>> get_work_du(
       const chrono::local_time_pos& in_min,
-      const chrono::local_time_pos& in_max);
+      const chrono::local_time_pos& in_max) const;
 
-  inline auto get_work_du(const doodle::time_point_wrap& in_min,
-                          const doodle::time_point_wrap& in_max) {
+  [[nodiscard("")]] inline auto get_work_du(const doodle::time_point_wrap& in_min,
+                                            const doodle::time_point_wrap& in_max) const {
     return get_work_du(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
                        doodle::chrono::floor<chrono::local_time_pos::duration>(in_max.zoned_time_.get_local_time()));
   };
 
+  /**
+   * @brief 获取当前点所在时间段段的备注
+   * @param in_time 时间点
+   * @return 可选段备注
+   */
   std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& in_time);
+  /**
+   * @copybrief   std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& in_time)
+   */
   std::optional<std::string> get_extra_work_info(const doodle::time_point_wrap& in_time);
 
   std::string debug_print();

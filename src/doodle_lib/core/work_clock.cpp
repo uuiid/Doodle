@@ -107,9 +107,8 @@ void work_clock::set_interval(const chrono::local_time_pos& in_min,
                                                 in_max));
 }
 std::vector<std::pair<work_clock::time_d_t, work_clock::time_d_t>> work_clock::get_work_du(
-
     const chrono::local_time_pos& in_min,
-    const chrono::local_time_pos& in_max) {
+    const chrono::local_time_pos& in_max) const {
   std::vector<std::pair<time_d_t, time_d_t>> l_r{};
   auto l_d = discrete_interval_time::right_open(in_min,
                                                 in_max);
