@@ -413,6 +413,7 @@ class time_sequencer_widget::impl {
 
     decltype(l_list.front().time_point_)::time_local_point l_begin =
         doodle::chrono::floor<chrono::days>(l_list.front().time_point_.zoned_time_.get_local_time());
+
     work_time = l_list |
                 ranges::views::transform(
                     [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
@@ -459,25 +460,20 @@ class time_sequencer_widget::impl {
     _set_time_point(l_time_list, in_index, in_time_s);
   }
 
-  void average_time(std::size_t in_begin,
-                    std::size_t in_end) {
+  void average_time() {
     if (time_list.empty()) return;
 
-    auto l_begin_index = std::max(std::size_t(1), std::min(in_begin, in_end));
-    auto l_end_index   = std::min(time_list.size() - 1, std::max(in_begin, in_end));
-    if (l_begin_index == l_end_index) return;
+    decltype(time_list.front().time_point_) l_begin =
+        time_list.front().time_point_.current_month_start();
 
-    decltype(time_list.front().time_point_)::time_local_point l_begin =
-        time_list[l_begin_index - 1].time_point_.zoned_time_.get_local_time();
+    auto l_all_len  = work_clock_(l_begin,
+                                  time_list.back().time_point_.current_month_end());
+    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
-    auto l_all_len  = work_clock_(time_list[l_begin_index - 1].time_point_,
-                                  time_list[l_end_index].time_point_);
-    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(l_end_index - l_begin_index + 1);
-
-    ranges::for_each(time_list | ranges::views::slice(l_begin_index, l_end_index),
+    ranges::for_each(time_list,
                      [&](decltype(time_list)::value_type& in_) {
-                       in_.time_point_ = time_point_wrap{work_clock_.next_time(l_begin, l_du)};
-                       l_begin         = in_.time_point_.zoned_time_.get_local_time();
+                       in_.time_point_ = work_clock_.next_time(l_begin, l_du);
+                       l_begin         = in_.time_point_;
                      });
     refresh_cache(time_list);
     refresh_work_time(time_list);
@@ -637,11 +633,11 @@ void time_sequencer_widget::render() {
                      p_i->time_list.size());
     ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
 
-//    {
-//      auto l_guard = p_i->chick_view();
-//
-//      l_guard = ImPlot::IsPlotSelected();
-//    }
+    //    {
+    //      auto l_guard = p_i->chick_view();
+    //
+    //      l_guard = ImPlot::IsPlotSelected();
+    //    }
 
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
@@ -709,9 +705,7 @@ void time_sequencer_widget::render() {
     ImPlot::EndPlot();
   }
 
-  if (ImGui::Button("平均时间")) p_i->average_time(0, p_i->time_list.size());
-  ImGui::SameLine();
-  if (ImGui::Button("平均视图内时间")) p_i->average_time(p_i->index_begin_, p_i->index_view_end);
+  if (ImGui::Button("平均时间")) p_i->average_time();
 
   ImGui::Separator();
   dear::Text(p_i->rules_cache.gui_name.name);
