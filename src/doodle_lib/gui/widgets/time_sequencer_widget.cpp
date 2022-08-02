@@ -701,11 +701,11 @@ void time_sequencer_widget::render() {
   dear::Text(p_i->rules_cache.gui_name.name);
 
   if (ImGui::Button("应用规则")) {
-    p_i->save();
     p_i->rules_                                  = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
     g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
     p_i->work_clock_.set_rules(p_i->rules_);
     p_i->refresh_work_clock_();
+    p_i->save();
   }
 
   dear::CollapsingHeader{*p_i->rules_cache().work_day} && [this]() {
