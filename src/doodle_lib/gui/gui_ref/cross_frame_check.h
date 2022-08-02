@@ -51,10 +51,12 @@ class cross_frame_check {
     flag |= flag_init;
   }
 
+ public:
   /**
-   * @brief 作用域守卫物体(自动进行检查)
+   * @brief 作用域守卫物体 非自动检查;
    */
   class guard_lock {
+   protected:
     cross_frame_check& check_p;
     bool flag{};
 
@@ -69,9 +71,7 @@ class cross_frame_check {
     /**
      * @brief 结束时检查守卫
      */
-    virtual ~guard_lock() {
-      check_p.begin_unlock();
-    }
+    virtual ~guard_lock() = default;
 
     /**
      * @brief 传入是否成功
@@ -108,6 +108,24 @@ class cross_frame_check {
     explicit operator bool() const {
       return flag;
     }
+    /**
+     * @brief 进行检查
+     */
+    void chick() const {
+      this->check_p.begin_unlock();
+    }
+  };
+
+ private:
+  /**
+   * @brief 作用域守卫物体(自动进行检查)
+   */
+  class guard_lock_auto : public guard_lock {
+   public:
+    using guard_lock::guard_lock;
+    virtual ~guard_lock_auto() override {
+      this->chick();
+    }
   };
 
   /**
@@ -138,9 +156,9 @@ class cross_frame_check {
    * @brief 获取跨帧守卫
    * @return 返回跨帧守卫
    */
-  [[nodiscard("")]] guard_lock operator()() {
+  [[nodiscard("")]] guard_lock_auto operator()() {
     begin_lock();
-    return guard_lock{*this};
+    return guard_lock_auto{*this};
   }
 };
 
