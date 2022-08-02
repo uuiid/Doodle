@@ -5,7 +5,7 @@
 #include "image_loader.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
-//#include <opencv2/core/directx.hpp>
+// #include <opencv2/core/directx.hpp>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/core/core_set.h>
@@ -17,12 +17,12 @@
 #include <platform/win/wnd_proc.h>
 #include <boost/asio.hpp>
 
-//#include <DirectXTK/ScreenGrab.h>
-//#include <wincodec.h>
+// #include <DirectXTK/ScreenGrab.h>
+// #include <wincodec.h>
 
-//#include <winrt/base.h>
-//#include <atlbase.h>
-//#include <atlwin.h>
+// #include <winrt/base.h>
+// #include <atlbase.h>
+// #include <atlwin.h>
 /// \brief 显卡驱动导入
 #include <d3d11.h>
 namespace doodle {
@@ -62,6 +62,12 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
       is_regular_file(l_local_path)) {
     auto k_image = cv::imread(l_local_path.generic_string());
     chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
+    static std::double_t s_image_max{512};
+    if (k_image.cols > s_image_max || k_image.rows > s_image_max) {
+      auto l_size = std::min(s_image_max / k_image.cols, s_image_max / k_image.rows);
+      cv::resize(k_image, k_image, cv::Size{}, l_size, l_size, cv::INTER_LINEAR);
+    }
+
     cv::cvtColor(k_image, k_image, cv::COLOR_BGR2RGBA);
     auto k_sh = cv_to_d3d(k_image, false);
     cv::cvtColor(k_image, k_image, cv::COLOR_RGBA2BGR);
@@ -181,11 +187,9 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
   auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
 
   FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);
-  auto l_mat = cv::imread(k_path.generic_string());
-  cv::cvtColor(l_mat, l_mat, cv::COLOR_BGR2RGBA);
-
-  k_icon.image   = cv_to_d3d(l_mat, false);
-  k_icon.size2d_ = l_mat.size();
+  auto&& [l_mat, l_d3d] = load_mat(k_path);
+  k_icon.image          = l_d3d;
+  k_icon.size2d_        = l_mat.size();
   return true;
 }
 
