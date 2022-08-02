@@ -454,7 +454,7 @@ class time_sequencer_widget::impl {
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
-    time_list.back() = time_list.back().time_point_.current_month_end();
+    time_list.back().time_point_ = time_list.back().time_point_.current_month_end();
     auto l_all_len   = work_clock_(l_begin,
                                    time_list.back().time_point_);
     const auto l_du  = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
@@ -464,7 +464,7 @@ class time_sequencer_widget::impl {
                        in_.time_point_ = work_clock_.next_time(l_begin, l_du);
                        l_begin         = in_.time_point_;
                      });
-    time_list.back() = time_list.back().time_point_.current_month_end();
+    time_list.back().time_point_ = time_list.back().time_point_.current_month_end();
     refresh_cache(time_list);
     refresh_work_time(time_list);
   }
@@ -701,6 +701,7 @@ void time_sequencer_widget::render() {
   dear::Text(p_i->rules_cache.gui_name.name);
 
   if (ImGui::Button("应用规则")) {
+    p_i->save();
     p_i->rules_                                  = static_cast<decltype(p_i->rules_)>(p_i->rules_cache());
     g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
     p_i->work_clock_.set_rules(p_i->rules_);
