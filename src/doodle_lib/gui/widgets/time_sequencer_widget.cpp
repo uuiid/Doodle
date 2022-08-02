@@ -382,8 +382,8 @@ class time_sequencer_widget::impl {
       DOODLE_LOG_INFO(work_clock_.debug_print());
       refresh_cache(time_list);
       refresh_work_time(time_list);
-      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_,
-                                                    time_list.back().time_point_));
+      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_.current_month_start(),
+                                                    time_list.back().time_point_.current_month_end()));
     }
   }
 
@@ -416,8 +416,8 @@ class time_sequencer_widget::impl {
     work_time = l_list |
                 ranges::views::transform(
                     [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
-                      auto l_d   = work_clock_(l_begin, in_time.time_point_);
-                      l_begin    = in_time.time_point_;
+                      auto l_d = work_clock_(l_begin, in_time.time_point_);
+                      l_begin  = in_time.time_point_;
                       return l_d;
                     }) |
                 ranges::to_vector;
@@ -454,16 +454,17 @@ class time_sequencer_widget::impl {
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
-
-    auto l_all_len  = work_clock_(l_begin,
-                                  time_list.back().time_point_.current_month_end());
-    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+    time_list.back() = time_list.back().time_point_.current_month_end();
+    auto l_all_len   = work_clock_(l_begin,
+                                   time_list.back().time_point_);
+    const auto l_du  = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
     ranges::for_each(time_list,
                      [&](decltype(time_list)::value_type& in_) {
                        in_.time_point_ = work_clock_.next_time(l_begin, l_du);
                        l_begin         = in_.time_point_;
                      });
+    time_list.back() = time_list.back().time_point_.current_month_end();
     refresh_cache(time_list);
     refresh_work_time(time_list);
   }
