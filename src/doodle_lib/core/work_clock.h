@@ -147,6 +147,19 @@ class DOODLELIB_API work_clock {
         chrono::floor<chrono::seconds>(in_du_time));
   };
 
+  template <typename Duration_,
+            std::enable_if_t<
+                !std::is_same_v<chrono::time_point<chrono::local_t, Duration_>,
+                                chrono::local_time_pos>,
+                bool> = true>
+  chrono::time_point<chrono::local_t, Duration_> next_time(
+      const time_point_wrap& in_s,
+      const Duration_& in_du_time) {
+    return next_time(
+        chrono::floor<chrono::seconds>(in_s.zoned_time_.get_local_time()),
+        chrono::floor<chrono::seconds>(in_du_time));
+  };
+
   /**
    * @brief 获取两个时间点之间点时间分段( 休息时间段 -> 工作时间段)
    * @param in_min 开始时间
