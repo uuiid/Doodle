@@ -336,9 +336,6 @@ class time_sequencer_widget::impl {
   std::vector<double> time_list_x{};
   std::vector<double> time_list_y{};
 
-  ImPlotRect rect_{};
-  ImPlotRect rect_org_{};
-
   std::vector<doodle::chrono::hours_double> work_time;
   std::vector<std::double_t> work_time_plots;
   std::vector<std::pair<std::double_t, std::double_t>> work_time_plots_drag;
@@ -364,7 +361,8 @@ class time_sequencer_widget::impl {
   std::vector<std::double_t> shaded_works_time{};
 
   detail::cross_frame_check<std::tuple<std::int32_t, std::double_t>> edit_chick{};
-  detail::cross_frame_check<> chick_view{};
+  detail::cross_frame_check<ImPlotRect> chick_view1{};
+  detail::cross_frame_check<ImPlotRect> chick_view2{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
