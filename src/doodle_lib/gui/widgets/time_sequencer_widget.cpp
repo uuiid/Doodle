@@ -654,14 +654,11 @@ void time_sequencer_widget::render() {
       for (std::int32_t l_i = p_i->drag_point_current;
            l_i < std::min(p_i->drag_point_current + 2, (std::int32_t)p_i->time_list.size());
            ++l_i) {
-        std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
-                                    p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
-                                    .time_since_epoch()
-                                    .count();
         auto l_tmp = boost::numeric_cast<std::double_t>(l_i);
         if (l_guard = ImPlot::DragPoint((std::int32_t)l_i,
                                         (std::double_t*)&(p_i->time_list_x[l_i]),
-                                        &(l_tmp), ImVec4{0, 0.9f, 0, 1});
+                                        &(l_tmp),
+                                        ImVec4{0, 0.9f, 0, 1});
             l_guard) {
           l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
           //          p_i->time_list_y[l_i] = l_i;
