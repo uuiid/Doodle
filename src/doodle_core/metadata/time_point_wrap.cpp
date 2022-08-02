@@ -226,10 +226,10 @@ time_point_wrap time_point_wrap::current_month_start(const time_point_wrap& in_t
   return time_point_wrap{chrono::local_days{l_mo} + doodle::chrono::days{1}};
 }
 time_point_wrap time_point_wrap::current_month_end() const {
-  return time_point_wrap(*this);
+  return current_month_end(*this);
 }
 time_point_wrap time_point_wrap::current_month_start() const {
-  return time_point_wrap(*this);
+  return current_month_start(*this);
 }
 
 }  // namespace doodle
