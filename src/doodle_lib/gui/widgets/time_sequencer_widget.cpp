@@ -364,6 +364,7 @@ class time_sequencer_widget::impl {
   std::vector<std::double_t> shaded_works_time{};
 
   detail::cross_frame_check<std::tuple<std::int32_t, std::double_t>> edit_chick{};
+  detail::cross_frame_check<> chick_view{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
@@ -607,9 +608,6 @@ void time_sequencer_widget::render() {
   if (p_i->time_list.empty())
     return;
 
-  std::size_t l_index_begin{0};
-  std::size_t l_index_end{0};
-
   if (ImGui::Button("提交更新")) p_i->save();
 
   if (ImPlot::BeginPlot("时间折线图")) {
@@ -640,6 +638,12 @@ void time_sequencer_widget::render() {
                      p_i->time_list_y.data(),
                      p_i->time_list.size());
     ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
+
+//    {
+//      auto l_guard = p_i->chick_view();
+//
+//      l_guard = ImPlot::IsPlotSelected();
+//    }
 
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
