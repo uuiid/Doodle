@@ -24,12 +24,12 @@ class DOODLE_CORE_EXPORT time_point_wrap {
  public:
   class DOODLE_CORE_EXPORT gui_data {
    public:
-    std::uint16_t year_;
-    std::uint16_t month_;
-    std::uint16_t day_;
-    std::uint16_t hours_;
-    std::uint16_t minutes_;
-    std::uint16_t seconds_;
+    std::uint16_t year_{};
+    std::uint16_t month_{};
+    std::uint16_t day_{};
+    std::uint16_t hours_{};
+    std::uint16_t minutes_{};
+    std::uint16_t seconds_{};
 
     gui_data() : gui_data(time_point_wrap{}) {}
     explicit gui_data(const time_point_wrap& in_wrap) {
