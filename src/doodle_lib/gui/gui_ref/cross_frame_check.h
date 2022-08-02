@@ -9,6 +9,10 @@
 #include <bitset>
 namespace doodle::gui::detail {
 
+/**
+ * @brief 可以进行跨越多帧进行检查的类(检查是否在拖拽等, 并在结束时进行回调)
+ * @tparam Cache_T 传入的需要缓存的数据
+ */
 template <typename Cache_T = void>
 class cross_frame_check {
  public:
@@ -22,10 +26,17 @@ class cross_frame_check {
   sig_type call_fun{};
   constexpr const static std::bitset<3> flag_init{0b001};
 
+  /**
+   * @brief 开始初始帧
+   */
   void begin_lock() {
     flag <<= 1;
   }
-  /// \brief 在这里调用回调
+  /**
+   * @brief 检查是否多帧连续成功
+   *
+   * 在这里调用回调
+   */
   void begin_unlock() {
     auto l_f = flag ^ flag_init;
     if (l_f.all()) {
@@ -33,22 +44,40 @@ class cross_frame_check {
       flag.reset();
     }
   }
+  /**
+   * @brief 在成功时记录此帧
+   */
   void modify_lock() {
     flag |= flag_init;
   }
 
+  /**
+   * @brief 作用域守卫物体(自动进行检查)
+   */
   class guard_lock {
     cross_frame_check& check_p;
     bool flag{};
 
    public:
+    /**
+     * @brief 强制传入检查类
+     * @param in_check
+     */
     explicit guard_lock(cross_frame_check& in_check)
         : check_p(in_check) {}
 
+    /**
+     * @brief 结束时检查守卫
+     */
     virtual ~guard_lock() {
       check_p.begin_unlock();
     }
 
+    /**
+     * @brief 传入是否成功
+     * @param in_bool 成功或者失败的标志
+     * @return 自身
+     */
     guard_lock& operator=(bool in_bool) {
       if (in_bool)
         check_p.modify_lock();
@@ -56,18 +85,36 @@ class cross_frame_check {
       return *this;
     }
 
+    /**
+     * @brief 传入需要缓存的数据 在发出信号时调用
+     * @param in_data 传入的数据
+     * @return 自身
+     */
     guard_lock& operator^(const Cache_T& in_data) const {
       check_p = in_data;
       return *this;
     }
+    /**
+     * @copybrief guard_lock& operator^(const Cache_T& in_data) const
+     */
     guard_lock& operator^(const Cache_T& in_data) {
       check_p = in_data;
       return *this;
     }
+    /**
+     * @brief 可以进行判断成功
+     * @return
+     */
     explicit operator bool() const {
       return flag;
     }
   };
+
+  /**
+   * @brief 方便的数据转换类
+   * @param in 传入的数据
+   * @return
+   */
   cross_frame_check& operator=(const Cache_T& in) {
     data = in;
     return *this;
@@ -78,10 +125,19 @@ class cross_frame_check {
   virtual ~cross_frame_check() = default;
   //  DOODLE_MOVE(cross_frame_check);
 
+  /**
+   * @brief 链接信号
+   * @param in_slot_type 传入的可调用对象
+   * @return 信号链接
+   */
   connect_type connect(const solt_type& in_slot_type) {
     return call_fun.connect(in_slot_type);
   }
 
+  /**
+   * @brief 获取跨帧守卫
+   * @return 返回跨帧守卫
+   */
   [[nodiscard("")]] guard_lock operator()() {
     begin_lock();
     return guard_lock{*this};
