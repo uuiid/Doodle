@@ -123,6 +123,9 @@ class cross_frame_check {
   class guard_lock_auto : public guard_lock {
    public:
     using guard_lock::guard_lock;
+    using guard_lock::operator=;
+    using guard_lock::operator^;
+    using guard_lock::operator bool;
     virtual ~guard_lock_auto() override {
       this->chick();
     }
