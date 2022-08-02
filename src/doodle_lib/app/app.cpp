@@ -67,6 +67,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
        nullptr, nullptr, nullptr, nullptr,
        _T("doodle"),
        nullptr};
+  p_win_class.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
 
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
