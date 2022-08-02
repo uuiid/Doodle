@@ -68,6 +68,10 @@ class cross_frame_check {
       return flag;
     }
   };
+  cross_frame_check& operator=(const Cache_T& in) {
+    data = in;
+    return *this;
+  }
 
  public:
   cross_frame_check()          = default;
@@ -78,14 +82,9 @@ class cross_frame_check {
     return call_fun.connect(in_slot_type);
   }
 
-  guard_lock operator()() {
+  [[nodiscard("")]] guard_lock operator()() {
     begin_lock();
     return guard_lock{*this};
-  }
-
-  cross_frame_check& operator=(const Cache_T& in) {
-    data = in;
-    return *this;
   }
 };
 

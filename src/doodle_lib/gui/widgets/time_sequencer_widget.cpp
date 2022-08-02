@@ -8,6 +8,8 @@
 #include <doodle_core/metadata/comment.h>
 #include <doodle_lib/core/work_clock.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_lib/gui/gui_ref/cross_frame_check.h>
+
 #include <doodle_core/core/core_sig.h>
 
 #include <utility>
@@ -327,7 +329,8 @@ class time_sequencer_widget::impl {
   };
 
  public:
-  impl()= default;;
+  impl() = default;
+  ;
   ~impl() = default;
   std::vector<point_cache> time_list{};
   std::vector<double> time_list_x{};
@@ -360,8 +363,7 @@ class time_sequencer_widget::impl {
 
   std::vector<std::double_t> shaded_works_time{};
 
-  std::size_t current_edit_index{};
-  std::double_t current_edit_size{};
+  detail::cross_frame_check<std::tuple<std::int32_t, std::double_t>> edit_chick{};
 
   void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
     shaded_works_time.clear();
@@ -438,27 +440,24 @@ class time_sequencer_widget::impl {
                            ranges::to_vector;
   }
 
-  void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
-    chick_true<doodle_error>(in_index < time_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
-    if (current_edit_index != in_index && current_edit_size != 0 && current_edit_index >= 0) {
-      /// \brief 编辑另一个点之前更新
-      ranges::for_each(ranges::views::ints(current_edit_index, time_list.size()),
-                       [&](const std::int32_t& in_ints) {
-                         time_list[in_ints].time_point_ += doodle::chrono::seconds{
-                             boost::numeric_cast<doodle::chrono::seconds::rep>(current_edit_size)};
-                       });
-    }
-    auto l_time_list = time_list;
+  void _set_time_point(decltype(time_list)& in_list, const std::size_t& in_index, const std::double_t& in_time_s) {
+    chick_true<doodle_error>(in_index < in_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
 
-    ranges::for_each(ranges::views::ints(in_index, l_time_list.size()),
+    ranges::for_each(ranges::views::ints(in_index, in_list.size()),
                      [&](const std::int32_t& in_ints) {
-                       l_time_list[in_ints].time_point_ += doodle::chrono::seconds{
+                       in_list[in_ints].time_point_ += doodle::chrono::seconds{
                            boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)};
                      });
-    refresh_cache(l_time_list);
-    refresh_work_time(l_time_list);
-    current_edit_index = in_index;
-    current_edit_size  = in_time_s;
+    refresh_cache(in_list);
+    refresh_work_time(in_list);
+  }
+  inline void set_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
+    _set_time_point(time_list, in_index, in_time_s);
+  }
+
+  inline void refresh_DragPoint_time_point(const std::size_t& in_index, const std::double_t& in_time_s) {
+    auto l_time_list = time_list;
+    _set_time_point(l_time_list, in_index, in_time_s);
   }
 
   void average_time(std::size_t in_begin,
@@ -591,6 +590,12 @@ time_sequencer_widget::time_sequencer_widget()
                 p_i->work_clock_.set_rules(p_i->rules_);
                 p_i->refresh_work_clock_();
               });
+  p_i->edit_chick.connect([this](const std::tuple<std::int32_t, std::double_t>& in) {
+    DOODLE_LOG_INFO("开始设置时间点 {} 增量 {}", std::get<0>(in),
+                    chrono::seconds{
+                        boost::numeric_cast<doodle::chrono::seconds::rep>(std::get<1>(in))});
+    p_i->set_time_point(std::get<0>(in), std::get<1>(in));
+  });
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -652,18 +657,22 @@ void time_sequencer_widget::render() {
         auto l_point            = ImPlot::GetPlotMousePos();
         p_i->drag_point_current = p_i->get_iter_DragPoint(l_point.x);
       }
-      for (int l_i = p_i->drag_point_current;
+      auto l_guard = p_i->edit_chick();
+      for (std::int32_t l_i = p_i->drag_point_current;
            l_i < std::min(p_i->drag_point_current + 2, (std::int32_t)p_i->time_list.size());
            ++l_i) {
         std::double_t l_org_x = doodle::chrono::floor<chrono::seconds>(
                                     p_i->time_list[l_i].time_point_.zoned_time_.get_sys_time())
                                     .time_since_epoch()
                                     .count();
-        if (ImPlot::DragPoint((std::int32_t)l_i,
-                              (std::double_t*)&(p_i->time_list_x[l_i]),
-                              &(p_i->time_list_y[l_i]), ImVec4{0, 0.9f, 0, 1})) {
-          p_i->time_list_y[l_i] = l_i;
-          p_i->set_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
+        auto l_tmp = boost::numeric_cast<std::double_t>(l_i);
+        if (l_guard = ImPlot::DragPoint((std::int32_t)l_i,
+                                        (std::double_t*)&(p_i->time_list_x[l_i]),
+                                        &(l_tmp), ImVec4{0, 0.9f, 0, 1});
+            l_guard) {
+          l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i] - l_org_x);
+          //          p_i->time_list_y[l_i] = l_i;
+          p_i->refresh_DragPoint_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
         };
       }
     }
