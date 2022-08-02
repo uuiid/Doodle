@@ -40,17 +40,5 @@ const std::string& user::get_enus() const {
 void user::set_enus(const std::string& in_string) {
   p_ENUS = in_string;
 }
-const user::time_pair_list& user::get_time_work_list() const {
-  return p_time_work;
-}
-user::time_pair_list& user::get_time_work_list() {
-  return p_time_work;
-}
-const user::time_pair_list& user::get_time_rest_list() const {
-  return p_time_rest;
-}
-user::time_pair_list& user::get_time_rest_list() {
-  return p_time_rest;
-}
 
 }  // namespace doodle

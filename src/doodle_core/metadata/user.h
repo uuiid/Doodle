@@ -30,12 +30,6 @@ class user {
   [[nodiscard]] const std::string& get_enus() const;
   void set_enus(const std::string& in_string);
 
-  const time_pair_list& get_time_work_list() const;
-  time_pair_list& get_time_work_list();
-
-  const time_pair_list& get_time_rest_list() const;
-  time_pair_list& get_time_rest_list();
-
  private:
 
   friend void to_json(nlohmann::json& j, const user& p) {
