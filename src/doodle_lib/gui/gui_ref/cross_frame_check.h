@@ -153,12 +153,21 @@ class cross_frame_check {
   }
 
   /**
-   * @brief 获取跨帧守卫
-   * @return 返回跨帧守卫
+   * @brief 获取跨帧守卫(自动检查类型)
+   * @return 返回跨帧守卫(自动检查守卫)
    */
   [[nodiscard("")]] guard_lock_auto operator()() {
     begin_lock();
     return guard_lock_auto{*this};
+  }
+
+  /**
+   * @brief 获取跨帧守卫(非自动类型)
+   * @return 返回跨帧守卫
+   */
+  [[nodiscard("")]] guard_lock get_guard() {
+    begin_lock();
+    return guard_lock{*this};
   }
 };
 
