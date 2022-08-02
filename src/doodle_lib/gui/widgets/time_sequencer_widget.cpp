@@ -391,7 +391,7 @@ class time_sequencer_widget::impl {
     time_list_x = in_list |
                   ranges::views::transform([](const impl::point_cache& in) -> double {
                     return doodle::chrono::floor<doodle::chrono::seconds>(
-                               in.time_point_.zoned_time_.get_sys_time())
+                               in.time_point_.zoned_time_.get_local_time())
                         .time_since_epoch()
                         .count();
                   }) |
@@ -430,13 +430,18 @@ class time_sequencer_widget::impl {
   }
 
   void _set_time_point(decltype(time_list)& in_list, const std::size_t& in_index, const std::double_t& in_time_s) {
-    chick_true<doodle_error>(in_index < in_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
+    chick_true<doodle_error>(0 <= in_index && in_index < in_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
 
-    ranges::for_each(ranges::views::ints(in_index, in_list.size()),
-                     [&](const std::int32_t& in_ints) {
-                       in_list[in_ints].time_point_ += doodle::chrono::seconds{
-                           boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)};
-                     });
+    auto l_min = in_list[std::max(std::size_t(0), in_index - 1)].time_point_;
+    auto l_max = in_list[std::min(in_list.size(), in_index + 1)].time_point_;
+
+    time_point_wrap l_time{time_point_wrap::time_local_point{
+        doodle::chrono::seconds{
+            boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)}}};
+
+    auto l_value                  = std::max(l_min, std::min(l_time, l_max));
+    in_list[in_index].time_point_ = l_value;
+
     refresh_cache(in_list);
     refresh_work_time(in_list);
   }
@@ -455,9 +460,9 @@ class time_sequencer_widget::impl {
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
     time_list.back().time_point_ = time_list.back().time_point_.current_month_end();
-    auto l_all_len   = work_clock_(l_begin,
-                                   time_list.back().time_point_);
-    const auto l_du  = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+    auto l_all_len               = work_clock_(l_begin,
+                                               time_list.back().time_point_);
+    const auto l_du              = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
     ranges::for_each(time_list,
                      [&](decltype(time_list)::value_type& in_) {
@@ -658,9 +663,9 @@ void time_sequencer_widget::render() {
                                         (std::double_t*)&(p_i->time_list_x[l_i]),
                                         &(l_tmp), ImVec4{0, 0.9f, 0, 1});
             l_guard) {
-          l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i] - l_org_x);
+          l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
           //          p_i->time_list_y[l_i] = l_i;
-          p_i->refresh_DragPoint_time_point(l_i, p_i->time_list_x[l_i] - l_org_x);
+          p_i->refresh_DragPoint_time_point(l_i, p_i->time_list_x[l_i]);
         };
       }
     }
