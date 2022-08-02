@@ -144,70 +144,73 @@ class cross_frame_check {
   }
 };
 
-template <>
-class cross_frame_check<void> {
- public:
-  std::bitset<3> flag;
-  using sig_type     = boost::signals2::signal<void()>;
-  using solt_type    = typename sig_type::slot_type;
-  using connect_type = boost::signals2::connection;
-
- private:
-  sig_type call_fun{};
-  constexpr const static std::bitset<3> flag_init{0b001};
-
-  inline void begin_lock() {
-    flag <<= 1;
-  }
-  /// \brief 在这里调用回调
-  inline void begin_unlock() {
-    auto l_f = flag ^ flag_init;
-    if (l_f.all()) {
-      call_fun();
-      flag.reset();
-    }
-  }
-  inline void modify_lock() {
-    flag |= flag_init;
-  }
-
-  class guard_lock {
-    cross_frame_check& check_p;
-    bool flag{};
-
-   public:
-    explicit guard_lock(cross_frame_check& in_check)
-        : check_p(in_check) {}
-
-    virtual ~guard_lock() {
-      check_p.begin_unlock();
-    }
-
-    inline guard_lock& operator=(bool in_bool) {
-      if (in_bool)
-        check_p.modify_lock();
-      flag = in_bool;
-      return *this;
-    }
-
-    inline explicit operator bool() const {
-      return flag;
-    }
-  };
-
- public:
-  cross_frame_check()          = default;
-  virtual ~cross_frame_check() = default;
-  //  DOODLE_MOVE(cross_frame_check);
-
-  inline connect_type connect(const solt_type& in_slot_type) {
-    return call_fun.connect(in_slot_type);
-  }
-
-  [[nodiscard("")]] inline guard_lock operator()() {
-    begin_lock();
-    return guard_lock{*this};
-  }
-};
+/**
+ * @brief void 模板的特化
+ */
+// template <>
+// class cross_frame_check<void> {
+//  public:
+//   std::bitset<3> flag;
+//   using sig_type     = boost::signals2::signal<void()>;
+//   using solt_type    = typename sig_type::slot_type;
+//   using connect_type = boost::signals2::connection;
+//
+//  private:
+//   sig_type call_fun{};
+//   constexpr const static std::bitset<3> flag_init{0b001};
+//
+//   inline void begin_lock() {
+//     flag <<= 1;
+//   }
+//   /// \brief 在这里调用回调
+//   inline void begin_unlock() {
+//     auto l_f = flag ^ flag_init;
+//     if (l_f.all()) {
+//       call_fun();
+//       flag.reset();
+//     }
+//   }
+//   inline void modify_lock() {
+//     flag |= flag_init;
+//   }
+//
+//   class guard_lock {
+//     cross_frame_check& check_p;
+//     bool flag{};
+//
+//    public:
+//     explicit guard_lock(cross_frame_check& in_check)
+//         : check_p(in_check) {}
+//
+//     virtual ~guard_lock() {
+//       check_p.begin_unlock();
+//     }
+//
+//     inline guard_lock& operator=(bool in_bool) {
+//       if (in_bool)
+//         check_p.modify_lock();
+//       flag = in_bool;
+//       return *this;
+//     }
+//
+//     inline explicit operator bool() const {
+//       return flag;
+//     }
+//   };
+//
+//  public:
+//   cross_frame_check()          = default;
+//   virtual ~cross_frame_check() = default;
+//   //  DOODLE_MOVE(cross_frame_check);
+//
+//   inline connect_type connect(const solt_type& in_slot_type) {
+//     return call_fun.connect(in_slot_type);
+//   }
+//
+//   [[nodiscard("")]] inline guard_lock operator()() {
+//     begin_lock();
+//     return guard_lock{*this};
+//   }
+// };
 
 }  // namespace doodle::gui::detail
