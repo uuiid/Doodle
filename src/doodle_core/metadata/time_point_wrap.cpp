@@ -84,15 +84,15 @@ chrono::hours_double time_point_wrap::one_day_works_hours(const time_local_point
   /// 获得当天的日期后制作工作时间
   auto k_day     = chrono::floor<chrono::days>(in_point);
 
-  auto k_begin_1 = k_day + std::chrono::hours{9};   ///上午上班时间
+  auto k_begin_1 = k_day + std::chrono::hours{9};   /// 上午上班时间
   auto k_end_1   = k_day + std::chrono::hours{12};  /// 上午下班时间
   auto k_begin_2 = k_day + std::chrono::hours{13};  /// 下午上班时间
   auto k_end_2   = k_day + std::chrono::hours{18};  /// 下午下班时间
 
   chrono::hours_double k_h{0};
-  if (in_point <= k_begin_1) {                               ///上班前提交
-                                                             ///
-  } else if (in_point > k_begin_1 && in_point <= k_end_1) {  ///上午上班后提交
+  if (in_point <= k_begin_1) {  /// 上班前提交
+                                ///
+  } else if (in_point > k_begin_1 && in_point <= k_end_1) {  /// 上午上班后提交
     k_h = in_point - k_begin_1;                              ///
                                                              ///
   } else if (in_point > k_end_1 && in_point <= k_begin_2) {  /// 中文午休提交
@@ -206,7 +206,6 @@ bool time_point_wrap::operator>=(const time_point_wrap::time_zoned& in_rhs) cons
   return zoned_time_.get_local_time() >= in_rhs.get_local_time();
 }
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
-
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;
   // chrono::local_days k_{l_mo};
@@ -225,6 +224,12 @@ time_point_wrap time_point_wrap::current_month_start(const time_point_wrap& in_t
   // chrono::local_days k_{l_mo};
   // time_local_point l{k_};
   return time_point_wrap{chrono::local_days{l_mo} + doodle::chrono::days{1}};
+}
+time_point_wrap time_point_wrap::current_month_end() const {
+  return time_point_wrap(*this);
+}
+time_point_wrap time_point_wrap::current_month_start() const {
+  return time_point_wrap(*this);
 }
 
 }  // namespace doodle

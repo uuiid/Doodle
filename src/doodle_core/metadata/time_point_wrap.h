@@ -72,6 +72,8 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   static time_point_wrap current_month_end(const time_point_wrap& in_time);
   static time_point_wrap current_month_start(const time_point_wrap& in_time);
 
+  time_point_wrap current_month_end() const;
+  time_point_wrap current_month_start() const;
   /**
    * @brief 最小时间
    * @return
