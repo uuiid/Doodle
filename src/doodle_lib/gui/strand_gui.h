@@ -37,6 +37,9 @@ template <typename Type>
 gui_service_id<Type> gui_execution_context_service_base<Type>::id;
 
 ///=================================================================
+/**
+ * @brief 此处开始事件循环
+ */
 class strand_gui_executor_service
     : public gui_execution_context_service_base<strand_gui_executor_service> {
  public:
