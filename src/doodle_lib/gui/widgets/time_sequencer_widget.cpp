@@ -338,7 +338,6 @@ class time_sequencer_widget::impl {
 
   std::vector<doodle::chrono::hours_double> work_time;
   std::vector<std::double_t> work_time_plots;
-  std::vector<std::pair<std::double_t, std::double_t>> work_time_plots_drag;
 
   /// \brief 时间规则
   doodle::business::rules rules_{g_reg()->ctx().emplace<doodle::business::rules>()};
@@ -411,15 +410,14 @@ class time_sequencer_widget::impl {
     auto l_list = in_list;
     l_list |= ranges::actions::sort;
 
-    decltype(l_list.front().time_point_)::time_local_point l_begin =
-        doodle::chrono::floor<chrono::days>(l_list.front().time_point_.zoned_time_.get_local_time());
+    decltype(l_list.front().time_point_) l_begin =
+        l_list.front().time_point_.current_month_start();
 
     work_time = l_list |
                 ranges::views::transform(
                     [&](const impl::point_cache& in_time) -> doodle::chrono::hours_double {
-                      auto l_end = in_time.time_point_.zoned_time_.get_local_time();
-                      auto l_d   = work_clock_(l_begin, l_end);
-                      l_begin    = l_end;
+                      auto l_d   = work_clock_(l_begin, in_time.time_point_);
+                      l_begin    = in_time.time_point_;
                       return l_d;
                     }) |
                 ranges::to_vector;
@@ -429,15 +427,6 @@ class time_sequencer_widget::impl {
                             return in_time.count();
                           }) |
                       ranges::to_vector;
-    work_time_plots_drag = work_time |
-                           ranges::views::enumerate |
-                           ranges::views::transform(
-                               [&](const std::pair<std::size_t, doodle::chrono::hours_double>& in_item) {
-                                 return std::make_pair(
-                                     boost::numeric_cast<std::double_t>(in_item.first),
-                                     in_item.second.count());
-                               }) |
-                           ranges::to_vector;
   }
 
   void _set_time_point(decltype(time_list)& in_list, const std::size_t& in_index, const std::double_t& in_time_s) {
