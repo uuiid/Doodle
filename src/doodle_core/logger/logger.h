@@ -52,6 +52,8 @@ class DOODLE_CORE_EXPORT logger_ctrl {
    */
   bool set_log_name(const std::string& in_name);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr);
+
+  void refresh();
 };
 
 template <class throw_T,
