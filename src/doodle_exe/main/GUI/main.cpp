@@ -8,19 +8,21 @@
  */
 #include <doodle_lib/app/app.h>
 #include <doodle_lib/doodle_lib_all.h>
-//#include <doodle_lib/DoodleApp.h>
-//#include <boost/locale.hpp>
+// #include <doodle_lib/DoodleApp.h>
+// #include <boost/locale.hpp>
 
 extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
                                HINSTANCE hPrevInstance,
                                PWSTR strCmdLine,
                                int nCmdShow) try {
   doodle::app app{hInstance};
-  app.command_line_parser(strCmdLine);
-  return app.run();
-} catch (const std::exception& err) {
-  std::cout << err.what() << std::endl;
-  return 1;
+  try {
+    app.command_line_parser(strCmdLine);
+    return app.run();
+  } catch (const std::exception& err) {
+    DOODLE_LOG_WARN(err.what());
+    return 1;
+  }
 } catch (...) {
   return 1;
 }
