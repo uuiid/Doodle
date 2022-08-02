@@ -9,7 +9,12 @@
 #include <doodle_core/logger/logger.h>
 
 namespace doodle {
-
+void to_json(nlohmann::json& j, const time_point_wrap& p) {
+  j["time"] = p.zoned_time_.get_sys_time();
+}
+void from_json(const nlohmann::json& j, time_point_wrap& p) {
+  p.zoned_time_ = j.at("time").get<time_point_wrap::time_point>();
+}
 time_point_wrap::time_point_wrap()
     : time_point_wrap(time_point::clock::now()) {
 }
@@ -80,51 +85,6 @@ std::string time_point_wrap::show_str() const {
   return date::format("%Y/%m/%d %H:%M:%S", zoned_time_.get_local_time());
 }
 
-chrono::hours_double time_point_wrap::one_day_works_hours(const time_local_point& in_point) const {
-  /// 获得当天的日期后制作工作时间
-  auto k_day     = chrono::floor<chrono::days>(in_point);
-
-  auto k_begin_1 = k_day + std::chrono::hours{9};   /// 上午上班时间
-  auto k_end_1   = k_day + std::chrono::hours{12};  /// 上午下班时间
-  auto k_begin_2 = k_day + std::chrono::hours{13};  /// 下午上班时间
-  auto k_end_2   = k_day + std::chrono::hours{18};  /// 下午下班时间
-
-  chrono::hours_double k_h{0};
-  if (in_point <= k_begin_1) {  /// 上班前提交
-                                ///
-  } else if (in_point > k_begin_1 && in_point <= k_end_1) {  /// 上午上班后提交
-    k_h = in_point - k_begin_1;                              ///
-                                                             ///
-  } else if (in_point > k_end_1 && in_point <= k_begin_2) {  /// 中文午休提交
-    k_h = chrono::hours_double{3};                           ///
-                                                             ///
-  } else if (in_point > k_begin_2 && in_point <= k_end_2) {  /// 下午上班后提交
-    k_h = chrono::hours_double{3} + (in_point - k_begin_2);  ///
-                                                             ///
-  } else if (in_point > k_end_2) {                           /// 下午下班后提交
-    k_h = chrono::hours_double{8};                           ///
-  } else {
-    chick_true<doodle_error>(false, DOODLE_LOC, "未知时间");
-  }
-  return k_h;
-}
-chrono::days time_point_wrap::work_days(const time_point_wrap::time_local_point& in_begin,
-                                        const time_point_wrap::time_local_point& in_end) const {
-  auto k_day_begin = chrono::floor<chrono::days>(in_begin);
-  auto k_day_end   = chrono::floor<chrono::days>(in_end);
-
-  std::vector<chrono::local_days> k_days{};
-  k_days.resize((k_day_end - k_day_begin).count());
-  std::generate_n(k_days.begin(), (k_day_end - k_day_begin).count(), [k_day_begin, n = 0]() mutable -> chrono::local_days {
-    auto k_i = k_day_begin + chrono::days{n};
-    ++n;
-    return k_i;
-  });
-  auto k_s = std::count_if(k_days.begin(), k_days.end(), [](const chrono::local_days& in) {
-    return !chrono::is_rest_day(in);
-  });
-  return chrono::days{k_s};
-}
 std::tuple<std::uint16_t,  // year
            std::uint16_t,  // month
            std::uint16_t,  // day
@@ -143,14 +103,7 @@ time_point_wrap::compose() const {
                          boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes().count()),
                          boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds().count()));
 }
-time_point_wrap::time_point_wrap(const time_point_wrap::gui_data& in_data)
-    : time_point_wrap(in_data.year_,
-                      in_data.month_,
-                      in_data.day_,
-                      in_data.hours_,
-                      in_data.minutes_,
-                      in_data.seconds_) {
-}
+
 bool time_point_wrap::operator==(const time_point_wrap& in_rhs) const {
   return zoned_time_ == in_rhs.zoned_time_;
 }
@@ -208,8 +161,6 @@ bool time_point_wrap::operator>=(const time_point_wrap::time_zoned& in_rhs) cons
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;
-  // chrono::local_days k_{l_mo};
-  // time_local_point l{k_};
   return time_point_wrap{chrono::local_days{l_mo} + 23h + 59min + 59s};
 }
 time_point_wrap time_point_wrap::min() {
@@ -221,8 +172,6 @@ time_point_wrap time_point_wrap::max() {
 time_point_wrap time_point_wrap::current_month_start(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m - 1u} / chrono::last;
-  // chrono::local_days k_{l_mo};
-  // time_local_point l{k_};
   return time_point_wrap{chrono::local_days{l_mo} + doodle::chrono::days{1}};
 }
 time_point_wrap time_point_wrap::current_month_end() const {
@@ -231,5 +180,13 @@ time_point_wrap time_point_wrap::current_month_end() const {
 time_point_wrap time_point_wrap::current_month_start() const {
   return current_month_start(*this);
 }
-
+void time_point_wrap::set_time(const time_point_wrap::time_local_point& in) {
+  zoned_time_ = chrono::make_zoned(zoned_time_.get_time_zone(), in);
+}
+void time_point_wrap::set_time(const time_point_wrap::time_point& in) {
+  zoned_time_ = chrono::make_zoned(zoned_time_.get_time_zone(), in);
+}
+void time_point_wrap::set_time(const time_zoned& in) {
+  zoned_time_ = in;
+}
 }  // namespace doodle

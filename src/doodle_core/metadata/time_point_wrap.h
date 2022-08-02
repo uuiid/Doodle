@@ -1,4 +1,4 @@
-﻿ //
+﻿//
 // Created by TD on 2021/5/17.
 //
 
@@ -8,7 +8,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
-
+class time_point_wrap;
+void to_json(nlohmann::json& j, const time_point_wrap& p);
+void from_json(const nlohmann::json& j, time_point_wrap& p);
 /**
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
@@ -21,6 +23,10 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   using time_zoned       = chrono::zoned_time<time_duration>;
 
  private:
+  void set_time(const time_local_point& in);
+  void set_time(const time_point& in);
+  void set_time(const time_zoned& in);
+
  public:
   class DOODLE_CORE_EXPORT gui_data {
    public:
@@ -54,7 +60,6 @@ class DOODLE_CORE_EXPORT time_point_wrap {
       std::int32_t in_hours   = 0,
       std::int32_t in_minutes = 0,
       std::int32_t in_seconds = 0);
-  explicit time_point_wrap(const gui_data& in_data);
 
   [[nodiscard]] std::tuple<std::uint16_t,  // year
                            std::uint16_t,  // month
@@ -109,7 +114,7 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   bool operator>=(const time_zoned& in_rhs) const;
 
   template <typename Rep_T, typename Period_T>
-  time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur){
+  time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
     l_sys_time += in_dur;
     zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
@@ -117,39 +122,30 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   }
 
   template <typename Rep_T, typename Period_T>
-  time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur){
+  time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
     l_sys_time += in_dur;
     return time_point_wrap{doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time)};
   }
 
   template <typename Rep_T, typename Period_T>
-  time_point_wrap operator-(const doodle::chrono::duration<Rep_T, Period_T>& in_dur){
+  time_point_wrap operator-(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
     l_sys_time -= in_dur;
     return time_point_wrap{doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time)};
   }
 
+  template <class Clock,
+            class Duration = typename Clock::duration>
+  time_point_wrap& operator=(const doodle::chrono::time_point<Clock, Duration>& in_dur) {
+    this->set_time(chrono::floor<time_duration>(in_dur));
+    return *this;
+  }
+
  private:
-  /**
-   * 这个是计算开始时到一天结束时的工作时长
-   * 通常是安装8小时计算, 同时计算前段时间可以使用 8-return
-   * @param in_point  开始的时间点
-   * @return 工作时间长度
-   *
-   * @todo: 这里我们要添加设置， 而不是静态变量
-   */
-  chrono::hours_double one_day_works_hours(const time_local_point& in_point) const;
-  chrono::days work_days(const time_local_point& in_begin, const time_local_point& in_end) const;
-
   // 这里是序列化的代码
-
-  friend void to_json(nlohmann::json& j, const time_point_wrap& p) {
-    j["time"] = p.zoned_time_.get_sys_time();
-  }
-  friend void from_json(const nlohmann::json& j, time_point_wrap& p) {
-    p.zoned_time_ = j.at("time").get<time_point>();
-  }
+  friend void to_json(nlohmann::json& j, const time_point_wrap& p);
+  friend void from_json(const nlohmann::json& j, time_point_wrap& p);
 };
 
 }  // namespace doodle
