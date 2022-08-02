@@ -60,7 +60,7 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
   const auto& l_local_path = in_path;
   if (exists(l_local_path) &&
       is_regular_file(l_local_path)) {
-    auto k_image = cv::imread(l_local_path.generic_string());
+    auto k_image = cv::imread(l_local_path.generic_string(), cv::IMREAD_REDUCED_COLOR_4);
     chick_true<doodle_error>(!k_image.empty(), DOODLE_LOC, "open cv not read image");
     static std::double_t s_image_max{512};
     if (k_image.cols > s_image_max || k_image.rows > s_image_max) {
