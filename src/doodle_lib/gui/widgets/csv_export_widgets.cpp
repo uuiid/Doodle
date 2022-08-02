@@ -151,8 +151,8 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
   /// \brief 这里设置一下时钟规则
   p_i->work_clock_.set_rules(g_reg()->ctx().at<doodle::business::rules>());
-  p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>(),
-                               p_i->list_sort_time.back().get<time_point_wrap>());
+  p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>() - chrono::days{5},
+                                p_i->list_sort_time.back().get<time_point_wrap>() + chrono::days{5});
 
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
@@ -225,7 +225,7 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
 
   auto l_it = ranges::find(p_i->list_sort_time, in_handle);
   if (l_it == p_i->list_sort_time.begin()) {
-    return time_point_wrap::current_month_start(in_handle.get<time_point_wrap>());
+    return in_handle.get<time_point_wrap>().current_month_start();
   } else {
     auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
     auto end_it = ranges::find_if(
@@ -236,7 +236,7 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
         });
 
     return end_it == p_i->list_sort_time.rend()
-               ? time_point_wrap::current_month_start(in_handle.get<time_point_wrap>())
+               ? in_handle.get<time_point_wrap>().current_month_start()
                : end_it->get<time_point_wrap>();
   }
 }
