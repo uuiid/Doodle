@@ -42,6 +42,9 @@ add_custom_target(gen_light_file
         -ext "WixUIExtension"
         -cultures:zh-CN
         -ct ${DOODLE_CPU_N}
+        -cc "${CMAKE_INSTALL_PREFIX}"
+        -reusecab
+
         #        -b ${CMAKE_INSTALL_PREFIX}/bin
         -spdb # 取消pdb文件输出
         ${gen_wixobj_files}
