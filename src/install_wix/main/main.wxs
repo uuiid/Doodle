@@ -57,12 +57,48 @@
                 </RegistryKey>
             </Component>
         </DirectoryRef>
+
         <Property Id="INSTALL_ROOT" Secure="yes">
             <RegistrySearch Id="FindInstallLocation" Root="HKLM"
                             Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[WIX_UPGRADE_DETECTED]"
                             Name="InstallLocation" Type="raw"/>
         </Property>
         <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
+
+        <DirectoryRef Id="DesktopFolder">
+            <Component Id="doodle_desktop" Guid="*">
+                <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
+                          Name="Doodle"
+                          Target="[#com_DoodleExe_exe]"
+                          WorkingDirectory="WIXUI_INSTALLDIR"/>
+                <RegistryValue Root="HKCU"
+                               Key="Software\uuiid\Doodle"
+                               Name="installed_desktop" Type="integer" Value="1"
+                               KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="ProgramMenuDir">
+            <Component Id="StartMenuShortcuts"
+                       Guid="C96D5AEF-4EBB-42E9-A238-69D2459B8740">
+                <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
+                <!--菜单快捷方式-->
+                <Shortcut Id="CM_SP_bin.DoodleExe.exe"
+                          Name="Doodle"
+                          Target="[#DoodleExe_exe]"
+                          WorkingDirectory="WIXUI_INSTALLDIR"/>
+
+                <!--注册表-->
+                <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle"
+                               Name="installed"
+                               Type="integer"
+                               Value="1"
+                               KeyPath="yes"/>
+                <!--卸载方式-->
+                <Shortcut Id="UNINSTALL" Name="Uninstall Doodle" Description="Uninstalls Doodle"
+                          Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]"/>
+            </Component>
+        </DirectoryRef>
 
         <Feature Id="ProductFeature"
                  Display="expand"
@@ -77,43 +113,10 @@
             <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
             <!--            <ComponentRef Id="doodle_desktop"/>-->
-            <Component Id="doodle_desktop" Guid="*"
-                       Directory="DesktopFolder">
-                <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
-                          Name="Doodle"
-                          Target="[#com_DoodleExe_exe]"
-                          Icon="MainIcon.exe"
-                          IconIndex="0"
-                          WorkingDirectory="WIXUI_INSTALLDIR"/>
-                <RegistryValue Root="HKCU"
-                               Key="Software\uuiid\Doodle"
-                               Name="installed_desktop" Type="integer" Value="1"
-                               KeyPath="yes"/>
-            </Component>
-            <Component Id="StartMenuShortcuts"
-                       Guid="C96D5AEF-4EBB-42E9-A238-69D2459B8740"
-                       Directory="ProgramMenuDir">
-                <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
-
-                <!--菜单快捷方式-->
-                <Shortcut Id="CM_SP_bin.DoodleExe.exe"
-                          Name="Doodle"
-                          Target="[#com_DoodleExe_exe]"
-                          WorkingDirectory="DesktopFolder"/>
-
-                <!--注册表-->
-                <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle"
-                               Name="installed"
-                               Type="integer"
-                               Value="1"
-                               KeyPath="yes"/>
-                <!--卸载方式-->
-                <Shortcut Id="UNINSTALL" Name="Uninstall Doodle" Description="Uninstalls Doodle"
-                          Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]"/>
-
-
-            </Component>
+            <ComponentRef Id="doodle_desktop"/>
+            <ComponentRef Id="StartMenuShortcuts"/>
         </Feature>
+
         <Feature Id="MayaPlug"
                  Display="expand"
                  Absent="allow"
