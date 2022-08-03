@@ -11,25 +11,25 @@
 // clang-format on
 #include <cstdint>
 #include <string>
-namespace doodle::version{
+#include <chrono>
+namespace doodle::version {
 extern const std::int16_t version_major;
 extern const std::int16_t version_minor;
 extern const std::int16_t version_patch;
 extern const std::int16_t version_tweak;
 extern const std::string version_str;
-}
-
-
+extern const std::string build_time;
+}  // namespace doodle::version
 
 #if defined _WIN32
 //
 //
-//#ifndef _WIN32_WINNT
-//#define _WIN32_WINNT 0x0A00
-//#else
-//#undef _WIN32_WINNT
-//#define _WIN32_WINNT 0x0A00
-//#endif
+// #ifndef _WIN32_WINNT
+// #define _WIN32_WINNT 0x0A00
+// #else
+// #undef _WIN32_WINNT
+// #define _WIN32_WINNT 0x0A00
+// #endif
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -59,15 +59,14 @@ extern const std::string version_str;
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #endif
 
-#elif defined __linux__ // _WIN32
+#elif defined __linux__  // _WIN32
 
-#endif // __linux__
-
+#endif  // __linux__
 
 #include <boost/current_function.hpp>
 #ifndef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char *>( BOOST_CURRENT_FUNCTION )
+#define SPDLOG_FUNCTION static_cast<const char *>(BOOST_CURRENT_FUNCTION)
 #else
 #undef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char *>( BOOST_CURRENT_FUNCTION )
+#define SPDLOG_FUNCTION static_cast<const char *>(BOOST_CURRENT_FUNCTION)
 #endif
