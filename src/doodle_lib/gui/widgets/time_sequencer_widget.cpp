@@ -377,8 +377,8 @@ class time_sequencer_widget::impl {
 
   void refresh_work_clock_() {
     if (!time_list.empty()) {
-      work_clock_.set_interval(time_list.front().time_point_ - chrono::days{4},
-                               time_list.back().time_point_ + chrono::days{4});
+      work_clock_.set_interval(time_list.front().time_point_.current_month_start() - chrono::days{4},
+                               time_list.back().time_point_.current_month_end() + chrono::days{4});
       DOODLE_LOG_INFO(work_clock_.debug_print());
       refresh_cache(time_list);
       refresh_work_time(time_list);
@@ -464,6 +464,7 @@ class time_sequencer_widget::impl {
 
   void average_time() {
     if (time_list.empty()) return;
+    time_list |= ranges::actions::sort;
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
@@ -549,6 +550,7 @@ class time_sequencer_widget::impl {
                      }),
                      [&](const point_cache& in) {
                        in.handle_.replace<time_point_wrap>(in.time_point_);
+                       DOODLE_LOG_INFO("设置时间点 {}", in.time_point_);
                        if (auto l_info = work_clock_.get_extra_work_info(in.time_point_); l_info) {
                          in.handle_.get_or_emplace<comment>().p_comment += *l_info;
                        }
