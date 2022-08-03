@@ -151,8 +151,8 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
   /// \brief 这里设置一下时钟规则
   p_i->work_clock_.set_rules(g_reg()->ctx().at<doodle::business::rules>());
-  p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>() - chrono::days{5},
-                                p_i->list_sort_time.back().get<time_point_wrap>() + chrono::days{5});
+  p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
+                                p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
 
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
