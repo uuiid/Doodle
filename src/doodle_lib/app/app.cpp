@@ -67,7 +67,6 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
        nullptr, nullptr, nullptr, nullptr,
        _T("doodle"),
        nullptr};
-  MAKEINTRESOURCEW(1);
   p_win_class.hIconSm = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
   p_win_class.hIcon   = p_win_class.hIconSm;
 
