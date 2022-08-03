@@ -467,9 +467,8 @@ class time_sequencer_widget::impl {
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
-    time_list.back().time_point_ = time_list.back().time_point_.current_month_end();
     auto l_all_len               = work_clock_(l_begin,
-                                               time_list.back().time_point_);
+                                               time_list.back().time_point_.current_month_end();
     const auto l_du              = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
     ranges::for_each(time_list,
@@ -477,7 +476,6 @@ class time_sequencer_widget::impl {
                        in_.time_point_ = work_clock_.next_time(l_begin, l_du);
                        l_begin         = in_.time_point_;
                      });
-    time_list.back().time_point_ = time_list.back().time_point_.current_month_end();
     refresh_cache(time_list);
     refresh_work_time(time_list);
   }
