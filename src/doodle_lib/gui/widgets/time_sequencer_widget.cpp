@@ -391,7 +391,7 @@ class time_sequencer_widget::impl {
     time_list_x = in_list |
                   ranges::views::transform([](const impl::point_cache& in) -> double {
                     return doodle::chrono::floor<doodle::chrono::seconds>(
-                               in.time_point_.zoned_time_.get_local_time())
+                               in.time_point_.zoned_time_.get_sys_time())
                         .time_since_epoch()
                         .count();
                   }) |
@@ -435,7 +435,7 @@ class time_sequencer_widget::impl {
     auto l_min = in_list[std::max(std::size_t(0), in_index - 1)].time_point_;
     auto l_max = in_list[std::min(in_list.size(), in_index + 1)].time_point_;
 
-    time_point_wrap l_time{time_point_wrap::time_local_point{
+    time_point_wrap l_time{time_point_wrap::time_point{
         doodle::chrono::seconds{
             boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)}}};
 
