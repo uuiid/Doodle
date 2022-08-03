@@ -79,7 +79,7 @@
                        Directory="DesktopFolder">
                 <Shortcut Id="CM_DSP_bin.doodle_limited_exe.exe"
                           Name="Doodle"
-                          Target="[#com_doodle_limited_exe_exe]"
+                          Target="[#doodle_limited_exe_exe]"
                           WorkingDirectory="DesktopFolder"/>
                 <RegistryValue Root="HKCU"
                                Key="Software\uuiid\Doodle"
@@ -94,7 +94,7 @@
                 <!--菜单快捷方式-->
                 <Shortcut Id="CM_SP_bin.doodle_limited_exe.exe"
                           Name="Doodle"
-                          Target="[#com_doodle_limited_exe_exe]"
+                          Target="[#doodle_limited_exe_exe]"
                           WorkingDirectory="DesktopFolder"/>
 
                 <!--注册表-->
