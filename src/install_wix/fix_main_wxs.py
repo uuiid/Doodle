@@ -25,7 +25,7 @@ class wix_run():
                 .replace("""\\""", "_") \
                 .replace("-", "_")
         else:
-            return str(hash(path)).replace("-", "_")
+            return "id_" + str(hash(path)).replace("-", "_")
 
     def make_root_xml(self, path: pathlib.Path):
         self.root_path = path
