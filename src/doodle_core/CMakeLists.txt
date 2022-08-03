@@ -28,7 +28,7 @@ target_include_directories(doodle_core
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         )
-string(TIMESTAMP DOODLE_BUILD_TIME "%Y %m %d %H %M %S")
+string(TIMESTAMP DOODLE_BUILD_TIME "%Y %m %d %H %M %S" UTC)
 message("build time ${DOODLE_BUILD_TIME}")
 configure_file(configure/config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/configure/config.cpp)
 target_sources(doodle_core
