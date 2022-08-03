@@ -55,7 +55,28 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
   l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
   chrono::sys_time_pos l_point{l_build_time_};
   l_point += chrono::months{3};
-  return chrono::system_clock::now() < l_point;
+  if (chrono::system_clock::now() < l_point)
+    return true;
+
+  boost::contract::check l_c =
+      boost::contract::public_function(this)
+          .precondition([&]() {
+            chick_true<doodle_error>(!in_path.empty(), DOODLE_LOC, "传入路径为空");
+            chick_true<doodle_error>(!FSys::is_directory(in_path),
+                                     DOODLE_LOC,
+                                     "传入路径不是文件或者不存在");
+          });
+  FSys::ifstream l_ifstream{in_path};
+
+  std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
+  try {
+    authorization l_authorization{ciphertext};
+
+    return l_authorization.is_expire();
+  } catch (const std::exception& err) {
+    DOODLE_LOG_INFO(err.what());
+    return false;
+  }
 }
 
 void app_command_base::command_line_parser(const PWSTR& in_arg) {
