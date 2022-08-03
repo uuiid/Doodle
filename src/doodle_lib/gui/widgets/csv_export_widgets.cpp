@@ -144,6 +144,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "开始时间"s,
       "结束时间"s,
       "持续时间/h"s,
+      "时间备注"s,
       "备注"s,
       "类别"s,
       "名称"s,
@@ -211,6 +212,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
       fmt::format("{:3f}", k_time.count()),                                                          //"持续时间"
+      fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
       k_ass.p_name,                                                                                  //"名称"

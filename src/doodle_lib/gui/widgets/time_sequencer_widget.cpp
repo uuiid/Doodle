@@ -553,13 +553,11 @@ class time_sequencer_widget::impl {
                      [&](const point_cache& in) {
                        in.handle_.replace<time_point_wrap>(in.time_point_);
                        DOODLE_LOG_INFO("设置时间点 {}", in.time_point_);
-                       if (auto l_info = work_clock_.get_extra_work_info({}, in.time_point_); l_info) {
-                         in.handle_.get_or_emplace<comment>().p_comment += *l_info;
-                       }
-                       if (auto l_info = work_clock_.get_extra_rest_info({}, in.time_point_); l_info) {
-                         in.handle_.get_or_emplace<comment>().p_comment += *l_info;
+                       if (auto l_info = work_clock_.get_time_info(l_begin, in.time_point_); l_info) {
+                         in.handle_.get_or_emplace<comment>().p_time_info = *l_info;
                        }
 
+                       l_begin = in.time_point_;
                        database::save(in.handle_);
                      });
   }
