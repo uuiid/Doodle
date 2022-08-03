@@ -468,7 +468,7 @@ class time_sequencer_widget::impl {
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
     auto l_all_len               = work_clock_(l_begin,
-                                               time_list.back().time_point_.current_month_end();
+                                               time_list.back().time_point_.current_month_end());
     const auto l_du              = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
     ranges::for_each(time_list,
