@@ -111,7 +111,7 @@ bool time_point_wrap::operator!=(const time_point_wrap& in_rhs) const {
   return !(in_rhs == *this);
 }
 bool time_point_wrap::operator<(const time_point_wrap& in_rhs) const {
-  return zoned_time_.get_local_time() < in_rhs.zoned_time_.get_local_time();
+  return zoned_time_.get_sys_time() < in_rhs.zoned_time_.get_sys_time();
 }
 bool time_point_wrap::operator>(const time_point_wrap& in_rhs) const {
   return in_rhs < *this;

@@ -432,15 +432,23 @@ class time_sequencer_widget::impl {
   void _set_time_point(decltype(time_list)& in_list, const std::size_t& in_index, const std::double_t& in_time_s) {
     chick_true<doodle_error>(0 <= in_index && in_index < in_list.size(), DOODLE_LOC, "错误的索引 {}", in_index);
 
-    auto l_min = in_list[std::max(std::size_t(0), in_index - 1)].time_point_;
-    auto l_max = in_list[std::min(in_list.size(), in_index + 1)].time_point_;
+    auto l_index = boost::numeric_cast<std::int64_t>(in_index);
+    auto l_min   = in_list[std::max(0ll, l_index - 1)].time_point_;
+    auto l_max   = in_list[std::min(boost::numeric_cast<std::int64_t>(in_list.size() - 1), l_index + 1)].time_point_;
+
+    if (l_index == (in_list.size() - 1)) {
+      l_max = time_point_wrap::max();
+    } else if (l_index == 0) {
+      l_min = time_point_wrap::min();
+    }
 
     time_point_wrap l_time{time_point_wrap::time_point{
         doodle::chrono::seconds{
             boost::numeric_cast<doodle::chrono::seconds::rep>(in_time_s)}}};
+    DOODLE_LOG_INFO("时间 {} 限制为 {} -> {}", l_time, l_min, l_max);
 
-    auto l_value                  = std::max(l_min, std::min(l_time, l_max));
-    in_list[in_index].time_point_ = l_value;
+    auto l_value                 = std::max(l_min, std::min(l_time, l_max));
+    in_list[l_index].time_point_ = l_value;
 
     refresh_cache(in_list);
     refresh_work_time(in_list);
@@ -557,8 +565,9 @@ class time_sequencer_widget::impl {
 
 time_sequencer_widget::time_sequencer_widget()
     : p_i(std::make_unique<impl>()) {
-  this->title_name_               = std::string{name};
-  ImPlot::GetStyle().UseLocalTime = true;
+  this->title_name_                 = std::string{name};
+  ImPlot::GetStyle().UseLocalTime   = true;
+  ImPlot::GetStyle().Use24HourClock = true;
 
   p_i->l_select_conn =
       g_reg()
