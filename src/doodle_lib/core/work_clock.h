@@ -104,6 +104,7 @@ class DOODLELIB_API work_clock {
    */
   chrono::hours_double operator()(const chrono::local_time_pos& in_min,
                                   const chrono::local_time_pos& in_max) const;
+
   inline chrono::hours_double operator()(const doodle::time_point_wrap& in_min,
                                          const doodle::time_point_wrap& in_max) const {
     return (*this)(doodle::chrono::floor<chrono::local_time_pos::duration>(in_min.zoned_time_.get_local_time()),
