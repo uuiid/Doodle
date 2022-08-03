@@ -312,8 +312,8 @@ class time_sequencer_widget::impl {
                          return static_cast<decltype(l_r.extra_work)::value_type>(in_);
                        }) |
                        ranges::to_vector;
-      l_r.extra_rest = extra_rest() | ranges::views::transform([&](const decltype(extra_work.data)::value_type& in_) {
-                         return static_cast<decltype(l_r.extra_work)::value_type>(in_);
+      l_r.extra_rest = extra_rest() | ranges::views::transform([&](const decltype(extra_rest.data)::value_type& in_) {
+                         return static_cast<decltype(l_r.extra_rest)::value_type>(in_);
                        }) |
                        ranges::to_vector;
       return l_r;
@@ -468,9 +468,9 @@ class time_sequencer_widget::impl {
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
-    auto l_all_len               = work_clock_(l_begin,
-                                               time_list.back().time_point_.current_month_end());
-    const auto l_du              = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+    auto l_all_len  = work_clock_(l_begin,
+                                  time_list.back().time_point_.current_month_end());
+    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
 
     ranges::for_each(time_list,
                      [&](decltype(time_list)::value_type& in_) {
@@ -545,16 +545,18 @@ class time_sequencer_widget::impl {
   }
 
   void save() {
+    decltype(time_list.front().time_point_) l_begin =
+        time_list.front().time_point_.current_month_start();
     ranges::for_each(time_list | ranges::views::filter([](const point_cache& in) -> bool {
                        return in.handle_.valid() && in.handle_.any_of<database>();
                      }),
                      [&](const point_cache& in) {
                        in.handle_.replace<time_point_wrap>(in.time_point_);
                        DOODLE_LOG_INFO("设置时间点 {}", in.time_point_);
-                       if (auto l_info = work_clock_.get_extra_work_info(in.time_point_); l_info) {
+                       if (auto l_info = work_clock_.get_extra_work_info({}, in.time_point_); l_info) {
                          in.handle_.get_or_emplace<comment>().p_comment += *l_info;
                        }
-                       if (auto l_info = work_clock_.get_extra_rest_info(in.time_point_); l_info) {
+                       if (auto l_info = work_clock_.get_extra_rest_info({}, in.time_point_); l_info) {
                          in.handle_.get_or_emplace<comment>().p_comment += *l_info;
                        }
 

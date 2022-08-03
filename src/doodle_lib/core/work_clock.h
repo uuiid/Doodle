@@ -7,17 +7,15 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <bitset>
 #include <utility>
-
-#include <boost/msm/front/state_machine_def.hpp>
-#include <boost/msm/back/state_machine.hpp>
-#include <boost/msm/back/tools.hpp>
-#include <boost/msm/front/functor_row.hpp>
+#include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_lib/lib_warp/boost_icl_warp.h>
+
 #include <boost/icl/split_interval_set.hpp>
 #include <boost/icl/discrete_interval.hpp>
+#include <boost/icl/interval_map.hpp>
+#include <boost/icl/interval_set.hpp>
 
-#include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
 
 namespace business {
@@ -73,11 +71,15 @@ class DOODLELIB_API rules {
 class DOODLELIB_API work_clock {
   rules rules_;
   using time_d_t               = doodle::chrono::local_time_pos;
+  using info_type              = std::set<std::string>;
   using discrete_interval_time = boost::icl::discrete_interval<time_d_t>;
   using interval_set_time      = boost::icl::interval_set<time_d_t>;
+  using interval_map_time      = boost::icl::interval_map<time_d_t, info_type>;
 
   void gen_rules_(const discrete_interval_time& in_time);
+  void generate_interval_map_time_(const discrete_interval_time& in_time);
   interval_set_time interval_set_time_;
+  interval_map_time interval_map_time_;
 
  public:
   work_clock();
@@ -182,11 +184,15 @@ class DOODLELIB_API work_clock {
    * @param in_time 时间点
    * @return 可选段备注
    */
-  std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& in_time);
+  std::optional<std::string> get_extra_rest_info(
+      const doodle::time_point_wrap& in_min,
+      const doodle::time_point_wrap& in_max);
   /**
-   * @copybrief   std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& in_time)
+   * @copybrief   std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& )
    */
-  std::optional<std::string> get_extra_work_info(const doodle::time_point_wrap& in_time);
+  std::optional<std::string> get_extra_work_info(
+      const doodle::time_point_wrap& in_min,
+      const doodle::time_point_wrap& in_max);
 
   std::string debug_print();
 };
