@@ -13,6 +13,7 @@ class DOODLE_CORE_EXPORT comment {
  public:
   std::string p_comment;
   std::string p_user;
+  std::string p_time_info;
 
   comment();
   explicit comment(std::string in_str);
@@ -24,12 +25,15 @@ class DOODLE_CORE_EXPORT comment {
 
  private:
   friend void to_json(nlohmann::json& j, const comment& p) {
-    j["comment"] = p.p_comment;
-    j["user"]    = p.p_user;
+    j["comment"]   = p.p_comment;
+    j["user"]      = p.p_user;
+    j["time_info"] = p.p_time_info;
   }
   friend void from_json(const nlohmann::json& j, comment& p) {
     j.at("comment").get_to(p.p_comment);
     j.at("user").get_to(p.p_user);
+    if (j.contains("time_info"))
+      j.at("time_info").get_to(p.p_time_info);
   }
 };
 
