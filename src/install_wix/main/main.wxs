@@ -70,8 +70,10 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_bin"/>
-            <ComponentRef Id="com_path_bin_DoodleExe_exe"/>
+            <!--基本的 bin 文件夹 -->
+            <ComponentGroupRef Id="com_group_bin"/>
+            <!--基本的运行文件-->
+            <ComponentRef Id="com_DoodleExe_exe"/>
             <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
             <!--            <ComponentRef Id="doodle_desktop"/>-->
@@ -79,7 +81,7 @@
                        Directory="DesktopFolder">
                 <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
                           Name="Doodle"
-                          Target="[#path_bin_DoodleExe_exe]"
+                          Target="[#DoodleExe_exe]"
                           WorkingDirectory="DesktopFolder"/>
                 <RegistryValue Root="HKCU"
                                Key="Software\uuiid\Doodle"
@@ -94,7 +96,7 @@
                 <!--菜单快捷方式-->
                 <Shortcut Id="CM_SP_bin.DoodleExe.exe"
                           Name="Doodle"
-                          Target="[#path_bin_DoodleExe_exe]"
+                          Target="[#DoodleExe_exe]"
                           WorkingDirectory="DesktopFolder"/>
 
                 <!--注册表-->
@@ -116,7 +118,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Maya Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_maya">
+            <ComponentGroupRef Id="com_group_maya">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue425"
@@ -125,7 +127,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue425 Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_ue425_Plug">
+            <ComponentGroupRef Id="com_group_ue425_Plug">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue426"
@@ -134,7 +136,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue426 Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_ue426_Plug">
+            <ComponentGroupRef Id="com_group_ue426_Plug">
             </ComponentGroupRef>
         </Feature>
         <Feature Id="Ue427"
@@ -143,7 +145,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue427 Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_ue427_Plug">
+            <ComponentGroupRef Id="com_group_ue427_Plug">
             </ComponentGroupRef>
         </Feature>
 
@@ -153,7 +155,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle houdini Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_houdini">
+            <ComponentGroupRef Id="com_group_houdini">
             </ComponentGroupRef>
         </Feature>
 
@@ -164,7 +166,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="houdini SideFX Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_SideFX_Labs">
+            <ComponentGroupRef Id="com_group_SideFX_Labs">
             </ComponentGroupRef>
         </Feature>
         <!--        <UIRef Id="$(var.DOODLE_WIX_UI_REF)"/>-->

@@ -70,8 +70,8 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_bin"/>
-            <ComponentRef Id="com_path_bin_doodle_limited_exe_exe"/>
+            <ComponentGroupRef Id="com_group_bin"/>
+            <ComponentRef Id="com_doodle_limited_exe_exe"/>
             <!--            <ComponentRef Id="StartMenuShortcuts"/>-->
             <ComponentRef Id="RegistryEntries"/>
             <!--            <ComponentRef Id="doodle_desktop"/>-->
@@ -79,7 +79,7 @@
                        Directory="DesktopFolder">
                 <Shortcut Id="CM_DSP_bin.doodle_limited_exe.exe"
                           Name="Doodle"
-                          Target="[#path_bin_doodle_limited_exe_exe]"
+                          Target="[#doodle_limited_exe_exe]"
                           WorkingDirectory="DesktopFolder"/>
                 <RegistryValue Root="HKCU"
                                Key="Software\uuiid\Doodle"
@@ -94,7 +94,7 @@
                 <!--菜单快捷方式-->
                 <Shortcut Id="CM_SP_bin.doodle_limited_exe.exe"
                           Name="Doodle"
-                          Target="[#path_bin_doodle_limited_exe_exe]"
+                          Target="[#doodle_limited_exe_exe]"
                           WorkingDirectory="DesktopFolder"/>
 
                 <!--注册表-->
@@ -116,7 +116,7 @@
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Maya Plug"
                  Level="1">
-            <ComponentGroupRef Id="com_group_dir_maya">
+            <ComponentGroupRef Id="com_group_maya">
             </ComponentGroupRef>
         </Feature>
 

@@ -19,6 +19,11 @@ class wix_run():
     def __get_path_id__(self, path: pathlib.Path):
         if path.suffix == ".exe":
             return path.name.replace(".", "_")
+        elif self.root_path == path:
+            return str(path.relative_to(self.root_path.parent)) \
+                .replace(".", "_") \
+                .replace("""\\""", "_") \
+                .replace("-", "_")
         else:
             return str(hash(path)).replace("-", "_")
 
@@ -34,6 +39,8 @@ class wix_run():
     def write_xml_file(self, path):
         l_tree = et.ElementTree(self.root_node)
         et.indent(l_tree, space="\t", level=0)
+        if not path.parent.exists():
+            path.parent.mkdir()
 
         l_tree.write(path, encoding="utf-8", xml_declaration=True)
 
