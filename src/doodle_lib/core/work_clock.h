@@ -184,13 +184,7 @@ class DOODLELIB_API work_clock {
    * @param in_time 时间点
    * @return 可选段备注
    */
-  std::optional<std::string> get_extra_rest_info(
-      const doodle::time_point_wrap& in_min,
-      const doodle::time_point_wrap& in_max);
-  /**
-   * @copybrief   std::optional<std::string> get_extra_rest_info(const doodle::time_point_wrap& )
-   */
-  std::optional<std::string> get_extra_work_info(
+  std::optional<std::string> get_time_info(
       const doodle::time_point_wrap& in_min,
       const doodle::time_point_wrap& in_max);
 

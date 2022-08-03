@@ -174,16 +174,22 @@ std::string work_clock::debug_print() {
                      interval_set_time_,
                      interval_map_time_);
 }
-std::optional<std::string> work_clock::get_extra_rest_info(
+std::optional<std::string> work_clock::get_time_info(
     const time_point_wrap& in_min,
     const time_point_wrap& in_max) {
-  return {};
+  auto l_d    = discrete_interval_time::right_open(chrono::floor<time_d_t::duration>(in_min.zoned_time_.get_local_time()),
+                                                   chrono::floor<time_d_t::duration>(in_max.zoned_time_.get_local_time()));
+
+  auto l_item = interval_map_time_ & l_d;
+
+  std::string l_r{};
+  for (auto&& i : l_item) {
+    l_r += fmt::to_string(fmt::join(i.second, " "));
+  }
+
+  return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
 }
-std::optional<std::string> work_clock::get_extra_work_info(
-    const time_point_wrap& in_min,
-    const time_point_wrap& in_max) {
-  return {};
-}
+
 }  // namespace business
 namespace detail {
 
