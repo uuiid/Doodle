@@ -17,17 +17,10 @@ class wix_run():
         self.root_node = et.Element("{http://schemas.microsoft.com/wix/2006/wi}Wix")
 
     def __get_path_id__(self, path: pathlib.Path):
-        str_id = str(path.relative_to(self.root_path.parent)) \
-            .replace(".", "_") \
-            .replace("""\\""", "_") \
-            .replace("-", "_")
-
-        if len(str_id) > 30:
-            str_id = str_id[:-35] + str(hash(str(path))).replace("-", "_")
-        if path.is_dir():
-            return "dir_" + str_id
+        if path.suffix == ".exe":
+            return path.name.replace(".", "_")
         else:
-            return "path_" + str_id
+            return str(hash(path)).replace("-", "_")
 
     def make_root_xml(self, path: pathlib.Path):
         self.root_path = path
