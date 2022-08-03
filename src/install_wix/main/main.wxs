@@ -81,8 +81,10 @@
                        Directory="DesktopFolder">
                 <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
                           Name="Doodle"
-                          Target="[#DoodleExe_exe]"
-                          WorkingDirectory="DesktopFolder"/>
+                          Target="[#com_DoodleExe_exe]"
+                          Icon="MainIcon.exe"
+                          IconIndex="0"
+                          WorkingDirectory="WIXUI_INSTALLDIR"/>
                 <RegistryValue Root="HKCU"
                                Key="Software\uuiid\Doodle"
                                Name="installed_desktop" Type="integer" Value="1"
@@ -96,7 +98,7 @@
                 <!--菜单快捷方式-->
                 <Shortcut Id="CM_SP_bin.DoodleExe.exe"
                           Name="Doodle"
-                          Target="[#DoodleExe_exe]"
+                          Target="[#com_DoodleExe_exe]"
                           WorkingDirectory="DesktopFolder"/>
 
                 <!--注册表-->
