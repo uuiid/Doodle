@@ -10,3 +10,4 @@ target_sources(doodle_core
         enum_template_tool.h
 
         )
+add_subdirectory(detail)
