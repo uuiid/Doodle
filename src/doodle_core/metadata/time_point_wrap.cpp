@@ -111,36 +111,12 @@ bool time_point_wrap::operator<(const time_point_wrap& in_rhs) const {
   return zoned_time_.get_sys_time() < in_rhs.zoned_time_.get_sys_time();
 }
 
-bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_point& in_r) {
-  return in_l.zoned_time_.get_sys_time() < in_r;
+bool time_point_wrap::operator<(const time_point_wrap_ns::time_point& in_l) const {
+  return this->zoned_time_.get_sys_time() < in_l;
 };
-bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_local_point& in_r) {
-  return in_l.zoned_time_.get_local_time() < in_r;
+bool time_point_wrap::operator<(const time_point_wrap_ns::time_local_point& in_l) const {
+  return this->zoned_time_.get_local_time() < in_l;
 };
-bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_zoned& in_r) {
-  return in_l.zoned_time_.get_sys_time() < in_r.get_sys_time();
-};
-bool operator<(const time_point_wrap::time_point& in_l, const time_point_wrap& in_r) {
-  return in_l < in_r.zoned_time_.get_sys_time();
-};
-bool operator<(const time_point_wrap::time_local_point& in_l, const time_point_wrap& in_r) {
-  return in_l < in_r.zoned_time_.get_local_time();
-};
-bool operator<(const time_point_wrap::time_zoned& in_l, const time_point_wrap& in_r) {
-  return in_l.get_sys_time() < in_r.zoned_time_.get_sys_time();
-};
-
-
-bool time_point_wrap::operator<(const time_point_wrap::time_point& in_l) {
-  return this->zoned_time_.get_sys_time() < in_l ;
-};
-bool time_point_wrap::operator<(const time_point_wrap::time_local_point& in_l) {
-  return this->zoned_time_.get_local_time() < in_l ;
-};
-bool time_point_wrap::operator<(const time_point_wrap::time_zoned& in_l) {
-  return this->zoned_time_.get_sys_time()  < in_l.get_sys_time();
-};
-
 
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
@@ -148,7 +124,7 @@ time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_tim
   return time_point_wrap{chrono::local_days{l_mo} + 23h + 59min + 59s};
 }
 time_point_wrap time_point_wrap::min() {
-  auto l_p = time_point_wrap{time_point::min()} > time_point ::clock ::now();
+  auto l_p  = time_point_wrap{time_point::min()} > time_point ::clock ::now();
   auto l_p2 = time_point_wrap{time_point::min()} > time_point_wrap{time_point::min()};
 
   return time_point_wrap{time_point::min()};

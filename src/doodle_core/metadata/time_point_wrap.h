@@ -19,12 +19,6 @@ using time_duration    = time_point::duration;
 using time_local_point = chrono::local_time<time_duration>;
 using time_zoned       = chrono::zoned_time<time_duration>;
 }  // namespace time_point_wrap_ns
-bool operator<(const time_point_wrap& in_l, const time_point_wrap_ns::time_point& in_r);
-bool operator<(const time_point_wrap& in_l, const time_point_wrap_ns::time_local_point& in_r);
-bool operator<(const time_point_wrap& in_l, const time_point_wrap_ns::time_zoned& in_r);
-bool operator<(const time_point_wrap_ns::time_point& in_l, const time_point_wrap& in_r);
-bool operator<(const time_point_wrap_ns::time_local_point& in_l, const time_point_wrap& in_r);
-bool operator<(const time_point_wrap_ns::time_zoned& in_l, const time_point_wrap& in_r);
 
 /**
  * @brief 这是一个小的时间类
@@ -33,8 +27,7 @@ bool operator<(const time_point_wrap_ns::time_zoned& in_l, const time_point_wrap
 class DOODLE_CORE_EXPORT time_point_wrap
     : boost::totally_ordered<time_point_wrap>,
       boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_point>,
-      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_local_point>,
-      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_zoned> {
+      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_local_point> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -114,14 +107,6 @@ class DOODLE_CORE_EXPORT time_point_wrap
   bool operator<(const time_point_wrap& in_rhs) const;
   bool operator<(const time_point& in_rhs) const;
   bool operator<(const time_local_point& in_rhs) const;
-  bool operator<(const time_zoned& in_rhs) const;
-
-  friend bool operator<(const time_point_wrap& in_l, const time_point& in_r);
-  friend bool operator<(const time_point_wrap& in_l, const time_local_point& in_r);
-  friend bool operator<(const time_point_wrap& in_l, const time_zoned& in_r);
-  //  friend bool operator<(const time_point& in_l, const time_point_wrap& in_r);
-  //  friend bool operator<(const time_local_point& in_l, const time_point_wrap& in_r);
-  //  friend bool operator<(const time_zoned& in_l, const time_point_wrap& in_r);
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
