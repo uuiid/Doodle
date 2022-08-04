@@ -20,6 +20,7 @@ target_sources(
         user.h
         redirection_path_info.h
         move_create.h
+        rules.h
 
         PRIVATE
         assets.cpp
@@ -40,5 +41,6 @@ target_sources(
         user.cpp
         redirection_path_info.cpp
         move_create.cpp
+        rules.cpp
 
 )
