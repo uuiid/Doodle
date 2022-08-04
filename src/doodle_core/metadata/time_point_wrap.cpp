@@ -157,6 +157,7 @@ time_point_wrap::time_point time_point_wrap::get_sys_time() const {
 time_point_wrap::time_local_point time_point_wrap::get_local_time() const {
   return p_i->zoned_time_.get_local_time();
 }
+
 time_point_wrap::~time_point_wrap() = default;
 time_point_wrap::time_point_wrap(const time_point_wrap& in_other) noexcept
     : p_i(std::make_unique<impl>()) {
