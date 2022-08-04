@@ -22,6 +22,7 @@ class DOODLE_CORE_EXPORT time_point_wrap
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
+  using duration         = time_point::duration;
   using time_local_point = chrono::local_time<time_duration>;
 
  private:
