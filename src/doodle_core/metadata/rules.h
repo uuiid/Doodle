@@ -26,7 +26,7 @@ class time_point_info;
  * @brief 这个时间规则是一个本地时间(并非 utc 时间)
  */
 
-class rules : boost::noncopyable {
+class DOODLE_CORE_EXPORT rules : boost::noncopyable {
  private:
   friend void to_json(nlohmann::json& j, const rules& p);
   friend void from_json(const nlohmann::json& j, rules& p);

@@ -8,6 +8,7 @@ target_sources(doodle_core
         std_warp.h
         sqlppWarp.h
         enum_template_tool.h
+        boost_icl_warp.h
 
         )
 add_subdirectory(detail)

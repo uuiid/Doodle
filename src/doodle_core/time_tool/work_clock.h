@@ -3,14 +3,13 @@
 //
 
 #pragma once
-
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <bitset>
 #include <utility>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/rules.h>
 
-#include <doodle_lib/lib_warp/boost_icl_warp.h>
+#include <doodle_core/lib_warp/boost_icl_warp.h>
 
 #include <boost/icl/split_interval_set.hpp>
 #include <boost/icl/discrete_interval.hpp>
