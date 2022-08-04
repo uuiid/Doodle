@@ -12,7 +12,7 @@ namespace doodle {
 
 class time_point_wrap::impl {
  public:
-  chrono::zoned_time<time_duration> zoned_time_;
+  chrono::zoned_time<time_duration> zoned_time_{};
 };
 
 void to_json(nlohmann::json& j, const time_point_wrap& p) {
@@ -23,18 +23,18 @@ void from_json(const nlohmann::json& j, time_point_wrap& p) {
 }
 
 time_point_wrap::time_point_wrap()
-    : time_point_wrap(time_point::clock::now()) {
-}
-time_point_wrap::time_point_wrap(const time_point_wrap::time_zoned& in_time_zoned)
     : p_i(std::make_unique<impl>()) {
-  p_i->zoned_time_ = in_time_zoned;
+  p_i->zoned_time_ = date::make_zoned(date::current_zone(), time_point::clock::now());
 }
+
 time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
-    : time_point_wrap(chrono::make_zoned(date::current_zone(), in_utc_timePoint)) {
+    : time_point_wrap() {
+  set_time(in_utc_timePoint);
 }
 
 time_point_wrap::time_point_wrap(time_local_point in_local_time_point)
-    : time_point_wrap(chrono::make_zoned(date::current_zone(), in_local_time_point)) {
+    : time_point_wrap() {
+  set_time(in_local_time_point);
 }
 
 time_point_wrap::time_point_wrap(
@@ -147,9 +147,7 @@ void time_point_wrap::set_time(const time_point_wrap::time_local_point& in) {
 void time_point_wrap::set_time(const time_point_wrap::time_point& in) {
   p_i->zoned_time_ = in;
 }
-void time_point_wrap::set_time(const time_zoned& in) {
-  p_i->zoned_time_ = in;
-}
+
 time_point_wrap time_point_wrap::now() {
   return time_point_wrap{time_point::clock::now()};
 }

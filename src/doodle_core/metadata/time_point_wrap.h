@@ -23,12 +23,10 @@ class DOODLE_CORE_EXPORT time_point_wrap
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
   using time_local_point = chrono::local_time<time_duration>;
-  using time_zoned       = chrono::zoned_time<time_duration>;
 
  private:
   void set_time(const time_local_point& in);
   void set_time(const time_point& in);
-  void set_time(const time_zoned& in);
 
   class impl;
   std::unique_ptr<impl> p_i;
@@ -36,7 +34,6 @@ class DOODLE_CORE_EXPORT time_point_wrap
  public:
   time_point_wrap();
   virtual ~time_point_wrap();
-  explicit time_point_wrap(const time_zoned& in_time_zoned);
   explicit time_point_wrap(time_point in_utc_timePoint);
   explicit time_point_wrap(time_local_point in_utc_timePoint);
   explicit time_point_wrap(
