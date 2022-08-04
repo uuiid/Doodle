@@ -1,91 +1,4 @@
 
-set(doodle_maya_plug_cpp
-        main/maya_plug.cpp
-        main/maya_plug_fwd.h
-        gui/maya_plug_app.cpp
-        gui/maya_plug_app.h
-        gui/action/reference_attr_setting.cpp
-        gui/action/reference_attr_setting.h
-        gui/action/comm_check_scenes.h
-        gui/action/comm_check_scenes.cpp
-        maya_render/hud_render_override.h
-        maya_render/hud_render_override.cpp
-        maya_render/hud_render_node.h
-        maya_render/hud_render_node.cpp
-        data/play_blast.h
-        data/play_blast.cpp
-        data/create_hud_node.h
-        data/create_hud_node.cpp
-        data/reference_file.h
-        data/reference_file.cpp
-        data/qcloth_shape.cpp
-        data/qcloth_shape.h
-        data/maya_file_io.cpp
-        data/maya_file_io.h
-        logger/maya_logger_info.h
-        data/maya_camera.h
-        data/maya_camera.cpp
-        maya_comm/cam_comm.cpp
-        maya_comm/cam_comm.h
-        maya_comm/open_doodle_main.cpp
-        maya_comm/open_doodle_main.h
-        maya_comm/reference_comm.cpp
-        maya_comm/reference_comm.h
-        maya_comm/play_blash_comm.h
-        maya_comm/play_blash_comm.cpp
-        fmt/fmt_select_list.h
-        data/sim_cloth_tools.cpp
-        data/sim_cloth_tools.h
-        maya_comm/file_comm.cpp
-        maya_comm/file_comm.h
-        data/maya_tool.h
-        data/maya_tool.cpp
-        gui/action/create_sim_cloth.h
-        gui/action/create_sim_cloth.cpp
-        exception/exception.h
-        fmt/fmt_warp.h
-        maya_comm/afterimage_comm.h
-        maya_comm/afterimage_comm.cpp
-        data/sim_cover_attr.h
-        data/sim_cover_attr.cpp
-        data/maya_clear_scenes.cpp
-        data/maya_clear_scenes.h
-        maya_comm/clear_scene_comm.cpp
-        maya_comm/clear_scene_comm.h
-        data/maya_poly_info.cpp
-        data/maya_poly_info.h
-        data/find_duplicate_poly.cpp
-        data/find_duplicate_poly.h
-        maya_comm/find_duplicate_poly_comm.h
-        maya_comm/find_duplicate_poly_comm.cpp
-        configure/static_value.h
-        gui/maya_layout.cpp
-        gui/maya_layout.h
-        maya_comm/auto_chick_call_back.cpp
-        maya_comm/auto_chick_call_back.h
-        maya_comm/replace_rig_file_command.h
-        maya_comm/replace_rig_file_command.cpp
-        data/maya_call_guard.h
-        data/maya_call_guard.cpp
-        maya_comm/upload_files_command.h
-        maya_comm/upload_files_command.cpp
-        maya_comm/dem_bones_comm.h
-        maya_comm/dem_bones_comm.cpp
-        maya_comm/dem_bones_comm.h
-        maya_comm/dem_bones_comm.cpp
-        maya_comm/dem_bones_add_weight.h
-        maya_comm/dem_bones_add_weight.cpp
-        data/dem_bones_ex.h
-        data/dem_bones_ex.cpp
-        gui/action/dem_cloth_to_fbx.h
-        gui/action/dem_cloth_to_fbx.cpp
-        maya_comm/create_qcloth_assets.h
-        maya_comm/create_qcloth_assets.cpp
-        data/maya_register_main.h
-        maya_comm/sequence_to_blend_shape.h
-        maya_comm/sequence_to_blend_shape.cpp
-        )
-
 if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
     find_package(OpenMP REQUIRED)
@@ -105,11 +18,21 @@ if (DEFINED Maya_Version)
         configure_file(DoodleExe.manifest.in doodle_maya.manifest)
         configure_file(maya_plug.rc.in doodle_maya.rc)
         add_library(doodle_maya MODULE
-                ${doodle_maya_plug_cpp}
                 doodle_maya.manifest
                 doodle_maya.rc
                 ../doodle_exe/main/icon.ico
                 )
+
+        add_subdirectory(configure configure_${Maya_Version})
+        add_subdirectory(data data_${Maya_Version})
+        add_subdirectory(exception exception_${Maya_Version})
+        add_subdirectory(fmt fmt_${Maya_Version})
+        add_subdirectory(gui gui_${Maya_Version})
+        add_subdirectory(logger logger_${Maya_Version})
+        add_subdirectory(main main_${Maya_Version})
+        add_subdirectory(maya_comm maya_comm_${Maya_Version})
+        add_subdirectory(maya_render maya_render_${Maya_Version})
+
         target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
         set_target_properties(doodle_maya PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins

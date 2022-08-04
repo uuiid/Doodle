@@ -1,0 +1,34 @@
+target_sources(doodle_maya
+        PUBLIC
+        create_hud_node.h
+        dem_bones_ex.h
+        find_duplicate_poly.h
+        maya_call_guard.h
+        maya_camera.h
+        maya_clear_scenes.h
+        maya_file_io.h
+        maya_poly_info.h
+        maya_register_main.h
+        maya_tool.h
+        play_blast.h
+        qcloth_shape.h
+        reference_file.h
+        sim_cloth_tools.h
+        sim_cover_attr.h
+
+        PRIVATE
+        create_hud_node.cpp
+        dem_bones_ex.cpp
+        find_duplicate_poly.cpp
+        maya_call_guard.cpp
+        maya_camera.cpp
+        maya_clear_scenes.cpp
+        maya_file_io.cpp
+        maya_poly_info.cpp
+        maya_tool.cpp
+        play_blast.cpp
+        qcloth_shape.cpp
+        reference_file.cpp
+        sim_cloth_tools.cpp
+        sim_cover_attr.cpp
+        )

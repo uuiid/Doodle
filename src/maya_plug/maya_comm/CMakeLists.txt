@@ -1,0 +1,35 @@
+target_sources(doodle_maya
+        PUBLIC
+        replace_rig_file_command.h
+        find_duplicate_poly_comm.h
+        create_qcloth_assets.h
+        sequence_to_blend_shape.h
+        upload_files_command.h
+        file_comm.h
+        cam_comm.h
+        play_blash_comm.h
+        dem_bones_add_weight.h
+        open_doodle_main.h
+        clear_scene_comm.h
+        reference_comm.h
+        auto_chick_call_back.h
+        dem_bones_comm.h
+        afterimage_comm.h
+
+        PRIVATE
+        open_doodle_main.cpp
+        upload_files_command.cpp
+        file_comm.cpp
+        cam_comm.cpp
+        afterimage_comm.cpp
+        reference_comm.cpp
+        replace_rig_file_command.cpp
+        dem_bones_add_weight.cpp
+        sequence_to_blend_shape.cpp
+        find_duplicate_poly_comm.cpp
+        play_blash_comm.cpp
+        auto_chick_call_back.cpp
+        create_qcloth_assets.cpp
+        clear_scene_comm.cpp
+        dem_bones_comm.cpp
+        )
