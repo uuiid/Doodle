@@ -107,49 +107,29 @@ time_point_wrap::compose() const {
 bool time_point_wrap::operator==(const time_point_wrap& in_rhs) const {
   return zoned_time_ == in_rhs.zoned_time_;
 }
-bool time_point_wrap::operator!=(const time_point_wrap& in_rhs) const {
-  return !(in_rhs == *this);
-}
 bool time_point_wrap::operator<(const time_point_wrap& in_rhs) const {
   return zoned_time_.get_sys_time() < in_rhs.zoned_time_.get_sys_time();
 }
 
-bool time_point_wrap::operator<(const time_point_wrap::time_point& in_rhs) const {
-  return zoned_time_.get_sys_time() < in_rhs;
-}
-bool time_point_wrap::operator>(const time_point_wrap::time_point& in_rhs) const {
-  return zoned_time_.get_sys_time() > in_rhs;
-}
-bool time_point_wrap::operator<=(const time_point_wrap::time_point& in_rhs) const {
-  return zoned_time_.get_sys_time() <= in_rhs;
-}
-bool time_point_wrap::operator>=(const time_point_wrap::time_point& in_rhs) const {
-  return zoned_time_.get_sys_time() >= in_rhs;
-}
-bool time_point_wrap::operator<(const time_point_wrap::time_local_point& in_rhs) const {
-  return zoned_time_.get_local_time() < in_rhs;
-}
-bool time_point_wrap::operator>(const time_point_wrap::time_local_point& in_rhs) const {
-  return zoned_time_.get_local_time() > in_rhs;
-}
-bool time_point_wrap::operator<=(const time_point_wrap::time_local_point& in_rhs) const {
-  return zoned_time_.get_local_time() <= in_rhs;
-}
-bool time_point_wrap::operator>=(const time_point_wrap::time_local_point& in_rhs) const {
-  return zoned_time_.get_local_time() >= in_rhs;
-}
-bool time_point_wrap::operator<(const time_point_wrap::time_zoned& in_rhs) const {
-  return zoned_time_.get_local_time() < in_rhs.get_local_time();
-}
-bool time_point_wrap::operator>(const time_point_wrap::time_zoned& in_rhs) const {
-  return zoned_time_.get_local_time() > in_rhs.get_local_time();
-}
-bool time_point_wrap::operator<=(const time_point_wrap::time_zoned& in_rhs) const {
-  return zoned_time_.get_local_time() <= in_rhs.get_local_time();
-}
-bool time_point_wrap::operator>=(const time_point_wrap::time_zoned& in_rhs) const {
-  return zoned_time_.get_local_time() >= in_rhs.get_local_time();
-}
+bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_point& in_r) {
+  return in_l.zoned_time_.get_sys_time() < in_r;
+};
+bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_local_point& in_r) {
+  return in_l.zoned_time_.get_local_time() < in_r;
+};
+bool operator<(const time_point_wrap& in_l, const time_point_wrap::time_zoned& in_r) {
+  return in_l.zoned_time_.get_sys_time() < in_r.get_sys_time();
+};
+bool operator<(const time_point_wrap::time_point& in_l, const time_point_wrap& in_r) {
+  return in_l < in_r.zoned_time_.get_sys_time();
+};
+bool operator<(const time_point_wrap::time_local_point& in_l, const time_point_wrap& in_r) {
+  return in_l < in_r.zoned_time_.get_local_time();
+};
+bool operator<(const time_point_wrap::time_zoned& in_l, const time_point_wrap& in_r) {
+  return in_l.get_sys_time() < in_r.zoned_time_.get_sys_time();
+};
+
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
   auto&& [l_y, l_m, l_d, l_1, l_2, l_3] = in_time.compose();
   auto l_mo                             = chrono::year{l_y} / chrono::month{l_m} / chrono::last;

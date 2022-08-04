@@ -12,12 +12,23 @@ namespace doodle {
 class time_point_wrap;
 void to_json(nlohmann::json& j, const time_point_wrap& p);
 void from_json(const nlohmann::json& j, time_point_wrap& p);
+
+namespace time_point_wrap_ns {
+using time_point       = chrono::sys_time_pos;
+using time_duration    = time_point::duration;
+using time_local_point = chrono::local_time<time_duration>;
+using time_zoned       = chrono::zoned_time<time_duration>;
+}  // namespace time_point_wrap_ns
+
 /**
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
 class DOODLE_CORE_EXPORT time_point_wrap
-    : boost::less_than_comparable1<time_point_wrap> {
+    : boost::totally_ordered<time_point_wrap>,
+      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_point>,
+      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_local_point>,
+      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_zoned> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -79,8 +90,8 @@ class DOODLE_CORE_EXPORT time_point_wrap
   static time_point_wrap current_month_end(const time_point_wrap& in_time);
   static time_point_wrap current_month_start(const time_point_wrap& in_time);
 
-  time_point_wrap current_month_end() const;
-  time_point_wrap current_month_start() const;
+  [[nodiscard]] time_point_wrap current_month_end() const;
+  [[nodiscard]] time_point_wrap current_month_start() const;
   /**
    * @brief 最小时间
    * @return
@@ -93,24 +104,15 @@ class DOODLE_CORE_EXPORT time_point_wrap
   static time_point_wrap max();
 
   bool operator==(const time_point_wrap& in_rhs) const;
-  bool operator!=(const time_point_wrap& in_rhs) const;
 
   bool operator<(const time_point_wrap& in_rhs) const;
 
-  bool operator<(const time_point& in_rhs) const;
-  bool operator>(const time_point& in_rhs) const;
-  bool operator<=(const time_point& in_rhs) const;
-  bool operator>=(const time_point& in_rhs) const;
-
-  bool operator<(const time_local_point& in_rhs) const;
-  bool operator>(const time_local_point& in_rhs) const;
-  bool operator<=(const time_local_point& in_rhs) const;
-  bool operator>=(const time_local_point& in_rhs) const;
-
-  bool operator<(const time_zoned& in_rhs) const;
-  bool operator>(const time_zoned& in_rhs) const;
-  bool operator<=(const time_zoned& in_rhs) const;
-  bool operator>=(const time_zoned& in_rhs) const;
+  friend bool operator<(const time_point_wrap& in_l, const time_point& in_r);
+  friend bool operator<(const time_point_wrap& in_l, const time_local_point& in_r);
+  friend bool operator<(const time_point_wrap& in_l, const time_zoned& in_r);
+  friend bool operator<(const time_point& in_l, const time_point_wrap& in_r);
+  friend bool operator<(const time_local_point& in_l, const time_point_wrap& in_r);
+  friend bool operator<(const time_zoned& in_l, const time_point_wrap& in_r);
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
