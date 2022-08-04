@@ -17,12 +17,12 @@ class time_point_info {
  public:
   time_point_info() = default;
   time_point_info(time_point_wrap in_b, time_point_wrap in_e, std::string in_indo)
-      : first(std::move(in_b)),
-        second(std::move(in_e)),
+      : first(in_b),
+        second(in_e),
         info(std::move(in_indo)) {}
 
   time_point_info(time_point_wrap in_b, time_point_wrap in_e)
-      : time_point_info(std::move(in_b), std::move(in_e), ""s) {}
+      : time_point_info(in_b, in_e, ""s) {}
 
   time_point_wrap first{};
   time_point_wrap second{};
