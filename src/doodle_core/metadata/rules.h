@@ -25,7 +25,7 @@ class time_point_info;
  * @brief 这个时间规则是一个本地时间(并非 utc 时间)
  */
 
-class DOODLE_CORE_EXPORT rules : boost::noncopyable {
+class DOODLE_CORE_EXPORT rules {
  public:
   using duration_type        = chrono::seconds;
   using point_type           = rules_ns::time_point_info;
@@ -43,6 +43,8 @@ class DOODLE_CORE_EXPORT rules : boost::noncopyable {
   rules();
   virtual ~rules();
 
+  rules(const rules& in_rules) noexcept;
+  rules& operator=(const rules& in_rules) noexcept;
   rules(rules&& in_rules) noexcept;
   rules& operator=(rules&& in_rules) noexcept;
   /**

@@ -77,6 +77,16 @@ rules rules::get_default() {
   l_rules.p_i->work_pair.emplace_back(13h, 18h);
   return l_rules;
 }
+
+rules::rules(const rules& in_rules) noexcept
+    : p_i(std::make_unique<impl>()) {
+  *p_i = *in_rules.p_i;
+}
+rules& rules::operator=(const rules& in_rules) noexcept {
+  *p_i = *in_rules.p_i;
+  return *this;
+}
+
 rules::rules(rules&& in_rules) noexcept
     : p_i(std::move(in_rules.p_i)) {
 }
