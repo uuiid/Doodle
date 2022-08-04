@@ -19,7 +19,8 @@ class rules::impl {
       chrono::seconds,
       chrono::seconds>>
       work_pair{};
-  std::vector<std::pair<chrono::seconds, chrono::seconds>> extra_holidays{};
+
+  std::vector<time_point_info> extra_holidays{};
   std::vector<time_point_info> extra_work{};
   std::vector<time_point_info> extra_rest{};
 
@@ -72,8 +73,8 @@ const std::vector<rules_ns::time_point_info>& rules::extra_rest() const {
 rules rules::get_default() {
   rules l_rules{};
   l_rules.p_i->work_weekdays = impl::work_Monday_to_Friday;
-  l_rules.p_i->extra_holidays.emplace_back(9h, 12h);
-  l_rules.p_i->extra_holidays.emplace_back(13h, 18h);
+  l_rules.p_i->work_pair.emplace_back(9h, 12h);
+  l_rules.p_i->work_pair.emplace_back(13h, 18h);
   return l_rules;
 }
 rules::rules(rules&& in_rules) noexcept
@@ -92,10 +93,10 @@ std::string rules::debug_print() {
       fmt::join(p_i->extra_rest, "->"),
       fmt::join(p_i->extra_work, "->"));
 }
-void rules::add_extra_holidays(const duration_type& in_begin, const duration_type& in_end) {
+void rules::add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   p_i->extra_holidays.emplace_back(in_begin, in_end);
 }
-const std::vector<std::pair<chrono::seconds, chrono::seconds>>& rules::extra_holidays() const {
+const rules::time_point_vector& rules::extra_holidays() const {
   return p_i->extra_holidays;
 }
 

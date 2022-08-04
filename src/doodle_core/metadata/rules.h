@@ -60,8 +60,8 @@ class DOODLE_CORE_EXPORT rules : boost::noncopyable {
   void add_work_time(const duration_type& in_begin, const duration_type& in_end);
   [[nodiscard("")]] const time_duration_vector& work_time() const;
 
-  void add_extra_holidays(const duration_type& in_begin, const duration_type& in_end);
-  [[nodiscard("")]] const time_duration_vector& extra_holidays() const;
+  void add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end);
+  [[nodiscard("")]] const time_point_vector& extra_holidays() const;
 
   void add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
   [[nodiscard("")]] const time_point_vector& extra_work() const;
