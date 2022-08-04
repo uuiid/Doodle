@@ -86,7 +86,7 @@ std::string time_point_wrap::get_week_s() const {
 
 std::int32_t time_point_wrap::get_week_int() const {
   date::weekday k_weekday{chrono::time_point_cast<date::days>(get_local_time())};
-  return k_weekday.c_encoding();
+  return boost::numeric_cast<std::int32_t>(k_weekday.c_encoding());
 }
 
 std::string time_point_wrap::show_str() const {
