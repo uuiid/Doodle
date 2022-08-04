@@ -22,13 +22,13 @@ namespace business {
 
 work_clock::work_clock() = default;
 
-chrono::hours_double work_clock::operator()(
+duration_type work_clock::operator()(
     const time_type& in_min,
     const time_type& in_max) const {
   auto l_d = discrete_interval_time::right_open(in_min,
                                                 in_max);
   auto l_l = interval_set_time_ & l_d;
-  chrono::hours_double l_len{};
+  duration_type l_len{};
   for (auto&& l_i : l_l) {
     l_len += boost::icl::last(l_i) - boost::icl::first(l_i);
   }

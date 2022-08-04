@@ -23,6 +23,7 @@ namespace business {
 class DOODLE_CORE_EXPORT work_clock {
   rules rules_;
   using time_type              = doodle::time_point_wrap;
+  using duration_type          = doodle::time_point_wrap::duration;
   using info_type              = std::set<std::string>;
   using discrete_interval_time = boost::icl::discrete_interval<time_type>;
   using interval_set_time      = boost::icl::interval_set<time_type>;
@@ -51,7 +52,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @param in_max 结束时间
    * @return 工作时间
    */
-  chrono::hours_double operator()(const time_type& in_min,
+  duration_type operator()(const time_type& in_min,
                                   const time_type& in_max) const;
 
   /**
