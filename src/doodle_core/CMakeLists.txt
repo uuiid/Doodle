@@ -21,6 +21,11 @@ add_library(doodle_core
         ${OUT_LISTS_sqlpp}
         )
 
+target_precompile_headers(doodle_core
+        PRIVATE
+        doodle_core_pch.h
+        )
+
 # 添加库目录
 target_include_directories(doodle_core
         PUBLIC

@@ -7,11 +7,14 @@
 #include <boost/contract.hpp>
 
 #include <doodle_core/metadata/comment.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/split_interval_set.hpp>
+
+#include <range/v3/range.hpp>
 
 namespace doodle {
 
@@ -64,8 +67,8 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
     /// \brief 加入工作日规定时间
     chrono::local_days l_local_days{l_begin};
     chrono::weekday l_weekday{l_begin};
-    if (rules_.work_weekdays[l_weekday.c_encoding()]) {
-      ranges::for_each(rules_.work_pair, [&](const std::pair<chrono::seconds,
+    if (rules_.work_weekdays()[l_weekday.c_encoding()]) {
+      ranges::for_each(rules_.work_time(), [&](const std::pair<chrono::seconds,
                                                              chrono::seconds>& in_pair) {
         l_r += discrete_interval_time::right_open(l_begin + in_pair.first,
                                                   l_begin + in_pair.second);
