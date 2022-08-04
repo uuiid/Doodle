@@ -174,4 +174,16 @@ time_point_wrap& time_point_wrap::operator=(time_point_wrap&& in_other) noexcept
   p_i = std::move(in_other.p_i);
   return *this;
 }
+time_point_wrap& time_point_wrap::operator+=(const time_point_wrap::duration& in_dur) {
+  p_i->zoned_time_ = get_sys_time() + in_dur;
+  return *this;
+}
+time_point_wrap& time_point_wrap::operator-=(const time_point_wrap::duration& in_dur) {
+  p_i->zoned_time_ = get_sys_time() - in_dur;
+  return *this;
+}
+
+time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r) {
+  return in_l.get_sys_time() - in_r.get_sys_time();
+}
 }  // namespace doodle

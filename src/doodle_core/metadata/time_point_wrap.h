@@ -13,12 +13,20 @@ class time_point_wrap;
 void to_json(nlohmann::json& j, const time_point_wrap& p);
 void from_json(const nlohmann::json& j, time_point_wrap& p);
 
+namespace time_point_wrap_ns {
+using time_point       = chrono::sys_time_pos;
+using time_duration    = time_point::duration;
+using duration         = time_point::duration;
+using time_local_point = chrono::local_time<time_duration>;
+}  // namespace time_point_wrap_ns
+
 /**
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
 class DOODLE_CORE_EXPORT time_point_wrap
-    : boost::totally_ordered<time_point_wrap> {
+    : boost::totally_ordered<time_point_wrap>,
+      boost::additive<time_point_wrap, time_point_wrap_ns::duration> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -102,21 +110,9 @@ class DOODLE_CORE_EXPORT time_point_wrap
 
   bool operator==(const time_point_wrap& in_rhs) const;
   bool operator<(const time_point_wrap& in_rhs) const;
+  time_point_wrap& operator+=(const duration& in_dur);
+  time_point_wrap& operator-=(const duration& in_dur);
 
-  template <typename Rep_T, typename Period_T>
-  time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = get_sys_time();
-    l_sys_time += in_dur;
-    this->set_time(l_sys_time);
-    return *this;
-  }
-  template <typename Rep_T, typename Period_T>
-  time_point_wrap& operator-=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = get_sys_time();
-    l_sys_time -= in_dur;
-    this->set_time(l_sys_time);
-    return *this;
-  }
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = get_sys_time();
@@ -134,7 +130,7 @@ class DOODLE_CORE_EXPORT time_point_wrap
   template <class Clock,
             class Duration = typename Clock::duration>
   time_point_wrap& operator=(const doodle::chrono::time_point<Clock, Duration>& in_dur) {
-    this->set_time(chrono::floor<time_duration>(in_dur));
+    this->set_time(chrono::floor<duration>(in_dur));
     return *this;
   }
 
@@ -143,6 +139,8 @@ class DOODLE_CORE_EXPORT time_point_wrap
   friend void to_json(nlohmann::json& j, const time_point_wrap& p);
   friend void from_json(const nlohmann::json& j, time_point_wrap& p);
 };
+
+time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
 
 }  // namespace doodle
 
