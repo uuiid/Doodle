@@ -73,6 +73,12 @@ class DOODLE_CORE_EXPORT time_point_wrap
    */
   static time_point_wrap max();
 
+  /**
+   * @brief 最大时间
+   * @return
+   */
+  static time_point_wrap now();
+
   bool operator==(const time_point_wrap& in_rhs) const;
   bool operator<(const time_point_wrap& in_rhs) const;
 

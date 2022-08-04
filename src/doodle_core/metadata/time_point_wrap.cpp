@@ -142,4 +142,7 @@ void time_point_wrap::set_time(const time_point_wrap::time_point& in) {
 void time_point_wrap::set_time(const time_zoned& in) {
   zoned_time_ = in;
 }
+time_point_wrap time_point_wrap::now() {
+  return time_point_wrap{time_point::clock::now()};
+}
 }  // namespace doodle
