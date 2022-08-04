@@ -30,9 +30,12 @@ class DOODLE_CORE_EXPORT time_point_wrap
   void set_time(const time_point& in);
   void set_time(const time_zoned& in);
 
+  class impl;
+  std::unique_ptr<impl> p_i;
+
  public:
-  chrono::zoned_time<time_duration> zoned_time_;
   time_point_wrap();
+  virtual ~time_point_wrap();
   explicit time_point_wrap(const time_zoned& in_time_zoned);
   explicit time_point_wrap(time_point in_utc_timePoint);
   explicit time_point_wrap(time_local_point in_utc_timePoint);
@@ -52,6 +55,15 @@ class DOODLE_CORE_EXPORT time_point_wrap
                            std::uint16_t>  // seconds
   compose() const;
 
+  /// @brief 复制构造
+  time_point_wrap(const time_point_wrap& in_other) noexcept;
+  /// @brief 移动构造
+  time_point_wrap(time_point_wrap&& in_other) noexcept;
+  /// @brief 赋值运算
+  time_point_wrap& operator=(const time_point_wrap& in_other) noexcept;
+  /// @brief 移动运算
+  time_point_wrap& operator=(time_point_wrap&& in_other) noexcept;
+
   [[nodiscard]] std::string get_week_s() const;
   [[nodiscard]] std::int32_t get_week_int() const;
 
@@ -59,9 +71,17 @@ class DOODLE_CORE_EXPORT time_point_wrap
 
   static time_point_wrap current_month_end(const time_point_wrap& in_time);
   static time_point_wrap current_month_start(const time_point_wrap& in_time);
-
+  /**
+   * @brief 当月段结束
+   * @return
+   */
   [[nodiscard]] time_point_wrap current_month_end() const;
+  /**
+   * @brief 当月的开开始
+   * @return
+   */
   [[nodiscard]] time_point_wrap current_month_start() const;
+
   /**
    * @brief 最小时间
    * @return
@@ -73,8 +93,11 @@ class DOODLE_CORE_EXPORT time_point_wrap
    */
   static time_point_wrap max();
 
+  [[nodiscard("")]] time_point get_sys_time() const;
+  [[nodiscard("")]] time_local_point get_local_time() const;
+
   /**
-   * @brief 最大时间
+   * @brief 现在时间
    * @return
    */
   static time_point_wrap now();

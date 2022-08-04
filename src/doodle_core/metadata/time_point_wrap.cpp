@@ -9,17 +9,25 @@
 #include <doodle_core/logger/logger.h>
 
 namespace doodle {
+
+class time_point_wrap::impl {
+ public:
+  chrono::zoned_time<time_duration> zoned_time_;
+};
+
 void to_json(nlohmann::json& j, const time_point_wrap& p) {
-  j["time"] = p.zoned_time_.get_sys_time();
+  j["time"] = p.p_i->zoned_time_.get_sys_time();
 }
 void from_json(const nlohmann::json& j, time_point_wrap& p) {
-  p.zoned_time_ = j.at("time").get<time_point_wrap::time_point>();
+  p.p_i->zoned_time_ = j.at("time").get<time_point_wrap::time_point>();
 }
+
 time_point_wrap::time_point_wrap()
     : time_point_wrap(time_point::clock::now()) {
 }
 time_point_wrap::time_point_wrap(const time_point_wrap::time_zoned& in_time_zoned)
-    : zoned_time_(in_time_zoned) {
+    : p_i(std::make_unique<impl>()) {
+  p_i->zoned_time_ = in_time_zoned;
 }
 time_point_wrap::time_point_wrap(time_point in_utc_timePoint)
     : time_point_wrap(chrono::make_zoned(date::current_zone(), in_utc_timePoint)) {
@@ -77,12 +85,12 @@ std::string time_point_wrap::get_week_s() const {
 }
 
 std::int32_t time_point_wrap::get_week_int() const {
-  date::weekday k_weekday{chrono::time_point_cast<date::days>(zoned_time_.get_local_time())};
+  date::weekday k_weekday{chrono::time_point_cast<date::days>(get_local_time())};
   return k_weekday.c_encoding();
 }
 
 std::string time_point_wrap::show_str() const {
-  return date::format("%Y/%m/%d %H:%M:%S", zoned_time_.get_local_time());
+  return date::format("%Y/%m/%d %H:%M:%S", get_local_time());
 }
 
 std::tuple<std::uint16_t,  // year
@@ -92,7 +100,7 @@ std::tuple<std::uint16_t,  // year
            std::uint16_t,  // minutes
            std::uint16_t>
 time_point_wrap::compose() const {
-  auto k_local = zoned_time_.get_local_time();
+  auto k_local = get_local_time();
   auto k_dp    = date::floor<date::days>(k_local);
   date::year_month_day k_day{k_dp};
   date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
@@ -105,10 +113,10 @@ time_point_wrap::compose() const {
 }
 
 bool time_point_wrap::operator==(const time_point_wrap& in_rhs) const {
-  return zoned_time_ == in_rhs.zoned_time_;
+  return p_i->zoned_time_ == in_rhs.p_i->zoned_time_;
 }
 bool time_point_wrap::operator<(const time_point_wrap& in_rhs) const {
-  return zoned_time_.get_sys_time() < in_rhs.zoned_time_.get_sys_time();
+  return p_i->zoned_time_.get_sys_time() < in_rhs.p_i->zoned_time_.get_sys_time();
 }
 
 time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_time) {
@@ -134,15 +142,37 @@ time_point_wrap time_point_wrap::current_month_start() const {
   return current_month_start(*this);
 }
 void time_point_wrap::set_time(const time_point_wrap::time_local_point& in) {
-  zoned_time_ = chrono::make_zoned(zoned_time_.get_time_zone(), in);
+  p_i->zoned_time_ = in;
 }
 void time_point_wrap::set_time(const time_point_wrap::time_point& in) {
-  zoned_time_ = chrono::make_zoned(zoned_time_.get_time_zone(), in);
+  p_i->zoned_time_ = in;
 }
 void time_point_wrap::set_time(const time_zoned& in) {
-  zoned_time_ = in;
+  p_i->zoned_time_ = in;
 }
 time_point_wrap time_point_wrap::now() {
   return time_point_wrap{time_point::clock::now()};
+}
+time_point_wrap::time_point time_point_wrap::get_sys_time() const {
+  return p_i->zoned_time_.get_sys_time();
+}
+time_point_wrap::time_local_point time_point_wrap::get_local_time() const {
+  return p_i->zoned_time_.get_local_time();
+}
+time_point_wrap::~time_point_wrap() = default;
+time_point_wrap::time_point_wrap(const time_point_wrap& in_other) noexcept
+    : p_i(std::make_unique<impl>()) {
+  *p_i = *in_other.p_i;
+}
+time_point_wrap::time_point_wrap(time_point_wrap&& in_other) noexcept
+    : p_i(std::move(in_other.p_i)) {
+}
+time_point_wrap& time_point_wrap::operator=(const time_point_wrap& in_other) noexcept {
+  *p_i = *in_other.p_i;
+  return *this;
+}
+time_point_wrap& time_point_wrap::operator=(time_point_wrap&& in_other) noexcept {
+  p_i = std::move(in_other.p_i);
+  return *this;
 }
 }  // namespace doodle
