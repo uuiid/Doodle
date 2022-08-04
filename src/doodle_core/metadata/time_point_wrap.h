@@ -80,14 +80,14 @@ class DOODLE_CORE_EXPORT time_point_wrap
   time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
     l_sys_time += in_dur;
-    zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
+    this->set_time(l_sys_time);
     return *this;
   }
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator-=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
     l_sys_time -= in_dur;
-    zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
+    this->set_time(l_sys_time);
     return *this;
   }
   template <typename Rep_T, typename Period_T>
