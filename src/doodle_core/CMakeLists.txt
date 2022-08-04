@@ -57,6 +57,7 @@ add_subdirectory(pin_yin)
 add_subdirectory(platform)
 add_subdirectory(thread_pool)
 add_subdirectory(details)
+add_subdirectory(time_tool)
 
 
 # 连接库

@@ -24,7 +24,7 @@
 #include <catch.hpp>
 
 #include <doodle_lib/app/app.h>
-#include <doodle_lib/core/work_clock.h>
+#include <doodle_core/time_tool/work_clock.h>
 
 #include <doodle_lib/gui/gui_ref/cross_frame_check.h>
 

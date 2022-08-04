@@ -6,7 +6,7 @@
 
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/comment.h>
-#include <doodle_lib/core/work_clock.h>
+#include <doodle_core/time_tool/work_clock.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/gui_ref/cross_frame_check.h>
 

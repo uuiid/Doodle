@@ -9,7 +9,6 @@ set(
         core/util.h
         core/image_loader.h
         core/authorization.h
-        core/work_clock.h
 
 
         file_warp/opencv_read_player.h
@@ -78,7 +77,6 @@ set(
         core/util.cpp
         core/image_loader.cpp
         core/authorization.cpp
-        core/work_clock.cpp
 
 
         file_warp/opencv_read_player.cpp
