@@ -13,13 +13,6 @@ class time_point_wrap;
 void to_json(nlohmann::json& j, const time_point_wrap& p);
 void from_json(const nlohmann::json& j, time_point_wrap& p);
 
-namespace time_point_wrap_ns {
-using time_point       = chrono::sys_time_pos;
-using time_duration    = time_point::duration;
-using time_local_point = chrono::local_time<time_duration>;
-using time_zoned       = chrono::zoned_time<time_duration>;
-}  // namespace time_point_wrap_ns
-
 /**
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
