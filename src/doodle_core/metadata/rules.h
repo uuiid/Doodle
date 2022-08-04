@@ -8,6 +8,10 @@
 #include <bitset>
 #include <utility>
 
+namespace doodle {
+class time_point_wrap;
+}
+
 namespace doodle::business {
 class rules;
 void to_json(nlohmann::json& j, const rules& p);
@@ -25,16 +29,23 @@ class rules {
   std::unique_ptr<impl> p_i;
 
  public:
-  /// \brief 周六 ->周日(index 6->0)
-  constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_9_12{9h, 12h};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_13_18{13h, 18h};
   rules();
   virtual ~rules();
+
+  /// \brief 周六 ->周日(index 6->0)
+  using work_day_type = std::bitset<7>;
+
+  void work_weekdays(const work_day_type& in_work_weekdays);
+  [[nodiscard("")]] const work_day_type& work_weekdays() const;
+
+  void add_work_time(const chrono::seconds& in_begin, const chrono::seconds& in_end);
+  [[nodiscard("")]] const std::vector<std::pair<chrono::seconds, chrono::seconds>>& work_time() const;
+
+  void add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
+  [[nodiscard("")]] const std::vector<rules_ns::time_point_info>& extra_work() const;
+
+  void add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
+  [[nodiscard("")]] const std::vector<rules_ns::time_point_info>& extra_rest() const;
 };
 
 }  // namespace doodle::business
