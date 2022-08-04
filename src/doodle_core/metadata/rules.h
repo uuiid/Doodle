@@ -13,6 +13,10 @@ class rules;
 void to_json(nlohmann::json& j, const rules& p);
 void from_json(const nlohmann::json& j, rules& p);
 
+namespace rules_ns {
+class time_point_info;
+};
+
 class rules {
  private:
   friend void to_json(nlohmann::json& j, const rules& p);

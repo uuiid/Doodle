@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <boost/uuid/uuid.hpp>
 #include <chrono>
@@ -118,12 +117,12 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
                                 var_t& in_var,
                                 const index_t& in_index,
                                 std::index_sequence<Index...>) {
-//    in_var.emplace<Index>(j["data"].get<decltype(std::get<Index>(std::declval<var_t>()))>());
+    //    in_var.emplace<Index>(j["data"].get<decltype(std::get<Index>(std::declval<var_t>()))>());
 
-//    (((in_index == Index)
-//          ? (void)j["data"].get_to(std::get<Index>(in_var))
-//          : void()),
-//     ...);
+    //    (((in_index == Index)
+    //          ? (void)j["data"].get_to(std::get<Index>(in_var))
+    //          : void()),
+    //     ...);
     (((in_index == Index)
           ? (void)in_var.emplace<Index>(j["data"].get<std::decay_t<decltype(std::get<Index>(std::declval<var_t>()))>>())
           : void()),
@@ -145,3 +144,5 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
 };
 
 }  // namespace nlohmann
+
+#include <doodle_core/lib_warp/detail/bit_set.h>
