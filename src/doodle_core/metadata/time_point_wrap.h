@@ -7,6 +7,7 @@
 #include <date/tz.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <boost/operators.hpp>
 namespace doodle {
 class time_point_wrap;
 void to_json(nlohmann::json& j, const time_point_wrap& p);
@@ -15,7 +16,8 @@ void from_json(const nlohmann::json& j, time_point_wrap& p);
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLE_CORE_EXPORT time_point_wrap {
+class DOODLE_CORE_EXPORT time_point_wrap
+    : boost::less_than_comparable1<time_point_wrap> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -94,9 +96,6 @@ class DOODLE_CORE_EXPORT time_point_wrap {
   bool operator!=(const time_point_wrap& in_rhs) const;
 
   bool operator<(const time_point_wrap& in_rhs) const;
-  bool operator>(const time_point_wrap& in_rhs) const;
-  bool operator<=(const time_point_wrap& in_rhs) const;
-  bool operator>=(const time_point_wrap& in_rhs) const;
 
   bool operator<(const time_point& in_rhs) const;
   bool operator>(const time_point& in_rhs) const;
