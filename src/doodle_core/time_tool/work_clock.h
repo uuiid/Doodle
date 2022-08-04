@@ -8,6 +8,7 @@
 #include <bitset>
 #include <utility>
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/rules.h>
 
 #include <doodle_lib/lib_warp/boost_icl_warp.h>
 
@@ -19,54 +20,6 @@
 namespace doodle {
 
 namespace business {
-/**
- * @brief 这个时间规则是一个本地时间(并非 utc 时间)
- */
-class DOODLELIB_API rules {
- public:
-  struct time_pair_info : public std::pair<chrono::local_time_pos, chrono::local_time_pos> {
-    using base_type = std::pair<chrono::local_time_pos, chrono::local_time_pos>;
-    std::string info{};
-    using base_type::base_type;
-    explicit time_pair_info(std::string in_info) : info(std::move(in_info)), base_type() {}
-    explicit time_pair_info(std::string in_info, base_type in_base) : info(std::move(in_info)), base_type(std::move(in_base)) {}
-    time_pair_info() = default;
-  };
-
- public:
-  /// \brief 周六 ->周日(index 6->0)
-  constexpr static std::bitset<7> work_Monday_to_Friday{0b0111110};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_9_12{9h, 12h};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_13_18{13h, 18h};
-
-  explicit rules(const std::bitset<7>& in_work_day = work_Monday_to_Friday,
-                 std::vector<std::pair<
-                     chrono::seconds,
-                     chrono::seconds>>
-                     in_work_time = std::vector<std::pair<
-                         chrono::seconds,
-                         chrono::seconds>>{work_9_12, work_13_18})
-      : work_weekdays(in_work_day),
-        work_pair(std::move(in_work_time)),
-        extra_work(),
-        extra_rest() {}
-
-  /// \brief 工作日 周六 ->周日
-  std::bitset<7> work_weekdays{};
-  std::vector<std::pair<
-      chrono::seconds,
-      chrono::seconds>>
-      work_pair{};
-  std::vector<std::pair<chrono::local_time_pos, chrono::local_time_pos>> extra_holidays{};
-  std::vector<time_pair_info> extra_work{};
-  std::vector<time_pair_info> extra_rest{};
-
-  std::string debug_print();
-};
 
 class DOODLELIB_API work_clock {
   rules rules_;
@@ -226,17 +179,4 @@ chrono::time_point<chrono::local_t, Duration_> next_time(
 };
 }  // namespace doodle
 
-namespace fmt {
-/**
- * @brief 集数格式化程序
- *
- * @tparam
- */
-template <>
-struct formatter<::doodle::business::rules::time_pair_info> : formatter<std::string> {
-  template <typename FormatContext>
-  auto format(const ::doodle::business::rules::time_pair_info& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    return format_to(ctx.out(), "{} {} {}", in_.info, in_.first, in_.second);
-  }
-};
-}  // namespace fmt
+

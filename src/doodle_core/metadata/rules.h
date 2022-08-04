@@ -21,6 +21,11 @@ namespace rules_ns {
 class time_point_info;
 };
 
+
+/**
+ * @brief 这个时间规则是一个本地时间(并非 utc 时间)
+ */
+
 class rules : boost::noncopyable {
  private:
   friend void to_json(nlohmann::json& j, const rules& p);
@@ -54,6 +59,8 @@ class rules : boost::noncopyable {
 
   void add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
   [[nodiscard("")]] const std::vector<rules_ns::time_point_info>& extra_rest() const;
+
+  std::string debug_print() ;
 };
 
 }  // namespace doodle::business

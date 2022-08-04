@@ -25,12 +25,6 @@ class rules::impl {
 
   /// \brief 周六 ->周日(index 6->0)
   constexpr static work_day_type work_Monday_to_Friday{0b0111110};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_9_12{9h, 12h};
-  constexpr static std::pair<chrono::seconds,
-                             chrono::seconds>
-      work_13_18{13h, 18h};
 };
 
 void to_json(nlohmann::json& j, const rules& p) {
@@ -88,6 +82,15 @@ rules::rules(rules&& in_rules) noexcept
 rules& rules::operator=(rules&& in_rules) noexcept {
   p_i = std::move(in_rules.p_i);
   return *this;
+}
+std::string rules::debug_print() {
+  return fmt::format(
+      "规则 周六日规则 {}\n每日规则 {} \n节假日规则 {} \n调休规则 {} \n加班规则 {}",
+      p_i->work_weekdays,
+      fmt::join(p_i->work_pair, "->"),
+      fmt::join(p_i->extra_holidays, "->"),
+      fmt::join(p_i->extra_rest, "->"),
+      fmt::join(p_i->extra_work, "->"));
 }
 
 rules::~rules() = default;

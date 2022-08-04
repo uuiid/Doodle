@@ -35,3 +35,18 @@ class time_point_info {
 }  // namespace rules_ns
 }  // namespace business
 }  // namespace doodle
+
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::business::rules_ns::time_point_info> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::business::rules_ns::time_point_info& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return format_to(ctx.out(), "{} {} {}", in_.info, in_.first, in_.second);
+  }
+};
+}  // namespace fmt
