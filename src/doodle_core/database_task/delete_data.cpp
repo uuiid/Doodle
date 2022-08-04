@@ -35,7 +35,7 @@ class delete_data::impl {
 
   std::atomic_bool stop{false};
 
-  std::size_t size;
+  std::size_t size{};
 
   void create_id() {
     delete_id_list =
