@@ -8,7 +8,6 @@
 
 #include <boost/icl/discrete_interval.hpp>
 namespace boost::icl {
-
 template <>
 struct is_discrete<::doodle::time_point_wrap> {
   typedef is_discrete type;
@@ -43,14 +42,6 @@ struct size_type_of<::doodle::time_point_wrap> {
   typedef ::doodle::time_point_wrap::duration type;
 };
 
-// ------------------------------------------------------------------------
-inline ::doodle::time_point_wrap operator++(::doodle::time_point_wrap& x) {
-  return ::doodle::time_point_wrap{++x.time_since_epoch()};
-}
-
-inline ::doodle::time_point_wrap operator--(::doodle::time_point_wrap& x) {
-  return ::doodle::time_point_wrap{--x.time_since_epoch()};
-}
 // ------------------------------------------------------------------------
 template <>
 struct is_discrete<::doodle::time_point_wrap::duration> {
