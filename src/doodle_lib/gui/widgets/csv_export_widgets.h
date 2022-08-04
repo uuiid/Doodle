@@ -5,8 +5,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API csv_export_widgets
     : public window_panel {
@@ -55,5 +54,4 @@ constexpr auto init = []() {
 class [[maybe_unused]] init_class
     : public init_register::registrar_lambda<init, 3> {};
 }  // namespace csv_export_widgets_ns
-}  // namespace gui
 }  // namespace doodle
