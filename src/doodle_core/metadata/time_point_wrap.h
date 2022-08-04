@@ -31,26 +31,6 @@ class DOODLE_CORE_EXPORT time_point_wrap
   void set_time(const time_zoned& in);
 
  public:
-  class DOODLE_CORE_EXPORT gui_data {
-   public:
-    std::uint16_t year_{};
-    std::uint16_t month_{};
-    std::uint16_t day_{};
-    std::uint16_t hours_{};
-    std::uint16_t minutes_{};
-    std::uint16_t seconds_{};
-
-    gui_data() : gui_data(time_point_wrap{}) {}
-    explicit gui_data(const time_point_wrap& in_wrap) {
-      std::tie(year_,
-               month_,
-               day_,
-               hours_,
-               minutes_,
-               seconds_) = in_wrap.compose();
-    }
-  };
-
   chrono::zoned_time<time_duration> zoned_time_;
   time_point_wrap();
   explicit time_point_wrap(const time_zoned& in_time_zoned);
@@ -94,10 +74,7 @@ class DOODLE_CORE_EXPORT time_point_wrap
   static time_point_wrap max();
 
   bool operator==(const time_point_wrap& in_rhs) const;
-
   bool operator<(const time_point_wrap& in_rhs) const;
-  bool operator<(const time_point& in_rhs) const;
-  bool operator<(const time_local_point& in_rhs) const;
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
@@ -106,7 +83,13 @@ class DOODLE_CORE_EXPORT time_point_wrap
     zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
     return *this;
   }
-
+  template <typename Rep_T, typename Period_T>
+  time_point_wrap& operator-=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
+    auto l_sys_time = zoned_time_.get_sys_time();
+    l_sys_time -= in_dur;
+    zoned_time_ = doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time);
+    return *this;
+  }
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
     auto l_sys_time = zoned_time_.get_sys_time();
