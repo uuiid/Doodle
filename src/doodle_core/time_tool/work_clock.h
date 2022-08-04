@@ -20,7 +20,7 @@ namespace doodle {
 
 namespace business {
 
-class DOODLELIB_API work_clock {
+class DOODLE_CORE_EXPORT work_clock {
   rules rules_;
   using time_d_t               = doodle::chrono::local_time_pos;
   using info_type              = std::set<std::string>;
