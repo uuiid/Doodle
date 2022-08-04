@@ -37,7 +37,7 @@ duration_type work_clock::operator()(
 
 work_clock::time_type work_clock::next_time(
     const time_type& in_begin,
-    const time_type::duration& in_du) const {
+    const duration_type& in_du) const {
   auto l_d = discrete_interval_time::right_open(in_begin, in_begin.max());
   auto l_l = interval_set_time_ & l_d;
   chrono::hours_double l_len{};

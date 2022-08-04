@@ -62,7 +62,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @return 下一个时间点
    */
   time_type next_time(const time_type& in_begin,
-                      const time_type::duration& in_du) const;
+                      const duration_type& in_du) const;
 
   /**
    * @brief 获取两个时间点之间点时间分段( 休息时间段 -> 工作时间段)
