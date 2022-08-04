@@ -109,6 +109,21 @@ void rules::add_extra_holidays(const time_point_wrap& in_begin, const time_point
 const rules::time_point_vector& rules::extra_holidays() const {
   return p_i->extra_holidays;
 }
+rules::work_day_type& rules::work_weekdays() {
+  return p_i->work_weekdays;
+}
+rules::time_duration_vector& rules::work_time() {
+  return p_i->work_pair;
+}
+rules::time_point_vector& rules::extra_holidays() {
+  return p_i->extra_holidays;
+}
+rules::time_point_vector& rules::extra_work() {
+  return p_i->extra_work;
+}
+rules::time_point_vector& rules::extra_rest() {
+  return p_i->extra_rest;
+}
 
 rules::~rules() = default;
 

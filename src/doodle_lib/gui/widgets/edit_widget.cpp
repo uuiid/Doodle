@@ -3,7 +3,7 @@
 // Created by TD on 2021/9/23.
 //
 
-#include "edit_widgets.h"
+#include "edit_widget.h"
 
 #include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>

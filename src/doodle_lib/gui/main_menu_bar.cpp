@@ -17,7 +17,7 @@
 
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
-#include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
 #include <doodle_lib/gui/action/command_tool.h>

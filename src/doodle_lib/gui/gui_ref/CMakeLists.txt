@@ -1,0 +1,18 @@
+target_sources(doodle_lib
+        PUBLIC
+        base_windows_factory.h
+        database_edit.h
+        ref_base.h
+        layout_window.h
+        base_window.h
+        cross_frame_check.h
+        path.h
+
+        PRIVATE
+        base_windows_factory.cpp
+        base_window.cpp
+        path.cpp
+        database_edit.cpp
+        layout_window.cpp
+        ref_base.cpp
+        )

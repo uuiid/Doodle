@@ -5,6 +5,7 @@
 #include <implot_internal.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/time_tool/work_clock.h>
 #include <doodle_lib/gui/gui_ref/ref_base.h>
@@ -15,6 +16,10 @@
 #include <utility>
 
 namespace doodle::gui {
+
+namespace {
+
+}
 
 class time_sequencer_widget::impl {
  public:
@@ -283,39 +288,39 @@ class time_sequencer_widget::impl {
 
     explicit operator doodle::business::rules() const {
       doodle::business::rules l_r{};
-      l_r.work_weekdays[0] = work_day.data[0].data;
-      l_r.work_weekdays[1] = work_day.data[1].data;
-      l_r.work_weekdays[2] = work_day.data[2].data;
-      l_r.work_weekdays[3] = work_day.data[3].data;
-      l_r.work_weekdays[4] = work_day.data[4].data;
-      l_r.work_weekdays[5] = work_day.data[5].data;
-      l_r.work_weekdays[6] = work_day.data[6].data;
+      l_r.work_weekdays()[0] = work_day.data[0].data;
+      l_r.work_weekdays()[1] = work_day.data[1].data;
+      l_r.work_weekdays()[2] = work_day.data[2].data;
+      l_r.work_weekdays()[3] = work_day.data[3].data;
+      l_r.work_weekdays()[4] = work_day.data[4].data;
+      l_r.work_weekdays()[5] = work_day.data[5].data;
+      l_r.work_weekdays()[6] = work_day.data[6].data;
 
-      l_r.work_pair        = work_time.data |
-                      ranges::views::transform([](const decltype(work_time.data)::value_type& in_value) -> decltype(l_r.work_pair)::value_type {
-                        chrono::hh_mm_ss l_hh_mm_ss{chrono::hours{in_value.data.first.data[0]} +
-                                                    chrono::minutes{in_value.data.first.data[1]} +
-                                                    doodle::chrono::seconds{in_value.data.first.data[2]}};
-                        chrono::hh_mm_ss l_hh_mm_ss2{chrono::hours{in_value.data.second.data[0]} +
-                                                     chrono::minutes{in_value.data.second.data[1]} +
-                                                     doodle::chrono::seconds{in_value.data.second.data[2]}};
-                        return std::make_pair(
-                            l_hh_mm_ss.to_duration(),
-                            l_hh_mm_ss2.to_duration());
-                      }) |
-                      ranges::to_vector;
-      l_r.extra_holidays = extra_holidays() | ranges::views::transform([&](const decltype(extra_holidays.data)::value_type& in_) {
-                             return static_cast<decltype(l_r.extra_holidays)::value_type>(in_);
-                           }) |
-                           ranges::to_vector;
-      l_r.extra_work = extra_work() | ranges::views::transform([&](const decltype(extra_work.data)::value_type& in_) {
-                         return static_cast<decltype(l_r.extra_work)::value_type>(in_);
-                       }) |
-                       ranges::to_vector;
-      l_r.extra_rest = extra_rest() | ranges::views::transform([&](const decltype(extra_rest.data)::value_type& in_) {
-                         return static_cast<decltype(l_r.extra_rest)::value_type>(in_);
-                       }) |
-                       ranges::to_vector;
+      l_r.work_pair()        = work_time.data |
+                        ranges::views::transform([](const decltype(work_time.data)::value_type& in_value) -> decltype(l_r.work_pair)::value_type {
+                          chrono::hh_mm_ss l_hh_mm_ss{chrono::hours{in_value.data.first.data[0]} +
+                                                      chrono::minutes{in_value.data.first.data[1]} +
+                                                      doodle::chrono::seconds{in_value.data.first.data[2]}};
+                          chrono::hh_mm_ss l_hh_mm_ss2{chrono::hours{in_value.data.second.data[0]} +
+                                                       chrono::minutes{in_value.data.second.data[1]} +
+                                                       doodle::chrono::seconds{in_value.data.second.data[2]}};
+                          return std::make_pair(
+                              l_hh_mm_ss.to_duration(),
+                              l_hh_mm_ss2.to_duration());
+                        }) |
+                        ranges::to_vector;
+      l_r.extra_holidays() = extra_holidays() | ranges::views::transform([&](const decltype(extra_holidays.data)::value_type& in_) {
+                               return static_cast<std::decay_t<decltype(l_r.extra_holidays())>::value_type>(in_);
+                             }) |
+                             ranges::to_vector;
+      l_r.extra_work() = extra_work() | ranges::views::transform([&](const decltype(extra_work.data)::value_type& in_) {
+                           return static_cast<decltype(l_r.extra_work)::value_type>(in_);
+                         }) |
+                         ranges::to_vector;
+      l_r.extra_rest() = extra_rest() | ranges::views::transform([&](const decltype(extra_rest.data)::value_type& in_) {
+                           return static_cast<decltype(l_r.extra_rest)::value_type>(in_);
+                         }) |
+                         ranges::to_vector;
       return l_r;
     }
   };
@@ -363,15 +368,13 @@ class time_sequencer_widget::impl {
   detail::cross_frame_check<ImPlotRect> chick_view1{};
   detail::cross_frame_check<ImPlotRect> chick_view2{};
 
-  void set_shaded_works_time(const std::vector<std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>>& in_works) {
+  void set_shaded_works_time(const std::vector<std::pair<time_point_wrap, time_point_wrap>>& in_works) {
     shaded_works_time.clear();
-    ranges::for_each(in_works, [this](const std::pair<doodle::chrono::local_time_pos, doodle::chrono::local_time_pos>& in_pair) {
-      time_point_wrap l_point_1{in_pair.first};
-      time_point_wrap l_point_2{in_pair.second};
+    ranges::for_each(in_works, [this](const std::pair<time_point_wrap, time_point_wrap>& in_pair) {
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(l_point_1.zoned_time_.get_sys_time()).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first.get_sys_time()).time_since_epoch().count());
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(l_point_2.zoned_time_.get_sys_time()).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second.get_sys_time()).time_since_epoch().count());
     });
   }
 
@@ -391,7 +394,7 @@ class time_sequencer_widget::impl {
     time_list_x = in_list |
                   ranges::views::transform([](const impl::point_cache& in) -> double {
                     return doodle::chrono::floor<doodle::chrono::seconds>(
-                               in.time_point_.zoned_time_.get_sys_time())
+                               in.time_point_.get_sys_time())
                         .time_since_epoch()
                         .count();
                   }) |
@@ -470,7 +473,7 @@ class time_sequencer_widget::impl {
         time_list.front().time_point_.current_month_start();
     auto l_all_len  = work_clock_(l_begin,
                                   time_list.back().time_point_.current_month_end());
-    const auto l_du = l_all_len / boost::numeric_cast<std::double_t>(time_list.size());
+    const auto l_du = l_all_len / time_list.size();
 
     ranges::for_each(time_list,
                      [&](decltype(time_list)::value_type& in_) {
@@ -612,11 +615,11 @@ void time_sequencer_widget::render() {
     /// 设置州为时间轴
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
     double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
-                       p_i->time_list.front().time_point_.zoned_time_.get_sys_time())
+                       p_i->time_list.front().time_point_.get_sys_time())
                        .time_since_epoch()
                        .count();  // 01/01/2021 @ 12:00:00am (UTC)
     double t_max = doodle::chrono::floor<doodle::chrono::seconds>(
-                       p_i->time_list.back().time_point_.zoned_time_.get_sys_time())
+                       p_i->time_list.back().time_point_.get_sys_time())
                        .time_since_epoch()
                        .count();  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);

@@ -4,7 +4,6 @@ set(
         core/ContainerDevice.h
         core/filesystem_extend.h
         core/observable_container.h
-        gui/open_file_dialog.h
         core/program_options.h
         core/util.h
         core/image_loader.h
@@ -12,36 +11,7 @@ set(
 
 
         file_warp/opencv_read_player.h
-        gui/setting_windows.h
-        gui/main_menu_bar.h
-        gui/main_status_bar.h
-        gui/get_input_dialog.h
-        gui/gui_ref/path.h
-        gui/gui_ref/ref_base.h
-        gui/gui_ref/database_edit.h
-        gui/gui_ref/base_windows_factory.h
-        gui/gui_ref/base_window.h
-        gui/gui_ref/layout_window.h
-        gui/gui_ref/cross_frame_check.h
 
-
-        gui/action/command_tool.h
-        gui/widgets/assets_file_widgets.h
-        gui/widgets/assets_filter_widget.h
-        gui/widgets/edit_widgets.h
-        gui/widgets/long_time_tasks_widget.h
-        gui/widgets/opencv_player_widget.h
-        gui/widgets/screenshot_widget.h
-        gui/widgets/project_edit.h
-        gui/widgets/csv_export_widgets.h
-        gui/widgets/time_sequencer_widget.h
-        gui/widgets/ue4_widget.h
-        gui/widgets/extract_subtitles_widgets.h
-        gui/widgets/subtitle_processing.h
-        gui/widgets/make_link_widget.h
-        gui/main_proc_handle.h
-        gui/main_windows.h
-        gui/strand_gui.h
 
         lib_warp/boost_locale_warp.h
         lib_warp/cache.hpp
@@ -79,36 +49,6 @@ set(
 
 
         file_warp/opencv_read_player.cpp
-        gui/setting_windows.cpp
-        gui/main_menu_bar.cpp
-        gui/main_status_bar.cpp
-        gui/get_input_dialog.cpp
-        gui/gui_ref/path.cpp
-        gui/gui_ref/ref_base.cpp
-        gui/gui_ref/database_edit.cpp
-        gui/gui_ref/base_windows_factory.cpp
-        gui/gui_ref/base_window.cpp
-        gui/gui_ref/layout_window.cpp
-
-        gui/action/command_tool.cpp
-        gui/widgets/assets_file_widgets.cpp
-        gui/widgets/assets_filter_widget.cpp
-        gui/widgets/edit_widgets.cpp
-        gui/widgets/long_time_tasks_widget.cpp
-        gui/widgets/opencv_player_widget.cpp
-        gui/widgets/screenshot_widget.cpp
-        gui/widgets/project_edit.cpp
-        gui/widgets/csv_export_widgets.cpp
-        gui/widgets/time_sequencer_widget.cpp
-        gui/widgets/ue4_widget.cpp
-        gui/widgets/extract_subtitles_widgets.cpp
-        gui/widgets/subtitle_processing.cpp
-        gui/widgets/make_link_widget.cpp
-        gui/main_proc_handle.cpp
-        gui/main_windows.cpp
-        gui/strand_gui.cpp
-
-        gui/open_file_dialog.cpp
 
 
         lib_warp/imgui_warp.cpp

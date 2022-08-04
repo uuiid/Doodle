@@ -1,19 +1,6 @@
 
-
-
 include(doodle_exe)
 include(doodle_lib.cmake)
-
-# include(${PROJECT_SOURCE_DIR}/CMake/fix_mariadb_plug.cmake)
-
-
-#doodle_grpc_generate(
-#        OUT_LISTS_GRPC
-#        LISTS_FILES
-#        rpc/metadata_server.proto
-#        rpc/file_system_server.proto
-#        rpc/user_message.proto
-#)
 
 
 add_library(doodle_lib
@@ -23,7 +10,6 @@ add_library(doodle_lib
 
 target_sources(doodle_lib PRIVATE ${DOODLELIB_SOURCE})
 target_sources(doodle_lib PUBLIC ${DOODLELIB_HEADER} ${OUT_LISTS_sqlpp})
-add_subdirectory(gui/widgets/edit_widgets)
 #target_precompile_headers(doodle_lib
 #        PUBLIC [[<doodle_lib/doodle_lib_pch.h>]])
 
@@ -36,7 +22,7 @@ generate_export_header(doodle_lib
 add_subdirectory(external)
 add_subdirectory(json_rpc)
 add_subdirectory(platform/win)
-add_subdirectory(gui/widgets/assets_filter_widgets)
+add_subdirectory(gui)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -85,7 +71,6 @@ target_compile_options(doodle_lib
 
 target_include_directories(doodle_lib
         PUBLIC
-        ${CMAKE_CURRENT_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/external/csv-parser/include
         )

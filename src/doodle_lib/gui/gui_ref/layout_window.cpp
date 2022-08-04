@@ -7,7 +7,7 @@
 #include <doodle_core/gui_template/gui_process.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 
-#include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
 #include <doodle_lib/gui/action/command_tool.h>

@@ -58,18 +58,23 @@ class DOODLE_CORE_EXPORT rules {
 
   void work_weekdays(const work_day_type& in_work_weekdays);
   [[nodiscard("")]] const work_day_type& work_weekdays() const;
+  [[nodiscard("")]] work_day_type& work_weekdays();
 
   void add_work_time(const duration_type& in_begin, const duration_type& in_end);
   [[nodiscard("")]] const time_duration_vector& work_time() const;
+  [[nodiscard("")]] time_duration_vector& work_time();
 
   void add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end);
   [[nodiscard("")]] const time_point_vector& extra_holidays() const;
+  [[nodiscard("")]] time_point_vector& extra_holidays();
 
   void add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
   [[nodiscard("")]] const time_point_vector& extra_work() const;
+  [[nodiscard("")]] time_point_vector& extra_work();
 
   void add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
   [[nodiscard("")]] const time_point_vector& extra_rest() const;
+  [[nodiscard("")]] time_point_vector& extra_rest();
 
   std::string debug_print();
 };

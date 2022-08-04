@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <doodle_lib_export.h>
+#include <doodle_lib/configure/doodle_lib_export.h>
 #include <doodle_lib/doodle_lib_pch.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
