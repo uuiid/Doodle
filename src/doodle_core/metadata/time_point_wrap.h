@@ -25,9 +25,7 @@ using time_zoned       = chrono::zoned_time<time_duration>;
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
 class DOODLE_CORE_EXPORT time_point_wrap
-    : boost::totally_ordered<time_point_wrap>,
-      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_point>,
-      boost::totally_ordered<time_point_wrap, time_point_wrap_ns::time_local_point> {
+    : boost::totally_ordered<time_point_wrap> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;

@@ -124,9 +124,6 @@ time_point_wrap time_point_wrap::current_month_end(const time_point_wrap& in_tim
   return time_point_wrap{chrono::local_days{l_mo} + 23h + 59min + 59s};
 }
 time_point_wrap time_point_wrap::min() {
-  auto l_p  = time_point_wrap{time_point::min()} > time_point ::clock ::now();
-  auto l_p2 = time_point_wrap{time_point::min()} > time_point_wrap{time_point::min()};
-
   return time_point_wrap{time_point::min()};
 }
 time_point_wrap time_point_wrap::max() {
