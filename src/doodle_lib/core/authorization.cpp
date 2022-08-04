@@ -68,7 +68,7 @@ authorization::~authorization() {
   save();
 }
 bool authorization::is_expire() const {
-  return p_i->l_time > chrono::system_clock::now();
+  return p_i->l_time > time_point_wrap::now();
 }
 void authorization::generate_token(const FSys::path& in_path) {
   boost::contract::check l_c =
