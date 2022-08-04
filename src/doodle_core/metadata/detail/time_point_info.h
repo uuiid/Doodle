@@ -28,8 +28,8 @@ class time_point_info {
   time_point_wrap second{};
   std::string info{};
 
-  [[maybe_unused]] friend void to_json(nlohmann::json& j, const time_point_info& p);
-  [[maybe_unused]] friend void from_json(const nlohmann::json& j, time_point_info& p);
+  friend void to_json(nlohmann::json& j, const time_point_info& p);
+  friend void from_json(const nlohmann::json& j, time_point_info& p);
 };
 
 }  // namespace rules_ns
