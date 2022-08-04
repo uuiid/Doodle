@@ -92,6 +92,12 @@ std::string rules::debug_print() {
       fmt::join(p_i->extra_rest, "->"),
       fmt::join(p_i->extra_work, "->"));
 }
+void rules::add_extra_holidays(const duration_type& in_begin, const duration_type& in_end) {
+  p_i->extra_holidays.emplace_back(in_begin, in_end);
+}
+const std::vector<std::pair<chrono::seconds, chrono::seconds>>& rules::extra_holidays() const {
+  return p_i->extra_holidays;
+}
 
 rules::~rules() = default;
 
