@@ -26,7 +26,8 @@ using time_local_point = chrono::local_time<time_duration>;
  */
 class DOODLE_CORE_EXPORT time_point_wrap
     : boost::totally_ordered<time_point_wrap>,
-      boost::additive<time_point_wrap, time_point_wrap_ns::duration> {
+      boost::additive<time_point_wrap, time_point_wrap_ns::duration>,
+      boost::unit_steppable<time_point_wrap> {
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;
@@ -112,6 +113,9 @@ class DOODLE_CORE_EXPORT time_point_wrap
   bool operator<(const time_point_wrap& in_rhs) const;
   time_point_wrap& operator+=(const duration& in_dur);
   time_point_wrap& operator-=(const duration& in_dur);
+
+  time_point_wrap& operator++();
+  time_point_wrap& operator--();
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
