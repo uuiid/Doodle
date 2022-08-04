@@ -177,3 +177,11 @@ struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
   }
 };
 }  // namespace fmt
+
+namespace doodle {
+template <typename CharType, typename CharTraits>
+std::basic_ostream<CharType, CharTraits>&
+operator<<(std::basic_ostream<CharType, CharTraits>& stream, const time_point_wrap& in_point_wrap) {
+  return stream << fmt::to_string(in_point_wrap);
+}
+}  // namespace doodle
