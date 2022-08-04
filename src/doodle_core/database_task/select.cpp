@@ -14,6 +14,10 @@
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
+
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/database_task/sql_file.h>
 
