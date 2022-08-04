@@ -105,30 +105,30 @@ class DOODLE_CORE_EXPORT time_point_wrap
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator+=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = zoned_time_.get_sys_time();
+    auto l_sys_time = get_sys_time();
     l_sys_time += in_dur;
     this->set_time(l_sys_time);
     return *this;
   }
   template <typename Rep_T, typename Period_T>
   time_point_wrap& operator-=(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = zoned_time_.get_sys_time();
+    auto l_sys_time = get_sys_time();
     l_sys_time -= in_dur;
     this->set_time(l_sys_time);
     return *this;
   }
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = zoned_time_.get_sys_time();
+    auto l_sys_time = get_sys_time();
     l_sys_time += in_dur;
-    return time_point_wrap{doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time)};
+    return time_point_wrap{l_sys_time};
   }
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator-(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = zoned_time_.get_sys_time();
+    auto l_sys_time = get_sys_time();
     l_sys_time -= in_dur;
-    return time_point_wrap{doodle::chrono::make_zoned(zoned_time_.get_time_zone(), l_sys_time)};
+    return time_point_wrap{l_sys_time};
   }
 
   template <class Clock,
