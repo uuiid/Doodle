@@ -5,7 +5,7 @@
 #pragma once
 
 #include <maya/MMessage.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 namespace doodle {
 namespace maya_plug {
 

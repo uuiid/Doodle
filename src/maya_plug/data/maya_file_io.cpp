@@ -6,7 +6,7 @@
 
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>

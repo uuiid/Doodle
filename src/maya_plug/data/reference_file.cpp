@@ -27,7 +27,7 @@
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_call_guard.h>
 

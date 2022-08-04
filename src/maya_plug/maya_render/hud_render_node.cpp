@@ -12,7 +12,7 @@
 
 #include <maya_plug/data/play_blast.h>
 #include <maya_plug/data/maya_camera.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 MTypeId doodle_info_node::doodle_id{0x0005002B};

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 namespace {

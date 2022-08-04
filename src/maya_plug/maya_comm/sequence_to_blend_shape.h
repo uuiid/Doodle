@@ -2,7 +2,7 @@
 // Created by TD on 2022/7/29.
 //
 #pragma once
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 namespace doodle {
 namespace maya_plug {
 

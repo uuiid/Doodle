@@ -24,7 +24,7 @@
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/sim_cover_attr.h>
 
 namespace doodle::maya_plug {

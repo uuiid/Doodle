@@ -1,7 +1,7 @@
 
 set(doodle_maya_plug_cpp
-        maya_plug.cpp
-        maya_plug_fwd.h
+        main/maya_plug.cpp
+        main/maya_plug_fwd.h
         gui/maya_plug_app.cpp
         gui/maya_plug_app.h
         gui/action/reference_attr_setting.cpp

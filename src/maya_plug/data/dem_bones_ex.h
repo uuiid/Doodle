@@ -4,7 +4,7 @@
 
 #pragma once
 #include <DemBones/DemBonesExt.h>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 class dem_bones_ex : public ::Dem::DemBonesExt<std::double_t, std::double_t> {
  public:

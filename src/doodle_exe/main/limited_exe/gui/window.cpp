@@ -4,7 +4,7 @@
 
 #include "window.h"
 
-#include <doodle_lib/gui/widgets/edit_widgets.h>
+#include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
 #include <doodle_lib/gui/action/command_tool.h>

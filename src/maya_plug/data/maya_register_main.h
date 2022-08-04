@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stack>
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 #include <maya/MMessage.h>
 #include <maya/MDrawRegistry.h>
 

@@ -10,7 +10,7 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MFnSet.h>
 
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 

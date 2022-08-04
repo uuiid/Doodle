@@ -16,7 +16,7 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/episodes.h>
 
-#include <maya_plug/maya_plug_fwd.h>
+#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <regex>
 namespace doodle::maya_plug {
