@@ -72,6 +72,11 @@ class DOODLE_CORE_EXPORT time_point_wrap
   time_point_wrap& operator=(time_point_wrap&& in_other) noexcept;
 
   [[nodiscard]] std::string get_week_s() const;
+  /**
+   * @brief 本地时间转换段周索引
+   * @warning 此处返回本地时间段周索引
+   * @return
+   */
   [[nodiscard]] std::int32_t get_week_int() const;
 
   [[nodiscard]] std::string show_str() const;
