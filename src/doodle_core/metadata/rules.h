@@ -21,7 +21,7 @@ namespace rules_ns {
 class time_point_info;
 };
 
-class rules {
+class rules : boost::noncopyable {
  private:
   friend void to_json(nlohmann::json& j, const rules& p);
   friend void from_json(const nlohmann::json& j, rules& p);
@@ -31,6 +31,14 @@ class rules {
  public:
   rules();
   virtual ~rules();
+
+  rules(rules&& in_rules) noexcept;
+  rules& operator=(rules&& in_rules) noexcept;
+  /**
+   * @brief 获取每周 1-5工作, 每天9-12 13-18 工作时间的默认时间段
+   * @return 默认段规则
+   */
+  [[nodiscard("")]] static rules get_default();
 
   /// \brief 周六 ->周日(index 6->0)
   using work_day_type = std::bitset<7>;

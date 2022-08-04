@@ -51,9 +51,43 @@ void from_json(const nlohmann::json& j, rules& p) {
 using namespace rules_ns;
 rules::rules()
     : p_i(std::make_unique<impl>()) {
-  p_i->work_weekdays = impl::work_Monday_to_Friday;
-  p_i->extra_holidays.emplace_back(9h, 12h);
-  p_i->extra_holidays.emplace_back(13h, 18h);
+}
+void rules::work_weekdays(const rules::work_day_type& in_work_weekdays) {
+}
+const rules::work_day_type& rules::work_weekdays() const {
+  return p_i->work_weekdays;
+}
+void rules::add_work_time(const chrono::seconds& in_begin, const chrono::seconds& in_end) {
+  p_i->work_pair.emplace_back(in_begin, in_end);
+}
+const std::vector<std::pair<chrono::seconds, chrono::seconds>>& rules::work_time() const {
+  return p_i->work_pair;
+}
+void rules::add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info) {
+  p_i->extra_work.emplace_back(in_begin, in_end, in_info);
+}
+const std::vector<rules_ns::time_point_info>& rules::extra_work() const {
+  return p_i->extra_work;
+}
+void rules::add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info) {
+  p_i->extra_rest.emplace_back(in_begin, in_end, in_info);
+}
+const std::vector<rules_ns::time_point_info>& rules::extra_rest() const {
+  return p_i->extra_rest;
+}
+rules rules::get_default() {
+  rules l_rules{};
+  l_rules.p_i->work_weekdays = impl::work_Monday_to_Friday;
+  l_rules.p_i->extra_holidays.emplace_back(9h, 12h);
+  l_rules.p_i->extra_holidays.emplace_back(13h, 18h);
+  return l_rules;
+}
+rules::rules(rules&& in_rules) noexcept
+    : p_i(std::move(in_rules.p_i)) {
+}
+rules& rules::operator=(rules&& in_rules) noexcept {
+  p_i = std::move(in_rules.p_i);
+  return *this;
 }
 
 rules::~rules() = default;
