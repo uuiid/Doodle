@@ -204,7 +204,7 @@ class time_work_gui_data_render {
  public:
   using gui_data_type = time_work_gui_data;
   std::vector<gui_data_type> gui_data{};
-  gui_cache_name_id name_id{};
+  gui_cache_name_id name_id{"每日工作时间"};
 
   gui_cache_name_id name_id_add{"添加"s};
   gui_cache_name_id name_id_delete{"删除"s};
@@ -236,7 +236,7 @@ class time_work_gui_data_render {
     this->modify = true;
   }
   void delete_node(const gui_data_type& in_data_type) {
-    ranges::remove(gui_data, in_data_type);
+    gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data_type; });
     this->modify = true;
   }
 
@@ -299,7 +299,7 @@ class time_info_gui_data_render {
   }
 
   void delete_node(const gui_data_type& in_data) {
-    ranges::remove(gui_data, in_data);
+    gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data; });
     modify = true;
   }
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
@@ -382,7 +382,8 @@ class time_rules_render::impl {
 
 time_rules_render::time_rules_render()
     : p_i(std::make_unique<impl>()) {
-  p_i->rules_attr                               = g_reg()->ctx().emplace<rules_type>();
+  p_i->rules_attr = g_reg()->ctx().at<rules_type>();
+  rules_attr(p_i->rules_attr);
   p_i->render_time.extra_holidays_attr.gui_name = gui_cache_name_id{"节假日"s};
   p_i->render_time.extra_work_attr.gui_name     = gui_cache_name_id{"加班时间"s};
   p_i->render_time.extra_rest_attr.gui_name     = gui_cache_name_id{"调休时间"s};
@@ -404,7 +405,7 @@ bool time_rules_render::render() {
   boost::pfr::for_each_field(p_i->render_time, [this](auto&& in, std::size_t in_size) {
     if (in.render()) {
       this->p_i->mod |= true;
-      this->p_i->set_rules(in_size);
+      boost::asio::post(g_io_context(), [this, in_size]() { this->p_i->set_rules(in_size); });
     }
   });
   return p_i->mod;

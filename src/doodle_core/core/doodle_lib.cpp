@@ -9,6 +9,7 @@
 #include <doodle_core/core/core_set.h>
 #include <exception/exception.h>
 #include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/rules.h>
 #include <thread_pool/thread_pool.h>
 
 #include <doodle_core/core/core_sig.h>
@@ -40,6 +41,7 @@ doodle_lib::doodle_lib()
   reg->ctx().emplace<database_info>();
   reg->ctx().emplace<project>("C:/", "tmp_project");
   reg->ctx().emplace<project_config::base_config>();
+  reg->ctx().emplace<business::rules>(business::rules::get_default());
 
   auto& k_sig = reg->ctx().emplace<core_sig>();
   reg->ctx().emplace<status_info>();
