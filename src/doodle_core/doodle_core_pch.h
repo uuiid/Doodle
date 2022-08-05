@@ -47,3 +47,7 @@
 #include <range/v3/range.hpp>
 #include <range/v3/utility.hpp>
 #include <range/v3/view.hpp>
+
+
+#include <boost/operators.hpp>
+#include <boost/pfr.hpp>
