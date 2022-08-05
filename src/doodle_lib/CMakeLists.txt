@@ -10,8 +10,8 @@ add_library(doodle_lib
 
 target_sources(doodle_lib PRIVATE ${DOODLELIB_SOURCE})
 target_sources(doodle_lib PUBLIC ${DOODLELIB_HEADER} ${OUT_LISTS_sqlpp})
-#target_precompile_headers(doodle_lib
-#        PUBLIC [[<doodle_lib/doodle_lib_pch.h>]])
+target_precompile_headers(doodle_lib
+        PRIVATE [[<doodle_lib/doodle_lib_pch.h>]])
 
 include(GenerateExportHeader)
 set(MY_CUSTOM_CONTENT "")
