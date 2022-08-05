@@ -55,11 +55,6 @@ class work_gui_data {
 class time_hh_mm_ss_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
  public:
   using base_type   = gui_cache<std::array<std::int32_t, 3>>;
-  //  explicit time_hh_mm_ss_gui_data(std::int32_t in_h,
-  //                                  std::int32_t in_m,
-  //                                  std::int32_t in_s)
-  //      : base_type("时分秒",
-  //                  std::array<std::int32_t, 3>{in_h, in_m, in_s}){};
 
   using friend_type = chrono::seconds;
   time_hh_mm_ss_gui_data()
@@ -82,6 +77,7 @@ class time_hh_mm_ss_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
 class time_yy_mm_dd_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
  public:
   using base_type = gui_cache<std::array<std::int32_t, 3>>;
+
   time_yy_mm_dd_gui_data()
       : base_type("年月日"s,
                   std::array<std::int32_t, 3>{}){};
@@ -102,49 +98,58 @@ class time_yy_mm_dd_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
   }
 };
 
-class time_warp_gui_data
-    : public gui_cache<std::pair<time_yy_mm_dd_gui_data, time_hh_mm_ss_gui_data>> {
+class time_warp_gui_data : boost::equality_comparable<time_warp_gui_data> {
  public:
-  using base_type   = gui_cache<std::pair<time_yy_mm_dd_gui_data, time_yy_mm_dd_gui_data>>;
-
   using friend_type = time_point_wrap;
+  time_yy_mm_dd_gui_data ymd{};
+  time_hh_mm_ss_gui_data hms{};
 
   time_warp_gui_data() : time_warp_gui_data(friend_type{}){};
+
   explicit time_warp_gui_data(const friend_type& in_point_wrap)
       : time_warp_gui_data("时间"s, in_point_wrap){};
+
   explicit time_warp_gui_data(const std::string& in_string, const friend_type& in_point_wrap) {
-    this->gui_name    = gui_cache_name_id{in_string};
     auto&& [l_y, l_s] = in_point_wrap.compose_1();
-    data.first        = time_yy_mm_dd_gui_data{l_y};
-    data.second       = time_hh_mm_ss_gui_data{l_s};
+    ymd               = time_yy_mm_dd_gui_data{l_y};
+    hms               = time_hh_mm_ss_gui_data{l_s};
   };
   explicit operator friend_type() {
-    return friend_type{chrono::local_days{data.first} + chrono::seconds{data.second}};
+    return friend_type{chrono::local_days{ymd} + chrono::seconds{hms}};
+  }
+  bool operator==(const time_warp_gui_data& in) const {
+    return std::tie(ymd, hms) == std::tie(in.ymd, in.hms);
   }
 };
 
-class time_info_gui_data
-    : public gui_cache<std::pair<time_warp_gui_data, time_warp_gui_data>> {
+class time_info_gui_data : boost::equality_comparable<time_info_gui_data> {
  public:
+  time_warp_gui_data begin_time;
+  time_warp_gui_data end_time;
   gui_cache<std::string> info;
-  gui_cache<bool> delete_node{"删除"s, false};
+  gui_cache_name_id delete_node{"删除"s};
 
   using friend_type = ::doodle::business::rules::point_type;
 
   time_info_gui_data() : time_info_gui_data(friend_type{}) {}
   explicit time_info_gui_data(const friend_type& in_point_type)
-      : gui_cache<std::pair<time_warp_gui_data, time_warp_gui_data>>(
-            "时间"s),
+      : begin_time(),
+        end_time(),
         info("备注"s, in_point_type.info) {
-    data.first  = time_warp_gui_data{"开始时间"s, in_point_type.first};
-    data.second = time_warp_gui_data{"结束时间"s, in_point_type.second};
+    begin_time = time_warp_gui_data{"开始时间"s, in_point_type.first};
+    end_time   = time_warp_gui_data{"结束时间"s, in_point_type.second};
   };
 
   explicit operator friend_type() {
     return friend_type{
-        time_point_wrap{data.first},
-        time_point_wrap{data.second},
+        time_point_wrap{begin_time},
+        time_point_wrap{end_time},
         info()};
+  }
+
+  bool operator==(const time_info_gui_data& in) const {
+    return std::tie(begin_time, end_time, info, delete_node) ==
+           std::tie(in.begin_time, in.end_time, in.info, in.delete_node);
   }
 };
 
@@ -271,7 +276,18 @@ class time_info_gui_data_render {
         boost::asio::post(g_io_context(), [this]() { this->add(); });
       }
       ranges::for_each(gui_data, [this](gui_data_type& in_data) {
-        dear::Text(in_data.data.first.gui_name.name);
+        dear::Text("开始时间"s);
+        ImGui::InputInt3(*in_data.begin_time.ymd.gui_name, in_data.begin_time.ymd.data.data());
+        ImGui::InputInt3(*in_data.begin_time.hms.gui_name, in_data.begin_time.hms.data.data());
+
+        dear::Text("结束时间"s);
+        ImGui::InputInt3(*in_data.end_time.ymd.gui_name, in_data.end_time.ymd.data.data());
+        ImGui::InputInt3(*in_data.end_time.hms.gui_name, in_data.end_time.hms.data.data());
+        ImGui::InputText(*in_data.info, &in_data.info);
+
+        if (ImGui::Button(*in_data.delete_node)) {
+          boost::asio::post(g_io_context(), [this, in_data]() { this->delete_node(in_data); });
+        }
       });
     };
     return modify;
@@ -279,9 +295,12 @@ class time_info_gui_data_render {
 
   void add() {
     gui_data.emplace_back(gui_data_type::friend_type{});
+    modify = true;
   }
 
   void delete_node(const gui_data_type& in_data) {
+    ranges::remove(gui_data, in_data);
+    modify = true;
   }
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
     gui_data = in_type |
@@ -363,7 +382,10 @@ class time_rules_render::impl {
 
 time_rules_render::time_rules_render()
     : p_i(std::make_unique<impl>()) {
-  p_i->rules_attr = g_reg()->ctx().emplace<rules_type>();
+  p_i->rules_attr                               = g_reg()->ctx().emplace<rules_type>();
+  p_i->render_time.extra_holidays_attr.gui_name = gui_cache_name_id{"节假日"s};
+  p_i->render_time.extra_work_attr.gui_name     = gui_cache_name_id{"加班时间"s};
+  p_i->render_time.extra_rest_attr.gui_name     = gui_cache_name_id{"调休时间"s};
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const {
   return p_i->rules_attr;
@@ -385,7 +407,6 @@ bool time_rules_render::render() {
       this->p_i->set_rules(in_size);
     }
   });
-
   return p_i->mod;
 }
 time_rules_render::~time_rules_render() = default;
