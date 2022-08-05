@@ -14,13 +14,14 @@ namespace gui {
 namespace time_sequencer_widget_ns {
 
 namespace {
-class work_gui_data : public gui_cache<std::array<gui_cache<bool>, 7>> {
+class work_gui_data {
  public:
   using base_type = gui_cache<std::array<gui_cache<bool>, 7>>;
+  base_type gui_attr;
   work_gui_data()
       : work_gui_data(business::rules::work_Monday_to_Friday){};
   explicit work_gui_data(const business::rules::work_day_type& in_work_day_type)
-      : base_type(
+      : gui_attr(
             "工作周"s,
             std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, in_work_day_type[0]},
                                                 gui::gui_cache<bool>{"星期一"s, in_work_day_type[1]},
@@ -32,13 +33,13 @@ class work_gui_data : public gui_cache<std::array<gui_cache<bool>, 7>> {
 
   explicit operator business::rules::work_day_type() {
     business::rules::work_day_type l_r{};
-    l_r[0] = data[0]();
-    l_r[1] = data[1]();
-    l_r[2] = data[2]();
-    l_r[3] = data[3]();
-    l_r[4] = data[4]();
-    l_r[5] = data[5]();
-    l_r[6] = data[6]();
+    l_r[0] = gui_attr.data[0]();
+    l_r[1] = gui_attr.data[1]();
+    l_r[2] = gui_attr.data[2]();
+    l_r[3] = gui_attr.data[3]();
+    l_r[4] = gui_attr.data[4]();
+    l_r[5] = gui_attr.data[5]();
+    l_r[6] = gui_attr.data[6]();
     return l_r;
   }
 };
@@ -68,14 +69,14 @@ class time_hh_mm_ss_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
     return chrono::hours{data[0]} + chrono::minutes{data[1]} + chrono::seconds{data[2]};
   }
 };
-class time_yy_mm_dd_data : public gui_cache<std::array<std::int32_t, 3>> {
+class time_yy_mm_dd_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
  public:
   using base_type = gui_cache<std::array<std::int32_t, 3>>;
-  time_yy_mm_dd_data()
+  time_yy_mm_dd_gui_data()
       : base_type("年月日"s,
                   std::array<std::int32_t, 3>{}){};
-  explicit time_yy_mm_dd_data(const chrono::local_days& in_days)
-      : time_yy_mm_dd_data() {
+  explicit time_yy_mm_dd_gui_data(const chrono::local_days& in_days)
+      : time_yy_mm_dd_gui_data() {
     chrono::year_month_day l_year_month_day{in_days};
     data[0] = boost::numeric_cast<std::int32_t>((std::int32_t)l_year_month_day.year());
     data[1] = boost::numeric_cast<std::int32_t>((std::uint32_t)l_year_month_day.month());
@@ -92,16 +93,16 @@ class time_yy_mm_dd_data : public gui_cache<std::array<std::int32_t, 3>> {
 };
 
 class time_warp_gui_data
-    : public gui_cache<std::pair<time_yy_mm_dd_data, time_hh_mm_ss_gui_data>> {
+    : public gui_cache<std::pair<time_yy_mm_dd_gui_data, time_hh_mm_ss_gui_data>> {
  public:
-  using base_type = gui_cache<std::pair<time_yy_mm_dd_data, time_yy_mm_dd_data>>;
+  using base_type = gui_cache<std::pair<time_yy_mm_dd_gui_data, time_yy_mm_dd_gui_data>>;
   time_warp_gui_data() : time_warp_gui_data(time_point_wrap{}){};
   explicit time_warp_gui_data(const time_point_wrap& in_point_wrap)
       : time_warp_gui_data("时间"s, in_point_wrap){};
   explicit time_warp_gui_data(const std::string& in_string, const time_point_wrap& in_point_wrap) {
     this->gui_name    = gui_cache_name_id{in_string};
     auto&& [l_y, l_s] = in_point_wrap.compose_1();
-    data.first        = time_yy_mm_dd_data{l_y};
+    data.first        = time_yy_mm_dd_gui_data{l_y};
     data.second       = time_hh_mm_ss_gui_data{l_s};
   };
   explicit operator time_point_wrap() {
@@ -132,11 +133,19 @@ class time_info_gui_data
   }
 };
 
+class time_work_gui_data {
+ public:
+  gui_cache<time_hh_mm_ss_gui_data> begin;
+  gui_cache<time_hh_mm_ss_gui_data> end;
+  time_work_gui_data() = default;
+};
+
 }  // namespace
 
 class time_rules_render::impl {
  public:
   rules_type rules_attr;
+  work_gui_data work_gui_data_attr{};
 };
 
 time_rules_render::time_rules_render()
