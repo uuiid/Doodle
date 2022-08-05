@@ -61,6 +61,12 @@ class select::impl {
         l_v == 3 && l_i >= 4 && doodle::database_n::details::db_compatible::has_metadatatab_table(in_conn)) {
       Metadatatab l_metadatatab{};
 
+      std::size_t l_size{1};
+      for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
+        l_size = raw.count.value();
+        break;
+      }
+
       for (auto&& row : in_conn(sqlpp::select(sqlpp::all_of(l_metadatatab))
                                     .from(l_metadatatab)
                                     .unconditionally())) {
@@ -75,6 +81,7 @@ class select::impl {
                      in_str  = row.userData.value(),
                      in_uuid = row.uuidData.value(),
                      &in_reg,
+                     l_size,
                      this]() {
                       if (stop)
                         return;
@@ -95,7 +102,7 @@ class select::impl {
                                            doodle::organization_list,
                                            doodle::redirection_path_info>(l_h, k_json);
                       database::save(l_h);
-                      g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 6});
+                      g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
                     }});
         results.emplace_back(l_fun.share());
         if (stop)
@@ -115,7 +122,6 @@ class select::impl {
                               ? l_h.get<doodle::project_config::base_config>()
                               : doodle::project_config::base_config{};
                     }
-                    g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 6});
                   }});
       results.emplace_back(l_fun.share());
     }
@@ -126,6 +132,12 @@ class select::impl {
     sql::ComEntity l_com_entity{};
 
     auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread_pool().pool_));
+    std::size_t l_size{1};
+    for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_com_entity.id)).from(l_com_entity).unconditionally())) {
+      l_size = raw.count.value();
+      break;
+    }
+
     for (auto&& row : in_conn(
              sqlpp::select(
                  l_com_entity.entityId,
@@ -141,6 +153,7 @@ class select::impl {
               [in_json = row.jsonData.value(),
                in_id   = row.entityId.value(),
                &in_reg,
+               l_size,
                this]() {
                 if (stop)
                   return;
@@ -154,7 +167,7 @@ class select::impl {
 
                 auto l_json = nlohmann::json::parse(in_json);
                 l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
-                g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 3});
+                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
               }});
 
       results.emplace_back(l_fut.share());
@@ -182,7 +195,6 @@ class select::impl {
       if (auto l_f = in_fun_list.find(row.comHash.value());
           l_f != in_fun_list.end()) {
         in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
-
       }
     }
   }
@@ -200,7 +212,6 @@ class select::impl {
 
                              in_reg.ctx().template emplace<Type>(
                                  std::move(l_json.get<Type>()));
-                             g_reg()->ctx().at<process_message>().progress_step({1, l_fun.size() * 3});
                            })...};
 
     _select_ctx_(in_reg, in_conn, l_fun);
@@ -209,6 +220,12 @@ class select::impl {
   void select_entt(entt::registry& in_reg,
                    sqlpp::sqlite3::connection& in_conn) {
     sql::Entity l_entity{};
+
+    std::size_t l_size{1};
+    for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
+      l_size = raw.count.value();
+      break;
+    }
 
     for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity))
                                  .from(l_entity)
@@ -225,6 +242,7 @@ class select::impl {
                in_id   = row.id,
                l_e,
                &in_reg,
+               l_size,
                this]() {
                 if (stop)
                   return;
@@ -237,6 +255,8 @@ class select::impl {
                   l_h.remove<data_status_save>();
                 } else
                   l_h.emplace<database>(in_json).set_id(in_id);
+
+                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
               }});
 
       results.emplace_back(l_fut.share());
