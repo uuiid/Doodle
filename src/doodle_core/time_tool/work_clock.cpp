@@ -22,7 +22,7 @@ namespace business {
 
 work_clock::work_clock() = default;
 
-duration_type work_clock::operator()(
+work_clock::duration_type work_clock::operator()(
     const time_type& in_min,
     const time_type& in_max) const {
   auto l_d = discrete_interval_time::right_open(in_min,
