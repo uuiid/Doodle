@@ -89,6 +89,8 @@ const std::string& process_message::message_back() const {
 }
 
 process_message::process_message(process_message&& in) noexcept {
+  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock_in{in._mutex};
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = std::move(in.p_err);
@@ -98,6 +100,8 @@ process_message::process_message(process_message&& in) noexcept {
   p_progress = in.p_progress;
 }
 process_message& process_message::operator=(process_message&& in) noexcept {
+  std::lock_guard _lock{_mutex};
+  std::lock_guard _lock_in{in._mutex};
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = std::move(in.p_err);
@@ -108,6 +112,7 @@ process_message& process_message::operator=(process_message&& in) noexcept {
   return *this;
 }
 process_message::process_message(const process_message& in) noexcept {
+  std::lock_guard _lock{_mutex};
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = in.p_err;
@@ -117,6 +122,7 @@ process_message::process_message(const process_message& in) noexcept {
   p_progress = in.p_progress;
 }
 process_message& process_message::operator=(const process_message& in) noexcept {
+  std::lock_guard _lock{_mutex};
   p_time     = in.p_time;
   p_end      = in.p_end;
   p_err      = in.p_err;
