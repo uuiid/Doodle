@@ -4,6 +4,8 @@
 
 #include <boost/signals2.hpp>
 
+#include <boost/operators.hpp>
+
 namespace doodle::gui {
 /**
  * @brief 基本的渲染基类, render(const entt::handle & )必须每帧调用
@@ -144,7 +146,7 @@ class gui_cache_path {
  * @brief gui 名称,使用 identifier 作为id已进行相同名称的id区分
  *
  */
-class gui_cache_name_id {
+class gui_cache_name_id : boost::totally_ordered<gui_cache_name_id> {
  public:
   /**
    * @brief 名称和id 的字符串 {name}##{id}
@@ -194,6 +196,9 @@ class gui_cache_name_id {
   gui_cache_name_id(const gui_cache_name_id &in_r) noexcept;
   /// @copydoc gui_cache_name_id(gui_cache_name_id &&in_r)
   gui_cache_name_id &operator=(const gui_cache_name_id &in_r) noexcept;
+
+  bool operator==(const gui_cache_name_id &in) const noexcept;
+  bool operator<(const gui_cache_name_id &in) const noexcept;
 };
 
 /**

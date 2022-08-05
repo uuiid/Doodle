@@ -71,4 +71,10 @@ gui_cache_name_id &gui_cache_name_id::operator=(const gui_cache_name_id &in_r) n
   return *this;
 }
 
+bool gui_cache_name_id::operator==(const gui_cache_name_id &in) const noexcept {
+  return name_id == in.name_id;
+}
+bool gui_cache_name_id::operator<(const gui_cache_name_id &in) const noexcept {
+  return name_id < in.name_id;
+}
 }  // namespace doodle::gui
