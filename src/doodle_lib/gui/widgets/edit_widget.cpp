@@ -264,12 +264,13 @@ class time_edit : public gui::edit_interface {
       : time_ymd("年月日"s, std::array<std::int32_t, 3>{0, 0, 0}),
         time_hms("时分秒"s, std::array<std::int32_t, 3>{0, 0, 0}) {}
   void init_(const entt::handle &in) override {
-    std::tie(time_ymd.data[0],
-             time_ymd.data[1],
-             time_ymd.data[2],
-             time_hms.data[0],
-             time_hms.data[1],
-             time_hms.data[2]) = in.get_or_emplace<time_point_wrap>().compose();
+    auto l_com       = in.get_or_emplace<time_point_wrap>().compose();
+    time_ymd.data[0] = boost::pfr::get<0>(l_com);
+    time_ymd.data[1] = boost::pfr::get<1>(l_com);
+    time_ymd.data[2] = boost::pfr::get<2>(l_com);
+    time_hms.data[0] = boost::pfr::get<3>(l_com);
+    time_hms.data[1] = boost::pfr::get<4>(l_com);
+    time_hms.data[2] = boost::pfr::get<5>(l_com);
   }
 
   void render(const entt::handle &in) override {
