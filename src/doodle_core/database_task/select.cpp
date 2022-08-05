@@ -102,7 +102,8 @@ class select::impl {
                                            doodle::organization_list,
                                            doodle::redirection_path_info>(l_h, k_json);
                       database::save(l_h);
-                      g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
+                      g_reg()->ctx().at<process_message>().message("开始旧版本兼容转换"s);
+                      g_reg()->ctx().at<process_message>().progress_step({1, l_size});
                     }});
         results.emplace_back(l_fun.share());
         if (stop)
@@ -122,6 +123,9 @@ class select::impl {
                               ? l_h.get<doodle::project_config::base_config>()
                               : doodle::project_config::base_config{};
                     }
+                    g_reg()->ctx().at<process_message>().message("完成旧版本兼容转换"s);
+                    g_reg()->ctx().at<process_message>().progress_clear();
+
                   }});
       results.emplace_back(l_fun.share());
     }
@@ -167,7 +171,7 @@ class select::impl {
 
                 auto l_json = nlohmann::json::parse(in_json);
                 l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
-                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
+                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
               }});
 
       results.emplace_back(l_fut.share());
@@ -256,7 +260,7 @@ class select::impl {
                 } else
                   l_h.emplace<database>(in_json).set_id(in_id);
 
-                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 3});
+                g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
               }});
 
       results.emplace_back(l_fut.share());
