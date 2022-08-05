@@ -227,6 +227,14 @@ class gui_cache : public BaseType {
       : base_type(),
         gui_name(in_name),
         data(std::forward<IN_T>(in_data)){};
+  /**
+   * @brief 初始化id, 并且默认构造数据
+   * @param in_name
+   */
+  explicit gui_cache(const std::string &in_name)
+      : base_type(),
+        gui_name(in_name),
+        data(){};
 
   /**
    * @brief 使用传入数据的构造, 并将数据转为字符串, 作为名称
