@@ -23,9 +23,6 @@ class rules::impl {
   std::vector<time_point_info> extra_holidays{};
   std::vector<time_point_info> extra_work{};
   std::vector<time_point_info> extra_rest{};
-
-  /// \brief 周六 ->周日(index 6->0)
-  constexpr static work_day_type work_Monday_to_Friday{0b0111110};
 };
 
 void to_json(nlohmann::json& j, const rules& p) {
@@ -72,7 +69,7 @@ const std::vector<rules_ns::time_point_info>& rules::extra_rest() const {
 }
 rules rules::get_default() {
   rules l_rules{};
-  l_rules.p_i->work_weekdays = impl::work_Monday_to_Friday;
+  l_rules.p_i->work_weekdays = work_Monday_to_Friday;
   l_rules.p_i->work_pair.emplace_back(9h, 12h);
   l_rules.p_i->work_pair.emplace_back(13h, 18h);
   return l_rules;

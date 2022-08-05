@@ -32,6 +32,8 @@ class DOODLE_CORE_EXPORT rules {
 
   using time_duration_vector = std::vector<std::pair<duration_type, duration_type>>;
   using time_point_vector    = std::vector<rules_ns::time_point_info>;
+  /// \brief 周六 ->周日(index 6->0)
+  using work_day_type        = std::bitset<7>;
 
  private:
   friend void to_json(nlohmann::json& j, const rules& p);
@@ -40,6 +42,9 @@ class DOODLE_CORE_EXPORT rules {
   std::unique_ptr<impl> p_i;
 
  public:
+  /// \brief 周六 ->周日(index 6->0)
+  constexpr static work_day_type work_Monday_to_Friday{0b0111110};
+
   rules();
   virtual ~rules();
 
@@ -52,9 +57,6 @@ class DOODLE_CORE_EXPORT rules {
    * @return 默认段规则
    */
   [[nodiscard("")]] static rules get_default();
-
-  /// \brief 周六 ->周日(index 6->0)
-  using work_day_type = std::bitset<7>;
 
   void work_weekdays(const work_day_type& in_work_weekdays);
   [[nodiscard("")]] const work_day_type& work_weekdays() const;
