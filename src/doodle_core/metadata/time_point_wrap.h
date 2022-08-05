@@ -3,11 +3,13 @@
 //
 
 #pragma once
-#include <date/date.h>
-#include <date/tz.h>
+
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/operators.hpp>
+#include <boost/pfr.hpp>
+#include <boost/pfr/functions_for.hpp>
+
 namespace doodle {
 class time_point_wrap;
 void to_json(nlohmann::json& j, const time_point_wrap& p);
@@ -18,6 +20,23 @@ using time_point       = chrono::sys_time_pos;
 using time_duration    = time_point::duration;
 using duration         = time_point::duration;
 using time_local_point = chrono::local_time<time_duration>;
+class compose_type {
+ public:
+  std::uint16_t year;
+  std::uint16_t month;
+  std::uint16_t day;
+  std::uint16_t hours;
+  std::uint16_t minutes;
+  std::uint16_t seconds;
+};
+BOOST_PFR_FUNCTIONS_FOR(compose_type);
+
+class compose_2_type {
+ public:
+  chrono::local_days y_m_d;
+  chrono::seconds h_m_s;
+};
+
 }  // namespace time_point_wrap_ns
 
 /**
@@ -33,6 +52,8 @@ class DOODLE_CORE_EXPORT time_point_wrap
   using time_duration    = time_point::duration;
   using duration         = time_point::duration;
   using time_local_point = chrono::local_time<time_duration>;
+  using compose_type     = time_point_wrap_ns::compose_type;
+  using compose_2_type   = time_point_wrap_ns::compose_2_type;
 
  private:
   void set_time(const time_local_point& in);
@@ -54,13 +75,20 @@ class DOODLE_CORE_EXPORT time_point_wrap
       std::int32_t in_minutes = 0,
       std::int32_t in_seconds = 0);
 
-  [[nodiscard]] std::tuple<std::uint16_t,  // year
-                           std::uint16_t,  // month
-                           std::uint16_t,  // day
-                           std::uint16_t,  // hours
-                           std::uint16_t,  // minutes
-                           std::uint16_t>  // seconds
+  /**
+   * @brief 分解函数
+   * @warning 返回时间均为本地时间
+   * @return 返回本地时间段分解(年月日时分秒)
+   */
+  [[nodiscard]] compose_type  // seconds
   compose() const;
+  /**
+   * @brief 简单段分解函数
+   * @warning 本地时间段分解
+   * @return 转换为天数和秒数
+   */
+  [[nodiscard("")]] compose_2_type
+  compose_1() const;
 
   /// @brief 复制构造
   time_point_wrap(const time_point_wrap& in_other) noexcept;

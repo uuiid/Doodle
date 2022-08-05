@@ -93,25 +93,27 @@ std::string time_point_wrap::show_str() const {
   return date::format("%Y/%m/%d %H:%M:%S", get_local_time());
 }
 
-std::tuple<std::uint16_t,  // year
-           std::uint16_t,  // month
-           std::uint16_t,  // day
-           std::uint16_t,  // hours
-           std::uint16_t,  // minutes
-           std::uint16_t>
+time_point_wrap::compose_type
 time_point_wrap::compose() const {
-  auto k_local = get_local_time();
-  auto k_dp    = date::floor<date::days>(k_local);
-  date::year_month_day k_day{k_dp};
-  date::hh_mm_ss k_hh_mm_ss{date::floor<std::chrono::milliseconds>(k_local - k_dp)};
-  return std::make_tuple(boost::numeric_cast<std::uint16_t>((std::int32_t)k_day.year()),
-                         boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.month()),
-                         boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.day()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.hours().count()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes().count()),
-                         boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds().count()));
-}
+  auto&& [l_d, l_s] = compose_1();
+  date::year_month_day k_day{l_d};
+  date::hh_mm_ss k_hh_mm_ss{l_s};
 
+  return time_point_wrap::compose_type{
+      boost::numeric_cast<std::uint16_t>((std::int32_t)k_day.year()),
+      boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.month()),
+      boost::numeric_cast<std::uint16_t>((std::uint32_t)k_day.day()),
+      boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.hours().count()),
+      boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.minutes().count()),
+      boost::numeric_cast<std::uint16_t>(k_hh_mm_ss.seconds().count())};
+}
+time_point_wrap::compose_2_type time_point_wrap::compose_1() const {
+  auto k_local = get_local_time();
+  auto k_dp    = chrono::floor<chrono::days>(k_local);
+  return time_point_wrap::compose_2_type{
+      k_dp,
+      chrono::floor<std::chrono::seconds>(k_local - k_dp)};
+}
 bool time_point_wrap::operator==(const time_point_wrap& in_rhs) const {
   return p_i->zoned_time_ == in_rhs.p_i->zoned_time_;
 }
