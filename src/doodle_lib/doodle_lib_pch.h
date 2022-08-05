@@ -39,9 +39,8 @@
 #pragma warning(disable : 4275)
 
 #include <date/date.h>
-#include <doodle_lib/configure/doodle_lib_export.h>
 #include <doodle_core/doodle_macro.h>
-#include <doodle_lib/lib_warp/boost_locale_warp.h>
+#include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
 #include <doodle_core/lib_warp/sqlppWarp.h>
@@ -60,3 +59,6 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <entt/entt.hpp>
+
+#include <doodle_lib/configure/doodle_lib_export.h>
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
