@@ -62,7 +62,7 @@ class select::impl {
       Metadatatab l_metadatatab{};
 
       std::size_t l_size{1};
-      for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
+      for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_metadatatab.id)).from(l_metadatatab).unconditionally())) {
         l_size = raw.count.value();
         break;
       }
