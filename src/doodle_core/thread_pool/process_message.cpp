@@ -129,5 +129,9 @@ process_message& process_message::operator=(const process_message& in) noexcept 
 const std::string& process_message::get_name_id() const {
   return p_name_id;
 }
+void process_message::progress_clear() {
+  std::lock_guard _lock{_mutex};
+  p_progress = 0;
+}
 
 }  // namespace doodle

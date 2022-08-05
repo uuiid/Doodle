@@ -46,6 +46,7 @@ class DOODLE_CORE_EXPORT process_message {
   void set_name(const std::string& in_string);
 
   void progress_step(const rational_int& in_rational_int);
+  void progress_clear();
   void message(const std::string& in_string, const level& in_level_enum = level::warning);
   [[nodiscard]] const std::string& message_back() const;
 
