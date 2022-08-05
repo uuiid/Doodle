@@ -95,6 +95,7 @@ class select::impl {
                                            doodle::organization_list,
                                            doodle::redirection_path_info>(l_h, k_json);
                       database::save(l_h);
+                      g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 6});
                     }});
         results.emplace_back(l_fun.share());
         if (stop)
@@ -114,6 +115,7 @@ class select::impl {
                               ? l_h.get<doodle::project_config::base_config>()
                               : doodle::project_config::base_config{};
                     }
+                    g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 6});
                   }});
       results.emplace_back(l_fun.share());
     }
@@ -152,6 +154,7 @@ class select::impl {
 
                 auto l_json = nlohmann::json::parse(in_json);
                 l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
+                g_reg()->ctx().at<process_message>().progress_step({1, results.size() * 3});
               }});
 
       results.emplace_back(l_fut.share());
@@ -179,6 +182,7 @@ class select::impl {
       if (auto l_f = in_fun_list.find(row.comHash.value());
           l_f != in_fun_list.end()) {
         in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
+
       }
     }
   }
@@ -189,13 +193,14 @@ class select::impl {
              std::function<void(entt::registry & in_reg, const std::string& in_str)>>
         l_fun{
             std::make_pair(entt::type_id<Type>().hash(),
-                           [](entt::registry& in_reg, const std::string& in_str) {
+                           [&](entt::registry& in_reg, const std::string& in_str) {
                              auto l_json = nlohmann::json::parse(in_str);
                              if (in_reg.ctx().template contains<Type>())
                                in_reg.ctx().template erase<Type>();
 
                              in_reg.ctx().template emplace<Type>(
                                  std::move(l_json.get<Type>()));
+                             g_reg()->ctx().at<process_message>().progress_step({1, l_fun.size() * 3});
                            })...};
 
     _select_ctx_(in_reg, in_conn, l_fun);
