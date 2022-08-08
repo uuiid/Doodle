@@ -47,7 +47,7 @@ void comm_maya_tool::init() {
                               in_handle.any_of<assets_file>();
                      }) |
                      ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                       auto l_ex = in_handle.get<assets_file>().path.extension();
+                       auto l_ex = in_handle.get<assets_file>().path_attr().extension();
                        return l_ex == ".ma" ||
                               l_ex == ".mb";
                      }) |
