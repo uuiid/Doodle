@@ -12,8 +12,7 @@ comment::comment()
 }
 
 comment::comment(std::string in_str)
-    : p_comment(std::move(in_str)),
-      p_user(core_set::getSet().get_user()) {
+    : p_comment(std::move(in_str)) {
 }
 
 const std::string& comment::get_comment() const {
@@ -21,12 +20,6 @@ const std::string& comment::get_comment() const {
 }
 void comment::set_comment(const std::string& in_comment) {
   p_comment = in_comment;
-}
-const std::string& comment::get_user() const {
-  return p_user;
-}
-void comment::set_user(const std::string& in_user) {
-  p_user = in_user;
 }
 
 }  // namespace doodle
