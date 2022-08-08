@@ -20,6 +20,7 @@
 
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/database_task/sql_file.h>
+#include <doodle_core/database_task/details/update_ctx.h>
 
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/generate/core/metadatatab_sql.h>
@@ -125,7 +126,6 @@ class select::impl {
                     }
                     g_reg()->ctx().at<process_message>().message("完成旧版本兼容转换"s);
                     g_reg()->ctx().at<process_message>().progress_clear();
-
                   }});
       results.emplace_back(l_fun.share());
     }
@@ -180,45 +180,6 @@ class select::impl {
   template <typename... Type>
   void select_com(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     (_select_com_<Type>(in_reg, in_conn), ...);
-  }
-
-  void _select_ctx_(entt::registry& in_reg,
-                    sqlpp::sqlite3::connection& in_conn,
-                    const std::map<std::uint32_t,
-                                   std::function<
-                                       void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) const {
-    sql::Context l_context{};
-
-    for (auto&& row : in_conn(
-             sqlpp::select(l_context.comHash,
-                           l_context.jsonData)
-                 .from(l_context)
-                 .unconditionally())) {
-      if (stop)
-        return;
-      if (auto l_f = in_fun_list.find(row.comHash.value());
-          l_f != in_fun_list.end()) {
-        in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
-      }
-    }
-  }
-  template <typename... Type>
-  void select_ctx(entt::registry& in_reg,
-                  sqlpp::sqlite3::connection& in_conn) {
-    std::map<std::uint32_t,
-             std::function<void(entt::registry & in_reg, const std::string& in_str)>>
-        l_fun{
-            std::make_pair(entt::type_id<Type>().hash(),
-                           [&](entt::registry& in_reg, const std::string& in_str) {
-                             auto l_json = nlohmann::json::parse(in_str);
-                             if (in_reg.ctx().template contains<Type>())
-                               in_reg.ctx().template erase<Type>();
-
-                             in_reg.ctx().template emplace<Type>(
-                                 std::move(l_json.get<Type>()));
-                           })...};
-
-    _select_ctx_(in_reg, in_conn, l_fun);
   }
 
   void select_entt(entt::registry& in_reg,
@@ -339,8 +300,7 @@ void select::th_run() {
     }
     /// \brief 选中上下文
     {
-      p_i->select_ctx<doodle::project,
-                      doodle::project_config::base_config>(*p_i->local_reg, *l_k_con);
+      doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
     }
   }
 

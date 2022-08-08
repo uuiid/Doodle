@@ -43,6 +43,45 @@ void get_ctx_sql_data(
     std::map<std::uint32_t, std::string>& in_data) {
   (_get_ctx_sql_data_<Type_T>(in_registry, in_data), ...);
 }
+
+void _select_ctx_(entt::registry& in_reg,
+                  sqlpp::sqlite3::connection& in_conn,
+                  const std::map<std::uint32_t,
+                                 std::function<
+                                     void(entt::registry& in_reg,
+                                          const std::string& in_str)>>& in_fun_list) {
+  sql::Context l_context{};
+
+  for (auto&& row : in_conn(
+           sqlpp::select(l_context.comHash,
+                         l_context.jsonData)
+               .from(l_context)
+               .unconditionally())) {
+    if (auto l_f = in_fun_list.find(row.comHash.value());
+        l_f != in_fun_list.end()) {
+      in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
+    }
+  }
+}
+template <typename... Type>
+void select_ctx_template(entt::registry& in_reg,
+                sqlpp::sqlite3::connection& in_conn) {
+  std::map<std::uint32_t,
+           std::function<void(entt::registry & in_reg, const std::string& in_str)>>
+      l_fun{
+          std::make_pair(entt::type_id<Type>().hash(),
+                         [&](entt::registry& in_reg, const std::string& in_str) {
+                           auto l_json = nlohmann::json::parse(in_str);
+                           if (in_reg.ctx().template contains<Type>())
+                             in_reg.ctx().template erase<Type>();
+
+                           in_reg.ctx().template emplace<Type>(
+                               std::move(l_json.get<Type>()));
+                         })...};
+
+  _select_ctx_(in_reg, in_conn, l_fun);
+}
+
 }  // namespace
 
 void update_ctx::ctx(const entt::registry& in_registry,
@@ -69,6 +108,9 @@ void update_ctx::ctx(const entt::registry& in_registry) {
 
   ctx(in_registry, *l_comm);
   l_tx.commit();
+}
+void update_ctx::select_ctx(entt::registry& in_registry, sqlpp::sqlite3::connection& in_connection) {
+  select_ctx_template<DOODLE_SQLITE_TYPE_CTX>(in_registry, in_connection);
 }
 
 std::tuple<std::uint32_t, std::uint32_t> get_version(

@@ -10,6 +10,9 @@ namespace doodle::database_n::details {
 
 class update_ctx {
  public:
+  static void select_ctx(entt::registry &in_registry,
+                         sqlpp::sqlite3::connection &in_connection);
+
   static void ctx(const entt::registry &in_registry,
                   sqlpp::sqlite3::connection &in_connection);
   static void ctx(const entt::registry &in_registry);
