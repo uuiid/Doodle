@@ -117,5 +117,11 @@ FSys::path assets_file::get_path_normal() const {
     return l_p.lexically_normal();
   }
 }
+const FSys::path& assets_file::path_attr() const {
+  return p_i->path;
+}
+void assets_file::path_attr(const FSys::path& in_path) {
+  p_i->path = in_path;
+}
 
 }  // namespace doodle

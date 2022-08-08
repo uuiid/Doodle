@@ -57,6 +57,9 @@ class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
   [[nodiscard]] entt::handle user_attr() const;
   void user_attr(const entt::handle& in_user);
 
+  [[nodiscard]] const FSys::path& path_attr() const;
+  void path_attr(const FSys::path& in_path);
+
   [[nodiscard]] const std::uint64_t& get_version() const noexcept;
   void set_version(const std::uint64_t& in_Version) noexcept;
 
