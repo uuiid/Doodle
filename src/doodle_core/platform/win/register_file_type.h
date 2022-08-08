@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/metadata.h>
 namespace doodle {
 
 class register_file_type {
@@ -10,6 +12,8 @@ class register_file_type {
   register_file_type();
 
   void register_type();
+
+  std::optional<database::ref_data> get_ref_uuid();
 };
 
-}  // namespace dppdle
+}  // namespace doodle

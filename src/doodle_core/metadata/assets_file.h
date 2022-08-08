@@ -17,20 +17,20 @@ enum class assets_file_type : std::uint32_t {
 
 };
 
+class assets_file;
+void to_json(nlohmann::json& j, const assets_file& p);
+void from_json(const nlohmann::json& j, assets_file& p);
+
 /**
  * @brief 这个类代表着服务端的文件条目
  *
  */
-class DOODLE_CORE_EXPORT assets_file {
+class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
  public:
-  FSys::path path;
-  std::string p_name;
-  std::uint64_t p_version{};
-
-  std::string p_user;
-  std::string organization_p;
-
  private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
  public:
   /**
    * @brief 默认构造
@@ -52,9 +52,10 @@ class DOODLE_CORE_EXPORT assets_file {
   DOODLE_MOVE(assets_file);
 
   [[nodiscard]] std::string str() const;
+  [[nodiscard]] const std::string& name_attr() const;
 
-  [[nodiscard]] const std::string& get_user() const;
-  void set_user(const std::string& in_user);
+  [[nodiscard]] entt::handle user_attr() const;
+  void user_attr(const entt::handle& in_user);
 
   [[nodiscard]] const std::uint64_t& get_version() const noexcept;
   void set_version(const std::uint64_t& in_Version) noexcept;
@@ -62,27 +63,11 @@ class DOODLE_CORE_EXPORT assets_file {
   [[nodiscard]] FSys::path get_path_normal() const;
 
   bool operator<(const assets_file& in_rhs) const;
-  bool operator>(const assets_file& in_rhs) const;
-  bool operator<=(const assets_file& in_rhs) const;
-  bool operator>=(const assets_file& in_rhs) const;
+  bool operator==(const assets_file& in_rhs) const;
 
  private:
-  friend void to_json(nlohmann::json& j, const assets_file& p) {
-    j["name"]           = p.p_name;
-    j["user"]           = p.p_user;
-    j["organization_p"] = p.organization_p;
-    j["version"]        = p.p_version;
-    j["path"]           = p.path;
-  }
-  friend void from_json(const nlohmann::json& j, assets_file& p) {
-    j.at("name").get_to(p.p_name);
-    j.at("user").get_to(p.p_user);
-    j.at("version").get_to(p.p_version);
-    if (j.contains("organization_p"))
-      j.at("organization_p").get_to(p.organization_p);
-    if (j.contains("path"))
-      j.at("path").get_to(p.path);
-  }
+  friend void to_json(nlohmann::json& j, const assets_file& p);
+  friend void from_json(const nlohmann::json& j, assets_file& p);
 };
 
 }  // namespace doodle
@@ -97,7 +82,7 @@ struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::assets_file& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
-        in_.p_name,
+        in_.name_attr(),
         ctx);
   }
 };
