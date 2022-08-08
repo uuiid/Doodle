@@ -91,8 +91,16 @@ entt::handle assets_file::user_attr() const {
     auto l_handle = p_i->ref_user.handle();
     if (!l_handle) {
       DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
+
+      for (auto&& [e, u] : g_reg()->view<user>().each()) {
+        if (u.get_name() == p_i->p_user) {
+          p_i->handle_cache = make_handle(e);
+        }
+      }
+
       l_handle = make_handle();
       l_handle.emplace<user>(p_i->p_user);
+      p_i->handle_cache = l_handle;
     }
     return l_handle;
   }
@@ -135,6 +143,12 @@ assets_file::assets_file(const assets_file& in) noexcept
 assets_file& assets_file::operator=(const assets_file& in) noexcept {
   *p_i = *in.p_i;
   return *this;
+}
+const std::string& assets_file::organization_attr() const noexcept {
+  return p_i->organization_p;
+}
+void assets_file::organization_attr(const std::string& in_organization) noexcept {
+  p_i->organization_p = in_organization;
 }
 assets_file::~assets_file() = default;
 }  // namespace doodle

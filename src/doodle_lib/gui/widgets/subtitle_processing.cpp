@@ -79,7 +79,7 @@ void subtitle_processing::init() {
                   return in_handle && in_handle.any_of<assets_file>();
                 }) |
                 ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                  auto& l_p = in_handle.get<assets_file>().path;
+                  auto& l_p = in_handle.get<assets_file>().path_attr();
                   return l_p.extension() == ".srt";
                 }) |
                 ranges::views::transform([](const entt::handle& in_handle) -> std::string {

@@ -197,8 +197,8 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   }
 
   table_line l_line{
-      k_ass.organization_p,                                                                          //"部门"
-      k_ass.p_user,                                                                                  //"制作人"
+      k_ass.organization_attr(),                                                                     //"部门"
+      k_ass.user_attr().get<user>().get_name(),                                                      //"制作人"
       l_prj_name,                                                                                    //"项目"
       (in.all_of<season>()                                                                           //
            ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)                           //
@@ -215,7 +215,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
-      k_ass.p_name,                                                                                  //"名称"
+      k_ass.name_attr(),                                                                             //"名称"
       in.any_of<importance>() ? in.get<importance>().cutoff_p : ""s                                  //"等级"
   };
 
@@ -234,7 +234,7 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
         ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
                               p_i->list_sort_time.rend()),
         [&](const entt::handle &in_l) {
-          return in_l.get<assets_file>().p_user == in_handle.get<assets_file>().p_user;
+          return in_l.get<assets_file>().user_attr() == in_handle.get<assets_file>().user_attr();
         });
 
     return end_it == p_i->list_sort_time.rend()
