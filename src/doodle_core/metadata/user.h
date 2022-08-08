@@ -28,9 +28,13 @@ class user : boost::equality_comparable<user> {
   bool operator==(const user& in_rhs) const;
   bool operator<(const user& in_rhs) const;
 
+  static void set_user_ctx(entt::registry& in_reg);
+  static void has_user_in_ctx(entt::registry& in_reg);
+  static void set_user_entt(entt::registry& in_reg);
+
  private:
   friend void to_json(nlohmann::json& j, const user& p);
-  friend void from_json(const nlohmann::json& j, user& p) ;
+  friend void from_json(const nlohmann::json& j, user& p);
 };
 
 }  // namespace doodle
