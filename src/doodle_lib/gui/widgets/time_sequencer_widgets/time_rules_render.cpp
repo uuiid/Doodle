@@ -352,8 +352,6 @@ class time_rules_render::impl {
   rules_type rules_attr;
 
   render_time_rules render_time{};
-
-  bool mod{false};
 };
 
 time_rules_render::time_rules_render()
@@ -398,15 +396,18 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
   p_i->render_time.extra_rest_attr.set(in_rules_type.extra_rest());
 }
 bool time_rules_render::render() {
-  p_i->mod = false;
+  if (modify_guard_)
+    modify_guard_(p_i->rules_attr);
 
-  p_i->mod |= p_i->render_time.work_gui_data_attr.render();
-  p_i->mod |= p_i->render_time.time_work_gui_data_attr.render();
-  p_i->mod |= p_i->render_time.extra_holidays_attr.render();
-  p_i->mod |= p_i->render_time.extra_work_attr.render();
-  p_i->mod |= p_i->render_time.extra_rest_attr.render();
+  modify_guard_.begin_flag();
 
-  return p_i->mod;
+  modify_guard_ = p_i->render_time.work_gui_data_attr.render();
+  modify_guard_ = p_i->render_time.time_work_gui_data_attr.render();
+  modify_guard_ = p_i->render_time.extra_holidays_attr.render();
+  modify_guard_ = p_i->render_time.extra_work_attr.render();
+  modify_guard_ = p_i->render_time.extra_rest_attr.render();
+
+  return modify_guard_.current_frame_modify();
 }
 time_rules_render::~time_rules_render() = default;
 }  // namespace time_sequencer_widget_ns

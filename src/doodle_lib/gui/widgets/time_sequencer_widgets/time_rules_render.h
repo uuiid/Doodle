@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_lib/gui/gui_ref/modify_guard.h>
 namespace doodle {
 namespace business {
 class rules;
@@ -23,6 +23,8 @@ class DOODLELIB_API time_rules_render {
   std::unique_ptr<impl> p_i;
 
  public:
+  modify_guard<rules_type> modify_guard_{};
+
   time_rules_render();
   virtual ~time_rules_render();
 
