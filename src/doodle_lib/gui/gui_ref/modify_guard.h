@@ -22,13 +22,16 @@ class modify_guard : boost::noncopyable {
   sig_type sig_attr;
 
   flag_type flag;
+  bool current_flag{false};
 
   void call_fun(const Data_Type& in_data) {
-    if (chick_call())
+    if (chick_call()) {
       sig_attr(in_data);
+      flag.reset();
+    }
   }
 
-  void move_flag() {
+  void begin_flag() {
     flag <<= 1;
   };
 
@@ -44,11 +47,11 @@ class modify_guard : boost::noncopyable {
     modify_guard& self;
     explicit grard(modify_guard& in_modify_guard)
         : self(in_modify_guard) {
-      self.move_flag();
+      self.begin_flag();
     };
 
     virtual ~grard() {
-      self.move_flag();
+      self.begin_flag();
     }
   };
 
@@ -56,21 +59,61 @@ class modify_guard : boost::noncopyable {
   modify_guard()          = default;
   virtual ~modify_guard() = default;
 
+  /**
+   * @brief 链接信号
+   * @param in_solt_type 槽类型
+   * @return 链接类
+   */
   connect_type connect(const solt_type& in_solt_type) {
     return sig_attr.connect(in_solt_type);
   }
 
+  /**
+   * @brief 获取守卫
+   * @return 自动调用守卫
+   */
+  grard operator*() {
+    return grard{*this};
+  }
+  /**
+   * @brief 调用信号
+   * @param in_data
+   */
   void operator()(const Data_Type& in_data) {
     call_fun(in_data);
   }
-
+  /**
+   * @brief 传入检查是否修改的 bool 类型便利函数
+   * @param in 是否修改段结果
+   * @return 本身
+   */
   modify_guard& operator=(bool in) {
+    current_flag = in;
     if (in)
       flag[0] = in;
     return *this;
   }
+  /**
+   * @brief 检查当前是否进行修改
+   * @return 是否修改
+   */
   explicit operator bool() {
+    return chick_call();
+  }
+
+  /**
+   * @brief 测试当前帧是否进行过修改
+   * @return 是否修改
+   */
+  bool current_frame_modify() {
     return flag[0];
+  }
+  /**
+   * @brief 测试当前传入的变量是否进行了修改
+   * @return 是否修改
+   */
+  bool current_modify() {
+    return current_flag;
   }
 };
 }  // namespace doodle::gui
