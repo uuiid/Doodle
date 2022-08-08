@@ -17,12 +17,11 @@ class modify_guard : boost::noncopyable {
   using sig_type     = boost::signals2::signal<void(const Data_Type&)>;
   using solt_type    = typename sig_type::slot_type;
   using connect_type = boost::signals2::connection;
-  flag_type flag;
 
  private:
   sig_type sig_attr;
 
-  bool modify{false};
+  flag_type flag;
 
   void call_fun(const Data_Type& in_data) {
     if (chick_call())
@@ -62,8 +61,12 @@ class modify_guard : boost::noncopyable {
   }
 
   modify_guard& operator=(bool in) {
-    modify |= in;
+    if (in)
+      flag[0] = in;
     return *this;
+  }
+  explicit operator bool() {
+    return flag[0];
   }
 };
 }  // namespace doodle::gui
