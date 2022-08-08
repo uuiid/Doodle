@@ -25,11 +25,14 @@ target_precompile_headers(doodle_core
         PRIVATE
         doodle_core_pch.h
         )
+# 寻找 winreg 文件
+find_path(WINREG_INCLUDE_DIRS "winreg/WinReg.hpp")
 
 # 添加库目录
 target_include_directories(doodle_core
         PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/..
+        ${WINREG_INCLUDE_DIRS}
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         )
