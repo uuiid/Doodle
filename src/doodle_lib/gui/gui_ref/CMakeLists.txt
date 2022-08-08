@@ -6,6 +6,7 @@ target_sources(doodle_lib
         layout_window.h
         base_window.h
         cross_frame_check.h
+        modify_guard.h
         path.h
 
         PRIVATE
