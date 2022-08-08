@@ -37,6 +37,7 @@ class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
    *
    */
   assets_file();
+  virtual ~assets_file();
   /**
    * @brief 这是相对于上下文的根目录构建的
    *
@@ -49,11 +50,15 @@ class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
                        std::uint64_t in_version);
   explicit assets_file(const FSys::path& in_path);
 
-  DOODLE_MOVE(assets_file);
+  assets_file(assets_file&&) noexcept;
+  assets_file& operator=(assets_file&&) noexcept;
+
+  assets_file(const assets_file&) noexcept;
+  assets_file& operator=(const assets_file&) noexcept;
 
   [[nodiscard]] std::string str() const;
   [[nodiscard]] const std::string& name_attr() const;
-  void  name_attr(const std::string& in_name) const;
+  void name_attr(const std::string& in_name) const;
 
   [[nodiscard]] entt::handle user_attr() const;
   void user_attr(const entt::handle& in_user);

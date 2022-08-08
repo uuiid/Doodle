@@ -4,13 +4,13 @@
 
 #pragma once
 
-#define DOODLE_USE_MOVE(class_name)                        \
-  class_name(class_name &&) noexcept            = default; \
-  class_name &operator=(class_name &&) noexcept = default;
+#define DOODLE_USE_MOVE(class_name)                          \
+  class_name(class_name &&in) noexcept            = default; \
+  class_name &operator=(class_name &&in) noexcept = default;
 
-#define DOODLE_DIS_COPY(class_name)                      \
-  class_name(class_name &) noexcept            = delete; \
-  class_name &operator=(class_name &) noexcept = delete;
+#define DOODLE_DIS_COPY(class_name)                              \
+  class_name(const class_name &in) noexcept            = delete; \
+  class_name &operator=(const class_name &in) noexcept = delete;
 
 #define DOODLE_MOVE(class_name) \
   DOODLE_USE_MOVE(class_name)   \
