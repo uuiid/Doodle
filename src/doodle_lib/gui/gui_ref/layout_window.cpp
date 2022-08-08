@@ -122,6 +122,7 @@ void layout_window::init() {
     call_render<::doodle::assets_file_widgets>();
     call_render<::doodle::long_time_tasks_widget>();
     call_render<::doodle::gui::time_sequencer_widget>();
+    call_render<::doodle::ue4_widget>();
   });
 }
 
