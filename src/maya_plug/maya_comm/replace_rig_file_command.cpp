@@ -16,7 +16,7 @@ MSyntax replace_rig_file_command_ns::replace_rig_file_syntax() {
 MStatus replace_rig_file_command::doIt(const MArgList&) {
   for (auto&& [e_, ass, re] : g_reg()->view<assets_file, redirection_path_info>().each()) {
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-      if (ass.path.filename() == ref.get_path().filename()) {
+      if (ass.path_attr().filename() == ref.get_path().filename()) {
         ref.replace_file(make_handle(e_));
       }
     }
