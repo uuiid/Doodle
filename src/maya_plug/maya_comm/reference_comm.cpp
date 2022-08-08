@@ -6,6 +6,7 @@
 
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
 
@@ -335,7 +336,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
-    k_qs.set_cache_folder(core_set::getSet().get_user_en());
+    k_qs.set_cache_folder(g_reg()->ctx().at<user>().get_name());
   }
   return l_status;
 }

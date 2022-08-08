@@ -26,9 +26,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   void set_maya_path(const FSys::path &in_MayaPath) noexcept;
 
   // user设置
-  [[nodiscard]] std::string get_user() const;
-  [[nodiscard]] std::string get_user_en() const;
-  void set_user(const std::string &value);
+
 
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;

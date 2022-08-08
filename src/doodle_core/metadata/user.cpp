@@ -42,12 +42,6 @@ bool user::operator<(const user& in_rhs) const {
   return p_string_ < in_rhs.p_string_;
 }
 void user::set_user_ctx(entt::registry& in_reg) {
-  auto l_v  = in_reg.view<user>().each();
-  auto l_it = ranges::find_if(l_v, [&](auto&& in) -> bool {
-    return std::get<user&>(in).p_string == core_set::getSet().get_user();
-  });
-  if (l_it != l_v.end()) {
-  }
 }
 void user::has_user_in_ctx(entt::registry& in_reg) {
 }

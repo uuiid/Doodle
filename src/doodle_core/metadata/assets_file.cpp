@@ -24,7 +24,7 @@ assets_file::assets_file(const FSys::path& in_path,
     : path(in_path),
       p_name(std::move(in_name)),
       p_version(in_version),
-      p_user(core_set::getSet().get_user()),
+      p_user(),
       organization_p(core_set::getSet().organization_name) {
 }
 

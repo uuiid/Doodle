@@ -72,17 +72,6 @@ entt::handle database::ref_data::handle() const {
     }
   return l_r;
 }
-bool database::ref_data::find_for_path(const FSys::path &in_path) {
-  bool l_r{false};
-  for (auto &&[e, a] : g_reg()->view<assets_file>().each()) {
-    if (a.path == in_path) {
-      uuid = make_handle(e).get<database>().uuid();
-      l_r  = true;
-      break;
-    }
-  }
-  return l_r;
-}
 database::ref_data::ref_data() = default;
 database::database()
     : p_i(std::make_unique<impl>()) {

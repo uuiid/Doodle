@@ -95,17 +95,6 @@ boost::uuids::uuid core_set::get_uuid() {
   return p_uuid_gen();
 }
 
-std::string core_set::get_user() const { return p_user_; }
-
-std::string core_set::get_user_en() const {
-  return boost::algorithm::to_lower_copy(
-      convert::Get().toEn(p_user_));
-}
-
-void core_set::set_user(const std::string &value) {
-  p_user_ = value;
-}
-
 FSys::path core_set::get_doc() const {
   return p_doc;
 }

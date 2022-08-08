@@ -67,8 +67,6 @@ class DOODLE_CORE_EXPORT database {
     friend void to_json(nlohmann::json &j, const ref_data &p);
     friend void from_json(const nlohmann::json &j, ref_data &p);
 
-    bool find_for_path(const FSys::path &in_path);
-
    public:
     ref_data();
     explicit ref_data(const database &in);
