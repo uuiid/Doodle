@@ -6,6 +6,14 @@
 #include <pin_yin/convert.h>
 
 namespace doodle {
+
+void to_json(nlohmann::json& j, const user& p) {
+  j["string_"] = p.p_string_;
+}
+void from_json(const nlohmann::json& j, user& p) {
+  j.at("string_").get_to(p.p_string_);
+  p.p_ENUS =  convert::Get().toEn(p.p_string_);
+}
 user::user()
     : p_string_(),
       p_ENUS() {}
@@ -28,6 +36,12 @@ void user::set_name(const std::string& in_string) {
 
 const std::string& user::get_enus() const {
   return p_ENUS;
+}
+bool user::operator==(const user& in_rhs) const {
+  return p_string_ == in_rhs.p_string_;
+}
+bool user::operator<(const user& in_rhs) const {
+  return p_string_ < in_rhs.p_string_;
 }
 
 }  // namespace doodle

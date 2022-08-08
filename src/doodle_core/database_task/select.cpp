@@ -227,6 +227,11 @@ class select::impl {
       results.emplace_back(l_fut.share());
     }
   }
+
+  void set_user_ctx(entt::registry& in_reg) {
+
+
+  }
 };
 
 select::select(const select::arg& in_arg) : p_i(std::make_unique<impl>()) {
@@ -308,6 +313,7 @@ void select::th_run() {
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
     in_.get();
   });
+  /// \brief 开始设置用户上下文
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
 }
