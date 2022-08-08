@@ -229,8 +229,7 @@ class select::impl {
   }
 
   void set_user_ctx(entt::registry& in_reg) {
-
-
+    user::set_user_ctx(in_reg);
   }
 };
 
@@ -314,6 +313,7 @@ void select::th_run() {
     in_.get();
   });
   /// \brief 开始设置用户上下文
+  p_i->set_user_ctx(*p_i->local_reg);
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
 }
