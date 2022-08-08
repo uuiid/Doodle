@@ -453,6 +453,6 @@ void time_sequencer_widget::render() {
   ImGui::Separator();
   dear::Text(p_i->rules_cache.gui_name.name);
 
-  p_i->rules_cache().render()
+  p_i->rules_cache().render();
 }
 }  // namespace doodle::gui
