@@ -11,6 +11,8 @@
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 
 #include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_lib/gui/gui_ref/modify_guard.h>
+
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
 
@@ -179,18 +181,21 @@ class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
 
 class work_gui_data_render {
  public:
-  bool modify{false};
   using gui_data_type = work_gui_data;
+  modify_guard<gui_data_type::friend_type> modify_guard_;
   gui_data_type gui_data{};
   bool render() {
-    modify = false;
+    modify_guard_.begin_flag();
+
     dear::CollapsingHeader{*gui_data.gui_attr} && [this]() {
       dear::HelpMarker{"按星期去计算工作时间"};
       ranges::for_each(gui_data.gui_attr(), [this](decltype(gui_data.gui_attr().front()) in_value) {
-        modify |= ImGui::Checkbox(*in_value, &in_value);
+        modify_guard_ = ImGui::Checkbox(*in_value, &in_value);
       });
     };
-    return modify;
+    if (modify_guard_)
+      modify_guard_(get());
+    return modify_guard_.current_frame_modify();
   }
   gui_data_type::friend_type get() {
     return gui_data_type::friend_type{gui_data};
@@ -208,36 +213,43 @@ class time_work_gui_data_render {
 
   gui_cache_name_id name_id_add{"添加"s};
   gui_cache_name_id name_id_delete{"删除"s};
-  bool modify{false};
+  modify_guard<std::vector<gui_data_type::friend_type>> modify_guard_;
 
   bool render() {
-    modify = false;
+    if (modify_guard_)
+      modify_guard_(get());
+
+    modify_guard_.begin_flag();
 
     dear::CollapsingHeader{*name_id} && [this]() {
       dear::HelpMarker{"每天的开始和结束时间段"};
-      if (imgui::Button(*name_id_add)) {
+      if (modify_guard_ = imgui::Button(*name_id_add);
+          modify_guard_.current_modify()) {
         boost::asio::post(g_io_context(), [this]() { this->add(); });
       }
       ranges::for_each(gui_data, [this](gui_data_type& in_type) {
-        modify |= ImGui::SliderInt3(*in_type.begin, in_type.begin.data.data(), 0, 59);
-        modify |= ImGui::SliderInt3(*in_type.end, in_type.end.data.data(), 0, 59);
-        if (imgui::Button(*in_type.name_id_delete)) {
+        modify_guard_ = ImGui::SliderInt3(*in_type.begin, in_type.begin.data.data(), 0, 59);
+        modify_guard_ = ImGui::SliderInt3(*in_type.end, in_type.end.data.data(), 0, 59);
+        if (modify_guard_ = imgui::Button(*in_type.name_id_delete);
+            modify_guard_.current_modify()) {
           boost::asio::post(g_io_context(), [this, in_type]() {
             this->delete_node(in_type);
           });
         }
       });
     };
-    return modify;
+
+    modify_guard_.async_begin_flag();
+    return modify_guard_.current_frame_modify();
   };
 
   void add() {
     gui_data.emplace_back(gui_data_type{std::make_pair(9h, 12h)});
-    this->modify = true;
+    this->modify_guard_ = true;
   }
   void delete_node(const gui_data_type& in_data_type) {
     gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data_type; });
-    this->modify = true;
+    this->modify_guard_ = true;
   }
 
   std::vector<gui_data_type::friend_type> get() {
@@ -266,41 +278,48 @@ class time_info_gui_data_render {
   gui_cache_name_id gui_name{};
   gui_cache_name_id gui_name_add{"添加"s};
 
-  bool modify{false};
+  modify_guard<std::vector<gui_data_type::friend_type>> modify_guard_{};
 
   bool render() {
-    modify = false;
+    if (modify_guard_)
+      modify_guard_(get());
+
+    modify_guard_.begin_flag();
 
     dear::CollapsingHeader{*gui_name} && [this]() {
-      if (ImGui::Button(*gui_name_add)) {
+      if (modify_guard_ = ImGui::Button(*gui_name_add);
+          modify_guard_.current_modify()) {
         boost::asio::post(g_io_context(), [this]() { this->add(); });
       }
       ranges::for_each(gui_data, [this](gui_data_type& in_data) {
         dear::Text("开始时间"s);
-        ImGui::InputInt3(*in_data.begin_time.ymd.gui_name, in_data.begin_time.ymd.data.data());
-        ImGui::InputInt3(*in_data.begin_time.hms.gui_name, in_data.begin_time.hms.data.data());
+        modify_guard_ = ImGui::InputInt3(*in_data.begin_time.ymd.gui_name, in_data.begin_time.ymd.data.data());
+        modify_guard_ = ImGui::InputInt3(*in_data.begin_time.hms.gui_name, in_data.begin_time.hms.data.data());
 
         dear::Text("结束时间"s);
-        ImGui::InputInt3(*in_data.end_time.ymd.gui_name, in_data.end_time.ymd.data.data());
-        ImGui::InputInt3(*in_data.end_time.hms.gui_name, in_data.end_time.hms.data.data());
-        ImGui::InputText(*in_data.info, &in_data.info);
+        modify_guard_ = ImGui::InputInt3(*in_data.end_time.ymd.gui_name, in_data.end_time.ymd.data.data());
+        modify_guard_ = ImGui::InputInt3(*in_data.end_time.hms.gui_name, in_data.end_time.hms.data.data());
+        modify_guard_ = ImGui::InputText(*in_data.info, &in_data.info);
 
-        if (ImGui::Button(*in_data.delete_node)) {
+        if (modify_guard_ = ImGui::Button(*in_data.delete_node);
+            modify_guard_.current_modify()) {
           boost::asio::post(g_io_context(), [this, in_data]() { this->delete_node(in_data); });
         }
       });
     };
-    return modify;
+
+    modify_guard_.async_begin_flag();
+    return modify_guard_.current_frame_modify();
   }
 
   void add() {
     gui_data.emplace_back(gui_data_type::friend_type{});
-    modify = true;
+    modify_guard_ = true;
   }
 
   void delete_node(const gui_data_type& in_data) {
     gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data; });
-    modify = true;
+    modify_guard_ = true;
   }
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
     gui_data = in_type |
@@ -334,50 +353,7 @@ class time_rules_render::impl {
 
   render_time_rules render_time{};
 
-  void set_rules(std::size_t in_size) {
-    switch (in_size) {
-      case 0ull:
-        set_work_gui_data_attr();
-        break;
-      case 1ull:
-        set_time_work_gui_data_attr();
-        break;
-      case 2ull:
-        set_extra_holidays_attr();
-        break;
-      case 3ull:
-        set_extra_work_attr();
-        break;
-      case 4ull:
-        set_extra_rest_attr();
-        break;
-      default:
-        break;
-    }
-  }
-
   bool mod{false};
-
- private:
-  void set_work_gui_data_attr() {
-    rules_attr.work_weekdays() = render_time.work_gui_data_attr.get();
-  }
-  void set_time_work_gui_data_attr() {
-    rules_attr.work_time() =
-        render_time.time_work_gui_data_attr.get();
-  }
-  void set_extra_holidays_attr() {
-    rules_attr.extra_holidays() =
-        render_time.extra_holidays_attr.get();
-  }
-  void set_extra_work_attr() {
-    rules_attr.extra_work() =
-        render_time.extra_work_attr.get();
-  }
-  void set_extra_rest_attr() {
-    rules_attr.extra_rest() =
-        render_time.extra_rest_attr.get();
-  }
 };
 
 time_rules_render::time_rules_render()
@@ -387,6 +363,27 @@ time_rules_render::time_rules_render()
   p_i->render_time.extra_holidays_attr.gui_name = gui_cache_name_id{"节假日"s};
   p_i->render_time.extra_work_attr.gui_name     = gui_cache_name_id{"加班时间"s};
   p_i->render_time.extra_rest_attr.gui_name     = gui_cache_name_id{"调休时间"s};
+
+  p_i->render_time.work_gui_data_attr.modify_guard_.connect(
+      [this](const auto& in) {
+        p_i->rules_attr.work_weekdays() = in;
+      });
+  p_i->render_time.time_work_gui_data_attr.modify_guard_.connect(
+      [this](const auto& in) {
+        p_i->rules_attr.work_time() = in;
+      });
+  p_i->render_time.extra_holidays_attr.modify_guard_.connect(
+      [this](const auto& in) {
+        p_i->rules_attr.extra_holidays() = in;
+      });
+  p_i->render_time.extra_work_attr.modify_guard_.connect(
+      [this](const auto& in) {
+        p_i->rules_attr.extra_work() = in;
+      });
+  p_i->render_time.extra_rest_attr.modify_guard_.connect(
+      [this](const auto& in) {
+        p_i->rules_attr.extra_rest() = in;
+      });
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const {
   return p_i->rules_attr;
@@ -402,12 +399,13 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
 }
 bool time_rules_render::render() {
   p_i->mod = false;
-  boost::pfr::for_each_field(p_i->render_time, [this](auto&& in, std::size_t in_size) {
-    if (in.render()) {
-      this->p_i->mod |= true;
-      boost::asio::post(g_io_context(), [this, in_size]() { this->p_i->set_rules(in_size); });
-    }
-  });
+
+  p_i->mod |= p_i->render_time.work_gui_data_attr.render();
+  p_i->mod |= p_i->render_time.time_work_gui_data_attr.render();
+  p_i->mod |= p_i->render_time.extra_holidays_attr.render();
+  p_i->mod |= p_i->render_time.extra_work_attr.render();
+  p_i->mod |= p_i->render_time.extra_rest_attr.render();
+
   return p_i->mod;
 }
 time_rules_render::~time_rules_render() = default;

@@ -31,29 +31,15 @@ class modify_guard : boost::noncopyable {
     }
   }
 
-  void begin_flag() {
-    flag <<= 1;
-  };
-
   bool chick_call() {
     const static flag_type s_f1{0b001};
     const static flag_type s_f2{0b101};
-    auto l_chick = (flag ^ s_f1) | (flag ^ s_f2);
+    const static flag_type s_f3{0b011};
+    auto l_chick = (flag ^ s_f1) |
+                   (flag ^ s_f2) |
+                   (flag ^ s_f3);
     return l_chick.all();
   }
-
-  class grard {
-   public:
-    modify_guard& self;
-    explicit grard(modify_guard& in_modify_guard)
-        : self(in_modify_guard) {
-      self.begin_flag();
-    };
-
-    virtual ~grard() {
-      self.begin_flag();
-    }
-  };
 
  public:
   modify_guard()          = default;
@@ -68,13 +54,6 @@ class modify_guard : boost::noncopyable {
     return sig_attr.connect(in_solt_type);
   }
 
-  /**
-   * @brief 获取守卫
-   * @return 自动调用守卫
-   */
-  grard operator*() {
-    return grard{*this};
-  }
   /**
    * @brief 调用信号
    * @param in_data
@@ -114,6 +93,20 @@ class modify_guard : boost::noncopyable {
    */
   bool current_modify() {
     return current_flag;
+  }
+
+  /**
+   * @brief 开始检查
+   */
+  void begin_flag() {
+    flag <<= 1;
+  };
+  /**
+   * @brief 结束检查
+   * @warning 如果没有在渲染函数以外进行异步修改不需要调用
+   */
+  void async_begin_flag() {
+    flag <<= 1;
   }
 };
 }  // namespace doodle::gui
