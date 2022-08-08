@@ -34,10 +34,10 @@ class modify_guard : boost::noncopyable {
     const static flag_type s_f1{0b001};
     const static flag_type s_f2{0b101};
     const static flag_type s_f3{0b011};
-    auto l_chick = (flag ^ s_f1) |
-                   (flag ^ s_f2) |
-                   (flag ^ s_f3);
-    return l_chick.all();
+    auto l_chick = (flag ^ s_f1).all() ||
+                   (flag ^ s_f2).all() ||
+                   (flag ^ s_f3).all();
+    return l_chick;
   }
 
  public:

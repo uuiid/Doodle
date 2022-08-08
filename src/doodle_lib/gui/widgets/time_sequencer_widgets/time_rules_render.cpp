@@ -365,22 +365,27 @@ time_rules_render::time_rules_render()
   p_i->render_time.work_gui_data_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.work_weekdays() = in;
+        this->modify_guard_             = true;
       });
   p_i->render_time.time_work_gui_data_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.work_time() = in;
+        this->modify_guard_         = true;
       });
   p_i->render_time.extra_holidays_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_holidays() = in;
+        this->modify_guard_              = true;
       });
   p_i->render_time.extra_work_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_work() = in;
+        this->modify_guard_          = true;
       });
   p_i->render_time.extra_rest_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_rest() = in;
+        this->modify_guard_          = true;
       });
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const {
