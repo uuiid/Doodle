@@ -63,7 +63,7 @@ class file_path_filter : public gui::filter_base {
 
   bool operator()(const entt::handle& in) const override {
     if (in.any_of<assets_file>()) {
-      auto l_str = in.get<assets_file>().path.generic_string();
+      auto l_str = in.get<assets_file>().path_attr().generic_string();
       return boost::algorithm::icontains(l_str, file_path_);
 
     } else

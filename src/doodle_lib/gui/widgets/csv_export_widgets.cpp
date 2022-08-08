@@ -119,7 +119,7 @@ void csv_export_widgets::render() {
                               });
     p_i->list |= ranges::actions::stable_sort(
         [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
-          return in_r.get<assets_file>().p_user < in_l.get<assets_file>().p_user;
+          return in_r.get<assets_file>().user_attr() < in_l.get<assets_file>().user_attr();
         });
     if (p_i->list.empty()) {
       DOODLE_LOG_INFO("选择为空, 不导出");
