@@ -114,15 +114,15 @@ void layout_window::init() {
   boost::asio::post(g_io_context(), [this]() {
     call_render<::doodle::edit_widgets>();
     call_render<::doodle::assets_filter_widget>();
-    call_render<::doodle::gui::csv_export_widgets>();
     call_render<::doodle::comm_maya_tool>();
     call_render<::doodle::comm_create_video>();
     call_render<::doodle::gui::extract_subtitles_widgets>();
     call_render<::doodle::gui::subtitle_processing>();
-    call_render<::doodle::assets_file_widgets>();
     call_render<::doodle::long_time_tasks_widget>();
     call_render<::doodle::gui::time_sequencer_widget>();
     call_render<::doodle::ue4_widget>();
+    call_render<::doodle::assets_file_widgets>();
+    call_render<::doodle::gui::csv_export_widgets>();
   });
 }
 
