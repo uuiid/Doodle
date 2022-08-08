@@ -138,7 +138,7 @@ void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
         return in_handle && in_handle.any_of<assets_file>();
       }) |
       ranges::views::transform([](const entt::handle &in_handle) -> impl::ue4_file_gui {
-        auto str = in_handle.get<assets_file>().p_name;
+        auto str = in_handle.get<assets_file>().name_attr();
         impl::ue4_file_gui l_gui{str, false};
         l_gui.handle_ = in_handle;
         return l_gui;
