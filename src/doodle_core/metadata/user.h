@@ -17,8 +17,7 @@ class user : boost::equality_comparable<user> {
  public:
   user();
   DOODLE_MOVE(user);
-  explicit user(std::string in_string);
-  explicit user(std::string in_string, std::string in_ENUS);
+  explicit user(const std::string& in_string);
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& in_string);
