@@ -42,8 +42,9 @@ bool user::operator==(const user& in_rhs) const {
 bool user::operator<(const user& in_rhs) const {
   return p_string_ < in_rhs.p_string_;
 }
-void user::reg_to_ctx(entt::registry& in_reg) {
-  /// \brief 开始兼容旧版本的设置
+
+namespace {
+database::ref_data chick_user_reg(entt::registry& in_reg) {
   database::ref_data l_ref{};
   /// \brief 有保存的用户数据
   if (core_set::getSet().json_data->contains("user_data")) {
@@ -51,18 +52,32 @@ void user::reg_to_ctx(entt::registry& in_reg) {
   }
 
   /// \brief 在注册表中存在用户
-  if (auto l_h = l_ref.handle();
-      l_h) {
-    in_reg.ctx().at<user>()            = l_h.get<user>();
-    in_reg.ctx().at<business::rules>() = l_h.get<business::rules>();
-  } else {
+  if (!l_ref) {
     auto l_create_h = make_handle();
+    l_ref           = database::ref_data{l_create_h.emplace<database>()};
+
     l_create_h.emplace<user>(in_reg.ctx().at<user>());
-    l_ref = database::ref_data{l_create_h.emplace<database>()};
     l_create_h.emplace<business::rules>(in_reg.ctx().at<business::rules>());
     database::save(l_create_h);
 
     (*core_set::getSet().json_data)["user_data"] = l_ref;
+  }
+  chick_true<doodle_error>(l_ref, DOODLE_LOC, "缺失用户实体{}");
+  return l_ref;
+}
+}  // namespace
+
+entt::handle user::get_user() {
+  return chick_user_reg(*g_reg()).handle();
+}
+
+void user::reg_to_ctx(entt::registry& in_reg) {
+  auto l_ref = chick_user_reg(in_reg);
+  /// \brief 在注册表中存在用户
+  if (auto l_h = l_ref.handle();
+      l_h) {
+    in_reg.ctx().at<user>()            = l_h.get<user>();
+    in_reg.ctx().at<business::rules>() = l_h.get<business::rules>();
   }
 }
 

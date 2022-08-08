@@ -5,6 +5,7 @@
 #include "setting_windows.h"
 
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
@@ -47,9 +48,8 @@ setting_windows::setting_windows()
 }
 
 void setting_windows::save() {
-  auto& set = core_set::getSet();
+  auto& set                    = core_set::getSet();
 
-  set.set_user(p_i->p_user.data);
   set.organization_name        = p_i->p_org_name.data;
   set.p_mayaPath               = p_i->p_maya_path.data;
   set.p_max_thread             = p_i->p_batch_max.data;
@@ -60,10 +60,17 @@ void setting_windows::save() {
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
   core_set_init{}.write_file();
+
+  g_reg()->ctx().at<user>().set_name(p_i->p_user());
+  auto l_user = user::get_user();
+  l_user.get<user>().set_name(p_i->p_user());
+  database::save(l_user);
+  g_reg()->ctx().at<core_sig>().save();
 }
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
+  p_i->p_user.data                     = g_reg()->ctx().at<user>().get_name();
   p_i->p_org_name.data                 = core_set::getSet().organization_name;
   p_i->p_cache.data                    = core_set::getSet().get_cache_root().generic_string();
   p_i->p_doc.data                      = core_set::getSet().get_doc().generic_string();

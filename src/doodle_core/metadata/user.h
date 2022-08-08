@@ -33,6 +33,7 @@ class user : boost::equality_comparable<user> {
    * @param in_reg 传入段注册表引用
    */
   static void reg_to_ctx(entt::registry& in_reg);
+  static entt::handle get_user();
 
  private:
   friend void to_json(nlohmann::json& j, const user& p);
