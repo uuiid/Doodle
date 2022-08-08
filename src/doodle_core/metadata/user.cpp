@@ -55,18 +55,14 @@ void user::reg_to_ctx(entt::registry& in_reg) {
       l_h) {
     in_reg.ctx().at<user>()            = l_h.get<user>();
     in_reg.ctx().at<business::rules>() = l_h.get<business::rules>();
-  } else {  /// \brief 在注册表中不存在用户
-    detail::user_set_data l_user_data{};
-    l_user_data.user_data              = in_reg.ctx().at<user>();
-
-    in_reg.ctx().at<user>()            = l_user_data.user_data;
-    in_reg.ctx().at<business::rules>() = l_user_data.rules_attr;
-
-    auto l_create_h                    = make_handle();
-    l_create_h.emplace<user>(l_user_data.user_data);
-    l_create_h.emplace<database>(std::move(l_user_data.data_ref));
-    l_create_h.emplace<business::rules>(l_user_data.rules_attr);
+  } else {
+    auto l_create_h = make_handle();
+    l_create_h.emplace<user>(in_reg.ctx().at<user>());
+    l_ref = database::ref_data{l_create_h.emplace<database>()};
+    l_create_h.emplace<business::rules>(in_reg.ctx().at<business::rules>());
     database::save(l_create_h);
+
+    (*core_set::getSet().json_data)["user_data"] = l_ref;
   }
 }
 
