@@ -12,6 +12,9 @@
 namespace doodle {
 namespace detail {
 
+class user_set_data;
+void to_json(nlohmann::json& j, const user_set_data& p);
+void from_json(const nlohmann::json& j, user_set_data& p);
 class DOODLE_CORE_EXPORT user_set_data {
  public:
   user_set_data()          = default;
@@ -20,6 +23,10 @@ class DOODLE_CORE_EXPORT user_set_data {
   database data_ref{};
   ::doodle::business::rules rules_attr{};
   user user_data{};
+
+ private:
+  friend void to_json(nlohmann::json& j, const user_set_data& p);
+  friend void from_json(const nlohmann::json& j, user_set_data& p);
 };
 
 }  // namespace detail

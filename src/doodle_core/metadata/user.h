@@ -9,6 +9,7 @@ namespace doodle {
 class user;
 void to_json(nlohmann::json& j, const user& p);
 void from_json(const nlohmann::json& j, user& p);
+
 class user : boost::equality_comparable<user> {
  private:
   std::string p_string_;
@@ -16,7 +17,7 @@ class user : boost::equality_comparable<user> {
 
  public:
   user();
-  DOODLE_MOVE(user);
+
   explicit user(const std::string& in_string);
 
   [[nodiscard]] const std::string& get_name() const;
@@ -27,9 +28,12 @@ class user : boost::equality_comparable<user> {
   bool operator==(const user& in_rhs) const;
   bool operator<(const user& in_rhs) const;
 
-  static void set_user_ctx(entt::registry& in_reg);
-  static void has_user_in_ctx(entt::registry& in_reg);
-  static void set_user_entt(entt::registry& in_reg);
+  /**
+   * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
+   * @param in_reg 传入段注册表引用
+   */
+  static void reg_to_ctx(entt::registry& in_reg);
+  static void ctx_to_reg(entt::registry& in_reg);
 
  private:
   friend void to_json(nlohmann::json& j, const user& p);

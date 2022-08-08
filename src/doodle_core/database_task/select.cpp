@@ -229,7 +229,7 @@ class select::impl {
   }
 
   void set_user_ctx(entt::registry& in_reg) {
-    user::set_user_ctx(in_reg);
+    user::reg_to_ctx(in_reg);
   }
 };
 

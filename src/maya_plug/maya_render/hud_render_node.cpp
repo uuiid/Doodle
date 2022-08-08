@@ -4,6 +4,8 @@
 
 #include "hud_render_node.h"
 
+#include <doodle_core/metadata/user.h>
+
 #include <maya/MAnimControl.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnDagNode.h>

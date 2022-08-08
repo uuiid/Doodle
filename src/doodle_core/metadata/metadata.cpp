@@ -22,17 +22,23 @@ class database::impl {
       : p_id(0),
         p_uuid_(core_set::getSet().get_uuid()) {
   }
-  impl(const std::string &in_uuid_str)
+  explicit impl(const boost::uuids::uuid &in_uuid)
       : p_id(0),
-        p_uuid_(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {
+        p_uuid_(in_uuid) {
   }
+
   mutable std::uint64_t p_id;
   boost::uuids::uuid p_uuid_;
 };
 
 database::ref_data::ref_data(const database &in)
-    : id(in.p_i->p_id),
-      uuid(in.p_i->p_uuid_) {
+    : uuid(in.p_i->p_uuid_) {
+}
+bool database::ref_data::operator==(const database::ref_data &in_rhs) const {
+  return uuid == in_rhs.uuid;
+}
+bool database::ref_data::operator!=(const database::ref_data &in_rhs) const {
+  return !(in_rhs == *this);
 }
 void from_json(const nlohmann::json &j, database::ref_data &p) {
   if (j.contains("uuid"))
@@ -41,12 +47,7 @@ void from_json(const nlohmann::json &j, database::ref_data &p) {
 void to_json(nlohmann::json &j, const database::ref_data &p) {
   j["uuid"] = p.uuid;
 }
-bool database::ref_data::operator==(const database::ref_data &in_rhs) const {
-  return uuid == in_rhs.uuid;
-}
-bool database::ref_data::operator!=(const database::ref_data &in_rhs) const {
-  return !(in_rhs == *this);
-}
+
 database::ref_data::operator bool() const {
   bool l_r{false};
 
@@ -73,12 +74,17 @@ entt::handle database::ref_data::handle() const {
   return l_r;
 }
 database::ref_data::ref_data() = default;
+
 database::database()
     : p_i(std::make_unique<impl>()) {
 }
-database::database(const std::string &in_uuid_str)
-    : p_i(std::make_unique<impl>(in_uuid_str)) {
+database::database(const boost::uuids::uuid &in_uuid)
+    : p_i(std::make_unique<impl>(in_uuid)) {
 }
+database::database(const std::string &in_uuid_str)
+    : database(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {
+}
+
 database::~database() = default;
 
 std::uint64_t database::get_id() const {

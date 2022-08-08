@@ -70,11 +70,11 @@ class DOODLE_CORE_EXPORT database {
    public:
     ref_data();
     explicit ref_data(const database &in);
-    std::uint64_t id;
+
     boost::uuids::uuid uuid;
 
-    operator bool() const;
-    entt::handle handle() const;
+    explicit operator bool() const;
+    [[nodiscard("")]] entt::handle handle() const;
 
     bool operator==(const ref_data &in_rhs) const;
     bool operator!=(const ref_data &in_rhs) const;
@@ -82,6 +82,8 @@ class DOODLE_CORE_EXPORT database {
 
   database();
   explicit database(const std::string &in_uuid_str);
+  explicit database(const boost::uuids::uuid &in);
+
   //  explicit database(const metadata_database &in_metadata_database);
   ~database();
 
