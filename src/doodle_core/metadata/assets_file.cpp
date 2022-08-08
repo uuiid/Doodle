@@ -26,7 +26,8 @@ class assets_file::impl {
 
   std::string organization_p;
 
-  [[deprecated("不要使用, 已经是过期段属性 保留只是兼容性更改")]] std::string p_user;
+  /// \brief 不要使用, 已经是过期段属性 保留只是兼容性更改
+  [[deprecated("Don't use it. It is an expired section. The content is only changed for compatibility")]] std::string p_user;
 };
 
 void to_json(nlohmann::json& j, const assets_file& p) {
