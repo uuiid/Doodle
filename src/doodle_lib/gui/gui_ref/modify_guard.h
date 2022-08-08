@@ -12,7 +12,6 @@ namespace doodle::gui {
 template <typename Data_Type>
 class modify_guard : boost::noncopyable {
  public:
-  Data_Type data{};
   using flag_type    = std::bitset<3>;
   using sig_type     = boost::signals2::signal<void(const Data_Type&)>;
   using solt_type    = typename sig_type::slot_type;
