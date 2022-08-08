@@ -7,15 +7,9 @@
 
 namespace doodle {
 class user {
- public:
-  using time_pair_list = std::vector<std::pair<chrono::sys_time_pos, chrono::sys_time_pos> >;
-
  private:
   std::string p_string_;
   std::string p_ENUS;
-
-  time_pair_list p_time_rest;
-  time_pair_list p_time_work;
 
  public:
   user();
@@ -25,24 +19,19 @@ class user {
 
   [[nodiscard]] const std::string& get_name() const;
   void set_name(const std::string& in_string);
-  void set_name(const std::string& in_string, const std::string& in_ENUS);
 
   [[nodiscard]] const std::string& get_enus() const;
-  void set_enus(const std::string& in_string);
+
 
  private:
 
   friend void to_json(nlohmann::json& j, const user& p) {
     j["string_"]   = p.p_string_;
     j["ENUS"]      = p.p_ENUS;
-    j["time_rest"] = p.p_time_rest;
-    j["time_work"] = p.p_time_work;
   }
   friend void from_json(const nlohmann::json& j, user& p) {
     j.at("string_").get_to(p.p_string_);
     j.at("ENUS").get_to(p.p_ENUS);
-    j.at("time_rest").get_to(p.p_time_rest);
-    j.at("time_work").get_to(p.p_time_work);
   }
 };
 
