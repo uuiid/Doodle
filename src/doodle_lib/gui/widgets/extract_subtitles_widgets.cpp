@@ -93,7 +93,7 @@ void extract_subtitles_widgets::init() {
         ranges::views::filter(
             [](const entt::handle& in_handle) {
               return in_handle.any_of<assets_file>() &&
-                     in_handle.get<assets_file>().path.extension() == ".txt" &&
+                     in_handle.get<assets_file>().path_attr().extension() == ".txt" &&
                      FSys::exists(in_handle.get<assets_file>().get_path_normal());
             }) |
         ranges::views::transform([](const entt::handle& in_handle) -> std::string {

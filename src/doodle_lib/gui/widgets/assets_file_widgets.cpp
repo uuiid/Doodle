@@ -72,7 +72,7 @@ class assets_file_widgets::impl {
                 handle_.try_get<assets_file, episodes, shot>();
             l_ass || l_ep || l_shot) {
           if (l_ass) {
-            name.data = l_ass->p_name;
+            name.data = l_ass->name_attr();
             if (l_ep || l_shot)
               name.data.push_back('\n');
           }
@@ -154,7 +154,7 @@ class assets_file_widgets::impl {
       to_s<time_point_wrap>(time_p, in_h);
       if (in_h.any_of<assets_file>()) {
         auto&& l_ass = in_h.get<assets_file>();
-        user_p       = l_ass.p_user;
+        user_p       = l_ass.user_attr().get<user>().get_name();
         file_path_p  = in_h.get<assets_file>().get_path_normal().generic_string();
       }
     }
@@ -242,7 +242,7 @@ void assets_file_widgets::render() {
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   if (dear::MenuItem("打开") && in_.all_of<assets_file>()) {
-    auto k_path = g_reg()->ctx().at<project>().get_path() / in_.get<assets_file>().path;
+    auto k_path = g_reg()->ctx().at<project>().get_path() / in_.get<assets_file>().path_attr();
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {

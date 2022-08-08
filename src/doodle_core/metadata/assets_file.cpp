@@ -102,11 +102,11 @@ void assets_file::user_attr(const entt::handle& in_user) {
   p_i->handle_cache = in_user;
 }
 
-const std::uint64_t& assets_file::get_version() const noexcept {
+const std::uint64_t& assets_file::version_attr() const noexcept {
   return p_i->p_version;
 }
 
-void assets_file::set_version(const std::uint64_t& in_Version) noexcept {
+void assets_file::version_attr(const std::uint64_t& in_Version) noexcept {
   p_i->p_version = in_Version;
 }
 FSys::path assets_file::get_path_normal() const {
@@ -123,6 +123,9 @@ const FSys::path& assets_file::path_attr() const {
 }
 void assets_file::path_attr(const FSys::path& in_path) {
   p_i->path = in_path;
+}
+void assets_file::name_attr(const std::string& in_name) const {
+  p_i->p_name = in_name;
 }
 
 }  // namespace doodle

@@ -202,15 +202,15 @@ class assets_file_edit : public gui::edit_interface {
         p_name_cache("名称"s, ""s),
         p_version_cache("版本"s, 0) {
     p_path_cache.patch = [this](assets_file &l_ass) {
-      l_ass.path          = p_path_cache.data;
+      l_ass.path_attr(p_path_cache.data);
       p_path_cache.select = false;
     };
     p_name_cache.patch = [this](assets_file &l_ass) {
-      l_ass.p_name        = p_name_cache;
+      l_ass.name_attr(p_name_cache);
       p_name_cache.select = false;
     };
     p_version_cache.patch = [this](assets_file &l_ass) {
-      l_ass.p_version        = p_version_cache;
+      l_ass.version_attr(p_version_cache);
       p_version_cache.select = false;
     };
   };
@@ -218,9 +218,9 @@ class assets_file_edit : public gui::edit_interface {
   void init_(const entt::handle &in) override {
     if (in.all_of<assets_file>()) {
       auto &l_ass     = in.get<assets_file>();
-      p_path_cache    = l_ass.path.generic_string();
-      p_name_cache    = l_ass.p_name;
-      p_version_cache = l_ass.get_version();
+      p_path_cache    = l_ass.path_attr().generic_string();
+      p_name_cache    = l_ass.name_attr();
+      p_version_cache = l_ass.version_attr();
     } else {
       p_path_cache      = g_reg()->ctx().at<project>().p_path.generic_string();
       p_name_cache.data = {};
@@ -478,7 +478,7 @@ class add_assets_for_file : public base_render {
         for (auto &&i : p_list.data) {
           if (i) {
             if (i.all_of<assets_file>()) {
-              dear::Text(i.get<assets_file>().p_name);
+              dear::Text(i.get<assets_file>().name_attr());
             }
           }
         }
