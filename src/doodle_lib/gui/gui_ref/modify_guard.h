@@ -56,6 +56,10 @@ class modify_guard : boost::noncopyable {
   modify_guard()          = default;
   virtual ~modify_guard() = default;
 
+  connect_type connect(const solt_type& in_solt_type) {
+    return sig_attr.connect(in_solt_type);
+  }
+
   void operator()(const Data_Type& in_data) {
     call_fun(in_data);
   }
