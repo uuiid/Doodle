@@ -25,9 +25,6 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   [[nodiscard]] const FSys::path &maya_path() const noexcept;
   void set_maya_path(const FSys::path &in_MayaPath) noexcept;
 
-  // user设置
-
-
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
   [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
@@ -42,7 +39,6 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
 
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
-  void set_max_tread(std::uint16_t in);
 
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);

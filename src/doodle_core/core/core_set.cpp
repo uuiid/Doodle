@@ -2,6 +2,7 @@
 
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/user.h>
 
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <boost/algorithm/string.hpp>
@@ -132,9 +133,9 @@ std::string core_set::get_uuid_str() {
   return boost::uuids::to_string(get_uuid());
 }
 
-void core_set::set_max_tread(const std::uint16_t in) {
-  p_max_thread = in;
-}
+/// ----------------------------------------------------------------------------
+/// ----------------------------------------------------------------------------
+/// ----------------------------------------------------------------------------
 
 core_set_init::core_set_init()
     : p_set(core_set::getSet()) {
@@ -171,6 +172,12 @@ bool core_set_init::read_file() {
     try {
       *p_set.json_data = nlohmann::json::parse(l_in_josn);
       p_set.json_data->at("setting").get_to(p_set);
+
+      /// \brief 兼容旧版本段配置文件
+      if (p_set.json_data->at("setting").contains("user_")) {
+        g_reg()->ctx().at<user>().set_name(p_set.json_data->at("setting").at("user_").get<std::string>());
+      }
+
     } catch (const nlohmann::json::parse_error &err) {
       DOODLE_LOG_DEBUG(err.what());
       return false;
@@ -201,7 +208,6 @@ nlohmann::json &core_set_init::json_value() {
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
-  j["user_"]                    = p.p_user_;
   j["organization_name"]        = p.organization_name;
   j["mayaPath"]                 = p.p_mayaPath;
   j["max_thread"]               = p.p_max_thread;
@@ -213,7 +219,6 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
 }
 void from_json(const nlohmann::json &j, core_set &p) {
-  j.at("user_").get_to(p.p_user_);
   if (j.count("organization_name"))
     j.at("organization_name").get_to(p.organization_name);
   if (j.count("ue4_setting")) {
