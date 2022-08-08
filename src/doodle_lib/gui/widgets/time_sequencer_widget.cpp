@@ -329,6 +329,14 @@ time_sequencer_widget::time_sequencer_widget()
                         boost::numeric_cast<doodle::chrono::seconds::rep>(std::get<1>(in))});
     p_i->set_time_point(std::get<0>(in), std::get<1>(in));
   });
+
+  p_i->rules_cache().modify_guard_.connect([this](const business::rules& in) {
+    p_i->rules_                                  = in;
+    g_reg()->ctx().at<doodle::business::rules>() = in;
+    p_i->work_clock_.set_rules(p_i->rules_);
+    p_i->refresh_work_clock_();
+    p_i->save();
+  });
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -445,19 +453,6 @@ void time_sequencer_widget::render() {
   ImGui::Separator();
   dear::Text(p_i->rules_cache.gui_name.name);
 
-  if (ImGui::Button("应用规则")) {
-    p_i->rules_                                  = p_i->rules_cache().rules_attr();
-    g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
-    p_i->work_clock_.set_rules(p_i->rules_);
-    p_i->refresh_work_clock_();
-    p_i->save();
-  }
-  if (p_i->rules_cache().render()) {
-    p_i->rules_                                  = p_i->rules_cache().rules_attr();
-    g_reg()->ctx().at<doodle::business::rules>() = p_i->rules_;
-    p_i->work_clock_.set_rules(p_i->rules_);
-    p_i->refresh_work_clock_();
-    p_i->save();
-  }
+  p_i->rules_cache().render()
 }
 }  // namespace doodle::gui
