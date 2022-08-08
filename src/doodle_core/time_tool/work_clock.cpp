@@ -121,7 +121,7 @@ void work_clock::generate_interval_map_time_(const discrete_interval_time& in_ti
       rules_.extra_holidays(),
       [&](const std::decay_t<decltype(rules_.extra_holidays())>::value_type& in_) {
         l_r += std::make_pair(discrete_interval_time::right_open(in_.first, in_.second),
-                              info_type{"节假日"});
+                              info_type{in_.info});
       });
   /// \brief 减去调休
   ranges::for_each(
