@@ -42,6 +42,7 @@ doodle_lib::doodle_lib()
   reg->ctx().emplace<project>("C:/", "tmp_project");
   reg->ctx().emplace<project_config::base_config>();
   reg->ctx().emplace<business::rules>(business::rules::get_default());
+  reg->ctx().emplace<user>("user"s);
 
   auto& k_sig = reg->ctx().emplace<core_sig>();
   reg->ctx().emplace<status_info>();
