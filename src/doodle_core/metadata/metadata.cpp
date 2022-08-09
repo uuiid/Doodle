@@ -30,16 +30,16 @@ class database::impl {
   mutable std::uint64_t p_id;
   boost::uuids::uuid p_uuid_;
 };
+namespace database_ns {
+ref_data::ref_data() = default;
 
-database::ref_data::ref_data(const database &in)
-    : uuid(in.p_i->p_uuid_) {
+ref_data::ref_data(const database &in)
+    : uuid(in.uuid()) {
 }
-bool database::ref_data::operator==(const database::ref_data &in_rhs) const {
+bool ref_data::operator==(const database::ref_data &in_rhs) const {
   return uuid == in_rhs.uuid;
 }
-bool database::ref_data::operator!=(const database::ref_data &in_rhs) const {
-  return !(in_rhs == *this);
-}
+
 void from_json(const nlohmann::json &j, database::ref_data &p) {
   if (j.contains("uuid"))
     j["uuid"].get_to(p.uuid);
@@ -47,8 +47,7 @@ void from_json(const nlohmann::json &j, database::ref_data &p) {
 void to_json(nlohmann::json &j, const database::ref_data &p) {
   j["uuid"] = p.uuid;
 }
-
-database::ref_data::operator bool() const {
+ref_data::operator bool() const {
   bool l_r{false};
 
   //  ranges::make_subrange(g_reg()->view<database>().each());
@@ -61,7 +60,7 @@ database::ref_data::operator bool() const {
   return l_r;
 }
 
-entt::handle database::ref_data::handle() const {
+entt::handle ref_data::handle() const {
   entt::handle l_r{};
 
   //  ranges::make_subrange(g_reg()->view<database>().each());
@@ -73,7 +72,7 @@ entt::handle database::ref_data::handle() const {
     }
   return l_r;
 }
-database::ref_data::ref_data() = default;
+}  // namespace database_ns
 
 database::database()
     : p_i(std::make_unique<impl>()) {
@@ -98,16 +97,18 @@ bool database::is_install() const {
 bool database::operator==(const database &in_rhs) const {
   return p_i->p_uuid_ == in_rhs.p_i->p_uuid_;
 }
+bool database::operator==(const boost::uuids::uuid &in_rhs) const {
+  return p_i->p_uuid_ == in_rhs;
+}
+bool database::operator==(const database_ns::ref_data &in_rhs) const {
+  return p_i->p_uuid_ == in_rhs.uuid;
+}
 
 void database::set_id(std::uint64_t in_id) const {
   p_i->p_id = in_id;
 }
 const boost::uuids::uuid &database::uuid() const {
   return p_i->p_uuid_;
-}
-
-bool database::operator==(const boost::uuids::uuid &in_rhs) const {
-  return p_i->p_uuid_ == in_rhs;
 }
 
 database::database(database &&in) noexcept            = default;

@@ -18,9 +18,31 @@ class DOODLE_CORE_EXPORT database_info {
 using data_status_save   = entt::tag<"data_status_save"_hs>;
 using data_status_delete = entt::tag<"data_status_delete"_hs>;
 
+class database;
+
+namespace database_ns {
+class DOODLE_CORE_EXPORT ref_data {
+  friend void to_json(nlohmann::json &j, const ref_data &p);
+  friend void from_json(const nlohmann::json &j, ref_data &p);
+
+ public:
+  ref_data();
+  explicit ref_data(const database &in);
+
+  boost::uuids::uuid uuid;
+
+  explicit operator bool() const;
+  [[nodiscard("")]] entt::handle handle() const;
+
+  bool operator==(const ref_data &in_rhs) const;
+
+};
+}  // namespace database_ns
+
 class DOODLE_CORE_EXPORT database
     : boost::equality_comparable<database>,
-      boost::equality_comparable<boost::uuids::uuid> {
+      boost::equality_comparable<boost::uuids::uuid>,
+      boost::equality_comparable<database_ns::ref_data> {
  private:
   friend class database_n::insert;
   friend class database_n::select;
@@ -31,22 +53,7 @@ class DOODLE_CORE_EXPORT database
   void set_id(std::uint64_t in_id) const;
 
  public:
-  class DOODLE_CORE_EXPORT ref_data {
-    friend void to_json(nlohmann::json &j, const ref_data &p);
-    friend void from_json(const nlohmann::json &j, ref_data &p);
-
-   public:
-    ref_data();
-    explicit ref_data(const database &in);
-
-    boost::uuids::uuid uuid;
-
-    explicit operator bool() const;
-    [[nodiscard("")]] entt::handle handle() const;
-
-    bool operator==(const ref_data &in_rhs) const;
-    bool operator!=(const ref_data &in_rhs) const;
-  };
+  using ref_data = database_ns::ref_data;
 
   database();
   explicit database(const std::string &in_uuid_str);
@@ -72,6 +79,7 @@ class DOODLE_CORE_EXPORT database
 
   bool operator==(const database &in_rhs) const;
   bool operator==(const boost::uuids::uuid &in_rhs) const;
+  bool operator==(const ref_data &in_rhs) const;
 
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);
