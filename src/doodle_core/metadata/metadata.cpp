@@ -132,6 +132,15 @@ bool database::operator==(const std::string &in_rhs) const {
 bool database::operator!=(const std::string &in_rhs) const {
   return !(*this == in_rhs);
 }
+entt::handle database::find_by_uuid(const boost::uuids::uuid &in) {
+  entt::handle l_r{};
+  for (auto &&[e, d] : g_reg()->view<database>().each())
+    if (d == in) {
+      l_r = entt::handle{*g_reg(), e};
+      break;
+    }
+  return l_r;
+}
 
 void database::fun_delete_::operator()(const entt::handle &in) const {
   if (in)

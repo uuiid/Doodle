@@ -82,6 +82,8 @@ class DOODLE_CORE_EXPORT database {
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);
 
+  static entt::handle find_by_uuid(const boost::uuids::uuid &in);
+
   class DOODLE_CORE_EXPORT fun_save_ {
    public:
     constexpr fun_save_() = default;
