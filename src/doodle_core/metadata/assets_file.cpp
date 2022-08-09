@@ -98,6 +98,8 @@ entt::handle assets_file::user_attr() const {
       for (auto&& [e, u] : g_reg()->view<user>().each()) {
         if (u.get_name() == p_i->p_user) {
           p_i->handle_cache = make_handle(e);
+          if (p_i->handle_cache.any_of<database>())
+            p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
         }
       }
       if (!p_i->handle_cache) {
