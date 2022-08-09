@@ -43,9 +43,6 @@ class csv_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "ep {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   gui_cache<bool> average_time{"平均时间"s, false};
-
-  /// \brief 工作时间计算
-  doodle::business::work_clock work_clock_{};
 };
 
 csv_export_widgets::csv_export_widgets()
@@ -131,6 +128,16 @@ void csv_export_widgets::render() {
     for (auto &&l_u : p_i->list_sort_time) {
       p_i->user_handle[l_u.get<assets_file>().user_attr().get<user>()].emplace_back(l_u);
     }
+    /// \brief 这里设置一下时钟规则
+
+    for (auto &&l_u : p_i->user_handle) {
+      auto l_user_h      = l_u.second.front();
+      auto &l_ru         = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
+      auto &l_work_clock = l_user_h.emplace<business::work_clock>();
+      l_work_clock.set_rules(l_ru);
+      l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
+                                p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
+    }
 
     if (p_i->list.empty()) {
       DOODLE_LOG_INFO("选择为空, 不导出");
@@ -159,10 +166,6 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "名称"s,
       "等级"s};
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
-  /// \brief 这里设置一下时钟规则
-  p_i->work_clock_.set_rules(user::get_current_handle().get<doodle::business::rules>());
-  p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
-                                p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
 
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
@@ -186,12 +189,14 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
 }
 csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
-  auto &k_ass       = in.get<assets_file>();
-  auto project_root = g_reg()->ctx().at<project>().p_path;
-  auto start_time   = get_user_up_time(in);
-  auto end_time     = in.get<time_point_wrap>();
+  auto &k_ass                 = in.get<assets_file>();
+  /// \brief 工作时间计算
+  auto &work_clock            = k_ass.user_attr().get<business::work_clock>();
+  auto project_root           = g_reg()->ctx().at<project>().p_path;
+  auto start_time             = get_user_up_time(in);
+  auto end_time               = in.get<time_point_wrap>();
   /// \brief 计算持续时间
-  auto k_time       = p_i->work_clock_(start_time, end_time);
+  chrono::hours_double k_time = work_clock(start_time, end_time);
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)
@@ -220,7 +225,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
            : ""s),                                                                                   //"镜头"
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
-      fmt::format("{}", chrono::floor<chrono::seconds>(k_time).count()),                             //"持续时间"
+      fmt::format("{:8}", k_time.count()),                                                           //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
@@ -239,10 +244,10 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_hand
   auto l_it          = ranges::find(l_time_list, in_handle);
   if (l_it == l_time_list.begin()) {
     return in_handle.get<time_point_wrap>().current_month_start();
-  } else if (++l_it == l_time_list.end()) {
+  } else if (--l_it == l_time_list.end()) {
     return in_handle.get<time_point_wrap>().current_month_end();
   } else {
-    return (++l_it)->get<time_point_wrap>();
+    return (l_it)->get<time_point_wrap>();
   }
 }
 
