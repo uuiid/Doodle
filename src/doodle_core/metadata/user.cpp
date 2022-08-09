@@ -67,7 +67,7 @@ entt::handle user::chick_user_reg(entt::registry& in_reg) {
     auto l_create_h = make_handle();
     l_create_h.emplace<user>(in_reg.ctx().at<user>());
     l_create_h.emplace<business::rules>();
-    l_cache.uuid        = l_create_h.emplace<database>().uuid();
+    l_cache.uuid        = l_create_h.emplace<database>(l_cache.uuid).uuid();
     l_cache.user_handle = l_create_h;
 
     database::save(l_create_h);
