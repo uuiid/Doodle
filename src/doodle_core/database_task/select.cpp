@@ -25,7 +25,6 @@
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/generate/core/metadatatab_sql.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
-#include <doodle_core/database_task/details/update_ctx.h>
 
 #include <sqlpp11/sqlpp11.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
