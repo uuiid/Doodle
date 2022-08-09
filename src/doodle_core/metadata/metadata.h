@@ -18,7 +18,9 @@ class DOODLE_CORE_EXPORT database_info {
 using data_status_save   = entt::tag<"data_status_save"_hs>;
 using data_status_delete = entt::tag<"data_status_delete"_hs>;
 
-class DOODLE_CORE_EXPORT database {
+class DOODLE_CORE_EXPORT database
+    : boost::equality_comparable<database>,
+      boost::equality_comparable<boost::uuids::uuid> {
  private:
   friend class database_n::insert;
   friend class database_n::select;
@@ -69,15 +71,7 @@ class DOODLE_CORE_EXPORT database {
   std::uint64_t get_id() const;
 
   bool operator==(const database &in_rhs) const;
-  bool operator!=(const database &in_rhs) const;
-
-  bool operator==(const ref_data &in_rhs) const;
-  bool operator!=(const ref_data &in_rhs) const;
-  bool operator==(const std::string &in_uuid_str) const;
-  bool operator!=(const std::string &in_uuid_str) const;
-
   bool operator==(const boost::uuids::uuid &in_rhs) const;
-  bool operator!=(const boost::uuids::uuid &in_rhs) const;
 
   friend void to_json(nlohmann::json &j, const database &p);
   friend void from_json(const nlohmann::json &j, database &p);

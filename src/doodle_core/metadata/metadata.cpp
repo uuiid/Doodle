@@ -99,9 +99,6 @@ bool database::operator==(const database &in_rhs) const {
   return p_i->p_uuid_ == in_rhs.p_i->p_uuid_;
 }
 
-bool database::operator!=(const database &in_rhs) const {
-  return !(*this == in_rhs);
-}
 void database::set_id(std::uint64_t in_id) const {
   p_i->p_id = in_id;
 }
@@ -112,26 +109,11 @@ const boost::uuids::uuid &database::uuid() const {
 bool database::operator==(const boost::uuids::uuid &in_rhs) const {
   return p_i->p_uuid_ == in_rhs;
 }
-bool database::operator!=(const boost::uuids::uuid &in_rhs) const {
-  return !(*this == in_rhs);
-}
+
 database::database(database &&in) noexcept            = default;
 
 database &database::operator=(database &&in) noexcept = default;
 
-bool database::operator==(const ref_data &in_rhs) const {
-  return this->p_i->p_uuid_ == in_rhs.uuid;
-}
-bool database::operator!=(const ref_data &in_rhs) const {
-  return !(*this == in_rhs);
-}
-
-bool database::operator==(const std::string &in_rhs) const {
-  return p_i->p_uuid_ == boost::lexical_cast<boost::uuids::uuid>(in_rhs);
-}
-bool database::operator!=(const std::string &in_rhs) const {
-  return !(*this == in_rhs);
-}
 entt::handle database::find_by_uuid(const boost::uuids::uuid &in) {
   entt::handle l_r{};
   for (auto &&[e, d] : g_reg()->view<database>().each())
