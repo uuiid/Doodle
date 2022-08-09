@@ -99,10 +99,13 @@ entt::handle assets_file::user_attr() const {
           p_i->handle_cache = make_handle(e);
         }
       }
+      if(!p_i->handle_cache){
+        DOODLE_LOG_WARN("创建临时虚拟用户 {}", p_i->p_user);
+        l_handle = make_handle();
+        l_handle.emplace<user>(p_i->p_user);
+        p_i->handle_cache = l_handle;
+      }
 
-      l_handle = make_handle();
-      l_handle.emplace<user>(p_i->p_user);
-      p_i->handle_cache = l_handle;
     }
     return l_handle;
   }
