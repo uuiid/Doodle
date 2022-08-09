@@ -67,7 +67,7 @@ database::ref_data chick_user_reg(entt::registry& in_reg) {
 }
 }  // namespace
 
-entt::handle user::get_user() {
+entt::handle user::get_current_handle() {
   return chick_user_reg(*g_reg()).handle();
 }
 

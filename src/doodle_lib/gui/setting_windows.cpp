@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/metadata.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
@@ -39,6 +40,7 @@ class setting_windows::impl {
   gui::gui_cache<std::int32_t> p_timeout;
   gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::getSet().maya_replace_save_dialog};
   gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::getSet().maya_force_resolve_link};
+  std::string user_uuid;
 };
 
 setting_windows::setting_windows()
@@ -62,7 +64,7 @@ void setting_windows::save() {
   core_set_init{}.write_file();
 
   g_reg()->ctx().at<user>().set_name(p_i->p_user());
-  auto l_user = user::get_user();
+  auto l_user = user::get_current_handle();
   l_user.get<user>().set_name(p_i->p_user());
   database::save(l_user);
   g_reg()->ctx().at<core_sig>().save();
@@ -71,6 +73,7 @@ setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
   p_i->p_user.data                     = g_reg()->ctx().at<user>().get_name();
+  p_i->user_uuid                       = fmt::format("用户id: {}", user::get_current_handle().get<database>().uuid());
   p_i->p_org_name.data                 = core_set::getSet().organization_name;
   p_i->p_cache.data                    = core_set::getSet().get_cache_root().generic_string();
   p_i->p_doc.data                      = core_set::getSet().get_doc().generic_string();
@@ -86,6 +89,7 @@ void setting_windows::init() {
 void setting_windows::render() {
   ImGui::InputText(*p_i->p_org_name.gui_name, &p_i->p_org_name.data);
   imgui::InputText(*p_i->p_user.gui_name, &(p_i->p_user.data));
+  dear::Text(p_i->user_uuid);
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
   imgui::InputText(*p_i->p_doc.gui_name, &(p_i->p_doc.data), ImGuiInputTextFlags_ReadOnly);
   imgui::InputText(*p_i->p_maya_path.gui_name, &(p_i->p_maya_path.data));
