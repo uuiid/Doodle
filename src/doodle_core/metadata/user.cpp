@@ -59,7 +59,7 @@ entt::handle user::chick_user_reg(entt::registry& in_reg) {
   if (l_cache.uuid.is_nil()) {
     l_cache.uuid = core_set::getSet().user_id;
   }
-  if (l_cache.user_handle) {
+  if (!l_cache.user_handle) {
     l_cache.user_handle = database::find_by_uuid(l_cache.uuid);
   }
 
