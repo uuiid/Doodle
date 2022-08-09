@@ -33,8 +33,7 @@ class csv_export_widgets::impl {
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
-
-  std::map<std::string, std::vector<entt::handle>> user_map;
+  std::map<user, std::vector<entt::handle>> user_handle;
 
   std::vector<boost::signals2::scoped_connection> con;
 
@@ -119,14 +118,24 @@ void csv_export_widgets::render() {
                               });
     p_i->list |= ranges::actions::stable_sort(
         [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
-          return in_r.get<assets_file>().user_attr() < in_l.get<assets_file>().user_attr();
+          return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
         });
+
+    //    auto l_user_vector = p_i->list |
+    //                         ranges::views::transform([](const entt::handle &in) -> user {
+    //                           return in.get<assets_file>().user_attr().get<user>();
+    //                         }) |
+    //                         ranges::to_vector;
+    //    l_user_vector |= ranges::actions::unique;
+    p_i->user_handle.clear();
+    for (auto &&l_u : p_i->list_sort_time) {
+      p_i->user_handle[l_u.get<assets_file>().user_attr().get<user>()].emplace_back(l_u);
+    }
+
     if (p_i->list.empty()) {
       DOODLE_LOG_INFO("选择为空, 不导出");
       return;
     }
-
-    p_i->user_map.clear();
 
     this->export_csv(p_i->list, p_i->export_path.path);
   }
@@ -225,21 +234,15 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
 time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
   time_point_wrap l_r{};
 
-  auto l_it = ranges::find(p_i->list_sort_time, in_handle);
-  if (l_it == p_i->list_sort_time.begin()) {
-    return in_handle.get<time_point_wrap>().current_month_start();
-  } else {
-    auto l_dis  = std::distance(l_it, p_i->list_sort_time.end());
-    auto end_it = ranges::find_if(
-        ranges::make_subrange(p_i->list_sort_time.rbegin() + l_dis,
-                              p_i->list_sort_time.rend()),
-        [&](const entt::handle &in_l) {
-          return in_l.get<assets_file>().user_attr() == in_handle.get<assets_file>().user_attr();
-        });
+  auto &&l_time_list = p_i->user_handle[in_handle.get<assets_file>().user_attr().get<user>()];
 
-    return end_it == p_i->list_sort_time.rend()
-               ? in_handle.get<time_point_wrap>().current_month_start()
-               : end_it->get<time_point_wrap>();
+  auto l_it          = ranges::find(l_time_list, in_handle);
+  if (l_it == l_time_list.begin()) {
+    return in_handle.get<time_point_wrap>().current_month_start();
+  } else if (++l_it == l_time_list.end()) {
+    return in_handle.get<time_point_wrap>().current_month_end();
+  } else {
+    return (++l_it)->get<time_point_wrap>();
   }
 }
 
