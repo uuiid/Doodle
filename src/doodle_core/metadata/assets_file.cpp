@@ -37,6 +37,7 @@ void to_json(nlohmann::json& j, const assets_file& p) {
   j["path"]           = p.p_i->path;
 
   j["user_ref"]       = p.p_i->ref_user;
+  j["user"]           = p.p_i->p_user;
 }
 void from_json(const nlohmann::json& j, assets_file& p) {
   if (j.contains("user"))
@@ -99,13 +100,12 @@ entt::handle assets_file::user_attr() const {
           p_i->handle_cache = make_handle(e);
         }
       }
-      if(!p_i->handle_cache){
+      if (!p_i->handle_cache) {
         DOODLE_LOG_WARN("创建临时虚拟用户 {}", p_i->p_user);
         l_handle = make_handle();
         l_handle.emplace<user>(p_i->p_user);
         p_i->handle_cache = l_handle;
       }
-
     }
     return p_i->handle_cache;
   }
