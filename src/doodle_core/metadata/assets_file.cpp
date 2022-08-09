@@ -85,9 +85,11 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 }
 
 entt::handle assets_file::user_attr() const {
-  if (p_i->handle_cache.get<database>() == p_i->ref_user)
+  if (p_i->handle_cache && p_i->handle_cache.any_of<database>() && p_i->handle_cache.get<database>() == p_i->ref_user)
     return p_i->handle_cache;
-  else {
+  else if (p_i->handle_cache && p_i->handle_cache.any_of<user>()) {
+    return p_i->handle_cache;
+  } else {
     auto l_handle = p_i->ref_user.handle();
     if (!l_handle) {
       DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
