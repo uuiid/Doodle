@@ -16,7 +16,7 @@ class DOODLELIB_API redirection_path_info_edit : public edit_interface {
 
  public:
   redirection_path_info_edit();
-  ~redirection_path_info_edit() override;
+  virtual ~redirection_path_info_edit() override;
 
  public:
   virtual void render(const entt::handle& in) override;
@@ -26,4 +26,4 @@ class DOODLELIB_API redirection_path_info_edit : public edit_interface {
   virtual void save_(const entt::handle& in) const override;
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui

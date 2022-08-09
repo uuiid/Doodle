@@ -13,6 +13,7 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
+#include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
 
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -551,6 +552,7 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
+  p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<gui::edit_user>());
   p_i->p_edit.emplace_back("备注"s, std::make_unique<gui::command_edit>());
   p_i->p_edit.emplace_back("等级"s, std::make_unique<gui::importance_edit>());
   auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<gui::assets_edit>()).data.get();
