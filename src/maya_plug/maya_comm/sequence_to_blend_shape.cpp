@@ -199,6 +199,9 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
   /// \brief 冻结座标轴
   /// \brief 获取变换
   const auto l_tran = l_fn_transform.getTranslation(MSpace::kWorld, &l_s);
+  MQuaternion l_rot{};
+  l_fn_transform.getRotation(l_rot, MSpace::kTransform);
+  
   DOODLE_CHICK(l_s);
   /// \brief 清除变换
   l_s = l_fn_transform.resetFromRestPosition();
