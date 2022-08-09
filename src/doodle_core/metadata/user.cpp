@@ -60,17 +60,13 @@ entt::handle user::chick_user_reg(entt::registry& in_reg) {
     l_cache.uuid = core_set::getSet().user_id;
   }
   if (l_cache.user_handle) {
-    for (auto&& [e, d] : g_reg()->view<database>().each())
-      if (d == l_cache.uuid) {
-        l_cache.user_handle = entt::handle{in_reg, e};
-        break;
-      }
+    l_cache.user_handle = database::find_by_uuid(l_cache.uuid);
   }
 
   if (!l_cache) {
     auto l_create_h = make_handle();
     l_create_h.emplace<user>(in_reg.ctx().at<user>());
-    l_create_h.emplace<business::rules>(in_reg.ctx().at<business::rules>());
+    l_create_h.emplace<business::rules>();
     l_cache.uuid        = l_create_h.emplace<database>().uuid();
     l_cache.user_handle = l_create_h;
 
@@ -91,6 +87,17 @@ void user::reg_to_ctx(entt::registry& in_reg) {
   if (l_h) {
     in_reg.ctx().at<user>() = l_h.get<user>();
   }
+}
+void user::generate_new_user_id() {
+  auto& l_cache = g_reg()->ctx().emplace<user::user_cache>();
+  l_cache.uuid = core_set::getSet().get_uuid();
+  auto l_create_h = make_handle();
+  l_create_h.emplace<user>(g_reg()->ctx().at<user>());
+  l_create_h.emplace<business::rules>(g_reg()->ctx().at<business::rules>());
+  l_cache.uuid        = l_create_h.emplace<database>().uuid();
+  l_cache.user_handle = l_create_h;
+
+  database::save(l_create_h);
 }
 
 }  // namespace doodle

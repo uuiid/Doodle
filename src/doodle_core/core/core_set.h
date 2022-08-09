@@ -4,6 +4,7 @@
 namespace doodle {
 
 class core_set_init;
+class user;
 
 /**
  * @brief 全局静态设置类
@@ -13,6 +14,7 @@ class core_set_init;
 
 class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   friend core_set_init;
+  friend user;
 
  public:
   static core_set &getSet();
@@ -41,8 +43,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
 
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);
-  // 用户名称
-  boost::uuids::uuid user_id;
+
   // 部门
   std::string organization_name;
 
@@ -60,6 +61,8 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   bool maya_force_resolve_link{false};
 
  private:
+  // 用户名称
+  boost::uuids::uuid user_id;
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
    *
