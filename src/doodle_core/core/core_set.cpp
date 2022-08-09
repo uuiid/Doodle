@@ -191,6 +191,12 @@ bool core_set_init::write_file() {
 
   FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
   (*p_set.json_data)["setting"] = p_set;
+
+  /// \brief 兼容旧版本段配置文件
+  if (p_set.json_data->at("setting").contains("user_")) {
+    p_set.json_data->at("setting")["user_"] = g_reg()->ctx().at<user>().get_name();
+  }
+
   l_ofstream << p_set.json_data->dump();
   return true;
 }
