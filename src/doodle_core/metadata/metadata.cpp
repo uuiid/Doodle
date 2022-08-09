@@ -133,4 +133,17 @@ bool database::operator!=(const std::string &in_rhs) const {
   return !(*this == in_rhs);
 }
 
+void database::fun_delete_::operator()(const entt::handle &in) const {
+  if (in)
+    in.get_or_emplace<data_status_delete>();
+  else
+    DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
+}
+void database::fun_save_::operator()(const entt::handle &in) const {
+  if (in)
+    in.get_or_emplace<data_status_save>();
+  else
+    DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
+}
+
 }  // namespace doodle

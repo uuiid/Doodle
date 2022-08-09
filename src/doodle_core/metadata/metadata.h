@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-
 #include <boost/signals2.hpp>
 #include <optional>
 
@@ -86,22 +85,12 @@ class DOODLE_CORE_EXPORT database {
   class DOODLE_CORE_EXPORT fun_save_ {
    public:
     constexpr fun_save_() = default;
-    void operator()(const entt::handle &in) const {
-      if (in)
-        in.get_or_emplace<data_status_save>();
-      else
-        DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
-    }
+    void operator()(const entt::handle &in) const;
   };
   class DOODLE_CORE_EXPORT fun_delete_ {
    public:
     constexpr fun_delete_() = default;
-    void operator()(const entt::handle &in) const {
-      if (in)
-        in.get_or_emplace<data_status_delete>();
-      else
-        DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
-    }
+    void operator()(const entt::handle &in) const;
   };
 
   constexpr const static fun_save_ save{};
