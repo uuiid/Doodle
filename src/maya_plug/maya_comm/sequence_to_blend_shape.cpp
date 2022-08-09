@@ -12,6 +12,7 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MComputation.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnDagNode.h>
 #include <maya/MDagModifier.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MDoubleArray.h>
@@ -62,7 +63,6 @@ class sequence_to_blend_shape::impl {
  public:
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
-  std::int32_t bindFrame_p{0};
   MObject parent_tran;
 
   MSelectionList select_list;
@@ -130,9 +130,9 @@ MStatus sequence_to_blend_shape::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
-  //  this->create_mesh();
-  //  this->create_anim();
+  this->create_mesh();
   this->run_blend_shape_comm();
+  //  this->create_anim();
   return MStatus();
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -165,6 +165,9 @@ void sequence_to_blend_shape::create_mesh() {
 
     auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
+    auto l_path_tmp = get_dag_path(l_create_mesh_obj);
+    center_pivot(l_path_tmp);
+
     l_s = p_i->create_mesh_list.append(l_create_mesh_obj);
     DOODLE_CHICK(l_s);
 
@@ -180,30 +183,65 @@ void sequence_to_blend_shape::create_mesh() {
 }
 void sequence_to_blend_shape::create_anim() {
 }
+
+void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
+  DOODLE_LOG_INFO("开始居中轴");
+  MStatus l_s{};
+  auto l_tran_path = get_dag_path(in_path.transform());
+  MFnTransform l_fn_transform{std::as_const(l_tran_path), &l_s};
+  DOODLE_CHICK(l_s);
+  DOODLE_LOG_INFO("获取选中物体 {}", get_node_full_name(l_tran_path.node()));
+
+  l_s = in_path.extendToShape();
+  DOODLE_CHICK(l_s);
+  DOODLE_LOG_INFO("获取网格体 {}", get_node_full_name(in_path.node()));
+
+  /// \brief 冻结座标轴
+  /// \brief 获取变换
+  const auto l_tran = l_fn_transform.getTranslation(MSpace::kWorld, &l_s);
+  DOODLE_CHICK(l_s);
+  /// \brief 清除变换
+  l_s = l_fn_transform.resetFromRestPosition();
+  DOODLE_CHICK(l_s);
+  /// \brief 变换网格体
+  for (MItMeshVertex l_it_mesh_vertex{std::as_const(in_path), MObject::kNullObj, &l_s};
+       l_s && !l_it_mesh_vertex.isDone();
+       l_it_mesh_vertex.next()) {
+    l_s = l_it_mesh_vertex.translateBy(l_tran, MSpace::kWorld);
+    DOODLE_CHICK(l_s);
+  }
+  DOODLE_CHICK(l_s);
+
+  /// \brief 居中座标轴
+  MFnMesh l_mesh{std::as_const(in_path), &l_s};
+  DOODLE_CHICK(l_s);
+  auto l_box = l_mesh.boundingBox(&l_s);
+  DOODLE_CHICK(l_s);
+
+  auto l_center = l_box.center();
+  DOODLE_LOG_INFO("获取中心 {}", l_center);
+  l_s = l_fn_transform.setScalePivot(l_center, MSpace::kWorld, false);
+  DOODLE_CHICK(l_s);
+  l_s = l_fn_transform.setRotatePivot(l_center, MSpace::kWorld, false);
+  DOODLE_CHICK(l_s);
+  DOODLE_LOG_INFO("完成");
+}
+
 void sequence_to_blend_shape::run_blend_shape_comm() {
   MDagPath l_path{};
   MStatus l_s{};
   l_s = p_i->select_list.getDagPath(0, l_path);
   DOODLE_CHICK(l_s);
 
-  l_s = l_path.extendToShape();
-  DOODLE_CHICK(l_s);
+  std::vector<std::string> l_names{};
+  for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
+    l_names.emplace_back(get_node_full_name(p_i->create_mesh_list[l_i]));
+  }
 
-  MObject l_mesh_obj{l_path.node(&l_s)};
+  auto l_comm = fmt::format("blendShape -ib {} {};", get_node_full_name(l_path.node()), fmt::join(l_names, " "));
+  DOODLE_LOG_INFO("run {}", l_comm);
+  l_s = MGlobal::executeCommand(d_str{l_comm}, false, false);
   DOODLE_CHICK(l_s);
-  MFnMesh l_mesh{};
-  l_s = l_mesh.setObject(l_mesh_obj);
-  DOODLE_CHICK(l_s);
-
-  MFnTransform l_fn_transform{};
-  l_fn_transform.setObject(l_path.transform(&l_s));
-  DOODLE_CHICK(l_s);
-
-  l_s = l_fn_transform.clearRestPosition();
-  DOODLE_CHICK(l_s);
-  l_s = l_fn_transform.resetFromRestPosition();
-  DOODLE_CHICK(l_s);
-  DOODLE_LOG_INFO("完成");
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;

@@ -23,6 +23,8 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
   void create_anim();
   void run_blend_shape_comm();
 
+  static void center_pivot(MDagPath& in_path);
+
  public:
   sequence_to_blend_shape();
   ~sequence_to_blend_shape() override;

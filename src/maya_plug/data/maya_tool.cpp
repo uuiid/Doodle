@@ -183,4 +183,13 @@ std::string set_node_name(const MObject& in_obj, const std::string& in_name) {
   DOODLE_CHICK(l_s);
   return d_str{l_name};
 }
+MDagPath get_dag_path(const MObject& in_object) {
+  MStatus l_s{};
+  MFnDagNode l_node{in_object, &l_s};
+  DOODLE_CHICK(l_s);
+  MDagPath l_path{};
+  l_s = l_node.getPath(l_path);
+  DOODLE_CHICK(l_s);
+  return l_path;
+}
 }  // namespace doodle::maya_plug

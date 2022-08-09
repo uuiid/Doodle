@@ -23,16 +23,16 @@ void set_attribute(const MObject& in_node,
                    const std::string& in_name,
                    const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
-  throw_maya_exception(l_s,DOODLE_LOC);
-//  DOODLE_CHICK(l_s);
+  throw_maya_exception(l_s, DOODLE_LOC);
+  //  DOODLE_CHICK(l_s);
 }
 template <typename T>
 T get_attribute(const MObject& in_node,
                 const std::string& in_name) {
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
-  throw_maya_exception(l_s,DOODLE_LOC);
-//  DOODLE_CHICK(l_s);
+  throw_maya_exception(l_s, DOODLE_LOC);
+  //  DOODLE_CHICK(l_s);
   return result;
 }
 
@@ -42,6 +42,7 @@ MObject get_first_mesh(const MObject& in_node);
 
 MObject get_shape(const MObject& in_object);
 MObject get_transform(const MObject& in_object);
+MDagPath get_dag_path(const MObject& in_object);
 
 void add_child(const MObject& in_praent, MObject& in_child);
 
