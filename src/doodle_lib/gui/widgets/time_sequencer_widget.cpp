@@ -5,6 +5,7 @@
 #include <implot_internal.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/time_tool/work_clock.h>
@@ -76,7 +77,7 @@ class time_sequencer_widget::impl {
   std::vector<std::double_t> work_time_plots;
 
   /// \brief 时间规则
-  doodle::business::rules rules_{g_reg()->ctx().emplace<doodle::business::rules>()};
+  doodle::business::rules rules_{};
   /// \brief 工作时间计算
   doodle::business::work_clock work_clock_{};
 
@@ -320,6 +321,7 @@ time_sequencer_widget::time_sequencer_widget()
                                      }) |
                                  ranges::to_vector;
                 p_i->time_list |= ranges::actions::sort;
+                p_i->rules_ = user::get_current_handle().get<business::rules>();
                 p_i->work_clock_.set_rules(p_i->rules_);
                 p_i->refresh_work_clock_();
               });

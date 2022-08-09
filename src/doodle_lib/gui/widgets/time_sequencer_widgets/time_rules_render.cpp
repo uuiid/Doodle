@@ -5,6 +5,7 @@
 #include "time_rules_render.h"
 
 #include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
@@ -356,7 +357,7 @@ class time_rules_render::impl {
 
 time_rules_render::time_rules_render()
     : p_i(std::make_unique<impl>()) {
-  p_i->rules_attr = g_reg()->ctx().at<rules_type>();
+  p_i->rules_attr = user::get_current_handle().get<rules_type>();
   rules_attr(p_i->rules_attr);
   p_i->render_time.extra_holidays_attr.gui_name = gui_cache_name_id{"节假日"s};
   p_i->render_time.extra_work_attr.gui_name     = gui_cache_name_id{"加班时间"s};
