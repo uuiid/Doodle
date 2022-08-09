@@ -357,7 +357,7 @@ class time_rules_render::impl {
 
 time_rules_render::time_rules_render()
     : p_i(std::make_unique<impl>()) {
-  p_i->rules_attr = user::get_current_handle().get<rules_type>();
+  p_i->rules_attr = rules_type::get_default();
   rules_attr(p_i->rules_attr);
   p_i->render_time.extra_holidays_attr.gui_name = gui_cache_name_id{"节假日"s};
   p_i->render_time.extra_work_attr.gui_name     = gui_cache_name_id{"加班时间"s};
@@ -388,6 +388,8 @@ time_rules_render::time_rules_render()
         p_i->rules_attr.extra_rest() = in;
         this->modify_guard_          = true;
       });
+
+  g_reg()->ctx().at<core_sig>().project_end_open.connect([this](){p_i->rules_attr = user::get_current_handle().get<rules_type>();});
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const {
   return p_i->rules_attr;
