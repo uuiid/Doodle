@@ -43,41 +43,53 @@ bool user::operator<(const user& in_rhs) const {
   return p_string_ < in_rhs.p_string_;
 }
 
-namespace {
-database::ref_data chick_user_reg(entt::registry& in_reg) {
-  database::ref_data l_ref{};
-  /// \brief 有保存的用户数据
-  if (core_set::getSet().json_data->contains("user_data")) {
-    l_ref = core_set::getSet().json_data->at("user_data").get<database::ref_data>();
+class user::user_cache {
+ public:
+  entt::handle user_handle;
+  boost::uuids::uuid uuid;
+
+  explicit operator bool() const {
+    return user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid;
+  }
+};
+
+entt::handle user::chick_user_reg(entt::registry& in_reg) {
+  auto& l_cache = in_reg.ctx().emplace<user::user_cache>();
+
+  if (l_cache.uuid.is_nil()) {
+    l_cache.uuid = core_set::getSet().user_id;
+  }
+  if (l_cache.user_handle) {
+    for (auto&& [e, d] : g_reg()->view<database>().each())
+      if (d == l_cache.uuid) {
+        l_cache.user_handle = entt::handle{in_reg, e};
+        break;
+      }
   }
 
-  /// \brief 在注册表中存在用户
-  if (!l_ref) {
+  if (!l_cache) {
     auto l_create_h = make_handle();
-    l_ref           = database::ref_data{l_create_h.emplace<database>()};
-
     l_create_h.emplace<user>(in_reg.ctx().at<user>());
     l_create_h.emplace<business::rules>(in_reg.ctx().at<business::rules>());
-    database::save(l_create_h);
+    l_cache.uuid        = l_create_h.emplace<database>().uuid();
+    l_cache.user_handle = l_create_h;
 
-    (*core_set::getSet().json_data)["user_data"] = l_ref;
+    database::save(l_create_h);
   }
-  chick_true<doodle_error>(l_ref, DOODLE_LOC, "缺失用户实体{}");
-  return l_ref;
+
+  chick_true<doodle_error>(l_cache, DOODLE_LOC, "缺失用户实体{}", l_cache.user_handle);
+  return l_cache.user_handle;
 }
-}  // namespace
 
 entt::handle user::get_current_handle() {
-  return chick_user_reg(*g_reg()).handle();
+  return chick_user_reg(*g_reg());
 }
 
 void user::reg_to_ctx(entt::registry& in_reg) {
-  auto l_ref = chick_user_reg(in_reg);
+  auto l_h = chick_user_reg(in_reg);
   /// \brief 在注册表中存在用户
-  if (auto l_h = l_ref.handle();
-      l_h) {
-    in_reg.ctx().at<user>()            = l_h.get<user>();
-    in_reg.ctx().at<business::rules>() = l_h.get<business::rules>();
+  if (l_h) {
+    in_reg.ctx().at<user>() = l_h.get<user>();
   }
 }
 

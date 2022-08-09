@@ -333,8 +333,10 @@ time_sequencer_widget::time_sequencer_widget()
   });
 
   p_i->rules_cache().modify_guard_.connect([this](const business::rules& in) {
-    p_i->rules_                                  = in;
-    g_reg()->ctx().at<doodle::business::rules>() = in;
+    p_i->rules_                                       = in;
+    auto l_user                                       = user::get_current_handle();
+    user::get_current_handle().get<business::rules>() = in;
+    database::save(l_user);
     p_i->work_clock_.set_rules(p_i->rules_);
     p_i->refresh_work_clock_();
     p_i->save();

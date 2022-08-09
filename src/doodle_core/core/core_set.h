@@ -42,7 +42,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   std::array<FSys::path, 10> project_root;
   void add_recent_project(const FSys::path &in);
   // 用户名称
-  std::string p_user_;
+  boost::uuids::uuid user_id;
   // 部门
   std::string organization_name;
 

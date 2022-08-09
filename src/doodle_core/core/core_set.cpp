@@ -217,7 +217,9 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["ue4_version"]              = p.ue4_version;
   j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
+  j["user_id"]                  = p.user_id;
 }
+
 void from_json(const nlohmann::json &j, core_set &p) {
   if (j.count("organization_name"))
     j.at("organization_name").get_to(p.organization_name);
@@ -238,6 +240,10 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
   if (j.contains("maya_force_resolve_link"))
     j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
+  if (j.contains("user_id"))
+    j.at("user_id").get_to(p.user_id);
+  else
+    p.user_id = p.get_uuid();
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);

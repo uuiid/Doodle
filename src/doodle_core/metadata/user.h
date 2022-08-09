@@ -15,6 +15,10 @@ class user : boost::equality_comparable<user> {
   std::string p_string_;
   std::string p_ENUS;
 
+  class user_cache;
+
+  static entt::handle chick_user_reg(entt::registry& in_reg);
+
  public:
   user();
 
