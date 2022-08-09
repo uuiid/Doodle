@@ -40,7 +40,7 @@ work_clock::time_type work_clock::next_time(
     const duration_type& in_du) const {
   auto l_d = discrete_interval_time::right_open(in_begin, in_begin.max());
   auto l_l = interval_set_time_ & l_d;
-  chrono::hours_double l_len{};
+  duration_type l_len{};
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::last(l_i) - boost::icl::first(l_i);
     if ((l_en_t + l_len) > in_du) {

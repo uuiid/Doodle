@@ -77,7 +77,7 @@ class time_sequencer_widget::impl {
   std::vector<std::double_t> work_time_plots;
 
   /// \brief 时间规则
-  doodle::business::rules rules_{};
+  doodle::business::rules rules_{doodle::business::rules::get_default()};
   /// \brief 工作时间计算
   doodle::business::work_clock work_clock_{};
 
@@ -159,7 +159,7 @@ class time_sequencer_widget::impl {
     work_time_plots = work_time |
                       ranges::views::transform(
                           [&](const doodle::chrono::hours_double& in_time) -> std::double_t {
-                            return in_time.count();
+                            return in_time.count() > 0.5 ? in_time.count() : 0.0;
                           }) |
                       ranges::to_vector;
   }

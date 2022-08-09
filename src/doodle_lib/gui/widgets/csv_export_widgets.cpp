@@ -143,7 +143,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "镜头"s,
       "开始时间"s,
       "结束时间"s,
-      "持续时间/h"s,
+      "持续时间/s"s,
       "时间备注"s,
       "备注"s,
       "类别"s,
@@ -151,7 +151,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "等级"s};
   l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
   /// \brief 这里设置一下时钟规则
-  p_i->work_clock_.set_rules(g_reg()->ctx().at<doodle::business::rules>());
+  p_i->work_clock_.set_rules(user::get_current_handle().get<doodle::business::rules>());
   p_i->work_clock_.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
                                 p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
 
@@ -211,7 +211,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
            : ""s),                                                                                   //"镜头"
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
-      fmt::format("{:3f}", k_time.count()),                                                          //"持续时间"
+      fmt::format("{}", chrono::floor<chrono::seconds>(k_time).count()),                             //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
