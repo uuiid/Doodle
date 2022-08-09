@@ -131,7 +131,7 @@ void csv_export_widgets::render() {
     /// \brief 这里设置一下时钟规则
 
     for (auto &&l_u : p_i->user_handle) {
-      auto l_user_h      = l_u.second.front();
+      auto l_user_h      = l_u.second.front().get<assets_file>().user_attr();
       auto &l_ru         = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
       auto &l_work_clock = l_user_h.emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
