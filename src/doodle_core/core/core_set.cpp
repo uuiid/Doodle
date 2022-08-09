@@ -68,7 +68,7 @@ void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
 }
 
 core_set::core_set()
-    : p_user_("user"),
+    : user_id(),
       organization_name(),
       p_doc(FSys::current_path()),
       p_uuid_gen(),
