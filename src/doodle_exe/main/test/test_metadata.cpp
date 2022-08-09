@@ -31,13 +31,10 @@ class test_convert : public app {
 
     REQUIRE(k_s.all_of<shot, database>());
 
-    auto& k_d2 = k_s.get<database>();
-    metadata_database k_data2;
-    k_data2 = k_d2;
-    std::cout << k_data2.user_data << std::endl;
+    auto& k_d2  = k_s.get<database>();
+
     auto k_tmp2 = make_handle(reg->create());
     auto& k_d3  = k_tmp2.get_or_emplace<database>();
-    k_d3        = k_data2;
 
     std::cout << "k_d3 id: " << k_d3.uuid() << std::endl;
     std::cout << "k_d2 id: " << k_d2.uuid() << std::endl;
@@ -84,9 +81,9 @@ TEST_CASE("create_prj") {
 }
 
 TEST_CASE("open project") {
-//  core::client{}.open_project("D:/tmp");
-//  while (!g_main_loop().empty())
-//    g_main_loop().update({}, nullptr);
+  //  core::client{}.open_project("D:/tmp");
+  //  while (!g_main_loop().empty())
+  //    g_main_loop().update({}, nullptr);
 }
 
 TEST_CASE("install project") {
@@ -171,7 +168,7 @@ class name_data : public app_command_base {
         .attach<database_task_install>(k_prj)
         .then<one_process_t>([=]() {
           auto k_p = k_prj.get<project>().p_path;
-//          core::client{}.open_project(k_p);
+          //          core::client{}.open_project(k_p);
         });
     while (!g_main_loop().empty())
       doodle::app_command_base::loop_one();
@@ -199,8 +196,6 @@ TEST_CASE_METHOD(name_data, "install project data") {
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);
 }
-
-
 
 class test_o_snapshot {
  public:

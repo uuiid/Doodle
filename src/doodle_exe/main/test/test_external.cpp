@@ -9,36 +9,26 @@ TEST_CASE("date time", "[time]") {
   using namespace doodle;
   date::current_zone();
 }
-//#include <boost/type_erasure/any.hpp>
-//#include <boost/type_erasure/any_cast.hpp>
-//#include <boost/type_erasure/builtin.hpp>
-//#include <boost/type_erasure/free.hpp>
-//#include <boost/type_erasure/member.hpp>
-//#include <boost/type_erasure/operators.hpp>
-// BOOST_TYPE_ERASURE_MEMBER(push_back)
+// #include <boost/type_erasure/any.hpp>
+// #include <boost/type_erasure/any_cast.hpp>
+// #include <boost/type_erasure/builtin.hpp>
+// #include <boost/type_erasure/free.hpp>
+// #include <boost/type_erasure/member.hpp>
+// #include <boost/type_erasure/operators.hpp>
+//  BOOST_TYPE_ERASURE_MEMBER(push_back)
 //
-// class test_to_entt {
-//  std::int32_t p_t;
+//  class test_to_entt {
+//   std::int32_t p_t;
 //
-// public:
-//  bool render() {
-//    using namespace doodle;
-//    auto k_h = make_handle(*this);
-//    REQUIRE(k_h);
-//    return true;
-//  }
-//};
+//  public:
+//   bool render() {
+//     using namespace doodle;
+//     auto k_h = make_handle(*this);
+//     REQUIRE(k_h);
+//     return true;
+//   }
+// };
 //
-// TEST_CASE("type_erasure", "[boost]") {
-//  using namespace doodle;
-//  auto reg  = g_reg();
-//  auto k_h  = make_handle(reg->create());
-//  auto& k_w = k_h.emplace<test_to_entt>(test_to_entt{});
-//  REQUIRE(to_entity(k_w) == k_h.entity());
-//  k_w.render();
-//  std::any k_any;
-//  entt::enum_as_bitmask<metadata_type>{};
-//}
 
 // struct test_external {
 //   std::float_t x;

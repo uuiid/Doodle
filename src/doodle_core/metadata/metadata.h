@@ -10,39 +10,6 @@
 #include <optional>
 
 namespace doodle {
-class DOODLE_CORE_EXPORT metadata_database {
- public:
-  std::string user_data;
-  std::uint64_t id;
-  std::optional<std::uint32_t> parent;
-  std::int32_t m_type;
-  std::string uuid_path;
-  boost::uuids::uuid uuid_;
-
-  std::optional<std::int32_t> season;
-  std::optional<std::int32_t> episode;
-  std::optional<std::int32_t> shot;
-  std::optional<std::string> assets;
-};
-/**
- * @brief 元数据代表的类型
- *
- */
-enum class metadata_type : std::int32_t {
-  unknown_file       = 0,
-  project_root       = 1,  /// 项目的根
-  file               = 2,  /// 文件, 基本可以说具有 assets_file 类组件
-  folder             = 3,  /// 没有文件,没有 assets_file 组件
-  derive_file        = 4,
-  animation_lib_root = 5,
-  maya_file          = 6,
-  maya_rig           = 7,
-  fbx                = 8,
-  abc                = 9,
-  movie              = 10,
-  ue4_prj            = 11
-
-};
 
 class DOODLE_CORE_EXPORT database_info {
  public:
@@ -84,7 +51,6 @@ class DOODLE_CORE_EXPORT database {
   explicit database(const std::string &in_uuid_str);
   explicit database(const boost::uuids::uuid &in);
 
-  //  explicit database(const metadata_database &in_metadata_database);
   ~database();
 
   database(database &&) noexcept;
@@ -134,14 +100,6 @@ class DOODLE_CORE_EXPORT database {
 
   constexpr const static fun_save_ save{};
   constexpr const static fun_delete_ delete_{};
-};
-
-// using need_save = entt::tag<"need_save"_hs>;
-
-template <class in_class>
-class DOODLE_CORE_EXPORT handle_warp {
- public:
-  entt::handle handle_;
 };
 
 }  // namespace doodle
