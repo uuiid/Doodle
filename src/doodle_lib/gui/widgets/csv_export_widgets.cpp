@@ -196,7 +196,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto start_time             = get_user_up_time(in);
   auto end_time               = in.get<time_point_wrap>();
   /// \brief 计算持续时间
-  chrono::hours_double k_time = work_clock(start_time, end_time);
+  chrono::seconds k_time = chrono::floor<chrono::seconds>(work_clock(start_time, end_time));
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)

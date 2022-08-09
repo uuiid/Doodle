@@ -107,7 +107,7 @@ entt::handle assets_file::user_attr() const {
       }
 
     }
-    return l_handle;
+    return p_i->handle_cache;
   }
 }
 void assets_file::user_attr(const entt::handle& in_user) {
