@@ -93,29 +93,27 @@ entt::handle assets_file::user_attr() const {
   } else {
     auto l_handle = p_i->ref_user.handle();
     if (!l_handle) {
-      DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
       if (!p_i->p_user.empty()) {
-        for (auto&& [e, u] : g_reg()->view<user>().each()) {
-          if (u.get_name() == p_i->p_user) {
-            p_i->handle_cache = make_handle(e);
-            if (p_i->handle_cache.any_of<database>())
-              p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
-            break;
-            DOODLE_LOG_WARN("找到用户相同名称用户 {} 句柄 {}", p_i->handle_cache.get<user>(), p_i->handle_cache);
-          }
+        p_i->p_user = "null";
+      }
+      DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
+      for (auto&& [e, u] : g_reg()->view<user>().each()) {
+        if (u.get_name() == p_i->p_user) {
+          p_i->handle_cache = make_handle(e);
+          if (p_i->handle_cache.any_of<database>())
+            p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
+          break;
+          DOODLE_LOG_WARN("找到用户相同名称用户 {} 句柄 {}", p_i->handle_cache.get<user>(), p_i->handle_cache);
         }
+      }
 
-        if (!p_i->handle_cache) {
-          DOODLE_LOG_WARN("创建临时虚拟用户 {}", p_i->p_user);
-          l_handle = make_handle();
-          l_handle.emplace<user>(p_i->p_user);
-          p_i->handle_cache = l_handle;
-        }
-      } else {
+      if (!p_i->handle_cache) {
+        DOODLE_LOG_WARN("创建临时虚拟用户 {}", p_i->p_user);
         l_handle = make_handle();
-        l_handle.emplace<user>("null");
+        l_handle.emplace<user>(p_i->p_user);
         p_i->handle_cache = l_handle;
       }
+
     } else {
       p_i->handle_cache = l_handle;
     }
