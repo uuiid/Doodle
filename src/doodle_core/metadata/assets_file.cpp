@@ -86,9 +86,9 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 }
 
 entt::handle assets_file::user_attr() const {
-  if (p_i->handle_cache && p_i->handle_cache.any_of<database>() && p_i->handle_cache.get<database>() == p_i->ref_user)
-    return p_i->handle_cache;
-  else if (p_i->handle_cache && p_i->handle_cache.any_of<user>()) {
+  if (p_i->handle_cache &&
+      ((p_i->handle_cache.any_of<database>() && p_i->handle_cache.get<database>() == p_i->ref_user) &&
+       (p_i->handle_cache.any_of<user>() && p_i->handle_cache.get<user>().get_name() == p_i->p_user))) {
     return p_i->handle_cache;
   } else {
     auto l_handle = p_i->ref_user.handle();
@@ -124,7 +124,7 @@ void assets_file::user_attr(const entt::handle& in_user) {
   if (in_user.any_of<database>())
     p_i->ref_user = database::ref_data{in_user.get<database>()};
   p_i->handle_cache = in_user;
-  p_i->p_name       = in_user.get<user>().get_name();
+  p_i->p_user       = in_user.get<user>().get_name();
 }
 
 const std::uint64_t& assets_file::version_attr() const noexcept {

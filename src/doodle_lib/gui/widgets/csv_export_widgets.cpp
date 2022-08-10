@@ -133,12 +133,18 @@ void csv_export_widgets::render() {
     for (auto &&l_u : p_i->user_handle) {
       auto l_user_h = l_u.second.front().get<assets_file>().user_attr();
       auto &l_ru    = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
-      if (l_ru.work_time().empty())
-        l_ru = business::rules::get_default();
+      if (l_ru.work_time().empty()) {
+        auto l_tmp_u     = business::rules::get_default();
+        l_ru.work_time() = l_tmp_u.work_time();
+        if (l_ru.work_weekdays().none()) {
+          l_ru.work_weekdays(l_tmp_u.work_weekdays());
+        }
+      }
       auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
       l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
                                 p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
+      DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_u.first.get_name(), l_work_clock.debug_print());
     }
 
     if (p_i->list.empty()) {
