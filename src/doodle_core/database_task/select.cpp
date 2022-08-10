@@ -70,7 +70,8 @@ struct future_data {
       l_entt_list.push_back(l_e);
       l_data_list.emplace_back(std::move(l_t.get()));
     }
-    DOODLE_LOG_WARN("无效的实体: {}", fmt::join(l_not_valid_entity, " "));
+    if (!l_not_valid_entity.empty())
+      DOODLE_LOG_WARN("无效的实体: {}", fmt::join(l_not_valid_entity, " "));
     chick_true<doodle_error>(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }),
                              DOODLE_LOC,
                              "无效实体");
