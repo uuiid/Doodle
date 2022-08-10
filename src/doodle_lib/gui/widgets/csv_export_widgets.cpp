@@ -213,6 +213,13 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   if (auto l_c = in.try_get<comment>(); l_c)
     k_comm = *l_c;
 
+  if (auto l_time_com = work_clock.get_time_info(start_time, end_time);
+      l_time_com) {
+    k_comm.p_time_info = *l_time_com;
+  } else {
+    k_comm.p_time_info.clear();
+  }
+
   auto l_prj_name = g_reg()->ctx().at<project>().p_name;
   if (p_i->use_first_as_project_name.data)
     l_prj_name = in.all_of<assets>() ? in.get<assets>().p_path.begin()->generic_string() : ""s;
