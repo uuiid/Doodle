@@ -12,7 +12,15 @@ namespace gui {
 class edit_user::impl {
  public:
   gui_cache_name_id button{"设置user"s};
+  gui_cache<std::string> user_name_edit{"姓名"s, ""s};
+
+  gui_cache<bool> advanced{"高级设置", false};
+
   entt::handle user_handle;
+
+  entt::handle user_tmp_handle;
+
+  entt::handle set_handle;
 };
 
 edit_user::edit_user()
@@ -23,14 +31,33 @@ edit_user::~edit_user() = default;
 void edit_user::render(const entt::handle& in) {
   if (ImGui::Button(*ptr->button)) {
     set_modify(true);
+    ptr->set_handle = ptr->user_handle;
+  }
+  ImGui::Checkbox(*ptr->advanced, &ptr->advanced);
+  if (ptr->advanced()) {
+    dear::Text("直接设置用户姓名"s);
+    if (ImGui::InputText(*ptr->user_name_edit, &ptr->user_name_edit)) {
+      set_modify(true);
+      ptr->user_tmp_handle.get<user>().set_name(ptr->user_name_edit());
+      ptr->set_handle = ptr->user_tmp_handle;
+    }
   }
 }
 void edit_user::init_(const entt::handle& in) {
   ptr->user_handle = user::get_current_handle();
+  /// \brief 初始化临时user
+  if (!ptr->user_tmp_handle) {
+    ptr->user_tmp_handle = make_handle();
+    ptr->user_tmp_handle.emplace_or_replace<user>();
+  }
+
+  /// \brief 初始化名称
+  if (in.any_of<assets_file>())
+    ptr->user_name_edit = in.get<assets_file>().user_attr().get<user>().get_name();
 }
 void edit_user::save_(const entt::handle& in) const {
   if (in.any_of<assets_file>()) {
-    in.get<assets_file>().user_attr(ptr->user_handle);
+    in.get<assets_file>().user_attr(ptr->set_handle);
   }
 }
 }  // namespace gui

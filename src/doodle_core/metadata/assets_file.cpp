@@ -87,8 +87,9 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 
 entt::handle assets_file::user_attr() const {
   if (p_i->handle_cache &&
-      ((p_i->handle_cache.any_of<database>() && p_i->handle_cache.get<database>() == p_i->ref_user) &&
-       (p_i->handle_cache.any_of<user>() && p_i->handle_cache.get<user>().get_name() == p_i->p_user))) {
+      (
+          //          (p_i->handle_cache.any_of<database>() && p_i->handle_cache.get<database>() == p_i->ref_user) &&
+          (p_i->handle_cache.any_of<user>() && p_i->handle_cache.get<user>().get_name() == p_i->p_user))) {
     return p_i->handle_cache;
   } else {
     auto l_handle = p_i->ref_user.handle();
@@ -121,6 +122,7 @@ entt::handle assets_file::user_attr() const {
   }
 }
 void assets_file::user_attr(const entt::handle& in_user) {
+  chick_true<doodle_error>(in_user.any_of<user>(), DOODLE_LOC, "句柄 {} 缺失必要组件 user", in_user);
   if (in_user.any_of<database>())
     p_i->ref_user = database::ref_data{in_user.get<database>()};
   p_i->handle_cache = in_user;
