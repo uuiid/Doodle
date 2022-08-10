@@ -121,7 +121,8 @@ entt::handle assets_file::user_attr() const {
   }
 }
 void assets_file::user_attr(const entt::handle& in_user) {
-  p_i->ref_user     = database::ref_data{in_user.get<database>()};
+  if (in_user.any_of<database>())
+    p_i->ref_user = database::ref_data{in_user.get<database>()};
   p_i->handle_cache = in_user;
 }
 
