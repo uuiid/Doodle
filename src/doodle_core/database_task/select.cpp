@@ -46,17 +46,7 @@ struct future_data {
   future_data(future_data&& in) noexcept            = default;
   future_data& operator=(future_data&& in) noexcept = default;
 
-  mutable std::vector<std::tuple<entt::entity, std::future<T>>> data{};
-
-  //    std::tuple<std::vector<entt::entity>, std::vector<T>> convert() {
-  //      std::vector<entt::entity> l_entt_list{};
-  //      std::vector<T> l_data_list{};
-  //      for (auto&& [l_e, l_t] : data) {
-  //        l_entt_list.push_back(l_e);
-  //        l_data_list.emplace_back(std::move(l_t.get()));
-  //      }
-  //      return std::make_tuple(l_entt_list, l_data_list);
-  //    };
+  std::vector<std::tuple<entt::entity, std::future<T>>> data{};
 
   void install_reg(const registry_ptr& in_reg) {
     std::vector<entt::entity> l_entt_list{};
