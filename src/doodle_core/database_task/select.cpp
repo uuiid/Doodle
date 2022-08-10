@@ -52,10 +52,46 @@ class select::impl {
   boost_strand
       strand_{boost::asio::make_strand(g_thread_pool().pool_)};
   std::vector<boost_strand> strands_{};
-  std::size_t size_{10};
 
   registry_ptr local_reg{g_reg()};
 
+  std::vector<std::function<void(const registry_ptr& in_reg)>> list_install{};
+
+  std::vector<entt::entity> create_entt{};
+
+  template <class T>
+  struct future_data {
+    future_data()                              = default;
+    future_data(const future_data&)            = delete;
+    future_data& operator=(const future_data&) = delete;
+    future_data(future_data&& in)              = default;
+    future_data& operator=(future_data&& in)   = default;
+
+    mutable std::vector<std::tuple<entt::entity, std::future<T>>> data{};
+
+    //    std::tuple<std::vector<entt::entity>, std::vector<T>> convert() {
+    //      std::vector<entt::entity> l_entt_list{};
+    //      std::vector<T> l_data_list{};
+    //      for (auto&& [l_e, l_t] : data) {
+    //        l_entt_list.push_back(l_e);
+    //        l_data_list.emplace_back(std::move(l_t.get()));
+    //      }
+    //      return std::make_tuple(l_entt_list, l_data_list);
+    //    };
+
+    void install_reg(const registry_ptr& in_reg) {
+      std::vector<entt::entity> l_entt_list{};
+      std::vector<T> l_data_list{};
+      for (auto&& [l_e, l_t] : data) {
+        l_entt_list.push_back(l_e);
+        l_data_list.emplace_back(std::move(l_t.get()));
+      }
+      in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
+      in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+    };
+  };
+
+#pragma region "old compatible 兼容旧版函数"
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     if (auto [l_v, l_i] = doodle::database_n::details::get_version(in_conn);
         l_v == 3 && l_i >= 4 && doodle::database_n::details::db_compatible::has_metadatatab_table(in_conn)) {
@@ -129,6 +165,7 @@ class select::impl {
       results.emplace_back(l_fun.share());
     }
   }
+#pragma endregion
 
   template <typename Type>
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -190,6 +227,7 @@ class select::impl {
       l_size = raw.count.value();
       break;
     }
+    future_data<database> l_future_data{};
 
     for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity))
                                  .from(l_entity)
@@ -197,34 +235,29 @@ class select::impl {
       if (stop)
         return;
       auto l_e = num_to_enum<entt::entity>(row.id.value());
-      if (!in_reg.valid(l_e)) l_e = in_reg.create(l_e);
+      create_entt.push_back(l_e);
 
       auto l_fut = boost::asio::post(
           strand_,
-          std::packaged_task<void()>{
+          std::packaged_task<database()>{
               [in_json = row.uuidData.value(),
                in_id   = row.id,
-               l_e,
-               &in_reg,
-               l_size,
-               this]() {
-                if (stop)
-                  return;
-
-                entt::handle l_h{in_reg, l_e};
-                chick_true<doodle_error>(
-                    l_h.valid(), DOODLE_LOC,
-                    "失效的实体 {}", l_e);
-                if (l_h.any_of<database>()) {
-                  l_h.remove<data_status_save>();
-                } else
-                  l_h.emplace<database>(in_json).set_id(in_id);
-
+               l_size]() -> database {
+                database l_database{in_json};
+                l_database.set_id(in_id);
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
+                return l_database;
               }});
-
-      results.emplace_back(l_fut.share());
+      l_future_data.data.emplace_back(std::make_tuple(l_e, std::move(l_fut)));
     }
+    std::vector<entt::entity> l_entt_list{};
+    std::vector<std::string> l_data_list{};
+    in_reg.insert<std::string>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+
+    //    list_install.emplace_back(
+    //        [l_f = std::move(l_future_data)](const registry_ptr& in) mutable {
+    //          return l_f.install_reg(in);
+    //        });
   }
 
   void set_user_ctx(entt::registry& in_reg) {

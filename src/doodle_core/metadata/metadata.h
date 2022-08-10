@@ -35,7 +35,6 @@ class DOODLE_CORE_EXPORT ref_data {
   [[nodiscard("")]] entt::handle handle() const;
 
   bool operator==(const ref_data &in_rhs) const;
-
 };
 }  // namespace database_ns
 
@@ -64,8 +63,8 @@ class DOODLE_CORE_EXPORT database
   database(database &&) noexcept;
   database &operator=(database &&) noexcept;
 
-  database(database &) noexcept            = delete;
-  database &operator=(database &) noexcept = delete;
+  database(const database &) noexcept            = delete;
+  database &operator=(const database &) noexcept = delete;
 
   bool is_install() const;
 
