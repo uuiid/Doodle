@@ -202,7 +202,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
     auto l_title = conv::utf_to_utf<char>(p_title);
-    auto l_str   = fmt::format("{} 文件 {} 项目路径 {} : {} 名称: {}({})({})",
+    auto l_str   = fmt::format("{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})",
                                l_title,
                              g_reg()->ctx().contains<database_info>() ? g_reg()->ctx().at<database_info>().path_ : FSys::path{":memory:"},
                                l_prj.p_path,
