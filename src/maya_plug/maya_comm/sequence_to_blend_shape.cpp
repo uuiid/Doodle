@@ -185,16 +185,16 @@ void sequence_to_blend_shape::create_anim() {
 }
 
 void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
-  DOODLE_LOG_INFO("开始居中轴");
+  //  DOODLE_LOG_INFO("开始居中轴");
   MStatus l_s{};
   auto l_tran_path = get_dag_path(in_path.transform());
   MFnTransform l_fn_transform{std::as_const(l_tran_path), &l_s};
   DOODLE_CHICK(l_s);
-  DOODLE_LOG_INFO("获取选中物体 {}", get_node_full_name(l_tran_path.node()));
+  //  DOODLE_LOG_INFO("获取选中物体 {}", get_node_full_name(l_tran_path.node()));
 
   l_s = in_path.extendToShape();
   DOODLE_CHICK(l_s);
-  DOODLE_LOG_INFO("获取网格体 {}", get_node_full_name(in_path.node()));
+  //  DOODLE_LOG_INFO("获取网格体 {}", get_node_full_name(in_path.node()));
 
   /// 获取变换
   //  auto l_mat        = l_fn_transform.transformationMatrix(&l_s);
@@ -224,12 +224,12 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
   DOODLE_CHICK(l_s);
 
   auto l_center = l_box.center();
-  DOODLE_LOG_INFO("获取中心 {}", l_center);
-  l_s = l_fn_transform.setScalePivot(l_center, MSpace::kWorld, false);
+  //  DOODLE_LOG_INFO("获取中心 {}", l_center);
+  l_s           = l_fn_transform.setScalePivot(l_center, MSpace::kWorld, false);
   DOODLE_CHICK(l_s);
   l_s = l_fn_transform.setRotatePivot(l_center, MSpace::kWorld, false);
   DOODLE_CHICK(l_s);
-  DOODLE_LOG_INFO("完成");
+  //  DOODLE_LOG_INFO("完成");
 }
 
 void sequence_to_blend_shape::run_blend_shape_comm() {
