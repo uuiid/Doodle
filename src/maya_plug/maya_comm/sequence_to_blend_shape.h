@@ -23,7 +23,12 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
   void create_anim();
   void run_blend_shape_comm();
 
+  /**
+   * @brief 将网格居中在mesh中心
+   * @param in_path
+   */
   static void center_pivot(MDagPath& in_path);
+  static void center_pivot(MDagPath& in_path, const MMatrix& in_matrix, const MPoint& in_point);
 
  public:
   sequence_to_blend_shape();
