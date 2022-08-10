@@ -121,6 +121,8 @@ void assets_file::user_attr(const entt::handle& in_user) {
   chick_true<doodle_error>(in_user.any_of<user>(), DOODLE_LOC, "句柄 {} 缺失必要组件 user", in_user);
   if (in_user.any_of<database>())
     p_i->ref_user = database::ref_data{in_user.get<database>()};
+  else
+    p_i->ref_user = {};
   p_i->handle_cache = in_user;
   p_i->p_user       = in_user.get<user>().get_name();
 }
