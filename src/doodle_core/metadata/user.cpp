@@ -99,5 +99,16 @@ void user::generate_new_user_id() {
 
   database::save(l_create_h);
 }
+entt::handle user::find_by_user_name(const std::string& in_name) {
+  entt::handle l_r{};
+  for (auto&& [e, u] : g_reg()->view<user>().each()) {
+    if (u.get_name() == in_name) {
+      l_r = make_handle(e);
+      break;
+      DOODLE_LOG_WARN("找到用户名称 {} 的句柄 {}", in_name, l_r);
+    }
+  }
+  return l_r;
+}
 
 }  // namespace doodle

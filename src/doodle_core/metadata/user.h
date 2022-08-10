@@ -40,6 +40,13 @@ class user : boost::equality_comparable<user> {
   static entt::handle get_current_handle();
   static void generate_new_user_id();
 
+  /**
+   * @brief 按名称寻找user
+   * @param in_name 用户名称
+   * @return 句柄(可能无效)
+   */
+  static entt::handle find_by_user_name(const std::string& in_name);
+
  private:
   friend void to_json(nlohmann::json& j, const user& p);
   friend void from_json(const nlohmann::json& j, user& p);

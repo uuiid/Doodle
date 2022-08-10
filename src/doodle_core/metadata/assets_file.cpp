@@ -97,14 +97,11 @@ entt::handle assets_file::user_attr() const {
         p_i->p_user = "null";
       }
       DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
-      for (auto&& [e, u] : g_reg()->view<user>().each()) {
-        if (u.get_name() == p_i->p_user) {
-          p_i->handle_cache = make_handle(e);
-          if (p_i->handle_cache.any_of<database>())
-            p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
-          break;
-          DOODLE_LOG_WARN("找到用户相同名称用户 {} 句柄 {}", p_i->handle_cache.get<user>(), p_i->handle_cache);
-        }
+      if (auto l_user = user::find_by_user_name(p_i->p_user);
+          l_user) {
+        p_i->handle_cache = l_user;
+        if (p_i->handle_cache.any_of<database>())
+          p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
       }
 
       if (!p_i->handle_cache) {

@@ -36,20 +36,22 @@ void edit_user::render(const entt::handle& in) {
   ImGui::Checkbox(*ptr->advanced, &ptr->advanced);
   if (ptr->advanced()) {
     dear::Text("直接设置用户姓名"s);
-    if (ImGui::InputText(*ptr->user_name_edit, &ptr->user_name_edit)) {
-      set_modify(true);
-      ptr->user_tmp_handle.get<user>().set_name(ptr->user_name_edit());
+    if (ImGui::InputText(*ptr->user_name_edit, &ptr->user_name_edit,ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
+      if (auto l_user = user::find_by_user_name(ptr->user_name_edit());
+          l_user) {
+        ptr->user_tmp_handle = l_user;
+      } else {
+        ptr->user_tmp_handle = make_handle();
+        ptr->user_tmp_handle.get_or_emplace<user>().set_name(ptr->user_name_edit());
+      }
+
       ptr->set_handle = ptr->user_tmp_handle;
+      set_modify(true);
     }
   }
 }
 void edit_user::init_(const entt::handle& in) {
   ptr->user_handle = user::get_current_handle();
-  /// \brief 初始化临时user
-  if (!ptr->user_tmp_handle) {
-    ptr->user_tmp_handle = make_handle();
-    ptr->user_tmp_handle.emplace_or_replace<user>();
-  }
 
   /// \brief 初始化名称
   if (in.any_of<assets_file>())
