@@ -67,8 +67,11 @@ class sequence_to_blend_shape::impl {
 
   MSelectionList select_list;
 
+  MObject bind_obj;
+
   MObjectArray create_mesh_list{};
   MPointArray create_point_list{};
+  MObject blend_shape_obj;
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -153,13 +156,30 @@ void sequence_to_blend_shape::create_mesh() {
   MFnMesh l_mesh{};
   MFnMesh l_create_mesh{};
 
+  {  /// \brief 获取bind obj
+    auto i = p_i->startFrame_p;
+    l_s    = MGlobal::viewFrame(i);
+    DOODLE_CHICK(l_s);
+    l_s = l_mesh.setObject(l_mesh_obj);
+    DOODLE_CHICK(l_s);
+
+    auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
+    DOODLE_CHICK(l_s);
+    auto l_path_tmp = get_dag_path(l_create_mesh_obj);
+    center_pivot(l_path_tmp);
+
+    p_i->bind_obj = l_create_mesh_obj;
+
+    add_mat(p_i->bind_obj, l_mesh_obj);
+  }
+
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
     l_s = MGlobal::viewFrame(i);
     DOODLE_CHICK(l_s);
 
-    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
+    //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
     l_s = l_mesh.setObject(l_mesh_obj);
     DOODLE_CHICK(l_s);
 
@@ -233,19 +253,24 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
 }
 
 void sequence_to_blend_shape::run_blend_shape_comm() {
-  MDagPath l_path{};
   MStatus l_s{};
-  l_s = p_i->select_list.getDagPath(0, l_path);
-  DOODLE_CHICK(l_s);
 
   std::vector<std::string> l_names{};
   for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
     l_names.emplace_back(get_node_full_name(p_i->create_mesh_list[l_i]));
   }
 
-  auto l_comm = fmt::format("blendShape -ib {} {};", get_node_full_name(l_path.node()), fmt::join(l_names, " "));
-  DOODLE_LOG_INFO("run {}", l_comm);
-  l_s = MGlobal::executeCommand(d_str{l_comm}, false, false);
+  auto l_comm = fmt::format("blendShape -ib {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_obj));
+  //  DOODLE_LOG_INFO("run {}", l_comm);
+  MStringArray l_r{};
+  l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
+  DOODLE_CHICK(l_s);
+  chick_true<doodle_error>(l_r.length() == 1, DOODLE_LOC, "错误的融合变形节点创建");
+
+  MSelectionList l_selection_list{};
+  l_s = l_selection_list.add(l_r[0], true);
+  DOODLE_CHICK(l_s);
+  l_s = l_selection_list.getDependNode(0, p_i->blend_shape_obj);
   DOODLE_CHICK(l_s);
 }
 
