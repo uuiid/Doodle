@@ -62,9 +62,16 @@ struct future_data {
     std::vector<entt::entity> l_entt_list{};
     std::vector<T> l_data_list{};
     for (auto&& [l_e, l_t] : data) {
+      if (!in_reg->valid(l_e)) {
+        DOODLE_LOG_WARN("无效的实体, {}", l_e);
+        continue;
+      }
       l_entt_list.push_back(l_e);
       l_data_list.emplace_back(std::move(l_t.get()));
     }
+    chick_true<doodle_error>(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }),
+                             DOODLE_LOC,
+                             "无效实体");
     in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
     in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
   };
