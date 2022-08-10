@@ -23,7 +23,7 @@ target_link_libraries(
 
 target_compile_options(doodle_tool
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHsc>
+        $<$<CXX_COMPILER_ID:MSVC>: /EHs>
         )
 set_target_properties(doodle_tool
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

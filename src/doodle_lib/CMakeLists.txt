@@ -66,7 +66,7 @@ target_compile_definitions(doodle_lib
         )
 target_compile_options(doodle_lib
         PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>: /EHsc>
+        $<$<CXX_COMPILER_ID:MSVC>: /EHs>
         )
 
 target_include_directories(doodle_lib

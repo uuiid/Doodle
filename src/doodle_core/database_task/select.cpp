@@ -38,6 +38,38 @@
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
+template <class T>
+struct future_data {
+  future_data()                                     = default;
+  future_data(const future_data&)                   = delete;
+  future_data& operator=(const future_data&)        = delete;
+  future_data(future_data&& in) noexcept            = default;
+  future_data& operator=(future_data&& in) noexcept = default;
+
+  mutable std::vector<std::tuple<entt::entity, std::future<T>>> data{};
+
+  //    std::tuple<std::vector<entt::entity>, std::vector<T>> convert() {
+  //      std::vector<entt::entity> l_entt_list{};
+  //      std::vector<T> l_data_list{};
+  //      for (auto&& [l_e, l_t] : data) {
+  //        l_entt_list.push_back(l_e);
+  //        l_data_list.emplace_back(std::move(l_t.get()));
+  //      }
+  //      return std::make_tuple(l_entt_list, l_data_list);
+  //    };
+
+  void install_reg(const registry_ptr& in_reg) {
+    std::vector<entt::entity> l_entt_list{};
+    std::vector<T> l_data_list{};
+    for (auto&& [l_e, l_t] : data) {
+      l_entt_list.push_back(l_e);
+      l_data_list.emplace_back(std::move(l_t.get()));
+    }
+    in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
+    in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+  };
+};
+
 class select::impl {
  public:
   using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
@@ -58,38 +90,6 @@ class select::impl {
   std::vector<std::function<void(const registry_ptr& in_reg)>> list_install{};
 
   std::vector<entt::entity> create_entt{};
-
-  template <class T>
-  struct future_data {
-    future_data()                              = default;
-    future_data(const future_data&)            = delete;
-    future_data& operator=(const future_data&) = delete;
-    future_data(future_data&& in)              = default;
-    future_data& operator=(future_data&& in)   = default;
-
-    mutable std::vector<std::tuple<entt::entity, std::future<T>>> data{};
-
-    //    std::tuple<std::vector<entt::entity>, std::vector<T>> convert() {
-    //      std::vector<entt::entity> l_entt_list{};
-    //      std::vector<T> l_data_list{};
-    //      for (auto&& [l_e, l_t] : data) {
-    //        l_entt_list.push_back(l_e);
-    //        l_data_list.emplace_back(std::move(l_t.get()));
-    //      }
-    //      return std::make_tuple(l_entt_list, l_data_list);
-    //    };
-
-    void install_reg(const registry_ptr& in_reg) {
-      std::vector<entt::entity> l_entt_list{};
-      std::vector<T> l_data_list{};
-      for (auto&& [l_e, l_t] : data) {
-        l_entt_list.push_back(l_e);
-        l_data_list.emplace_back(std::move(l_t.get()));
-      }
-      in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
-      in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
-    };
-  };
 
 #pragma region "old compatible 兼容旧版函数"
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -178,6 +178,8 @@ class select::impl {
       break;
     }
 
+    auto l_future_data = std::make_shared<future_data<Type>>();
+
     for (auto&& row : in_conn(
              sqlpp::select(
                  l_com_entity.entityId,
@@ -187,31 +189,24 @@ class select::impl {
                      l_com_entity.comHash == entt::type_id<Type>().hash()))) {
       if (stop)
         return;
+      auto l_id  = row.entityId.value();
       auto l_fut = boost::asio::post(
           l_s,
-          std::packaged_task<void()>{
+          std::packaged_task<Type()>{
               [in_json = row.jsonData.value(),
-               in_id   = row.entityId.value(),
-               &in_reg,
-               l_size,
-               this]() {
-                if (stop)
-                  return;
-                auto l_e = num_to_enum<entt::entity>(in_id);
-                entt::handle l_h{in_reg, l_e};
-                if (!l_h.valid()) {
-                  DOODLE_LOG_ERROR("无效的实体 {}", in_id);
-                  /// @todo 这里需要删除数据库中的无效实体
-                  return;
-                }
-
+               in_id   = l_id,
+               l_size]() {
                 auto l_json = nlohmann::json::parse(in_json);
-                l_h.emplace_or_replace<Type>(std::move(l_json.template get<Type>()));
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
+                return l_json.get<Type>();
               }});
 
-      results.emplace_back(l_fut.share());
+      l_future_data->data.emplace_back(std::make_tuple(num_to_enum<entt::entity>(l_id), std::move(l_fut)));
     }
+    list_install.emplace_back(
+        [l_future_data = std::move(l_future_data)](const registry_ptr& in) mutable {
+          return l_future_data->install_reg(in);
+        });
   }
   template <typename... Type>
   void select_com(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -227,7 +222,7 @@ class select::impl {
       l_size = raw.count.value();
       break;
     }
-    future_data<database> l_future_data{};
+    auto l_future_data = std::make_shared<future_data<database>>();
 
     for (auto& row : in_conn(sqlpp::select(sqlpp::all_of(l_entity))
                                  .from(l_entity)
@@ -248,16 +243,13 @@ class select::impl {
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
                 return l_database;
               }});
-      l_future_data.data.emplace_back(std::make_tuple(l_e, std::move(l_fut)));
+      l_future_data->data.emplace_back(std::make_tuple(l_e, std::move(l_fut)));
     }
-    std::vector<entt::entity> l_entt_list{};
-    std::vector<std::string> l_data_list{};
-    in_reg.insert<std::string>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
 
-    //    list_install.emplace_back(
-    //        [l_f = std::move(l_future_data)](const registry_ptr& in) mutable {
-    //          return l_f.install_reg(in);
-    //        });
+    list_install.emplace_back(
+        [l_future_data = std::move(l_future_data)](const registry_ptr& in) mutable {
+          return l_future_data->install_reg(in);
+        });
   }
 
   void set_user_ctx(entt::registry& in_reg) {
@@ -326,24 +318,22 @@ void select::th_run() {
       /// \brief 选中实体
       p_i->select_entt(*p_i->local_reg, *l_k_con);
       /// \brief 等待实体创建完成
-      ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
-        in_.get();
-      });
-      p_i->results.clear();
+
 #include "details/macro.h"
       /// @brief 选中组件
       p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
     }
     /// \brief 选中上下文
-    {
-      doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
+    doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
+
+    /// \brief 开始修改注册表
+
+    p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
+    for (auto&& l_f : p_i->list_install) {
+      l_f(p_i->local_reg);
     }
   }
 
-  /// \brief 等待所有的任务完成
-  ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
-    in_.get();
-  });
   /// \brief 开始设置用户上下文
   p_i->set_user_ctx(*p_i->local_reg);
 
