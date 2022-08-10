@@ -45,6 +45,7 @@ rules::rules()
     : p_i(std::make_unique<impl>()) {
 }
 void rules::work_weekdays(const rules::work_day_type& in_work_weekdays) {
+  p_i->work_weekdays = in_work_weekdays;
 }
 const rules::work_day_type& rules::work_weekdays() const {
   return p_i->work_weekdays;
