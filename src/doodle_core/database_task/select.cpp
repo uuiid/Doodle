@@ -40,24 +40,27 @@ namespace doodle::database_n {
 namespace sql = doodle_database;
 template <class T>
 struct future_data {
+  using id_map_type                                 = std::map<std::int64_t, entt::entity>;
+
   future_data()                                     = default;
   future_data(const future_data&)                   = delete;
   future_data& operator=(const future_data&)        = delete;
   future_data(future_data&& in) noexcept            = default;
   future_data& operator=(future_data&& in) noexcept = default;
 
-  std::vector<std::tuple<entt::entity, std::future<T>>> data{};
+  std::vector<std::tuple<std::int64_t, std::future<T>>> data{};
 
-  void install_reg(const registry_ptr& in_reg) {
+  void install_reg(const registry_ptr& in_reg, const id_map_type& in_map_type) {
     std::vector<entt::entity> l_entt_list{};
     std::vector<T> l_data_list{};
     std::vector<entt::entity> l_not_valid_entity;
-    for (auto&& [l_e, l_t] : data) {
-      if (!in_reg->valid(l_e)) {
-        l_not_valid_entity.emplace_back(l_e);
+    for (auto&& [l_id, l_t] : data) {
+      auto l_entt = in_map_type.at(l_id);
+      if (!in_reg->valid(l_entt)) {
+        l_not_valid_entity.emplace_back(l_entt);
         continue;
       }
-      l_entt_list.push_back(l_e);
+      l_entt_list.push_back(l_entt);
       l_data_list.emplace_back(std::move(l_t.get()));
     }
     if (!l_not_valid_entity.empty())
@@ -73,6 +76,7 @@ struct future_data {
 class select::impl {
  public:
   using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+  using id_map_type  = std::map<std::int64_t, entt::entity>;
   /**
    * 数据库的绝对路径
    */
@@ -87,9 +91,10 @@ class select::impl {
 
   registry_ptr local_reg{g_reg()};
 
-  std::vector<std::function<void(const registry_ptr& in_reg)>> list_install{};
+  std::vector<std::function<void(const registry_ptr&)>> list_install{};
 
   std::vector<entt::entity> create_entt{};
+  id_map_type id_map{};
 
 #pragma region "old compatible 兼容旧版函数"
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -201,11 +206,11 @@ class select::impl {
                 return l_json.get<Type>();
               }});
 
-      l_future_data->data.emplace_back(std::make_tuple(num_to_enum<entt::entity>(l_id), std::move(l_fut)));
+      l_future_data->data.emplace_back(std::make_tuple(boost::numeric_cast<std::int64_t>(l_id), std::move(l_fut)));
     }
     list_install.emplace_back(
-        [l_future_data = std::move(l_future_data)](const registry_ptr& in) mutable {
-          return l_future_data->install_reg(in);
+        [l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
+          return l_future_data->install_reg(in, id_map);
         });
   }
   template <typename... Type>
@@ -243,12 +248,12 @@ class select::impl {
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
                 return l_database;
               }});
-      l_future_data->data.emplace_back(std::make_tuple(l_e, std::move(l_fut)));
+      l_future_data->data.emplace_back(std::make_tuple(boost::numeric_cast<std::int64_t>(enum_to_num(l_e)), std::move(l_fut)));
     }
 
     list_install.emplace_back(
-        [l_future_data = std::move(l_future_data)](const registry_ptr& in) mutable {
-          return l_future_data->install_reg(in);
+        [l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
+          return l_future_data->install_reg(in, id_map);
         });
   }
 
@@ -327,16 +332,14 @@ void select::th_run() {
     doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
 
     /// \brief 开始修改注册表
-    entt::registry l_reg{};
     p_i->local_reg->clear();
-    ranges::for_each(p_i->create_entt, [this](entt::entity in) {
-      if (p_i->local_reg->valid(in)) {
-        p_i->local_reg->destroy(in);
-        p_i->local_reg->release(in);
-        DOODLE_LOG_INFO("释放需要的标识符 {}", in);
-      }
-    });
+
+    auto l_id = p_i->create_entt;
     p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
+    for (int l_j = 0; l_j < l_id.size(); ++l_j) {
+      p_i->id_map.emplace(boost::numeric_cast<std::int64_t>(enum_to_num(l_id[l_j])), p_i->create_entt[l_j]);
+    }
+
     for (auto&& l_f : p_i->list_install) {
       l_f(p_i->local_reg);
     }
