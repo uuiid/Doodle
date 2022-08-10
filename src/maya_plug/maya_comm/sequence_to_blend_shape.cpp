@@ -196,15 +196,17 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
   DOODLE_CHICK(l_s);
   DOODLE_LOG_INFO("获取网格体 {}", get_node_full_name(in_path.node()));
 
+  /// 获取变换
+  //  auto l_mat        = l_fn_transform.transformationMatrix(&l_s);
+
   /// \brief 冻结座标轴
   /// \brief 获取变换
   const auto l_tran = l_fn_transform.getTranslation(MSpace::kWorld, &l_s);
   MQuaternion l_rot{};
   l_fn_transform.getRotation(l_rot, MSpace::kTransform);
-  
   DOODLE_CHICK(l_s);
   /// \brief 清除变换
-  l_s = l_fn_transform.resetFromRestPosition();
+  l_s = l_fn_transform.setTranslation({}, MSpace::kWorld);
   DOODLE_CHICK(l_s);
   /// \brief 变换网格体
   for (MItMeshVertex l_it_mesh_vertex{std::as_const(in_path), MObject::kNullObj, &l_s};
