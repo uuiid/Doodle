@@ -327,7 +327,15 @@ void select::th_run() {
     doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
 
     /// \brief 开始修改注册表
-
+    entt::registry l_reg{};
+    p_i->local_reg->clear();
+    ranges::for_each(p_i->create_entt, [this](entt::entity in) {
+      if (p_i->local_reg->valid(in)) {
+        p_i->local_reg->destroy(in);
+        p_i->local_reg->release(in);
+        DOODLE_LOG_INFO("释放需要的标识符 {}", in);
+      }
+    });
     p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
     for (auto&& l_f : p_i->list_install) {
       l_f(p_i->local_reg);
