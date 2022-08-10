@@ -93,7 +93,7 @@ entt::handle assets_file::user_attr() const {
   } else {
     auto l_handle = p_i->ref_user.handle();
     if (!l_handle) {
-      if (!p_i->p_user.empty()) {
+      if (p_i->p_user.empty()) {
         p_i->p_user = "null";
       }
       DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);

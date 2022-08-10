@@ -133,7 +133,7 @@ void csv_export_widgets::render() {
     for (auto &&l_u : p_i->user_handle) {
       auto l_user_h      = l_u.second.front().get<assets_file>().user_attr();
       auto &l_ru         = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
-      auto &l_work_clock = l_user_h.emplace<business::work_clock>();
+      auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
       l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
                                 p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
