@@ -133,12 +133,15 @@ void csv_export_widgets::render() {
     for (auto &&l_u : p_i->user_handle) {
       auto l_user_h = l_u.second.front().get<assets_file>().user_attr();
       auto &l_ru    = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
+      auto l_tmp_u  = business::rules::get_default();
       if (l_ru.work_time().empty()) {
-        auto l_tmp_u     = business::rules::get_default();
         l_ru.work_time() = l_tmp_u.work_time();
         if (l_ru.work_weekdays().none()) {
           l_ru.work_weekdays(l_tmp_u.work_weekdays());
         }
+      }
+      if (l_ru.extra_work().empty() && l_ru.work_weekdays().none()) {
+        l_ru.work_weekdays(l_tmp_u.work_weekdays());
       }
       auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
