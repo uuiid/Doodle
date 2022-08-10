@@ -7,7 +7,7 @@
 
 namespace doodle::database_n::details {
 
-class com_data {
+class com_data : boost::less_than_comparable<com_data> {
  public:
   com_data(entt::entity in_entt,
            std::uint32_t in_id,
@@ -20,9 +20,6 @@ class com_data {
   std::uint32_t com_id{};
   std::string json_data{};
   bool operator<(const com_data& in_rhs) const;
-  bool operator>(const com_data& in_rhs) const;
-  bool operator<=(const com_data& in_rhs) const;
-  bool operator>=(const com_data& in_rhs) const;
 };
 
 }  // namespace doodle::database_n::details
