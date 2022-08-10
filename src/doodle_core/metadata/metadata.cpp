@@ -115,6 +115,15 @@ database::database(database &&in) noexcept            = default;
 
 database &database::operator=(database &&in) noexcept = default;
 
+database::database(const database &in) noexcept
+    : p_i(std::make_unique<impl>()) {
+  *p_i = *in.p_i;
+};
+database &database::operator=(const database &in) noexcept {
+  *p_i = *in.p_i;
+  return *this;
+};
+
 entt::handle database::find_by_uuid(const boost::uuids::uuid &in) {
   entt::handle l_r{};
   for (auto &&[e, d] : g_reg()->view<database>().each())

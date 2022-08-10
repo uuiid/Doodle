@@ -63,8 +63,8 @@ class DOODLE_CORE_EXPORT database
   database(database &&) noexcept;
   database &operator=(database &&) noexcept;
 
-  database(const database &) noexcept            = delete;
-  database &operator=(const database &) noexcept = delete;
+  database(const database &) noexcept;
+  database &operator=(const database &) noexcept;
 
   bool is_install() const;
 
