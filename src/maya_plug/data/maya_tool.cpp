@@ -161,9 +161,22 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   l_set.addMember(in_object);
 }
 std::string get_node_full_name(const MObject& in_obj) {
-  MFnDependencyNode l_node{};
-  DOODLE_CHICK(l_node.setObject(in_obj));
-  return d_str{l_node.absoluteName()};
+  if (in_obj.hasFn(MFn::kDagNode)) {
+    MStatus l_s{};
+    MFnDagNode l_dag_node{in_obj, &l_s};
+    DOODLE_CHICK(l_s);
+    MDagPath l_path{};
+    l_s = l_dag_node.getPath(l_path);
+    DOODLE_CHICK(l_s);
+    auto l_path_str = l_path.fullPathName(&l_s);
+    DOODLE_CHICK(l_s);
+    return d_str{l_path_str};
+  } else if (in_obj.hasFn(MFn::Type::kDependencyNode)) {
+    MFnDependencyNode l_node{};
+    DOODLE_CHICK(l_node.setObject(in_obj));
+    return d_str{l_node.absoluteName()};
+  }
+  return {};
 }
 std::string get_node_name(const MObject& in_obj) {
   MFnDependencyNode l_node{};
