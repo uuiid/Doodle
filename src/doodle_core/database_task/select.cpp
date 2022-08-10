@@ -61,14 +61,16 @@ struct future_data {
   void install_reg(const registry_ptr& in_reg) {
     std::vector<entt::entity> l_entt_list{};
     std::vector<T> l_data_list{};
+    std::vector<entt::entity> l_not_valid_entity;
     for (auto&& [l_e, l_t] : data) {
       if (!in_reg->valid(l_e)) {
-        DOODLE_LOG_WARN("无效的实体, {}", l_e);
+        l_not_valid_entity.emplace_back(l_e);
         continue;
       }
       l_entt_list.push_back(l_e);
       l_data_list.emplace_back(std::move(l_t.get()));
     }
+    DOODLE_LOG_WARN("无效的实体: {}", fmt::join(l_not_valid_entity, " "));
     chick_true<doodle_error>(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }),
                              DOODLE_LOC,
                              "无效实体");
