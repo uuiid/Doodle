@@ -18,6 +18,7 @@ target_sources(doodle_lib
         extract_subtitles_widgets.h
         long_time_tasks_widget.h
         make_link_widget.h
+        all_user_view.h
 
         PRIVATE
         edit_widget.cpp
@@ -33,5 +34,6 @@ target_sources(doodle_lib
         time_sequencer_widget.cpp
         screenshot_widget.cpp
         ue4_widget.cpp
+        all_user_view.cpp
         )
 
