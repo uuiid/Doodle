@@ -46,3 +46,19 @@ class user : boost::equality_comparable<user> {
 };
 
 }  // namespace doodle
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::user> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::user& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+    return formatter<std::string>::format(
+        in_.get_name(),
+        ctx);
+  }
+};
+}  // namespace fmt
