@@ -124,6 +124,7 @@ void assets_file::user_attr(const entt::handle& in_user) {
   if (in_user.any_of<database>())
     p_i->ref_user = database::ref_data{in_user.get<database>()};
   p_i->handle_cache = in_user;
+  p_i->p_name       = in_user.get<user>().get_name();
 }
 
 const std::uint64_t& assets_file::version_attr() const noexcept {
