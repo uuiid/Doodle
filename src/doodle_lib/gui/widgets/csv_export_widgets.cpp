@@ -131,8 +131,10 @@ void csv_export_widgets::render() {
     /// \brief 这里设置一下时钟规则
 
     for (auto &&l_u : p_i->user_handle) {
-      auto l_user_h      = l_u.second.front().get<assets_file>().user_attr();
-      auto &l_ru         = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
+      auto l_user_h = l_u.second.front().get<assets_file>().user_attr();
+      auto &l_ru    = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
+      if (l_ru.work_time().empty())
+        l_ru = business::rules::get_default();
       auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
       l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
@@ -189,12 +191,12 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
 }
 csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   chick_true<doodle_error>(in.any_of<assets_file>(), DOODLE_LOC, "缺失文件组件");
-  auto &k_ass                 = in.get<assets_file>();
+  auto &k_ass            = in.get<assets_file>();
   /// \brief 工作时间计算
-  auto &work_clock            = k_ass.user_attr().get<business::work_clock>();
-  auto project_root           = g_reg()->ctx().at<project>().p_path;
-  auto start_time             = get_user_up_time(in);
-  auto end_time               = in.get<time_point_wrap>();
+  auto &work_clock       = k_ass.user_attr().get<business::work_clock>();
+  auto project_root      = g_reg()->ctx().at<project>().p_path;
+  auto start_time        = get_user_up_time(in);
+  auto end_time          = in.get<time_point_wrap>();
   /// \brief 计算持续时间
   chrono::seconds k_time = chrono::floor<chrono::seconds>(work_clock(start_time, end_time));
 
