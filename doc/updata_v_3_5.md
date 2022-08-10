@@ -269,3 +269,4 @@ ue4人物残影蓝图
 - 兼容性id引用
 - 修正资产测试
 - 针对性董修改 
+- 修正错误的函数 void rules::work_weekdays(const rules::work_day_type& in_work_weekdays)
