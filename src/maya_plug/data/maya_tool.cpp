@@ -163,11 +163,7 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
 std::string get_node_full_name(const MObject& in_obj) {
   if (in_obj.hasFn(MFn::kDagNode)) {
     MStatus l_s{};
-    MFnDagNode l_dag_node{in_obj, &l_s};
-    DOODLE_CHICK(l_s);
-    MDagPath l_path{};
-    l_s = l_dag_node.getPath(l_path);
-    DOODLE_CHICK(l_s);
+    auto l_path     = get_dag_path(in_obj);
     auto l_path_str = l_path.fullPathName(&l_s);
     DOODLE_CHICK(l_s);
     return d_str{l_path_str};
