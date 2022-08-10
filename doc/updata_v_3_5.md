@@ -256,7 +256,7 @@ ue4人物残影蓝图
 
 - 添加设置user功能
 
-## 版本3.5.88 - 96
+## 版本3.5.88 - 99
 
 - 修正user 默认引用
 
@@ -271,3 +271,4 @@ ue4人物残影蓝图
 - 针对性董修改 
 - 修正错误的函数 void rules::work_weekdays(const rules::work_day_type& in_work_weekdays)
 - 修正user高级设置 
+- 修正设置user用户
