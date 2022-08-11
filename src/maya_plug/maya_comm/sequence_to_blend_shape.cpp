@@ -278,7 +278,7 @@ void sequence_to_blend_shape::create_anim() {
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
-    l_value_weight.append(boost::numeric_cast<std::double_t>(i - p_i->startFrame_p));
+    l_value_weight.append(boost::numeric_cast<std::double_t>(1 / (i - p_i->startFrame_p)));
   }
   aim.create(plug_weight[0], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
   l_s = aim.addKeys(&l_time, &l_value_weight);
