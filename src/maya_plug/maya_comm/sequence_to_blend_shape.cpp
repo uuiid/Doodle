@@ -399,8 +399,8 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   l_s = l_selection_list.getDependNode(0, p_i->blend_shape_obj);
   DOODLE_CHICK(l_s);
 
-  for (auto&& i : p_i->create_mesh_list) {
-    l_s = MGlobal::deleteNode(i);
+  for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
+    l_s = MGlobal::deleteNode(p_i->create_mesh_list[l_i]);
     DOODLE_CHICK(l_s);
   }
 }
