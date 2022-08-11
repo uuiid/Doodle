@@ -204,7 +204,11 @@ void sequence_to_blend_shape::create_mesh() {
     auto l_bind_box = l_mesh.boundingBox(&l_s);
     DOODLE_CHICK(l_s);
 
-    auto l_tran   = l_transform.transformationMatrix(&l_s);
+    l_s = l_transform.setObject(get_dag_path(l_path.transform(&l_s)));
+    DOODLE_CHICK(l_s);
+    auto l_tran = l_transform.transformationMatrix(&l_s);
+    DOODLE_CHICK(l_s);
+    //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
     auto l_center = l_bind_box.center();
     l_center      = l_center * l_tran;
