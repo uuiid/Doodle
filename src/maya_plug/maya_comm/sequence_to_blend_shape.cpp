@@ -173,9 +173,9 @@ void sequence_to_blend_shape::create_mesh() {
     auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
     p_i->bind_path = get_dag_path(l_create_mesh_obj);
-    center_pivot(p_i->bind_path);
+    //    center_pivot(p_i->bind_path);
 
-    p_i->bind_obj = l_create_mesh_obj;
+    p_i->bind_obj  = l_create_mesh_obj;
     DOODLE_CHICK(l_s);
     p_i->bind_matrix = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
@@ -209,26 +209,26 @@ void sequence_to_blend_shape::create_mesh() {
     DOODLE_CHICK(l_s);
     //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
-    auto l_center = l_bind_box.center();
-    l_center      = (l_center * l_tran) - p_i->bind_center;
-    l_s           = p_i->create_point_list.append(l_center);
+    auto l_center   = l_bind_box.center();
+    auto l_center_1 = (l_center * l_tran) - p_i->bind_center;
+    l_s             = p_i->create_point_list.append(l_center_1);
     DOODLE_CHICK(l_s);
 
     /// \brief 冻结网格数据
     auto l_path_tmp = get_dag_path(l_create_mesh_obj);
-    center_pivot(l_path_tmp, p_i->bind_matrix, p_i->bind_center);
+    //    center_pivot(l_path_tmp);
 
-    l_s = p_i->create_mesh_list.append(l_create_mesh_obj);
+    l_s             = p_i->create_mesh_list.append(l_create_mesh_obj);
     DOODLE_CHICK(l_s);
 
     /// \brief 旋转网格数据
-    l_path_tmp = get_dag_path(l_path_tmp.transform(&l_s));
-    DOODLE_CHICK(l_s);
-    l_s = l_fn_transform_dub.setObject(l_path_tmp);
-    DOODLE_CHICK(l_s);
-
-    l_s = l_fn_transform_dub.setTranslation(l_center, MSpace::kWorld);
-    DOODLE_CHICK(l_s);
+    //    l_path_tmp = get_dag_path(l_path_tmp.transform(&l_s));
+    //    DOODLE_CHICK(l_s);
+    //    l_s = l_fn_transform_dub.setObject(l_path_tmp);
+    //    DOODLE_CHICK(l_s);
+    //
+    //    l_s = l_fn_transform_dub.setTranslation(l_center, MSpace::kWorld);
+    //    DOODLE_CHICK(l_s);
   }
 }
 void sequence_to_blend_shape::create_anim() {
@@ -266,16 +266,16 @@ void sequence_to_blend_shape::create_anim() {
   l_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
   DOODLE_CHICK(l_s);
 
-  DOODLE_ADD_ANM_set_anm(x);
-  DOODLE_ADD_ANM_set_anm(y);
-  DOODLE_ADD_ANM_set_anm(z);
+//  DOODLE_ADD_ANM_set_anm(x);
+//  DOODLE_ADD_ANM_set_anm(y);
+//  DOODLE_ADD_ANM_set_anm(z);
 #undef DOODLE_ADD_ANM_declaration
 #undef DOODLE_ADD_ANM_set
 #undef DOODLE_ADD_ANM_set_anm
   MPlug plug_weight = get_plug(p_i->blend_shape_obj, "weight");
   MDoubleArray l_value_weight{};
 
-  const auto l_len = boost::numeric_cast<std::double_t>(p_i->endFrame_p - p_i->startFrame_p + 1);
+  const auto l_len = boost::numeric_cast<std::double_t>(p_i->endFrame_p - p_i->startFrame_p);
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
