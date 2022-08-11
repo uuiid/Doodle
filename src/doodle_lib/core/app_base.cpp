@@ -42,10 +42,6 @@ bool app_command_base::chick_authorization() {
   if (!exists(l_p)) {
     l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
   }
-  if (!exists(l_p)) {
-    DOODLE_LOG_ERROR("无法找到授权文件")
-    return false;
-  }
 
   return chick_authorization(l_p);
 }
@@ -66,6 +62,11 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
                                      DOODLE_LOC,
                                      "传入路径不是文件或者不存在");
           });
+  if (!exists(in_path)) {
+    DOODLE_LOG_ERROR("无法找到授权文件")
+    return false;
+  }
+
   FSys::ifstream l_ifstream{in_path};
 
   std::string ciphertext{std::istreambuf_iterator(l_ifstream), std::istreambuf_iterator<char>()};
