@@ -141,7 +141,6 @@ MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
   this->run_blend_shape_comm();
   this->create_anim();
-  //  DOODLE_LOG_INFO("bind_center {} create_point_list {}", p_i->bind_center, p_i->create_point_list);
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -256,7 +255,7 @@ void sequence_to_blend_shape::create_anim() {
        ++i) {
 #define DOODLE_ADD_ANM_set(axis) \
   l_value_tran_##axis.append(l_point.axis);
-    auto l_point = p_i->create_point_list[i];
+    auto l_point = p_i->create_point_list[i - p_i->startFrame_p];
     l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
     DOODLE_ADD_ANM_set(x);
     DOODLE_ADD_ANM_set(y);
@@ -276,13 +275,12 @@ void sequence_to_blend_shape::create_anim() {
   MPlug plug_weight = get_plug(p_i->blend_shape_obj, "weight");
   MDoubleArray l_value_weight{};
 
-  const auto l_len = boost::numeric_cast<std::double_t>(p_i->endFrame_p - p_i->startFrame_p);
+  const auto l_len = boost::numeric_cast<std::double_t>(p_i->endFrame_p - p_i->startFrame_p + 1);
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
     auto l_denominator = i - p_i->startFrame_p;
-
-    l_value_weight.append(boost::numeric_cast<std::double_t>(l_len == 0 ? (l_denominator / l_len) : 0));
+    l_value_weight.append(boost::numeric_cast<std::double_t>(l_len != 0 ? (l_denominator / l_len) : 0));
   }
   aim.create(plug_weight[0], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
   l_s = aim.addKeys(&l_time, &l_value_weight);
