@@ -275,12 +275,14 @@ void sequence_to_blend_shape::create_anim() {
 #undef DOODLE_ADD_ANM_set_anm
   MPlug plug_weight = get_plug(p_i->blend_shape_obj, "weight");
   MDoubleArray l_value_weight{};
+
+  const auto l_len = boost::numeric_cast<std::double_t>(p_i->endFrame_p - p_i->startFrame_p);
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
     auto l_denominator = i - p_i->startFrame_p;
 
-    l_value_weight.append(boost::numeric_cast<std::double_t>(l_denominator ? (1 / l_denominator) : 0));
+    l_value_weight.append(boost::numeric_cast<std::double_t>(l_len ? (l_denominator / l_len) : 0));
   }
   aim.create(plug_weight[0], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
   l_s = aim.addKeys(&l_time, &l_value_weight);
