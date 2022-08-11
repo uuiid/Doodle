@@ -55,6 +55,7 @@ struct future_data {
     std::set<entt::entity> l_entt_set;
     std::vector<T> l_data_list{};
     std::vector<entt::entity> l_not_valid_entity;
+    std::vector<entt::entity> l_duplicate_entity;
     for (auto&& [l_id, l_t] : data) {
       /// \brief 保证id 具有对应的实体
       if (in_map_type.find(l_id) == in_map_type.end()) {
@@ -71,11 +72,13 @@ struct future_data {
       if (l_entt_set.find(l_entt) == l_entt_set.end()) {
         l_entt_list.push_back(l_entt);
         l_data_list.emplace_back(std::move(l_t.get()));
+      } else {
+        l_duplicate_entity.emplace_back(l_entt);
       }
       l_entt_set.emplace(l_entt);
     }
     if (!l_not_valid_entity.empty())
-      DOODLE_LOG_WARN("{} 无效的实体: {}", typeid(T).name(), fmt::join(l_not_valid_entity, " "));
+      DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(T).name(), l_not_valid_entity, l_duplicate_entity);
     chick_true<doodle_error>(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }),
                              DOODLE_LOC,
                              "无效实体");
