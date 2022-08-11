@@ -139,9 +139,9 @@ MStatus sequence_to_blend_shape::undoIt() {
 }
 MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
-  //  this->run_blend_shape_comm();
-  //  this->create_anim();
-  DOODLE_LOG_INFO("bind_center {} create_point_list {}", p_i->bind_center, p_i->create_point_list);
+  this->run_blend_shape_comm();
+  this->create_anim();
+  //  DOODLE_LOG_INFO("bind_center {} create_point_list {}", p_i->bind_center, p_i->create_point_list);
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -256,7 +256,7 @@ void sequence_to_blend_shape::create_anim() {
        ++i) {
 #define DOODLE_ADD_ANM_set(axis) \
   l_value_tran_##axis.append(l_point.axis);
-    auto l_point = p_i->create_point_list[i] - p_i->bind_center;
+    auto l_point = p_i->create_point_list[i];
     l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
     DOODLE_ADD_ANM_set(x);
     DOODLE_ADD_ANM_set(y);
