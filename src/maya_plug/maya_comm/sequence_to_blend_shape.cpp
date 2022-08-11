@@ -139,9 +139,10 @@ MStatus sequence_to_blend_shape::undoIt() {
 }
 MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
-  this->run_blend_shape_comm();
-  this->create_anim();
-  return MStatus();
+  //  this->run_blend_shape_comm();
+  //  this->create_anim();
+  DOODLE_LOG_INFO("bind_center {} create_point_list {}", p_i->bind_center, p_i->create_point_list);
+  return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
   return false;
@@ -185,6 +186,8 @@ void sequence_to_blend_shape::create_mesh() {
     add_mat(p_i->bind_obj, l_mesh_obj);
   }
 
+  MFnTransform l_fn_transform_dub{};
+
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
@@ -197,17 +200,29 @@ void sequence_to_blend_shape::create_mesh() {
 
     auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
+    /// \brief 获取网格中心
+    auto l_bind_box = l_mesh.boundingBox(&l_s);
+    DOODLE_CHICK(l_s);
+
+    auto l_tran   = l_transform.transformationMatrix(&l_s);
+
+    auto l_center = l_bind_box.center();
+    l_center      = l_center * l_tran;
+    l_s           = p_i->create_point_list.append(l_center);
+    DOODLE_CHICK(l_s);
+
+    /// \brief 冻结网格数据
     auto l_path_tmp = get_dag_path(l_create_mesh_obj);
     center_pivot(l_path_tmp, p_i->bind_matrix, p_i->bind_center);
 
     l_s = p_i->create_mesh_list.append(l_create_mesh_obj);
     DOODLE_CHICK(l_s);
 
-    auto l_bind_box = l_mesh.boundingBox(&l_s);
+    /// \brief 旋转网格数据
+    l_s = l_fn_transform_dub.setObject(l_path_tmp);
     DOODLE_CHICK(l_s);
 
-    auto l_center = l_bind_box.center();
-    l_s           = p_i->create_point_list.append(l_center);
+    l_s = l_fn_transform_dub.setTranslation(l_center, MSpace::kWorld);
     DOODLE_CHICK(l_s);
   }
 }
@@ -259,7 +274,7 @@ void sequence_to_blend_shape::create_anim() {
        ++i) {
     l_value_weight.append(boost::numeric_cast<std::double_t>(i - p_i->startFrame_p));
   }
-  aim.create(plug_weight, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+  aim.create(plug_weight[0], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
   l_s = aim.addKeys(&l_time, &l_value_weight);
   DOODLE_CHICK(l_s);
   l_s = p_i->dg_modidier.doIt();
