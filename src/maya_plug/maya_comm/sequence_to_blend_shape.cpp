@@ -180,7 +180,7 @@ void sequence_to_blend_shape::create_mesh() {
     DOODLE_CHICK(l_s);
     p_i->bind_matrix = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
-    p_i->bind_center = l_mesh.boundingBox(&l_s).center();
+    p_i->bind_center = l_mesh.boundingBox(&l_s).center() * p_i->bind_matrix;
     DOODLE_CHICK(l_s);
 
     add_mat(p_i->bind_obj, l_mesh_obj);
@@ -211,7 +211,7 @@ void sequence_to_blend_shape::create_mesh() {
     //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
     auto l_center = l_bind_box.center();
-    l_center      = l_center * l_tran;
+    l_center      = (l_center * l_tran) - p_i->bind_center;
     l_s           = p_i->create_point_list.append(l_center);
     DOODLE_CHICK(l_s);
 
@@ -223,6 +223,8 @@ void sequence_to_blend_shape::create_mesh() {
     DOODLE_CHICK(l_s);
 
     /// \brief 旋转网格数据
+    l_path_tmp = get_dag_path(l_path_tmp.transform(&l_s));
+    DOODLE_CHICK(l_s);
     l_s = l_fn_transform_dub.setObject(l_path_tmp);
     DOODLE_CHICK(l_s);
 
