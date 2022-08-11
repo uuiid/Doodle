@@ -93,7 +93,7 @@ void user::generate_new_user_id() {
   l_cache.uuid    = core_set::getSet().get_uuid();
   auto l_create_h = make_handle();
   l_create_h.emplace<user>(g_reg()->ctx().at<user>());
-  l_create_h.emplace<business::rules>(g_reg()->ctx().at<business::rules>());
+  l_create_h.emplace<business::rules>(business::rules::get_default());
   l_cache.uuid        = l_create_h.emplace<database>().uuid();
   l_cache.user_handle = l_create_h;
 
