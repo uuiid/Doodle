@@ -54,12 +54,14 @@ void from_json(const nlohmann::json& j, assets_file& p) {
     j.at("user_ref").get_to(p.p_i->ref_user);
 }
 
-assets_file::assets_file() : p_i(std::make_unique<impl>()){};
+assets_file::assets_file()
+    : p_i(std::make_unique<impl>()){};
 
 assets_file::assets_file(const FSys::path& in_path)
     : assets_file() {
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
+  user_attr(user::get_current_handle());
 }
 
 assets_file::assets_file(const FSys::path& in_path,
@@ -70,6 +72,7 @@ assets_file::assets_file(const FSys::path& in_path,
   p_i->p_name         = std::move(in_name);
   p_i->p_version      = in_version;
   p_i->organization_p = core_set::getSet().organization_name;
+  user_attr(user::get_current_handle());
 }
 
 std::string assets_file::str() const {
