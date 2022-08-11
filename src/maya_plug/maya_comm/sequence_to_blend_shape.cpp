@@ -68,14 +68,15 @@ class sequence_to_blend_shape::impl {
 
   MSelectionList select_list;
 
-  MObject bind_obj;
-
   MObjectArray create_mesh_list{};
   MPointArray create_point_list{};
 
+  MObject bind_obj;
+  MDagPath bind_path;
+  MPoint bind_center;
+  MMatrix bind_matrix;
   MObject blend_shape_obj;
-  MPoint blend_shape_center;
-  MMatrix blend_shape_matrix;
+  MDagModifier dg_modidier;
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -171,14 +172,14 @@ void sequence_to_blend_shape::create_mesh() {
 
     auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
-    auto l_path_tmp = get_dag_path(l_create_mesh_obj);
-    center_pivot(l_path_tmp);
+    p_i->bind_path = get_dag_path(l_create_mesh_obj);
+    center_pivot(p_i->bind_path);
 
     p_i->bind_obj = l_create_mesh_obj;
     DOODLE_CHICK(l_s);
-    p_i->blend_shape_matrix = l_transform.transformationMatrix(&l_s);
+    p_i->bind_matrix = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
-    p_i->blend_shape_center = l_mesh.boundingBox(&l_s).center();
+    p_i->bind_center = l_mesh.boundingBox(&l_s).center();
     DOODLE_CHICK(l_s);
 
     add_mat(p_i->bind_obj, l_mesh_obj);
@@ -197,7 +198,7 @@ void sequence_to_blend_shape::create_mesh() {
     auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
     auto l_path_tmp = get_dag_path(l_create_mesh_obj);
-    center_pivot(l_path_tmp, p_i->blend_shape_matrix, p_i->blend_shape_center);
+    center_pivot(l_path_tmp, p_i->bind_matrix, p_i->bind_center);
 
     l_s = p_i->create_mesh_list.append(l_create_mesh_obj);
     DOODLE_CHICK(l_s);
@@ -211,6 +212,58 @@ void sequence_to_blend_shape::create_mesh() {
   }
 }
 void sequence_to_blend_shape::create_anim() {
+  MStatus l_s{};
+  MFnAnimCurve aim{};
+  /// \brief 创建 tran 变形
+
+  MPlug plugtx = get_plug(p_i->bind_obj, "tx");
+  MPlug plugty = get_plug(p_i->bind_obj, "ty");
+  MPlug plugtz = get_plug(p_i->bind_obj, "tz");
+  MPlug plugrx = get_plug(p_i->bind_obj, "rx");
+  MPlug plugry = get_plug(p_i->bind_obj, "ry");
+  MPlug plugrz = get_plug(p_i->bind_obj, "rz");
+  MTimeArray l_time{};
+#define DOODLE_ADD_ANM_declaration(axis) \
+  MDoubleArray l_value_tran_##axis{};
+
+  DOODLE_ADD_ANM_declaration(x);
+  DOODLE_ADD_ANM_declaration(y);
+  DOODLE_ADD_ANM_declaration(z);
+
+  for (auto i = p_i->startFrame_p;
+       i <= p_i->endFrame_p;
+       ++i) {
+#define DOODLE_ADD_ANM_set(axis) \
+  l_value_tran_##axis.append(l_point.axis);
+    auto l_point = p_i->create_point_list[i] - p_i->bind_center;
+    l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
+    DOODLE_ADD_ANM_set(x);
+    DOODLE_ADD_ANM_set(y);
+    DOODLE_ADD_ANM_set(z);
+  }
+#define DOODLE_ADD_ANM_set_anm(axis)                                                     \
+  aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
+  l_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
+  DOODLE_CHICK(l_s);
+
+  DOODLE_ADD_ANM_set_anm(x);
+  DOODLE_ADD_ANM_set_anm(y);
+  DOODLE_ADD_ANM_set_anm(z);
+#undef DOODLE_ADD_ANM_declaration
+#undef DOODLE_ADD_ANM_set
+#undef DOODLE_ADD_ANM_set_anm
+  MPlug plug_weight = get_plug(p_i->blend_shape_obj, "weight");
+  MDoubleArray l_value_weight{};
+  for (auto i = p_i->startFrame_p;
+       i <= p_i->endFrame_p;
+       ++i) {
+    l_value_weight.append(boost::numeric_cast<std::double_t>(i - p_i->startFrame_p));
+  }
+  aim.create(plug_weight, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+  l_s = aim.addKeys(&l_time, &l_value_weight);
+  DOODLE_CHICK(l_s);
+  l_s = p_i->dg_modidier.doIt();
+  DOODLE_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
@@ -324,9 +377,10 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   l_s = l_selection_list.getDependNode(0, p_i->blend_shape_obj);
   DOODLE_CHICK(l_s);
 
-  //  for (auto&& i : p_i->create_mesh_list) {
-  //    MGlobal::deleteNode(i);
-  //  }
+  for (auto&& i : p_i->create_mesh_list) {
+    l_s = MGlobal::deleteNode(i);
+    DOODLE_CHICK(l_s);
+  }
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
