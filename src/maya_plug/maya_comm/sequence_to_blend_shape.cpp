@@ -362,8 +362,7 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path, const MMatrix& in_
   /// \brief 居中座标轴
   MFnMesh l_mesh{std::as_const(in_path), &l_s};
   DOODLE_CHICK(l_s);
-  auto l_box = l_mesh.boundingBox(&l_s);
-  DOODLE_CHICK(l_s);
+
   l_s = l_fn_transform.setScalePivot(in_point, MSpace::kWorld, false);
   DOODLE_CHICK(l_s);
   l_s = l_fn_transform.setRotatePivot(in_point, MSpace::kWorld, false);
