@@ -26,19 +26,22 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   MPlug l_plug{};
 
   MFnDependencyNode l_node{in_node, &k_s};
+  DOODLE_CHICK(k_s);
   try {
     l_plug = l_node.findPlug(d_str{in_name}, false, &k_s);
 
-    if (!k_s) {
+    if (!k_s) {  /// \brief 出错后再次寻找
       DOODLE_LOG_WARN(k_s.errorString());
-    }
-
-    l_plug = l_node.findPlug(d_str{in_name}, true, &k_s);
-    if (!k_s) {
-      DOODLE_LOG_WARN(k_s.errorString());
+      l_plug = l_node.findPlug(d_str{in_name}, true, &k_s);
+      if (!k_s) {
+        DOODLE_LOG_WARN(k_s.errorString());
+      }
     }
   } catch (const maya_InvalidParameter& error) {
     DOODLE_LOG_INFO("没有在这个节点中找到属性 {}", in_name);
+  }
+  if (!l_plug.isNull()) {
+    return l_plug;
   }
 
   if (in_node.hasFn(MFn::kDagNode)) {
