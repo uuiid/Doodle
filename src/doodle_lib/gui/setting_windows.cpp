@@ -95,6 +95,7 @@ void setting_windows::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->new_user_id)) {
     user::generate_new_user_id();
+    p_i->user_uuid = fmt::format("用户id: {}", user::get_current_handle().get<database>().uuid());
   }
 
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
