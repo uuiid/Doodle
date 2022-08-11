@@ -28,6 +28,14 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
    * @param in_path
    */
   static void center_pivot(MDagPath& in_path);
+  /**
+   * @brief 使用传入的矩阵将座标轴重置在传入的点中
+   *    @li 会对做标进行归零处理
+   *    @li 在试图中体现为归零座标轴, 并将座标轴移动至传入点
+   * @param in_path 变换的路径
+   * @param in_matrix 变换网格的矩阵
+   * @param in_point 传入的点
+   */
   static void center_pivot(MDagPath& in_path, const MMatrix& in_matrix, const MPoint& in_point);
 
  public:

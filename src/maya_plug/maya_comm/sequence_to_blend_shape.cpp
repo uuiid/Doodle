@@ -150,6 +150,8 @@ void sequence_to_blend_shape::create_mesh() {
   MStatus l_s{};
   l_s = p_i->select_list.getDagPath(0, l_path);
   DOODLE_CHICK(l_s);
+  MFnTransform l_transform{l_path, &l_s};
+  DOODLE_CHICK(l_s);
 
   l_s = l_path.extendToShape();
   DOODLE_CHICK(l_s);
@@ -173,7 +175,6 @@ void sequence_to_blend_shape::create_mesh() {
     center_pivot(l_path_tmp);
 
     p_i->bind_obj = l_create_mesh_obj;
-    MFnTransform l_transform{l_path, &l_s};
     DOODLE_CHICK(l_s);
     p_i->blend_shape_matrix = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
@@ -323,9 +324,9 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   l_s = l_selection_list.getDependNode(0, p_i->blend_shape_obj);
   DOODLE_CHICK(l_s);
 
-  for (auto&& i : p_i->create_mesh_list) {
-    MGlobal::deleteNode(i);
-  }
+  //  for (auto&& i : p_i->create_mesh_list) {
+  //    MGlobal::deleteNode(i);
+  //  }
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
