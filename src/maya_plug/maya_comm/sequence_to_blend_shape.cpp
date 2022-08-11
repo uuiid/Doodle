@@ -386,7 +386,7 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
     l_names.emplace_back(get_node_full_name(p_i->create_mesh_list[l_i]));
   }
 
-  auto l_comm = fmt::format("blendShape -ib {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_obj));
+  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_obj));
   //  DOODLE_LOG_INFO("run {}", l_comm);
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
