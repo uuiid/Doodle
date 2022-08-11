@@ -140,7 +140,7 @@ MStatus sequence_to_blend_shape::undoIt() {
 MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
   this->run_blend_shape_comm();
-  //  this->create_anim();
+  this->create_anim();
   return MStatus();
 }
 bool sequence_to_blend_shape::isUndoable() const {
