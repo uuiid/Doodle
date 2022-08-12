@@ -52,6 +52,7 @@ MSyntax syntax() {
 
   /// \brief 选中的物体
   syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList, 1);
+  syntax.useSelectionAsDefault(true);
 
   syntax.enableEdit(false);
   syntax.enableQuery(false);
