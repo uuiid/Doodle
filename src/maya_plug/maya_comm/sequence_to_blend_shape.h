@@ -20,15 +20,16 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
   void get_arg(const MArgList& in_arg);
 
   void create_mesh();
-  void create_mesh(std::size_t in_index);
   void create_anim();
   void run_blend_shape_comm();
+  void add_to_parent();
 
   /**
    * @brief 将网格居中在mesh中心
    * @param in_path
    */
-  static void center_pivot(MDagPath& in_path);
+  static void
+  center_pivot(MDagPath& in_path);
   /**
    * @brief 使用传入的矩阵将座标轴重置在传入的点中
    *    @li 会对做标进行归零处理

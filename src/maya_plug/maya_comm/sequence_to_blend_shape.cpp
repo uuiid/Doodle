@@ -23,6 +23,7 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MQuaternion.h>
 #include <maya/MDagPath.h>
+#include <maya/MNamespace.h>
 #include <maya/MTransformationMatrix.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
@@ -99,22 +100,36 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
     MTime l_value{};
     k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::startFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
-    p_i->startFrame_p = l_value.value();
+    p_i->startFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
-    p_i->startFrame_p = MAnimControl::minTime().value();
+    p_i->startFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::minTime().value());
   }
   if (k_prase.isFlagSet(sequence_to_blend_shape_ns::endFrame_f, &k_s)) {
     DOODLE_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::endFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
-    p_i->endFrame_p = l_value.value();
+    p_i->endFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
-    p_i->endFrame_p = MAnimControl::maxTime().value();
+    p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
   }
   chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
                            DOODLE_LOC, "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
+
+  /// \brief 获取选择物体
+  k_s = k_prase.getObjects(p_i->select_list);
+  DOODLE_CHICK(k_s);
+  chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
+
+  /// \brief 生成绑定物体path
+  for (auto i = 0;
+       i < p_i->select_list.length();
+       ++i) {
+    impl::current_ctx l_ctx{};
+    p_i->select_list.getDagPath(i, l_ctx.select_path);
+    p_i->ctx.emplace_back(l_ctx);
+  }
 
   if (k_prase.isFlagSet(sequence_to_blend_shape_ns::parent_f, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -127,19 +142,18 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
 
     k_s = l_select.getDagPath(0, p_i->parent_tran);
     DOODLE_CHICK(k_s);
-  }
-
-  k_s = k_prase.getObjects(p_i->select_list);
-  DOODLE_CHICK(k_s);
-  chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
-
-  /// \brief 生成绑定物体path
-  for (auto i = 0;
-       i < p_i->select_list.length();
-       ++i) {
-    impl::current_ctx l_ctx{};
-    p_i->select_list.getDagPath(i, l_ctx.select_path);
-    p_i->ctx.emplace_back(l_ctx);
+  } else {  /// \brief 从本身的名称空间中搜索
+    auto l_namespace = MNamespace::getNamespaceFromName(d_str{get_node_full_name(p_i->ctx.front().select_path)}, &k_s);
+    MSelectionList l_selection_list{};
+    try {
+      auto l_select_str = fmt::format("{}:*UE4", l_namespace);
+      k_s               = l_selection_list.add(d_str{l_select_str}, true);
+      DOODLE_CHICK(k_s);
+      k_s = l_selection_list.getDagPath(0, p_i->parent_tran);
+      DOODLE_CHICK(k_s);
+    } catch (const maya_InvalidParameter& in) {
+      DOODLE_LOG_INFO("没有找到ue4组 {}", in.what());
+    }
   }
 }
 
@@ -154,6 +168,7 @@ MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
   this->run_blend_shape_comm();
   this->create_anim();
+  this->add_to_parent();
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -236,7 +251,16 @@ void sequence_to_blend_shape::create_mesh() {
     }
   }
 }
-
+void sequence_to_blend_shape::add_to_parent() {
+  MStatus l_s{};
+  if (p_i->parent_tran.isValid(&l_s)) {
+    DOODLE_CHICK(l_s);
+    MFnDagNode l_dag_node{};
+    for (auto&& ctx : p_i->ctx) {
+      add_child(p_i->parent_tran, ctx.bind_path);
+    }
+  }
+}
 void sequence_to_blend_shape::create_anim() {
   MStatus l_s{};
 
