@@ -342,9 +342,8 @@ bool reference_file::has_sim_cloth() {
 bool reference_file::set_namespace(const std::string &in_namespace) {
   chick_true<doodle_error>(!in_namespace.empty(), DOODLE_LOC, "空名称空间");
   file_namespace = in_namespace.substr(1);
-  auto k_r       = find_ref_node();
-  k_r &= has_ue4_group();
-  return k_r;
+  find_ref_node();
+  return has_ue4_group();
 }
 bool reference_file::find_ref_node() {
   chick_mobject();
@@ -362,8 +361,10 @@ bool reference_file::find_ref_node() {
       p_m_object = refIter.thisNode();
     }
   }
-  if (p_m_object.isNull())
+  if (p_m_object.isNull()) {
+    DOODLE_LOG_INFO("名称空间 {} 没有引用文件", file_namespace);
     return false;
+  }
 
   MFnReference k_ref{p_m_object, &k_s};
   DOODLE_CHICK(k_s);
