@@ -134,7 +134,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       //        std::unique_ptr<wchar_t[]> varbuf{new wchar_t[l_len]};
       //
       //        UINT cch = DragQueryFile(hdrop, i, varbuf.get(), l_len);
-      //        doodle::chick_true<doodle::doodle_error>(cch != 0, DOODLE_LOC, "拖拽文件获取失败");
+      //        doodle::chick_true<doodle::doodle_error>(cch != 0,  "拖拽文件获取失败");
       //        l_vector.emplace_back(varbuf.get());
       //      }
       //      DragFinish(hdrop);

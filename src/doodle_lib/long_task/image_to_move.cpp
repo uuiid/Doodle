@@ -63,11 +63,11 @@ class image_to_move::impl {
 
 // image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
 //     : p_i(std::make_unique<impl>()) {
-//   chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-//   chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
+//   chick_true<doodle_error>(in_handle.any_of<process_message>(),  "缺失进度指示结构");
+//   chick_true<doodle_error>(in_handle.any_of<FSys::path>(),  "缺失输出文件路径");
 //   p_i->p_out_path = in_handle.get<FSys::path>();
 //   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
-//     chick_true<doodle_error>(in.any_of<image_file_attribute>(), DOODLE_LOC, "缺失文件属性");
+//     chick_true<doodle_error>(in.any_of<image_file_attribute>(),  "缺失文件属性");
 //   });
 //   p_i->p_h = in_handle;
 //   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
@@ -75,23 +75,23 @@ class image_to_move::impl {
 //                    return in.get<image_file_attribute>();
 //                  });
 //   std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
-//     chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
+//     chick_true<doodle_error>(exists(in.file_path),  "找不到路径指向的文件");
 //   });
-//   chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
+//   chick_true<doodle_error>(!p_i->p_image.empty(),  "没有传入任何的图片");
 // }
 image_to_move::image_to_move(const entt::handle &in_handle,
                              const std::vector<image_file_attribute> &in_vector)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.any_of<process_message>(), DOODLE_LOC, "缺失进度指示结构");
-  chick_true<doodle_error>(in_handle.any_of<FSys::path>(), DOODLE_LOC, "缺失输出文件路径");
+  chick_true<doodle_error>(in_handle.any_of<process_message>(),  "缺失进度指示结构");
+  chick_true<doodle_error>(in_handle.any_of<FSys::path>(),  "缺失输出文件路径");
   p_i->p_out_path = in_handle.get<FSys::path>();
   std::for_each(in_vector.begin(), in_vector.end(), [](const image_file_attribute &in) {
-    chick_true<doodle_error>(exists(in.file_path), DOODLE_LOC, "找不到路径指向的文件");
+    chick_true<doodle_error>(exists(in.file_path),  "找不到路径指向的文件");
   });
   p_i->p_image = in_vector;
   p_i->p_h     = in_handle;
 
-  chick_true<doodle_error>(!p_i->p_image.empty(), DOODLE_LOC, "没有传入任何的图片");
+  chick_true<doodle_error>(!p_i->p_image.empty(),  "没有传入任何的图片");
 }
 
 image_to_move::image_to_move(const entt::handle &in_handle,
@@ -157,7 +157,7 @@ void image_to_move::init() {
     p_i->p_out_path /= fmt::format(
         "{}.mp4", core_set::getSet().get_uuid());
   } else
-    chick_true<doodle_error>(p_i->p_out_path.extension() == ".mp4", DOODLE_LOC, "扩展名称不是MP4");
+    chick_true<doodle_error>(p_i->p_out_path.extension() == ".mp4",  "扩展名称不是MP4");
 
   if (exists(p_i->p_out_path.parent_path()))
     create_directories(p_i->p_out_path.parent_path());
@@ -202,7 +202,7 @@ void image_to_move::update(
     const chrono::duration<chrono::system_clock::rep,
                            chrono::system_clock::period> &,
     void *data) {
-  chick_true<doodle_error>(p_i->result.valid(), DOODLE_LOC, "无效的数据");
+  chick_true<doodle_error>(p_i->result.valid(),  "无效的数据");
   switch (p_i->result.wait_for(0ns)) {
     case std::future_status::ready: {
       try {
@@ -296,8 +296,8 @@ void image_file_attribute::extract_num(std::vector<image_file_attribute> &in_ima
                   [k_size](const image_file_attribute &in) -> bool {
                     return in.num_list.size() == k_size;
                   }),
-      DOODLE_LOC, "序列不匹配");
-  chick_true<doodle_error>(in_image_list.size() >= 2, DOODLE_LOC, "单个文件, 无法搜索帧号");
+       "序列不匹配");
+  chick_true<doodle_error>(in_image_list.size() >= 2,  "单个文件, 无法搜索帧号");
   auto &one   = in_image_list[0].num_list;
   auto &tow   = in_image_list[1].num_list;
   auto l_item = ranges::views::ints(std::size_t{0}, k_size) |
@@ -306,7 +306,7 @@ void image_file_attribute::extract_num(std::vector<image_file_attribute> &in_ima
                 }) |
                 ranges::to_vector;
 
-  chick_true<doodle_error>(!l_item.empty(), DOODLE_LOC, "没有找到帧索引");
+  chick_true<doodle_error>(!l_item.empty(),  "没有找到帧索引");
   auto l_index = l_item.front();
   std::for_each(in_image_list.begin(), in_image_list.end(),
                 [&](image_file_attribute &in_attribute) {

@@ -312,7 +312,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
   }
 
   chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
-                           DOODLE_LOC, "开始帧 {} 大于结束帧 {}",
+                            "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::bindFrame_f, &k_s)) {
@@ -324,7 +324,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
   }
   chick_true<doodle_error>(p_i->startFrame_p <= p_i->bindFrame_p &&
                                p_i->bindFrame_p < p_i->endFrame_p,
-                           DOODLE_LOC, "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内",
+                            "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内",
                            p_i->bindFrame_p,
                            p_i->startFrame_p,
                            p_i->endFrame_p);
@@ -337,7 +337,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
   }
 
   chick_true<doodle_error>(p_i->nBones_p > 0,
-                           DOODLE_LOC, "骨骼数小于零 {}", p_i->nBones_p);
+                            "骨骼数小于零 {}", p_i->nBones_p);
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
     DOODLE_CHICK(k_s);
@@ -428,7 +428,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
-  chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
+  chick_true<doodle_error>(p_i->select_list.length() > 0,  "未获得选中物体");
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);

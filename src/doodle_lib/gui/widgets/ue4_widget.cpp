@@ -224,11 +224,11 @@ std::string ue4_import_data::find_ue4_skin(
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(FSys::is_directory(in_ue4_content_dir), DOODLE_LOC,
+            chick_true<doodle_error>(FSys::is_directory(in_ue4_content_dir),
                                      "无法找到ue4 content 文件夹");
-            chick_true<doodle_error>(!in_fmt.empty(), DOODLE_LOC,
+            chick_true<doodle_error>(!in_fmt.empty(),
                                      "格式化字符串不可为空");
-            chick_true<doodle_error>(!in_regex.empty(), DOODLE_LOC,
+            chick_true<doodle_error>(!in_regex.empty(),
                                      "正则表达式不可为空");
           });
 
@@ -275,11 +275,11 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle, DOODLE_LOC,
+            chick_true<doodle_error>(in_handle,
                                      "无效的句柄");
           })
           .postcondition([&]() {
-            chick_true<doodle_error>(!result.empty(), DOODLE_LOC,
+            chick_true<doodle_error>(!result.empty(),
                                      "设置路径为空");
           });
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
@@ -300,11 +300,11 @@ std::string ue4_import_group::set_level_dir(
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle, DOODLE_LOC,
+            chick_true<doodle_error>(in_handle,
                                      "无效的句柄");
           })
           .postcondition([&]() {
-            chick_true<doodle_error>(!result.empty(), DOODLE_LOC,
+            chick_true<doodle_error>(!result.empty(),
                                      "设置路径为空");
           });
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /

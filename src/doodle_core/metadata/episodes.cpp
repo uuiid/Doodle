@@ -12,7 +12,7 @@ episodes::episodes()
 
 episodes::episodes(int64_t in_episodes)
     : p_episodes(in_episodes) {
-  chick_true<doodle_error>(p_episodes >= 0, DOODLE_LOC, "集数无法为负");
+  chick_true<doodle_error>(p_episodes >= 0,  "集数无法为负");
 }
 
 // Episodes::~Episodes() {
@@ -25,7 +25,7 @@ const int64_t& episodes::get_episodes() const noexcept {
 }
 
 void episodes::set_episodes(const int64_t& Episodes_) {
-  chick_true<doodle_error>(Episodes_ >= 0, DOODLE_LOC, "集数无法为负");
+  chick_true<doodle_error>(Episodes_ >= 0,  "集数无法为负");
   p_episodes = Episodes_;
 }
 
@@ -61,7 +61,7 @@ bool episodes::conjecture_season(const entt::handle& in_handle) {
     return true;
 
   chick_true<doodle_error>(
-      g_reg()->ctx().contains<project_config::base_config>(), DOODLE_LOC, "缺失上下文组件");
+      g_reg()->ctx().contains<project_config::base_config>(),  "缺失上下文组件");
 
   if (in_handle.all_of<episodes>()) {
     auto l_count = g_reg()->ctx().at<project_config::base_config>().season_count;

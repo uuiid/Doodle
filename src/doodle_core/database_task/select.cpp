@@ -80,7 +80,7 @@ struct future_data {
     if (!l_not_valid_entity.empty())
       DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(T).name(), l_not_valid_entity, l_duplicate_entity);
     chick_true<doodle_error>(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }),
-                             DOODLE_LOC,
+
                              "无效实体");
     in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
     in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
@@ -319,7 +319,7 @@ void select::update() {
 void select::th_run() {
   chick_true<doodle_error>(
       FSys::exists(p_i->project),
-      DOODLE_LOC,
+
       "数据库不存在 {}", p_i->project);
 
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);

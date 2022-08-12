@@ -51,10 +51,10 @@ void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file
       boost::contract::function()
           .postcondition([&]() {
             chick_true<doodle_error>(FSys::is_regular_file(in_source_file),
-                                     DOODLE_LOC,
+
                                      "不存在文件");
             chick_true<doodle_error>(in_source_file.extension() == ".txt",
-                                     DOODLE_LOC,
+
                                      "文件类型错误");
           });
   FSys::ifstream l_in_f{in_source_file};

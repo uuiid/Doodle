@@ -180,7 +180,7 @@ void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
 void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj);
-  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine), DOODLE_LOC, "没有找到着色集");
+  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine),  "没有找到着色集");
   MFnSet l_set{k_mat, &l_s};
   DOODLE_CHICK(l_s);
   l_set.addMember(in_object);
@@ -188,7 +188,7 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
 void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj.node());
-  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine), DOODLE_LOC, "没有找到着色集");
+  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine),  "没有找到着色集");
   MFnSet l_set{k_mat, &l_s};
   DOODLE_CHICK(l_s);
   l_set.addMember(in_obj);

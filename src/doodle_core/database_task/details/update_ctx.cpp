@@ -123,7 +123,7 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(
                            boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
   }
   chick_true<doodle_error>(false,
-                           DOODLE_LOC,
+
                            "无法检查到数据库版本 {}", g_reg()->ctx().at<database_info>().path_);
   return {};
 }

@@ -76,7 +76,7 @@ DOODLE_MOVE_CPP(opencv_read_player)
 
 bool opencv_read_player::load_frame(std::int32_t in_frame) {
   chick_true<doodle_error>(p_data->p_video.isOpened(),
-                           DOODLE_LOC,
+
                            "没有打开的视频");
   // 获得全局GPU渲染对象
   auto k_g = app::Get().d3dDevice;
@@ -89,7 +89,7 @@ bool opencv_read_player::load_frame(std::int32_t in_frame) {
   cv::Mat p_mat{};
   p_data->p_video.set(cv::CAP_PROP_POS_FRAMES, boost::numeric_cast<std::double_t>(in_frame));
   auto k_r = p_data->p_video.read(p_mat);
-  chick_true<doodle_error>(k_r, DOODLE_LOC, "无法读取帧");
+  chick_true<doodle_error>(k_r,  "无法读取帧");
 
   /// 转换图像
   cv::cvtColor(p_mat, p_mat, cv::COLOR_BGR2RGBA);

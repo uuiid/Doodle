@@ -114,13 +114,13 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
   }
   chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
-                           DOODLE_LOC, "开始帧 {} 大于结束帧 {}",
+                            "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
 
   /// \brief 获取选择物体
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
-  chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
+  chick_true<doodle_error>(p_i->select_list.length() > 0,  "未获得选中物体");
 
   /// \brief 生成绑定物体path
   for (auto i = 0;
@@ -487,7 +487,7 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
     MStringArray l_r{};
     l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
     DOODLE_CHICK(l_s);
-    chick_true<doodle_error>(l_r.length() == 1, DOODLE_LOC, "错误的融合变形节点创建");
+    chick_true<doodle_error>(l_r.length() == 1,  "错误的融合变形节点创建");
 
     MSelectionList l_selection_list{};
     l_s = l_selection_list.add(l_r[0], true);

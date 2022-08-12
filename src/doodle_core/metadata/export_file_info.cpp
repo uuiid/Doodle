@@ -56,7 +56,7 @@ void export_file_info::write_file(const entt::handle& in_handle) {
       boost::contract::function()
           .precondition([&]() {
             chick_true<doodle_error>(in_handle.any_of<export_file_info>(),
-                                     DOODLE_LOC,
+
                                      "缺失导出组件");
           });
   nlohmann::json l_json{};
@@ -73,7 +73,7 @@ entt::handle export_file_info::read_file(const FSys::path& in_path) {
       boost::contract::function()
           .precondition([&]() {
             chick_true<doodle_error>(exists(in_path),
-                                     DOODLE_LOC,
+
                                      "文件不存在 {}",
                                      in_path);
           });

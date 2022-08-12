@@ -73,7 +73,7 @@ entt::handle user::chick_user_reg(entt::registry& in_reg) {
     database::save(l_create_h);
   }
 
-  chick_true<doodle_error>(l_cache, DOODLE_LOC, "缺失用户实体{}", l_cache.user_handle);
+  chick_true<doodle_error>(l_cache,  "缺失用户实体{}", l_cache.user_handle);
   return l_cache.user_handle;
 }
 
