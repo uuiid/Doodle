@@ -109,6 +109,7 @@ class dem_bones_comm::impl {
     dem.nnz               = nonZeroWeightsNum_p;
     dem.weightsSmooth     = weightsSmooth_p;
     dem.weightsSmoothStep = weightsSmoothStep_p;
+    dem.weightEps         = 1e-15;
 
     dem.nS                = 1;
     dem.nF                = endFrame_p - startFrame_p;
