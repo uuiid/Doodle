@@ -165,7 +165,7 @@ MStatus sequence_to_blend_shape::doIt(const MArgList& in_arg) {
 MStatus sequence_to_blend_shape::undoIt() {
   MStatus l_status{};
   for (auto&& ctx : p_i->ctx) {
-    if(ctx.bind_path.isValid(&l_status)){
+    if (ctx.bind_path.isValid(&l_status)) {
       DOODLE_CHICK(l_status)
       auto l_node = ctx.bind_path.node(&l_status);
       DOODLE_CHICK(l_status);
