@@ -69,15 +69,21 @@ class sequence_to_blend_shape::impl {
 
   MSelectionList select_list;
 
-  MDagPathArray create_mesh_list{};
-  MVectorArray create_point_list{};
-
-  MDagPath bind_path;
-  MPoint bind_center;
-  MMatrix bind_matrix;
   MDagModifier dg_modidier;
 
-  MObject blend_shape_obj;
+  class current_ctx {
+   public:
+    MDagPath select_path;
+    MDagPathArray create_mesh_list{};
+    MVectorArray create_point_list{};
+
+    MDagPath bind_path;
+    MPoint bind_center;
+    MMatrix bind_matrix;
+    MObject blend_shape_obj;
+  };
+
+  std::vector<current_ctx> ctx{};
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -125,6 +131,15 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
   chick_true<doodle_error>(p_i->select_list.length() > 0, DOODLE_LOC, "未获得选中物体");
+
+  /// \brief 生成绑定物体path
+  for (auto i = 0;
+       i < p_i->select_list.length();
+       ++i) {
+    impl::current_ctx l_ctx{};
+    p_i->select_list.getDagPath(i, l_ctx.select_path);
+    p_i->ctx.emplace_back(l_ctx);
+  }
 }
 
 MStatus sequence_to_blend_shape::doIt(const MArgList& in_arg) {
@@ -137,44 +152,45 @@ MStatus sequence_to_blend_shape::undoIt() {
 MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
   this->run_blend_shape_comm();
-  //  this->create_anim();
+  this->create_anim();
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
   return false;
 }
 void sequence_to_blend_shape::create_mesh() {
-  MDagPath l_path{};
   MStatus l_s{};
-  l_s = p_i->select_list.getDagPath(0, l_path);
-  DOODLE_CHICK(l_s);
-  MFnTransform l_transform{l_path, &l_s};
-  DOODLE_CHICK(l_s);
-
+  MFnTransform l_transform{};
   MFnMesh l_mesh{};
-  MFnMesh l_create_mesh{};
-  MFnDagNode l_dag_path{l_path, &l_s};
-  DOODLE_CHICK(l_s);
+  MFnDagNode l_dag_path{};
 
-  {  /// \brief 获取bind obj
+  {  /// \brief 设置时间
     auto i = p_i->startFrame_p;
     l_s    = MGlobal::viewFrame(i);
     DOODLE_CHICK(l_s);
 
-    auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
-    DOODLE_CHICK(l_s);
-    p_i->bind_path = get_dag_path(l_create_mesh_obj);
+    for (auto&& ctx : p_i->ctx) {
+      /// \brief 设置函数集
+      l_s = l_dag_path.setObject(ctx.select_path);
+      DOODLE_CHICK(l_s);
 
-    DOODLE_CHICK(l_s);
-    p_i->bind_matrix = l_transform.transformationMatrix(&l_s);
-    DOODLE_CHICK(l_s);
-    l_s = l_mesh.setObject(l_path);
-    DOODLE_CHICK(l_s);
-    p_i->bind_center = l_mesh.boundingBox(&l_s).center() * p_i->bind_matrix;
-    DOODLE_CHICK(l_s);
+      auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
+      DOODLE_CHICK(l_s);
+      ctx.bind_path = get_dag_path(l_create_mesh_obj);
+      l_s           = l_transform.setObject(ctx.bind_path);
+      DOODLE_CHICK(l_s);
 
-    to_work_zero(p_i->bind_path);
-    copy_mat(p_i->bind_path, l_path);
+      DOODLE_CHICK(l_s);
+      ctx.bind_matrix = l_transform.transformationMatrix(&l_s);
+      DOODLE_CHICK(l_s);
+      l_s = l_mesh.setObject(ctx.bind_path);
+      DOODLE_CHICK(l_s);
+      ctx.bind_center = l_mesh.boundingBox(&l_s).center() * ctx.bind_matrix;
+      DOODLE_CHICK(l_s);
+
+      to_work_zero(ctx.bind_path);
+      copy_mat(ctx.bind_path, ctx.select_path);
+    }
   }
 
   MFnTransform l_fn_transform_dub{};
@@ -182,118 +198,115 @@ void sequence_to_blend_shape::create_mesh() {
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
+    /// \brief 设置时间过程
     l_s = MGlobal::viewFrame(i);
     DOODLE_CHICK(l_s);
+    for (auto&& ctx : p_i->ctx) {
+      //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
+      l_s = l_dag_path.setObject(ctx.select_path);
+      DOODLE_CHICK(l_s);
 
-    //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
-    l_s = l_dag_path.setObject(l_path);
-    DOODLE_CHICK(l_s);
+      auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
+      DOODLE_CHICK(l_s);
 
-    auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
-    DOODLE_CHICK(l_s);
+      l_s = l_mesh.setObject(l_create_mesh_path);
+      DOODLE_CHICK(l_s);
 
-    l_s = l_mesh.setObject(l_create_mesh_path);
-    DOODLE_CHICK(l_s);
+      /// \brief 获取网格中心
+      auto l_bind_box = l_mesh.boundingBox(&l_s);
+      DOODLE_CHICK(l_s);
 
-    /// \brief 获取网格中心
-    auto l_bind_box = l_mesh.boundingBox(&l_s);
-    DOODLE_CHICK(l_s);
+      l_s = l_transform.setObject(l_create_mesh_path);
+      DOODLE_CHICK(l_s);
+      auto l_tran = l_transform.transformationMatrix(&l_s);
+      DOODLE_CHICK(l_s);
+      //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
-    l_s = l_transform.setObject(l_create_mesh_path);
-    DOODLE_CHICK(l_s);
-    auto l_tran = l_transform.transformationMatrix(&l_s);
-    DOODLE_CHICK(l_s);
-    //    DOODLE_LOG_INFO("网格tran {}", l_tran);
+      auto l_center = l_bind_box.center() * l_tran;
+      l_s           = ctx.create_point_list.append(l_center);
+      DOODLE_CHICK(l_s);
 
-    auto l_center = l_bind_box.center() * l_tran;
-    l_s           = p_i->create_point_list.append(l_center);
-    DOODLE_CHICK(l_s);
+      /// \brief 移动到世界中心
+      to_work_zero(l_create_mesh_path);
+      //    center_pivot(l_path_tmp);
 
-    /// \brief 移动到世界中心
-    to_work_zero(l_create_mesh_path);
-    //    center_pivot(l_path_tmp);
-
-    l_s = p_i->create_mesh_list.append(l_create_mesh_path);
-    DOODLE_CHICK(l_s);
-
-    /// \brief 旋转网格数据
-    //    l_path_tmp = get_dag_path(l_path_tmp.transform(&l_s));
-    //    DOODLE_CHICK(l_s);
-    //    l_s = l_fn_transform_dub.setObject(l_path_tmp);
-    //    DOODLE_CHICK(l_s);
-    //
-    //    l_s = l_fn_transform_dub.setTranslation(l_center, MSpace::kWorld);
-    //    DOODLE_CHICK(l_s);
+      l_s = ctx.create_mesh_list.append(l_create_mesh_path);
+      DOODLE_CHICK(l_s);
+    }
   }
 }
+
 void sequence_to_blend_shape::create_anim() {
   MStatus l_s{};
-  MFnAnimCurve aim{};
-  /// \brief 创建 tran 变形
 
-  MPlug plugtx = get_plug(p_i->bind_path.node(&l_s), "tx");
-  DOODLE_CHICK(l_s);
-  MPlug plugty = get_plug(p_i->bind_path.node(&l_s), "ty");
-  DOODLE_CHICK(l_s);
-  MPlug plugtz = get_plug(p_i->bind_path.node(&l_s), "tz");
-  DOODLE_CHICK(l_s);
-  MPlug plugrx = get_plug(p_i->bind_path.node(&l_s), "rx");
-  DOODLE_CHICK(l_s);
-  MPlug plugry = get_plug(p_i->bind_path.node(&l_s), "ry");
-  DOODLE_CHICK(l_s);
-  MPlug plugrz = get_plug(p_i->bind_path.node(&l_s), "rz");
-  DOODLE_CHICK(l_s);
-  MTimeArray l_time{};
+  for (auto&& ctx : p_i->ctx) {
+    MFnAnimCurve aim{};
+    /// \brief 创建 tran 变形
+
+    MPlug plugtx = get_plug(ctx.bind_path.node(&l_s), "tx");
+    DOODLE_CHICK(l_s);
+    MPlug plugty = get_plug(ctx.bind_path.node(&l_s), "ty");
+    DOODLE_CHICK(l_s);
+    MPlug plugtz = get_plug(ctx.bind_path.node(&l_s), "tz");
+    DOODLE_CHICK(l_s);
+    MPlug plugrx = get_plug(ctx.bind_path.node(&l_s), "rx");
+    DOODLE_CHICK(l_s);
+    MPlug plugry = get_plug(ctx.bind_path.node(&l_s), "ry");
+    DOODLE_CHICK(l_s);
+    MPlug plugrz = get_plug(ctx.bind_path.node(&l_s), "rz");
+    DOODLE_CHICK(l_s);
+    MTimeArray l_time{};
 #define DOODLE_ADD_ANM_declaration(axis) \
   MDoubleArray l_value_tran_##axis{};
 
-  DOODLE_ADD_ANM_declaration(x);
-  DOODLE_ADD_ANM_declaration(y);
-  DOODLE_ADD_ANM_declaration(z);
+    DOODLE_ADD_ANM_declaration(x);
+    DOODLE_ADD_ANM_declaration(y);
+    DOODLE_ADD_ANM_declaration(z);
 
-  for (auto i = p_i->startFrame_p;
-       i <= p_i->endFrame_p;
-       ++i) {
+    for (auto i = p_i->startFrame_p;
+         i <= p_i->endFrame_p;
+         ++i) {
 #define DOODLE_ADD_ANM_set(axis) \
   l_value_tran_##axis.append(l_point.axis);
-    auto l_point = p_i->create_point_list[i - p_i->startFrame_p];
-    l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
-    DOODLE_ADD_ANM_set(x);
-    DOODLE_ADD_ANM_set(y);
-    DOODLE_ADD_ANM_set(z);
-  }
+      auto l_point = ctx.create_point_list[i - p_i->startFrame_p];
+      l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
+      DOODLE_ADD_ANM_set(x);
+      DOODLE_ADD_ANM_set(y);
+      DOODLE_ADD_ANM_set(z);
+    }
 #define DOODLE_ADD_ANM_set_anm(axis)                                                     \
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
   l_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
   DOODLE_CHICK(l_s);
 
-//  DOODLE_ADD_ANM_set_anm(x);
-//  DOODLE_ADD_ANM_set_anm(y);
-//  DOODLE_ADD_ANM_set_anm(z);
+    DOODLE_ADD_ANM_set_anm(x);
+    DOODLE_ADD_ANM_set_anm(y);
+    DOODLE_ADD_ANM_set_anm(z);
 #undef DOODLE_ADD_ANM_declaration
 #undef DOODLE_ADD_ANM_set
 #undef DOODLE_ADD_ANM_set_anm
-  MPlug plug_weight = get_plug(p_i->blend_shape_obj, "weight");
+    MPlug plug_weight = get_plug(ctx.blend_shape_obj, "weight");
 
-  /// \brief 每个融合变形负责一帧 开始循环每个融合变形
-  for (auto j = 0;
-       j < p_i->create_mesh_list.length();
-       ++j) {
-    MDoubleArray l_value_weight{};
-    /// \brief 开始循环每一帧
-    for (auto i = p_i->startFrame_p;
-         i <= p_i->endFrame_p;
-         ++i) {
-      const auto l_current_index = i - p_i->startFrame_p;
-      l_value_weight.append(l_current_index == j ? 1 : 0);
+    /// \brief 每个融合变形负责一帧 开始循环每个融合变形
+    for (auto j = 0;
+         j < ctx.create_mesh_list.length();
+         ++j) {
+      MDoubleArray l_value_weight{};
+      /// \brief 开始循环每一帧
+      for (auto i = p_i->startFrame_p;
+           i <= p_i->endFrame_p;
+           ++i) {
+        const auto l_current_index = i - p_i->startFrame_p;
+        l_value_weight.append(l_current_index == j ? 1 : 0);
+      }
+      aim.create(plug_weight[j], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
+      l_s = aim.addKeys(&l_time, &l_value_weight);
+      DOODLE_CHICK(l_s);
     }
-    aim.create(plug_weight[j], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier);
-    l_s = aim.addKeys(&l_time, &l_value_weight);
+
+    l_s = p_i->dg_modidier.doIt();
     DOODLE_CHICK(l_s);
   }
-
-  l_s = p_i->dg_modidier.doIt();
-  DOODLE_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
@@ -427,29 +440,31 @@ void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
 void sequence_to_blend_shape::run_blend_shape_comm() {
   MStatus l_s{};
 
-  std::vector<std::string> l_names{};
-  for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
-    l_names.emplace_back(get_node_full_name(p_i->create_mesh_list[l_i]));
-  }
+  for (auto&& ctx : p_i->ctx) {
+    std::vector<std::string> l_names{};
+    for (int l_i = 0; l_i < ctx.create_mesh_list.length(); ++l_i) {
+      l_names.emplace_back(get_node_full_name(ctx.create_mesh_list[l_i]));
+    }
 
-  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_path));
-  //  DOODLE_LOG_INFO("run {}", l_comm);
-  MStringArray l_r{};
-  l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
-  DOODLE_CHICK(l_s);
-  chick_true<doodle_error>(l_r.length() == 1, DOODLE_LOC, "错误的融合变形节点创建");
-
-  MSelectionList l_selection_list{};
-  l_s = l_selection_list.add(l_r[0], true);
-  DOODLE_CHICK(l_s);
-  l_s = l_selection_list.getDependNode(0, p_i->blend_shape_obj);
-  DOODLE_CHICK(l_s);
-
-  for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
-    auto l_node = p_i->create_mesh_list[l_i].node(&l_s);
+    auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(ctx.bind_path));
+    //  DOODLE_LOG_INFO("run {}", l_comm);
+    MStringArray l_r{};
+    l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
     DOODLE_CHICK(l_s);
-    l_s = MGlobal::deleteNode(l_node);
+    chick_true<doodle_error>(l_r.length() == 1, DOODLE_LOC, "错误的融合变形节点创建");
+
+    MSelectionList l_selection_list{};
+    l_s = l_selection_list.add(l_r[0], true);
     DOODLE_CHICK(l_s);
+    l_s = l_selection_list.getDependNode(0, ctx.blend_shape_obj);
+    DOODLE_CHICK(l_s);
+
+    for (int l_i = 0; l_i < ctx.create_mesh_list.length(); ++l_i) {
+      auto l_node = ctx.create_mesh_list[l_i].node(&l_s);
+      DOODLE_CHICK(l_s);
+      l_s = MGlobal::deleteNode(l_node);
+      DOODLE_CHICK(l_s);
+    }
   }
 }
 

@@ -20,6 +20,7 @@ class sequence_to_blend_shape : public doodle::TemplateAction<
   void get_arg(const MArgList& in_arg);
 
   void create_mesh();
+  void create_mesh(std::size_t in_index);
   void create_anim();
   void run_blend_shape_comm();
 
