@@ -137,7 +137,7 @@ MStatus sequence_to_blend_shape::undoIt() {
 MStatus sequence_to_blend_shape::redoIt() {
   this->create_mesh();
   this->run_blend_shape_comm();
-  this->create_anim();
+  //  this->create_anim();
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -446,7 +446,9 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   DOODLE_CHICK(l_s);
 
   for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
-    l_s = MGlobal::deleteNode(p_i->create_mesh_list[l_i].node());
+    auto l_node = p_i->create_mesh_list[l_i].node(&l_s);
+    DOODLE_CHICK(l_s);
+    l_s = MGlobal::deleteNode(l_node);
     DOODLE_CHICK(l_s);
   }
 }
