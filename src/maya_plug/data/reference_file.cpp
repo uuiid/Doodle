@@ -78,7 +78,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-  chick_true<doodle_error>(!file_namespace.empty(), DOODLE_SOURCE_LOC, "名称空间为空");
+  chick_true<doodle_error>(!file_namespace.empty(),  "名称空间为空");
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
