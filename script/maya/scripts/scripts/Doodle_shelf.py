@@ -82,6 +82,8 @@ class DlsShelf(shelfBase._shelf):
 
         self.addButon("ik to fk", "icons/mark_ik_to_fk.png",
                       command=lambda: scripts.doodle_ik_to_fk.doodle_ik_to_fk())
+        self.addButon("abc to bl", "icons/sequence_to_blend_shape.png",
+                      command=lambda: cmds.doodle_sequence_to_blend_shape())
 
     def polyremesh(self):
         self.re()
