@@ -10,6 +10,6 @@ namespace doodle::gui {
 class make_link_widget {
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui
 
 #endif  // DOODLE_SRC_DOODLE_LIB_GUI_WIDGETS_MAKE_LINK_WIDGET_H_

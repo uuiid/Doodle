@@ -7,7 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/program_options.hpp>
-//#include <Windows.h>
+// #include <Windows.h>
 namespace doodle {
 
 class DOODLELIB_API program_options {

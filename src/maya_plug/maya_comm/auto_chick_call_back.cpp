@@ -14,6 +14,5 @@ void auto_chick_call_back::add_call_back() {
 void auto_chick_call_back::delete_call_back() {
 }
 void auto_chick_call_back::show_windows() {
-
 }
-}  // namespace doodle
+}  // namespace doodle::maya_plug

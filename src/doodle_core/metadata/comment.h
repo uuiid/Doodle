@@ -20,7 +20,7 @@ class DOODLE_CORE_EXPORT comment {
 
  private:
   friend void to_json(nlohmann::json& j, const comment& p) {
-    j["comment"] = p.p_comment;
+    j["comment"]   = p.p_comment;
     j["time_info"] = p.p_time_info;
   }
   friend void from_json(const nlohmann::json& j, comment& p) {

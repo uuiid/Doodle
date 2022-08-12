@@ -126,7 +126,7 @@ void reference_file::init_show_name() {
 }
 std::string reference_file::get_namespace() const {
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  chick_true<doodle_error>(!file_namespace.empty(),  "名称空间为空");
+  chick_true<doodle_error>(!file_namespace.empty(), "名称空间为空");
   return file_namespace;
 }
 
@@ -138,7 +138,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  chick_true<doodle_error>(this->find_ref_node(),  "缺失引用");
+  chick_true<doodle_error>(this->find_ref_node(), "缺失引用");
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -340,7 +340,7 @@ bool reference_file::has_sim_cloth() {
   return false;
 }
 bool reference_file::set_namespace(const std::string &in_namespace) {
-  chick_true<doodle_error>(!in_namespace.empty(),  "空名称空间");
+  chick_true<doodle_error>(!in_namespace.empty(), "空名称空间");
   file_namespace = in_namespace.substr(1);
   find_ref_node();
   return has_ue4_group();
@@ -483,8 +483,8 @@ entt::handle reference_file::export_file_select(
   return out_;
 }
 bool reference_file::replace_file(const entt::handle &in_handle) {
-  chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(),  "缺失替换引用信息");
-  chick_true<doodle_error>(!p_m_object.isNull(),  "没有引用文件, 无法替换");
+  chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), "缺失替换引用信息");
+  chick_true<doodle_error>(!p_m_object.isNull(), "没有引用文件, 无法替换");
   search_file_info = in_handle;
   MStatus k_s{};
   {
@@ -520,8 +520,8 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
   k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
   DOODLE_CHICK(k_s);
   file_namespace = l_name_d;
-  chick_true<doodle_error>(find_ref_node(),  "没有在新的名称空间中查询到引用节点");
-  chick_true<doodle_error>(has_ue4_group(),  "没有在引用文件中找到 导出 组");
+  chick_true<doodle_error>(find_ref_node(), "没有在新的名称空间中查询到引用节点");
+  chick_true<doodle_error>(has_ue4_group(), "没有在引用文件中找到 导出 组");
   return false;
 }
 FSys::path reference_file::get_path() const {
@@ -603,7 +603,7 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
   FSys::path out_{};
 
-  chick_true<doodle_error>(is_loaded(),  "需要导出fbx的引用必须加载");
+  chick_true<doodle_error>(is_loaded(), "需要导出fbx的引用必须加载");
 
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();

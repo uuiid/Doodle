@@ -15,8 +15,8 @@ void from_json(const nlohmann::json &j, base_window &p) {
 base_window *base_window::find_window_by_title(const std::string &in_title) {
   auto &l_list = g_reg()->ctx().emplace<base_window::list>();
   auto it      = ranges::find_if(
-           l_list,
-           [&](const base_window *in_window) -> bool {
+      l_list,
+      [&](const base_window *in_window) -> bool {
         return in_window->title() == in_title;
       });
   if (it != l_list.end())
@@ -36,7 +36,6 @@ nlohmann::json &base_window::get_setting() const {
 }
 base_window::base_window()  = default;
 base_window::~base_window() = default;
-
 
 const std::string &window_panel::title() const {
   return title_name_;

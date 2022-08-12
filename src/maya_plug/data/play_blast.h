@@ -25,7 +25,7 @@ class play_blast {
   std::string p_uuid;
 
   static std::string p_post_render_notification_name;
-//  static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
+  //  static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
 
   FSys::path get_file_path(const MTime& in_time) const;
   FSys::path get_file_path() const;

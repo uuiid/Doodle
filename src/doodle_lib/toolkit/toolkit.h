@@ -31,7 +31,6 @@ class DOODLELIB_API toolkit {
 
   static void installUePath(const FSys::path &path);
 
-
   /**
    * @brief 安装maya插件
    *
@@ -39,7 +38,6 @@ class DOODLELIB_API toolkit {
    *
    */
   static void installMayaPath();
-
 
   /**
    * @brief 修改ue4缓存位置,
@@ -52,7 +50,6 @@ class DOODLELIB_API toolkit {
    * 替换为 @b %GAMEDIR%DerivedDataCache 的方法运行
    */
   static void modifyUeCachePath();
-
 
   /**
    * @brief 删除缓存

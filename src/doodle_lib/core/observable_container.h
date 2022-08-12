@@ -20,9 +20,9 @@ namespace details {
 template <class container_type>
 class abs_pretreatment {
  public:
-  using _value_type  = typename container_type::value_type;
-  using _size_type   = typename container_type::size_type;
-  abs_pretreatment() = default;
+  using _value_type                              = typename container_type::value_type;
+  using _size_type                               = typename container_type::size_type;
+  abs_pretreatment()                             = default;
 
   virtual void clear(const container_type& val)  = 0;
   virtual void insert(const _value_type& val)    = 0;
@@ -65,14 +65,14 @@ class observable_container : public container_type, public details::no_copy {
 
  public:
   //  using _container_type  = typename std::vector<std::string>;
-  using _allocator_type  = typename container_type::allocator_type;
-  using _size_type       = typename container_type::size_type;
-  using _value_type      = typename container_type::value_type;
-  using _pointer         = typename container_type::pointer;
-  using _const_pointer   = typename container_type::const_pointer;
-  using _reference       = typename container_type::reference;
-  using _const_reference = typename container_type::const_reference;
-  using _difference_type = typename container_type::difference_type;
+  using _allocator_type         = typename container_type::allocator_type;
+  using _size_type              = typename container_type::size_type;
+  using _value_type             = typename container_type::value_type;
+  using _pointer                = typename container_type::pointer;
+  using _const_pointer          = typename container_type::const_pointer;
+  using _reference              = typename container_type::reference;
+  using _const_reference        = typename container_type::const_reference;
+  using _difference_type        = typename container_type::difference_type;
 
   using _iterator               = typename container_type::iterator;
   using _const_iterator         = typename container_type::const_iterator;

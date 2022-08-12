@@ -2,8 +2,8 @@
 // Created by TD on 2022/5/27.
 //
 #include <gui/app.h>
-//#include <doodle_lib/DoodleApp.h>
-//#include <boost/locale.hpp>
+// #include <doodle_lib/DoodleApp.h>
+// #include <boost/locale.hpp>
 
 extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
                                HINSTANCE hPrevInstance,

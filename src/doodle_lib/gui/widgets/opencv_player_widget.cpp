@@ -128,7 +128,7 @@ struct player_ : public msm::front::state_machine_def<player_> {
     }
   };
 
-  //定义守卫
+  // 定义守卫
 
   struct dummy_guard {
     template <class EVT, class FSM, class SourceState, class TargetState>

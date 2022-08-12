@@ -61,7 +61,7 @@ class test_screenshot_widget_app : public app {
   void load_windows() override {
     g_reg()->ctx().emplace<project>("D:/tmp", "test");
     auto k_h = make_handle();
-     post<null_process_t>().then<screenshot_widget>(k_h).then<one_process_t>([]() {
+    post<null_process_t>().then<screenshot_widget>(k_h).then<one_process_t>([]() {
       app::Get().stop();
     });
   }

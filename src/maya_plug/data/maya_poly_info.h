@@ -20,8 +20,6 @@ class maya_poly_info {
   /// \brief 使用可以在下游查找到ql布料解算节点
   bool has_cloth;
 
-
-
   std::string node_name;
   std::string node_org_name;
   //  std::int32_t numColors;

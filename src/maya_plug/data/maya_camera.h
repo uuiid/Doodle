@@ -48,7 +48,6 @@ class maya_camera {
    */
   bool back_camera(const MTime& in_start, const MTime& in_end);
 
-
   bool camera_parent_is_word();
   bool fix_group_camera(const MTime& in_start, const MTime& in_end);
 

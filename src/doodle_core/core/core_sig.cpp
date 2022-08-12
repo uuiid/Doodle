@@ -3,6 +3,6 @@
 //
 
 #include "core_sig.h"
-namespace{
+namespace {
 
 }

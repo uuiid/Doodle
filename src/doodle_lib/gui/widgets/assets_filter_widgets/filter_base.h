@@ -6,10 +6,10 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle::gui{
+namespace doodle::gui {
 class DOODLELIB_API filter_base {
  public:
   virtual ~filter_base()                                = default;
   virtual bool operator()(const entt::handle& in) const = 0;
 };
-}
+}  // namespace doodle::gui

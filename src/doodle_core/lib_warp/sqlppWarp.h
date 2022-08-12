@@ -10,8 +10,8 @@ class connection;
 struct connection_config;
 }  // namespace mysql
 
-namespace sqlite3{
+namespace sqlite3 {
 class connection;
 struct connection_config;
-}
+}  // namespace sqlite3
 }  // namespace sqlpp

@@ -54,4 +54,4 @@ constexpr auto init = []() {
 class [[maybe_unused]] init_class
     : public init_register::registrar_lambda<init, 3> {};
 }  // namespace csv_export_widgets_ns
-}  // namespace doodle
+}  // namespace doodle::gui

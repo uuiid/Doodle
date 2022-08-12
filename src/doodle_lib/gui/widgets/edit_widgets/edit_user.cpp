@@ -36,7 +36,7 @@ void edit_user::render(const entt::handle& in) {
   ImGui::Checkbox(*ptr->advanced, &ptr->advanced);
   if (ptr->advanced()) {
     dear::Text("直接设置用户姓名"s);
-    if (ImGui::InputText(*ptr->user_name_edit, &ptr->user_name_edit,ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputText(*ptr->user_name_edit, &ptr->user_name_edit, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
       if (auto l_user = user::find_by_user_name(ptr->user_name_edit());
           l_user) {
         ptr->user_tmp_handle = l_user;

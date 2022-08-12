@@ -117,7 +117,7 @@ void project_edit::init() {
             p_i->config_init();
           }));
   p_i->scoped_connections_.emplace_back(
-      g_reg()->ctx().at<core_sig>().save.connect(1,[this]() {
+      g_reg()->ctx().at<core_sig>().save.connect(1, [this]() {
         g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
         g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
       }));

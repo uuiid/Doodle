@@ -22,4 +22,4 @@ class upload_files_command : public TemplateAction<
   MStatus doIt(const MArgList& in_list) override;
 };
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug

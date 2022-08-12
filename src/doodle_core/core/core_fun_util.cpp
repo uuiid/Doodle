@@ -5,7 +5,6 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/logger/logger.h>
 
-
 #include <boost/algorithm/string.hpp>
 
 #include <Windows.h>
@@ -24,7 +23,6 @@ bool is_rest_day(const local_days &in_days) {
   return k_weekday == Sunday || k_weekday == Saturday;
 }
 }  // namespace chrono
-
 
 }  // namespace doodle
 

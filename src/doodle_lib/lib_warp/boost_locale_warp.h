@@ -9,4 +9,4 @@
 namespace doodle::conv {
 using namespace boost::locale::conv;
 
-}  // namespace doodle
+}  // namespace doodle::conv

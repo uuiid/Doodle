@@ -22,33 +22,33 @@ static int InputTextCallback(ImGuiInputTextCallbackData *data) {
     std::string &str = user_data->Str;
     IM_ASSERT(data->Buf == str.c_str());
     str.resize(data->BufTextLen);
-    data->Buf       = (char *)str.c_str();
+    data->Buf          = (char *)str.c_str();
     *(user_data->Path) = FSys::path{user_data->Str};
   } else if (user_data->ChainCallback) {
     // Forward to user callback, if any
-    data->UserData  = user_data->ChainCallbackUserData;
+    data->UserData     = user_data->ChainCallbackUserData;
     *(user_data->Path) = FSys::path{user_data->Str};
     return user_data->ChainCallback(data);
   }
   return 0;
 }
 
-//bool InputText(const char *label,
-//               FSys::path *in_path,
-//               ImGuiInputTextFlags flags,
-//               ImGuiInputTextCallback callback,
-//               void *user_data) {
-//  IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
-//  input_text_callback_userdata cb_user_data;
-//  cb_user_data.Path                  = in_path;
-//  cb_user_data.Str                   = in_path->generic_string();
-//  cb_user_data.ChainCallback         = callback;
-//  cb_user_data.ChainCallbackUserData = user_data;
-//  return ImGui::InputText(label,
-//                          (char *)cb_user_data.Str.c_str(),
-//                          cb_user_data.Str.capacity() + 1,
-//                          flags,
-//                          InputTextCallback,
-//                          (void *)&cb_user_data);
-//}
+// bool InputText(const char *label,
+//                FSys::path *in_path,
+//                ImGuiInputTextFlags flags,
+//                ImGuiInputTextCallback callback,
+//                void *user_data) {
+//   IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+//   input_text_callback_userdata cb_user_data;
+//   cb_user_data.Path                  = in_path;
+//   cb_user_data.Str                   = in_path->generic_string();
+//   cb_user_data.ChainCallback         = callback;
+//   cb_user_data.ChainCallbackUserData = user_data;
+//   return ImGui::InputText(label,
+//                           (char *)cb_user_data.Str.c_str(),
+//                           cb_user_data.Str.capacity() + 1,
+//                           flags,
+//                           InputTextCallback,
+//                           (void *)&cb_user_data);
+// }
 }  // namespace doodle::dear

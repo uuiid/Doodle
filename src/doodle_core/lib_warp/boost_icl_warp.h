@@ -33,10 +33,14 @@ struct has_difference<doodle::chrono::local_time_pos> {
 };
 
 template <>
-struct difference_type_of<doodle::chrono::local_time_pos> { typedef doodle::chrono::local_time_pos::duration type; };
+struct difference_type_of<doodle::chrono::local_time_pos> {
+  typedef doodle::chrono::local_time_pos::duration type;
+};
 
 template <>
-struct size_type_of<doodle::chrono::local_time_pos> { typedef doodle::chrono::local_time_pos::duration type; };
+struct size_type_of<doodle::chrono::local_time_pos> {
+  typedef doodle::chrono::local_time_pos::duration type;
+};
 
 // ------------------------------------------------------------------------
 inline doodle::chrono::local_time_pos operator++(doodle::chrono::local_time_pos& x) {
@@ -73,4 +77,3 @@ inline doodle::chrono::local_time_pos::duration operator--(doodle::chrono::local
 }
 
 };  // namespace boost::icl
-

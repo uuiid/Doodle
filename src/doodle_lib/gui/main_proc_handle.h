@@ -18,4 +18,4 @@ class DOODLELIB_API main_proc_handle : public details::no_copy {
   std::function<void()> win_close{[]() {}};
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui

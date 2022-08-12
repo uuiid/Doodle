@@ -22,9 +22,9 @@ TEST_CASE("image to vide", "[core]") {
   l_msg.emplace<shot>().analysis(k_image_path);
   l_msg.emplace<FSys::path>(R"(E:\tmp\)");
 
-//  g_bounded_pool().wait<details::image_to_move>(l_msg, l_vector);
-//
-//  for (auto& h : l_vector) {
-//    REQUIRE(h.all_of<image_file_attribute>());
-//  }
+  //  g_bounded_pool().wait<details::image_to_move>(l_msg, l_vector);
+  //
+  //  for (auto& h : l_vector) {
+  //    REQUIRE(h.all_of<image_file_attribute>());
+  //  }
 }

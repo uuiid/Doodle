@@ -6,7 +6,6 @@
 #include <set>
 #include <memory>
 
-
 namespace doodle::json_rpc {
 class session;
 class session_manager {
@@ -24,4 +23,4 @@ class session_manager {
   void stop(const std::shared_ptr<session>& in_session);
   void stop_all();
 };
-}
+}  // namespace doodle::json_rpc

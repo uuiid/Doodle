@@ -9,9 +9,8 @@
 #include <variant>
 #include <optional>
 
-
 #include <nlohmann/json.hpp>
-namespace doodle::json_rpc{
+namespace doodle::json_rpc {
 using namespace std::literals;
 class rpc_request {
   class identifier {
@@ -37,4 +36,4 @@ class rpc_request {
   std::optional<nlohmann::json> params_{};
   std::variant<std::int64_t, std::string, std::monostate> id_{0};
 };
-}
+}  // namespace doodle::json_rpc

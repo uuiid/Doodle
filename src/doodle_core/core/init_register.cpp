@@ -27,7 +27,6 @@ void init_register::reg_class() {
                     [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
                       i.second();
                     });
-
     });
   }
   boost::asio::post(l_s, [l_s]() {

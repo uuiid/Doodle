@@ -202,8 +202,8 @@ void file_panel::scan_director(const FSys::path &in_dir) {
   p_i->edit_input.data = in_dir.generic_string();
 
   p_i->path_list       = ranges::make_subrange(
-                             FSys::directory_iterator{in_dir},
-                             FSys::directory_iterator{}) |
+                       FSys::directory_iterator{in_dir},
+                       FSys::directory_iterator{}) |
                    ranges::views::transform([](const auto &in) {
                      path_info l_info{};
                      try {

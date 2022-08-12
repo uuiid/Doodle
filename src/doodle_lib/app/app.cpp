@@ -129,7 +129,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
   DragAcceptFiles(p_hwnd, true);
   /// \brief 注册拖放对象
   auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
-  chick_true<doodle_error>(k_r == S_OK,  "无法注册拖拽com");
+  chick_true<doodle_error>(k_r == S_OK, "无法注册拖拽com");
 
   //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
@@ -181,7 +181,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
-  chick_true<doodle_error>(::IsWindowUnicode(p_hwnd),  "错误的窗口");
+  chick_true<doodle_error>(::IsWindowUnicode(p_hwnd), "错误的窗口");
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);

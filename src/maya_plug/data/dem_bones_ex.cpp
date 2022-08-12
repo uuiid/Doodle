@@ -35,4 +35,4 @@ void dem_bones_ex::cbWeightsIterBegin() {
 bool dem_bones_ex::cbWeightsIterEnd() {
   return false;
 }
-}
+}  // namespace doodle::maya_plug

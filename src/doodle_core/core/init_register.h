@@ -92,4 +92,3 @@ class meta_init_registrar
   class meta_init_registrar                                                        \
       : public init_register::registrar_lambda<meta_init_registrar_lab, index> {}; \
   }
-

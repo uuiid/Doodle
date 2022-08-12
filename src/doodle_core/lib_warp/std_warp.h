@@ -12,20 +12,20 @@ namespace details {
 
 }  // namespace details
 
- template <class ClassIn, class... Args>
- std::shared_ptr<ClassIn> new_object(Args&&... in_args) {
-   // post_constructor
-   constexpr auto has_make_this =
-       boost::hana::is_valid(
-           [](auto&& obj)
-               -> decltype(obj->post_constructor()) {});
-   auto ptr              = std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
-   using has_make_this_v = decltype(has_make_this(ptr));
-   if constexpr (has_make_this_v{}) {
-     ptr->post_constructor();
-   }
-   return ptr;
- }
+template <class ClassIn, class... Args>
+std::shared_ptr<ClassIn> new_object(Args &&...in_args) {
+  // post_constructor
+  constexpr auto has_make_this =
+      boost::hana::is_valid(
+          [](auto &&obj)
+              -> decltype(obj->post_constructor()) {});
+  auto ptr              = std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
+  using has_make_this_v = decltype(has_make_this(ptr));
+  if constexpr (has_make_this_v{}) {
+    ptr->post_constructor();
+  }
+  return ptr;
+}
 }  // namespace doodle
 
 namespace fmt {
@@ -43,4 +43,4 @@ struct formatter<::std::filesystem::path> : formatter<string_view> {
         ctx);
   }
 };
-}
+}  // namespace fmt

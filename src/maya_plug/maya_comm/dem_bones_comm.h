@@ -31,6 +31,6 @@ class dem_bones_comm : public doodle::TemplateAction<
   MStatus doIt(const MArgList& in_arg) override;
 };
 
-class dem_bones_add_wieget ;
+class dem_bones_add_wieget;
 
 }  // namespace doodle::maya_plug

@@ -16,7 +16,6 @@ class clear_scene_comm : public TemplateAction<clear_scene_comm,
   MStatus doIt(const MArgList& in_arg) override;
 
   static bool show_save_mag();
-
 };
 
 }  // namespace doodle::maya_plug

@@ -13,15 +13,16 @@ FSys::path image_icon::image_root(const entt::handle& in_handle) const {
   boost::contract::check l_c =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle,  "无效的句柄");
+            chick_true<doodle_error>(in_handle, "无效的句柄");
           })
           .postcondition([&]() {
-            chick_true<doodle_error>(!result.empty(),  "无效的根目录");
+            chick_true<doodle_error>(!result.empty(), "无效的根目录");
           });
 
   return result = in_handle
                       .registry()
-                      ->ctx().at<project>()
+                      ->ctx()
+                      .at<project>()
                       .make_path(
                           std::string{doodle_config::image_folder_name});
 }

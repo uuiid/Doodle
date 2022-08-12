@@ -1,2 +1,3 @@
 #define MANIFEST_RESOURCE_ID 1
-MANIFEST_RESOURCE_ID RT_MANIFEST "@maya_plug_name@.manifest"
+MANIFEST_RESOURCE_ID
+RT_MANIFEST "@maya_plug_name@.manifest"

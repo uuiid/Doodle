@@ -44,19 +44,17 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     this->has_cloth = has_cloth_link(maya_obj);
 
     node_org_name   = boost::erase_head_copy(
-          node_name,
-          boost::numeric_cast<std::int32_t>(
+        node_name,
+        boost::numeric_cast<std::int32_t>(
             this->node_name.find_last_of(':')));
 
     std::string l_find_str{};
     if (has_cloth) {
-      l_find_str = g_reg()->ctx().at<project_config::base_config>()
-                       .cloth_proxy_;
+      l_find_str = g_reg()->ctx().at<project_config::base_config>().cloth_proxy_;
       boost::ends_with(node_org_name, l_find_str);
       has_cloth = boost::ends_with(node_org_name, l_find_str);
     } else if (has_skin) {
-      l_find_str = g_reg()->ctx().at<project_config::base_config>()
-                       .simple_module_proxy_;
+      l_find_str = g_reg()->ctx().at<project_config::base_config>().simple_module_proxy_;
       boost::ends_with(node_org_name, l_find_str);
       has_skin = boost::ends_with(node_org_name, l_find_str);
     }

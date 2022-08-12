@@ -16,7 +16,6 @@ class create_sim_cloth
 
   void run_comm();
 
-
  public:
   create_sim_cloth();
   ~create_sim_cloth() override;

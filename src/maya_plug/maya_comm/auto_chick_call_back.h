@@ -14,4 +14,4 @@ class auto_chick_call_back {
   static void show_windows();
 };
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug

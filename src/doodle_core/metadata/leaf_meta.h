@@ -14,6 +14,5 @@ class DOODLE_CORE_EXPORT ref_meta {
  public:
   std::vector<database::ref_data> ref_list;
   ref_meta();
-
 };
 }  // namespace doodle

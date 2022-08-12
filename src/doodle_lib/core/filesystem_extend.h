@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
@@ -10,7 +9,6 @@ std::tuple<std::uint64_t, std::uint64_t> find_path_frame(const path& in_path);
     const std::string& in_falg,
     const std::string& in_string,
     const std::string& in_extension);
-
 
 }  // namespace FSys
 

@@ -4,6 +4,6 @@
 
 #pragma once
 
-//添加资源
+// 添加资源
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(DoodleLibResource);

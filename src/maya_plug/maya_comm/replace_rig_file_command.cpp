@@ -3,7 +3,7 @@
 //
 
 #include "replace_rig_file_command.h"
-//#include <doodle_lib/doodle_lib_all.h>
+// #include <doodle_lib/doodle_lib_all.h>
 #include <maya_plug/data/reference_file.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/redirection_path_info.h>

@@ -61,7 +61,7 @@ struct ScopeWrapper {
   constexpr operator bool() const noexcept { return ok_; }
 
  protected:
-  ScopeWrapper(const ScopeWrapper&) = delete;
+  ScopeWrapper(const ScopeWrapper&)            = delete;
   ScopeWrapper& operator=(const ScopeWrapper&) = delete;
 };
 

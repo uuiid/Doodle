@@ -29,14 +29,14 @@ FSys::path write_tmp_file(const std::string& in_falg,
                   version::version_minor,
                   version::version_patch));
   auto k_tmp_path = tmp_path / (boost::uuids::to_string(core_set::getSet().get_uuid()) + in_extension);
-  {  //写入文件后直接关闭
+  {  // 写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out};
     file << in_string;
   }
   return k_tmp_path;
 }
 
-std::string file_hash_sha224(const path &in_file) {
+std::string file_hash_sha224(const path& in_file) {
   chick_true<doodle_error>(
       exists(in_file) && is_regular_file(in_file),
 
@@ -44,7 +44,7 @@ std::string file_hash_sha224(const path &in_file) {
   CryptoPP::SHA224 k_sha_224;
   std::string k_string;
   ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
-  chick_true<doodle_error>(k_ifstream,  "{} 无法打开", in_file);
+  chick_true<doodle_error>(k_ifstream, "{} 无法打开", in_file);
 
   CryptoPP::FileSource k_file{
       k_ifstream,

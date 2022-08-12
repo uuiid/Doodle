@@ -33,6 +33,4 @@ class DOODLELIB_API filter_factory_base {
   std::unique_ptr<filter_base> make_filter();
 };
 
-
-
 }  // namespace doodle::gui

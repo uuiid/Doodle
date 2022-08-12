@@ -176,7 +176,7 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
 
   l_s = k_select.add(d_str{fmt::format("{}Base*", l_name)});
   DOODLE_CHICK(l_s);
-  chick_true<doodle_error>(k_select.length() > 0,  "无法找到包裹生成的网格");
+  chick_true<doodle_error>(k_select.length() > 0, "无法找到包裹生成的网格");
   MObject l_r{};
   l_s = k_select.getDependNode(0, l_r);
   DOODLE_CHICK(l_s);
@@ -304,7 +304,7 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
       l_collider_offset = l_node;
   }
 
-  chick_true<maya_error>(!l_collider.isNull() && !l_collider_offset.isNull(),  "寻找的的解算网格体和偏移网格体不一致");
+  chick_true<maya_error>(!l_collider.isNull() && !l_collider_offset.isNull(), "寻找的的解算网格体和偏移网格体不一致");
   return std::make_tuple(l_collider, l_collider_offset);
 }
 
@@ -354,7 +354,7 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
     : qcloth_shape() {
   p_ref_file = in_ref_file;
   obj        = in_object;
-  chick_true<doodle_error>(p_ref_file.any_of<reference_file>(),  "缺失组件");
+  chick_true<doodle_error>(p_ref_file.any_of<reference_file>(), "缺失组件");
 }
 bool qcloth_shape::set_cache_folder() const {
   return set_cache_folder(FSys::path{});
@@ -372,7 +372,7 @@ bool qcloth_shape::create_cache() const {
 std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   chick_true<doodle_error>(
       in_handle.any_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(),
-       "缺失组件");
+      "缺失组件");
 
   auto& k_ref = g_reg()->ctx().at<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
@@ -496,7 +496,7 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 
 void qcloth_shape::add_collider(const entt::handle& in_handle) {
   chick_true<component_error>(
-      in_handle.any_of<qcloth_shape_n::shape_list>(),  "缺失组件");
+      in_handle.any_of<qcloth_shape_n::shape_list>(), "缺失组件");
   auto l_group   = get_cloth_group();
   auto l_ql      = get_ql_solver();
   auto l_ql_tran = get_transform(l_ql);
@@ -627,7 +627,7 @@ void qcloth_shape::sort_group() {
 bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
   chick_true<doodle_error>(
       in_handle.any_of<qcloth_shape_n::maya_obj>(),
-       "缺失组件");
+      "缺失组件");
   MStatus l_s{};
   auto l_shape = get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
   /// 寻找高模的皮肤簇
@@ -656,7 +656,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
       break;
     }
   }
-  chick_true<maya_error>(!l_object.isNull(),  "没有找到qlSolver解算核心");
+  chick_true<maya_error>(!l_object.isNull(), "没有找到qlSolver解算核心");
 
   return l_object;
 }
@@ -672,7 +672,7 @@ MObject qcloth_shape::get_ql_solver() {
       break;
     }
   }
-  chick_true<maya_error>(!l_object.isNull(),  "没有找到qlSolver解算核心");
+  chick_true<maya_error>(!l_object.isNull(), "没有找到qlSolver解算核心");
   return l_object;
 }
 void qcloth_shape::reset_create_node_attribute(const entt::handle& in_handle) {

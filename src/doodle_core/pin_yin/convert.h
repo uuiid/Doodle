@@ -2,7 +2,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle{
+namespace doodle {
 class DOODLE_CORE_EXPORT convert {
  public:
   std::string toEn(const std::string &conStr);
@@ -17,7 +17,4 @@ class DOODLE_CORE_EXPORT convert {
   convert();
   ~convert();
 };
-}
-
-
-
+}  // namespace doodle

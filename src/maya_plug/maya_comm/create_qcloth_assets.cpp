@@ -75,7 +75,7 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   p_i->cloth_list |= ranges::action::remove_if([](const entt::handle& in) {
     return !in;
   });
-  chick_true<doodle_error>(!p_i->cloth_list.empty(),  "传入了空的布料列表");
+  chick_true<doodle_error>(!p_i->cloth_list.empty(), "传入了空的布料列表");
   if (!p_i->coll_p.valid())
     p_i->coll_p = {};
 }
@@ -88,7 +88,7 @@ MStatus create_qcloth_assets::undoIt() {
   delete_node();
   // 更新所有的属性
   reset_properties();
-  if(g_reg()->ctx().contains<qcloth_shape::cloth_group>()){
+  if (g_reg()->ctx().contains<qcloth_shape::cloth_group>()) {
     g_reg()->ctx().erase<qcloth_shape::cloth_group>();
   }
   return MStatus::kSuccess;

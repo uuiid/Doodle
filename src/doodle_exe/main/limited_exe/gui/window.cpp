@@ -19,7 +19,8 @@ void limited_layout::init() {
   boost::asio::post(g_io_context(), [this]() {
     call_render<::doodle::edit_widgets>();
     call_render<::doodle::assets_filter_widget>();
-    call_render<::doodle::comm_maya_tool>();;
+    call_render<::doodle::comm_maya_tool>();
+    ;
     call_render<::doodle::assets_file_widgets>();
     call_render<::doodle::long_time_tasks_widget>();
   });

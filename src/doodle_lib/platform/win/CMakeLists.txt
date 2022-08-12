@@ -6,5 +6,5 @@ target_sources(doodle_lib
         PRIVATE
         get_screenshot.cpp
         wnd_proc.cpp
-        
+
         )

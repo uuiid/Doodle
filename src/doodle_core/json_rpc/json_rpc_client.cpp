@@ -20,5 +20,4 @@ void json_rpc_client::image_to_move(const image_to_move_sig& in_skin,
                                               in_list);
 }
 
-
 }  // namespace doodle

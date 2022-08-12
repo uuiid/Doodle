@@ -10,6 +10,7 @@ print(res_dir)
 
 import maya_fun_tool
 
+
 class doodle_main(object):
     maya_version = str(maya.cmds.about(api=True))[0:4]
     doodle_plug = "doodle_maya_{}".format(str(cmds.about(api=True))[0:4])
@@ -42,7 +43,7 @@ def doodle_test_sim():
 def doodle_test_fbx():
     print("run test")
     k_f = maya_fun_tool.open_file()
-    k_f.config_ =  """
+    k_f.config_ = """
 [
 {
 "export_path":"",

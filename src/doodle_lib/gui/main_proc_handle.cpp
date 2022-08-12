@@ -12,4 +12,4 @@ main_proc_handle& main_proc_handle::get() {
   return l_handle;
 }
 main_proc_handle::~main_proc_handle() = default;
-}  // namespace doodle
+}  // namespace doodle::gui

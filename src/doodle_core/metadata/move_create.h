@@ -45,4 +45,4 @@ class DOODLE_CORE_EXPORT image_attr {
   bool operator>=(const image_attr& in_rhs) const;
 };
 
-}  // namespace doodle::move
+}  // namespace doodle::movie
