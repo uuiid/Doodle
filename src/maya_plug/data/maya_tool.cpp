@@ -159,14 +159,22 @@ MObject get_transform(const MObject& in_object) {
   return k_r;
 }
 void add_child(const MObject& in_praent, MObject& in_child) {
+  add_child(get_dag_path(in_praent), get_dag_path(in_child));
+}
+void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
+  if (in_praent == in_child)
+    return;
+
   MStatus k_s{};
   MFnDagNode k_node{in_praent, &k_s};
   DOODLE_CHICK(k_s);
-  if (k_node.hasChild(in_child, &k_s)) {
+  auto l_node = in_child.node(&k_s);
+  DOODLE_CHICK(k_s);
+  if (k_node.hasChild(l_node, &k_s)) {
     DOODLE_CHICK(k_s);
-    k_node.removeChild(in_child);
+    k_node.removeChild(l_node);
   }
-  k_s = k_node.addChild(in_child);
+  k_s = k_node.addChild(l_node);
   DOODLE_CHICK(k_s);
 }
 void add_mat(const MObject& in_object, MObject& in_ref_obj) {

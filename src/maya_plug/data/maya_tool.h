@@ -46,6 +46,7 @@ MObject get_transform(const MObject& in_object);
 MDagPath get_dag_path(const MObject& in_object);
 
 void add_child(const MObject& in_praent, MObject& in_child);
+void add_child(const MDagPath& in_praent, const MDagPath& in_child);
 
 void add_mat(const MObject& in_obj, MObject& in_ref_obj);
 void copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj);
