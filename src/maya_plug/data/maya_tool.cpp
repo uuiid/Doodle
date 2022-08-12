@@ -74,19 +74,16 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   return l_plug;
 }
 MObject get_shading_engine(const MObject& in_node) {
+  return get_shading_engine(get_dag_path(in_node));
+}
+MObject get_shading_engine(const MDagPath& in_node) {
   MStatus k_s{};
-  MObject k_obj = in_node;
-  if (in_node.hasFn(MFn::kDagNode)) {
-    MFnDagNode l_dag_node{in_node, &k_s};
-    DOODLE_CHICK(k_s);
-    MDagPath l_path{};
-    k_s = l_dag_node.getPath(l_path);
-    DOODLE_CHICK(k_s);
-    k_s = l_path.extendToShape();
-    DOODLE_CHICK(k_s);
-    k_obj = l_path.node(&k_s);
-    DOODLE_CHICK(k_s);
-  }
+  auto l_path = in_node;
+  k_s         = l_path.extendToShape();
+  DOODLE_CHICK(k_s);
+  MObject k_obj = l_path.node(&k_s);
+  DOODLE_CHICK(k_s);
+
   MObject obj{};
   for (MItDependencyGraph i{k_obj,
                             MFn::Type::kShadingEngine,
@@ -180,6 +177,14 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   DOODLE_CHICK(l_s);
   l_set.addMember(in_object);
 }
+void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
+  MStatus l_s{};
+  auto k_mat = get_shading_engine(in_ref_obj.node());
+  chick_true<maya_error>(k_mat.hasFn(MFn::kShadingEngine), DOODLE_LOC, "没有找到着色集");
+  MFnSet l_set{k_mat, &l_s};
+  DOODLE_CHICK(l_s);
+  l_set.addMember(in_obj);
+}
 std::string get_node_full_name(const MObject& in_obj) {
   if (in_obj.hasFn(MFn::kDagNode)) {
     MStatus l_s{};
@@ -221,4 +226,5 @@ MDagPath get_dag_path(const MObject& in_object) {
   DOODLE_CHICK(l_s);
   return l_path;
 }
+
 }  // namespace doodle::maya_plug
