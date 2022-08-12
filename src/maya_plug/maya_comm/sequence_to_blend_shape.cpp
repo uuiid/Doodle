@@ -143,11 +143,12 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
     k_s = l_select.getDagPath(0, p_i->parent_tran);
     DOODLE_CHICK(k_s);
   } else {  /// \brief 从本身的名称空间中搜索
-    auto l_namespace = MNamespace::getNamespaceFromName(d_str{get_node_full_name(p_i->ctx.front().select_path)}, &k_s);
+    auto l_namespace = MNamespace::getNamespaceFromName(d_str{get_node_name(p_i->ctx.front().select_path)}, &k_s);
     MSelectionList l_selection_list{};
     try {
       auto l_select_str = fmt::format("{}:*UE4", l_namespace);
-      k_s               = l_selection_list.add(d_str{l_select_str}, true);
+      DOODLE_LOG_INFO("选择 {}", l_select_str);
+      k_s = l_selection_list.add(d_str{l_select_str}, true);
       DOODLE_CHICK(k_s);
       k_s = l_selection_list.getDagPath(0, p_i->parent_tran);
       DOODLE_CHICK(k_s);
@@ -172,10 +173,10 @@ MStatus sequence_to_blend_shape::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
-  this->create_mesh();
-  this->run_blend_shape_comm();
-  this->create_anim();
-  this->add_to_parent();
+  //  this->create_mesh();
+  //  this->run_blend_shape_comm();
+  //  this->create_anim();
+  //  this->add_to_parent();
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {

@@ -217,6 +217,15 @@ std::string get_node_name(const MObject& in_obj) {
   DOODLE_CHICK(l_s);
   return d_str{l_name};
 }
+std::string get_node_name(const MDagPath& in_obj) {
+  MFnDependencyNode l_node{};
+  MStatus l_s{};
+  DOODLE_CHICK(l_node.setObject(in_obj.node(&l_s)));
+  DOODLE_CHICK(l_s);
+  auto l_name = l_node.name(&l_s);
+  DOODLE_CHICK(l_s);
+  return d_str{l_name};
+}
 std::string set_node_name(const MObject& in_obj, const std::string& in_name) {
   MFnDependencyNode l_node{};
   DOODLE_CHICK(l_node.setObject(in_obj));

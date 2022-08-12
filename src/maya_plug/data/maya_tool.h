@@ -53,5 +53,6 @@ void copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj);
 std::string get_node_full_name(const MObject& in_obj);
 std::string get_node_full_name(const MDagPath& in_obj);
 std::string get_node_name(const MObject& in_obj);
+std::string get_node_name(const MDagPath& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 }  // namespace doodle::maya_plug
