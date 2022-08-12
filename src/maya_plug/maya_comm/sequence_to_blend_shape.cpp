@@ -44,12 +44,16 @@ constexpr char bindFrame_lf[]  = "-bindFrame";
 
 constexpr char parent_f[]      = "-p";
 constexpr char parent_lf[]     = "-parent";
+
+constexpr char duplicate_f[]   = "-du";
+constexpr char duplicate_lf[]  = "-duplicate";
 MSyntax syntax() {
   MSyntax syntax{};
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
   syntax.addFlag(endFrame_f, endFrame_lf, MSyntax::kTime);
   syntax.addFlag(bindFrame_f, bindFrame_lf, MSyntax::kTime);
   syntax.addFlag(parent_f, parent_lf, MSyntax::kString);
+  syntax.addFlag(duplicate_f, duplicate_lf, MSyntax::kBoolean);
 
   /// \brief 选中的物体
   syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList, 1);
@@ -68,6 +72,8 @@ class sequence_to_blend_shape::impl {
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
   MDagPath parent_tran;
+
+  bool duplicate_bind{};
 
   MSelectionList select_list;
 
@@ -116,6 +122,16 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
   chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
                            "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
+
+  if (k_prase.isFlagSet(sequence_to_blend_shape_ns::duplicate_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    bool l_value{};
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::duplicate_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->duplicate_bind = l_value;
+  } else {
+    p_i->duplicate_bind = true;
+  }
 
   /// \brief 获取选择物体
   k_s = k_prase.getObjects(p_i->select_list);
@@ -200,11 +216,14 @@ void sequence_to_blend_shape::create_mesh() {
       /// \brief 设置函数集
       l_s = l_dag_path.setObject(ctx.select_path);
       DOODLE_CHICK(l_s);
-
-      auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
-      DOODLE_CHICK(l_s);
-      ctx.bind_path = get_dag_path(l_create_mesh_obj);
-      l_s           = l_transform.setObject(ctx.bind_path);
+      if (p_i->duplicate_bind) {
+        auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
+        DOODLE_CHICK(l_s);
+        ctx.bind_path = get_dag_path(l_create_mesh_obj);
+      } else {
+        ctx.bind_path = ctx.select_path;
+      }
+      l_s = l_transform.setObject(ctx.bind_path);
       DOODLE_CHICK(l_s);
 
       DOODLE_CHICK(l_s);
