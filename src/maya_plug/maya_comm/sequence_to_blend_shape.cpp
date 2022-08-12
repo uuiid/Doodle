@@ -162,6 +162,13 @@ MStatus sequence_to_blend_shape::doIt(const MArgList& in_arg) {
   return redoIt();
 }
 MStatus sequence_to_blend_shape::undoIt() {
+  MStatus l_status{};
+  for (auto&& ctx : p_i->ctx) {
+    auto l_node = ctx.bind_path.node(&l_status);
+    DOODLE_CHICK(l_status);
+    l_status = MGlobal::deleteNode(l_node);
+    DOODLE_CHICK(l_status);
+  }
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
