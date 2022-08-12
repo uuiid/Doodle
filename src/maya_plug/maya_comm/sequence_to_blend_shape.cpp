@@ -26,6 +26,7 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
+#include <maya/MDagPathArray.h>
 #include <maya/MPointArray.h>
 
 namespace doodle {
@@ -64,19 +65,19 @@ class sequence_to_blend_shape::impl {
  public:
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
-  MObject parent_tran;
+  MDagPath parent_tran;
 
   MSelectionList select_list;
 
-  MObjectArray create_mesh_list{};
-  MPointArray create_point_list{};
+  MDagPathArray create_mesh_list{};
+  MVectorArray create_point_list{};
 
-  MObject bind_obj;
   MDagPath bind_path;
   MPoint bind_center;
   MMatrix bind_matrix;
-  MObject blend_shape_obj;
   MDagModifier dg_modidier;
+
+  MObject blend_shape_obj;
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -116,12 +117,8 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
     MSelectionList l_select{};
     k_s = l_select.add(l_value);
     DOODLE_CHICK(k_s);
-    MDagPath l_path;
 
-    k_s = l_select.getDagPath(0, l_path);
-    DOODLE_CHICK(k_s);
-
-    p_i->parent_tran = l_path.transform(&k_s);
+    k_s = l_select.getDagPath(0, p_i->parent_tran);
     DOODLE_CHICK(k_s);
   }
 
@@ -154,12 +151,9 @@ void sequence_to_blend_shape::create_mesh() {
   MFnTransform l_transform{l_path, &l_s};
   DOODLE_CHICK(l_s);
 
-  MObject l_mesh_obj{l_path.node(&l_s)};
-  DOODLE_CHICK(l_s);
-
   MFnMesh l_mesh{};
   MFnMesh l_create_mesh{};
-  MFnDagNode l_tran_node{l_path, &l_s};
+  MFnDagNode l_dag_path{l_path, &l_s};
   DOODLE_CHICK(l_s);
 
   {  /// \brief 获取bind obj
@@ -167,12 +161,10 @@ void sequence_to_blend_shape::create_mesh() {
     l_s    = MGlobal::viewFrame(i);
     DOODLE_CHICK(l_s);
 
-    auto l_create_mesh_obj = l_tran_node.duplicate(false, false, &l_s);
+    auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
     DOODLE_CHICK(l_s);
     p_i->bind_path = get_dag_path(l_create_mesh_obj);
-    //    center_pivot(p_i->bind_path);
 
-    p_i->bind_obj  = l_create_mesh_obj;
     DOODLE_CHICK(l_s);
     p_i->bind_matrix = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
@@ -181,7 +173,8 @@ void sequence_to_blend_shape::create_mesh() {
     p_i->bind_center = l_mesh.boundingBox(&l_s).center() * p_i->bind_matrix;
     DOODLE_CHICK(l_s);
 
-    add_mat(p_i->bind_obj, l_mesh_obj);
+    to_work_zero(p_i->bind_path);
+    copy_mat(p_i->bind_path, l_path);
   }
 
   MFnTransform l_fn_transform_dub{};
@@ -193,31 +186,34 @@ void sequence_to_blend_shape::create_mesh() {
     DOODLE_CHICK(l_s);
 
     //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
-    l_s = l_mesh.setObject(l_path);
+    l_s = l_dag_path.setObject(l_path);
     DOODLE_CHICK(l_s);
 
-    auto l_create_mesh_obj = l_mesh.duplicate(false, false, &l_s);
+    auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
     DOODLE_CHICK(l_s);
+
+    l_s = l_mesh.setObject(l_create_mesh_path);
+    DOODLE_CHICK(l_s);
+
     /// \brief 获取网格中心
     auto l_bind_box = l_mesh.boundingBox(&l_s);
     DOODLE_CHICK(l_s);
 
-    l_s = l_transform.setObject(get_dag_path(l_path.transform(&l_s)));
+    l_s = l_transform.setObject(l_create_mesh_path);
     DOODLE_CHICK(l_s);
     auto l_tran = l_transform.transformationMatrix(&l_s);
     DOODLE_CHICK(l_s);
     //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
-    auto l_center   = l_bind_box.center();
-    auto l_center_1 = (l_center * l_tran) - p_i->bind_center;
-    l_s             = p_i->create_point_list.append(l_center_1);
+    auto l_center = l_bind_box.center() * l_tran;
+    l_s           = p_i->create_point_list.append(l_center);
     DOODLE_CHICK(l_s);
 
-    /// \brief 冻结网格数据
-    auto l_path_tmp = get_dag_path(l_create_mesh_obj);
+    /// \brief 移动到世界中心
+    to_work_zero(l_create_mesh_path);
     //    center_pivot(l_path_tmp);
 
-    l_s             = p_i->create_mesh_list.append(l_create_mesh_obj);
+    l_s = p_i->create_mesh_list.append(l_create_mesh_path);
     DOODLE_CHICK(l_s);
 
     /// \brief 旋转网格数据
@@ -235,12 +231,18 @@ void sequence_to_blend_shape::create_anim() {
   MFnAnimCurve aim{};
   /// \brief 创建 tran 变形
 
-  MPlug plugtx = get_plug(p_i->bind_obj, "tx");
-  MPlug plugty = get_plug(p_i->bind_obj, "ty");
-  MPlug plugtz = get_plug(p_i->bind_obj, "tz");
-  MPlug plugrx = get_plug(p_i->bind_obj, "rx");
-  MPlug plugry = get_plug(p_i->bind_obj, "ry");
-  MPlug plugrz = get_plug(p_i->bind_obj, "rz");
+  MPlug plugtx = get_plug(p_i->bind_path.node(&l_s), "tx");
+  DOODLE_CHICK(l_s);
+  MPlug plugty = get_plug(p_i->bind_path.node(&l_s), "ty");
+  DOODLE_CHICK(l_s);
+  MPlug plugtz = get_plug(p_i->bind_path.node(&l_s), "tz");
+  DOODLE_CHICK(l_s);
+  MPlug plugrx = get_plug(p_i->bind_path.node(&l_s), "rx");
+  DOODLE_CHICK(l_s);
+  MPlug plugry = get_plug(p_i->bind_path.node(&l_s), "ry");
+  DOODLE_CHICK(l_s);
+  MPlug plugrz = get_plug(p_i->bind_path.node(&l_s), "rz");
+  DOODLE_CHICK(l_s);
   MTimeArray l_time{};
 #define DOODLE_ADD_ANM_declaration(axis) \
   MDoubleArray l_value_tran_##axis{};
@@ -430,7 +432,7 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
     l_names.emplace_back(get_node_full_name(p_i->create_mesh_list[l_i]));
   }
 
-  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_obj));
+  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(p_i->bind_path));
   //  DOODLE_LOG_INFO("run {}", l_comm);
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
@@ -444,7 +446,7 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   DOODLE_CHICK(l_s);
 
   for (int l_i = 0; l_i < p_i->create_mesh_list.length(); ++l_i) {
-    l_s = MGlobal::deleteNode(p_i->create_mesh_list[l_i]);
+    l_s = MGlobal::deleteNode(p_i->create_mesh_list[l_i].node());
     DOODLE_CHICK(l_s);
   }
 }
