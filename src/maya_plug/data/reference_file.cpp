@@ -78,7 +78,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-  chick_true<doodle_error>(!file_namespace.empty(),  "名称空间为空");
+  chick_true<doodle_error>(!file_namespace.empty(), "名称空间为空");
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -635,35 +635,34 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
   static std::string maya_bakeResults_str{R"(
-bakeResults
- -simulation true
- -t "{}:{}"
- -hierarchy below
- -sampleBy 1
- -oversamplingRate 1
- -disableImplicitControl true
- -preserveOutsideKeys {}
- -sparseAnimCurveBake false
- -removeBakedAttributeFromLayer false
- -removeBakedAnimFromLayer false
- -bakeOnOverrideLayer false
- -minimizeRotation true
- -controlPoints false
- -shape true
- "{}:*{}";
-)"};
+bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:*{}";)"};
   auto l_comm = fmt::format(maya_bakeResults_str,
                             in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
     DOODLE_CHICK(k_s);
-    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试");
   } catch (const maya_Failure &in) {
-    auto l_comm_back = fmt::format(maya_bakeResults_str,
-                                   in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
-    DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm_back);
-    k_s = MGlobal::executeCommand(d_str{l_comm});
+    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", in.what());
+    try {
+      l_comm = fmt::format(maya_bakeResults_str,
+                           in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
+      DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+      k_s = MGlobal::executeCommand(d_str{l_comm});
+      DOODLE_CHICK(k_s);
+    } catch (const maya_Failure &in2) {
+      DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", in2.what());
+
+      try {
+        l_comm = fmt::format(R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:*{}";)", in_start.value(), in_end.value(), get_namespace(), k_cfg.export_group);
+        DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+        k_s = MGlobal::executeCommand(d_str{l_comm});
+        DOODLE_CHICK(k_s);
+      } catch (const maya_Failure &in3) {
+        DOODLE_LOG_INFO("烘培失败, 直接导出 {}", in3.what());
+      }
+    }
+
     DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
   }
 
