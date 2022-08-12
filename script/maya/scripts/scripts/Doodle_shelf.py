@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 import shelfBase
 import maya.cmds as cmds
-
+from maya import mel
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
 import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
@@ -11,7 +11,6 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 import random
-
 
 import scripts.doodle_ik_to_fk
 
@@ -180,6 +179,13 @@ class DoodleUIManage(object):
             if cmds.shelfLayout(inst.name, ex=1):
                 try:
                     cmds.deleteUI(inst.name)
-                except RuntimeError:
-                    pass
+                except RuntimeError as err:
+                    print(err)
             DoodleUIManage._instances.discard(inst)
+        gShelfTopLevel = mel.eval("global string $gShelfTopLevel; $tmp = $gShelfTopLevel;")
+        gShelfTopLevel += "|Doodle"
+        if cmds.shelfLayout(gShelfTopLevel, ex=1):
+            try:
+                cmds.deleteUI(gShelfTopLevel)
+            except RuntimeError as err:
+                print(err)
