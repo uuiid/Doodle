@@ -59,20 +59,18 @@ class DOODLE_CORE_EXPORT logger_ctrl {
 template <class throw_T,
           class BOOL_T,
           class FormatString, class... Args>
-inline void chick_true(const BOOL_T& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
+inline void chick_true(const BOOL_T& in, const FormatString& fmt, Args&&... args) {
   if (!in) {
-    if constexpr (sizeof...(args) > 0) {
-      spdlog::log(in_loc, spdlog::level::warn, fmt, std::forward<Args>(args)...);
-      throw throw_T{fmt::format(fmt::to_string_view(fmt), std::forward<Args>(args)...)};
-    } else {
-      spdlog::log(in_loc, spdlog::level::warn, fmt);
+    if constexpr (sizeof...(args) == 0) {
       throw throw_T{fmt::to_string(fmt)};
+    } else {
+      throw throw_T{fmt::format(fmt::to_string_view(fmt), std::forward<Args>(args)...)};
     }
   }
 }
 template <class throw_T, class FormatString, class... Args>
-inline void chick_false(const bool& in, const ::spdlog::source_loc& in_loc, const FormatString& fmt, Args&&... args) {
-  chick_true<throw_T>(!in, in_loc, fmt, args...);
+inline void chick_false(const bool& in, const FormatString& fmt, Args&&... args) {
+  chick_true<throw_T>(!in, fmt, args...);
 }
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) \

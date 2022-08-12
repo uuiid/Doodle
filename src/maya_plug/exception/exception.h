@@ -52,36 +52,36 @@ class maya_EndOfFile : public maya_error {
   explicit maya_EndOfFile(const std::string& in_str) : maya_error(in_str){};
 };
 
-inline void throw_maya_exception(const MStatus& in_status, const ::spdlog::source_loc& in_location) {
-  switch (in_status.statusCode()) {
-    case MStatus::MStatusCode::kSuccess:
-      break;
-    case MStatus::MStatusCode::kFailure: {
-      chick_true<maya_Failure>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kInsufficientMemory: {
-      chick_true<maya_InsufficientMemory>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kInvalidParameter: {
-      chick_true<maya_InvalidParameter>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kLicenseFailure: {
-      chick_true<maya_LicenseFailure>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kUnknownParameter: {
-      chick_true<maya_UnknownParameter>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kNotImplemented: {
-      chick_true<maya_NotImplemented>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kNotFound: {
-      chick_true<maya_NotFound>(false, in_location, in_status.errorString());
-    }
-    case MStatus::MStatusCode::kEndOfFile: {
-      chick_true<maya_EndOfFile>(false, in_location, in_status.errorString());
-    }
-    default:
-      chick_true<doodle_error>(false, in_location, "未知选项");
-  }
+inline void throw_maya_exception(const MStatus& in_status) {
+  chick_true<maya_Failure>(in_status, in_status.errorString());
+  //  switch (in_status.statusCode()) {
+  //    case MStatus::MStatusCode::kSuccess:
+  //      break;
+  //    case MStatus::MStatusCode::kFailure: {
+  //    }
+  //    case MStatus::MStatusCode::kInsufficientMemory: {
+  //      chick_true<maya_InsufficientMemory>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kInvalidParameter: {
+  //      chick_true<maya_InvalidParameter>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kLicenseFailure: {
+  //      chick_true<maya_LicenseFailure>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kUnknownParameter: {
+  //      chick_true<maya_UnknownParameter>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kNotImplemented: {
+  //      chick_true<maya_NotImplemented>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kNotFound: {
+  //      chick_true<maya_NotFound>(false, in_status.errorString());
+  //    }
+  //    case MStatus::MStatusCode::kEndOfFile: {
+  //      chick_true<maya_EndOfFile>(false, in_status.errorString());
+  //    }
+  //    default:
+  //      chick_true<doodle_error>(false, "未知选项");
+  //  }
 }
 }  // namespace doodle::maya_plug

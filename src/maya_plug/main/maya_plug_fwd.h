@@ -99,7 +99,7 @@ class d_str {
  * @brief 检查maya的返回状态
  */
 #define DOODLE_CHICK(in_status) \
-  throw_maya_exception(in_status, DOODLE_SOURCE_LOC);
+  throw_maya_exception(in_status);
 
 void open_windows();
 
