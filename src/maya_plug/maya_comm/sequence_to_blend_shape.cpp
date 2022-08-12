@@ -165,18 +165,21 @@ MStatus sequence_to_blend_shape::doIt(const MArgList& in_arg) {
 MStatus sequence_to_blend_shape::undoIt() {
   MStatus l_status{};
   for (auto&& ctx : p_i->ctx) {
-    auto l_node = ctx.bind_path.node(&l_status);
-    DOODLE_CHICK(l_status);
-    l_status = MGlobal::deleteNode(l_node);
-    DOODLE_CHICK(l_status);
+    if(ctx.bind_path.isValid(&l_status)){
+      DOODLE_CHICK(l_status)
+      auto l_node = ctx.bind_path.node(&l_status);
+      DOODLE_CHICK(l_status);
+      l_status = MGlobal::deleteNode(l_node);
+      DOODLE_CHICK(l_status);
+    }
   }
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
-  //  this->create_mesh();
-  //  this->run_blend_shape_comm();
-  //  this->create_anim();
-  //  this->add_to_parent();
+  this->create_mesh();
+  this->run_blend_shape_comm();
+  this->create_anim();
+  this->add_to_parent();
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
