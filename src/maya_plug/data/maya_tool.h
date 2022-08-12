@@ -50,6 +50,7 @@ void add_child(const MObject& in_praent, MObject& in_child);
 void add_mat(const MObject& in_obj, MObject& in_ref_obj);
 void copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj);
 std::string get_node_full_name(const MObject& in_obj);
+std::string get_node_full_name(const MDagPath& in_obj);
 std::string get_node_name(const MObject& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 }  // namespace doodle::maya_plug

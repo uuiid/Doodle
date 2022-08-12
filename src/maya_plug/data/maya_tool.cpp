@@ -187,17 +187,19 @@ void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
 }
 std::string get_node_full_name(const MObject& in_obj) {
   if (in_obj.hasFn(MFn::kDagNode)) {
-    MStatus l_s{};
-    auto l_path     = get_dag_path(in_obj);
-    auto l_path_str = l_path.fullPathName(&l_s);
-    DOODLE_CHICK(l_s);
-    return d_str{l_path_str};
+    return get_node_full_name(get_dag_path(in_obj));
   } else if (in_obj.hasFn(MFn::Type::kDependencyNode)) {
     MFnDependencyNode l_node{};
     DOODLE_CHICK(l_node.setObject(in_obj));
     return d_str{l_node.absoluteName()};
   }
   return {};
+}
+std::string get_node_full_name(const MDagPath& in_obj) {
+  MStatus l_s{};
+  auto l_str = in_obj.fullPathName(&l_s);
+  DOODLE_CHICK(l_s);
+  return d_str{l_str};
 }
 std::string get_node_name(const MObject& in_obj) {
   MFnDependencyNode l_node{};
