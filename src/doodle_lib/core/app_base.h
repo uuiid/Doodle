@@ -31,6 +31,9 @@ class DOODLELIB_API app_command_base : public app_base {
   virtual void command_line_parser(const std::vector<std::string>& in_arg);
   bool chick_authorization(const FSys::path& in_path);
   program_options_ptr options_;
+
+ protected:
+  virtual void post_constructor() override;
 };
 
 }  // namespace doodle

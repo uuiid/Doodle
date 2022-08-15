@@ -10,6 +10,7 @@ namespace doodle {
 /**
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
+
 class DOODLE_CORE_EXPORT app_base {
  protected:
   static app_base* self;
@@ -35,6 +36,11 @@ class DOODLE_CORE_EXPORT app_base {
   virtual void post_constructor() = 0;
 
  public:
+  class in_app_args {
+   public:
+    win::wnd_instance in_instance;
+  };
+
   explicit app_base();
   explicit app_base(const win::wnd_instance& in_instance);
   virtual ~app_base();

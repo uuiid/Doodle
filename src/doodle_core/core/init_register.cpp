@@ -12,25 +12,21 @@ std::multimap<std::int32_t, std::function<void()>>& init_register::registered_fu
 }
 void init_register::reg_class() {
   auto l_s = boost::asio::make_strand(g_io_context());
-  boost::asio::post(l_s, [l_s]() {
-    DOODLE_LOG_INFO("开始反射注册");
-  });
+  DOODLE_LOG_INFO("开始反射注册");
 
   auto& l_map = registered_functions();
   for (auto it = l_map.begin(), end = l_map.end();
        it != end;
        it = l_map.upper_bound(it->first)) {
     DOODLE_LOG_INFO("初始化优先级 {}", it->first);
-    boost::asio::post(l_s, [key = it->first, l_s]() {
-      auto l_p = init_register::instance().registered_functions().equal_range(key);
-      std::for_each(l_p.first, l_p.second,
-                    [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
-                      i.second();
-                    });
-    });
+    auto l_p = init_register::instance().registered_functions().equal_range(it->first);
+    std::for_each(l_p.first, l_p.second,
+                  [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
+                    i.second();
+                  });
   }
+  DOODLE_LOG_INFO("结束开始反射注册");
   boost::asio::post(l_s, [l_s]() {
-    DOODLE_LOG_INFO("结束开始反射注册");
     for (auto&& mat : entt::resolve())
       DOODLE_LOG_INFO(fmt::format("{}", mat.info().name()));
     g_reg()->ctx().at<core_sig>().init_end();

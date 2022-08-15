@@ -17,6 +17,8 @@
 #include <cryptopp/filters.h>
 
 namespace doodle {
+void app_command_base::post_constructor() {}
+
 void app_command_base::command_line_parser(const std::vector<std::string>& in_arg) {
   if (!chick_authorization())
     stop_app();
@@ -97,4 +99,5 @@ app_command_base::app_command_base(win::wnd_instance const& in_instance)
 app_command_base::app_command_base()
     : app_base(::GetModuleHandleW(nullptr)) {
 }
+
 }  // namespace doodle

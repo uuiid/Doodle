@@ -44,6 +44,7 @@ class app::impl {
  public:
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard;
+  win::wnd_handle parent;
 
  public:
 };
@@ -57,6 +58,7 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
       d3dDevice(nullptr),
       d3dDeviceContext(nullptr),
       p_i(std::make_unique<impl>()) {
+  p_i->parent = in_parent;
 }
 
 void app::post_constructor() {
@@ -81,7 +83,7 @@ void app::post_constructor() {
                                p_title.c_str(),
                                WS_OVERLAPPEDWINDOW,
                                100, 100, 1280, 800,
-                               in_parent,
+                               p_i->parent,
                                nullptr,
                                p_win_class.hInstance,
                                nullptr);
