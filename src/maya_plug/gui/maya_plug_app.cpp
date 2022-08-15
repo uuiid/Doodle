@@ -28,6 +28,9 @@ maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
     : app(in_instance,
           in_parent) {
   self = this;
+  boost::asio::post(g_io_context(), []() {
+    app::Get().close_windows();
+  });
 }
 
 }  // namespace doodle::maya_plug
