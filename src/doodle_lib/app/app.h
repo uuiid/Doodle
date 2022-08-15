@@ -164,5 +164,6 @@ class DOODLELIB_API app : public app_command_base {
   virtual void load_windows();
   void load_back_end() override;
   virtual bool chick_authorization() override;
+  virtual void post_constructor() override;
 };
 }  // namespace doodle

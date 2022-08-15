@@ -57,6 +57,9 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
       d3dDevice(nullptr),
       d3dDeviceContext(nullptr),
       p_i(std::make_unique<impl>()) {
+}
+
+void app::post_constructor() {
   p_win_class =
       {sizeof(WNDCLASSEX),
        CS_CLASSDC,
