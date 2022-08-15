@@ -51,6 +51,7 @@ constexpr char parent_lf[]     = "-parent";
 
 constexpr char duplicate_f[]   = "-du";
 constexpr char duplicate_lf[]  = "-duplicate";
+
 MSyntax syntax() {
   MSyntax syntax{};
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
@@ -75,7 +76,6 @@ class sequence_to_blend_shape_comm::impl {
  public:
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
-  MDagPath parent_tran;
 
   bool duplicate_bind{};
 
@@ -85,6 +85,7 @@ class sequence_to_blend_shape_comm::impl {
 
   class current_ctx {
    public:
+    MDagPath parent_tran;
     MDagPath select_path;
     MDagPathArray create_mesh_list{};
     MVectorArray create_point_list{};
@@ -160,20 +161,32 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
     k_s = l_select.add(l_value);
     DOODLE_CHICK(k_s);
 
-    k_s = l_select.getDagPath(0, p_i->parent_tran);
+    MDagPath l_path{};
+
+    k_s = l_select.getDagPath(0, l_path);
     DOODLE_CHICK(k_s);
+
+    for (auto&& ctx : p_i->ctx) {
+      ctx.parent_tran = l_path;
+    }
   } else {  /// \brief 从本身的名称空间中搜索
-    auto l_namespace = MNamespace::getNamespaceFromName(d_str{get_node_name(p_i->ctx.front().select_path)}, &k_s);
-    MSelectionList l_selection_list{};
-    try {
-      auto l_select_str = fmt::format("{}:*UE4", l_namespace);
-      DOODLE_LOG_INFO("选择 {}", l_select_str);
-      k_s = l_selection_list.add(d_str{l_select_str}, true);
-      DOODLE_CHICK(k_s);
-      k_s = l_selection_list.getDagPath(0, p_i->parent_tran);
-      DOODLE_CHICK(k_s);
-    } catch (const maya_InvalidParameter& in) {
-      DOODLE_LOG_INFO("没有找到ue4组 {}", in.what());
+
+    for (auto&& ctx : p_i->ctx) {
+      auto l_namespace = MNamespace::getNamespaceFromName(d_str{get_node_name(p_i->ctx.front().select_path)}, &k_s);
+      MSelectionList l_selection_list{};
+      try {
+        auto l_select_str = fmt::format("{}:*{}", g_reg()->ctx().at<project_config::base_config>().export_group);
+        DOODLE_LOG_INFO("选择 {}", l_select_str);
+        k_s = l_selection_list.add(d_str{l_select_str}, true);
+        DOODLE_CHICK(k_s);
+        MDagPath l_path{};
+        k_s = l_selection_list.getDagPath(0, l_path);
+        DOODLE_CHICK(k_s);
+        /// \brief 分别为每一个上下文设置父变换
+        ctx.parent_tran = l_path;
+      } catch (const maya_InvalidParameter& in) {
+        DOODLE_LOG_INFO("没有找到ue4组 {}", in.what());
+      }
     }
   }
 }
@@ -316,11 +329,11 @@ void sequence_to_blend_shape_comm::create_mesh() {
 }
 void sequence_to_blend_shape_comm::add_to_parent() {
   MStatus l_s{};
-  if (p_i->parent_tran.isValid(&l_s)) {
-    DOODLE_CHICK(l_s);
-    MFnDagNode l_dag_node{};
-    for (auto&& ctx : p_i->ctx) {
-      add_child(p_i->parent_tran, ctx.bind_path);
+
+  for (auto&& ctx : p_i->ctx) {
+    if (ctx.parent_tran.isValid(&l_s)) {
+      DOODLE_CHICK(l_s);
+      add_child(ctx.parent_tran, ctx.bind_path);
     }
   }
 }
