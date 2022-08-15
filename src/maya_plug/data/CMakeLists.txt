@@ -15,6 +15,7 @@ target_sources(doodle_maya
         reference_file.h
         sim_cloth_tools.h
         sim_cover_attr.h
+        sequence_to_blend_shape.h
 
         PRIVATE
         create_hud_node.cpp
@@ -31,4 +32,5 @@ target_sources(doodle_maya
         reference_file.cpp
         sim_cloth_tools.cpp
         sim_cover_attr.cpp
+        sequence_to_blend_shape.cpp
         )
