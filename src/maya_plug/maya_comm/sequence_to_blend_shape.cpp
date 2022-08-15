@@ -199,7 +199,7 @@ MStatus sequence_to_blend_shape::redoIt() {
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
-  return false;
+  return true;
 }
 void sequence_to_blend_shape::create_mesh() {
   MStatus l_s{};
