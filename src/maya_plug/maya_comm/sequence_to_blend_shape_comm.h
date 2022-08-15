@@ -6,15 +6,15 @@
 namespace doodle {
 namespace maya_plug {
 
-namespace sequence_to_blend_shape_ns {
+namespace sequence_to_blend_shape_comm_ns {
 constexpr char name[] = "doodle_sequence_to_blend_shape";
 MSyntax syntax();
-}  // namespace sequence_to_blend_shape_ns
+}  // namespace sequence_to_blend_shape_comm_ns
 
 class sequence_to_blend_shape_comm : public doodle::TemplateAction<
                                          sequence_to_blend_shape_comm,
-                                         sequence_to_blend_shape_ns::name,
-                                         sequence_to_blend_shape_ns::syntax> {
+                                         sequence_to_blend_shape_comm_ns::name,
+                                         sequence_to_blend_shape_comm_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);

@@ -35,7 +35,7 @@
 
 namespace doodle::maya_plug {
 
-namespace sequence_to_blend_shape_ns {
+namespace sequence_to_blend_shape_comm_ns {
 constexpr char startFrame_f[]  = "-sf";
 constexpr char startFrame_lf[] = "-startFrame";
 constexpr char endFrame_f[]    = "-ef";
@@ -67,7 +67,7 @@ MSyntax syntax() {
   return syntax;
 }
 
-}  // namespace sequence_to_blend_shape_ns
+}  // namespace sequence_to_blend_shape_comm_ns
 
 class sequence_to_blend_shape_comm::impl {
  public:
@@ -103,19 +103,19 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
   MStatus k_s;
   MArgDatabase k_prase{syntax(), in_arg};
 
-  if (k_prase.isFlagSet(sequence_to_blend_shape_ns::startFrame_f, &k_s)) {
+  if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::startFrame_f, &k_s)) {
     DOODLE_CHICK(k_s);
     MTime l_value{};
-    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::startFrame_f, 0, l_value);
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_comm_ns::startFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->startFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
     p_i->startFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::minTime().value());
   }
-  if (k_prase.isFlagSet(sequence_to_blend_shape_ns::endFrame_f, &k_s)) {
+  if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::endFrame_f, &k_s)) {
     DOODLE_CHICK(k_s);
     MTime l_value{};
-    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::endFrame_f, 0, l_value);
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_comm_ns::endFrame_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
@@ -125,10 +125,10 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
                            "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
 
-  if (k_prase.isFlagSet(sequence_to_blend_shape_ns::duplicate_f, &k_s)) {
+  if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::duplicate_f, &k_s)) {
     DOODLE_CHICK(k_s);
     bool l_value{};
-    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::duplicate_f, 0, l_value);
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_comm_ns::duplicate_f, 0, l_value);
     DOODLE_CHICK(k_s);
     p_i->duplicate_bind = l_value;
   } else {
@@ -149,10 +149,10 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
     p_i->ctx.emplace_back(l_ctx);
   }
 
-  if (k_prase.isFlagSet(sequence_to_blend_shape_ns::parent_f, &k_s)) {
+  if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::parent_f, &k_s)) {
     DOODLE_CHICK(k_s);
     MString l_value{};
-    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ns::parent_f, 0, l_value);
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_comm_ns::parent_f, 0, l_value);
     DOODLE_CHICK(k_s);
     MSelectionList l_select{};
     k_s = l_select.add(l_value);
