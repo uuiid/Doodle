@@ -293,6 +293,15 @@ void sequence_to_blend_shape::attach_parent() {
   }
 }
 
+sequence_to_blend_shape::sequence_to_blend_shape(sequence_to_blend_shape&& in) noexcept
+    : ptr(std::move(in.ptr)) {
+}
+
+sequence_to_blend_shape& sequence_to_blend_shape::operator=(sequence_to_blend_shape&& in) noexcept {
+  ptr = std::move(in.ptr);
+  return *this;
+}
+
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
 }  // namespace maya_plug
 }  // namespace doodle

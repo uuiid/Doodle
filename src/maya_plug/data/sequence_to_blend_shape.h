@@ -23,6 +23,9 @@ class sequence_to_blend_shape {
   sequence_to_blend_shape();
   virtual ~sequence_to_blend_shape();
 
+  sequence_to_blend_shape(sequence_to_blend_shape&& in) noexcept;
+  sequence_to_blend_shape& operator=(sequence_to_blend_shape&& in) noexcept;
+
   /**
    * @brief 设置完成结果后附加的父路径
    * @param in_path 传入的父dag路径

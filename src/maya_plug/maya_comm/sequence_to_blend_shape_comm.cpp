@@ -139,7 +139,7 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
     MDagPath l_path{};
     p_i->select_list.getDagPath(i, l_path);
     l_blend_shape.select_attr(l_path);
-    p_i->blend_list.emplace_back(l_blend_shape);
+    p_i->blend_list.emplace_back(std::move(l_blend_shape));
   }
 
   if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::parent_f, &k_s)) {
