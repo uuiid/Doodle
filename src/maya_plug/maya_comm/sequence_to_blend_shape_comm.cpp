@@ -85,21 +85,6 @@ class sequence_to_blend_shape_comm::impl {
   MDagModifier dg_modidier;
 
   std::vector<sequence_to_blend_shape> blend_list{};
-
-  class current_ctx {
-   public:
-    MDagPath parent_tran;
-    MDagPath select_path;
-    MDagPathArray create_mesh_list{};
-    MVectorArray create_point_list{};
-
-    MDagPath bind_path;
-    MPoint bind_center;
-    MMatrix bind_matrix;
-    MObject blend_shape_obj;
-  };
-
-  std::vector<current_ctx> ctx{};
 };
 
 sequence_to_blend_shape_comm::sequence_to_blend_shape_comm()
