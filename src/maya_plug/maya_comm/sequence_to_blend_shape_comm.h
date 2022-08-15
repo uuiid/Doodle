@@ -40,8 +40,6 @@ class sequence_to_blend_shape_comm : public doodle::TemplateAction<
    */
   static void center_pivot(MDagPath& in_path, const MMatrix& in_matrix, const MPoint& in_point);
 
-  static void to_work_zero(const MDagPath& in_path);
-
  public:
   sequence_to_blend_shape_comm();
   ~sequence_to_blend_shape_comm() override;
