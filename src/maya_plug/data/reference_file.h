@@ -149,6 +149,8 @@ class reference_file {
    */
   bool has_ue4_group() const;
 
+  std::optional<MDagPath> export_group_attr() const;
+
   MSelectionList get_all_object() const;
 
  private:

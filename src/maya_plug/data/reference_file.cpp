@@ -714,5 +714,23 @@ MSelectionList reference_file::get_all_object() const {
   }
   return l_select;
 }
+std::optional<MDagPath> reference_file::export_group_attr() const {
+  chick_mobject();
+  MStatus k_s{};
+
+  DOODLE_CHICK(k_s);
+  MSelectionList k_select{};
+  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  MDagPath l_path;
+  try {
+    k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
+    DOODLE_CHICK(k_s);
+    k_s = k_select.getDagPath(0, l_path);
+    DOODLE_CHICK(k_s);
+  } catch (const maya_InvalidParameter &err) {
+    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
+  }
+  return l_path.isValid() ? std::make_optional(l_path) : std::optional{};
+}
 
 }  // namespace doodle::maya_plug

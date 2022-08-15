@@ -3,8 +3,167 @@
 //
 
 #include "sequence_to_blend_shape_ref_comm.h"
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/sequence_to_blend_shape.h>
+#include <maya_plug/data/qcloth_shape.h>
 
-namespace doodle {
-namespace maya_plug {
-}  // namespace maya_plug
+#include <maya/MArgDatabase.h>
+#include <maya/MSelectionList.h>
+#include <maya/MAnimControl.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MFnMesh.h>
+#include <maya/MDagModifier.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MQuaternion.h>
+#include <maya/MDagPath.h>
+#include <maya/MNamespace.h>
+#include <maya/MMatrix.h>
+#include <maya/MBoundingBox.h>
+#include <maya/MDagPathArray.h>
+#include <maya/MDataHandle.h>
+
+namespace doodle::maya_plug {
+
+namespace sequence_to_blend_shape_ref_comm_ns {
+constexpr char startFrame_f[]  = "-sf";
+constexpr char startFrame_lf[] = "-startFrame";
+constexpr char endFrame_f[]    = "-ef";
+constexpr char endFrame_lf[]   = "-endFrame";
+
+MSyntax syntax() {
+  MSyntax syntax{};
+  syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
+  syntax.addFlag(endFrame_f, endFrame_lf, MSyntax::kTime);
+
+  syntax.enableEdit(false);
+  syntax.enableQuery(false);
+
+  return syntax;
+}
+
+}  // namespace sequence_to_blend_shape_ref_comm_ns
+
+class sequence_to_blend_shape_ref_comm::impl {
+ public:
+  std::int32_t startFrame_p{0};
+  std::int32_t endFrame_p{120};
+
+  bool duplicate_bind{};
+
+  MSelectionList select_list;
+
+  MDagModifier dg_modidier;
+
+  std::vector<sequence_to_blend_shape> blend_list{};
+};
+void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
+  MStatus k_s;
+  MArgDatabase k_prase{syntax(), in_arg};
+
+  if (k_prase.isFlagSet(sequence_to_blend_shape_ref_comm_ns::startFrame_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MTime l_value{};
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ref_comm_ns::startFrame_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->startFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
+  } else {
+    p_i->startFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::minTime().value());
+  }
+  if (k_prase.isFlagSet(sequence_to_blend_shape_ref_comm_ns::endFrame_f, &k_s)) {
+    DOODLE_CHICK(k_s);
+    MTime l_value{};
+    k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ref_comm_ns::endFrame_f, 0, l_value);
+    DOODLE_CHICK(k_s);
+    p_i->endFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
+  } else {
+    p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
+  }
+  chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
+                           "开始帧 {} 大于结束帧 {}",
+                           p_i->startFrame_p, p_i->endFrame_p);
+
+  DOODLE_LOG_INFO("开始清除布料组件")
+  g_reg()->clear<qcloth_shape>();
+
+  /// \brief 生成绑定物体path
+  DOODLE_LOG_INFO("开始生成新的布料组件")
+
+  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+    auto l_hs = qcloth_shape::create(make_handle(e));
+    for (auto&& h : l_hs) {
+      sequence_to_blend_shape l_blend_shape{};
+      l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
+      if (auto l_p = ref.export_group_attr();
+          l_p)
+        l_blend_shape.parent_attr(*l_p);
+      p_i->blend_list.emplace_back(std::move(l_blend_shape));
+    }
+  }
+}
+void sequence_to_blend_shape_ref_comm::create_mesh() {
+  MStatus l_s{};
+
+  {  /// \brief 设置时间
+    l_s = MGlobal::viewFrame(p_i->startFrame_p);
+    DOODLE_CHICK(l_s);
+
+    for (auto&& ctx : p_i->blend_list) {
+      ctx.create_bind_mesh();
+    }
+  }
+
+  for (auto i = p_i->startFrame_p;
+       i <= p_i->endFrame_p;
+       ++i) {
+    /// \brief 设置时间过程
+    l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
+    DOODLE_CHICK(l_s);
+    for (auto&& ctx : p_i->blend_list) {
+      ctx.create_blend_shape_mesh();
+    }
+  }
+}
+void sequence_to_blend_shape_ref_comm::create_anim() {
+  for (auto&& ctx : p_i->blend_list) {
+    ctx.create_blend_shape_anim(p_i->startFrame_p, p_i->endFrame_p, p_i->dg_modidier);
+  }
+}
+void sequence_to_blend_shape_ref_comm::run_blend_shape_comm() {
+  for (auto&& ctx : p_i->blend_list) {
+    ctx.create_blend_shape();
+  }
+}
+void sequence_to_blend_shape_ref_comm::add_to_parent() {
+  for (auto&& ctx : p_i->blend_list) {
+    ctx.attach_parent();
+  }
+}
+sequence_to_blend_shape_ref_comm::sequence_to_blend_shape_ref_comm()
+    : p_i(std::make_unique<impl>()) {
+}
+sequence_to_blend_shape_ref_comm::~sequence_to_blend_shape_ref_comm() = default;
+MStatus sequence_to_blend_shape_ref_comm::doIt(const MArgList& in_arg) {
+  get_arg(in_arg);
+  return redoIt();
+}
+MStatus sequence_to_blend_shape_ref_comm::undoIt() {
+  MStatus l_status{};
+  for (auto&& ctx : p_i->blend_list) {
+    ctx.delete_bind_mesh();
+  }
+  return MStatus::kSuccess;
+}
+MStatus sequence_to_blend_shape_ref_comm::redoIt() {
+  this->create_mesh();
+  this->run_blend_shape_comm();
+  this->create_anim();
+  this->add_to_parent();
+  return MStatus::kSuccess;
+}
+bool sequence_to_blend_shape_ref_comm::isUndoable() const {
+  return true;
+}
 }  // namespace doodle

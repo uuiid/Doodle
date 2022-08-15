@@ -4,26 +4,15 @@
 
 #include "sequence_to_blend_shape_comm.h"
 
-#include <maya_plug/data/reference_file.h>
-#include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>
 
 #include <maya/MArgDatabase.h>
-#include <maya/MTime.h>
 #include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
 #include <maya/MAnimControl.h>
 #include <maya/MItMeshVertex.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MComputation.h>
 #include <maya/MFnMesh.h>
-#include <maya/MFnDagNode.h>
 #include <maya/MDagModifier.h>
 #include <maya/MFnIkJoint.h>
-#include <maya/MDoubleArray.h>
-#include <maya/MTransformationMatrix.h>
-#include <maya/MFnSet.h>
-#include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MQuaternion.h>
@@ -31,9 +20,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
-#include <maya/MDGContextGuard.h>
 #include <maya/MDagPathArray.h>
-#include <maya/MPointArray.h>
 #include <maya/MDataHandle.h>
 
 namespace doodle::maya_plug {
@@ -43,9 +30,6 @@ constexpr char startFrame_f[]  = "-sf";
 constexpr char startFrame_lf[] = "-startFrame";
 constexpr char endFrame_f[]    = "-ef";
 constexpr char endFrame_lf[]   = "-endFrame";
-
-constexpr char bindFrame_f[]   = "-bf";
-constexpr char bindFrame_lf[]  = "-bindFrame";
 
 constexpr char parent_f[]      = "-p";
 constexpr char parent_lf[]     = "-parent";
@@ -57,7 +41,6 @@ MSyntax syntax() {
   MSyntax syntax{};
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
   syntax.addFlag(endFrame_f, endFrame_lf, MSyntax::kTime);
-  syntax.addFlag(bindFrame_f, bindFrame_lf, MSyntax::kTime);
   syntax.addFlag(parent_f, parent_lf, MSyntax::kString);
   syntax.addFlag(duplicate_f, duplicate_lf, MSyntax::kBoolean);
 
