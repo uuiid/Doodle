@@ -135,7 +135,6 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
   for (auto i = 0;
        i < p_i->select_list.length();
        ++i) {
-    impl::current_ctx l_ctx{};
     sequence_to_blend_shape l_blend_shape{};
     MDagPath l_path{};
     p_i->select_list.getDagPath(i, l_path);
