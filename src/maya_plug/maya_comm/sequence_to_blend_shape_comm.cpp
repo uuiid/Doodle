@@ -2,7 +2,7 @@
 // Created by TD on 2022/7/29.
 //
 
-#include "sequence_to_blend_shape.h"
+#include "sequence_to_blend_shape_comm.h"
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -69,7 +69,7 @@ MSyntax syntax() {
 
 }  // namespace sequence_to_blend_shape_ns
 
-class sequence_to_blend_shape::impl {
+class sequence_to_blend_shape_comm::impl {
  public:
   std::int32_t startFrame_p{0};
   std::int32_t endFrame_p{120};
@@ -96,10 +96,10 @@ class sequence_to_blend_shape::impl {
   std::vector<current_ctx> ctx{};
 };
 
-sequence_to_blend_shape::sequence_to_blend_shape()
+sequence_to_blend_shape_comm::sequence_to_blend_shape_comm()
     : p_i(std::make_unique<impl>()) {
 }
-void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
+void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
   MStatus k_s;
   MArgDatabase k_prase{syntax(), in_arg};
 
@@ -176,11 +176,11 @@ void sequence_to_blend_shape::get_arg(const MArgList& in_arg) {
   }
 }
 
-MStatus sequence_to_blend_shape::doIt(const MArgList& in_arg) {
+MStatus sequence_to_blend_shape_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
   return redoIt();
 }
-MStatus sequence_to_blend_shape::undoIt() {
+MStatus sequence_to_blend_shape_comm::undoIt() {
   MStatus l_status{};
   for (auto&& ctx : p_i->ctx) {
     if (ctx.bind_path.isValid(&l_status)) {
@@ -193,7 +193,7 @@ MStatus sequence_to_blend_shape::undoIt() {
   }
   return MStatus::kSuccess;
 }
-MStatus sequence_to_blend_shape::redoIt() {
+MStatus sequence_to_blend_shape_comm::redoIt() {
   //  this->create_mesh();
   //  this->run_blend_shape_comm();
   //  this->create_anim();
@@ -205,10 +205,10 @@ MStatus sequence_to_blend_shape::redoIt() {
 
   return MStatus::kSuccess;
 }
-bool sequence_to_blend_shape::isUndoable() const {
+bool sequence_to_blend_shape_comm::isUndoable() const {
   return true;
 }
-void sequence_to_blend_shape::create_mesh() {
+void sequence_to_blend_shape_comm::create_mesh() {
   MStatus l_s{};
   MFnTransform l_transform{};
   MFnMesh l_mesh{};
@@ -288,7 +288,7 @@ void sequence_to_blend_shape::create_mesh() {
     }
   }
 }
-void sequence_to_blend_shape::add_to_parent() {
+void sequence_to_blend_shape_comm::add_to_parent() {
   MStatus l_s{};
   if (p_i->parent_tran.isValid(&l_s)) {
     DOODLE_CHICK(l_s);
@@ -298,7 +298,7 @@ void sequence_to_blend_shape::add_to_parent() {
     }
   }
 }
-void sequence_to_blend_shape::create_anim() {
+void sequence_to_blend_shape_comm::create_anim() {
   MStatus l_s{};
 
   for (auto&& ctx : p_i->ctx) {
@@ -371,7 +371,7 @@ void sequence_to_blend_shape::create_anim() {
   }
 }
 
-void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
+void sequence_to_blend_shape_comm::center_pivot(MDagPath& in_path) {
   //  DOODLE_LOG_INFO("开始居中轴");
   MStatus l_s{};
   auto l_tran_path = get_dag_path(in_path.transform());
@@ -420,7 +420,7 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path) {
   DOODLE_CHICK(l_s);
   //  DOODLE_LOG_INFO("完成");
 }
-void sequence_to_blend_shape::center_pivot(MDagPath& in_path, const MMatrix& in_matrix, const MPoint& in_point) {
+void sequence_to_blend_shape_comm::center_pivot(MDagPath& in_path, const MMatrix& in_matrix, const MPoint& in_point) {
   //  DOODLE_LOG_INFO("开始居中轴");
   MStatus l_s{};
   auto l_tran_path = get_dag_path(in_path.transform());
@@ -455,7 +455,7 @@ void sequence_to_blend_shape::center_pivot(MDagPath& in_path, const MMatrix& in_
   DOODLE_CHICK(l_s);
   //  DOODLE_LOG_INFO("完成");
 }
-void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
+void sequence_to_blend_shape_comm::to_work_zero(const MDagPath& in_path) {
   MStatus l_s{};
   MFnTransform l_fn_transform{in_path, &l_s};
   DOODLE_CHICK(l_s);
@@ -499,7 +499,7 @@ void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
   l_s = l_fn_transform.setRotatePivot({}, MSpace::kWorld, false);
   DOODLE_CHICK(l_s);
 }
-void sequence_to_blend_shape::run_blend_shape_comm() {
+void sequence_to_blend_shape_comm::run_blend_shape_comm() {
   MStatus l_s{};
 
   for (auto&& ctx : p_i->ctx) {
@@ -530,6 +530,6 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
   }
 }
 
-sequence_to_blend_shape::~sequence_to_blend_shape() = default;
+sequence_to_blend_shape_comm::~sequence_to_blend_shape_comm() = default;
 
 }  // namespace doodle::maya_plug

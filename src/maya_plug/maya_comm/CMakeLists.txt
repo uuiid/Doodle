@@ -3,7 +3,7 @@ target_sources(doodle_maya
         replace_rig_file_command.h
         find_duplicate_poly_comm.h
         create_qcloth_assets.h
-        sequence_to_blend_shape.h
+        sequence_to_blend_shape_comm.h
         upload_files_command.h
         file_comm.h
         cam_comm.h
@@ -25,7 +25,7 @@ target_sources(doodle_maya
         reference_comm.cpp
         replace_rig_file_command.cpp
         dem_bones_add_weight.cpp
-        sequence_to_blend_shape.cpp
+        sequence_to_blend_shape_comm.cpp
         find_duplicate_poly_comm.cpp
         play_blash_comm.cpp
         auto_chick_call_back.cpp

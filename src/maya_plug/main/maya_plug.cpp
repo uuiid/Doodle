@@ -23,7 +23,7 @@
 #include <maya_plug/maya_comm/dem_bones_comm.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
-#include <maya_plug/maya_comm/sequence_to_blend_shape.h>
+#include <maya_plug/maya_comm/sequence_to_blend_shape_comm.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/maya_render/hud_render_node.h>
@@ -94,7 +94,6 @@ MStatus initializePlugin(MObject obj) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
       doodle::maya_plug::open_windows();
-
       // 注册命令
       status = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
       CHECK_MSTATUS(status);
@@ -231,7 +230,7 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::dem_bones_add_weight>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加变形骨骼命令
-  status = maya_reg->register_command<::doodle::maya_plug::sequence_to_blend_shape>(k_plugin);
+  status = maya_reg->register_command<::doodle::maya_plug::sequence_to_blend_shape_comm>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 添加创建布料命令
