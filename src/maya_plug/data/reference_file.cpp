@@ -730,7 +730,7 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
   }
-  return l_path.isValid() ? std::make_optional(l_path) : std::optional{};
+  return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
 }
 
 }  // namespace doodle::maya_plug
