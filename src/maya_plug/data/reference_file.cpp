@@ -532,6 +532,14 @@ FSys::path reference_file::get_path() const {
   DOODLE_CHICK(k_s);
   return l_path;
 }
+FSys::path reference_file::get_abs_path() const {
+  MStatus k_s{};
+  MFnReference k_ref{p_m_object, &k_s};
+  DOODLE_CHICK(k_s);
+  FSys::path l_path = d_str{k_ref.fileName(false, false, false, &k_s)}.str();
+  DOODLE_CHICK(k_s);
+  return l_path;
+}
 FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
   FSys::path out_{};
   rename_material();

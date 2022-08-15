@@ -194,13 +194,13 @@ MStatus sequence_to_blend_shape::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape::redoIt() {
-  this->create_mesh();
-  this->run_blend_shape_comm();
-  this->create_anim();
-  this->add_to_parent();
+  //  this->create_mesh();
+  //  this->run_blend_shape_comm();
+  //  this->create_anim();
+  //  this->add_to_parent();
 
   for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-    maya_file_io::import_file(ref, false);
+    maya_file_io::import_reference_file(ref, false);
   }
 
   return MStatus::kSuccess;

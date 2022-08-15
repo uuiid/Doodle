@@ -116,8 +116,15 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
   }
   return result;
 }
-void maya_file_io::import_file(const reference_file& in_ref, bool preserve_references) {
-  if (!in_ref.p_m_object.isNull())
-    MFileIO::importFile(d_str{in_ref.get_path().generic_string()}, nullptr, preserve_references, in_ref.get_namespace().c_str(), true);
+void maya_file_io::import_reference_file(const reference_file& in_ref, bool preserve_references) {
+  if (!in_ref.p_m_object.isNull()) {
+    DOODLE_LOG_INFO("开始加载引用文件 {}", in_ref.get_abs_path());
+    MStatus l_s{};
+    //    auto l_obj = in_ref.p_m_object;
+    //    MFileIO::loadReferenceByNode(l_obj, &l_s);
+    auto l_com = fmt::format("file -importReference -referenceNode {}", get_node_full_name(in_ref.p_m_object));
+    l_s        = MGlobal::executeCommand(d_str{l_com});
+    DOODLE_CHICK(l_s);
+  }
 }
 }  // namespace doodle::maya_plug
