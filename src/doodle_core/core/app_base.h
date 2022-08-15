@@ -22,6 +22,8 @@ class DOODLE_CORE_EXPORT app_base {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void init();
+
  protected:
   /**
    * @brief 这个会在第一个循环中加载
@@ -29,6 +31,8 @@ class DOODLE_CORE_EXPORT app_base {
    */
   virtual void load_back_end() = 0;
   virtual void loop_one();
+
+  virtual void post_constructor() = 0;
 
  public:
   explicit app_base();

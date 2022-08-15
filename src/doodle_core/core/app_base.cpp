@@ -30,7 +30,11 @@ app_base::app_base()
       p_lib(std::make_shared<doodle_lib>()),
       p_i(std::make_unique<impl>()) {
   self = this;
-
+  boost::asio::post(g_io_context(), [this]() {
+    this->init();
+  });
+}
+void app_base::init() {
   DOODLE_LOG_INFO("开始初始化基本配置");
 
   core_set_init k_init{};
@@ -46,6 +50,8 @@ app_base::app_base()
     init_register::instance().reg_class();
     this->load_back_end();
   });
+
+  this->post_constructor();
 }
 app_base::~app_base() = default;
 
