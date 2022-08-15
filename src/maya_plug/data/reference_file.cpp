@@ -37,9 +37,7 @@ reference_file::reference_file()
       use_sim(false),
       collision_model(),
       p_m_object(),
-      file_namespace(){
-
-      };
+      file_namespace(){};
 
 reference_file::reference_file(
     const std::string &in_maya_namespace)
@@ -443,6 +441,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
   }
   return out_;
 }
+
 entt::handle reference_file::export_file_select(
     const reference_file::export_arg &in_arg,
     const MSelectionList &in_list) {
@@ -482,6 +481,7 @@ entt::handle reference_file::export_file_select(
   }
   return out_;
 }
+
 bool reference_file::replace_file(const entt::handle &in_handle) {
   chick_true<doodle_error>(in_handle.all_of<redirection_path_info>(), "缺失替换引用信息");
   chick_true<doodle_error>(!p_m_object.isNull(), "没有引用文件, 无法替换");
@@ -709,7 +709,8 @@ MSelectionList reference_file::get_all_object() const {
       MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
   DOODLE_CHICK(k_s);
   for (std::uint32_t i = 0u; i < l_r.length(); ++i) {
-    l_select.add(l_r[i], true);
+    k_s = l_select.add(l_r[i], true);
+    DOODLE_CHICK(k_s);
   }
   return l_select;
 }
