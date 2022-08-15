@@ -37,7 +37,9 @@ MSyntax syntax() {
   MSyntax syntax{};
   syntax.addFlag(startFrame_f, startFrame_lf, MSyntax::kTime);
   syntax.addFlag(endFrame_f, endFrame_lf, MSyntax::kTime);
-
+  /// \brief 选中的物体
+  syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList);
+  syntax.useSelectionAsDefault(true);
   syntax.enableEdit(false);
   syntax.enableQuery(false);
 
@@ -85,21 +87,41 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
                            "开始帧 {} 大于结束帧 {}",
                            p_i->startFrame_p, p_i->endFrame_p);
 
+  /// \brief 获取选择物体
+  k_s = k_prase.getObjects(p_i->select_list);
+  DOODLE_CHICK(k_s);
+
   DOODLE_LOG_INFO("开始清除布料组件")
   g_reg()->clear<qcloth_shape>();
 
   /// \brief 生成绑定物体path
   DOODLE_LOG_INFO("开始生成新的布料组件")
 
-  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-    auto l_hs = qcloth_shape::create(make_handle(e));
-    for (auto&& h : l_hs) {
-      sequence_to_blend_shape l_blend_shape{};
-      l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
-      if (auto l_p = ref.export_group_attr();
-          l_p)
-        l_blend_shape.parent_attr(*l_p);
-      p_i->blend_list.emplace_back(std::move(l_blend_shape));
+  if (p_i->select_list.length() > 0) {
+    for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      if (ref.has_node(p_i->select_list)) {
+        auto l_hs = qcloth_shape::create(make_handle(e));
+        for (auto&& h : l_hs) {
+          sequence_to_blend_shape l_blend_shape{};
+          l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
+          if (auto l_p = ref.export_group_attr();
+              l_p)
+            l_blend_shape.parent_attr(*l_p);
+          p_i->blend_list.emplace_back(std::move(l_blend_shape));
+        }
+      }
+    }
+  } else {
+    for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      auto l_hs = qcloth_shape::create(make_handle(e));
+      for (auto&& h : l_hs) {
+        sequence_to_blend_shape l_blend_shape{};
+        l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
+        if (auto l_p = ref.export_group_attr();
+            l_p)
+          l_blend_shape.parent_attr(*l_p);
+        p_i->blend_list.emplace_back(std::move(l_blend_shape));
+      }
     }
   }
 }
@@ -166,4 +188,4 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
 bool sequence_to_blend_shape_ref_comm::isUndoable() const {
   return true;
 }
-}  // namespace doodle
+}  // namespace doodle::maya_plug
