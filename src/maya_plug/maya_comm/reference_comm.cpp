@@ -85,10 +85,8 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg, &k_s};
 
   DOODLE_LOG_INFO("开始清除引用实体")
-  auto k_ref_view   = g_reg()->view<reference_file>();
-  auto k_cloth_view = g_reg()->view<qcloth_shape>();
-  g_reg()->destroy(k_ref_view.begin(), k_ref_view.end());
-  g_reg()->destroy(k_cloth_view.begin(), k_cloth_view.end());
+  g_reg()->clear<reference_file>();
+  g_reg()->clear<qcloth_shape>();
 
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
 

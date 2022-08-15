@@ -159,7 +159,7 @@ class DlsShelf(shelfBase._shelf):
     @staticmethod
     def _export_cloth_fbx_():
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_load();
+        # cmds.doodle_ref_file_load()
         cmds.doodle_sequence_to_blend_shape_ref(
             startFrame=1001)
         cmds.doodle_ref_file_export(

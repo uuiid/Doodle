@@ -91,16 +91,15 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
 
-  DOODLE_LOG_INFO("开始清除布料组件")
-  g_reg()->clear<qcloth_shape>();
-
   /// \brief 生成绑定物体path
   DOODLE_LOG_INFO("开始生成新的布料组件")
 
   if (p_i->select_list.length() > 0) {
-    DOODLE_LOG_INFO("使用交互式导出")
+    DOODLE_LOG_INFO("使用交互式创建混合变形")
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      DOODLE_LOG_INFO("测试引用文件 {}", ref.path);
       if (ref.has_node(p_i->select_list)) {
+        DOODLE_LOG_INFO("测试选择命中引用文件 {}", ref.path);
         maya_file_io::import_reference_file(ref, false);
         auto l_hs = qcloth_shape::create(make_handle(e));
         for (auto&& h : l_hs) {
@@ -114,7 +113,9 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
       }
     }
   } else {
+    DOODLE_LOG_INFO("使用批量自动运行创建混合变形")
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      DOODLE_LOG_INFO("开始转换引用文件 {}", ref.path);
       maya_file_io::import_reference_file(ref, false);
       auto l_hs = qcloth_shape::create(make_handle(e));
       for (auto&& h : l_hs) {
