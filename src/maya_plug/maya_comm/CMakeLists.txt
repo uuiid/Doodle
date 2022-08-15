@@ -15,6 +15,7 @@ target_sources(doodle_maya
         auto_chick_call_back.h
         dem_bones_comm.h
         afterimage_comm.h
+        sequence_to_blend_shape_ref_comm.h
 
         PRIVATE
         open_doodle_main.cpp
@@ -32,4 +33,5 @@ target_sources(doodle_maya
         create_qcloth_assets.cpp
         clear_scene_comm.cpp
         dem_bones_comm.cpp
+        sequence_to_blend_shape_ref_comm.cpp
         )
