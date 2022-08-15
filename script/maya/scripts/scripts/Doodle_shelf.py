@@ -82,7 +82,7 @@ class DlsShelf(shelfBase._shelf):
         self.addButon("ik to fk", "icons/mark_ik_to_fk.png",
                       command=lambda: scripts.doodle_ik_to_fk.doodle_ik_to_fk())
         self.addButon("abc to bl", "icons/sequence_to_blend_shape.png",
-                      command=lambda: cmds.doodle_sequence_to_blend_shape())
+                      command=lambda: DlsShelf._export_cloth_fbx_())
 
     def polyremesh(self):
         self.re()
@@ -155,6 +155,16 @@ class DlsShelf(shelfBase._shelf):
         j_list.append(l_du[0])
         cmds.skinCluster(j_list)
         cmds.doodle_comm_dem_bones_weiget(l_du)
+
+    @staticmethod
+    def _export_cloth_fbx_():
+        cmds.doodle_create_ref_file()
+        cmds.doodle_ref_file_load();
+        cmds.doodle_sequence_to_blend_shape_ref(
+            startFrame=1000)
+        cmds.doodle_ref_file_export(
+            startTime=1001, exportType="fbx", select=True)
+        cmds.doodle_upload_files()
 
     def re(self):
         key = QtWidgets.QApplication.keyboardModifiers()
