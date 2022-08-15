@@ -237,7 +237,7 @@ bool app::valid() const {
   return this->p_hwnd != nullptr;
 }
 void app::close_windows() {
-  doodle::app_base::Get().stop_app();
+  doodle::app_command_base::Get().stop_app();
   ::ShowWindow(p_hwnd, SW_HIDE);
   ::DestroyWindow(doodle::app::Get().p_hwnd);
 }

@@ -26,7 +26,7 @@ set(
         long_task/image_load_task.h
 
 
-        core/app_base.h
+        core/app_command_base.h
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
@@ -58,6 +58,6 @@ set(
         long_task/image_load_task.cpp
 
 
-        core/app_base.cpp
+        core/app_command_base.cpp
         doodle_lib_all.cpp
 )

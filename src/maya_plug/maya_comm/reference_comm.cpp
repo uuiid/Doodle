@@ -10,7 +10,7 @@
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
 
-#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/app_command_base.h>
 #include <doodle_lib/app/app.h>
 
 #include <maya/MDagPath.h>
@@ -307,7 +307,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
         while (!*l_open) {
-          app_base::Get().poll_one();
+          app_command_base::Get().poll_one();
         }
       }
     }

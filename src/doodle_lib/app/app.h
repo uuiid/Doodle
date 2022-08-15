@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/app_command_base.h>
 
 namespace doodle {
 /**

@@ -9,7 +9,7 @@
 
 #include <platform/win/wnd_proc.h>
 
-#include <core/app_base.h>
+#include <core/app_command_base.h>
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -26,7 +26,7 @@ strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_
 void strand_gui_executor_service::strand_impl::ready_start() {
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
-    if (in_code == boost::asio::error::operation_aborted || app_base::Get().stop_)
+    if (in_code == boost::asio::error::operation_aborted || app_command_base::Get().stop_)
       return;
 
     service_->render_begin();

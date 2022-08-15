@@ -3,7 +3,7 @@
 //
 
 #include <doodle_lib/core/authorization.h>
-#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/app_command_base.h>
 int main(int argc, char *argv[]) {
   doodle::app_command_base l_command_base{};
   if (argc > 1) {

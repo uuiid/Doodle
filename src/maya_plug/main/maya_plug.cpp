@@ -49,7 +49,7 @@ MCallbackId app_run_id{0};
 std::stack<MCallbackId> maya_call_back_id{};
 
 using namespace doodle;
-std::shared_ptr<app_base> p_doodle_app = nullptr;
+std::shared_ptr<app_command_base> p_doodle_app = nullptr;
 std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 // struct enum_windows_struct {

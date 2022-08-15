@@ -2,7 +2,7 @@
 // Created by TD on 2022/1/18.
 //
 
-#include "app_base.h"
+#include "app_command_base.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -97,7 +97,7 @@ app_command_base::app_command_base(win::wnd_instance const& in_instance)
       options_(std::make_shared<program_options>()) {
 }
 app_command_base::app_command_base()
-    : app_base(::GetModuleHandleW(nullptr)) {
+    : app_command_base(::GetModuleHandleW(nullptr)) {
 }
 
 }  // namespace doodle
