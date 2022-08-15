@@ -7,6 +7,7 @@
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
 #include <main/maya_plug_fwd.h>
+#include <maya_plug/data/reference_file.h>
 
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
@@ -114,5 +115,9 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
     DOODLE_LOG_ERROR("复制文件失败, {}", error.what());
   }
   return result;
+}
+void maya_file_io::import_file(const reference_file& in_ref, bool preserve_references) {
+  if (!in_ref.p_m_object.isNull())
+    MFileIO::importFile(d_str{in_ref.get_path().generic_string()}, nullptr, preserve_references, in_ref.get_namespace().c_str(), true);
 }
 }  // namespace doodle::maya_plug

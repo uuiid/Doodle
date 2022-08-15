@@ -6,7 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::maya_plug {
-
+class reference_file;
 class maya_file_io {
  private:
  public:
@@ -20,5 +20,8 @@ class maya_file_io {
 
   static bool upload_file(const FSys::path& in_source_path,
                           const FSys::path& in_prefix);
+
+  static void import_file(const reference_file& in_path,
+                          bool preserve_references);
 };
 }  // namespace doodle::maya_plug

@@ -3,6 +3,10 @@
 //
 
 #include "sequence_to_blend_shape.h"
+
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/maya_file_io.h>
+
 #include <maya/MArgDatabase.h>
 #include <maya/MTime.h>
 #include <maya/MSelectionList.h>
@@ -24,7 +28,6 @@
 #include <maya/MQuaternion.h>
 #include <maya/MDagPath.h>
 #include <maya/MNamespace.h>
-#include <maya/MTransformationMatrix.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
 #include <maya/MDagPathArray.h>
@@ -195,6 +198,11 @@ MStatus sequence_to_blend_shape::redoIt() {
   this->run_blend_shape_comm();
   this->create_anim();
   this->add_to_parent();
+
+  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+    maya_file_io::import_file(ref, false);
+  }
+
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape::isUndoable() const {
@@ -524,4 +532,4 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug

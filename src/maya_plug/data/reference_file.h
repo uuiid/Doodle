@@ -77,8 +77,8 @@ class reference_file {
   void set_collision_model(const MSelectionList &in_list);
   [[nodiscard]] std::string get_namespace() const;
 
-  bool has_node(const MSelectionList &in_list);
-  bool has_node(const MObject &in_node) const;
+  [[nodiscard]] bool has_node(const MSelectionList &in_list);
+  [[nodiscard]] bool has_node(const MObject &in_node) const;
   /**
    * @brief 获取真正的路径
    * @return
