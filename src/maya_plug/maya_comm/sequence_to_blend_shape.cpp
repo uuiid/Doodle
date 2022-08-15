@@ -30,8 +30,7 @@
 #include <maya/MDagPathArray.h>
 #include <maya/MPointArray.h>
 
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 namespace sequence_to_blend_shape_ns {
 constexpr char startFrame_f[]  = "-sf";
@@ -525,5 +524,4 @@ void sequence_to_blend_shape::run_blend_shape_comm() {
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
 
-}  // namespace maya_plug
 }  // namespace doodle
