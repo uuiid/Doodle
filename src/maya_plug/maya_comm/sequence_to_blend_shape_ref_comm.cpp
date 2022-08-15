@@ -98,8 +98,10 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   DOODLE_LOG_INFO("开始生成新的布料组件")
 
   if (p_i->select_list.length() > 0) {
+    DOODLE_LOG_INFO("使用交互式导出")
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
       if (ref.has_node(p_i->select_list)) {
+        maya_file_io::import_reference_file(ref, false);
         auto l_hs = qcloth_shape::create(make_handle(e));
         for (auto&& h : l_hs) {
           sequence_to_blend_shape l_blend_shape{};
@@ -113,6 +115,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
     }
   } else {
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+      maya_file_io::import_reference_file(ref, false);
       auto l_hs = qcloth_shape::create(make_handle(e));
       for (auto&& h : l_hs) {
         sequence_to_blend_shape l_blend_shape{};
