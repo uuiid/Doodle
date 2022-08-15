@@ -30,8 +30,10 @@
 #include <maya/MNamespace.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
+#include <maya/MDGContextGuard.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MPointArray.h>
+#include <maya/MDataHandle.h>
 
 namespace doodle::maya_plug {
 
@@ -194,14 +196,14 @@ MStatus sequence_to_blend_shape_comm::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape_comm::redoIt() {
-  //  this->create_mesh();
+  this->create_mesh();
   //  this->run_blend_shape_comm();
   //  this->create_anim();
   //  this->add_to_parent();
 
-  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-    maya_file_io::import_reference_file(ref, false);
-  }
+  //  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
+  //    maya_file_io::import_reference_file(ref, false);
+  //  }
 
   return MStatus::kSuccess;
 }
@@ -248,14 +250,37 @@ void sequence_to_blend_shape_comm::create_mesh() {
 
   MFnTransform l_fn_transform_dub{};
 
+  //  /// \brief 创建属性网格
+  //  for (auto i = p_i->startFrame_p;
+  //       i <= p_i->endFrame_p;
+  //       ++i) {
+  //    for (auto&& ctx : p_i->ctx) {
+  //      auto l_mesh_obj = p_i->dg_modidier.createNode(d_str{"mesh"s}, MObject::kNullObj, &l_s);
+  //      DOODLE_CHICK(l_s);
+  //      l_s = ctx.create_mesh_list.append(get_dag_path(l_mesh_obj));
+  //      DOODLE_CHICK(l_s);
+  //    }
+  //  }
+  //  p_i->dg_modidier.doIt();
+  //  return;
+
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
     /// \brief 设置时间过程
+    //    MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
+    //    MDGContextGuard l_guard{l_context};
     l_s = MGlobal::viewFrame(i);
     DOODLE_CHICK(l_s);
     for (auto&& ctx : p_i->ctx) {
       //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
+      //      auto l_mesh_data = get_plug(ctx.select_path.node(&l_s), "outMesh");
+      //      DOODLE_CHICK(l_s);
+      //      auto l_mesh_data_handle = l_mesh_data.asMDataHandle(&l_s);
+      //      DOODLE_CHICK(l_s);
+      //      auto l_mesh_obj = l_mesh_data_handle.asMesh();
+      //      DOODLE_CHICK(l_s);
+
       l_s = l_dag_path.setObject(ctx.select_path);
       DOODLE_CHICK(l_s);
 
@@ -264,6 +289,7 @@ void sequence_to_blend_shape_comm::create_mesh() {
 
       l_s = l_mesh.setObject(l_create_mesh_path);
       DOODLE_CHICK(l_s);
+      //      l_mesh.create
 
       /// \brief 获取网格中心
       auto l_bind_box = l_mesh.boundingBox(&l_s);
