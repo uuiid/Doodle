@@ -5,6 +5,9 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <maya/MObject.h>
+
+// #include <maya/MDagPath.h>
+
 namespace doodle::maya_plug {
 class reference_file;
 namespace qcloth_shape_n {
@@ -93,6 +96,9 @@ class qcloth_shape {
    * @return false 空mobj(有可能没有完成评估)
    */
   bool create_cache() const;
+
+  MDagPath get_export_model() const;
+
   /**
    * @brief 从传入的实体创建一个绑定节点
    * @param in_handle 传入的一个实体,
@@ -111,6 +117,10 @@ class qcloth_shape {
   static std::vector<entt::handle> create_sim_cloth(
       const entt::handle& in_handle);
 
+  /**
+   * @brief 重置maya高模皮肤簇节点为权重为1
+   * @param in_handle 传入的句柄 需要具备 qcloth_shape_n::shape_list 组件
+   */
   static void reset_create_node_attribute(const entt::handle& in_handle);
   /**
    * @brief 检查所有传入的简模是否进行了蒙皮
@@ -126,7 +136,7 @@ class qcloth_shape {
   /**
    * @brief 根据引用文件创建布料句柄
    * @param in_ref_file 传入的引用文件句柄
-   * @return
+   * @return 完成布料网格的创建的句柄
    */
   static std::vector<entt::handle> create(
       const entt::handle& in_ref_file);

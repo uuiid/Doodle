@@ -3,7 +3,9 @@
 //
 
 #include "qcloth_shape.h"
-#include "doodle_core/metadata/metadata.h"
+
+#include <boost/functional/factory.hpp>
+#include <boost/functional/value_factory.hpp>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -259,7 +261,7 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_CHICK(l_s);
   }
-  chick_true<maya_error>(!l_mesh.isNull(),  "找不到解算网格的输出端");
+  chick_true<maya_error>(!l_mesh.isNull(), "找不到解算网格的输出端");
 
   return std::make_tuple(l_cloth_shape, l_mesh);
 }
@@ -361,7 +363,7 @@ bool qcloth_shape::set_cache_folder() const {
 }
 
 bool qcloth_shape::create_cache() const {
-  chick_true<doodle_error>(!obj.isNull(),  "空组件");
+  chick_true<doodle_error>(!obj.isNull(), "空组件");
   MStatus k_s{};
   MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
@@ -434,7 +436,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   add_child(l_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
-    chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(),  "节点数量不一致");
+    chick_true<maya_error>(l_high_mesh.size() == k_maya_high_mesh.size(), "节点数量不一致");
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
       transfer_dynamic(l_high_mesh[l_i], k_maya_high_mesh[l_i].obj);
     }
@@ -699,7 +701,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
     DOODLE_CHICK(l_s);
   }
 
-  chick_true<maya_error>(!l_skin_cluster.isNull(),  "没有找到皮肤簇变形节点");
+  chick_true<maya_error>(!l_skin_cluster.isNull(), "没有找到皮肤簇变形节点");
   return l_skin_cluster;
 }
 void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
@@ -708,6 +710,24 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_CHICK(l_s);
+}
+MDagPath qcloth_shape::get_export_model() const {
+  MStatus l_status{};
+  MObject l_object{obj};
+  MObject l_return{};
+  for (
+      MItDependencyGraph l_it{l_object,
+                              MFn::Type::kMesh,
+                              MItDependencyGraph::Direction::kDownstream,
+                              MItDependencyGraph::Traversal::kDepthFirst,
+                              MItDependencyGraph::Level::kNodeLevel,
+                              &l_status};
+      !l_it.isDone() && l_status;
+      l_it.next()) {
+    l_return = l_it.currentItem(&l_status);
+    DOODLE_CHICK(l_status);
+  }
+  return get_dag_path(l_return);
 }
 
 }  // namespace doodle::maya_plug
