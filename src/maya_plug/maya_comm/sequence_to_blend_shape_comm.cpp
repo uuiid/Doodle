@@ -270,7 +270,7 @@ void sequence_to_blend_shape_comm::create_mesh() {
     /// \brief 设置时间过程
     //    MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
     //    MDGContextGuard l_guard{l_context};
-    l_s = MGlobal::viewFrame(i);
+    l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
     DOODLE_CHICK(l_s);
     for (auto&& ctx : p_i->ctx) {
       //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
