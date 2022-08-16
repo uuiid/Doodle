@@ -55,7 +55,7 @@ class sequence_to_blend_shape {
    * @brief 创建混合变形节点(每帧一个, );
    * @param 使用上下文的重载
    */
-  void create_blend_shape_mesh(const MDGContextGuard&);
+  void create_blend_shape_mesh(const MDGContextGuard&, std::size_t in_index);
   /**
    * @brief 最后创建混合变形
    * 调用顺序方法

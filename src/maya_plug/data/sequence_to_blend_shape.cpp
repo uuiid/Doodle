@@ -35,6 +35,7 @@
 #include <maya/MPointArray.h>
 #include <maya/MDataHandle.h>
 #include <maya/MFloatPointArray.h>
+#include <maya/MMatrixArray.h>
 namespace doodle {
 namespace maya_plug {
 
@@ -44,11 +45,29 @@ class sequence_to_blend_shape::impl {
   MDagPath select_path{};
   MDagPathArray create_mesh_list{};
   MVectorArray create_point_list{};
+  MMatrixArray create_matrix_list{};
 
   MDagPath bind_path{};
   MPoint bind_center{};
   MMatrix bind_matrix{};
   MObject blend_shape_obj{};
+
+  class bounding_box_ {
+   public:
+    std::double_t x_min;
+    std::double_t y_min;
+    std::double_t z_min;
+
+    std::double_t x_max;
+    std::double_t y_max;
+    std::double_t z_max;
+
+    void add_point(const MPoint& in_point) {
+    }
+
+    void get_center() const {
+    }
+  };
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -136,15 +155,8 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   MStatus l_s{};
   MFnTransform l_transform{};
   MFnMesh l_mesh{};
-  MFnDagNode l_dag_path{};
 
-  l_s = l_dag_path.setObject(ptr->select_path);
-  DOODLE_CHICK(l_s);
-
-  auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
-  DOODLE_CHICK(l_s);
-
-  l_s = l_mesh.setObject(l_create_mesh_path);
+  l_s = l_mesh.setObject(ptr->select_path);
   DOODLE_CHICK(l_s);
   //      l_mesh.create
 
@@ -152,7 +164,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   auto l_bind_box = l_mesh.boundingBox(&l_s);
   DOODLE_CHICK(l_s);
 
-  l_s = l_transform.setObject(l_create_mesh_path);
+  l_s = l_transform.setObject(ptr->select_path);
   DOODLE_CHICK(l_s);
   auto l_tran = l_transform.transformationMatrix(&l_s);
   DOODLE_CHICK(l_s);
@@ -162,15 +174,12 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   l_s           = ptr->create_point_list.append(l_center);
   DOODLE_CHICK(l_s);
 
-  /// \brief 移动到世界中心
-  to_work_zero(l_create_mesh_path);
-  //    center_pivot(l_path_tmp);
+  /// \brief 获取变换矩阵
 
-  l_s = ptr->create_mesh_list.append(l_create_mesh_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_CHICK(ptr->create_matrix_list.append(l_tran));
 }
 
-void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard&) {
+void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_guard, std::size_t in_index) {
   MStatus l_status;
   auto l_mesh_plug = get_plug(ptr->select_path.node(&l_status), "outMesh");
   DOODLE_CHICK(l_status);
@@ -179,16 +188,17 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard&) {
   /// \brief 上下文网格
   MFnMesh l_ctx_mesh{l_mesh_data_handle.asMesh(), &l_status};
   auto l_ctx_mesh_obj = l_mesh_data_handle.asMesh();
-  auto l_matrix       = l_mesh_data_handle.geometryTransformMatrix();
+  auto l_matrix       = ptr->create_matrix_list[in_index];
+
   /// 上下文网格中心
-  auto l_center       = l_ctx_mesh.boundingBox(&l_status).center() * l_matrix;
+  auto l_center       = ptr->create_point_list[in_index];
   DOODLE_CHICK(l_status);
   const std::double_t l_tran[4][4]{1, 0, 0, 0,
                                    0, 1, 0, 0,
                                    0, 0, 1, 0,
-                                   l_center.x, l_center.y, l_center.z, l_center.w};
+                                   -l_center.x, -l_center.y, -l_center.z, 1};
   l_matrix *= MMatrix{l_tran};
-  l_matrix = l_matrix.inverse();
+  l_matrix = MMatrix{l_tran}.inverse();
 
   MFnMesh l_create_mesh{};
   MFloatPointArray l_vertexArray{};
