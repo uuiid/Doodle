@@ -257,6 +257,9 @@ void sequence_to_blend_shape::create_blend_shape() {
     l_s = MGlobal::deleteNode(l_node);
     DOODLE_CHICK(l_s);
   }
+  auto l_node_select = ptr->select_path.node(&l_s);
+  l_s                = MGlobal::deleteNode(l_node_select);
+  DOODLE_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time,
