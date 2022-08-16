@@ -19,27 +19,10 @@ class DOODLE_CORE_EXPORT error_iterator : public std::runtime_error {
  public:
   explicit error_iterator(const std::string& message) : std::runtime_error(message){};
 };
-// 空指针错误
-class DOODLE_CORE_EXPORT nullptr_error : public doodle_error {
- public:
-  explicit nullptr_error(const std::string& err) : doodle_error(err){};
-};
-
-// 序列化错误
-class DOODLE_CORE_EXPORT serialization_error : public doodle_error {
- public:
-  explicit serialization_error(const std::string& err) : doodle_error(err){};
-};
 
 class DOODLE_CORE_EXPORT component_error : public doodle_error {
  public:
   explicit component_error(const std::string& err) : doodle_error(err){};
-};
-
-class DOODLE_CORE_EXPORT file_error : public doodle_error {
- public:
-  explicit file_error(const std::string& message)
-      : doodle_error(message){};
 };
 
 template <typename exception_type>
