@@ -24,6 +24,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MFileObject.h>
 #include <maya/MSceneMessage.h>
+#include <maya/MItDependencyGraph.h>
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
@@ -731,6 +732,41 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
   }
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
+}
+std::vector<MDagPath> reference_file::qcloth_export_model() const {
+  auto l_cloth = qcloth_shape::create(make_handle(*this));
+
+  MStatus l_status{};
+  MObject l_return{};
+  std::vector<MDagPath> l_all_path{};
+  if (!has_ue4_group())
+    return l_all_path;
+
+  MFnDagNode l_child{};
+  MObject l_export_group{export_group_attr()->node(&l_status)};
+  DOODLE_CHICK(l_status);
+
+  for (auto &&qlc : l_cloth) {
+    auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
+    DOODLE_CHICK(l_status);
+    for (
+        MItDependencyGraph l_it{l_object,
+                                MFn::Type::kMesh,
+                                MItDependencyGraph::Direction::kDownstream,
+                                MItDependencyGraph::Traversal::kDepthFirst,
+                                MItDependencyGraph::Level::kNodeLevel,
+                                &l_status};
+        !l_it.isDone() && l_status;
+        l_it.next()) {
+      auto l_obj = l_it.currentItem(&l_status);
+      DOODLE_CHICK(l_status);
+      l_status = l_child.setObject(get_dag_path(l_obj));
+      DOODLE_CHICK(l_status);
+      if (l_child.hasParent(l_export_group))
+        l_all_path.emplace_back(get_dag_path(l_obj));
+    }
+  }
+  return l_all_path;
 }
 
 }  // namespace doodle::maya_plug

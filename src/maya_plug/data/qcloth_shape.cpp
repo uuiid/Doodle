@@ -23,6 +23,7 @@
 
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/maya_tool.h>
 #include <main/maya_plug_fwd.h>
 
 #include <magic_enum.hpp>
@@ -711,25 +712,8 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_CHICK(l_s);
 }
-MDagPath qcloth_shape::get_export_model() const {
-  MStatus l_status{};
-  MObject l_object{obj};
-  MObject l_return{};
-  for (
-      MItDependencyGraph l_it{l_object,
-                              MFn::Type::kMesh,
-                              MItDependencyGraph::Direction::kDownstream,
-                              MItDependencyGraph::Traversal::kDepthFirst,
-                              MItDependencyGraph::Level::kNodeLevel,
-                              &l_status};
-      !l_it.isDone() && l_status;
-      l_it.next()) {
-    l_return = l_it.currentItem(&l_status);
-    DOODLE_CHICK(l_status);
-  }
-  auto l_path = get_dag_path(l_return);
-  DOODLE_LOG_INFO("获取导出模型 {}", get_node_name(l_path));
-  return l_path;
+MDagPath qcloth_shape::ql_cloth_shape() const {
+  return get_dag_path(obj);
 }
 
 }  // namespace doodle::maya_plug

@@ -97,7 +97,7 @@ class qcloth_shape {
    */
   bool create_cache() const;
 
-  MDagPath get_export_model() const;
+  MDagPath ql_cloth_shape() const;
 
   /**
    * @brief 从传入的实体创建一个绑定节点

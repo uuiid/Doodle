@@ -101,12 +101,11 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
       if (ref.has_node(p_i->select_list)) {
         DOODLE_LOG_INFO("测试选择命中引用文件 {}", ref.path);
         maya_file_io::import_reference_file(ref, false);
-        auto l_hs = qcloth_shape::create(make_handle(e));
-        for (auto&& h : l_hs) {
+        auto l_p = ref.export_group_attr();
+        for (auto&& ql_export : ref.qcloth_export_model()) {
           sequence_to_blend_shape l_blend_shape{};
-          l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
-          if (auto l_p = ref.export_group_attr();
-              l_p)
+          l_blend_shape.select_attr(ql_export);
+          if (l_p)
             l_blend_shape.parent_attr(*l_p);
           p_i->blend_list.emplace_back(std::move(l_blend_shape));
         }
@@ -117,12 +116,11 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
       DOODLE_LOG_INFO("开始转换引用文件 {}", ref.path);
       maya_file_io::import_reference_file(ref, false);
-      auto l_hs = qcloth_shape::create(make_handle(e));
-      for (auto&& h : l_hs) {
+      auto l_p = ref.export_group_attr();
+      for (auto&& ql_export : ref.qcloth_export_model()) {
         sequence_to_blend_shape l_blend_shape{};
-        l_blend_shape.select_attr(h.get<qcloth_shape>().get_export_model());
-        if (auto l_p = ref.export_group_attr();
-            l_p)
+        l_blend_shape.select_attr(ql_export);
+        if (l_p)
           l_blend_shape.parent_attr(*l_p);
         p_i->blend_list.emplace_back(std::move(l_blend_shape));
       }

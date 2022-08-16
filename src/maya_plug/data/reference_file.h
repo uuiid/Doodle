@@ -151,6 +151,8 @@ class reference_file {
 
   std::optional<MDagPath> export_group_attr() const;
 
+  std::vector<MDagPath> qcloth_export_model() const;
+
   MSelectionList get_all_object() const;
 
  private:
