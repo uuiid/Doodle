@@ -182,7 +182,6 @@ MStatus sequence_to_blend_shape_ref_comm::doIt(const MArgList& in_arg) {
   return redoIt();
 }
 MStatus sequence_to_blend_shape_ref_comm::undoIt() {
-  MStatus l_status{};
   for (auto&& ctx : p_i->blend_list) {
     ctx.delete_bind_mesh();
   }
@@ -202,5 +201,11 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
 }
 bool sequence_to_blend_shape_ref_comm::isUndoable() const {
   return true;
+}
+void sequence_to_blend_shape_ref_comm::delete_node() {
+  for (auto&& ctx : p_i->blend_list) {
+    DOODLE_LOG_INFO("开始 {} 的原始模型", get_node_name(ctx.select_attr()));
+    ctx.delete_select_node();
+  }
 }
 }  // namespace doodle::maya_plug

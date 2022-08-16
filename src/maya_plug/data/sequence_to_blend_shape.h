@@ -76,6 +76,9 @@ class sequence_to_blend_shape {
    */
   void create_blend_shape();
 
+
+  void delete_select_node();
+
   /**
    * @brief 创建anim
    * @param in_begin_time 开始时间

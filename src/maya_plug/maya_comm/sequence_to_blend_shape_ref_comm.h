@@ -25,6 +25,7 @@ class sequence_to_blend_shape_ref_comm : public doodle::TemplateAction<
   void create_anim();
   void run_blend_shape_comm();
   void add_to_parent();
+  void delete_node();
  public:
   sequence_to_blend_shape_ref_comm();
   ~sequence_to_blend_shape_ref_comm() override;
