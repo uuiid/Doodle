@@ -164,7 +164,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   auto l_bind_box = l_mesh.boundingBox(&l_s);
   DOODLE_CHICK(l_s);
 
-  l_s = l_transform.setObject(ptr->select_path);
+  l_s = l_transform.setObject(get_dag_path(ptr->select_path.transform()));
   DOODLE_CHICK(l_s);
   auto l_tran = l_transform.transformationMatrix(&l_s);
   DOODLE_CHICK(l_s);
@@ -219,7 +219,9 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
       l_polygonConnects.append(l_polygonConnects_tmp[l_i]);
     }
   }
-
+  /// \brief 复制网格
+  auto l_create_obj = l_ctx_mesh.duplicate(false, false, &l_status);
+  DOODLE_CHICK(l_status);
   for (MItMeshVertex l_it_mesh_vertex{l_ctx_mesh_obj, &l_status};
        l_status && !l_it_mesh_vertex.isDone();
        l_it_mesh_vertex.next()) {
@@ -235,8 +237,9 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
                        l_vertexArray,
                        l_polygonCounts,
                        l_polygonConnects);
+  chick_true<doodle_error>(!l_create_obj.isNull(), "创建网格出错 {}", get_node_name(ptr->select_path));
   DOODLE_CHICK(ptr->create_point_list.append(l_center));
-  DOODLE_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_mesh.object(&l_status))));
+  DOODLE_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_obj)));
   DOODLE_CHICK(l_status);
 }
 

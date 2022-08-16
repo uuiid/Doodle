@@ -158,7 +158,7 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
     MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
     MDGContextGuard l_guard{l_context};
     for (auto&& ctx : p_i->blend_list) {
-      ctx.create_blend_shape_mesh(l_guard);
+      ctx.create_blend_shape_mesh(l_guard, i - p_i->startFrame_p);
     }
   }
 }
