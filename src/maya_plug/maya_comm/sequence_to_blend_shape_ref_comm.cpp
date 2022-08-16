@@ -193,6 +193,7 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
     this->run_blend_shape_comm();
     this->create_anim();
     this->add_to_parent();
+    this->delete_node();
   } catch (const doodle_error& err) {
     DOODLE_LOG_WARN(err.what());
     return MStatus::kFailure;
@@ -204,7 +205,7 @@ bool sequence_to_blend_shape_ref_comm::isUndoable() const {
 }
 void sequence_to_blend_shape_ref_comm::delete_node() {
   for (auto&& ctx : p_i->blend_list) {
-    DOODLE_LOG_INFO("开始 {} 的原始模型", get_node_name(ctx.select_attr()));
+    DOODLE_LOG_INFO("开始删除 {} 的原始模型", get_node_name(ctx.select_attr()));
     ctx.delete_select_node();
   }
 }

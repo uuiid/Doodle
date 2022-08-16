@@ -312,14 +312,15 @@ bool reference_file::has_node(const MObject &in_node) const {
 bool reference_file::is_loaded() const {
   chick_mobject();
   ///@brief  引用为空的情况下，我们主动测试一下是否有导出组，如果有就可以认为时已加载的
-  if (p_m_object.isNull()) {
-    return has_ue4_group();
-  } else {
+  try {
     MFnReference k_ref{p_m_object};
     MStatus k_s{};
     auto k_r = k_ref.isLoaded(&k_s);
     DOODLE_CHICK(k_s);
     return k_r;
+  } catch (const maya_error &inerr) {
+    DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", inerr.what());
+    return has_ue4_group();
   }
 }
 bool reference_file::has_sim_cloth() {
