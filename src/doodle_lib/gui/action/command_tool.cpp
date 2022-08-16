@@ -76,7 +76,7 @@ void comm_maya_tool::render() {
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
     imgui::Checkbox("导出为fbx格式", &p_sim_export_fbx);
-    imgui::Checkbox("只进行解算导出", &p_sim_only_export);
+    imgui::Checkbox("只导出", &p_sim_only_export);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() {
     imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
