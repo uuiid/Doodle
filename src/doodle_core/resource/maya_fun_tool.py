@@ -154,6 +154,8 @@ class sim_config(config):
         super(sim_config, self).__init__()
         self.only_sim = False
         self.upload_file = False
+        self.export_fbx = True
+        self.only_export = False
 
 
 class fbx_config(config):
@@ -176,6 +178,8 @@ def __load_config__(obj):
         k_con.project = obj["project_"]
         k_con.only_sim = obj["only_sim"]
         k_con.upload_file = obj["upload_file"]
+        k_con.export_fbx = obj["export_fbx"]
+        k_con.only_export = obj["only_export"]
         return k_con
     elif "use_all_ref" in obj:
         k_con = fbx_config()
