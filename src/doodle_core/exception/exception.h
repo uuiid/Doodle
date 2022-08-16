@@ -2,6 +2,7 @@
 
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_core_pch.h>
+#include <boost/exception/exception.hpp>
 
 #include <filesystem>
 #include <stdexcept>
@@ -35,13 +36,17 @@ class DOODLE_CORE_EXPORT component_error : public doodle_error {
   explicit component_error(const std::string& err) : doodle_error(err){};
 };
 
-// fileErr
 class DOODLE_CORE_EXPORT file_error : public doodle_error {
  public:
   explicit file_error(const std::string& message)
       : doodle_error(message){};
 };
-// doodl err
+
+template <typename exception_type>
+[[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& loc = BOOST_CURRENT_LOCATION) {
+  boost::throw_exception(std::forward<exception_type>(in_exception_type), loc);
+}
+
 }  // namespace doodle
 
 #include <fmt/format.h>
