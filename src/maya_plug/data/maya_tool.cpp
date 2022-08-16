@@ -70,7 +70,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
     }
   }
 
-  chick_true<doodle_error>(!l_plug.isNull(),  " {} 无法找到属性 {}", get_node_name(in_node), in_name);
+  chick_true<doodle_error>(!l_plug.isNull(), " {} 无法找到属性 {}", get_node_name(in_node), in_name);
   return l_plug;
 }
 MObject get_shading_engine(const MObject& in_node) {
@@ -101,7 +101,7 @@ MObject get_shading_engine(const MDagPath& in_node) {
     //    DOODLE_LOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
     break;
   }
-  chick_true<doodle_error>(!obj.isNull(),  "没有找到节点");
+  chick_true<doodle_error>(!obj.isNull(), "没有找到节点");
   return obj;
 }
 MObject get_first_mesh(const MObject& in_node) {
@@ -121,7 +121,7 @@ MObject get_first_mesh(const MObject& in_node) {
     l_r = i.currentItem(&k_s);
     break;
   }
-  chick_true<maya_error>(!l_r.isNull(),  "没有在依赖网格中寻找到mesh节点");
+  chick_true<maya_error>(!l_r.isNull(), "没有在依赖网格中寻找到mesh节点");
   return l_r;
 }
 MObject get_shape(const MObject& in_object) {
@@ -139,7 +139,7 @@ MObject get_shape(const MObject& in_object) {
     k_r = l_path.node(&k_s);
     DOODLE_CHICK(k_s);
   }
-  chick_true<maya_error>(!k_r.isNull(),  "没有找到形状");
+  chick_true<maya_error>(!k_r.isNull(), "没有找到形状");
   return k_r;
 }
 MObject get_transform(const MObject& in_object) {
@@ -155,7 +155,7 @@ MObject get_transform(const MObject& in_object) {
     k_r = l_path.transform(&k_s);
     DOODLE_CHICK(k_s);
   }
-  chick_true<maya_error>(!k_r.isNull(),  "没有找到变换");
+  chick_true<maya_error>(!k_r.isNull(), "没有找到变换");
   return k_r;
 }
 void add_child(const MObject& in_praent, MObject& in_child) {
