@@ -43,9 +43,13 @@ class DOODLE_CORE_EXPORT file_error : public doodle_error {
 };
 
 template <typename exception_type>
-[[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& loc = BOOST_CURRENT_LOCATION) {
-  boost::throw_exception(std::forward<exception_type>(in_exception_type), loc);
+[[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
+  boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
+#define DOODLE_CHICK(condition, exception_type) \
+  if (!(condition)) {                           \
+    throw_exception(exception_type);            \
+  }
 
 }  // namespace doodle
 
