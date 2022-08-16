@@ -17,6 +17,8 @@
 #include <range/v3/all.hpp>
 #include <core/status_info.h>
 
+#include <boost/ptr_container/ptr_vector.hpp>
+
 namespace doodle::database_n {
 
 void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
@@ -110,4 +112,27 @@ void sqlite_client::create_sqlite() {
       make_process_adapter<database_n::insert>(g_io_context().get_executor(), std::vector<entt::entity>{})
           .next<database_n::update_data>(std::vector<entt::entity>{}));
 }
+
+class sqlite_file::impl {
+ public:
+  registry_ptr registry_attr;
+};
+
+sqlite_file::sqlite_file()
+    : sqlite_file(g_reg()) {
+}
+sqlite_file::sqlite_file(registry_ptr in_registry)
+    : ptr(std::make_unique<impl>()) {
+  ptr->registry_attr = in_registry;
+}
+
+void sqlite_file::open(const FSys::path& in_path, bool only_ctx) {
+}
+void sqlite_file::save(const FSys::path& in_path) {
+}
+
+sqlite_file::~sqlite_file()                                    = default;
+sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;
+sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;
+
 }  // namespace doodle::database_n
