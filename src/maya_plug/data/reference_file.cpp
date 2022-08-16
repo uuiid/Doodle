@@ -758,15 +758,17 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
                                 &l_status};
         !l_it.isDone() && l_status;
         l_it.next()) {
-      auto l_obj = l_it.currentItem(&l_status);
+      auto l_temp_sp = get_dag_path(l_it.currentItem(&l_status));
       DOODLE_CHICK(l_status);
-      l_status = l_child.setObject(get_dag_path(l_obj));
+      auto l_current_path = get_dag_path(l_temp_sp.transform(&l_status));
+      DOODLE_CHICK(l_status);
+      l_status = l_child.setObject(l_current_path);
       DOODLE_CHICK(l_status);
       if (l_child.hasParent(l_export_group)) {
-        auto l_path = get_dag_path(l_obj);
+        auto l_path = l_current_path;
         if (auto l_it_j = ranges::find_if(l_all_path, [&](const MDagPath &in) { return l_path == in; });
             l_it_j == l_all_path.end()) {
-          l_all_path.emplace_back(get_dag_path(l_obj));
+          l_all_path.emplace_back(l_current_path);
         }
       }
     }
