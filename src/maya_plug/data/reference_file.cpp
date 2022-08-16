@@ -766,6 +766,16 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
         l_all_path.emplace_back(get_dag_path(l_obj));
     }
   }
+
+  std::sort(l_all_path.begin(), l_all_path.end(), [](const MDagPath &l_r, const MDagPath &l_l) -> bool {
+    MStatus l_staus_;
+    auto l_r_s = l_r.fullPathName(&l_staus_);
+    DOODLE_CHICK(l_staus_);
+    auto l_l_s = l_l.fullPathName(&l_staus_);
+    DOODLE_CHICK(l_staus_);
+    return l_r_s.asUTF8() < l_l_s.asUTF8();
+  });
+  auto l_it = std::unique(l_all_path.begin(), l_all_path.end());
   return l_all_path;
 }
 
