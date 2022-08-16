@@ -727,7 +727,9 @@ MDagPath qcloth_shape::get_export_model() const {
     l_return = l_it.currentItem(&l_status);
     DOODLE_CHICK(l_status);
   }
-  return get_dag_path(l_return);
+  auto l_path = get_dag_path(l_return);
+  DOODLE_LOG_INFO("获取导出模型 {}", get_node_name(l_path));
+  return l_path;
 }
 
 }  // namespace doodle::maya_plug
