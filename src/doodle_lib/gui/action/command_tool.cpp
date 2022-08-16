@@ -31,7 +31,9 @@ comm_maya_tool::comm_maya_tool()
       p_sim_path(),
       p_only_sim(false),
       p_use_all_ref(false),
-      p_upload_files(false) {
+      p_upload_files(false),
+      p_sim_export_fbx(true),
+      p_sim_only_export() {
   title_name_ = std::string{name};
 }
 void comm_maya_tool::init() {
@@ -73,6 +75,8 @@ void comm_maya_tool::render() {
   imgui::Checkbox("自动上传", &p_upload_files);
   dear::TreeNode{"解算设置"} && [this]() {
     imgui::Checkbox("只解算不替换引用", &p_only_sim);
+    imgui::Checkbox("导出为fbx格式", &p_sim_export_fbx);
+    imgui::Checkbox("只进行解算导出", &p_sim_only_export);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() {
     imgui::Checkbox("直接加载所有引用", &p_use_all_ref);
@@ -85,6 +89,8 @@ void comm_maya_tool::render() {
                     k_arg.file_path   = in_path;
                     k_arg.only_sim    = p_only_sim;
                     k_arg.upload_file = p_upload_files;
+                    k_arg.export_fbx  = p_sim_export_fbx;
+                    k_arg.only_export = p_sim_only_export;
                     k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
                     g_bounded_pool().attach<maya_exe>(
                         make_handle(),

@@ -40,6 +40,9 @@ class DOODLELIB_API comm_maya_tool
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
   bool p_only_sim;
+  bool p_sim_export_fbx;
+  bool p_sim_only_export;
+
   bool p_use_all_ref;
   bool p_upload_files;
 
