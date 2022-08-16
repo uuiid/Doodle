@@ -34,6 +34,7 @@
 #include <maya/MDagPathArray.h>
 #include <maya/MPointArray.h>
 #include <maya/MDataHandle.h>
+#include <maya/MFloatPointArray.h>
 namespace doodle {
 namespace maya_plug {
 
@@ -53,6 +54,7 @@ class sequence_to_blend_shape::impl {
 sequence_to_blend_shape::sequence_to_blend_shape()
     : ptr(std::make_unique<impl>()) {
 }
+
 void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
   MStatus l_s{};
   MFnTransform l_fn_transform{in_path, &l_s};
@@ -167,6 +169,67 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   l_s = ptr->create_mesh_list.append(l_create_mesh_path);
   DOODLE_CHICK(l_s);
 }
+
+void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard&) {
+  MStatus l_status;
+  auto l_mesh_plug = get_plug(ptr->select_path.node(&l_status), "outMesh");
+  DOODLE_CHICK(l_status);
+  auto l_mesh_data_handle = l_mesh_plug.asMDataHandle(&l_status);
+  DOODLE_CHICK(l_status);
+  /// \brief 上下文网格
+  MFnMesh l_ctx_mesh{l_mesh_data_handle.asMesh(), &l_status};
+  auto l_ctx_mesh_obj = l_mesh_data_handle.asMesh();
+  auto l_matrix       = l_mesh_data_handle.geometryTransformMatrix();
+  /// 上下文网格中心
+  auto l_center       = l_ctx_mesh.boundingBox(&l_status).center() * l_matrix;
+  DOODLE_CHICK(l_status);
+  const std::double_t l_tran[4][4]{1, 0, 0, 0,
+                                   0, 1, 0, 0,
+                                   0, 0, 1, 0,
+                                   l_center.x, l_center.y, l_center.z, l_center.w};
+  l_matrix *= MMatrix{l_tran};
+  l_matrix = l_matrix.inverse();
+
+  MFnMesh l_create_mesh{};
+  MFloatPointArray l_vertexArray{};
+  MIntArray l_polygonCounts{};
+  MIntArray l_polygonConnects{};
+  MIntArray l_polygonConnects_tmp{};
+
+  for (MItMeshPolygon l_it_mesh_polygon{l_ctx_mesh_obj, &l_status};
+       l_status && !l_it_mesh_polygon.isDone();
+       l_it_mesh_polygon.next()) {
+    auto l_polygon_count = l_it_mesh_polygon.count(&l_status);
+    DOODLE_CHICK(l_status);
+    DOODLE_CHICK(l_polygonCounts.append(l_polygon_count));
+    DOODLE_CHICK(l_polygonConnects_tmp.clear());
+    l_status = l_it_mesh_polygon.getConnectedVertices(l_polygonConnects_tmp);
+    DOODLE_CHICK(l_status);
+    for (int l_i = 0; l_i < l_polygonConnects_tmp.length(); ++l_i) {
+      l_polygonConnects.append(l_polygonConnects_tmp[l_i]);
+    }
+  }
+
+  for (MItMeshVertex l_it_mesh_vertex{l_ctx_mesh_obj, &l_status};
+       l_status && !l_it_mesh_vertex.isDone();
+       l_it_mesh_vertex.next()) {
+    auto l_point = l_it_mesh_vertex.position(MSpace::kWorld, &l_status);
+    DOODLE_CHICK(l_status);
+    l_point = l_point * l_matrix;
+    DOODLE_CHICK(l_status);
+    DOODLE_CHICK(l_vertexArray.append(l_point));
+  }
+
+  l_create_mesh.create(l_ctx_mesh.numVertices(),
+                       l_ctx_mesh.numPolygons(),
+                       l_vertexArray,
+                       l_polygonCounts,
+                       l_polygonConnects);
+  DOODLE_CHICK(ptr->create_point_list.append(l_center));
+  DOODLE_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_mesh.object(&l_status))));
+  DOODLE_CHICK(l_status);
+}
+
 void sequence_to_blend_shape::create_blend_shape() {
   MStatus l_s{};
 

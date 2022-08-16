@@ -51,7 +51,11 @@ class sequence_to_blend_shape {
    * 设置时间
    */
   void create_blend_shape_mesh();
-
+  /**
+   * @brief 创建混合变形节点(每帧一个, );
+   * @param 使用上下文的重载
+   */
+  void create_blend_shape_mesh(const MDGContextGuard&);
   /**
    * @brief 最后创建混合变形
    * 调用顺序方法
