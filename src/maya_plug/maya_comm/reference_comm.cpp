@@ -30,6 +30,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/data/sim_cover_attr.h>
+#include <maya_plug/fmt/fmt_select_list.h>
 
 #include <magic_enum.hpp>
 
@@ -266,6 +267,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   if (use_select) {
     MSelectionList k_select{};
     k_s = MGlobal::getActiveSelectionList(k_select);
+    DOODLE_LOG_INFO("获取选中物体 {}", k_select);
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
       if (k_r.has_node(k_select)) {
         DOODLE_LOG_INFO("开始导出 {}", k_r.path);
