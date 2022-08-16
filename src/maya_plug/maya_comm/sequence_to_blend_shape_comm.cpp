@@ -238,7 +238,11 @@ void sequence_to_blend_shape_comm::create_mesh() {
 }
 void sequence_to_blend_shape_comm::add_to_parent() {
   for (auto&& ctx : p_i->blend_list) {
-    ctx.attach_parent();
+    try {
+      ctx.attach_parent();
+    } catch (const doodle_error& error) {
+      DOODLE_LOG_WARN("由于错误 {} 取消附加");
+    }
   }
 }
 void sequence_to_blend_shape_comm::create_anim() {
