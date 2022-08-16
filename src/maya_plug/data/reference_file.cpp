@@ -775,7 +775,9 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
     DOODLE_CHICK(l_staus_);
     return l_r_s.asUTF8() < l_l_s.asUTF8();
   });
-  auto l_it = std::unique(l_all_path.begin(), l_all_path.end());
+  auto l_it = std::unique(l_all_path.begin(), l_all_path.end(), [](const MDagPath &l_r, const MDagPath &l_l) -> bool {
+    return l_r == l_l;
+  });
   return l_all_path;
 }
 
