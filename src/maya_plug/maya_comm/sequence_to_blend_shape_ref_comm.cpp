@@ -137,6 +137,7 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
     DOODLE_CHICK(l_s);
 
     for (auto&& ctx : p_i->blend_list) {
+      DOODLE_LOG_INFO("开始创建绑定网格 {}", get_node_name(ctx.select_attr()));
       ctx.create_bind_mesh();
     }
   }
@@ -154,11 +155,14 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
 }
 void sequence_to_blend_shape_ref_comm::create_anim() {
   for (auto&& ctx : p_i->blend_list) {
+    DOODLE_LOG_INFO("开始创建绑定网格 {} 的动画", get_node_name(ctx.select_attr()));
+
     ctx.create_blend_shape_anim(p_i->startFrame_p, p_i->endFrame_p, p_i->dg_modidier);
   }
 }
 void sequence_to_blend_shape_ref_comm::run_blend_shape_comm() {
   for (auto&& ctx : p_i->blend_list) {
+    DOODLE_LOG_INFO("开始创建绑定网格 {} 的混合变形", get_node_name(ctx.select_attr()));
     ctx.create_blend_shape();
   }
 }
@@ -183,10 +187,15 @@ MStatus sequence_to_blend_shape_ref_comm::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape_ref_comm::redoIt() {
-  this->create_mesh();
-  this->run_blend_shape_comm();
-  this->create_anim();
-  this->add_to_parent();
+  try {
+    this->create_mesh();
+    this->run_blend_shape_comm();
+    this->create_anim();
+    this->add_to_parent();
+  } catch (const doodle_error& err) {
+    DOODLE_LOG_WARN(err.what());
+    return MStatus::kFailure;
+  }
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape_ref_comm::isUndoable() const {
