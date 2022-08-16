@@ -150,17 +150,6 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
       ctx.create_blend_shape_mesh();
     }
   }
-
-  for (auto i = p_i->startFrame_p;
-       i <= p_i->endFrame_p;
-       ++i) {
-    /// \brief 设置时间过程
-    MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
-    MDGContextGuard l_guard{l_context};
-    for (auto&& ctx : p_i->blend_list) {
-      ctx.create_blend_shape_mesh(l_guard, i - p_i->startFrame_p);
-    }
-  }
 }
 void sequence_to_blend_shape_ref_comm::create_anim() {
   for (auto&& ctx : p_i->blend_list) {
@@ -202,9 +191,9 @@ MStatus sequence_to_blend_shape_ref_comm::undoIt() {
 MStatus sequence_to_blend_shape_ref_comm::redoIt() {
   try {
     this->create_mesh();
-    //    this->run_blend_shape_comm();
-    //    this->create_anim();
-    //    this->add_to_parent();
+    this->run_blend_shape_comm();
+    this->create_anim();
+    this->add_to_parent();
   } catch (const doodle_error& err) {
     DOODLE_LOG_WARN(err.what());
     return MStatus::kFailure;

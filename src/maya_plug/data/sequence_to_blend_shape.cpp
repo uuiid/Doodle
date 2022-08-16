@@ -155,8 +155,15 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   MStatus l_s{};
   MFnTransform l_transform{};
   MFnMesh l_mesh{};
+  MFnDagNode l_dag_path{};
 
-  l_s = l_mesh.setObject(ptr->select_path);
+  l_s = l_dag_path.setObject(ptr->select_path);
+  DOODLE_CHICK(l_s);
+
+  auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
+  DOODLE_CHICK(l_s);
+
+  l_s = l_mesh.setObject(l_create_mesh_path);
   DOODLE_CHICK(l_s);
   //      l_mesh.create
 
@@ -164,7 +171,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   auto l_bind_box = l_mesh.boundingBox(&l_s);
   DOODLE_CHICK(l_s);
 
-  l_s = l_transform.setObject(get_dag_path(ptr->select_path.transform()));
+  l_s = l_transform.setObject(l_create_mesh_path);
   DOODLE_CHICK(l_s);
   auto l_tran = l_transform.transformationMatrix(&l_s);
   DOODLE_CHICK(l_s);
@@ -174,9 +181,12 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   l_s           = ptr->create_point_list.append(l_center);
   DOODLE_CHICK(l_s);
 
-  /// \brief 获取变换矩阵
+  /// \brief 移动到世界中心
+  to_work_zero(l_create_mesh_path);
+  //    center_pivot(l_path_tmp);
 
-  DOODLE_CHICK(ptr->create_matrix_list.append(l_tran));
+  l_s = ptr->create_mesh_list.append(l_create_mesh_path);
+  DOODLE_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_guard, std::size_t in_index) {
