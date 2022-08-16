@@ -22,6 +22,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MMatrix.h>
 #include <maya/MBoundingBox.h>
+#include <maya/MDGContextGuard.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
 
@@ -144,10 +145,10 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
        i <= p_i->endFrame_p;
        ++i) {
     /// \brief 设置时间过程
-    l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
-    DOODLE_CHICK(l_s);
+    MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
+    MDGContextGuard l_guard{l_context};
     for (auto&& ctx : p_i->blend_list) {
-      ctx.create_blend_shape_mesh();
+      ctx.create_blend_shape_mesh(l_guard);
     }
   }
 }
