@@ -157,6 +157,63 @@ class sim_config(config):
         self.export_fbx = True
         self.only_export = False
 
+    def run(self):
+        if self.only_export:
+            self.only_sim = True
+            self.config_file()
+            self.export_file()
+            if self.upload_file:
+                self.update_file_fun()
+            pass
+        else:
+            self.config_file()
+            self.run_sim()
+            self.export_file()
+            if self.upload_file:
+                self.update_file_fun()
+
+    def config_file(self):
+
+        cmds.doodle_load_project(project=self.project)
+
+        cmds.doodle_create_ref_file()
+        if not self.only_sim:
+            cmds.doodle_ref_file_load()
+
+    def run_sim(self):
+        cmds.doodle_ref_file_sim(
+            startTime=doodle_work_space.raneg.start,
+            endTime=doodle_work_space.raneg.end)
+
+        cmds.comm_play_blast_maya(startTime=1001,
+                                  endTime=doodle_work_space.raneg.end,
+                                  filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
+                                  .format(
+                                      path=doodle_work_space.get_move_folder(),
+                                      base_name=doodle_work_space.maya_file.name_not_ex,
+                                      start=1001,
+                                      end=doodle_work_space.raneg.end
+                                  ))
+
+    def export_file(self):
+        cmds.select(cl=True)
+
+        if self.export_fbx:
+            cmds.doodle_sequence_to_blend_shape_ref(
+                startFrame=1001)
+            cmds.doodle_ref_file_export(
+                startTime=1001,
+                endTime=doodle_work_space.raneg.end,
+                exportType="fbx")
+        else:
+            cmds.doodle_ref_file_export(
+                startTime=1000,
+                endTime=doodle_work_space.raneg.end,
+                exportType="abc")
+
+    def update_file_fun(self):
+        cmds.doodle_upload_files(clear=not self.cfg.upload_file)
+
 
 class fbx_config(config):
     def __init__(self):
@@ -257,29 +314,7 @@ class open_file(object):
         doodle_work_space.reset()
 
         assert (isinstance(self.cfg, sim_config))
-        cmds.doodle_load_project(project=self.cfg.project)
-
-        cmds.doodle_create_ref_file()
-        if not self.cfg.only_sim:
-            cmds.doodle_ref_file_load()
-        cmds.doodle_ref_file_sim(
-            startTime=doodle_work_space.raneg.start,
-            endTime=doodle_work_space.raneg.end)
-
-        cmds.comm_play_blast_maya(startTime=1001,
-                                  endTime=doodle_work_space.raneg.end,
-                                  filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
-                                  .format(
-                                      path=doodle_work_space.get_move_folder(),
-                                      base_name=doodle_work_space.maya_file.name_not_ex,
-                                      start=1001,
-                                      end=doodle_work_space.raneg.end
-                                  ))
-        cmds.doodle_ref_file_export(
-            startTime=1000,
-            endTime=doodle_work_space.raneg.end,
-            exportType="abc")
-        cmds.doodle_upload_files(clear=not self.cfg.upload_file)
+        self.cfg.run()
 
     def get_fbx_export(self):
         # type: () -> None
