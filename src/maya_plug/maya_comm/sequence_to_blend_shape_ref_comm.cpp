@@ -169,7 +169,7 @@ void sequence_to_blend_shape_ref_comm::add_to_parent() {
     try {
       ctx.attach_parent();
     } catch (const doodle_error& error) {
-      DOODLE_LOG_WARN("由于错误 {} 取消附加");
+      DOODLE_LOG_WARN("由于错误 {} 取消附加", error);
     }
   }
 }
