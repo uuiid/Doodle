@@ -119,8 +119,8 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
   boost::contract::check l_ =
       boost::contract::function()
           .precondition([&]() {
-            chick_true<doodle_error>(FSys::exists(in_path), "文件 {} 不存在", in_path);
-            chick_true<doodle_error>(in_path.extension() == ".srt", "文件 {} 扩展名错误", in_path);
+            DOODLE_CHICK(FSys::exists(in_path),doodle_error{"文件 {} 不存在", in_path});
+            DOODLE_CHICK(in_path.extension() == ".srt",doodle_error{"文件 {} 扩展名错误", in_path});
           });
 
   std::vector<subtitle_srt_line> l_vector{};
@@ -138,7 +138,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
         auto& l_b = l_vector.emplace_back(subtitle_srt_line{});
 
         /// \brief 读取时间字符串
-        chick_true<doodle_error>(std::getline(l_ifstream, l_string), "文件 {} 解析错误", in_path);
+        DOODLE_CHICK(std::getline(l_ifstream,l_string), doodle_error{"文件 {} 解析错误", in_path});
 
         l_b.parse_time(l_string);
         /// \brief 读取字幕

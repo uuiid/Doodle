@@ -68,10 +68,7 @@ inline void chick_true(const BOOL_T& in, const FormatString& fmt, Args&&... args
     }
   }
 }
-template <class throw_T, class FormatString, class... Args>
-inline void chick_false(const bool& in, const FormatString& fmt, Args&&... args) {
-  chick_true<throw_T>(!in, fmt, args...);
-}
+
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) \
   SPDLOG_DEBUG(__VA_ARGS__);

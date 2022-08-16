@@ -48,7 +48,7 @@ maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm)
   in_handle.patch<process_message>([&](process_message &in) {
     in.set_name("自定义导出");
   });
-  chick_true<doodle_error>(core_set::getSet().has_maya(), "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
+  DOODLE_CHICK(core_set::getSet().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
   p_i->p_mess  = in_handle;
 
   // 生成命令
@@ -66,7 +66,7 @@ maya_exe::maya_exe(const entt::handle &in_handle,
   in_handle.patch<process_message>([&](process_message &in) {
     in.set_name(in_arg.file_path.filename().generic_string());
   });
-  chick_true<doodle_error>(core_set::getSet().has_maya(), "没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin)");
+  DOODLE_CHICK(core_set::getSet().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
   p_i->p_mess = in_handle;
 
   // 生成导出文件

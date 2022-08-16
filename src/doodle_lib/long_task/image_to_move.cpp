@@ -63,11 +63,11 @@ class image_to_move::impl {
 
 // image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
 //     : p_i(std::make_unique<impl>()) {
-//   chick_true<doodle_error>(in_handle.any_of<process_message>(),  "缺失进度指示结构");
-//   chick_true<doodle_error>(in_handle.any_of<FSys::path>(),  "缺失输出文件路径");
+//   DOODLE_CHICK(in_handle.any_of<process_message>(),doodle_error{ "缺失进度指示结构"});
+//   DOODLE_CHICK(in_handle.any_of<FSys::path>(),doodle_error{ "缺失输出文件路径"});
 //   p_i->p_out_path = in_handle.get<FSys::path>();
 //   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
-//     chick_true<doodle_error>(in.any_of<image_file_attribute>(),  "缺失文件属性");
+//     DOODLE_CHICK(in.any_of<image_file_attribute>(),doodle_error{ "缺失文件属性"});
 //   });
 //   p_i->p_h = in_handle;
 //   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
@@ -75,9 +75,9 @@ class image_to_move::impl {
 //                    return in.get<image_file_attribute>();
 //                  });
 //   std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
-//     chick_true<doodle_error>(exists(in.file_path),  "找不到路径指向的文件");
+//     DOODLE_CHICK(exists(in.file_path),doodle_error{ "找不到路径指向的文件"});
 //   });
-//   chick_true<doodle_error>(!p_i->p_image.empty(),  "没有传入任何的图片");
+//   DOODLE_CHICK(!p_i->p_image.empty(),doodle_error{ "没有传入任何的图片"});
 // }
 image_to_move::image_to_move(const entt::handle &in_handle,
                              const std::vector<image_file_attribute> &in_vector)

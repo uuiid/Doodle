@@ -6,6 +6,7 @@
 #include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/exception/exception.h>
 
 #include <core/util.h>
 
@@ -25,7 +26,8 @@ class join_move::impl {
 };
 join_move::join_move(const entt::handle &in_handle, const std::vector<FSys::path> &in_vector)
     : p_i(std::make_unique<impl>()) {
-  chick_true<doodle_error>(in_handle.all_of<FSys::path, process_message>(), "缺失组件");
+  if (!in_handle.all_of<FSys::path, process_message>())
+    throw_exception(doodle_error{"缺失组件"}, BOOST_CURRENT_LOCATION);
   p_i->handle_   = in_handle;
   p_i->out_path_ = in_handle.get<FSys::path>();
   p_i->in_list   = in_vector | ranges::views::filter([](const FSys::path &in_path) {
@@ -55,7 +57,7 @@ void join_move::link_move() {
   for (const auto &path : p_i->in_list) {
     if (p_i->stop_)
       return;
-    chick_true<doodle_error>(k_video_input.open(path.generic_string()), "文件 {} 的格式不支持", path);
+    DOODLE_CHICK(k_video_input.open(path.generic_string()), doodle_error{"文件 {} 的格式不支持", path});
     // 获得总帧数
     auto k_frame_count = boost::numeric_cast<std::size_t>(
         k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT));

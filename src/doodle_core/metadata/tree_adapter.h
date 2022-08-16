@@ -50,7 +50,7 @@ class DOODLE_CORE_EXPORT vector_adapter {
 
   iterator erase(const value_type& in) {
     auto it = std::find(_list.begin(), _list.end(), in);
-    chick_true<error_iterator>(it != _list.end(), "错误的迭代器");
+    DOODLE_CHICK(it != _list.end(),error_iterator{"错误的迭代器"});
 
     auto k_r = _list.erase(it);
     _self.end_erase(in);

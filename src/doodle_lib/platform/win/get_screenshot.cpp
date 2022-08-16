@@ -106,21 +106,21 @@ std::string get_font_data() {
       reinterpret_cast<LPARAM>(&logfont_init), 0);
 
   auto hfont = ::CreateFontIndirectW(&logfont_init);
-  chick_true<doodle_error>(hfont,  "无法获取字体数据");
+  DOODLE_CHICK(hfont,doodle_error{ "无法获取字体数据"});
   ::SelectObject(dc, hfont);
 
   LPVOID ptr      = NULL;
   HGLOBAL hGlobal = NULL;
 
   auto l_size     = ::GetFontData(dc, 0, 0, nullptr, 0);
-  chick_true<doodle_error>(l_size != GDI_ERROR,  "无法获取字体数据");
+  DOODLE_CHICK(l_size != GDI_ERROR,doodle_error{ "无法获取字体数据"});
   std::unique_ptr<char[]> l_buff{new char[l_size]};
 
   hGlobal   = GlobalAlloc(GMEM_MOVEABLE, l_size);
   ptr       = GlobalLock(hGlobal);
 
   auto l_r_ = ::GetFontData(dc, 0, 0, ptr, l_size);
-  chick_true<doodle_error>(l_r_ != GDI_ERROR,  "无法获取字体数据");
+  DOODLE_CHICK(l_r_ != GDI_ERROR,doodle_error{ "无法获取字体数据"});
   IStream* fontStream = NULL;
   l_r_                = CreateStreamOnHGlobal(hGlobal, TRUE, &fontStream);
   ULONG _l_long{};

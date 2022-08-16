@@ -121,7 +121,7 @@ entt::handle assets_file::user_attr() const {
   }
 }
 void assets_file::user_attr(const entt::handle& in_user) {
-  chick_true<doodle_error>(in_user.any_of<user>(), "句柄 {} 缺失必要组件 user", in_user);
+  DOODLE_CHICK(in_user.any_of<user>(),doodle_error{"句柄 {} 缺失必要组件 user", in_user});
   if (in_user.any_of<database>())
     p_i->ref_user = database::ref_data{in_user.get<database>()};
   else
@@ -138,7 +138,7 @@ void assets_file::version_attr(const std::uint64_t& in_Version) noexcept {
   p_i->p_version = in_Version;
 }
 FSys::path assets_file::get_path_normal() const {
-  chick_true<doodle_error>(g_reg()->ctx().contains<project>(), "缺失项目上下文");
+  DOODLE_CHICK(g_reg()->ctx().contains<project>(),doodle_error{"缺失项目上下文"});
   if (p_i->path.has_root_path())
     return p_i->path;
   else {

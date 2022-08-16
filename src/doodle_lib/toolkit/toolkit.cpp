@@ -109,7 +109,7 @@ bool toolkit::deleteUeCache() {
   // 获取环境变量
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, nullptr, &pManager);
-  chick_true<doodle_error>(pManager, "无法找到保存路径");
+  DOODLE_CHICK(pManager,doodle_error{"无法找到保存路径"});
 
   FSys::path path{pManager};
   CoTaskMemFree(pManager);

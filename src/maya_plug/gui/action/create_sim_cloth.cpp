@@ -80,7 +80,7 @@ void create_sim_cloth::render() {
           k_s = i.getDependNode(k_node);
           DOODLE_CHICK(k_s);
 
-          chick_true<maya_error>(k_node != l_h.get<qcloth_shape_n::maya_obj>().obj, "低模和高模是相同的");
+          DOODLE_CHICK(k_node != l_h.get<qcloth_shape_n::maya_obj>().obj,maya_error{"低模和高模是相同的"});
 
           l_list.emplace_back(k_node);
         }

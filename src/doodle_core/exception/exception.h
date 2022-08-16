@@ -3,6 +3,7 @@
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <boost/exception/exception.hpp>
+#include <boost/throw_exception.hpp>
 
 #include <filesystem>
 #include <stdexcept>
@@ -13,6 +14,9 @@ namespace doodle {
 class DOODLE_CORE_EXPORT doodle_error : public std::runtime_error {
  public:
   explicit doodle_error(const std::string& message) : std::runtime_error(message){};
+  template <typename... Args>
+  explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
+      : std::runtime_error(fmt::format(fmt::to_string_view(fmt_str), std::forward<Args>(in_args)...)){};
 };
 // iterators
 class DOODLE_CORE_EXPORT error_iterator : public std::runtime_error {
@@ -29,9 +33,9 @@ template <typename exception_type>
 [[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
-#define DOODLE_CHICK(condition, exception_type) \
-  if (!(condition)) {                           \
-    throw_exception(exception_type);            \
+#define DOODLE_CHICK(condition, ...)                      \
+  if (!(condition)) {                                     \
+    throw_exception(__VA_ARGS__, BOOST_CURRENT_LOCATION); \
   }
 
 }  // namespace doodle

@@ -57,31 +57,31 @@ inline void throw_maya_exception(const MStatus& in_status) {
     case MStatus::MStatusCode::kSuccess:
       break;
     case MStatus::MStatusCode::kFailure: {
-      chick_true<maya_Failure>(in_status, in_status.errorString());
+      DOODLE_CHICK(in_status,maya_Failure{in_status.errorString()});
     }
     case MStatus::MStatusCode::kInsufficientMemory: {
-      chick_true<maya_InsufficientMemory>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_InsufficientMemory{in_status.errorString()});
     }
     case MStatus::MStatusCode::kInvalidParameter: {
-      chick_true<maya_InvalidParameter>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_InvalidParameter{in_status.errorString()});
     }
     case MStatus::MStatusCode::kLicenseFailure: {
-      chick_true<maya_LicenseFailure>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_LicenseFailure{in_status.errorString()});
     }
     case MStatus::MStatusCode::kUnknownParameter: {
-      chick_true<maya_UnknownParameter>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_UnknownParameter{in_status.errorString()});
     }
     case MStatus::MStatusCode::kNotImplemented: {
-      chick_true<maya_NotImplemented>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_NotImplemented{in_status.errorString()});
     }
     case MStatus::MStatusCode::kNotFound: {
-      chick_true<maya_NotFound>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_NotFound{in_status.errorString()});
     }
     case MStatus::MStatusCode::kEndOfFile: {
-      chick_true<maya_EndOfFile>(false, in_status.errorString());
+      DOODLE_CHICK(false,maya_EndOfFile{in_status.errorString()});
     }
     default:
-      chick_true<doodle_error>(false, "未知选项");
+      DOODLE_CHICK(false,doodle_error{"未知选项"});
   }
 }
 }  // namespace doodle::maya_plug

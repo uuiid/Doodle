@@ -22,7 +22,7 @@ const int64_t& shot::get_shot() const noexcept {
 }
 
 void shot::set_shot(const int64_t& in_shot) {
-  chick_true<doodle_error>(in_shot >= 0, "shot无法为负");
+  DOODLE_CHICK(in_shot >= 0,doodle_error{"shot无法为负"});
   p_shot = in_shot;
 }
 
