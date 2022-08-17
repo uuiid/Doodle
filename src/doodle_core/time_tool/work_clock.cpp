@@ -8,6 +8,7 @@
 
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
+#include <doodle_core/lib_warp/boost_fmt_icl.h>
 
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
