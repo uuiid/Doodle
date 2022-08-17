@@ -55,9 +55,7 @@ void export_file_info::write_file(const entt::handle& in_handle) {
   boost::contract::check l_check =
       boost::contract::function()
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle.any_of<export_file_info>(),
-
-                                     "缺失导出组件");
+            in_handle.any_of<export_file_info>() ? void() : throw_exception(doodle_error{"缺失导出组件"s});
           });
   nlohmann::json l_json{};
   entt_tool::save_comm<export_file_info, episodes, shot>(in_handle, l_json);
@@ -72,11 +70,9 @@ entt::handle export_file_info::read_file(const FSys::path& in_path) {
   boost::contract::check l_check =
       boost::contract::function()
           .precondition([&]() {
-            chick_true<doodle_error>(exists(in_path),
-
-                                     "文件不存在 {}",
-                                     in_path);
+            FSys::exists(in_path) ? void() : throw_exception(doodle_error{"文件不存在{}", in_path});
           });
+
   auto l_json = nlohmann::json::parse(FSys::ifstream{in_path});
   auto l_h    = make_handle();
   entt_tool::load_comm<export_file_info, episodes, shot>(l_h, l_json);

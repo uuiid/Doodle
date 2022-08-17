@@ -37,10 +37,10 @@ FSys::path write_tmp_file(const std::string& in_falg,
 }
 
 std::string file_hash_sha224(const path& in_file) {
-  chick_true<doodle_error>(
-      exists(in_file) && is_regular_file(in_file),
+  (FSys::exists(in_file) && FSys::is_regular_file(in_file))
+      ? void()
+      : throw_exception(doodle_error{"{} 文件不存在或者不是文件", in_file});
 
-      "{} 文件不存在或者不是文件", in_file);
   CryptoPP::SHA224 k_sha_224;
   std::string k_string;
   ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};

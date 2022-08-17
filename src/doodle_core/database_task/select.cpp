@@ -317,10 +317,7 @@ void select::update() {
 }
 
 void select::th_run() {
-  chick_true<doodle_error>(
-      FSys::exists(p_i->project),
-
-      "数据库不存在 {}", p_i->project);
+  if (!FSys::exists(p_i->project)) throw_exception(doodle_error{"数据库不存在 {}", p_i->project});
 
   auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
   this->p_i->select_old(*p_i->local_reg, *l_k_con);

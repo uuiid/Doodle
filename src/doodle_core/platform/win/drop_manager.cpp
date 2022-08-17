@@ -76,7 +76,7 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
       std::unique_ptr<wchar_t[]> varbuf{new wchar_t[l_len]};
 
       UINT cch = DragQueryFile(hdrop, i, varbuf.get(), l_len);
-      doodle::chick_true<doodle::doodle_error>(cch != 0, "拖拽文件获取失败");
+      if (cch == 0) doodle::throw_exception(doodle::doodle_error{"拖拽文件获取失败"s});
       l_vector.emplace_back(varbuf.get());
     }
     DOODLE_LOG_INFO("查询到文件拖拽 :\n{}", fmt::join(l_vector, "\n"));
@@ -102,10 +102,9 @@ ole_guard::ole_guard() {
       DOODLE_LOG_INFO("COM 库已在此线程上初始化");
       break;
     case RPC_E_CHANGED_MODE:
-      chick_true<doodle_error>(
-          false,
-          "之前对CoInitializeEx的调用将此线程的并发模型指定为多线程单元 (MTA),"
-          "这也可能表明发生了从中性线程单元到单线程单元的更改");
+      throw_exception(doodle_error{
+          "之前对CoInitializeEx的调用将此线程的并发模型指定为多线程单元 (MTA), "
+          "这也可能表明发生了从中性线程单元到单线程单元的更改"});
       break;
     default:
       break;

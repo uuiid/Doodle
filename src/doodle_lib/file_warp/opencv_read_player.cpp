@@ -64,6 +64,7 @@ class opencv_read_player::impl {
   ~impl(){};
   cv::VideoCapture p_video;
   std::map<std::uint32_t, frame_impl> p_image;
+  FSys::path video_path;
 };
 
 opencv_read_player::opencv_read_player()
@@ -75,9 +76,12 @@ opencv_read_player::~opencv_read_player() = default;
 DOODLE_MOVE_CPP(opencv_read_player)
 
 bool opencv_read_player::load_frame(std::int32_t in_frame) {
-  chick_true<doodle_error>(p_data->p_video.isOpened(),
+  p_data->p_video.isOpened()
+      ? void()
+      : throw_exception(doodle_error{
+            "没有打开的视频"s,
+            p_data->video_path});
 
-                           "没有打开的视频");
   // 获得全局GPU渲染对象
   auto k_g = app::Get().d3dDevice;
 
@@ -145,7 +149,9 @@ bool opencv_read_player::is_open() const {
 }
 
 bool opencv_read_player::open_file(const FSys::path& in_path) {
-  return p_data->p_video.open(in_path.generic_string());
+  auto l_r   = p_data->p_video.open(in_path.generic_string());
+  video_path = in_path;
+  return l_r;
 }
 
 opencv::frame opencv_read_player::read(std::int32_t in_frame) {

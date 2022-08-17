@@ -60,8 +60,8 @@ bool episodes::conjecture_season(const entt::handle& in_handle) {
   if (in_handle.all_of<season>())
     return true;
 
-  chick_true<doodle_error>(
-      g_reg()->ctx().contains<project_config::base_config>(), "缺失上下文组件");
+  if (!g_reg()->ctx().contains<project_config::base_config>())
+    throw_exception(doodle_error{"缺失上下文组件"s});
 
   if (in_handle.all_of<episodes>()) {
     auto l_count  = g_reg()->ctx().at<project_config::base_config>().season_count;

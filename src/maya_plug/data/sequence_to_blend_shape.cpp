@@ -247,7 +247,8 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
                        l_vertexArray,
                        l_polygonCounts,
                        l_polygonConnects);
-  chick_true<doodle_error>(!l_create_obj.isNull(), "创建网格出错 {}", get_node_name(ptr->select_path));
+
+  if (!l_create_obj.isNull()) throw_exception(doodle_error{"创建网格出错 {}", get_node_name(ptr->select_path)});
   DOODLE_MAYA_CHICK(ptr->create_point_list.append(l_center));
   DOODLE_MAYA_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_obj)));
   DOODLE_MAYA_CHICK(l_status);
@@ -266,7 +267,7 @@ void sequence_to_blend_shape::create_blend_shape() {
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
   DOODLE_MAYA_CHICK(l_s);
-  chick_true<doodle_error>(l_r.length() == 1, "错误的融合变形节点创建");
+  if (l_r.length() == 1) throw_exception(doodle_error{"错误的融合变形节点创建"s});
 
   MSelectionList l_selection_list{};
   l_s = l_selection_list.add(l_r[0], true);

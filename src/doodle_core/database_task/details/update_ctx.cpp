@@ -122,9 +122,8 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(
     return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
                            boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
   }
-  chick_true<doodle_error>(false,
 
-                           "无法检查到数据库版本 {}", g_reg()->ctx().at<database_info>().path_);
+  throw_exception(doodle_error{"无法检查到数据库版本 {}", g_reg()->ctx().at<database_info>().path_});
   return {};
 }
 

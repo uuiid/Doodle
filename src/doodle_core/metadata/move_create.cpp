@@ -68,12 +68,13 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
                 ranges::to_vector;
   const auto k_size = l_list.front().num_list.size();
 
-  chick_true<doodle_error>(
-      ranges::all_of(l_list,
-                     [k_size](const image_attr_auxiliary &in) -> bool {
-                       return in.num_list.size() == k_size;
-                     }),
-      "序列不匹配");
+  ranges::all_of(l_list,
+                 [k_size](const image_attr_auxiliary &in) -> bool {
+                   return in.num_list.size() == k_size;
+                 })
+      ? void()
+      : throw_exception(doodle_error{"序列不匹配"s});
+
   DOODLE_CHICK(l_list.size() >= 2, doodle_error{"单个文件, 无法搜索帧号"});
   auto &one   = l_list[0].num_list;
   auto &tow   = l_list[1].num_list;

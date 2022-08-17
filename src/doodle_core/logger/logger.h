@@ -56,19 +56,6 @@ class DOODLE_CORE_EXPORT logger_ctrl {
   void refresh();
 };
 
-template <class throw_T,
-          class BOOL_T,
-          class FormatString, class... Args>
-inline void chick_true(const BOOL_T& in, const FormatString& fmt, Args&&... args) {
-  if (!in) {
-    if constexpr (sizeof...(args) == 0) {
-      throw throw_T{fmt::to_string(fmt)};
-    } else {
-      throw throw_T{fmt::format(fmt, std::forward<Args>(args)...)};
-    }
-  }
-}
-
 }  // namespace doodle
 #define DOODLE_LOG_DEBUG(...) \
   SPDLOG_DEBUG(__VA_ARGS__);

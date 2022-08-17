@@ -123,25 +123,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       doodle::gui::main_proc_handle::get().win_close();
       return 0;
     }
-      //    case WM_DROPFILES: {
-      //      const auto hdrop = reinterpret_cast<::HDROP>(wParam);
-      //      auto file_size   = DragQueryFile(hdrop, 0xFFFFFFFF, nullptr, 0);
-      //      std::vector<doodle::FSys::path> l_vector{};
-      //
-      //      //我们可以同时拖动多个文件，所以我们必须在这里循环
-      //      for (UINT i = 0; i < file_size; i++) {
-      //        std::size_t l_len = DragQueryFile(hdrop, i, nullptr, 0) + 1;
-      //        std::unique_ptr<wchar_t[]> varbuf{new wchar_t[l_len]};
-      //
-      //        UINT cch = DragQueryFile(hdrop, i, varbuf.get(), l_len);
-      //        doodle::chick_true<doodle::doodle_error>(cch != 0,  "拖拽文件获取失败");
-      //        l_vector.emplace_back(varbuf.get());
-      //      }
-      //      DragFinish(hdrop);
-      //      DOODLE_LOG_INFO("查询到文件拖拽 :\n{}", fmt::join(l_vector, "\n"));
-      //
-      //      break;
-      //    }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();
       //      DWORD wChar = wParam;

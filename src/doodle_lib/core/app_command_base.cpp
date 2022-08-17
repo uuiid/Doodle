@@ -60,9 +60,7 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
       boost::contract::public_function(this)
           .precondition([&]() {
             DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
-            chick_true<doodle_error>(!FSys::is_directory(in_path),
-
-                                     "传入路径不是文件或者不存在");
+            FSys::is_directory(in_path) ? void() : throw_exception(doodle_error{"传入路径不是文件或者不存在"s});
           });
   if (!exists(in_path)) {
     DOODLE_LOG_ERROR("无法找到授权文件")
