@@ -14,11 +14,6 @@
 #include <doodle_core/core/file_sys.h>
 #include <spdlog/spdlog.h>
 
-#define DOODLE_SOURCE_LOC \
-  ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
-
-#define DOODLE_LOC \
-  ::spdlog::source_loc { __FILE__, __LINE__, SPDLOG_FUNCTION }
 
 namespace doodle {
 
