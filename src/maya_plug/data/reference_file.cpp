@@ -48,11 +48,11 @@ reference_file::reference_file(
 void reference_file::set_path(const MObject &in_ref_node) {
   MStatus k_s{};
   MFnReference k_ref{in_ref_node, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   file_namespace = d_str{k_ref.associatedNamespace(false, &k_s)};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 }
 
 MSelectionList reference_file::get_collision_model() const {
@@ -68,7 +68,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
   MFnReference k_file;
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_file.setObject(refIter.thisNode());
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     if (k_file.uuid().asString().asUTF8() == in_ref_uuid) {
       p_m_object = refIter.thisNode();
       set_path(p_m_object);
@@ -77,7 +77,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
+  DOODLE_MAYA_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -89,18 +89,18 @@ void reference_file::set_collision_model(const MSelectionList &in_list) {
   for (MItSelectionList l_it{in_list, MFn::Type::kMesh, &k_s};
        !l_it.isDone(&k_s);
        l_it.next()) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_it.getDagPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_obj = l_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_node.setObject(k_obj);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     collision_model_show_str.emplace_back(d_str{l_node.name(&k_s)});
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     collision_model.emplace_back(d_str{l_node.fullPathName(&k_s)});
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 }
 
@@ -112,20 +112,20 @@ void reference_file::init_show_name() {
   for (MItSelectionList l_it{get_collision_model(), MFn::Type::kMesh, &k_s};
        !l_it.isDone(&k_s);
        l_it.next()) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_it.getDagPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_obj = l_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_node.setObject(k_obj);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     collision_model_show_str.emplace_back(d_str{l_node.name(&k_s)});
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 }
 std::string reference_file::get_namespace() const {
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
+  DOODLE_MAYA_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
   return file_namespace;
 }
 
@@ -137,20 +137,20 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
+  DOODLE_MAYA_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
   /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_WARN("引用没有加载, 跳过!");
     return false;
   }
 
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   FSys::path k_m_str{get_path()};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path / fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
   if (!FSys::exists(k_vfx_path))
@@ -184,23 +184,23 @@ bool reference_file::rename_material() const {
     if (k_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
       k_node.setObject(k_obj);
       auto k_plug = k_node.findPlug(d_str{"surfaceShader"}, true, &k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       MPlugArray l_m_plug_array{};
       auto k_source = k_plug.source(&k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       if (k_source.isNull(&k_s)) {
         continue;
       }
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       auto k_mat = k_source.node(&k_s);  /// \brief 从属性链接获得材质名称
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       MFnDependencyNode k_mat_node{};
       k_mat_node.setObject(k_mat);
       std::string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       /// \brief 重命名材质名称
       k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
 
       k_node.setName(d_str{k_mat_node_name}, false, &k_s);
@@ -216,7 +216,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 不符合配置的文件, 不进行导出")
     return {};
@@ -226,24 +226,24 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   {
     MDagPath k_root{};
     k_s = k_select.getDagPath(0, k_root);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MItDag k_it{};
     k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MFnDagNode l_fn_dag_node{};
     k_select.clear();
     for (; !k_it.isDone(&k_s); k_it.next()) {
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       k_s = k_it.getPath(k_root);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
 
       k_s = l_fn_dag_node.setObject(k_root);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       /// \brief 检查一下是否是中间对象
       if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
-        DOODLE_CHICK(k_s)
+        DOODLE_MAYA_CHICK(k_s)
         k_s = k_select.add(l_fn_dag_node.object());
-        DOODLE_CHICK(k_s);
+        DOODLE_MAYA_CHICK(k_s);
       }
     }
   }
@@ -256,15 +256,15 @@ bool reference_file::add_collision() const {
 
   MStatus k_s{};
   k_s = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   auto l_item = this->get_collision_model();
   k_s         = l_item.add(d_str{fmt::format("{}:qlSolver1", get_namespace())}, true);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::setActiveSelectionList(l_item);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::executeCommand(d_str{"qlCreateCollider;"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return true;
 }
 
@@ -274,7 +274,7 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
     return {};
@@ -290,7 +290,7 @@ bool reference_file::has_node(const MSelectionList &in_list) {
        !k_iter.isDone();
        k_iter.next()) {
     k_s = k_iter.getDependNode(k_node);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     if (has_node(k_node))
       return true;
@@ -316,7 +316,7 @@ bool reference_file::is_loaded() const {
     MFnReference k_ref{p_m_object};
     MStatus k_s{};
     auto k_r = k_ref.isLoaded(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     return k_r;
   } catch (const maya_error &inerr) {
     DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", inerr.what());

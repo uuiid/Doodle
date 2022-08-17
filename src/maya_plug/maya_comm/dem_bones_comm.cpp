@@ -170,9 +170,9 @@ class dem_bones_comm::impl {
     MStatus k_s{};
     MFnTransform l_fn_tran{};
     k_s = l_fn_tran.setObject(parent_tran);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto l_t = l_fn_tran.transformation(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     tran_inverse_list.push_back(l_t.asMatrixInverse());
   }
@@ -180,22 +180,22 @@ class dem_bones_comm::impl {
   void init() {
     MStatus k_s;
     MItSelectionList l_it{select_list, MFn::Type::kMesh, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     for (; !l_it.isDone(&k_s); l_it.next()) {
       k_s = l_it.getDependNode(mesh_obj);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     }
 
     MFnMesh l_mesh{mesh_obj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     {  /// \brief 设置一些属性并且扩展数组大小
       dem.nV = l_mesh.numVertices(&k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       dem.v.resize(3 * dem.nF, dem.nV);
       dem.fTime.resize(dem.nF);
       dem.fv.resize(l_mesh.numPolygons(&k_s));
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       dem.subjectID.resize(dem.nF);
       dem.u.resize(3 * dem.nS, dem.nV);
       //      dem.preMulInv.resize(4 * dem.nS, 4 * dem.nB);
@@ -210,20 +210,20 @@ class dem_bones_comm::impl {
     // 如果有父物体需要添加转换矩阵
 
     MFnDagNode l_dag_node{mesh_obj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto l_mesh_name = l_dag_node.name(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     tran_inverse_list.clear();
 
     for (auto i = 0; i < dem.nF; ++i) {
       k_s = MGlobal::viewFrame((std::double_t)(i + startFrame_p));
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       DOODLE_LOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       /// \brief 添加当前帧的逆矩阵
       push_time_tran_inverse();
 
       MItMeshVertex vexpoint{mesh_obj, &k_s};
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       /// \brief 设置顶点
       dem.fTime(i) = i;
 
@@ -293,19 +293,19 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
   MArgDatabase k_prase{syntax(), in_arg};
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::startFrame_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::startFrame_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->startFrame_p = l_value.value();
   } else {
     p_i->startFrame_p = MAnimControl::minTime().value();
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::endFrame_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::endFrame_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->endFrame_p = l_value.value();
   } else {
     p_i->endFrame_p = MAnimControl::maxTime().value();

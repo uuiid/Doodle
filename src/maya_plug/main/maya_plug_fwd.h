@@ -95,11 +95,13 @@ class d_str {
     return p_u8_str;
   }
 };
+
 /**
  * @brief 检查maya的返回状态
  */
-#define DOODLE_CHICK(in_status) \
-  throw_maya_exception(in_status);
+#define DOODLE_MAYA_CHICK(in_status) \
+  if (!in_status)                    \
+    throw_exception(maya_error{in_status.errorString().asUTF8()});
 
 void open_windows();
 

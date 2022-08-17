@@ -28,7 +28,7 @@ FSys::path maya_file_io::work_path(const FSys::path& in_path) {
 std::string maya_file_io::get_channel_date() {
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
-  DOODLE_CHICK(k_status);
+  DOODLE_MAYA_CHICK(k_status);
   auto k_channel = k_meta.channel("doodle_sim_json");
   if (!k_channel.empty()) {
     auto k_stream = k_channel.dataStream("json_stream");
@@ -42,7 +42,7 @@ std::string maya_file_io::get_channel_date() {
 bool maya_file_io::chick_channel() {
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
-  DOODLE_CHICK(k_status);
+  DOODLE_MAYA_CHICK(k_status);
   auto k_channel = k_meta.channel("doodle_sim_json");
   if (!k_channel.dataStream("json_stream")) {
     auto k_s = adsk::Data::Structure::create();              // 添加结构
@@ -60,7 +60,7 @@ bool maya_file_io::replace_channel_date(const std::string& in_string) {
   chick_channel();
   MStatus k_status{};
   adsk::Data::Associations k_meta{MFileIO::metadata(&k_status)};
-  DOODLE_CHICK(k_status);
+  DOODLE_MAYA_CHICK(k_status);
   auto k_json   = k_meta.channel("doodle_sim_json");  /// 获得元数据通道
   auto k_stream = k_json.dataStream("json_stream");   /// 获得元数据流
 
@@ -84,11 +84,11 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
     create_directories(in_file_path.parent_path());
   }
   k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, nullptr, true);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return false;
 }
 bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix) {
-  DOODLE_CHICK(FSys::is_regular_file(in_source_path), doodle_error{"{} 路径不存在或者不是文件"});
+  DOODLE_MAYA_CHICK(FSys::is_regular_file(in_source_path), doodle_error{"{} 路径不存在或者不是文件"});
   bool result{false};
 
   auto l_upload_path = g_reg()->ctx().at<project_config::base_config>().get_upload_path();
@@ -124,7 +124,7 @@ void maya_file_io::import_reference_file(const reference_file& in_ref, bool pres
     //    MFileIO::loadReferenceByNode(l_obj, &l_s);
     auto l_com = fmt::format("file -importReference -referenceNode {}", get_node_full_name(in_ref.p_m_object));
     l_s        = MGlobal::executeCommand(d_str{l_com});
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
 }
 }  // namespace doodle::maya_plug

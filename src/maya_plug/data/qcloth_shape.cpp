@@ -36,7 +36,7 @@ maya_obj::maya_obj(const MObject& in_object) {
   obj = in_object;
   MStatus k_s;
   MFnDependencyNode k_node{in_object, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   p_name = d_str{k_node.name(&k_s)};
   DOODLE_CHICK(k_s);
 }

@@ -29,7 +29,7 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     MFnDagNode l_mesh{};
     MStatus l_status{};
     l_status = l_mesh.setObject(in_mesh_object);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
 
     this->is_intermediate_obj = l_mesh.isIntermediateObject(&l_status);
     DOODLE_CHICK(l_status);

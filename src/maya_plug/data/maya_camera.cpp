@@ -31,11 +31,11 @@ maya_camera::maya_camera(const MDagPath& in_path)
 
 void maya_camera::chick() const {
   MStatus k_s{};
-  DOODLE_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"});
-  DOODLE_CHICK(k_s);
-  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera,&k_s),
+  DOODLE_MAYA_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"});
+  DOODLE_MAYA_CHICK(k_s);
+  DOODLE_MAYA_CHICK(p_path.hasFn(MFn::Type::kCamera,&k_s),
         doodle_error{"dag 路径不兼容 MFn::Type::kCamera"}));
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 }
 
 bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
@@ -44,9 +44,9 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   MStatus k_s{};
   MSelectionList k_select{};
   k_s = k_select.add(p_path);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::setActiveSelectionList(k_select);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   /// \brief 开始创建路径并进行导出
   auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
   if (!FSys::exists(k_file_path))
@@ -57,23 +57,23 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
                              in_end.value());
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
   k_s         = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = std::string{"FBXExportConstraints -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   auto l_h = make_handle();
 
@@ -94,7 +94,7 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 
   MFnDagNode k_tran_node{};
   k_s = k_tran_node.setObject(p_path.transform());
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   auto k_comm = fmt::format(R"(bakeResults
 -simulation true
@@ -114,9 +114,9 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 {{"{}"}};
 )",
                             in_start.value(), in_end.value(), d_str{k_tran_node.fullPathName()}.str());
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return true;
 }
 bool maya_camera::unlock_attr() {
@@ -126,40 +126,40 @@ bool maya_camera::unlock_attr() {
   MFnDependencyNode k_node{};
   {
     auto k_obj = p_path.node(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_node.setObject(k_obj);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   const auto& k_size = k_node.attributeCount(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   for (int l_i = 0; l_i < k_size; ++l_i) {
     auto k_attr = k_node.attribute(l_i, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
     //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       k_s = k_plug.setLocked(false);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     }
   }
   {
     auto k_obj = p_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_node.setObject(k_obj);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   const auto& k_size2 = k_node.attributeCount(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   for (int l_i = 0; l_i < k_size2; ++l_i) {
     auto k_attr = k_node.attribute(l_i, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
     //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       k_s = k_plug.setLocked(false);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     }
   }
 

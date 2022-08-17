@@ -76,7 +76,7 @@ reference_attr_setting::reference_attr_setting()
 bool reference_attr_setting::get_file_info() {
   adsk::Debug::Print k_p{std::cout};
   MStatus k_status{};
-  DOODLE_CHICK(k_status);
+  DOODLE_MAYA_CHICK(k_status);
   destroy_handle(p_i->p_handles);
 
   MStatus k_s{};

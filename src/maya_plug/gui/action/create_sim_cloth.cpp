@@ -33,12 +33,12 @@ void create_sim_cloth::render() {
   if (imgui::Button("获得低模")) {
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MObject k_node{};
     for (MItSelectionList i{k_list}; !i.isDone(); i.next()) {
       auto k_h = make_handle();
       k_s      = i.getDependNode(k_node);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       k_h.emplace<qcloth_shape_n::maya_obj>(k_node);
       k_h.emplace<qcloth_shape>();
       k_h.emplace<qcloth_shape_n::shape_list>();
@@ -50,7 +50,7 @@ void create_sim_cloth::render() {
     qcloth_shape_n::shape_list l_list{};
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MObject k_node{};
     for (MItSelectionList i{k_list}; !i.isDone(); i.next()) {
       k_s = i.getDependNode(k_node);
@@ -73,14 +73,14 @@ void create_sim_cloth::render() {
       if (imgui::Button("获得高模")) {
         MSelectionList k_list{};
         auto k_s = MGlobal::getActiveSelectionList(k_list);
-        DOODLE_CHICK(k_s);
+        DOODLE_MAYA_CHICK(k_s);
         MObject k_node{};
         qcloth_shape_n::shape_list l_list{};
         for (MItSelectionList i{k_list}; !i.isDone(); i.next()) {
           k_s = i.getDependNode(k_node);
-          DOODLE_CHICK(k_s);
+          DOODLE_MAYA_CHICK(k_s);
 
-          DOODLE_CHICK(k_node != l_h.get<qcloth_shape_n::maya_obj>().obj, maya_error{"低模和高模是相同的"});
+          DOODLE_MAYA_CHICK(k_node != l_h.get<qcloth_shape_n::maya_obj>().obj, maya_error{"低模和高模是相同的"});
 
           l_list.emplace_back(k_node);
         }
