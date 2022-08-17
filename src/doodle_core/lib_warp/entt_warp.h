@@ -116,7 +116,7 @@ struct formatter<::entt::entity>
   using base_type = formatter<typename ::entt::entt_traits<::entt::entity>::entity_type>;
 
   template <typename FormatContext>
-  auto format(const ::entt::entity &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+  auto format(const ::entt::entity &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return base_type::format(
         ::entt::to_integral(in_),
         ctx);
@@ -130,7 +130,7 @@ struct formatter<::entt::basic_handle<Entity, Type...>>
   using entt_handle_type = ::entt::basic_handle<Entity, Type...>;
 
   template <typename FormatContext>
-  auto format(const entt_handle_type &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+  auto format(const entt_handle_type &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return base_type::format(
         in_.entity(),
         ctx);

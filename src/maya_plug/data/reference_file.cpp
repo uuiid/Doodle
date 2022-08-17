@@ -77,7 +77,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-  DOODLE_CHICK(!file_namespace.empty(),doodle_error{"名称空间为空"});
+  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -125,7 +125,7 @@ void reference_file::init_show_name() {
 }
 std::string reference_file::get_namespace() const {
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  DOODLE_CHICK(!file_namespace.empty(),doodle_error{"名称空间为空"});
+  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
   return file_namespace;
 }
 
@@ -137,7 +137,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_CHICK(this->find_ref_node(),doodle_error{"缺失引用"});
+  DOODLE_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -340,7 +340,7 @@ bool reference_file::has_sim_cloth() {
   return false;
 }
 bool reference_file::set_namespace(const std::string &in_namespace) {
-  DOODLE_CHICK(!in_namespace.empty(),doodle_error{"空名称空间"});
+  DOODLE_CHICK(!in_namespace.empty(), doodle_error{"空名称空间"});
   file_namespace = in_namespace.substr(1);
   find_ref_node();
   return has_ue4_group();
@@ -485,8 +485,8 @@ entt::handle reference_file::export_file_select(
 }
 
 bool reference_file::replace_file(const entt::handle &in_handle) {
-  DOODLE_CHICK(in_handle.all_of<redirection_path_info>(),doodle_error{"缺失替换引用信息"});
-  DOODLE_CHICK(!p_m_object.isNull(),doodle_error{"没有引用文件, 无法替换"});
+  DOODLE_CHICK(in_handle.all_of<redirection_path_info>(), doodle_error{"缺失替换引用信息"});
+  DOODLE_CHICK(!p_m_object.isNull(), doodle_error{"没有引用文件, 无法替换"});
   search_file_info = in_handle;
   MStatus k_s{};
   {
@@ -522,8 +522,8 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
   k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
   DOODLE_CHICK(k_s);
   file_namespace = l_name_d;
-  DOODLE_CHICK(find_ref_node(),doodle_error{"没有在新的名称空间中查询到引用节点"});
-  DOODLE_CHICK(has_ue4_group(),doodle_error{"没有在引用文件中找到 导出 组"});
+  DOODLE_CHICK(find_ref_node(), doodle_error{"没有在新的名称空间中查询到引用节点"});
+  DOODLE_CHICK(has_ue4_group(), doodle_error{"没有在引用文件中找到 导出 组"});
   return false;
 }
 FSys::path reference_file::get_path() const {
@@ -613,7 +613,7 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
   FSys::path out_{};
 
-  DOODLE_CHICK(is_loaded(),doodle_error{"需要导出fbx的引用必须加载"});
+  DOODLE_CHICK(is_loaded(), doodle_error{"需要导出fbx的引用必须加载"});
 
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();

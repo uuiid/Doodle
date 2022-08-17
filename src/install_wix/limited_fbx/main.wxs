@@ -45,7 +45,8 @@
             <Component Id="RegistryEntries" Guid="354e2dc2-c36f-4735-a8f0-1204ecd42058">
                 <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\shell\open\command"
                              ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes">
-                    <RegistryValue Type="string" Value="&quot;[DOODLE_ROOT]\bin\doodle_limited_exe.exe&quot; &quot;%1&quot;"/>
+                    <RegistryValue Type="string"
+                                   Value="&quot;[DOODLE_ROOT]\bin\doodle_limited_exe.exe&quot; &quot;%1&quot;"/>
                 </RegistryKey>
                 <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\DefaultIcon" ForceCreateOnInstall="yes"
                              ForceDeleteOnUninstall="yes">

@@ -199,7 +199,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
   DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);
 }
 csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
-  DOODLE_CHICK(in.any_of<assets_file>(),doodle_error{"缺失文件组件"});
+  DOODLE_CHICK(in.any_of<assets_file>(), doodle_error{"缺失文件组件"});
   auto &k_ass            = in.get<assets_file>();
   /// \brief 工作时间计算
   auto &work_clock       = k_ass.user_attr().get<business::work_clock>();

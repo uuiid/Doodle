@@ -179,7 +179,7 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
 
   l_s = k_select.add(d_str{fmt::format("{}Base*", l_name)});
   DOODLE_CHICK(l_s);
-  DOODLE_CHICK(k_select.length() > 0,doodle_error{"无法找到包裹生成的网格"});
+  DOODLE_CHICK(k_select.length() > 0, doodle_error{"无法找到包裹生成的网格"});
   MObject l_r{};
   l_s = k_select.getDependNode(0, l_r);
   DOODLE_CHICK(l_s);
@@ -262,7 +262,7 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_CHICK(l_s);
   }
-  DOODLE_CHICK(!l_mesh.isNull(),maya_error{"找不到解算网格的输出端"});
+  DOODLE_CHICK(!l_mesh.isNull(), maya_error{"找不到解算网格的输出端"});
 
   return std::make_tuple(l_cloth_shape, l_mesh);
 }
@@ -307,7 +307,7 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
       l_collider_offset = l_node;
   }
 
-  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(),maya_error{"寻找的的解算网格体和偏移网格体不一致"});
+  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(), maya_error{"寻找的的解算网格体和偏移网格体不一致"});
   return std::make_tuple(l_collider, l_collider_offset);
 }
 
@@ -357,14 +357,14 @@ qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_ob
     : qcloth_shape() {
   p_ref_file = in_ref_file;
   obj        = in_object;
-  DOODLE_CHICK(p_ref_file.any_of<reference_file>(),doodle_error{"缺失组件"});
+  DOODLE_CHICK(p_ref_file.any_of<reference_file>(), doodle_error{"缺失组件"});
 }
 bool qcloth_shape::set_cache_folder() const {
   return set_cache_folder(FSys::path{});
 }
 
 bool qcloth_shape::create_cache() const {
-  DOODLE_CHICK(!obj.isNull(),doodle_error{"空组件"});
+  DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
   MStatus k_s{};
   MFnDependencyNode l_node{obj, &k_s};
   auto k_plug = get_plug(obj, "outputMesh");
@@ -437,7 +437,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   add_child(l_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
-    DOODLE_CHICK(l_high_mesh.size() == k_maya_high_mesh.size(),maya_error{"节点数量不一致"});
+    DOODLE_CHICK(l_high_mesh.size() == k_maya_high_mesh.size(), maya_error{"节点数量不一致"});
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
       transfer_dynamic(l_high_mesh[l_i], k_maya_high_mesh[l_i].obj);
     }
@@ -659,7 +659,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(),maya_error{"没有找到qlSolver解算核心"});
+  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"});
 
   return l_object;
 }
@@ -675,7 +675,7 @@ MObject qcloth_shape::get_ql_solver() {
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(),maya_error{"没有找到qlSolver解算核心"});
+  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"});
   return l_object;
 }
 void qcloth_shape::reset_create_node_attribute(const entt::handle& in_handle) {
@@ -702,7 +702,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
     DOODLE_CHICK(l_s);
   }
 
-  DOODLE_CHICK(!l_skin_cluster.isNull(),maya_error{"没有找到皮肤簇变形节点"});
+  DOODLE_CHICK(!l_skin_cluster.isNull(), maya_error{"没有找到皮肤簇变形节点"});
   return l_skin_cluster;
 }
 void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {

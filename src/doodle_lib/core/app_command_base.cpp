@@ -59,7 +59,7 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
   boost::contract::check l_c =
       boost::contract::public_function(this)
           .precondition([&]() {
-            DOODLE_CHICK(!in_path.empty(),doodle_error{"传入路径为空"});
+            DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
             chick_true<doodle_error>(!FSys::is_directory(in_path),
 
                                      "传入路径不是文件或者不存在");

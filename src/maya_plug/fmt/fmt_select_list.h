@@ -20,7 +20,7 @@ namespace fmt {
 template <>
 struct formatter<MSelectionList> : formatter<string_view> {
   template <typename FormatContext>
-  auto format(const MSelectionList& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const MSelectionList& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     MStringArray l_array{};
     in_.getSelectionStrings(l_array);
     return formatter<string_view>::format(

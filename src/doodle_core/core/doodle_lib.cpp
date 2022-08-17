@@ -73,7 +73,7 @@ FSys::path doodle_lib::create_time_database() {
       FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
       DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
 
-      DOODLE_CHICK(k_ofstream,doodle_error{"无法创建数据库 {}", k_local_path / i.filename()});
+      DOODLE_CHICK(k_ofstream, doodle_error{"无法创建数据库 {}", k_local_path / i.filename()});
       auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
       k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
     }

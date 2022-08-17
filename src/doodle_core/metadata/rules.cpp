@@ -6,6 +6,7 @@
 
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
+#include <doodle_core/lib_warp/std_fmt_bitset.h>
 
 namespace doodle {
 namespace business {

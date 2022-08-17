@@ -65,7 +65,7 @@ void _select_ctx_(entt::registry& in_reg,
 }
 template <typename... Type>
 void select_ctx_template(entt::registry& in_reg,
-                sqlpp::sqlite3::connection& in_conn) {
+                         sqlpp::sqlite3::connection& in_conn) {
   std::map<std::uint32_t,
            std::function<void(entt::registry & in_reg, const std::string& in_str)>>
       l_fun{

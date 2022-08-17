@@ -36,7 +36,7 @@ namespace fmt {
 template <>
 struct formatter<doodle::comment> : formatter<string_view> {
   template <typename FormatContext>
-  auto format(const doodle::comment& in_, FormatContext& ctx) {
+  auto format(const doodle::comment& in_, FormatContext& ctx) const {
     formatter<string_view>::format(
         in_.get_comment(),
         ctx);

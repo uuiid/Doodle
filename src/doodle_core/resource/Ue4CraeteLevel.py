@@ -98,7 +98,8 @@ class doodle_lve:
 
         # 添加手动聚焦
         camera_component_focal_track = camera_component_binding.add_track(unreal.MovieSceneFloatTrack)
-        camera_component_focal_track.set_property_name_and_path("手动聚焦距离(聚焦设置)", "FocusSettings.ManualFocusDistance")
+        camera_component_focal_track.set_property_name_and_path("手动聚焦距离(聚焦设置)",
+                                                                "FocusSettings.ManualFocusDistance")
         camera_component_focal_track_section = camera_component_focal_track.add_section()
         self.make_range(camera_component_focal_track_section)
 

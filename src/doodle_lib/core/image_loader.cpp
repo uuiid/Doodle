@@ -61,7 +61,7 @@ std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::pa
   if (exists(l_local_path) &&
       is_regular_file(l_local_path)) {
     auto k_image = cv::imread(l_local_path.generic_string(), cv::IMREAD_REDUCED_COLOR_4);
-    DOODLE_CHICK(!k_image.empty(),doodle_error{"open cv not read image"});
+    DOODLE_CHICK(!k_image.empty(), doodle_error{"open cv not read image"});
     static std::double_t s_image_max{512};
     if (k_image.cols > s_image_max || k_image.rows > s_image_max) {
       auto l_size = std::min(s_image_max / k_image.cols, s_image_max / k_image.rows);
@@ -92,8 +92,8 @@ bool image_loader::load(image_icon& in_icon, const FSys::path& in_root) {
   return false;
 }
 bool image_loader::load(const entt::handle& in_handle) {
-  DOODLE_CHICK(in_handle.any_of<image_icon>(),doodle_error{"缺失图标组件"});
-  DOODLE_CHICK(in_handle.registry()->ctx().contains<project>(),doodle_error{"缺失项目上下文"});
+  DOODLE_CHICK(in_handle.any_of<image_icon>(), doodle_error{"缺失图标组件"});
+  DOODLE_CHICK(in_handle.registry()->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
   auto& l_image     = in_handle.get<image_icon>();
   auto l_local_path = l_image.image_root(in_handle);
 
@@ -106,7 +106,7 @@ bool image_loader::save(const entt::handle& in_handle,
                         const cv::Mat& in_image,
                         const cv::Rect2f& in_rect) {
   auto k_reg = g_reg();
-  DOODLE_CHICK(k_reg->ctx().contains<project>(),doodle_error{"缺失项目上下文"});
+  DOODLE_CHICK(k_reg->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
 
@@ -160,7 +160,7 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
   k_sub_resource.SysMemPitch      = k_tex_desc.Width * 4;
   k_sub_resource.SysMemSlicePitch = 0;
   auto k_r                        = k_g->CreateTexture2D(&k_tex_desc, &k_sub_resource, &k_com_tex);
-  DOODLE_CHICK(k_r == 0,doodle_error{"windows com 异常 {}", k_r});
+  DOODLE_CHICK(k_r == 0, doodle_error{"windows com 异常 {}", k_r});
   guard_win_ptr_delete l_a_delete{k_com_tex};
 
   D3D11_SHADER_RESOURCE_VIEW_DESC k_srv;
@@ -179,8 +179,8 @@ std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool conver
 }
 bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path) {
   auto k_reg = g_reg();
-  DOODLE_CHICK(k_reg->ctx().contains<project>(),doodle_error{"缺失项目上下文"});
-  DOODLE_CHICK(exists(in_path),doodle_error{"文件不存在"});
+  DOODLE_CHICK(k_reg->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
+  DOODLE_CHICK(exists(in_path), doodle_error{"文件不存在"});
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
   k_icon.path  = core_set::getSet().get_uuid_str() + in_path.extension().generic_string();

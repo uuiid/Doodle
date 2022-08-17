@@ -92,7 +92,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   template <typename FormatContext>
-  auto format(const ::doodle::assets_file& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::assets_file& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.name_attr(),
         ctx);

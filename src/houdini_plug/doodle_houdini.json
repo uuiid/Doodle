@@ -1,14 +1,14 @@
 {
-    "env": [
-        {
-            "DOODLE_LIB": "$HOUDINI_USER_PREF_DIR/plus/doodle"
-        },
-        {
-            "DOODLE_OTL": "$DOODLE_LIB/otls"
-        },
-        {
-            "HOUDINI_OTLSCAN_PATH": "$DOODLE_OTL/base;$HOUDINI_OTLSCAN_PATH"
-        }
-    ],
-    "path": "$DOODLE_LIB"
+  "env": [
+    {
+      "DOODLE_LIB": "$HOUDINI_USER_PREF_DIR/plus/doodle"
+    },
+    {
+      "DOODLE_OTL": "$DOODLE_LIB/otls"
+    },
+    {
+      "HOUDINI_OTLSCAN_PATH": "$DOODLE_OTL/base;$HOUDINI_OTLSCAN_PATH"
+    }
+  ],
+  "path": "$DOODLE_LIB"
 }

@@ -22,7 +22,7 @@ image_load_task::image_load_task(const entt::handle &in_handle)
 }
 void image_load_task::init() {
   if (p_i->handle_) {
-    DOODLE_CHICK(p_i->handle_.any_of<image_icon>(),doodle_error{"缺失图片组件"});
+    DOODLE_CHICK(p_i->handle_.any_of<image_icon>(), doodle_error{"缺失图片组件"});
     p_i->image_ = p_i->handle_.get<image_icon>();
     DOODLE_LOG_INFO("准备加载图片 {}", p_i->image_.path);
     if (!p_i->image_.image) {

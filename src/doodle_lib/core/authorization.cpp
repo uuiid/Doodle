@@ -42,8 +42,8 @@ authorization::authorization(std::string in_data)
     const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
     const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
 
-    DOODLE_CHICK(ciphertext.size() == enc.size() + mac.size(),doodle_error{"授权码解码失误"});
-    DOODLE_CHICK(doodle_config::cryptopp_tag_size == mac.size(),doodle_error{"授权码解码失误"});
+    DOODLE_CHICK(ciphertext.size() == enc.size() + mac.size(), doodle_error{"授权码解码失误"});
+    DOODLE_CHICK(doodle_config::cryptopp_tag_size == mac.size(), doodle_error{"授权码解码失误"});
 
     CryptoPP::AuthenticatedDecryptionFilter df{
         l_decryption, new CryptoPP::StringSink(decryptedtext),
@@ -74,7 +74,7 @@ void authorization::generate_token(const FSys::path& in_path) {
   boost::contract::check l_c =
       boost::contract::function()
           .precondition([&]() {
-            DOODLE_CHICK(!in_path.empty(),doodle_error{"传入路径为空"});
+            DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
           });
 
   impl l_impl{};

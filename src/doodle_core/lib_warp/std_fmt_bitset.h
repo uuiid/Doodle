@@ -9,8 +9,8 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace fmt{
+namespace fmt {
 
 template <std::size_t N>
-struct formatter<::std::bitset<N>>: ::fmt::ostream_formatter {};
-}
+struct formatter<::std::bitset<N>> : ::fmt::ostream_formatter {};
+}  // namespace fmt

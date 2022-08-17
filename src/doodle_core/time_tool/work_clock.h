@@ -53,7 +53,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @return 工作时间
    */
   duration_type operator()(const time_type& in_min,
-                                  const time_type& in_max) const;
+                           const time_type& in_max) const;
 
   /**
    * @brief 根据传入的开始时间和工作时间段获取下一个时间点

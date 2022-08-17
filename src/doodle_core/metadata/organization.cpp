@@ -31,7 +31,7 @@ bool organization::operator<=(const organization& in_rhs) const {
 bool organization::operator>=(const organization& in_rhs) const {
   return !(*this < in_rhs);
 }
-organization::organization(organization&& in_r) noexcept = default;
+organization::organization(organization&& in_r) noexcept            = default;
 organization& organization::operator=(organization&& in_r) noexcept = default;
 
 organization::organization(const organization& in_r) noexcept {

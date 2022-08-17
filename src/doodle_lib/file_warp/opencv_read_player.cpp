@@ -89,7 +89,7 @@ bool opencv_read_player::load_frame(std::int32_t in_frame) {
   cv::Mat p_mat{};
   p_data->p_video.set(cv::CAP_PROP_POS_FRAMES, boost::numeric_cast<std::double_t>(in_frame));
   auto k_r = p_data->p_video.read(p_mat);
-  DOODLE_CHICK(k_r,doodle_error{"无法读取帧"});
+  DOODLE_CHICK(k_r, doodle_error{"无法读取帧"});
 
   /// 转换图像
   cv::cvtColor(p_mat, p_mat, cv::COLOR_BGR2RGBA);

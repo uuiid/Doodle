@@ -198,7 +198,7 @@ struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
    * @return decltype(ctx.out()) 基本上时 std::string
    */
   template <typename FormatContext>
-  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.show_str(),
         ctx);

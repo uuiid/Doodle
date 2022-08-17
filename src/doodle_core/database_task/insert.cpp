@@ -159,7 +159,7 @@ class insert::impl {
     });
   }
 
-  //#define Type_T doodle::project
+  // #define Type_T doodle::project
   /**
    * @brief 创建组件数据
    * @tparam Type_T 组件类型

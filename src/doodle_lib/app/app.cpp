@@ -134,7 +134,7 @@ void app::post_constructor() {
   DragAcceptFiles(p_hwnd, true);
   /// \brief 注册拖放对象
   auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
-  DOODLE_CHICK(k_r == S_OK,doodle_error{"无法注册拖拽com"});
+  DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
   //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
@@ -186,7 +186,7 @@ void app::post_constructor() {
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
-  DOODLE_CHICK(::IsWindowUnicode(p_hwnd),doodle_error{"错误的窗口"});
+  DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
     auto l_quit = std::make_shared<bool>(false);

@@ -165,7 +165,7 @@ class time_sequencer_widget::impl {
   }
 
   void _set_time_point(decltype(time_list)& in_list, const std::size_t& in_index, const std::double_t& in_time_s) {
-    DOODLE_CHICK(0 <= in_index && in_index < in_list.size(),doodle_error{"错误的索引 {}", in_index});
+    DOODLE_CHICK(0 <= in_index && in_index < in_list.size(), doodle_error{"错误的索引 {}", in_index});
 
     auto l_index = boost::numeric_cast<std::int64_t>(in_index);
     auto l_min   = in_list[std::max(0ll, l_index - 1)].time_point_;

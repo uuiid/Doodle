@@ -44,7 +44,7 @@ std::string file_hash_sha224(const path& in_file) {
   CryptoPP::SHA224 k_sha_224;
   std::string k_string;
   ifstream k_ifstream{in_file, std::ios::binary | std::ios::in};
-  DOODLE_CHICK(k_ifstream,doodle_error{"{} 无法打开", in_file});
+  DOODLE_CHICK(k_ifstream, doodle_error{"{} 无法打开", in_file});
 
   CryptoPP::FileSource k_file{
       k_ifstream,

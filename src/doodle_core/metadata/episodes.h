@@ -51,7 +51,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::episodes> : formatter<std::int64_t> {
   template <typename FormatContext>
-  auto format(const ::doodle::episodes &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::episodes &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "ep_");
     return formatter<std::int64_t>::format(
         in_.p_episodes,

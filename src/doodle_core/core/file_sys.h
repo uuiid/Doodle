@@ -59,7 +59,7 @@ struct formatter<::boost::filesystem::path> : formatter<std::string_view> {
    * @return decltype(ctx.out()) 基本上时 std::string
    */
   template <typename FormatContext>
-  auto format(const ::boost::filesystem::path& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::boost::filesystem::path& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.generic_string(),
         ctx);

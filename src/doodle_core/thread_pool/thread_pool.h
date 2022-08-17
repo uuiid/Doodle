@@ -24,7 +24,7 @@ class DOODLE_CORE_EXPORT thread_pool : public details::no_copy {
   auto enqueue(F&& f, Args&&... args)
       -> std::future<typename std::invoke_result<F, Args...>::type>;
   ~thread_pool();
-  
+
   // need to keep track of threads so we can join them
   boost::asio::thread_pool pool_;
 };

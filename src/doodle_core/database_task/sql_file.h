@@ -70,7 +70,7 @@ begin
     update entity set update_time =CURRENT_TIMESTAMP where id = old.entity_id;
 end;
 )";
-constexpr auto create_version_table    = R"(
+constexpr auto create_version_table        = R"(
 create table if not exists doodle_info
 (
     version_major integer not null,

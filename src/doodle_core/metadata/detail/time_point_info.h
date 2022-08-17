@@ -47,7 +47,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::business::rules_ns::time_point_info> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(const ::doodle::business::rules_ns::time_point_info& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::business::rules_ns::time_point_info& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return format_to(ctx.out(), "{} {} {}", in_.info, in_.first, in_.second);
   }
 };

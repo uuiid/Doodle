@@ -124,13 +124,13 @@ class container_device {
     } else if (way == BOOST_IOS::end) {
       next = container_.size() + off - 1;
     } else {
-      DOODLE_CHICK(false,doodle_error{"bad seek direction"});
+      DOODLE_CHICK(false, doodle_error{"bad seek direction"});
       //      throw BOOST_IOSTREAMS_FAILURE("bad seek direction");
     }
 
     // Check for errors
     if (next < 0 || next > static_cast<boost::iostreams::stream_offset>(container_.size()))
-      DOODLE_CHICK(false,doodle_error{"bad seek offset"});
+      DOODLE_CHICK(false, doodle_error{"bad seek offset"});
     //      throw BOOST_IOSTREAMS_FAILURE("bad seek offset");
 
     pos_ = next;

@@ -76,7 +76,6 @@ class sequence_to_blend_shape {
    */
   void create_blend_shape();
 
-
   void delete_select_node();
 
   /**

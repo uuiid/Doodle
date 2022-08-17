@@ -70,7 +70,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::shot> : formatter<std::int64_t> {
   template <typename FormatContext>
-  auto format(const ::doodle::shot &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::shot &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "sc_");
 
     formatter<std::int64_t>::format(
@@ -90,7 +90,7 @@ struct formatter<::doodle::shot> : formatter<std::int64_t> {
 template <>
 struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
   template <typename FormatContext>
-  auto format(const ::doodle::shot::shot_ab_enum &in_, FormatContext &ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::shot::shot_ab_enum &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     switch (in_) {
       case ::doodle::shot::shot_ab_enum::None:
         break;

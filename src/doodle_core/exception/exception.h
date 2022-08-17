@@ -50,7 +50,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::doodle_error> : formatter<string_view> {
   template <typename FormatContext>
-  auto format(const ::doodle::doodle_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::doodle_error& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<string_view>::format(
         in_.what(),
         ctx);

@@ -26,7 +26,6 @@
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
-
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -38,7 +37,6 @@
 #include <fmt/printf.h>
 #include <fmt/xchar.h>
 
-
 #include <range/v3/action.hpp>
 #include <range/v3/algorithm.hpp>
 #include <range/v3/functional.hpp>
@@ -47,7 +45,6 @@
 #include <range/v3/range.hpp>
 #include <range/v3/utility.hpp>
 #include <range/v3/view.hpp>
-
 
 #include <boost/operators.hpp>
 #include <boost/pfr.hpp>

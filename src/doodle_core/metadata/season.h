@@ -49,7 +49,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::season> : formatter<std::int32_t> {
   template <typename FormatContext>
-  auto format(const ::doodle::season& in_, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const ::doodle::season& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "seas_");
     return formatter<std::int32_t>::format(
         in_.p_int,

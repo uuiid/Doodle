@@ -12,7 +12,7 @@ episodes::episodes()
 
 episodes::episodes(int64_t in_episodes)
     : p_episodes(in_episodes) {
-  DOODLE_CHICK(p_episodes >= 0,doodle_error{"集数无法为负"});
+  DOODLE_CHICK(p_episodes >= 0, doodle_error{"集数无法为负"});
 }
 
 // Episodes::~Episodes() {
@@ -25,7 +25,7 @@ const int64_t& episodes::get_episodes() const noexcept {
 }
 
 void episodes::set_episodes(const int64_t& Episodes_) {
-  DOODLE_CHICK(Episodes_ >= 0,doodle_error{"集数无法为负"});
+  DOODLE_CHICK(Episodes_ >= 0, doodle_error{"集数无法为负"});
   p_episodes = Episodes_;
 }
 

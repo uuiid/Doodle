@@ -31,7 +31,7 @@ void database_edit::init_(const entt::handle& in) {
   this->format_();
 }
 void database_edit::save_(const entt::handle& in) const {
-  DOODLE_CHICK(in.all_of<database>(),doodle_error{"缺失数据库组件"});
+  DOODLE_CHICK(in.all_of<database>(), doodle_error{"缺失数据库组件"});
   database::save(in);
 }
 database_edit::database_edit()

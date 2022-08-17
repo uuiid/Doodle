@@ -22,6 +22,6 @@ class maya_file_io {
                           const FSys::path& in_prefix);
 
   static void import_reference_file(const reference_file& in_path,
-                          bool preserve_references);
+                                    bool preserve_references);
 };
 }  // namespace doodle::maya_plug

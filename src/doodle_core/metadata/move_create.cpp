@@ -74,7 +74,7 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
                        return in.num_list.size() == k_size;
                      }),
       "序列不匹配");
-  DOODLE_CHICK(l_list.size() >= 2,doodle_error{"单个文件, 无法搜索帧号"});
+  DOODLE_CHICK(l_list.size() >= 2, doodle_error{"单个文件, 无法搜索帧号"});
   auto &one   = l_list[0].num_list;
   auto &tow   = l_list[1].num_list;
   auto l_item = ranges::views::ints(std::size_t{0}, k_size) |
@@ -83,7 +83,7 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
                 }) |
                 ranges::to_vector;
 
-  DOODLE_CHICK(!l_item.empty(),doodle_error{"没有找到帧索引"});
+  DOODLE_CHICK(!l_item.empty(), doodle_error{"没有找到帧索引"});
   auto l_index = l_item.front();
   ranges::for_each(l_list,
                    [&](image_attr_auxiliary &in_attribute) {

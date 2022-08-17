@@ -48,7 +48,7 @@ class dem_bones_add_weight::impl {
       k_s = l_it.getDependNode(skin_mesh_obj);
       DOODLE_CHICK(k_s);
     }
-    DOODLE_CHICK(!skin_mesh_obj.isNull(),doodle_error{"未获得选中物体"});
+    DOODLE_CHICK(!skin_mesh_obj.isNull(), doodle_error{"未获得选中物体"});
     auto l_obj = get_shape(skin_mesh_obj);
     for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter,
                                                   MItDependencyGraph::kUpstream,
@@ -128,7 +128,7 @@ void dem_bones_add_weight::get_arg(const MArgList& in_arg) {
   MArgDatabase k_prase{syntax(), in_arg};
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_CHICK(k_s);
-  DOODLE_CHICK(p_i->select_list.length() > 0,doodle_error{"未获得选中物体"});
+  DOODLE_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
 }
 dem_bones_add_weight::~dem_bones_add_weight() = default;
 }  // namespace doodle::maya_plug

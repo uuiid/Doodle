@@ -5,9 +5,9 @@
 #pragma once
 
 #include <Windows.h>
-//#include <windef.h>
-//#include <boost/winapi/handles.hpp>
-//#include <boost/winapi/show_window.hpp>
+// #include <windef.h>
+// #include <boost/winapi/handles.hpp>
+// #include <boost/winapi/show_window.hpp>
 
 struct ID3D11Device;
 struct ID3D11DeviceContext;
