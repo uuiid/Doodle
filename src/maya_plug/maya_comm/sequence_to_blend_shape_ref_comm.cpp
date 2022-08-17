@@ -84,10 +84,11 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   } else {
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
   }
-  chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
-                           "开始帧 {} 大于结束帧 {}",
-                           p_i->startFrame_p, p_i->endFrame_p);
 
+  p_i->startFrame_p < p_i->endFrame_p
+      ? void()
+      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}"s,
+                                     p_i->startFrame_p < p_i->endFrame_p});
   /// \brief 获取选择物体
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_MAYA_CHICK(k_s);

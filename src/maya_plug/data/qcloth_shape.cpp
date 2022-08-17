@@ -499,8 +499,10 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 }
 
 void qcloth_shape::add_collider(const entt::handle& in_handle) {
-  chick_true<component_error>(
-      in_handle.any_of<qcloth_shape_n::shape_list>(), "缺失组件");
+  in_handle.any_of<qcloth_shape_n::shape_list>()
+      ? void()
+      : throw_exception(doodle_error{"缺失组件 {}"s, in_handle});
+
   auto l_group   = get_cloth_group();
   auto l_ql      = get_ql_solver();
   auto l_ql_tran = get_transform(l_ql);
@@ -629,9 +631,9 @@ void qcloth_shape::sort_group() {
   }
 }
 bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
-  chick_true<doodle_error>(
-      in_handle.any_of<qcloth_shape_n::maya_obj>(),
-      "缺失组件");
+  in_handle.any_of<qcloth_shape_n::maya_obj>()
+      ? void()
+      : throw_exception(doodle_error{"缺失组件"s});
   MStatus l_s{};
   auto l_shape = get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
   /// 寻找高模的皮肤簇

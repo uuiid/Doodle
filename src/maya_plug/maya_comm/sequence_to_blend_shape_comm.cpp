@@ -95,10 +95,11 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
   } else {
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
   }
-  chick_true<doodle_error>(p_i->startFrame_p < p_i->endFrame_p,
-                           "开始帧 {} 大于结束帧 {}",
-                           p_i->startFrame_p, p_i->endFrame_p);
 
+  p_i->startFrame_p < p_i->endFrame_p
+      ? void()
+      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}"s,
+                                     p_i->startFrame_p < p_i->endFrame_p});
   if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::duplicate_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
     bool l_value{};
@@ -112,7 +113,7 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
   /// \brief 获取选择物体
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_MAYA_CHICK(k_s);
-  p_i->select_list.length() > 0 ? void(): throw_exception(doodle_error{"未获得选中物体"});
+  p_i->select_list.length() > 0 ? void() : throw_exception(doodle_error{"未获得选中物体"});
 
   /// \brief 生成绑定物体path
   for (auto i = 0;
