@@ -149,8 +149,8 @@ bool opencv_read_player::is_open() const {
 }
 
 bool opencv_read_player::open_file(const FSys::path& in_path) {
-  auto l_r   = p_data->p_video.open(in_path.generic_string());
-  video_path = in_path;
+  auto l_r           = p_data->p_video.open(in_path.generic_string());
+  p_data->video_path = in_path;
   return l_r;
 }
 
