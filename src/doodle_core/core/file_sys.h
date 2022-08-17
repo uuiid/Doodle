@@ -8,6 +8,7 @@
 #include <fmt/format.h>
 
 #include <nlohmann/json_fwd.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem.hpp>
 #include <doodle_core/core/chrono_.h>
 #include <doodle_core/configure/doodle_core_export.h>
