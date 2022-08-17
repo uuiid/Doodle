@@ -10,5 +10,6 @@ target_sources(doodle_core
         enum_template_tool.h
         boost_icl_warp.h
         std_fmt_bitset.h
+        boost_fmt_icl.h
         )
 add_subdirectory(detail)

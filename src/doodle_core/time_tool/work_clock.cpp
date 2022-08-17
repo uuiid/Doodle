@@ -168,7 +168,7 @@ work_clock::get_work_du(
 }
 
 std::string work_clock::debug_print() {
-  return fmt::format("规则 {} \n时间段 {}\n 时间信息 {}",
+  return fmt::format("规则 {}  时间段 {}  时间信息 {}",
                      rules_.debug_print(),
                      interval_set_time_,
                      interval_map_time_);
