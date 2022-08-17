@@ -76,8 +76,8 @@ struct formatter<Type,
 //   }
 // };
 
-template <typename Type>
-struct formatter<Type,
-                 std::enable_if_t<::boost::icl::is_interval_set<Type>::value, char>>
-    : ostream_formatter {};
+// template <typename Type>
+// struct formatter<Type,
+//                  std::enable_if_t<::boost::icl::is_interval_set<Type>::value, char>>
+//     : ostream_formatter {};
 }  // namespace fmt
