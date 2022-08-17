@@ -12,7 +12,24 @@
 #include <fmt/ostream.h>
 
 namespace fmt {
-template <
+// template <
+//     typename DomainT,
+//     typename CodomainT,
+//     class Traits,
+//     ICL_COMPARE Compare,
+//     ICL_COMBINE Combine,
+//     ICL_SECTION Section,
+//     ICL_INTERVAL(ICL_COMPARE) Interval,
+//     ICL_ALLOC Alloc>
+// struct formatter<::boost::icl::interval_map<
+//     DomainT,
+//     CodomainT,
+//     Traits,
+//     Compare,
+//     Combine,
+//     Section,
+//     Interval,
+//     Alloc>> {};
 
     typename DomainT,
     typename CodomainT,
