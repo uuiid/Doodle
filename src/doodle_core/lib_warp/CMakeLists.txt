@@ -9,6 +9,6 @@ target_sources(doodle_core
         sqlppWarp.h
         enum_template_tool.h
         boost_icl_warp.h
-
+        std_fmt_bitset.h
         )
 add_subdirectory(detail)
