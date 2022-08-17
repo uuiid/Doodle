@@ -6,7 +6,13 @@
 #include <set>
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 namespace fmt {
-
-}
+// template <
+//     class Key,
+//     class Compare,
+//     class Allocator
+//     >
+// struct formatter<::std::set<Key, Compare, Allocator>> : ostream_formatter {};
+}  // namespace fmt

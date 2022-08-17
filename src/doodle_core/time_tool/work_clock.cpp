@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/lib_warp/boost_fmt_icl.h>
+#include <doodle_core/lib_warp/std_fmt_set.h>
 
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
@@ -169,10 +170,18 @@ work_clock::get_work_du(
 }
 
 std::string work_clock::debug_print() {
-  return fmt::format("规则 {}  时间段 {}  时间信息 {}",
-                     rules_.debug_print(),
-                     interval_set_time_,
-                     interval_map_time_);
+  //  return fmt::format("规则 {}  时间段 {}  时间信息 {}",
+  //                     rules_.debug_print(),
+  //                     interval_set_time_,
+  //                     interval_map_time_);
+
+  for (auto&& i : interval_map_time_) {
+    fmt::format("{} ", i.second);
+    auto l_item = i.first;
+    fmt::format("{} ", i.first);
+  }
+
+  return fmt::format("{}", interval_map_time_);
 }
 std::optional<std::string> work_clock::get_time_info(
     const time_type& in_min,
