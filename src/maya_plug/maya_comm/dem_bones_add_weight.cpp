@@ -77,10 +77,8 @@ MStatus dem_bones_add_weight::doIt(const MArgList& in_arg) {
   return MStatus::kSuccess;
 }
 void dem_bones_add_weight::add_weight() {
-  chick_true<doodle_error>(
-      !p_i->skin_obj.isNull(),
+  p_i->skin_obj.isNull() ? throw_exception(doodle_error{"没有找到绑定皮肤簇"s}) : void();
 
-      "没有找到绑定皮肤簇");
   MStatus k_s{};
 
   MFnSkinCluster l_skin_cluster{p_i->skin_obj};
