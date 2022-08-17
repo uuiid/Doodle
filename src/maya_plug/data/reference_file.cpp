@@ -217,7 +217,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_InvalidParameter &err) {
+  } catch (const maya_error &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 不符合配置的文件, 不进行导出")
     return {};
   }
@@ -275,7 +275,7 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_InvalidParameter &err) {
+  } catch (const maya_error &err) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
     return {};
   }
@@ -383,7 +383,7 @@ bool reference_file::has_ue4_group() const {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
     return true;
-  } catch (const maya_InvalidParameter &err) {
+  } catch (const maya_error &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
     return false;
   }
@@ -652,7 +652,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
     DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_Failure &in) {
+  } catch (const maya_error &in) {
     DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", in.what());
     try {
       l_comm = fmt::format(maya_bakeResults_str,
@@ -660,7 +660,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
       DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
       k_s = MGlobal::executeCommand(d_str{l_comm});
       DOODLE_MAYA_CHICK(k_s);
-    } catch (const maya_Failure &in2) {
+    } catch (const maya_error &in2) {
       DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", in2.what());
 
       try {
@@ -668,7 +668,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
         DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
         k_s = MGlobal::executeCommand(d_str{l_comm});
         DOODLE_MAYA_CHICK(k_s);
-      } catch (const maya_Failure &in3) {
+      } catch (const maya_error &in3) {
         DOODLE_LOG_INFO("烘培失败, 直接导出 {}", in3.what());
       }
     }
@@ -729,7 +729,7 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
     DOODLE_MAYA_CHICK(k_s);
     k_s = k_select.getDagPath(0, l_path);
     DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_InvalidParameter &err) {
+  } catch (const maya_error &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
   }
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};

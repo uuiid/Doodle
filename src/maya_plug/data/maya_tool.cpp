@@ -37,7 +37,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
         DOODLE_LOG_WARN(k_s.errorString());
       }
     }
-  } catch (const maya_InvalidParameter& error) {
+  } catch (const maya_error& error) {
     DOODLE_LOG_INFO("没有在这个节点中找到属性 {}", in_name);
   }
   if (!l_plug.isNull()) {
@@ -65,7 +65,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
         DOODLE_LOG_WARN(k_s.errorString());
       }
 
-    } catch (const maya_InvalidParameter& error) {
+    } catch (const maya_error& error) {
       DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点")
     }
   }

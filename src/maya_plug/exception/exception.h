@@ -19,37 +19,4 @@ class maya_error : public doodle_error {
       : doodle_error(in_m_string.asUTF8()){};
 };
 
-class maya_Failure : public maya_error {
- public:
-  explicit maya_Failure(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_InsufficientMemory : public maya_error {
- public:
-  explicit maya_InsufficientMemory(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_InvalidParameter : public maya_error {
- public:
-  explicit maya_InvalidParameter(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_LicenseFailure : public maya_error {
- public:
-  explicit maya_LicenseFailure(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_UnknownParameter : public maya_error {
- public:
-  explicit maya_UnknownParameter(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_NotImplemented : public maya_error {
- public:
-  explicit maya_NotImplemented(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_NotFound : public maya_error {
- public:
-  explicit maya_NotFound(const std::string& in_str) : maya_error(in_str){};
-};
-class maya_EndOfFile : public maya_error {
- public:
-  explicit maya_EndOfFile(const std::string& in_str) : maya_error(in_str){};
-};
-
 }  // namespace doodle::maya_plug
