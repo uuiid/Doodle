@@ -12,12 +12,34 @@
 #include <fmt/ostream.h>
 
 namespace fmt {
-template <typename Type>
-struct formatter<Type,
-                 std::enable_if_t<boost::icl::is_interval_map<Type>::value, void>>
+template <
+
+    typename DomainT,
+    typename CodomainT,
+    class Traits,
+    ICL_COMPARE Compare,
+    ICL_COMBINE Combine,
+    ICL_SECTION Section,
+    ICL_INTERVAL(ICL_COMPARE) Interval,
+    ICL_ALLOC Alloc>
+struct formatter<::boost::icl::interval_map<
+    DomainT,
+    CodomainT,
+    Traits,
+    Compare,
+    Combine,
+    Section,
+    Interval,
+    Alloc>>
     : ostream_formatter {};
-template <typename Type>
-struct formatter<Type,
-                 std::enable_if_t<boost::icl::is_interval_set<Type>::value, void>>
+
+template <typename DomainT,
+          ICL_COMPARE Compare,
+          typename Interval,
+          ICL_ALLOC Alloc>
+struct formatter<::boost::icl::interval_set<DomainT,
+                                            Compare,
+                                            Interval,
+                                            Alloc>>
     : ostream_formatter {};
 }  // namespace fmt

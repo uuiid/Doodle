@@ -11,5 +11,6 @@ target_sources(doodle_core
         boost_icl_warp.h
         std_fmt_bitset.h
         boost_fmt_icl.h
+        std_fmt_set.h
         )
 add_subdirectory(detail)
