@@ -5,7 +5,7 @@
 #pragma once
 
 #include <fmt/format.h>
-
+#include <fmt/ostream.h>
 #include <maya/MString.h>
 
 namespace fmt {
@@ -24,4 +24,7 @@ struct formatter<MString> : formatter<string_view> {
         ctx);
   }
 };
+
+template <>
+struct formatter<MArgList> : ostream_formatter {};
 }  // namespace fmt

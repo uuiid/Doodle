@@ -428,7 +428,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_MAYA_CHICK(k_s);
-  DOODLE_MAYA_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
+  DOODLE_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"s});
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
@@ -507,7 +507,7 @@ void dem_bones_comm::create_anm_curve() {
 #define DOODLE_ADD_ANM_set_anm(axis)                                                     \
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
-  DOODLE_MAYA_CHICK(k_s);                                                                     \
+  DOODLE_MAYA_CHICK(k_s);                                                                \
   aim.create(plugr##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time, &l_value_rot_##axis);                                       \
   DOODLE_MAYA_CHICK(k_s);

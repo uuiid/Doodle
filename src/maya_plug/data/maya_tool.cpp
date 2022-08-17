@@ -121,7 +121,7 @@ MObject get_first_mesh(const MObject& in_node) {
     l_r = i.currentItem(&k_s);
     break;
   }
-  DOODLE_CHICK(!l_r.isNull(), maya_error{"没有在依赖网格中寻找到mesh节点"});
+  DOODLE_CHICK(!l_r.isNull(), maya_error{"没有在依赖网格中寻找到mesh节点"s});
   return l_r;
 }
 MObject get_shape(const MObject& in_object) {

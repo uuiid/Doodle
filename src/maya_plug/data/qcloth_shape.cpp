@@ -262,7 +262,7 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_MAYA_CHICK(l_s);
   }
-  DOODLE_CHICK(!l_mesh.isNull(), maya_error{"找不到解算网格的输出端"});
+  DOODLE_CHICK(!l_mesh.isNull(), maya_error{"找不到解算网格的输出端"s});
 
   return std::make_tuple(l_cloth_shape, l_mesh);
 }
@@ -307,7 +307,8 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
       l_collider_offset = l_node;
   }
 
-  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(), maya_error{"寻找的的解算网格体和偏移网格体不一致"});
+  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(),
+               maya_error{"寻找的的解算网格体和偏移网格体不一致"s});
   return std::make_tuple(l_collider, l_collider_offset);
 }
 
@@ -437,7 +438,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   add_child(l_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
-    DOODLE_CHICK(l_high_mesh.size() == k_maya_high_mesh.size(), maya_error{"节点数量不一致"});
+    DOODLE_CHICK(l_high_mesh.size() == k_maya_high_mesh.size(), maya_error{"节点数量不一致"s});
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
       transfer_dynamic(l_high_mesh[l_i], k_maya_high_mesh[l_i].obj);
     }
@@ -659,7 +660,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"});
+  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"s});
 
   return l_object;
 }
@@ -675,7 +676,7 @@ MObject qcloth_shape::get_ql_solver() {
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"});
+  DOODLE_CHICK(!l_object.isNull(), maya_error{"没有找到qlSolver解算核心"s});
   return l_object;
 }
 void qcloth_shape::reset_create_node_attribute(const entt::handle& in_handle) {
@@ -702,7 +703,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
     DOODLE_MAYA_CHICK(l_s);
   }
 
-  DOODLE_CHICK(!l_skin_cluster.isNull(), maya_error{"没有找到皮肤簇变形节点"});
+  DOODLE_CHICK(!l_skin_cluster.isNull(), maya_error{"没有找到皮肤簇变形节点"s});
   return l_skin_cluster;
 }
 void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
