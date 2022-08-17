@@ -16,7 +16,7 @@ class DOODLE_CORE_EXPORT doodle_error : public std::runtime_error {
   explicit doodle_error(const std::string& message) : std::runtime_error(message){};
   template <typename... Args>
   explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
-      : std::runtime_error(fmt::format(fmt::to_string_view(fmt_str), std::forward<Args>(in_args)...)){};
+      : std::runtime_error(fmt::format(fmt_str, std::forward<Args>(in_args)...)){};
 };
 // iterators
 class DOODLE_CORE_EXPORT error_iterator : public std::runtime_error {

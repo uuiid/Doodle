@@ -64,7 +64,7 @@ inline void chick_true(const BOOL_T& in, const FormatString& fmt, Args&&... args
     if constexpr (sizeof...(args) == 0) {
       throw throw_T{fmt::to_string(fmt)};
     } else {
-      throw throw_T{fmt::format(fmt::to_string_view(fmt), std::forward<Args>(args)...)};
+      throw throw_T{fmt::format(fmt, std::forward<Args>(args)...)};
     }
   }
 }
