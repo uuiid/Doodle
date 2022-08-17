@@ -95,7 +95,7 @@ rules& rules::operator=(rules&& in_rules) noexcept {
 }
 std::string rules::debug_print() {
   return fmt::format(
-      "规则 周六日规则 {}\n每日规则 {} \n节假日规则 {} \n调休规则 {} \n加班规则 {}",
+      "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}",
       p_i->work_weekdays,
       fmt::join(p_i->work_pair, "->"),
       fmt::join(p_i->extra_holidays, "->"),

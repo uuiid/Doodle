@@ -49,7 +49,7 @@ namespace fmt {
  * @tparam 资产类
  */
 template <>
-struct formatter<::boost::filesystem::path> : formatter<std::string_view> {
+struct formatter<::boost::filesystem::path> : formatter<string_view> {
   /**
    * @brief 格式化函数
    *
@@ -60,7 +60,7 @@ struct formatter<::boost::filesystem::path> : formatter<std::string_view> {
    */
   template <typename FormatContext>
   auto format(const ::boost::filesystem::path& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string_view>::format(
+    return formatter<string_view>::format(
         in_.generic_string(),
         ctx);
   }

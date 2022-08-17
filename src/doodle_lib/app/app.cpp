@@ -4,7 +4,7 @@
 
 #include "app.h"
 #include <platform/win/wnd_proc.h>
-#include <doodle_core/core/core_set.h>
+#include <doodle_core/core/file_sys.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_lib/gui/main_menu_bar.h>
@@ -278,10 +278,10 @@ bool app::set_parent(win::wnd_handle in_parent) {
 }
 bool app::chick_authorization() {
   if (!app_command_base::chick_authorization()) {
-    auto show_str = fmt::format(L"授权失败\n请见授权文件放入 {} ",
+    auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ",
                                 core_set::getSet().get_doc() /
                                     doodle_config::token_name.data());
-    ::MessageBoxExW(p_hwnd, show_str.c_str(), L"错误", MB_OK, 0);
+    ::MessageBoxExW(p_hwnd, boost::locale::conv::utf_to_utf<wchar_t>(show_str).c_str(), L"错误", MB_OK, 0);
     return false;
   }
   return true;
