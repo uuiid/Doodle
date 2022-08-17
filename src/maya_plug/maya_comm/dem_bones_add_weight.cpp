@@ -43,12 +43,12 @@ class dem_bones_add_weight::impl {
   void init() {
     MStatus k_s;
     MItSelectionList l_it{select_list, MFn::Type::kMesh, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     for (; !l_it.isDone(&k_s); l_it.next()) {
       k_s = l_it.getDependNode(skin_mesh_obj);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     }
-    DOODLE_CHICK(!skin_mesh_obj.isNull(), doodle_error{"未获得选中物体"});
+    DOODLE_MAYA_CHICK(!skin_mesh_obj.isNull(), doodle_error{"未获得选中物体"});
     auto l_obj = get_shape(skin_mesh_obj);
     for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter,
                                                   MItDependencyGraph::kUpstream,
@@ -93,33 +93,33 @@ void dem_bones_add_weight::add_weight() {
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     auto l_joint = p_i->dem.joins[ibone];
     k_s          = l_fn_joint.setObject(l_joint);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_fn_joint.getPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto l_joint_index = l_skin_cluster.indexForInfluenceObject(l_path, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     joins_index[ibone] = l_joint_index;
   }
   MFnMesh l_obj{p_i->skin_mesh_obj};
   k_s = l_obj.getPath(l_path);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MItMeshVertex iterMeshVertex{p_i->skin_mesh_obj};
   auto l_w_plug = get_plug(p_i->skin_obj, "weightList");
   get_plug(p_i->skin_obj, "normalizeWeights").setValue(false);
   for (; !iterMeshVertex.isDone(); iterMeshVertex.next()) {
     auto l_v_i          = iterMeshVertex.index();
     auto l_point_w_plug = l_w_plug.elementByLogicalIndex(l_v_i, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto l_point_w_plug_child = l_point_w_plug.child(0, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_point_w_plug_child.setNumElements(p_i->dem.nB);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
       auto l_w = p_i->dem.w.coeff(ibone, l_v_i);
       auto l_p = l_point_w_plug_child.elementByLogicalIndex(joins_index[ibone], &k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       k_s = l_p.setValue(l_w);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     }
   }
 }
@@ -127,8 +127,8 @@ void dem_bones_add_weight::get_arg(const MArgList& in_arg) {
   MStatus k_s;
   MArgDatabase k_prase{syntax(), in_arg};
   k_s = k_prase.getObjects(p_i->select_list);
-  DOODLE_CHICK(k_s);
-  DOODLE_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
+  DOODLE_MAYA_CHICK(k_s);
+  DOODLE_MAYA_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
 }
 dem_bones_add_weight::~dem_bones_add_weight() = default;
 }  // namespace doodle::maya_plug

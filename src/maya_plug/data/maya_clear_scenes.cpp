@@ -23,32 +23,32 @@ bool maya_clear_scenes::unlock_normal() {
   MStatus k_s{};
 
   MItDag k_iter{MItDag::kDepthFirst, MFn::kMesh, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
   for (; !k_iter.isDone(); k_iter.next()) {
     MDagPath k_dag_path{};
     k_s = k_iter.getPath(k_dag_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_dag_node{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     if (!k_dag_path.hasFn(MFn::kMesh))
       DOODLE_LOG_INFO("错误的类型");
 
     /// 开始软化边
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     k_s = MGlobal::executePythonCommand(d_str{R"(import maya.cmds
 maya.cmds.polyNormalPerVertex(unFreezeNormal=True)
 maya.cmds.polySoftEdge(angle=180, constructionHistory=True)
     )"},
                                         false, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   k_s = MGlobal::clearSelectionList();
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return true;
 }
 bool maya_clear_scenes::duplicate_name(MSelectionList& in_select) {
@@ -62,13 +62,13 @@ bool maya_clear_scenes::duplicate_name(MSelectionList& in_select) {
     MDagPath k_dag_path{};
 
     k_s = k_iter.getPath(k_dag_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_dag_node{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     auto k_name = k_dag_node.name(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     k_name_list.insert({std::string{k_name.asUTF8()}, k_dag_path});
   }
@@ -90,20 +90,20 @@ bool maya_clear_scenes::multilateral_surface(MSelectionList& in_select) {
     MDagPath k_dag_path{};
 
     k_s = k_iter.getPath(k_dag_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_dag_node{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t k_face_num{};
     for (; !k_iter_poly.isDone(); k_iter_poly.next()) {
       k_face_num = k_iter_poly.polygonVertexCount(&k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       if (k_face_num > 4) {
         k_s = in_select.add(k_dag_path, k_iter_poly.currentItem());
-        DOODLE_CHICK(k_s);
+        DOODLE_MAYA_CHICK(k_s);
         l_r = true;
       }
     }
@@ -120,20 +120,20 @@ bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
     MDagPath k_dag_path{};
 
     k_s = k_iter.getPath(k_dag_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_dag_node{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     if (!k_dag_path.hasFn(MFn::kMesh))
       DOODLE_LOG_INFO("错误的类型");
 
     MFnMesh k_mesh{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     if (k_mesh.numUVSets(&k_s) > 1) {
       k_s = in_select.add(k_dag_path);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       l_r = true;
     }
   }
@@ -150,7 +150,7 @@ for p in pymel.core.lsUI(panels=True):
         pymel.core.outlinerEditor(p,edit=True, selectCommand="")
 )"},
                                       true);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return false;
 }
 bool maya_clear_scenes::err_2() {
@@ -161,7 +161,7 @@ for item in pymel.core.lsUI(editors=True):
    if isinstance(item, pymel.core.ui.ModelEditor):
        pymel.core.modelEditor(item, edit=True, editorChanged="")
   )"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return false;
 }
 bool maya_clear_scenes::err_3() {
@@ -172,7 +172,7 @@ for item in pymel.core.lsUI(editors=True):
    if isinstance(item, pymel.core.ui.ModelEditor):
        pymel.core.modelEditor(item, edit=True, editorChanged="")
   )"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return false;
 }
 bool maya_clear_scenes::err_4() {
@@ -205,20 +205,20 @@ for job in pymel.core.scriptJob(listJobs=True):
 if 'leukocyte' in globals():
   del leukocyte
   )doodle_script"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   MItDependencyNodes k_iter{MFn::kScript, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MObject k_node{};
   std::vector<MObject> k_obj_set{};
   for (; !k_iter.isDone(); k_iter.next()) {
     MDagPath k_dag_path{};
 
     k_node = k_iter.thisNode(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDependencyNode k_dag_node{k_node, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     if (k_dag_node.name() == "vaccine_gene" ||
         k_dag_node.name() == "breed_gene") {
@@ -227,7 +227,7 @@ if 'leukocyte' in globals():
   }
   for (auto k_obj : k_obj_set) {
     k_s = MGlobal::deleteNode(k_obj);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 
   auto k_maya_script = doodle::win::get_pwd() / "maya" / "scripts";
@@ -258,26 +258,26 @@ std::tuple<bool, MSelectionList> maya_clear_scenes::multilateral_surface_by_sele
 
   MSelectionList l_r_select{};
   MItSelectionList l_it_selection_list{in_select, MFn::kMesh, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   for (; !l_it_selection_list.isDone(); l_it_selection_list.next()) {
     MDagPath k_dag_path{};
 
     k_s = l_it_selection_list.getDagPath(k_dag_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_dag_node{k_dag_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MItMeshPolygon k_iter_poly{k_dag_path, MObject::kNullObj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t k_face_num{};
     for (; !k_iter_poly.isDone(); k_iter_poly.next()) {
       k_face_num = k_iter_poly.polygonVertexCount(&k_s);
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       if (k_face_num > 4) {
         k_s = l_r_select.add(k_dag_path, k_iter_poly.currentItem());
-        DOODLE_CHICK(k_s);
+        DOODLE_MAYA_CHICK(k_s);
         l_r = true;
       }
     }

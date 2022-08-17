@@ -26,14 +26,14 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
   MTime k_start{MAnimControl::minTime()};
   MTime k_end = MAnimControl::maxTime();
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   auto &k_cam = g_reg()->ctx().emplace<maya_camera>();
   k_cam.conjecture();

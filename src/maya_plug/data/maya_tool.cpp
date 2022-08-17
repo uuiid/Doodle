@@ -26,7 +26,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   MPlug l_plug{};
 
   MFnDependencyNode l_node{in_node, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   try {
     l_plug = l_node.findPlug(d_str{in_name}, false, &k_s);
 
@@ -46,13 +46,13 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
 
   if (in_node.hasFn(MFn::kDagNode)) {
     MFnDagNode l_dag_node{in_node, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MDagPath l_path{};
     k_s = l_dag_node.getPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     try {
       k_s = l_path.extendToShape();
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       MFnDagNode l_dag_node_shape{l_path, &k_s};
       l_plug = l_dag_node_shape.findPlug(d_str{in_name}, false, &k_s);
 
@@ -80,9 +80,9 @@ MObject get_shading_engine(const MDagPath& in_node) {
   MStatus k_s{};
   auto l_path = in_node;
   k_s         = l_path.extendToShape();
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MObject k_obj = l_path.node(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   MObject obj{};
   for (MItDependencyGraph i{k_obj,
@@ -93,9 +93,9 @@ MObject get_shading_engine(const MDagPath& in_node) {
                             &k_s};
        !i.isDone();
        i.next()) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     obj = i.currentItem(&k_s);
-    //    DOODLE_CHICK(k_s);
+    //    DOODLE_MAYA_CHICK(k_s);
     //    MFnDependencyNode k_node{};
     //    k_node.setObject(obj);
     //    DOODLE_LOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
@@ -117,7 +117,7 @@ MObject get_first_mesh(const MObject& in_node) {
                             &k_s};
        !i.isDone();
        i.next()) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     l_r = i.currentItem(&k_s);
     break;
   }
@@ -130,16 +130,16 @@ MObject get_shape(const MObject& in_object) {
   MObject k_r{};
   if (k_obj.hasFn(MFn::kDagNode)) {
     MFnDagNode l_dag_node{k_obj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MDagPath l_path{};
     k_s = l_dag_node.getPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_path.extendToShape();
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_r = l_path.node(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到形状"});
+  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到形状"s});
   return k_r;
 }
 MObject get_transform(const MObject& in_object) {
@@ -148,14 +148,14 @@ MObject get_transform(const MObject& in_object) {
   MObject k_r{};
   if (k_obj.hasFn(MFn::kDagNode)) {
     MFnDagNode l_dag_node{k_obj, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MDagPath l_path{};
     k_s = l_dag_node.getPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_r = l_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到变换"});
+  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到变换"s});
   return k_r;
 }
 void add_child(const MObject& in_praent, MObject& in_child) {
@@ -167,30 +167,30 @@ void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
 
   MStatus k_s{};
   MFnDagNode k_node{in_praent, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   auto l_node = in_child.node(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   if (k_node.hasChild(l_node, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_node.removeChild(l_node);
   }
   k_s = k_node.addChild(l_node);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 }
 void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj);
-  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"});
+  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"s});
   MFnSet l_set{k_mat, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_set.addMember(in_object);
 }
 void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj.node());
-  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"});
+  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"s});
   MFnSet l_set{k_mat, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_set.addMember(in_obj);
 }
 std::string get_node_full_name(const MObject& in_obj) {
@@ -198,7 +198,7 @@ std::string get_node_full_name(const MObject& in_obj) {
     return get_node_full_name(get_dag_path(in_obj));
   } else if (in_obj.hasFn(MFn::Type::kDependencyNode)) {
     MFnDependencyNode l_node{};
-    DOODLE_CHICK(l_node.setObject(in_obj));
+    DOODLE_MAYA_CHICK(l_node.setObject(in_obj));
     return d_str{l_node.absoluteName()};
   }
   return {};
@@ -206,43 +206,43 @@ std::string get_node_full_name(const MObject& in_obj) {
 std::string get_node_full_name(const MDagPath& in_obj) {
   MStatus l_s{};
   auto l_str = in_obj.fullPathName(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return d_str{l_str};
 }
 std::string get_node_name(const MObject& in_obj) {
   MFnDependencyNode l_node{};
-  DOODLE_CHICK(l_node.setObject(in_obj));
+  DOODLE_MAYA_CHICK(l_node.setObject(in_obj));
   MStatus l_s{};
   auto l_name = l_node.name(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }
 std::string get_node_name(const MDagPath& in_obj) {
   MFnDependencyNode l_node{};
   MStatus l_s{};
-  DOODLE_CHICK(l_node.setObject(in_obj.node(&l_s)));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_node.setObject(in_obj.node(&l_s)));
+  DOODLE_MAYA_CHICK(l_s);
   auto l_name = l_node.name(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }
 std::string set_node_name(const MObject& in_obj, const std::string& in_name) {
   MFnDependencyNode l_node{};
-  DOODLE_CHICK(l_node.setObject(in_obj));
+  DOODLE_MAYA_CHICK(l_node.setObject(in_obj));
   MStatus l_s{};
   l_node.setName(d_str{in_name}, true, &l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_name = l_node.name(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }
 MDagPath get_dag_path(const MObject& in_object) {
   MStatus l_s{};
   MFnDagNode l_node{in_object, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MDagPath l_path{};
   l_s = l_node.getPath(l_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return l_path;
 }
 

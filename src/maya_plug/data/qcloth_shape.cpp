@@ -38,7 +38,7 @@ maya_obj::maya_obj(const MObject& in_object) {
   MFnDependencyNode k_node{in_object, &k_s};
   DOODLE_MAYA_CHICK(k_s);
   p_name = d_str{k_node.name(&k_s)};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 }
 }  // namespace qcloth_shape_n
 
@@ -57,34 +57,34 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent, const 
 
   // 复制传入节点
   l_s = l_node.setObject(in_object);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_r = l_node.duplicate(false, false, &l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_LOG_INFO("复制节点 {}", k_anim_mesh_name);
 
   // 设置复制节点的名称
   l_s = l_node.setObject(l_r);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, in_suffix)}, false, &l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_LOG_INFO("设置复制节点名称 {}", l_node.name(&l_s));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   // 设置材质属性
   MFnSet l_mat{get_shading_engine(in_object), &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_mat.addMember(l_r);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   /// 将复制节点添加为父节点的子物体
   l_s = l_node.setObject(in_parent);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_node.addChild(l_r);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_LOG_INFO("设置复制节点父物体 {}", l_node.name(&l_s));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return l_r;
 }
 
@@ -104,34 +104,34 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
                  [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
                    /// 复制模型
                    l_s = l_node.setObject(in_object.obj);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    auto l_r = l_node.duplicate(false, false, &l_s);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    DOODLE_LOG_INFO("复制高模节点 {}", k_anim_mesh_name);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
 
                    // 设置复制节点的名称
                    l_node.setObject(l_r);
                    l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    DOODLE_LOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
 
                    /// 设置材质
                    MFnSet l_mat{get_shading_engine(in_object.obj), &l_s};
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    l_s = l_mat.addMember(l_r);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
 
                    /// 将复制节点添加为父节点的子物体
                    l_s = l_node.setObject(in_parent);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    l_s = l_node.addChild(l_r);
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
                    DOODLE_LOG_INFO("设置复制高模节点父物体 {}", l_node.name(&l_s));
-                   DOODLE_CHICK(l_s);
+                   DOODLE_MAYA_CHICK(l_s);
 
                    return l_r;
                  });
@@ -153,36 +153,36 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
   std::for_each(in_high_node.begin(), in_high_node.end(),
                 [&](const MObject& in_obj) -> void {
                   l_s = k_select.add(in_obj, false);
-                  DOODLE_CHICK(l_s);
+                  DOODLE_MAYA_CHICK(l_s);
                   l_s = l_node.setObject(in_obj);
-                  DOODLE_CHICK(l_s);
+                  DOODLE_MAYA_CHICK(l_s);
                   l_string += fmt::format("高模节点 {}", l_node.name(&l_s));
-                  DOODLE_CHICK(l_s);
+                  DOODLE_MAYA_CHICK(l_s);
                 });
 
   l_s = k_select.add(in_low, false);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_node.setObject(in_low);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_string += fmt::format(" 低模节点 {} 进行包裹变形", l_node.name(&l_s));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_LOG_INFO(l_string);
   /// 设置选择
   l_s = MGlobal::setActiveSelectionList(k_select);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = MGlobal::executeCommand(d_str{R"(doWrapArgList "7" {"1","0","1", "2","1","1","0","0"};)"});
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   auto l_name = get_node_name(get_transform(in_low));
   l_s         = k_select.clear();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = k_select.add(d_str{fmt::format("{}Base*", l_name)});
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_CHICK(k_select.length() > 0, doodle_error{"无法找到包裹生成的网格"});
   MObject l_r{};
   l_s = k_select.getDependNode(0, l_r);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return l_r;
 }
 
@@ -200,22 +200,22 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   /// 先将高模的皮肤簇权重重置为0;
   MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(0);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   DOODLE_LOG_INFO("找到高模皮肤簇 {}， 并将包裹设置为0 ", l_fn_skin_cluster.name(&l_s));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   ///  获得名称进行格式化命令
   MFnDagNode l_node{in_anim_node, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   std::string l_aim_name = d_str{l_node.name(&l_s)};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_node.setObject(in_sim_node);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   std::string l_sim_name = d_str{l_node.name(&l_s)};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   DOODLE_LOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name)
   /// 这个设置包裹
   MStringArray l_blend{};
@@ -223,7 +223,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
                                     fmt::format(R"(blendShape -automatic {} {};)",
                                                 l_sim_name, l_aim_name)},
                                 l_blend);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   //      /// 开始设置权重
   MGlobal::executeCommand(d_str{fmt::format(R"(setAttr "{}.{}" 1;)",
                                             l_blend[0], l_sim_name)});
@@ -240,27 +240,27 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
   /// 创建解算网络
   MSelectionList l_selection_list{};
   l_s = l_selection_list.add(in_object);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = MGlobal::setActiveSelectionList(l_selection_list);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MString l_cloth_shape_name{};
   l_s = MGlobal::executeCommand(d_str{"qlCreateCloth;"}, l_cloth_shape_name);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_selection_list.clear();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_selection_list.add(l_cloth_shape_name, true);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   MObject l_cloth_shape{};
   l_s = l_selection_list.getDependNode(0, l_cloth_shape);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_plug = get_plug(l_cloth_shape, "outputMesh");
   for (MItDependencyGraph i{l_plug, MFn::kMesh};
        !i.isDone();
        i.next()) {
     l_mesh = i.currentItem(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
   DOODLE_CHICK(!l_mesh.isNull(), maya_error{"找不到解算网格的输出端"});
 
@@ -278,14 +278,14 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
   auto l_ql_solver = qcloth_shape::get_ql_solver();
   MSelectionList l_list{};
   l_status = l_list.add(l_ql_solver);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   l_status = l_list.add(in_collider);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   l_status = MGlobal::setActiveSelectionList(l_list);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   MString l_collider_name{};
   l_status = MGlobal::executeCommand("qlCreateCollider;", l_collider_name);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
 
   /// 获取创建出来的碰撞体和解算体
   l_status = l_list.clear();
@@ -299,10 +299,10 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
   auto l_out_plug = get_plug(l_collider, "output");
   MPlugArray l_plug_array{};
   l_out_plug.destinations(l_plug_array, &l_status);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   for (int l_i = 0; l_i < l_plug_array.length(); ++l_i) {
     auto l_node = l_plug_array[l_i].node(&l_status);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     if (l_node.hasFn(MFn::kMesh))
       l_collider_offset = l_node;
   }
@@ -321,10 +321,10 @@ MObject chick_group(const MFnDagNode& in_node,
                     const std::string& in_name) {
   MStatus l_s{};
   auto l_name = in_node.name(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   if (l_name.asUTF8() == in_name.c_str()) {
     auto l_obj = in_node.object(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     return l_obj;
   }
   return {};
@@ -342,11 +342,11 @@ MObject make_group(MDagModifier& in_modifier,
                    const MObject& in_parent) {
   MStatus l_s{};
   auto l_r = in_modifier.createNode(d_str{"transform"}, in_parent, &l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = in_modifier.renameNode(l_r, d_str{in_name});
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = in_modifier.doIt();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   return l_r;
 }
 }  // namespace
@@ -428,9 +428,9 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   {  /// 将解算的输出网格连接到代理输出中去
     k_s = l_modifier.connect(get_plug(l_mesh_out, "outMesh"),
                              get_plug(k_proxy_node_output, "inMesh"));
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_modifier.doIt();
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   /// \brief 使用低模包裹高模
   auto k_warp = warp_model(k_proxy_node_output, l_high_mesh);
@@ -456,9 +456,9 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
   }
 
   for (MItDag i{MItDag::kDepthFirst, MFn::Type::kTransform, &k_s}; !i.isDone(); i.next()) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_node.setObject(i.currentItem());
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_r.cfx_grp        = chick_group(k_node, "cfx_grp");
     k_r.solver_grp     = chick_group(k_node, "solver_grp");
     k_r.anim_grp       = chick_group(k_node, "anim_grp");
@@ -506,7 +506,7 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
 
   /// \brief 鉴于有些文件会锁定默认着色组, 我们需要进行解锁
   auto k_s       = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   add_child(l_group.cfx_grp, l_ql_tran);
 
   for (auto& l_item : in_handle.get<qcloth_shape_n::shape_list>()) {
@@ -524,10 +524,10 @@ std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) 
   auto&& l_ref = in_ref_file.get<reference_file>();
   for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
     auto k_obj = i.thisNode(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MFnDependencyNode k_dep{k_obj};
     if (k_dep.typeName(&k_s) == "qlClothShape" && l_ref.has_node(k_obj)) {
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       auto k_h = make_handle();
       k_h.emplace<qcloth_shape>(in_ref_file, k_obj);
       result.emplace_back(k_h);
@@ -539,15 +539,15 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
   MStatus k_s{};
   /// \brief 获得解算节点fn
   MFnDependencyNode k_node{obj, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   std::string k_namespace = p_ref_file.get<reference_file>().get_namespace();
 
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   std::string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   {
     auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_file_name    = maya_file_io::get_current_path();
     /// \brief 使用各种信息确认缓存相对路径
     FSys::path l_string = fmt::format("cache/{}/{}/{}",
@@ -564,11 +564,11 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
     }
     FSys::create_directories(k_path);
     k_s = k_cache.setString(d_str{l_string.generic_string()});
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   {
     auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_cache.setString(d_str{k_node_name});
   }
   return true;
@@ -580,21 +580,21 @@ void qcloth_shape::sort_group() {
   {  /// \brief 开始排序
     MFnDagNode l_p{};
     k_s = l_p.setObject(l_group.cfx_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     /// \brief 必须先取消掉父物体
     k_s = l_p.removeChild(l_ql);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.removeChild(l_group.anim_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.removeChild(l_group.solver_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.removeChild(l_group.constraint_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.removeChild(l_group.deform_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.removeChild(l_group.export_grp);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     /**
      * @brief 排序组
@@ -614,17 +614,17 @@ void qcloth_shape::sort_group() {
      */
 
     k_s = l_p.addChild(l_ql, 0);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.addChild(l_group.anim_grp, 1);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.addChild(l_group.solver_grp, 2);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.addChild(l_group.constraint_grp, 3);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.addChild(l_group.deform_grp, 4);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_p.addChild(l_group.export_grp, 5);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 }
 bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
@@ -639,7 +639,7 @@ bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
                             MItDependencyGraph::Direction::kUpstream};
        !i.isDone();
        i.next()) {
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     return true;
   }
 
@@ -651,9 +651,9 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
 
   for (MItSelectionList i{in_selection_list, MFn::kPluginLocatorNode, &l_status};
        !i.isDone(); i.next()) {
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     l_status = i.getDependNode(l_object);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     MFnDependencyNode k_dep{l_object};
     if (k_dep.typeName(&l_status) == "qlSolverShape") {
       break;
@@ -699,7 +699,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
        !i.isDone();
        i.next()) {
     l_skin_cluster = i.currentItem(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
 
   DOODLE_CHICK(!l_skin_cluster.isNull(), maya_error{"没有找到皮肤簇变形节点"});
@@ -710,7 +710,7 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   /// 先将高模的皮肤簇权重重置为1;
   MFnSkinCluster l_fn_skin_cluster{qcloth_shape::get_skin_custer(in_anim_node), &l_s};
   l_s = l_fn_skin_cluster.setEnvelope(1);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 }
 MDagPath qcloth_shape::ql_cloth_shape() const {
   return get_dag_path(obj);

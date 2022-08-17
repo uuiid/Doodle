@@ -24,7 +24,7 @@ void set_attribute(const MObject& in_node,
                    const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
   if (!l_s)
-    throw_exception(maya_error{l_s.errorString().asUTF8()});
+    throw_exception(maya_error{l_s.errorString()});
 }
 template <typename T>
 T get_attribute(const MObject& in_node,
@@ -32,7 +32,7 @@ T get_attribute(const MObject& in_node,
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
   if (!l_s)
-    throw_exception(maya_error{l_s.errorString().asUTF8()});
+    throw_exception(maya_error{l_s.errorString()});
   return result;
 }
 

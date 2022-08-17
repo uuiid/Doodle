@@ -67,19 +67,19 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   MArgDatabase k_prase{syntax(), in_arg};
 
   if (k_prase.isFlagSet(sequence_to_blend_shape_ref_comm_ns::startFrame_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ref_comm_ns::startFrame_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->startFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
     p_i->startFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::minTime().value());
   }
   if (k_prase.isFlagSet(sequence_to_blend_shape_ref_comm_ns::endFrame_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(sequence_to_blend_shape_ref_comm_ns::endFrame_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
     p_i->endFrame_p = boost::numeric_cast<std::int32_t>(MAnimControl::maxTime().value());
@@ -90,7 +90,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
 
   /// \brief 获取选择物体
   k_s = k_prase.getObjects(p_i->select_list);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   /// \brief 生成绑定物体path
   DOODLE_LOG_INFO("开始生成新的布料组件")
@@ -133,7 +133,7 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
 
   {  /// \brief 设置时间
     l_s = MGlobal::viewFrame(p_i->startFrame_p);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
 
     for (auto&& ctx : p_i->blend_list) {
       DOODLE_LOG_INFO("开始创建绑定网格 {}", get_node_name(ctx.select_attr()));
@@ -145,7 +145,7 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
        i <= p_i->endFrame_p;
        ++i) {
     l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     for (auto&& ctx : p_i->blend_list) {
       ctx.create_blend_shape_mesh();
     }

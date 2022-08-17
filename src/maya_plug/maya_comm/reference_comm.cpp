@@ -152,14 +152,14 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   auto k_end   = MAnimControl::maxTime();
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   DOODLE_LOG_INFO(
       "解算开始时间 {}  结束时间 {}  ",
@@ -191,7 +191,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
     k_save_file /= maya_file_io::get_current_path().filename();
     k_s = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
     DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } catch (maya_error& error) {
     DOODLE_LOG_WARN("无法保存文件: {}", error);
   }
@@ -214,34 +214,34 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   reference_file::export_type k_export_type{};
 
   if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(doodle_export_type, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MString k_k_export_type_s{};
     k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_export_type = magic_enum::enum_cast<reference_file::export_type>(
                         d_str{k_k_export_type_s}.str())
                         .value();
   }
   if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_export_use_select, 0, use_select);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 
   if (k_prase.isFlagSet(doodle_export_force, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_export_force, 0, is_force);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     if (!use_select) {
       DOODLE_LOG_ERROR("错误, 强制导出时必须使用选择标志并选中导出物体");
       return {MStatus::kFailure};
@@ -293,7 +293,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
   FSys::path k_path{};
 
   if (k_prase.isFlagSet(doodle_project_path, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MString k_path_M{};
     k_s = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
     DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
@@ -320,7 +320,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   MStatus l_status{};
   MArgDatabase k_prase{syntax(), in_list, &l_status};
   MSelectionList l_list{};
-  DOODLE_CHICK(k_prase.getObjects(l_list));
+  DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
 
   MObject l_object{};
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
@@ -328,7 +328,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
     /// \brief 生成需要的 布料实体
     if (!l_list.isEmpty())
       for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
-        DOODLE_CHICK(l_i.getDependNode(l_object));
+        DOODLE_MAYA_CHICK(l_i.getDependNode(l_object));
         if (k_ref.has_node(l_object))
           qcloth_shape::create(make_handle(k_e));
       }

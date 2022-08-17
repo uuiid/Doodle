@@ -316,10 +316,10 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
                            p_i->startFrame_p, p_i->endFrame_p);
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::bindFrame_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MTime l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::bindFrame_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->bindFrame_p = l_value.value();
   }
   chick_true<doodle_error>(p_i->startFrame_p <= p_i->bindFrame_p &&
@@ -329,10 +329,10 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
                            p_i->startFrame_p,
                            p_i->endFrame_p);
   if (k_prase.isFlagSet(dem_bones_comm_ns::nBones_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nBones_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nBones_p = l_value;
   }
 
@@ -340,95 +340,95 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
                            "骨骼数小于零 {}", p_i->nBones_p);
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nInitIters_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nInitIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nIters_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nIters_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nTransIters_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nTransIters_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nTransIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::isBindUpdate_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::isBindUpdate_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->isBindUpdate_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::transAffine_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::double_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::transAffine_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->transAffine_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::transAffineNorm_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::double_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::transAffineNorm_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->transAffineNorm_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nWeightsIters_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nWeightsIters_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nWeightsIters_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::nonZeroWeightsNum_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::nonZeroWeightsNum_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->nonZeroWeightsNum_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::weightsSmooth_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::double_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::weightsSmooth_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->weightsSmooth_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::weightsSmoothStep_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::double_t l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::weightsSmoothStep_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->weightsSmoothStep_p = l_value;
   }
   if (k_prase.isFlagSet(dem_bones_comm_ns::parent_f, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MString l_value{};
     k_s = k_prase.getFlagArgument(dem_bones_comm_ns::parent_f, 0, l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MSelectionList l_select{};
     k_s = l_select.add(l_value);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MDagPath l_path;
 
     k_s = l_select.getDagPath(0, l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     p_i->parent_tran = l_path.transform(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 
   k_s = k_prase.getObjects(p_i->select_list);
-  DOODLE_CHICK(k_s);
-  DOODLE_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
+  DOODLE_MAYA_CHICK(k_s);
+  DOODLE_MAYA_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"});
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
@@ -447,9 +447,9 @@ void dem_bones_comm::create_joins() {
   for (int ibone = 0; ibone < p_i->dem.nB; ibone++) {
     MFnIkJoint joint{};
     auto l_joint_obj = joint.create(p_i->parent_tran, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = joint.setRotationOrder(MTransformationMatrix::RotationOrder::kXYZ, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     p_i->joins.push_back(l_joint_obj);
   }
   p_i->dem.joins = p_i->joins;
@@ -488,16 +488,16 @@ void dem_bones_comm::create_anm_curve() {
       l_erot      = l_qrot.asEulerRotation();
       //      MTransformationMatrix l_tran_mat = joint.transformation();
       //      k_s                              = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()}, MSpace::Space::kWorld);
-      //      DOODLE_CHICK(k_s);
+      //      DOODLE_MAYA_CHICK(k_s);
       //      l_tran_mat.setRotationOrientation(l_qrot);
-      //      DOODLE_CHICK(k_s);
+      //      DOODLE_MAYA_CHICK(k_s);
       //      if (!p_i->tran_inverse_list.empty()) {
       //        auto l_matrix = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];
       //        l_tran_mat    = l_matrix;
       //      }
       //      l_erot          = l_tran_mat.eulerRotation();
       //      auto l_vex_tran = l_tran_mat.getTranslation(MSpace::Space::kTransform, &k_s);
-      //      DOODLE_CHICK(k_s);
+      //      DOODLE_MAYA_CHICK(k_s);
 
       l_time.append(MTime{(std::double_t)l_f + p_i->startFrame_p, MTime::uiUnit()});
       DOODLE_ADD_ANM_set(x);
@@ -507,10 +507,10 @@ void dem_bones_comm::create_anm_curve() {
 #define DOODLE_ADD_ANM_set_anm(axis)                                                     \
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                      \
-  DOODLE_CHICK(k_s);                                                                     \
+  DOODLE_MAYA_CHICK(k_s);                                                                     \
   aim.create(plugr##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTA, &p_i->dg_modidier); \
   k_s = aim.addKeys(&l_time, &l_value_rot_##axis);                                       \
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
     DOODLE_ADD_ANM_set_anm(x);
     DOODLE_ADD_ANM_set_anm(y);
@@ -528,9 +528,9 @@ void dem_bones_comm::set_result() {
   MDagPath l_path{};
   for (auto&& i : p_i->joins) {
     k_s = l_j.setObject(i);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = l_j.getPath(l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     appendToResult(l_path.fullPathName());
   }
 }

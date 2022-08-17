@@ -32,12 +32,12 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     DOODLE_MAYA_CHICK(l_status);
 
     this->is_intermediate_obj = l_mesh.isIntermediateObject(&l_status);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
 
     l_status = l_mesh.setObject(get_transform(in_mesh_object));
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     this->node_name = d_str{l_mesh.absoluteName(&l_status)};
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     maya_obj        = in_mesh_object;
 
     this->has_skin  = has_skin_cluster(maya_obj);
@@ -97,18 +97,18 @@ bool maya_poly_info::has_cloth_link(const MObject &in_object) {
   //         !l_it_dependency_graph.isDone();
   //         l_it_dependency_graph.next()) {
   //      l_path.setObject(l_it_dependency_graph.currentItem(&l_s));
-  //      DOODLE_CHICK(l_s);
+  //      DOODLE_MAYA_CHICK(l_s);
   //      if (l_path.typeName(&l_s) == "qlClothShape") {
-  //        DOODLE_CHICK(l_s);
+  //        DOODLE_MAYA_CHICK(l_s);
   //        return true;
   //      }
   //    }
   //  std::uint32_t i{0};
   if (in_object.hasFn(MFn::kMesh)) {
     auto l_obj = get_plug(in_object, "inMesh").source(&l_s).node(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     l_path.setObject(l_obj);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     return l_path.typeName(&l_s) == d_str{"qlClothShape"};
   }
 

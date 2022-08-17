@@ -53,29 +53,29 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   MStatus l_s{};
   MArgDatabase l_arg{syntax(), in_arg, &l_s};
   if (l_arg.isFlagSet(create_qcloth_assets_ns::cloth, &l_s)) {
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     auto l_num = l_arg.numberOfFlagUses(create_qcloth_assets_ns::cloth);
     for (auto i = 0; i < l_num; ++i) {
       MArgList l_arg_list{};
       l_s = l_arg.getFlagArgumentList(create_qcloth_assets_ns::cloth, i, l_arg_list);
-      DOODLE_CHICK(l_s);
+      DOODLE_MAYA_CHICK(l_s);
 
       p_i->cloth_list.emplace_back(make_handle(num_to_enum<entt::entity>(l_arg_list.asInt(0))));
     }
   }
 
   if (l_arg.isFlagSet(create_qcloth_assets_ns::collision, &l_s)) {
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     std::int32_t l_value{};
     l_s = l_arg.getFlagArgument(create_qcloth_assets_ns::collision, 0, l_value);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     p_i->coll_p = make_handle(num_to_enum<entt::entity>(l_value));
   }
 
   p_i->cloth_list |= ranges::action::remove_if([](const entt::handle& in) {
     return !in;
   });
-  DOODLE_CHICK(!p_i->cloth_list.empty(), doodle_error{"传入了空的布料列表"});
+  DOODLE_MAYA_CHICK(!p_i->cloth_list.empty(), doodle_error{"传入了空的布料列表"});
   if (!p_i->coll_p.valid())
     p_i->coll_p = {};
 }
@@ -120,7 +120,7 @@ std::vector<MObject> create_qcloth_assets::get_all_node() {
        !l_it.isDone();
        l_it.next()) {
     l_r.emplace_back(l_it.currentItem(&l_s));
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
   return l_r;
 }
@@ -130,7 +130,7 @@ void create_qcloth_assets::delete_node() {
   //    if (!i.isNull())
   //      CHECK_MSTATUS(l_modifier.deleteNode(i));
   //  }
-  //  DOODLE_CHICK(l_modifier.doIt());
+  //  DOODLE_MAYA_CHICK(l_modifier.doIt());
 
   MGlobal::deleteNode(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
 }

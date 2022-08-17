@@ -31,9 +31,9 @@ maya_camera::maya_camera(const MDagPath& in_path)
 
 void maya_camera::chick() const {
   MStatus k_s{};
-  DOODLE_MAYA_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"});
+  DOODLE_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"});
   DOODLE_MAYA_CHICK(k_s);
-  DOODLE_MAYA_CHICK(p_path.hasFn(MFn::Type::kCamera,&k_s),
+  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera,&k_s),
         doodle_error{"dag 路径不兼容 MFn::Type::kCamera"}));
   DOODLE_MAYA_CHICK(k_s);
 }
@@ -180,15 +180,15 @@ void maya_camera::conjecture() {
 
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   std::vector<camera> k_list{};
   for (; !k_it.isDone(); k_it.next()) {
     MDagPath k_path{};
     k_s = k_it.getPath(k_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::string k_path_str = d_str{k_path.fullPathName(&k_s)};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     camera k_cam{k_path, 0};
     for (const auto& k_reg : reg_list) {
@@ -219,66 +219,66 @@ void maya_camera::conjecture() {
 void maya_camera::set_render_cam() const {
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   for (; !k_it.isDone(); k_it.next()) {
     MDagPath k_path{};
     k_s = k_it.getPath(k_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     MFnDagNode k_cam_fn{k_path, &k_s};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     auto k_plug = k_cam_fn.findPlug("renderable", true, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_plug.setBool(k_cam_fn.object() == p_path.node(&k_s));
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 }
 void maya_camera::set_play_attr() {
   MStatus k_s;
   MFnCamera k_cam_fn{p_path, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = k_cam_fn.setFilmFit(MFnCamera::FilmFit::kFillFilmFit);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = k_cam_fn.setDisplayFilmGate(false);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = k_cam_fn.setDisplayGateMask(false);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   k_s = k_displayResolution.setBool(false);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   set_render_cam();
 }
 std::double_t maya_camera::focalLength() const {
   MStatus k_s;
   MFnCamera k_cam_fn{p_path, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   auto k_r = k_cam_fn.focalLength(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return k_r;
 }
 std::string maya_camera::get_transform_name() const {
   MStatus k_s{};
   auto k_obj = p_path.transform(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MFnDagNode k_node{k_obj, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   auto k_str = k_node.name(&k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return d_str{k_str};
 }
 bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
   MFnDagNode l_node{};
   MStatus l_s{};
   l_s = l_node.setObject(p_path.transform());
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   if (p_path.length() > 1) {
     DOODLE_LOG_INFO("测量到相机 {} 有组父物体, 开始转换相机", get_transform_name());
     /// \brief 开始调整相机并创建新相机
     MFnCamera l_camera{};
     l_camera.create(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     /// 创建约束
     auto l_cam_name = get_node_name(get_transform(l_camera.object()));
     auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
@@ -288,11 +288,11 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     DOODLE_LOG_INFO("运行 {}", l_comm);
     MStringArray l_constraints{};
     l_s = MGlobal::executeCommand(d_str{l_comm}, l_constraints);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     auto l_old_path{p_path};
 
     l_s = l_camera.getPath(p_path);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
 
     back_camera(in_start, in_end);
     /// \brief 删除约束
@@ -301,14 +301,14 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
       MSelectionList l_select{};
       for (int l_i = 0; l_i < l_constraints.length(); ++l_i) {
         l_s = l_select.add(l_constraints[l_i]);
-        DOODLE_CHICK(l_s);
+        DOODLE_MAYA_CHICK(l_s);
       }
       MObject l_con{};
       for (int l_i = 0; l_i < l_select.length(); ++l_i) {
         l_s = l_select.getDependNode(l_i, l_con);
-        DOODLE_CHICK(l_s);
+        DOODLE_MAYA_CHICK(l_s);
         l_s = MGlobal::deleteNode(l_con);
-        DOODLE_CHICK(l_s);
+        DOODLE_MAYA_CHICK(l_s);
       }
     }
 
@@ -332,7 +332,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
 #undef DOODLE_CONN_CAM
 
     l_s = l_dag_modifier.doIt();
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
 
     return true;
   }
@@ -343,10 +343,10 @@ bool maya_camera::camera_parent_is_word() {
   MFnDagNode l_node{};
   MStatus l_s{};
   l_s = l_node.setObject(p_path.transform());
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MDagPath l_path{};
   l_s = l_node.getPath(l_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   DOODLE_LOG_INFO("检查相机级数为 {}", l_path.length())
   return l_path.length() > 1;

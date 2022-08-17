@@ -77,7 +77,7 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-  DOODLE_MAYA_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
+  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
   collision_model.clear();
@@ -125,7 +125,7 @@ void reference_file::init_show_name() {
 }
 std::string reference_file::get_namespace() const {
   /// \brief 再没有名称空间时, 我们使用引用名称计算并映射到导出名称中去
-  DOODLE_MAYA_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
+  DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
   return file_namespace;
 }
 
@@ -137,7 +137,7 @@ bool reference_file::replace_sim_assets_file() {
 
   chick_mobject();
 
-  DOODLE_MAYA_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
+  DOODLE_CHICK(this->find_ref_node(), doodle_error{"缺失引用"});
   MFnReference k_ref{p_m_object};
   MStatus k_s{};
 
@@ -327,13 +327,13 @@ bool reference_file::has_sim_cloth() {
   chick_mobject();
   MStatus k_s{};
   MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MFnDependencyNode k_node{};
   for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
     k_s = k_node.setObject(k_objs[l_i]);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     if (k_node.typeName(&k_s) == "qlSolverShape") {
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
       return true;
     }
   }
@@ -355,7 +355,7 @@ bool reference_file::find_ref_node() {
   DOODLE_LOG_INFO("名称空间 {} 开始寻找的引用", file_namespace);
   for (MItDependencyNodes refIter(MFn::kReference); !refIter.isDone(); refIter.next()) {
     k_s = k_file.setObject(refIter.thisNode());
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     const auto &&k_mata_str = k_file.associatedNamespace(false, &k_s);
     if (k_mata_str == file_namespace.c_str()) {
       p_m_object = refIter.thisNode();
@@ -367,7 +367,7 @@ bool reference_file::find_ref_node() {
   }
 
   MFnReference k_ref{p_m_object, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   path = d_str{k_ref.fileName(false, true, true, &k_s)};
   DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
   return true;
@@ -376,12 +376,12 @@ bool reference_file::has_ue4_group() const {
   chick_mobject();
   MStatus k_s{};
   MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     return true;
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
@@ -393,14 +393,14 @@ void reference_file::qlUpdateInitialPose() const {
   MStatus l_status{};
   auto l_v = find_duplicate_poly{}(
       MNamespace::getNamespaceObjects(d_str{this->get_namespace()}, false, &l_status));
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
 
   for (auto &&[l_obj1, l_obj2] : l_v) {
     MSelectionList l_list{};
-    DOODLE_CHICK(l_list.add(l_obj1));
-    DOODLE_CHICK(l_list.add(l_obj2));
-    DOODLE_CHICK(MGlobal::setActiveSelectionList(l_list));
-    DOODLE_CHICK(
+    DOODLE_MAYA_CHICK(l_list.add(l_obj1));
+    DOODLE_MAYA_CHICK(l_list.add(l_obj2));
+    DOODLE_MAYA_CHICK(MGlobal::setActiveSelectionList(l_list));
+    DOODLE_MAYA_CHICK(
         MGlobal::executeCommand(
             d_str{
                 "qlUpdateInitialPose;"}));
@@ -499,7 +499,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
             MStatus k_s{};
             DOODLE_LOG_INFO("开始替换文件 {} 到 {}", self->path, *l_path);
             k_s = file.setRawFullName(d_str{l_path->generic_string()});
-            DOODLE_CHICK(k_s);
+            DOODLE_MAYA_CHICK(k_s);
             *retCode = FSys::exists(self->path);
           } else {
             *retCode = false;
@@ -508,7 +508,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
         this)};
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
   }
   auto l_name   = get_path().stem().generic_string();
@@ -520,7 +520,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
 
   DOODLE_LOG_INFO("开始重命名名称空间 {} 到 {}", get_namespace(), l_name_d);
   k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   file_namespace = l_name_d;
   DOODLE_CHICK(find_ref_node(), doodle_error{"没有在新的名称空间中查询到引用节点"});
   DOODLE_CHICK(has_ue4_group(), doodle_error{"没有在引用文件中找到 导出 组"});
@@ -529,17 +529,17 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
 FSys::path reference_file::get_path() const {
   MStatus k_s{};
   MFnReference k_ref{p_m_object, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return l_path;
 }
 FSys::path reference_file::get_abs_path() const {
   MStatus k_s{};
   MFnReference k_ref{p_m_object, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   FSys::path l_path = d_str{k_ref.fileName(false, false, false, &k_s)}.str();
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return l_path;
 }
 FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
@@ -556,10 +556,10 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   /// \brief 进行dag遍历提取需要的节点
 
   if (k_select.length(&k_s) > 1) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     MStringArray k_mearge_names{};
     k_s = k_select.getSelectionStrings(k_mearge_names);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     std::vector<std::string> l_names;
     for (int l_i = 0; l_i < k_mearge_names.length(); ++l_i) {
       l_names.emplace_back(d_str{k_mearge_names[l_i]});
@@ -574,11 +574,11 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     k_s = MGlobal::executeCommand(d_str{l_mel},
                                   k_r_s,
                                   true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     k_select.clear();
     k_s = k_select.add(k_r_s[0], true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
 
   if (k_select.isEmpty()) {
@@ -588,7 +588,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
   MDagPath k_mesh_path{};
   k_s = k_select.getDagPath(0, k_mesh_path);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
   auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
@@ -607,7 +607,7 @@ AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldS
                   in_end.as(MTime::uiUnit()),                   /// \brief 结束时间
                   d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
                   k_path.generic_string())});                   /// \brief 导出文件路径，包含文件名和文件路径
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return k_path;
 }
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
@@ -624,7 +624,7 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
   }
 
   k_s = MGlobal::setActiveSelectionList(in_export_obj);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
 
@@ -651,7 +651,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_Failure &in) {
     DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", in.what());
     try {
@@ -659,7 +659,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
                            in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
       DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
       k_s = MGlobal::executeCommand(d_str{l_comm});
-      DOODLE_CHICK(k_s);
+      DOODLE_MAYA_CHICK(k_s);
     } catch (const maya_Failure &in2) {
       DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", in2.what());
 
@@ -667,7 +667,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
         l_comm = fmt::format(R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:*{}";)", in_start.value(), in_end.value(), get_namespace(), k_cfg.export_group);
         DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
         k_s = MGlobal::executeCommand(d_str{l_comm});
-        DOODLE_CHICK(k_s);
+        DOODLE_MAYA_CHICK(k_s);
       } catch (const maya_Failure &in3) {
         DOODLE_LOG_INFO("烘培失败, 直接导出 {}", in3.what());
       }
@@ -685,23 +685,23 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
   k_s         = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = std::string{"FBXExportConstraints -v true;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   return k_file_path;
 }
 MSelectionList reference_file::get_all_object() const {
@@ -709,10 +709,10 @@ MSelectionList reference_file::get_all_object() const {
   MSelectionList l_select;
   auto l_r =
       MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   for (std::uint32_t i = 0u; i < l_r.length(); ++i) {
     k_s = l_select.add(l_r[i], true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   return l_select;
 }
@@ -720,15 +720,15 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
   chick_mobject();
   MStatus k_s{};
 
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   MDagPath l_path;
   try {
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_select.getDagPath(0, l_path);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_InvalidParameter &err) {
     DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
   }
@@ -745,11 +745,11 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
 
   MFnDagNode l_child{};
   MObject l_export_group{export_group_attr()->node(&l_status)};
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
 
   for (auto &&qlc : l_cloth) {
     auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     for (
         MItDependencyGraph l_it{l_object,
                                 MFn::Type::kMesh,
@@ -760,11 +760,11 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
         !l_it.isDone() && l_status;
         l_it.next()) {
       auto l_temp_sp = get_dag_path(l_it.currentItem(&l_status));
-      DOODLE_CHICK(l_status);
+      DOODLE_MAYA_CHICK(l_status);
       auto l_current_path = get_dag_path(l_temp_sp.transform(&l_status));
-      DOODLE_CHICK(l_status);
+      DOODLE_MAYA_CHICK(l_status);
       l_status = l_child.setObject(l_current_path);
-      DOODLE_CHICK(l_status);
+      DOODLE_MAYA_CHICK(l_status);
       if (l_child.hasParent(l_export_group)) {
         auto l_path = l_current_path;
         if (auto l_it_j = ranges::find_if(l_all_path, [&](const MDagPath &in) { return l_path == in; });

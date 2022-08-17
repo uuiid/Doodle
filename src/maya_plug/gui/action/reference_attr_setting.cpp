@@ -98,7 +98,7 @@ bool reference_attr_setting::get_file_info() {
   {
     MSelectionList l_selection_list{};
     k_status = MGlobal::getActiveSelectionList(l_selection_list);
-    DOODLE_CHICK(k_status);
+    DOODLE_MAYA_CHICK(k_status);
     MObject l_obj{};
     p_i->p_handles |= ranges::action::remove_if([&](entt::handle& in) -> bool {
       if (!in.get<reference_file>().has_node(l_selection_list)) {
@@ -158,7 +158,7 @@ void reference_attr_setting::render() {
 
         if (imgui::Button("添加碰撞")) {
           k_s = MGlobal::getActiveSelectionList(l_select);
-          DOODLE_CHICK(k_s);
+          DOODLE_MAYA_CHICK(k_s);
           k_ref.set_collision_model(l_select);
         }
         ImGui::SameLine();

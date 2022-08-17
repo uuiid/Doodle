@@ -25,9 +25,9 @@ MStatus comm_file_save::doIt(const MArgList& in_arg) {
   MArgParser k_prase{syntax(), in_arg};
 
   if (k_prase.isFlagSet(doodle_filepath, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     auto k_path = k_prase.flagArgumentString(doodle_filepath, 0, &k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     maya_file_io::save_file(d_str{k_path}.str());
   } else {

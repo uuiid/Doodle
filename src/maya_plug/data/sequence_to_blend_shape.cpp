@@ -77,46 +77,46 @@ sequence_to_blend_shape::sequence_to_blend_shape()
 void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
   MStatus l_s{};
   MFnTransform l_fn_transform{in_path, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   MFnMesh l_mesh{in_path, &l_s};
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MVector center = l_mesh.boundingBox(&l_s).center();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_matrix = l_fn_transform.transformationMatrix(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   center *= l_matrix;
   center = -center;
   l_s    = l_fn_transform.setTranslation(center, MSpace::kWorld);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   //  DOODLE_LOG_INFO("获取选中物体 {}", get_node_full_name(l_tran_path.node()));
   l_matrix = l_fn_transform.transformationMatrix(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   /// \brief 冻结座标轴
   /// \brief 清除变换
   l_s = l_fn_transform.resetFromRestPosition();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_path_mesh = in_path;
   l_s              = l_path_mesh.extendToShape();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   /// \brief 变换网格体
   for (MItMeshVertex l_it_mesh_vertex{l_path_mesh, MObject::kNullObj, &l_s};
        l_s && !l_it_mesh_vertex.isDone();
        l_it_mesh_vertex.next()) {
     auto l_point = l_it_mesh_vertex.position(MSpace::kWorld, &l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     l_point = l_point * l_matrix;
     l_s     = l_it_mesh_vertex.setPosition(l_point);
     //    l_s     = l_it_mesh_vertex.translateBy(l_tran, MSpace::kWorld);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_fn_transform.setScalePivot({}, MSpace::kWorld, false);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_fn_transform.setRotatePivot({}, MSpace::kWorld, false);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 }
 void sequence_to_blend_shape::parent_attr(const MDagPath& in_path) {
   ptr->parent_tran = in_path;
@@ -133,20 +133,20 @@ void sequence_to_blend_shape::create_bind_mesh() {
 
   /// \brief 设置函数集
   l_s = l_dag_path.setObject(ptr->select_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   ptr->bind_path = get_dag_path(l_create_mesh_obj);
   l_s            = l_transform.setObject(ptr->bind_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   ptr->bind_matrix = l_transform.transformationMatrix(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_mesh.setObject(ptr->bind_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   ptr->bind_center = l_mesh.boundingBox(&l_s).center() * ptr->bind_matrix;
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   to_work_zero(ptr->bind_path);
   copy_mat(ptr->bind_path, ptr->select_path);
@@ -158,43 +158,43 @@ void sequence_to_blend_shape::create_blend_shape_mesh() {
   MFnDagNode l_dag_path{};
 
   l_s = l_dag_path.setObject(ptr->select_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   auto l_create_mesh_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_mesh.setObject(l_create_mesh_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   //      l_mesh.create
 
   /// \brief 获取网格中心
   auto l_bind_box = l_mesh.boundingBox(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_transform.setObject(l_create_mesh_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   auto l_tran = l_transform.transformationMatrix(&l_s);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   //    DOODLE_LOG_INFO("网格tran {}", l_tran);
 
   auto l_center = l_bind_box.center() * l_tran;
   l_s           = ptr->create_point_list.append(l_center);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   /// \brief 移动到世界中心
   to_work_zero(l_create_mesh_path);
   //    center_pivot(l_path_tmp);
 
   l_s = ptr->create_mesh_list.append(l_create_mesh_path);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_guard, std::size_t in_index) {
   MStatus l_status;
   auto l_mesh_plug = get_plug(ptr->select_path.node(&l_status), "outMesh");
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   auto l_mesh_data_handle = l_mesh_plug.asMDataHandle(&l_status);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   /// \brief 上下文网格
   MFnMesh l_ctx_mesh{l_mesh_data_handle.asMesh(), &l_status};
   auto l_ctx_mesh_obj = l_mesh_data_handle.asMesh();
@@ -202,7 +202,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
 
   /// 上下文网格中心
   auto l_center       = ptr->create_point_list[in_index];
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   const std::double_t l_tran[4][4]{1, 0, 0, 0,
                                    0, 1, 0, 0,
                                    0, 0, 1, 0,
@@ -220,26 +220,26 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
        l_status && !l_it_mesh_polygon.isDone();
        l_it_mesh_polygon.next()) {
     auto l_polygon_count = l_it_mesh_polygon.count(&l_status);
-    DOODLE_CHICK(l_status);
-    DOODLE_CHICK(l_polygonCounts.append(l_polygon_count));
-    DOODLE_CHICK(l_polygonConnects_tmp.clear());
+    DOODLE_MAYA_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_polygonCounts.append(l_polygon_count));
+    DOODLE_MAYA_CHICK(l_polygonConnects_tmp.clear());
     l_status = l_it_mesh_polygon.getConnectedVertices(l_polygonConnects_tmp);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     for (int l_i = 0; l_i < l_polygonConnects_tmp.length(); ++l_i) {
       l_polygonConnects.append(l_polygonConnects_tmp[l_i]);
     }
   }
   /// \brief 复制网格
   auto l_create_obj = l_ctx_mesh.duplicate(false, false, &l_status);
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(l_status);
   for (MItMeshVertex l_it_mesh_vertex{l_ctx_mesh_obj, &l_status};
        l_status && !l_it_mesh_vertex.isDone();
        l_it_mesh_vertex.next()) {
     auto l_point = l_it_mesh_vertex.position(MSpace::kWorld, &l_status);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     l_point = l_point * l_matrix;
-    DOODLE_CHICK(l_status);
-    DOODLE_CHICK(l_vertexArray.append(l_point));
+    DOODLE_MAYA_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_vertexArray.append(l_point));
   }
 
   l_create_mesh.create(l_ctx_mesh.numVertices(),
@@ -248,9 +248,9 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
                        l_polygonCounts,
                        l_polygonConnects);
   chick_true<doodle_error>(!l_create_obj.isNull(), "创建网格出错 {}", get_node_name(ptr->select_path));
-  DOODLE_CHICK(ptr->create_point_list.append(l_center));
-  DOODLE_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_obj)));
-  DOODLE_CHICK(l_status);
+  DOODLE_MAYA_CHICK(ptr->create_point_list.append(l_center));
+  DOODLE_MAYA_CHICK(ptr->create_mesh_list.append(get_dag_path(l_create_obj)));
+  DOODLE_MAYA_CHICK(l_status);
 }
 
 void sequence_to_blend_shape::create_blend_shape() {
@@ -265,20 +265,20 @@ void sequence_to_blend_shape::create_blend_shape() {
   //  DOODLE_LOG_INFO("run {}", l_comm);
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   chick_true<doodle_error>(l_r.length() == 1, "错误的融合变形节点创建");
 
   MSelectionList l_selection_list{};
   l_s = l_selection_list.add(l_r[0], true);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   l_s = l_selection_list.getDependNode(0, ptr->blend_shape_obj);
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   for (int l_i = 0; l_i < ptr->create_mesh_list.length(); ++l_i) {
     auto l_node = ptr->create_mesh_list[l_i].node(&l_s);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     l_s = MGlobal::deleteNode(l_node);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
 }
 
@@ -291,17 +291,17 @@ void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time
   /// \brief 创建 tran 变形
 
   MPlug plugtx = get_plug(ptr->bind_path.node(&l_s), "tx");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MPlug plugty = get_plug(ptr->bind_path.node(&l_s), "ty");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MPlug plugtz = get_plug(ptr->bind_path.node(&l_s), "tz");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MPlug plugrx = get_plug(ptr->bind_path.node(&l_s), "rx");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MPlug plugry = get_plug(ptr->bind_path.node(&l_s), "ry");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MPlug plugrz = get_plug(ptr->bind_path.node(&l_s), "rz");
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
   MTimeArray l_time{};
 #define DOODLE_ADD_ANM_declaration(axis) \
   MDoubleArray l_value_tran_##axis{};
@@ -324,7 +324,7 @@ void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time
 #define DOODLE_ADD_ANM_set_anm(axis)                                                   \
   aim.create(plugt##axis, MFnAnimCurve::AnimCurveType::kAnimCurveTL, &in_dg_modidier); \
   l_s = aim.addKeys(&l_time, &l_value_tran_##axis);                                    \
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 
   DOODLE_ADD_ANM_set_anm(x);
   DOODLE_ADD_ANM_set_anm(y);
@@ -348,11 +348,11 @@ void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time
     }
     aim.create(plug_weight[j], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &in_dg_modidier);
     l_s = aim.addKeys(&l_time, &l_value_weight);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
 
   l_s = in_dg_modidier.doIt();
-  DOODLE_CHICK(l_s);
+  DOODLE_MAYA_CHICK(l_s);
 }
 
 void sequence_to_blend_shape::delete_create_blend_shape_mesh() {
@@ -361,11 +361,11 @@ void sequence_to_blend_shape::delete_create_blend_shape_mesh() {
 void sequence_to_blend_shape::delete_bind_mesh() {
   MStatus l_status{};
   if (ptr->bind_path.isValid(&l_status)) {
-    DOODLE_CHICK(l_status)
+    DOODLE_MAYA_CHICK(l_status)
     auto l_node = ptr->bind_path.node(&l_status);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
     l_status = MGlobal::deleteNode(l_node);
-    DOODLE_CHICK(l_status);
+    DOODLE_MAYA_CHICK(l_status);
   }
 }
 MDagPath& sequence_to_blend_shape::select_attr() {
@@ -374,7 +374,7 @@ MDagPath& sequence_to_blend_shape::select_attr() {
 void sequence_to_blend_shape::attach_parent() {
   MStatus l_s{};
   if (ptr->parent_tran.isValid(&l_s)) {
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
     add_child(ptr->parent_tran, ptr->bind_path);
   }
 }
@@ -392,7 +392,7 @@ void sequence_to_blend_shape::delete_select_node() {
   auto l_node_select = ptr->select_path.node(&l_s);
   if (!l_node_select.isNull()) {
     l_s = MGlobal::deleteNode(l_node_select);
-    DOODLE_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
   }
 }
 

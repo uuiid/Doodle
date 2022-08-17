@@ -25,12 +25,12 @@ MStatus upload_files_command::doIt(const MArgList& in_list) {
 
   MStatus k_s{};
   MArgParser k_prase{syntax(), in_list, &k_s};
-  DOODLE_CHICK(k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   if (k_prase.isFlagSet(export_cam_clear, &k_s)) {
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(export_cam_clear, 0, is_clear);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (!is_clear) {
     for (auto&& [e, f] : g_reg()->view<export_file_info>().each()) {

@@ -114,10 +114,10 @@ void doodle_info_node_draw_override::addUIDrawables(
   MDagPath k_cam{};
   if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
     auto k_view = M3dView::active3dView(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     k_s = k_view.getCamera(k_cam);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
   } else {
     if (g_reg()->ctx().contains<maya_camera>())
       k_cam = g_reg()->ctx().at<maya_camera>().p_path;
@@ -172,7 +172,7 @@ void doodle_info_node_draw_override::addUIDrawables(
   {
     MFnCamera k_fn_cam{k_cam};
     auto k_f = k_fn_cam.focalLength(&k_s);
-    DOODLE_CHICK(k_s);
+    DOODLE_MAYA_CHICK(k_s);
 
     auto _k_s_ = fmt::format("FOV: {:.3f}", k_f);
     MString k_str{_k_s_.c_str()};
