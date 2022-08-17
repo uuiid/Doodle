@@ -224,12 +224,15 @@ std::string ue4_import_data::find_ue4_skin(
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(FSys::is_directory(in_ue4_content_dir),
-                                     "无法找到ue4 content 文件夹");
-            chick_true<doodle_error>(!in_fmt.empty(),
-                                     "格式化字符串不可为空");
-            chick_true<doodle_error>(!in_regex.empty(),
-                                     "正则表达式不可为空");
+            FSys::is_directory(in_ue4_content_dir)
+                ? void()
+                : throw_exception(doodle_error{"无法找到ue4 content 文件夹 {}", in_ue4_content_dir});
+            in_fmt.empty()
+                ? throw_exception(doodle_error{"格式化字符串不可为空 {}", in_fmt})
+                : void();
+            in_regex.empty()
+                ? throw_exception(doodle_error{"正则表达式不可为空 "})
+                :void();
           });
 
   std::string result{};
@@ -275,12 +278,12 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle,
-                                     "无效的句柄");
+            in_handle ? void() : throw_exception(doodle_error{"无效的句柄 {}"s, in_handle});
           })
           .postcondition([&]() {
-            chick_true<doodle_error>(!result.empty(),
-                                     "设置路径为空");
+            result.empty()
+                ? throw_exception(doodle_error{"设置路径为空 {}"s, result})
+                : void();
           });
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
              doodle_config::ue4_shot.data() /
@@ -300,12 +303,12 @@ std::string ue4_import_group::set_level_dir(
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
-            chick_true<doodle_error>(in_handle,
-                                     "无效的句柄");
+            in_handle ? void() : throw_exception(doodle_error{"无效的句柄 {}"s, in_handle});
           })
           .postcondition([&]() {
-            chick_true<doodle_error>(!result.empty(),
-                                     "设置路径为空");
+            result.empty()
+                ? throw_exception(doodle_error{"设置路径为空 {}"s, result})
+                : void();
           });
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
              doodle_config::ue4_shot.data() /
