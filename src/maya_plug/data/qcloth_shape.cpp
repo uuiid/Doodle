@@ -374,9 +374,9 @@ bool qcloth_shape::create_cache() const {
 }
 
 std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
-  chick_true<doodle_error>(
-      in_handle.any_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>(),
-      "缺失组件");
+  in_handle.all_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>()
+      ? void()
+      : throw_exception(doodle_error{"缺失组件 qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list"});
 
   auto& k_ref = g_reg()->ctx().at<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});

@@ -291,12 +291,13 @@ void image_file_attribute::extract_num(std::vector<image_file_attribute> &in_ima
 
   const auto k_size = in_image_list.front().num_list.size();
 
-  chick_true<doodle_error>(
-      std::all_of(in_image_list.begin(), in_image_list.end(),
-                  [k_size](const image_file_attribute &in) -> bool {
-                    return in.num_list.size() == k_size;
-                  }),
-      "序列不匹配");
+  std::all_of(in_image_list.begin(), in_image_list.end(),
+              [k_size](const image_file_attribute &in) -> bool {
+                return in.num_list.size() == k_size;
+              })
+      ? void()
+      : throw_exception(doodle_error{"序列不匹配 {}"s, in_image_list.front().file_path});
+
   in_image_list.size() >= 2 ? void() : throw_exception(doodle_error{"单个文件, 无法搜索帧号"});
   auto &one   = in_image_list[0].num_list;
   auto &tow   = in_image_list[1].num_list;
