@@ -34,6 +34,9 @@ void sqlite_client::create_sqlite() {
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("加载数据");
+  k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
   return open_impl(in_path);
 }

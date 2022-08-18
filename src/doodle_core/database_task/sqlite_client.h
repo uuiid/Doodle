@@ -67,13 +67,10 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
                     boost::system::error_code error = {}) {
       switch (state_attr) {
         case state::init: {
-          boost::asio::post(
-              g_thread(),
-              [&]() {
-                bsys::error_code l_r = file_translator_attr->open(file_path);
-                if (l_r) self.complete(l_r);
-                state_attr = state::end;
-              });
+          bsys::error_code l_r = file_translator_attr->open(file_path);
+          if (l_r) self.complete(l_r);
+          state_attr = state::end;
+
           break;
         }
         case state::end: {
