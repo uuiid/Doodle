@@ -126,7 +126,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       database_n::details::update_ctx::ctx(*ptr->registry_attr);
       return {};
     } else {
-      auto l_list = all_list | ranges::view::transform([](auto e) {
+      auto l_list = all_list | ranges::view::transform([&](auto e) {
                       return entt::handle{*(ptr->registry_attr), e};
                     }) |
                     ranges::to_vector;
