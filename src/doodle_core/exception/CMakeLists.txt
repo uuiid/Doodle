@@ -1,3 +1,7 @@
 target_sources(doodle_core
         PUBLIC
-        exception.h)
+        exception.h
+
+        PRIVATE
+        exception.cpp
+        )

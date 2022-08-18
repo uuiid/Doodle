@@ -24,9 +24,16 @@ class DOODLE_CORE_EXPORT error_iterator : public std::runtime_error {
   explicit error_iterator(const std::string& message) : std::runtime_error(message){};
 };
 
-class DOODLE_CORE_EXPORT component_error : public doodle_error {
+class DOODLE_CORE_EXPORT doodle_category : public std::error_category {
  public:
-  explicit component_error(const std::string& err) : doodle_error(err){};
+  const char * name() const noexcept;
+
+  std::string message( int ev ) const;
+  char const * message( int ev, char * buffer, std::size_t len ) const noexcept;
+
+  bool failed( int ev ) const noexcept;
+
+  std::error_condition default_error_condition( int ev ) const noexcept;
 };
 
 template <typename exception_type>
