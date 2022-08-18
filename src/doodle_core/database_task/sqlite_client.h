@@ -167,8 +167,8 @@ class sqlite_file : public file_translator {
   std::unique_ptr<impl> ptr;
 
  protected:
-  //  virtual bool open_impl(const FSys::path& in_path) override;
-  //  virtual bool save_impl(const FSys::path& in_path) override;
+  virtual bsys::error_code open_impl(const FSys::path& in_path) override;
+  virtual bsys::error_code save_impl(const FSys::path& in_path) override;
 
  public:
   sqlite_file();
