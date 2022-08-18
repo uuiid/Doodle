@@ -20,24 +20,24 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  bsys::error_code open_init(const FSys::path& in_path);
-  bsys::result<bool> open_next();
+  bsys::error_code open(const FSys::path& in_path);
+
   bsys::error_code open_end();
 
  protected:
-  virtual bsys::error_code open_init_impl(const FSys::path& in_path) = 0;
-  virtual bsys::result<bool> open_next_impl()                        = 0;
-  virtual bsys::error_code open_end_impl();
+  /**
+   * @brief  初始化文件加载
+   * @param in_path 传入的保存路径
+   * @return 错误代码(异步)
+   */
+  virtual bsys::error_code open_impl(const FSys::path& in_path) = 0;
 
  private:
-  bsys::error_code save_init(const FSys::path& in_path);
-  bsys::result<bool> save_next();
+  bsys::error_code save(const FSys::path& in_path);
   bsys::error_code save_end();
 
  protected:
-  virtual bsys::error_code save_init_impl(const FSys::path& in_path) = 0;
-  virtual bsys::result<bool> save_next_impl()                        = 0;
-  virtual bsys::error_code save_end_impl();
+  virtual bsys::error_code save_impl(const FSys::path& in_path) = 0;
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
 
@@ -45,7 +45,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
   class async_open_impl {
    public:
     enum class state : std::uint8_t {
-      none,
+
       init,
       next,
       end
@@ -61,32 +61,32 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
         file_translator_ptr in_file_translator)
         : timer_attr(in_timer),
           file_translator_attr(std::move(in_file_translator)),
-          state_attr(state::none),
+          state_attr(state::init),
           file_path(std::move(in_file_path)) {}
 
     template <typename Self>
     void operator()(Self& self,
                     boost::system::error_code error = {}) {
       switch (self.state_attr) {
-        case state::none: {
+        case state::init: {
           error = self->file_translator_attr->open_init(file_path);
           if (error) self.complete(error);
           self->state_attr = state::init;
           break;
         }
-        case state::init: {
-          error = self->file_translator_attr->open_next();
-          if (error) self.complete(error);
-          self->state_attr = state::next;
-          break;
-        }
+
         case state::next: {
-          error = self->file_translator_attr->open_end();
-          if (error) self.complete(error);
-          self->state_attr = state::end;
+          bsys::result<bool> l_r = self->file_translator_attr->open_next();
+          if (l_r.has_error()) self.complete(error);
+          if (l_r.has_value() && l_r.value())
+            self->state_attr = state::next;
+          else
+            self->state_attr = state::end;
           break;
         }
         case state::end: {
+          error = self->file_translator_attr->open_end();
+
           self.complete(error);
           break;
         }
