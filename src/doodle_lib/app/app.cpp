@@ -182,7 +182,9 @@ void app::post_constructor() {
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
-    load_project(app::Get().options_ ? app::Get().options_->p_project_path : FSys::path{});
+    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty()
+                     ? app::Get().options_->p_project_path
+                     : core_set::getSet().project_root[0]);
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
