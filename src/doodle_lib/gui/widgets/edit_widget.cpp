@@ -434,7 +434,7 @@ class add_assets_for_file : public base_render {
                   ? "null"s
                   : this->assets_list.data.front();
         });
-    l_sig.save_end.connect([this](const doodle::handle_list &) {
+    l_sig.save_end.connect([this]() {
       auto &prj         = g_reg()->ctx().at<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {

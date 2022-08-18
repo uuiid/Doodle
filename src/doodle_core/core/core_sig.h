@@ -47,11 +47,11 @@ class DOODLE_CORE_EXPORT core_sig {
   /**
    * @brief 开始保存
    */
-  boost::signals2::signal<void(const std::vector<entt::handle>&)> save_begin;
+  boost::signals2::signal<void()> save_begin;
   /**
    * @brief 结束保存
    */
-  boost::signals2::signal<void(const std::vector<entt::handle>&)> save_end;
+  boost::signals2::signal<void()> save_end;
   /**
    * @brief 外部文件拖入
    */

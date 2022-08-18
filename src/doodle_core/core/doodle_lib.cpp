@@ -45,20 +45,6 @@ doodle_lib::doodle_lib()
 
   auto& k_sig = reg->ctx().emplace<core_sig>();
   reg->ctx().emplace<status_info>();
-  k_sig.project_begin_open.connect([=](const FSys::path& in_path) {
-    auto k_reg                             = g_reg();
-    /// @brief 设置数据库路径
-    k_reg->ctx().at<database_info>().path_ = in_path;
-    /// @brief 清除所有数据库实体
-    k_reg->clear();
-  });
-
-  k_sig.project_end_open.connect([]() {
-    core_set::getSet().add_recent_project(g_reg()->ctx().at<database_info>().path_);
-  });
-  k_sig.save_end.connect([](const std::vector<entt::handle>&) {
-    g_reg()->ctx().at<status_info>().need_save = false;
-  });
   k_sig.save.connect(2, []() {
     database_n::sqlite_client{}.update_entt();
   });

@@ -43,7 +43,7 @@ void filter_factory_base::connection_sig() {
         p_i->need_init = true;
       }));
   p_i->p_conns.emplace_back(l_sig.save_end.connect(
-      [&](const std::vector<entt::handle>&) {
+      [&]() {
         p_i->need_init = true;
       }));
 }

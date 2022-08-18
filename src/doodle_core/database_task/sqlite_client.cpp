@@ -118,10 +118,7 @@ void sqlite_client::create_sqlite() {
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
-  g_reg()
-      ->ctx()
-      .at<core_sig>()
-      .project_begin_open(in_path);
+  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
   return open_impl(in_path);
 }
 
@@ -135,11 +132,16 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
+  g_reg()->ctx().at<core_sig>().save_begin({});
+
   return save_impl(in_path);
 }
 
 bsys::error_code file_translator::save_end() {
   g_reg()->ctx().at<status_info>().need_save = false;
+  g_reg()->ctx().at<core_sig>().save_end({});
+  g_reg()->clear<data_status_save>();
+  g_reg()->clear<data_status_delete>();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
@@ -205,9 +207,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     if (all_list.empty()) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
-      ptr->registry_attr->ctx().at<core_sig>().save_begin({});
       database_n::details::update_ctx::ctx(*ptr->registry_attr);
-      ptr->registry_attr->ctx().at<core_sig>().save_end({});
       return {};
     } else {
       auto l_list = all_list | ranges::view::transform([](auto e) {
@@ -230,13 +230,9 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         database_n::delete_data l_sqlit_action{};
         l_sqlit_action(*ptr->registry_attr, delete_list);
       }
-      ptr->registry_attr->clear<data_status_save>();
-      ptr->registry_attr->clear<data_status_save>();
       ptr->registry_attr->ctx().at<core_sig>().save_end(l_list);
-      ptr->registry_attr->ctx().at<status_info>().need_save = false;
     }
   }
-
   return {};
 }
 
