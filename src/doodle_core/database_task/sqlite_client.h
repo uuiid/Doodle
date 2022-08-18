@@ -21,13 +21,23 @@ using file_translator_ptr = std::shared_ptr<file_translator>;
 class file_translator : public std::enable_shared_from_this<file_translator> {
  private:
   bsys::error_code open_init(const FSys::path& in_path);
-  bsys::error_code open_next();
+  bsys::result<bool> open_next();
   bsys::error_code open_end();
 
  protected:
   virtual bsys::error_code open_init_impl(const FSys::path& in_path) = 0;
-  virtual bsys::error_code open_next_impl()                          = 0;
+  virtual bsys::result<bool> open_next_impl()                        = 0;
   virtual bsys::error_code open_end_impl();
+
+ private:
+  bsys::error_code save_init(const FSys::path& in_path);
+  bsys::result<bool> save_next();
+  bsys::error_code save_end();
+
+ protected:
+  virtual bsys::error_code save_init_impl(const FSys::path& in_path) = 0;
+  virtual bsys::result<bool> save_next_impl()                        = 0;
+  virtual bsys::error_code save_end_impl();
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
 
@@ -43,36 +53,43 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     boost::asio::high_resolution_timer& timer_attr;
     file_translator_ptr file_translator_attr;
     state state_attr;
+    FSys::path file_path;
+
     explicit async_open_impl(
+        FSys::path in_file_path,
         boost::asio::high_resolution_timer& in_timer,
         file_translator_ptr in_file_translator)
         : timer_attr(in_timer),
           file_translator_attr(std::move(in_file_translator)),
-          state_attr(state::none) {}
+          state_attr(state::none),
+          file_path(std::move(in_file_path)) {}
 
     template <typename Self>
     void operator()(Self& self,
                     boost::system::error_code error = {}) {
       switch (self.state_attr) {
         case state::none: {
-          self->file_translator_attr->open_init_impl();
+          error = self->file_translator_attr->open_init(file_path);
+          if (error) self.complete(error);
+          self->state_attr = state::init;
           break;
         }
         case state::init: {
-          self->file_translator_attr->open_next_impl();
+          error = self->file_translator_attr->open_next();
+          if (error) self.complete(error);
+          self->state_attr = state::next;
           break;
         }
         case state::next: {
-          self->file_translator_attr->open_end_impl();
+          error = self->file_translator_attr->open_end();
+          if (error) self.complete(error);
+          self->state_attr = state::end;
           break;
         }
         case state::end: {
-          self->file_translator_attr->;
-          break;
-        }
-        default:
           self.complete(error);
           break;
+        }
       }
     }
   };
@@ -94,7 +111,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
 
     return boost::asio::async_compose<CompletionToken,
                                       void(bsys::error_code)>(
-        async_open_impl{l_time, this->shared_from_this()}, token, l_time);
+        async_open_impl{in_path, l_time, this->shared_from_this()}, token, l_time);
   };
 };
 

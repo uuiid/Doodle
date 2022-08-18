@@ -135,9 +135,9 @@ sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;
 bsys::error_code file_translator::open_init(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
-  return open_init(in_path);
+  return open_init_impl(in_path);
 }
-bsys::error_code file_translator::open_next() {
+bsys::result<bool> file_translator::open_next() {
   return open_next_impl();
 }
 bsys::error_code file_translator::open_end() {
@@ -145,6 +145,20 @@ bsys::error_code file_translator::open_end() {
   return open_end_impl();
 }
 bsys::error_code file_translator::open_end_impl() {
+  return {};
+}
+bsys::error_code file_translator::save_init(const FSys::path& in_path) {
+  return save_init_impl(in_path);
+}
+bsys::result<bool> file_translator::save_next() {
+  return save_next_impl();
+}
+bsys::error_code file_translator::save_end() {
+  auto l_r                                   = save_end_impl();
+  g_reg()->ctx().at<status_info>().need_save = false;
+  return l_r;
+}
+bsys::error_code file_translator::save_end_impl() {
   return {};
 }
 }  // namespace doodle::database_n
