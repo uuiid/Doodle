@@ -167,7 +167,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     std::vector<entt::entity> install_list;
     std::vector<entt::entity> update_list;
     std::vector<entt::entity> next_delete_list;
-
     auto l_dv = ptr->registry_attr->view<data_status_delete, database>();
     for (auto&& [e, d] : l_dv.each()) {
       if (d.is_install()) {
@@ -195,41 +194,35 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
       ptr->registry_attr->ctx().at<core_sig>().save_begin({});
-
       database_n::details::update_ctx::ctx(*ptr->registry_attr);
-
       ptr->registry_attr->ctx().at<core_sig>().save_end({});
+      return {};
+    }else{
+      auto l_list = all_list | ranges::view::transform([](auto e) {
+                      return make_handle(e);
+                    }) |
+                    ranges::to_vector;
+      ptr->registry_attr->ctx().at<core_sig>().save_begin(l_list);
+      /// \brief 删除没有插入的
+      ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
 
-      return;
+      if (!install_list.empty()) {
+        database_n::insert l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, install_list);
+      }
+      if (!update_list.empty()) {
+        database_n::update_data l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, update_list);
+      }
+      if (!delete_list.empty()) {
+        database_n::delete_data l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, delete_list);
+      }
+      ptr->registry_attr->clear<data_status_save>();
+      ptr->registry_attr->clear<data_status_save>();
+      ptr->registry_attr->ctx().at<core_sig>().save_end(l_list);
+      ptr->registry_attr->ctx().at<status_info>().need_save = false;
     }
-
-    auto l_list = all_list | ranges::view::transform([](auto e) {
-                    return make_handle(e);
-                  }) |
-                  ranges::to_vector;
-    ptr->registry_attr->ctx().at<core_sig>().save_begin(l_list);
-    /// \brief 删除没有插入的
-    ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
-
-    if (!install_list.empty()) {
-      database_n::insert l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, install_list);
-    }
-    if (!update_list.empty()) {
-      database_n::update_data l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, update_list);
-    }
-    if (!delete_list.empty()) {
-      database_n::delete_data l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, delete_list);
-    }
-    auto l_sv = ptr->registry_attr->view<data_status_save>();
-    ptr->registry_attr->remove<data_status_save>(l_sv.begin(), l_sv.end());
-    auto l_dv = ptr->registry_attr->view<data_status_delete>();
-    ptr->registry_attr->remove<data_status_save>(l_dv.begin(), l_dv.end());
-    ptr->registry_attr->ctx().at<core_sig>().save_end(l_list);
-
-    ptr->registry_attr->ctx().at<status_info>().need_save = false;
   }
 
   return {};
