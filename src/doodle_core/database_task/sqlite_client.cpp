@@ -78,7 +78,7 @@ sqlite_file::sqlite_file(registry_ptr in_registry)
 }
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   constexpr auto l_loc = BOOST_CURRENT_LOCATION;
-  if (FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
+  if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
   l_select(*ptr->registry_attr, in_path);
