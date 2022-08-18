@@ -272,7 +272,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     });
 
     g_reg()->ctx().at<core_sig>().save_begin.connect(
-        [this, in_, l_list](const std::vector<entt::handle>&) {
+        [this, in_, l_list]() {
           boost::asio::post(g_io_context(), [this, in_, l_list]() {
             p_i->lists = p_i->lists |
                          ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
