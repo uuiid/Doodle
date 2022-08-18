@@ -47,8 +47,12 @@ const bsys::error_category& doodle_category::get() {
 bsys::error_condition doodle_category::default_error_condition(int ev) const noexcept {
   return error_category::default_error_condition(ev);
 }
-bsys::error_code make_error_code(error_enum e, ::boost::source_location const& in_loc) {
-  return bsys::error_code{enum_to_num(e), doodle_category::get(), &in_loc};
+bsys::error_code make_error_code(error_enum e, ::boost::source_location const* in_loc) {
+  return bsys::error_code{enum_to_num(e), doodle_category::get(), in_loc};
+  //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
+}
+bsys::error_code make_error_code(error_enum e) {
+  return bsys::error_code{enum_to_num(e), doodle_category::get()};
   //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
 }
 }  // namespace doodle

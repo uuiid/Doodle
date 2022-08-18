@@ -18,7 +18,8 @@ enum class error_enum : std::int32_t {
   success = 0,
   sqlite3_save_error,
   file_copy_error,
-  component_missing_error
+  component_missing_error,
+  file_not_exists
 };
 
 class DOODLE_CORE_EXPORT doodle_error : public std::runtime_error {
@@ -48,7 +49,8 @@ class DOODLE_CORE_EXPORT doodle_category : public bsys::error_category {
   static const bsys::error_category& get();
 };
 
-bsys::error_code make_error_code(error_enum e, ::boost::source_location const& in_loc);
+bsys::error_code make_error_code(error_enum e, ::boost::source_location const* in_loc);
+bsys::error_code make_error_code(error_enum e);
 
 template <typename exception_type>
 [[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {

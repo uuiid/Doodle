@@ -118,11 +118,16 @@ void sqlite_client::create_sqlite() {
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
+  g_reg()
+      ->ctx()
+      .at<core_sig>()
+      .project_begin_open(in_path);
   return open_impl(in_path);
 }
 
 bsys::error_code file_translator::open_end() {
   core_set::getSet().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
+  g_reg()->ctx().at<core_sig>().project_end_open();
   return {};
 }
 
@@ -135,7 +140,7 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
 
 bsys::error_code file_translator::save_end() {
   g_reg()->ctx().at<status_info>().need_save = false;
-  auto& k_msg                                = g_reg()->ctx().emplace<process_message>();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
   return {};
@@ -154,7 +159,12 @@ sqlite_file::sqlite_file(registry_ptr in_registry)
   ptr->registry_attr = std::move(in_registry);
 }
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
-  return bsys::error_code();
+  constexpr auto l_loc = BOOST_CURRENT_LOCATION;
+  if (FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
+
+  database_n::select l_select{};
+  l_select(*ptr->registry_attr, in_path);
+  return {};
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) {  /// \brief  不存在时直接保存所有的实体
@@ -162,11 +172,13 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     auto l_view = g_reg()->view<doodle::database>();
     l_insert(*g_reg(), std::vector<entt::entity>{l_view.begin(), l_view.end()});
   } else {  /// \brief   否则进行筛选
-    std::vector<entt::entity> delete_list;
     std::vector<entt::entity> all_list;
+
+    std::vector<entt::entity> delete_list;
     std::vector<entt::entity> install_list;
     std::vector<entt::entity> update_list;
     std::vector<entt::entity> next_delete_list;
+
     auto l_dv = ptr->registry_attr->view<data_status_delete, database>();
     for (auto&& [e, d] : l_dv.each()) {
       if (d.is_install()) {
@@ -197,7 +209,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       database_n::details::update_ctx::ctx(*ptr->registry_attr);
       ptr->registry_attr->ctx().at<core_sig>().save_end({});
       return {};
-    }else{
+    } else {
       auto l_list = all_list | ranges::view::transform([](auto e) {
                       return make_handle(e);
                     }) |
