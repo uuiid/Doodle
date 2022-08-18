@@ -109,12 +109,11 @@ bool app_base::is_stop() const {
   return stop_;
 }
 void app_base::load_project(const FSys::path& in_path) const {
-  auto l_path = in_path;
-  if (!l_path.empty() &&
-      FSys::exists(l_path) &&
-      FSys::is_regular_file(l_path) &&
-      l_path.extension() == doodle_config::doodle_db_name.data()) {
-    database_n::sqlite_client{}.open_sqlite(l_path);
+  if (!in_path.empty() &&
+      FSys::exists(in_path) &&
+      FSys::is_regular_file(in_path) &&
+      in_path.extension() == doodle_config::doodle_db_name.data()) {
+    std::make_shared<database_n::sqlite_file>()->async_open(in_path, [](bsys::error_code) {});
   }
 }
 void app_base::clear_loop() {
