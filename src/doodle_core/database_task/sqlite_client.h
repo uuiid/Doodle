@@ -65,19 +65,19 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     template <typename Self>
     void operator()(Self& self,
                     boost::system::error_code error = {}) {
-      switch (self.state_attr) {
+      switch (state_attr) {
         case state::init: {
           boost::asio::post(
               g_thread(),
               [&]() {
-                bsys::error_code l_r = self->file_translator_attr->open(file_path);
+                bsys::error_code l_r = file_translator_attr->open(file_path);
                 if (l_r) self.complete(l_r);
-                self->state_attr = state::end;
+                state_attr = state::end;
               });
           break;
         }
         case state::end: {
-          error = self->file_translator_attr->open_end();
+          error = file_translator_attr->open_end();
           self.complete(error);
           break;
         }
@@ -104,19 +104,19 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     template <typename Self>
     void operator()(Self& self,
                     boost::system::error_code error = {}) {
-      switch (self.state_attr) {
+      switch (state_attr) {
         case state::init: {
           boost::asio::post(
               g_thread(),
               [&]() {
-                bsys::error_code l_r = self->file_translator_attr->save(file_path);
+                bsys::error_code l_r = file_translator_attr->save(file_path);
                 if (l_r) self.complete(l_r);
-                self->state_attr = state::end;
+                state_attr = state::end;
               });
           break;
         }
         case state::end: {
-          error = self->file_translator_attr->save_end();
+          error = file_translator_attr->save_end();
           self.complete(error);
           break;
         }
