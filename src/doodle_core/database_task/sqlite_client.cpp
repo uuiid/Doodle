@@ -18,6 +18,8 @@
 #include <core/status_info.h>
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <utility>
+#include <core/core_set.h>
 
 namespace doodle::database_n {
 
@@ -123,16 +125,26 @@ sqlite_file::sqlite_file()
 }
 sqlite_file::sqlite_file(registry_ptr in_registry)
     : ptr(std::make_unique<impl>()) {
-  ptr->registry_attr = in_registry;
-}
-
-void sqlite_file::open(const FSys::path& in_path, bool only_ctx) {
-}
-void sqlite_file::save(const FSys::path& in_path) {
+  ptr->registry_attr = std::move(in_registry);
 }
 
 sqlite_file::~sqlite_file()                                    = default;
 sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;
 sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;
 
+bool file_translator::open_init(const FSys::path& in_path) {
+  g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
+  g_reg()->clear();
+  return true;
+}
+bool file_translator::open_next() {
+  return false;
+}
+bool file_translator::open_end() {
+  core_set::getSet().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
+  return false;
+}
+bool file_translator::open_end_impl() {
+  return true;
+}
 }  // namespace doodle::database_n
