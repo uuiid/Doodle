@@ -27,11 +27,16 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
 
  protected:
   /**
-   * @brief  初始化文件加载
+   * @brief  文件加载(@b 非主线程) 可以阻塞,
    * @param in_path 传入的保存路径
    * @return 错误代码(异步)
    */
   virtual bsys::error_code open_impl(const FSys::path& in_path) = 0;
+  /**
+   * @brief 文件保存(@b 非主线程) 可以阻塞,
+   * @param in_path 传入的需要保存的路径
+   * @return 错误代码(异步)
+   */
   virtual bsys::error_code save_impl(const FSys::path& in_path) = 0;
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
