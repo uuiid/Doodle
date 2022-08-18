@@ -22,11 +22,15 @@ class DOODLE_CORE_EXPORT select : public process_handy_tools {
     bool only_ctx;
   };
   explicit select(const arg& in_arg);
+  select();
 
   ~select() override;
   void init();
   void aborted();
   void update();
+  void operator()(
+      entt::registry& in_registry,
+      const FSys::path& in_project_path);
 
  private:
   void th_run();

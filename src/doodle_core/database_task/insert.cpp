@@ -193,7 +193,7 @@ class insert::impl {
   }
 
   /**
-   * @brief 从主线程开始调用的函数
+   * @brief 这个已经在非主线程了
    */
   void th_insert() {
     g_reg()->ctx().emplace<process_message>().message("创建实体数据");
@@ -201,7 +201,6 @@ class insert::impl {
     g_reg()->ctx().emplace<process_message>().message("组件数据...");
 #include "details/macro.h"
     create_com_data<DOODLE_SQLITE_TYPE>();
-
     g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
     for (auto &f : futures_) {
       if (stop)
@@ -235,6 +234,9 @@ insert::insert(const std::vector<entt::entity> &in_inster)
   p_i->entt_list = in_inster;
   p_i->size      = p_i->entt_list.size();
 }
+insert::insert()
+    : p_i(std::make_unique<impl>()) {}
+
 insert::~insert() = default;
 void insert::init() {
   auto &k_msg = g_reg()->ctx().emplace<process_message>();
@@ -265,6 +267,12 @@ void insert::update() {
     default:
       break;
   }
+}
+void insert::operator()(const entt::registry &in_registry,
+                        const std::vector<entt::entity> &in_insert_data) {
+  p_i->entt_list = in_insert_data;
+  p_i->size      = p_i->entt_list.size();
+  p_i->th_insert();
 }
 
 }  // namespace doodle::database_n

@@ -13,12 +13,17 @@ class DOODLE_CORE_EXPORT update_data : public process_handy_tools {
 
  public:
   explicit update_data(const std::vector<entt::entity>& in_data);
+  update_data();
 
   ~update_data() override;
   void init();
 
   void aborted();
   void update();
+
+  void operator()(
+      entt::registry& in_registry,
+      const std::vector<entt::entity>& in_update_data);
 };
 
 }  // namespace doodle::database_n

@@ -280,6 +280,7 @@ select::select(const select::arg& in_arg) : p_i(std::make_unique<impl>()) {
   p_i->project  = in_arg.project_path;
   p_i->only_ctx = in_arg.only_ctx;
 }
+select::select() : p_i(std::make_unique<impl>()) {}
 select::~select() = default;
 
 void select::init() {
@@ -360,6 +361,14 @@ void select::th_run() {
   p_i->set_user_ctx(*p_i->local_reg);
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
+}
+
+void select::operator()(
+    entt::registry& in_registry,
+    const FSys::path& in_project_path) {
+  p_i->project  = in_project_path;
+  p_i->only_ctx = false;
+  this->th_run();
 }
 
 }  // namespace doodle::database_n

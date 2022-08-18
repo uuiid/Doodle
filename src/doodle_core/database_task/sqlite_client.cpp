@@ -20,7 +20,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <utility>
 #include <core/core_set.h>
-
+#include <doodle_core/thread_pool/process_message.h>
 namespace doodle::database_n {
 
 void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
@@ -114,6 +114,7 @@ void sqlite_client::create_sqlite() {
       make_process_adapter<database_n::insert>(g_io_context().get_executor(), std::vector<entt::entity>{})
           .next<database_n::update_data>(std::vector<entt::entity>{}));
 }
+
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
@@ -126,11 +127,17 @@ bsys::error_code file_translator::open_end() {
 }
 
 bsys::error_code file_translator::save(const FSys::path& in_path) {
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("保存数据");
+  k_msg.set_state(k_msg.run);
   return save_impl(in_path);
 }
 
 bsys::error_code file_translator::save_end() {
   g_reg()->ctx().at<status_info>().need_save = false;
+  auto& k_msg                                = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("完成写入数据");
+  k_msg.set_state(k_msg.success);
   return {};
 }
 
@@ -150,7 +157,82 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   return bsys::error_code();
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
-  return bsys::error_code();
+  if (!FSys::exists(in_path)) {  /// \brief  不存在时直接保存所有的实体
+    insert l_insert{};
+    auto l_view = g_reg()->view<doodle::database>();
+    l_insert(*g_reg(), std::vector<entt::entity>{l_view.begin(), l_view.end()});
+  } else {  /// \brief   否则进行筛选
+    std::vector<entt::entity> delete_list;
+    std::vector<entt::entity> all_list;
+    std::vector<entt::entity> install_list;
+    std::vector<entt::entity> update_list;
+    std::vector<entt::entity> next_delete_list;
+
+    auto l_dv = ptr->registry_attr->view<data_status_delete, database>();
+    for (auto&& [e, d] : l_dv.each()) {
+      if (d.is_install()) {
+        delete_list.push_back(e);
+      } else {
+        next_delete_list.push_back(e);
+      }
+    }
+
+    auto l_sv = ptr->registry_attr->view<data_status_save, database>();
+    for (auto&& [e, d] : l_sv.each()) {
+      if (d.is_install()) {
+        update_list.push_back(e);
+      } else {
+        install_list.push_back(e);
+      }
+    }
+    all_list |= ranges::actions::push_back(delete_list) |
+                ranges::actions::push_back(install_list) |
+                ranges::actions::push_back(update_list) |
+                ranges::actions::push_back(next_delete_list) |
+                ranges::actions::unique;
+
+    if (all_list.empty()) {
+      /// \brief 只更新上下文
+      auto l_s = boost::asio::make_strand(g_io_context());
+      ptr->registry_attr->ctx().at<core_sig>().save_begin({});
+
+      database_n::details::update_ctx::ctx(*ptr->registry_attr);
+
+      ptr->registry_attr->ctx().at<core_sig>().save_end({});
+
+      return;
+    }
+
+    auto l_list = all_list | ranges::view::transform([](auto e) {
+                    return make_handle(e);
+                  }) |
+                  ranges::to_vector;
+    ptr->registry_attr->ctx().at<core_sig>().save_begin(l_list);
+    /// \brief 删除没有插入的
+    ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
+
+    if (!install_list.empty()) {
+      database_n::insert l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, install_list);
+    }
+    if (!update_list.empty()) {
+      database_n::update_data l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, update_list);
+    }
+    if (!delete_list.empty()) {
+      database_n::delete_data l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, delete_list);
+    }
+    auto l_sv = ptr->registry_attr->view<data_status_save>();
+    ptr->registry_attr->remove<data_status_save>(l_sv.begin(), l_sv.end());
+    auto l_dv = ptr->registry_attr->view<data_status_delete>();
+    ptr->registry_attr->remove<data_status_save>(l_dv.begin(), l_dv.end());
+    ptr->registry_attr->ctx().at<core_sig>().save_end(l_list);
+
+    ptr->registry_attr->ctx().at<status_info>().need_save = false;
+  }
+
+  return {};
 }
 
 sqlite_file::~sqlite_file()                                    = default;

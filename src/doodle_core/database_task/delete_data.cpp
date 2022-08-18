@@ -99,6 +99,8 @@ delete_data::delete_data(const std::vector<entt::entity> &in_data)
   p_i->entt_list = in_data;
   p_i->size      = p_i->entt_list.size();
 }
+delete_data::delete_data() : p_i(std::make_unique<impl>()){};
+
 delete_data::~delete_data() = default;
 void delete_data::init() {
   auto &k_msg = g_reg()->ctx().emplace<process_message>();
@@ -129,5 +131,12 @@ void delete_data::update() {
     default:
       break;
   }
+}
+void delete_data::operator()(
+    entt::registry &in_registry,
+    const std::vector<entt::entity> &in_update_data) {
+  p_i->entt_list = in_update_data;
+  p_i->size      = p_i->entt_list.size();
+  p_i->th_delete();
 }
 }  // namespace doodle::database_n
