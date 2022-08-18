@@ -90,8 +90,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     auto l_view = g_reg()->view<doodle::database>();
     l_insert(*g_reg(), std::vector<entt::entity>{l_view.begin(), l_view.end()});
   } else {  /// \brief   否则进行筛选
-    std::vector<entt::entity> all_list;
-
     std::vector<entt::entity> delete_list;
     std::vector<entt::entity> install_list;
     std::vector<entt::entity> update_list;
@@ -114,23 +112,15 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         install_list.push_back(e);
       }
     }
-    all_list |= ranges::actions::push_back(delete_list) |
-                ranges::actions::push_back(install_list) |
-                ranges::actions::push_back(update_list) |
-                ranges::actions::push_back(next_delete_list) |
-                ranges::actions::unique;
 
-    if (all_list.empty()) {
+    if (delete_list.empty() &&
+        install_list.empty() &&
+        update_list.empty()) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
       database_n::details::update_ctx::ctx(*ptr->registry_attr);
       return {};
     } else {
-      auto l_list = all_list | ranges::view::transform([&](auto e) {
-                      return entt::handle{*(ptr->registry_attr), e};
-                    }) |
-                    ranges::to_vector;
-
       /// \brief 删除没有插入的
       ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
       if (!install_list.empty()) {
