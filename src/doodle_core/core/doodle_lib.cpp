@@ -108,5 +108,8 @@ bounded_pool_t& g_bounded_pool() {
 boost::asio::io_context& g_io_context() {
   return *doodle_lib::Get().io_context_;
 }
+boost::asio::thread_pool& g_thread() {
+  return doodle_lib::Get().p_thread_pool->pool_;
+}
 
 }  // namespace doodle

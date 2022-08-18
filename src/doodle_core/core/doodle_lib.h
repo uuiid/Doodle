@@ -9,6 +9,7 @@
 
 namespace boost::asio {
 class io_context;
+class thread_pool;
 }
 
 namespace doodle {
@@ -38,5 +39,6 @@ DOODLE_CORE_EXPORT registry_ptr& g_reg();
 DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
 DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
 DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
+DOODLE_CORE_EXPORT boost::asio::thread_pool& g_thread();
 
 }  // namespace doodle
