@@ -31,8 +31,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
    * @param in_path 传入的保存路径
    * @return 错误代码(异步)
    */
-  virtual bsys::result<bool> open_impl(const FSys::path& in_path) = 0;
-  virtual bsys::result<bool> save_impl(const FSys::path& in_path) = 0;
+  virtual bsys::error_code open_impl(const FSys::path& in_path) = 0;
+  virtual bsys::error_code save_impl(const FSys::path& in_path) = 0;
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
   enum class state : std::uint8_t {
