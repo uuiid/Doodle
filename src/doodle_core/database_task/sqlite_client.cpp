@@ -24,95 +24,11 @@
 namespace doodle::database_n {
 
 void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
-  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-  boost::asio::post(
-      make_process_adapter<database_n::select>(
-          g_io_context().get_executor(), database_n::select::arg{in_path, only_ctx})
-          .next([]() {
-            g_reg()->ctx().at<core_sig>().project_end_open();
-          }));
 }
 
 void sqlite_client::update_entt() {
-  std::vector<entt::entity> delete_list;
-  std::vector<entt::entity> all_list;
-  std::vector<entt::entity> install_list;
-  std::vector<entt::entity> update_list;
-  std::vector<entt::entity> next_delete_list;
-
-  auto l_dv = g_reg()->view<data_status_delete, database>();
-  for (auto&& [e, d] : l_dv.each()) {
-    if (d.is_install()) {
-      delete_list.push_back(e);
-    } else {
-      next_delete_list.push_back(e);
-    }
-  }
-
-  auto l_sv = g_reg()->view<data_status_save, database>();
-  for (auto&& [e, d] : l_sv.each()) {
-    if (d.is_install()) {
-      update_list.push_back(e);
-    } else {
-      install_list.push_back(e);
-    }
-  }
-  all_list |= ranges::actions::push_back(delete_list) |
-              ranges::actions::push_back(install_list) |
-              ranges::actions::push_back(update_list) |
-              ranges::actions::push_back(next_delete_list) |
-              ranges::actions::unique;
-
-  if (all_list.empty()) {
-    /// \brief 只更新上下文
-    auto l_s = boost::asio::make_strand(g_io_context());
-    boost::asio::post(l_s, [l_s]() {
-      g_reg()->ctx().at<core_sig>().save_begin({});
-    });
-    boost::asio::post(l_s, [l_s]() {
-      database_n::details::update_ctx::ctx(*g_reg());
-    });
-    boost::asio::post(l_s, [l_s]() {
-      g_reg()->ctx().at<core_sig>().save_end({});
-    });
-
-    return;
-  }
-
-  auto l_list = all_list | ranges::view::transform([](auto e) {
-                  return make_handle(e);
-                }) |
-                ranges::to_vector;
-  auto l_next = make_process_adapter(g_io_context().get_executor(), [=]() {
-    g_reg()->ctx().at<core_sig>().save_begin(l_list);
-    /// \brief 删除没有插入的
-    g_reg()->destroy(next_delete_list.begin(), next_delete_list.end());
-  });
-
-  if (!install_list.empty()) {
-    l_next.next<database_n::insert>(install_list);
-  }
-  if (!update_list.empty()) {
-    l_next.next<database_n::update_data>(update_list);
-  }
-  if (!delete_list.empty()) {
-    l_next.next<database_n::delete_data>(delete_list);
-  }
-  l_next.next([=]() {
-    auto l_sv = g_reg()->view<data_status_save>();
-    g_reg()->remove<data_status_save>(l_sv.begin(), l_sv.end());
-    auto l_dv = g_reg()->view<data_status_delete>();
-    g_reg()->remove<data_status_save>(l_dv.begin(), l_dv.end());
-    g_reg()->ctx().at<core_sig>().save_end(l_list);
-
-    g_reg()->ctx().at<status_info>().need_save = false;
-  });
-  boost::asio::post(l_next);
 }
 void sqlite_client::create_sqlite() {
-  boost::asio::post(
-      make_process_adapter<database_n::insert>(g_io_context().get_executor(), std::vector<entt::entity>{})
-          .next<database_n::update_data>(std::vector<entt::entity>{}));
 }
 
 bsys::error_code file_translator::open(const FSys::path& in_path) {
@@ -132,14 +48,14 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
-  g_reg()->ctx().at<core_sig>().save_begin({});
+  g_reg()->ctx().at<core_sig>().save_begin();
 
   return save_impl(in_path);
 }
 
 bsys::error_code file_translator::save_end() {
   g_reg()->ctx().at<status_info>().need_save = false;
-  g_reg()->ctx().at<core_sig>().save_end({});
+  g_reg()->ctx().at<core_sig>().save_end();
   g_reg()->clear<data_status_save>();
   g_reg()->clear<data_status_delete>();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -211,13 +127,12 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       return {};
     } else {
       auto l_list = all_list | ranges::view::transform([](auto e) {
-                      return make_handle(e);
+                      return entt::handle{*ptr->registry_attr, e};
                     }) |
                     ranges::to_vector;
-      ptr->registry_attr->ctx().at<core_sig>().save_begin(l_list);
+
       /// \brief 删除没有插入的
       ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
-
       if (!install_list.empty()) {
         database_n::insert l_sqlit_action{};
         l_sqlit_action(*ptr->registry_attr, install_list);
@@ -230,7 +145,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         database_n::delete_data l_sqlit_action{};
         l_sqlit_action(*ptr->registry_attr, delete_list);
       }
-      ptr->registry_attr->ctx().at<core_sig>().save_end(l_list);
     }
   }
   return {};
