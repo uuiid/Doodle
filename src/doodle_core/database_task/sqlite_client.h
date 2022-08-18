@@ -20,30 +20,60 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class file_translator : public std::enable_shared_from_this<file_translator> {
  private:
-  bool open_init(const FSys::path& in_path);
-  bool open_next();
-  bool open_end();
+  bsys::error_code open_init(const FSys::path& in_path);
+  bsys::error_code open_next();
+  bsys::error_code open_end();
 
  protected:
-  virtual bool open_init_impl(const FSys::path& in_path) = 0;
-  virtual bool open_next_impl()                          = 0;
-  virtual bool open_end_impl();
+  virtual bsys::error_code open_init_impl(const FSys::path& in_path) = 0;
+  virtual bsys::error_code open_next_impl()                          = 0;
+  virtual bsys::error_code open_end_impl();
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
 
   // public:
   class async_open_impl {
    public:
+    enum class state : std::uint8_t {
+      none,
+      init,
+      next,
+      end
+    };
     boost::asio::high_resolution_timer& timer_attr;
     file_translator_ptr file_translator_attr;
+    state state_attr;
     explicit async_open_impl(
         boost::asio::high_resolution_timer& in_timer,
         file_translator_ptr in_file_translator)
-        : timer_attr(in_timer), file_translator_attr(std::move(in_file_translator)) {}
+        : timer_attr(in_timer),
+          file_translator_attr(std::move(in_file_translator)),
+          state_attr(state::none) {}
 
     template <typename Self>
     void operator()(Self& self,
                     boost::system::error_code error = {}) {
+      switch (self.state_attr) {
+        case state::none: {
+          self->file_translator_attr->open_init_impl();
+          break;
+        }
+        case state::init: {
+          self->file_translator_attr->open_next_impl();
+          break;
+        }
+        case state::next: {
+          self->file_translator_attr->open_end_impl();
+          break;
+        }
+        case state::end: {
+          self->file_translator_attr->;
+          break;
+        }
+        default:
+          self.complete(error);
+          break;
+      }
     }
   };
 

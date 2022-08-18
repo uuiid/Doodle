@@ -132,19 +132,19 @@ sqlite_file::~sqlite_file()                                    = default;
 sqlite_file::sqlite_file(sqlite_file&& in) noexcept            = default;
 sqlite_file& sqlite_file::operator=(sqlite_file&& in) noexcept = default;
 
-bool file_translator::open_init(const FSys::path& in_path) {
+bsys::error_code file_translator::open_init(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
-  return true;
+  return open_init(in_path);
 }
-bool file_translator::open_next() {
-  return false;
+bsys::error_code file_translator::open_next() {
+  return open_next_impl();
 }
-bool file_translator::open_end() {
+bsys::error_code file_translator::open_end() {
   core_set::getSet().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
-  return false;
+  return open_end_impl();
 }
-bool file_translator::open_end_impl() {
-  return true;
+bsys::error_code file_translator::open_end_impl() {
+  return {};
 }
 }  // namespace doodle::database_n
