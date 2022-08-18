@@ -277,7 +277,6 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
             p_i->lists = p_i->lists |
                          ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
                            return ranges::contains(l_list, in_data->handle_);
-                           //                           return in_data.handle_ == in_;
                          }) |
                          ranges::to_vector;
           });
