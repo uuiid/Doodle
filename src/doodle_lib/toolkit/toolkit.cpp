@@ -38,7 +38,7 @@ PYTHONPATH+:= scripts
       k_file << k_mod;
     }
   } catch (FSys::filesystem_error &err) {
-    DOODLE_LOG_ERROR(err.what());
+    DOODLE_LOG_ERROR(boost::diagnostic_information(err.what()));
     throw;
   }
 }
@@ -79,7 +79,7 @@ void toolkit::installUePath(const FSys::path &path) {
     /// \brief 安装houdini labs 插件
     install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
   } catch (FSys::filesystem_error &error) {
-    DOODLE_LOG_ERROR(error.what());
+    DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
     throw;
   }
 }
@@ -148,7 +148,7 @@ void toolkit::install_houdini_plug() {
     }
 
   } catch (FSys::filesystem_error &error) {
-    DOODLE_LOG_ERROR(error.what());
+    DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
     throw;
   }
 }

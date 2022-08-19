@@ -20,7 +20,7 @@ extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
     app.command_line_parser(strCmdLine);
     return app.run();
   } catch (const std::exception& err) {
-    DOODLE_LOG_WARN(err.what());
+    DOODLE_LOG_WARN(boost::diagnostic_information(boost::diagnostic_information(err.what())));
     return 1;
   }
 } catch (...) {

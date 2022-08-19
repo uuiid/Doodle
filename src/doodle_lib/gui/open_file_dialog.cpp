@@ -209,7 +209,7 @@ void file_panel::scan_director(const FSys::path &in_dir) {
                      try {
                        l_info.init(in.path());
                      } catch (const FSys::filesystem_error &err) {
-                       DOODLE_LOG_ERROR(err.what());
+                       DOODLE_LOG_ERROR(boost::diagnostic_information(err.what()));
                      }
                      return l_info;
                    }) |  /// 过滤无效

@@ -196,7 +196,7 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
     this->add_to_parent();
     this->delete_node();
   } catch (const doodle_error& err) {
-    DOODLE_LOG_WARN(err.what());
+    DOODLE_LOG_WARN(boost::diagnostic_information(err.what()));
     return MStatus::kFailure;
   }
   return MStatus::kSuccess;

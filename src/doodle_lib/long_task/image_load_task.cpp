@@ -53,7 +53,7 @@ void image_load_task::update() {
           p_i->result_.get();
           this->succeed();
         } catch (const doodle_error &error) {
-          DOODLE_LOG_ERROR(error.what());
+          DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
           this->fail();
           throw;
         }

@@ -118,7 +118,7 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   try {
     k_j = nlohmann::json::parse(k_j_str);
   } catch (const nlohmann::json::exception& error) {
-    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", error.what())
+    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", boost::diagnostic_information(error.what()))
   }
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     auto l_i = make_handle(k_e);

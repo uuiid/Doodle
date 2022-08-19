@@ -209,7 +209,7 @@ void image_to_move::update(
         p_i->result.get();
         this->succeed();
       } catch (const doodle_error &error) {
-        DOODLE_LOG_ERROR(error.what());
+        DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
         this->fail();
         throw;
       }
@@ -244,7 +244,7 @@ void image_to_move::aborted() {
     remove(p_i->p_out_path);
   } catch (const FSys::filesystem_error &err) {
     p_i->p_h.patch<process_message>([&](process_message &in) {
-      auto k_str = fmt::format("合成视频主动删除失败 {}\n", err.what());
+      auto k_str = fmt::format("合成视频主动删除失败 {}\n", boost::diagnostic_information(err.what()));
       in.message(k_str, in.warning);
     });
     throw;
