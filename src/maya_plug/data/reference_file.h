@@ -27,7 +27,7 @@ class reference_file {
    */
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
-
+  void bake_results(const MTime &in_start, const MTime &in_end) const;
   /**
    * @brief 导出到abc文件中
    * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
