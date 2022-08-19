@@ -36,6 +36,9 @@
 #include <maya/MDataHandle.h>
 #include <maya/MFloatPointArray.h>
 #include <maya/MMatrixArray.h>
+
+// #define DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
+
 namespace doodle {
 namespace maya_plug {
 
@@ -130,26 +133,31 @@ void sequence_to_blend_shape::create_bind_mesh() {
   MFnTransform l_transform{};
   MFnMesh l_mesh{};
   MFnDagNode l_dag_path{};
+#ifdef DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
+  /// 使用复制模型
+  {  /// \brief 设置函数集
+    l_s = l_dag_path.setObject(ptr->select_path);
+    DOODLE_MAYA_CHICK(l_s);
+    /// \brief
+    ptr->bind_path = get_dag_path(l_dag_path.duplicate(false, false, &l_s));
+    DOODLE_MAYA_CHICK(l_s);
+    l_s = l_transform.setObject(ptr->bind_path);
+    DOODLE_MAYA_CHICK(l_s);
 
-  /// \brief 设置函数集
-  l_s = l_dag_path.setObject(ptr->select_path);
-  DOODLE_MAYA_CHICK(l_s);
-  auto l_create_mesh_obj = l_dag_path.duplicate(false, false, &l_s);
-  DOODLE_MAYA_CHICK(l_s);
-  ptr->bind_path = get_dag_path(l_create_mesh_obj);
-  l_s            = l_transform.setObject(ptr->bind_path);
-  DOODLE_MAYA_CHICK(l_s);
+    DOODLE_MAYA_CHICK(l_s);
+    ptr->bind_matrix = l_transform.transformationMatrix(&l_s);
+    DOODLE_MAYA_CHICK(l_s);
+    l_s = l_mesh.setObject(ptr->bind_path);
+    DOODLE_MAYA_CHICK(l_s);
+    ptr->bind_center = l_mesh.boundingBox(&l_s).center() * ptr->bind_matrix;
+    DOODLE_MAYA_CHICK(l_s);
 
-  DOODLE_MAYA_CHICK(l_s);
-  ptr->bind_matrix = l_transform.transformationMatrix(&l_s);
-  DOODLE_MAYA_CHICK(l_s);
-  l_s = l_mesh.setObject(ptr->bind_path);
-  DOODLE_MAYA_CHICK(l_s);
-  ptr->bind_center = l_mesh.boundingBox(&l_s).center() * ptr->bind_matrix;
-  DOODLE_MAYA_CHICK(l_s);
-
-  to_work_zero(ptr->bind_path);
-  copy_mat(ptr->bind_path, ptr->select_path);
+    to_work_zero(ptr->bind_path);
+    copy_mat(ptr->bind_path, ptr->select_path);
+  }
+#else
+  ptr->bind_path = ptr->select_path;
+#endif
 }
 void sequence_to_blend_shape::create_blend_shape_mesh() {
   MStatus l_s{};
@@ -261,16 +269,18 @@ void sequence_to_blend_shape::create_blend_shape() {
   for (int l_i = 0; l_i < ptr->create_mesh_list.length(); ++l_i) {
     l_names.emplace_back(get_node_full_name(ptr->create_mesh_list[l_i]));
   }
+#ifdef DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
+#else
+  MSelectionList l_selection_list_delete_history{};
+  l_s = l_selection_list_delete_history.add(ptr->select_path);
+  DOODLE_MAYA_CHICK(l_s);
 
-  //  MSelectionList l_selection_list_delete_history{};
-  //  l_s = l_selection_list_delete_history.add(ptr->select_path);
-  //  DOODLE_MAYA_CHICK(l_s);
-  //
-  //  l_s = MGlobal::setActiveSelectionList(l_selection_list_delete_history);
-  //  DOODLE_MAYA_CHICK(l_s);
-  //
-  //  l_s = MGlobal::executeCommand("DeleteHistory");
-  //  DOODLE_MAYA_CHICK(l_s);
+  l_s = MGlobal::setActiveSelectionList(l_selection_list_delete_history);
+  DOODLE_MAYA_CHICK(l_s);
+
+  l_s = MGlobal::executeCommand("DeleteHistory");
+  DOODLE_MAYA_CHICK(l_s);
+#endif
 
   auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(ptr->bind_path));
   //  DOODLE_LOG_INFO("run {}", l_comm);
@@ -370,6 +380,7 @@ void sequence_to_blend_shape::delete_create_blend_shape_mesh() {
 }
 
 void sequence_to_blend_shape::delete_bind_mesh() {
+#ifdef DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
   MStatus l_status{};
   if (ptr->bind_path.isValid(&l_status)) {
     DOODLE_MAYA_CHICK(l_status)
@@ -378,6 +389,7 @@ void sequence_to_blend_shape::delete_bind_mesh() {
     l_status = MGlobal::deleteNode(l_node);
     DOODLE_MAYA_CHICK(l_status);
   }
+#endif
 }
 MDagPath& sequence_to_blend_shape::select_attr() {
   return ptr->select_path;
@@ -399,12 +411,14 @@ sequence_to_blend_shape& sequence_to_blend_shape::operator=(sequence_to_blend_sh
   return *this;
 }
 void sequence_to_blend_shape::delete_select_node() {
+#ifdef DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
   MStatus l_s{};
   auto l_node_select = ptr->select_path.node(&l_s);
   if (!l_node_select.isNull()) {
     l_s = MGlobal::deleteNode(l_node_select);
     DOODLE_MAYA_CHICK(l_s);
   }
+#endif
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
