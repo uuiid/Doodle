@@ -121,7 +121,7 @@ class update_data::impl {
         l_pre.params.comHash  = i.first.get().com_id;
         l_pre.params.entityId = main_tabls[i.first.get().entt_];
         auto l_s              = in_db(l_pre);
-        DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_s, i.first.get().entt_, i.first.get().com_id);
+        DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_s, i.first.get().entt_, i.first.get().com_id);
         g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
       }
     }
