@@ -75,7 +75,7 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
 
     return l_authorization.is_expire();
   } catch (const std::exception& err) {
-    DOODLE_LOG_INFO(boost::diagnostic_information(err.what()));
+    DOODLE_LOG_INFO(boost::diagnostic_information(err));
     return false;
   }
 }

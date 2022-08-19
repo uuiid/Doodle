@@ -319,7 +319,7 @@ bool reference_file::is_loaded() const {
     DOODLE_MAYA_CHICK(k_s);
     return k_r;
   } catch (const maya_error &inerr) {
-    DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", boost::diagnostic_information(inerr.what()));
+    DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", boost::diagnostic_information(inerr));
     return has_ue4_group();
   }
 }
@@ -766,7 +766,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
     k_s = MGlobal::executeCommand(d_str{l_comm});
     DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_error &in) {
-    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in.what()));
+    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
     try {
       l_comm = fmt::format(maya_bakeResults_str,
                            in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
@@ -774,7 +774,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
       k_s = MGlobal::executeCommand(d_str{l_comm});
       DOODLE_MAYA_CHICK(k_s);
     } catch (const maya_error &in2) {
-      DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", boost::diagnostic_information(in2.what()));
+      DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", boost::diagnostic_information(in2));
 
       try {
         l_comm = fmt::format(R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:*{}";)", in_start.value(), in_end.value(), get_namespace(), k_cfg.export_group);
@@ -782,7 +782,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
         k_s = MGlobal::executeCommand(d_str{l_comm});
         DOODLE_MAYA_CHICK(k_s);
       } catch (const maya_error &in3) {
-        DOODLE_LOG_INFO("烘培失败, 直接导出 {}", boost::diagnostic_information(in3.what()));
+        DOODLE_LOG_INFO("烘培失败, 直接导出 {}", boost::diagnostic_information(in3));
       }
     }
 

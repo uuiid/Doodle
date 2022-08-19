@@ -102,7 +102,7 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
     DOODLE_LOG_INFO("开始备份文件 {}", l_target);
     FSys::backup_file(l_target);
   } catch (const FSys::filesystem_error& error) {
-    DOODLE_LOG_ERROR("备份文件失败, {}", boost::diagnostic_information(error.what()));
+    DOODLE_LOG_ERROR("备份文件失败, {}", boost::diagnostic_information(error));
   }
 
   try {
@@ -112,7 +112,7 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
                     FSys::copy_options::overwrite_existing);
     result = true;
   } catch (const FSys::filesystem_error& error) {
-    DOODLE_LOG_ERROR("复制文件失败, {}", boost::diagnostic_information(error.what()));
+    DOODLE_LOG_ERROR("复制文件失败, {}", boost::diagnostic_information(error));
   }
   return result;
 }

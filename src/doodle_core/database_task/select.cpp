@@ -302,7 +302,7 @@ void select::update() {
         try {
           p_i->result.get();
         } catch (const doodle_error& error) {
-          DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
+          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
           this->fail();
           throw;
         }

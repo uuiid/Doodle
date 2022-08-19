@@ -72,7 +72,7 @@ void logger_ctrl::init_temp_log() {
     spdlog::flush_every(3s);
     spdlog::set_level(spdlog::level::debug);
   } catch (const spdlog::spdlog_ex &spdlog_ex) {
-    std::cout << "日志初始化失败" << boost::diagnostic_information(spdlog_ex.what()) << std::endl;
+    std::cout << "日志初始化失败" << boost::diagnostic_information(spdlog_ex) << std::endl;
   }
   SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}", "ok"));
   SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));

@@ -179,7 +179,7 @@ bool core_set_init::read_file() {
       }
 
     } catch (const nlohmann::json::parse_error &err) {
-      DOODLE_LOG_DEBUG(boost::diagnostic_information(err.what()));
+      DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
       return false;
     }
     return true;

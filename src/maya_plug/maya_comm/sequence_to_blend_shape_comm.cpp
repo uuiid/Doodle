@@ -159,7 +159,7 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
         /// \brief 分别为每一个上下文设置父变换
         ctx.parent_attr(l_path);
       } catch (const maya_error& in) {
-        DOODLE_LOG_INFO("没有找到ue4组 {}", boost::diagnostic_information(in.what()));
+        DOODLE_LOG_INFO("没有找到ue4组 {}", boost::diagnostic_information(in));
       }
     }
   }

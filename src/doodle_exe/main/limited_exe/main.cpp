@@ -13,7 +13,7 @@ extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
   app.command_line_parser(strCmdLine);
   return app.run();
 } catch (const std::exception& err) {
-  std::cout << boost::diagnostic_information(err.what()) << std::endl;
+  std::cout << boost::diagnostic_information(err) << std::endl;
   return 1;
 } catch (...) {
   return 1;

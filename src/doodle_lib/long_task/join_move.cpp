@@ -117,7 +117,7 @@ void join_move::update(
         p_i->future_.get();
         this->succeed();
       } catch (const doodle_error &error) {
-        DOODLE_LOG_ERROR(boost::diagnostic_information(error.what()));
+        DOODLE_LOG_ERROR(boost::diagnostic_information(error));
         this->fail();
         throw;
       }
