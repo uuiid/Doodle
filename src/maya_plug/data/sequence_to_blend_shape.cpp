@@ -37,7 +37,7 @@
 #include <maya/MFloatPointArray.h>
 #include <maya/MMatrixArray.h>
 
-#define DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
+// #define DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
 
 namespace doodle {
 namespace maya_plug {
