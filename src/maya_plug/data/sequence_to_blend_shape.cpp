@@ -287,7 +287,7 @@ void sequence_to_blend_shape::create_blend_shape() {
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
   DOODLE_MAYA_CHICK(l_s);
-  if (l_r.length() == 1) throw_exception(doodle_error{"错误的融合变形节点创建"s});
+  if (l_r.length() != 1) throw_exception(doodle_error{"错误的融合变形节点创建"s});
 
   MSelectionList l_selection_list{};
   l_s = l_selection_list.add(l_r[0], true);
