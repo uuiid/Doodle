@@ -10,12 +10,6 @@
 #include <boost/asio.hpp>
 #include <utility>
 namespace doodle::database_n {
-class sqlite_client {
- public:
-  void open_sqlite(const FSys::path& in_path, bool only_ctx = false);
-  void update_entt();
-  void create_sqlite();
-};
 
 class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;

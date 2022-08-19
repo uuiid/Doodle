@@ -46,7 +46,11 @@ doodle_lib::doodle_lib()
   auto& k_sig = reg->ctx().emplace<core_sig>();
   reg->ctx().emplace<status_info>();
   k_sig.save.connect(2, []() {
-    database_n::sqlite_client{}.update_entt();
+    std::make_shared<database_n::sqlite_file>()
+        ->async_save(g_reg()->ctx().at<::doodle::database_info>().path_,
+                     [](auto) {
+                       DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_);
+                     });
   });
   p_install = this;
 }

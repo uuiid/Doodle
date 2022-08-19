@@ -89,9 +89,7 @@ void main_menu_bar::menu_file() {
         file_dialog::dialog_args{l_ptr}
             .set_title("选择目录"s)
             .set_use_dir())
-        .next<get_input_project_dialog>(l_ptr)
-        .next([]() { database_n::sqlite_client{}
-                         .create_sqlite(); })();
+        .next<get_input_project_dialog>(l_ptr)();
   }
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
@@ -100,7 +98,9 @@ void main_menu_bar::menu_file() {
                                           .set_title("选择文件")
                                           .add_filter(std::string{doodle_config::doodle_db_name}))
         .next([=]() {
-          database_n::sqlite_client{}.open_sqlite(*l_ptr);
+          std::make_shared<database_n::sqlite_file>()->async_open(*l_ptr, [l_ptr](auto) {
+            DOODLE_LOG_INFO("打开项目 {}", *l_ptr);
+          });
         })();
   }
   dear::Menu{"最近的项目"} && []() {
@@ -109,8 +109,9 @@ void main_menu_bar::menu_file() {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
-          database_n::sqlite_client{}.open_sqlite(l_p);
-          ;
+          std::make_shared<database_n::sqlite_file>()->async_open(l_p, [l_p](auto) {
+            DOODLE_LOG_INFO("打开项目 {}", l_p);
+          });
         }
     }
   };

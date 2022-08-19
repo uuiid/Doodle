@@ -23,14 +23,6 @@
 #include <doodle_core/thread_pool/process_message.h>
 namespace doodle::database_n {
 
-void sqlite_client::open_sqlite(const FSys::path& in_path, bool only_ctx) {
-}
-
-void sqlite_client::update_entt() {
-}
-void sqlite_client::create_sqlite() {
-}
-
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   g_reg()->clear();
