@@ -100,19 +100,6 @@ void create_sim_cloth::render() {
   }
 
   if (imgui::Button("制作布料")) {
-    {  /// \brief 检查属性
-      maya_clear_scenes l_clear_scenes{};
-      MSelectionList l_list{};
-      if (l_clear_scenes.duplicate_name(l_list)) {
-        DOODLE_LOG_ERROR("有重复的名称, 请重新命名 {}", l_list)
-        return;
-      }
-      l_list.clear();
-      if (l_clear_scenes.multilateral_surface(l_list)) {
-        DOODLE_LOG_ERROR("有五边面 {}", l_list)
-        return;
-      }
-    }
     for (auto& l_h : p_list) {
       if (!qcloth_shape::chick_low_skin(l_h)) {
         DOODLE_LOG_ERROR("{} 是没有绑定的简模", l_h.get<qcloth_shape_n::maya_obj>().p_name);
