@@ -362,7 +362,8 @@ bool reference_file::find_ref_node() {
     }
   }
   if (p_m_object.isNull()) {
-    DOODLE_LOG_INFO("名称空间 {} 没有引用文件", file_namespace);
+    DOODLE_LOG_INFO("名称空间 {} 没有引用文件,使用名称空间作为引用", file_namespace);
+    path = file_namespace;
     return false;
   }
 
@@ -735,6 +736,11 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
   return l_all_path;
 }
 void reference_file::bake_results(const MTime &in_start, const MTime &in_end) const {
+  if (!has_ue4_group()) {
+    DOODLE_LOG_INFO("{} 没有ue4组", path);
+    return;
+  }
+
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   /**
