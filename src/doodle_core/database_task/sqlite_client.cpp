@@ -59,7 +59,9 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().save_begin();
 
-  return save_impl(in_path);
+  auto l_r = save_impl(in_path);
+  save_end();
+  return l_r;
 }
 
 bsys::error_code file_translator::save_end() {
