@@ -38,12 +38,18 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-  return open_impl(in_path);
+  auto l_r = open_impl(in_path);
+  open_end();
+  return l_r;
 }
 
 bsys::error_code file_translator::open_end() {
   core_set::getSet().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
   g_reg()->ctx().at<core_sig>().project_end_open();
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  k_msg.set_name("完成写入数据");
+  k_msg.set_state(k_msg.success);
+  g_reg()->ctx().erase<process_message>();
   return {};
 }
 
@@ -64,6 +70,7 @@ bsys::error_code file_translator::save_end() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
+  g_reg()->ctx().erase<process_message>();
   return {};
 }
 
