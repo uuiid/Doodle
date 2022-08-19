@@ -262,7 +262,17 @@ void sequence_to_blend_shape::create_blend_shape() {
     l_names.emplace_back(get_node_full_name(ptr->create_mesh_list[l_i]));
   }
 
-  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(ptr->bind_path));
+  MSelectionList l_selection_list_delete_history{};
+  l_s = l_selection_list_delete_history.add(ptr->select_path);
+  DOODLE_MAYA_CHICK(l_s);
+
+  l_s = MGlobal::setActiveSelectionList(l_selection_list_delete_history);
+  DOODLE_MAYA_CHICK(l_s);
+
+  l_s = MGlobal::executeCommand("DeleteHistory");
+  DOODLE_MAYA_CHICK(l_s);
+
+  auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(ptr->select_path));
   //  DOODLE_LOG_INFO("run {}", l_comm);
   MStringArray l_r{};
   l_s = MGlobal::executeCommand(d_str{l_comm}, l_r, false, false);
