@@ -156,12 +156,13 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     return boost::asio::async_initiate<CompletionToken,
                                        void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+          std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(),
-                            [l_s, in_path, l_completion_handler = std::move(completion_handler)]() {
+                            [l_s, in_path, call]() {
                               auto l_r = l_s->open(in_path);
                               boost::asio::post(g_io_context(),
-                                                [l_h = std::move(l_completion_handler), l_r]() {
-                                                  l_h(l_r);
+                                                [call, l_r]() {
+                                                  call(l_r);
                                                 });
                             });
         },
@@ -187,12 +188,13 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     return boost::asio::async_initiate<CompletionToken,
                                        void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+          std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(),
-                            [l_s, in_path, l_completion_handler = std::move(completion_handler)]() {
+                            [l_s, in_path, call]() {
                               auto l_r = l_s->save(in_path);
                               boost::asio::post(g_io_context(),
-                                                [l_h = std::move(l_completion_handler), l_r]() {
-                                                  l_h(l_r);
+                                                [call, l_r]() {
+                                                  call(l_r);
                                                 });
                             });
         },

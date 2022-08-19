@@ -1,6 +1,7 @@
 //
 // Created by TD on 2021/12/13.
 //
+#include <doodle_core/database_task/sqlite_client.h>
 
 #include "reference_comm.h"
 
@@ -299,17 +300,13 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
     if (k_path_M.numChars() > 0) {
       k_path      = k_path_M.asUTF8();
-      auto l_open = std::make_shared<bool>(false);
-      boost::signals2::scoped_connection l_comm{
-          g_reg()->ctx().at<core_sig>().project_end_open.connect([l_open]() {
-            *l_open = true;
-          })};
-      app::Get().load_project(k_path);
+      auto l_open = std::make_shared<database_n::sqlite_file>();
+      l_open
+          ->async_open(k_path,
+                       boost::asio::use_future)
+          .get();
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        while (!*l_open) {
-          app_command_base::Get().poll_one();
-        }
       }
     }
   }
