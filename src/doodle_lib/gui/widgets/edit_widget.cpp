@@ -375,7 +375,7 @@ class add_assets_for_file : public base_render {
   void add_assets(const std::vector<FSys::path> &in_list) {
     image_loader l_image_load{};
     p_list.data = in_list |
-                  ranges::views::transform([&](const FSys::path &in_path) {
+                  ranges::views::transform([&](const FSys::path &in_path) -> entt::handle {
                     auto k_h        = make_handle();
                     auto l_prj_path = g_reg()->ctx().at<project>().p_path;
                     /// \brief 这里使用 lexically_proximate 防止相对路径失败
