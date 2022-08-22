@@ -1,6 +1,6 @@
 #include "MapGenerator/LoadBP.h"
 
-#include "UObjectGlobals.h"
+#include "UObject/UObjectGlobals.h"
 #include "Engine.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"

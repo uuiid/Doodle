@@ -129,7 +129,7 @@ FString SetupLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveMap
 
 	if (Package == nullptr)
 	{
-		Package = CreatePackage(NULL, *PackagePath);
+		Package = CreatePackage(*PackagePath);
 		ShotSequence = NewObject<ULevelSequence>(Package, FName(*LevelSequenceName), RF_Public | RF_Standalone);
 
 		FAssetRegistryModule::AssetCreated(ShotSequence);
@@ -224,7 +224,7 @@ FString SetupBPLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveM
 
 	if (Package == nullptr)
 	{
-		Package = CreatePackage(NULL, *PackagePath);
+		Package = CreatePackage(*PackagePath);
 		ShotSequence = NewObject<ULevelSequence>(Package, FName(*LevelSequenceName), RF_Public | RF_Standalone);
 
 		FAssetRegistryModule::AssetCreated(ShotSequence);
@@ -322,7 +322,7 @@ FString SetupBPLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveM
 
 	if (Package == nullptr)
 	{
-		Package = CreatePackage(NULL, *PackagePath);
+		Package = CreatePackage(*PackagePath);
 		ShotSequence = NewObject<ULevelSequence>(Package, FName(*LevelSequenceName), RF_Public | RF_Standalone);
 
 		FAssetRegistryModule::AssetCreated(ShotSequence);
@@ -416,11 +416,11 @@ void ImportCamera(FString &LevelSequencePath, FString &FbxCameraDir, FString &Sh
 	{
 		FSoftObjectPath LevelSequenceSoftPath = FSoftObjectPath(LevelSequencePath);
 		UObject *LoadedObject = LevelSequenceSoftPath.TryLoad();
+		UAssetEditorSubsystem *AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 		if (LoadedObject != nullptr)
 		{
-			FAssetEditorManager::Get().OpenEditorForAsset(LoadedObject);
+			AssetEditorSubsystem->OpenEditorForAsset(LoadedObject);
 		}
-		UAssetEditorSubsystem *AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 		IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(ShotSequence, true);
 		ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
 		ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();

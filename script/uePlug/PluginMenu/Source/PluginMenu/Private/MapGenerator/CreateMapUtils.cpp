@@ -10,9 +10,11 @@
 #include "IAssetRegistry.h"
 #include "AssetToolsModule.h"
 #include "AssetTools/Public/IAssetTools.h"
-#include "AssetEditorManager.h"
+
+#include "Toolkits/AssetEditorManager.h"
 #include "ContentBrowser/Private/ContentBrowserUtils.h"
-#include "Private/LevelSequenceEditorToolkit.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "ILevelSequenceEditorToolkit.h"
 
 #include "MapGenerator/ConvertPath.h"
 #include "MapGenerator/ImportFbxFileCamera.h"
@@ -70,7 +72,8 @@ TArray<FString> GetSequenceReferencers(FString &MapPackage)
 	FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 	TArray<FName> SoftdReferencers;
-	AssetRegistryModule.Get().GetReferencers(FName(*MapPackage), SoftdReferencers, EAssetRegistryDependencyType::Soft);
+	AssetRegistryModule.Get().GetReferencers(FName(*MapPackage), SoftdReferencers,
+											 UE::AssetRegistry::EDependencyCategory::Package);
 
 	if (SoftdReferencers.Num())
 	{
@@ -128,13 +131,14 @@ TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence *InS
 {
 	TMap<const FGuid, FName> OldActorBindMap;
 
+	UAssetEditorSubsystem *AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 	if (InSequence != nullptr)
 	{
-		FAssetEditorManager::Get().OpenEditorForAsset(InSequence);
+		AssetEditorSubsystem->OpenEditorForAsset(InSequence);
 	}
 
-	IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(InSequence, true);
-	FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+	IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(InSequence, true);
+	ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
 	ISequencer *Sequencer = LevelSequenceEditor->GetSequencer().Get();
 
 	TArrayView<TWeakObjectPtr<UObject>> BindObjects;
@@ -512,9 +516,9 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 			// TArray<FAssetRenameData> RenameAssets;
 			bool bFind = false;
 			if (RenameAssets.Num())
-				for (auto Asset : RenameAssets)
+				for (auto L_Asset : RenameAssets)
 				{
-					FString ExistPackage = Asset.NewPackagePath + "/" + Asset.NewName;
+					FString ExistPackage = L_Asset.NewPackagePath + "/" + L_Asset.NewName;
 					if (ExistPackage == OutPackage)
 					{
 						bFind = true;

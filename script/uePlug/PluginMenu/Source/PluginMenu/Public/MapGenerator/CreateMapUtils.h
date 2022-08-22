@@ -60,7 +60,5 @@ public:
 	static void SaveMaterialsInFolder(FString Folder);
 
 
-public:
-	static TArray<FString> ToSaveClass;
 };
 

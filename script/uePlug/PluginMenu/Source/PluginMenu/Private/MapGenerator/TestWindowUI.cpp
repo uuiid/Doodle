@@ -34,7 +34,7 @@
 #include "Engine/Public/TextureResource.h"
 #include "AssetEditorManager.h"
 #include "Private/LevelSequenceEditorToolkit.h"
-
+#include "ISequencer.h"
 #include "AssetToolsModule.h"
 #include "AssetTools/Public/IAssetTools.h"
 
@@ -45,6 +45,9 @@
 
 #include "MapGenerator/ConvertPath.h"
 #include "MapGenerator/CreateMapUtils.h"
+
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "ILevelSequenceEditorToolkit.h"
 
 //#include "Public/AssetManagerEditorModule.h"
 
@@ -196,13 +199,16 @@ FReply STestWindowUI::CheckReference()
 	//}
 	FString LevelSequencePackage = TextFolder->GetText().ToString();
 	ULevelSequence *Sequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePackage);
+	UAssetEditorSubsystem *AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+
 	if (Sequence != nullptr)
 	{
-		FAssetEditorManager::Get().OpenEditorForAsset(Sequence);
+		AssetEditorSubsystem->OpenEditorForAsset(Sequence);
 	}
 
-	IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(Sequence, true);
-	FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+	IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Sequence, true);
+	ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
+
 	ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
 
 	TArrayView<TWeakObjectPtr<UObject>> BindObjects;
