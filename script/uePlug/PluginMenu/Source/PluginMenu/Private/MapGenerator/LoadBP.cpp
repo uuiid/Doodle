@@ -50,7 +50,7 @@ TArray<USkeletalMesh*> FLoadBP::FindCompatibleMeshes(UAnimSequence* AnimSequence
 	Filter.ClassNames.Add(USkeletalMesh::StaticClass()->GetFName());
 
 	FString SkeletonString = FAssetData(AnimSequence->GetSkeleton()).GetExportTextName();
-	Filter.TagsAndValues.Add(GET_MEMBER_NAME_CHECKED(USkeletalMesh, Skeleton), SkeletonString);
+	Filter.TagsAndValues.Add(TEXT("Skeleton"), SkeletonString);
 
 	TArray<FAssetData> AssetList;
 	AssetRegistryModule.Get().GetAssets(Filter, AssetList);

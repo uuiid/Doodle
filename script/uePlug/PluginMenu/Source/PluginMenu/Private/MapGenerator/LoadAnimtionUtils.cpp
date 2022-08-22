@@ -21,6 +21,11 @@
 #include "MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
 #include "MovieSceneTracks/Public/Sections/MovieScene3DTransformSection.h"
 
+#ifdef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE
+#endif
+
+
 #define LOCTEXT_NAMESPACE "FLoadAnimationUtils"
 
 TArray<USkeletalMesh*> FLoadAnimationUtils::FindCompatibleMeshes(UAnimSequence* AnimSequence)
@@ -33,7 +38,9 @@ TArray<USkeletalMesh*> FLoadAnimationUtils::FindCompatibleMeshes(UAnimSequence* 
 	Filter.ClassNames.Add(USkeletalMesh::StaticClass()->GetFName());
 
 	FString SkeletonString = FAssetData(AnimSequence->GetSkeleton()).GetExportTextName();
-	Filter.TagsAndValues.Add(GET_MEMBER_NAME_CHECKED(USkeletalMesh, Skeleton), SkeletonString);
+	Filter.TagsAndValues.Add(TEXT("Skeleton"), SkeletonString);
+	
+
 
 	TArray<FAssetData> AssetList;
 	AssetRegistryModule.Get().GetAssets(Filter, AssetList);
