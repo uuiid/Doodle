@@ -26,7 +26,7 @@
 #include "MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
 #include "MovieSceneTracks/Public/Sections/MovieScene3DTransformSection.h"
 
-// #include "Private/LevelSequenceEditorToolkit.h"
+#include "ILevelSequenceEditorToolkit.h"
 #include "Toolkits/AssetEditorManager.h"
 
 #include "MapGenerator/ImportFbxFileCamera.h"
@@ -420,9 +420,9 @@ void ImportCamera(FString &LevelSequencePath, FString &FbxCameraDir, FString &Sh
 		{
 			FAssetEditorManager::Get().OpenEditorForAsset(LoadedObject);
 		}
-			
-		IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(ShotSequence, true);
-		FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+		UAssetEditorSubsystem *AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+		IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(ShotSequence, true);
+		ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
 		ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
 
 		TMap<FGuid, FString> ObjectBindingMap;
