@@ -19,7 +19,8 @@
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
 
-void FdoodleEditorModule::StartupModule() {
+void FdoodleEditorModule::StartupModule()
+{
   FdoodleStyle::Initialize();
   FdoodleStyle::ReloadTextures();
 
@@ -47,13 +48,14 @@ void FdoodleEditorModule::StartupModule() {
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
   //    GetTransientPackage(), "doodle_AssetData"));
   // AssetDataSource->Initialize(R"(/doodle/test)");
-  //auto AssetRegistry = &FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
+  // auto AssetRegistry = &FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
   //                          AssetRegistryConstants::ModuleName)
   //                          .Get();
-  //AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
+  // AssetRegistry->AddPath(R"(/../../tmp2/Content/)");
 }
 
-void FdoodleEditorModule::ShutdownModule() {
+void FdoodleEditorModule::ShutdownModule()
+{
   UToolMenus::UnRegisterStartupCallback(this);
 
   UToolMenus::UnregisterOwner(this);
@@ -63,10 +65,11 @@ void FdoodleEditorModule::ShutdownModule() {
   FdoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-  //AssetDataSource.Reset();
+  // AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
-    const FSpawnTabArgs &SpawnTabArgs) {
+    const FSpawnTabArgs &SpawnTabArgs)
+{
   FText WidgetText = FText::Format(
       LOCTEXT("WindowWidgetText",
               "Add code to {0} in {1} to override this window's contents"),
@@ -77,19 +80,21 @@ TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
       // Put your tab content here!
       SNew(SBox)
           .HAlign(HAlign_Left)
-          .VAlign(VAlign_Top)[SNew(DoodleCopyMat)  //这里创建我们自己的界面
+          .VAlign(VAlign_Top)[SNew(DoodleCopyMat) //这里创建我们自己的界面
   ]];
 }
 
-void FdoodleEditorModule::PluginButtonClicked() {
+void FdoodleEditorModule::PluginButtonClicked()
+{
 #if ENGINE_MINOR_VERSION == 27
   FGlobalTabmanager::Get()->TryInvokeTab(doodleTabName);
 #else if ENGINE_MINOR_VERSION < 27
-  FGlobalTabmanager::Get()->InvokeTab(doodleTabName);
+  FGlobalTabmanager::Get()->TryInvokeTab(doodleTabName);
 #endif
 }
 
-void FdoodleEditorModule::RegisterMenus() {
+void FdoodleEditorModule::RegisterMenus()
+{
   // Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
   FToolMenuOwnerScoped OwnerScoped(this);
 
