@@ -4,7 +4,7 @@
 #include "Editor.h"
 #include "LevelSequence/Public/LevelSequence.h"
 
-#include "FileManager.h"
+#include "HAL/FileManager.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
 #include "AssetRegistryModule.h"
 #include "IAssetRegistry.h"
@@ -19,10 +19,10 @@
 
 #define LOCTEXT_NAMESPACE "FCreateMapUtils"
 
-void FCreateMapUtils::SaveLevel(FString& LevelPackagePath, FString& LevelName)
+void FCreateMapUtils::SaveLevel(FString &LevelPackagePath, FString &LevelName)
 {
 
-	//Savel Level
+	// Savel Level
 	FString AbsolutePath = FPaths::ProjectContentDir() + LevelPackagePath;
 	if (!IFileManager::Get().DirectoryExists(*AbsolutePath))
 		IFileManager::Get().MakeDirectory(*AbsolutePath);
@@ -32,9 +32,9 @@ void FCreateMapUtils::SaveLevel(FString& LevelPackagePath, FString& LevelName)
 	FEditorFileUtils::SaveCurrentLevel();
 }
 
-void FCreateMapUtils::AddStreamingLevel(FString& StreamingLevelMapPackage)
+void FCreateMapUtils::AddStreamingLevel(FString &StreamingLevelMapPackage)
 {
-	ULevelStreamingAlwaysLoaded * StreamingLevel = NewObject<ULevelStreamingAlwaysLoaded>(GWorld, NAME_None, RF_Public, nullptr);
+	ULevelStreamingAlwaysLoaded *StreamingLevel = NewObject<ULevelStreamingAlwaysLoaded>(GWorld, NAME_None, RF_Public, nullptr);
 
 	FName SceneMapPackage;
 	if (StreamingLevelMapPackage == "Template_Default")
@@ -50,8 +50,7 @@ void FCreateMapUtils::AddStreamingLevel(FString& StreamingLevelMapPackage)
 			SceneMapPackage = FName("/Engine/Maps/Templates/Template_Default");
 	}
 
-
-	//StreamingLevel Setting
+	// StreamingLevel Setting
 	StreamingLevel->SetWorldAssetByPackageName(SceneMapPackage);
 	StreamingLevel->PackageNameToLoad = SceneMapPackage;
 	StreamingLevel->bLocked = true;
@@ -60,17 +59,15 @@ void FCreateMapUtils::AddStreamingLevel(FString& StreamingLevelMapPackage)
 	GWorld->FlushLevelStreaming();
 }
 
-void FCreateMapUtils::RemoveStreamingLevel(FString& StreamingLevelMapPackage)
+void FCreateMapUtils::RemoveStreamingLevel(FString &StreamingLevelMapPackage)
 {
-	
 }
 
-
-TArray<FString> GetSequenceReferencers(FString& MapPackage)
+TArray<FString> GetSequenceReferencers(FString &MapPackage)
 {
 	TArray<FString> SequenceReferencers;
 
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 	TArray<FName> SoftdReferencers;
 	AssetRegistryModule.Get().GetReferencers(FName(*MapPackage), SoftdReferencers, EAssetRegistryDependencyType::Soft);
@@ -79,17 +76,15 @@ TArray<FString> GetSequenceReferencers(FString& MapPackage)
 	{
 		for (auto Referencer : SoftdReferencers)
 		{
-			ULevelSequence * Sequence = LoadObject<ULevelSequence>(NULL, *Referencer.ToString());
+			ULevelSequence *Sequence = LoadObject<ULevelSequence>(NULL, *Referencer.ToString());
 			if (Sequence != nullptr)
 				SequenceReferencers.Add(Referencer.ToString());
 		}
-
 	}
 	return SequenceReferencers;
-
 }
 
-bool CheckFolderPath(AActor* InActor,FString DestFolder)
+bool CheckFolderPath(AActor *InActor, FString DestFolder)
 {
 	FString ActorFolderPath = InActor->GetFolderPath().ToString();
 
@@ -101,7 +96,7 @@ bool CheckFolderPath(AActor* InActor,FString DestFolder)
 		return true;
 	else if (ActorTopFolder == "None")
 	{
-		AActor * AttachParentActor = InActor->GetAttachParentActor();
+		AActor *AttachParentActor = InActor->GetAttachParentActor();
 		if (AttachParentActor)
 			return CheckFolderPath(AttachParentActor, DestFolder);
 		else
@@ -109,16 +104,13 @@ bool CheckFolderPath(AActor* InActor,FString DestFolder)
 	}
 	else
 		return false;
-
-	
 }
 
-
-TArray<AActor*> FCreateMapUtils::GetActorsInFolder(FString& FolderInWorld)
+TArray<AActor *> FCreateMapUtils::GetActorsInFolder(FString &FolderInWorld)
 {
-	TArray<AActor*> AllActors, FolderActors;
+	TArray<AActor *> AllActors, FolderActors;
 
-	ULevel * CurrentLevel = GWorld->GetCurrentLevel();
+	ULevel *CurrentLevel = GWorld->GetCurrentLevel();
 	AllActors = CurrentLevel->Actors;
 
 	for (auto Actor : AllActors)
@@ -126,13 +118,13 @@ TArray<AActor*> FCreateMapUtils::GetActorsInFolder(FString& FolderInWorld)
 		if (CheckFolderPath(Actor, FolderInWorld))
 		{
 			FolderActors.Add(Actor);
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Actor->GetActorLabel());
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Actor->GetActorLabel());
 		}
 	}
 	return FolderActors;
 }
 
-TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence * InSequence)
+TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence *InSequence)
 {
 	TMap<const FGuid, FName> OldActorBindMap;
 
@@ -141,15 +133,14 @@ TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence * In
 		FAssetEditorManager::Get().OpenEditorForAsset(InSequence);
 	}
 
-	IAssetEditorInstance * AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(InSequence, true);
-	FLevelSequenceEditorToolkit * LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
-	ISequencer *  Sequencer = LevelSequenceEditor->GetSequencer().Get();
+	IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(InSequence, true);
+	FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+	ISequencer *Sequencer = LevelSequenceEditor->GetSequencer().Get();
 
 	TArrayView<TWeakObjectPtr<UObject>> BindObjects;
 
-	UMovieScene *  MyMovieScene = InSequence->MovieScene;
+	UMovieScene *MyMovieScene = InSequence->MovieScene;
 	int32 PosseableCount = MyMovieScene->GetPossessableCount();
-
 
 	for (int i = 0; i < PosseableCount; i++)
 	{
@@ -167,24 +158,23 @@ TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence * In
 	return OldActorBindMap;
 }
 
-
-void FCreateMapUtils::FixActorBinds(ULevelSequence * InSequence, TMap<const FGuid, FName> OldActorBindMap)
+void FCreateMapUtils::FixActorBinds(ULevelSequence *InSequence, TMap<const FGuid, FName> OldActorBindMap)
 {
-	UMovieScene * MyMovieScene = InSequence->MovieScene;
+	UMovieScene *MyMovieScene = InSequence->MovieScene;
 
-	//Check Actor Bind Exist in Sequence 
+	// Check Actor Bind Exist in Sequence
 
 	FString Folder = "VFX";
-	TArray<AActor*> VFXActors = GetActorsInFolder(Folder);
-	//TArray<AActor*> VFXActors = GWorld->GetCurrentLevel()->Actors;
+	TArray<AActor *> VFXActors = GetActorsInFolder(Folder);
+	// TArray<AActor*> VFXActors = GWorld->GetCurrentLevel()->Actors;
 
 	if (VFXActors.Num())
 	{
 		int32 PosseableCount = MyMovieScene->GetPossessableCount();
 		TArray<FGuid> FindBindGuid, NotFindBindGuid;
 
-		//Fix Actor Bind
-		TMap<const FGuid, AActor*> ActorBindMap;
+		// Fix Actor Bind
+		TMap<const FGuid, AActor *> ActorBindMap;
 		for (int32 Index = 0; Index < PosseableCount; Index++)
 		{
 			FMovieScenePossessable Possable = MyMovieScene->GetPossessable(Index);
@@ -201,7 +191,7 @@ void FCreateMapUtils::FixActorBinds(ULevelSequence * InSequence, TMap<const FGui
 							InSequence->BindPossessableObject(Possable.GetGuid(), *Actor, Actor->GetWorld());
 							ActorBindMap.Add(Possable.GetGuid(), Actor);
 							bFind = true;
-							//FindBindGuid.Add(Possable.GetGuid());
+							// FindBindGuid.Add(Possable.GetGuid());
 							break;
 						}
 					}
@@ -211,7 +201,6 @@ void FCreateMapUtils::FixActorBinds(ULevelSequence * InSequence, TMap<const FGui
 					NotFindBindGuid.Add(Possable.GetGuid());
 				}
 			}
-
 		}
 
 		// Fix Componenet Bind
@@ -227,15 +216,15 @@ void FCreateMapUtils::FixActorBinds(ULevelSequence * InSequence, TMap<const FGui
 
 					if (ActorBindMap.Contains(ParentGuid))
 					{
-						AActor * Actor = ActorBindMap[ParentGuid];
-						TSet<UActorComponent*> ActorComponents = Actor->GetComponents();
+						AActor *Actor = ActorBindMap[ParentGuid];
+						TSet<UActorComponent *> ActorComponents = Actor->GetComponents();
 						for (auto it = ActorComponents.CreateIterator(); it; ++it)
 						{
-							UActorComponent * Component = *it;
+							UActorComponent *Component = *it;
 							if (Component->GetName() == Possable.GetName())
 							{
 								InSequence->BindPossessableObject(Possable.GetGuid(), *Component, Actor->GetWorld());
-								//FindBindGuid.Add(Possable.GetGuid());
+								// FindBindGuid.Add(Possable.GetGuid());
 								bFind = true;
 								break;
 							}
@@ -245,33 +234,27 @@ void FCreateMapUtils::FixActorBinds(ULevelSequence * InSequence, TMap<const FGui
 					{
 						NotFindBindGuid.Add(Possable.GetGuid());
 					}
-					
 				}
-
 			}
 		}
 
-		
-		//Remove UnBind Guid
+		// Remove UnBind Guid
 		if (NotFindBindGuid.Num())
 		{
 			for (auto Guid : NotFindBindGuid)
 				MyMovieScene->RemovePossessable(Guid);
 		}
 	}
-
-	
 }
 
-void FCreateMapUtils::CleanUpMap(FString& InMapPackage, FString& InSequencePackage,FString& OutputPath,bool bOverwrite)
+void FCreateMapUtils::CleanUpMap(FString &InMapPackage, FString &InSequencePackage, FString &OutputPath, bool bOverwrite)
 {
 	UEditorLoadingAndSavingUtils::LoadMap(*InMapPackage);
-	
+
 	FString Folder = "VFX";
-	TArray<AActor*> VFXActors = GetActorsInFolder(Folder);
+	TArray<AActor *> VFXActors = GetActorsInFolder(Folder);
 
-
-	//Select Actors In Folder
+	// Select Actors In Folder
 	if (VFXActors.Num())
 	{
 
@@ -287,25 +270,25 @@ void FCreateMapUtils::CleanUpMap(FString& InMapPackage, FString& InSequencePacka
 				OutSequenceName += "_Clean";
 		}
 
-		//Duplicate Sequence Asset
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-		IAssetTools& AssetTool = AssetToolsModule.Get();
+		// Duplicate Sequence Asset
+		FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+		IAssetTools &AssetTool = AssetToolsModule.Get();
 
-		ULevelSequence * InSequence = LoadObject<ULevelSequence>(NULL, *InSequencePackage);
+		ULevelSequence *InSequence = LoadObject<ULevelSequence>(NULL, *InSequencePackage);
 
 		TMap<const FGuid, FName> OldActorBindMap;
 		OldActorBindMap = FCreateMapUtils::GetOldActorBindMap(InSequence);
 
-		ULevelSequence * DuplicateSequence;
+		ULevelSequence *DuplicateSequence;
 		FString DuplicateSequencePackage = "/Game/" + OutputPath + "/" + OutSequenceName;
 		DuplicateSequence = LoadObject<ULevelSequence>(NULL, *DuplicateSequencePackage);
 
 		if (DuplicateSequence == nullptr)
 		{
-			DuplicateSequence = (ULevelSequence*)AssetTool.DuplicateAsset(*OutSequenceName, *("/Game/" + OutputPath), InSequence);
+			DuplicateSequence = (ULevelSequence *)AssetTool.DuplicateAsset(*OutSequenceName, *("/Game/" + OutputPath), InSequence);
 
-			//Unbind Duplicate Sequence to Original Map
-			UMovieScene * InMovieScene = DuplicateSequence->MovieScene;
+			// Unbind Duplicate Sequence to Original Map
+			UMovieScene *InMovieScene = DuplicateSequence->MovieScene;
 			int32 InPosseableCount = InMovieScene->GetPossessableCount();
 			for (int32 Index = 0; Index < InPosseableCount; Index++)
 			{
@@ -314,19 +297,15 @@ void FCreateMapUtils::CleanUpMap(FString& InMapPackage, FString& InSequencePacka
 			}
 		}
 
-		
-
-
-		//Select Actors in VFX Folder
+		// Select Actors in VFX Folder
 		GEditor->SelectNone(false, false, false);
 		for (auto Actor : VFXActors)
 		{
 			GEditor->SelectActor(Actor, true, false, false, false);
 		}
 
-		//Copy And Paste Actors 
+		// Copy And Paste Actors
 		GEditor->CopySelectedActorsToClipboard(GWorld, false, false, false);
-
 
 		FEditorFileUtils::SaveCurrentLevel();
 		GEditor->CreateNewMapForEditing();
@@ -336,30 +315,27 @@ void FCreateMapUtils::CleanUpMap(FString& InMapPackage, FString& InSequencePacka
 
 		SaveLevel(OutputPath, OutMapName);
 
-				
-		//Rebind Dupliacate Sequence to New Map
-		FixActorBinds(DuplicateSequence,OldActorBindMap);
+		// Rebind Dupliacate Sequence to New Map
+		FixActorBinds(DuplicateSequence, OldActorBindMap);
 
 		UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	}
 }
 
-
-
-int32 AutoRename(FString InFileName, int32 i,FString Ext)
+int32 AutoRename(FString InFileName, int32 i, FString Ext)
 {
 	FString File = InFileName + "_" + FString::FromInt(i) + "." + Ext;
 
 	if (!IFileManager::Get().FileExists(*File))
 		return i;
 	else
-		return AutoRename(InFileName, i + 1,Ext);
+		return AutoRename(InFileName, i + 1, Ext);
 }
 
 int32 AutoRename(FAssetRenameData RenameData, int32 i, TArray<FAssetRenameData> RenameAssets)
 {
 	FString InPackage = RenameData.NewPackagePath + "/" + RenameData.NewName + "_" + FString::FromInt(i);
-	
+
 	if (RenameAssets.Num())
 		for (auto Asset : RenameAssets)
 		{
@@ -369,8 +345,6 @@ int32 AutoRename(FAssetRenameData RenameData, int32 i, TArray<FAssetRenameData> 
 		}
 
 	return i;
-
-	
 }
 
 TArray<FString> SetClassToBeSaved()
@@ -421,7 +395,7 @@ TArray<FString> SetClassInParticleFolder()
 TArray<FString> SetClassInMeshFolder()
 {
 	TArray<FString> ClassInFolder;
-	
+
 	ClassInFolder.Add("StaticMesh");
 	ClassInFolder.Add("SkeletalMesh");
 	ClassInFolder.Add("Skeleton");
@@ -430,11 +404,10 @@ TArray<FString> SetClassInMeshFolder()
 	return ClassInFolder;
 }
 
-
 // Save All Material Asset in Folder
- void FCreateMapUtils::SaveMaterialsInFolder(FString Folder)
+void FCreateMapUtils::SaveMaterialsInFolder(FString Folder)
 {
-	UObjectLibrary * ObjectLibrary = UObjectLibrary::CreateLibrary(UObject::StaticClass(), false, GIsEditor);
+	UObjectLibrary *ObjectLibrary = UObjectLibrary::CreateLibrary(UObject::StaticClass(), false, GIsEditor);
 	if (ObjectLibrary)
 	{
 		ObjectLibrary->AddToRoot();
@@ -452,12 +425,11 @@ TArray<FString> SetClassInMeshFolder()
 
 		for (auto Asset : AssetsData)
 		{
-			UObject* Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
+			UObject *Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
 			FString ObjectClass = Object->GetClass()->GetName();
 			int32 ClassIndex;
 			if (ToSaveClass.Find(ObjectClass, ClassIndex))
 				Object->MarkPackageDirty();
-			
 		}
 
 		UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
@@ -467,7 +439,7 @@ TArray<FString> SetClassInMeshFolder()
 void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool bMoveFolder)
 {
 
-	UObjectLibrary * ObjectLibrary = UObjectLibrary::CreateLibrary(UObject::StaticClass(), false, GIsEditor);
+	UObjectLibrary *ObjectLibrary = UObjectLibrary::CreateLibrary(UObject::StaticClass(), false, GIsEditor);
 	if (ObjectLibrary)
 	{
 		ObjectLibrary->AddToRoot();
@@ -479,22 +451,21 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 	TArray<FAssetData> AssetsData;
 	ObjectLibrary->GetAssetDataList(AssetsData);
 
-
 	if (AssetsData.Num())
 	{
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-		IAssetTools& AssetTool = AssetToolsModule.Get();
-		
+		FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+		IAssetTools &AssetTool = AssetToolsModule.Get();
+
 		TArray<FAssetRenameData> RenameAssets;
 		for (auto Asset : AssetsData)
 		{
-			UObject* Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
+			UObject *Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
 			FString Package = Asset.PackageName.ToString();
 
 			FString OutPath, OutPackage;
 
 			FString ObjectClass = Object->GetClass()->GetName();
-			
+
 			if (bMoveFolder)
 			{
 				OutPath = "/Game/" + OutFolder + "/";
@@ -533,13 +504,12 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 					OutPackage = OutPath + FConvertPath::GetPackageName(Package) + "_" + FString::FromInt(FileVersion);
 				}
 			}
-			
+
 			FString OutPackageName = FConvertPath::GetPackageName(OutPackage);
 			FString OutPackagePath = FConvertPath::GetPackagePath(OutPackage);
 
-		
 			FAssetRenameData RenameData = FAssetRenameData(Object, *OutPackagePath, *OutPackageName);
-			//TArray<FAssetRenameData> RenameAssets;
+			// TArray<FAssetRenameData> RenameAssets;
 			bool bFind = false;
 			if (RenameAssets.Num())
 				for (auto Asset : RenameAssets)
@@ -551,7 +521,7 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 						break;
 					}
 				}
-			
+
 			if (bFind)
 			{
 				int32 Version = AutoRename(RenameData, 0, RenameAssets);
@@ -559,9 +529,8 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 				RenameData = FAssetRenameData(Object, *OutPackagePath, *NewOutPackageName);
 			}
 
-
 			RenameAssets.Add(RenameData);
-			//AssetTool.RenameAssets(RenameAssets);
+			// AssetTool.RenameAssets(RenameAssets);
 		}
 		AssetTool.RenameAssets(RenameAssets);
 	}
@@ -569,7 +538,7 @@ void FCreateMapUtils::MoveAssetInFolder(FString Folder, FString OutFolder, bool 
 
 void FCreateMapUtils::FixRedirectorsInFolder(FString Folder)
 {
-	UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UObjectRedirector::StaticClass(), false, GIsEditor);
+	UObjectLibrary *AnimLibrary = UObjectLibrary::CreateLibrary(UObjectRedirector::StaticClass(), false, GIsEditor);
 	if (AnimLibrary)
 	{
 		AnimLibrary->AddToRoot();
@@ -581,25 +550,23 @@ void FCreateMapUtils::FixRedirectorsInFolder(FString Folder)
 	TArray<FAssetData> AssetsData;
 	AnimLibrary->GetAssetDataList(AssetsData);
 
-	TArray<UObjectRedirector*> ObjectRedirectors;
+	TArray<UObjectRedirector *> ObjectRedirectors;
 
-	//Find and Fix up Object Radirector 
+	// Find and Fix up Object Radirector
 	if (AssetsData.Num())
 	{
 		for (auto Asset : AssetsData)
 		{
 
-			UObjectRedirector* Redirector = LoadObject<UObjectRedirector>(NULL, *Asset.ToSoftObjectPath().ToString());
+			UObjectRedirector *Redirector = LoadObject<UObjectRedirector>(NULL, *Asset.ToSoftObjectPath().ToString());
 			ObjectRedirectors.Add(Redirector);
 		}
 
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-		IAssetTools& AssetTool = AssetToolsModule.Get();
+		FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+		IAssetTools &AssetTool = AssetToolsModule.Get();
 		AssetTool.FixupReferencers(ObjectRedirectors);
 	}
 }
-
-
 
 void FCreateMapUtils::MoveAssetInCurrentFolder(FString Folder, FString OutFolder, bool bMoveFolder)
 {
@@ -619,7 +586,7 @@ void FCreateMapUtils::MoveAssetInCurrentFolder(FString Folder, FString OutFolder
 				AbsoluteFilePath = AbsolutePath + "/" + File;
 			FString Package = FConvertPath::ToRelativePath(AbsoluteFilePath, false);
 
-			UObject * Object = LoadObject<UObject>(NULL, *Package);
+			UObject *Object = LoadObject<UObject>(NULL, *Package);
 
 			FString OutPath, OutPackage;
 			if (bMoveFolder)
@@ -656,10 +623,9 @@ void FCreateMapUtils::MoveAssetInCurrentFolder(FString Folder, FString OutFolder
 				FString OutFile = FConvertPath::ToAbsolutePath(OutPackage, true, Ext);
 				if (IFileManager::Get().FileExists(*OutFile))
 				{
-					int32 FileVersion = AutoRename(FConvertPath::ToAbsolutePath(OutPackage), 0,Ext);
+					int32 FileVersion = AutoRename(FConvertPath::ToAbsolutePath(OutPackage), 0, Ext);
 					OutPackage = OutPath + FConvertPath::GetPackageName(Package) + "_" + FString::FromInt(FileVersion);
 				}
-
 			}
 
 			FString OutPackageName = FConvertPath::GetPackageName(OutPackage);
@@ -667,15 +633,12 @@ void FCreateMapUtils::MoveAssetInCurrentFolder(FString Folder, FString OutFolder
 
 			FAssetRenameData RenameData = FAssetRenameData(Object, *OutPackagePath, *OutPackageName);
 			RenameAssets.Add(RenameData);
-
 		}
-
 
 	if (RenameAssets.Num())
 	{
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-		IAssetTools& AssetTool = AssetToolsModule.Get();
+		FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+		IAssetTools &AssetTool = AssetToolsModule.Get();
 		AssetTool.RenameAssets(RenameAssets);
 	}
-
 }

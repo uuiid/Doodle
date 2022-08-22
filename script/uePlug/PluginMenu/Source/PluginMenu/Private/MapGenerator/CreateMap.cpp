@@ -5,7 +5,7 @@
 #include "Engine.h"
 #include "Editor.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
-#include "FileManager.h"
+#include "HAL/FileManager.h"
 #include "Engine/LevelStreamingAlwaysLoaded.h"
 #include "LevelSequence/Public/LevelSequence.h"
 #include "MovieScene.h"
@@ -26,18 +26,18 @@
 #include "MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
 #include "MovieSceneTracks/Public/Sections/MovieScene3DTransformSection.h"
 
-#include "Private/LevelSequenceEditorToolkit.h"
-#include "AssetEditorManager.h"
+// #include "Private/LevelSequenceEditorToolkit.h"
+#include "Toolkits/AssetEditorManager.h"
 
-#include "ImportFbxFileCamera.h"
+#include "MapGenerator/ImportFbxFileCamera.h"
 
 #define LOCTEXT_NAMESPACE "FCreateMap"
 
-//Create Empty Level and Save
-void SaveLevel(FString& SaveMapPath, FString& LevelMap)
+// Create Empty Level and Save
+void SaveLevel(FString &SaveMapPath, FString &LevelMap)
 {
 
-	//Savel Level
+	// Savel Level
 	FString FullPath = FPaths::ProjectContentDir() + SaveMapPath;
 	if (!IFileManager::Get().DirectoryExists(*FullPath))
 		IFileManager::Get().MakeDirectory(*FullPath);
@@ -47,12 +47,10 @@ void SaveLevel(FString& SaveMapPath, FString& LevelMap)
 	FEditorFileUtils::SaveCurrentLevel();
 }
 
-
-
-//Add StreamingLevel
-void AddStreamingLevel(FString& LevelStreamingMap)
+// Add StreamingLevel
+void AddStreamingLevel(FString &LevelStreamingMap)
 {
-	ULevelStreamingAlwaysLoaded * StreamingLevel = NewObject<ULevelStreamingAlwaysLoaded>(GWorld, NAME_None, RF_Public, nullptr);
+	ULevelStreamingAlwaysLoaded *StreamingLevel = NewObject<ULevelStreamingAlwaysLoaded>(GWorld, NAME_None, RF_Public, nullptr);
 
 	FName SceneMap;
 	if (LevelStreamingMap == "Template_Default")
@@ -66,31 +64,28 @@ void AddStreamingLevel(FString& LevelStreamingMap)
 		else
 			SceneMap = FName("/Engine/Maps/Templates/Template_Default");
 	}
-		
 
-	//StreamingLevel Setting
+	// StreamingLevel Setting
 	StreamingLevel->SetWorldAssetByPackageName(SceneMap);
 	StreamingLevel->PackageNameToLoad = SceneMap;
 	StreamingLevel->bLocked = true;
-	
+
 	GWorld->AddStreamingLevel(StreamingLevel);
 	GWorld->FlushLevelStreaming();
 }
 
-
-void AddSkeletalMeshActor(ULevelSequence* ShotSequence, UAnimSequence* AnimSequence, FFrameNumber MySequenceStart)
+void AddSkeletalMeshActor(ULevelSequence *ShotSequence, UAnimSequence *AnimSequence, FFrameNumber MySequenceStart)
 {
-	UMovieScene * MyMovieScene = ShotSequence->GetMovieScene();
+	UMovieScene *MyMovieScene = ShotSequence->GetMovieScene();
 
-	//Create SkeletalMesh Actor
-	ASkeletalMeshActor* SkeletalMeshActor = Cast<ASkeletalMeshActor>(GEditor->AddActor(GWorld->GetCurrentLevel(), ASkeletalMeshActor::StaticClass(), FTransform(FVector(0))));
+	// Create SkeletalMesh Actor
+	ASkeletalMeshActor *SkeletalMeshActor = Cast<ASkeletalMeshActor>(GEditor->AddActor(GWorld->GetCurrentLevel(), ASkeletalMeshActor::StaticClass(), FTransform(FVector(0))));
 	SkeletalMeshActor->SetActorLabel(AnimSequence->GetName());
 	SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(AnimSequence->GetSkeleton()->GetPreviewMesh(true));
 	SkeletalMeshActor->GetSkeletalMeshComponent()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	SkeletalMeshActor->GetSkeletalMeshComponent()->AnimationData.AnimToPlay = AnimSequence;
 
-
-	//Check Actor Bind Exist in Sequence 
+	// Check Actor Bind Exist in Sequence
 	int32 BindPosseableCount = MyMovieScene->GetPossessableCount();
 	bool bExist = false;
 	for (int32 Index = 0; Index < BindPosseableCount; Index++)
@@ -103,36 +98,34 @@ void AddSkeletalMeshActor(ULevelSequence* ShotSequence, UAnimSequence* AnimSeque
 		}
 	}
 
-
-	//Add SkeletalMeshActor to LevelSequence
+	// Add SkeletalMeshActor to LevelSequence
 	if (!bExist)
 	{
 		FGuid SkeltalMeshActorGuid = MyMovieScene->AddPossessable(SkeletalMeshActor->GetActorLabel(), SkeletalMeshActor->GetClass());
 		ShotSequence->BindPossessableObject(SkeltalMeshActorGuid, *SkeletalMeshActor, SkeletalMeshActor->GetWorld());
 
-		UMovieSceneSkeletalAnimationTrack * AnimTrack = MyMovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(SkeltalMeshActorGuid);
-		UAnimSequenceBase *AnimSequenceBase = (UAnimSequenceBase*)AnimSequence;
+		UMovieSceneSkeletalAnimationTrack *AnimTrack = MyMovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(SkeltalMeshActorGuid);
+		UAnimSequenceBase *AnimSequenceBase = (UAnimSequenceBase *)AnimSequence;
 		AnimTrack->AddNewAnimation(MySequenceStart, AnimSequenceBase);
 
-		UMovieScene3DTransformTrack * SkeletalMeshActorTransTrack = MyMovieScene->AddTrack<UMovieScene3DTransformTrack>(SkeltalMeshActorGuid);
+		UMovieScene3DTransformTrack *SkeletalMeshActorTransTrack = MyMovieScene->AddTrack<UMovieScene3DTransformTrack>(SkeltalMeshActorGuid);
 		UMovieScene3DTransformSection *SkelMeshActorTransSection = Cast<UMovieScene3DTransformSection>(SkeletalMeshActorTransTrack->CreateNewSection());
 		SkelMeshActorTransSection->SetRange(TRange<FFrameNumber>::All());
 		SkeletalMeshActorTransTrack->AddSection(*SkelMeshActorTransSection);
 	}
 }
 
-
-FString SetupLevelSequence(FString& ProjectPath, FString& Shot, FString& SaveMapPath, FString& LevelMap)
+FString SetupLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveMapPath, FString &LevelMap)
 {
 
 	FString LevelSequenceName = "Seq_" + LevelMap;
 	FString PackagePath = "/Game/" + SaveMapPath + "/" + LevelSequenceName;
 	FString PackgeSavePath = FPaths::ProjectContentDir() + "/" + SaveMapPath + "/" + LevelSequenceName;
 
-	//ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
+	// ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-	UPackage * Package = LoadPackage(NULL, *PackagePath, LOAD_None);
-	ULevelSequence * ShotSequence;
+	UPackage *Package = LoadPackage(NULL, *PackagePath, LOAD_None);
+	ULevelSequence *ShotSequence;
 
 	if (Package == nullptr)
 	{
@@ -148,10 +141,8 @@ FString SetupLevelSequence(FString& ProjectPath, FString& Shot, FString& SaveMap
 	else
 		ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-
-
-	//Load AnimSequecne From Anim Directory in ProjectPath
-	UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
+	// Load AnimSequecne From Anim Directory in ProjectPath
+	UObjectLibrary *AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
 	if (AnimLibrary)
 	{
 		AnimLibrary->AddToRoot();
@@ -163,25 +154,25 @@ FString SetupLevelSequence(FString& ProjectPath, FString& Shot, FString& SaveMap
 	TArray<FAssetData> AnimAssetsData;
 	AnimLibrary->GetAssetDataList(AnimAssetsData);
 
-	//Get Animaton NumFrames
+	// Get Animaton NumFrames
 	int32 SequenceLength = 0;
 	if (AnimAssetsData.Num())
 	{
 		for (auto Anim : AnimAssetsData)
 		{
 			FString AnimSoftPath = Anim.ObjectPath.ToString();
-			UAnimSequence * AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
-			int32 Max = AnimSequenceTemp->NumFrames;
+			UAnimSequence *AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
+			// int32 Max = AnimSequenceTemp->NumFrames;
+			int32 Max = AnimSequenceTemp->GetNumberOfFrames();
 			if (Max > SequenceLength)
-				SequenceLength = AnimSequenceTemp->NumFrames;
+				SequenceLength = AnimSequenceTemp->GetNumberOfFrames();
 		}
 	}
 	else
 		SequenceLength = 200;
 
-
 	// LevelSequence Setup
-	UMovieScene * MyMovieScene = ShotSequence->GetMovieScene();
+	UMovieScene *MyMovieScene = ShotSequence->GetMovieScene();
 	int32 MySeqStart = 71;
 	int32 MySeqEnd = MySeqStart + SequenceLength - 1;
 
@@ -195,51 +186,47 @@ FString SetupLevelSequence(FString& ProjectPath, FString& Shot, FString& SaveMap
 	FFrameNumber MySequenceEnd = MyTickResolution.Numerator * MySeqEnd / 25;
 	TRange<FFrameNumber> MySectionRange = TRange<FFrameNumber>(MySequenceStart, MySequenceEnd);
 
-	//MyMovieScene->SetSelectionRange(MySectionRange);
+	// MyMovieScene->SetSelectionRange(MySectionRange);
 	MyMovieScene->SetPlaybackRangeLocked(false);
 	MyMovieScene->SetPlaybackRange(MySequenceStart, (MySequenceEnd - MySequenceStart).Value, true);
 
-
-	//Add SkeletalMesh Actor to LevelSequence
+	// Add SkeletalMesh Actor to LevelSequence
 	for (auto AnimAsset : AnimAssetsData)
 	{
 		FString AnimPath = AnimAsset.ObjectPath.ToString();
-		UAnimSequence * AnimSequence = LoadObject<UAnimSequence>(NULL, *AnimPath);
+		UAnimSequence *AnimSequence = LoadObject<UAnimSequence>(NULL, *AnimPath);
 
 		if (AnimSequence)
 		{
 			AddSkeletalMeshActor(ShotSequence, AnimSequence, MySequenceStart);
 		}
-
-
 	}
 
-	//Save DirtyPackage
+	// Save DirtyPackage
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
 	return PackagePath;
-
 }
 
-
-//Create Empty Level Sequence
-FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMapPath, FString& LevelMap,TArray<TSharedPtr<FString>> LoadedBP)
+// Create Empty Level Sequence
+FString SetupBPLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveMapPath, FString &LevelMap, TArray<TSharedPtr<FString>> LoadedBP)
 {
 
-	FString LevelSequenceName ="Seq_" + LevelMap;
+	FString LevelSequenceName = "Seq_" + LevelMap;
 	FString PackagePath = "/Game/" + SaveMapPath + "/" + LevelSequenceName;
 	FString PackgeSavePath = FPaths::ProjectContentDir() + "/" + SaveMapPath + "/" + LevelSequenceName;
 
-	//ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
+	// ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-	UPackage * Package = LoadPackage(NULL, *PackagePath, LOAD_None);;
-	ULevelSequence * ShotSequence;
+	UPackage *Package = LoadPackage(NULL, *PackagePath, LOAD_None);
+	;
+	ULevelSequence *ShotSequence;
 
 	if (Package == nullptr)
 	{
 		Package = CreatePackage(NULL, *PackagePath);
 		ShotSequence = NewObject<ULevelSequence>(Package, FName(*LevelSequenceName), RF_Public | RF_Standalone);
-		
+
 		FAssetRegistryModule::AssetCreated(ShotSequence);
 
 		ShotSequence->Initialize();
@@ -249,10 +236,8 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	else
 		ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-	
-
-	//Load AnimSequecne From Anim Directory in ProjectPath
-	UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
+	// Load AnimSequecne From Anim Directory in ProjectPath
+	UObjectLibrary *AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
 	if (AnimLibrary)
 	{
 		AnimLibrary->AddToRoot();
@@ -264,30 +249,29 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	TArray<FAssetData> AnimAssetsData;
 	AnimLibrary->GetAssetDataList(AnimAssetsData);
 
-	//Get Animaton NumFrames
+	// Get Animaton NumFrames
 	int32 SequenceLength = 0;
 	if (AnimAssetsData.Num())
 	{
 		for (auto Anim : AnimAssetsData)
 		{
 			FString AnimSoftPath = Anim.ObjectPath.ToString();
-			UAnimSequence * AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
-			int32 Max = AnimSequenceTemp->NumFrames;
+			UAnimSequence *AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
+			int32 Max = AnimSequenceTemp->GetNumberOfFrames();
 			if (Max > SequenceLength)
-				SequenceLength = AnimSequenceTemp->NumFrames;
+				SequenceLength = AnimSequenceTemp->GetNumberOfFrames();
 		}
 	}
 	else
 		SequenceLength = 200;
 
-
 	// LevelSequence Setup
-	UMovieScene * MyMovieScene = ShotSequence->GetMovieScene();
+	UMovieScene *MyMovieScene = ShotSequence->GetMovieScene();
 	int32 MySeqStart = 71;
 	int32 MySeqEnd = MySeqStart + SequenceLength - 1;
 
 	MyMovieScene->SetDisplayRate(FFrameRate(25, 1));
-	MyMovieScene->SetWorkingRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10)/ 25);
+	MyMovieScene->SetWorkingRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10) / 25);
 	MyMovieScene->SetViewRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10) / 25);
 
 	FFrameRate MyTickResolution = MyMovieScene->GetTickResolution();
@@ -296,52 +280,51 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	FFrameNumber MySequenceEnd = MyTickResolution.Numerator * MySeqEnd / 25;
 	TRange<FFrameNumber> MySectionRange = TRange<FFrameNumber>(MySequenceStart, MySequenceEnd);
 
-	//MyMovieScene->SetSelectionRange(MySectionRange);
+	// MyMovieScene->SetSelectionRange(MySectionRange);
 	MyMovieScene->SetPlaybackRangeLocked(false);
 	MyMovieScene->SetPlaybackRange(MySequenceStart, (MySequenceEnd - MySequenceStart).Value, true);
 
 	if (AnimAssetsData.Num())
 	{
-		//Add Skeletal Mesh Actors
-		TArray<UAnimSequence*> SkeletalMeshAnims = FLoadBP::GetSkeletalMeshAnims(AnimAssetsData, LoadedBP);
+		// Add Skeletal Mesh Actors
+		TArray<UAnimSequence *> SkeletalMeshAnims = FLoadBP::GetSkeletalMeshAnims(AnimAssetsData, LoadedBP);
 		for (auto AnimSequence : SkeletalMeshAnims)
 		{
 			AddSkeletalMeshActor(ShotSequence, AnimSequence, MySequenceStart);
 		}
 
-		//Add BP Actors
+		// Add BP Actors
 		for (auto BP : LoadedBP)
 		{
-			UClass * BPClass = FLoadBP::GetBPClass(*BP);
-			TArray<TArray<UAnimSequence*>> BPAnims = FLoadBP::GetBPAnims(AnimAssetsData, BPClass);
+			UClass *BPClass = FLoadBP::GetBPClass(*BP);
+			TArray<TArray<UAnimSequence *>> BPAnims = FLoadBP::GetBPAnims(AnimAssetsData, BPClass);
 			FLoadBP::AddBPActor(BPAnims, ShotSequence, BPClass);
 		}
 	}
-	//Save DirtyPackage
+	// Save DirtyPackage
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
 	return PackagePath;
-
 }
 
-
-FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMapPath, FString& LevelMap,TArray<TSharedPtr<struct FBPInfo>> AllBPInfo)
+FString SetupBPLevelSequence(FString &ProjectPath, FString &Shot, FString &SaveMapPath, FString &LevelMap, TArray<TSharedPtr<struct FBPInfo>> AllBPInfo)
 {
 
-	FString LevelSequenceName ="Seq_" + LevelMap;
+	FString LevelSequenceName = "Seq_" + LevelMap;
 	FString PackagePath = "/Game/" + SaveMapPath + "/" + LevelSequenceName;
 	FString PackgeSavePath = FPaths::ProjectContentDir() + "/" + SaveMapPath + "/" + LevelSequenceName;
 
-	//ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
+	// ULevelSequence * ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-	UPackage * Package = LoadPackage(NULL, *PackagePath, LOAD_None);;
-	ULevelSequence * ShotSequence;
+	UPackage *Package = LoadPackage(NULL, *PackagePath, LOAD_None);
+	;
+	ULevelSequence *ShotSequence;
 
 	if (Package == nullptr)
 	{
 		Package = CreatePackage(NULL, *PackagePath);
 		ShotSequence = NewObject<ULevelSequence>(Package, FName(*LevelSequenceName), RF_Public | RF_Standalone);
-		
+
 		FAssetRegistryModule::AssetCreated(ShotSequence);
 
 		ShotSequence->Initialize();
@@ -351,10 +334,8 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	else
 		ShotSequence = LoadObject<ULevelSequence>(NULL, *PackagePath);
 
-	
-
-	//Load AnimSequecne From Anim Directory in ProjectPath
-	UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
+	// Load AnimSequecne From Anim Directory in ProjectPath
+	UObjectLibrary *AnimLibrary = UObjectLibrary::CreateLibrary(UAnimSequence::StaticClass(), false, GIsEditor);
 	if (AnimLibrary)
 	{
 		AnimLibrary->AddToRoot();
@@ -366,30 +347,29 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	TArray<FAssetData> AnimAssetsData;
 	AnimLibrary->GetAssetDataList(AnimAssetsData);
 
-	//Get Animaton NumFrames
+	// Get Animaton NumFrames
 	int32 SequenceLength = 0;
 	if (AnimAssetsData.Num())
 	{
 		for (auto Anim : AnimAssetsData)
 		{
 			FString AnimSoftPath = Anim.ObjectPath.ToString();
-			UAnimSequence * AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
-			int32 Max = AnimSequenceTemp->NumFrames;
+			UAnimSequence *AnimSequenceTemp = LoadObject<UAnimSequence>(NULL, *AnimSoftPath);
+			int32 Max = AnimSequenceTemp->GetNumberOfFrames();
 			if (Max > SequenceLength)
-				SequenceLength = AnimSequenceTemp->NumFrames;
+				SequenceLength = AnimSequenceTemp->GetNumberOfFrames();
 		}
 	}
 	else
 		SequenceLength = 200;
 
-
 	// LevelSequence Setup
-	UMovieScene * MyMovieScene = ShotSequence->GetMovieScene();
+	UMovieScene *MyMovieScene = ShotSequence->GetMovieScene();
 	int32 MySeqStart = 71;
 	int32 MySeqEnd = MySeqStart + SequenceLength - 1;
 
 	MyMovieScene->SetDisplayRate(FFrameRate(25, 1));
-	MyMovieScene->SetWorkingRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10)/ 25);
+	MyMovieScene->SetWorkingRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10) / 25);
 	MyMovieScene->SetViewRange(static_cast<float>(MySeqStart) / 25, static_cast<float>(MySeqEnd + 10) / 25);
 
 	FFrameRate MyTickResolution = MyMovieScene->GetTickResolution();
@@ -398,56 +378,52 @@ FString SetupBPLevelSequence(FString& ProjectPath,FString& Shot,FString& SaveMap
 	FFrameNumber MySequenceEnd = MyTickResolution.Numerator * MySeqEnd / 25;
 	TRange<FFrameNumber> MySectionRange = TRange<FFrameNumber>(MySequenceStart, MySequenceEnd);
 
-	//MyMovieScene->SetSelectionRange(MySectionRange);
+	// MyMovieScene->SetSelectionRange(MySectionRange);
 	MyMovieScene->SetPlaybackRangeLocked(false);
 	MyMovieScene->SetPlaybackRange(MySequenceStart, (MySequenceEnd - MySequenceStart).Value, true);
-
 
 	if (AnimAssetsData.Num())
 	{
 		TArray<TSharedPtr<FString>> LoadedBP;
-		//Add BP Actors
+		// Add BP Actors
 		for (auto BPInfo : AllBPInfo)
 			if (BPInfo->bLoaded)
 			{
 				LoadedBP.Add(MakeShareable(new FString(BPInfo->BPPackage)));
-				UClass * BPClass = FLoadBP::GetBPClass(BPInfo->BPPackage);
-				TArray<TArray<UAnimSequence*>> BPAnims = FLoadBP::GetBPAnims(AnimAssetsData, BPClass);
+				UClass *BPClass = FLoadBP::GetBPClass(BPInfo->BPPackage);
+				TArray<TArray<UAnimSequence *>> BPAnims = FLoadBP::GetBPAnims(AnimAssetsData, BPClass);
 				FLoadBP::AddBPActor(BPAnims, ShotSequence, BPClass, BPInfo->StartFrame);
 			}
 
-		//Add Skeletal Mesh Actors
+		// Add Skeletal Mesh Actors
 
-		TArray<UAnimSequence*> SkeletalMeshAnims = FLoadBP::GetSkeletalMeshAnims(AnimAssetsData, LoadedBP);
+		TArray<UAnimSequence *> SkeletalMeshAnims = FLoadBP::GetSkeletalMeshAnims(AnimAssetsData, LoadedBP);
 		for (auto AnimSequence : SkeletalMeshAnims)
 		{
 			AddSkeletalMeshActor(ShotSequence, AnimSequence, MySequenceStart);
 		}
-
-		
 	}
-	//Save DirtyPackage
+	// Save DirtyPackage
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
 	return PackagePath;
-
 }
 
-void ImportCamera(FString& LevelSequencePath, FString& FbxCameraDir, FString& Shot)
+void ImportCamera(FString &LevelSequencePath, FString &FbxCameraDir, FString &Shot)
 {
 	ULevelSequence *ShotSequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePath);
 	if (ShotSequence != nullptr)
 	{
 		FSoftObjectPath LevelSequenceSoftPath = FSoftObjectPath(LevelSequencePath);
-		UObject* LoadedObject = LevelSequenceSoftPath.TryLoad();
+		UObject *LoadedObject = LevelSequenceSoftPath.TryLoad();
 		if (LoadedObject != nullptr)
 		{
 			FAssetEditorManager::Get().OpenEditorForAsset(LoadedObject);
 		}
-
-		IAssetEditorInstance * AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(ShotSequence, true);
-		FLevelSequenceEditorToolkit * LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
-		ISequencer *  ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
+			
+		IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(ShotSequence, true);
+		FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+		ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
 
 		TMap<FGuid, FString> ObjectBindingMap;
 
@@ -469,9 +445,7 @@ void ImportCamera(FString& LevelSequencePath, FString& FbxCameraDir, FString& Sh
 	}
 }
 
-
-
-void FCreateMap::CreateMap(FString& ProjectPath, FString& FbxCameraDir, FString& Shot, FString& LevelMap, FString& LevelStreamingMap, bool IsSaveInMap)
+void FCreateMap::CreateMap(FString &ProjectPath, FString &FbxCameraDir, FString &Shot, FString &LevelMap, FString &LevelStreamingMap, bool IsSaveInMap)
 {
 
 	GEditor->CreateNewMapForEditing();
@@ -486,15 +460,14 @@ void FCreateMap::CreateMap(FString& ProjectPath, FString& FbxCameraDir, FString&
 
 	AddStreamingLevel(LevelStreamingMap);
 
-	FString  LevelSequecnePath = SetupLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap);
+	FString LevelSequecnePath = SetupLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap);
 
 	ImportCamera(LevelSequecnePath, FbxCameraDir, Shot);
 
 	SaveLevel(SaveMapPath, LevelMap);
 }
 
-
-void FCreateMap::CreateBPMap(FString& ProjectPath, FString& FbxCameraDir, FString& Shot ,FString& LevelMap, FString& LevelStreamingMap, bool IsSaveInMap, TArray<TSharedPtr<FString>> LoadedBP)
+void FCreateMap::CreateBPMap(FString &ProjectPath, FString &FbxCameraDir, FString &Shot, FString &LevelMap, FString &LevelStreamingMap, bool IsSaveInMap, TArray<TSharedPtr<FString>> LoadedBP)
 {
 
 	GEditor->CreateNewMapForEditing();
@@ -509,14 +482,14 @@ void FCreateMap::CreateBPMap(FString& ProjectPath, FString& FbxCameraDir, FStrin
 
 	AddStreamingLevel(LevelStreamingMap);
 
-	FString  LevelSequecnePackage = SetupBPLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap, LoadedBP);
-	
+	FString LevelSequecnePackage = SetupBPLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap, LoadedBP);
+
 	ImportCamera(LevelSequecnePackage, FbxCameraDir, Shot);
 
 	SaveLevel(SaveMapPath, LevelMap);
 }
 
-void FCreateMap::CreateBPMap(FString& ProjectPath, FString& FbxCameraDir, FString& Shot, FString& LevelMap, FString& LevelStreamingMap, bool IsSaveInMap, TArray<TSharedPtr<struct FBPInfo>> AllBPInfo)
+void FCreateMap::CreateBPMap(FString &ProjectPath, FString &FbxCameraDir, FString &Shot, FString &LevelMap, FString &LevelStreamingMap, bool IsSaveInMap, TArray<TSharedPtr<struct FBPInfo>> AllBPInfo)
 {
 
 	GEditor->CreateNewMapForEditing();
@@ -531,14 +504,13 @@ void FCreateMap::CreateBPMap(FString& ProjectPath, FString& FbxCameraDir, FStrin
 
 	AddStreamingLevel(LevelStreamingMap);
 
-	FString  LevelSequecnePackage = SetupBPLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap, AllBPInfo);
+	FString LevelSequecnePackage = SetupBPLevelSequence(ProjectPath, Shot, SaveMapPath, LevelMap, AllBPInfo);
 
 	ImportCamera(LevelSequecnePackage, FbxCameraDir, Shot);
 
 	SaveLevel(SaveMapPath, LevelMap);
 }
-
 
 #undef LOCTEXT_NAMESPACE
 
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

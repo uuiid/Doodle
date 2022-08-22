@@ -1,6 +1,6 @@
 #include "MapGenerator/ConvertPath.h"
 
-#include "FileManager.h"
+#include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 
 #define LOCTEXT_NAMESPACE "FConvertPath"
@@ -40,7 +40,7 @@ FString FConvertPath::ToRelativePath(FString &AbsoluteFilePath, bool WithExt)
 	{
 		if (AbsoluteFilePath.Contains(FPaths::ProjectContentDir()))
 		{
-			FString FilePath = FPaths::GetPath(AbsoluteFilePath) + "/";
+			FilePath = FPaths::GetPath(AbsoluteFilePath) + "/";
 			if (WithExt)
 				FileName = FPaths::GetCleanFilename(AbsoluteFilePath);
 			else

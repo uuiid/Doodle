@@ -1,7 +1,7 @@
 #include "MapGenerator/TestWindowUI.h"
 
-#include "SEditableText.h"
-#include "SButton.h"
+#include "Widgets/Input/SEditableText.h"
+#include "Widgets/Input/SButton.h"
 #include "Input/Reply.h"
 
 #include "AssetToolsModule.h"

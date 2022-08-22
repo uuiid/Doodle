@@ -19,8 +19,7 @@ public:
 
 	FString DefaultOpenProjectDir = FPaths::ProjectContentDir();
 	FString DefaultOpenOutputDir = FPaths::ProjectContentDir();
-	ProjectContentDir()
-		TArray<TSharedPtr<FString>> ItemsMap,
+	TArray<TSharedPtr<FString>> ItemsMap,
 		ItemsMapPackage, ItemsSequence, ItemsShot, ItemsEmpty;
 	TArray<TSharedPtr<FMapInfo>> ItemsMapInfo;
 

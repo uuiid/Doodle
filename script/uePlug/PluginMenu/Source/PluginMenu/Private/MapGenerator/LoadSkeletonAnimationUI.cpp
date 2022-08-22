@@ -1,12 +1,12 @@
 #include "MapGenerator/LoadSkeletonAnimationUI.h"
 
 #include "Styling/SlateTypes.h"
-#include "SCanvas.h"
-#include "SButton.h"
-#include "SConstraintCanvas.h"
-#include "SListView.h"
-#include "SScrollBox.h"
-#include "SEditableText.h"
+#include "Widgets/SCanvas.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SConstraintCanvas.h"
+#include "Widgets/Views/SListView.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Input/SEditableText.h"
 
 #include "Engine.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
