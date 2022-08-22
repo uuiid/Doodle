@@ -28,6 +28,10 @@ static const FName Menu1_5UITabName("Menu1_5UI");
 static const FName Menu1_6UITabName("Menu1_6UI");
 static const FName Menu1_7UITabName("Menu1_7UI");
 
+#ifdef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE
+#endif
+
 #define LOCTEXT_NAMESPACE "FPluginMenuModule"
 
 void FPluginMenuModule::StartupModule()
@@ -295,9 +299,11 @@ void FPluginMenuModule::OpenMenuTab(FName TabName)
 			}
 			else
 			{
-				TSharedRef<SDockTab> PluginTab = FGlobalTabmanager::Get()->TryInvokeTab(TabName);
+				TSharedRef<SDockTab> PluginTab = FGlobalTabmanager::Get()->TryInvokeTab(TabName).ToSharedRef();
 				PluginTab.Get().RequestCloseTab();
-				MenuTabManager->InsertNewDocumentTab(PlaceholderTabName, FTabManager::ESearchPreference::PreferLiveTab, PluginTab);
+				MenuTabManager->InsertNewDocumentTab(PlaceholderTabName,
+													 FTabManager::ESearchPreference::PreferLiveTab,
+													 PluginTab);
 			}
 		}
 	}

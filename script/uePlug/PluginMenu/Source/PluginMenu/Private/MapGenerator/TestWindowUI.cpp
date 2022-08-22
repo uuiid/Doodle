@@ -207,7 +207,7 @@ FReply STestWindowUI::CheckReference()
 	}
 
 	IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(Sequence, true);
-	ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
+	ILevelSequenceEditorToolkit *LevelSequenceEditor = (ILevelSequenceEditorToolkit*)AssetEditor;
 
 	ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
 

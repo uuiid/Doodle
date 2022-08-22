@@ -422,7 +422,7 @@ void ImportCamera(FString &LevelSequencePath, FString &FbxCameraDir, FString &Sh
 			AssetEditorSubsystem->OpenEditorForAsset(LoadedObject);
 		}
 		IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(ShotSequence, true);
-		ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
+		ILevelSequenceEditorToolkit *LevelSequenceEditor = (ILevelSequenceEditorToolkit*)AssetEditor;
 		ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
 
 		TMap<FGuid, FString> ObjectBindingMap;

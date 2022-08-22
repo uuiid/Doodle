@@ -138,7 +138,7 @@ TMap<const FGuid, FName> FCreateMapUtils::GetOldActorBindMap(ULevelSequence *InS
 	}
 
 	IAssetEditorInstance *AssetEditor = AssetEditorSubsystem->FindEditorForAsset(InSequence, true);
-	ILevelSequenceEditorToolkit *LevelSequenceEditor = CastChecked<ILevelSequenceEditorToolkit>(AssetEditor);
+	ILevelSequenceEditorToolkit *LevelSequenceEditor = (ILevelSequenceEditorToolkit*)AssetEditor;
 	ISequencer *Sequencer = LevelSequenceEditor->GetSequencer().Get();
 
 	TArrayView<TWeakObjectPtr<UObject>> BindObjects;
