@@ -1,22 +1,25 @@
 #include "MapGenerator/UIOperationUtils.h"
 
 #include "SlateCore.h"
-#include "SEditableTextBox.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 #include "Engine.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
-#include "SlateApplication.h"
+#include "Framework/Application/SlateApplication.h"
 
 #include "MapGenerator/ConvertPath.h"
 
+#ifdef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE
+#endif
+
 #define LOCTEXT_NAMESPACE "FUIOperationUtils"
 
-
-void FUIOperationUtils::ChooseProjectFolderAndDisplay(TSharedPtr<SEditableTextBox> TextBox,FString& DefaultOpenDirectory)
+void FUIOperationUtils::ChooseProjectFolderAndDisplay(TSharedPtr<SEditableTextBox> TextBox, FString &DefaultOpenDirectory)
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -26,8 +29,7 @@ void FUIOperationUtils::ChooseProjectFolderAndDisplay(TSharedPtr<SEditableTextBo
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*DefaultOpenDirectory,
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -41,10 +43,10 @@ void FUIOperationUtils::ChooseProjectFolderAndDisplay(TSharedPtr<SEditableTextBo
 	}
 }
 
-void FUIOperationUtils::ChooseProjectFileAndDisplay(TSharedPtr<SEditableTextBox> TextBox, FString& DefaultOpenDirectory,FString& FileType)
+void FUIOperationUtils::ChooseProjectFileAndDisplay(TSharedPtr<SEditableTextBox> TextBox, FString &DefaultOpenDirectory, FString &FileType)
 {
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	if (IFileManager::Get().DirectoryExists(*TextBox->GetText().ToString()))
 		DefaultOpenDirectory = TextBox->GetText().ToString();
@@ -66,8 +68,7 @@ void FUIOperationUtils::ChooseProjectFileAndDisplay(TSharedPtr<SEditableTextBox>
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
 
 	if (bOpen)
@@ -79,16 +80,15 @@ void FUIOperationUtils::ChooseProjectFileAndDisplay(TSharedPtr<SEditableTextBox>
 			FString RelativeFilePath = FConvertPath::ToRelativePath(OpenFilenames[0], false);
 			TextBox->SetText(FText::FromString(RelativeFilePath));
 		}
-
 	}
 }
 
-TArray<TSharedPtr<FMapInfo>> FUIOperationUtils::FindMapsInProject(FString& RelativeProjectPath, bool bInMap)
+TArray<TSharedPtr<FMapInfo>> FUIOperationUtils::FindMapsInProject(FString &RelativeProjectPath, bool bInMap)
 {
 
 	TArray<TSharedPtr<FMapInfo>> MapInfo;
 	// Find UWorld  In Directory
-	UObjectLibrary * WorldLibrary = UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, GIsEditor);
+	UObjectLibrary *WorldLibrary = UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, GIsEditor);
 	if (WorldLibrary)
 	{
 		WorldLibrary->AddToRoot();
@@ -130,9 +130,7 @@ TArray<TSharedPtr<FMapInfo>> FUIOperationUtils::FindMapsInProject(FString& Relat
 				}
 			}
 		}
-
 	}
 
 	return MapInfo;
-	
 }

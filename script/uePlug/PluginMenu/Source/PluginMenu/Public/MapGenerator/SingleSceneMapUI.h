@@ -15,7 +15,7 @@ public:
 
 	void Construct(const FArguments &InArgs);
 
-	FString DefaultOpenFileDir = FPaths::GameContentDir();
+	FString DefaultOpenFileDir = FPaths::ProjectContentDir();
 	FString DefaultOpenFbxDir = "C:/";
 
 	TArray<TSharedPtr<FString>> ItemsMap, ItemsScene, ItemsShot, ItemsEmpty;

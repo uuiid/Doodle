@@ -16,6 +16,11 @@
 #include "MapGenerator/CreateMap.h"
 #include "MapGenerator/ConvertPath.h"
 
+#ifdef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE
+#endif
+
+
 #define LOCTEXT_NAMESPACE "SSingleSceneMapUI"
 
 void SSingleSceneMapUI::Construct(const FArguments &InArgs)

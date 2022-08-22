@@ -16,6 +16,11 @@
 #include "MapGenerator/CreateMap.h"
 #include "MapGenerator/ConvertPath.h"
 
+#ifdef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE
+#endif
+
+
 #define LOCTEXT_NAMESPACE "SMutiSceneMapUI"
 
 void SMutiSceneMapUI::Construct(const FArguments &InArgs)
