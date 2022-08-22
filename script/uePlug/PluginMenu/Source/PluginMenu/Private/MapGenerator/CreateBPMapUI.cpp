@@ -1,6 +1,6 @@
 #include "MapGenerator/CreateBPMapUI.h"
 
-#include "SlateTypes.h"
+#include "Styling/SlateTypes.h"
 #include "SCanvas.h"
 #include "SButton.h"
 #include "SConstraintCanvas.h"
@@ -19,418 +19,255 @@
 
 #define LOCTEXT_NAMESPACE "SCreateBPMapUI"
 
-
-
-void SCreateBPMapUI::Construct(const FArguments& InArgs)
+void SCreateBPMapUI::Construct(const FArguments &InArgs)
 {
-	
-	FSlateFontInfo SlateFontInfoContent =  FSlateFontInfo("Arial", 14);
-	FSlateFontInfo SlateSmallFontInfoContent =  FSlateFontInfo("Arial", 12);
+
+	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
+	FSlateFontInfo SlateSmallFontInfoContent = FSlateFontInfo("Arial", 12);
 
 	ChildSlot
 
-	[
-	
-		SNew(SBorder)
-		.BorderBackgroundColor(FLinearColor(0.3,0.3,0.3,1))
-		.BorderImage(new FSlateBrush())
 		[
-		SNew(SCanvas)
-			// Title
-		+ SCanvas::Slot()
-			.Position(FVector2D(700, 60))
-			.Size(FVector2D(800, 100))
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
-				.Font(FSlateFontInfo("Arial", 26))
-				.ColorAndOpacity(FLinearColor::Black)
-			]
-		
-		//Save Settings
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 60))
-			.Size(FVector2D(920, 300))
-			[
-				SNew(SVerticalBox)
-				//Content Row1
-				+ SVerticalBox::Slot().Padding(5,5)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).Padding(2,2)
-							[
-								SNew(STextBlock)
-								.Font(FSlateFontInfo("Arial", 22))
-								.Text(FText::FromString(TEXT("Tools Setting:")))
-								.ColorAndOpacity(FLinearColor::Black)
-							]
 
-						+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-
-						+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-							[
-								SNew(SButton)
-									.Text(FText::FromString(TEXT("Save Settings")))
-									.VAlign(VAlign_Center)
-									.HAlign(HAlign_Center)
-									.OnClicked(this,&SCreateBPMapUI::SaveSetting)
-							]
-					]
-				
-				//Working Project Info
-				+ SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-							[
-								SNew(STextBlock)
-								.Font(SlateFontInfoContent)
-								.Text(FText::FromString(TEXT("Project:")))
-								.ColorAndOpacity(FLinearColor::Black)
-							]
-
-						+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-							[
-								
-								SAssignNew(TextPorject, SEditableTextBox)
-									.Font(SlateFontInfoContent)
-									.Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))
-							]
-						+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Choose Dir")))
-							.VAlign(VAlign_Center)
-							.HAlign(HAlign_Center)
-							.OnClicked(this,&SCreateBPMapUI::OpenProjcetDir)
-							]
-					]
-					
-				//LevelStreaming Info	
-				+ SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Fbx Camera Dir :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextFbxDir, SEditableTextBox)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("C:/")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Dir")))
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-						.OnClicked(this,&SCreateBPMapUI::OpenFbxDir)
-					]
-				]
-
-
-				//Fbx Camera Dir	
-				+SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-				[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Scene Map :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextSceneMap,SEditableTextBox)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Template_Default")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Map")))
-						.OnClicked(this,&SCreateBPMapUI::OpenSceneMap)
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-					]
-				]
-
-
-				//Map Save Path	
-				+SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Map Save Path :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Map")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxMap,SCheckBox)
-						.IsChecked(ECheckBoxState::Checked)
-						.BorderBackgroundColor(FLinearColor::White)
-						.OnCheckStateChanged(this,&SCreateBPMapUI::SaveInMap)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Shot")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxShot, SCheckBox)
-						.OnCheckStateChanged(this,&SCreateBPMapUI::SaveInShot)
-					]
-			
-				+ SHorizontalBox::Slot().FillWidth(3.9).Padding(2, 2)
-
-				]
-
-
-			]
-		
-		
-	
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 280))
-			.Size(FVector2D(920, 20))
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.02)
-					[
-						SNew(STextBlock)
-						.Font(SlateSmallFontInfoContent)
-					.Text(FText::FromString(TEXT("BP Reference:")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+SHorizontalBox::Slot().FillWidth(1.02)
-					[
-					SNew(STextBlock)
-					.Font(SlateSmallFontInfoContent)
-					.Text(FText::FromString(TEXT("Shot Map List:")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(1)
-				[
-					SNew(STextBlock)
-					.Font(SlateSmallFontInfoContent)
-				.Text(FText::FromString(TEXT("Scene Map List:")))
-				.ColorAndOpacity(FLinearColor::Black)
-				]
-			]
-
-		+SCanvas::Slot()
-			.Position(FVector2D(100, 305))
-			.Size(FVector2D(250, 300))
-			[
-				SNew(SBorder)
-					.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
-					.BorderImage(new FSlateBrush())
-					[
-
-						SNew(SScrollBox).ScrollBarAlwaysVisible(true)
-						+ SScrollBox::Slot()
-						[
-							SAssignNew(ListViewAllBP, SListView<TSharedPtr<FBPInfo>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsAllBP)
-							.OnGenerateRow(this, &SCreateBPMapUI::GenerateBPList)
-						]
-							
-				]
-			]
-
-		+SCanvas::Slot()
-		.Position(FVector2D(410, 305))
-		.Size(FVector2D(610, 300))
-		[
 			SNew(SBorder)
-				.BorderBackgroundColor(FLinearColor(0.75,0.75,0.75,1))
+				.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
 				.BorderImage(new FSlateBrush())
-			[
-			
-					SNew(SScrollBox).ScrollBarAlwaysVisible(true)
-					+SScrollBox::Slot()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.2)
-					
-						[
-							SAssignNew(ListViewShot, SListView<TSharedPtr<FString>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsMap)
-							.OnGenerateRow(this,&SCreateBPMapUI::GenerateList)
-							.OnMouseButtonClick(this,&SCreateBPMapUI::LinkSelection_ClickL)
-						
-						
-						]
-						+ SHorizontalBox::Slot().FillWidth(0.025)
-					
-						[
-							SNew(SBorder)
-							.BorderBackgroundColor(FLinearColor::Blue)
-							.VAlign(VAlign_Fill)
-							.DesiredSizeScale(FVector2D(1,75))
-						]
-						+ SHorizontalBox::Slot().FillWidth(1.8)
-						[
-							SAssignNew(ListViewScene, SListView<TSharedPtr<FString>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsScene)
-							//.OnMouseButtonClick(this, &SCreateBPMapUI::LinkSelection_ClickR)
-							.OnGenerateRow(this, &SCreateBPMapUI::GenerateList)
-							
-						]
+					[SNew(SCanvas)
+					 // Title
+					 + SCanvas::Slot()
+						   .Position(FVector2D(700, 60))
+						   .Size(FVector2D(800, 100))
+						   .HAlign(HAlign_Center)
+						   .VAlign(VAlign_Center)
+							   [SNew(STextBlock)
+									.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
+									.Font(FSlateFontInfo("Arial", 26))
+									.ColorAndOpacity(FLinearColor::Black)]
 
-					]
-				]			
+					 // Save Settings
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 60))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SVerticalBox)
+								// Content Row1
+								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
-			
-			]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
 
+									   + SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+											 [SNew(SButton)
+												  .Text(FText::FromString(TEXT("Save Settings")))
+												  .VAlign(VAlign_Center)
+												  .HAlign(HAlign_Center)
+												  .OnClicked(this, &SCreateBPMapUI::SaveSetting)]]
 
+								// Working Project Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Project:"))).ColorAndOpacity(FLinearColor::Black)]
 
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 610))
-			.Size(FVector2D(920, 35))
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(0.4)
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [
 
-				+ SHorizontalBox::Slot().FillWidth(0.4)
-				[
-				SNew(SButton)
-				.Text(FText::FromString(FString("Show BP Assets")))
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				.OnClicked(this, &SCreateBPMapUI::ShowBPAssets)
-				]
-				
-				+ SHorizontalBox::Slot().FillWidth(0.6)
+												 SAssignNew(TextPorject, SEditableTextBox)
+													 .Font(SlateFontInfoContent)
+													 .Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SCreateBPMapUI::OpenProjcetDir)]]
 
-				+ SHorizontalBox::Slot().FillWidth(.4).Padding(2, 0)
-				[
-					SNew(SButton)
-					.OnClicked(this, &SCreateBPMapUI::ShowMapInfo)
-					.Text(FText::FromString(FString("Show Map Info")))
-					.HAlign(HAlign_Center)
-					.VAlign(VAlign_Center)
-					
-				]
-				+ SHorizontalBox::Slot().FillWidth(0.4)
+								// LevelStreaming Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Fbx Camera Dir :"))).ColorAndOpacity(FLinearColor::Black)]
 
-				+SHorizontalBox::Slot().FillWidth(0.4).Padding(2,0)
-					[
-						SNew(SButton)
-						.OnClicked(this, &SCreateBPMapUI::ChangeSceneMap)
-						.Text(FText::FromString(FString("Change Scene Map")))
-						.HAlign(HAlign_Center)
-						.VAlign(VAlign_Center)
-					]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextFbxDir, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("C:/")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SCreateBPMapUI::OpenFbxDir)]]
 
-				+SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
-					[
-						SNew(SButton)
-						.OnClicked(this, &SCreateBPMapUI::RestSceneMap)
-						.Text(FText::FromString(FString("Reset Default")))
-						.HAlign(HAlign_Center)
-						.VAlign(VAlign_Center)
-					]
-			
-				
+								// Fbx Camera Dir
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Scene Map :"))).ColorAndOpacity(FLinearColor::Black)]
 
-			]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextSceneMap, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Template_Default")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Map")))
+												.OnClicked(this, &SCreateBPMapUI::OpenSceneMap)
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)]]
 
-		+SCanvas::Slot()
-			.Position(FVector2D(480, 690))
-			.Size(FVector2D(200, 60))
-			.VAlign(VAlign_Center)
-			[
-				SNew(SButton)
-				.Text(FText::FromString(FString("Create Map")))
-				.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				.OnClicked(this,&SCreateBPMapUI::CreateMap)
-			]
-		]
-	];
+								// Map Save Path
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Map Save Path :"))).ColorAndOpacity(FLinearColor::Black)]
+
+									   + SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+											 [SNew(STextBlock)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Map")))
+												  .ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxMap, SCheckBox)
+												.IsChecked(ECheckBoxState::Checked)
+												.BorderBackgroundColor(FLinearColor::White)
+												.OnCheckStateChanged(this, &SCreateBPMapUI::SaveInMap)] +
+									   SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+										   [SNew(STextBlock)
+												.Font(SlateFontInfoContent)
+												.Text(FText::FromString(TEXT("Shot")))
+												.ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxShot, SCheckBox)
+												.OnCheckStateChanged(this, &SCreateBPMapUI::SaveInShot)]
+
+									   + SHorizontalBox::Slot().FillWidth(3.9).Padding(2, 2)
+
+	]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 280))
+						   .Size(FVector2D(920, 20))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.02)[SNew(STextBlock).Font(SlateSmallFontInfoContent).Text(FText::FromString(TEXT("BP Reference:"))).ColorAndOpacity(FLinearColor::Black)]
+
+								+ SHorizontalBox::Slot().FillWidth(1.02)
+									  [SNew(STextBlock)
+										   .Font(SlateSmallFontInfoContent)
+										   .Text(FText::FromString(TEXT("Shot Map List:")))
+										   .ColorAndOpacity(FLinearColor::Black)] +
+								SHorizontalBox::Slot().FillWidth(1)
+									[SNew(STextBlock)
+										 .Font(SlateSmallFontInfoContent)
+										 .Text(FText::FromString(TEXT("Scene Map List:")))
+										 .ColorAndOpacity(FLinearColor::Black)]]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 305))
+						   .Size(FVector2D(250, 300))
+							   [SNew(SBorder)
+									.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
+									.BorderImage(new FSlateBrush())
+										[
+
+											SNew(SScrollBox).ScrollBarAlwaysVisible(true) + SScrollBox::Slot()
+																								[SAssignNew(ListViewAllBP, SListView<TSharedPtr<FBPInfo>>)
+																									 .ItemHeight(24)
+																									 .ListItemsSource(&ItemsAllBP)
+																									 .OnGenerateRow(this, &SCreateBPMapUI::GenerateBPList)]
+
+	]]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(410, 305))
+						   .Size(FVector2D(610, 300))
+							   [SNew(SBorder)
+									.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
+									.BorderImage(new FSlateBrush())
+										[
+
+											SNew(SScrollBox).ScrollBarAlwaysVisible(true) + SScrollBox::Slot()
+																								[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.2)
+
+																															[SAssignNew(ListViewShot, SListView<TSharedPtr<FString>>).ItemHeight(24).ListItemsSource(&ItemsMap).OnGenerateRow(this, &SCreateBPMapUI::GenerateList).OnMouseButtonClick(this, &SCreateBPMapUI::LinkSelection_ClickL)
+
+	] + SHorizontalBox::Slot().FillWidth(0.025)
+
+																									 [SNew(SBorder).BorderBackgroundColor(FLinearColor::Blue).VAlign(VAlign_Fill).DesiredSizeScale(FVector2D(1, 75))] +
+																								 SHorizontalBox::Slot().FillWidth(1.8)
+																									 [SAssignNew(ListViewScene, SListView<TSharedPtr<FString>>)
+																										  .ItemHeight(24)
+																										  .ListItemsSource(&ItemsScene)
+																										  //.OnMouseButtonClick(this, &SCreateBPMapUI::LinkSelection_ClickR)
+																										  .OnGenerateRow(this, &SCreateBPMapUI::GenerateList)
+
+	]
+
+	]]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 610))
+						   .Size(FVector2D(920, 35))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(0.4)
+
+								+ SHorizontalBox::Slot().FillWidth(0.4)
+									  [SNew(SButton)
+										   .Text(FText::FromString(FString("Show BP Assets")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)
+										   .OnClicked(this, &SCreateBPMapUI::ShowBPAssets)]
+
+								+ SHorizontalBox::Slot().FillWidth(0.6)
+
+								+ SHorizontalBox::Slot().FillWidth(.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SCreateBPMapUI::ShowMapInfo)
+										   .Text(FText::FromString(FString("Show Map Info")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)
+
+	] + SHorizontalBox::Slot().FillWidth(0.4)
+
+								+ SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SCreateBPMapUI::ChangeSceneMap)
+										   .Text(FText::FromString(FString("Change Scene Map")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)]
+
+								+ SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SCreateBPMapUI::RestSceneMap)
+										   .Text(FText::FromString(FString("Reset Default")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(480, 690))
+						   .Size(FVector2D(200, 60))
+						   .VAlign(VAlign_Center)
+							   [SNew(SButton)
+									.Text(FText::FromString(FString("Create Map")))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.HAlign(HAlign_Center)
+									.VAlign(VAlign_Center)
+									.OnClicked(this, &SCreateBPMapUI::CreateMap)]]];
 
 	LoadSetting();
 }
 
-
-//Listview GenarateRow Action
-TSharedRef<ITableRow> SCreateBPMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)
+// Listview GenarateRow Action
+TSharedRef<ITableRow> SCreateBPMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase> &OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(STextBlock)
-			.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-			.Text(FText::FromString(*Item))
-		];
+			[SNew(STextBlock)
+				 .ColorAndOpacity(FLinearColor(0, 0, 0, 1))
+				 .Text(FText::FromString(*Item))];
 }
 
-
-TSharedRef<ITableRow> SCreateBPMapUI::GenerateBPList(TSharedPtr<FBPInfo> BPItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SCreateBPMapUI::GenerateBPList(TSharedPtr<FBPInfo> BPItem, const TSharedRef<STableViewBase> &OwnerTable)
 {
-	
+
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().FillWidth(1.2)
-			[
-				SNew(STextBlock)
-				.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-				.Text(FText::FromString(*FConvertPath::GetPackageName(BPItem->BPPackage)))
-			]
-			+ SHorizontalBox::Slot().FillWidth(0.3)
-				[
-					SNew(SEditableText)
-					.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-					.Text(FText::FromString(*FString::FromInt(BPItem->StartFrame)))
-					.OnTextCommitted(this,&SCreateBPMapUI::SetBPAnimStart1)
-				]
-			+SHorizontalBox::Slot().FillWidth(0.1)
-			[
-				SNew(SCheckBox)
-				.ForegroundColor(FLinearColor(0.1,0.1,0.2,1))
-				.IsChecked(BPItem->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-				.OnCheckStateChanged(this, &SCreateBPMapUI::SetBPLoad)
-				.IsFocusable(true)
-			]
-		];
+			[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.2)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*FConvertPath::GetPackageName(BPItem->BPPackage)))] + SHorizontalBox::Slot().FillWidth(0.3)[SNew(SEditableText).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*FString::FromInt(BPItem->StartFrame))).OnTextCommitted(this, &SCreateBPMapUI::SetBPAnimStart1)] + SHorizontalBox::Slot().FillWidth(0.1)[SNew(SCheckBox).ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1)).IsChecked(BPItem->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked).OnCheckStateChanged(this, &SCreateBPMapUI::SetBPLoad).IsFocusable(true)]];
 }
 
 // Listview MouseCilcked Action ShotMap
@@ -440,17 +277,15 @@ void SCreateBPMapUI::LinkSelection_ClickL(TSharedPtr<FString> Item)
 
 	ListViewScene->ClearSelection();
 
-
 	for (auto SelectedItem : CurrentSelcetedItems)
 	{
 		int32 index;
 		if (ItemsMap.Find(SelectedItem, index))
-		ListViewScene->SetItemSelection(ItemsScene[index], true, ESelectInfo::Direct);
+			ListViewScene->SetItemSelection(ItemsScene[index], true, ESelectInfo::Direct);
 	}
 	ListViewScene->RebuildList();
 	ListViewScene->RequestListRefresh();
 }
-
 
 // Listview MouseCilcked Action SceneMap
 void SCreateBPMapUI::LinkSelection_ClickR(TSharedPtr<FString> Item)
@@ -468,10 +303,7 @@ void SCreateBPMapUI::LinkSelection_ClickR(TSharedPtr<FString> Item)
 
 	ListViewShot->RebuildList();
 	ListViewShot->RequestListRefresh();
-
-} 
-
-
+}
 
 void SCreateBPMapUI::BPItemsAddContent(FString ProjectPath)
 {
@@ -486,7 +318,7 @@ void SCreateBPMapUI::BPItemsAddContent(FString ProjectPath)
 		}
 	}
 	ItemsAllBP.Sort([](TSharedPtr<FBPInfo> A, TSharedPtr<FBPInfo> B)
-	{
+					{
 
 		FString BPNameA = A->BPPackage;
 		FString BPNameB = B->BPPackage;
@@ -505,14 +337,10 @@ void SCreateBPMapUI::BPItemsAddContent(FString ProjectPath)
 		for (int32 i = 0; i < Length; i++)
 			if (BPNameA.GetCharArray()[i] != BPNameB.GetCharArray()[i])
 				return BPNameA.GetCharArray()[i] < BPNameB.GetCharArray()[i];
-		return BPNameA.Len() < BPNameB.Len();
-	});
-
+		return BPNameA.Len() < BPNameB.Len(); });
 
 	ListViewAllBP->RequestListRefresh();
-
 }
-
 
 FReply SCreateBPMapUI::ShowBPAssets()
 {
@@ -525,13 +353,11 @@ FReply SCreateBPMapUI::ShowBPAssets()
 	return FReply::Handled();
 }
 
-
-
 // Button Action ChangeSceneMap
 FReply SCreateBPMapUI::ChangeSceneMap()
-{	
+{
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -549,10 +375,8 @@ FReply SCreateBPMapUI::ChangeSceneMap()
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
-
 
 	if (bOpen)
 	{
@@ -560,7 +384,7 @@ FReply SCreateBPMapUI::ChangeSceneMap()
 		SceneMap = OpenFilenames[0];
 
 		TArray<TSharedPtr<FString>> CurrentSelcetedItems = ListViewScene->GetSelectedItems();
-		
+
 		if (SceneMap.Contains(FPaths::ProjectContentDir()))
 		{
 			FString DisplaySceneMap = FConvertPath::ToRelativePath(SceneMap, false);
@@ -569,13 +393,11 @@ FReply SCreateBPMapUI::ChangeSceneMap()
 				*Item = DisplaySceneMap;
 			}
 		}
-		
 
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
-
 	}
-	
+
 	return FReply::Handled();
 }
 
@@ -589,9 +411,8 @@ FReply SCreateBPMapUI::RestSceneMap()
 		{
 			int32 Index;
 			ItemsScene.Find(SelectedItem, Index);
-		//	*SelectedItem = "Template_Default";
+			//	*SelectedItem = "Template_Default";
 			*ItemsScene[Index] = "Template_Default";
-
 		}
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
@@ -599,7 +420,7 @@ FReply SCreateBPMapUI::RestSceneMap()
 	return FReply::Handled();
 }
 
-//Button Action ShowMapInfo
+// Button Action ShowMapInfo
 FReply SCreateBPMapUI::ShowMapInfo()
 {
 
@@ -609,25 +430,22 @@ FReply SCreateBPMapUI::ShowMapInfo()
 	ItemsAddContent(ProjectFullPath);
 
 	RefreshList();
-	
+
 	return FReply::Handled();
 }
 
-//Button Action SaveSetting
+// Button Action SaveSetting
 FReply SCreateBPMapUI::SaveSetting()
 {
 	WriteSetting();
 	return FReply::Handled();
 }
 
-
-//Write Setting.json
+// Write Setting.json
 void SCreateBPMapUI::WriteSetting()
 {
 	TSharedPtr<FJsonObject> RootObject = MakeShareable(new FJsonObject);
 	TSharedPtr<FJsonObject> EntryObject = MakeShareable(new FJsonObject);
-
-
 
 	EntryObject->SetStringField(TEXT("Project"), *(TextPorject->GetText().ToString()));
 	EntryObject->SetStringField(TEXT("Fbx Camera Dir"), *(TextFbxDir->GetText().ToString()));
@@ -640,7 +458,7 @@ void SCreateBPMapUI::WriteSetting()
 
 	RootObject->SetArrayField(TEXT("Settings"), JsonData);
 	FString JsonFileName = FPaths::ProjectDir() / TEXT("Settings.json");
-	FArchive * JsonFile = IFileManager::Get().CreateFileWriter(*JsonFileName, FILEWRITE_EvenIfReadOnly);
+	FArchive *JsonFile = IFileManager::Get().CreateFileWriter(*JsonFileName, FILEWRITE_EvenIfReadOnly);
 
 	if (JsonFile)
 	{
@@ -650,13 +468,13 @@ void SCreateBPMapUI::WriteSetting()
 	}
 }
 
-//If Setting.json Exist , Loading Settings
+// If Setting.json Exist , Loading Settings
 void SCreateBPMapUI::LoadSetting()
 {
 	FString JsonFileName = FPaths::ProjectDir() / TEXT("Settings.json");
 	if (IFileManager::Get().FileExists(*JsonFileName))
 	{
-		FArchive * JsonFile = IFileManager::Get().CreateFileReader(*JsonFileName);
+		FArchive *JsonFile = IFileManager::Get().CreateFileReader(*JsonFileName);
 		TSharedPtr<FJsonObject> RootObject = MakeShareable(new FJsonObject);
 		bool bJsonLoaded = false;
 
@@ -673,21 +491,19 @@ void SCreateBPMapUI::LoadSetting()
 			FbxCameraDir = JsonData[0]->AsObject()->GetStringField(TEXT("Fbx Camera Dir"));
 			TextFbxDir->SetText(FText::FromString(FbxCameraDir));
 
-			//SceneMap = JsonData[0]->AsObject()->GetStringField(TEXT("Scene Map"));
-			//TextSceneMap->SetText(FText::FromString(SceneMap));
+			// SceneMap = JsonData[0]->AsObject()->GetStringField(TEXT("Scene Map"));
+			// TextSceneMap->SetText(FText::FromString(SceneMap));
 
-			//bool SavePath = JsonData[0]->AsObject()->GetBoolField(TEXT("Map Save Path"));
-
-		
+			// bool SavePath = JsonData[0]->AsObject()->GetBoolField(TEXT("Map Save Path"));
 		}
 	}
 }
 
-//Button Action OpenProjectDir
+// Button Action OpenProjectDir
 FReply SCreateBPMapUI::OpenProjcetDir()
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -697,8 +513,7 @@ FReply SCreateBPMapUI::OpenProjcetDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*FPaths::ProjectContentDir(),
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -719,11 +534,11 @@ FReply SCreateBPMapUI::OpenProjcetDir()
 	return FReply::Handled();
 }
 
-//Button Action Open FbxDir
+// Button Action Open FbxDir
 FReply SCreateBPMapUI::OpenFbxDir()
 {
 	FString OpenDirectoryName;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	if (IFileManager::Get().DirectoryExists(*TextFbxDir->GetText().ToString()))
 		DefaultOpenFbxDir = TextFbxDir->GetText().ToString();
@@ -736,8 +551,7 @@ FReply SCreateBPMapUI::OpenFbxDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*DefaultOpenFbxDir,
-			OpenDirectoryName
-		);
+			OpenDirectoryName);
 	}
 
 	if (bOpen)
@@ -748,11 +562,11 @@ FReply SCreateBPMapUI::OpenFbxDir()
 	return FReply::Handled();
 }
 
-//Button Action OpenSceneMap
+// Button Action OpenSceneMap
 FReply SCreateBPMapUI::OpenSceneMap()
 {
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -770,10 +584,8 @@ FReply SCreateBPMapUI::OpenSceneMap()
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
-
 
 	if (bOpen)
 	{
@@ -794,14 +606,13 @@ FReply SCreateBPMapUI::OpenSceneMap()
 		TextSceneMap->SetText(FText::FromString(DisplaySceneMap));
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
-
 	}
 
 	return FReply::Handled();
 }
 
-//Check Map Exists  
-bool SCreateBPMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
+// Check Map Exists
+bool SCreateBPMapUI::MapExist(bool SaveInMap, FString Shot, FString MapName)
 {
 	bool bMapExist = false;
 	FString SaveMapPath;
@@ -811,7 +622,6 @@ bool SCreateBPMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
 		SaveMapPath = FPaths::ProjectContentDir() + TextPorject->GetText().ToString() + "/" + Shot;
 
 	FString MapFullPath = SaveMapPath + "/" + MapName + ".umap";
-	
 
 	if (IFileManager::Get().DirectoryExists(*SaveMapPath))
 	{
@@ -820,22 +630,19 @@ bool SCreateBPMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
 	return bMapExist;
 }
 
-
-//Set Map Name
+// Set Map Name
 FString SCreateBPMapUI::SetMapName(FString Shot)
 {
 	FString ProjectName = TextPorject->GetText().ToString();
-		FString MapName;
-		TArray<FString> NameSplit;
-		ProjectName.ParseIntoArray(NameSplit, TEXT("_"), true);
-		if (NameSplit.Num())
-			MapName = NameSplit[0] + "_" + TextPorject->GetText().ToString().Right(3) + "_" + Shot.Right(3) + "_VFX";
+	FString MapName;
+	TArray<FString> NameSplit;
+	ProjectName.ParseIntoArray(NameSplit, TEXT("_"), true);
+	if (NameSplit.Num())
+		MapName = NameSplit[0] + "_" + TextPorject->GetText().ToString().Right(3) + "_" + Shot.Right(3) + "_VFX";
 	return MapName;
 }
 
-
-
-//Add Map Info to Items Array
+// Add Map Info to Items Array
 void SCreateBPMapUI::ItemsAddContent(FString ProjectPath)
 {
 
@@ -851,7 +658,7 @@ void SCreateBPMapUI::ItemsAddContent(FString ProjectPath)
 		if (ShotDir.StartsWith("SC", ESearchCase::IgnoreCase))
 		{
 			FString MapName = SetMapName(ShotDir);
-		
+
 			if (!MapExist(IsSaveInMap, ShotDir, MapName))
 			{
 				ItemsMap.Add(MakeShareable(new FString(MapName)));
@@ -859,7 +666,6 @@ void SCreateBPMapUI::ItemsAddContent(FString ProjectPath)
 				ItemsScene.Add(MakeShareable(new FString(TextSceneMap->GetText().ToString())));
 			}
 		}
-
 	}
 }
 
@@ -871,7 +677,6 @@ void SCreateBPMapUI::SaveInMap(ECheckBoxState State)
 	else
 		CheckBoxShot->SetIsChecked(ECheckBoxState::Checked);
 
-	
 	ItemsUpdateContent();
 
 	RefreshList();
@@ -890,7 +695,7 @@ void SCreateBPMapUI::SaveInShot(ECheckBoxState State)
 	RefreshList();
 }
 
-void SCreateBPMapUI::SetBPLoad(ECheckBoxState State) 
+void SCreateBPMapUI::SetBPLoad(ECheckBoxState State)
 {
 	TArray<TSharedPtr<FBPInfo>> CurrentSelcetedItems = ListViewAllBP->GetSelectedItems();
 
@@ -912,7 +717,7 @@ void SCreateBPMapUI::SetBPLoad(ECheckBoxState State)
 	RefreshBPList();
 }
 
-void SCreateBPMapUI::SetBPAnimStart1(const FText& InText, ETextCommit::Type Type)
+void SCreateBPMapUI::SetBPAnimStart1(const FText &InText, ETextCommit::Type Type)
 {
 	TArray<TSharedPtr<FBPInfo>> CurrentSelcetedItems = ListViewAllBP->GetSelectedItems();
 	if (CurrentSelcetedItems.Num())
@@ -929,7 +734,6 @@ void SCreateBPMapUI::RefreshBPList()
 {
 	ListViewAllBP->RebuildList();
 	ListViewAllBP->RequestListRefresh();
-	
 }
 
 void SCreateBPMapUI::RefreshList()
@@ -940,14 +744,12 @@ void SCreateBPMapUI::RefreshList()
 	ListViewScene->RequestListRefresh();
 }
 
-
 void SCreateBPMapUI::ItemsUpdateContent()
 {
-	TArray<TSharedPtr<FString>> ItemsMapNew,ItemsShotNew, ItemsSceneNew;
-
+	TArray<TSharedPtr<FString>> ItemsMapNew, ItemsShotNew, ItemsSceneNew;
 
 	TArray<FString> SubDirs;
-	FString FinalPath = FPaths::ProjectContentDir() + "/"  + TextPorject->GetText().ToString() + "/" +  TEXT("*");
+	FString FinalPath = FPaths::ProjectContentDir() + "/" + TextPorject->GetText().ToString() + "/" + TEXT("*");
 	IFileManager::Get().FindFiles(SubDirs, *FinalPath, false, true);
 	for (auto ShotDir : SubDirs)
 	{
@@ -973,7 +775,6 @@ void SCreateBPMapUI::ItemsUpdateContent()
 					ItemsMapNew.Add(ItemsMap[Index]);
 					ItemsShotNew.Add(ItemsShot[Index]);
 					ItemsSceneNew.Add(ItemsScene[Index]);
-
 				}
 				else
 				{
@@ -983,16 +784,11 @@ void SCreateBPMapUI::ItemsUpdateContent()
 				}
 			}
 		}
-
 	}
-
-	
 
 	ItemsMap = ItemsMapNew;
 	ItemsScene = ItemsSceneNew;
-
 }
-
 
 FReply SCreateBPMapUI::CreateMap()
 {
@@ -1000,8 +796,6 @@ FReply SCreateBPMapUI::CreateMap()
 
 	FbxCameraPath = TextFbxDir->GetText().ToString();
 	ProjectPath = TextPorject->GetText().ToString();
-
-	
 
 	if (ItemsMap.Num() == 0)
 	{
@@ -1016,19 +810,17 @@ FReply SCreateBPMapUI::CreateMap()
 			ItemsLoadedBP.Add(MakeShareable(new FString(BP->BPPackage)));
 	}*/
 
-
-	for (int i=0; i<ItemsMap.Num();i++)
+	for (int i = 0; i < ItemsMap.Num(); i++)
 	{
-		FCreateMap::CreateBPMap(ProjectPath, FbxCameraPath, *ItemsShot[i], *ItemsMap[i], *ItemsScene[i], IsSaveInMap,ItemsAllBP);
+		FCreateMap::CreateBPMap(ProjectPath, FbxCameraPath, *ItemsShot[i], *ItemsMap[i], *ItemsScene[i], IsSaveInMap, ItemsAllBP);
 	}
 
 	ItemsUpdateContent();
 	RefreshList();
 
 	return FReply::Handled();
-	
 }
 
 #undef LOCTEXT_NAMESPACE
 
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

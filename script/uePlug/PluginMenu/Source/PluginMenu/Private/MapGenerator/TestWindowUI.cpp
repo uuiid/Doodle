@@ -2,8 +2,7 @@
 
 #include "SEditableText.h"
 #include "SButton.h"
-#include "Reply.h"
-
+#include "Input/Reply.h"
 
 #include "AssetToolsModule.h"
 #include "AssetTools/Public/IAssetTools.h"
@@ -16,7 +15,7 @@
 #include "Private/ContentBrowserSingleton.h"
 #include "AssetRegistryModule.h"
 #include "AssetData.h"
-#include "Paths.h"
+#include "Misc/Paths.h"
 #include "AssetRegistryInterface.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
 #include "Private/SAssetView.h"
@@ -36,7 +35,6 @@
 #include "AssetEditorManager.h"
 #include "Private/LevelSequenceEditorToolkit.h"
 
-
 #include "AssetToolsModule.h"
 #include "AssetTools/Public/IAssetTools.h"
 
@@ -50,44 +48,14 @@
 
 //#include "Public/AssetManagerEditorModule.h"
 
-
-
 #define LOCTEXT_NAMESPACE "STestWindowUI"
 
-
-void STestWindowUI::Construct(const FArguments& InArgs)
+void STestWindowUI::Construct(const FArguments &InArgs)
 {
 	ChildSlot
-	[
-		SNew(SCanvas)
-		+SCanvas::Slot()
-		.Position(FVector2D(320, 60))
-		.Size(FVector2D(50, 50))
-		[
-			SNew(SButton)
-			.Text(FText::FromString(TEXT("Check")))
-			.OnClicked(this,&STestWindowUI::CheckReference)
-		]
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 60))
-			.Size(FVector2D(200, 50))
-			[
-				SAssignNew(TextFolder, SEditableTextBox)
-				.Text(FText::FromString(TEXT("")))
-			]
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 150))
-			.Size(FVector2D(50, 50))
-			[
-				SNew(SButton)
-				.Text(FText::FromString(TEXT("Remove")))
-			.OnClicked(this, &STestWindowUI::RemoveActor)
-			]
-		
-	];
+		[SNew(SCanvas) + SCanvas::Slot().Position(FVector2D(320, 60)).Size(FVector2D(50, 50))[SNew(SButton).Text(FText::FromString(TEXT("Check"))).OnClicked(this, &STestWindowUI::CheckReference)] + SCanvas::Slot().Position(FVector2D(100, 60)).Size(FVector2D(200, 50))[SAssignNew(TextFolder, SEditableTextBox).Text(FText::FromString(TEXT("")))] + SCanvas::Slot().Position(FVector2D(100, 150)).Size(FVector2D(50, 50))[SNew(SButton).Text(FText::FromString(TEXT("Remove"))).OnClicked(this, &STestWindowUI::RemoveActor)]
 
-	
-	
+	];
 }
 
 FReply STestWindowUI::CheckReference()
@@ -96,54 +64,52 @@ FReply STestWindowUI::CheckReference()
 	TArray<AActor*> AllActors = CurrentLevel->Actors;
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::FromInt(AllActors.Num()));*/
 
-	//FString InMapPackage = "/Game/YSJ_VFX_project/EP112/SC036/YSJ_112_036_VFX";
-	//UWorld * World = UEditorLoadingAndSavingUtils::LoadMap(*InMapPackage);
+	// FString InMapPackage = "/Game/YSJ_VFX_project/EP112/SC036/YSJ_112_036_VFX";
+	// UWorld * World = UEditorLoadingAndSavingUtils::LoadMap(*InMapPackage);
 
-	//FString Folder = "VFX";
-	//TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
+	// FString Folder = "VFX";
+	// TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
 
 	////Select Actors In Folder
-	//GEditor->SelectNone(false, false, false);
-	//for (auto Actor : VFXActors)
+	// GEditor->SelectNone(false, false, false);
+	// for (auto Actor : VFXActors)
 	//{
 	//	GEditor->SelectActor(Actor, true, false, false, false);
-	//}
+	// }
 
-	////Copy And Paste Actors 
-	//GEditor->CopySelectedActorsToClipboard(GWorld, false, false, false);
+	////Copy And Paste Actors
+	// GEditor->CopySelectedActorsToClipboard(GWorld, false, false, false);
 
-	//FEditorFileUtils::SaveCurrentLevel();
+	// FEditorFileUtils::SaveCurrentLevel();
 
-	//GEditor->CreateNewMapForEditing();
-	//GEditor->PasteSelectedActorsFromClipboard(GWorld, FText::FromString(""), EPasteTo::PT_OriginalLocation);
+	// GEditor->CreateNewMapForEditing();
+	// GEditor->PasteSelectedActorsFromClipboard(GWorld, FText::FromString(""), EPasteTo::PT_OriginalLocation);
 
-	//FString OutputPath = "YSJ_VFX_project/EP112/map";
-	//FString OutMapName = "YSJ_112_036_VFX";
-	//FCreateMapUtils::SaveLevel(OutputPath, OutMapName);
+	// FString OutputPath = "YSJ_VFX_project/EP112/map";
+	// FString OutMapName = "YSJ_112_036_VFX";
+	// FCreateMapUtils::SaveLevel(OutputPath, OutMapName);
 
-
-	//FString LevelSequencePackage = "/Game/YSJ_VFX_project/EP112/SC036/Seq_YSJ_112_036_VFX";
+	// FString LevelSequencePackage = "/Game/YSJ_VFX_project/EP112/SC036/Seq_YSJ_112_036_VFX";
 	//
 	//
 
-	//ULevelSequence * Sequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePackage);
+	// ULevelSequence * Sequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePackage);
 
-	//FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-	//IAssetTools& AssetTool = AssetToolsModule.Get();
+	// FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+	// IAssetTools& AssetTool = AssetToolsModule.Get();
 
-	//FString DuplicateSequencePackage = "/Game/YSJ_VFX_project/EP112/map/Seq_YSJ_112_036_VFX";
-	//ULevelSequence * DuplicateSequence = LoadObject<ULevelSequence>(NULL, *DuplicateSequencePackage);
+	// FString DuplicateSequencePackage = "/Game/YSJ_VFX_project/EP112/map/Seq_YSJ_112_036_VFX";
+	// ULevelSequence * DuplicateSequence = LoadObject<ULevelSequence>(NULL, *DuplicateSequencePackage);
 
-	//if (DuplicateSequence == nullptr)
+	// if (DuplicateSequence == nullptr)
 	//	DuplicateSequence = (ULevelSequence*)AssetTool.DuplicateAsset(TEXT("Seq_YSJ_112_036_VFX"), TEXT("/Game/YSJ_VFX_project/EP112/map"), Sequence);
 
-
-	//FCreateMapUtils::FixActorBinds(DuplicateSequence);
+	// FCreateMapUtils::FixActorBinds(DuplicateSequence);
 
 	///*FString Folder = "VFX";
-	//TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
+	// TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
 
-	//for (auto Actor : VFXActors)
+	// for (auto Actor : VFXActors)
 	//{
 	//	TSet<UActorComponent*> ActorComponents = Actor->GetComponents();
 	//	for (auto it = ActorComponents.CreateIterator(); it; ++it)
@@ -151,11 +117,10 @@ FReply STestWindowUI::CheckReference()
 	//		UActorComponent* Component = *it;
 	//		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *Component->GetName());
 	//	}
-	//}*/
+	// }*/
 
-	//UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+	// UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
-	
 	/*UObject * Object = LoadObject<UObject>(NULL, TEXT("/Game/wenli_107"));
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *Object->GetClass()->GetName());
@@ -169,28 +134,28 @@ FReply STestWindowUI::CheckReference()
 
 	AssetTool.RenameAssets(RenameAssets);*/
 
-	//UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UTexture2D::StaticClass(), false, GIsEditor);
-	//if (AnimLibrary)
+	// UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UTexture2D::StaticClass(), false, GIsEditor);
+	// if (AnimLibrary)
 	//{
 	//	AnimLibrary->AddToRoot();
-	//}
+	// }
 
-	//FString AnimAssetsPath = "/Game/" ;
-	//AnimLibrary->LoadAssetDataFromPath(*AnimAssetsPath);
+	// FString AnimAssetsPath = "/Game/" ;
+	// AnimLibrary->LoadAssetDataFromPath(*AnimAssetsPath);
 
-	//TArray<FAssetData> AssetsData;
-	//AnimLibrary->GetAssetDataList(AssetsData);
+	// TArray<FAssetData> AssetsData;
+	// AnimLibrary->GetAssetDataList(AssetsData);
 
 	////Get Animaton NumFrames
-	//if (AssetsData.Num())
+	// if (AssetsData.Num())
 	//{
 	//	for (auto Tex : AssetsData)
 	//	{
 	//		FString TexSoftPath = Tex.ObjectPath.ToString();
 	//		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *TexSoftPath);
-	//	
+	//
 	//	}
-	//}
+	// }
 	//
 	/*FString Folder = "G:/CPP3/Content/";
 	TArray<FString> FoundFiles;
@@ -202,21 +167,21 @@ FReply STestWindowUI::CheckReference()
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *File);
 		}*/
 
-	//UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UObjectRedirector::StaticClass(), false, GIsEditor);
-	//if (AnimLibrary)
+	// UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UObjectRedirector::StaticClass(), false, GIsEditor);
+	// if (AnimLibrary)
 	//{
 	//	AnimLibrary->AddToRoot();
-	//}
+	// }
 
-	//FString Folder = TextFolder->GetText().ToString();
-	//FString AnimAssetsPath = "/Game/" + Folder;
-	//AnimLibrary->LoadAssetDataFromPath(*AnimAssetsPath);
+	// FString Folder = TextFolder->GetText().ToString();
+	// FString AnimAssetsPath = "/Game/" + Folder;
+	// AnimLibrary->LoadAssetDataFromPath(*AnimAssetsPath);
 
-	//TArray<FAssetData> AssetsData;
-	//AnimLibrary->GetAssetDataList(AssetsData);
+	// TArray<FAssetData> AssetsData;
+	// AnimLibrary->GetAssetDataList(AssetsData);
 
 	// ObjectRedirectors.Reset();
-	//if (AssetsData.Num())
+	// if (AssetsData.Num())
 	//{
 	//	for (auto Asset : AssetsData)
 	//	{
@@ -230,22 +195,21 @@ FReply STestWindowUI::CheckReference()
 
 	//}
 	FString LevelSequencePackage = TextFolder->GetText().ToString();
-	ULevelSequence * Sequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePackage);
+	ULevelSequence *Sequence = LoadObject<ULevelSequence>(NULL, *LevelSequencePackage);
 	if (Sequence != nullptr)
 	{
 		FAssetEditorManager::Get().OpenEditorForAsset(Sequence);
 	}
 
-	IAssetEditorInstance * AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(Sequence, true);
-	FLevelSequenceEditorToolkit * LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
-	ISequencer *  ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
-	
+	IAssetEditorInstance *AssetEditor = FAssetEditorManager::Get().FindEditorForAsset(Sequence, true);
+	FLevelSequenceEditorToolkit *LevelSequenceEditor = (FLevelSequenceEditorToolkit *)AssetEditor;
+	ISequencer *ShotSequencer = LevelSequenceEditor->GetSequencer().Get();
+
 	TArrayView<TWeakObjectPtr<UObject>> BindObjects;
-	
-	UMovieScene *  MyMovieScene = Sequence->MovieScene;
+
+	UMovieScene *MyMovieScene = Sequence->MovieScene;
 	int32 PosseableCount = MyMovieScene->GetPossessableCount();
 
-	
 	for (int i = 0; i < PosseableCount; i++)
 	{
 		FMovieScenePossessable Possable = MyMovieScene->GetPossessable(i);
@@ -258,19 +222,18 @@ FReply STestWindowUI::CheckReference()
 
 			for (auto Object : BindObjects)
 				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, *Object->GetFName().ToString());
-
 		}
 	}
 	/*for (int i = 0; i < PosseableCount; i++)
 	{
-		
+
 		FMovieScenePossessable Possable = MyMovieScene->GetPossessable(i);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, Possable.GetName());
 
 	}*/
 
 	FString Folder = "VFX";
-	TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
+	TArray<AActor *> VFXActors = FCreateMapUtils::GetActorsInFolder(Folder);
 	for (auto Actor : VFXActors)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, *Actor->GetFName().ToString());
@@ -278,50 +241,40 @@ FReply STestWindowUI::CheckReference()
 	return FReply::Handled();
 }
 
-
-void MoveAssetInFolder(FString Folder, FString OutFolder,bool bMoveFolder)
+void MoveAssetInFolder(FString Folder, FString OutFolder, bool bMoveFolder)
 {
-	
 
 	TArray<FString> FoundFiles;
 	IFileManager::Get().FindFiles(FoundFiles, *Folder, TEXT(".uasset"));
 
 	TArray<FAssetRenameData> RenameAssets;
 	if (FoundFiles.Num())
-	for (auto File : FoundFiles)
-	{
-		
-		FString AbsoluteFilePath = Folder + "/" + File;
-		FString Package = FConvertPath::ToRelativePath(AbsoluteFilePath, false);
+		for (auto File : FoundFiles)
+		{
 
-		UObject * Object = LoadObject<UObject>(NULL, *Package);
-		FString OutPath = "/Game/" + OutFolder + "/";
-		FString OutPackage = OutPath + Package.RightChop(6);
-		FString OutPackageName = FConvertPath::GetPackageName(OutPackage);
-		FString OutPackagePath = FConvertPath::GetPackagePath(OutPackage);
+			FString AbsoluteFilePath = Folder + "/" + File;
+			FString Package = FConvertPath::ToRelativePath(AbsoluteFilePath, false);
 
-		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, *Package);
-		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, *OutPackagePath);
-		
-		FAssetRenameData RenameData = FAssetRenameData(Object, *OutPackagePath, *OutPackageName);
-		RenameAssets.Add(RenameData);
-		
-		
-	}
+			UObject *Object = LoadObject<UObject>(NULL, *Package);
+			FString OutPath = "/Game/" + OutFolder + "/";
+			FString OutPackage = OutPath + Package.RightChop(6);
+			FString OutPackageName = FConvertPath::GetPackageName(OutPackage);
+			FString OutPackagePath = FConvertPath::GetPackagePath(OutPackage);
 
+			// GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, *Package);
+			// GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, *OutPackagePath);
+
+			FAssetRenameData RenameData = FAssetRenameData(Object, *OutPackagePath, *OutPackageName);
+			RenameAssets.Add(RenameData);
+		}
 
 	if (RenameAssets.Num())
 	{
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-		IAssetTools& AssetTool = AssetToolsModule.Get();
+		FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+		IAssetTools &AssetTool = AssetToolsModule.Get();
 		AssetTool.RenameAssets(RenameAssets);
 	}
-		
-
-
 }
-
-
 
 TArray<FString> STestWindowUI::FindSubDirs(FString Folder)
 {
@@ -332,8 +285,8 @@ TArray<FString> STestWindowUI::FindSubDirs(FString Folder)
 		for (auto Dir : SubDirs)
 		{
 			FoundDirs.Add(Folder + "/" + Dir);
-			//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, *(Folder + "/" + Dir));
-			FindSubDirs(Folder + "/" + Dir );
+			// GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, *(Folder + "/" + Dir));
+			FindSubDirs(Folder + "/" + Dir);
 		}
 	return FoundDirs;
 }
@@ -350,8 +303,8 @@ int32 AutoRename1(FString InFileName, int32 i, FString Ext)
 
 FReply STestWindowUI::RemoveActor()
 {
-	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
-	IAssetTools& AssetTool = AssetToolsModule.Get();
+	FAssetToolsModule &AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(FName("AssetTools"));
+	IAssetTools &AssetTool = AssetToolsModule.Get();
 
 	/*FString Package = "/Game/YSJ_VFX_project/EP063/sc042/mat/P_circle_fire/mf_GRIMColorCollection";
 	UObject * Object = LoadObject<UObject>(NULL, *Package);
@@ -362,12 +315,12 @@ FReply STestWindowUI::RemoveActor()
 	FAssetRenameData RenameData = FAssetRenameData(Object, TEXT("/Game"), TEXT("mf_GRIMColorCollection"));
 	FAssetRenameData RenameData1 = FAssetRenameData(Object1, TEXT("/Game"), TEXT("T_Rift_Orb_flibbook"));
 
-	
+
 	RenameAssets.Add(RenameData);
 	RenameAssets.Add(RenameData1);
 
 	AssetTool.RenameAssets(RenameAssets);*/
-	
+
 	/*UObjectLibrary * AnimLibrary = UObjectLibrary::CreateLibrary(UObject::StaticClass(), false, GIsEditor);
 	if (AnimLibrary)
 	{
@@ -390,12 +343,12 @@ FReply STestWindowUI::RemoveActor()
 	}*/
 
 	FString Path = TextFolder->GetText().ToString();
-	ULevelSequence * MySeq = LoadObject<ULevelSequence>(NULL, *Path);
-	UMovieScene *  MyMovieScene = MySeq->MovieScene;
+	ULevelSequence *MySeq = LoadObject<ULevelSequence>(NULL, *Path);
+	UMovieScene *MyMovieScene = MySeq->MovieScene;
 	int32 PosseableCount = MyMovieScene->GetPossessableCount();
-	
+
 	FString VFXFolder = "VFX";
-	TArray<AActor*> VFXActors = FCreateMapUtils::GetActorsInFolder(VFXFolder);
+	TArray<AActor *> VFXActors = FCreateMapUtils::GetActorsInFolder(VFXFolder);
 	for (auto Actor : VFXActors)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Actor->GetActorLabel());
@@ -422,12 +375,11 @@ FReply STestWindowUI::RemoveActor()
 				if (Actor->GetActorLabel().Contains(Possable.GetName().Left(6), ESearchCase::IgnoreCase, ESearchDir::FromStart))
 				{
 					FString Class = Actor->GetClass()->GetName();
-					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, *Class);
+					// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, *Class);
 					if (Class == "Emitter")
 					{
 						bDelete = false;
 						break;
-						
 					}
 				}
 			}
@@ -436,8 +388,6 @@ FReply STestWindowUI::RemoveActor()
 		}
 	}
 
-	
-	
 	/*for (auto Asset : AssetsData)
 	{
 		UObject* Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
@@ -460,7 +410,7 @@ FReply STestWindowUI::RemoveActor()
 
 		OutPackage = OutPath + FConvertPath::GetPackageName(Package);
 
-		
+
 		FString Ext = "uasset";
 		FString OutFile = FConvertPath::ToAbsolutePath(OutPackage, true, Ext);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OutFile);
@@ -480,24 +430,17 @@ FReply STestWindowUI::RemoveActor()
 		AssetTool.RenameAssets(RenameAssets);
 	}*/
 
-	
-	
-
 	/*for (auto Asset : AssetsData)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *Asset.AssetName.ToString());
 		UObject* Object = LoadObject<UObject>(NULL, *Asset.ToSoftObjectPath().ToString());
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *Object->GetClass()->GetName());
-		
+
 	}*/
-	
-	
+
 	return FReply::Handled();
 }
 
-
 #undef LOCTEXT_NAMESPACE
 
-
-
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

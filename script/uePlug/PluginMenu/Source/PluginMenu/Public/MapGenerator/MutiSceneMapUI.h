@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SCompoundWidget.h"
-#include "Reply.h"
-#include "SUserWidget.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Input/Reply.h"
+#include "Widgets/SUserWidget.h"
 
 class SMutiSceneMapUI : public SCompoundWidget
 {

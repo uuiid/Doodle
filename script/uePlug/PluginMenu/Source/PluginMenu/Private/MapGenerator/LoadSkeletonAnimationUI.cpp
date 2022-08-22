@@ -1,6 +1,6 @@
 #include "MapGenerator/LoadSkeletonAnimationUI.h"
 
-#include "SlateTypes.h"
+#include "Styling/SlateTypes.h"
 #include "SCanvas.h"
 #include "SButton.h"
 #include "SConstraintCanvas.h"
@@ -16,286 +16,172 @@
 #include "LevelSequence.h"
 #include "FileHelpers.h"
 
-
 #include "MapGenerator/CreateMap.h"
 #include "MapGenerator/ConvertPath.h"
 #include "MapGenerator/LoadBP.h"
 
 #define LOCTEXT_NAMESPACE "SLoadSkeletonAnimationUI"
 
-
-void SLoadSkeletonAnimationUI::Construct(const FArguments& InArgs)
+void SLoadSkeletonAnimationUI::Construct(const FArguments &InArgs)
 {
 
 	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
 
 	ChildSlot
-	[
-
-		SNew(SBorder)
-		.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
-		.BorderImage(new FSlateBrush())
 		[
-			SNew(SCanvas)
-			// Title
-			+ SCanvas::Slot()
-			.Position(FVector2D(700, 60))
-			.Size(FVector2D(800, 100))
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString("UE4 Load Skeleton Animation Tool"))
-			.Font(FSlateFontInfo("Arial", 26))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
 
-		//Save Settings
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 60))
-			.Size(FVector2D(920, 300))
-			[
-				SNew(SVerticalBox)
-				//Content Row1
-			+ SVerticalBox::Slot().Padding(5, 5)
-			.AutoHeight()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)
-				[
-					SNew(STextBlock)
-					.Font(FSlateFontInfo("Arial", 22))
-				.Text(FText::FromString(TEXT("Tools Setting:")))
-				.ColorAndOpacity(FLinearColor::Black)
-				]
+			SNew(SBorder)
+				.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
+				.BorderImage(new FSlateBrush())
+					[SNew(SCanvas)
+					 // Title
+					 + SCanvas::Slot()
+						   .Position(FVector2D(700, 60))
+						   .Size(FVector2D(800, 100))
+						   .HAlign(HAlign_Center)
+						   .VAlign(VAlign_Center)
+							   [SNew(STextBlock)
+									.Text(FText::FromString("UE4 Load Skeleton Animation Tool"))
+									.Font(FSlateFontInfo("Arial", 26))
+									.ColorAndOpacity(FLinearColor::Black)]
 
-				+ SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
+					 // Save Settings
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 60))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SVerticalBox)
+								// Content Row1
+								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
-			]
-
-			//Working Project Info
-			+ SVerticalBox::Slot().Padding(2, 2)
-			.AutoHeight()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Project:")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextPorject, SEditableTextBox)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Dir")))
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Center)
-					.OnClicked(this, &SLoadSkeletonAnimationUI::OpenProjcetDir)
-					]
-			]
-
-			//LevelStreaming Info	
-			+ SVerticalBox::Slot().Padding(2, 2)
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Skeleton Asset :")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-					+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-						[
-							SAssignNew(TextAsset, SEditableTextBox)
-							.Font(SlateFontInfoContent)
-						]
-					+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-						[
-							SNew(SButton)
-							.Text(FText::FromString(TEXT("Choose Asset")))
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-						.OnClicked(this, &SLoadSkeletonAnimationUI::ChooseAsset)
-						]
-				]
-	
-
-	//Map Save Path	
-	+SVerticalBox::Slot().Padding(2, 2)
-		.AutoHeight()
-		[
-			SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Map Save Path :")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Map")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxMap, SCheckBox)
-						.IsChecked(ECheckBoxState::Checked)
-					.BorderBackgroundColor(FLinearColor::White)
-					.OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SaveInMap)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Shot")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxShot, SCheckBox)
-						.OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SaveInShot)
-					]
-				+ SHorizontalBox::Slot().FillWidth(0.8).Padding(2, 2)
-				
-				+ SHorizontalBox::Slot().FillWidth(1.6).Padding(2, 2)
-				[
-					SNew(STextBlock)
-					.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Animation Start Frame:")))
-					.ColorAndOpacity(FLinearColor::Black)
-				]
-				+ SHorizontalBox::Slot().FillWidth(0.45).Padding(2, 2).HAlign(HAlign_Left)
-					[
-						SAssignNew(TextStartFrame, SEditableTextBox)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("71")))
-						.MinDesiredWidth(100)
-				]
-
-				+ SHorizontalBox::Slot().FillWidth(1.05).Padding(2, 2)
-			]
-
+									   + SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
 
 	]
 
-	//Listview label
-	+SCanvas::Slot()
-		.Position(FVector2D(100, 280))
-		.Size(FVector2D(920, 50))
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().FillWidth(1)
-			[
-			SNew(STextBlock)
-				.Font(SlateFontInfoContent)
-			.Text(FText::FromString(TEXT("Map Info:")))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
-		+ SHorizontalBox::Slot().FillWidth(2)
-			[
-				SNew(STextBlock)
-				.Font(SlateFontInfoContent)
-			.Text(FText::FromString(TEXT("Sequence Info:")))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
+								// Working Project Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Project:"))).ColorAndOpacity(FLinearColor::Black)]
 
-		]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextPorject, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SLoadSkeletonAnimationUI::OpenProjcetDir)]]
 
-		//Listview Content
-	+ SCanvas::Slot()
-		.Position(FVector2D(100, 310))
-		.Size(FVector2D(920, 300))
-		[
-			SNew(SBorder)
-			.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
-		.BorderImage(new FSlateBrush())
-				[
+								// LevelStreaming Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Skeleton Asset :"))).ColorAndOpacity(FLinearColor::Black)]
 
-					SNew(SScrollBox).ScrollBarAlwaysVisible(true)
-					+ SScrollBox::Slot()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1)
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextAsset, SEditableTextBox)
+												  .Font(SlateFontInfoContent)] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Asset")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SLoadSkeletonAnimationUI::ChooseAsset)]]
 
-						[
-						SAssignNew(ListViewMapInfo, SListView<TSharedPtr<FMapInfo>>)
-						.ItemHeight(24)
-						.ListItemsSource(&ItemsMapInfo)
-						.SelectionMode(ESelectionMode::Multi)
-						.OnGenerateRow(this, &SLoadSkeletonAnimationUI::GenerateMapInfoList)
-						.OnSelectionChanged(this, &SLoadSkeletonAnimationUI::ShowSequence)
-										]
-					+ SHorizontalBox::Slot().FillWidth(0.025)
+								// Map Save Path
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Map Save Path :"))).ColorAndOpacity(FLinearColor::Black)]
 
-						[
-							SNew(SBorder)
-							.BorderBackgroundColor(FLinearColor::Blue)
-						.VAlign(VAlign_Fill)
-						.DesiredSizeScale(FVector2D(1, 75))
-						]
-					+ SHorizontalBox::Slot().FillWidth(2)
-						[
-							SAssignNew(ListViewSequence, SListView<TSharedPtr<FString>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsEmpty)
-							.OnGenerateRow(this, &SLoadSkeletonAnimationUI::GenerateList)
+									   + SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+											 [SNew(STextBlock)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Map")))
+												  .ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxMap, SCheckBox)
+												.IsChecked(ECheckBoxState::Checked)
+												.BorderBackgroundColor(FLinearColor::White)
+												.OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SaveInMap)] +
+									   SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+										   [SNew(STextBlock)
+												.Font(SlateFontInfoContent)
+												.Text(FText::FromString(TEXT("Shot")))
+												.ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxShot, SCheckBox)
+												.OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SaveInShot)] +
+									   SHorizontalBox::Slot().FillWidth(0.8).Padding(2, 2)
 
-						]
+									   + SHorizontalBox::Slot().FillWidth(1.6).Padding(2, 2)
+											 [SNew(STextBlock)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Animation Start Frame:")))
+												  .ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(0.45).Padding(2, 2).HAlign(HAlign_Left)
+										   [SAssignNew(TextStartFrame, SEditableTextBox)
+												.Font(SlateFontInfoContent)
+												.Text(FText::FromString(TEXT("71")))
+												.MinDesiredWidth(100)]
 
-				]
-			]
+									   + SHorizontalBox::Slot().FillWidth(1.05).Padding(2, 2)]
 
+	]
 
-		]
+					 // Listview label
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 280))
+						   .Size(FVector2D(920, 50))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Map Info:"))).ColorAndOpacity(FLinearColor::Black)] + SHorizontalBox::Slot().FillWidth(2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Sequence Info:"))).ColorAndOpacity(FLinearColor::Black)]
 
+	]
 
+					 // Listview Content
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 310))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SBorder)
+									.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
+									.BorderImage(new FSlateBrush())
+										[
 
-			+SCanvas::Slot()
-				.Position(FVector2D(450, 675))
-				.Size(FVector2D(200, 75))
-				.VAlign(VAlign_Center)
-				[
-					SNew(SButton)
-					.Text(FText::FromString(FString("Load Anim")))
-				.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				.OnClicked(this, &SLoadSkeletonAnimationUI::LoadSkeletonAnim)
-				]
-		]
-	];
+											SNew(SScrollBox).ScrollBarAlwaysVisible(true) + SScrollBox::Slot()
+																								[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)
 
+																															[SAssignNew(ListViewMapInfo, SListView<TSharedPtr<FMapInfo>>).ItemHeight(24).ListItemsSource(&ItemsMapInfo).SelectionMode(ESelectionMode::Multi).OnGenerateRow(this, &SLoadSkeletonAnimationUI::GenerateMapInfoList).OnSelectionChanged(this, &SLoadSkeletonAnimationUI::ShowSequence)] +
+																								 SHorizontalBox::Slot().FillWidth(0.025)
+
+																									 [SNew(SBorder)
+																										  .BorderBackgroundColor(FLinearColor::Blue)
+																										  .VAlign(VAlign_Fill)
+																										  .DesiredSizeScale(FVector2D(1, 75))] +
+																								 SHorizontalBox::Slot().FillWidth(2)
+																									 [SAssignNew(ListViewSequence, SListView<TSharedPtr<FString>>)
+																										  .ItemHeight(24)
+																										  .ListItemsSource(&ItemsEmpty)
+																										  .OnGenerateRow(this, &SLoadSkeletonAnimationUI::GenerateList)
+
+	]
+
+	]]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(450, 675))
+						   .Size(FVector2D(200, 75))
+						   .VAlign(VAlign_Center)
+							   [SNew(SButton)
+									.Text(FText::FromString(FString("Load Anim")))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.HAlign(HAlign_Center)
+									.VAlign(VAlign_Center)
+									.OnClicked(this, &SLoadSkeletonAnimationUI::LoadSkeletonAnim)]]];
 }
 
-
-
-
-
-
-
-
-
-
-//Button Action OpenProjectDir
+// Button Action OpenProjectDir
 FReply SLoadSkeletonAnimationUI::OpenProjcetDir()
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -305,8 +191,7 @@ FReply SLoadSkeletonAnimationUI::OpenProjcetDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*FPaths::ProjectContentDir(),
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -317,18 +202,17 @@ FReply SLoadSkeletonAnimationUI::OpenProjcetDir()
 
 			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
 			ItemsUpdateContent();
-
 		}
 	}
 
 	return FReply::Handled();
 }
 
-//Button Action Open FbxDir
+// Button Action Open FbxDir
 FReply SLoadSkeletonAnimationUI::ChooseAsset()
 {
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	if (IFileManager::Get().DirectoryExists(*TextAsset->GetText().ToString()))
 		DefaultOpenFbxDir = TextAsset->GetText().ToString();
@@ -348,8 +232,7 @@ FReply SLoadSkeletonAnimationUI::ChooseAsset()
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
 
 	if (bOpen)
@@ -373,46 +256,29 @@ FReply SLoadSkeletonAnimationUI::ChooseAsset()
 	return FReply::Handled();
 }
 
-
-TSharedRef<ITableRow> SLoadSkeletonAnimationUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SLoadSkeletonAnimationUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase> &OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(STextBlock)
-			.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-			.Text(FText::FromString(*Item))
-		//		.Font(FSlateFontInfo("Arial", 12))
-		];
+			[SNew(STextBlock)
+				 .ColorAndOpacity(FLinearColor(0, 0, 0, 1))
+				 .Text(FText::FromString(*Item))
+			 //		.Font(FSlateFontInfo("Arial", 12))
+	];
 }
 
-TSharedRef<ITableRow> SLoadSkeletonAnimationUI::GenerateMapInfoList(TSharedPtr<FMapInfo> Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SLoadSkeletonAnimationUI::GenerateMapInfoList(TSharedPtr<FMapInfo> Item, const TSharedRef<STableViewBase> &OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().FillWidth(1)
-			[
-				SNew(STextBlock)
-				.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-				.Text(FText::FromString(*FConvertPath::GetPackageName(Item->MapPackage)))
-			]
-			+ SHorizontalBox::Slot().FillWidth(0.1)
-				[
-					SNew(SCheckBox)
-					.ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1))
-					.IsChecked(Item->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-					.OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SetMapLoad)
-				]
-		//		.Font(FSlateFontInfo("Arial", 12))
-		];
+			[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*FConvertPath::GetPackageName(Item->MapPackage)))] + SHorizontalBox::Slot().FillWidth(0.1)[SNew(SCheckBox).ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1)).IsChecked(Item->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked).OnCheckStateChanged(this, &SLoadSkeletonAnimationUI::SetMapLoad)]
+			 //		.Font(FSlateFontInfo("Arial", 12))
+	];
 }
 
 void SLoadSkeletonAnimationUI::SetMapLoad(ECheckBoxState State)
 {
 	TArray<TSharedPtr<FMapInfo>> CurrentSelcetedItems = ListViewMapInfo->GetSelectedItems();
-
 
 	for (auto Item : CurrentSelcetedItems)
 	{
@@ -425,8 +291,6 @@ void SLoadSkeletonAnimationUI::SetMapLoad(ECheckBoxState State)
 	ListViewMapInfo->RequestListRefresh();
 }
 
-
-
 void SLoadSkeletonAnimationUI::SaveInMap(ECheckBoxState State)
 {
 	IsSaveInMap = CheckBoxMap->IsChecked();
@@ -435,9 +299,7 @@ void SLoadSkeletonAnimationUI::SaveInMap(ECheckBoxState State)
 	else
 		CheckBoxShot->SetIsChecked(ECheckBoxState::Checked);
 
-
 	ItemsUpdateContent();
-	
 }
 
 void SLoadSkeletonAnimationUI::SaveInShot(ECheckBoxState State)
@@ -449,20 +311,17 @@ void SLoadSkeletonAnimationUI::SaveInShot(ECheckBoxState State)
 		CheckBoxMap->SetIsChecked(ECheckBoxState::Unchecked);
 
 	ItemsUpdateContent();
-
-
 }
-
 
 void SLoadSkeletonAnimationUI::ItemsUpdateContent()
 {
-	//TArray<TSharedPtr<FMapInfo>> ItemsMapInfoNew;
-	//TArray<TSharedPtr<FString>>  ItemsSequenceNew, ItemsMapPackageNew;
+	// TArray<TSharedPtr<FMapInfo>> ItemsMapInfoNew;
+	// TArray<TSharedPtr<FString>>  ItemsSequenceNew, ItemsMapPackageNew;
 
 	ItemsMapInfo.Reset();
 
-	//Load AnimSequecne From Anim Directory in ProjectPath
-	UObjectLibrary * WorldLibrary = UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, GIsEditor);
+	// Load AnimSequecne From Anim Directory in ProjectPath
+	UObjectLibrary *WorldLibrary = UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, GIsEditor);
 	if (WorldLibrary)
 	{
 		WorldLibrary->AddToRoot();
@@ -501,56 +360,49 @@ void SLoadSkeletonAnimationUI::ItemsUpdateContent()
 				}
 			}
 		}
-
 	}
 	if (ItemsMapInfo.Num())
 	{
 		ItemsAllSequence.Reset();
 
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		for (int i = 0;i< ItemsMapInfo.Num();i++)
+		for (int i = 0; i < ItemsMapInfo.Num(); i++)
 		{
 			TArray<FName> SoftdReferencers;
 			AssetRegistryModule.Get().GetReferencers(FName(*ItemsMapInfo[i]->MapPackage), SoftdReferencers, EAssetRegistryDependencyType::Soft);
-			TArray<TSharedPtr<FString>> ItemsSequenceName,ItemsSequencePackage;
+			TArray<TSharedPtr<FString>> ItemsSequenceName, ItemsSequencePackage;
 
 			if (SoftdReferencers.Num())
 			{
 				for (auto Referencer : SoftdReferencers)
 				{
-					ULevelSequence * Sequence = LoadObject<ULevelSequence>(NULL, *Referencer.ToString());
+					ULevelSequence *Sequence = LoadObject<ULevelSequence>(NULL, *Referencer.ToString());
 					if (Sequence != nullptr)
 					{
 						ItemsSequencePackage.Add(MakeShareable(new FString(Referencer.ToString())));
 						TArray<FString> NameSplit;
 						Referencer.ToString().ParseIntoArray(NameSplit, TEXT("/"), true);
-						ItemsSequenceName.Add(MakeShareable(new FString(NameSplit[NameSplit.Num()-1])));
+						ItemsSequenceName.Add(MakeShareable(new FString(NameSplit[NameSplit.Num() - 1])));
 					}
 				}
-
 			}
 			ItemsAllSequence.Add(ItemsSequenceName);
 			ItemsAllSequencePackage.Add(ItemsSequencePackage);
-
 		}
 	}
 
 	ListViewSequence->SetListItemsSource(ItemsEmpty);
 	ListViewSequence->RequestListRefresh();
 
-	
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *FString::FromInt(ItemsMapInfoNew.Num()));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *FString::FromInt(ItemsMapInfoNew.Num()));
 	ListViewMapInfo->RebuildList();
 	ListViewMapInfo->RequestListRefresh();
 
-//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *FString::FromInt(ItemsMap.Num()));
-
-	
-
+	//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *FString::FromInt(ItemsMap.Num()));
 }
 
-void SLoadSkeletonAnimationUI::ShowSequence(TSharedPtr<FMapInfo> Item,ESelectInfo::Type Direct)
+void SLoadSkeletonAnimationUI::ShowSequence(TSharedPtr<FMapInfo> Item, ESelectInfo::Type Direct)
 {
 	TArray<TSharedPtr<FMapInfo>> CurrentSelcetedItem = ListViewMapInfo->GetSelectedItems();
 
@@ -563,14 +415,8 @@ void SLoadSkeletonAnimationUI::ShowSequence(TSharedPtr<FMapInfo> Item,ESelectInf
 	else
 		ListViewSequence->SetListItemsSource(ItemsEmpty);
 
-
 	ListViewSequence->RequestListRefresh();
 }
-
-
-
-
-
 
 FReply SLoadSkeletonAnimationUI::LoadSkeletonAnim()
 {
@@ -595,10 +441,8 @@ FReply SLoadSkeletonAnimationUI::LoadSkeletonAnim()
 		}
 	}
 	return FReply::Handled();
-
 }
 
 #undef LOCTEXT_NAMESPACE
 
-
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

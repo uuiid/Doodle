@@ -1,11 +1,11 @@
 #include "MapGenerator/ConvertPath.h"
 
 #include "FileManager.h"
-#include "Paths.h"
+#include "Misc/Paths.h"
 
 #define LOCTEXT_NAMESPACE "FConvertPath"
 
-FString FConvertPath::ToRelativePath(FString& AbsolutePath)
+FString FConvertPath::ToRelativePath(FString &AbsolutePath)
 {
 	FString RelativePath;
 
@@ -14,12 +14,11 @@ FString FConvertPath::ToRelativePath(FString& AbsolutePath)
 	if (IFileManager::Get().DirectoryExists(*AbsolutePath))
 		if (AbsolutePath.Contains(FPaths::ProjectContentDir()))
 			RelativePath = AbsolutePath.Replace(*FPaths::ProjectContentDir(), TEXT("/Game/"));
-		
 
 	return RelativePath;
 }
 
-FString FConvertPath::ToAbsolutePath(FString& RelativePath)
+FString FConvertPath::ToAbsolutePath(FString &RelativePath)
 {
 	FString AbsolutePath;
 
@@ -28,14 +27,10 @@ FString FConvertPath::ToAbsolutePath(FString& RelativePath)
 	if (RelativePath.StartsWith("/Game/"))
 		AbsolutePath = FPaths::ProjectContentDir() + RelativePath.RightChop(6);
 
-	
-
-
 	return AbsolutePath;
 }
 
-
-FString FConvertPath::ToRelativePath(FString& AbsoluteFilePath, bool WithExt)
+FString FConvertPath::ToRelativePath(FString &AbsoluteFilePath, bool WithExt)
 {
 	FString FilePath, FileName, RelativePath;
 
@@ -58,7 +53,7 @@ FString FConvertPath::ToRelativePath(FString& AbsoluteFilePath, bool WithExt)
 	return RelativePath;
 }
 
-FString FConvertPath::ToAbsolutePath(FString& RelativeFilePath, bool WithExt, FString& Ext)
+FString FConvertPath::ToAbsolutePath(FString &RelativeFilePath, bool WithExt, FString &Ext)
 {
 	FString AbsolutePath = RelativeFilePath;
 	if (RelativeFilePath.StartsWith("/Game/"))
@@ -88,7 +83,7 @@ FString FConvertPath::GetPackagePath(FString &Package)
 
 	FString Path = "";
 	if (PackageSplit.Num() > 1)
-		Path = Package.LeftChop(PackageSplit[PackageSplit.Num()-1].Len() + 1);
+		Path = Package.LeftChop(PackageSplit[PackageSplit.Num() - 1].Len() + 1);
 
 	return Path;
 }

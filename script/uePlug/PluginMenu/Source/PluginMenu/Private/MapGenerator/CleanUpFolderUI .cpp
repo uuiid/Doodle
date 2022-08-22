@@ -1,6 +1,6 @@
 #include "MapGenerator/CleanUpFolderUI.h"
 
-#include "SlateTypes.h"
+#include "Styling/SlateTypes.h"
 #include "SCanvas.h"
 #include "SButton.h"
 #include "SConstraintCanvas.h"
@@ -29,198 +29,126 @@
 
 #define LOCTEXT_NAMESPACE "SCleanUpFolderUI"
 
-
-void SCleanUpFolderUI::Construct(const FArguments& InArgs)
+void SCleanUpFolderUI::Construct(const FArguments &InArgs)
 {
 
 	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
 
 	ChildSlot
-	[
-
-		SNew(SBorder)
-		.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
-		.BorderImage(new FSlateBrush())
 		[
-			SNew(SCanvas)
-			// Title
-			+ SCanvas::Slot()
-			.Position(FVector2D(700, 60))
-			.Size(FVector2D(800, 100))
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(FText::FromString("UE4 Clean Up Folder Tool"))
-			.Font(FSlateFontInfo("Arial", 26))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
 
-		//Save Settings
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 60))
-			.Size(FVector2D(920, 300))
-			[
-				SNew(SVerticalBox)
-				//Content Row1
-			+ SVerticalBox::Slot().Padding(5, 5)
-			.AutoHeight()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)
-				[
-					SNew(STextBlock)
-					.Font(FSlateFontInfo("Arial", 22))
-				.Text(FText::FromString(TEXT("Tools Setting:")))
-				.ColorAndOpacity(FLinearColor::Black)
-				]
-
-				+ SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
-
-			]
-
-			//Working Project Info
-			+ SVerticalBox::Slot().Padding(2, 2)
-			.AutoHeight()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Project:")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextPorject, SEditableTextBox)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Dir")))
-					.VAlign(VAlign_Center)
-					.HAlign(HAlign_Center)
-					.OnClicked(this, &SCleanUpFolderUI::OpenProjcetDir)
-					]
-			]
-
-			//LevelStreaming Info	
-			+ SVerticalBox::Slot().Padding(2, 2)
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Output Path :")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-
-					+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-						[
-							SAssignNew(TextOutput, SEditableTextBox)
-							.Font(SlateFontInfoContent)
-						]
-					+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-						[
-							SNew(SButton)
-							.Text(FText::FromString(TEXT("Choose Path")))
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-						.OnClicked(this, &SCleanUpFolderUI::OpenOutputDir)
-						]
-				]
-			]
-
-	//Map Save Path	
-	
-
-	//Listview label
-	+SCanvas::Slot()
-		.Position(FVector2D(100, 230))
-		.Size(FVector2D(920, 50))
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().FillWidth(1)
-			[
-			SNew(STextBlock)
-				.Font(SlateFontInfoContent)
-			.Text(FText::FromString(TEXT("Need Clean up Folders:")))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
-
-		]
-
-		//Listview Content
-	+ SCanvas::Slot()
-		.Position(FVector2D(100, 260))
-		.Size(FVector2D(920, 350))
-		[
 			SNew(SBorder)
-			.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
-			.BorderImage(new FSlateBrush())
-				[
+				.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
+				.BorderImage(new FSlateBrush())
+					[SNew(SCanvas)
+					 // Title
+					 + SCanvas::Slot()
+						   .Position(FVector2D(700, 60))
+						   .Size(FVector2D(800, 100))
+						   .HAlign(HAlign_Center)
+						   .VAlign(VAlign_Center)
+							   [SNew(STextBlock)
+									.Text(FText::FromString("UE4 Clean Up Folder Tool"))
+									.Font(FSlateFontInfo("Arial", 26))
+									.ColorAndOpacity(FLinearColor::Black)]
 
-					SNew(SScrollBox).ScrollBarAlwaysVisible(true)
-					+ SScrollBox::Slot()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1)
+					 // Save Settings
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 60))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SVerticalBox)
+								// Content Row1
+								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
-						[
-						SAssignNew(ListViewFolderInfo, SListView<TSharedPtr<FFolderInfo>>)
-						.ItemHeight(24)
-						.ListItemsSource(&ItemsFolderInfo)
-						.SelectionMode(ESelectionMode::Multi)
-						.OnGenerateRow(this, &SCleanUpFolderUI::GenerateFolderInfoList)
-						]
-					
+									   + SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
 
-					]
-				]
+	]
 
+								// Working Project Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Project:"))).ColorAndOpacity(FLinearColor::Black)]
 
-		]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextPorject, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SCleanUpFolderUI::OpenProjcetDir)]]
 
+								// LevelStreaming Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Output Path :"))).ColorAndOpacity(FLinearColor::Black)]
 
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextOutput, SEditableTextBox)
+												  .Font(SlateFontInfoContent)] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Path")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SCleanUpFolderUI::OpenOutputDir)]]]
 
-		+SCanvas::Slot()
-		.Position(FVector2D(450, 675))
-		.Size(FVector2D(200, 75))
-		.VAlign(VAlign_Center)
-		[
-			SNew(SButton)
-			.Text(FText::FromString(FString("Clean Up")))
-			.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			.OnClicked(this, &SCleanUpFolderUI::CleanUpFolders)
-		]
-		]
+					 // Map Save Path
+
+					 // Listview label
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 230))
+						   .Size(FVector2D(920, 50))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)
+														   [SNew(STextBlock)
+																.Font(SlateFontInfoContent)
+																.Text(FText::FromString(TEXT("Need Clean up Folders:")))
+																.ColorAndOpacity(FLinearColor::Black)]
+
+	]
+
+					 // Listview Content
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 260))
+						   .Size(FVector2D(920, 350))
+							   [SNew(SBorder)
+									.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
+									.BorderImage(new FSlateBrush())
+										[
+
+											SNew(SScrollBox).ScrollBarAlwaysVisible(true) + SScrollBox::Slot()
+																								[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)
+
+																															[SAssignNew(ListViewFolderInfo, SListView<TSharedPtr<FFolderInfo>>)
+																																 .ItemHeight(24)
+																																 .ListItemsSource(&ItemsFolderInfo)
+																																 .SelectionMode(ESelectionMode::Multi)
+																																 .OnGenerateRow(this, &SCleanUpFolderUI::GenerateFolderInfoList)]
+
+	]]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(450, 675))
+						   .Size(FVector2D(200, 75))
+						   .VAlign(VAlign_Center)
+							   [SNew(SButton)
+									.Text(FText::FromString(FString("Clean Up")))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.HAlign(HAlign_Center)
+									.VAlign(VAlign_Center)
+									.OnClicked(this, &SCleanUpFolderUI::CleanUpFolders)]]
 
 	];
-
 }
 
-
-
-
-
-
-
-
-
-
-//Button Action OpenProjectDir
+// Button Action OpenProjectDir
 FReply SCleanUpFolderUI::OpenProjcetDir()
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -230,8 +158,7 @@ FReply SCleanUpFolderUI::OpenProjcetDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*DefaultOpenProjectDir,
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -242,20 +169,18 @@ FReply SCleanUpFolderUI::OpenProjcetDir()
 			DefaultOpenProjectDir = OpenDirectory;
 			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
 			ItemsUpdateContent();
-
 		}
 	}
 
 	return FReply::Handled();
 }
 
-//Button Action Open FbxDir
+// Button Action Open FbxDir
 FReply SCleanUpFolderUI::OpenOutputDir()
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
-	
 	bool bOpen = false;
 	FString SceneMap;
 
@@ -265,8 +190,7 @@ FReply SCleanUpFolderUI::OpenOutputDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*DefaultOpenOutputDir,
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -276,59 +200,37 @@ FReply SCleanUpFolderUI::OpenOutputDir()
 		{
 			DefaultOpenOutputDir = OpenDirectory;
 			TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
-
 		}
 	}
 	return FReply::Handled();
 }
 
-
-
-TSharedRef<ITableRow> SCleanUpFolderUI::GenerateFolderInfoList(TSharedPtr<FFolderInfo> Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SCleanUpFolderUI::GenerateFolderInfoList(TSharedPtr<FFolderInfo> Item, const TSharedRef<STableViewBase> &OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().FillWidth(1.5)
-			[
-				SNew(STextBlock)
-				.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-				.Text(FText::FromString(*Item->FolderPackage))
-			]
-		+ SHorizontalBox::Slot().FillWidth(0.3)
-			[
-				SNew(STextBlock)
-				.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-				.Text(FText::FromString("Move Folder"))
-			]
+			[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*Item->FolderPackage))] + SHorizontalBox::Slot().FillWidth(0.3)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString("Move Folder"))]
 
-			+ SHorizontalBox::Slot().FillWidth(0.1)
-				[
-					SNew(SCheckBox)
-					.ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1))
-					.IsChecked(Item->bFolder ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-					.OnCheckStateChanged(this, &SCleanUpFolderUI::SetByFolder)
-				]
-			+ SHorizontalBox::Slot().FillWidth(0.5)
+			 + SHorizontalBox::Slot().FillWidth(0.1)
+				   [SNew(SCheckBox)
+						.ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1))
+						.IsChecked(Item->bFolder ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+						.OnCheckStateChanged(this, &SCleanUpFolderUI::SetByFolder)] +
+			 SHorizontalBox::Slot().FillWidth(0.5)
 
-			+ SHorizontalBox::Slot().FillWidth(0.3)
-				[
-					SNew(STextBlock)
-					.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-					.Text(FText::FromString("Move Assets"))
-				]
-			+ SHorizontalBox::Slot().FillWidth(0.1)
-				[
-					SNew(SCheckBox)
-					.ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1))
-				.IsChecked(Item->bAssetType ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-				.OnCheckStateChanged(this, &SCleanUpFolderUI::SetByAssetType)
-				]
+			 + SHorizontalBox::Slot().FillWidth(0.3)
+				   [SNew(STextBlock)
+						.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
+						.Text(FText::FromString("Move Assets"))] +
+			 SHorizontalBox::Slot().FillWidth(0.1)
+				 [SNew(SCheckBox)
+					  .ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1))
+					  .IsChecked(Item->bAssetType ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+					  .OnCheckStateChanged(this, &SCleanUpFolderUI::SetByAssetType)]
 
-			+ SHorizontalBox::Slot().FillWidth(0.5)
-		//		.Font(FSlateFontInfo("Arial", 12))
-		];
+			 + SHorizontalBox::Slot().FillWidth(0.5)
+			 //		.Font(FSlateFontInfo("Arial", 12))
+	];
 }
 
 void SCleanUpFolderUI::SetByFolder(ECheckBoxState State)
@@ -342,12 +244,9 @@ void SCleanUpFolderUI::SetByFolder(ECheckBoxState State)
 		{
 			FolderInfo->bFolder = !CheckState;
 		}
-
-		
 	}
 	ListViewFolderInfo->RebuildList();
 	ListViewFolderInfo->RequestListRefresh();
-	
 }
 
 void SCleanUpFolderUI::SetByAssetType(ECheckBoxState State)
@@ -361,16 +260,10 @@ void SCleanUpFolderUI::SetByAssetType(ECheckBoxState State)
 		{
 			FolderInfo->bAssetType = !CheckState;
 		}
-	
 	}
 	ListViewFolderInfo->RebuildList();
 	ListViewFolderInfo->RequestListRefresh();
-	
 }
-
-
-
-
 
 void SCleanUpFolderUI::ItemsUpdateContent()
 {
@@ -378,12 +271,12 @@ void SCleanUpFolderUI::ItemsUpdateContent()
 
 	TArray<FString> SplitProject;
 	Project.ParseIntoArray(SplitProject, TEXT("/"), ESearchCase::IgnoreCase);
-	
+
 	if (SplitProject.Num() > 1)
 	{
 		ItemsFolderInfo.Reset();
 
-		//Find Folders in Content Dir
+		// Find Folders in Content Dir
 		TArray<FString> SubDirsInContent, SubDirsInProject, SubDirsInEpisode;
 		FString ParentFolder;
 
@@ -396,35 +289,31 @@ void SCleanUpFolderUI::ItemsUpdateContent()
 					ItemsFolderInfo.Add(MakeShareable(new FFolderInfo(Dir)));
 			}
 
-		//Find Folders in Project Folder
+		// Find Folders in Project Folder
 		ParentFolder = FPaths::ProjectContentDir() + SplitProject[0] + "/*";
 		IFileManager::Get().FindFiles(SubDirsInProject, *ParentFolder, false, true);
 		if (SubDirsInProject.Num())
 			for (auto Dir : SubDirsInProject)
 			{
 				if (Dir != SplitProject[1])
-					ItemsFolderInfo.Add(MakeShareable(new FFolderInfo(SplitProject[0] + "/" + Dir,false,true)));
+					ItemsFolderInfo.Add(MakeShareable(new FFolderInfo(SplitProject[0] + "/" + Dir, false, true)));
 			}
 
-
 		// Find Folder in Episode Folder
-		ParentFolder = FPaths::ProjectContentDir() + SplitProject[0] + "/" + SplitProject[1] +  "/*";
+		ParentFolder = FPaths::ProjectContentDir() + SplitProject[0] + "/" + SplitProject[1] + "/*";
 		IFileManager::Get().FindFiles(SubDirsInEpisode, *ParentFolder, false, true);
 		if (SubDirsInEpisode.Num())
 		{
 			for (auto Dir : SubDirsInEpisode)
 			{
-				if (!Dir.StartsWith(TEXT("SC"),ESearchCase::IgnoreCase) && Dir.ToLower() != "map")
-					ItemsFolderInfo.Add(MakeShareable(new FFolderInfo(SplitProject[0] + "/" + SplitProject[1] + "/"  + Dir,false,true)));
+				if (!Dir.StartsWith(TEXT("SC"), ESearchCase::IgnoreCase) && Dir.ToLower() != "map")
+					ItemsFolderInfo.Add(MakeShareable(new FFolderInfo(SplitProject[0] + "/" + SplitProject[1] + "/" + Dir, false, true)));
 			}
 		}
 
 		ListViewFolderInfo->RebuildList();
 		ListViewFolderInfo->RequestListRefresh();
 	}
-	
-	
-
 }
 
 TArray<FString> SCleanUpFolderUI::FindAllSubDirs(FString Folder)
@@ -441,9 +330,7 @@ TArray<FString> SCleanUpFolderUI::FindAllSubDirs(FString Folder)
 	return AllSubDirsInFolder;
 }
 
-
-
-void  SCleanUpFolderUI::CleanUpFolder(FString& SourceFolder, FString& DestFolder, bool bFolder) 
+void SCleanUpFolderUI::CleanUpFolder(FString &SourceFolder, FString &DestFolder, bool bFolder)
 {
 	FCreateMapUtils::MoveAssetInFolder(SourceFolder, DestFolder, bFolder);
 	FCreateMapUtils::FixRedirectorsInFolder(SourceFolder);
@@ -467,8 +354,8 @@ FReply SCleanUpFolderUI::CleanUpFolders()
 		FCreateMapUtils::FixRedirectorsInFolder(ContentFolder);
 		FCreateMapUtils::SaveMaterialsInFolder(Project);
 
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		IAssetRegistry& AssetTool = AssetRegistryModule.Get();
+		FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		IAssetRegistry &AssetTool = AssetRegistryModule.Get();
 		for (auto FolderInfo : ItemsFolderInfo)
 		{
 			if (FolderInfo->bFolder || FolderInfo->bAssetType)
@@ -481,12 +368,10 @@ FReply SCleanUpFolderUI::CleanUpFolders()
 
 		ItemsUpdateContent();
 	}
-	
-	return FReply::Handled();
 
+	return FReply::Handled();
 }
 
 #undef LOCTEXT_NAMESPACE
 
-
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

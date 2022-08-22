@@ -1,6 +1,6 @@
 #include "MapGenerator/MutiSceneMapUI.h"
 
-#include "SlateTypes.h"
+#include "Styling/SlateTypes.h"
 #include "SCanvas.h"
 #include "SButton.h"
 #include "SConstraintCanvas.h"
@@ -18,344 +18,212 @@
 
 #define LOCTEXT_NAMESPACE "SMutiSceneMapUI"
 
-
-
-void SMutiSceneMapUI::Construct(const FArguments& InArgs)
+void SMutiSceneMapUI::Construct(const FArguments &InArgs)
 {
-	
+
 	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
 
 	ChildSlot
-	[
-	
-		SNew(SBorder)
-		.BorderBackgroundColor(FLinearColor(0.3,0.3,0.3,1))
-		.BorderImage(new FSlateBrush())
 		[
-		SNew(SCanvas)
-			// Title
-		+ SCanvas::Slot()
-			.Position(FVector2D(700, 60))
-			.Size(FVector2D(800, 100))
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-			SNew(STextBlock)
-			.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
-			.Font(FSlateFontInfo("Arial", 26))
-			.ColorAndOpacity(FLinearColor::Black)
-			]
-		
-		//Save Settings
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 60))
-			.Size(FVector2D(920, 300))
-			[
-				SNew(SVerticalBox)
-				//Content Row1
-				+ SVerticalBox::Slot().Padding(5,5)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).Padding(2,2)
-							[
-								SNew(STextBlock)
-								.Font(FSlateFontInfo("Arial", 22))
-								.Text(FText::FromString(TEXT("Tools Setting:")))
-								.ColorAndOpacity(FLinearColor::Black)
-							]
 
-						+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-
-						+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-							[
-								SNew(SButton)
-									.Text(FText::FromString(TEXT("Save Settings")))
-									.VAlign(VAlign_Center)
-									.HAlign(HAlign_Center)
-									.OnClicked(this,&SMutiSceneMapUI::SaveSetting)
-							]
-					]
-				
-				//Working Project Info
-				+ SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-							[
-								SNew(STextBlock)
-								.Font(SlateFontInfoContent)
-								.Text(FText::FromString(TEXT("Project:")))
-								.ColorAndOpacity(FLinearColor::Black)
-							]
-
-						+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-							[
-								
-								SAssignNew(TextPorject, SEditableTextBox)
-									.Font(SlateFontInfoContent)
-									.Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))
-							]
-						+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Choose Dir")))
-							.VAlign(VAlign_Center)
-							.HAlign(HAlign_Center)
-							.OnClicked(this,&SMutiSceneMapUI::OpenProjcetDir)
-							]
-					]
-					
-				//LevelStreaming Info	
-				+ SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Fbx Camera Dir :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextFbxDir, SEditableTextBox)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("C:/")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Dir")))
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-						.OnClicked(this,&SMutiSceneMapUI::OpenFbxDir)
-					]
-				]
-
-
-				//Fbx Camera Dir	
-				+SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Scene Map :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
-					[
-						SAssignNew(TextSceneMap,SEditableTextBox)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Template_Default")))
-					]
-				+ SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Choose Map")))
-						.OnClicked(this,&SMutiSceneMapUI::OpenSceneMap)
-						.VAlign(VAlign_Center)
-						.HAlign(HAlign_Center)
-					]
-				]
-
-
-				//Map Save Path	
-				+SVerticalBox::Slot().Padding(2, 2)
-					.AutoHeight()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Map Save Path :")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Map")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxMap,SCheckBox)
-						.IsChecked(ECheckBoxState::Checked)
-						.BorderBackgroundColor(FLinearColor::White)
-						.OnCheckStateChanged(this,&SMutiSceneMapUI::SaveInMap)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Shot")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
-					[
-						SAssignNew(CheckBoxShot, SCheckBox)
-						.OnCheckStateChanged(this,&SMutiSceneMapUI::SaveInShot)
-					]
-				+ SHorizontalBox::Slot().FillWidth(3.9).Padding(2, 2)
-
-				]
-
-
-			]
-		
-		
-		//ListView label
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 280))
-			.Size(FVector2D(920, 300))
-			[
-				SNew(SHorizontalBox)
-				+SHorizontalBox::Slot().FillWidth(1.02)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-						.Text(FText::FromString(TEXT("Shot Map List:")))
-						.ColorAndOpacity(FLinearColor::Black)
-					]
-				+ SHorizontalBox::Slot().FillWidth(2)
-					[
-						SNew(STextBlock)
-						.Font(SlateFontInfoContent)
-					.Text(FText::FromString(TEXT("Scene Map List:")))
-					.ColorAndOpacity(FLinearColor::Black)
-					]
-			]
-		
-		//Listview
-		+SCanvas::Slot()
-		.Position(FVector2D(100, 310))
-		.Size(FVector2D(920, 300))
-		[
 			SNew(SBorder)
-				.BorderBackgroundColor(FLinearColor(0.75,0.75,0.75,1))
+				.BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 1))
 				.BorderImage(new FSlateBrush())
-			[
-				
-					SNew(SScrollBox).ScrollBarAlwaysVisible(true)
-					+SScrollBox::Slot()
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1)
-					
-						[
-							SAssignNew(ListViewShot, SListView<TSharedPtr<FString>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsMap)
-							.OnGenerateRow(this,&SMutiSceneMapUI::GenerateList)
-							.OnMouseButtonClick(this,&SMutiSceneMapUI::LinkSelection_ClickL)
-						
-						
-						]
-						+ SHorizontalBox::Slot().FillWidth(0.025)
-					
-						[
-							SNew(SBorder)
-							.BorderBackgroundColor(FLinearColor::Blue)
-							.VAlign(VAlign_Fill)
-							.DesiredSizeScale(FVector2D(1,75))
-						]
-						+ SHorizontalBox::Slot().FillWidth(2)
-						[
-							SAssignNew(ListViewScene, SListView<TSharedPtr<FString>>)
-							.ItemHeight(24)
-							.ListItemsSource(&ItemsScene)
-							.OnMouseButtonClick(this, &SMutiSceneMapUI::LinkSelection_ClickR)
-							.OnGenerateRow(this, &SMutiSceneMapUI::GenerateList)
-							
-						]
+					[SNew(SCanvas)
+					 // Title
+					 + SCanvas::Slot()
+						   .Position(FVector2D(700, 60))
+						   .Size(FVector2D(800, 100))
+						   .HAlign(HAlign_Center)
+						   .VAlign(VAlign_Center)
+							   [SNew(STextBlock)
+									.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
+									.Font(FSlateFontInfo("Arial", 26))
+									.ColorAndOpacity(FLinearColor::Black)]
 
-					]
-				]			
+					 // Save Settings
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 60))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SVerticalBox)
+								// Content Row1
+								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
-		
-			]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
 
-		+ SCanvas::Slot()
-			.Position(FVector2D(100, 615))
-			.Size(FVector2D(920, 35))
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().FillWidth(.6)
+									   + SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+											 [SNew(SButton)
+												  .Text(FText::FromString(TEXT("Save Settings")))
+												  .VAlign(VAlign_Center)
+												  .HAlign(HAlign_Center)
+												  .OnClicked(this, &SMutiSceneMapUI::SaveSetting)]]
 
-				+ SHorizontalBox::Slot().FillWidth(.4).Padding(2, 0)
-				[
-					SNew(SButton)
-					.OnClicked(this, &SMutiSceneMapUI::ShowMapInfo)
-					.Text(FText::FromString(FString("Show Map Info")))
-					.HAlign(HAlign_Center)
-					.VAlign(VAlign_Center)
-					
-				]
-				+ SHorizontalBox::Slot().FillWidth(1.2)
+								// Working Project Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Project:"))).ColorAndOpacity(FLinearColor::Black)]
 
-				+SHorizontalBox::Slot().FillWidth(0.4).Padding(2,0)
-					[
-						SNew(SButton)
-						.OnClicked(this, &SMutiSceneMapUI::ChangeSceneMap)
-						.Text(FText::FromString(FString("Change Scene Map")))
-						.HAlign(HAlign_Center)
-						.VAlign(VAlign_Center)
-					]
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [
 
-				+SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
-					[
-						SNew(SButton)
-						.OnClicked(this, &SMutiSceneMapUI::RestSceneMap)
-						.Text(FText::FromString(FString("Reset Default")))
-						.HAlign(HAlign_Center)
-						.VAlign(VAlign_Center)
-					]
-			
-				
+												 SAssignNew(TextPorject, SEditableTextBox)
+													 .Font(SlateFontInfoContent)
+													 .Text(FText::FromString(TEXT("LJZ_VFX_project/EP000")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SMutiSceneMapUI::OpenProjcetDir)]]
 
-			]
+								// LevelStreaming Info
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Fbx Camera Dir :"))).ColorAndOpacity(FLinearColor::Black)]
 
-			+SCanvas::Slot()
-				.Position(FVector2D(480, 700))
-				.Size(FVector2D(160, 60))
-				.VAlign(VAlign_Center)
-				[
-					SNew(SButton)
-					.Text(FText::FromString(FString("Create Map")))
-					.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
-					.HAlign(HAlign_Center)
-					.VAlign(VAlign_Center)
-					.OnClicked(this,&SMutiSceneMapUI::CreateMap)
-				]
-		]
-	];
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextFbxDir, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("C:/")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Dir")))
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)
+												.OnClicked(this, &SMutiSceneMapUI::OpenFbxDir)]]
+
+								// Fbx Camera Dir
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Scene Map :"))).ColorAndOpacity(FLinearColor::Black)]
+
+									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
+											 [SAssignNew(TextSceneMap, SEditableTextBox)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Template_Default")))] +
+									   SHorizontalBox::Slot().FillWidth(1).Padding(2, 2)
+										   [SNew(SButton)
+												.Text(FText::FromString(TEXT("Choose Map")))
+												.OnClicked(this, &SMutiSceneMapUI::OpenSceneMap)
+												.VAlign(VAlign_Center)
+												.HAlign(HAlign_Center)]]
+
+								// Map Save Path
+								+ SVerticalBox::Slot().Padding(2, 2).AutoHeight()
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).HAlign(HAlign_Center).Padding(2, 2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Map Save Path :"))).ColorAndOpacity(FLinearColor::Black)]
+
+									   + SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+											 [SNew(STextBlock)
+												  .Font(SlateFontInfoContent)
+												  .Text(FText::FromString(TEXT("Map")))
+												  .ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxMap, SCheckBox)
+												.IsChecked(ECheckBoxState::Checked)
+												.BorderBackgroundColor(FLinearColor::White)
+												.OnCheckStateChanged(this, &SMutiSceneMapUI::SaveInMap)] +
+									   SHorizontalBox::Slot().FillWidth(.6).Padding(2, 2).HAlign(HAlign_Right)
+										   [SNew(STextBlock)
+												.Font(SlateFontInfoContent)
+												.Text(FText::FromString(TEXT("Shot")))
+												.ColorAndOpacity(FLinearColor::Black)] +
+									   SHorizontalBox::Slot().FillWidth(.2).Padding(2, 2)
+										   [SAssignNew(CheckBoxShot, SCheckBox)
+												.OnCheckStateChanged(this, &SMutiSceneMapUI::SaveInShot)] +
+									   SHorizontalBox::Slot().FillWidth(3.9).Padding(2, 2)
+
+	]
+
+	]
+
+					 // ListView label
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 280))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.02)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Shot Map List:"))).ColorAndOpacity(FLinearColor::Black)] + SHorizontalBox::Slot().FillWidth(2)[SNew(STextBlock).Font(SlateFontInfoContent).Text(FText::FromString(TEXT("Scene Map List:"))).ColorAndOpacity(FLinearColor::Black)]]
+
+					 // Listview
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 310))
+						   .Size(FVector2D(920, 300))
+							   [SNew(SBorder)
+									.BorderBackgroundColor(FLinearColor(0.75, 0.75, 0.75, 1))
+									.BorderImage(new FSlateBrush())
+										[
+
+											SNew(SScrollBox).ScrollBarAlwaysVisible(true) + SScrollBox::Slot()
+																								[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)
+
+																															[SAssignNew(ListViewShot, SListView<TSharedPtr<FString>>).ItemHeight(24).ListItemsSource(&ItemsMap).OnGenerateRow(this, &SMutiSceneMapUI::GenerateList).OnMouseButtonClick(this, &SMutiSceneMapUI::LinkSelection_ClickL)
+
+	] + SHorizontalBox::Slot().FillWidth(0.025)
+
+																									 [SNew(SBorder).BorderBackgroundColor(FLinearColor::Blue).VAlign(VAlign_Fill).DesiredSizeScale(FVector2D(1, 75))] +
+																								 SHorizontalBox::Slot().FillWidth(2)
+																									 [SAssignNew(ListViewScene, SListView<TSharedPtr<FString>>)
+																										  .ItemHeight(24)
+																										  .ListItemsSource(&ItemsScene)
+																										  .OnMouseButtonClick(this, &SMutiSceneMapUI::LinkSelection_ClickR)
+																										  .OnGenerateRow(this, &SMutiSceneMapUI::GenerateList)
+
+	]
+
+	]]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(100, 615))
+						   .Size(FVector2D(920, 35))
+							   [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(.6)
+
+								+ SHorizontalBox::Slot().FillWidth(.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SMutiSceneMapUI::ShowMapInfo)
+										   .Text(FText::FromString(FString("Show Map Info")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)
+
+	] + SHorizontalBox::Slot().FillWidth(1.2)
+
+								+ SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SMutiSceneMapUI::ChangeSceneMap)
+										   .Text(FText::FromString(FString("Change Scene Map")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)]
+
+								+ SHorizontalBox::Slot().FillWidth(0.4).Padding(2, 0)
+									  [SNew(SButton)
+										   .OnClicked(this, &SMutiSceneMapUI::RestSceneMap)
+										   .Text(FText::FromString(FString("Reset Default")))
+										   .HAlign(HAlign_Center)
+										   .VAlign(VAlign_Center)]
+
+	]
+
+					 + SCanvas::Slot()
+						   .Position(FVector2D(480, 700))
+						   .Size(FVector2D(160, 60))
+						   .VAlign(VAlign_Center)
+							   [SNew(SButton)
+									.Text(FText::FromString(FString("Create Map")))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.HAlign(HAlign_Center)
+									.VAlign(VAlign_Center)
+									.OnClicked(this, &SMutiSceneMapUI::CreateMap)]]];
 
 	LoadSetting();
 }
 
-
-
-//Listview GenarateRow Action
-TSharedRef<ITableRow> SMutiSceneMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)
+// Listview GenarateRow Action
+TSharedRef<ITableRow> SMutiSceneMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase> &OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
-		[
-			SNew(STextBlock)
-			.ColorAndOpacity(FLinearColor(0, 0, 0, 1))
-			.Text(FText::FromString(*Item))
-	//		.Font(FSlateFontInfo("Arial", 12))
-		];
+			[SNew(STextBlock)
+				 .ColorAndOpacity(FLinearColor(0, 0, 0, 1))
+				 .Text(FText::FromString(*Item))
+			 //		.Font(FSlateFontInfo("Arial", 12))
+	];
 }
 
 // Listview MouseCilcked Action ShotMap
@@ -365,12 +233,11 @@ void SMutiSceneMapUI::LinkSelection_ClickL(TSharedPtr<FString> Item)
 
 	ListViewScene->ClearSelection();
 
-
 	for (auto SelectedItem : CurrentSelcetedItems)
 	{
 		int32 index;
 		if (ItemsMap.Find(SelectedItem, index))
-		ListViewScene->SetItemSelection(ItemsScene[index], true, ESelectInfo::Direct);
+			ListViewScene->SetItemSelection(ItemsScene[index], true, ESelectInfo::Direct);
 	}
 	ListViewScene->RebuildList();
 	ListViewScene->RequestListRefresh();
@@ -392,17 +259,13 @@ void SMutiSceneMapUI::LinkSelection_ClickR(TSharedPtr<FString> Item)
 
 	ListViewShot->RebuildList();
 	ListViewShot->RequestListRefresh();
-
 }
-
-
-
 
 // Button Action ChangeSceneMap
 FReply SMutiSceneMapUI::ChangeSceneMap()
-{	
+{
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -420,10 +283,8 @@ FReply SMutiSceneMapUI::ChangeSceneMap()
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
-
 
 	if (bOpen)
 	{
@@ -431,7 +292,7 @@ FReply SMutiSceneMapUI::ChangeSceneMap()
 		SceneMap = OpenFilenames[0];
 
 		TArray<TSharedPtr<FString>> CurrentSelcetedItems = ListViewScene->GetSelectedItems();
-		
+
 		if (SceneMap.Contains(FPaths::ProjectContentDir()))
 		{
 			FString DisplaySceneMap = FConvertPath::ToRelativePath(SceneMap, false);
@@ -440,13 +301,11 @@ FReply SMutiSceneMapUI::ChangeSceneMap()
 				*Item = DisplaySceneMap;
 			}
 		}
-		
 
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
-
 	}
-	
+
 	return FReply::Handled();
 }
 
@@ -460,9 +319,8 @@ FReply SMutiSceneMapUI::RestSceneMap()
 		{
 			int32 Index;
 			ItemsScene.Find(SelectedItem, Index);
-		//	*SelectedItem = "Template_Default";
+			//	*SelectedItem = "Template_Default";
 			*ItemsScene[Index] = "Template_Default";
-
 		}
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
@@ -470,7 +328,7 @@ FReply SMutiSceneMapUI::RestSceneMap()
 	return FReply::Handled();
 }
 
-//Button Action ShowMapInfo
+// Button Action ShowMapInfo
 FReply SMutiSceneMapUI::ShowMapInfo()
 {
 
@@ -479,26 +337,23 @@ FReply SMutiSceneMapUI::ShowMapInfo()
 	ItemsAddContent(ProjectFullPath);
 
 	RefreshList();
-	
+
 	return FReply::Handled();
 }
 
-//Button Action SaveSetting
+// Button Action SaveSetting
 FReply SMutiSceneMapUI::SaveSetting()
 {
-	
+
 	WriteSetting();
 	return FReply::Handled();
 }
 
-
-//Write Setting.json
+// Write Setting.json
 void SMutiSceneMapUI::WriteSetting()
 {
 	TSharedPtr<FJsonObject> RootObject = MakeShareable(new FJsonObject);
 	TSharedPtr<FJsonObject> EntryObject = MakeShareable(new FJsonObject);
-
-
 
 	EntryObject->SetStringField(TEXT("Project"), *(TextPorject->GetText().ToString()));
 	EntryObject->SetStringField(TEXT("Fbx Camera Dir"), *(TextFbxDir->GetText().ToString()));
@@ -511,7 +366,7 @@ void SMutiSceneMapUI::WriteSetting()
 
 	RootObject->SetArrayField(TEXT("Settings"), JsonData);
 	FString JsonFileName = FPaths::ProjectDir() / TEXT("Settings.json");
-	FArchive * JsonFile = IFileManager::Get().CreateFileWriter(*JsonFileName, FILEWRITE_EvenIfReadOnly);
+	FArchive *JsonFile = IFileManager::Get().CreateFileWriter(*JsonFileName, FILEWRITE_EvenIfReadOnly);
 
 	if (JsonFile)
 	{
@@ -521,13 +376,13 @@ void SMutiSceneMapUI::WriteSetting()
 	}
 }
 
-//If Setting.json Exist , Loading Settings
+// If Setting.json Exist , Loading Settings
 void SMutiSceneMapUI::LoadSetting()
 {
 	FString JsonFileName = FPaths::ProjectDir() / TEXT("Settings.json");
 	if (IFileManager::Get().FileExists(*JsonFileName))
 	{
-		FArchive * JsonFile = IFileManager::Get().CreateFileReader(*JsonFileName);
+		FArchive *JsonFile = IFileManager::Get().CreateFileReader(*JsonFileName);
 		TSharedPtr<FJsonObject> RootObject = MakeShareable(new FJsonObject);
 		bool bJsonLoaded = false;
 
@@ -544,21 +399,19 @@ void SMutiSceneMapUI::LoadSetting()
 			FbxCameraDir = JsonData[0]->AsObject()->GetStringField(TEXT("Fbx Camera Dir"));
 			TextFbxDir->SetText(FText::FromString(FbxCameraDir));
 
-			//SceneMap = JsonData[0]->AsObject()->GetStringField(TEXT("Scene Map"));
-			//TextSceneMap->SetText(FText::FromString(SceneMap));
+			// SceneMap = JsonData[0]->AsObject()->GetStringField(TEXT("Scene Map"));
+			// TextSceneMap->SetText(FText::FromString(SceneMap));
 
-			//bool SavePath = JsonData[0]->AsObject()->GetBoolField(TEXT("Map Save Path"));
-
-		
+			// bool SavePath = JsonData[0]->AsObject()->GetBoolField(TEXT("Map Save Path"));
 		}
 	}
 }
 
-//Button Action OpenProjectDir
+// Button Action OpenProjectDir
 FReply SMutiSceneMapUI::OpenProjcetDir()
 {
 	FString OpenDirectory;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -568,8 +421,7 @@ FReply SMutiSceneMapUI::OpenProjcetDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*FPaths::ProjectContentDir(),
-			OpenDirectory
-		);
+			OpenDirectory);
 	}
 
 	if (bOpen)
@@ -577,7 +429,7 @@ FReply SMutiSceneMapUI::OpenProjcetDir()
 
 		if (OpenDirectory.Contains(FPaths::ProjectContentDir()))
 		{
-			
+
 			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
 
 			ItemsAddContent(OpenDirectory);
@@ -589,11 +441,11 @@ FReply SMutiSceneMapUI::OpenProjcetDir()
 	return FReply::Handled();
 }
 
-//Button Action Open FbxDir
+// Button Action Open FbxDir
 FReply SMutiSceneMapUI::OpenFbxDir()
 {
 	FString OpenDirectoryName;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	if (IFileManager::Get().DirectoryExists(*TextFbxDir->GetText().ToString()))
 		DefaultOpenFbxDir = TextFbxDir->GetText().ToString();
@@ -606,8 +458,7 @@ FReply SMutiSceneMapUI::OpenFbxDir()
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
 			*DefaultOpenFbxDir,
-			OpenDirectoryName
-		);
+			OpenDirectoryName);
 	}
 
 	if (bOpen)
@@ -618,11 +469,11 @@ FReply SMutiSceneMapUI::OpenFbxDir()
 	return FReply::Handled();
 }
 
-//Button Action OpenSceneMap
+// Button Action OpenSceneMap
 FReply SMutiSceneMapUI::OpenSceneMap()
 {
 	TArray<FString> OpenFilenames;
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
 	bool bOpen = false;
 
@@ -640,10 +491,8 @@ FReply SMutiSceneMapUI::OpenSceneMap()
 			TEXT(""),
 			*ExtensionStr,
 			EFileDialogFlags::None,
-			OpenFilenames
-		);
+			OpenFilenames);
 	}
-
 
 	if (bOpen)
 	{
@@ -664,14 +513,13 @@ FReply SMutiSceneMapUI::OpenSceneMap()
 		TextSceneMap->SetText(FText::FromString(DisplaySceneMap));
 		ListViewScene->RebuildList();
 		ListViewScene->RequestListRefresh();
-
 	}
 
 	return FReply::Handled();
 }
 
-//Check Map Exists  
-bool SMutiSceneMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
+// Check Map Exists
+bool SMutiSceneMapUI::MapExist(bool SaveInMap, FString Shot, FString MapName)
 {
 	bool bMapExist = false;
 	FString SaveMapPath;
@@ -681,7 +529,6 @@ bool SMutiSceneMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
 		SaveMapPath = FPaths::ProjectContentDir() + TextPorject->GetText().ToString() + "/" + Shot;
 
 	FString MapFullPath = SaveMapPath + "/" + MapName + ".umap";
-	
 
 	if (IFileManager::Get().DirectoryExists(*SaveMapPath))
 	{
@@ -690,22 +537,19 @@ bool SMutiSceneMapUI::MapExist(bool SaveInMap,FString Shot,FString MapName)
 	return bMapExist;
 }
 
-
-//Set Map Name
+// Set Map Name
 FString SMutiSceneMapUI::SetMapName(FString Shot)
 {
 	FString ProjectName = TextPorject->GetText().ToString();
-		FString MapName;
-		TArray<FString> NameSplit;
-		ProjectName.ParseIntoArray(NameSplit, TEXT("_"), true);
-		if (NameSplit.Num())
-			MapName = NameSplit[0] + "_" + TextPorject->GetText().ToString().Right(3) + "_" + Shot.Right(3) + "_VFX";
+	FString MapName;
+	TArray<FString> NameSplit;
+	ProjectName.ParseIntoArray(NameSplit, TEXT("_"), true);
+	if (NameSplit.Num())
+		MapName = NameSplit[0] + "_" + TextPorject->GetText().ToString().Right(3) + "_" + Shot.Right(3) + "_VFX";
 	return MapName;
 }
 
-
-
-//Add Map Info to Items Array
+// Add Map Info to Items Array
 void SMutiSceneMapUI::ItemsAddContent(FString ProjectPath)
 {
 
@@ -721,7 +565,7 @@ void SMutiSceneMapUI::ItemsAddContent(FString ProjectPath)
 		if (ShotDir.StartsWith("SC", ESearchCase::IgnoreCase))
 		{
 			FString MapName = SetMapName(ShotDir);
-		
+
 			if (!MapExist(IsSaveInMap, ShotDir, MapName))
 			{
 				ItemsMap.Add(MakeShareable(new FString(MapName)));
@@ -729,7 +573,6 @@ void SMutiSceneMapUI::ItemsAddContent(FString ProjectPath)
 				ItemsScene.Add(MakeShareable(new FString(TextSceneMap->GetText().ToString())));
 			}
 		}
-
 	}
 }
 
@@ -741,7 +584,6 @@ void SMutiSceneMapUI::SaveInMap(ECheckBoxState State)
 	else
 		CheckBoxShot->SetIsChecked(ECheckBoxState::Checked);
 
-	
 	ItemsUpdateContent();
 
 	RefreshList();
@@ -758,7 +600,6 @@ void SMutiSceneMapUI::SaveInShot(ECheckBoxState State)
 	ItemsUpdateContent();
 
 	RefreshList();
-
 }
 
 void SMutiSceneMapUI::RefreshList()
@@ -769,14 +610,12 @@ void SMutiSceneMapUI::RefreshList()
 	ListViewScene->RequestListRefresh();
 }
 
-
 void SMutiSceneMapUI::ItemsUpdateContent()
 {
-	TArray<TSharedPtr<FString>> ItemsMapNew,ItemsShotNew, ItemsSceneNew;
-
+	TArray<TSharedPtr<FString>> ItemsMapNew, ItemsShotNew, ItemsSceneNew;
 
 	TArray<FString> SubDirs;
-	FString FinalPath = FPaths::ProjectContentDir() + "/"  + TextPorject->GetText().ToString() + "/" +  TEXT("*");
+	FString FinalPath = FPaths::ProjectContentDir() + "/" + TextPorject->GetText().ToString() + "/" + TEXT("*");
 	IFileManager::Get().FindFiles(SubDirs, *FinalPath, false, true);
 	for (auto ShotDir : SubDirs)
 	{
@@ -802,7 +641,6 @@ void SMutiSceneMapUI::ItemsUpdateContent()
 					ItemsMapNew.Add(ItemsMap[Index]);
 					ItemsShotNew.Add(ItemsShot[Index]);
 					ItemsSceneNew.Add(ItemsScene[Index]);
-
 				}
 				else
 				{
@@ -812,16 +650,11 @@ void SMutiSceneMapUI::ItemsUpdateContent()
 				}
 			}
 		}
-
 	}
-
-	
 
 	ItemsMap = ItemsMapNew;
 	ItemsScene = ItemsSceneNew;
-
 }
-
 
 FReply SMutiSceneMapUI::CreateMap()
 {
@@ -830,16 +663,13 @@ FReply SMutiSceneMapUI::CreateMap()
 	FbxCameraPath = TextFbxDir->GetText().ToString();
 	ProjectPath = TextPorject->GetText().ToString();
 
-	
-
 	if (ItemsMap.Num() == 0)
 	{
 		FString ProjectFullPath = FPaths::ProjectContentDir() + "/" + ProjectPath;
 		ItemsAddContent(ProjectFullPath);
 	}
 
-
-	for (int i=0; i<ItemsMap.Num();i++)
+	for (int i = 0; i < ItemsMap.Num(); i++)
 	{
 		FCreateMap::CreateMap(ProjectPath, FbxCameraPath, *ItemsShot[i], *ItemsMap[i], *ItemsScene[i], IsSaveInMap);
 	}
@@ -848,8 +678,6 @@ FReply SMutiSceneMapUI::CreateMap()
 	RefreshList();
 
 	return FReply::Handled();
-	
 }
 
-
-//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);
+// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, *OpenDirectory);

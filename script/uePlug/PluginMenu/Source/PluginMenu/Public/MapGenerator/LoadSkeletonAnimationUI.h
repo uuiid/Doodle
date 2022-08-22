@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SCompoundWidget.h"
-#include "Reply.h"
-#include "Paths.h"
-#include "SUserWidget.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Input/Reply.h"
+#include "Misc/Paths.h"
+#include "Widgets/SUserWidget.h"
 #include "MapGenerator/DataType.h"
 
 class SLoadSkeletonAnimationUI : public SCompoundWidget

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SCompoundWidget.h"
-#include "Reply.h"
-#include "SUserWidget.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Input/Reply.h"
+#include "Widgets/SUserWidget.h"
 #include "MapGenerator/DataType.h"
 
 class SCreateBPMapUI : public SCompoundWidget
