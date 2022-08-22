@@ -178,7 +178,7 @@ void ImportTransformChannel(const FRichCurve &Source, FMovieSceneFloatChannel *D
 	for (auto L_It = Source.GetKeyHandleIterator(); L_It; ++L_It)
 	{
 		FKeyHandle L_KeyHandle = *L_It;
-		FRichCurveKey &L_Key = Source.GetKey(L_KeyHandle);
+		FRichCurveKey L_Key = Source.GetKey(L_KeyHandle);
 		float ArriveTangent = L_Key.ArriveTangent;
 		float LeaveTangent = L_Key.LeaveTangent;
 		FFrameNumber KeyTime = (Source.GetKeyTime(L_KeyHandle) * DestFrameRate).RoundToFrame();
