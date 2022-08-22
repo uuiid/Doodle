@@ -74,3 +74,4 @@ cmake-build-debug/
 *.mll
 /imgui.ini
 *.sqlite
+**/PluginMenu/Intermediate/*
