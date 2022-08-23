@@ -179,6 +179,7 @@ void SLoadSkeletonAnimationUI::Construct(const FArguments &InArgs)
 }
 
 // Button Action OpenProjectDir
+
 FReply SLoadSkeletonAnimationUI::OpenProjcetDir()
 {
 	FString OpenDirectory;
@@ -191,17 +192,17 @@ FReply SLoadSkeletonAnimationUI::OpenProjcetDir()
 		bOpen = DesktopPlatform->OpenDirectoryDialog(
 			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
 			NSLOCTEXT("MapCreateTool", "", "").ToString(),
-			*FPaths::ProjectContentDir(),
+			*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()),
 			OpenDirectory);
 	}
 
 	if (bOpen)
 	{
-
-		if (OpenDirectory.Contains(FPaths::ProjectContentDir()))
+		UE_LOG(LogTemp, Log, TEXT("工程目录 %s"), *FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()));
+		if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())))
 		{
 
-			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
+			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase)));
 			ItemsUpdateContent();
 		}
 	}
