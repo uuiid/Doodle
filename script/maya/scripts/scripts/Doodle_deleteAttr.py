@@ -27,7 +27,7 @@ class deleButten(QtWidgets.QPushButton):
         # print(self.index)
         maya.mel.eval("blendShapeDeleteTargetGroup {} {}".format(
             self.node, self.index))
-        print("delete : {}--> {}".format(self.node, self.deleteAttr.getAlias()))
+        print("delete : {}--> {}".format(self.node, self.deleteAttr))
         self.deleteLater()
 
 
@@ -66,15 +66,16 @@ class deleteShape(QtWidgets.QMainWindow):
 
         self.deletebutten = {}
         try:
-            for i in self.node.weight:
+            for i, name in self.get_weight().items():
                 self.deletebutten[i] = deleButten(self.scrollara)
-                self.deletebutten[i].setObjectName("deletebutten{}".format(i))
-                self.deletebutten[i].setText("delet:{}".format(i.getAlias()))
+                self.deletebutten[i].setObjectName("deletebutten{}".format(name))
+                self.deletebutten[i].setText("delet:{}".format(name))
                 self.deletebutten[i].setMinimumHeight(15)
-                self.deletebutten[i].addDelete(i.index(), i, self.node)
+                self.deletebutten[i].addDelete(i, i, self.node)
                 self.deletebutten[i].clicked.connect(self.deletebutten[i].deleteAttrDef)
                 self.Hbox.addWidget(self.deletebutten[i])
-        except:
+        except BaseException as err:
+            maya.cmds.warning("err {}".format(err))
             maya.cmds.warning("Please select deformation node")
 
     def getSelectNode(self):
@@ -84,5 +85,9 @@ class deleteShape(QtWidgets.QMainWindow):
             self.adddeleteButten()
             break
 
-
-
+    def get_weight(self):
+        # type()->{int:string}
+        l_weight_list = {}
+        for i in range(0, len(maya.cmds.getAttr(self.node + ".weight"))):
+            l_weight_list[i] = maya.cmds.attributeName("{}.weight[{}]".format(self.node, i), n=1)
+        return l_weight_list
