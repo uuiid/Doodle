@@ -88,8 +88,9 @@ class deleteShape(QtWidgets.QMainWindow):
     def get_weight(self):
         # type()->{int:string}
         l_weight_list = {}
-        l_w = maya.cmds.getAttr(self.node + ".weight")
-        l_len = l_w if len(l_w[0]) else 0
-        for i in range(0, l_len):
-            l_weight_list[i] = maya.cmds.attributeName("{}.weight[{}]".format(self.node, i), n=1)
+
+        for l_w in maya.cmds.getAttr(self.node + ".weight"):
+            for i in range(0, len(l_w)):
+                l_weight_list[i] = maya.cmds.attributeName("{}.weight[{}]".format(self.node, i), n=1)
+            break
         return l_weight_list
