@@ -58,12 +58,13 @@ if (DEFINED Maya_Version)
                 LIST_DIRECTORIES false
                 CONFIGURE_DEPENDS
                 "${PROJECT_SOURCE_DIR}/script/maya/*.*")
+#        message("${maya_script_files}")
         add_custom_command(
                 TARGET doodle_maya
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
-                DEPENDS ${maya_script_files} ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
+                DEPENDS ${maya_script_files}
         )
         # 定义安装逻辑
         install(TARGETS doodle_maya
