@@ -105,17 +105,28 @@ void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
   l_s              = l_path_mesh.extendToShape();
   DOODLE_MAYA_CHICK(l_s);
   /// \brief 变换网格体
-  for (MItMeshVertex l_it_mesh_vertex{l_path_mesh, MObject::kNullObj, &l_s};
-       l_s && !l_it_mesh_vertex.isDone();
-       l_it_mesh_vertex.next()) {
-    auto l_point = l_it_mesh_vertex.position(MSpace::kWorld, &l_s);
-    DOODLE_MAYA_CHICK(l_s);
-    l_point = l_point * l_matrix;
-    l_s     = l_it_mesh_vertex.setPosition(l_point);
-    //    l_s     = l_it_mesh_vertex.translateBy(l_tran, MSpace::kWorld);
-    DOODLE_MAYA_CHICK(l_s);
-  }
+  MPointArray l_pos{};
+  l_s = l_mesh.getPoints(l_pos, MSpace::kWorld);
   DOODLE_MAYA_CHICK(l_s);
+
+#pragma omp parallel for
+  for (auto i = 0; i < l_pos.length(); ++i) {
+    auto&& l_p = l_pos[i];
+    l_p *= l_matrix;
+  }
+  l_mesh.setPoints(l_pos, MSpace::kWorld);
+
+  //  for (MItMeshVertex l_it_mesh_vertex{l_path_mesh, MObject::kNullObj, &l_s};
+  //       l_s && !l_it_mesh_vertex.isDone();
+  //       l_it_mesh_vertex.next()) {
+  //    auto l_point = l_it_mesh_vertex.position(MSpace::kWorld, &l_s);
+  //    DOODLE_MAYA_CHICK(l_s);
+  //    l_point = l_point * l_matrix;
+  //    l_s     = l_it_mesh_vertex.setPosition(l_point);
+  //    //    l_s     = l_it_mesh_vertex.translateBy(l_tran, MSpace::kWorld);
+  //    DOODLE_MAYA_CHICK(l_s);
+  //  }
+  //  DOODLE_MAYA_CHICK(l_s);
 
   l_s = l_fn_transform.setScalePivot({}, MSpace::kWorld, false);
   DOODLE_MAYA_CHICK(l_s);
