@@ -6,7 +6,6 @@ from PySide2 import QtWidgets
 
 from maya import OpenMayaUI as omui
 from shiboken2 import wrapInstance
-from multiprocessing import connection as Conn
 
 mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtWidgets.QWidget)
@@ -16,7 +15,7 @@ class deleButten(QtWidgets.QPushButton):
     def __init__(self, parent):
         super(deleButten, self).__init__(parent)
         self.deleteAttr = None
-        self.index = -1;
+        self.index = -1
         self.node = None
 
     def addDelete(self, index, attr, node):

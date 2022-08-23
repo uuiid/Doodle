@@ -6,7 +6,7 @@ import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
 import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
-# import scripts.Doodle_deleteAttr as deleteAttr
+import scripts.Doodle_deleteAttr as deleteAttr
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -35,8 +35,6 @@ class DlsShelf(shelfBase._shelf):
 
         # self.addButon("delect Weight", icon="icons/ue_delete_weight.png",
         #               command=self.deleteWeightPoint)
-        # self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
-        #               command=self.deleteAttr)
 
         button_color = self.addButon("randomColor", icon="icons/randomColor.png",
                                      command=lambda: self.randomColor(),
@@ -83,10 +81,16 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: scripts.doodle_ik_to_fk.doodle_ik_to_fk())
         self.addButon("abc to bl", "icons/sequence_to_blend_shape.png",
                       command=lambda: DlsShelf._export_cloth_fbx_())
+        self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
+                      command=self.deleteAttr)
 
     def polyremesh(self):
         self.re()
         Doodle_PolyRemesh.myRemesh()
+
+    def deleteAttr(self):
+        self.re()
+        deleteAttr.deleteShape().show()
 
     def export_cam(self):
         cmds.doodle_export_camera()
@@ -174,7 +178,7 @@ class DlsShelf(shelfBase._shelf):
             reload(Doodle_PolyRemesh)
             reload(Doodle_clear)
             # reload(deleteWeight)
-            # reload(deleteAttr)
+            reload(deleteAttr)
 
 
 class DoodleUIManage(object):
