@@ -358,7 +358,7 @@ void SCleanUpMapUI::ItemsUpdateContent()
 			TArray<FName> SoftdReferencers;
 			AssetRegistryModule.Get().GetReferencers(FName(*ItemsMapInfo[i]->MapPackage),
 													 SoftdReferencers,
-													 UE::AssetRegistry::EDependencyCategory::Package);
+													 UE::AssetRegistry::EDependencyCategory::All);
 			TArray<TSharedPtr<FString>> ItemsSequenceName, ItemsSequencePackage;
 
 			if (SoftdReferencers.Num())

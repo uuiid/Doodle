@@ -375,7 +375,7 @@ void SLoadSkeletonAnimationUI::ItemsUpdateContent()
 			AssetRegistryModule.Get().GetReferencers(
 				FName(*ItemsMapInfo[i]->MapPackage),
 				SoftdReferencers,
-				UE::AssetRegistry::EDependencyCategory::Package // EAssetRegistryDependencyType::Soft
+				UE::AssetRegistry::EDependencyCategory::All // EAssetRegistryDependencyType::Soft
 			);
 			TArray<TSharedPtr<FString>> ItemsSequenceName, ItemsSequencePackage;
 
