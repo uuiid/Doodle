@@ -157,6 +157,25 @@ void sequence_to_blend_shape::create_bind_mesh() {
   }
 #else
   ptr->bind_path = ptr->select_path;
+  /// \brief 如果是使用选择的文件就需要做好解除属性锁定的问题
+  DOODLE_LOG_INFO("开始解除节点 {} 属性锁定", get_node_name(ptr->bind_path));
+
+  l_s = l_dag_path.setObject(get_dag_path(ptr->bind_path.transform()));
+  DOODLE_MAYA_CHICK(l_s);
+
+  const auto& k_size = l_dag_path.attributeCount(&l_s);
+  DOODLE_MAYA_CHICK(l_s);
+  for (int l_i = 0; l_i < k_size; ++l_i) {
+    auto k_attr = l_dag_path.attribute(l_i, &l_s);
+    DOODLE_MAYA_CHICK(l_s);
+    auto k_plug = l_dag_path.findPlug(k_attr, false, &l_s);
+    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    if (k_plug.isLocked(&l_s)) {
+      DOODLE_MAYA_CHICK(l_s);
+      l_s = k_plug.setLocked(false);
+      DOODLE_MAYA_CHICK(l_s);
+    }
+  }
 #endif
 }
 void sequence_to_blend_shape::create_blend_shape_mesh() {
