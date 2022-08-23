@@ -177,15 +177,16 @@ MStatus sequence_to_blend_shape_comm::undoIt() {
   return MStatus::kSuccess;
 }
 MStatus sequence_to_blend_shape_comm::redoIt() {
-  this->create_mesh();
-  this->run_blend_shape_comm();
-  this->create_anim();
-  this->add_to_parent();
-
-  //  for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-  //    maya_file_io::import_reference_file(ref, false);
-  //  }
-
+  try {
+    this->create_mesh();
+    this->run_blend_shape_comm();
+    this->create_anim();
+    this->add_to_parent();
+    this->delete_node();
+  } catch (const doodle_error& err) {
+    DOODLE_LOG_WARN(boost::diagnostic_information(err));
+    return MStatus::kFailure;
+  }
   return MStatus::kSuccess;
 }
 bool sequence_to_blend_shape_comm::isUndoable() const {
@@ -203,37 +204,13 @@ void sequence_to_blend_shape_comm::create_mesh() {
     }
   }
 
-  //  /// \brief 创建属性网格
-  //  for (auto i = p_i->startFrame_p;
-  //       i <= p_i->endFrame_p;
-  //       ++i) {
-  //    for (auto&& ctx : p_i->ctx) {
-  //      auto l_mesh_obj = p_i->dg_modidier.createNode(d_str{"mesh"s}, MObject::kNullObj, &l_s);
-  //      DOODLE_MAYA_CHICK(l_s);
-  //      l_s = ctx.create_mesh_list.append(get_dag_path(l_mesh_obj));
-  //      DOODLE_MAYA_CHICK(l_s);
-  //    }
-  //  }
-  //  p_i->dg_modidier.doIt();
-  //  return;
-
   for (auto i = p_i->startFrame_p;
        i <= p_i->endFrame_p;
        ++i) {
-    /// \brief 设置时间过程
-    //    MDGContext l_context{MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()}};
-    //    MDGContextGuard l_guard{l_context};
     l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
     DOODLE_MAYA_CHICK(l_s);
     for (auto&& ctx : p_i->blend_list) {
       ctx.create_blend_shape_mesh();
-      //    DOODLE_LOG_INFO("获取网格 第 {} 帧的数据", i);
-      //      auto l_mesh_data = get_plug(ctx.select_path.node(&l_s), "outMesh");
-      //      DOODLE_MAYA_CHICK(l_s);
-      //      auto l_mesh_data_handle = l_mesh_data.asMDataHandle(&l_s);
-      //      DOODLE_MAYA_CHICK(l_s);
-      //      auto l_mesh_obj = l_mesh_data_handle.asMesh();
-      //      DOODLE_MAYA_CHICK(l_s);
     }
   }
 }
@@ -339,6 +316,13 @@ void sequence_to_blend_shape_comm::center_pivot(MDagPath& in_path, const MMatrix
 void sequence_to_blend_shape_comm::run_blend_shape_comm() {
   for (auto&& ctx : p_i->blend_list) {
     ctx.create_blend_shape();
+  }
+}
+
+void sequence_to_blend_shape_comm::delete_node() {
+  for (auto&& ctx : p_i->blend_list) {
+    DOODLE_LOG_INFO("开始删除 {} 的原始模型", get_node_name(ctx.select_attr()));
+    ctx.delete_select_node();
   }
 }
 

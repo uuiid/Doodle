@@ -27,7 +27,8 @@ struct formatter<MString> : formatter<string_view> {
 
 template <>
 struct formatter<MArgList> : ostream_formatter {};
-
+template <>
+struct formatter<MVector> : ostream_formatter {};
 #if OPENMAYA_MAJOR_NAMESPACE == OpenMaya20180000
 template <>
 struct formatter<MStringArray> : ostream_formatter {};

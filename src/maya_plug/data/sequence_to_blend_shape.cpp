@@ -91,6 +91,7 @@ void sequence_to_blend_shape::to_work_zero(const MDagPath& in_path) {
 
   center *= l_matrix;
   center = -center;
+  //  DOODLE_LOG_INFO("设置中心轴 {}", center);
   l_s    = l_fn_transform.setTranslation(center, MSpace::kWorld);
   DOODLE_MAYA_CHICK(l_s);
   //  DOODLE_LOG_INFO("获取选中物体 {}", get_node_full_name(l_tran_path.node()));
@@ -299,6 +300,7 @@ void sequence_to_blend_shape::create_blend_shape() {
 
   l_s = MGlobal::executeCommand("DeleteHistory");
   DOODLE_MAYA_CHICK(l_s);
+  to_work_zero(ptr->bind_path);
 #endif
 
   auto l_comm = fmt::format("blendShape {} {};", fmt::join(l_names, " "), get_node_full_name(ptr->bind_path));

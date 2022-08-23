@@ -19,6 +19,8 @@ class sequence_to_blend_shape_comm : public doodle::TemplateAction<
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);
 
+
+  void delete_node();
   void create_mesh();
   void create_anim();
   void run_blend_shape_comm();
