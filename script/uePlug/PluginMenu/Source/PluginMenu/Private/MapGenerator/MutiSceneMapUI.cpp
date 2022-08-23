@@ -20,13 +20,12 @@
 #undef LOCTEXT_NAMESPACE
 #endif
 
-
 #define LOCTEXT_NAMESPACE "SMutiSceneMapUI"
 
 void SMutiSceneMapUI::Construct(const FArguments &InArgs)
 {
 
-	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
+	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo(GEditor->GetSmallFont(), 14);
 
 	ChildSlot
 		[
@@ -43,7 +42,7 @@ void SMutiSceneMapUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(STextBlock)
 									.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
-									.Font(FSlateFontInfo("Arial", 26))
+									.Font(FSlateFontInfo(GEditor->GetSmallFont(), 26))
 									.ColorAndOpacity(FLinearColor::Black)]
 
 					 // Save Settings
@@ -53,7 +52,7 @@ void SMutiSceneMapUI::Construct(const FArguments &InArgs)
 							   [SNew(SVerticalBox)
 								// Content Row1
 								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
-									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo(GEditor->GetSmallFont(), 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
 									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
 
@@ -211,7 +210,7 @@ void SMutiSceneMapUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(SButton)
 									.Text(FText::FromString(FString("Create Map")))
-									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo(GEditor->GetSmallFont(), 20)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
 									.HAlign(HAlign_Center)
 									.VAlign(VAlign_Center)
 									.OnClicked(this, &SMutiSceneMapUI::CreateMap)]]];
@@ -227,7 +226,7 @@ TSharedRef<ITableRow> SMutiSceneMapUI::GenerateList(TSharedPtr<FString> Item, co
 			[SNew(STextBlock)
 				 .ColorAndOpacity(FLinearColor(0, 0, 0, 1))
 				 .Text(FText::FromString(*Item))
-			 //		.Font(FSlateFontInfo("Arial", 12))
+			 //		.Font(FSlateFontInfo(GEditor->GetSmallFont(), 12))
 	];
 }
 

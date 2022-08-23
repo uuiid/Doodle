@@ -31,9 +31,12 @@
 
 void SCleanUpFolderUI::Construct(const FArguments &InArgs)
 {
+	GEditor->GetSmallFont();
 
-	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
+	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo(GEditor->GetSmallFont(), 14);
 
+
+	FSlateFontInfo{};
 	ChildSlot
 		[
 
@@ -49,7 +52,7 @@ void SCleanUpFolderUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(STextBlock)
 									.Text(FText::FromString("UE4 Clean Up Folder Tool"))
-									.Font(FSlateFontInfo("Arial", 26))
+									.Font(FSlateFontInfo(GEditor->GetSmallFont(), 26))
 									.ColorAndOpacity(FLinearColor::Black)]
 
 					 // Save Settings
@@ -59,7 +62,7 @@ void SCleanUpFolderUI::Construct(const FArguments &InArgs)
 							   [SNew(SVerticalBox)
 								// Content Row1
 								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
-									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo(GEditor->GetSmallFont(), 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
 									   + SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
 
@@ -136,7 +139,7 @@ void SCleanUpFolderUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(SButton)
 									.Text(FText::FromString(FString("Clean Up")))
-									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo(GEditor->GetSmallFont(), 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
 									.HAlign(HAlign_Center)
 									.VAlign(VAlign_Center)
 									.OnClicked(this, &SCleanUpFolderUI::CleanUpFolders)]]
@@ -229,7 +232,7 @@ TSharedRef<ITableRow> SCleanUpFolderUI::GenerateFolderInfoList(TSharedPtr<FFolde
 					  .OnCheckStateChanged(this, &SCleanUpFolderUI::SetByAssetType)]
 
 			 + SHorizontalBox::Slot().FillWidth(0.5)
-			 //		.Font(FSlateFontInfo("Arial", 12))
+			 //		.Font(FSlateFontInfo(GEditor->GetSmallFont(), 12))
 	];
 }
 

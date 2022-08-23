@@ -25,7 +25,7 @@
 void SLoadBPAnimationUI::Construct(const FArguments &InArgs)
 {
 
-	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
+	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo(GEditor->GetSmallFont(), 14);
 
 	ChildSlot
 		[
@@ -42,7 +42,7 @@ void SLoadBPAnimationUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(STextBlock)
 									.Text(FText::FromString("UE4 Load BP Animation Tool"))
-									.Font(FSlateFontInfo("Arial", 26))
+									.Font(FSlateFontInfo(GEditor->GetSmallFont(), 26))
 									.ColorAndOpacity(FLinearColor::Black)]
 
 					 // Save Settings
@@ -52,7 +52,7 @@ void SLoadBPAnimationUI::Construct(const FArguments &InArgs)
 							   [SNew(SVerticalBox)
 								// Content Row1
 								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
-									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo(GEditor->GetSmallFont(), 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
 									   + SHorizontalBox::Slot().FillWidth(5.5).Padding(2, 2)
 
@@ -171,7 +171,7 @@ void SLoadBPAnimationUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(SButton)
 									.Text(FText::FromString(FString("Load BP")))
-									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo(GEditor->GetSmallFont(), 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
 									.HAlign(HAlign_Center)
 									.VAlign(VAlign_Center)
 									.OnClicked(this, &SLoadBPAnimationUI::LoadBPAnim)]]];
@@ -263,7 +263,7 @@ TSharedRef<ITableRow> SLoadBPAnimationUI::GenerateList(TSharedPtr<FString> Item,
 			[SNew(STextBlock)
 				 .ColorAndOpacity(FLinearColor(0, 0, 0, 1))
 				 .Text(FText::FromString(*Item))
-			 //		.Font(FSlateFontInfo("Arial", 12))
+			 //		.Font(FSlateFontInfo(GEditor->GetSmallFont(), 12))
 	];
 }
 
@@ -272,7 +272,7 @@ TSharedRef<ITableRow> SLoadBPAnimationUI::GenerateMapInfoList(TSharedPtr<FMapInf
 	return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
 		.Padding(2.0f)
 			[SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*FConvertPath::GetPackageName(Item->MapPackage)))] + SHorizontalBox::Slot().FillWidth(0.1)[SNew(SCheckBox).ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1)).IsChecked(Item->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked).OnCheckStateChanged(this, &SLoadBPAnimationUI::SetMapLoad)]
-			 //		.Font(FSlateFontInfo("Arial", 12))
+			 //		.Font(FSlateFontInfo(GEditor->GetSmallFont(), 12))
 	];
 }
 

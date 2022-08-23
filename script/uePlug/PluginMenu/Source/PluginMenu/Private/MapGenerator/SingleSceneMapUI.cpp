@@ -20,13 +20,12 @@
 #undef LOCTEXT_NAMESPACE
 #endif
 
-
 #define LOCTEXT_NAMESPACE "SSingleSceneMapUI"
 
 void SSingleSceneMapUI::Construct(const FArguments &InArgs)
 {
 
-	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo("Arial", 14);
+	FSlateFontInfo SlateFontInfoContent = FSlateFontInfo(GEditor->GetSmallFont(), 14);
 
 	ChildSlot
 
@@ -44,7 +43,7 @@ void SSingleSceneMapUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(STextBlock)
 									.Text(FText::FromString("UE4 Level Map Auto Create Tool"))
-									.Font(FSlateFontInfo("Arial", 26))
+									.Font(FSlateFontInfo(GEditor->GetSmallFont(), 26))
 									.ColorAndOpacity(FLinearColor::Black)]
 
 					 // Save Settings
@@ -54,7 +53,7 @@ void SSingleSceneMapUI::Construct(const FArguments &InArgs)
 							   [SNew(SVerticalBox)
 								// Content Row1
 								+ SVerticalBox::Slot().Padding(5, 5).AutoHeight()
-									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo("Arial", 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
+									  [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1.5).Padding(2, 2)[SNew(STextBlock).Font(FSlateFontInfo(GEditor->GetSmallFont(), 22)).Text(FText::FromString(TEXT("Tools Setting:"))).ColorAndOpacity(FLinearColor::Black)]
 
 									   + SHorizontalBox::Slot().FillWidth(4.5).Padding(2, 2)
 
@@ -146,7 +145,7 @@ void SSingleSceneMapUI::Construct(const FArguments &InArgs)
 						   .VAlign(VAlign_Center)
 							   [SNew(SButton)
 									.Text(FText::FromString(FString("Create Map")))
-									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo("Arial", 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
+									.TextStyle(&FTextBlockStyle().SetFont(FSlateFontInfo(GEditor->GetSmallFont(), 25)).SetColorAndOpacity(FSlateColor(FLinearColor::Black)))
 									.HAlign(HAlign_Center)
 									.VAlign(VAlign_Center)
 									.OnClicked(this, &SSingleSceneMapUI::CreateMap)]]];
