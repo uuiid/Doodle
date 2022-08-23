@@ -25,9 +25,14 @@ class deleButten(QtWidgets.QPushButton):
 
     def deleteAttrDef(self):
         # print(self.index)
+        # maya.cmds.warning("{}.weight[{}]".format(self.node, self.index))
+        maya.cmds.setAttr("{}.weight[{}]".format(self.node, self.index), l=0)
         maya.mel.eval("blendShapeDeleteTargetGroup {} {}".format(
             self.node, self.index))
-        print("delete : {}--> {}".format(self.node, self.deleteAttr))
+        maya.cmds.warning("delete : {}--> {}".format(
+            self.node,
+            self.index)
+        )
         self.deleteLater()
 
 
@@ -62,7 +67,8 @@ class deleteShape(QtWidgets.QMainWindow):
 
     def adddeleteButten(self):
         for k, b in self.deletebutten.items():
-            b.deleteLater()
+            if b:
+                b.deleteLater()
 
         self.deletebutten = {}
         try:
@@ -91,6 +97,7 @@ class deleteShape(QtWidgets.QMainWindow):
 
         for l_w in maya.cmds.getAttr(self.node + ".weight"):
             for i in range(0, len(l_w)):
-                l_weight_list[i] = maya.cmds.attributeName("{}.weight[{}]".format(self.node, i), n=1)
+                l_weight_list[i] = maya.cmds.attributeName("{}.weight[{}]".format(self.node, i), l=1)
             break
+        print(l_weight_list)
         return l_weight_list
