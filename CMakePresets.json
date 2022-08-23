@@ -94,7 +94,6 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
-        "doodle_limited_exe",
         "Doxygen",
         "generate_token_run"
       ]
@@ -104,8 +103,7 @@
       "configurePreset": "Ninja_release",
       "jobs": 10,
       "targets": [
-        "gen_light_file",
-        "gen_light_file_limited"
+        "gen_light_file"
       ]
     }
   ],
