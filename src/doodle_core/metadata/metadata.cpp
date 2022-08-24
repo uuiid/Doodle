@@ -135,15 +135,16 @@ entt::handle database::find_by_uuid(const boost::uuids::uuid &in) {
 }
 
 void database::fun_delete_::operator()(const entt::handle &in) const {
-  if (in)
+  if (in) {
+    in.remove<data_status_save>();
     in.get_or_emplace<data_status_delete>();
-  else
+  } else
     DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
 }
 void database::fun_save_::operator()(const entt::handle &in) const {
-  if (in)
+  if (in) {
     in.get_or_emplace<data_status_save>();
-  else
+  } else
     DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
 }
 
