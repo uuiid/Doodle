@@ -97,6 +97,7 @@ void app::post_constructor() {
   // Show the window
   ::ShowWindow(p_hwnd, SW_SHOWDEFAULT);
   ::UpdateWindow(p_hwnd);
+  ::ShowWindow(p_hwnd, p_i->show_enum);
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -139,7 +140,6 @@ void app::post_constructor() {
   auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
   DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
-  ::ShowWindow(p_hwnd, p_i->show_enum);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
   //  MONITORINFO mi = {sizeof(mi)};
