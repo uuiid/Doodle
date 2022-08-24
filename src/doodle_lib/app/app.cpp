@@ -64,7 +64,7 @@ app::app(const in_gui_arg& in_arg)
 }
 
 void app::post_constructor() {
-  app_base::post_constructor();
+  app_command_base::post_constructor();
   p_win_class =
       {sizeof(WNDCLASSEX),
        CS_CLASSDC,
