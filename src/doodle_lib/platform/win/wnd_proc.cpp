@@ -115,13 +115,12 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       }
       break;
     case WM_CLOSE: {
-      //      doodle::doodle_app::Get()->p_done = true;
       doodle::gui::main_proc_handle::get().win_close();
       return 0;
+    }
     case WM_DESTROY: {
       doodle::gui::main_proc_handle::get().win_destroy();
       return 0;
-    }
     }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();
