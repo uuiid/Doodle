@@ -7,11 +7,23 @@
 
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
+
+namespace all_user_view_widget_ns {
+
+}
 
 class all_user_view_widget : public window_panel {
+ private:
+  class impl;
+  std::unique_ptr<impl> ptr;
+
+ public:
+  all_user_view_widget();
+  virtual ~all_user_view_widget();
+
+ protected:
+  virtual void render() override;
 };
 
-}  // namespace gui
-}  // namespace doodle
+}  // namespace doodle::gui
