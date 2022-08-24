@@ -22,7 +22,6 @@ if (DEFINED Maya_Version)
                 doodle_maya.rc
                 ../doodle_exe/main/icon.ico
                 )
-        add_library(doodle_maya_python_files INTERFACE)
 
         add_subdirectory(configure configure_${Maya_Version})
         add_subdirectory(data data_${Maya_Version})
@@ -61,16 +60,17 @@ if (DEFINED Maya_Version)
                 CONFIGURE_DEPENDS
                 "${PROJECT_SOURCE_DIR}/script/maya/*.*")
         list(APPEND maya_script_files ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py)
-        target_sources(doodle_maya_python_files INTERFACE ${maya_script_files})
-        add_dependencies(doodle_maya doodle_maya_python_files)
 
-#        message("${maya_script_files}")
-        add_custom_command(
-                TARGET doodle_maya
-                POST_BUILD
+
+        #        message("${maya_script_files}")
+        add_custom_target(
+                doodle_maya_python_files
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
+                DEPENDS ${maya_script_files}
         )
+
+        add_dependencies(doodle_maya doodle_maya_python_files)
         # 定义安装逻辑
         install(TARGETS doodle_maya
                 DESTINATION maya/plug-ins
