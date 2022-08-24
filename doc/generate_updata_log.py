@@ -36,7 +36,10 @@ class git_log():
                 continue
             else:
                 current_value = i.message
-                l_value += "- {}".format(i.message)
+                mess = i.message
+                mess = mess[:-1]
+                mess.replace("\n","\n ")
+                l_value += "- {}\n".format(i.message)
         print(l_value)
 
     def is_null_mess(self, mess: str) -> bool:
