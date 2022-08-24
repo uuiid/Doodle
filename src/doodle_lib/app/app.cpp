@@ -147,20 +147,7 @@ void app::post_constructor() {
   //               mi.rcMonitor.right - mi.rcMonitor.left,
   //               mi.rcMonitor.bottom - mi.rcMonitor.top,
   //               SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-  // Load Fonts
-  // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-  // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-  // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-  // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-  // - Read 'docs/FONTS.md' for more instructions and details.
-  // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-  // io.Fonts->AddFontDefault();
-  // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-  // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-  // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-  // io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-  // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-  // IM_ASSERT(font != NULL);
+
   auto imgui_file_path = core_set::getSet().get_cache_root("imgui") / "imgui.ini";
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
@@ -177,7 +164,10 @@ void app::post_constructor() {
     icons_config.PixelSnapH           = true;
     icons_config.FontDataOwnedByAtlas = false;
     // io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
-    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(), l_font.size(), 16.0f, &icons_config, icons_ranges);
+    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(),
+                                   boost::numeric_cast<std::int32_t>(l_font.size()),
+                                   16.0f,
+                                   &icons_config, icons_ranges);
   }
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
@@ -263,7 +253,7 @@ app::~app() {
 
   ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);
-  ::UnregisterClass(p_win_class.lpszClassName, p_win_class.hInstance);
+  ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
 
 void app::load_back_end() {
