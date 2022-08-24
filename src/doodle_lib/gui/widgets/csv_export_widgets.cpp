@@ -22,6 +22,7 @@
 #include <gui/open_file_dialog.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/time_tool/work_clock.h>
+#include <doodle_core/lib_warp/boost_fmt_rational.h>
 
 #include <fmt/chrono.h>
 
@@ -165,12 +166,11 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
       "部门"s,
       "制作人"s,
       "项目"s,
-      "季数"s,
       "集数"s,
       "镜头"s,
       "开始时间"s,
       "结束时间"s,
-      "持续时间/s"s,
+      "持续时间/天"s,
       "时间备注"s,
       "备注"s,
       "类别"s,
@@ -200,14 +200,14 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
 }
 csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
   DOODLE_CHICK(in.any_of<assets_file>(), doodle_error{"缺失文件组件"});
-  auto &k_ass            = in.get<assets_file>();
+  auto &k_ass       = in.get<assets_file>();
   /// \brief 工作时间计算
-  auto &work_clock       = k_ass.user_attr().get<business::work_clock>();
-  auto project_root      = g_reg()->ctx().at<project>().p_path;
-  auto start_time        = get_user_up_time(in);
-  auto end_time          = in.get<time_point_wrap>();
+  auto &work_clock  = k_ass.user_attr().get<business::work_clock>();
+  auto project_root = g_reg()->ctx().at<project>().p_path;
+  auto start_time   = get_user_up_time(in);
+  auto end_time     = in.get<time_point_wrap>();
   /// \brief 计算持续时间
-  chrono::seconds k_time = chrono::floor<chrono::seconds>(work_clock(start_time, end_time));
+  auto k_time       = chrono::floor<chrono::seconds>(work_clock(start_time, end_time));
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)
@@ -227,14 +227,18 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   if (p_i->use_first_as_project_name.data && !k_ass_path.empty()) {
     k_ass_path = fmt::to_string(fmt::join(++k_ass_path.begin(), k_ass_path.end(), "/"));
   }
+  using time_rational = boost::rational<std::uint64_t>;
+  auto l_time         = time_rational{k_time.count(), 60ull * 60ull * 8ull};
+
+  auto l_season       =                                                          //"季数"
+      in.all_of<season>()                                                  //
+                ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)  //
+                : ""s;
 
   table_line l_line{
       k_ass.organization_attr(),                                                                     //"部门"
       k_ass.user_attr().get<user>().get_name(),                                                      //"制作人"
-      l_prj_name,                                                                                    //"项目"
-      (in.all_of<season>()                                                                           //
-           ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)                           //
-           : ""s),                                                                                   //"季数"
+      fmt::format("《{}》 {}", l_prj_name, l_season),                                                //"项目"
       (in.all_of<episodes>()                                                                         //
            ? fmt::format(p_i->episodes_fmt_str.data, in.get<episodes>().p_episodes)                  //
            : ""s),                                                                                   //"集数"
@@ -243,7 +247,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
            : ""s),                                                                                   //"镜头"
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
-      fmt::format("{:8}", k_time.count()),                                                           //"持续时间"
+      fmt::format("{}", l_time),                                                                     //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
