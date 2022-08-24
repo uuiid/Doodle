@@ -8,7 +8,8 @@
 #include <fmt/ostream.h>
 #include <boost/rational.hpp>
 
-
-namespace fmt{
-
-}
+namespace fmt {
+template <typename Type>
+struct formatter<::boost::rational<Type>>
+    : ostream_formatter {};
+}  // namespace fmt
