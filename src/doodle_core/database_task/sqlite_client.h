@@ -161,7 +161,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
                             [l_s, in_path, call]() {
                               auto l_r = l_s->open(in_path);
                               boost::asio::post(g_io_context(),
-                                                [call, l_r]() {
+                                                [call, l_r, l_s]() {
+                                                  l_s->open_end();
                                                   call(l_r);
                                                 });
                             });
@@ -193,7 +194,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
                             [l_s, in_path, call]() {
                               auto l_r = l_s->save(in_path);
                               boost::asio::post(g_io_context(),
-                                                [call, l_r]() {
+                                                [call, l_r, l_s]() {
+                                                  l_s->save_end();
                                                   call(l_r);
                                                 });
                             });

@@ -31,7 +31,6 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
   auto l_r = open_impl(in_path);
-  open_end();
   return l_r;
 }
 
@@ -52,7 +51,6 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
   g_reg()->ctx().at<core_sig>().save_begin();
 
   auto l_r = save_impl(in_path);
-  save_end();
   return l_r;
 }
 
