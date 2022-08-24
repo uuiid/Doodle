@@ -39,10 +39,11 @@ class DOODLE_CORE_EXPORT app_base {
   class in_app_args {
    public:
     win::wnd_instance in_instance;
+    win::string_type in_cmd_line;
   };
 
   explicit app_base();
-  explicit app_base(const win::wnd_instance& in_instance);
+  explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
 
   /**

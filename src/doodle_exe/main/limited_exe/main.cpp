@@ -9,12 +9,15 @@ extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
                                HINSTANCE hPrevInstance,
                                PWSTR strCmdLine,
                                int nCmdShow) try {
-  limited_app app{hInstance};
-  app.command_line_parser(strCmdLine);
-  return app.run();
-} catch (const std::exception& err) {
-  std::cout << boost::diagnostic_information(err) << std::endl;
-  return 1;
+  limited_app app{doodle::app::in_gui_arg{
+      doodle::app::in_app_args{hInstance, strCmdLine},
+      nCmdShow, nullptr}};
+  try {
+    return app.run();
+  } catch (const std::exception& err) {
+    DOODLE_LOG_WARN(boost::diagnostic_information(boost::diagnostic_information(err)));
+    return 1;
+  }
 } catch (...) {
   return 1;
 }

@@ -143,8 +143,13 @@ class DOODLELIB_API app : public app_command_base {
   std::unique_ptr<impl> p_i;
 
  public:
-  explicit app(const win::wnd_instance& in_instance = nullptr,
-               const win::wnd_handle& in_parent     = nullptr);
+  class in_gui_arg : public app_base::in_app_args {
+   public:
+    std::int32_t show_enum;
+    win::wnd_handle in_parent;
+  };
+
+  explicit app(const in_gui_arg& in_arg);
 
   ~app() override;
   win::wnd_handle p_hwnd;

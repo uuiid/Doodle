@@ -45,12 +45,13 @@ class app::impl {
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard;
   win::wnd_handle parent;
+  std::int32_t show_enum;
 
  public:
 };
 
-app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
-    : app_command_base(in_instance ? in_instance : (::GetModuleHandleW(nullptr))),
+app::app(const in_gui_arg& in_arg)
+    : app_command_base(in_arg),
       p_hwnd(),
       p_win_class(),
       d3d_deve(),
@@ -58,7 +59,8 @@ app::app(const win::wnd_instance& in_instance, const win::wnd_handle& in_parent)
       d3dDevice(nullptr),
       d3dDeviceContext(nullptr),
       p_i(std::make_unique<impl>()) {
-  p_i->parent = in_parent;
+  p_i->parent    = in_arg.in_parent;
+  p_i->show_enum = in_arg.show_enum;
 }
 
 void app::post_constructor() {
@@ -136,7 +138,7 @@ void app::post_constructor() {
   auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
   DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
-  //  ::ShowWindow(p_impl->p_hwnd, SW_HIDE);
+  ::ShowWindow(p_hwnd, p_i->show_enum);
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
   //                                     MONITOR_DEFAULTTONEAREST);
   //  MONITORINFO mi = {sizeof(mi)};

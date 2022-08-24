@@ -34,6 +34,11 @@ app_base::app_base()
     this->init();
   });
 }
+
+app_base::app_base(const app_base::in_app_args& in_arg)
+    : app_base(){
+  instance = in_arg.in_instance;
+}
 void app_base::init() {
   DOODLE_LOG_INFO("开始初始化基本配置");
 
@@ -55,11 +60,6 @@ void app_base::init() {
 }
 app_base::~app_base() = default;
 
-app_base::app_base(win::wnd_instance const& in_instance)
-    : app_base() {
-  instance = in_instance;
-  self     = this;
-}
 std::atomic_bool& app_base::stop() {
   stop_ = true;
   return stop_;
@@ -138,5 +138,6 @@ void app_base::loop_one() {
   g_bounded_pool().update(l_now - s_now, nullptr);
   s_now = l_now;
 }
+
 
 }  // namespace doodle

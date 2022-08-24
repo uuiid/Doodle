@@ -18,5 +18,6 @@ using wnd_handle   = ::HWND;
 using wnd_class    = ::WNDCLASSEX;
 using wnd_instance = ::HINSTANCE;
 class d3d_device;
+using string_type = PWSTR;
 
 }  // namespace doodle::win

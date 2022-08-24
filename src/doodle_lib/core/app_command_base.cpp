@@ -22,7 +22,6 @@ void app_command_base::post_constructor() {}
 void app_command_base::command_line_parser(const std::vector<std::string>& in_arg) {
   if (!chick_authorization())
     stop_app();
-  options_->command_line_parser(in_arg);
 
   auto& set = core_set::getSet();
   DOODLE_LOG_INFO("初始化gui日志");
@@ -90,12 +89,10 @@ void app_command_base::load_back_end() {
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));
 }
-app_command_base::app_command_base(win::wnd_instance const& in_instance)
+app_command_base::app_command_base(const app_base::in_app_args& in_instance)
     : app_base(in_instance),
       options_(std::make_shared<program_options>()) {
+  options_->command_line_parser(
+      boost::program_options::split_winmain(conv::utf_to_utf<char>(in_instance.in_cmd_line)));
 }
-app_command_base::app_command_base()
-    : app_command_base(::GetModuleHandleW(nullptr)) {
-}
-
 }  // namespace doodle
