@@ -39,12 +39,14 @@ class all_user_view_widget::impl {
   void get_user_time_rule(const entt::handle& in_h) {
     select_user = in_h;
     if (select_user) {
-      rules_attr = select_user.get_or_emplace<business::rules>();
+      rules_attr     = select_user.get_or_emplace<business::rules>();
+      combox_user_id = fmt::to_string(in_h.get<user>());
       time_rules_render_attr.rules_attr(rules_attr);
     }
   };
 
   void rules_(const business::rules& in_rules) {
+    DOODLE_LOG_INFO("设置用户 {} 规则为 {}", combox_user_id(), in_rules);
     rules_attr = in_rules;
     select_user.replace<business::rules>(rules_attr);
     database::save(select_user);
