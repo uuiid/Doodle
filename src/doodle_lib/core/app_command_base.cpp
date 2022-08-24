@@ -18,6 +18,10 @@
 
 namespace doodle {
 void app_command_base::post_constructor() {
+  if (cmd_str)
+    options_->command_line_parser(
+        boost::program_options::split_winmain(conv::utf_to_utf<char>(cmd_str)));
+
   if (!chick_authorization())
     stop_app();
 
@@ -85,9 +89,7 @@ app_command_base& app_command_base::Get() {
 }
 app_command_base::app_command_base(const app_base::in_app_args& in_instance)
     : app_base(in_instance),
-      options_(std::make_shared<program_options>()) {
-  if (in_instance.in_cmd_line)
-    options_->command_line_parser(
-        boost::program_options::split_winmain(conv::utf_to_utf<char>(in_instance.in_cmd_line)));
+      options_(std::make_shared<program_options>()),
+      cmd_str(in_instance.in_cmd_line) {
 }
 }  // namespace doodle

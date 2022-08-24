@@ -15,6 +15,9 @@ namespace doodle {
  */
 class DOODLELIB_API app_command_base : public app_base {
  protected:
+  using cmd_string_type = win::string_type;
+  cmd_string_type cmd_str;
+
   void load_back_end() override;
   virtual bool chick_authorization();
 
@@ -22,10 +25,7 @@ class DOODLELIB_API app_command_base : public app_base {
   explicit app_command_base(const app_base::in_app_args& in_instance);
 
   static app_command_base& Get();
-//
-//    std::vector<std::string> l_str{argv, argv + argc};
-
-//
+  //    std::vector<std::string> l_str{argv, argv + argc};
 
   bool chick_authorization(const FSys::path& in_path);
   program_options_ptr options_;
