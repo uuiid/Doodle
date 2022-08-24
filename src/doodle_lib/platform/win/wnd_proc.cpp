@@ -106,10 +106,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       if ((wParam & 0xfff0) == SC_KEYMENU)  // Disable ALT application menu
         return 0;
       break;
-    case WM_DESTROY: {
-      doodle::gui::main_proc_handle::get().win_destroy();
-      return 0;
-    }
     case WM_DPICHANGED:
       if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
         // const int dpi = HIWORD(wParam);
@@ -122,6 +118,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       //      doodle::doodle_app::Get()->p_done = true;
       doodle::gui::main_proc_handle::get().win_close();
       return 0;
+    case WM_DESTROY: {
+      doodle::gui::main_proc_handle::get().win_destroy();
+      return 0;
+    }
     }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();

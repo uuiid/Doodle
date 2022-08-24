@@ -28,13 +28,14 @@ maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
     : app(in_instance,
           in_parent) {
   self = this;
+}
+void maya_plug_app::post_constructor() {
+  app::post_constructor();
+  doodle::gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
+  doodle::gui::main_proc_handle::get().win_destroy = []() {};
   boost::asio::post(g_io_context(), []() {
     app::Get().close_windows();
   });
-  /// \brief 设置窗口句柄处理
-  gui::main_proc_handle::get().win_close = [this]() {
-    this->close_windows();
-  };
 }
 
 }  // namespace doodle::maya_plug

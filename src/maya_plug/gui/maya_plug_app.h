@@ -15,6 +15,9 @@ class maya_plug_app : public app {
  private:
   virtual void load_windows() override;
 
+ protected:
+  virtual void post_constructor() override;
+
  public:
  public:
   using app::app;
