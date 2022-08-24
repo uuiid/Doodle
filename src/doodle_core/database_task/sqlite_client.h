@@ -15,8 +15,11 @@ class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
 class file_translator : public std::enable_shared_from_this<file_translator> {
  private:
+  bsys::error_code open_begin(const FSys::path& in_path);
   bsys::error_code open(const FSys::path& in_path);
   bsys::error_code open_end();
+
+  bsys::error_code save_begin(const FSys::path& in_path);
   bsys::error_code save(const FSys::path& in_path);
   bsys::error_code save_end();
 
@@ -156,6 +159,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     return boost::asio::async_initiate<CompletionToken,
                                        void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+          l_s->open_begin(in_path);
           std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(),
                             [l_s, in_path, call]() {
@@ -189,6 +193,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     return boost::asio::async_initiate<CompletionToken,
                                        void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
+          l_s->save_begin(in_path);
           std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(),
                             [l_s, in_path, call]() {
