@@ -13,9 +13,9 @@ namespace doodle::gui {
 class all_user_view_widget::impl {
  public:
   struct user_gui_data {
-    user_gui_data(std::string in_basic_string, entt::handle in_handle)
-        : show_name(std::move(in_basic_string)),
-          handle(std::move(in_handle)) {}
+    user_gui_data(const std::string& in_basic_string, entt::handle in_handle)
+        : show_name(in_basic_string),
+          handle(in_handle) {}
 
     gui_cache_name_id show_name;
     entt::handle handle;
@@ -24,7 +24,7 @@ class all_user_view_widget::impl {
   entt::handle select_user{};
   std::vector<user_gui_data> user_name_list{};
 
-  gui_cache_name_id get_all_user_id{"获取所有用户"};
+  gui_cache_name_id delete_user{"删除所选用户"};
   gui_cache<std::string> combox_user_id{"查看用户"s, "null"s};
   business::rules rules_attr{};
   time_sequencer_widget_ns::time_rules_render time_rules_render_attr{};
@@ -52,6 +52,16 @@ class all_user_view_widget::impl {
     select_user.replace<business::rules>(rules_attr);
     database::save(select_user);
   }
+  void delete_user_fun() {
+    auto l_it = ranges::find_if(user_name_list, [&](const user_gui_data& in) -> bool {
+      return in.handle == select_user;
+    });
+    if (l_it != user_name_list.end()) {
+      database::delete_(l_it->handle);
+      user_name_list.erase(l_it);
+      combox_user_id() = std::string{"null"s};
+    }
+  }
 };
 
 all_user_view_widget::all_user_view_widget()
@@ -71,6 +81,11 @@ void all_user_view_widget::render() {
       }
     }
   };
+
+  if (ImGui::Button(*ptr->delete_user)) {
+    ptr->delete_user_fun();
+  }
+
   if (ptr->time_rules_render_attr.render()) {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
   }
