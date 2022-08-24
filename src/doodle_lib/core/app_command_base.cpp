@@ -17,9 +17,7 @@
 #include <cryptopp/filters.h>
 
 namespace doodle {
-void app_command_base::post_constructor() {}
-
-void app_command_base::command_line_parser(const std::vector<std::string>& in_arg) {
+void app_command_base::post_constructor() {
   if (!chick_authorization())
     stop_app();
 
@@ -79,10 +77,6 @@ bool app_command_base::chick_authorization(const FSys::path& in_path) {
   }
 }
 
-void app_command_base::command_line_parser(const PWSTR& in_arg) {
-  auto k_str = boost::program_options::split_winmain(conv::utf_to_utf<char>(in_arg));
-  return command_line_parser(k_str);
-}
 void app_command_base::load_back_end() {
 }
 

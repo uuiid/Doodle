@@ -89,10 +89,6 @@ class DOODLELIB_API program_options {
     return command_line_parser(k_str);
   };
   bool command_line_parser(const std::vector<std::string>& in_arg);
-  //  inline bool command_line_parser(const std::wstring& in_arg) {
-  //    auto k_str = boost::program_options::split_winmain(in_arg);
-  //    return command_line_parser(k_str);
-  //  };
 };
 
 }  // namespace doodle

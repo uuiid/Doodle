@@ -228,7 +228,7 @@ class test_metadata_install : public app {
 
 TEST_CASE_METHOD(test_metadata_install, "test_metadata_install") {
   g_reg()->ctx().at<core_sig>().project_end_open.connect([this](auto...) { this->make_install(); });
-  //  this->command_line_parser();
+
   this->run();
 }
 

@@ -22,12 +22,11 @@ class DOODLELIB_API app_command_base : public app_base {
   explicit app_command_base(const app_base::in_app_args& in_instance);
 
   static app_command_base& Get();
-//  inline void command_line_parser(int argc, char* argv[]) {
+//
 //    std::vector<std::string> l_str{argv, argv + argc};
-//    command_line_parser(l_str);
-//  };
-  void command_line_parser(const PWSTR& in_arg);
-  virtual void command_line_parser(const std::vector<std::string>& in_arg);
+
+//
+
   bool chick_authorization(const FSys::path& in_path);
   program_options_ptr options_;
 
