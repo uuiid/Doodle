@@ -42,6 +42,7 @@ constexpr const std::string_view comm_create_video{"创建视频"};
 constexpr const std::string_view extract_subtitles{"提取字幕"};
 constexpr const std::string_view subtitle_processing{"修改字幕"};
 constexpr const std::string_view time_edit{"时间编辑"};
+constexpr const std::string_view all_user_view_widget{"用户列表"};
 constexpr const auto menu_base =
     std::make_tuple(project_widget,
                     edit_,
@@ -50,14 +51,6 @@ constexpr const auto menu_base =
                     long_time_tasks,
                     setting,
                     project_edit);
-constexpr const auto menu_list =
-    std::tuple_cat(menu_base,
-                   std::make_tuple(csv_export,
-                                   ue4_widget,
-                                   comm_maya_tool,
-                                   comm_create_video,
-                                   extract_subtitles,
-                                   subtitle_processing));
 
 }  // namespace gui::config::menu_w
 }  // namespace doodle

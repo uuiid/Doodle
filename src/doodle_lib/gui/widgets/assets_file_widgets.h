@@ -6,7 +6,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-#include <boost/signals2.hpp>
 namespace doodle {
 
 class assets_file_widgets;

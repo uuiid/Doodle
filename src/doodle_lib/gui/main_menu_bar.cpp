@@ -27,6 +27,7 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
+#include <doodle_lib/gui/widgets/all_user_view_widget.h>
 
 namespace doodle {
 namespace main_menu_bar_ns {
@@ -156,6 +157,8 @@ void main_menu_bar::menu_windows() {
     g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::long_time_tasks_widget>();
   if (dear::MenuItem(::doodle::gui::time_sequencer_widget::name.data()))
     g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::time_sequencer_widget>();
+  if (dear::MenuItem(::doodle::gui::all_user_view_widget::name.data()))
+    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::all_user_view_widget>();
 }
 
 void main_menu_bar::menu_tool() {

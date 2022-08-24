@@ -53,6 +53,7 @@ class all_user_view_widget::impl {
 
 all_user_view_widget::all_user_view_widget()
     : ptr(std::make_unique<impl>()) {
+  title_name_ = std::string{name};
 }
 void all_user_view_widget::render() {
   if (ImGui::Button(*ptr->get_all_user_id)) {
