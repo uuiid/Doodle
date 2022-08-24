@@ -199,11 +199,11 @@ FReply SCleanUpMapUI::OpenProjcetDir()
 	if (bOpen)
 	{
 
-		if (OpenDirectory.Contains(FPaths::ProjectContentDir()))
+		if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())))
 		{
 			DefaultOpenProjectDir = OpenDirectory;
-			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
-			TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase) + "/map"));
+			TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase)));
+			TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase) + "/map"));
 			ItemsUpdateContent();
 		}
 	}
@@ -232,10 +232,10 @@ FReply SCleanUpMapUI::OpenOutputDir()
 	if (bOpen)
 	{
 
-		if (OpenDirectory.Contains(FPaths::ProjectContentDir()))
+		if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())))
 		{
 			DefaultOpenOutputDir = OpenDirectory;
-			TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ProjectContentDir(), TEXT(""), ESearchCase::IgnoreCase)));
+			TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase)));
 		}
 	}
 	return FReply::Handled();
@@ -329,7 +329,7 @@ void SCleanUpMapUI::ItemsUpdateContent()
 	else
 	{
 		TArray<FString> SubDirs;
-		FString FinalPath = FPaths::ProjectContentDir() + "/" + ProjectPath + "/" + TEXT("*");
+		FString FinalPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) + "/" + ProjectPath + "/" + TEXT("*");
 		IFileManager::Get().FindFiles(SubDirs, *FinalPath, false, true);
 		for (auto ShotDir : SubDirs)
 		{
@@ -356,9 +356,11 @@ void SCleanUpMapUI::ItemsUpdateContent()
 		for (int i = 0; i < ItemsMapInfo.Num(); i++)
 		{
 			TArray<FName> SoftdReferencers;
-			AssetRegistryModule.Get().GetReferencers(FName(*ItemsMapInfo[i]->MapPackage),
-													 SoftdReferencers,
-													 UE::AssetRegistry::EDependencyCategory::All);
+			AssetRegistryModule.Get().GetReferencers(
+				FName(*ItemsMapInfo[i]->MapPackage),
+				SoftdReferencers,
+				UE::AssetRegistry::EDependencyCategory::All,
+				UE::AssetRegistry::EDependencyQuery::Soft);
 			TArray<TSharedPtr<FString>> ItemsSequenceName, ItemsSequencePackage;
 
 			if (SoftdReferencers.Num())
