@@ -15,7 +15,7 @@ namespace doodle {
  */
 class DOODLELIB_API app_command_base : public app_base {
  protected:
-  using cmd_string_type = win::string_type;
+
   cmd_string_type cmd_str;
 
   void load_back_end() override;

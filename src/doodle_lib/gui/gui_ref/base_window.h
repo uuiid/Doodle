@@ -98,9 +98,7 @@ class DOODLELIB_API modal_window : public base_window {
   void update() override;
 };
 
-template <typename Windows_Type, typename... Args>
-auto show_windows() {
-}
+
 
 namespace base_windows_ns {
 constexpr auto init_base_windows = []() {

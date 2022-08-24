@@ -31,9 +31,9 @@ void maya_plug_app::post_constructor() {
   app::post_constructor();
   doodle::gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
   doodle::gui::main_proc_handle::get().win_destroy = []() {};
-  boost::asio::post(g_io_context(), []() {
-    app::Get().close_windows();
-  });
+//  boost::asio::post(g_io_context(), []() {
+//    app::Get().close_windows();
+//  });
 }
 
 }  // namespace doodle::maya_plug

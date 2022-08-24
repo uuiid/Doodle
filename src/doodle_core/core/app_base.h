@@ -12,6 +12,9 @@ namespace doodle {
  */
 
 class DOODLE_CORE_EXPORT app_base {
+ public:
+  using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
+
  protected:
   static app_base* self;
 
@@ -39,7 +42,7 @@ class DOODLE_CORE_EXPORT app_base {
   class in_app_args {
    public:
     win::wnd_instance in_instance;
-    win::string_type in_cmd_line;
+    cmd_string_type in_cmd_line;
   };
 
   explicit app_base();
