@@ -33,6 +33,7 @@ class deleButten(QtWidgets.QPushButton):
             self.node,
             self.index)
         )
+
         self.deleteLater()
 
 
