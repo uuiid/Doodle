@@ -28,6 +28,7 @@ class all_user_view_widget::impl {
   gui_cache<std::string> combox_user_id{"查看用户"s, "null"s};
   business::rules rules_attr{};
   time_sequencer_widget_ns::time_rules_render time_rules_render_attr{};
+  bool has_init{false};
 
   void get_all_user_data() {
     auto l_v = g_reg()->view<database, user>();
@@ -58,8 +59,9 @@ all_user_view_widget::all_user_view_widget()
   title_name_ = std::string{name};
 }
 void all_user_view_widget::render() {
-  if (ImGui::Button(*ptr->get_all_user_id)) {
+  if (!ptr->has_init) {
     ptr->get_all_user_data();
+    ptr->has_init = true;
   }
 
   dear::Combo{*ptr->combox_user_id, ptr->combox_user_id().data()} && [this]() {
