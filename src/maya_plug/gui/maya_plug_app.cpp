@@ -23,10 +23,8 @@ void maya_plug_app::load_windows() {
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-maya_plug_app::maya_plug_app(const win::wnd_instance& in_instance,
-                             const win::wnd_handle& in_parent)
-    : app(in_instance,
-          in_parent) {
+maya_plug_app::maya_plug_app(const app::in_gui_arg& in_arg)
+    : app(in_arg) {
   self = this;
 }
 void maya_plug_app::post_constructor() {
