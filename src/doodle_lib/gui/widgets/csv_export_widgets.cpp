@@ -40,8 +40,8 @@ class csv_export_widgets::impl {
 
   gui_cache<std::string, gui_cache_path> export_path{"导出路径"s, ""s};
   gui_cache<bool> use_first_as_project_name{"分类作为项目名称", true};
-  gui_cache<std::string> season_fmt_str{"季数格式化"s, "第 {} 季"s};
-  gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "ep {}"s};
+  gui_cache<std::string> season_fmt_str{"季数格式化"s, "第{}季"s};
+  gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   gui_cache<bool> average_time{"平均时间"s, false};
 };
