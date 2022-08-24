@@ -91,9 +91,10 @@ class layout_window::impl {
         ImGui::DockBuilderDockWindow(menu_w::extract_subtitles.data(), dock_id_tools);    /// \brief 工具所在的id
         ImGui::DockBuilderDockWindow(menu_w::subtitle_processing.data(), dock_id_tools);  /// \brief 工具所在的id
 
-        ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_main);      /// \brief 主窗口的停靠
-        ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);  /// \brief 主窗口的停靠
-        ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);        /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::assets_file.data(), dock_id_main);           /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);       /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);             /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::all_user_view_widget.data(), dock_id_main);  /// \brief 主窗口的停靠
         ImGui::DockBuilderFinish(dockspace_id);
       }
     }
