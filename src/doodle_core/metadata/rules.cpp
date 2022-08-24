@@ -123,7 +123,15 @@ rules::time_point_vector& rules::extra_work() {
 rules::time_point_vector& rules::extra_rest() {
   return p_i->extra_rest;
 }
-
+std::string rules::fmt_str() const {
+  return fmt::format(
+      "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}",
+      p_i->work_weekdays,
+      fmt::join(p_i->work_pair, "->"),
+      fmt::join(p_i->extra_holidays, "->"),
+      fmt::join(p_i->extra_rest, "->"),
+      fmt::join(p_i->extra_work, "->"));
+}
 rules::~rules() = default;
 
 }  // namespace business
