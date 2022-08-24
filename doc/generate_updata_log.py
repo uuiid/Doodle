@@ -36,14 +36,13 @@ class git_log():
                 continue
             else:
                 current_value = i.message
-                mess = i.message
-                mess = mess[:-1]
-                mess.replace("\n","\n ")
-                l_value += "- {}\n".format(i.message)
+                mess = i.message[:-1]
+                mess.replace("\\n","\\n ")
+                l_value += "- {}".format(i.message)
         print(l_value)
 
     def is_null_mess(self, mess: str) -> bool:
-        return re.search(self.mess_reg, mess)
+        return re.search(self.mess_reg, mess) is not None
 
 
 if __name__ == "__main__":
