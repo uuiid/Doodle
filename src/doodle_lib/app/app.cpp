@@ -85,7 +85,7 @@ void app::post_constructor() {
                                p_win_class.lpszClassName,
                                p_title.c_str(),
                                WS_OVERLAPPEDWINDOW,
-                               100, 100, 1280, 800,
+                               CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                p_i->parent,
                                nullptr,
                                p_win_class.hInstance,
