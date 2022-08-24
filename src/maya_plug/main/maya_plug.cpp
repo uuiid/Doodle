@@ -128,7 +128,7 @@ MStatus initializePlugin(MObject obj) {
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
     default: {
-      p_doodle_app = std::make_shared<doodle::app_command_base>();
+      p_doodle_app = std::make_shared<doodle::app_command_base>(doodle::app_base::in_app_args{::MhInstPlugin, nullptr});
     } break;
   }
   maya_reg->register_callback(MSceneMessage::addCallback(
