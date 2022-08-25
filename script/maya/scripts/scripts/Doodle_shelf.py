@@ -84,7 +84,7 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: DlsShelf._export_cloth_fbx_())
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
-        self.addButon("create hair uv", icon="icons/hair_to_uv.png",
+        self.addButon("mesh to hair uv", icon="icons/hair_to_uv.png",
                       command=lambda: hair_uv.main())
 
     def polyremesh(self):
