@@ -46,7 +46,11 @@ void get_ctx_sql_data(
   (_get_ctx_sql_data_<Type_T>(in_registry, in_data), ...);
 }
 
-void _select_ctx_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn, const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
+void _select_ctx_(
+    entt::registry& in_reg,
+    sqlpp::sqlite3::connection& in_conn,
+    const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list
+) {
   sql::Context l_context{};
 
   for (auto&& row : in_conn(
