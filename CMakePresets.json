@@ -75,7 +75,6 @@
       "inherits": "debug",
       "targets": [
         "DoodleExe",
-        "Doxygen"
       ]
     },
     {
@@ -94,7 +93,6 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
-        "Doxygen",
         "generate_token_run"
       ]
     },

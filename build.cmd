@@ -133,7 +133,7 @@ robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
-py %my_pwd%doc\generate_directory_index_caddystyle.py %my_pwd%\build\html\file
+call ./doc/doc.cmd
 
 rmdir /q /s %my_pwd%build\install\bin
 rmdir /q /s %my_pwd%build\install\maya
