@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/gui_template/gui_process.h>
 #include <boost/asio.hpp>
 
@@ -211,31 +212,26 @@ class strand_gui {
   using executor_type = boost::asio::any_io_executor;
 
   strand_gui()
-      : executor_(),
-        impl_(strand_gui::create_implementation(executor_)) {
+      : executor_() {
   }
 
   template <typename Executor1>
   explicit strand_gui(const Executor1& in_e, std::enable_if_t<std::conditional<!std::is_same_v<Executor1, strand_gui>, std::is_convertible<Executor1, Executor>, std::false_type>::type::value, bool> = false)
-      : executor_(in_e),
-        impl_(strand_gui::create_implementation(executor_)) {
+      : executor_(in_e) {
   }
   template <typename Executor1>
   explicit strand_gui(Executor1& in_e, std::enable_if_t<!std::is_same_v<Executor1, strand_gui> && !std::is_convertible_v<Executor1, Executor>, bool> = false)
-      : executor_(in_e.get_executor()),
-        impl_(strand_gui::create_implementation(executor_)) {
+      : executor_(in_e.get_executor()) {
   }
 
 #pragma region "复制移动函数"
   /// \brief 复制构造
   strand_gui(const strand_gui& other) BOOST_ASIO_NOEXCEPT
-      : executor_(other.executor_),
-        impl_(other.impl_) {
+      : executor_(other.executor_) {
   }
 
   strand_gui& operator=(const strand_gui& other) BOOST_ASIO_NOEXCEPT {
     executor_ = other.executor_;
-    impl_     = other.impl_;
 
     return *this;
   }
@@ -243,13 +239,11 @@ class strand_gui {
   /// 移动构造
 
   strand_gui(strand_gui&& other) BOOST_ASIO_NOEXCEPT
-      : executor_(BOOST_ASIO_MOVE_CAST(Executor)(other.executor_)),
-        impl_(BOOST_ASIO_MOVE_CAST(implementation_type)(other.impl_)) {
+      : executor_(BOOST_ASIO_MOVE_CAST(Executor)(other.executor_)) {
   }
 
   strand_gui& operator=(strand_gui&& other) BOOST_ASIO_NOEXCEPT {
     executor_ = BOOST_ASIO_MOVE_CAST(Executor)(other.executor_);
-    impl_     = BOOST_ASIO_MOVE_CAST(implementation_type)(other.impl_);
     return *this;
   }
 
@@ -283,7 +277,6 @@ class strand_gui {
       BOOST_ASIO_NOEXCEPT_IF((
           boost::asio::is_nothrow_require<const Executor&, Property>::value
       )) {
-    return strand_gui(boost::asio::require(executor_, p), impl_);
   }
 
   template <typename Property>
@@ -298,9 +291,6 @@ class strand_gui {
       BOOST_ASIO_NOEXCEPT_IF((
           boost::asio::is_nothrow_prefer<const Executor&, Property>::value
       )) {
-    return strand_gui(
-        boost::asio::prefer(executor_, p), impl_
-    );
   }
 #pragma endregion
 
@@ -315,38 +305,32 @@ class strand_gui {
   //      boost::asio::execution::can_execute<executor_type, Function>::value,
   //      void>
   void execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
-    return detail::strand_gui_executor_service::execute(
-        impl_,
-        executor_, BOOST_ASIO_MOVE_CAST(Function)(f)
-    );
   }
 
   template <typename Function, typename Allocator>
   void dispatch(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui_executor_service::dispatch(
-        impl_,
-        executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a
-    );
   }
 
   template <typename Function, typename Allocator>
   void post(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui_executor_service::post(impl_, executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
+    app_base::Get()._add_tick_([fun = std::move(f)](bool& in_b) {
+      fun();
+      in_b = true;
+    });
   }
 
   template <typename Function, typename Allocator>
   void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    detail::strand_gui_executor_service::defer(impl_, executor_, BOOST_ASIO_MOVE_CAST(Function)(f), a);
   }
 
   void stop();
 
   friend bool operator==(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
-    return a.impl_ == b.impl_;
+    return a.executor_ == b.executor_;
   }
 
   friend bool operator!=(const strand_gui& a, const strand_gui& b) BOOST_ASIO_NOEXCEPT {
-    return a.impl_ != b.impl_;
+    return a.executor_ != b.executor_;
   }
 
   inner_executor_type get_inner_executor() const BOOST_ASIO_NOEXCEPT;
@@ -381,8 +365,7 @@ class strand_gui {
   }
 
   strand_gui(const Executor& ex, const implementation_type& impl)
-      : executor_(ex),
-        impl_(impl) {
+      : executor_(ex) {
   }
 
   template <typename Property>
@@ -401,7 +384,6 @@ class strand_gui {
   }
 
   Executor executor_;
-  implementation_type impl_;
 };
 }  // namespace doodle
 

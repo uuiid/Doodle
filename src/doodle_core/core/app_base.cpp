@@ -29,8 +29,7 @@ class app_base::impl {
       handlers |= ranges::action::push_back(handlers_next);
       handlers_next.clear();
     }
-    ranges::remove_if(
-        handlers,
+    handlers |= ranges::action::remove_if(
         [&](const typename decltype(this->handlers)::value_type& handler) -> bool {
           bool l_r{false};
           handler(l_r);

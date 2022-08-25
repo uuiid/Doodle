@@ -17,7 +17,6 @@ program_options::program_options()
       p_help(false),
       p_version(false),
       p_config_file(),
-      p_max_thread(std::make_pair(false, std::thread::hardware_concurrency() - 2)),
       p_root(std::make_pair(false, "C:/")),
       p_ue4outpath(),
       p_ue4Project() {
@@ -57,12 +56,6 @@ program_options::program_options()
       "数据根目录"
   );
 
-  p_opt_advanced.add_options()(
-      thread_max_,
-      boost::program_options::value(&p_max_thread.second),
-      "线程池大小\n(默认文硬件最大限制 - 1)"
-  );
-
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
   p_opt_file.add(p_opt_gui).add(p_opt_advanced);
 }
@@ -90,8 +83,8 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
         boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), p_vm);
     }
   }
-  p_max_thread.first = p_vm.count(thread_max);
-  p_root.first       = p_vm.count(root);
+
+  p_root.first = p_vm.count(root);
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
 

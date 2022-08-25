@@ -359,7 +359,7 @@ class process_adapter {
 
   rear_adapter_ptr p_ptr;
   using executor_type = boost::asio::any_io_executor;
-  executor_type get_executor() const noexcept {
+  [[nodiscard]] executor_type get_executor() const noexcept {
     return this->p_ptr->get_executor();
   }
 

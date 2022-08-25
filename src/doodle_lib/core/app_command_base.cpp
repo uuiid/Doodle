@@ -35,10 +35,6 @@ void app_command_base::post_constructor() {
   auto& l_set = core_set::getSet();
   if (options_->p_root.first)
     l_set.set_root(options_->p_root.second);
-  if (options_->p_max_thread.first) {
-    l_set.p_max_thread   = options_->p_max_thread.second;
-    p_lib->p_thread_pool = std::make_shared<thread_pool>(l_set.p_max_thread);
-  }
 
   if (options_->p_help || options_->p_version)
     stop_app();

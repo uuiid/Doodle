@@ -117,7 +117,7 @@ void strand_gui::on_work_finished() const BOOST_ASIO_NOEXCEPT {
   DOODLE_LOG_INFO("结束工作工作")
 }
 void strand_gui::stop() {
-  detail::strand_gui_executor_service::stop(impl_);
+  DOODLE_LOG_INFO("strand_gui::stop")
 }
 strand_gui::inner_executor_type strand_gui::get_inner_executor() const BOOST_ASIO_NOEXCEPT {
   return executor_;
