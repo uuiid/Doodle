@@ -2,4 +2,4 @@ BasedOnStyle: Google
 SortIncludes: false
 ColumnLimit: 0
 AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: BlockIndent
