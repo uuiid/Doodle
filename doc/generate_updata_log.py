@@ -1,9 +1,37 @@
+import os
 import re
 import sys
 
 import pathlib
 import subprocess
 import git
+import argparse
+
+__hmtl_str_begin__ = """
+<!DOCTYPE html>
+<html lang="zn-CH">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>更新日志</title>
+</head>
+<body>
+<ul>
+
+        """
+
+end_str = """
+</ul>
+
+</body>
+</html>
+        """
+__hmtl_str_end__ = """
+</ul>
+
+</body>
+</html>
+        """
 
 
 class comm_mess():
@@ -24,12 +52,13 @@ class git_log():
 
         tag_map = {i.commit: i.name for i in git_sub.tags}
 
-        l_value = str()
+        l_value = __hmtl_str_begin__
+
         current_value = str()
         for i in git_sub.iter_commits():
             if i in tag_map:
                 l_value += "\n"
-                l_value += "### 版本 {}\n".format(tag_map[i])
+                l_value += "<h3> 版本 {} </h3>\n".format(tag_map[i])
             if self.is_null_mess(i.message):
                 continue
             if current_value == i.message:
@@ -43,8 +72,9 @@ class git_log():
                     mess = mess[1::]
                 if len(mess) > 50 or len(mess) == 0:
                     continue
-                l_value += "- {}   (time: {})\n".format(mess, i.committed_datetime.strftime("%y-%m-%d %I:%M"))
+                l_value += "<li> {}   (time: {})</li>\n".format(mess, i.committed_datetime.strftime("%y-%m-%d %I:%M"))
 
+        l_value += __hmtl_str_end__
         with open(args[0], "w", encoding="utf-8") as file:
             file.write(l_value)
         # print(l_value)
@@ -54,4 +84,11 @@ class git_log():
 
 
 if __name__ == "__main__":
-    git_log()("D:/tmp.md")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("out_file",
+                        nargs="?",
+                        action="store",
+                        help="必须参数, 输出的文件路径",
+                        default=os.getcwd() + "/tmp.html")
+    config = parser.parse_args(sys.argv[1:])
+    git_log()(config.out_file)

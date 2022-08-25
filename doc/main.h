@@ -10,6 +10,7 @@
  * \n
  *
  * <a href="./file">下载文件列表</a> \n
+ * <a href="./update.html">更新日志</a> \n
  *
  *
  *
