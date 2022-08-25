@@ -86,4 +86,8 @@ class DOODLE_CORE_EXPORT app_base {
   void _add_tick_(const std::function<void(bool&)>& in_tick);
 };
 
+
+
+
+
 }  // namespace doodle
