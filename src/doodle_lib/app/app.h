@@ -142,6 +142,10 @@ class DOODLELIB_API app : public app_command_base {
   class impl;
   std::unique_ptr<impl> p_i;
 
+ protected:
+  virtual void tick_begin() override;
+  virtual void tick_end() override;
+
  public:
   class in_gui_arg : public app_base::in_app_args {
    public:

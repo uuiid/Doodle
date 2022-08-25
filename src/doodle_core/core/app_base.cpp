@@ -18,6 +18,29 @@ namespace doodle {
 class app_base::impl {
  public:
   boost::asio::high_resolution_timer timer_{g_io_context()};
+
+  std::vector<std::function<void(bool&)>> handlers{};
+  std::vector<std::function<void(bool&)>> handlers_next{};
+  std::recursive_mutex mutex_{};
+  void tick() {
+    std::lock_guard l_g{mutex_};
+
+    if (!handlers_next.empty()) {
+      handlers |= ranges::action::push_back(handlers_next);
+      handlers_next.clear();
+    }
+    ranges::remove_if(
+        handlers,
+        [&](const typename decltype(this->handlers)::value_type& handler) -> bool {
+          bool l_r{false};
+          handler(l_r);
+          return l_r;
+        }
+    );
+
+    handlers.clear();
+    std::swap(handlers, handlers_next);
+  }
 };
 
 app_base* app_base::self = nullptr;
@@ -83,7 +106,10 @@ void app_base::begin_loop() {
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted)
       return;
-    this->loop_one();
+    this->tick_begin();
+    this->loop_one();   /// \brief 各种
+    this->p_i->tick();  /// 渲染
+    this->tick_end();   /// 渲染结束
     if (!stop_) {
       p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
       p_i->timer_.async_wait(s_fun);
@@ -137,6 +163,13 @@ void app_base::loop_one() {
   g_main_loop().update(l_now - s_now, nullptr);
   g_bounded_pool().update(l_now - s_now, nullptr);
   s_now = l_now;
+}
+void app_base::tick_begin() {}
+void app_base::tick_end() {}
+
+void app_base::_add_tick_(const std::function<void(bool&)>& in_tick) {
+  std::lock_guard l_g{p_i->mutex_};
+  p_i->handlers_next.emplace_back(in_tick);
 }
 
 }  // namespace doodle

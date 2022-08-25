@@ -11,6 +11,14 @@ namespace doodle {
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
 
+namespace app_base_ns {
+class config_tick {
+ public:
+  std::function<void()> tick_begin;
+  std::function<void()> tick_end;
+};
+}  // namespace app_base_ns
+
 class DOODLE_CORE_EXPORT app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
@@ -35,6 +43,9 @@ class DOODLE_CORE_EXPORT app_base {
    */
   virtual void load_back_end() = 0;
   virtual void loop_one();
+
+  virtual void tick_begin();
+  virtual void tick_end();
 
   virtual void post_constructor() = 0;
 
@@ -71,6 +82,8 @@ class DOODLE_CORE_EXPORT app_base {
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
+
+  void _add_tick_(const std::function<void(bool&)>& in_tick);
 };
 
 }  // namespace doodle

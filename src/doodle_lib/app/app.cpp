@@ -263,5 +263,48 @@ bool app::chick_authorization() {
   }
   return true;
 }
+void app::tick_begin() {
+  app_base::tick_begin();
+
+  MSG msg;
+  while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+    ::TranslateMessage(&msg);
+    ::DispatchMessage(&msg);
+    /// 如果时退出消息, 直接设置停止
+    if (msg.message == WM_QUIT) {
+      DOODLE_LOG_INFO("开始退出");
+      return;
+    }
+  }
+
+  // Start the Dear ImGui frame
+  ImGui_ImplDX11_NewFrame();
+  ImGui_ImplWin32_NewFrame();
+  ImGui::NewFrame();
+}
+void app::tick_end() {
+  app_base::tick_end();
+  // Rendering
+  ImGui::Render();
+  static ImVec4 clear_color             = ImVec4(0.0f, 0.0f, 0.0f, 0.00f);
+  const float clear_color_with_alpha[4] = {
+      clear_color.x * clear_color.w,
+      clear_color.y * clear_color.w,
+      clear_color.z * clear_color.w,
+      clear_color.w};
+
+  d3d_deve->g_pd3dDeviceContext->OMSetRenderTargets(1, &d3d_deve->g_mainRenderTargetView, nullptr);
+  d3d_deve->g_pd3dDeviceContext->ClearRenderTargetView(d3d_deve->g_mainRenderTargetView, clear_color_with_alpha);
+  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+  // Update and Render additional Platform Windows
+  if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+  }
+
+  d3d_deve->g_pSwapChain->Present(1, 0);  // Present with vsync
+                                          // g_pSwapChain->Present(0, 0); // Present without vsync
+}
 
 }  // namespace doodle

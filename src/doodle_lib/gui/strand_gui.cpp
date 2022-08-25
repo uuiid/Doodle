@@ -13,8 +13,6 @@
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
-// 启用窗口拖拽导入头文件
-#include <shellapi.h>
 
 namespace doodle {
 namespace detail {
@@ -26,7 +24,7 @@ strand_gui_executor_service::strand_gui_executor_service(boost::asio::execution_
 void strand_gui_executor_service::strand_impl::ready_start() {
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
-    if (in_code == boost::asio::error::operation_aborted || app_command_base::Get().stop_)
+    if (in_code == boost::asio::error::operation_aborted || app_base::Get().stop_)
       return;
 
     service_->render_begin();
