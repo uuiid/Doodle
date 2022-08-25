@@ -4,10 +4,22 @@
 #include <string>
 #include <chrono>
 namespace doodle::version {
-const std::int16_t version_major = {@Doodle_VERSION_MAJOR@};
-const std::int16_t version_minor = {@Doodle_VERSION_MINOR@};
-const std::int16_t version_patch = {@Doodle_VERSION_PATCH@};
-const std::int16_t version_tweak = {@Doodle_VERSION_TWEAK@};
+// clang-format off
+#define DOODLE_VERSION_MAJOR_ @Doodle_VERSION_MAJOR@
+#define DOODLE_VERSION_MINOR_ @Doodle_VERSION_MINOR@
+#define DOODLE_VERSION_PATCH_ @Doodle_VERSION_PATCH@
+#define DOODLE_VERSION_TWEAK_ @Doodle_VERSION_TWEAK@
+// clang-format on
+
+const std::int16_t version_major = {DOODLE_VERSION_MAJOR_};
+const std::int16_t version_minor = {DOODLE_VERSION_MINOR_};
+const std::int16_t version_patch = {DOODLE_VERSION_PATCH_};
+const std::int16_t version_tweak = {DOODLE_VERSION_TWEAK_};
 const std::string version_str    = {"@v_short@"};
 const std::string build_time{"@DOODLE_BUILD_TIME@"};
+
+#undef DOODLE_VERSION_MAJOR_
+#undef DOODLE_VERSION_MINOR_
+#undef DOODLE_VERSION_PATCH_
+#undef DOODLE_VERSION_TWEAK_
 }  // namespace doodle::version
