@@ -128,5 +128,3 @@ def main():
     l_out = l_out[0]
     create_root_uv_attribute( curve_top_group , uv_mesh)
     abc_export(l_out, curve_top_group)
-
-main()
