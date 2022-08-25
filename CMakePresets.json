@@ -74,7 +74,7 @@
       "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": [
-        "DoodleExe",
+        "DoodleExe"
       ]
     },
     {
