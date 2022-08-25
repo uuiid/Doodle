@@ -251,10 +251,6 @@ void app::load_back_end() {
   boost::asio::post(make_process_adapter<short_cut>(strand_gui{g_io_context()}));
 }
 
-bool app::set_parent(win::wnd_handle in_parent) {
-  //  ::SetWindowLongW(p_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_CHILD);
-  return ::SetParent(p_hwnd, in_parent) != nullptr;
-}
 bool app::chick_authorization() {
   if (!app_command_base::chick_authorization()) {
     auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ", core_set::getSet().get_doc() / doodle_config::token_name.data());
