@@ -111,22 +111,42 @@ class strand_gui {
   //      boost::asio::execution::can_execute<executor_type, Function>::value,
   //      void>
   void execute(BOOST_ASIO_MOVE_ARG(Function) f) const {
+    using function_type = typename std::decay_t<Function>;
+    auto l_ptr          = std::make_shared<function_type>(std::move(f));
+    app_base::Get()._add_tick_([l_ptr](bool& in_b) {
+      (*l_ptr)();
+      in_b = true;
+    });
   }
 
   template <typename Function, typename Allocator>
   void dispatch(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
+    using function_type = typename std::decay_t<Function>;
+    auto l_ptr          = std::make_shared<function_type>(std::move(f));
+    app_base::Get()._add_tick_([l_ptr](bool& in_b) {
+      (*l_ptr)();
+      in_b = true;
+    });
   }
 
   template <typename Function, typename Allocator>
   void post(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
-    app_base::Get()._add_tick_([fun = std::move(f)](bool& in_b) {
-      fun();
+    using function_type = typename std::decay_t<Function>;
+    auto l_ptr          = std::make_shared<function_type>(std::move(f));
+    app_base::Get()._add_tick_([l_ptr](bool& in_b) {
+      (*l_ptr)();
       in_b = true;
     });
   }
 
   template <typename Function, typename Allocator>
   void defer(BOOST_ASIO_MOVE_ARG(Function) f, const Allocator& a) const {
+    using function_type = typename std::decay_t<Function>;
+    auto l_ptr          = std::make_shared<function_type>(std::move(f));
+    app_base::Get()._add_tick_([l_ptr](bool& in_b) {
+      (*l_ptr)();
+      in_b = true;
+    });
   }
 
   void stop();
@@ -140,39 +160,6 @@ class strand_gui {
   }
 
   inner_executor_type get_inner_executor() const BOOST_ASIO_NOEXCEPT;
-
-  typedef detail::strand_gui_executor_service::implementation_type
-      implementation_type;
-
-  template <typename InnerExecutor>
-  static implementation_type create_implementation(
-      const InnerExecutor& ex,
-      typename std::enable_if<
-          boost::asio::can_query<InnerExecutor, boost::asio::execution::context_t>::value,
-          std::int32_t>::type = 0
-  ) {
-    return boost::asio::use_service<detail::strand_gui_executor_service>(
-               boost::asio::query(ex, boost::asio::execution::context)
-    )
-        .create_implementation(ex);
-  }
-
-  template <typename InnerExecutor>
-  static implementation_type create_implementation(
-      const InnerExecutor& ex,
-      typename std::enable_if<
-          !boost::asio::can_query<InnerExecutor, boost::asio::execution::context_t>::value,
-          std::int32_t>::type = 0
-  ) {
-    return boost::asio::use_service<detail::strand_gui_executor_service>(
-               ex.context()
-    )
-        .create_implementation();
-  }
-
-  strand_gui(const Executor& ex, const implementation_type& impl)
-      : executor_(ex) {
-  }
 
   template <typename Property>
   typename boost::asio::query_result<const Executor&, Property>::type query_helper(
