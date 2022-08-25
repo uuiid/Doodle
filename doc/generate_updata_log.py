@@ -18,7 +18,7 @@ class comm_mess():
 
 class git_log():
     def __call__(self, *args, **kwargs):
-        self.mess_reg = re.compile("""log|doc|\.\.\.|\.\.""")
+        self.mess_reg = re.compile("""log|doc|\.\.\.|\.\.|(\d\.\d\.\d)""")
 
         git_sub = git.Repo(".", search_parent_directories=True)
 
@@ -37,13 +37,21 @@ class git_log():
             else:
                 current_value = i.message
                 mess = i.message[:-1]
-                mess.replace("\\n","\\n ")
-                l_value += "- {}".format(i.message)
-        print(l_value)
+                mess = mess.replace("\n\n", "\n")
+                mess = mess.replace("\n", "\n  ")
+                if mess and mess[0] == ' ':
+                    mess = mess[1::]
+                if len(mess) > 50 or len(mess) == 0:
+                    continue
+                l_value += "- {}   (time: {})\n".format(mess, i.committed_datetime.strftime("%y-%m-%d %I:%M"))
+
+        with open(args[0], "w", encoding="utf-8") as file:
+            file.write(l_value)
+        # print(l_value)
 
     def is_null_mess(self, mess: str) -> bool:
         return re.search(self.mess_reg, mess) is not None
 
 
 if __name__ == "__main__":
-    git_log()()
+    git_log()("D:/tmp.md")
