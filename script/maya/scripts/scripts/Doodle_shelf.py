@@ -7,6 +7,7 @@ import scripts.Doodle_clear as Doodle_clear
 import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
+import scripts.create_hair_uv as hair_uv
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -83,6 +84,8 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda: DlsShelf._export_cloth_fbx_())
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
+        self.addButon("create hair uv", icon="icons/hair_to_uv.png",
+                      command=lambda: hair_uv.main())
 
     def polyremesh(self):
         self.re()
