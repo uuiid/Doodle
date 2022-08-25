@@ -21,6 +21,7 @@
 #include <utility>
 #include <core/core_set.h>
 #include <doodle_core/thread_pool/process_message.h>
+#include <doodle_core/core/post_tick.h>
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
@@ -43,7 +44,10 @@ bsys::error_code file_translator::open_end() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
-  g_reg()->ctx().erase<process_message>();
+  post_tick([]() {
+    g_reg()->ctx().erase<process_message>();
+    return true;
+  });
   return {};
 }
 
@@ -68,7 +72,10 @@ bsys::error_code file_translator::save_end() {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
-  g_reg()->ctx().erase<process_message>();
+  post_tick([]() {
+    g_reg()->ctx().erase<process_message>();
+    return true;
+  });
   return {};
 }
 
