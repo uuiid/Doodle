@@ -10,7 +10,7 @@
 namespace boost::asio {
 class io_context;
 class thread_pool;
-}
+}  // namespace boost::asio
 
 namespace doodle {
 

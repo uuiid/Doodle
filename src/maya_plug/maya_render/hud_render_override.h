@@ -51,7 +51,8 @@ class hud_render : public MHWRender::MUserRenderOperation {
   bool hasUIDrawables() const override;
   void addUIDrawables(
       MHWRender::MUIDrawManager& drawManager2D,
-      const MHWRender::MFrameContext& frameContext) override;
+      const MHWRender::MFrameContext& frameContext
+  ) override;
   const MFloatPoint* viewportRectangleOverride() override;
 
   /// 测试MUserRenderOperation所需覆盖方法

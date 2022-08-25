@@ -73,7 +73,8 @@ class DOODLE_CORE_EXPORT time_point_wrap
       std::int32_t in_day,
       std::int32_t in_hours   = 0,
       std::int32_t in_minutes = 0,
-      std::int32_t in_seconds = 0);
+      std::int32_t in_seconds = 0
+  );
 
   /**
    * @brief 分解函数
@@ -164,8 +165,7 @@ class DOODLE_CORE_EXPORT time_point_wrap
     return time_point_wrap{l_sys_time};
   }
 
-  template <class Clock,
-            class Duration = typename Clock::duration>
+  template <class Clock, class Duration = typename Clock::duration>
   time_point_wrap& operator=(const doodle::chrono::time_point<Clock, Duration>& in_dur) {
     this->set_time(chrono::floor<duration>(in_dur));
     return *this;
@@ -201,7 +201,8 @@ struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
   auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.show_str(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

@@ -72,8 +72,6 @@ bsys::error_code file_translator::save_end() {
   return {};
 }
 
-
-
 class sqlite_file::impl {
  public:
   registry_ptr registry_attr;

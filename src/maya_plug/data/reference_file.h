@@ -130,8 +130,7 @@ class reference_file {
   };
 
   entt::handle export_file(const export_arg &in_arg);
-  entt::handle export_file_select(const export_arg &in_arg,
-                                  const MSelectionList &in_list);
+  entt::handle export_file_select(const export_arg &in_arg, const MSelectionList &in_list);
 
   /**
    * @brief 在这个解算引用中添加一些标记的碰撞

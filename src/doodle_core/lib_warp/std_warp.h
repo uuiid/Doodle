@@ -18,7 +18,8 @@ std::shared_ptr<ClassIn> new_object(Args &&...in_args) {
   constexpr auto has_make_this =
       boost::hana::is_valid(
           [](auto &&obj)
-              -> decltype(obj->post_constructor()) {});
+              -> decltype(obj->post_constructor()) {}
+      );
   auto ptr              = std::make_shared<ClassIn>(std::forward<Args>(in_args)...);
   using has_make_this_v = decltype(has_make_this(ptr));
   if constexpr (has_make_this_v{}) {
@@ -40,7 +41,8 @@ struct formatter<::std::filesystem::path> : formatter<string_view> {
   auto format(const ::std::filesystem::path &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return formatter<fmt::string_view>::format(
         in_.generic_string(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

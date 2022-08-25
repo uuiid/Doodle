@@ -53,7 +53,8 @@ class delete_data::impl {
     sql::Entity l_tabl{};
     auto l_pre = in_db.prepare(
         sqlpp::remove_from(l_tabl)
-            .where(l_tabl.id == sqlpp::parameter(l_tabl.id)));
+            .where(l_tabl.id == sqlpp::parameter(l_tabl.id))
+    );
     for (auto &&i : delete_id_list) {
       if (stop)
         return;
@@ -67,7 +68,8 @@ class delete_data::impl {
     sql::ComEntity l_tabl{};
     auto l_pre = in_db.prepare(
         sqlpp::remove_from(l_tabl)
-            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
+            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId))
+    );
     for (auto &&i : delete_id_list) {
       if (stop)
         return;
@@ -134,7 +136,8 @@ void delete_data::update() {
 }
 void delete_data::operator()(
     entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data) {
+    const std::vector<entt::entity> &in_update_data
+) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();
   p_i->th_delete();

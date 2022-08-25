@@ -41,17 +41,9 @@ if select_list:
         cmds.skinCluster(j_list)
         cmds.doodle_comm_dem_bones_weiget(l_du)
 )",
-                            startFrame_p,
-                            endFrame_p,
-                            startFrame_p,
-                            nBones_p,
-                            nIters_p,
-                            nInitIters_p,
-                            nTransIters_p,
-                            nWeightsIters_p);
+                            startFrame_p, endFrame_p, startFrame_p, nBones_p, nIters_p, nInitIters_p, nTransIters_p, nWeightsIters_p);
 
-    MGlobal::executePythonCommandOnIdle(d_str{l_py},
-                                        true);
+    MGlobal::executePythonCommandOnIdle(d_str{l_py}, true);
   }
 };
 dem_cloth_to_fbx::dem_cloth_to_fbx()

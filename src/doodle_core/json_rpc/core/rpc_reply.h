@@ -26,24 +26,22 @@ class rpc_reply {
  private:
   friend void to_json(nlohmann::json& nlohmann_json_j, const rpc_reply& nlohmann_json_t) {
     nlohmann_json_j["jsonrpc"] = nlohmann_json_t.jsonrpc_;
-    std::visit(detail::overloaded{
-                   [&](const nlohmann::json& in_json) {
-                     nlohmann_json_j["result"] = in_json;
-                   },
-                   [&](const rpc_error& in_error) {
-                     nlohmann_json_j["error"] = in_error;
-                   }},
+    std::visit(detail::overloaded{[&](const nlohmann::json& in_json) {
+                                    nlohmann_json_j["result"] = in_json;
+                                  },
+                                  [&](const rpc_error& in_error) {
+                                    nlohmann_json_j["error"] = in_error;
+                                  }},
                nlohmann_json_t.result);
-    std::visit(detail::overloaded{
-                   [&](const std::int64_t& in_id) {
-                     nlohmann_json_j["id"] = in_id;
-                   },
-                   [&](const std::string& in_str_id) {
-                     nlohmann_json_j["id"] = in_str_id;
-                   },
-                   [&](const std::monostate& in_null_id) {
-                     nlohmann_json_j["id"] = nlohmann::json{nlohmann::json::value_t::null};
-                   }},
+    std::visit(detail::overloaded{[&](const std::int64_t& in_id) {
+                                    nlohmann_json_j["id"] = in_id;
+                                  },
+                                  [&](const std::string& in_str_id) {
+                                    nlohmann_json_j["id"] = in_str_id;
+                                  },
+                                  [&](const std::monostate& in_null_id) {
+                                    nlohmann_json_j["id"] = nlohmann::json{nlohmann::json::value_t::null};
+                                  }},
                nlohmann_json_t.id_);
   }
   friend void from_json(const nlohmann::json& nlohmann_json_j, rpc_reply& nlohmann_json_t) {

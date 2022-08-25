@@ -21,11 +21,9 @@ struct win_ptr_delete {
 };
 
 struct frame_impl {
-  std::unique_ptr<ID3D11ShaderResourceView,
-                  win_ptr_delete<ID3D11ShaderResourceView>>
+  std::unique_ptr<ID3D11ShaderResourceView, win_ptr_delete<ID3D11ShaderResourceView>>
       p_d3d_view;
-  std::unique_ptr<ID3D11Texture2D,
-                  win_ptr_delete<ID3D11Texture2D>>
+  std::unique_ptr<ID3D11Texture2D, win_ptr_delete<ID3D11Texture2D>>
       p_d3d_tex;
   mutable opencv::frame frame;
 

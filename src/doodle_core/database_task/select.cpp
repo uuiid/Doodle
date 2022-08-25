@@ -79,9 +79,7 @@ struct future_data {
     }
     if (!l_not_valid_entity.empty())
       DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(T).name(), l_not_valid_entity, l_duplicate_entity);
-    DOODLE_CHICK(ranges::all_of(l_entt_list,
-                                [&](const entt::entity& in) { return in_reg->valid(in); }),
-                 doodle_error{"无效实体"});
+    DOODLE_CHICK(ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }), doodle_error{"无效实体"});
     in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
     in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
   };
@@ -143,23 +141,12 @@ class select::impl {
                       entt::handle l_h{in_reg, l_e};
                       l_h.emplace<database>(in_uuid).set_id(0);
                       auto k_json = nlohmann::json::parse(in_str);
-                      entt_tool::load_comm<doodle::project,
-                                           doodle::episodes,
-                                           doodle::shot,
-                                           doodle::season,
-                                           doodle::assets,
-                                           doodle::assets_file,
-                                           doodle::time_point_wrap,
-                                           doodle::comment,
-                                           doodle::project_config::base_config,
-                                           doodle::image_icon,
-                                           doodle::importance,
-                                           doodle::organization_list,
-                                           doodle::redirection_path_info>(l_h, k_json);
+                      entt_tool::load_comm<doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon, doodle::importance, doodle::organization_list, doodle::redirection_path_info>(l_h, k_json);
                       database::save(l_h);
                       g_reg()->ctx().at<process_message>().message("开始旧版本兼容转换"s);
                       g_reg()->ctx().at<process_message>().progress_step({1, l_size});
-                    }});
+                    }}
+            );
         results.emplace_back(l_fun.share());
         if (stop)
           return;
@@ -180,7 +167,8 @@ class select::impl {
                     }
                     g_reg()->ctx().at<process_message>().message("完成旧版本兼容转换"s);
                     g_reg()->ctx().at<process_message>().progress_clear();
-                  }});
+                  }}
+          );
       results.emplace_back(l_fun.share());
     }
   }
@@ -202,10 +190,13 @@ class select::impl {
     for (auto&& row : in_conn(
              sqlpp::select(
                  l_com_entity.entityId,
-                 l_com_entity.jsonData)
+                 l_com_entity.jsonData
+             )
                  .from(l_com_entity)
                  .where(
-                     l_com_entity.comHash == entt::type_id<Type>().hash()))) {
+                     l_com_entity.comHash == entt::type_id<Type>().hash()
+                 )
+         )) {
       if (stop)
         return;
       auto l_id  = row.entityId.value();
@@ -218,22 +209,23 @@ class select::impl {
                 auto l_json = nlohmann::json::parse(in_json);
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
                 return l_json.get<Type>();
-              }});
+              }}
+      );
 
       l_future_data->data.emplace_back(std::make_tuple(boost::numeric_cast<std::int64_t>(l_id), std::move(l_fut)));
     }
     list_install.emplace_back(
         [l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
           return l_future_data->install_reg(in, id_map);
-        });
+        }
+    );
   }
   template <typename... Type>
   void select_com(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     (_select_com_<Type>(in_reg, in_conn), ...);
   }
 
-  void select_entt(entt::registry& in_reg,
-                   sqlpp::sqlite3::connection& in_conn) {
+  void select_entt(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::Entity l_entity{};
 
     std::size_t l_size{1};
@@ -261,14 +253,16 @@ class select::impl {
                 l_database.set_id(in_id);
                 g_reg()->ctx().at<process_message>().progress_step({1, l_size * 2});
                 return l_database;
-              }});
+              }}
+      );
       l_future_data->data.emplace_back(std::make_tuple(boost::numeric_cast<std::int64_t>(enum_to_num(l_e)), std::move(l_fut)));
     }
 
     list_install.emplace_back(
         [l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {
           return l_future_data->install_reg(in, id_map);
-        });
+        }
+    );
   }
 
   void set_user_ctx(entt::registry& in_reg) {
@@ -365,7 +359,8 @@ void select::th_run() {
 
 void select::operator()(
     entt::registry& in_registry,
-    const FSys::path& in_project_path) {
+    const FSys::path& in_project_path
+) {
   p_i->project  = in_project_path;
   p_i->only_ctx = false;
   this->th_run();

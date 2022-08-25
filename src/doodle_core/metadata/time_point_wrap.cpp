@@ -43,13 +43,16 @@ time_point_wrap::time_point_wrap(
     std::int32_t in_day,
     std::int32_t in_hours,
     std::int32_t in_minutes,
-    std::int32_t in_seconds)
-    : time_point_wrap(chrono::local_time_pos{chrono::local_days{chrono::year{boost::numeric_cast<std::int32_t>(in_year)} /
-                                                                chrono::month{boost::numeric_cast<std::uint32_t>(in_month)} /
-                                                                chrono::day{boost::numeric_cast<std::uint32_t>(in_day)}} +
-                                             chrono::hours{in_hours} +
-                                             chrono::minutes{in_minutes} +
-                                             chrono::seconds{in_seconds}}) {
+    std::int32_t in_seconds
+)
+    : time_point_wrap(chrono::local_time_pos{
+          chrono::local_days{
+              chrono::year{boost::numeric_cast<std::int32_t>(in_year)} /
+              chrono::month{boost::numeric_cast<std::uint32_t>(in_month)} /
+              chrono::day{boost::numeric_cast<std::uint32_t>(in_day)}} +
+          chrono::hours{in_hours} +
+          chrono::minutes{in_minutes} +
+          chrono::seconds{in_seconds}}) {
 }
 
 std::string time_point_wrap::get_week_s() const {

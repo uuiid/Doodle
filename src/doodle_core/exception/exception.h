@@ -77,7 +77,8 @@ struct formatter<::doodle::doodle_error> : formatter<string_view> {
   auto format(const ::doodle::doodle_error& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<string_view>::format(
         boost::diagnostic_information(in_),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

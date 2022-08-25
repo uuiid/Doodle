@@ -62,7 +62,8 @@ struct formatter<::boost::filesystem::path> : formatter<string_view> {
   auto format(const ::boost::filesystem::path& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<string_view>::format(
         in_.generic_string(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

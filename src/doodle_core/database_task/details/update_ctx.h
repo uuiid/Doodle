@@ -12,16 +12,15 @@ namespace doodle::database_n::details {
 
 class update_ctx {
  public:
-  static void select_ctx(entt::registry &in_registry,
-                         sqlpp::sqlite3::connection &in_connection);
+  static void select_ctx(entt::registry &in_registry, sqlpp::sqlite3::connection &in_connection);
 
-  static void ctx(const entt::registry &in_registry,
-                  sqlpp::sqlite3::connection &in_connection);
+  static void ctx(const entt::registry &in_registry, sqlpp::sqlite3::connection &in_connection);
   static void ctx(const entt::registry &in_registry);
 };
 
 std::tuple<std::uint32_t, std::uint32_t> get_version(
-    sqlpp::sqlite3::connection &in_connection);
+    sqlpp::sqlite3::connection &in_connection
+);
 
 void add_ctx_table(sqlpp::sqlite3::connection &in_conn);
 void add_entity_table(sqlpp::sqlite3::connection &in_conn);

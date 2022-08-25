@@ -31,8 +31,7 @@ class DOODLELIB_API csv_export_widgets
    *
    * @param in_list
    */
-  void export_csv(const std::vector<entt::handle>& in_list,
-                  const FSys::path& in_export_file_path);
+  void export_csv(const std::vector<entt::handle>& in_list, const FSys::path& in_export_file_path);
 
  public:
   csv_export_widgets();

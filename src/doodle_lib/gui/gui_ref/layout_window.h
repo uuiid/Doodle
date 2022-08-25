@@ -29,7 +29,8 @@ class DOODLELIB_API layout_window
   void call_render() {
     if (!has_windows(std::string{windows_type::name})) {
       auto l_w = ::doodle::make_process_adapter<windows_type>(
-          strand_gui{::doodle::g_io_context()});
+          strand_gui{::doodle::g_io_context()}
+      );
       add_windows(std::string{windows_type::name}, l_w.p_ptr);
       boost::asio::post(l_w);
     }

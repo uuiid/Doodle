@@ -14,7 +14,6 @@
 #include <doodle_core/core/file_sys.h>
 #include <spdlog/spdlog.h>
 
-
 namespace doodle {
 
 /**

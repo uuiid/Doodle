@@ -65,7 +65,8 @@ struct formatter<::doodle::user> : formatter<std::string> {
   auto format(const ::doodle::user& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string>::format(
         in_.get_name(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

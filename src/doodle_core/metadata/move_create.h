@@ -13,10 +13,7 @@ class DOODLE_CORE_EXPORT image_watermark {
  public:
   using rgba_t      = std::array<std::double_t, 4>;
   image_watermark() = default;
-  image_watermark(std::string in_p_text,
-                  double_t in_p_width_proportion,
-                  double_t in_p_height_proportion,
-                  rgba_t in_rgba)
+  image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, rgba_t in_rgba)
       : text_(std::move(in_p_text)),
         width_proportion_(in_p_width_proportion),
         height_proportion_(in_p_height_proportion),

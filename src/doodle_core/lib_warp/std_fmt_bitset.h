@@ -12,5 +12,5 @@
 namespace fmt {
 
 template <std::size_t N>
-struct formatter<::std::bitset<N>> :  ostream_formatter {};
+struct formatter<::std::bitset<N>> : ostream_formatter {};
 }  // namespace fmt

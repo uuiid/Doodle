@@ -135,7 +135,8 @@ void create_qcloth_assets::delete_node() {
   MGlobal::deleteNode(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
 }
 void create_qcloth_assets::filter_create_node(
-    const std::vector<MObject>& in_obj) {
+    const std::vector<MObject>& in_obj
+) {
   //  p_i->create_nodes = get_all_node();
   //  p_i->create_nodes |= ranges::action::remove_if([&](const MObject& in) -> bool {
   //    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {

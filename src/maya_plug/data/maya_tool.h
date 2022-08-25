@@ -19,16 +19,13 @@ namespace doodle::maya_plug {
 MPlug get_plug(const MObject& in_node, const std::string& in_name);
 
 template <typename T>
-void set_attribute(const MObject& in_node,
-                   const std::string& in_name,
-                   const T& in_t) {
+void set_attribute(const MObject& in_node, const std::string& in_name, const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
   if (!l_s)
     throw_exception(maya_error{l_s.errorString()});
 }
 template <typename T>
-T get_attribute(const MObject& in_node,
-                const std::string& in_name) {
+T get_attribute(const MObject& in_node, const std::string& in_name) {
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
   if (!l_s)

@@ -26,8 +26,7 @@ class DOODLE_CORE_EXPORT episodes {
   };
   bool analysis(const std::string &in_path);
 
-  static bool analysis_static(const entt::handle &in_handle,
-                              const FSys::path &in_path);
+  static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
 
   static bool conjecture_season(const entt::handle &in_handle);
 
@@ -55,7 +54,8 @@ struct formatter<::doodle::episodes> : formatter<std::int64_t> {
     format_to(ctx.out(), "ep_");
     return formatter<std::int64_t>::format(
         in_.p_episodes,
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

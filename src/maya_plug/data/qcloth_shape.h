@@ -115,7 +115,8 @@ class qcloth_shape {
    *  需要读取配置文件中的各个属性, 进行标准的重命名
    */
   static std::vector<entt::handle> create_sim_cloth(
-      const entt::handle& in_handle);
+      const entt::handle& in_handle
+  );
 
   /**
    * @brief 重置maya高模皮肤簇节点为权重为1
@@ -139,7 +140,8 @@ class qcloth_shape {
    * @return 完成布料网格的创建的句柄
    */
   static std::vector<entt::handle> create(
-      const entt::handle& in_ref_file);
+      const entt::handle& in_ref_file
+  );
 
   static MObject get_ql_solver(const MSelectionList& in_selection_list);
   static MObject get_ql_solver();

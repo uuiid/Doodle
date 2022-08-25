@@ -13,10 +13,9 @@ class USplineComponent;
 class UInstancedStaticMeshComponent;
 
 UCLASS(meta = (ChildCanTick))
-class DOODLE_API ADoodleSurroundMeshActor : public AActor
-{
+class DOODLE_API ADoodleSurroundMeshActor : public AActor {
   GENERATED_BODY()
-public:
+ public:
   ADoodleSurroundMeshActor();
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "网格体")
@@ -71,16 +70,17 @@ public:
 
 #if WITH_EDITOR
   virtual void PostEditChangeProperty(FPropertyChangedEvent &PropertyChangeEvent) override;
-#endif // WITH_EDITOR
+#endif  // WITH_EDITOR
 
   virtual void PostLoad() override;
   virtual void OnConstruction(
-      const FTransform &Transform) override;
+      const FTransform &Transform
+  ) override;
 
-  //覆盖用来在编辑器中运行
+  // 覆盖用来在编辑器中运行
   virtual bool ShouldTickIfViewportsOnly() const override;
 
-protected:
+ protected:
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
@@ -89,7 +89,7 @@ protected:
   void SetRadius();
   void SetSize();
 
-public:
+ public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
 };

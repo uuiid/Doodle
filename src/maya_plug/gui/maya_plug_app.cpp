@@ -14,11 +14,14 @@ namespace doodle::maya_plug {
 
 void maya_plug_app::load_windows() {
   boost::asio::post(
-      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_status_bar>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<maya_layout>(strand_gui{g_io_context()}));
+      make_process_adapter<maya_layout>(strand_gui{g_io_context()})
+  );
 }
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
@@ -31,9 +34,9 @@ void maya_plug_app::post_constructor() {
   app::post_constructor();
   doodle::gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
   doodle::gui::main_proc_handle::get().win_destroy = []() {};
-//  boost::asio::post(g_io_context(), []() {
-//    app::Get().close_windows();
-//  });
+  //  boost::asio::post(g_io_context(), []() {
+  //    app::Get().close_windows();
+  //  });
 }
 
 }  // namespace doodle::maya_plug

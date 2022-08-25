@@ -25,7 +25,7 @@
 namespace boost::asio {
 class io_context;
 class thread_pool;
-}
+}  // namespace boost::asio
 
 // #include <>
 namespace doodle {

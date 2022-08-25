@@ -86,7 +86,9 @@ void subtitle_processing::init() {
                   return in_handle.get<assets_file>().get_path_normal().generic_string();
                 }) |
                 ranges::to_vector;
-          }));
+          }
+      )
+  );
 }
 void subtitle_processing::render() {
   dear::ListBox{*p_i->list_srt_file.gui_name} && [&]() {
@@ -105,14 +107,13 @@ void subtitle_processing::render() {
     ImGui::InputInt(*p_i->cut_off_line_size.gui_name, &p_i->cut_off_line_size.data);
   }
   if (ImGui::Button(*p_i->run_button)) {
-    ranges::for_each(p_i->list_srt_file.data,
-                     [this](const FSys::path& in_path) {
-                       auto l_out = in_path;
-                       auto l_f   = (l_out.stem() += p_i->file_suffix.data);
-                       l_f += in_path.extension();
-                       l_out.remove_filename() /= l_f;
-                       this->run(in_path, l_out);
-                     });
+    ranges::for_each(p_i->list_srt_file.data, [this](const FSys::path& in_path) {
+      auto l_out = in_path;
+      auto l_f   = (l_out.stem() += p_i->file_suffix.data);
+      l_f += in_path.extension();
+      l_out.remove_filename() /= l_f;
+      this->run(in_path, l_out);
+    });
   }
 }
 void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_subtitles_file) {
@@ -244,9 +245,11 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
 {})",
                 in_pair.first + 1,
                 in_pair.second.time_str,
-                in_pair.second.subtitle);
+                in_pair.second.subtitle
+            );
             return l_str;
-          }) |
+          }
+      ) |
       ranges::to_vector;
   if (!FSys::exists(out_subtitles_file.parent_path()))
     FSys::create_directories(out_subtitles_file.parent_path());

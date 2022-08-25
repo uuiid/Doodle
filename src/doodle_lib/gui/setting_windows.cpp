@@ -106,10 +106,8 @@ void setting_windows::render() {
   imgui::InputInt(*p_i->p_batch_max.gui_name, &(p_i->p_batch_max.data));
   dear::HelpMarker{"更改任务池时,减小不会结束现在的任务, 真假时会立即加入等待的项目"s};
   imgui::InputInt(*p_i->p_timeout.gui_name, &(p_i->p_timeout.data));
-  imgui::Checkbox(*p_i->p_maya_replace_save_dialog.gui_name,
-                  &(p_i->p_maya_replace_save_dialog.data));
-  imgui::Checkbox(*p_i->p_maya_force_resolve_link.gui_name,
-                  &(p_i->p_maya_force_resolve_link.data));
+  imgui::Checkbox(*p_i->p_maya_replace_save_dialog.gui_name, &(p_i->p_maya_replace_save_dialog.data));
+  imgui::Checkbox(*p_i->p_maya_force_resolve_link.gui_name, &(p_i->p_maya_force_resolve_link.data));
   dear::HelpMarker{"强制maya解析硬链接, 这个是在插件中使用的选项"s};
 
   if (imgui::Button("save"))

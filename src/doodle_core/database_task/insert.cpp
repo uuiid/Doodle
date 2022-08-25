@@ -88,7 +88,9 @@ class insert::impl {
     auto l_pre = in_db.prepare(
         sqlpp::insert_into(l_tabl)
             .set(
-                l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)));
+                l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)
+            )
+    );
 
     for (auto &&i : main_tabls) {
       if (stop)
@@ -107,11 +109,14 @@ class insert::impl {
     sql::ComEntity l_tabl{};
     auto l_pre = in_db.prepare(
         sqlpp::insert_into(
-            l_tabl)
+            l_tabl
+        )
             .set(
                 l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData),
                 l_tabl.comHash  = sqlpp::parameter(l_tabl.comHash),
-                l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)));
+                l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)
+            )
+    );
     for (auto &&j : com_tabls) {
       if (stop)
         return;
@@ -155,7 +160,9 @@ class insert::impl {
                     in.second->uuid_data =
                         boost::uuids::to_string(l_h.get<database>().uuid());
                     g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
-                  }}));
+                  }}
+          )
+      );
     });
   }
 
@@ -183,7 +190,9 @@ class insert::impl {
                       com_tabls.emplace_back(in, entt::type_id<Type_T>().hash(), l_j.dump());
                     }
                     g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size * 4});
-                  }}));
+                  }}
+          )
+      );
     });
   }
   template <typename... Type_T>
@@ -268,8 +277,7 @@ void insert::update() {
       break;
   }
 }
-void insert::operator()(const entt::registry &in_registry,
-                        const std::vector<entt::entity> &in_insert_data) {
+void insert::operator()(const entt::registry &in_registry, const std::vector<entt::entity> &in_insert_data) {
   p_i->entt_list = in_insert_data;
   p_i->size      = p_i->entt_list.size();
   p_i->th_insert();

@@ -65,9 +65,7 @@ class ref_file_export_command : public TemplateAction<
 /**
  * @brief 打开并加载文件
  */
-class load_project : public TemplateAction<load_project,
-                                           load_project_name,
-                                           load_project_syntax> {
+class load_project : public TemplateAction<load_project, load_project_name, load_project_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };

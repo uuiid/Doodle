@@ -104,21 +104,21 @@ class time_sequencer_widget::impl {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<time_point_wrap, time_point_wrap>& in_pair) {
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first.get_sys_time()).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first.get_sys_time()).time_since_epoch().count()
+      );
       shaded_works_time.emplace_back(
-          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second.get_sys_time()).time_since_epoch().count());
+          doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second.get_sys_time()).time_since_epoch().count()
+      );
     });
   }
 
   void refresh_work_clock_() {
     if (!time_list.empty()) {
-      work_clock_.set_interval(time_list.front().time_point_.current_month_start() - chrono::days{4},
-                               time_list.back().time_point_.current_month_end() + chrono::days{4});
+      work_clock_.set_interval(time_list.front().time_point_.current_month_start() - chrono::days{4}, time_list.back().time_point_.current_month_end() + chrono::days{4});
       DOODLE_LOG_INFO(work_clock_.debug_print());
       refresh_cache(time_list);
       refresh_work_time(time_list);
-      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_.current_month_start(),
-                                                    time_list.back().time_point_.current_month_end()));
+      set_shaded_works_time(work_clock_.get_work_du(time_list.front().time_point_.current_month_start(), time_list.back().time_point_.current_month_end()));
     }
   }
 
@@ -126,7 +126,8 @@ class time_sequencer_widget::impl {
     time_list_x = in_list |
                   ranges::views::transform([](const impl::point_cache& in) -> double {
                     return doodle::chrono::floor<doodle::chrono::seconds>(
-                               in.time_point_.get_sys_time())
+                               in.time_point_.get_sys_time()
+                    )
                         .time_since_epoch()
                         .count();
                   }) |
@@ -154,13 +155,15 @@ class time_sequencer_widget::impl {
                       auto l_d = work_clock_(l_begin, in_time.time_point_);
                       l_begin  = in_time.time_point_;
                       return l_d;
-                    }) |
+                    }
+                ) |
                 ranges::to_vector;
     work_time_plots = work_time |
                       ranges::views::transform(
                           [&](const doodle::chrono::hours_double& in_time) -> std::double_t {
                             return in_time.count() > 0.5 ? in_time.count() : 0.0;
-                          }) |
+                          }
+                      ) |
                       ranges::to_vector;
   }
 
@@ -203,33 +206,29 @@ class time_sequencer_widget::impl {
 
     decltype(time_list.front().time_point_) l_begin =
         time_list.front().time_point_.current_month_start();
-    auto l_all_len  = work_clock_(l_begin,
-                                  time_list.back().time_point_.current_month_end());
+    auto l_all_len  = work_clock_(l_begin, time_list.back().time_point_.current_month_end());
     const auto l_du = l_all_len / time_list.size();
 
-    ranges::for_each(time_list,
-                     [&](decltype(time_list)::value_type& in_) {
-                       in_.time_point_ = work_clock_.next_time(l_begin, l_du);
-                       l_begin         = in_.time_point_;
-                     });
+    ranges::for_each(time_list, [&](decltype(time_list)::value_type& in_) {
+      in_.time_point_ = work_clock_.next_time(l_begin, l_du);
+      l_begin         = in_.time_point_;
+    });
     refresh_cache(time_list);
     refresh_work_time(time_list);
   }
 
   void refresh_view1_index() {
     if (view1_.into_select && view1_.outto_select) {
-      auto l_ben         = ranges::find_if(time_list_y,
-                                           [&](const std::double_t& in_) -> bool {
-                                     auto l_index = boost::numeric_cast<std::size_t>(in_);
-                                     return view1_.rect_select_.Contains(time_list_x[l_index], in_);
-                                   });
+      auto l_ben         = ranges::find_if(time_list_y, [&](const std::double_t& in_) -> bool {
+        auto l_index = boost::numeric_cast<std::size_t>(in_);
+        return view1_.rect_select_.Contains(time_list_x[l_index], in_);
+      });
       auto l_begin_index = ranges::distance(time_list_y.begin(), l_ben);
 
-      auto l_end         = ranges::find_if(l_ben, time_list_y.end(),
-                                           [&](const std::double_t& in_) -> bool {
-                                     auto l_index = boost::numeric_cast<std::size_t>(in_);
-                                     return !view1_.rect_select_.Contains(time_list_x[l_index], in_);
-                                   });
+      auto l_end         = ranges::find_if(l_ben, time_list_y.end(), [&](const std::double_t& in_) -> bool {
+        auto l_index = boost::numeric_cast<std::size_t>(in_);
+        return !view1_.rect_select_.Contains(time_list_x[l_index], in_);
+      });
       auto l_end_index   = ranges::distance(time_list_y.begin(), l_end);
 
       index_begin_       = std::max(std::size_t(0), std::size_t(l_begin_index));
@@ -252,10 +251,7 @@ class time_sequencer_widget::impl {
     }
   }
   ImPlotRect get_view1_rect() {
-    ImPlotRect l_r{time_list_x[index_begin_] - 360,
-                   time_list_x[index_view_end] + 360,
-                   time_list_y[index_begin_] - 1,
-                   time_list_y[index_view_end] + 1};
+    ImPlotRect l_r{time_list_x[index_begin_] - 360, time_list_x[index_view_end] + 360, time_list_y[index_begin_] - 1, time_list_y[index_view_end] + 1};
     return l_r;
   }
   ImPlotRect get_view2_rect() {
@@ -316,21 +312,22 @@ time_sequencer_widget::time_sequencer_widget()
                                  ranges::views::filter(
                                      [](const entt::handle& in) -> bool {
                                        return in.any_of<time_point_wrap>();
-                                     }) |
+                                     }
+                                 ) |
                                  ranges::views::transform(
                                      [](const entt::handle& in) -> impl::point_cache {
                                        return impl::point_cache{in, in.get<time_point_wrap>()};
-                                     }) |
+                                     }
+                                 ) |
                                  ranges::to_vector;
                 p_i->time_list |= ranges::actions::sort;
                 p_i->rules_ = user::get_current_handle().get<business::rules>();
                 p_i->work_clock_.set_rules(p_i->rules_);
                 p_i->refresh_work_clock_();
-              });
+              }
+          );
   p_i->edit_chick.connect([this](const std::tuple<std::int32_t, std::double_t>& in) {
-    DOODLE_LOG_INFO("开始设置时间点 {} 增量 {}", std::get<0>(in),
-                    chrono::seconds{
-                        boost::numeric_cast<doodle::chrono::seconds::rep>(std::get<1>(in))});
+    DOODLE_LOG_INFO("开始设置时间点 {} 增量 {}", std::get<0>(in), chrono::seconds{boost::numeric_cast<doodle::chrono::seconds::rep>(std::get<1>(in))});
     p_i->set_time_point(std::get<0>(in), std::get<1>(in));
   });
 
@@ -360,29 +357,24 @@ void time_sequencer_widget::render() {
     /// 设置州为时间轴
     ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
     double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
-                       p_i->time_list.front().time_point_.get_sys_time())
+                       p_i->time_list.front().time_point_.get_sys_time()
+    )
                        .time_since_epoch()
                        .count();  // 01/01/2021 @ 12:00:00am (UTC)
     double t_max = doodle::chrono::floor<doodle::chrono::seconds>(
-                       p_i->time_list.back().time_point_.get_sys_time())
+                       p_i->time_list.back().time_point_.get_sys_time()
+    )
                        .time_since_epoch()
                        .count();  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
     ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
     if (p_i->view2_.set_other_view) {
       auto l_rect = p_i->get_view1_rect();
-      ImPlot::SetupAxesLimits(l_rect.X.Min,
-                              l_rect.X.Max,
-                              l_rect.Y.Min,
-                              l_rect.Y.Max,
-                              ImGuiCond_Always);
+      ImPlot::SetupAxesLimits(l_rect.X.Min, l_rect.X.Max, l_rect.Y.Min, l_rect.Y.Max, ImGuiCond_Always);
       p_i->view2_.set_other_view = false;
     }
     /// \brief 时间折线
-    ImPlot::PlotLine("Time Series",
-                     p_i->time_list_x.data(),
-                     p_i->time_list_y.data(),
-                     p_i->time_list.size());
+    ImPlot::PlotLine("Time Series", p_i->time_list_x.data(), p_i->time_list_y.data(), p_i->time_list.size());
     ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
 
     //    {
@@ -412,10 +404,7 @@ void time_sequencer_widget::render() {
            l_i < std::min(p_i->drag_point_current + 2, (std::int32_t)p_i->time_list.size());
            ++l_i) {
         auto l_tmp = boost::numeric_cast<std::double_t>(l_i);
-        if (l_guard = ImPlot::DragPoint((std::int32_t)l_i,
-                                        (std::double_t*)&(p_i->time_list_x[l_i]),
-                                        &(l_tmp),
-                                        ImVec4{0, 0.9f, 0, 1});
+        if (l_guard = ImPlot::DragPoint((std::int32_t)l_i, (std::double_t*)&(p_i->time_list_x[l_i]), &(l_tmp), ImVec4{0, 0.9f, 0, 1});
             l_guard) {
           l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
           //          p_i->time_list_y[l_i] = l_i;
@@ -430,16 +419,10 @@ void time_sequencer_widget::render() {
   if (ImPlot::BeginPlot("工作柱状图")) {
     if (p_i->view1_.set_other_view) {
       auto l_rect = p_i->get_view2_rect();
-      ImPlot::SetupAxesLimits(l_rect.X.Min,
-                              l_rect.X.Max,
-                              l_rect.Y.Min,
-                              l_rect.Y.Max,
-                              ImGuiCond_Always);
+      ImPlot::SetupAxesLimits(l_rect.X.Min, l_rect.X.Max, l_rect.Y.Min, l_rect.Y.Max, ImGuiCond_Always);
       p_i->view1_.set_other_view = false;
     }
-    ImPlot::PlotBars("Bars",
-                     p_i->work_time_plots.data(),
-                     p_i->work_time_plots.size());
+    ImPlot::PlotBars("Bars", p_i->work_time_plots.data(), p_i->work_time_plots.size());
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
       p_i->view2_.rect_select_ = ImPlot::GetPlotSelection();

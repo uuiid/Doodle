@@ -102,9 +102,7 @@ bool image_loader::load(const entt::handle& in_handle) {
 
   return false;
 }
-bool image_loader::save(const entt::handle& in_handle,
-                        const cv::Mat& in_image,
-                        const cv::Rect2f& in_rect) {
+bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, const cv::Rect2f& in_rect) {
   auto k_reg = g_reg();
   DOODLE_CHICK(k_reg->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
 
@@ -208,11 +206,9 @@ void image_loader_ns::image_loader_init::init() const {
         auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
         cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
-                          (k_mat.rows + textSize.height) * 0.5);
+        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "no", textOrg, fontFace, fontScale,
-                    {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+        cv::putText(k_mat, "no", textOrg, fontFace, fontScale, {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
         auto k_def            = l_loader.cv_to_d3d(k_mat);
         l_cache.default_image = k_def;
       }
@@ -228,11 +224,9 @@ void image_loader_ns::image_loader_init::init() const {
         auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
         cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5,
-                          (k_mat.rows + textSize.height) * 0.5);
+        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "err", textOrg, fontFace, fontScale,
-                    {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+        cv::putText(k_mat, "err", textOrg, fontFace, fontScale, {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
         auto k_def          = l_loader.cv_to_d3d(k_mat);
         l_cache.error_image = k_def;
       }

@@ -6,7 +6,8 @@
 namespace doodle {
 namespace process_bounded_ns {
 process_bounded_server::process_bounded_server(
-    boost::asio::execution_context& context)
+    boost::asio::execution_context& context
+)
     : execution_context_service_base(context),
       mutex_() {
 }

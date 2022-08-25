@@ -5,26 +5,25 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 
-//这个必须最后导入
+// 这个必须最后导入
 #include "DoodleCurveCrowd.generated.h"
 
 class USplineComponent;
 class UAnimationAsset;
 
 UCLASS()
-class DOODLE_API ADoodleCurveCrowd : public ACharacter
-{
+class DOODLE_API ADoodleCurveCrowd : public ACharacter {
   GENERATED_BODY()
 
-public:
+ public:
   // Sets default values for this character's properties
   ADoodleCurveCrowd();
 
-protected:
+ protected:
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
-public:
+ public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
 
@@ -36,6 +35,6 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Org")
   FVector Direction;
 
-private:
+ private:
   FVector p_Point;
 };

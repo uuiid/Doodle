@@ -4,13 +4,11 @@
 
 IMPLEMENT_MODULE(FDoodleClusterModule, DoodleCluster)
 
-void FDoodleClusterModule::StartupModule()
-{
+void FDoodleClusterModule::StartupModule() {
 #if WITH_EDITOR
-    // FGeometryCacheSequencerModule& Module = FModuleManager::LoadModuleChecked<FGeometryCacheSequencerModule>(TEXT("GeometryCacheSequencer"));
+  // FGeometryCacheSequencerModule& Module = FModuleManager::LoadModuleChecked<FGeometryCacheSequencerModule>(TEXT("GeometryCacheSequencer"));
 #endif
 }
 
-void FDoodleClusterModule::ShutdownModule()
-{
+void FDoodleClusterModule::ShutdownModule() {
 }

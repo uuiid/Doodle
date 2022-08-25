@@ -251,9 +251,7 @@ void opencv_player_widget::update(chrono::duration<chrono::system_clock::rep, ch
   bool k_line = true;
   for (auto& f : k_list) {
     f.multiply(k_s);
-    imgui::Image(f.data, ImVec2{
-                             boost::numeric_cast<std::float_t>(f.width),
-                             boost::numeric_cast<std::float_t>(f.height)});
+    imgui::Image(f.data, ImVec2{boost::numeric_cast<std::float_t>(f.width), boost::numeric_cast<std::float_t>(f.height)});
     if (k_line) {
       imgui::SameLine();
     }

@@ -83,8 +83,7 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 
   for (int i = 0; i < num_segments; i++) {
     const float a = a_min + ((float)i / (float)num_segments) * (a_max - a_min);
-    window->DrawList->PathLineTo(ImVec2(centre.x + ImCos(a + g.Time * 8) * radius,
-                                        centre.y + ImSin(a + g.Time * 8) * radius));
+    window->DrawList->PathLineTo(ImVec2(centre.x + ImCos(a + g.Time * 8) * radius, centre.y + ImSin(a + g.Time * 8) * radius));
   }
 
   window->DrawList->PathStroke(color, false, thickness);
@@ -129,9 +128,7 @@ void main_status_bar::update() {
         auto& l_msg = g_reg()->ctx().at<process_message>();
         dear::Text(l_msg.get_name());
         ImGui::SameLine();
-        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg.get_progress()),
-                           ImVec2{-FLT_MIN, 0.0f},
-                           fmt::format("{:04f}%", l_msg.get_progress_f()).c_str());
+        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f}, fmt::format("{:04f}%", l_msg.get_progress_f()).c_str());
       }
     };
   };

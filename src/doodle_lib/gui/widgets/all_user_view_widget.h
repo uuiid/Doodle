@@ -22,6 +22,7 @@ class all_user_view_widget : public window_panel {
   all_user_view_widget();
   virtual ~all_user_view_widget();
   constexpr static std::string_view name{gui::config::menu_w::all_user_view_widget};
+
  protected:
   virtual void render() override;
 };

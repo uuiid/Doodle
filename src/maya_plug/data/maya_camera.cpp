@@ -33,8 +33,7 @@ void maya_camera::chick() const {
   MStatus k_s{};
   DOODLE_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"s});
   DOODLE_MAYA_CHICK(k_s);
-  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera,&k_s),
-        doodle_error{"dag 路径不兼容 MFn::Type::kCamera"s});
+  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera, &k_s), doodle_error{"dag 路径不兼容 MFn::Type::kCamera"s});
   DOODLE_MAYA_CHICK(k_s);
 }
 
@@ -51,10 +50,7 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
   if (!FSys::exists(k_file_path))
     FSys::create_directories(k_file_path);
-  k_file_path /= fmt::format("{}_camera_{}-{}.fbx",
-                             maya_file_io::get_current_path().stem().generic_string(),
-                             in_start.value(),
-                             in_end.value());
+  k_file_path /= fmt::format("{}_camera_{}-{}.fbx", maya_file_io::get_current_path().stem().generic_string(), in_start.value(), in_end.value());
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
   k_s         = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
@@ -80,11 +76,7 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   episodes::analysis_static(l_h, k_file_path);
   shot::analysis_static(l_h, k_file_path);
 
-  l_h.emplace<export_file_info>(k_file_path,
-                                in_start.value(),
-                                in_end.value(),
-                                FSys::path{},
-                                export_file_info::export_type::camera);
+  l_h.emplace<export_file_info>(k_file_path, in_start.value(), in_end.value(), FSys::path{}, export_file_info::export_type::camera);
   export_file_info::write_file(l_h);
   return true;
 }
@@ -281,9 +273,7 @@ bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
     DOODLE_MAYA_CHICK(l_s);
     /// 创建约束
     auto l_cam_name = get_node_name(get_transform(l_camera.object()));
-    auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};",
-                                  l_node.fullPathName(),
-                                  l_cam_name);
+    auto l_comm     = fmt::format("parentConstraint -weight 1 {} {};", l_node.fullPathName(), l_cam_name);
 
     DOODLE_LOG_INFO("运行 {}", l_comm);
     MStringArray l_constraints{};

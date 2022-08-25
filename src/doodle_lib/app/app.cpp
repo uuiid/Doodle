@@ -81,15 +81,7 @@ void app::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  p_hwnd   = ::CreateWindowExW(0L,
-                               p_win_class.lpszClassName,
-                               p_title.c_str(),
-                               WS_OVERLAPPEDWINDOW,
-                               CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                               p_i->parent,
-                               nullptr,
-                               p_win_class.hInstance,
-                               nullptr);
+  p_hwnd   = ::CreateWindowExW(0L, p_win_class.lpszClassName, p_title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, p_i->parent, nullptr, p_win_class.hInstance, nullptr);
 
   // Initialize Direct3D
   d3d_deve = std::make_shared<win::d3d_device>(p_hwnd);
@@ -167,17 +159,12 @@ void app::post_constructor() {
     icons_config.PixelSnapH           = true;
     icons_config.FontDataOwnedByAtlas = false;
     // io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
-    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(),
-                                   boost::numeric_cast<std::int32_t>(l_font.size()),
-                                   16.0f,
-                                   &icons_config, icons_ranges);
+    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(), boost::numeric_cast<std::int32_t>(l_font.size()), 16.0f, &icons_config, icons_ranges);
   }
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
-    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty()
-                     ? app::Get().options_->p_project_path
-                     : core_set::getSet().project_root[0]);
+    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty() ? app::Get().options_->p_project_path : core_set::getSet().project_root[0]);
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
@@ -188,11 +175,13 @@ void app::post_constructor() {
     boost::asio::post(
         make_process_adapter<gui::input::get_bool_dialog>(
             strand_gui{g_io_context()},
-            l_quit)
+            l_quit
+        )
             .next([l_quit, this]() {
               if (*l_quit)
                 this->close_windows();
-            }));
+            })
+    );
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
@@ -202,13 +191,7 @@ void app::post_constructor() {
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
     auto l_title = conv::utf_to_utf<char>(p_title);
-    auto l_str   = fmt::format("{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})",
-                               l_title,
-                             g_reg()->ctx().contains<database_info>() ? g_reg()->ctx().at<database_info>().path_ : FSys::path{":memory:"},
-                               l_prj.p_path,
-                               l_prj.show_str(),
-                               l_prj.str(),
-                               l_prj.short_str());
+    auto l_str   = fmt::format("{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, g_reg()->ctx().contains<database_info>() ? g_reg()->ctx().at<database_info>().path_ : FSys::path{":memory:"}, l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str());
 
     set_title(l_str);
   };
@@ -217,12 +200,10 @@ void app::post_constructor() {
 }
 
 void app::set_title(const std::string& in_title) {
-  boost::asio::post(g_io_context(),
-                    [&, in_title]() {
-                      auto l_str = conv::utf_to_utf<wchar_t>(in_title);
-                      SetWindowTextW(p_hwnd,
-                                     l_str.c_str());
-                    });
+  boost::asio::post(g_io_context(), [&, in_title]() {
+    auto l_str = conv::utf_to_utf<wchar_t>(in_title);
+    SetWindowTextW(p_hwnd, l_str.c_str());
+  });
 }
 
 app& app::Get() {
@@ -241,11 +222,14 @@ void app::show_windows() {
 }
 void app::load_windows() {
   boost::asio::post(
-      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()}));
+      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_status_bar>(strand_gui{g_io_context()})
+  );
 }
 app::~app() {
   // Cleanup
@@ -273,9 +257,7 @@ bool app::set_parent(win::wnd_handle in_parent) {
 }
 bool app::chick_authorization() {
   if (!app_command_base::chick_authorization()) {
-    auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ",
-                                core_set::getSet().get_doc() /
-                                    doodle_config::token_name.data());
+    auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ", core_set::getSet().get_doc() / doodle_config::token_name.data());
     ::MessageBoxExW(p_hwnd, boost::locale::conv::utf_to_utf<wchar_t>(show_str).c_str(), L"错误", MB_OK, 0);
     return false;
   }

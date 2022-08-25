@@ -46,10 +46,7 @@ void join_move::link_move() {
 
   auto k_video_input = cv::VideoCapture{};
   const static cv::Size k_size{1920, 1080};
-  auto k_video_out     = cv::VideoWriter{p_i->out_path_.generic_string(),
-                                     cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
-                                     25,
-                                     k_size};
+  auto k_video_out     = cv::VideoWriter{p_i->out_path_.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image         = cv::Mat{};
   auto k_image_resized = cv::Mat{};
   const auto k_len     = p_i->in_list.size();
@@ -60,7 +57,8 @@ void join_move::link_move() {
     DOODLE_CHICK(k_video_input.open(path.generic_string()), doodle_error{"文件 {} 的格式不支持", path});
     // 获得总帧数
     auto k_frame_count = boost::numeric_cast<std::size_t>(
-        k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT));
+        k_video_input.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT)
+    );
 
     while (k_video_input.read(k_image)) {
       if (p_i->stop_)
@@ -78,9 +76,7 @@ void join_move::link_move() {
 }
 void join_move::init() {
   if (!p_i->out_path_.has_extension()) {
-    p_i->out_path_ /= (p_i->handle_.all_of<episodes>()
-                           ? fmt::to_string(p_i->handle_.get<episodes>())
-                           : fmt::format("move_{}", ::doodle::core::identifier::get().id()));
+    p_i->out_path_ /= (p_i->handle_.all_of<episodes>() ? fmt::to_string(p_i->handle_.get<episodes>()) : fmt::format("move_{}", ::doodle::core::identifier::get().id()));
     p_i->out_path_ += ".mp4";
   } else if (p_i->out_path_.extension() != ".mp4")
     p_i->out_path_.replace_extension(".mp4");
@@ -110,7 +106,8 @@ void join_move::aborted() {
 }
 void join_move::update(
     const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &,
-    void *data) {
+    void *data
+) {
   switch (p_i->future_.wait_for(0ns)) {
     case std::future_status::ready: {
       try {

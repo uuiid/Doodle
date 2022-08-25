@@ -17,10 +17,9 @@ class DOODLE_CORE_EXPORT json_rpc_server_i : public json_rpc::rpc_server {
 
  public:
   void init_register() override;
-  using image_to_move_sig                                                 = boost::signals2::signal<void(const json_rpc::args::rpc_json_progress&)>;
+  using image_to_move_sig                                                                                   = boost::signals2::signal<void(const json_rpc::args::rpc_json_progress&)>;
 
-  virtual void create_movie(const image_to_move_sig& in_skin,
-                            const std::vector<movie::image_attr>& in_arg) = 0;
+  virtual void create_movie(const image_to_move_sig& in_skin, const std::vector<movie::image_attr>& in_arg) = 0;
 };
 
 }  // namespace doodle

@@ -64,9 +64,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
   if (p_i->p_select_list.length(&k_s) > 1) {
     DOODLE_MAYA_CHICK(k_s);
     MStringArray k_r{};
-    k_s = MGlobal::executeCommand(d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot {};)",
-                                                    fmt::join(k_name_s, " "))},
-                                  k_r);
+    k_s = MGlobal::executeCommand(d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot {};)", fmt::join(k_name_s, " "))}, k_r);
     DOODLE_MAYA_CHICK(k_s);
 
     k_s = k_list.add(k_r[0], true);

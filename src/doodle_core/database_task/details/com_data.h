@@ -9,9 +9,7 @@ namespace doodle::database_n::details {
 
 class com_data : boost::less_than_comparable<com_data> {
  public:
-  com_data(entt::entity in_entt,
-           std::uint32_t in_id,
-           std::string in_str)
+  com_data(entt::entity in_entt, std::uint32_t in_id, std::string in_str)
       : entt_(in_entt),
         com_id(in_id),
         json_data(std::move(in_str)) {}

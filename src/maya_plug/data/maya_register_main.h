@@ -52,31 +52,34 @@ class maya_register {
         &node_type::creator,
         &node_type::initialize,
         node_type::node_type,
-        &node_type::drawDbClassification);
+        &node_type::drawDbClassification
+    );
     CHECK_MSTATUS(l_s);
     if (l_s) {
       maya_comm_call_back.emplace([](auto& in_plugin) {
         auto l_s = in_plugin.deregisterNode(
-            node_type::doodle_id);
+            node_type::doodle_id
+        );
         CHECK_MSTATUS(l_s);
         return l_s;
       });
     }
     return l_s;
   }
-  template <typename node_type,
-            typename draw_type>
+  template <typename node_type, typename draw_type>
   MStatus register_draw_overrider() {
     auto l_s = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
         node_type::drawDbClassification,
         node_type::drawRegistrantId,
-        draw_type::Creator);
+        draw_type::Creator
+    );
     CHECK_MSTATUS(l_s);
     if (l_s) {
       maya_comm_call_back.emplace([](auto& in) {
         auto l_s = MDrawRegistry::deregisterGeometryOverrideCreator(
             node_type::drawDbClassification,
-            node_type::drawRegistrantId);
+            node_type::drawRegistrantId
+        );
         CHECK_MSTATUS(l_s);
         return l_s;
       });

@@ -39,14 +39,14 @@ class rpc_server {
 
   using call_fun_coroutines = std::function<void(
       const json_sig&,
-      const std::optional<nlohmann::json>&)>;
+      const std::optional<nlohmann::json>&
+  )>;
 
   using call_               = std::variant<call_fun, call_fun_coroutines>;
 
  private:
  protected:
-  std::map<std::string,
-           call_>
+  std::map<std::string, call_>
       fun_list_{};
 
   template <typename... Ts>
@@ -119,8 +119,7 @@ class rpc_server_ref : public rpc_server {
   void init_register() override{};
 
  public:
-  explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server,
-                          const std::function<void()>& in_close_fun);
+  explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server, const std::function<void()>& in_close_fun);
   call_ operator()(const std::string& in_name) const override;
   void close_current();
 };

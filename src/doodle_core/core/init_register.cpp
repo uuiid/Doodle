@@ -20,10 +20,9 @@ void init_register::reg_class() {
        it = l_map.upper_bound(it->first)) {
     DOODLE_LOG_INFO("初始化优先级 {}", it->first);
     auto l_p = init_register::instance().registered_functions().equal_range(it->first);
-    std::for_each(l_p.first, l_p.second,
-                  [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
-                    i.second();
-                  });
+    std::for_each(l_p.first, l_p.second, [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
+      i.second();
+    });
   }
   DOODLE_LOG_INFO("结束开始反射注册");
   boost::asio::post(l_s, [l_s]() {

@@ -17,8 +17,7 @@ std::string parser_rpc::operator()(const rpc_server_ref& in_server) {
 void parser_rpc::json_data_attr(const std::string& in_string) {
   json_data_ = in_string;
 }
-void parser_rpc::operator()(const string_sig& sink,
-                            const rpc_server_ref& in_server) {
+void parser_rpc::operator()(const string_sig& sink, const rpc_server_ref& in_server) {
   auto rpc_requrst_json = nlohmann::json::parse(json_data_);
   nlohmann::json result{};
 

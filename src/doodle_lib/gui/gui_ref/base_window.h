@@ -98,8 +98,6 @@ class DOODLELIB_API modal_window : public base_window {
   void update() override;
 };
 
-
-
 namespace base_windows_ns {
 constexpr auto init_base_windows = []() {
   entt::meta<base_window>().type();

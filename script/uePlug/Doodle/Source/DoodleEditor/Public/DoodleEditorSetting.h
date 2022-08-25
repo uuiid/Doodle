@@ -6,18 +6,16 @@
 #include "DoodleEditorSetting.generated.h"
 
 UCLASS(config = Editor, defaultconfig)
-class UDoodleEditorSetting : public UDeveloperSettings
-{
-    GENERATED_BODY()
-  public:
-    UDoodleEditorSetting();
+class UDoodleEditorSetting : public UDeveloperSettings {
+  GENERATED_BODY()
+ public:
+  UDoodleEditorSetting();
 #if WITH_EDITOR
 
-	//~ UDeveloperSettings interface
-	virtual FName GetCategoryName() const override;
-	virtual FText GetSectionText() const override;
+  //~ UDeveloperSettings interface
+  virtual FName GetCategoryName() const override;
+  virtual FText GetSectionText() const override;
 #endif
-	UPROPERTY(config, EditAnywhere, Category=Doodle, meta=(DisplayName="doodle 路径"))
-    FString DoodleExePath;
-
+  UPROPERTY(config, EditAnywhere, Category = Doodle, meta = (DisplayName = "doodle 路径"))
+  FString DoodleExePath;
 };

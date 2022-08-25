@@ -28,9 +28,7 @@ class file_panel::path_info {
     is_dir = is_directory(in_path);
 
     show_name =
-        fmt::format("{} {}",
-                    is_directory(in_path) ? "[dir]"s : "[file]"s,
-                    path.has_filename() ? path.filename().generic_string() : path.generic_string());
+        fmt::format("{} {}", is_directory(in_path) ? "[dir]"s : "[file]"s, path.has_filename() ? path.filename().generic_string() : path.generic_string());
     size       = is_regular_file(in_path) ? file_size(in_path) : 0u;
     last_time  = FSys::last_write_time_point(in_path);
     has_select = false;
@@ -145,13 +143,12 @@ void file_panel::succeeded() {
   g_reg()->ctx().erase<default_pwd>();
   g_reg()->ctx().emplace<default_pwd>(p_i->p_pwd);
 
-  std::visit(entt::overloaded{
-                 [&](const one_sig &in_sig) -> void {
-                   *in_sig = get_select();
-                 },
-                 [&](const mult_sig &in_sig) -> void {
-                   *in_sig = get_selects();
-                 }},
+  std::visit(entt::overloaded{[&](const one_sig &in_sig) -> void {
+                                *in_sig = get_select();
+                              },
+                              [&](const mult_sig &in_sig) -> void {
+                                *in_sig = get_selects();
+                              }},
              p_i->out_);
 }
 
@@ -203,7 +200,8 @@ void file_panel::scan_director(const FSys::path &in_dir) {
 
   p_i->path_list       = ranges::make_subrange(
                        FSys::directory_iterator{in_dir},
-                       FSys::directory_iterator{}) |
+                       FSys::directory_iterator{}
+                   ) |
                    ranges::views::transform([](const auto &in) {
                      path_info l_info{};
                      try {
@@ -252,11 +250,13 @@ void file_panel::sort_file_attr(sort_by in_sort_by, bool in_reverse) {
                 break;
             }
             return result;
-          });
+          }
+      );
   /// \brief 将目录和文件进行分区
   ranges::stable_partition(
       p_i->path_list,
-      [](const path_info &in) -> bool { return in.is_dir; });
+      [](const path_info &in) -> bool { return in.is_dir; }
+  );
   if (in_reverse)
     ranges::reverse(p_i->path_list);
   p_i->select_index = 0;
@@ -295,8 +295,7 @@ void file_panel::render_path(bool edit) {
     }
   } else {
     imgui::SameLine();
-    if (ImGui::InputText(*p_i->edit_input.gui_name, &p_i->edit_input.data,
-                         ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputText(*p_i->edit_input.gui_name, &p_i->edit_input.data, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) {
       p_i->edit_button.data = false;
       p_i->begin_fun_list.emplace_back([this]() {
         this->scan_director(p_i->edit_input.data);
@@ -319,13 +318,9 @@ void file_panel::render_list_path() {
       ImVec2(0.0f, -ImGui::GetTextLineHeightWithSpacing() * 3)} &&
       [&]() {
         /// \brief 设置题头元素
-        ImGui::TableSetupColumn("file name",
-                                ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed,
-                                0.0f, magic_enum::enum_integer(sort_by::name));
-        ImGui::TableSetupColumn("size", ImGuiTableColumnFlags_WidthFixed, 0.0f,
-                                magic_enum::enum_integer(sort_by::size));
-        ImGui::TableSetupColumn("last write time", ImGuiTableColumnFlags_WidthFixed, 0.0f,
-                                magic_enum::enum_integer(sort_by::time));
+        ImGui::TableSetupColumn("file name", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed, 0.0f, magic_enum::enum_integer(sort_by::name));
+        ImGui::TableSetupColumn("size", ImGuiTableColumnFlags_WidthFixed, 0.0f, magic_enum::enum_integer(sort_by::size));
+        ImGui::TableSetupColumn("last write time", ImGuiTableColumnFlags_WidthFixed, 0.0f, magic_enum::enum_integer(sort_by::time));
         ImGui::TableHeadersRow();
 
         /// \brief 这里进行排序
@@ -333,9 +328,11 @@ void file_panel::render_list_path() {
           if (l_sorts_specs->SpecsDirty) {
             this->sort_file_attr(
                 magic_enum::enum_cast<sort_by>(
-                    boost::numeric_cast<std::int16_t>(l_sorts_specs->Specs[0].ColumnUserID))
+                    boost::numeric_cast<std::int16_t>(l_sorts_specs->Specs[0].ColumnUserID)
+                )
                     .value(),
-                l_sorts_specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending);
+                l_sorts_specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending
+            );
           }
           l_sorts_specs->SpecsDirty = false;
         }
@@ -344,10 +341,7 @@ void file_panel::render_list_path() {
           ImGui::TableNextRow();
           /// \brief 设置文件名序列
           ImGui::TableNextColumn();
-          if (dear::Selectable(k_p.show_name,
-                               k_p.has_select,
-                               ImGuiSelectableFlags_SpanAllColumns |
-                                   ImGuiSelectableFlags_AllowDoubleClick)) {
+          if (dear::Selectable(k_p.show_name, k_p.has_select, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
             set_select(l_index);
           }
           /// \brief 文件大小
@@ -365,7 +359,8 @@ void file_panel::set_select(std::size_t in_index) {
     p_i->begin_fun_list.emplace_back(
         [=, in_path = k_p.path]() {
           this->scan_director(in_path);
-        });
+        }
+    );
   } else /*(imgui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))*/ {  /// \brief 单击函数
     /// \brief 多选时的方法
     if (p_i->p_flags_[2]) {
@@ -375,15 +370,11 @@ void file_panel::set_select(std::size_t in_index) {
       else if (k_io.KeyShift) {
         ranges::for_each(
             p_i->path_list |
-                ranges::views::slice(boost::numeric_cast<std::size_t>(
-                                         std::min(in_index, p_i->select_index)),
-                                     boost::numeric_cast<std::size_t>(
-                                         std::min(
-                                             std::max(in_index, p_i->select_index) + 1,
-                                             p_i->path_list.size()))),
+                ranges::views::slice(boost::numeric_cast<std::size_t>(std::min(in_index, p_i->select_index)), boost::numeric_cast<std::size_t>(std::min(std::max(in_index, p_i->select_index) + 1, p_i->path_list.size()))),
             [](path_info &in_attr) {
               in_attr.has_select = true;
-            });
+            }
+        );
 
       } else {
         ranges::for_each(p_i->path_list, [](auto &in) {
@@ -429,14 +420,12 @@ void file_panel::button_cancel() {
   }
 }
 void file_panel::generate_buffer(std::size_t in_index) {
-  if (ranges::any_of(p_i->path_list,
-                     [](const path_info &in) -> bool {
-                       return in.has_select;
-                     })) {
-    auto l_size = ranges::count_if(p_i->path_list,
-                                   [](const path_info &in) -> bool {
-                                     return in.has_select;
-                                   });
+  if (ranges::any_of(p_i->path_list, [](const path_info &in) -> bool {
+        return in.has_select;
+      })) {
+    auto l_size = ranges::count_if(p_i->path_list, [](const path_info &in) -> bool {
+      return in.has_select;
+    });
     if (l_size > 1) {
       p_i->buffer.data = fmt::format("选中了 {} 个路径", l_size);
     } else {

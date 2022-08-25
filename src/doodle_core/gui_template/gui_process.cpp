@@ -6,8 +6,7 @@
 namespace doodle::detail {
 
 void rear_adapter_t::operator()() {
-  boost::asio::post(executor, [this,
-                               self_ = this->shared_from_this()]() {
+  boost::asio::post(executor, [this, self_ = this->shared_from_this()]() {
     process();
     if (process.finished()) {
       if (this->next_value)

@@ -31,9 +31,7 @@ MStatus comm_file_save::doIt(const MArgList& in_arg) {
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     maya_file_io::save_file(d_str{k_path}.str());
   } else {
-    maya_file_io::save_file(maya_file_io::work_path("fbx") /
-                            maya_file_io::get_current_path().stem() /
-                            maya_file_io::get_current_path().filename());
+    maya_file_io::save_file(maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem() / maya_file_io::get_current_path().filename());
   }
   return k_s;
 }

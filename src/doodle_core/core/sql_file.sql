@@ -42,8 +42,8 @@ create table if not exists usertab
 (
     id               bigint unsigned auto_increment
         primary key,
-    user_name        text not null,
-    uuid_path        text null,
+    user_name        text             not null,
+    uuid_path        text             null,
     permission_group bigint default 0 not null
 );
 

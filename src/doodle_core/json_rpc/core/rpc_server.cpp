@@ -23,8 +23,7 @@ rpc_server::~rpc_server() = default;
 void rpc_server::register_fun(const std::string& in_name, const rpc_server::call_fun_coroutines& in_call) {
   fun_list_.emplace(in_name, in_call);
 }
-rpc_server_ref::rpc_server_ref(std::weak_ptr<rpc_server> in_server,
-                               const std::function<void()>& in_close_fun)
+rpc_server_ref::rpc_server_ref(std::weak_ptr<rpc_server> in_server, const std::function<void()>& in_close_fun)
     : rpc_server(),
       server(std::move(in_server)) {
   fun_list_.emplace(rpc_close_name, [=](const std::optional<nlohmann::json>&) -> rpc_reply {

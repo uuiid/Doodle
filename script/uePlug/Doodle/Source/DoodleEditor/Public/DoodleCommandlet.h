@@ -36,8 +36,7 @@ class UFbxFactory;
 // };
 
 UCLASS()
-class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet
-{
+class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet {
   GENERATED_UCLASS_BODY()
 
   /** Parsed commandline tokens */
@@ -46,7 +45,7 @@ class DOODLEEDITOR_API UDoodleAssCreateCommandlet : public UCommandlet
   /** Parsed commandline switches */
   TArray<FString> CmdLineSwitches;
 
-private:
+ private:
   /**
    *
    */
@@ -59,15 +58,15 @@ private:
 
   FString import_setting_path;
 
-private:
-  bool parse_params(const FString &in_params); 
+ private:
+  bool parse_params(const FString &in_params);
   void setting_import_fbx_is_skobj(UFbxFactory *k_fbx_f);
- 
+
   // void ClearDirtyPackages();
   // static bool SavePackage(UPackage* Package, const FString& PackageFilename)
 
   void save_temp_json(const FString &out_path);
 
-public:
+ public:
   virtual int32 Main(const FString &Params) override;
 };

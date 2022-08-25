@@ -1,15 +1,15 @@
 create table if not exists metadatatab
 (
     id          integer primary key,
-    parent      integer            null,
-    uuidPath    text               null,
-    user_data   text               null,
+    parent      integer                            null,
+    uuidPath    text                               null,
+    user_data   text                               null,
     update_time datetime default CURRENT_TIMESTAMP not null,
-    meta_type   bigint   default 0 null,
-    episode     int                null,
-    shot        int                null,
-    season      int                null,
-    assets_p    text               null,
+    meta_type   bigint   default 0                 null,
+    episode     int                                null,
+    shot        int                                null,
+    season      int                                null,
+    assets_p    text                               null,
     constraint fk_test_id
         foreign key (parent) references metadatatab (id)
             on delete cascade
@@ -27,9 +27,9 @@ create index IF NOT EXISTS Metadata_uuidPath_index
 create table if not exists usertab
 (
     id               integer primary key,
-    user_name        text not null,
-    uuid_path        text null,
-    user_data        text null,
+    user_name        text             not null,
+    uuid_path        text             null,
+    user_data        text             null,
     permission_group bigint default 0 not null
 );
 

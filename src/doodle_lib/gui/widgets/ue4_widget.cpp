@@ -70,12 +70,14 @@ void ue4_widget::render() {
         make_process_adapter<file_dialog>(
             strand_gui{g_io_context()},
             file_dialog::dialog_args{l_p}
-                .add_filter(".uproject"s))
+                .add_filter(".uproject"s)
+        )
             .next([this, l_p]() {
               this->p_i->ue4_prj.data = l_p->generic_string();
               this->p_i->ue4_prj.path = *l_p;
               p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
-            }));
+            })
+    );
   }
   /// 列出文件
   dear::ListBox{*p_i->import_list_files.gui_name} && [this]() {
@@ -126,10 +128,9 @@ void ue4_widget::import_ue4_prj() {
         FSys::remove(l_p.path());
     }
 
-  ranges::for_each(l_list,
-                   [this](const entt::handle &in_handle) {
-                     this->plan_file_path(in_handle.get<assets_file>().get_path_normal());
-                   });
+  ranges::for_each(l_list, [this](const entt::handle &in_handle) {
+    this->plan_file_path(in_handle.get<assets_file>().get_path_normal());
+  });
 }
 void ue4_widget::accept_handle(const std::vector<entt::handle> &in_list) {
   p_i->import_list_files.data =
@@ -156,11 +157,13 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   l_group.groups =
       ranges::make_subrange(
           FSys::directory_iterator{in_path},
-          FSys::directory_iterator{}) |
+          FSys::directory_iterator{}
+      ) |
       ranges::views::filter(
           [](const FSys::directory_entry &in_entry) -> bool {
             return in_entry.path().extension() == doodle_config::doodle_json_extension.data();
-          }) |
+          }
+      ) |
       ranges::views::transform([](const FSys::directory_entry &in_entry) -> FSys::path {
         return in_entry.path();
       }) |
@@ -172,7 +175,8 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
             l_h.get<export_file_info>().ref_file,
             p_i->ue4_content_dir,
             p_i->ue4_rig_regex.data,
-            p_i->ue4_sk_fmt.data);
+            p_i->ue4_sk_fmt.data
+        );
         l_r.import_file_save_dir = l_r.set_save_dir(l_h);
         return l_r;
       }) |
@@ -192,10 +196,8 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
     l_group.start_frame = l_group.groups.front().start_frame;
     l_group.end_frame   = l_group.groups.front().end_frame;
   }
-  l_group.world_path    = l_group.set_level_dir(l_h,
-                                                fmt::format("{}", core_set::getSet().organization_name.front()));
-  l_group.level_path    = l_group.set_level_dir(l_h,
-                                                fmt::format("lev_{}", core_set::getSet().organization_name.front()));
+  l_group.world_path    = l_group.set_level_dir(l_h, fmt::format("{}", core_set::getSet().organization_name.front()));
+  l_group.level_path    = l_group.set_level_dir(l_h, fmt::format("lev_{}", core_set::getSet().organization_name.front()));
 
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
@@ -220,7 +222,8 @@ std::string ue4_import_data::find_ue4_skin(
     const FSys::path &in_ref_file,
     const FSys::path &in_ue4_content_dir,
     const std::string &in_regex,
-    const std::string &in_fmt) const {
+    const std::string &in_fmt
+) const {
   boost::contract::check l_ =
       boost::contract::public_function(this)
           .precondition([&]() {
@@ -232,7 +235,7 @@ std::string ue4_import_data::find_ue4_skin(
                 : void();
             in_regex.empty()
                 ? throw_exception(doodle_error{"正则表达式不可为空 "})
-                :void();
+                : void();
           });
 
   std::string result{};
@@ -243,9 +246,7 @@ std::string ue4_import_data::find_ue4_skin(
       std::smatch l_smatch{};
       std::string l_token{};
       std::string l_stem{in_ref_file.stem().generic_string()};
-      if (std::regex_match(l_stem,
-                           l_smatch,
-                           l_regex)) {
+      if (std::regex_match(l_stem, l_smatch, l_regex)) {
         if (l_smatch.size() == 2) {
           l_token = l_smatch[1].str();
 
@@ -254,10 +255,12 @@ std::string ue4_import_data::find_ue4_skin(
               ranges::make_subrange(
                   /// \brief 注意, 这里由于项目原因,需要遵循符号链接
                   FSys::recursive_directory_iterator{in_ue4_content_dir, FSys::directory_options::follow_directory_symlink},
-                  FSys::recursive_directory_iterator{}),
+                  FSys::recursive_directory_iterator{}
+              ),
               [&](const FSys::directory_entry &in_entry) -> bool {
                 return in_entry.path().stem() == l_fbx_skeleton;
-              });
+              }
+          );
           if (l_path_it != FSys::recursive_directory_iterator{}) {
             auto l_p = l_path_it->path().lexically_relative(in_ue4_content_dir);
             l_p      = FSys::path{doodle_config::ue4_game.data()} / l_p.parent_path() / l_p.stem();
@@ -288,17 +291,14 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
              doodle_config::ue4_shot.data() /
              fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
-             fmt::format("{}{:04d}_{:04d}{}",
-                         g_reg()->ctx().at<project>().short_str(),
-                         in_handle.get_or_emplace<episodes>().p_episodes,
-                         in_handle.get_or_emplace<shot>().p_shot,
-                         in_handle.get_or_emplace<shot>().p_shot_enum) /
+             fmt::format("{}{:04d}_{:04d}{}", g_reg()->ctx().at<project>().short_str(), in_handle.get_or_emplace<episodes>().p_episodes, in_handle.get_or_emplace<shot>().p_shot, in_handle.get_or_emplace<shot>().p_shot_enum) /
              core_set::getSet().organization_name;
   return result = l_p.generic_string();
 }
 std::string ue4_import_group::set_level_dir(
     const entt::handle &in_handle,
-    const std::string &in_e) const {
+    const std::string &in_e
+) const {
   std::string result{};
   boost::contract::check l_ =
       boost::contract::public_function(this)
@@ -313,17 +313,8 @@ std::string ue4_import_group::set_level_dir(
   auto l_p = FSys::path{doodle_config::ue4_game.data()} /
              doodle_config::ue4_shot.data() /
              fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
-             fmt::format("{}{:04d}_{:04d}{}",
-                         g_reg()->ctx().at<project>().short_str(),
-                         in_handle.get_or_emplace<episodes>().p_episodes,
-                         in_handle.get_or_emplace<shot>().p_shot,
-                         in_handle.get_or_emplace<shot>().p_shot_enum) /
-             fmt::format("{}{:04d}_sc{:04d}{}_{}",
-                         g_reg()->ctx().at<project>().short_str(),
-                         in_handle.get_or_emplace<episodes>().p_episodes,
-                         in_handle.get_or_emplace<shot>().p_shot,
-                         in_handle.get_or_emplace<shot>().p_shot_enum,
-                         in_e);
+             fmt::format("{}{:04d}_{:04d}{}", g_reg()->ctx().at<project>().short_str(), in_handle.get_or_emplace<episodes>().p_episodes, in_handle.get_or_emplace<shot>().p_shot, in_handle.get_or_emplace<shot>().p_shot_enum) /
+             fmt::format("{}{:04d}_sc{:04d}{}_{}", g_reg()->ctx().at<project>().short_str(), in_handle.get_or_emplace<episodes>().p_episodes, in_handle.get_or_emplace<shot>().p_shot, in_handle.get_or_emplace<shot>().p_shot_enum, in_e);
   return result = l_p.generic_string();
 }
 

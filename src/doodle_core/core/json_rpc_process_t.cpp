@@ -26,7 +26,8 @@ void json_rpc_process_t::aborted() {
 }
 void json_rpc_process_t::update(
     const chrono::system_clock::duration& in_duration,
-    void* in_data) {
+    void* in_data
+) {
 }
 json_rpc_process_t::~json_rpc_process_t() = default;
 

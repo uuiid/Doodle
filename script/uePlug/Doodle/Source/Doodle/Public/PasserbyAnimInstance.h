@@ -2,15 +2,15 @@
 
 #pragma once
 
-//#include "CoreMinimal.h"
-//#include "Animation/AnimInstance.h"
-//#include "PasserbyAnimInstance.generated.h"
+// #include "CoreMinimal.h"
+// #include "Animation/AnimInstance.h"
+// #include "PasserbyAnimInstance.generated.h"
 
 /**
- * 
+ *
  */
-//UCLASS()
-//class DOODLE_API UPasserbyAnimInstance : public UAnimInstance {
+// UCLASS()
+// class DOODLE_API UPasserbyAnimInstance : public UAnimInstance {
 //	GENERATED_BODY()
-//	
-//};
+//
+// };

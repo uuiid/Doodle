@@ -51,8 +51,7 @@ struct formatter<::boost::icl::interval_bounds>
 //     : ostream_formatter {};
 
 template <typename Type>
-struct formatter<Type,
-                 std::enable_if_t<::boost::icl::is_interval<Type>::value, char>>
+struct formatter<Type, std::enable_if_t<::boost::icl::is_interval<Type>::value, char>>
     : ostream_formatter {};
 
 // template <typename Type>

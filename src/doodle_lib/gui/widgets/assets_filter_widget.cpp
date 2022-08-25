@@ -77,7 +77,8 @@ class time_filter : public gui::filter_base {
   time_point_wrap p_end;
   explicit time_filter(
       time_point_wrap in_begin,
-      time_point_wrap in_end)
+      time_point_wrap in_end
+  )
       : p_begin(in_begin),
         p_end(in_end){};
 
@@ -142,9 +143,7 @@ class shot_filter_factory : public gui::filter_factory_t<shot> {
 #if 1
 class assets_filter_factory : public gui::filter_factory_base {
  public:
-  constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow |
-                                                       ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                                                       ImGuiTreeNodeFlags_SpanAvailWidth};
+  constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
 
   using data_type          = assets;
   using gui_cache          = gui::gui_cache<FSys::path>;
@@ -167,7 +166,9 @@ class assets_filter_factory : public gui::filter_factory_base {
             std::make_shared<tree_node_type>(
                 gui_cache{
                     p_popen.data,
-                    k_path}));
+                    k_path}
+            )
+        );
         ImGui::CloseCurrentPopup();
       }
     }
@@ -195,7 +196,8 @@ class assets_filter_factory : public gui::filter_factory_base {
         ranges::views::transform(
             [](const tree_node_type::child_type& in_node) -> path_filter {
               return path_filter{in_node->data};
-            }) |
+            }
+        ) |
         ranges::to_vector;
     return std::make_unique<path_filters>(in_list);
   }
@@ -211,10 +213,9 @@ class assets_filter_factory : public gui::filter_factory_base {
       } else
         l_p /= j;
 
-      if (auto it = ranges::find_if(root->child,
-                                    [&](const tree_node_type::child_type& in) -> bool {
-                                      return in->data.gui_name.name == j.string();
-                                    });
+      if (auto it = ranges::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
+            return in->data.gui_name.name == j.string();
+          });
           it != root->child.end()) {
         root = it->get();
       } else {
@@ -250,7 +251,8 @@ class assets_filter_factory : public gui::filter_factory_base {
               database::save(l_h);
             }
             if (auto* l_win = gui::base_window::find_window_by_title(
-                    std::string{assets_filter_widget::name});
+                    std::string{assets_filter_widget::name}
+                );
                 l_win) {
               dynamic_cast<assets_filter_widget*>(l_win)->refresh(false);
             };
@@ -310,15 +312,18 @@ class time_filter_factory : public gui::filter_factory_base {
     if (use_begin.data && use_end.data)
       return std::make_unique<time_filter>(
           time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
-          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]});
+          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]}
+      );
     else if (use_begin.data) {
       return std::make_unique<time_filter>(
           time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
-          time_point_wrap::max());
+          time_point_wrap::max()
+      );
     } else if (use_end.data) {
       return std::make_unique<time_filter>(
           time_point_wrap::min(),
-          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]});
+          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]}
+      );
     } else {
       return {};
     }
@@ -437,9 +442,7 @@ class assets_filter_widget::impl {
   impl() : p_conns(),
            p_filter_factorys(),
            p_filters(),
-           p_sorts({gui::gui_cache<bool>{"名称排序"s, true},
-                    gui::gui_cache<bool>{"集数排序"s, false},
-                    gui::gui_cache<bool>{"反向"s, false}}) {}
+           p_sorts({gui::gui_cache<bool>{"名称排序"s, true}, gui::gui_cache<bool>{"集数排序"s, false}, gui::gui_cache<bool>{"反向"s, false}}) {}
 
   std::vector<boost::signals2::scoped_connection> p_conns;
 
@@ -490,10 +493,9 @@ void assets_filter_widget::render() {
     }
   }
 
-  if (ranges::any_of(p_impl->p_filter_factorys,
-                     [](const impl::factory_chick& in) {
-                       return in.p_factory.select && in.p_factory.data->is_edit;
-                     }) ||
+  if (ranges::any_of(p_impl->p_filter_factorys, [](const impl::factory_chick& in) {
+        return in.p_factory.select && in.p_factory.data->is_edit;
+      }) ||
 
       l_is_edit) {
     refresh(false);
@@ -514,12 +516,10 @@ void assets_filter_widget::refresh_(bool force) {
                       ranges::views::filter([](const impl::factory_chick& in) -> bool {
                         return in.p_factory.select;
                       }) |
-                      ranges::views::transform([](const impl::factory_chick& in)
-                                                   -> std::unique_ptr<gui::filter_base> {
+                      ranges::views::transform([](const impl::factory_chick& in) -> std::unique_ptr<gui::filter_base> {
                         return in.p_factory.data->make_filter();
                       }) |
-                      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in)
-                                                -> bool {
+                      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in) -> bool {
                         return (bool)in;
                       }) |
                       ranges::to_vector;
@@ -536,7 +536,8 @@ void assets_filter_widget::refresh_(bool force) {
                p_impl->p_filters,
                [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
                  return (*in_f)(in);
-               });
+               }
+           );
          }) |
          ranges::to_vector;
 

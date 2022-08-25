@@ -73,8 +73,7 @@ struct IDScope : public ScopeWrapper<IDScope, true> {
 
   IDScope(const char* str_id_begin, const char* str_id_end)
       : ScopeWrapper(true) {
-    ImGui::PushID(str_id_begin,
-                  str_id_end);
+    ImGui::PushID(str_id_begin, str_id_end);
   }
   IDScope(const void* ptr_id)
       : ScopeWrapper(true) {
@@ -98,11 +97,9 @@ struct Begin : public ScopeWrapper<Begin, true> {
 
 // Wrapper for ImGui::BeginChild ... EndChild, which will always call EndChild.
 struct Child : public ScopeWrapper<Child, true> {
-  explicit Child(const char* title, const ImVec2& size = Zero, bool border = false,
-                 ImGuiWindowFlags flags = 0) noexcept
+  explicit Child(const char* title, const ImVec2& size = Zero, bool border = false, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(title, size, border, flags)) {}
-  explicit Child(ImGuiID id, const ImVec2& size = Zero, bool border = false,
-                 ImGuiWindowFlags flags = 0) noexcept
+  explicit Child(ImGuiID id, const ImVec2& size = Zero, bool border = false, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginChild(id, size, border, flags)) {}
   static void dtor() noexcept { ImGui::EndChild(); }
 };
@@ -157,8 +154,7 @@ struct Menu : public ScopeWrapper<Menu> {
 // Wrapper for ImGui::BeginTable...ImGui::EndTable.
 // See also EditTableFlags.
 struct Table : public ScopeWrapper<Table> {
-  Table(const char* str_id, int column, ImGuiTableFlags flags = 0,
-        const ImVec2& outer_size = Zero, float inner_width = 0.0f) noexcept
+  Table(const char* str_id, int column, ImGuiTableFlags flags = 0, const ImVec2& outer_size = Zero, float inner_width = 0.0f) noexcept
       : ScopeWrapper(ImGui::BeginTable(str_id, column, flags, outer_size, inner_width)) {}
   static void dtor() noexcept { ImGui::EndTable(); }
 };
@@ -299,8 +295,7 @@ static inline bool MenuItem(const char* text, bool* selected, bool enabled = tru
   return ImGui::MenuItem(text, nullptr, selected, enabled);
 }
 #ifndef DEAR_NO_STRING
-static inline bool MenuItem(const std::string& str, const char* shortcut = nullptr,
-                            bool selected = false, bool enabled = true) noexcept {
+static inline bool MenuItem(const std::string& str, const char* shortcut = nullptr, bool selected = false, bool enabled = true) noexcept {
   return ImGui::MenuItem(str.c_str(), shortcut, selected, enabled);
 }
 static inline bool
@@ -311,24 +306,20 @@ MenuItem(const std::string& text, bool* selected, bool enabled = true) noexcept 
 
 // static inline bool Selectable(const char *text) noexcept { return ImGui::Selectable(text); }
 static inline bool
-Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0,
-           const ImVec2& size = Zero) noexcept {
+Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
   return ImGui::Selectable(label, selected, flags, size);
 }
 static inline bool
-Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0,
-           const ImVec2& size = Zero) noexcept {
+Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
   return ImGui::Selectable(label, p_selected, flags, size);
 }
 #ifndef DEAR_NO_STRING
 static inline bool
-Selectable(const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0,
-           const ImVec2& size = Zero) noexcept {
+Selectable(const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
   return ImGui::Selectable(label.c_str(), selected, flags, size);
 }
 static inline bool
-Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0,
-           const ImVec2& size = Zero) noexcept {
+Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
   return ImGui::Selectable(label.c_str(), p_selected, flags, size);
 }
 #endif
@@ -347,9 +338,11 @@ Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flag
 struct ViewportSideBar : public ScopeWrapper<ViewportSideBar, true> {
   explicit ViewportSideBar(
       const std::string& in_name,
-      ImGuiViewport* viewport, const ImGuiDir& dir, const float& size, const ImGuiWindowFlags& window_flags)
+      ImGuiViewport* viewport, const ImGuiDir& dir, const float& size, const ImGuiWindowFlags& window_flags
+  )
       : ScopeWrapper<ViewportSideBar, true>(
-            BeginViewportSideBar(in_name.c_str(), viewport, dir, size, window_flags)) {}
+            BeginViewportSideBar(in_name.c_str(), viewport, dir, size, window_flags)
+        ) {}
   static void dtor() noexcept { ImGui::End(); }
 };
 
@@ -368,7 +361,8 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   template <class... Args>
   TreeNodeEx(Args&&... in_args) noexcept
       : ScopeWrapper<TreeNodeEx>(
-            ::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)),
+            ::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)
+        ),
         use_dtor(find_flags(std::forward<Args>(in_args)...)) {}
   static void dtor() noexcept {};
   ~TreeNodeEx() {
@@ -384,7 +378,8 @@ struct OpenPopup : public ScopeWrapper<OpenPopup> {
   template <class... Args>
   OpenPopup(Args&&... in_args) noexcept
       : ScopeWrapper<OpenPopup>(
-            true) {
+            true
+        ) {
     ::ImGui::OpenPopup(std::forward<Args>(in_args)...);
   }
 

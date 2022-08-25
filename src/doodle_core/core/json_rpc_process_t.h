@@ -22,7 +22,8 @@ class DOODLE_CORE_EXPORT json_rpc_process_t : public process_t<json_rpc_process_
   void aborted();
   void update(
       const chrono::system_clock::duration& in_duration,
-      void* in_data);
+      void* in_data
+  );
 };
 
 }  // namespace doodle

@@ -45,9 +45,7 @@ class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
    * @param in_name 名称
    * @param in_version 版本
    */
-  explicit assets_file(const FSys::path& in_path,
-                       std::string in_name,
-                       std::uint64_t in_version);
+  explicit assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version);
   explicit assets_file(const FSys::path& in_path);
 
   assets_file(assets_file&&) noexcept;
@@ -95,7 +93,8 @@ struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   auto format(const ::doodle::assets_file& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.name_attr(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

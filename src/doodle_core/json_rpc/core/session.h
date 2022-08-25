@@ -23,7 +23,8 @@ class session : public std::enable_shared_from_this<session> {
   inline static const std::string division_string = "\n";
   explicit session(
       boost::asio::io_context& in_io_context,
-      boost::asio::ip::tcp::socket in_socket);
+      boost::asio::ip::tcp::socket in_socket
+  );
   virtual ~session();
   void start(std::shared_ptr<rpc_server_ref> in_server);
   void stop();

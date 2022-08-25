@@ -15,7 +15,6 @@ namespace doodle {
  */
 class DOODLELIB_API app_command_base : public app_base {
  protected:
-
   cmd_string_type cmd_str;
 
   void load_back_end() override;

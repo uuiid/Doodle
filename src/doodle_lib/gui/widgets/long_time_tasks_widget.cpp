@@ -21,11 +21,7 @@ long_time_tasks_widget::long_time_tasks_widget()
 }
 
 void long_time_tasks_widget::render() {
-  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit |
-                    ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-                    ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
-                    ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-                    ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
+  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_::ImGuiTableFlags_Resizable | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
   dear::Table{"long_time_tasks_widget", 6, flags} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
@@ -39,10 +35,7 @@ void long_time_tasks_widget::render() {
       auto k_h = make_handle(e);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(msg.get_name_id(),
-                           p_current_select == k_h,
-                           ImGuiSelectableFlags_SpanAllColumns |
-                               ImGuiSelectableFlags_AllowItemOverlap)) {
+      if (dear::Selectable(msg.get_name_id(), p_current_select == k_h, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
         p_current_select = k_h;
       }
 

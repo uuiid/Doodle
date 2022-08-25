@@ -73,7 +73,9 @@ void csv_export_widgets::init() {
       g_reg()->ctx().at<core_sig>().select_handles.connect(
           [this](const std::vector<entt::handle> &in) {
             p_i->list = in;
-          }));
+          }
+      )
+  );
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
   p_i->export_path.data = p_i->export_path.path.generic_string();
 }
@@ -92,11 +94,13 @@ void csv_export_widgets::render() {
             strand_gui{g_io_context()},
             file_dialog::dialog_args{l_file}
                 .set_title("选择目录"s)
-                .set_use_dir())
+                .set_use_dir()
+        )
             .next([=]() {
               p_i->export_path.path = *l_file / "tmp.csv";
               p_i->export_path.data = p_i->export_path.path.generic_string();
-            }));
+            })
+    );
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
   ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
@@ -113,11 +117,13 @@ void csv_export_widgets::render() {
                           ranges::actions::sort(
                               [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
                                 return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
-                              });
+                              }
+                          );
     p_i->list |= ranges::actions::stable_sort(
         [](const entt::handle &in_r, const entt::handle &in_l) -> bool {
           return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
-        });
+        }
+    );
 
     //    auto l_user_vector = p_i->list |
     //                         ranges::views::transform([](const entt::handle &in) -> user {
@@ -146,8 +152,7 @@ void csv_export_widgets::render() {
       }
       auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
       l_work_clock.set_rules(l_ru);
-      l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
-                                p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
+      l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(), p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
       DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_u.first.get_name(), l_work_clock.debug_print());
     }
 
@@ -159,8 +164,7 @@ void csv_export_widgets::render() {
     this->export_csv(p_i->list, p_i->export_path.path);
   }
 }
-void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list,
-                                    const FSys::path &in_export_file_path) {
+void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list, const FSys::path &in_export_file_path) {
   FSys::ofstream l_f{in_export_file_path};
   static const table_line l_tile{
       "部门"s,

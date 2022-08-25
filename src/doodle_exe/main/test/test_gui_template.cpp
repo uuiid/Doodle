@@ -20,7 +20,8 @@ auto async_gui_work(const Executor& ex, CompletionToken&& token) {
       [&](auto&& in_token) {
         ex.post(in_token, boost::asio::get_associated_allocator(in_token));
       },
-      token);
+      token
+  );
 }
 template <typename Executor, typename CompletionToken>
 auto async_work(const Executor& ex, CompletionToken&& token) {
@@ -28,7 +29,8 @@ auto async_work(const Executor& ex, CompletionToken&& token) {
       [&](auto&& in_token) {
         ex.post(in_token, boost::asio::get_associated_allocator(in_token));
       },
-      token);
+      token
+  );
 }
 }  // namespace doodle
 
@@ -65,7 +67,8 @@ TEST_CASE("test gui strand2") {
   doodle::app l_app{};
   doodle::async_gui_work(
       doodle::g_io_context().get_executor(),
-      []() -> bool { return true; });
+      []() -> bool { return true; }
+  );
   //  auto l_work = doodle::async_gui_work(
   //      doodle::g_io_context().get_executor(),
   //      std::function<bool()>{[]() -> bool {}});
@@ -74,11 +77,9 @@ TEST_CASE("test gui strand") {
   doodle::app l_app{};
   doodle::strand_gui l_gui{doodle::g_io_context().get_executor()};
 
-  boost::asio::post(l_gui, doodle::make_process_adapter<test_1>(l_gui, 2)
-                               .next<test_1>(l_gui, 5)
-                               .next(l_gui, []() {
-                                 DOODLE_LOG_INFO("end");
-                               })
+  boost::asio::post(l_gui, doodle::make_process_adapter<test_1>(l_gui, 2).next<test_1>(l_gui, 5).next(l_gui, []() {
+                                                                                                  DOODLE_LOG_INFO("end");
+                                                                                                })
                                .next<test_1>(doodle::g_io_context().get_executor(), 10)
                                .next(doodle::g_io_context().get_executor(), [&l_app]() {
                                  DOODLE_LOG_INFO("end");

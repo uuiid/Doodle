@@ -10,13 +10,11 @@
 namespace doodle {
 
 class init_register {
-  std::multimap<std::int32_t,
-                std::function<void()>>
+  std::multimap<std::int32_t, std::function<void()>>
       init_p;
 
  public:
-  std::multimap<std::int32_t,
-                std::function<void()>>&
+  std::multimap<std::int32_t, std::function<void()>>&
   registered_functions();
 
   void reg_class();
@@ -31,7 +29,8 @@ class init_register {
     static bool getInstance() {
       registered;
       instance().registered_functions().insert(
-          std::make_pair(priority, [&]() { Fun(); }));
+          std::make_pair(priority, [&]() { Fun(); })
+      );
       return true;
     }
     inline static bool registered = getInstance();

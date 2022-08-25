@@ -119,7 +119,8 @@ struct formatter<::doodle::maya_plug::maya_error> : formatter<string_view> {
   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
     return formatter<string_view>::format(
         boost::diagnostic_information(in_),
-        ctx);
+        ctx
+    );
   }
 };
 

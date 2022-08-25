@@ -44,17 +44,20 @@ class doodle_info_node_draw_override : public MPxDrawOverride {
 
   bool isBounded(
       const MDagPath& objPath,
-      const MDagPath& cameraPath) const override;
+      const MDagPath& cameraPath
+  ) const override;
 
   MBoundingBox boundingBox(
       const MDagPath& objPath,
-      const MDagPath& cameraPath) const override;
+      const MDagPath& cameraPath
+  ) const override;
 
   MUserData* prepareForDraw(
       const MDagPath& objPath,
       const MDagPath& cameraPath,
       const MFrameContext& frameContext,
-      MUserData* oldData) override;
+      MUserData* oldData
+  ) override;
 
   bool hasUIDrawables() const override { return true; }
 
@@ -62,6 +65,7 @@ class doodle_info_node_draw_override : public MPxDrawOverride {
       const MDagPath& objPath,
       MHWRender::MUIDrawManager& drawManager,
       const MHWRender::MFrameContext& frameContext,
-      const MUserData* data) override;
+      const MUserData* data
+  ) override;
 };
 }  // namespace doodle::maya_plug

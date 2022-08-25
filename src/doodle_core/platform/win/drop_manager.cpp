@@ -33,19 +33,14 @@ STDMETHODIMP drop_manager::QueryInterface(const IID &riid, void **ppv) {
   return E_NOINTERFACE;
 }
 
-STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto,
-                                     DWORD grfKeyState,
-                                     POINTL ptl,
-                                     DWORD *pdwEffect) {
+STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
 
-STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState,
-                                    POINTL ptl,
-                                    DWORD *pdwEffect) {
+STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
@@ -56,10 +51,7 @@ STDMETHODIMP drop_manager::DragLeave() {
   return S_OK;
 }
 
-STDMETHODIMP drop_manager::Drop(IDataObject *pdto,
-                                DWORD grfKeyState,
-                                POINTL ptl,
-                                DWORD *pdwEffect) {
+STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 Drop");
 
   // 使用 fmte

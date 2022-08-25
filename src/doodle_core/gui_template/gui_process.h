@@ -66,13 +66,11 @@ class process_warp_t {
   DOODLE_TYPE_HASE_MFN(state)
 #undef DOODLE_TYPE_HASE_MFN
 
-  template <typename Target                                      = Process_t,
-            std::enable_if_t<has_state_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t, std::enable_if_t<has_state_fun<Target>::value, bool> = false>
   [[nodiscard]] auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
     return process_p.get().state();
   }
-  template <typename Target                                       = Process_t,
-            std::enable_if_t<!has_state_fun<Target>::value, bool> = false>
+  template <typename Target = Process_t, std::enable_if_t<!has_state_fun<Target>::value, bool> = false>
   [[nodiscard]] auto chick_state() const -> decltype(process_state()) {  // decltype(std::declval<Target>().state(), process_state())
     return process_state::run;
   }
@@ -319,7 +317,8 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
     rear_adapter_ptr l_ptr  = std::make_shared<
         rear_adapter_ptr::element_type>(
         std::forward<Executor1>(in_io),
-        process_warp_t<Process_t1>{*l_ptr_owner, l_ptr_owner});
+        process_warp_t<Process_t1>{*l_ptr_owner, l_ptr_owner}
+    );
     return l_ptr;
   };
 
@@ -332,8 +331,7 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   }
   template <typename Executor1, typename Fun_t>
   rear_adapter_t& next_e(Executor1&& in_io, Fun_t in_fun) {
-    return next_e<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io),
-                                                in_fun);
+    return next_e<lambda_process_warp_t<Fun_t>>(std::forward<Executor1>(in_io), in_fun);
   }
 
   template <typename Process_t1, typename... Args1>
@@ -343,7 +341,8 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   template <typename Fun_t>
   rear_adapter_t& next(Fun_t in_fun) {
     return next<lambda_process_warp_t<Fun_t>>(
-        in_fun);
+        in_fun
+    );
   }
 
   inline explicit operator bool() const {
@@ -387,13 +386,15 @@ template <typename Process_t, typename Executor, typename... Args>
 auto make_process_adapter(Executor&& in_io, Args&&... in_args) {
   return process_adapter{
       ::doodle::detail::rear_adapter_t::make_shared<Process_t>(
-          std::forward<Executor>(in_io), std::forward<Args>(in_args)...)};
+          std::forward<Executor>(in_io), std::forward<Args>(in_args)...
+      )};
 }
 template <typename Executor, typename Fun_t>
 auto make_process_adapter(Executor&& in_io, Fun_t&& in_args) {
   return make_process_adapter<lambda_process_warp_t<Fun_t>>(
       in_io,
-      std::forward<Fun_t>(in_args));
+      std::forward<Fun_t>(in_args)
+  );
 }
 
 }  // namespace doodle

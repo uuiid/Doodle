@@ -297,10 +297,9 @@ class scheduler {
     if (handlers.empty())
       return;
     auto l_end         = handlers.begin() + timiter_(handlers);
-    auto l_erase_benin = std::remove_if(handlers.begin(), l_end,
-                                        [&](typename decltype(this->handlers)::value_type &handler) {
-                                          return handler.update(handler, delta, data);
-                                        });
+    auto l_erase_benin = std::remove_if(handlers.begin(), l_end, [&](typename decltype(this->handlers)::value_type &handler) {
+      return handler.update(handler, delta, data);
+    });
     if (l_erase_benin != handlers.end() &&
         l_erase_benin != l_end)
       handlers.erase(l_erase_benin, l_end);

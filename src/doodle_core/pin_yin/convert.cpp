@@ -11,7 +11,8 @@ convert::convert() {
   std::string ZhongWenToPinYin{resource.begin(), resource.size()};
   std::regex regex{R"(\s)"};
   auto iter = std::sregex_token_iterator(
-      ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1);
+      ZhongWenToPinYin.begin(), ZhongWenToPinYin.end(), regex, -1
+  );
   while (iter != std::sregex_token_iterator{}) {
     pinyin_list.push_back(*iter);
     ++iter;

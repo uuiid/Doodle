@@ -41,7 +41,8 @@ void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
     DOODLE_LOG_INFO("开始覆盖 {} 的解算配置", in_handle.get<reference_file>().path);
     auto& self     = in_handle.get<sim_cover_attr>();
     auto l_ql_core = qcloth_shape::get_ql_solver(
-        in_handle.get<reference_file>().get_all_object());
+        in_handle.get<reference_file>().get_all_object()
+    );
     set_attribute(l_ql_core, "simpleSubsampling", self.simple_subsampling);
     DOODLE_LOG_INFO("开始覆盖 simpleSubsampling 值为 {}", self.simple_subsampling);
     set_attribute(l_ql_core, "frameSamples", self.frame_samples);

@@ -41,11 +41,13 @@ void filter_factory_base::connection_sig() {
   p_i->p_conns.emplace_back(l_sig.project_end_open.connect(
       [&]() {
         p_i->need_init = true;
-      }));
+      }
+  ));
   p_i->p_conns.emplace_back(l_sig.save_end.connect(
       [&]() {
         p_i->need_init = true;
-      }));
+      }
+  ));
 }
 filter_factory_base::~filter_factory_base() = default;
 

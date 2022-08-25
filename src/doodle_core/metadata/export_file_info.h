@@ -26,11 +26,13 @@ class export_file_info {
 
  public:
   export_file_info();
-  explicit export_file_info(FSys::path in_path,
-                            std::int32_t in_start_frame,
-                            std::int32_t in_end_frame,
-                            FSys::path in_ref_path,
-                            export_type in_export_type);
+  explicit export_file_info(
+      FSys::path in_path,
+      std::int32_t in_start_frame,
+      std::int32_t in_end_frame,
+      FSys::path in_ref_path,
+      export_type in_export_type
+  );
   FSys::path file_path;
   std::int32_t start_frame;
   std::int32_t end_frame;

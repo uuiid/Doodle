@@ -11,7 +11,6 @@
 
 #include "LevelSequence.h"
 
-
 #include "Animation/SkeletalMeshActor.h"
 #include "Animation/Skeleton.h"
 #include "Animation/AnimSequence.h"
@@ -25,36 +24,27 @@
 #undef LOCTEXT_NAMESPACE
 #endif
 
-
 #define LOCTEXT_NAMESPACE "FLoadAnimationUtils"
 
-TArray<USkeletalMesh*> FLoadAnimationUtils::FindCompatibleMeshes(UAnimSequence* AnimSequence)
-{
-	TArray<USkeletalMesh*> SkeletalMeshes;
+TArray<USkeletalMesh*> FLoadAnimationUtils::FindCompatibleMeshes(UAnimSequence* AnimSequence) {
+  TArray<USkeletalMesh*> SkeletalMeshes;
 
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+  FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 
-	FARFilter Filter;
-	Filter.ClassNames.Add(USkeletalMesh::StaticClass()->GetFName());
+  FARFilter Filter;
+  Filter.ClassNames.Add(USkeletalMesh::StaticClass()->GetFName());
 
-	FString SkeletonString = FAssetData(AnimSequence->GetSkeleton()).GetExportTextName();
-	Filter.TagsAndValues.Add(TEXT("Skeleton"), SkeletonString);
-	
+  FString SkeletonString = FAssetData(AnimSequence->GetSkeleton()).GetExportTextName();
+  Filter.TagsAndValues.Add(TEXT("Skeleton"), SkeletonString);
 
+  TArray<FAssetData> AssetList;
+  AssetRegistryModule.Get().GetAssets(Filter, AssetList);
 
-	TArray<FAssetData> AssetList;
-	AssetRegistryModule.Get().GetAssets(Filter, AssetList);
-
-
-	if (AssetList.Num() > 0)
-	{
-		for (auto Asset : AssetList)
-		{
-			USkeletalMesh * SkeletalMesh = Cast<USkeletalMesh>(Asset.GetAsset());
-			SkeletalMeshes.Add(SkeletalMesh);
-		}
-	}
-	return SkeletalMeshes;
-
+  if (AssetList.Num() > 0) {
+    for (auto Asset : AssetList) {
+      USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Asset.GetAsset());
+      SkeletalMeshes.Add(SkeletalMesh);
+    }
+  }
+  return SkeletalMeshes;
 }
-

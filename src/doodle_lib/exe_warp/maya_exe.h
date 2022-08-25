@@ -64,9 +64,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   std::unique_ptr<impl> p_i;
   static void add_maya_fun_tool();
   template <typename T>
-  explicit maya_exe(const entt::handle &in_handle,
-                    const T &in_arg,
-                    std::int32_t in_arg_tag);
+  explicit maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t in_arg_tag);
 
  public:
   using base_type = process_t<maya_exe>;

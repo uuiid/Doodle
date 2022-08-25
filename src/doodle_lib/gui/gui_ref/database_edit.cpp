@@ -52,8 +52,6 @@ void database_edit::format_() {
   p_i->show_text = fmt::format(R"(数据 id : {}
 数据状态 {} {}
 )",
-                               p_i->id,
-                               p_i->status,
-                               p_i->is_edit);
+                               p_i->id, p_i->status, p_i->is_edit);
 }
 }  // namespace doodle::gui

@@ -164,7 +164,8 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   }
   DOODLE_LOG_INFO(
       "解算开始时间 {}  结束时间 {}  ",
-      k_start.value(), k_end.value());
+      k_start.value(), k_end.value()
+  );
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
@@ -230,7 +231,8 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
     DOODLE_MAYA_CHICK(k_s);
     k_export_type = magic_enum::enum_cast<reference_file::export_type>(
-                        d_str{k_k_export_type_s}.str())
+                        d_str{k_k_export_type_s}.str()
+    )
                         .value();
   }
   if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
@@ -251,7 +253,8 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
 
   DOODLE_LOG_INFO(
       "导出开始时间 {}  结束时间 {} 导出类型 {} ",
-      k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type));
+      k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type)
+  );
 
   if (is_force) {
     DOODLE_LOG_INFO("开始使用交互式导出");
@@ -304,17 +307,15 @@ MStatus load_project::doIt(const MArgList& in_arg) {
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
         auto l_f = l_open
-                       ->async_open(k_path,
-                                    boost::asio::use_future);
+                       ->async_open(k_path, boost::asio::use_future);
         while (l_f.wait_for(0ns) != std::future_status::ready) {
           app_command_base::Get().poll_one();
         }
       } else {
         l_open
-            ->async_open(k_path,
-                         [k_path](bsys::error_code) -> void {
-                           DOODLE_LOG_INFO("完成打开项目 {}", k_path);
-                         });
+            ->async_open(k_path, [k_path](bsys::error_code) -> void {
+              DOODLE_LOG_INFO("完成打开项目 {}", k_path);
+            });
       }
     }
   }

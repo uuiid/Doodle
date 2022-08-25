@@ -30,9 +30,7 @@ doodle_lib::doodle_lib()
       loop_bounded_pool(),
       io_context_(std::make_shared<boost::asio::io_context>()) {
   boost::locale::generator k_gen{};
-  k_gen.categories(boost::locale::all_categories ^
-                   boost::locale::formatting_facet ^
-                   boost::locale::parsing_facet);
+  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
   loop_bounded_pool.timiter_ = core_set::getSet().p_max_thread;
   /// 创建依赖性
@@ -47,10 +45,9 @@ doodle_lib::doodle_lib()
   reg->ctx().emplace<status_info>();
   k_sig.save.connect(2, []() {
     std::make_shared<database_n::sqlite_file>()
-        ->async_save(g_reg()->ctx().at<::doodle::database_info>().path_,
-                     [](auto) {
-                       DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_);
-                     });
+        ->async_save(g_reg()->ctx().at<::doodle::database_info>().path_, [](auto) {
+          DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_);
+        });
   });
   p_install = this;
 }

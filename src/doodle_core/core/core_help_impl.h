@@ -25,13 +25,11 @@ namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 registry_ptr &g_reg();
 
-template <class Component,
-          std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
+template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
   return entt::handle{*(g_reg()), entt::to_entity(*(g_reg()), instance)};
 };
-template <class Component,
-          std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
+template <class Component, std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
   return entt::handle{*(g_reg()), instance};
 };

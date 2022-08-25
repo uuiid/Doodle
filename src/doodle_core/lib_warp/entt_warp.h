@@ -119,7 +119,8 @@ struct formatter<::entt::entity>
   auto format(const ::entt::entity &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return base_type::format(
         ::entt::to_integral(in_),
-        ctx);
+        ctx
+    );
   }
 };
 
@@ -133,7 +134,8 @@ struct formatter<::entt::basic_handle<Entity, Type...>>
   auto format(const entt_handle_type &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return base_type::format(
         in_.entity(),
-        ctx);
+        ctx
+    );
   }
 };
 

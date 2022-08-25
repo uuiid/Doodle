@@ -21,7 +21,8 @@ struct formatter<MString> : formatter<string_view> {
     std::string k_str = in_.asUTF8();
     return formatter<string_view>::format(
         k_str,
-        ctx);
+        ctx
+    );
   }
 };
 

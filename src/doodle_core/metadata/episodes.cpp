@@ -73,8 +73,7 @@ bool episodes::conjecture_season(const entt::handle& in_handle) {
 
   return false;
 }
-bool episodes::analysis_static(const entt::handle& in_handle,
-                               const FSys::path& in_path) {
+bool episodes::analysis_static(const entt::handle& in_handle, const FSys::path& in_path) {
   episodes k_eps{};
   if (k_eps.analysis(in_path)) {
     in_handle.emplace<episodes>(k_eps);

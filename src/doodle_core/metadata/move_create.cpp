@@ -22,16 +22,9 @@
 
 namespace doodle::movie {
 
-DOODLE_JSON_CPP(image_watermark,
-                text_,
-                width_proportion_,
-                height_proportion_,
-                rgba_)
+DOODLE_JSON_CPP(image_watermark, text_, width_proportion_, height_proportion_, rgba_)
 
-DOODLE_JSON_CPP(image_attr,
-                path_,
-                watermarks,
-                num)
+DOODLE_JSON_CPP(image_attr, path_, watermarks, num)
 
 namespace {
 class image_attr_auxiliary {
@@ -68,10 +61,9 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
                 ranges::to_vector;
   const auto k_size = l_list.front().num_list.size();
 
-  ranges::all_of(l_list,
-                 [k_size](const image_attr_auxiliary &in) -> bool {
-                   return in.num_list.size() == k_size;
-                 })
+  ranges::all_of(l_list, [k_size](const image_attr_auxiliary &in) -> bool {
+    return in.num_list.size() == k_size;
+  })
       ? void()
       : throw_exception(doodle_error{"序列不匹配"s});
 
@@ -86,10 +78,9 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
 
   DOODLE_CHICK(!l_item.empty(), doodle_error{"没有找到帧索引"});
   auto l_index = l_item.front();
-  ranges::for_each(l_list,
-                   [&](image_attr_auxiliary &in_attribute) {
-                     in_attribute.image.num = in_attribute.num_list[l_index];
-                   });
+  ranges::for_each(l_list, [&](image_attr_auxiliary &in_attribute) {
+    in_attribute.image.num = in_attribute.num_list[l_index];
+  });
 }
 
 bool image_attr::operator<(const image_attr &in_rhs) const {

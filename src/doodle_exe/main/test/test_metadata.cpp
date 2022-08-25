@@ -188,10 +188,9 @@ TEST_CASE_METHOD(name_data, "install project data") {
   k_h.emplace<process_message>();
   std::vector<entt::handle> k_l{};
   auto k_view = g_reg()->view<database>();
-  std::transform(k_view.begin(), k_view.end(), std::back_inserter(k_l),
-                 [](auto& in) {
-                   return make_handle(in);
-                 });
+  std::transform(k_view.begin(), k_view.end(), std::back_inserter(k_l), [](auto& in) {
+    return make_handle(in);
+  });
   g_main_loop().attach<database_task_install>(k_l);
   while (!g_main_loop().empty())
     g_main_loop().update({}, nullptr);

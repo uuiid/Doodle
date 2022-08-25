@@ -46,7 +46,9 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     node_org_name   = boost::erase_head_copy(
         node_name,
         boost::numeric_cast<std::int32_t>(
-            this->node_name.find_last_of(':')));
+            this->node_name.find_last_of(':')
+        )
+    );
 
     std::string l_find_str{};
     if (has_cloth) {
@@ -75,10 +77,7 @@ bool maya_poly_info::has_skin_cluster(const MObject &in_object) {
   //       l_it_dependency_graph.next()) {
   //    return true;
   //  }
-  for (MItDependencyGraph l_it_dependency_graph{l_object, MFn::kSkinClusterFilter,
-                                                MItDependencyGraph::kUpstream,
-                                                MItDependencyGraph::kDepthFirst,
-                                                MItDependencyGraph::kNodeLevel, nullptr};
+  for (MItDependencyGraph l_it_dependency_graph{l_object, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, nullptr};
        !l_it_dependency_graph.isDone();
        l_it_dependency_graph.next()) {
     return true;

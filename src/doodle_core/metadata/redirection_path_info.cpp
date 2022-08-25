@@ -16,7 +16,8 @@ redirection_path_info::redirection_path_info() = default;
 redirection_path_info::redirection_path_info(
 
     std::vector<FSys::path> in_search_path,
-    FSys::path in_file_name)
+    FSys::path in_file_name
+)
     : search_path_(std::move(in_search_path)),
       file_name_(std::move(in_file_name)) {
 }

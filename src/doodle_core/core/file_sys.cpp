@@ -56,7 +56,8 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
   /// 最后我们强制转换为时间系统时间点
   return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(
-      chrono::floor<std::chrono::seconds>(withUnixEpoch))};
+      chrono::floor<std::chrono::seconds>(withUnixEpoch)
+  )};
 #elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
@@ -65,7 +66,8 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
 }
 void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point) {
   const auto asDuration = chrono::duration_cast<filetime_duration>(
-      in_time_point.time_since_epoch());
+      in_time_point.time_since_epoch()
+  );
   const auto withNtEpoch = asDuration - nt_to_unix_epoch;
   std::filesystem::file_time_type k_time{withNtEpoch};
   std::filesystem::last_write_time(in_path, k_time);
@@ -123,12 +125,14 @@ namespace nlohmann {
 // template <>
 void adl_serializer<boost::filesystem::path>::to_json(
     json &j,
-    const boost::filesystem::path &in_path) {
+    const boost::filesystem::path &in_path
+) {
   j = in_path.generic_string();
 }
 void adl_serializer<boost::filesystem::path>::from_json(
     const json &j,
-    boost::filesystem::path &in_path) {
+    boost::filesystem::path &in_path
+) {
   in_path = j.get<std::string>();
 }
 }  // namespace nlohmann

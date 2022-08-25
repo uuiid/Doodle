@@ -14,8 +14,7 @@ class UAssetImportTask;
 class UAnimSequence;
 
 UENUM()
-enum class EDoodleImportType : uint8
-{
+enum class EDoodleImportType : uint8 {
   None = 0,
   abc,
   fbx,
@@ -26,16 +25,15 @@ enum class EDoodleImportType : uint8
  *
  */
 USTRUCT()
-struct FDoodleAssetImportData
-{
+struct FDoodleAssetImportData {
   GENERATED_BODY()
-public:
+ public:
   void set_fbx(UAssetImportTask *in_import_data);
   void set_abc(UAssetImportTask *in_import_data);
 
   UAssetImportTask *get_input(UObject *Outer);
 
-public:
+ public:
   /* 导入文件的路径(文件名称) */
   UPROPERTY()
   FString import_file_path;
@@ -60,8 +58,7 @@ public:
 };
 
 USTRUCT()
-struct FDoodleAssetImportDataGroup
-{
+struct FDoodleAssetImportDataGroup {
   GENERATED_BODY()
 
   UPROPERTY()

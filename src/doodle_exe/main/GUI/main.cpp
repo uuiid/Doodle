@@ -11,10 +11,7 @@
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
 
-extern "C" int WINAPI wWinMain(HINSTANCE hInstance,
-                               HINSTANCE hPrevInstance,
-                               PWSTR strCmdLine,
-                               int nCmdShow) try {
+extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
   doodle::app app{doodle::app::in_gui_arg{
       doodle::app::in_app_args{hInstance, strCmdLine},
       nCmdShow, nullptr}};

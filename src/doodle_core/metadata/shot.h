@@ -15,10 +15,8 @@ class DOODLE_CORE_EXPORT shot {
  public:
   std::string p_shot_ab;
   shot();
-  explicit shot(std::int64_t in_shot,
-                shot_ab_enum in_ab);
-  explicit shot(std::int64_t in_shot,
-                std::string in_ab);
+  explicit shot(std::int64_t in_shot, shot_ab_enum in_ab);
+  explicit shot(std::int64_t in_shot, std::string in_ab);
 
   // clang-format off
   enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
@@ -75,7 +73,8 @@ struct formatter<::doodle::shot> : formatter<std::int64_t> {
 
     formatter<std::int64_t>::format(
         in_.p_shot,
-        ctx);
+        ctx
+    );
     if (in_.p_shot_enum != doodle::shot::shot_ab_enum::None)
       format_to(ctx.out(), magic_enum::enum_name(in_.p_shot_enum));
     return ctx.out();

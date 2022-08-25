@@ -3,26 +3,25 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "TimerManager.h" //定时器
-//这个必须最后导入
+#include "TimerManager.h"  //定时器
+// 这个必须最后导入
 #include "DoodleAIController.generated.h"
 
 UCLASS()
-class DOODLE_API ADoodleAIController : public AAIController
-{
-public:
-    GENERATED_BODY()
-    ADoodleAIController(
-        const FObjectInitializer &ObjectInitializer = FObjectInitializer::Get());
+class DOODLE_API ADoodleAIController : public AAIController {
+ public:
+  GENERATED_BODY()
+  ADoodleAIController(
+      const FObjectInitializer &ObjectInitializer = FObjectInitializer::Get()
+  );
 
-    virtual void BeginPlay() override;
+  virtual void BeginPlay() override;
 
-    virtual void OnMoveCompleted(FAIRequestID RequestID,
-                                 const FPathFollowingResult &Result) override;
+  virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult &Result) override;
 
-    void GoToRandomWaypoint();
-    bool GetRandomPointInRadius(const FVector &Origin, float Radius, FVector &OutResult);
+  void GoToRandomWaypoint();
+  bool GetRandomPointInRadius(const FVector &Origin, float Radius, FVector &OutResult);
 
-private:
-    FTimerHandle TimerHandle;
+ private:
+  FTimerHandle TimerHandle;
 };

@@ -35,12 +35,7 @@ gui_cache_name_id::gui_cache_name_id(const std::string &in_name)
       name() {
   auto l_size = in_name.size();
 
-  name_id     = fmt::format("{}{}{}",
-                            in_name,
-                        (in_name.find_first_of('#') != std::string::npos)
-                                ? ""s
-                                : "##"s,
-                            doodle::core::identifier::get().id());
+  name_id     = fmt::format("{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s, doodle::core::identifier::get().id());
   name        = {name_id.c_str(), l_size};
   // name = k_v.substr(0, l_size);
 }

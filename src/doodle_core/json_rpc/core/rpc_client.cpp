@@ -19,8 +19,7 @@ class rpc_client::impl {
   boost::asio::ip::tcp::socket client_socket;
 };
 
-rpc_client::rpc_client(boost::asio::io_context &in_context,
-                       const std::string &in_host, std::uint16_t in_post)
+rpc_client::rpc_client(boost::asio::io_context &in_context, const std::string &in_host, std::uint16_t in_post)
     : ptr(std::make_unique<impl>(in_context)) {
   ptr->client_socket.connect(boost::asio::ip::tcp::endpoint{
       boost::asio::ip::address::from_string(in_host),
@@ -39,8 +38,7 @@ std::string rpc_client::call_server(const std::string &in_string, bool is_notice
   std::getline(l_istream, l_out);
   return l_out;
 }
-void rpc_client::call_server(const std::string &in_string,
-                             const string_sig &in_skin) {
+void rpc_client::call_server(const std::string &in_string, const string_sig &in_skin) {
   boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::division_string));
 
   boost::asio::streambuf l_r{};
@@ -57,9 +55,7 @@ void rpc_client::call_server(const std::string &in_string,
 
   std::istream l_istream{&l_r};
   while (true) {
-    boost::asio::read_until(ptr->client_socket,
-                            l_r,
-                            l_function);
+    boost::asio::read_until(ptr->client_socket, l_r, l_function);
     std::string l_out{};
     std::getline(l_istream, l_out);
     if (l_out.empty())

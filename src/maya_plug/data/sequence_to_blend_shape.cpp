@@ -242,10 +242,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
   /// 上下文网格中心
   auto l_center       = ptr->create_point_list[in_index];
   DOODLE_MAYA_CHICK(l_status);
-  const std::double_t l_tran[4][4]{1, 0, 0, 0,
-                                   0, 1, 0, 0,
-                                   0, 0, 1, 0,
-                                   -l_center.x, -l_center.y, -l_center.z, 1};
+  const std::double_t l_tran[4][4]{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -l_center.x, -l_center.y, -l_center.z, 1};
   l_matrix *= MMatrix{l_tran};
   l_matrix = MMatrix{l_tran}.inverse();
 
@@ -281,11 +278,7 @@ void sequence_to_blend_shape::create_blend_shape_mesh(const MDGContextGuard& in_
     DOODLE_MAYA_CHICK(l_vertexArray.append(l_point));
   }
 
-  l_create_mesh.create(l_ctx_mesh.numVertices(),
-                       l_ctx_mesh.numPolygons(),
-                       l_vertexArray,
-                       l_polygonCounts,
-                       l_polygonConnects);
+  l_create_mesh.create(l_ctx_mesh.numVertices(), l_ctx_mesh.numPolygons(), l_vertexArray, l_polygonCounts, l_polygonConnects);
 
   if (!l_create_obj.isNull()) throw_exception(doodle_error{"创建网格出错 {}", get_node_name(ptr->select_path)});
   DOODLE_MAYA_CHICK(ptr->create_point_list.append(l_center));
@@ -335,9 +328,7 @@ void sequence_to_blend_shape::create_blend_shape() {
   }
 }
 
-void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time,
-                                                      std::int64_t in_end_time,
-                                                      MDagModifier& in_dg_modidier) {
+void sequence_to_blend_shape::create_blend_shape_anim(std::int64_t in_begin_time, std::int64_t in_end_time, MDagModifier& in_dg_modidier) {
   MStatus l_s{};
 
   MFnAnimCurve aim{};

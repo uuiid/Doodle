@@ -14,9 +14,12 @@
 using namespace doodle;
 void limited_app::load_windows() {
   boost::asio::post(
-      make_process_adapter<limited_layout>(strand_gui{g_io_context()}));
+      make_process_adapter<limited_layout>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()})
+  );
   boost::asio::post(
-      make_process_adapter<main_status_bar>(strand_gui{g_io_context()}));
+      make_process_adapter<main_status_bar>(strand_gui{g_io_context()})
+  );
 }

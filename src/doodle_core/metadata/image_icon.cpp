@@ -24,7 +24,8 @@ FSys::path image_icon::image_root(const entt::handle& in_handle) const {
                       ->ctx()
                       .at<project>()
                       .make_path(
-                          std::string{doodle_config::image_folder_name});
+                          std::string{doodle_config::image_folder_name}
+                      );
 }
 
 void to_json(nlohmann::json& j, const doodle::image_icon& p) {

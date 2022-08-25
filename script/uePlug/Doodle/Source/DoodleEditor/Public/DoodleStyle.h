@@ -7,22 +7,22 @@
 
 /**  */
 class FdoodleStyle {
-public:
-	static void Initialize();
+ public:
+  static void Initialize();
 
-	static void Shutdown();
+  static void Shutdown();
 
-	/** reloads textures used by slate renderer */
-	static void ReloadTextures();
+  /** reloads textures used by slate renderer */
+  static void ReloadTextures();
 
-	/** @return The Slate style set for the Shooter game */
-	static const ISlateStyle& Get();
+  /** @return The Slate style set for the Shooter game */
+  static const ISlateStyle& Get();
 
-	static FName GetStyleSetName();
+  static FName GetStyleSetName();
 
-	static TSharedRef<class FSlateStyleSet> Create();
-private:
+  static TSharedRef<class FSlateStyleSet> Create();
 
-private:
-	static TSharedPtr<class FSlateStyleSet> StyleInstance;
+ private:
+ private:
+  static TSharedPtr<class FSlateStyleSet> StyleInstance;
 };

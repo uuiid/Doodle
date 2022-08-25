@@ -69,8 +69,7 @@ MStatus initializePlugin(MObject obj) {
    * @brief 添加插件注册方法
    */
   MStatus status = MStatus::MStatusCode::kFailure;
-  MFnPlugin k_plugin{obj, "doodle", version::version_str.c_str(),
-                     fmt::format("{}", MAYA_API_VERSION).c_str()};
+  MFnPlugin k_plugin{obj, "doodle", version::version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()};
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -85,13 +84,7 @@ MStatus initializePlugin(MObject obj) {
       CHECK_MSTATUS(status);
 
       // 添加菜单项
-      k_plugin.addMenuItem(doodle_windows.data(),
-                           doodle_win_path.data(),
-                           ::doodle::maya_plug::doodleCreate_name,
-                           "",
-                           false,
-                           nullptr,
-                           &status);
+      k_plugin.addMenuItem(doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status);
       CHECK_MSTATUS_AND_RETURN_IT(status);
 
       /// \brief  自定义hud回调
@@ -102,7 +95,8 @@ MStatus initializePlugin(MObject obj) {
             k_c();
           },
           nullptr,
-          &status));
+          &status
+      ));
       CHECK_MSTATUS(status);
       maya_reg->register_callback(MSceneMessage::addCallback(
           MSceneMessage::Message::kAfterNew,
@@ -111,7 +105,8 @@ MStatus initializePlugin(MObject obj) {
             k_c();
           },
           nullptr,
-          &status));
+          &status
+      ));
       CHECK_MSTATUS(status);
       if (doodle::core_set::getSet().maya_replace_save_dialog) {
         maya_reg->register_callback(
@@ -121,7 +116,9 @@ MStatus initializePlugin(MObject obj) {
                   *retCode = maya_plug::clear_scene_comm::show_save_mag();
                 },
                 nullptr,
-                &status));
+                &status
+            )
+        );
         CHECK_MSTATUS(status);
       }
     } break;
@@ -139,7 +136,8 @@ MStatus initializePlugin(MObject obj) {
         p_doodle_app.reset();
       },
       nullptr,
-      &status));
+      &status
+  ));
   CHECK_MSTATUS(status);
 
   doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
@@ -152,7 +150,8 @@ MStatus initializePlugin(MObject obj) {
           p_doodle_app->poll_one();
         }
       },
-      nullptr, &status));
+      nullptr, &status
+  ));
   CHECK_MSTATUS(status);
 
   /// 注册自定义hud节点

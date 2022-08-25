@@ -18,7 +18,8 @@ base_window *base_window::find_window_by_title(const std::string &in_title) {
       l_list,
       [&](const base_window *in_window) -> bool {
         return in_window->title() == in_title;
-      });
+      }
+  );
   if (it != l_list.end())
     return *it;
   else

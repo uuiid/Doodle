@@ -59,12 +59,10 @@ TEST_CASE("Crypto_aes") {
         false,
         TAG_SIZE};
 
-    l_authenticated_encryption_filter.ChannelPut(CryptoPP::AAD_CHANNEL,
-                                                 (const byte*)a_data.data(), a_data.size());
+    l_authenticated_encryption_filter.ChannelPut(CryptoPP::AAD_CHANNEL, (const byte*)a_data.data(), a_data.size());
     l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
 
-    l_authenticated_encryption_filter.ChannelPut(CryptoPP::DEFAULT_CHANNEL,
-                                                 (const byte*)plaintext.data(), plaintext.size());
+    l_authenticated_encryption_filter.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const byte*)plaintext.data(), plaintext.size());
     l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
   }
   //  ciphertext.clear();
@@ -113,10 +111,7 @@ TEST_CASE("Crypto_aes") {
     assert(enc.size() == plaintext.size());
     assert(TAG_SIZE == mac.size());
 
-    CryptoPP::AuthenticatedDecryptionFilter df{l_decryption, new CryptoPP::StringSink(decryptedtext),
-                                               CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN |
-                                                   CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
-                                               TAG_SIZE};
+    CryptoPP::AuthenticatedDecryptionFilter df{l_decryption, new CryptoPP::StringSink(decryptedtext), CryptoPP::AuthenticatedDecryptionFilter::MAC_AT_BEGIN | CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION, TAG_SIZE};
 
     df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const byte*)mac.data(), mac.size());
     df.ChannelPut(CryptoPP::AAD_CHANNEL, (const byte*)a_data.data(), a_data.size());

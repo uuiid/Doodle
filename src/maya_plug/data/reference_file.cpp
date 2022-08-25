@@ -41,7 +41,8 @@ reference_file::reference_file()
       file_namespace(){};
 
 reference_file::reference_file(
-    const std::string &in_maya_namespace)
+    const std::string &in_maya_namespace
+)
     : reference_file() {
   set_namespace(in_maya_namespace);
 }
@@ -166,7 +167,8 @@ bool reference_file::replace_sim_assets_file() {
           file.setRawFullName(d_str{self->path});
           *retCode = FSys::exists(self->path);
         },
-        this)};
+        this
+    )};
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
     DOODLE_LOG_INFO("替换完成引用文件 {}", l_s);
@@ -393,7 +395,8 @@ void reference_file::qlUpdateInitialPose() const {
   DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
   MStatus l_status{};
   auto l_v = find_duplicate_poly{}(
-      MNamespace::getNamespaceObjects(d_str{this->get_namespace()}, false, &l_status));
+      MNamespace::getNamespaceObjects(d_str{this->get_namespace()}, false, &l_status)
+  );
   DOODLE_MAYA_CHICK(l_status);
 
   for (auto &&[l_obj1, l_obj2] : l_v) {
@@ -404,7 +407,9 @@ void reference_file::qlUpdateInitialPose() const {
     DOODLE_MAYA_CHICK(
         MGlobal::executeCommand(
             d_str{
-                "qlUpdateInitialPose;"}));
+                "qlUpdateInitialPose;"}
+        )
+    );
   }
 }
 entt::handle reference_file::export_file(const reference_file::export_arg &in_arg) {
@@ -434,11 +439,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
       l_eps = fmt::to_string(out_.get<episodes>());
     shot::analysis_static(out_, l_path);
     auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
-    out_.emplace<export_file_info>(l_path,
-                                   boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
-                                   boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
-                                   l_ref_file,
-                                   l_type)
+    out_.emplace<export_file_info>(l_path, boost::numeric_cast<std::int32_t>(in_arg.start_p.value()), boost::numeric_cast<std::int32_t>(in_arg.end_p.value()), l_ref_file, l_type)
         .upload_path_ = l_upload_prefix;
     export_file_info::write_file(out_);
   }
@@ -447,7 +448,8 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
 
 entt::handle reference_file::export_file_select(
     const reference_file::export_arg &in_arg,
-    const MSelectionList &in_list) {
+    const MSelectionList &in_list
+) {
   entt::handle out_{};
   FSys::path l_path{};
 
@@ -474,11 +476,7 @@ entt::handle reference_file::export_file_select(
       l_eps = fmt::to_string(out_.get<episodes>());
     auto l_upload_prefix = FSys::path{magic_enum::enum_name(l_type).data()} / l_eps;
     shot::analysis_static(out_, l_path);
-    out_.emplace<export_file_info>(l_path,
-                                   boost::numeric_cast<std::int32_t>(in_arg.start_p.value()),
-                                   boost::numeric_cast<std::int32_t>(in_arg.end_p.value()),
-                                   l_ref_file,
-                                   l_type)
+    out_.emplace<export_file_info>(l_path, boost::numeric_cast<std::int32_t>(in_arg.start_p.value()), boost::numeric_cast<std::int32_t>(in_arg.end_p.value()), l_ref_file, l_type)
         .upload_path_ = l_upload_prefix;
     export_file_info::write_file(out_);
   }
@@ -506,7 +504,8 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
             *retCode = false;
           }
         },
-        this)};
+        this
+    )};
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(p_m_object, &k_s)};
     DOODLE_MAYA_CHICK(k_s);
@@ -568,13 +567,9 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
     MStringArray k_r_s{};
     auto k_name       = fmt::format("{}_export_abc", get_namespace());
-    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)",
-                                    k_name,
-                                    fmt::join(l_names, " "));
+    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
     DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
-    k_s = MGlobal::executeCommand(d_str{l_mel},
-                                  k_r_s,
-                                  true);
+    k_s = MGlobal::executeCommand(d_str{l_mel}, k_r_s, true);
     DOODLE_MAYA_CHICK(k_s);
 
     k_select.clear();
@@ -634,11 +629,7 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
 
   this->bake_results(in_start, in_end);
 
-  k_file_path /= fmt::format("{}_{}_{}-{}.fbx",
-                             maya_file_io::get_current_path().stem().generic_string(),
-                             get_namespace(),
-                             in_start.value(),
-                             in_end.value());
+  k_file_path /= fmt::format("{}_{}_{}-{}.fbx", maya_file_io::get_current_path().stem().generic_string(), get_namespace(), in_start.value(), in_end.value());
   DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
 
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
@@ -709,14 +700,10 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
     auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
     DOODLE_MAYA_CHICK(l_status);
     for (
-        MItDependencyGraph l_it{l_object,
-                                MFn::Type::kMesh,
-                                MItDependencyGraph::Direction::kDownstream,
-                                MItDependencyGraph::Traversal::kDepthFirst,
-                                MItDependencyGraph::Level::kNodeLevel,
-                                &l_status};
+        MItDependencyGraph l_it{l_object, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
         !l_it.isDone() && l_status;
-        l_it.next()) {
+        l_it.next()
+    ) {
       auto l_temp_sp = get_dag_path(l_it.currentItem(&l_status));
       DOODLE_MAYA_CHICK(l_status);
       auto l_current_path = get_dag_path(l_temp_sp.transform(&l_status));
@@ -759,8 +746,7 @@ void reference_file::bake_results(const MTime &in_start, const MTime &in_end) co
    */
   static std::string maya_bakeResults_str{R"(
 bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:*{}";)"};
-  auto l_comm = fmt::format(maya_bakeResults_str,
-                            in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
+  auto l_comm = fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group);
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
@@ -768,8 +754,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   } catch (const maya_error &in) {
     DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
     try {
-      l_comm = fmt::format(maya_bakeResults_str,
-                           in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
+      l_comm = fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group);
       DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
       k_s = MGlobal::executeCommand(d_str{l_comm});
       DOODLE_MAYA_CHICK(k_s);

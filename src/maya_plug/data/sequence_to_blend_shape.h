@@ -84,9 +84,7 @@ class sequence_to_blend_shape {
    * @param in_end_time 结束时间
    * @param in_dg_modidier dag修改器(方便撤销)
    */
-  void create_blend_shape_anim(std::int64_t in_begin_time,
-                               std::int64_t in_end_time,
-                               MDagModifier& in_dg_modidier);
+  void create_blend_shape_anim(std::int64_t in_begin_time, std::int64_t in_end_time, MDagModifier& in_dg_modidier);
 
   /**
    * @brief 删除创建的辅助融合变形的节点

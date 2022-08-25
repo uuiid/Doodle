@@ -153,18 +153,7 @@ struct UuidData {
 };
 }  // namespace Metadatatab_
 
-struct Metadatatab : sqlpp::table_t<Metadatatab,
-                                    Metadatatab_::Id,
-                                    Metadatatab_::Parent,
-                                    Metadatatab_::UuidPath,
-                                    Metadatatab_::UserData,
-                                    Metadatatab_::UpdateTime,
-                                    Metadatatab_::MetaType,
-                                    Metadatatab_::Episode,
-                                    Metadatatab_::Shot,
-                                    Metadatatab_::Season,
-                                    Metadatatab_::AssetsP,
-                                    Metadatatab_::UuidData> {
+struct Metadatatab : sqlpp::table_t<Metadatatab, Metadatatab_::Id, Metadatatab_::Parent, Metadatatab_::UuidPath, Metadatatab_::UserData, Metadatatab_::UpdateTime, Metadatatab_::MetaType, Metadatatab_::Episode, Metadatatab_::Shot, Metadatatab_::Season, Metadatatab_::AssetsP, Metadatatab_::UuidData> {
   struct _alias_t {
     static constexpr const char _literal[] = "metadatatab";
     using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;

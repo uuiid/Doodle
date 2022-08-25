@@ -100,7 +100,8 @@ std::string rules::debug_print() {
       fmt::join(p_i->work_pair, "->"),
       fmt::join(p_i->extra_holidays, "->"),
       fmt::join(p_i->extra_rest, "->"),
-      fmt::join(p_i->extra_work, "->"));
+      fmt::join(p_i->extra_work, "->")
+  );
 }
 void rules::add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   p_i->extra_holidays.emplace_back(in_begin, in_end);
@@ -130,7 +131,8 @@ std::string rules::fmt_str() const {
       fmt::join(p_i->work_pair, "->"),
       fmt::join(p_i->extra_holidays, "->"),
       fmt::join(p_i->extra_rest, "->"),
-      fmt::join(p_i->extra_work, "->"));
+      fmt::join(p_i->extra_work, "->")
+  );
 }
 rules::~rules() = default;
 

@@ -6,8 +6,7 @@
 class USkeletalMesh;
 class UAnimSequence;
 
-class FLoadAnimationUtils
-{
-public:
-	static TArray<USkeletalMesh*> FindCompatibleMeshes(UAnimSequence* AnimSequence);
+class FLoadAnimationUtils {
+ public:
+  static TArray<USkeletalMesh*> FindCompatibleMeshes(UAnimSequence* AnimSequence);
 };

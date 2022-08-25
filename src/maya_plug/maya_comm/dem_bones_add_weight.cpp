@@ -50,10 +50,7 @@ class dem_bones_add_weight::impl {
     }
     DOODLE_CHICK(!skin_mesh_obj.isNull(), doodle_error{"未获得选中物体"s});
     auto l_obj = get_shape(skin_mesh_obj);
-    for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter,
-                                                  MItDependencyGraph::kUpstream,
-                                                  MItDependencyGraph::kDepthFirst,
-                                                  MItDependencyGraph::kNodeLevel, nullptr};
+    for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, nullptr};
          !l_it_dependency_graph.isDone();
          l_it_dependency_graph.next()) {
       skin_obj = l_it_dependency_graph.currentItem();

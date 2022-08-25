@@ -140,10 +140,8 @@ bool clear_scene_comm::show_save_mag() {
   std::vector<std::string> l_msg{
       "请检查一下几项:"s,
       ""s,
-      fmt::format(R"(开始帧为 1001  --> {})",
-                  MAnimControl::minTime() == l_start ? "正确"s : "错误"s),
-      fmt::format(R"(总帧数为       --> {} 请确认)",
-                  (MAnimControl::maxTime() - MAnimControl::minTime()).value() + 1),
+      fmt::format(R"(开始帧为 1001  --> {})", MAnimControl::minTime() == l_start ? "正确"s : "错误"s),
+      fmt::format(R"(总帧数为       --> {} 请确认)", (MAnimControl::maxTime() - MAnimControl::minTime()).value() + 1),
       "5. 帧率(25)"s,
       "1. 检查950帧 TPost"s,
       "2. 摄像机: 命名(项目缩写_ep集数_sc镜头_开始帧_结束帧), 是否有多余"s,

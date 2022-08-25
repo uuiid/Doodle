@@ -83,12 +83,7 @@ MObject get_shading_engine(const MDagPath& in_node) {
   DOODLE_MAYA_CHICK(k_s);
 
   MObject obj{};
-  for (MItDependencyGraph i{k_obj,
-                            MFn::Type::kShadingEngine,
-                            MItDependencyGraph::Direction::kDownstream,
-                            MItDependencyGraph::Traversal::kDepthFirst,
-                            MItDependencyGraph::Level::kNodeLevel,
-                            &k_s};
+  for (MItDependencyGraph i{k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
        !i.isDone();
        i.next()) {
     DOODLE_MAYA_CHICK(k_s);
@@ -107,12 +102,7 @@ MObject get_first_mesh(const MObject& in_node) {
   MObject k_obj = in_node;
   MObject l_r{};
 
-  for (MItDependencyGraph i{k_obj,
-                            MFn::Type::kMesh,
-                            MItDependencyGraph::Direction::kDownstream,
-                            MItDependencyGraph::Traversal::kDepthFirst,
-                            MItDependencyGraph::Level::kNodeLevel,
-                            &k_s};
+  for (MItDependencyGraph i{k_obj, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
        !i.isDone();
        i.next()) {
     DOODLE_MAYA_CHICK(k_s);

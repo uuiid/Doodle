@@ -24,7 +24,8 @@ class DOODLE_CORE_EXPORT insert : public process_handy_tools {
 
   void operator()(
       const entt::registry& in_registry,
-      const std::vector<entt::entity>& in_insert_data);
+      const std::vector<entt::entity>& in_insert_data
+  );
 };
 
 }  // namespace doodle::database_n

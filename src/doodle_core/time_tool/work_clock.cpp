@@ -26,9 +26,9 @@ work_clock::work_clock() = default;
 
 work_clock::duration_type work_clock::operator()(
     const time_type& in_min,
-    const time_type& in_max) const {
-  auto l_d = discrete_interval_time::closed(in_min,
-                                            in_max);
+    const time_type& in_max
+) const {
+  auto l_d = discrete_interval_time::closed(in_min, in_max);
   auto l_l = interval_set_time_ & l_d;
   duration_type l_len{};
   for (auto&& l_i : l_l) {
@@ -39,7 +39,8 @@ work_clock::duration_type work_clock::operator()(
 
 work_clock::time_type work_clock::next_time(
     const time_type& in_begin,
-    const duration_type& in_du) const {
+    const duration_type& in_du
+) const {
   auto l_d = discrete_interval_time::right_open(in_begin, time_type::max());
   auto l_l = interval_set_time_ & l_d;
   duration_type l_len{};
@@ -69,10 +70,8 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
        l_begin += chrono::days{1}) {
     /// \brief 加入工作日规定时间
     if (rules_.work_weekdays()[l_begin.get_week_int()]) {
-      ranges::for_each(rules_.work_time(), [&](const std::pair<chrono::seconds,
-                                                               chrono::seconds>& in_pair) {
-        l_r += discrete_interval_time::closed(l_begin + in_pair.first,
-                                              l_begin + in_pair.second);
+      ranges::for_each(rules_.work_time(), [&](const std::pair<chrono::seconds, chrono::seconds>& in_pair) {
+        l_r += discrete_interval_time::closed(l_begin + in_pair.first, l_begin + in_pair.second);
       });
     }
   }
@@ -81,19 +80,22 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
       rules_.extra_holidays(),
       [&](const std::decay_t<decltype(rules_.extra_holidays())>::value_type& in_) {
         l_r -= discrete_interval_time::open(in_.first, in_.second);
-      });
+      }
+  );
   /// \brief 减去调休
   ranges::for_each(
       rules_.extra_rest(),
       [&](const std::decay_t<decltype(rules_.extra_rest())>::value_type& in_) {
         l_r -= discrete_interval_time::open(in_.first, in_.second);
-      });
+      }
+  );
   /// \brief 加上加班
   ranges::for_each(
       rules_.extra_work(),
       [&](const std::decay_t<decltype(rules_.extra_work())>::value_type& in_) {
         l_r += discrete_interval_time::open(in_.first, in_.second);
-      });
+      }
+  );
   interval_set_time_ = l_r;
 }
 
@@ -107,23 +109,23 @@ void work_clock::generate_interval_map_time_(const discrete_interval_time& in_ti
   ranges::for_each(
       rules_.extra_holidays(),
       [&](const std::decay_t<decltype(rules_.extra_holidays())>::value_type& in_) {
-        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second),
-                              info_type{in_.info});
-      });
+        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second), info_type{in_.info});
+      }
+  );
   /// \brief 减去调休
   ranges::for_each(
       rules_.extra_rest(),
       [&](const std::decay_t<decltype(rules_.extra_rest())>::value_type& in_) {
-        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second),
-                              info_type{in_.info});
-      });
+        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second), info_type{in_.info});
+      }
+  );
   /// \brief 加上加班
   ranges::for_each(
       rules_.extra_work(),
       [&](const std::decay_t<decltype(rules_.extra_work())>::value_type& in_) {
-        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second),
-                              info_type{in_.info});
-      });
+        l_r += std::make_pair(discrete_interval_time::closed(in_.first, in_.second), info_type{in_.info});
+      }
+  );
   interval_map_time_ = l_r;
 }
 
@@ -132,10 +134,8 @@ void work_clock::set_rules(const rules& in_rules) {
   interval_set_time_.clear();
   interval_map_time_.clear();
 }
-void work_clock::set_interval(const time_type& in_min,
-                              const time_type& in_max) {
-  auto l_item = discrete_interval_time::closed(in_min,
-                                                   in_max);
+void work_clock::set_interval(const time_type& in_min, const time_type& in_max) {
+  auto l_item = discrete_interval_time::closed(in_min, in_max);
   gen_rules_(l_item);
   generate_interval_map_time_(l_item);
 }
@@ -143,10 +143,10 @@ void work_clock::set_interval(const time_type& in_min,
 std::vector<std::pair<work_clock::time_type, work_clock::time_type>>
 work_clock::get_work_du(
     const time_type& in_min,
-    const time_type& in_max) const {
+    const time_type& in_max
+) const {
   std::vector<std::pair<time_type, time_type>> l_r{};
-  auto l_d = discrete_interval_time::closed(in_min,
-                                                in_max);
+  auto l_d = discrete_interval_time::closed(in_min, in_max);
   auto l_l = interval_set_time_ & l_d;
   for (auto&& l_i : l_l) {
     l_r.emplace_back(boost::icl::first(l_i), boost::icl::last(l_i));
@@ -155,10 +155,7 @@ work_clock::get_work_du(
 }
 
 std::string work_clock::debug_print() {
-  return fmt::format("规则 {}  时间段 {}  时间信息 {}",
-                     rules_.debug_print(),
-                     interval_set_time_,
-                     interval_map_time_);
+  return fmt::format("规则 {}  时间段 {}  时间信息 {}", rules_.debug_print(), interval_set_time_, interval_map_time_);
 
   //  for (auto&& i : interval_map_time_) {
   //    fmt::format("{} ", i.second);
@@ -170,7 +167,8 @@ std::string work_clock::debug_print() {
 }
 std::optional<std::string> work_clock::get_time_info(
     const time_type& in_min,
-    const time_type& in_max) {
+    const time_type& in_max
+) {
   auto l_d    = discrete_interval_time::closed(in_min, in_max);
 
   auto l_item = interval_map_time_ & l_d;

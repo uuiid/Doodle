@@ -8,8 +8,7 @@ hud_render_override::hud_render_override(const MString &in_name)
     : MRenderOverride(in_name),
       mUIName("doodle_hud"),
       mOperations({nullptr, nullptr}),
-      mOperationNames({"hud_render_override_hud_render",
-                       "hud_render_override_present"}),
+      mOperationNames({"hud_render_override_hud_render", "hud_render_override_present"}),
       mCurrentOperation(-1) {
 }
 hud_render_override::~hud_render_override() = default;
@@ -74,7 +73,8 @@ bool hud_render::hasUIDrawables() const {
 }
 void hud_render::addUIDrawables(
     MHWRender::MUIDrawManager &drawManager2D,
-    const MHWRender::MFrameContext &frameContext) {
+    const MHWRender::MFrameContext &frameContext
+) {
   // Start draw UI
   drawManager2D.beginDrawable();
   // Set font color
@@ -88,7 +88,8 @@ void hud_render::addUIDrawables(
   drawManager2D.text(
       MPoint(w * 0.5f, h * 0.91f),
       MString("Renderer Override Options Tester"),
-      MHWRender::MUIDrawManager::kCenter);
+      MHWRender::MUIDrawManager::kCenter
+  );
 
   // Draw viewport information
   MString viewportInfoText("Viewport information: x= ");
@@ -102,7 +103,8 @@ void hud_render::addUIDrawables(
   drawManager2D.text(
       MPoint(w * 0.5f, h * 0.885f),
       viewportInfoText,
-      MHWRender::MUIDrawManager::kCenter);
+      MHWRender::MUIDrawManager::kCenter
+  );
   drawManager2D.endDrawable();
 }
 const MFloatPoint *hud_render::viewportRectangleOverride() {

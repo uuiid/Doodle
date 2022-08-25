@@ -79,10 +79,10 @@ class DOODLE_CORE_EXPORT rules {
   [[nodiscard("")]] time_point_vector& extra_rest();
 
   std::string debug_print();
+
  private:
   friend struct ::fmt::formatter<::doodle::business::rules>;
   std::string fmt_str() const;
-
 };
 
 }  // namespace doodle::business
@@ -98,7 +98,8 @@ struct formatter<::doodle::business::rules> : formatter<string_view> {
   auto format(const ::doodle::business::rules& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<string_view>::format(
         in_.fmt_str(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

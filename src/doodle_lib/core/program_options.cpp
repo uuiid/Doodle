@@ -28,32 +28,40 @@ program_options::program_options()
   p_opt_general.add_options()(
       help_,
       boost::program_options::bool_switch(&p_help),
-      "help")(
+      "help"
+  )(
       version_,
       boost::program_options::bool_switch(&p_version),
-      "显示版本")(
+      "显示版本"
+  )(
       input_project,
       boost::program_options::value(&p_project_path),
-      "初始打开的项目文件")(
+      "初始打开的项目文件"
+  )(
       config_file_,
       boost::program_options::value(&p_config_file),
-      "配置文件的路径")(
+      "配置文件的路径"
+  )(
       ue4outpath,
       boost::program_options::value(&p_ue4outpath)->default_value(FSys::temp_directory_path().generic_string()),
-      "导出ue4导入配置文件的路径")(
+      "导出ue4导入配置文件的路径"
+  )(
       ue4Project,
       boost::program_options::value(&p_ue4Project)->default_value(FSys::temp_directory_path().generic_string()),
-      "ue4项目路径");
+      "ue4项目路径"
+  );
 
   p_opt_gui.add_options()(
       root_,
       boost::program_options::value(&p_root.second),
-      "数据根目录");
+      "数据根目录"
+  );
 
   p_opt_advanced.add_options()(
       thread_max_,
       boost::program_options::value(&p_max_thread.second),
-      "线程池大小\n(默认文硬件最大限制 - 1)");
+      "线程池大小\n(默认文硬件最大限制 - 1)"
+  );
 
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
   p_opt_file.add(p_opt_gui).add(p_opt_advanced);
@@ -68,7 +76,8 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
       .allow_unregistered()
       .style(
           boost::program_options::command_line_style::default_style |
-          boost::program_options::command_line_style::allow_slash_for_short);
+          boost::program_options::command_line_style::allow_slash_for_short
+      );
 
   auto k_opt = k_p.run();
   boost::program_options::store(k_opt, p_vm);

@@ -161,7 +161,8 @@ struct formatter<::doodle::assets> : formatter<std::string_view> {
   auto format(const ::doodle::assets& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return formatter<std::string_view>::format(
         in_.p_path.generic_string(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

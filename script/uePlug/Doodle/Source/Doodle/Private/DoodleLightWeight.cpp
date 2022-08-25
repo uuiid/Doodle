@@ -5,6 +5,5 @@
 
 FDoodleLightWeight::FDoodleLightWeight() : light(), weight(1) {}
 
-FDoodleLightWeight::FDoodleLightWeight(ULightComponent* in_light,
-                                       float in_weight)
+FDoodleLightWeight::FDoodleLightWeight(ULightComponent* in_light, float in_weight)
     : light(in_light), weight(in_weight) {}

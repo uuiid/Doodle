@@ -39,7 +39,8 @@ struct formatter<doodle::comment> : formatter<string_view> {
   auto format(const doodle::comment& in_, FormatContext& ctx) const {
     formatter<string_view>::format(
         in_.get_comment(),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

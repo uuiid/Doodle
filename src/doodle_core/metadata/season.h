@@ -26,8 +26,7 @@ class DOODLE_CORE_EXPORT season {
 
   bool analysis(const std::string& in_path);
 
-  static bool analysis_static(const entt::handle& in_handle,
-                              const FSys::path& in_path);
+  static bool analysis_static(const entt::handle& in_handle, const FSys::path& in_path);
 
  private:
   friend void to_json(nlohmann::json& j, const season& p) {
@@ -53,7 +52,8 @@ struct formatter<::doodle::season> : formatter<std::int32_t> {
     format_to(ctx.out(), "seas_");
     return formatter<std::int32_t>::format(
         in_.p_int,
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

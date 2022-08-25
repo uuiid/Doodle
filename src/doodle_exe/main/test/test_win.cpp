@@ -55,7 +55,8 @@ TEST_CASE_METHOD(test_get_font_data, "test_get_font_data") {
           boost::adaptors::filtered([](const FSys::path& in) {
             return in.extension() == ".ttf";
           }),
-      std::back_inserter(l_r));
+      std::back_inserter(l_r)
+  );
 
   std::cout << fmt::to_string(fmt::join(l_r, "\n"));
 }

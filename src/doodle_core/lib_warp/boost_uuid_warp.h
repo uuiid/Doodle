@@ -22,7 +22,8 @@ struct formatter<::boost::uuids::uuid> : formatter<fmt::string_view> {
   auto format(const ::boost::uuids::uuid &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     return formatter<fmt::string_view>::format(
         ::boost::uuids::to_string(in_),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

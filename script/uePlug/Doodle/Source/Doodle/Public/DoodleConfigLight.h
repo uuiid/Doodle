@@ -20,7 +20,6 @@ class DOODLE_API UDoodleConfigLight : public UObject {
  public:
   UDoodleConfigLight();
 
-  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle",
-            DisplayName = "actor")
+  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "actor")
   AActor* p_Actor;
 };

@@ -89,15 +89,13 @@ void main_menu_bar::menu_file() {
         strand_gui{g_io_context().get_executor()},
         file_dialog::dialog_args{l_ptr}
             .set_title("选择目录"s)
-            .set_use_dir())
+            .set_use_dir()
+    )
         .next<get_input_project_dialog>(l_ptr)();
   }
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();
-    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()},
-                                      file_dialog::dialog_args{l_ptr}
-                                          .set_title("选择文件")
-                                          .add_filter(std::string{doodle_config::doodle_db_name}))
+    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()}, file_dialog::dialog_args{l_ptr}.set_title("选择文件").add_filter(std::string{doodle_config::doodle_db_name}))
         .next([=]() {
           std::make_shared<database_n::sqlite_file>()->async_open(*l_ptr, [l_ptr](auto) {
             DOODLE_LOG_INFO("打开项目 {}", *l_ptr);
@@ -168,10 +166,7 @@ void main_menu_bar::menu_tool() {
     toolkit::installUePath(core_set::getSet().ue4_path / "Engine");
   if (dear::MenuItem("安装ue4项目插件")) {
     auto l_ptr = std::make_shared<FSys::path>();
-    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()},
-                                      file_dialog::dialog_args{l_ptr}
-                                          .set_title("select_ue_project"s)
-                                          .add_filter(".uproject"))
+    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()}, file_dialog::dialog_args{l_ptr}.set_title("select_ue_project"s).add_filter(".uproject"))
         .next([=]() {
           toolkit::installUePath(*l_ptr);
         })();

@@ -17,9 +17,7 @@ class rpc_error_exception : public doodle_error {
   const std::int64_t code{};
   const std::string message{};
   const std::string data{};
-  rpc_error_exception(const std::int64_t& in_code,
-                      const std::string& in_msg,
-                      const std::string& in_data = {})
+  rpc_error_exception(const std::int64_t& in_code, const std::string& in_msg, const std::string& in_data = {})
       : doodle_error(fmt::format("error code {}, msg {}, {}", in_code, in_msg, in_data)),
         code(in_code),
         message(in_msg),
@@ -64,15 +62,12 @@ class rpc_error {
  public:
   constexpr rpc_error() = default;
 
-  explicit rpc_error(std::int64_t in_code,
-                     std::string in_message,
-                     std::string in_data)
+  explicit rpc_error(std::int64_t in_code, std::string in_message, std::string in_data)
       : code(in_code),
         message(std::move(in_message)),
         data(std::move(in_data)) {}
 
-  template <typename Error,
-            std::enable_if_t<std::is_base_of_v<rpc_error_exception, Error>, bool> = true>
+  template <typename Error, std::enable_if_t<std::is_base_of_v<rpc_error_exception, Error>, bool> = true>
   explicit rpc_error(const Error& in_err)
       : code(in_err.code),
         message(in_err.message),

@@ -62,11 +62,7 @@ struct PermissionGroup {
 };
 }  // namespace Usertab_
 
-struct Usertab : sqlpp::table_t<Usertab,
-                                Usertab_::Id,
-                                Usertab_::UserName,
-                                Usertab_::UuidPath,
-                                Usertab_::PermissionGroup> {
+struct Usertab : sqlpp::table_t<Usertab, Usertab_::Id, Usertab_::UserName, Usertab_::UuidPath, Usertab_::PermissionGroup> {
   struct _alias_t {
     static constexpr const char _literal[] = "usertab";
     using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;

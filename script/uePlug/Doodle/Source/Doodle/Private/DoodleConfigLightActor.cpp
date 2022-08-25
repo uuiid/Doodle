@@ -7,7 +7,7 @@
 #include "Components/LightComponent.h"
 #include "DoodleConfigLight.h"
 #include "Engine/Light.h"
-#include "Engine/World.h" 
+#include "Engine/World.h"
 
 #if WITH_EDITOR
 #if ENGINE_MINOR_VERSION >= 26
@@ -18,7 +18,7 @@
 #include "IContentBrowserSingleton.h"
 #endif
 
-//添加编辑器显示图标
+// 添加编辑器显示图标
 #include "Components/ArrowComponent.h"
 
 #define LOCTEXT_NAMESPACE "doodle"
@@ -29,12 +29,11 @@ ADoodleConfigLightActor::ADoodleConfigLightActor() : p_light_list() {
   // RootComponent->SetupAttachment(RootComponent);
 
   for (int i = 0; i < 3; i++) {
-    auto com_1 = CreateDefaultSubobject<UArrowComponent>("com_1" + i);
+    auto com_1         = CreateDefaultSubobject<UArrowComponent>("com_1" + i);
 
     auto l_en          = com_1->ArrowLength * 2;
     com_1->ArrowLength = l_en;
-    com_1->AttachToComponent(RootComponent,
-                             FAttachmentTransformRules::KeepRelativeTransform);
+    com_1->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
     com_1->SetArrowColor({1, 0, 0});
     com_1->SetWorldRotation({0, 0, 0});
     com_1->SetWorldLocation({-(l_en / 2), (float)((i - 1) * 20), 0});
@@ -44,15 +43,14 @@ ADoodleConfigLightActor::ADoodleConfigLightActor() : p_light_list() {
 
 #if WITH_EDITOR
 
-bool ADoodleConfigLightActor::OpenSaveDialog(const FString& InDefaultPath,
-                                             const FString& InNewNameSuggestion,
-                                             FString& OutPackageName) {
+bool ADoodleConfigLightActor::OpenSaveDialog(const FString& InDefaultPath, const FString& InNewNameSuggestion, FString& OutPackageName) {
   FSaveAssetDialogConfig SaveAssetDialogConfig;
   {
-    SaveAssetDialogConfig.DefaultPath = InDefaultPath;
+    SaveAssetDialogConfig.DefaultPath      = InDefaultPath;
     SaveAssetDialogConfig.DefaultAssetName = InNewNameSuggestion;
     SaveAssetDialogConfig.AssetClassNames.Add(
-        UDoodleConfigLight::StaticClass()->GetFName());
+        UDoodleConfigLight::StaticClass()->GetFName()
+    );
     SaveAssetDialogConfig.ExistingAssetPolicy =
         ESaveAssetDialogExistingAssetPolicy::AllowButWarn;
     SaveAssetDialogConfig.DialogTitleOverride =
@@ -61,10 +59,12 @@ bool ADoodleConfigLightActor::OpenSaveDialog(const FString& InDefaultPath,
 
   FContentBrowserModule& ContentBrowserModule =
       FModuleManager::LoadModuleChecked<FContentBrowserModule>(
-          "ContentBrowser");
+          "ContentBrowser"
+      );
   FString SaveObjectPath =
       ContentBrowserModule.Get().CreateModalSaveAssetDialog(
-          SaveAssetDialogConfig);
+          SaveAssetDialogConfig
+      );
 
   if (!SaveObjectPath.IsEmpty()) {
     OutPackageName = FPackageName::ObjectPathToPackageName(SaveObjectPath);
@@ -75,12 +75,14 @@ bool ADoodleConfigLightActor::OpenSaveDialog(const FString& InDefaultPath,
 }
 
 UObject* ADoodleConfigLightActor::OpenDialog(
-    const FString& InDefaultPath, const FString& InNewNameSuggestion) {
+    const FString& InDefaultPath, const FString& InNewNameSuggestion
+) {
   FOpenAssetDialogConfig OpenAssetDialogConfig;
   {
     OpenAssetDialogConfig.DefaultPath = InDefaultPath;
     OpenAssetDialogConfig.AssetClassNames.Add(
-        UDoodleConfigLight::StaticClass()->GetFName());
+        UDoodleConfigLight::StaticClass()->GetFName()
+    );
     OpenAssetDialogConfig.bAllowMultipleSelection = false;
     OpenAssetDialogConfig.DialogTitleOverride =
         LOCTEXT("OpenConfigPresetDialogTitle", "Open Doodle light Config");
@@ -88,10 +90,12 @@ UObject* ADoodleConfigLightActor::OpenDialog(
 
   FContentBrowserModule& ContentBrowserModule =
       FModuleManager::LoadModuleChecked<FContentBrowserModule>(
-          "ContentBrowser");
+          "ContentBrowser"
+      );
   TArray<FAssetData> l_AssetData_ =
       ContentBrowserModule.Get().CreateModalOpenAssetDialog(
-          OpenAssetDialogConfig);
+          OpenAssetDialogConfig
+      );
 
   if (l_AssetData_.IsValidIndex(0)) {
     // OutObjName = FPackageName::ObjectPathToPackageName(l_AssetData_[0]);
@@ -111,9 +115,7 @@ void ADoodleConfigLightActor::SaveConfig() {
 
   FAssetToolsModule& AssetToolsModule =
       FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-  AssetToolsModule.Get().CreateUniqueAssetName(DialogStartPath / DefaultName,
-                                               TEXT(""), UniquePackageName,
-                                               UniqueAssetName);
+  AssetToolsModule.Get().CreateUniqueAssetName(DialogStartPath / DefaultName, TEXT(""), UniquePackageName, UniqueAssetName);
 
   FString DialogStartName = FPaths::GetCleanFilename(UniqueAssetName);
 
@@ -145,7 +147,8 @@ void ADoodleConfigLightActor::SaveConfig() {
 
   UDoodleConfigLight* NewPreset = NewObject<UDoodleConfigLight>(
       NewPackage, UDoodleConfigLight::StaticClass(), *NewAssetName,
-      RF_Public | RF_Standalone | RF_Transactional);
+      RF_Public | RF_Standalone | RF_Transactional
+  );
   if (NewPreset) {
     // for (auto it = p_light_list.CreateIterator(); it; ++it) {
     //  ///// <summary>
@@ -165,7 +168,8 @@ void ADoodleConfigLightActor::SaveConfig() {
     //}
     NewPreset->p_Actor = DuplicateObject(this, NewPackage);
     NewPreset->p_Actor->DetachFromActor(
-        FDetachmentTransformRules::KeepRelativeTransform);
+        FDetachmentTransformRules::KeepRelativeTransform
+    );
 
     NewPreset->MarkPackageDirty();
 #if ENGINE_MINOR_VERSION >= 26
@@ -213,7 +217,8 @@ void ADoodleConfigLightActor::LoadConfig() {
 
 #if WITH_EDITOR
 void ADoodleConfigLightActor::PostEditChangeProperty(
-    struct FPropertyChangedEvent& PropertyChangeEvent) {
+    struct FPropertyChangedEvent& PropertyChangeEvent
+) {
   Super::PostEditChangeProperty(PropertyChangeEvent);
   // auto name2 = PropertyChangeEvent.GetPropertyName();
   FName name = PropertyChangeEvent.MemberProperty
@@ -245,9 +250,7 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
     TArray<UDirectionalLightComponent*> out_list;
     this->GetComponents<UDirectionalLightComponent>(out_list);
     for (auto it = out_list.CreateIterator(); it; ++it) {
-      (*it)->SetIntensity(Intensity * (p_light_list.IsValidIndex(it.GetIndex())
-                                           ? p_light_list[it.GetIndex()]
-                                           : 1));
+      (*it)->SetIntensity(Intensity * (p_light_list.IsValidIndex(it.GetIndex()) ? p_light_list[it.GetIndex()] : 1));
       //(*it)->SetLightColor(LightColor);
       //(*it)->SetTemperature(Temperature);
       //(*it)->SetUseTemperature(bUseTemperature);
@@ -287,23 +290,18 @@ void ADoodleConfigLightActor::PostEditChangeProperty(
     TArray<UDirectionalLightComponent*> out_list;
     this->GetComponents<UDirectionalLightComponent>(out_list);
     for (auto it = out_list.CreateIterator(); it; ++it) {
-      (*it)->SetLightingChannels(LightingChannels.bChannel0,
-                                 LightingChannels.bChannel1,
-                                 LightingChannels.bChannel2);
+      (*it)->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
       (*it)->PostEditChangeProperty(PropertyChangeEvent);
     }
   }
 
   DOODLE_SET_VALUE(SetAffectTranslucentLighting, bAffectTranslucentLighting)
-  DOODLE_SET_VALUE(SetDynamicShadowDistanceMovableLight,
-                   DynamicShadowDistanceMovableLight)
-  DOODLE_SET_VALUE(SetDynamicShadowDistanceStationaryLight,
-                   DynamicShadowDistanceStationaryLight)
+  DOODLE_SET_VALUE(SetDynamicShadowDistanceMovableLight, DynamicShadowDistanceMovableLight)
+  DOODLE_SET_VALUE(SetDynamicShadowDistanceStationaryLight, DynamicShadowDistanceStationaryLight)
   DOODLE_SET_VALUE(SetDynamicShadowCascades, DynamicShadowCascades)
   DOODLE_SET_VALUE(SetCascadeDistributionExponent, CascadeDistributionExponent)
   DOODLE_SET_VALUE(SetCascadeTransitionFraction, CascadeTransitionFraction)
-  DOODLE_SET_VALUE(SetShadowDistanceFadeoutFraction,
-                   ShadowDistanceFadeoutFraction)
+  DOODLE_SET_VALUE(SetShadowDistanceFadeoutFraction, ShadowDistanceFadeoutFraction)
   DOODLE_ASSIGN_VALUE(bUseInsetShadowsForMovableObjects)
   DOODLE_ASSIGN_VALUE(FarShadowCascadeCount)
   DOODLE_ASSIGN_VALUE(FarShadowDistance)

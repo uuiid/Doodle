@@ -9,10 +9,7 @@ namespace doodle {
 class DOODLELIB_API image_watermark {
  public:
   image_watermark() = default;
-  image_watermark(std::string in_p_text,
-                  double_t in_p_width_proportion,
-                  double_t in_p_height_proportion,
-                  cv::Scalar in_rgba);
+  image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, cv::Scalar in_rgba);
   std::string p_text;
   std::double_t p_width_proportion;
   std::double_t p_height_proportion;
@@ -52,8 +49,7 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
    *
    * @note 在传入的 in_handle 中， 我们会测试 shot， episode 组件， 如果具有这些组件，将会组合并进行重置输出路径的句柄
    */
-  explicit image_to_move(const entt::handle &in_handle,
-                         const std::vector<image_file_attribute> &in_vector);
+  explicit image_to_move(const entt::handle &in_handle, const std::vector<image_file_attribute> &in_vector);
   /**
    * @brief 将传入的图片序列连接为视频(将具有默认的水印)
    * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄 可选的 shot， episode 组件
@@ -61,12 +57,12 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
    *
    * @note 默认的水印是 @b 创建人的部门和姓名, 集数, 镜头号, 帧数/总帧数 ， 创建的时间
    */
-  explicit image_to_move(const entt::handle &in_handle,
-                         const std::vector<FSys::path> &in_vector);
+  explicit image_to_move(const entt::handle &in_handle, const std::vector<FSys::path> &in_vector);
 
   static std::vector<image_file_attribute> make_default_attr(
       const entt::handle &in_handle,
-      const std::vector<FSys::path> &in_path_list);
+      const std::vector<FSys::path> &in_path_list
+  );
 
   inline static const cv::Scalar rgb_default{25, 220, 2};
 

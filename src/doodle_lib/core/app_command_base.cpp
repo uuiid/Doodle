@@ -20,7 +20,8 @@ namespace doodle {
 void app_command_base::post_constructor() {
   if (std::holds_alternative<win::string_type>(cmd_str) && std::get<win::string_type>(cmd_str)) {
     options_->command_line_parser(
-        boost::program_options::split_winmain(conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str))));
+        boost::program_options::split_winmain(conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
+    );
   } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
     options_->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
   }

@@ -107,9 +107,7 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
 
   try {
     DOODLE_LOG_INFO("开始复制文件 {} -> {}", in_source_path, l_upload_path);
-    FSys::copy_file(in_source_path,
-                    l_target,
-                    FSys::copy_options::overwrite_existing);
+    FSys::copy_file(in_source_path, l_target, FSys::copy_options::overwrite_existing);
     result = true;
   } catch (const FSys::filesystem_error& error) {
     DOODLE_LOG_ERROR("复制文件失败, {}", boost::diagnostic_information(error));

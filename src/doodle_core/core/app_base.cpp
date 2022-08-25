@@ -24,7 +24,8 @@ app_base* app_base::self = nullptr;
 
 app_base::app_base()
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format(
-          "doodle {}", version::version_str))),
+          "doodle {}", version::version_str
+      ))),
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),
       p_lib(std::make_shared<doodle_lib>()),
@@ -36,7 +37,7 @@ app_base::app_base()
 }
 
 app_base::app_base(const app_base::in_app_args& in_arg)
-    : app_base(){
+    : app_base() {
   instance = in_arg.in_instance;
 }
 void app_base::init() {
@@ -115,10 +116,9 @@ void app_base::load_project(const FSys::path& in_path) const {
       in_path.extension() == doodle_config::doodle_db_name.data()) {
     auto l_open = std::make_shared<database_n::sqlite_file>();
     l_open
-        ->async_open(in_path,
-                     [](bsys::error_code) -> void {
-                       DOODLE_LOG_INFO("完成打开项目");
-                     });
+        ->async_open(in_path, [](bsys::error_code) -> void {
+          DOODLE_LOG_INFO("完成打开项目");
+        });
   }
 }
 void app_base::clear_loop() {
@@ -138,6 +138,5 @@ void app_base::loop_one() {
   g_bounded_pool().update(l_now - s_now, nullptr);
   s_now = l_now;
 }
-
 
 }  // namespace doodle

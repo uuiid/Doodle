@@ -40,7 +40,7 @@ class DOODLEEDITOR_API ADoodleCopySpline : public AActor {
 
 #if WITH_EDITOR
   virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangeEvent) override;
-#endif //WITH_EDITOR
+#endif  // WITH_EDITOR
 
   // virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangeEvent) override;
   // virtual void PostInterpChange(FProperty* PropertyThatChanged) override;
@@ -52,5 +52,4 @@ class DOODLEEDITOR_API ADoodleCopySpline : public AActor {
  public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
-
 };

@@ -45,8 +45,7 @@ void extract_subtitles_widgets::render() {
     });
   };
 }
-void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file,
-                                                const FSys::path& out_subtitles_file) {
+void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file, const FSys::path& out_subtitles_file) {
   boost::contract::check _l_chick =
       boost::contract::function()
           .postcondition([&]() {
@@ -75,10 +74,12 @@ void extract_subtitles_widgets::write_subtitles(const FSys::path& in_source_file
                           R"({}
 {:%H:%M:%S},000 --> {:%H:%M:%S},000
 {})",
-                          in_pair.first + 1, l_seconds, l_seconds + 3s, in_pair.second);
+                          in_pair.first + 1, l_seconds, l_seconds + 3s, in_pair.second
+                      );
                       l_seconds += 3s;
                       return l_str;
-                    }) |
+                    }
+                ) |
                 ranges::to_vector;
 
   if (!FSys::exists(out_subtitles_file.parent_path()))
@@ -95,7 +96,8 @@ void extract_subtitles_widgets::init() {
               return in_handle.any_of<assets_file>() &&
                      in_handle.get<assets_file>().path_attr().extension() == ".txt" &&
                      FSys::exists(in_handle.get<assets_file>().get_path_normal());
-            }) |
+            }
+        ) |
         ranges::views::transform([](const entt::handle& in_handle) -> std::string {
           return in_handle.get<assets_file>().get_path_normal().generic_string();
         }) |

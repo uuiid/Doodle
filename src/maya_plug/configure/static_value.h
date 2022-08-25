@@ -16,11 +16,7 @@ constexpr static std::string_view create_sim_cloth{"创建布料"};
 constexpr static std::string_view reference_attr_setting{"引用编辑"};
 constexpr static std::string_view dem_cloth_to_fbx{"布料转换"};
 constexpr static auto menu_maya =
-    std::tuple_cat(gui::config::menu_w::menu_base,
-                   std::make_tuple(
-                       comm_check_scenes,
-                       create_sim_cloth,
-                       reference_attr_setting));
+    std::tuple_cat(gui::config::menu_w::menu_base, std::make_tuple(comm_check_scenes, create_sim_cloth, reference_attr_setting));
 
 }  // namespace gui::config::maya_plug::menu
 }  // namespace doodle

@@ -22,7 +22,8 @@ class DOODLE_CORE_EXPORT delete_data : public process_handy_tools {
   void update();
   void operator()(
       entt::registry& in_registry,
-      const std::vector<entt::entity>& in_update_data);
+      const std::vector<entt::entity>& in_update_data
+  );
 };
 
 }  // namespace doodle::database_n

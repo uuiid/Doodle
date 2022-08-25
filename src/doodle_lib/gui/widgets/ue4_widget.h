@@ -23,13 +23,11 @@ class ue4_import_data {
   std::uint64_t start_frame{};
   std::uint64_t end_frame{};
 
-  [[nodiscard]] std::string find_ue4_skin(const FSys::path& in_ref_file,
-                                          const FSys::path& in_ue4_content_dir,
-                                          const std::string& in_regex,
-                                          const std::string& in_fmt) const;
+  [[nodiscard]] std::string find_ue4_skin(const FSys::path& in_ref_file, const FSys::path& in_ue4_content_dir, const std::string& in_regex, const std::string& in_fmt) const;
 
   [[nodiscard]] std::string set_save_dir(
-      const entt::handle& in_handle) const;
+      const entt::handle& in_handle
+  ) const;
 
   /**
    * @brief 传入一个读取出 json_doodle 的文件路径
@@ -51,7 +49,8 @@ class ue4_import_group {
 
   [[nodiscard]] std::string set_level_dir(
       const entt::handle& in_handle,
-      const std::string& in_e = {}) const;
+      const std::string& in_e = {}
+  ) const;
 
  private:
   friend void to_json(nlohmann::json& j, const ue4_import_group& p);

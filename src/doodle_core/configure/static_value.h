@@ -44,13 +44,7 @@ constexpr const std::string_view subtitle_processing{"修改字幕"};
 constexpr const std::string_view time_edit{"时间编辑"};
 constexpr const std::string_view all_user_view_widget{"用户列表"};
 constexpr const auto menu_base =
-    std::make_tuple(project_widget,
-                    edit_,
-                    assets_filter,
-                    assets_file,
-                    long_time_tasks,
-                    setting,
-                    project_edit);
+    std::make_tuple(project_widget, edit_, assets_filter, assets_file, long_time_tasks, setting, project_edit);
 
 }  // namespace gui::config::menu_w
 }  // namespace doodle

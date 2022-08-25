@@ -55,7 +55,8 @@ class layout_window::impl {
     ImGui::Begin(
         "Doodle_DockSpace",
         nullptr,
-        window_flags);
+        window_flags
+    );
     ImGui::PopStyleVar(3);
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
     ImGuiIO &io                               = ImGui::GetIO();

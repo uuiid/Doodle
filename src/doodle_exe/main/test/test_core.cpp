@@ -101,7 +101,8 @@ struct fmt::formatter<point> {
     return format_to(
         ctx.out(),
         presentation == 'f' ? "({:.1f}, {:.1f})" : "({:.1e}, {:.1e})",
-        p.x, p.y);
+        p.x, p.y
+    );
   }
 };
 
@@ -165,14 +166,11 @@ TEST_CASE("test entt hash") {
 TEST_CASE_METHOD(test_path_2, "test ranges") {
   std::regex l_regex{"UE4"};
 
-  auto it = ranges::find_if(ranges::make_subrange(
-                                FSys::directory_iterator{root / "tmp"},
-                                FSys::directory_iterator{}),
-                            [&](const FSys::path& in_file) {
-                              auto&& l_ext = in_file.extension();
-                              std::cout << in_file << std::endl;
-                              return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
-                            });
+  auto it = ranges::find_if(ranges::make_subrange(FSys::directory_iterator{root / "tmp"}, FSys::directory_iterator{}), [&](const FSys::path& in_file) {
+    auto&& l_ext = in_file.extension();
+    std::cout << in_file << std::endl;
+    return (l_ext == ".png" || l_ext == ".jpg") && std::regex_search(in_file.filename().generic_string(), l_regex);
+  });
   if (it != FSys::directory_iterator{})
     std::cout << (*it).path();
 }
@@ -318,7 +316,8 @@ TEST_CASE("maya get log", "[maya]") {
   boost::asio::post(make_process_adapter<maya_exe>(
       g_io_context().get_executor(),
       k_mesg,
-      R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)"));
+      R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)"
+  ));
 
   //  std::int32_t i{0};
   while (!g_main_loop().empty()) {
@@ -336,7 +335,8 @@ TEST_CASE("maya time out", "[maya]") {
   k_mesg.emplace<process_message>();
   g_main_loop().attach<maya_exe>(
       k_mesg,
-      R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)");
+      R"(C:\Users\TD\Source\Doodle\src\doodle_exe\main\test\test_maya_null.py)"
+  );
   g_main_loop().update({}, nullptr);
   g_main_loop().update({}, nullptr);
   k_mesg.get<process_message>().aborted();
@@ -378,16 +378,12 @@ TEST_CASE("std regex", "[std][regex]") {
   const static std::wregex fatal_error_en_us{
       LR"(Fatal Error\. Attempting to save in C:/Users/[a-zA-Z~\d]+/AppData/Local/Temp/[a-zA-Z~\d]+\.\d+\.\d+\.ma)"};
 
-  std::cout << std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
-                                 fatal_error_znch)
+  std::cout << std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存", fatal_error_znch)
             << std::endl;
-  REQUIRE(std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存",
-                            fatal_error_znch));
-  std::cout << std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
-                                 fatal_error_en_us)
+  REQUIRE(std::regex_search(L"致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存", fatal_error_znch));
+  std::cout << std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma", fatal_error_en_us)
             << std::endl;
-  REQUIRE(std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma",
-                            fatal_error_en_us));
+  REQUIRE(std::regex_search(L"Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma", fatal_error_en_us));
 }
 
 TEST_CASE("path iter", "[core]") {

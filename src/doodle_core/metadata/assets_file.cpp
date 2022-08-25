@@ -64,9 +64,7 @@ assets_file::assets_file(const FSys::path& in_path)
   user_attr(user::get_current_handle());
 }
 
-assets_file::assets_file(const FSys::path& in_path,
-                         std::string in_name,
-                         std::uint64_t in_version)
+assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version)
     : assets_file() {
   p_i->path           = in_path;
   p_i->p_name         = std::move(in_name);

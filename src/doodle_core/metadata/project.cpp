@@ -76,7 +76,8 @@ const std::string& project::get_name() const {
 
 void project::init_name() {
   p_en_str = boost::algorithm::to_lower_copy(
-      convert::Get().toEn(this->p_name));
+      convert::Get().toEn(this->p_name)
+  );
   auto wstr       = boost::locale::conv::utf_to_utf<wchar_t>(this->p_name);
   auto& k_pingYin = convert::Get();
   std::string str{};

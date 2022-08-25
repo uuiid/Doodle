@@ -59,14 +59,16 @@ void strand_gui_executor_service::loop_one() {
       impl_list_->handlers.end(),
       [&](typename decltype(this->impl_list_->handlers)::value_type& handler) {
         handler();
-      });
+      }
+  );
 
   impl_list_->handlers.clear();
   std::swap(impl_list_->handlers, impl_list_->handlers_next);
 }
 
 void strand_gui_executor_service::stop(
-    const strand_gui_executor_service::implementation_type& in_impl) {
+    const strand_gui_executor_service::implementation_type& in_impl
+) {
   in_impl->timer_.cancel();
 }
 void strand_gui_executor_service::render_begin() {
@@ -90,10 +92,7 @@ void strand_gui_executor_service::render_end() {
   // Rendering
   ImGui::Render();
   static ImVec4 clear_color             = ImVec4(0.0f, 0.0f, 0.0f, 0.00f);
-  const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w,
-                                           clear_color.y * clear_color.w,
-                                           clear_color.z * clear_color.w,
-                                           clear_color.w};
+  const float clear_color_with_alpha[4] = {clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w};
   auto d3d_deve                         = &doodle::win::d3d_device::Get();
   d3d_deve->g_pd3dDeviceContext->OMSetRenderTargets(1, &d3d_deve->g_mainRenderTargetView, nullptr);
   d3d_deve->g_pd3dDeviceContext->ClearRenderTargetView(d3d_deve->g_mainRenderTargetView, clear_color_with_alpha);

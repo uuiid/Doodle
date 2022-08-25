@@ -16,7 +16,8 @@ class DOODLE_CORE_EXPORT redirection_path_info {
   explicit redirection_path_info(
 
       std::vector<FSys::path> in_search_path,
-      FSys::path in_file_name);
+      FSys::path in_file_name
+  );
 
   std::vector<FSys::path> search_path_;
   FSys::path file_name_;

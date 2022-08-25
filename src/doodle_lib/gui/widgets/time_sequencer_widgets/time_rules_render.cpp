@@ -34,13 +34,8 @@ class work_gui_data {
   explicit work_gui_data(const friend_type& in_work_day_type)
       : gui_attr(
             "工作周"s,
-            std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, in_work_day_type[0]},
-                                                gui::gui_cache<bool>{"星期一"s, in_work_day_type[1]},
-                                                gui::gui_cache<bool>{"星期二"s, in_work_day_type[2]},
-                                                gui::gui_cache<bool>{"星期三"s, in_work_day_type[3]},
-                                                gui::gui_cache<bool>{"星期四"s, in_work_day_type[4]},
-                                                gui::gui_cache<bool>{"星期五"s, in_work_day_type[5]},
-                                                gui::gui_cache<bool>{"星期六"s, in_work_day_type[6]}}){};
+            std::array<gui::gui_cache<bool>, 7>{gui::gui_cache<bool>{"星期日"s, in_work_day_type[0]}, gui::gui_cache<bool>{"星期一"s, in_work_day_type[1]}, gui::gui_cache<bool>{"星期二"s, in_work_day_type[2]}, gui::gui_cache<bool>{"星期三"s, in_work_day_type[3]}, gui::gui_cache<bool>{"星期四"s, in_work_day_type[4]}, gui::gui_cache<bool>{"星期五"s, in_work_day_type[5]}, gui::gui_cache<bool>{"星期六"s, in_work_day_type[6]}}
+        ){};
 
   explicit operator friend_type() {
     friend_type l_r{};
@@ -61,8 +56,7 @@ class time_hh_mm_ss_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
 
   using friend_type = chrono::seconds;
   time_hh_mm_ss_gui_data()
-      : base_type("时分秒",
-                  std::array<std::int32_t, 3>{}){
+      : base_type("时分秒", std::array<std::int32_t, 3>{}){
 
         };
   explicit time_hh_mm_ss_gui_data(const friend_type& in_seconds)
@@ -82,8 +76,7 @@ class time_yy_mm_dd_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
   using base_type = gui_cache<std::array<std::int32_t, 3>>;
 
   time_yy_mm_dd_gui_data()
-      : base_type("年月日"s,
-                  std::array<std::int32_t, 3>{}){};
+      : base_type("年月日"s, std::array<std::int32_t, 3>{}){};
   explicit time_yy_mm_dd_gui_data(const chrono::local_days& in_days)
       : time_yy_mm_dd_gui_data() {
     chrono::year_month_day l_year_month_day{in_days};
@@ -170,8 +163,7 @@ class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
         end(in_pair.second) {}
 
   explicit operator friend_type() {
-    return std::make_pair(friend_type::first_type{begin},
-                          friend_type::second_type{end});
+    return std::make_pair(friend_type::first_type{begin}, friend_type::second_type{end});
   }
   bool operator==(const time_work_gui_data& in_rhs) const {
     return begin == in_rhs.begin &&
@@ -367,27 +359,32 @@ time_rules_render::time_rules_render()
       [this](const auto& in) {
         p_i->rules_attr.work_weekdays() = in;
         this->modify_guard_             = true;
-      });
+      }
+  );
   p_i->render_time.time_work_gui_data_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.work_time() = in;
         this->modify_guard_         = true;
-      });
+      }
+  );
   p_i->render_time.extra_holidays_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_holidays() = in;
         this->modify_guard_              = true;
-      });
+      }
+  );
   p_i->render_time.extra_work_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_work() = in;
         this->modify_guard_          = true;
-      });
+      }
+  );
   p_i->render_time.extra_rest_attr.modify_guard_.connect(
       [this](const auto& in) {
         p_i->rules_attr.extra_rest() = in;
         this->modify_guard_          = true;
-      });
+      }
+  );
 
   g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() { this->rules_attr(user::get_current_handle().get<rules_type>()); });
   g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) { this->rules_attr(user::get_current_handle().get<rules_type>()); });

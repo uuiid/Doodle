@@ -23,7 +23,8 @@ class DOODLE_CORE_EXPORT update_data : public process_handy_tools {
 
   void operator()(
       entt::registry& in_registry,
-      const std::vector<entt::entity>& in_update_data);
+      const std::vector<entt::entity>& in_update_data
+  );
 };
 
 }  // namespace doodle::database_n

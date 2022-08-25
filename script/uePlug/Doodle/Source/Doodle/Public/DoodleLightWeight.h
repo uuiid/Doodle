@@ -12,8 +12,7 @@ struct FDoodleLightWeight {
 
   UPROPERTY(EditAnywhere, Category = FDoodleLightWeight, DisplayName = "灯光")
   ULightComponent* light;
-  UPROPERTY(EditAnywhere, Category = FDoodleLightWeight, DisplayName = "权重",
-            meta = (ClampMin = 0, ClampMax = 10))
+  UPROPERTY(EditAnywhere, Category = FDoodleLightWeight, DisplayName = "权重", meta = (ClampMin = 0, ClampMax = 10))
   float weight;
 
   FDoodleLightWeight();

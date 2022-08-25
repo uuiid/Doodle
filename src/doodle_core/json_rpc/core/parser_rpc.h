@@ -33,7 +33,6 @@ class parser_rpc {
 
   std::string operator()(const rpc_server_ref& in_server);
 
-  void operator()(const string_sig& sink,
-                  const rpc_server_ref& in_server);
+  void operator()(const string_sig& sink, const rpc_server_ref& in_server);
 };
 }  // namespace doodle::json_rpc

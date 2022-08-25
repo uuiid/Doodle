@@ -44,8 +44,7 @@ class DOODLELIB_API join_move : public process_t<join_move> {
    * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄
    * @param in_vector 视频序列的句柄, 不需要排序, 会根据名称自动排序
    */
-  join_move(const entt::handle &in_handle,
-            const std::vector<FSys::path> &in_vector);
+  join_move(const entt::handle &in_handle, const std::vector<FSys::path> &in_vector);
   virtual ~join_move();
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();

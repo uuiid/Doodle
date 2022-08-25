@@ -34,10 +34,7 @@ authorization::authorization(std::string in_data)
 
   {
     CryptoPP::GCM<CryptoPP::AES>::Decryption l_decryption{};
-    l_decryption.SetKeyWithIV(doodle_config::cryptopp_key.data(),
-                              CryptoPP::AES::DEFAULT_KEYLENGTH,
-                              doodle_config::cryptopp_iv.data(),
-                              CryptoPP::AES::BLOCKSIZE);
+    l_decryption.SetKeyWithIV(doodle_config::cryptopp_key.data(), CryptoPP::AES::DEFAULT_KEYLENGTH, doodle_config::cryptopp_iv.data(), CryptoPP::AES::BLOCKSIZE);
 
     const std::string& enc = ciphertext.substr(0, ciphertext.length() - doodle_config::cryptopp_tag_size);
     const std::string& mac = ciphertext.substr(ciphertext.length() - doodle_config::cryptopp_tag_size);
@@ -51,11 +48,8 @@ authorization::authorization(std::string in_data)
             CryptoPP::AuthenticatedDecryptionFilter::THROW_EXCEPTION,
         doodle_config::cryptopp_tag_size};
 
-    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL,
-                  (const CryptoPP::byte*)mac.data(), mac.size());
-    df.ChannelPut(CryptoPP::AAD_CHANNEL,
-                  (const CryptoPP::byte*)doodle_config::authorization_data.data(),
-                  doodle_config::authorization_data.size());
+    df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)mac.data(), mac.size());
+    df.ChannelPut(CryptoPP::AAD_CHANNEL, (const CryptoPP::byte*)doodle_config::authorization_data.data(), doodle_config::authorization_data.size());
     df.ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)enc.data(), enc.size());
 
     df.ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
@@ -90,10 +84,7 @@ void authorization::generate_token(const FSys::path& in_path) {
   std::string in_data{out_json.dump()};
   {
     CryptoPP::GCM<CryptoPP::AES>::Encryption aes_Encryption{};
-    aes_Encryption.SetKeyWithIV(doodle_config::cryptopp_key.data(),
-                                CryptoPP::AES::DEFAULT_KEYLENGTH,
-                                doodle_config::cryptopp_iv.data(),
-                                CryptoPP::AES::BLOCKSIZE);
+    aes_Encryption.SetKeyWithIV(doodle_config::cryptopp_key.data(), CryptoPP::AES::DEFAULT_KEYLENGTH, doodle_config::cryptopp_iv.data(), CryptoPP::AES::BLOCKSIZE);
     CryptoPP::AuthenticatedEncryptionFilter l_authenticated_encryption_filter{
         aes_Encryption,
         new CryptoPP::StringSink{out_data},
@@ -101,15 +92,12 @@ void authorization::generate_token(const FSys::path& in_path) {
         doodle_config::cryptopp_tag_size};
 
     l_authenticated_encryption_filter
-        .ChannelPut(CryptoPP::AAD_CHANNEL,
-                    (const CryptoPP::byte*)doodle_config::authorization_data.data(),
-                    doodle_config::authorization_data.size());
+        .ChannelPut(CryptoPP::AAD_CHANNEL, (const CryptoPP::byte*)doodle_config::authorization_data.data(), doodle_config::authorization_data.size());
     l_authenticated_encryption_filter
         .ChannelMessageEnd(CryptoPP::AAD_CHANNEL);
 
     l_authenticated_encryption_filter
-        .ChannelPut(CryptoPP::DEFAULT_CHANNEL,
-                    (const CryptoPP::byte*)in_data.data(), in_data.size());
+        .ChannelPut(CryptoPP::DEFAULT_CHANNEL, (const CryptoPP::byte*)in_data.data(), in_data.size());
     l_authenticated_encryption_filter.ChannelMessageEnd(CryptoPP::DEFAULT_CHANNEL);
   }
   if (exists(in_path))

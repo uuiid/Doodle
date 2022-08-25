@@ -42,18 +42,7 @@ bool d3d_device::CreateDeviceD3D(HWND hWnd) {
       D3D_FEATURE_LEVEL_11_0,
       D3D_FEATURE_LEVEL_10_0,
   };
-  if (D3D11CreateDeviceAndSwapChain(nullptr,
-                                    D3D_DRIVER_TYPE_HARDWARE,
-                                    nullptr,
-                                    createDeviceFlags,
-                                    featureLevelArray,
-                                    2,
-                                    D3D11_SDK_VERSION,
-                                    &sd,
-                                    &g_pSwapChain,
-                                    &g_pd3dDevice,
-                                    &featureLevel,
-                                    &g_pd3dDeviceContext) != S_OK)
+  if (D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK)
     return false;
 
   CreateRenderTarget();

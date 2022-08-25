@@ -19,7 +19,8 @@ json_rpc_server::json_rpc_server()
 
 void json_rpc_server::create_movie(
     const image_to_move_sig& in_skin,
-    const std::vector<movie::image_attr>& in_arg) {
+    const std::vector<movie::image_attr>& in_arg
+) {
   in_skin(json_rpc::args::rpc_json_progress{"test 0.3"s, "test 0.3"s, 0.3});
   in_skin(json_rpc::args::rpc_json_progress{"test 0.4"s, "test 0.4"s, 0.4});
   in_skin(json_rpc::args::rpc_json_progress{"test 0.5"s, "test 0.5"s, 0.5});

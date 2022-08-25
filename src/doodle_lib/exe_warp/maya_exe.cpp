@@ -55,12 +55,11 @@ maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm)
   p_i->in_comm = fmt::format(
       R"("{}/mayapy.exe" {})",
       core_set::getSet().maya_path().generic_string(),
-      in_comm);
+      in_comm
+  );
 }
 template <typename T>
-maya_exe::maya_exe(const entt::handle &in_handle,
-                   const T &in_arg,
-                   std::int32_t in_arg_tag)
+maya_exe::maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t in_arg_tag)
     : p_i(std::make_unique<impl>()) {
   in_handle.emplace<process_message>();
   in_handle.patch<process_message>([&](process_message &in) {
@@ -80,7 +79,8 @@ k_f.config_ = """{}"""
 k_f()
 quit()
 )",
-      l_json.dump());
+      l_json.dump()
+  );
 
   auto run_path = FSys::write_tmp_file("maya", str_script, ".py");
 
@@ -92,7 +92,8 @@ quit()
   p_i->in_comm = fmt::format(
       R"("{}/mayapy.exe" {})",
       core_set::getSet().maya_path().generic_string(),
-      run_path.generic_string());
+      run_path.generic_string()
+  );
 }
 
 maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg)
@@ -106,10 +107,8 @@ maya_exe::~maya_exe() = default;
 
 void maya_exe::add_maya_fun_tool() {
   const auto tmp_path = core_set::getSet().get_cache_root(
-      fmt::format("maya\\v{}{}{}",
-                  version::version_major,
-                  version::version_minor,
-                  version::version_patch));
+      fmt::format("maya\\v{}{}{}", version::version_major, version::version_minor, version::version_patch)
+  );
   auto k_tmp_path = tmp_path / "maya_fun_tool.py";
   if (!exists(k_tmp_path)) {
     auto k_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
@@ -175,7 +174,8 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
             if (self && self->p_out)
               getline(self->p_out, k_str);
             return k_str;
-          }));
+          }
+      ));
   }
 
   if (p_i->p_err_str.valid()) {  /// 异步有效, 是否可以读取
@@ -216,7 +216,8 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
             if (self && self->p_err)
               getline(self->p_err, k_str);
             return k_str;
-          }));
+          }
+      ));
   }
 
   auto k_time = chrono::system_clock::now() - p_i->p_time;

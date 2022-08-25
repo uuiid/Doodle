@@ -59,13 +59,15 @@ MHWRender::DrawAPI doodle_info_node_draw_override::supportedDrawAPIs() const {
 
 bool doodle_info_node_draw_override::isBounded(
     const MDagPath& objPath,
-    const MDagPath& cameraPath) const {
+    const MDagPath& cameraPath
+) const {
   return false;
 }
 
 MBoundingBox doodle_info_node_draw_override::boundingBox(
     const MDagPath& objPath,
-    const MDagPath& cameraPath) const {
+    const MDagPath& cameraPath
+) const {
   return MBoundingBox{};
 }
 
@@ -73,7 +75,8 @@ MUserData* doodle_info_node_draw_override::prepareForDraw(
     const MDagPath& objPath,
     const MDagPath& cameraPath,
     const MFrameContext& frameContext,
-    MUserData* oldData) {
+    MUserData* oldData
+) {
   // MStatus k_s{};
   // MFnDependencyNode k_fn_node{};
 
@@ -91,7 +94,8 @@ void doodle_info_node_draw_override::addUIDrawables(
     const MDagPath& objPath,
     MHWRender::MUIDrawManager& drawManager,
     const MHWRender::MFrameContext& frameContext,
-    const MUserData* data) {
+    const MUserData* data
+) {
   // auto this_data = dynamic_cast<const doodle_info_node_data*>(data);
 
   // if (!this_data)
@@ -150,7 +154,8 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_str,
         MHWRender::MUIDrawManager::kLeft,
         k_size,
-        &k_color);
+        &k_color
+    );
   }
 
   {
@@ -165,7 +170,8 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_time,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
-        &k_color);
+        &k_color
+    );
   }
 
   /// 绘制摄像机avo
@@ -182,7 +188,8 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_str,
         MHWRender::MUIDrawManager::kRight,
         k_size,
-        &k_color);
+        &k_color
+    );
   }
 
   {
@@ -196,7 +203,8 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_str,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
-        &k_color);
+        &k_color
+    );
   }
 
   /// 制作人姓名
@@ -210,7 +218,8 @@ void doodle_info_node_draw_override::addUIDrawables(
         k_str,
         MHWRender::MUIDrawManager::kCenter,
         k_size,
-        &k_color);
+        &k_color
+    );
   }
 
   drawManager.endDrawable();

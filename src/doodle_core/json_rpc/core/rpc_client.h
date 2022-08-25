@@ -22,19 +22,14 @@ class rpc_client {
 
  public:
   using string_sig = boost::signals2::signal<void(const std::string&)>;
-  explicit rpc_client(boost::asio::io_context& in_context,
-                      const std::string& in_host,
-                      std::uint16_t in_post);
+  explicit rpc_client(boost::asio::io_context& in_context, const std::string& in_host, std::uint16_t in_post);
   virtual ~rpc_client();
 
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
-  void call_server(const std::string& in_string,
-                   const string_sig& in_skin);
+  void call_server(const std::string& in_string, const string_sig& in_skin);
 
-  template <typename Result_Type,
-            typename Arg,
-            std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <typename Result_Type, typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
     nlohmann::json l_json{};
 
@@ -57,8 +52,7 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type,
-            std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name) {
     nlohmann::json l_json{};
 
@@ -78,10 +72,7 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type,
-            bool is_notice_type,
-            typename Arg,
-            std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <typename Result_Type, bool is_notice_type, typename Arg, std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
     nlohmann::json l_json{};
 
@@ -107,9 +98,7 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type,
-            bool is_notice_type,
-            std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <typename Result_Type, bool is_notice_type, std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name) {
     nlohmann::json l_json{};
 
@@ -134,11 +123,8 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type,
-            typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
-  void call_fun(const std::string& in_name,
-                const typename boost::signals2::signal<void(const Result_Type&)>& in_skin,
-                Arg args) {
+  template <typename Result_Type, typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  void call_fun(const std::string& in_name, const typename boost::signals2::signal<void(const Result_Type&)>& in_skin, Arg args) {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
@@ -164,8 +150,7 @@ class rpc_client {
   }
 
   template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
-  void call_fun(const std::string& in_name,
-                const typename boost::signals2::signal<void(const Result_Type&)>& in_skin) {
+  void call_fun(const std::string& in_name, const typename boost::signals2::signal<void(const Result_Type&)>& in_skin) {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};

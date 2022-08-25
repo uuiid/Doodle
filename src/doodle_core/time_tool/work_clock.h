@@ -43,8 +43,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @param in_min
    * @param in_max
    */
-  void set_interval(const time_type& in_min,
-                    const time_type& in_max);
+  void set_interval(const time_type& in_min, const time_type& in_max);
 
   /**
    * @brief 获取两个时间点点工作时间(按照规则获取)
@@ -52,8 +51,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @param in_max 结束时间
    * @return 工作时间
    */
-  duration_type operator()(const time_type& in_min,
-                           const time_type& in_max) const;
+  duration_type operator()(const time_type& in_min, const time_type& in_max) const;
 
   /**
    * @brief 根据传入的开始时间和工作时间段获取下一个时间点
@@ -61,8 +59,7 @@ class DOODLE_CORE_EXPORT work_clock {
    * @param in_du 时间段
    * @return 下一个时间点
    */
-  time_type next_time(const time_type& in_begin,
-                      const duration_type& in_du) const;
+  time_type next_time(const time_type& in_begin, const duration_type& in_du) const;
 
   /**
    * @brief 获取两个时间点之间点时间分段( 休息时间段 -> 工作时间段)
@@ -72,7 +69,8 @@ class DOODLE_CORE_EXPORT work_clock {
    */
   [[nodiscard("")]] std::vector<std::pair<time_type, time_type>> get_work_du(
       const time_type& in_min,
-      const time_type& in_max) const;
+      const time_type& in_max
+  ) const;
 
   /**
    * @brief 获取当前点所在时间段段的备注
@@ -81,7 +79,8 @@ class DOODLE_CORE_EXPORT work_clock {
    */
   std::optional<std::string> get_time_info(
       const time_type& in_min,
-      const time_type& in_max);
+      const time_type& in_max
+  );
 
   std::string debug_print();
 };

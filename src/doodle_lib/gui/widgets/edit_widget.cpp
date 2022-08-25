@@ -51,17 +51,20 @@ class assets_edit : public edit_interface {
         ranges::views::filter(
             [](const entt::handle &in_handle) -> bool {
               return in_handle && in_handle.any_of<assets>();
-            }) |
+            }
+        ) |
         ranges::views::transform(
             [](const entt::handle &in_handle) -> std::vector<std::string> {
               return in_handle.get<assets>().get_path_component();
-            }) |
+            }
+        ) |
         ranges::to_vector |
         ranges::actions::sort(
             [](const std::vector<std::string> &l_l,
                const std::vector<std::string> &l_r) -> bool {
               return l_l.size() < l_r.size();
-            });
+            }
+        );
     if (l_r.empty())
       return;
     auto l_list = l_r.front();
@@ -78,15 +81,13 @@ class assets_edit : public edit_interface {
   }
   void render(const entt::handle &in) override {
     dear::ListBox{*path_list.gui_name} && [&]() {
-      ranges::for_each(path_list.data,
-                       [this](
-                           gui_list_item_type &in_list) {
-                         if (ImGui::InputText(*in_list.gui_name, &in_list.data)) {
-                           edit_data.old_path = in_list.path;
-                           edit_data.new_name = in_list.data;
-                           this->set_modify(true);
-                         }
-                       });
+      ranges::for_each(path_list.data, [this](gui_list_item_type &in_list) {
+        if (ImGui::InputText(*in_list.gui_name, &in_list.data)) {
+          edit_data.old_path = in_list.path;
+          edit_data.new_name = in_list.data;
+          this->set_modify(true);
+        }
+      });
     };
   }
 
@@ -99,14 +100,13 @@ class assets_edit : public edit_interface {
       std::string l_out{l_ass.p_path.generic_string()};
       auto new_path = edit_data.old_path;
       new_path.remove_filename() /= edit_data.new_name;
-      boost::replace_all(l_out,
-                         edit_data.old_path.generic_string(),
-                         new_path.generic_string());
+      boost::replace_all(l_out, edit_data.old_path.generic_string(), new_path.generic_string());
 
       l_ass.set_path(l_out);
       in.patch<assets>();
       if (auto *l_win = gui::base_window::find_window_by_title(
-              std::string{assets_filter_widget::name});
+              std::string{assets_filter_widget::name}
+          );
           l_win) {
         dynamic_cast<assets_filter_widget *>(l_win)->refresh(false);
       };
@@ -281,12 +281,7 @@ class time_edit : public gui::edit_interface {
       set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<time_point_wrap>(time_ymd.data[0],
-                                           time_ymd.data[1],
-                                           time_ymd.data[2],
-                                           time_hms.data[0],
-                                           time_hms.data[1],
-                                           time_hms.data[2]);
+    in.emplace_or_replace<time_point_wrap>(time_ymd.data[0], time_ymd.data[1], time_ymd.data[2], time_hms.data[0], time_hms.data[1], time_hms.data[2]);
   }
 };
 
@@ -361,11 +356,13 @@ class add_assets_for_file : public base_render {
       auto k_imghe_path = ranges::find_if(
           ranges::make_subrange(
               FSys::directory_iterator{l_path},
-              FSys::directory_iterator{}),
+              FSys::directory_iterator{}
+          ),
           [&](const FSys::path &in_file) {
             return l_config.match_icon_extensions(in_file) &&
                    std::regex_search(in_file.filename().generic_string(), l_regex);
-          });
+          }
+      );
       if (k_imghe_path != FSys::directory_iterator{}) {
         l_image_load.save(in_handle, k_imghe_path->path());
       }
@@ -433,7 +430,8 @@ class add_assets_for_file : public base_render {
               this->assets_list.data.empty()
                   ? "null"s
                   : this->assets_list.data.front();
-        });
+        }
+    );
     l_sig.save_end.connect([this]() {
       auto &prj         = g_reg()->ctx().at<project_config::base_config>();
       this->assets_list = prj.assets_list;
@@ -582,7 +580,8 @@ void edit_widgets::init() {
         ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
           in_edit.data->init(p_i->p_h);
         });
-      }));
+      }
+  ));
   /**
    * @brief 保存时禁用编辑
    */
@@ -590,7 +589,8 @@ void edit_widgets::init() {
       [&](const FSys::path &) {
         this->p_i->add_handles.clear();
         this->p_i->p_h = {};
-      }));
+      }
+  ));
 }
 
 void edit_widgets::failed() {
@@ -636,15 +636,12 @@ void edit_widgets::add_handle() {
 }
 
 void edit_widgets::clear_handle() {
-  std::for_each(p_i->add_handles.begin(),
-                p_i->add_handles.end(),
-                [](entt::handle &in) {
-                  if (in.orphan()) {
-                    in.destroy();
-                  }
-                });
-  ranges::actions::remove_if(p_i->add_handles,
-                             [](const entt::handle &in) { return !in.valid(); });
+  std::for_each(p_i->add_handles.begin(), p_i->add_handles.end(), [](entt::handle &in) {
+    if (in.orphan()) {
+      in.destroy();
+    }
+  });
+  ranges::actions::remove_if(p_i->add_handles, [](const entt::handle &in) { return !in.valid(); });
   this->notify_file_list();
 }
 

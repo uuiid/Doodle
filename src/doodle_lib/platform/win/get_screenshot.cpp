@@ -9,10 +9,7 @@ cv::Rect2f get_system_metrics_VIRTUALSCREEN() {
   //  int screeny = GetSystemMetrics(SM_YVIRTUALSCREEN);
   //  int width   = GetSystemMetrics(SM_CXVIRTUALSCREEN);
   //  int height  = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-  return cv::Rect{GetSystemMetrics(SM_XVIRTUALSCREEN),
-                  GetSystemMetrics(SM_YVIRTUALSCREEN),
-                  GetSystemMetrics(SM_CXVIRTUALSCREEN),
-                  GetSystemMetrics(SM_CYVIRTUALSCREEN)};
+  return cv::Rect{GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN), GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN)};
 }
 
 namespace {
@@ -56,12 +53,9 @@ cv::Mat get_screenshot() {
   SelectObject(hwindowCompatibleDC, hbwindow);
 
   // copy from the window device context to the bitmap device context
-  StretchBlt(hwindowCompatibleDC, 0, 0, k_rot.width, k_rot.height,
-             hwindowDC, k_rot.x, k_rot.y, k_rot.width, k_rot.height,
-             SRCCOPY);  // change SRCCOPY to NOTSRCCOPY for wacky colors !
-  GetDIBits(hwindowCompatibleDC, hbwindow,
-            0, k_rot.height, src.data,
-            (BITMAPINFO*)&bi, DIB_RGB_COLORS);  // copy from hwindowCompatibleDC to hbwindow
+  StretchBlt(hwindowCompatibleDC, 0, 0, k_rot.width, k_rot.height, hwindowDC, k_rot.x, k_rot.y, k_rot.width, k_rot.height,
+             SRCCOPY);                                                                                    // change SRCCOPY to NOTSRCCOPY for wacky colors !
+  GetDIBits(hwindowCompatibleDC, hbwindow, 0, k_rot.height, src.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);  // copy from hwindowCompatibleDC to hbwindow
 
   // avoid memory leak
   DeleteObject(hbwindow);

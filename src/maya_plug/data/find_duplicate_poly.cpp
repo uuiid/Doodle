@@ -50,8 +50,10 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
                                    ranges::to_vector;
                    return std::make_pair(
                        l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj,
-                       in_object.maya_obj);
-                 }) |
+                       in_object.maya_obj
+                   );
+                 }
+             ) |
              ranges::views::filter([](const std::pair<MObject, MObject>& in_pair) -> bool {
                return !in_pair.first.isNull() && !in_pair.second.isNull();
              }) |

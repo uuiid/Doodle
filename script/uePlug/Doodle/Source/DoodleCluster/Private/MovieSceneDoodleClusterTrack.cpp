@@ -17,34 +17,30 @@
  *****************************************************************************/
 
 UMovieSceneDoodleClusterTrack::UMovieSceneDoodleClusterTrack(const FObjectInitializer &ObjectInitializer)
-    : Super(ObjectInitializer)
-{
+    : Super(ObjectInitializer) {
 #if WITH_EDITORONLY_DATA
-    // TrackTint = FColor(124, 15, 124, 65);
+  // TrackTint = FColor(124, 15, 124, 65);
 #endif
 
-    // SupportedBlendTypes.Add(EMovieSceneBlendType::Absolute);
+  // SupportedBlendTypes.Add(EMovieSceneBlendType::Absolute);
 
-    // EvalOptions.bCanEvaluateNearestSection = true;
-    // EvalOptions.bEvaluateInPreroll = true;
+  // EvalOptions.bCanEvaluateNearestSection = true;
+  // EvalOptions.bEvaluateInPreroll = true;
 }
 
-bool UMovieSceneDoodleClusterTrack::SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const
-{
-    return true;
+bool UMovieSceneDoodleClusterTrack::SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const {
+  return true;
 }
 
-FMovieSceneEvalTemplatePtr UMovieSceneDoodleClusterTrack::CreateTemplateForSection(const UMovieSceneSection &InSection) const
-{
-    // return FMovieSceneGeometryCacheSectionTemplate(*CastChecked<UMovieSceneGeometryCacheSection>(&InSection));
-    return {};
+FMovieSceneEvalTemplatePtr UMovieSceneDoodleClusterTrack::CreateTemplateForSection(const UMovieSceneSection &InSection) const {
+  // return FMovieSceneGeometryCacheSectionTemplate(*CastChecked<UMovieSceneGeometryCacheSection>(&InSection));
+  return {};
 }
 
 #if WITH_EDITORONLY_DATA
 
-FText UMovieSceneDoodleClusterTrack::GetDefaultDisplayName() const
-{
-    return LOCTEXT("TrackName", "Doodle Cluster");
+FText UMovieSceneDoodleClusterTrack::GetDefaultDisplayName() const {
+  return LOCTEXT("TrackName", "Doodle Cluster");
 }
 
 #endif

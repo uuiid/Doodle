@@ -204,13 +204,15 @@ void assets_file_widgets::init() {
       [this](const std::vector<entt::handle>& in) {
         p_i->handle_list = in;
         generate_lists(p_i->handle_list);
-      }));
+      }
+  ));
   p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
       [&](const FSys::path&) {
         p_i->handle_list.clear();
         p_i->lists.clear();
         p_i->select_index = 0;
-      }));
+      }
+  ));
 
   //  p_i->observer_h.connect();
 }
@@ -223,9 +225,7 @@ void assets_file_widgets::render() {
   /// 渲染数据
 
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-  dear::Child{"ScrollingRegion",
-              ImVec2(0, -footer_height_to_reserve),
-              false} &&
+  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} &&
       [&]() {
         if (p_i->lists.empty())
           return;
@@ -280,7 +280,8 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
                          }) |
                          ranges::to_vector;
           });
-        });
+        }
+    );
   }
 }
 void assets_file_widgets::set_select(std::size_t in_size) {
@@ -306,7 +307,8 @@ void assets_file_widgets::set_select(std::size_t in_size) {
       l_handle_list = p_i->lists |
                       ranges::views::slice(
                           std::min(p_i->select_index, in_size),
-                          std::max(p_i->select_index, in_size) + 1) |
+                          std::max(p_i->select_index, in_size) + 1
+                      ) |
                       ranges::views::indirect |
                       ranges::views::transform([](impl::base_data& in) {
                         in.select = true;
@@ -314,10 +316,9 @@ void assets_file_widgets::set_select(std::size_t in_size) {
                       }) |
                       ranges::to_vector;
     } else {
-      ranges::for_each(p_i->lists | ranges::views::indirect,
-                       [](impl::base_data& in) {
-                         in.select = false;
-                       });
+      ranges::for_each(p_i->lists | ranges::views::indirect, [](impl::base_data& in) {
+        in.select = false;
+      });
       i.select = true;
       l_handle_list.push_back(i.handle_);
     }
@@ -345,7 +346,9 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
       ranges::views::transform(
           [](const impl::base_data& in) -> entt::handle {
             return in.handle_;
-          }));
+          }
+      )
+  );
   if (ranges::find(l_lists, l_item.handle_) == l_lists.end())
     l_lists.emplace_back(l_item.handle_);
   g_reg()->ctx().erase<std::vector<entt::handle>>();
@@ -354,7 +357,8 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
     ImGui::SetDragDropPayload(
         doodle_config::drop_handle_list.data(),
         &(g_reg()->ctx().at<std::vector<entt::handle>>()),
-        sizeof(g_reg()->ctx().at<std::vector<entt::handle>>()));
+        sizeof(g_reg()->ctx().at<std::vector<entt::handle>>())
+    );
     ImGui::Text("拖拽实体");
   }
 }
@@ -376,10 +380,7 @@ void assets_file_widgets::render_by_icon() {
 
           ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
 
-          if (ImGui::Selectable(*i.select.gui_name,
-                                i.select.data,
-                                ImGuiSelectableFlags_AllowDoubleClick,
-                                {k_length, k_length})) {
+          if (ImGui::Selectable(*i.select.gui_name, i.select.data, ImGuiSelectableFlags_AllowDoubleClick, {k_length, k_length})) {
             set_select(l_index);
           }
           dear::PopupContextItem{} && [this, &i]() {
@@ -437,10 +438,7 @@ void assets_file_widgets::render_by_info() {
         auto&& i = *std::dynamic_pointer_cast<impl::info_data>(p_i->lists[l_index]);
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        if (ImGui::Selectable(*i.select.gui_name,
-                              i.select.data,
-                              ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns |
-                                  ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick)) {
+        if (ImGui::Selectable(*i.select.gui_name, i.select.data, ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick)) {
           set_select(l_index);
         }
         dear::PopupContextItem{} && [this, &i]() {

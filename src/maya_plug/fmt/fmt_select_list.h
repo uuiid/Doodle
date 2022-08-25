@@ -25,7 +25,8 @@ struct formatter<MSelectionList> : formatter<string_view> {
     in_.getSelectionStrings(l_array);
     return formatter<string_view>::format(
         to_string(l_array),
-        ctx);
+        ctx
+    );
   }
 };
 }  // namespace fmt

@@ -28,9 +28,7 @@ template <typename T, typename = void>
 struct is_handle_container : public std::false_type {};
 
 template <typename T>
-struct is_handle_container<T,
-                           std::enable_if_t<
-                               std::is_same_v<entt::handle, typename T::value_type>, void>>
+struct is_handle_container<T, std::enable_if_t<std::is_same_v<entt::handle, typename T::value_type>, void>>
     : public std::true_type {};
 
 /// to boost::less_pointees_t;

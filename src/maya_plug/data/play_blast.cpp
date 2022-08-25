@@ -69,8 +69,7 @@ FSys::path play_blast::get_file_dir() const {
 
 FSys::path play_blast::get_file_path(const MTime& in_time) const {
   auto k_cache_path = get_file_dir();
-  k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid,
-                              boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
+  k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid, boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
   return k_cache_path;
 }
 FSys::path play_blast::get_file_path() const {
@@ -150,9 +149,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -endTime {}
 ;
 )",
-                             get_out_path().replace_extension("").generic_string(),
-                             in_start.as(MTime::uiUnit()),
-                             in_end.as(MTime::uiUnit()));
+                             get_out_path().replace_extension("").generic_string(), in_start.as(MTime::uiUnit()), in_end.as(MTime::uiUnit()));
     k_s        = MGlobal::executeCommand(k_mel.c_str());
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     return MStatus::kSuccess;
@@ -171,9 +168,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -endTime {}
 ;
 )",
-                             get_file_path().generic_string(),
-                             in_start.value(),
-                             in_end.value());
+                             get_file_path().generic_string(), in_start.value(), in_end.value());
     DOODLE_LOG_INFO("开始生成图片序列 {}\n{}", get_file_path(), k_mel);
     k_s = MGlobal::executeCommand(k_mel.c_str(), true, false);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
@@ -193,23 +188,27 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       k_image.watermarks.emplace_back(
           fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()),
           0.5, 0.1,
-          cv::Scalar{25, 220, 2});
+          cv::Scalar{25, 220, 2}
+      );
       ++k_frame;
       /// \brief 绘制摄像机avo
       k_image.watermarks.emplace_back(
           fmt::format("FOV: {:.3f}", k_cam.focalLength()),
           0.91, 0.1,
-          cv::Scalar{25, 220, 2});
+          cv::Scalar{25, 220, 2}
+      );
       /// \brief 当前时间节点
       k_image.watermarks.emplace_back(
           fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
           0.1, 0.91,
-          cv::Scalar{25, 220, 2});
+          cv::Scalar{25, 220, 2}
+      );
       /// \brief 制作人姓名
       k_image.watermarks.emplace_back(
           g_reg()->ctx().at<user>().get_name(),
           0.5, 0.91,
-          cv::Scalar{25, 220, 2});
+          cv::Scalar{25, 220, 2}
+      );
       l_handle_list.push_back(std::move(k_image));
     }
     auto k_msg = make_handle();

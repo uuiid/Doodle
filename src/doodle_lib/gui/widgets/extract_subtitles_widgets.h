@@ -15,8 +15,7 @@ class DOODLELIB_API extract_subtitles_widgets
   class impl;
   std::unique_ptr<impl> p_i;
 
-  void write_subtitles(const FSys::path& in_soure_file,
-                       const FSys::path& out_subtitles_file);
+  void write_subtitles(const FSys::path& in_soure_file, const FSys::path& out_subtitles_file);
 
  public:
   extract_subtitles_widgets();

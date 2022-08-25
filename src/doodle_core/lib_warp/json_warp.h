@@ -113,10 +113,7 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
    * @param in_index 传入的运行时索引
    */
   template <index_t... Index>
-  static void get_variant_value(const json& j,
-                                var_t& in_var,
-                                const index_t& in_index,
-                                std::index_sequence<Index...>) {
+  static void get_variant_value(const json& j, var_t& in_var, const index_t& in_index, std::index_sequence<Index...>) {
     //    in_var.emplace<Index>(j["data"].get<decltype(std::get<Index>(std::declval<var_t>()))>());
 
     //    (((in_index == Index)

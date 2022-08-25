@@ -75,8 +75,8 @@ class update_data::impl {
     auto l_pre_select = in_db.prepare(
         sqlpp::select(l_tabl.id)
             .from(l_tabl)
-            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
-                   l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
+            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash))
+    );
     for (auto &&i : com_tabls) {
       l_pre_select.params.comHash  = i.com_id;
       l_pre_select.params.entityId = main_tabls[i.entt_];
@@ -93,9 +93,8 @@ class update_data::impl {
       if (!i.second) {
         auto l_pre_inster = in_db.prepare(
             sqlpp::insert_into(l_tabl)
-                .set(l_tabl.entityId = sqlpp::parameter(l_tabl.entityId),
-                     l_tabl.comHash  = sqlpp::parameter(l_tabl.comHash),
-                     l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData)));
+                .set(l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash), l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
+        );
         if (stop)
           return;
         l_pre_inster.params.comHash  = i.first.get().com_id;
@@ -113,8 +112,8 @@ class update_data::impl {
         auto l_pre = in_db.prepare(
             sqlpp::update(l_tabl)
                 .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
-                .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
-                       l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)));
+                .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash))
+        );
         if (stop)
           return;
         l_pre.params.jsonData = i.first.get().json_data;
@@ -151,12 +150,12 @@ class update_data::impl {
                     if (l_h.all_of<Type_T>()) {
                       auto l_json = nlohmann::json{};
                       l_json      = l_h.get<Type_T>();
-                      com_tabls.emplace_back(in_,
-                                             entt::type_id<Type_T>().hash(),
-                                             l_json.dump());
+                      com_tabls.emplace_back(in_, entt::type_id<Type_T>().hash(), l_json.dump());
                     }
                     g_reg()->ctx().emplace<process_message>().progress_step({1, in_size * size * 2});
-                  }}));
+                  }}
+          )
+      );
     });
   }
 
@@ -234,7 +233,8 @@ void update_data::update() {
 
 void update_data::operator()(
     entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data) {
+    const std::vector<entt::entity> &in_update_data
+) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();
   p_i->th_updata();

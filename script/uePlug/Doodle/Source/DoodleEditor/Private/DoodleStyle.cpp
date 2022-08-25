@@ -9,24 +9,22 @@
 TSharedPtr<FSlateStyleSet> FdoodleStyle::StyleInstance = NULL;
 
 void FdoodleStyle::Initialize() {
-	if (!StyleInstance.IsValid()) {
-		StyleInstance = Create();
-		FSlateStyleRegistry::RegisterSlateStyle(*StyleInstance);
-	}
+  if (!StyleInstance.IsValid()) {
+    StyleInstance = Create();
+    FSlateStyleRegistry::RegisterSlateStyle(*StyleInstance);
+  }
 }
 
 void FdoodleStyle::Shutdown() {
-	FSlateStyleRegistry::UnRegisterSlateStyle(*StyleInstance);
-	ensure(StyleInstance.IsUnique());
-	StyleInstance.Reset();
+  FSlateStyleRegistry::UnRegisterSlateStyle(*StyleInstance);
+  ensure(StyleInstance.IsUnique());
+  StyleInstance.Reset();
 }
 
 FName FdoodleStyle::GetStyleSetName() {
-	static FName StyleSetName(TEXT("doodleStyle"));
-	return StyleSetName;
+  static FName StyleSetName(TEXT("doodleStyle"));
+  return StyleSetName;
 }
-
-
 
 #define IMAGE_BRUSH(RelativePath, ...) FSlateImageBrush(Style->RootToContentDir(RelativePath, TEXT(".png")), __VA_ARGS__)
 #define BOX_BRUSH(RelativePath, ...) FSlateBoxBrush(Style->RootToContentDir(RelativePath, TEXT(".png")), __VA_ARGS__)
@@ -39,12 +37,12 @@ const FVector2D Icon20x20(20.0f, 20.0f);
 const FVector2D Icon40x40(40.0f, 40.0f);
 
 TSharedRef<FSlateStyleSet> FdoodleStyle::Create() {
-	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet("doodleStyle"));
-	Style->SetContentRoot(IPluginManager::Get().FindPlugin("doodle")->GetBaseDir() / TEXT("Resources"));
+  TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet("doodleStyle"));
+  Style->SetContentRoot(IPluginManager::Get().FindPlugin("doodle")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("doodle.OpenPluginWindow", new IMAGE_BRUSH(TEXT("ButtonIcon_40x"), Icon40x40));
+  Style->Set("doodle.OpenPluginWindow", new IMAGE_BRUSH(TEXT("ButtonIcon_40x"), Icon40x40));
 
-	return Style;
+  return Style;
 }
 
 #undef IMAGE_BRUSH
@@ -54,11 +52,11 @@ TSharedRef<FSlateStyleSet> FdoodleStyle::Create() {
 #undef OTF_FONT
 
 void FdoodleStyle::ReloadTextures() {
-	if (FSlateApplication::IsInitialized()) {
-		FSlateApplication::Get().GetRenderer()->ReloadTextureResources();
-	}
+  if (FSlateApplication::IsInitialized()) {
+    FSlateApplication::Get().GetRenderer()->ReloadTextureResources();
+  }
 }
 
 const ISlateStyle& FdoodleStyle::Get() {
-	return *StyleInstance;
+  return *StyleInstance;
 }

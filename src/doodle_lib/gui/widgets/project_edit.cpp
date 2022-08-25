@@ -59,17 +59,17 @@ class project_edit::impl {
     assets_list          = l_config.assets_list |
                   ranges::views::transform(
                       [](const std::string& in_str) {
-                        return std::make_pair(gui_cache<std::string>{""s, in_str},
-                                              gui_cache<bool>{"删除", false});
-                      }) |
+                        return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
+                      }
+                  ) |
                   ranges::to_vector;
 
     icon_list.list = l_config.icon_extensions |
                      ranges::views::transform(
                          [](const std::string& in_str) {
-                           return std::make_pair(gui_cache<std::string>{""s, in_str},
-                                                 gui_cache<bool>{"删除", false});
-                         }) |
+                           return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
+                         }
+                     ) |
                      ranges::to_vector;
     upload_path  = l_config.upload_path.generic_string();
     season_count = l_config.season_count;
@@ -87,7 +87,8 @@ class project_edit::impl {
         ranges::views::transform(
             [](const decltype(p_i->assets_list)::value_type& in_part) -> std::string {
               return in_part.first.data;
-            }) |
+            }
+        ) |
         ranges::to_vector;
 
     l_c.icon_extensions =
@@ -95,7 +96,8 @@ class project_edit::impl {
         ranges::views::transform(
             [](const decltype(p_i->icon_list.list)::value_type& in_part) -> std::string {
               return in_part.first.data;
-            }) |
+            }
+        ) |
         ranges::to_vector;
     l_c.upload_path  = upload_path.data;
     l_c.season_count = season_count;
@@ -115,12 +117,15 @@ void project_edit::init() {
       g_reg()->ctx().at<core_sig>().project_end_open.connect(
           [this]() {
             p_i->config_init();
-          }));
+          }
+      )
+  );
   p_i->scoped_connections_.emplace_back(
       g_reg()->ctx().at<core_sig>().save.connect(1, [this]() {
         g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
         g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
-      }));
+      })
+  );
 }
 
 void project_edit::render() {
@@ -152,8 +157,7 @@ void project_edit::render() {
   }
   /// @brief 添加分类编辑
   if (ImGui::Button(*p_i->add_list_name_button)) {
-    p_i->assets_list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s},
-                                                 gui_cache<bool>{"删除", false}));
+    p_i->assets_list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s}, gui_cache<bool>{"删除", false}));
   }
   dear::ListBox{*p_i->list_name} && [&]() {
     for (auto&& i : p_i->assets_list) {
@@ -166,16 +170,14 @@ void project_edit::render() {
     }
   };
   const auto l_r =
-      ranges::remove_if(p_i->assets_list,
-                        [](const decltype(p_i->assets_list)::value_type& in_part) -> bool {
-                          return in_part.second.data;
-                        });
+      ranges::remove_if(p_i->assets_list, [](const decltype(p_i->assets_list)::value_type& in_part) -> bool {
+        return in_part.second.data;
+      });
   if (l_r != p_i->assets_list.end())
     p_i->assets_list.erase(l_r, p_i->assets_list.end());
   /// @brief 后缀名编辑
   if (ImGui::Button(*p_i->icon_list.button_name)) {
-    p_i->icon_list.list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s},
-                                                    gui_cache<bool>{"删除", false}));
+    p_i->icon_list.list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s}, gui_cache<bool>{"删除", false}));
   }
   dear::ListBox{*p_i->icon_list.name} && [&]() {
     for (auto&& i : p_i->icon_list.list) {
@@ -188,10 +190,9 @@ void project_edit::render() {
     }
   };
   const auto l_r_ =
-      ranges::remove_if(p_i->icon_list.list,
-                        [](const decltype(p_i->icon_list.list)::value_type& in_part) -> bool {
-                          return in_part.second.data;
-                        });
+      ranges::remove_if(p_i->icon_list.list, [](const decltype(p_i->icon_list.list)::value_type& in_part) -> bool {
+        return in_part.second.data;
+      });
   if (l_r_ != p_i->icon_list.list.end())
     p_i->icon_list.list.erase(l_r_, p_i->icon_list.list.end());
 

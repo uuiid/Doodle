@@ -28,10 +28,9 @@ void redirection_path_info_edit::init_(const entt::handle& in) {
     auto&& l_info     = in.get<redirection_path_info>();
 
     ptr->file_name_   = l_info.file_name_.generic_string();
-    ptr->search_path_ = fmt::to_string(fmt::join(l_info.search_path_ |
-                                                     ranges::views::transform([](const FSys::path& in_path) -> std::string {
-                                                       return in_path.generic_string();
-                                                     }),
+    ptr->search_path_ = fmt::to_string(fmt::join(l_info.search_path_ | ranges::views::transform([](const FSys::path& in_path) -> std::string {
+                                                   return in_path.generic_string();
+                                                 }),
                                                  "\n"));
   } else {
     ptr->file_name_.data.clear();
@@ -48,7 +47,8 @@ void redirection_path_info_edit::save_(const entt::handle& in) const {
             return FSys::path{c.begin(), c.end()};
           }) |
           ranges::to_vector,
-      ptr->file_name_.data);
+      ptr->file_name_.data
+  );
 }
 
 redirection_path_info_edit::~redirection_path_info_edit() = default;

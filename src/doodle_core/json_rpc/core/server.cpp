@@ -12,12 +12,9 @@
 namespace doodle::json_rpc {
 class server::impl {
  public:
-  explicit impl(boost::asio::io_context &in_io_context,
-                std::uint16_t in_port)
+  explicit impl(boost::asio::io_context &in_io_context, std::uint16_t in_port)
       : io_context_(in_io_context),
-        acceptor_(in_io_context,
-                  boost::asio::ip::tcp::endpoint{
-                      boost::asio::ip::address::from_string("127.0.0.1"), in_port}),
+        acceptor_(in_io_context, boost::asio::ip::tcp::endpoint{boost::asio::ip::address::from_string("127.0.0.1"), in_port}),
         rpc_server_ptr_(),
         session_manager_ptr(std::make_shared<session_manager>()) {}
 
@@ -27,8 +24,7 @@ class server::impl {
   std::shared_ptr<rpc_server> rpc_server_ptr_;
 };
 
-server::server(boost::asio::io_context &in_io_context,
-               std::uint16_t in_port)
+server::server(boost::asio::io_context &in_io_context, std::uint16_t in_port)
     : ptr(std::make_unique<impl>(in_io_context, in_port)) {
   do_accept();
 }
@@ -45,10 +41,13 @@ void server::do_accept() {
                    se_wptr     = l_session->weak_from_this(),
                    session_ptr = ptr->session_manager_ptr]() {
                     session_ptr->stop(se_wptr.lock());
-                  }));
+                  }
+              )
+          );
         }
         this->do_accept();
-      });
+      }
+  );
 }
 void server::set_rpc_server(const std::shared_ptr<rpc_server> &in_server) {
   in_server->init_register();

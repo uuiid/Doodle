@@ -28,9 +28,10 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 #endif
             fmt::to_string(formatted)
 #ifdef UNICODE
-                )
+        )
 #endif
-            .c_str());
+            .c_str()
+    );
 #else
     std::cout << fmt::to_string(formatted) << std::endl;
 #endif
@@ -58,7 +59,8 @@ void logger_ctrl::init_temp_log() {
     spdlog::init_thread_pool(8192, 1);
     auto l_file   = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
     auto l_logger = std::make_shared<spdlog::async_logger>(
-        "doodle_lib", l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+        "doodle_lib", l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+    );
 #if !defined(NDEBUG)
     auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
     l_logger->sinks().push_back(l_k_debug);

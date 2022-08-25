@@ -29,9 +29,7 @@ class container_source {
         static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
-      std::copy(container_.begin() + pos_,
-                container_.begin() + pos_ + result,
-                s);
+      std::copy(container_.begin() + pos_, container_.begin() + pos_ + result, s);
       pos_ += result;
       return result;
     } else {
@@ -87,9 +85,7 @@ class container_device {
         static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
-      std::copy(container_.begin() + pos_,
-                container_.begin() + pos_ + result,
-                s);
+      std::copy(container_.begin() + pos_, container_.begin() + pos_ + result, s);
       pos_ += result;
       return result;
     } else {
@@ -154,10 +150,7 @@ class container_device {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT     = char,
-          class Container = std::vector<CharT>,
-          class Device    = container_source<Container>,
-          class Buffer    = boost::iostreams::stream_buffer<Device> >
+template <class CharT = char, class Container = std::vector<CharT>, class Device = container_source<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_istream : public std::istream {
   Buffer _vector_buffer;
 
@@ -175,10 +168,7 @@ class base_vector_istream : public std::istream {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT     = char,
-          class Container = std::vector<CharT>,
-          class Device    = container_sink<Container>,
-          class Buffer    = boost::iostreams::stream_buffer<Device> >
+template <class CharT = char, class Container = std::vector<CharT>, class Device = container_sink<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_ostream : public std::ostream {
   Buffer _vector_buffer;
 
@@ -196,10 +186,7 @@ class base_vector_ostream : public std::ostream {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT     = char,
-          class Container = std::vector<CharT>,
-          class Device    = container_device<Container>,
-          class Buffer    = boost::iostreams::stream_buffer<Device> >
+template <class CharT = char, class Container = std::vector<CharT>, class Device = container_device<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_iostream : public std::iostream {
   Buffer _vector_buffer;
 

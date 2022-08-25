@@ -13,11 +13,7 @@ namespace doodle {
 export_file_info::export_file_info()
     : export_file_info(FSys::path{}, 0, 0, FSys::path{}, export_type::none) {
 }
-export_file_info::export_file_info(FSys::path in_path,
-                                   std::int32_t in_start_frame,
-                                   std::int32_t in_end_frame,
-                                   FSys::path in_ref_path,
-                                   export_type in_export_type)
+export_file_info::export_file_info(FSys::path in_path, std::int32_t in_start_frame, std::int32_t in_end_frame, FSys::path in_ref_path, export_type in_export_type)
     : file_path(std::move(in_path)),
       start_frame(in_start_frame),
       end_frame(in_end_frame),

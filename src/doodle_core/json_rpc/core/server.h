@@ -17,8 +17,7 @@ class server {
   std::unique_ptr<impl> ptr;
 
  public:
-  explicit server(boost::asio::io_context &in_io_context,
-                  std::uint16_t in_port);
+  explicit server(boost::asio::io_context &in_io_context, std::uint16_t in_port);
   virtual ~server();
   void set_rpc_server(const std::shared_ptr<rpc_server> &in_server);
 

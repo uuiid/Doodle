@@ -45,13 +45,12 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
 
   template <typename CompletionToken>
   auto async_open_impl_fun(CompletionToken&& token, FSys::path in_path) {
-    return boost::asio::async_initiate<CompletionToken,
-                                       void(bsys::error_code)>(
+    return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [this, l_p = std::move(in_path)](auto&& completion_handler) {
-          boost::asio::post(g_thread(),
-                            [this, l_p = l_p]() { this->open(l_p); });
+          boost::asio::post(g_thread(), [this, l_p = l_p]() { this->open(l_p); });
         },
-        token);
+        token
+    );
   }
 
   // public:
@@ -65,7 +64,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     explicit async_open_impl(
         FSys::path in_file_path,
         boost::asio::high_resolution_timer& in_timer,
-        file_translator_ptr in_file_translator)
+        file_translator_ptr in_file_translator
+    )
         : timer_attr(in_timer),
           file_translator_attr(std::move(in_file_translator)),
           state_attr(state::init),
@@ -76,8 +76,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     }
 
     template <typename Self>
-    void operator()(Self& self,
-                    boost::system::error_code error = {}) {
+    void operator()(Self& self, boost::system::error_code error = {}) {
       switch (state_attr) {
         case state::init: {
           boost::asio::post(
@@ -88,7 +87,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
                   self.complete(l_r);
                 state_attr = state::end;
                 //                boost::asio::post(g_io_context(), std::move(self));
-              });
+              }
+          );
           break;
         }
         case state::end: {
@@ -110,15 +110,15 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     explicit async_save_impl(
         FSys::path in_file_path,
         boost::asio::high_resolution_timer& in_timer,
-        file_translator_ptr in_file_translator)
+        file_translator_ptr in_file_translator
+    )
         : timer_attr(in_timer),
           file_translator_attr(std::move(in_file_translator)),
           state_attr(state::init),
           file_path(std::move(in_file_path)) {}
 
     template <typename Self>
-    void operator()(Self& self,
-                    boost::system::error_code error = {}) {
+    void operator()(Self& self, boost::system::error_code error = {}) {
       switch (state_attr) {
         case state::init: {
           boost::asio::post(
@@ -127,7 +127,8 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
                 bsys::error_code l_r = file_translator_attr->save(file_path);
                 if (l_r) self.complete(l_r);
                 state_attr = state::end;
-              });
+              }
+          );
           break;
         }
         case state::end: {
@@ -156,22 +157,20 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     //    return boost::asio::async_compose<CompletionToken,
     //                                      void(bsys::error_code)>(
     //        async_open_impl{in_path, l_time, this->shared_from_this()}, token, l_time);
-    return boost::asio::async_initiate<CompletionToken,
-                                       void(bsys::error_code)>(
+    return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
           l_s->open_begin(in_path);
           std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(),
-                            [l_s, in_path, call]() {
-                              auto l_r = l_s->open(in_path);
-                              boost::asio::post(g_io_context(),
-                                                [call, l_r, l_s]() {
-                                                  l_s->open_end();
-                                                  call(l_r);
-                                                });
-                            });
+          boost::asio::post(g_thread(), [l_s, in_path, call]() {
+            auto l_r = l_s->open(in_path);
+            boost::asio::post(g_io_context(), [call, l_r, l_s]() {
+              l_s->open_end();
+              call(l_r);
+            });
+          });
         },
-        token);
+        token
+    );
   };
 
   /**
@@ -190,22 +189,20 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
     //                                      void(bsys::error_code)>(
     //        async_save_impl{in_path, l_time, this->shared_from_this()}, token, l_time);
 
-    return boost::asio::async_initiate<CompletionToken,
-                                       void(bsys::error_code)>(
+    return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
           l_s->save_begin(in_path);
           std::function<void(bsys::error_code)> call{completion_handler};
-          boost::asio::post(g_thread(),
-                            [l_s, in_path, call]() {
-                              auto l_r = l_s->save(in_path);
-                              boost::asio::post(g_io_context(),
-                                                [call, l_r, l_s]() {
-                                                  l_s->save_end();
-                                                  call(l_r);
-                                                });
-                            });
+          boost::asio::post(g_thread(), [l_s, in_path, call]() {
+            auto l_r = l_s->save(in_path);
+            boost::asio::post(g_io_context(), [call, l_r, l_s]() {
+              l_s->save_end();
+              call(l_r);
+            });
+          });
         },
-        token);
+        token
+    );
   };
 };
 

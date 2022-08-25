@@ -30,7 +30,8 @@ namespace {
 template <typename Type_T>
 void _get_ctx_sql_data_(
     const entt::registry& in_registry,
-    std::map<std::uint32_t, std::string>& in_data) {
+    std::map<std::uint32_t, std::string>& in_data
+) {
   if (in_registry.ctx().contains<Type_T>()) {
     auto l_json = nlohmann::json{};
     l_json      = in_registry.ctx().at<Type_T>();
@@ -40,23 +41,19 @@ void _get_ctx_sql_data_(
 template <typename... Type_T>
 void get_ctx_sql_data(
     const entt::registry& in_registry,
-    std::map<std::uint32_t, std::string>& in_data) {
+    std::map<std::uint32_t, std::string>& in_data
+) {
   (_get_ctx_sql_data_<Type_T>(in_registry, in_data), ...);
 }
 
-void _select_ctx_(entt::registry& in_reg,
-                  sqlpp::sqlite3::connection& in_conn,
-                  const std::map<std::uint32_t,
-                                 std::function<
-                                     void(entt::registry& in_reg,
-                                          const std::string& in_str)>>& in_fun_list) {
+void _select_ctx_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn, const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list) {
   sql::Context l_context{};
 
   for (auto&& row : in_conn(
-           sqlpp::select(l_context.comHash,
-                         l_context.jsonData)
+           sqlpp::select(l_context.comHash, l_context.jsonData)
                .from(l_context)
-               .unconditionally())) {
+               .unconditionally()
+       )) {
     if (auto l_f = in_fun_list.find(row.comHash.value());
         l_f != in_fun_list.end()) {
       in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
@@ -64,28 +61,25 @@ void _select_ctx_(entt::registry& in_reg,
   }
 }
 template <typename... Type>
-void select_ctx_template(entt::registry& in_reg,
-                         sqlpp::sqlite3::connection& in_conn) {
-  std::map<std::uint32_t,
-           std::function<void(entt::registry & in_reg, const std::string& in_str)>>
+void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>>
       l_fun{
-          std::make_pair(entt::type_id<Type>().hash(),
-                         [&](entt::registry& in_reg, const std::string& in_str) {
-                           auto l_json = nlohmann::json::parse(in_str);
-                           if (in_reg.ctx().template contains<Type>())
-                             in_reg.ctx().template erase<Type>();
+          std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
+            auto l_json = nlohmann::json::parse(in_str);
+            if (in_reg.ctx().template contains<Type>())
+              in_reg.ctx().template erase<Type>();
 
-                           in_reg.ctx().template emplace<Type>(
-                               std::move(l_json.get<Type>()));
-                         })...};
+            in_reg.ctx().template emplace<Type>(
+                std::move(l_json.get<Type>())
+            );
+          })...};
 
   _select_ctx_(in_reg, in_conn, l_fun);
 }
 
 }  // namespace
 
-void update_ctx::ctx(const entt::registry& in_registry,
-                     sqlpp::sqlite3::connection& in_connection) {
+void update_ctx::ctx(const entt::registry& in_registry, sqlpp::sqlite3::connection& in_connection) {
   std::map<std::uint32_t, std::string> data{};
 #include "macro.h"
   get_ctx_sql_data<DOODLE_SQLITE_TYPE_CTX>(in_registry, data);
@@ -94,8 +88,8 @@ void update_ctx::ctx(const entt::registry& in_registry,
 
   auto l_par = in_connection.prepare(
       sqlpp::sqlite3::insert_or_replace_into(l_table)
-          .set(l_table.comHash  = sqlpp::parameter(l_table.comHash),
-               l_table.jsonData = sqlpp::parameter(l_table.jsonData)));
+          .set(l_table.comHash = sqlpp::parameter(l_table.comHash), l_table.jsonData = sqlpp::parameter(l_table.jsonData))
+  );
   for (auto&& i : data) {
     l_par.params.comHash  = i.first;
     l_par.params.jsonData = i.second;
@@ -114,13 +108,14 @@ void update_ctx::select_ctx(entt::registry& in_registry, sqlpp::sqlite3::connect
 }
 
 std::tuple<std::uint32_t, std::uint32_t> get_version(
-    sqlpp::sqlite3::connection& in_conn) {
+    sqlpp::sqlite3::connection& in_conn
+) {
   sql::DoodleInfo l_info{};
 
   for (auto&& row : in_conn(
-           sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
-    return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
-                           boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
+           sqlpp::select(all_of(l_info)).from(l_info).unconditionally()
+       )) {
+    return std::make_tuple(boost::numeric_cast<std::uint32_t>(row.versionMajor.value()), boost::numeric_cast<std::uint32_t>(row.versionMinor.value()));
   }
 
   throw_exception(doodle_error{"无法检查到数据库版本 {}", g_reg()->ctx().at<database_info>().path_});
@@ -153,21 +148,24 @@ void add_version_table(sqlpp::sqlite3::connection& in_conn) {
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
       l_info.versionMajor = version::version_major,
-      l_info.versionMinor = version::version_minor));
+      l_info.versionMinor = version::version_minor
+  ));
 }
 
 void set_version(sqlpp::sqlite3::connection& in_conn) {
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::update(l_info).unconditionally().set(
       l_info.versionMajor = version::version_major,
-      l_info.versionMinor = version::version_minor));
+      l_info.versionMinor = version::version_minor
+  ));
 }
 bool has_version_table(sqlpp::sqlite3::connection& in_conn) {
   sql::SqliteMaster l_master{};
   auto l_item = in_conn(
       sqlpp::select(sqlpp::all_of(l_master))
           .from(l_master)
-          .where(l_master.type == "table" && l_master.name == "doodle_info"));
+          .where(l_master.type == "table" && l_master.name == "doodle_info")
+  );
   for (auto&& row : l_item) {
     return true;
   }
@@ -179,7 +177,8 @@ bool db_compatible::has_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {
   auto l_item = in_conn(
       sqlpp::select(sqlpp::all_of(l_master))
           .from(l_master)
-          .where(l_master.type == "table" && l_master.name == "metadatatab"));
+          .where(l_master.type == "table" && l_master.name == "metadatatab")
+  );
   for (auto&& row : l_item) {
     return true;
   }

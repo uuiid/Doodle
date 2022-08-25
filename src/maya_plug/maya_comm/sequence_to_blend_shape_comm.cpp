@@ -98,8 +98,7 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
 
   p_i->startFrame_p < p_i->endFrame_p
       ? void()
-      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}"s,
-                                     p_i->startFrame_p < p_i->endFrame_p});
+      : throw_exception(doodle_error{"开始帧 {} 大于结束帧 {}"s, p_i->startFrame_p < p_i->endFrame_p});
   if (k_prase.isFlagSet(sequence_to_blend_shape_comm_ns::duplicate_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
     bool l_value{};

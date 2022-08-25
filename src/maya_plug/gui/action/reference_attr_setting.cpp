@@ -66,11 +66,9 @@ reference_attr_setting::reference_attr_setting()
     : p_i(std::make_unique<impl>()) {
   title_name_     = std::string{name};
   auto k_ref_view = g_reg()->view<reference_file>();
-  std::transform(k_ref_view.begin(), k_ref_view.end(),
-                 std::back_inserter(p_i->p_handles),
-                 [](auto& in_e) {
-                   return make_handle(in_e);
-                 });
+  std::transform(k_ref_view.begin(), k_ref_view.end(), std::back_inserter(p_i->p_handles), [](auto& in_e) {
+    return make_handle(in_e);
+  });
 }
 
 bool reference_attr_setting::get_file_info() {
