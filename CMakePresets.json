@@ -78,6 +78,15 @@
       ]
     },
     {
+      "name": "doxygen",
+      "description": "doc",
+      "displayName": "生成日志",
+      "configurePreset": "Ninja_release",
+      "targets": [
+        "Doxygen"
+      ]
+    },
+    {
       "name": "debug_maya_plug",
       "description": "调试 maya 插件(maya插件只能使用release调试)",
       "displayName": "调试 doodle maya",
