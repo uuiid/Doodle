@@ -22,27 +22,33 @@ namespace doodle {
 
 doodle_lib* doodle_lib::p_install = nullptr;
 
+class doodle_lib::impl {
+ public:
+  std::shared_ptr<boost::asio::io_context> io_context_{std::make_shared<boost::asio::io_context>()};
+  thread_pool_ptr p_thread_pool{std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2)};
+  logger_ctr_ptr p_log{std::make_shared<logger_ctrl>()};
+  registry_ptr reg{std::make_shared<entt::registry>()};
+
+  scheduler_t loop{};
+  bounded_pool_t loop_bounded_pool{};
+};
+
 doodle_lib::doodle_lib()
-    : p_thread_pool(std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2)),
-      p_log(std::make_shared<logger_ctrl>()),
-      reg(std::make_shared<entt::registry>()),
-      loop(),
-      loop_bounded_pool(),
-      io_context_(std::make_shared<boost::asio::io_context>()) {
+    : ptr(std::make_unique<impl>()) {
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
-  loop_bounded_pool.timiter_ = core_set::getSet().p_max_thread;
+  ptr->loop_bounded_pool.timiter_ = core_set::getSet().p_max_thread;
   /// 创建依赖性
-  reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
+  ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  reg->ctx().emplace<database_info>();
-  reg->ctx().emplace<project>("C:/", "tmp_project");
-  reg->ctx().emplace<project_config::base_config>();
-  reg->ctx().emplace<user>("user"s);
+  ptr->reg->ctx().emplace<database_info>();
+  ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
+  ptr->reg->ctx().emplace<project_config::base_config>();
+  ptr->reg->ctx().emplace<user>("user"s);
 
-  auto& k_sig = reg->ctx().emplace<core_sig>();
-  reg->ctx().emplace<status_info>();
+  auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
+  ptr->reg->ctx().emplace<status_info>();
   k_sig.save.connect(2, []() {
     std::make_shared<database_n::sqlite_file>()
         ->async_save(g_reg()->ctx().at<::doodle::database_info>().path_, [](auto) {
@@ -73,8 +79,23 @@ doodle_lib& doodle_lib::Get() {
   return *p_install;
 }
 
-thread_pool_ptr doodle_lib::get_thread_pool() {
-  return p_thread_pool;
+thread_pool_ptr doodle_lib::get_thread_pool() const {
+  return ptr->p_thread_pool;
+}
+registry_ptr& doodle_lib::reg_attr() const {
+  return ptr->reg;
+}
+scheduler_t& doodle_lib::main_loop_attr() const {
+  return ptr->loop;
+}
+bounded_pool_t& doodle_lib::bounded_pool_attr() const {
+  return ptr->loop_bounded_pool;
+}
+boost::asio::io_context& doodle_lib::io_context_attr() const {
+  return *ptr->io_context_;
+}
+boost::asio::thread_pool& doodle_lib::thread_attr() const {
+  return ptr->p_thread_pool->pool_;
 }
 
 doodle_lib::~doodle_lib() = default;
@@ -84,19 +105,19 @@ thread_pool& g_thread_pool() {
 };
 
 registry_ptr& g_reg() {
-  return doodle_lib::Get().reg;
+  return doodle_lib::Get().reg_attr();
 }
 scheduler_t& g_main_loop() {
-  return doodle_lib::Get().loop;
+  return doodle_lib::Get().main_loop_attr();
 }
 bounded_pool_t& g_bounded_pool() {
-  return doodle_lib::Get().loop_bounded_pool;
+  return doodle_lib::Get().bounded_pool_attr();
 }
 boost::asio::io_context& g_io_context() {
-  return *doodle_lib::Get().io_context_;
+  return doodle_lib::Get().io_context_attr();
 }
 boost::asio::thread_pool& g_thread() {
-  return doodle_lib::Get().p_thread_pool->pool_;
+  return doodle_lib::Get().thread_attr();
 }
 
 }  // namespace doodle
