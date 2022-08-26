@@ -1,19 +1,6 @@
 
 set(doodle_test_list
-        test_core
-        test_external
-        test_metadata
-        test_server
-        test_gui
-        test_image
-        test_win
-        test_std
-        test_lib
-        test_rpc
-        test_entt_type
-        test_work_time
-        test_boost_asio
-        test_gui_template
+
         )
 include(Catch)
 
@@ -22,9 +9,9 @@ foreach (_file_ IN LISTS doodle_test_list)
             doodle_${_file_}
             EXCLUDE_FROM_ALL
             ${_file_}.cpp
-            ../DoodleExe.manifest
-            ../icon.ico
-            ../win_exe.rc
+            ../doodle_exe/main/DoodleExe.manifest
+            ../doodle_exe/main/icon.ico
+            ../doodle_exe/main/win_exe.rc
 
     )
     set_target_properties(doodle_${_file_}

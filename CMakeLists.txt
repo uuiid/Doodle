@@ -110,7 +110,7 @@ set(DOXYGEN_EXCLUDE
         src/doodle_core/generate
         src/doodle_lib/rpc
 
-        src/doodle_exe/main/test
+        src/test
         )
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
 # set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
