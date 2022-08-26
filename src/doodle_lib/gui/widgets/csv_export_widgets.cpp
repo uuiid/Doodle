@@ -174,7 +174,7 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list, co
       "镜头"s,
       "开始时间"s,
       "结束时间"s,
-      "持续时间/h"s,
+      "持续时间/day"s,
       "时间备注"s,
       "备注"s,
       "类别"s,
@@ -238,7 +238,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
       in.all_of<season>()                                                  //
                 ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)  //
                 : ""s;
-
+  using hours_days = chrono::duration<std::double_t, std::ratio<60 * 60 * 8>>;
   table_line l_line{
       k_ass.organization_attr(),                                                                     //"部门"
       k_ass.user_attr().get<user>().get_name(),                                                      //"制作人"
@@ -251,7 +251,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
            : ""s),                                                                                   //"镜头"
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
-      fmt::format("{}", chrono::floor<chrono::hours_double>(k_time).count()),                        //"持续时间"
+      fmt::format("{}", chrono::floor<hours_days>(k_time).count()),                                  //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
