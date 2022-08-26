@@ -11,5 +11,5 @@ add_executable(
         EXCLUDE_FROM_ALL
         lib_create.cpp
 )
-doodle_link_test(test_pinying)
+doodle_link_test(test_lib_create)
 add_test(test_test_lib_create_exe test_lib_create)
