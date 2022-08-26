@@ -9,12 +9,12 @@ macro(doodle_link_test)
             ${PROJECT_SOURCE_DIR}/src/doodle_exe/main/icon.ico
             ${PROJECT_SOURCE_DIR}/src/doodle_exe/main/win_exe.rc
     )
-    set_target_properties(${ARGV0}
-            PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+#    set_target_properties(${ARGV0}
+#            PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     target_link_libraries(${ARGV0}
             PUBLIC
             doodle_lib
-            Catch2::Catch2WithMain
+            Boost::unit_test_framework
             )
     target_compile_definitions(${ARGV0}
             PUBLIC
