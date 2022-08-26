@@ -1,30 +1,28 @@
 
-set(doodle_test_list
 
-        )
-include(Catch)
 
-foreach (_file_ IN LISTS doodle_test_list)
-    add_executable(
-            doodle_${_file_}
-            EXCLUDE_FROM_ALL
-            ${_file_}.cpp
-            ../doodle_exe/main/DoodleExe.manifest
-            ../doodle_exe/main/icon.ico
-            ../doodle_exe/main/win_exe.rc
-
+macro(doodle_link_test)
+    target_sources(
+            ${ARGV0}
+            PRIVATE
+            ${PROJECT_SOURCE_DIR}/src/doodle_exe/main/DoodleExe.manifest
+            ${PROJECT_SOURCE_DIR}/src/doodle_exe/main/icon.ico
+            ${PROJECT_SOURCE_DIR}/src/doodle_exe/main/win_exe.rc
     )
-    set_target_properties(doodle_${_file_}
+    set_target_properties(${ARGV0}
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    target_link_libraries(doodle_${_file_}
+    target_link_libraries(${ARGV0}
             PUBLIC
             doodle_lib
             Catch2::Catch2WithMain
             )
-    target_compile_definitions(doodle_${_file_}
+    target_compile_definitions(${ARGV0}
             PUBLIC
             $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
             )
-    target_compile_options(doodle_${_file_} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)# $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
-    catch_discover_tests(doodle_${_file_})
-endforeach ()
+    target_compile_options(${ARGV0} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
+    # $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
+endmacro()
+
+
+add_subdirectory(core)
