@@ -97,6 +97,9 @@ boost::asio::io_context& doodle_lib::io_context_attr() const {
 boost::asio::thread_pool& doodle_lib::thread_attr() const {
   return ptr->p_thread_pool->pool_;
 }
+bool doodle_lib::operator==(const doodle_lib& in_rhs) const {
+  return ptr == in_rhs.ptr;
+}
 
 doodle_lib::~doodle_lib() = default;
 

@@ -18,7 +18,8 @@ DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
 DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
 DOODLE_CORE_EXPORT boost::asio::thread_pool& g_thread();
 
-class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
+class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy,
+                                      boost::equality_comparable<doodle_lib> {
  private:
   static doodle_lib* p_install;
   class impl;
@@ -38,6 +39,8 @@ class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy {
   bounded_pool_t& bounded_pool_attr() const;
   boost::asio::io_context& io_context_attr() const;
   boost::asio::thread_pool& thread_attr() const;
+
+  bool operator==(const doodle_lib& in_rhs) const;
 };
 
 }  // namespace doodle
