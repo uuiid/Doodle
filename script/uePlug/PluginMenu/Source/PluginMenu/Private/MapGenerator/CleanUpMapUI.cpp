@@ -24,7 +24,8 @@
 
 #define LOCTEXT_NAMESPACE "SCleanUpMapUI"
 
-void SCleanUpMapUI::Construct(const FArguments &InArgs) {
+void SCleanUpMapUI::Construct(const FArguments &InArgs)
+{
   FSlateFontInfo SlateFontInfoContent = FSlateFontInfo(GEditor->GetSmallFont(), 14);
 
   ChildSlot
@@ -178,23 +179,26 @@ void SCleanUpMapUI::Construct(const FArguments &InArgs) {
 }
 
 // Button Action OpenProjectDir
-FReply SCleanUpMapUI::OpenProjcetDir() {
+FReply SCleanUpMapUI::OpenProjcetDir()
+{
   FString OpenDirectory;
   IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
-  bool bOpen                        = false;
+  bool bOpen = false;
 
-  if (DesktopPlatform) {
+  if (DesktopPlatform)
+  {
     bOpen = DesktopPlatform->OpenDirectoryDialog(
         FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
         NSLOCTEXT("MapCreateTool", "", "").ToString(),
         *DefaultOpenProjectDir,
-        OpenDirectory
-    );
+        OpenDirectory);
   }
 
-  if (bOpen) {
-    if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()))) {
+  if (bOpen)
+  {
+    if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())))
+    {
       DefaultOpenProjectDir = OpenDirectory;
       TextPorject->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase)));
       TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase) + "/map"));
@@ -206,24 +210,27 @@ FReply SCleanUpMapUI::OpenProjcetDir() {
 }
 
 // Button Action Open FbxDir
-FReply SCleanUpMapUI::OpenOutputDir() {
+FReply SCleanUpMapUI::OpenOutputDir()
+{
   FString OpenDirectory;
   IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get();
 
-  bool bOpen                        = false;
+  bool bOpen = false;
   FString SceneMap;
 
-  if (DesktopPlatform) {
+  if (DesktopPlatform)
+  {
     bOpen = DesktopPlatform->OpenDirectoryDialog(
         FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
         NSLOCTEXT("MapCreateTool", "", "").ToString(),
         *DefaultOpenOutputDir,
-        OpenDirectory
-    );
+        OpenDirectory);
   }
 
-  if (bOpen) {
-    if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()))) {
+  if (bOpen)
+  {
+    if (OpenDirectory.Contains(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())))
+    {
       DefaultOpenOutputDir = OpenDirectory;
       TextOutput->SetText(FText::FromString(OpenDirectory.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase)));
     }
@@ -231,7 +238,8 @@ FReply SCleanUpMapUI::OpenOutputDir() {
   return FReply::Handled();
 }
 
-TSharedRef<ITableRow> SCleanUpMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase> &OwnerTable) {
+TSharedRef<ITableRow> SCleanUpMapUI::GenerateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase> &OwnerTable)
+{
   return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
       .Padding(2.0f)
           [SNew(STextBlock)
@@ -241,7 +249,8 @@ TSharedRef<ITableRow> SCleanUpMapUI::GenerateList(TSharedPtr<FString> Item, cons
   ];
 }
 
-TSharedRef<ITableRow> SCleanUpMapUI::GenerateMapInfoList(TSharedPtr<FMapInfo> Item, const TSharedRef<STableViewBase> &OwnerTable) {
+TSharedRef<ITableRow> SCleanUpMapUI::GenerateMapInfoList(TSharedPtr<FMapInfo> Item, const TSharedRef<STableViewBase> &OwnerTable)
+{
   return SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
       .Padding(2.0f)
           [SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(1)[SNew(STextBlock).ColorAndOpacity(FLinearColor(0, 0, 0, 1)).Text(FText::FromString(*FConvertPath::GetPackageName(Item->MapPackage)))] + SHorizontalBox::Slot().FillWidth(0.1)[SNew(SCheckBox).ForegroundColor(FLinearColor(0.1, 0.1, 0.2, 1)).IsChecked(Item->bLoaded ? ECheckBoxState::Checked : ECheckBoxState::Unchecked).OnCheckStateChanged(this, &SCleanUpMapUI::SetMapLoad)]
@@ -249,10 +258,12 @@ TSharedRef<ITableRow> SCleanUpMapUI::GenerateMapInfoList(TSharedPtr<FMapInfo> It
   ];
 }
 
-void SCleanUpMapUI::SetMapLoad(ECheckBoxState State) {
+void SCleanUpMapUI::SetMapLoad(ECheckBoxState State)
+{
   TArray<TSharedPtr<FMapInfo>> CurrentSelcetedItems = ListViewMapInfo->GetSelectedItems();
 
-  for (auto Item : CurrentSelcetedItems) {
+  for (auto Item : CurrentSelcetedItems)
+  {
     if (Item->bLoaded)
       Item->bLoaded = false;
     else
@@ -262,7 +273,8 @@ void SCleanUpMapUI::SetMapLoad(ECheckBoxState State) {
   ListViewMapInfo->RequestListRefresh();
 }
 
-void SCleanUpMapUI::SaveInMap(ECheckBoxState State) {
+void SCleanUpMapUI::SaveInMap(ECheckBoxState State)
+{
   IsSaveInMap = CheckBoxMap->IsChecked();
   if (IsSaveInMap)
     CheckBoxShot->SetIsChecked(ECheckBoxState::Unchecked);
@@ -272,7 +284,8 @@ void SCleanUpMapUI::SaveInMap(ECheckBoxState State) {
   ItemsUpdateContent();
 }
 
-void SCleanUpMapUI::SaveInShot(ECheckBoxState State) {
+void SCleanUpMapUI::SaveInShot(ECheckBoxState State)
+{
   IsSaveInMap = !CheckBoxShot->IsChecked();
   if (IsSaveInMap)
     CheckBoxMap->SetIsChecked(ECheckBoxState::Checked);
@@ -282,7 +295,8 @@ void SCleanUpMapUI::SaveInShot(ECheckBoxState State) {
   ItemsUpdateContent();
 }
 
-void SCleanUpMapUI::ItemsUpdateContent() {
+void SCleanUpMapUI::ItemsUpdateContent()
+{
   // TArray<TSharedPtr<FMapInfo>> ItemsMapInfoNew;
   // TArray<TSharedPtr<FString>>  ItemsSequenceNew, ItemsMapPackageNew;
 
@@ -290,56 +304,78 @@ void SCleanUpMapUI::ItemsUpdateContent() {
 
   // Load AnimSequecne From Anim Directory in ProjectPath
   UObjectLibrary *WorldLibrary = UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, GIsEditor);
-  if (WorldLibrary) {
+  if (WorldLibrary)
+  {
     WorldLibrary->AddToRoot();
   }
 
   FString ProjectPath = TextPorject->GetText().ToString();
   FString WorldAssetsPath;
 
-  if (IsSaveInMap) {
+  if (IsSaveInMap)
+  {
     WorldAssetsPath = "/Game/" + ProjectPath + "/map";
     WorldLibrary->LoadAssetDataFromPath(*WorldAssetsPath);
     TArray<FAssetData> WorldAssetsData;
     WorldLibrary->GetAssetDataList(WorldAssetsData);
-    for (auto World : WorldAssetsData) {
+    for (auto World : WorldAssetsData)
+    {
       ItemsMapInfo.Add(MakeShareable(new FMapInfo(World.PackageName.ToString())));
     }
-  } else {
+  }
+  else
+  {
     TArray<FString> SubDirs;
     FString FinalPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) + "/" + ProjectPath + "/" + TEXT("*");
     IFileManager::Get().FindFiles(SubDirs, *FinalPath, false, true);
-    for (auto ShotDir : SubDirs) {
-      if (ShotDir.StartsWith("SC", ESearchCase::IgnoreCase)) {
+    for (auto ShotDir : SubDirs)
+    {
+      if (ShotDir.StartsWith("SC", ESearchCase::IgnoreCase))
+      {
         WorldAssetsPath = "/Game/" + ProjectPath + "/" + ShotDir;
         WorldLibrary->LoadAssetDataFromPath(*WorldAssetsPath);
         TArray<FAssetData> WorldAssetsData;
         WorldLibrary->GetAssetDataList(WorldAssetsData);
-        for (auto World : WorldAssetsData) {
+        for (auto World : WorldAssetsData)
+        {
           ItemsMapInfo.Add(MakeShareable(new FMapInfo(World.PackageName.ToString())));
         }
       }
     }
   }
-  if (ItemsMapInfo.Num()) {
+  if (ItemsMapInfo.Num())
+  {
     ItemsAllSequence.Reset();
 
     FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-    for (int i = 0; i < ItemsMapInfo.Num(); i++) {
+    for (int i = 0; i < ItemsMapInfo.Num(); i++)
+    {
       TArray<FName> SoftdReferencers;
-      AssetRegistryModule.Get().GetReferencers(
+      AssetRegistryModule.Get().GetDependencies(
           FName(*ItemsMapInfo[i]->MapPackage),
           SoftdReferencers,
           UE::AssetRegistry::EDependencyCategory::All,
-          UE::AssetRegistry::EDependencyQuery::Soft
-      );
+          UE::AssetRegistry::EDependencyQuery::Hard |
+              UE::AssetRegistry::EDependencyQuery::Build |
+              UE::AssetRegistry::EDependencyQuery::Game);
+
+      AssetRegistryModule.Get().GetDependencies(
+          FName(*ItemsMapInfo[i]->MapPackage),
+          SoftdReferencers,
+          UE::AssetRegistry::EDependencyCategory::All,
+          UE::AssetRegistry::EDependencyQuery::Soft);
+
       TArray<TSharedPtr<FString>> ItemsSequenceName, ItemsSequencePackage;
 
-      if (SoftdReferencers.Num()) {
-        for (auto Referencer : SoftdReferencers) {
+      if (SoftdReferencers.Num())
+      {
+        for (auto Referencer : SoftdReferencers)
+        {
+          UE_LOG(LogTemp, Log, TEXT("%s"), *Referencer.ToString());
           ULevelSequence *Sequence = LoadObject<ULevelSequence>(NULL, *Referencer.ToString());
-          if (Sequence != nullptr) {
+          if (Sequence != nullptr)
+          {
             ItemsSequencePackage.Add(MakeShareable(new FString(Referencer.ToString())));
             TArray<FString> NameSplit;
             Referencer.ToString().ParseIntoArray(NameSplit, TEXT("/"), true);
@@ -359,29 +395,35 @@ void SCleanUpMapUI::ItemsUpdateContent() {
   ListViewMapInfo->RequestListRefresh();
 }
 
-void SCleanUpMapUI::ShowSequence(TSharedPtr<FMapInfo> Item, ESelectInfo::Type Direct) {
+void SCleanUpMapUI::ShowSequence(TSharedPtr<FMapInfo> Item, ESelectInfo::Type Direct)
+{
   TArray<TSharedPtr<FMapInfo>> CurrentSelcetedItem = ListViewMapInfo->GetSelectedItems();
 
   int32 index;
-  if (CurrentSelcetedItem.Num() == 1) {
+  if (CurrentSelcetedItem.Num() == 1)
+  {
     if (ItemsMapInfo.Find(CurrentSelcetedItem[0], index))
       ListViewSequence->SetListItemsSource(ItemsAllSequence[index]);
-  } else
+  }
+  else
     ListViewSequence->SetListItemsSource(ItemsEmpty);
 
   ListViewSequence->RequestListRefresh();
 }
 
-FReply SCleanUpMapUI::CleanUpMap() {
+FReply SCleanUpMapUI::CleanUpMap()
+{
   FString OutPath = TextOutput->GetText().ToString();
   bool bOverwrite = CheckBoxOverwrite->IsChecked();
 
   if (IFileManager::Get().DirectoryExists(*OutPath))
     IFileManager::Get().MakeDirectory(*OutPath, true);
 
-  if (ItemsMapInfo.Num()) {
+  if (ItemsMapInfo.Num())
+  {
     for (int32 i = 0; i < ItemsMapInfo.Num(); i++)
-      if ((ItemsAllSequencePackage[i].Num()) && (ItemsMapInfo[i]->bLoaded)) {
+      if ((ItemsAllSequencePackage[i].Num()) && (ItemsMapInfo[i]->bLoaded))
+      {
         FString MapPackage = ItemsMapInfo[i]->MapPackage;
         FCreateMapUtils::CleanUpMap(MapPackage, *ItemsAllSequencePackage[i][0], OutPath, bOverwrite);
       }
