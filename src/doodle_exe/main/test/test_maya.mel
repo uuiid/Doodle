@@ -1,2 +1,0 @@
-python("import test_maya");
-python("test_maya.doodle_test()");
