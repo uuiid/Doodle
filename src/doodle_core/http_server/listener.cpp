@@ -12,37 +12,19 @@ class listener::impl {
 };
 listener::listener(boost::asio::ip::tcp::endpoint in_end_point)
     : ptr(std::make_unique<impl>()) {
-  boost::beast::error_code ec;
-
   // Open the acceptor
-  ptr->acceptor_.open(in_end_point.protocol(), ec);
-  if (ec) {
-    //    fail(ec, "open");
-    return;
-  }
+  ptr->acceptor_.open(in_end_point.protocol());
 
   // Allow address reuse
-  ptr->acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
-  if (ec) {
-    //    fail(ec, "set_option");
-    return;
-  }
+  ptr->acceptor_.set_option(boost::asio::socket_base::reuse_address(true));
 
   // Bind to the server address
-  ptr->acceptor_.bind(in_end_point, ec);
-  if (ec) {
-    //    fail(ec, "bind");
-    return;
-  }
+  ptr->acceptor_.bind(in_end_point);
 
   // Start listening for connections
   ptr->acceptor_.listen(
-      boost::asio::socket_base::max_listen_connections, ec
+      boost::asio::socket_base::max_listen_connections
   );
-  if (ec) {
-    //    fail(ec, "listen");
-    return;
-  }
 }
 void listener::run() {
   do_accept();

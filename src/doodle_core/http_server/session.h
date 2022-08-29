@@ -36,6 +36,7 @@ class DOODLE_CORE_EXPORT session : public std::enable_shared_from_this<session> 
   explicit session(
       tcp::socket&& socket
   );
+  virtual ~session();
 
   void run();
   void do_read();

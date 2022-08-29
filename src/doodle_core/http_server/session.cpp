@@ -4,6 +4,9 @@
 
 #include "session.h"
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/lib_warp/boost_fmt_error.h>
 namespace doodle::http_server {
 
 template <
@@ -32,7 +35,8 @@ void handle_request(
   // Returns a not found response
   auto const not_found =
       [&req](boost::beast::string_view target) {
-        boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::not_found, req.version()};
+        boost::beast::http::response<boost::beast::http::string_body>
+            res{boost::beast::http::status::not_found, req.version()};
         res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(boost::beast::http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
@@ -67,14 +71,14 @@ void handle_request(
     return send(bad_request("Illegal request-target"));
 
   // Build the path to the requested file
-  std::string path = path_cat(doc_root, req.target());
+  FSys::path path = std::string{req.target()};
   if (req.target().back() == '/')
     path.append("index.html");
 
   // Attempt to open the file
   boost::beast::error_code ec;
   boost::beast::http::file_body::value_type body;
-  body.open(path.c_str(), boost::beast::file_mode::scan, ec);
+  body.open(path.generic_string().c_str(), boost::beast::file_mode::scan, ec);
 
   // Handle the case where the file doesn't exist
   if (ec == boost::beast::errc::no_such_file_or_directory)
@@ -92,7 +96,7 @@ void handle_request(
     boost::beast::http::response<boost::beast::http::empty_body>
         res{boost::beast::http::status::ok, req.version()};
     res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    res.set(boost::beast::http::field::content_type, mime_type(path));
+    res.set(boost::beast::http::field::content_type, std::string{} /*mime_type(path)*/);
     res.content_length(size);
     res.keep_alive(req.keep_alive());
     return send(std::move(res));
@@ -104,7 +108,7 @@ void handle_request(
       std::make_tuple(std::move(body)),
       std::make_tuple(boost::beast::http::status::ok, req.version())};
   res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  res.set(boost::beast::http::field::content_type, mime_type(path));
+  res.set(boost::beast::http::field::content_type, std::string{} /*mime_type(path)*/);
   res.content_length(size);
   res.keep_alive(req.keep_alive());
   return send(std::move(res));
@@ -164,18 +168,16 @@ void session::on_read(
     return do_close();
 
   if (ec)
-    //    return fail(ec, "read");
-    return;
+    DOODLE_LOG_INFO("{}", ec);
   // Send the response
   handle_request(
-      *ptr->doc_root_, std::move(ptr->req_),
-      [this](
-          auto&& msg
-      ) {
+      *ptr->doc_root_,
+      std::move(ptr->req_),
+      [this](auto&& msg) {
         // The lifetime of the message has to extend
         // for the duration of the async operation so
         // we use a shared_ptr to manage it.
-        auto sp         = std::make_shared<std::decay_t<decltype(msg)>>(std::move(msg));
+        auto sp         = std::make_shared<std::decay_t<decltype(msg)>>(std::forward<decltype(msg)>(msg));
 
         // Store a type-erased version of the shared
         // pointer in the class to keep it alive.
@@ -217,9 +219,8 @@ void session::on_write(
 }
 void session::do_close() {
   // Send a TCP shutdown
-  boost::beast::error_code ec;
-  ptr->stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
-
+  ptr->stream_.socket().shutdown(tcp::socket::shutdown_send);
   // At this point the connection is closed gracefully
 }
+session::~session() = default;
 }  // namespace doodle::http_server
