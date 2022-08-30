@@ -28,9 +28,12 @@ void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor)
         FVector LInVector = InActor->GetActorLocation();
         FVector LSelfVector = LSelfPawn->GetActorLocation();
 
-        FVector LVector = LSelfVector - LInVector;
-        // LVector.RotateAngleAxis()
-        // UE_LOG(LogTemp, Log, TEXT("LVector: %s"), *(LVector.ToString()));
+        FVector LVector = LInVector - LSelfVector;
+        // LVector.Normalize();
+        // FRotator LRot = LVector.Rotation();
+        // DirectionAttrXY = LRot.Yaw;
+        // DirectionAttrZ = LRot.Pitch;
+        // UE_LOG(LogTemp, Log, TEXT("LRot: %s"), *(LRot.ToString()));
         if (!LVector.IsNearlyZero())
         {
             // 此处代码是根据 CalculateDirection 函数来的
@@ -38,8 +41,11 @@ void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor)
                 LSelfPawn->GetBaseAimRotation()};
 
             FVector LXYNormal = LVector.GetSafeNormal2D();
+            FVector LForward = LSelfRot.GetScaledAxis(EAxis::X);
+            // UE_LOG(LogTemp, Log, TEXT("LForward: %s"), *(LForward.ToString()));
+
             // 获取向前矢量和速度(XY平面) 的cos -> 弧度值
-            float ForwardCosAngle = FVector::DotProduct(LSelfRot.GetScaledAxis(EAxis::X), LXYNormal);
+            float ForwardCosAngle = FVector::DotProduct(LForward, LXYNormal);
             // 将弧度值转换为度
             DirectionAttrXY = FMath::RadiansToDegrees(FMath::Acos(ForwardCosAngle));
 
@@ -51,22 +57,25 @@ void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor)
             }
 
             // 这下面是上下角度的代码
-            FVector2D LZNormal2D{LVector.X, LVector.Z};
-            LZNormal2D.Normalize();
-            FVector LZNormal{LZNormal2D.X, 0.0f, LZNormal2D.Y};
+            // FVector2D LZNormal2D{LVector.X, LVector.Z};
+            // LZNormal2D.Normalize();
+            // FVector LXZNormal{LZNormal2D.X, 0.0f, LZNormal2D.Y};
+            FVector LXZNormal = FVector::VectorPlaneProject(LVector, LSelfRot.GetScaledAxis(EAxis::Y));
+            LXZNormal.Normalize();
+            // UE_LOG(LogTemp, Log, TEXT("LXZNormal: %s"), *(LXZNormal.ToString()));
 
-            // 获取向前矢量和速度(XY平面) 的cos -> 弧度值
-            ForwardCosAngle = FVector::DotProduct(LSelfRot.GetScaledAxis(EAxis::X), LZNormal);
+            // 获取向前矢量和速度(XZ平面) 的cos -> 弧度值
+            ForwardCosAngle = FVector::DotProduct(LForward, LXZNormal);
             // 将弧度值转换为度
             DirectionAttrZ = FMath::RadiansToDegrees(FMath::Acos(ForwardCosAngle));
 
             // 判断向前轴和速度方向, 根据结果进行翻转
-            RightCosAngle = FVector::DotProduct(LSelfRot.GetScaledAxis(EAxis::Z), LZNormal);
+            RightCosAngle = FVector::DotProduct(LSelfRot.GetScaledAxis(EAxis::Z), LXZNormal);
             if (RightCosAngle < 0)
             {
                 DirectionAttrZ *= -1;
             }
-            UE_LOG(LogTemp, Log, TEXT("DirectionAttrXY %f DirectionAttrZ: %f"), DirectionAttrXY, DirectionAttrZ);
+            // UE_LOG(LogTemp, Log, TEXT("DirectionAttrXY %f DirectionAttrZ: %f"), DirectionAttrXY, DirectionAttrZ);
         }
     }
 }
