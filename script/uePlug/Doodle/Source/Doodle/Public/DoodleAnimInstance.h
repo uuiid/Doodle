@@ -14,12 +14,17 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance
 public:
     GENERATED_BODY()
     UDoodleAnimInstance();
-
+    UFUNCTION(BlueprintCallable)
     void DoodleCalculateSpeed();
 
+    UFUNCTION(BlueprintCallable)
     void DoodleLookAtObject(const AActor *InActor);
 
 protected:
-    float VelocityAttr;
-    float DirectionAttr;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
+    float VelocityAttr{0.f};
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
+    float DirectionAttrXY{0.f};
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
+    float DirectionAttrZ{0.f};
 };
