@@ -13,6 +13,9 @@
 #include <doodle_core/json_rpc/core/rpc_reply.h>
 
 #include <boost/signals2.hpp>
+
+#include <boost/asio/spawn.hpp>
+
 namespace doodle::json_rpc {
 
 class rpc_request;
@@ -22,8 +25,7 @@ class rpc_server_ref;
 class parser_rpc {
  private:
   std::string json_data_{};
-
-  using string_sig = boost::signals2::signal<void(const std::string&)>;
+  bool is_close{false};
 
  public:
   parser_rpc() = default;
@@ -31,8 +33,7 @@ class parser_rpc {
       : json_data_(std::move(string)) {}
   void json_data_attr(const std::string& in_string);
 
-  std::string operator()(const rpc_server_ref& in_server);
-
-  void operator()(const string_sig& sink, const rpc_server_ref& in_server);
+  std::string operator()(const rpc_server& in_server);
+  [[nodiscard]] explicit operator bool() const;
 };
 }  // namespace doodle::json_rpc

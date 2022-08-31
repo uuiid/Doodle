@@ -51,32 +51,26 @@ session::session(boost::asio::io_context& in_io_context, boost::asio::ip::tcp::s
 void session::start(std::shared_ptr<rpc_server> in_server) {
   ptr->rpc_server_ = std::move(in_server);
   boost::asio::spawn(ptr->io_context_, [self = shared_from_this(), this](const boost::asio::yield_context& yield) {
-    using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
-    static std::function<
-        std::pair<iter_buff, bool>(iter_buff, iter_buff)>
-        l_function{
-            [](iter_buff in_begin, const iter_buff& in_end)
-                -> std::pair<iter_buff, bool> {
-              iter_buff i = std::move(in_begin);
-              while (i != in_end)
-                if (std::isspace(*i++))
-                  return std::make_pair(i, true);
-              return std::make_pair(i, false);
-            }};
-    boost::signals2::signal<void(const std::string&)> l_sig{};
-    l_sig.connect([&](const std::string& in_string) {
-      if (!ptr->socket_.is_open())
-        return;
+    //    using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
+    //    static std::function<
+    //        std::pair<iter_buff, bool>(iter_buff, iter_buff)>
+    //        l_function{
+    //            [](iter_buff in_begin, const iter_buff& in_end)
+    //                -> std::pair<iter_buff, bool> {
+    //              iter_buff i = std::move(in_begin);
+    //              while (i != in_end)
+    //                if (std::isspace(*i++))
+    //                  return std::make_pair(i, true);
+    //              return std::make_pair(i, false);
+    //            }};
 
-      boost::asio::async_write(ptr->socket_, boost::asio::buffer(in_string + division_string), yield);
-    });
     while (!ptr->stop_) {
       boost::system::error_code ec{};
 
       boost::asio::async_read_until(
           ptr->socket_,
           ptr->data_,
-          l_function,
+          end_string,
           yield[ec]
       );
       if (!ec) {
@@ -87,11 +81,11 @@ void session::start(std::shared_ptr<rpc_server> in_server) {
           continue;
 
         ptr->parser_rpc_.json_data_attr(l_ine);
-        ptr->parser_rpc_(l_sig, *ptr->rpc_server_);
-
-        std::string end{end_string};
-        if (ptr->socket_.is_open())
-          boost::asio::async_write(ptr->socket_, boost::asio::buffer(end), yield[ec]);
+        auto l_result_string = ptr->parser_rpc_(*ptr->rpc_server_);
+        if (!ptr->parser_rpc_) {  /// \brief 如果传入的是关闭函数就直接关闭
+          ptr->session_manager_->stop(this->shared_from_this());
+        }
+        boost::asio::async_write(ptr->socket_, boost::asio::buffer(l_result_string + end_string), yield);
       } else {
         ptr->session_manager_->stop(this->shared_from_this());
         break;
@@ -101,10 +95,10 @@ void session::start(std::shared_ptr<rpc_server> in_server) {
 }
 
 void session::stop() {
-  ptr->socket_.close();
   ptr->stop_ = true;
+  ptr->socket_.close();
 }
-void session::session_manager_attr( session_manager* in_session_manager) {
+void session::session_manager_attr(session_manager* in_session_manager) {
   ptr->session_manager_ = in_session_manager;
 }
 session::~session() = default;

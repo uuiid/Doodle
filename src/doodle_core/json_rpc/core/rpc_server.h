@@ -34,15 +34,9 @@ class fun_traits {
 };
 class rpc_server {
  public:
-  using call_fun            = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
-  using json_sig            = boost::signals2::signal<void(const nlohmann::json&)>;
+  using call_fun = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
 
-  using call_fun_coroutines = std::function<void(
-      const json_sig&,
-      const std::optional<nlohmann::json>&
-  )>;
-
-  using call_               = std::variant<call_fun, call_fun_coroutines>;
+  using call_    = call_fun;
 
  private:
  protected:
@@ -60,7 +54,6 @@ class rpc_server {
   virtual void init_register() = 0;
 
   void register_fun(const std::string& in_name, const call_fun& in_call);
-  void register_fun(const std::string& in_name, const call_fun_coroutines& in_call);
 
  protected:
   /**
@@ -106,21 +99,5 @@ class rpc_server {
   virtual call_ operator()(const std::string& in_name) const;
 };
 class session;
-class rpc_server_ref : public rpc_server {
- public:
-  using call_fun            = rpc_server::call_fun;
-  using call_               = rpc_server::call_;
-  using call_fun_coroutines = rpc_server::call_fun_coroutines;
 
-  inline static auto rpc_close_name{"rpc.close"s};
-
- private:
-  std::weak_ptr<rpc_server> server;
-  void init_register() override{};
-
- public:
-  explicit rpc_server_ref(std::weak_ptr<rpc_server> in_server, const std::function<void()>& in_close_fun);
-  call_ operator()(const std::string& in_name) const override;
-  void close_current();
-};
 }  // namespace doodle::json_rpc
