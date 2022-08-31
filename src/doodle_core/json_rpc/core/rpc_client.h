@@ -123,56 +123,6 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type, typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
-  void call_fun(const std::string& in_name, const typename boost::signals2::signal<void(const Result_Type&)>& in_skin, Arg args) {
-    nlohmann::json l_json{};
-
-    rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = false;
-    l_rpc_request.params_   = args;
-
-    l_json                  = l_rpc_request;
-
-    string_sig l_sig{};
-    l_sig.connect([&](const std::string& in_string) {
-      nlohmann::json l_r = nlohmann::json::parse(in_string);
-      auto l_rpc_r       = l_r.template get<rpc_reply>();
-      if (l_rpc_r.result.index() != rpc_reply::err_index) {
-        in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
-      } else {
-        auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
-        l_err_.to_throw();
-      }
-    });
-
-    call_server(l_json.dump(), l_sig);
-  }
-
-  template <typename Result_Type, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
-  void call_fun(const std::string& in_name, const typename boost::signals2::signal<void(const Result_Type&)>& in_skin) {
-    nlohmann::json l_json{};
-
-    rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = false;
-
-    l_json                  = l_rpc_request;
-
-    string_sig l_sig{};
-    l_sig.connect([&](const std::string& in_string) {
-      nlohmann::json l_r = nlohmann::json::parse(in_string);
-      auto l_rpc_r       = l_r.template get<rpc_reply>();
-      if (l_rpc_r.result.index() != rpc_reply::err_index) {
-        in_skin(std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>());
-      } else {
-        auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
-        l_err_.to_throw();
-      }
-    });
-
-    call_server(l_json.dump(), l_sig);
-  }
   void close();
 };
 }  // namespace doodle::json_rpc

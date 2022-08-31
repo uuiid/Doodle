@@ -13,8 +13,8 @@ namespace doodle {
 
 json_rpc_client::json_rpc_client(boost::asio::io_context& in_context, const std::string& in_host, uint16_t in_post)
     : rpc_client(in_context, in_host, in_post) {}
-void json_rpc_client::image_to_move(const image_to_move_sig& in_skin, const std::vector<movie::image_attr>& in_list) {
-  call_fun<json_rpc::args::rpc_json_progress>(json_rpc::rpc_fun_name::image_to_move, in_skin, in_list);
+json_rpc::args::rpc_json_progress json_rpc_client::image_to_move(const std::vector<movie::image_attr>& in_list) {
+  return call_fun<json_rpc::args::rpc_json_progress>(json_rpc::rpc_fun_name::image_to_move, in_list);
 }
 
 }  // namespace doodle
