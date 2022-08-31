@@ -69,6 +69,8 @@ class rpc_client {
     if (l_rpc_r.result.index() == rpc_reply::err_index) {
       auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
       l_err_.to_throw();
+    } else {
+      return std::get<nlohmann::json>(l_rpc_r.result).template get<Result_Type>();
     }
   }
 
