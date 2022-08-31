@@ -19,6 +19,7 @@ class session_manager {
   void start(const std::shared_ptr<Session>& in_session, Args... args) {
     session_list_.emplace(in_session);
     in_session->start(std::forward<Args>(args)...);
+    in_session->session_manager_attr(this);
   };
   void stop(const std::shared_ptr<session>& in_session);
   void stop_all();

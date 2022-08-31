@@ -10,10 +10,10 @@
 namespace boost::asio {
 class io_context;
 }
-
 namespace doodle::json_rpc {
 
-class rpc_server_ref;
+class session_manager;
+class rpc_server;
 class session : public std::enable_shared_from_this<session> {
   class impl;
   std::unique_ptr<impl> ptr;
@@ -26,10 +26,12 @@ class session : public std::enable_shared_from_this<session> {
       boost::asio::ip::tcp::socket in_socket
   );
   virtual ~session();
-  void start(std::shared_ptr<rpc_server_ref> in_server);
-  void stop();
 
  private:
+  friend class session_manager;
+  void start(std::shared_ptr<rpc_server> in_server);
+  void session_manager_attr(session_manager* in_session_manager);
+  void stop();
 };
 
 }  // namespace doodle::json_rpc

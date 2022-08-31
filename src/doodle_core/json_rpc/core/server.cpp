@@ -35,14 +35,7 @@ void server::do_accept() {
           auto l_session = std::make_shared<session>(ptr->io_context_, std::move(in_socket));
           ptr->session_manager_ptr->start(
               l_session,
-              std::make_shared<rpc_server_ref>(
-                  ptr->rpc_server_ptr_,
-                  [            =,
-                   se_wptr     = l_session->weak_from_this(),
-                   session_ptr = ptr->session_manager_ptr]() {
-                    session_ptr->stop(se_wptr.lock());
-                  }
-              )
+              ptr->rpc_server_ptr_
           );
         }
         this->do_accept();

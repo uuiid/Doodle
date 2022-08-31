@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_server.h>
+#include <doodle_core/json_rpc/core/session_manager.h>
 #include <boost/asio/spawn.hpp>
 
 #include <string>
@@ -15,7 +16,7 @@ namespace json_rpc {
 
 class parser_rpc;
 class rpc_server;
-class rpc_server_ref;
+
 class session_manager;
 class session::impl {
  public:
@@ -33,12 +34,13 @@ class session::impl {
   boost::asio::io_context& io_context_;
   boost::asio::ip::tcp::socket socket_;
   parser_rpc parser_rpc_;
-  std::shared_ptr<rpc_server_ref> rpc_server_;
+  std::shared_ptr<rpc_server> rpc_server_;
 
   boost::asio::streambuf data_{};
   std::string msg_{};
 
   bool stop_{false};
+  session_manager* session_manager_;
 };
 
 session::session(boost::asio::io_context& in_io_context, boost::asio::ip::tcp::socket in_socket)
@@ -46,9 +48,21 @@ session::session(boost::asio::io_context& in_io_context, boost::asio::ip::tcp::s
 
       };
 
-void session::start(std::shared_ptr<rpc_server_ref> in_server) {
+void session::start(std::shared_ptr<rpc_server> in_server) {
   ptr->rpc_server_ = std::move(in_server);
   boost::asio::spawn(ptr->io_context_, [self = shared_from_this(), this](const boost::asio::yield_context& yield) {
+    using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
+    static std::function<
+        std::pair<iter_buff, bool>(iter_buff, iter_buff)>
+        l_function{
+            [](iter_buff in_begin, const iter_buff& in_end)
+                -> std::pair<iter_buff, bool> {
+              iter_buff i = std::move(in_begin);
+              while (i != in_end)
+                if (std::isspace(*i++))
+                  return std::make_pair(i, true);
+              return std::make_pair(i, false);
+            }};
     boost::signals2::signal<void(const std::string&)> l_sig{};
     l_sig.connect([&](const std::string& in_string) {
       if (!ptr->socket_.is_open())
@@ -58,18 +72,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
     });
     while (!ptr->stop_) {
       boost::system::error_code ec{};
-      using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
 
-      std::function<
-          std::pair<iter_buff, bool>(iter_buff in_begen, iter_buff in_end)>
-          l_function{
-              [](iter_buff in_begin, const iter_buff& in_end) -> std::pair<iter_buff, bool> {
-                iter_buff i = std::move(in_begin);
-                while (i != in_end)
-                  if (std::isspace(*i++))
-                    return std::make_pair(i, true);
-                return std::make_pair(i, false);
-              }};
       boost::asio::async_read_until(
           ptr->socket_,
           ptr->data_,
@@ -90,7 +93,7 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
         if (ptr->socket_.is_open())
           boost::asio::async_write(ptr->socket_, boost::asio::buffer(end), yield[ec]);
       } else {
-        ptr->rpc_server_->close_current();
+        ptr->session_manager_->stop(this->shared_from_this());
         break;
       }
     }
@@ -100,6 +103,9 @@ void session::start(std::shared_ptr<rpc_server_ref> in_server) {
 void session::stop() {
   ptr->socket_.close();
   ptr->stop_ = true;
+}
+void session::session_manager_attr( session_manager* in_session_manager) {
+  ptr->session_manager_ = in_session_manager;
 }
 session::~session() = default;
 

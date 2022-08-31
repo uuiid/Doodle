@@ -6,6 +6,7 @@
 #include <json_rpc/core/server.h>
 #include <json_rpc/core/session.h>
 
+
 namespace doodle::json_rpc {
 session_manager::session_manager() = default;
 
