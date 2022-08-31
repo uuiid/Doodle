@@ -38,31 +38,7 @@ std::string rpc_client::call_server(const std::string &in_string, bool is_notice
   std::getline(l_istream, l_out);
   return l_out;
 }
-void rpc_client::call_server(const std::string &in_string, const string_sig &in_skin) {
-  boost::asio::write(ptr->client_socket, boost::asio::buffer(in_string + session::division_string));
 
-  boost::asio::streambuf l_r{};
-  //  using iter_buff = boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>;
-
-  //  std::function<std::pair<iter_buff, bool>(iter_buff in_begen, iter_buff in_end)> l_function{
-  //      [](iter_buff in_begin, const iter_buff &in_end) -> std::pair<iter_buff, bool> {
-  //        iter_buff i = std::move(in_begin);
-  //        while (i != in_end)
-  //          if (std::isspace(*i++))
-  //            return std::make_pair(i, true);
-  //        return std::make_pair(i, false);
-  //      }};
-
-  std::istream l_istream{&l_r};
-  while (true) {
-    boost::asio::read_until(ptr->client_socket, l_r, session::end_string);
-    std::string l_out{};
-    std::getline(l_istream, l_out);
-    if (l_out.empty())
-      break;
-    in_skin(l_out);
-  }
-}
 void rpc_client::close() {
   return this->call_fun<void, true>("rpc.close"s);
 }

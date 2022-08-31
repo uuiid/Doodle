@@ -27,7 +27,6 @@ class rpc_client {
 
  protected:
   std::string call_server(const std::string& in_string, bool is_notice);
-  void call_server(const std::string& in_string, const string_sig& in_skin);
 
   template <typename Result_Type, typename Arg, std::enable_if_t<!std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
