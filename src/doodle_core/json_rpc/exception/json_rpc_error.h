@@ -77,7 +77,7 @@ class rpc_error {
   std::string message{};
   std::string data{};
 
-  void to_throw() const {
+  [[noreturn]] void to_throw() const {
     switch (code) {
       case -32700:
         throw parse_error_exception{};
