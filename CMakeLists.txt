@@ -104,13 +104,11 @@ set(DOXYGEN_WARNINGS YES)
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
 set(DOXYGEN_OUTPUT_LANGUAGE Chinese)
-set(DOXYGEN_IMAGE_PATH ${PROJECT_SOURCE_DIR}/doc)
 set(DOXYGEN_EXCLUDE
         src/doodle_lib/external
         src/doodle_lib/resource
         src/doodle_core/generate
         src/doodle_lib/rpc
-
         src/test
         )
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
@@ -128,7 +126,6 @@ set(DOXYGEN_NUM_PROC_THREADS 0)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${PROJECT_SOURCE_DIR}/doc/css/doxygen-awesome.css)
 doxygen_add_docs(Doxygen
         src
-        doc
         )
 
 #[==[
