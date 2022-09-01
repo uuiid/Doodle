@@ -30,7 +30,7 @@ class app_base::impl {
       handlers_next.clear();
     }
     handlers |= ranges::action::remove_if(
-        [&](const typename decltype(this->handlers)::value_type& handler) -> bool {
+        [](const typename decltype(this->handlers)::value_type& handler) -> bool {
           bool l_r{false};
           handler(l_r);
           return l_r;
@@ -105,8 +105,8 @@ void app_base::begin_loop() {
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted)
       return;
-    this->tick_begin();
     this->loop_one();   /// \brief 各种
+    this->tick_begin();
     this->p_i->tick();  /// 渲染
     this->tick_end();   /// 渲染结束
     if (!stop_) {

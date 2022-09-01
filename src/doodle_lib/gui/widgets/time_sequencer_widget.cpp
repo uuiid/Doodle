@@ -255,15 +255,20 @@ class time_sequencer_widget::impl {
     return l_r;
   }
   ImPlotRect get_view2_rect() {
-    auto l_tmp  = work_time_plots;
-    auto l_list = l_tmp | ranges::views::slice(index_begin_, index_view_end);
-    l_list |= ranges::actions::sort;
-    ImPlotRect l_r{
-        std::double_t(index_begin_) - 1,
-        std::double_t(index_view_end + 1),
-        0,
-        l_list.empty() ? std::double_t(8) : l_list.back()};
-    return l_r;
+    auto l_tmp = work_time_plots;
+    if (0 <= index_begin_&&
+        index_begin_ < index_view_end&&
+        index_view_end < l_tmp.size()) {
+      auto l_list = l_tmp | ranges::views::slice(index_begin_, index_view_end);
+      l_list |= ranges::actions::sort;
+      ImPlotRect l_r{
+          std::double_t(index_begin_) - 1,
+          std::double_t(index_view_end + 1),
+          0,
+          l_list.empty() ? std::double_t(8) : l_list.back()};
+      return l_r;
+    }
+    return ImPlotRect{};
   }
 
   std::size_t get_iter_DragPoint(std::double_t in_current) {
@@ -404,8 +409,16 @@ void time_sequencer_widget::render() {
            l_i < std::min(p_i->drag_point_current + 2, (std::int32_t)p_i->time_list.size());
            ++l_i) {
         auto l_tmp = boost::numeric_cast<std::double_t>(l_i);
-        if (l_guard = ImPlot::DragPoint((std::int32_t)l_i, (std::double_t*)&(p_i->time_list_x[l_i]), &(l_tmp), ImVec4{0, 0.9f, 0, 1});
-            l_guard) {
+        if (
+            ImPlot::DragPoint(
+                (std::int32_t)l_i,
+                (std::double_t*)&(p_i->time_list_x[l_i]),
+                &(l_tmp),
+                ImVec4{0, 0.9f, 0, 1},
+                4,
+                ImPlotDragToolFlags_::ImPlotDragToolFlags_Delayed
+            )
+        ) {
           l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
           //          p_i->time_list_y[l_i] = l_i;
           p_i->refresh_DragPoint_time_point(l_i, p_i->time_list_x[l_i]);

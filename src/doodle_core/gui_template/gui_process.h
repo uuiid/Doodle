@@ -308,6 +308,8 @@ class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
 
   void operator()();
 
+  void updata_render();
+
   template <typename Process_t1, typename Executor1, typename... Args1>
   static std::shared_ptr<rear_adapter_t> make_shared(Executor1&& in_io, Args1&&... in_args) {
     using rear_adapter_type = rear_adapter_t;

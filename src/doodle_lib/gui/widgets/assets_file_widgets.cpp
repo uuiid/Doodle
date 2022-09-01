@@ -90,10 +90,6 @@ class assets_file_widgets::impl {
         if (handle_.all_of<database>())
           name = fmt::to_string(handle_.get<database>().get_id());
       }
-
-      //      if (handle_.all_of<image_icon>() && !handle_.get<image_icon>().image) {
-      //        boost::asio::post(make_process_adapter<image_load_task>(g_io_context().get_executor(), handle_));
-      //      }
     }
 
     void compute_size(float max_length) {

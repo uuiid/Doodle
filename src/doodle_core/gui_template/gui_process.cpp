@@ -26,6 +26,8 @@ rear_adapter_t::~rear_adapter_t() {
 rear_adapter_t::executor_type rear_adapter_t::get_executor() const noexcept {
   return this->executor;
 }
+void rear_adapter_t::updata_render() {
+}
 }  // namespace doodle::detail
 void doodle::process_handy_tools::fail() {
   process_state_p = process_state::fail;

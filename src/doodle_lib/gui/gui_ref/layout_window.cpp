@@ -16,6 +16,8 @@
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+
+#include <utility>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 namespace doodle::gui {
 class layout_window::impl {
@@ -130,44 +132,9 @@ void layout_window::init() {
 
 void layout_window::update() {
   p_i->builder_dock();
-  //  if (!p_i->init) {
-  //    /// \brief 这里显示需要的初始化窗口
-  //    call_render<::doodle::edit_widgets>();
-  //    call_render<::doodle::assets_filter_widget>();
-  //    call_render<::doodle::gui::csv_export_widgets>();
-  //    call_render<::doodle::comm_maya_tool>();
-  //    call_render<::doodle::comm_create_video>();
-  //    call_render<::doodle::gui::extract_subtitles_widgets>();
-  //    call_render<::doodle::gui::subtitle_processing>();
-  //    call_render<::doodle::assets_file_widgets>();
-  //    call_render<::doodle::long_time_tasks_widget>();
-  //    call_render<::doodle::gui::time_sequencer_widget>();
-  //    p_i->init = true;
-  //  }
-  //  const ImGuiViewport *viewport = ImGui::GetMainViewport();
-  //  ImGui::SetNextWindowPos(viewport->WorkPos);
-  //  ImGui::SetNextWindowSize(viewport->WorkSize);
-
-  namespace menu_w = gui::config::menu_w;
-  //  call_render(std::string{menu_w::edit_});
-  //  call_render(std::string{menu_w::assets_filter});
-  //
-  //  call_render(std::string{menu_w::csv_export});
-  //  call_render(std::string{menu_w::ue4_widget});
-  //  call_render(std::string{menu_w::comm_maya_tool});
-  //  call_render(std::string{menu_w::comm_create_video});
-  //  call_render(std::string{menu_w::extract_subtitles});
-  //  call_render(std::string{menu_w::subtitle_processing});
-  //
-  //  call_render(std::string{menu_w::assets_file});
-  //  call_render(std::string{menu_w::long_time_tasks});
-  //
-  //  dear::Begin{menu_w::time_edit.data()} && [&, this]() {
-  //    p_i->time_r.tick({}, {});
-  //  };
 }
 void layout_window::add_windows(const std::string &in_name, process_adapter::rear_adapter_weak_ptr in_ptr) {
-  p_i->list_windows[in_name] = in_ptr;
+  p_i->list_windows[in_name] = std::move(in_ptr);
 }
 bool layout_window::has_windows(const std::string &in_name) {
   return !p_i->list_windows[in_name].expired();
