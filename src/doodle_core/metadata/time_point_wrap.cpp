@@ -55,38 +55,6 @@ time_point_wrap::time_point_wrap(
           chrono::seconds{in_seconds}}) {
 }
 
-std::string time_point_wrap::get_week_s() const {
-  auto k_int = get_week_int();
-  std::string k_string{};
-  switch (k_int) {
-    case 0:
-      k_string = "星期日";
-      break;
-    case 1:
-      k_string = "星期一";
-      break;
-    case 2:
-      k_string = "星期二";
-      break;
-    case 3:
-      k_string = "星期三";
-      break;
-    case 4:
-      k_string = "星期四";
-      break;
-    case 5:
-      k_string = "星期五";
-      break;
-    case 6:
-      k_string = "星期六";
-      break;
-    default:
-      k_string = "未知";
-      break;
-  }
-  return k_string;
-}
-
 std::int32_t time_point_wrap::get_week_int() const {
   date::weekday k_weekday{chrono::time_point_cast<date::days>(get_local_time())};
   return boost::numeric_cast<std::int32_t>(k_weekday.c_encoding());

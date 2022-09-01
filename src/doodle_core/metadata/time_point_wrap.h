@@ -100,7 +100,6 @@ class DOODLE_CORE_EXPORT time_point_wrap
   /// @brief 移动运算
   time_point_wrap& operator=(time_point_wrap&& in_other) noexcept;
 
-  [[nodiscard]] std::string get_week_s() const;
   /**
    * @brief 本地时间转换段周索引
    * @warning 此处返回本地时间段周索引
