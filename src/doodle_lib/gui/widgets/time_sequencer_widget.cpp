@@ -256,8 +256,8 @@ class time_sequencer_widget::impl {
   }
   ImPlotRect get_view2_rect() {
     auto l_tmp = work_time_plots;
-    if (0 <= index_begin_&&
-        index_begin_ < index_view_end&&
+    if (0 <= index_begin_ &&
+        index_begin_ < index_view_end &&
         index_view_end < l_tmp.size()) {
       auto l_list = l_tmp | ranges::views::slice(index_begin_, index_view_end);
       l_list |= ranges::actions::sort;
@@ -414,9 +414,7 @@ void time_sequencer_widget::render() {
                 (std::int32_t)l_i,
                 (std::double_t*)&(p_i->time_list_x[l_i]),
                 &(l_tmp),
-                ImVec4{0, 0.9f, 0, 1},
-                4,
-                ImPlotDragToolFlags_::ImPlotDragToolFlags_Delayed
+                ImVec4{0, 0.9f, 0, 1}
             )
         ) {
           l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
