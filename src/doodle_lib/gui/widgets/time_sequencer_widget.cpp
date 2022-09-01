@@ -360,7 +360,7 @@ void time_sequencer_widget::render() {
 
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
-    ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_Time);
+    ImPlot::SetupAxis(ImAxis_X1, nullptr);
     double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
                        p_i->time_list.front().time_point_.get_sys_time()
     )
@@ -380,7 +380,7 @@ void time_sequencer_widget::render() {
     }
     /// \brief 时间折线
     ImPlot::PlotLine("Time Series", p_i->time_list_x.data(), p_i->time_list_y.data(), p_i->time_list.size());
-    ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
+    //    ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
 
     //    {
     //      auto l_guard = p_i->chick_view();
