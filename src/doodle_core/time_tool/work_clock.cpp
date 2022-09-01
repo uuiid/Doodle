@@ -155,7 +155,12 @@ work_clock::get_work_du(
 }
 
 std::string work_clock::debug_print() {
-  return fmt::format("规则 {}  时间段 {}  时间信息 {}", rules_.debug_print(), interval_set_time_, interval_map_time_);
+  return fmt::format(
+      "规则 {}  时间段 {}  时间信息 {}",
+      rules_.debug_print(),
+      interval_set_time_,
+      interval_map_time_
+  );
 
   //  for (auto&& i : interval_map_time_) {
   //    fmt::format("{} ", i.second);
