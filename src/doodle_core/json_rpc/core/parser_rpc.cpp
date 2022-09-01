@@ -14,6 +14,7 @@ std::string parser_rpc::operator()(const rpc_server& in_server) {
   auto rpc_requrst_ = rpc_requrst_json.get<rpc_request>();
 
   if (rpc_requrst_.method_ == "rpc.close") {
+    is_close = true;
     return {};
   }
 
