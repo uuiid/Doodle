@@ -133,7 +133,7 @@ robocopy %my_pwd%build\Ninja_release\html %my_pwd%build\html /s /NFL /NDL
 mkdir %my_pwd%build\html\file
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
 robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
-call ./doc/doc.cmd
+call ./docs/doc.cmd
 
 rmdir /q /s %my_pwd%build\install\bin
 rmdir /q /s %my_pwd%build\install\maya
