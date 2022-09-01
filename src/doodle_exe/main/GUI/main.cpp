@@ -14,16 +14,6 @@
  * @mainpage doodle 工具包
  * @tableofcontents
  *
- * @ref doodle_updata_log \n
- *
- * 基本上是按照版本控制语义来的 <https://semver.org/>
- *
- * @section main_management_tool 主要窗口
- * @section installation_steps 安装步骤
- *
- * 基本上直接安装， 中途不会有问题
- * @warning 尽量在安装路径中不要出现中文
- *
  * @defgroup 主要程序 主要程序
  * @tableofcontents
  * @brief 主要的程序逻辑
