@@ -213,22 +213,6 @@ void update_data::aborted() {
   p_i->stop = true;
 }
 void update_data::update() {
-  switch (p_i->future_.wait_for(0ns)) {
-    case std::future_status::ready: {
-      try {
-        p_i->future_.get();
-        this->succeed();
-      } catch (const doodle_error &error) {
-        DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-        this->fail();
-        throw;
-      }
-      g_reg()->ctx().erase<process_message>();
-      break;
-    }
-    default:
-      break;
-  }
 }
 
 void update_data::operator()(

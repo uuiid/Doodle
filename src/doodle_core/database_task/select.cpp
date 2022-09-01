@@ -289,27 +289,6 @@ void select::init() {
 void select::aborted() {
   p_i->stop = true;
 }
-void select::update() {
-  if (p_i->result.valid()) {
-    switch (p_i->result.wait_for(0ns)) {
-      case std::future_status::ready: {
-        try {
-          p_i->result.get();
-        } catch (const doodle_error& error) {
-          DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-          this->fail();
-          throw;
-        }
-      } break;
-      default:
-        break;
-    }
-  } else {
-    std::swap(g_reg(), p_i->local_reg);
-    this->succeed();
-    g_reg()->ctx().erase<process_message>();
-  }
-}
 
 void select::th_run() {
   if (!FSys::exists(p_i->project)) throw_exception(doodle_error{"数据库不存在 {}", p_i->project});
