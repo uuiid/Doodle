@@ -211,7 +211,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   auto start_time   = get_user_up_time(in);
   auto end_time     = in.get<time_point_wrap>();
   /// \brief 计算持续时间
-  auto k_time       = chrono::floor<chrono::seconds>(work_clock(start_time, end_time));
+  auto k_time       = work_clock(start_time, end_time);
 
   comment k_comm{};
   if (auto l_c = in.try_get<comment>(); l_c)
@@ -232,7 +232,6 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
     k_ass_path = fmt::to_string(fmt::join(++k_ass_path.begin(), k_ass_path.end(), "/"));
   }
   using time_rational = boost::rational<std::uint64_t>;
-  auto l_time         = time_rational{k_time.count(), 60ull * 60ull * 8ull};
 
   auto l_season       =                                                          //"季数"
       in.all_of<season>()                                                  //
@@ -263,17 +262,13 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
 }
 
 time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
-  time_point_wrap l_r{};
-
   auto &&l_time_list = p_i->user_handle[in_handle.get<assets_file>().user_attr().get<user>()];
 
   auto l_it          = ranges::find(l_time_list, in_handle);
   if (l_it == l_time_list.begin()) {
     return in_handle.get<time_point_wrap>().current_month_start();
-  } else if (--l_it == l_time_list.end()) {
-    return in_handle.get<time_point_wrap>().current_month_end();
   } else {
-    return (l_it)->get<time_point_wrap>();
+    return (--l_it)->get<time_point_wrap>();
   }
 }
 
