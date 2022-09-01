@@ -47,6 +47,7 @@ public class doodleEditor : ModuleRules
                 "RenderCore",
                 "RHI",
                 "DeveloperSettings",// 显示设置模块
+                "EditorSubsystem",//子系统依赖
 
                 // 资产自定义模块
                 // "ContentBrowserAssetDataSource"
