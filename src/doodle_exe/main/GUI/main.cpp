@@ -17,23 +17,10 @@
  * @ref doodle_updata_log \n
  *
  * 基本上是按照版本控制语义来的 <https://semver.org/>
- * \n
- * @ref doc/schedule.md "描述" \n
- * \n
- *
- * <a href="./file">下载文件列表</a> \n
- * <a href="./update.html">更新日志</a> \n
- *
- *
  *
  * @section main_management_tool 主要窗口
- * @image html doodle_image/new_prj.gif 主要面板 width=90%
- *
- *
- *
  * @section installation_steps 安装步骤
  *
- * @image html doodle_image/install.gif 安装图像 width=90%
  * 基本上直接安装， 中途不会有问题
  * @warning 尽量在安装路径中不要出现中文
  *
