@@ -410,12 +410,13 @@ void time_sequencer_widget::render() {
            ++l_i) {
         auto l_tmp = boost::numeric_cast<std::double_t>(l_i);
         if (
-            ImPlot::DragPoint(
+            l_guard = ImPlot::DragPoint(
                 (std::int32_t)l_i,
                 (std::double_t*)&(p_i->time_list_x[l_i]),
                 &(l_tmp),
                 ImVec4{0, 0.9f, 0, 1}
-            )
+            );
+            l_guard
         ) {
           l_guard ^ std::make_tuple(l_i, p_i->time_list_x[l_i]);
           //          p_i->time_list_y[l_i] = l_i;
