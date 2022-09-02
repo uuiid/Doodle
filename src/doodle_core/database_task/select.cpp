@@ -144,8 +144,8 @@ class select::impl {
                       auto k_json = nlohmann::json::parse(in_str);
                       entt_tool::load_comm<doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon, doodle::importance, doodle::organization_list, doodle::redirection_path_info>(l_h, k_json);
                       database::save(l_h);
-                      process_message_.message("开始旧版本兼容转换"s);
-                      process_message_.progress_step({1, l_size});
+                      process_message_->message("开始旧版本兼容转换"s);
+                      process_message_->progress_step({1, l_size});
                     }}
             );
         results.emplace_back(l_fun.share());
@@ -166,8 +166,8 @@ class select::impl {
                               ? l_h.get<doodle::project_config::base_config>()
                               : doodle::project_config::base_config{};
                     }
-                    process_message_.message("完成旧版本兼容转换"s);
-                    process_message_.progress_clear();
+                    process_message_->message("完成旧版本兼容转换"s);
+                    process_message_->progress_clear();
                   }}
           );
       results.emplace_back(l_fun.share());
@@ -209,7 +209,7 @@ class select::impl {
                l_size,
                this]() {
                 auto l_json = nlohmann::json::parse(in_json);
-                process_message_.progress_step({1, l_size * 2});
+                process_message_->progress_step({1, l_size * 2});
                 return l_json.get<Type>();
               }}
       );
@@ -254,7 +254,7 @@ class select::impl {
                this]() -> database {
                 database l_database{in_json};
                 l_database.set_id(in_id);
-                process_message_.progress_step({1, l_size * 2});
+                process_message_->progress_step({1, l_size * 2});
                 return l_database;
               }}
       );
