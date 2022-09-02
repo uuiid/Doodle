@@ -33,7 +33,7 @@ work_clock::duration_type work_clock::operator()(
   duration_type l_len{};
   for (auto&& l_i : l_l) {
     l_len += boost::icl::last(l_i) - boost::icl::first(l_i);
-    DOODLE_LOG_INFO("{} -> {} = {}", boost::icl::last(l_i), boost::icl::first(l_i), l_len);
+    DOODLE_LOG_INFO("{} -> {} = {}", boost::icl::last(l_i), boost::icl::first(l_i), chrono::floor<chrono::seconds>(l_len));
   }
   return l_len;
 }
