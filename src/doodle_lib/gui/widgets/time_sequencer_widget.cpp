@@ -360,7 +360,7 @@ void time_sequencer_widget::render() {
 
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
-    ImPlot::SetupAxis(ImAxis_X1, nullptr);
+    ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_::ImPlotScale_Time);
     double t_min = doodle::chrono::floor<doodle::chrono::seconds>(
                        p_i->time_list.front().time_point_.get_sys_time()
     )
