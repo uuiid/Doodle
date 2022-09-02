@@ -34,7 +34,7 @@ class csv_export_widgets::impl {
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
-  std::map<user, std::vector<entt::handle>> user_handle;
+  std::map<entt::handle, std::vector<entt::handle>> user_handle;
 
   std::vector<boost::signals2::scoped_connection> con;
 
@@ -136,7 +136,7 @@ void csv_export_widgets::render() {
     for (auto &&l_u : p_i->list_sort_time) {
       auto l_user_h = l_u.get<assets_file>().user_attr();
       /// \brief 收集用户的配置
-      p_i->user_handle[l_u.get<assets_file>().user_attr().get<user>()].emplace_back(l_u);
+      p_i->user_handle[l_u.get<assets_file>().user_attr()].emplace_back(l_u);
       if (!l_user_h.all_of<business::rules, business::work_clock>()) {
         auto &l_ru   = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
         auto l_tmp_u = business::rules::get_default();
@@ -151,7 +151,10 @@ void csv_export_widgets::render() {
         }
         auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
         l_work_clock.set_rules(l_ru);
-        l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(), p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
+        l_work_clock.set_interval(
+            p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
+            p_i->list_sort_time.back().get<time_point_wrap>().current_month_end()
+        );
         DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user_h.get<user>().get_name(), l_work_clock.debug_print());
       }
     }
@@ -198,17 +201,20 @@ void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list, co
          });
 
   for (auto &&h : l_h) {
-    l_f << fmt::format("{}\n", fmt::join(to_csv_line(h), ","));
+    l_f << fmt::format("{}\n", to_csv_line(h.get<assets_file>().user_attr(), h));
   }
   DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);
 }
-csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handle &in) {
+csv_export_widgets::csv_line csv_export_widgets::to_csv_line(
+    const entt::handle &in_user,
+    const entt::handle &in
+) {
   DOODLE_CHICK(in.any_of<assets_file>(), doodle_error{"缺失文件组件"});
   auto &k_ass       = in.get<assets_file>();
   /// \brief 工作时间计算
-  auto &work_clock  = k_ass.user_attr().get<business::work_clock>();
+  auto &work_clock  = in_user.get<business::work_clock>();
   auto project_root = g_reg()->ctx().at<project>().p_path;
-  auto start_time   = get_user_up_time(in);
+  auto start_time   = get_user_up_time(in_user, in);
   auto end_time     = in.get<time_point_wrap>();
   /// \brief 计算持续时间
   auto k_time       = work_clock(start_time, end_time);
@@ -231,16 +237,18 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   if (p_i->use_first_as_project_name.data && !k_ass_path.empty()) {
     k_ass_path = fmt::to_string(fmt::join(++k_ass_path.begin(), k_ass_path.end(), "/"));
   }
-  using time_rational = boost::rational<std::uint64_t>;
 
-  auto l_season       =                                                          //"季数"
+  auto l_season =                                                          //"季数"
       in.all_of<season>()                                                  //
-                ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)  //
-                : ""s;
-  using hours_days = chrono::duration<std::double_t, std::ratio<60 * 60 * 8>>;
-  table_line l_line{
+          ? fmt::format(p_i->season_fmt_str.data, in.get<season>().p_int)  //
+          : ""s;
+
+  using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
+  using time_rational = boost::rational<std::uint64_t>;
+  time_rational l_time_rational{chrono::floor<chrono::seconds>(k_time).count(), 60ull * 60ull * 8ull};
+  csv_line l_line{
       k_ass.organization_attr(),                                                                     //"部门"
-      k_ass.user_attr().get<user>().get_name(),                                                      //"制作人"
+      in_user.get<user>().get_name(),                                                                //"制作人"
       fmt::format("《{}》 {}", l_prj_name, l_season),                                                //"项目"
       (in.all_of<episodes>()                                                                         //
            ? fmt::format(p_i->episodes_fmt_str.data, in.get<episodes>().p_episodes)                  //
@@ -250,7 +258,7 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
            : ""s),                                                                                   //"镜头"
       fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
       fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
-      fmt::format("{}", chrono::floor<hours_days>(k_time).count()),                                  //"持续时间"
+      fmt::format("{}", boost::rational_cast<std::double_t>(l_time_rational)),                       //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
       k_ass_path.generic_string(),                                                                   //"类别"
@@ -261,8 +269,8 @@ csv_export_widgets::table_line csv_export_widgets::to_csv_line(const entt::handl
   return l_line;
 }
 
-time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_handle) {
-  auto &&l_time_list = p_i->user_handle[in_handle.get<assets_file>().user_attr().get<user>()];
+time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_user, const entt::handle &in_handle) {
+  auto &&l_time_list = p_i->user_handle[in_user];
 
   auto l_it          = ranges::find(l_time_list, in_handle);
   if (l_it == l_time_list.begin()) {

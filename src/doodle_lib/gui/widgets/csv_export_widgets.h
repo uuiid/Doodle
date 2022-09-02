@@ -9,6 +9,25 @@ namespace doodle::gui {
 
 class DOODLELIB_API csv_export_widgets
     : public window_panel {
+ public:
+  class csv_line {
+   public:
+    std::string organization_;
+    std::string user_;
+    std::string season_name_;
+    std::string episodes_;
+    std::string shot_;
+    std::string start_time_;
+    std::string end_time_;
+    std::string len_time_;
+    std::string time_info_;
+    std::string comment_info_;
+    std::string file_path_;
+    std::string name_attr_;
+    std::string cutoff_attr_;
+  };
+
+ private:
   class impl;
   std::unique_ptr<impl> p_i;
   using table_line = std::array<std::string, 13>;
@@ -18,14 +37,14 @@ class DOODLELIB_API csv_export_widgets
    * @param in
    * @return entt::handle
    */
-  time_point_wrap get_user_up_time(const entt::handle& in);
+  time_point_wrap get_user_up_time(const entt::handle& in_user, const entt::handle& in);
   /**
    * @brief 导出单行使用的函数
    *
    * @param in 传入的一行实体
    * @return table_line 返回的一行
    */
-  table_line to_csv_line(const entt::handle& in);
+  csv_line to_csv_line(const entt::handle& in_user, const entt::handle& in);
   /**
    * @brief 导出单张表使用的函数
    *
@@ -54,3 +73,47 @@ class [[maybe_unused]] init_class
     : public init_register::registrar_lambda<init, 3> {};
 }  // namespace csv_export_widgets_ns
 }  // namespace doodle::gui
+
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<::doodle::gui::csv_export_widgets::csv_line> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const ::doodle::gui::csv_export_widgets::csv_line& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
+    fmt::format_to(
+        ctx.out(),
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{},"
+        "{}",
+        in_.organization_,
+        in_.user_,
+        in_.season_name_,
+        in_.episodes_,
+        in_.shot_,
+        in_.start_time_,
+        in_.end_time_,
+        in_.len_time_,
+        in_.time_info_,
+        in_.comment_info_,
+        in_.file_path_,
+        in_.name_attr_,
+        in_.cutoff_attr_
+    );
+    return ctx.out();
+  }
+};
+}  // namespace fmt

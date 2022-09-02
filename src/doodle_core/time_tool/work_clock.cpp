@@ -31,9 +31,10 @@ work_clock::duration_type work_clock::operator()(
   auto l_d = discrete_interval_time::closed(in_min, in_max);
   auto l_l = interval_set_time_ & l_d;
   duration_type l_len{};
-  for (auto&& l_i : l_l) {
-    l_len += boost::icl::last(l_i) - boost::icl::first(l_i);
-    DOODLE_LOG_INFO("{} -> {} = {}", boost::icl::last(l_i), boost::icl::first(l_i), chrono::floor<chrono::seconds>(l_len));
+  for (const auto& l_i : l_l) {
+    l_len += (l_i.upper() - l_i.lower());
+    //    l_len += (boost::icl::upper(l_i).get_sys_time() - boost::icl::lower(l_i).get_sys_time());
+    //    DOODLE_LOG_INFO("{} -> {} = {}", l_i.upper(), l_i.lower(), chrono::floor<chrono::seconds>(l_len));
   }
   return l_len;
 }
@@ -46,7 +47,7 @@ work_clock::time_type work_clock::next_time(
   auto l_l = interval_set_time_ & l_d;
   duration_type l_len{};
   for (auto&& l_i : l_l) {
-    auto l_en_t = boost::icl::last(l_i) - boost::icl::first(l_i);
+    auto l_en_t = boost::icl::upper(l_i) - boost::icl::lower(l_i);
     if ((l_en_t + l_len) > in_du) {
       return boost::icl::first(l_i) +
              doodle::chrono::floor<doodle::chrono::seconds>(in_du - l_len);
