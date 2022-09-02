@@ -30,7 +30,6 @@ class DOODLELIB_API csv_export_widgets
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-  using table_line = std::array<std::string, 13>;
   /**
    * @brief Get the user next time object 获取上一次人物提交时的实体文件
    *

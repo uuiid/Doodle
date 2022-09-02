@@ -169,21 +169,26 @@ void csv_export_widgets::render() {
 }
 void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list, const FSys::path &in_export_file_path) {
   FSys::ofstream l_f{in_export_file_path};
-  static const table_line l_tile{
-      "部门"s,
-      "制作人"s,
-      "项目"s,
-      "集数"s,
-      "镜头"s,
-      "开始时间"s,
-      "结束时间"s,
-      "持续时间/day"s,
-      "时间备注"s,
-      "备注"s,
-      "类别"s,
-      "名称"s,
-      "等级"s};
-  l_f << fmt::format("{}\n", fmt::join(l_tile, ","));  /// @brief 标题
+  l_f << fmt::format(
+      "{}\n",
+      fmt::join(
+          std::vector<std::string>{
+              "部门"s,
+              "制作人"s,
+              "项目"s,
+              "集数"s,
+              "镜头"s,
+              "开始时间"s,
+              "结束时间"s,
+              "持续时间/day"s,
+              "时间备注"s,
+              "备注"s,
+              "类别"s,
+              "名称"s,
+              "等级"s},
+          ","
+      )
+  );  /// @brief 标题
 
   std::vector<entt::handle> l_h{in_list};
   /// 按照 季数 -> 集数 -> 镜头 排序
