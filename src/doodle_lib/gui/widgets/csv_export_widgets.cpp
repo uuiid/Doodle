@@ -132,28 +132,28 @@ void csv_export_widgets::render() {
     //                         ranges::to_vector;
     //    l_user_vector |= ranges::actions::unique;
     p_i->user_handle.clear();
-    for (auto &&l_u : p_i->list_sort_time) {
-      p_i->user_handle[l_u.get<assets_file>().user_attr().get<user>()].emplace_back(l_u);
-    }
     /// \brief 这里设置一下时钟规则
-
-    for (auto &&l_u : p_i->user_handle) {
-      auto l_user_h = l_u.second.front().get<assets_file>().user_attr();
-      auto &l_ru    = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
-      auto l_tmp_u  = business::rules::get_default();
-      if (l_ru.work_time().empty()) {
-        l_ru.work_time() = l_tmp_u.work_time();
-        if (l_ru.work_weekdays().none()) {
+    for (auto &&l_u : p_i->list_sort_time) {
+      auto l_user_h = l_u.get<assets_file>().user_attr();
+      /// \brief 收集用户的配置
+      p_i->user_handle[l_u.get<assets_file>().user_attr().get<user>()].emplace_back(l_u);
+      if (!l_user_h.all_of<business::rules, business::work_clock>()) {
+        auto &l_ru   = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
+        auto l_tmp_u = business::rules::get_default();
+        if (l_ru.work_time().empty()) {
+          l_ru.work_time() = l_tmp_u.work_time();
+          if (l_ru.work_weekdays().none()) {
+            l_ru.work_weekdays(l_tmp_u.work_weekdays());
+          }
+        }
+        if (l_ru.extra_work().empty() && l_ru.work_weekdays().none()) {
           l_ru.work_weekdays(l_tmp_u.work_weekdays());
         }
+        auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
+        l_work_clock.set_rules(l_ru);
+        l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(), p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
+        DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user_h.get<user>().get_name(), l_work_clock.debug_print());
       }
-      if (l_ru.extra_work().empty() && l_ru.work_weekdays().none()) {
-        l_ru.work_weekdays(l_tmp_u.work_weekdays());
-      }
-      auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
-      l_work_clock.set_rules(l_ru);
-      l_work_clock.set_interval(p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(), p_i->list_sort_time.back().get<time_point_wrap>().current_month_end());
-      DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_u.first.get_name(), l_work_clock.debug_print());
     }
 
     if (p_i->list.empty()) {
