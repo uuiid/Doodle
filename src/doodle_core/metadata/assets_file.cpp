@@ -63,6 +63,7 @@ assets_file::assets_file(const FSys::path& in_path)
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
   user_attr(user::get_current_handle());
+  p_i->organization_p = core_set::getSet().organization_name;
 }
 
 assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version)
