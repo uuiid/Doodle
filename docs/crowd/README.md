@@ -6,7 +6,7 @@
 
 #### 创建多个post帧
 
-需要创建多个静止姿势为瞄准偏移做准备![](image_/crowd_000.png)  
+需要创建多个静止姿势为瞄准偏移做准备![test](image_/crowd_000.png)  
 首先选中导入的fbx动画序列![](image_/crowd_001.png),_由于改动后需要保存, 可也先复制出一个_,
 使用右键打开菜单后选中**在新窗口中打开**![](image_/crowd_002.png),
 将游标移动到序列中想要的post帧![](image_/crowd_004.png),
@@ -61,4 +61,19 @@
 
 ### 创建pawn类
 
+在资源管理器中右键弹出操作菜单,选中**蓝图类**进行创建![](image_/crowd_125.png),
+其中类的选择可是pawn类,或者角色类![](image_/crowd_126.png), 并双击打开刚刚创建的类![](image_/crowd_128.png),
+在左侧拖入**骨骼物体**![](image_/crowd_130.png),并选中**视口窗口**![](image_/crowd_131.png),
+将**人物和箭头方向对齐![img.png](img.png)**![](image_/crowd_132.png),之后选中拖入的**
+骨骼网格体**![](image_/crowd_130.png),
+将动画类更改为上一步创建的类![](image_/crowd_136.png), 并点击**编译按钮**![](image_/crowd_141.png)
+
 ### 在导演蓝图中创建委托
+
+将上一步创建的**蓝图类**拖入**Sequencer**中![](image_/crowd_148.png),点击**轨道按钮**![](image_/crowd_149.png),
+弹出动作菜单,并点击拖入的骨骼物体,将骨骼物体添加到轨道中![](image_/crowd_150.png),
+在骨骼物体的右侧再次点击**轨道按钮**, ![](image_/crowd_151.png),选中第四步创建的**动画实例**![](image_/crowd_153.png),
+在动画实例中再次点击**轨道按钮**![](image_/crowd_154.png),在轨道菜单中, 选择事件子菜单中的中继器![](image_/crowd_155.png),
+完成后双击添加的轨道
+
+
