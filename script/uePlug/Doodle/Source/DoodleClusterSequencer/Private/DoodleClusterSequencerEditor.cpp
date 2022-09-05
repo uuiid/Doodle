@@ -126,7 +126,7 @@ bool FDoodleClusterTrackEditor::SupportsSequence(UMovieSceneSequence *InSequence
 }
 bool FDoodleClusterTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
 {
-  return Type == UDoodleAnimInstance::StaticClass();
+  return Type == UMovieSceneDoodleClusterTrack::StaticClass();
 }
 
 #undef LOCTEXT_NAMESPACE

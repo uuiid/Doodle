@@ -12,14 +12,14 @@ class FImportedEntity;
 
 UCLASS()
 class DOODLECLUSTER_API UDoodleClusterSection
-    : public UMovieSceneSection,
-      public IMovieSceneEntityProvider
+    : public UMovieSceneSection
+//   public IMovieSceneEntityProvider
 {
     GENERATED_BODY()
 
 public:
-    virtual void ImportEntityImpl(
-        UMovieSceneEntitySystemLinker *EntityLinker,
-        const FEntityImportParams &Params,
-        FImportedEntity *OutImportedEntity) override;
+    // virtual void ImportEntityImpl(
+    //     UMovieSceneEntitySystemLinker *EntityLinker,
+    //     const FEntityImportParams &Params,
+    //     FImportedEntity *OutImportedEntity) override;
 };
