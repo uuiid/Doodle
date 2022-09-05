@@ -12,8 +12,8 @@ IMPLEMENT_MODULE(FDoodleClusterSequencerModule, DoodleClusterSequencer);
 void FDoodleClusterSequencerModule::StartupModule()
 {
     ISequencerModule &SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-    // TrackEditorBindingHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(
-    //     &FDoodleClusterTrackEditor::CreateTrackEditor));
+    TrackEditorBindingHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(
+        &FDoodleClusterTrackEditor::CreateTrackEditor));
 }
 
 void FDoodleClusterSequencerModule::ShutdownModule()
@@ -21,7 +21,7 @@ void FDoodleClusterSequencerModule::ShutdownModule()
     ISequencerModule *SequencerModulePtr = FModuleManager::Get().GetModulePtr<ISequencerModule>("Sequencer");
     if (SequencerModulePtr)
     {
-        // SequencerModulePtr->UnRegisterTrackEditor(TrackEditorBindingHandle);
+        SequencerModulePtr->UnRegisterTrackEditor(TrackEditorBindingHandle);
     }
 }
 

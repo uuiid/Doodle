@@ -54,30 +54,8 @@ public:
   // 构造编辑小部件
   virtual TSharedPtr<SWidget> BuildOutlinerEditWidget(const FGuid &ObjectBinding, UMovieSceneTrack *Track, const FBuildEditWidgetParams &Params) override;
   // virtual const FSlateBrush *GetIconBrush() const overriFde;
+
+  private:
+  void AddNewObjectBindingTrack(TArray<FGuid> InObjectBindings) const;
 };
 
-class FDoodleClusterSection
-    : public ISequencerSection,
-      public TSharedFromThis<FDoodleClusterSection>
-{
-public:
-  /** Constructor. */
-  FDoodleClusterSection(UMovieSceneSection &InSection, TWeakPtr<ISequencer> InSequencer);
-
-  /** Virtual destructor. */
-  virtual ~FDoodleClusterSection() {}
-
-public:
-  // ISequencerSection interface
-
-  virtual UMovieSceneSection *GetSectionObject() override { return {}; };
-  virtual FText GetSectionTitle() const override { return {}; };
-  virtual float GetSectionHeight() const override { return {}; };
-  virtual int32 OnPaintSection(FSequencerSectionPainter &Painter) const override { return {}; };
-  virtual void BeginResizeSection() override{};
-  virtual void ResizeSection(ESequencerSectionResizeMode ResizeMode, FFrameNumber ResizeTime) override{};
-  virtual void BeginSlipSection() override{};
-  virtual void SlipSection(FFrameNumber SlipTime) override{};
-  virtual void BeginDilateSection() override{};
-  virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override{};
-};
