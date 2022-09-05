@@ -10,19 +10,12 @@
 /**
  * The public interface to this module
  */
-class FDoodleClusterSequencerModule : public IModuleInterface {
- public:
-  virtual void StartupModule() override {
-    ISequencerModule &SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");
-    // TrackEditorBindingHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FGeometryCacheTrackEditor::CreateTrackEditor));
-  }
+class FDoodleClusterSequencerModule : public IModuleInterface
+{
+public:
+  virtual void StartupModule() override;
 
-  virtual void ShutdownModule() override {
-    ISequencerModule *SequencerModulePtr = FModuleManager::Get().GetModulePtr<ISequencerModule>("Sequencer");
-    if (SequencerModulePtr) {
-      // SequencerModulePtr->UnRegisterTrackEditor(TrackEditorBindingHandle);
-    }
-  }
+  virtual void ShutdownModule() override;
 
   FDelegateHandle TrackEditorBindingHandle;
 };

@@ -63,8 +63,8 @@ public class DoodleClusterSequencer : ModuleRules
                 "CinematicCamera",// 相机模块
                 // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
-                "DoodleCluster"//我们自己的序列
-                // "Projects",
+                "DoodleCluster",//我们自己的序列
+                "doodle",
                 // "InputCore",
                 // "CoreUObject",
                 // "Engine",
