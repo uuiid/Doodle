@@ -1,7 +1,0 @@
-FROM mysql:8.0
-
-# WORKDIR /doodle
-# COPY doodle_create_table.sql doodle_create_table.sql
-ADD doodle_create_table.sql /docker-entrypoint-initdb.d
-# RUN mysql -u root -p'$MYSQL_ROOT_PASSWORD' -e "create schema doodle";
-# RUN mysql -u root -p'$MYSQL_ROOT_PASSWORD' doodle < doodle_create_table.sql

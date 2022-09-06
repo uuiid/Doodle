@@ -1,4 +1,0 @@
-# FROM mcr.microsoft.com/powershell:lts-windowsservercore-1909
-FROM mcr.microsoft.com/powershell:lts-nanoserver-1909
-ADD bin /bin
-CMD [ "/bin/DoodleServerExe.exe" ]
