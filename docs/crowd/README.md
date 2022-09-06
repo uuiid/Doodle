@@ -71,10 +71,10 @@
 并点击**编译**和**保存**![](image_/img_2.png ':size=30*30'),
 最终结果完成![](image_/img_14.png ':size=30*30')
 
-### 创建pawn类
+### 创建Character类
 
 在资源管理器中右键弹出操作菜单,选中**蓝图类**进行创建![](image_/crowd_125.png ':size=30*30'),
-其中类的选择可是pawn类,或者角色类![](image_/crowd_126.png ':size=30*30'),
+其中类的选择是Character(**角色**)类![](image_/img_15.png ':size=30*30'),
 并双击打开刚刚创建的类![](image_/crowd_128.png ':size=30*30'),
 在左侧拖入**骨骼物体**![](image_/crowd_130.png ':size=30*30'),并选中**视口窗口**
 ![](image_/crowd_131.png ':size=30*30'),
