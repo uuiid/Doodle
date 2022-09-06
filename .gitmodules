@@ -4,10 +4,6 @@
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "src/doodle_lib/external/im-neo-sequencer"]
-	path = src/doodle_lib/external/im-neo-sequencer
-	url = https://gitlab.com/GroGy/im-neo-sequencer.git
-	branch = main
 [submodule "src/doodle_lib/external/IconFontCppHeaders"]
 	path = src/doodle_lib/external/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
