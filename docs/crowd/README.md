@@ -74,13 +74,8 @@
 弹出动作菜单,并点击拖入的骨骼物体,将骨骼物体添加到轨道中![](image_/crowd_150.png ':size=30*30'),
 在骨骼物体的右侧再次点击**轨道按钮**, ![](image_/crowd_151.png ':size=30*30'),选中第四步创建的**动画实例**![](image_/crowd_153.png ':size=30*30'),
 在动画实例中再次点击**轨道按钮**![](image_/crowd_154.png ':size=30*30'),在轨道菜单中,
-选择事件子菜单中的中继器![](image_/crowd_155.png ':size=30*30'),
-完成后双击添加的轨道打开导演蓝图![](image_/img_3.png ':size=30*30'),在**创建的节点**中, 拖出第二项连接![](image_/crowd_169.png ':size=30*30'),
-搜索 **doodle**, 找到**Doodle Lock at Object** ![img.png](img.png ':size=30*30')并创建节点![img_1.png](img_1.png ':size=30*30'),
-将**Sequencer**中, **需要看向的物体**![](image_/crowd_180.png ':size=30*30')拖入导演蓝图中,
-并将节点的连接拖出, ![](image_/crowd_186.png ':size=30*30')并搜索**get**![](image_/crowd_190.png ':size=30*30'),
-创建获取绑定的**actor**![](image_/crowd_191.png ':size=30*30'),在之后创建如下的连接![](image_/crowd_200.png ':size=30*30'),
-最后点击编译选项![](image_/crowd_201.png ':size=30*30'),完成最后的工作
+选择事件子菜单**Doodle Cluster**选项添加自定义轨道![](image_/img_4.png),
+之后点击右键![](image_/img_5.png),调整 **doodle lock at object** 属性为看向目标
 
 
 
