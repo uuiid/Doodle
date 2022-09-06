@@ -14,8 +14,8 @@ echo -----------------pack---------------------
 if %errorlevel% NEQ 0 exit 1
 
 echo -----------------copy file--------------------
-mkdir %my_pwd%build\html\file
-robocopy %my_pwd%build\install %my_pwd%build\html\file *.msi
-robocopy %my_pwd%build\install %my_pwd%build\html\file *.7z
+mkdir %my_pwd%\build\html\file
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
 
 

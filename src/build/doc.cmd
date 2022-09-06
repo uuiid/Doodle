@@ -1,12 +1,4 @@
-set my_pwd=%~dp0
-echo %my_pwd%
-
-echo -----------------set env--------------------
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-
-cd %my_pwd%/..
-
-call ./.venv/Scripts/activate.bat
+call ./set_venv.cmd
 
 echo -----------------build doxygen--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^

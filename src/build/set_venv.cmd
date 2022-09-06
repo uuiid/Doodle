@@ -13,9 +13,9 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary
 cd %my_pwd%/../..
 
 set my_pwd=%cd%
+call %my_pwd%/.venv/Scripts/activate.bat
 
 goto end
-
 
 :end
 
