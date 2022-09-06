@@ -20,6 +20,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Doodle")
     void DoodleLookAtObject(const AActor *InActor);
 
+    void DoodleRandom();
+
+    void NativeBeginPlay() override;
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
     float VelocityAttr{0.f};
@@ -27,4 +31,8 @@ protected:
     float DirectionAttrXY{0.f};
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
     float DirectionAttrZ{0.f};
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
+    float RandomAttr{0.f};
+
+    float RandomAttr_InstallValue;
 };

@@ -18,6 +18,7 @@ void UDoodleAnimInstance::DoodleCalculateSpeed()
             LPawn->GetBaseAimRotation());
     }
 }
+
 void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor)
 {
     // const APawn *LInPawn = Cast<const APawn>(InActor);
@@ -78,4 +79,26 @@ void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor)
             // UE_LOG(LogTemp, Log, TEXT("DirectionAttrXY %f DirectionAttrZ: %f"), DirectionAttrXY, DirectionAttrZ);
         }
     }
+}
+
+void UDoodleAnimInstance::DoodleRandom()
+{
+    // 获得物体创建时间
+    float time = GetOwningActor()->GetGameTimeSinceCreation() / 2.0f + RandomAttr_InstallValue;
+
+    // 生成噪波函数
+    float noise = FMath::PerlinNoise1D(time);
+    noise = FMath::Abs(noise);
+    // FMath::DivideAndRoundNearest()
+
+    // 获得最大和最小猪
+    float tmp_Clamp = FMath::Clamp(noise, 0.25f, 0.75f);
+    RandomAttr = FMath::GetMappedRangeValueClamped({0.25f, 0.75f}, {0.0f, 1.0f}, noise);
+    UE_LOG(LogTemp, Log, TEXT("RandomAttr %f "), RandomAttr);
+}
+
+void UDoodleAnimInstance::NativeBeginPlay()
+{
+    UAnimInstance::NativeBeginPlay();
+    RandomAttr_InstallValue = FMath::RandRange(0.0, 256.0f);
 }

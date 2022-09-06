@@ -56,6 +56,7 @@ struct FEventTrackExecutionTokenDOodle
                     {
 
                         L_Anim->DoodleLookAtObject(L_Lock_Object);
+                        L_Anim->DoodleRandom();
                         // UE_LOG(LogTemp, Log, TEXT("APawn *L_Pawn = L_Anim->TryGetPawnOwner()"));
                         if (APawn *L_Pawn = L_Anim->TryGetPawnOwner())
                         {
