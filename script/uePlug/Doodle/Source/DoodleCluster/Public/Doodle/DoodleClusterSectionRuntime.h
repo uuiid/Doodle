@@ -12,14 +12,29 @@ class FImportedEntity;
 
 UCLASS()
 class DOODLECLUSTER_API UDoodleClusterSection
-    : public UMovieSceneSection
-//   public IMovieSceneEntityProvider
+    : public UMovieSceneSection,
+      public IMovieSceneEntityProvider
 {
     GENERATED_BODY()
 
 public:
-    // virtual void ImportEntityImpl(
-    //     UMovieSceneEntitySystemLinker *EntityLinker,
-    //     const FEntityImportParams &Params,
-    //     FImportedEntity *OutImportedEntity) override;
+    /// 开始 IMovieSceneEntityProvider 接口
+    virtual void ImportEntityImpl(
+        UMovieSceneEntitySystemLinker *EntityLinker,
+        const FEntityImportParams &Params,
+        FImportedEntity *OutImportedEntity) override;
+
+protected:
+    // 开始 UMovieSceneSection 接口
+    // virtual TOptional<TRange<FFrameNumber>> GetAutoSizeRange() const override;
+    // virtual void TrimSection(FQualifiedFrameTime TrimTime, bool bTrimLeft, bool bDeleteKeys) override;
+    // virtual UMovieSceneSection *SplitSection(FQualifiedFrameTime SplitTime, bool bDeleteKeys) override;
+    // virtual void GetSnapTimes(TArray<FFrameNumber> &OutSnapTimes, bool bGetSectionBorders) const override;
+    // virtual TOptional<FFrameTime> GetOffsetTime() const override;
+
+private:
+public:
+    /** 这个是看向的物体 */
+    UPROPERTY(EditAnywhere, Category = "Section")
+    FMovieSceneObjectBindingID DoodleLockAtObject;
 };

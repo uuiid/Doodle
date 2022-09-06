@@ -25,6 +25,6 @@ struct FMovieSceneDoodleSectionClusterTemplate : public FMovieSceneEvalTemplate
         const FPersistentEvaluationData &PersistentData,
         FMovieSceneExecutionTokens &ExecutionTokens) const override;
 
-    // UPROPERTY()
-    // FMovieSceneDoodleSectionClusterTemplateParameters Params;
+    UPROPERTY()
+   const UDoodleClusterSection * Params;
 };

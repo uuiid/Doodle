@@ -16,6 +16,8 @@ class FMenuBuilder;
 class FSequencerSectionPainter;
 class UMovieSceneGeometryCacheSection;
 class UMovieSceneSequence;
+class UMovieSceneSection;
+class UDoodleClusterSection;
 
 class FDoodleClusterSection
     : public ISequencerSection,
@@ -29,7 +31,7 @@ public:
     virtual ~FDoodleClusterSection();
 
 public:
-    // ISequencerSection interface
+    // 开始 ISequencerSection interface
 
     virtual UMovieSceneSection *GetSectionObject() override;
     virtual FText GetSectionTitle() const override;
@@ -37,8 +39,12 @@ public:
     virtual int32 OnPaintSection(FSequencerSectionPainter &Painter) const override;
     virtual void BeginResizeSection() override;
     virtual void ResizeSection(ESequencerSectionResizeMode ResizeMode, FFrameNumber ResizeTime) override;
-    virtual void BeginSlipSection() override;
-    virtual void SlipSection(FFrameNumber SlipTime) override;
-    virtual void BeginDilateSection() override;
-    virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override;
+    // virtual void BeginSlipSection() override;
+    // virtual void SlipSection(FFrameNumber SlipTime) override;
+    // virtual void BeginDilateSection() override;
+    // virtual void DilateSection(const TRange<FFrameNumber> &NewRange, float DilationFactor) override;
+
+private:
+    UDoodleClusterSection *Section;
+    TWeakPtr<ISequencer> Sequencer;
 };

@@ -73,7 +73,8 @@ bool UMovieSceneDoodleClusterTrack::SupportsType(TSubclassOf<UMovieSceneSection>
 
 UMovieSceneSection *UMovieSceneDoodleClusterTrack::CreateNewSection()
 {
-  return NewObject<UMovieSceneSection>(this, UDoodleClusterSection::StaticClass(),
+  return NewObject<UMovieSceneSection>(this,
+                                       UDoodleClusterSection::StaticClass(),
                                        NAME_None,
                                        RF_Transactional);
 }

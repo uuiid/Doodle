@@ -77,6 +77,7 @@ void FDoodleClusterTrackEditor::AddNewObjectBindingTrack(
     }
   }
 }
+
 void FDoodleClusterTrackEditor::BuildObjectBindingTrackMenu(
     FMenuBuilder &MenuBuilder,
     const TArray<FGuid> &ObjectBindings,

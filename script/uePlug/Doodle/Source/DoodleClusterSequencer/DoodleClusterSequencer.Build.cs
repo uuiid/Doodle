@@ -65,7 +65,8 @@ public class DoodleClusterSequencer : ModuleRules
                 "MovieSceneTracks", // 骨骼物体轨道需要
                 "DoodleCluster",//我们自己的序列
                 "doodle",
-                "UnrealEd"
+                "UnrealEd",
+                "EditorStyle",
                 // "InputCore",
                 // "CoreUObject",
                 // "Engine",
