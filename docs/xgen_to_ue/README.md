@@ -4,7 +4,7 @@
 
 ### 创建曲线
 
-选中所有导向![](image_/xgen_image_00.png '****:size=60*30****')
+选中所有导向![](image_/xgen_image_00.png ':size=30*30')
 使用 xgen 编辑中的工具 ![](image_/xgen_image_02.png ':size=30*30')
 选中导向到曲线并创建曲线 ![](image_/xgen_image_04.png ':size=30*30')
 
@@ -68,19 +68,19 @@
 - 写入面集
 - 世界空间
 
-文件格式选中**ogawa**![](image_/xgen_image_57.png ':size=60*30' )
-最后点击应用![](image_/xgen_image_58.png ':size=60*30' )
+文件格式选中**ogawa**![](image_/xgen_image_57.png ':size=30*30' )
+最后点击应用![](image_/xgen_image_58.png ':size=30*30' )
 
 #### 导出毛发
 
-在maya中切换编辑菜单![](image_/xgen_image_60.png ':size=60*30' )
-切换为**建模菜单**![](image_/xgen_image_61.png ':size=60*30' )
-选中创建的**交互式缓存xgen**![](image_/img_3.png ':size=60*30' )
-打开**生成**菜单![](image_/xgen_image_62.png ':size=60*30' )
-打开**次级缓存**菜单,并点击创建新缓存![](image_/xgen_image_63.png ':size=60*30' )
-打开创建缓存的配置窗口 ![](image_/xgen_image_64.png ':size=60*30' )
-在配置窗口中的配置是选中时间滑块 ![](image_/xgen_image_65.png ':size=60*30' )
-以及下方的写入最终宽度![](image_/xgen_image_66.png ':size=60*30' )
+在maya中切换编辑菜单![](image_/xgen_image_60.png ':size=30*30' )
+切换为**建模菜单**![](image_/xgen_image_61.png ':size=30*30' )
+选中创建的**交互式缓存xgen**![](image_/img_3.png ':size=30*30' )
+打开**生成**菜单![](image_/xgen_image_62.png ':size=30*30' )
+打开**次级缓存**菜单,并点击创建新缓存![](image_/xgen_image_63.png ':size=30*30' )
+打开创建缓存的配置窗口 ![](image_/xgen_image_64.png ':size=30*30' )
+在配置窗口中的配置是选中时间滑块 ![](image_/xgen_image_65.png ':size=30*30' )
+以及下方的写入最终宽度![](image_/xgen_image_66.png ':size=30*30' )
 最后点击应用
 
 ## 导入 ue4
