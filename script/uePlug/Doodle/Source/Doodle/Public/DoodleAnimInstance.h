@@ -14,10 +14,10 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance
 public:
     GENERATED_BODY()
     UDoodleAnimInstance();
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Doodle")
     void DoodleCalculateSpeed();
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Doodle")
     void DoodleLookAtObject(const AActor *InActor);
 
 protected:
