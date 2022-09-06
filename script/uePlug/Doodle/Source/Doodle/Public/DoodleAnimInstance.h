@@ -8,7 +8,7 @@
 // 这个必须最后导入
 #include "DoodleAnimInstance.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class DOODLE_API UDoodleAnimInstance : public UAnimInstance
 {
 public:
