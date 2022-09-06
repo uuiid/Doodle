@@ -15,7 +15,7 @@ if %errorlevel% NEQ 0 exit 1
 
 echo -----------------copy file--------------------
 mkdir %my_pwd%\build\html\file
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi > %tmp%/doodle_install_copy1.txt
+robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z > %tmp%/doodle_install_copy2.txt
 
 
