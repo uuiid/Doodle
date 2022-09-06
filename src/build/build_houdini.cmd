@@ -1,4 +1,4 @@
-call ./set_venv.cmd
+call %~dp0/set_venv.cmd
 
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --install %my_pwd%\build\Ninja_release ^

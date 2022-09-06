@@ -1,4 +1,4 @@
-call ./set_venv.cmd
+call %~dp0/set_venv.cmd
 
 
 echo -----------------config ue4--------------------

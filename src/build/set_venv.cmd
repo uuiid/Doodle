@@ -1,5 +1,5 @@
 if exist "%cd%/.git/config" goto end
-if not  exist "%cd%/.git/config" goto set_pwd
+if not exist "%cd%/.git/config" goto set_pwd
 goto end
 
 
