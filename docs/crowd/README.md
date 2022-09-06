@@ -49,30 +49,42 @@
 双击打开刚刚创建的动画蓝图![](image_/crowd_076.png ':size=30*30'),
 选中动画图表并进行编辑![](image_/crowd_084.png ':size=30*30'),
 在窗口中打开**资产游览器**![](image_/img.png ':size=30*30')
-将**资产游览器**中刚刚创建的瞄准偏移拖入**动画图表**![](image_/crowd_086.png ':size=30*30')![](image_/crowd_087.png ':size=30*30'),
-并将**静止post**从**资产游览器**![](image_/crowd_089.png ':size=30*30')拖入**动画图表**![](image_/crowd_090.png ':size=30*30'),
-将**静止post**中的输出链接到瞄准偏移的**base post**输入端,![](image_/crowd_092.png ':size=30*30'),
+将**资产游览器**中刚刚创建的瞄准偏移拖入**
+动画图表**![](image_/crowd_086.png ':size=30*30')![](image_/crowd_087.png ':size=30*30'),
+并将**静止post**从**资产游览器**![](image_/crowd_089.png ':size=30*30')拖入**
+动画图表**![](image_/crowd_090.png ':size=30*30'),
+同时将**其他另一个动画**从**资产游览器**![](image_/img_6.png)拖入**动画图表**!![](image_/img_7.png),
+在**动画图表**中右键点击弹出**创建操作菜单**,输入**blends**,创建**混合节点**,将**静止post**中的输出链接到**混合节点**
+的**A**输入端,将**其他另一个动画**中的输出链接到**混合节点**的**B**输入端![](image_/img_8.png),
+搜索变量**获取 Random Attr**,并点击后创建出节点![](image_/img_9.png),
+将输出连接到混合节点的**alpha**输入端,最后将**混合节点**的输出连接到**瞄准偏移**的**base post**输入端![](image_/img_10.png),
 在**动画图表**中右键点击弹出**创建操作菜单**,输入**direction**,
 搜索变量**获取Direction Attr XY**,**获取Direction Attr Z**条目,![](image_/crowd_101.png ':size=30*30')
-并点击后创建出这个两个条目![](image_/crowd_119.png ':size=30*30'),并将输出从 **获取Direction Attr XY** 连接到
-**xy**输入端, 输出从 **获取Direction Attr Z** 连接到 **z**输入端,
-最终将瞄准偏移的输出连接到**输出姿势**的输入端![](image_/crowd_124.png ':size=30*30'),
-并点击**编译**和**保存**完成创建![](image_/img_2.png ':size=30*30')
+并点击后创建出这个两个条目![](image_/img_12.png),并将输出从 **获取Direction Attr XY** 连接到
+**xy**输入端, 输出从 **获取Direction Attr Z** 连接到 **z**输入端![](image_/img_11.png),
+最终将瞄准偏移的输出连接到**输出姿势**的输入端 ![](image_/img_13.png),
+并点击**编译**和**保存**![](image_/img_2.png ':size=30*30'),
+最终结果完成![](image_/img_14.png)
 
 ### 创建pawn类
 
 在资源管理器中右键弹出操作菜单,选中**蓝图类**进行创建![](image_/crowd_125.png ':size=30*30'),
-其中类的选择可是pawn类,或者角色类![](image_/crowd_126.png ':size=30*30'), 并双击打开刚刚创建的类![](image_/crowd_128.png ':size=30*30'),
-在左侧拖入**骨骼物体**![](image_/crowd_130.png ':size=30*30'),并选中**视口窗口**![](image_/crowd_131.png ':size=30*30'),
-将**人物和箭头方向对齐![img.png](img.png ':size=30*30')**![](image_/crowd_132.png ':size=30*30'),之后选中拖入的**
+其中类的选择可是pawn类,或者角色类![](image_/crowd_126.png ':size=30*30'),
+并双击打开刚刚创建的类![](image_/crowd_128.png ':size=30*30'),
+在左侧拖入**骨骼物体**![](image_/crowd_130.png ':size=30*30'),并选中**视口窗口**
+![](image_/crowd_131.png ':size=30*30'),
+将**人物和箭头方向对齐**![](image_/crowd_132.png ':size=30*30'),之后选中拖入的**
 骨骼网格体**![](image_/crowd_130.png ':size=30*30'),
-将动画类更改为上一步创建的类![](image_/crowd_136.png ':size=30*30'), 并点击**编译按钮**![](image_/crowd_141.png ':size=30*30')
+将动画类更改为上一步创建的类![](image_/crowd_136.png ':size=30*30'), 并点击**
+编译按钮**![](image_/crowd_141.png ':size=30*30')
 
 ### 在导演蓝图中创建委托
 
-将上一步创建的**蓝图类**拖入**Sequencer**中![](image_/crowd_148.png ':size=30*30'),点击**轨道按钮**![](image_/crowd_149.png ':size=30*30'),
+将上一步创建的**蓝图类**拖入**Sequencer**中![](image_/crowd_148.png ':size=30*30'),点击**
+轨道按钮**![](image_/crowd_149.png ':size=30*30'),
 弹出动作菜单,并点击拖入的骨骼物体,将骨骼物体添加到轨道中![](image_/crowd_150.png ':size=30*30'),
-在骨骼物体的右侧再次点击**轨道按钮**, ![](image_/crowd_151.png ':size=30*30'),选中第四步创建的**动画实例**![](image_/crowd_153.png ':size=30*30'),
+在骨骼物体的右侧再次点击**轨道按钮**, ![](image_/crowd_151.png ':size=30*30'),选中第四步创建的**
+动画实例**![](image_/crowd_153.png ':size=30*30'),
 在动画实例中再次点击**轨道按钮**![](image_/crowd_154.png ':size=30*30'),在轨道菜单中,
 选择事件子菜单**Doodle Cluster**选项添加自定义轨道![](image_/img_4.png),
 之后点击右键![](image_/img_5.png),调整 **doodle lock at object** 属性为看向目标
