@@ -1,0 +1,27 @@
+call ./set_venv.cmd
+
+echo "Current Location is %my_pwd%"
+
+echo -----------------clear main--------------------
+del  %my_pwd%build\Ninja_release\CMakeCache.txt
+
+echo -----------------config main exe--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+-S%my_pwd% ^
+--preset Ninja_release
+
+if %errorlevel% NEQ 0 exit 1
+
+echo -----------------build main exe--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset release_exe
+
+
+if %errorlevel% NEQ 0 exit 1
+echo -----------------install main exe--------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--install %my_pwd%\build\Ninja_release ^
+--component exe_com
+
+call ./docs/doc.cmd > %tmp%/doodle_doc_info.txt
