@@ -31,7 +31,7 @@ public class DoodleSourceControl : ModuleRules
                 "Core",
                 "ContentBrowser",
                 "EditorScriptingUtilities",
-
+                "SourceControl",// 源代码控制
             }
             );
 
