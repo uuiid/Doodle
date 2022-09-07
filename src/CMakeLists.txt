@@ -1,5 +1,6 @@
 
 add_subdirectory(doodle_core)
+add_subdirectory(doodle_dingding)
 add_subdirectory(doodle_lib)
 add_subdirectory(doodle_exe)
 add_subdirectory(doodle_tool_lib)

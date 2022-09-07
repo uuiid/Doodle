@@ -2,10 +2,10 @@ add_library(doodle_dingding SHARED)
 target_sources(
         doodle_dingding
         PUBLIC
-        doodle_dingding_lib.h
-        doodle_dingding_lib_fwd.h
+        doodle_dingding.h
+        doodle_dingding_fwd.h
 )
-
+add_subdirectory(client)
 add_subdirectory(configure)
 
 
@@ -15,7 +15,11 @@ target_link_libraries(
         doodle_core
 
 )
-
+target_compile_definitions(
+        doodle_dingding
+        PRIVATE
+        DOODLE_DINGDING_EXPORTS
+)
 
 target_compile_options(doodle_dingding
         PUBLIC
