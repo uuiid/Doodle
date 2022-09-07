@@ -47,6 +47,8 @@ public class DoodleSourceControl : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "DesktopWidgets",
+                "EditorStyle",
 			}
             );
 
