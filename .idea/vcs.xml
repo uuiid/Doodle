@@ -5,6 +5,5 @@
     <mapping directory="$PROJECT_DIR$/external/cmrc" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/doxygen-awesome-css" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/doodle_lib/external/IconFontCppHeaders" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/doodle_lib/external/im-neo-sequencer" vcs="Git" />
   </component>
 </project>
