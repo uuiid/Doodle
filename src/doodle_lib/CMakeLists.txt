@@ -57,6 +57,8 @@ target_link_libraries(doodle_lib
         dxgi.lib
         Microsoft::DirectXTK
         implot::implot
+        PRIVATE
+        doodle_dingding
         )
 target_compile_definitions(doodle_lib
         PUBLIC
