@@ -27,6 +27,7 @@ target_compile_definitions(
 target_compile_options(doodle_dingding
         PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /EHs>
+        $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
         )
 set_target_properties(doodle_dingding
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
