@@ -1,6 +1,6 @@
 
 
-#include <configure/config.h>
+#include <doodle_core/configure/config.h>
 #include <string>
 #include <chrono>
 namespace doodle::version {
@@ -13,12 +13,12 @@ namespace doodle::version {
 // clang-format on
 
 build_info::build_info() {
-  std::int16_t version_major = {DOODLE_VERSION_MAJOR_};
-  std::int16_t version_minor = {DOODLE_VERSION_MINOR_};
-  std::int16_t version_patch = {DOODLE_VERSION_PATCH_};
-  std::int16_t version_tweak = {DOODLE_VERSION_TWEAK_};
-  std::string version_str    = {"@v_short@"};
-  std::string build_time{"@DOODLE_BUILD_TIME@"};
+  version_major = {DOODLE_VERSION_MAJOR_};
+  version_minor = {DOODLE_VERSION_MINOR_};
+  version_patch = {DOODLE_VERSION_PATCH_};
+  version_tweak = {DOODLE_VERSION_TWEAK_};
+  version_str   = {"@v_short@"};
+  build_time    = {"@DOODLE_BUILD_TIME@"};
 }
 
 build_info& build_info::get() {

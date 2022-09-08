@@ -6,13 +6,13 @@
 namespace doodle::dingding {
 
 // clang-format off
-#define DINGDING_KEY @DINGDING_VALUE@
+#define DINGDING_KEY @DINGDING_KEY@
 #define DINGDING_VALUE @DINGDING_VALUE@
 // clang-format on
 
 dingding_config::dingding_config() {
-  std::string app_key   = {DINGDING_KEY};
-  std::string app_value = {DINGDING_VALUE};
+  app_key   = {DINGDING_KEY};
+  app_value = {DINGDING_VALUE};
 }
 
 dingding_config& dingding_config::get() {
