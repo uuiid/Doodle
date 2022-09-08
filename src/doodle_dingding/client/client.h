@@ -5,13 +5,16 @@
 #pragma once
 
 #include <doodle_dingding/doodle_dingding_fwd.h>
+#include <boost/asio/io_context.hpp>
+namespace doodle::dingding {
 
-namespace doodle {
-namespace dingding {
+class DOODLE_DINGDING_API client {
+ private:
+  class impl;
+  std::unique_ptr<impl> ptr;
 
-class DOODLE_LIB_DEPRECATED client {
+ public:
+  explicit client(const boost::asio::io_context& in_context);
 };
 
-}  // namespace dingding
-}  // namespace doodle
-
+}  // namespace doodle::dingding

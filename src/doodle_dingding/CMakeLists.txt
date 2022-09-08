@@ -8,12 +8,15 @@ target_sources(
 add_subdirectory(client)
 add_subdirectory(configure)
 
-
+target_include_directories(
+        doodle_dingding
+        PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/..
+)
 target_link_libraries(
         doodle_dingding
         PUBLIC
         doodle_core
-
 )
 target_compile_definitions(
         doodle_dingding
