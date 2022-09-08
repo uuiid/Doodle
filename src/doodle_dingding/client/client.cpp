@@ -6,7 +6,6 @@
 
 #include <doodle_core/doodle_core.h>
 #include <doodle_dingding/configure/config.h>
-
 #include <boost/asio.hpp>
 
 #include <utility>
