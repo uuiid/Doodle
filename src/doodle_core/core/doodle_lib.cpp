@@ -20,8 +20,6 @@
 #include <doodle_core/database_task/sqlite_client.h>
 namespace doodle {
 
-doodle_lib* doodle_lib::p_install = nullptr;
-
 class doodle_lib::impl {
  public:
   std::shared_ptr<boost::asio::io_context> io_context_{std::make_shared<boost::asio::io_context>()};
