@@ -1,6 +1,6 @@
 #pragma once
 
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <boost/exception/exception.hpp>
 #include <boost/throw_exception.hpp>
@@ -23,7 +23,7 @@ enum class error_enum : std::int32_t {
   file_not_exists
 };
 
-class DOODLE_CORE_EXPORT doodle_error : public std::runtime_error {
+class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
   explicit doodle_error(const std::string& message) : std::runtime_error(message){};
   template <typename... Args>
@@ -31,12 +31,12 @@ class DOODLE_CORE_EXPORT doodle_error : public std::runtime_error {
       : std::runtime_error(fmt::format(fmt_str, std::forward<Args>(in_args)...)){};
 };
 // iterators
-class DOODLE_CORE_EXPORT error_iterator : public std::runtime_error {
+class DOODLE_CORE_API error_iterator : public std::runtime_error {
  public:
   explicit error_iterator(const std::string& message) : std::runtime_error(message){};
 };
 
-class DOODLE_CORE_EXPORT doodle_category : public bsys::error_category {
+class DOODLE_CORE_API doodle_category : public bsys::error_category {
  public:
   const char* name() const noexcept;
 

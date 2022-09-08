@@ -9,7 +9,7 @@
 #pragma once
 
 #include <doodle_core/configure/config.h>
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/core/file_sys.h>
 #include <spdlog/spdlog.h>
@@ -19,7 +19,7 @@ namespace doodle {
 /**
  * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
  */
-class DOODLE_CORE_EXPORT logger_ctrl {
+class DOODLE_CORE_API logger_ctrl {
   FSys::path p_log_path;
   std::string p_log_name;
 

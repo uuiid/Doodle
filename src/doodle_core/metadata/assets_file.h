@@ -25,7 +25,7 @@ void from_json(const nlohmann::json& j, assets_file& p);
  * @brief 这个类代表着服务端的文件条目
  *
  */
-class DOODLE_CORE_EXPORT assets_file : boost::equality_comparable<assets_file> {
+class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
  public:
  private:
   class impl;

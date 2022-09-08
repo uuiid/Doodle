@@ -5,7 +5,7 @@
 
 #include <magic_enum.hpp>
 namespace doodle {
-class DOODLE_CORE_EXPORT shot {
+class DOODLE_CORE_API shot {
  public:
   enum class shot_ab_enum;
 

@@ -10,7 +10,7 @@ class redirection_path_info;
 void to_json(nlohmann::json& j, const redirection_path_info& p);
 void from_json(const nlohmann::json& j, redirection_path_info& p);
 
-class DOODLE_CORE_EXPORT redirection_path_info {
+class DOODLE_CORE_API redirection_path_info {
  public:
   redirection_path_info();
   explicit redirection_path_info(

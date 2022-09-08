@@ -3,7 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
-class DOODLE_CORE_EXPORT convert {
+class DOODLE_CORE_API convert {
  public:
   std::string toEn(const std::string &conStr);
   std::string toEn(const std::wstring &conStr);

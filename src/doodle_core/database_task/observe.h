@@ -8,7 +8,7 @@
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_EXPORT observe {
+class DOODLE_CORE_API observe {
  private:
   class impl;
   std::unique_ptr<impl> p_i;

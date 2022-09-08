@@ -2,19 +2,19 @@
 // Created by TD on 2021/12/31.
 //
 
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 #include <oleidl.h>
 
 void OpenFilesFromDataObject(IDataObject *pdto);
 namespace doodle::win {
 
-class DOODLE_CORE_EXPORT ole_guard {
+class DOODLE_CORE_API ole_guard {
  public:
   ole_guard();
   ~ole_guard();
 };
 
-class DOODLE_CORE_EXPORT drop_manager : public IDropTarget {
+class DOODLE_CORE_API drop_manager : public IDropTarget {
  private:
   LONG m_RefCount;
 

@@ -11,7 +11,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem.hpp>
 #include <doodle_core/core/chrono_.h>
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 
 namespace doodle::chrono {
 using namespace std::chrono;
@@ -31,15 +31,15 @@ using namespace boost::filesystem;
 
 #endif
 
-DOODLE_CORE_EXPORT std::time_t last_write_time_t(const path& in_path);
-DOODLE_CORE_EXPORT chrono::sys_time_pos last_write_time_point(const path& in_path);
-DOODLE_CORE_EXPORT void last_write_time_point(const path& in_path, const std::chrono::system_clock::time_point& in_time_point);
-DOODLE_CORE_EXPORT path add_time_stamp(const path& in_path);
-DOODLE_CORE_EXPORT void open_explorer(const path& in_path);
-DOODLE_CORE_EXPORT void backup_file(const path& source);
-DOODLE_CORE_EXPORT std::vector<path> list_files(const path& in_dir);
-DOODLE_CORE_EXPORT bool is_sub_path(const path& in_parent, const path& in_child);
-DOODLE_CORE_EXPORT path program_location();
+DOODLE_CORE_API std::time_t last_write_time_t(const path& in_path);
+DOODLE_CORE_API chrono::sys_time_pos last_write_time_point(const path& in_path);
+DOODLE_CORE_API void last_write_time_point(const path& in_path, const std::chrono::system_clock::time_point& in_time_point);
+DOODLE_CORE_API path add_time_stamp(const path& in_path);
+DOODLE_CORE_API void open_explorer(const path& in_path);
+DOODLE_CORE_API void backup_file(const path& source);
+DOODLE_CORE_API std::vector<path> list_files(const path& in_dir);
+DOODLE_CORE_API bool is_sub_path(const path& in_parent, const path& in_child);
+DOODLE_CORE_API path program_location();
 
 }  // namespace doodle::FSys
 namespace fmt {

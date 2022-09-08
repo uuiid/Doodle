@@ -10,7 +10,7 @@
 namespace doodle {
 class project;
 
-class DOODLE_CORE_EXPORT core_sig {
+class DOODLE_CORE_API core_sig {
  public:
   /**
    * @brief 软件初始化完成

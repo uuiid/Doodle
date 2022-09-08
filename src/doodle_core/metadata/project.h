@@ -12,7 +12,7 @@ class organization;
 /**
  * 项目信息类
  */
-class DOODLE_CORE_EXPORT project {
+class DOODLE_CORE_API project {
  public:
   std::string p_name;
   FSys::path p_path;
@@ -60,7 +60,7 @@ class DOODLE_CORE_EXPORT project {
 namespace project_config {
 void to_json(nlohmann::json& j, const base_config& p);
 void from_json(const nlohmann::json& j, base_config& p);
-class DOODLE_CORE_EXPORT base_config {
+class DOODLE_CORE_API base_config {
  private:
   friend void to_json(nlohmann::json& j, const base_config& p);
   friend void from_json(const nlohmann::json& j, base_config& p);

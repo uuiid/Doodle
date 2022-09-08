@@ -4,7 +4,7 @@
 
 namespace doodle {
 
-class DOODLE_CORE_EXPORT episodes {
+class DOODLE_CORE_API episodes {
  public:
   int64_t p_episodes;
   episodes();

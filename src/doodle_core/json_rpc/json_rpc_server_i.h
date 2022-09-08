@@ -11,7 +11,7 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLE_CORE_EXPORT json_rpc_server_i : public json_rpc::rpc_server {
+class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
  public:
   using json_rpc::rpc_server::rpc_server;
 

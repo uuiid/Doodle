@@ -12,7 +12,7 @@ class user;
  * @warning 这个类本身的初始化极为基本和简单， 初始化请使用 core_set_init 分步调用
  */
 
-class DOODLE_CORE_EXPORT core_set : public details::no_copy {
+class DOODLE_CORE_API core_set : public details::no_copy {
   friend core_set_init;
   friend user;
 
@@ -85,7 +85,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
 
 void to_json(nlohmann::json &j, const core_set &p);
 void from_json(const nlohmann::json &j, core_set &p);
-class DOODLE_CORE_EXPORT core_set_init {
+class DOODLE_CORE_API core_set_init {
   core_set &p_set;
 
   nlohmann::json &json_value();
@@ -101,8 +101,8 @@ class DOODLE_CORE_EXPORT core_set_init {
 
 namespace win {
 /// FOLDERID_Fonts
-FSys::path DOODLE_CORE_EXPORT get_font();
-FSys::path DOODLE_CORE_EXPORT get_pwd();
+FSys::path DOODLE_CORE_API get_font();
+FSys::path DOODLE_CORE_API get_pwd();
 
 }  // namespace win
 

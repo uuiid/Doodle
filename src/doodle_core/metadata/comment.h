@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-class DOODLE_CORE_EXPORT comment {
+class DOODLE_CORE_API comment {
  public:
   std::string p_comment;
   std::string p_time_info;

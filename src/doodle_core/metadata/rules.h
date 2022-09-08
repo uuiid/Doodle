@@ -25,7 +25,7 @@ class time_point_info;
  * @brief 这个时间规则是一个本地时间(并非 utc 时间)
  */
 
-class DOODLE_CORE_EXPORT rules {
+class DOODLE_CORE_API rules {
  public:
   using duration_type        = chrono::seconds;
   using point_type           = rules_ns::time_point_info;

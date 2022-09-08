@@ -7,7 +7,7 @@
 #include <doodle_core/metadata/metadata.h>
 namespace doodle {
 
-class DOODLE_CORE_EXPORT season {
+class DOODLE_CORE_API season {
  public:
   std::int32_t p_int;
   season();

@@ -4,8 +4,8 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 
 namespace doodle::win {
-std::vector<FSys::path> DOODLE_CORE_EXPORT list_drive();
+std::vector<FSys::path> DOODLE_CORE_API list_drive();
 }

@@ -19,7 +19,7 @@ class config_tick {
 };
 }  // namespace app_base_ns
 
-class DOODLE_CORE_EXPORT app_base {
+class DOODLE_CORE_API app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
 

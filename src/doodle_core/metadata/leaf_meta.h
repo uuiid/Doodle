@@ -6,7 +6,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 namespace doodle {
-class DOODLE_CORE_EXPORT ref_meta {
+class DOODLE_CORE_API ref_meta {
  private:
   friend void to_json(nlohmann::json &j, const ref_meta &p);
   friend void from_json(const nlohmann::json &j, ref_meta &p);

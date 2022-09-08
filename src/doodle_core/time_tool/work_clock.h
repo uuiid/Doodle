@@ -20,7 +20,7 @@ namespace doodle {
 
 namespace business {
 
-class DOODLE_CORE_EXPORT work_clock {
+class DOODLE_CORE_API work_clock {
   rules rules_;
   using time_type              = doodle::time_point_wrap;
   using duration_type          = doodle::time_point_wrap::duration;

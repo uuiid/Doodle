@@ -7,7 +7,7 @@ namespace doodle {
  * @brief 这个是sql连接单例， 负责配置生成sql连接
  *
  */
-class DOODLE_CORE_EXPORT core_sql : public details::no_copy {
+class DOODLE_CORE_API core_sql : public details::no_copy {
   class impl;
   std::unique_ptr<impl> p_i;
   explicit core_sql();

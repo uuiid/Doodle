@@ -12,7 +12,7 @@
 #include <doodle_core/metadata/project.h>
 namespace doodle {
 
-class DOODLE_CORE_EXPORT json_rpc_client : public json_rpc::rpc_client {
+class DOODLE_CORE_API json_rpc_client : public json_rpc::rpc_client {
  public:
   json_rpc_client(boost::asio::io_context& in_context, const std::string& in_host, std::uint16_t in_post);
 

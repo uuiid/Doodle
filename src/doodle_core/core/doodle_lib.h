@@ -14,7 +14,7 @@ class thread_pool;
 namespace doodle {
 
 
-class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy,
+class DOODLE_CORE_API doodle_lib : public details::no_copy,
                                       boost::equality_comparable<doodle_lib> {
  private:
   class impl;

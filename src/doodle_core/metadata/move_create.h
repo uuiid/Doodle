@@ -7,7 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle::movie {
-class DOODLE_CORE_EXPORT image_watermark {
+class DOODLE_CORE_API image_watermark {
  private:
   DOODLE_JSON(image_watermark)
  public:
@@ -24,7 +24,7 @@ class DOODLE_CORE_EXPORT image_watermark {
   rgba_t rgba_;
 };
 
-class DOODLE_CORE_EXPORT image_attr {
+class DOODLE_CORE_API image_attr {
  private:
   DOODLE_JSON(image_attr)
  public:

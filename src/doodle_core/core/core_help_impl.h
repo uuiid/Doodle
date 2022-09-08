@@ -23,7 +23,7 @@ struct [[maybe_unused]] entt::type_hash<
 
 namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
-DOODLE_CORE_EXPORT registry_ptr &g_reg();
+DOODLE_CORE_API registry_ptr &g_reg();
 
 template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
@@ -51,7 +51,7 @@ void destroy_handle(Container_ &in_handles) {
   in_handles.clear();
 }
 
-class DOODLE_CORE_EXPORT null_fun_t {
+class DOODLE_CORE_API null_fun_t {
  public:
   null_fun_t() = default;
   template <class in_class>

@@ -17,7 +17,7 @@
 namespace doodle {
 
 // namespace details {
-class DOODLE_CORE_EXPORT thread_pool : public details::no_copy {
+class DOODLE_CORE_API thread_pool : public details::no_copy {
  public:
   explicit thread_pool(size_t);
   template <class F, class... Args>

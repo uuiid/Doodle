@@ -43,7 +43,7 @@ class compose_2_type {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLE_CORE_EXPORT time_point_wrap
+class DOODLE_CORE_API time_point_wrap
     : boost::totally_ordered<time_point_wrap>,
       boost::additive<time_point_wrap, time_point_wrap_ns::duration>,
       boost::unit_steppable<time_point_wrap> {

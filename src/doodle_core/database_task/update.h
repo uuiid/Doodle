@@ -6,7 +6,7 @@
 #include <doodle_core/gui_template/gui_process.h>
 namespace doodle::database_n {
 
-class DOODLE_CORE_EXPORT update_data : public process_handy_tools {
+class DOODLE_CORE_API update_data : public process_handy_tools {
  private:
   class impl;
   std::unique_ptr<impl> p_i;

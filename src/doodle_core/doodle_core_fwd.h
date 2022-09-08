@@ -2,7 +2,7 @@
 // Created by TD on 2022/4/28.
 //
 #pragma once
-#include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/configure/DOODLE_CORE_API.h>
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
@@ -58,7 +58,7 @@ class null_limiter;
 }  // namespace pool_n
 
 template <typename Delta, typename Timiter = pool_n::null_limiter>
-class DOODLE_CORE_EXPORT scheduler;
+class DOODLE_CORE_API scheduler;
 
 template <class Derived>
 using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
@@ -66,12 +66,12 @@ using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
-DOODLE_CORE_EXPORT registry_ptr& g_reg();
-DOODLE_CORE_EXPORT scheduler_t& g_main_loop();
-DOODLE_CORE_EXPORT bounded_pool_t& g_bounded_pool();
-DOODLE_CORE_EXPORT thread_pool& g_thread_pool();
-DOODLE_CORE_EXPORT boost::asio::io_context& g_io_context();
-DOODLE_CORE_EXPORT boost::asio::thread_pool& g_thread();
+DOODLE_CORE_API registry_ptr& g_reg();
+DOODLE_CORE_API scheduler_t& g_main_loop();
+DOODLE_CORE_API bounded_pool_t& g_bounded_pool();
+DOODLE_CORE_API thread_pool& g_thread_pool();
+DOODLE_CORE_API boost::asio::io_context& g_io_context();
+DOODLE_CORE_API boost::asio::thread_pool& g_thread();
 
 namespace movie {
 class image_attr;

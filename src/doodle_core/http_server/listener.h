@@ -15,7 +15,7 @@
 
 namespace doodle::http_server {
 
-class DOODLE_CORE_EXPORT listener : public std::enable_shared_from_this<listener> {
+class DOODLE_CORE_API listener : public std::enable_shared_from_this<listener> {
  private:
   class impl;
   std::unique_ptr<impl> ptr;

@@ -17,7 +17,7 @@
 
 namespace doodle::http_server {
 
-class DOODLE_CORE_EXPORT session : public std::enable_shared_from_this<session> {
+class DOODLE_CORE_API session : public std::enable_shared_from_this<session> {
  public:
   //    namespace beast = boost::beast;          // from <boost/beast.hpp>
   //  namespace http  = beast::http;           // from <boost/beast/http.hpp>

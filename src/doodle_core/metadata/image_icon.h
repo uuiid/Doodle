@@ -8,7 +8,7 @@
 #include <opencv2/core.hpp>
 
 namespace doodle {
-class DOODLE_CORE_EXPORT image_icon {
+class DOODLE_CORE_API image_icon {
  public:
   /**
    * @brief 这个路径是相对于根目录的

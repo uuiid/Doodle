@@ -10,7 +10,7 @@
 
 namespace doodle {
 
-class DOODLE_CORE_EXPORT database_info {
+class DOODLE_CORE_API database_info {
  public:
   FSys::path path_;
 };
@@ -21,7 +21,7 @@ using data_status_delete = entt::tag<"data_status_delete"_hs>;
 class database;
 
 namespace database_ns {
-class DOODLE_CORE_EXPORT ref_data {
+class DOODLE_CORE_API ref_data {
   friend void to_json(nlohmann::json &j, const ref_data &p);
   friend void from_json(const nlohmann::json &j, ref_data &p);
 
@@ -38,11 +38,11 @@ class DOODLE_CORE_EXPORT ref_data {
 };
 }  // namespace database_ns
 
-void DOODLE_CORE_EXPORT to_json(nlohmann::json &j, const database &p);
-void DOODLE_CORE_EXPORT from_json(const nlohmann::json &j, database &p);
+void DOODLE_CORE_API to_json(nlohmann::json &j, const database &p);
+void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
 
-class DOODLE_CORE_EXPORT database
+class DOODLE_CORE_API database
     : boost::equality_comparable<database>,
       boost::equality_comparable<boost::uuids::uuid>,
       boost::equality_comparable<database_ns::ref_data> {
@@ -89,12 +89,12 @@ class DOODLE_CORE_EXPORT database
 
   static entt::handle find_by_uuid(const boost::uuids::uuid &in);
 
-  class DOODLE_CORE_EXPORT fun_save_ {
+  class DOODLE_CORE_API fun_save_ {
    public:
     constexpr fun_save_() = default;
     void operator()(const entt::handle &in) const;
   };
-  class DOODLE_CORE_EXPORT fun_delete_ {
+  class DOODLE_CORE_API fun_delete_ {
    public:
     constexpr fun_delete_() = default;
     void operator()(const entt::handle &in) const;

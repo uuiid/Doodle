@@ -7,13 +7,13 @@
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_EXPORT select : public process_handy_tools {
+class DOODLE_CORE_API select : public process_handy_tools {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
-  class DOODLE_CORE_EXPORT arg {
+  class DOODLE_CORE_API arg {
    public:
     /**
      * @brief 这个是指向数据库的绝对路径

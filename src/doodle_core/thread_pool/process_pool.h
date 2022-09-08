@@ -345,7 +345,7 @@ class scheduler {
   std::recursive_mutex mutex_;
 };
 
-class DOODLE_CORE_EXPORT null_process_t : public process_t<null_process_t> {
+class DOODLE_CORE_API null_process_t : public process_t<null_process_t> {
  public:
   null_process_t() = default;
   using base_type  = process_t<null_process_t>;
@@ -357,7 +357,7 @@ class DOODLE_CORE_EXPORT null_process_t : public process_t<null_process_t> {
     this->succeed();
   };
 };
-class DOODLE_CORE_EXPORT one_process_t : public process_t<one_process_t> {
+class DOODLE_CORE_API one_process_t : public process_t<one_process_t> {
  public:
   std::function<void()> one_loop;
   explicit one_process_t(std::function<void()> in_function)

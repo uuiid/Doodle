@@ -8,7 +8,7 @@ namespace doodle {
 
 using rational_int = boost::rational<std::size_t>;
 
-class DOODLE_CORE_EXPORT process_message {
+class DOODLE_CORE_API process_message {
  public:
   enum level {
     info    = 0,

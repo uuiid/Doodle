@@ -13,7 +13,7 @@ namespace doodle {
 // };
 
 template <class container_type, class self_type>
-class DOODLE_CORE_EXPORT vector_adapter {
+class DOODLE_CORE_API vector_adapter {
  public:
   using value_type             = typename container_type::value_type;
   using value_list             = container_type;
