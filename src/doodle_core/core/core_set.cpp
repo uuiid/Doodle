@@ -50,7 +50,7 @@ FSys::path win::get_font() {
   return k_path;
 }
 
-core_set &core_set::getSet() {
+core_set &core_set::get_set() {
   static core_set install;
   return install;
 }
@@ -138,7 +138,7 @@ std::string core_set::get_uuid_str() {
 /// ----------------------------------------------------------------------------
 
 core_set_init::core_set_init()
-    : p_set(core_set::getSet()) {
+    : p_set(core_set::get_set()) {
   if (!FSys::exists(p_set.p_doc))
     FSys::create_directories(p_set.p_doc);
   if (!FSys::exists(p_set.get_cache_root())) {

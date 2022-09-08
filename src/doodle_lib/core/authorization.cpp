@@ -111,7 +111,7 @@ void authorization::save(const FSys::path& in_path) const {
   FSys::ofstream{in_path} << p_i->ciphertext_data;
 }
 void authorization::save() const {
-  save(core_set::getSet().get_doc() / FSys::path{doodle_config::token_name.data()});
+  save(core_set::get_set().get_doc() / FSys::path{doodle_config::token_name.data()});
 }
 
 }  // namespace doodle

@@ -103,7 +103,7 @@ void main_menu_bar::menu_file() {
         })();
   }
   dear::Menu{"最近的项目"} && []() {
-    auto &k_list = core_set::getSet().project_root;
+    auto &k_list = core_set::get_set().project_root;
     for (int l_i = 0; l_i < k_list.size(); ++l_i) {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
@@ -163,7 +163,7 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件"))
     toolkit::installMayaPath();
   if (dear::MenuItem("安装ue4插件"))
-    toolkit::installUePath(core_set::getSet().ue4_path / "Engine");
+    toolkit::installUePath(core_set::get_set().ue4_path / "Engine");
   if (dear::MenuItem("安装ue4项目插件")) {
     auto l_ptr = std::make_shared<FSys::path>();
     make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()}, file_dialog::dialog_args{l_ptr}.set_title("select_ue_project"s).add_filter(".uproject"))

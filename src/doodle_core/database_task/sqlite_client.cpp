@@ -39,7 +39,7 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
 }
 
 bsys::error_code file_translator::open_end() {
-  core_set::getSet().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
+  core_set::get_set().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
   g_reg()->ctx().at<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");

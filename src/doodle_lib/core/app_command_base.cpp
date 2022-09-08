@@ -29,10 +29,10 @@ void app_command_base::post_constructor() {
   if (!chick_authorization())
     stop_app();
 
-  auto& set = core_set::getSet();
+  auto& set = core_set::get_set();
   DOODLE_LOG_INFO("初始化gui日志");
   logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
-  auto& l_set = core_set::getSet();
+  auto& l_set = core_set::get_set();
   if (options_->p_root.first)
     l_set.set_root(options_->p_root.second);
 
@@ -43,7 +43,7 @@ void app_command_base::post_constructor() {
 bool app_command_base::chick_authorization() {
   auto l_p = core_set::program_location() / doodle_config::token_name.data();
   if (!exists(l_p)) {
-    l_p = core_set::getSet().get_doc() / doodle_config::token_name.data();
+    l_p = core_set::get_set().get_doc() / doodle_config::token_name.data();
   }
 
   return chick_authorization(l_p);

@@ -73,7 +73,7 @@ void app_base::init() {
   k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
-  g_bounded_pool().timiter_ = core_set::getSet().p_max_thread;
+  g_bounded_pool().timiter_ = core_set::get_set().p_max_thread;
   boost::asio::post(g_io_context(), [this]() {
     init_register::instance().reg_class();
     this->load_back_end();

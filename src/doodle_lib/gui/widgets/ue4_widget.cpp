@@ -196,8 +196,8 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
     l_group.start_frame = l_group.groups.front().start_frame;
     l_group.end_frame   = l_group.groups.front().end_frame;
   }
-  l_group.world_path    = l_group.set_level_dir(l_h, fmt::format("{}", core_set::getSet().organization_name.front()));
-  l_group.level_path    = l_group.set_level_dir(l_h, fmt::format("lev_{}", core_set::getSet().organization_name.front()));
+  l_group.world_path    = l_group.set_level_dir(l_h, fmt::format("{}", core_set::get_set().organization_name.front()));
+  l_group.level_path    = l_group.set_level_dir(l_h, fmt::format("lev_{}", core_set::get_set().organization_name.front()));
 
   FSys::path l_out_path = app::Get().options_->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
@@ -205,7 +205,7 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   }
   nlohmann::json l_json{};
   l_json = l_group;
-  FSys::ofstream{l_out_path / core_set::getSet().get_uuid_str(".json_doodle")}
+  FSys::ofstream{l_out_path / core_set::get_set().get_uuid_str(".json_doodle")}
       << l_json.dump();
 }
 namespace ue4_widget_n {
@@ -292,7 +292,7 @@ std::string ue4_import_data::set_save_dir(const entt::handle &in_handle) const {
              doodle_config::ue4_shot.data() /
              fmt::format("ep{:04d}", in_handle.get_or_emplace<episodes>().p_episodes) /
              fmt::format("{}{:04d}_{:04d}{}", g_reg()->ctx().at<project>().short_str(), in_handle.get_or_emplace<episodes>().p_episodes, in_handle.get_or_emplace<shot>().p_shot, in_handle.get_or_emplace<shot>().p_shot_enum) /
-             core_set::getSet().organization_name;
+             core_set::get_set().organization_name;
   return result = l_p.generic_string();
 }
 std::string ue4_import_group::set_level_dir(

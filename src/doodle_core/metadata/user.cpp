@@ -57,7 +57,7 @@ entt::handle user::chick_user_reg(entt::registry& in_reg) {
   auto& l_cache = in_reg.ctx().emplace<user::user_cache>();
 
   if (l_cache.uuid.is_nil()) {
-    l_cache.uuid = core_set::getSet().user_id;
+    l_cache.uuid = core_set::get_set().user_id;
   }
   if (!l_cache.user_handle) {
     l_cache.user_handle = database::find_by_uuid(l_cache.uuid);
@@ -94,7 +94,7 @@ void user::generate_new_user_id() {
   l_create_h.emplace<user>(g_reg()->ctx().at<user>());
   l_create_h.emplace<business::rules>(business::rules::get_default());
   l_cache.uuid               = l_create_h.emplace<database>().uuid();
-  core_set::getSet().user_id = l_cache.uuid;
+  core_set::get_set().user_id = l_cache.uuid;
   l_cache.user_handle        = l_create_h;
 
   database::save(l_create_h);

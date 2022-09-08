@@ -48,13 +48,13 @@ maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm)
   in_handle.patch<process_message>([&](process_message &in) {
     in.set_name("自定义导出");
   });
-  DOODLE_CHICK(core_set::getSet().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
+  DOODLE_CHICK(core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
   p_i->p_mess  = in_handle;
 
   // 生成命令
   p_i->in_comm = fmt::format(
       R"("{}/mayapy.exe" {})",
-      core_set::getSet().maya_path().generic_string(),
+      core_set::get_set().maya_path().generic_string(),
       in_comm
   );
 }
@@ -65,7 +65,7 @@ maya_exe::maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t 
   in_handle.patch<process_message>([&](process_message &in) {
     in.set_name(in_arg.file_path.filename().generic_string());
   });
-  DOODLE_CHICK(core_set::getSet().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
+  DOODLE_CHICK(core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"});
   p_i->p_mess = in_handle;
 
   // 生成导出文件
@@ -91,7 +91,7 @@ quit()
   // 生成命令
   p_i->in_comm = fmt::format(
       R"("{}/mayapy.exe" {})",
-      core_set::getSet().maya_path().generic_string(),
+      core_set::get_set().maya_path().generic_string(),
       run_path.generic_string()
   );
 }
@@ -106,7 +106,7 @@ maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_fil
 maya_exe::~maya_exe() = default;
 
 void maya_exe::add_maya_fun_tool() {
-  const auto tmp_path = core_set::getSet().get_cache_root(
+  const auto tmp_path = core_set::get_set().get_cache_root(
       fmt::format("maya\\v{}{}{}", version::version_major, version::version_minor, version::version_patch)
   );
   auto k_tmp_path = tmp_path / "maya_fun_tool.py";
@@ -221,7 +221,7 @@ void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system
   }
 
   auto k_time = chrono::system_clock::now() - p_i->p_time;
-  if (core_set::getSet().timeout < chrono::floor<chrono::seconds>(k_time).count()) {
+  if (core_set::get_set().timeout < chrono::floor<chrono::seconds>(k_time).count()) {
     p_i->p_process.terminate();
     p_i->p_mess.patch<process_message>([&](process_message &in) {
       in.message("进程超时, 主动结束任务\n", in.warning);

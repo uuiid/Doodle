@@ -143,7 +143,7 @@ void app::post_constructor() {
   //               mi.rcMonitor.bottom - mi.rcMonitor.top,
   //               SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
-  auto imgui_file_path = core_set::getSet().get_cache_root("imgui") / "imgui.ini";
+  auto imgui_file_path = core_set::get_set().get_cache_root("imgui") / "imgui.ini";
   static std::string _l_p{imgui_file_path.generic_string()};
   io.IniFilename = _l_p.c_str();
 
@@ -164,7 +164,7 @@ void app::post_constructor() {
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
-    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty() ? app::Get().options_->p_project_path : core_set::getSet().project_root[0]);
+    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty() ? app::Get().options_->p_project_path : core_set::get_set().project_root[0]);
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
@@ -253,7 +253,7 @@ void app::load_back_end() {
 
 bool app::chick_authorization() {
   if (!app_command_base::chick_authorization()) {
-    auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ", core_set::getSet().get_doc() / doodle_config::token_name.data());
+    auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ", core_set::get_set().get_doc() / doodle_config::token_name.data());
     ::MessageBoxExW(p_hwnd, boost::locale::conv::utf_to_utf<wchar_t>(show_str).c_str(), L"错误", MB_OK, 0);
     return false;
   }

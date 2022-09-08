@@ -38,7 +38,7 @@ doodle_lib::doodle_lib()
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
-  ptr->loop_bounded_pool.timiter_ = core_set::getSet().p_max_thread;
+  ptr->loop_bounded_pool.timiter_ = core_set::get_set().p_max_thread;
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
@@ -59,7 +59,7 @@ doodle_lib::doodle_lib()
 }
 
 FSys::path doodle_lib::create_time_database() {
-  auto k_local_path = core_set::getSet().get_cache_root("tzdata");
+  auto k_local_path = core_set::get_set().get_cache_root("tzdata");
   if (FSys::is_empty(k_local_path)) {
     auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
     for (const auto& i : k_path) {

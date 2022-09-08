@@ -33,7 +33,7 @@ void base_window::show(bool in_show) {
 }
 
 nlohmann::json &base_window::get_setting() const {
-  return (*core_set::getSet().json_data)[title()];
+  return (*core_set::get_set().json_data)[title()];
 }
 base_window::base_window()  = default;
 base_window::~base_window() = default;

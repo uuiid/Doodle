@@ -17,7 +17,7 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   friend user;
 
  public:
-  static core_set &getSet();
+  static core_set &get_set();
 
   // 获得运行程序目录
   static FSys::path program_location();

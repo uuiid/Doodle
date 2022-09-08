@@ -27,8 +27,8 @@ class setting_windows::impl {
         p_maya_path("maya路径"s, ""s),
         p_ue_path("ue路径"s, ""s),
         p_ue_version("ue版本"s, ""s),
-        p_batch_max("最大任务数"s, core_set::getSet().p_max_thread),
-        p_timeout("任务超时时间"s, core_set::getSet().timeout) {}
+        p_batch_max("最大任务数"s, core_set::get_set().p_max_thread),
+        p_timeout("任务超时时间"s, core_set::get_set().timeout) {}
   gui::gui_cache<std::string> p_user;
   gui::gui_cache<std::string> p_org_name;
   gui::gui_cache<std::string> p_cache;
@@ -38,8 +38,8 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_ue_version;
   gui::gui_cache<std::int32_t> p_batch_max;
   gui::gui_cache<std::int32_t> p_timeout;
-  gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::getSet().maya_replace_save_dialog};
-  gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::getSet().maya_force_resolve_link};
+  gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::get_set().maya_replace_save_dialog};
+  gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::get_set().maya_force_resolve_link};
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
 };
@@ -51,7 +51,7 @@ setting_windows::setting_windows()
 }
 
 void setting_windows::save() {
-  auto& set                    = core_set::getSet();
+  auto& set                    = core_set::get_set();
 
   set.organization_name        = p_i->p_org_name.data;
   set.p_mayaPath               = p_i->p_maya_path.data;
@@ -76,16 +76,16 @@ void setting_windows::init() {
   p_i->p_user.data                     = g_reg()->ctx().at<user>().get_name();
   p_i->user_uuid                       = fmt::format("用户id: {}", user::get_current_handle().get<database>().uuid());
 
-  p_i->p_org_name.data                 = core_set::getSet().organization_name;
-  p_i->p_cache.data                    = core_set::getSet().get_cache_root().generic_string();
-  p_i->p_doc.data                      = core_set::getSet().get_doc().generic_string();
-  p_i->p_maya_path.data                = core_set::getSet().maya_path().generic_string();
-  p_i->p_ue_path.data                  = core_set::getSet().ue4_path.generic_string();
-  p_i->p_ue_version.data               = core_set::getSet().ue4_version;
-  p_i->p_batch_max.data                = core_set::getSet().p_max_thread;
-  p_i->p_timeout.data                  = core_set::getSet().timeout;
-  p_i->p_maya_replace_save_dialog.data = core_set::getSet().maya_replace_save_dialog;
-  p_i->p_maya_force_resolve_link.data  = core_set::getSet().maya_force_resolve_link;
+  p_i->p_org_name.data                 = core_set::get_set().organization_name;
+  p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
+  p_i->p_doc.data                      = core_set::get_set().get_doc().generic_string();
+  p_i->p_maya_path.data                = core_set::get_set().maya_path().generic_string();
+  p_i->p_ue_path.data                  = core_set::get_set().ue4_path.generic_string();
+  p_i->p_ue_version.data               = core_set::get_set().ue4_version;
+  p_i->p_batch_max.data                = core_set::get_set().p_max_thread;
+  p_i->p_timeout.data                  = core_set::get_set().timeout;
+  p_i->p_maya_replace_save_dialog.data = core_set::get_set().maya_replace_save_dialog;
+  p_i->p_maya_force_resolve_link.data  = core_set::get_set().maya_force_resolve_link;
 }
 
 void setting_windows::render() {

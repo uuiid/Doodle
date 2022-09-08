@@ -106,7 +106,7 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
                if (in_handle.any_of<episodes>())
                  l_attribute.watermarks.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, rgb_default);
                l_attribute.watermarks.emplace_back(g_reg()->ctx().at<user>().get_name(), 0.1, 0.2, rgb_default);
-               l_attribute.watermarks.emplace_back(core_set::getSet().organization_name, 0.1, 0.25, rgb_default);
+               l_attribute.watermarks.emplace_back(core_set::get_set().organization_name, 0.1, 0.25, rgb_default);
                return l_attribute;
              }
          ) |
@@ -151,7 +151,7 @@ void image_to_move::init() {
     );
   else if (!p_i->p_out_path.has_extension()) {
     p_i->p_out_path /= fmt::format(
-        "{}.mp4", core_set::getSet().get_uuid()
+        "{}.mp4", core_set::get_set().get_uuid()
     );
   } else
     p_i->p_out_path.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});

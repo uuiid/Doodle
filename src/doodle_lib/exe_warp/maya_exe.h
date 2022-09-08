@@ -77,7 +77,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * @param in_handle 具有消息组件的的句柄
    * @param in_file py文件路径
    *
-   * 检查 process_message 和 core_set::getSet().has_maya()
+   * 检查 process_message 和 core_set::get_set().has_maya()
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const std::string &in_file);
@@ -86,7 +86,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * @param in_handle 具有消息组件的的句柄
    * @param in_arg qcloth 配置类
    *
-   * 检查 process_message 和 core_set::getSet().has_maya()
+   * 检查 process_message 和 core_set::get_set().has_maya()
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg);
@@ -95,7 +95,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * @param in_handle 具有消息组件的的句柄
    * @param in_arg 导出fbx 配置类
    *
-   * 检查 process_message 和 core_set::getSet().has_maya()
+   * 检查 process_message 和 core_set::get_set().has_maya()
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::export_fbx_arg &in_arg);
@@ -104,7 +104,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    * @param in_handle 具有消息组件的的句柄
    * @param in_arg 导出 文件替换 配置类
    *
-   * 检查 process_message 和 core_set::getSet().has_maya()
+   * 检查 process_message 和 core_set::get_set().has_maya()
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg);

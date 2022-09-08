@@ -89,7 +89,7 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
   boost::program_options::notify(p_vm);
 
   if (!p_vm.count(input_project)) {
-    p_project_path = core_set::getSet().project_root[0].generic_string();
+    p_project_path = core_set::get_set().project_root[0].generic_string();
   } else {
     if (p_project_path.front() == '"') {
       p_project_path = p_project_path.substr(1, p_project_path.size() - 2);

@@ -110,7 +110,7 @@ bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, 
 
   auto k_image = in_image(in_rect).clone();
 
-  k_icon.path  = core_set::getSet().get_uuid_str() + ".png";
+  k_icon.path  = core_set::get_set().get_uuid_str() + ".png";
   auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
 
   cv::imwrite(k_path.generic_string(), k_image);
@@ -181,7 +181,7 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
   DOODLE_CHICK(exists(in_path), doodle_error{"文件不存在"});
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
-  k_icon.path  = core_set::getSet().get_uuid_str() + in_path.extension().generic_string();
+  k_icon.path  = core_set::get_set().get_uuid_str() + in_path.extension().generic_string();
   auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
 
   FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);

@@ -58,7 +58,7 @@ void install_SideFX_Labs(const FSys::path &path) {
 void toolkit::installUePath(const FSys::path &path) {
   try {
     /// \brief 安装我们自己的插件
-    auto &set      = core_set::getSet();
+    auto &set      = core_set::get_set();
     auto sourePath = FSys::program_location().parent_path();
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.');
@@ -85,7 +85,7 @@ void toolkit::installUePath(const FSys::path &path) {
 }
 
 void toolkit::modifyUeCachePath() {
-  auto ue_path     = core_set::getSet().ue4_path / "Engine/Config/BaseEngine.ini";
+  auto ue_path     = core_set::get_set().ue4_path / "Engine/Config/BaseEngine.ini";
   // 做备份
   auto backup_path = FSys::path{ue_path}.replace_extension(".ini.backup");
   FSys::copy(ue_path, FSys::add_time_stamp(backup_path), FSys::copy_options::update_existing);
