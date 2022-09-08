@@ -45,11 +45,13 @@ void client::run(
     const std::int32_t& in_port,
     const std::string& in_target
 ) {
-//    if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.data())) {
-//      throw_exception(boost::system::system_error{
-//          static_cast<int>(::ERR_get_error()),
-//          boost::asio::error::get_ssl_category()});
-//    }
+  if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.c_str()) &&
+      ::ERR_get_error() != 0ul) {
+    DOODLE_LOG_INFO("{}", ::ERR_get_error());
+    throw_exception(boost::system::system_error{
+        static_cast<int>(::ERR_get_error()),
+        boost::asio::error::get_ssl_category()});
+  }
 
   // Set up an HTTP GET request message
   ptr->req_.version(11);
@@ -95,7 +97,7 @@ void client::on_resolve(
         X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
         DOODLE_LOG_INFO("Verifying {}", subject_name)
 
-        return preverified;
+        return true;
       }
   );
 
@@ -143,7 +145,7 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
-    DOODLE_LOG_INFO("write", ec.what());
+    DOODLE_LOG_INFO("write {}", ec.what());
     return;
   }
 
@@ -156,7 +158,7 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
 void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
   if (ec) {
-    DOODLE_LOG_INFO("read", ec.what());
+    DOODLE_LOG_INFO("read {}", ec.what());
     return;
   }
 
@@ -182,7 +184,7 @@ void client::on_shutdown(boost::system::error_code ec) {
     ec = {};
   }
   if (ec) {
-    DOODLE_LOG_INFO("shutdown", ec.what());
+    DOODLE_LOG_INFO("shutdown {}", ec.what());
   }
 
   // 成功关机
