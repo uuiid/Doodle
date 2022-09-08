@@ -1,4 +1,4 @@
-add_library(doodle_dingding)
+add_library(doodle_dingding SHARED)
 target_sources(
         doodle_dingding
         PUBLIC
