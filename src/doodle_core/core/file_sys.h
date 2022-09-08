@@ -11,7 +11,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem.hpp>
 #include <doodle_core/core/chrono_.h>
-#include <doodle_core/configure/DOODLE_CORE_API.h>
+#include <doodle_core/configure/doodle_core_export.h>
 
 namespace doodle::chrono {
 using namespace std::chrono;

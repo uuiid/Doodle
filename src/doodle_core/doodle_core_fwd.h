@@ -2,7 +2,7 @@
 // Created by TD on 2022/4/28.
 //
 #pragma once
-#include <doodle_core/configure/DOODLE_CORE_API.h>
+#include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>

@@ -2,7 +2,7 @@
 // Created by TD on 2021/12/31.
 //
 
-#include <doodle_core/configure/DOODLE_CORE_API.h>
+#include <doodle_core/configure/doodle_core_export.h>
 #include <oleidl.h>
 
 void OpenFilesFromDataObject(IDataObject *pdto);

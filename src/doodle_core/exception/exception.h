@@ -1,6 +1,6 @@
 #pragma once
 
-#include <doodle_core/configure/DOODLE_CORE_API.h>
+#include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <boost/exception/exception.hpp>
 #include <boost/throw_exception.hpp>
