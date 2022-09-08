@@ -107,7 +107,12 @@ maya_exe::~maya_exe() = default;
 
 void maya_exe::add_maya_fun_tool() {
   const auto tmp_path = core_set::get_set().get_cache_root(
-      fmt::format("maya\\v{}{}{}", version::version_major, version::version_minor, version::version_patch)
+      fmt::format(
+          "maya\\v{}{}{}",
+          version::build_info::get().version_major,
+          version::build_info::get().version_minor,
+          version::build_info::get().version_patch
+      )
   );
   auto k_tmp_path = tmp_path / "maya_fun_tool.py";
   if (!exists(k_tmp_path)) {

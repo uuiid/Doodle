@@ -50,7 +50,7 @@ bool app_command_base::chick_authorization() {
 }
 bool app_command_base::chick_authorization(const FSys::path& in_path) {
   chrono::sys_seconds l_build_time_;
-  std::istringstream l_time{version::build_time};
+  std::istringstream l_time{version::build_info::get().build_time};
   l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
   chrono::sys_time_pos l_point{l_build_time_};
   l_point += chrono::months{3};

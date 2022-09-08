@@ -8,7 +8,7 @@
 
 namespace doodle::win {
 
-class DOODLE_CORE_API d3d_device {
+class d3d_device {
   static d3d_device* self;
 
  public:
