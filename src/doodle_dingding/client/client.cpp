@@ -45,11 +45,11 @@ void client::run(
     const std::int32_t& in_port,
     const std::string& in_target
 ) {
-  if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.data())) {
-    throw boost::system::system_error{
-        static_cast<int>(::ERR_get_error()),
-        boost::asio::error::get_ssl_category()};
-  }
+//    if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.data())) {
+//      throw_exception(boost::system::system_error{
+//          static_cast<int>(::ERR_get_error()),
+//          boost::asio::error::get_ssl_category()});
+//    }
 
   // Set up an HTTP GET request message
   ptr->req_.version(11);
@@ -67,7 +67,7 @@ void client::run(
 }
 
 void client::run(const std::string& in_host, const std::string& in_target) {
-  return run(in_host, 80, in_target);
+  return run(in_host, 443, in_target);
 }
 
 void client::on_resolve(
@@ -85,6 +85,20 @@ void client::on_resolve(
   )
       .expires_after(30s);
 
+  ptr->ssl_stream.set_verify_mode(boost::asio::ssl::verify_peer);
+
+  ptr->ssl_stream.set_verify_callback(
+      [](bool preverified,
+         boost::asio::ssl::verify_context& ctx) -> bool {
+        char subject_name[256];
+        X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+        X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+        DOODLE_LOG_INFO("Verifying {}", subject_name)
+
+        return preverified;
+      }
+  );
+
   boost::beast::get_lowest_layer(ptr->ssl_stream)
       .async_connect(
           results,
@@ -96,7 +110,7 @@ void client::on_connect(
     const boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>&
 ) {
   if (ec) {
-    DOODLE_LOG_INFO("on_connect", ec.what());
+    DOODLE_LOG_INFO("on_connect {}", ec.what());
     return;
   }
 
@@ -111,15 +125,15 @@ void client::on_connect(
 }
 void client::on_handshake(boost::system::error_code ec) {
   if (ec) {
-    DOODLE_LOG_INFO("handshake", ec.what());
+    DOODLE_LOG_INFO("handshake {}", ec.message());
     return;
   }
 
-  // Set a timeout on the operation
+  // 设置操作超时
   boost::beast::get_lowest_layer(ptr->ssl_stream)
       .expires_after(std::chrono::seconds(30));
 
-  // Send the HTTP request to the remote host
+  // 向远程主机发送 HTTP 请求
   boost::beast::http::async_write(
       ptr->ssl_stream, ptr->req_,
       boost::beast::bind_front_handler(&client::on_write, shared_from_this())
