@@ -7,6 +7,7 @@ target_sources(
 )
 add_subdirectory(client)
 add_subdirectory(configure)
+add_subdirectory(fmt_lib)
 
 target_include_directories(
         doodle_dingding

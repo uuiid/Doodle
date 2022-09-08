@@ -207,9 +207,10 @@ std::string client::gettoken() {
       )
   );
   ptr->req_.set(boost::beast::http::field::uri, std::string{l_url.string()});
+  DOODLE_LOG_INFO(l_url.string());
 
-  run(l_url.host(), 443, l_url.path());
 
+//  run(l_url.host(), 443, l_url.path());
   return ptr->res_.body();
 }
 
