@@ -5,16 +5,56 @@
 #pragma once
 
 #include <doodle_dingding/doodle_dingding_fwd.h>
-#include <boost/asio/io_context.hpp>
-namespace doodle::dingding {
 
-class DOODLE_DINGDING_API client {
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/system.hpp>
+
+namespace doodle::dingding {
+/**
+ * @brief 一个特别基础的https客户端
+ * 使用方法 run("www.example.com","443","/")
+ */
+class DOODLE_DINGDING_API client
+    : public std::enable_shared_from_this<client> {
  private:
   class impl;
   std::unique_ptr<impl> ptr;
 
+  void on_resolve(
+      boost::system::error_code ec,
+      const boost::asio::ip::tcp::resolver::results_type& results
+  );
+
+  void on_connect(
+      boost::system::error_code ec,
+      const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
+  );
+
+  void on_handshake(boost::system::error_code ec);
+  void on_write(
+      boost::system::error_code ec,
+      std::size_t bytes_transferred
+  );
+  void on_read(
+      boost::system::error_code ec,
+      std::size_t bytes_transferred
+  );
+  void on_shutdown(boost::system::error_code ec);
+
  public:
-  explicit client(const boost::asio::io_context& in_context);
+  explicit client(
+      const boost::asio::any_io_executor& in_executor,
+      boost::asio::ssl::context& in_ssl_context
+  );
+
+  void run(
+      const std::string& in_host,
+      const std::string& in_port,
+      const std::string& in_target
+  );
+  virtual ~client() noexcept;
 };
 
 }  // namespace doodle::dingding
