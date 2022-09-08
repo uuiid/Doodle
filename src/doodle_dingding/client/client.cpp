@@ -42,7 +42,7 @@ client::client(
 }
 void client::run(
     const std::string& in_host,
-    const std::string& in_port,
+    const std::int32_t& in_port,
     const std::string& in_target
 ) {
   if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.data())) {
@@ -61,10 +61,15 @@ void client::run(
   // Look up the domain name
   ptr->resolver_.async_resolve(
       in_host,
-      in_port,
+      fmt::to_string(in_port),
       boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
   );
 }
+
+void client::run(const std::string& in_host, const std::string& in_target) {
+  return run(in_host, 80, in_target);
+}
+
 void client::on_resolve(
     boost::system::error_code ec,
     const boost::asio::ip::basic_resolver<
@@ -168,6 +173,7 @@ void client::on_shutdown(boost::system::error_code ec) {
 
   // 成功关机
 }
+
 client::~client() noexcept = default;
 
 }  // namespace doodle::dingding

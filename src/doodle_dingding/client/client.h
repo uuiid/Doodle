@@ -51,7 +51,11 @@ class DOODLE_DINGDING_API client
 
   void run(
       const std::string& in_host,
-      const std::string& in_port,
+      const std::int32_t& in_port,
+      const std::string& in_target
+  );
+  void run(
+      const std::string& in_host,
       const std::string& in_target
   );
   virtual ~client() noexcept;
