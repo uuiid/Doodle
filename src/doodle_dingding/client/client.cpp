@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core.h>
 #include <doodle_dingding/configure/config.h>
+#include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
+
 #include <boost/asio.hpp>
 
 #include <utility>
@@ -59,8 +61,21 @@ void client::run(
     const std::string& in_port,
     const std::string& in_target
 ) {
-  if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.c_str()) &&
-      ::ERR_get_error() != 0ul) {
+  boost::url l_url{fmt::format("{}:{}{}", in_host, in_port, in_target)};
+  return run(l_url);
+}
+void client::run(
+    boost::url& in_url
+) {
+  const std::string host{in_url.host()};
+  const std::string port{in_url.has_port()  //
+                             ? in_url.port()
+                             : (in_url.scheme_id() == boost::urls::scheme::wss)  //
+                                   ? "https"
+                                   : "http"};
+  in_url.remove_origin();  /// \brief 去除一部分
+
+  if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), host.c_str()) && ::ERR_get_error() != 0ul) {
     throw_exception(boost::system::system_error{
         static_cast<int>(::ERR_get_error()),
         boost::asio::error::get_ssl_category()});
@@ -69,18 +84,18 @@ void client::run(
   // Set up an HTTP GET request message
   ptr->req_.version(11);
   ptr->req_.method(boost::beast::http::verb::get);
-  ptr->req_.target(in_target);
-  ptr->req_.set(boost::beast::http::field::host, in_host);
+  ptr->req_.target(in_url.c_str());
+  ptr->req_.set(boost::beast::http::field::host, host);
   ptr->req_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  ptr->req_.prepare_payload();
 
   // Look up the domain name
   ptr->resolver_.async_resolve(
-      in_host,
-      in_port,
+      host,
+      port,
       boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
   );
 }
-
 void client::on_resolve(
     boost::system::error_code ec,
     const boost::asio::ip::basic_resolver<
@@ -199,18 +214,19 @@ void client::on_shutdown(boost::system::error_code ec) {
   // 成功关机
 }
 std::string client::gettoken() {
-  boost::url l_url{dingding_host.data()};
-  l_url.set_path("/gettoken");
-  l_url.set_query(
-      fmt::format(
-          "appkey={}&appsecret={}", dingding_config::get().app_key, dingding_config::get().app_value
-      )
-  );
+  boost::url l_url{};
+  boost::url l_method{"gettoken"};
+  l_method.params().set("appkey", dingding_config::get().app_key);
+  l_method.params().set("appsecret", dingding_config::get().app_value);
+
+  boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
+
   ptr->req_.set(boost::beast::http::field::uri, std::string{l_url.string()});
   DOODLE_LOG_INFO(l_url.string());
+  DOODLE_LOG_INFO(ptr->req_);
+  DOODLE_LOG_INFO(l_url.path());
 
-
-//  run(l_url.host(), 443, l_url.path());
+  //  run(l_url.host(), 443, l_url.path());
   return ptr->res_.body();
 }
 

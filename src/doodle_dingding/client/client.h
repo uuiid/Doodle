@@ -10,6 +10,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/system.hpp>
+#include <boost/url/urls.hpp>
 
 namespace doodle::dingding {
 /**
@@ -64,6 +65,9 @@ class DOODLE_DINGDING_API client
   void run(
       const std::string& in_host,
       const std::string& in_target
+  );
+  void run(
+      boost::url& in_url
   );
 
   std::string gettoken();
