@@ -5,6 +5,7 @@
 #include "client.h"
 
 #include <doodle_core/doodle_core.h>
+#include <doodle_dingding/configure/config.h>
 
 #include <boost/asio.hpp>
 
@@ -14,7 +15,6 @@
 #include <boost/system.hpp>
 
 #include <boost/url.hpp>
-
 
 namespace doodle::dingding {
 class client::impl {
@@ -49,6 +49,17 @@ void client::run(
     const std::int32_t& in_port,
     const std::string& in_target
 ) {
+  run(in_host, fmt::to_string(in_port), in_target);
+}
+
+void client::run(const std::string& in_host, const std::string& in_target) {
+  return run(in_host, 443, in_target);
+}
+void client::run(
+    const std::string& in_host,
+    const std::string& in_port,
+    const std::string& in_target
+) {
   if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.c_str()) &&
       ::ERR_get_error() != 0ul) {
     throw_exception(boost::system::system_error{
@@ -66,13 +77,9 @@ void client::run(
   // Look up the domain name
   ptr->resolver_.async_resolve(
       in_host,
-      fmt::to_string(in_port),
+      in_port,
       boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
   );
-}
-
-void client::run(const std::string& in_host, const std::string& in_target) {
-  return run(in_host, 443, in_target);
 }
 
 void client::on_resolve(
@@ -191,6 +198,20 @@ void client::on_shutdown(boost::system::error_code ec) {
   }
 
   // 成功关机
+}
+std::string client::gettoken() {
+  boost::url l_url{dingding_host.data()};
+  l_url.set_path("/gettoken");
+  l_url.set_query(
+      fmt::format(
+          "appkey={}&appsecret={}", dingding_config::get().app_key, dingding_config::get().app_value
+      )
+  );
+  ptr->req_.set(boost::beast::http::field::uri, std::string{l_url.string()});
+
+  run(l_url.host(), 443, l_url.path());
+
+  return ptr->res_.body();
 }
 
 client::~client() noexcept = default;

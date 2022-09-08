@@ -19,6 +19,8 @@ namespace doodle::dingding {
 class DOODLE_DINGDING_API client
     : public std::enable_shared_from_this<client> {
  private:
+  constexpr static const std::string_view dingding_host{"https://oapi.dingtalk.com"};
+
   class impl;
   std::unique_ptr<impl> ptr;
 
@@ -56,8 +58,16 @@ class DOODLE_DINGDING_API client
   );
   void run(
       const std::string& in_host,
+      const std::string& in_port,
       const std::string& in_target
   );
+  void run(
+      const std::string& in_host,
+      const std::string& in_target
+  );
+
+  std::string gettoken();
+
   virtual ~client() noexcept;
 };
 
