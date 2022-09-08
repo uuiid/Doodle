@@ -1,3 +1,12 @@
+set(DINGDING_KEY "0")
+set(DINGDING_VALUE "0")
+
+
+
+
+
+
+
 configure_file(config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/config.cpp)
 
 
