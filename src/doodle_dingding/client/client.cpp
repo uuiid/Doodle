@@ -221,7 +221,6 @@ std::string client::gettoken() {
 
   boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
 
-  ptr->req_.set(boost::beast::http::field::uri, std::string{l_url.string()});
   DOODLE_LOG_INFO(l_url.string());
   DOODLE_LOG_INFO(ptr->req_);
   DOODLE_LOG_INFO(l_url.path());
