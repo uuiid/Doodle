@@ -1,3 +1,14 @@
+configure_file(config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/config.cpp)
+
+
 target_sources(doodle_dingding
         PUBLIC
-        doodle_dingding_export.h)
+        doodle_dingding_export.h
+        config.h
+
+        PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/config.cpp
+
+        )
+
+
