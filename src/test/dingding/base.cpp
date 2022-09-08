@@ -27,3 +27,23 @@ BOOST_AUTO_TEST_CASE(client_base_tset) {
       ->run("www.baidu.com"s, "/"s);
   l_io_context.run();
 }
+
+BOOST_AUTO_TEST_CASE(client_get_gettoken) {
+  boost::asio::io_context l_io_context{};
+  /// \brief SSL 上下文是必需的，并持有证书
+  boost::asio::ssl::context l_context{
+      boost::asio::ssl::context::sslv23};
+  /// 验证远程服务器的证书
+  l_context.set_verify_mode(boost::asio::ssl::verify_peer);
+  l_context.set_options(
+      boost::asio::ssl::context::default_workarounds
+      | boost::asio::ssl::context::no_sslv2
+      | boost::asio::ssl::context::no_sslv3
+  );
+  l_context.set_default_verify_paths();
+  using namespace std::literals;
+
+  std::make_shared<dingding::client>(boost::asio::make_strand(l_io_context), l_context)
+      ->gettoken();
+  l_io_context.run();
+}
