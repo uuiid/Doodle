@@ -60,6 +60,9 @@ class DOODLE_CORE_EXPORT core_set : public details::no_copy {
   bool maya_replace_save_dialog{false};
   bool maya_force_resolve_link{false};
 
+  doodle_lib* lib_ptr;
+  logger_ctrl* log_ptr;
+
  private:
   // 用户名称
   boost::uuids::uuid user_id;

@@ -40,14 +40,12 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
   void flush_() override {}
 };
 }  // namespace details
-using msvc_doodle_sink_mt       = details::msvc_doodle_sink<std::mutex>;
-
-logger_ctrl *logger_ctrl::_self = nullptr;
+using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 
 logger_ctrl::logger_ctrl()
     : p_log_path(FSys::temp_directory_path() / "doodle" / "log"),
       p_log_name("tmp_logfile" + date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()) + ".txt") {
-  _self = this;
+  core_set::get_set().log_ptr = this;
   init_temp_log();
 }
 void logger_ctrl::init_temp_log() {
@@ -87,7 +85,7 @@ void logger_ctrl::init_log() {
     FSys::create_directories(p_log_path);
 }
 logger_ctrl &logger_ctrl::get_log() {
-  return *_self;
+  return *core_set::get_set().log_ptr;
 }
 bool logger_ctrl::set_log_name(const std::string &in_name) {
   init_log();

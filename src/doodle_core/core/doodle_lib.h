@@ -12,10 +12,11 @@ class thread_pool;
 }  // namespace boost::asio
 
 namespace doodle {
+
+
 class DOODLE_CORE_EXPORT doodle_lib : public details::no_copy,
                                       boost::equality_comparable<doodle_lib> {
  private:
-  static doodle_lib* p_install;
   class impl;
   std::unique_ptr<impl> ptr;
 

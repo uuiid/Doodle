@@ -55,7 +55,7 @@ doodle_lib::doodle_lib()
           DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_);
         });
   });
-  p_install = this;
+  core_set::get_set().lib_ptr = this;
 }
 
 FSys::path doodle_lib::create_time_database() {
@@ -76,7 +76,7 @@ FSys::path doodle_lib::create_time_database() {
   return k_local_path;
 }
 doodle_lib& doodle_lib::Get() {
-  return *p_install;
+  return *core_set::get_set().lib_ptr;
 }
 
 thread_pool_ptr doodle_lib::get_thread_pool() const {

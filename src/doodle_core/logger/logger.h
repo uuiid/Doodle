@@ -24,7 +24,6 @@ class DOODLE_CORE_EXPORT logger_ctrl {
   std::string p_log_name;
 
   void init_temp_log();
-  static logger_ctrl* _self;
 
   void init_log();
 
