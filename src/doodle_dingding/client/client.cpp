@@ -12,6 +12,10 @@
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/system.hpp>
+
+#include <boost/url.hpp>
+
+
 namespace doodle::dingding {
 class client::impl {
  public:
@@ -47,7 +51,6 @@ void client::run(
 ) {
   if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), in_host.c_str()) &&
       ::ERR_get_error() != 0ul) {
-    DOODLE_LOG_INFO("{}", ::ERR_get_error());
     throw_exception(boost::system::system_error{
         static_cast<int>(::ERR_get_error()),
         boost::asio::error::get_ssl_category()});

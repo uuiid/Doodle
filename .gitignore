@@ -66,6 +66,7 @@ cmake-build-debug/
 /.idea/
 /.venv/
 /install*
+CMakeUserPresets.json
 
 *.exp
 #忽略python文件
