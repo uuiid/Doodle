@@ -17,6 +17,8 @@ target_link_libraries(
         doodle_dingding
         PUBLIC
         doodle_core
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 target_compile_definitions(
         doodle_dingding

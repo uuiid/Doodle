@@ -29,19 +29,19 @@ class thread_pool;
 
 // #include <>
 namespace doodle {
-class convert;
-class doodle_error;
-class error_iterator;
-class nullptr_error;
-class serialization_error;
-class file_error;
+class DOODLE_CORE_API convert;
+class DOODLE_CORE_API doodle_error;
+class DOODLE_CORE_API error_iterator;
+class DOODLE_CORE_API nullptr_error;
+class DOODLE_CORE_API serialization_error;
+class DOODLE_CORE_API file_error;
 
 using namespace std::literals;
 using namespace date::literals;
 
-class logger_ctrl;
-class doodle_lib;
-class thread_pool;
+class DOODLE_CORE_API logger_ctrl;
+class DOODLE_CORE_API doodle_lib;
+class DOODLE_CORE_API thread_pool;
 using handle_list     = std::vector<entt::handle>;
 using logger_ctr_ptr  = std::shared_ptr<logger_ctrl>;
 using string_list     = std::vector<std::string>;
@@ -74,15 +74,15 @@ DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
 
 namespace movie {
-class image_attr;
-class image_watermark;
+class DOODLE_CORE_API image_attr;
+class DOODLE_CORE_API image_watermark;
 }  // namespace movie
 
 namespace database_n {
-class insert;
-class select;
-class update_data;
-class delete_data;
+class DOODLE_CORE_API insert;
+class DOODLE_CORE_API select;
+class DOODLE_CORE_API update_data;
+class DOODLE_CORE_API delete_data;
 }  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;

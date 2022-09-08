@@ -12,13 +12,29 @@
 #include <cstdint>
 #include <string>
 #include <chrono>
+#include <doodle_core/configure/doodle_core_export.h>
 namespace doodle::version {
-extern const std::int16_t version_major;
-extern const std::int16_t version_minor;
-extern const std::int16_t version_patch;
-extern const std::int16_t version_tweak;
-extern const std::string version_str;
-extern const std::string build_time;
+
+class DOODLE_CORE_API build_info {
+  build_info();
+
+ public:
+  ~build_info() = default;
+
+  static build_info& get();
+
+  build_info(const build_info&) noexcept            = delete;
+  build_info(build_info&&) noexcept                 = delete;
+  build_info& operator=(const build_info&) noexcept = delete;
+  build_info& operator=(build_info&&) noexcept      = delete;
+  std::int16_t version_major;
+  std::int16_t version_minor;
+  std::int16_t version_patch;
+  std::int16_t version_tweak;
+  std::string version_str;
+  std::string build_time;
+};
+
 }  // namespace doodle::version
 
 #if defined _WIN32
@@ -65,8 +81,8 @@ extern const std::string build_time;
 
 #include <boost/current_function.hpp>
 #ifndef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char *>(BOOST_CURRENT_FUNCTION)
+#define SPDLOG_FUNCTION static_cast<const char*>(BOOST_CURRENT_FUNCTION)
 #else
 #undef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char *>(BOOST_CURRENT_FUNCTION)
+#define SPDLOG_FUNCTION static_cast<const char*>(BOOST_CURRENT_FUNCTION)
 #endif

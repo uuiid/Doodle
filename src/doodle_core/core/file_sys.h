@@ -70,7 +70,7 @@ struct formatter<::boost::filesystem::path> : formatter<string_view> {
 
 namespace nlohmann {
 template <>
-struct adl_serializer<boost::filesystem::path> {
+struct DOODLE_CORE_API adl_serializer<boost::filesystem::path> {
   static void to_json(json& j, const boost::filesystem::path& in_path);
 
   static void from_json(const json& j, boost::filesystem::path& in_path);

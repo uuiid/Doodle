@@ -58,12 +58,12 @@ class DOODLE_CORE_API project {
   }
 };
 namespace project_config {
-void to_json(nlohmann::json& j, const base_config& p);
-void from_json(const nlohmann::json& j, base_config& p);
+void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
+void DOODLE_CORE_API from_json(const nlohmann::json& j, base_config& p);
 class DOODLE_CORE_API base_config {
  private:
-  friend void to_json(nlohmann::json& j, const base_config& p);
-  friend void from_json(const nlohmann::json& j, base_config& p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, base_config& p);
 
  public:
   constexpr static std::uint32_t class_hash() {

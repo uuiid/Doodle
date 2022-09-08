@@ -4,11 +4,8 @@
 
 #pragma once
 
-#ifdef DOODLE_CORE_STATIC_DEFINE
-#define DOODLE_CORE_API
-#else
-#ifndef DOODLE_CORE_EXPORT
-#ifdef DOODLE_CORE_API
+
+#ifdef DOODLE_CORE_EXPORT
 /* We are building this library */
 #define DOODLE_CORE_API __declspec(dllexport)
 #else
@@ -16,6 +13,3 @@
 #define DOODLE_CORE_API __declspec(dllimport)
 #endif
 
-#endif
-
-#endif

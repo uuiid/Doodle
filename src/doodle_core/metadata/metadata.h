@@ -84,8 +84,8 @@ class DOODLE_CORE_API database
   bool operator==(const boost::uuids::uuid &in_rhs) const;
   bool operator==(const ref_data &in_rhs) const;
 
-  friend void to_json(nlohmann::json &j, const database &p);
-  friend void from_json(const nlohmann::json &j, database &p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json &j, const database &p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
   static entt::handle find_by_uuid(const boost::uuids::uuid &in);
 

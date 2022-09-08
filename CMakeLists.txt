@@ -55,7 +55,8 @@ find_package(Doxygen)
 # 寻找opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-
+# 寻找 openssl
+find_package(OpenSSL REQUIRED)
 #仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)

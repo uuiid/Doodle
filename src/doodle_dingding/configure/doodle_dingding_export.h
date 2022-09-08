@@ -4,16 +4,6 @@
 
 #pragma once
 
-//
-// Created by TD on 2022/8/4.
-//
-
-#pragma once
-
-#ifdef DOODLE_DINGDING_STATIC_DEFINE
-#define DOODLE_DINGDING_API
-
-#else  // DOODLE_DINGDING_STATIC_DEFINE
 
 
 #ifdef DOODLE_DINGDING_EXPORTS
@@ -24,6 +14,3 @@
 #define DOODLE_DINGDING_API __declspec(dllimport)
 
 #endif
-
-
-#endif  // DOODLE_DINGDING_STATIC_DEFINE

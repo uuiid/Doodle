@@ -99,7 +99,7 @@ target_compile_definitions(doodle_core
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,STATIC_LIBRARY>:DOODLE_CORE_STATIC_DEFINE>
         PRIVATE
 
-        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_API>
+        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_EXPORT>
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 

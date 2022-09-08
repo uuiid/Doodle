@@ -46,7 +46,7 @@ app_base* app_base::self = nullptr;
 
 app_base::app_base()
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format(
-          "doodle {}", version::version_str
+          "doodle {}", version::build_info::get().version_str
       ))),
       stop_(false),
       instance(::GetModuleHandleW(nullptr)),

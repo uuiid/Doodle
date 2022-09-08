@@ -8,6 +8,7 @@
 #include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/file_sys.h>
 
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
@@ -151,16 +152,16 @@ void add_version_table(sqlpp::sqlite3::connection& in_conn) {
   in_conn.execute(std::string{::doodle::database_n::create_version_table});
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
-      l_info.versionMajor = version::version_major,
-      l_info.versionMinor = version::version_minor
+      l_info.versionMajor = version::build_info::get().version_major,
+      l_info.versionMinor = version::build_info::get().version_minor
   ));
 }
 
 void set_version(sqlpp::sqlite3::connection& in_conn) {
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::update(l_info).unconditionally().set(
-      l_info.versionMajor = version::version_major,
-      l_info.versionMinor = version::version_minor
+      l_info.versionMajor = version::build_info::get().version_major,
+      l_info.versionMinor = version::build_info::get().version_minor
   ));
 }
 bool has_version_table(sqlpp::sqlite3::connection& in_conn) {
