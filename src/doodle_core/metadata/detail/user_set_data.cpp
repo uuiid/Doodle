@@ -3,9 +3,9 @@
 //
 
 #include "user_set_data.h"
+#include <doodle_core/metadata/metadata.h>
 
-namespace doodle {
-namespace detail {
+namespace doodle::detail {
 void to_json(nlohmann::json& j, const user_set_data& p) {
   j["rules_attr"] = p.rules_attr;
   j["data_ref"]   = p.data_ref;
@@ -16,5 +16,4 @@ void from_json(const nlohmann::json& j, user_set_data& p) {
   j.at("data_ref").get_to(p.data_ref);
   j.at("user_data").get_to(p.user_data);
 }
-}  // namespace detail
 }  // namespace doodle

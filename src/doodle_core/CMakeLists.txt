@@ -18,6 +18,7 @@ doodle_sqlpp_generate(
 
 # 添加配置
 add_library(doodle_core
+        SHARED
         ${OUT_LISTS_sqlpp}
         )
 
@@ -87,6 +88,8 @@ target_link_libraries(
         spdlog::spdlog
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp-static
+        sqlpp11::sqlpp11
+        sqlpp11::sqlite3
 )
 
 target_compile_definitions(doodle_core

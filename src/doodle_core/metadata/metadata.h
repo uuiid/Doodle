@@ -38,6 +38,10 @@ class DOODLE_CORE_EXPORT ref_data {
 };
 }  // namespace database_ns
 
+void DOODLE_CORE_EXPORT to_json(nlohmann::json &j, const database &p);
+void DOODLE_CORE_EXPORT from_json(const nlohmann::json &j, database &p);
+
+
 class DOODLE_CORE_EXPORT database
     : boost::equality_comparable<database>,
       boost::equality_comparable<boost::uuids::uuid>,

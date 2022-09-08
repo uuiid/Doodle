@@ -30,6 +30,7 @@ class database::impl {
   mutable std::uint64_t p_id;
   boost::uuids::uuid p_uuid_;
 };
+
 namespace database_ns {
 ref_data::ref_data() = default;
 
@@ -146,6 +147,14 @@ void database::fun_save_::operator()(const entt::handle &in) const {
     in.get_or_emplace<data_status_save>();
   } else
     DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
+}
+void to_json(nlohmann::json &j, const database &p) {
+  j["uuid"] = p.p_i->p_uuid_;
+  j["id"]   = p.p_i->p_id;
+}
+void from_json(const nlohmann::json &j, database &p) {
+  j["uuid"].get_to(p.p_i->p_uuid_);
+  j["id"].get_to(p.p_i->p_id);
 }
 
 }  // namespace doodle

@@ -13,8 +13,8 @@ namespace doodle {
 namespace detail {
 
 class user_set_data;
-void to_json(nlohmann::json& j, const user_set_data& p);
-void from_json(const nlohmann::json& j, user_set_data& p);
+void DOODLE_CORE_EXPORT to_json(nlohmann::json& j, const user_set_data& p);
+void DOODLE_CORE_EXPORT from_json(const nlohmann::json& j, user_set_data& p);
 class DOODLE_CORE_EXPORT user_set_data {
  public:
   user_set_data()          = default;
