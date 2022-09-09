@@ -110,14 +110,18 @@ class DOODLE_CORE_API base_config {
   /// \brief 季数包含的集数个数
   std::int32_t season_count;
 
+  /// 先判断是否只导出解算体, 然后判断是否划分网格
+  /// \brief 是否只导出解算物体
+  bool use_only_sim_cloth{false};
+  /// \brief 是否进行分组导出
+  bool use_divide_group_export{false};
+  /// 重命名和合并网格体是在最后判断的
+
   /// \brief maya导出 abc 时是否进行作色集和材质名称进行调换
   bool use_rename_material{true};
   /// \brief maya导出时, 是否进行合并网格操作
   bool use_merge_mesh{true};
-  /// \brief 是否进行分组导出
-  bool use_divide_group_export{false};
-  /// \brief 是否只导出解算物体
-  bool use_only_sim_cloth{false};
+
   /// \brief t post 时间
   std::int32_t t_post{950u};
   /// \brief 导出动画时间
