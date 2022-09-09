@@ -113,15 +113,19 @@ project_config::base_config::base_config()
       season_count(20) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
-  j["find_icon_regex"]      = p.find_icon_regex;
-  j["assets_list"]          = p.assets_list;
-  j["vfx_cloth_sim_path"]   = p.vfx_cloth_sim_path;
-  j["export_group"]         = p.export_group;
-  j["cloth_proxy_"]         = p.cloth_proxy_;
-  j["simple_module_proxy_"] = p.simple_module_proxy_;
-  j["icon_extensions"]      = p.icon_extensions;
-  j["upload_path"]          = p.upload_path;
-  j["season_count"]         = p.season_count;
+  j["find_icon_regex"]         = p.find_icon_regex;
+  j["assets_list"]             = p.assets_list;
+  j["vfx_cloth_sim_path"]      = p.vfx_cloth_sim_path;
+  j["export_group"]            = p.export_group;
+  j["cloth_proxy_"]            = p.cloth_proxy_;
+  j["simple_module_proxy_"]    = p.simple_module_proxy_;
+  j["icon_extensions"]         = p.icon_extensions;
+  j["upload_path"]             = p.upload_path;
+  j["season_count"]            = p.season_count;
+
+  j["use_rename_material"]     = p.use_rename_material;
+  j["use_merge_mesh"]          = p.use_merge_mesh;
+  j["use_divide_group_export"] = p.use_divide_group_export;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -141,6 +145,13 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("upload_path").get_to(p.upload_path);
   if (j.contains("season_count"))
     j.at("season_count").get_to(p.season_count);
+
+  if (j.contains("use_rename_material"))
+    j.at("use_rename_material").get_to(p.use_rename_material);
+  if (j.contains("use_merge_mesh"))
+    j.at("use_merge_mesh").get_to(p.use_merge_mesh);
+  if (j.contains("use_divide_group_export"))
+    j.at("use_divide_group_export").get_to(p.use_divide_group_export);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {

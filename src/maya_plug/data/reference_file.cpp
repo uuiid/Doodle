@@ -220,7 +220,10 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_error &err) {
-    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 不符合配置的文件, 不进行导出")
+    DOODLE_LOG_WARN(
+        "没有物体被配置文件中的 export_group 值 {} 选中, 不符合配置的文件, 不进行导出",
+        k_cfg.export_group
+    );
     return {};
   }
 

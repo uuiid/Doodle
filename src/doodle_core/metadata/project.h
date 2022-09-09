@@ -105,10 +105,17 @@ class DOODLE_CORE_API base_config {
    *
    */
   std::vector<std::string> icon_extensions;
-
+  /// \brief 导出后上传路径
   FSys::path upload_path;
-
+  /// \brief 季数包含的集数个数
   std::int32_t season_count;
+
+  /// \brief maya导出 abc 时是否进行作色集和材质名称进行调换
+  bool use_rename_material{true};
+  /// \brief maya导出时, 是否进行合并网格操作
+  bool use_merge_mesh{false};
+  /// \brief 是否进行分组导出
+  bool use_divide_group_export{false};
 
   base_config();
 
