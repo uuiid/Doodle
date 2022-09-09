@@ -211,7 +211,6 @@ class sim_config(config):
             l_b_time_ = self.export_anim_time
             if self.export_anim_time == 1001:
                 l_b_time_ = 1000
-
             cmds.doodle_ref_file_export(
                 startTime=l_b_time_,
                 endTime=doodle_work_space.raneg.end,
