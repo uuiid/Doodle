@@ -12,8 +12,6 @@
 
 namespace doodle {
 class time_point_wrap;
-void to_json(nlohmann::json& j, const time_point_wrap& p);
-void from_json(const nlohmann::json& j, time_point_wrap& p);
 
 namespace time_point_wrap_ns {
 using time_point       = chrono::sys_time_pos;
@@ -172,8 +170,8 @@ class DOODLE_CORE_API time_point_wrap
 
  private:
   // 这里是序列化的代码
-  friend void to_json(nlohmann::json& j, const time_point_wrap& p);
-  friend void from_json(const nlohmann::json& j, time_point_wrap& p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const time_point_wrap& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
 };
 
 time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
