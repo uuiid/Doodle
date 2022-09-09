@@ -69,10 +69,8 @@ void client::run(
 ) {
   const std::string host{in_url.host()};
   const std::string port{in_url.has_port()  //
-                             ? in_url.port()
-                             : (in_url.scheme_id() == boost::urls::scheme::wss)  //
-                                   ? "https"
-                                   : "http"};
+                             ? std::string{in_url.port()}
+                             : "443"s};
   in_url.remove_origin();  /// \brief 去除一部分
 
   if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), host.c_str()) && ::ERR_get_error() != 0ul) {
@@ -88,6 +86,7 @@ void client::run(
   ptr->req_.set(boost::beast::http::field::host, host);
   ptr->req_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   ptr->req_.prepare_payload();
+//  DOODLE_LOG_INFO(ptr->req_);
 
   // Look up the domain name
   ptr->resolver_.async_resolve(
@@ -221,11 +220,11 @@ std::string client::gettoken() {
 
   boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
 
-  DOODLE_LOG_INFO(l_url.string());
-  DOODLE_LOG_INFO(ptr->req_);
-  DOODLE_LOG_INFO(l_url.path());
+  //  DOODLE_LOG_INFO(l_url.string());
+  //  DOODLE_LOG_INFO(ptr->req_);
+  //  DOODLE_LOG_INFO(l_url.remove_origin().string());
 
-  //  run(l_url.host(), 443, l_url.path());
+  run(l_url);
   return ptr->res_.body();
 }
 
