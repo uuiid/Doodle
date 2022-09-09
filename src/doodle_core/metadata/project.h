@@ -117,9 +117,9 @@ class DOODLE_CORE_API base_config {
   /// \brief 是否进行分组导出
   bool use_divide_group_export{false};
   /// \brief t post 时间
-  std::int32_t t_post;
+  std::int32_t t_post{950u};
   /// \brief 导出动画时间
-  std::int32_t export_anim_time;
+  std::int32_t export_anim_time{1001u};
 
   base_config();
 
