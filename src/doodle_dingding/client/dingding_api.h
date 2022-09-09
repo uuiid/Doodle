@@ -4,9 +4,13 @@
 #pragma once
 
 #include <doodle_dingding/client/client.h>
+#include <nlohmann/json_fwd.hpp>
+
+#include <doodle_dingding/metadata/access_token.h>
 
 namespace doodle {
 namespace dingding {
+class access_token;
 
 class DOODLE_DINGDING_API dingding_api : public client {
  private:
@@ -17,7 +21,9 @@ class DOODLE_DINGDING_API dingding_api : public client {
       const boost::asio::any_io_executor& in_executor,
       boost::asio::ssl::context& in_ssl_context
   );
-  std::string gettoken();
+  void async_get_token(
+      read_access_token_fun&& in
+  );
 };
 
 }  // namespace dingding
