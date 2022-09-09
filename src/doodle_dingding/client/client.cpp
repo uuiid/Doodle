@@ -37,7 +37,24 @@ class client::impl {
   boost::beast::flat_buffer buffer_;
   boost::beast::http::request<boost::beast::http::empty_body> req_;
   boost::beast::http::response<boost::beast::http::string_body> res_;
+  bool init_{false};
+
+  config_type config;
 };
+
+void client::set_openssl(const std::string& host) {
+  if (!ptr->init_) {
+    if (
+        SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), host.c_str()) &&
+        ::ERR_get_error() != 0ul
+    ) {
+      throw_exception(boost::system::system_error{
+          static_cast<int>(::ERR_get_error()),
+          boost::asio::error::get_ssl_category()});
+    }
+    ptr->init_ = true;
+  }
+}
 
 client::client(
     const boost::asio::any_io_executor& in_executor,
@@ -45,49 +62,28 @@ client::client(
 )
     : ptr(std::make_unique<impl>(in_executor, in_ssl_context)) {
 }
-void client::run(
-    const std::string& in_host,
-    const std::int32_t& in_port,
-    const std::string& in_target
-) {
-  run(in_host, fmt::to_string(in_port), in_target);
-}
 
 void client::run(const std::string& in_host, const std::string& in_target) {
-  return run(in_host, 443, in_target);
+  boost::url l_url{fmt::format("{}:{}{}", in_host, "443"s, in_target)};
+  client_ns::http_req_res<
+      boost::beast::http::request<boost::beast::http::empty_body>,
+      boost::beast::http::response<boost::beast::http::string_body> >
+      l_http_req_res{shared_from_this()};
+  l_http_req_res.req_attr.method(boost::beast::http::verb::get);
+  l_http_req_res.url_attr = l_url;
+  return run(l_http_req_res);
 }
+
 void client::run(
-    const std::string& in_host,
-    const std::string& in_port,
-    const std::string& in_target
-) {
-  boost::url l_url{fmt::format("{}:{}{}", in_host, in_port, in_target)};
-  return run(l_url);
-}
-void client::run(
-    boost::url& in_url
+    const boost::url& in_url,
+    const config_type& in_config_type
 ) {
   const std::string host{in_url.host()};
+  set_openssl(host);
   const std::string port{in_url.has_port()  //
                              ? std::string{in_url.port()}
                              : "443"s};
-  in_url.remove_origin();  /// \brief 去除一部分
-
-  if (SSL_set_tlsext_host_name(ptr->ssl_stream.native_handle(), host.c_str()) && ::ERR_get_error() != 0ul) {
-    throw_exception(boost::system::system_error{
-        static_cast<int>(::ERR_get_error()),
-        boost::asio::error::get_ssl_category()});
-  }
-
-  // Set up an HTTP GET request message
-  ptr->req_.version(11);
-  ptr->req_.method(boost::beast::http::verb::get);
-  ptr->req_.target(in_url.c_str());
-  ptr->req_.set(boost::beast::http::field::host, host);
-  ptr->req_.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  ptr->req_.prepare_payload();
-//  DOODLE_LOG_INFO(ptr->req_);
-
+  ptr->config = in_config_type;
   // Look up the domain name
   ptr->resolver_.async_resolve(
       host,
@@ -95,6 +91,7 @@ void client::run(
       boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
   );
 }
+
 void client::on_resolve(
     boost::system::error_code ec,
     const boost::asio::ip::basic_resolver<
@@ -130,6 +127,7 @@ void client::on_resolve(
           boost::beast::bind_front_handler(&client::on_connect, shared_from_this())
       );
 }
+
 void client::on_connect(
     boost::system::error_code ec,
     const boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>&
@@ -148,6 +146,7 @@ void client::on_connect(
       )
   );
 }
+
 void client::on_handshake(boost::system::error_code ec) {
   if (ec) {
     DOODLE_LOG_INFO("handshake {}", ec.message());
@@ -159,11 +158,9 @@ void client::on_handshake(boost::system::error_code ec) {
       .expires_after(std::chrono::seconds(30));
 
   // 向远程主机发送 HTTP 请求
-  boost::beast::http::async_write(
-      ptr->ssl_stream, ptr->req_,
-      boost::beast::bind_front_handler(&client::on_write, shared_from_this())
-  );
+  ptr->config.async_write(ptr->ssl_stream);
 }
+
 void client::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
 
@@ -172,11 +169,8 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
     return;
   }
 
-  // Receive the HTTP response
-  boost::beast::http::async_read(
-      ptr->ssl_stream, ptr->buffer_, ptr->res_,
-      boost::beast::bind_front_handler(&client::on_read, shared_from_this())
-  );
+  // 接收HTTP响应
+  ptr->config.async_read(ptr->ssl_stream);
 }
 void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
@@ -211,21 +205,6 @@ void client::on_shutdown(boost::system::error_code ec) {
   }
 
   // 成功关机
-}
-std::string client::gettoken() {
-  boost::url l_url{};
-  boost::url l_method{"gettoken"};
-  l_method.params().set("appkey", dingding_config::get().app_key);
-  l_method.params().set("appsecret", dingding_config::get().app_value);
-
-  boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
-
-  //  DOODLE_LOG_INFO(l_url.string());
-  //  DOODLE_LOG_INFO(ptr->req_);
-  //  DOODLE_LOG_INFO(l_url.remove_origin().string());
-
-  run(l_url);
-  return ptr->res_.body();
 }
 
 client::~client() noexcept = default;
