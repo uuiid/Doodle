@@ -58,6 +58,8 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
 
   std::make_shared<dingding::dingding_api>(boost::asio::make_strand(l_io_context), l_context)
-      ->gettoken();
+      ->async_get_token([](const dingding::access_token& in) {
+        DOODLE_LOG_INFO(in.token);
+      });
   l_io_context.run();
 }
