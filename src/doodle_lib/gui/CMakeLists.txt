@@ -4,7 +4,6 @@ target_sources(doodle_lib
         main_menu_bar.h
         main_proc_handle.h
         main_status_bar.h
-        main_windows.h
         open_file_dialog.h
         setting_windows.h
         strand_gui.h
@@ -14,7 +13,6 @@ target_sources(doodle_lib
         main_menu_bar.cpp
         main_proc_handle.cpp
         main_status_bar.cpp
-        main_windows.cpp
         open_file_dialog.cpp
         setting_windows.cpp
         strand_gui.cpp
