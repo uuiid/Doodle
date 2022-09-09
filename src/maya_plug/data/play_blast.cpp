@@ -52,14 +52,14 @@ std::string play_blast::p_post_render_notification_name{"doodle_lib_maya_notific
 // }
 
 play_blast::play_blast()
-    : p_save_path(core_set::getSet().get_cache_root("maya_play_blast")),
+    : p_save_path(core_set::get_set().get_cache_root("maya_play_blast")),
       p_eps(),
       p_shot(),
       p_current_time(),
       p_uuid() {
 }
 FSys::path play_blast::get_file_dir() const {
-  auto k_cache_path = core_set::getSet().get_cache_root("maya_play_blast/tmp");
+  auto k_cache_path = core_set::get_set().get_cache_root("maya_play_blast/tmp");
   k_cache_path /= p_uuid.substr(0, 3);
   if (!FSys::exists(k_cache_path)) {
     FSys::create_directories(k_cache_path);
@@ -105,7 +105,7 @@ bool play_blast::conjecture_camera() {
 }
 
 MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
-  p_uuid = core_set::getSet().get_uuid_str();
+  p_uuid = core_set::get_set().get_uuid_str();
   MStatus k_s{};
 
   if (!g_reg()->ctx().contains<maya_camera>()) {

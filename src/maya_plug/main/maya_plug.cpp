@@ -108,7 +108,7 @@ MStatus initializePlugin(MObject obj) {
           &status
       ));
       CHECK_MSTATUS(status);
-      if (doodle::core_set::getSet().maya_replace_save_dialog) {
+      if (doodle::core_set::get_set().maya_replace_save_dialog) {
         maya_reg->register_callback(
             MSceneMessage::addCheckCallback(
                 MSceneMessage::Message::kBeforeSaveCheck,
@@ -237,7 +237,7 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
     default:
       break;
   }
-  if (!::doodle::core_set::getSet().maya_force_resolve_link) {
+  if (!::doodle::core_set::get_set().maya_force_resolve_link) {
     status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
     CHECK_MSTATUS(status);
   }
@@ -251,7 +251,7 @@ MStatus uninitializePlugin(MObject obj) {
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
-  if (!::doodle::core_set::getSet().maya_force_resolve_link) {
+  if (!::doodle::core_set::get_set().maya_force_resolve_link) {
     /// \brief
     status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 2;)");
     CHECK_MSTATUS(status);
