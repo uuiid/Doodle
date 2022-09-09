@@ -34,9 +34,6 @@ class client::impl {
 
   boost::asio::ip::tcp::resolver resolver_;
   boost::beast::ssl_stream<boost::beast::tcp_stream> ssl_stream;
-  boost::beast::flat_buffer buffer_;
-  boost::beast::http::request<boost::beast::http::empty_body> req_;
-  boost::beast::http::response<boost::beast::http::string_body> res_;
   bool init_{false};
 
   config_type config;
@@ -180,7 +177,6 @@ void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred
   }
 
   // 打印消息
-  DOODLE_LOG_INFO(ptr->res_.body())
 
   // Set a timeout on the operation
   boost::beast::get_lowest_layer(ptr->ssl_stream)

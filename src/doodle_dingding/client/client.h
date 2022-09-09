@@ -69,13 +69,13 @@ class DOODLE_DINGDING_API client
       const std::string& in_target
   );
   template <typename HttpReqResType>
-  void run(const HttpReqResType& in) {
+  void run(HttpReqResType&& in) {
     other_data = std::move(in);
     config_type l_c{
-        [&](boost::beast::ssl_stream<boost::beast::tcp_stream>& in) {
+        [this](boost::beast::ssl_stream<boost::beast::tcp_stream>& in) {
           std::any_cast<HttpReqResType>(this->other_data).async_write(in);
         },
-        [&](boost::beast::ssl_stream<boost::beast::tcp_stream>& in) {
+        [this](boost::beast::ssl_stream<boost::beast::tcp_stream>& in) {
           std::any_cast<HttpReqResType>(this->other_data).async_read(in);
         }};
     return run(std::any_cast<HttpReqResType>(this->other_data).url_attr, l_c);
