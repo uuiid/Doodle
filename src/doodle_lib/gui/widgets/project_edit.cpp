@@ -155,12 +155,17 @@ void project_edit::render() {
   imgui::InputText(*p_i->project_name.gui_name, &(p_i->project_name.data));
   dear::Text(p_i->project_path);
 
-  ImGui::Text("基本配置:");
-
+  ImGui::Text("解算配置:");
   imgui::InputText(*p_i->path_.gui_name, &(p_i->path_.data));
   imgui::InputText(*p_i->ue4_name.gui_name, &(p_i->ue4_name.data));
   imgui::InputText(*p_i->cloth_proxy_.gui_name, &(p_i->cloth_proxy_.data));
   imgui::InputText(*p_i->simple_module_proxy_.gui_name, &(p_i->simple_module_proxy_.data));
+  ImGui::Checkbox(*p_i->use_only_sim_cloth, &p_i->use_only_sim_cloth);
+  ImGui::Checkbox(*p_i->use_divide_group_export, &p_i->use_divide_group_export);
+  ImGui::Checkbox(*p_i->use_rename_material, &p_i->use_rename_material);
+  ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
+  ImGui::InputInt(*p_i->t_post, &p_i->t_post);
+  ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
 
   ImGui::Text("其他配置:");
   /// @brief 正则表达式编辑
@@ -220,13 +225,6 @@ void project_edit::render() {
 
   ImGui::InputText(*p_i->upload_path.gui_name, &p_i->upload_path.data);
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
-
-  ImGui::Checkbox(*p_i->use_only_sim_cloth, &p_i->use_only_sim_cloth);
-  ImGui::Checkbox(*p_i->use_divide_group_export, &p_i->use_divide_group_export);
-  ImGui::Checkbox(*p_i->use_rename_material, &p_i->use_rename_material);
-  ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
-  ImGui::InputInt(*p_i->t_post, &p_i->t_post);
-  ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
 
   if (ImGui::Button("保存"))
     g_reg()->ctx().at<core_sig>().save();
