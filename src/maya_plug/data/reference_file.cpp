@@ -24,6 +24,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MFileObject.h>
 #include <maya/MSceneMessage.h>
+#include <maya/MIteratorType.h>
 #include <maya/MItDependencyGraph.h>
 
 #include <maya_plug/data/maya_file_io.h>
@@ -213,30 +214,25 @@ bool reference_file::rename_material() const {
 }
 
 FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
-  MSelectionList k_select{};
   MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
-  try {
-    k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_error &err) {
-    DOODLE_LOG_WARN(
-        "没有物体被配置文件中的 export_group 值 {} 选中, 不符合配置的文件, 不进行导出",
-        k_cfg.export_group
-    );
+  auto &k_cfg        = g_reg()->ctx().at<project_config::base_config>();
+  auto l_export_root = this->export_group_attr();
+
+  if (!l_export_root) {
     return {};
   }
 
   /// \brief 进行dag遍历提取需要的节点
-  {
+  std::map<std::string, MSelectionList> export_divide_map{};
+  std::vector<MDagPath> export_path;
+  if (k_cfg.use_only_sim_cloth) {
+    export_path = this->qcloth_export_model();
+  } else {
     MDagPath k_root{};
-    k_s = k_select.getDagPath(0, k_root);
-    DOODLE_MAYA_CHICK(k_s);
     MItDag k_it{};
-    k_s = k_it.reset(k_root, MItDag::kDepthFirst, MFn::Type::kMesh);
+    k_s = k_it.reset(*l_export_root, MItDag::kDepthFirst, MFn::Type::kMesh);
     DOODLE_MAYA_CHICK(k_s);
     MFnDagNode l_fn_dag_node{};
-    k_select.clear();
     for (; !k_it.isDone(&k_s); k_it.next()) {
       DOODLE_MAYA_CHICK(k_s);
       k_s = k_it.getPath(k_root);
@@ -246,14 +242,44 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       DOODLE_MAYA_CHICK(k_s);
       /// \brief 检查一下是否是中间对象
       if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
+        export_path.emplace_back(k_root);
         DOODLE_MAYA_CHICK(k_s)
-        k_s = k_select.add(l_fn_dag_node.object());
-        DOODLE_MAYA_CHICK(k_s);
       }
     }
   }
 
-  return export_abc(in_start, in_endl, k_select);
+  if (k_cfg.use_divide_group_export) {
+    MDagPath l_parent{};
+    for (auto &&i : export_path) {
+      l_parent.set(i);
+      l_parent.pop();
+      auto abc_name = fmt::format(
+          "{}_{}.abc",
+          maya_file_io::get_current_path().stem(),
+          get_node_name(l_parent)
+      );
+      export_divide_map[get_node_name(l_parent)].add(i);
+    }
+  } else {
+    MSelectionList l_list{};
+    for (auto &&i : export_path) {
+      k_s = l_list.add(i);
+      DOODLE_MAYA_CHICK(k_s);
+    }
+    auto abc_name = fmt::format(
+        "{}_{}_{}-{}.abc",
+        maya_file_io::get_current_path().stem(),
+        get_namespace(),
+        in_start.as(MTime::uiUnit()),
+        in_endl.as(MTime::uiUnit())
+    );
+    export_divide_map[get_namespace()] = l_list;
+  }
+  FSys::path l_path{};
+  for (auto &&[name, s_l] : export_divide_map) {
+    l_path = export_abc(in_start, in_endl, s_l, name);
+  }
+  return l_path;
 }
 bool reference_file::add_collision() const {
   if (collision_model.empty())
@@ -459,8 +485,16 @@ entt::handle reference_file::export_file_select(
   export_file_info::export_type l_type{};
   switch (in_arg.export_type_p) {
     case export_type::abc: {
-      l_type = export_file_info::export_type::abc;
-      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list);
+      l_type        = export_file_info::export_type::abc;
+      auto abc_name = fmt::format(
+          "{}_{}_{}-{}.abc",
+          maya_file_io::get_current_path().stem(),
+          get_namespace(),
+          in_arg.start_p.as(MTime::uiUnit()),
+          in_arg.end_p.as(MTime::uiUnit())
+      );
+
+      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list, abc_name);
 
     } break;
     case export_type::fbx: {
@@ -546,37 +580,54 @@ FSys::path reference_file::get_abs_path() const {
   return l_path;
 }
 FSys::path reference_file::export_abc(
-    const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj
+    const MTime &in_start,
+    const MTime &in_end,
+    const MSelectionList &in_export_obj,
+    const std::string &in_abc_name
 ) const {
   FSys::path out_{};
-  rename_material();
-  MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+
+  if (k_cfg.use_rename_material)
+    rename_material();
+  MStatus k_s{};
 
   if (in_export_obj.isEmpty()) {
     DOODLE_LOG_INFO("没有找到导出对象")
     return out_;
   }
+  std::vector<std::string> l_export_paths;
+  if (k_cfg.use_merge_mesh) {
+    MDagPath k_mesh_path{comm_warp::marge_mesh(in_export_obj, get_namespace())};
+    l_export_paths.emplace_back(fmt::format("-root {}", get_node_full_name(k_mesh_path)));
+  } else {
+    MStringArray l_string_array{};
+    k_s = in_export_obj.getSelectionStrings(l_string_array);
+    DOODLE_MAYA_CHICK(k_s);
+    for (auto i = 0;
+         i < l_string_array.length();
+         ++i) {
+      l_export_paths.emplace_back(fmt::format("-root {}", l_string_array[i]));
+    }
+  }
 
-  MDagPath k_mesh_path{comm_warp::marge_mesh(in_export_obj, get_namespace())};
-
-  auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
-  auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
+  auto k_path = maya_file_io::work_path(
+      FSys::path{"abc"} / maya_file_io::get_current_path().stem()
+  );
 
   if (!exists(k_path)) {
     create_directories(k_path);
   }
-  k_path /= fmt::format("{}_{}_{}-{}.abc", k_seance_name, get_namespace(), in_start.as(MTime::uiUnit()), in_end.as(MTime::uiUnit()));
-
+  k_path /= in_abc_name;
   /// \brief 导出abc命令
   k_s = MGlobal::executeCommand(d_str{
       fmt::format(R"(
-AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa -root {} -file {}";
+AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {} -file {}";
 )",
-                  in_start.as(MTime::uiUnit()),                 /// \brief 开始时间
-                  in_end.as(MTime::uiUnit()),                   /// \brief 结束时间
-                  d_str{k_mesh_path.fullPathName(&k_s)}.str(),  /// \brief 导出物体的根路径
-                  k_path.generic_string())});                   /// \brief 导出文件路径，包含文件名和文件路径
+                  in_start.as(MTime::uiUnit()),    /// \brief 开始时间
+                  in_end.as(MTime::uiUnit()),      /// \brief 结束时间
+                  fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
+                  k_path.generic_string())});      /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_MAYA_CHICK(k_s);
   return k_path;
 }

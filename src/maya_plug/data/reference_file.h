@@ -38,7 +38,12 @@ class reference_file {
    * @throw maya_error maya返回值非成功
    *
    */
-  FSys::path export_abc(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const;
+  FSys::path export_abc(
+      const MTime &in_start,
+      const MTime &in_end,
+      const MSelectionList &in_export_obj,
+      const std::string &in_abc_name
+  ) const;
   /**
    * @brief 导出文件到fbx中, 这个函数会烘培动画帧进行导出
    * @param in_start 开始时间
