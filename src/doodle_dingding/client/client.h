@@ -60,6 +60,7 @@ class DOODLE_DINGDING_API client
   void on_shutdown(boost::system::error_code ec);
 
   void async_shutdown();
+
  public:
   explicit client(
       const boost::asio::any_io_executor& in_executor,
@@ -141,13 +142,14 @@ namespace client_ns {
 
 template <typename Req, typename Res>
 class http_req_res {
-  boost::beast::flat_buffer buffer_;
+  boost::beast::flat_buffer buffer_{};
+  boost::beast::ssl_stream<boost::beast::tcp_stream>* ssl_stream{};
 
  public:
-  std::weak_ptr<client> self;
   explicit http_req_res(const std::shared_ptr<client>& in_self)
       : self(in_self) {}
 
+  std::weak_ptr<client> self;
   Req req_attr;
   Res res_attr;
   boost::url url_attr;
@@ -179,23 +181,24 @@ class http_req_res {
   void async_read(
       boost::beast::ssl_stream<boost::beast::tcp_stream>& in_ssl_stream
   ) {
+    ssl_stream = std::addressof(in_ssl_stream);
     // 接收HTTP响应
     boost::beast::http::async_read(
         in_ssl_stream, buffer_, res_attr,
-        boost::beast::bind_front_handler(
-            &std::decay_t<decltype(*this)>::on_read,
-            self.lock()->shared_from_this()
-        )
+        [self = self.lock()->shared_from_this(), this](auto&&... in) {
+          this->on_read(std::forward<decltype(in)>(in)...);
+        }
     );
   }
   void on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
     auto l_self = self.lock();
     boost::ignore_unused(bytes_transferred);
-    if(ec){
+    if (ec) {
       throw_exception(boost::system::system_error{ec});
     }
     /// 设置超时
-    boost::beast::get_lowest_layer(ptr->ssl_stream)
+    using namespace std::literals;
+    boost::beast::get_lowest_layer(*ssl_stream)
         .expires_after(30s);
 
     read_fun(res_attr);
