@@ -9,7 +9,7 @@
 #include <maya/MDagPath.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MFnSet.h>
-
+#include <maya/MItSelectionList.h>
 #include <main/maya_plug_fwd.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -233,5 +233,42 @@ MDagPath get_dag_path(const MObject& in_object) {
   DOODLE_MAYA_CHICK(l_s);
   return l_path;
 }
+
+namespace comm_warp {
+MDagPath marge_mesh(
+    const MSelectionList& in_marge_obj,
+    const std::string& in_marge_name
+) {
+  MStatus k_s{};
+  MSelectionList k_select{in_marge_obj};
+  if (k_select.length(&k_s) > 1) {
+    DOODLE_MAYA_CHICK(k_s);
+    MStringArray k_mearge_names{};
+    k_s = k_select.getSelectionStrings(k_mearge_names);
+    DOODLE_MAYA_CHICK(k_s);
+    std::vector<std::string> l_names;
+    for (int l_i = 0; l_i < k_mearge_names.length(); ++l_i) {
+      l_names.emplace_back(d_str{k_mearge_names[l_i]});
+    }
+
+    MStringArray k_r_s{};
+    auto k_name       = fmt::format("{}_export_abc", in_marge_name);
+    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
+    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
+    k_s = MGlobal::executeCommand(d_str{l_mel}, k_r_s, true);
+    DOODLE_MAYA_CHICK(k_s);
+
+    k_select.clear();
+    k_s = k_select.add(k_r_s[0], true);
+    DOODLE_MAYA_CHICK(k_s);
+  } else {
+    DOODLE_LOG_INFO("只有一个网格体 不合并");
+  }
+  MDagPath k_mesh_path{};
+  k_s = k_select.getDagPath(0, k_mesh_path);
+  DOODLE_MAYA_CHICK(k_s);
+  return get_dag_path(k_mesh_path.transform());
+}
+}  // namespace comm_warp
 
 }  // namespace doodle::maya_plug

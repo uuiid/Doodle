@@ -542,49 +542,20 @@ FSys::path reference_file::get_abs_path() const {
   DOODLE_MAYA_CHICK(k_s);
   return l_path;
 }
-FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
+FSys::path reference_file::export_abc(
+    const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj
+) const {
   FSys::path out_{};
   rename_material();
-  MSelectionList k_select{in_export_obj};
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
 
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到合并对象")
-    return out_;
-  }
-  /// \brief 进行dag遍历提取需要的节点
-
-  if (k_select.length(&k_s) > 1) {
-    DOODLE_MAYA_CHICK(k_s);
-    MStringArray k_mearge_names{};
-    k_s = k_select.getSelectionStrings(k_mearge_names);
-    DOODLE_MAYA_CHICK(k_s);
-    std::vector<std::string> l_names;
-    for (int l_i = 0; l_i < k_mearge_names.length(); ++l_i) {
-      l_names.emplace_back(d_str{k_mearge_names[l_i]});
-    }
-
-    MStringArray k_r_s{};
-    auto k_name       = fmt::format("{}_export_abc", get_namespace());
-    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
-    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
-    k_s = MGlobal::executeCommand(d_str{l_mel}, k_r_s, true);
-    DOODLE_MAYA_CHICK(k_s);
-
-    k_select.clear();
-    k_s = k_select.add(k_r_s[0], true);
-    DOODLE_MAYA_CHICK(k_s);
-  }
-
-  if (k_select.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到合并对象")
+  if (in_export_obj.isEmpty()) {
+    DOODLE_LOG_INFO("没有找到导出对象")
     return out_;
   }
 
-  MDagPath k_mesh_path{};
-  k_s = k_select.getDagPath(0, k_mesh_path);
-  DOODLE_MAYA_CHICK(k_s);
+  MDagPath k_mesh_path{comm_warp::marge_mesh(in_export_obj, get_namespace())};
 
   auto k_seance_name = maya_file_io::get_current_path().stem().generic_string();
   auto k_path        = maya_file_io::work_path(fmt::format("abc/{}", k_seance_name));
@@ -700,7 +671,13 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
     auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
     DOODLE_MAYA_CHICK(l_status);
     for (
-        MItDependencyGraph l_it{l_object, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
+        MItDependencyGraph l_it{
+            l_object,
+            MFn::Type::kMesh,
+            MItDependencyGraph::Direction::kDownstream,
+            MItDependencyGraph::Traversal::kDepthFirst,
+            MItDependencyGraph::Level::kNodeLevel,
+            &l_status};
         !l_it.isDone() && l_status;
         l_it.next()
     ) {

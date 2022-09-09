@@ -103,7 +103,7 @@ class reference_file {
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return
    */
-  [[nodiscard]] bool rename_material() const;
+  bool rename_material() const;
   /**
    * @brief 导出到abc文件中
    * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
@@ -148,10 +148,23 @@ class reference_file {
    */
   bool has_ue4_group() const;
 
+  /**
+   * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
+   * @return 导出配置文件中对应的组
+   */
   std::optional<MDagPath> export_group_attr() const;
 
+  /**
+   * @brief 获取所有需要导出布料所包裹的高模,
+   * @warning 必须使用maya 节点连接到导出模型, 从解算节点开始查找(qcloth或者ncloth)
+   * @return 所有需要导出的路径
+   */
   std::vector<MDagPath> qcloth_export_model() const;
 
+  /**
+   * @brief 获取这个抽象引用中所有的 obj
+   * @return 选中所有的obj
+   */
   MSelectionList get_all_object() const;
 
  private:
