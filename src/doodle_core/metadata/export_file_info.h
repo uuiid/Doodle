@@ -21,8 +21,8 @@ class DOODLE_CORE_API export_file_info {
   };
 
  private:
-  friend void to_json(nlohmann::json& j, const export_type& p);
-  friend void from_json(const nlohmann::json& j, export_type& p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const export_type& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, export_type& p);
 
  public:
   export_file_info();
@@ -49,6 +49,5 @@ class DOODLE_CORE_API export_file_info {
   static void write_file(const entt::handle& in_handle);
   static entt::handle read_file(const FSys::path& in_path);
 };
-void DOODLE_CORE_API to_json(nlohmann::json& j, const export_file_info::export_type& p);
-void DOODLE_CORE_API from_json(const nlohmann::json& j, export_file_info::export_type& p);
+
 }  // namespace doodle

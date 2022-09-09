@@ -10,12 +10,6 @@
 #include <doodle_core/logger/logger.h>
 
 namespace doodle {
-void to_json(nlohmann::json& j, const export_file_info::export_type& p) {
-  j = enum_to_num(p);
-}
-void from_json(const nlohmann::json& j, export_file_info::export_type& p) {
-  p = num_to_enum<export_file_info::export_type>(j.get<std::int32_t>());
-}
 
 export_file_info::export_file_info()
     : export_file_info(FSys::path{}, 0, 0, FSys::path{}, export_type::none) {
