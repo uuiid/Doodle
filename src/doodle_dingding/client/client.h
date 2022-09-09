@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_dingding/doodle_dingding_fwd.h>
+#include <doodle_core/exception/exception.h>
 
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/ssl.hpp>
@@ -58,6 +59,7 @@ class DOODLE_DINGDING_API client
   );
   void on_shutdown(boost::system::error_code ec);
 
+  void async_shutdown();
  public:
   explicit client(
       const boost::asio::any_io_executor& in_executor,
@@ -181,9 +183,23 @@ class http_req_res {
     boost::beast::http::async_read(
         in_ssl_stream, buffer_, res_attr,
         boost::beast::bind_front_handler(
-            &client::on_read, self.lock()->shared_from_this()
+            &std::decay_t<decltype(*this)>::on_read,
+            self.lock()->shared_from_this()
         )
     );
+  }
+  void on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
+    auto l_self = self.lock();
+    boost::ignore_unused(bytes_transferred);
+    if(ec){
+      throw_exception(boost::system::system_error{ec});
+    }
+    /// 设置超时
+    boost::beast::get_lowest_layer(ptr->ssl_stream)
+        .expires_after(30s);
+
+    read_fun(res_attr);
+    l_self->async_shutdown();
   }
 
   std::function<void(const Res&)> read_fun{};

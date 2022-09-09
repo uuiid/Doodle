@@ -95,9 +95,9 @@ void client::on_resolve(
         boost::asio::ip::tcp, boost::asio::any_io_executor>::results_type& results
 ) {
   if (ec) {
-    DOODLE_LOG_INFO("resolve {}", ec.what());
-    return;
+    throw_exception(boost::system::system_error{ec});
   }
+
   /// \brief 超时设置
   boost::beast::get_lowest_layer(
       ptr->ssl_stream
@@ -130,8 +130,7 @@ void client::on_connect(
     const boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>&
 ) {
   if (ec) {
-    DOODLE_LOG_INFO("on_connect {}", ec.what());
-    return;
+    throw_exception(boost::system::system_error{ec});
   }
 
   // 执行SSL握手
@@ -146,8 +145,7 @@ void client::on_connect(
 
 void client::on_handshake(boost::system::error_code ec) {
   if (ec) {
-    DOODLE_LOG_INFO("handshake {}", ec.message());
-    return;
+    throw_exception(boost::system::system_error{ec});
   }
 
   // 设置操作超时
@@ -162,8 +160,7 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
-    DOODLE_LOG_INFO("write {}", ec.what());
-    return;
+    throw_exception(boost::system::system_error{ec});
   }
 
   // 接收HTTP响应
@@ -172,8 +169,7 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
 void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
   boost::ignore_unused(bytes_transferred);
   if (ec) {
-    DOODLE_LOG_INFO("read {}", ec.what());
-    return;
+    throw_exception(boost::system::system_error{ec});
   }
 
   // 打印消息
@@ -190,6 +186,15 @@ void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred
       )
   );
 }
+void client::async_shutdown() {
+  // 异步关闭流
+  ptr->ssl_stream.async_shutdown(
+      boost::beast::bind_front_handler(
+          &client::on_shutdown,
+          shared_from_this()
+      )
+  );
+}
 void client::on_shutdown(boost::system::error_code ec) {
   if (ec == boost::asio::error::eof) {
     // Rationale:
@@ -197,7 +202,7 @@ void client::on_shutdown(boost::system::error_code ec) {
     ec = {};
   }
   if (ec) {
-    DOODLE_LOG_INFO("shutdown {}", ec.what());
+    throw_exception(boost::system::system_error{ec});
   }
 
   // 成功关机
