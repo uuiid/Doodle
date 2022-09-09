@@ -22,7 +22,7 @@ enum class process_state : std::uint8_t {
   fail
 };
 
-class process_handy_tools {
+class DOODLE_CORE_API process_handy_tools {
   process_state process_state_p{process_state::run};
 
  public:
@@ -248,7 +248,7 @@ class lambda_process_warp_t : private Lambda_Process, public process_handy_tools
 
 namespace detail {
 
-class rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
+class DOODLE_CORE_API rear_adapter_t : public std::enable_shared_from_this<rear_adapter_t> {
   class rear_adapter_data {
    public:
     template <typename Process_t>

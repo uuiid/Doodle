@@ -13,7 +13,7 @@ namespace doodle::database_n {
 
 class file_translator;
 using file_translator_ptr = std::shared_ptr<file_translator>;
-class file_translator : public std::enable_shared_from_this<file_translator> {
+class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file_translator> {
  private:
   bsys::error_code open_begin(const FSys::path& in_path);
   bsys::error_code open(const FSys::path& in_path);
@@ -205,7 +205,7 @@ class file_translator : public std::enable_shared_from_this<file_translator> {
   };
 };
 
-class sqlite_file : public file_translator {
+class DOODLE_CORE_API sqlite_file : public file_translator {
  private:
   class impl;
   std::unique_ptr<impl> ptr;

@@ -8,9 +8,9 @@
 
 namespace doodle {
 
-class export_file_info {
-  friend void to_json(nlohmann::json& j, const export_file_info& p);
-  friend void from_json(const nlohmann::json& j, export_file_info& p);
+class DOODLE_CORE_API export_file_info {
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const export_file_info& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, export_file_info& p);
 
  public:
   enum class export_type : std::uint32_t {

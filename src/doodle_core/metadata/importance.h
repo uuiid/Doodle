@@ -6,7 +6,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 namespace doodle {
-class importance {
+class DOODLE_CORE_API importance {
  private:
   friend void to_json(nlohmann::json &j, const importance &p);
   friend void from_json(const nlohmann::json &j, importance &p);

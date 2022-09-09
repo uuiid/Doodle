@@ -7,10 +7,8 @@
 
 namespace doodle {
 class user;
-void to_json(nlohmann::json& j, const user& p);
-void from_json(const nlohmann::json& j, user& p);
 
-class user : boost::equality_comparable<user> {
+class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
   std::string p_string_;
   std::string p_ENUS;
@@ -48,8 +46,8 @@ class user : boost::equality_comparable<user> {
   static entt::handle find_by_user_name(const std::string& in_name);
 
  private:
-  friend void to_json(nlohmann::json& j, const user& p);
-  friend void from_json(const nlohmann::json& j, user& p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
 
 }  // namespace doodle

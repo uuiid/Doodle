@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-class init_register {
+class DOODLE_CORE_API init_register {
   std::multimap<std::int32_t, std::function<void()>>
       init_p;
 
@@ -40,7 +40,7 @@ class init_register {
     }
   };
 
-  class base_registrar {
+  class DOODLE_CORE_API base_registrar {
    public:
     virtual ~base_registrar() = default;
     ;
