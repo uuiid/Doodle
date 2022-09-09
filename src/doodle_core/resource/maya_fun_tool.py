@@ -137,6 +137,8 @@ class config(object):
         self._path = pymel.util.path()
         self.export_path = pymel.util.path()
         self.project = pymel.util.path()
+        self.t_post = 950
+        self.export_anim_time = 1001
 
     @property
     def path(self):
@@ -185,13 +187,13 @@ class sim_config(config):
             startTime=doodle_work_space.raneg.start,
             endTime=doodle_work_space.raneg.end)
 
-        cmds.comm_play_blast_maya(startTime=1001,
+        cmds.comm_play_blast_maya(startTime=self.export_anim_time,
                                   endTime=doodle_work_space.raneg.end,
                                   filepath="{path}/{base_name}_playblast_{start}-{end}.mp4"
                                   .format(
                                       path=doodle_work_space.get_move_folder(),
                                       base_name=doodle_work_space.maya_file.name_not_ex,
-                                      start=1001,
+                                      start=self.export_anim_time,
                                       end=doodle_work_space.raneg.end
                                   ))
 
@@ -200,14 +202,14 @@ class sim_config(config):
 
         if self.export_fbx:
             cmds.doodle_sequence_to_blend_shape_ref(
-                startFrame=1001)
+                startFrame=self.export_anim_time)
             cmds.doodle_ref_file_export(
-                startTime=1001,
+                startTime=self.export_anim_time,
                 endTime=doodle_work_space.raneg.end,
                 exportType="fbx")
         else:
             cmds.doodle_ref_file_export(
-                startTime=1000,
+                startTime=self.export_anim_time,
                 endTime=doodle_work_space.raneg.end,
                 exportType="abc")
 
@@ -229,28 +231,33 @@ class replace_file(config):
 
 
 def __load_config__(obj):
+    l_config = None
     if "only_sim" in obj:
-        k_con = sim_config()
-        k_con.path = obj["path"]
-        k_con.project = obj["project_"]
-        k_con.only_sim = obj["only_sim"]
-        k_con.upload_file = obj["upload_file"]
-        k_con.export_fbx = obj["export_fbx"]
-        k_con.only_export = obj["only_export"]
-        return k_con
+        l_config = sim_config()
+        l_config.path = obj["path"]
+        l_config.project = obj["project_"]
+        l_config.only_sim = obj["only_sim"]
+        l_config.upload_file = obj["upload_file"]
+        l_config.export_fbx = obj["export_fbx"]
+        l_config.only_export = obj["only_export"]
+
     elif "use_all_ref" in obj:
-        k_con = fbx_config()
-        k_con.path = obj["path"]
-        k_con.project = obj["project_"]
-        k_con.use_all_ref = obj["use_all_ref"]
-        k_con.upload_file = obj["upload_file"]
-        return k_con
+        l_config = fbx_config()
+        l_config.path = obj["path"]
+        l_config.project = obj["project_"]
+        l_config.use_all_ref = obj["use_all_ref"]
+        l_config.upload_file = obj["upload_file"]
+
     elif "replace_file_all" in obj:
-        k_con = replace_file()
-        k_con.path = obj["path"]
-        k_con.project = obj["project_"]
-        k_con.use_all_ref = obj["replace_file_all"]
-        return k_con
+        l_config = replace_file()
+        l_config.path = obj["path"]
+        l_config.project = obj["project_"]
+        l_config.use_all_ref = obj["replace_file_all"]
+    assert (l_config)
+
+    l_config.export_anim_time = obj["export_anim_time"]
+    l_config.t_post = obj["t_post"]
+    return l_config
 
 
 class open_file(object):
@@ -336,10 +343,10 @@ class open_file(object):
                                       end=doodle_work_space.raneg.end
                                   ))
         cmds.doodle_ref_file_export(
-            startTime=1001,
+            startTime=self.cfg.export_anim_time,
             endTime=doodle_work_space.raneg.end,
             exportType="fbx")
-        cmds.doodle_export_camera(startTime=1001,
+        cmds.doodle_export_camera(startTime=self.cfg.export_anim_time,
                                   endTime=doodle_work_space.raneg.end)
         cmds.doodle_upload_files(clear=not self.cfg.upload_file)
 
