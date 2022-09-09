@@ -126,6 +126,8 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["use_rename_material"]     = p.use_rename_material;
   j["use_merge_mesh"]          = p.use_merge_mesh;
   j["use_divide_group_export"] = p.use_divide_group_export;
+  j["t_post"]                  = p.t_post;
+  j["export_anim_time"]        = p.export_anim_time;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -152,6 +154,11 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("use_merge_mesh").get_to(p.use_merge_mesh);
   if (j.contains("use_divide_group_export"))
     j.at("use_divide_group_export").get_to(p.use_divide_group_export);
+
+  if (j.contains("t_post"))
+    j.at("t_post").get_to(p.t_post);
+  if (j.contains("export_anim_time"))
+    j.at("export_anim_time").get_to(p.export_anim_time);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {

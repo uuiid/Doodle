@@ -116,6 +116,10 @@ class DOODLE_CORE_API base_config {
   bool use_merge_mesh{false};
   /// \brief 是否进行分组导出
   bool use_divide_group_export{false};
+  /// \brief t post 时间
+  std::int32_t t_post;
+  /// \brief 导出动画时间
+  std::int32_t export_anim_time;
 
   base_config();
 
