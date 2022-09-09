@@ -14,9 +14,13 @@ class arg {
   virtual ~arg() = default;
   FSys::path file_path;
   FSys::path project_;
+  std::int32_t t_post;
+  std::int32_t export_anim_time;
   friend void to_json(nlohmann::json &nlohmann_json_j, const arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]     = nlohmann_json_t.file_path.generic_string();
-    nlohmann_json_j["project_"] = nlohmann_json_t.project_.generic_string();
+    nlohmann_json_j["path"]             = nlohmann_json_t.file_path.generic_string();
+    nlohmann_json_j["project_"]         = nlohmann_json_t.project_.generic_string();
+    nlohmann_json_j["t_post"]           = nlohmann_json_t.t_post;
+    nlohmann_json_j["export_anim_time"] = nlohmann_json_t.export_anim_time;
   }
 };
 

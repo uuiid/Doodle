@@ -93,6 +93,8 @@ void comm_maya_tool::render() {
       k_arg.export_fbx  = p_sim_export_fbx;
       k_arg.only_export = p_sim_only_export;
       k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
+      k_arg.t_post = g_reg()->ctx().at<project_config::base_config>().t_post;
+      k_arg.export_anim_time= g_reg()->ctx().at<project_config::base_config>().export_anim_time;
       g_bounded_pool().attach<maya_exe>(
           make_handle(),
           k_arg
@@ -106,6 +108,8 @@ void comm_maya_tool::render() {
       k_arg.file_path   = i;
       k_arg.use_all_ref = this->p_use_all_ref;
       k_arg.upload_file = p_upload_files;
+      k_arg.t_post = g_reg()->ctx().at<project_config::base_config>().t_post;
+      k_arg.export_anim_time= g_reg()->ctx().at<project_config::base_config>().export_anim_time;
 
       k_arg.project_    = g_reg()->ctx().at<database_info>().path_;
       g_bounded_pool().attach<maya_exe>(
@@ -121,6 +125,9 @@ void comm_maya_tool::render() {
       k_arg.file_path        = i;
       k_arg.replace_file_all = true;
       k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
+      k_arg.t_post = g_reg()->ctx().at<project_config::base_config>().t_post;
+      k_arg.export_anim_time= g_reg()->ctx().at<project_config::base_config>().export_anim_time;
+
       g_bounded_pool().attach<maya_exe>(
           make_handle(),
           k_arg
