@@ -21,7 +21,6 @@ target_compile_definitions(DoodleExe
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         # ENTT_API_IMPORT
         )
-#add_dependencies(DoodleExe generate_token_run)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)

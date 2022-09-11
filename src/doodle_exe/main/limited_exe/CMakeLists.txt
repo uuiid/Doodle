@@ -25,7 +25,6 @@ target_compile_definitions(doodle_limited_exe
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         # ENTT_API_IMPORT
         )
-add_dependencies(doodle_limited_exe generate_token_run)
 
 # 定义安装逻辑
 
