@@ -32,7 +32,9 @@
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_call_guard.h>
-#include <maya_plug/fmt/fmt_warp.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
+#include <maya_plug/fmt/fmt_select_list.h>
+
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
@@ -249,7 +251,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       }
     }
   }
-  DOODLE_LOG_INFO("到出收集完成 {}", fmt::join(export_path, " "));
+  DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, " "));
 
   if (k_cfg.use_divide_group_export) {
     MDagPath l_parent{};
@@ -261,7 +263,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
           maya_file_io::get_current_path().stem(),
           get_node_name(l_parent)
       );
-      export_divide_map[get_node_name(l_parent)].add(i);
+      export_divide_map[abc_name].add(i);
     }
   } else {
     MSelectionList l_list{};
@@ -276,8 +278,9 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
         in_start.as(MTime::uiUnit()),
         in_endl.as(MTime::uiUnit())
     );
-    export_divide_map[get_namespace()] = l_list;
+    export_divide_map[abc_name] = l_list;
   }
+  DOODLE_LOG_INFO("导出划分完成 {}", export_divide_map);
   FSys::path l_path{};
   for (auto &&[name, s_l] : export_divide_map) {
     l_path = export_abc(in_start, in_endl, s_l, name);

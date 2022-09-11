@@ -520,6 +520,7 @@ std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) 
     if (k_dep.typeName(&k_s) == "qlClothShape" && l_ref.has_node(k_obj)) {
       DOODLE_MAYA_CHICK(k_s);
       auto k_h = make_handle();
+      DOODLE_LOG_INFO("获取布料物体 {}", get_node_name(k_obj));
       k_h.emplace<qcloth_shape>(in_ref_file, k_obj);
       result.emplace_back(k_h);
     }
