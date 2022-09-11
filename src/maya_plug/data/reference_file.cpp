@@ -32,6 +32,7 @@
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_call_guard.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 namespace doodle::maya_plug {
 reference_file::reference_file()
@@ -226,6 +227,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   std::map<std::string, MSelectionList> export_divide_map{};
   std::vector<MDagPath> export_path;
   if (k_cfg.use_only_sim_cloth) {
+    DOODLE_LOG_INFO("只导出解算的物体")
     export_path = this->qcloth_export_model();
   } else {
     MDagPath k_root{};
@@ -247,6 +249,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       }
     }
   }
+  DOODLE_LOG_INFO("到出收集完成 {}", fmt::join(export_path, " "));
 
   if (k_cfg.use_divide_group_export) {
     MDagPath l_parent{};

@@ -7,6 +7,9 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <maya/MString.h>
+#include <maya/MDagPath.h>
+
+
 
 namespace fmt {
 /**
@@ -30,6 +33,7 @@ template <>
 struct formatter<MArgList> : ostream_formatter {};
 template <>
 struct formatter<MVector> : ostream_formatter {};
+
 #if OPENMAYA_MAJOR_NAMESPACE == OpenMaya20180000
 template <>
 struct formatter<MStringArray> : ostream_formatter {};

@@ -319,8 +319,8 @@ class open_file(object):
 
         self.load_plug(["AbcExport", "AbcImport", open_file.qcloth])
         self.open()
-        cmds.playbackOptions(animationStartTime=950, minTime=950)
-        cmds.currentTime(950)
+        cmds.playbackOptions(animationStartTime=self.cfg.t_post, minTime=self.cfg.t_post)
+        cmds.currentTime(self.cfg.t_post)
         doodle_work_space.reset()
 
         assert (isinstance(self.cfg, sim_config))
