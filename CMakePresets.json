@@ -35,7 +35,7 @@
       "displayName": "config maya plug",
       "description": "构建maya插件 默认版本是2019",
       "cacheVariables": {
-        "Maya_Version": "2019",
+        "Maya_Version": "2018",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
