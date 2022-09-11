@@ -20,4 +20,5 @@ add_custom_target(
         generate_token_run
         COMMAND $<TARGET_FILE:generate_token> ${PROJECT_BINARY_DIR}/bin/
         DEPENDS generate_token
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 )
