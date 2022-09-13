@@ -159,16 +159,12 @@ bool maya_camera::unlock_attr() {
 }
 void maya_camera::conjecture() {
   DOODLE_LOG_INFO("开始测量相机优先级");
-  const static std::vector reg_list{
-      regex_priority_pair{std::regex{"(front|persp|side|top|camera)"}, -1000},
-      regex_priority_pair{std::regex{R"(ep\d+_sc\d+)", std::regex::icase}, 30},
-      regex_priority_pair{std::regex{R"(ep\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(sc\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+_sc_\d+)", std::regex::icase}, 10},
-      regex_priority_pair{std::regex{R"(ep_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(sc_\d+)", std::regex::icase}, 5},
-      regex_priority_pair{std::regex{R"(^[A-Z]+_)"}, 2},
-      regex_priority_pair{std::regex{R"(_\d+_\d+)", std::regex::icase}, 2}};
+
+  auto l_reg_list = g_reg()->ctx().at<project_config::base_config>().maya_camera_select |
+                    ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
+                      return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
+                    }) |
+                    ranges::to_vector;
 
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
@@ -183,7 +179,7 @@ void maya_camera::conjecture() {
     DOODLE_MAYA_CHICK(k_s);
 
     camera k_cam{k_path, 0};
-    for (const auto& k_reg : reg_list) {
+    for (const auto& k_reg : l_reg_list) {
       if (std::regex_search(k_path_str, k_reg.reg)) {
         k_cam.priority += k_reg.priority;
       }

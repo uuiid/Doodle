@@ -60,6 +60,9 @@ class DOODLE_CORE_API project {
 namespace project_config {
 void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
 void DOODLE_CORE_API from_json(const nlohmann::json& j, base_config& p);
+
+using camera_judge = std::pair<std::string, std::int32_t>;
+
 class DOODLE_CORE_API base_config {
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const base_config& p);
@@ -141,6 +144,8 @@ class DOODLE_CORE_API base_config {
    *
    */
   std::bitset<8> export_abc_arg{};
+  /// \brief 使用camera优先级寻找maya 相机
+  std::vector<camera_judge> maya_camera_select{};
 
   base_config();
 
