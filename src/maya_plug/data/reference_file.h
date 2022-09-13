@@ -20,6 +20,8 @@ class reference_file {
 
   void chick_mobject() const;
 
+  static [[nodiscard("not")]] std::string get_abc_exprt_arg();
+
   /**
    * @brief
    * @warning 这个是一个兼容性函数， 小心使用,会被删除

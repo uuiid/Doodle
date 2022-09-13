@@ -49,6 +49,15 @@ class project_edit::impl {
   gui_cache<std::int32_t> t_post{"TPost时间"s, 950u};
   gui_cache<std::int32_t> export_anim_time{"导出动画开始帧"s, 1001u};
 
+  gui_cache<bool> abc_arg_uvWrite{"uv写入", false};
+  gui_cache<bool> abc_arg_writeColorSets{"写入颜色集", false};
+  gui_cache<bool> abc_arg_writeFaceSets{"写入面集", false};
+  gui_cache<bool> abc_arg_wholeFrameGeo{"整帧几何体", false};
+  gui_cache<bool> abc_arg_worldSpace{"世界空间", false};
+  gui_cache<bool> abc_arg_writeVisibility{"写入可见性", false};
+  gui_cache<bool> abc_arg_writeUVSets{"写入uv集", false};
+  gui_cache<bool> abc_arg_stripNamespaces{"分裂名称空间", false};
+
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
 
   void config_init() {
@@ -87,6 +96,16 @@ class project_edit::impl {
     use_merge_mesh          = l_config.use_merge_mesh;
     t_post                  = l_config.t_post;
     export_anim_time        = l_config.export_anim_time;
+    /// \brief 设置未集
+
+    abc_arg_uvWrite         = l_config.export_abc_arg[0];
+    abc_arg_writeColorSets  = l_config.export_abc_arg[1];
+    abc_arg_writeFaceSets   = l_config.export_abc_arg[2];
+    abc_arg_wholeFrameGeo   = l_config.export_abc_arg[3];
+    abc_arg_worldSpace      = l_config.export_abc_arg[4];
+    abc_arg_writeVisibility = l_config.export_abc_arg[5];
+    abc_arg_writeUVSets     = l_config.export_abc_arg[6];
+    abc_arg_stripNamespaces = l_config.export_abc_arg[7];
   }
 
   project_config::base_config get_config_() {
@@ -122,7 +141,15 @@ class project_edit::impl {
     l_c.use_merge_mesh          = use_merge_mesh;
     l_c.t_post                  = t_post;
     l_c.export_anim_time        = export_anim_time;
-
+    /// \brief 传递位集
+    l_c.export_abc_arg[0]       = abc_arg_uvWrite();
+    l_c.export_abc_arg[1]       = abc_arg_writeColorSets();
+    l_c.export_abc_arg[2]       = abc_arg_writeFaceSets();
+    l_c.export_abc_arg[3]       = abc_arg_wholeFrameGeo();
+    l_c.export_abc_arg[4]       = abc_arg_worldSpace();
+    l_c.export_abc_arg[5]       = abc_arg_writeVisibility();
+    l_c.export_abc_arg[6]       = abc_arg_writeUVSets();
+    l_c.export_abc_arg[7]       = abc_arg_stripNamespaces();
     return l_c;
   }
 };
@@ -166,6 +193,15 @@ void project_edit::render() {
   ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
   ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
+  ImGui::Text("导出abc配置:");
+  ImGui::Checkbox(*p_i->abc_arg_uvWrite, &p_i->abc_arg_uvWrite);
+  ImGui::Checkbox(*p_i->abc_arg_writeColorSets, &p_i->abc_arg_writeColorSets);
+  ImGui::Checkbox(*p_i->abc_arg_writeFaceSets, &p_i->abc_arg_writeFaceSets);
+  ImGui::Checkbox(*p_i->abc_arg_wholeFrameGeo, &p_i->abc_arg_wholeFrameGeo);
+  ImGui::Checkbox(*p_i->abc_arg_worldSpace, &p_i->abc_arg_worldSpace);
+  ImGui::Checkbox(*p_i->abc_arg_writeVisibility, &p_i->abc_arg_writeVisibility);
+  ImGui::Checkbox(*p_i->abc_arg_writeUVSets, &p_i->abc_arg_writeUVSets);
+  ImGui::Checkbox(*p_i->abc_arg_stripNamespaces, &p_i->abc_arg_stripNamespaces);
 
   ImGui::Text("其他配置:");
   /// @brief 正则表达式编辑

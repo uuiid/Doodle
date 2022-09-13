@@ -126,6 +126,21 @@ class DOODLE_CORE_API base_config {
   std::int32_t t_post{950u};
   /// \brief 导出动画时间
   std::int32_t export_anim_time{1001u};
+  /**
+   * @brief 导出abc选项(只有一部分)
+   * 分别是
+   * @li 0 uvWrite                        =1  uv写入
+   * @li 1 writeColorSets                 =0  写入颜色集
+   * @li 2 writeFaceSets                  =1  写入面集
+   * @li 3 wholeFrameGeo                  =0  整帧几何体
+   *
+   * @li 4 worldSpace                     =1    世界空间
+   * @li 5 writeVisibility                =0    写入可见性
+   * @li 6 writeUVSets                    =0   写入uv集
+   * @li 7 stripNamespaces                =1    去除名称空间
+   *
+   */
+  std::bitset<8> export_abc_arg{};
 
   base_config();
 

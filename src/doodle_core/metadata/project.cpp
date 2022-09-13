@@ -110,7 +110,8 @@ project_config::base_config::base_config()
       find_icon_regex(),
       assets_list(),
       icon_extensions({".png"s, ".jpg"s}),
-      season_count(20) {}
+      season_count(20),
+      export_abc_arg(0b10010101) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]         = p.find_icon_regex;
@@ -126,10 +127,11 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["use_rename_material"]     = p.use_rename_material;
   j["use_merge_mesh"]          = p.use_merge_mesh;
   j["use_divide_group_export"] = p.use_divide_group_export;
-  j["use_only_sim_cloth"] = p.use_only_sim_cloth;
+  j["use_only_sim_cloth"]      = p.use_only_sim_cloth;
 
   j["t_post"]                  = p.t_post;
   j["export_anim_time"]        = p.export_anim_time;
+  j["export_abc_arg"]          = p.export_abc_arg;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -163,6 +165,8 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("t_post").get_to(p.t_post);
   if (j.contains("export_anim_time"))
     j.at("export_anim_time").get_to(p.export_anim_time);
+  if (j.contains("export_abc_arg"))
+    j.at("export_abc_arg").get_to(p.export_abc_arg);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {

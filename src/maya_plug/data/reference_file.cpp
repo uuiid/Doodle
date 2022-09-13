@@ -628,10 +628,11 @@ FSys::path reference_file::export_abc(
   /// \brief 导出abc命令
   k_s = MGlobal::executeCommand(d_str{
       fmt::format(R"(
-AbcExport -j "-frameRange {} {} -stripNamespaces -uvWrite -writeFaceSets -worldSpace -dataFormat ogawa {} -file {}";
+AbcExport -j "-frameRange {} {} {} -dataFormat ogawa {} -file {}";
 )",
                   in_start.as(MTime::uiUnit()),    /// \brief 开始时间
                   in_end.as(MTime::uiUnit()),      /// \brief 结束时间
+                  get_abc_exprt_arg(),             /// \brief 导出参数
                   fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
                   k_path.generic_string())});      /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_MAYA_CHICK(k_s);
@@ -810,6 +811,28 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 
     DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
   }
+}
+std::string reference_file::get_abc_exprt_arg() {
+  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  std::string l_r{};
+  if (k_cfg.export_abc_arg[0])
+    l_r += "-uvWrite ";
+  if (k_cfg.export_abc_arg[1])
+    l_r += "-writeColorSets ";
+  if (k_cfg.export_abc_arg[2])
+    l_r += "-writeFaceSets ";
+  if (k_cfg.export_abc_arg[3])
+    l_r += "-wholeFrameGeo ";
+  if (k_cfg.export_abc_arg[4])
+    l_r += "-worldSpace ";
+  if (k_cfg.export_abc_arg[5])
+    l_r += "-writeVisibility ";
+  if (k_cfg.export_abc_arg[6])
+    l_r += "-writeUVSets ";
+  if (k_cfg.export_abc_arg[7])
+    l_r += "-stripNamespaces ";
+
+  return l_r;
 }
 
 }  // namespace doodle::maya_plug
