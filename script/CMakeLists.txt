@@ -7,16 +7,6 @@ if (DEFINED Ue4_ROOT_DIR)
             BYPRODUCTS ${CMAKE_CURRENT_LIST_DIR}/uePlug/4.27/Plugins/Doodle
             )
     message("ue4 root ${Ue4_ROOT_DIR}")
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.25/Plugins/Doodle/
-            DESTINATION ue425_Plug
-            COMPONENT ue4_plug
-            PATTERN "Intermediate" EXCLUDE
-            )
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.26/Plugins/Doodle/
-            DESTINATION ue426_Plug
-            COMPONENT ue4_plug
-            PATTERN "Intermediate" EXCLUDE
-            )
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/4.27/Plugins/Doodle/
             DESTINATION ue427_Plug
             COMPONENT ue4_plug
