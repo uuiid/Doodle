@@ -11,6 +11,7 @@
 #include <maya/MFnSet.h>
 #include <maya/MItSelectionList.h>
 #include <main/maya_plug_fwd.h>
+#include <maya/MNamespace.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -232,6 +233,17 @@ MDagPath get_dag_path(const MObject& in_object) {
   l_s = l_node.getPath(l_path);
   DOODLE_MAYA_CHICK(l_s);
   return l_path;
+}
+std::string get_node_name_strip_name_space(const MDagPath& in_obj) {
+  MFnDependencyNode l_node{};
+  MStatus l_s{};
+  DOODLE_MAYA_CHICK(l_node.setObject(in_obj.node(&l_s)));
+  DOODLE_MAYA_CHICK(l_s);
+  auto l_name = l_node.name(&l_s);
+  DOODLE_MAYA_CHICK(l_s);
+  l_name = MNamespace::stripNamespaceFromName(l_name, &l_s);
+  DOODLE_MAYA_CHICK(l_s);
+  return d_str{l_name};
 }
 
 namespace comm_warp {

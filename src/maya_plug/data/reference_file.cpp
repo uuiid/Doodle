@@ -35,7 +35,6 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
-
 namespace doodle::maya_plug {
 reference_file::reference_file()
     : path(),
@@ -259,9 +258,10 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       l_parent.set(i);
       l_parent.pop();
       auto abc_name = fmt::format(
-          "{}_{}.abc",
+          "{}_{}_{}.abc",
           maya_file_io::get_current_path().stem(),
-          get_node_name(l_parent)
+          get_namespace(),
+          get_node_name_strip_name_space(l_parent)
       );
       export_divide_map[abc_name].add(i);
     }
