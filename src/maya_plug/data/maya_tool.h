@@ -51,6 +51,7 @@ std::string get_node_full_name(const MObject& in_obj);
 std::string get_node_full_name(const MDagPath& in_obj);
 std::string get_node_name(const MObject& in_obj);
 std::string get_node_name(const MDagPath& in_obj);
+std::string get_node_name_strip_name_space(const MDagPath& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 
 namespace comm_warp {
