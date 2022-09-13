@@ -52,7 +52,7 @@ class DOODLE_DINGDING_API client
   void on_write(
       boost::system::error_code ec,
       std::size_t bytes_transferred
-  );
+  ) const;
   void on_read(
       boost::system::error_code ec,
       std::size_t bytes_transferred
@@ -139,7 +139,6 @@ namespace client_ns {
 //     );
 //   }
 // };
-
 template <typename Req, typename Res>
 class http_req_res {
   boost::beast::flat_buffer buffer_{};
@@ -202,7 +201,8 @@ class http_req_res {
         .expires_after(30s);
 
     read_fun(res_attr);
-    l_self->async_shutdown();
+    if (!res_attr.keep_alive())
+      l_self->async_shutdown();
   }
 
   std::function<void(const Res&)> read_fun{};

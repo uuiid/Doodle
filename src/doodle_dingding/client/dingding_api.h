@@ -8,8 +8,7 @@
 
 #include <doodle_dingding/metadata/access_token.h>
 
-namespace doodle {
-namespace dingding {
+namespace doodle::dingding {
 class access_token;
 
 class DOODLE_DINGDING_API dingding_api : public client {
@@ -26,5 +25,4 @@ class DOODLE_DINGDING_API dingding_api : public client {
   );
 };
 
-}  // namespace dingding
 }  // namespace doodle

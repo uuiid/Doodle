@@ -36,6 +36,7 @@ BOOST_AUTO_TEST_CASE(client_base_tset) {
       l_http_req_res{l_r->shared_from_this()};
   l_http_req_res.req_attr.method(boost::beast::http::verb::get);
   l_http_req_res.url_attr = boost::url{"https://www.baidu.com/"s};
+  l_http_req_res.req_attr.keep_alive(false);
   l_http_req_res.read_fun = [](auto&& in) {
     DOODLE_LOG_INFO(in);
   };

@@ -156,7 +156,7 @@ void client::on_handshake(boost::system::error_code ec) {
   ptr->config.async_write(ptr->ssl_stream);
 }
 
-void client::on_write(boost::system::error_code ec, std::size_t bytes_transferred) {
+void client::on_write(boost::system::error_code ec, std::size_t bytes_transferred) const {
   boost::ignore_unused(bytes_transferred);
 
   if (ec) {
