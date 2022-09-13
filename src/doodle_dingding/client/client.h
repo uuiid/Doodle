@@ -26,6 +26,12 @@ class client;
 class DOODLE_DINGDING_API client
     : public std::enable_shared_from_this<client> {
  protected:
+  class config_type_base {
+   public:
+    virtual void async_write(boost::beast::ssl_stream<boost::beast::tcp_stream>& in_stream) = 0;
+    virtual void async_read(boost::beast::ssl_stream<boost::beast::tcp_stream>& in_stream)  = 0;
+  };
+
   class config_type {
    public:
     std::function<void(boost::beast::ssl_stream<boost::beast::tcp_stream>&)> async_write;
@@ -53,10 +59,7 @@ class DOODLE_DINGDING_API client
       boost::system::error_code ec,
       std::size_t bytes_transferred
   ) const;
-  void on_read(
-      boost::system::error_code ec,
-      std::size_t bytes_transferred
-  );
+
   void on_shutdown(boost::system::error_code ec);
 
   void async_shutdown();

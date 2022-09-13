@@ -35,6 +35,7 @@ class client::impl {
   boost::asio::ip::tcp::resolver resolver_;
   boost::beast::ssl_stream<boost::beast::tcp_stream> ssl_stream;
   bool init_{false};
+  bool is_connect{false};
 
   config_type config;
 };
@@ -81,12 +82,22 @@ void client::run(
                              ? std::string{in_url.port()}
                              : "443"s};
   ptr->config = in_config_type;
-  // Look up the domain name
-  ptr->resolver_.async_resolve(
-      host,
-      port,
-      boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
-  );
+  /// \brief 如果已经连接, 复用 连接
+  if (ptr->is_connect) {
+    // 设置操作超时
+    boost::beast::get_lowest_layer(ptr->ssl_stream)
+        .expires_after(std::chrono::seconds(30));
+
+    // 向远程主机发送 HTTP 请求
+    ptr->config.async_write(ptr->ssl_stream);
+  } else {
+    // Look up the domain name
+    ptr->resolver_.async_resolve(
+        host,
+        port,
+        boost::beast::bind_front_handler(&client::on_resolve, shared_from_this())
+    );
+  }
 }
 
 void client::on_resolve(
@@ -151,7 +162,7 @@ void client::on_handshake(boost::system::error_code ec) {
   // 设置操作超时
   boost::beast::get_lowest_layer(ptr->ssl_stream)
       .expires_after(std::chrono::seconds(30));
-
+  ptr->is_connect = true;
   // 向远程主机发送 HTTP 请求
   ptr->config.async_write(ptr->ssl_stream);
 }
@@ -166,28 +177,10 @@ void client::on_write(boost::system::error_code ec, std::size_t bytes_transferre
   // 接收HTTP响应
   ptr->config.async_read(ptr->ssl_stream);
 }
-void client::on_read(boost::system::error_code ec, std::size_t bytes_transferred) {
-  boost::ignore_unused(bytes_transferred);
-  if (ec) {
-    throw_exception(boost::system::system_error{ec});
-  }
 
-  // 打印消息
-
-  // Set a timeout on the operation
-  boost::beast::get_lowest_layer(ptr->ssl_stream)
-      .expires_after(30s);
-
-  // Gracefully close the stream
-  ptr->ssl_stream.async_shutdown(
-      boost::beast::bind_front_handler(
-          &client::on_shutdown,
-          shared_from_this()
-      )
-  );
-}
 void client::async_shutdown() {
   // 异步关闭流
+  ptr->is_connect = false;
   ptr->ssl_stream.async_shutdown(
       boost::beast::bind_front_handler(
           &client::on_shutdown,
