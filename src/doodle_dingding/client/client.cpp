@@ -61,6 +61,10 @@ client::client(
     : ptr(std::make_unique<impl>(in_executor, in_ssl_context)) {
 }
 
+client::executor_type client::get_executor() noexcept {
+  return ptr->io_executor_;
+}
+
 void client::run(const std::string& in_host, const std::string& in_target) {
   boost::url l_url{fmt::format("{}:{}{}", in_host, "443"s, in_target)};
   client_ns::http_req_res<
@@ -90,6 +94,7 @@ void client::run(
 
     // 向远程主机发送 HTTP 请求
     ptr->config.async_write(ptr->ssl_stream);
+    ptr->ssl_stream.get_executor();
   } else {
     // Look up the domain name
     ptr->resolver_.async_resolve(
@@ -200,6 +205,7 @@ void client::on_shutdown(boost::system::error_code ec) {
 
   // 成功关机
 }
+
 
 client::~client() noexcept = default;
 
