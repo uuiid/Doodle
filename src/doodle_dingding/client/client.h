@@ -25,6 +25,9 @@ class client;
  */
 class DOODLE_DINGDING_API client
     : public std::enable_shared_from_this<client> {
+ public:
+  using executor_type = typename boost::asio::any_io_executor;
+
  protected:
   class config_type_base {
    public:
@@ -40,10 +43,10 @@ class DOODLE_DINGDING_API client
   void set_openssl(const std::string& host);
   std::any other_data;
 
- public:
   class impl;
   std::unique_ptr<impl> ptr;
 
+ public:
   void on_resolve(
       boost::system::error_code ec,
       const boost::asio::ip::tcp::resolver::results_type& results
@@ -86,6 +89,8 @@ class DOODLE_DINGDING_API client
         }};
     return run(std::any_cast<HttpReqResType>(this->other_data).url_attr, l_c);
   }
+
+  executor_type get_executor() noexcept;
 
  protected:
   /**
