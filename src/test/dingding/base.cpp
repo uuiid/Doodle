@@ -64,3 +64,35 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
       });
   l_io_context.run();
 }
+
+BOOST_AUTO_TEST_SUITE(dingding_base)
+dingding::access_token l_token{};
+
+BOOST_AUTO_TEST_SUITE_END()
+
+namespace client_get_dep_ns {
+void get_dep(const dingding::access_token& in) {
+}
+}  // namespace client_get_dep_ns
+
+BOOST_AUTO_TEST_CASE(client_get_dep) {
+  boost::asio::io_context l_io_context{};
+  /// \brief SSL 上下文是必需的，并持有证书
+  boost::asio::ssl::context l_context{
+      boost::asio::ssl::context::sslv23};
+  /// 验证远程服务器的证书
+  l_context.set_verify_mode(boost::asio::ssl::verify_peer);
+  l_context.set_options(
+      boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3
+  );
+  l_context.set_default_verify_paths();
+  using namespace std::literals;
+
+  auto l_st = boost::asio::make_strand(l_io_context);
+
+  std::make_shared<dingding::dingding_api>(l_st, l_context)
+      ->async_get_token([](const dingding::access_token& in) {
+        DOODLE_LOG_INFO(in.token);
+      });
+  l_io_context.run();
+}
