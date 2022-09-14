@@ -45,6 +45,9 @@ BOOST_AUTO_TEST_CASE(client_base_tset) {
   l_io_context.run();
 }
 
+BOOST_AUTO_TEST_SUITE(dingding_base)
+static dingding::access_token l_token{};
+
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   boost::asio::io_context l_io_context{};
   /// \brief SSL 上下文是必需的，并持有证书
@@ -61,12 +64,12 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   std::make_shared<dingding::dingding_api>(boost::asio::make_strand(l_io_context), l_context)
       ->async_get_token([](const dingding::access_token& in) {
         DOODLE_LOG_INFO(in.token);
+        l_token = in;
       });
   l_io_context.run();
 }
 
-BOOST_AUTO_TEST_SUITE(dingding_base)
-dingding::access_token l_token{};
+
 
 BOOST_AUTO_TEST_SUITE_END()
 
