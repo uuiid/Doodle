@@ -40,12 +40,12 @@ void dingding_api::async_get_token(
       l_http_req_res.url_attr
   );
   l_http_req_res.read_fun = [l_fun = std::move(in)](const decltype(l_http_req_res.res_attr)& in) {
-    auto l_j = nlohmann::json::parse(in.body());
-    if (l_j["errcode"] != 0) {
-      throw_exception(doodle_error{"{} {}", l_j["errcode"], l_j["errmsg"]});
+    auto l_j                 = nlohmann::json::parse(in.body());
+    auto l_access_token_body = access_token_body{l_j};
+    if (l_access_token_body) {
+      throw_exception(doodle_error{l_access_token_body});
     }
-    auto l_meg = l_j.get<access_token>();
-    l_fun(l_meg);
+    l_fun(l_access_token_body.result_type);
   };
 
   run(l_http_req_res);
@@ -80,13 +80,12 @@ void dingding_api::async_get_departments(
     if (in.body().empty())
       return;
     DOODLE_LOG_INFO(in);
-    auto l_j = nlohmann::json::parse(in.body());
+    auto l_j    = nlohmann::json::parse(in.body());
     auto l_body = department_body{l_j};
-    if (l_j["errcode"].get<std::int32_t>() != 0) {
-      throw_exception(doodle_error{"{} {}", l_j["errcode"].get<std::int32_t>(), l_j["errmsg"].get<std::string>()});
+    if (l_body) {
+      throw_exception(doodle_error{l_body});
     }
-    auto l_r   = l_j["result"].get<std::vector<department>>();
-    auto l_msg = l_r |
+    auto l_msg = l_body.result_type |
                  ranges::view::transform([](const department& in) -> entt::handle {
                    auto l_handle = doodle::make_handle();
                    l_handle.emplace<department>(in);
