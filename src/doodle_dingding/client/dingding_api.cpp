@@ -53,7 +53,7 @@ void dingding_api::async_get_token(
 void dingding_api::async_get_departments(
     const department_query& in_query,
     const access_token& in_token,
-    dingidng_call_list_fun&& in_fun
+    dingidng_call_fun&& in_fun
 ) {
   boost::url l_url{};
   boost::url l_method{"topapi/v2/department/listsub"};
@@ -72,7 +72,9 @@ void dingding_api::async_get_departments(
       l_method,
       l_http_req_res.url_attr
   );
-  l_http_req_res.read_fun = [l_fun = std::move(in_fun), this](const decltype(l_http_req_res.res_attr)& in) {
+  auto l_call_fun         = std::make_shared<dingidng_call_fun>(in_fun);
+
+  l_http_req_res.read_fun = [l_call_fun, this](const decltype(l_http_req_res.res_attr)& in) {
     auto l_j = nlohmann::json::parse(in.body());
     if (l_j["errcode"] != 0) {
       throw_exception(doodle_error{"{} {}", l_j["errcode"], l_j["errmsg"]});
@@ -85,10 +87,13 @@ void dingding_api::async_get_departments(
                    return l_handle;
                  }) |
                  ranges::to_vector;
-    boost::asio::post(
-        this->get_executor(),
-        [fun = std::move(l_fun), meg = std::move(l_msg)]() { fun(meg); }
-    );
+
+    ranges::for_each(l_msg, [&](const entt::handle& in) {
+      boost::asio::post(
+          this->get_executor(),
+          [l_call_fun, meg = in]() {(*l_call_fun)(meg); }
+      );
+    });
   };
 
   run(l_http_req_res);

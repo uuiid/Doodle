@@ -30,7 +30,7 @@ class DOODLE_DINGDING_API dingding_api : public client {
   void async_get_departments(
       const department_query& in_query,
       const access_token& in_token,
-      dingidng_call_list_fun&& in_fun
+      dingidng_call_fun&& in_fun
   );
 };
 
