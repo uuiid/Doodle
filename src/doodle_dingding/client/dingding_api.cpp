@@ -69,6 +69,8 @@ void dingding_api::async_get_departments(
   nlohmann::json l_json          = in_query;
   l_http_req_res.req_attr.body() = l_json.dump();
 
+  DOODLE_LOG_INFO(l_http_req_res.req_attr);
+
   boost::urls::resolve(
       boost::urls::url_view{dingding_host},
       l_method,
