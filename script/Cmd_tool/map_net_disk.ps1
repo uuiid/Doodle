@@ -17,10 +17,7 @@ $Net_MAPS = @(
     @("W:", "\\192.168.10.240\public\mygwaibao", "美易高_外包")
 )
 
-
 #写入新的消息
-Write-Host("测试完成:")
-
 $Net = New-Object -ComObject WScript.Network
 $Net_List = $Net.EnumNetworkDrives();
 $rename = new-object -ComObject Shell.Application
