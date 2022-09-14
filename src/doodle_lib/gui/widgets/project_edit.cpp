@@ -260,7 +260,7 @@ void project_edit::render() {
       3} &&
       [&]() {
         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 400);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 160);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 220);
         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 40);
 
         ranges::for_each(p_i->camera_judge_gui_attr.camera_judge_list_gui, [this](camera_judge_gui& in) {
