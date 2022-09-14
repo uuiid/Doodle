@@ -45,7 +45,7 @@ void dingding_api::async_get_token(
     if (l_access_token_body) {
       throw_exception(doodle_error{l_access_token_body});
     }
-    l_fun(l_access_token_body.result_type);
+    l_fun(l_access_token_body.result_type());
   };
 
   run(l_http_req_res);
@@ -85,7 +85,8 @@ void dingding_api::async_get_departments(
     if (l_body) {
       throw_exception(doodle_error{l_body});
     }
-    auto l_msg = l_body.result_type |
+    auto l_res = l_body.result_type();
+    auto l_msg = l_res |
                  ranges::view::transform([](const department& in) -> entt::handle {
                    auto l_handle = doodle::make_handle();
                    l_handle.emplace<department>(in);

@@ -16,7 +16,7 @@ class request_base {
  public:
   std::int32_t errcode;
   std::string errmsg;
-
+  nlohmann::json json_attr{};
   explicit request_base(std::int32_t in_code, const std::string& in_msg)
       : errcode(in_code),
         errmsg(in_msg){};
@@ -24,7 +24,7 @@ class request_base {
   explicit operator doodle_error() {
     return doodle_error{"code: {} {}", errcode, errmsg};
   }
-  [[nodiscard("s")]] operator bool() {
+  [[nodiscard("s")]] operator bool() const {
     return errcode != 0;
   }
 };
@@ -36,28 +36,30 @@ class request_base;
 template <typename Result_Type>
 class request_base<true, Result_Type> : public detail::request_base {
  public:
-  Result_Type result_type;
+  Result_Type result_type() {
+    return json_attr.at("result").get<Result_Type>();
+  };
 
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
             in_json.at("errcode").get<std::int32_t>(),
             in_json.at("errmsg").get<std::string>()
-        ),
-        result_type(in_json.at("result").get<Result_Type>()) {}
+        ) {}
 };
 template <typename Result_Type>
 class request_base<false, Result_Type> : public detail::request_base {
  public:
-  Result_Type result_type;
+  Result_Type result_type() {
+    return json_attr.get<Result_Type>();
+  };
 
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
             in_json.at("errcode").get<std::int32_t>(),
             in_json.at("errmsg").get<std::string>()
-        ),
-        result_type(in_json.get<Result_Type>()) {}
+        ) {}
 };
 using access_token_body = request_base<false, access_token>;
 using department_body   = request_base<true, std::vector<department>>;
