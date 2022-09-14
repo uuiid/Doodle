@@ -79,9 +79,9 @@ void dingding_api::async_get_departments(
   auto l_call_fun         = std::make_shared<dingidng_call_fun>(in_fun);
 
   l_http_req_res.read_fun = [l_call_fun, this](const decltype(l_http_req_res.res_attr)& in) {
+    DOODLE_LOG_INFO(in);
     if (in.body().empty())
       return;
-    DOODLE_LOG_INFO(in);
     auto l_j    = nlohmann::json::parse(in.body());
     auto l_body = department_body{l_j};
     if (l_body) {
