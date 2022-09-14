@@ -6,6 +6,7 @@
 #include <doodle_dingding/configure/config.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_core/doodle_core.h>
+#include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
 
 #include <nlohmann/json.hpp>
 
@@ -65,7 +66,7 @@ void dingding_api::async_get_departments(
       l_http_req_res{shared_from_this()};
   l_http_req_res.req_attr.method(boost::beast::http::verb::post);
   nlohmann::json l_json          = in_query;
-  l_http_req_res.res_attr.body() = l_json.dump();
+  l_http_req_res.req_attr.body() = l_json.dump();
 
   boost::urls::resolve(
       boost::urls::url_view{dingding_host},
@@ -75,9 +76,12 @@ void dingding_api::async_get_departments(
   auto l_call_fun         = std::make_shared<dingidng_call_fun>(in_fun);
 
   l_http_req_res.read_fun = [l_call_fun, this](const decltype(l_http_req_res.res_attr)& in) {
+    if (in.body().empty())
+      return;
+    DOODLE_LOG_INFO(in);
     auto l_j = nlohmann::json::parse(in.body());
-    if (l_j["errcode"] != 0) {
-      throw_exception(doodle_error{"{} {}", l_j["errcode"], l_j["errmsg"]});
+    if (l_j["errcode"].get<std::int32_t>() != 0) {
+      throw_exception(doodle_error{"{} {}", l_j["errcode"].get<std::int32_t>(), l_j["errmsg"].get<std::string>()});
     }
     auto l_r   = l_j["result"].get<std::vector<department>>();
     auto l_msg = l_r |
@@ -88,10 +92,10 @@ void dingding_api::async_get_departments(
                  }) |
                  ranges::to_vector;
 
-    ranges::for_each(l_msg, [&](const entt::handle& in) {
+    ranges::for_each(l_msg, [l_call_fun, this](const entt::handle& in) {
       boost::asio::post(
           this->get_executor(),
-          [l_call_fun, meg = in]() {(*l_call_fun)(meg); }
+          [l_call_fun, in]() { (*l_call_fun)(in); }
       );
     });
   };
