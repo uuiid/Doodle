@@ -79,9 +79,9 @@ find_package(directxtk CONFIG REQUIRED)
 add_custom_target(
         update_doc_and_cmrc
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/docs/css
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-brands-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-regular-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-solid-900.ttf ${PROJECT_SOURCE_DIR}/src/doodle_lib/resource
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-brands-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-regular-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-solid-900.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake/
 
 )
