@@ -21,6 +21,7 @@ struct loop_fixtures {
   boost::asio::io_context io_context_attr{};
   boost::asio::ssl::context context_attr{
       boost::asio::ssl::context::sslv23};
+  doodle_lib l_lib{};
   void setup() {
     context_attr.set_verify_mode(boost::asio::ssl::verify_peer);
     context_attr.set_options(
@@ -56,15 +57,12 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
-static dingding::access_token l_token{};
+static dingding::access_token l_token{"79cdb3f9e48034ddbb72d576e95ab708"s, 0};
 
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
   std::make_shared<dingding::dingding_api>(boost::asio::make_strand(io_context_attr), context_attr)
-      ->async_get_token([](const dingding::access_token& in) {
-        DOODLE_LOG_INFO(in.token);
-        l_token = in;
-      });
+      ->async_get_token();
 }
 
 BOOST_AUTO_TEST_CASE(client_get_dep) {
@@ -76,7 +74,7 @@ BOOST_AUTO_TEST_CASE(client_get_dep) {
   std::shared_ptr<std::function<void(const dingding::department_query&)>>
       l_call_ptr{std::make_shared<std::function<void(const dingding::department_query&)>>()};
   *l_call_ptr = [l_c, l_st, l_call_ptr](const dingding::department_query& in_q) {
-    l_c->async_get_departments(dingding::department_query{}, l_token, [=](const entt::handle& in_handle) {
+    l_c->async_get_departments(in_q, l_token, [=](const entt::handle& in_handle) {
       BOOST_TEST(in_handle.any_of<dingding::department>());
       DOODLE_LOG_INFO(in_handle.get<dingding::department>().name);
       boost::asio::post(l_st, [=]() { (*l_call_ptr)(
@@ -85,9 +83,7 @@ BOOST_AUTO_TEST_CASE(client_get_dep) {
                                       ); });
     });
   };
-  (*l_call_ptr)(dingding::department_query{});
-
-
+  (*l_call_ptr)(dingding::department_query{145552127, "zh_CN"s});
 }
 
 BOOST_AUTO_TEST_SUITE_END()

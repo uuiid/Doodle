@@ -8,10 +8,14 @@
 #include <doodle_core/lib_warp/entt_warp.h>
 
 #include <doodle_dingding/metadata/access_token.h>
+
+#include <doodle_dingding/configure/config.h>
+#include <doodle_core/doodle_core.h>
+#include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
 namespace doodle::dingding {
 class access_token;
 class department_query;
-using dingidng_call_fun  = std::function<void(const entt::handle& in)>;
+using dingidng_call_fun      = std::function<void(const entt::handle& in)>;
 using dingidng_call_list_fun = std::function<void(const std::vector<entt::handle>& in)>;
 
 class DOODLE_DINGDING_API dingding_api : public client {
@@ -23,6 +27,35 @@ class DOODLE_DINGDING_API dingding_api : public client {
       const boost::asio::any_io_executor& in_executor,
       boost::asio::ssl::context& in_ssl_context
   );
+
+  auto async_get_token(
+
+  ) {
+    using req_type = boost::beast::http::request<boost::beast::http::empty_body>;
+    using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+
+    boost::url l_url{};
+    req_type l_req{};
+    boost::url l_method{"gettoken"};
+
+    l_method.params().set("appkey", dingding_config::get().app_key);
+    l_method.params().set("appsecret", dingding_config::get().app_value);
+
+    l_req.method(boost::beast::http::verb::get);
+    boost::urls::resolve(
+        boost::urls::url_view{dingding_host},
+        l_method,
+        l_url
+    );
+    return async_write_read<res_type>(
+        l_req,
+        l_url,
+        [](boost::system::error_code in_code, const res_type& in_res_type) {
+          DOODLE_LOG_INFO(in_res_type);
+        }
+    );
+  };
+
   void async_get_token(
       read_access_token_fun&& in
   );

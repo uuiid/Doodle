@@ -69,7 +69,7 @@ void client::run(const std::string& in_host, const std::string& in_target) {
   boost::url l_url{fmt::format("{}:{}{}", in_host, "443"s, in_target)};
   client_ns::http_req_res<
       boost::beast::http::request<boost::beast::http::empty_body>,
-      boost::beast::http::response<boost::beast::http::string_body> >
+      boost::beast::http::response<boost::beast::http::string_body>>
       l_http_req_res{shared_from_this()};
   l_http_req_res.req_attr.method(boost::beast::http::verb::get);
   l_http_req_res.url_attr = l_url;
@@ -94,7 +94,6 @@ void client::run(
 
     // 向远程主机发送 HTTP 请求
     ptr->config.async_write(ptr->ssl_stream);
-    ptr->ssl_stream.get_executor();
   } else {
     // Look up the domain name
     ptr->resolver_.async_resolve(
@@ -205,7 +204,76 @@ void client::on_shutdown(boost::system::error_code ec) {
 
   // 成功关机
 }
+boost::beast::ssl_stream<boost::beast::tcp_stream>& client::ssl_stream() {
+  return ptr->ssl_stream;
+}
+bool client::is_connect() {
+  return ptr->is_connect;
+}
+boost::asio::ssl::context& client::ssl_context() {
+  return ptr->ssl_context_;
+}
+boost::asio::ip::tcp::resolver& client::resolver() {
+  return ptr->resolver_;
+}
+void client::async_resolve(
+    const boost::url& in_url,
 
+    const std::function<void(boost::system::error_code)>& in_fun
+) {
+  const std::string host{in_url.host()};
+  set_openssl(host);
+  using namespace std::literals;
+  const std::string port{in_url.has_port()  //
+                             ? std::string{in_url.port()}
+                             : "443"s};
+  auto l_fun = std::make_shared<std::function<void(boost::system::error_code)>>(in_fun);
+
+  resolver().async_resolve(
+      host,
+      port,
+      [this, l_fun](
+          boost::system::error_code ec,
+          const boost::asio::ip::tcp::resolver::results_type& results
+      ) {
+        if (ec) {
+          throw_exception(boost::system::system_error{ec});
+        }
+
+        /// \brief 超时设置
+        boost::beast::get_lowest_layer(
+            ssl_stream()
+        )
+            .expires_after(30s);
+
+        ssl_stream().set_verify_mode(boost::asio::ssl::verify_peer);
+
+        ssl_stream().set_verify_callback(
+            [](bool preverified,
+               boost::asio::ssl::verify_context& ctx) -> bool {
+              char subject_name[256];
+              X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+              X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+              DOODLE_LOG_INFO("Verifying {}", subject_name);
+
+              return true;
+            }
+        );
+
+        boost::beast::get_lowest_layer(ssl_stream())
+            .async_connect(
+                results,
+                [l_fun,this](
+                    boost::system::error_code ec,
+                    const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
+                ) {
+                  ptr->is_connect = true;
+                  (*l_fun)(ec);
+                }
+            );
+      }
+  );
+}
 
 client::~client() noexcept = default;
 
