@@ -5,6 +5,7 @@
 #include <doodle_dingding/doodle_dingding_fwd.h>
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 #include <doodle_dingding/metadata/access_token.h>
 #include <doodle_dingding/metadata/department.h>
@@ -17,14 +18,14 @@ class request_base {
   std::int32_t errcode;
   std::string errmsg;
   nlohmann::json json_attr{};
-  explicit request_base(std::int32_t in_code, const std::string& in_msg)
+  explicit request_base(std::int32_t in_code, std::string  in_msg)
       : errcode(in_code),
-        errmsg(in_msg){};
+        errmsg(std::move(in_msg)){};
   virtual ~request_base() = default;
-  explicit operator doodle_error() {
+  [[nodiscard("")]] doodle_error get_error() const {
     return doodle_error{"code: {} {}", errcode, errmsg};
   }
-  [[nodiscard("s")]] operator bool() const {
+  [[nodiscard("s")]] explicit operator bool() const {
     return errcode != 0;
   }
 };

@@ -43,7 +43,7 @@ void dingding_api::async_get_token(
     auto l_j                 = nlohmann::json::parse(in.body());
     auto l_access_token_body = access_token_body{l_j};
     if (l_access_token_body) {
-      throw_exception(doodle_error{l_access_token_body});
+      throw_exception(l_access_token_body.get_error());
     }
     l_fun(l_access_token_body.result_type());
   };
@@ -83,7 +83,7 @@ void dingding_api::async_get_departments(
     auto l_j    = nlohmann::json::parse(in.body());
     auto l_body = department_body{l_j};
     if (l_body) {
-      throw_exception(doodle_error{l_body});
+      throw_exception(doodle_error{"code: {} {}", l_body.errcode, l_body.errmsg});
     }
     auto l_res = l_body.result_type();
     auto l_msg = l_res |
