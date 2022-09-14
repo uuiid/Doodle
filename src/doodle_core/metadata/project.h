@@ -146,6 +146,8 @@ class DOODLE_CORE_API base_config {
   std::bitset<8> export_abc_arg{};
   /// \brief 使用camera优先级寻找maya 相机
   std::vector<camera_judge> maya_camera_select{};
+  /// \brief 是否导出自定义元数据
+  bool use_write_metadata{true};
 
   base_config();
 

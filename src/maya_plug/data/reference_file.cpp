@@ -463,7 +463,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
       l_path = export_fbx(in_arg.start_p, in_arg.end_p);
     } break;
   }
-  if (!l_path.empty()) {
+  if (!l_path.empty() && g_reg()->ctx().at<project_config::base_config>().use_write_metadata) {
     out_ = make_handle();
     FSys::path l_ref_file{this->path};
     if (l_ref_file.empty()) {

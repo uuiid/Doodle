@@ -12,6 +12,38 @@
 
 namespace doodle::gui {
 
+namespace {
+class camera_judge_gui : boost::equality_comparable<camera_judge_gui> {
+ public:
+  camera_judge_gui() = default;
+  explicit camera_judge_gui(const project_config::camera_judge& in_judge)
+      : camera_regex("正则表达式", in_judge.first),
+        judge("判断优先级", in_judge.second) {}
+
+  gui_cache<std::string> camera_regex{"正则表达式", ""s};
+  gui_cache<std::int32_t> judge{"判断优先级", 100};
+  gui_cache_name_id delete_button{"删除"s};
+  explicit operator project_config::camera_judge() {
+    return std::make_pair(camera_regex(), judge());
+  }
+
+  bool operator==(const camera_judge_gui& in_l) const {
+    return std::tie(
+               camera_regex,
+               judge,
+               delete_button
+           ) == std::tie(in_l.camera_regex, in_l.judge, in_l.delete_button);
+  }
+};
+
+class camera_judge_table_gui {
+ public:
+  std::vector<camera_judge_gui> camera_judge_list_gui{};
+  gui_cache_name_id add_camera_judge_list_gui{"添加"};
+  gui_cache_name_id table_name{"camera_judge_table_gui"};
+};
+}  // namespace
+
 class project_edit::impl {
   struct icon_extensions {
     gui::gui_cache_name_id name;
@@ -58,6 +90,10 @@ class project_edit::impl {
   gui_cache<bool> abc_arg_writeUVSets{"写入uv集", false};
   gui_cache<bool> abc_arg_stripNamespaces{"分裂名称空间", false};
 
+  camera_judge_table_gui camera_judge_gui_attr{};
+
+  gui_cache<bool> use_write_metadata{"写出元数据", true};
+
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
 
   void config_init() {
@@ -87,25 +123,35 @@ class project_edit::impl {
                          }
                      ) |
                      ranges::to_vector;
-    upload_path             = l_config.upload_path.generic_string();
-    season_count            = l_config.season_count;
+    upload_path                                 = l_config.upload_path.generic_string();
+    season_count                                = l_config.season_count;
 
-    use_only_sim_cloth      = l_config.use_only_sim_cloth;
-    use_divide_group_export = l_config.use_divide_group_export;
-    use_rename_material     = l_config.use_rename_material;
-    use_merge_mesh          = l_config.use_merge_mesh;
-    t_post                  = l_config.t_post;
-    export_anim_time        = l_config.export_anim_time;
+    use_only_sim_cloth                          = l_config.use_only_sim_cloth;
+    use_divide_group_export                     = l_config.use_divide_group_export;
+    use_rename_material                         = l_config.use_rename_material;
+    use_merge_mesh                              = l_config.use_merge_mesh;
+    t_post                                      = l_config.t_post;
+    export_anim_time                            = l_config.export_anim_time;
+
     /// \brief 设置未集
+    abc_arg_uvWrite                             = l_config.export_abc_arg[0];
+    abc_arg_writeColorSets                      = l_config.export_abc_arg[1];
+    abc_arg_writeFaceSets                       = l_config.export_abc_arg[2];
+    abc_arg_wholeFrameGeo                       = l_config.export_abc_arg[3];
+    abc_arg_worldSpace                          = l_config.export_abc_arg[4];
+    abc_arg_writeVisibility                     = l_config.export_abc_arg[5];
+    abc_arg_writeUVSets                         = l_config.export_abc_arg[6];
+    abc_arg_stripNamespaces                     = l_config.export_abc_arg[7];
 
-    abc_arg_uvWrite         = l_config.export_abc_arg[0];
-    abc_arg_writeColorSets  = l_config.export_abc_arg[1];
-    abc_arg_writeFaceSets   = l_config.export_abc_arg[2];
-    abc_arg_wholeFrameGeo   = l_config.export_abc_arg[3];
-    abc_arg_worldSpace      = l_config.export_abc_arg[4];
-    abc_arg_writeVisibility = l_config.export_abc_arg[5];
-    abc_arg_writeUVSets     = l_config.export_abc_arg[6];
-    abc_arg_stripNamespaces = l_config.export_abc_arg[7];
+    camera_judge_gui_attr.camera_judge_list_gui = l_config.maya_camera_select |
+                                                  ranges::views::transform(
+                                                      [](const project_config::camera_judge& in_camera_judge) -> camera_judge_gui {
+                                                        return camera_judge_gui{in_camera_judge};
+                                                      }
+                                                  ) |
+                                                  ranges::to_vector;
+
+    use_write_metadata() = l_config.use_write_metadata;
   }
 
   project_config::base_config get_config_() {
@@ -150,6 +196,14 @@ class project_edit::impl {
     l_c.export_abc_arg[5]       = abc_arg_writeVisibility();
     l_c.export_abc_arg[6]       = abc_arg_writeUVSets();
     l_c.export_abc_arg[7]       = abc_arg_stripNamespaces();
+
+    l_c.maya_camera_select      = camera_judge_gui_attr.camera_judge_list_gui |
+                             ranges::views::transform([](auto&& in) -> project_config::camera_judge {
+                               return project_config::camera_judge{in};
+                             }) |
+                             ranges::to_vector;
+    l_c.use_write_metadata = use_write_metadata();
+
     return l_c;
   }
 };
@@ -193,6 +247,37 @@ void project_edit::render() {
   ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
   ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
+
+  ImGui::Text("相机优先级配置:");
+  if (ImGui::Button(*p_i->camera_judge_gui_attr.add_camera_judge_list_gui)) {
+    p_i->camera_judge_gui_attr.camera_judge_list_gui.emplace_back();
+  }
+  //,
+  //      ImGuiTableFlags_::ImGuiTableFlags_SizingStretchSame
+  dear::Table{
+      *p_i->camera_judge_gui_attr.table_name,
+      3} &&
+      [&]() {
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 400);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 160);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 40);
+
+        ranges::for_each(p_i->camera_judge_gui_attr.camera_judge_list_gui, [this](camera_judge_gui& in) {
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          ImGui::InputText(*in.camera_regex, &in.camera_regex);
+          ImGui::TableNextColumn();
+          ImGui::InputInt(*in.judge, &in.judge);
+          ImGui::TableNextColumn();
+          if (ImGui::Button(*in.delete_button))
+            boost::asio::post(g_io_context(), [in, this]() {
+              p_i->camera_judge_gui_attr.camera_judge_list_gui |= ranges::action::remove_if([&](const camera_judge_gui& in_) -> bool {
+                return in_ == in;
+              });
+            });
+        });
+      };
+
   ImGui::Text("导出abc配置:");
   ImGui::Checkbox(*p_i->abc_arg_uvWrite, &p_i->abc_arg_uvWrite);
   ImGui::Checkbox(*p_i->abc_arg_writeColorSets, &p_i->abc_arg_writeColorSets);
