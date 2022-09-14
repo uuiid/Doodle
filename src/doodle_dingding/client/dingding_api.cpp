@@ -5,6 +5,7 @@
 #include "dingding_api.h"
 #include <doodle_dingding/configure/config.h>
 #include <doodle_dingding/metadata/department.h>
+#include <doodle_dingding/metadata/request_base.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
 
@@ -80,6 +81,7 @@ void dingding_api::async_get_departments(
       return;
     DOODLE_LOG_INFO(in);
     auto l_j = nlohmann::json::parse(in.body());
+    auto l_body = department_body{l_j};
     if (l_j["errcode"].get<std::int32_t>() != 0) {
       throw_exception(doodle_error{"{} {}", l_j["errcode"].get<std::int32_t>(), l_j["errmsg"].get<std::string>()});
     }

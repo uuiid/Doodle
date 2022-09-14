@@ -7,6 +7,7 @@ target_sources(
 )
 add_subdirectory(client)
 add_subdirectory(configure)
+add_subdirectory(error_code)
 add_subdirectory(fmt_lib)
 add_subdirectory(metadata)
 
