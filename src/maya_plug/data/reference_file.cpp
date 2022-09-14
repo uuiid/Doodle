@@ -263,7 +263,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
           get_namespace(),
           get_node_name_strip_name_space(l_parent)
       );
-      export_divide_map[abc_name].add(i);
+      export_divide_map[abc_name].add(l_parent, MObject::kNullObj, true);
     }
   } else {
     MSelectionList l_list{};
@@ -625,16 +625,18 @@ FSys::path reference_file::export_abc(
     create_directories(k_path);
   }
   k_path /= in_abc_name;
-  /// \brief 导出abc命令
-  k_s = MGlobal::executeCommand(d_str{
-      fmt::format(R"(
+  auto l_com = fmt::format(R"(
 AbcExport -j "-frameRange {} {} {} -dataFormat ogawa {} -file {}";
 )",
-                  in_start.as(MTime::uiUnit()),    /// \brief 开始时间
-                  in_end.as(MTime::uiUnit()),      /// \brief 结束时间
-                  get_abc_exprt_arg(),             /// \brief 导出参数
-                  fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
-                  k_path.generic_string())});      /// \brief 导出文件路径，包含文件名和文件路径
+                           in_start.as(MTime::uiUnit()),    /// \brief 开始时间
+                           in_end.as(MTime::uiUnit()),      /// \brief 结束时间
+                           get_abc_exprt_arg(),             /// \brief 导出参数
+                           fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
+                           k_path.generic_string());
+  DOODLE_LOG_INFO("生成导出命令 {}", l_com);
+
+  /// \brief 导出abc命令
+  k_s = MGlobal::executeCommand(d_str{l_com});  /// \brief 导出文件路径，包含文件名和文件路径
   DOODLE_MAYA_CHICK(k_s);
   return k_path;
 }
