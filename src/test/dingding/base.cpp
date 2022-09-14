@@ -45,6 +45,16 @@ BOOST_AUTO_TEST_CASE(client_base_tset) {
   l_io_context.run();
 }
 
+struct loop_fixtures {
+  loop_fixtures()  = default;
+  ~loop_fixtures() = default;
+  boost::asio::io_context io_context_attr{};
+  boost::asio::ssl::context context_attr{
+      boost::asio::ssl::context::sslv23};
+  void setup();
+  void teardown();
+};
+
 BOOST_AUTO_TEST_SUITE(dingding_base)
 static dingding::access_token l_token{};
 
@@ -68,8 +78,6 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
       });
   l_io_context.run();
 }
-
-
 
 BOOST_AUTO_TEST_SUITE_END()
 
