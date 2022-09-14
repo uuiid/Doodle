@@ -247,6 +247,7 @@ void project_edit::render() {
   ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
   ImGui::InputInt(*p_i->export_anim_time, &p_i->export_anim_time);
+  ImGui::Checkbox(*p_i->use_write_metadata, &p_i->use_write_metadata);
 
   ImGui::Text("相机优先级配置:");
   if (ImGui::Button(*p_i->camera_judge_gui_attr.add_camera_judge_list_gui)) {
