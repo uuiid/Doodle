@@ -73,12 +73,18 @@ class cursor {
   bool has_more;
   std::size_t next_cursor;
   Result_Type list;
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      cursor,
-      has_more,
-      next_cursor,
-      list
-  )
+  friend void to_json(nlohmann::json& nlohmann_json_j, const cursor& nlohmann_json_t) {
+    nlohmann_json_j["has_more"]    = nlohmann_json_t.has_more;
+    nlohmann_json_j["next_cursor"] = nlohmann_json_t.next_cursor;
+    nlohmann_json_j["list"]        = nlohmann_json_t.list;
+  }
+  friend void from_json(const nlohmann::json& nlohmann_json_j, cursor& nlohmann_json_t) {
+    nlohmann_json_j.at("has_more").get_to(nlohmann_json_t.has_more);
+    if (nlohmann_json_j.contains("next_cursor"))
+      nlohmann_json_j.at("next_cursor").get_to(nlohmann_json_t.next_cursor);
+    if (nlohmann_json_j.contains("list"))
+      nlohmann_json_j.at("list").get_to(nlohmann_json_t.list);
+  }
 };
 }  // namespace detail
 
