@@ -42,7 +42,8 @@ struct async_http_req_res {
  public:
   boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream;
   std::shared_ptr<client> self_attr;
-  using data_ptr = std::shared_ptr<async_http_req_res_data<Req, Res>>;
+  using data_type = async_http_req_res_data<Req, Res>;
+  using data_ptr = std::shared_ptr<data_type>;
   data_ptr p_data;
 
   enum {
@@ -64,7 +65,7 @@ struct async_http_req_res {
   ) : ssl_stream(in_ssl_stream),
       self_attr(std::move(in_self_attr)),
       p_data(
-          std::make_shared<data_ptr::element_type>(
+          std::make_shared<data_type>(
               std::move(in_req_attr),
               std::move(in_url_attr)
           )
