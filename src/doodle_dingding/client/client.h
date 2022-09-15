@@ -32,9 +32,14 @@ struct async_http_req_res {
   std::shared_ptr<client> self_attr;
   boost::beast::flat_buffer buffer_;
   enum {
-    starting,
-    writing,
-    reading,
+    on_starting,
+
+    on_resolve,
+    on_connected,
+    on_handshake,
+
+    on_writing,
+    on_reading,
   } state_;
 
   explicit async_http_req_res(
@@ -48,7 +53,7 @@ struct async_http_req_res {
       ssl_stream(in_ssl_stream),
       self_attr(std::move(in_self_attr)),
       buffer_(),
-      state_(starting){};
+      state_(on_starting){};
 
   void write_prepare() {
     boost::url l_url{url_attr};
@@ -66,41 +71,11 @@ struct async_http_req_res {
   }
 
   template <typename Self>
-  bool connect(
-      Self& self
-  ) {
-    if (self_attr->is_connect()) {
-      return true;
-    } else {
-      self_attr->async_resolve(
-          url_attr,
-          [&, this, l_tmp = self_attr,
-           l_f = std::make_shared<std::decay_t<decltype(self)>>(std::move(self))](
-              boost::system::error_code ec
-          ) {
-            if (ec) {
-              throw_exception(boost::system::system_error{ec});
-            }
-            // 执行SSL握手
-            l_f->ssl_stream.async_handshake(
-                boost::asio::ssl::stream_base::client,
-                [l_self = l_f](
-                    boost::system::error_code ec
-                ) mutable {
-                  (*l_self)(ec);
-                }
-            );
-          }
-      );
-    }
-    return false;
-  }
-
-  template <typename Self>
   void operator()(
       Self& self,
-      boost::system::error_code error = {},
-      const Res& in_res               = {}
+      boost::system::error_code error                      = {},
+      const Res& in_res                                    = {},
+      boost::asio::ip::tcp::resolver::results_type results = {}
   ) {
     if (error) {
       throw_exception(boost::system::system_error{error});
@@ -110,12 +85,69 @@ struct async_http_req_res {
     boost::beast::get_lowest_layer(ssl_stream)
         .expires_after(30s);
     switch (state_) {
-      case starting: {
-        if (!connect(self)) {
-          break;
-        }
-        state_ = writing;
-        write_prepare();
+      case on_starting: {
+        state_ = on_resolve;
+        const std::string host{url_attr.host()};
+        self_attr->set_openssl(host);
+        using namespace std::literals;
+        const std::string port{url_attr.has_port()  //
+                                   ? std::string{url_attr.port()}
+                                   : "443"s};
+        self_attr->resolver().async_resolve(
+            host,
+            port,
+            [self = std::move(self)](
+                boost::system::error_code ec,
+                const boost::asio::ip::tcp::resolver::results_type& results
+            ) {
+              self(ec, Res{}, results);
+            }
+        );
+        break;
+      }
+
+      case on_resolve: {
+        state_ = on_connected;
+        ssl_stream.set_verify_mode(boost::asio::ssl::verify_peer);
+        ssl_stream.set_verify_callback(
+            [](bool preverified,
+               boost::asio::ssl::verify_context& ctx) -> bool {
+              char subject_name[256];
+              X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+              X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+              DOODLE_LOG_INFO("Verifying {}", subject_name);
+
+              return true;
+            }
+        );
+
+        boost::beast::get_lowest_layer(ssl_stream)
+            .async_connect(
+                results,
+                [self = std::move(self)](
+                    boost::system::error_code ec,
+                    const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
+                ) {
+                  self(ec);
+                }
+            );
+        break;
+      }
+      case on_connected: {
+        state_ = on_handshake;
+        ssl_stream.async_handshake(
+            boost::asio::ssl::stream_base::client,
+            [self = std::move(self)](
+                boost::system::error_code ec
+            ) mutable {
+              self(ec);
+            }
+        );
+        break;
+      }
+      case on_handshake: {
+        state_ = on_writing;
+        this->write_prepare();
         boost::beast::http::async_write(
             ssl_stream, req_attr,
             [l_self = std::move(self)](
@@ -126,10 +158,12 @@ struct async_http_req_res {
               l_self(ec);
             }
         );
+
         break;
       }
-      case writing: {
-        state_ = reading;
+
+      case on_writing: {
+        state_ = on_reading;
         boost::beast::http::async_read(
             ssl_stream,
             buffer_,
@@ -145,7 +179,7 @@ struct async_http_req_res {
 
         break;
       }
-      case reading: {
+      case on_reading: {
         if (!res_attr.keep_alive())
           self_attr->async_shutdown();
         self.complete(error, in_res);
