@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
               BOOST_TEST(!l_user.name.empty());
               BOOST_TEST_MESSAGE(l_user.userid);
               BOOST_TEST(!l_user.dept_id_list.empty());
-              BOOST_TEST_MESSAGE(l_user.dept_id_list);
+              BOOST_TEST_MESSAGE(fmt::to_string(l_user.dept_id_list));
             }
         );
       }
