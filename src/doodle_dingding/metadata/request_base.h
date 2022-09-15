@@ -88,8 +88,10 @@ class cursor {
 };
 }  // namespace detail
 
-using access_token_body = request_base<false, access_token>;
-using department_body   = request_base<true, std::vector<department>>;
-using user_dd_body      = request_base<true, detail::cursor<std::vector<user_dd>>>;
+using access_token_body    = request_base<false, access_token>;
+using department_body      = request_base<true, std::vector<department>>;
+
+using user_dd_body         = request_base<true, detail::cursor<std::vector<user_dd>>>;
+using user_dd_id_list_body = request_base<true, user_dd>;
 
 }  // namespace doodle::dingding

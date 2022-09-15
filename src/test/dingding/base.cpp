@@ -125,4 +125,26 @@ BOOST_AUTO_TEST_CASE(client_get_dep_user) {
   );
 }
 
+BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
+  using namespace std::literals;
+
+  auto l_st                      = boost::asio::make_strand(io_context_attr);
+  auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  dingding::access_token l_token = globe_access_token{};
+
+  l_c->async_find_mobile_user(
+      dingding::user_dd_ns::find_by_mobile{
+          "13891558584"},
+      l_token,
+      [=](const std::vector<entt::handle>& in_handle) {
+        ranges::for_each(
+            in_handle, [](auto&& i) {
+              BOOST_TEST(i.any_of<dingding::user_dd>());
+              BOOST_TEST_MESSAGE(i.get<dingding::user_dd>().userid);
+            }
+        );
+      }
+  );
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -11,6 +11,7 @@ namespace doodle::dingding {
 
 namespace user_dd_ns {
 class dep_query;
+class find_by_mobile;
 }
 
 class access_token;
@@ -39,6 +40,11 @@ class DOODLE_DINGDING_API dingding_api : public client {
   );
   void async_get_departments_user(
       const user_dd_ns::dep_query& in_query,
+      const access_token& in_token,
+      dingidng_call_fun&& in_fun
+  );
+  void async_find_mobile_user(
+      const user_dd_ns::find_by_mobile& in_query,
       const access_token& in_token,
       dingidng_call_fun&& in_fun
   );

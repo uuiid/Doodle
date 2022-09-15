@@ -28,6 +28,18 @@ class DOODLE_DINGDING_API dep_query {
       language
   )
 };
+
+class DOODLE_DINGDING_API find_by_mobile {
+ public:
+  std::string mobile{};
+  bool support_exclusive_account_search{};
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+      find_by_mobile,
+      mobile,
+      support_exclusive_account_search
+  )
+};
+
 }  // namespace user_dd_ns
 
 class DOODLE_DINGDING_API user_dd {
@@ -57,8 +69,8 @@ class DOODLE_DINGDING_API user_dd {
   }
   friend void from_json(const nlohmann::json& nlohmann_json_j, user_dd& nlohmann_json_t) {
     nlohmann_json_j.at("userid").get_to(nlohmann_json_t.userid);
-    nlohmann_json_j.at("name").get_to(nlohmann_json_t.name);
-
+    if (nlohmann_json_j.contains("unionid"))
+      nlohmann_json_j.at("name").get_to(nlohmann_json_t.name);
     if (nlohmann_json_j.contains("unionid"))
       nlohmann_json_j.at("unionid").get_to(nlohmann_json_t.unionid);
     if (nlohmann_json_j.contains("job_number"))
@@ -69,4 +81,4 @@ class DOODLE_DINGDING_API user_dd {
       nlohmann_json_j.at("dept_id_list").get_to(nlohmann_json_t.dept_id_list);
   };
 };
-}  // namespace doodle
+}  // namespace doodle::dingding
