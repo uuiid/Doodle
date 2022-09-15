@@ -33,8 +33,7 @@ struct loop_fixtures {
     context_attr.set_default_verify_paths();
     BOOST_TEST_MESSAGE("完成夹具设置");
   };
-  void teardown() {
-  };
+  void teardown(){};
 };
 
 BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
@@ -60,14 +59,13 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
       }
   );
   io_context_attr.run();
-
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
 using namespace entt::literals;
 
-using globe_access_token = entt::monostate<"globe_access_token"_hs>;
-using globe_department   = entt::monostate<"globe_department"_hs>;
+using globe_access_token  = entt::monostate<"globe_access_token"_hs>;
+using globe_department_id = entt::monostate<"globe_department_id"_hs>;
 
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
@@ -77,58 +75,6 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
         DOODLE_LOG_INFO(in.token);
       });
   io_context_attr.run();
-
-}
-
-BOOST_AUTO_TEST_CASE(client_get_dep) {
-  using namespace std::literals;
-  auto l_st                      = boost::asio::make_strand(io_context_attr);
-  auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
-  dingding::access_token l_token = globe_access_token{};
-  l_c->async_get_departments(
-      dingding::department_ns::department_query{145552127, "zh_CN"s},
-      l_token,
-      [=](const std::vector<entt::handle>& in_handle) {
-        ranges::for_each(
-            in_handle, [](auto&& i) {
-              auto l_dep         = i.get<dingding::department>();
-              globe_department{} = l_dep;
-              BOOST_TEST(i.any_of<dingding::department>());
-              BOOST_TEST_MESSAGE(l_dep.name);
-            }
-        );
-      }
-  );
-  io_context_attr.run();
-
-}
-
-BOOST_AUTO_TEST_CASE(client_get_dep_user) {
-  using namespace std::literals;
-
-  auto l_st                      = boost::asio::make_strand(io_context_attr);
-  auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
-  dingding::access_token l_token = globe_access_token{};
-  dingding::department l_dep     = globe_department{};
-
-  l_c->async_get_departments_user(
-      dingding::user_dd_ns::dep_query{
-          l_dep.dept_id,
-          0,
-          50},
-      l_token,
-      [=](const std::vector<entt::handle>& in_handle) {
-        ranges::for_each(
-            in_handle, [](auto&& i) {
-              BOOST_TEST(i.any_of<dingding::user_dd>());
-              BOOST_TEST_MESSAGE(i.get<dingding::user_dd>().name);
-              BOOST_TEST_MESSAGE(i.get<dingding::user_dd>().userid);
-            }
-        );
-      }
-  );
-  io_context_attr.run();
-
 }
 
 BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
@@ -148,15 +94,38 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
               BOOST_TEST(i.any_of<dingding::user_dd>());
               auto l_user = i.get<dingding::user_dd>();
               BOOST_TEST(!l_user.name.empty());
-              BOOST_TEST_MESSAGE(l_user.userid);
+              DOODLE_LOG_INFO(l_user.userid);
               BOOST_TEST(!l_user.dept_id_list.empty());
-              BOOST_TEST_MESSAGE(fmt::to_string(l_user.dept_id_list));
+              DOODLE_LOG_INFO(fmt::to_string(l_user.dept_id_list));
+              globe_department_id{} = l_user.dept_id_list.back();
             }
         );
       }
   );
   io_context_attr.run();
-
 }
 
+BOOST_AUTO_TEST_CASE(client_get_dep) {
+  using namespace std::literals;
+  auto l_st                      = boost::asio::make_strand(io_context_attr);
+  auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  dingding::access_token l_token = globe_access_token{};
+  std::int32_t l_dep             = globe_department_id{};
+  l_c->async_get_departments(
+      dingding::department_ns::department_query{l_dep, "zh_CN"s},
+      l_token,
+      [=](const std::vector<entt::handle>& in_handle) {
+        ranges::for_each(
+            in_handle, [](auto&& i) {
+              auto l_dep = i.get<dingding::department>();
+
+              BOOST_TEST(i.any_of<dingding::department>());
+              DOODLE_LOG_INFO(l_dep.name);
+              DOODLE_LOG_INFO(l_dep.source_identifier);
+            }
+        );
+      }
+  );
+  io_context_attr.run();
+}
 BOOST_AUTO_TEST_SUITE_END()

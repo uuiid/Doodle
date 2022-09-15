@@ -9,7 +9,6 @@
 #include <nlohmann/json.hpp>
 namespace doodle::dingding {
 
-
 namespace department_ns {
 class DOODLE_DINGDING_API department_query {
  public:
@@ -32,9 +31,11 @@ class DOODLE_DINGDING_API department {
   std::int32_t dept_id{};
   std::string name{};
   std::int32_t parent_id{};
-  bool create_dept_group{};
-  bool auto_add_user{};
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(department, dept_id, name, parent_id, create_dept_group, auto_add_user)
+  std::string source_identifier{};
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+      department, dept_id, name, parent_id, source_identifier
+  )
 };
 
 }  // namespace doodle::dingding

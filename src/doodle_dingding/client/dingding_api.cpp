@@ -61,7 +61,7 @@ void dingding_api::async_get_departments(
     dingidng_call_fun&& in_fun
 ) {
   boost::url l_url{};
-  boost::url l_method{"topapi/v2/department/listsub"};
+  boost::url l_method{"topapi/v2/department/get"};
   l_method.params().set("access_token", in_token.token);
   using req_type = boost::beast::http::request<boost::beast::http::string_body>;
   using res_type = boost::beast::http::response<boost::beast::http::string_body>;
