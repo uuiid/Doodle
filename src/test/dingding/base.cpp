@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(client_get_dep) {
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   dingding::access_token l_token = globe_access_token{};
   l_c->async_get_departments(
-      dingding::department_query{145552127, "zh_CN"s},
+      dingding::department_ns::department_query{145552127, "zh_CN"s},
       l_token,
       [=](const std::vector<entt::handle>& in_handle) {
         ranges::for_each(
@@ -138,8 +138,11 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
       l_token,
       [=](const std::vector<entt::handle>& in_handle) {
         ranges::for_each(
-            in_handle, [](auto&& i) {
+            in_handle, [](const entt::handle& i) {
               BOOST_TEST(i.any_of<dingding::user_dd>());
+              auto l_user = i.get<dingding::user_dd>();
+              l_user.;
+              BOOST_TEST();
               BOOST_TEST_MESSAGE(i.get<dingding::user_dd>().userid);
             }
         );

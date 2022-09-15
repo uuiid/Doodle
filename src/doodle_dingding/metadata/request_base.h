@@ -94,4 +94,16 @@ using department_body      = request_base<true, std::vector<department>>;
 using user_dd_body         = request_base<true, detail::cursor<std::vector<user_dd>>>;
 using user_dd_id_list_body = request_base<true, user_dd>;
 
+namespace department_ns {
+class DOODLE_DINGDING_API parent_list {
+ public:
+  std::vector<std::int32_t> parent_dept_id_list;
+};
+class DOODLE_DINGDING_API dept_parent_response {
+ public:
+  std::vector<parent_list> parent_list;
+};
+
+using dep_list_parent_by_user = request_base<true, dept_parent_response>;
+}  // namespace department_ns
 }  // namespace doodle::dingding

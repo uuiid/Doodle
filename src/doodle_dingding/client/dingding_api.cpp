@@ -56,7 +56,7 @@ void dingding_api::async_get_token(
   );
 }
 void dingding_api::async_get_departments(
-    const department_query& in_query,
+    const department_ns::department_query& in_query,
     const access_token& in_token,
     dingidng_call_fun&& in_fun
 ) {
@@ -192,6 +192,57 @@ void dingding_api::async_find_mobile_user(
       l_method,
       l_url
   );
+  auto l_call_fun = std::make_shared<dingidng_call_fun>(std::move(in_fun));
+
+  async_write_read<res_type>(
+      l_req,
+      l_url,
+      [=](
+          boost::system::error_code in_code,
+          const res_type& in_res_type
+      ) {
+        DOODLE_LOG_INFO(in_res_type);
+        if (in_res_type.body().empty())
+          return;
+        auto l_j    = nlohmann::json::parse(in_res_type.body());
+        auto l_body = user_dd_id_list_body{l_j};
+        if (l_body) {
+          throw_exception(l_body.get_error());
+        }
+        auto l_res = l_body.result_type();
+        auto l_msg = std::vector{make_handle()};
+
+        async_get_user_info(
+            {l_res.userid},
+            in_token,
+            std::move(*l_call_fun)
+        );
+      }
+  );
+}
+void dingding_api::async_get_user_info(
+    const user_dd_ns::get_user_info& in_query,
+    const access_token& in_token,
+    dingidng_call_fun&& in_fun
+) {
+  boost::url l_url{};
+  boost::url l_method{"topapi/v2/user/get"};
+  l_method.params().set("access_token", in_token.token);
+  using req_type = boost::beast::http::request<boost::beast::http::string_body>;
+  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+  req_type l_req{};
+
+  l_req.method(boost::beast::http::verb::post);
+  nlohmann::json l_json = in_query;
+  l_req.body()          = l_json.dump();
+
+  DOODLE_LOG_INFO(l_req);
+
+  boost::urls::resolve(
+      boost::urls::url_view{dingding_host},
+      l_method,
+      l_url
+  );
   auto l_call_fun = std::make_shared<dingidng_call_fun>(in_fun);
 
   async_write_read<res_type>(
@@ -221,5 +272,6 @@ void dingding_api::async_find_mobile_user(
       }
   );
 }
+
 }  // namespace dingding
 }  // namespace doodle

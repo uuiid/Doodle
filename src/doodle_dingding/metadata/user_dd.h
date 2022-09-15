@@ -32,11 +32,20 @@ class DOODLE_DINGDING_API dep_query {
 class DOODLE_DINGDING_API find_by_mobile {
  public:
   std::string mobile{};
-  bool support_exclusive_account_search{};
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
       find_by_mobile,
-      mobile,
-      support_exclusive_account_search
+      mobile
+  )
+};
+
+class DOODLE_DINGDING_API get_user_info {
+ public:
+  std::string userid{};
+  std::string language{"zh_CN"};
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+      get_user_info,
+      userid,
+      language
   )
 };
 

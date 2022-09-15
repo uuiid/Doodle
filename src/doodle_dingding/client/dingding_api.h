@@ -12,15 +12,26 @@ namespace doodle::dingding {
 namespace user_dd_ns {
 class dep_query;
 class find_by_mobile;
-}
+class get_user_info;
+}  // namespace user_dd_ns
+
+namespace department_ns {
+class department_query;
+class user_to_dep_query;
+}  // namespace department_ns
 
 class access_token;
-class department_query;
 using dingidng_call_fun     = std::function<void(const std::vector<entt::handle>&)>;
 using read_access_token_fun = std::function<void(const access_token&)>;
 
 class DOODLE_DINGDING_API dingding_api : public client {
  private:
+  void async_get_user_info(
+      const user_dd_ns::get_user_info& in_query,
+      const access_token& in_token,
+      dingidng_call_fun&& in_fun
+  );
+
  public:
   constexpr static const std::string_view dingding_host{"https://oapi.dingtalk.com"};
 
@@ -34,7 +45,7 @@ class DOODLE_DINGDING_API dingding_api : public client {
   );
 
   void async_get_departments(
-      const department_query& in_query,
+      const department_ns::department_query& in_query,
       const access_token& in_token,
       dingidng_call_fun&& in_fun
   );
