@@ -37,7 +37,6 @@ class client::impl {
   bool init_{false};
   bool is_connect{false};
 
-  config_type config;
 };
 
 void client::set_openssl(const std::string& host) {

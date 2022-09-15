@@ -211,7 +211,7 @@ struct async_http_req_res {
           self_attr->async_shutdown();
         boost::asio::post(
             l_c->get_executor(),
-            [l_self = std::move(self), error, l_data]() {
+            [l_self = std::move(self), error, l_data]() mutable {
               l_self.complete(error, l_data->res_attr);
             }
         );
