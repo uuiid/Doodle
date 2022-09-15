@@ -8,9 +8,14 @@
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/doodle_core.h>
 namespace doodle::dingding {
+
+namespace user_dd_ns {
+class dep_query;
+}
+
 class access_token;
 class department_query;
-using dingidng_call_fun     = std::function<void(const entt::handle&)>;
+using dingidng_call_fun     = std::function<void(const std::vector<entt::handle>&)>;
 using read_access_token_fun = std::function<void(const access_token&)>;
 
 class DOODLE_DINGDING_API dingding_api : public client {
@@ -33,7 +38,7 @@ class DOODLE_DINGDING_API dingding_api : public client {
       dingidng_call_fun&& in_fun
   );
   void async_get_departments_user(
-      const department_query& in_query,
+      const user_dd_ns::dep_query& in_query,
       const access_token& in_token,
       dingidng_call_fun&& in_fun
   );

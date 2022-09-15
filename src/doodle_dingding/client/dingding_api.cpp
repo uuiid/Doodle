@@ -104,20 +104,70 @@ void dingding_api::async_get_departments(
                      }) |
                      ranges::to_vector;
 
-        ranges::for_each(l_msg, [l_call_fun, this](const entt::handle& in) {
-          boost::asio::post(
-              this->get_executor(),
-              [l_call_fun, in]() { (*l_call_fun)(in); }
-          );
-        });
+        boost::asio::post(
+            this->get_executor(),
+            [l_call_fun, l_msg]() { (*l_call_fun)(l_msg); }
+        );
+        ;
       }
   );
 }
 void dingding_api::async_get_departments_user(
-    const department_query& in_query,
+    const user_dd_ns::dep_query& in_query,
     const access_token& in_token,
     dingidng_call_fun&& in_fun
 ) {
+  boost::url l_url{};
+  boost::url l_method{"topapi/user/listsimple"};
+  l_method.params().set("access_token", in_token.token);
+  using req_type = boost::beast::http::request<boost::beast::http::string_body>;
+  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+  req_type l_req{};
+
+  l_req.method(boost::beast::http::verb::post);
+  nlohmann::json l_json = in_query;
+  l_req.body()          = l_json.dump();
+
+  DOODLE_LOG_INFO(l_req);
+
+  boost::urls::resolve(
+      boost::urls::url_view{dingding_host},
+      l_method,
+      l_url
+  );
+  auto l_call_fun = std::make_shared<dingidng_call_fun>(in_fun);
+
+  async_write_read<res_type>(
+      l_req,
+      l_url,
+      [=](
+          boost::system::error_code in_code,
+          const res_type& in_res_type
+      ) {
+        DOODLE_LOG_INFO(in_res_type);
+        if (in_res_type.body().empty())
+          return;
+        auto l_j    = nlohmann::json::parse(in_res_type.body());
+        auto l_body = user_dd_body{l_j};
+        if (l_body) {
+          throw_exception(l_body.get_error());
+        }
+        auto l_res = l_body.result_type().list;
+        auto l_msg = l_res |
+                     ranges::view::transform([](const user_dd& in) -> entt::handle {
+                       auto l_handle = doodle::make_handle();
+                       l_handle.emplace<user_dd>(in);
+                       return l_handle;
+                     }) |
+                     ranges::to_vector;
+
+        boost::asio::post(
+            this->get_executor(),
+            [l_call_fun, l_msg]() { (*l_call_fun)(l_msg); }
+        );
+        ;
+      }
+  );
 }
 }  // namespace dingding
 }  // namespace doodle
