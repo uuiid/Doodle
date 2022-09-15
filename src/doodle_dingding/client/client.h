@@ -202,7 +202,7 @@ struct async_http_req_res {
       case on_reading: {
         if (!l_data->res_attr.keep_alive())
           self_attr->async_shutdown();
-        self.complete(error, in_res);
+        self.complete(error, l_data->res_attr);
         break;
       }
     }
