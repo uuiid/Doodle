@@ -141,9 +141,10 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
             in_handle, [](const entt::handle& i) {
               BOOST_TEST(i.any_of<dingding::user_dd>());
               auto l_user = i.get<dingding::user_dd>();
-              l_user.;
-              BOOST_TEST();
-              BOOST_TEST_MESSAGE(i.get<dingding::user_dd>().userid);
+              BOOST_TEST(!l_user.name.empty());
+              BOOST_TEST_MESSAGE(l_user.userid);
+              BOOST_TEST(!l_user.dept_id_list.empty());
+              BOOST_TEST_MESSAGE(l_user.dept_id_list);
             }
         );
       }
