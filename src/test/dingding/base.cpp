@@ -42,18 +42,19 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
   auto l_r = std::make_shared<dingding::client>(
       boost::asio::make_strand(io_context_attr), context_attr
   );
-
-  dingding::client_ns::http_req_res<
-      boost::beast::http::request<boost::beast::http::empty_body>,
-      boost::beast::http::response<boost::beast::http::string_body>>
-      l_http_req_res{l_r->shared_from_this()};
-  l_http_req_res.req_attr.method(boost::beast::http::verb::get);
-  l_http_req_res.url_attr = boost::url{"https://www.baidu.com/"s};
-  l_http_req_res.req_attr.keep_alive(false);
-  l_http_req_res.read_fun = [](auto&& in) {
-    DOODLE_LOG_INFO(in);
-  };
-  l_r->run(l_http_req_res);
+  using request_type  = boost::beast::http::request<boost::beast::http::empty_body>;
+  using response_type = boost::beast::http::response < boost::beast::http::string_body >> ;
+  request_type l_req{};
+  l_req.method(boost::beast::http::verb::get);
+  l_req.keep_alive(false);
+  boost::url l_url{"https://www.baidu.com/"s};
+  l_r->async_write_read<response_type>(
+      l_req,
+      l_url,
+      [](const response_type& in) {
+        DOODLE_LOG_INFO(in);
+      }
+  );
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
