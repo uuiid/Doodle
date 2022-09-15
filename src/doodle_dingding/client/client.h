@@ -209,7 +209,12 @@ struct async_http_req_res {
       case on_reading: {
         if (!l_data->res_attr.keep_alive())
           self_attr->async_shutdown();
-        self.complete(error, l_data->res_attr);
+        boost::asio::post(
+            l_c->get_executor(),
+            [l_self = std::move(self), error, l_data]() {
+              l_self.complete(error, l_data->res_attr);
+            }
+        );
         break;
       }
     }
@@ -229,19 +234,6 @@ class DOODLE_DINGDING_API client
 
  protected:
   [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
-
-  class config_type_base {
-   public:
-    virtual void async_write(boost::beast::ssl_stream<boost::beast::tcp_stream>& in_stream) = 0;
-    virtual void async_read(boost::beast::ssl_stream<boost::beast::tcp_stream>& in_stream)  = 0;
-  };
-
-  class config_type {
-   public:
-    std::function<void(boost::beast::ssl_stream<boost::beast::tcp_stream>&)> async_write;
-    std::function<void(boost::beast::ssl_stream<boost::beast::tcp_stream>&)> async_read;
-  };
-  std::any other_data;
 
   class impl;
   std::unique_ptr<impl> ptr;
