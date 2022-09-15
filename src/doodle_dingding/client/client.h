@@ -109,6 +109,12 @@ struct async_http_req_res {
       case on_starting: {
         if (l_c->is_connect()) {
           state_ = on_handshake;  /// 如果已经连接,直接跳转到握手完成开始写入
+          boost::asio::post(
+              l_c->get_executor(),
+              [l_self = std::move(self), error]() mutable {
+                l_self(error);
+              }
+          );  /// 直接开始下一步调用
         } else {
           state_ = on_resolve;  /// 开始进行ip解析已经各种证书验证, 和握手
           const std::string host{l_data->url_attr.host()};
