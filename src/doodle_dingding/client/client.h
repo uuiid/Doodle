@@ -26,6 +26,7 @@ struct async_http_req_res_data {
   Res res_attr;
   boost::url url_attr;
   boost::beast::flat_buffer buffer_;
+  boost::asio::ip::tcp::resolver::results_type results_attr{};
 
   explicit async_http_req_res_data(
       Req in_req_attr,
@@ -106,24 +107,28 @@ struct async_http_req_res {
 
     switch (state_) {
       case on_starting: {
-        state_ = on_resolve;
-        const std::string host{l_data->url_attr.host()};
-        l_c->set_openssl(host);
-        using namespace std::literals;
-        const std::string port{l_data->url_attr.has_port()  //
-                                   ? std::string{l_data->url_attr.port()}
-                                   : "443"s};
-        l_c->resolver().async_resolve(
-            host,
-            port,
-            [self = std::move(self), l_c](
-                boost::system::error_code ec,
-                const boost::asio::ip::tcp::resolver::results_type& results
-            ) mutable {
-              l_c->results_attr = results;
-              self(ec, Res{});
-            }
-        );
+        if (l_c->is_connect()) {
+          state_ = on_handshake;  /// 如果已经连接,直接跳转到握手完成开始写入
+        } else {
+          state_ = on_resolve;  /// 开始进行ip解析已经各种证书验证, 和握手
+          const std::string host{l_data->url_attr.host()};
+          l_c->set_openssl(host);
+          using namespace std::literals;
+          const std::string port{l_data->url_attr.has_port()  //
+                                     ? std::string{l_data->url_attr.port()}
+                                     : "443"s};
+          l_c->resolver().async_resolve(
+              host,
+              port,
+              [self = std::move(self), l_c, l_data](
+                  boost::system::error_code ec,
+                  const boost::asio::ip::tcp::resolver::results_type& results
+              ) mutable {
+                l_data->results_attr = results;
+                self(ec, Res{});
+              }
+          );
+        }
         break;
       }
 
@@ -144,7 +149,7 @@ struct async_http_req_res {
 
         boost::beast::get_lowest_layer(ssl_stream)
             .async_connect(
-                l_c->results_attr,
+                l_data->results_attr,
                 [self = std::move(self)](
                     boost::system::error_code ec,
                     const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
@@ -168,6 +173,7 @@ struct async_http_req_res {
       }
       case on_handshake: {
         state_ = on_writing;
+        l_c->is_connect(true);
         this->write_prepare();
         boost::beast::http::async_write(
             ssl_stream, l_data->req_attr,
@@ -242,10 +248,11 @@ class DOODLE_DINGDING_API client
 
  public:
   void set_openssl(const std::string& host);
-  bool is_connect();
+  bool is_connect() const;
+  void is_connect(bool in_connect);
+
   [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
   [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
-  boost::asio::ip::tcp::resolver::results_type results_attr{};
 
   void async_shutdown();
 
@@ -293,6 +300,5 @@ class DOODLE_DINGDING_API client
  public:
   virtual ~client() noexcept;
 };
-
 
 }  // namespace doodle::dingding

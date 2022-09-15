@@ -88,8 +88,11 @@ void client::async_shutdown() {
 boost::beast::ssl_stream<boost::beast::tcp_stream>& client::ssl_stream() {
   return ptr->ssl_stream;
 }
-bool client::is_connect() {
+bool client::is_connect() const {
   return ptr->is_connect;
+}
+void client::is_connect(bool in_connect) {
+  ptr->is_connect = in_connect;
 }
 boost::asio::ssl::context& client::ssl_context() {
   return ptr->ssl_context_;
