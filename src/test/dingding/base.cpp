@@ -43,7 +43,7 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
       boost::asio::make_strand(io_context_attr), context_attr
   );
   using request_type  = boost::beast::http::request<boost::beast::http::empty_body>;
-  using response_type = boost::beast::http::response < boost::beast::http::string_body >> ;
+  using response_type = boost::beast::http::response<boost::beast::http::string_body>;
   request_type l_req{};
   l_req.method(boost::beast::http::verb::get);
   l_req.keep_alive(false);
