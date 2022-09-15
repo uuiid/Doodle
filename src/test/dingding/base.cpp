@@ -34,8 +34,6 @@ struct loop_fixtures {
     BOOST_TEST_MESSAGE("完成夹具设置");
   };
   void teardown() {
-    BOOST_TEST_MESSAGE("开始运行");
-    io_context_attr.run();
   };
 };
 
@@ -61,6 +59,8 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
         DOODLE_LOG_INFO(in);
       }
   );
+  io_context_attr.run();
+
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
@@ -76,6 +76,8 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
         globe_access_token{} = in;
         DOODLE_LOG_INFO(in.token);
       });
+  io_context_attr.run();
+
 }
 
 BOOST_AUTO_TEST_CASE(client_get_dep) {
@@ -97,6 +99,8 @@ BOOST_AUTO_TEST_CASE(client_get_dep) {
         );
       }
   );
+  io_context_attr.run();
+
 }
 
 BOOST_AUTO_TEST_CASE(client_get_dep_user) {
@@ -123,6 +127,8 @@ BOOST_AUTO_TEST_CASE(client_get_dep_user) {
         );
       }
   );
+  io_context_attr.run();
+
 }
 
 BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
@@ -149,6 +155,8 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
         );
       }
   );
+  io_context_attr.run();
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
