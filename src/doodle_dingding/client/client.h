@@ -20,17 +20,31 @@ namespace doodle::dingding {
 class client;
 
 namespace client_ns {
+template <typename Req, typename Res>
+struct async_http_req_res_data {
+  Req req_attr;
+  Res res_attr;
+  boost::url url_attr;
+  boost::beast::flat_buffer buffer_;
+
+  explicit async_http_req_res_data(
+      Req in_req_attr,
+      boost::url in_url_attr
+  ) : req_attr(std::move(in_req_attr)),
+      res_attr(),
+      url_attr(std::move(in_url_attr)),
+      buffer_() {
+  }
+};
 
 template <typename Req, typename Res>
 struct async_http_req_res {
  public:
-  Req req_attr;
-  Res res_attr;
-  boost::url url_attr;
-
   boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream;
   std::shared_ptr<client> self_attr;
-  boost::beast::flat_buffer buffer_;
+  using data_ptr = std::shared_ptr<async_http_req_res_data<Req, Res>>;
+  data_ptr p_data;
+
   enum {
     on_starting,
 
@@ -47,67 +61,73 @@ struct async_http_req_res {
       boost::url in_url_attr,
       boost::beast::ssl_stream<boost::beast::tcp_stream>& in_ssl_stream,
       std::shared_ptr<client> in_self_attr
-  ) : req_attr(std::move(in_req_attr)),
-      res_attr(),
-      url_attr(std::move(in_url_attr)),
-      ssl_stream(in_ssl_stream),
+  ) : ssl_stream(in_ssl_stream),
       self_attr(std::move(in_self_attr)),
-      buffer_(),
+      p_data(
+          std::make_shared<data_ptr::element_type>(
+              std::move(in_req_attr),
+              std::move(in_url_attr)
+          )
+      ),
       state_(on_starting){};
 
   void write_prepare() {
-    boost::url l_url{url_attr};
+    auto l_data = p_data;
+    boost::url l_url{l_data->url_attr};
     l_url.remove_origin();  /// \brief 去除一部分
     /// \brief 设置http的一些通用方法
-    req_attr.version(11);
+    l_data->req_attr.version(11);
     //    req_attr.method(boost::beast::http::verb::get);
-    req_attr.target(l_url.c_str());
-    req_attr.set(boost::beast::http::field::host, url_attr.host());
-    req_attr.set(
+    l_data->req_attr.target(l_url.c_str());
+    l_data->req_attr.set(boost::beast::http::field::host, l_data->url_attr.host());
+    l_data->req_attr.set(
         boost::beast::http::field::user_agent,
         BOOST_BEAST_VERSION_STRING
     );
-    req_attr.prepare_payload();
+    l_data->req_attr.prepare_payload();
   }
 
   template <typename Self>
   void operator()(
       Self& self,
-      boost::system::error_code error                      = {},
-      const Res& in_res                                    = {},
-      boost::asio::ip::tcp::resolver::results_type results = {}
+      boost::system::error_code error = {},
+      const Res& in_res               = {}
   ) {
+    /// 检查错误
     if (error) {
       throw_exception(boost::system::system_error{error});
     }
-
     using namespace std::literals;
     boost::beast::get_lowest_layer(ssl_stream)
-        .expires_after(30s);
+        .expires_after(30s);  /// 更新超时
+    auto l_data = p_data;     /// 在这里复制一次内部数据, 放置移动时数据无法访问
+    auto l_c    = self_attr;  /// 在这里复制一次客户端,放置客户端被移动时无法访问
+
     switch (state_) {
       case on_starting: {
         state_ = on_resolve;
-        const std::string host{url_attr.host()};
-        self_attr->set_openssl(host);
+        const std::string host{l_data->url_attr.host()};
+        l_c->set_openssl(host);
         using namespace std::literals;
-        const std::string port{url_attr.has_port()  //
-                                   ? std::string{url_attr.port()}
+        const std::string port{l_data->url_attr.has_port()  //
+                                   ? std::string{l_data->url_attr.port()}
                                    : "443"s};
-        self_attr->resolver().async_resolve(
+        l_c->resolver().async_resolve(
             host,
             port,
-            [self = std::move(self)](
+            [self = std::move(self), l_c](
                 boost::system::error_code ec,
                 const boost::asio::ip::tcp::resolver::results_type& results
-            ) {
-              self(ec, Res{}, results);
+            ) mutable {
+              l_c->results_attr = results;
+              self(ec, Res{});
             }
         );
         break;
       }
 
       case on_resolve: {
-        state_ = on_connected;
+        state_   = on_connected;
         ssl_stream.set_verify_mode(boost::asio::ssl::verify_peer);
         ssl_stream.set_verify_callback(
             [](bool preverified,
@@ -123,11 +143,11 @@ struct async_http_req_res {
 
         boost::beast::get_lowest_layer(ssl_stream)
             .async_connect(
-                results,
+                l_c->results_attr,
                 [self = std::move(self)](
                     boost::system::error_code ec,
                     const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
-                ) {
+                ) mutable {
                   self(ec);
                 }
             );
@@ -149,7 +169,7 @@ struct async_http_req_res {
         state_ = on_writing;
         this->write_prepare();
         boost::beast::http::async_write(
-            ssl_stream, req_attr,
+            ssl_stream, l_data->req_attr,
             [l_self = std::move(self)](
                 boost::system::error_code ec,
                 std::size_t bytes_transferred
@@ -166,8 +186,8 @@ struct async_http_req_res {
         state_ = on_reading;
         boost::beast::http::async_read(
             ssl_stream,
-            buffer_,
-            res_attr,
+            l_data->buffer_,
+            l_data->res_attr,
             [l_self = std::move(self)](
                 boost::system::error_code ec,
                 std::size_t bytes_transferred
@@ -180,7 +200,7 @@ struct async_http_req_res {
         break;
       }
       case on_reading: {
-        if (!res_attr.keep_alive())
+        if (!l_data->res_attr.keep_alive())
           self_attr->async_shutdown();
         self.complete(error, in_res);
         break;
@@ -224,11 +244,7 @@ class DOODLE_DINGDING_API client
   bool is_connect();
   [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
   [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
-
-  void async_resolve(
-      const boost::url& in_url,
-      const std::function<void(boost::system::error_code)>& in_fun
-  );
+  boost::asio::ip::tcp::resolver::results_type results_attr{};
 
   void on_resolve(
       boost::system::error_code ec,

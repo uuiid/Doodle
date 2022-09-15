@@ -51,7 +51,10 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
   l_r->async_write_read<response_type>(
       l_req,
       l_url,
-      [](const response_type& in) {
+      [](
+          boost::system::error_code,
+          const response_type& in
+      ) {
         DOODLE_LOG_INFO(in);
       }
   );

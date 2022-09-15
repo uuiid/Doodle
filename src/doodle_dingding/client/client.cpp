@@ -216,64 +216,6 @@ boost::asio::ssl::context& client::ssl_context() {
 boost::asio::ip::tcp::resolver& client::resolver() {
   return ptr->resolver_;
 }
-void client::async_resolve(
-    const boost::url& in_url,
-
-    const std::function<void(boost::system::error_code)>& in_fun
-) {
-  const std::string host{in_url.host()};
-  set_openssl(host);
-  using namespace std::literals;
-  const std::string port{in_url.has_port()  //
-                             ? std::string{in_url.port()}
-                             : "443"s};
-  auto l_fun = std::make_shared<std::function<void(boost::system::error_code)>>(in_fun);
-
-  resolver().async_resolve(
-      host,
-      port,
-      [this, l_fun](
-          boost::system::error_code ec,
-          const boost::asio::ip::tcp::resolver::results_type& results
-      ) {
-        if (ec) {
-          throw_exception(boost::system::system_error{ec});
-        }
-
-        /// \brief 超时设置
-        boost::beast::get_lowest_layer(
-            ssl_stream()
-        )
-            .expires_after(30s);
-
-        ssl_stream().set_verify_mode(boost::asio::ssl::verify_peer);
-
-        ssl_stream().set_verify_callback(
-            [](bool preverified,
-               boost::asio::ssl::verify_context& ctx) -> bool {
-              char subject_name[256];
-              X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-              X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-              DOODLE_LOG_INFO("Verifying {}", subject_name);
-
-              return true;
-            }
-        );
-
-        boost::beast::get_lowest_layer(ssl_stream())
-            .async_connect(
-                results,
-                [l_fun,this](
-                    boost::system::error_code ec,
-                    const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
-                ) {
-                  ptr->is_connect = true;
-                  (*l_fun)(ec);
-                }
-            );
-      }
-  );
-}
 
 client::~client() noexcept = default;
 
