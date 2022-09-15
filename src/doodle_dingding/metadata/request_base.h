@@ -70,9 +70,9 @@ namespace detail {
 template <typename Result_Type>
 class cursor {
  public:
-  bool has_more;
-  std::size_t next_cursor;
-  Result_Type list;
+  bool has_more{};
+  std::size_t next_cursor{};
+  Result_Type list{};
   friend void to_json(nlohmann::json& nlohmann_json_j, const cursor& nlohmann_json_t) {
     nlohmann_json_j["has_more"]    = nlohmann_json_t.has_more;
     nlohmann_json_j["next_cursor"] = nlohmann_json_t.next_cursor;
