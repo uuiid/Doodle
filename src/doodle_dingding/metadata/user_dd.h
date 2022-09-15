@@ -67,7 +67,7 @@ class DOODLE_DINGDING_API user_dd {
   //  std::string email;
   //  std::string work_place;
   //  std::string remark;
-  std::string dept_id_list;
+  std::vector<std::int32_t> dept_id_list;
   friend void to_json(nlohmann::json& nlohmann_json_j, const user_dd& nlohmann_json_t) {
     nlohmann_json_j["userid"]       = nlohmann_json_t.userid;
     nlohmann_json_j["unionid"]      = nlohmann_json_t.unionid;
