@@ -73,19 +73,23 @@ struct async_http_req_res {
       return true;
     } else {
       self_attr->async_resolve(
-          url_attr, [this](boost::system::error_code ec) {
+          url_attr,
+          [&, this, l_tmp = self_attr,
+           l_f = std::make_shared<std::decay_t<decltype(self)>>(std::move(self))](
+              boost::system::error_code ec
+          ) {
             if (ec) {
               throw_exception(boost::system::system_error{ec});
             }
-          }
-      );
-      // 执行SSL握手
-      ssl_stream.async_handshake(
-          boost::asio::ssl::stream_base::client,
-          [l_self = std::move(self)](
-              boost::system::error_code ec
-          ) mutable {
-            l_self(ec);
+            // 执行SSL握手
+            l_f->ssl_stream.async_handshake(
+                boost::asio::ssl::stream_base::client,
+                [l_self = l_f](
+                    boost::system::error_code ec
+                ) mutable {
+                  (*l_self)(ec);
+                }
+            );
           }
       );
     }
