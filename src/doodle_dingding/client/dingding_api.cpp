@@ -63,51 +63,55 @@ void dingding_api::async_get_departments(
   boost::url l_url{};
   boost::url l_method{"topapi/v2/department/listsub"};
   l_method.params().set("access_token", in_token.token);
+  using req_type = boost::beast::http::request<boost::beast::http::string_body>;
+  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+  req_type l_req{};
 
-  client_ns::http_req_res<
-      boost::beast::http::request<boost::beast::http::string_body>,
-      boost::beast::http::response<boost::beast::http::string_body>>
-      l_http_req_res{shared_from_this()};
-  l_http_req_res.req_attr.method(boost::beast::http::verb::post);
-  nlohmann::json l_json          = in_query;
-  l_http_req_res.req_attr.body() = l_json.dump();
+  l_req.method(boost::beast::http::verb::post);
+  nlohmann::json l_json = in_query;
+  l_req.body()          = l_json.dump();
 
-  DOODLE_LOG_INFO(l_http_req_res.req_attr);
+  DOODLE_LOG_INFO(l_req);
 
   boost::urls::resolve(
       boost::urls::url_view{dingding_host},
       l_method,
-      l_http_req_res.url_attr
+      l_url
   );
-  auto l_call_fun         = std::make_shared<dingidng_call_fun>(in_fun);
+  auto l_call_fun = std::make_shared<dingidng_call_fun>(in_fun);
 
-  l_http_req_res.read_fun = [l_call_fun, this](const decltype(l_http_req_res.res_attr)& in) {
-    DOODLE_LOG_INFO(in);
-    if (in.body().empty())
-      return;
-    auto l_j    = nlohmann::json::parse(in.body());
-    auto l_body = department_body{l_j};
-    if (l_body) {
-      throw_exception(doodle_error{"code: {} {}", l_body.errcode, l_body.errmsg});
-    }
-    auto l_res = l_body.result_type();
-    auto l_msg = l_res |
-                 ranges::view::transform([](const department& in) -> entt::handle {
-                   auto l_handle = doodle::make_handle();
-                   l_handle.emplace<department>(in);
-                   return l_handle;
-                 }) |
-                 ranges::to_vector;
+  async_write_read<res_type>(
+      l_req,
+      l_url,
+      [=](
+          boost::system::error_code in_code,
+          const res_type& in_res_type
+      ) {
+        DOODLE_LOG_INFO(in_res_type);
+        if (in_res_type.body().empty())
+          return;
+        auto l_j    = nlohmann::json::parse(in_res_type.body());
+        auto l_body = department_body{l_j};
+        if (l_body) {
+          throw_exception(l_body.get_error());
+        }
+        auto l_res = l_body.result_type();
+        auto l_msg = l_res |
+                     ranges::view::transform([](const department& in) -> entt::handle {
+                       auto l_handle = doodle::make_handle();
+                       l_handle.emplace<department>(in);
+                       return l_handle;
+                     }) |
+                     ranges::to_vector;
 
-    ranges::for_each(l_msg, [l_call_fun, this](const entt::handle& in) {
-      boost::asio::post(
-          this->get_executor(),
-          [l_call_fun, in]() { (*l_call_fun)(in); }
-      );
-    });
-  };
-
-  run(l_http_req_res);
+        ranges::for_each(l_msg, [l_call_fun, this](const entt::handle& in) {
+          boost::asio::post(
+              this->get_executor(),
+              [l_call_fun, in]() { (*l_call_fun)(in); }
+          );
+        });
+      }
+  );
 }
 }  // namespace dingding
 }  // namespace doodle
