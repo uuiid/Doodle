@@ -66,7 +66,10 @@ static dingding::access_token l_token{"94dd7c4806b834c68fa656cb22775284"s, 0};
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
   std::make_shared<dingding::dingding_api>(boost::asio::make_strand(io_context_attr), context_attr)
-      ->async_get_token();
+      ->async_get_token([](const dingding::access_token& in) {
+        l_token = in;
+        DOODLE_LOG_INFO(l_token.token);
+      });
 }
 
 BOOST_AUTO_TEST_CASE(client_get_dep) {
@@ -75,19 +78,14 @@ BOOST_AUTO_TEST_CASE(client_get_dep) {
   auto l_st = boost::asio::make_strand(io_context_attr);
   auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
 
-  std::shared_ptr<std::function<void(const dingding::department_query&)>>
-      l_call_ptr{std::make_shared<std::function<void(const dingding::department_query&)>>()};
-  *l_call_ptr = [l_c, l_st, l_call_ptr](const dingding::department_query& in_q) {
-    l_c->async_get_departments(in_q, l_token, [=](const entt::handle& in_handle) {
-      BOOST_TEST(in_handle.any_of<dingding::department>());
-      DOODLE_LOG_INFO(in_handle.get<dingding::department>().name);
-      boost::asio::post(l_st, [=]() { (*l_call_ptr)(
-                                          dingding::department_query{
-                                              in_handle.get<dingding::department>().dept_id, "zh_CN"s}
-                                      ); });
-    });
-  };
-  (*l_call_ptr)(dingding::department_query{145552127, "zh_CN"s});
+  l_c->async_get_departments(
+      dingding::department_query{145552127, "zh_CN"s},
+      l_token,
+      [=](const entt::handle& in_handle) {
+        BOOST_TEST(in_handle.any_of<dingding::department>());
+        DOODLE_LOG_INFO(in_handle.get<dingding::department>().name);
+      }
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
