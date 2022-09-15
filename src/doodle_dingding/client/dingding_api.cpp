@@ -42,7 +42,7 @@ void dingding_api::async_get_token(
   async_write_read<res_type>(
       l_req,
       l_url,
-      [l_fu = std::move(in)](
+      [l_fu = std::move(in), l_c = shared_from_this()](
           boost::system::error_code in_code,
           const res_type& in_res_type
       ) {
@@ -83,7 +83,7 @@ void dingding_api::async_get_departments(
   async_write_read<res_type>(
       l_req,
       l_url,
-      [=](
+      [=, l_c = shared_from_this()](
           boost::system::error_code in_code,
           const res_type& in_res_type
       ) {
@@ -140,7 +140,7 @@ void dingding_api::async_get_departments_user(
   async_write_read<res_type>(
       l_req,
       l_url,
-      [=](
+      [=, l_c = shared_from_this()](
           boost::system::error_code in_code,
           const res_type& in_res_type
       ) {
@@ -197,7 +197,7 @@ void dingding_api::async_find_mobile_user(
   async_write_read<res_type>(
       l_req,
       l_url,
-      [=](
+      [=, l_c = shared_from_this()](
           boost::system::error_code in_code,
           const res_type& in_res_type
       ) {
@@ -248,7 +248,7 @@ void dingding_api::async_get_user_info(
   async_write_read<res_type>(
       l_req,
       l_url,
-      [=](
+      [=, l_c = shared_from_this()](
           boost::system::error_code in_code,
           const res_type& in_res_type
       ) {
