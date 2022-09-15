@@ -31,10 +31,13 @@ class DOODLE_DINGDING_API department {
   std::int32_t dept_id{};
   std::string name{};
   std::int32_t parent_id{};
-  std::string source_identifier{};
+  //  std::string source_identifier{};
 
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      department, dept_id, name, parent_id, source_identifier
+      department,
+      dept_id,
+      name,
+      parent_id
   )
 };
 

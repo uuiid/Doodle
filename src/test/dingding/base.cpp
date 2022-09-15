@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(
 
               BOOST_TEST(i.any_of<dingding::department>());
               DOODLE_LOG_INFO(l_dep.name);
-              DOODLE_LOG_INFO(l_dep.source_identifier);
+              DOODLE_LOG_INFO(l_dep.dept_id);
             }
         );
       }
