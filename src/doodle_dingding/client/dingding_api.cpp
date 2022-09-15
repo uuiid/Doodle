@@ -23,34 +23,37 @@ dingding_api::dingding_api(
 void dingding_api::async_get_token(
     read_access_token_fun&& in
 ) {
+  using req_type = boost::beast::http::request<boost::beast::http::empty_body>;
+  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+
   boost::url l_url{};
+  req_type l_req{};
   boost::url l_method{"gettoken"};
+
   l_method.params().set("appkey", dingding_config::get().app_key);
   l_method.params().set("appsecret", dingding_config::get().app_value);
 
-  client_ns::http_req_res<
-      boost::beast::http::request<boost::beast::http::empty_body>,
-      boost::beast::http::response<boost::beast::http::string_body>>
-      l_http_req_res{shared_from_this()};
-  l_http_req_res.req_attr.method(boost::beast::http::verb::get);
-
+  l_req.method(boost::beast::http::verb::get);
   boost::urls::resolve(
       boost::urls::url_view{dingding_host},
       l_method,
-      l_http_req_res.url_attr
+      l_url
   );
-  l_http_req_res.read_fun = [l_fun = std::move(in)](const decltype(l_http_req_res.res_attr)& in) {
-    auto l_j                 = nlohmann::json::parse(in.body());
-    auto l_access_token_body = access_token_body{l_j};
-    if (l_access_token_body) {
-      throw_exception(l_access_token_body.get_error());
-    }
-    l_fun(l_access_token_body.result_type());
-  };
-
-  run(l_http_req_res);
-  //  run(l_url);
-  //  return ptr->res_.body();
+  async_write_read<res_type>(
+      l_req,
+      l_url,
+      [l_fu = std::move(in)](
+          boost::system::error_code in_code,
+          const res_type& in_res_type
+      ) {
+        auto l_j                 = nlohmann::json::parse(in_res_type.body());
+        auto l_access_token_body = access_token_body{l_j};
+        if (l_access_token_body) {
+          throw_exception(l_access_token_body.get_error());
+        }
+        l_fu(l_access_token_body.result_type());
+      }
+  );
 }
 void dingding_api::async_get_departments(
     const department_query& in_query,

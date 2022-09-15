@@ -61,7 +61,7 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
-static dingding::access_token l_token{"79cdb3f9e48034ddbb72d576e95ab708"s, 0};
+static dingding::access_token l_token{"94dd7c4806b834c68fa656cb22775284"s, 0};
 
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
