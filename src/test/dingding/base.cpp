@@ -77,7 +77,10 @@ BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   io_context_attr.run();
 }
 
-BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
+BOOST_AUTO_TEST_CASE(
+    client_find_user_by_mobile,
+    *boost::unit_test::depends_on("client_get_gettoken")
+) {
   using namespace std::literals;
 
   auto l_st                      = boost::asio::make_strand(io_context_attr);
@@ -105,7 +108,10 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
   io_context_attr.run();
 }
 
-BOOST_AUTO_TEST_CASE(client_get_dep) {
+BOOST_AUTO_TEST_CASE(
+    client_get_dep,
+    *boost::unit_test::depends_on("client_get_gettoken")
+) {
   using namespace std::literals;
   auto l_st                      = boost::asio::make_strand(io_context_attr);
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
