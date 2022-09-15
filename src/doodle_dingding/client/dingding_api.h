@@ -10,8 +10,8 @@
 namespace doodle::dingding {
 class access_token;
 class department_query;
-using dingidng_call_fun      = std::function<void(const entt::handle&)>;
-using read_access_token_fun  = std::function<void(const access_token&)>;
+using dingidng_call_fun     = std::function<void(const entt::handle&)>;
+using read_access_token_fun = std::function<void(const access_token&)>;
 
 class DOODLE_DINGDING_API dingding_api : public client {
  private:
@@ -28,6 +28,11 @@ class DOODLE_DINGDING_API dingding_api : public client {
   );
 
   void async_get_departments(
+      const department_query& in_query,
+      const access_token& in_token,
+      dingidng_call_fun&& in_fun
+  );
+  void async_get_departments_user(
       const department_query& in_query,
       const access_token& in_token,
       dingidng_call_fun&& in_fun

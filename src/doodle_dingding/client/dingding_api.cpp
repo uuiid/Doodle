@@ -113,5 +113,11 @@ void dingding_api::async_get_departments(
       }
   );
 }
+void dingding_api::async_get_departments_user(
+    const department_query& in_query,
+    const access_token& in_token,
+    dingidng_call_fun&& in_fun
+) {
+}
 }  // namespace dingding
 }  // namespace doodle

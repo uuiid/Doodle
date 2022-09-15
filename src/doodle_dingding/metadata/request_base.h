@@ -13,7 +13,7 @@
 namespace doodle::dingding {
 
 namespace detail {
-class request_base {
+class DOODLE_DINGDING_API request_base {
  public:
   std::int32_t errcode;
   std::string errmsg;

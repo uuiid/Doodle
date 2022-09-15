@@ -9,7 +9,7 @@
 namespace doodle {
 namespace dingding {
 
-class access_token {
+class DOODLE_DINGDING_API access_token {
  public:
   std::string token;
   std::int32_t expires_in;
