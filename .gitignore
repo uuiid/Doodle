@@ -56,6 +56,7 @@ obj/
 _ReSharper*/
 [Tt]est[Rr]esult*
 .vs/
+.idea/
 #Nuget packages folder
 #我们自己的构建文件
 packages/

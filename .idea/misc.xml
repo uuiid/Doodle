@@ -1,27 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
-  <component name="CidrRootsConfiguration">
-    <excludeRoots>
-      <file path="$PROJECT_DIR$/.venv" />
-      <file path="$PROJECT_DIR$/.vs" />
-      <file path="$PROJECT_DIR$/.vscode" />
-      <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Debug" />
-      <file path="$PROJECT_DIR$/b_Ninja_VS19_Ni_64_qt515_Release" />
-      <file path="$PROJECT_DIR$/build" />
-      <file path="$PROJECT_DIR$/build/html" />
-      <file path="$PROJECT_DIR$/build/install" />
-      <file path="$PROJECT_DIR$/build/vs2022" />
-      <file path="$PROJECT_DIR$/external" />
-      <file path="$PROJECT_DIR$/external/csv-parser/tests" />
-      <file path="$PROJECT_DIR$/src/doodle_core/resource/tzdata" />
-      <file path="$PROJECT_DIR$/src/doodle_lib/resource/tzdata" />
-      <file path="$PROJECT_DIR$/src/doodle_lib/rpc" />
-      <file path="$PROJECT_DIR$/tools" />
-      <file path="$PROJECT_DIR$/tools/grpc_test" />
-    </excludeRoots>
-  </component>
-  <component name="PyPackaging">
-    <option name="earlyReleasesAsUpgrades" value="true" />
-  </component>
 </project>
