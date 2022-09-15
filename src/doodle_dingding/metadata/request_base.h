@@ -9,6 +9,7 @@
 
 #include <doodle_dingding/metadata/access_token.h>
 #include <doodle_dingding/metadata/department.h>
+#include <doodle_dingding/metadata/user_dd.h>
 
 namespace doodle::dingding {
 
@@ -65,7 +66,24 @@ class request_base<false, Result_Type> : public detail::request_base {
             in_json
         ) {}
 };
+namespace detail {
+template <typename Result_Type>
+class cursor {
+ public:
+  bool has_more;
+  std::size_t next_cursor;
+  Result_Type list;
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+      cursor,
+      has_more,
+      next_cursor,
+      list
+  )
+};
+}  // namespace detail
+
 using access_token_body = request_base<false, access_token>;
 using department_body   = request_base<true, std::vector<department>>;
+using user_dd_body      = request_base<true, detail::cursor<std::vector<user_dd>>>;
 
 }  // namespace doodle::dingding
