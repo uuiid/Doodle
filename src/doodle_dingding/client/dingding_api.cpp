@@ -211,11 +211,15 @@ void dingding_api::async_find_mobile_user(
         }
         auto l_res = l_body.result_type();
         auto l_msg = std::vector{make_handle()};
-
-        async_get_user_info(
-            {l_res.userid},
-            in_token,
-            std::move(*l_call_fun)
+        boost::asio::post(
+            get_executor(),
+            [this, l_res, l_c = l_c]() {
+              async_get_user_info(
+                  {l_res.userid},
+                  in_token,
+                  std::move(*l_call_fun)
+              );
+            }
         );
       }
   );
