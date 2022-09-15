@@ -96,14 +96,8 @@ void dingding_api::async_get_departments(
           throw_exception(l_body.get_error());
         }
         auto l_res = l_body.result_type();
-        auto l_msg = l_res |
-                     ranges::view::transform([](const department& in) -> entt::handle {
-                       auto l_handle = doodle::make_handle();
-                       l_handle.emplace<department>(in);
-                       return l_handle;
-                     }) |
-                     ranges::to_vector;
-
+        auto l_msg = std::vector{make_handle()};
+        l_msg.front().emplace<department>(l_res);
         boost::asio::post(
             this->get_executor(),
             [l_call_fun, l_msg]() { (*l_call_fun)(l_msg); }
