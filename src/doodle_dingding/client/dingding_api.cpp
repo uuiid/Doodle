@@ -210,10 +210,9 @@ void dingding_api::async_find_mobile_user(
           throw_exception(l_body.get_error());
         }
         auto l_res = l_body.result_type();
-        auto l_msg = std::vector{make_handle()};
         boost::asio::post(
             get_executor(),
-            [this, l_res, l_c = l_c]() {
+            [=, l_c]() {
               async_get_user_info(
                   {l_res.userid},
                   in_token,
