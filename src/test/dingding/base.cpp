@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(
 
 BOOST_AUTO_TEST_CASE(
     client_get_dep,
-    *boost::unit_test::depends_on("dingding_base/client_get_gettoken")
+    *boost::unit_test::depends_on("dingding_base/client_get_gettoken") * boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")
 ) {
   using namespace std::literals;
   auto l_st                      = boost::asio::make_strand(io_context_attr);
