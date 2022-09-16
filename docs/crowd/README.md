@@ -82,10 +82,10 @@
 在资源管理器中右键弹出操作菜单,选中**蓝图类**进行创建![](image_/crowd_125.png ':size=30*30'),
 其中类的选择是Character(**角色**)类![](image_/img_15.png ':size=30*30'),
 并双击打开刚刚创建的类![](image_/crowd_128.png ':size=30*30'),
-在左侧拖入**骨骼物体**![](image_/crowd_130.png ':size=30*30'),并选中**视口窗口**
+在左侧选中**网格体**![](image_/img_14.png ':size=30*30'),并选中**视口窗口**
 ![](image_/crowd_131.png ':size=30*30'),
-将**人物和箭头方向对齐**![](image_/crowd_132.png ':size=30*30'),之后选中拖入的**
-骨骼网格体**![](image_/crowd_130.png ':size=30*30'),
+将**人物和箭头方向对齐**![](image_/crowd_132.png ':size=30*30'),
+之后选中**骨骼网格体**![](image_/img_14.png ':size=30*30'),
 将动画类更改为上一步创建的类![](image_/crowd_136.png ':size=30*30'), 并点击**
 编译按钮**![](image_/crowd_141.png ':size=30*30')
 
