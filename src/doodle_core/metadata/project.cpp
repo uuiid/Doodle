@@ -148,6 +148,7 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["use_write_metadata"]                = p.use_write_metadata;
   j["abc_export_extract_reference_name"] = p.abc_export_extract_reference_name;
   j["abc_export_extract_scene_name"]     = p.abc_export_extract_scene_name;
+  j["abc_export_add_frame_range"]        = p.abc_export_add_frame_range;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -192,6 +193,8 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("abc_export_extract_reference_name").get_to(p.abc_export_extract_reference_name);
   if (j.contains("abc_export_extract_scene_name"))
     j.at("abc_export_extract_scene_name").get_to(p.abc_export_extract_scene_name);
+  if (j.contains("abc_export_add_frame_range"))
+    j.at("abc_export_add_frame_range").get_to(p.abc_export_add_frame_range);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {
