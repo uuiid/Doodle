@@ -96,8 +96,6 @@ void FDoodleClusterTrackEditor::BuildObjectBindingTrackMenu(
   }
 
   if (ObjectClass->IsChildOf(USkeletalMeshComponent::StaticClass())) {
-    TSharedPtr<ISequencer> SequencerPtr = GetSequencer();
-
     MenuBuilder.AddMenuEntry(
         LOCTEXT("Add_Anim", "Add Anim"),
         LOCTEXT("Add_Anim", "Add Anim"),
@@ -105,7 +103,7 @@ void FDoodleClusterTrackEditor::BuildObjectBindingTrackMenu(
         FUIAction{
             FExecuteAction::CreateLambda(
                 [=]() {
-
+                  this->AddAllBindAnimationInstance(ObjectBindings);
                 }
             )}
     );

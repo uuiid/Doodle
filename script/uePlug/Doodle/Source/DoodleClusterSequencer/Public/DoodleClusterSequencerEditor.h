@@ -58,8 +58,7 @@ class FDoodleClusterTrackEditor final : public FMovieSceneTrackEditor {
   // virtual const FSlateBrush *GetIconBrush() const overriFde;
 
  private:
-  
   void AddNewObjectBindingTrack(TArray<FGuid> InObjectBindings) const;
 
-  void AddAllBindAnimationInstance(    const TArray<FGuid> &ObjectBindings)const;
+  void AddAllBindAnimationInstance(const TArray<FGuid> &ObjectBindings) const;
 };
