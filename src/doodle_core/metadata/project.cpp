@@ -125,27 +125,29 @@ project_config::base_config::base_config()
       ) {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
-  j["find_icon_regex"]         = p.find_icon_regex;
-  j["assets_list"]             = p.assets_list;
-  j["vfx_cloth_sim_path"]      = p.vfx_cloth_sim_path;
-  j["export_group"]            = p.export_group;
-  j["cloth_proxy_"]            = p.cloth_proxy_;
-  j["simple_module_proxy_"]    = p.simple_module_proxy_;
-  j["icon_extensions"]         = p.icon_extensions;
-  j["upload_path"]             = p.upload_path;
-  j["season_count"]            = p.season_count;
+  j["find_icon_regex"]                   = p.find_icon_regex;
+  j["assets_list"]                       = p.assets_list;
+  j["vfx_cloth_sim_path"]                = p.vfx_cloth_sim_path;
+  j["export_group"]                      = p.export_group;
+  j["cloth_proxy_"]                      = p.cloth_proxy_;
+  j["simple_module_proxy_"]              = p.simple_module_proxy_;
+  j["icon_extensions"]                   = p.icon_extensions;
+  j["upload_path"]                       = p.upload_path;
+  j["season_count"]                      = p.season_count;
 
-  j["use_rename_material"]     = p.use_rename_material;
-  j["use_merge_mesh"]          = p.use_merge_mesh;
-  j["use_divide_group_export"] = p.use_divide_group_export;
-  j["use_only_sim_cloth"]      = p.use_only_sim_cloth;
+  j["use_rename_material"]               = p.use_rename_material;
+  j["use_merge_mesh"]                    = p.use_merge_mesh;
+  j["use_divide_group_export"]           = p.use_divide_group_export;
+  j["use_only_sim_cloth"]                = p.use_only_sim_cloth;
 
-  j["t_post"]                  = p.t_post;
-  j["export_anim_time"]        = p.export_anim_time;
-  j["export_abc_arg"]          = p.export_abc_arg;
+  j["t_post"]                            = p.t_post;
+  j["export_anim_time"]                  = p.export_anim_time;
+  j["export_abc_arg"]                    = p.export_abc_arg;
 
-  j["maya_camera_select"]      = p.maya_camera_select;
-  j["use_write_metadata"]      = p.use_write_metadata;
+  j["maya_camera_select"]                = p.maya_camera_select;
+  j["use_write_metadata"]                = p.use_write_metadata;
+  j["abc_export_extract_reference_name"] = p.abc_export_extract_reference_name;
+  j["abc_export_extract_scene_name"]     = p.abc_export_extract_scene_name;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -185,6 +187,11 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("maya_camera_select").get_to(p.maya_camera_select);
   if (j.contains("use_write_metadata"))
     j.at("use_write_metadata").get_to(p.use_write_metadata);
+
+  if (j.contains("abc_export_extract_reference_name"))
+    j.at("abc_export_extract_reference_name").get_to(p.abc_export_extract_reference_name);
+  if (j.contains("abc_export_extract_scene_name"))
+    j.at("abc_export_extract_scene_name").get_to(p.abc_export_extract_scene_name);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {
