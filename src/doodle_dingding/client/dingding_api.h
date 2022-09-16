@@ -59,6 +59,10 @@ class DOODLE_DINGDING_API dingding_api : public client {
       const access_token& in_token,
       dingidng_call_fun&& in_fun
   );
+
+  void async_get_user_attendance_data(
+
+  );
 };
 
 }  // namespace doodle::dingding

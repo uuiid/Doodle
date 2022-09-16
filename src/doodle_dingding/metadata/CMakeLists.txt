@@ -4,11 +4,13 @@ target_sources(doodle_dingding
         department.h
         request_base.h
         user_dd.h
+        attendance.h
 
         PRIVATE
         access_token.cpp
         department.cpp
         request_base.cpp
         user_dd.cpp
+        attendance.cpp
 
         )
