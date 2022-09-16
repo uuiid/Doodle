@@ -16,13 +16,13 @@ class FMenuBuilder;
 class FSequencerSectionPainter;
 class UMovieSceneGeometryCacheSection;
 class UMovieSceneSequence;
+class UMovieSceneSequence;
 
 /**
  * ue4人群tack条目
  */
-class FDoodleClusterTrackEditor final : public FMovieSceneTrackEditor
-{
-public:
+class FDoodleClusterTrackEditor final : public FMovieSceneTrackEditor {
+ public:
   FDoodleClusterTrackEditor(TSharedRef<ISequencer> InSequencer);
 
   virtual ~FDoodleClusterTrackEditor() override;
@@ -36,17 +36,19 @@ public:
   static TSharedRef<ISequencerTrackEditor>
   CreateTrackEditor(TSharedRef<ISequencer> OwningSequencer);
 
-public:
+ public:
   // ISequencerTrackEditor interface
   // 在obj绑定中添加菜单
   virtual void BuildObjectBindingTrackMenu(
-    FMenuBuilder &MenuBuilder,
-     const TArray<FGuid> &ObjectBindings,
-      const UClass *ObjectClass) override;
+      FMenuBuilder &MenuBuilder,
+      const TArray<FGuid> &ObjectBindings,
+      const UClass *ObjectClass
+  ) override;
   // 制作特定的部分
   virtual TSharedRef<ISequencerSection> MakeSectionInterface(
       UMovieSceneSection &SectionObject,
-      UMovieSceneTrack &Track, FGuid ObjectBinding) override;
+      UMovieSceneTrack &Track, FGuid ObjectBinding
+  ) override;
   // 返回是否支持序列
   virtual bool SupportsSequence(UMovieSceneSequence *InSequence) const override;
   // 返回是否支持轨道类
@@ -55,7 +57,9 @@ public:
   virtual TSharedPtr<SWidget> BuildOutlinerEditWidget(const FGuid &ObjectBinding, UMovieSceneTrack *Track, const FBuildEditWidgetParams &Params) override;
   // virtual const FSlateBrush *GetIconBrush() const overriFde;
 
-  private:
+ private:
+  
   void AddNewObjectBindingTrack(TArray<FGuid> InObjectBindings) const;
-};
 
+  void AddAllBindAnimationInstance(    const TArray<FGuid> &ObjectBindings)const;
+};
