@@ -82,7 +82,7 @@ FSys::path generate_abc_file_path::get_name(
         l_ref_name = k_match[1].str();
       }
     } catch (const std::regex_error &in) {
-      DOODLE_LOG_ERROR("{}", in.what());
+      DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", l_ref_name, extract_reference_name, in.what());
     }
   }
 
@@ -95,7 +95,7 @@ FSys::path generate_abc_file_path::get_name(
         l_scene_name = k_match[1].str();
       }
     } catch (const std::regex_error &in) {
-      DOODLE_LOG_ERROR("{}", in.what());
+      DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", l_scene_name, extract_scene_name, in.what());
     }
   }
   auto l_name =
