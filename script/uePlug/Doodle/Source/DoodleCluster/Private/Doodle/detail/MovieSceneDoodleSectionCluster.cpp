@@ -42,8 +42,8 @@ struct FEventTrackExecutionTokenDOodle
             break;
           }
         }
-        if (L_Lock_Object) {
-          if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
+        if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
+          if (L_Lock_Object) {
             L_Anim->DoodleLookAtObject(L_Lock_Object);
             // UE_LOG(LogTemp, Log, TEXT("APawn *L_Pawn = L_Anim->TryGetPawnOwner()"));
             if (APawn *L_Pawn = L_Anim->TryGetPawnOwner()) {
@@ -51,8 +51,8 @@ struct FEventTrackExecutionTokenDOodle
             }
             break;
           }
+          L_Anim->DoodleRandom();
         }
-        L_Anim->DoodleRandom();
       }
     }
   }
