@@ -602,13 +602,6 @@ entt::handle reference_file::export_file_select(
   switch (in_arg.export_type_p) {
     case export_type::abc: {
       l_type        = export_file_info::export_type::abc;
-      auto abc_name = fmt::format(
-          "{}_{}_{}-{}.abc",
-          maya_file_io::get_current_path().stem(),
-          get_namespace(),
-          in_arg.start_p.as(MTime::uiUnit()),
-          in_arg.end_p.as(MTime::uiUnit())
-      );
       reference_file_ns::generate_abc_file_path
           l_name{*g_reg()};
       l_name.begin_end_time     = std::make_pair(in_arg.start_p, in_arg.end_p);
