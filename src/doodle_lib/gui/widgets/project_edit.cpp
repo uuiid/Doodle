@@ -91,6 +91,9 @@ class project_edit::impl {
   gui_cache<bool> abc_arg_stripNamespaces{"分裂名称空间", false};
 
   camera_judge_table_gui camera_judge_gui_attr{};
+  gui_cache<std::string> abc_export_extract_reference_name{"重新提取引用名称"s, ""s};
+  gui_cache<std::string> abc_export_extract_scene_name{"重新提取文件名称"s, ""s};
+  gui_cache<bool> abc_export_add_frame_range{"导出附加范围"s, true};
 
   gui_cache<bool> use_write_metadata{"写出元数据", true};
 
@@ -151,7 +154,10 @@ class project_edit::impl {
                                                   ) |
                                                   ranges::to_vector;
 
-    use_write_metadata() = l_config.use_write_metadata;
+    use_write_metadata()                = l_config.use_write_metadata;
+    abc_export_extract_reference_name() = l_config.abc_export_extract_reference_name;
+    abc_export_extract_scene_name()     = l_config.abc_export_extract_scene_name;
+    abc_export_add_frame_range()        = l_config.abc_export_add_frame_range;
   }
 
   project_config::base_config get_config_() {
@@ -202,7 +208,10 @@ class project_edit::impl {
                                return project_config::camera_judge{in};
                              }) |
                              ranges::to_vector;
-    l_c.use_write_metadata = use_write_metadata();
+    l_c.use_write_metadata                = use_write_metadata();
+    l_c.abc_export_extract_reference_name = abc_export_extract_reference_name();
+    l_c.abc_export_extract_scene_name     = abc_export_extract_scene_name();
+    l_c.abc_export_add_frame_range        = abc_export_add_frame_range();
 
     return l_c;
   }
@@ -288,6 +297,9 @@ void project_edit::render() {
   ImGui::Checkbox(*p_i->abc_arg_writeVisibility, &p_i->abc_arg_writeVisibility);
   ImGui::Checkbox(*p_i->abc_arg_writeUVSets, &p_i->abc_arg_writeUVSets);
   ImGui::Checkbox(*p_i->abc_arg_stripNamespaces, &p_i->abc_arg_stripNamespaces);
+  ImGui::InputText(*p_i->abc_export_extract_reference_name, &p_i->abc_export_extract_reference_name);
+  ImGui::InputText(*p_i->abc_export_extract_scene_name, &p_i->abc_export_extract_scene_name);
+  ImGui::Checkbox(*p_i->abc_export_add_frame_range, &p_i->abc_export_add_frame_range);
 
   ImGui::Text("其他配置:");
   /// @brief 正则表达式编辑
