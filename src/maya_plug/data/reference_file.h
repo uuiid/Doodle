@@ -4,7 +4,34 @@
 #pragma once
 #include "doodle_lib/doodle_lib_fwd.h"
 #include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 namespace doodle::maya_plug {
+class reference_file;
+namespace reference_file_ns {
+class generate_abc_file_path : boost::equality_comparable<generate_abc_file_path> {
+  std::string extract_reference_name;
+  std::string extract_scene_name;
+  bool use_add_range;
+
+ protected:
+  virtual FSys::path get_path() const;
+  virtual FSys::path get_name(const std::string &in_ref_name) const;
+
+ public:
+  explicit generate_abc_file_path(
+      const entt::registry &in
+  );
+  virtual ~generate_abc_file_path();
+
+  std::optional<std::string> add_external_string;
+
+  std::pair<MTime, MTime> begin_end_time;
+
+  [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
+
+  FSys::path operator()(const reference_file &in_ref) const;
+};
+}  // namespace reference_file_ns
 
 /**
  * @brief 一个类似的引用文件使用名称空间作为引用的定位,

@@ -36,6 +36,101 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 
 namespace doodle::maya_plug {
+
+namespace reference_file_ns {
+
+generate_abc_file_path::generate_abc_file_path(
+    const entt::registry &in
+) : extract_reference_name(),
+    extract_scene_name() {
+  auto &l_cong           = in.ctx().at<project_config::base_config>();
+
+  extract_reference_name = l_cong.abc_export_extract_reference_name;
+  extract_scene_name     = l_cong.abc_export_extract_scene_name;
+  use_add_range          = l_cong.abc_export_add_frame_range;
+}
+
+FSys::path generate_abc_file_path::operator()(
+    const reference_file &in_ref
+) const {
+  return get_path() / get_name(in_ref.get_namespace());
+}
+FSys::path generate_abc_file_path::get_path() const {
+  auto k_path = maya_file_io::work_path(
+      FSys::path{"abc"} / maya_file_io::get_current_path().stem()
+  );
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  return k_path;
+}
+FSys::path generate_abc_file_path::get_name(
+    const std::string &in_ref_name
+) const {
+  std::string l_scene_name{
+      maya_file_io::get_current_path().stem().generic_string()};
+  std::string l_ref_name{in_ref_name};
+
+  if (!extract_reference_name.empty()) {
+    std::regex l_regex{extract_reference_name};
+    std::smatch k_match{};
+    const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
+    if (k_r) {
+      l_ref_name = k_match[1].str();
+    }
+  }
+
+  if (!extract_scene_name.empty()) {
+    std::regex l_regex{extract_scene_name};
+    std::smatch k_match{};
+    const auto &k_r = std::regex_search(l_scene_name, k_match, l_regex);
+    if (k_r) {
+      l_scene_name = k_match[1].str();
+    }
+  }
+  auto l_name =
+      fmt::format(
+          "{}_{}"s,
+          l_scene_name,
+          l_ref_name
+      );
+  if (add_external_string)
+    l_name = fmt::format("{}_{}", l_name, *add_external_string);
+
+  if (use_add_range)
+    l_name = fmt::format(
+        "{}_{}-{}",
+        l_name,
+        begin_end_time.first.as(MTime::uiUnit()),
+        begin_end_time.second.as(MTime::uiUnit())
+    );
+
+  l_name += ".abc";
+
+  return FSys::path{l_name};
+}
+
+bool generate_abc_file_path::operator==(
+    const generate_abc_file_path &in
+) const noexcept {
+  return std::tie(
+             extract_reference_name,
+             extract_scene_name,
+             use_add_range,
+             add_external_string,
+             begin_end_time
+         ) ==
+         std::tie(
+             in.extract_reference_name,
+             in.extract_scene_name,
+             in.use_add_range,
+             in.add_external_string,
+             in.begin_end_time
+         );
+}
+generate_abc_file_path::~generate_abc_file_path() = default;
+}  // namespace reference_file_ns
+
 reference_file::reference_file()
     : path(),
       use_sim(false),
