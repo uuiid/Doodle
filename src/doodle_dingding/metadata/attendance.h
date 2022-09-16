@@ -45,19 +45,18 @@ class DOODLE_DINGDING_API attendance_result {
 class DOODLE_DINGDING_API attendance_record {
  public:
   std::int64_t record_id;
-  std::string user_check_time;
-  bool valid_matched;
-  std::string user_accuracy;
   std::string source_type;
+  std::string user_accuracy;
+  bool valid_matched;
+  std::string user_check_time;
   std::string invalid_record_msg;
   std::string invalid_record_type;
-  std::string user_longitude;
-  std::string user_latitude;
+  //  std::string user_longitude;
+  //  std::string user_latitude;
 };
 
 class DOODLE_DINGDING_API attendance {
  public:
-
   time_point_wrap date;
   std::vector<attendance_result> attendance_result_list;
   std::int32_t userid;
