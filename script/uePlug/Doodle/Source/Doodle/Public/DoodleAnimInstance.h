@@ -36,7 +36,7 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
   UPROPERTY(EditAnywhere, Interp, BlueprintReadOnly, Category = "Doodle", Meta = (ClampMin = 0))
   int RandomAttrMin{0};
   UPROPERTY(EditAnywhere, Interp, BlueprintReadOnly, Category = "Doodle", Meta = (ClampMin = 0))
-  int RandomAttrMax{4};
+  int RandomAttrMax{6};
 
   float RandomAttr_InstallValue;
 };
