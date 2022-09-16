@@ -74,20 +74,28 @@ FSys::path generate_abc_file_path::get_name(
   std::string l_ref_name{in_ref_name};
 
   if (!extract_reference_name.empty()) {
-    std::regex l_regex{extract_reference_name};
-    std::smatch k_match{};
-    const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
-    if (k_r) {
-      l_ref_name = k_match[1].str();
+    try {
+      std::regex l_regex{extract_reference_name};
+      std::smatch k_match{};
+      const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
+      if (k_r && k_match.size() >= 2) {
+        l_ref_name = k_match[1].str();
+      }
+    } catch (const std::regex_error &in) {
+      DOODLE_LOG_ERROR("{}", in.what());
     }
   }
 
   if (!extract_scene_name.empty()) {
-    std::regex l_regex{extract_scene_name};
-    std::smatch k_match{};
-    const auto &k_r = std::regex_search(l_scene_name, k_match, l_regex);
-    if (k_r) {
-      l_scene_name = k_match[1].str();
+    try {
+      std::regex l_regex{extract_scene_name};
+      std::smatch k_match{};
+      const auto &k_r = std::regex_search(l_scene_name, k_match, l_regex);
+      if (k_r && k_match.size() >= 2) {
+        l_scene_name = k_match[1].str();
+      }
+    } catch (const std::regex_error &in) {
+      DOODLE_LOG_ERROR("{}", in.what());
     }
   }
   auto l_name =
@@ -601,11 +609,11 @@ entt::handle reference_file::export_file_select(
   export_file_info::export_type l_type{};
   switch (in_arg.export_type_p) {
     case export_type::abc: {
-      l_type        = export_file_info::export_type::abc;
+      l_type = export_file_info::export_type::abc;
       reference_file_ns::generate_abc_file_path
           l_name{*g_reg()};
-      l_name.begin_end_time     = std::make_pair(in_arg.start_p, in_arg.end_p);
-      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list, l_name);
+      l_name.begin_end_time = std::make_pair(in_arg.start_p, in_arg.end_p);
+      l_path                = export_abc(in_arg.start_p, in_arg.end_p, in_list, l_name);
 
     } break;
     case export_type::fbx: {
