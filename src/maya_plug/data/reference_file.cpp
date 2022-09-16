@@ -34,6 +34,8 @@
 #include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
+#include <doodle_core/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/std_fmt_optional.h>
 
 namespace doodle::maya_plug {
 
@@ -374,7 +376,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       reference_file_ns::generate_abc_file_path
           l_name{*g_reg()};
       l_name.add_external_string = get_node_name_strip_name_space(l_parent);
-
+      l_name.begin_end_time      = std::make_pair(in_start, in_endl);
       export_divide_map[l_name].add(l_parent, MObject::kNullObj, true);
     }
   } else {
@@ -385,6 +387,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     }
     reference_file_ns::generate_abc_file_path
         l_name{*g_reg()};
+    l_name.begin_end_time     = std::make_pair(in_start, in_endl);
     export_divide_map[l_name] = l_list;
   }
   DOODLE_LOG_INFO("导出划分完成 {}", export_divide_map);
@@ -606,8 +609,10 @@ entt::handle reference_file::export_file_select(
           in_arg.start_p.as(MTime::uiUnit()),
           in_arg.end_p.as(MTime::uiUnit())
       );
-
-      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list, abc_name);
+      reference_file_ns::generate_abc_file_path
+          l_name{*g_reg()};
+      l_name.begin_end_time     = std::make_pair(in_arg.start_p, in_arg.end_p);
+      l_path = export_abc(in_arg.start_p, in_arg.end_p, in_list, l_name);
 
     } break;
     case export_type::fbx: {

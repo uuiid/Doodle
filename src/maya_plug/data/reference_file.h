@@ -230,7 +230,7 @@ class reference_file {
 
 namespace fmt {
 /**
- * @brief 集数格式化程序
+ * @brief
  *
  * @tparam
  */
