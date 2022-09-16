@@ -117,17 +117,33 @@ bool generate_abc_file_path::operator==(
              extract_reference_name,
              extract_scene_name,
              use_add_range,
-             add_external_string,
-             begin_end_time
+             add_external_string
          ) ==
          std::tie(
              in.extract_reference_name,
              in.extract_scene_name,
              in.use_add_range,
-             in.add_external_string,
-             in.begin_end_time
+             in.add_external_string
          );
 }
+
+bool generate_abc_file_path::operator<(
+    const generate_abc_file_path &in
+) const noexcept {
+  return std::tie(
+             extract_reference_name,
+             extract_scene_name,
+             use_add_range,
+             add_external_string
+         ) <
+         std::tie(
+             in.extract_reference_name,
+             in.extract_scene_name,
+             in.use_add_range,
+             in.add_external_string
+         );
+}
+
 generate_abc_file_path::~generate_abc_file_path() = default;
 }  // namespace reference_file_ns
 
@@ -320,7 +336,9 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   }
 
   /// \brief 进行dag遍历提取需要的节点
-  std::map<std::string, MSelectionList> export_divide_map{};
+  std::map<
+      reference_file_ns::generate_abc_file_path, MSelectionList>
+      export_divide_map{};
   std::vector<MDagPath> export_path;
   if (k_cfg.use_only_sim_cloth) {
     DOODLE_LOG_INFO("只导出解算的物体")
@@ -352,13 +370,12 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     for (auto &&i : export_path) {
       l_parent.set(i);
       l_parent.pop();
-      auto abc_name = fmt::format(
-          "{}_{}_{}.abc",
-          maya_file_io::get_current_path().stem(),
-          get_namespace(),
-          get_node_name_strip_name_space(l_parent)
-      );
-      export_divide_map[abc_name].add(l_parent, MObject::kNullObj, true);
+
+      reference_file_ns::generate_abc_file_path
+          l_name{*g_reg()};
+      l_name.add_external_string = get_node_name_strip_name_space(l_parent);
+
+      export_divide_map[l_name].add(l_parent, MObject::kNullObj, true);
     }
   } else {
     MSelectionList l_list{};
@@ -366,14 +383,9 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       k_s = l_list.add(i);
       DOODLE_MAYA_CHICK(k_s);
     }
-    auto abc_name = fmt::format(
-        "{}_{}_{}-{}.abc",
-        maya_file_io::get_current_path().stem(),
-        get_namespace(),
-        in_start.as(MTime::uiUnit()),
-        in_endl.as(MTime::uiUnit())
-    );
-    export_divide_map[abc_name] = l_list;
+    reference_file_ns::generate_abc_file_path
+        l_name{*g_reg()};
+    export_divide_map[l_name] = l_list;
   }
   DOODLE_LOG_INFO("导出划分完成 {}", export_divide_map);
   FSys::path l_path{};
@@ -684,7 +696,7 @@ FSys::path reference_file::export_abc(
     const MTime &in_start,
     const MTime &in_end,
     const MSelectionList &in_export_obj,
-    const std::string &in_abc_name
+    const reference_file_ns::generate_abc_file_path &in_abc_name
 ) const {
   FSys::path out_{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
@@ -712,22 +724,15 @@ FSys::path reference_file::export_abc(
     }
   }
 
-  auto k_path = maya_file_io::work_path(
-      FSys::path{"abc"} / maya_file_io::get_current_path().stem()
-  );
-
-  if (!exists(k_path)) {
-    create_directories(k_path);
-  }
-  k_path /= in_abc_name;
-  auto l_com = fmt::format(R"(
+  auto k_path = in_abc_name(*this);
+  auto l_com  = fmt::format(R"(
 AbcExport -j "-frameRange {} {} {} -dataFormat ogawa {} -file {}";
 )",
-                           in_start.as(MTime::uiUnit()),    /// \brief 开始时间
-                           in_end.as(MTime::uiUnit()),      /// \brief 结束时间
-                           get_abc_exprt_arg(),             /// \brief 导出参数
-                           fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
-                           k_path.generic_string());
+                            in_start.as(MTime::uiUnit()),    /// \brief 开始时间
+                            in_end.as(MTime::uiUnit()),      /// \brief 结束时间
+                            get_abc_exprt_arg(),             /// \brief 导出参数
+                            fmt::join(l_export_paths, " "),  /// \brief 导出物体的根路径
+                            k_path.generic_string());
   DOODLE_LOG_INFO("生成导出命令 {}", l_com);
 
   /// \brief 导出abc命令

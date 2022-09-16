@@ -8,10 +8,11 @@
 namespace doodle::maya_plug {
 class reference_file;
 namespace reference_file_ns {
-class generate_abc_file_path : boost::equality_comparable<generate_abc_file_path> {
+class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path> {
   std::string extract_reference_name;
   std::string extract_scene_name;
   bool use_add_range;
+  friend struct fmt::formatter<generate_abc_file_path>;
 
  protected:
   virtual FSys::path get_path() const;
@@ -28,6 +29,7 @@ class generate_abc_file_path : boost::equality_comparable<generate_abc_file_path
   std::pair<MTime, MTime> begin_end_time;
 
   [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
+  [[nodiscard("")]] bool operator<(const generate_abc_file_path &in) const noexcept;
 
   FSys::path operator()(const reference_file &in_ref) const;
 };
@@ -47,7 +49,7 @@ class reference_file {
 
   void chick_mobject() const;
 
-  static [[nodiscard("not")]] std::string get_abc_exprt_arg();
+  static std::string get_abc_exprt_arg();
 
   /**
    * @brief
@@ -71,7 +73,7 @@ class reference_file {
       const MTime &in_start,
       const MTime &in_end,
       const MSelectionList &in_export_obj,
-      const std::string &in_abc_name
+      const reference_file_ns::generate_abc_file_path &in_abc_name
   ) const;
   /**
    * @brief 导出文件到fbx中, 这个函数会烘培动画帧进行导出
@@ -225,3 +227,27 @@ class reference_file {
 };
 
 }  // namespace doodle::maya_plug
+
+namespace fmt {
+/**
+ * @brief 集数格式化程序
+ *
+ * @tparam
+ */
+template <>
+struct formatter<
+    ::doodle::maya_plug::reference_file_ns::generate_abc_file_path> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(
+      const ::doodle::maya_plug::reference_file_ns::generate_abc_file_path &in_,
+      FormatContext &ctx
+  ) const -> decltype(ctx.out()) {
+    return fmt::format_to(
+        ctx.out(),
+        "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
+        in_.extract_scene_name, in_.extract_reference_name,
+        in_.use_add_range, in_.add_external_string
+    );
+  }
+};
+}  // namespace fmt
