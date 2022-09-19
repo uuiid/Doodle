@@ -106,6 +106,7 @@ set(MAYA_LIBS_TO_FIND
         )
 # 添加maya 接口库
 add_library(maya_all INTERFACE IMPORTED)
+target_include_directories(maya_all INTERFACE ${MAYA_INCLUDE_DIR})
 # 循环查找maya 库列表
 foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
     find_library(MAYA_${MAYA_LIB}_LIBRARY
