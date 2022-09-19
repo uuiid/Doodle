@@ -41,7 +41,7 @@ template <typename Result_Type>
 class request_base<true, Result_Type> : public detail::request_base {
  public:
   Result_Type result_type() {
-    return json_attr.at("result").get<Result_Type>();
+    return json_attr.at("result").template get<Result_Type>();
   };
 
  public:
