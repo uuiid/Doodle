@@ -432,7 +432,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       /// \brief 检查一下是否是中间对象
       if (!l_fn_dag_node.isIntermediateObject(&k_s)) {
         export_path.emplace_back(k_root);
-        DOODLE_MAYA_CHICK(k_s)
+        DOODLE_MAYA_CHICK(k_s);
       }
     }
   }

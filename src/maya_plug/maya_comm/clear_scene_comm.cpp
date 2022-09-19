@@ -64,12 +64,12 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
   std::stringstream k_r{};
   bool hae_err{false};
   if (k_prase.isFlagSet(unlock_normal, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
     l_clear_scenes.unlock_normal();
     k_r << fmt::format("{} \n", "完成场景中所有多边形解锁法线"s);
   }
   if (k_prase.isFlagSet(duplicate_name, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
     DOODLE_MAYA_CHICK(l_list.clear());
     if (l_clear_scenes.duplicate_name(l_list)) {
       MStringArray l_m_string_array{};
@@ -80,8 +80,8 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
       k_r << fmt::format("{}\n", "没有重名网格");
   }
   if (k_prase.isFlagSet(multilateral, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s)
-    DOODLE_MAYA_CHICK(l_list.clear())
+    DOODLE_MAYA_CHICK(k_s);
+    DOODLE_MAYA_CHICK(l_list.clear());
     if (l_clear_scenes.multilateral_surface(l_list)) {
       MStringArray l_m_string_array{};
       DOODLE_MAYA_CHICK(l_list.getSelectionStrings(l_m_string_array));
@@ -92,8 +92,8 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
     }
   }
   if (k_prase.isFlagSet(uv_set, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s)
-    DOODLE_MAYA_CHICK(l_list.clear())
+    DOODLE_MAYA_CHICK(k_s);
+    DOODLE_MAYA_CHICK(l_list.clear());
     if (l_clear_scenes.uv_set(l_list)) {
       MStringArray l_m_string_array{};
       DOODLE_MAYA_CHICK(l_list.getSelectionStrings(l_m_string_array));
@@ -106,26 +106,26 @@ MStatus clear_scene_comm::doIt(const MArgList &in_arg) {
   if (k_prase.isFlagSet(err_1, &k_s)) {
     l_clear_scenes.err_1();
     k_r << fmt::format("{}\n", "去除了场景中的 UI outlinerPanel 错误");
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(err_2, &k_s)) {
     l_clear_scenes.err_2();
     k_r << fmt::format("{}\n", "去除了场景中的 UI 模型面板回调错误");
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(err_3, &k_s)) {
     l_clear_scenes.err_3();
     k_r << fmt::format("{}\n", "去除了场景中的 UI outlinerPanel 错误");
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
   }
   if (k_prase.isFlagSet(err_4, &k_s)) {
     l_clear_scenes.err_4();
     k_r << fmt::format("{}\n", "去除了场景中的 未知插件和贼健康错误");
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
   }
 
   if (k_prase.isFlagSet(syntax_select, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s)
+    DOODLE_MAYA_CHICK(k_s);
     DOODLE_MAYA_CHICK(MGlobal::setActiveSelectionList(l_list));
   }
   MStringArray l_array{2, MString{}};
