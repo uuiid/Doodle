@@ -831,6 +831,10 @@ FSys::path reference_file::export_fbx(
   }
 
   k_s = MGlobal::setActiveSelectionList(in_export_obj);
+
+  boost::system::system_error l_err{
+      boost::system::error_code{},
+      ""s};
   DOODLE_MAYA_CHICK(k_s);
 
   this->bake_results(in_start, in_end);

@@ -18,4 +18,18 @@ class maya_error : public doodle_error {
       : doodle_error(in_m_string.asUTF8()){};
 };
 
+class DOODLE_CORE_API maya_category : public bsys::error_category {
+ public:
+  const char* name() const noexcept;
+
+  std::string message(int ev) const;
+  char const* message(int ev, char* buffer, std::size_t len) const noexcept;
+
+  bool failed(int ev) const noexcept;
+
+  bsys::error_condition default_error_condition(int ev) const noexcept;
+
+  static const bsys::error_category& get();
+};
+
 }  // namespace doodle::maya_plug
