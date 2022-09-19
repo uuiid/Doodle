@@ -265,9 +265,6 @@ void reference_file::find_ref_node(const std::string &in_ref_uuid) {
 }
 
 void reference_file::chick_mobject() const {
-
-
-
   DOODLE_CHICK(!file_namespace.empty(), doodle_error{"名称空间为空"});
 }
 void reference_file::set_collision_model(const MSelectionList &in_list) {
@@ -532,9 +529,9 @@ bool reference_file::has_node(const MObject &in_node) const {
   return false;
 }
 bool reference_file::is_loaded() const {
-  chick_mobject();
-  ///@brief  引用为空的情况下，我们主动测试一下是否有导出组，如果有就可以认为时已加载的
   try {
+    ///@brief  引用为空的情况下，我们主动测试一下是否有导出组，如果有就可以认为时已加载的
+    chick_mobject();
     MFnReference k_ref{p_m_object};
     MStatus k_s{};
     auto k_r = k_ref.isLoaded(&k_s);
