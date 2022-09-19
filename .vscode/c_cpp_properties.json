@@ -83,7 +83,8 @@
         {
             "name": "win32_cmake",
             "includePath": [
-                "${workspaceFolder}/src/**"
+                "${workspaceFolder}/src/**",
+                "C:/Program Files/Autodesk/Maya2018/include"
             ],
             "defines": [
                 "_DEBUG",
@@ -95,7 +96,11 @@
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
-            "compileCommands": "${workspaceFolder}/build/doodle_maya/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/build/doodle_maya/compile_commands.json",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${workspaceFolder}/.vscode/browse_cmake.vc.db"
+            },
         }
     ],
     "version": 4
