@@ -14,6 +14,8 @@ class generate_file_path_base
   std::string extract_reference_name;
   std::string extract_scene_name;
   bool use_add_range;
+  template <typename T1, typename Char, typename Enable>
+  friend struct fmt::formatter;
 
   virtual FSys::path get_path() const                               = 0;
   virtual FSys::path get_name(const std::string &in_ref_name) const = 0;
