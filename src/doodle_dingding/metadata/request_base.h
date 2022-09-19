@@ -41,7 +41,12 @@ template <typename Result_Type>
 class request_base<true, Result_Type> : public detail::request_base {
  public:
   Result_Type result_type() {
-    return json_attr.at("result").template get<Result_Type>();
+    if (json_attr.contains("result"))
+      return json_attr.at("result").template get<Result_Type>();
+    else if (json_attr.contains("recordresult"))
+      return json_attr.at("recordresult").template get<Result_Type>();
+    else
+      throw_exception(doodle_error{"无法寻找到键 result 或者 recordresult {}", json_attr});
   };
 
  public:
@@ -94,7 +99,7 @@ using department_body          = request_base<true, department>;
 
 using user_dd_body             = request_base<true, detail::cursor<std::vector<user_dd>>>;
 using user_dd_id_list_body     = request_base<true, user_dd>;
-using user_day_updatedata_body = request_base<true, attendance>;
+using user_day_updatedata_body = request_base<true, std::vector<attendance::day_data>>;
 namespace department_ns {
 
 }  // namespace department_ns
