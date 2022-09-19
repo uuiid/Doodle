@@ -94,12 +94,15 @@ class cursor {
 };
 }  // namespace detail
 
-using access_token_body        = request_base<false, access_token>;
-using department_body          = request_base<true, department>;
+using access_token_body    = request_base<false, access_token>;
+using department_body      = request_base<true, department>;
 
-using user_dd_body             = request_base<true, detail::cursor<std::vector<user_dd>>>;
-using user_dd_id_list_body     = request_base<true, user_dd>;
+using user_dd_body         = request_base<true, detail::cursor<std::vector<user_dd>>>;
+using user_dd_id_list_body = request_base<true, user_dd>;
+namespace attendance {
 using user_day_updatedata_body = request_base<true, std::vector<attendance::day_data>>;
+
+}
 namespace department_ns {
 
 }  // namespace department_ns
