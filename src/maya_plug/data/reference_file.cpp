@@ -593,18 +593,18 @@ bool reference_file::find_ref_node() {
   return true;
 }
 bool reference_file::has_ue4_group() const {
-  chick_mobject();
-  MStatus k_s{};
-  MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  DOODLE_MAYA_CHICK(k_s);
-  MSelectionList k_select{};
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
   try {
+    chick_mobject();
+    MStatus k_s{};
+    MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
+    DOODLE_MAYA_CHICK(k_s);
+    MSelectionList k_select{};
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
     return true;
   } catch (const std::runtime_error &err) {
-    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), k_cfg.export_group);
+    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", file_namespace, k_cfg.export_group);
     return false;
   }
 }
