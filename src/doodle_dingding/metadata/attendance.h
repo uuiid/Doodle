@@ -14,14 +14,18 @@ namespace doodle::dingding::attendance {
 namespace query {
 class DOODLE_DINGDING_API get_day_data {
  public:
-  time_point_wrap work_date_from;
-  time_point_wrap work_date_to;
-  std::vector<std::string> user_id_list;
-  int64_t offset;
-  int64_t limit;
-  bool is_i18_n;
-  friend void to_json(nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t);
-  friend void from_json(const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t) ;
+  time_point_wrap workDateFrom{};
+  time_point_wrap workDateTo{};
+  std::vector<std::string> userIdList{};
+  int64_t offset{};
+  int64_t limit{};
+  bool isI18n{};
+  friend void DOODLE_DINGDING_API to_json(
+      nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t
+  );
+  friend void DOODLE_DINGDING_API from_json(
+      const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t
+  );
 };
 };  // namespace query
 
@@ -84,7 +88,7 @@ class DOODLE_DINGDING_API attendance_result {
       procInst_id,
       check_type,
       time_result
-  ),
+  )
 };
 
 class DOODLE_DINGDING_API attendance_record {
@@ -131,33 +135,30 @@ class DOODLE_DINGDING_API attendance_record {
 
 class DOODLE_DINGDING_API day_data {
  public:
-  std::string check_type;
-  std::string location_result;
-  int64_t base_check_time;
-  int64_t group_id;
-  std::string time_result;
-  std::string user_id;
-  int64_t record_id;
-  int64_t work_date;
-  std::string source_type;
-  int64_t user_check_time;
-  int64_t plan_id;
-  int64_t id;
+  std::string sourceType{};
+  time_point_wrap baseCheckTime{};
+  time_point_wrap userCheckTime{};
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      day_data,
-      check_type,
-      location_result,
-      base_check_time,
-      group_id,
-      time_result,
-      user_id,
-      record_id,
-      work_date,
-      source_type,
-      user_check_time,
-      plan_id,
-      id
-  )
+  std::optional<std::string> procInstId{};
+  std::optional<std::string> approveId{};
+
+  std::string locationResult{};
+  std::string timeResult{};
+  std::string checkType{};
+  std::string userId{};
+  time_point_wrap workDate{};
+  std::int64_t recordId{};
+  std::int64_t planId{};
+  std::int64_t groupId{};
+  std::int64_t id{};
+
+  friend void DOODLE_DINGDING_API to_json(
+      nlohmann::json& nlohmann_json_j,
+      const day_data& nlohmann_json_t
+  );
+  friend void DOODLE_DINGDING_API from_json(
+      const nlohmann::json& nlohmann_json_j,
+      day_data& nlohmann_json_t
+  );
 };
 }  // namespace doodle::dingding::attendance
