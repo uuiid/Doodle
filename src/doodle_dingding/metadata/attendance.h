@@ -9,7 +9,21 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <nlohmann/json.hpp>
 
-namespace doodle::dingding {
+namespace doodle::dingding::attendance {
+
+namespace query {
+class DOODLE_DINGDING_API get_day_data {
+ public:
+  time_point_wrap work_date_from;
+  time_point_wrap work_date_to;
+  std::vector<std::string> user_id_list;
+  int64_t offset;
+  int64_t limit;
+  bool is_i18_n;
+  friend void to_json(nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t);
+  friend void from_json(const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t) ;
+};
+};  // namespace query
 
 class DOODLE_DINGDING_API approve_for_open {
  public:
@@ -96,23 +110,54 @@ class DOODLE_DINGDING_API attendance_record {
   )
 };
 
-class DOODLE_DINGDING_API attendance {
+// class DOODLE_DINGDING_API attendance {
+//  public:
+//   time_point_wrap date{};
+//   std::vector<attendance_result> attendance_result_list{};
+//   std::int32_t userid{};
+//   std::vector<approve_for_open> approve_list{};
+//   std::string corp_id{};
+//   std::vector<attendance_record> check_record_list{};
+//   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+//       attendance,
+//       date,
+//       attendance_result_list,
+//       userid,
+//       approve_list,
+//       corp_id,
+//       check_record_list
+//   )
+// };
+
+class DOODLE_DINGDING_API day_data {
  public:
-  time_point_wrap date{};
-  std::vector<attendance_result> attendance_result_list{};
-  std::int32_t userid{};
-  std::vector<approve_for_open> approve_list{};
-  std::string corp_id{};
-  std::vector<attendance_record> check_record_list{};
+  std::string check_type;
+  std::string location_result;
+  int64_t base_check_time;
+  int64_t group_id;
+  std::string time_result;
+  std::string user_id;
+  int64_t record_id;
+  int64_t work_date;
+  std::string source_type;
+  int64_t user_check_time;
+  int64_t plan_id;
+  int64_t id;
+
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      attendance,
-      date,
-      attendance_result_list,
-      userid,
-      approve_list,
-      corp_id,
-      check_record_list
+      day_data,
+      check_type,
+      location_result,
+      base_check_time,
+      group_id,
+      time_result,
+      user_id,
+      record_id,
+      work_date,
+      source_type,
+      user_check_time,
+      plan_id,
+      id
   )
 };
-
-}  // namespace doodle::dingding
+}  // namespace doodle::dingding::attendance
