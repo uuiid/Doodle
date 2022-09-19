@@ -32,7 +32,12 @@ class camera_judge_gui : boost::equality_comparable<camera_judge_gui> {
                camera_regex,
                judge,
                delete_button
-           ) == std::tie(in_l.camera_regex, in_l.judge, in_l.delete_button);
+           ) ==
+           std::tie(
+               in_l.camera_regex,
+               in_l.judge,
+               in_l.delete_button
+           );
   }
 };
 
