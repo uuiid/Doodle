@@ -145,7 +145,7 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
 
   doodle::logger_ctrl::get_log().set_log_name("doodle_maya_plug.txt");
-  doodle::logger_ctrl::get_log().add_log_sink(new_object<::doodle::maya_plug::maya_msg_mt>());
+  doodle::logger_ctrl::get_log().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>());
 
   maya_reg->register_callback(MTimerMessage::addTimerCallback(
       0.001,
