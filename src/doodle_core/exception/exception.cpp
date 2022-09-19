@@ -6,7 +6,6 @@
 #include <boost/system/error_code.hpp>
 
 #include <doodle_core/lib_warp/enum_template_tool.h>
-#include <maya_plug/exception/exception.h>
 
 namespace doodle {
 // namespace bsys = boost::system;

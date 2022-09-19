@@ -5,10 +5,10 @@
 #pragma once
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/lib_warp/enum_template_tool.h>
 
 #include <maya/MStatus.h>
 #include <maya/MString.h>
-#include <doodle_core/lib_warp/enum_template_tool.h>
 namespace doodle::maya_plug {
 class maya_error : public std::system_error {
  public:
