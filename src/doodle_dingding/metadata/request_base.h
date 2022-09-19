@@ -10,6 +10,7 @@
 #include <doodle_dingding/metadata/access_token.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/user_dd.h>
+#include <doodle_dingding/metadata/attendance.h>
 
 namespace doodle::dingding {
 
@@ -88,12 +89,12 @@ class cursor {
 };
 }  // namespace detail
 
-using access_token_body    = request_base<false, access_token>;
-using department_body      = request_base<true, department>;
+using access_token_body        = request_base<false, access_token>;
+using department_body          = request_base<true, department>;
 
-using user_dd_body         = request_base<true, detail::cursor<std::vector<user_dd>>>;
-using user_dd_id_list_body = request_base<true, user_dd>;
-
+using user_dd_body             = request_base<true, detail::cursor<std::vector<user_dd>>>;
+using user_dd_id_list_body     = request_base<true, user_dd>;
+using user_day_updatedata_body = request_base<true, attendance>;
 namespace department_ns {
 
 }  // namespace department_ns
