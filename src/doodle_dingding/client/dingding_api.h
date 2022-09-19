@@ -15,6 +15,12 @@ class find_by_mobile;
 class get_user_info;
 }  // namespace user_dd_ns
 
+namespace attendance {
+namespace query {
+class get_day_data;
+}
+}  // namespace attendance
+
 namespace department_ns {
 class department_query;
 class user_to_dep_query;
@@ -60,8 +66,10 @@ class DOODLE_DINGDING_API dingding_api : public client {
       dingidng_call_fun&& in_fun
   );
 
-  void async_get_user_attendance_data(
-
+  void async_get_user_day_attendance(
+      const attendance::query::get_day_data& in_query,
+      const access_token& in_token,
+      dingidng_call_fun&& in_fun
   );
 };
 
