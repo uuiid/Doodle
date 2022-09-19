@@ -34,5 +34,3 @@ struct is_handle_container<T, std::enable_if_t<std::is_same_v<entt::handle, type
 /// to boost::less_pointees_t;
 
 }  // namespace doodle::details
-
-}  // namespace doodle::conv
