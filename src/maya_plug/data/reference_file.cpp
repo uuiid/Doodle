@@ -44,7 +44,7 @@ namespace reference_file_ns {
 FSys::path generate_file_path_base::operator()(
     const reference_file &in_ref
 ) const {
-  return get_path() / get_name(in_ref.get_namespace());
+  return get_path() / get_name(in_ref.is_loaded() ? in_ref.get_namespace() : ""s);
 }
 
 bool generate_file_path_base::operator==(
