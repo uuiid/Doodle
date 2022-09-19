@@ -81,10 +81,9 @@
             "compileCommands": "${workspaceFolder}/build/Ninja_release_plug/compile_commands.json"
         },
         {
-            "name": "win32_cmake",
+            "name": "win32_cmake_maya",
             "includePath": [
-                "${workspaceFolder}/src/**",
-                "C:/Program Files/Autodesk/Maya2018/include"
+                "${workspaceFolder}/src/**"
             ],
             "defines": [
                 "_DEBUG",
