@@ -3,6 +3,9 @@
 //
 
 #include "sequence_to_blend_shape_ref_comm.h"
+
+#include <doodle_core/lib_warp/std_fmt_system_error.h>
+
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>

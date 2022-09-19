@@ -26,7 +26,7 @@ class maya_category : public bsys::error_category {
   static const bsys::error_category& get();
 };
 
-bsys::error_code make_error(const MStatus::MStatusCode& in_code) {
+inline bsys::error_code make_error(const MStatus::MStatusCode& in_code) {
   return std::error_code{enum_to_num(in_code), maya_category::get()};
 };
 

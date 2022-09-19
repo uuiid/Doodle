@@ -17,7 +17,6 @@ using namespace std::chrono;
 using namespace date;
 
 using hours_double   = duration<std::double_t, std::ratio<3600>>;
-using days_double    = duration<std::double_t, std::ratio<28800>>;
 using sys_time_pos   = time_point<system_clock>;
 using local_time_pos = time_point<local_t, seconds>;
 
@@ -25,4 +24,4 @@ template <class dur>
 std::time_t to_time_t(const time_point<local_t, dur>& in_timePoint) {
   return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
 };
-}  // namespace doodle
+};  // namespace doodle::chrono
