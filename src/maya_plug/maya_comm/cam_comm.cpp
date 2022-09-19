@@ -7,6 +7,7 @@
 #include <maya/MArgParser.h>
 #include <maya/MAnimControl.h>
 #include <maya_plug/data/maya_camera.h>
+#include <maya_plug/data/reference_file.h>
 #define doodle_startTime "-st"
 #define doodle_endTime "-et"
 
@@ -43,7 +44,13 @@ MStatus export_camera_command::doIt(const MArgList &in_arg) {
   if (k_cam.camera_parent_is_word()) {
     k_cam.fix_group_camera(k_start, k_end);
   }
-  k_cam.export_file(k_start, k_end);
+  reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
+  l_export.begin_end_time = std::make_pair(k_start, k_end);
+  k_cam.export_file(
+      k_start,
+      k_end,
+      l_export
+  );
 
   return k_s;
 }
