@@ -102,7 +102,7 @@ MStatus create_qcloth_assets::redoIt() {
     if (p_i->coll_p.any_of<qcloth_shape_n::shape_list>() && !p_i->cloth_list.empty())
       qcloth_shape::add_collider(p_i->coll_p);
     qcloth_shape::sort_group();
-  } catch (const doodle_error& in_err) {
+  } catch (const std::runtime_error& in_err) {
     filter_create_node(l_org_list);
     delete_node();
     return {MStatus::kFailure};

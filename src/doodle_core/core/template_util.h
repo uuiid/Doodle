@@ -34,12 +34,5 @@ struct is_handle_container<T, std::enable_if_t<std::is_same_v<entt::handle, type
 /// to boost::less_pointees_t;
 
 }  // namespace doodle::details
-namespace doodle::conv {
-template <typename T>
-class form_to {
-  template <typename Form_T>
-  T operator()(const Form_T& in) {
-    return T{in};
-  }
-};
+
 }  // namespace doodle::conv

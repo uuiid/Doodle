@@ -8,14 +8,11 @@
 
 #include <maya/MStatus.h>
 #include <maya/MString.h>
-
+#include <doodle_core/lib_warp/enum_template_tool.h>
 namespace doodle::maya_plug {
-class maya_error : public doodle_error {
+class maya_error : public std::system_error {
  public:
-  explicit maya_error(const std::string& err)
-      : doodle_error(err){};
-  explicit maya_error(const MString& in_m_string)
-      : doodle_error(in_m_string.asUTF8()){};
+  using std::system_error::system_error;
 };
 
 class DOODLE_CORE_API maya_category : public bsys::error_category {
@@ -23,13 +20,27 @@ class DOODLE_CORE_API maya_category : public bsys::error_category {
   const char* name() const noexcept;
 
   std::string message(int ev) const;
-  char const* message(int ev, char* buffer, std::size_t len) const noexcept;
-
-  bool failed(int ev) const noexcept;
 
   bsys::error_condition default_error_condition(int ev) const noexcept;
 
   static const bsys::error_category& get();
 };
 
+bsys::error_code make_error(const MStatus::MStatusCode& in_code) {
+  return std::error_code{enum_to_num(in_code), maya_category::get()};
+};
+
 }  // namespace doodle::maya_plug
+
+namespace boost::system {
+
+template <>
+struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {
+};
+}  // namespace boost::system
+namespace std {
+
+template <>
+struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {
+};
+}  // namespace std

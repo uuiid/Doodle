@@ -168,7 +168,7 @@ void sequence_to_blend_shape_ref_comm::add_to_parent() {
   for (auto&& ctx : p_i->blend_list) {
     try {
       ctx.attach_parent();
-    } catch (const doodle_error& error) {
+    } catch (const std::runtime_error& error) {
       DOODLE_LOG_WARN("由于错误 {} 取消附加", error);
     }
   }
@@ -194,7 +194,7 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
     this->create_anim();
     this->add_to_parent();
     this->delete_node();
-  } catch (const doodle_error& err) {
+  } catch (const std::runtime_error& err) {
     DOODLE_LOG_WARN(boost::diagnostic_information(err));
     return MStatus::kFailure;
   }

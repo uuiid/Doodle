@@ -99,9 +99,11 @@ class d_str {
 /**
  * @brief 检查maya的返回状态
  */
-#define DOODLE_MAYA_CHICK(in_status) \
-  if (!in_status)                    \
-    throw_exception(maya_error{in_status.errorString()})
+#define DOODLE_MAYA_CHICK(in_status)      \
+  if (!in_status)                         \
+  throw_exception(maya_error{             \
+      make_error(in_status.statusCode()), \
+      fmt::to_string(in_status)})
 
 void open_windows();
 
