@@ -15,7 +15,7 @@ class maya_error : public std::system_error {
   using std::system_error::system_error;
 };
 
-class DOODLE_CORE_API maya_category : public bsys::error_category {
+class maya_category : public bsys::error_category {
  public:
   const char* name() const noexcept;
 

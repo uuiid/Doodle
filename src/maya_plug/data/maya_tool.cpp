@@ -110,7 +110,7 @@ MObject get_first_mesh(const MObject& in_node) {
     l_r = i.currentItem(&k_s);
     break;
   }
-  DOODLE_CHICK(!l_r.isNull(), maya_error{"没有在依赖网格中寻找到mesh节点"s});
+  DOODLE_CHICK(!l_r.isNull(), doodle_error{"没有在依赖网格中寻找到mesh节点"s});
   return l_r;
 }
 MObject get_shape(const MObject& in_object) {
@@ -128,7 +128,7 @@ MObject get_shape(const MObject& in_object) {
     k_r = l_path.node(&k_s);
     DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到形状"s});
+  DOODLE_CHICK(!k_r.isNull(), doodle_error{"没有找到形状"s});
   return k_r;
 }
 MObject get_transform(const MObject& in_object) {
@@ -144,7 +144,7 @@ MObject get_transform(const MObject& in_object) {
     k_r = l_path.transform(&k_s);
     DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_CHICK(!k_r.isNull(), maya_error{"没有找到变换"s});
+  DOODLE_CHICK(!k_r.isNull(), doodle_error{"没有找到变换"s});
   return k_r;
 }
 void add_child(const MObject& in_praent, MObject& in_child) {
@@ -169,7 +169,7 @@ void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
 void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj);
-  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"s});
+  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), doodle_error{"没有找到着色集"s});
   MFnSet l_set{k_mat, &l_s};
   DOODLE_MAYA_CHICK(l_s);
   l_set.addMember(in_object);
@@ -177,7 +177,7 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
 void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj.node());
-  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), maya_error{"没有找到着色集"s});
+  DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), doodle_error{"没有找到着色集"s});
   MFnSet l_set{k_mat, &l_s};
   DOODLE_MAYA_CHICK(l_s);
   l_set.addMember(in_obj);

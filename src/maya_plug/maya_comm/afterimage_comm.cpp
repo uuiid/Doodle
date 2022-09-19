@@ -69,13 +69,13 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
     k_s = k_list.add(k_r[0], true);
 
-    DOODLE_CHICK(!k_list.isEmpty(&k_s), maya_error{"没有找到合并对象"s});
+    DOODLE_CHICK(!k_list.isEmpty(&k_s), doodle_error{"没有找到合并对象"s});
 
     k_s = k_list.getDependNode(0, p_i->p_util_obj);
     DOODLE_MAYA_CHICK(k_s);
     k_s = k_list.getDagPath(0, k_path);
     DOODLE_MAYA_CHICK(k_s);
-    DOODLE_CHICK(p_i->p_util_obj.hasFn(MFn::kTransform), maya_error{" 没有找到符合的 Transform 节点"s});
+    DOODLE_CHICK(p_i->p_util_obj.hasFn(MFn::kTransform), doodle_error{" 没有找到符合的 Transform 节点"s});
   } else {
     MObject k_one_obj{};
     k_s = p_i->p_copy_list.getDependNode(0, k_one_obj);
