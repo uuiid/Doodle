@@ -65,7 +65,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       }
 
     } catch (const maya_error& error) {
-      DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点")
+      DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点");
     }
   }
 

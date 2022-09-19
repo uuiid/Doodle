@@ -320,7 +320,7 @@ void project_edit::render() {
       p_i->err_str.clear();
     } catch (const std::regex_error& error) {
       p_i->err_str = fmt::format("错误的正则表达式 {}", p_i->regex_.data);
-      DOODLE_LOG_ERROR(p_i->err_str)
+      DOODLE_LOG_ERROR(p_i->err_str);
     }
   };
   if (!p_i->err_str.empty()) {

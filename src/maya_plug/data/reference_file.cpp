@@ -414,7 +414,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
       export_divide_map{};
   std::vector<MDagPath> export_path;
   if (k_cfg.use_only_sim_cloth) {
-    DOODLE_LOG_INFO("只导出解算的物体")
+    DOODLE_LOG_INFO("只导出解算的物体");
     export_path = this->qcloth_export_model();
   } else {
     MDagPath k_root{};
@@ -494,7 +494,7 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
     k_s = k_select.add(d_str{fmt::format("{}:*{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
   } catch (const maya_error &err) {
-    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
+    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return {};
   }
   reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
@@ -778,7 +778,7 @@ FSys::path reference_file::export_abc(
   MStatus k_s{};
 
   if (in_export_obj.isEmpty()) {
-    DOODLE_LOG_INFO("没有找到导出对象")
+    DOODLE_LOG_INFO("没有找到导出对象");
     return out_;
   }
   std::vector<std::string> l_export_paths;
@@ -826,7 +826,7 @@ FSys::path reference_file::export_fbx(
   auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
 
   if (in_export_obj.isEmpty()) {
-    DOODLE_LOG_WARN("没有选中的物体, 不进行输出")
+    DOODLE_LOG_WARN("没有选中的物体, 不进行输出");
     return out_;
   }
 

@@ -337,7 +337,7 @@ bool maya_camera::camera_parent_is_word() {
   l_s = l_node.getPath(l_path);
   DOODLE_MAYA_CHICK(l_s);
 
-  DOODLE_LOG_INFO("检查相机级数为 {}", l_path.length())
+  DOODLE_LOG_INFO("检查相机级数为 {}", l_path.length());
   return l_path.length() > 1;
 }
 

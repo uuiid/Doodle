@@ -59,7 +59,7 @@ bool create_hud_node::operator()() const {
 
     DOODLE_LOG_INFO("完成创建节点 doodle_hud");
   } else {
-    DOODLE_LOG_WARN("节点(doodle_hud)已经存在， 不需要重复创建")
+    DOODLE_LOG_WARN("节点(doodle_hud)已经存在， 不需要重复创建");
   }
   return true;
 }

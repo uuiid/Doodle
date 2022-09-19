@@ -213,7 +213,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
 
   std::string l_sim_name = d_str{l_node.name(&l_s)};
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name)
+  DOODLE_LOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name);
   /// 这个设置包裹
   MStringArray l_blend{};
   l_s = MGlobal::executeCommand(d_str{fmt::format(R"(blendShape -automatic {} {};)", l_sim_name, l_aim_name)}, l_blend);

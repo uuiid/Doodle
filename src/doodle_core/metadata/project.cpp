@@ -85,7 +85,7 @@ void project::init_name() {
     auto k_s_front = k_pingYin.toEn(s).front();
     str.append(&k_s_front, 1);
   }
-  DOODLE_LOG_INFO(str)
+  DOODLE_LOG_INFO(str);
   p_shor_str = boost::algorithm::to_upper_copy(str.substr(0, 2));
 }
 bool project::operator==(const project& in_rhs) const {

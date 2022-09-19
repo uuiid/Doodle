@@ -237,7 +237,7 @@ if 'leukocyte' in globals():
     auto k_varc = k_maya_script / "vaccine.pyc";
     MString k_str{};
     if (FSys::exists(k_user)) {
-      DOODLE_LOG_INFO("删除 {}", k_user)
+      DOODLE_LOG_INFO("删除 {}", k_user);
       FSys::remove(k_user);
     }
     if (FSys::exists(k_var)) {

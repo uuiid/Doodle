@@ -86,7 +86,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg, &k_s};
 
-  DOODLE_LOG_INFO("开始清除引用实体")
+  DOODLE_LOG_INFO("开始清除引用实体");
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
 
@@ -118,7 +118,7 @@ MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
   try {
     k_j = nlohmann::json::parse(k_j_str);
   } catch (const nlohmann::json::exception& error) {
-    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", boost::diagnostic_information(error))
+    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", boost::diagnostic_information(error));
   }
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     auto l_i = make_handle(k_e);
@@ -168,7 +168,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   );
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path)
+    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path);
     /// \brief 生成需要的 布料实体
     qcloth_shape::create(make_handle(k_e));
     /// \brief 添加碰撞体
@@ -180,7 +180,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
     sim_cover_attr::cover_qcloth_attr(make_handle(k_e));
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
-    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
+    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
     k_qs.set_cache_folder();
   }
 
@@ -280,7 +280,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
       }
     }
   } else {
-    DOODLE_LOG_INFO("全部的引用文件导出")
+    DOODLE_LOG_INFO("全部的引用文件导出");
     for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
       DOODLE_LOG_INFO("开始导出 {}", k_r.path);
       reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
@@ -330,7 +330,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
 
   MObject l_object{};
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path)
+    DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path);
     /// \brief 生成需要的 布料实体
     if (!l_list.isEmpty())
       for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
@@ -342,7 +342,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
       qcloth_shape::create(make_handle(k_e));
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
-    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹")
+    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
     k_qs.set_cache_folder(g_reg()->ctx().at<user>().get_name());
   }
   return l_status;

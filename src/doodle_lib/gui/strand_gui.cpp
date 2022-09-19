@@ -20,13 +20,15 @@ boost::asio::execution_context& strand_gui::context() const BOOST_ASIO_NOEXCEPT 
   return executor_.context();
 }
 void strand_gui::on_work_started() const BOOST_ASIO_NOEXCEPT {
-  DOODLE_LOG_INFO("开始工作")
+  DOODLE_LOG_INFO("开始工作");
 }
 void strand_gui::on_work_finished() const BOOST_ASIO_NOEXCEPT {
-  DOODLE_LOG_INFO("结束工作工作")
+  DOODLE_LOG_INFO("结束工作工作");
 }
-void strand_gui::stop(){
-    DOODLE_LOG_INFO("strand_gui::stop")} strand_gui::inner_executor_type strand_gui::get_inner_executor() const BOOST_ASIO_NOEXCEPT {
+void strand_gui::stop() {
+  DOODLE_LOG_INFO("strand_gui::stop");
+}
+strand_gui::inner_executor_type strand_gui::get_inner_executor() const BOOST_ASIO_NOEXCEPT {
   return executor_;
 }
 
