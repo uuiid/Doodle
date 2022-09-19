@@ -101,6 +101,7 @@ class project_edit::impl {
   gui_cache<bool> abc_export_add_frame_range{"导出附加范围"s, true};
 
   gui_cache<bool> use_write_metadata{"写出元数据", true};
+  gui_cache<std::string> maya_camera_suffix{"相机后缀"s, "camera"s};
 
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
 
@@ -163,6 +164,7 @@ class project_edit::impl {
     abc_export_extract_reference_name() = l_config.abc_export_extract_reference_name;
     abc_export_extract_scene_name()     = l_config.abc_export_extract_scene_name;
     abc_export_add_frame_range()        = l_config.abc_export_add_frame_range;
+    maya_camera_suffix()                = l_config.maya_camera_suffix;
   }
 
   project_config::base_config get_config_() {
@@ -217,6 +219,7 @@ class project_edit::impl {
     l_c.abc_export_extract_reference_name = abc_export_extract_reference_name();
     l_c.abc_export_extract_scene_name     = abc_export_extract_scene_name();
     l_c.abc_export_add_frame_range        = abc_export_add_frame_range();
+    l_c.maya_camera_suffix                = maya_camera_suffix();
 
     return l_c;
   }
@@ -292,6 +295,8 @@ void project_edit::render() {
             });
         });
       };
+
+  imgui::InputText(*p_i->maya_camera_suffix, &(p_i->maya_camera_suffix));
 
   ImGui::Text("导出abc配置:");
   ImGui::Checkbox(*p_i->abc_arg_uvWrite, &p_i->abc_arg_uvWrite);

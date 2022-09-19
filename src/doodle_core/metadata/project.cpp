@@ -122,7 +122,8 @@ project_config::base_config::base_config()
            std::make_pair(R"(sc_\d+)"s, 5),
            std::make_pair(R"(^[A-Z]+_)"s, 2),
            std::make_pair(R"(_\d+_\d+)"s, 2)}
-      ) {}
+      ),
+      maya_camera_suffix("camera") {}
 
 void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["find_icon_regex"]                   = p.find_icon_regex;
@@ -149,6 +150,7 @@ void project_config::to_json(nlohmann::json& j, const base_config& p) {
   j["abc_export_extract_reference_name"] = p.abc_export_extract_reference_name;
   j["abc_export_extract_scene_name"]     = p.abc_export_extract_scene_name;
   j["abc_export_add_frame_range"]        = p.abc_export_add_frame_range;
+  j["maya_camera_suffix"]                = p.maya_camera_suffix;
 }
 void project_config::from_json(const nlohmann::json& j, base_config& p) {
   if (j.contains("find_icon_regex"))
@@ -195,6 +197,8 @@ void project_config::from_json(const nlohmann::json& j, base_config& p) {
     j.at("abc_export_extract_scene_name").get_to(p.abc_export_extract_scene_name);
   if (j.contains("abc_export_add_frame_range"))
     j.at("abc_export_add_frame_range").get_to(p.abc_export_add_frame_range);
+  if (j.contains("maya_camera_suffix"))
+    j.at("maya_camera_suffix").get_to(p.maya_camera_suffix);
 }
 
 bool project_config::base_config::match_icon_extensions(const FSys::path& in_path) const {

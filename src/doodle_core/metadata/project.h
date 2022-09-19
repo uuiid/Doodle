@@ -155,6 +155,8 @@ class DOODLE_CORE_API base_config {
   std::string abc_export_extract_scene_name{};
   /// \brief 添加帧范围后缀
   bool abc_export_add_frame_range{true};
+  /// \brief camera 文件名称后缀
+  std::string maya_camera_suffix;
 
   base_config();
 
