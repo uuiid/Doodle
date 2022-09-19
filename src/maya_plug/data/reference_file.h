@@ -18,8 +18,6 @@ class generate_file_path_base
   virtual FSys::path get_path() const                               = 0;
   virtual FSys::path get_name(const std::string &in_ref_name) const = 0;
 
-  FSys::path operator()(const reference_file &in_ref) const;
-
   std::string get_extract_scene_name(const std::string &in_name) const;
   std::string get_extract_reference_name(const std::string &in_name) const;
 
@@ -30,6 +28,7 @@ class generate_file_path_base
   std::optional<std::string> add_external_string;
 
   std::pair<MTime, MTime> begin_end_time;
+  FSys::path operator()(const reference_file &in_ref) const;
   [[nodiscard("")]] bool operator==(const generate_file_path_base &in) const noexcept;
   [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
 };
@@ -37,8 +36,8 @@ class generate_file_path_base
 class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>,
                                public generate_file_path_base {
  protected:
-  virtual FSys::path get_path() const override;
-  virtual FSys::path get_name(const std::string &in_ref_name) const override;
+  [[nodiscard("")]] FSys::path get_path() const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
   friend struct fmt::formatter<generate_file_path_base>;
 
  public:
@@ -47,8 +46,8 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
   );
   virtual ~generate_abc_file_path();
 
-  [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
-  [[nodiscard("")]] bool operator<(const generate_abc_file_path &in) const noexcept;
+  //  [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
+  //  [[nodiscard("")]] bool operator<(const generate_abc_file_path &in) const noexcept;
 };
 
 class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>,
@@ -60,8 +59,8 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
   bool is_camera_attr{};
 
  protected:
-  virtual FSys::path get_path() const override;
-  virtual FSys::path get_name(const std::string &in_ref_name) const override;
+  [[nodiscard("")]] FSys::path get_path() const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
 
  public:
   explicit generate_fbx_file_path(
@@ -122,7 +121,12 @@ class reference_file {
    * @param in_export_obj 需要导出的选中列表
    * @return 导出文件的路径
    */
-  FSys::path export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const;
+  FSys::path export_fbx(
+      const MTime &in_start,
+      const MTime &in_end,
+      const MSelectionList &in_export_obj,
+      const reference_file_ns::generate_fbx_file_path &in_fbx_name
+  ) const;
 
  public:
   /**
@@ -285,8 +289,10 @@ struct formatter<
     return fmt::format_to(
         ctx.out(),
         "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
-        in_.extract_scene_name, in_.extract_reference_name,
-        in_.use_add_range, in_.add_external_string
+        in_.extract_scene_name,
+        in_.extract_reference_name,
+        in_.use_add_range,
+        in_.add_external_string
     );
   }
 };

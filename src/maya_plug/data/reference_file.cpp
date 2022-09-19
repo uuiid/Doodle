@@ -158,22 +158,37 @@ FSys::path generate_abc_file_path::get_name(
   return FSys::path{l_name};
 }
 
-bool generate_abc_file_path::operator==(
-    const generate_abc_file_path &in
-) const noexcept {
-  return *this == in;
-}
-
-bool generate_abc_file_path::operator<(
-    const generate_abc_file_path &in
-) const noexcept {
-  return *this < in;
-}
+// bool generate_abc_file_path::operator==(
+//     const generate_abc_file_path &in
+//) const noexcept {
+//   return *this == in;
+// }
+//
+// bool generate_abc_file_path::operator<(
+//     const generate_abc_file_path &in
+//) const noexcept {
+//   return *this < in;
+// }
 
 generate_abc_file_path::~generate_abc_file_path() = default;
 
+generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in)
+    : generate_file_path_base() {
+  auto &l_cong           = in.ctx().at<project_config::base_config>();
+  camera_suffix          = l_cong.maya_camera_suffix;
+  extract_reference_name = l_cong.abc_export_extract_reference_name;
+  extract_scene_name     = l_cong.abc_export_extract_scene_name;
+  use_add_range          = l_cong.abc_export_add_frame_range;
+}
+
 FSys::path generate_fbx_file_path::get_path() const {
-  return maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
+  auto k_path = maya_file_io::work_path(
+      FSys::path{"fbx"} / maya_file_io::get_current_path().stem()
+  );
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  return k_path;
 }
 FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) const {
   auto l_name =
@@ -197,15 +212,12 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
 
   return FSys::path{l_name};
 }
-generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in)
-    : generate_file_path_base() {
-  auto &l_cong  = in.ctx().at<project_config::base_config>();
-  camera_suffix = l_cong.maya_camera_suffix;
-}
+
 void generate_fbx_file_path::is_camera(bool in_is_camera) {
   is_camera_attr = in_is_camera;
 }
 generate_fbx_file_path::~generate_fbx_file_path() = default;
+
 }  // namespace reference_file_ns
 
 reference_file::reference_file()
@@ -485,8 +497,9 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出")
     return {};
   }
-
-  return export_fbx(in_start, in_end, k_select);
+  reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
+  l_export.begin_end_time = std::make_pair(in_start, in_end);
+  return export_fbx(in_start, in_end, k_select, l_export);
 }
 bool reference_file::has_node(const MSelectionList &in_list) {
   chick_mobject();
@@ -669,10 +682,12 @@ entt::handle reference_file::export_file_select(
     } break;
     case export_type::fbx: {
       l_type = export_file_info::export_type::fbx;
-      l_path = export_fbx(in_arg.start_p, in_arg.end_p, in_list);
+      reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
+      l_export.begin_end_time = std::make_pair(in_arg.start_p, in_arg.end_p);
+      l_path                  = export_fbx(in_arg.start_p, in_arg.end_p, in_list, l_export);
     } break;
   }
-  if (!l_path.empty()) {
+  if (!l_path.empty() && g_reg()->ctx().at<project_config::base_config>().use_write_metadata) {
     out_ = make_handle();
     FSys::path l_ref_file{this->path};
     if (l_ref_file.empty()) {
@@ -797,7 +812,12 @@ AbcExport -j "-frameRange {} {} {} -dataFormat ogawa {} -file {}";
   DOODLE_MAYA_CHICK(k_s);
   return k_path;
 }
-FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj) const {
+FSys::path reference_file::export_fbx(
+    const MTime &in_start,
+    const MTime &in_end,
+    const MSelectionList &in_export_obj,
+    const reference_file_ns::generate_fbx_file_path &in_fbx_name
+) const {
   FSys::path out_{};
 
   DOODLE_CHICK(is_loaded(), doodle_error{"需要导出fbx的引用必须加载"});
@@ -813,14 +833,9 @@ FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end
   k_s = MGlobal::setActiveSelectionList(in_export_obj);
   DOODLE_MAYA_CHICK(k_s);
 
-  auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
-
-  if (!FSys::exists(k_file_path))
-    FSys::create_directories(k_file_path);
-
   this->bake_results(in_start, in_end);
 
-  k_file_path /= fmt::format("{}_{}_{}-{}.fbx", maya_file_io::get_current_path().stem().generic_string(), get_namespace(), in_start.value(), in_end.value());
+  auto k_file_path = in_fbx_name(*this);
   DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
 
   auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());

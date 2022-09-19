@@ -5,7 +5,9 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <maya/MDagPath.h>
 namespace doodle::maya_plug {
-
+namespace reference_file_ns {
+class generate_fbx_file_path;
+}
 class maya_camera {
   void chick() const;
 
@@ -39,7 +41,11 @@ class maya_camera {
    * @return 如果dag path 无效则返回false
    * @throw maya_error maya返回值错误
    */
-  bool export_file(const MTime& in_start, const MTime& in_end);
+  bool export_file(
+      const MTime& in_start,
+      const MTime& in_end,
+      const reference_file_ns::generate_fbx_file_path& in_name
+  );
   /**
    * @brief 烘培动画关键帧
    * @param in_start 开始时间

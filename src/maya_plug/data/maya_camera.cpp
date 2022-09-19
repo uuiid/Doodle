@@ -18,6 +18,7 @@
 
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/reference_file.h>
 #include <regex>
 namespace doodle::maya_plug {
 
@@ -37,7 +38,10 @@ void maya_camera::chick() const {
   DOODLE_MAYA_CHICK(k_s);
 }
 
-bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
+bool maya_camera::export_file(
+    const MTime& in_start, const MTime& in_end,
+    const reference_file_ns::generate_fbx_file_path& in_name
+) {
   chick();
 
   MStatus k_s{};
@@ -47,12 +51,11 @@ bool maya_camera::export_file(const MTime& in_start, const MTime& in_end) {
   k_s = MGlobal::setActiveSelectionList(k_select);
   DOODLE_MAYA_CHICK(k_s);
   /// \brief 开始创建路径并进行导出
-  auto k_file_path = maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
-  if (!FSys::exists(k_file_path))
-    FSys::create_directories(k_file_path);
-  k_file_path /= fmt::format("{}_camera_{}-{}.fbx", maya_file_io::get_current_path().stem().generic_string(), in_start.value(), in_end.value());
-  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
-  k_s         = MGlobal::executeCommand(d_str{k_comm});
+  auto l_name = in_name;
+  l_name.is_camera(true);
+  auto k_file_path = l_name({});
+  auto k_comm      = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
+  k_s              = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
   k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
