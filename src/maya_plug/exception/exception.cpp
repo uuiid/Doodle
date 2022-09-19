@@ -15,7 +15,7 @@ bsys::error_condition maya_category::default_error_condition(int ev) const noexc
   return error_category::default_error_condition(ev);
 }
 const bsys::error_category& maya_category::get() {
-  maya_category install{};
+  static maya_category install{};
   return install;
 }
 }  // namespace doodle::maya_plug
