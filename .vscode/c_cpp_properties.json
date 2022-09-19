@@ -45,10 +45,9 @@
             "includePath": [
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/src/doodle_exe",
+                "${workspaceFolder}/src/maya_plug",
                 "${workspaceFolder}/src/doodle_lib",
                 "E:/vcpkg/installed/x64-windows/include",
-                "${workspaceFolder}/build/Ninja_debug/configure",
-                "${workspaceFolder}/src/doodle_exe/maya_plug",
                 "${workspaceFolder}/build/Ninja_debug/_cmrc/include/cmrc",
                 "C:/Program Files/Autodesk/Maya2020/include"
             ],
