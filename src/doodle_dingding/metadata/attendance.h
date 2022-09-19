@@ -6,6 +6,7 @@
 
 #include <doodle_dingding/doodle_dingding_fwd.h>
 #include <doodle_core/core/chrono_.h>
+#include <doodle_core/lib_warp/std_fmt_optional.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <nlohmann/json.hpp>
 
@@ -162,3 +163,46 @@ class DOODLE_DINGDING_API day_data {
   );
 };
 }  // namespace doodle::dingding::attendance
+
+namespace fmt {
+template <>
+struct formatter<::doodle::dingding::attendance::day_data> : formatter<string_view> {
+  template <typename FormatContext>
+  auto format(
+      const ::doodle::dingding::attendance::day_data& in_,
+      FormatContext& ctx
+  ) const -> decltype(ctx.out()) {
+    return fmt::format_to(
+        ctx.out(),
+        "sourceType {}"
+        "baseCheckTime {}"
+        "userCheckTime {}"
+        "procInstId {}"
+        "approveId {}"
+        "locationResult {}"
+        "timeResult {}"
+        "checkType {}"
+        "userId {}"
+        "workDate {}"
+        "recordId {}"
+        "planId {}"
+        "groupId {}"
+        "id {}",
+        in_.sourceType,
+        in_.baseCheckTime,
+        in_.userCheckTime,
+        in_.procInstId,
+        in_.approveId,
+        in_.locationResult,
+        in_.timeResult,
+        in_.checkType,
+        in_.userId,
+        in_.workDate,
+        in_.recordId,
+        in_.planId,
+        in_.groupId,
+        in_.id
+    );
+  }
+};
+}  // namespace fmt
