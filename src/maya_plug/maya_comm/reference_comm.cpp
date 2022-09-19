@@ -185,17 +185,17 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   }
 
   /// \brief 在这里我们保存引用
+  auto k_save_file = maya_file_io::work_path("ma");
+  if (!FSys::exists(k_save_file)) {
+    FSys::create_directories(k_save_file);
+  }
+  k_save_file /= maya_file_io::get_current_path().filename();
   try {
-    auto k_save_file = maya_file_io::work_path("ma");
-    if (!FSys::exists(k_save_file)) {
-      FSys::create_directories(k_save_file);
-    }
-    k_save_file /= maya_file_io::get_current_path().filename();
     k_s = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
     DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
     DOODLE_MAYA_CHICK(k_s);
-  } catch (maya_error& error) {
-    DOODLE_LOG_WARN("无法保存文件: {}", error);
+  } catch (const maya_error& error) {
+    DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
   }
 
   for (MTime k_t = k_start; k_t <= k_end; ++k_t) {
