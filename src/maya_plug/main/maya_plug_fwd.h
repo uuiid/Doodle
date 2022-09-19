@@ -101,7 +101,7 @@ class d_str {
  */
 #define DOODLE_MAYA_CHICK(in_status) \
   if (!in_status)                    \
-    throw_exception(maya_error{in_status.errorString()});
+    throw_exception(maya_error{in_status.errorString()})
 
 void open_windows();
 
