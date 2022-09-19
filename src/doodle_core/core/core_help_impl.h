@@ -51,13 +51,6 @@ void destroy_handle(Container_ &in_handles) {
   in_handles.clear();
 }
 
-class DOODLE_CORE_API null_fun_t {
- public:
-  null_fun_t() = default;
-  template <class in_class>
-  inline void operator()(in_class &in){};
-};
-
 namespace details {
 /**
  * @brief 不可复制类

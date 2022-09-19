@@ -18,7 +18,6 @@ target_sources(
         PRIVATE
         core_set.cpp
         core_sig.cpp
-        core_fun_util.cpp
         doodle_lib.cpp
         status_info.cpp
         init_register.cpp
