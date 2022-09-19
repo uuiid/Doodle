@@ -8,15 +8,38 @@
 namespace doodle::maya_plug {
 class reference_file;
 namespace reference_file_ns {
-class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path> {
+class generate_file_path_base
+    : boost::less_than_comparable<generate_file_path_base> {
+ protected:
   std::string extract_reference_name;
   std::string extract_scene_name;
   bool use_add_range;
-  friend struct fmt::formatter<generate_abc_file_path>;
 
+  virtual FSys::path get_path() const                               = 0;
+  virtual FSys::path get_name(const std::string &in_ref_name) const = 0;
+
+  FSys::path operator()(const reference_file &in_ref) const;
+
+  std::string get_extract_scene_name(const std::string &in_name) const;
+  std::string get_extract_reference_name(const std::string &in_name) const;
+
+ public:
+  generate_file_path_base()          = default;
+  virtual ~generate_file_path_base() = default;
+
+  std::optional<std::string> add_external_string;
+
+  std::pair<MTime, MTime> begin_end_time;
+  [[nodiscard("")]] bool operator==(const generate_file_path_base &in) const noexcept;
+  [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
+};
+
+class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>,
+                               public generate_file_path_base {
  protected:
-  virtual FSys::path get_path() const;
-  virtual FSys::path get_name(const std::string &in_ref_name) const;
+  virtual FSys::path get_path() const override;
+  virtual FSys::path get_name(const std::string &in_ref_name) const override;
+  friend struct fmt::formatter<generate_file_path_base>;
 
  public:
   explicit generate_abc_file_path(
@@ -24,15 +47,32 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
   );
   virtual ~generate_abc_file_path();
 
-  std::optional<std::string> add_external_string;
-
-  std::pair<MTime, MTime> begin_end_time;
-
   [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
   [[nodiscard("")]] bool operator<(const generate_abc_file_path &in) const noexcept;
-
-  FSys::path operator()(const reference_file &in_ref) const;
 };
+
+class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>,
+                               public generate_file_path_base {
+  friend struct fmt::formatter<generate_fbx_file_path>;
+
+ private:
+  std::string camera_suffix{};
+  bool is_camera_attr{};
+
+ protected:
+  virtual FSys::path get_path() const override;
+  virtual FSys::path get_name(const std::string &in_ref_name) const override;
+
+ public:
+  explicit generate_fbx_file_path(
+      const entt::registry &in
+  );
+
+  void is_camera(bool in_is_camera);
+
+  virtual ~generate_fbx_file_path();
+};
+
 }  // namespace reference_file_ns
 
 /**

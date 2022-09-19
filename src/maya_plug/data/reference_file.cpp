@@ -41,51 +41,48 @@ namespace doodle::maya_plug {
 
 namespace reference_file_ns {
 
-generate_abc_file_path::generate_abc_file_path(
-    const entt::registry &in
-) : extract_reference_name(),
-    extract_scene_name() {
-  auto &l_cong           = in.ctx().at<project_config::base_config>();
-
-  extract_reference_name = l_cong.abc_export_extract_reference_name;
-  extract_scene_name     = l_cong.abc_export_extract_scene_name;
-  use_add_range          = l_cong.abc_export_add_frame_range;
-}
-
-FSys::path generate_abc_file_path::operator()(
+FSys::path generate_file_path_base::operator()(
     const reference_file &in_ref
 ) const {
   return get_path() / get_name(in_ref.get_namespace());
 }
-FSys::path generate_abc_file_path::get_path() const {
-  auto k_path = maya_file_io::work_path(
-      FSys::path{"abc"} / maya_file_io::get_current_path().stem()
-  );
-  if (!exists(k_path)) {
-    create_directories(k_path);
-  }
-  return k_path;
+
+bool generate_file_path_base::operator==(
+    const generate_file_path_base &in
+) const noexcept {
+  return std::tie(
+             extract_reference_name,
+             extract_scene_name,
+             use_add_range,
+             add_external_string
+         ) ==
+         std::tie(
+             in.extract_reference_name,
+             in.extract_scene_name,
+             in.use_add_range,
+             in.add_external_string
+         );
 }
-FSys::path generate_abc_file_path::get_name(
-    const std::string &in_ref_name
-) const {
+
+bool generate_file_path_base::operator<(
+    const generate_file_path_base &in
+) const noexcept {
+  return std::tie(
+             extract_reference_name,
+             extract_scene_name,
+             use_add_range,
+             add_external_string
+         ) <
+         std::tie(
+             in.extract_reference_name,
+             in.extract_scene_name,
+             in.use_add_range,
+             in.add_external_string
+         );
+}
+std::string generate_file_path_base::get_extract_scene_name(const std::string &in_name) const {
   std::string l_scene_name{
-      maya_file_io::get_current_path().stem().generic_string()};
-  std::string l_ref_name{in_ref_name};
-
-  if (!extract_reference_name.empty()) {
-    try {
-      std::regex l_regex{extract_reference_name};
-      std::smatch k_match{};
-      const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
-      if (k_r && k_match.size() >= 2) {
-        l_ref_name = k_match[1].str();
-      }
-    } catch (const std::regex_error &in) {
-      DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", l_ref_name, extract_reference_name, in.what());
-    }
-  }
-
+      in_name};
   if (!extract_scene_name.empty()) {
     try {
       std::regex l_regex{extract_scene_name};
@@ -98,11 +95,52 @@ FSys::path generate_abc_file_path::get_name(
       DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", l_scene_name, extract_scene_name, in.what());
     }
   }
+  return l_scene_name;
+}
+std::string generate_file_path_base::get_extract_reference_name(const std::string &in_name) const {
+  std::string l_ref_name{in_name};
+  if (!extract_reference_name.empty()) {
+    try {
+      std::regex l_regex{extract_reference_name};
+      std::smatch k_match{};
+      const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
+      if (k_r && k_match.size() >= 2) {
+        l_ref_name = k_match[1].str();
+      }
+    } catch (const std::regex_error &in) {
+      DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", l_ref_name, extract_reference_name, in.what());
+    }
+  }
+  return l_ref_name;
+}
+
+generate_abc_file_path::generate_abc_file_path(
+    const entt::registry &in
+) : generate_file_path_base() {
+  auto &l_cong           = in.ctx().at<project_config::base_config>();
+
+  extract_reference_name = l_cong.abc_export_extract_reference_name;
+  extract_scene_name     = l_cong.abc_export_extract_scene_name;
+  use_add_range          = l_cong.abc_export_add_frame_range;
+}
+
+FSys::path generate_abc_file_path::get_path() const {
+  auto k_path = maya_file_io::work_path(
+      FSys::path{"abc"} / maya_file_io::get_current_path().stem()
+  );
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  return k_path;
+}
+FSys::path generate_abc_file_path::get_name(
+    const std::string &in_ref_name
+) const {
   auto l_name =
       fmt::format(
           "{}_{}"s,
-          l_scene_name,
-          l_ref_name
+          get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
+          get_extract_reference_name(in_ref_name)
       );
   if (add_external_string)
     l_name = fmt::format("{}_{}", l_name, *add_external_string);
@@ -123,38 +161,51 @@ FSys::path generate_abc_file_path::get_name(
 bool generate_abc_file_path::operator==(
     const generate_abc_file_path &in
 ) const noexcept {
-  return std::tie(
-             extract_reference_name,
-             extract_scene_name,
-             use_add_range,
-             add_external_string
-         ) ==
-         std::tie(
-             in.extract_reference_name,
-             in.extract_scene_name,
-             in.use_add_range,
-             in.add_external_string
-         );
+  return *this == in;
 }
 
 bool generate_abc_file_path::operator<(
     const generate_abc_file_path &in
 ) const noexcept {
-  return std::tie(
-             extract_reference_name,
-             extract_scene_name,
-             use_add_range,
-             add_external_string
-         ) <
-         std::tie(
-             in.extract_reference_name,
-             in.extract_scene_name,
-             in.use_add_range,
-             in.add_external_string
-         );
+  return *this < in;
 }
 
 generate_abc_file_path::~generate_abc_file_path() = default;
+
+FSys::path generate_fbx_file_path::get_path() const {
+  return maya_file_io::work_path("fbx") / maya_file_io::get_current_path().stem();
+}
+FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) const {
+  auto l_name =
+      fmt::format(
+          "{}_{}"s,
+          get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
+          is_camera_attr ? camera_suffix : get_extract_reference_name(in_ref_name)
+      );
+  if (add_external_string)
+    l_name = fmt::format("{}_{}", l_name, *add_external_string);
+
+  if (use_add_range)
+    l_name = fmt::format(
+        "{}_{}-{}",
+        l_name,
+        begin_end_time.first.as(MTime::uiUnit()),
+        begin_end_time.second.as(MTime::uiUnit())
+    );
+
+  l_name += ".fbx";
+
+  return FSys::path{l_name};
+}
+generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in)
+    : generate_file_path_base() {
+  auto &l_cong  = in.ctx().at<project_config::base_config>();
+  camera_suffix = l_cong.maya_camera_suffix;
+}
+void generate_fbx_file_path::is_camera(bool in_is_camera) {
+  is_camera_attr = in_is_camera;
+}
+generate_fbx_file_path::~generate_fbx_file_path() = default;
 }  // namespace reference_file_ns
 
 reference_file::reference_file()
