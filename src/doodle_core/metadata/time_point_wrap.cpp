@@ -163,6 +163,27 @@ time_point_wrap& time_point_wrap::operator--() {
   p_i->zoned_time_ = time_point{--get_sys_time().time_since_epoch()};
   return *this;
 }
+time_point_wrap::operator std::tm() const {
+  std::tm l_tm{};
+  auto l_com    = compose();
+  l_tm.tm_year  = l_com.year - 1900;  /// 年份减去 1900
+  l_tm.tm_mon   = l_com.month;
+  l_tm.tm_mday  = l_com.day;
+  /// 时分秒
+  l_tm.tm_hour  = l_com.hours;
+  l_tm.tm_min   = l_com.minutes;
+  l_tm.tm_sec   = l_com.seconds;
+  /// 星期
+  l_tm.tm_wday  = boost::numeric_cast<std::int32_t>(get_week_int());
+
+  auto l_com2   = compose_1();
+
+  /// 当年的天数
+  auto l_yday   = l_com2.y_m_d - chrono::local_days{chrono::year{l_com.year} / chrono::month{} / chrono::day{}};
+  l_tm.tm_yday  = l_yday.count();
+  l_tm.tm_isdst = -1;  /// 夏令时标志。如果 DST 生效，则值为正，如果没有，则为零，如果没有可用信息，则值为负
+  return l_tm;
+}
 
 time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r) {
   return in_l.get_sys_time() - in_r.get_sys_time();
