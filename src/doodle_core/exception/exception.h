@@ -43,7 +43,7 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
 
   std::string message(int ev) const final;
 
-  bsys::error_condition default_error_condition(int ev) const noexcept;
+  bsys::error_condition default_error_condition(int ev) const noexcept final;
 
   static const bsys::error_category& get();
 };
