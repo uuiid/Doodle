@@ -16,7 +16,6 @@ target_sources(
         season.h
         shot.h
         time_point_wrap.h
-        tree_adapter.h
         user.h
         redirection_path_info.h
         move_create.h
