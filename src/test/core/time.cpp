@@ -29,8 +29,21 @@ BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
   time_point_wrap l_time{2022, 5, 7, 3, 46, 55};
   BOOST_TEST_MESSAGE(fmt::format("{}", l_time));
   BOOST_TEST(fmt::format("{}", l_time) == "2022-05-07 11:46:55"s);
-  BOOST_TEST(fmt::format("{:S}", l_time) == "2022-05-07 3:46:55"s);
+  BOOST_TEST(fmt::format("{:S}", l_time) == "2022-05-07 03:46:55"s);
   BOOST_TEST(fmt::format("{:L}", l_time) == "2022-05-07 11:46:55"s);
+
+  BOOST_TEST(
+      fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time) ==
+      "2022/05/07 11:46:55"s
+  );
+  BOOST_TEST(
+      fmt::format("{:S%Y/%m/%d %H:%M:%S}", l_time) ==
+      "2022/05/07 03:46:55"s
+  );
+  BOOST_TEST(
+      fmt::format("{:L%Y/%m/%d %H:%M:%S}", l_time) ==
+      "2022/05/07 11:46:55"s
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
