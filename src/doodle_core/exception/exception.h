@@ -21,7 +21,8 @@ enum class error_enum : std::int32_t {
   file_copy_error,
   component_missing_error,
   invalid_handle,
-  file_not_exists
+  file_not_exists,
+  time_to_tm_error,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
