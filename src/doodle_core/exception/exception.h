@@ -32,9 +32,9 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
       : std::runtime_error(fmt::format(fmt_str, std::forward<Args>(in_args)...)){};
 };
 
-class DOODLE_CORE_API sys_error : public bsys::system_error {
+class DOODLE_CORE_API sys_error : public std::system_error {
  public:
-  using bsys::system_error::system_error;
+  using std::system_error::system_error;
 };
 
 class DOODLE_CORE_API doodle_category : public bsys::error_category {

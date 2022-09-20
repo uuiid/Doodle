@@ -17,11 +17,11 @@ class maya_error : public std::system_error {
 
 class maya_category : public bsys::error_category {
  public:
-  const char* name() const noexcept;
+  const char* name() const noexcept final;
 
-  std::string message(int ev) const;
+  std::string message(int ev) const final;
 
-  bsys::error_condition default_error_condition(int ev) const noexcept;
+  bsys::error_condition default_error_condition(int ev) const noexcept final;
 
   static const bsys::error_category& get();
 };
