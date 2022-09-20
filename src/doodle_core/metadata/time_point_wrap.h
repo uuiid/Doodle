@@ -172,6 +172,12 @@ class DOODLE_CORE_API time_point_wrap
   [[nodiscard("not ")]] explicit operator std::tm() const;
 
  private:
+  template <typename T1, typename Char, typename Enable>
+  friend struct fmt::formatter;
+
+  [[nodiscard("not ")]] time_point get_local_point_to_fmt_lib() const;
+  [[nodiscard("not ")]] time_point get_sys_point_to_fmt_lib() const;
+
   // 这里是序列化的代码
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const time_point_wrap& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
@@ -187,75 +193,69 @@ namespace fmt {
  *
  * @tparam 资产类
  */
-//template <typename Char>
-//struct formatter<::doodle::time_point_wrap, Char>
-//    : formatter<
-//          std::tm,
-//          Char> {
-//  using base_type = formatter<
-//      std::tm,
-//      Char>;
-//
-//  using fmt_point_type = formatter<
-//      ::doodle::time_point_wrap::time_point,
-//      Char>;
-//  FMT_CONSTEXPR formatter() {
-//    this->do_parse(
-//        fmt_point_type::default_specs,
-//        fmt_point_type::default_specs +
-//            sizeof(fmt_point_type::default_specs) / sizeof(Char)
-//    );
-//  }
-//  template <typename ParseContext>
-//  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
-//    return this->do_parse(ctx.begin(), ctx.end(), true);
-//  }
-//
-//  //  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-//  //    auto it = ctx.begin(), end = ctx.end();
-//  //
-//  //    while (it != end) {
-//  //      auto c = *it;
-//  //    }
-//  //
-//  //    return base_type::parse(ctx);
-//  //  }
-//
-//  /**
-//   * @brief 格式化函数
-//   *
-//   * @tparam FormatContext fmt上下文类
-//   * @param in_ 传入的资产类
-//   * @param ctx 上下文
-//   * @return decltype(ctx.out()) 基本上时 std::string
-//   */
-//  template <typename FormatContext>
-//  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-//    std::tm l_tm = (std::tm)in_;
-//    return base_type::format(
-//        l_tm,
-//        ctx
-//    );
-//  }
-//};
- template <>
- struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
-   /**
-    * @brief 格式化函数
-    *
-    * @tparam FormatContext fmt上下文类
-    * @param in_ 传入的资产类
-    * @param ctx 上下文
-    * @return decltype(ctx.out()) 基本上时 std::string
-    */
-   template <typename FormatContext>
-   auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-     return formatter<std::string_view>::format(
-         in_.show_str(),
-         ctx
-     );
-   }
- };
+template <typename Char>
+struct formatter<::doodle::time_point_wrap, Char>
+    : formatter<
+          ::doodle::time_point_wrap::time_point,
+          Char> {
+  using base_type = formatter<
+      ::doodle::time_point_wrap::time_point,
+      Char>;
+
+  char presentation = 'L';
+
+  //  template <typename ParseContext>
+  //  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+  //    return this->do_parse(ctx.begin(), ctx.end(), true);
+  //  }
+  template <typename ParseContext>
+  constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+    auto it = ctx.begin(), end = ctx.end();
+
+    if (it != end && (*it == 'L' || *it == 'S')) {
+      presentation = *it++;
+      ctx.advance_to(it);
+    }
+
+    return base_type::parse(ctx);
+  }
+
+  /**
+   * @brief 格式化函数
+   *
+   * @tparam FormatContext fmt上下文类
+   * @param in_ 传入的资产类
+   * @param ctx 上下文
+   * @return decltype(ctx.out()) 基本上时 std::string
+   */
+  template <typename FormatContext>
+  auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return base_type::format(
+        presentation == 'L'
+            ? in_.get_local_point_to_fmt_lib()
+            : in_.get_sys_point_to_fmt_lib(),
+        ctx
+    );
+  }
+};
+//  template <>
+//  struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
+//    /**
+//     * @brief 格式化函数
+//     *
+//     * @tparam FormatContext fmt上下文类
+//     * @param in_ 传入的资产类
+//     * @param ctx 上下文
+//     * @return decltype(ctx.out()) 基本上时 std::string
+//     */
+//    template <typename FormatContext>
+//    auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
+//      return formatter<std::string_view>::format(
+//          in_.show_str(),
+//          ctx
+//      );
+//    }
+//  };
 
 }  // namespace fmt
 
