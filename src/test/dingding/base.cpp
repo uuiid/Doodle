@@ -26,6 +26,7 @@ struct loop_fixtures {
       boost::asio::ssl::context::sslv23};
   doodle_lib l_lib{};
   void setup() {
+    doodle_lib::create_time_database();
     context_attr.set_verify_mode(boost::asio::ssl::verify_peer);
     context_attr.set_options(
         boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3
