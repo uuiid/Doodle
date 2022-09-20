@@ -106,8 +106,6 @@ class DOODLE_CORE_API time_point_wrap
    */
   [[nodiscard]] std::int32_t get_week_int() const;
 
-  [[nodiscard]] std::string show_str() const;
-
   static time_point_wrap current_month_end(const time_point_wrap& in_time);
   static time_point_wrap current_month_start(const time_point_wrap& in_time);
   /**
@@ -204,10 +202,6 @@ struct formatter<::doodle::time_point_wrap, Char>
 
   char presentation = 'L';
 
-  //  template <typename ParseContext>
-  //  FMT_CONSTEXPR auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
-  //    return this->do_parse(ctx.begin(), ctx.end(), true);
-  //  }
   template <typename ParseContext>
   constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
     auto it = ctx.begin(), end = ctx.end();
@@ -238,24 +232,6 @@ struct formatter<::doodle::time_point_wrap, Char>
     );
   }
 };
-//  template <>
-//  struct formatter<::doodle::time_point_wrap> : formatter<std::string_view> {
-//    /**
-//     * @brief 格式化函数
-//     *
-//     * @tparam FormatContext fmt上下文类
-//     * @param in_ 传入的资产类
-//     * @param ctx 上下文
-//     * @return decltype(ctx.out()) 基本上时 std::string
-//     */
-//    template <typename FormatContext>
-//    auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-//      return formatter<std::string_view>::format(
-//          in_.show_str(),
-//          ctx
-//      );
-//    }
-//  };
 
 }  // namespace fmt
 

@@ -60,10 +60,6 @@ std::int32_t time_point_wrap::get_week_int() const {
   return boost::numeric_cast<std::int32_t>(k_weekday.c_encoding());
 }
 
-std::string time_point_wrap::show_str() const {
-  return date::format("%Y/%m/%d %H:%M:%S", get_local_time());
-}
-
 time_point_wrap::compose_type
 time_point_wrap::compose() const {
   auto&& [l_d, l_s] = compose_1();

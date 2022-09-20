@@ -261,8 +261,8 @@ csv_export_widgets::csv_line csv_export_widgets::to_csv_line(
       (in.all_of<shot>()                                                                             //
            ? fmt::format(p_i->shot_fmt_str.data, in.get<shot>().p_shot, in.get<shot>().p_shot_enum)  //
            : ""s),                                                                                   //"镜头"
-      fmt::format(R"("{}")", start_time.show_str()),                                                 //"开始时间"
-      fmt::format(R"("{}")", end_time.show_str()),                                                   //"结束时间"
+      fmt::format(R"("{:%Y/%m/%d %H:%M:%S}")", start_time),                                          //"开始时间"
+      fmt::format(R"("{:%Y/%m/%d %H:%M:%S}")", end_time),                                            //"结束时间"
       fmt::format("{}", boost::rational_cast<std::double_t>(l_time_rational)),                       //"持续时间"
       fmt::format("{}", k_comm.p_time_info),                                                         //"时间备注"
       fmt::format("{}", k_comm.get_comment()),                                                       //"备注"
