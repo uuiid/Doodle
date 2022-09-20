@@ -39,4 +39,6 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
   int RandomAttrMax{6};
 
   float RandomAttr_InstallValue;
+
+  FTimerHandle TimerHandle_Attr{}; 
 };

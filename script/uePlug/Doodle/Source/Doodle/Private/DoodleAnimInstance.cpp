@@ -75,24 +75,37 @@ void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor) {
 
 void UDoodleAnimInstance::DoodleRandom() {
   // 获得物体创建时间
-  float time  = GetOwningActor()->GetGameTimeSinceCreation() / 2.0f + RandomAttr_InstallValue;
+  float time = GetOwningActor()->GetGameTimeSinceCreation() / 2.0f + RandomAttr_InstallValue;
 
-  int l_min   = FMath::Min(RandomAttrMax, RandomAttrMin);
-  int l_max   = FMath::Max(RandomAttrMax, RandomAttrMin);
+  int l_min  = FMath::Min(RandomAttrMax, RandomAttrMin);
+  int l_max  = FMath::Max(RandomAttrMax, RandomAttrMin);
 
-  // 生成噪波函数
-  float noise = FMath::PerlinNoise1D(time);
-  noise       = FMath::Abs(noise) * (float)(l_max - l_min) + l_min;
-  // FMath::DivideAndRoundNearest()
+  // // 生成噪波函数
+  // float noise = FMath::PerlinNoise1D(time);
+  // noise       = FMath::Abs(noise) * (float)(l_max - l_min) + l_min;
+  // // FMath::DivideAndRoundNearest()
 
-  // 获得最大和最小
-  // UE_LOG(LogTemp, Log, TEXT("noise %f "), noise);
-  RandomAttr  = FMath::Clamp((int)noise, l_min, l_max);
+  // // 获得最大和最小
+  // // UE_LOG(LogTemp, Log, TEXT("noise %f "), noise);
+  // RandomAttr  = FMath::Clamp((int)noise, l_min, l_max);
+
+  RandomAttr = FMath::RandRange(l_min, l_max);
   UE_LOG(LogTemp, Log, TEXT("RandomAttr %d "), RandomAttr);
+
+  if (AActor *L_Actor = GetOwningActor()) {
+    L_Actor->GetWorldTimerManager().SetTimer(
+        TimerHandle_Attr,
+        this,
+        &UDoodleAnimInstance::DoodleRandom,
+        FMath::RandRange(1.0f, 6.0f),
+        false
+    );
+  }
 }
 
 void UDoodleAnimInstance::NativeBeginPlay() {
   UAnimInstance::NativeBeginPlay();
   RandomAttr_InstallValue = FMath::RandRange(0.0, 256.0f);
   UE_LOG(LogTemp, Log, TEXT("RandomAttr_InstallValue: %f"), RandomAttr_InstallValue);
+  DoodleRandom();
 }

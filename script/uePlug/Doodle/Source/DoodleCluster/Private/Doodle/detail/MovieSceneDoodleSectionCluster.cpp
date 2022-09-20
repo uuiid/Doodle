@@ -51,7 +51,7 @@ struct FEventTrackExecutionTokenDOodle
             }
             break;
           }
-          L_Anim->DoodleRandom();
+          // L_Anim->DoodleRandom();
         }
       }
     }
