@@ -32,6 +32,11 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
       : std::runtime_error(fmt::format(fmt_str, std::forward<Args>(in_args)...)){};
 };
 
+class DOODLE_CORE_API sys_error : public bsys::system_error {
+ public:
+  using bsys::system_error::system_error;
+};
+
 class DOODLE_CORE_API doodle_category : public bsys::error_category {
  public:
   const char* name() const noexcept final;
@@ -43,7 +48,6 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
   static const bsys::error_category& get();
 };
 
-bsys::error_code make_error_code(error_enum e, ::boost::source_location const* in_loc);
 bsys::error_code make_error_code(error_enum e);
 
 template <typename exception_type>
@@ -52,7 +56,17 @@ template <typename exception_type>
 }
 
 template <typename Error>
-[[noreturn]] void throw_error(Error in_error_index, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION);
+[[noreturn]] void throw_error(
+    Error in_error_index,
+    ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+);
+
+template <typename Error>
+[[noreturn]] void throw_error(
+    Error in_error_index,
+    const std::string& mess,
+    ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+);
 
 #define DOODLE_CHICK(condition, ...) \
   if (!(condition)) {                \
@@ -88,3 +102,17 @@ namespace std {
 template <>
 struct is_error_code_enum<::doodle::error_enum> : std::true_type {};
 }  // namespace std
+
+namespace doodle {
+template <>
+[[noreturn]] void throw_error<error_enum>(
+    error_enum in_error_index,
+    const std::string& mess,
+    ::boost::source_location const& in_loc
+);
+template <>
+[[noreturn]] void throw_error<error_enum>(
+    error_enum in_error_index,
+    ::boost::source_location const& in_loc
+);
+}  // namespace doodle
