@@ -151,7 +151,8 @@ BOOST_AUTO_TEST_CASE(
 
   time_point_wrap l_begin_day{};
   time_point_wrap l_end_day{l_begin_day + doodle::chrono::days{6}};
-  std::vector<std::string> l_user_id{std::string{globe_user_id{}}};
+  std::string l_u = globe_user_id{};
+  std::vector<std::string> l_user_id{l_u};
 
   l_c->async_get_user_day_attendance(
       dingding::attendance::query::get_day_data{
@@ -164,7 +165,7 @@ BOOST_AUTO_TEST_CASE(
             in_handle, [](auto&& i) {
               BOOST_TEST(i.any_of<dingding::attendance::day_data>());
               auto l_day = i.get<dingding::attendance::day_data>();
-
+              BOOST_TEST(i.any_of<dingding::attendance::day_data>());
               DOODLE_LOG_INFO("{}", l_day);
             }
         );
