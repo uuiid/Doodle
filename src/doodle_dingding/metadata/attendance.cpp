@@ -15,19 +15,13 @@ namespace query {
 void to_json(nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t) {
   /// 时间需要特殊处理
 
-  nlohmann_json_j["workDateFrom"] = fmt::format(
-      "{}",
-      nlohmann_json_t.workDateFrom
-  );
-  nlohmann_json_j["workDateTo"] = fmt::format(
-      "{}",
-      nlohmann_json_t.workDateTo
-  );
+  nlohmann_json_j["workDateFrom"] = detail::tool::print_dingding_time(nlohmann_json_t.workDateFrom);
+  nlohmann_json_j["workDateTo"]   = detail::tool::print_dingding_time(nlohmann_json_t.workDateTo);
 
-  nlohmann_json_j["userIdList"] = nlohmann_json_t.userIdList;
-  nlohmann_json_j["offset"]     = nlohmann_json_t.offset;
-  nlohmann_json_j["limit"]      = nlohmann_json_t.limit;
-  nlohmann_json_j["isI18n"]     = nlohmann_json_t.isI18n;
+  nlohmann_json_j["userIdList"]   = nlohmann_json_t.userIdList;
+  nlohmann_json_j["offset"]       = nlohmann_json_t.offset;
+  nlohmann_json_j["limit"]        = nlohmann_json_t.limit;
+  nlohmann_json_j["isI18n"]       = nlohmann_json_t.isI18n;
 }
 void from_json(const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t) {
   /// 时间需要特殊处理

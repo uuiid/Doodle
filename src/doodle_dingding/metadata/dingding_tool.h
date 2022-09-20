@@ -16,6 +16,7 @@ class DOODLE_DINGDING_API tool {
  public:
   static time_point_wrap parse_dingding_time(const nlohmann::json& time_obj);
   static time_point_wrap parse_dingding_Date(const nlohmann::json& time_obj);
+  static std::string print_dingding_time(const time_point_wrap& in_time);
 };
 
 }  // namespace doodle::dingding::detail
