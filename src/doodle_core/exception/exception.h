@@ -20,6 +20,7 @@ enum class error_enum : std::int32_t {
   sqlite3_save_error,
   file_copy_error,
   component_missing_error,
+  invalid_handle,
   file_not_exists
 };
 
@@ -30,20 +31,12 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
   explicit doodle_error(const std::string& fmt_str, Args&&... in_args)
       : std::runtime_error(fmt::format(fmt_str, std::forward<Args>(in_args)...)){};
 };
-// iterators
-class DOODLE_CORE_API error_iterator : public std::runtime_error {
- public:
-  explicit error_iterator(const std::string& message) : std::runtime_error(message){};
-};
 
 class DOODLE_CORE_API doodle_category : public bsys::error_category {
  public:
-  const char* name() const noexcept;
+  const char* name() const noexcept final;
 
-  std::string message(int ev) const;
-  char const* message(int ev, char* buffer, std::size_t len) const noexcept;
-
-  bool failed(int ev) const noexcept;
+  std::string message(int ev) const final;
 
   bsys::error_condition default_error_condition(int ev) const noexcept;
 
@@ -57,6 +50,10 @@ template <typename exception_type>
 [[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
+
+template <typename Error>
+[[noreturn]] void throw_error(Error in_error_index, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION);
+
 #define DOODLE_CHICK(condition, ...) \
   if (!(condition)) {                \
     throw_exception(__VA_ARGS__);    \

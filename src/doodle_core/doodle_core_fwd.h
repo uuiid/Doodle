@@ -31,7 +31,6 @@ class thread_pool;
 namespace doodle {
 class DOODLE_CORE_API convert;
 class DOODLE_CORE_API doodle_error;
-class DOODLE_CORE_API error_iterator;
 class DOODLE_CORE_API nullptr_error;
 class DOODLE_CORE_API serialization_error;
 class DOODLE_CORE_API file_error;

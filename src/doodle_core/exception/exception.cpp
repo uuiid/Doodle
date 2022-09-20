@@ -16,31 +16,25 @@ const char* doodle_category::name() const noexcept {
 }
 std::string doodle_category::message(int ev) const {
   using namespace std::literals;
-  switch (ev) {
-    case 0:
+  switch (num_to_enum<error_enum>(ev)) {
+    case error_enum::success:
       return "no error"s;
-    case 1:
-      return "voltage out of range"s;
-    case 2:
-      return "impedance mismatch"s;
+    case error_enum::sqlite3_save_error:
+      return "sqlite3 error"s;
+    case error_enum::file_copy_error:
+      return "file copy error"s;
 
-    case 31:
-    case 32:
-    case 33:
-      return fmt::format("component {} failure", ev - 30);
-
+    case error_enum::component_missing_error:
+      return "component missing error"s;
+    case error_enum::invalid_handle:
+      return "Invalid handle"s;
+    case error_enum::file_not_exists:
+      return "file not exists"s;
     default:
       return fmt::format("unknown error {}", ev);
   }
 }
-char const* doodle_category::message(int ev, char* buffer, std::size_t len) const noexcept {
-  auto l_str = message(ev);
-  buffer     = std::copy_n(l_str.begin(), len, buffer);
-  return buffer;
-}
-bool doodle_category::failed(int ev) const noexcept {
-  return ev != 0;
-}
+
 const bsys::error_category& doodle_category::get() {
   const static doodle_category l_doodle_category{};
   return l_doodle_category;
