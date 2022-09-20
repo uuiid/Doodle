@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/lib_warp/entt_warp.h>
+#include <doodle_core/logger/logger.h>
 
 #include <core/core_set.h>
 

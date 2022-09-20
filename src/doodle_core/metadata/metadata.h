@@ -29,7 +29,7 @@ class DOODLE_CORE_API ref_data {
   ref_data();
   explicit ref_data(const database &in);
 
-  boost::uuids::uuid uuid;
+  boost::uuids::uuid uuid{};
 
   explicit operator bool() const;
   [[nodiscard("")]] entt::handle handle() const;
