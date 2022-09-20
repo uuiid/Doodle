@@ -59,14 +59,26 @@ template <typename Error>
 [[noreturn]] void throw_error(
     Error in_error_index,
     ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
-);
+) {
+  boost::throw_exception(
+      sys_error{
+          bsys::error_code{in_error_index}},
+      in_loc
+  );
+}
 
 template <typename Error>
 [[noreturn]] void throw_error(
     Error in_error_index,
     const std::string& mess,
     ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
-);
+) {
+  boost::throw_exception(
+      sys_error{
+          bsys::error_code{in_error_index}, mess},
+      in_loc
+  );
+}
 
 #define DOODLE_CHICK(condition, ...) \
   if (!(condition)) {                \
@@ -102,17 +114,3 @@ namespace std {
 template <>
 struct is_error_code_enum<::doodle::error_enum> : std::true_type {};
 }  // namespace std
-
-namespace doodle {
-template <>
-[[noreturn]] void throw_error<error_enum>(
-    error_enum in_error_index,
-    const std::string& mess,
-    ::boost::source_location const& in_loc
-);
-template <>
-[[noreturn]] void throw_error<error_enum>(
-    error_enum in_error_index,
-    ::boost::source_location const& in_loc
-);
-}  // namespace doodle

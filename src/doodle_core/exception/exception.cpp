@@ -47,28 +47,7 @@ bsys::error_code make_error_code(error_enum e) {
   return bsys::error_code{enum_to_num(e), doodle_category::get()};
   //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
 }
-template <>
-void throw_error<error_enum>(
-    error_enum in_error_index,
-    const std::string& mess,
-    ::boost::source_location const& in_loc
-) {
-  boost::throw_exception(
-      sys_error{
-          bsys::error_code{in_error_index}, mess},
-      in_loc
-  );
-}
 
-template <>
-void throw_error<error_enum>(
-    error_enum in_error_index,
-    ::boost::source_location const& in_loc
-) {
-  boost::throw_exception(
-      sys_error{
-          bsys::error_code{in_error_index}},
-      in_loc
-  );
-}
+
+
 }  // namespace doodle
