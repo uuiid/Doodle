@@ -8,7 +8,7 @@
 namespace doodle::gui {
 
 class DOODLELIB_API csv_export_widgets
-    : public window_panel {
+    : public base_windows<dear::Begin, csv_export_widgets> {
  public:
   class csv_line {
    public:
@@ -58,19 +58,10 @@ class DOODLELIB_API csv_export_widgets
   constexpr static std::string_view name{gui::config::menu_w::csv_export};
 
   void init();
-  void failed();
-  void render() override;
+  void render();
+  const std::string& title() const override;
 };
-namespace csv_export_widgets_ns {
-constexpr auto init = []() {
-  entt::meta<csv_export_widgets>()
-      .type()
-      .prop("name"_hs, std::string{csv_export_widgets::name})
-      .base<gui::window_panel>();
-};
-class [[maybe_unused]] init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace csv_export_widgets_ns
+
 }  // namespace doodle::gui
 
 namespace fmt {

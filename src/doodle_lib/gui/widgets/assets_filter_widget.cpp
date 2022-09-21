@@ -11,9 +11,9 @@
 #include <gui/widgets/assets_filter_widgets/filter_base.h>
 
 #include <utility>
-namespace doodle {
+namespace doodle::gui {
 
-class path_filter : public gui::filter_base {
+class path_filter : public filter_base {
  public:
   FSys::path p_assets;
   std::size_t len{};
@@ -43,7 +43,7 @@ class path_filter : public gui::filter_base {
   };
 };
 
-class path_filters : public gui::filter_base {
+class path_filters : public filter_base {
  public:
   std::vector<path_filter> filters;
   explicit path_filters(std::vector<path_filter> in)
@@ -56,7 +56,7 @@ class path_filters : public gui::filter_base {
   }
 };
 
-class file_path_filter : public gui::filter_base {
+class file_path_filter : public filter_base {
  public:
   explicit file_path_filter(std::string in_string) : file_path_(std::move(in_string)) {}
   std::string file_path_;
@@ -71,7 +71,7 @@ class file_path_filter : public gui::filter_base {
   }
 };
 
-class time_filter : public gui::filter_base {
+class time_filter : public filter_base {
  public:
   time_point_wrap p_begin;
   time_point_wrap p_end;
@@ -92,7 +92,7 @@ class time_filter : public gui::filter_base {
   };
 };
 
-class season_filter_factory : public gui::filter_factory_t<season> {
+class season_filter_factory : public filter_factory_t<season> {
  public:
   bool render() override {
     dear::Combo{"季数", select_name.c_str()} && [&]() {
@@ -108,7 +108,7 @@ class season_filter_factory : public gui::filter_factory_t<season> {
   }
 };
 
-class episodes_filter_factory : public gui::filter_factory_t<episodes> {
+class episodes_filter_factory : public filter_factory_t<episodes> {
  public:
   bool render() override {
     dear::Combo{"集数", select_name.c_str()} && [&]() {
@@ -124,7 +124,7 @@ class episodes_filter_factory : public gui::filter_factory_t<episodes> {
   }
 };
 
-class shot_filter_factory : public gui::filter_factory_t<shot> {
+class shot_filter_factory : public filter_factory_t<shot> {
  public:
   bool render() override {
     dear::Combo{"镜头", select_name.c_str()} && [&]() {
@@ -141,15 +141,15 @@ class shot_filter_factory : public gui::filter_factory_t<shot> {
 };
 
 #if 1
-class assets_filter_factory : public gui::filter_factory_base {
+class assets_filter_factory : public filter_factory_base {
  public:
   constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
 
   using data_type          = assets;
-  using gui_cache          = gui::gui_cache<FSys::path>;
+  using gui_cache          = gui_cache<FSys::path>;
   using tree_node_type     = tree_node<gui_cache>;
   using tree_node_type_ptr = tree_node<gui_cache>::child_type;
-  using popen_cache        = gui::gui_cache<std::string>;
+  using popen_cache        = gui_cache<std::string>;
 
   tree_node_type::child_type p_tree;
   popen_cache p_popen;
@@ -190,7 +190,7 @@ class assets_filter_factory : public gui::filter_factory_base {
     }
   }
 
-  std::unique_ptr<gui::filter_base> make_filter_() override {
+  std::unique_ptr<filter_base> make_filter_() override {
     std::vector<path_filter> in_list =
         p_cur_selects |
         ranges::views::transform(
@@ -302,8 +302,8 @@ class assets_filter_factory : public gui::filter_factory_base {
 };
 #endif
 
-class time_filter_factory : public gui::filter_factory_base {
-  std::unique_ptr<gui::filter_base> make_filter_() override {
+class time_filter_factory : public filter_factory_base {
+  std::unique_ptr<filter_base> make_filter_() override {
     if (use_begin.data && use_end.data)
       return std::make_unique<time_filter>(
           time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
@@ -325,10 +325,10 @@ class time_filter_factory : public gui::filter_factory_base {
   }
 
  private:
-  gui::gui_cache<bool> use_begin;
-  gui::gui_cache<bool> use_end;
-  gui::gui_cache<std::array<std::int32_t, 3>> time_begin;
-  gui::gui_cache<std::array<std::int32_t, 3>> time_end;
+  gui_cache<bool> use_begin;
+  gui_cache<bool> use_end;
+  gui_cache<std::array<std::int32_t, 3>> time_begin;
+  gui_cache<std::array<std::int32_t, 3>> time_end;
 
  public:
   time_filter_factory()
@@ -366,13 +366,13 @@ class time_filter_factory : public gui::filter_factory_base {
   }
 };
 
-class file_path_filter_factory : public gui::filter_factory_base {
+class file_path_filter_factory : public filter_factory_base {
  private:
-  gui::gui_cache<std::string> edit;
+  gui_cache<std::string> edit;
 
  public:
   file_path_filter_factory() : edit("路径过滤"s, ""s){};
-  std::unique_ptr<gui::filter_base> make_filter_() override {
+  std::unique_ptr<filter_base> make_filter_() override {
     if (!edit.data.empty()) {
       return std::make_unique<file_path_filter>(edit.data);
     } else {
@@ -400,15 +400,15 @@ class file_path_filter_factory : public gui::filter_factory_base {
 class assets_filter_widget::impl {
  public:
   using factory_gui_cache =
-      gui::gui_cache<
-          std::unique_ptr<gui::filter_factory_base>,
-          gui::gui_cache_select>;
+      gui_cache<
+          std::unique_ptr<filter_factory_base>,
+          gui_cache_select>;
 
-  class factory_chick : public gui::base_render {
+  class factory_chick : public base_render {
    public:
     const bool p_chick;
     factory_gui_cache p_factory;
-    factory_chick(bool use_chick, std::string&& in_name, std::unique_ptr<gui::filter_factory_base>&& in_factory_base)
+    factory_chick(bool use_chick, std::string&& in_name, std::unique_ptr<filter_factory_base>&& in_factory_base)
         : p_chick(use_chick),
           p_factory(in_name, std::move(in_factory_base)) {}
 
@@ -437,13 +437,17 @@ class assets_filter_widget::impl {
   impl() : p_conns(),
            p_filter_factorys(),
            p_filters(),
-           p_sorts({gui::gui_cache<bool>{"名称排序"s, true}, gui::gui_cache<bool>{"集数排序"s, false}, gui::gui_cache<bool>{"反向"s, false}}) {}
+           p_sorts(
+               {gui_cache<bool>{"名称排序"s, true},
+                gui_cache<bool>{"集数排序"s, false},
+                gui_cache<bool>{"反向"s, false}}
+           ) {}
 
   std::vector<boost::signals2::scoped_connection> p_conns;
 
   std::vector<factory_chick> p_filter_factorys;
-  std::vector<std::unique_ptr<gui::filter_base>> p_filters;
-  std::array<gui::gui_cache<bool>, 3> p_sorts;
+  std::vector<std::unique_ptr<filter_base>> p_filters;
+  std::array<gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
   std::string title_name_;
 };
@@ -559,4 +563,4 @@ const std::string& assets_filter_widget::title() const {
   return p_impl->title_name_;
 }
 
-}  // namespace doodle
+}  // namespace doodle::gui

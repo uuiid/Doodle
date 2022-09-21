@@ -22,12 +22,11 @@
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/organization.h>
 #include <core/tree_node.h>
-namespace doodle {
+namespace doodle::gui {
 namespace edit_widgets_ns {
 
 }
 
-namespace gui {
 class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;
   using gui_assets_list    = gui_cache<std::vector<gui_list_item_type>>;
@@ -108,7 +107,6 @@ class assets_edit : public edit_interface {
     }
   }
 };
-}  // namespace gui
 /**
  * @brief 季数编辑
  *
@@ -280,7 +278,6 @@ class time_edit : public gui::edit_interface {
   }
 };
 
-namespace gui {
 class importance_edit : public edit_interface {
   gui_cache<std::string> p_importance;
 
@@ -506,7 +503,6 @@ class add_entt_base : public base_render {
     return result;
   }
 };
-}  // namespace gui
 
 class edit_widgets::impl {
  public:
@@ -527,11 +523,11 @@ class edit_widgets::impl {
    */
   std::vector<entt::handle> p_h;
 
-  gui::database_edit data_edit;
-  gui::assets_edit *assets_edit;
+  database_edit data_edit;
+  assets_edit *assets_edit;
 
-  using gui_edit_cache = gui::gui_cache<std::unique_ptr<gui::edit_interface>>;
-  using gui_add_cache  = gui::gui_cache<std::unique_ptr<gui::base_render>>;
+  using gui_edit_cache = gui_cache<std::unique_ptr<edit_interface>>;
+  using gui_add_cache  = gui_cache<std::unique_ptr<base_render>>;
   std::vector<gui_edit_cache> p_edit;
   std::vector<gui_add_cache> p_add;
   std::string title_name_;
@@ -545,23 +541,23 @@ edit_widgets::edit_widgets()
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
-  p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<gui::edit_user>());
-  p_i->p_edit.emplace_back("备注"s, std::make_unique<gui::command_edit>());
-  p_i->p_edit.emplace_back("等级"s, std::make_unique<gui::importance_edit>());
-  auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<gui::assets_edit>()).data.get();
+  p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<edit_user>());
+  p_i->p_edit.emplace_back("备注"s, std::make_unique<command_edit>());
+  p_i->p_edit.emplace_back("等级"s, std::make_unique<importance_edit>());
+  auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>()).data.get();
 
-  p_i->assets_edit = dynamic_cast<gui::assets_edit *>(l_edit);
+  p_i->assets_edit = dynamic_cast<assets_edit *>(l_edit);
 
   p_i->p_edit.emplace_back("时间编辑"s, std::make_unique<time_edit>());
-  p_i->p_edit.emplace_back("替换规则"s, std::make_unique<gui::redirection_path_info_edit>());
+  p_i->p_edit.emplace_back("替换规则"s, std::make_unique<redirection_path_info_edit>());
 
   /// \brief 连接信号
   ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
     p_i->data_edit.link_sig(in_edit.data);
   });
 
-  p_i->p_add.emplace_back("添加"s, std::make_unique<gui::add_entt_base>());
-  p_i->p_add.emplace_back("文件添加"s, std::make_unique<gui::add_assets_for_file>());
+  p_i->p_add.emplace_back("添加"s, std::make_unique<add_entt_base>());
+  p_i->p_add.emplace_back("文件添加"s, std::make_unique<add_assets_for_file>());
 }
 edit_widgets::~edit_widgets() = default;
 
@@ -626,23 +622,8 @@ void edit_widgets::add_handle() {
   }
 }
 
-void edit_widgets::notify_file_list() const {
-  if (g_reg()->ctx().contains<assets_file_widgets>()) {
-    std::vector<entt::handle> l_vector{};
-    std::vector<entt::handle> k_list_h{p_i->add_handles};
-    k_list_h |= ranges::actions::sort |
-                ranges::actions::unique;
-    l_vector = k_list_h |
-               ranges::views::filter([](const entt::handle &in) -> bool {
-                 return in.valid();
-               }) |
-               ranges::to_vector;
-
-    g_reg()->ctx().at<core_sig>().filter_handle(l_vector);
-  }
-}
 const std::string &edit_widgets::title() const {
   return p_i->title_name_;
 }
 
-}  // namespace doodle
+}  // namespace doodle::gui

@@ -57,6 +57,8 @@ class windows_tack_warp {
   template <typename T = windows_type>
   auto call_self(...){};
 
+  virtual std::int32_t flags() { return {}; };
+
  public:
   virtual ~windows_tack_warp()             = default;
 

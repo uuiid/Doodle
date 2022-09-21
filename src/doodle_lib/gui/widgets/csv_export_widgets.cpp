@@ -44,11 +44,12 @@ class csv_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   gui_cache<bool> average_time{"平均时间"s, false};
+  std::string title_name_;
 };
 
 csv_export_widgets::csv_export_widgets()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};
 }
 csv_export_widgets::~csv_export_widgets() = default;
 
@@ -78,9 +79,6 @@ void csv_export_widgets::init() {
   );
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
   p_i->export_path.data = p_i->export_path.path.generic_string();
-}
-
-void csv_export_widgets::failed() {
 }
 
 void csv_export_widgets::render() {
@@ -283,6 +281,9 @@ time_point_wrap csv_export_widgets::get_user_up_time(const entt::handle &in_user
   } else {
     return (--l_it)->get<time_point_wrap>();
   }
+}
+const std::string &csv_export_widgets::title() const {
+  return p_i->title_name_;
 }
 
 }  // namespace gui

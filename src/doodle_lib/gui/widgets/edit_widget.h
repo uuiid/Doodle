@@ -8,7 +8,7 @@
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
 #include <boost/signals2.hpp>
-namespace doodle {
+namespace doodle::gui {
 
 namespace edit_widgets_ns {
 class edit_assets_data {
@@ -32,7 +32,6 @@ class DOODLELIB_API edit_widgets : public gui::base_windows<
 
   void edit_handle();
   void add_handle();
-  void notify_file_list() const;
 
  public:
   /**
@@ -70,4 +69,4 @@ class DOODLELIB_API edit_widgets : public gui::base_windows<
   void render();
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui

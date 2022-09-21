@@ -10,7 +10,7 @@
 
 #include <boost/signals2.hpp>
 
-namespace doodle {
+namespace doodle::gui {
 
 /**
  * @brief 资产显示树
@@ -36,4 +36,4 @@ class DOODLELIB_API assets_filter_widget
   void refresh(bool force);
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui
