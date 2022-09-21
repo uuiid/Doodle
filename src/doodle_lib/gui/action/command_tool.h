@@ -35,7 +35,9 @@ namespace doodle {
  *
  */
 class DOODLELIB_API comm_maya_tool
-    : public gui::window_panel {
+    : public gui::base_windows<
+          dear::Begin,
+          comm_maya_tool> {
   FSys::path p_cloth_path;
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
@@ -45,6 +47,7 @@ class DOODLELIB_API comm_maya_tool
 
   bool p_use_all_ref;
   bool p_upload_files;
+  std::string title_name_;
 
  public:
   comm_maya_tool();
@@ -52,19 +55,10 @@ class DOODLELIB_API comm_maya_tool
   constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
   void init();
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
 
-namespace comm_maya_tool_ns {
-constexpr auto init = []() {
-  entt::meta<comm_maya_tool>()
-      .type()
-      .prop("name"_hs, std::string{comm_maya_tool::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace comm_maya_tool_ns
 /**
  * @brief 创建视频工具类
  * @image html comm_create_video.jpg 创建视频工具

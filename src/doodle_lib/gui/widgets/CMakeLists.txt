@@ -19,6 +19,7 @@ target_sources(doodle_lib
         long_time_tasks_widget.h
         make_link_widget.h
         all_user_view_widget.h
+        maya_tool.h
 
         PRIVATE
         edit_widget.cpp
@@ -35,5 +36,7 @@ target_sources(doodle_lib
         screenshot_widget.cpp
         ue4_widget.cpp
         all_user_view_widget.cpp
+        maya_tool.cpp
+
         )
 

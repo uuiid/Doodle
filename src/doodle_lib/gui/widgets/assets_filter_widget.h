@@ -18,7 +18,7 @@ namespace doodle {
  *
  */
 class DOODLELIB_API assets_filter_widget
-    : public gui::window_panel {
+    : public gui::base_windows<dear::Begin, assets_filter_widget> {
   class impl;
   std::unique_ptr<impl> p_impl;
 
@@ -31,21 +31,9 @@ class DOODLELIB_API assets_filter_widget
   constexpr static std::string_view name{gui::config::menu_w::assets_filter};
 
   void init();
-  void failed();
-  void render() override;
-
+  void render();
+  const std::string& title() const override;
   void refresh(bool force);
 };
-
-namespace assets_filter_widget_ns {
-constexpr auto init = []() {
-  entt::meta<assets_filter_widget>()
-      .type()
-      .prop("name"_hs, std::string{assets_filter_widget::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace assets_filter_widget_ns
 
 }  // namespace doodle

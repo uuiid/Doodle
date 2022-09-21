@@ -61,7 +61,7 @@ class DOODLELIB_API edit_widgets : public gui::base_windows<
    *
    */
   void init();
-  const std::string& title() const override;
+  [[nodiscard("")]] const std::string& title() const override;
   /**
    * @brief 每帧刷新函数
    *

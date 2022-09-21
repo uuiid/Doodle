@@ -445,18 +445,16 @@ class assets_filter_widget::impl {
   std::vector<std::unique_ptr<gui::filter_base>> p_filters;
   std::array<gui::gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
+  std::string title_name_;
 };
 
 assets_filter_widget::assets_filter_widget()
     : p_impl(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
-  show_       = true;
+  p_impl->title_name_ = std::string{name};
 }
 assets_filter_widget::~assets_filter_widget() = default;
 
 void assets_filter_widget::init() {
-  g_reg()->ctx().emplace<assets_filter_widget&>(*this);
-
   p_impl->p_filter_factorys.emplace_back(false, "路径过滤"s, std::make_unique<file_path_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "季数过滤"s, std::make_unique<season_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "集数过滤"s, std::make_unique<episodes_filter_factory>());
@@ -464,12 +462,6 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back(true, "资产过滤"s, std::make_unique<assets_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "时间过滤"s, std::make_unique<time_filter_factory>());
   p_impl->p_filter_factorys.emplace_back(true, "制作人过滤"s, std::make_unique<gui::name_filter_factory>());
-
-  //  p_impl->p_sorts = {{"名称排序"s, true}, {"反向"s, false}};
-}
-
-void assets_filter_widget::failed() {
-  g_reg()->ctx().erase<assets_filter_widget>();
 }
 
 void assets_filter_widget::render() {
@@ -562,6 +554,9 @@ void assets_filter_widget::refresh_(bool force) {
   }
 
   g_reg()->ctx().at<core_sig>().filter_handle(list);
+}
+const std::string& assets_filter_widget::title() const {
+  return p_impl->title_name_;
 }
 
 }  // namespace doodle
