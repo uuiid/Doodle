@@ -20,8 +20,7 @@
 
 #include <utility>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 maya_tool::maya_tool()
     : p_cloth_path(),
       p_text(),
@@ -136,5 +135,4 @@ const std::string& maya_tool::title() const {
   return title_name_;
 }
 
-}  // namespace gui
 }  // namespace doodle

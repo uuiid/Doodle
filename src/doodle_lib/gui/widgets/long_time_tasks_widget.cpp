@@ -13,7 +13,7 @@
 #include <fmt/chrono.h>
 #include <doodle_core/core/init_register.h>
 
-namespace doodle {
+namespace doodle::gui {
 
 long_time_tasks_widget::long_time_tasks_widget()
     : p_current_select() {
@@ -74,4 +74,7 @@ void long_time_tasks_widget::render() {
     }
   };
 }
-}  // namespace doodle
+const std::string& long_time_tasks_widget::title() const {
+  return title_name_;
+}
+}  // namespace doodle::gui

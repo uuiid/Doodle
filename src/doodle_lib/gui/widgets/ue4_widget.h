@@ -9,7 +9,7 @@
 #include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
+namespace doodle::gui {
 
 namespace ue4_widget_n {
 class ue4_import_data {
@@ -60,7 +60,9 @@ class ue4_import_group {
 }  // namespace ue4_widget_n
 
 class DOODLELIB_API ue4_widget
-    : public gui::window_panel {
+    : public base_windows<
+          dear::Begin,
+          ue4_widget> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -72,20 +74,9 @@ class DOODLELIB_API ue4_widget
   ue4_widget();
   ~ue4_widget() override;
   constexpr static std::string_view name{gui::config::menu_w::ue4_widget};
-
+  const std::string& title() const override;
   void init();
-  void render() override;
+  void render();
 };
 
-namespace ue4_widget_ns {
-constexpr auto init = []() {
-  entt::meta<ue4_widget>()
-      .type()
-      .prop("name"_hs, std::string{ue4_widget::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace ue4_widget_ns
-
-}  // namespace doodle
+}  // namespace doodle::gui

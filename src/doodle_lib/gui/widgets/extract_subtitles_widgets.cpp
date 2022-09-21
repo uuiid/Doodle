@@ -20,11 +20,12 @@ class extract_subtitles_widgets::impl {
 
   gui_cache<std::string> regex_find_subtitles{"正则表达式"s, R"((.+?[:|：].+?)$)"s};
   gui_cache<std::string> regex1{"正则表达式"s, R"(.+?[:|：](.+?))"s};
+  std::string title_name_;
 };
 
 extract_subtitles_widgets::extract_subtitles_widgets()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};
 }
 void extract_subtitles_widgets::render() {
   dear::ListBox{*p_i->file_list_.gui_name} && [&]() {
@@ -103,6 +104,9 @@ void extract_subtitles_widgets::init() {
         }) |
         ranges::to_vector;
   });
+}
+const std::string& extract_subtitles_widgets::title() const {
+  return p_i->title_name_;
 }
 extract_subtitles_widgets::~extract_subtitles_widgets() = default;
 }  // namespace doodle::gui

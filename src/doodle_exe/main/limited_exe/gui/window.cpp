@@ -7,7 +7,6 @@
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
-#include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>

@@ -10,7 +10,8 @@
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
-#include <doodle_lib/gui/action/command_tool.h>
+#include <doodle_lib/gui/widgets/create_video.h>
+#include <doodle_lib/gui/widgets/maya_tool.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
@@ -117,14 +118,14 @@ bool layout_window::tick() {
   if (p_i->init) {  /// 初始化窗口
     make_gui_handle().emplace<gui_windows>(::doodle::edit_widgets{});
     make_gui_handle().emplace<gui_windows>(::doodle::assets_filter_widget{});
-    make_gui_handle().emplace<gui_windows>(::doodle::comm_maya_tool{});
-    make_gui_handle().emplace<gui_windows>(::doodle::comm_create_video{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::maya_tool{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::create_video{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::subtitle_processing{});
-    make_gui_handle().emplace<gui_windows>(::doodle::long_time_tasks_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::long_time_tasks_widget{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::time_sequencer_widget{});
-    make_gui_handle().emplace<gui_windows>(::doodle::ue4_widget{});
-    make_gui_handle().emplace<gui_windows>(::doodle::assets_file_widgets{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::ue4_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_file_widgets{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::csv_export_widgets{});
   }
 

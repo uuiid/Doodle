@@ -18,7 +18,7 @@
 #include <gui/gui_ref/ref_base.h>
 
 #include <doodle_core/core/init_register.h>
-namespace doodle {
+namespace doodle::gui {
 
 class assets_file_widgets::impl {
  public:
@@ -172,12 +172,12 @@ class assets_file_widgets::impl {
 
   std::function<void()> render_list;
   entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
+  std::string title_name_;
 };
 
 assets_file_widgets::assets_file_widgets()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
-  show_       = true;
+  p_i->title_name_ = std::string{name};
 
   this->switch_rander();
 }
@@ -188,9 +188,6 @@ void assets_file_widgets::switch_rander() {
   } else {
     p_i->render_list = [this]() { this->render_by_info(); };
   }
-}
-
-void assets_file_widgets::refresh(const std::vector<entt::handle>& in_list) {
 }
 
 void assets_file_widgets::init() {
@@ -211,10 +208,6 @@ void assets_file_widgets::init() {
   ));
 
   //  p_i->observer_h.connect();
-}
-
-void assets_file_widgets::failed() {
-  p_i->observer_h.disconnect();
 }
 
 void assets_file_widgets::render() {
@@ -479,6 +472,11 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
         ranges::to_vector;
 }
 
-assets_file_widgets::~assets_file_widgets() = default;
+const std::string& assets_file_widgets::title() const {
+  return p_i->title_name_;
+}
+assets_file_widgets::~assets_file_widgets() {
+  p_i->observer_h.disconnect();
+}
 
-}  // namespace doodle
+}  // namespace doodle::gui

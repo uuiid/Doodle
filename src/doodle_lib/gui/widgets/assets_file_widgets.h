@@ -6,7 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
+namespace doodle::gui {
 
 class assets_file_widgets;
 
@@ -18,7 +18,7 @@ class assets_file_widgets;
  *
  */
 class DOODLELIB_API assets_file_widgets
-    : public gui::window_panel {
+    : public base_windows<dear::Begin, assets_file> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -39,20 +39,9 @@ class DOODLELIB_API assets_file_widgets
 
   constexpr static std::string_view name{gui::config::menu_w::assets_file};
 
-  void refresh(const std::vector<entt::handle>& in_list);
   void init();
-  void failed();
-  void render() override;
+  void render();
+  const std::string& title() const override;
 };
-namespace assets_file_widgets_ns {
-constexpr auto init = []() {
-  entt::meta<assets_file_widgets>()
-      .type()
-      .prop("name"_hs, std::string{assets_file_widgets::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
 
-}  // namespace assets_file_widgets_ns
-}  // namespace doodle
+}  // namespace doodle::gui

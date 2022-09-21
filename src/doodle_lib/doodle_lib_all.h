@@ -11,7 +11,6 @@
 
 #include <doodle_lib/file_warp/opencv_read_player.h>
 #include <doodle_lib/gui/setting_windows.h>
-#include <doodle_lib/gui/action/command_tool.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
@@ -41,4 +40,3 @@
 #include <doodle_lib/gui/widgets/ue4_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
-#include <doodle_lib/gui/action/command_tool.h>

@@ -63,31 +63,32 @@ class subtitle_processing::impl {
   gui_cache<std::int32_t> cut_off_line_size{"切断行大小"s, 28};
 
   gui_cache_name_id run_button{"开始处理"s};
+  std::string title_name_;
+
+  boost::signals2::scoped_connection sig_scoped;
 };
 
 subtitle_processing::subtitle_processing()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};
 }
 void subtitle_processing::init() {
-  this->sig_scoped.emplace_back(
-      g_reg()->ctx().at<core_sig>().select_handles.connect(
-          [this](const std::vector<entt::handle>& in_vector) {
-            p_i->list_srt_file =
-                in_vector |
-                ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                  return in_handle && in_handle.any_of<assets_file>();
-                }) |
-                ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                  auto& l_p = in_handle.get<assets_file>().path_attr();
-                  return l_p.extension() == ".srt";
-                }) |
-                ranges::views::transform([](const entt::handle& in_handle) -> std::string {
-                  return in_handle.get<assets_file>().get_path_normal().generic_string();
-                }) |
-                ranges::to_vector;
-          }
-      )
+  p_i->sig_scoped = g_reg()->ctx().at<core_sig>().select_handles.connect(
+      [this](const std::vector<entt::handle>& in_vector) {
+        p_i->list_srt_file =
+            in_vector |
+            ranges::views::filter([](const entt::handle& in_handle) -> bool {
+              return in_handle && in_handle.any_of<assets_file>();
+            }) |
+            ranges::views::filter([](const entt::handle& in_handle) -> bool {
+              auto& l_p = in_handle.get<assets_file>().path_attr();
+              return l_p.extension() == ".srt";
+            }) |
+            ranges::views::transform([](const entt::handle& in_handle) -> std::string {
+              return in_handle.get<assets_file>().get_path_normal().generic_string();
+            }) |
+            ranges::to_vector;
+      }
   );
 }
 void subtitle_processing::render() {
@@ -255,6 +256,9 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
     FSys::create_directories(out_subtitles_file.parent_path());
   DOODLE_LOG_INFO("输出文件 {}", out_subtitles_file);
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_sub_str_list, "\n\n"));
+}
+const std::string& subtitle_processing::title() const {
+  return p_i->title_name_;
 }
 subtitle_processing::~subtitle_processing() = default;
 }  // namespace doodle::gui

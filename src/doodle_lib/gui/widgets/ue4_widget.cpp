@@ -16,7 +16,7 @@
 
 #include <boost/contract.hpp>
 
-namespace doodle {
+namespace doodle::gui {
 class ue4_widget::impl {
   class file_data {
    public:
@@ -40,14 +40,14 @@ class ue4_widget::impl {
   gui::gui_cache_name_id import_{"导入"s};
   gui::gui_cache_name_id open_file_dig{"选择"s};
 
- public:
   FSys::path ue4_content_dir{};
   std::vector<entt::handle> l_handle_temp{};
+  std::string title_name_;
 };
 
 ue4_widget::ue4_widget()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};
 }
 ue4_widget::~ue4_widget() = default;
 
@@ -208,6 +208,9 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   FSys::ofstream{l_out_path / core_set::get_set().get_uuid_str(".json_doodle")}
       << l_json.dump();
 }
+const std::string &ue4_widget::title() const {
+  return p_i->title_name_;
+}
 namespace ue4_widget_n {
 ue4_import_data::ue4_import_data() = default;
 ue4_import_data::ue4_import_data(const export_file_info &in_info)
@@ -356,4 +359,4 @@ void from_json(const nlohmann::json &j, ue4_import_group &p) {
 }
 
 }  // namespace ue4_widget_n
-}  // namespace doodle
+}  // namespace doodle::gui

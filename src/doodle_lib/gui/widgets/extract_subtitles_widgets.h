@@ -11,7 +11,7 @@ namespace doodle::gui {
  *
  */
 class DOODLELIB_API extract_subtitles_widgets
-    : public window_panel {
+    : public base_windows<dear::Begin, extract_subtitles_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -24,19 +24,8 @@ class DOODLELIB_API extract_subtitles_widgets
   void init();
 
   constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
-
- protected:
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
 
-namespace extract_subtitles_widgets_ns {
-constexpr auto init = []() {
-  entt::meta<extract_subtitles_widgets>()
-      .type()
-      .prop("name"_hs, std::string{extract_subtitles_widgets::name})
-      .base<window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace extract_subtitles_widgets_ns
 }  // namespace doodle::gui

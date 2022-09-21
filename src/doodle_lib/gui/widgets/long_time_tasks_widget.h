@@ -9,28 +9,21 @@
 #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <boost/signals2.hpp>
-namespace doodle {
+namespace doodle::gui {
 
 class DOODLELIB_API long_time_tasks_widget
-    : public gui::window_panel {
+    : public base_windows<
+          dear::Begin,
+          long_time_tasks_widget> {
   entt::handle p_current_select;
+  std::string title_name_;
 
  public:
   long_time_tasks_widget();
 
   constexpr static std::string_view name{gui::config::menu_w::long_time_tasks};
-
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
 
-namespace long_time_tasks_widget_ns {
-constexpr auto init = []() {
-  entt::meta<long_time_tasks_widget>()
-      .type()
-      .prop("name"_hs, std::string{long_time_tasks_widget::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace long_time_tasks_widget_ns
-}  // namespace doodle
+}  // namespace doodle::gui

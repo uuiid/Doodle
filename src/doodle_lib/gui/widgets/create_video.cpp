@@ -23,8 +23,7 @@
 
 #include <utility>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class create_video::image_arg : public gui::gui_cache<std::string> {
  public:
@@ -217,5 +216,4 @@ const std::string& create_video::title() const {
 }
 create_video::~create_video() = default;
 
-}  // namespace gui
 }  // namespace doodle
