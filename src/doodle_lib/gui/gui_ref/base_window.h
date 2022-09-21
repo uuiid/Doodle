@@ -16,7 +16,6 @@
 
 #include <doodle_core/gui_template/gui_process.h>
 
-
 namespace doodle::gui {
 // namespace details {
 // using hock_t = boost::intrusive::list_base_hook<
@@ -26,17 +25,6 @@ namespace doodle::gui {
 // }
 
 namespace detail {
-
-template <typename T>
-class bar_tack_warp {
- public:
-  T bar_attr;
-
-  bool operator()() {
-    bar_attr.render();
-    return false;
-  }
-};
 
 template <
     typename dear_type,
@@ -107,7 +95,7 @@ class windows_tack_warp {
 
 }  // namespace detail
 
-using gui_render = doodle::gui::detail::windows_render;
+using gui_tick = doodle::gui::detail::windows_tick;
 
 /**
  * @brief 基本窗口

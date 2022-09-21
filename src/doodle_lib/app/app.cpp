@@ -221,8 +221,8 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  make_gui_handle().emplace<gui::gui_render>(main_menu_bar{});
-  make_gui_handle().emplace<gui::gui_render>(main_status_bar{});
+  make_gui_handle().emplace<gui::gui_tick>(main_menu_bar{});
+  make_gui_handle().emplace<gui::gui_tick>(main_status_bar{});
 
   //  _add_tick_(gui::detail::bar_tack_warp<main_menu_bar>{main_menu_bar{}});
   //  _add_tick_(gui::detail::bar_tack_warp<main_status_bar>{main_status_bar{}});

@@ -12,7 +12,7 @@ namespace doodle::gui::detail {
 
 BOOST_TYPE_ERASURE_MEMBER(tick);
 
-using windows_render = boost::type_erasure::any<
+using windows_tick = boost::type_erasure::any<
     boost::mpl::vector<
         boost::type_erasure::typeid_<>,
         boost::type_erasure::relaxed,
