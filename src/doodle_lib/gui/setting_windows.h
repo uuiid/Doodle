@@ -8,7 +8,7 @@
 #include <doodle_lib/gui/gui_ref/base_window.h>
 #include <doodle_lib/gui/gui_ref/base_windows_factory.h>
 
-namespace doodle {
+namespace doodle::gui {
 /**
  * @addtogroup 设置窗口
  * @image html doodle_setting.jpg 设置窗口
@@ -50,7 +50,8 @@ namespace doodle {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows : public gui::window_panel {
+class DOODLELIB_API setting_windows
+    : public base_windows<dear::Begin, setting_windows> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -59,21 +60,10 @@ class DOODLELIB_API setting_windows : public gui::window_panel {
   ~setting_windows() override;
 
   constexpr static std::string_view name{gui::config::menu_w::setting};
+  const std::string& title() const override;
   void init();
-
-  void render() override;
-
+  void render();
   void save();
 };
 
-namespace setting_windows_ns {
-constexpr auto init = []() {
-  entt::meta<setting_windows>()
-      .type()
-      .prop("name"_hs, std::string{setting_windows::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace setting_windows_ns
-}  // namespace doodle
+}  // namespace doodle::gui

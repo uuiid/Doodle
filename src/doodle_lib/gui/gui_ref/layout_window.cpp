@@ -117,7 +117,7 @@ bool layout_window::tick() {
   p_i->builder_dock();
   if (p_i->init) {  /// 初始化窗口
     make_gui_handle().emplace<gui_windows>(::doodle::gui::edit_widgets{});
-    make_gui_handle().emplace<gui_windows>(::doodle::assets_filter_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_filter_widget{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::maya_tool{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::create_video{});
     make_gui_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});

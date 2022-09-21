@@ -10,26 +10,20 @@
 namespace doodle::gui {
 
 class DOODLELIB_API project_edit
-    : public gui::window_panel {
+    : public base_windows<
+          dear::Begin, project_edit> {
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   project_edit();
   ~project_edit() override;
+
   constexpr static std::string_view name{gui::config::menu_w::project_edit};
+
   void init();
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
-namespace project_edit_ns {
-constexpr auto init = []() {
-  entt::meta<project_edit>()
-      .type()
-      .prop("name"_hs, std::string{project_edit::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace project_edit_ns
 
 }  // namespace doodle::gui

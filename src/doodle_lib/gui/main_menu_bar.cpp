@@ -121,6 +121,21 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
+
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::edit_widgets{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_filter_widget{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::maya_tool{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::create_video{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::subtitle_processing{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::long_time_tasks_widget{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::time_sequencer_widget{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::ue4_widget{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_file_widgets{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::csv_export_widgets{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::setting_windows{});
+  make_gui_handle().emplace<gui_windows>(::doodle::gui::project_edit{});
+
   if (dear::MenuItem(gui::config::menu_w::setting.data()))
     g_reg()->ctx().at<gui::layout_window>().call_render<setting_windows>();
   if (dear::MenuItem(gui::config::menu_w::project_edit.data()))

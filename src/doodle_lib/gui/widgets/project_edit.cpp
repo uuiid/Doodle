@@ -104,6 +104,7 @@ class project_edit::impl {
   gui_cache<std::string> maya_camera_suffix{"相机后缀"s, "camera"s};
 
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
+  std::string title_name_;
 
   void config_init() {
     auto&& l_prj         = g_reg()->ctx().at<project>();
@@ -227,7 +228,7 @@ class project_edit::impl {
 
 project_edit::project_edit()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};
 }
 project_edit::~project_edit() = default;
 
@@ -372,5 +373,8 @@ void project_edit::render() {
 
   if (ImGui::Button("保存"))
     g_reg()->ctx().at<core_sig>().save();
+}
+const std::string& project_edit::title() const {
+  return p_i->title_name_;
 }
 }  // namespace doodle::gui

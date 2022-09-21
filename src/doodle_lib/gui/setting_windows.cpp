@@ -42,12 +42,12 @@ class setting_windows::impl {
   gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::get_set().maya_force_resolve_link};
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
+  std::string title_name_;
 };
 
 setting_windows::setting_windows()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
-  show_       = true;
+  p_i->title_name_ = std::string{name};
 }
 
 void setting_windows::save() {
@@ -114,4 +114,7 @@ void setting_windows::render() {
     save();
 }
 
+const std::string& gui::setting_windows::title() const {
+  return p_i->title_name_;
+}
 }  // namespace doodle
