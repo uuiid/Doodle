@@ -164,7 +164,7 @@ void app_base::loop_one() {
 void app_base::tick_begin() {}
 void app_base::tick_end() {}
 
-void app_base::_add_tick_(const std::function<bool()>& in_tick) {
+void app_base::_add_tick_impl(const std::function<bool()>& in_tick) {
   std::lock_guard l_g{p_i->mutex_};
   p_i->handlers_next.emplace_back(in_tick);
 }

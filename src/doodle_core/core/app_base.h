@@ -11,7 +11,6 @@ namespace doodle {
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
 
-
 class DOODLE_CORE_API app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
@@ -28,6 +27,7 @@ class DOODLE_CORE_API app_base {
   std::unique_ptr<impl> p_i;
 
   void init();
+  void _add_tick_impl(const std::function<bool()>& in_tick);
 
  protected:
   /**
@@ -75,12 +75,12 @@ class DOODLE_CORE_API app_base {
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
-
-  void _add_tick_(const std::function<bool()>& in_tick);
+  template <typename T>
+  void _add_tick_(T&& in_tick) {
+    /// 将调用转移
+    auto l_fun = std::unique_ptr<std::function<bool()>>(std::forward<T>(in_tick));
+    _add_tick_impl([l_fun = std::move(l_fun)]() { return (*l_fun)(); });
+  };
 };
-
-
-
-
 
 }  // namespace doodle
