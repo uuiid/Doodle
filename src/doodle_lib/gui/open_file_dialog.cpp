@@ -28,7 +28,11 @@ class file_panel::path_info {
     is_dir = is_directory(in_path);
 
     show_name =
-        fmt::format("{} {}", is_directory(in_path) ? "[dir]"s : "[file]"s, path.has_filename() ? path.filename().generic_string() : path.generic_string());
+        fmt::format(
+            "{} {}",
+            is_directory(in_path) ? "[dir]"s : "[file]"s,
+            path.has_filename() ? path.filename().generic_string() : path.generic_string()
+        );
     size       = is_regular_file(in_path) ? file_size(in_path) : 0u;
     last_time  = FSys::last_write_time_point(in_path);
     has_select = false;
@@ -112,6 +116,7 @@ class file_panel::impl {
   file_panel::select_sig out_;
   FSys::path p_pwd;
   sort_by sort_by_p;
+  mult_fun call_fun;
 };
 
 file_panel::default_pwd::default_pwd()
@@ -143,13 +148,12 @@ void file_panel::succeeded() {
   g_reg()->ctx().erase<default_pwd>();
   g_reg()->ctx().emplace<default_pwd>(p_i->p_pwd);
 
-  std::visit(entt::overloaded{[&](const one_sig &in_sig) -> void {
-                                *in_sig = get_select();
-                              },
-                              [&](const mult_sig &in_sig) -> void {
-                                *in_sig = get_selects();
-                              }},
-             p_i->out_);
+  boost::asio::post(
+      g_io_context(),
+      [l_files = get_selects(), l_fun = std::move(p_i->call_fun)]() {
+        l_fun(l_files);
+      }
+  );
 }
 
 void file_panel::render() {
@@ -409,14 +413,13 @@ void file_panel::render_filter() {
 }
 void file_panel::button_ok() {
   if (imgui::Button("ok")) {
-    close();
-    this->succeed();
+    ImGui::CloseCurrentPopup();
+    this->succeeded();
   }
 }
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
-    close();
-    this->fail();
+    ImGui::CloseCurrentPopup();
   }
 }
 void file_panel::generate_buffer(std::size_t in_index) {
@@ -466,6 +469,17 @@ std::vector<FSys::path> file_panel::get_selects() {
     result.emplace_back(p_i->p_pwd);
 
   return result;
+}
+file_panel &file_panel::async_read(one_fun &&in_fun) {
+  p_i->call_fun = [in_fun = std::move(in_fun)](const std::vector<FSys::path> &in) {
+    if (!in.empty())
+      in_fun(in.front());
+  };
+  return *this;
+}
+file_panel &file_panel::async_read(mult_fun &&in_fun) {
+  p_i->call_fun = in_fun;
+  return *this;
 }
 file_panel::~file_panel() = default;
 

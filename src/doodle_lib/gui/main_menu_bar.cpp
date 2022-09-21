@@ -66,19 +66,9 @@ class main_menu_bar::impl {
   std::vector<main_menu_bar_ns::layout_data> layout_list;
 };
 
-void to_json(nlohmann::json &j, const main_menu_bar &p) {
-  j["layout_list"] = p.p_i->layout_list;
-}
-void from_json(const nlohmann::json &j, main_menu_bar &p) {
-  if (j.count("layout_list"))
-    j["layout_list"].get_to(p.p_i->layout_list);
-}
-
 main_menu_bar::main_menu_bar()
     : p_i(std::make_unique<impl>()) {
-  this->show_ = true;
 }
-
 main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
@@ -179,10 +169,6 @@ void main_menu_bar::menu_tool() {
     toolkit::install_houdini_plug();
 }
 
-void main_menu_bar::init() {
-  this->read_setting();
-  g_reg()->ctx().emplace<main_menu_bar &>(*this);
-}
 void main_menu_bar::update() {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
@@ -208,11 +194,6 @@ void main_menu_bar::menu_layout() {
 
   //    };
   //  }
-}
-
-const std::string &main_menu_bar::title() const {
-  static std::string name{"main_menu"};
-  return name;
 }
 
 }  // namespace doodle

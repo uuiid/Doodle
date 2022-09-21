@@ -34,11 +34,18 @@ class windows_tack_warp {
   };
   enum class state_enum : std::uint8_t {
     none = 0,
+    set_attr,
     init
   };
 
   bool show_attr{};
   state_enum state_attr{};
+
+  template <typename T = windows_type>
+  auto call_self(std::integral_constant<state_enum, state_enum::set_attr>)
+      -> decltype(std::declval<T>().init(), void()) {
+    self_().set_attr();
+  };
 
   template <typename T = windows_type>
   auto call_self(std::integral_constant<state_enum, state_enum::init>)
@@ -53,14 +60,21 @@ class windows_tack_warp {
   explicit windows_tack_warp(
       windows_type&& in_win
   ) : windows_self(std::move(in_win)){};
+  virtual ~windows_tack_warp() = default;
 
   bool operator()() {
+    if (state_attr == state_enum::none) {
+      call_self(std::integral_constant<
+                state_enum, state_enum::set_attr>{});
+      state_attr = state_enum::set_attr;
+    }
+
     dear_type l_dear_{
         self_().title().data(),
         &show_attr,
         self_().flags()};
 
-    if (l_dear_ && state_attr == state_enum::none) {
+    if (l_dear_ && state_attr == state_enum::set_attr) {
       call_self(std::integral_constant<
                 state_enum, state_enum::init>{});
       state_attr = state_enum::init;

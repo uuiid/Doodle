@@ -99,10 +99,6 @@ class main_status_bar::impl {
 main_status_bar::main_status_bar()
     : p_i(std::make_unique<impl>()) {}
 
-void main_status_bar::init() {
-  g_reg()->ctx().emplace<main_status_bar&>(*this);
-}
-
 void main_status_bar::update() {
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
   float height                  = ImGui::GetFrameHeight();

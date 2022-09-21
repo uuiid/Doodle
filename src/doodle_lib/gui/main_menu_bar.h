@@ -22,16 +22,12 @@ class layout_data {
   bool operator!=(const std::string& in_rhs) const;
 };
 }  // namespace main_menu_bar_ns
-class DOODLELIB_API main_menu_bar
-    : public gui::base_window {
+class DOODLELIB_API main_menu_bar {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-  friend void to_json(nlohmann::json& j, const main_menu_bar& p);
-  friend void from_json(const nlohmann::json& j, main_menu_bar& p);
 
  protected:
-  void widget_menu_item(const std::string_view& in_view);
   virtual void menu_file();
   virtual void menu_windows();
   virtual void menu_edit();
@@ -42,9 +38,6 @@ class DOODLELIB_API main_menu_bar
  public:
   main_menu_bar();
   ~main_menu_bar() override;
-
-  const std::string& title() const override;
-  void init();
 
   void update() override;
 };

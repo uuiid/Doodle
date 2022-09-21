@@ -36,6 +36,7 @@ class DOODLELIB_API file_panel
   void generate_buffer(std::size_t in_index);
   FSys::path get_select();
   std::vector<FSys::path> get_selects();
+  void succeeded();
 
   class default_pwd {
    public:
@@ -54,6 +55,8 @@ class DOODLELIB_API file_panel
   using one_sig    = std::shared_ptr<FSys::path>;
   using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
   using select_sig = std::variant<one_sig, mult_sig>;
+  using mult_fun   = std::function<void(const std::vector<FSys::path>&)>;
+  using one_fun    = std::function<void(const FSys::path&)>;
 
   class dialog_args {
     friend file_panel;
@@ -84,8 +87,11 @@ class DOODLELIB_API file_panel
 
   [[nodiscard]] std::string& title() const override;
   void init();
-  void succeeded();
+
   void render() override;
+
+  file_panel& async_read(one_fun&& in_fun);
+  file_panel& async_read(mult_fun&& in_fun);
 };
 
 using file_dialog = file_panel;
