@@ -18,6 +18,5 @@ target_sources(doodle_lib
         strand_gui.cpp
         )
 
-add_subdirectory(action)
 add_subdirectory(gui_ref)
 add_subdirectory(widgets)
