@@ -7,24 +7,6 @@
 #include <doodle_core/core/init_register.h>
 namespace doodle::gui {
 
-void to_json(nlohmann::json &j, const base_window &p) {
-}
-void from_json(const nlohmann::json &j, base_window &p) {
-}
-
-base_window *base_window::find_window_by_title(const std::string &in_title) {
-  auto &l_list = g_reg()->ctx().emplace<base_window::list>();
-  auto it      = ranges::find_if(
-      l_list,
-      [&](const base_window *in_window) -> bool {
-        return in_window->title() == in_title;
-      }
-  );
-  if (it != l_list.end())
-    return *it;
-  else
-    return nullptr;
-}
 bool base_window::is_show() const {
   return show_;
 }
@@ -32,9 +14,6 @@ void base_window::show(bool in_show) {
   show_ = in_show;
 }
 
-nlohmann::json &base_window::get_setting() const {
-  return (*core_set::get_set().json_data)[title()];
-}
 base_window::base_window()  = default;
 base_window::~base_window() = default;
 

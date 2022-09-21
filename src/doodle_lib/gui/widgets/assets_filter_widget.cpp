@@ -250,12 +250,7 @@ class assets_filter_factory : public gui::filter_factory_base {
               l_h.emplace_or_replace<assets>(i->data.data);
               database::save(l_h);
             }
-            if (auto* l_win = gui::base_window::find_window_by_title(
-                    std::string{assets_filter_widget::name}
-                );
-                l_win) {
-              dynamic_cast<assets_filter_widget*>(l_win)->refresh(false);
-            };
+            // @todo 这里要写拖拽
           }
         };
         l_node&& [this, i]() {

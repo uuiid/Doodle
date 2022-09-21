@@ -32,18 +32,12 @@ class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
 
   bool show_{true};
 
-  friend void to_json(nlohmann::json& j, const base_window& p);
-  friend void from_json(const nlohmann::json& j, base_window& p);
-
  public:
   using list        = std::set<base_window*>;
   using window_list = std::vector<std::shared_ptr<base_window>>;
 
   base_window();
   virtual ~base_window();
-  //  DOODLE_DIS_COPY(base_window)
-
-  [[nodiscard]] nlohmann::json& get_setting() const;
 
   /**
    * @brief 获取窗口标识
@@ -64,13 +58,6 @@ class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
    */
   [[nodiscard]] bool is_show() const;
   void show(bool in_show = true);
-
-  /**
-   * @brief 安装窗口名称寻找窗口
-   * @param in_title
-   * @return
-   */
-  static base_window* find_window_by_title(const std::string& in_title);
 };
 
 class DOODLELIB_API window_panel : public base_window {

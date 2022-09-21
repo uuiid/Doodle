@@ -215,12 +215,4 @@ const std::string &main_menu_bar::title() const {
   return name;
 }
 
-void main_menu_bar::read_setting() {
-  if (auto &&l_j = get_setting(); l_j.count("main_menu_bar"))
-    l_j["main_menu_bar"].get_to(*this);
-}
-void main_menu_bar::save_setting() const {
-  get_setting()["main_menu_bar"] = *this;
-}
-
 }  // namespace doodle

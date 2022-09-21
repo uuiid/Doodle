@@ -104,12 +104,7 @@ class assets_edit : public edit_interface {
 
       l_ass.set_path(l_out);
       in.patch<assets>();
-      if (auto *l_win = gui::base_window::find_window_by_title(
-              std::string{assets_filter_widget::name}
-          );
-          l_win) {
-        dynamic_cast<assets_filter_widget *>(l_win)->refresh(false);
-      };
+      // @todo 这里要写拖拽
     }
   }
 };

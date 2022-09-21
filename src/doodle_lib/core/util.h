@@ -24,6 +24,4 @@ class DOODLELIB_API identifier {
 };
 }  // namespace core
 
-strand_gui g_strand_gui();
-
 }  // namespace doodle

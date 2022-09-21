@@ -20,9 +20,3 @@ std::uint64_t identifier::id() {
 
 }  // namespace doodle::core
 
-namespace doodle {
-strand_gui g_strand_gui() {
-  return strand_gui{g_io_context().get_executor()};
-}
-
-}  // namespace doodle

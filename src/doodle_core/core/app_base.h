@@ -11,13 +11,6 @@ namespace doodle {
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
 
-namespace app_base_ns {
-class config_tick {
- public:
-  std::function<void()> tick_begin;
-  std::function<void()> tick_end;
-};
-}  // namespace app_base_ns
 
 class DOODLE_CORE_API app_base {
  public:

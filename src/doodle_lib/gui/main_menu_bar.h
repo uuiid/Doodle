@@ -21,7 +21,6 @@ class layout_data {
   bool operator==(const std::string& in_rhs) const;
   bool operator!=(const std::string& in_rhs) const;
 };
-
 }  // namespace main_menu_bar_ns
 class DOODLELIB_API main_menu_bar
     : public gui::base_window {
@@ -40,9 +39,6 @@ class DOODLELIB_API main_menu_bar
   void menu_layout();
 
  public:
-  virtual void read_setting();
-  virtual void save_setting() const;
-
  public:
   main_menu_bar();
   ~main_menu_bar() override;
