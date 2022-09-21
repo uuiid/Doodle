@@ -20,7 +20,8 @@
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/csv_export_widgets.h>
-#include <doodle_lib/gui/action/command_tool.h>
+#include <doodle_lib/gui/widgets/maya_tool.h>
+#include <doodle_lib/gui/widgets/create_video.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
@@ -29,7 +30,7 @@
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/all_user_view_widget.h>
 
-namespace doodle {
+namespace doodle::gui {
 namespace main_menu_bar_ns {
 void to_json(nlohmann::json &j, const layout_data &p) {
   j["imgui_data"] = p.imgui_data;
@@ -121,47 +122,32 @@ void main_menu_bar::menu_file() {
 }
 
 void main_menu_bar::menu_windows() {
-
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::edit_widgets{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_filter_widget{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::maya_tool{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::create_video{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::subtitle_processing{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::long_time_tasks_widget{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::time_sequencer_widget{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::ue4_widget{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::assets_file_widgets{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::csv_export_widgets{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::setting_windows{});
-  make_gui_handle().emplace<gui_windows>(::doodle::gui::project_edit{});
-
-  if (dear::MenuItem(gui::config::menu_w::setting.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<setting_windows>();
-  if (dear::MenuItem(gui::config::menu_w::project_edit.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<gui::project_edit>();
-  if (dear::MenuItem(::doodle::edit_widgets::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::edit_widgets>();
-  if (dear::MenuItem(::doodle::assets_filter_widget::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::assets_filter_widget>();
-  if (dear::MenuItem(::doodle::gui::csv_export_widgets::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::csv_export_widgets>();
-  if (dear::MenuItem(::doodle::comm_maya_tool::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::comm_maya_tool>();
-  if (dear::MenuItem(::doodle::comm_create_video::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::comm_create_video>();
-  if (dear::MenuItem(::doodle::gui::extract_subtitles_widgets::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::extract_subtitles_widgets>();
-  if (dear::MenuItem(::doodle::gui::subtitle_processing::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::subtitle_processing>();
-  if (dear::MenuItem(::doodle::assets_file_widgets::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::assets_file_widgets>();
-  if (dear::MenuItem(::doodle::long_time_tasks_widget::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::long_time_tasks_widget>();
-  if (dear::MenuItem(::doodle::gui::time_sequencer_widget::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::time_sequencer_widget>();
-  if (dear::MenuItem(::doodle::gui::all_user_view_widget::name.data()))
-    g_reg()->ctx().at<gui::layout_window>().call_render<::doodle::gui::all_user_view_widget>();
+  if (dear::MenuItem(setting_windows::name.data()))
+    make_gui_handle().emplace<gui_windows>(setting_windows{});
+  if (dear::MenuItem(project_edit::name.data()))
+    make_gui_handle().emplace<gui_windows>(project_edit{});
+  if (dear::MenuItem(edit_widgets::name.data()))
+    make_gui_handle().emplace<gui_windows>(edit_widgets{});
+  if (dear::MenuItem(assets_filter_widget::name.data()))
+    make_gui_handle().emplace<gui_windows>(assets_filter_widget{});
+  if (dear::MenuItem(csv_export_widgets::name.data()))
+    make_gui_handle().emplace<gui_windows>(csv_export_widgets{});
+  if (dear::MenuItem(maya_tool::name.data()))
+    make_gui_handle().emplace<gui_windows>(maya_tool{});
+  if (dear::MenuItem(create_video::name.data()))
+    make_gui_handle().emplace<gui_windows>(create_video{});
+  if (dear::MenuItem(extract_subtitles_widgets::name.data()))
+    make_gui_handle().emplace<gui_windows>(extract_subtitles_widgets{});
+  if (dear::MenuItem(subtitle_processing::name.data()))
+    make_gui_handle().emplace<gui_windows>(subtitle_processing{});
+  if (dear::MenuItem(assets_file_widgets::name.data()))
+    make_gui_handle().emplace<gui_windows>(assets_file_widgets{});
+  if (dear::MenuItem(long_time_tasks_widget::name.data()))
+    make_gui_handle().emplace<gui_windows>(long_time_tasks_widget{});
+  if (dear::MenuItem(time_sequencer_widget::name.data()))
+    make_gui_handle().emplace<gui_windows>(time_sequencer_widget{});
+  if (dear::MenuItem(all_user_view_widget::name.data()))
+    make_gui_handle().emplace<gui_windows>(all_user_view_widget{});
 }
 
 void main_menu_bar::menu_tool() {
@@ -226,4 +212,4 @@ main_menu_bar &main_menu_bar::operator=(main_menu_bar &&in) noexcept {
   return *this;
 }
 
-}  // namespace doodle
+}  // namespace doodle::gui

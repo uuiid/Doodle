@@ -6,7 +6,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
+namespace doodle::gui {
 namespace main_menu_bar_ns {
 class layout_data {
  private:
@@ -47,4 +47,4 @@ class DOODLELIB_API main_menu_bar {
 
   bool tick();
 };
-}  // namespace doodle
+}  // namespace doodle::gui
