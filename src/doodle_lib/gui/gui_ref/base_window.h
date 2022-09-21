@@ -22,10 +22,68 @@ namespace doodle::gui {
 //
 // }
 
+namespace detail {
+
+template <
+    typename dear_type,
+    typename windows_type>
+class windows_tack_warp {
+ protected:
+  windows_type& self_() {
+    return std::any_cast<windows_type&>(windows_self);
+  };
+  enum class state_enum : std::uint8_t {
+    none = 0,
+    init
+  };
+
+  bool show_attr{};
+  state_enum state_attr{};
+
+  template <typename T = windows_type>
+  auto call_self(std::integral_constant<state_enum, state_enum::init>)
+      -> decltype(std::declval<T>().init(), void()) {
+    self_().init();
+  };
+  template <typename T = windows_type>
+  auto call_self(...){};
+
+ public:
+  std::any windows_self;
+  explicit windows_tack_warp(
+      windows_type&& in_win
+  ) : windows_self(std::move(in_win)){};
+
+  bool operator()() {
+    dear_type l_dear_{
+        self_().title().data(),
+        &show_attr,
+        self_().flags()};
+
+    if (l_dear_ && state_attr == state_enum::none) {
+      call_self(std::integral_constant<
+                state_enum, state_enum::init>{});
+      state_attr = state_enum::init;
+    }
+
+    l_dear_&& [this]() {
+      self_().render();
+    };
+    if (!show_attr) {
+      windows_self.reset();
+    }
+
+    return self_().show_;
+  };
+};
+
+}  // namespace detail
+
 /**
  * @brief 基本窗口
  */
-class DOODLELIB_API base_window : public ::doodle::process_handy_tools {
+class DOODLELIB_API base_window
+    : public ::doodle::process_handy_tools {
  protected:
   std::vector<std::function<void()>> begin_fun{};
   std::vector<boost::signals2::scoped_connection> sig_scoped{};
