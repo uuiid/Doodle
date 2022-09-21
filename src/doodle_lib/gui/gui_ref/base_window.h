@@ -32,7 +32,7 @@ template <
 class windows_tack_warp {
  protected:
   windows_type& self_() {
-    return std::any_cast<windows_type&>(windows_self);
+    return *dynamic_cast<windows_type*>(this);
   };
   enum class state_enum : std::uint8_t {
     none = 0,
@@ -58,15 +58,9 @@ class windows_tack_warp {
   auto call_self(...){};
 
  public:
-  std::any windows_self;
-  explicit windows_tack_warp(
-      windows_type&& in_win
-  ) : windows_self(std::move(in_win)){};
-  virtual ~windows_tack_warp() = default;
+  virtual ~windows_tack_warp()             = default;
 
-  const std::string& title() {
-    self_().title();
-  }
+  virtual const std::string& title() const = 0;
 
   bool tick() {
     if (state_attr == state_enum::none) {
@@ -76,7 +70,7 @@ class windows_tack_warp {
     }
 
     dear_type l_dear_{
-        self_().title().data(),
+        title().data(),
         &show_attr,
         self_().flags()};
 
@@ -90,7 +84,6 @@ class windows_tack_warp {
       self_().render();
     };
     if (!show_attr) {
-      windows_self.reset();
     }
 
     return self_().show_;
@@ -98,8 +91,11 @@ class windows_tack_warp {
 };
 
 }  // namespace detail
-
-using gui_tick    = doodle::gui::detail::windows_tick;
-using gui_windows = doodle::gui::detail::windows_render;
+template <
+    typename dear_type,
+    typename windows_type>
+using base_windows = doodle::gui::detail::windows_tack_warp<dear_type, windows_type>;
+using gui_tick     = doodle::gui::detail::windows_tick;
+using gui_windows  = doodle::gui::detail::windows_render;
 
 }  // namespace doodle::gui

@@ -30,6 +30,11 @@ class app_base::impl {
         delete_entt.emplace_back(l_e);
       }
     }
+    for (auto&& [l_e, l_render] : g_gui_reg()->view<gui::detail::windows_render>().each()) {
+      if (l_render.tick()) {
+        delete_entt.emplace_back(l_e);
+      }
+    }
 
     g_gui_reg()->destroy(delete_entt.begin(), delete_entt.end());
   }

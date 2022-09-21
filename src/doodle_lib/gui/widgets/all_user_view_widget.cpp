@@ -21,6 +21,8 @@ class all_user_view_widget::impl {
     entt::handle handle;
   };
 
+  std::string title_name_{std::string{name}};
+
   entt::handle select_user{};
   std::vector<user_gui_data> user_name_list{};
 
@@ -66,7 +68,6 @@ class all_user_view_widget::impl {
 
 all_user_view_widget::all_user_view_widget()
     : ptr(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
 }
 void all_user_view_widget::render() {
   if (!ptr->has_init) {
@@ -89,6 +90,9 @@ void all_user_view_widget::render() {
   if (ptr->time_rules_render_attr.render()) {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
   }
+}
+const std::string& all_user_view_widget::title() const {
+  return ptr->title_name_;
 }
 
 all_user_view_widget::~all_user_view_widget() = default;

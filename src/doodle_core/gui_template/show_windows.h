@@ -13,6 +13,9 @@ namespace doodle::gui::detail {
 BOOST_TYPE_ERASURE_MEMBER(tick)
 BOOST_TYPE_ERASURE_MEMBER(title)
 
+/**
+ * 当 tick 返回 true 时, 会将其在定时器中弹出并销毁
+ */
 using windows_tick = boost::type_erasure::any<
     boost::mpl::vector<
         boost::type_erasure::typeid_<>,
@@ -26,6 +29,6 @@ using windows_render = boost::type_erasure::any<
         boost::type_erasure::relaxed,
         boost::type_erasure::copy_constructible<>,
         has_tick<bool()>,
-        has_title<const std::string&()>>>;
+        has_title<const std::string&() const>>>;
 
 }  // namespace doodle::gui::detail

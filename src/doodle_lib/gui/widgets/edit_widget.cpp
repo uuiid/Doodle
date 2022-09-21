@@ -534,12 +534,12 @@ class edit_widgets::impl {
   using gui_add_cache  = gui::gui_cache<std::unique_ptr<gui::base_render>>;
   std::vector<gui_edit_cache> p_edit;
   std::vector<gui_add_cache> p_add;
+  std::string title_name_;
 };
 
 edit_widgets::edit_widgets()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
-  show_       = true;
+  p_i->title_name_ = std::string{name};
 
   p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
@@ -588,10 +588,6 @@ void edit_widgets::init() {
   ));
 }
 
-void edit_widgets::failed() {
-  this->clear_handle();
-}
-
 void edit_widgets::render() {
   dear::TreeNode{"添加"} && [this]() {
     this->add_handle();
@@ -630,16 +626,6 @@ void edit_widgets::add_handle() {
   }
 }
 
-void edit_widgets::clear_handle() {
-  std::for_each(p_i->add_handles.begin(), p_i->add_handles.end(), [](entt::handle &in) {
-    if (in.orphan()) {
-      in.destroy();
-    }
-  });
-  ranges::actions::remove_if(p_i->add_handles, [](const entt::handle &in) { return !in.valid(); });
-  this->notify_file_list();
-}
-
 void edit_widgets::notify_file_list() const {
   if (g_reg()->ctx().contains<assets_file_widgets>()) {
     std::vector<entt::handle> l_vector{};
@@ -654,6 +640,9 @@ void edit_widgets::notify_file_list() const {
 
     g_reg()->ctx().at<core_sig>().filter_handle(l_vector);
   }
+}
+const std::string &edit_widgets::title() const {
+  return p_i->title_name_;
 }
 
 }  // namespace doodle

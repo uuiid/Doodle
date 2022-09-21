@@ -23,7 +23,6 @@ namespace doodle::gui {
 class layout_window::impl {
  public:
   impl() = default;
-  std::map<std::string, ::doodle::process_adapter::rear_adapter_weak_ptr> list_windows{};
 
   bool init{false};
 
@@ -108,37 +107,30 @@ layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {
 }
 
-//const std::string &layout_window::title() const {
-//  static std::string l_title{"layout_window"};
-//  return l_title;
-//}
-
-void layout_window::init() {
-//  boost::asio::post(g_io_context(), [this]() {
-//    call_render<::doodle::edit_widgets>();
-//    call_render<::doodle::assets_filter_widget>();
-//    call_render<::doodle::comm_maya_tool>();
-//    call_render<::doodle::comm_create_video>();
-//    call_render<::doodle::gui::extract_subtitles_widgets>();
-//    call_render<::doodle::gui::subtitle_processing>();
-//    call_render<::doodle::long_time_tasks_widget>();
-//    call_render<::doodle::gui::time_sequencer_widget>();
-//    call_render<::doodle::ue4_widget>();
-//    call_render<::doodle::assets_file_widgets>();
-//    call_render<::doodle::gui::csv_export_widgets>();
-//  });
-}
+// const std::string &layout_window::title() const {
+//   static std::string l_title{"layout_window"};
+//   return l_title;
+// }
 
 bool layout_window::tick() {
   p_i->builder_dock();
+  if (p_i->init) {  /// 初始化窗口
+    make_gui_handle().emplace<gui_windows>(::doodle::edit_widgets{});
+    make_gui_handle().emplace<gui_windows>(::doodle::assets_filter_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::comm_maya_tool{});
+    make_gui_handle().emplace<gui_windows>(::doodle::comm_create_video{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::subtitle_processing{});
+    make_gui_handle().emplace<gui_windows>(::doodle::long_time_tasks_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::time_sequencer_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::ue4_widget{});
+    make_gui_handle().emplace<gui_windows>(::doodle::assets_file_widgets{});
+    make_gui_handle().emplace<gui_windows>(::doodle::gui::csv_export_widgets{});
+  }
+
   return false;
 }
-void layout_window::add_windows(const std::string &in_name, process_adapter::rear_adapter_weak_ptr in_ptr) {
-  p_i->list_windows[in_name] = std::move(in_ptr);
-}
-bool layout_window::has_windows(const std::string &in_name) {
-  return !p_i->list_windows[in_name].expired();
-}
+
 // template <typename windows_type>
 // void layout_window::call_render() {
 //   auto &&l_win = p_i->list_windows[""s];

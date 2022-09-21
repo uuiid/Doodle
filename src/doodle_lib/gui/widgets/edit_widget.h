@@ -25,14 +25,13 @@ class edit_assets_data {
  * 在没有计算出文件路径的时候, 其中,名称为空
  *
  */
-class DOODLELIB_API edit_widgets
-    : public gui::window_panel {
+class DOODLELIB_API edit_widgets : public gui::base_windows<
+                                       dear::Begin, edit_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
 
   void edit_handle();
   void add_handle();
-  void clear_handle();
   void notify_file_list() const;
 
  public:
@@ -45,7 +44,7 @@ class DOODLELIB_API edit_widgets
    * @brief Destroy the edit widgets object
    *
    */
-  ~edit_widgets() override;
+  virtual ~edit_widgets();
   /**
    * @brief 窗口显示名称
    *
@@ -62,30 +61,13 @@ class DOODLELIB_API edit_widgets
    *
    */
   void init();
-
-  /**
-   * @brief 失败结束任务
-   *
-   */
-  void failed();
-
+  const std::string& title() const override;
   /**
    * @brief 每帧刷新函数
    *
    * @param data 自定义数据
    */
-  void render() override;
+  void render();
 };
 
-namespace edit_widgets_ns {
-constexpr auto init = []() {
-  entt::meta<edit_widgets>()
-      .type()
-      .prop("name"_hs, std::string{edit_widgets::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-
-}  // namespace edit_widgets_ns
 }  // namespace doodle
