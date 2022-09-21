@@ -20,6 +20,8 @@ target_sources(doodle_lib
         make_link_widget.h
         all_user_view_widget.h
         maya_tool.h
+        create_video.h
+
 
         PRIVATE
         edit_widget.cpp
@@ -37,6 +39,7 @@ target_sources(doodle_lib
         ue4_widget.cpp
         all_user_view_widget.cpp
         maya_tool.cpp
+        create_video.cpp
 
         )
 
