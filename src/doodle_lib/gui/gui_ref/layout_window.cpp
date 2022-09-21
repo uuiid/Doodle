@@ -108,30 +108,30 @@ layout_window::layout_window()
     : p_i(std::make_unique<impl>()) {
 }
 
-const std::string &layout_window::title() const {
-  static std::string l_title{"layout_window"};
-  return l_title;
-}
+//const std::string &layout_window::title() const {
+//  static std::string l_title{"layout_window"};
+//  return l_title;
+//}
 
 void layout_window::init() {
-  g_reg()->ctx().emplace<layout_window &>(*this);
-  boost::asio::post(g_io_context(), [this]() {
-    call_render<::doodle::edit_widgets>();
-    call_render<::doodle::assets_filter_widget>();
-    call_render<::doodle::comm_maya_tool>();
-    call_render<::doodle::comm_create_video>();
-    call_render<::doodle::gui::extract_subtitles_widgets>();
-    call_render<::doodle::gui::subtitle_processing>();
-    call_render<::doodle::long_time_tasks_widget>();
-    call_render<::doodle::gui::time_sequencer_widget>();
-    call_render<::doodle::ue4_widget>();
-    call_render<::doodle::assets_file_widgets>();
-    call_render<::doodle::gui::csv_export_widgets>();
-  });
+//  boost::asio::post(g_io_context(), [this]() {
+//    call_render<::doodle::edit_widgets>();
+//    call_render<::doodle::assets_filter_widget>();
+//    call_render<::doodle::comm_maya_tool>();
+//    call_render<::doodle::comm_create_video>();
+//    call_render<::doodle::gui::extract_subtitles_widgets>();
+//    call_render<::doodle::gui::subtitle_processing>();
+//    call_render<::doodle::long_time_tasks_widget>();
+//    call_render<::doodle::gui::time_sequencer_widget>();
+//    call_render<::doodle::ue4_widget>();
+//    call_render<::doodle::assets_file_widgets>();
+//    call_render<::doodle::gui::csv_export_widgets>();
+//  });
 }
 
-void layout_window::update() {
+bool layout_window::tick() {
   p_i->builder_dock();
+  return false;
 }
 void layout_window::add_windows(const std::string &in_name, process_adapter::rear_adapter_weak_ptr in_ptr) {
   p_i->list_windows[in_name] = std::move(in_ptr);

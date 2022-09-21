@@ -221,6 +221,9 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
+  make_gui_handle().emplace<gui::gui_tick>(
+      gui::layout_window{}
+  );
   make_gui_handle().emplace<gui::gui_tick>(main_menu_bar{});
   make_gui_handle().emplace<gui::gui_tick>(main_status_bar{});
 

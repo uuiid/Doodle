@@ -128,6 +128,7 @@ bool main_status_bar::tick() {
       }
     };
   };
+  return false;
 }
 
 main_status_bar::main_status_bar(const main_status_bar& in) noexcept
@@ -144,4 +145,6 @@ main_status_bar& main_status_bar::operator=(main_status_bar&& in) noexcept {
   p_i = std::move(in.p_i);
   return *this;
 }
+
+main_status_bar::~main_status_bar() = default;
 }  // namespace doodle

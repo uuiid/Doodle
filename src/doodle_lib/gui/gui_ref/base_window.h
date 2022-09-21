@@ -64,7 +64,11 @@ class windows_tack_warp {
   ) : windows_self(std::move(in_win)){};
   virtual ~windows_tack_warp() = default;
 
-  bool operator()() {
+  const std::string& title() {
+    self_().title();
+  }
+
+  bool tick() {
     if (state_attr == state_enum::none) {
       call_self(std::integral_constant<
                 state_enum, state_enum::set_attr>{});
@@ -95,85 +99,7 @@ class windows_tack_warp {
 
 }  // namespace detail
 
-using gui_tick = doodle::gui::detail::windows_tick;
+using gui_tick    = doodle::gui::detail::windows_tick;
+using gui_windows = doodle::gui::detail::windows_render;
 
-/**
- * @brief 基本窗口
- */
-class DOODLELIB_API base_window
-    : public ::doodle::process_handy_tools {
- protected:
-  std::vector<std::function<void()>> begin_fun{};
-  std::vector<boost::signals2::scoped_connection> sig_scoped{};
-
-  bool show_{true};
-
- public:
-  using list = std::set<base_window*>;
-
-  base_window();
-  virtual ~base_window();
-
-  /**
-   * @brief 获取窗口标识
-   * @return 窗口标识
-   */
-  [[nodiscard]] virtual const std::string& title() const = 0;
-
-  boost::signals2::signal<void()> close{};
-  /**
-   * @brief 每帧渲染调用
-   * @param in_duration 传入的时间间隔
-   * @param in_data 传入的自定义数据
-   */
-  virtual void update() = 0;
-  /**
-   * @brief 判断是否显示
-   * @return
-   */
-  [[nodiscard]] bool is_show() const;
-  void show(bool in_show = true);
-};
-
-class DOODLELIB_API window_panel : public base_window {
- protected:
-  std::string title_name_{};
-
-  virtual void render() = 0;
-
- public:
-  window_panel()           = default;
-  ~window_panel() override = default;
-
-  [[nodiscard]] const std::string& title() const override;
-  void update() override;
-};
-
-class DOODLELIB_API modal_window : public base_window {
- protected:
-  virtual void render() = 0;
-
- public:
-  modal_window();
-  ~modal_window() override = default;
-
-  void update() override;
-};
-
-namespace base_windows_ns {
-constexpr auto init_base_windows = []() {
-  entt::meta<base_window>().type();
-};
-
-class init_base_windows_
-    : public init_register::registrar_lambda<init_base_windows, 1> {};
-
-constexpr auto init_windows_panel = []() {
-  entt::meta<window_panel>().type().base<base_window>();
-};
-
-class init_windows_panel_
-    : public init_register::registrar_lambda<init_windows_panel, 2> {};
-
-}  // namespace base_windows_ns
 }  // namespace doodle::gui

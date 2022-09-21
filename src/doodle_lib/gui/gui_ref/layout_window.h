@@ -9,8 +9,7 @@
 #include <doodle_lib/gui/strand_gui.h>
 namespace doodle::gui {
 
-class DOODLELIB_API layout_window
-    : public base_window {
+class DOODLELIB_API layout_window {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -20,11 +19,10 @@ class DOODLELIB_API layout_window
 
  public:
   layout_window();
-  ~layout_window() override;
-  [[nodiscard]] const std::string& title() const override;
+  virtual ~layout_window();
   virtual void init();
 
-  void update() override;
+  bool tick();
   template <typename windows_type>
   void call_render() {
     if (!has_windows(std::string{windows_type::name})) {

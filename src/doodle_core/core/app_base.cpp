@@ -24,18 +24,14 @@ class app_base::impl {
   void tick() {
     std::lock_guard l_g{mutex_};
 
-    auto l_view = g_gui_reg()->view<gui::detail::windows_render>();
-    ranges::for_each(
-        l_view.each(),
-        [](const std::tuple<entt::entity, gui::detail::windows_render&>& in) {
-          auto&& [l_e, l_render] = in;
-          if (l_render.tick()) {
-            boost::asio::post(g_io_context(), [l = l_e]() {
-              make_handle(l).remove<gui::detail::windows_render>();
-            });
-          }
-        }
-    );
+    std::vector<entt::entity> delete_entt{};
+    for (auto&& [l_e, l_render] : g_gui_reg()->view<gui::detail::windows_tick>().each()) {
+      if (l_render.tick()) {
+        delete_entt.emplace_back(l_e);
+      }
+    }
+
+    g_gui_reg()->destroy(delete_entt.begin(), delete_entt.end());
   }
 };
 
