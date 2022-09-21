@@ -24,6 +24,7 @@ struct [[maybe_unused]] entt::type_hash<
 namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 DOODLE_CORE_API registry_ptr &g_reg();
+DOODLE_CORE_API registry_ptr &g_gui_reg();
 
 template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {
@@ -36,7 +37,20 @@ entt::handle make_handle(const Component &instance) {
 
 inline entt::handle make_handle() {
   return entt::handle{*(g_reg()), g_reg()->create()};
+}
+
+template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
+entt::handle make_gui_handle(const Component &instance) {
+  return entt::handle{*(g_gui_reg()), entt::to_entity(*(g_gui_reg()), instance)};
 };
+template <class Component, std::enable_if_t<std::is_same_v<entt::entity, Component>, bool> = true>
+entt::handle make_gui_handle(const Component &instance) {
+  return entt::handle{*(g_gui_reg()), instance};
+};
+
+inline entt::handle make_gui_handle() {
+  return entt::handle{*(g_gui_reg()), g_gui_reg()->create()};
+}
 
 template <typename Handle_, std::enable_if_t<std::is_same_v<entt::handle, Handle_>, bool> = true>
 void destroy_handle(Handle_ &in_handle) {

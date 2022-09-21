@@ -4,6 +4,7 @@
 
 #include "app_base.h"
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/thread_pool/thread_pool.h>
@@ -19,24 +20,22 @@ class app_base::impl {
  public:
   boost::asio::high_resolution_timer timer_{g_io_context()};
 
-  std::vector<std::function<bool()>> handlers{};
-  std::vector<std::function<bool()>> handlers_next{};
   std::recursive_mutex mutex_{};
   void tick() {
     std::lock_guard l_g{mutex_};
 
-    if (!handlers_next.empty()) {
-      handlers |= ranges::action::push_back(handlers_next);
-      handlers_next.clear();
-    }
-    handlers |= ranges::action::remove_if(
-        [](const typename decltype(this->handlers)::value_type& handler) -> bool {
-          return handler(l_r);
+    auto l_view = g_gui_reg()->view<gui::detail::windows_render>();
+    ranges::for_each(
+        l_view.each(),
+        [](const std::tuple<entt::entity, gui::detail::windows_render&>& in) {
+          auto&& [l_e, l_render] = in;
+          if (l_render.tick()) {
+            boost::asio::post(g_io_context(), [l = l_e]() {
+              make_handle(l).remove<gui::detail::windows_render>();
+            });
+          }
         }
     );
-
-    handlers.clear();
-    std::swap(handlers, handlers_next);
   }
 };
 
@@ -163,10 +162,5 @@ void app_base::loop_one() {
 }
 void app_base::tick_begin() {}
 void app_base::tick_end() {}
-
-void app_base::_add_tick_impl(const std::function<bool()>& in_tick) {
-  std::lock_guard l_g{p_i->mutex_};
-  p_i->handlers_next.emplace_back(in_tick);
-}
 
 }  // namespace doodle

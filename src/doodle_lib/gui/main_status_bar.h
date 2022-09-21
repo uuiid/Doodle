@@ -21,6 +21,6 @@ class DOODLELIB_API main_status_bar {
   main_status_bar& operator=(const main_status_bar& in) noexcept;
   main_status_bar& operator=(main_status_bar&& in) noexcept;
 
-  [[maybe_unused]] void render();
+  [[maybe_unused]] bool tick();
 };
 }  // namespace doodle

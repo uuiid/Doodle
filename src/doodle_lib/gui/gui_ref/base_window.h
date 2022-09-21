@@ -7,6 +7,7 @@
 #include <doodle_lib/gui/strand_gui.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/gui_template/show_windows.h>
 #include <boost/signals2.hpp>
 #include <utility>
 
@@ -14,6 +15,8 @@
 #include <boost/intrusive/list_hook.hpp>
 
 #include <doodle_core/gui_template/gui_process.h>
+
+
 namespace doodle::gui {
 // namespace details {
 // using hock_t = boost::intrusive::list_base_hook<
@@ -23,6 +26,17 @@ namespace doodle::gui {
 // }
 
 namespace detail {
+
+template <typename T>
+class bar_tack_warp {
+ public:
+  T bar_attr;
+
+  bool operator()() {
+    bar_attr.render();
+    return false;
+  }
+};
 
 template <
     typename dear_type,
@@ -93,6 +107,8 @@ class windows_tack_warp {
 
 }  // namespace detail
 
+using gui_render = doodle::gui::detail::windows_render;
+
 /**
  * @brief 基本窗口
  */
@@ -105,8 +121,7 @@ class DOODLELIB_API base_window
   bool show_{true};
 
  public:
-  using list        = std::set<base_window*>;
-  using window_list = std::vector<std::shared_ptr<base_window>>;
+  using list = std::set<base_window*>;
 
   base_window();
   virtual ~base_window();

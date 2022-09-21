@@ -4,19 +4,18 @@
 
 #pragma once
 
-#include <doodle_core/doodle_core_fwd.h
+#include <doodle_core/doodle_core_fwd.h>
+#include <boost/type_erasure/any.hpp>
+#include <boost/type_erasure/member.hpp>
 
-namespace doodle::detail {
+namespace doodle::gui::detail {
 
-class tack_proc_interface {
- public:
-  virtual ~tack_proc_interface()              = default;
+BOOST_TYPE_ERASURE_MEMBER(tick);
 
-  [[nodiscard("")]] virtual bool operator()() = 0;
-};
-
-template <typename T>
-class tack_proc {
- public:
-};
-}  // namespace doodle::detail
+using windows_render = boost::type_erasure::any<
+    boost::mpl::vector<
+        boost::type_erasure::typeid_<>,
+        boost::type_erasure::relaxed,
+        boost::type_erasure::copy_constructible<>,
+        has_tick<bool()>>>;
+}  // namespace doodle::gui::detail

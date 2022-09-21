@@ -31,7 +31,7 @@ bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
-  return bsys::error_code();
+  return {};
 }
 bsys::error_code file_translator::open(const FSys::path& in_path) {
   auto l_r = open_impl(in_path);

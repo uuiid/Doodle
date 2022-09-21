@@ -99,7 +99,7 @@ class main_status_bar::impl {
 main_status_bar::main_status_bar()
     : p_i(std::make_unique<impl>()) {}
 
-void main_status_bar::render() {
+bool main_status_bar::tick() {
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
   float height                  = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {

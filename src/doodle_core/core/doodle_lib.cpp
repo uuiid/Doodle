@@ -26,6 +26,7 @@ class doodle_lib::impl {
   thread_pool_ptr p_thread_pool{std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2)};
   logger_ctr_ptr p_log{std::make_shared<logger_ctrl>()};
   registry_ptr reg{std::make_shared<entt::registry>()};
+  registry_ptr reg_gui{std::make_shared<entt::registry>()};
 
   scheduler_t loop{};
   bounded_pool_t loop_bounded_pool{};
@@ -83,6 +84,9 @@ thread_pool_ptr doodle_lib::get_thread_pool() const {
 registry_ptr& doodle_lib::reg_attr() const {
   return ptr->reg;
 }
+registry_ptr& doodle_lib::reg_gui_attr() const {
+  return ptr->reg_gui;
+}
 scheduler_t& doodle_lib::main_loop_attr() const {
   return ptr->loop;
 }
@@ -107,6 +111,9 @@ thread_pool& g_thread_pool() {
 
 registry_ptr& g_reg() {
   return doodle_lib::Get().reg_attr();
+}
+registry_ptr& g_gui_reg() {
+  return doodle_lib::Get().reg_gui_attr();
 }
 scheduler_t& g_main_loop() {
   return doodle_lib::Get().main_loop_attr();

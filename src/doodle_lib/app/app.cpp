@@ -221,15 +221,15 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  boost::asio::post(
-      make_process_adapter<gui::layout_window>(strand_gui{g_io_context()})
-  );
-  boost::asio::post(
-      make_process_adapter<main_menu_bar>(strand_gui{g_io_context()})
-  );
-  boost::asio::post(
-      make_process_adapter<main_status_bar>(strand_gui{g_io_context()})
-  );
+  make_gui_handle().emplace<gui::gui_render>(main_menu_bar{});
+  make_gui_handle().emplace<gui::gui_render>(main_status_bar{});
+
+  //  _add_tick_(gui::detail::bar_tack_warp<main_menu_bar>{main_menu_bar{}});
+  //  _add_tick_(gui::detail::bar_tack_warp<main_status_bar>{main_status_bar{}});
+  //  _add_tick_(gui::detail::windows_tack_warp<
+  //             dear::Begin,
+  //             gui::layout_window>{
+  //      gui::layout_window{}});
 }
 app::~app() {
   // Cleanup

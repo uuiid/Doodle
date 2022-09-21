@@ -45,6 +45,6 @@ class DOODLELIB_API main_menu_bar {
   main_menu_bar& operator=(const main_menu_bar& in) noexcept;
   main_menu_bar& operator=(main_menu_bar&& in) noexcept;
 
-  void render();
+  bool tick();
 };
 }  // namespace doodle

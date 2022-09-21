@@ -27,7 +27,6 @@ class DOODLE_CORE_API app_base {
   std::unique_ptr<impl> p_i;
 
   void init();
-  void _add_tick_impl(const std::function<bool()>& in_tick);
 
  protected:
   /**
@@ -75,12 +74,6 @@ class DOODLE_CORE_API app_base {
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
-  template <typename T>
-  void _add_tick_(T&& in_tick) {
-    /// 将调用转移
-    auto l_fun = std::unique_ptr<std::function<bool()>>(std::forward<T>(in_tick));
-    _add_tick_impl([l_fun = std::move(l_fun)]() { return (*l_fun)(); });
-  };
 };
 
 }  // namespace doodle

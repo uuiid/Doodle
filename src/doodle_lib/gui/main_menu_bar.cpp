@@ -169,7 +169,7 @@ void main_menu_bar::menu_tool() {
     toolkit::install_houdini_plug();
 }
 
-void main_menu_bar::render() {
+bool main_menu_bar::tick() {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
@@ -179,6 +179,7 @@ void main_menu_bar::render() {
     ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 #endif
   };
+  return false;
 }
 void main_menu_bar::menu_edit() {
   dear::Menu{"布局"} && [this]() { this->menu_layout(); };

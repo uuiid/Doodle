@@ -30,6 +30,7 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy,
   [[nodiscard]] thread_pool_ptr get_thread_pool() const;
 
   [[nodiscard]] registry_ptr& reg_attr() const;
+  [[nodiscard]] registry_ptr& reg_gui_attr() const;
   [[nodiscard]] scheduler_t& main_loop_attr() const;
   [[nodiscard]] bounded_pool_t& bounded_pool_attr() const;
   [[nodiscard]] boost::asio::io_context& io_context_attr() const;
