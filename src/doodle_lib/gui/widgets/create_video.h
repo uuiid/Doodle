@@ -7,8 +7,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API create_video
     : public gui::base_windows<
@@ -24,9 +23,7 @@ class DOODLELIB_API create_video
   create_video();
   ~create_video() override;
   constexpr static std::string_view name{gui::config::menu_w::comm_create_video};
-
-  void init();
+  const std::string& title() const override;
   void render();
 };
-}  // namespace gui
-}  // namespace doodle
+}  // namespace doodle::gui

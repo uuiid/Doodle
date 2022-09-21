@@ -48,16 +48,13 @@ class create_video::impl {
   std::vector<image_cache> image_to_video_list;
   std::vector<video_cache> video_list;
   entt::handle out_video_h;
+  std::string title_name_;
 };
 
 create_video::create_video()
     : p_i(std::make_unique<impl>()) {
-  title_name_ = std::string{name};
-}
-void create_video::init() {
+  p_i->title_name_ = std::string{name};
   p_i->out_video_h = make_handle();
-
-  g_reg()->ctx().emplace<create_video&>(*this);
 }
 
 void create_video::render() {
@@ -214,6 +211,9 @@ entt::handle create_video::create_image_to_move_handle(
   shot::analysis_static(l_h, in_path);
   l_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
   return l_h;
+}
+const std::string& create_video::title() const {
+  return p_i->title_name_;
 }
 create_video::~create_video() = default;
 
