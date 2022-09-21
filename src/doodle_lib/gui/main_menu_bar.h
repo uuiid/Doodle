@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
+
 namespace doodle {
 namespace main_menu_bar_ns {
 class layout_data {
@@ -37,8 +38,13 @@ class DOODLELIB_API main_menu_bar {
  public:
  public:
   main_menu_bar();
-  ~main_menu_bar() override;
+  ~main_menu_bar();
 
-  void update() override;
+  main_menu_bar(const main_menu_bar& in) noexcept;
+  main_menu_bar(main_menu_bar&& in) noexcept;
+  main_menu_bar& operator=(const main_menu_bar& in) noexcept;
+  main_menu_bar& operator=(main_menu_bar&& in) noexcept;
+
+  void render();
 };
 }  // namespace doodle

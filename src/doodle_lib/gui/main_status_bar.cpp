@@ -99,7 +99,7 @@ class main_status_bar::impl {
 main_status_bar::main_status_bar()
     : p_i(std::make_unique<impl>()) {}
 
-void main_status_bar::update() {
+void main_status_bar::render() {
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
   float height                  = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
@@ -129,6 +129,19 @@ void main_status_bar::update() {
     };
   };
 }
-main_status_bar::~main_status_bar() = default;
 
+main_status_bar::main_status_bar(const main_status_bar& in) noexcept
+    : p_i(std::make_unique<impl>(*in.p_i)) {
+}
+main_status_bar::main_status_bar(main_status_bar&& in) noexcept {
+  p_i = std::move(in.p_i);
+}
+main_status_bar& main_status_bar::operator=(const main_status_bar& in) noexcept {
+  *p_i = *p_i;
+  return *this;
+}
+main_status_bar& main_status_bar::operator=(main_status_bar&& in) noexcept {
+  p_i = std::move(in.p_i);
+  return *this;
+}
 }  // namespace doodle

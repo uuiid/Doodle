@@ -169,7 +169,7 @@ void main_menu_bar::menu_tool() {
     toolkit::install_houdini_plug();
 }
 
-void main_menu_bar::update() {
+void main_menu_bar::render() {
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
@@ -194,6 +194,20 @@ void main_menu_bar::menu_layout() {
 
   //    };
   //  }
+}
+main_menu_bar::main_menu_bar(const main_menu_bar &in) noexcept
+    : p_i(std::make_unique<impl>(*in.p_i)) {
+}
+main_menu_bar::main_menu_bar(main_menu_bar &&in) noexcept {
+  p_i = std::move(in.p_i);
+}
+main_menu_bar &main_menu_bar::operator=(const main_menu_bar &in) noexcept {
+  *p_i = *p_i;
+  return *this;
+}
+main_menu_bar &main_menu_bar::operator=(main_menu_bar &&in) noexcept {
+  p_i = std::move(in.p_i);
+  return *this;
 }
 
 }  // namespace doodle
