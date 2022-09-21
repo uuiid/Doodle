@@ -19,8 +19,8 @@ class app_base::impl {
  public:
   boost::asio::high_resolution_timer timer_{g_io_context()};
 
-  std::vector<std::function<void(bool&)>> handlers{};
-  std::vector<std::function<void(bool&)>> handlers_next{};
+  std::vector<std::function<bool()>> handlers{};
+  std::vector<std::function<bool()>> handlers_next{};
   std::recursive_mutex mutex_{};
   void tick() {
     std::lock_guard l_g{mutex_};
@@ -31,9 +31,7 @@ class app_base::impl {
     }
     handlers |= ranges::action::remove_if(
         [](const typename decltype(this->handlers)::value_type& handler) -> bool {
-          bool l_r{false};
-          handler(l_r);
-          return l_r;
+          return handler(l_r);
         }
     );
 
@@ -105,7 +103,7 @@ void app_base::begin_loop() {
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted)
       return;
-    this->loop_one();   /// \brief 各种
+    this->loop_one();  /// \brief 各种
     this->tick_begin();
     this->p_i->tick();  /// 渲染
     this->tick_end();   /// 渲染结束
@@ -166,7 +164,7 @@ void app_base::loop_one() {
 void app_base::tick_begin() {}
 void app_base::tick_end() {}
 
-void app_base::_add_tick_(const std::function<void(bool&)>& in_tick) {
+void app_base::_add_tick_(const std::function<bool()>& in_tick) {
   std::lock_guard l_g{p_i->mutex_};
   p_i->handlers_next.emplace_back(in_tick);
 }

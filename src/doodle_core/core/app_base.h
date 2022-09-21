@@ -76,7 +76,7 @@ class DOODLE_CORE_API app_base {
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
 
-  void _add_tick_(const std::function<void(bool&)>& in_tick);
+  void _add_tick_(const std::function<bool()>& in_tick);
 };
 
 
