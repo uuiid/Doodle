@@ -60,9 +60,7 @@ class windows_tack_warp : public detail::windows_render_interface {
   virtual std::int32_t flags() { return {}; };
 
  public:
-  virtual ~windows_tack_warp()             = default;
-
-  virtual const std::string& title() const = 0;
+  virtual ~windows_tack_warp() = default;
 
   bool tick() {
     if (state_attr == state_enum::none) {
