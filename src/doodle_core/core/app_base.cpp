@@ -154,7 +154,6 @@ void app_base::clear_loop() {
     g_bounded_pool().update(l_now - s_now, nullptr);
     s_now = l_now;
   }
-  g_io_context().run();
 }
 void app_base::loop_one() {
   static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
