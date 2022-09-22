@@ -23,6 +23,8 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   bsys::error_code save(const FSys::path& in_path);
   bsys::error_code save_end();
 
+  void clear_scene() const;
+
  protected:
   /**
    * @brief  文件加载(@b 非主线程) 可以阻塞,
