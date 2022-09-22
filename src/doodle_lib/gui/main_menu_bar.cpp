@@ -77,7 +77,7 @@ void main_menu_bar::menu_file() {
     make_handle().emplace<gui_windows>(create_project_dialog{});
   }
   if (dear::MenuItem("打开项目"s)) {
-    file_dialog l_file{file_dialog::dialog_args{}};
+    file_dialog l_file{file_dialog::dialog_args{}.set_title("打开项目")};
     auto l_f_h = make_handle();
     l_f_h.emplace<gui_windows>(l_file);
     l_file.async_read([l_f_h](const FSys::path &in) mutable {
@@ -150,11 +150,16 @@ void main_menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4插件"))
     toolkit::installUePath(core_set::get_set().ue4_path / "Engine");
   if (dear::MenuItem("安装ue4项目插件")) {
-    auto l_ptr = std::make_shared<FSys::path>();
-    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()}, file_dialog::dialog_args{l_ptr}.set_title("select_ue_project"s).add_filter(".uproject"))
-        .next([=]() {
-          toolkit::installUePath(*l_ptr);
-        })();
+    file_dialog l_file{
+        file_dialog::dialog_args{}
+            .set_title("选择ue4项目文件")
+            .add_filter(".uproject")};
+    auto l_f_h = make_handle();
+    l_f_h.emplace<gui_windows>(l_file);
+    l_file.async_read([l_f_h](const FSys::path &in) mutable {
+      toolkit::installUePath(in);
+      l_f_h.destroy();
+    });
   }
   if (dear::MenuItem("删除ue4缓存"))
     toolkit::deleteUeCache();
