@@ -79,6 +79,7 @@ bsys::error_code file_translator::save_end() {
 void file_translator::new_file_scene(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
   this->clear_scene();
+  auto& l_s = g_reg()->ctx().emplace<status_info>();
   l_s.message   = "创建新项目";
   l_s.need_save = true;
 }
@@ -99,7 +100,6 @@ void file_translator::clear_scene() const {
   for (auto&& l_c : windows_render_com) {
     make_handle().emplace<gui::detail::windows_render>(l_c);
   }
-  auto& l_s = g_reg()->ctx().emplace<status_info>();
 }
 
 class sqlite_file::impl {

@@ -302,20 +302,21 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
     DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
     if (k_path_M.numChars() > 0) {
-      k_path      = k_path_M.asUTF8();
-      auto l_open = std::make_shared<database_n::sqlite_file>();
+      k_path = k_path_M.asUTF8();
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        auto l_f = l_open
-                       ->async_open(k_path, boost::asio::use_future);
+        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
+            k_path, boost::asio::use_future
+        );
         while (l_f.wait_for(0ns) != std::future_status::ready) {
           app_command_base::Get().poll_one();
         }
       } else {
-        l_open
-            ->async_open(k_path, [k_path](bsys::error_code) -> void {
+        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
+            k_path, [k_path](bsys::error_code) -> void {
               DOODLE_LOG_INFO("完成打开项目 {}", k_path);
-            });
+            }
+        );
       }
     }
   }

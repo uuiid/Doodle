@@ -137,11 +137,11 @@ void app_base::load_project(const FSys::path& in_path) const {
       FSys::exists(in_path) &&
       FSys::is_regular_file(in_path) &&
       in_path.extension() == doodle_config::doodle_db_name.data()) {
-    auto l_open = std::make_shared<database_n::sqlite_file>();
-    l_open
-        ->async_open(in_path, [](bsys::error_code) -> void {
+    g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
+        in_path, [](bsys::error_code) -> void {
           DOODLE_LOG_INFO("完成打开项目");
-        });
+        }
+    );
   }
 }
 void app_base::clear_loop() {

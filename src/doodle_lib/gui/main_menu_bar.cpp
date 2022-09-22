@@ -80,8 +80,8 @@ void main_menu_bar::menu_file() {
     auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("打开项目"));
     auto l_f_h  = make_handle();
     l_f_h.emplace<gui_windows>(l_file);
-    l_file->async_read([l_f_h](const FSys::path &in) mutable {
-      std::make_shared<database_n::sqlite_file>()->async_open(in, [in](auto) {
+    l_file->async_read([](const FSys::path &in) mutable {
+      g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(in, [in](auto) {
         DOODLE_LOG_INFO("打开项目 {}", in);
       });
     });
@@ -92,7 +92,7 @@ void main_menu_bar::menu_file() {
       auto &l_p = k_list[l_i];
       if (!l_p.empty())
         if (dear::MenuItem(fmt::format("{0}##{1}", l_p.generic_string(), l_i))) {
-          std::make_shared<database_n::sqlite_file>()->async_open(l_p, [l_p](auto) {
+          g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(l_p, [l_p](auto) {
             DOODLE_LOG_INFO("打开项目 {}", l_p);
           });
         }
