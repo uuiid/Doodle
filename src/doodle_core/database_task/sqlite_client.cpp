@@ -128,15 +128,17 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   return {};
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
+  std::vector<entt::entity> delete_list;
+  std::vector<entt::entity> install_list;
+  std::vector<entt::entity> update_list;
+  std::vector<entt::entity> next_delete_list;
   if (!FSys::exists(in_path)) {  /// \brief  不存在时直接保存所有的实体
-    insert l_insert{};
-    auto l_view = g_reg()->view<doodle::database>();
-    l_insert(*g_reg(), std::vector<entt::entity>{l_view.begin(), l_view.end()});
+    if (!FSys::exists(in_path.parent_path())) {
+      FSys::create_directories(in_path.parent_path());
+    }
+    auto l_view  = g_reg()->view<doodle::database>();
+    install_list = {l_view.begin(), l_view.end()};
   } else {  /// \brief   否则进行筛选
-    std::vector<entt::entity> delete_list;
-    std::vector<entt::entity> install_list;
-    std::vector<entt::entity> update_list;
-    std::vector<entt::entity> next_delete_list;
 
     auto l_dv = ptr->registry_attr->view<data_status_delete, database>();
     for (auto&& [e, d] : l_dv.each()) {
@@ -155,34 +157,36 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         install_list.push_back(e);
       }
     }
-    auto l_k_con = core_sql::Get().get_connection_const(in_path);
-    auto l_tx    = sqlpp::start_transaction(*l_k_con);
-
-    if (delete_list.empty() &&
-        install_list.empty() &&
-        update_list.empty()) {
-      /// \brief 只更新上下文
-      auto l_s = boost::asio::make_strand(g_io_context());
-      database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
-      return {};
-    } else {
-      /// \brief 删除没有插入的
-      ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
-      if (!install_list.empty()) {
-        database_n::insert l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, install_list, l_k_con);
-      }
-      if (!update_list.empty()) {
-        database_n::update_data l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, update_list, l_k_con);
-      }
-      if (!delete_list.empty()) {
-        database_n::delete_data l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, delete_list, l_k_con);
-      }
-    }
-    l_tx.commit();
   }
+
+
+  auto l_k_con = core_sql::Get().get_connection(in_path);
+  auto l_tx    = sqlpp::start_transaction(*l_k_con);
+  if (delete_list.empty() &&
+      install_list.empty() &&
+      update_list.empty()) {
+    /// \brief 只更新上下文
+    auto l_s = boost::asio::make_strand(g_io_context());
+    database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
+    return {};
+  } else {
+    /// \brief 删除没有插入的
+    ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
+    if (!install_list.empty()) {
+      database_n::insert l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, install_list, l_k_con);
+    }
+    if (!update_list.empty()) {
+      database_n::update_data l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, update_list, l_k_con);
+    }
+    if (!delete_list.empty()) {
+      database_n::delete_data l_sqlit_action{};
+      l_sqlit_action(*ptr->registry_attr, delete_list, l_k_con);
+    }
+  }
+  l_tx.commit();
+
   return {};
 }
 
