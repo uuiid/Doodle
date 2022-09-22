@@ -11,7 +11,7 @@
 #include <gui/gui_ref/ref_base.h>
 #include <doodle_core/platform/win/list_drive.h>
 
-namespace doodle {
+namespace doodle::gui {
 
 class file_panel::path_info {
  public:

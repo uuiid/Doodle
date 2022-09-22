@@ -123,31 +123,31 @@ void main_menu_bar::menu_file() {
 
 void main_menu_bar::menu_windows() {
   if (dear::MenuItem(setting_windows::name.data()))
-    make_gui_handle().emplace<gui_windows>(setting_windows{});
+    make_handle().emplace<gui_windows>(setting_windows{});
   if (dear::MenuItem(project_edit::name.data()))
-    make_gui_handle().emplace<gui_windows>(project_edit{});
+    make_handle().emplace<gui_windows>(project_edit{});
   if (dear::MenuItem(edit_widgets::name.data()))
-    make_gui_handle().emplace<gui_windows>(edit_widgets{});
+    make_handle().emplace<gui_windows>(edit_widgets{});
   if (dear::MenuItem(assets_filter_widget::name.data()))
-    make_gui_handle().emplace<gui_windows>(assets_filter_widget{});
+    make_handle().emplace<gui_windows>(assets_filter_widget{});
   if (dear::MenuItem(csv_export_widgets::name.data()))
-    make_gui_handle().emplace<gui_windows>(csv_export_widgets{});
+    make_handle().emplace<gui_windows>(csv_export_widgets{});
   if (dear::MenuItem(maya_tool::name.data()))
-    make_gui_handle().emplace<gui_windows>(maya_tool{});
+    make_handle().emplace<gui_windows>(maya_tool{});
   if (dear::MenuItem(create_video::name.data()))
-    make_gui_handle().emplace<gui_windows>(create_video{});
+    make_handle().emplace<gui_windows>(create_video{});
   if (dear::MenuItem(extract_subtitles_widgets::name.data()))
-    make_gui_handle().emplace<gui_windows>(extract_subtitles_widgets{});
+    make_handle().emplace<gui_windows>(extract_subtitles_widgets{});
   if (dear::MenuItem(subtitle_processing::name.data()))
-    make_gui_handle().emplace<gui_windows>(subtitle_processing{});
+    make_handle().emplace<gui_windows>(subtitle_processing{});
   if (dear::MenuItem(assets_file_widgets::name.data()))
-    make_gui_handle().emplace<gui_windows>(assets_file_widgets{});
+    make_handle().emplace<gui_windows>(assets_file_widgets{});
   if (dear::MenuItem(long_time_tasks_widget::name.data()))
-    make_gui_handle().emplace<gui_windows>(long_time_tasks_widget{});
+    make_handle().emplace<gui_windows>(long_time_tasks_widget{});
   if (dear::MenuItem(time_sequencer_widget::name.data()))
-    make_gui_handle().emplace<gui_windows>(time_sequencer_widget{});
+    make_handle().emplace<gui_windows>(time_sequencer_widget{});
   if (dear::MenuItem(all_user_view_widget::name.data()))
-    make_gui_handle().emplace<gui_windows>(all_user_view_widget{});
+    make_handle().emplace<gui_windows>(all_user_view_widget{});
 }
 
 void main_menu_bar::menu_tool() {

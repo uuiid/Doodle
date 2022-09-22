@@ -7,12 +7,14 @@
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
 #include <bitset>
-namespace doodle {
+namespace doodle::gui {
 /**
  * @brief
  */
 class DOODLELIB_API file_panel
-    : public gui::modal_window {
+    : public base_windows<
+          dear::PopupModal,
+          file_panel> {
   class impl;
   class path_info;
   enum class sort_by : std::int16_t {
@@ -88,11 +90,12 @@ class DOODLELIB_API file_panel
   [[nodiscard]] std::string& title() const override;
   void init();
 
-  void render() override;
+  void render();
+
 
   file_panel& async_read(one_fun&& in_fun);
   file_panel& async_read(mult_fun&& in_fun);
 };
 
 using file_dialog = file_panel;
-}  // namespace doodle
+}  // namespace doodle::gui
