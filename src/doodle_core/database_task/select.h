@@ -24,9 +24,6 @@ class DOODLE_CORE_API select : public process_handy_tools {
       const FSys::path& in_project_path,
       conn_ptr& in_connect
   );
-
- private:
-  void th_run();
 };
 
 }  // namespace database_n
