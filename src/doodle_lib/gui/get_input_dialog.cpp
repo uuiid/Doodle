@@ -33,7 +33,9 @@ void create_project_dialog::render() {
 
   if (ImGui::Button(*p_i->select_button_id)) {
     auto l_file = std::make_shared<file_dialog>(
-        file_dialog::dialog_args{}.set_use_dir()
+        file_dialog::dialog_args{}
+            .set_use_dir()
+            .set_title("选择文件夹")
     );
     l_file->async_read([this](const FSys::path& in) {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
@@ -52,7 +54,7 @@ void create_project_dialog::render() {
   }
 
   if (imgui::Button("ok")) {
-    ImGui::CloseCurrentPopup();
+    show_attr = false;
     p_i->select_button_id().destroy();
     g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
     g_reg()->ctx().at<project>()                       = p_i->prj;

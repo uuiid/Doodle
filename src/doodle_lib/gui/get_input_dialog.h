@@ -10,7 +10,7 @@
 namespace doodle::gui {
 
 class DOODLELIB_API create_project_dialog
-    : public base_windows<dear::PopupModal, create_project_dialog> {
+    : public base_windows<dear::Begin, create_project_dialog> {
   class impl;
   std::unique_ptr<impl> p_i;
 
