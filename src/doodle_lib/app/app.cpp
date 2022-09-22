@@ -204,8 +204,10 @@ bool app::valid() const {
 }
 void app::close_windows() {
   doodle::app_command_base::Get().stop_app();
-  ::ShowWindow(p_hwnd, SW_HIDE);
-  ::DestroyWindow(doodle::app::Get().p_hwnd);
+  boost::asio::post([this]() {
+    ::ShowWindow(p_hwnd, SW_HIDE);
+    ::DestroyWindow(doodle::app::Get().p_hwnd);
+  })
 }
 void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
