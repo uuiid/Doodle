@@ -12,6 +12,7 @@
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/gui/open_file_dialog.h>
+#include <doodle_core/database_task/sqlite_client.h>
 
 namespace doodle::gui {
 
@@ -56,8 +57,8 @@ void create_project_dialog::render() {
   if (imgui::Button("ok")) {
     show_attr = false;
     p_i->select_button_id().destroy();
-    g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
-    g_reg()->ctx().at<project>()                       = p_i->prj;
+    g_reg()->ctx().at<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
+    g_reg()->ctx().at<project>() = p_i->prj;
   }
 }
 
