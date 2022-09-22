@@ -170,7 +170,7 @@ void app::post_constructor() {
 
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
   /// \brief 设置窗口句柄处理
-  gui::main_proc_handle::get().win_close = [this]() {
+  gui::main_proc_handle::get().win_close = []() {
     make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
@@ -239,7 +239,7 @@ void app::load_back_end() {
     init_register::instance().init_run();
   });
 
-  make_handle().emplace<gui::gui_tick>(std::make_shared<short_cut>());
+  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::short_cut>());
 }
 
 bool app::chick_authorization() {

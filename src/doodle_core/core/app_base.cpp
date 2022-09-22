@@ -36,7 +36,7 @@ class app_base::impl {
       }
     }
 
-    g_gui_reg()->destroy(delete_entt.begin(), delete_entt.end());
+    g_reg()->destroy(delete_entt.begin(), delete_entt.end());
   }
 };
 

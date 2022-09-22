@@ -18,7 +18,7 @@ class assets_file_widgets;
  *
  */
 class DOODLELIB_API assets_file_widgets
-    : public base_windows<dear::Begin, assets_file> {
+    : public base_windows<dear::Begin, assets_file_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
 

@@ -74,13 +74,13 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
-    make_handle().emplace<gui_windows>(create_project_dialog{});
+    make_handle().emplace<gui_windows>(std::make_shared<create_project_dialog>());
   }
   if (dear::MenuItem("打开项目"s)) {
-    file_dialog l_file{file_dialog::dialog_args{}.set_title("打开项目")};
-    auto l_f_h = make_handle();
+    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("打开项目"));
+    auto l_f_h  = make_handle();
     l_f_h.emplace<gui_windows>(l_file);
-    l_file.async_read([l_f_h](const FSys::path &in) mutable {
+    l_file->async_read([l_f_h](const FSys::path &in) mutable {
       std::make_shared<database_n::sqlite_file>()->async_open(in, [in](auto) {
         DOODLE_LOG_INFO("打开项目 {}", in);
       });

@@ -146,9 +146,9 @@ class assets_filter_factory : public filter_factory_base {
   constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
 
   using data_type          = assets;
-  using gui_cache          = gui_cache<FSys::path>;
-  using tree_node_type     = tree_node<gui_cache>;
-  using tree_node_type_ptr = tree_node<gui_cache>::child_type;
+  using gui_cache_path     = gui_cache<FSys::path>;
+  using tree_node_type     = tree_node<gui_cache_path>;
+  using tree_node_type_ptr = tree_node<gui_cache_path>::child_type;
   using popen_cache        = gui_cache<std::string>;
 
   tree_node_type::child_type p_tree;
@@ -164,7 +164,7 @@ class assets_filter_factory : public filter_factory_base {
         auto k_path = in_node.data.data / p_popen.data;
         in_node.child.emplace_back(
             std::make_shared<tree_node_type>(
-                gui_cache{
+                gui_cache_path{
                     p_popen.data,
                     k_path}
             )
@@ -219,7 +219,7 @@ class assets_filter_factory : public filter_factory_base {
           it != root->child.end()) {
         root = it->get();
       } else {
-        auto it1 = root->child.emplace_back(std::make_shared<tree_node_type>(gui_cache{j.generic_string(), l_p}));
+        auto it1 = root->child.emplace_back(std::make_shared<tree_node_type>(gui_cache_path{j.generic_string(), l_p}));
         root     = it1.get();
       }
     }
@@ -277,7 +277,7 @@ class assets_filter_factory : public filter_factory_base {
  public:
   assets_filter_factory()
       : p_cur_selects(),
-        p_tree(std::make_shared<tree_node_type>(gui_cache{"root"s, FSys::path{}})),
+        p_tree(std::make_shared<tree_node_type>(gui_cache_path{"root"s, FSys::path{}})),
         p_popen("name"s, "null"s) {
     p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }

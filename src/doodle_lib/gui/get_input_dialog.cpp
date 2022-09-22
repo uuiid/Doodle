@@ -80,15 +80,12 @@ std::int32_t create_project_dialog::flags() const {
 
 class close_exit_dialog::impl {
  public:
-  explicit impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
-  std::shared_ptr<bool> quit_;
   std::string title{"退出"s};
 };
 void close_exit_dialog::render() {
   ImGui::Text("是否退出?");
 
   if (ImGui::Button("yes")) {
-    *p_i->quit_ = true;
     ImGui::CloseCurrentPopup();
     boost::asio::post(g_io_context(), []() {
       app::Get().close_windows();
@@ -96,7 +93,6 @@ void close_exit_dialog::render() {
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
-    *p_i->quit_ = false;
     ImGui::CloseCurrentPopup();
   }
 }
@@ -105,7 +101,7 @@ void close_exit_dialog::set_attr() const {
   ImGui::SetNextWindowSize({640, 360});
 }
 close_exit_dialog::close_exit_dialog()
-    : p_i() {
+    : p_i(std::make_unique<impl>()) {
 }
 const std::string& close_exit_dialog::title() const {
   return p_i->title;

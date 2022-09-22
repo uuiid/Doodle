@@ -9,7 +9,7 @@
 
 namespace doodle::gui {
 
-class all_user_view_widget {
+class all_user_view_widget : public base_windows<dear::Begin, all_user_view_widget> {
  private:
   class impl;
   std::unique_ptr<impl> ptr;

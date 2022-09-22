@@ -45,7 +45,7 @@ class windows_tack_warp : public detail::windows_render_interface {
 
   template <typename T = windows_type>
   auto call_self(std::integral_constant<state_enum, state_enum::set_attr>)
-      -> decltype(std::declval<T>().init(), void()) {
+      -> decltype(std::declval<T>().set_attr(), void()) {
     self_().set_attr();
   };
 
@@ -67,6 +67,7 @@ class windows_tack_warp : public detail::windows_render_interface {
       call_self(std::integral_constant<
                 state_enum, state_enum::set_attr>{});
       state_attr = state_enum::set_attr;
+      show_attr  = true;
     }
 
     dear_type l_dear_{
@@ -74,7 +75,7 @@ class windows_tack_warp : public detail::windows_render_interface {
         &show_attr,
         self_().flags()};
 
-    if (l_dear_ && state_attr == state_enum::set_attr) {
+    if (static_cast<bool>(l_dear_) && state_attr == state_enum::set_attr) {
       call_self(std::integral_constant<
                 state_enum, state_enum::init>{});
       state_attr = state_enum::init;

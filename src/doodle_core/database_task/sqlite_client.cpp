@@ -22,11 +22,30 @@
 #include <core/core_set.h>
 #include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/core/post_tick.h>
+
+#include <doodle_core/gui_template/show_windows.h>
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
   g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
+
+  std::vector<gui::detail::windows_tick> windows_tick_com{};
+  std::vector<gui::detail::windows_render> windows_render_com{};
+  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
+    windows_tick_com.emplace_back(l_render);
+  }
+  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_render>().each()) {
+    windows_render_com.emplace_back(l_render);
+  }
   g_reg()->clear();
+
+  for (auto&& l_c : windows_tick_com) {
+    make_handle().emplace<gui::detail::windows_tick>(l_c);
+  }
+  for (auto&& l_c : windows_render_com) {
+    make_handle().emplace<gui::detail::windows_render>(l_c);
+  }
+
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);

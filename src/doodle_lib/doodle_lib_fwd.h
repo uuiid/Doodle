@@ -35,11 +35,11 @@ class time_point_wrap;
 class comment;
 class thread_pool;
 class season;
-class setting_windows;
+
 class core_sig;
 class app;
 class program_options;
-class short_cut;
+
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;

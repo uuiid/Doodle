@@ -320,8 +320,6 @@ void select::th_run() {
     doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
 
     /// \brief 开始修改注册表
-    p_i->local_reg->clear();
-
     auto l_id = p_i->create_entt;
     p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
     for (int l_j = 0; l_j < l_id.size(); ++l_j) {
