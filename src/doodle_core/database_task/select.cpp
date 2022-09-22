@@ -283,6 +283,7 @@ void select::operator()(
 ) {
   p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
+  p_i->project          = in_project_path;
 
   this->p_i->select_old(*p_i->local_reg, *in_connect);
 
