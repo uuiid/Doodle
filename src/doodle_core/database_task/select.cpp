@@ -276,19 +276,6 @@ class select::impl {
 select::select() : p_i(std::make_unique<impl>()) {}
 select::~select() = default;
 
-void select::init() {
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("加载数据");
-  k_msg.set_state(k_msg.run);
-  p_i->result = g_thread_pool().enqueue([this]() {
-    this->th_run();
-  });
-}
-
-void select::aborted() {
-  p_i->stop = true;
-}
-
 void select::operator()(
     entt::registry& in_registry,
     const FSys::path& in_project_path,
