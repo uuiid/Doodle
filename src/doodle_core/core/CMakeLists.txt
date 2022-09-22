@@ -13,7 +13,6 @@ target_sources(
         json_rpc_process_t.h
         app_base.h
         core_sql.h
-        post_tick.h
 
         PRIVATE
         core_set.cpp

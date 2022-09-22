@@ -10,13 +10,4 @@
 
 namespace doodle {
 
-template <typename T>
-auto post_tick(T&& in_fun) {
-  app_base::Get()._add_tick_(
-      [fun = std::move(in_fun)](bool& in_r) {
-        in_r = fun();
-      }
-  );
-}
-
 }  // namespace doodle
