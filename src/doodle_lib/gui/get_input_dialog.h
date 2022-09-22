@@ -14,8 +14,6 @@ class DOODLELIB_API create_project_dialog
   class impl;
   std::unique_ptr<impl> p_i;
 
- protected:
-  void render();
 
  public:
   explicit create_project_dialog();
@@ -25,6 +23,7 @@ class DOODLELIB_API create_project_dialog
   void set_attr() const;
   virtual const std::string& title() const override;
   std::int32_t flags() const;
+  void render();
 };
 
 class DOODLELIB_API close_exit_dialog

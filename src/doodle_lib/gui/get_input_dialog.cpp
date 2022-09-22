@@ -22,7 +22,7 @@ class create_project_dialog::impl {
   std::string path_gui;
   std::string name;
   std::shared_ptr<FSys::path> in_path;
-  gui_cache<entt::handle> select_button_id{"选择文件夹", entt::handle{}};
+  gui_cache<entt::handle> select_button_id{"选择文件夹", make_handle()};
 
   std::string title{"输入项目"s};
 };
@@ -31,14 +31,12 @@ void create_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
-    file_dialog l_file{file_dialog::dialog_args{}};
+    file_dialog l_file{file_dialog::dialog_args{}.set_use_dir()};
     l_file.async_read([this](const FSys::path& in) {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
       p_i->path_gui = p_i->path.generic_string();
     });
-    auto l_handle = make_handle();
-    l_handle.emplace_or_replace<gui_windows>(l_file);
-    p_i->select_button_id() = l_handle;
+    p_i->select_button_id().emplace_or_replace<gui_windows>(l_file);
   }
 
   if (dear::InputText("名称", &(p_i->name))) {

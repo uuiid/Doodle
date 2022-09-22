@@ -77,13 +77,15 @@ void main_menu_bar::menu_file() {
     make_handle().emplace<gui_windows>(create_project_dialog{});
   }
   if (dear::MenuItem("打开项目"s)) {
-    auto l_ptr = std::make_shared<FSys::path>();
-    make_process_adapter<file_dialog>(strand_gui{g_io_context().get_executor()}, file_dialog::dialog_args{l_ptr}.set_title("选择文件").add_filter(std::string{doodle_config::doodle_db_name}))
-        .next([=]() {
-          std::make_shared<database_n::sqlite_file>()->async_open(*l_ptr, [l_ptr](auto) {
-            DOODLE_LOG_INFO("打开项目 {}", *l_ptr);
-          });
-        })();
+    file_dialog l_file{file_dialog::dialog_args{}};
+    auto l_f_h = make_handle();
+    l_f_h.emplace<gui_windows>(l_file);
+    l_file.async_read([l_f_h](const FSys::path &in) mutable {
+      std::make_shared<database_n::sqlite_file>()->async_open(in, [in](auto) {
+        DOODLE_LOG_INFO("打开项目 {}", in);
+      });
+      l_f_h.destroy();
+    });
   }
   dear::Menu{"最近的项目"} && []() {
     auto &k_list = core_set::get_set().project_root;
