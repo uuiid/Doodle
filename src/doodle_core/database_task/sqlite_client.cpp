@@ -201,15 +201,15 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));
       }
 
-    if (ptr->error_retry) {/// 重试时不进行下一步重试
+    if (ptr->error_retry) {  /// 重试时不进行下一步重试
       g_reg()->ctx().at<status_info>().message = "重试失败, 不保存";
       ptr->error_retry                         = false;
-    }else{
+    } else {
       g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
       ptr->error_retry                         = true;
       ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
-      ptr->error_timer->async_wait([l_path = in_path, this]() {
-        this->async_save(l_path, [](auto&& in) {});
+      ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
+        this->async_save(l_path, [](boost::system::error_code in) -> void {});
       });
       ptr->error_timer->expires_from_now(3s);
     }
