@@ -58,7 +58,8 @@ void create_project_dialog::render() {
 
 create_project_dialog::create_project_dialog()
     : p_i(std::make_unique<impl>()) {
-  p_i->path_gui = core_set::get_doc() / "doodle";
+  p_i->path     = core_set::get_set().get_doc() / "doodle";
+  p_i->path_gui = p_i->path.generic_string();
 }
 create_project_dialog::~create_project_dialog() = default;
 
@@ -68,6 +69,10 @@ const std::string& create_project_dialog::title() const {
 void create_project_dialog::set_attr() const {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
+}
+std::int32_t create_project_dialog::flags() const {
+  boost::ignore_unused(this);
+  return ImGuiWindowFlags_NoSavedSettings;
 }
 
 class close_exit_dialog::impl {
@@ -81,13 +86,11 @@ void close_exit_dialog::render() {
 
   if (ImGui::Button("yes")) {
     *p_i->quit_ = true;
-    succeed();
     ImGui::CloseCurrentPopup();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     *p_i->quit_ = false;
-    this->fail();
     ImGui::CloseCurrentPopup();
   }
 }
@@ -100,5 +103,9 @@ close_exit_dialog::close_exit_dialog(std::shared_ptr<bool> is_quit)
 }
 const std::string& close_exit_dialog::title() const {
   return p_i->title;
+}
+std::int32_t close_exit_dialog::flags() const {
+  boost::ignore_unused(this);
+  return ImGuiWindowFlags_NoSavedSettings;
 }
 }  // namespace doodle::gui
