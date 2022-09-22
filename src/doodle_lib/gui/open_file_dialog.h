@@ -54,24 +54,22 @@ class DOODLELIB_API file_panel
   constexpr const static dialog_flags flags_Create_Name{0x2};
   constexpr const static dialog_flags flags_Multiple_Selection{0x4};
 
-  using one_sig    = std::shared_ptr<FSys::path>;
-  using mult_sig   = std::shared_ptr<std::vector<FSys::path>>;
-  using select_sig = std::variant<one_sig, mult_sig>;
-  using mult_fun   = std::function<void(const std::vector<FSys::path>&)>;
-  using one_fun    = std::function<void(const FSys::path&)>;
+  using mult_fun = std::function<void(const std::vector<FSys::path>&)>;
+  using one_fun  = std::function<void(const FSys::path&)>;
 
   class dialog_args {
     friend file_panel;
-    select_sig out_ptr;
     dialog_flags p_flags;
     std::vector<std::string> filter;
     std::string title;
     FSys::path pwd;
+    bool multiple_attr{false};
 
    public:
-    explicit dialog_args(select_sig in_out_ptr);
+    explicit dialog_args();
 
     dialog_args& set_use_dir(bool use_dir = true);
+    dialog_args& multiple(bool use_dir = true);
     dialog_args& create_file_module(bool use_create = true);
     dialog_args& set_title(std::string in_title);
     dialog_args& set_filter(const std::vector<std::string>& in_filters);
@@ -91,7 +89,8 @@ class DOODLELIB_API file_panel
   void init();
 
   void render();
-
+  void set_attr();
+  std::int32_t flags() const;
 
   file_panel& async_read(one_fun&& in_fun);
   file_panel& async_read(mult_fun&& in_fun);

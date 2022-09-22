@@ -7,35 +7,37 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-namespace doodle {
+namespace doodle::gui {
 
-class DOODLELIB_API get_input_project_dialog : public gui::modal_window {
+class DOODLELIB_API create_project_dialog
+    : public base_windows<dear::PopupModal, create_project_dialog> {
   class impl;
   std::unique_ptr<impl> p_i;
 
  protected:
-  void render() override;
+  void render();
 
  public:
-  explicit get_input_project_dialog(std::shared_ptr<FSys::path> in_handle);
+  explicit create_project_dialog();
 
-  ~get_input_project_dialog() override;
-  virtual void init();
+  virtual ~create_project_dialog();
+
+  void set_attr() const;
   virtual const std::string& title() const override;
-  virtual void succeeded();
 };
 
-namespace gui::input {
-class DOODLELIB_API get_bool_dialog : public modal_window {
+class DOODLELIB_API close_exit_dialog
+    : public base_windows<dear::PopupModal, close_exit_dialog> {
   class impl;
   std::unique_ptr<impl> p_i;
 
  protected:
-  void render() override;
+  void render();
 
  public:
+  void set_attr() const;
   virtual const std::string& title() const override;
-  explicit get_bool_dialog(std::shared_ptr<bool> is_quit);
+  explicit close_exit_dialog(std::shared_ptr<bool> is_quit);
 };
-}  // namespace gui::input
-}  // namespace doodle
+
+}  // namespace doodle::gui

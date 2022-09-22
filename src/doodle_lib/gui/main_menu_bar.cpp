@@ -74,15 +74,7 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
-    auto l_ptr = std::make_shared<FSys::path>();
-
-    make_process_adapter<file_dialog>(
-        strand_gui{g_io_context().get_executor()},
-        file_dialog::dialog_args{l_ptr}
-            .set_title("选择目录"s)
-            .set_use_dir()
-    )
-        .next<get_input_project_dialog>(l_ptr)();
+    make_handle().emplace<gui_windows>(create_project_dialog{});
   }
   if (dear::MenuItem("打开项目"s)) {
     auto l_ptr = std::make_shared<FSys::path>();

@@ -481,16 +481,21 @@ file_panel &file_panel::async_read(mult_fun &&in_fun) {
   p_i->call_fun = in_fun;
   return *this;
 }
+void file_panel::set_attr() {
+  ImGui::OpenPopup(title().data());
+  ImGui::SetNextWindowSize({640, 360});
+}
+std::int32_t file_panel::flags() const {
+  return ImGuiWindowFlags_NoSavedSettings;
+}
 file_panel::~file_panel() = default;
 
-file_panel::dialog_args::dialog_args(file_panel::select_sig in_out_ptr)
-    : out_ptr(std::move(in_out_ptr)),
-      p_flags(),
+file_panel::dialog_args::dialog_args()
+    : p_flags(),
       filter(),
       title("get file"),
       pwd() {
   use_default_pwd();
-  p_flags[2] = out_ptr.index() == 1;
 }
 
 file_panel::dialog_args &file_panel::dialog_args::set_use_dir(bool use_dir) {
@@ -527,4 +532,9 @@ file_panel::dialog_args &file_panel::dialog_args::use_default_pwd() {
   pwd = g_reg()->ctx().emplace<default_pwd>().pwd;
   return *this;
 }
-}  // namespace doodle
+file_panel::dialog_args &file_panel::dialog_args::multiple(bool in_multiple) {
+  p_flags[2] = in_multiple;
+
+  return *this;
+}
+}  // namespace doodle::gui

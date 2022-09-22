@@ -9,9 +9,12 @@
 
 #include <utility>
 
-namespace doodle {
+#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_lib/gui/open_file_dialog.h>
 
-class get_input_project_dialog::impl {
+namespace doodle::gui {
+
+class create_project_dialog::impl {
  public:
   project prj;
 
@@ -19,12 +22,24 @@ class get_input_project_dialog::impl {
   std::string path_gui;
   std::string name;
   std::shared_ptr<FSys::path> in_path;
+  gui_cache<entt::handle> select_button_id{"选择文件夹", entt::handle{}};
 
   std::string title{"输入项目"s};
 };
 
-void get_input_project_dialog::render() {
+void create_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
+
+  if (ImGui::Button(*p_i->select_button_id)) {
+    file_dialog l_file{file_dialog::dialog_args{}};
+    l_file.async_read([this](const FSys::path& in) {
+      p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
+      p_i->path_gui = p_i->path.generic_string();
+    });
+    auto l_handle = make_handle();
+    l_handle.emplace_or_replace<gui_windows>(l_file);
+    p_i->select_button_id() = l_handle;
+  }
 
   if (dear::InputText("名称", &(p_i->name))) {
     p_i->prj.set_name(p_i->name);
@@ -34,60 +49,56 @@ void get_input_project_dialog::render() {
   }
 
   if (imgui::Button("ok")) {
-    succeed();
-    close();
+    ImGui::CloseCurrentPopup();
+    p_i->select_button_id().destroy();
+    g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
+    g_reg()->ctx().at<project>()                       = p_i->prj;
   }
 }
 
-get_input_project_dialog::get_input_project_dialog(std::shared_ptr<FSys::path> in_handle)
+create_project_dialog::create_project_dialog()
     : p_i(std::make_unique<impl>()) {
-  p_i->in_path = std::move(in_handle);
+  p_i->path_gui = core_set::get_doc() / "doodle";
 }
-get_input_project_dialog::~get_input_project_dialog() = default;
+create_project_dialog::~create_project_dialog() = default;
 
-void get_input_project_dialog::succeeded() {
-  g_reg()->ctx().at<::doodle::database_info>().path_ = p_i->path;
-  g_reg()->ctx().at<project>()                       = p_i->prj;
-}
-
-void get_input_project_dialog::init() {
-  p_i->prj.set_path(*p_i->in_path);
-
-  p_i->path     = *p_i->in_path / ("tmp" + std::string{doodle_config::doodle_db_name});
-  p_i->path_gui = p_i->path.generic_string();
-}
-const std::string& get_input_project_dialog::title() const {
+const std::string& create_project_dialog::title() const {
   return p_i->title;
 }
+void create_project_dialog::set_attr() const {
+  ImGui::OpenPopup(title().data());
+  ImGui::SetNextWindowSize({640, 360});
+}
 
-namespace gui::input {
-class get_bool_dialog::impl {
+class close_exit_dialog::impl {
  public:
   explicit impl(std::shared_ptr<bool> is_quit) : quit_(std::move(is_quit)){};
   std::shared_ptr<bool> quit_;
   std::string title{"退出"s};
 };
-void get_bool_dialog::render() {
+void close_exit_dialog::render() {
   ImGui::Text("是否退出?");
 
   if (ImGui::Button("yes")) {
     *p_i->quit_ = true;
     succeed();
-    close();
+    ImGui::CloseCurrentPopup();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     *p_i->quit_ = false;
     this->fail();
-    close();
+    ImGui::CloseCurrentPopup();
   }
 }
-get_bool_dialog::get_bool_dialog(std::shared_ptr<bool> is_quit)
+void close_exit_dialog::set_attr() const {
+  ImGui::OpenPopup(title().data());
+  ImGui::SetNextWindowSize({640, 360});
+}
+close_exit_dialog::close_exit_dialog(std::shared_ptr<bool> is_quit)
     : p_i(std::make_unique<impl>(std::move(is_quit))) {
 }
-const std::string& get_bool_dialog::title() const {
+const std::string& close_exit_dialog::title() const {
   return p_i->title;
 }
-
-}  // namespace gui::input
-}  // namespace doodle
+}  // namespace doodle::gui
