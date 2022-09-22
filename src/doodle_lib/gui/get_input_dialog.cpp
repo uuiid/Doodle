@@ -6,6 +6,7 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_lib/app/app.h>
 
 #include <utility>
 
@@ -31,8 +32,10 @@ void create_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
-    file_dialog l_file{file_dialog::dialog_args{}.set_use_dir()};
-    l_file.async_read([this](const FSys::path& in) {
+    auto l_file = std::make_shared<file_dialog>(
+        file_dialog::dialog_args{}.set_use_dir()
+    );
+    l_file->async_read([this](const FSys::path& in) {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
       p_i->path_gui = p_i->path.generic_string();
     });
@@ -85,6 +88,9 @@ void close_exit_dialog::render() {
   if (ImGui::Button("yes")) {
     *p_i->quit_ = true;
     ImGui::CloseCurrentPopup();
+    boost::asio::post(g_io_context(), []() {
+      app::Get().close_windows();
+    });
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
@@ -96,8 +102,8 @@ void close_exit_dialog::set_attr() const {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
 }
-close_exit_dialog::close_exit_dialog(std::shared_ptr<bool> is_quit)
-    : p_i(std::make_unique<impl>(std::move(is_quit))) {
+close_exit_dialog::close_exit_dialog()
+    : p_i() {
 }
 const std::string& close_exit_dialog::title() const {
   return p_i->title;

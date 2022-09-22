@@ -9,7 +9,7 @@
 #include <doodle_lib/gui/strand_gui.h>
 namespace doodle::gui {
 
-class DOODLELIB_API layout_window {
+class DOODLELIB_API layout_window : public detail::windows_tick {
   class impl;
   std::unique_ptr<impl> p_i;
 

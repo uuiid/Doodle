@@ -6,7 +6,9 @@
 
 namespace doodle::gui {
 class DOODLELIB_API time_sequencer_widget
-    : public window_panel {
+    : public base_windows<
+          dear::Begin,
+          time_sequencer_widget> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -15,7 +17,7 @@ class DOODLELIB_API time_sequencer_widget
   ~time_sequencer_widget() override;
 
   constexpr static std::string_view name = config::menu_w::time_edit;
-
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
 }  // namespace doodle::gui

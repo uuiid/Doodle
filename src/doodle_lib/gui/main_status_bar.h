@@ -6,8 +6,8 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle {
-class DOODLELIB_API main_status_bar {
+namespace doodle::gui {
+class DOODLELIB_API main_status_bar : public detail::windows_tick {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -23,4 +23,4 @@ class DOODLELIB_API main_status_bar {
 
   [[maybe_unused]] bool tick();
 };
-}  // namespace doodle
+}  // namespace doodle::gui

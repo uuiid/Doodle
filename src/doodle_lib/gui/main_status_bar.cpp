@@ -91,7 +91,7 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 }
 }  // namespace ImGui
 
-namespace doodle {
+namespace doodle::gui {
 class main_status_bar::impl {
  public:
 };

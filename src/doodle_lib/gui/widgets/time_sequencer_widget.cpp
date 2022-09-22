@@ -99,6 +99,7 @@ class time_sequencer_widget::impl {
   detail::cross_frame_check<std::tuple<std::int32_t, std::double_t>> edit_chick{};
   detail::cross_frame_check<ImPlotRect> chick_view1{};
   detail::cross_frame_check<ImPlotRect> chick_view2{};
+  std::string title_name_;
 
   void set_shaded_works_time(const std::vector<std::pair<time_point_wrap, time_point_wrap>>& in_works) {
     shaded_works_time.clear();
@@ -303,7 +304,7 @@ class time_sequencer_widget::impl {
 
 time_sequencer_widget::time_sequencer_widget()
     : p_i(std::make_unique<impl>()) {
-  this->title_name_                 = std::string{name};
+  p_i->title_name_                 = std::string{name};
   ImPlot::GetStyle().UseLocalTime   = true;
   ImPlot::GetStyle().Use24HourClock = true;
 
@@ -455,5 +456,8 @@ void time_sequencer_widget::render() {
   dear::Text(p_i->rules_cache.gui_name.name);
 
   p_i->rules_cache().render();
+}
+const std::string& time_sequencer_widget::title() const {
+  return p_i->title_name_;
 }
 }  // namespace doodle::gui

@@ -113,7 +113,6 @@ class file_panel::impl {
   std::size_t select_index{};
   dialog_flags p_flags_;
 
-  file_panel::select_sig out_;
   FSys::path p_pwd;
   sort_by sort_by_p;
   mult_fun call_fun;
@@ -134,7 +133,6 @@ file_panel::file_panel(const dialog_args &in_args)
   /// \brief 设置标志
   p_i->p_flags_             = in_args.p_flags;
   /// \brief 设置输出
-  p_i->out_                 = in_args.out_ptr;
   p_i->p_pwd                = in_args.pwd;
 }
 

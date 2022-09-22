@@ -23,7 +23,7 @@ class layout_data {
   bool operator!=(const std::string& in_rhs) const;
 };
 }  // namespace main_menu_bar_ns
-class DOODLELIB_API main_menu_bar {
+class DOODLELIB_API main_menu_bar : public detail::windows_tick {
  private:
   class impl;
   std::unique_ptr<impl> p_i;

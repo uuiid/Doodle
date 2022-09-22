@@ -26,12 +26,12 @@ class app_base::impl {
 
     std::vector<entt::entity> delete_entt{};
     for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
-      if (l_render.tick()) {
+      if (l_render->tick()) {
         delete_entt.emplace_back(l_e);
       }
     }
     for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_render>().each()) {
-      if (l_render.tick()) {
+      if (l_render->tick()) {
         delete_entt.emplace_back(l_e);
       }
     }

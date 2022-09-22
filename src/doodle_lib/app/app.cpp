@@ -171,17 +171,7 @@ void app::post_constructor() {
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::get().win_close = [this]() {
-    auto l_quit = std::make_shared<bool>(false);
-    boost::asio::post(
-        make_process_adapter<gui::input::get_bool_dialog>(
-            strand_gui{g_io_context()},
-            l_quit
-        )
-            .next([l_quit, this]() {
-              if (*l_quit)
-                this->close_windows();
-            })
-    );
+    make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
   };
   gui::main_proc_handle::get().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
@@ -221,11 +211,11 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  make_gui_handle().emplace<gui::gui_tick>(
-      gui::layout_window{}
+  make_handle().emplace<gui::gui_tick>(
+      std::make_shared<gui::layout_window>();
   );
-  make_gui_handle().emplace<gui::gui_tick>(main_menu_bar{});
-  make_gui_handle().emplace<gui::gui_tick>(main_status_bar{});
+  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_menu_bar>());
+  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_status_bar>());
 
   //  _add_tick_(gui::detail::bar_tack_warp<main_menu_bar>{main_menu_bar{}});
   //  _add_tick_(gui::detail::bar_tack_warp<main_status_bar>{main_status_bar{}});

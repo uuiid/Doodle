@@ -14,7 +14,6 @@ class DOODLELIB_API create_project_dialog
   class impl;
   std::unique_ptr<impl> p_i;
 
-
  public:
   explicit create_project_dialog();
 
@@ -37,9 +36,8 @@ class DOODLELIB_API close_exit_dialog
  public:
   void set_attr() const;
   virtual const std::string& title() const override;
-  explicit close_exit_dialog(std::shared_ptr<bool> is_quit);
+  explicit close_exit_dialog();
   std::int32_t flags() const;
-
 };
 
 }  // namespace doodle::gui

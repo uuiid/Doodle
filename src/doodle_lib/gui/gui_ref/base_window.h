@@ -29,7 +29,7 @@ namespace detail {
 template <
     typename dear_type,
     typename windows_type>
-class windows_tack_warp {
+class windows_tack_warp : public detail::windows_render {
  protected:
   windows_type& self_() {
     return *dynamic_cast<windows_type*>(this);
