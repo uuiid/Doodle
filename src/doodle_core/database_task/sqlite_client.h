@@ -152,7 +152,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
       typename boost::asio::async_result<
           typename std::decay_t<CompletionToken>,
           void(bsys::error_code)>::return_type {
-    boost::asio::high_resolution_timer l_time{g_thread()};
     open_begin(in_path);
     //    return boost::asio::async_compose<CompletionToken,
     //                                      void(bsys::error_code)>(
@@ -203,6 +202,8 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
         token
     );
   };
+
+  virtual void new_file_scene(const FSys::path& in_path);
 };
 
 class DOODLE_CORE_API sqlite_file : public file_translator {
