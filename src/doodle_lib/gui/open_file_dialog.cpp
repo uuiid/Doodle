@@ -100,7 +100,7 @@ class file_panel::impl {
         p_flags_(),
         sort_by_p(sort_by::none){};
 
-  std::string title_p;
+  gui_cache_name_id title_p;
   gui::gui_cache_name_id drive_button;
   gui::gui_cache<bool> edit_button;
   gui::gui_cache<std::string> edit_input;
@@ -125,7 +125,7 @@ file_panel::default_pwd::default_pwd(FSys::path in_pwd)
 
 file_panel::file_panel(const dialog_args &in_args)
     : p_i(std::make_unique<impl>()) {
-  p_i->title_p          = in_args.title;
+  p_i->title_p          = gui_cache_name_id{in_args.title};
   /// \brief 放置过滤器
   p_i->filter_list.data = in_args.filter;
   p_i->filter_list.data.emplace_back("*.*");
@@ -137,7 +137,7 @@ file_panel::file_panel(const dialog_args &in_args)
 }
 
 std::string &file_panel::title() const {
-  return p_i->title_p;
+  return p_i->title_p.name_id;
 }
 void file_panel::init() {
   this->scan_director(p_i->p_pwd);
@@ -199,36 +199,40 @@ void file_panel::scan_director(const FSys::path &in_dir) {
   p_i->select_index = 0;
   p_i->buffer.data.clear();
   p_i->edit_input.data = in_dir.generic_string();
-
-  p_i->path_list       = ranges::make_subrange(
-                       FSys::directory_iterator{in_dir},
-                       FSys::directory_iterator{}
-                   ) |
-                   ranges::views::transform([](const auto &in) {
-                     path_info l_info{};
-                     try {
-                       l_info.init(in.path());
-                     } catch (const FSys::filesystem_error &err) {
-                       DOODLE_LOG_ERROR(boost::diagnostic_information(err));
-                     }
-                     return l_info;
-                   }) |  /// 过滤无效
-                   ranges::views::filter([](const auto &in_info) -> bool {
-                     return in_info;
-                   }) |  /// 过滤不符合过滤器的
-                   ranges::views::filter([this](const path_info &in_info) -> bool {
-                     /// 进行目录过滤
-                     if (!p_i->p_flags_[0]) {
-                       if (p_i->filter_list.show_str != "*.*") {
-                         return in_info.is_dir ||
-                                in_info.path.extension() == p_i->filter_list.show_str;
+  try {
+    p_i->path_list = ranges::make_subrange(
+                         FSys::directory_iterator{in_dir},
+                         FSys::directory_iterator{}
+                     ) |
+                     ranges::views::transform([](const auto &in) {
+                       path_info l_info{};
+                       try {
+                         l_info.init(in.path());
+                       } catch (const FSys::filesystem_error &err) {
+                         DOODLE_LOG_ERROR(boost::diagnostic_information(err));
                        }
-                     } else {
-                       return in_info.is_dir;
-                     }
-                     return true;
-                   }) |
-                   ranges::to_vector;
+                       return l_info;
+                     }) |  /// 过滤无效
+                     ranges::views::filter([](const auto &in_info) -> bool {
+                       return in_info;
+                     }) |  /// 过滤不符合过滤器的
+                     ranges::views::filter([this](const path_info &in_info) -> bool {
+                       /// 进行目录过滤
+                       if (!p_i->p_flags_[0]) {
+                         if (p_i->filter_list.show_str != "*.*") {
+                           return in_info.is_dir ||
+                                  in_info.path.extension() == p_i->filter_list.show_str;
+                         }
+                       } else {
+                         return in_info.is_dir;
+                       }
+                       return true;
+                     }) |
+                     ranges::to_vector;
+
+  } catch (const FSys::filesystem_error &in_er) {
+    DOODLE_LOG_ERROR(boost::diagnostic_information(in_er));
+  }
   sort_file_attr(p_i->sort_by_p);
 }
 

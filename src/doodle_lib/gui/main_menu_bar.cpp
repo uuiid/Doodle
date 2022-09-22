@@ -84,7 +84,6 @@ void main_menu_bar::menu_file() {
       std::make_shared<database_n::sqlite_file>()->async_open(in, [in](auto) {
         DOODLE_LOG_INFO("打开项目 {}", in);
       });
-      l_f_h.destroy();
     });
   }
   dear::Menu{"最近的项目"} && []() {
