@@ -55,6 +55,7 @@ doodle_lib::doodle_lib()
         });
   });
   core_set::get_set().lib_ptr = this;
+  g_reg()->ctx().emplace<database_n::file_translator_ptr>();
 }
 
 FSys::path doodle_lib::create_time_database() {
