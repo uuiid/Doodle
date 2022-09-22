@@ -25,6 +25,7 @@
 #include <doodle_core/core/post_tick.h>
 
 #include <doodle_core/gui_template/show_windows.h>
+#include <boost/asio.hpp>
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
@@ -109,6 +110,9 @@ void file_translator::clear_scene() const {
 class sqlite_file::impl {
  public:
   registry_ptr registry_attr;
+  bool error_retry{false};
+
+  std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
 sqlite_file::sqlite_file()
@@ -159,33 +163,57 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     }
   }
 
+  try {
+    auto l_k_con = core_sql::Get().get_connection(in_path);
+    auto l_tx    = sqlpp::start_transaction(*l_k_con);
+    if (delete_list.empty() &&
+        install_list.empty() &&
+        update_list.empty()) {
+      /// \brief 只更新上下文
+      auto l_s = boost::asio::make_strand(g_io_context());
+      database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
+      return {};
+    } else {
+      /// \brief 删除没有插入的
+      ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
+      if (!install_list.empty()) {
+        database_n::insert l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, install_list, l_k_con);
+      }
+      if (!update_list.empty()) {
+        database_n::update_data l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, update_list, l_k_con);
+      }
+      if (!delete_list.empty()) {
+        database_n::delete_data l_sqlit_action{};
+        l_sqlit_action(*ptr->registry_attr, delete_list, l_k_con);
+      }
+    }
+    l_tx.commit();
+  } catch (const sqlpp::exception& in_error) {
+    DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
+    auto l_journal_file{in_path};
+    l_journal_file += "-journal";
+    if (FSys::exists(l_journal_file))
+      try {
+        FSys::remove(l_journal_file);
+      } catch (const FSys::filesystem_error& in_error2) {
+        DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));
+      }
 
-  auto l_k_con = core_sql::Get().get_connection(in_path);
-  auto l_tx    = sqlpp::start_transaction(*l_k_con);
-  if (delete_list.empty() &&
-      install_list.empty() &&
-      update_list.empty()) {
-    /// \brief 只更新上下文
-    auto l_s = boost::asio::make_strand(g_io_context());
-    database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
-    return {};
-  } else {
-    /// \brief 删除没有插入的
-    ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
-    if (!install_list.empty()) {
-      database_n::insert l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, install_list, l_k_con);
+    if (ptr->error_retry) {
+      g_reg()->ctx().at<status_info>().message = "重试失败, 不保存";
+      ptr->error_retry                         = false;
     }
-    if (!update_list.empty()) {
-      database_n::update_data l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, update_list, l_k_con);
-    }
-    if (!delete_list.empty()) {
-      database_n::delete_data l_sqlit_action{};
-      l_sqlit_action(*ptr->registry_attr, delete_list, l_k_con);
-    }
+
+    g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
+    ptr->error_retry                         = true;
+    ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
+    ptr->error_timer->async_wait([l_path = in_path, this]() {
+      this->async_save(l_path, [](auto&& in) {});
+    });
+    ptr->error_timer->expires_from_now(3s);
   }
-  l_tx.commit();
 
   return {};
 }
