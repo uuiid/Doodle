@@ -87,7 +87,8 @@ class windows_tack_warp : public detail::windows_render_interface {
     if (!show_attr) {
     }
 
-    return show_attr;
+    /// 显示时返回 false 不删除
+    return !show_attr;
   };
 };
 

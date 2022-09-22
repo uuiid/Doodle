@@ -115,7 +115,8 @@ layout_window::layout_window()
 
 bool layout_window::tick() {
   p_i->builder_dock();
-  if (p_i->init) {  /// 初始化窗口
+  if (!p_i->init) {  /// 初始化窗口
+    p_i->init = true;
     make_handle().emplace<gui_windows>(std::make_shared<edit_widgets>());
     make_handle().emplace<gui_windows>(std::make_shared<assets_filter_widget>());
     make_handle().emplace<gui_windows>(std::make_shared<maya_tool>());
