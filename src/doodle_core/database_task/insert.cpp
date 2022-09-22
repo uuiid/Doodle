@@ -25,6 +25,7 @@
 
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/database_task/sql_file.h>
+#include <doodle_core/database_task/details/update_ctx.h>
 
 #include <range/v3/all.hpp>
 
