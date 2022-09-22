@@ -101,13 +101,7 @@ void update_ctx::ctx(const entt::registry& in_registry, sqlpp::sqlite3::connecti
     in_connection(l_par);
   }
 }
-void update_ctx::ctx(const entt::registry& in_registry) {
-  auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
-  auto l_tx   = sqlpp::start_transaction(*l_comm);
 
-  ctx(in_registry, *l_comm);
-  l_tx.commit();
-}
 void update_ctx::select_ctx(entt::registry& in_registry, sqlpp::sqlite3::connection& in_connection) {
   select_ctx_template<DOODLE_SQLITE_TYPE_CTX>(in_registry, in_connection);
 }

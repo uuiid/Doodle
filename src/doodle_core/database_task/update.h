@@ -16,14 +16,12 @@ class DOODLE_CORE_API update_data : public process_handy_tools {
   update_data();
 
   ~update_data() override;
-  void init();
 
-  void aborted();
-  void update();
 
   void operator()(
       entt::registry& in_registry,
-      const std::vector<entt::entity>& in_update_data
+      const std::vector<entt::entity>& in_update_data,
+      conn_ptr& in_connect
   );
 };
 

@@ -81,19 +81,6 @@ class delete_data::impl {
   }
 
   void th_delete() {
-    g_reg()->ctx().emplace<process_message>().message("创建实体id");
-    create_id();
-    {
-      g_reg()->ctx().emplace<process_message>().message("删除数据库数据");
-      auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
-      auto l_tx   = sqlpp::start_transaction(*l_comm);
-      delete_db_entt(*l_comm);
-      delete_db_com(*l_comm);
-      l_tx.commit();
-    }
-    g_reg()->ctx().emplace<process_message>().message("清除程序内部注册表");
-    g_reg()->destroy(entt_list.begin(), entt_list.end());
-    g_reg()->ctx().emplace<process_message>().message("完成");
   }
 };
 delete_data::delete_data(const std::vector<entt::entity> &in_data)
@@ -120,10 +107,18 @@ void delete_data::update() {
 }
 void delete_data::operator()(
     entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data
+    const std::vector<entt::entity> &in_update_data,
+    conn_ptr &in_connect
 ) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();
-  p_i->th_delete();
+  g_reg()->ctx().emplace<process_message>().message("创建实体id");
+  p_i->create_id();
+  g_reg()->ctx().emplace<process_message>().message("删除数据库数据");
+  p_i->delete_db_entt(*in_connect);
+  p_i->delete_db_com(*in_connect);
+  g_reg()->ctx().emplace<process_message>().message("清除程序内部注册表");
+  g_reg()->destroy(p_i->entt_list.begin(), p_i->entt_list.end());
+  g_reg()->ctx().emplace<process_message>().message("完成");
 }
 }  // namespace doodle::database_n

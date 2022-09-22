@@ -27,7 +27,7 @@
 #include <doodle_core/database_task/sql_file.h>
 
 #include <range/v3/all.hpp>
-#include <database_task/details/update_ctx.h>
+
 #include <database_task/details/com_data.h>
 
 namespace doodle::database_n {
@@ -45,11 +45,9 @@ class entity_data {
 };
 }  // namespace
 class insert::impl {
- private:
+ public:
   /// @brief 线程未来数据获取
   std::vector<std::future<void>> futures_;
-
- public:
   using com_data = details::com_data;
   /// @brief 传入的实体列表
   std::vector<entt::entity> entt_list{};
@@ -200,71 +198,46 @@ class insert::impl {
     auto l_size = sizeof...(Type_T);
     (_create_com_data_<Type_T>(l_size), ...);
   }
-
-  /**
-   * @brief 这个已经在非主线程了
-   */
-  void th_insert() {
-    g_reg()->ctx().emplace<process_message>().message("创建实体数据");
-    create_entt_data();
-    g_reg()->ctx().emplace<process_message>().message("组件数据...");
-#include "details/macro.h"
-    create_com_data<DOODLE_SQLITE_TYPE>();
-    g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
-    for (auto &f : futures_) {
-      if (stop)
-        return;
-      f.get();
-    }
-    g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
-    auto l_path = g_reg()->ctx().at<database_info>().path_;
-    if (!FSys::exists(l_path.parent_path()))
-      FSys::create_directories(l_path.parent_path());
-    {
-      auto l_comm = core_sql::Get().get_connection(l_path);
-      auto l_tx   = sqlpp::start_transaction(*l_comm);
-      g_reg()->ctx().emplace<process_message>().message("检查数据库存在性");
-      create_db(*l_comm);
-      g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
-      insert_db_entity(*l_comm);
-      g_reg()->ctx().emplace<process_message>().message("组件插入...");
-      insert_db_com(*l_comm);
-      g_reg()->ctx().emplace<process_message>().message("开始上下文插入");
-      doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
-      l_tx.commit();
-    }
-    g_reg()->ctx().emplace<process_message>().message("回调设置id");
-    set_database_id();
-    g_reg()->ctx().emplace<process_message>().message("完成");
-  }
 };
-insert::insert(const std::vector<entt::entity> &in_inster)
-    : p_i(std::make_unique<impl>()) {
-  p_i->entt_list = in_inster;
-  p_i->size      = p_i->entt_list.size();
-}
+
 insert::insert()
     : p_i(std::make_unique<impl>()) {}
 
 insert::~insert() = default;
-void insert::init() {
-  auto &k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("插入数据");
-  k_msg.set_state(k_msg.run);
-  p_i->future_ = g_thread_pool().enqueue([this]() {
-    p_i->th_insert();
-  });
-}
 
-void insert::aborted() {
-  p_i->stop = true;
-}
-void insert::update() {
-}
-void insert::operator()(const entt::registry &in_registry, const std::vector<entt::entity> &in_insert_data) {
+void insert::operator()(
+    const entt::registry &in_registry,
+    const std::vector<entt::entity> &in_insert_data,
+    conn_ptr &in_connect
+) {
   p_i->entt_list = in_insert_data;
   p_i->size      = p_i->entt_list.size();
-  p_i->th_insert();
+  g_reg()->ctx().emplace<process_message>().message("创建实体数据");
+  p_i->create_entt_data();
+  g_reg()->ctx().emplace<process_message>().message("组件数据...");
+#include "details/macro.h"
+  p_i->create_com_data<DOODLE_SQLITE_TYPE>();
+  g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
+  for (auto &f : p_i->futures_) {
+    if (p_i->stop)
+      return;
+    f.get();
+  }
+  g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
+  auto l_path = g_reg()->ctx().at<database_info>().path_;
+  if (!FSys::exists(l_path.parent_path()))
+    FSys::create_directories(l_path.parent_path());
+
+  g_reg()->ctx().emplace<process_message>().message("检查数据库存在性");
+  p_i->create_db(*in_connect);
+  g_reg()->ctx().emplace<process_message>().message("开始插入数据库实体");
+  p_i->insert_db_entity(*in_connect);
+  g_reg()->ctx().emplace<process_message>().message("组件插入...");
+  p_i->insert_db_com(*in_connect);
+
+  g_reg()->ctx().emplace<process_message>().message("回调设置id");
+  p_i->set_database_id();
+  g_reg()->ctx().emplace<process_message>().message("完成");
 }
 
 }  // namespace doodle::database_n

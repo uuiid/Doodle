@@ -33,10 +33,8 @@ namespace doodle::database_n {
 namespace sql = doodle_database;
 
 class update_data::impl {
- private:
-  std::vector<std::future<void>> futures_;
-
  public:
+  std::vector<std::future<void>> futures_;
   using com_data = details::com_data;
   std::vector<entt::entity> entt_list{};
 
@@ -164,33 +162,6 @@ class update_data::impl {
     auto l_size = sizeof...(Type_T);
     (_create_com_data_<Type_T>(l_size), ...);
   }
-
-  void th_updata() {
-    g_reg()->ctx().emplace<process_message>().message("创建实体数据");
-    create_entt_data();
-#include "details/macro.h"
-    g_reg()->ctx().emplace<process_message>().message("组件数据...");
-    create_com_data<DOODLE_SQLITE_TYPE>();
-
-    g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
-    for (auto &f : futures_) {
-      f.get();
-    }
-    if (futures_.empty())
-      return;
-    auto l_comm = core_sql::Get().get_connection(g_reg()->ctx().at<database_info>().path_);
-    auto l_tx   = sqlpp::start_transaction(*l_comm);
-
-    g_reg()->ctx().emplace<process_message>().message("检查数据库架构");
-    updata_db_table(*l_comm);
-
-    g_reg()->ctx().emplace<process_message>().message("组件更新...");
-    updata_db(*l_comm);
-    g_reg()->ctx().emplace<process_message>().message("更新上下文...");
-    doodle::database_n::details::update_ctx::ctx(*g_reg(), *l_comm);
-    g_reg()->ctx().emplace<process_message>().message("完成");
-    l_tx.commit();
-  }
 };
 update_data::update_data(const std::vector<entt::entity> &in_data)
     : p_i(std::make_unique<impl>()) {
@@ -201,26 +172,34 @@ update_data::update_data() : p_i(std::make_unique<impl>()) {}
 
 update_data::~update_data() = default;
 
-void update_data::init() {
-  auto &k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("插入数据");
-  k_msg.set_state(k_msg.run);
-  p_i->future_ = g_thread_pool().enqueue([this]() {
-    p_i->th_updata();
-  });
-}
-void update_data::aborted() {
-  p_i->stop = true;
-}
-void update_data::update() {
-}
-
 void update_data::operator()(
     entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data
+    const std::vector<entt::entity> &in_update_data,
+    conn_ptr &in_connect
 ) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();
-  p_i->th_updata();
+
+  g_reg()->ctx().emplace<process_message>().message("创建实体数据");
+  p_i->create_entt_data();
+#include "details/macro.h"
+  g_reg()->ctx().emplace<process_message>().message("组件数据...");
+  p_i->create_com_data<DOODLE_SQLITE_TYPE>();
+
+  g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
+  for (auto &f : p_i->futures_) {
+    f.get();
+  }
+  if (p_i->futures_.empty())
+    return;
+
+  g_reg()->ctx().emplace<process_message>().message("检查数据库架构");
+  p_i->updata_db_table(*in_connect);
+
+  g_reg()->ctx().emplace<process_message>().message("组件更新...");
+  p_i->updata_db(*in_connect);
+  g_reg()->ctx().emplace<process_message>().message("更新上下文...");
+  doodle::database_n::details::update_ctx::ctx(*g_reg(), *in_connect);
+  g_reg()->ctx().emplace<process_message>().message("完成");
 }
 }  // namespace doodle::database_n

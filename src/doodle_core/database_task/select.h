@@ -13,15 +13,6 @@ class DOODLE_CORE_API select : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  class DOODLE_CORE_API arg {
-   public:
-    /**
-     * @brief 这个是指向数据库的绝对路径
-     */
-    FSys::path project_path;
-    bool only_ctx;
-  };
-  explicit select(const arg& in_arg);
   select();
 
   ~select() override;
@@ -30,7 +21,8 @@ class DOODLE_CORE_API select : public process_handy_tools {
 
   void operator()(
       entt::registry& in_registry,
-      const FSys::path& in_project_path
+      const FSys::path& in_project_path,
+      conn_ptr& in_connect
   );
 
  private:

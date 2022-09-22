@@ -9,6 +9,7 @@
 #include <database_task/update.h>
 #include <database_task/delete_data.h>
 #include <database_task/details/update_ctx.h>
+#include <doodle_core/core/core_sql.h>
 
 #include <thread_pool/process_pool.h>
 #include <doodle_core/core/core_sig.h>
@@ -122,7 +123,8 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  l_select(*ptr->registry_attr, in_path);
+  auto l_k_con = core_sql::Get().get_connection_const(in_path);
+  l_select(*ptr->registry_attr, in_path, l_k_con);
   return {};
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
@@ -153,30 +155,33 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         install_list.push_back(e);
       }
     }
+    auto l_k_con = core_sql::Get().get_connection_const(in_path);
+    auto l_tx    = sqlpp::start_transaction(*l_k_con);
 
     if (delete_list.empty() &&
         install_list.empty() &&
         update_list.empty()) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
-      database_n::details::update_ctx::ctx(*ptr->registry_attr);
+      database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
       return {};
     } else {
       /// \brief 删除没有插入的
       ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
       if (!install_list.empty()) {
         database_n::insert l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, install_list);
+        l_sqlit_action(*ptr->registry_attr, install_list, l_k_con);
       }
       if (!update_list.empty()) {
         database_n::update_data l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, update_list);
+        l_sqlit_action(*ptr->registry_attr, update_list, l_k_con);
       }
       if (!delete_list.empty()) {
         database_n::delete_data l_sqlit_action{};
-        l_sqlit_action(*ptr->registry_attr, delete_list);
+        l_sqlit_action(*ptr->registry_attr, delete_list, l_k_con);
       }
     }
+    l_tx.commit();
   }
   return {};
 }

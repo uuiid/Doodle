@@ -13,18 +13,14 @@ class DOODLE_CORE_API insert : public process_handy_tools {
   std::unique_ptr<impl> p_i;
 
  public:
-  explicit insert(const std::vector<entt::entity>& in_inster);
   insert();
 
   ~insert() override;
-  [[maybe_unused]] void init();
-
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update();
 
   void operator()(
       const entt::registry& in_registry,
-      const std::vector<entt::entity>& in_insert_data
+      const std::vector<entt::entity>& in_insert_data,
+      conn_ptr& in_connect
   );
 };
 

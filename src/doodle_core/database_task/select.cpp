@@ -273,10 +273,6 @@ class select::impl {
   }
 };
 
-select::select(const select::arg& in_arg) : p_i(std::make_unique<impl>()) {
-  p_i->project  = in_arg.project_path;
-  p_i->only_ctx = in_arg.only_ctx;
-}
 select::select() : p_i(std::make_unique<impl>()) {}
 select::~select() = default;
 
@@ -293,11 +289,15 @@ void select::aborted() {
   p_i->stop = true;
 }
 
-void select::th_run() {
-  if (!FSys::exists(p_i->project)) throw_exception(doodle_error{"数据库不存在 {}", p_i->project});
+void select::operator()(
+    entt::registry& in_registry,
+    const FSys::path& in_project_path,
+    conn_ptr& in_connect
+) {
+  p_i->process_message_ = g_reg()->ctx().find<process_message>();
+  p_i->only_ctx         = false;
 
-  auto l_k_con = core_sql::Get().get_connection_const(p_i->project);
-  this->p_i->select_old(*p_i->local_reg, *l_k_con);
+  this->p_i->select_old(*p_i->local_reg, *in_connect);
 
   /// \brief 等待旧的任务完成
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) {
@@ -305,19 +305,19 @@ void select::th_run() {
   });
   p_i->results.clear();
 
-  if (auto [l_v, l_i] = doodle::database_n::details::get_version(*l_k_con);
+  if (auto [l_v, l_i] = doodle::database_n::details::get_version(*in_connect);
       l_v >= 3 && l_i > 4) {
     if (!p_i->only_ctx) {
       /// \brief 选中实体
-      p_i->select_entt(*p_i->local_reg, *l_k_con);
+      p_i->select_entt(*p_i->local_reg, *in_connect);
       /// \brief 等待实体创建完成
 
 #include "details/macro.h"
       /// @brief 选中组件
-      p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *l_k_con);
+      p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
     }
     /// \brief 选中上下文
-    doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *l_k_con);
+    doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *in_connect);
 
     /// \brief 开始修改注册表
     auto l_id = p_i->create_entt;
@@ -335,16 +335,6 @@ void select::th_run() {
   p_i->set_user_ctx(*p_i->local_reg);
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
-}
-
-void select::operator()(
-    entt::registry& in_registry,
-    const FSys::path& in_project_path
-) {
-  p_i->process_message_ = g_reg()->ctx().find<process_message>();
-  p_i->project          = in_project_path;
-  p_i->only_ctx         = false;
-  this->th_run();
 }
 
 }  // namespace doodle::database_n
