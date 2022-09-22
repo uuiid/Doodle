@@ -8,21 +8,20 @@
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/thread_pool/process_pool.h>
 
-namespace doodle {
+namespace doodle::gui {
 class short_cut::impl {
  public:
   std::int32_t p_{0};
 };
 
 short_cut::short_cut() : p_i(std::make_unique<impl>()){};
-void short_cut::init() {
-  g_reg()->ctx().emplace<short_cut &>(*this);
-}
 
-void short_cut::update() {
+bool short_cut::tick() {
+  boost::ignore_unused(p_i);
   if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl)
     g_reg()->ctx().at<core_sig>().save();
+  return {};
 }
 short_cut::~short_cut() = default;
 
-}  // namespace doodle
+}  // namespace doodle::gui

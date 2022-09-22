@@ -5,19 +5,18 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/gui/gui_ref/base_window.h>
+namespace doodle::gui {
 
-namespace doodle {
-
-class short_cut {
+class short_cut : public detail::windows_tick_interface {
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   short_cut();
-  virtual ~short_cut();
+  ~short_cut() override;
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void update();
+  bool tick() final;
 };
 
-}  // namespace doodle
+}  // namespace doodle::gui

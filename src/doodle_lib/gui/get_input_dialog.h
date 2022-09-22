@@ -31,13 +31,12 @@ class DOODLELIB_API close_exit_dialog
   std::unique_ptr<impl> p_i;
 
  protected:
-  void render();
-
  public:
   void set_attr() const;
   virtual const std::string& title() const override;
   explicit close_exit_dialog();
   std::int32_t flags() const;
+  void render();
 };
 
 }  // namespace doodle::gui

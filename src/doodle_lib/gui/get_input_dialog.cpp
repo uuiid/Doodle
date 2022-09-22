@@ -39,7 +39,9 @@ void create_project_dialog::render() {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
       p_i->path_gui = p_i->path.generic_string();
     });
-    p_i->select_button_id().emplace_or_replace<gui_windows>(l_file);
+    p_i->select_button_id().emplace_or_replace<gui_windows>(
+        std::dynamic_pointer_cast<gui_windows::element_type>(l_file)
+    );
   }
 
   if (dear::InputText("名称", &(p_i->name))) {

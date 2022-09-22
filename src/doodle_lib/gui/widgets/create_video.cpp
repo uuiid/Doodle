@@ -65,69 +65,69 @@ void create_video::render() {
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_ptr = std::make_shared<FSys::path>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_ptr}
-                .set_title("选择目录"s)
-                .set_use_dir()
-        )
-            .next([this, l_ptr]() {
-              p_i->out_path.data = l_ptr->generic_string();
-              ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
-                in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
-              });
-            })
-    );
+    //    boost::asio::post(
+    //        make_process_adapter<file_dialog>(
+    //            strand_gui{g_io_context()},
+    //            file_dialog::dialog_args{l_ptr}
+    //                .set_title("选择目录"s)
+    //                .set_use_dir()
+    //        )
+    //            .next([this, l_ptr]() {
+    //              p_i->out_path.data = l_ptr->generic_string();
+    //              ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
+    //                in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
+    //              });
+    //            })
+    //    );
   }
 
   if (imgui::Button("选择图片")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_ptr}
-                .set_title("选择序列"s)
-                .set_filter(string_list{".png", ".jpg"})
-        )
-            .next([this, l_ptr]() {
-              p_i->image_to_video_list.emplace_back(
-                  create_image_to_move_handle(l_ptr->front()),
-                  *l_ptr,
-                  l_ptr->front().generic_string()
-              );
-            })
-    );
+//    boost::asio::post(
+//        make_process_adapter<file_dialog>(
+//            strand_gui{g_io_context()},
+//            file_dialog::dialog_args{l_ptr}
+//                .set_title("选择序列"s)
+//                .set_filter(string_list{".png", ".jpg"})
+//        )
+//            .next([this, l_ptr]() {
+//              p_i->image_to_video_list.emplace_back(
+//                  create_image_to_move_handle(l_ptr->front()),
+//                  *l_ptr,
+//                  l_ptr->front().generic_string()
+//              );
+//            })
+//    );
   }
   imgui::SameLine();
   if (imgui::Button("选择文件夹")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_ptr}
-                .set_title("select dir"s)
-                .set_use_dir()
-        )
-            .next([=]() {
-              ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
-                std::vector<FSys::path> list =
-                    ranges::make_subrange(FSys::directory_iterator{in_path}, FSys::directory_iterator{}) |
-                    ranges::views::filter([](const FSys::directory_entry& in_file) {
-                      return FSys::is_regular_file(in_file);
-                    }) |
-                    ranges::view::transform([](const FSys::directory_entry& in_file) -> FSys::path {
-                      return in_file.path();
-                    }) |
-                    ranges::to_vector;
-                p_i->image_to_video_list.emplace_back(
-                    create_image_to_move_handle(in_path),
-                    list,
-                    in_path.generic_string()
-                );
-              });
-            })
-    );
+    //    boost::asio::post(
+    //        make_process_adapter<file_dialog>(
+    //            strand_gui{g_io_context()},
+    //            file_dialog::dialog_args{l_ptr}
+    //                .set_title("select dir"s)
+    //                .set_use_dir()
+    //        )
+    //            .next([=]() {
+    //              ranges::for_each(*l_ptr, [this](const FSys::path& in_path) {
+    //                std::vector<FSys::path> list =
+    //                    ranges::make_subrange(FSys::directory_iterator{in_path}, FSys::directory_iterator{}) |
+    //                    ranges::views::filter([](const FSys::directory_entry& in_file) {
+    //                      return FSys::is_regular_file(in_file);
+    //                    }) |
+    //                    ranges::view::transform([](const FSys::directory_entry& in_file) -> FSys::path {
+    //                      return in_file.path();
+    //                    }) |
+    //                    ranges::to_vector;
+    //                p_i->image_to_video_list.emplace_back(
+    //                    create_image_to_move_handle(in_path),
+    //                    list,
+    //                    in_path.generic_string()
+    //                );
+    //              });
+    //            })
+    //    );
   }
 
   imgui::SameLine();
@@ -156,22 +156,22 @@ void create_video::render() {
 
   if (imgui::Button("选择视频")) {
     auto l_ptr = std::make_shared<std::vector<FSys::path>>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_ptr}
-                .set_title("select mp4 file"s)
-                .add_filter(".mp4")
-        )
-            .next([=]() {
-              p_i->video_list |= ranges::action::push_back(
-                  *l_ptr |
-                  ranges::views::transform([](const FSys::path& in_path) -> impl::video_cache {
-                    return impl::video_cache{in_path.generic_string()};
-                  })
-              );
-            })
-    );
+    //    boost::asio::post(
+    //        make_process_adapter<file_dialog>(
+    //            strand_gui{g_io_context()},
+    //            file_dialog::dialog_args{l_ptr}
+    //                .set_title("select mp4 file"s)
+    //                .add_filter(".mp4")
+    //        )
+    //            .next([=]() {
+    //              p_i->video_list |= ranges::action::push_back(
+    //                  *l_ptr |
+    //                  ranges::views::transform([](const FSys::path& in_path) -> impl::video_cache {
+    //                    return impl::video_cache{in_path.generic_string()};
+    //                  })
+    //              );
+    //            })
+    //    );
   }
   imgui::SameLine();
   if (imgui::Button("清除视频")) {

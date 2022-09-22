@@ -157,7 +157,7 @@ void main_menu_bar::menu_tool() {
     );
     auto l_f_h = make_handle();
     l_f_h.emplace<gui_windows>(l_file);
-    l_file.async_read([l_f_h](const FSys::path &in) mutable {
+    l_file->async_read([l_f_h](const FSys::path &in) mutable {
       toolkit::installUePath(in);
       l_f_h.destroy();
     });

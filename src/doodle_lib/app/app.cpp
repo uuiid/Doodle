@@ -211,11 +211,9 @@ void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 void app::load_windows() {
-  make_handle().emplace<gui::gui_tick>(
-      std::make_shared<gui::layout_window>();
-  );
-  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_menu_bar>());
-  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_status_bar>());
+  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::layout_window>();
+  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_menu_bar>();
+  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
 
   //  _add_tick_(gui::detail::bar_tack_warp<main_menu_bar>{main_menu_bar{}});
   //  _add_tick_(gui::detail::bar_tack_warp<main_status_bar>{main_status_bar{}});
@@ -241,7 +239,7 @@ void app::load_back_end() {
     init_register::instance().init_run();
   });
 
-  boost::asio::post(make_process_adapter<short_cut>(strand_gui{g_io_context()}));
+  make_handle().emplace<gui::gui_tick>(std::make_shared<short_cut>());
 }
 
 bool app::chick_authorization() {

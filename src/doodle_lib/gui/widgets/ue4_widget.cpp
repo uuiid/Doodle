@@ -65,19 +65,17 @@ void ue4_widget::render() {
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->open_file_dig)) {
-    auto l_p = std::make_shared<FSys::path>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_p}
-                .add_filter(".uproject"s)
-        )
-            .next([this, l_p]() {
-              this->p_i->ue4_prj.data = l_p->generic_string();
-              this->p_i->ue4_prj.path = *l_p;
-              p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
-            })
+    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}
+                                                    .add_filter(".uproject"s)
     );
+    l_file->async_read(
+        [this](const FSys::path &in) {
+          this->p_i->ue4_prj.data = in.generic_string();
+          this->p_i->ue4_prj.path = in;
+          p_i->ue4_content_dir    = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
+        }
+    );
+    make_handle().emplace<gui_windows>(l_file);
   }
   /// 列出文件
   dear::ListBox{*p_i->import_list_files.gui_name} && [this]() {

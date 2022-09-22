@@ -86,19 +86,16 @@ void csv_export_widgets::render() {
     p_i->export_path.path = p_i->export_path.data;
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
-    auto l_file = std::make_shared<FSys::path>();
-    boost::asio::post(
-        make_process_adapter<file_dialog>(
-            strand_gui{g_io_context()},
-            file_dialog::dialog_args{l_file}
-                .set_title("选择目录"s)
-                .set_use_dir()
-        )
-            .next([=]() {
-              p_i->export_path.path = *l_file / "tmp.csv";
-              p_i->export_path.data = p_i->export_path.path.generic_string();
-            })
+    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}
+                                                    .set_title("选择目录"s)
+                                                    .set_use_dir());
+    l_file->async_read(
+        [this](const FSys::path &in) {
+          p_i->export_path.path = in / "tmp.csv";
+          p_i->export_path.data = p_i->export_path.path.generic_string();
+        }
     );
+    make_handle().emplace<gui_windows>(l_file);
   }
   ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
   ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);

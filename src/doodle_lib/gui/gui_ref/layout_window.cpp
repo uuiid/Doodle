@@ -116,17 +116,17 @@ layout_window::layout_window()
 bool layout_window::tick() {
   p_i->builder_dock();
   if (p_i->init) {  /// 初始化窗口
-    make_handle().emplace<gui_windows>(::doodle::gui::edit_widgets{});
-    make_handle().emplace<gui_windows>(::doodle::gui::assets_filter_widget{});
-    make_handle().emplace<gui_windows>(::doodle::gui::maya_tool{});
-    make_handle().emplace<gui_windows>(::doodle::gui::create_video{});
-    make_handle().emplace<gui_windows>(::doodle::gui::extract_subtitles_widgets{});
-    make_handle().emplace<gui_windows>(::doodle::gui::subtitle_processing{});
-    make_handle().emplace<gui_windows>(::doodle::gui::long_time_tasks_widget{});
-    make_handle().emplace<gui_windows>(::doodle::gui::time_sequencer_widget{});
-    make_handle().emplace<gui_windows>(::doodle::gui::ue4_widget{});
-    make_handle().emplace<gui_windows>(::doodle::gui::assets_file_widgets{});
-    make_handle().emplace<gui_windows>(::doodle::gui::csv_export_widgets{});
+    make_handle().emplace<gui_windows>(std::make_shared<edit_widgets>());
+    make_handle().emplace<gui_windows>(std::make_shared<assets_filter_widget>());
+    make_handle().emplace<gui_windows>(std::make_shared<maya_tool>());
+    make_handle().emplace<gui_windows>(std::make_shared<create_video>());
+    make_handle().emplace<gui_windows>(std::make_shared<extract_subtitles_widgets>());
+    make_handle().emplace<gui_windows>(std::make_shared<subtitle_processing>());
+    make_handle().emplace<gui_windows>(std::make_shared<long_time_tasks_widget>());
+    make_handle().emplace<gui_windows>(std::make_shared<time_sequencer_widget>());
+    make_handle().emplace<gui_windows>(std::make_shared<ue4_widget>());
+    make_handle().emplace<gui_windows>(std::make_shared<assets_file_widgets>());
+    make_handle().emplace<gui_windows>(std::make_shared<csv_export_widgets>());
   }
 
   return false;

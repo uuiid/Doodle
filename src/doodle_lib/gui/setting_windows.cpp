@@ -15,7 +15,7 @@
 #include <doodle_core/core/init_register.h>
 
 #include <magic_enum.hpp>
-namespace doodle {
+namespace doodle::gui {
 
 class setting_windows::impl {
  public:
@@ -117,4 +117,4 @@ void setting_windows::render() {
 const std::string& gui::setting_windows::title() const {
   return p_i->title_name_;
 }
-}  // namespace doodle
+}  // namespace doodle::gui
