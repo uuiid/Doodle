@@ -60,12 +60,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
       typename boost::asio::async_result<
           typename std::decay_t<CompletionToken>,
           void(bsys::error_code)>::return_type {
-    open_begin(in_path);
-
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
           if (l_s->is_opening)
             return;
+          l_s->open_begin(in_path);
 
           std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(), [l_s, in_path, call]() {
@@ -90,11 +89,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
       typename boost::asio::async_result<
           typename std::decay_t<CompletionToken>,
           void(bsys::error_code)>::return_type {
-    save_begin(in_path);
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
           if (l_s->is_saving)
             return;
+          l_s->save_begin(in_path);
 
           std::function<void(bsys::error_code)> call{completion_handler};
           boost::asio::post(g_thread(), [l_s, in_path, call]() {
