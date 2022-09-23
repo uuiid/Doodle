@@ -14,6 +14,8 @@ namespace maya_plug {
 
 class maya_layout::impl {
  public:
+  bool inited{false};
+
   void builder_dock() {
     // 我们使用ImGuiWindowFlags_NoDocking标志来使窗口不可停靠到父窗口中，因为在彼此之间有两个停靠目标会令人困惑
     ImGuiWindowFlags window_flags =  // 没有菜单 ImGuiWindowFlags_MenuBar |
@@ -86,14 +88,13 @@ maya_layout::maya_layout()
 }
 void maya_layout::update() {
   p_i->builder_dock();
-}
-void maya_layout::init() {
-  boost::asio::post(g_io_context(), [this]() {
-    call_render<comm_check_scenes>();
-    call_render<reference_attr_setting>();
-    call_render<create_sim_cloth>();
-    call_render<dem_cloth_to_fbx>();
-  });
+  if (!p_i->inited) {
+    p_i->inited = true;
+    make_handle().emplace<gui::gui_windows>(std::make_shared<comm_check_scenes>());
+    make_handle().emplace<gui::gui_windows>(std::make_shared<reference_attr_setting>());
+    make_handle().emplace<gui::gui_windows>(std::make_shared<create_sim_cloth>());
+    make_handle().emplace<gui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
+  }
 }
 
 maya_layout::~maya_layout() = default;

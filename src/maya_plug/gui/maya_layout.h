@@ -15,7 +15,7 @@ class maya_layout
  public:
   maya_layout();
   ~maya_layout();
-  virtual void init() override;
+
   void update() override;
 };
 

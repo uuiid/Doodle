@@ -13,6 +13,9 @@
 namespace doodle::maya_plug {
 
 void maya_plug_app::load_windows() {
+  make_handle().emplace<gui::gui_windows>(std::make_shared<maya_layout>());
+  make_handle().emplace<gui::gui_windows>(std::make_shared<gui::main_menu_bar>());
+  make_handle().emplace<gui::gui_windows>(std::make_shared<gui::main_status_bar>());
 }
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
