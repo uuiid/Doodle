@@ -22,3 +22,12 @@ add_executable(
 )
 doodle_link_test(test_time)
 add_test(test_time_exe test_time)
+
+
+add_executable(
+        bvh_test
+        EXCLUDE_FROM_ALL
+        bvh.cpp
+)
+doodle_link_test(bvh_test)
+add_test(bvh_test_exe bvh_test)
