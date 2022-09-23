@@ -305,7 +305,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
       k_path = k_path_M.asUTF8();
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
+        auto l_f = g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
             k_path, boost::asio::use_future
         );
         while (l_f.wait_for(0ns) != std::future_status::ready) {

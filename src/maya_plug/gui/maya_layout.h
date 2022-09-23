@@ -16,7 +16,7 @@ class maya_layout
   maya_layout();
   ~maya_layout();
 
-  void update() override;
+  bool tick() override;
 };
 
 }  // namespace maya_plug

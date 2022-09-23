@@ -86,7 +86,7 @@ class maya_layout::impl {
 maya_layout::maya_layout()
     : p_i(std::make_unique<impl>()) {
 }
-void maya_layout::update() {
+bool maya_layout::tick() {
   p_i->builder_dock();
   if (!p_i->inited) {
     p_i->inited = true;
@@ -95,6 +95,7 @@ void maya_layout::update() {
     make_handle().emplace<gui::gui_windows>(std::make_shared<create_sim_cloth>());
     make_handle().emplace<gui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
   }
+  return false ;
 }
 
 maya_layout::~maya_layout() = default;

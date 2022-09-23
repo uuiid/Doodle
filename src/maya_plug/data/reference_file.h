@@ -224,7 +224,7 @@ class reference_file {
    * @throw maya_error maya返回值非成功
    *
    */
-  [[nodiscard]] bool add_collision() const;
+  bool add_collision() const;
 
   [[nodiscard]] bool is_loaded() const;
 
