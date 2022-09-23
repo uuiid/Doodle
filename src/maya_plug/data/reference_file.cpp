@@ -1036,7 +1036,7 @@ std::vector<MDagPath> reference_file::find_out_group_child_suffix_node(
   DOODLE_MAYA_CHICK(l_status);
 
   std::vector<MDagPath> l_r{};
-  for (; !l_it.isDone(); l_it.isDone()) {
+  for (; !l_it.isDone(); l_it.next()) {
     MDagPath l_path{};
     l_status = l_it.getPath(l_path);
     DOODLE_MAYA_CHICK(l_status);

@@ -104,7 +104,6 @@ void core_set::set_root(const FSys::path &in_path) {
   p_root      = in_path;
   _root_cache = p_root / "cache";
   _root_data  = p_root / "data";
-  DOODLE_LOG_INFO("设置缓存目录", p_root);
 }
 
 FSys::path core_set::get_cache_root() const {
@@ -147,6 +146,7 @@ core_set_init::core_set_init()
   if (!FSys::exists(p_set.get_data_root())) {
     FSys::create_directories(p_set.get_data_root());
   }
+  DOODLE_LOG_INFO("设置缓存目录 {}", p_set.p_root);
 }
 bool core_set_init::find_maya() {
   DOODLE_LOG_INFO("寻找maya");
