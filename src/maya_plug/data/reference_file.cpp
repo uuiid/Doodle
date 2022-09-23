@@ -439,10 +439,14 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   DOODLE_LOG_INFO("导出收集完成 {}", fmt::join(export_path, " "));
 
   if (k_cfg.use_divide_group_export) {
-    MDagPath l_parent{};
+    ranges::for_each(export_path, [](MDagPath &in) {
+      in.pop();
+    });
+
+    auto l_suffix = g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix;
     export_path |= ranges::action::push_back(
         find_out_group_child_suffix_node(
-            g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix
+            l_suffix
         )
     );
     export_path |= ranges::action::unique([](const MDagPath &in_r, const MDagPath &in_l) -> bool {
@@ -450,14 +454,17 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     });
     DOODLE_LOG_INFO("按组划分导出再次收集完成 {}", fmt::join(export_path, " "));
     for (auto &&i : export_path) {
-      l_parent.set(i);
-      l_parent.pop();
-
       reference_file_ns::generate_abc_file_path
           l_name{*g_reg()};
-      l_name.add_external_string = get_node_name_strip_name_space(l_parent);
+      auto l_node_name = get_node_name_strip_name_space(i);
+      if (auto l_it = l_node_name.find(l_suffix);
+          l_it != std::string::npos) {
+        l_node_name.erase(l_it, l_suffix.length());
+      }
+
+      l_name.add_external_string = get_node_name_strip_name_space(i);
       l_name.begin_end_time      = std::make_pair(in_start, in_endl);
-      export_divide_map[l_name].add(l_parent, MObject::kNullObj, true);
+      export_divide_map[l_name].add(i, MObject::kNullObj, true);
     }
   } else {
     MSelectionList l_list{};
@@ -1040,7 +1047,7 @@ std::vector<MDagPath> reference_file::find_out_group_child_suffix_node(
     MDagPath l_path{};
     l_status = l_it.getPath(l_path);
     DOODLE_MAYA_CHICK(l_status);
-    auto l_node = get_node_name(l_path);
+    auto l_node = get_node_name_strip_name_space(l_path);
     if (l_node.length() > in_suffix.length() &&
         std::equal(in_suffix.rbegin(), in_suffix.rend(), l_node.rbegin())) {
       l_r.emplace_back(l_path);
