@@ -92,6 +92,10 @@ class reference_file {
 
   static std::string get_abc_exprt_arg();
 
+  std::vector<MDagPath> find_out_group_child_suffix_node(
+      const std::string &in_suffix
+  );
+
   /**
    * @brief
    * @warning 这个是一个兼容性函数， 小心使用,会被删除

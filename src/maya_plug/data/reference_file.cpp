@@ -440,6 +440,12 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
 
   if (k_cfg.use_divide_group_export) {
     MDagPath l_parent{};
+    export_path |= ranges::action::push_back(
+        find_out_group_child_suffix_node(
+            g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix
+        )
+    );
+
     for (auto &&i : export_path) {
       l_parent.set(i);
       l_parent.pop();
@@ -1010,6 +1016,33 @@ std::string reference_file::get_abc_exprt_arg() {
     l_r += "-writeUVSets ";
   if (k_cfg.export_abc_arg[7])
     l_r += "-stripNamespaces ";
+
+  return l_r;
+}
+std::vector<MDagPath> reference_file::find_out_group_child_suffix_node(
+    const std::string &in_suffix
+) {
+  auto l_uot_group = export_group_attr();
+  if (!l_uot_group) {
+    return {};
+  }
+
+  MItDag l_it{};
+  MStatus l_status{};
+  l_status = l_it.reset(*l_uot_group, MItDag::kBreadthFirst, MFn::Type::kTransform);
+  DOODLE_MAYA_CHICK(l_status);
+
+  std::vector<MDagPath> l_r{};
+  for (; !l_it.isDone(); l_it.isDone()) {
+    MDagPath l_path{};
+    l_status = l_it.getPath(l_path);
+    DOODLE_MAYA_CHICK(l_status);
+    auto l_node = get_node_name(l_path);
+    if (l_node.length() > in_suffix.length() &&
+        std::equal(in_suffix.rbegin(), in_suffix.rend(), l_node.rbegin())) {
+      l_r.emplace_back(l_path);
+    }
+  }
 
   return l_r;
 }
