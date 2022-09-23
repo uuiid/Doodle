@@ -172,7 +172,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
       database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
-      return {};
     } else {
       /// \brief 删除没有插入的
       ptr->registry_attr->destroy(next_delete_list.begin(), next_delete_list.end());
@@ -200,7 +199,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
       } catch (const FSys::filesystem_error& in_error2) {
         DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));
       }
-
     if (ptr->error_retry) {  /// 重试时不进行下一步重试
       g_reg()->ctx().at<status_info>().message = "重试失败, 不保存";
       ptr->error_retry                         = false;

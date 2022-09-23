@@ -197,7 +197,7 @@
 		"taskExplorer.exclude": [
 			"**/.vscode-test/**",
 			"**/bin/**",
-			"**/build/**",
+			"/build/**",
 			"**/CompiledOutput/**",
 			"**/dist/**",
 			"**/doc/**",
@@ -217,7 +217,7 @@
 			"**/work/**",
 			"**/external/**",
 			"**/resource/**",
-			"**/.venv/**"
+			"**/.venv/**",
 		],
 		"todo-tree.tree.disableCompactFolders": true,
 		"C_Cpp.autocompleteAddParentheses": true,
