@@ -3,13 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/doodle_exe",
-                "${workspaceFolder}/src/doodle_lib",
-                "E:/vcpkg/installed/x64-windows/include",
-                "${workspaceFolder}/build/Ninja_debug/configure",
-                "${workspaceFolder}/build/Ninja_debug/_cmrc/include",
-                "${workspaceFolder}/build/Ninja_debug/src/doodle_lib"
+                "${workspaceFolder}/src/**",
+                "E:/vcpkg/installed/x64-windows/include"
             ],
             "defines": [
                 "UNICODE",
@@ -36,9 +31,15 @@
             "intelliSenseMode": "windows-msvc-x64",
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+                "path": [
+                    "${workspaceFolder}/src/**",
+                    "E:/vcpkg/installed/x64-windows/include",
+                    "${workspaceFolder}"
+                ]
             },
-            "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json",
+            "mergeConfigurations": false
         },
         {
             "name": "Win32_Maya",

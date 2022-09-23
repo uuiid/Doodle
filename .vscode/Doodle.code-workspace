@@ -153,7 +153,6 @@
 			}
 		],
 		"cmake.buildDirectory": "${workspaceFolder}/build/b_${generator}_${buildKit}_${buildType}",
-		"cmake.configureSettings": {},
 		"python.envFile": "${workspaceFolder}/env.env",
 		"python.formatting.autopep8Args": [
 			"--ignore",
@@ -194,15 +193,6 @@
 		"todo-tree.regex.regexCaseSensitive": false,
 		"todo-tree.regex.regex": "((@|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
 		"todo-tree.tree.showBadges": false,
-		"markdownlint.config": {
-			"MD033": false
-		},
-		"vscode-cppinsights.args": [
-			"-IE:/vcpkg/installed/x64-windows/include"
-		],
-		"vscode-cppinsights.path": "C:/insights.exe",
-		"vscode-cppinsights.buildDirectory": "${workspaceFolder}/build/Ninja_debug/",
-		"vscode-cppinsights.buildDirectoryPrioritizeCMake": false,
 		"git.fetchOnPull": true,
 		"taskExplorer.exclude": [
 			"**/.vscode-test/**",
@@ -233,7 +223,8 @@
 		"C_Cpp.autocompleteAddParentheses": true,
 		"C_Cpp.experimentalFeatures": "Enabled",
 		"redhat.telemetry.enabled": false,
-		"C_Cpp.errorSquiggles": "Enabled"
+		"C_Cpp.errorSquiggles": "Enabled",
+		"boost-test-adapter.testExecutable": "${workspaceFolder}/build/Ninja_debug/src/test/dingding/dingding_base.exe"
 	},
 	"launch": {
 		"version": "0.2.0",

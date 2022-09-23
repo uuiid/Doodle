@@ -130,6 +130,24 @@
           "name": "pinyi"
         }
       }
+    },
+    {
+      "name": "test_bvh",
+      "description": "测试bvh",
+      "displayName": "bvh",
+      "configurePreset": "Ninja_debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "include": {
+          "name": "bvh"
+        }
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
     }
   ],
   "vendor": {}
