@@ -102,6 +102,7 @@ class project_edit::impl {
 
   gui_cache<bool> use_write_metadata{"写出元数据", true};
   gui_cache<std::string> maya_camera_suffix{"相机后缀"s, "camera"s};
+  gui_cache<std::string> maya_out_put_abc_suffix{"分组导出abc寻找后缀"s, "_output_abc"s};
 
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
   std::string title_name_;
@@ -166,6 +167,7 @@ class project_edit::impl {
     abc_export_extract_scene_name()     = l_config.abc_export_extract_scene_name;
     abc_export_add_frame_range()        = l_config.abc_export_add_frame_range;
     maya_camera_suffix()                = l_config.maya_camera_suffix;
+    maya_out_put_abc_suffix()           = l_config.maya_out_put_abc_suffix;
   }
 
   project_config::base_config get_config_() {
@@ -221,6 +223,7 @@ class project_edit::impl {
     l_c.abc_export_extract_scene_name     = abc_export_extract_scene_name();
     l_c.abc_export_add_frame_range        = abc_export_add_frame_range();
     l_c.maya_camera_suffix                = maya_camera_suffix();
+    l_c.maya_out_put_abc_suffix           = maya_out_put_abc_suffix();
 
     return l_c;
   }
@@ -261,6 +264,9 @@ void project_edit::render() {
   imgui::InputText(*p_i->simple_module_proxy_.gui_name, &(p_i->simple_module_proxy_.data));
   ImGui::Checkbox(*p_i->use_only_sim_cloth, &p_i->use_only_sim_cloth);
   ImGui::Checkbox(*p_i->use_divide_group_export, &p_i->use_divide_group_export);
+  if (p_i->use_divide_group_export())
+    ImGui::InputText(*p_i->maya_out_put_abc_suffix, &p_i->maya_out_put_abc_suffix);
+
   ImGui::Checkbox(*p_i->use_rename_material, &p_i->use_rename_material);
   ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
   ImGui::InputInt(*p_i->t_post, &p_i->t_post);
