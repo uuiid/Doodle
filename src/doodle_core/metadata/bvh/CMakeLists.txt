@@ -5,3 +5,4 @@ target_sources(doodle_core
         bvh_tree.cpp
 
         )
+add_subdirectory(detail)
