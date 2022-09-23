@@ -9,7 +9,7 @@
 
 namespace doodle::gui {
 class DOODLELIB_API screenshot_widget
-    : public base_windows<dear::PopupModal, screenshot_widget> {
+    : public base_windows<dear::Begin, screenshot_widget> {
   class impl;
   std::unique_ptr<impl> p_i;
   using call_type     = std::function<void(const entt::handle&)>;
@@ -32,6 +32,8 @@ class DOODLELIB_API screenshot_widget
 
   void set_attr();
   const std::string& title() const override;
+  std::int32_t flags() const;
+
   template <typename CompletionToken>
   auto async_save_image(
       const entt::handle& in,

@@ -58,43 +58,34 @@ void screenshot_widget::succeeded() {
 }
 
 void screenshot_widget::render() {
-  //  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.9f, 0.5f, 0.5f, 0.0f));
-  dear::Begin{
-      name.data(),
-      nullptr,
-      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove} &&
-      [&]() {
-        ImGui::ImageButton(p_i->image_gui.get(), {p_i->virtual_screen.size().width, p_i->virtual_screen.size().height});
-        if (imgui::IsItemActive() && p_i->mouse_state) {
-          p_i->mouse_end.x = imgui::GetIO().MousePos.x;
-          p_i->mouse_end.y = imgui::GetIO().MousePos.y;
-          p_i->mouse_rect  = {p_i->mouse_begin, p_i->mouse_end};
-        }
-        if (imgui::IsItemClicked() && !p_i->mouse_state) {
-          p_i->mouse_begin.x = imgui::GetIO().MousePos.x;
-          p_i->mouse_begin.y = imgui::GetIO().MousePos.y;
-          p_i->mouse_state   = true;
-        }
-        if (imgui::IsItemDeactivated() && p_i->mouse_state) {
-          this->succeeded();
-        }
+  ImGui::ImageButton(p_i->image_gui.get(), {p_i->virtual_screen.size().width, p_i->virtual_screen.size().height});
+  if (imgui::IsItemActive() && p_i->mouse_state) {
+    p_i->mouse_end.x = imgui::GetIO().MousePos.x;
+    p_i->mouse_end.y = imgui::GetIO().MousePos.y;
+    p_i->mouse_rect  = {p_i->mouse_begin, p_i->mouse_end};
+  }
+  if (imgui::IsItemClicked() && !p_i->mouse_state) {
+    p_i->mouse_begin.x = imgui::GetIO().MousePos.x;
+    p_i->mouse_begin.y = imgui::GetIO().MousePos.y;
+    p_i->mouse_state   = true;
+  }
+  if (imgui::IsItemDeactivated() && p_i->mouse_state) {
+    show_attr = false;
+    this->succeeded();
+  }
 
-        ImGui::GetWindowDrawList()
-            ->AddRectFilled({p_i->virtual_screen.tl().x, p_i->virtual_screen.tl().y}, {p_i->virtual_screen.br().x, p_i->virtual_screen.br().y}, ImGui::ColorConvertFloat4ToU32({0.1f, 0.4f, 0.5f, 0.2f}));
-        if (!p_i->mouse_rect.empty()) {
-          ImGui::GetWindowDrawList()
-              ->AddRectFilled({p_i->mouse_rect.tl().x, p_i->mouse_rect.tl().y}, {p_i->mouse_rect.br().x, p_i->mouse_rect.br().y}, ImGui::ColorConvertFloat4ToU32({1.0f, 1.0f, 1.0f, 0.4f}), 0.f);
-          ImGui::GetWindowDrawList()
-              ->AddRect({p_i->mouse_rect.tl().x, p_i->mouse_rect.tl().y}, {p_i->mouse_rect.br().x, p_i->mouse_rect.br().y}, ImGui::ColorConvertFloat4ToU32({1.0f, 0.2f, 0.2f, 0.4f}), 0.f, 5.f);
-        }
+  ImGui::GetWindowDrawList()
+      ->AddRectFilled({p_i->virtual_screen.tl().x, p_i->virtual_screen.tl().y}, {p_i->virtual_screen.br().x, p_i->virtual_screen.br().y}, ImGui::ColorConvertFloat4ToU32({0.1f, 0.4f, 0.5f, 0.2f}));
+  if (!p_i->mouse_rect.empty()) {
+    ImGui::GetWindowDrawList()
+        ->AddRectFilled({p_i->mouse_rect.tl().x, p_i->mouse_rect.tl().y}, {p_i->mouse_rect.br().x, p_i->mouse_rect.br().y}, ImGui::ColorConvertFloat4ToU32({1.0f, 1.0f, 1.0f, 0.4f}), 0.f);
+    ImGui::GetWindowDrawList()
+        ->AddRect({p_i->mouse_rect.tl().x, p_i->mouse_rect.tl().y}, {p_i->mouse_rect.br().x, p_i->mouse_rect.br().y}, ImGui::ColorConvertFloat4ToU32({1.0f, 0.2f, 0.2f, 0.4f}), 0.f, 5.f);
+  }
 
-        if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
-          imgui::CloseCurrentPopup();
-        }
-      };
-  //  ImGui::PopStyleColor();
-  //  dear::WithStyleVar{ImGuiStyleVar_WindowRounding, 0.0f} && [&]() {
-  //  };
+  if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
+    imgui::CloseCurrentPopup();
+  }
 }
 void screenshot_widget::handle_attr(const entt::handle& in) {
   p_i->handle = in;
@@ -106,6 +97,9 @@ void screenshot_widget::call_save(const screenshot_widget::call_ptr_type& in) {
 }
 const std::string& screenshot_widget::title() const {
   return p_i->title.name_id;
+}
+std::int32_t screenshot_widget::flags() const {
+  return ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 }
 
 }  // namespace doodle::gui

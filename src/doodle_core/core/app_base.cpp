@@ -125,8 +125,9 @@ std::int32_t app_base::poll_one() {
 }
 void app_base::stop_app(bool in_stop) {
   g_bounded_pool().abort(in_stop);
-
-  core_set_init{}.write_file();
+  g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
+  core_set_init{}
+      .write_file();
   this->stop_ = true;
 }
 
@@ -146,7 +147,7 @@ void app_base::load_project(const FSys::path& in_path) const {
   }
 }
 void app_base::clear_loop() {
-  while (g_bounded_pool().empty()) {
+  while (!g_bounded_pool().empty()) {
     static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
     decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
     g_bounded_pool().update(l_now - s_now, nullptr);
