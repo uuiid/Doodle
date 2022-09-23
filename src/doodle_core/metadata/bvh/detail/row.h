@@ -28,40 +28,50 @@
 namespace doodle::bvh::detail {
 namespace qi    = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
-struct DOODLE_CORE_API row {
+struct DOODLE_CORE_API offset {
   std::double_t x;
   std::double_t y;
   std::double_t z;
+  std::vector<std::string> channels_attr;
 };
 
 template <typename Iterator>
-struct row_parser : qi::grammar<Iterator, row(), ascii::space_type> {
-  row_parser() : row_parser::base_type(start) {
+struct offset_parser_impl : qi::grammar<Iterator, offset(), ascii::space_type> {
+  offset_parser_impl() : offset_parser_impl::base_type(start) {
     using ascii::char_;
     using qi::double_;
     using qi::int_;
     using qi::lexeme;
     using qi::lit;
+    using qi::no_skip;
+    namespace lab = qi::labels;
 
-    quoted_string %= lexeme['"' >> +(char_ - '"') >> '"'];
-
+    text          = lexeme[+(char_ - ' ')[lab::_val += lab::_1]];
+    //    end_tag       = int_ >> lit(lab::_r1);
     start %=
-        lit("employee") >> '{' >> int_ >> ',' >> quoted_string >> ',' >> quoted_string >> ',' >> double_ >> '}';
+        qi::string("OFFSET") >>
+        double_ >> double_ >> double_ >>
+        qi::string("CHANNELS") >> int_[lab::_r1] >> *text;
   }
 
-  qi::rule<Iterator, std::string(), ascii::space_type> quoted_string;
-  qi::rule<Iterator, row(), ascii::space_type> start;
+  qi::rule<Iterator, offset(), ascii::space_type> start;
+  qi::rule<Iterator, std::string(), ascii::space_type> text;
+//  qi::rule<Iterator, void(std::string), ascii::space_type> end_tag;
 };
+
+using offset_parser = offset_parser_impl<std::string::const_iterator>;
 
 }  // namespace doodle::bvh::detail
 
+// clang-format off
+/// @brief 注意此处注册的熟悉顺序
+
 BOOST_FUSION_ADAPT_STRUCT(
-    doodle::bvh::detail::row,
-    (
-        std::double_t, x
-    )(
-        std::double_t, y
-    )(
-        std::double_t, z
-    )
+    doodle::bvh::detail::offset,
+    (std::double_t, x)
+    (std::double_t, z)
+    (std::double_t, y)
+    (std::vector<std::string>, channels_attr)
 )
+
+// clang-format onn

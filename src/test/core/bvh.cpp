@@ -91,22 +91,21 @@ BOOST_AUTO_TEST_CASE(test_base_spirit) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(bvh_offest) {
+BOOST_AUTO_TEST_CASE(bvh_offest, *boost::unit_test::tolerance(0.00001)) {
   std::string l_data{"OFFSET 0.000 91.545 0.000"};
   namespace qi    = boost::spirit::qi;
   namespace ascii = boost::spirit::ascii;
-  using ascii::space;
-  using boost::phoenix::push_back;
-  using qi::_1;
-  using qi::double_;
-  using qi::int_;
-  using qi::parse;
-  using qi::phrase_parse;
-  using qi::string;
 
-  auto l_p = qi::string("OFFSET"s) >> (+double_);
-  auto l_r = boost::spirit::qi::phrase_parse(l_data.begin(), l_data.end(), l_p, space);
+  doodle::bvh::detail::offset_parser l_p{};
+  doodle::bvh::detail::offset l_w{};
+  auto l_r = boost::spirit::qi::phrase_parse(
+      l_data.begin(), l_data.end(), l_p, ascii::space, l_w
+  );
+
   BOOST_TEST(l_r);
+  BOOST_TEST(l_w.x == 0.000);
+  BOOST_TEST(l_w.y == 91.545);
+  BOOST_TEST(l_w.z == 0.000);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
