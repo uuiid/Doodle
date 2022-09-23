@@ -43,9 +43,9 @@ namespace doodle {
 class app::impl {
  public:
   /// \brief 初始化 com
-  [[maybe_unused]] win::ole_guard _guard;
-  win::wnd_handle parent;
-  std::int32_t show_enum;
+  [[maybe_unused]] win::ole_guard _guard{};
+  win::wnd_handle parent{};
+  std::int32_t show_enum{};
 
  public:
 };
@@ -99,7 +99,6 @@ void app::post_constructor() {
 
   (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // Enable Docking
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable Multi-Viewport / Platform Windows
   // io.ConfigViewportsNoAutoMerge = true;
@@ -207,7 +206,7 @@ void app::close_windows() {
   boost::asio::post([this]() {
     ::ShowWindow(p_hwnd, SW_HIDE);
     ::DestroyWindow(doodle::app::Get().p_hwnd);
-  })
+  });
 }
 void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
@@ -216,13 +215,6 @@ void app::load_windows() {
   make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::layout_window>();
   make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_menu_bar>();
   make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
-
-  //  _add_tick_(gui::detail::bar_tack_warp<main_menu_bar>{main_menu_bar{}});
-  //  _add_tick_(gui::detail::bar_tack_warp<main_status_bar>{main_status_bar{}});
-  //  _add_tick_(gui::detail::windows_tack_warp<
-  //             dear::Begin,
-  //             gui::layout_window>{
-  //      gui::layout_window{}});
 }
 app::~app() {
   // Cleanup

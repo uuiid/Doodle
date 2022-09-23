@@ -87,12 +87,7 @@ thread_pool_ptr doodle_lib::get_thread_pool() const {
 registry_ptr& doodle_lib::reg_attr() const {
   return ptr->reg;
 }
-registry_ptr& doodle_lib::reg_gui_attr() const {
-  return ptr->reg_gui;
-}
-scheduler_t& doodle_lib::main_loop_attr() const {
-  return ptr->loop;
-}
+
 bounded_pool_t& doodle_lib::bounded_pool_attr() const {
   return ptr->loop_bounded_pool;
 }
@@ -115,12 +110,7 @@ thread_pool& g_thread_pool() {
 registry_ptr& g_reg() {
   return doodle_lib::Get().reg_attr();
 }
-registry_ptr& g_gui_reg() {
-  return doodle_lib::Get().reg_gui_attr();
-}
-scheduler_t& g_main_loop() {
-  return doodle_lib::Get().main_loop_attr();
-}
+
 bounded_pool_t& g_bounded_pool() {
   return doodle_lib::Get().bounded_pool_attr();
 }
