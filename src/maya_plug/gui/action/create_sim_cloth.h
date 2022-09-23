@@ -9,11 +9,11 @@
 
 namespace doodle::maya_plug {
 class create_sim_cloth
-    : public gui::window_panel {
+    : public gui::base_windows<dear::Begin, create_sim_cloth> {
   std::vector<entt::handle> p_list;
 
   entt::handle p_coll;
-
+  std::string title_name_;
   void run_comm();
 
  public:
@@ -22,16 +22,8 @@ class create_sim_cloth
 
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::create_sim_cloth;
 
-  void render() override;
+  void render();
+  const std::string& title() const override;
 };
-namespace create_sim_cloth_ns {
-constexpr auto init = []() {
-  entt::meta<create_sim_cloth>()
-      .type()
-      .prop("name"_hs, std::string{create_sim_cloth::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace create_sim_cloth_ns
+
 }  // namespace doodle::maya_plug

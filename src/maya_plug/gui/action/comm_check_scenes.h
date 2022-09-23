@@ -26,7 +26,7 @@ namespace doodle::maya_plug {
  *
  */
 class comm_check_scenes
-    : public gui::window_panel {
+    : public gui::base_windows<dear::Begin, comm_check_scenes> {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;
@@ -35,6 +35,7 @@ class comm_check_scenes
   bool p_err_2;
   bool p_err_3;
   bool p_err_4;
+  std::string title_name_;
 
   static MStatus run_maya_py_script(const std::string& in_script);
 
@@ -50,17 +51,8 @@ class comm_check_scenes
  public:
   comm_check_scenes();
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::comm_check_scenes;
-  void render() override;
+  const std::string& title() const override;
+  void render();
 };
 
-namespace comm_check_scenes_ns {
-constexpr auto init = []() {
-  entt::meta<comm_check_scenes>()
-      .type()
-      .prop("name"_hs, std::string{comm_check_scenes::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace comm_check_scenes_ns
 }  // namespace doodle::maya_plug

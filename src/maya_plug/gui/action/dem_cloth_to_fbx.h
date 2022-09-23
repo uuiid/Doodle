@@ -10,7 +10,7 @@
 namespace doodle::maya_plug {
 
 class dem_cloth_to_fbx
-    : public gui::window_panel {
+    : public gui::base_windows<dear::Begin, dem_cloth_to_fbx> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -19,7 +19,8 @@ class dem_cloth_to_fbx
   dem_cloth_to_fbx();
   ~dem_cloth_to_fbx() override;
   virtual void init();
-  void render() override;
+  void render()  ;
+  const std::string& title() const override;
 };
 
 }  // namespace doodle::maya_plug

@@ -349,5 +349,8 @@ void comm_check_scenes::render() {
   // dear::Disabled{!p_duplicate_name} && [&]() {
   // };
 }
+const std::string& comm_check_scenes::title() const {
+  return title_name_;
+}
 
 }  // namespace doodle::maya_plug

@@ -37,7 +37,7 @@ using data_ptr = std::shared_ptr<data>;
  *
  */
 class reference_attr_setting
-    : public gui::window_panel {
+    : public gui::base_windows<dear::Begin, reference_attr_setting> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -49,17 +49,8 @@ class reference_attr_setting
   ~reference_attr_setting() override;
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::reference_attr_setting;
 
-  void render() override;
+  void render()  ;
+  const std::string& title() const override;
 };
 
-namespace reference_attr_setting_ns {
-constexpr auto init = []() {
-  entt::meta<reference_attr_setting>()
-      .type()
-      .prop("name"_hs, std::string{reference_attr_setting::name})
-      .base<gui::window_panel>();
-};
-class init_class
-    : public init_register::registrar_lambda<init, 3> {};
-}  // namespace reference_attr_setting_ns
 }  // namespace doodle::maya_plug

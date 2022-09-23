@@ -43,6 +43,7 @@ class reference_attr_setting::impl {
  public:
   std::vector<entt::handle> p_handles;
   entt::handle p_current_select;
+  std::string title_name_;
 
   ::doodle::gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
   ::doodle::gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};
@@ -64,7 +65,7 @@ class reference_attr_setting::impl {
 
 reference_attr_setting::reference_attr_setting()
     : p_i(std::make_unique<impl>()) {
-  title_name_     = std::string{name};
+  p_i->title_name_     = std::string{name};
   auto k_ref_view = g_reg()->view<reference_file>();
   std::transform(k_ref_view.begin(), k_ref_view.end(), std::back_inserter(p_i->p_handles), [](auto& in_e) {
     return make_handle(in_e);
@@ -219,6 +220,9 @@ void reference_attr_setting::clear() {
 }
 reference_attr_setting::~reference_attr_setting() {
   clear();
+}
+const std::string& reference_attr_setting::title() const {
+  return p_i->title_name_;
 }
 
 }  // namespace doodle::maya_plug

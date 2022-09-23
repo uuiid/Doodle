@@ -120,5 +120,8 @@ doodle_create_qcloth_assets -collision {} -cloth {};
                                  p_coll, fmt::join(p_list, " -cloth "))};
   MGlobal::executeCommand(d_str{l_comm}, true, true);
 }
+const std::string& create_sim_cloth::title() const {
+  return title_name_;
+}
 
 }  // namespace doodle::maya_plug

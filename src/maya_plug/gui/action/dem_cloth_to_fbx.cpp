@@ -25,7 +25,7 @@ class dem_cloth_to_fbx::impl {
   std::double_t weightsSmooth_p{1e-4};
   std::double_t weightsSmoothStep_p{1};
   std::int32_t isBindUpdate_p{0};
-
+  std::string title_name_{};
   void run() {
     auto l_py = fmt::format(R"(
 import maya.cmds as cmds
@@ -48,7 +48,7 @@ if select_list:
 };
 dem_cloth_to_fbx::dem_cloth_to_fbx()
     : p_i(std::make_unique<impl>()) {
-  this->title_name_ = std::string{name};
+  this->p_i->title_name_ = std::string{name};
 }
 void dem_cloth_to_fbx::init() {
   p_i->startFrame_p = MAnimControl::minTime().value();
@@ -67,6 +67,9 @@ void dem_cloth_to_fbx::render() {
   if (ImGui::Button("转换")) {
     p_i->run();
   }
+}
+const std::string& dem_cloth_to_fbx::title() const {
+  return p_i->title_name_;
 }
 
 dem_cloth_to_fbx::~dem_cloth_to_fbx() = default;
