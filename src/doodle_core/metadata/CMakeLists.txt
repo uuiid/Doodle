@@ -43,4 +43,5 @@ target_sources(
         rules.cpp
 
 )
+add_subdirectory(bvh)
 add_subdirectory(detail)
