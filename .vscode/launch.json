@@ -1,4 +1,11 @@
 {
+    "version": "0.2.0",
+    "setupCommands": [
+        {
+            "description": "Enable utf-8",
+            "text": "set charset UTF-8"
+        }
+    ],
     "configurations": [
         {
             "name": "maya",
@@ -35,7 +42,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -52,7 +59,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
                 }
             ],
             "console": "internalConsole",
@@ -70,13 +77,7 @@
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
             "environment": [],
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis",
-            "setupCommands": [
-                {
-                    "description": "Enable utf-8",
-                    "text": "set charset UTF-8"
-                }
-            ]
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         }
     ],
     "inputs": [
