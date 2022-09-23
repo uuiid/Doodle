@@ -157,6 +157,8 @@ class DOODLE_CORE_API base_config {
   bool abc_export_add_frame_range{true};
   /// \brief camera 文件名称后缀
   std::string maya_camera_suffix;
+  /// @brief 输出abc时的后缀
+  std::string maya_out_put_abc_suffix;
 
   base_config();
 
