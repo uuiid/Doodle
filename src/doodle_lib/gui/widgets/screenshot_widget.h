@@ -42,11 +42,12 @@ class DOODLELIB_API screenshot_widget
         void(const entt::handle& in)>(
         [this, in](auto&& completion_handler) {
           auto l_call = std::make_shared<call_type>(
-              std::forward<decltypr(completion_handler)>(completion_handler)
+              std::forward<decltype(completion_handler)>(completion_handler)
           );
           this->handle_attr(in);
           this->call_save(l_call);
-        }
+        },
+        token
     );
   }
 };
