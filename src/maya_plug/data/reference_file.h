@@ -94,7 +94,7 @@ class reference_file {
 
   std::vector<MDagPath> find_out_group_child_suffix_node(
       const std::string &in_suffix
-  );
+  ) const;
 
   /**
    * @brief

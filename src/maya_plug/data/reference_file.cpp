@@ -445,7 +445,10 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
             g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix
         )
     );
-
+    export_path |= ranges::action::unique([](const MDagPath &in_r, const MDagPath &in_l) -> bool {
+      return in_r == in_l;
+    });
+    DOODLE_LOG_INFO("按组划分导出再次收集完成 {}", fmt::join(export_path, " "));
     for (auto &&i : export_path) {
       l_parent.set(i);
       l_parent.pop();
@@ -1021,7 +1024,7 @@ std::string reference_file::get_abc_exprt_arg() {
 }
 std::vector<MDagPath> reference_file::find_out_group_child_suffix_node(
     const std::string &in_suffix
-) {
+) const {
   auto l_uot_group = export_group_attr();
   if (!l_uot_group) {
     return {};
