@@ -244,9 +244,11 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
-    make_handle().emplace<gui_windows>(std::make_shared<screenshot_widget>())->async_save_image(in_, [](const entt::handle& in) {
-      database::save(in_);
+    auto l_image = std::make_shared<screenshot_widget>();
+    l_image->async_save_image(in_, [](const entt::handle& in) {
+      database::save(in);
     });
+    make_handle().emplace<gui_windows>(l_image);
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {
