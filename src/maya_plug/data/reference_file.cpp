@@ -462,7 +462,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
         l_node_name.erase(l_it, l_suffix.length());
       }
 
-      l_name.add_external_string = get_node_name_strip_name_space(i);
+      l_name.add_external_string = l_node_name;
       l_name.begin_end_time      = std::make_pair(in_start, in_endl);
       export_divide_map[l_name].add(i, MObject::kNullObj, true);
     }
