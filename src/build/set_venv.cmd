@@ -1,7 +1,8 @@
 @echo off
 
-if exist "%my_pwd%/src/doodle_core" goto end
 if not exist "%my_pwd%/src/doodle_core" goto set_pwd
+
+if not exist "%cd%/src/doodle_core" goto set_pwd
 
 goto end
 
@@ -14,7 +15,6 @@ cd %~dp0/../..
 set my_pwd=%cd%
 call %my_pwd%/.venv/Scripts/activate.bat
 
-goto end
 
 :end
 
