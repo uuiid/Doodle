@@ -1,6 +1,7 @@
 add_executable(
         doodle_limited_exe
         WIN32
+        EXCLUDE_FROM_ALL
         main.cpp
         gui/app.cpp
         gui/app.h
@@ -37,7 +38,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
         COMPONENT limited_exe_com
         )
 
-#最后实现camke修复
+# 最后实现camke修复
 install(CODE "
 include(BundleUtilities)
 fixup_bundle(\"$<TARGET_FILE:doodle_limited_exe>\"   \"\"   \"\")

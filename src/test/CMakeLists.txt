@@ -22,7 +22,6 @@ macro(doodle_link_test)
             $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
             )
     target_compile_options(${ARGV0} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
-    # $<$<CXX_COMPILER_ID:GNU>: -Wa,-mbig-obj>
 endmacro()
 
 

@@ -4,7 +4,7 @@ add_executable(
         pinyin.cpp
 )
 doodle_link_test(test_pinying)
-add_test(test_pinying_exe test_pinying)
+add_test(NAME test_pinying_exe COMMAND test_pinying)
 
 add_executable(
         test_lib_create
@@ -12,7 +12,7 @@ add_executable(
         lib_create.cpp
 )
 doodle_link_test(test_lib_create)
-add_test(test_lib_create_exe test_lib_create)
+add_test(NAME test_lib_create_exe COMMAND test_lib_create)
 
 
 add_executable(
@@ -21,7 +21,7 @@ add_executable(
         time.cpp
 )
 doodle_link_test(test_time)
-add_test(test_time_exe test_time)
+add_test(NAME test_time_exe COMMAND test_time)
 
 
 add_executable(
@@ -30,4 +30,4 @@ add_executable(
         bvh.cpp
 )
 doodle_link_test(bvh_test)
-add_test(bvh_test_exe bvh_test)
+add_test(NAME bvh_test_exe COMMAND bvh_test --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
