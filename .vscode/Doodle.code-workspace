@@ -223,8 +223,7 @@
 		"C_Cpp.autocompleteAddParentheses": true,
 		"C_Cpp.experimentalFeatures": "Enabled",
 		"redhat.telemetry.enabled": false,
-		"C_Cpp.errorSquiggles": "Enabled",
-		"boost-test-adapter.testExecutable": "${workspaceFolder}/build/Ninja_debug/src/test/dingding/dingding_base.exe"
+		"C_Cpp.errorSquiggles": "Enabled"
 	},
 	"launch": {
 		"version": "0.2.0",

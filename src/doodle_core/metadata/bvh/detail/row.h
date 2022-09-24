@@ -24,6 +24,10 @@
 #include <boost/phoenix/core.hpp>
 #include <boost/phoenix/operator.hpp>
 #include <boost/phoenix/stl.hpp>
+#include <boost/mpl/range_c.hpp>
+#include <boost/mpl/for_each.hpp>
+
+// #include <boost/>
 
 namespace doodle::bvh::detail {
 namespace qi    = boost::spirit::qi;
@@ -35,6 +39,7 @@ struct DOODLE_CORE_API offset {
   std::vector<std::string> channels_attr;
 };
 
+
 template <typename Iterator>
 struct offset_parser_impl : qi::grammar<Iterator, offset(), ascii::space_type> {
   offset_parser_impl() : offset_parser_impl::base_type(start) {
@@ -44,19 +49,21 @@ struct offset_parser_impl : qi::grammar<Iterator, offset(), ascii::space_type> {
     using qi::lexeme;
     using qi::lit;
     using qi::no_skip;
-    namespace lab = qi::labels;
+    namespace phoe = boost::phoenix;
+    namespace lab  = qi::labels;
 
-    text          = lexeme[+(char_ - ' ')[lab::_val += lab::_1]];
+    text           = lexeme[+(char_ - ' ')[lab::_val += lab::_1]];
     //    end_tag       = int_ >> lit(lab::_r1);
     start %=
         qi::string("OFFSET") >>
         double_ >> double_ >> double_ >>
-        qi::string("CHANNELS") >> int_[lab::_r1] >> *text;
+        qi::string("CHANNELS") >> *text[phoe::push_back(phoe::at_c<3>(qi::_val), qi::_1)];
   }
 
   qi::rule<Iterator, offset(), ascii::space_type> start;
   qi::rule<Iterator, std::string(), ascii::space_type> text;
-//  qi::rule<Iterator, void(std::string), ascii::space_type> end_tag;
+
+  //  qi::rule<Iterator, void(std::string), ascii::space_type> end_tag;
 };
 
 using offset_parser = offset_parser_impl<std::string::const_iterator>;
@@ -69,8 +76,8 @@ using offset_parser = offset_parser_impl<std::string::const_iterator>;
 BOOST_FUSION_ADAPT_STRUCT(
     doodle::bvh::detail::offset,
     (std::double_t, x)
-    (std::double_t, z)
     (std::double_t, y)
+    (std::double_t, z)
     (std::vector<std::string>, channels_attr)
 )
 
