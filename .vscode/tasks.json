@@ -1,6 +1,28 @@
 {
   "version": "2.0.0",
   "tasks": [
+    {
+      "label": "cmake config",
+      "type": "process",
+      "command": "C:/Program Files/CMake/bin/cmake.exe",
+      "args": [
+        "-S${workspaceFolder}",
+        "--preset Ninja_debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake build",
+      "type": "process",
+      "command": "C:/Program Files/CMake/bin/cmake.exe",
+      "args": [
+        "--build",
+        "--preset",
+        "debug_doodle",
+        "${input:build_target}"
+      ],
+      "problemMatcher": []
+    }
   ],
   "inputs": [
     {
@@ -8,6 +30,15 @@
       "type": "promptString",
       "description": "input arg",
       "default": "test create metadata"
+    },
+    {
+      "id": "build_target",
+      "type": "pickString",
+      "description": "要构建的目标",
+      "options": [
+        "DoodleExe",
+        "doodle_core"
+      ]
     }
   ]
 }

@@ -27,28 +27,6 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
-            "name": "maya_cmd",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2019/bin/maya.exe",
-            "args": [
-                "-noAutoloadPlugins",
-                "-batch",
-                "-script",
-                "${workspaceFolder}/src/doodle_exe/main/test/test_maya.py"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
-                }
-            ],
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
