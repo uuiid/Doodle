@@ -8,8 +8,7 @@
       "args": [
         "-S${workspaceFolder}",
         "--preset Ninja_debug"
-      ],
-      "problemMatcher": []
+      ]
     },
     {
       "label": "cmake build",
@@ -19,6 +18,7 @@
         "--build",
         "--preset",
         "debug_doodle",
+        "--target",
         "${input:build_target}"
       ],
       "problemMatcher": []
