@@ -61,6 +61,7 @@ using namespace doodle;
 #include <boost/mpl/range_c.hpp>
 #include <boost/mpl/for_each.hpp>
 #include <boost/variant/recursive_variant.hpp>
+#include <utility>
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 // #include <boost/>
 
@@ -97,7 +98,7 @@ struct bvh_tree {
       node in_root
   ) : frames(in_frames),
       frame_time(in_frame_time),
-      root(in_root) {}
+      root(std::move(in_root)) {}
 
   std::size_t frames;
   rational_int frame_time;
@@ -125,15 +126,37 @@ BOOST_FUSION_ADAPT_STRUCT(
     (doodle::bvh::detail::rational_int, frame_time)
     (doodle::bvh::detail::node, root)
 )
-
 // clang-format on
+
+namespace fmt {
+template <>
+struct formatter<doodle::bvh::detail::bvh_tree> : formatter<std::int64_t> {
+  template <typename FormatContext>
+  auto format(const doodle::bvh::detail::bvh_tree& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return formatter<std::int64_t>::format(
+        in_.frames,
+        ctx
+    );
+  }
+};
+template <>
+struct formatter<doodle::bvh::detail::node> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const doodle::bvh::detail::node& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return formatter<std::string>::format(
+        in_.name,
+        ctx
+    );
+  }
+};
+}  // namespace fmt
 
 namespace doodle::bvh::detail {
 
 struct print_rul {
   template <typename T>
   void operator()(T const& i, qi::unused_type, qi::unused_type) const {
-    BOOST_TEST_MESSAGE(i);
+    BOOST_TEST_MESSAGE(fmt::to_string(i));
   }
 };
 
@@ -163,10 +186,9 @@ struct bvh_node_impl : qi::grammar<Iterator, node(), ascii::space_type> {
             double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
             double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
             qi::string("CHANNELS") >> int_ >>
-            *channel[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)] >>
+            *join_name[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)] >>
 
             qi::char_('}');
-    qi::alnum;
 
     BOOST_SPIRIT_DEBUG_NODES((start));
   }
@@ -179,46 +201,37 @@ struct bvh_node_impl : qi::grammar<Iterator, node(), ascii::space_type> {
 template <typename Iterator>
 struct bvh_tree_impl : qi::grammar<Iterator, bvh_tree(), ascii::space_type> {
   bvh_tree_impl() : bvh_tree_impl::base_type(start) {
-    using ascii::char_;
-    using boost::spirit::repository::qi::kwd;
-    using qi::double_;
-    using qi::int_;
-    using qi::lexeme;
-    using qi::lit;
-    using qi::no_skip;
-
     namespace phoe = boost::phoenix;
     namespace lab  = qi::labels;
 
-    name_str %= lexeme[+qi::alnum];
+    name_str %= qi::lexeme[+qi::alnum];
 
     end_node = qi::string("End") >>
                name_str[phoe::at_c<0>(qi::_val) = qi::_1] >>
                qi::char_('{') >>
                qi::string("OFFSET") >>
-               double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
-               double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
-               double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
+               qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
+               qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
+               qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
                qi::char_('}');
-
+    int n;
     node_rule =
         (qi::string("ROOT") | qi::string("JOINT")) >>
         name_str[phoe::at_c<0>(qi::_val) = qi::_1] >>
 
         qi::char_('{') >>
         qi::string("OFFSET") >>
-        double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
-        double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
-        double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
-        qi::string("CHANNELS") >> int_ >>
-        *channel[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)] >>
-        *(node_rule | end_node) >>
+        qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
+        qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
+        qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
+        qi::string("CHANNELS") >> qi::int_[phoe::ref(n) = qi::_1] >>
+        qi::repeat(phoe::ref(n))[name_str[print_rul{}]] >>
+        *(node_rule | end_node)[print_rul{}] >>
         qi::char_('}');
-    qi::char_('}');
 
     start = qi::string("HIERARCHY") >>
-            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
-            *(qi::char_) >>
+            node_rule[print_rul{}] >>
+            //            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
             qi::string("MOTION") >>
             qi::string("Frames:") >> qi::int_[phoe::at_c<0>(qi::_val) = qi::_1] >>
             qi::string("Frame") >> qi::string("Time:") >>
@@ -327,7 +340,7 @@ BOOST_AUTO_TEST_CASE(bvh_tree, *boost::unit_test::tolerance(0.00001)) {
   namespace qi    = boost::spirit::qi;
   namespace ascii = boost::spirit::ascii;
 
-  doodle::bvh::detail::bvh_node_parse l_p{};
+  doodle::bvh::detail::bvh_tree_parse l_p{};
   doodle::bvh::detail::bvh_tree l_w{};
   auto l_r = boost::spirit::qi::phrase_parse(
       bvh_data::bvh_data_attr.begin(), bvh_data::bvh_data_attr.end(), l_p, ascii::space, l_w
@@ -355,7 +368,7 @@ ROOT Hips
 		JOINT Neck
 		{
 			OFFSET	 0.00	 18.65	 0.00
-			CHANNELS 3 Zrotation Xrotation Yrotation
+                      CHANNELS 3 Zrotation Xrotation Yrotation
 			JOINT Head
 			{
 				OFFSET	 0.00	 5.45	 0.00
