@@ -1,6 +1,5 @@
-
-
-set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+# set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 
 include(ExternalProject)
@@ -19,12 +18,12 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-message("TimeLib_SOURCE_DIR = ${timelib_SOURCE_DIR}")
 
 
 
 FetchContent_MakeAvailable(CMakeRCLib TimeLib)
 
+message("TimeLib_SOURCE_DIR = ${timelib_SOURCE_DIR}")
 message("CMakeRCLib_SOURCE_DIR = ${cmakerclib_SOURCE_DIR}")
 
 list(APPEND CMAKE_PREFIX_PATH ${cmakerclib_SOURCE_DIR})
