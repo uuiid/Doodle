@@ -1,12 +1,35 @@
 
 
+
+
+
+
+include(ExternalProject)
+include(FetchContent)
+
+FetchContent_Declare(
+        fontawesome
+        GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
+        GIT_TAG 6.x
+)
+FetchContent_MakeAvailable(fontawesome)
+
+
+message("fontawesome_SOURCE_DIR = ${fontawesome_SOURCE_DIR}")
+
+
+cmrc_add_resource_library(
+        DoodleLibResourceFont
+        WHENCE ${fontawesome_SOURCE_DIR}/webfonts
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-brands-400.ttf
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-regular-400.ttf
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-solid-900.ttf
+)
+
 # 添加资源
 add_subdirectory(resource)
 cmrc_add_resource_library(
         DoodleLibResource
-        resource/fa-brands-400.ttf
-        resource/fa-regular-400.ttf
-        resource/fa-solid-900.ttf
         ${DOODLE_RE_FILES_LIST}
 )
 include(doodle_exe)

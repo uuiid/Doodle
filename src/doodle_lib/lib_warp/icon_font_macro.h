@@ -1,3 +1,3 @@
 #pragma once
 
-#include <doodle_lib/external/IconFontCppHeaders/IconsFontAwesome6.h>
+#include <IconsFontAwesome6.h>
