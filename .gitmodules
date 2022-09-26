@@ -4,10 +4,6 @@
 [submodule "external/doxygen-awesome-css"]
 	path = external/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "src/doodle_lib/external/IconFontCppHeaders"]
-	path = src/doodle_lib/external/IconFontCppHeaders
-	url = https://github.com/juliettef/IconFontCppHeaders.git
-	branch = main
 [submodule "external/Font-Awesome"]
 	path = external/Font-Awesome
 	url = https://github.com/FortAwesome/Font-Awesome.git
