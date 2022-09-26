@@ -35,7 +35,7 @@ option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
-include(CMakeRC)
+
 
 find_package(Boost REQUIRED COMPONENTS
         locale

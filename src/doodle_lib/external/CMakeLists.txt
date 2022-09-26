@@ -18,7 +18,7 @@ FetchContent_MakeAvailable(IconFontCppHeaders)
 
 target_include_directories(
         doodle_lib
-        PRIVATE ${iconfontcppheaders_SOURCE_DIR}
+        PUBLIC ${iconfontcppheaders_SOURCE_DIR}
 )
 
 message("IconFontCppHeaders_SOURCE_DIR = ${iconfontcppheaders_SOURCE_DIR}")
