@@ -1,12 +1,3 @@
-
-
-
-
-
-
-include(ExternalProject)
-include(FetchContent)
-
 FetchContent_Declare(
         fontawesome
         GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git

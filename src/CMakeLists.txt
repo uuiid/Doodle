@@ -11,7 +11,19 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/vector-of-bool/cmrc.git
         GIT_TAG master
 )
-FetchContent_MakeAvailable(CMakeRCLib)
+
+
+FetchContent_Declare(
+        TimeLib
+        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+message("TimeLib_SOURCE_DIR = ${timelib_SOURCE_DIR}")
+
+
+
+FetchContent_MakeAvailable(CMakeRCLib TimeLib)
 
 message("CMakeRCLib_SOURCE_DIR = ${cmakerclib_SOURCE_DIR}")
 
