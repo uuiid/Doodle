@@ -181,7 +181,7 @@ class DOODLE_CORE_API time_point_wrap
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, time_point_wrap& p);
 };
 
-time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
+time_point_wrap::duration DOODLE_CORE_API operator-(const time_point_wrap& in_l, const time_point_wrap& in_r);
 
 }  // namespace doodle
 
