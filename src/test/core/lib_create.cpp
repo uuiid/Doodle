@@ -3,7 +3,9 @@
 //
 
 #define BOOST_TEST_MODULE doodle lib
-
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #include <boost/test/included/unit_test.hpp>
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/doodle_core.h>
