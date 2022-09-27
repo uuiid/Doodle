@@ -89,6 +89,7 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
       std::smatch k_match{};
       const auto &k_r = std::regex_search(l_scene_name, k_match, l_regex);
       if (k_r && k_match.size() >= 2) {
+        l_scene_name.clear();
         for (auto i = ++std::begin(k_match);
              i != std::end(k_match);
              ++i) {
@@ -109,6 +110,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
       std::smatch k_match{};
       const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
       if (k_r && k_match.size() >= 2) {
+        l_ref_name.clear();
         for (auto i = ++std::begin(k_match);
              i != std::end(k_match);
              ++i) {
