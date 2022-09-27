@@ -2,7 +2,6 @@ target_sources(doodle_core
         PUBLIC
         cmrcWarp.h
         boost_uuid_warp.h
-        entt_warp.cpp
         entt_warp.h
         json_warp.h
         std_warp.h
@@ -14,5 +13,8 @@ target_sources(doodle_core
         std_fmt_set.h
         boost_fmt_rational.h
         std_fmt_optional.h
-        )
+
+        PRIVATE
+        entt_warp.cpp
+)
 add_subdirectory(detail)

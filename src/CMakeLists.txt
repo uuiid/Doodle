@@ -16,11 +16,23 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-FetchContent_MakeAvailable(CMakeRCLib TimeLib)
+FetchContent_Declare(
+        fontawesome
+        GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
+        GIT_TAG 6.x
+)
+FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome)
 
 list(APPEND CMAKE_MODULE_PATH ${cmakerclib_SOURCE_DIR})
 include(CMakeRC)
 
+cmrc_add_resource_library(
+        DoodleLibResourceFont
+        WHENCE ${fontawesome_SOURCE_DIR}/webfonts
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-brands-400.ttf
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-regular-400.ttf
+        ${fontawesome_SOURCE_DIR}/webfonts/fa-solid-900.ttf
+)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_dingding)
 add_subdirectory(doodle_lib)
