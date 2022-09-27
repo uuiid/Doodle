@@ -39,6 +39,7 @@
 		"cmake.useCMakePresets": "always",
 		"files.associations": {
 			".clang-format": "yaml",
+			"*.json_doodle": "json",
 			"memory": "cpp",
 			"vector": "cpp",
 			"algorithm": "cpp",
@@ -142,7 +143,8 @@
 			"cfenv": "cpp",
 			"*.rh": "cpp",
 			"*.inc": "cpp",
-			"csetjmp": "cpp"
+			"csetjmp": "cpp",
+			"resumable": "cpp"
 		},
 		"testMate.cpp.log.logSentry": "disable_3",
 		"testMate.cpp.test.advancedExecutables": [
