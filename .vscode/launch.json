@@ -44,6 +44,26 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "debug_test",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/bvh_test.exe",
+            "args": [
+                "--logger=HRF,all",
+                "--color_output=true"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${command:cmake.getLaunchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "Doodle_debug_command",
             "type": "cppvsdbg",
             "request": "launch",
