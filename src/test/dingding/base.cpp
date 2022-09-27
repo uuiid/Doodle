@@ -1,8 +1,13 @@
 //
 // Created by TD on 2022/9/8.
 //
+
+#include <main_fixtures/lib_fixtures.h>
+
 #define BOOST_TEST_MODULE dingding
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+
+#include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/data/monomorphic.hpp>
 
@@ -18,13 +23,12 @@
 #include <boost/asio.hpp>
 using namespace doodle;
 
-struct loop_fixtures {
+struct loop_fixtures : lib_fixtures {
   loop_fixtures()  = default;
   ~loop_fixtures() = default;
   boost::asio::io_context io_context_attr{};
   boost::asio::ssl::context context_attr{
       boost::asio::ssl::context::sslv23};
-  doodle_lib l_lib{};
   void setup() {
     doodle_lib::create_time_database();
     context_attr.set_verify_mode(boost::asio::ssl::verify_peer);

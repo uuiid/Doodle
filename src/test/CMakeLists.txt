@@ -22,6 +22,11 @@ macro(doodle_link_test)
                 PUBLIC
                 $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
         )
+        target_include_directories(
+                ${ARGV0}
+                PRIVATE
+                ${PROJECT_SOURCE_DIR}/src/test
+        )
         target_compile_options(${ARGV0} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
 endmacro()
 
