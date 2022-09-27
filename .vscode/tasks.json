@@ -13,12 +13,8 @@
     {
       "label": "cmake build",
       "type": "process",
-      "command": "C:/Program Files/CMake/bin/cmake.exe",
+      "command": "${workspaceFolder}/src/cmd_debug/build_debug_venv.cmd",
       "args": [
-        "--build",
-        "--preset",
-        "debug_doodle",
-        "--target",
         "${input:build_target}"
       ],
       "problemMatcher": []
@@ -37,7 +33,8 @@
       "description": "要构建的目标",
       "options": [
         "DoodleExe",
-        "doodle_core"
+        "doodle_core",
+        "bvh_test"
       ]
     }
   ]
