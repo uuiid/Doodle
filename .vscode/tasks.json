@@ -3,16 +3,13 @@
   "tasks": [
     {
       "label": "cmake config",
-      "type": "process",
-      "command": "C:/Program Files/CMake/bin/cmake.exe",
-      "args": [
-        "-S${workspaceFolder}",
-        "--preset Ninja_debug"
-      ]
+      "type": "shell",
+      "command": "${workspaceFolder}/src/cmd_debug/config_cmake.cmd",
+      "args": []
     },
     {
       "label": "cmake build",
-      "type": "process",
+      "type": "shell",
       "command": "${workspaceFolder}/src/cmd_debug/build_debug_venv.cmd",
       "args": [
         "${input:build_target}"
