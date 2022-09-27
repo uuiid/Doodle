@@ -16,6 +16,20 @@
         "${input:build_target}"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "cmake test",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:build_target}.exe",
+      "args": [
+        "--logger=HRF,all",
+        "--color_output=true",
+        "--run_test=${input:build_target}"
+      ],
+      "problemMatcher": [],
+      "dependsOn": [
+        "cmake build"
+      ]
     }
   ],
   "inputs": [
@@ -23,7 +37,7 @@
       "id": "arg_input",
       "type": "promptString",
       "description": "input arg",
-      "default": "test create metadata"
+      "default": "dingding_base/client_get_user_attendance"
     },
     {
       "id": "build_target",
@@ -32,7 +46,8 @@
       "options": [
         "DoodleExe",
         "doodle_core",
-        "bvh_test"
+        "bvh_test",
+        "dingding_base"
       ]
     }
   ]
