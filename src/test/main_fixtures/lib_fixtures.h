@@ -5,6 +5,8 @@
 #include <doodle_core/doodle_core.h>
 
 struct lib_fixtures {
-  lib_fixtures()  = default;
-  ~lib_fixtures() = default;
+  lib_fixtures();
+  virtual ~lib_fixtures() = default;
+
+  doodle::doodle_lib doodle_lib_attr{};
 };
