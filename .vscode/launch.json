@@ -33,7 +33,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.getLaunchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
@@ -53,7 +53,7 @@
                 "--color_output=true"
             ],
             "stopAtEntry": true,
-            "cwd": "${command:cmake.getLaunchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
