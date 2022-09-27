@@ -5,6 +5,7 @@ namespace doodle {
 
 class core_set_init;
 class user;
+class doodle_lib;
 
 /**
  * @brief 全局静态设置类
@@ -13,8 +14,9 @@ class user;
  */
 
 class DOODLE_CORE_API core_set : public details::no_copy {
-  friend core_set_init;
-  friend user;
+  friend class core_set_init;
+  friend class user;
+  friend class doodle_lib;
 
  public:
   static core_set &get_set();
@@ -60,8 +62,8 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   bool maya_replace_save_dialog{false};
   bool maya_force_resolve_link{false};
 
-  doodle_lib* lib_ptr;
-  logger_ctrl* log_ptr;
+  doodle_lib *lib_ptr;
+  logger_ctrl *log_ptr;
 
  private:
   // 用户名称

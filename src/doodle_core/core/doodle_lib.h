@@ -18,6 +18,9 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy,
  private:
   class impl;
   std::unique_ptr<impl> ptr;
+  friend class core_set;
+
+  core_set& core_set_attr() const;
 
  public:
   doodle_lib();

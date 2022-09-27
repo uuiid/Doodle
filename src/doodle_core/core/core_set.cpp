@@ -2,6 +2,7 @@
 
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/metadata/user.h>
 
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
@@ -51,8 +52,7 @@ FSys::path win::get_font() {
 }
 
 core_set &core_set::get_set() {
-  static core_set install;
-  return install;
+  return doodle_lib::Get().core_set_attr();
 }
 
 bool core_set::has_maya() const noexcept {
@@ -263,4 +263,5 @@ void core_set::add_recent_project(const FSys::path &in) {
 std::string core_set::get_uuid_str(const std::string &in_add) {
   return get_uuid_str() + in_add;
 }
+
 }  // namespace doodle

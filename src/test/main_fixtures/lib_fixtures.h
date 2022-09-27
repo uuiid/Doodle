@@ -6,7 +6,7 @@
 
 struct lib_fixtures {
   lib_fixtures();
-  virtual ~lib_fixtures() = default;
+  virtual ~lib_fixtures();
 
   doodle::doodle_lib doodle_lib_attr{};
 };

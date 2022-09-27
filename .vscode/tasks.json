@@ -18,13 +18,33 @@
       "problemMatcher": []
     },
     {
-      "label": "cmake test",
+      "label": "cmake clear",
+      "type": "shell",
+      "command": "${workspaceFolder}/src/cmd_debug/build_debug_venv.cmd",
+      "args": [],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake test part",
       "type": "shell",
       "command": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:build_target}.exe",
       "args": [
         "--logger=HRF,all",
         "--color_output=true",
-        "--run_test=${input:build_target}"
+        "--run_test=${input:arg_input}"
+      ],
+      "problemMatcher": [],
+      "dependsOn": [
+        "cmake build"
+      ]
+    },
+    {
+      "label": "cmake test",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:build_target}.exe",
+      "args": [
+        "--logger=HRF,all",
+        "--color_output=true"
       ],
       "problemMatcher": [],
       "dependsOn": [
@@ -47,7 +67,8 @@
         "DoodleExe",
         "doodle_core",
         "bvh_test",
-        "dingding_base"
+        "dingding_base",
+        "test_time"
       ]
     }
   ]

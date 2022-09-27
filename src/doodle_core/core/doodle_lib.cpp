@@ -20,20 +20,37 @@
 #include <doodle_core/database_task/sqlite_client.h>
 namespace doodle {
 
+class static_value {
+ public:
+  doodle_lib* p_lib;
+  static static_value& get() {
+    static static_value install{};
+    return install;
+  }
+};
+
 class doodle_lib::impl {
  public:
-  std::shared_ptr<boost::asio::io_context> io_context_{std::make_shared<boost::asio::io_context>()};
-  thread_pool_ptr p_thread_pool{std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2)};
-  logger_ctr_ptr p_log{std::make_shared<logger_ctrl>()};
-  registry_ptr reg{std::make_shared<entt::registry>()};
-  registry_ptr reg_gui{std::make_shared<entt::registry>()};
+  std::shared_ptr<core_set> p_set{};
+  std::shared_ptr<boost::asio::io_context> io_context_{};
+  thread_pool_ptr p_thread_pool{};
+  logger_ctr_ptr p_log{};
+  registry_ptr reg{};
 
-  scheduler_t loop{};
   bounded_pool_t loop_bounded_pool{};
 };
 
 doodle_lib::doodle_lib()
     : ptr(std::make_unique<impl>()) {
+  /// @brief 最先初始化的局部静态变量
+  static_value::get().p_lib = this;
+  /// @brief 初始化其他
+  ptr->p_set.reset(new core_set{});
+  ptr->io_context_   = std::make_shared<boost::asio::io_context>();
+  ptr->p_thread_pool = std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2);
+  ptr->p_log         = std::make_shared<logger_ctrl>();
+  ptr->reg           = std::make_shared<entt::registry>();
+
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
@@ -78,7 +95,7 @@ FSys::path doodle_lib::create_time_database() {
   return k_local_path;
 }
 doodle_lib& doodle_lib::Get() {
-  return *core_set::get_set().lib_ptr;
+  return *static_value::get().p_lib;
 }
 
 thread_pool_ptr doodle_lib::get_thread_pool() const {
@@ -100,8 +117,14 @@ boost::asio::thread_pool& doodle_lib::thread_attr() const {
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const {
   return ptr == in_rhs.ptr;
 }
+core_set& doodle_lib::core_set_attr() const {
+  return *ptr->p_set;
+}
 
-doodle_lib::~doodle_lib() = default;
+doodle_lib::~doodle_lib() {
+  /// @brief  清理变量
+  static_value::get().p_lib = nullptr;
+}
 
 thread_pool& g_thread_pool() {
   return *(doodle_lib::Get().get_thread_pool());

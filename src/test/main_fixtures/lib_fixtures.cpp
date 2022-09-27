@@ -28,3 +28,6 @@ lib_fixtures::lib_fixtures() {
       std::make_shared<boost_test_sink_mt>()
   );
 }
+lib_fixtures::~lib_fixtures() {
+  doodle::logger_ctrl::get_log().refresh();
+}

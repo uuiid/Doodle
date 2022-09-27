@@ -53,12 +53,12 @@
             "name": "debug_test",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/bvh_test.exe",
+            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:debug_target}.exe",
             "args": [
                 "--logger=HRF,all",
                 "--color_output=true"
             ],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
             "environment": [
                 {
@@ -98,7 +98,8 @@
             "options": [
                 "DoodleExe",
                 "doodle_core",
-                "bvh_test"
+                "bvh_test",
+                "dingding_base"
             ],
             "default": "DoodleExe"
         }
