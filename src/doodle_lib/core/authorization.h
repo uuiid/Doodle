@@ -12,7 +12,7 @@ class DOODLELIB_API authorization {
 
  public:
   explicit authorization(std::string in_data);
-  ~authorization();
+  virtual ~authorization();
 
   [[nodiscard]] bool is_expire() const;
   void save(const FSys::path& in_path) const;

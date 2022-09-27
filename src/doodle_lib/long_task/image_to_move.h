@@ -66,7 +66,7 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
 
   inline static const cv::Scalar rgb_default{25, 220, 2};
 
-  ~image_to_move() override;
+  virtual ~image_to_move() override;
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();

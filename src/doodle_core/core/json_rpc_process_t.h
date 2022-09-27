@@ -15,7 +15,7 @@ class DOODLE_CORE_API json_rpc_process_t : public process_t<json_rpc_process_t> 
 
  public:
   json_rpc_process_t(std::uint16_t in_port);
-  ~json_rpc_process_t();
+  virtual ~json_rpc_process_t();
   void init();
   void succeeded();
   void failed();

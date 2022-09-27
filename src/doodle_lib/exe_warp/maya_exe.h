@@ -112,7 +112,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
    *
    */
   explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg);
-  ~maya_exe() override;
+  virtual ~maya_exe() override;
 
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();

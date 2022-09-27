@@ -41,7 +41,7 @@ struct ScopeWrapper {
   constexpr explicit ScopeWrapper(bool ok) noexcept : ok_{ok} {}
 
   // destructor always invokes the supplied destructor function.
-  ~ScopeWrapper() noexcept {
+  virtual ~ScopeWrapper() noexcept {
     if constexpr (!force_dtor) {
       if (!ok_)
         return;

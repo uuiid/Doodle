@@ -15,7 +15,7 @@ class DOODLE_CORE_API update_data : public process_handy_tools {
   explicit update_data(const std::vector<entt::entity>& in_data);
   update_data();
 
-  ~update_data() override;
+  virtual ~update_data() override;
 
 
   void operator()(

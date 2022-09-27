@@ -19,7 +19,7 @@ class DOODLE_CORE_API build_info {
   build_info();
 
  public:
-  ~build_info() = default;
+  virtual ~build_info() = default;
 
   static build_info& get();
 

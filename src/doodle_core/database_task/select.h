@@ -15,7 +15,7 @@ class DOODLE_CORE_API select : public process_handy_tools {
  public:
   select();
 
-  ~select() override;
+  virtual ~select() override;
 
   void operator()(
       entt::registry& in_registry,

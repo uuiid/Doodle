@@ -11,7 +11,7 @@ namespace doodle::win {
 class DOODLE_CORE_API ole_guard {
  public:
   ole_guard();
-  ~ole_guard();
+  virtual ~ole_guard();
 };
 
 class DOODLE_CORE_API drop_manager : public IDropTarget {

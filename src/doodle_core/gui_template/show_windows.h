@@ -20,7 +20,7 @@ class DOODLE_CORE_API windows_tick_interface {
 class DOODLE_CORE_API windows_render_interface
     : public windows_tick_interface {
  public:
-  ~windows_render_interface() override                                           = default;
+  virtual ~windows_render_interface() override                                   = default;
   [[nodiscard("Back to Window Title")]] virtual const std::string& title() const = 0;
 };
 

@@ -13,7 +13,7 @@ class DOODLE_CORE_API core_sql : public details::no_copy {
   explicit core_sql();
 
  public:
-  ~core_sql();
+  virtual ~core_sql();
 
   [[nodiscard]] static core_sql& Get();
   [[nodiscard]] conn_ptr get_connection(const FSys::path& in_path);

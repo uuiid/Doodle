@@ -15,7 +15,7 @@ namespace core {
 class DOODLELIB_API identifier {
   identifier();
 
-  ~identifier();
+  virtual ~identifier();
   std::atomic_uint64_t id_;
 
  public:

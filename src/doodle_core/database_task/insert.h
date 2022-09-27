@@ -15,7 +15,7 @@ class DOODLE_CORE_API insert : public process_handy_tools {
  public:
   insert();
 
-  ~insert() override;
+  virtual ~insert() override;
 
   void operator()(
       const entt::registry& in_registry,

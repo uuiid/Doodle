@@ -15,6 +15,6 @@ class DOODLE_CORE_API convert {
 
  private:
   convert();
-  ~convert();
+  virtual ~convert();
 };
 }  // namespace doodle

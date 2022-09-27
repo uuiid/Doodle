@@ -18,7 +18,7 @@ class organization {
   std::string org_p;
   organization();
   organization(std::string in_org_p);
-  ~organization();
+  virtual ~organization();
 
   /**
    * @brief 构造一个新的id
@@ -47,7 +47,7 @@ class organization_list {
  public:
   std::map<std::string, organization> config_list;
   organization_list();
-  ~organization_list();
+  virtual ~organization_list();
 
   friend void to_json(nlohmann::json &j, const organization_list &p);
   friend void from_json(const nlohmann::json &j, organization_list &p);

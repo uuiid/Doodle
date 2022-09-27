@@ -15,6 +15,6 @@ class DOODLE_CORE_API importance {
   std::string cutoff_p;
   importance();
   explicit importance(std::string in_cutoff_p);
-  ~importance();
+  virtual ~importance();
 };
 }  // namespace doodle

@@ -14,7 +14,7 @@ class short_cut : public detail::windows_tick_interface {
 
  public:
   short_cut();
-  ~short_cut() override;
+  virtual ~short_cut() override;
 
   bool tick() final;
 };

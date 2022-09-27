@@ -15,7 +15,7 @@ class DOODLE_CORE_API delete_data : public process_handy_tools {
   explicit delete_data(const std::vector<entt::entity>& in_data);
   delete_data();
 
-  ~delete_data() override;
+  virtual ~delete_data() override;
   void init();
 
   void aborted();

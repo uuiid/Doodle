@@ -11,7 +11,7 @@ class dingding_config {
   dingding_config();
 
  public:
-  ~dingding_config() = default;
+  virtual ~dingding_config() = default;
 
   static dingding_config& get();
 

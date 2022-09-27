@@ -31,7 +31,7 @@ class DOODLELIB_API opencv_read_player {
 
  public:
   opencv_read_player();
-  ~opencv_read_player();
+  virtual ~opencv_read_player();
   DOODLE_IMP_MOVE(opencv_read_player)
 
   bool is_open() const;

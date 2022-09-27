@@ -18,7 +18,7 @@ class DOODLELIB_API image_load_task {
 
  public:
   explicit image_load_task();
-  ~image_load_task();
+  virtual ~image_load_task();
 
   template <typename CompletionHandler>
   auto async_read(const entt::handle& in_handle, CompletionHandler&& in_completion) {

@@ -62,7 +62,7 @@ class DOODLE_CORE_API database
   explicit database(const std::string &in_uuid_str);
   explicit database(const boost::uuids::uuid &in);
 
-  ~database();
+  virtual ~database();
 
   database(database &&) noexcept;
   database &operator=(database &&) noexcept;

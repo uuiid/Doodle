@@ -43,7 +43,6 @@ class DOODLE_CORE_API init_register {
   class DOODLE_CORE_API base_registrar {
    public:
     virtual ~base_registrar() = default;
-    ;
     virtual void init() const = 0;
   };
 
