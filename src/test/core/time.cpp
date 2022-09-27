@@ -46,4 +46,17 @@ BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
   );
 }
 
+BOOST_AUTO_TEST_CASE(time_warp_local_to_sys) {
+  using namespace chrono::literals;
+  time_point_wrap l_sys_time{
+      time_point_wrap::time_point{
+          chrono::sys_days{2022_y / 7 / 30_d} + chrono::hours{7}}};
+  time_point_wrap l_local_time{
+      time_point_wrap::time_local_point{
+          chrono::local_days{2022_y / 7 / 30_d} + chrono::hours{7}}};
+
+  auto l_time_du = chrono::duration_cast<chrono::hours>(l_sys_time - l_local_time);
+
+  BOOST_TEST(l_time_du.count() == 8);
+}
 BOOST_AUTO_TEST_SUITE_END()
