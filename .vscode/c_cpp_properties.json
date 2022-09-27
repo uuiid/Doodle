@@ -79,7 +79,7 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "${workspaceFolder}/.vscode/browse_maya.vc.db"
             },
-            "compileCommands": "${workspaceFolder}/build/Ninja_release_plug/compile_commands.json"
+            "compileCommands": "${workspaceFolder}/build/doodle_maya/compile_commands.json"
         },
         {
             "name": "win32_cmake_maya",

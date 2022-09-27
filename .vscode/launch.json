@@ -27,10 +27,16 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "maya (Windows) 附加",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        },
+        {
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.launchTargetPath}",
+            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:debug_target}",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
@@ -84,6 +90,17 @@
             "type": "promptString",
             "description": "input arg",
             "default": ""
+        },
+        {
+            "id": "debug_target",
+            "type": "pickString",
+            "description": "要调试的目标",
+            "options": [
+                "DoodleExe",
+                "doodle_core",
+                "bvh_test"
+            ],
+            "default": "DoodleExe"
         }
     ],
     "compounds": [
