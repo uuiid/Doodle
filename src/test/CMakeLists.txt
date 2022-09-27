@@ -21,6 +21,7 @@ macro(doodle_link_test)
         target_compile_definitions(${ARGV0}
                 PUBLIC
                 $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
+                CRTDBG_MAP_ALLOC
         )
         target_include_directories(
                 ${ARGV0}

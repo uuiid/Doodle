@@ -26,11 +26,9 @@ using namespace doodle;
 struct loop_fixtures : lib_fixtures {
   loop_fixtures()  = default;
   ~loop_fixtures() = default;
-  boost::asio::io_context io_context_attr{};
   boost::asio::ssl::context context_attr{
       boost::asio::ssl::context::sslv23};
   void setup() {
-    doodle_lib::create_time_database();
     context_attr.set_verify_mode(boost::asio::ssl::verify_peer);
     context_attr.set_options(
         boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::no_sslv3
@@ -45,7 +43,7 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
   using namespace std::literals;
 
   auto l_r = std::make_shared<dingding::client>(
-      boost::asio::make_strand(io_context_attr), context_attr
+      boost::asio::make_strand(g_io_context()), context_attr
   );
   using request_type  = boost::beast::http::request<boost::beast::http::empty_body>;
   using response_type = boost::beast::http::response<boost::beast::http::string_body>;
@@ -63,7 +61,7 @@ BOOST_FIXTURE_TEST_CASE(client_base_tset, loop_fixtures) {
         DOODLE_LOG_INFO(in);
       }
   );
-  io_context_attr.run();
+  g_io_context().run();
 }
 
 BOOST_FIXTURE_TEST_SUITE(dingding_base, loop_fixtures)
@@ -75,12 +73,12 @@ using globe_user_id       = entt::monostate<"globe_user_id"_hs>;
 
 BOOST_AUTO_TEST_CASE(client_get_gettoken) {
   using namespace std::literals;
-  std::make_shared<dingding::dingding_api>(boost::asio::make_strand(io_context_attr), context_attr)
+  std::make_shared<dingding::dingding_api>(boost::asio::make_strand(g_io_context()), context_attr)
       ->async_get_token([](const dingding::access_token& in) {
         globe_access_token{} = in;
         DOODLE_LOG_INFO(in.token);
       });
-  io_context_attr.run();
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -89,7 +87,7 @@ BOOST_AUTO_TEST_CASE(
 ) {
   using namespace std::literals;
 
-  auto l_st                      = boost::asio::make_strand(io_context_attr);
+  auto l_st                      = boost::asio::make_strand(g_io_context());
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   dingding::access_token l_token = globe_access_token{};
 
@@ -112,7 +110,7 @@ BOOST_AUTO_TEST_CASE(
         );
       }
   );
-  io_context_attr.run();
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -121,7 +119,7 @@ BOOST_AUTO_TEST_CASE(
         boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")
 ) {
   using namespace std::literals;
-  auto l_st                      = boost::asio::make_strand(io_context_attr);
+  auto l_st                      = boost::asio::make_strand(g_io_context());
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   dingding::access_token l_token = globe_access_token{};
   std::int32_t l_dep             = globe_department_id{};
@@ -140,7 +138,7 @@ BOOST_AUTO_TEST_CASE(
         );
       }
   );
-  io_context_attr.run();
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -149,7 +147,7 @@ BOOST_AUTO_TEST_CASE(
         boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")
 ) {
   using namespace std::literals;
-  auto l_st                      = boost::asio::make_strand(io_context_attr);
+  auto l_st                      = boost::asio::make_strand(g_io_context());
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   dingding::access_token l_token = globe_access_token{};
 
@@ -178,7 +176,7 @@ BOOST_AUTO_TEST_CASE(
         *l_run = true;
       }
   );
-  io_context_attr.run();
+  g_io_context().run();
   BOOST_TEST(is_run_chick);
 }
 
