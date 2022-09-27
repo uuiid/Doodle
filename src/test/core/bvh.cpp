@@ -225,12 +225,12 @@ struct bvh_tree_impl : qi::grammar<Iterator, bvh_tree(), ascii::space_type> {
         qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
         qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
         qi::string("CHANNELS") >> qi::int_[phoe::ref(n) = qi::_1] >>
-        qi::repeat(phoe::ref(n))[name_str[print_rul{}]] >>
-        *(node_rule | end_node)[print_rul{}] >>
+        qi::repeat(phoe::ref(n))[name_str[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)]] >>
+        *(node_rule | end_node)[phoe::push_back(phoe::at_c<5>(qi::_val), qi::_1)] >>
         qi::char_('}');
 
     start = qi::string("HIERARCHY") >>
-            node_rule[print_rul{}] >>
+            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
             //            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
             qi::string("MOTION") >>
             qi::string("Frames:") >> qi::int_[phoe::at_c<0>(qi::_val) = qi::_1] >>
@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(bvh_node, *boost::unit_test::tolerance(0.00001)) {
   // BOOST_TEST(boost::rational_cast<std::double_t>(l_w.frame_time) == 0.000);
 }
 
-BOOST_AUTO_TEST_CASE(bvh_tree, *boost::unit_test::tolerance(0.00001)) {
+BOOST_AUTO_TEST_CASE(bvh_tree_test, *boost::unit_test::tolerance(0.00001)) {
   namespace qi    = boost::spirit::qi;
   namespace ascii = boost::spirit::ascii;
 
