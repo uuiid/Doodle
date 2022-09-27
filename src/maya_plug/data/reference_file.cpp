@@ -81,15 +81,19 @@ bool generate_file_path_base::operator<(
          );
 }
 std::string generate_file_path_base::get_extract_scene_name(const std::string &in_name) const {
-  std::string l_scene_name{
-      in_name};
+  std::string l_scene_name{in_name};
+
   if (!extract_scene_name.empty()) {
     try {
       std::regex l_regex{extract_scene_name};
       std::smatch k_match{};
       const auto &k_r = std::regex_search(l_scene_name, k_match, l_regex);
       if (k_r && k_match.size() >= 2) {
-        l_scene_name = k_match[1].str();
+        for (auto i = ++std::begin(k_match);
+             i != std::end(k_match);
+             ++i) {
+          l_scene_name += i->str();
+        }
       }
     } catch (const std::regex_error &in) {
       DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", l_scene_name, extract_scene_name, in.what());
@@ -105,7 +109,11 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
       std::smatch k_match{};
       const auto &k_r = std::regex_search(l_ref_name, k_match, l_regex);
       if (k_r && k_match.size() >= 2) {
-        l_ref_name = k_match[1].str();
+        for (auto i = ++std::begin(k_match);
+             i != std::end(k_match);
+             ++i) {
+          l_ref_name += i->str();
+        }
       }
     } catch (const std::regex_error &in) {
       DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", l_ref_name, extract_reference_name, in.what());
