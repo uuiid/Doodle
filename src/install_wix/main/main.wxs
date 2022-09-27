@@ -126,24 +126,6 @@
             <ComponentGroupRef Id="com_group_maya">
             </ComponentGroupRef>
         </Feature>
-        <Feature Id="Ue425"
-                 Display="expand"
-                 Absent="allow"
-                 ConfigurableDirectory="DOODLE_ROOT"
-                 Title="Doodle Ue425 Plug"
-                 Level="1">
-            <ComponentGroupRef Id="com_group_ue425_Plug">
-            </ComponentGroupRef>
-        </Feature>
-        <Feature Id="Ue426"
-                 Display="expand"
-                 Absent="allow"
-                 ConfigurableDirectory="DOODLE_ROOT"
-                 Title="Doodle Ue426 Plug"
-                 Level="1">
-            <ComponentGroupRef Id="com_group_ue426_Plug">
-            </ComponentGroupRef>
-        </Feature>
         <Feature Id="Ue427"
                  Display="expand"
                  Absent="allow"
