@@ -227,7 +227,31 @@
 		"C_Cpp.autocompleteAddParentheses": true,
 		"C_Cpp.experimentalFeatures": "Enabled",
 		"redhat.telemetry.enabled": false,
-		"C_Cpp.errorSquiggles": "Enabled"
+		"C_Cpp.errorSquiggles": "Enabled",
+		"terminal.integrated.scrollback": 9999,
+		"powershell.integratedConsole.forceClearScrollbackBuffer": false,
+		"terminal.integrated.profiles.windows": {
+			"PowerShell": {
+				"source": "PowerShell",
+				"icon": "terminal-powershell",
+				"args": [
+					"chcp 65001; powershell -NoLogo"
+				]
+			},
+			"Command Prompt": {
+				"path": [
+					"${env:windir}\\Sysnative\\cmd.exe",
+					"${env:windir}\\System32\\cmd.exe"
+				],
+				"args": [
+					"chcp 65001 &&"
+				],
+				"icon": "terminal-cmd"
+			},
+			"Git Bash": {
+				"source": "Git Bash"
+			}
+		}
 	},
 	"launch": {
 		"version": "0.2.0",
