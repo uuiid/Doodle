@@ -5,7 +5,8 @@
       "label": "cmake config",
       "type": "shell",
       "command": "${workspaceFolder}/src/cmd_debug/config_cmake.cmd",
-      "args": []
+      "args": [],
+      "problemMatcher": []
     },
     {
       "label": "cmake build",
