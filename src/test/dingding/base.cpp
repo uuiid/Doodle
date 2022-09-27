@@ -149,29 +149,33 @@ BOOST_AUTO_TEST_CASE(
   auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   dingding::access_token l_token = globe_access_token{};
 
-  time_point_wrap l_begin_day{};
-  time_point_wrap l_end_day{l_begin_day + doodle::chrono::days{6}};
+  time_point_wrap l_end_day{};
+  time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{6}};
   std::string l_u = globe_user_id{};
   std::vector<std::string> l_user_id{l_u};
 
+  bool is_run_chick{};
   l_c->async_get_user_day_attendance(
       dingding::attendance::query::get_day_data{
           l_begin_day,
           l_end_day,
           l_user_id},
       l_token,
-      [=](const std::vector<entt::handle>& in_handle) {
+      [=, l_run = &is_run_chick](const std::vector<entt::handle>& in_handle) mutable {
+        BOOST_TEST(!in_handle.empty());
         ranges::for_each(
-            in_handle, [](auto&& i) {
+            in_handle, [=](auto&& i) {
               BOOST_TEST(i.any_of<dingding::attendance::day_data>());
               auto l_day = i.get<dingding::attendance::day_data>();
               BOOST_TEST(i.any_of<dingding::attendance::day_data>());
               DOODLE_LOG_INFO("{}", l_day);
             }
         );
+        *l_run = true;
       }
   );
   io_context_attr.run();
+  BOOST_TEST(is_run_chick);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

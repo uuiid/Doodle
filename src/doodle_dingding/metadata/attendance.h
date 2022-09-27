@@ -175,19 +175,19 @@ struct formatter<::doodle::dingding::attendance::day_data> : formatter<string_vi
     return fmt::format_to(
         ctx.out(),
         "sourceType {}"
-        "baseCheckTime {}"
-        "userCheckTime {}"
-        "procInstId {}"
-        "approveId {}"
-        "locationResult {}"
-        "timeResult {}"
-        "checkType {}"
-        "userId {}"
-        "workDate {}"
-        "recordId {}"
-        "planId {}"
-        "groupId {}"
-        "id {}",
+        " baseCheckTime {}"
+        " userCheckTime {}"
+        " procInstId {}"
+        " approveId {}"
+        " locationResult {}"
+        " timeResult {}"
+        " checkType {}"
+        " userId {}"
+        " workDate {}"
+        " recordId {}"
+        " planId {}"
+        " groupId {}"
+        " id {}",
         in_.sourceType,
         in_.baseCheckTime,
         in_.userCheckTime,

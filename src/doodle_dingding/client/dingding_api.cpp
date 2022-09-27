@@ -282,7 +282,7 @@ void dingding_api::async_get_user_day_attendance(
 
   l_req.method(boost::beast::http::verb::post);
   auto l_q              = in_query;
-  l_q.limit             = std::min(in_query.limit, 50ll);
+  l_q.limit             = std::max(in_query.limit, 50ll);
 
   nlohmann::json l_json = l_q;
   l_req.body()          = l_json.dump();
