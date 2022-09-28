@@ -219,6 +219,10 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     DOODLE_MAYA_CHICK(k_s);
     k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
     DOODLE_MAYA_CHICK(k_s);
+  } else {
+    k_start = MTime{
+        boost::numeric_cast<std::double_t>(g_reg()->ctx().at<project_config::base_config>().export_anim_time),
+        MTime::uiUnit()};
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);

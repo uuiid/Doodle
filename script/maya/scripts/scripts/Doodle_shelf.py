@@ -100,13 +100,11 @@ class DlsShelf(shelfBase._shelf):
 
     def exportAbc(self):
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(
-            startTime=1000, exportType="abc", select=True)
+        cmds.doodle_ref_file_export(exportType="abc", select=True)
 
     def exportFbx(self):
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(
-            startTime=1001, exportType="fbx", select=True)
+        cmds.doodle_ref_file_export(exportType="fbx", select=True)
 
     def set_cache(self):
         cmds.doodle_create_ref_file()
@@ -145,8 +143,7 @@ class DlsShelf(shelfBase._shelf):
 
     def _export_abc_and_upload_(self):
         cmds.doodle_create_ref_file()
-        cmds.doodle_ref_file_export(
-            startTime=1000, exportType="abc", select=True, force=True)
+        cmds.doodle_ref_file_export(exportType="abc", select=True, force=True)
         cmds.doodle_upload_files()
 
     @staticmethod
@@ -168,11 +165,9 @@ class DlsShelf(shelfBase._shelf):
         l_select = cmds.ls(sl=True)
         cmds.doodle_create_ref_file()
         # cmds.doodle_ref_file_load()
-        cmds.doodle_sequence_to_blend_shape_ref(
-            startFrame=1001)
+        cmds.doodle_sequence_to_blend_shape_ref()
         cmds.select(l_select)
-        cmds.doodle_ref_file_export(
-            startTime=1001, exportType="fbx", select=True)
+        cmds.doodle_ref_file_export(exportType="fbx", select=True)
         cmds.doodle_upload_files()
 
     def re(self):
