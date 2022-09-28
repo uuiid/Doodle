@@ -58,7 +58,8 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_resul
   nlohmann_json_j["class_id"]        = nlohmann_json_t.class_id;
   nlohmann_json_j["location_method"] = nlohmann_json_t.location_method;
   nlohmann_json_j["location_result"] = nlohmann_json_t.location_result;
-  nlohmann_json_j["outside_remark"]  = nlohmann_json_t.outside_remark;
+  if (!nlohmann_json_t.outside_remark.empty())
+    nlohmann_json_j["outside_remark"] = nlohmann_json_t.outside_remark;
   nlohmann_json_j["plan_id"]         = nlohmann_json_t.plan_id;
   nlohmann_json_j["user_address"]    = nlohmann_json_t.user_address;
   nlohmann_json_j["group_id"]        = nlohmann_json_t.group_id;
@@ -86,7 +87,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_res
   } else {
     DOODLE_LOG_INFO("无法找到 {} 对应的枚举变量", l_location_result);
   }
-  nlohmann_json_j.at("outside_remark").get_to(nlohmann_json_t.outside_remark);
+  if (nlohmann_json_j.contains("outside_remark"))
+    nlohmann_json_t.outside_remark = nlohmann_json_j.at("outside_remark").get<std::string>();
   nlohmann_json_j.at("plan_id").get_to(nlohmann_json_t.plan_id);
   nlohmann_json_j.at("user_address").get_to(nlohmann_json_t.user_address);
   nlohmann_json_j.at("group_id").get_to(nlohmann_json_t.group_id);
