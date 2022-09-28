@@ -141,7 +141,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_op
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t) {
-  nlohmann_json_j["work_date"]              = nlohmann_json_t.work_date;
+  nlohmann_json_j["work_date"]              = tool::print_dingding_time(nlohmann_json_t.work_date);
   nlohmann_json_j["attendance_result_list"] = nlohmann_json_t.attendance_result_list;
   nlohmann_json_j["userid"]                 = nlohmann_json_t.userid;
   nlohmann_json_j["approve_list"]           = nlohmann_json_t.approve_list;
@@ -150,7 +150,9 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t)
 }
 
 void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t) {
-  nlohmann_json_j.at("work_date").get_to(nlohmann_json_t.work_date);
+  nlohmann_json_t.work_date = tool::parse_dingding_time(
+      nlohmann_json_j.at("work_date")
+  );
   nlohmann_json_j.at("attendance_result_list").get_to(nlohmann_json_t.attendance_result_list);
   nlohmann_json_j.at("userid").get_to(nlohmann_json_t.userid);
   nlohmann_json_j.at("approve_list").get_to(nlohmann_json_t.approve_list);
