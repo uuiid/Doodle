@@ -24,5 +24,8 @@ time_point_wrap tool::parse_dingding_Date(const nlohmann::json& time_obj) {
 std::string tool::print_dingding_time(const time_point_wrap& in_time) {
   return fmt::format("{:L%Y-%m-%d %H:%M:%S}", in_time);
 }
+std::int64_t tool::print_to_int(const time_point_wrap& in_time) {
+  return in_time.get_local_time().time_since_epoch().count();
+}
 
 }  // namespace doodle::dingding::detail

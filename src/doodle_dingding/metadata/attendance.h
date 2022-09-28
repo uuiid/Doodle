@@ -29,68 +29,43 @@ class DOODLE_DINGDING_API get_day_data {
   );
 };
 };  // namespace query
-
-class DOODLE_DINGDING_API approve_for_open {
- public:
-  std::string duration_unit{};
-  std::string duration{};
-  std::string sub_type{};
-  std::string tag_name{};
-  std::string procInst_id{};
-  time_point_wrap begin_time{};
-  std::int32_t biz_type{};
-  time_point_wrap end_time{};
-  time_point_wrap gmt_finished{};
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      approve_for_open,
-      duration_unit,
-      duration,
-      sub_type,
-      tag_name,
-      procInst_id,
-      begin_time,
-      biz_type,
-      end_time,
-      gmt_finished
-  )
+namespace detail {
+enum class source_type : std::uint16_t {
+  ATM,        /// @brief 考勤机
+  BEACON,     /// @brief IBeacon(不知道什么东西)
+  DING_ATM,   /// @brief 钉钉考勤机
+  USER,       /// @brief 用户打卡
+  BOSS,       /// @brief 老板 改签
+  APPROVE,    /// @brief 审批系统
+  SYSTEM,     /// @brief 考勤系统
+  AUTO_CHECK  /// @brief 自动打卡
 };
 
-class DOODLE_DINGDING_API attendance_result {
- public:
-  std::int32_t record_id{};
-  std::string source_type{};
-  time_point_wrap plan_check_time{};
-  std::int32_t class_id{};
-  std::string location_method{};
-  std::string location_result{};
-  std::string outside_remark{};
-  std::int32_t plan_id{};
-  std::string user_address{};
-  std::int32_t group_id{};
-  time_point_wrap user_check_time{};
-  std::string procInst_id{};
-  std::string check_type{};
-  std::string time_result{};
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      attendance_result,
-      record_id,
-      source_type,
-      plan_check_time,
-      class_id,
-      location_method,
-      location_result,
-      outside_remark,
-      plan_id,
-      user_address,
-      group_id,
-      user_check_time,
-      procInst_id,
-      check_type,
-      time_result
-  )
+enum class location_result : std::uint16_t {
+  Normal,    /// @brief 范围内(正常)
+  Outside,   /// @brief 范围外
+  NotSigned  /// @brief 未打卡
 };
+enum class time_result : std::uint16_t {
+  Normal,       /// @brief 正常
+  Early,        /// @brief 早退
+  Late,         /// @brief 迟到
+  SeriousLate,  /// @brief 严重迟到
+  Absenteeism,  /// @brief 旷工迟到
+  NotSigned     /// @brief 未打卡
+};
+enum class check_type : std::uint16_t {
+  OnDuty,   /// @brief 上班
+  OffDuty,  /// @brief下班
+};
+
+enum class approve_type : std::uint16_t {
+  leave,            /// @brief 请假
+  business_travel,  /// @brief 出差
+  work_overtime     /// @brief 加班
+};
+
+}  // namespace detail
 
 class DOODLE_DINGDING_API attendance_record {
  public:
@@ -115,42 +90,120 @@ class DOODLE_DINGDING_API attendance_record {
   )
 };
 
-// class DOODLE_DINGDING_API attendance {
-//  public:
-//   time_point_wrap date{};
-//   std::vector<attendance_result> attendance_result_list{};
-//   std::int32_t userid{};
-//   std::vector<approve_for_open> approve_list{};
-//   std::string corp_id{};
-//   std::vector<attendance_record> check_record_list{};
-//   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-//       attendance,
-//       date,
-//       attendance_result_list,
-//       userid,
-//       approve_list,
-//       corp_id,
-//       check_record_list
-//   )
-// };
+class DOODLE_DINGDING_API attendance {
+ public:
+  class DOODLE_DINGDING_API attendance_result {
+   public:
+    /// @brief 打卡流水id
+    std::int32_t record_id{};
+    /// @brief 来源类型
+    detail::source_type source_type{};
+    /// @brief 标准打卡时间
+    time_point_wrap plan_check_time{};
+    /// @brief 班次id
+    std::int32_t class_id{};
+    /// @brief 定位方法
+    std::string location_method{};
+    /// @brief 定位结果
+    detail::location_result location_result{};
+    /// @brief 外勤备注
+    std::string outside_remark{};
+    /// @brief 排班id
+    std::int32_t plan_id{};
+    /// @brief 用户打卡地址
+    std::string user_address{};
+    /// @brief 考勤组id
+    std::int32_t group_id{};
+    /// @brief 用户打卡时间
+    time_point_wrap user_check_time{};
+    /// @brief 审批单id
+    std::string procInst_id{};
+    /// @brief 打卡类型
+    detail::check_type check_type{};
+    /// @brief 打卡结果
+    detail::time_result time_result{};
+    friend void to_json(
+        nlohmann::json& nlohmann_json_j, const attendance::attendance_result& nlohmann_json_t
+    );
+    friend void from_json(
+        const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t
+    );
+  };
+
+  class DOODLE_DINGDING_API approve_for_open {
+   public:
+    /// @brief 审批单的单位 (天/小时)
+    std::string duration_unit{};
+    /// @brief 时长 (2.0)
+    std::string duration{};
+    /// @brief 子类型名称 比如年假
+    std::string sub_type{};
+    /// @brief 标签名称
+    std::string tag_name{};
+    /// @brief 审批单id
+    std::string procInst_id{};
+    /// @brief 审批开始时间
+    time_point_wrap begin_time{};
+    /// @brief 审批单类型
+    detail::approve_type biz_type{};
+    /// @brief 审批结束时间
+    time_point_wrap end_time{};
+    /// @brief 审批单审批完成时间
+    time_point_wrap gmt_finished{};
+
+    friend void to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open& nlohmann_json_t);
+    friend void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
+  };
+  /// @brief 查询日期
+  time_point_wrap work_date{};
+  /// @brief 打卡结果
+  std::vector<attendance_result> attendance_result_list{};
+  /// @brief 用户id
+  std::int32_t userid{};
+  /// @brief 审批单列表
+  std::vector<approve_for_open> approve_list{};
+  /// @brief 打卡详情列表(此处暂时没有获取)
+  std::vector<attendance_record> check_record_list{};
+  ///  @brief 企业di
+  std::string corp_id{};
+  std::vector<std::pair<time_point_wrap,
+                        time_point_wrap>>
+      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
+  friend void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t);
+  friend void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t);
+};
 
 class DOODLE_DINGDING_API day_data {
  public:
+  /// @brief 来源类型
   std::string sourceType{};
+  /// @brief 基准时间(标准上下班时间)
   time_point_wrap baseCheckTime{};
+  /// @brief 用户打卡时间
   time_point_wrap userCheckTime{};
 
+  /// @brief 关联的审批实例 id
   std::optional<std::string> procInstId{};
+  /// @brief 关联的审批ID
   std::optional<std::string> approveId{};
 
+  /// @brief 位置结果 enum { Normal, Outside, NotSigned }
   std::string locationResult{};
+  /// @brief 打卡结果：enum { Normal, Early, Late, SeriousLate, Absenteeism, NotSigned }
   std::string timeResult{};
+  /// @brief 考勤类型: enum { OnDuty, OffDuty }
   std::string checkType{};
+  /// @brief 关联的用户id
   std::string userId{};
+  /// @brief 工作日
   time_point_wrap workDate{};
+  /// @brief 打卡记录ID
   std::int64_t recordId{};
+  /// @brief 排班ID
   std::int64_t planId{};
+  /// @brief 考勤组ID
   std::int64_t groupId{};
+  /// @brief 唯一标识ID
   std::int64_t id{};
 
   friend void DOODLE_DINGDING_API to_json(
