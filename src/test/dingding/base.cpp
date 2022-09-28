@@ -180,4 +180,40 @@ BOOST_AUTO_TEST_CASE(
   BOOST_TEST(is_run_chick);
 }
 
+BOOST_AUTO_TEST_CASE(
+    client_get_user_attendance2,
+    *boost::unit_test::depends_on("dingding_base/client_get_gettoken") *
+        boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")
+) {
+  using namespace std::literals;
+  auto l_st                      = boost::asio::make_strand(g_io_context());
+  auto l_c                       = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  dingding::access_token l_token = globe_access_token{};
+
+  time_point_wrap l_end_day{};
+  time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{6}};
+  std::string l_user_id = globe_user_id{};
+
+  bool is_run_chick{};
+  l_c->async_get_user_updatedata_attendance(
+      dingding::attendance::query::get_update_data{
+          l_begin_day,
+          l_user_id},
+      l_token,
+      [=, l_run = &is_run_chick](const std::vector<entt::handle>& in_handle) mutable {
+        BOOST_TEST(!in_handle.empty());
+        ranges::for_each(
+            in_handle, [=](const entt::handle& i) {
+              BOOST_TEST(i.any_of<dingding::attendance::attendance>());
+              auto l_day = i.get<dingding::attendance::attendance>();
+              BOOST_TEST(i.any_of<dingding::attendance::attendance>());
+              //              DOODLE_LOG_INFO("{}", l_day);
+            }
+        );
+        *l_run = true;
+      }
+  );
+  g_io_context().run();
+  BOOST_TEST(is_run_chick);
+}
 BOOST_AUTO_TEST_SUITE_END()
