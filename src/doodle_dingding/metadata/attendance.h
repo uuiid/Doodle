@@ -28,6 +28,18 @@ class DOODLE_DINGDING_API get_day_data {
       const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t
   );
 };
+class DOODLE_DINGDING_API get_update_data {
+ public:
+  time_point_wrap work_date{};
+  std::string userid{};
+  friend void DOODLE_DINGDING_API to_json(
+      nlohmann::json& nlohmann_json_j, const get_update_data& nlohmann_json_t
+  );
+  friend void DOODLE_DINGDING_API from_json(
+      const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_json_t
+  );
+};
+
 };  // namespace query
 namespace detail {
 enum class source_type : std::uint16_t {
@@ -122,10 +134,10 @@ class DOODLE_DINGDING_API attendance {
     detail::check_type check_type{};
     /// @brief 打卡结果
     detail::time_result time_result{};
-    friend void to_json(
+    friend void DOODLE_DINGDING_API to_json(
         nlohmann::json& nlohmann_json_j, const attendance::attendance_result& nlohmann_json_t
     );
-    friend void from_json(
+    friend void DOODLE_DINGDING_API from_json(
         const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t
     );
   };
@@ -151,8 +163,8 @@ class DOODLE_DINGDING_API attendance {
     /// @brief 审批单审批完成时间
     time_point_wrap gmt_finished{};
 
-    friend void to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open& nlohmann_json_t);
-    friend void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
   };
   /// @brief 查询日期
   time_point_wrap work_date{};
@@ -169,8 +181,8 @@ class DOODLE_DINGDING_API attendance {
   //  std::vector<std::pair<time_point_wrap,
   //                        time_point_wrap>>
   //      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
-  friend void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t);
-  friend void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t);
+  friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t);
+  friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t);
 };
 
 class DOODLE_DINGDING_API day_data {

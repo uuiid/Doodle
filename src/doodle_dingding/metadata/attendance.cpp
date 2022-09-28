@@ -14,6 +14,7 @@ namespace dingding {
 namespace attendance {
 
 namespace query {
+
 void to_json(nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t) {
   /// 时间需要特殊处理
 
@@ -34,6 +35,19 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_jso
   nlohmann_json_j.at("offset").get_to(nlohmann_json_t.offset);
   nlohmann_json_j.at("limit").get_to(nlohmann_json_t.limit);
   nlohmann_json_j.at("isI18n").get_to(nlohmann_json_t.isI18n);
+}
+
+void to_json(
+    nlohmann::json& nlohmann_json_j, const get_update_data& nlohmann_json_t
+) {
+  nlohmann_json_j["work_date"] = tool::print_dingding_time(nlohmann_json_t.work_date);
+  nlohmann_json_j["userid"]    = nlohmann_json_t.userid;
+}
+void from_json(
+    const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_json_t
+) {
+  nlohmann_json_t.work_date = tool::parse_dingding_time(nlohmann_json_j.at("work_date"));
+  nlohmann_json_j.get_to(nlohmann_json_t.userid);
 }
 }  // namespace query
 
