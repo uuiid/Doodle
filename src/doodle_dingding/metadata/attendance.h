@@ -163,12 +163,12 @@ class DOODLE_DINGDING_API attendance {
   /// @brief 审批单列表
   std::vector<approve_for_open> approve_list{};
   /// @brief 打卡详情列表(此处暂时没有获取)
-  std::vector<attendance_record> check_record_list{};
+  //  std::vector<attendance_record> check_record_list{};
   ///  @brief 企业di
   std::string corp_id{};
-  std::vector<std::pair<time_point_wrap,
-                        time_point_wrap>>
-      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
+  //  std::vector<std::pair<time_point_wrap,
+  //                        time_point_wrap>>
+  //      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
   friend void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t);
   friend void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t);
 };
