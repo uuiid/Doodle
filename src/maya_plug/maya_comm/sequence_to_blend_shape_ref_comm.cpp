@@ -76,7 +76,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
     DOODLE_MAYA_CHICK(k_s);
     p_i->startFrame_p = boost::numeric_cast<std::int32_t>(l_value.value());
   } else {
-    p_i->startFrame_p = g_reg()->ctx().at<project_config::base_config>().export_anim_time
+    p_i->startFrame_p = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
   }
   if (k_prase.isFlagSet(sequence_to_blend_shape_ref_comm_ns::endFrame_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
