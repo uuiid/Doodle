@@ -49,7 +49,8 @@
       "inherits": "Ninja_build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27"
+        "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
+        "Maya_Version": "2018"
       }
     },
     {
