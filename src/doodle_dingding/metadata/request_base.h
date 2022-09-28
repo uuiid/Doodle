@@ -100,7 +100,8 @@ using department_body      = request_base<true, department>;
 using user_dd_body         = request_base<true, detail::cursor<std::vector<user_dd>>>;
 using user_dd_id_list_body = request_base<true, user_dd>;
 namespace attendance {
-using user_day_updatedata_body = request_base<true, std::vector<attendance::day_data>>;
+using user_day_updatedata_body = request_base<true, std::vector<day_data>>;
+using user_attendance_body = request_base<true, attendance>;
 
 }
 namespace department_ns {
