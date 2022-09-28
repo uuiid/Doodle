@@ -370,7 +370,7 @@ void dingding_api::async_get_user_updatedata_attendance(
         }
         auto l_res = l_body.result_type();
         std::vector l_msg{make_handle()};
-        l_msg.front().emplace<attendance::attendance>(l_res);
+        l_msg.front().emplace<attendance::attendance>(std::move(l_res));
         boost::asio::post(
             this->get_executor(),
             [l_call_fun, l_msg]() { (*l_call_fun)(l_msg); }
