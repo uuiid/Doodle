@@ -64,9 +64,10 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_resul
   nlohmann_json_j["user_address"]    = nlohmann_json_t.user_address;
   nlohmann_json_j["group_id"]        = nlohmann_json_t.group_id;
   nlohmann_json_j["user_check_time"] = nlohmann_json_t.user_check_time;
-  nlohmann_json_j["procInst_id"]     = nlohmann_json_t.procInst_id;
-  nlohmann_json_j["check_type"]      = nlohmann_json_t.check_type;
-  nlohmann_json_j["time_result"]     = nlohmann_json_t.time_result;
+  if (!nlohmann_json_t.procInst_id.empty())
+    nlohmann_json_j["procInst_id"] = nlohmann_json_t.procInst_id;
+  nlohmann_json_j["check_type"]  = nlohmann_json_t.check_type;
+  nlohmann_json_j["time_result"] = nlohmann_json_t.time_result;
 }
 void from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t) {
   nlohmann_json_j.at("record_id").get_to(nlohmann_json_t.record_id);
@@ -93,17 +94,17 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_res
   nlohmann_json_j.at("user_address").get_to(nlohmann_json_t.user_address);
   nlohmann_json_j.at("group_id").get_to(nlohmann_json_t.group_id);
   nlohmann_json_t.user_check_time = tool::parse_dingding_time(nlohmann_json_j.at("user_check_time"));
+  if (nlohmann_json_j.contains("procInst_id"))
+    nlohmann_json_j.at("procInst_id").get_to(nlohmann_json_t.procInst_id);
 
-  nlohmann_json_j.at("procInst_id").get_to(nlohmann_json_t.procInst_id);
-
-  auto l_check_type = nlohmann_json_j.at("procInst_id").get<std::string>();
+  auto l_check_type = nlohmann_json_j.at("check_type").get<std::string>();
   if (auto l_enum = magic_enum::enum_cast<doodle::dingding::attendance::detail::check_type>(l_check_type);
       l_enum)
     nlohmann_json_t.check_type = *l_enum;
   else
     DOODLE_LOG_INFO("无法找到 {} 对应的枚举变量", l_check_type);
 
-  auto l_time_result = nlohmann_json_j.at("procInst_id").get<std::string>();
+  auto l_time_result = nlohmann_json_j.at("time_result").get<std::string>();
   if (auto l_enum = magic_enum::enum_cast<doodle::dingding::attendance::detail::time_result>(l_time_result);
       l_enum)
     nlohmann_json_t.time_result = *l_enum;
@@ -147,7 +148,7 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t)
   nlohmann_json_j["attendance_result_list"] = nlohmann_json_t.attendance_result_list;
   nlohmann_json_j["userid"]                 = nlohmann_json_t.userid;
   nlohmann_json_j["approve_list"]           = nlohmann_json_t.approve_list;
-  nlohmann_json_j["corp_id"]                = nlohmann_json_t.corp_id;
+  nlohmann_json_j["corpId"]                = nlohmann_json_t.corpId;
   //  nlohmann_json_j["check_record_list"]      = nlohmann_json_t.check_record_list;
 }
 
@@ -158,7 +159,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_
   nlohmann_json_j.at("attendance_result_list").get_to(nlohmann_json_t.attendance_result_list);
   nlohmann_json_j.at("userid").get_to(nlohmann_json_t.userid);
   nlohmann_json_j.at("approve_list").get_to(nlohmann_json_t.approve_list);
-  nlohmann_json_j.at("corp_id").get_to(nlohmann_json_t.corp_id);
+  nlohmann_json_j.at("corpId").get_to(nlohmann_json_t.corpId);
   //  nlohmann_json_j.at("check_record_list").get_to(nlohmann_json_t.check_record_list);
 }
 

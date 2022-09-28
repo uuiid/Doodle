@@ -171,13 +171,13 @@ class DOODLE_DINGDING_API attendance {
   /// @brief 打卡结果
   std::vector<attendance_result> attendance_result_list{};
   /// @brief 用户id
-  std::int32_t userid{};
+  std::string userid{};
   /// @brief 审批单列表
   std::vector<approve_for_open> approve_list{};
   /// @brief 打卡详情列表(此处暂时没有获取)
   //  std::vector<attendance_record> check_record_list{};
   ///  @brief 企业di
-  std::string corp_id{};
+  std::string corpId{};
   //  std::vector<std::pair<time_point_wrap,
   //                        time_point_wrap>>
   //      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
