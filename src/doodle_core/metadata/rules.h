@@ -82,7 +82,7 @@ class DOODLE_CORE_API rules {
 
  private:
   friend struct ::fmt::formatter<::doodle::business::rules>;
-  std::string fmt_str() const;
+  [[nodiscard]] std::string fmt_str() const;
 };
 
 }  // namespace doodle::business
