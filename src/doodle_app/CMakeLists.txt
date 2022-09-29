@@ -30,12 +30,6 @@ target_link_libraries(
         doodle_core
 )
 
-target_compile_definitions(doodle_app
-        PRIVATE
-        DOODLE_APP_EXPORT
-        #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
-        )
-
 target_compile_options(doodle_app
         PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /EHs >
