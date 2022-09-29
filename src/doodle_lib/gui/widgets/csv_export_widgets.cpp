@@ -17,7 +17,7 @@
 #include <doodle_core/metadata/importance.h>
 #include <boost/contract.hpp>
 
-#include <lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 #include <gui/gui_ref/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_core/core/init_register.h>

@@ -16,7 +16,7 @@
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
 #include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/lib_warp/boost_locale_warp.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/lib_warp/protobuf_warp_cpp.h>
 #include <doodle_lib/toolkit/toolkit.h>

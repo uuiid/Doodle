@@ -8,7 +8,7 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <lib_warp/imgui_warp.h>
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_core/thread_pool/process_pool.h>

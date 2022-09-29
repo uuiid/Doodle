@@ -8,7 +8,7 @@ set(
         core/authorization.h
         file_warp/opencv_read_player.h
         lib_warp/boost_locale_warp.h
-        lib_warp/imgui_warp.h
+        ../doodle_app/lib_warp/imgui_warp.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
         exe_warp/ue4_exe.h
@@ -28,7 +28,7 @@ set(
         core/image_loader.cpp
         core/authorization.cpp
         file_warp/opencv_read_player.cpp
-        lib_warp/imgui_warp.cpp
+        ../doodle_app/lib_warp/imgui_warp.cpp
         toolkit/toolkit.cpp
         exe_warp/maya_exe.cpp
         exe_warp/ue4_exe.cpp

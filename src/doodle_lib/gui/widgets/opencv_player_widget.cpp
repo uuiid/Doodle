@@ -5,7 +5,7 @@
 #include "opencv_player_widget.h"
 
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_lib/file_warp/opencv_read_player.h>
 
 #include <boost/msm/back/state_machine.hpp>

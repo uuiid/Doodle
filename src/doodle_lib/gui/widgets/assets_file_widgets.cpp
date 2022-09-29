@@ -4,7 +4,7 @@
 
 #include "assets_file_widgets.h"
 
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_lib/core/image_loader.h>

@@ -3,8 +3,8 @@
 //
 
 #include "main_status_bar.h"
-#include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <lib_warp/imgui_warp.h>
+#include <lib_warp/imgui_warp.h>
 #include <doodle_core/core/status_info.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901

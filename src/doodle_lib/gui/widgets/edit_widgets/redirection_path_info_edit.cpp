@@ -5,7 +5,7 @@
 #include "redirection_path_info_edit.h"
 
 #include <doodle_core/metadata/redirection_path_info.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 namespace doodle::gui {
 
 class redirection_path_info_edit::impl {

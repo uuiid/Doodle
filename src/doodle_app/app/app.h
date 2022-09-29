@@ -45,7 +45,7 @@ class DOODLE_APP_API app : public app_command_base {
   virtual void show_windows();
 
  protected:
-  virtual void load_windows();
+  virtual void load_windows() = 0;
   void load_back_end() override;
   virtual bool chick_authorization() override;
   virtual void post_constructor() override;

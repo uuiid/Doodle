@@ -3,16 +3,15 @@
 //
 
 #include "app.h"
-#include <doodle_lib/platform/win/wnd_proc.h>
+#include <doodle_app/platform/win/windows_proc.h>
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_lib/lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 #include <gui/main_menu_bar.h>
 #include <gui/main_status_bar.h>
-#include <doodle_lib/gui/gui_ref/layout_window.h>
 #include <doodle_core/platform/win/drop_manager.h>
-#include <doodle_lib/long_task/short_cut.h>
-#include <doodle_lib/core/image_loader.h>
+#include <doodle_app/app/short_cut.h>
+#include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/gui_template/gui_process.h>
 #include <doodle_core/core/init_register.h>
@@ -20,11 +19,10 @@
 #include <gui/get_input_dialog.h>
 
 #include <doodle_app/app/program_options.h>
-#include <doodle_lib/lib_warp/icon_font_macro.h>
+#include <doodle_app/lib_warp/icon_font_macro.h>
 
 #include <implot.h>
 #include <implot_internal.h>
-
 
 // Helper functions
 #include <d3d11.h>
@@ -98,8 +96,8 @@ void app::post_constructor() {
 
   (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable Multi-Viewport / Platform Windows
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport / Platform Windows
   // io.ConfigViewportsNoAutoMerge = true;
   // io.ConfigViewportsNoTaskBarIcon = true;
   // io.ConfigViewportsNoDefaultParent = true;
@@ -210,11 +208,7 @@ void app::close_windows() {
 void app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
-void app::load_windows() {
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::layout_window>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_menu_bar>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
-}
+
 app::~app() {
   // Cleanup
   ImGui_ImplDX11_Shutdown();

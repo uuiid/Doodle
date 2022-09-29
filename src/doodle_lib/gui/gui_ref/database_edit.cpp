@@ -4,7 +4,7 @@
 
 #include "database_edit.h"
 #include <doodle_core/metadata/metadata.h>
-#include <lib_warp/imgui_warp.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 
 namespace doodle::gui {
 class database_edit::impl {
