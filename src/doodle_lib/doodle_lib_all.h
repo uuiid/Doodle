@@ -5,11 +5,11 @@
 #pragma once
 #include <doodle_lib/core/ContainerDevice.h>
 #include <doodle_lib/core/filesystem_extend.h>
-#include <doodle_lib/gui/open_file_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_lib/core/util.h>
 
 #include <doodle_lib/file_warp/opencv_read_player.h>
-#include <doodle_lib/gui/setting_windows.h>
+#include <doodle_app/gui/setting_windows.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>

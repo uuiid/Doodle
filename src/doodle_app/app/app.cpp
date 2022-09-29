@@ -7,8 +7,8 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/gui/main_menu_bar.h>
-#include <doodle_lib/gui/main_status_bar.h>
+#include <gui/main_menu_bar.h>
+#include <gui/main_status_bar.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>
 #include <doodle_core/platform/win/drop_manager.h>
 #include <doodle_lib/long_task/short_cut.h>
@@ -16,8 +16,8 @@
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/gui_template/gui_process.h>
 #include <doodle_core/core/init_register.h>
-#include <doodle_lib/gui/main_proc_handle.h>
-#include <doodle_lib/gui/get_input_dialog.h>
+#include <gui/main_proc_handle.h>
+#include <gui/get_input_dialog.h>
 
 #include <doodle_app/app/program_options.h>
 #include <doodle_lib/lib_warp/icon_font_macro.h>
@@ -25,7 +25,6 @@
 #include <implot.h>
 #include <implot_internal.h>
 
-#include <doodle_lib/gui/strand_gui.h>
 
 // Helper functions
 #include <d3d11.h>

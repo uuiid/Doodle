@@ -31,7 +31,7 @@
 #include <maya_plug/maya_render/hud_render_override.h>
 #include <maya_plug/logger/maya_logger_info.h>
 
-#include <doodle_lib/gui/main_proc_handle.h>
+#include <doodle_app/gui/main_proc_handle.h>
 #include <maya_plug/data/maya_register_main.h>
 
 #include <QtCore/QtCore>

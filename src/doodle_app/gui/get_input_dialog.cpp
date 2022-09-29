@@ -11,7 +11,7 @@
 #include <utility>
 
 #include <doodle_lib/gui/gui_ref/ref_base.h>
-#include <doodle_lib/gui/open_file_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_core/database_task/sqlite_client.h>
 
 namespace doodle::gui {

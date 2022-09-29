@@ -61,8 +61,8 @@ target_link_libraries(doodle_lib
         doodle_dingding
         DoodleLibResourceFont
         Eigen3::Eigen
+        )
 
-)
 target_compile_definitions(doodle_lib
         PUBLIC
         $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>

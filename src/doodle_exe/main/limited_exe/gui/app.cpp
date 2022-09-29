@@ -4,8 +4,8 @@
 
 #include "app.h"
 
-#include <doodle_lib/gui/main_menu_bar.h>
-#include <doodle_lib/gui/main_status_bar.h>
+#include <doodle_app/gui/main_menu_bar.h>
+#include <doodle_app/gui/main_status_bar.h>
 
 #include <doodle_app/app/program_options.h>
 

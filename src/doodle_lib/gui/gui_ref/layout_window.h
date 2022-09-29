@@ -6,7 +6,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/gui/gui_ref/base_window.h>
 
-#include <doodle_lib/gui/strand_gui.h>
 namespace doodle::gui {
 
 class DOODLELIB_API layout_window : public detail::windows_tick_interface {

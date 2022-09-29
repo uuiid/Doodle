@@ -2,8 +2,8 @@
 // Created by TD on 2022/1/18.
 //
 
-#include "wnd_proc.h"
-#include <doodle_app/gui/main_proc_handle.h>
+#include "windows_proc.h"
+#include <gui/main_proc_handle.h>
 // Helper functions
 #include <Windows.h>
 #include <d3d11.h>
@@ -115,11 +115,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     }
     case WM_CLOSE: {
-      doodle::gui::main_proc_handle::get().win_close();
+      g_reg()->ctx().at<gui::main_proc_handle>().win_close();
       return 0;
     }
     case WM_DESTROY: {
-      doodle::gui::main_proc_handle::get().win_destroy();
+      g_reg()->ctx().at<gui::main_proc_handle>().win_destroy();
       return 0;
     }
       //    case WM_IME_CHAR: {

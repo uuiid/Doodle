@@ -4,7 +4,7 @@
 
 #include "create_video.h"
 
-#include <gui/open_file_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
 
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/season.h>

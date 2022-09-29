@@ -1,22 +1,4 @@
-target_sources(doodle_lib
-        PUBLIC
-        get_input_dialog.h
-        main_menu_bar.h
-        main_proc_handle.h
-        main_status_bar.h
-        open_file_dialog.h
-        setting_windows.h
-        strand_gui.h
 
-        PRIVATE
-        get_input_dialog.cpp
-        main_menu_bar.cpp
-        main_proc_handle.cpp
-        main_status_bar.cpp
-        open_file_dialog.cpp
-        setting_windows.cpp
-        strand_gui.cpp
-        )
 
 add_subdirectory(gui_ref)
 add_subdirectory(widgets)

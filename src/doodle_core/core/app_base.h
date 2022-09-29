@@ -42,10 +42,10 @@ class DOODLE_CORE_API app_base {
   virtual void post_constructor() = 0;
 
  public:
-  class in_app_args {
+  class DOODLE_CORE_API in_app_args {
    public:
-    win::wnd_instance in_instance;
-    cmd_string_type in_cmd_line;
+    win::wnd_instance in_instance{};
+    cmd_string_type in_cmd_line{};
   };
 
   explicit app_base();

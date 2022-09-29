@@ -4,7 +4,6 @@
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
-#include <doodle_lib/gui/strand_gui.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/gui_template/show_windows.h>

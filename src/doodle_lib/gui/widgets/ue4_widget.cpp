@@ -6,7 +6,7 @@
 #include <doodle_lib/gui/gui_ref/ref_base.h>
 #include <doodle_lib/lib_warp/imgui_warp.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_lib/gui/open_file_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>

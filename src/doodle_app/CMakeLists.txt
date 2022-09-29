@@ -19,7 +19,8 @@ target_sources(
 
 add_subdirectory(app)
 add_subdirectory(configure)
-
+add_subdirectory(gui)
+add_subdirectory(platform)
 
 
 # 连接库

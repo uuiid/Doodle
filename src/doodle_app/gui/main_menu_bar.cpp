@@ -6,11 +6,11 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_lib/app/app.h>
 
-#include <gui/open_file_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
 #include <toolkit/toolkit.h>
-#include <gui/setting_windows.h>
+#include <doodle_app/gui/setting_windows.h>
 #include <gui/widgets/project_edit.h>
-#include <gui/get_input_dialog.h>
+#include <doodle_app/gui/get_input_dialog.h>
 #include <gui/gui_ref/ref_base.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_lib/gui/gui_ref/layout_window.h>

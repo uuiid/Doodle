@@ -4,7 +4,6 @@
 
 #include "util.h"
 
-#include <doodle_lib/gui/strand_gui.h>
 namespace doodle::core {
 identifier::identifier()
     : id_(0) {}
