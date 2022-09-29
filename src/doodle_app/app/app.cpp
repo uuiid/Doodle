@@ -170,13 +170,7 @@ void doodle_main_app::post_constructor() {
   });
 
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
-  /// \brief 设置窗口句柄处理
-  g_reg()->ctx().at<gui::main_proc_handle>().win_close = []() {
-    make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
-  };
-  g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = [=]() {
-    ::DestroyWindow(p_hwnd);
-  };
+
 
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
