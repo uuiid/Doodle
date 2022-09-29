@@ -121,25 +121,25 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(
   return {};
 }
 
-void add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
+void db_compatible::add_ctx_table(sqlpp::sqlite3::connection& in_conn) {
   in_conn.execute(std::string{::doodle::database_n::create_ctx_table});
   in_conn.execute(std::string{::doodle::database_n::create_ctx_table_index});
   in_conn.execute(std::string{::doodle::database_n::create_ctx_table_unique});
 }
 
-void add_entity_table(sqlpp::sqlite3::connection& in_conn) {
+void db_compatible::add_entity_table(sqlpp::sqlite3::connection& in_conn) {
   in_conn.execute(std::string{::doodle::database_n::create_entity_table});
   in_conn.execute(std::string{::doodle::database_n::create_entity_table_index});
 }
 
-void add_component_table(sqlpp::sqlite3::connection& in_conn) {
+void db_compatible::add_component_table(sqlpp::sqlite3::connection& in_conn) {
   in_conn.execute(std::string{::doodle::database_n::create_com_table});
   in_conn.execute(std::string{::doodle::database_n::create_com_table_index_id});
   in_conn.execute(std::string{::doodle::database_n::create_com_table_index_hash});
   in_conn.execute(std::string{::doodle::database_n::create_com_table_trigger});
 }
 
-void add_version_table(sqlpp::sqlite3::connection& in_conn) {
+void db_compatible::add_version_table(sqlpp::sqlite3::connection& in_conn) {
   if (has_version_table(in_conn)) {
     return;
   }
@@ -151,14 +151,14 @@ void add_version_table(sqlpp::sqlite3::connection& in_conn) {
   ));
 }
 
-void set_version(sqlpp::sqlite3::connection& in_conn) {
+void db_compatible::set_version(sqlpp::sqlite3::connection& in_conn) {
   sql::DoodleInfo l_info{};
   in_conn(sqlpp::update(l_info).unconditionally().set(
       l_info.versionMajor = version::build_info::get().version_major,
       l_info.versionMinor = version::build_info::get().version_minor
   ));
 }
-bool has_version_table(sqlpp::sqlite3::connection& in_conn) {
+bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
   sql::SqliteMaster l_master{};
   auto l_item = in_conn(
       sqlpp::select(sqlpp::all_of(l_master))

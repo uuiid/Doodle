@@ -71,11 +71,11 @@ class insert::impl {
   std::size_t size;
 
   void create_db(sqlpp::sqlite3::connection &in_db) {
-    details::add_entity_table(in_db);
-    details::add_ctx_table(in_db);
-    details::add_component_table(in_db);
-    details::add_version_table(in_db);
-    doodle::database_n::details::db_compatible::delete_metadatatab_table(in_db);
+    details::db_compatible::add_entity_table(in_db);
+    details::db_compatible::add_ctx_table(in_db);
+    details::db_compatible::add_component_table(in_db);
+    details::db_compatible::add_version_table(in_db);
+    details::db_compatible::delete_metadatatab_table(in_db);
   }
 
   /**
@@ -225,9 +225,6 @@ void insert::operator()(
     f.get();
   }
   g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");
-  auto l_path = g_reg()->ctx().at<database_info>().path_;
-  if (!FSys::exists(l_path.parent_path()))
-    FSys::create_directories(l_path.parent_path());
 
   g_reg()->ctx().emplace<process_message>().message("检查数据库存在性");
   p_i->create_db(*in_connect);

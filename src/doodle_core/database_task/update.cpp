@@ -55,10 +55,10 @@ class update_data::impl {
   void updata_db_table(sqlpp::sqlite3::connection &in_db) {
     auto [l_main_v, l_s_v] = details::get_version(in_db);
     if (l_main_v <= 3 && l_s_v <= 4) {
-      details::add_entity_table(in_db);
-      details::add_ctx_table(in_db);
-      details::add_component_table(in_db);
-      details::set_version(in_db);
+      details::db_compatible::add_entity_table(in_db);
+      details::db_compatible::add_ctx_table(in_db);
+      details::db_compatible::add_component_table(in_db);
+      details::db_compatible::set_version(in_db);
     }
     doodle::database_n::details::db_compatible::delete_metadatatab_table(in_db);
   }

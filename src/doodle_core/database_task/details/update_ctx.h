@@ -21,15 +21,14 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(
     sqlpp::sqlite3::connection &in_connection
 );
 
-void add_ctx_table(sqlpp::sqlite3::connection &in_conn);
-void add_entity_table(sqlpp::sqlite3::connection &in_conn);
-void add_component_table(sqlpp::sqlite3::connection &in_conn);
-void add_version_table(sqlpp::sqlite3::connection &in_conn);
-bool has_version_table(sqlpp::sqlite3::connection &in_conn);
-void set_version(sqlpp::sqlite3::connection &in_conn);
-
 class db_compatible {
  public:
+  static void add_ctx_table(sqlpp::sqlite3::connection &in_conn);
+  static void add_entity_table(sqlpp::sqlite3::connection &in_conn);
+  static void add_component_table(sqlpp::sqlite3::connection &in_conn);
+  static void add_version_table(sqlpp::sqlite3::connection &in_conn);
+  static bool has_version_table(sqlpp::sqlite3::connection &in_conn);
+  static void set_version(sqlpp::sqlite3::connection &in_conn);
   static bool has_metadatatab_table(sqlpp::sqlite3::connection &in_conn);
   static void delete_metadatatab_table(sqlpp::sqlite3::connection &in_conn);
 };

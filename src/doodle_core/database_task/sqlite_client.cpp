@@ -136,7 +136,8 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   std::vector<entt::entity> install_list;
   std::vector<entt::entity> update_list;
   std::vector<entt::entity> next_delete_list;
-  if (!FSys::exists(in_path)) {  /// \brief  不存在时直接保存所有的实体
+  DOODLE_LOG_INFO("文件位置 {}", in_path);
+  if (!FSys::exists(in_path) && in_path.generic_string() != ":memory:"s) {  /// \brief  不存在时直接保存所有的实体
     if (!FSys::exists(in_path.parent_path())) {
       FSys::create_directories(in_path.parent_path());
     }
@@ -171,6 +172,11 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
         update_list.empty()) {
       /// \brief 只更新上下文
       auto l_s = boost::asio::make_strand(g_io_context());
+      details::db_compatible::add_entity_table(*l_k_con);
+      details::db_compatible::add_ctx_table(*l_k_con);
+      details::db_compatible::add_component_table(*l_k_con);
+      details::db_compatible::add_version_table(*l_k_con);
+      details::db_compatible::delete_metadatatab_table(*l_k_con);
       database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
     } else {
       /// \brief 删除没有插入的
