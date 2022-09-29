@@ -7,7 +7,7 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API main_proc_handle : public details::no_copy {
+class DOODLE_APP_API main_proc_handle : public details::no_copy {
   main_proc_handle();
 
  public:

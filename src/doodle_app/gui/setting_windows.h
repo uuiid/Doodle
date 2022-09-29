@@ -49,7 +49,7 @@ namespace doodle::gui {
  * @brief 设置主窗口
  *
  */
-class DOODLELIB_API setting_windows
+class DOODLE_APP_API setting_windows
     : public base_windows<dear::Begin, setting_windows> {
   class impl;
   std::unique_ptr<impl> p_i;

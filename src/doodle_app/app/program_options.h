@@ -10,7 +10,7 @@
 // #include <Windows.h>
 namespace doodle {
 
-class DOODLELIB_API program_options {
+class DOODLE_APP_API program_options {
  public:
   FSys::path p_config_file;
   std::pair<bool, FSys::path> p_root;

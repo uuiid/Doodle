@@ -8,7 +8,7 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API layout_window : public detail::windows_tick_interface {
+class DOODLE_APP_API layout_window : public detail::windows_tick_interface {
   class impl;
   std::unique_ptr<impl> p_i;
 

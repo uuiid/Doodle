@@ -8,7 +8,7 @@
 #include <doodle_app/gui/base/base_window.h>
 
 namespace doodle::gui {
-class DOODLELIB_API main_status_bar : public detail::windows_tick_interface {
+class DOODLE_APP_API main_status_bar : public detail::windows_tick_interface {
  private:
   class impl;
   std::unique_ptr<impl> p_i;

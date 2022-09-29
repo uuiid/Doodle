@@ -11,7 +11,7 @@ namespace doodle::gui {
  * @brief 基本的渲染基类, render(const entt::handle & )必须每帧调用
  *
  */
-class DOODLELIB_API base_render {
+class DOODLE_APP_API base_render {
  public:
   /**
    * @brief Construct a new base render object
@@ -47,7 +47,7 @@ class gui_data {
  * @brief 编辑类的接口
  *
  */
-class DOODLELIB_API edit_interface {
+class DOODLE_APP_API edit_interface {
  protected:
   /**
    * @brief 初始化编辑时使用

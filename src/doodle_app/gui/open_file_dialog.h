@@ -11,7 +11,7 @@ namespace doodle::gui {
 /**
  * @brief
  */
-class DOODLELIB_API file_panel
+class DOODLE_APP_API file_panel
     : public base_windows<
           dear::PopupModal,
           file_panel> {
