@@ -10,7 +10,7 @@ namespace doodle::core {
  * @brief 标识符生成器， 线程安全
  *
  */
-class DOODLE_APP_API identifier {
+class DOODLE_CORE_API identifier {
   identifier();
 
   virtual ~identifier();
