@@ -3,16 +3,14 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_app/doodle_app_fwd.h>
 
-namespace doodle {
-
-namespace core {
+namespace doodle::core {
 /**
  * @brief 标识符生成器， 线程安全
  *
  */
-class DOODLELIB_API identifier {
+class DOODLE_APP_API identifier {
   identifier();
 
   virtual ~identifier();
@@ -22,6 +20,4 @@ class DOODLELIB_API identifier {
   static identifier& get();
   std::uint64_t id();
 };
-}  // namespace core
-
 }  // namespace doodle
