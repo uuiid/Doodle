@@ -33,6 +33,7 @@ cmrc_add_resource_library(
         ${fontawesome_SOURCE_DIR}/webfonts/fa-regular-400.ttf
         ${fontawesome_SOURCE_DIR}/webfonts/fa-solid-900.ttf
 )
+add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_dingding)
 add_subdirectory(doodle_lib)
