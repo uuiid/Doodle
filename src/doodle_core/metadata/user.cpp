@@ -109,11 +109,11 @@ user::current_user::current_user()
 user::current_user::~current_user() = default;
 void user::current_user::create_user() {
   auto l_create_h = make_handle();
-  l_create_h.emplace<user>(g_reg()->ctx().at<user>());
+  l_create_h.emplace<user>(core_set::get_set().user_name);
   l_create_h.emplace<business::rules>(business::rules::get_default());
-  uuid               = l_create_h.emplace<database>().uuid();
+  uuid                        = l_create_h.emplace<database>().uuid();
   core_set::get_set().user_id = uuid;
-  user_handle        = l_create_h;
+  user_handle                 = l_create_h;
 
   database::save(l_create_h);
 }

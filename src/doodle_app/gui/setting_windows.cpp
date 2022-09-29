@@ -63,10 +63,10 @@ void setting_windows::save() {
   g_bounded_pool().timiter_    = p_i->p_batch_max.data;
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
-  core_set_init{}.write_file();
 
   g_reg()->ctx().at<user::current_user>().user_name_attr(p_i->p_user());
   g_reg()->ctx().at<core_sig>().save();
+  core_set_init{}.write_file();
 }
 setting_windows::~setting_windows() = default;
 

@@ -167,16 +167,15 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   try {
     auto l_k_con = core_sql::Get().get_connection(in_path);
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
+    details::db_compatible::add_entity_table(*l_k_con);
+    details::db_compatible::add_ctx_table(*l_k_con);
+    details::db_compatible::add_component_table(*l_k_con);
+    details::db_compatible::add_version_table(*l_k_con);
+    details::db_compatible::delete_metadatatab_table(*l_k_con);
     if (delete_list.empty() &&
         install_list.empty() &&
         update_list.empty()) {
       /// \brief 只更新上下文
-      auto l_s = boost::asio::make_strand(g_io_context());
-      details::db_compatible::add_entity_table(*l_k_con);
-      details::db_compatible::add_ctx_table(*l_k_con);
-      details::db_compatible::add_component_table(*l_k_con);
-      details::db_compatible::add_version_table(*l_k_con);
-      details::db_compatible::delete_metadatatab_table(*l_k_con);
       database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
     } else {
       /// \brief 删除没有插入的
