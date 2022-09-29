@@ -20,7 +20,7 @@ if (DEFINED Maya_Version)
         add_library(doodle_maya MODULE
                 doodle_maya.manifest
                 doodle_maya.rc
-                ../doodle_exe/main/icon.ico
+                ${PROJECT_SOURCE_DIR}/src/doodle_main_exe/icon.ico
                 )
 
         add_subdirectory(configure configure_${Maya_Version})
@@ -49,7 +49,7 @@ if (DEFINED Maya_Version)
                 Eigen3::Eigen
                 OpenMP::OpenMP_CXX
                 )
-        target_include_directories(doodle_maya PUBLIC ../doodle_exe)
+
         #设置maya插件后缀名
         set_target_properties(
                 doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.mll"
