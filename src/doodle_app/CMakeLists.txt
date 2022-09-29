@@ -8,6 +8,7 @@ target_include_directories(
         doodle_app
         PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/..
+        ${iconfontcppheaders_SOURCE_DIR}
 )
 
 

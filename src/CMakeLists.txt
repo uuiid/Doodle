@@ -21,7 +21,14 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
         GIT_TAG 6.x
 )
-FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome)
+
+FetchContent_Declare(
+        IconFontCppHeaders
+        GIT_REPOSITORY https://github.com/juliettef/IconFontCppHeaders.git
+        GIT_TAG main
+)
+
+FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome IconFontCppHeaders)
 
 list(APPEND CMAKE_MODULE_PATH ${cmakerclib_SOURCE_DIR})
 include(CMakeRC)
