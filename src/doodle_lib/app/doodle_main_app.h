@@ -7,8 +7,9 @@
 #include <doodle_app/app/app.h>
 
 namespace doodle {
-class DOODLELIB_API doodle_main_app : public app {
+class DOODLELIB_API main_app : public doodle_main_app {
  public:
-
+ protected:
+  void load_windows() override;
 };
 }  // namespace doodle
