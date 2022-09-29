@@ -209,7 +209,7 @@ void doodle_info_node_draw_override::addUIDrawables(
 
   /// 制作人姓名
   {
-    auto _k_s_ = fmt::format("{}", g_reg()->ctx().at<user>().get_name());
+    auto _k_s_ = fmt::format("{}", g_reg()->ctx().at<user::current_user>().user_name_attr());
     MString k_str{};
     k_str.setUTF8(_k_s_.c_str());
     std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_ * 2, 35};

@@ -173,10 +173,6 @@ void core_set_init::read_file() {
       *p_set.json_data = nlohmann::json::parse(l_in_josn);
       p_set.json_data->at("setting").get_to(p_set);
 
-      /// \brief 兼容旧版本段配置文件
-      if (p_set.json_data->at("setting").contains("user_")) {
-        g_reg()->ctx().at<user>().set_name(p_set.json_data->at("setting").at("user_").get<std::string>());
-      }
     } catch (const nlohmann::json::parse_error &err) {
       DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
     }
@@ -218,6 +214,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
   j["user_id"]                  = p.user_id;
+  j["user_name"]                = p.user_name;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
@@ -244,6 +241,11 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j.at("user_id").get_to(p.user_id);
   else
     p.user_id = p.get_uuid();
+  /// \brief 兼容旧版本段配置文件
+  if (j.contains("user_"))
+    j.at("user_").get_to(p.user_name);
+  if (j.contains("user_name"))
+    j.at("user_name").get_to(p.user_name);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);

@@ -53,52 +53,6 @@ class user::user_cache {
   }
 };
 
-entt::handle user::chick_user_reg(entt::registry& in_reg) {
-  auto& l_cache = in_reg.ctx().emplace<user::user_cache>();
-
-  if (l_cache.uuid.is_nil()) {
-    l_cache.uuid = core_set::get_set().user_id;
-  }
-  if (!l_cache.user_handle) {
-    l_cache.user_handle = database::find_by_uuid(l_cache.uuid);
-  }
-
-  if (!l_cache) {
-    auto l_create_h = make_handle();
-    l_create_h.emplace<user>(in_reg.ctx().at<user>());
-    l_create_h.emplace<business::rules>(business::rules::get_default());
-    l_cache.uuid        = l_create_h.emplace<database>(l_cache.uuid).uuid();
-    l_cache.user_handle = l_create_h;
-
-    database::save(l_create_h);
-  }
-
-  DOODLE_CHICK(l_cache, doodle_error{"缺失用户实体{}", l_cache.user_handle});
-  return l_cache.user_handle;
-}
-
-entt::handle user::get_current_handle() {
-  return chick_user_reg(*g_reg());
-}
-
-void user::reg_to_ctx(entt::registry& in_reg) {
-  auto l_h = chick_user_reg(in_reg);
-  /// \brief 在注册表中存在用户
-  if (l_h) {
-    in_reg.ctx().at<user>() = l_h.get<user>();
-  }
-}
-void user::generate_new_user_id() {
-  auto& l_cache   = g_reg()->ctx().emplace<user::user_cache>();
-  auto l_create_h = make_handle();
-  l_create_h.emplace<user>(g_reg()->ctx().at<user>());
-  l_create_h.emplace<business::rules>(business::rules::get_default());
-  l_cache.uuid               = l_create_h.emplace<database>().uuid();
-  core_set::get_set().user_id = l_cache.uuid;
-  l_cache.user_handle        = l_create_h;
-
-  database::save(l_create_h);
-}
 entt::handle user::find_by_user_name(const std::string& in_name) {
   entt::handle l_r{};
   for (auto&& [e, u] : g_reg()->view<user>().each()) {
@@ -111,4 +65,48 @@ entt::handle user::find_by_user_name(const std::string& in_name) {
   return l_r;
 }
 
+user::current_user::operator entt::handle() {
+  return get_handle();
+}
+entt::handle user::current_user::get_handle() {
+  if (!user_handle) {
+    user_handle = database::find_by_uuid(uuid);
+  }
+
+  if (!*this) {
+    auto l_create_h = make_handle();
+    l_create_h.emplace<user>(core_set::get_set().user_name);
+    l_create_h.emplace<business::rules>(business::rules::get_default());
+    uuid        = l_create_h.emplace<database>(uuid).uuid();
+    user_handle = l_create_h;
+
+    database::save(l_create_h);
+  }
+
+  DOODLE_CHICK(
+      user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid,
+      doodle_error{"缺失用户实体{}", user_handle}
+  );
+  return user_handle;
+}
+
+std::string user::current_user::user_name_attr() {
+  if (!*this) get_handle();
+  return user_handle.get<user>().get_name();
+}
+void user::current_user::user_name_attr(const std::string& in_name) {
+  if (!*this) get_handle();
+  user_handle.get<user>().set_name(in_name);
+  core_set::get_set().user_name = in_name;
+  database::save(user_handle);
+}
+user::current_user::operator bool() const {
+  return user_handle && user_handle.all_of<database, user>() && user_handle.get<database>() == uuid;
+}
+user::current_user::current_user()
+    : uuid(core_set::get_set().user_id) {}
+
+user::current_user::~current_user() {
+  core_set::get_set().user_id = core_set::get_set().get_uuid();
+}
 }  // namespace doodle

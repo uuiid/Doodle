@@ -205,7 +205,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       );
       /// \brief 制作人姓名
       k_image.watermarks.emplace_back(
-          g_reg()->ctx().at<user>().get_name(),
+          g_reg()->ctx().at<user::current_user>().user_name_attr(),
           0.5, 0.91,
           cv::Scalar{25, 220, 2}
       );

@@ -65,16 +65,13 @@ void setting_windows::save() {
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
   core_set_init{}.write_file();
 
-  g_reg()->ctx().at<user>().set_name(p_i->p_user());
-  auto l_user = user::get_current_handle();
-  l_user.get<user>().set_name(p_i->p_user());
-  database::save(l_user);
+  g_reg()->ctx().at<user::current_user>().user_name_attr(p_i->p_user());
   g_reg()->ctx().at<core_sig>().save();
 }
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  auto l_user                          = user::get_current_handle();
+  auto l_user                          = g_reg()->ctx().at<user::current_user>().get_handle();
   p_i->p_user.data                     = l_user.get<user>().get_name();
   p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
 

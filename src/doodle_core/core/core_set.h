@@ -68,6 +68,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
  private:
   // 用户名称
   boost::uuids::uuid user_id;
+  std::string user_name;
   /**
    * @brief 在初始化的时候，我们会进行一些设置，这些设置是及其基本的
    *
