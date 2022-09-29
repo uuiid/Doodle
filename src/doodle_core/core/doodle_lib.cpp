@@ -61,7 +61,7 @@ doodle_lib::doodle_lib()
   ptr->reg->ctx().emplace<database_info>().path_ = ":memory:"s;
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
-  ptr->reg->ctx().emplace<user>("user"s);
+  ptr->reg->ctx().emplace<user::current_user>("user"s);
 
   auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
   ptr->reg->ctx().emplace<status_info>();
