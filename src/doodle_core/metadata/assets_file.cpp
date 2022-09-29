@@ -62,7 +62,7 @@ assets_file::assets_file(const FSys::path& in_path)
     : assets_file() {
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
-  user_attr(user::get_current_handle());
+  user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
   p_i->organization_p = core_set::get_set().organization_name;
 }
 
@@ -72,7 +72,7 @@ assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::ui
   p_i->p_name         = std::move(in_name);
   p_i->p_version      = in_version;
   p_i->organization_p = core_set::get_set().organization_name;
-  user_attr(user::get_current_handle());
+  user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
 }
 
 std::string assets_file::str() const {

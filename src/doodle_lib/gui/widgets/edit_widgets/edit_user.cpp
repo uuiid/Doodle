@@ -51,7 +51,7 @@ void edit_user::render(const entt::handle& in) {
   }
 }
 void edit_user::init_(const entt::handle& in) {
-  ptr->user_handle = user::get_current_handle();
+  ptr->user_handle = g_reg()->ctx().at<user::current_user>().get_handle();
 
   /// \brief 初始化名称
   if (in.any_of<assets_file>())

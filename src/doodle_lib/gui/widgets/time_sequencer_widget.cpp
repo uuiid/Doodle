@@ -304,7 +304,7 @@ class time_sequencer_widget::impl {
 
 time_sequencer_widget::time_sequencer_widget()
     : p_i(std::make_unique<impl>()) {
-  p_i->title_name_                 = std::string{name};
+  p_i->title_name_                  = std::string{name};
   ImPlot::GetStyle().UseLocalTime   = true;
   ImPlot::GetStyle().Use24HourClock = true;
 
@@ -327,7 +327,7 @@ time_sequencer_widget::time_sequencer_widget()
                                  ) |
                                  ranges::to_vector;
                 p_i->time_list |= ranges::actions::sort;
-                p_i->rules_ = user::get_current_handle().get<business::rules>();
+                p_i->rules_ = g_reg()->ctx().at<user::current_user>().get_handle().get<business::rules>();
                 p_i->work_clock_.set_rules(p_i->rules_);
                 p_i->refresh_work_clock_();
               }
@@ -338,9 +338,9 @@ time_sequencer_widget::time_sequencer_widget()
   });
 
   p_i->rules_cache().modify_guard_.connect([this](const business::rules& in) {
-    p_i->rules_                                       = in;
-    auto l_user                                       = user::get_current_handle();
-    user::get_current_handle().get<business::rules>() = in;
+    p_i->rules_                                                                 = in;
+    auto l_user                                                                 = g_reg()->ctx().at<user::current_user>().get_handle();
+    g_reg()->ctx().at<user::current_user>().get_handle().get<business::rules>() = in;
     database::save(l_user);
     p_i->work_clock_.set_rules(p_i->rules_);
     p_i->refresh_work_clock_();

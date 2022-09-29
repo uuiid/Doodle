@@ -267,10 +267,6 @@ class select::impl {
         }
     );
   }
-
-  void set_user_ctx(entt::registry& in_reg) {
-    user::reg_to_ctx(in_reg);
-  }
 };
 
 select::select() : p_i(std::make_unique<impl>()) {}
@@ -318,9 +314,6 @@ void select::operator()(
       l_f(p_i->local_reg);
     }
   }
-
-  /// \brief 开始设置用户上下文
-  p_i->set_user_ctx(*p_i->local_reg);
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
 }

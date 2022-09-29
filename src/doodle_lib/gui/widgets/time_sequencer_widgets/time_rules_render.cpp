@@ -386,8 +386,8 @@ time_rules_render::time_rules_render()
       }
   );
 
-  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() { this->rules_attr(user::get_current_handle().get<rules_type>()); });
-  g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) { this->rules_attr(user::get_current_handle().get<rules_type>()); });
+  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() { this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>()); });
+  g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) { this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>()); });
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const {
   return p_i->rules_attr;
