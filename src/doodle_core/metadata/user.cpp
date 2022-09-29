@@ -106,7 +106,15 @@ user::current_user::operator bool() const {
 user::current_user::current_user()
     : uuid(core_set::get_set().user_id) {}
 
-user::current_user::~current_user() {
-  core_set::get_set().user_id = core_set::get_set().get_uuid();
+user::current_user::~current_user() = default;
+void user::current_user::create_user() {
+  auto l_create_h = make_handle();
+  l_create_h.emplace<user>(g_reg()->ctx().at<user>());
+  l_create_h.emplace<business::rules>(business::rules::get_default());
+  uuid               = l_create_h.emplace<database>().uuid();
+  core_set::get_set().user_id = uuid;
+  user_handle        = l_create_h;
+
+  database::save(l_create_h);
 }
 }  // namespace doodle

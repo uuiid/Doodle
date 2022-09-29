@@ -28,8 +28,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   bool operator==(const user& in_rhs) const;
   bool operator<(const user& in_rhs) const;
 
-
-
   /**
    * @brief 按名称寻找user
    * @param in_name 用户名称
@@ -50,6 +48,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
     entt::handle get_handle();
     std::string user_name_attr();
     void user_name_attr(const std::string& in_name);
+
+    void create_user();
 
     explicit operator bool() const;
   };

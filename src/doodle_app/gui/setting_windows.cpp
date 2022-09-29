@@ -93,8 +93,10 @@ void setting_windows::render() {
   dear::Text(p_i->user_uuid);
   ImGui::SameLine();
   if (ImGui::Button(*p_i->new_user_id)) {
-    user::generate_new_user_id();
-    p_i->user_uuid = fmt::format("用户id: {}", user::get_current_handle().get<database>().uuid());
+    g_reg()->ctx().at<user::current_user>() = {};
+    auto& l_h                               = g_reg()->ctx().at<user::current_user>();
+    l_h.create_user();
+    p_i->user_uuid = fmt::format("用户id: {}", l_h.uuid);
   }
 
   imgui::InputText(*p_i->p_cache.gui_name, &(p_i->p_cache.data), ImGuiInputTextFlags_ReadOnly);
