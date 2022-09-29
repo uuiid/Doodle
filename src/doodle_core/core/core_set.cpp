@@ -183,7 +183,6 @@ void core_set_init::read_file() {
   }
   if (p_set.user_id.is_nil())
     p_set.user_id = p_set.get_uuid();
-  return true;
 }
 bool core_set_init::write_file() {
   DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
