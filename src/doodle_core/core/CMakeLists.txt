@@ -13,6 +13,7 @@ target_sources(
         json_rpc_process_t.h
         app_base.h
         core_sql.h
+        util.h
 
         PRIVATE
         core_set.cpp
@@ -24,4 +25,5 @@ target_sources(
         json_rpc_process_t.cpp
         app_base.cpp
         core_sql.cpp
+        util.cpp
 )

@@ -8,7 +8,7 @@
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/exception/exception.h>
 
-#include <core/util.h>
+#include <doodle_core/core/util.h>
 
 #include <opencv2/opencv.hpp>
 

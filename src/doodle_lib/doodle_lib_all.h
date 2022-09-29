@@ -6,7 +6,7 @@
 #include <doodle_lib/core/ContainerDevice.h>
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_app/gui/open_file_dialog.h>
-#include <doodle_lib/core/util.h>
+#include <doodle_core/core/util.h>
 
 #include <doodle_lib/file_warp/opencv_read_player.h>
 #include <doodle_app/gui/setting_windows.h>

@@ -1,6 +1,6 @@
 #include "ref_base.h"
 #include <doodle_core/metadata/metadata.h>
-#include <core/util.h>
+#include <doodle_core/core/util.h>
 namespace doodle::gui {
 
 void edit_interface::init(const entt::handle &in) {
