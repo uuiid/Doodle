@@ -9,7 +9,7 @@ namespace doodle::maya_plug {
 class maya_plug_app : public app {
  protected:
  public:
-  maya_plug_app(const app::in_gui_arg& in_arg);
+  maya_plug_app(const doodle_main_app::in_gui_arg& in_arg);
 
  private:
   virtual void load_windows() override;
@@ -19,7 +19,7 @@ class maya_plug_app : public app {
 
  public:
  public:
-  using app::app;
+  using doodle_main_app::app;
   virtual void close_windows() override;
 };
 }  // namespace doodle::maya_plug

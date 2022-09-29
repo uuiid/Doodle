@@ -95,7 +95,7 @@ void main_menu_bar::menu_file() {
   dear::MenuItem("关于"s, &p_i->p_about_show);
   ImGui::Separator();
   if (dear::MenuItem(u8"退出")) {
-    app::Get().stop();
+    doodle_main_app::Get().stop();
   }
 }
 

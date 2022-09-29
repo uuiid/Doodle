@@ -4,8 +4,11 @@
 //
 
 #pragma once
-#include <doodle_app/app/app_command.h>
+#include <doodle_app/app/app.h>
 
 namespace doodle {
+class DOODLELIB_API doodle_main_app : public app {
+ public:
 
+};
 }  // namespace doodle

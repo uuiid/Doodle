@@ -6,8 +6,8 @@
 // #include <boost/locale.hpp>
 
 extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-  limited_app app{doodle::app::in_gui_arg{
-      doodle::app::in_app_args{hInstance, strCmdLine},
+  limited_app app{doodle::doodle_main_app::in_gui_arg{
+      doodle::doodle_main_app::in_app_args{hInstance, strCmdLine},
       nCmdShow, nullptr}};
   try {
     return app.run();

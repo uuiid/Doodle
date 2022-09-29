@@ -20,12 +20,12 @@ void maya_plug_app::load_windows() {
 void maya_plug_app::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-maya_plug_app::maya_plug_app(const app::in_gui_arg& in_arg)
+maya_plug_app::maya_plug_app(const doodle_main_app::in_gui_arg& in_arg)
     : app(in_arg) {
   self = this;
 }
 void maya_plug_app::post_constructor() {
-  app::post_constructor();
+  doodle_main_app::post_constructor();
   doodle::gui::main_proc_handle::get().win_close   = [this]() { this->close_windows(); };
   doodle::gui::main_proc_handle::get().win_destroy = []() {};
   //  boost::asio::post(g_io_context(), []() {

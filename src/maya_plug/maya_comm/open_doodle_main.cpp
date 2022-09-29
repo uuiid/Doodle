@@ -17,8 +17,8 @@ open_doodle_main::~open_doodle_main() = default;
 MStatus open_doodle_main::doIt(const MArgList& list) {
   // auto l_o = MQtUtil::nativeWindow(MQtUtil::mainWindow());
 
-  app::Get().begin_loop();
-  app::Get().show_windows();
+  doodle_main_app::Get().begin_loop();
+  doodle_main_app::Get().show_windows();
   // app::Get().set_parent(l_o);
   return MStatus::kSuccess;
 }

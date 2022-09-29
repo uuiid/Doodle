@@ -58,7 +58,7 @@ std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 namespace doodle::maya_plug {
 void open_windows() {
   HWND win_id       = reinterpret_cast<HWND>(MQtUtil::mainWindow()->winId());
-  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(doodle::app::in_gui_arg{
+  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(doodle::doodle_main_app::in_gui_arg{
       doodle::app_base::in_app_args{::MhInstPlugin, nullptr}, SW_HIDE, win_id});
   p_doodle_app      = l_doodle_app;
 }
@@ -136,7 +136,7 @@ MStatus initializePlugin(MObject obj) {
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
         if (MGlobal::mayaState() == MGlobal::kInteractive)
-          app::Get().stop();
+          doodle_main_app::Get().stop();
         p_doodle_app.reset();
       },
       nullptr,
