@@ -1,7 +1,7 @@
 //
 // Created by TD on 2022/5/27.
 //
-#include <gui/app.h>
+#include <doodle_main_exe/limited_exe/gui/app.h>
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
 
