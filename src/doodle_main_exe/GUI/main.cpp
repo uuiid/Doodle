@@ -6,7 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/app/app.h>
+#include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_lib/doodle_lib_all.h>
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
@@ -36,8 +36,8 @@
  */
 
 extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-  doodle::app app{doodle::app::in_gui_arg{
-      doodle::app::in_app_args{hInstance, strCmdLine},
+  doodle::doodle_main_app app{doodle::doodle_main_app::in_gui_arg{
+      doodle::doodle_main_app::in_app_args{hInstance, strCmdLine},
       nCmdShow, nullptr}};
   try {
     return app.run();

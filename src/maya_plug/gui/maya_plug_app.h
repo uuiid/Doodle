@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_lib/app/app.h>
+#include <doodle_lib/app/doodle_main_app.h>
 
 namespace doodle::maya_plug {
 class maya_plug_app : public app {

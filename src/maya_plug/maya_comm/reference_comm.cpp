@@ -11,8 +11,7 @@
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
 
-#include <doodle_lib/core/app_command_base.h>
-#include <doodle_lib/app/app.h>
+#include <doodle_app/app/app.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

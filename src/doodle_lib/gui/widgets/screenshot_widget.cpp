@@ -4,7 +4,7 @@
 
 #include "screenshot_widget.h"
 #include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_lib/app/app.h>
+#include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
 #include <doodle_core/metadata/image_icon.h>

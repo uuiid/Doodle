@@ -7,7 +7,7 @@
 // #include <maya/MQtUtil.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/app/app.h>
+#include <doodle_lib/app/doodle_main_app.h>
 
 namespace doodle::maya_plug {
 open_doodle_main::open_doodle_main()  = default;

@@ -14,7 +14,6 @@ set(
         long_task/join_move.h
         long_task/short_cut.h
         long_task/image_load_task.h
-        core/app_command_base.h
         doodle_lib_all.h
         doodle_lib_fwd.h
         doodle_lib_pch.h
@@ -32,6 +31,5 @@ set(
         long_task/join_move.cpp
         long_task/short_cut.cpp
         long_task/image_load_task.cpp
-        core/app_command_base.cpp
         doodle_lib_all.cpp
 )

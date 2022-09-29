@@ -1,7 +1,6 @@
 target_sources(doodle_lib
         PUBLIC
-        app.h
+        doodle_main_app.h
         PRIVATE
-        app_render.cpp
-        app.cpp
+        doodle_main_app.cpp
         )

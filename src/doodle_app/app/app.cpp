@@ -38,7 +38,7 @@ namespace doodle {
  * @brief 内部类
  *
  */
-class app::impl {
+class doodle_main_app::impl {
  public:
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard{};
@@ -48,7 +48,7 @@ class app::impl {
  public:
 };
 
-app::app(const in_gui_arg& in_arg)
+doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
     : app_command_base(in_arg),
       p_hwnd(),
       p_win_class(),
@@ -61,7 +61,7 @@ app::app(const in_gui_arg& in_arg)
   p_i->show_enum = in_arg.show_enum;
 }
 
-void app::post_constructor() {
+void doodle_main_app::post_constructor() {
   app_command_base::post_constructor();
   p_win_class =
       {sizeof(WNDCLASSEX),
@@ -161,7 +161,7 @@ void app::post_constructor() {
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     /// 在这里我们加载项目
-    load_project(app::Get().options_ && !app::Get().options_->p_project_path.empty() ? app::Get().options_->p_project_path : core_set::get_set().project_root[0]);
+    load_project(doodle_main_app::Get().options_ && !doodle_main_app::Get().options_->p_project_path.empty() ? doodle_main_app::Get().options_->p_project_path : core_set::get_set().project_root[0]);
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
@@ -186,31 +186,31 @@ void app::post_constructor() {
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
 }
 
-void app::set_title(const std::string& in_title) {
+void doodle_main_app::set_title(const std::string& in_title) {
   boost::asio::post(g_io_context(), [&, in_title]() {
     auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(in_title);
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
 
-app& app::Get() {
-  return *(dynamic_cast<app*>(self));
+doodle_main_app& doodle_main_app::Get() {
+  return *(dynamic_cast<doodle_main_app*>(self));
 }
-bool app::valid() const {
+bool doodle_main_app::valid() const {
   return this->p_hwnd != nullptr;
 }
-void app::close_windows() {
+void doodle_main_app::close_windows() {
   doodle::app_command_base::Get().stop_app();
   boost::asio::post([this]() {
     ::ShowWindow(p_hwnd, SW_HIDE);
-    ::DestroyWindow(doodle::app::Get().p_hwnd);
+    ::DestroyWindow(doodle::doodle_main_app::Get().p_hwnd);
   });
 }
-void app::show_windows() {
+void doodle_main_app::show_windows() {
   ::ShowWindow(p_hwnd, SW_SHOW);
 }
 
-app::~app() {
+doodle_main_app::~doodle_main_app() {
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
@@ -222,14 +222,14 @@ app::~app() {
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
 
-void app::load_back_end() {
+void doodle_main_app::load_back_end() {
   g_reg()->ctx().at<core_sig>().init_end.connect([]() {
     init_register::instance().init_run();
   });
   make_handle().emplace<gui::gui_tick>(std::make_shared<gui::short_cut>());
 }
 
-bool app::chick_authorization() {
+bool doodle_main_app::chick_authorization() {
   if (!app_command_base::chick_authorization()) {
     auto show_str = fmt::format("授权失败\n请见授权文件放入 {} ", core_set::get_set().get_doc() / doodle_config::token_name.data());
     ::MessageBoxExW(p_hwnd, boost::locale::conv::utf_to_utf<wchar_t>(show_str).c_str(), L"错误", MB_OK, 0);
@@ -237,7 +237,7 @@ bool app::chick_authorization() {
   }
   return true;
 }
-void app::tick_begin() {
+void doodle_main_app::tick_begin() {
   app_base::tick_begin();
 
   MSG msg;
@@ -256,7 +256,7 @@ void app::tick_begin() {
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
 }
-void app::tick_end() {
+void doodle_main_app::tick_end() {
   app_base::tick_end();
   // Rendering
   ImGui::Render();

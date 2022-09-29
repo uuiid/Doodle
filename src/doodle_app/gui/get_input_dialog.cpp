@@ -94,7 +94,7 @@ void close_exit_dialog::render() {
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
     boost::asio::post(g_io_context(), []() {
-      app::Get().close_windows();
+      doodle_main_app::Get().close_windows();
     });
   }
   ImGui::SameLine();

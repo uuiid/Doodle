@@ -37,7 +37,7 @@ class thread_pool;
 class season;
 
 class core_sig;
-class app;
+class doodle_main_app;
 class program_options;
 
 class opencv_read_player;
