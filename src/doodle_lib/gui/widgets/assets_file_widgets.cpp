@@ -15,7 +15,7 @@
 #include <doodle_core/core/status_info.h>
 #include <doodle_lib/long_task/image_load_task.h>
 
-#include <gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_core/core/init_register.h>
 namespace doodle::gui {

@@ -3,7 +3,7 @@
 //
 
 #pragma
-#include <doodle_lib/gui/gui_ref/layout_window.h>
+#include <doodle_app/gui/layout_window.h>
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/configure/static_value.h>
 

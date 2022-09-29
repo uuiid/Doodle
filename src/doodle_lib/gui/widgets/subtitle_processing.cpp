@@ -3,7 +3,7 @@
 //
 
 #include "subtitle_processing.h"
-#include <gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <boost/contract.hpp>

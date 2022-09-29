@@ -10,9 +10,6 @@
 #include <boost/signals2.hpp>
 #include <utility>
 
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/list_hook.hpp>
-
 #include <doodle_core/gui_template/gui_process.h>
 
 namespace doodle::gui {

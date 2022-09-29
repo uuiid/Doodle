@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_lib/gui/gui_ref/database_edit.h>
+#include <gui/widgets/database_edit.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
 

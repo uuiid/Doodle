@@ -18,7 +18,7 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <long_task/image_to_move.h>
-#include <gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <long_task/join_move.h>
 
 #include <utility>

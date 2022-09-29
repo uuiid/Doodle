@@ -18,7 +18,7 @@
 #include <boost/contract.hpp>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
-#include <gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/time_tool/work_clock.h>

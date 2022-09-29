@@ -9,10 +9,10 @@
 #include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <doodle_core/metadata/time_point_wrap.h>
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_lib/gui/gui_ref/modify_guard.h>
+#include <doodle_app/gui/base/modify_guard.h>
 
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>

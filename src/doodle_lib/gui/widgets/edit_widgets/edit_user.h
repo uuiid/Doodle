@@ -6,7 +6,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 
 namespace doodle {
 namespace gui {

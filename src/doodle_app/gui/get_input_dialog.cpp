@@ -6,11 +6,11 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_lib/app/app.h>
+#include <doodle_app/app/app.h>
 
 #include <utility>
 
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <gui/base/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_core/database_task/sqlite_client.h>
 

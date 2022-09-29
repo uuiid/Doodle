@@ -9,8 +9,8 @@
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/time_tool/work_clock.h>
-#include <doodle_lib/gui/gui_ref/ref_base.h>
-#include <doodle_lib/gui/gui_ref/cross_frame_check.h>
+#include <doodle_app/gui/base/ref_base.h>
+#include <doodle_app/gui/base/cross_frame_check.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
 #include <doodle_core/core/core_sig.h>

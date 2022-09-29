@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/gui_ref/modify_guard.h>
+#include <doodle_app/gui/base/modify_guard.h>
 namespace doodle {
 namespace business {
 class rules;

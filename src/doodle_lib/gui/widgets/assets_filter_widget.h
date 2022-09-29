@@ -4,8 +4,8 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/gui_ref/base_window.h>
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/base_window.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_core/core/init_register.h>
 
 #include <boost/signals2.hpp>

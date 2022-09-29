@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <doodle_lib/gui/gui_ref/base_window.h>
+#include <doodle_app/gui/base/base_window.h>
 namespace doodle::gui {
 /**
  * @brief 使用正则表达式提取字幕文本

@@ -2,7 +2,7 @@
 // Created by TD on 2021/11/2.
 //
 
-#include <doodle_lib/gui/gui_ref/base_window.h>
+#include <doodle_app/gui/base/base_window.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <maya/MStatus.h>

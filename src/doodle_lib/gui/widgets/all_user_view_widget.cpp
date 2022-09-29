@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/rules.h>
 
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
 namespace doodle::gui {

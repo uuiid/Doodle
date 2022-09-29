@@ -4,7 +4,7 @@
 
 #include "extract_subtitles_widgets.h"
 
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/core/core_sig.h>
 #include <boost/contract.hpp>

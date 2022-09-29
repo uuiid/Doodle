@@ -4,7 +4,7 @@
 
 #include "name_filter_factory.h"
 #include <gui/widgets/assets_filter_widgets/name_filter.h>
-#include <gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 namespace doodle::gui {

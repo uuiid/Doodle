@@ -8,7 +8,7 @@
 #include <doodle_lib/core/image_loader.h>
 #include <doodle_lib/platform/win/wnd_proc.h>
 #include <doodle_core/metadata/image_icon.h>
-#include <doodle_lib/gui/gui_ref/ref_base.h>
+#include <doodle_app/gui/base/ref_base.h>
 #include <platform/win/get_screenshot.h>
 namespace doodle::gui {
 
