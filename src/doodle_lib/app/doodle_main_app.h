@@ -9,8 +9,11 @@
 namespace doodle {
 class DOODLELIB_API main_app : public doodle_main_app {
  public:
-  using doodle_main_app::doodle_main_app;
+  explicit main_app(const in_gui_arg& in_arg);
+
  protected:
+  entt::handle exit_handle;
+
   void load_windows() override;
 };
 }  // namespace doodle
