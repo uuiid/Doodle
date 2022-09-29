@@ -80,8 +80,7 @@ class windows_tack_warp : public detail::windows_render_interface {
     l_dear_&& [this]() {
       self_().render();
     };
-    if (!show_attr) {
-    }
+    show_attr = ImGui::IsWindowAppearing();
 
     /// 显示时返回 false 不删除
     return !show_attr;
