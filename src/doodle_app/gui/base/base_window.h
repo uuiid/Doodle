@@ -2,7 +2,7 @@
 // Created by TD on 2022/4/8.
 //
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/init_register.h>

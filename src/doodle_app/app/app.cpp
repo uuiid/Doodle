@@ -20,6 +20,7 @@
 
 #include <doodle_app/app/program_options.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
+#include <boost/locale.hpp>
 
 #include <implot.h>
 #include <implot_internal.h>
@@ -176,7 +177,7 @@ void app::post_constructor() {
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
-    auto l_title = conv::utf_to_utf<char>(p_title);
+    auto l_title = boost::locale::conv::utf_to_utf<char>(p_title);
     auto l_str   = fmt::format("{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, g_reg()->ctx().contains<database_info>() ? g_reg()->ctx().at<database_info>().path_ : FSys::path{":memory:"}, l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str());
 
     set_title(l_str);
@@ -187,7 +188,7 @@ void app::post_constructor() {
 
 void app::set_title(const std::string& in_title) {
   boost::asio::post(g_io_context(), [&, in_title]() {
-    auto l_str = conv::utf_to_utf<wchar_t>(in_title);
+    auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(in_title);
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }

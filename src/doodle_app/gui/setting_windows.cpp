@@ -5,6 +5,7 @@
 #include "setting_windows.h"
 
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/core/doodle_lib.h>

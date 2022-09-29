@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
 
 namespace doodle::gui {

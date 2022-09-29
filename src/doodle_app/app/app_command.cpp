@@ -12,12 +12,12 @@
 #include <doodle_app/app/program_options.h>
 
 #include <boost/contract.hpp>
-
+#include <boost/locale.hpp>
 namespace doodle {
 void app_command_base::post_constructor() {
   if (std::holds_alternative<win::string_type>(cmd_str)) {
     options_->command_line_parser(
-        boost::program_options::split_winmain(conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
+        boost::program_options::split_winmain(boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
     );
   } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
     options_->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
