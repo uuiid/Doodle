@@ -6,7 +6,6 @@ target_sources(doodle_app
         main_status_bar.h
         open_file_dialog.h
         setting_windows.h
-        layout_window.h
 
         PRIVATE
         get_input_dialog.cpp
@@ -15,6 +14,5 @@ target_sources(doodle_app
         main_status_bar.cpp
         open_file_dialog.cpp
         setting_windows.cpp
-        layout_window.cpp
         )
 add_subdirectory(base)

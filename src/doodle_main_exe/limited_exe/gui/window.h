@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_app/gui/layout_window.h>
+#include <doodle_lib/gui/layout_window.h>
 using namespace doodle;
 class limited_layout : public doodle::gui::layout_window {
  public:

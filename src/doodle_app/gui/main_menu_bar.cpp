@@ -7,11 +7,9 @@
 #include <doodle_app/app/app.h>
 
 #include <doodle_app/gui/open_file_dialog.h>
-#include <doodle_app/gui/setting_windows.h>
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_core/core/core_sig.h>
-#include <gui/layout_window.h>
 
 #include <doodle_core/database_task/sqlite_client.h>
 
