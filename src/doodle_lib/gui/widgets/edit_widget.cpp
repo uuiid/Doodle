@@ -536,6 +536,10 @@ class edit_widgets::impl {
 edit_widgets::edit_widgets()
     : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
+}
+edit_widgets::~edit_widgets() = default;
+
+void edit_widgets::init() {
 
   p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
@@ -558,10 +562,7 @@ edit_widgets::edit_widgets()
 
   p_i->p_add.emplace_back("添加"s, std::make_unique<add_entt_base>());
   p_i->p_add.emplace_back("文件添加"s, std::make_unique<add_assets_for_file>());
-}
-edit_widgets::~edit_widgets() = default;
 
-void edit_widgets::init() {
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().at<core_sig>();
   p_i->p_sc.emplace_back(l_sig.select_handles.connect(
