@@ -44,6 +44,7 @@ class doodle_main_app::impl {
   [[maybe_unused]] win::ole_guard _guard{};
   win::wnd_handle parent{};
   std::int32_t show_enum{};
+  win::d3d_device_ptr d3d_attr;
 
  public:
 };
@@ -52,13 +53,11 @@ doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
     : app_command_base(in_arg),
       p_hwnd(),
       p_win_class(),
-      d3d_deve(),
       p_show_err(false),
-      d3dDevice(nullptr),
-      d3dDeviceContext(nullptr),
       p_i(std::make_unique<impl>()) {
   p_i->parent    = in_arg.in_parent;
   p_i->show_enum = in_arg.show_enum;
+  g_reg()->ctx().emplace<gui::main_proc_handle>();
 }
 
 void doodle_main_app::post_constructor() {
@@ -79,10 +78,10 @@ void doodle_main_app::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  p_hwnd = ::CreateWindowExW(0L, p_win_class.lpszClassName, p_title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, p_i->parent, nullptr, p_win_class.hInstance, nullptr);
+  p_hwnd        = ::CreateWindowExW(0L, p_win_class.lpszClassName, p_title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, p_i->parent, nullptr, p_win_class.hInstance, nullptr);
 
   // Initialize Direct3D
-  g_reg()->ctx().emplace<std::shared_ptr<win::d3d_device>>(std::make_shared<win::d3d_device>(p_hwnd));
+  p_i->d3d_attr = g_reg()->ctx().emplace<std::shared_ptr<win::d3d_device>>(std::make_shared<win::d3d_device>(p_hwnd));
 
   // Show the window
   ::ShowWindow(p_hwnd, SW_SHOWDEFAULT);
@@ -120,9 +119,8 @@ void doodle_main_app::post_constructor() {
 
   // Setup Platform/Renderer backends
   ImGui_ImplWin32_Init(p_hwnd);
-  ImGui_ImplDX11_Init(d3d_deve->g_pd3dDevice, d3d_deve->g_pd3dDeviceContext);
-  d3dDevice        = d3d_deve->g_pd3dDevice;
-  d3dDeviceContext = d3d_deve->g_pd3dDeviceContext;
+  ImGui_ImplDX11_Init(p_i->d3d_attr->g_pd3dDevice, p_i->d3d_attr->g_pd3dDeviceContext);
+
   /// 启用文件拖拽
   DragAcceptFiles(p_hwnd, true);
   /// \brief 注册拖放对象
@@ -160,17 +158,23 @@ void doodle_main_app::post_constructor() {
   }
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
+    auto l_op = g_reg()->ctx().at<program_options_ptr>();
     /// 在这里我们加载项目
-    load_project(doodle_main_app::Get().options_ && !doodle_main_app::Get().options_->p_project_path.empty() ? doodle_main_app::Get().options_->p_project_path : core_set::get_set().project_root[0]);
+    load_project(
+        l_op &&
+                !l_op->p_project_path.empty()
+            ? l_op->p_project_path
+            : core_set::get_set().project_root[0]
+    );
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
 
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
   /// \brief 设置窗口句柄处理
-  gui::main_proc_handle::get().win_close = []() {
+  g_reg()->ctx().at<gui::main_proc_handle>().win_close = []() {
     make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
   };
-  gui::main_proc_handle::get().win_destroy = [=]() {
+  g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
   };
 
@@ -268,8 +272,8 @@ void doodle_main_app::tick_end() {
       clear_color.z * clear_color.w,
       clear_color.w};
 
-  d3d_deve->g_pd3dDeviceContext->OMSetRenderTargets(1, &d3d_deve->g_mainRenderTargetView, nullptr);
-  d3d_deve->g_pd3dDeviceContext->ClearRenderTargetView(d3d_deve->g_mainRenderTargetView, clear_color_with_alpha);
+   p_i->d3d_attr->g_pd3dDeviceContext->OMSetRenderTargets(1, & p_i->d3d_attr->g_mainRenderTargetView, nullptr);
+   p_i->d3d_attr->g_pd3dDeviceContext->ClearRenderTargetView( p_i->d3d_attr->g_mainRenderTargetView, clear_color_with_alpha);
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
@@ -278,7 +282,7 @@ void doodle_main_app::tick_end() {
     ImGui::RenderPlatformWindowsDefault();
   }
 
-  d3d_deve->g_pSwapChain->Present(1, 0);  // Present with vsync
+   p_i->d3d_attr->g_pSwapChain->Present(1, 0);  // Present with vsync
                                           // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 

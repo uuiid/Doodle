@@ -36,8 +36,8 @@
  */
 
 extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-  doodle::doodle_main_app app{doodle::doodle_main_app::in_gui_arg{
-      doodle::doodle_main_app::in_app_args{hInstance, strCmdLine},
+  doodle::main_app app{doodle::main_app::in_gui_arg{
+      doodle::main_app::in_app_args{hInstance, strCmdLine},
       nCmdShow, nullptr}};
   try {
     return app.run();

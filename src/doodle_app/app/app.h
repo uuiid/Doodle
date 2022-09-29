@@ -32,8 +32,6 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
 
   ~doodle_main_app() override;
   win::wnd_handle p_hwnd;
-  ::ID3D11Device* d3dDevice;
-  ::ID3D11DeviceContext* d3dDeviceContext;
 
   static doodle_main_app& Get();
   bool valid() const override;

@@ -83,10 +83,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
   switch (msg) {
     case WM_SIZE: {
-      if (d3d_device::Get().g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
-        d3d_device::Get().CleanupRenderTarget();
-        d3d_device::Get().g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-        d3d_device::Get().CreateRenderTarget();
+      if (g_reg()->ctx().at<d3d_device_ptr>()->g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
+        g_reg()->ctx().at<d3d_device_ptr>()->CleanupRenderTarget();
+        g_reg()->ctx().at<d3d_device_ptr>()->g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
+        g_reg()->ctx().at<d3d_device_ptr>()->CreateRenderTarget();
       }
       return 0;
     }

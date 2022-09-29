@@ -21,6 +21,7 @@ target_sources(doodle_lib
         all_user_view_widget.h
         maya_tool.h
         create_video.h
+        database_edit.h
 
 
         PRIVATE
@@ -40,6 +41,7 @@ target_sources(doodle_lib
         all_user_view_widget.cpp
         maya_tool.cpp
         create_video.cpp
+        database_edit.cpp
 
         )
 

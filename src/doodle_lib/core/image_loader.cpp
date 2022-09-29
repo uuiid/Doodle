@@ -135,7 +135,7 @@ std::shared_ptr<void> image_loader::error_image() const {
 }
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
   // 获得全局GPU渲染对象
-  auto k_g = doodle_main_app::Get().d3dDevice;
+  auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
   if (convert_toRGBA)
     /// \brief 转换图像
     cv::cvtColor(in_mat, in_mat, cv::COLOR_BGR2RGBA);

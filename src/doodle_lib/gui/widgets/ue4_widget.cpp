@@ -52,8 +52,9 @@ ue4_widget::ue4_widget()
 ue4_widget::~ue4_widget() = default;
 
 void ue4_widget::init() {
-  p_i->ue4_prj.data    = app::Get().options_->p_ue4Project;
-  p_i->ue4_prj.path    = app::Get().options_->p_ue4Project;
+  auto l_opt           = g_reg()->ctx().at<program_options_ptr>();
+  p_i->ue4_prj.data    = l_opt->p_ue4Project;
+  p_i->ue4_prj.path    = l_opt->p_ue4Project;
   p_i->ue4_content_dir = p_i->ue4_prj.path.parent_path() / doodle_config::ue4_content.data();
   g_reg()->ctx().emplace<ue4_widget &>(*this);
 }
@@ -105,7 +106,7 @@ void ue4_widget::render() {
   /// 开始导入
   if (ImGui::Button(*p_i->import_)) {
     this->import_ue4_prj();
-    app::Get().stop_app();
+    doodle_main_app::Get().stop_app();
   }
 }
 void ue4_widget::import_ue4_prj() {
@@ -119,7 +120,8 @@ void ue4_widget::import_ue4_prj() {
       }) |
       ranges::to_vector;
   /// \brief 导出前清除目录
-  FSys::path l_out_path = app::Get().options_->p_ue4outpath;
+  auto l_opt            = g_reg()->ctx().at<program_options_ptr>();
+  FSys::path l_out_path = l_opt->p_ue4outpath;
   if (FSys::exists(l_out_path))
     for (auto &l_p : FSys::directory_iterator{l_out_path}) {
       if (FSys::is_regular_file(l_p))
@@ -196,8 +198,8 @@ void ue4_widget::plan_file_path(const FSys::path &in_path) {
   }
   l_group.world_path    = l_group.set_level_dir(l_h, fmt::format("{}", core_set::get_set().organization_name.front()));
   l_group.level_path    = l_group.set_level_dir(l_h, fmt::format("lev_{}", core_set::get_set().organization_name.front()));
-
-  FSys::path l_out_path = app::Get().options_->p_ue4outpath;
+  auto l_opt            = g_reg()->ctx().at<program_options_ptr>();
+  FSys::path l_out_path = l_opt->p_ue4outpath;
   if (!FSys::exists(l_out_path)) {
     FSys::create_directories(l_out_path);
   }

@@ -7,12 +7,10 @@
 
 namespace doodle::gui {
 
-class DOODLE_APP_API main_proc_handle : public details::no_copy {
-  main_proc_handle();
-
+class DOODLE_APP_API main_proc_handle {
  public:
+  main_proc_handle();
   virtual ~main_proc_handle();
-  static main_proc_handle& get();
 
   std::function<void()> win_destroy{[]() {}};
   std::function<void()> win_close{[]() {}};

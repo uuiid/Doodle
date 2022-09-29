@@ -109,6 +109,7 @@ void close_exit_dialog::set_attr() const {
 close_exit_dialog::close_exit_dialog()
     : p_i(std::make_unique<impl>()) {
 }
+close_exit_dialog::~close_exit_dialog() = default;
 const std::string& close_exit_dialog::title() const {
   return p_i->title;
 }

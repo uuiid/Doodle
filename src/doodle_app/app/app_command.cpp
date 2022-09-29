@@ -15,7 +15,7 @@
 #include <boost/locale.hpp>
 namespace doodle {
 void app_command_base::post_constructor() {
-  auto l_opt = g_reg()->ctx().at<program_options_ptr>() = std::make_shared<program_options_ptr::element_type>();
+  auto l_opt = g_reg()->ctx().at<program_options_ptr>();
   if (std::holds_alternative<win::string_type>(cmd_str)) {
     l_opt->command_line_parser(
         boost::program_options::split_winmain(boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
