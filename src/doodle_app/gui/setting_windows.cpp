@@ -74,8 +74,9 @@ void setting_windows::save() {
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  p_i->p_user.data                     = g_reg()->ctx().at<user>().get_name();
-  p_i->user_uuid                       = fmt::format("用户id: {}", user::get_current_handle().get<database>().uuid());
+  auto l_user                          = user::get_current_handle();
+  p_i->p_user.data                     = l_user.get<user>().get_name();
+  p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
 
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
