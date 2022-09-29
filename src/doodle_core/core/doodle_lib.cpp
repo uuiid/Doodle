@@ -58,7 +58,7 @@ doodle_lib::doodle_lib()
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  ptr->reg->ctx().emplace<database_info>();
+  ptr->reg->ctx().emplace<database_info>().path_ = ":memory:"s;
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
   ptr->reg->ctx().emplace<user>("user"s);
