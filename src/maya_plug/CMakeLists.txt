@@ -38,7 +38,10 @@ if (DEFINED Maya_Version)
                 RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
                 )
-        target_link_libraries(doodle_maya PRIVATE doodle_lib
+        target_link_libraries(doodle_maya
+                PRIVATE
+                doodle_core
+                doodle_app
                 maya::maya_all
                 Qt5::Core
                 Qt5::Widgets

@@ -46,6 +46,6 @@ class image_icon;
 
 class strand_gui;
 
-using program_options_ptr = std::shared_ptr<program_options>;
+
 
 }  // namespace doodle

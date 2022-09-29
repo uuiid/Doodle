@@ -60,6 +60,8 @@ target_link_libraries(doodle_lib
         PRIVATE
         doodle_dingding
         DoodleLibResourceFont
+        Eigen3::Eigen
+
 )
 target_compile_definitions(doodle_lib
         PUBLIC

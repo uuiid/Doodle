@@ -87,5 +87,5 @@ class DOODLELIB_API program_options {
   };
   bool command_line_parser(const std::vector<std::string>& in_arg);
 };
-
+using program_options_ptr = std::shared_ptr<program_options>;
 }  // namespace doodle

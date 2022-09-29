@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include <doodle_lib/core/app_command_base.h>
+#include <doodle_app/app/app_command.h>
 
 namespace doodle {
 /**
@@ -131,7 +131,7 @@ namespace doodle {
  *
  *
  */
-class DOODLELIB_API app : public app_command_base {
+class DOODLE_APP_API app : public app_command_base {
  protected:
   win::wnd_class p_win_class;
 
