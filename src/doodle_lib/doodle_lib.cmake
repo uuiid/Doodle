@@ -3,7 +3,6 @@ set(
         core/ContainerDevice.h
         core/filesystem_extend.h
         core/observable_container.h
-        core/program_options.h
         core/util.h
         core/image_loader.h
         core/authorization.h
@@ -25,7 +24,6 @@ set(
 set(
         DOODLELIB_SOURCE
         core/filesystem_extend.cpp
-        core/program_options.cpp
         core/util.cpp
         core/image_loader.cpp
         core/authorization.cpp

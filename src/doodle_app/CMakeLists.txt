@@ -10,8 +10,17 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/..
 )
 
+
+target_sources(
+        doodle_app
+        PUBLIC
+        doodle_app_fwd.h
+)
+
 add_subdirectory(app)
 add_subdirectory(configure)
+
+
 
 # 连接库
 target_link_libraries(

@@ -19,7 +19,7 @@
 #include <doodle_lib/gui/main_proc_handle.h>
 #include <doodle_lib/gui/get_input_dialog.h>
 
-#include <doodle_lib/core/program_options.h>
+#include <doodle_app/app/program_options.h>
 #include <doodle_lib/lib_warp/icon_font_macro.h>
 
 #include <implot.h>

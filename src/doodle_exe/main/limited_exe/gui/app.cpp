@@ -7,7 +7,7 @@
 #include <doodle_lib/gui/main_menu_bar.h>
 #include <doodle_lib/gui/main_status_bar.h>
 
-#include <doodle_lib/core/program_options.h>
+#include <doodle_app/app/program_options.h>
 
 #include <gui/window.h>
 #include <doodle_lib/doodle_lib_all.h>
