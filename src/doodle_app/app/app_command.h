@@ -20,14 +20,15 @@ class DOODLE_APP_API app_command_base : public app_base {
   void load_back_end() override;
   virtual bool chick_authorization();
 
+  std::optional<FSys::path> find_authorization_file() const;
+  bool chick_build_time() const;
+
  public:
   explicit app_command_base(const app_base::in_app_args& in_instance);
 
   static app_command_base& Get();
   //    std::vector<std::string> l_str{argv, argv + argc};
 
-  bool chick_authorization(const FSys::path& in_path);
-  program_options_ptr options_;
 
  protected:
   virtual void post_constructor() override;
