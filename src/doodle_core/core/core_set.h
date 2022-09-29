@@ -96,7 +96,7 @@ class DOODLE_CORE_API core_set_init {
   core_set_init();
 
   bool find_maya();
-  bool read_file();
+  void read_file();
   bool write_file();
   bool config_to_user();
 };

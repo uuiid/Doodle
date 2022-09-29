@@ -164,7 +164,7 @@ bool core_set_init::find_maya() {
   return false;
 }
 
-bool core_set_init::read_file() {
+void core_set_init::read_file() {
   FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
   DOODLE_LOG_INFO("读取配置文件 {}", l_k_setting_file_name);
   if (FSys::exists(l_k_setting_file_name)) {
@@ -177,14 +177,13 @@ bool core_set_init::read_file() {
       if (p_set.json_data->at("setting").contains("user_")) {
         g_reg()->ctx().at<user>().set_name(p_set.json_data->at("setting").at("user_").get<std::string>());
       }
-
     } catch (const nlohmann::json::parse_error &err) {
       DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
-      return false;
     }
-    return true;
   }
-  return false;
+  if (p_set.user_id.is_nil())
+    p_set.user_id = p_set.get_uuid();
+  return true;
 }
 bool core_set_init::write_file() {
   DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
