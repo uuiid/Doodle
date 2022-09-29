@@ -545,7 +545,7 @@ void edit_widgets::init() {
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
   p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<assets_file_edit>());
-  p_i->p_edit.emplace_back("文件编辑"s, std::make_unique<edit_user>());
+  p_i->p_edit.emplace_back("用户编辑"s, std::make_unique<edit_user>());
   p_i->p_edit.emplace_back("备注"s, std::make_unique<command_edit>());
   p_i->p_edit.emplace_back("等级"s, std::make_unique<importance_edit>());
   auto *l_edit     = p_i->p_edit.emplace_back("资产类别"s, std::make_unique<assets_edit>()).data.get();

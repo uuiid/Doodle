@@ -19,7 +19,7 @@ void main_app::load_windows() {
   g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = [=]() {
     ::DestroyWindow(p_hwnd);
   };
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::layout_window>();
+  g_reg()->ctx().at<gui::layout_tick>()  = std::make_shared<gui::layout_window>();
   make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::menu_bar>();
   make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
 }

@@ -23,6 +23,9 @@ class app_base::impl {
   std::recursive_mutex mutex_{};
   void tick() {
     std::lock_guard l_g{mutex_};
+    auto l_lay =
+        g_reg()->ctx().find<gui::detail::layout_tick>();
+    if (l_lay && *l_lay) (*l_lay)->tick();
 
     std::vector<entt::entity> delete_entt{};
     for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {

@@ -58,6 +58,7 @@ doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
   p_i->parent    = in_arg.in_parent;
   p_i->show_enum = in_arg.show_enum;
   g_reg()->ctx().emplace<gui::main_proc_handle>();
+  g_reg()->ctx().emplace<gui::detail::layout_tick>();
 }
 
 void doodle_main_app::post_constructor() {
@@ -171,7 +172,6 @@ void doodle_main_app::post_constructor() {
 
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
 
-
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
@@ -266,8 +266,8 @@ void doodle_main_app::tick_end() {
       clear_color.z * clear_color.w,
       clear_color.w};
 
-   p_i->d3d_attr->g_pd3dDeviceContext->OMSetRenderTargets(1, & p_i->d3d_attr->g_mainRenderTargetView, nullptr);
-   p_i->d3d_attr->g_pd3dDeviceContext->ClearRenderTargetView( p_i->d3d_attr->g_mainRenderTargetView, clear_color_with_alpha);
+  p_i->d3d_attr->g_pd3dDeviceContext->OMSetRenderTargets(1, &p_i->d3d_attr->g_mainRenderTargetView, nullptr);
+  p_i->d3d_attr->g_pd3dDeviceContext->ClearRenderTargetView(p_i->d3d_attr->g_mainRenderTargetView, clear_color_with_alpha);
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
@@ -276,8 +276,8 @@ void doodle_main_app::tick_end() {
     ImGui::RenderPlatformWindowsDefault();
   }
 
-   p_i->d3d_attr->g_pSwapChain->Present(1, 0);  // Present with vsync
-                                          // g_pSwapChain->Present(0, 0); // Present without vsync
+  p_i->d3d_attr->g_pSwapChain->Present(1, 0);  // Present with vsync
+                                               // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 
 }  // namespace doodle

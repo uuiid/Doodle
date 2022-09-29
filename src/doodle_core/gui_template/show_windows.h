@@ -24,6 +24,13 @@ class DOODLE_CORE_API windows_render_interface
   [[nodiscard("Back to Window Title")]] virtual const std::string& title() const = 0;
 };
 
+class DOODLE_CORE_API layout_tick_interface
+    : public windows_tick_interface {
+ public:
+};
+
 using windows_tick   = std::shared_ptr<windows_tick_interface>;
 using windows_render = std::shared_ptr<windows_render_interface>;
+using layout_tick    = std::shared_ptr<layout_tick_interface>;
+
 }  // namespace doodle::gui::detail
