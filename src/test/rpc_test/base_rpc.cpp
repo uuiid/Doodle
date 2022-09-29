@@ -6,3 +6,6 @@
 #define BOOST_TEST_MODULE rpc
 
 #include <boost/test/unit_test.hpp>
+
+struct loop_rpc : lib_fixtures {
+};
