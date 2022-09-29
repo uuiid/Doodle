@@ -422,6 +422,7 @@ void file_panel::button_ok() {
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
     ImGui::CloseCurrentPopup();
+    show_attr = false;
   }
 }
 void file_panel::generate_buffer(std::size_t in_index) {

@@ -62,6 +62,7 @@ void create_project_dialog::render() {
         p_i->path
     );
     g_reg()->ctx().at<project>() = p_i->prj;
+    show_attr = false;
   }
 }
 
@@ -100,6 +101,7 @@ void close_exit_dialog::render() {
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     ImGui::CloseCurrentPopup();
+    show_attr = false;
   }
 }
 void close_exit_dialog::set_attr() const {
