@@ -14,7 +14,7 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <platform/win/get_screenshot.h>
 #include <app/doodle_main_app.h>
-#include <platform/win/wnd_proc.h>
+#include <doodle_app/platform/win/windows_proc.h>
 #include <boost/asio.hpp>
 
 // #include <DirectXTK/ScreenGrab.h>

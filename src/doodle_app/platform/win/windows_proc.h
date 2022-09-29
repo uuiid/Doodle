@@ -9,7 +9,6 @@
 namespace doodle::win {
 
 class d3d_device {
-  static d3d_device* self;
 
  public:
   ID3D11Device* g_pd3dDevice                     = nullptr;
@@ -25,7 +24,6 @@ class d3d_device {
 
   void CreateRenderTarget();
   void CleanupRenderTarget();
-  static d3d_device& Get();
 };
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

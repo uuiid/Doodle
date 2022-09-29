@@ -65,7 +65,7 @@ cv::Mat get_screenshot() {
 }
 #if 0
 std::string get_font_data() {
-  auto dc = ::GetDC(d3d_device::Get().handle_wnd);
+  auto dc = ::GetDC(g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().handle_wnd);
   LOGFONTW logfont{};
   logfont.lfCharSet        = CHINESEBIG5_CHARSET;
   logfont.lfFaceName[0]    = '\0';

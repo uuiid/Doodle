@@ -15,8 +15,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace doodle::win {
 
-d3d_device* d3d_device::self = nullptr;
-
 bool d3d_device::CreateDeviceD3D(HWND hWnd) {
   // Setup swap chain
   DXGI_SWAP_CHAIN_DESC sd;
@@ -146,12 +144,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 d3d_device::d3d_device(wnd_handle const& in_handle) {
   handle_wnd = in_handle;
   CreateDeviceD3D(in_handle);
-  self = this;
 }
 d3d_device::~d3d_device() {
   CleanupDeviceD3D();
 }
-d3d_device& d3d_device::Get() {
-  return *self;
-}
+
 }  // namespace doodle::win

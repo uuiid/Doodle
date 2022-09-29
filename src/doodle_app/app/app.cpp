@@ -79,10 +79,10 @@ void doodle_main_app::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  p_hwnd   = ::CreateWindowExW(0L, p_win_class.lpszClassName, p_title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, p_i->parent, nullptr, p_win_class.hInstance, nullptr);
+  p_hwnd = ::CreateWindowExW(0L, p_win_class.lpszClassName, p_title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, p_i->parent, nullptr, p_win_class.hInstance, nullptr);
 
   // Initialize Direct3D
-  d3d_deve = std::make_shared<win::d3d_device>(p_hwnd);
+  g_reg()->ctx().emplace<std::shared_ptr<win::d3d_device>>(std::make_shared<win::d3d_device>(p_hwnd));
 
   // Show the window
   ::ShowWindow(p_hwnd, SW_SHOWDEFAULT);
@@ -216,6 +216,7 @@ doodle_main_app::~doodle_main_app() {
   ImGui_ImplWin32_Shutdown();
   ImPlot::DestroyContext();
   ImGui::DestroyContext();
+  g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().reset();
 
   ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);

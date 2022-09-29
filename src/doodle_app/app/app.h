@@ -11,7 +11,6 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
  protected:
   win::wnd_class p_win_class;
 
-  std::shared_ptr<win::d3d_device> d3d_deve;
   bool p_show_err;
 
  private:

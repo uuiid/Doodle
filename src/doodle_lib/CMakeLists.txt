@@ -35,6 +35,7 @@ set_target_properties(doodle_lib
 target_link_libraries(doodle_lib
         PUBLIC
         doodle_core
+        doodle_app
         date::date
         date::date-tz
         DoodleLibResource
