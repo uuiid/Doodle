@@ -9,6 +9,8 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
+#include <date/date.h>
+#include <date/tz.h>
 using namespace doodle;
 
 struct loop_fixtures {
@@ -25,8 +27,25 @@ struct loop_fixtures {
 
 BOOST_FIXTURE_TEST_SUITE(fmt_print, loop_fixtures)
 
+BOOST_AUTO_TEST_CASE(date_) {
+  using namespace date::literals;
+  using namespace std::literals;
+  auto l_time_l = date::make_zoned(date::current_zone(), date::local_days{2022_y / 5 / 7_d} + 11h + 46min + 55s);
+  auto l_time_s = date::make_zoned(date::current_zone(), date::sys_days{2022_y / 5 / 7_d} + 11h + 46min + 55s);
+  auto l_time_3 = std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>{l_time_l.get_local_time().time_since_epoch()};
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_l.get_sys_time()) == "2022/05/07 03:46:55"s);
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_s.get_sys_time()) == "2022/05/07 11:46:55"s);
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3) == "2022/05/07 11:46:55"s);
+
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_l.get_sys_time() + 8h) == fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time_l.get_sys_time()));
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_s.get_sys_time() + 8h) == fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time_s.get_sys_time()));
+  BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3 + 8h) == fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time_3));
+}
+
 BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
-  time_point_wrap l_time{2022, 5, 7, 3, 46, 55};
+  time_point_wrap l_time{
+      2022, 5, 7,
+      11, 46, 55};
   BOOST_TEST_MESSAGE(fmt::format("{}", l_time));
   BOOST_TEST(fmt::format("{}", l_time) == "2022-05-07 11:46:55"s);
   BOOST_TEST(fmt::format("{:S}", l_time) == "2022-05-07 03:46:55"s);

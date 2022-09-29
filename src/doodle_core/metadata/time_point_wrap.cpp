@@ -168,10 +168,10 @@ time_point_wrap::operator std::tm() const {
   return l_tm;
 }
 time_point_wrap::time_point time_point_wrap::get_local_point_to_fmt_lib() const {
-  return chrono::clock_cast<chrono::system_clock>(p_i->zoned_time_.get_local_time());
+  return p_i->zoned_time_.get_sys_time();
 }
 time_point_wrap::time_point time_point_wrap::get_sys_point_to_fmt_lib() const {
-  return p_i->zoned_time_.get_sys_time();
+  return p_i->zoned_time_.get_sys_time() - p_i->zoned_time_.get_info().offset;
 }
 
 time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r) {
