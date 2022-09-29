@@ -50,7 +50,7 @@ app_command_base& app_command_base::Get() {
 app_command_base::app_command_base(const app_base::in_app_args& in_instance)
     : app_base(in_instance),
       cmd_str(in_instance.in_cmd_line) {
-  g_reg()->ctx().at<program_options_ptr>() = std::make_shared<program_options_ptr::element_type>();
+  g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
 }
 std::optional<FSys::path> app_command_base::find_authorization_file() const {
   auto l_p = core_set::program_location() / doodle_config::token_name.data();
