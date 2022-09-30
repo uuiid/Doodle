@@ -40,6 +40,7 @@ class DOODLE_CORE_API app_base {
   virtual void tick_end();
 
   virtual void post_constructor() = 0;
+  std::atomic_bool stop_;
 
  public:
   class DOODLE_CORE_API in_app_args {
@@ -67,7 +68,6 @@ class DOODLE_CORE_API app_base {
   std::atomic_bool& stop();
   bool is_stop() const;
   void stop_app(bool in_stop = false);
-  std::atomic_bool stop_;
   virtual bool valid() const;
 
   void load_project(const FSys::path& in_path) const;
