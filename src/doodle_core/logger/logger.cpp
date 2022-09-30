@@ -102,6 +102,7 @@ bool logger_ctrl::set_log_name(const std::string &in_name) {
 logger_ctrl::~logger_ctrl() {
   refresh();
   spdlog::shutdown();
+  spdlog::drop_all();
 }
 bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr) {
   spdlog::get("doodle_lib")->sinks().push_back(in_ptr);
