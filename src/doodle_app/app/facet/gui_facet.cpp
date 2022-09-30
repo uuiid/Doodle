@@ -19,6 +19,7 @@
 #include <gui/get_input_dialog.h>
 
 #include <doodle_app/app/program_options.h>
+#include <doodle_app/app/short_cut.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
 #include <boost/locale.hpp>
 
@@ -56,6 +57,7 @@ const std::string& gui_facet::name() const noexcept {
 }
 void gui_facet::operator()() {
   post_constructor();
+  make_handle().emplace<::doodle::gui::gui_tick>(std::make_shared<gui::short_cut>());
   timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
