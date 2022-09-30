@@ -24,12 +24,8 @@ class DOODLE_CORE_API app_base {
 
   doodle_lib_ptr p_lib;
   std::wstring p_title;
-  win::wnd_instance instance;
   std::map<std::string, app_facet_ptr> facet_list{};
-
- private:
-  class impl;
-  std::unique_ptr<impl> p_i;
+  app_facet_ptr run_facet;
 
   void init();
 
@@ -38,11 +34,6 @@ class DOODLE_CORE_API app_base {
    * @brief 这个会在第一个循环中加载
    *
    */
-  virtual void load_back_end() = 0;
-  virtual void loop_one();
-
-  virtual void tick_begin();
-  virtual void tick_end();
 
   virtual void post_constructor() = 0;
   std::atomic_bool stop_;
@@ -58,6 +49,7 @@ class DOODLE_CORE_API app_base {
   explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
 
+  void set_parent_handle(win::wnd_handle in);
   void add_facet(const app_facet_ptr& in_facet);
 
   /**
@@ -66,16 +58,11 @@ class DOODLE_CORE_API app_base {
    */
   virtual std::int32_t run();
 
-  virtual void begin_loop();
-
   virtual std::int32_t poll_one();
 
   virtual void clear_loop();
-
   std::atomic_bool& stop();
-  bool is_stop() const;
   void stop_app(bool in_stop = false);
-  virtual bool valid() const;
 
   void load_project(const FSys::path& in_path) const;
 

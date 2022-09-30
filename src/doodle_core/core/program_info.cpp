@@ -3,8 +3,23 @@
 //
 
 #include "program_info.h"
+#include <doodle_core/core/app_base.h>
+namespace doodle::core {
+const std::atomic_bool& program_info::stop_attr() const {
+  return is_stop;
+}
+win::wnd_instance program_info::handle_attr() const {
+  return handle_;
+}
+win::wnd_handle program_info::parent_windows_attr() const {
+  return parent_handle_;
+}
 
-namespace doodle {
-namespace core {
-}  // namespace core
-}  // namespace doodle
+std::string& program_info::title_attr() {
+  return title;
+}
+void program_info::title_attr(const std::string& in_str) {
+  title = in_str;
+}
+
+}  // namespace doodle::core

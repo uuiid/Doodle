@@ -3,8 +3,41 @@
 //
 
 #pragma once
+#include <doodle_app/doodle_app_fwd.h>
+
+#include <doodle_core/core/app_facet.h>
+#include <boost/asio/high_resolution_timer.hpp>
+#include <doodle_core/doodle_core.h>
 namespace doodle::facet {
 
-class gui_facet {
+class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
+  std::string name_attr;
+  boost::asio::high_resolution_timer timer_;
+
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ protected:
+  virtual void loop_one();
+  virtual void tick_begin();
+  virtual void tick();
+  virtual void tick_end();
+
+  win::wnd_handle p_hwnd;
+  win::wnd_class p_win_class;
+  void post_constructor();
+
+  virtual void load_windows() = 0;
+
+ public:
+  gui_facet();
+  virtual ~gui_facet() override;
+
+  virtual void show_windows() const;
+  virtual void close_windows() const;
+  void set_title(const std::string& in_title) const;
+  [[nodiscard]] const std::string& name() const noexcept override;
+  void operator()() override;
+  void deconstruction() override;
 };
 }  // namespace doodle::facet

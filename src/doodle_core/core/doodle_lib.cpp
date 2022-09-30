@@ -7,6 +7,7 @@
 #include <date/tz.h>
 #include <logger/logger.h>
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/core/program_info.h>
 #include <exception/exception.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
@@ -62,6 +63,7 @@ doodle_lib::doodle_lib()
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
   ptr->reg->ctx().emplace<user::current_user>();
+  ptr->reg->ctx().emplace<program_info>();
 
   auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
   ptr->reg->ctx().emplace<status_info>();

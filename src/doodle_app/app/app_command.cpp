@@ -10,12 +10,17 @@
 
 #include <doodle_core/core/init_register.h>
 #include <doodle_app/app/program_options.h>
+#include <doodle_core/core/app_facet.h>
 
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
 namespace doodle {
 void app_command_base::post_constructor() {
   auto l_opt = g_reg()->ctx().at<program_options_ptr>();
+  load_facet();
+  for (auto&& [key, val] : facet_list)
+    l_opt->build_opt(key);
+
   if (std::holds_alternative<win::string_type>(cmd_str)) {
     l_opt->command_line_parser(
         boost::program_options::split_winmain(boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
@@ -27,14 +32,15 @@ void app_command_base::post_constructor() {
   if (!chick_authorization())
     stop_app();
 
-  auto& set = core_set::get_set();
-  DOODLE_LOG_INFO("初始化gui日志");
-  logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
+  for (auto&& [key, val] : l_opt->facet_model) {
+    if (val) {
+      DOODLE_LOG_INFO("开始运行 {} facet", key);
+      run_facet = facet_list[key];
 
-  if (l_opt->p_help || l_opt->p_version) {
-    boost::asio::post(g_io_context(), []() {
-      app_command_base::Get().stop_app();
-    });
+      boost::asio::post(g_io_context(), [l_f = facet_list[key]]() {
+        (*l_f)();
+      });
+    }
   }
 }
 
@@ -42,7 +48,7 @@ bool app_command_base::chick_authorization() {
   return chick_build_time();
 }
 
-void app_command_base::load_back_end() {}
+
 
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));
@@ -67,5 +73,7 @@ bool app_command_base::chick_build_time() const {
   chrono::sys_time_pos l_point{l_build_time_};
   l_point += chrono::months{3};
   return chrono::system_clock::now() < l_point;
+}
+void app_command_base::load_facet() {
 }
 }  // namespace doodle

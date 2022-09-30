@@ -9,17 +9,12 @@
 namespace doodle {
 class DOODLE_APP_API doodle_main_app : public app_command_base {
  protected:
-  win::wnd_class p_win_class;
 
   bool p_show_err;
 
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-
- protected:
-  virtual void tick_begin() override;
-  virtual void tick_end() override;
 
  public:
   class in_gui_arg : public app_base::in_app_args {
@@ -31,10 +26,9 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
   explicit doodle_main_app(const in_gui_arg& in_arg);
 
   ~doodle_main_app() override;
-  win::wnd_handle p_hwnd;
+
 
   static doodle_main_app& Get();
-  bool valid() const override;
 
   void set_title(const std::string& in_title);
 
@@ -43,7 +37,7 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
 
  protected:
   virtual void load_windows() = 0;
-  void load_back_end() override;
+
   virtual bool chick_authorization() override;
   virtual void post_constructor() override;
 };

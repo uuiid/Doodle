@@ -17,8 +17,9 @@ class DOODLE_APP_API app_command_base : public app_base {
  protected:
   cmd_string_type cmd_str;
 
-  void load_back_end() override;
+
   virtual bool chick_authorization();
+  virtual void load_facet();
 
   std::optional<FSys::path> find_authorization_file() const;
   bool chick_build_time() const;
@@ -28,7 +29,6 @@ class DOODLE_APP_API app_command_base : public app_base {
 
   static app_command_base& Get();
   //    std::vector<std::string> l_str{argv, argv + argc};
-
 
  protected:
   virtual void post_constructor() override;

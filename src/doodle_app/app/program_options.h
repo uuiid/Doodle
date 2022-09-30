@@ -21,7 +21,7 @@ class DOODLE_APP_API program_options {
   bool p_version;
 
   std::vector<std::string> p_arg;
-  bool rpc_json_server_attr{};
+  std::map<std::string, bool> facet_model;
 
  private:
   static constexpr char input_project[] = "input_project";
@@ -31,7 +31,7 @@ class DOODLE_APP_API program_options {
   static constexpr char config_file[]   = "config_file";
   static constexpr char ue4outpath[]    = "ue4outpath";
   static constexpr char ue4Project[]    = "ue4Project";
-  static constexpr char rpc_server[]    = "rpc_server";
+
   /**
    * @brief 所有选项， 命令行选项
    *
@@ -69,6 +69,7 @@ class DOODLE_APP_API program_options {
  public:
   program_options();
 
+  void build_opt(const std::string& in_name_face);
   /**
    * @brief 解析命令行
    *

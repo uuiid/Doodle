@@ -50,13 +50,11 @@ program_options::program_options()
       boost::program_options::value(&p_ue4Project),
       "ue4项目路径"
   );
-
-  p_opt_advanced.add_options()(rpc_server, boost::program_options::value(&rpc_json_server_attr), "启动服务模式");
-
-  p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
-  p_opt_file.add(p_opt_gui).add(p_opt_advanced);
 }
 bool program_options::command_line_parser(const std::vector<std::string>& in_arg) {
+  p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
+  p_opt_file.add(p_opt_gui).add(p_opt_advanced);
+
   p_arg = in_arg;
   DOODLE_LOG_INFO("开始解析命令行 {}", fmt::join(in_arg, "\n"));
   boost::program_options::command_line_parser k_p{in_arg};
@@ -109,6 +107,13 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
     DOODLE_LOG_WARN("版本 {}", version::build_info::get().version_str);
 
   return true;
+}
+void program_options::build_opt(const std::string& in_name_face) {
+  p_opt_advanced.add_options()(
+      in_name_face.c_str(),
+      boost::program_options::value(&facet_model[in_name_face]),
+      fmt::format("启动 {} 模式", in_name_face).c_str()
+  );
 };
 
 }  // namespace doodle
