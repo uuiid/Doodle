@@ -31,8 +31,11 @@ void app_command_base::post_constructor() {
   DOODLE_LOG_INFO("初始化gui日志");
   logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
 
-  if (l_opt->p_help || l_opt->p_version)
-    stop_app();
+  if (l_opt->p_help || l_opt->p_version) {
+    boost::asio::post(g_io_context(), []() {
+      app_command_base::Get().stop_app();
+    });
+  }
 }
 
 bool app_command_base::chick_authorization() {
