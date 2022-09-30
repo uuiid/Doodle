@@ -14,6 +14,8 @@
 
 #include <boost/locale.hpp>
 #include <boost/asio.hpp>
+
+#include <doodle_core/core/app_facet.h>
 namespace doodle {
 
 class app_base::impl {
@@ -165,5 +167,8 @@ void app_base::loop_one() {
 }
 void app_base::tick_begin() {}
 void app_base::tick_end() {}
+void app_base::add_facet(const app_facet_ptr& in_facet) {
+  facet_list.emplace_back(in_facet);
+}
 
 }  // namespace doodle

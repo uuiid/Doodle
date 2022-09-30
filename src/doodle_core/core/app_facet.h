@@ -6,8 +6,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle {
-namespace detail {
+namespace doodle::detail {
 class DOODLE_CORE_API app_facet_interface {
  public:
   virtual ~app_facet_interface()                   = default;
@@ -29,5 +28,4 @@ class DOODLE_CORE_API app_facet_interface {
   virtual void deconstruction()                    = 0;
 };
 
-}  // namespace detail
 }  // namespace doodle

@@ -11,9 +11,13 @@ namespace doodle {
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
 
+namespace detail {
+class app_facet;
+}  // namespace detail
 class DOODLE_CORE_API app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
+  using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet>;
 
  protected:
   static app_base* self;
@@ -21,6 +25,7 @@ class DOODLE_CORE_API app_base {
   doodle_lib_ptr p_lib;
   std::wstring p_title;
   win::wnd_instance instance;
+  std::vector<app_facet_ptr> facet_list{};
 
  private:
   class impl;
@@ -52,6 +57,8 @@ class DOODLE_CORE_API app_base {
   explicit app_base();
   explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
+
+  void add_facet(const app_facet_ptr& in_facet);
 
   /**
    * @brief 直接使用默认配置运行
