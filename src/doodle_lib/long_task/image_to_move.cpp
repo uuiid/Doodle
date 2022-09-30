@@ -227,6 +227,8 @@ void image_to_move::aborted() {
 image_to_move::image_to_move()
     : p_i(std::make_unique<impl>()) {
 }
+void image_to_move::create_move(const entt::handle &in_handle, const std::vector<image_file_attribute> &in_vector) {
+}
 
 }  // namespace details
 image_watermark::image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, cv::Scalar in_rgba)
