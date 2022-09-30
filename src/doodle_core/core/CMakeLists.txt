@@ -14,6 +14,7 @@ target_sources(
         app_base.h
         core_sql.h
         util.h
+        app_facet.h
 
         PRIVATE
         core_set.cpp
@@ -26,4 +27,5 @@ target_sources(
         app_base.cpp
         core_sql.cpp
         util.cpp
+        app_facet.cpp
 )
