@@ -4,13 +4,17 @@
 
 #include "app_command.h"
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/program_info.h>
+#include <doodle_core/gui_template/show_windows.h>
+
+#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/thread_pool/thread_pool.h>
 
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/app_facet.h>
 
+#include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/app/program_options.h>
 #include <doodle_app/app/facet/gui_facet.h>
 
@@ -36,9 +40,6 @@ void app_command_base::post_constructor() {
       DOODLE_LOG_INFO("开始运行 {} facet", key);
       run_facet = facet_list[key];
       g_reg()->ctx().emplace<app_facet_ptr>(facet_list[key]);
-      boost::asio::post(g_io_context(), [l_f = facet_list[key]]() {
-        (*l_f)();
-      });
       break;
     }
   }
@@ -46,6 +47,9 @@ void app_command_base::post_constructor() {
   if (!g_reg()->ctx().contains<doodle::app_facet_ptr>()) {
     g_reg()->ctx().emplace<app_facet_ptr>(run_facet);
   }
+  boost::asio::post(g_io_context(), [l_f = run_facet]() {
+    (*l_f)();
+  });
 }
 
 bool app_command_base::chick_authorization() {

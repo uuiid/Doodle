@@ -61,6 +61,8 @@ void gui_facet::operator()() {
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted)
       return;
+    if (g_reg()->ctx().at<::doodle::program_info>().stop_attr())
+      return;
     this->loop_one();  /// \brief 各种
     this->tick_begin();
     this->tick();      /// 渲染
@@ -75,6 +77,16 @@ void gui_facet::operator()() {
   timer_.async_wait(s_fun);
 }
 void gui_facet::deconstruction() {
+  // Cleanup
+  ImGui_ImplDX11_Shutdown();
+  ImGui_ImplWin32_Shutdown();
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
+  g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().reset();
+
+  ::RevokeDragDrop(p_hwnd);
+  ::DestroyWindow(p_hwnd);
+  ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
 gui_facet::gui_facet()
     : name_attr("gui_windows"),
@@ -295,11 +307,11 @@ void gui_facet::post_constructor() {
   g_reg()->ctx().at<core_sig>().project_end_open.connect(s_set_title_fun);
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
 }
-void gui_facet::close_windows() const {
-  doodle::app_base::Get().stop_app();
-  boost::asio::post([l_hwnd = p_hwnd]() {
+void gui_facet::close_windows() {
+  boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
+    doodle::app_base::Get().stop_app();
   });
 }
 void gui_facet::show_windows() const {
@@ -311,16 +323,5 @@ void gui_facet::set_title(const std::string& in_title) const {
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
-gui_facet::~gui_facet() {
-  // Cleanup
-  ImGui_ImplDX11_Shutdown();
-  ImGui_ImplWin32_Shutdown();
-  ImPlot::DestroyContext();
-  ImGui::DestroyContext();
-  g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().reset();
-
-  ::RevokeDragDrop(p_hwnd);
-  ::DestroyWindow(p_hwnd);
-  ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
-}
+gui_facet::~gui_facet() = default;
 }  // namespace doodle::facet

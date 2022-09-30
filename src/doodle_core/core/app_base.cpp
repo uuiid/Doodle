@@ -27,7 +27,7 @@ app_base::app_base()
       ))),
       stop_(false),
       p_lib(std::make_shared<doodle_lib>()) {
-  self = this;
+  self                                      = this;
   g_reg()->ctx().at<program_info>().handle_ = ::GetModuleHandleW(nullptr);
   boost::asio::post(g_io_context(), [this]() {
     this->init();
@@ -76,16 +76,23 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
-  run_facet->deconstruction();
-  g_bounded_pool().abort(in_stop);
-  g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
-  core_set_init{}.write_file();
+  boost::asio::post(
+      g_io_context(),
+      [=]() {
+        g_bounded_pool().abort(in_stop);
+        g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
+        run_facet->deconstruction();
+        core_set_init{}.write_file();
 
-  g_reg()->ctx().at<program_info>().is_stop = true;
-  this->stop_                               = true;
+        g_reg()->ctx().at<program_info>().is_stop = true;
+        this->stop_                               = true;
+      }
+  );
+
 }
 
 void app_base::load_project(const FSys::path& in_path) const {
+  boost::ignore_unused(this);
   if (!in_path.empty() &&
       FSys::exists(in_path) &&
       FSys::is_regular_file(in_path) &&
