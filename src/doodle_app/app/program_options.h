@@ -13,7 +13,6 @@ namespace doodle {
 class DOODLE_APP_API program_options {
  public:
   FSys::path p_config_file;
-  std::pair<bool, FSys::path> p_root;
   std::string p_project_path;
   std::string p_ue4outpath;
   std::string p_ue4Project;
@@ -22,17 +21,14 @@ class DOODLE_APP_API program_options {
   bool p_version;
 
   std::vector<std::string> p_arg;
+  bool rpc_json_server_attr{};
 
  private:
   static constexpr char input_project[] = "input_project";
-  static constexpr char help[]          = "help";
   static constexpr char help_[]         = "help,h";
   static constexpr char version[]       = "version";
   static constexpr char version_[]      = "version,v";
   static constexpr char config_file[]   = "config_file";
-  static constexpr char config_file_[]  = "config_file";
-  static constexpr char root[]          = "root";
-  static constexpr char root_[]         = "root";
   static constexpr char ue4outpath[]    = "ue4outpath";
   static constexpr char ue4Project[]    = "ue4Project";
   static constexpr char rpc_server[]    = "rpc_server";

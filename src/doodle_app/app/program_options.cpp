@@ -18,7 +18,6 @@ program_options::program_options()
       p_help(false),
       p_version(false),
       p_config_file(),
-      p_root(std::make_pair(false, "C:/")),
       p_ue4outpath(),
       p_ue4Project() {
   DOODLE_LOG_INFO("开始构建命令行");
@@ -38,24 +37,20 @@ program_options::program_options()
       boost::program_options::value(&p_project_path),
       "初始打开的项目文件"
   )(
-      config_file_,
+      config_file,
       boost::program_options::value(&p_config_file),
       "配置文件的路径"
   )(
       ue4outpath,
-      boost::program_options::value(&p_ue4outpath)->default_value(FSys::temp_directory_path().generic_string()),
+      boost::program_options::value(&p_ue4outpath),
       "导出ue4导入配置文件的路径"
   )(
       ue4Project,
-      boost::program_options::value(&p_ue4Project)->default_value(FSys::temp_directory_path().generic_string()),
+      boost::program_options::value(&p_ue4Project),
       "ue4项目路径"
   );
 
-  p_opt_gui.add_options()(
-      root_,
-      boost::program_options::value(&p_root.second),
-      "数据根目录"
-  );
+  p_opt_advanced.add_options()(rpc_server, boost::program_options::value(&rpc_json_server_attr), "启动服务模式");
 
   p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
   p_opt_file.add(p_opt_gui).add(p_opt_advanced);
@@ -85,7 +80,6 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
     }
   }
 
-  p_root.first = p_vm.count(root);
   boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
 
@@ -106,9 +100,6 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
       p_ue4Project = p_ue4Project.substr(1, p_ue4Project.size() - 2);
     }
   }
-
-  if (!p_config_file.empty())
-    DOODLE_LOG_INFO("配置文件解析为 config_file : {}", p_config_file);
 
   return true;
 };
