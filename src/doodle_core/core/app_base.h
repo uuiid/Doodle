@@ -49,7 +49,6 @@ class DOODLE_CORE_API app_base {
   explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
 
-  void set_parent_handle(win::wnd_handle in);
   void add_facet(const app_facet_ptr& in_facet);
 
   /**

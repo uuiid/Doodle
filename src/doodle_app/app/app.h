@@ -8,14 +8,6 @@
 
 namespace doodle {
 class DOODLE_APP_API doodle_main_app : public app_command_base {
- protected:
-
-  bool p_show_err;
-
- private:
-  class impl;
-  std::unique_ptr<impl> p_i;
-
  public:
   class in_gui_arg : public app_base::in_app_args {
    public:
@@ -27,18 +19,9 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
 
   ~doodle_main_app() override;
 
-
   static doodle_main_app& Get();
 
-  void set_title(const std::string& in_title);
-
-  virtual void close_windows();
-  virtual void show_windows();
-
  protected:
-  virtual void load_windows() = 0;
-
   virtual bool chick_authorization() override;
-  virtual void post_constructor() override;
 };
 }  // namespace doodle

@@ -30,7 +30,8 @@ class DOODLE_CORE_API program_info {
    * 这个是如果插件使用就会有, 否则一般为空
    * @return
    */
-  [[nodiscard]] win_handle parent_windows_attr() const;
+  [[nodiscard]] win::wnd_handle parent_windows_attr();
+  void parent_windows_attr(win::wnd_handle in_) const;
   std::string& title_attr();
   void title_attr(const std::string& in_str);
 };

@@ -5,9 +5,11 @@
 #pragma once
 #include <doodle_app/doodle_app_fwd.h>
 
-#include <doodle_core/core/app_facet.h>
-#include <boost/asio/high_resolution_timer.hpp>
 #include <doodle_core/doodle_core.h>
+#include <doodle_core/core/app_facet.h>
+
+#include <boost/asio/high_resolution_timer.hpp>
+#include <doodle_core/platform/win/windows_alias.h>
 namespace doodle::facet {
 
 class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
@@ -23,8 +25,8 @@ class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
   virtual void tick();
   virtual void tick_end();
 
-  win::wnd_handle p_hwnd;
-  win::wnd_class p_win_class;
+  ::doodle::win::wnd_handle   p_hwnd;
+  ::doodle::win::wnd_class   p_win_class;
   void post_constructor();
 
   virtual void load_windows() = 0;

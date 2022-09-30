@@ -55,6 +55,7 @@ const std::string& gui_facet::name() const noexcept {
   return name_attr;
 }
 void gui_facet::operator()() {
+  post_constructor();
   timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
@@ -173,9 +174,11 @@ void gui_facet::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  p_hwnd = ::CreateWindowExW(
+  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(g_reg()->ctx().at<program_info>().title_attr());
+  p_hwnd     = ::CreateWindowExW(
       0L,
-      p_win_class.lpszClassName, g_reg()->ctx().at<program_info>().title_attr().c_str(),
+      p_win_class.lpszClassName,
+      l_str.c_str(),
       WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
       g_reg()->ctx().at<program_info>().parent_windows_attr(),
       nullptr,
@@ -308,5 +311,16 @@ void gui_facet::set_title(const std::string& in_title) const {
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
-gui_facet::~gui_facet() = default;
+gui_facet::~gui_facet() {
+  // Cleanup
+  ImGui_ImplDX11_Shutdown();
+  ImGui_ImplWin32_Shutdown();
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
+  g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().reset();
+
+  ::RevokeDragDrop(p_hwnd);
+  ::DestroyWindow(p_hwnd);
+  ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
+}
 }  // namespace doodle::facet
