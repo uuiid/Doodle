@@ -111,7 +111,7 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
 void program_options::build_opt(const std::string& in_name_face) {
   p_opt_advanced.add_options()(
       in_name_face.c_str(),
-      boost::program_options::value(&facet_model[in_name_face]),
+      boost::program_options::bool_switch(&facet_model[in_name_face]),
       fmt::format("启动 {} 模式", in_name_face).c_str()
   );
 };
