@@ -10,4 +10,5 @@ target_sources(doodle_app
         app_command.cpp
         program_options.cpp
         short_cut.cpp
-)
+        )
+add_subdirectory(facet)
