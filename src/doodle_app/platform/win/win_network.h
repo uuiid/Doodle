@@ -3,6 +3,16 @@
 //
 
 #pragma once
-class win_network {
+
+#include <doodle_app/doodle_app_fwd.h>
+
+#include <doodle_core/doodle_core.h>
+
+namespace doodle::win {
+
+class DOODLE_APP_API win_network {
+ public:
+
 };
 
+}  // namespace doodle::win
