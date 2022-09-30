@@ -219,9 +219,9 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
       DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
-      g_bounded_pool().wait<details::image_to_move>(k_msg, l_handle_list);
+      /// @todo 创建同步合成视频需要在这里
     } else {
-      g_bounded_pool().attach<details::image_to_move>(k_msg, l_handle_list);
+      /// @todo 创建视频需要在这里
     }
     DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
     FSys::remove_all(k_f);

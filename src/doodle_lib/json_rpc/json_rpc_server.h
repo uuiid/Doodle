@@ -15,7 +15,7 @@ class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
   virtual ~json_rpc_server() override;
 
   json_rpc::args::rpc_json_progress create_movie(
-      const std::vector<movie::image_attr>& in_arg
+      const create_move_arg& in_arg
   ) override;
 };
 }  // namespace doodle

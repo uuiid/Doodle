@@ -36,12 +36,18 @@ class DOODLELIB_API image_file_attribute {
 };
 namespace details {
 
-class DOODLELIB_API image_to_move : public process_t<image_to_move> {
+class DOODLELIB_API image_to_move {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void create_move(
+      const entt::handle &in_handle,
+      const std::vector<image_file_attribute> &in_vector
+  );
+
  public:
   using base_type = process_t<image_to_move>;
+  image_to_move();
   /**
    * @brief 将传入的图片序列连接为视频
    * @param in_handle 具有消息组件, 和 *输出路径文件夹* 组件的的句柄 可选的 shot， episode 组件
@@ -66,7 +72,41 @@ class DOODLELIB_API image_to_move : public process_t<image_to_move> {
 
   inline static const cv::Scalar rgb_default{25, 220, 2};
 
-  virtual ~image_to_move() override;
+  template <typename CompletionHandler>
+  auto async_create_move(
+      const entt::handle &in_handle,
+      const std::vector<image_file_attribute> &in_vector,
+      CompletionHandler &&in_completion
+  ) {
+    using l_call = std::function<void()>;
+    in_handle.any_of<process_message>() ? void() : throw_exception(doodle_error{"缺失进度指示结构"});
+    in_handle.any_of<FSys::path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
+    std::for_each(
+        std::begin(in_vector), std::end(in_vector), [](const image_file_attribute &in) {
+          exists(in.file_path) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
+        }
+    );
+    in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
+
+    return boost::asio::async_initiate<CompletionHandler, void()>(
+        [this, in_handle, in_vector](auto &&in_completion_handler) {
+          auto l_f = std::make_shared<l_call>(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
+          );
+          boost::asio::post(
+              [this, l_f, in_handle, in_vector]() {
+                this->create_move(in_handle, in_vector);
+                boost::asio::post(g_io_context(), [l_f]() { (*l_f)(); });
+              }
+          );
+        },
+        in_completion
+    );
+  };
+
+
+
+  virtual ~image_to_move();
   [[maybe_unused]] void init();
   [[maybe_unused]] void succeeded();
   [[maybe_unused]] void failed();

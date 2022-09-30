@@ -4,6 +4,7 @@
 #pragma once
 
 #include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/doodle_core_fwd.h>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cmath>
@@ -16,8 +17,6 @@ class DOODLE_CORE_API rpc_json_progress {
   friend void from_json(const nlohmann::json& nlohmann_json_j, rpc_json_progress& nlohmann_json_t);
 
  public:
-  std::string msg_;
-  std::string result_;
-  std::double_t progress_;
+  FSys::path result_;
 };
 }  // namespace doodle::json_rpc::args

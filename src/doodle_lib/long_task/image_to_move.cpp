@@ -137,7 +137,6 @@ void image_to_move::init() {
   l_mag.aborted_function = [self = this]() {
     if (self) {
       self->p_i->stop = true;
-      self->abort();
     }
   };
   l_mag.message(fmt::format("获得图片路径 {}", p_i->p_image.front().file_path.parent_path()));
@@ -192,26 +191,7 @@ void image_to_move::init() {
   };
   p_i->result = std::move(g_thread_pool().enqueue(k_fun));
 }
-void image_to_move::update(
-    const chrono::duration<chrono::system_clock::rep, chrono::system_clock::period> &,
-    void *data
-) {
-  p_i->result.valid() ? void() : throw_exception(doodle_error{"无效的数据"});
-  switch (p_i->result.wait_for(0ns)) {
-    case std::future_status::ready: {
-      try {
-        p_i->result.get();
-        this->succeed();
-      } catch (const doodle_error &error) {
-        DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-        this->fail();
-        throw;
-      }
-    } break;
-    default:
-      break;
-  }
-}
+
 void image_to_move::succeeded() {
   p_i->p_h.patch<process_message>([&](process_message &in) {
     in.set_state(in.success);
@@ -243,6 +223,9 @@ void image_to_move::aborted() {
     });
     throw;
   }
+}
+image_to_move::image_to_move()
+    : p_i(std::make_unique<impl>()) {
 }
 
 }  // namespace details

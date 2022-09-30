@@ -18,13 +18,9 @@ json_rpc_server::json_rpc_server()
 }
 
 json_rpc::args::rpc_json_progress json_rpc_server::create_movie(
-    const std::vector<movie::image_attr>& in_arg
+    const create_move_arg& in_arg
 ) {
-  return json_rpc::args::rpc_json_progress{"test 0.3"s, "test 0.3"s, 0.3};
-  //  json_rpc::args::rpc_json_progress{"test 0.4"s, "test 0.4"s, 0.4};
-  //  json_rpc::args::rpc_json_progress{"test 0.5"s, "test 0.5"s, 0.5};
-  //  json_rpc::args::rpc_json_progress{"test 0.6"s, "test 0.6"s, 0.6};
-  //  json_rpc::args::rpc_json_progress{"test 1.0"s, "test 1.0"s, 1.0};
+  return json_rpc::args::rpc_json_progress{""s};
 }
 
 json_rpc_server::~json_rpc_server() = default;
