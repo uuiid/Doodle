@@ -30,9 +30,6 @@ void app_command_base::post_constructor() {
   auto& set = core_set::get_set();
   DOODLE_LOG_INFO("初始化gui日志");
   logger_ctrl::get_log().set_log_name(fmt::format("doodle_{}.txt", fmt::ptr(GetModuleHandleW(nullptr))));
-  auto& l_set = core_set::get_set();
-  if (l_opt->p_root.first)
-    l_set.set_root(l_opt->p_root.second);
 
   if (l_opt->p_help || l_opt->p_version)
     stop_app();
