@@ -168,7 +168,7 @@ void app_base::loop_one() {
 void app_base::tick_begin() {}
 void app_base::tick_end() {}
 void app_base::add_facet(const app_facet_ptr& in_facet) {
-  facet_list.emplace_back(in_facet);
+  facet_list.insert(in_facet->name(), in_facet);
 }
 
 }  // namespace doodle

@@ -12,12 +12,12 @@ namespace doodle {
  */
 
 namespace detail {
-class app_facet;
+class app_facet_interface;
 }  // namespace detail
 class DOODLE_CORE_API app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
-  using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet>;
+  using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet_interface>;
 
  protected:
   static app_base* self;
@@ -25,7 +25,7 @@ class DOODLE_CORE_API app_base {
   doodle_lib_ptr p_lib;
   std::wstring p_title;
   win::wnd_instance instance;
-  std::vector<app_facet_ptr> facet_list{};
+  std::map<std::string, app_facet_ptr> facet_list{};
 
  private:
   class impl;
