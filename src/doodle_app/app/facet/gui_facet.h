@@ -38,6 +38,7 @@ class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
   virtual void show_windows() const;
   virtual void close_windows();
   void set_title(const std::string& in_title) const;
+
   [[nodiscard]] const std::string& name() const noexcept override;
   void operator()() override;
   void deconstruction() override;
