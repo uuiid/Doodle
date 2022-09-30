@@ -6,7 +6,10 @@
 #include <lib_warp/imgui_warp.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/metadata.h>
+#include <doodle_core/core/app_facet.h>
+
 #include <doodle_app/app/app.h>
+#include <doodle_app/app/facet/gui_facet.h>
 
 #include <utility>
 
@@ -62,7 +65,7 @@ void create_project_dialog::render() {
         p_i->path
     );
     g_reg()->ctx().at<project>() = p_i->prj;
-    show_attr = false;
+    show_attr                    = false;
   }
 }
 
@@ -95,7 +98,14 @@ void close_exit_dialog::render() {
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
     boost::asio::post(g_io_context(), []() {
-      doodle_main_app::Get().close_windows();
+      if (auto l_f = std::dynamic_pointer_cast<::doodle::facet::gui_facet>(
+              g_reg()->ctx().at<::doodle::app_facet_ptr>()
+          );
+          l_f) {
+        l_f->close_windows();
+      } else {
+        app_base::Get().stop_app(true);
+      }
     });
   }
   ImGui::SameLine();

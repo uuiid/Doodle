@@ -9,7 +9,7 @@
 namespace doodle::detail {
 class DOODLE_CORE_API app_facet_interface {
  public:
-  virtual ~app_facet_interface()                   = default;
+  virtual ~app_facet_interface()                                 = default;
 
   /**
    * 返回构面的名称以用来初始化命令行
@@ -20,12 +20,16 @@ class DOODLE_CORE_API app_facet_interface {
   /**
    * 初始化
    */
-  virtual void operator()()                        = 0;
+  virtual void operator()()                                      = 0;
 
   /**
    * 结束清理
    */
-  virtual void deconstruction()                    = 0;
+  virtual void deconstruction()                                  = 0;
 };
 
-}  // namespace doodle
+}  // namespace doodle::detail
+
+namespace doodle{
+using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet_interface>;
+}

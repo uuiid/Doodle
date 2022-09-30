@@ -25,6 +25,9 @@ class DOODLE_CORE_API app_base {
   doodle_lib_ptr p_lib;
   std::wstring p_title;
   std::map<std::string, app_facet_ptr> facet_list{};
+  /**
+   * 此处是正在运行的构面,  同时可以初始化,  作为命令行中没有指定时的后备选项
+   */
   app_facet_ptr run_facet;
 
   void init();

@@ -9,8 +9,10 @@
 #include <doodle_core/thread_pool/thread_pool.h>
 
 #include <doodle_core/core/init_register.h>
-#include <doodle_app/app/program_options.h>
 #include <doodle_core/core/app_facet.h>
+
+#include <doodle_app/app/program_options.h>
+#include <doodle_app/app/facet/gui_facet.h>
 
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
@@ -29,26 +31,26 @@ void app_command_base::post_constructor() {
     l_opt->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
   }
 
-  if (!chick_authorization())
-    stop_app();
-
   for (auto&& [key, val] : l_opt->facet_model) {
     if (val) {
       DOODLE_LOG_INFO("开始运行 {} facet", key);
       run_facet = facet_list[key];
-
+      g_reg()->ctx().emplace<app_facet_ptr>(facet_list[key]);
       boost::asio::post(g_io_context(), [l_f = facet_list[key]]() {
         (*l_f)();
       });
+      break;
     }
+  }
+
+  if (!g_reg()->ctx().contains<doodle::app_facet_ptr>()) {
+    g_reg()->ctx().emplace<app_facet_ptr>(run_facet);
   }
 }
 
 bool app_command_base::chick_authorization() {
   return chick_build_time();
 }
-
-
 
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));

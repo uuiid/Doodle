@@ -11,7 +11,7 @@ const std::atomic_bool& program_info::stop_attr() const {
 ::doodle::win::wnd_instance program_info::handle_attr() const {
   return handle_;
 }
-::doodle::win::wnd_handle program_info::parent_windows_attr() {
+::doodle::win::wnd_handle program_info::parent_windows_attr() const {
   return parent_handle_;
 }
 
@@ -21,7 +21,7 @@ std::string& program_info::title_attr() {
 void program_info::title_attr(const std::string& in_str) {
   title = in_str;
 }
-void program_info::parent_windows_attr(::doodle::win::wnd_handle in_) const {
+void program_info::parent_windows_attr(::doodle::win::wnd_handle in_) {
   parent_handle_ = in_;
 }
 

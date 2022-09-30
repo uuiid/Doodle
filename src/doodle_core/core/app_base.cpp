@@ -76,6 +76,7 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
+  run_facet->deconstruction();
   g_bounded_pool().abort(in_stop);
   g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
   core_set_init{}.write_file();
