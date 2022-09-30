@@ -7,6 +7,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/logger/logger.h>
+#include <doodle_app/lib_warp/boost_fmt_progrm_opt.h>
 
 namespace doodle {
 program_options::program_options()
@@ -100,6 +101,12 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
       p_ue4Project = p_ue4Project.substr(1, p_ue4Project.size() - 2);
     }
   }
+
+  if (p_help) {
+    DOODLE_LOG_WARN("{}", p_opt_all);
+  }
+  if (p_version)
+    DOODLE_LOG_WARN("版本 {}", version::build_info::get().version_str);
 
   return true;
 };
