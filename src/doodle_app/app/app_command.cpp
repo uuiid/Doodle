@@ -79,3 +79,24 @@ bool app_command_base::chick_build_time() const {
 void app_command_base::load_facet() {
 }
 }  // namespace doodle
+
+namespace doodle {
+
+doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
+    : app_command_base(in_arg) {
+  g_reg()->ctx().emplace<gui::main_proc_handle>();
+  g_reg()->ctx().emplace<gui::detail::layout_tick>();
+  auto& l_p = g_reg()->ctx().at<program_info>();
+  l_p.parent_windows_attr(in_arg.in_parent);
+}
+
+doodle_main_app& doodle_main_app::Get() {
+  return *(dynamic_cast<doodle_main_app*>(self));
+}
+bool doodle_main_app::chick_authorization() {
+  return app_command_base::chick_authorization();
+}
+
+doodle_main_app::~doodle_main_app() = default;
+
+}  // namespace doodle

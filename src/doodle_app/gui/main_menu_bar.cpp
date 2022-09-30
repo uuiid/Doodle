@@ -4,7 +4,7 @@
 
 #include "main_menu_bar.h"
 #include <lib_warp/imgui_warp.h>
-#include <doodle_app/app/app.h>
+#include <doodle_app/app/app_command.h>
 
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/gui/get_input_dialog.h>

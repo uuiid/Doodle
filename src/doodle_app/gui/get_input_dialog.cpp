@@ -8,7 +8,7 @@
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/core/app_facet.h>
 
-#include <doodle_app/app/app.h>
+#include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
 
 #include <utility>

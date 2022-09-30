@@ -5,7 +5,7 @@
 
 #pragma once
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_app/app/app.h>
+#include <doodle_app/app/app_command.h>
 namespace doodle {
 class DOODLELIB_API main_app : public doodle_main_app {
  public:
