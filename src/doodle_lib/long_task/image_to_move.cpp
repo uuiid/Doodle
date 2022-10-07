@@ -187,8 +187,19 @@ void image_to_move::create_move(
   auto k_image           = cv::Mat{};
   const auto &k_size_len = l_vector.size();
   for (auto &l_image : l_vector) {
-    if (l_stop)
+    if (l_stop) {
+      in_msg.set_state(in_msg.fail);
+      auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除\n");
+      in_msg.message(k_str, in_msg.warning);
+      try {
+        remove(p_i->p_out_path);
+      } catch (const FSys::filesystem_error &err) {
+        auto l_str = fmt::format("合成视频主动删除失败 {}\n", boost::diagnostic_information(err));
+        in_msg.message(l_str, in_msg.warning);
+        DOODLE_LOG_WARN(l_str);
+      }
       return;
+    }
     in_msg.message(fmt::format("开始读取图片 {}", l_image.file_path));
     k_image = cv::imread(l_image.file_path.generic_string());
     if (k_image.empty()) {
@@ -204,6 +215,10 @@ void image_to_move::create_move(
     in_msg.progress_step(rational_int{1, k_size_len});
     video << k_image;
   }
+
+  in_msg.set_state(in_msg.success);
+  auto k_str = fmt::format("成功完成任务\n");
+  in_msg.message(k_str, in_msg.warning);
 }
 FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
   boost::ignore_unused(this);
