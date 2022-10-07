@@ -49,10 +49,6 @@ class image_to_move::impl {
   impl() = default;
   std::vector<image_file_attribute> p_image;
   FSys::path p_out_path;
-  entt::handle p_h;
-  std::future<void> result;
-
-  std::atomic_bool stop{false};
 };
 
 // image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
@@ -127,69 +123,6 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
 image_to_move::~image_to_move() = default;
 
 void image_to_move::init() {
-  /// \brief 这里排序组件
-  image_file_attribute::extract_num(p_i->p_image);
-  std::sort(p_i->p_image.begin(), p_i->p_image.end());
-
-  /// \brief 这里进行消息初始化
-  auto &l_mag = p_i->p_h.patch<process_message>();
-  l_mag.set_state(l_mag.run);
-  l_mag.aborted_function = [self = this]() {
-    if (self) {
-      self->p_i->stop = true;
-    }
-  };
-  l_mag.message(fmt::format("获得图片路径 {}", p_i->p_image.front().file_path.parent_path()));
-
-  /// \brief 这里我们检查 shot，episode 进行路径的组合
-  if (!p_i->p_out_path.has_extension() && p_i->p_h.any_of<episodes, shot>())
-    p_i->p_out_path /= fmt::format(
-        "{}_{}.mp4",
-        p_i->p_h.any_of<episodes>() ? fmt::to_string(p_i->p_h.get<episodes>()) : "eps_none"s,
-        p_i->p_h.any_of<shot>() ? fmt::to_string(p_i->p_h.get<shot>()) : "sh_none"s
-    );
-  else if (!p_i->p_out_path.has_extension()) {
-    p_i->p_out_path /= fmt::format(
-        "{}.mp4", core_set::get_set().get_uuid()
-    );
-  } else
-    p_i->p_out_path.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
-
-  if (exists(p_i->p_out_path.parent_path()))
-    create_directories(p_i->p_out_path.parent_path());
-
-  l_mag.message(fmt::format("开始创建视频 {}", p_i->p_out_path));
-  l_mag.set_name(p_i->p_out_path.filename().generic_string());
-
-  auto k_fun = [&]() -> void {
-    const static cv::Size k_size{1920, 1080};
-    auto video             = cv::VideoWriter{p_i->p_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
-    auto k_image           = cv::Mat{};
-    const auto &k_size_len = p_i->p_image.size();
-    for (auto &l_image : p_i->p_image) {
-      if (p_i->stop)
-        return;
-      p_i->p_h.patch<process_message>([&](process_message &in_message) {
-        in_message.message(fmt::format("开始读取图片 {}", l_image.file_path));
-      });
-      k_image = cv::imread(l_image.file_path.generic_string());
-      if (k_image.empty()) {
-        DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.file_path);
-        continue;
-      }
-      if (k_image.cols != k_size.width || k_image.rows != k_size.height)
-        cv::resize(k_image, k_image, k_size);
-
-      for (auto &k_w : l_image.watermarks) {
-        watermark_add_image(k_image, k_w);
-      }
-      p_i->p_h.patch<process_message>([&](process_message &in_message) {
-        in_message.progress_step(rational_int{1, k_size_len});
-      });
-      video << k_image;
-    }
-  };
-  p_i->result = std::move(g_thread_pool().enqueue(k_fun));
 }
 
 void image_to_move::succeeded() {
@@ -227,7 +160,74 @@ void image_to_move::aborted() {
 image_to_move::image_to_move()
     : p_i(std::make_unique<impl>()) {
 }
-void image_to_move::create_move(const entt::handle &in_handle, const std::vector<image_file_attribute> &in_vector) {
+void image_to_move::create_move(
+    const FSys::path &in_out_path,
+    process_message &in_msg,
+    const std::vector<image_file_attribute> &in_vector
+) {
+  /// \brief 这里排序组件
+  auto l_vector = in_vector;
+  image_file_attribute::extract_num(l_vector);
+  std::sort(l_vector.begin(), l_vector.end());
+  std::atomic_bool l_stop{};
+  /// \brief 这里进行消息初始化
+  in_msg.set_state(in_msg.run);
+  in_msg.aborted_function = [l_s = std::addressof(l_stop)]() mutable {
+    if (!(*l_s)) {
+      *l_s = true;
+    }
+  };
+  in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().file_path.parent_path()));
+
+  in_msg.message(fmt::format("开始创建视频 {}", p_i->p_out_path));
+  in_msg.set_name(p_i->p_out_path.filename().generic_string());
+
+  const static cv::Size k_size{1920, 1080};
+  auto video             = cv::VideoWriter{p_i->p_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto k_image           = cv::Mat{};
+  const auto &k_size_len = l_vector.size();
+  for (auto &l_image : l_vector) {
+    if (l_stop)
+      return;
+    in_msg.message(fmt::format("开始读取图片 {}", l_image.file_path));
+    k_image = cv::imread(l_image.file_path.generic_string());
+    if (k_image.empty()) {
+      DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.file_path);
+      continue;
+    }
+    if (k_image.cols != k_size.width || k_image.rows != k_size.height)
+      cv::resize(k_image, k_image, k_size);
+
+    for (auto &k_w : l_image.watermarks) {
+      watermark_add_image(k_image, k_w);
+    }
+    in_msg.progress_step(rational_int{1, k_size_len});
+    video << k_image;
+  }
+}
+FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
+  boost::ignore_unused(this);
+
+  FSys::path l_out{};
+  l_out = in_handle.get<FSys::path>();
+
+  /// \brief 这里我们检查 shot，episode 进行路径的组合
+  if (!l_out.has_extension() && in_handle.any_of<episodes, shot>())
+    l_out /= fmt::format(
+        "{}_{}.mp4",
+        in_handle.any_of<episodes>() ? fmt::to_string(in_handle.get<episodes>()) : "eps_none"s,
+        in_handle.any_of<shot>() ? fmt::to_string(in_handle.get<shot>()) : "sh_none"s
+    );
+  else if (!l_out.has_extension()) {
+    l_out /= fmt::format(
+        "{}.mp4", core_set::get_set().get_uuid()
+    );
+  } else
+    l_out.extension() == ".mp4" ? void() : throw_exception(doodle_error{"扩展名称不是MP4"});
+
+  if (exists(l_out.parent_path()))
+    create_directories(l_out.parent_path());
+  return l_out;
 }
 
 }  // namespace details

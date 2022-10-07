@@ -10,10 +10,10 @@ class DOODLELIB_API image_watermark {
  public:
   image_watermark() = default;
   image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, cv::Scalar in_rgba);
-  std::string p_text;
-  std::double_t p_width_proportion;
-  std::double_t p_height_proportion;
-  cv::Scalar rgba;
+  std::string p_text{};
+  std::double_t p_width_proportion{};
+  std::double_t p_height_proportion{};
+  cv::Scalar rgba{};
 };
 
 class DOODLELIB_API image_file_attribute {
@@ -41,9 +41,11 @@ class DOODLELIB_API image_to_move {
   std::unique_ptr<impl> p_i;
 
   void create_move(
-      const entt::handle &in_handle,
+      const FSys::path &in_out_path,
+      process_message &in_msg,
       const std::vector<image_file_attribute> &in_vector
   );
+  FSys::path create_out_path(const entt::handle &in_handle);
 
  public:
   using base_type = process_t<image_to_move>;
@@ -63,7 +65,6 @@ class DOODLELIB_API image_to_move {
       CompletionHandler &&in_completion
   ) {
     using l_call = std::function<void()>;
-    in_handle.any_of<process_message>() ? void() : throw_exception(doodle_error{"缺失进度指示结构"});
     in_handle.any_of<FSys::path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
     std::for_each(
         std::begin(in_vector), std::end(in_vector), [](const image_file_attribute &in) {
@@ -71,15 +72,24 @@ class DOODLELIB_API image_to_move {
         }
     );
     in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-
+    auto l_msg_ref  = std::ref(in_handle.get_or_emplace<process_message>());
+    auto l_out_path = this->create_out_path(in_handle);
     return boost::asio::async_initiate<CompletionHandler, void()>(
-        [this, in_handle, in_vector](auto &&in_completion_handler) {
+        [this,
+         in_vector,
+         l_msg_ref,
+         l_out_path](auto &&in_completion_handler) {
           auto l_f = std::make_shared<l_call>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
           boost::asio::post(
-              [this, l_f, in_handle, in_vector]() {
-                this->create_move(in_handle, in_vector);
+              g_thread_pool(),
+              [this,
+               l_f,
+               in_vector,
+               l_msg_ref,
+               l_out_path]() {
+                this->create_move(l_out_path, l_msg_ref, in_vector);
                 boost::asio::post(g_io_context(), [l_f]() { (*l_f)(); });
               }
           );
