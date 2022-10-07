@@ -47,45 +47,7 @@ void watermark_add_image(cv::Mat &in_image, const image_watermark &in_watermark)
 class image_to_move::impl {
  public:
   impl() = default;
-  std::vector<image_file_attribute> p_image;
-  FSys::path p_out_path;
 };
-
-// image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<entt::handle> &in_vector)
-//     : p_i(std::make_unique<impl>()) {
-//   DOODLE_CHICK(in_handle.any_of<process_message>(),doodle_error{ "缺失进度指示结构"});
-//   DOODLE_CHICK(in_handle.any_of<FSys::path>(),doodle_error{ "缺失输出文件路径"});
-//   p_i->p_out_path = in_handle.get<FSys::path>();
-//   std::for_each(in_vector.begin(), in_vector.end(), [](const entt::handle &in) {
-//     DOODLE_CHICK(in.any_of<image_file_attribute>(),doodle_error{ "缺失文件属性"});
-//   });
-//   p_i->p_h = in_handle;
-//   std::transform(in_vector.begin(), in_vector.end(), std::back_inserter(p_i->p_image),
-//                  [](const entt::handle &in) -> image_file_attribute {
-//                    return in.get<image_file_attribute>();
-//                  });
-//   std::for_each(p_i->p_image.begin(), p_i->p_image.end(), [](const image_file_attribute &in) {
-//     DOODLE_CHICK(exists(in.file_path),doodle_error{ "找不到路径指向的文件"});
-//   });
-//   DOODLE_CHICK(!p_i->p_image.empty(),doodle_error{ "没有传入任何的图片"});
-// }
-image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<image_file_attribute> &in_vector)
-    : p_i(std::make_unique<impl>()) {
-  in_handle.any_of<process_message>() ? void() : throw_exception(doodle_error{"缺失进度指示结构"});
-  in_handle.any_of<FSys::path>() ? void() : throw_exception(doodle_error{"缺失输出文件路径"});
-  p_i->p_out_path = in_handle.get<FSys::path>();
-  std::for_each(in_vector.begin(), in_vector.end(), [](const image_file_attribute &in) {
-    exists(in.file_path) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
-  });
-  p_i->p_image = in_vector;
-  p_i->p_h     = in_handle;
-
-  !p_i->p_image.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
-}
-
-image_to_move::image_to_move(const entt::handle &in_handle, const std::vector<FSys::path> &in_vector)
-    : image_to_move(in_handle, make_default_attr(in_handle, in_vector)) {
-}
 
 std::vector<image_file_attribute> image_to_move::make_default_attr(
     const entt::handle &in_handle,
@@ -145,11 +107,11 @@ void image_to_move::create_move(
   };
   in_msg.message(fmt::format("获得图片路径 {}", l_vector.front().file_path.parent_path()));
 
-  in_msg.message(fmt::format("开始创建视频 {}", p_i->p_out_path));
-  in_msg.set_name(p_i->p_out_path.filename().generic_string());
+  in_msg.message(fmt::format("开始创建视频 {}", in_out_path));
+  in_msg.set_name(in_out_path.filename().generic_string());
 
   const static cv::Size k_size{1920, 1080};
-  auto video             = cv::VideoWriter{p_i->p_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto video             = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
   auto k_image           = cv::Mat{};
   const auto &k_size_len = l_vector.size();
   for (auto &l_image : l_vector) {
@@ -158,7 +120,7 @@ void image_to_move::create_move(
       auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除\n");
       in_msg.message(k_str, in_msg.warning);
       try {
-        remove(p_i->p_out_path);
+        remove(in_out_path);
       } catch (const FSys::filesystem_error &err) {
         auto l_str = fmt::format("合成视频主动删除失败 {}\n", boost::diagnostic_information(err));
         in_msg.message(l_str, in_msg.warning);
