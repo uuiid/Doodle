@@ -122,41 +122,6 @@ std::vector<image_file_attribute> image_to_move::make_default_attr(
 
 image_to_move::~image_to_move() = default;
 
-void image_to_move::init() {
-}
-
-void image_to_move::succeeded() {
-  p_i->p_h.patch<process_message>([&](process_message &in) {
-    in.set_state(in.success);
-    auto k_str = fmt::format("成功完成任务\n");
-    in.message(k_str, in.warning);
-  });
-  p_i->p_h.emplace_or_replace<FSys::path>(p_i->p_out_path);
-}
-void image_to_move::failed() {
-  p_i->p_h.patch<process_message>([&](process_message &in) {
-    in.set_state(in.fail);
-    auto k_str = fmt::format("转换失败 \n");
-    in.message(k_str, in.warning);
-  });
-}
-void image_to_move::aborted() {
-  p_i->stop = true;
-  p_i->p_h.patch<process_message>([&](process_message &in) {
-    in.set_state(in.fail);
-    auto k_str = fmt::format("合成视频被主动结束 合成视频文件将被主动删除\n");
-    in.message(k_str, in.warning);
-  });
-  try {
-    remove(p_i->p_out_path);
-  } catch (const FSys::filesystem_error &err) {
-    p_i->p_h.patch<process_message>([&](process_message &in) {
-      auto k_str = fmt::format("合成视频主动删除失败 {}\n", boost::diagnostic_information(err));
-      in.message(k_str, in.warning);
-    });
-    throw;
-  }
-}
 image_to_move::image_to_move()
     : p_i(std::make_unique<impl>()) {
 }
@@ -165,6 +130,7 @@ void image_to_move::create_move(
     process_message &in_msg,
     const std::vector<image_file_attribute> &in_vector
 ) {
+  boost::ignore_unused(this);
   /// \brief 这里排序组件
   auto l_vector = in_vector;
   image_file_attribute::extract_num(l_vector);
@@ -200,6 +166,7 @@ void image_to_move::create_move(
       }
       return;
     }
+
     in_msg.message(fmt::format("开始读取图片 {}", l_image.file_path));
     k_image = cv::imread(l_image.file_path.generic_string());
     if (k_image.empty()) {
