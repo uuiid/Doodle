@@ -9,6 +9,8 @@
 #include <utility>
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+
+#include <doodle_core/logger/logger.h>
 namespace doodle::json_rpc {
 class server::impl {
  public:
@@ -26,7 +28,6 @@ class server::impl {
 
 server::server(boost::asio::io_context &in_io_context, std::uint16_t in_port)
     : ptr(std::make_unique<impl>(in_io_context, in_port)) {
-  do_accept();
 }
 void server::do_accept() {
   ptr->acceptor_.async_accept(
@@ -37,14 +38,21 @@ void server::do_accept() {
               l_session,
               ptr->rpc_server_ptr_
           );
+          this->do_accept();
+        }else{
+          DOODLE_LOG_INFO(in_err.message());
         }
-        this->do_accept();
       }
   );
 }
 void server::set_rpc_server(const std::shared_ptr<rpc_server> &in_server) {
   in_server->init_register();
   ptr->rpc_server_ptr_ = in_server;
+  do_accept();
+}
+void server::stop() {
+  ptr->session_manager_ptr->stop_all();
+  ptr->acceptor_.cancel();
 }
 server::~server()                             = default;
 server::server(server &&) noexcept            = default;

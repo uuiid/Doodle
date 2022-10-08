@@ -12,18 +12,26 @@ class rpc_server_facet::impl {
  public:
   std::shared_ptr<json_rpc_server> rpc_server_attr;
   std::shared_ptr<json_rpc::server> server_attr;
+  std::string name{"json_rpc"};
 };
 
 rpc_server_facet::rpc_server_facet()
-    : json_rpc_facet(),
-      p_i(std::make_unique<impl>()) {
+    : p_i(std::make_unique<impl>()) {
   p_i->rpc_server_attr = std::make_shared<json_rpc_server>();
 }
-
-void rpc_server_facet::load_rpc_server() {
+const std::string& rpc_server_facet::name() const noexcept {
+  return p_i->name;
+}
+void rpc_server_facet::operator()() {
   p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());
   p_i->server_attr->set_rpc_server(p_i->rpc_server_attr);
 }
+void rpc_server_facet::deconstruction() {
+  p_i->server_attr->stop();
+  p_i->server_attr.reset();
+  p_i->rpc_server_attr.reset();
+}
+
 rpc_server_facet::~rpc_server_facet() = default;
 }  // namespace facet
 }  // namespace doodle

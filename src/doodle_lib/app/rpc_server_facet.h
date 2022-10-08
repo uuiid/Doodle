@@ -9,14 +9,16 @@
 
 namespace doodle::facet {
 
-class DOODLELIB_API rpc_server_facet : public json_rpc_facet {
+class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interface{
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   rpc_server_facet();
   virtual ~rpc_server_facet() override;
-  void load_rpc_server() override;
+  const std::string& name() const noexcept override;
+  void operator()() override;
+  void deconstruction() override;
 };
 
 }  // namespace doodle::facet

@@ -27,6 +27,9 @@ class DOODLE_CORE_API server {
   server(server &&) noexcept;
   server &operator=(server &&) noexcept;
 
+
+  void stop();
+
  private:
   void do_accept();
 };

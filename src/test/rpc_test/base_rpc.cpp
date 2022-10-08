@@ -22,8 +22,14 @@ class test_app2 : public doodle_main_app {
 };
 }  // namespace doodle
 
+using namespace doodle;
+
 struct loop_rpc {
   ::doodle::test_app2 main_app_attr{};
+  std::shared_ptr<boost::asio::high_resolution_timer> timer;
+  loop_rpc(){
+    timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  }
   void setup() {
     for (int l = 0; l < 500; ++l) {
       main_app_attr.poll_one();
@@ -31,9 +37,17 @@ struct loop_rpc {
   }
 };
 
+
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
+  bool run_test{};
+  timer->async_wait([l_r = &run_test](boost::system::error_code) {
+    app_base::Get().stop_app();
+    *l_r = true;
+  });
+  timer->expires_from_now(2s);
   main_app_attr.run();
+  BOOST_TEST(run_test);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
