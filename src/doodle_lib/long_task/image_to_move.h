@@ -88,7 +88,7 @@ class DOODLELIB_API image_to_move {
           exists(in.file_path) ? void() : throw_exception(doodle_error{"找不到路径指向的文件"});
         }
     );
-    in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
+    !in_vector.empty() ? void() : throw_exception(doodle_error{"没有传入任何的图片"});
     auto l_msg_ref  = std::ref(in_handle.get_or_emplace<process_message>());
     auto l_out_path = this->create_out_path(in_handle);
     return boost::asio::async_initiate<CompletionHandler, void()>(
