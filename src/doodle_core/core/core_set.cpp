@@ -51,6 +51,7 @@ FSys::path win::get_font() {
   return k_path;
 }
 
+
 core_set &core_set::get_set() {
   return doodle_lib::Get().core_set_attr();
 }
