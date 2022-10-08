@@ -4,6 +4,8 @@
 
 #define BOOST_TEST_MODULE doodle lib
 
+#include <main_fixtures/lib_fixtures.h>
+
 #include <boost/test/unit_test.hpp>
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/doodle_core.h>
@@ -13,13 +15,8 @@
 #include <date/tz.h>
 using namespace doodle;
 
-struct loop_fixtures {
-  loop_fixtures()  = default;
-  ~loop_fixtures() = default;
-
-  doodle_lib l_lib{};
+struct loop_fixtures : lib_fixtures {
   void setup() {
-    doodle_lib::create_time_database();
     BOOST_TEST_MESSAGE("完成夹具设置");
   };
   void teardown(){};

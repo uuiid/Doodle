@@ -5,6 +5,7 @@ add_executable(
         lib_create.cpp
         time.cpp
         bvh.cpp
+        create_move.cpp
 
 )
 doodle_link_test(test_core)
