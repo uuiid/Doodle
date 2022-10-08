@@ -12,7 +12,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <doodle_core/doodle_core.h>
 // #include <doodle_core/metadata/bvh/detail/row.h>
 

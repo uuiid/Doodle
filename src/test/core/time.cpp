@@ -4,7 +4,7 @@
 
 #define BOOST_TEST_MODULE doodle lib
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <doodle_core/pin_yin/convert.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/time_point_wrap.h>

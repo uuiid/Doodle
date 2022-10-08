@@ -1,5 +1,5 @@
 add_executable(
-        test_pinying
+        test_core
         EXCLUDE_FROM_ALL
         pinyin.cpp
         lib_create.cpp
@@ -7,6 +7,6 @@ add_executable(
         bvh.cpp
 
 )
-doodle_link_test(test_pinying)
-add_test(NAME test_pinying_exe COMMAND test_pinying --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+doodle_link_test(test_core)
+add_test(NAME test_core_exe COMMAND test_core --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

@@ -3,7 +3,7 @@
 //
 
 #define BOOST_TEST_MODULE doodle pinying
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <doodle_core/pin_yin/convert.h>
 
 using namespace doodle;
