@@ -20,7 +20,14 @@ json_rpc_server::json_rpc_server()
 json_rpc::args::rpc_json_progress json_rpc_server::create_movie(
     const create_move_arg& in_arg
 ) {
-  return json_rpc::args::rpc_json_progress{""s};
+  auto l_h = make_handle();
+  l_h.emplace<episodes>().analysis(in_arg.out_path);
+  l_h.emplace<shot>().analysis(in_arg.out_path);
+  l_h.emplace<FSys::path>(in_arg.out_path);
+  g_reg()->ctx().at<image_to_move>()->async_create_move(
+      l_h, in_arg.image, []() {}
+  );
+  return json_rpc::args::rpc_json_progress{in_arg.out_path};
 }
 
 json_rpc_server::~json_rpc_server() = default;
