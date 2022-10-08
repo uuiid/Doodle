@@ -24,5 +24,6 @@ void rpc_server_facet::load_rpc_server() {
   p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());
   p_i->server_attr->set_rpc_server(p_i->rpc_server_attr);
 }
+rpc_server_facet::~rpc_server_facet() = default;
 }  // namespace facet
 }  // namespace doodle

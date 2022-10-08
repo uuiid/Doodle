@@ -20,11 +20,14 @@ class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
    public:
     FSys::path out_path;
     std::vector<movie::image_attr> image;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-        create_move_arg,
-        out_path,
-        image
-    );
+    friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const create_move_arg& nlohmann_json_t) {
+      nlohmann_json_j["out_path"] = nlohmann_json_t.out_path;
+      nlohmann_json_j["image"]    = nlohmann_json_t.image;
+    }
+    friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, create_move_arg& nlohmann_json_t) {
+      nlohmann_json_j.at("out_path").get_to(nlohmann_json_t.out_path);
+      nlohmann_json_j.at("image").get_to(nlohmann_json_t.image);
+    }
   };
 
  public:

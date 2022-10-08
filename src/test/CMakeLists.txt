@@ -35,5 +35,7 @@ endmacro()
 
 add_subdirectory(core)
 add_subdirectory(dingding)
-add_subdirectory(main_fixtures)
 add_subdirectory(rpc_test)
+# 这一项要放在最后
+
+add_subdirectory(main_fixtures)

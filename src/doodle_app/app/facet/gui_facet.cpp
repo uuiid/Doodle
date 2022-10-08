@@ -82,6 +82,7 @@ void gui_facet::operator()() {
   timer_.async_wait(s_fun);
 }
 void gui_facet::deconstruction() {
+  timer_.cancel();
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();

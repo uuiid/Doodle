@@ -7,15 +7,15 @@
 
 #include <doodle_app/app/facet/json_rpc_facet.h>
 
-
 namespace doodle::facet {
 
 class DOODLELIB_API rpc_server_facet : public json_rpc_facet {
-
   class impl;
   std::unique_ptr<impl> p_i;
+
  public:
   rpc_server_facet();
+  virtual ~rpc_server_facet() override;
   void load_rpc_server() override;
 };
 

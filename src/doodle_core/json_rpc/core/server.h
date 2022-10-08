@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace boost::asio {
 class io_context;
@@ -12,7 +13,7 @@ class rpc_server;
 class rpc_server_ref;
 class session_manager;
 
-class server {
+class DOODLE_CORE_API server {
   class impl;
   std::unique_ptr<impl> ptr;
 

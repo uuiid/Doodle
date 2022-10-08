@@ -32,7 +32,7 @@ class fun_traits {
   using return_type = void;
   using arg_type    = void;
 };
-class rpc_server {
+class DOODLE_CORE_API rpc_server {
  public:
   using call_fun = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
 
