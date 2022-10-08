@@ -35,10 +35,11 @@ using namespace doodle;
 struct move_fix {
   move_fix() {
     timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-    timer->async_wait([](boost::system::error_code) {
-      app_base::Get().stop_app();
-    });
-    timer->expires_from_now(10s);
+  }
+  void setup() {
+    for (int l = 0; l < 500; ++l) {
+      main_app_attr.poll_one();
+    }
   }
 
   test_app main_app_attr;
@@ -61,8 +62,12 @@ BOOST_AUTO_TEST_CASE(create) {
   std::vector<FSys::path> l_files{FSys::list_files(l_image_path)};
   bool run_test{};
   g_reg()->ctx().at<image_to_move>()->async_create_move(
-      l_h, l_files, [l_r = &run_test]() {
+      l_h, l_files, [l_r = &run_test,this]() {
         *l_r = true;
+        timer->async_wait([](boost::system::error_code) {
+          app_base::Get().stop_app();
+        });
+        timer->expires_from_now(2s);
       }
   );
 
