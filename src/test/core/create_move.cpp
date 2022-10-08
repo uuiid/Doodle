@@ -49,11 +49,14 @@ struct move_fix {
 BOOST_FIXTURE_TEST_SUITE(move, move_fix)
 
 BOOST_AUTO_TEST_CASE(base_run) {
-  timer->async_wait([](boost::system::error_code) {
+  bool run_test{};
+  timer->async_wait([l_r = &run_test](boost::system::error_code) {
     app_base::Get().stop_app();
+    *l_r = true;
   });
   timer->expires_from_now(2s);
   main_app_attr.run();
+  BOOST_TEST(run_test);
 }
 
 BOOST_AUTO_TEST_CASE(create) {
@@ -66,7 +69,7 @@ BOOST_AUTO_TEST_CASE(create) {
   std::vector<FSys::path> l_files{FSys::list_files(l_image_path)};
   bool run_test{};
   g_reg()->ctx().at<image_to_move>()->async_create_move(
-      l_h, l_files, [l_r = &run_test,this]() {
+      l_h, l_files, [l_r = &run_test, this]() {
         *l_r = true;
         timer->async_wait([](boost::system::error_code) {
           app_base::Get().stop_app();
