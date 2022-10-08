@@ -24,10 +24,12 @@ struct MIB_TCPTABLE_free {
 }  // namespace
 
 std::uint32_t get_tcp_port(std::uint32_t id) {
+  DOODLE_LOG_INFO("寻找线程id {}", id);
   DWORD l_err, dwSize;
 
   l_err = GetTcpTable2(nullptr, &dwSize, true);
-  THROW_IF_WIN32_ERROR(l_err);
+  if (l_err != ERROR_INSUFFICIENT_BUFFER)
+    THROW_WIN32(l_err);
 
   std::unique_ptr<MIB_TCPTABLE2, MIB_TCPTABLE_free> tcp_table{
       reinterpret_cast<MIB_TCPTABLE2*>(std::malloc(dwSize))};
@@ -39,10 +41,14 @@ std::uint32_t get_tcp_port(std::uint32_t id) {
        i < tcp_table->dwNumEntries;
        ++i) {
     if (auto& l_row = tcp_table->table[i];
-        l_row.dwState == MIB_TCP_STATE_ESTAB &&
+        //        l_row.dwState == MIB_TCP_STATE_ESTAB &&
         l_row.dwOwningPid == id) {
+      DOODLE_LOG_INFO("找到线程port dwLocalPort {}", l_row.dwLocalPort);
+      DOODLE_LOG_INFO("找到线程port dwRemotePort {}", l_row.dwRemotePort);
+      DOODLE_LOG_INFO("找到线程port dwRemoteAddr {}", l_row.dwRemoteAddr);
+      DOODLE_LOG_INFO("找到线程port dwLocalAddr {}", l_row.dwLocalAddr);
       l_r_port = l_row.dwLocalPort;
-      break;
+      //      break;
     }
   }
   return l_r_port;

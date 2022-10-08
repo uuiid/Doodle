@@ -19,7 +19,8 @@ namespace doodle {
 class test_app2 : public doodle_main_app {
  public:
   test_app2() : doodle::doodle_main_app() {
-    run_facet = std::make_shared<facet::rpc_server_facet>();
+    f_attr    = std::make_shared<facet::rpc_server_facet>();
+    run_facet = f_attr;
     add_facet(run_facet);
   }
   std::shared_ptr<facet::rpc_server_facet> f_attr{};
@@ -48,8 +49,7 @@ BOOST_AUTO_TEST_CASE(base) {
   auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
   auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());
   BOOST_TEST(l_prot == l_f_prot);
-
-  timer->async_wait([l_r = &run_test](boost::system::error_code) {
+  timer->async_wait([l_r = &run_test,this](boost::system::error_code) {
     app_base::Get().stop_app();
     *l_r = true;
   });

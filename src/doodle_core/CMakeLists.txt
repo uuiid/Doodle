@@ -86,6 +86,7 @@ target_link_libraries(
         sqlpp11::sqlpp11
         sqlpp11::sqlite3
         WIL::WIL
+        Iphlpapi.lib
 )
 
 target_compile_definitions(doodle_core
