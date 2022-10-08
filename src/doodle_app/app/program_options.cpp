@@ -56,7 +56,7 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
   p_opt_file.add(p_opt_gui).add(p_opt_advanced);
 
   p_arg = in_arg;
-  DOODLE_LOG_INFO("开始解析命令行 {}", fmt::join(in_arg, "\n"));
+  DOODLE_LOG_INFO("开始解析命令行 [{}]", fmt::join(in_arg, "  "));
   boost::program_options::command_line_parser k_p{in_arg};
 
   k_p.positional(p_opt_positional)
