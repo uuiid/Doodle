@@ -31,6 +31,9 @@ void rpc_server_facet::deconstruction() {
   p_i->server_attr.reset();
   p_i->rpc_server_attr.reset();
 }
+std::shared_ptr<json_rpc::server> rpc_server_facet::server_attr() const {
+  return p_i->server_attr;
+}
 
 rpc_server_facet::~rpc_server_facet() = default;
 }  // namespace facet

@@ -27,8 +27,8 @@ class DOODLE_CORE_API server {
   server(server &&) noexcept;
   server &operator=(server &&) noexcept;
 
-
   void stop();
+  std::uint16_t get_prot() const;
 
  private:
   void do_accept();

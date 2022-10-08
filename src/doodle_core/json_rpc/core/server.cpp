@@ -54,6 +54,9 @@ void server::stop() {
   ptr->session_manager_ptr->stop_all();
   ptr->acceptor_.cancel();
 }
+std::uint16_t server::get_prot() const {
+  return ptr->acceptor_.local_endpoint().port();
+}
 server::~server()                             = default;
 server::server(server &&) noexcept            = default;
 server &server::operator=(server &&) noexcept = default;

@@ -11,6 +11,9 @@
 #include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_lib/app/rpc_server_facet.h>
 #include <doodle_lib/long_task/image_to_move.h>
+#include <doodle_core/json_rpc/core/server.h>
+#include <doodle_core/platform/win/get_prot.h>
+#include <boost/process.hpp>
 
 namespace doodle {
 class test_app2 : public doodle_main_app {
@@ -19,6 +22,7 @@ class test_app2 : public doodle_main_app {
     run_facet = std::make_shared<facet::rpc_server_facet>();
     add_facet(run_facet);
   }
+  std::shared_ptr<facet::rpc_server_facet> f_attr{};
 };
 }  // namespace doodle
 
@@ -27,7 +31,7 @@ using namespace doodle;
 struct loop_rpc {
   ::doodle::test_app2 main_app_attr{};
   std::shared_ptr<boost::asio::high_resolution_timer> timer;
-  loop_rpc(){
+  loop_rpc() {
     timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
   }
   void setup() {
@@ -37,10 +41,14 @@ struct loop_rpc {
   }
 };
 
-
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
   bool run_test{};
+
+  auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
+  auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());
+  BOOST_TEST(l_prot == l_f_prot);
+
   timer->async_wait([l_r = &run_test](boost::system::error_code) {
     app_base::Get().stop_app();
     *l_r = true;
