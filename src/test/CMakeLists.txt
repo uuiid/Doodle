@@ -22,6 +22,7 @@ macro(doodle_link_test)
                 PUBLIC
                 $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=1>
                 CRTDBG_MAP_ALLOC
+                BOOST_TEST_DYN_LINK
         )
         target_include_directories(
                 ${ARGV0}

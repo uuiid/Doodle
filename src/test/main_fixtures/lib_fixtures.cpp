@@ -1,5 +1,5 @@
 #include "lib_fixtures.h"
-#define BOOST_TEST_DYN_LINK
+
 #include <boost/test/unit_test.hpp>
 #include <spdlog/sinks/base_sink.h>
 
