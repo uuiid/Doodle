@@ -9,6 +9,13 @@
 #include <doodle_app/app/facet/gui_facet.h>
 namespace doodle {
 
+//namespace detail {
+//class DOODLELIB_API rpc_server_facet : public ::doodle::facet::json_rpc_facet {
+//
+// public:
+//};
+//}  // namespace detail
+
 class DOODLELIB_API main_facet : public facet::gui_facet {
  public:
  protected:

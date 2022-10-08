@@ -13,9 +13,16 @@ namespace doodle {
 namespace facet {
 
 class DOODLE_APP_API json_rpc_facet : public ::doodle::detail::app_facet_interface {
-  std::string name_attr;
+ private:
+  class impl;
+  std::unique_ptr<impl> p_i;
+
+ protected:
+  virtual void load_rpc_server() = 0;
+
  public:
   json_rpc_facet();
+  virtual ~json_rpc_facet();
   const std::string& name() const noexcept override;
   void operator()() override;
   void deconstruction() override;
