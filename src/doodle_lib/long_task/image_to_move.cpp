@@ -81,11 +81,19 @@ std::vector<image_to_move::image_attr> image_to_move::make_default_attr(
                image_attr l_attribute{};
                l_attribute.path_attr = in_path;
                if (in_handle.any_of<shot>())
-                 l_attribute.watermarks_attr.emplace_back(fmt::to_string(in_handle.get<shot>()), 0.1, 0.1, rgb_default);
+                 l_attribute.watermarks_attr.emplace_back(
+                     fmt::to_string(in_handle.get<shot>()), 0.1, 0.1, image_watermark::rgb_default
+                 );
                if (in_handle.any_of<episodes>())
-                 l_attribute.watermarks_attr.emplace_back(fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, rgb_default);
-               l_attribute.watermarks_attr.emplace_back(g_reg()->ctx().at<user::current_user>().user_name_attr(), 0.1, 0.2, rgb_default);
-               l_attribute.watermarks_attr.emplace_back(core_set::get_set().organization_name, 0.1, 0.25, rgb_default);
+                 l_attribute.watermarks_attr.emplace_back(
+                     fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, image_watermark::rgb_default
+                 );
+               l_attribute.watermarks_attr.emplace_back(
+                   g_reg()->ctx().at<user::current_user>().user_name_attr(), 0.1, 0.2, image_watermark::rgb_default
+               );
+               l_attribute.watermarks_attr.emplace_back(
+                   core_set::get_set().organization_name, 0.1, 0.25, image_watermark::rgb_default
+               );
                return l_attribute;
              }
          ) |
@@ -93,10 +101,12 @@ std::vector<image_to_move::image_attr> image_to_move::make_default_attr(
   image_attr::extract_num(list);
   const auto l_size = in_path_list.size();
   ranges::for_each(list, [&](image_attr &in_attribute) {
-    in_attribute.watermarks_attr.emplace_back(fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.8, 0.1, rgb_default);
+    in_attribute.watermarks_attr.emplace_back(
+        fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.8, 0.1, image_watermark::rgb_default);
     in_attribute.watermarks_attr.emplace_back(
         fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
-        0.8, 0.2, rgb_default
+        0.8, 0.2,
+        image_watermark::rgb_default
     );
   });
 

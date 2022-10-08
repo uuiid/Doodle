@@ -49,6 +49,10 @@ struct move_fix {
 BOOST_FIXTURE_TEST_SUITE(move, move_fix)
 
 BOOST_AUTO_TEST_CASE(base_run) {
+  timer->async_wait([](boost::system::error_code) {
+    app_base::Get().stop_app();
+  });
+  timer->expires_from_now(2s);
   main_app_attr.run();
 }
 

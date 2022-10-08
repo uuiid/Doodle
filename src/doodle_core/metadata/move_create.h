@@ -13,7 +13,12 @@ class DOODLE_CORE_API image_watermark {
  public:
   using rgba_t      = std::array<std::double_t, 4>;
   image_watermark() = default;
-  image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, rgba_t in_rgba)
+  image_watermark(
+      std::string in_p_text,
+      double_t in_p_width_proportion,
+      double_t in_p_height_proportion,
+      rgba_t in_rgba
+  )
       : text_attr(std::move(in_p_text)),
         width_proportion_attr(in_p_width_proportion),
         height_proportion_attr(in_p_height_proportion),
@@ -22,6 +27,7 @@ class DOODLE_CORE_API image_watermark {
   std::double_t width_proportion_attr;
   std::double_t height_proportion_attr;
   rgba_t rgba_attr;
+  constexpr static const rgba_t rgb_default{25, 220, 2};
 };
 
 class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
