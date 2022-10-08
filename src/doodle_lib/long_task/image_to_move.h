@@ -5,6 +5,10 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <opencv2/core/types.hpp>
+
+#include <boost/asio.hpp>
+#include <boost/asio.hpp>
+
 namespace doodle {
 class DOODLELIB_API image_watermark {
  public:
@@ -40,21 +44,21 @@ class DOODLELIB_API image_to_move {
   class impl;
   std::unique_ptr<impl> p_i;
 
-  void create_move(
+  virtual void create_move(
       const FSys::path &in_out_path,
       process_message &in_msg,
       const std::vector<image_file_attribute> &in_vector
   );
   FSys::path create_out_path(const entt::handle &in_handle);
 
- public:
-  using base_type = process_t<image_to_move>;
-  image_to_move();
-
   static std::vector<image_file_attribute> make_default_attr(
       const entt::handle &in_handle,
       const std::vector<FSys::path> &in_path_list
   );
+
+ public:
+  image_to_move();
+  virtual ~image_to_move();
 
   inline static const cv::Scalar rgb_default{25, 220, 2};
 
@@ -96,7 +100,7 @@ class DOODLELIB_API image_to_move {
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
           boost::asio::post(
-              g_thread_pool(),
+              g_thread(),
               [this,
                l_f,
                in_vector,
@@ -110,8 +114,6 @@ class DOODLELIB_API image_to_move {
         in_completion
     );
   };
-
-  virtual ~image_to_move();
 };
 }  // namespace details
 using image_to_move = std::shared_ptr<details::image_to_move>;
