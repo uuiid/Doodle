@@ -29,6 +29,7 @@
 #include <doodle_core/thread_pool/process_pool.h>
 
 #include <doodle_app/lib_warp/imgui_warp.h>
+#include <doodle_lib/long_task/image_to_move.h>
 
 #include <implot.h>
 #include <implot_internal.h>
@@ -96,6 +97,7 @@ gui_facet::gui_facet()
       p_i(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
+  g_reg()->ctx().emplace<image_to_move>(std::make_shared<image_to_move::element_type>());
 }
 
 void gui_facet::loop_one() {

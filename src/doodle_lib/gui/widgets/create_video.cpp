@@ -137,9 +137,9 @@ void create_video::render() {
   imgui::SameLine();
   if (imgui::Button("创建视频")) {
     ranges::for_each(p_i->image_to_video_list, [this](const impl::image_cache& in_cache) {
-      g_reg()->ctx().emplace<image_to_move>().async_create_move(
+      g_reg()->ctx().emplace<image_to_move>()->async_create_move(
           in_cache.out_handle,
-          image_to_move::make_default_attr(in_cache.image_attr),
+          in_cache.image_attr,
           [this, l_h = in_cache.out_handle]() {  /// \brief 在这里我们将合成的视频添加到下一个工具栏中
             auto l_out_path = l_h.get<FSys::path>();
             p_i->video_list.emplace_back(l_out_path.generic_string(), l_out_path.generic_string());
