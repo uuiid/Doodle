@@ -61,6 +61,19 @@ class DOODLELIB_API image_to_move {
   template <typename CompletionHandler>
   auto async_create_move(
       const entt::handle &in_handle,
+      const std::vector<FSys::path> &in_vector,
+      CompletionHandler &&in_completion
+  ) {
+    return async_create_move(
+        in_handle,
+        make_default_attr(in_handle, in_vector),
+        std::forward<decltype(in_completion)>(in_completion)
+    );
+  }
+
+  template <typename CompletionHandler>
+  auto async_create_move(
+      const entt::handle &in_handle,
       const std::vector<image_file_attribute> &in_vector,
       CompletionHandler &&in_completion
   ) {
@@ -101,5 +114,5 @@ class DOODLELIB_API image_to_move {
   virtual ~image_to_move();
 };
 }  // namespace details
-using image_to_move = details::image_to_move;
+using image_to_move = std::shared_ptr<details::image_to_move>;
 }  // namespace doodle
