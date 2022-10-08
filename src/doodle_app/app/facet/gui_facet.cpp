@@ -62,8 +62,10 @@ void gui_facet::operator()() {
   timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
-    if (in_code == boost::asio::error::operation_aborted)
+    if (in_code == boost::asio::error::operation_aborted) {
+      DOODLE_LOG_INFO(in_code.message());
       return;
+    }
     if (g_reg()->ctx().at<::doodle::program_info>().stop_attr())
       return;
     this->loop_one();  /// \brief 各种

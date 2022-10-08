@@ -61,6 +61,7 @@ void app_command_base::post_constructor() {
   }
 
   if (!g_reg()->ctx().contains<doodle::app_facet_ptr>()) {
+    DOODLE_LOG_INFO("运行默认构面 {}", run_facet->name());
     g_reg()->ctx().emplace<app_facet_ptr>(run_facet);
   }
   boost::asio::post(g_io_context(), [l_f = run_facet]() {
