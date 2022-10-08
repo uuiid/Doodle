@@ -85,6 +85,7 @@ target_link_libraries(
         cryptopp-static
         sqlpp11::sqlpp11
         sqlpp11::sqlite3
+        WIL::WIL
 )
 
 target_compile_definitions(doodle_core
