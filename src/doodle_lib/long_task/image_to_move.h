@@ -78,7 +78,7 @@ class DOODLELIB_API image_to_move {
         [this,
          in_vector,
          l_msg_ref,
-         l_out_path](auto &&in_completion_handler) {
+         l_out_path = std::move(l_out_path)](auto &&in_completion_handler) {
           auto l_f = std::make_shared<l_call>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
