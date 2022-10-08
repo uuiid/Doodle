@@ -10,7 +10,10 @@
 namespace doodle {
 namespace facet {
 
-class DOODLELIB_API rpc_server_facet : public json_rpc_facet {
+class DOODLELIB_API json_rpc_facet : public rpc_server_facet {
+ public:
+  json_rpc_facet();
+  void load_rpc_server() override;
 };
 
 }  // namespace facet

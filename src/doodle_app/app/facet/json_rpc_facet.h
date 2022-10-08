@@ -9,8 +9,7 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/core/app_facet.h>
 
-namespace doodle {
-namespace facet {
+namespace doodle::facet {
 
 class DOODLE_APP_API json_rpc_facet : public ::doodle::detail::app_facet_interface {
  private:
@@ -28,5 +27,4 @@ class DOODLE_APP_API json_rpc_facet : public ::doodle::detail::app_facet_interfa
   void deconstruction() override;
 };
 
-}  // namespace facet
 }  // namespace doodle
