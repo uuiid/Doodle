@@ -6,5 +6,5 @@
 #include <doodle_core/doodle_core_fwd.h>
 namespace doodle::win {
 
-std::uint32_t DOODLE_CORE_API get_port(std::uint32_t id);
+std::uint32_t DOODLE_CORE_API get_tcp_port(std::uint32_t id);
 }
