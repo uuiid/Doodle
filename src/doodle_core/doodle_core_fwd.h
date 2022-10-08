@@ -84,3 +84,10 @@ class DOODLE_CORE_API delete_data;
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
 }  // namespace doodle
+namespace doodle::json_rpc {
+class server;
+class parser_rpc;
+class rpc_server;
+class rpc_server_ref;
+class session_manager;
+}  // namespace doodle::json_rpc

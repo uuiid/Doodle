@@ -17,7 +17,7 @@ class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interf
   rpc_server_facet();
   virtual ~rpc_server_facet() override;
 
-  std::shared_ptr<json_rpc::server> server_attr() const;
+  std::shared_ptr<::doodle::json_rpc::server> server_attr() const;
 
   const std::string& name() const noexcept override;
   void operator()() override;
