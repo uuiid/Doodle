@@ -17,7 +17,6 @@ class DOODLE_APP_API app_command_base : public app_base {
  protected:
   cmd_string_type cmd_str;
 
-
   virtual bool chick_authorization();
   virtual void load_facet();
 
@@ -25,6 +24,7 @@ class DOODLE_APP_API app_command_base : public app_base {
   bool chick_build_time() const;
 
  public:
+  app_command_base();
   explicit app_command_base(const app_base::in_app_args& in_instance);
 
   static app_command_base& Get();
@@ -41,7 +41,7 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
     std::int32_t show_enum;
     win::wnd_handle in_parent;
   };
-
+  explicit doodle_main_app();
   explicit doodle_main_app(const in_gui_arg& in_arg);
 
   ~doodle_main_app() override;

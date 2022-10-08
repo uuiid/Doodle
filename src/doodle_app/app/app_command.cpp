@@ -20,7 +20,22 @@
 
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
+
 namespace doodle {
+
+app_command_base::app_command_base(const app_base::in_app_args& in_instance)
+    : app_base(in_instance),
+      cmd_str(in_instance.in_cmd_line) {
+  g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
+}
+
+app_command_base::app_command_base()
+    : app_base(),
+      cmd_str(boost::program_options::split_winmain(std::string{
+          boost::locale::conv::utf_to_utf<char>(GetCommandLineW())
+      })) {
+}
+
 void app_command_base::post_constructor() {
   auto l_opt = g_reg()->ctx().at<program_options_ptr>();
   load_facet();
@@ -59,11 +74,7 @@ bool app_command_base::chick_authorization() {
 app_command_base& app_command_base::Get() {
   return *(dynamic_cast<app_command_base*>(self));
 }
-app_command_base::app_command_base(const app_base::in_app_args& in_instance)
-    : app_base(in_instance),
-      cmd_str(in_instance.in_cmd_line) {
-  g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
-}
+
 std::optional<FSys::path> app_command_base::find_authorization_file() const {
   auto l_p = core_set::program_location() / doodle_config::token_name.data();
   if (!exists(l_p)) {
@@ -82,6 +93,7 @@ bool app_command_base::chick_build_time() const {
 }
 void app_command_base::load_facet() {
 }
+
 }  // namespace doodle
 
 namespace doodle {
@@ -93,7 +105,9 @@ doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
   auto& l_p = g_reg()->ctx().at<program_info>();
   l_p.parent_windows_attr(in_arg.in_parent);
 }
-
+doodle_main_app::doodle_main_app()
+    : app_command_base() {
+}
 doodle_main_app& doodle_main_app::Get() {
   return *(dynamic_cast<doodle_main_app*>(self));
 }
