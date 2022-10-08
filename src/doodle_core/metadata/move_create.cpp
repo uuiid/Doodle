@@ -22,9 +22,9 @@
 
 namespace doodle::movie {
 
-DOODLE_JSON_CPP(image_watermark, text_, width_proportion_, height_proportion_, rgba_)
+DOODLE_JSON_CPP(image_watermark, text_attr, width_proportion_attr, height_proportion_attr, rgba_attr)
 
-DOODLE_JSON_CPP(image_attr, path_, watermarks, num)
+DOODLE_JSON_CPP(image_attr, path_attr, watermarks_attr, num_attr)
 
 namespace {
 class image_attr_auxiliary {
@@ -41,7 +41,7 @@ class image_attr_auxiliary {
     static std::regex reg{R"(\d+)"};
     std::smatch k_match{};
 
-    auto k_name = image.path_.filename().generic_string();
+    auto k_name = image.path_attr.filename().generic_string();
 
     auto k_b    = std::sregex_iterator{k_name.begin(), k_name.end(), reg};
 
@@ -79,21 +79,15 @@ void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
   DOODLE_CHICK(!l_item.empty(), doodle_error{"没有找到帧索引"});
   auto l_index = l_item.front();
   ranges::for_each(l_list, [&](image_attr_auxiliary &in_attribute) {
-    in_attribute.image.num = in_attribute.num_list[l_index];
+    in_attribute.image.num_attr = in_attribute.num_list[l_index];
   });
 }
 
-bool image_attr::operator<(const image_attr &in_rhs) const {
-  return num < in_rhs.num;
+bool image_attr::operator<(const image_attr &in_rhs) const noexcept {
+  return num_attr < in_rhs.num_attr;
 }
-bool image_attr::operator>(const image_attr &in_rhs) const {
-  return in_rhs < *this;
-}
-bool image_attr::operator<=(const image_attr &in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool image_attr::operator>=(const image_attr &in_rhs) const {
-  return !(*this < in_rhs);
+bool image_attr::operator==(const image_attr &in_rhs) const noexcept {
+  return path_attr == in_rhs.path_attr;
 }
 
 }  // namespace doodle::movie
