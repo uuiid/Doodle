@@ -52,6 +52,7 @@ class DOODLE_CORE_API app_base {
   explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
 
+  void force_run_facet(const app_facet_ptr& in_facet);
   void add_facet(const app_facet_ptr& in_facet);
 
   /**

@@ -116,5 +116,7 @@ void app_base::clear_loop() {
 void app_base::add_facet(const app_facet_ptr& in_facet) {
   facet_list.emplace(in_facet->name(), in_facet);
 }
+void app_base::force_run_facet(const app_facet_ptr& in_facet) {
+}
 
 }  // namespace doodle
