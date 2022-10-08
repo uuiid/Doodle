@@ -1,9 +1,7 @@
 //
 // Created by TD on 2022/9/23.
 //
-#define BOOST_TEST_MODULE doodle lib
-#define BOOST_SPIRIT_X3_DEBUG
-#define BOOST_SPIRIT_DEBUG
+
 
 #include <cstdlib>
 #include <crtdbg.h>
@@ -12,6 +10,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include <main_fixtures/lib_fixtures.h>
 #include <boost/test/unit_test.hpp>
 #include <doodle_core/doodle_core.h>
 // #include <doodle_core/metadata/bvh/detail/row.h>

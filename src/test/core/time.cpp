@@ -2,7 +2,7 @@
 // Created by TD on 2022/9/20.
 //
 
-#define BOOST_TEST_MODULE doodle lib
+
 
 #include <main_fixtures/lib_fixtures.h>
 

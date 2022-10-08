@@ -4,7 +4,7 @@
 
 #include <main_fixtures/lib_fixtures.h>
 
-#define BOOST_TEST_MODULE dingding
+
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
