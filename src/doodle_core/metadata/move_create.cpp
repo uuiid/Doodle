@@ -20,6 +20,11 @@
 #include <nlohmann/json.hpp>
 #include <doodle_core/details/json_macro.h>
 
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/core/core_set.h>
+
 namespace doodle::movie {
 
 DOODLE_JSON_CPP(image_watermark, text_attr, width_proportion_attr, height_proportion_attr, rgba_attr)
@@ -60,7 +65,7 @@ class image_attr_auxiliary {
 }  // namespace
 
 image_attr::image_attr(FSys::path in_path)
-    : path_attr(std::move(in_path)){}
+    : path_attr(std::move(in_path)) {}
 
 void image_attr::extract_num(std::vector<image_attr> &in_image_list) {
   auto l_list = in_image_list |
@@ -99,7 +104,7 @@ bool image_attr::operator==(const image_attr &in_rhs) const noexcept {
   return path_attr == in_rhs.path_attr;
 }
 
-std::vector<image_to_move::image_attr> image_attr::make_default_attr(
+std::vector<image_attr> image_attr::make_default_attr(
     const entt::handle &in_handle,
     const std::vector<FSys::path> &in_path_list
 ) {
@@ -131,7 +136,8 @@ std::vector<image_to_move::image_attr> image_attr::make_default_attr(
   const auto l_size = in_path_list.size();
   ranges::for_each(list, [&](image_attr &in_attribute) {
     in_attribute.watermarks_attr.emplace_back(
-        fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.8, 0.1, image_watermark::rgb_default);
+        fmt::format("{}/{}", in_attribute.num_attr, l_size), 0.8, 0.1, image_watermark::rgb_default
+    );
     in_attribute.watermarks_attr.emplace_back(
         fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
         0.8, 0.2,
