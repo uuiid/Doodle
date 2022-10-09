@@ -9,6 +9,34 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_app/lib_warp/boost_fmt_progrm_opt.h>
 
+namespace boost::filesystem {
+template <class CharT>
+void validate(
+    boost::any& v,
+    const std::vector<std::basic_string<CharT>>& values,
+    ::boost::filesystem::path*,
+    std::int32_t
+) {
+  using namespace boost::program_options;
+
+  // Make sure no previous assignment to 'a' was made.
+  validators::check_first_occurrence(v);
+  // Extract the first string from 'values'. If there is more than
+  // one string, it's an error, and exception will be thrown.
+  const std::basic_string<CharT>& s = validators::get_single_string(values);
+
+  // Do regex match and convert the interesting part to
+  // int.
+  if (s[0] == '"') {
+    v = boost::any{::doodle::FSys::path{s.substr(1, s.size() - 2)}};
+  } else {
+    v = boost::any{
+        ::doodle::FSys::path{s}};
+  }
+}
+
+}  // namespace boost::filesystem
+
 namespace doodle {
 program_options::program_options()
     : p_opt_all("doodle opt"),
@@ -77,24 +105,6 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
 
   boost::program_options::store(boost::program_options::parse_environment(p_opt_all, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
-
-  if (!p_vm.count(input_project)) {
-    p_project_path = core_set::get_set().project_root[0].generic_string();
-  } else {
-    if (p_project_path.front() == '"') {
-      p_project_path = p_project_path.substr(1, p_project_path.size() - 2);
-    }
-  }
-  if (p_vm.count(ue4outpath)) {
-    if (p_ue4outpath.front() == '"') {
-      p_ue4outpath = p_ue4outpath.substr(1, p_ue4outpath.size() - 2);
-    }
-  }
-  if (p_vm.count(ue4Project)) {
-    if (p_ue4Project.front() == '"') {
-      p_ue4Project = p_ue4Project.substr(1, p_ue4Project.size() - 2);
-    }
-  }
 
   if (p_help) {
     DOODLE_LOG_WARN("{}", p_opt_all);

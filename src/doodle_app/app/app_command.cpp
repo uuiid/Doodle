@@ -33,6 +33,7 @@ app_command_base::app_command_base()
     : app_base(),
       cmd_str(boost::program_options::split_winmain(std::string{
           boost::locale::conv::utf_to_utf<char>(GetCommandLineW())})) {
+  DOODLE_LOG_INFO("获取到命令行 {}", std::string{boost::locale::conv::utf_to_utf<char>(GetCommandLineW())});
   g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
 }
 

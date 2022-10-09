@@ -6,7 +6,7 @@
 #include <doodle_lib/json_rpc/json_rpc_server.h>
 #include <doodle_core/json_rpc/core/server.h>
 #include <doodle_app/app/program_options.h>
-
+#include <doodle_lib/long_task/image_to_move.h>
 #include <boost/program_options.hpp>
 
 #include <wil/result.h>
@@ -19,7 +19,7 @@ class rpc_server_facet::impl {
   std::string name{"json_rpc"};
 
   boost::program_options::options_description opt{"rpc"};
-  FSys::path l_files;
+  std::string files_attr;
   std::shared_ptr<program_options> program_options;
 
   void redirect_io_to_console() {
@@ -73,15 +73,26 @@ class rpc_server_facet::impl {
 
 rpc_server_facet::rpc_server_facet()
     : p_i(std::make_unique<impl>()) {
-//  p_i->redirect_io_to_console();
+  //  p_i->redirect_io_to_console();
   //  p_i->rpc_server_attr = std::make_shared<json_rpc_server>();
 }
 const std::string& rpc_server_facet::name() const noexcept {
   return p_i->name;
 }
 void rpc_server_facet::operator()() {
+  /// 开始创建视频
   if ((*p_i->program_options)["create_move"]) {
-    DOODLE_LOG_INFO("ok");
+    if (!FSys::exists(p_i->files_attr)) {
+      DOODLE_LOG_INFO("不存在文件 {}", p_i->files_attr);
+    }
+    FSys::ifstream l_file{p_i->files_attr};
+    auto l_json = nlohmann::json::parse(l_file);
+    auto l_h    = make_handle();
+    entt_tool::load_comm<episodes, shot, FSys::path, std::vector<movie::image_attr>>(l_h, l_json);
+    auto l_f = g_reg()->ctx().at<image_to_move>()->async_create_move(
+        l_h, l_h.get<std::vector<movie::image_attr>>(),
+        boost::asio::use_future
+    );
   }
 
   //  p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());
@@ -97,7 +108,7 @@ std::shared_ptr<json_rpc::server> rpc_server_facet::server_attr() const {
   return {};
 }
 void rpc_server_facet::add_program_options(const std::shared_ptr<program_options>& in_opt) {
-  p_i->opt.add_options()("create_move", boost::program_options::value(&p_i->l_files), "创建视频的序列json选项");
+  p_i->opt.add_options()("create_move", boost::program_options::value(&p_i->files_attr), "创建视频的序列json选项");
   in_opt->add_opt(p_i->opt);
   p_i->program_options = in_opt;
 }
