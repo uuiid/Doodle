@@ -8,7 +8,7 @@
 #include <doodle_core/thread_pool/process_message.h>
 namespace doodle::detail {
 
-class DOODLE_CORE_API this_rpc_exe {
+class DOODLE_APP_API this_rpc_exe {
  private:
   class impl;
   std::unique_ptr<impl> ptr;
