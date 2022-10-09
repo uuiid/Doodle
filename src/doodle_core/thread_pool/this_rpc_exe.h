@@ -27,11 +27,6 @@ class DOODLE_CORE_API this_rpc_exe {
       const std::vector<doodle::movie::image_attr>& in_move,
       ::doodle::process_message& in_msg
   );
-  void create_move(
-      const FSys::path& in_out_path,
-      const std::vector<FSys::path>& in_move,
-      ::doodle::process_message& in_msg
-  );
 
   virtual ~this_rpc_exe();
 };

@@ -121,15 +121,7 @@ void this_rpc_exe::read_out() const {
       }
   );
 }
-void this_rpc_exe::create_move(
-    const FSys::path& in_out_path, const std::vector<FSys::path>& in_move, process_message& in_msg
-) {
-  return crate_move(
-      in_out_path,
-      doodle::movie::image_attr::make_default_attr(in_move),
-      in_msg
-  );
-}
+
 
 this_rpc_exe::~this_rpc_exe() = default;
 }  // namespace doodle::detail
