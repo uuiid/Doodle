@@ -35,25 +35,20 @@ struct loop_rpc {
   loop_rpc() {
     timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
   }
-  void setup() {
-    for (int l = 0; l < 500; ++l) {
-      main_app_attr.poll_one();
-    }
-  }
 };
 
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
   bool run_test{};
 
-  auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
-  auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());
-  BOOST_TEST(l_prot == l_f_prot);
+  //  auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
+  //  auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());
+  //  BOOST_TEST(l_prot == l_f_prot);
+  timer->expires_from_now(3s);
   timer->async_wait([l_r = &run_test,this](boost::system::error_code) {
     app_base::Get().stop_app();
     *l_r = true;
   });
-  timer->expires_from_now(2s);
   main_app_attr.run();
   BOOST_TEST(run_test);
 }
