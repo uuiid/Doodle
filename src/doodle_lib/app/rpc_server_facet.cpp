@@ -23,7 +23,7 @@ const std::string& rpc_server_facet::name() const noexcept {
   return p_i->name;
 }
 void rpc_server_facet::operator()() {
-  p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context(), 24445u);
+  p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());
   p_i->server_attr->set_rpc_server(p_i->rpc_server_attr);
 }
 void rpc_server_facet::deconstruction() {
