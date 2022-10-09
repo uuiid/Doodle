@@ -14,8 +14,10 @@ class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
   json_rpc_server();
   ~json_rpc_server() override;
 
-  void create_movie(
+  entt::entity create_movie(
       const create_move_arg& in_arg
   ) override;
+  process_message get_progress(entt::entity in_id) override;
+  void stop_app() override;
 };
 }  // namespace doodle

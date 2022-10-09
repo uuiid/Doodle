@@ -8,6 +8,7 @@
 #include <doodle_core/json_rpc/args/rpc_json_progress.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/move_create.h>
+#include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/signals2.hpp>
 namespace doodle {
@@ -33,11 +34,11 @@ class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
  public:
   void init_register() override;
 
-  virtual void create_movie(
+  virtual entt::entity create_movie(
       const create_move_arg& in_arg
   )                                                                          = 0;
 
-  virtual json_rpc::args::rpc_json_progress get_progress(entt::entity in_id) = 0;
+  virtual process_message get_progress(entt::entity in_id) = 0;
   virtual void stop_app()                                                    = 0;
 };
 

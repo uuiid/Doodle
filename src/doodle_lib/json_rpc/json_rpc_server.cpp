@@ -4,6 +4,7 @@
 
 #include "json_rpc_server.h"
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/core/app_base.h>
 #include <long_task/image_to_move.h>
 
 namespace doodle {
@@ -17,7 +18,7 @@ json_rpc_server::json_rpc_server()
     : ptr(std::make_unique<impl>()) {
 }
 
-void json_rpc_server::create_movie(
+entt::entity json_rpc_server::create_movie(
     const create_move_arg& in_arg
 ) {
   auto l_h = make_handle();
@@ -27,7 +28,14 @@ void json_rpc_server::create_movie(
   g_reg()->ctx().at<image_to_move>()->async_create_move(
       l_h, in_arg.image, []() {}
   );
-  return json_rpc::args::rpc_json_progress{in_arg.out_path};
+  return l_h;
+}
+process_message json_rpc_server::get_progress(entt::entity in_id) {
+  auto l_h = make_handle(in_id);
+  return l_h.all_of<process_message>() ? l_h.get<process_message>() : process_message{};
+}
+void json_rpc_server::stop_app() {
+  app_base::Get().stop_app();
 }
 
 json_rpc_server::~json_rpc_server() = default;

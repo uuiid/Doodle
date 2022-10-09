@@ -10,9 +10,8 @@ namespace doodle {
 void json_rpc_server_i::init_register() {
   register_fun_t(
       json_rpc::rpc_fun_name::image_to_move,
-      [this](const std::optional<nlohmann::json>& in_json) -> void {
-        this->create_movie(in_json->get<create_move_arg>());
-        return;
+      [this](const std::optional<nlohmann::json>& in_json) -> entt::entity {
+        return this->create_movie(in_json->get<create_move_arg>());
       }
   );
   register_fun_t(
