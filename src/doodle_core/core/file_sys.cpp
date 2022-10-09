@@ -119,6 +119,26 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
 path program_location() {
   return boost::dll::program_location().parent_path();
 }
+
+FSys::path write_tmp_file(const std::string& in_falg, const std::string& in_string, const std::string& in_extension) {
+  auto tmp_path = core_set::get_set().get_cache_root(
+      fmt::format(
+          "{}/v{}{}{}",
+          in_falg,
+          version::build_info::get().version_major,
+          version::build_info::get().version_minor,
+          version::build_info::get().version_patch
+      )
+  );
+  auto k_tmp_path = tmp_path / (boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension);
+  {  // 写入文件后直接关闭
+    FSys::fstream file{k_tmp_path, std::ios::out};
+    file << in_string;
+  }
+  return k_tmp_path;
+}
+
+
 }  // namespace doodle::FSys
 
 namespace nlohmann {
