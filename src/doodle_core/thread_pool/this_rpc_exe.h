@@ -17,6 +17,7 @@ class DOODLE_CORE_API this_rpc_exe {
 
   void read_err() const;
   void read_out() const;
+
  public:
   this_rpc_exe();
 
@@ -24,6 +25,11 @@ class DOODLE_CORE_API this_rpc_exe {
   void create_move(
       const FSys::path& in_out_path,
       const std::vector<doodle::movie::image_attr>& in_move,
+      ::doodle::process_message& in_msg
+  );
+  void create_move(
+      const FSys::path& in_out_path,
+      const std::vector<FSys::path>& in_move,
       ::doodle::process_message& in_msg
   );
 

@@ -30,11 +30,6 @@ class DOODLELIB_API image_to_move {
   );
   FSys::path create_out_path(const entt::handle &in_handle);
 
-  static std::vector<image_attr> make_default_attr(
-      const entt::handle &in_handle,
-      const std::vector<FSys::path> &in_path_list
-  );
-
  public:
   image_to_move();
   virtual ~image_to_move();
@@ -49,7 +44,7 @@ class DOODLELIB_API image_to_move {
   ) {
     return async_create_move(
         in_handle,
-        make_default_attr(in_handle, in_vector),
+        image_attr::make_default_attr(in_handle, in_vector),
         std::forward<decltype(in_completion)>(in_completion)
     );
   }

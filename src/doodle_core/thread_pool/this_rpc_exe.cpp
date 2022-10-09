@@ -42,6 +42,7 @@ void this_rpc_exe::create_move(
     const std::vector<doodle::movie::image_attr>& in_move,
     ::doodle::process_message& in_msg
 ) {
+  ptr->msg = &in_msg;
   nlohmann::json l_json{};
   auto l_h = make_handle();
   entt_tool::save_comm<episodes, shot, FSys::path, std::vector<doodle::movie::image_attr>>(
@@ -57,7 +58,7 @@ void this_rpc_exe::create_move(
       boost::process::args = fmt::format(R"(--json_rpc --create_move="{}")", l_tmp),
       boost::process::std_out > ptr->out_attr,
       boost::process::std_err > ptr->err_attr};
-  
+
   this->read_err();
   this->read_out();
 
@@ -118,6 +119,15 @@ void this_rpc_exe::read_out() const {
         } else
           DOODLE_LOG_INFO("错误 {}", in_code.message());
       }
+  );
+}
+void this_rpc_exe::create_move(
+    const FSys::path& in_out_path, const std::vector<FSys::path>& in_move, process_message& in_msg
+) {
+  return crate_move(
+      in_out_path,
+      doodle::movie::image_attr::make_default_attr(in_move),
+      in_msg
   );
 }
 
