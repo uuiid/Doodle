@@ -10,8 +10,35 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <entt/entt.hpp>
+#include <boost/rational.hpp>
 // partial specialization (full specialization works too)
 namespace nlohmann {
+
+template <class T>
+struct [[maybe_unused]] adl_serializer<boost::rational<T>> {
+  using rational = boost::rational<T>;
+  static void to_json(json& j, const rational& in_rational) {
+    j["numerator"]   = in_rational.numerator();
+    j["denominator"] = in_rational.denominator();
+  }
+  static void from_json(const json& j, rational& in_rational) {
+    in_rational = rational{
+        j.at("numerator").template get<T>(),
+        j.at("denominator").template get<T>()};
+  }
+};
+
+// template <>
+// struct [[maybe_unused]] adl_serializer<entt::entity> {
+//   static void to_json(json& j, const entt::entity& in_entity) {
+//     j = in_entity;
+//   }
+//   static void from_json(const json& j, entt::entity& in_entity) {
+//     j.get_to(in_entity);
+//   }
+// };
+
 // template <>
 // struct adl_serializer<std::filesystem::path> {
 //   static void to_json(json& j, const std::filesystem::path& in_path) {

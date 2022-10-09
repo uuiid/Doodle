@@ -1,6 +1,8 @@
 #include "process_message.h"
 
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/lib_warp/boost_fmt_rational.h>
+#include <doodle_core/lib_warp/json_warp.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
@@ -9,7 +11,28 @@
 #include <range/v3/range.hpp>
 #include <range/v3/all.hpp>
 namespace doodle {
-
+void to_json(nlohmann::json& nlohmann_json_j, const process_message& nlohmann_json_t) {
+  nlohmann_json_j["time"]     = nlohmann_json_t.p_time;
+  nlohmann_json_j["end"]      = nlohmann_json_t.p_end;
+  //  nlohmann_json_j["err"]      = nlohmann_json_t.p_err;
+  //  nlohmann_json_j["log"]      = nlohmann_json_t.p_log;
+  nlohmann_json_j["str_end"]  = nlohmann_json_t.p_str_end;
+  nlohmann_json_j["name"]     = nlohmann_json_t.p_name;
+  nlohmann_json_j["name_id"]  = nlohmann_json_t.p_name_id;
+  nlohmann_json_j["state"]    = nlohmann_json_t.p_state;
+  nlohmann_json_j["progress"] = nlohmann_json_t.p_progress;
+}
+void from_json(const nlohmann::json& nlohmann_json_j, process_message& nlohmann_json_t) {
+  nlohmann_json_j.at("time").get_to(nlohmann_json_t.p_time);
+  nlohmann_json_j.at("end").get_to(nlohmann_json_t.p_end);
+  //  nlohmann_json_j.at("err").get_to(nlohmann_json_t.p_err);
+  //  nlohmann_json_j.at("log").get_to(nlohmann_json_t.p_log);
+  nlohmann_json_j.at("str_end").get_to(nlohmann_json_t.p_str_end);
+  nlohmann_json_j.at("name").get_to(nlohmann_json_t.p_name);
+  nlohmann_json_j.at("name_id").get_to(nlohmann_json_t.p_name_id);
+  nlohmann_json_j.at("state").get_to(nlohmann_json_t.p_state);
+  nlohmann_json_j.at("progress").get_to(nlohmann_json_t.p_progress);
+}
 process_message::process_message()
     : p_state(state::wait),
       p_time(chrono::system_clock::now()),

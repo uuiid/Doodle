@@ -9,6 +9,9 @@ namespace doodle {
 using rational_int = boost::rational<std::size_t>;
 
 class DOODLE_CORE_API process_message {
+  friend void DOODLE_CORE_API to_json(nlohmann::json& nlohmann_json_j, const process_message& nlohmann_json_t);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& nlohmann_json_j, process_message& nlohmann_json_t);
+
  public:
   enum level {
     info    = 0,
