@@ -20,7 +20,7 @@
 
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
-
+#include <doodle_app/app/program_options.h>
 namespace doodle {
 
 app_command_base::app_command_base(const app_base::in_app_args& in_instance)

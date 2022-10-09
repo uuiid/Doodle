@@ -3,10 +3,10 @@
 //
 
 #include "get_prot.h"
+#include <boost/winapi/error_handling.hpp>
 #include <Windows.h>
 #include <winsock.h>
 #include <iprtrmib.h>
-#include <tlhelp32.h>
 #include <iphlpapi.h>
 
 #include <wil/result.h>

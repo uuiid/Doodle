@@ -6,7 +6,7 @@
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/core/app_base.h>
-#include <doodle_app/app/program_options.h>
+
 namespace doodle {
 
 /**
