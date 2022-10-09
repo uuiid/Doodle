@@ -12,6 +12,10 @@
 #include <Windows.h>
 #include <shellapi.h>
 #include <tchar.h>
+
+
+#include <doodle_core/core/core_set.h>
+
 namespace doodle::FSys {
 
 #ifdef USE_STD_FSYS
