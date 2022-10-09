@@ -39,6 +39,25 @@ process_message json_rpc_server::get_progress(entt::entity in_id) {
 void json_rpc_server::stop_app() {
   app_base::Get().stop_app();
 }
-
+void json_rpc_server::init_register() {
+  register_fun_t(
+      rpc_fun_name::image_to_move,
+      [this](const std::optional<nlohmann::json>& in_json) -> entt::entity {
+        return this->create_movie(in_json->get<create_move_arg>());
+      }
+  );
+  register_fun_t(
+      rpc_fun_name::get_progress,
+      [this](const std::optional<nlohmann::json>& in_json) {
+        return this->get_progress(in_json->get<entt::entity>());
+      }
+  );
+  register_fun_t(
+      rpc_fun_name::stop_app,
+      [this]() {
+        return this->stop_app();
+      }
+  );
+}
 json_rpc_server::~json_rpc_server() = default;
 }  // namespace doodle

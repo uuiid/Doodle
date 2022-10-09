@@ -4,7 +4,8 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-
+#include <doodle_core/metadata/move_create.h>
+#include <doodle_core/thread_pool/process_message.h>
 namespace doodle::detail {
 
 class DOODLE_CORE_API this_rpc_exe {
@@ -18,7 +19,11 @@ class DOODLE_CORE_API this_rpc_exe {
   this_rpc_exe();
 
   void stop_exit();
-  entt::handle create_move();
+  void create_move(
+      const FSys::path& in_out_path,
+      const std::vector<doodle::movie::image_attr>& in_move,
+      ::doodle::process_message& in_msg
+  );
 
   virtual ~this_rpc_exe();
 };

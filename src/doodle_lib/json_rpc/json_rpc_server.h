@@ -4,8 +4,13 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/json_rpc/json_rpc_i.h>
+
+#include <doodle_core/json_rpc/core/rpc_server.h>
+
 namespace doodle {
-class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
+class DOODLELIB_API json_rpc_server
+    : public json_rpc_i,
+      public json_rpc::rpc_server{
  private:
   class impl;
   std::unique_ptr<impl> ptr;
@@ -13,6 +18,8 @@ class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
  public:
   json_rpc_server();
   ~json_rpc_server() override;
+
+  void init_register() override;
 
   entt::entity create_movie(
       const create_move_arg& in_arg

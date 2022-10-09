@@ -27,8 +27,14 @@ void this_rpc_exe::stop_exit() {
     ptr->rpc_child->stop_app();
   }
 }
-entt::handle this_rpc_exe::create_move() {
-  ptr->rpc_child->image_to_move();
+void this_rpc_exe::create_move(
+    const FSys::path& in_out_path,
+    const std::vector<doodle::movie::image_attr>& in_move,
+    ::doodle::process_message& in_msg
+) {
+  create_rpc_child();
+  ptr->rpc_child->create_movie({in_out_path, in_move});
+  //  in_msg.message();
 }
 void this_rpc_exe::create_rpc_child() {
   if (ptr->this_exe_proces.valid() && ptr->rpc_child)

@@ -15,8 +15,6 @@ namespace doodle {
 
 class DOODLE_CORE_API json_rpc_i {
  public:
-  using json_rpc::rpc_server::rpc_server;
-
   class DOODLE_CORE_API create_move_arg {
    public:
     FSys::path out_path;
@@ -31,9 +29,16 @@ class DOODLE_CORE_API json_rpc_i {
     }
   };
 
- public:
-  //  void init_register() override;
+ protected:
+  struct rpc_fun_name {
+    constexpr static auto image_to_move{"image_to_move"};
+    constexpr static auto get_progress{"get_progress"};
+    constexpr static auto open_project{"open_project"};
+    constexpr static auto get_project_config{"get_project_config"};
+    constexpr static auto stop_app{"stop_app"};
+  };
 
+ public:
   virtual entt::entity create_movie(
       const create_move_arg& in_arg
   )                                                        = 0;

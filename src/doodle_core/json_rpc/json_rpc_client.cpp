@@ -22,7 +22,7 @@ void json_rpc_client::stop_app() {
   return call_fun<void, true>(json_rpc::rpc_fun_name::stop_app);
 }
 entt::entity json_rpc_client::create_movie(const json_rpc_i::create_move_arg& in_arg) {
-  call_fun<entt::entity>(json_rpc::rpc_fun_name::image_to_move, in_list);
+  return call_fun<entt::entity>(json_rpc::rpc_fun_name::image_to_move, in_arg);
 }
 
 }  // namespace doodle

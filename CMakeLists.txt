@@ -157,4 +157,12 @@ remove boost-uninstall --recurse
         find_package(dem-bones CONFIG REQUIRED)
     target_link_libraries(main PRIVATE DemBones::dem-bones)
 
+# this is heuristically generated, and may not be correct
+find_package(gRPC CONFIG REQUIRED)
+# note: 7 additional targets are not displayed.
+target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
+
+find_package(modules CONFIG REQUIRED)
+target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
+
 ]==]
