@@ -48,7 +48,6 @@ class rpc_client {
     } else {
       auto l_err_ = std::get<rpc_error>(l_rpc_r.result);
       l_err_.to_throw();
-      return Result_Type{};
     }
   }
 
