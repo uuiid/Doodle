@@ -32,7 +32,9 @@ entt::entity json_rpc_server::create_movie(
 }
 process_message json_rpc_server::get_progress(entt::entity in_id) {
   auto l_h = make_handle(in_id);
-  return l_h.all_of<process_message>() ? l_h.get<process_message>() : process_message{};
+  return l_h && l_h.all_of<process_message>()
+             ? l_h.get<process_message>()
+             : process_message{};
 }
 void json_rpc_server::stop_app() {
   app_base::Get().stop_app();
