@@ -32,16 +32,17 @@ app_command_base::app_command_base(const app_base::in_app_args& in_instance)
 app_command_base::app_command_base()
     : app_base(),
       cmd_str(boost::program_options::split_winmain(std::string{
-          boost::locale::conv::utf_to_utf<char>(GetCommandLineW())
-      })) {
+          boost::locale::conv::utf_to_utf<char>(GetCommandLineW())})) {
   g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
 }
 
 void app_command_base::post_constructor() {
   auto l_opt = g_reg()->ctx().at<program_options_ptr>();
-  load_facet();
-  for (auto&& [key, val] : facet_list)
+
+  for (auto&& [key, val] : facet_list) {
+    val->add_program_options(l_opt);
     l_opt->build_opt(key);
+  }
 
   if (std::holds_alternative<win::string_type>(cmd_str)) {
     l_opt->command_line_parser(
@@ -92,8 +93,6 @@ bool app_command_base::chick_build_time() const {
   chrono::sys_time_pos l_point{l_build_time_};
   l_point += chrono::months{3};
   return chrono::system_clock::now() < l_point;
-}
-void app_command_base::load_facet() {
 }
 
 }  // namespace doodle

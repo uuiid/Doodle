@@ -12,10 +12,7 @@
 namespace doodle {
 program_options::program_options()
     : p_opt_all("doodle opt"),
-      p_opt_file("doodle config file"),
-      p_opt_gui("doodle config gui"),
       p_opt_general("doodle config general"),
-      p_opt_advanced("doodle general config"),
       p_help(false),
       p_version(false),
       p_config_file(),
@@ -52,8 +49,7 @@ program_options::program_options()
   );
 }
 bool program_options::command_line_parser(const std::vector<std::string>& in_arg) {
-  p_opt_all.add(p_opt_general).add(p_opt_gui).add(p_opt_advanced);
-  p_opt_file.add(p_opt_gui).add(p_opt_advanced);
+  p_opt_all.add(p_opt_general);
 
   p_arg = in_arg;
   DOODLE_LOG_INFO("开始解析命令行 [{}]", fmt::join(in_arg, "  "));
@@ -75,11 +71,11 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
     if (!k_path.empty() && FSys::exists(k_path)) {
       FSys::ifstream k_file{p_vm[config_file].as<FSys::path>()};
       if (k_file)
-        boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_file), p_vm);
+        boost::program_options::store(boost::program_options::parse_config_file(k_file, p_opt_all), p_vm);
     }
   }
 
-  boost::program_options::store(boost::program_options::parse_environment(p_opt_file, "doodle_"), p_vm);
+  boost::program_options::store(boost::program_options::parse_environment(p_opt_all, "doodle_"), p_vm);
   boost::program_options::notify(p_vm);
 
   if (!p_vm.count(input_project)) {
@@ -109,11 +105,17 @@ bool program_options::command_line_parser(const std::vector<std::string>& in_arg
   return true;
 }
 void program_options::build_opt(const std::string& in_name_face) {
-  p_opt_advanced.add_options()(
+  p_opt_all.add_options()(
       in_name_face.c_str(),
       boost::program_options::bool_switch(&facet_model[in_name_face]),
       fmt::format("启动 {} 模式", in_name_face).c_str()
   );
+}
+void program_options::add_opt(const boost::program_options::options_description& in_opt) {
+  p_opt_all.add(in_opt);
+}
+bool program_options::operator[](const std::string& in_key) const {
+  return p_vm.count(in_key);
 };
 
 }  // namespace doodle

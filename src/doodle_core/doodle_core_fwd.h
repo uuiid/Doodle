@@ -41,6 +41,7 @@ using namespace date::literals;
 class DOODLE_CORE_API logger_ctrl;
 class DOODLE_CORE_API doodle_lib;
 class DOODLE_CORE_API thread_pool;
+class program_options;
 using handle_list     = std::vector<entt::handle>;
 using logger_ctr_ptr  = std::shared_ptr<logger_ctrl>;
 using string_list     = std::vector<std::string>;

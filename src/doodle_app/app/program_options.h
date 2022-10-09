@@ -32,36 +32,11 @@ class DOODLE_APP_API program_options {
   static constexpr char ue4outpath[]    = "ue4outpath";
   static constexpr char ue4Project[]    = "ue4Project";
 
-  /**
-   * @brief 所有选项， 命令行选项
-   *
-   */
+  /// @brief 所有选项， 命令行选项
   boost::program_options::options_description p_opt_all;
-  /**
-   * @brief 解析配置文件时的选项
-   *
-   */
-  boost::program_options::options_description p_opt_file;
-
-  /**
-   * @brief gui选项
-   *
-   */
-  boost::program_options::options_description p_opt_gui;
-  /**
-   * @brief 一般选项
-   *
-   */
+  /// @brief 一般选项
   boost::program_options::options_description p_opt_general;
-  /**
-   * @brief 高级设置
-   *
-   */
-  boost::program_options::options_description p_opt_advanced;
-  /**
-   * @brief 位置选项
-   *
-   */
+  /// @brief 位置选项
   boost::program_options::positional_options_description p_opt_positional;
 
   boost::program_options::variables_map p_vm;
@@ -70,6 +45,8 @@ class DOODLE_APP_API program_options {
   program_options();
 
   void build_opt(const std::string& in_name_face);
+
+  void add_opt(const boost::program_options::options_description& in_opt);
   /**
    * @brief 解析命令行
    *
@@ -83,6 +60,8 @@ class DOODLE_APP_API program_options {
     return command_line_parser(k_str);
   };
   bool command_line_parser(const std::vector<std::string>& in_arg);
+  /// @brief 测试是否存在值
+  bool operator[](const std::string& in_key) const;
 };
 using program_options_ptr = std::shared_ptr<program_options>;
 }  // namespace doodle

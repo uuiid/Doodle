@@ -7,6 +7,7 @@
 #include <doodle_app/gui/main_status_bar.h>
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/gui/layout_window.h>
+#include <doodle_lib/app/rpc_server_facet.h>
 
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/get_input_dialog.h>
@@ -16,6 +17,14 @@ main_app::main_app(const doodle_main_app::in_gui_arg& in_arg)
     : doodle_main_app(in_arg) {
   run_facet = std::make_shared<main_facet>();
   add_facet(run_facet);
+  add_facet(std::make_shared<facet::rpc_server_facet>());
+}
+main_app::main_app()
+    : doodle_main_app() {
+  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+  run_facet = std::make_shared<main_facet>();
+  add_facet(run_facet);
+  add_facet(std::make_shared<facet::rpc_server_facet>());
 }
 
 void main_facet::load_windows() {

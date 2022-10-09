@@ -18,7 +18,7 @@ class DOODLE_APP_API app_command_base : public app_base {
   cmd_string_type cmd_str;
 
   virtual bool chick_authorization();
-  virtual void load_facet();
+
 
   std::optional<FSys::path> find_authorization_file() const;
   bool chick_build_time() const;

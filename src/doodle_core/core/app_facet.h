@@ -26,10 +26,12 @@ class DOODLE_CORE_API app_facet_interface {
    * 结束清理
    */
   virtual void deconstruction()                                  = 0;
+
+  virtual void add_program_options(const std::shared_ptr<program_options>& in_opt){};
 };
 
 }  // namespace doodle::detail
 
-namespace doodle{
-using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet_interface>;
+namespace doodle {
+using app_facet_ptr = std::shared_ptr<::doodle::detail::app_facet_interface>;
 }

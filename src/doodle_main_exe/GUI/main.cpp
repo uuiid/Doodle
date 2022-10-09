@@ -34,10 +34,9 @@
  * @brief 项目中的各种配置选项, 每个项目不同
  */
 
-extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-  doodle::main_app app{doodle::main_app::in_gui_arg{
-      doodle::main_app::in_app_args{hInstance, strCmdLine},
-      nCmdShow, nullptr}};
+// extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
+extern "C" int main() try {
+  doodle::main_app app{};
   try {
     return app.run();
   } catch (const std::exception& err) {

@@ -5,7 +5,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include <doodle_app/app/facet/json_rpc_facet.h>
+#include <doodle_core/core/app_facet.h>
 
 namespace doodle::facet {
 
@@ -22,6 +22,7 @@ class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interf
   const std::string& name() const noexcept override;
   void operator()() override;
   void deconstruction() override;
+  void add_program_options(const std::shared_ptr<program_options>& in_opt) override;
 };
 
 }  // namespace doodle::facet
