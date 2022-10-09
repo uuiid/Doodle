@@ -3,7 +3,7 @@
 //
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_core/json_rpc/json_rpc_server_i.h>
+#include <doodle_core/json_rpc/json_rpc_i.h>
 namespace doodle {
 class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
  private:

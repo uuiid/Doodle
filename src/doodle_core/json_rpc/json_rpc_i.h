@@ -13,7 +13,7 @@
 #include <boost/signals2.hpp>
 namespace doodle {
 
-class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
+class DOODLE_CORE_API json_rpc_i {
  public:
   using json_rpc::rpc_server::rpc_server;
 
@@ -32,14 +32,14 @@ class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
   };
 
  public:
-  void init_register() override;
+  //  void init_register() override;
 
   virtual entt::entity create_movie(
       const create_move_arg& in_arg
-  )                                                                          = 0;
+  )                                                        = 0;
 
   virtual process_message get_progress(entt::entity in_id) = 0;
-  virtual void stop_app()                                                    = 0;
+  virtual void stop_app()                                  = 0;
 };
 
 }  // namespace doodle
