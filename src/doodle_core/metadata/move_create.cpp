@@ -23,6 +23,11 @@
 namespace doodle::movie {
 
 DOODLE_JSON_CPP(image_watermark, text_attr, width_proportion_attr, height_proportion_attr, rgba_attr)
+image_watermark::image_watermark(std::string in_p_text, double_t in_p_width_proportion, double_t in_p_height_proportion, image_watermark::rgba_t in_rgba)
+    : text_attr(std::move(in_p_text)),
+      width_proportion_attr(in_p_width_proportion),
+      height_proportion_attr(in_p_height_proportion),
+      rgba_attr(in_rgba) {}
 
 DOODLE_JSON_CPP(image_attr, path_attr, watermarks_attr, num_attr)
 
@@ -89,5 +94,7 @@ bool image_attr::operator<(const image_attr &in_rhs) const noexcept {
 bool image_attr::operator==(const image_attr &in_rhs) const noexcept {
   return path_attr == in_rhs.path_attr;
 }
+image_attr::image_attr(FSys::path in_path)
+    : path_attr(std::move(in_path)){}
 
 }  // namespace doodle::movie
