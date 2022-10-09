@@ -38,6 +38,7 @@ class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
   )                                                                          = 0;
 
   virtual json_rpc::args::rpc_json_progress get_progress(entt::entity in_id) = 0;
+  virtual void stop_app()                                                    = 0;
 };
 
 }  // namespace doodle

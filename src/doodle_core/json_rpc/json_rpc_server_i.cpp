@@ -8,10 +8,23 @@
 #include <metadata/move_create.h>
 namespace doodle {
 void json_rpc_server_i::init_register() {
-  register_fun(
+  register_fun_t(
       json_rpc::rpc_fun_name::image_to_move,
+      [this](const std::optional<nlohmann::json>& in_json) -> void {
+        this->create_movie(in_json->get<create_move_arg>());
+        return;
+      }
+  );
+  register_fun_t(
+      json_rpc::rpc_fun_name::get_progress,
       [this](const std::optional<nlohmann::json>& in_json) {
-        return this->create_movie(in_json->get<create_move_arg>());
+        return this->get_progress(in_json->get<entt::entity>());
+      }
+  );
+  register_fun_t(
+      json_rpc::rpc_fun_name::stop_app,
+      [this]() {
+        return this->stop_app();
       }
   );
 }
