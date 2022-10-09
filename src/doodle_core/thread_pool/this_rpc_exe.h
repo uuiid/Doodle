@@ -15,6 +15,8 @@ class DOODLE_CORE_API this_rpc_exe {
 
   void create_rpc_child();
 
+  void read_err() const;
+  void read_out() const;
  public:
   this_rpc_exe();
 
