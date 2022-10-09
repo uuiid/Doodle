@@ -17,7 +17,7 @@ json_rpc_server::json_rpc_server()
     : ptr(std::make_unique<impl>()) {
 }
 
-json_rpc::args::rpc_json_progress json_rpc_server::create_movie(
+void json_rpc_server::create_movie(
     const create_move_arg& in_arg
 ) {
   auto l_h = make_handle();
