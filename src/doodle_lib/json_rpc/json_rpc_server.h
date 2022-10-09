@@ -14,7 +14,7 @@ class DOODLELIB_API json_rpc_server : public json_rpc_server_i {
   json_rpc_server();
   ~json_rpc_server() override;
 
-  json_rpc::args::rpc_json_progress create_movie(
+  void create_movie(
       const create_move_arg& in_arg
   ) override;
 };

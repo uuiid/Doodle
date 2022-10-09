@@ -33,9 +33,11 @@ class DOODLE_CORE_API json_rpc_server_i : public json_rpc::rpc_server {
  public:
   void init_register() override;
 
-  virtual json_rpc::args::rpc_json_progress create_movie(
+  virtual void create_movie(
       const create_move_arg& in_arg
-  ) = 0;
+  )                                                                          = 0;
+
+  virtual json_rpc::args::rpc_json_progress get_progress(entt::entity in_id) = 0;
 };
 
 }  // namespace doodle
