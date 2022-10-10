@@ -5,6 +5,7 @@ target_sources(
         process_pool.h
         process_message.h
         process_task.h
+        image_to_movie.h
 
         PRIVATE
         process_message.cpp
