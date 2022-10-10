@@ -100,7 +100,7 @@ gui_facet::gui_facet()
       p_i(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
-  g_reg()->ctx().emplace<image_to_move>(std::make_shared<image_to_move::element_type>());
+  g_reg()->ctx().emplace<image_to_move>();
 }
 
 void gui_facet::loop_one() {

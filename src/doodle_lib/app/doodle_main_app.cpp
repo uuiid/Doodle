@@ -11,6 +11,7 @@
 
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/get_input_dialog.h>
+#include <doodle_lib/long_task/image_to_move.h>
 namespace doodle {
 
 main_app::main_app(const doodle_main_app::in_gui_arg& in_arg)
@@ -25,6 +26,10 @@ main_app::main_app()
   run_facet = std::make_shared<main_facet>();
   add_facet(run_facet);
   add_facet(std::make_shared<facet::rpc_server_facet>());
+}
+
+main_facet::main_facet() : facet::gui_facet() {
+  g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::image_to_move>();
 }
 
 void main_facet::load_windows() {

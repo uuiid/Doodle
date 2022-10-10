@@ -10,4 +10,5 @@ target_sources(
         PRIVATE
         process_message.cpp
         process_pool.cpp
+        image_to_movie.cpp
 )

@@ -17,9 +17,10 @@ class DOODLE_CORE_API image_to_movie_interface {
   virtual FSys::path create_out_path(const entt::handle &in_handle) = 0;
 
  public:
-  using image_attr                    = ::doodle::movie::image_attr;
-  using image_watermark               = ::doodle::movie::image_watermark;
-  virtual ~image_to_movie_interface() = default;
+  using image_attr      = ::doodle::movie::image_attr;
+  using image_watermark = ::doodle::movie::image_watermark;
+  image_to_movie_interface();
+  virtual ~image_to_movie_interface();
   virtual void create_move(
       const FSys::path &in_out_path,
       process_message &in_msg,
@@ -79,7 +80,7 @@ class DOODLE_CORE_API image_to_movie_interface {
     );
   };
 };
-}
+}  // namespace detail
 
 using image_to_move = std::shared_ptr<detail::image_to_movie_interface>;
 }  // namespace doodle
