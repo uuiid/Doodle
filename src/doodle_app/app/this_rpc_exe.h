@@ -21,6 +21,7 @@ class DOODLE_APP_API this_rpc_exe {
 
  public:
   this_rpc_exe();
+  virtual ~this_rpc_exe();
 
   void stop_exit();
   void create_move(
@@ -28,8 +29,6 @@ class DOODLE_APP_API this_rpc_exe {
       const std::vector<doodle::movie::image_attr>& in_move,
       ::doodle::process_message& in_msg
   );
-
-  virtual ~this_rpc_exe();
 };
 
 }  // namespace doodle::detail

@@ -86,12 +86,14 @@ void rpc_server_facet::operator()() {
       DOODLE_LOG_INFO("不存在文件 {}", p_i->files_attr);
     }
     FSys::ifstream l_file{p_i->files_attr};
-    auto l_json = nlohmann::json::parse(l_file);
-    auto l_h    = make_handle();
-    entt_tool::load_comm<episodes, shot, FSys::path, std::vector<movie::image_attr>>(l_h, l_json);
-    auto l_f = g_reg()->ctx().at<image_to_move>()->async_create_move(
-        l_h, l_h.get<std::vector<movie::image_attr>>(),
-        boost::asio::use_future
+    auto l_json     = nlohmann::json::parse(l_file);
+    auto l_out_path = l_json["out_path"].get<FSys::path>();
+    auto l_move     = l_json["image_attr"].get<std::vector<doodle::movie::image_attr>>();
+    process_message l_msg;
+    g_reg()->ctx().at<image_to_move>()->create_move(
+        l_out_path,
+        l_msg,
+        l_move
     );
   }
 

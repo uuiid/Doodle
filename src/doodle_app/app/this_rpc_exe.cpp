@@ -22,15 +22,15 @@ class this_rpc_exe::impl {
 
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
-  boost::asio::streambuf out_io_out_attr;
-  boost::asio::streambuf out_io_err_attr;
+  std::string out_io_out_attr;
+  std::string out_io_err_attr;
   ::doodle::process_message* msg;
   //  std::shared_ptr<json_rpc_client> rpc_child;
 };
 
 this_rpc_exe::this_rpc_exe()
     : ptr(std::make_unique<impl>()) {
-  //  ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
+  ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
 }
 void this_rpc_exe::stop_exit() {
   //  if (ptr->this_exe_proces.valid() && ptr->rpc_child) {
@@ -44,12 +44,11 @@ void this_rpc_exe::create_move(
 ) {
   ptr->msg = &in_msg;
   nlohmann::json l_json{};
-  auto l_h = make_handle();
-  entt_tool::save_comm<episodes, shot, FSys::path, std::vector<doodle::movie::image_attr>>(
-      l_h,
-      l_json
-  );
-  auto l_tmp = FSys::write_tmp_file(
+  auto l_h             = make_handle();
+
+  l_json["out_path"]   = in_out_path;
+  l_json["image_attr"] = in_move;
+  auto l_tmp           = FSys::write_tmp_file(
       "create_move",
       l_json.dump(), ".json"
   );
@@ -59,7 +58,7 @@ void this_rpc_exe::create_move(
       boost::process::std_out > ptr->out_attr,
       boost::process::std_err > ptr->err_attr};
 
-  this->read_err();
+//  this->read_err();
   this->read_out();
 
   //  ptr->rpc_child->create_movie({in_out_path, in_move});
@@ -80,48 +79,43 @@ void this_rpc_exe::create_rpc_child() {
   //  );
 }
 void this_rpc_exe::read_err() const {
-  boost::asio::async_read_until(
-      ptr->out_attr,
-      ptr->out_io_err_attr,
-      '\n',
-      [this](boost::system::error_code in_code, std::size_t in_size) {
-        if (in_code) {
-          std::istream l_istream{&ptr->out_io_err_attr};
-          std::string l_ine{};
-          std::getline(l_istream, l_ine);
-          if (l_ine.empty())
-            return;
-          if (ptr->msg) {
-            ptr->msg->message(l_ine);
-          }
-          this->read_err();
-        } else
-          DOODLE_LOG_INFO("错误 {}", in_code.message());
-      }
-  );
+  if (ptr->err_attr.is_open())
+    boost::asio::async_read_until(
+        ptr->err_attr,
+        boost::asio::dynamic_buffer(ptr->out_io_err_attr),
+        '\n',
+        [this](boost::system::error_code in_code, std::size_t in_size) {
+          if (in_code) {
+            if (!ptr->out_io_err_attr.empty() && ptr->msg)
+              ptr->msg->message(ptr->out_io_err_attr);
+            ptr->out_io_err_attr.clear();
+            this->read_err();
+          } else
+            DOODLE_LOG_INFO("错误 {}", in_code.message());
+        }
+    );
 }
 void this_rpc_exe::read_out() const {
-  boost::asio::async_read_until(
-      ptr->out_attr,
-      ptr->out_io_out_attr,
-      '\n',
-      [this](boost::system::error_code in_code, std::size_t in_size) {
-        if (in_code) {
-          std::istream l_istream{&ptr->out_io_out_attr};
-          std::string l_ine{};
-          std::getline(l_istream, l_ine);
-          if (l_ine.empty())
-            return;
-          if (ptr->msg) {
-            ptr->msg->message(l_ine);
-          }
-          this->read_out();
-        } else
-          DOODLE_LOG_INFO("错误 {}", in_code.message());
-      }
-  );
+  if (ptr->out_attr.is_open())
+    boost::asio::async_read_until(
+        ptr->out_attr,
+        boost::asio::dynamic_buffer(ptr->out_io_out_attr),
+        '\n',
+        [this](boost::system::error_code in_code, std::size_t in_size) {
+          if (in_code) {
+            if (!ptr->out_io_out_attr.empty() && ptr->msg)
+              ptr->msg->message(ptr->out_io_out_attr);
+            ptr->out_io_out_attr.clear();
+            this->read_out();
+          } else
+            DOODLE_LOG_INFO("错误 {}", in_code.message());
+        }
+    );
 }
 
-
-this_rpc_exe::~this_rpc_exe() = default;
+this_rpc_exe::~this_rpc_exe() {
+  ptr->this_exe_proces.terminate();
+  ptr->err_attr.close();
+  ptr->out_attr.close();
+}
 }  // namespace doodle::detail

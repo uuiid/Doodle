@@ -23,11 +23,6 @@ class DOODLELIB_API image_to_move {
   class impl;
   std::unique_ptr<impl> p_i;
 
-  virtual void create_move(
-      const FSys::path &in_out_path,
-      process_message &in_msg,
-      const std::vector<image_attr> &in_vector
-  );
   FSys::path create_out_path(const entt::handle &in_handle);
 
  public:
@@ -35,6 +30,12 @@ class DOODLELIB_API image_to_move {
   virtual ~image_to_move();
 
   inline static const cv::Scalar rgb_default{25, 220, 2};
+
+  virtual void create_move(
+      const FSys::path &in_out_path,
+      process_message &in_msg,
+      const std::vector<image_attr> &in_vector
+  );
 
   template <typename CompletionHandler>
   auto async_create_move(
