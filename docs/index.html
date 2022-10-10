@@ -36,6 +36,11 @@
 <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar-folder.min.css"/>
 <!--显示警告和info插件-->
 <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+<script>
+    if (typeof navigator.serviceWorker !== 'undefined') {
+        navigator.serviceWorker.register('sw.js')
+    }
+</script>
 </body>
 
 </html>
