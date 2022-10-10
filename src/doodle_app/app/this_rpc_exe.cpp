@@ -54,11 +54,11 @@ void this_rpc_exe::create_move(
   );
   ptr->this_exe_proces = boost::process::child{
       boost::process::exe  = ptr->this_exe_path,
-      boost::process::args = fmt::format(R"(--json_rpc --create_move="{}")", l_tmp),
+      boost::process::args = {"--json_rpc"s, fmt::format(R"(--create_move="{}")", l_tmp)},
       boost::process::std_out > ptr->out_attr,
       boost::process::std_err > ptr->err_attr};
 
-//  this->read_err();
+  this->read_err();
   this->read_out();
 
   //  ptr->rpc_child->create_movie({in_out_path, in_move});
@@ -85,7 +85,7 @@ void this_rpc_exe::read_err() const {
         boost::asio::dynamic_buffer(ptr->out_io_err_attr),
         '\n',
         [this](boost::system::error_code in_code, std::size_t in_size) {
-          if (in_code) {
+          if (!in_code) {
             if (!ptr->out_io_err_attr.empty() && ptr->msg)
               ptr->msg->message(ptr->out_io_err_attr);
             ptr->out_io_err_attr.clear();
@@ -102,7 +102,7 @@ void this_rpc_exe::read_out() const {
         boost::asio::dynamic_buffer(ptr->out_io_out_attr),
         '\n',
         [this](boost::system::error_code in_code, std::size_t in_size) {
-          if (in_code) {
+          if (!in_code) {
             if (!ptr->out_io_out_attr.empty() && ptr->msg)
               ptr->msg->message(ptr->out_io_out_attr);
             ptr->out_io_out_attr.clear();

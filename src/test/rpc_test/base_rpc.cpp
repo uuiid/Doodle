@@ -23,8 +23,8 @@ namespace doodle {
 class test_this_exe : public details::image_to_move {
  public:
  private:
+  detail::this_rpc_exe l_exe{};
   void create_move(const FSys::path& in_out_path, process_message& in_msg, const std::vector<image_attr>& in_vector) override {
-    detail::this_rpc_exe l_exe{};
     l_exe.create_move(in_out_path, in_vector, in_msg);
   }
 };
@@ -67,7 +67,9 @@ BOOST_AUTO_TEST_CASE(base) {
   //  auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
   //  auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());
   //  BOOST_TEST(l_prot == l_f_prot);
-  run_fun = []() { app_base::Get().stop_app(); };
+  run_fun = [&]() {
+    work.reset();
+    app_base::Get().stop_app(); };
   main_app_attr.run();
   BOOST_TEST(is_run);
 }
