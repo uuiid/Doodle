@@ -3,23 +3,16 @@
 //
 
 #pragma once
-#include <doodle_lib/app/doodle_main_app.h>
+#include <doodle_core/core/app_facet.h>
+#include <doodle_app/app/facet/gui_facet.h>
 
 namespace doodle::maya_plug {
-class maya_plug_app : public app {
+class maya_facet : public doodle::facet::gui_facet {
  protected:
- public:
-  maya_plug_app(const doodle_main_app::in_gui_arg& in_arg);
-
- private:
-  virtual void load_windows() override;
-
- protected:
-  virtual void post_constructor() override;
+  void load_windows() override;
 
  public:
- public:
-  using doodle_main_app::app;
-  virtual void close_windows() override;
+  void close_windows() override;
 };
+
 }  // namespace doodle::maya_plug
