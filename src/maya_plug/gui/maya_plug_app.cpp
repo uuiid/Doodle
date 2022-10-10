@@ -11,9 +11,6 @@
 #include <maya_plug/gui/maya_layout.h>
 #include <doodle_app/gui/main_proc_handle.h>
 namespace doodle::maya_plug {
-
-
-
 void maya_facet::load_windows() {
   g_reg()->ctx().at<gui::main_proc_handle>().win_close   = [this]() { this->close_windows(); };
   g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = []() {};
@@ -24,4 +21,19 @@ void maya_facet::load_windows() {
 void maya_facet::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
+
+namespace detail {
+
+class maya_create_movie::impl {
+ public:
+};
+
+maya_create_movie::maya_create_movie() : ptr(std::make_unique<impl>()) {}
+
+void maya_create_movie::create_move(const FSys::path& in_out_path, process_message& in_msg, const std::vector<image_attr>& in_vector) {
+}
+FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
+  return FSys::path();
+}
+}  // namespace detail
 }  // namespace doodle::maya_plug

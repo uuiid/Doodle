@@ -15,7 +15,7 @@
 #include <opencv2/freetype.hpp>
 
 namespace doodle {
-namespace details {
+namespace detail {
 namespace {
 void watermark_add_image(cv::Mat &in_image, const image_to_move::image_watermark &in_watermark) {
   auto l_image     = in_image;
@@ -161,5 +161,5 @@ FSys::path image_to_move::create_out_path(const entt::handle &in_handle) {
     create_directories(l_out.parent_path());
   return l_out;
 }
-}  // namespace details
+}  // namespace detail
 }  // namespace doodle
