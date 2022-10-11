@@ -13,7 +13,7 @@ target_link_libraries(generate_token
 
 target_compile_definitions(generate_token
         PUBLIC
-        ISOLATION_AWARE_ENABLED
+        #        ISOLATION_AWARE_ENABLED
         )
 
 add_custom_target(
