@@ -246,6 +246,7 @@ csv_export_widgets::csv_line csv_export_widgets::to_csv_line(
   using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
   using time_rational = boost::rational<std::uint64_t>;
   time_rational l_time_rational{chrono::floor<chrono::seconds>(k_time).count(), 60ull * 60ull * 8ull};
+  DOODLE_LOG_INFO("计算时间为 {}", chrono::floor<chrono::seconds>(k_time).count());
   csv_line l_line{
       k_ass.organization_attr(),                                                                     //"部门"
       in_user.get<user>().get_name(),                                                                //"制作人"

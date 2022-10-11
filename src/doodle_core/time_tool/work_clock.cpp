@@ -28,7 +28,7 @@ work_clock::duration_type work_clock::operator()(
     const time_type& in_min,
     const time_type& in_max
 ) const {
-  auto l_d = discrete_interval_time::closed(in_min, in_max);
+  auto l_d = discrete_interval_time::left_open(in_min, in_max);
   auto l_l = interval_set_time_ & l_d;
   duration_type l_len{};
   for (const auto& l_i : l_l) {
@@ -95,7 +95,7 @@ void work_clock::gen_rules_(const discrete_interval_time& in_time) {
   ranges::for_each(
       rules_.extra_work(),
       [&](const std::decay_t<decltype(rules_.extra_work())>::value_type& in_) {
-        l_r += discrete_interval_time::open(in_.first, in_.second);
+        l_r += discrete_interval_time::closed(in_.first, in_.second);
       }
   );
   interval_set_time_ = l_r;
