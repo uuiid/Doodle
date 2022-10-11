@@ -1,11 +1,10 @@
 text_prompts:
-  - A beautiful painting of a singular lighthouse, shining its light across a tumultuous sea of blood by greg rutkowski and thomas kinkade, Trending on artstation.
-  - yellow color scheme
+  - Trending on ArtStation. A deep and quiet mountain stream
 
-init_image:
+init_image: https://cdnb.artstation.com/p/assets/images/images/054/733/039/large/zahir-aghakhani-test.jpg?1665237512
 width_height: [ 640, 384 ]
 
-skip_steps: 0
+skip_steps: 10
 steps: 250
 
 init_scale: 1000
