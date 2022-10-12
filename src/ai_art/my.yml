@@ -9,7 +9,7 @@ skip_steps: 0
 steps: 250
 
 init_scale: 1000
-clip_guidance_scale: 5000
+clip_guidance_scale: 2500
 
 tv_scale: 0
 range_scale: 150
