@@ -1,7 +1,8 @@
 text_prompts:
-  - Trending on ArtStation. A deep caves, colorful rocks
+  - Trending on ArtStation. The green stones in the deep cave surround the central statue of the figure greg rutkowski and thomas kinkade
 
-init_image: https://cdnb.artstation.com/p/assets/images/images/054/733/039/large/zahir-aghakhani-test.jpg?1665237512
+
+init_image: https://cdnb.artstation.com/p/assets/images/images/054/786/893/large/zack-ryan-photobashing.jpg?1665389699
 width_height: [ 640, 384 ]
 
 skip_steps: 10
