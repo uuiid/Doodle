@@ -3,13 +3,10 @@
 //
 
 #include <doodle_lib/core/authorization.h>
-#include <doodle_app/app/app_command.h>
+#include <doodle_core/core/doodle_lib.h>
 int main(int argc, char *argv[]) {
-  doodle::app_command_base l_command_base{
-      doodle::app_command_base::in_app_args{nullptr, std::vector<std::string>{}}};
-  for (int l_i = 0; l_i < 10; ++l_i) {
-    l_command_base.poll_one();
-  }
+  doodle::doodle_lib l_lib{};
+  doodle::doodle_lib::create_time_database();
   if (argc > 1) {
     doodle::authorization::generate_token(argv[1]);
   } else {
