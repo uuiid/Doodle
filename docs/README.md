@@ -19,7 +19,7 @@
 <summary>本地 doc 文档 apache 配置 </summary>  
 
 ``` xml
-Define DOCROOT "C:/Users/TD/Source/Doodle"
+Define DOCROOT "E:/Doodle"
 DocumentRoot "${DOCROOT}/docs"
 <Directory "${DOCROOT}/docs">
     Options Indexes MultiViews FollowSymlinks
