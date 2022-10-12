@@ -1,11 +1,11 @@
 text_prompts:
-  - Trending on ArtStation. The green stones in the deep cave surround the central statue of the figure greg rutkowski and thomas kinkade
+  - beutiful goth Girl with short blue hair ,  league of legends, cyberpunk futuristic neon. long blue hair, decorated with traditional japanese ornaments by ismail inceoglu dragan bibin hans thoma greg rutkowski alexandros pyromallis nekro rene maritte illustrated, perfect face, fine details, realistic shaded, fine - face, pretty face
 
 
-init_image: https://cdnb.artstation.com/p/assets/images/images/054/786/893/large/zack-ryan-photobashing.jpg?1665389699
+init_image:
 width_height: [ 640, 384 ]
 
-skip_steps: 10
+skip_steps: 0
 steps: 250
 
 init_scale: 1000
