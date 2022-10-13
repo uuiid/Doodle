@@ -93,8 +93,6 @@ void from_json(const nlohmann::json &j, core_set &p);
 class DOODLE_CORE_API core_set_init {
   core_set &p_set;
 
-  nlohmann::json &json_value();
-
  public:
   core_set_init();
 

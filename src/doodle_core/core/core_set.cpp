@@ -4,7 +4,6 @@
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/pin_yin/convert.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
@@ -203,10 +202,6 @@ bool core_set_init::config_to_user() {
     FSys::create_directories(p_set.p_doc);
   }
   return true;
-}
-
-nlohmann::json &core_set_init::json_value() {
-  return *p_set.json_data;
 }
 
 void to_json(nlohmann::json &j, const core_set &p) {
