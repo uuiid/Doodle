@@ -11,6 +11,7 @@
 #include <doodle_lib/long_task/image_to_move.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/move_create.h>
 
 #include <maya_plug/data/maya_camera.h>
 #include <maya/M3dView.h>
@@ -176,35 +177,35 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     auto k_f = get_file_dir();
 
-    std::vector<image_file_attribute> l_handle_list{};
+    std::vector<movie::image_attr> l_handle_list{};
     std::double_t k_frame{0};
     for (auto& l_path : FSys::directory_iterator{k_f}) {
-      image_file_attribute k_image{};
-      k_image.file_path = l_path;
+      movie::image_attr k_image{};
+      k_image.path_attr = l_path;
       /// \brief 相机名称
-      k_image.watermarks.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
+      k_image.watermarks_attr.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
       /// \brief 当前帧和总帧数
       auto k_len = in_end - in_start + 1;
-      k_image.watermarks.emplace_back(
+      k_image.watermarks_attr.emplace_back(
           fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()),
           0.5, 0.1,
           cv::Scalar{25, 220, 2}
       );
       ++k_frame;
       /// \brief 绘制摄像机avo
-      k_image.watermarks.emplace_back(
+      k_image.watermarks_attr.emplace_back(
           fmt::format("FOV: {:.3f}", k_cam.focalLength()),
           0.91, 0.1,
           cv::Scalar{25, 220, 2}
       );
       /// \brief 当前时间节点
-      k_image.watermarks.emplace_back(
+      k_image.watermarks_attr.emplace_back(
           fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
           0.1, 0.91,
           cv::Scalar{25, 220, 2}
       );
       /// \brief 制作人姓名
-      k_image.watermarks.emplace_back(
+      k_image.watermarks_attr.emplace_back(
           g_reg()->ctx().at<user::current_user>().user_name_attr(),
           0.5, 0.91,
           cv::Scalar{25, 220, 2}

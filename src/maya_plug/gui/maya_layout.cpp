@@ -99,5 +99,10 @@ bool maya_layout::tick() {
 }
 
 maya_layout::~maya_layout() = default;
+void maya_menu::menu_windows() {
+
+}
+void maya_menu::menu_tool() {
+}
 }  // namespace maya_plug
 }  // namespace doodle
