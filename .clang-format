@@ -10,6 +10,9 @@ IncludeCategories:
   - Regex: "doodle_lib"
     Priority: 4
     SortPriority: 4
+  - Regex: "maya_plug"
+    Priority: 4
+    SortPriority: 4
 
 ColumnLimit: 0
 AlignConsecutiveAssignments: AcrossEmptyLinesAndComments

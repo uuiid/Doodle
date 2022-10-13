@@ -3,22 +3,23 @@
 //
 
 #include "maya_camera.h"
-#include <maya/MTime.h>
-#include <maya/MSelectionList.h>
-#include <maya/MFnDependencyNode.h>
-#include <maya/MPlug.h>
-#include <maya/MItDag.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MFnCamera.h>
-#include <maya/MDGModifier.h>
 
+#include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/export_file_info.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/metadata/episodes.h>
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/main/maya_plug_fwd.h>
+
+#include <maya/MDGModifier.h>
+#include <maya/MFnCamera.h>
+#include <maya/MFnDagNode.h>
+#include <maya/MFnDependencyNode.h>
+#include <maya/MItDag.h>
+#include <maya/MPlug.h>
+#include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 #include <regex>
 namespace doodle::maya_plug {
 

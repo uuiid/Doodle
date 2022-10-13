@@ -111,7 +111,6 @@ const MFloatPoint *hud_render::viewportRectangleOverride() {
   // if (mOverrideViewRectangle) {
   //   if (mDebugTrace)
   //     printf("%s : override viewport rectangle\n", mName.asChar());
-
   //   // 1/4 to the right and 1/4 up. 3/4 of the target size.
   // }
   // return NULL;

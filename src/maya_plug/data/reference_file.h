@@ -2,7 +2,8 @@
 // Created by TD on 2021/11/30.
 //
 #pragma once
-#include "doodle_lib/doodle_lib_fwd.h"
+#include <maya_plug/main/maya_plug_fwd.h>
+
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>
 namespace doodle::maya_plug {

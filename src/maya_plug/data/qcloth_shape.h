@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <maya_plug/main/maya_plug_fwd.h>
+
 #include <maya/MObject.h>
 
 // #include <maya/MDagPath.h>

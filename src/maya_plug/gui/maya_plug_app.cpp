@@ -4,13 +4,18 @@
 
 #include "maya_plug_app.h"
 
-#include <doodle_app/gui/main_status_bar.h>
-#include <doodle_app/gui/main_menu_bar.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_app/gui/main_proc_handle.h>
+#include <doodle_core/thread_pool/process_pool.h>
+
 #include <doodle_app/app/this_rpc_exe.h>
+#include <doodle_app/gui/main_menu_bar.h>
+#include <doodle_app/gui/main_proc_handle.h>
+#include <doodle_app/gui/main_status_bar.h>
+
+#include <maya_plug/data/null_facet.h>
 #include <maya_plug/gui/maya_layout.h>
+
+#include <maya/MGlobal.h>
 
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
@@ -23,7 +28,7 @@ void maya_facet::load_windows() {
 void maya_facet::close_windows() {
   ::ShowWindow(p_hwnd, SW_HIDE);
 }
-maya_facet::maya_facet() :doodle::facet::gui_facet(){
+maya_facet::maya_facet() : doodle::facet::gui_facet() {
   g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::maya_create_movie>();
 }
 
@@ -38,8 +43,8 @@ maya_create_movie::maya_create_movie() : ptr(std::make_unique<impl>()) {}
 
 void maya_create_movie::create_move(const FSys::path& in_out_path, process_message& in_msg, const std::vector<image_attr>& in_vector) {
   ptr->doodle_exe_attr.create_move(
-      in_out_path,in_vector,in_msg
-      );
+      in_out_path, in_vector, in_msg
+  );
 }
 FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
   boost::ignore_unused(this);
@@ -66,4 +71,19 @@ FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
   return l_out;
 }
 }  // namespace detail
+maya_plug_app::maya_plug_app() {
+  switch (MGlobal::mayaState()) {
+    case MGlobal::MMayaState::kBaseUIMode:
+    case MGlobal::MMayaState::kInteractive: {
+      run_facet = std::make_shared<null_facet>();
+      add_facet(run_facet);
+    }
+    case MGlobal::MMayaState::kBatch:
+    case MGlobal::MMayaState::kLibraryApp:
+    default: {
+      run_facet = std::make_shared<maya_facet>();
+      add_facet(run_facet);
+    } break;
+  }
+}
 }  // namespace doodle::maya_plug

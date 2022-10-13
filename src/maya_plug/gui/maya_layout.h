@@ -9,7 +9,7 @@ namespace doodle {
 namespace maya_plug {
 
 class maya_layout
-    : public doodle::gui::layout_window {
+    : public doodle::gui::detail::layout_tick_interface {
   class impl;
   std::unique_ptr<impl> p_i;
 

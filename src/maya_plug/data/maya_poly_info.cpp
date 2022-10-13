@@ -3,9 +3,12 @@
 //
 
 #include "maya_poly_info.h"
+
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <maya/MDagPath.h>
 #include <maya/MFnMesh.h>
 #include <maya/MItDependencyGraph.h>
-#include <maya/MDagPath.h>
 namespace doodle::maya_plug {
 
 maya_poly_info::maya_poly_info()

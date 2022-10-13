@@ -8,6 +8,8 @@
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
 
+#include <maya_plug/data/maya_camera.h>
+
 #include <fmt/chrono.h>
 #include <fmt/ostream.h>
 #include <maya/M3dView.h>
@@ -15,7 +17,6 @@
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
-#include <maya_plug/data/maya_camera.h>
 namespace doodle::maya_plug {
 
 std::string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
@@ -180,32 +181,35 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       movie::image_attr k_image{};
       k_image.path_attr = l_path;
       /// \brief 相机名称
-      k_image.watermarks_attr.emplace_back(k_cam.get_transform_name(), 0.1, 0.1, cv::Scalar{25, 220, 2});
+      k_image.watermarks_attr.emplace_back(
+          k_cam.get_transform_name(), 0.1, 0.1,
+          movie::image_watermark::rgba_t{25, 220, 2}
+      );
       /// \brief 当前帧和总帧数
       auto k_len = in_end - in_start + 1;
       k_image.watermarks_attr.emplace_back(
           fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()),
           0.5, 0.1,
-          cv::Scalar{25, 220, 2}
+          movie::image_watermark::rgba_t{25, 220, 2}
       );
       ++k_frame;
       /// \brief 绘制摄像机avo
       k_image.watermarks_attr.emplace_back(
           fmt::format("FOV: {:.3f}", k_cam.focalLength()),
           0.91, 0.1,
-          cv::Scalar{25, 220, 2}
+          movie::image_watermark::rgba_t{25, 220, 2}
       );
       /// \brief 当前时间节点
       k_image.watermarks_attr.emplace_back(
           fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
           0.1, 0.91,
-          cv::Scalar{25, 220, 2}
+          movie::image_watermark::rgba_t{25, 220, 2}
       );
       /// \brief 制作人姓名
       k_image.watermarks_attr.emplace_back(
           g_reg()->ctx().at<user::current_user>().user_name_attr(),
           0.5, 0.91,
-          cv::Scalar{25, 220, 2}
+          movie::image_watermark::rgba_t{25, 220, 2}
       );
       l_handle_list.push_back(std::move(k_image));
     }

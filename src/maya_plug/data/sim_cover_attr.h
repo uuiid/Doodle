@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <maya_plug/main/maya_plug_fwd.h>
+
 namespace doodle::maya_plug {
 class sim_cover_attr;
 void to_json(nlohmann::json& j, const sim_cover_attr& p);

@@ -4,8 +4,10 @@
 
 #pragma once
 #include <doodle_core/core/app_facet.h>
-#include <doodle_app/app/facet/gui_facet.h>
 #include <doodle_core/thread_pool/image_to_movie.h>
+
+#include <doodle_app/app/app_command.h>
+#include <doodle_app/app/facet/gui_facet.h>
 namespace doodle::maya_plug {
 
 namespace detail {
@@ -37,6 +39,11 @@ class maya_facet : public doodle::facet::gui_facet {
  public:
   maya_facet();
   void close_windows() override;
+};
+
+class maya_plug_app : public doodle::doodle_main_app {
+ public:
+  maya_plug_app();
 };
 
 }  // namespace doodle::maya_plug

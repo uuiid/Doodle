@@ -20,7 +20,7 @@ class DOODLELIB_API layout_window : public detail::layout_tick_interface {
   layout_window();
   virtual ~layout_window() override;
 
-  bool tick();
+  bool tick() override;
 };
 
 }  // namespace gui

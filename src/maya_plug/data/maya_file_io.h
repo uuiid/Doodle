@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <doodle_core/doodle_core.h>
+
 namespace doodle::maya_plug {
 class reference_file;
 class maya_file_io {

@@ -3,6 +3,8 @@
 //
 
 #include <maya/MDagPath.h>
+#include <regex>
+
 namespace doodle::maya_plug {
 namespace reference_file_ns {
 class generate_fbx_file_path;
