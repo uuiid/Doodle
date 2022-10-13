@@ -1,14 +1,18 @@
 //
 // Created by TD on 2021/12/13.
 //
-
 #include "open_doodle_main.h"
+
+#ifdef fsin
+#undef fsin
+#endif
 
 #include <doodle_core/core/app_facet.h>
 
+#include <maya_plug/gui/maya_plug_app.h>
+
 // #include <doodle_app/app/app_command.h>
 
-#include <maya_plug/gui/maya_plug_app.h>
 // #include <maya/MQtUtil.h>
 
 namespace doodle::maya_plug {

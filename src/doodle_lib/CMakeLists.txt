@@ -52,12 +52,12 @@ target_link_libraries(doodle_lib
         imgui::imgui
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp-static
+
         PRIVATE
         d3d11.lib
         dxgi.lib
         Microsoft::DirectXTK
         implot::implot
-        PRIVATE
         doodle_dingding
         DoodleLibResourceFont
         Eigen3::Eigen

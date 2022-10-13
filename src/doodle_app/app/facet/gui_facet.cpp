@@ -3,43 +3,40 @@
 //
 
 #include "gui_facet.h"
-#include <doodle_app/platform/win/windows_proc.h>
-#include <doodle_core/core/file_sys.h>
-#include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_app/lib_warp/imgui_warp.h>
-#include <gui/main_menu_bar.h>
-#include <gui/main_status_bar.h>
-#include <doodle_core/platform/win/drop_manager.h>
-#include <doodle_app/app/short_cut.h>
-#include <doodle_app/gui/get_input_dialog.h>
+
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_sig.h>
-#include <doodle_core/gui_template/gui_process.h>
+#include <doodle_core/core/file_sys.h>
 #include <doodle_core/core/init_register.h>
-#include <gui/main_proc_handle.h>
-#include <gui/get_input_dialog.h>
+#include <doodle_core/core/program_info.h>
+#include <doodle_core/gui_template/gui_process.h>
+#include <doodle_core/gui_template/show_windows.h>
+#include <doodle_core/platform/win/drop_manager.h>
+#include <doodle_core/thread_pool/process_pool.h>
 
 #include <doodle_app/app/program_options.h>
 #include <doodle_app/app/short_cut.h>
+#include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
-#include <boost/locale.hpp>
-
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/program_info.h>
-#include <doodle_core/gui_template/show_windows.h>
-#include <doodle_core/thread_pool/process_pool.h>
-
 #include <doodle_app/lib_warp/imgui_warp.h>
+#include <doodle_app/platform/win/windows_proc.h>
+
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <boost/asio/high_resolution_timer.hpp>
+#include <boost/locale.hpp>
+#include <gui/get_input_dialog.h>
+#include <gui/main_menu_bar.h>
+#include <gui/main_proc_handle.h>
+#include <gui/main_status_bar.h>
 #include <implot.h>
 #include <implot_internal.h>
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
 // 启用窗口拖拽导入头文件
-#include <shellapi.h>
-
 #include <imgui.h>
+#include <shellapi.h>
 
 namespace doodle::facet {
 class gui_facet::impl {
@@ -49,17 +46,19 @@ class gui_facet::impl {
   win::wnd_handle parent{};
   std::int32_t show_enum{};
   win::d3d_device_ptr d3d_attr;
+  std::string name_attr{"gui_windows"};
+  boost::asio::high_resolution_timer timer_{g_io_context()};
 
  public:
 };
 
 const std::string& gui_facet::name() const noexcept {
-  return name_attr;
+  return p_i->name_attr;
 }
 void gui_facet::operator()() {
   post_constructor();
   make_handle().emplace<::doodle::gui::gui_tick>(std::make_shared<gui::short_cut>());
-  timer_.cancel();
+  p_i->timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
@@ -73,16 +72,16 @@ void gui_facet::operator()() {
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
     if (!g_reg()->ctx().at<::doodle::program_info>().stop_attr()) {
-      timer_.expires_after(doodle::chrono::seconds{1} / 60);
-      timer_.async_wait(s_fun);
+      p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
+      p_i->timer_.async_wait(s_fun);
     }
   };
 
-  timer_.expires_after(doodle::chrono::seconds{1} / 60);
-  timer_.async_wait(s_fun);
+  p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
+  p_i->timer_.async_wait(s_fun);
 }
 void gui_facet::deconstruction() {
-  timer_.cancel();
+  p_i->timer_.cancel();
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
@@ -95,9 +94,7 @@ void gui_facet::deconstruction() {
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
 gui_facet::gui_facet()
-    : name_attr("gui_windows"),
-      timer_(g_io_context()),
-      p_i(std::make_unique<impl>()) {
+    : p_i(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
   g_reg()->ctx().emplace<image_to_move>();

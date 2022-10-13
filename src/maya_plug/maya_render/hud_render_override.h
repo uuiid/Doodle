@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include <array>
 #include <maya/MViewport2Renderer.h>
-
 namespace doodle {
 class hud_render_override : public MHWRender::MRenderOverride {
  private:

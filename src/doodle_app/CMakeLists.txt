@@ -29,6 +29,11 @@ target_link_libraries(
         doodle_app
         PUBLIC
         doodle_core
+        imgui::imgui
+
+        PRIVATE
+        d3d11.lib
+        dxgi.lib
 )
 
 target_compile_options(doodle_app

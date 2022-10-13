@@ -8,14 +8,10 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/core/app_facet.h>
 
-#include <boost/asio/high_resolution_timer.hpp>
 #include <doodle_core/platform/win/windows_alias.h>
 namespace doodle::facet {
 
 class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
-  std::string name_attr;
-  boost::asio::high_resolution_timer timer_;
-
   class impl;
   std::unique_ptr<impl> p_i;
 

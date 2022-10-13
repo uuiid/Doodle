@@ -1,43 +1,35 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
 
-#include <doodle_core/lib_warp/std_warp.h>
-
-#include <maya/MDrawRegistry.h>
-#include <maya/MFnPlugin.h>
-#include <maya/MSceneMessage.h>
-#include <maya/MTimerMessage.h>
-
+#include <maya_plug/data/create_hud_node.h>
+#include <maya_plug/data/maya_register_main.h>
+#include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/logger/maya_logger_info.h>
+#include <maya_plug/maya_comm/afterimage_comm.h>
 #include <maya_plug/maya_comm/cam_comm.h>
+#include <maya_plug/maya_comm/clear_scene_comm.h>
+#include <maya_plug/maya_comm/create_qcloth_assets.h>
+#include <maya_plug/maya_comm/dem_bones_add_weight.h>
+#include <maya_plug/maya_comm/dem_bones_comm.h>
+#include <maya_plug/maya_comm/file_comm.h>
+#include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/play_blash_comm.h>
 #include <maya_plug/maya_comm/reference_comm.h>
-#include <maya_plug/maya_comm/file_comm.h>
-#include <maya_plug/maya_comm/clear_scene_comm.h>
-#include <maya_plug/data/create_hud_node.h>
-#include <maya_plug/maya_comm/afterimage_comm.h>
-#include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/replace_rig_file_command.h>
-#include <maya_plug/maya_comm/upload_files_command.h>
-#include <maya_plug/maya_comm/dem_bones_comm.h>
-#include <maya_plug/maya_comm/dem_bones_add_weight.h>
-#include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/sequence_to_blend_shape_comm.h>
 #include <maya_plug/maya_comm/sequence_to_blend_shape_ref_comm.h>
-
-#include <maya_plug/gui/maya_plug_app.h>
+#include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_render/hud_render_node.h>
 #include <maya_plug/maya_render/hud_render_override.h>
-#include <maya_plug/logger/maya_logger_info.h>
-
-#include <doodle_app/gui/main_proc_handle.h>
-#include <maya_plug/data/maya_register_main.h>
 
 #include <QtCore/QtCore>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
+#include <maya/MFnPlugin.h>
 #include <maya/MQtUtil.h>
-
+#include <maya/MSceneMessage.h>
+#include <maya/MTimerMessage.h>
 #include <stack>
 namespace {
 const constexpr std::string_view doodle_windows{"doodle_windows"};
