@@ -3,11 +3,12 @@
 //
 
 #include "play_blash_comm.h"
-#include <maya_plug/data/play_blast.h>
-#include <maya_plug/data/create_hud_node.h>
 
-#include <maya/MArgDatabase.h>
+#include <maya_plug/data/create_hud_node.h>
+#include <maya_plug/data/play_blast.h>
+
 #include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
 
 namespace doodle::maya_plug {
 #define doodle_filepath "-fp"
@@ -55,7 +56,11 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     DOODLE_MAYA_CHICK(k_s);
     k_start_time = l_database.flagArgumentMTime(doodle_startTime, 0, &k_s);
     DOODLE_MAYA_CHICK(k_s);
+  } else {
+    auto l_time  = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
+    k_start_time = MTime{boost::numeric_cast<std::double_t>(l_time), MTime::uiUnit()};
   }
+
   MTime k_end_time = MAnimControl::maxTime();
   if (l_database.isFlagSet(doodle_endTime, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
