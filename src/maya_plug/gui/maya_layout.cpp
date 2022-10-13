@@ -3,12 +3,14 @@
 //
 
 #include "maya_layout.h"
-#include <maya_plug/configure/static_value.h>
 
-#include <maya_plug/gui/action/create_sim_cloth.h>
+#include <doodle_app/gui/setting_windows.h>
+#include <maya_plug/configure/static_value.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
-#include <maya_plug/gui/action/reference_attr_setting.h>
+#include <maya_plug/gui/action/create_sim_cloth.h>
 #include <maya_plug/gui/action/dem_cloth_to_fbx.h>
+#include <maya_plug/gui/action/reference_attr_setting.h>
+
 namespace doodle {
 namespace maya_plug {
 
@@ -100,7 +102,17 @@ bool maya_layout::tick() {
 
 maya_layout::~maya_layout() = default;
 void maya_menu::menu_windows() {
-
+  namespace dgui = doodle::gui;
+  if (dear::MenuItem(dgui::setting_windows::name.data()))
+    make_handle().emplace<dgui::gui_windows>(std::make_shared<dgui::setting_windows>());
+  if (dear::MenuItem(comm_check_scenes::name.data()))
+    make_handle().emplace<dgui::gui_windows>(std::make_shared<comm_check_scenes>());
+  if (dear::MenuItem(reference_attr_setting::name.data()))
+    make_handle().emplace<dgui::gui_windows>(std::make_shared<reference_attr_setting>());
+  if (dear::MenuItem(create_sim_cloth::name.data()))
+    make_handle().emplace<dgui::gui_windows>(std::make_shared<create_sim_cloth>());
+  if (dear::MenuItem(dem_cloth_to_fbx::name.data()))
+    make_handle().emplace<dgui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
 }
 void maya_menu::menu_tool() {
 }
