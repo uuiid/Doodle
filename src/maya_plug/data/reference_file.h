@@ -48,9 +48,6 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
       const entt::registry &in
   );
   virtual ~generate_abc_file_path();
-
-  //  [[nodiscard("")]] bool operator==(const generate_abc_file_path &in) const noexcept;
-  //  [[nodiscard("")]] bool operator<(const generate_abc_file_path &in) const noexcept;
 };
 
 class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>,
