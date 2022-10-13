@@ -30,10 +30,14 @@ target_link_libraries(
         PUBLIC
         doodle_core
         imgui::imgui
+        Boost::program_options
+
 
         PRIVATE
         d3d11.lib
         dxgi.lib
+        DoodleLibResourceFont
+        implot::implot
 )
 
 target_compile_options(doodle_app
