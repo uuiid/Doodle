@@ -1,11 +1,11 @@
 #include "core_set.h"
 
-#include <doodle_core/pin_yin/convert.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/metadata/user.h>
-
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/pin_yin/convert.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 
@@ -50,7 +50,6 @@ FSys::path win::get_font() {
   CoTaskMemFree(pManager);
   return k_path;
 }
-
 
 core_set &core_set::get_set() {
   return doodle_lib::Get().core_set_attr();
@@ -255,8 +254,11 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("user_name"))
     j.at("user_name").get_to(p.user_name);
 
-  if (j.contains("program_location_attr"))
-    j.at("program_location_attr").get_to(p.program_location_attr);
+  if (j.contains("program_location_attr")) {
+    auto l_path = j.at("program_location_attr").get<FSys::path>();
+    if (l_path.filename() == "DoodleExe.exe")
+      p.program_location_attr = l_path;
+  }
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
