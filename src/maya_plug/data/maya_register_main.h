@@ -3,10 +3,11 @@
 //
 
 #pragma once
-#include <stack>
 #include <main/maya_plug_fwd.h>
-#include <maya/MMessage.h>
+
 #include <maya/MDrawRegistry.h>
+#include <maya/MMessage.h>
+#include <stack>
 
 /// 提前声明 maya MFnPlugin 类
 OPENMAYA_MAJOR_NAMESPACE_OPEN
@@ -85,6 +86,13 @@ class maya_register {
       });
     }
     return l_s;
+  }
+
+  template <typename Fun_t>
+  MStatus register_lab(
+      Fun_t&& in_fun
+  ) {
+    maya_comm_call_back.emplace(std::forward<Fun_t>(in_fun));
   }
 
   template <typename mfn_plugin_type>

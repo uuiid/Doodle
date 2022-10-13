@@ -47,7 +47,10 @@ std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 namespace doodle::maya_plug {
 void open_windows() {
-  HWND win_id       = reinterpret_cast<HWND>(MQtUtil::mainWindow()->winId());
+  HWND win_id{};
+  if (auto l_main_win = MQtUtil::mainWindow()) {
+    win_id = reinterpret_cast<HWND>(l_main_win->winId());
+  }
   auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(doodle::doodle_main_app::in_gui_arg{
       doodle::app_base::in_app_args{::MhInstPlugin, nullptr}, SW_HIDE, win_id});
   p_doodle_app      = l_doodle_app;
@@ -75,8 +78,26 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
 
   // 添加菜单项
-  k_plugin.addMenuItem(doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status);
-  CHECK_MSTATUS_AND_RETURN_IT(status);
+  k_plugin.addMenuItem(
+      doodle_windows.data(),
+      doodle_win_path.data(),
+      ::doodle::maya_plug::doodleCreate_name,
+      "", false, nullptr, &status
+  );
+  if (status)
+    maya_reg->register_lab(
+        [](MFnPlugin& in_plug) {
+          // 这一部分是删除菜单项的
+          MStatus status{};
+          MStringArray menuItems{};
+          menuItems.append(doodle_windows.data());
+          status = in_plug.removeMenuItem(menuItems);
+          CHECK_MSTATUS(status);
+          return status;
+        }
+    );
+  else
+    DOODLE_LOG_ERROR(status);
 
   /// \brief  自定义hud回调
   maya_reg->register_callback(MSceneMessage::addCallback(
@@ -250,12 +271,6 @@ scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
   CHECK_MSTATUS(status);
 
   status = maya_reg->unregister(k_plugin);
-  CHECK_MSTATUS(status);
-
-  // 这一部分是删除菜单项的
-  MStringArray menuItems{};
-  menuItems.append(doodle_windows.data());
-  status = k_plugin.removeMenuItem(menuItems);
   CHECK_MSTATUS(status);
 
   p_doodle_app.reset();

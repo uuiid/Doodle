@@ -44,16 +44,15 @@ void maya_plug_app::set_facet() {
   switch (MGlobal::mayaState()) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
-      run_facet = std::make_shared<null_facet>();
-      add_facet(run_facet);
+      run_facet = std::make_shared<maya_facet>();
       break;
     }
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:
     default: {
-      run_facet = std::make_shared<maya_facet>();
-      add_facet(run_facet);
+      run_facet = std::make_shared<null_facet>();
     } break;
   }
+  add_facet(run_facet);
 }
 }  // namespace doodle::maya_plug
