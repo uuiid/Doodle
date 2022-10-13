@@ -42,5 +42,12 @@ Alias "/DOXYGEN_DOC" "${DOCROOT}/build/html"
 
 ```
 
-<summary>c++ 示例 </summary>
+</details>
+
+<details>
+
+<summary> 杂项 </summary>
+/E /PE 输出预处理过的文件
+/showIncludes 显示所有的 include 
+cmd中 `2>tmp.txt` 重定向 error 通道
 </details>
