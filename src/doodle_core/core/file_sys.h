@@ -39,7 +39,7 @@ DOODLE_CORE_API void open_explorer(const path& in_path);
 DOODLE_CORE_API void backup_file(const path& source);
 DOODLE_CORE_API std::vector<path> list_files(const path& in_dir);
 DOODLE_CORE_API bool is_sub_path(const path& in_parent, const path& in_child);
-DOODLE_CORE_API path program_location();
+
 [[nodiscard]] FSys::path DOODLE_CORE_API write_tmp_file(
     const std::string& in_falg,
     const std::string& in_string,

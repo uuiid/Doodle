@@ -13,7 +13,6 @@
 #include <shellapi.h>
 #include <tchar.h>
 
-
 #include <doodle_core/core/core_set.h>
 
 namespace doodle::FSys {
@@ -120,11 +119,7 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
   return boost::istarts_with(in_parent.generic_string(), in_child.generic_string());
 }
 
-path program_location() {
-  return boost::dll::program_location().parent_path();
-}
-
-FSys::path write_tmp_file(const std::string& in_falg, const std::string& in_string, const std::string& in_extension) {
+FSys::path write_tmp_file(const std::string &in_falg, const std::string &in_string, const std::string &in_extension) {
   auto tmp_path = core_set::get_set().get_cache_root(
       fmt::format(
           "{}/v{}{}{}",
@@ -141,7 +136,6 @@ FSys::path write_tmp_file(const std::string& in_falg, const std::string& in_stri
   }
   return k_tmp_path;
 }
-
 
 }  // namespace doodle::FSys
 
