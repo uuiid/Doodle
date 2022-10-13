@@ -46,6 +46,7 @@ void maya_plug_app::set_facet() {
     case MGlobal::MMayaState::kInteractive: {
       run_facet = std::make_shared<null_facet>();
       add_facet(run_facet);
+      break;
     }
     case MGlobal::MMayaState::kBatch:
     case MGlobal::MMayaState::kLibraryApp:

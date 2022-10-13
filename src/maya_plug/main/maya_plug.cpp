@@ -21,7 +21,6 @@
 #include <maya_plug/maya_comm/sequence_to_blend_shape_ref_comm.h>
 #include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_render/hud_render_node.h>
-#include <maya_plug/maya_render/hud_render_override.h>
 
 #include <QtCore/QtCore>
 #include <QtWidgets/QApplication>
@@ -70,59 +69,50 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS_AND_RETURN_IT(status);
   maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
 
-  switch (k_st) {
-    case MGlobal::MMayaState::kBaseUIMode:
-    case MGlobal::MMayaState::kInteractive: {
-      doodle::maya_plug::open_windows();
-      // 注册命令
-      status = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
-      CHECK_MSTATUS(status);
+  doodle::maya_plug::open_windows();
+  // 注册命令
+  status = maya_reg->register_command<::doodle::maya_plug::open_doodle_main>(k_plugin);
+  CHECK_MSTATUS(status);
 
-      // 添加菜单项
-      k_plugin.addMenuItem(doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status);
-      CHECK_MSTATUS_AND_RETURN_IT(status);
+  // 添加菜单项
+  k_plugin.addMenuItem(doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status);
+  CHECK_MSTATUS_AND_RETURN_IT(status);
 
-      /// \brief  自定义hud回调
-      maya_reg->register_callback(MSceneMessage::addCallback(
-          MSceneMessage::Message::kAfterOpen,
-          [](void* clientData) {
-            ::doodle::maya_plug::create_hud_node k_c{};
-            k_c();
-          },
-          nullptr,
-          &status
-      ));
-      CHECK_MSTATUS(status);
-      maya_reg->register_callback(MSceneMessage::addCallback(
-          MSceneMessage::Message::kAfterNew,
-          [](void* clientData) {
-            ::doodle::maya_plug::create_hud_node k_c{};
-            k_c();
-          },
-          nullptr,
-          &status
-      ));
-      CHECK_MSTATUS(status);
-      if (doodle::core_set::get_set().maya_replace_save_dialog) {
-        maya_reg->register_callback(
-            MSceneMessage::addCheckCallback(
-                MSceneMessage::Message::kBeforeSaveCheck,
-                [](bool* retCode, void* clientData) {
-                  *retCode = maya_plug::clear_scene_comm::show_save_mag();
-                },
-                nullptr,
-                &status
-            )
-        );
-        CHECK_MSTATUS(status);
-      }
-    } break;
-    case MGlobal::MMayaState::kBatch:
-    case MGlobal::MMayaState::kLibraryApp:
-    default: {
-      p_doodle_app = std::make_shared<doodle::app_command_base>(doodle::app_base::in_app_args{::MhInstPlugin, nullptr});
-    } break;
+  /// \brief  自定义hud回调
+  maya_reg->register_callback(MSceneMessage::addCallback(
+      MSceneMessage::Message::kAfterOpen,
+      [](void* clientData) {
+        ::doodle::maya_plug::create_hud_node k_c{};
+        k_c();
+      },
+      nullptr,
+      &status
+  ));
+  CHECK_MSTATUS(status);
+  maya_reg->register_callback(MSceneMessage::addCallback(
+      MSceneMessage::Message::kAfterNew,
+      [](void* clientData) {
+        ::doodle::maya_plug::create_hud_node k_c{};
+        k_c();
+      },
+      nullptr,
+      &status
+  ));
+  CHECK_MSTATUS(status);
+  if (doodle::core_set::get_set().maya_replace_save_dialog) {
+    maya_reg->register_callback(
+        MSceneMessage::addCheckCallback(
+            MSceneMessage::Message::kBeforeSaveCheck,
+            [](bool* retCode, void* clientData) {
+              *retCode = maya_plug::clear_scene_comm::show_save_mag();
+            },
+            nullptr,
+            &status
+        )
+    );
+    CHECK_MSTATUS(status);
   }
+
   maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
@@ -254,35 +244,20 @@ MStatus uninitializePlugin(MObject obj) {
   // 这里要停止app
   p_doodle_app->stop();
   /// 先删除工具架
-  switch (k_st) {
-    case MGlobal::MMayaState::kInteractive:
-      status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
+  status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
 )");
-      CHECK_MSTATUS(status);
-      break;
-    default:
-      break;
-  }
+  CHECK_MSTATUS(status);
+
   status = maya_reg->unregister(k_plugin);
   CHECK_MSTATUS(status);
 
-  switch (k_st) {
-    case MGlobal::MMayaState::kBaseUIMode:
-    case MGlobal::MMayaState::kInteractive: {
-      // 这一部分是删除菜单项的
-      MStringArray menuItems{};
-      menuItems.append(doodle_windows.data());
-      status = k_plugin.removeMenuItem(menuItems);
-      CHECK_MSTATUS(status);
-      break;
-    }
+  // 这一部分是删除菜单项的
+  MStringArray menuItems{};
+  menuItems.append(doodle_windows.data());
+  status = k_plugin.removeMenuItem(menuItems);
+  CHECK_MSTATUS(status);
 
-    case MGlobal::MMayaState::kBatch:
-    case MGlobal::MMayaState::kLibraryApp:
-    default:
-      break;
-  }
   p_doodle_app.reset();
   maya_reg.reset();
   return status;
