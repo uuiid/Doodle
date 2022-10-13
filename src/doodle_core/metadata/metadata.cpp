@@ -4,17 +4,16 @@
 
 #include "metadata.h"
 
-#include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/metadata/image_icon.h>
-#include <doodle_core/metadata/importance.h>
-#include <doodle_core/metadata/organization.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/logger/logger.h>
-
-#include <core/core_set.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/organization.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 
 #include <boost/hana/ext/std.hpp>
+#include <core/core_set.h>
 namespace doodle {
 
 class database::impl {
@@ -66,12 +65,12 @@ entt::handle ref_data::handle() const {
   entt::handle l_r{};
 
   //  ranges::make_subrange(g_reg()->view<database>().each());
-
-  for (auto &&[e, d] : g_reg()->view<database>().each())
-    if (d == uuid) {
-      l_r = entt::handle{*g_reg(), e};
-      break;
-    }
+  if (!uuid.is_nil())
+    for (auto &&[e, d] : g_reg()->view<database>().each())
+      if (d == uuid) {
+        l_r = entt::handle{*g_reg(), e};
+        break;
+      }
   return l_r;
 }
 }  // namespace database_ns
