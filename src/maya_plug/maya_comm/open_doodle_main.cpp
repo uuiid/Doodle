@@ -6,7 +6,7 @@
 
 #include <doodle_core/core/app_facet.h>
 
-#include <doodle_app/app/app_command.h>
+// #include <doodle_app/app/app_command.h>
 
 #include <maya_plug/gui/maya_plug_app.h>
 // #include <maya/MQtUtil.h>

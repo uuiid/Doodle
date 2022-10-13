@@ -17,6 +17,7 @@ target_sources(doodle_maya
         sim_cover_attr.h
         sequence_to_blend_shape.h
         null_facet.h
+        maya_create_movie.h
 
         PRIVATE
         create_hud_node.cpp
@@ -35,4 +36,5 @@ target_sources(doodle_maya
         sim_cover_attr.cpp
         sequence_to_blend_shape.cpp
         null_facet.cpp
+        maya_create_movie.cpp
         )

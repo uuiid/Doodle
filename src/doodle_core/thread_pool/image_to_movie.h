@@ -8,7 +8,9 @@
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/thread_pool/process_message.h>
 
-#include <boost/asio.hpp>
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
 namespace doodle {
 namespace detail {
 
