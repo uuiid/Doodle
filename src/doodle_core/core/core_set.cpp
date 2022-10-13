@@ -123,6 +123,7 @@ FSys::path core_set::get_data_root() const {
 }
 
 FSys::path core_set::program_location() {
+
   return boost::dll::program_location().parent_path();
 }
 std::string core_set::config_file_name() {

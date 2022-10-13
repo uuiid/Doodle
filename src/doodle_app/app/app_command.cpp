@@ -83,7 +83,7 @@ app_command_base& app_command_base::Get() {
 }
 
 std::optional<FSys::path> app_command_base::find_authorization_file() const {
-  auto l_p = core_set::program_location() / doodle_config::token_name.data();
+  auto l_p = core_set::get_set().program_location() / doodle_config::token_name.data();
   if (!exists(l_p)) {
     l_p = core_set::get_set().get_doc() / doodle_config::token_name.data();
   }

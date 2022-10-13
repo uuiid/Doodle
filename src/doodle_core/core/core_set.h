@@ -23,7 +23,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   static core_set &get_set();
 
   // 获得运行程序目录
-  static FSys::path program_location();
+  FSys::path program_location();
 
   [[nodiscard]] bool has_maya() const noexcept;
   [[nodiscard]] const FSys::path &maya_path() const noexcept;
