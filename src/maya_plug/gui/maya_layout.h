@@ -17,7 +17,7 @@ class maya_layout
 
  public:
   maya_layout();
-  ~maya_layout();
+  virtual ~maya_layout();
 
   bool tick() override;
 };

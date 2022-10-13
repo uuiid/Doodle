@@ -80,6 +80,7 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
  private:
   boost::uuids::random_generator p_uuid_gen;
+  FSys::path program_location_attr{};
 
  private:
   // 这里是序列化的代码

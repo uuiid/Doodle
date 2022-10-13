@@ -90,6 +90,10 @@ core_set::core_set()
   } else {
     set_root(FSys::path{p_buff.get()} / "Doodle");
   }
+
+  if (boost::dll::program_location().filename() == "DoodleExe.exe") {
+    program_location_attr = boost::dll::program_location();
+  }
 #endif  // _WIN32
 }
 
@@ -123,8 +127,7 @@ FSys::path core_set::get_data_root() const {
 }
 
 FSys::path core_set::program_location() {
-
-  return boost::dll::program_location().parent_path();
+  return program_location_attr.parent_path();
 }
 std::string core_set::config_file_name() {
   static std::string str{"doodle_config"};
@@ -219,6 +222,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
   j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
+  j["program_location_attr"]    = p.program_location_attr;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
@@ -250,6 +254,9 @@ void from_json(const nlohmann::json &j, core_set &p) {
     j.at("user_").get_to(p.user_name);
   if (j.contains("user_name"))
     j.at("user_name").get_to(p.user_name);
+
+  if (j.contains("program_location_attr"))
+    j.at("program_location_attr").get_to(p.program_location_attr);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);

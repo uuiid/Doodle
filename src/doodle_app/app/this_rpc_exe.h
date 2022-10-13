@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/thread_pool/process_message.h>
+
 namespace doodle::detail {
 
 class DOODLE_APP_API this_rpc_exe {
