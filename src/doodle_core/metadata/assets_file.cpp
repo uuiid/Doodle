@@ -5,13 +5,13 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/metadata.h>
-#include <doodle_core/metadata/user.h>
-#include <doodle_core/metadata/rules.h>
-
-#include <doodle_core/metadata/time_point_wrap.h>
-#include <doodle_core/pin_yin/convert.h>
-#include <core/core_set.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/pin_yin/convert.h>
+
+#include <core/core_set.h>
 
 namespace doodle {
 
@@ -28,7 +28,7 @@ class assets_file::impl {
   std::string organization_p;
 
   /// \brief 不要使用, 已经是过期段属性 保留只是兼容性更改
-  [[deprecated("Don't use it. It is an expired section. The content is only changed for compatibility")]] std::string p_user;
+  std::string p_user;
 };
 
 void to_json(nlohmann::json& j, const assets_file& p) {
@@ -90,8 +90,9 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 
 entt::handle assets_file::user_attr() const {
   if (p_i->handle_cache &&
-      ((p_i->handle_cache.any_of<database>() ? p_i->handle_cache.get<database>() == p_i->ref_user : true) &&
-       (p_i->handle_cache.any_of<user>() && p_i->handle_cache.get<user>().get_name() == p_i->p_user))) {
+      p_i->handle_cache.all_of<database, user>() &&
+      p_i->handle_cache.get<database>() == p_i->ref_user &&
+      p_i->handle_cache.get<user>().get_name() == p_i->p_user) {
     return p_i->handle_cache;
   } else {
     auto l_handle = p_i->ref_user.handle();
