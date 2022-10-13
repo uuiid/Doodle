@@ -3,11 +3,12 @@
 //
 
 #include "replace_rig_file_command.h"
-// #include <doodle_lib/doodle_lib_all.h>
-#include <maya_plug/data/reference_file.h>
+
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/redirection_path_info.h>
+
+#include <maya_plug/data/reference_file.h>
 namespace doodle::maya_plug {
 MSyntax replace_rig_file_command_ns::replace_rig_file_syntax() {
   return MSyntax{};

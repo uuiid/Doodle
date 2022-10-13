@@ -13,8 +13,6 @@
 #include <main/maya_plug_fwd.h>
 #include <maya/MNamespace.h>
 
-#include <doodle_lib/doodle_lib_fwd.h>
-
 namespace doodle::maya_plug {
 
 MPlug get_plug(const MObject& in_node, const std::string& in_name) {

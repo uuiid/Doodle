@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <spdlog/sinks/base_sink.h>
 
 #include <maya/MGlobal.h>

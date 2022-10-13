@@ -4,21 +4,18 @@
 
 #include "play_blast.h"
 
-#include <fmt/ostream.h>
-#include <fmt/chrono.h>
-
 #include <doodle_core/core/core_set.h>
-#include <doodle_lib/long_task/image_to_move.h>
-#include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/move_create.h>
+#include <doodle_core/metadata/user.h>
 
-#include <maya_plug/data/maya_camera.h>
+#include <fmt/chrono.h>
+#include <fmt/ostream.h>
 #include <maya/M3dView.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
+#include <maya_plug/data/maya_camera.h>
 namespace doodle::maya_plug {
 
 std::string play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};

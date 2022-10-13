@@ -4,11 +4,10 @@
 //
 
 #include "sim_cover_attr.h"
-#include <doodle_lib/doodle_lib_fwd.h>
 
-#include <maya_plug/data/reference_file.h>
-#include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/data/maya_tool.h>
+#include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/data/reference_file.h>
 
 namespace doodle::maya_plug {
 void to_json(nlohmann::json& j, const sim_cover_attr& p) {

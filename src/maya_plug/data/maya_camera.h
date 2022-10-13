@@ -2,7 +2,6 @@
 // Created by TD on 2021/12/13.
 //
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <maya/MDagPath.h>
 namespace doodle::maya_plug {
 namespace reference_file_ns {

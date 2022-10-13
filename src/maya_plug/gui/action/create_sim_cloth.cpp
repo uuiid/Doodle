@@ -3,21 +3,18 @@
 //
 
 #include "create_sim_cloth.h"
-#include <main/maya_plug_fwd.h>
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
-
-#include <maya_plug/data/qcloth_shape.h>
-#include <maya_plug/data/maya_tool.h>
-#include <maya_plug/fmt/fmt_select_list.h>
-#include <maya_plug/data/maya_clear_scenes.h>
-
-#include <maya/MGlobal.h>
-#include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MItDependencyNodes.h>
+#include <main/maya_plug_fwd.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MGlobal.h>
+#include <maya/MItDependencyNodes.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MSelectionList.h>
+#include <maya_plug/data/maya_clear_scenes.h>
+#include <maya_plug/data/maya_tool.h>
+#include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/fmt/fmt_select_list.h>
 
 namespace doodle::maya_plug {
 

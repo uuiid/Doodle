@@ -3,10 +3,8 @@
 //
 
 #include <doodle_app/gui/base/base_window.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-
-#include <maya/MStatus.h>
 #include <maya/MSelectionList.h>
+#include <maya/MStatus.h>
 #include <maya_plug/configure/static_value.h>
 
 namespace doodle::maya_plug {

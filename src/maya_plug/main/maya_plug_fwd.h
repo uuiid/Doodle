@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>

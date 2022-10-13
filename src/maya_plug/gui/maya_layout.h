@@ -2,8 +2,6 @@
 // Created by TD on 2022/4/22.
 //
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/gui/layout_window.h>
 
 #include <doodle_app/gui/main_menu_bar.h>
 
