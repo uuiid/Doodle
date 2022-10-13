@@ -1,11 +1,14 @@
 text_prompts:
-  - beutiful goth Girl with short blue hair ,  league of legends, cyberpunk futuristic neon. long blue hair, decorated with traditional japanese ornaments by ismail inceoglu dragan bibin hans thoma greg rutkowski alexandros pyromallis nekro rene maritte illustrated, perfect face, fine details, realistic shaded, fine - face, pretty face
+  - beutiful goth Girl with short blue hair:0.5
+  - league of legends, cyberpunk futuristic neon:0.1
+  - long blue hair, decorated with traditional japanese ornaments perfect face:0.2
+  - fine details, realistic shaded, fine face:0.1
 
 
-init_image:
-width_height: [ 640, 384 ]
+init_image: f:/Doodle/build/li-11.jpg
+width_height: [ 512, 768 ]
 
-skip_steps: 0
+skip_steps: 1
 steps: 250
 
 init_scale: 1000
@@ -16,7 +19,7 @@ range_scale: 150
 sat_scale: 0
 cutn_batches: 4
 
-diffusion_model: 512x512_diffusion_uncond_finetune_008100
+diffusion_model: FeiArt_Handpainted_CG_Diffusion
 use_secondary_model: True
 diffusion_sampling_mode: ddim
 
@@ -50,7 +53,7 @@ clip_models_schedules:
 
 use_vertical_symmetry: False
 use_horizontal_symmetry: False
-transformation_percent: [0.09]
+transformation_percent: [ 0.09 ]
 
 on_misspelled_token: ignore
 diffusion_model_config:
