@@ -30,6 +30,7 @@ wix_candle_gen(SideFX_Labs ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 
 include(ProcessorCount)
 ProcessorCount(DOODLE_CPU_N)
+find_package(SevenZip)
 
 add_custom_target(gen_light_file
         COMMAND wix_light
@@ -45,7 +46,7 @@ add_custom_target(gen_light_file
         -spdb # 取消pdb文件输出
         ${gen_wixobj_files}
 
-        COMMAND 7z a -mx2 -mmt8
+        COMMAND ${SEVENZIP_BIN} a -mx2 -mmt8
         "${CMAKE_INSTALL_PREFIX}/${DOODLE_PACKAGE_NAME}.7z"
         "${CMAKE_INSTALL_PREFIX}/bin"
         "${CMAKE_INSTALL_PREFIX}/maya"
