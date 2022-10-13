@@ -50,7 +50,7 @@ void install_SideFX_Labs(const FSys::path &path) {
     FSys::create_directories(path);
   }
 
-  auto sourePath = FSys::program_location().parent_path() / "SideFX_Labs";
+  auto sourePath = core_set::get_set().program_location().parent_path() / "SideFX_Labs";
   DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
@@ -59,7 +59,7 @@ void toolkit::installUePath(const FSys::path &path) {
   try {
     /// \brief 安装我们自己的插件
     auto &set      = core_set::get_set();
-    auto sourePath = FSys::program_location().parent_path();
+    auto sourePath = core_set::get_set().program_location().parent_path();
     auto l_name{set.ue4_version};
     if (auto l_f = l_name.find('.');
         l_f != std::string::npos) {
