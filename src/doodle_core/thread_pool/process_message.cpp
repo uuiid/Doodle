@@ -6,10 +6,9 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
-#include <spdlog/spdlog.h>
-
-#include <range/v3/range.hpp>
 #include <range/v3/all.hpp>
+#include <range/v3/range.hpp>
+#include <spdlog/spdlog.h>
 namespace doodle {
 void to_json(nlohmann::json& nlohmann_json_j, const process_message& nlohmann_json_t) {
   nlohmann_json_j["time"]     = nlohmann_json_t.p_time;
@@ -33,11 +32,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, process_message& nlohmann_
   nlohmann_json_j.at("state").get_to(nlohmann_json_t.p_state);
   nlohmann_json_j.at("progress").get_to(nlohmann_json_t.p_progress);
 }
-process_message::process_message()
-    : p_state(state::wait),
-      p_time(chrono::system_clock::now()),
-      p_name_id("##none") {
-}
+process_message::process_message() : p_state(state::wait), p_time(chrono::system_clock::now()), p_name_id("##none") {}
 
 const std::string& process_message::get_name() const {
   //  std::lock_guard _lock{_mutex};
@@ -55,12 +50,11 @@ void process_message::progress_step(const rational_int& in_rational_int) {
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
   std::lock_guard _lock{_mutex};
   auto l_msg{in_string};
-  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
-    return in_type == '\n' || in_type == '\r';
-  });
-  if (l_msg.empty())
-    return;
-  l_msg += '\n';
+  //  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
+  //    return in_type == '\n' || in_type == '\r';
+  //  });
+  if (l_msg.empty()) return;
+  //  l_msg += '\n';
 
   spdlog::info(l_msg);
   switch (in_level_enum) {
@@ -107,9 +101,7 @@ chrono::sys_time_pos::duration process_message::get_time() const {
   //  std::lock_guard _lock{_mutex};
   return p_end ? (*p_end - p_time) : (chrono::system_clock::now() - p_time);
 }
-const std::string& process_message::message_back() const {
-  return p_str_end;
-}
+const std::string& process_message::message_back() const { return p_str_end; }
 
 process_message::process_message(process_message&& in) noexcept {
   std::lock_guard _lock{_mutex};
@@ -155,9 +147,7 @@ process_message& process_message::operator=(const process_message& in) noexcept 
   p_progress = in.p_progress;
   return *this;
 }
-const std::string& process_message::get_name_id() const {
-  return p_name_id;
-}
+const std::string& process_message::get_name_id() const { return p_name_id; }
 void process_message::progress_clear() {
   std::lock_guard _lock{_mutex};
   p_progress = 0;

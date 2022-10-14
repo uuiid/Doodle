@@ -31,7 +31,7 @@ class doodle_lib::impl {
  public:
   std::shared_ptr<core_set> p_set{};
   std::shared_ptr<boost::asio::io_context> io_context_{};
-
+  boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
   logger_ctr_ptr p_log{};
   registry_ptr reg{};
 };
@@ -41,15 +41,13 @@ doodle_lib::doodle_lib() : ptr(std::make_unique<impl>()) {
   static_value::get().p_lib = this;
   /// @brief 初始化其他
   ptr->p_set.reset(new core_set{});
-  ptr->io_context_   = std::make_shared<boost::asio::io_context>();
-  ptr->p_thread_pool = std::make_shared<thread_pool>(std::thread::hardware_concurrency() * 2);
-  ptr->p_log         = std::make_shared<logger_ctrl>();
-  ptr->reg           = std::make_shared<entt::registry>();
+  ptr->io_context_ = std::make_shared<boost::asio::io_context>();
+  ptr->p_log       = std::make_shared<logger_ctrl>();
+  ptr->reg         = std::make_shared<entt::registry>();
 
   boost::locale::generator k_gen{};
   k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
-  ptr->loop_bounded_pool.timiter_ = core_set::get_set().p_max_thread;
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
@@ -101,6 +99,7 @@ doodle_lib::~doodle_lib() {
   /// @brief  清理变量
   static_value::get().p_lib = nullptr;
 }
+boost::asio::thread_pool& doodle_lib::thread_attr() const { return ptr->thread_pool_attr; }
 
 registry_ptr& g_reg() { return doodle_lib::Get().reg_attr(); }
 

@@ -114,7 +114,7 @@ bool is_sub_path(const path &in_parent, const path &in_child) {
 
 FSys::path write_tmp_file(
     const std::string &in_falg, const std::string &in_string, const std::string &in_extension,
-    const std::optional<std::string> &in_file_name
+    const std::optional<std::string> &in_file_name, std::int32_t in_model
 ) {
   auto tmp_path = core_set::get_set().get_cache_root(fmt::format(
       "{}/v{}{}{}", in_falg, version::build_info::get().version_major, version::build_info::get().version_minor,
@@ -128,7 +128,7 @@ FSys::path write_tmp_file(
     return k_tmp_path;
   } else {
     // 写入文件后直接关闭
-    FSys::fstream file{k_tmp_path, std::ios::out};
+    FSys::fstream file{k_tmp_path, in_model};
     file << in_string;
   }
 

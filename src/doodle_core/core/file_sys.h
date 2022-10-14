@@ -44,7 +44,7 @@ DOODLE_CORE_API bool is_sub_path(const path& in_parent, const path& in_child);
 
 FSys::path DOODLE_CORE_API write_tmp_file(
     const std::string& in_falg, const std::string& in_string, const std::string& in_extension,
-    const std::optional<std::string>& in_file_name = {}
+    const std::optional<std::string>& in_file_name = {}, std::int32_t in_model = std::ios::out
 );
 }  // namespace doodle::FSys
 namespace fmt {

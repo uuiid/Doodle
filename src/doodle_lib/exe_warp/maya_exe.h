@@ -92,7 +92,8 @@ class DOODLELIB_API maya_exe {
   void notify_run();
   using call_fun_type = std::function<void(boost::system::error_code)>;
   void queue_up(
-      const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun
+      const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun,
+      const FSys::path &in_run_path
   );
 
  public:
@@ -108,7 +109,7 @@ class DOODLELIB_API maya_exe {
         [this, l_msg_ref, &in_arg, in_handle](auto &&in_completion_handler) {
           auto l_fun =
               std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          this->queue_up(in_handle, in_arg.to_str(), l_fun);
+          this->queue_up(in_handle, in_arg.to_str(), l_fun, in_arg.file_path);
         },
         in_completion
     );
