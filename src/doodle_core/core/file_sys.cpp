@@ -3,17 +3,16 @@
 //
 #include "file_sys.h"
 
-#include <nlohmann/json.hpp>
+#include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/dll.hpp>
 
 #include <Windows.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/dll.hpp>
+#include <nlohmann/json.hpp>
 #include <shellapi.h>
 #include <tchar.h>
-
-#include <doodle_core/core/core_set.h>
 
 namespace doodle::FSys {
 
@@ -58,9 +57,8 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   /// 从公元 1601 年到公元 1970 年有 369 年的差异，转换为 11644473600秒
   const auto withUnixEpoch = asDuration + nt_to_unix_epoch;
   /// 最后我们强制转换为时间系统时间点
-  return chrono::system_clock::time_point{chrono::duration_cast<chrono::system_clock::duration>(
-      chrono::floor<std::chrono::seconds>(withUnixEpoch)
-  )};
+  return chrono::system_clock::time_point{
+      chrono::duration_cast<chrono::system_clock::duration>(chrono::floor<std::chrono::seconds>(withUnixEpoch))};
 #elif defined(__linux__) && defined(__GNUC__)
   chrono::sys_time_pos k_sys_time_pos{k_time.time_since_epoch()};
   k_sys_time_pos -= S_epoch_diff;
@@ -68,17 +66,13 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
 #endif
 }
 void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point) {
-  const auto asDuration = chrono::duration_cast<filetime_duration>(
-      in_time_point.time_since_epoch()
-  );
+  const auto asDuration  = chrono::duration_cast<filetime_duration>(in_time_point.time_since_epoch());
   const auto withNtEpoch = asDuration - nt_to_unix_epoch;
   std::filesystem::file_time_type k_time{withNtEpoch};
   std::filesystem::last_write_time(in_path, k_time);
 }
 #else
-std::time_t last_write_time_t(const path &in_path) {
-  return last_write_time(in_path);
-}
+std::time_t last_write_time_t(const path &in_path) { return last_write_time(in_path); }
 
 chrono::sys_time_pos last_write_time_point(const path &in_path) {
   return chrono::sys_time_pos::clock::from_time_t(last_write_time(in_path));
@@ -92,14 +86,15 @@ void last_write_time_point(const path &in_path, const std::chrono::system_clock:
 
 void open_explorer(const path &in_path) {
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
-  ShellExecute(nullptr, _T("open"), _T("EXPLORER.EXE"), in_path.lexically_normal().native().c_str(), nullptr, SW_SHOWDEFAULT);
+  ShellExecute(
+      nullptr, _T("open"), _T("EXPLORER.EXE"), in_path.lexically_normal().native().c_str(), nullptr, SW_SHOWDEFAULT
+  );
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
 }
 
 void backup_file(const path &source) {
   auto backup_path = source.parent_path() / "backup" / add_time_stamp(source).filename();
-  if (!exists(backup_path.parent_path()))
-    create_directories(backup_path.parent_path());
+  if (!exists(backup_path.parent_path())) create_directories(backup_path.parent_path());
   rename(source, backup_path);
 }
 path add_time_stamp(const path &in_path) {
@@ -111,29 +106,32 @@ path add_time_stamp(const path &in_path) {
 }
 
 std::vector<path> list_files(const path &in_dir) {
-  return std::vector<path>{
-      directory_iterator{in_dir},
-      directory_iterator{}};
+  return std::vector<path>{directory_iterator{in_dir}, directory_iterator{}};
 }
 bool is_sub_path(const path &in_parent, const path &in_child) {
   return boost::istarts_with(in_parent.generic_string(), in_child.generic_string());
 }
 
-FSys::path write_tmp_file(const std::string &in_falg, const std::string &in_string, const std::string &in_extension) {
-  auto tmp_path = core_set::get_set().get_cache_root(
-      fmt::format(
-          "{}/v{}{}{}",
-          in_falg,
-          version::build_info::get().version_major,
-          version::build_info::get().version_minor,
-          version::build_info::get().version_patch
-      )
-  );
-  auto k_tmp_path = tmp_path / (boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension);
-  {  // 写入文件后直接关闭
+FSys::path write_tmp_file(
+    const std::string &in_falg, const std::string &in_string, const std::string &in_extension,
+    const std::optional<std::string> &in_file_name
+) {
+  auto tmp_path = core_set::get_set().get_cache_root(fmt::format(
+      "{}/v{}{}{}", in_falg, version::build_info::get().version_major, version::build_info::get().version_minor,
+      version::build_info::get().version_patch
+  ));
+  auto k_tmp_path =
+      tmp_path / FSys::path{
+                     in_file_name ? (*in_file_name + in_extension)
+                                  : boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension};
+  if (in_file_name && FSys::exists(k_tmp_path)) {
+    return k_tmp_path;
+  } else {
+    // 写入文件后直接关闭
     FSys::fstream file{k_tmp_path, std::ios::out};
     file << in_string;
   }
+
   return k_tmp_path;
 }
 
@@ -141,16 +139,10 @@ FSys::path write_tmp_file(const std::string &in_falg, const std::string &in_stri
 
 namespace nlohmann {
 // template <>
-void adl_serializer<boost::filesystem::path>::to_json(
-    json &j,
-    const boost::filesystem::path &in_path
-) {
+void adl_serializer<boost::filesystem::path>::to_json(json &j, const boost::filesystem::path &in_path) {
   j = in_path.generic_string();
 }
-void adl_serializer<boost::filesystem::path>::from_json(
-    const json &j,
-    boost::filesystem::path &in_path
-) {
+void adl_serializer<boost::filesystem::path>::from_json(const json &j, boost::filesystem::path &in_path) {
   in_path = j.get<std::string>();
 }
 }  // namespace nlohmann

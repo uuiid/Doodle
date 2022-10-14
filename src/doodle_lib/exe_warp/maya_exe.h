@@ -34,6 +34,8 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
   bool export_fbx;
   bool only_export;
 
+  std::string to_str() const;
+
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["only_sim"]    = nlohmann_json_t.only_sim;
@@ -48,6 +50,8 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   bool use_all_ref;
   bool upload_file;
 
+  std::string to_str() const;
+
   friend void to_json(nlohmann::json &nlohmann_json_j, const export_fbx_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["use_all_ref"] = nlohmann_json_t.use_all_ref;
@@ -59,11 +63,26 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
   bool replace_file_all;
 
+  std::string to_str() const;
+
   friend void to_json(nlohmann::json &nlohmann_json_j, const replace_file_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
     nlohmann_json_j["replace_file_all"] = nlohmann_json_t.replace_file_all;
   };
 };
+
+class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
+ public:
+  std::string save_file_extension_attr;
+
+  std::string to_str() const;
+
+  friend void to_json(nlohmann::json &nlohmann_json_j, const clear_file_arg &nlohmann_json_t) {
+    to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
+    nlohmann_json_j["replace_file_all"] = nlohmann_json_t.save_file_extension_attr;
+  };
+};
+
 }  // namespace doodle::maya_exe_ns
 namespace doodle {
 class DOODLELIB_API maya_exe : public process_t<maya_exe> {
@@ -138,9 +157,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
         [this, l_msg_ref, in_arg, in_handle](auto &&in_completion_handler) {
           auto l_fun =
               std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          nlohmann::json l_json{};
-          l_json = in_arg;
-          this->queue_up(in_handle, l_json.dump(), l_fun);
+          this->queue_up(in_handle, in_arg.to_str(), l_fun);
         }
     );
   };

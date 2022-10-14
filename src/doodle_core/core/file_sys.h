@@ -3,15 +3,15 @@
 //
 
 #pragma once
-#include <filesystem>
-
-#include <fmt/format.h>
-
-#include <nlohmann/json_fwd.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem.hpp>
-#include <doodle_core/core/chrono_.h>
 #include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/core/chrono_.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fmt/format.h>
+#include <nlohmann/json_fwd.hpp>
+#include <optional>
 
 namespace doodle::chrono {
 using namespace std::chrono;
@@ -33,17 +33,18 @@ using namespace boost::filesystem;
 
 DOODLE_CORE_API std::time_t last_write_time_t(const path& in_path);
 DOODLE_CORE_API chrono::sys_time_pos last_write_time_point(const path& in_path);
-DOODLE_CORE_API void last_write_time_point(const path& in_path, const std::chrono::system_clock::time_point& in_time_point);
+DOODLE_CORE_API void last_write_time_point(
+    const path& in_path, const std::chrono::system_clock::time_point& in_time_point
+);
 DOODLE_CORE_API path add_time_stamp(const path& in_path);
 DOODLE_CORE_API void open_explorer(const path& in_path);
 DOODLE_CORE_API void backup_file(const path& source);
 DOODLE_CORE_API std::vector<path> list_files(const path& in_dir);
 DOODLE_CORE_API bool is_sub_path(const path& in_parent, const path& in_child);
 
-[[nodiscard]] FSys::path DOODLE_CORE_API write_tmp_file(
-    const std::string& in_falg,
-    const std::string& in_string,
-    const std::string& in_extension
+FSys::path DOODLE_CORE_API write_tmp_file(
+    const std::string& in_falg, const std::string& in_string, const std::string& in_extension,
+    const std::optional<std::string>& in_file_name = {}
 );
 }  // namespace doodle::FSys
 namespace fmt {
@@ -64,10 +65,7 @@ struct formatter<::boost::filesystem::path> : formatter<string_view> {
    */
   template <typename FormatContext>
   auto format(const ::boost::filesystem::path& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.generic_string(),
-        ctx
-    );
+    return formatter<string_view>::format(in_.generic_string(), ctx);
   }
 };
 }  // namespace fmt
