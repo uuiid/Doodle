@@ -292,7 +292,9 @@ void maya_exe::queue_up(
         boost::asio::post(g_io_context(), [=]() {
           auto &&l_msg = in_msg.get<process_message>();
           l_msg.set_state(l_msg.success);
-          l_msg.message("成功完成", l_msg.warning);
+          if (!in_code) {
+            l_msg.message("成功完成", l_msg.warning);
+          }
           (*in_call_fun)(in_code);
           this->notify_run();
         });
