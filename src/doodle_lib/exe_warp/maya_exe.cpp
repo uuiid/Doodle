@@ -230,18 +230,6 @@ cmds.doodle_comm_file_save(filepath=save_file_path)
 
 class maya_exe::impl {
  public:
-  std::string in_comm;
-  //  boost::process::async_pipe p_out;
-  //    boost::process::async_pipe p_erra;
-  boost::process::ipstream p_out;
-  boost::process::ipstream p_err;
-  std::future<std::string> p_out_str;
-  std::future<std::string> p_err_str;
-
-  boost::process::child p_process;
-  entt::handle p_mess;
-  chrono::sys_time_pos p_time;
-
   std::stack<std::shared_ptr<maya_exe_ns::run_maya>> run_process_arg_attr;
   std::vector<std::shared_ptr<maya_exe_ns::run_maya>> run_attr{};
 
@@ -265,10 +253,10 @@ void maya_exe::notify_run() {
     p_i->run_attr.emplace_back(l_run);
   }
   /// @brief 清除运行完成的程序
-  for (auto &&i : p_i->run_attr) {
-    if (!i->child_attr.running()) {
-      boost::asio::post(g_io_context(), [i, this]() {
-        this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return i == j; });
+  for (auto &&l_i : p_i->run_attr) {
+    if (!l_i->child_attr.running()) {
+      boost::asio::post(g_io_context(), [l_i, this]() {
+        this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return l_i == j; });
       });
     }
   }
@@ -282,15 +270,16 @@ void maya_exe::queue_up(
   auto l_run             = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
   l_run->mag_attr        = in_msg;
   l_run->run_script_attr = in_string;
-  l_run->call_attr       = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in) {
-    boost::asio::post(g_io_context(), [=]() {
-      auto &&l_msg = in_msg.get<process_message>();
-      l_msg.set_state(l_msg.success);
-      l_msg.message("成功完成", l_msg.warning);
-      (*in_call_fun)(in);
-      this->notify_run();
-    });
-  });
+  l_run->call_attr =
+      std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
+        boost::asio::post(g_io_context(), [=]() {
+          auto &&l_msg = in_msg.get<process_message>();
+          l_msg.set_state(l_msg.success);
+          l_msg.message("成功完成", l_msg.warning);
+          (*in_call_fun)(in_code);
+          this->notify_run();
+        });
+      });
   notify_run();
 }
 maya_exe::~maya_exe() = default;
