@@ -10,7 +10,6 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 
 #include <database_task/details/com_data.h>
 #include <range/v3/all.hpp>

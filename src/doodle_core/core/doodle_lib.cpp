@@ -16,7 +16,6 @@
 #include <date/tz.h>
 #include <exception/exception.h>
 #include <logger/logger.h>
-#include <thread_pool/thread_pool.h>
 namespace doodle {
 
 class static_value {

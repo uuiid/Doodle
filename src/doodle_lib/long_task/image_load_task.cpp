@@ -5,7 +5,6 @@
 #include "image_load_task.h"
 
 #include <doodle_core/metadata/image_icon.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/metadata/project.h>
 
 #include <core/image_loader.h>

@@ -8,7 +8,6 @@
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/database_task/sqlite_client.h>

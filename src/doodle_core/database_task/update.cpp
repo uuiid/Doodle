@@ -6,7 +6,6 @@
 
 #include <doodle_core/thread_pool/process_message.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/core/core_sql.h>
 

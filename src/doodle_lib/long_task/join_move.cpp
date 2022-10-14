@@ -8,7 +8,6 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 
 #include <opencv2/opencv.hpp>
 

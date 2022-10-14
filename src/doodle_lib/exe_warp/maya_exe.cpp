@@ -7,7 +7,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/thread_pool/thread_pool.h>
 
 #include <doodle_lib/core/filesystem_extend.h>
 

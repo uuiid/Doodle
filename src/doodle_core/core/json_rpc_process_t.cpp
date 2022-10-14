@@ -6,7 +6,6 @@
 #include <json_rpc/core/server.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <boost/asio.hpp>
-#include <doodle_core/thread_pool/thread_pool.h>
 namespace doodle {
 class json_rpc_process_t::impl {
  public:
