@@ -33,7 +33,7 @@ constexpr const auto fatal_error_en_us{
 }  // namespace
 namespace maya_exe_ns {
 
-class run_maya {
+class run_maya : public std::enable_shared_from_this<run_maya> {
  public:
   entt::handle mag_attr{};
   FSys::path file_path_attr{};
@@ -89,12 +89,15 @@ class run_maya {
           boost::ignore_unused(in_exit);
           (*call_attr)(in_error_code);
         }};
+
+    read_out();
+    read_err();
   }
 
   void read_out() {
     boost::asio::async_read_until(
         out_attr, boost::asio::dynamic_buffer(out_str_attr), '\n',
-        [this](boost::system::error_code in_code) {
+        [this, l_self = shared_from_this()](boost::system::error_code in_code) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
@@ -112,7 +115,7 @@ class run_maya {
   void read_err() {
     boost::asio::async_read_until(
         err_attr, boost::asio::dynamic_buffer(err_str_attr), '\n',
-        [this](boost::system::error_code in_code) {
+        [this, l_self = shared_from_this()](boost::system::error_code in_code) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
@@ -227,9 +230,14 @@ class maya_exe::impl {
   entt::handle p_mess;
   chrono::sys_time_pos p_time;
 
-  std::stack<std::tuple<entt::handle, std::string, std::shared_ptr<call_fun_type>>> run_process_arg_attr;
+  std::stack<std::shared_ptr<maya_exe_ns::run_maya>> run_process_arg_attr;
+  std::vector<std::shared_ptr<maya_exe_ns::run_maya>> run_attr{};
+
   std::atomic_char16_t run_size_attr{};
 };
+
+maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
+
 maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm) : p_i(std::make_unique<impl>()) {
   in_handle.emplace<process_message>();
   in_handle.patch<process_message>([&](process_message &in) { in.set_name("自定义导出"); });
@@ -404,47 +412,33 @@ void maya_exe::aborted() {
 void maya_exe::run_maya(process_message &in_msg, const std::string &in_string) {}
 void maya_exe::notify_run() {
   add_maya_fun_tool();
-  if (p_i->run_size_attr < core_set::get_set().p_max_thread) {
-    auto &&[l_h, l_str, l_call] = p_i->run_process_arg_attr.top();
-    boost::asio::post(g_thread(), [this, l_call = l_call, l_str = l_str, l_h = l_h]() {
-      auto l_maya     = core_set::get_set().maya_path() / "mayabatch.exe";
-      auto l_tmp_file = FSys::write_tmp_file("maya", l_str, ".py");
-      boost::process::async_pipe l_out{g_io_context()};
-      boost::process::async_pipe l_err{g_io_context()};
-      boost::process::child l_child{
-          boost::process::exe  = l_maya,
-          boost::process::args = {L"-proj", L"-hideConsole", L"-script", l_tmp_file.generic_wstring()},
-          boost::process::std_out > l_out, boost::process::std_err > l_err,
-          boost::process::on_exit = [l_call](int in_exit, const std::error_code &in_error_code) {
-            boost::ignore_unused(in_exit);
-            (*l_call)(in_error_code);
-          }};
-
-      std::string l_out_str{};
-      std::string l_err_str{};
-
-      boost::asio::async_read_until(
-          l_out, boost::asio::dynamic_buffer(l_out_str), '\n',
-          [&](boost::system::error_code in_code) {
-            auto &&l_msg = l_h.get<process_message>();
-            if (in_code) {
-              /// @brief 此处不在主线程调用
-              l_msg.message(l_out_str);
-            } else {
-              l_msg.message(in_code.message());
-            }
-          }
-      );
-      boost::system::error_code l_code{};
-      l_child.wait(l_code);
-    });
+  if (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
+    auto l_run = p_i->run_process_arg_attr.top();
     p_i->run_process_arg_attr.pop();
+    l_run->run();
+    p_i->run_attr.emplace_back(l_run);
+
+    for (auto &&i : p_i->run_attr) {
+      if (!i->child_attr.running()) {
+        boost::asio::post(g_io_context(), [i, this]() {
+          this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return i == j; });
+        });
+      }
+    }
   }
 }
 void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun
 ) {
-  p_i->run_process_arg_attr.emplace(in_msg, in_string, in_call_fun);
+  auto l_run             = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
+  l_run->mag_attr        = in_msg;
+  l_run->run_script_attr = in_string;
+  l_run->call_attr       = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in) {
+    boost::asio::post(g_io_context(), [=]() {
+      (*in_call_fun)(in);
+      this->notify_run();
+    });
+  });
   notify_run();
 }
 

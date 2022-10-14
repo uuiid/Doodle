@@ -9,7 +9,6 @@ set(
         lib_warp/boost_locale_warp.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
-        exe_warp/ue4_exe.h
         long_task/image_to_move.h
         long_task/join_move.h
         long_task/image_load_task.h
@@ -25,7 +24,6 @@ set(
         file_warp/opencv_read_player.cpp
         toolkit/toolkit.cpp
         exe_warp/maya_exe.cpp
-        exe_warp/ue4_exe.cpp
         long_task/image_to_move.cpp
         long_task/join_move.cpp
         long_task/image_load_task.cpp

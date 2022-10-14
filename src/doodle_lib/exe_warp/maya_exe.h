@@ -101,7 +101,7 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
 
  public:
   using base_type = process_t<maya_exe>;
-
+  maya_exe();
   //  void succeed() noexcept;
   //  void fail() noexcept;
   //  void pause() noexcept;
