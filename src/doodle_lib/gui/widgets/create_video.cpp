@@ -191,7 +191,6 @@ void create_video::render() {
 
     p_i->out_video_h.emplace_or_replace<FSys::path>(p_i->out_path.data);
     p_i->out_video_h.emplace_or_replace<process_message>();
-    g_bounded_pool().attach<details::join_move>(p_i->out_video_h, l_list);
   }
 
   dear::ListBox{"video_list"} && [this]() {

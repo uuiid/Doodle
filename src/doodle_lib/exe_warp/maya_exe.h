@@ -154,12 +154,14 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
     auto l_msg_ref = in_handle.get_or_emplace<process_message>();
     l_msg_ref.set_name(in_arg.file_path.filename().generic_string());
     return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
-        [this, l_msg_ref, in_arg, in_handle](auto &&in_completion_handler) {
+        [this, l_msg_ref, &in_arg, in_handle](auto &&in_completion_handler) {
           auto l_fun =
               std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
           this->queue_up(in_handle, in_arg.to_str(), l_fun);
-        }
+        },
+        in_completion
     );
   };
 };
+using maya_exe_ptr = std::shared_ptr<maya_exe>;
 }  // namespace doodle

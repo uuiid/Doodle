@@ -202,15 +202,17 @@ cmds.file(force=True, new=True)
 
 l_file_path = "{}"
 save_file_path = "{}"
+project_path = "{}"
 doodle_plug = "doodle_maya_" + str(cmds.about(api=True))[0:4]
 cmds.loadPlugin(doodle_plug)
 
+cmds.doodle_load_project(project=project_path)
 cmds.file(l_file_path, open=True)
 
 cmds.doodle_clear_scene(err_4=True)
 cmds.doodle_comm_file_save(filepath=save_file_path)
 )",
-      file_path, l_save_file_path
+      file_path, l_save_file_path, project_
   );
 }
 
