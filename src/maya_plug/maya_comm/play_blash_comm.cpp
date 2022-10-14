@@ -5,6 +5,7 @@
 #include "play_blash_comm.h"
 
 #include <maya_plug/data/create_hud_node.h>
+#include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/play_blast.h>
 
 #include <maya/MAnimControl.h>
@@ -47,6 +48,14 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     DOODLE_MAYA_CHICK(k_s);
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     k_p.set_save_path(k_path.asUTF8());
+  } else {
+    auto l_str = fmt::format(
+        "{}_playblast_{}-{}.mp4", maya_file_io::get_current_path().stem().generic_path(), MAnimControl::minTime(),
+        MAnimControl::maxTime()
+    );
+    auto l_path = maya_file_io::work_path("mov") / l_str;
+    DOODLE_LOG_INFO(" 生成默认路径: {}", l_path);
+    k_p.set_save_path(l_path);
   }
 
   DOODLE_LOG_INFO("开始拍屏");

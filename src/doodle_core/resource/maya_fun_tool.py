@@ -36,9 +36,6 @@ class maya_file():
         self.name_not_ex = self.file_name.splitext()[0]
         self.abs_path = self.maya_path_class.dirname()  # type: pymel.util.path
 
-    def save(self):
-        pass
-
     def __str__(self):
         return "maya file path : {} maya name :" \
             .format(self.abs_path,
@@ -314,7 +311,7 @@ class open_file(object):
         doodle_work_space.reset()
         doodle_work_space.set_workspace()
 
-    def get_cloth_sim(self, qcloth_path=None):
+    def get_cloth_sim(self):
         # type: (str) -> None
 
         self.load_plug(["AbcExport", "AbcImport", open_file.qcloth])

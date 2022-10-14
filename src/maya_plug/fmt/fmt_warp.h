@@ -38,5 +38,6 @@ struct formatter<MVector> : ostream_formatter {};
 template <>
 struct formatter<MStringArray> : ostream_formatter {};
 #endif
-
+template <>
+struct formatter<MTime> : ostream_formatter {};
 }  // namespace fmt
