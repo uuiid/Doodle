@@ -14,6 +14,6 @@ IncludeCategories:
     Priority: 4
     SortPriority: 4
 
-ColumnLimit: 0
+ColumnLimit: 120
 AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
 AlignAfterOpenBracket: BlockIndent
