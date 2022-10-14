@@ -85,69 +85,20 @@ class DOODLELIB_API clear_file_arg : public maya_exe_ns::arg {
 
 }  // namespace doodle::maya_exe_ns
 namespace doodle {
-class DOODLELIB_API maya_exe : public process_t<maya_exe> {
+class DOODLELIB_API maya_exe {
   class impl;
   std::unique_ptr<impl> p_i;
   static void add_maya_fun_tool();
-  template <typename T>
-  explicit maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t in_arg_tag);
-
   void notify_run();
-  void run_maya(process_message &in_msg, const std::string &in_string);
   using call_fun_type = std::function<void(boost::system::error_code)>;
   void queue_up(
       const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun
   );
 
  public:
-  using base_type = process_t<maya_exe>;
   maya_exe();
-  //  void succeed() noexcept;
-  //  void fail() noexcept;
-  //  void pause() noexcept;
-  /**
-   * @brief 运行mayapy 任意python脚本
-   * @param in_handle 具有消息组件的的句柄
-   * @param in_file py文件路径
-   *
-   * 检查 process_message 和 core_set::get_set().has_maya()
-   *
-   */
-  explicit maya_exe(const entt::handle &in_handle, const std::string &in_file);
-  /**
-   * @brief 使用配置进行qcloth操作
-   * @param in_handle 具有消息组件的的句柄
-   * @param in_arg qcloth 配置类
-   *
-   * 检查 process_message 和 core_set::get_set().has_maya()
-   *
-   */
-  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg);
-  /**
-   * @brief 使用配置进行fbx导出
-   * @param in_handle 具有消息组件的的句柄
-   * @param in_arg 导出fbx 配置类
-   *
-   * 检查 process_message 和 core_set::get_set().has_maya()
-   *
-   */
-  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::export_fbx_arg &in_arg);
-  /**
-   * @brief 使用配置进行文件替换
-   * @param in_handle 具有消息组件的的句柄
-   * @param in_arg 导出 文件替换 配置类
-   *
-   * 检查 process_message 和 core_set::get_set().has_maya()
-   *
-   */
-  explicit maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg);
-  virtual ~maya_exe() override;
 
-  [[maybe_unused]] void init();
-  [[maybe_unused]] void succeeded();
-  [[maybe_unused]] void failed();
-  [[maybe_unused]] void aborted();
-  [[maybe_unused]] void update(base_type::delta_type, void *data);
+  virtual ~maya_exe();
 
   template <typename CompletionHandler, typename Arg_t>
   auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {

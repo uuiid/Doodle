@@ -67,12 +67,22 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     auto l_maya     = core_set::get_set().maya_path() / "mayabatch.exe";
     auto l_tmp_file = FSys::write_tmp_file("maya", run_script_attr, ".py");
     auto &&l_msg    = mag_attr.get<process_message>();
+
     l_msg.set_state(l_msg.run);
-    l_msg.aborted_function = [this]() { cancel(); };
+    l_msg.message(fmt::format("开始写入配置文件 {} \n", l_tmp_file), l_msg.warning);
+    l_msg.aborted_function = [this]() {
+      auto &&l_msg = mag_attr.get<process_message>();
+      l_msg.set_state(l_msg.fail);
+      l_msg.message("进程被主动结束");
+      cancel();
+    };
 
     timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
     timer_attr.async_wait([this](boost::system::error_code in_code) {
       if (!in_code) {
+        auto &&l_msg = mag_attr.get<process_message>();
+        l_msg.set_state(l_msg.fail);
+        l_msg.message("进程超时，结束任务");
         child_attr.terminate();
       } else {
         DOODLE_LOG_ERROR(in_code);
@@ -240,178 +250,12 @@ class maya_exe::impl {
 
 maya_exe::maya_exe() : p_i(std::make_unique<impl>()) {}
 
-maya_exe::maya_exe(const entt::handle &in_handle, const std::string &in_comm) : p_i(std::make_unique<impl>()) {
-  in_handle.emplace<process_message>();
-  in_handle.patch<process_message>([&](process_message &in) { in.set_name("自定义导出"); });
-  DOODLE_CHICK(
-      core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"}
-  );
-  p_i->p_mess  = in_handle;
-
-  // 生成命令
-  p_i->in_comm = fmt::format(R"("{}/mayapy.exe" {})", core_set::get_set().maya_path().generic_string(), in_comm);
-}
-template <typename T>
-maya_exe::maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t in_arg_tag)
-    : p_i(std::make_unique<impl>()) {
-  in_handle.emplace<process_message>();
-  in_handle.patch<process_message>([&](process_message &in) {
-    in.set_name(in_arg.file_path.filename().generic_string());
-  });
-  DOODLE_CHICK(
-      core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"}
-  );
-  p_i->p_mess   = in_handle;
-
-  auto run_path = FSys::write_tmp_file("maya", in_arg.to_str(), ".py");
-
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.message(fmt::format("开始写入配置文件 {} \n", run_path), in.warning);
-  });
-
-  // 生成命令
-  p_i->in_comm =
-      fmt::format(R"("{}/mayapy.exe" {})", core_set::get_set().maya_path().generic_string(), run_path.generic_string());
-}
-
-maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::qcloth_arg &in_arg)
-    : maya_exe(in_handle, in_arg, 0) {}
-maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::export_fbx_arg &in_arg)
-    : maya_exe(in_handle, in_arg, 0) {}
-maya_exe::maya_exe(const entt::handle &in_handle, const maya_exe_ns::replace_file_arg &in_arg)
-    : maya_exe(in_handle, in_arg, 0) {}
-
-maya_exe::~maya_exe() = default;
-
 void maya_exe::add_maya_fun_tool() {
   auto l_file_py = cmrc::DoodleLibResource::get_filesystem().open("resource/maya_fun_tool.py");
   FSys::write_tmp_file(
       "maya", std::string{l_file_py.begin(), boost::numeric_cast<std::size_t>(l_file_py.size())}, ".py", "maya_fun_tool"
   );
 }
-[[maybe_unused]] void maya_exe::init() {
-  auto &l_mag = p_i->p_mess.patch<process_message>();
-  l_mag.set_state(l_mag.run);
-  l_mag.aborted_function = [self = this]() {
-    if (self) self->abort();
-  };
-
-  add_maya_fun_tool();
-  DOODLE_LOG_INFO("命令 {}", p_i->in_comm);
-  p_i->p_process = boost::process::child{
-      boost::process::cmd = conv::utf_to_utf<wchar_t>(p_i->in_comm), boost::process::std_out > p_i->p_out,
-      boost::process::std_err > p_i->p_err, boost::process::on_exit([&](auto...) { p_i->p_process.terminate(); })
-#ifdef _WIN32
-                                                ,
-      boost::process::windows::hide
-#endif  //_WIN32};
-  };
-  p_i->p_mess.patch<process_message>([](process_message &in) { in.progress_step({1, 40}); });
-  p_i->p_time = chrono::system_clock::now();
-}
-void maya_exe::update(chrono::duration<chrono::system_clock::rep, chrono::system_clock::period>, void *data) {
-  using namespace chrono::literals;
-
-  std::string k_out{};
-  if (p_i->p_out_str.valid()) {  /// 异步有效, 是否可以读取
-    switch (p_i->p_out_str.wait_for(0ns)) {
-      case std::future_status::ready: {
-        k_out = p_i->p_out_str.get();
-        if (!k_out.empty()) {
-          auto k_str  = conv::to_utf<char>(k_out, "GBK");
-
-          p_i->p_time = chrono::system_clock::now();
-          p_i->p_mess.patch<process_message>([&](process_message &in) {
-            in.progress_step({1, 300});
-            in.message(k_str, in.warning);
-          });
-        }
-        goto sub_out;
-        break;
-      }
-      default:
-        break;
-    }
-  } else {  /// 提交新的读取函数
-  sub_out:
-    if (p_i->p_out)
-      p_i->p_out_str = std::move(g_thread_pool().enqueue([self = p_i.get()]() -> std::string {
-        std::string k_str{};
-        if (self && self->p_out) getline(self->p_out, k_str);
-        return k_str;
-      }));
-  }
-
-  if (p_i->p_err_str.valid()) {  /// 异步有效, 是否可以读取
-    switch (p_i->p_err_str.wait_for(0ns)) {
-      case std::future_status::ready: {
-        k_out = p_i->p_err_str.get();
-        if (!k_out.empty()) {
-          auto k_str   = conv::to_utf<char>(k_out, "GBK");
-          auto k_w_str = conv::to_utf<wchar_t>(k_out, "GBK");
-
-          p_i->p_time  = chrono::system_clock::now();
-          p_i->p_mess.patch<process_message>([&](process_message &in) {
-            in.progress_step({1, 20000});
-            in.message(k_str, in.info);
-          });
-        }
-        goto sub_err;
-        break;
-      }
-      default:
-        break;
-    }
-  } else {  /// 提交新的读取函数
-  sub_err:
-    if (p_i->p_err)
-      p_i->p_err_str = std::move(g_thread_pool().enqueue([self = p_i.get()]() -> std::string {
-        std::string k_str{};
-        if (self && self->p_err) getline(self->p_err, k_str);
-        return k_str;
-      }));
-  }
-
-  auto k_time = chrono::system_clock::now() - p_i->p_time;
-  if (core_set::get_set().timeout < chrono::floor<chrono::seconds>(k_time).count()) {
-    p_i->p_process.terminate();
-    p_i->p_mess.patch<process_message>([&](process_message &in) { in.message("进程超时, 主动结束任务\n", in.warning); }
-    );
-    this->fail();
-  }
-
-  if (!p_i->p_process.running() && p_i->p_out.eof() && p_i->p_err.eof()) {
-    if (p_i->p_process.exit_code() == 0) {
-      this->succeed();
-    } else {
-      this->fail();
-    }
-  }
-}
-
-void maya_exe::succeeded() {
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.set_state(in.success);
-    auto k_str = fmt::format("成功完成任务\n");
-    in.message(k_str, in.warning);
-  });
-}
-void maya_exe::failed() {
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.set_state(in.fail);
-    auto k_str = fmt::format("进程失败,退出代码是 {} \n", p_i->p_process.exit_code());
-    in.message(k_str, in.warning);
-  });
-}
-void maya_exe::aborted() {
-  p_i->p_process.terminate();
-  p_i->p_mess.patch<process_message>([&](process_message &in) {
-    in.set_state(in.fail);
-    auto k_str = fmt::format("进程被主动结束 \n", p_i->p_process.exit_code());
-    in.message(k_str, in.warning);
-  });
-}
-void maya_exe::run_maya(process_message &in_msg, const std::string &in_string) {}
 void maya_exe::notify_run() {
   add_maya_fun_tool();
   if (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
@@ -419,29 +263,36 @@ void maya_exe::notify_run() {
     p_i->run_process_arg_attr.pop();
     l_run->run();
     p_i->run_attr.emplace_back(l_run);
-
-    for (auto &&i : p_i->run_attr) {
-      if (!i->child_attr.running()) {
-        boost::asio::post(g_io_context(), [i, this]() {
-          this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return i == j; });
-        });
-      }
+  }
+  /// @brief 清除运行完成的程序
+  for (auto &&i : p_i->run_attr) {
+    if (!i->child_attr.running()) {
+      boost::asio::post(g_io_context(), [i, this]() {
+        this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return i == j; });
+      });
     }
   }
 }
 void maya_exe::queue_up(
     const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun
 ) {
+  DOODLE_CHICK(
+      core_set::get_set().has_maya(), doodle_error{"没有找到maya路径 (例如 C:/Program Files/Autodesk/Maya2019/bin})"}
+  );
   auto l_run             = p_i->run_process_arg_attr.emplace(std::make_shared<maya_exe_ns::run_maya>());
   l_run->mag_attr        = in_msg;
   l_run->run_script_attr = in_string;
   l_run->call_attr       = std::make_shared<call_fun_type>([in_call_fun, this](const boost::system::error_code &in) {
     boost::asio::post(g_io_context(), [=]() {
+      auto &&l_msg = in_msg.get<process_message>();
+      l_msg.set_state(l_msg.success);
+      l_msg.message("成功完成", l_msg.warning);
       (*in_call_fun)(in);
       this->notify_run();
     });
   });
   notify_run();
 }
+maya_exe::~maya_exe() = default;
 
 }  // namespace doodle
