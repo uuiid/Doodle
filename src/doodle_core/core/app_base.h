@@ -62,8 +62,6 @@ class DOODLE_CORE_API app_base {
   virtual std::int32_t run();
 
   virtual std::int32_t poll_one();
-
-  virtual void clear_loop();
   std::atomic_bool& stop();
   void stop_app(bool in_stop = false);
 

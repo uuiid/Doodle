@@ -4,22 +4,18 @@
 
 #include "delete_data.h"
 
-#include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/thread_pool/thread_pool.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/core/core_sql.h>
-
-#include <doodle_core/metadata/metadata_cpp.h>
-
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/generate/core/sql_sql.h>
-
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
-
-#include <range/v3/all.hpp>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/thread_pool/process_message.h>
+#include <doodle_core/thread_pool/thread_pool.h>
 
 #include <database_task/details/com_data.h>
+#include <range/v3/all.hpp>
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
@@ -38,26 +34,19 @@ class delete_data::impl {
   std::size_t size{};
 
   void create_id() {
-    delete_id_list =
-        entt_list |
-        ranges::view::transform([this](const entt::entity &in) {
-          if (stop)
-            return std::uint64_t{};
-          g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
-          return g_reg()->get<database>(in).get_id();
-        }) |
-        ranges::to_vector;
+    delete_id_list = entt_list | ranges::view::transform([this](const entt::entity &in) {
+                       if (stop) return std::uint64_t{};
+                       g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+                       return g_reg()->get<database>(in).get_id();
+                     }) |
+                     ranges::to_vector;
   }
 
   void delete_db_entt(sqlpp::sqlite3::connection &in_db) {
     sql::Entity l_tabl{};
-    auto l_pre = in_db.prepare(
-        sqlpp::remove_from(l_tabl)
-            .where(l_tabl.id == sqlpp::parameter(l_tabl.id))
-    );
+    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.id == sqlpp::parameter(l_tabl.id)));
     for (auto &&i : delete_id_list) {
-      if (stop)
-        return;
+      if (stop) return;
       l_pre.params.id = i;
       in_db(l_pre);
       DOODLE_LOG_INFO("删除数据库id {}", i);
@@ -66,13 +55,9 @@ class delete_data::impl {
   }
   void delete_db_com(sqlpp::sqlite3::connection &in_db) {
     sql::ComEntity l_tabl{};
-    auto l_pre = in_db.prepare(
-        sqlpp::remove_from(l_tabl)
-            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId))
-    );
+    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
     for (auto &&i : delete_id_list) {
-      if (stop)
-        return;
+      if (stop) return;
       l_pre.params.entityId = i;
       in_db(l_pre);
       DOODLE_LOG_INFO("删除数据库 com id {}", i);
@@ -80,35 +65,18 @@ class delete_data::impl {
     }
   }
 
-  void th_delete() {
-  }
+  void th_delete() {}
 };
-delete_data::delete_data(const std::vector<entt::entity> &in_data)
-    : p_i(std::make_unique<impl>()) {
+delete_data::delete_data(const std::vector<entt::entity> &in_data) : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_data;
   p_i->size      = p_i->entt_list.size();
 }
 delete_data::delete_data() : p_i(std::make_unique<impl>()){};
 
 delete_data::~delete_data() = default;
-void delete_data::init() {
-  auto &k_msg = g_reg()->ctx().emplace<process_message>();
-  k_msg.set_name("插入数据");
-  k_msg.set_state(k_msg.run);
-  p_i->future_ = g_thread_pool().enqueue([this]() {
-    p_i->th_delete();
-  });
-}
 
-void delete_data::aborted() {
-  p_i->stop = true;
-}
-void delete_data::update() {
-}
 void delete_data::operator()(
-    entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data,
-    conn_ptr &in_connect
+    entt::registry &in_registry, const std::vector<entt::entity> &in_update_data, conn_ptr &in_connect
 ) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();

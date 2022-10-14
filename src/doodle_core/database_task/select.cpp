@@ -87,7 +87,7 @@ struct future_data {
 
 class select::impl {
  public:
-  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+  using boost_strand = boost::asio::strand<std::decay_t<decltype(g_thread())>::executor_type>;
   using id_map_type  = std::map<std::int64_t, entt::entity>;
   /**
    * 数据库的绝对路径
@@ -97,8 +97,7 @@ class select::impl {
   std::future<void> result;
   std::vector<std::shared_future<void>> results;
   std::atomic_bool stop{false};
-  boost_strand
-      strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  boost_strand strand_{boost::asio::make_strand(g_thread())};
   std::vector<boost_strand> strands_{};
 
   registry_ptr local_reg{g_reg()};
@@ -179,7 +178,7 @@ class select::impl {
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};
 
-    auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread_pool().pool_));
+    auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread()));
     std::size_t l_size{1};
     for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_com_entity.id)).from(l_com_entity).unconditionally())) {
       l_size = raw.count.value();

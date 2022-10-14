@@ -60,7 +60,6 @@ void setting_windows::save() {
   set.ue4_path                 = p_i->p_ue_path.data;
   set.ue4_version              = p_i->p_ue_version.data;
   set.timeout                  = p_i->p_timeout.data;
-  g_bounded_pool().timiter_    = p_i->p_batch_max.data;
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
 

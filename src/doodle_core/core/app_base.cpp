@@ -49,7 +49,6 @@ void app_base::init() {
   k_init.find_maya();
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
-  g_bounded_pool().timiter_ = core_set::get_set().p_max_thread;
   this->post_constructor();
 
   boost::asio::post(g_io_context(), []() {
@@ -67,7 +66,6 @@ app_base& app_base::Get() {
 }
 std::int32_t app_base::run() {
   g_io_context().run();
-  clear_loop();
   return 0;
 }
 
@@ -79,8 +77,7 @@ void app_base::stop_app(bool in_stop) {
   boost::asio::post(
       g_io_context(),
       [=]() {
-        g_bounded_pool().abort(in_stop);
-        g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
+    g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
         run_facet->deconstruction();
         core_set_init{}.write_file();
 
@@ -102,14 +99,6 @@ void app_base::load_project(const FSys::path& in_path) const {
           DOODLE_LOG_INFO("完成打开项目");
         }
     );
-  }
-}
-void app_base::clear_loop() {
-  while (!g_bounded_pool().empty()) {
-    static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
-    decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
-    g_bounded_pool().update(l_now - s_now, nullptr);
-    s_now = l_now;
   }
 }
 

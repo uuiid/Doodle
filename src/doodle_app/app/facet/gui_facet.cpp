@@ -67,7 +67,6 @@ void gui_facet::operator()() {
     }
     if (g_reg()->ctx().at<::doodle::program_info>().stop_attr())
       return;
-    this->loop_one();  /// \brief 各种
     this->tick_begin();
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
@@ -100,12 +99,6 @@ gui_facet::gui_facet()
   g_reg()->ctx().emplace<image_to_move>();
 }
 
-void gui_facet::loop_one() {
-  static decltype(chrono::system_clock::now()) s_now{chrono::system_clock::now()};
-  decltype(chrono::system_clock::now()) l_now{chrono::system_clock::now()};
-  g_bounded_pool().update(l_now - s_now, nullptr);
-  s_now = l_now;
-}
 void gui_facet::tick() {
   auto l_lay =
       g_reg()->ctx().find<gui::detail::layout_tick>();

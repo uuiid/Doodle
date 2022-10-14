@@ -66,8 +66,6 @@ using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
 
 using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
 
-DOODLE_CORE_API bounded_pool_t& g_bounded_pool();
-DOODLE_CORE_API thread_pool& g_thread_pool();
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
 

@@ -59,10 +59,10 @@ class insert::impl {
 
   std::vector<std::pair<std::int32_t, std::string>> ctx_tabls;
 
-  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+  using boost_strand = boost::asio::strand<std::decay_t<decltype(g_thread())>::executor_type>;
 
   /// @brief boost 无锁保护
-  boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  boost_strand strand_{boost::asio::make_strand(g_thread())};
   ///@brief 原子停止指示
   std::atomic_bool stop{false};
 
@@ -149,19 +149,13 @@ class insert::impl {
       if (stop)
         return;
       futures_.emplace_back(
-          boost::asio::post(
-              g_thread_pool().pool_,
-              std::packaged_task<void()>{
-                  [=]() {
-                    if (stop)
-                      return;
-                    auto l_h = entt::handle{*g_reg(), in.second->entt_};
-                    in.second->uuid_data =
-                        boost::uuids::to_string(l_h.get<database>().uuid());
-                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
-                  }}
-          )
-      );
+          boost::asio::post(g_thread(), std::packaged_task<void()>{[=]() {
+                                                if (stop) return;
+                                                auto l_h = entt::handle{*g_reg(), in.second->entt_};
+                                                in.second->uuid_data =
+                                                    boost::uuids::to_string(l_h.get<database>().uuid());
+                                                g_reg()->ctx().emplace<process_message>().progress_step({1, size * 4});
+                                              }}));
     });
   }
 

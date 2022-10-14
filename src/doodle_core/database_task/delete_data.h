@@ -6,7 +6,7 @@
 #include <doodle_core/gui_template/gui_process.h>
 namespace doodle::database_n {
 
-class DOODLE_CORE_API delete_data : public process_handy_tools {
+class DOODLE_CORE_API delete_data {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -16,10 +16,7 @@ class DOODLE_CORE_API delete_data : public process_handy_tools {
   delete_data();
 
   virtual ~delete_data() override;
-  void init();
 
-  void aborted();
-  void update();
   void operator()(
       entt::registry& in_registry,
       const std::vector<entt::entity>& in_update_data,

@@ -29,10 +29,7 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy,
   static doodle_lib& Get();
   static FSys::path create_time_database();
 
-  [[nodiscard]] thread_pool_ptr get_thread_pool() const;
-
   [[nodiscard]] registry_ptr& reg_attr() const;
-  [[nodiscard]] bounded_pool_t& bounded_pool_attr() const;
   [[nodiscard]] boost::asio::io_context& io_context_attr() const;
   [[nodiscard]] boost::asio::thread_pool& thread_attr() const;
 

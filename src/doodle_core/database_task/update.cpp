@@ -40,9 +40,9 @@ class update_data::impl {
 
   std::vector<com_data> com_tabls;
   std::map<entt::entity, std::int64_t> main_tabls;
-  using boost_strand = boost::asio::strand<decltype(g_thread_pool().pool_)::executor_type>;
+  using boost_strand = boost::asio::strand<std::decay_t<decltype(g_thread())>::executor_type>;
   ///@brief boost 无锁保护
-  boost_strand strand_{boost::asio::make_strand(g_thread_pool().pool_)};
+  boost_strand strand_{boost::asio::make_strand(g_thread())};
   // #define Type_T doodle::project
 
   /// \brief 最终的ji结果
