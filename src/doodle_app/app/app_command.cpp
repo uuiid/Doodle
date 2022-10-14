@@ -3,36 +3,31 @@
 //
 
 #include "app_command.h"
+
+#include <doodle_core/core/app_facet.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/gui_template/show_windows.h>
-
 #include <doodle_core/thread_pool/process_pool.h>
 
-#include <doodle_core/core/init_register.h>
-#include <doodle_core/core/app_facet.h>
-
-#include <doodle_app/gui/main_proc_handle.h>
-#include <doodle_app/app/program_options.h>
 #include <doodle_app/app/facet/gui_facet.h>
+#include <doodle_app/app/program_options.h>
+#include <doodle_app/gui/main_proc_handle.h>
 
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
-#include <doodle_app/app/program_options.h>
 namespace doodle {
 
 app_command_base::app_command_base(const app_base::in_app_args& in_instance)
-    : app_base(in_instance),
-      cmd_str(in_instance.in_cmd_line) {
+    : app_base(in_instance), cmd_str(in_instance.in_cmd_line) {
   g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
 }
 
-app_command_base::app_command_base()
-    : app_base(),
-      cmd_str() {
-  auto l_args = boost::program_options::split_winmain(std::string{
-      boost::locale::conv::utf_to_utf<char>(GetCommandLineW())});
+app_command_base::app_command_base() : app_base(), cmd_str() {
+  auto l_args =
+      boost::program_options::split_winmain(std::string{boost::locale::conv::utf_to_utf<char>(GetCommandLineW())});
   l_args.erase(l_args.cbegin());
   cmd_str = l_args;
   DOODLE_LOG_INFO("获取到命令行 {}", l_args);
@@ -46,13 +41,16 @@ void app_command_base::post_constructor() {
     val->add_program_options(l_opt);
     l_opt->build_opt(key);
   }
-
-  if (std::holds_alternative<win::string_type>(cmd_str)) {
-    l_opt->command_line_parser(
-        boost::program_options::split_winmain(boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str)))
-    );
-  } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
-    l_opt->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
+  try {
+    if (std::holds_alternative<win::string_type>(cmd_str)) {
+      l_opt->command_line_parser(boost::program_options::split_winmain(
+          boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str))
+      ));
+    } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
+      l_opt->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
+    }
+  } catch (const boost::locale::conv::conversion_error& in_err) {
+    DOODLE_LOG_ERROR("无法解析命令行 {}", in_err.what());
   }
 
   for (auto&& [key, val] : l_opt->facet_model) {
@@ -68,18 +66,12 @@ void app_command_base::post_constructor() {
     DOODLE_LOG_INFO("运行默认构面 {}", run_facet->name());
     g_reg()->ctx().emplace<app_facet_ptr>(run_facet);
   }
-  boost::asio::post(g_io_context(), [l_f = run_facet]() {
-    (*l_f)();
-  });
+  boost::asio::post(g_io_context(), [l_f = run_facet]() { (*l_f)(); });
 }
 
-bool app_command_base::chick_authorization() {
-  return chick_build_time();
-}
+bool app_command_base::chick_authorization() { return chick_build_time(); }
 
-app_command_base& app_command_base::Get() {
-  return *(dynamic_cast<app_command_base*>(self));
-}
+app_command_base& app_command_base::Get() { return *(dynamic_cast<app_command_base*>(self)); }
 
 std::optional<FSys::path> app_command_base::find_authorization_file() const {
   auto l_p = core_set::get_set().program_location() / doodle_config::token_name.data();
@@ -102,22 +94,15 @@ bool app_command_base::chick_build_time() const {
 
 namespace doodle {
 
-doodle_main_app::doodle_main_app(const in_gui_arg& in_arg)
-    : app_command_base(in_arg) {
+doodle_main_app::doodle_main_app(const in_gui_arg& in_arg) : app_command_base(in_arg) {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
   auto& l_p = g_reg()->ctx().at<program_info>();
   l_p.parent_windows_attr(in_arg.in_parent);
 }
-doodle_main_app::doodle_main_app()
-    : app_command_base() {
-}
-doodle_main_app& doodle_main_app::Get() {
-  return *(dynamic_cast<doodle_main_app*>(self));
-}
-bool doodle_main_app::chick_authorization() {
-  return app_command_base::chick_authorization();
-}
+doodle_main_app::doodle_main_app() : app_command_base() {}
+doodle_main_app& doodle_main_app::Get() { return *(dynamic_cast<doodle_main_app*>(self)); }
+bool doodle_main_app::chick_authorization() { return app_command_base::chick_authorization(); }
 
 doodle_main_app::~doodle_main_app() = default;
 
