@@ -6,21 +6,24 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/thread_pool.hpp>
+
 namespace doodle::maya_exe_ns {
 
 class arg {
  public:
   arg()          = default;
   virtual ~arg() = default;
-  FSys::path file_path;
-  FSys::path project_;
-  std::int32_t t_post;
-  std::int32_t export_anim_time;
-  friend void to_json(nlohmann::json &nlohmann_json_j, const arg &nlohmann_json_t) {
-    nlohmann_json_j["path"]             = nlohmann_json_t.file_path.generic_string();
-    nlohmann_json_j["project_"]         = nlohmann_json_t.project_.generic_string();
-    nlohmann_json_j["t_post"]           = nlohmann_json_t.t_post;
-    nlohmann_json_j["export_anim_time"] = nlohmann_json_t.export_anim_time;
+  FSys::path file_path{};
+  FSys::path project_{};
+  std::int32_t t_post{};
+  std::int32_t export_anim_time{};
+  friend void to_json(nlohmann::json &in_nlohmann_json_j, const arg &in_nlohmann_json_t) {
+    in_nlohmann_json_j["path"]             = in_nlohmann_json_t.file_path.generic_string();
+    in_nlohmann_json_j["project_"]         = in_nlohmann_json_t.project_.generic_string();
+    in_nlohmann_json_j["t_post"]           = in_nlohmann_json_t.t_post;
+    in_nlohmann_json_j["export_anim_time"] = in_nlohmann_json_t.export_anim_time;
   }
 };
 
@@ -69,6 +72,13 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   static void add_maya_fun_tool();
   template <typename T>
   explicit maya_exe(const entt::handle &in_handle, const T &in_arg, std::int32_t in_arg_tag);
+
+  void notify_run();
+  void run_maya(process_message &in_msg, const std::string &in_string);
+  using call_fun_type = std::function<void(boost::system::error_code)>;
+  void queue_up(
+      const entt::handle &in_msg, const std::string &in_string, const std::shared_ptr<call_fun_type> &in_call_fun
+  );
 
  public:
   using base_type = process_t<maya_exe>;
@@ -119,5 +129,20 @@ class DOODLELIB_API maya_exe : public process_t<maya_exe> {
   [[maybe_unused]] void failed();
   [[maybe_unused]] void aborted();
   [[maybe_unused]] void update(base_type::delta_type, void *data);
+
+  template <typename CompletionHandler, typename Arg_t>
+  auto async_run_maya(const entt::handle &in_handle, const Arg_t &in_arg, CompletionHandler &&in_completion) {
+    auto l_msg_ref = in_handle.get_or_emplace<process_message>();
+    l_msg_ref.set_name(in_arg.file_path.filename().generic_string());
+    return boost::asio::async_initiate<CompletionHandler, void(boost::system::error_code)>(
+        [this, l_msg_ref, in_arg, in_handle](auto &&in_completion_handler) {
+          auto l_fun =
+              std::make_shared<call_fun_type>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
+          nlohmann::json l_json{};
+          l_json = in_arg;
+          this->queue_up(in_handle, l_json.dump(), l_fun);
+        }
+    );
+  };
 };
 }  // namespace doodle
