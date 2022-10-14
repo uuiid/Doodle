@@ -14,8 +14,8 @@
         <rule entity="STRUCT_MEMBER_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
         <rule entity="CLASS_MEMBER_FIELD" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="_attr" />
         <rule entity="STRUCT_MEMBER_FIELD" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="_attr" />
-        <rule entity="GLOBAL_FUNCTION" visibility="ANY" specifier="ANY" prefix="g_" style="SNAKE_CASE" suffix="" />
-        <rule entity="GLOBAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="g_" style="SNAKE_CASE" suffix="" />
+        <rule entity="GLOBAL_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
+        <rule entity="GLOBAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
         <rule entity="PARAMETER" visibility="ANY" specifier="ANY" prefix="in_" style="SNAKE_CASE" suffix="" />
         <rule entity="LOCAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="l_" style="SNAKE_CASE" suffix="" />
       </rules>
@@ -34,8 +34,8 @@
         <rule entity="STRUCT_MEMBER_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
         <rule entity="CLASS_MEMBER_FIELD" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="_attr" />
         <rule entity="STRUCT_MEMBER_FIELD" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="_attr" />
-        <rule entity="GLOBAL_FUNCTION" visibility="ANY" specifier="ANY" prefix="g_" style="SNAKE_CASE" suffix="" />
-        <rule entity="GLOBAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="g_" style="SNAKE_CASE" suffix="" />
+        <rule entity="GLOBAL_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
+        <rule entity="GLOBAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="" style="SNAKE_CASE" suffix="" />
         <rule entity="PARAMETER" visibility="ANY" specifier="ANY" prefix="in_" style="SNAKE_CASE" suffix="" />
         <rule entity="LOCAL_VARIABLE" visibility="ANY" specifier="ANY" prefix="l_" style="SNAKE_CASE" suffix="" />
       </rules>
