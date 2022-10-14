@@ -52,6 +52,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
 
   run_maya() = default;
+  virtual ~run_maya() { cancel(); }
 
   FSys::path find_maya_work() const {
     if (FSys::exists(file_path_attr.parent_path() / "workspace.mel")) {
@@ -107,7 +108,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   void read_out() {
     boost::asio::async_read_until(
         out_attr, boost::asio::dynamic_buffer(out_str_attr), '\n',
-        [this, l_self = shared_from_this()](boost::system::error_code in_code) {
+        [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
@@ -125,7 +126,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   void read_err() {
     boost::asio::async_read_until(
         err_attr, boost::asio::dynamic_buffer(err_str_attr), '\n',
-        [this, l_self = shared_from_this()](boost::system::error_code in_code) {
+        [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
