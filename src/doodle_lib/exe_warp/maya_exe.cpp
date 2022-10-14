@@ -219,6 +219,8 @@ std::string clear_file_arg::to_str() const {
       R"(# -*- coding: utf-8 -*-
 import maya.mel
 from maya import cmds
+import pymel.core
+
 cmds.file(force=True, new=True)
 
 l_file_path = "{}"
