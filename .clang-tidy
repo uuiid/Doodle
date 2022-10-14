@@ -65,6 +65,8 @@ CheckOptions:
     value: 'false'
   - key: modernize-use-override.FinalSpelling
     value: final
+  - key: modernize-use-override.OverrideSpelling
+    value: override
   - key: performance-move-constructor-init.IncludeStyle
     value: llvm
   - key: modernize-loop-convert.UseCxx20ReverseRanges
@@ -135,8 +137,6 @@ CheckOptions:
     value: 'true'
   - key: cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField
     value: '0'
-  - key: modernize-use-override.IgnoreDestructors
-    value: 'false'
   - key: performance-inefficient-vector-operation.EnableProto
     value: 'false'
   - key: modernize-make-shared.MakeSmartPtrFunction
@@ -169,8 +169,6 @@ CheckOptions:
     value: '0'
   - key: bugprone-argument-comment.CommentUserDefinedLiterals
     value: '0'
-  - key: modernize-use-override.OverrideSpelling
-    value: override
   - key: readability-redundant-declaration.IgnoreMacros
     value: 'true'
   - key: performance-inefficient-string-concatenation.StrictMode
