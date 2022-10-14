@@ -129,11 +129,12 @@ void maya_tool::render() {
   if (ImGui::Button("转换格式")) {
     auto l_maya = g_reg()->ctx().at<maya_exe_ptr>();
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
-      auto k_arg             = maya_exe_ns::clear_file_arg{};
-      k_arg.file_path        = i;
-      k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
-      k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
-      k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
+      auto k_arg                     = maya_exe_ns::clear_file_arg{};
+      k_arg.file_path                = i;
+      k_arg.project_                 = g_reg()->ctx().at<database_info>().path_;
+      k_arg.t_post                   = g_reg()->ctx().at<project_config::base_config>().t_post;
+      k_arg.export_anim_time         = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
+      k_arg.save_file_extension_attr = i.extension() == ".ma" ? ".mb" : ".ma";
 
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
