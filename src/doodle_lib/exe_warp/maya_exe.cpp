@@ -217,9 +217,8 @@ std::string clear_file_arg::to_str() const {
       file_path.parent_path() / "fbx" / file_path.filename().replace_extension(save_file_extension_attr);
   return fmt::format(
       R"(# -*- coding: utf-8 -*-
-import cmds
 import maya.mel
-
+from maya import cmds
 cmds.file(force=True, new=True)
 
 l_file_path = "{}"
