@@ -62,7 +62,6 @@ struct loop_rpc {
 
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
-  bool run_test{};
 
   //  auto l_prot   = main_app_attr.f_attr->server_attr()->get_prot();
   //  auto l_f_prot = win::get_tcp_port(boost::this_process::get_id());

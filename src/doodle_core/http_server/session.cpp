@@ -175,7 +175,7 @@ void session::on_read(
       std::move(ptr->req_),
       [this](auto&& msg) {
         // The lifetime of the message has to extend
-        // for the duration of the async operation so
+        // for the duration of the async operation, so
         // we use a shared_ptr to manage it.
         auto sp         = std::make_shared<std::decay_t<decltype(msg)>>(std::forward<decltype(msg)>(msg));
 
