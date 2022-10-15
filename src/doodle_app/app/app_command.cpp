@@ -43,9 +43,12 @@ void app_command_base::post_constructor() {
   }
   try {
     if (std::holds_alternative<win::string_type>(cmd_str)) {
-      l_opt->command_line_parser(boost::program_options::split_winmain(
-          boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str))
-      ));
+      auto&& l_comm = std::get<win::string_type>(cmd_str);
+      if (l_comm) {
+        l_opt->command_line_parser(boost::program_options::split_winmain(
+            boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str))
+        ));
+      }
     } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
       l_opt->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
     }

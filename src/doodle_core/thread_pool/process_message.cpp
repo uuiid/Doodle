@@ -50,16 +50,13 @@ void process_message::progress_step(const rational_int& in_rational_int) {
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
   std::lock_guard _lock{_mutex};
   auto l_msg{in_string};
-  if (ranges::all_of(l_msg, [](const std::string::value_type& in_type) -> bool {
-        return in_type == '\n' || in_type == '\r';
-      })) {
+  if (ranges::all_of(l_msg, [](const std::string::value_type& in_type) -> bool { return std::isspace(in_type); })) {
     return;
   }
   //  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
   //    return in_type == '\n' || in_type == '\r';
   //  });
-  if (l_msg.empty()) return;
-  //  l_msg += '\n';
+  l_msg += '\n';
 
   spdlog::info(l_msg);
   switch (in_level_enum) {

@@ -147,6 +147,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
               auto l_mstr = fmt::format("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
               l_msg.message(l_mstr, l_msg.warning);
+              l_msg.set_state(l_msg.fail);
+              cancel();
               return;
             } else {
               auto l_str = conv::to_utf<char>(err_str_attr, "GBK");
