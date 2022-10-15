@@ -4,11 +4,13 @@
 #include <doodle_core/lib_warp/boost_fmt_rational.h>
 #include <doodle_core/lib_warp/json_warp.h>
 
+#include <boost/locale.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <magic_enum.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
 #include <spdlog/spdlog.h>
+
 namespace doodle {
 void to_json(nlohmann::json& nlohmann_json_j, const process_message& nlohmann_json_t) {
   nlohmann_json_j["time"]     = nlohmann_json_t.p_time;
@@ -50,12 +52,19 @@ void process_message::progress_step(const rational_int& in_rational_int) {
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
   std::lock_guard _lock{_mutex};
   auto l_msg{in_string};
-  if (ranges::all_of(l_msg, [](const std::string::value_type& in_type) -> bool { return std::isspace(in_type); })) {
+
+  boost::locale::generator k_gen{};
+  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
+
+  static auto l_local{k_gen("zh_CN.UTF-8")};
+  if (ranges::all_of(l_msg, [&](const std::string::value_type& in_type) -> bool {
+        return std::isspace(in_type, l_local);
+      })) {
     return;
   }
-  //  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
-  //    return in_type == '\n' || in_type == '\r';
-  //  });
+  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
+    return std::isspace(in_type, l_local);
+  });
   l_msg += '\n';
 
   spdlog::info(l_msg);
