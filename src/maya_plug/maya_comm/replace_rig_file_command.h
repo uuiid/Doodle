@@ -15,9 +15,10 @@ MSyntax replace_rig_file_syntax();
 
 class replace_rig_file_command
     : public TemplateAction<
-          replace_rig_file_command,
-          replace_rig_file_command_ns::replace_rig_file_command_name,
+          replace_rig_file_command, replace_rig_file_command_ns::replace_rig_file_command_name,
           replace_rig_file_command_ns::replace_rig_file_syntax> {
+  void get_args(const MArgList& in_arg_list);
+
  public:
   MStatus doIt(const MArgList&) override;
 };

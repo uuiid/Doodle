@@ -17,6 +17,7 @@ target_sources(doodle_maya
         afterimage_comm.h
         sequence_to_blend_shape_ref_comm.h
         export_files.h
+        add_entt.h
 
         PRIVATE
         open_doodle_main.cpp
@@ -36,4 +37,5 @@ target_sources(doodle_maya
         dem_bones_comm.cpp
         sequence_to_blend_shape_ref_comm.cpp
         export_files.cpp
+        add_entt.cpp
         )

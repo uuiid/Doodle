@@ -30,6 +30,28 @@ class maya_file_type_gui : public gui_cache<maya_type> {
 
   std::string show_id_attr{".mb"};
 };
+class maya_reference_info : boost::equality_comparable<maya_reference_info> {
+ public:
+  maya_reference_info() = default;
+  gui_cache<std::string> f_file_path_attr{"原始文件路径"s, ""s};
+  gui_cache<std::string> to_file_path_attr{"替换文件路径"s, ""s};
+
+  gui_cache_name_id de_button_attr{"删除"};
+
+  bool operator==(const maya_reference_info& in_r) const {
+    return std::tie(f_file_path_attr, to_file_path_attr) == std::tie(in_r.f_file_path_attr, in_r.to_file_path_attr);
+  }
+};
+
+class ref_attr_gui {
+ public:
+  ref_attr_gui()  = default;
+  ~ref_attr_gui() = default;
+  gui_cache<std::vector<maya_tool_ns::maya_reference_info>> ref_attr{
+      "替换文件设置"s, std::vector<maya_tool_ns::maya_reference_info>{}};
+  gui_cache_name_id de_button_attr{"添加"};
+};
+
 }  // namespace maya_tool_ns
 
 class maya_tool::impl {
@@ -37,6 +59,7 @@ class maya_tool::impl {
   gui_cache_name_id convert_maya_id_attr{"转换文件设置"};
 
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
+  maya_tool_ns::ref_attr_gui ref_attr{};
 };
 
 maya_tool::maya_tool()
@@ -90,6 +113,24 @@ void maya_tool::render() {
     imgui::Checkbox("只导出", &p_sim_only_export);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
+  dear::TreeNode{*ptr_attr->ref_attr.ref_attr} && [&]() {
+    if (ImGui::Button(*ptr_attr->ref_attr.de_button_attr)) {
+      ptr_attr->ref_attr.ref_attr.data.emplace_back();
+    }
+
+    for (auto&& l_i : ptr_attr->ref_attr.ref_attr()) {
+      ImGui::InputText(*l_i.f_file_path_attr, &l_i.f_file_path_attr);
+      ImGui::InputText(*l_i.to_file_path_attr, &l_i.to_file_path_attr);
+      ImGui::SameLine();
+      if (ImGui::Button(*l_i.de_button_attr)) {
+        boost::asio::post(g_io_context(), [l_i, this]() {
+          ptr_attr->ref_attr.ref_attr() |=
+              ranges::action::remove_if([&](const maya_tool_ns::maya_reference_info& i) -> bool { return l_i == i; });
+        });
+      }
+    }
+  };
+
   dear::TreeNode{*ptr_attr->convert_maya_id_attr} && [&]() {
     dear::Combo{*ptr_attr->save_maya_type_attr.gui_name, ptr_attr->save_maya_type_attr.show_id_attr.c_str()} && [&]() {
       static auto l_list = magic_enum::enum_names<maya_tool_ns::maya_type>();
