@@ -247,12 +247,7 @@ cmds.doodle_load_project(project=project_path)
 cmds.file(l_file_path, open=True)
 
 cmds.doodle_clear_scene(err_4=True)
-try:
-    cmds.doodle_comm_file_save(filepath=save_file_path)
-except RuntimeError as err:
-    cmds.warning("save fial try cmds")
-    cmds.file(rename="{1}")
-    cmds.file(save=True, type="{4}")
+cmds.doodle_comm_file_save(filepath=save_file_path)
 quit())",
       file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string(),
       save_file_extension_attr == ".mb" ? "mayaBinary" : "mayaAscii"
