@@ -40,5 +40,6 @@ MStatus add_entt::doIt(const MArgList& in_arg_list) {
     entt_tool::load_comm<assets_file, redirection_path_info>(l_h, l_json);
     DOODLE_LOG_INFO("加载实体 {}", l_h);
   }
+  return l_s;
 }
 }  // namespace doodle::maya_plug
