@@ -124,7 +124,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
             /// @brief 此处在主线程调用
             std::string l_ine;
             std::istream l_istream{&out_strbuff_attr};
-            std::getline(l_istream, l_ine) auto l_str = conv::to_utf<char>(l_ine, "GBK");
+            std::getline(l_istream, l_ine);
+            auto l_str = conv::to_utf<char>(l_ine, "GBK");
             l_msg.progress_step({1, 300});
             l_msg.message(l_str + '\n', l_msg.info);
             read_out();
