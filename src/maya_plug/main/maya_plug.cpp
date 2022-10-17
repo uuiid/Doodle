@@ -63,10 +63,7 @@ MStatus initializePlugin(MObject obj) {
    */
   MStatus status = MStatus::MStatusCode::kFailure;
   MFnPlugin k_plugin{
-      obj,
-      "doodle",
-      version::build_info::get().version_str.c_str(),
-      fmt::format("{}", MAYA_API_VERSION).c_str()};
+      obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()};
 
   auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -79,23 +76,18 @@ MStatus initializePlugin(MObject obj) {
 
   // 添加菜单项
   k_plugin.addMenuItem(
-      doodle_windows.data(),
-      doodle_win_path.data(),
-      ::doodle::maya_plug::doodleCreate_name,
-      "", false, nullptr, &status
+      doodle_windows.data(), doodle_win_path.data(), ::doodle::maya_plug::doodleCreate_name, "", false, nullptr, &status
   );
   if (status)
-    maya_reg->register_lab(
-        [](MFnPlugin& in_plug) {
-          // 这一部分是删除菜单项的
-          MStatus status{};
-          MStringArray menuItems{};
-          menuItems.append(doodle_windows.data());
-          status = in_plug.removeMenuItem(menuItems);
-          CHECK_MSTATUS(status);
-          return status;
-        }
-    );
+    maya_reg->register_lab([](MFnPlugin& in_plug) {
+      // 这一部分是删除菜单项的
+      MStatus status{};
+      MStringArray menuItems{};
+      menuItems.append(doodle_windows.data());
+      status = in_plug.removeMenuItem(menuItems);
+      CHECK_MSTATUS(status);
+      return status;
+    });
   else
     DOODLE_LOG_ERROR(status);
 
@@ -106,8 +98,7 @@ MStatus initializePlugin(MObject obj) {
         ::doodle::maya_plug::create_hud_node k_c{};
         k_c();
       },
-      nullptr,
-      &status
+      nullptr, &status
   ));
   CHECK_MSTATUS(status);
   maya_reg->register_callback(MSceneMessage::addCallback(
@@ -116,33 +107,26 @@ MStatus initializePlugin(MObject obj) {
         ::doodle::maya_plug::create_hud_node k_c{};
         k_c();
       },
-      nullptr,
-      &status
+      nullptr, &status
   ));
   CHECK_MSTATUS(status);
   if (doodle::core_set::get_set().maya_replace_save_dialog) {
-    maya_reg->register_callback(
-        MSceneMessage::addCheckCallback(
-            MSceneMessage::Message::kBeforeSaveCheck,
-            [](bool* retCode, void* clientData) {
-              *retCode = maya_plug::clear_scene_comm::show_save_mag();
-            },
-            nullptr,
-            &status
-        )
-    );
+    maya_reg->register_callback(MSceneMessage::addCheckCallback(
+        MSceneMessage::Message::kBeforeSaveCheck,
+        [](bool* retCode, void* clientData) { *retCode = maya_plug::clear_scene_comm::show_save_mag(); }, nullptr,
+        &status
+    ));
     CHECK_MSTATUS(status);
   }
 
   maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
-        if (MGlobal::mayaState() == MGlobal::kInteractive)
-          doodle_main_app::Get().stop();
+        doodle_main_app::Get().stop_app();
+        p_doodle_app->run();
         p_doodle_app.reset();
       },
-      nullptr,
-      &status
+      nullptr, &status
   ));
   CHECK_MSTATUS(status);
 
@@ -166,8 +150,7 @@ MStatus initializePlugin(MObject obj) {
 
   /// 注册自定义渲染覆盖显示hud
   status = maya_reg->register_draw_overrider<
-      doodle::maya_plug::doodle_info_node,
-      doodle::maya_plug::doodle_info_node_draw_override>();
+      doodle::maya_plug::doodle_info_node, doodle::maya_plug::doodle_info_node_draw_override>();
   CHECK_MSTATUS(status);
 
   /// 注册拍屏命令

@@ -4,11 +4,11 @@
 
 #include "maya_file_io.h"
 
-#include <maya/MFileIO.h>
-#include <maya/MFileObject.h>
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/data/reference_file.h>
 
+#include <maya/MFileIO.h>
+#include <maya/MFileObject.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
@@ -33,8 +33,7 @@ std::string maya_file_io::get_channel_date() {
   if (!k_channel.empty()) {
     auto k_stream = k_channel.dataStream("json_stream");
     adsk::Data::Handle k_h{k_stream->element(0)};
-    if (!k_h.hasData())
-      return {};
+    if (!k_h.hasData()) return {};
     return k_h.str(0);
   }
   return {};
@@ -68,8 +67,7 @@ bool maya_file_io::replace_channel_date(const std::string& in_string) {
 
   std::string str_err{};
   DOODLE_LOG_INFO(in_string);
-  if (k_h.fromStr(in_string, 0, str_err) != 0)
-    DOODLE_LOG_ERROR(str_err);
+  if (k_h.fromStr(in_string, 0, str_err) != 0) DOODLE_LOG_ERROR(str_err);
   k_stream->setElement(0, k_h);
   MFileIO::setMetadata(k_meta);
 
@@ -83,7 +81,11 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
   if (!exists(in_file_path.parent_path())) {
     create_directories(in_file_path.parent_path());
   }
-  k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, nullptr, true);
+  auto l_ext = in_file_path.extension().generic_string();
+
+  MString l_string{};
+  l_string.setUTF8(l_ext.c_str());
+  k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, l_string.asChar(), true);
   DOODLE_MAYA_CHICK(k_s);
   return false;
 }
@@ -94,8 +96,7 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
   auto l_upload_path = g_reg()->ctx().at<project_config::base_config>().get_upload_path();
   l_upload_path /= in_prefix;
   l_upload_path /= maya_file_io::get_current_path().stem();
-  if (!FSys::exists(l_upload_path))
-    FSys::create_directories(l_upload_path);
+  if (!FSys::exists(l_upload_path)) FSys::create_directories(l_upload_path);
 
   auto l_target = l_upload_path / in_source_path.filename();
   try {

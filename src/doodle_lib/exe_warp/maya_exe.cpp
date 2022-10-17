@@ -64,8 +64,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
 
   boost::asio::high_resolution_timer timer_attr{g_io_context()};
 
-  run_maya() = default;
-  virtual ~run_maya() { cancel(); }
+  run_maya()          = default;
+  virtual ~run_maya() = default;
 
   void run() {
     auto l_maya     = core_set::get_set().maya_path() / "mayapy.exe";
@@ -244,7 +244,8 @@ cmds.file(l_file_path, open=True)
 
 cmds.doodle_clear_scene(err_4=True)
 cmds.doodle_comm_file_save(filepath=save_file_path)
-)",
+
+quit())",
       file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string()
   );
 }
@@ -310,6 +311,10 @@ void maya_exe::queue_up(
       });
   notify_run();
 }
-maya_exe::~maya_exe() = default;
+maya_exe::~maya_exe() {
+  for (auto &&l_i : p_i->run_attr) {
+    l_i->cancel();
+  }
+}
 
 }  // namespace doodle

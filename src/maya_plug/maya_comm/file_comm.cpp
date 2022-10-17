@@ -29,7 +29,7 @@ MSyntax details::comm_file_save_syntax() {
   return syntax;
 }
 
-MStatus comm_file_save::doIt(const MArgList& in_arg) {
+MStatus comm_file_save::doIt(const MArgList& in_arg) try {
   MStatus k_s;
   MArgParser k_prase{syntax(), in_arg};
 
@@ -45,5 +45,8 @@ MStatus comm_file_save::doIt(const MArgList& in_arg) {
   }
   maya_file_io::save_file(l_path);
   return k_s;
+} catch (const maya_error& in_err) {
+  DOODLE_LOG_ERROR(in_err);
+  return {MStatus::kFailure};
 }
 }  // namespace doodle::maya_plug
