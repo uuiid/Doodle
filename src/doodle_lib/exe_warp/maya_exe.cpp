@@ -99,7 +99,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
         boost::process::args = l_tmp_file.generic_wstring(),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
-        boost::process::on_exit = [this](int in_exit, const std::error_code &in_error_code) {
+        boost::process::on_exit = [this,
+                                   l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
           timer_attr.cancel();
           boost::ignore_unused(in_exit);
           (*call_attr)(in_error_code);
@@ -271,13 +272,14 @@ void maya_exe::add_maya_fun_tool() {
 }
 void maya_exe::notify_run() {
   add_maya_fun_tool();
-  if (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
+  while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
     auto l_run = p_i->run_process_arg_attr.top();
     p_i->run_process_arg_attr.pop();
     ++p_i->run_size_attr;
     l_run->run();
     p_i->run_attr.emplace_back(l_run);
   }
+
   /// @brief 清除运行完成的程序
   for (auto &&l_i : p_i->run_attr) {
     if (!l_i->child_attr.running()) {
