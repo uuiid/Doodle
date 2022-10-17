@@ -179,6 +179,8 @@ bool maya_clear_scenes::err_4() {
   MStatus k_s{};
   /// 去除无用的未知插件需求和去除贼健康问题
   k_s = MGlobal::executePythonCommand(d_str{R"doodle_script(import pymel.core
+import re
+
 not_nu_plug = ["mayaHlK"]
 un_know_plugs = pymel.core.unknownPlugin(query=True, list=True)
 if un_know_plugs:
@@ -196,15 +198,18 @@ if plugs:
         pymel.core.pluginInfo(plug, edit=True, writeRequires=False)
 print("=" * 30 + "clear ok" + "=" * 30)
 
-for job in pymel.core.scriptJob(listJobs=True):
-  if job.find("leukocyte.antivirus()") > 0:
-    num = re.findall("""\d+""",job)[0]
-    print(num)
-    pymel.core.scriptJob(kill=int(num),force=True)
+l_list = pymel.core.scriptJob(listJobs=True)
+if l_list:
+    for job in pymel.core.scriptJob(listJobs=True):
+        if job.find("leukocyte.antivirus()") > 0:
+            if re.findall("""\d+""", job):
+                num = re.findall("""\d+""", job)[0]
+                print(num)
+                pymel.core.scriptJob(kill=int(num), force=True)
 
 if 'leukocyte' in globals():
-  del leukocyte
-  )doodle_script"});
+    del leukocyte
+)doodle_script"});
   DOODLE_MAYA_CHICK(k_s);
 
   MItDependencyNodes k_iter{MFn::kScript, &k_s};

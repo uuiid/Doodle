@@ -57,8 +57,8 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   boost::process::async_pipe err_attr{g_io_context()};
   boost::process::child child_attr{};
 
-  std::string out_str_attr{};
-  std::string err_str_attr{};
+  boost::asio::streambuf out_strbuff_attr{};
+  boost::asio::streambuf err_strbuff_attr{};
 
   std::shared_ptr<std::function<void(boost::system::error_code)>> call_attr{};
 
@@ -111,16 +111,19 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
 
   void read_out() {
     boost::asio::async_read_until(
-        out_attr, boost::asio::dynamic_buffer(out_str_attr), '\n',
+        out_attr, out_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
             /// @brief 此处在主线程调用
-            auto l_str = conv::to_utf<char>(out_str_attr, "GBK");
-            l_msg.progress_step({1, 300});
-            l_msg.message(l_str, l_msg.warning);
-            out_str_attr.clear();
+            std::string l_ine;
+            std::istream l_istream{&out_strbuff_attr};
+            while (std::getline(l_istream, l_ine)) {
+              auto l_str = conv::to_utf<char>(l_ine, "GBK");
+              l_msg.progress_step({1, 300});
+              l_msg.message(l_str, l_msg.warning);
+            }
             read_out();
           } else {
             out_attr.close();
@@ -132,31 +135,34 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
   }
   void read_err() {
     boost::asio::async_read_until(
-        err_attr, boost::asio::dynamic_buffer(err_str_attr), '\n',
+        err_attr, err_strbuff_attr, '\n',
         [this, l_self = shared_from_this()](boost::system::error_code in_code, std::size_t in_n) {
           auto &&l_msg = mag_attr.get<process_message>();
           timer_attr.expires_from_now(chrono::seconds{core_set::get_set().timeout});
           if (!in_code) {
-            /// @brief 此处在主线程调用
-            // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
-            const static std::wregex l_fatal_error_znch{fatal_error_znch};
-            // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
-            const static std::wregex l_fatal_error_en_us{fatal_error_en_us};
-            auto l_w_str = conv::to_utf<wchar_t>(err_str_attr, "GBK");
-            if (std::regex_search(l_w_str, l_fatal_error_znch) || std::regex_search(l_w_str, l_fatal_error_en_us)) {
-              DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
-              auto l_mstr = fmt::format("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
-              l_msg.message(l_mstr, l_msg.warning);
-              l_msg.set_state(l_msg.fail);
-              cancel();
-              return;
-            } else {
-              auto l_str = conv::to_utf<char>(err_str_attr, "GBK");
-              l_msg.progress_step({1, 20000});
-              l_msg.message(l_str);
-              err_str_attr.clear();
-              read_err();
+            std::string l_line{};
+            std::istream l_istream{&err_strbuff_attr};
+            while (std::getline(l_istream, l_line)) {
+              /// @brief 此处在主线程调用
+              // 致命错误。尝试在 C:/Users/ADMINI~1/AppData/Local/Temp/Administrator.20210906.2300.ma 中保存
+              const static std::wregex l_fatal_error_znch{fatal_error_znch};
+              // Fatal Error. Attempting to save in C:/Users/Knownexus/AppData/Local/Temp/Knownexus.20160720.1239.ma
+              const static std::wregex l_fatal_error_en_us{fatal_error_en_us};
+              auto l_w_str = conv::to_utf<wchar_t>(l_line, "GBK");
+              if (std::regex_search(l_w_str, l_fatal_error_znch) || std::regex_search(l_w_str, l_fatal_error_en_us)) {
+                DOODLE_LOG_WARN("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
+                auto l_mstr = fmt::format("检测到maya结束崩溃,结束进程: 解算文件是 {}\n", file_path_attr);
+                l_msg.message(l_mstr, l_msg.warning);
+                l_msg.set_state(l_msg.fail);
+                cancel();
+                return;
+              } else {
+                auto l_str = conv::to_utf<char>(l_line, "GBK");
+                l_msg.progress_step({1, 20000});
+                l_msg.message(l_str);
+              }
             }
+            read_err();
           } else {
             err_attr.close();
             l_msg.message(in_code.message());
