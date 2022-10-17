@@ -85,6 +85,9 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
 
   MString l_string{};
   l_string.setUTF8(l_ext.c_str());
+  k_s = MFileIO::resetError();
+  DOODLE_MAYA_CHICK(k_s);
+
   k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, l_string.asChar(), true);
   DOODLE_MAYA_CHICK(k_s);
   return false;
