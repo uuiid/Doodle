@@ -280,13 +280,14 @@ void maya_exe::add_maya_fun_tool() {
 }
 void maya_exe::notify_run() {
   add_maya_fun_tool();
-  while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
-    auto l_run = p_i->run_process_arg_attr.top();
-    p_i->run_process_arg_attr.pop();
-    ++p_i->run_size_attr;
-    l_run->run();
-    p_i->run_attr.emplace_back(l_run);
-  }
+  if (!app_base::Get().stop())
+    while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
+      auto l_run = p_i->run_process_arg_attr.top();
+      p_i->run_process_arg_attr.pop();
+      ++p_i->run_size_attr;
+      l_run->run();
+      p_i->run_attr.emplace_back(l_run);
+    }
 
   /// @brief 清除运行完成的程序
   for (auto &&l_i : p_i->run_attr) {
