@@ -274,6 +274,7 @@ void maya_exe::notify_run() {
   if (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
     auto l_run = p_i->run_process_arg_attr.top();
     p_i->run_process_arg_attr.pop();
+    ++p_i->run_size_attr;
     l_run->run();
     p_i->run_attr.emplace_back(l_run);
   }
@@ -297,9 +298,12 @@ void maya_exe::queue_up(
   l_run->mag_attr        = in_msg;
   l_run->run_script_attr = in_string;
   l_run->file_path_attr  = in_run_path;
+  auto &&l_msg           = in_msg.get<process_message>();
+  l_msg.set_name(in_run_path.filename().generic_string());
   l_run->call_attr =
       std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
         boost::asio::post(g_io_context(), [=]() {
+          --p_i->run_size_attr;
           auto &&l_msg = in_msg.get<process_message>();
           l_msg.set_state(l_msg.success);
           if (!in_code) {
