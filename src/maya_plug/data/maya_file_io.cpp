@@ -82,9 +82,12 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
     create_directories(in_file_path.parent_path());
   }
   auto l_ext = in_file_path.extension().generic_string();
-
   MString l_string{};
-  l_string.setUTF8(l_ext.c_str());
+  if (l_ext == ".ma") {
+    l_string.setUTF8("mayaAscii");
+  } else if (l_ext == ".mb") {
+    l_string.setUTF8("mayaBinary");
+  }
   k_s = MFileIO::resetError();
   DOODLE_MAYA_CHICK(k_s);
 
