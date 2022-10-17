@@ -92,20 +92,7 @@ bool maya_file_io::save_file(const FSys::path& in_file_path) {
   DOODLE_MAYA_CHICK(k_s);
 
   k_s = MFileIO::saveAs(d_str{in_file_path.generic_string()}, l_string.asChar(), true);
-  if (k_s.error()) {
-    auto l_comm = fmt::format(
-        R"(
-import maya.cmds as cmds
-
-cmds.file(rename="{}")
-cmds.file(save=True, type="{}")
-)",
-        in_file_path.generic_string(), l_ext == ".mb" ? "mayaBinary" : "mayaAscii"
-    );
-    DOODLE_LOG_WARN("无法使用c++ api保存, 使用mel回调尝试 {}", l_comm);
-    k_s = MGlobal::executeCommand(d_str{l_comm});
-    DOODLE_MAYA_CHICK(k_s);
-  }
+  DOODLE_MAYA_CHICK(k_s);
   return false;
 }
 bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::path& in_prefix) {

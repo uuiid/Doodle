@@ -79,7 +79,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     l_msg.aborted_function = [this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
-      l_msg.message("进程被主动结束\n", l_msg.warning);
+      l_msg.message("进程被主动结束\n");
       cancel();
     };
 
@@ -88,7 +88,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
       if (!in_code) {
         auto &&l_msg = mag_attr.get<process_message>();
         l_msg.set_state(l_msg.fail);
-        l_msg.message("进程超时，结束任务\n", l_msg.warning);
+        l_msg.message("进程超时，结束任务\n");
         child_attr.terminate();
       } else {
         DOODLE_LOG_ERROR(in_code);
@@ -106,7 +106,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
           timer_attr.cancel();
           auto &&l_msg = mag_attr.get<process_message>();
           l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
-          l_msg.message(fmt::format("退出代码 {}", in_exit), l_msg.warning);
+          l_msg.message(fmt::format("退出代码 {}", in_exit));
           (*call_attr)(in_error_code);
         }};
 
@@ -231,13 +231,15 @@ std::string clear_file_arg::to_str() const {
 import maya.mel
 from maya import cmds
 import pymel.core
+import maya.standalone
+maya.standalone.initialize()
 
 cmds.file(force=True, new=True)
 
-l_file_path = "{}"
-save_file_path = "{}"
-project_path = "{}"
-work_path = "{}"
+l_file_path = "{0}"
+save_file_path = "{1}"
+project_path = "{2}"
+work_path = "{3}"
 doodle_plug = "doodle_maya_" + str(cmds.about(api=True))[0:4]
 cmds.loadPlugin(doodle_plug)
 cmds.workspace(work_path, openWorkspace=1)
@@ -246,10 +248,15 @@ cmds.doodle_load_project(project=project_path)
 cmds.file(l_file_path, open=True)
 
 cmds.doodle_clear_scene(err_4=True)
-cmds.doodle_comm_file_save(filepath=save_file_path)
-
+try:
+    cmds.doodle_comm_file_save(filepath=save_file_path)
+except RuntimeError as err:
+    cmds.warning("save fial try cmds")
+    cmds.file(rename="{1}")
+    cmds.file(save=True, type="{4}")
 quit())",
-      file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string()
+      file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string(),
+      save_file_extension_attr == ".mb" ? "mayaBinary" : "mayaAscii"
   );
 }
 

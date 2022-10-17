@@ -70,10 +70,10 @@ void process_message::message(const std::string& in_string, const level& in_leve
   switch (in_level_enum) {
     case level::warning:
       p_err += l_msg;
+      p_str_end = l_msg;
       break;
     default:
       p_log += l_msg;
-      p_str_end = l_msg;
       break;
   }
 }
