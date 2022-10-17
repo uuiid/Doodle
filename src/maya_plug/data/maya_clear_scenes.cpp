@@ -5,6 +5,7 @@
 #include "maya_clear_scenes.h"
 
 #include <doodle_core/core/core_set.h>
+
 #include <maya/MCallbackIdArray.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnMesh.h>
@@ -12,8 +13,8 @@
 #include <maya/MItDag.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItMeshPolygon.h>
-#include <maya/MSelectionList.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MSelectionList.h>
 
 namespace doodle::maya_plug {
 
@@ -33,18 +34,19 @@ bool maya_clear_scenes::unlock_normal() {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh))
-      DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
 
     /// 开始软化边
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
     DOODLE_MAYA_CHICK(k_s);
 
-    k_s = MGlobal::executePythonCommand(d_str{R"(import maya.cmds
+    k_s = MGlobal::executePythonCommand(
+        d_str{R"(import maya.cmds
 maya.cmds.polyNormalPerVertex(unFreezeNormal=True)
 maya.cmds.polySoftEdge(angle=180, constructionHistory=True)
     )"},
-                                        false, true);
+        false, true
+    );
     DOODLE_MAYA_CHICK(k_s);
   }
   k_s = MGlobal::clearSelectionList();
@@ -125,8 +127,7 @@ bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh))
-      DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
 
     MFnMesh k_mesh{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
@@ -143,13 +144,15 @@ bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
 bool maya_clear_scenes::err_1() {
   bool l_r{false};
   MStatus k_s{};
-  k_s = MGlobal::executePythonCommand(d_str{R"(import pymel.core
+  k_s = MGlobal::executePythonCommand(
+      d_str{R"(import pymel.core
 import re
 for p in pymel.core.lsUI(panels=True):
     if re.findall("outlinerPanel",p.name()):
         pymel.core.outlinerEditor(p,edit=True, selectCommand="")
 )"},
-                                      true);
+      true
+  );
   DOODLE_MAYA_CHICK(k_s);
   return false;
 }
@@ -225,8 +228,7 @@ if 'leukocyte' in globals():
     MFnDependencyNode k_dag_node{k_node, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (k_dag_node.name() == "vaccine_gene" ||
-        k_dag_node.name() == "breed_gene") {
+    if (k_dag_node.name() == "vaccine_gene" || k_dag_node.name() == "breed_gene") {
       k_obj_set.push_back(k_dag_node.object());
     }
   }
@@ -289,6 +291,24 @@ std::tuple<bool, MSelectionList> maya_clear_scenes::multilateral_surface_by_sele
   }
 
   return std::make_tuple(l_r, l_r_select);
+}
+void maya_clear_scenes::delete_unknown_node() {
+  boost::ignore_unused(this);
+
+  std::vector<MObject> l_node{};
+  MStatus l_s{};
+  for (MItDependencyNodes l_it{}; !l_it.isDone(); l_it.next()) {
+    auto l_api_type = l_it.thisNode(&l_s).apiType();
+    DOODLE_MAYA_CHICK(l_s);
+    if (l_api_type == MFn::kUnknown || l_api_type == MFn::kUnknownDag || l_api_type == MFn::kUnknownTransform) {
+      l_node.emplace_back(l_it.thisNode());
+    }
+  }
+
+  for (auto&& l_i : l_node) {
+    l_s = MGlobal::deleteNode(l_i);
+    DOODLE_MAYA_CHICK(l_s);
+  }
 }
 
 }  // namespace doodle::maya_plug

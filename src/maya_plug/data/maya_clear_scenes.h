@@ -28,5 +28,7 @@ class maya_clear_scenes {
   bool err_2();  // (2)onModelChange3dc
   bool err_3();  // (3)CgAbBlastPanelOptChangeCallback
   bool err_4();  // (4)贼健康
+
+  void delete_unknown_node();
 };
 }  // namespace doodle::maya_plug
