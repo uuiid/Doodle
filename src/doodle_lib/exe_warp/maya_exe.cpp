@@ -8,6 +8,8 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include <doodle_app/app/app_command.h>
+
 #include <doodle_lib/core/filesystem_extend.h>
 
 #include <boost/asio.hpp>
@@ -77,7 +79,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
     l_msg.aborted_function = [this]() {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
-      l_msg.message("进程被主动结束");
+      l_msg.message("进程被主动结束\n", l_msg.warning);
       cancel();
     };
 
@@ -86,7 +88,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
       if (!in_code) {
         auto &&l_msg = mag_attr.get<process_message>();
         l_msg.set_state(l_msg.fail);
-        l_msg.message("进程超时，结束任务");
+        l_msg.message("进程超时，结束任务\n", l_msg.warning);
         child_attr.terminate();
       } else {
         DOODLE_LOG_ERROR(in_code);
@@ -102,7 +104,9 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
         boost::process::on_exit = [this,
                                    l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
           timer_attr.cancel();
-          boost::ignore_unused(in_exit);
+          auto &&l_msg = mag_attr.get<process_message>();
+          l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
+          l_msg.message(fmt::format("退出代码 {}", in_exit), l_msg.warning);
           (*call_attr)(in_error_code);
         }};
 
@@ -123,12 +127,11 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
             while (std::getline(l_istream, l_ine)) {
               auto l_str = conv::to_utf<char>(l_ine, "GBK");
               l_msg.progress_step({1, 300});
-              l_msg.message(l_str, l_msg.warning);
+              l_msg.message(l_str + '\n', l_msg.info);
             }
             read_out();
           } else {
             out_attr.close();
-            l_msg.message(in_code.message());
             DOODLE_LOG_ERROR(in_code);
           }
         }
@@ -160,13 +163,12 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
               } else {
                 auto l_str = conv::to_utf<char>(l_line, "GBK");
                 l_msg.progress_step({1, 20000});
-                l_msg.message(l_str);
+                l_msg.message(l_str + '\n');
               }
             }
             read_err();
           } else {
             err_attr.close();
-            l_msg.message(in_code.message());
             DOODLE_LOG_ERROR(in_code);
           }
         }
@@ -306,11 +308,6 @@ void maya_exe::queue_up(
       std::make_shared<call_fun_type>([in_call_fun, this, in_msg](const boost::system::error_code &in_code) {
         boost::asio::post(g_io_context(), [=]() {
           --p_i->run_size_attr;
-          auto &&l_msg = in_msg.get<process_message>();
-          l_msg.set_state(l_msg.success);
-          if (!in_code) {
-            l_msg.message("成功完成", l_msg.warning);
-          }
           (*in_call_fun)(in_code);
           this->notify_run();
         });
