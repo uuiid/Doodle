@@ -43,6 +43,7 @@ MStatus comm_file_save::doIt(const MArgList& in_arg) try {
     DOODLE_LOG_INFO("获得传入路径: {}", k_path);
     l_path = d_str{k_path}.str();
   }
+  DOODLE_LOG_INFO("保存路径到: {}", l_path);
   maya_file_io::save_file(l_path);
   return k_s;
 } catch (const maya_error& in_err) {
