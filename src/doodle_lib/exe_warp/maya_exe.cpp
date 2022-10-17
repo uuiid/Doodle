@@ -14,7 +14,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
-#include <boost/asio/io_context.hpp>
 #include <stack>
 // #include <type_traits>
 
@@ -80,6 +79,7 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
       auto &&l_msg = mag_attr.get<process_message>();
       l_msg.set_state(l_msg.fail);
       l_msg.message("进程被主动结束\n");
+      child_attr.terminate();
       cancel();
     };
 
