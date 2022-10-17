@@ -175,4 +175,5 @@ void maya_tool::render() {
 }
 const std::string& maya_tool::title() const { return title_name_; }
 
+maya_tool::~maya_tool() = default;
 }  // namespace doodle::gui
