@@ -28,7 +28,7 @@ class maya_file_type_gui : public gui_cache<maya_type> {
  public:
   maya_file_type_gui() : gui_cache<maya_type>("转换文件格式", maya_type::mb) {}
 
-  std::string show_id_attr{"mb"};
+  std::string show_id_attr{".mb"};
 };
 }  // namespace maya_tool_ns
 
@@ -95,7 +95,7 @@ void maya_tool::render() {
       static auto l_list = magic_enum::enum_names<maya_tool_ns::maya_type>();
       for (auto&& l_i : l_list) {
         if (ImGui::Selectable(l_i.data())) {
-          ptr_attr->save_maya_type_attr.show_id_attr = std::string{l_i};
+          ptr_attr->save_maya_type_attr.show_id_attr = fmt::format(".{}", ptr_attr->save_maya_type_attr.show_id_attr);
           ptr_attr->save_maya_type_attr.data         = *magic_enum::enum_cast<maya_tool_ns::maya_type>(l_i);
         }
       }
