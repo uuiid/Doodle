@@ -21,6 +21,24 @@
 #include <utility>
 
 namespace doodle::gui {
+
+namespace maya_tool_ns {
+enum class maya_type { ma, mb };
+class maya_file_type_gui : public gui_cache<maya_type> {
+ public:
+  maya_file_type_gui() : gui_cache<maya_type>("转换文件格式", maya_type::mb) {}
+
+  std::string show_id_attr{"mb"};
+};
+}  // namespace maya_tool_ns
+
+class maya_tool::impl {
+ public:
+  gui_cache_name_id convert_maya_id_attr{"转换文件设置"};
+
+  maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
+};
+
 maya_tool::maya_tool()
     : p_cloth_path(),
       p_text(),
@@ -29,7 +47,8 @@ maya_tool::maya_tool()
       p_use_all_ref(false),
       p_upload_files(false),
       p_sim_export_fbx(true),
-      p_sim_only_export() {
+      p_sim_only_export(),
+      ptr_attr(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
   title_name_                            = std::string{name};
 }
@@ -71,6 +90,17 @@ void maya_tool::render() {
     imgui::Checkbox("只导出", &p_sim_only_export);
   };
   dear::TreeNode{"fbx导出设置"} && [&]() { imgui::Checkbox("直接加载所有引用", &p_use_all_ref); };
+  dear::TreeNode{*ptr_attr->convert_maya_id_attr} && [&]() {
+    dear::Combo{*ptr_attr->save_maya_type_attr.gui_name, ptr_attr->save_maya_type_attr.show_id_attr.c_str()} && [&]() {
+      static auto l_list = magic_enum::enum_names<maya_tool_ns::maya_type>();
+      for (auto&& l_i : l_list) {
+        if (ImGui::Selectable(l_i.data())) {
+          ptr_attr->save_maya_type_attr.show_id_attr = std::string{l_i};
+          ptr_attr->save_maya_type_attr.data         = *magic_enum::enum_cast<maya_tool_ns::maya_type>(l_i);
+        }
+      }
+    };
+  };
 
   if (imgui::Button("解算")) {
     auto l_maya = g_reg()->ctx().at<maya_exe_ptr>();
@@ -134,7 +164,7 @@ void maya_tool::render() {
       k_arg.project_                 = g_reg()->ctx().at<database_info>().path_;
       k_arg.t_post                   = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time         = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
-      k_arg.save_file_extension_attr = i.extension() == ".ma" ? ".mb" : ".ma";
+      k_arg.save_file_extension_attr = ptr_attr->save_maya_type_attr.show_id_attr;
 
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
