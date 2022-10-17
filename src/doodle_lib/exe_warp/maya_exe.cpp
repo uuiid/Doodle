@@ -214,7 +214,7 @@ std::string replace_file_arg::to_str() const {
   auto l_list_entt = save_handle | ranges::view::transform([](const entt::handle &in) -> std::string {
                        nlohmann::json l_j{};
                        entt_tool::save_comm<assets_file, redirection_path_info>(in, l_j);
-                       return fmt::format("cmds.doodle_add_entt(josndata={})", l_j.dump());
+                       return fmt::format(R"(cmds.doodle_add_entt(josndata="""{}"""))", l_j.dump());
                      }) |
                      ranges::to_vector;
 
@@ -234,13 +234,15 @@ project_path = "{1}"
 work_path = "{2}"
 cmds.workspace(work_path, openWorkspace=1)
 
-cmds.doodle_load_project(project=self.cfg.project)
+cmds.file(l_file_path, open=True)
+cmds.doodle_load_project(project=project_path)
 
 {3}
 
-cmds.doodle_create_ref_file()
+cmds.doodle_create_ref_file(allload=True)
 cmds.doodle_replace_rig_file()
 cmds.doodle_comm_file_save()
+quit()
 )",
       file_path, project_, find_maya_work(file_path).generic_string(), fmt::join(l_list_entt, "\n")
   );
@@ -271,7 +273,8 @@ cmds.file(l_file_path, open=True)
 
 cmds.doodle_clear_scene(err_4=True)
 cmds.doodle_comm_file_save(filepath=save_file_path)
-quit())",
+quit()
+)",
       file_path, l_save_file_path, project_, find_maya_work(file_path).generic_string()
   );
 }

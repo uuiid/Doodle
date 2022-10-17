@@ -1,38 +1,37 @@
 //
 // Created by TD on 2021/12/13.
 //
-#include <doodle_core/database_task/sqlite_client.h>
-
 #include "reference_comm.h"
 
+#include <doodle_core/core/core_set.h>
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/process_pool.h>
-#include <doodle_core/core/core_set.h>
 
 #include <doodle_app/app/app_command.h>
 
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/sim_cover_attr.h>
+#include <maya_plug/fmt/fmt_select_list.h>
+
+#include <boost/asio/use_future.hpp>
+#include <magic_enum.hpp>
+#include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MArgParser.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MItDependencyNodes.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MNamespace.h>
 #include <maya/MUuid.h>
 #include <maya/adskDataAssociations.h>
 #include <maya/adskDataStream.h>
 #include <maya/adskDebugPrint.h>
-#include <maya/MArgParser.h>
-#include <maya/MAnimControl.h>
-#include <maya/MNamespace.h>
-#include <maya/MArgDatabase.h>
-#include <maya/MItSelectionList.h>
-
-#include <maya_plug/data/reference_file.h>
-#include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/data/qcloth_shape.h>
-#include <maya_plug/data/sim_cover_attr.h>
-#include <maya_plug/fmt/fmt_select_list.h>
-
-#include <magic_enum.hpp>
 
 namespace doodle::maya_plug {
 namespace {
@@ -51,6 +50,16 @@ constexpr const char doodle_export_use_select_long[] = "-select";
 constexpr const char doodle_export_force_long[]      = "-force";
 
 };  // namespace
+namespace create_ref_file_command_ns {
+constexpr const char face_all[]     = "-a";
+constexpr const char face_all_log[] = "-allload";
+MSyntax syntax() {
+  MSyntax l_syntax{};
+  l_syntax.addFlag(face_all, face_all_log, MSyntax::kBoolean);
+  return l_syntax;
+}
+
+}  // namespace create_ref_file_command_ns
 
 MSyntax ref_file_sim_syntax() {
   MSyntax syntax{};
@@ -83,25 +92,35 @@ MSyntax set_cloth_cache_path_syntax() {
 
 MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
   MStatus k_s;
-  MArgParser k_prase{syntax(), in_arg, &k_s};
-
+  MArgDatabase k_prase{syntax(), in_arg, &k_s};
+  DOODLE_MAYA_CHICK(k_s);
   DOODLE_LOG_INFO("开始清除引用实体");
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
 
-  auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
+  auto k_names    = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
+
+  auto l_face_all = k_prase.isFlagSet(create_ref_file_command_ns::face_all, &k_s);
+  DOODLE_MAYA_CHICK(k_s);
 
   for (int l_i = 0; l_i < k_names.length(); ++l_i) {
     auto&& k_name = k_names[l_i];
     reference_file k_ref{};
 
-    if (k_ref.set_namespace(d_str{k_name})) {
-      if (k_ref.is_loaded()) {
-        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
-        auto k_h = make_handle();
-        k_h.emplace<reference_file>(k_ref);
-      } else {
-        DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+    if (l_face_all) {
+      k_ref.set_namespace(d_str{k_name});
+      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+      auto k_h = make_handle();
+      k_h.emplace<reference_file>(k_ref);
+    } else {
+      if (k_ref.set_namespace(d_str{k_name})) {
+        if (k_ref.is_loaded()) {
+          DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+          auto k_h = make_handle();
+          k_h.emplace<reference_file>(k_ref);
+        } else {
+          DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+        }
       }
     }
   }
@@ -161,10 +180,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
     k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
     DOODLE_MAYA_CHICK(k_s);
   }
-  DOODLE_LOG_INFO(
-      "解算开始时间 {}  结束时间 {}  ",
-      k_start.value(), k_end.value()
-  );
+  DOODLE_LOG_INFO("解算开始时间 {}  结束时间 {}  ", k_start.value(), k_end.value());
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
     DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path);
@@ -233,10 +249,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     MString k_k_export_type_s{};
     k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
     DOODLE_MAYA_CHICK(k_s);
-    k_export_type = magic_enum::enum_cast<reference_file::export_type>(
-                        d_str{k_k_export_type_s}.str()
-    )
-                        .value();
+    k_export_type = magic_enum::enum_cast<reference_file::export_type>(d_str{k_k_export_type_s}.str()).value();
   }
   if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
@@ -255,8 +268,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   }
 
   DOODLE_LOG_INFO(
-      "导出开始时间 {}  结束时间 {} 导出类型 {} ",
-      k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type)
+      "导出开始时间 {}  结束时间 {} 导出类型 {} ", k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type)
   );
 
   if (is_force) {
@@ -308,18 +320,14 @@ MStatus load_project::doIt(const MArgList& in_arg) {
       k_path = k_path_M.asUTF8();
 
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        auto l_f = g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
-            k_path, boost::asio::use_future
-        );
+        auto l_f = g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, boost::asio::use_future);
         while (l_f.wait_for(0ns) != std::future_status::ready) {
           app_command_base::Get().poll_one();
         }
       } else {
-        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
-            k_path, [k_path](bsys::error_code) -> void {
-              DOODLE_LOG_INFO("完成打开项目 {}", k_path);
-            }
-        );
+        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, [k_path](bsys::error_code) -> void {
+          DOODLE_LOG_INFO("完成打开项目 {}", k_path);
+        });
       }
     }
   }
@@ -339,8 +347,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
     if (!l_list.isEmpty())
       for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
         DOODLE_MAYA_CHICK(l_i.getDependNode(l_object));
-        if (k_ref.has_node(l_object))
-          qcloth_shape::create(make_handle(k_e));
+        if (k_ref.has_node(l_object)) qcloth_shape::create(make_handle(k_e));
       }
     else
       qcloth_shape::create(make_handle(k_e));
@@ -351,4 +358,5 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   }
   return l_status;
 }
+
 }  // namespace doodle::maya_plug

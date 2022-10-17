@@ -14,6 +14,12 @@ constexpr char ref_file_export_command_name[] = "doodle_ref_file_export";
 constexpr char load_project_name[]            = "doodle_load_project";
 constexpr char set_cloth_cache_path_name[]    = "doodle_set_cloth_cache_path";
 }  // namespace
+
+namespace create_ref_file_command_ns {
+MSyntax syntax();
+
+}
+
 MSyntax ref_file_sim_syntax();
 MSyntax ref_file_export_syntax();
 MSyntax load_project_syntax();
@@ -21,10 +27,8 @@ MSyntax set_cloth_cache_path_syntax();
 /**
  * @brief 创建并扫描引用文件句柄
  */
-class create_ref_file_command : public TemplateAction<
-                                    create_ref_file_command,
-                                    create_ref_file_command_name,
-                                    null_syntax_t> {
+class create_ref_file_command
+    : public TemplateAction<create_ref_file_command, create_ref_file_command_name, create_ref_file_command_ns::syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };
@@ -32,34 +36,25 @@ class create_ref_file_command : public TemplateAction<
  * @brief @li 尝试从引用文件的元数据节点中加载以前的保存数据
  * @li 并且替换引用文件
  */
-class ref_file_load_command : public TemplateAction<
-                                  ref_file_load_command,
-                                  ref_file_load_command_name> {
+class ref_file_load_command : public TemplateAction<ref_file_load_command, ref_file_load_command_name> {
  public:
   MStatus doIt(const MArgList&) override;
 };
 /**
  * @brief 开始进行解算
  */
-class ref_file_sim_command : public TemplateAction<
-                                 ref_file_sim_command,
-                                 ref_file_sim_command_name,
-                                 ref_file_sim_syntax> {
+class ref_file_sim_command
+    : public TemplateAction<ref_file_sim_command, ref_file_sim_command_name, ref_file_sim_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };
 /**
  * @brief 导出文件中需要导出的集合体(abc或者fbx)
  */
-class ref_file_export_command : public TemplateAction<
-                                    ref_file_export_command,
-                                    ref_file_export_command_name,
-                                    ref_file_export_syntax> {
+class ref_file_export_command
+    : public TemplateAction<ref_file_export_command, ref_file_export_command_name, ref_file_export_syntax> {
  public:
-  enum export_type : std::uint32_t {
-    abc = 0,
-    fbx = 1
-  };
+  enum export_type : std::uint32_t { abc = 0, fbx = 1 };
   MStatus doIt(const MArgList&) override;
 };
 /**
@@ -70,10 +65,8 @@ class load_project : public TemplateAction<load_project, load_project_name, load
   MStatus doIt(const MArgList&) override;
 };
 
-class set_cloth_cache_path : public TemplateAction<
-                                 set_cloth_cache_path,
-                                 set_cloth_cache_path_name,
-                                 set_cloth_cache_path_syntax> {
+class set_cloth_cache_path
+    : public TemplateAction<set_cloth_cache_path, set_cloth_cache_path_name, set_cloth_cache_path_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };

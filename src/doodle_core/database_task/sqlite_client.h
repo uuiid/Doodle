@@ -5,9 +5,11 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-
 #include <doodle_core/logger/logger.h>
-#include <boost/asio.hpp>
+
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <utility>
 namespace doodle::database_n {
 

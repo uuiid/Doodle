@@ -780,6 +780,7 @@ FSys::path reference_file::get_path() const {
   DOODLE_MAYA_CHICK(k_s);
   FSys::path l_path = d_str{k_ref.fileName(true, true, false, &k_s)}.str();
   DOODLE_MAYA_CHICK(k_s);
+  DOODLE_LOG_INFO("获取引用路径 {}", l_path);
   return l_path;
 }
 FSys::path reference_file::get_abs_path() const {
