@@ -57,7 +57,6 @@ void app_base::init() {
 app_base::~app_base() = default;
 
 std::atomic_bool& app_base::stop() {
-  stop_ = true;
   return stop_;
 }
 app_base& app_base::Get() {

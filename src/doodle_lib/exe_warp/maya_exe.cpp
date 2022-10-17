@@ -242,7 +242,7 @@ cmds.doodle_create_ref_file()
 cmds.doodle_replace_rig_file()
 cmds.doodle_comm_file_save()
 )",
-      file_path, project_, find_maya_work(file_path).generic_string(), fmt::join(l_list_entt, "\n");
+      file_path, project_, find_maya_work(file_path).generic_string(), fmt::join(l_list_entt, "\n")
   );
 }
 

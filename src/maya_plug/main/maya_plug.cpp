@@ -250,7 +250,7 @@ MStatus uninitializePlugin(MObject obj) {
     CHECK_MSTATUS(status);
   }
   // 这里要停止app
-  p_doodle_app->stop();
+  p_doodle_app->stop_app();
   /// 先删除工具架
   status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.deleteSelf()

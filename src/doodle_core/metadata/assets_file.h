@@ -18,8 +18,6 @@ enum class assets_file_type : std::uint32_t {
 };
 
 class assets_file;
-void to_json(nlohmann::json& j, const assets_file& p);
-void from_json(const nlohmann::json& j, assets_file& p);
 
 /**
  * @brief 这个类代表着服务端的文件条目
@@ -76,8 +74,8 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   bool operator==(const assets_file& in_rhs) const;
 
  private:
-  friend void to_json(nlohmann::json& j, const assets_file& p);
-  friend void from_json(const nlohmann::json& j, assets_file& p);
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const assets_file& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, assets_file& p);
 };
 
 }  // namespace doodle
