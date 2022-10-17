@@ -184,22 +184,22 @@ bool maya_clear_scenes::err_4() {
   k_s = MGlobal::executePythonCommand(d_str{R"doodle_script(import pymel.core
 import re
 
-not_nu_plug = ["mayaHlK"]
-un_know_plugs = pymel.core.unknownPlugin(query=True, list=True)
-if un_know_plugs:
-    for un_plug in un_know_plugs:
-        if un_plug in not_nu_plug:
-            continue
-        print("Remove unknown plugin {}".format(un_plug))
-        pymel.core.unknownPlugin(un_plug, remove=True)
-plugs = pymel.core.pluginInfo(query=True, listPlugins=True)
-if plugs:
-    for plug in plugs:
-        if plug in not_nu_plug:
-            continue
-        print("Cancel {} Automatic loading of plug-in writing".format(plug))
-        pymel.core.pluginInfo(plug, edit=True, writeRequires=False)
-print("=" * 30 + "clear ok" + "=" * 30)
+# not_nu_plug = ["mayaHlK"]
+# un_know_plugs = pymel.core.unknownPlugin(query=True, list=True)
+# if un_know_plugs:
+#     for un_plug in un_know_plugs:
+#         if un_plug in not_nu_plug:
+#             continue
+#         print("Remove unknown plugin {}".format(un_plug))
+#         pymel.core.unknownPlugin(un_plug, remove=True)
+# plugs = pymel.core.pluginInfo(query=True, listPlugins=True)
+# if plugs:
+#     for plug in plugs:
+#         if plug in not_nu_plug:
+#             continue
+#         print("Cancel {} Automatic loading of plug-in writing".format(plug))
+#         pymel.core.pluginInfo(plug, edit=True, writeRequires=False)
+# print("=" * 30 + "clear ok" + "=" * 30)
 
 l_list = pymel.core.scriptJob(listJobs=True)
 if l_list:
