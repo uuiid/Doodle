@@ -50,7 +50,6 @@ void process_message::progress_step(const rational_int& in_rational_int) {
   p_progress += in_rational_int;
 }
 void process_message::message(const std::string& in_string, const level& in_level_enum) {
-  std::lock_guard _lock{_mutex};
   auto l_msg{in_string};
 
   boost::locale::generator k_gen{};
@@ -62,15 +61,16 @@ void process_message::message(const std::string& in_string, const level& in_leve
       })) {
     return;
   }
-  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
-    return std::isspace(in_type, l_local);
-  });
-  l_msg += '\n';
-
+  //  l_msg |= ranges::actions::remove_if([](const std::string::value_type& in_type) -> bool {
+  //    return std::isspace(in_type, l_local);
+  //  });
   spdlog::info(l_msg);
+
+  std::lock_guard l_lock{_mutex};
   switch (in_level_enum) {
     case level::warning:
       p_err += l_msg;
+      break;
     default:
       p_log += l_msg;
       p_str_end = l_msg;
