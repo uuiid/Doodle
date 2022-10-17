@@ -6,6 +6,8 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <doodle_app/app/app_command.h>
@@ -209,16 +211,38 @@ k_f()
 }
 
 std::string replace_file_arg::to_str() const {
-  nlohmann::json l_json{};
-  l_json = *this;
+  auto l_list_entt = save_handle | ranges::view::transform([](const entt::handle &in) -> std::string {
+                       nlohmann::json l_j{};
+                       entt_tool::save_comm<assets_file, redirection_path_info>(in, l_j);
+                       return fmt::format("cmds.doodle_add_entt(josndata={})", l_j.dump());
+                     }) |
+                     ranges::to_vector;
+
   return fmt::format(
       R"(# -*- coding: utf-8 -*-
-import maya_fun_tool
-k_f =  maya_fun_tool.open_file()
-k_f.config_ = """{}"""
-k_f()
+from maya import cmds
+import pymel.core
+import maya.standalone
+maya.standalone.initialize()
+
+cmds.file(force=True, new=True)
+doodle_plug = "doodle_maya_" + str(cmds.about(api=True))[0:4]
+cmds.loadPlugin(doodle_plug)
+
+l_file_path = "{0}"
+project_path = "{1}"
+work_path = "{2}"
+cmds.workspace(work_path, openWorkspace=1)
+
+cmds.doodle_load_project(project=self.cfg.project)
+
+{3}
+
+cmds.doodle_create_ref_file()
+cmds.doodle_replace_rig_file()
+cmds.doodle_comm_file_save()
 )",
-      l_json.dump()
+      file_path, project_, find_maya_work(file_path).generic_string(), fmt::join(l_list_entt, "\n");
   );
 }
 

@@ -11,6 +11,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/organization.h>
+#include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
 
@@ -33,10 +34,25 @@ class maya_file_type_gui : public gui_cache<maya_type> {
 class maya_reference_info : boost::equality_comparable<maya_reference_info> {
  public:
   maya_reference_info() = default;
+  virtual ~maya_reference_info() {
+    if (save_handle) save_handle.destroy();
+  }
   gui_cache<std::string> f_file_path_attr{"原始文件路径"s, ""s};
   gui_cache<std::string> to_file_path_attr{"替换文件路径"s, ""s};
 
   gui_cache_name_id de_button_attr{"删除"};
+
+  entt::handle save_handle{make_handle()};
+
+  void set_value() {
+    auto& l_ass  = save_handle.get_or_emplace<assets_file>();
+    auto& l_path = save_handle.get_or_emplace<redirection_path_info>();
+
+    l_ass.path_attr(f_file_path_attr());
+    FSys::path l_f{to_file_path_attr()};
+    l_path.file_name_   = l_f.filename();
+    l_path.search_path_ = {l_f.parent_path()};
+  }
 
   bool operator==(const maya_reference_info& in_r) const {
     return std::tie(f_file_path_attr, to_file_path_attr) == std::tie(in_r.f_file_path_attr, in_r.to_file_path_attr);
@@ -119,8 +135,8 @@ void maya_tool::render() {
     }
 
     for (auto&& l_i : ptr_attr->ref_attr.ref_attr()) {
-      ImGui::InputText(*l_i.f_file_path_attr, &l_i.f_file_path_attr);
-      ImGui::InputText(*l_i.to_file_path_attr, &l_i.to_file_path_attr);
+      if (ImGui::InputText(*l_i.f_file_path_attr, &l_i.f_file_path_attr)) l_i.set_value();
+      if (ImGui::InputText(*l_i.to_file_path_attr, &l_i.to_file_path_attr)) l_i.set_value();
       ImGui::SameLine();
       if (ImGui::Button(*l_i.de_button_attr)) {
         boost::asio::post(g_io_context(), [l_i, this]() {
@@ -186,6 +202,11 @@ void maya_tool::render() {
       auto k_arg             = maya_exe_ns::replace_file_arg{};
       k_arg.file_path        = i;
       k_arg.replace_file_all = true;
+      k_arg.save_handle      = ptr_attr->ref_attr.ref_attr() |
+                          ranges::view::transform([](const maya_tool_ns::maya_reference_info& in_info) -> entt::handle {
+                            return in_info.save_handle;
+                          }) |
+                          ranges::to_vector;
       k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;

@@ -5,6 +5,7 @@
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/gui/maya_plug_app.h>
 #include <maya_plug/logger/maya_logger_info.h>
+#include <maya_plug/maya_comm/add_entt.h>
 #include <maya_plug/maya_comm/afterimage_comm.h>
 #include <maya_plug/maya_comm/cam_comm.h>
 #include <maya_plug/maya_comm/clear_scene_comm.h>
@@ -213,6 +214,9 @@ MStatus initializePlugin(MObject obj) {
   /// 添加创建布料命令
   status = maya_reg->register_command<::doodle::maya_plug::create_qcloth_assets>(k_plugin);
   CHECK_MSTATUS(status);
+
+  /// 添加加载实体命令
+  status = maya_reg->register_command<::doodle::maya_plug::add_entt>(k_plugin);
 
   /// 等所有命令完成后加载工具架
   switch (k_st) {

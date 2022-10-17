@@ -62,6 +62,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:
   bool replace_file_all;
+  std::vector<entt::handle> save_handle{};
 
   [[nodiscard]] std::string to_str() const;
 

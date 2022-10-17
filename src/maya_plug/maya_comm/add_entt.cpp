@@ -15,7 +15,7 @@ namespace doodle::maya_plug {
 namespace add_entt_ns {
 
 constexpr auto json      = "-j";
-constexpr auto json_long = "-josn";
+constexpr auto json_long = "-josndata";
 
 MSyntax syntax() {
   MSyntax l_synntax{};
