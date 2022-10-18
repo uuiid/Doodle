@@ -4,29 +4,26 @@
 
 #include "update.h"
 
-#include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/core/core_sql.h>
-
-#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/generate/core/sql_sql.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
-#include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/rules.h>
-#include <doodle_core/metadata/detail/time_point_info.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/thread_pool/process_message.h>
 
-#include <doodle_core/generate/core/sql_sql.h>
-
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
-
-#include <range/v3/all.hpp>
-
+#include <boost/asio.hpp>
 #include <database_task/details/com_data.h>
 #include <database_task/details/update_ctx.h>
+#include <range/v3/all.hpp>
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
@@ -69,11 +66,9 @@ class update_data::impl {
 
     sql::ComEntity l_tabl{};
     /// \brief 检查是否存在组件
-    auto l_pre_select = in_db.prepare(
-        sqlpp::select(l_tabl.id)
-            .from(l_tabl)
-            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash))
-    );
+    auto l_pre_select = in_db.prepare(sqlpp::select(l_tabl.id).from(l_tabl).where(
+        l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)
+    ));
     for (auto &&i : com_tabls) {
       l_pre_select.params.comHash  = i.com_id;
       l_pre_select.params.entityId = main_tabls[i.entt_];
@@ -88,12 +83,11 @@ class update_data::impl {
     /// \brief 不存在就插入
     for (auto &&i : inster_map) {
       if (!i.second) {
-        auto l_pre_inster = in_db.prepare(
-            sqlpp::insert_into(l_tabl)
-                .set(l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash), l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
-        );
-        if (stop)
-          return;
+        auto l_pre_inster = in_db.prepare(sqlpp::insert_into(l_tabl).set(
+            l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash),
+            l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData)
+        ));
+        if (stop) return;
         l_pre_inster.params.comHash  = i.first.get().com_id;
         l_pre_inster.params.entityId = main_tabls[i.first.get().entt_];
         l_pre_inster.params.jsonData = i.first.get().json_data;
@@ -106,13 +100,13 @@ class update_data::impl {
     /// \brief 存在则更新
     for (auto &&i : inster_map) {
       if (i.second) {
-        auto l_pre = in_db.prepare(
-            sqlpp::update(l_tabl)
-                .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
-                .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash))
-        );
-        if (stop)
-          return;
+        auto l_pre = in_db.prepare(sqlpp::update(l_tabl)
+                                       .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
+                                       .where(
+                                           l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
+                                           l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)
+                                       ));
+        if (stop) return;
         l_pre.params.jsonData = i.first.get().json_data;
         l_pre.params.comHash  = i.first.get().com_id;
         l_pre.params.entityId = main_tabls[i.first.get().entt_];
@@ -124,8 +118,7 @@ class update_data::impl {
   }
 
   void create_entt_data() {
-    main_tabls = entt_list |
-                 ranges::view::transform([](const entt::entity &in) {
+    main_tabls = entt_list | ranges::view::transform([](const entt::entity &in) {
                    return std::make_pair(in, g_reg()->get<database>(in).get_id());
                  }) |
                  ranges::to<std::map<entt::entity, std::int64_t>>();
@@ -134,24 +127,18 @@ class update_data::impl {
   template <typename Type_T>
   void _create_com_data_(std::size_t in_size) {
     ranges::for_each(entt_list, [this, in_size](const entt::entity &in_) {
-      if (stop)
-        return;
+      if (stop) return;
       futures_.emplace_back(
-          boost::asio::post(
-              strand_,
-              std::packaged_task<void()>{
-                  [=]() {
-                    if (stop)
-                      return;
-                    auto l_h = entt::handle{*g_reg(), in_};
-                    if (l_h.all_of<Type_T>()) {
-                      auto l_json = nlohmann::json{};
-                      l_json      = l_h.get<Type_T>();
-                      com_tabls.emplace_back(in_, entt::type_id<Type_T>().hash(), l_json.dump());
-                    }
-                    g_reg()->ctx().emplace<process_message>().progress_step({1, in_size * size * 2});
-                  }}
-          )
+          boost::asio::post(strand_, std::packaged_task<void()>{[=]() {
+                              if (stop) return;
+                              auto l_h = entt::handle{*g_reg(), in_};
+                              if (l_h.all_of<Type_T>()) {
+                                auto l_json = nlohmann::json{};
+                                l_json      = l_h.get<Type_T>();
+                                com_tabls.emplace_back(in_, entt::type_id<Type_T>().hash(), l_json.dump());
+                              }
+                              g_reg()->ctx().emplace<process_message>().progress_step({1, in_size * size * 2});
+                            }})
       );
     });
   }
@@ -162,8 +149,7 @@ class update_data::impl {
     (_create_com_data_<Type_T>(l_size), ...);
   }
 };
-update_data::update_data(const std::vector<entt::entity> &in_data)
-    : p_i(std::make_unique<impl>()) {
+update_data::update_data(const std::vector<entt::entity> &in_data) : p_i(std::make_unique<impl>()) {
   p_i->entt_list = in_data;
   p_i->size      = p_i->entt_list.size();
 }
@@ -172,9 +158,7 @@ update_data::update_data() : p_i(std::make_unique<impl>()) {}
 update_data::~update_data() = default;
 
 void update_data::operator()(
-    entt::registry &in_registry,
-    const std::vector<entt::entity> &in_update_data,
-    conn_ptr &in_connect
+    entt::registry &in_registry, const std::vector<entt::entity> &in_update_data, conn_ptr &in_connect
 ) {
   p_i->entt_list = in_update_data;
   p_i->size      = p_i->entt_list.size();
@@ -189,8 +173,7 @@ void update_data::operator()(
   for (auto &f : p_i->futures_) {
     f.get();
   }
-  if (p_i->futures_.empty())
-    return;
+  if (p_i->futures_.empty()) return;
 
   g_reg()->ctx().emplace<process_message>().message("检查数据库架构");
   p_i->updata_db_table(*in_connect);

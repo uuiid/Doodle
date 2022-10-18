@@ -1,21 +1,19 @@
 #include "init_register.h"
+
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/logger/logger.h>
 
+#include <boost/asio.hpp>
 namespace doodle {
 
-std::multimap<std::int32_t, std::function<void()>>& init_register::registered_functions() {
-  return init_p;
-}
+std::multimap<std::int32_t, std::function<void()>>& init_register::registered_functions() { return init_p; }
 void init_register::reg_class() {
   auto l_s = boost::asio::make_strand(g_io_context());
   DOODLE_LOG_INFO("开始反射注册");
 
   auto& l_map = registered_functions();
-  for (auto it = l_map.begin(), end = l_map.end();
-       it != end;
-       it = l_map.upper_bound(it->first)) {
+  for (auto it = l_map.begin(), end = l_map.end(); it != end; it = l_map.upper_bound(it->first)) {
     DOODLE_LOG_INFO("初始化优先级 {}", it->first);
     auto l_p = init_register::instance().registered_functions().equal_range(it->first);
     std::for_each(l_p.first, l_p.second, [](const std::multimap<std::int32_t, std::function<void()>>::value_type& i) {
@@ -24,8 +22,7 @@ void init_register::reg_class() {
   }
   DOODLE_LOG_INFO("结束开始反射注册");
   boost::asio::post(l_s, [l_s]() {
-    for (auto&& mat : entt::resolve())
-      DOODLE_LOG_INFO(fmt::format("{}", mat.info().name()));
+    for (auto&& mat : entt::resolve()) DOODLE_LOG_INFO(fmt::format("{}", mat.info().name()));
     g_reg()->ctx().at<core_sig>().init_end();
   });
 }

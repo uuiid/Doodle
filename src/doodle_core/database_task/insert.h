@@ -14,12 +14,10 @@ class DOODLE_CORE_API insert {
  public:
   insert();
 
-  virtual ~insert() override;
+  virtual ~insert();
 
   void operator()(
-      const entt::registry& in_registry,
-      const std::vector<entt::entity>& in_insert_data,
-      conn_ptr& in_connect
+      const entt::registry& in_registry, const std::vector<entt::entity>& in_insert_data, conn_ptr& in_connect
   );
 };
 

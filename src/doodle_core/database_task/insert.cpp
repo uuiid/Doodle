@@ -3,32 +3,28 @@
 //
 
 #include "insert.h"
-#include <doodle_core/thread_pool/process_message.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/logger/logger.h>
-#include <doodle_core/core/core_sql.h>
 
-#include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/database_task/details/update_ctx.h>
+#include <doodle_core/database_task/sql_file.h>
+#include <doodle_core/generate/core/sql_sql.h>
+#include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
+#include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
-#include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/rules.h>
-#include <doodle_core/metadata/detail/time_point_info.h>
+#include <doodle_core/metadata/user.h>
+#include <doodle_core/thread_pool/process_message.h>
 
-#include <doodle_core/generate/core/sql_sql.h>
-
-#include <sqlpp11/sqlpp11.h>
-#include <sqlpp11/sqlite3/sqlite3.h>
-
-#include <doodle_core/generate/core/sql_sql.h>
-#include <doodle_core/database_task/sql_file.h>
-#include <doodle_core/database_task/details/update_ctx.h>
-
-#include <range/v3/all.hpp>
-
+#include <boost/asio.hpp>
 #include <database_task/details/com_data.h>
+#include <range/v3/all.hpp>
+#include <sqlpp11/sqlite3/sqlite3.h>
+#include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
@@ -58,7 +54,7 @@ class insert::impl {
 
   std::vector<std::pair<std::int32_t, std::string>> ctx_tabls;
 
-  using boost_strand = boost::asio::strand<std::decay_t<decltype(g_thread())>::executor_type>;
+  using boost_strand = boost::asio::strand<boost::asio::thread_pool::executor_type>;
 
   /// @brief boost 无锁保护
   boost_strand strand_{boost::asio::make_strand(g_thread())};
@@ -83,16 +79,10 @@ class insert::impl {
    */
   void insert_db_entity(sqlpp::sqlite3::connection &in_db) {
     sql::Entity l_tabl{};
-    auto l_pre = in_db.prepare(
-        sqlpp::insert_into(l_tabl)
-            .set(
-                l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)
-            )
-    );
+    auto l_pre = in_db.prepare(sqlpp::insert_into(l_tabl).set(l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)));
 
     for (auto &&i : main_tabls) {
-      if (stop)
-        return;
+      if (stop) return;
       l_pre.params.uuidData = i.second->uuid_data;
       i.second->l_id        = in_db(l_pre);
       DOODLE_LOG_INFO("插入数据 id {}", i.second->l_id);
@@ -105,19 +95,12 @@ class insert::impl {
    */
   void insert_db_com(sqlpp::sqlite3::connection &in_db) {
     sql::ComEntity l_tabl{};
-    auto l_pre = in_db.prepare(
-        sqlpp::insert_into(
-            l_tabl
-        )
-            .set(
-                l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData),
-                l_tabl.comHash  = sqlpp::parameter(l_tabl.comHash),
-                l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)
-            )
-    );
+    auto l_pre = in_db.prepare(sqlpp::insert_into(l_tabl).set(
+        l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash),
+        l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)
+    ));
     for (auto &&j : com_tabls) {
-      if (stop)
-        return;
+      if (stop) return;
       l_pre.params.jsonData = j.json_data;
       l_pre.params.comHash  = j.com_id;
       l_pre.params.entityId = main_tabls.at(j.entt_)->l_id;
@@ -137,18 +120,15 @@ class insert::impl {
    * @brief 创建实体数据(多线程)
    */
   void create_entt_data() {
-    main_tabls = entt_list |
-                 ranges::view::transform([](const entt::entity &in) {
+    main_tabls = entt_list | ranges::view::transform([](const entt::entity &in) {
                    auto l_i   = std::make_shared<entity_data>();
                    l_i->entt_ = in;
                    return std::make_pair(in, l_i);
                  }) |
                  ranges::to<std::map<entt::entity, std::shared_ptr<entity_data>>>();
     ranges::for_each(main_tabls, [this](decltype(main_tabls)::value_type &in) {
-      if (stop)
-        return;
-      futures_.emplace_back(
-          boost::asio::post(g_thread(), std::packaged_task<void()>{[=]() {
+      if (stop) return;
+      futures_.emplace_back(boost::asio::post(g_thread(), std::packaged_task<void()>{[=]() {
                                                 if (stop) return;
                                                 auto l_h = entt::handle{*g_reg(), in.second->entt_};
                                                 in.second->uuid_data =
@@ -166,24 +146,18 @@ class insert::impl {
   template <typename Type_T>
   void _create_com_data_(std::size_t in_size) {
     ranges::for_each(entt_list, [this, in_size](const entt::entity &in) {
-      if (stop)
-        return;
+      if (stop) return;
       futures_.emplace_back(
-          boost::asio::post(
-              strand_,
-              std::packaged_task<void()>{
-                  [=]() {
-                    if (stop)
-                      return;
-                    auto l_h = entt::handle{*g_reg(), in};
-                    if (l_h.all_of<Type_T>()) {
-                      nlohmann::json l_j{};
-                      l_j = l_h.get<Type_T>();
-                      com_tabls.emplace_back(in, entt::type_id<Type_T>().hash(), l_j.dump());
-                    }
-                    g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size * 4});
-                  }}
-          )
+          boost::asio::post(strand_, std::packaged_task<void()>{[=]() {
+                              if (stop) return;
+                              auto l_h = entt::handle{*g_reg(), in};
+                              if (l_h.all_of<Type_T>()) {
+                                nlohmann::json l_j{};
+                                l_j = l_h.get<Type_T>();
+                                com_tabls.emplace_back(in, entt::type_id<Type_T>().hash(), l_j.dump());
+                              }
+                              g_reg()->ctx().emplace<process_message>().progress_step({1, size * in_size * 4});
+                            }})
       );
     });
   }
@@ -194,15 +168,12 @@ class insert::impl {
   }
 };
 
-insert::insert()
-    : p_i(std::make_unique<impl>()) {}
+insert::insert() : p_i(std::make_unique<impl>()) {}
 
 insert::~insert() = default;
 
 void insert::operator()(
-    const entt::registry &in_registry,
-    const std::vector<entt::entity> &in_insert_data,
-    conn_ptr &in_connect
+    const entt::registry &in_registry, const std::vector<entt::entity> &in_insert_data, conn_ptr &in_connect
 ) {
   p_i->entt_list = in_insert_data;
   p_i->size      = p_i->entt_list.size();
@@ -213,8 +184,7 @@ void insert::operator()(
   p_i->create_com_data<DOODLE_SQLITE_TYPE>();
   g_reg()->ctx().emplace<process_message>().message("完成数据线程准备");
   for (auto &f : p_i->futures_) {
-    if (p_i->stop)
-      return;
+    if (p_i->stop) return;
     f.get();
   }
   g_reg()->ctx().emplace<process_message>().message("完成数据数据创建");

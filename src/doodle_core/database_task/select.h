@@ -14,7 +14,7 @@ class DOODLE_CORE_API select {
  public:
   select();
 
-  virtual ~select() override;
+  virtual ~select();
 
   void operator()(entt::registry& in_registry,
       const FSys::path& in_project_path,
