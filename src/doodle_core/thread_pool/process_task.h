@@ -39,6 +39,5 @@ class process_task_service
 };
 }  // namespace process_task_ns
 
-class process_task {};
 
 }  // namespace doodle

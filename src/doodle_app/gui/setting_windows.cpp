@@ -12,7 +12,6 @@
 #include <lib_warp/imgui_warp.h>
 
 #include <doodle_app/gui/base/ref_base.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/init_register.h>
 
 #include <magic_enum.hpp>

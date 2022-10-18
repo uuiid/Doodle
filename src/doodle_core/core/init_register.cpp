@@ -1,9 +1,7 @@
 #include "init_register.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/logger/logger.h>
-#include <doodle_core/gui_template/gui_process.h>
 
 namespace doodle {
 

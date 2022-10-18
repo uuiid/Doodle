@@ -8,8 +8,6 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_lib/core/image_loader.h>
-#include <doodle_core/gui_template/gui_process.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/status_info.h>

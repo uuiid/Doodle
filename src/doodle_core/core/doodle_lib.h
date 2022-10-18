@@ -5,7 +5,6 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/thread_pool/process_pool.h>
 namespace boost::asio {
 class io_context;
 class thread_pool;

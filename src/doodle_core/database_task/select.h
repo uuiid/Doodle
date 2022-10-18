@@ -3,11 +3,10 @@
 //
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/gui_template/gui_process.h>
 namespace doodle {
 namespace database_n {
 
-class DOODLE_CORE_API select : public process_handy_tools {
+class DOODLE_CORE_API select {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -17,8 +16,7 @@ class DOODLE_CORE_API select : public process_handy_tools {
 
   virtual ~select() override;
 
-  void operator()(
-      entt::registry& in_registry,
+  void operator()(entt::registry& in_registry,
       const FSys::path& in_project_path,
       conn_ptr& in_connect
   );

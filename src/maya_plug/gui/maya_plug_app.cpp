@@ -5,7 +5,6 @@
 #include "maya_plug_app.h"
 
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/thread_pool/process_pool.h>
 
 #include <doodle_app/gui/main_menu_bar.h>
 #include <doodle_app/gui/main_proc_handle.h>

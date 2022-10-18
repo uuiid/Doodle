@@ -4,13 +4,11 @@
 #pragma once
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <boost/signals2.hpp>
 #include <utility>
 
-#include <doodle_core/gui_template/gui_process.h>
 
 namespace doodle::gui {
 // namespace details {

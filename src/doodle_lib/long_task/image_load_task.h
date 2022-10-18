@@ -4,19 +4,18 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_core/gui_template/gui_process.h>
-#include <boost/asio/basic_io_object.hpp>
+x #include<boost / asio / basic_io_object.hpp>
 #include <boost/asio/io_context.hpp>
-namespace doodle {
+    namespace doodle {
 
-class DOODLELIB_API image_load_task {
- private:
-  class impl;
-  std::unique_ptr<impl> p_i;
+  class DOODLELIB_API image_load_task {
+   private:
+    class impl;
+    std::unique_ptr<impl> p_i;
 
-  void read_image(const entt::handle& in_handle);
+    void read_image(const entt::handle& in_handle);
 
- public:
+   public:
   explicit image_load_task();
   virtual ~image_load_task();
 

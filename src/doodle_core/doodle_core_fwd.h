@@ -52,19 +52,10 @@ using registry_ptr    = std::shared_ptr<entt::registry>;
 
 using uuid            = boost::uuids::uuid;
 
-namespace pool_n {
-class bounded_limiter;
-class null_limiter;
-}  // namespace pool_n
-
-template <typename Delta, typename Timiter = pool_n::null_limiter>
-class DOODLE_CORE_API scheduler;
+namespace pool_n {}  // namespace pool_n
 
 template <class Derived>
-using process_t      = entt::process<Derived, std::chrono::system_clock::duration>;
-using scheduler_t    = scheduler<std::chrono::system_clock::duration>;
-
-using bounded_pool_t = scheduler<std::chrono::system_clock::duration, pool_n::bounded_limiter>;
+using process_t = entt::process<Derived, std::chrono::system_clock::duration>;
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();

@@ -8,7 +8,6 @@
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/thread_pool/process_pool.h>
 
 #include <doodle_app/app/app_command.h>
 

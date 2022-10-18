@@ -9,10 +9,8 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
-#include <doodle_core/gui_template/gui_process.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/platform/win/drop_manager.h>
-#include <doodle_core/thread_pool/process_pool.h>
 
 #include <doodle_app/app/program_options.h>
 #include <doodle_app/app/short_cut.h>

@@ -3,10 +3,9 @@
 //
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/gui_template/gui_process.h>
 namespace doodle::database_n {
 
-class DOODLE_CORE_API update_data : public process_handy_tools {
+class DOODLE_CORE_API update_data {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -16,7 +15,6 @@ class DOODLE_CORE_API update_data : public process_handy_tools {
   update_data();
 
   virtual ~update_data() override;
-
 
   void operator()(
       entt::registry& in_registry,

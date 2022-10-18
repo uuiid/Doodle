@@ -10,7 +10,6 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/init_register.h>
-#include <doodle_core/thread_pool/process_pool.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <platform/win/get_screenshot.h>
 #include <app/doodle_main_app.h>
