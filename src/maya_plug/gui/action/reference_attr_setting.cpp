@@ -165,6 +165,8 @@ void reference_attr_setting::render() {
 
         dear::Text("解算碰撞: "s);
         for (const auto& k_f : k_ref.collision_model_show_str) dear::Text(k_f);
+
+        dear::Text(fmt::format("链接风场: {}", k_ref.get_field_string()));
       };
     }
   };
