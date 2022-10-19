@@ -113,7 +113,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   }
 
   auto& k_cam = g_reg()->ctx().at<maya_camera>();
-  k_cam.conjecture();
   k_cam.set_render_cam();
   k_cam.set_play_attr();
 
@@ -247,10 +246,10 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
 bool play_blast::conjecture_ep_sc() {
   FSys::path p_current_path{MFileIO::currentFile().asUTF8()};
-  auto k_r = p_eps.analysis(p_current_path) &&
-             p_shot.analysis(p_current_path);
+  auto k_r = p_eps.analysis(p_current_path) && p_shot.analysis(p_current_path);
   set_save_filename(p_current_path.filename().replace_extension(".mp4"));
   return k_r;
 }
+void play_blast::play_blast_by_render(const MTime& in_start, const MTime& in_end) const {}
 
 }  // namespace doodle::maya_plug

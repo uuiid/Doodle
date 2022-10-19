@@ -5,9 +5,11 @@
 
 #pragma once
 
-#include "doodle_lib/doodle_lib_fwd.h"
 #include "doodle_core/metadata/episodes.h"
 #include "doodle_core/metadata/shot.h"
+
+#include "doodle_lib/doodle_lib_fwd.h"
+
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -31,6 +33,8 @@ class play_blast {
   FSys::path get_file_path(const MTime& in_time) const;
   FSys::path get_file_path() const;
   FSys::path get_file_dir() const;
+
+  void play_blast_by_render(const MTime& in_start, const MTime& in_end) const;
 
  public:
   play_blast();
