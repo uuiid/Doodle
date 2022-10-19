@@ -105,6 +105,7 @@ class qcloth_shape {
   void add_field() const;
 
   MDagPath ql_cloth_shape() const;
+  MDagPath cloth_mesh() const;
 
   /**
    * @brief 从传入的实体创建一个绑定节点

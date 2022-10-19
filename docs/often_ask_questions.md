@@ -40,5 +40,7 @@
 - C++ debug lanuch.json 编写
 - c_cpp_properties.json 编写 (指导c++ 智能编辑使用)
 
-### clion 
+### ue4  镜头ao效果错误
+
+解决方法 ： 调整post框 ao 值
 

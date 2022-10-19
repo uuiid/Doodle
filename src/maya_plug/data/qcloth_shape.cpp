@@ -4,29 +4,28 @@
 
 #include "qcloth_shape.h"
 
+#include <main/maya_plug_fwd.h>
+#include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/maya_tool.h>
+#include <maya_plug/data/reference_file.h>
+
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
-
+#include <magic_enum.hpp>
+#include <maya/MAnimControl.h>
+#include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFnMesh.h>
-#include <maya/MPlug.h>
-#include <maya/MNamespace.h>
-#include <maya/MItDag.h>
-#include <maya/MDagModifier.h>
 #include <maya/MFnSet.h>
-#include <maya/MItDependencyGraph.h>
 #include <maya/MFnSkinCluster.h>
+#include <maya/MItDag.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MItDependencyNodes.h>
-#include <maya/MAnimControl.h>
+#include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
-
-#include <maya_plug/data/reference_file.h>
-#include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/data/maya_tool.h>
-#include <main/maya_plug_fwd.h>
-
-#include <magic_enum.hpp>
+#include <maya/MNamespace.h>
+#include <maya/MPlug.h>
 
 namespace doodle::maya_plug {
 
@@ -99,40 +98,43 @@ std::vector<MObject> make_high_node(const qcloth_shape_n::shape_list& in_high_no
   std::vector<MObject> l_r{};
   MFnDagNode l_node{};
   /// 复制高模节点作为输出
-  std::transform(in_high_node.begin(), in_high_node.end(), std::back_inserter(l_r), [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
-    /// 复制模型
-    l_s = l_node.setObject(in_object.obj);
-    DOODLE_MAYA_CHICK(l_s);
-    std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
-    DOODLE_MAYA_CHICK(l_s);
-    auto l_r = l_node.duplicate(false, false, &l_s);
-    DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("复制高模节点 {}", k_anim_mesh_name);
-    DOODLE_MAYA_CHICK(l_s);
+  std::transform(
+      in_high_node.begin(), in_high_node.end(), std::back_inserter(l_r),
+      [&](const qcloth_shape_n::maya_obj& in_object) -> MObject {
+        /// 复制模型
+        l_s = l_node.setObject(in_object.obj);
+        DOODLE_MAYA_CHICK(l_s);
+        std::string k_anim_mesh_name = d_str{l_node.name(&l_s)};
+        DOODLE_MAYA_CHICK(l_s);
+        auto l_r = l_node.duplicate(false, false, &l_s);
+        DOODLE_MAYA_CHICK(l_s);
+        DOODLE_LOG_INFO("复制高模节点 {}", k_anim_mesh_name);
+        DOODLE_MAYA_CHICK(l_s);
 
-    // 设置复制节点的名称
-    l_node.setObject(l_r);
-    l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
-    DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
-    DOODLE_MAYA_CHICK(l_s);
+        // 设置复制节点的名称
+        l_node.setObject(l_r);
+        l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
+        DOODLE_MAYA_CHICK(l_s);
+        DOODLE_LOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
+        DOODLE_MAYA_CHICK(l_s);
 
-    /// 设置材质
-    MFnSet l_mat{get_shading_engine(in_object.obj), &l_s};
-    DOODLE_MAYA_CHICK(l_s);
-    l_s = l_mat.addMember(l_r);
-    DOODLE_MAYA_CHICK(l_s);
+        /// 设置材质
+        MFnSet l_mat{get_shading_engine(in_object.obj), &l_s};
+        DOODLE_MAYA_CHICK(l_s);
+        l_s = l_mat.addMember(l_r);
+        DOODLE_MAYA_CHICK(l_s);
 
-    /// 将复制节点添加为父节点的子物体
-    l_s = l_node.setObject(in_parent);
-    DOODLE_MAYA_CHICK(l_s);
-    l_s = l_node.addChild(l_r);
-    DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("设置复制高模节点父物体 {}", l_node.name(&l_s));
-    DOODLE_MAYA_CHICK(l_s);
+        /// 将复制节点添加为父节点的子物体
+        l_s = l_node.setObject(in_parent);
+        DOODLE_MAYA_CHICK(l_s);
+        l_s = l_node.addChild(l_r);
+        DOODLE_MAYA_CHICK(l_s);
+        DOODLE_LOG_INFO("设置复制高模节点父物体 {}", l_node.name(&l_s));
+        DOODLE_MAYA_CHICK(l_s);
 
-    return l_r;
-  });
+        return l_r;
+      }
+  );
   return l_r;
 }
 /**
@@ -249,9 +251,7 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
   l_s = l_selection_list.getDependNode(0, l_cloth_shape);
   DOODLE_MAYA_CHICK(l_s);
   auto l_plug = get_plug(l_cloth_shape, "outputMesh");
-  for (MItDependencyGraph i{l_plug, MFn::kMesh};
-       !i.isDone();
-       i.next()) {
+  for (MItDependencyGraph i{l_plug, MFn::kMesh}; !i.isDone(); i.next()) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_MAYA_CHICK(l_s);
   }
@@ -296,11 +296,12 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
   for (int l_i = 0; l_i < l_plug_array.length(); ++l_i) {
     auto l_node = l_plug_array[l_i].node(&l_status);
     DOODLE_MAYA_CHICK(l_status);
-    if (l_node.hasFn(MFn::kMesh))
-      l_collider_offset = l_node;
+    if (l_node.hasFn(MFn::kMesh)) l_collider_offset = l_node;
   }
 
-  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(), doodle_error{"寻找的的解算网格体和偏移网格体不一致"s});
+  DOODLE_CHICK(
+      !l_collider.isNull() && !l_collider_offset.isNull(), doodle_error{"寻找的的解算网格体和偏移网格体不一致"s}
+  );
   return std::make_tuple(l_collider, l_collider_offset);
 }
 
@@ -343,15 +344,12 @@ MObject make_group(MDagModifier& in_modifier, const std::string& in_name, const 
 
 qcloth_shape::qcloth_shape() = default;
 
-qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object)
-    : qcloth_shape() {
+qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object) : qcloth_shape() {
   p_ref_file = in_ref_file;
   obj        = in_object;
   DOODLE_CHICK(p_ref_file.any_of<reference_file>(), doodle_error{"缺失组件"});
 }
-bool qcloth_shape::set_cache_folder() const {
-  return set_cache_folder(FSys::path{});
-}
+bool qcloth_shape::set_cache_folder() const { return set_cache_folder(FSys::path{}); }
 
 bool qcloth_shape::create_cache() const {
   DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
@@ -379,8 +377,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
   auto& k_anim_mesh = in_handle.get<qcloth_shape_n::maya_obj>();
   {
     auto l_node_name = get_node_name(k_anim_mesh.obj);
-    if (auto l_f = l_node_name.find("_proxy");
-        l_f == std::string::npos)
+    if (auto l_f = l_node_name.find("_proxy"); l_f == std::string::npos)
       set_node_name(k_anim_mesh.obj, fmt::format("{}_proxy", k_anim_mesh.p_name));
     else {
       k_anim_mesh.p_name = l_node_name.substr(0, l_f);
@@ -458,38 +455,28 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
     k_r.deformBase_grp = chick_group(k_node, "deformBase_grp");
   }
   MDagModifier k_m{};
-  if (k_r.cfx_grp.isNull())
-    k_r.cfx_grp = make_group(k_m, "cfx_grp", MObject::kNullObj);
+  if (k_r.cfx_grp.isNull()) k_r.cfx_grp = make_group(k_m, "cfx_grp", MObject::kNullObj);
 
-  if (k_r.solver_grp.isNull())
-    k_r.solver_grp = make_group(k_m, "solver_grp", k_r.cfx_grp);
+  if (k_r.solver_grp.isNull()) k_r.solver_grp = make_group(k_m, "solver_grp", k_r.cfx_grp);
 
-  if (k_r.anim_grp.isNull())
-    k_r.anim_grp = make_group(k_m, "anim_grp", k_r.cfx_grp);
+  if (k_r.anim_grp.isNull()) k_r.anim_grp = make_group(k_m, "anim_grp", k_r.cfx_grp);
 
-  if (k_r.constraint_grp.isNull())
-    k_r.constraint_grp = make_group(k_m, "constraint_grp", k_r.cfx_grp);
+  if (k_r.constraint_grp.isNull()) k_r.constraint_grp = make_group(k_m, "constraint_grp", k_r.cfx_grp);
 
-  if (k_r.collider_grp.isNull())
-    k_r.collider_grp = make_group(k_m, "collider_grp", k_r.cfx_grp);
+  if (k_r.collider_grp.isNull()) k_r.collider_grp = make_group(k_m, "collider_grp", k_r.cfx_grp);
 
-  if (k_r.deform_grp.isNull())
-    k_r.deform_grp = make_group(k_m, "deform_grp", k_r.cfx_grp);
+  if (k_r.deform_grp.isNull()) k_r.deform_grp = make_group(k_m, "deform_grp", k_r.cfx_grp);
 
-  if (k_r.export_grp.isNull())
-    k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
+  if (k_r.export_grp.isNull()) k_r.export_grp = make_group(k_m, "export_grp", k_r.cfx_grp);
 
-  if (k_r.deformBase_grp.isNull())
-    k_r.deformBase_grp = make_group(k_m, "deformBase_grp", k_r.deform_grp);
+  if (k_r.deformBase_grp.isNull()) k_r.deformBase_grp = make_group(k_m, "deformBase_grp", k_r.deform_grp);
 
   k_reg->ctx().emplace<qcloth_shape::cloth_group>(k_r);
   return k_r;
 }
 
 void qcloth_shape::add_collider(const entt::handle& in_handle) {
-  in_handle.any_of<qcloth_shape_n::shape_list>()
-      ? void()
-      : throw_exception(doodle_error{"缺失组件 {}"s, in_handle});
+  in_handle.any_of<qcloth_shape_n::shape_list>() ? void() : throw_exception(doodle_error{"缺失组件 {}"s, in_handle});
 
   auto l_group   = get_cloth_group();
   auto l_ql      = get_ql_solver();
@@ -617,14 +604,11 @@ void qcloth_shape::sort_group() {
   }
 }
 bool qcloth_shape::chick_low_skin(const entt::handle& in_handle) {
-  in_handle.any_of<qcloth_shape_n::maya_obj>()
-      ? void()
-      : throw_exception(doodle_error{"缺失组件"s});
+  in_handle.any_of<qcloth_shape_n::maya_obj>() ? void() : throw_exception(doodle_error{"缺失组件"s});
   MStatus l_s{};
   auto l_shape = get_shape(in_handle.get<qcloth_shape_n::maya_obj>().obj);
   /// 寻找高模的皮肤簇
-  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream};
-       !i.isDone();
+  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
        i.next()) {
     DOODLE_MAYA_CHICK(l_s);
     return true;
@@ -636,8 +620,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
   MStatus l_status{};
   MObject l_object{};
 
-  for (MItSelectionList i{in_selection_list, MFn::kPluginLocatorNode, &l_status};
-       !i.isDone(); i.next()) {
+  for (MItSelectionList i{in_selection_list, MFn::kPluginLocatorNode, &l_status}; !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(l_status);
     l_status = i.getDependNode(l_object);
     DOODLE_MAYA_CHICK(l_status);
@@ -653,9 +636,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
 MObject qcloth_shape::get_ql_solver() {
   MStatus l_status{};
   MObject l_object{};
-  for (MItDependencyNodes i{
-           MFn::kPluginLocatorNode, &l_status};
-       !i.isDone(); i.next()) {
+  for (MItDependencyNodes i{MFn::kPluginLocatorNode, &l_status}; !i.isDone(); i.next()) {
     l_object = i.thisNode(&l_status);
     MFnDependencyNode k_dep{l_object};
     if (k_dep.typeName(&l_status) == "qlSolverShape") {
@@ -680,8 +661,7 @@ MObject qcloth_shape::get_skin_custer(const MObject& in_anim_node) {
   auto l_shape = get_shape(in_anim_node);
 
   /// 寻找高模的皮肤簇
-  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream};
-       !i.isDone();
+  for (MItDependencyGraph i{l_shape, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream}; !i.isDone();
        i.next()) {
     l_skin_cluster = i.currentItem(&l_s);
     DOODLE_MAYA_CHICK(l_s);
@@ -697,7 +677,34 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_MAYA_CHICK(l_s);
 }
-MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
+MDagPath qcloth_shape::ql_cloth_shape() const {
+  auto l_mesh = cloth_mesh();
+  MStatus l_status{};
+  MFnMesh l_mesh_fn{l_mesh, &l_status};
+  DOODLE_MAYA_CHICK(l_status);
+
+  MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
+  DOODLE_MAYA_CHICK(l_status);
+  MSelectionList l_select_list{};
+  for (; !l_it.isDone(); l_it.next()) {
+  }
+}
 void qcloth_shape::add_field() const {}
+MDagPath qcloth_shape::cloth_mesh() const {
+  MStatus l_s{};
+  MObject l_mesh{};
+  /// \brief 获得组件点上下文
+  auto l_shape = get_shape(obj);
+
+  /// 寻找高模的皮肤簇
+  for (MItDependencyGraph i{l_shape, MFn::kMesh, MItDependencyGraph::Direction::kDownstream}; !i.isDone(); i.next()) {
+    l_mesh = i.currentItem(&l_s);
+    DOODLE_MAYA_CHICK(l_s);
+    break;
+  }
+
+  DOODLE_CHICK(!l_mesh.isNull(), doodle_error{"没有找到布料模型节点"s});
+  return get_dag_path(l_mesh);
+}
 
 }  // namespace doodle::maya_plug
