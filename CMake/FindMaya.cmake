@@ -32,6 +32,8 @@ The following cache variables may also be set:
 
 ``MAYA_INCLUDE_DIR``
   The directory containing ``Maya.h``.
+``MAYA_BASE_DIR``
+  maya 基本的路径，在注册表中和 MAYA_LOCATION Maya_ROOT_DIR中寻找
 `` maya_all ``
   The path to the Maya library.
 
@@ -54,7 +56,7 @@ find_path(MAYA_BASE_DIR
         "${MAYA_LOCATION}"
         "$ENV{MAYA_LOCATION}"
         "${Maya_ROOT_DIR}"
-        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\Maya\\${Maya_FIND_VERSION}\\Setup\\InstallPath;MAYA_INSTALL_LOCATION]"
+        "[HKLM\\SOFTWARE\\Autodesk\\Maya\\${Maya_FIND_VERSION}\\Setup\\InstallPath;MAYA_INSTALL_LOCATION]"
         DOC
         "maya 基本路径"
         )
