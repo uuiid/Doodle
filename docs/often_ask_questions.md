@@ -24,9 +24,21 @@
 - 创建一个继承 DoodleCurveCrowd 的蓝图类
 - 将 蓝图类中的骨骼网格体设置为需要的网格体, 将动画资产指定为骨骼网格体对应的混合动画
 
-### cmake 3 的工作方法
+### cmake c++ 工程
 
-从cmakelists.txt开始
+- 配置 -> 配置成功
+- 构建 -> 构建完成 doodleexe.exe 文件
+- 安装
 
-- 确定版本
-- 
+### vscode
+
+- cmake 命令行使用
+- msvc 环境配置
+- cmd 脚本编写
+- cmake presste.json 使用
+- task.json 编写
+- C++ debug lanuch.json 编写
+- c_cpp_properties.json 编写 (指导c++ 智能编辑使用)
+
+### clion 
+
