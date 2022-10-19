@@ -25,8 +25,7 @@ namespace doodle::maya_plug {
 
 maya_camera::maya_camera() = default;
 
-maya_camera::maya_camera(const MDagPath& in_path)
-    : maya_camera() {
+maya_camera::maya_camera(const MDagPath& in_path) : maya_camera() {
   p_path = in_path;
   chick();
 }
@@ -40,8 +39,7 @@ void maya_camera::chick() const {
 }
 
 bool maya_camera::export_file(
-    const MTime& in_start, const MTime& in_end,
-    const reference_file_ns::generate_fbx_file_path& in_name
+    const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
 ) {
   chick();
 
@@ -80,7 +78,9 @@ bool maya_camera::export_file(
     episodes::analysis_static(l_h, k_file_path);
     shot::analysis_static(l_h, k_file_path);
 
-    l_h.emplace<export_file_info>(k_file_path, in_start.value(), in_end.value(), FSys::path{}, export_file_info::export_type::camera);
+    l_h.emplace<export_file_info>(
+        k_file_path, in_start.value(), in_end.value(), FSys::path{}, export_file_info::export_type::camera
+    );
     export_file_info::write_file(l_h);
   }
   return true;
@@ -93,7 +93,8 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
   k_s = k_tran_node.setObject(p_path.transform());
   DOODLE_MAYA_CHICK(k_s);
 
-  auto k_comm = fmt::format(R"(bakeResults
+  auto k_comm = fmt::format(
+      R"(bakeResults
 -simulation true
 -t "{}:{}"
 -hierarchy below
@@ -110,7 +111,8 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 -shape true
 {{"{}"}};
 )",
-                            in_start.value(), in_end.value(), d_str{k_tran_node.fullPathName()}.str());
+      in_start.value(), in_end.value(), d_str{k_tran_node.fullPathName()}.str()
+  );
   DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
@@ -165,11 +167,12 @@ bool maya_camera::unlock_attr() {
 void maya_camera::conjecture() {
   DOODLE_LOG_INFO("开始测量相机优先级");
 
-  auto l_reg_list = g_reg()->ctx().at<project_config::base_config>().maya_camera_select |
-                    ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
-                      return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
-                    }) |
-                    ranges::to_vector;
+  auto l_reg_list =
+      g_reg()->ctx().at<project_config::base_config>().maya_camera_select |
+      ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
+        return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
+      }) |
+      ranges::to_vector;
 
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
@@ -192,9 +195,7 @@ void maya_camera::conjecture() {
     k_list.push_back(std::move(k_cam));
   }
 
-  std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) {
-    return in_l > in_r;
-  });
+  std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) { return in_l > in_r; });
 
   for (const auto& k_c : k_list) {
     DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
@@ -237,6 +238,9 @@ void maya_camera::set_play_attr() {
   DOODLE_MAYA_CHICK(k_s);
   k_s = k_cam_fn.setDisplayGateMask(false);
   DOODLE_MAYA_CHICK(k_s);
+  k_s = k_cam_fn.setNearClippingPlane(1);
+  DOODLE_MAYA_CHICK(k_s);
+
   auto k_displayResolution = k_cam_fn.findPlug("displayResolution", true, &k_s);
   DOODLE_MAYA_CHICK(k_s);
   k_s = k_displayResolution.setBool(false);
@@ -343,16 +347,8 @@ bool maya_camera::camera_parent_is_word() {
   return l_path.length() > 1;
 }
 
-bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const {
-  return priority < in_rhs.priority;
-}
-bool maya_camera::camera::operator>(const maya_camera::camera& in_rhs) const {
-  return in_rhs < *this;
-}
-bool maya_camera::camera::operator<=(const maya_camera::camera& in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool maya_camera::camera::operator>=(const maya_camera::camera& in_rhs) const {
-  return !(*this < in_rhs);
-}
+bool maya_camera::camera::operator<(const maya_camera::camera& in_rhs) const { return priority < in_rhs.priority; }
+bool maya_camera::camera::operator>(const maya_camera::camera& in_rhs) const { return in_rhs < *this; }
+bool maya_camera::camera::operator<=(const maya_camera::camera& in_rhs) const { return !(in_rhs < *this); }
+bool maya_camera::camera::operator>=(const maya_camera::camera& in_rhs) const { return !(*this < in_rhs); }
 }  // namespace doodle::maya_plug
