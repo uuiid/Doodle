@@ -174,6 +174,7 @@ class reference_file {
   bool replace_file(const entt::handle &in_handle);
 
   std::optional<MDagPath> get_field_dag() const;
+  const std::string &get_field_string() const;
   void add_field_dag(const MSelectionList &in_list);
 
   /**

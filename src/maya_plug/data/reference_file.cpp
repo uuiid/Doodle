@@ -983,5 +983,6 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
     return;
   }
 }
+const std::string &reference_file::get_field_string() const { return field_attr; }
 
 }  // namespace doodle::maya_plug
