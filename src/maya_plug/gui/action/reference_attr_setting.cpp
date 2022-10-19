@@ -163,9 +163,12 @@ void reference_attr_setting::render() {
         if (imgui::Button("选择已添加")) {
           MGlobal::setActiveSelectionList(k_ref.get_collision_model());
         }
+
+        if (imgui::Button("设置布料风场")) {
+        }
+
         dear::Text("解算碰撞: "s);
-        for (const auto& k_f : k_ref.collision_model_show_str)
-          dear::Text(k_f);
+        for (const auto& k_f : k_ref.collision_model_show_str) dear::Text(k_f);
       };
     }
   };
