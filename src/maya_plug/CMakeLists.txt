@@ -13,7 +13,7 @@ if (DEFINED Maya_Version)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
     find_package(Qt5 COMPONENTS Core Widgets REQUIRED
-            HINTS ${MAYA_DEFAULT_LOCATION})
+            HINTS ${MAYA_BASE_DIR})
     find_package(dem-bones CONFIG REQUIRED)
 
 

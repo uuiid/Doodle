@@ -39,10 +39,9 @@ The following cache variables may also be set:
 
 include(CMakePrintHelpers)
 
+set(OPEN_MAYA OpenMaya)
 if (WIN32)
     # 现在的使用默认的maya安装路径寻找， 由于工作是在 win 平台上的， 并没有兼容其他的平台
-    set(MAYA_DEFAULT_LOCATION "C:/Program Files/Autodesk/Maya${Maya_FIND_VERSION}")
-    set(OPEN_MAYA OpenMaya)
 endif ()
 
 # 寻找maya 中的基本路径 使用 添加版本
@@ -55,7 +54,7 @@ find_path(MAYA_BASE_DIR
         "${MAYA_LOCATION}"
         "$ENV{MAYA_LOCATION}"
         "${Maya_ROOT_DIR}"
-        ${MAYA_DEFAULT_LOCATION}
+        "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\Maya\\${Maya_FIND_VERSION}\\Setup\\InstallPath;MAYA_INSTALL_LOCATION]"
         DOC
         "maya 基本路径"
         )
@@ -64,10 +63,7 @@ find_path(MAYA_BASE_DIR
 find_path(MAYA_INCLUDE_DIR
         maya/MFn.h
         HINTS
-        "${MAYA_LOCATION}"
-        "$ENV{MAYA_LOCATION}"
-        "${Maya_ROOT_DIR}"
-        ${MAYA_DEFAULT_LOCATION}
+        "${MAYA_BASE_DIR}"
         PATH_SUFFIXES
         "include"
         DOC
@@ -78,10 +74,7 @@ find_path(MAYA_INCLUDE_DIR
 find_path(MAYA_LIBRARY_DIR
         ${OPEN_MAYA}.lib
         HINTS
-        "${MAYA_LOCATION}"
-        "$ENV{MAYA_LOCATION}"
-        "${Maya_ROOT_DIR}"
-        ${MAYA_DEFAULT_LOCATION}
+        "${MAYA_BASE_DIR}"
         PATH_SUFFIXES
         "lib"
         DOC
@@ -92,10 +85,7 @@ find_path(MAYA_LIBRARY_DIR
 find_path(MAYA_DLL_LIBRARY_DIR
         ${OPEN_MAYA}.dll
         HINTS
-        "${MAYA_LOCATION}"
-        "$ENV{MAYA_LOCATION}"
-        "${Maya_ROOT_DIR}"
-        ${MAYA_DEFAULT_LOCATION}
+        "${MAYA_BASE_DIR}"
         PATH_SUFFIXES
         "bin"
         DOC
