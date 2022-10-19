@@ -184,6 +184,8 @@ class reference_file {
    */
   bool replace_file(const entt::handle &in_handle);
 
+  std::optional<MDagPath> get_field_dag() const;
+
   /**
    * @brief 将着色集和材质名称调换为导出abc做准备
    * @return

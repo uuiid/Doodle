@@ -677,19 +677,31 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_MAYA_CHICK(l_s);
 }
-MDagPath qcloth_shape::ql_cloth_shape() const {
+MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
+
+void qcloth_shape::add_field() const {
   auto l_mesh = cloth_mesh();
   MStatus l_status{};
-  MFnMesh l_mesh_fn{l_mesh, &l_status};
-  DOODLE_MAYA_CHICK(l_status);
 
-  MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
-  DOODLE_MAYA_CHICK(l_status);
-  MSelectionList l_select_list{};
-  for (; !l_it.isDone(); l_it.next()) {
+  auto l_f = p_ref_file.get<reference_file>().get_field_dag();
+  if (l_f) {
+    MSelectionList l_select_list{};
+    l_status = l_select_list.add(*l_f);
+    DOODLE_MAYA_CHICK(l_status);
+
+    MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
+    DOODLE_MAYA_CHICK(l_status);
+    for (; !l_it.isDone(); l_it.next()) {
+      auto l_obj = l_it.currentItem(&l_status);
+      DOODLE_MAYA_CHICK(l_status);
+      l_status = l_select_list.add(l_obj);
+      DOODLE_MAYA_CHICK(l_status);
+    }
+
+    MGlobal::setActiveSelectionList(l_select_list);
+    l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
   }
 }
-void qcloth_shape::add_field() const {}
 MDagPath qcloth_shape::cloth_mesh() const {
   MStatus l_s{};
   MObject l_mesh{};
