@@ -697,8 +697,7 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
   l_s = l_fn_skin_cluster.setEnvelope(1);
   DOODLE_MAYA_CHICK(l_s);
 }
-MDagPath qcloth_shape::ql_cloth_shape() const {
-  return get_dag_path(obj);
-}
+MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
+void qcloth_shape::add_field() const {}
 
 }  // namespace doodle::maya_plug

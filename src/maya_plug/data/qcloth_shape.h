@@ -98,6 +98,12 @@ class qcloth_shape {
    */
   bool create_cache() const;
 
+  /**
+   * @brief 使用配置添加风场
+   *
+   */
+  void add_field() const;
+
   MDagPath ql_cloth_shape() const;
 
   /**

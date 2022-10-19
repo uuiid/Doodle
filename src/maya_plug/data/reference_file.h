@@ -84,15 +84,16 @@ class reference_file {
  public:
  private:
   std::string file_namespace;
+
   entt::handle search_file_info;
+  /// @brief 添加风场字段
+  std::string field_attr;
 
   void chick_mobject() const;
 
   static std::string get_abc_exprt_arg();
 
-  std::vector<MDagPath> find_out_group_child_suffix_node(
-      const std::string &in_suffix
-  ) const;
+  std::vector<MDagPath> find_out_group_child_suffix_node(const std::string &in_suffix) const;
 
   /**
    * @brief
