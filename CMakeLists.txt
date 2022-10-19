@@ -1,13 +1,16 @@
-﻿cmake_minimum_required(VERSION 3.20)
-#添加模块文件
+﻿# 确定最低版本
+cmake_minimum_required(VERSION 3.20)
+# 添加模块文件(辅助cmake寻找需要的动态库)
+# CMAKE_SOURCE_DIR 代表当前文件的路径
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+# 寻找git版本标签🏷️
 include(GetGitVersion)
-
 get_git_version(
         WORK_DIR ${CMAKE_SOURCE_DIR}
 )
-MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
 
+MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+# 创建一个项目
 project(Doodle
         VERSION "${v_short}"
         DESCRIPTION "动画制作中的一些辅助工具"
@@ -16,19 +19,22 @@ project(Doodle
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+
+# 项目中所有的 std::string 类都是utf-8字节  认为 char -> char8
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 #add_compile_options(/W4)
 
+# 设置 c++ 版本
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-#使用中文
+# 使用中文
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
-#添加选项
+# 添加选项
 option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 
@@ -36,7 +42,7 @@ option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 #首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
-
+# 寻找包
 find_package(Boost REQUIRED COMPONENTS
         locale
         iostreams
@@ -49,12 +55,12 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Catch2 CONFIG)
 find_package(Doxygen)
-# 寻找opencv
+# 寻找 opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 # 寻找 openssl
 find_package(OpenSSL REQUIRED)
-#仅头库
+# 仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
@@ -77,16 +83,7 @@ find_package(cryptopp CONFIG REQUIRED)
 find_package(directxtk CONFIG REQUIRED)
 
 
-add_custom_target(
-        update_doc_and_cmrc
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/doxygen-awesome-css/doxygen-awesome.css ${PROJECT_SOURCE_DIR}/docs/css
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-brands-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-regular-400.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/Font-Awesome/webfonts/fa-solid-900.ttf ${PROJECT_SOURCE_DIR}/src/doodle_core/resource
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/external/cmrc/CMakeRC.cmake ${PROJECT_SOURCE_DIR}/CMake/
-
-)
-
+# 启用测试
 enable_testing()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 cmake_print_variables(DOODLE_PACKAGE_NAME)

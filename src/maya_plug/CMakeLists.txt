@@ -1,5 +1,9 @@
 
+# 验证变量 不存在跳过
 if (DEFINED Maya_Version)
+    # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
+    # 模块的寻找文件名称 Find + 包名称 + .cmake
+    # 开始运行 `FindMaya.cmake`
     find_package(Maya ${Maya_Version} MODULE)
     find_package(OpenMP REQUIRED)
 

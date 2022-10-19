@@ -1,5 +1,6 @@
 include(CMakePrintHelpers)
 
+# cmake函数
 function(get_git_version)
     set(options IS)
     set(oneValueArgs WORK_DIR)

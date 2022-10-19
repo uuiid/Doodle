@@ -46,6 +46,9 @@ if (WIN32)
 endif ()
 
 # 寻找maya 中的基本路径 使用 添加版本
+# MAYA_DEFAULT_LOCATION -> C:/Program Files/Autodesk/Maya2018
+# 验证 C:/Program Files/Autodesk/Maya2018/include/maya/MFn.h 是否存在 -> 存在 -> 设置变量 MAYA_BASE_DIR 为 C:/Program Files/Autodesk/Maya2018
+# 验证 D:/Maya2018/include/maya/MFn.h 是否存在 -> 存在 -> 设置变量 MAYA_BASE_DIR 为 D:/Maya2018
 find_path(MAYA_BASE_DIR
         include/maya/MFn.h
         HINTS
@@ -61,6 +64,9 @@ find_path(MAYA_BASE_DIR
 find_path(MAYA_INCLUDE_DIR
         maya/MFn.h
         HINTS
+        "${MAYA_LOCATION}"
+        "$ENV{MAYA_LOCATION}"
+        "${Maya_ROOT_DIR}"
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "include"
@@ -72,6 +78,9 @@ find_path(MAYA_INCLUDE_DIR
 find_path(MAYA_LIBRARY_DIR
         ${OPEN_MAYA}.lib
         HINTS
+        "${MAYA_LOCATION}"
+        "$ENV{MAYA_LOCATION}"
+        "${Maya_ROOT_DIR}"
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "lib"
@@ -83,6 +92,9 @@ find_path(MAYA_LIBRARY_DIR
 find_path(MAYA_DLL_LIBRARY_DIR
         ${OPEN_MAYA}.dll
         HINTS
+        "${MAYA_LOCATION}"
+        "$ENV{MAYA_LOCATION}"
+        "${Maya_ROOT_DIR}"
         ${MAYA_DEFAULT_LOCATION}
         PATH_SUFFIXES
         "bin"
