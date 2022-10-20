@@ -5,6 +5,7 @@
 #include "comm_check_scenes.h"
 
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/logger/logger.h>
 // #include <doodle_lib/lib_warp/imgui_warp.h>
 
 #include <maya/MCallbackIdArray.h>
