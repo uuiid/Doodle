@@ -696,7 +696,7 @@ void qcloth_shape::add_field() const {
       l_status = l_select_list.add(l_mesh, l_obj);
       DOODLE_MAYA_CHICK(l_status);
     }
-
+    /// @brief  这里必须要最后加入
     l_status = l_select_list.add(*l_f);
     DOODLE_MAYA_CHICK(l_status);
     MGlobal::setActiveSelectionList(l_select_list);
