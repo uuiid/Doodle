@@ -103,8 +103,15 @@ class qcloth_shape {
    *
    */
   void add_field() const;
-
+  /**
+   * @brief 获取布料形状（这个是一个tran）
+   * @return 布料dag路径
+   */
   MDagPath ql_cloth_shape() const;
+  /**
+   * @brief 获取布料输出的 mesh 节点，
+   * @return 布料网格dag
+   */
   MDagPath cloth_mesh() const;
 
   /**
