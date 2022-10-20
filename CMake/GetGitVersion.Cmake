@@ -42,33 +42,29 @@ function(get_git_version)
         #                CMAKE_MATCH_3
         #                CMAKE_MATCH_4
         #                CMAKE_MATCH_5)
-
-
-        # 版本递增
-        if (${CMAKE_MATCH_4})
-            math(EXPR lv_patch "${CMAKE_MATCH_3} + 1")
-        else()
-            set(lv_patch ${CMAKE_MATCH_3})
-        endif ()
-
-        set(lv_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${lv_patch}")
-
-
-        message("get version v${lv_short}")
-        execute_process( # get_git_version
-                COMMAND ${GIT_EXECUTABLE} tag -f "v${lv_short}"
+        execute_process( # 检查分支
+                COMMAND ${GIT_EXECUTABLE} branch --show-current
                 WORKING_DIRECTORY ${DOODLE_GIT_WORK_DIR}
+                OUTPUT_VARIABLE GIT_BRANCH
                 RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-        if (GIT_DESCRIBE_ERROR_CODE)
-            message(FATAL_ERROR "not set get version v${v_short}")
+        if (master STREQUAL GIT_BRANCH AND CMAKE_MATCH_4)
+            # 版本递增
+            message("The current branch is the master branch, and the version number will be added")
+            math(EXPR CMAKE_MATCH_3 "${CMAKE_MATCH_3} + 1")
+            execute_process( # get_git_version
+                    COMMAND ${GIT_EXECUTABLE} tag -f "v${lv_short}"
+                    WORKING_DIRECTORY ${DOODLE_GIT_WORK_DIR}
+                    RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
         endif ()
 
-        set(v_patch lv_patch PARENT_SCOPE)
         set(v_major ${CMAKE_MATCH_1} PARENT_SCOPE)
         set(v_minor ${CMAKE_MATCH_2} PARENT_SCOPE)
+        set(v_patch ${CMAKE_MATCH_3} PARENT_SCOPE)
         set(v_tweak ${CMAKE_MATCH_4} PARENT_SCOPE)
         set(v_sha1 ${CMAKE_MATCH_5} PARENT_SCOPE)
-        set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${lv_patch}" PARENT_SCOPE)
+        set(v_short "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}" PARENT_SCOPE)
+        message("get version v${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
     endif ()
 endfunction()
