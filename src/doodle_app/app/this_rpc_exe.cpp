@@ -28,8 +28,7 @@ class this_rpc_exe::impl {
   //  std::shared_ptr<json_rpc_client> rpc_child;
 };
 
-this_rpc_exe::this_rpc_exe()
-    : ptr(std::make_unique<impl>()) {
+this_rpc_exe::this_rpc_exe() : ptr(std::make_unique<impl>()) {
   ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
 }
 void this_rpc_exe::stop_exit() {
@@ -38,8 +37,7 @@ void this_rpc_exe::stop_exit() {
   //  }
 }
 void this_rpc_exe::create_move(
-    const FSys::path& in_out_path,
-    const std::vector<doodle::movie::image_attr>& in_move,
+    const FSys::path& in_out_path, const std::vector<doodle::movie::image_attr>& in_move,
     ::doodle::process_message& in_msg
 ) {
   ptr->msg = &in_msg;
@@ -48,15 +46,11 @@ void this_rpc_exe::create_move(
 
   l_json["out_path"]   = in_out_path;
   l_json["image_attr"] = in_move;
-  auto l_tmp           = FSys::write_tmp_file(
-      "create_move",
-      l_json.dump(), ".json"
-  );
+  auto l_tmp           = FSys::write_tmp_file("create_move", l_json.dump(), ".json");
   ptr->this_exe_proces = boost::process::child{
       boost::process::exe  = ptr->this_exe_path,
       boost::process::args = {"--json_rpc"s, fmt::format(R"(--create_move="{}")", l_tmp)},
-      boost::process::std_out > ptr->out_attr,
-      boost::process::std_err > ptr->err_attr};
+      boost::process::std_out > ptr->out_attr, boost::process::std_err > ptr->err_attr};
 
   this->read_err();
   this->read_out();
@@ -81,13 +75,10 @@ void this_rpc_exe::create_rpc_child() {
 void this_rpc_exe::read_err() const {
   if (ptr->err_attr.is_open())
     boost::asio::async_read_until(
-        ptr->err_attr,
-        boost::asio::dynamic_buffer(ptr->out_io_err_attr),
-        '\n',
+        ptr->err_attr, boost::asio::dynamic_buffer(ptr->out_io_err_attr), '\n',
         [this](boost::system::error_code in_code, std::size_t in_size) {
           if (!in_code) {
-            if (!ptr->out_io_err_attr.empty() && ptr->msg)
-              ptr->msg->message(ptr->out_io_err_attr);
+            if (!ptr->out_io_err_attr.empty() && ptr->msg) ptr->msg->message(ptr->out_io_err_attr);
             ptr->out_io_err_attr.clear();
             this->read_err();
           } else
@@ -98,13 +89,10 @@ void this_rpc_exe::read_err() const {
 void this_rpc_exe::read_out() const {
   if (ptr->out_attr.is_open())
     boost::asio::async_read_until(
-        ptr->out_attr,
-        boost::asio::dynamic_buffer(ptr->out_io_out_attr),
-        '\n',
+        ptr->out_attr, boost::asio::dynamic_buffer(ptr->out_io_out_attr), '\n',
         [this](boost::system::error_code in_code, std::size_t in_size) {
           if (!in_code) {
-            if (!ptr->out_io_out_attr.empty() && ptr->msg)
-              ptr->msg->message(ptr->out_io_out_attr);
+            if (!ptr->out_io_out_attr.empty() && ptr->msg) ptr->msg->message(ptr->out_io_out_attr);
             ptr->out_io_out_attr.clear();
             this->read_out();
           } else
@@ -118,4 +106,5 @@ this_rpc_exe::~this_rpc_exe() {
   ptr->err_attr.close();
   ptr->out_attr.close();
 }
+void this_rpc_exe::wait() { ptr->this_exe_proces.wait(); }
 }  // namespace doodle::detail

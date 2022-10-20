@@ -21,6 +21,7 @@ void maya_create_movie::create_move(
     const FSys::path& in_out_path, process_message& in_msg, const std::vector<image_attr>& in_vector
 ) {
   ptr->doodle_exe_attr.create_move(in_out_path, in_vector, in_msg);
+  ptr->doodle_exe_attr.wait();
 }
 FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
   boost::ignore_unused(this);
