@@ -197,7 +197,6 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     /// @brief 添加风场
-    DOODLE_LOG_INFO("开始设置解算布料 关联的风场");
     k_qs.add_field();
 
     DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");

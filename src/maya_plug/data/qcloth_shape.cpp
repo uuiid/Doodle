@@ -8,6 +8,7 @@
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -680,25 +681,26 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
 MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
 
 void qcloth_shape::add_field() const {
-  auto l_mesh = cloth_mesh();
-  MStatus l_status{};
-
   auto l_f = p_ref_file.get<reference_file>().get_field_dag();
   if (l_f) {
+    auto l_mesh = cloth_mesh();
+    DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
+    MStatus l_status{};
     MSelectionList l_select_list{};
-    l_status = l_select_list.add(*l_f);
-    DOODLE_MAYA_CHICK(l_status);
 
     MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
     DOODLE_MAYA_CHICK(l_status);
     for (; !l_it.isDone(); l_it.next()) {
       auto l_obj = l_it.currentItem(&l_status);
       DOODLE_MAYA_CHICK(l_status);
-      l_status = l_select_list.add(l_obj);
+      l_status = l_select_list.add(l_mesh, l_obj);
       DOODLE_MAYA_CHICK(l_status);
     }
 
+    l_status = l_select_list.add(*l_f);
+    DOODLE_MAYA_CHICK(l_status);
     MGlobal::setActiveSelectionList(l_select_list);
+    DOODLE_LOG_INFO("设置布料风场 {}", *l_f);
     l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
   }
 }
@@ -716,7 +718,9 @@ MDagPath qcloth_shape::cloth_mesh() const {
   }
 
   DOODLE_CHICK(!l_mesh.isNull(), doodle_error{"没有找到布料模型节点"s});
-  return get_dag_path(l_mesh);
+  auto l_path = get_dag_path(l_mesh);
+  DOODLE_LOG_INFO(" 找到布料节点 {}", l_path);
+  return l_path;
 }
 
 }  // namespace doodle::maya_plug
