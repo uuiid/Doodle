@@ -53,7 +53,7 @@ function(get_git_version)
             message("The current branch is the master branch, and the version number will be added")
             math(EXPR CMAKE_MATCH_3 "${CMAKE_MATCH_3} + 1")
             execute_process( # get_git_version
-                    COMMAND ${GIT_EXECUTABLE} tag -f "v${lv_short}"
+                    COMMAND ${GIT_EXECUTABLE} tag -f "v${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}"
                     WORKING_DIRECTORY ${DOODLE_GIT_WORK_DIR}
                     RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
