@@ -17,11 +17,13 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
   void DoodleCalculateSpeed();
 
   UFUNCTION(BlueprintCallable, Category = "Doodle")
-  void DoodleLookAtObject(const AActor *InActor);
+  void DoodleLookAtObject(const AActor* InActor);
 
   void DoodleRandom();
 
   void NativeBeginPlay() override;
+
+  void MoveToPoint(const FVector& In_Point);
 
  protected:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")

@@ -83,15 +83,9 @@ void FDoodleClusterTrackEditor::BuildObjectBindingTrackMenu(
 
   if (ObjectClass->IsChildOf(UDoodleAnimInstance::StaticClass())) {
     MenuBuilder.AddMenuEntry(
-        LOCTEXT("Add_Doodle_LookAtObject", "Add Foodle LookAtObject"),
-        LOCTEXT("Add_Doodle_LookAtObject", "Add Foodle LookAtObject"),
+        LOCTEXT("Add_Doodle_Object", "Add Foodle Object"), LOCTEXT("Add_Doodle_Object", "Add Foodle Object"),
         FSlateIcon("Subtitle", "EventIcon"),
-        FUIAction{
-            FExecuteAction::CreateLambda(
-                [=]() {
-                  this->AddNewObjectBindingTrack(ObjectBindings);
-                }
-            )}
+        FUIAction{FExecuteAction::CreateLambda([=]() { this->AddNewObjectBindingTrack(ObjectBindings); })}
     );
   }
 

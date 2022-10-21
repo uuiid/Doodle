@@ -43,15 +43,14 @@ struct FEventTrackExecutionTokenDOodle
           }
         }
         if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
+          /// 计算速度
           if (L_Lock_Object) {
-            L_Anim->DoodleLookAtObject(L_Lock_Object);
-            // UE_LOG(LogTemp, Log, TEXT("APawn *L_Pawn = L_Anim->TryGetPawnOwner()"));
-            if (APawn *L_Pawn = L_Anim->TryGetPawnOwner()) {
-              // L_Pawn->Tick
-            }
+            if (SectionTemplate->Params->MoveTo)
+              L_Anim->MoveToPoint(L_Lock_Object->GetActorLocation());
+            else
+              L_Anim->DoodleLookAtObject(L_Lock_Object);
             break;
           }
-          // L_Anim->DoodleRandom();
         }
       }
     }

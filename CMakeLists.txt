@@ -137,4 +137,5 @@ target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc+
 find_package(modules CONFIG REQUIRED)
 target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 
+GenerateProjectFiles.bat -projectfiles -vscode -project=F:\doodle_plug_dev_4.27\doodle_plug.uproject -game -engine
 ]==]
