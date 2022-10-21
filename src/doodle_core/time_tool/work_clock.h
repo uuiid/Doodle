@@ -4,21 +4,20 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
-#include <bitset>
-#include <utility>
-#include <doodle_core/metadata/time_point_wrap.h>
-#include <doodle_core/metadata/rules.h>
-
 #include <doodle_core/lib_warp/boost_icl_warp.h>
+#include <doodle_core/metadata/detail/boost_lcl_time_point_adaptation.h>
+#include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 
-#include <boost/icl/split_interval_set.hpp>
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/interval_set.hpp>
-#include <doodle_core/metadata/detail/boost_lcl_time_point_adaptation.h>
-namespace doodle {
+#include <boost/icl/split_interval_set.hpp>
 
-namespace business {
+#include <bitset>
+#include <utility>
+
+namespace doodle::business {
 
 class DOODLE_CORE_API work_clock {
   rules rules_;
@@ -38,6 +37,7 @@ class DOODLE_CORE_API work_clock {
   work_clock();
 
   void set_rules(const rules& in_rules);
+
   /**
    * @brief 设置工作时间时钟的开始和结束(缓存)
    * @param in_min
@@ -68,8 +68,7 @@ class DOODLE_CORE_API work_clock {
    * @return 时间段
    */
   [[nodiscard("")]] std::vector<std::pair<time_type, time_type>> get_work_du(
-      const time_type& in_min,
-      const time_type& in_max
+      const time_type& in_min, const time_type& in_max
   ) const;
 
   /**
@@ -77,12 +76,11 @@ class DOODLE_CORE_API work_clock {
    * @param in_time 时间点
    * @return 可选段备注
    */
-  std::optional<std::string> get_time_info(
-      const time_type& in_min,
-      const time_type& in_max
-  );
+  std::optional<std::string> get_time_info(const time_type& in_min, const time_type& in_max);
+
+  work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
+  work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
 
   std::string debug_print();
 };
-}  // namespace business
-}  // namespace doodle
+}  // namespace doodle::business
