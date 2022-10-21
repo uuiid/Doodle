@@ -8,14 +8,14 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle {
-namespace detail {
+namespace doodle::business::detail {
 
 class attendance_interface {
  public:
-  attendance_interface()                                                  = default;
-  virtual const doodle::business::work_clock& work_clock() const noexcept = 0;
+  attendance_interface()                                                       = default;
+  virtual ~attendance_interface()                                              = default;
+  virtual void set_user(const entt::handle& in_handle)                         = 0;
+  virtual const doodle::business::work_clock& work_clock_attr() const noexcept = 0;
 };
 
-}  // namespace detail
-}  // namespace doodle
+}  // namespace doodle::business::detail

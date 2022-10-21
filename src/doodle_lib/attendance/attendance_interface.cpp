@@ -4,6 +4,4 @@
 
 #include "attendance_interface.h"
 
-namespace doodle {
-namespace detail {}  // namespace detail
-}  // namespace doodle
+namespace doodle::detail {}  // namespace doodle::detail
