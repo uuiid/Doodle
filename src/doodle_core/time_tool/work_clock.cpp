@@ -154,6 +154,7 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
 
   return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
 }
+
 work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time) {
   auto&& [l_time_1, l_time_2] = in_time;
   auto l_dis                  = discrete_interval_time::closed(l_time_1, l_time_2);
@@ -167,7 +168,21 @@ work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_
   interval_map_time_ += std::make_pair(discrete_interval_time::closed(l_time_1, l_time_2), info_type{l_info});
   return *this;
 }
+work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_wrap>& in_time) {
+  auto&& [l_time_1, l_time_2] = in_time;
+  auto l_dis                  = discrete_interval_time::closed(l_time_1, l_time_2);
+  interval_set_time_ -= l_dis;
 
+  return *this;
+}
+work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
+  auto&& [l_time_1, l_time_2, l_info] = in_time;
+  auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
+  interval_set_time_ -= l_dis;
+  interval_map_time_ -= std::make_pair(discrete_interval_time::closed(l_time_1, l_time_2), info_type{l_info});
+
+  return *this;
+}
 }  // namespace business
 
 }  // namespace doodle

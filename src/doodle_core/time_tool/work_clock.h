@@ -80,7 +80,8 @@ class DOODLE_CORE_API work_clock {
 
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
-
+  work_clock& operator-=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
+  work_clock& operator-=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
   std::string debug_print();
 };
 }  // namespace doodle::business
