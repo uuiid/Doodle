@@ -46,10 +46,7 @@ struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
         if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
           /// 计算速度
           if (L_Lock_Object) {
-            if (SectionTemplate->Params->MoveTo)
-              L_Anim->MoveToPoint(L_Lock_Object);
-            else
-              L_Anim->DoodleLookAtObject(L_Lock_Object);
+            L_Anim->DoodleLookAtObject(L_Lock_Object);
             break;
           }
         }
@@ -60,12 +57,12 @@ struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
 };
 
 FMovieSceneDoodleSectionClusterTemplate::FMovieSceneDoodleSectionClusterTemplate() : Params() {
-  EnableOverrides(RequiresSetupFlag);
+  // EnableOverrides(RequiresSetupFlag);
 }
 
 FMovieSceneDoodleSectionClusterTemplate::FMovieSceneDoodleSectionClusterTemplate(const UDoodleClusterSection &Section)
     : Params(&Section) {
-  EnableOverrides(RequiresSetupFlag);
+  // EnableOverrides(RequiresSetupFlag);
 }
 
 void FMovieSceneDoodleSectionClusterTemplate::Evaluate(
@@ -95,20 +92,20 @@ void FMovieSceneDoodleSectionClusterTemplate::Evaluate(
   }
 }
 
-void FMovieSceneDoodleSectionClusterTemplate::Setup(
-    FPersistentEvaluationData &InPersistentData, IMovieScenePlayer &InPlayer
-) const {
-  // UMovieSceneTrack *L_Movie = Cast<UMovieSceneTrack>(Params->GetOuter());
-  // for (auto &&i : InPlayer.FindBoundObjects(L_Movie->FindObjectBindingGuid(), MovieSceneSequenceID::Root)) {
-  //   if (i.IsValid()) {
-  //     auto L_Obj    = i.Get();
-  //     APawn *L_Anim = Cast<APawn>(L_Obj->GetOuter()->GetOuter());
-  //     if (L_Anim && L_Movie && Params->MoveTo) {
-  //       L_Anim->SpawnDefaultController();
-  //       L_Anim->UpdateNavAgent();
-  //       // L_Anim->PostInitializeComponents();
-  //       // UE_LOG(LogTemp, Log, TEXT("ok %s"), *L_Anim->GetName());
-  //     }
-  //   }
-  // };
-}
+// void FMovieSceneDoodleSectionClusterTemplate::Setup(
+//     FPersistentEvaluationData &InPersistentData, IMovieScenePlayer &InPlayer
+// ) const {
+// UMovieSceneTrack *L_Movie = Cast<UMovieSceneTrack>(Params->GetOuter());
+// for (auto &&i : InPlayer.FindBoundObjects(L_Movie->FindObjectBindingGuid(), MovieSceneSequenceID::Root)) {
+//   if (i.IsValid()) {
+//     auto L_Obj    = i.Get();
+//     APawn *L_Anim = Cast<APawn>(L_Obj->GetOuter()->GetOuter());
+//     if (L_Anim && L_Movie && Params->MoveTo) {
+//       L_Anim->SpawnDefaultController();
+//       L_Anim->UpdateNavAgent();
+//       // L_Anim->PostInitializeComponents();
+//       // UE_LOG(LogTemp, Log, TEXT("ok %s"), *L_Anim->GetName());
+//     }
+//   }
+// };
+// }

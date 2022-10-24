@@ -48,7 +48,7 @@ bool ADoodleAIController::GetRandomPointInRadius(const FVector &Origin, float Ra
 
   // Out
   OutResult                           = Result;
-  ADoodleCurveCrowd *DoodleCurveCrowd = Cast<ADoodleCurveCrowd>(GetPawn());
+  ADoodleAiCrowd *DoodleCurveCrowd    = Cast<ADoodleAiCrowd>(GetPawn());
   if (DoodleCurveCrowd) {
     OutResult += DoodleCurveCrowd->Direction;
   }

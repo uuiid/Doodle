@@ -23,7 +23,6 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
 
   void NativeBeginPlay() override;
 
-  void MoveToPoint(AActor* In_Point);
 
  protected:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")

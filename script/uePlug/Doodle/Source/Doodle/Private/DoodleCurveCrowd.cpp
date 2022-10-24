@@ -11,8 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "DoodleAIController.h"
 // Sets default values
-ADoodleCurveCrowd::ADoodleCurveCrowd()
-    : ACharacter() {
+ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
 
@@ -39,7 +38,7 @@ ADoodleCurveCrowd::ADoodleCurveCrowd()
 }
 
 // Called every frame
-void ADoodleCurveCrowd::Tick(float DeltaTime) {
+void ADoodleAiCrowd::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
   // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
   // if (!SkeletalMeshComponent)

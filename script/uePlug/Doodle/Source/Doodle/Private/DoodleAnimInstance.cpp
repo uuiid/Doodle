@@ -13,22 +13,6 @@ void UDoodleAnimInstance::DoodleCalculateSpeed() {
   }
 }
 
-void UDoodleAnimInstance::MoveToPoint(AActor *In_Point) {
-  APawn *LPawn = TryGetPawnOwner();
-
-  if (LPawn) {
-    AAIController *L_AI = LPawn->GetController<AAIController>();
-    if (L_AI) {
-      if (!is_init) {
-        auto L_R = L_AI->MoveToActor(In_Point);
-        is_init  = true;
-      }
-
-      DoodleCalculateSpeed();
-    }
-  }
-}
-
 void UDoodleAnimInstance::DoodleLookAtObject(const AActor *InActor) {
   // const APawn *LInPawn = Cast<const APawn>(InActor);
   APawn *LSelfPawn = TryGetPawnOwner();

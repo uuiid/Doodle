@@ -12,12 +12,12 @@ class USplineComponent;
 class UAnimationAsset;
 
 UCLASS()
-class DOODLE_API ADoodleCurveCrowd : public ACharacter {
+class DOODLE_API ADoodleAiCrowd : public ACharacter {
   GENERATED_BODY()
 
  public:
   // Sets default values for this character's properties
-  ADoodleCurveCrowd();
+  ADoodleAiCrowd();
 
  protected:
   // Called when the game starts or when spawned
