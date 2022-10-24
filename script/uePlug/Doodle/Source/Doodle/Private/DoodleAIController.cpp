@@ -21,7 +21,7 @@ ADoodleAIController::ADoodleAIController(
 void ADoodleAIController::BeginPlay() {
   CastChecked<UCrowdFollowingComponent>(GetPathFollowingComponent())->SetCrowdAvoidanceRangeMultiplier(1);
   ADoodleAiCrowd *DoodleCurveCrowd = Cast<ADoodleAiCrowd>(GetPawn());
-  if (DoodleCurveCrowd->MoveTo) {
+  if (DoodleCurveCrowd && DoodleCurveCrowd->MoveTo) {
     GoToRandomWaypoint();
   }
 }
