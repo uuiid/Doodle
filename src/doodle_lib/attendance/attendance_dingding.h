@@ -16,7 +16,8 @@ class attendance_dingding : public detail::attendance_interface {
   virtual ~attendance_dingding();
   void set_user(const entt::handle& in_handle) override;
   void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) override;
-  const work_clock& work_clock_attr() const noexcept override;
+
+  const work_clock& work_clock_attr() const override;
 };
 
 }  // namespace doodle::business

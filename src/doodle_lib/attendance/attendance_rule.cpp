@@ -36,7 +36,7 @@ void attendance_rule::set_range(const time_point_wrap& in_begin, const time_poin
   gen_work_clock();
 }
 
-const work_clock& attendance_rule::work_clock_attr() const noexcept { return ptr->time_clock; }
+const work_clock& attendance_rule::work_clock_attr() const { return ptr->time_clock; }
 void attendance_rule::gen_work_clock() {
   if (ptr->user_handle && ptr->user_handle.any_of<rules>()) {
     auto& l_rule = ptr->user_handle.get<rules>();

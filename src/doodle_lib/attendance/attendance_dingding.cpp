@@ -15,12 +15,12 @@ namespace business {
 class attendance_dingding::impl {
  public:
   std::unique_ptr<doodle::dingding::dingding_api> client{};
-  work_clock work_clock_attr{};
+  std::unique_ptr<boost::asio::ssl::context> ssl_context{};
 
+  work_clock work_clock_attr{};
   entt::handle user_handle{};
   time_point_wrap begin_time{};
   time_point_wrap end_time{};
-  std::unique_ptr<boost::asio::ssl::context> ssl_context{};
 };
 
 attendance_dingding::attendance_dingding() : ptr(std::make_unique<impl>()) {}
@@ -36,7 +36,7 @@ void attendance_dingding::set_range(const time_point_wrap& in_begin, const time_
   ptr->end_time   = in_end;
 }
 
-const work_clock& attendance_dingding::work_clock_attr() const noexcept {
+const work_clock& attendance_dingding::work_clock_attr() const {
   if (!ptr->client) {
     ptr->ssl_context = std::move(std::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23));
     ptr->client =
