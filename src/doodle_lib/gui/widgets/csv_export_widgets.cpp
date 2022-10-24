@@ -1,7 +1,7 @@
 //
 // Created by TD on 2022/2/17.
 //
-
+///@brief 表格导出的界面///
 #include "csv_export_widgets.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -49,9 +49,9 @@ class csv_export_widgets::impl {
 
 csv_export_widgets::csv_export_widgets()
     : p_i(std::make_unique<impl>()) {
-  p_i->title_name_ = std::string{name};
+  p_i->title_name_ = std::string{name};//获取上一次人物提交时的实体name
 }
-csv_export_widgets::~csv_export_widgets() = default;
+csv_export_widgets::~csv_export_widgets() = default;///析构释放内存
 
 void csv_export_widgets::init() {
   boost::contract::old_ptr<FSys::path> l_old_ptr = BOOST_CONTRACT_OLDOF(p_i->export_path.path);
@@ -67,7 +67,7 @@ void csv_export_widgets::init() {
                                          BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
                                        });
 
-  g_reg()->ctx().emplace<csv_export_widgets &>(*this);
+  g_reg()->ctx().emplace<csv_export_widgets &>(*this);//如果没有被列表列进去把指针指向的数据传进列表？？
   if (g_reg()->ctx().contains<std::vector<entt::handle>>())
     p_i->list = g_reg()->ctx().at<std::vector<entt::handle>>();
   p_i->con.emplace_back(

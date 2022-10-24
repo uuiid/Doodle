@@ -5,6 +5,7 @@ target_sources(
         doodle_dingding.h
         doodle_dingding_fwd.h
 )
+# 添加子目录
 add_subdirectory(client)
 add_subdirectory(configure)
 add_subdirectory(error_code)

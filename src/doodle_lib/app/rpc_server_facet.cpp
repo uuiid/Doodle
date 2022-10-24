@@ -25,7 +25,7 @@ class rpc_server_facet::impl {
   void redirect_io_to_console() {
     boost::ignore_unused(this);
     /// 释放控制台
-    CONSOLE_SCREEN_BUFFER_INFO conInfo;
+    CONSOLE_SCREEN_BUFFER_INFO conInfo;///控制台信息
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &conInfo);
     //    if (conInfo.dwSize.Y < minLength)
     //      conInfo.dwSize.Y = minLength;
