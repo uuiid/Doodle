@@ -12,7 +12,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
   std::string p_string_;
   std::string p_ENUS;
-
   class user_cache;
 
  public:
@@ -70,10 +69,7 @@ template <>
 struct formatter<::doodle::user> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const ::doodle::user& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string>::format(
-        in_.get_name(),
-        ctx
-    );
+    return formatter<std::string>::format(in_.get_name(), ctx);
   }
 };
 }  // namespace fmt
