@@ -9,8 +9,7 @@
 namespace doodle::maya_plug {
 class reference_file;
 namespace reference_file_ns {
-class generate_file_path_base
-    : boost::less_than_comparable<generate_file_path_base> {
+class generate_file_path_base : boost::less_than_comparable<generate_file_path_base> {
  protected:
   std::string extract_reference_name;
   std::string extract_scene_name;
@@ -36,22 +35,18 @@ class generate_file_path_base
   [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
 };
 
-class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>,
-                               public generate_file_path_base {
+class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>, public generate_file_path_base {
  protected:
   [[nodiscard("")]] FSys::path get_path() const override;
   [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
   friend struct fmt::formatter<generate_file_path_base>;
 
  public:
-  explicit generate_abc_file_path(
-      const entt::registry &in
-  );
+  explicit generate_abc_file_path(const entt::registry &in);
   virtual ~generate_abc_file_path();
 };
 
-class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>,
-                               public generate_file_path_base {
+class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>, public generate_file_path_base {
   friend struct fmt::formatter<generate_fbx_file_path>;
 
  private:
@@ -63,9 +58,7 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
   [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
 
  public:
-  explicit generate_fbx_file_path(
-      const entt::registry &in
-  );
+  explicit generate_fbx_file_path(const entt::registry &in);
 
   void is_camera(bool in_is_camera);
 
@@ -114,9 +107,7 @@ class reference_file {
    *
    */
   FSys::path export_abc(
-      const MTime &in_start,
-      const MTime &in_end,
-      const MSelectionList &in_export_obj,
+      const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj,
       const reference_file_ns::generate_abc_file_path &in_abc_name
   ) const;
   /**
@@ -127,9 +118,7 @@ class reference_file {
    * @return 导出文件的路径
    */
   FSys::path export_fbx(
-      const MTime &in_start,
-      const MTime &in_end,
-      const MSelectionList &in_export_obj,
+      const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj,
       const reference_file_ns::generate_fbx_file_path &in_fbx_name
   ) const;
 
@@ -183,6 +172,10 @@ class reference_file {
    * @brief 替换引用 需要组件 redirection_path_info_edit
    */
   bool replace_file(const entt::handle &in_handle);
+
+  std::optional<MDagPath> get_field_dag() const;
+  const std::string &get_field_string() const;
+  void add_field_dag(const MSelectionList &in_list);
 
   /**
    * @brief 将着色集和材质名称调换为导出abc做准备
@@ -258,13 +251,14 @@ class reference_file {
     j["use_sim"]         = p.use_sim;
     j["collision_model"] = p.collision_model;
     j["file_namespace"]  = p.file_namespace;
+    j["field_attr"]      = p.field_attr;
   }
   friend void from_json(const nlohmann::json &j, reference_file &p) {
     j.at("path").get_to(p.path);
     j.at("use_sim").get_to(p.use_sim);
     j.at("collision_model").get_to(p.collision_model);
-    if (j.contains("file_namespace"))
-      j.at("file_namespace").get_to(p.file_namespace);
+    if (j.contains("file_namespace")) j.at("file_namespace").get_to(p.file_namespace);
+    if (j.contains("field_attr")) j.at("field_attr").get_to(p.field_attr);
 
     if (j.contains("ref_file_uuid")) {
       std::string ref_file_uuid;
@@ -284,20 +278,13 @@ namespace fmt {
  * @tparam
  */
 template <>
-struct formatter<
-    ::doodle::maya_plug::reference_file_ns::generate_abc_file_path> : formatter<std::string> {
+struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(
-      const ::doodle::maya_plug::reference_file_ns::generate_abc_file_path &in_,
-      FormatContext &ctx
-  ) const -> decltype(ctx.out()) {
+  auto format(const ::doodle::maya_plug::reference_file_ns::generate_abc_file_path &in_, FormatContext &ctx) const
+      -> decltype(ctx.out()) {
     return fmt::format_to(
-        ctx.out(),
-        "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
-        in_.extract_scene_name,
-        in_.extract_reference_name,
-        in_.use_add_range,
-        in_.add_external_string
+        ctx.out(), "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
+        in_.extract_scene_name, in_.extract_reference_name, in_.use_add_range, in_.add_external_string
     );
   }
 };

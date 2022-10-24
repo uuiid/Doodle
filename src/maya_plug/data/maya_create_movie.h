@@ -14,6 +14,7 @@ class maya_create_movie : public doodle::detail::image_to_movie_interface {
 
  public:
   maya_create_movie();
+  virtual ~maya_create_movie();
 
   void create_move(
       const FSys::path& in_out_path,

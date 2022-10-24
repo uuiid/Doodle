@@ -103,9 +103,16 @@ class qcloth_shape {
    *
    */
   void add_field() const;
-
-  MDagPath ql_cloth_shape() const;
-  MDagPath cloth_mesh() const;
+  /**
+   * @brief 获取布料形状（这个是一个tran）
+   * @return 布料dag路径
+   */
+  [[nodiscard]] MDagPath ql_cloth_shape() const;
+  /**
+   * @brief 获取布料输出的 mesh 节点，
+   * @return 布料网格dag
+   */
+  [[nodiscard]] MDagPath cloth_mesh() const;
 
   /**
    * @brief 从传入的实体创建一个绑定节点
@@ -122,9 +129,7 @@ class qcloth_shape {
    *
    *  需要读取配置文件中的各个属性, 进行标准的重命名
    */
-  static std::vector<entt::handle> create_sim_cloth(
-      const entt::handle& in_handle
-  );
+  static std::vector<entt::handle> create_sim_cloth(const entt::handle& in_handle);
 
   /**
    * @brief 重置maya高模皮肤簇节点为权重为1
@@ -147,9 +152,7 @@ class qcloth_shape {
    * @param in_ref_file 传入的引用文件句柄
    * @return 完成布料网格的创建的句柄
    */
-  static std::vector<entt::handle> create(
-      const entt::handle& in_ref_file
-  );
+  static std::vector<entt::handle> create(const entt::handle& in_ref_file);
 
   static MObject get_ql_solver(const MSelectionList& in_selection_list);
   static MObject get_ql_solver();

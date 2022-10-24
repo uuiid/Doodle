@@ -48,19 +48,13 @@ class maya_register {
   template <typename node_type, typename mfn_plugin_type>
   MStatus register_node(mfn_plugin_type& in_) {
     auto l_s = in_.registerNode(
-        node_type::node_name.data(),
-        node_type::doodle_id,
-        &node_type::creator,
-        &node_type::initialize,
-        node_type::node_type,
-        &node_type::drawDbClassification
+        node_type::node_name.data(), node_type::doodle_id, &node_type::creator, &node_type::initialize,
+        node_type::node_type, &node_type::drawDbClassification
     );
     CHECK_MSTATUS(l_s);
     if (l_s) {
       maya_comm_call_back.emplace([](auto& in_plugin) {
-        auto l_s = in_plugin.deregisterNode(
-            node_type::doodle_id
-        );
+        auto l_s = in_plugin.deregisterNode(node_type::doodle_id);
         CHECK_MSTATUS(l_s);
         return l_s;
       });
@@ -70,16 +64,13 @@ class maya_register {
   template <typename node_type, typename draw_type>
   MStatus register_draw_overrider() {
     auto l_s = MHWRender::MDrawRegistry::registerDrawOverrideCreator(
-        node_type::drawDbClassification,
-        node_type::drawRegistrantId,
-        draw_type::Creator
+        node_type::drawDbClassification, node_type::drawRegistrantId, draw_type::Creator
     );
     CHECK_MSTATUS(l_s);
     if (l_s) {
       maya_comm_call_back.emplace([](auto& in) {
         auto l_s = MDrawRegistry::deregisterGeometryOverrideCreator(
-            node_type::drawDbClassification,
-            node_type::drawRegistrantId
+            node_type::drawDbClassification, node_type::drawRegistrantId
         );
         CHECK_MSTATUS(l_s);
         return l_s;
@@ -89,10 +80,9 @@ class maya_register {
   }
 
   template <typename Fun_t>
-  MStatus register_lab(
-      Fun_t&& in_fun
-  ) {
+  MStatus register_lab(Fun_t&& in_fun) {
     maya_comm_call_back.emplace(std::forward<Fun_t>(in_fun));
+    return {};
   }
 
   template <typename mfn_plugin_type>

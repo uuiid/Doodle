@@ -20,6 +20,7 @@ generate_export_header(doodle_lib
         CUSTOM_CONTENT_FROM_VARIABLE MY_CUSTOM_CONTENT)
 
 add_subdirectory(app)
+add_subdirectory(attendance)
 add_subdirectory(json_rpc)
 add_subdirectory(platform/win)
 add_subdirectory(gui)

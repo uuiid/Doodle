@@ -957,5 +957,32 @@ std::vector<MDagPath> reference_file::find_out_group_child_suffix_node(const std
 
   return l_r;
 }
+std::optional<MDagPath> reference_file::get_field_dag() const {
+  MSelectionList l_select{};
+  auto l_status = l_select.add(d_str{field_attr}, false);
+  if (l_status == MStatus::kInvalidParameter) {
+    return {};
+  } else {
+    MDagPath l_obj{};
+    l_status = l_select.getDagPath(0, l_obj);
+    DOODLE_MAYA_CHICK(l_status);
+    return l_obj;
+  }
+}
+void reference_file::add_field_dag(const MSelectionList &in_list) {
+  MStatus l_status{};
+  MItSelectionList l_it{in_list, MFn::kField, &l_status};
+  DOODLE_MAYA_CHICK(l_status);
+  for (; !l_it.isDone(); l_it.next()) {
+    MDagPath l_path{};
+
+    l_status = l_it.getDagPath(l_path);
+    DOODLE_MAYA_CHICK(l_status);
+    field_attr = fmt::to_string(l_path);
+
+    return;
+  }
+}
+const std::string &reference_file::get_field_string() const { return field_attr; }
 
 }  // namespace doodle::maya_plug

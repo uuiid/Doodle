@@ -56,8 +56,7 @@ play_blast::play_blast()
       p_eps(),
       p_shot(),
       p_current_time(),
-      p_uuid() {
-}
+      p_uuid() {}
 FSys::path play_blast::get_file_dir() const {
   auto k_cache_path = core_set::get_set().get_cache_root("maya_play_blast/tmp");
   k_cache_path /= p_uuid.substr(0, 3);
@@ -92,8 +91,7 @@ FSys::path play_blast::set_save_filename(const FSys::path& in_save_filename) {
 }
 
 FSys::path play_blast::get_out_path() const {
-  if (!FSys::exists(p_save_path.parent_path()))
-    FSys::create_directories(p_save_path.parent_path());
+  if (!FSys::exists(p_save_path.parent_path())) FSys::create_directories(p_save_path.parent_path());
   // k_cache_path /= fmt::format("{}_{}.mp4", p_eps, p_shot);
   return p_save_path;
 }
@@ -134,7 +132,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     } else {
       DOODLE_LOG_WARN("not find view");
     }
-    auto k_mel = fmt::format(R"(playblast
+    auto k_mel = fmt::format(
+        R"(playblast
 -compression "H.264"
 -filename "{}"
 -format "qt"
@@ -148,12 +147,14 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -endTime {}
 ;
 )",
-                             get_out_path().replace_extension("").generic_string(), in_start.as(MTime::uiUnit()), in_end.as(MTime::uiUnit()));
-    k_s        = MGlobal::executeCommand(k_mel.c_str());
+        get_out_path().replace_extension("").generic_string(), in_start.as(MTime::uiUnit()), in_end.as(MTime::uiUnit())
+    );
+    k_s = MGlobal::executeCommand(k_mel.c_str());
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
     return MStatus::kSuccess;
   } else {
-    auto k_mel = fmt::format(R"(playblast
+    auto k_mel = fmt::format(
+        R"(playblast
 -compression "png"
 -filename "{}"
 -format "image"
@@ -167,7 +168,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 -endTime {}
 ;
 )",
-                             get_file_path().generic_string(), in_start.value(), in_end.value());
+        get_file_path().generic_string(), in_start.value(), in_end.value()
+    );
     DOODLE_LOG_INFO("开始生成图片序列 {}\n{}", get_file_path(), k_mel);
     k_s = MGlobal::executeCommand(k_mel.c_str(), true, false);
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
@@ -182,33 +184,27 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       k_image.path_attr = l_path;
       /// \brief 相机名称
       k_image.watermarks_attr.emplace_back(
-          k_cam.get_transform_name(), 0.1, 0.1,
-          movie::image_watermark::rgba_t{25, 220, 2}
+          k_cam.get_transform_name(), 0.1, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
       );
       /// \brief 当前帧和总帧数
       auto k_len = in_end - in_start + 1;
       k_image.watermarks_attr.emplace_back(
-          fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()),
-          0.5, 0.1,
+          fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()), 0.5, 0.1,
           movie::image_watermark::rgba_t{25, 220, 2}
       );
       ++k_frame;
       /// \brief 绘制摄像机avo
       k_image.watermarks_attr.emplace_back(
-          fmt::format("FOV: {:.3f}", k_cam.focalLength()),
-          0.91, 0.1,
-          movie::image_watermark::rgba_t{25, 220, 2}
+          fmt::format("FOV: {:.3f}", k_cam.focalLength()), 0.91, 0.1, movie::image_watermark::rgba_t{25, 220, 2}
       );
       /// \brief 当前时间节点
       k_image.watermarks_attr.emplace_back(
-          fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())),
-          0.1, 0.91,
+          fmt::format("{:%Y-%m-%d %H:%M:%S}", chrono::floor<chrono::minutes>(chrono::system_clock::now())), 0.1, 0.91,
           movie::image_watermark::rgba_t{25, 220, 2}
       );
       /// \brief 制作人姓名
       k_image.watermarks_attr.emplace_back(
-          g_reg()->ctx().at<user::current_user>().user_name_attr(),
-          0.5, 0.91,
+          g_reg()->ctx().at<user::current_user>().user_name_attr(), 0.5, 0.91,
           movie::image_watermark::rgba_t{25, 220, 2}
       );
       l_handle_list.push_back(std::move(k_image));
@@ -223,11 +219,11 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
       /// @todo 创建同步合成视频需要在这里
       bool l_ok{};
-      g_reg()->ctx().at<image_to_move>()->async_create_move(
-          k_msg, l_handle_list, [l_r = &l_ok]() {
-            *l_r = true;
-          }
-      );
+      g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [l_r = &l_ok, this, k_f]() {
+        *l_r = true;
+        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
+        FSys::remove_all(k_f);
+      });
       while (!l_ok) {
         g_io_context().poll_one();
       }
@@ -238,8 +234,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
         FSys::remove_all(k_f);
       });
     }
-    DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
-    FSys::remove_all(k_f);
     return k_s;
   }
 }

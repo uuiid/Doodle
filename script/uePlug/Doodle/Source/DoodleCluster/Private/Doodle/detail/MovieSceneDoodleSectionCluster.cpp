@@ -1,15 +1,16 @@
 #include "MovieSceneDoodleSectionCluster.h"
 
 #include "Doodle/DoodleClusterSectionRuntime.h"
-#include "MovieSceneExecutionToken.h"
 #include "DoodleAnimInstance.h"
-DECLARE_CYCLE_STAT(TEXT("Doodle Event Track Token Execute"), MovieSceneEval_EventTrack_TokenExecute_Doodle, STATGROUP_MovieSceneEval);
+#include "MovieSceneExecutionToken.h"
+#include "MovieSceneTrack.h"
 
-struct FEventTrackExecutionTokenDOodle
-    : IMovieSceneExecutionToken {
-  FEventTrackExecutionTokenDOodle(
-      const FMovieSceneDoodleSectionClusterTemplate *InSectionTemplate
-  )
+DECLARE_CYCLE_STAT(
+    TEXT("Doodle Event Track Token Execute"), MovieSceneEval_EventTrack_TokenExecute_Doodle, STATGROUP_MovieSceneEval
+);
+
+struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
+  FEventTrackExecutionTokenDOodle(const FMovieSceneDoodleSectionClusterTemplate *InSectionTemplate)
       : SectionTemplate(InSectionTemplate) {}
 
   virtual void Execute(
@@ -43,15 +44,14 @@ struct FEventTrackExecutionTokenDOodle
           }
         }
         if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
+          /// 计算速度
           if (L_Lock_Object) {
-            L_Anim->DoodleLookAtObject(L_Lock_Object);
-            // UE_LOG(LogTemp, Log, TEXT("APawn *L_Pawn = L_Anim->TryGetPawnOwner()"));
-            if (APawn *L_Pawn = L_Anim->TryGetPawnOwner()) {
-              // L_Pawn->Tick
-            }
+            if (SectionTemplate->Params->MoveTo)
+              L_Anim->MoveToPoint(L_Lock_Object->GetActorLocation());
+            else
+              L_Anim->DoodleLookAtObject(L_Lock_Object);
             break;
           }
-          // L_Anim->DoodleRandom();
         }
       }
     }
@@ -59,15 +59,17 @@ struct FEventTrackExecutionTokenDOodle
   const FMovieSceneDoodleSectionClusterTemplate *SectionTemplate;
 };
 
-FMovieSceneDoodleSectionClusterTemplate::FMovieSceneDoodleSectionClusterTemplate(
-    const UDoodleClusterSection &Section
-)
+FMovieSceneDoodleSectionClusterTemplate::FMovieSceneDoodleSectionClusterTemplate() : Params() {
+  EnableOverrides(RequiresSetupFlag);
+}
+
+FMovieSceneDoodleSectionClusterTemplate::FMovieSceneDoodleSectionClusterTemplate(const UDoodleClusterSection &Section)
     : Params(&Section) {
+  EnableOverrides(RequiresSetupFlag);
 }
 
 void FMovieSceneDoodleSectionClusterTemplate::Evaluate(
-    const FMovieSceneEvaluationOperand &Operand,
-    const FMovieSceneContext &Context,
+    const FMovieSceneEvaluationOperand &Operand, const FMovieSceneContext &Context,
     const FPersistentEvaluationData &PersistentData,
     FMovieSceneExecutionTokens &ExecutionTokens
 ) const {
@@ -90,5 +92,17 @@ void FMovieSceneDoodleSectionClusterTemplate::Evaluate(
     //      ++i)
     // {
     // }
+  }
+}
+
+void FMovieSceneDoodleSectionClusterTemplate::Setup(
+    FPersistentEvaluationData &InPersistentData, IMovieScenePlayer &InPlayer
+) const {
+  UMovieSceneTrack *L_Movie = Cast<UMovieSceneTrack>(Params->GetOuter());
+  ;
+  InPlayer.FindBoundObjects(L_Movie->FindObjectBindingGuid(), );
+  if (L_Movie && Params->MoveTo) {
+    L_Movie->SpawnDefaultController();
+    UE_LOG(LogTemp, Log, TEXT("ok"));
   }
 }
