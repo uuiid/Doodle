@@ -22,7 +22,7 @@ class attendance_rule : public detail::attendance_interface {
 
   void set_user(const entt::handle& in_handle) override;
 
-  void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end);
+  void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) override;
   [[nodiscard]] const work_clock& work_clock_attr() const noexcept override;
 };
 

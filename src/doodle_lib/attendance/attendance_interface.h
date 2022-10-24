@@ -12,10 +12,11 @@ namespace doodle::business::detail {
 
 class attendance_interface {
  public:
-  attendance_interface()                                                       = default;
-  virtual ~attendance_interface()                                              = default;
-  virtual void set_user(const entt::handle& in_handle)                         = 0;
-  virtual const doodle::business::work_clock& work_clock_attr() const noexcept = 0;
+  attendance_interface()                                                                 = default;
+  virtual ~attendance_interface()                                                        = default;
+  virtual void set_user(const entt::handle& in_handle)                                   = 0;
+  virtual void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) = 0;
+  virtual const doodle::business::work_clock& work_clock_attr() const noexcept           = 0;
 };
 
 }  // namespace doodle::business::detail

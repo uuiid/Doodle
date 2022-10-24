@@ -12,9 +12,9 @@ namespace business {
 
 class attendance_rule::impl {
  public:
-  work_clock time_clock;
+  work_clock time_clock{};
 
-  entt::handle user_handle;
+  entt::handle user_handle{};
 
   time_point_wrap begin{};
   time_point_wrap end{};
@@ -33,6 +33,7 @@ void attendance_rule::set_user(const entt::handle& in_handle) {
 void attendance_rule::set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   ptr->begin = in_begin;
   ptr->end   = in_end;
+  gen_work_clock();
 }
 
 const work_clock& attendance_rule::work_clock_attr() const noexcept { return ptr->time_clock; }
@@ -60,7 +61,7 @@ void attendance_rule::gen_work_clock() {
     });
     /// \brief 加上加班
     ranges::for_each(l_rule.extra_work(), [&](const std::decay_t<decltype(l_rule.extra_work())>::value_type& in_) {
-      ptr->time_clock -= std::make_tuple(in_.first, in_.second, in_.info);
+      ptr->time_clock += std::make_tuple(in_.first, in_.second, in_.info);
     });
   }
 }
