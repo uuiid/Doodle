@@ -4,11 +4,16 @@
 
 #pragma once
 
-#include <doodle_dingding/doodle_dingding_fwd.h>
 #include <doodle_core/core/chrono_.h>
 #include <doodle_core/lib_warp/std_fmt_optional.h>
 #include <doodle_core/metadata/time_point_wrap.h>
+
+#include <doodle_dingding/doodle_dingding_fwd.h>
 #include <nlohmann/json.hpp>
+
+namespace doodle::business {
+class work_clock;
+}
 
 namespace doodle::dingding::attendance {
 
@@ -21,23 +26,15 @@ class DOODLE_DINGDING_API get_day_data {
   int64_t offset{};
   int64_t limit{};
   bool isI18n{};
-  friend void DOODLE_DINGDING_API to_json(
-      nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t
-  );
-  friend void DOODLE_DINGDING_API from_json(
-      const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t
-  );
+  friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const get_day_data& nlohmann_json_t);
+  friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, get_day_data& nlohmann_json_t);
 };
 class DOODLE_DINGDING_API get_update_data {
  public:
   time_point_wrap work_date{};
   std::string userid{};
-  friend void DOODLE_DINGDING_API to_json(
-      nlohmann::json& nlohmann_json_j, const get_update_data& nlohmann_json_t
-  );
-  friend void DOODLE_DINGDING_API from_json(
-      const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_json_t
-  );
+  friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const get_update_data& nlohmann_json_t);
+  friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_json_t);
 };
 
 };  // namespace query
@@ -91,13 +88,7 @@ class DOODLE_DINGDING_API attendance_record {
   //  std::string user_longitude;
   //  std::string user_latitude;
   NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-      attendance_record,
-      record_id,
-      source_type,
-      user_accuracy,
-      valid_matched,
-      user_check_time,
-      invalid_record_msg,
+      attendance_record, record_id, source_type, user_accuracy, valid_matched, user_check_time, invalid_record_msg,
       invalid_record_type
   )
 };
@@ -134,12 +125,10 @@ class DOODLE_DINGDING_API attendance {
     detail::check_type check_type{};
     /// @brief 打卡结果
     detail::time_result time_result{};
-    friend void DOODLE_DINGDING_API to_json(
-        nlohmann::json& nlohmann_json_j, const attendance::attendance_result& nlohmann_json_t
-    );
-    friend void DOODLE_DINGDING_API from_json(
-        const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t
-    );
+    friend void DOODLE_DINGDING_API
+    to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_result& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API
+    from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t);
   };
 
   class DOODLE_DINGDING_API approve_for_open {
@@ -163,8 +152,10 @@ class DOODLE_DINGDING_API attendance {
     /// @brief 审批单审批完成时间
     time_point_wrap gmt_finished{};
 
-    friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open& nlohmann_json_t);
-    friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API
+    to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API
+    from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
   };
   /// @brief 查询日期
   time_point_wrap work_date{};
@@ -178,6 +169,8 @@ class DOODLE_DINGDING_API attendance {
   //  std::vector<attendance_record> check_record_list{};
   ///  @brief 企业di
   std::string corpId{};
+
+  void add_clock_data(doodle::business::work_clock& in_clock) const;
   //  std::vector<std::pair<time_point_wrap,
   //                        time_point_wrap>>
   //      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
@@ -218,14 +211,8 @@ class DOODLE_DINGDING_API day_data {
   /// @brief 唯一标识ID
   std::int64_t id{};
 
-  friend void DOODLE_DINGDING_API to_json(
-      nlohmann::json& nlohmann_json_j,
-      const day_data& nlohmann_json_t
-  );
-  friend void DOODLE_DINGDING_API from_json(
-      const nlohmann::json& nlohmann_json_j,
-      day_data& nlohmann_json_t
-  );
+  friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const day_data& nlohmann_json_t);
+  friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, day_data& nlohmann_json_t);
 };
 }  // namespace doodle::dingding::attendance
 
@@ -233,10 +220,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::dingding::attendance::day_data> : formatter<string_view> {
   template <typename FormatContext>
-  auto format(
-      const ::doodle::dingding::attendance::day_data& in_,
-      FormatContext& ctx
-  ) const -> decltype(ctx.out()) {
+  auto format(const ::doodle::dingding::attendance::day_data& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return fmt::format_to(
         ctx.out(),
         "sourceType {}"
@@ -253,20 +237,8 @@ struct formatter<::doodle::dingding::attendance::day_data> : formatter<string_vi
         " planId {}"
         " groupId {}"
         " id {}",
-        in_.sourceType,
-        in_.baseCheckTime,
-        in_.userCheckTime,
-        in_.procInstId,
-        in_.approveId,
-        in_.locationResult,
-        in_.timeResult,
-        in_.checkType,
-        in_.userId,
-        in_.workDate,
-        in_.recordId,
-        in_.planId,
-        in_.groupId,
-        in_.id
+        in_.sourceType, in_.baseCheckTime, in_.userCheckTime, in_.procInstId, in_.approveId, in_.locationResult,
+        in_.timeResult, in_.checkType, in_.userId, in_.workDate, in_.recordId, in_.planId, in_.groupId, in_.id
     );
   }
 };
