@@ -23,7 +23,7 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
 
   void NativeBeginPlay() override;
 
-  void MoveToPoint(const FVector& In_Point);
+  void MoveToPoint(AActor* In_Point);
 
  protected:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
@@ -42,5 +42,6 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
 
   float RandomAttr_InstallValue;
 
-  FTimerHandle TimerHandle_Attr{}; 
+  FTimerHandle TimerHandle_Attr{};
+  bool is_init{};
 };

@@ -21,17 +21,20 @@ class DOODLE_API ADoodleCurveCrowd : public ACharacter {
 
  protected:
   // Called when the game starts or when spawned
-  virtual void BeginPlay() override;
+  // virtual void BeginPlay() override;
 
  public:
   // Called every frame
   virtual void Tick(float DeltaTime) override;
 
-  // Called to bind functionality to input
-  virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
+  /** 这个是看向或者走向的物体 */
+  UPROPERTY(EditAnywhere, Category = "Doodle")
+  AActor* DoodleLockAtObject;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Anim")
-  UAnimationAsset *AnimationAsset;
+  /** 这个是看向(false)或者走向(true)的物体 */
+  UPROPERTY(EditAnywhere, Category = "Doodle")
+  bool MoveTo{};
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Org")
   FVector Direction;
 

@@ -13,13 +13,17 @@ void UDoodleAnimInstance::DoodleCalculateSpeed() {
   }
 }
 
-void UDoodleAnimInstance::MoveToPoint(const FVector &In_Point) {
+void UDoodleAnimInstance::MoveToPoint(AActor *In_Point) {
   APawn *LPawn = TryGetPawnOwner();
 
   if (LPawn) {
     AAIController *L_AI = LPawn->GetController<AAIController>();
     if (L_AI) {
-      auto L_R = L_AI->MoveToLocation(In_Point, 20.0f);
+      if (!is_init) {
+        auto L_R = L_AI->MoveToActor(In_Point);
+        is_init  = true;
+      }
+
       DoodleCalculateSpeed();
     }
   }

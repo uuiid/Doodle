@@ -2,9 +2,10 @@
 
 #include "Doodle/DoodleClusterSectionRuntime.h"
 #include "DoodleAnimInstance.h"
+#include "Evaluation/MovieSceneEvaluationTemplateInstance.h"
 #include "MovieSceneExecutionToken.h"
+#include "MovieSceneSequence.h"
 #include "MovieSceneTrack.h"
-
 DECLARE_CYCLE_STAT(
     TEXT("Doodle Event Track Token Execute"), MovieSceneEval_EventTrack_TokenExecute_Doodle, STATGROUP_MovieSceneEval
 );
@@ -14,8 +15,7 @@ struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
       : SectionTemplate(InSectionTemplate) {}
 
   virtual void Execute(
-      const FMovieSceneContext &Context,
-      const FMovieSceneEvaluationOperand &Operand,
+      const FMovieSceneContext &Context, const FMovieSceneEvaluationOperand &Operand,
       FPersistentEvaluationData &PersistentData,
       IMovieScenePlayer &Player
   ) override {
@@ -47,7 +47,7 @@ struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
           /// 计算速度
           if (L_Lock_Object) {
             if (SectionTemplate->Params->MoveTo)
-              L_Anim->MoveToPoint(L_Lock_Object->GetActorLocation());
+              L_Anim->MoveToPoint(L_Lock_Object);
             else
               L_Anim->DoodleLookAtObject(L_Lock_Object);
             break;
@@ -98,11 +98,17 @@ void FMovieSceneDoodleSectionClusterTemplate::Evaluate(
 void FMovieSceneDoodleSectionClusterTemplate::Setup(
     FPersistentEvaluationData &InPersistentData, IMovieScenePlayer &InPlayer
 ) const {
-  UMovieSceneTrack *L_Movie = Cast<UMovieSceneTrack>(Params->GetOuter());
-  ;
-  InPlayer.FindBoundObjects(L_Movie->FindObjectBindingGuid(), );
-  if (L_Movie && Params->MoveTo) {
-    L_Movie->SpawnDefaultController();
-    UE_LOG(LogTemp, Log, TEXT("ok"));
-  }
+  // UMovieSceneTrack *L_Movie = Cast<UMovieSceneTrack>(Params->GetOuter());
+  // for (auto &&i : InPlayer.FindBoundObjects(L_Movie->FindObjectBindingGuid(), MovieSceneSequenceID::Root)) {
+  //   if (i.IsValid()) {
+  //     auto L_Obj    = i.Get();
+  //     APawn *L_Anim = Cast<APawn>(L_Obj->GetOuter()->GetOuter());
+  //     if (L_Anim && L_Movie && Params->MoveTo) {
+  //       L_Anim->SpawnDefaultController();
+  //       L_Anim->UpdateNavAgent();
+  //       // L_Anim->PostInitializeComponents();
+  //       // UE_LOG(LogTemp, Log, TEXT("ok %s"), *L_Anim->GetName());
+  //     }
+  //   }
+  // };
 }
