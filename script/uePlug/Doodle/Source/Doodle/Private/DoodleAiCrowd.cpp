@@ -1,15 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DoodleCurveCrowd.h"
-#include "AIController.h"
+#include "DoodleAiCrowd.h"
 
-#include "Components/SplineComponent.h"
 #include "AI/NavigationSystemBase.h"
-#include "NavigationSystem.h"
-
-#include "Animation/AnimSingleNodeInstance.h"          //动画实例
-#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
+#include "AIController.h"
+#include "Animation/AnimSingleNodeInstance.h"  //动画实例
+#include "Components/SplineComponent.h"
 #include "DoodleAIController.h"
+#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
+#include "NavigationSystem.h"
 // Sets default values
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.

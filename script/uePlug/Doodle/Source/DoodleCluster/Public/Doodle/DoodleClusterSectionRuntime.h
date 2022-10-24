@@ -33,8 +33,4 @@ class DOODLECLUSTER_API UDoodleClusterSection : public UMovieSceneSection, publi
   /** 这个是看向或者走向的物体 */
   UPROPERTY(EditAnywhere, Category = "Section")
   FMovieSceneObjectBindingID DoodleLockAtObject;
-
-  /** 这个是看向(false)或者走向(true)的物体 */
-  UPROPERTY(EditAnywhere, Category = "Section")
-  bool MoveTo{};
 };

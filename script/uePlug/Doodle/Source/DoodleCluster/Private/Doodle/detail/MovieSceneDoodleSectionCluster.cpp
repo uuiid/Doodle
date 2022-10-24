@@ -1,11 +1,13 @@
 #include "MovieSceneDoodleSectionCluster.h"
 
 #include "Doodle/DoodleClusterSectionRuntime.h"
+#include "DoodleAiCrowd.h"
 #include "DoodleAnimInstance.h"
 #include "Evaluation/MovieSceneEvaluationTemplateInstance.h"
 #include "MovieSceneExecutionToken.h"
 #include "MovieSceneSequence.h"
 #include "MovieSceneTrack.h"
+
 DECLARE_CYCLE_STAT(
     TEXT("Doodle Event Track Token Execute"), MovieSceneEval_EventTrack_TokenExecute_Doodle, STATGROUP_MovieSceneEval
 );
@@ -36,18 +38,24 @@ struct FEventTrackExecutionTokenDOodle : IMovieSceneExecutionToken {
         //     }
         // }
         AActor *L_Lock_Object{};
-        for (auto j : Player.FindBoundObjects(SectionTemplate->Params->DoodleLockAtObject.GetGuid(), SectionTemplate->Params->DoodleLockAtObject.GetRelativeSequenceID())) {
+        for (auto j : Player.FindBoundObjects(
+                 SectionTemplate->Params->DoodleLockAtObject.GetGuid(),
+                 SectionTemplate->Params->DoodleLockAtObject.GetRelativeSequenceID()
+             )) {
           if (UObject *L_Object2 = j.Get()) {
-            if (AActor *L_Actor = Cast<AActor>(L_Object2))
-              L_Lock_Object = L_Actor;
+            if (AActor *L_Actor = Cast<AActor>(L_Object2)) L_Lock_Object = L_Actor;
             break;
           }
         }
-        if (UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_Object)) {
-          /// 计算速度
-          if (L_Lock_Object) {
-            L_Anim->DoodleLookAtObject(L_Lock_Object);
-            break;
+        if (ADoodleAiCrowd *L_Ai = Cast<ADoodleAiCrowd>(L_Object)) {
+          USkeletalMeshComponent *L_SK = L_Ai->GetMesh();
+          if (L_SK) {
+            UDoodleAnimInstance *L_Anim = Cast<UDoodleAnimInstance>(L_SK->GetAnimInstance());
+            /// 计算方向速度
+            if (L_Anim && L_Lock_Object) {
+              L_Anim->DoodleLookAtObject(L_Lock_Object);
+              break;
+            }
           }
         }
       }

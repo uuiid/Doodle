@@ -1,12 +1,12 @@
 #include "DoodleAIController.h"
-#include "DetourCrowdAIController.h"
 
-#include "Navigation/CrowdFollowingComponent.h"
 #include "AI/NavigationSystemBase.h"
-#include "NavigationSystem.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Blueprint/AIAsyncTaskBlueprintProxy.h"
-#include "DoodleCurveCrowd.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "DetourCrowdAIController.h"
+#include "DoodleAiCrowd.h"
+#include "Navigation/CrowdFollowingComponent.h"
+#include "NavigationSystem.h"
 
 ADoodleAIController::ADoodleAIController(
     const FObjectInitializer &ObjectInitializer
@@ -20,8 +20,10 @@ ADoodleAIController::ADoodleAIController(
 
 void ADoodleAIController::BeginPlay() {
   CastChecked<UCrowdFollowingComponent>(GetPathFollowingComponent())->SetCrowdAvoidanceRangeMultiplier(1);
-
-  GoToRandomWaypoint();
+  ADoodleAiCrowd *DoodleCurveCrowd = Cast<ADoodleAiCrowd>(GetPawn());
+  if (DoodleCurveCrowd->MoveTo) {
+    GoToRandomWaypoint();
+  }
 }
 
 void ADoodleAIController::GoToRandomWaypoint() {
@@ -44,11 +46,11 @@ bool ADoodleAIController::GetRandomPointInRadius(const FVector &Origin, float Ra
   }
 
   FNavLocation Result;
-  bool bSuccess                       = NavSys->GetRandomReachablePointInRadius(Origin, 600, Result);
+  bool bSuccess                    = NavSys->GetRandomReachablePointInRadius(Origin, 600, Result);
 
   // Out
-  OutResult                           = Result;
-  ADoodleAiCrowd *DoodleCurveCrowd    = Cast<ADoodleAiCrowd>(GetPawn());
+  OutResult                        = Result;
+  ADoodleAiCrowd *DoodleCurveCrowd = Cast<ADoodleAiCrowd>(GetPawn());
   if (DoodleCurveCrowd) {
     OutResult += DoodleCurveCrowd->Direction;
   }

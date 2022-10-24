@@ -1,13 +1,12 @@
 #include "DoodleClusterSequencerEditor.h"
-#include "LevelSequence.h"
-#include "DoodleAnimInstance.h"
-#include "Doodle/MovieSceneDoodleClusterTrack.h"
-#include "ScopedTransaction.h"
 
 #include "Doodle/DoodleClusterSection.h"
-
-#include "Doodle/MovieSceneDoodleClusterTrack.h"
 #include "Doodle/DoodleClusterSectionRuntime.h"
+#include "Doodle/MovieSceneDoodleClusterTrack.h"
+#include "DoodleAiCrowd.h"
+#include "DoodleAnimInstance.h"
+#include "LevelSequence.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "DoodleClusterSequencer"
 
@@ -81,9 +80,9 @@ void FDoodleClusterTrackEditor::BuildObjectBindingTrackMenu(
       ObjectClass
   );
 
-  if (ObjectClass->IsChildOf(UDoodleAnimInstance::StaticClass())) {
+  if (ObjectClass->IsChildOf(ADoodleAiCrowd::StaticClass())) {
     MenuBuilder.AddMenuEntry(
-        LOCTEXT("Add_Doodle_Object", "Add Foodle Object"), LOCTEXT("Add_Doodle_Object", "Add Foodle Object"),
+        LOCTEXT("Add_Doodle_Object", "Add Doodle Object"), LOCTEXT("Add_Doodle_Object", "Add Doodle Object"),
         FSlateIcon("Subtitle", "EventIcon"),
         FUIAction{FExecuteAction::CreateLambda([=]() { this->AddNewObjectBindingTrack(ObjectBindings); })}
     );
