@@ -160,11 +160,12 @@ class DOODLE_DINGDING_API dingding_api : public client {
   }
 
   /**
-   * @brief 获取考勤
-   * https://open.dingtalk.com/document/orgapp-server/obtain-the-attendance-update-data
-   * @param in_query
-   * @param in_token
-   * @param in_fun
+   * @brief 获取考勤列表的一个方便函数
+   *
+   * @param in_time_begin 开始时间
+   * @param in_time_end 结束时间
+   * @param in_user_id 用户id
+   * @param in_handler 处理句柄
    */
   template <typename CompletionHandler>
   auto async_get_user_updatedata_attendance_list(
