@@ -31,7 +31,7 @@ void dingding_api::tocken_delay() const {
     ptr->timer = std::move(std::make_unique<boost::asio::high_resolution_timer>(g_io_context()));
   }
   ptr->timer->expires_from_now(chrono::seconds{7200ul});
-  ptr->timer->async_wait([this](boost::system::error_code& in_code) mutable { ptr->tocken_valid = false; });
+  ptr->timer->async_wait([this](const boost::system::error_code& in_code) { ptr->tocken_valid = false; });
 }
 
 void dingding_api::async_run(const std::shared_ptr<std::function<void()>>& in_call) {
