@@ -24,9 +24,9 @@ using boost_test_sink_mt = detail::boost_test_sink<std::mutex>;
 
 lib_fixtures::lib_fixtures() {
   doodle_lib_attr.create_time_database();
-  doodle::logger_ctrl::get_log().add_log_sink(
-      std::make_shared<boost_test_sink_mt>()
-  );
+  //  doodle::logger_ctrl::get_log().add_log_sink(
+  //      std::make_shared<boost_test_sink_mt>()
+  //  );
 }
 lib_fixtures::~lib_fixtures() {
   doodle::logger_ctrl::get_log().refresh();
