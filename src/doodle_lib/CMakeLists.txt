@@ -1,8 +1,14 @@
 
+cmrc_add_resource_library(
+        doodle_holidaycn
+        WHENCE ${holidaycn_SOURCE_DIR}
+        ${holidaycn_SOURCE_DIR}/2022.json
+        ${holidaycn_SOURCE_DIR}/2023.json
+)
+
+
 include(doodle_exe)
 include(doodle_lib.cmake)
-
-
 add_library(doodle_lib
         #        SHARED
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
@@ -62,6 +68,8 @@ target_link_libraries(doodle_lib
         doodle_dingding
         DoodleLibResourceFont
         Eigen3::Eigen
+        doodle_holidaycn
+
         )
 
 target_compile_definitions(doodle_lib
