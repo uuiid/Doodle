@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
   auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
 
   l_c->async_find_mobile_user(
-      "15825515923"s,
+      "17376570239"s,
       [=](const boost::system::error_code& in_err, const dingding::user_dd& in_u) {
         BOOST_TEST(!in_err);
         BOOST_TEST(!in_u.name.empty());
