@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(
   using namespace std::literals;
   auto l_st = boost::asio::make_strand(g_io_context());
   auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
-  time_point_wrap l_end_day{};
+  time_point_wrap l_end_day{2022, 10, 1};
   time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{30}};
   std::string l_user_id = globe_user_id{};
 
