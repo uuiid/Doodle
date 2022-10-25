@@ -72,10 +72,6 @@ class DOODLE_DINGDING_API dingding_api : public client {
    * @param in_token
    * @param in_fun
    */
-  void async_get_departments(
-      const department_ns::department_query& in_query, const access_token& in_token, dingidng_call_fun&& in_fun
-  );
-
   template <typename CompletionHandler>
   auto async_get_departments(std::int32_t in_dep_id, CompletionHandler&& in_handler) {
     using call_type = void(const boost::system::error_code& in_code, const department& in_department);
@@ -138,9 +134,6 @@ class DOODLE_DINGDING_API dingding_api : public client {
    * @param in_token
    * @param in_fun
    */
-  void async_get_user_updatedata_attendance(
-      const attendance::query::get_update_data& in_query, const access_token& in_token, dingidng_call_fun&& in_fun
-  );
   template <typename CompletionHandler>
   auto async_get_user_updatedata_attendance(
       const doodle::time_point_wrap& in_time, const std::string& in_user_id, CompletionHandler&& in_handler

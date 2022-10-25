@@ -156,42 +156,7 @@ void dingding_api::async_get_token(read_access_token_fun&& in) {
       }
   );
 }
-void dingding_api::async_get_departments(  /// 异步找到部门
-    const department_ns::department_query& in_query, const access_token& in_token, dingidng_call_fun&& in_fun
-) {
-  boost::url l_url{};
-  boost::url l_method{"topapi/v2/department/get"};
-  l_method.params().set("access_token", in_token.token);  /// 设置访问令牌
-  using req_type = boost::beast::http::request<boost::beast::http::string_body>;
-  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
-  req_type l_req{};  /// 初始化一个l_req{}类
 
-  l_req.method(boost::beast::http::verb::post);  /// 获取方法用post
-  nlohmann::json l_json = in_query;
-  l_req.body()          = l_json.dump();  /// 转换成字符串
-
-  DOODLE_LOG_INFO(l_req);
-
-  boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
-  auto l_call_fun = std::make_shared<dingidng_call_fun>(in_fun);
-  async_write_read<res_type>(  /// 响应类型的异步读写
-      l_req, l_url,
-      [=, l_c = shared_from_this()](boost::system::error_code in_code, const res_type& in_res_type) {
-        DOODLE_LOG_INFO(in_res_type);
-        if (in_res_type.body().empty()) return;
-        auto l_j    = nlohmann::json::parse(in_res_type.body());  //?
-        auto l_body = department_body{l_j};
-        if (l_body) {
-          throw_exception(l_body.get_error());
-        }
-        auto l_res = l_body.result_type();
-        auto l_msg = std::vector{make_handle()};
-        l_msg.front().emplace<department>(l_res);
-        boost::asio::post(this->get_executor(), [l_call_fun, l_msg]() { (*l_call_fun)(l_msg); });
-        ;
-      }
-  );
-}
 // void dingding_api::async_get_departments_user(  // 找到部门成员
 //     const user_dd_ns::dep_query& in_query, const access_token& in_token, dingidng_call_fun&& in_fun
 //) {
