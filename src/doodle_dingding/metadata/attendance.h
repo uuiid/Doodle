@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_dingding/doodle_dingding_fwd.h>
+
 #include <nlohmann/json.hpp>
 
 namespace doodle::business {

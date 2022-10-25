@@ -69,8 +69,8 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_resul
   nlohmann_json_j["location_method"] = nlohmann_json_t.location_method;
   nlohmann_json_j["location_result"] = nlohmann_json_t.location_result;
   if (!nlohmann_json_t.outside_remark.empty()) nlohmann_json_j["outside_remark"] = nlohmann_json_t.outside_remark;
-  nlohmann_json_j["plan_id"] = nlohmann_json_t.plan_id;
-  if (nlohmann_json_j.contains("user_address")) nlohmann_json_j["user_address"] = nlohmann_json_t.user_address;
+  nlohmann_json_j["plan_id"]         = nlohmann_json_t.plan_id;
+  nlohmann_json_j["user_address"]    = nlohmann_json_t.user_address;
   nlohmann_json_j["group_id"]        = nlohmann_json_t.group_id;
   nlohmann_json_j["user_check_time"] = nlohmann_json_t.user_check_time;
   if (!nlohmann_json_t.procInst_id.empty()) nlohmann_json_j["procInst_id"] = nlohmann_json_t.procInst_id;
@@ -78,7 +78,7 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_resul
   nlohmann_json_j["time_result"] = nlohmann_json_t.time_result;
 }
 void from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_result& nlohmann_json_t) {
-  nlohmann_json_j.at("record_id").get_to(nlohmann_json_t.record_id);
+  if (nlohmann_json_j.contains("record_id")) nlohmann_json_j.at("record_id").get_to(nlohmann_json_t.record_id);
   auto l_soure_type = nlohmann_json_j.at("source_type").get<std::string>();
   if (auto l_enum = magic_enum::enum_cast<detail::source_type>(l_soure_type); l_enum) {
     nlohmann_json_t.source_type = *l_enum;
@@ -86,9 +86,9 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::attendance_res
     DOODLE_LOG_INFO("无法找到 {} 对应的枚举变量", l_soure_type);
   }
   nlohmann_json_t.plan_check_time = tool::parse_dingding_time(nlohmann_json_j.at("plan_check_time"));
-
-  nlohmann_json_j.at("class_id").get_to(nlohmann_json_t.class_id);
-  nlohmann_json_j.at("location_method").get_to(nlohmann_json_t.location_method);
+  if (nlohmann_json_j.contains("class_id")) nlohmann_json_j.at("class_id").get_to(nlohmann_json_t.class_id);
+  if (nlohmann_json_j.contains("location_method"))
+    nlohmann_json_j.at("location_method").get_to(nlohmann_json_t.location_method);
   auto l_location_result = nlohmann_json_j.at("location_result").get<std::string>();
   if (auto l_enum = magic_enum::enum_cast<doodle::dingding::attendance::detail::location_result>(l_location_result);
       l_enum) {
@@ -130,14 +130,15 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance::approve_for_open
 }
 
 void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t) {
-  nlohmann_json_j.at("duration_unit").get_to(nlohmann_json_t.duration_unit);
+  if (nlohmann_json_j.contains("duration_unit"))
+    nlohmann_json_j.at("duration_unit").get_to(nlohmann_json_t.duration_unit);
   nlohmann_json_j.at("duration").get_to(nlohmann_json_t.duration);
   nlohmann_json_j.at("sub_type").get_to(nlohmann_json_t.sub_type);
   nlohmann_json_j.at("tag_name").get_to(nlohmann_json_t.tag_name);
   nlohmann_json_j.at("procInst_id").get_to(nlohmann_json_t.procInst_id);
   nlohmann_json_t.begin_time = tool::parse_dingding_time(nlohmann_json_j.at("begin_time"));
 
-  auto l_bix_type            = nlohmann_json_j.at("biz_type").get<std::string>();
+  auto l_bix_type            = nlohmann_json_j.at("biz_type").get<std::int32_t>();
   if (auto l_enum = magic_enum::enum_cast<doodle::dingding::attendance::detail::approve_type>(l_bix_type); l_enum)
     nlohmann_json_t.biz_type = *l_enum;
   else
