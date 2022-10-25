@@ -67,27 +67,6 @@ const work_clock& attendance_dingding::work_clock_attr() const {
   if (l_user.phone_number.empty()) throw_error(doodle::error_enum::null_string, "用户电话号码为空");
 
   {  /// @brief  从客户端中获取考勤资源  -> 转换为 work_clock
-    ptr->client->async_get_token([this, l_user](const dingding::access_token& in_token) {
-      if (l_user.user_id.empty()) {
-        ptr->client->async_find_mobile_user(
-            {l_user.phone_number}, in_token,
-            [this, in_token](const std::vector<entt::handle>& in_vector) {
-              if (in_vector.empty()) return;
-
-              auto l_user_id                                 = in_vector.front().get<doodle::dingding::user_dd>();
-              ptr->user_handle.get<dingding::user>().user_id = l_user_id.userid;
-
-              ptr->client->async_get_user_updatedata_attendance(
-                  {time_point_wrap{}, l_user_id.userid}, in_token,
-                  [](const std::vector<entt::handle>& in_attendance) {
-                    /// @brief doodle::dingding::attendance::attendance
-                  }
-              );
-            }
-        );
-      } else {
-      }
-    });
   }
 
 
