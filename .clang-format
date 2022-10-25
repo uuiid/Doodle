@@ -10,12 +10,15 @@ IncludeCategories:
   - Regex: "doodle_lib"
     Priority: 4
     SortPriority: 4
-  - Regex: "boost"
+  - Regex: "doodle_dingding"
     Priority: 5
     SortPriority: 5
-  - Regex: "maya_plug"
+  - Regex: "boost"
     Priority: 6
     SortPriority: 6
+  - Regex: "maya_plug"
+    Priority: 7
+    SortPriority: 7
 
 ColumnLimit: 120
 AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
