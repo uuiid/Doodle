@@ -6,7 +6,6 @@ set(
         core/image_loader.h
         core/authorization.h
         file_warp/opencv_read_player.h
-        lib_warp/boost_locale_warp.h
         toolkit/toolkit.h
         exe_warp/maya_exe.h
         long_task/image_to_move.h
