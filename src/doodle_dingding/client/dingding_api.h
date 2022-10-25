@@ -5,6 +5,7 @@
 
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/lib_warp/entt_warp.h>
+#include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_dingding/client/client.h>
 #include <doodle_dingding/doodle_dingding_fwd.h>
@@ -45,7 +46,7 @@ class DOODLE_DINGDING_API dingding_api : public client {
   );
 
   void async_find_mobile_user_impl(
-      const dingding::user_dd_ns::get_user_info& in_get_user_info,
+      const dingding::user_dd_ns::find_by_mobile& in_get_user_info,
       const std::shared_ptr<std::function<void(const boost::system::error_code&, const dingding::user_dd&)>>& in_call
   );
 
@@ -53,6 +54,14 @@ class DOODLE_DINGDING_API dingding_api : public client {
       const dingding::attendance::query::get_update_data& in_get_user_info,
       const std::shared_ptr<
           std::function<void(const boost::system::error_code&, const dingding::attendance::attendance&)>>& in_call
+  );
+  void async_get_user_updatedata_attendance_list_impl(
+      const doodle::time_point_wrap& in_time_begin, const doodle::time_point_wrap& in_time_end,
+      const std::string& in_user_id,
+      const std::shared_ptr<
+          std::function<void(const boost::system::error_code&, const std::vector<dingding::attendance::attendance>&)>>&
+          in_call,
+      const std::shared_ptr<std::vector<dingding::attendance::attendance>>& in_list = {}
   );
 
  public:
@@ -80,7 +89,7 @@ class DOODLE_DINGDING_API dingding_api : public client {
           auto l_fun = std::make_shared<std::function<call_type>>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
-          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_dep_id, l_s = shared_from_this(), this]() {
+          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_dep_id, this]() {
             async_get_departments_impl({in_dep_id}, l_fun);
           });
           async_run(l_call);
@@ -111,11 +120,11 @@ class DOODLE_DINGDING_API dingding_api : public client {
   auto async_find_mobile_user(const std::string& in_mobile, CompletionHandler&& in_handler) {
     using call_type = void(const boost::system::error_code& in_code, const dingding::user_dd& in_department);
     return boost::asio::async_initiate<CompletionHandler, call_type>(
-        [in_mobile, this](auto&& in_completion_handler) {
+        [&in_mobile, this](auto&& in_completion_handler) {
           auto l_fun = std::make_shared<std::function<call_type>>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
-          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_mobile, l_s = shared_from_this(), this]() {
+          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_mobile, this]() {
             async_find_mobile_user_impl({in_mobile}, l_fun);
           });
           async_run(l_call);
@@ -124,9 +133,6 @@ class DOODLE_DINGDING_API dingding_api : public client {
     );
   }
 
-  //  void async_get_user_day_attendance(
-  //      const attendance::query::get_day_data& in_query, const access_token& in_token, dingidng_call_fun&& in_fun
-  //  );
   /**
    * @brief 获取考勤
    * https://open.dingtalk.com/document/orgapp-server/obtain-the-attendance-update-data
@@ -144,9 +150,36 @@ class DOODLE_DINGDING_API dingding_api : public client {
           auto l_fun = std::make_shared<std::function<call_type>>(
               std::forward<decltype(in_completion_handler)>(in_completion_handler)
           );
+          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_time = in_time, in_user_id, this]() {
+            async_get_user_updatedata_attendance_impl({in_time, in_user_id}, l_fun);
+          });
+          async_run(l_call);
+        },
+        in_handler
+    );
+  }
+
+  /**
+   * @brief 获取考勤
+   * https://open.dingtalk.com/document/orgapp-server/obtain-the-attendance-update-data
+   * @param in_query
+   * @param in_token
+   * @param in_fun
+   */
+  template <typename CompletionHandler>
+  auto async_get_user_updatedata_attendance_list(
+      const doodle::time_point_wrap& in_time_begin, const doodle::time_point_wrap& in_time_end,
+      const std::string& in_user_id, CompletionHandler&& in_handler
+  ) {
+    using call_type = void(const boost::system::error_code&, const std::vector<dingding::attendance::attendance>&);
+    return boost::asio::async_initiate<CompletionHandler, call_type>(
+        [&in_time_begin, &in_time_end, in_user_id, this](auto&& in_completion_handler) {
+          auto l_fun = std::make_shared<std::function<call_type>>(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
+          );
           auto l_call =
-              std::make_shared<std::function<void()>>([l_fun, &in_time, in_user_id, l_s = shared_from_this(), this]() {
-                async_get_user_updatedata_attendance_impl({in_time, in_user_id}, l_fun);
+              std::make_shared<std::function<void()>>([l_fun, in_time_begin, in_time_end, in_user_id, this]() {
+                async_get_user_updatedata_attendance_list_impl(in_time_begin, in_time_end, in_user_id, l_fun);
               });
           async_run(l_call);
         },

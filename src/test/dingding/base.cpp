@@ -64,9 +64,9 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
   auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
 
   l_c->async_find_mobile_user(
-      "13891558584"s,
+      "15825515923"s,
       [=](const boost::system::error_code& in_err, const dingding::user_dd& in_u) {
-        BOOST_TEST(in_err);
+        BOOST_TEST(!in_err);
         BOOST_TEST(!in_u.name.empty());
         DOODLE_LOG_INFO(in_u.userid);
         globe_user_id{} = in_u.userid;
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(client_get_dep, *boost::unit_test::depends_on("dingding_bas
   auto l_c           = std::make_shared<dingding::dingding_api>(l_st, context_attr);
   std::int32_t l_dep = globe_department_id{};
   l_c->async_get_departments(l_dep, [=](const boost::system::error_code& in_err, const dingding::department& in_dep) {
-    BOOST_TEST(in_err);
+    BOOST_TEST(!in_err);
     DOODLE_LOG_INFO(in_dep.name);
     DOODLE_LOG_INFO(in_dep.dept_id);
   });
@@ -107,8 +107,34 @@ BOOST_AUTO_TEST_CASE(
       [=, l_run = &is_run_chick](
           const boost::system::error_code& in_err, const dingding::attendance::attendance& in_att
       ) mutable {
-        BOOST_TEST(in_err);
-        DOODLE_LOG_INFO(fmt::to_string(in_att));
+        BOOST_TEST(!in_err);
+        *l_run = true;
+      }
+  );
+  g_io_context().run();
+  BOOST_TEST(is_run_chick);
+}
+BOOST_AUTO_TEST_CASE(
+    client_get_user_attendance3, *boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")
+) {
+  using namespace std::literals;
+  auto l_st = boost::asio::make_strand(g_io_context());
+  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  time_point_wrap l_end_day{};
+  time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{30}};
+  std::string l_user_id = globe_user_id{};
+
+  bool is_run_chick{};
+  l_c->async_get_user_updatedata_attendance_list(
+      l_begin_day, l_end_day, l_user_id,
+      [=, l_run = &is_run_chick](
+          const boost::system::error_code& in_err, const std::vector<dingding::attendance::attendance>& in_list
+      ) mutable {
+        BOOST_TEST(!in_err);
+        nlohmann::json l_json{};
+        l_json = in_list;
+        DOODLE_LOG_INFO(l_json.dump());
+
         *l_run = true;
       }
   );

@@ -21,29 +21,20 @@ namespace doodle::dingding {
 class dingding_api::impl {
  public:
   access_token tocken{};
-
-  std::unique_ptr<boost::asio::high_resolution_timer> timer{};
-  bool tocken_valid{};
+  chrono::time_point<chrono::system_clock> tocken_time{};
 };
 
-void dingding_api::tocken_delay() const {
-  if (!ptr->timer) {
-    ptr->timer = std::move(std::make_unique<boost::asio::high_resolution_timer>(g_io_context()));
-  }
-  ptr->timer->expires_from_now(chrono::seconds{7200ul});
-  ptr->timer->async_wait([this](const boost::system::error_code& in_code) { ptr->tocken_valid = false; });
-}
+void dingding_api::tocken_delay() const { ptr->tocken_time = chrono::system_clock::now(); }
 
 void dingding_api::async_run(const std::shared_ptr<std::function<void()>>& in_call) {
-  if (!ptr->tocken_valid)
+  if ((chrono::system_clock::now() - ptr->tocken_time) > chrono::seconds{ptr->tocken.expires_in})
     async_get_token([this, l_fun = in_call](const access_token& in_t) {
-      ptr->tocken       = in_t;
-      ptr->tocken_valid = true;
+      ptr->tocken = in_t;
       tocken_delay();
-      (*l_fun)();
+      boost::asio::post(g_io_context(), [=]() { (*l_fun)(); });
     });
   else
-    (*in_call)();
+    boost::asio::post(g_io_context(), [=]() { (*in_call)(); });
 }
 
 void dingding_api::async_get_departments_impl(
@@ -90,7 +81,7 @@ void dingding_api::async_get_departments_impl(
 }
 
 void dingding_api::async_find_mobile_user_impl(
-    const dingding::user_dd_ns::get_user_info& in_get_user_info,
+    const dingding::user_dd_ns::find_by_mobile& in_get_user_info,
     const std::shared_ptr<std::function<void(const boost::system::error_code&, const dingding::user_dd&)>>& in_call
 ) {
   boost::url l_url{};
@@ -314,6 +305,34 @@ void dingding_api::async_get_user_updatedata_attendance_impl(
         }
       }
   );
+}
+
+void dingding_api::async_get_user_updatedata_attendance_list_impl(
+    const doodle::time_point_wrap& in_time_begin, const doodle::time_point_wrap& in_time_end,
+    const std::string& in_user_id,
+    const std::shared_ptr<
+        std::function<void(const boost::system::error_code&, const std::vector<dingding::attendance::attendance>&)>>&
+        in_call,
+    const std::shared_ptr<std::vector<dingding::attendance::attendance>>& in_list
+) {
+  auto l_list = in_list ? in_list : std::make_shared<std::vector<dingding::attendance::attendance>>();
+  if (in_time_begin < in_time_end) {
+    async_get_user_updatedata_attendance(
+        in_time_begin, in_user_id,
+        [=](const boost::system::error_code& in_code, const dingding::attendance::attendance& in_attendance) {
+          if (!in_code) {
+            l_list->push_back(in_attendance);
+            async_get_user_updatedata_attendance_list_impl(
+                in_time_begin + chrono::days{1}, in_time_end, in_user_id, in_call, l_list
+            );
+          } else {
+            boost::asio::post(g_io_context(), [=]() { (*in_call)({}, *l_list); });
+          }
+        }
+    );
+  } else {
+    boost::asio::post(g_io_context(), [=]() { (*in_call)({}, *l_list); });
+  }
 }
 
 dingding_api::~dingding_api() = default;
