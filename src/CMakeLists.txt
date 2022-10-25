@@ -34,7 +34,13 @@ FetchContent_Declare(
         GIT_TAG main
 )
 
-FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome IconFontCppHeaders doxygenAwesomeCss)
+FetchContent_Declare(
+        holidaycn
+        GIT_REPOSITORY https://github.com/NateScarlet/holiday-cn.git
+        GIT_TAG master
+)
+
+FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
 
 #=====================文档过程===============================
 #添加文档生成
