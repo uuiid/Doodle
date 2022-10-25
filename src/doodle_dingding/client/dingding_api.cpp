@@ -37,6 +37,40 @@ void dingding_api::async_run(const std::shared_ptr<std::function<void()>>& in_ca
     boost::asio::post(g_io_context(), [=]() { (*in_call)(); });
 }
 
+template <
+    typename Req_t, typename Res_t, typename Return_t, typename Arg_t, typename Call_t, char* in_url,
+    std::int32_t in_method>
+void dingding_api::async_template(const Arg_t& in_arg, const std::shared_ptr<Call_t>& in_call) {
+  boost::url l_url{};
+  boost::url l_method{in_url};
+  l_method.params().set("access_token", ptr->tocken.token);
+  using req_type = boost::beast::http::request<Req_t>;
+  using res_type = boost::beast::http::response<Res_t>;
+
+  req_type l_req{};  /// 初始化一个l_req{}类
+
+  l_req.method(num_to_enum<boost::beast::http::verb>(in_method));
+  nlohmann::json l_json = in_arg;
+  l_req.body()          = l_json.dump();
+  DOODLE_LOG_INFO(l_req);
+
+  boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
+  async_write_read<res_type>(  /// 响应类型的异步读写
+      l_req, l_url,
+      [=, l_c = shared_from_this()](boost::system::error_code in_code, const res_type& in_res_type) {
+        DOODLE_LOG_INFO(in_res_type);
+        if (in_res_type.body().empty()) return;
+        auto l_j    = nlohmann::json::parse(in_res_type.body());
+        auto l_body = Return_t{l_j};
+        if (l_body) {
+          (*in_call)(l_body.get_code(), {});
+        } else {
+          (*in_call)(boost::system::error_code{}, l_body.result_type());
+        }
+      }
+  );
+}
+
 void dingding_api::async_get_departments_impl(
     const department_ns::department_query& in_query,
     const std::shared_ptr<std::function<void(const boost::system::error_code&, const department&)>>& in_call

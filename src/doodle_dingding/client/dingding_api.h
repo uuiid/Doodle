@@ -40,6 +40,11 @@ class DOODLE_DINGDING_API dingding_api : public client {
 
   void async_run(const std::shared_ptr<std::function<void()>>& in_call);
 
+  template <
+      typename Req_t, typename Res_t, typename Return_t, typename Arg_t, typename Call_t, char* in_url,
+      std::int32_t in_method>
+  void async_template(const Arg_t& in_arg, const std::shared_ptr<Call_t>& in_call);
+
   void async_get_departments_impl(
       const department_ns::department_query& in_query,
       const std::shared_ptr<std::function<void(const boost::system::error_code&, const department&)>>& in_call
