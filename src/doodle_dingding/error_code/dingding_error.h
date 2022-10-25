@@ -13,7 +13,6 @@ class dingding_category : public bsys::error_category {
   const char* name() const noexcept;
 
   std::string message(int ev) const;
-  char const* message(int ev, char* buffer, std::size_t len) const noexcept;
 
   bool failed(int ev) const noexcept;
 

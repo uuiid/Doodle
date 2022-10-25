@@ -3,15 +3,15 @@
 //
 #pragma once
 #include <doodle_dingding/doodle_dingding_fwd.h>
-#include <nlohmann/json_fwd.hpp>
-#include <nlohmann/json.hpp>
-#include <utility>
-
+#include <doodle_dingding/error_code/dingding_error.h>
 #include <doodle_dingding/metadata/access_token.h>
+#include <doodle_dingding/metadata/attendance.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/user_dd.h>
-#include <doodle_dingding/metadata/attendance.h>
 
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <utility>
 namespace doodle::dingding {
 
 namespace detail {
@@ -21,16 +21,13 @@ class DOODLE_DINGDING_API request_base {
   std::string errmsg;
   nlohmann::json json_attr{};
   explicit request_base(std::int32_t in_code, std::string in_msg, nlohmann::json in_json)
-      : errcode(in_code),
-        errmsg(std::move(in_msg)),
-        json_attr(std::move(in_json)){};
+      : errcode(in_code), errmsg(std::move(in_msg)), json_attr(std::move(in_json)){};
   virtual ~request_base() = default;
-  [[nodiscard("")]] doodle_error get_error() const {
-    return doodle_error{"code: {} {}", errcode, errmsg};
+  [[nodiscard("")]] doodle_error get_error() const { return doodle_error{"code: {} {}", errcode, errmsg}; }
+  [[nodiscard]] boost::system::error_code get_code() const {
+    return boost::system::error_code{errcode, dingding::dingding_category::get()};
   }
-  [[nodiscard("s")]] explicit operator bool() const {
-    return errcode != 0;
-  }
+  [[nodiscard("s")]] explicit operator bool() const { return errcode != 0; }
 };
 }  // namespace detail
 
@@ -52,24 +49,18 @@ class request_base<true, Result_Type> : public detail::request_base {
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
-            in_json.at("errcode").get<std::int32_t>(),
-            in_json.at("errmsg").get<std::string>(),
-            in_json
+            in_json.at("errcode").get<std::int32_t>(), in_json.at("errmsg").get<std::string>(), in_json
         ) {}
 };
 template <typename Result_Type>
 class request_base<false, Result_Type> : public detail::request_base {
  public:
-  Result_Type result_type() {
-    return json_attr.get<Result_Type>();
-  };
+  Result_Type result_type() { return json_attr.get<Result_Type>(); };
 
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
-            in_json.at("errcode").get<std::int32_t>(),
-            in_json.at("errmsg").get<std::string>(),
-            in_json
+            in_json.at("errcode").get<std::int32_t>(), in_json.at("errmsg").get<std::string>(), in_json
         ) {}
 };
 namespace detail {
@@ -86,10 +77,8 @@ class cursor {
   }
   friend void from_json(const nlohmann::json& nlohmann_json_j, cursor& nlohmann_json_t) {
     nlohmann_json_j.at("has_more").get_to(nlohmann_json_t.has_more);
-    if (nlohmann_json_j.contains("next_cursor"))
-      nlohmann_json_j.at("next_cursor").get_to(nlohmann_json_t.next_cursor);
-    if (nlohmann_json_j.contains("list"))
-      nlohmann_json_j.at("list").get_to(nlohmann_json_t.list);
+    if (nlohmann_json_j.contains("next_cursor")) nlohmann_json_j.at("next_cursor").get_to(nlohmann_json_t.next_cursor);
+    if (nlohmann_json_j.contains("list")) nlohmann_json_j.at("list").get_to(nlohmann_json_t.list);
   }
 };
 }  // namespace detail
@@ -101,10 +90,8 @@ using user_dd_body         = request_base<true, detail::cursor<std::vector<user_
 using user_dd_id_list_body = request_base<true, user_dd>;
 namespace attendance {
 using user_day_updatedata_body = request_base<true, std::vector<day_data>>;
-using user_attendance_body = request_base<true, attendance>;
+using user_attendance_body     = request_base<true, attendance>;
 
-}
-namespace department_ns {
-
-}  // namespace department_ns
+}  // namespace attendance
+namespace department_ns {}  // namespace department_ns
 }  // namespace doodle::dingding

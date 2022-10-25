@@ -47,11 +47,9 @@ bsys::error_condition doodle_category::default_error_condition(int ev) const noe
   return error_category::default_error_condition(ev);
 }
 
-bsys::error_code make_error_code(error_enum e) {
+[[maybe_unused]] bsys::error_code make_error_code(error_enum e) {
   return bsys::error_code{enum_to_num(e), doodle_category::get()};
   //  return boost::system::error_code{enum_to_num(e), doodle_category{}};
 }
-
-
 
 }  // namespace doodle
