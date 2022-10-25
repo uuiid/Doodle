@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 
 #include <doodle_dingding/client/dingding_api.h>
-#include <doodle_dingding/metadata/attendance.h>
+<<<<<<< Updated upstream
 #include <doodle_dingding/metadata/access_token.h>
 #include <doodle_dingding/metadata/attendance.h>
 #include <doodle_dingding/metadata/department.h>
@@ -17,6 +17,11 @@
 #include <doodle_dingding/metadata/user.h>
 
 namespace doodle::business {
+=======
+#include <doodle_dingding/metadata/attendance.h>
+namespace doodle {
+namespace business {
+>>>>>>> Stashed changes
 
 class attendance_dingding::impl {
  public:
@@ -62,6 +67,7 @@ const work_clock& attendance_dingding::work_clock_attr() const {
     ptr->client =
         std::move(std::make_unique<doodle::dingding::dingding_api>(g_io_context().get_executor(), *ptr->ssl_context));
   }
+<<<<<<< Updated upstream
 
   auto l_user = ptr->user_handle.get<doodle::dingding::user>();
   if (l_user.phone_number.empty()) throw_error(doodle::error_enum::null_string, "用户电话号码为空");
@@ -88,6 +94,15 @@ const work_clock& attendance_dingding::work_clock_attr() const {
       } else {
       }
     });
+=======
+   /// @brief  从客户端中获取考勤资源  -> 转换为 work_cloc
+  {
+    ///get_data=get_data+work_weekdays-extra_holiday-extra_rest+extra_work
+    ///获取初始的考勤资源
+    ///要将初始的考勤资源-节假日-调休+加班+工作日规定的时间
+    ///
+    ///work_clock_attr=get_data()
+>>>>>>> Stashed changes
   }
 
 
@@ -95,4 +110,15 @@ const work_clock& attendance_dingding::work_clock_attr() const {
 }
 
 attendance_dingding::~attendance_dingding() = default;
+<<<<<<< Updated upstream
 }  // namespace doodle::business
+=======
+}  // namespace business
+
+}  // namespace doodle
+
+
+
+
+
+>>>>>>> Stashed changes

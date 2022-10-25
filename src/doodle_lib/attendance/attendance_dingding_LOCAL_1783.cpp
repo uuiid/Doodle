@@ -9,7 +9,6 @@
 #include <boost/asio.hpp>
 
 #include <doodle_dingding/client/dingding_api.h>
-#include <doodle_dingding/metadata/attendance.h>
 #include <doodle_dingding/metadata/access_token.h>
 #include <doodle_dingding/metadata/attendance.h>
 #include <doodle_dingding/metadata/department.h>
@@ -24,12 +23,9 @@ class attendance_dingding::impl {
   std::unique_ptr<boost::asio::ssl::context> ssl_context{};
 
   work_clock work_clock_attr{};
-  work_clock gen_rules_{};
   entt::handle user_handle{};
   time_point_wrap begin_time{};
   time_point_wrap end_time{};
-  dingding::attendance::attendance get_day_data{};
-  dingding::attendance::attendance get_update_data{};
 };
 
 attendance_dingding::attendance_dingding() : ptr(std::make_unique<impl>()) {}
@@ -43,17 +39,6 @@ void attendance_dingding::set_user(const entt::handle& in_handle) {
 void attendance_dingding::set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   ptr->begin_time = in_begin;
   ptr->end_time   = in_end;
-}
-
-///获取考勤资源
-void attendance_dingding::get_resources(const dingding::attendance::attendance& get_data,
-                                        const dingding::attendance::attendance& get_update_data) {
-  ptr->get_day_data =get_data;
-  ptr->get_update_data=get_update_data;
-}
-
-void attendance_dingding::alt_clock(const doodle::business::work_clock& alt_workclock){
-  ptr->gen_rules_=alt_workclock;
 }
 
 const work_clock& attendance_dingding::work_clock_attr() const {
@@ -89,7 +74,6 @@ const work_clock& attendance_dingding::work_clock_attr() const {
       }
     });
   }
-
 
   return ptr->work_clock_attr;
 }

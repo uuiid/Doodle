@@ -10,13 +10,8 @@
 
 #include <doodle_dingding/client/dingding_api.h>
 #include <doodle_dingding/metadata/attendance.h>
-#include <doodle_dingding/metadata/access_token.h>
-#include <doodle_dingding/metadata/attendance.h>
-#include <doodle_dingding/metadata/department.h>
-#include <doodle_dingding/metadata/request_base.h>
-#include <doodle_dingding/metadata/user.h>
-
-namespace doodle::business {
+namespace doodle {
+namespace business {
 
 class attendance_dingding::impl {
  public:
@@ -35,7 +30,7 @@ class attendance_dingding::impl {
 attendance_dingding::attendance_dingding() : ptr(std::make_unique<impl>()) {}
 
 void attendance_dingding::set_user(const entt::handle& in_handle) {
-  if (in_handle.all_of<doodle::dingding::user>())
+  if (in_handle.all_of<user>())
     doodle::throw_error(doodle::error_enum::component_missing_error, fmt::format("句柄 {} 缺少用户组件", in_handle));
 
   ptr->user_handle = in_handle;
@@ -62,32 +57,13 @@ const work_clock& attendance_dingding::work_clock_attr() const {
     ptr->client =
         std::move(std::make_unique<doodle::dingding::dingding_api>(g_io_context().get_executor(), *ptr->ssl_context));
   }
-
-  auto l_user = ptr->user_handle.get<doodle::dingding::user>();
-  if (l_user.phone_number.empty()) throw_error(doodle::error_enum::null_string, "用户电话号码为空");
-
-  {  /// @brief  从客户端中获取考勤资源  -> 转换为 work_clock
-    ptr->client->async_get_token([this, l_user](const dingding::access_token& in_token) {
-      if (l_user.user_id.empty()) {
-        ptr->client->async_find_mobile_user(
-            {l_user.phone_number}, in_token,
-            [this, in_token](const std::vector<entt::handle>& in_vector) {
-              if (in_vector.empty()) return;
-
-              auto l_user_id                                 = in_vector.front().get<doodle::dingding::user_dd>();
-              ptr->user_handle.get<dingding::user>().user_id = l_user_id.userid;
-
-              ptr->client->async_get_user_updatedata_attendance(
-                  {time_point_wrap{}, l_user_id.userid}, in_token,
-                  [](const std::vector<entt::handle>& in_attendance) {
-                    /// @brief doodle::dingding::attendance::attendance
-                  }
-              );
-            }
-        );
-      } else {
-      }
-    });
+   /// @brief  从客户端中获取考勤资源  -> 转换为 work_cloc
+  {
+    ///get_data=get_data+work_weekdays-extra_holiday-extra_rest+extra_work
+    ///获取初始的考勤资源
+    ///要将初始的考勤资源-节假日-调休+加班+工作日规定的时间
+    ///
+    ///work_clock_attr=get_data()
   }
 
 
@@ -95,4 +71,11 @@ const work_clock& attendance_dingding::work_clock_attr() const {
 }
 
 attendance_dingding::~attendance_dingding() = default;
-}  // namespace doodle::business
+}  // namespace business
+
+}  // namespace doodle
+
+
+
+
+
