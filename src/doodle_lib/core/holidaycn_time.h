@@ -10,7 +10,8 @@ namespace doodle {
  */
 class holidaycn_time {
  private:
-  std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list;
+  std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list_rest;
+  std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list_work;
 
  public:
   class info {
@@ -26,7 +27,7 @@ class holidaycn_time {
   holidaycn_time();
   virtual ~holidaycn_time();
 
-  void set_clock(const business::work_clock &in_work_clock) const;
+  void set_clock(business::work_clock &in_work_clock) const;
 };
 
 }  // namespace doodle

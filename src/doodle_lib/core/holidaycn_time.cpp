@@ -28,11 +28,18 @@ holidaycn_time::holidaycn_time() {
   auto l_json = nlohmann::json::parse(std::string_view{l_file.begin(), l_file.size()});
   for (const auto &i : l_json.at("days").get<std::vector<info>>()) {
     if (i.is_odd_day)
-      holidaycn_list.emplace_back(
+      holidaycn_list_rest.emplace_back(
+          std::make_tuple(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name)
+      );
+    else
+      holidaycn_list_work.emplace_back(
           std::make_tuple(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name)
       );
   };
 }
 holidaycn_time::~holidaycn_time() = default;
-void holidaycn_time::set_clock(const business::work_clock &in_work_clock) const {}
+void holidaycn_time::set_clock(business::work_clock &in_work_clock) const {
+  for (const auto &item : holidaycn_list_work) in_work_clock += item;
+  for (const auto &item : holidaycn_list_rest) in_work_clock -= item;
+}
 }  // namespace doodle
