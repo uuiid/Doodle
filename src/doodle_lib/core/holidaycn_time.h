@@ -13,10 +13,20 @@ class holidaycn_time {
   std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list;
 
  public:
+  class info {
+   public:
+    std::string name;
+    chrono::local_days date;
+    bool is_odd_day;
+
+    friend void to_json(nlohmann::json &in_j, const info &in_p);
+    friend void from_json(const nlohmann::json &in_j, info &in_p);
+  };
+
   holidaycn_time();
   virtual ~holidaycn_time();
 
-  void set_clock(const bu);
+  void set_clock(const business::work_clock &in_work_clock) const;
 };
 
 }  // namespace doodle

@@ -35,6 +35,7 @@ endmacro()
 
 add_subdirectory(core)
 add_subdirectory(dingding)
+add_subdirectory(lib)
 add_subdirectory(rpc_test)
 # 这一项要放在最后
 
