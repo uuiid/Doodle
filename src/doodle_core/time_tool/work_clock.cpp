@@ -161,13 +161,7 @@ work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_
   interval_set_time_ += l_dis;
   return *this;
 }
-work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
-  auto&& [l_time_1, l_time_2, l_info] = in_time;
-  auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
-  interval_set_time_ += l_dis;
-  interval_map_time_ += std::make_pair(discrete_interval_time::closed(l_time_1, l_time_2), info_type{l_info});
-  return *this;
-}
+
 work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_wrap>& in_time) {
   auto&& [l_time_1, l_time_2] = in_time;
   auto l_dis                  = discrete_interval_time::closed(l_time_1, l_time_2);
@@ -175,11 +169,20 @@ work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_
 
   return *this;
 }
+
+work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
+  auto&& [l_time_1, l_time_2, l_info] = in_time;
+  auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
+  interval_set_time_ += l_dis;
+  interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
+  return *this;
+}
+
 work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
   auto&& [l_time_1, l_time_2, l_info] = in_time;
   auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
   interval_set_time_ -= l_dis;
-  interval_map_time_ -= std::make_pair(discrete_interval_time::closed(l_time_1, l_time_2), info_type{l_info});
+  interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
 
   return *this;
 }
