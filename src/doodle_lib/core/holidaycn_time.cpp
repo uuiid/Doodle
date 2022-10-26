@@ -32,9 +32,9 @@ holidaycn_time::holidaycn_time() {
           std::make_tuple(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name)
       );
     else
-      holidaycn_list_work.emplace_back(
-          std::make_tuple(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name)
-      );
+      holidaycn_list_work.emplace_back(std::make_tuple(
+          time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, fmt::format("{}补班", i.name)
+      ));
   };
 }
 holidaycn_time::~holidaycn_time() = default;
