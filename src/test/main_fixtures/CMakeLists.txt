@@ -22,3 +22,11 @@ target_sources(
         PRIVATE
         lib_fixtures.cpp
 )
+target_sources(
+        test_lib
+        PUBLIC
+        lib_fixtures.h
+
+        PRIVATE
+        lib_fixtures.cpp
+)

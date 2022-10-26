@@ -8,6 +8,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <main_fixtures/lib_fixtures.h>
+
 using namespace doodle;
 
 BOOST_FIXTURE_TEST_CASE(test_holidaycn, lib_fixtures) {
