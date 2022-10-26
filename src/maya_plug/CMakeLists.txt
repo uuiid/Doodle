@@ -7,7 +7,7 @@ if (DEFINED Maya_Version)
     find_package(Maya ${Maya_Version} MODULE)
     find_package(OpenMP REQUIRED)
 
-    cmake_print_variables(MAYA_DEFAULT_LOCATION)
+    cmake_print_variables(MAYA_BASE_DIR)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE Release)
     #    set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)

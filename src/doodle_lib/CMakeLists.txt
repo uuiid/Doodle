@@ -8,14 +8,22 @@ cmrc_add_resource_library(
 
 
 include(doodle_exe)
-include(doodle_lib.cmake)
 add_library(doodle_lib
         #        SHARED
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
+
+
         )
 
-target_sources(doodle_lib PRIVATE ${DOODLELIB_SOURCE})
-target_sources(doodle_lib PUBLIC ${DOODLELIB_HEADER} ${OUT_LISTS_sqlpp})
+target_sources(doodle_lib
+        PUBLIC
+        doodle_lib_fwd.h
+        doodle_lib_all.h
+        doodle_lib_pch.h
+        ${OUT_LISTS_sqlpp}
+        )
+
+
 target_precompile_headers(doodle_lib
         PRIVATE [[<doodle_lib/doodle_lib_pch.h>]])
 
@@ -27,9 +35,14 @@ generate_export_header(doodle_lib
 
 add_subdirectory(app)
 add_subdirectory(attendance)
+add_subdirectory(core)
+add_subdirectory(exe_warp)
+add_subdirectory(file_warp)
 add_subdirectory(json_rpc)
+add_subdirectory(long_task)
 add_subdirectory(lib_warp)
 add_subdirectory(platform/win)
+add_subdirectory(toolkit)
 add_subdirectory(gui)
 
 set_target_properties(doodle_lib

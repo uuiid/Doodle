@@ -44,8 +44,6 @@ class opencv_read_player;
 class opencv_player_widget;
 class image_icon;
 
-class strand_gui;
-
-
+class holidaycn_time;
 
 }  // namespace doodle
