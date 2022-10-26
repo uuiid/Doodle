@@ -2,25 +2,24 @@
 // Created by TD on 2022/4/28.
 //
 #pragma once
+#include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/configure/static_value.h>
+#include <doodle_core/core/chrono_.h>
+#include <doodle_core/core/core_help_impl.h>
+#include <doodle_core/core/file_sys.h>
+#include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
-
-#include <doodle_core/configure/config.h>
-#include <doodle_core/doodle_core_pch.h>
-#include <date/date.h>
-#include <entt/entt.hpp>
-#include <doodle_core/core/file_sys.h>
-#include <doodle_core/core/chrono_.h>
-#include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/lib_warp/cmrcWarp.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
-
-#include <doodle_core/core/core_help_impl.h>
-#include <doodle_core/lib_warp/std_warp.h>
+#include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/lib_warp/sqlppWarp.h>
+#include <doodle_core/lib_warp/std_warp.h>
+
+#include <date/date.h>
+#include <entt/entt.hpp>
 
 namespace boost::asio {
 class io_context;
@@ -29,28 +28,25 @@ class thread_pool;
 
 // #include <>
 namespace doodle {
-class DOODLE_CORE_API convert;
-class DOODLE_CORE_API doodle_error;
-class DOODLE_CORE_API nullptr_error;
-class DOODLE_CORE_API serialization_error;
-class DOODLE_CORE_API file_error;
+class convert;
+class doodle_error;
+class nullptr_error;
+class serialization_error;
+class file_error;
 
 using namespace std::literals;
 using namespace date::literals;
 
-class DOODLE_CORE_API logger_ctrl;
-class DOODLE_CORE_API doodle_lib;
-class DOODLE_CORE_API thread_pool;
+class logger_ctrl;
+class doodle_lib;
 class program_options;
-using handle_list     = std::vector<entt::handle>;
-using logger_ctr_ptr  = std::shared_ptr<logger_ctrl>;
-using string_list     = std::vector<std::string>;
+using logger_ctr_ptr = std::shared_ptr<logger_ctrl>;
+using string_list    = std::vector<std::string>;
 
-using doodle_lib_ptr  = std::shared_ptr<doodle_lib>;
-using thread_pool_ptr = std::shared_ptr<thread_pool>;
-using registry_ptr    = std::shared_ptr<entt::registry>;
+using doodle_lib_ptr = std::shared_ptr<doodle_lib>;
+using registry_ptr   = std::shared_ptr<entt::registry>;
 
-using uuid            = boost::uuids::uuid;
+using uuid           = boost::uuids::uuid;
 
 namespace pool_n {}  // namespace pool_n
 
@@ -61,23 +57,28 @@ DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
 
 namespace movie {
-class DOODLE_CORE_API image_attr;
-class DOODLE_CORE_API image_watermark;
+class image_attr;
+class image_watermark;
 }  // namespace movie
 
 namespace database_n {
-class DOODLE_CORE_API insert;
-class DOODLE_CORE_API select;
-class DOODLE_CORE_API update_data;
-class DOODLE_CORE_API delete_data;
+class insert;
+class select;
+class update_data;
+class delete_data;
 }  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
-}  // namespace doodle
-namespace doodle::json_rpc {
+
+namespace json_rpc {
 class server;
 class parser_rpc;
 class rpc_server;
 class rpc_server_ref;
 class session_manager;
-}  // namespace doodle::json_rpc
+}  // namespace json_rpc
+
+namespace business {
+class work_clock;
+}
+};  // namespace doodle

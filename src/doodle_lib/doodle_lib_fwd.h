@@ -33,7 +33,6 @@ class core_sql;
 class assets_file;
 class time_point_wrap;
 class comment;
-class thread_pool;
 class season;
 
 class core_sig;
