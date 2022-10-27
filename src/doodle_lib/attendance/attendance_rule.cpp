@@ -65,6 +65,9 @@ void attendance_rule::gen_work_clock() {
     });
   }
 }
+void attendance_rule::async_run(const detail::attendance_interface::call_type_ptr& in_call_type_ptr) {
+  (*in_call_type_ptr)({}, ptr->time_clock);
+}
 attendance_rule::~attendance_rule() = default;
 }  // namespace business
 }  // namespace doodle

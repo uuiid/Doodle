@@ -16,6 +16,9 @@ class attendance_rule : public detail::attendance_interface {
 
   void gen_work_clock();
 
+ protected:
+  void async_run(const call_type_ptr& in_call_type_ptr) override;
+
  public:
   attendance_rule();
   virtual ~attendance_rule();
