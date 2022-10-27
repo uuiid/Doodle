@@ -131,8 +131,8 @@ std::vector<std::pair<work_clock::time_type, work_clock::time_type>> work_clock:
   return l_r;
 }
 
-std::string work_clock::debug_print() {
-  return fmt::format("规则 {}  时间段 {}  时间信息 {}", rules_.debug_print(), interval_set_time_, interval_map_time_);
+std::string work_clock::debug_print() const {
+  return fmt::format("时间段 {}  时间信息 {}", interval_set_time_, interval_map_time_);
 
   //  for (auto&& i : interval_map_time_) {
   //    fmt::format("{} ", i.second);
