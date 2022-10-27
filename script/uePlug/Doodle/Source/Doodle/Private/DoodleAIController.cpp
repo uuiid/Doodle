@@ -16,6 +16,7 @@ ADoodleAIController::ADoodleAIController(
               TEXT("PathFollowingComponent")
           )
       ) {
+  // bAllowStrafe = true;
 }
 
 void ADoodleAIController::BeginPlay() {
@@ -36,7 +37,9 @@ void ADoodleAIController::GoToRandomWaypoint() {
 
     MoveTo(AIMoveRequest);
   }
-  GetWorldTimerManager().SetTimer(TimerHandle, this, &ADoodleAIController::GoToRandomWaypoint, 5.0f + FMath::RandRange(-2.0f, 3.0f), false);
+  GetWorldTimerManager().SetTimer(
+      TimerHandle, this, &ADoodleAIController::GoToRandomWaypoint, 5.0f + FMath::RandRange(-3.0f, 2.0f), false
+  );
 }
 
 bool ADoodleAIController::GetRandomPointInRadius(const FVector &Origin, float Radius, FVector &OutResult) {
