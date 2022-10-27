@@ -51,14 +51,59 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
 }  // namespace query
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
-  ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
-    switch (in_r.check_type) {
-      case detail::check_type::OnDuty:
+  if (attendance_result_list.size() == 2) {
+    auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
+    ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
+      switch (in_r.check_type) {
+        case detail::check_type::OnDuty:
+          std::get<0>(l_t) = in_r.plan_check_time;
+          break;
+        case detail::check_type::OffDuty:
+          std::get<1>(l_t) = in_r.plan_check_time;
+          break;
+      }
+    });
+    in_clock += l_t;
+    in_clock -= std::make_tuple(
+        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time,
+        std::get<1>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time
+    );
+
+  } else if (attendance_result_list.size() == 1) {
+    DOODLE_LOG_INFO("打卡列表不是两次");
+  }
+
+  ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
+    switch (in_approve_for_open.biz_type) {
+      case detail::approve_type::leave:
+        in_clock -=
+            std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
         break;
-      case detail::check_type::OffDuty:
+      case detail::approve_type::business_travel:
+        break;                                   /// 出差不管
+      case detail::approve_type::work_overtime:  /// 加班
+        in_clock +=
+            std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
+
         break;
     }
   });
+}
+
+void to_json(nlohmann::json& nlohmann_json_j, const attendance::rest_time_vo_list& nlohmann_json_t) {
+  nlohmann_json_j["rest_begin_time"] = nlohmann_json_t.rest_begin_time;
+  nlohmann_json_j["rest_end_time"]   = nlohmann_json_t.rest_end_time;
+}
+void from_json(const nlohmann::json& nlohmann_json_j, attendance::rest_time_vo_list& nlohmann_json_t) {
+  nlohmann_json_t.rest_begin_time = chrono::milliseconds{nlohmann_json_j.at("rest_begin_time").get<std::int32_t>()};
+  nlohmann_json_t.rest_end_time   = chrono::milliseconds{nlohmann_json_j.at("rest_end_time").get<std::int32_t>()};
+}
+
+void to_json(nlohmann::json& nlohmann_json_j, const attendance::class_setting_info& nlohmann_json_t) {
+  nlohmann_json_j["rest_time_vo_list"] = nlohmann_json_t.rest_time_vo_list_attr;
+}
+void from_json(const nlohmann::json& nlohmann_json_j, attendance::class_setting_info& nlohmann_json_t) {
+  nlohmann_json_j.at("rest_time_vo_list").get_to(nlohmann_json_t.rest_time_vo_list_attr);
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const attendance::attendance_result& nlohmann_json_t) {
