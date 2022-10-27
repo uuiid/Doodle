@@ -27,13 +27,11 @@ void attendance_rule::set_user(const entt::handle& in_handle) {
   if (!ptr->user_handle.any_of<rules>()) {
     ptr->user_handle.emplace<rules>(rules::get_default());
   }
-  gen_work_clock();
 }
 
 void attendance_rule::set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   ptr->begin = in_begin;
   ptr->end   = in_end;
-  gen_work_clock();
 }
 
 const work_clock& attendance_rule::work_clock_attr() const { return ptr->time_clock; }
@@ -66,6 +64,7 @@ void attendance_rule::gen_work_clock() {
   }
 }
 void attendance_rule::async_run(const detail::attendance_interface::call_type_ptr& in_call_type_ptr) {
+  gen_work_clock();
   (*in_call_type_ptr)({}, ptr->time_clock);
 }
 attendance_rule::~attendance_rule() = default;

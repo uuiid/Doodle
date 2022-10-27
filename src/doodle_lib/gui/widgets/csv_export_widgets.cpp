@@ -24,6 +24,9 @@
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include <doodle_lib/attendance/attendance_dingding.h>
+#include <doodle_lib/attendance/attendance_rule.h>
+
 #include <boost/contract.hpp>
 
 #include <fmt/chrono.h>
@@ -127,7 +130,10 @@ class csv_table_gui : public gui_cache<csv_export_widgets::csv_table> {
 
 class work_clock_method_gui {
  public:
-  gui_cache<std::string> data{"获取工作时间方法"s};
+  constexpr static std::string_view dingding{"钉钉软件"};
+  constexpr static std::string_view rule_method{"规则生成"};
+
+  gui_cache<std::string> data{"获取工作时间方法"s, std::string{dingding}};
   csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_dingding};
 };
 
@@ -150,8 +156,11 @@ class csv_export_widgets::impl {
 
   gui_cache_name_id gen_table{"生成表"};
   gui_cache_name_id export_table{"导出表"};
+  gui_cache_name_id advanced_setting{"高级设置"};
+
   csv_table_gui csv_table_gui_{};
   work_clock_method_gui work_clock_method_gui_{};
+  std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -191,11 +200,27 @@ void csv_export_widgets::render() {
     });
     make_handle().emplace<gui_windows>(l_file);
   }
-  ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
-  ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
-  ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
-  ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
+
+  dear::TreeNode{*p_i->advanced_setting} && [&]() {
+    ImGui::Checkbox(*p_i->use_first_as_project_name.gui_name, &p_i->use_first_as_project_name.data);
+    ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
+    ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
+    ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
+    dear::Combo{*p_i->work_clock_method_gui_.data, p_i->work_clock_method_gui_.data().c_str()} && [&]() {
+      for (const auto &item : {work_clock_method_gui::dingding, work_clock_method_gui::rule_method}) {
+        if (ImGui::Selectable(item.data())) {
+          p_i->work_clock_method_gui_.data = std::string{
+              item == work_clock_method_gui::dingding ? work_clock_method_gui::dingding
+                                                      : work_clock_method_gui::rule_method};
+          p_i->work_clock_method_gui_.method = item == work_clock_method_gui::dingding
+                                                   ? csv_export_widgets::work_clock_method::form_dingding
+                                                   : csv_export_widgets::work_clock_method::form_rule;
+        }
+      }
+    };
+  };
   if (ImGui::Button(*p_i->gen_table)) {
+    get_work_time();
     generate_table();
   }
   ImGui::SameLine();
@@ -260,32 +285,6 @@ void csv_export_widgets::generate_table() {
     return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
   });
   p_i->user_handle.clear();
-  /// \brief 这里设置一下时钟规则
-  for (auto &&l_u : p_i->list_sort_time) {
-    auto l_user_h = l_u.get<assets_file>().user_attr();
-    /// \brief 收集用户的配置
-    p_i->user_handle[l_u.get<assets_file>().user_attr()].emplace_back(l_u);
-    if (!l_user_h.all_of<business::rules, business::work_clock>()) {
-      auto &l_ru   = l_user_h.get_or_emplace<business::rules>(business::rules::get_default());
-      auto l_tmp_u = business::rules::get_default();
-      if (l_ru.work_time().empty()) {
-        l_ru.work_time() = l_tmp_u.work_time();
-        if (l_ru.work_weekdays().none()) {
-          l_ru.work_weekdays(l_tmp_u.work_weekdays());
-        }
-      }
-      if (l_ru.extra_work().empty() && l_ru.work_weekdays().none()) {
-        l_ru.work_weekdays(l_tmp_u.work_weekdays());
-      }
-      auto &l_work_clock = l_user_h.get_or_emplace<business::work_clock>();
-      l_work_clock.set_rules(l_ru);
-      l_work_clock.set_interval(
-          p_i->list_sort_time.front().get<time_point_wrap>().current_month_start(),
-          p_i->list_sort_time.back().get<time_point_wrap>().current_month_end()
-      );
-      DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user_h.get<user>().get_name(), l_work_clock.debug_print());
-    }
-  }
 
   p_i->csv_table_gui_.data.line_list = p_i->list |
                                        ranges::view::transform([this](const entt::handle &in_handle) -> csv_line {
@@ -302,7 +301,34 @@ void csv_export_widgets::generate_table() {
                                        ranges::to_vector;
 }
 void csv_export_widgets::export_csv() {}
-void csv_export_widgets::get_work_time() {}
+void csv_export_widgets::get_work_time() {
+  switch (p_i->work_clock_method_gui_.method) {
+    case work_clock_method::form_dingding: {
+    } break;
+    case work_clock_method::form_rule: {
+      if (!p_i->attendance_ptr) p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+
+      /// \brief 这里设置一下时钟规则
+      auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
+      auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
+      for (auto &&l_u : p_i->list_sort_time) {
+        auto l_user = l_u.get<assets_file>().user_attr();
+        /// \brief 收集用户的配置
+        p_i->user_handle[l_user].emplace_back(l_u);
+        if (!l_user.all_of<business::rules, business::work_clock>()) {
+          p_i->attendance_ptr->async_get_work_clock(
+              l_user, l_begin, l_end,
+              [&, l_user](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+                l_user.get_or_emplace<business::work_clock>() = in_clock;
+                DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
+              }
+          );
+        }
+      }
+      break;
+    }
+  }
+}
 
 }  // namespace gui
 }  // namespace doodle
