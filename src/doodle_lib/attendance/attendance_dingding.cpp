@@ -45,17 +45,6 @@ void attendance_dingding::set_range(const time_point_wrap& in_begin, const time_
   ptr->end_time   = in_end;
 }
 
-void attendance_dingding::get_resources(
-    const dingding::attendance::attendance& in_get_data, const dingding::attendance::attendance& in_get_update_data
-) {
-  ptr->get_day_data    = in_get_data;
-  ptr->get_update_data = in_get_update_data;
-}
-
-void attendance_dingding::alt_clock(const doodle::business::work_clock& in_alt_workclock) {
-  ptr->gen_rules_ = in_alt_workclock;
-}
-
 const work_clock& attendance_dingding::work_clock_attr() const {
   if (!ptr->client) {
     ptr->ssl_context = std::move(std::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23));
