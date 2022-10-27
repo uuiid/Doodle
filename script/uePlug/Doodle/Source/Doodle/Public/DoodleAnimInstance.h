@@ -22,7 +22,9 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
   void DoodleRandom();
 
   void NativeBeginPlay() override;
+  // virtual void NativeInitializeAnimation() override;
 
+  void NativeUpdateAnimation(float DeltaTimeX) override;
 
  protected:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")

@@ -7,8 +7,10 @@
 #include "Animation/AnimSingleNodeInstance.h"  //动画实例
 #include "Components/SplineComponent.h"
 #include "DoodleAIController.h"
+#include "DoodleAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "NavigationSystem.h"
+
 // Sets default values
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -42,8 +44,9 @@ void ADoodleAiCrowd::Tick(float DeltaTime) {
   // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
   // if (!SkeletalMeshComponent)
   //   return;
-  // auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  // auto Anim = Cast<UDoodleAnimInstance>(SkeletalMeshComponent->GetAnimInstance());
   // if (Anim) {
+  //   Anim->DoodleCalculateSpeed();
   //   auto Velocity = GetVelocity();
   //   FVector Blend{Velocity.Size(), Anim->CalculateDirection(Velocity, GetBaseAimRotation()), 0.0f};
   //   Anim->SetBlendSpaceInput(Blend);

@@ -1,15 +1,17 @@
 #include "DoodleAnimInstance.h"
 
-UDoodleAnimInstance::UDoodleAnimInstance()
-    : Super() {
+UDoodleAnimInstance::UDoodleAnimInstance() : Super() {}
+void UDoodleAnimInstance::NativeUpdateAnimation(float DeltaTimeX) {
+  Super::NativeUpdateAnimation(DeltaTimeX);
+  DoodleCalculateSpeed();
 }
-
 void UDoodleAnimInstance::DoodleCalculateSpeed() {
   APawn *LPawn = TryGetPawnOwner();
 
   if (LPawn) {
     FVector LVelocity = LPawn->GetVelocity();
     DirectionAttrXY   = CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
+    VelocityAttr      = LVelocity.Size();
   }
 }
 
