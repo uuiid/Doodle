@@ -25,6 +25,15 @@ class attendance_interface {
   virtual void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) = 0;
   virtual const doodle::business::work_clock& work_clock_attr() const                    = 0;
 
+  /**
+   * 异步获取时钟, 主要针对网络数据
+   * @tparam CompletionHandler 传入的处理句柄
+   * @param in_handle 传入的用户句柄
+   * @param in_begin 获取开始时间
+   * @param in_end 结束时间
+   * @param in_completion  传入的处理句柄实例
+   * @return 根据句柄进行返回
+   */
   template <typename CompletionHandler>
   auto async_get_work_clock(
       const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,

@@ -16,6 +16,11 @@ class attendance_dingding : public detail::attendance_interface {
   class impl;
   std::unique_ptr<impl> ptr;
 
+  void get_work_time();
+
+ protected:
+  void async_run(const call_type_ptr& in_call_type_ptr) override;
+
  public:
   attendance_dingding();
   virtual ~attendance_dingding();
