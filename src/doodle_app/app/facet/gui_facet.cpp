@@ -21,8 +21,13 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <doodle_dingding/client/dingding_api.h>
+
+#include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/locale.hpp>
+
 #include <gui/get_input_dialog.h>
 #include <gui/main_menu_bar.h>
 #include <gui/main_proc_handle.h>
@@ -50,9 +55,8 @@ class gui_facet::impl {
  public:
 };
 
-const std::string& gui_facet::name() const noexcept {
-  return p_i->name_attr;
-}
+const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
+
 void gui_facet::operator()() {
   post_constructor();
   make_handle().emplace<::doodle::gui::gui_tick>(std::make_shared<gui::short_cut>());
@@ -63,8 +67,7 @@ void gui_facet::operator()() {
       DOODLE_LOG_INFO(in_code.message());
       return;
     }
-    if (g_reg()->ctx().at<::doodle::program_info>().stop_attr())
-      return;
+    if (g_reg()->ctx().at<::doodle::program_info>().stop_attr()) return;
     this->tick_begin();
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
@@ -76,9 +79,19 @@ void gui_facet::operator()() {
 
   p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
   p_i->timer_.async_wait(s_fun);
+  /// 初始化上下文
+  auto l_ssl = g_reg()->ctx().emplace<std::shared_ptr<boost::asio::ssl::context>>(
+      std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23)
+  );
+  g_reg()->ctx().emplace<doodle::dingding_api_ptr>(
+      std::make_shared<doodle::dingding_api_ptr::element_type>(g_io_context().get_executor(), *l_ssl)
+  );
 }
 void gui_facet::deconstruction() {
   p_i->timer_.cancel();
+  g_reg()->ctx().erase<std::shared_ptr<boost::asio::ssl::context>>();
+  g_reg()->ctx().erase<doodle::dingding_api_ptr>();
+
   // Cleanup
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
@@ -90,16 +103,14 @@ void gui_facet::deconstruction() {
   ::DestroyWindow(p_hwnd);
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
-gui_facet::gui_facet()
-    : p_i(std::make_unique<impl>()) {
+gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
   g_reg()->ctx().emplace<image_to_move>();
 }
 
 void gui_facet::tick() {
-  auto l_lay =
-      g_reg()->ctx().find<gui::detail::layout_tick>();
+  auto l_lay = g_reg()->ctx().find<gui::detail::layout_tick>();
   if (l_lay && *l_lay) (*l_lay)->tick();
 
   std::vector<entt::entity> delete_entt{};
@@ -113,9 +124,7 @@ void gui_facet::tick() {
       delete_entt.emplace_back(l_e);
     }
   }
-  delete_entt |= ranges::action::remove_if([](const entt::entity in) -> bool {
-    return !g_reg()->valid(in);
-  });
+  delete_entt |= ranges::action::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
   g_reg()->destroy(delete_entt.begin(), delete_entt.end());
 }
 void gui_facet::tick_begin() {
@@ -140,13 +149,12 @@ void gui_facet::tick_end() {
   ImGui::Render();
   static ImVec4 clear_color             = ImVec4(0.0f, 0.0f, 0.0f, 0.00f);
   const float clear_color_with_alpha[4] = {
-      clear_color.x * clear_color.w,
-      clear_color.y * clear_color.w,
-      clear_color.z * clear_color.w,
-      clear_color.w};
+      clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w};
 
   p_i->d3d_attr->g_pd3dDeviceContext->OMSetRenderTargets(1, &p_i->d3d_attr->g_mainRenderTargetView, nullptr);
-  p_i->d3d_attr->g_pd3dDeviceContext->ClearRenderTargetView(p_i->d3d_attr->g_mainRenderTargetView, clear_color_with_alpha);
+  p_i->d3d_attr->g_pd3dDeviceContext->ClearRenderTargetView(
+      p_i->d3d_attr->g_mainRenderTargetView, clear_color_with_alpha
+  );
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
@@ -161,36 +169,18 @@ void gui_facet::tick_end() {
 void gui_facet::post_constructor() {
   auto l_instance = g_reg()->ctx().at<program_info>().handle_attr();
 
-  p_win_class =
-      {sizeof(WNDCLASSEX),
-       CS_CLASSDC,
-       win::WndProc,
-       0L,
-       0L,
-       l_instance,
-       nullptr, nullptr, nullptr, nullptr,
-       _T("doodle"),
-       nullptr};
-  p_win_class.hIconSm = (HICON)LoadImageW(
-      l_instance,
-      MAKEINTRESOURCEW(1),
-      IMAGE_ICON, 0, 0, LR_DEFAULTSIZE
-  );
-  p_win_class.hIcon = p_win_class.hIconSm;
+  p_win_class = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L, 0L, l_instance, nullptr, nullptr, nullptr, nullptr,
+                 _T("doodle"),       nullptr};
+  p_win_class.hIconSm = (HICON)LoadImageW(l_instance, MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
+  p_win_class.hIcon   = p_win_class.hIconSm;
 
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
   auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(g_reg()->ctx().at<program_info>().title_attr());
   p_hwnd     = ::CreateWindowExW(
-      0L,
-      p_win_class.lpszClassName,
-      l_str.c_str(),
-      WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-      g_reg()->ctx().at<program_info>().parent_windows_attr(),
-      nullptr,
-      p_win_class.hInstance,
-      nullptr
+      0L, p_win_class.lpszClassName, l_str.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+      CW_USEDEFAULT, g_reg()->ctx().at<program_info>().parent_windows_attr(), nullptr, p_win_class.hInstance, nullptr
   );
 
   // Initialize Direct3D
@@ -215,8 +205,7 @@ void gui_facet::post_constructor() {
   // io.ConfigViewportsNoDefaultParent = true;
   // io.ConfigDockingAlwaysTabBar = true;
   // io.ConfigDockingTransparentPayload = true;
-  // io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;     // FIXME-DPI: Experimental. THIS CURRENTLY DOESN'T WORK AS EXPECTED. DON'T USE IN USER APP!
-  // io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports; // FIXME-DPI: Experimental.
+  // Experimental.
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -255,10 +244,13 @@ void gui_facet::post_constructor() {
   io.IniFilename = _l_p.c_str();
 
   //  ImGuiIO& io = ImGui::GetIO();
-  //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+  //  io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\simkai.ttf)", 16.0f, nullptr,
+  //  io.Fonts->GetGlyphRangesChineseFull());
   {
     // io.Fonts->AddFontDefault();
-    io.Fonts->AddFontFromFileTTF(doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+    io.Fonts->AddFontFromFileTTF(
+        doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull()
+    );
     auto l_font                         = cmrc::DoodleLibResourceFont::get_filesystem().open("fa-solid-900.ttf");
     static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
@@ -267,17 +259,16 @@ void gui_facet::post_constructor() {
     icons_config.FontDataOwnedByAtlas = false;
     // io.Fonts->AddFontFromFileTTF(FONT_ICON_F
     // ILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
-    io.Fonts->AddFontFromMemoryTTF((void*)l_font.begin(), boost::numeric_cast<std::int32_t>(l_font.size()), 16.0f, &icons_config, icons_ranges);
+    io.Fonts->AddFontFromMemoryTTF(
+        (void*)l_font.begin(), boost::numeric_cast<std::int32_t>(l_font.size()), 16.0f, &icons_config, icons_ranges
+    );
   }
 
   g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
     auto l_op = g_reg()->ctx().at<program_options_ptr>();
     /// 在这里我们加载项目
     ::doodle::app_base::Get().load_project(
-        l_op &&
-                !l_op->p_project_path.empty()
-            ? l_op->p_project_path
-            : core_set::get_set().project_root[0]
+        l_op && !l_op->p_project_path.empty() ? l_op->p_project_path : core_set::get_set().project_root[0]
     );
     boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
   });
@@ -289,13 +280,8 @@ void gui_facet::post_constructor() {
     auto& l_prj  = g_reg()->ctx().at<project>();
     auto l_title = boost::locale::conv::utf_to_utf<char>(g_reg()->ctx().at<program_info>().title_attr());
     auto l_str   = fmt::format(
-        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})",
-        l_title,
-        g_reg()->ctx().at<database_info>().path_,
-        l_prj.p_path,
-        l_prj.show_str(),
-        l_prj.str(),
-        l_prj.short_str()
+        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, g_reg()->ctx().at<database_info>().path_,
+        l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
     );
     set_title(l_str);
   };
@@ -309,9 +295,7 @@ void gui_facet::close_windows() {
     doodle::app_base::Get().stop_app();
   });
 }
-void gui_facet::show_windows() const {
-  ::ShowWindow(p_hwnd, SW_SHOW);
-}
+void gui_facet::show_windows() const { ::ShowWindow(p_hwnd, SW_SHOW); }
 void gui_facet::set_title(const std::string& in_title) const {
   boost::asio::post(g_io_context(), [&, in_title]() {
     auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(in_title);

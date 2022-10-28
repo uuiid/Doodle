@@ -63,6 +63,9 @@ class DOODLE_APP_API setting_windows
   void init();
   void render();
   void save();
+
+ private:
+  void get_dingding_info();
 };
 
 }  // namespace doodle::gui
