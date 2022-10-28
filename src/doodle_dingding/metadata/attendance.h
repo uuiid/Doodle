@@ -158,6 +158,27 @@ class DOODLE_DINGDING_API attendance {
     friend void DOODLE_DINGDING_API
     from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_open& nlohmann_json_t);
   };
+  class DOODLE_DINGDING_API rest_time_vo_list {
+   public:
+    /// @brief 开始休息时间
+    chrono::milliseconds rest_begin_time{};
+    /// @brief 结束休息时间
+    chrono::milliseconds rest_end_time{};
+    friend void DOODLE_DINGDING_API
+    to_json(nlohmann::json& nlohmann_json_j, const attendance::rest_time_vo_list& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API
+    from_json(const nlohmann::json& nlohmann_json_j, attendance::rest_time_vo_list& nlohmann_json_t);
+  };
+  class DOODLE_DINGDING_API class_setting_info {
+   public:
+    /// @brief 班次内休息信息
+    rest_time_vo_list rest_time_vo_list_attr{};
+    friend void DOODLE_DINGDING_API
+    to_json(nlohmann::json& nlohmann_json_j, const attendance::class_setting_info& nlohmann_json_t);
+    friend void DOODLE_DINGDING_API
+    from_json(const nlohmann::json& nlohmann_json_j, attendance::class_setting_info& nlohmann_json_t);
+  };
+
   /// @brief 查询日期
   time_point_wrap work_date{};
   /// @brief 打卡结果
@@ -174,7 +195,8 @@ class DOODLE_DINGDING_API attendance {
   void add_clock_data(doodle::business::work_clock& in_clock) const;
   //  std::vector<std::pair<time_point_wrap,
   //                        time_point_wrap>>
-  //      class_setting_info;  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
+  /// @brief 当前排班对应的休息时间段 -> 班次内休息信息
+  class_setting_info class_setting_info_attr;
   friend void DOODLE_DINGDING_API to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t);
   friend void DOODLE_DINGDING_API from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_t);
 };
