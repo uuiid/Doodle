@@ -7,7 +7,7 @@
 #include "DoodleAiCrowd.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "NavigationSystem.h"
-
+///@brief Actor子类AI控制器
 ADoodleAIController::ADoodleAIController(
     const FObjectInitializer &ObjectInitializer
 )
@@ -17,7 +17,7 @@ ADoodleAIController::ADoodleAIController(
           )
       ) {
 }
-
+///@brief Actor子类控制器中的开始部件
 void ADoodleAIController::BeginPlay() {
   CastChecked<UCrowdFollowingComponent>(GetPathFollowingComponent())->SetCrowdAvoidanceRangeMultiplier(1);
   ADoodleAiCrowd *DoodleCurveCrowd = Cast<ADoodleAiCrowd>(GetPawn());
