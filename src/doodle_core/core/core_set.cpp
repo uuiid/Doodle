@@ -50,21 +50,13 @@ FSys::path win::get_font() {
   return k_path;
 }
 
-core_set &core_set::get_set() {
-  return doodle_lib::Get().core_set_attr();
-}
+core_set &core_set::get_set() { return doodle_lib::Get().core_set_attr(); }
 
-bool core_set::has_maya() const noexcept {
-  return !p_mayaPath.empty();
-}
+bool core_set::has_maya() const noexcept { return !p_mayaPath.empty(); }
 
-const FSys::path &core_set::maya_path() const noexcept {
-  return p_mayaPath;
-}
+const FSys::path &core_set::maya_path() const noexcept { return p_mayaPath; }
 
-void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept {
-  p_mayaPath = in_MayaPath;
-}
+void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept { p_mayaPath = in_MayaPath; }
 
 core_set::core_set()
     : user_id(),
@@ -95,13 +87,9 @@ core_set::core_set()
 #endif  // _WIN32
 }
 
-boost::uuids::uuid core_set::get_uuid() {
-  return p_uuid_gen();
-}
+boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }
 
-FSys::path core_set::get_doc() const {
-  return p_doc;
-}
+FSys::path core_set::get_doc() const { return p_doc; }
 
 void core_set::set_root(const FSys::path &in_path) {
   p_root      = in_path;
@@ -109,40 +97,29 @@ void core_set::set_root(const FSys::path &in_path) {
   _root_data  = p_root / "data";
 }
 
-FSys::path core_set::get_cache_root() const {
-  return _root_cache;
-}
+FSys::path core_set::get_cache_root() const { return _root_cache; }
 
 FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
   auto path = get_cache_root() / in_path;
-  if (!FSys::exists(path))
-    FSys::create_directories(path);
+  if (!FSys::exists(path)) FSys::create_directories(path);
   return path;
 }
 
-FSys::path core_set::get_data_root() const {
-  return _root_data;
-}
+FSys::path core_set::get_data_root() const { return _root_data; }
 
-FSys::path core_set::program_location() {
-  return program_location_attr.parent_path();
-}
+FSys::path core_set::program_location() { return program_location_attr.parent_path(); }
 std::string core_set::config_file_name() {
   static std::string str{"doodle_config"};
   return str;
 }
-std::string core_set::get_uuid_str() {
-  return boost::uuids::to_string(get_uuid());
-}
+std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
 
 /// ----------------------------------------------------------------------------
 /// ----------------------------------------------------------------------------
 /// ----------------------------------------------------------------------------
 
-core_set_init::core_set_init()
-    : p_set(core_set::get_set()) {
-  if (!FSys::exists(p_set.p_doc))
-    FSys::create_directories(p_set.p_doc);
+core_set_init::core_set_init() : p_set(core_set::get_set()) {
+  if (!FSys::exists(p_set.p_doc)) FSys::create_directories(p_set.p_doc);
   if (!FSys::exists(p_set.get_cache_root())) {
     FSys::create_directories(p_set.get_cache_root());
   }
@@ -217,43 +194,37 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
   j["program_location_attr"]    = p.program_location_attr;
+  j["user_phone_number"]        = p.user_phone_number;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
-  if (j.count("organization_name"))
-    j.at("organization_name").get_to(p.organization_name);
+  if (j.count("organization_name")) j.at("organization_name").get_to(p.organization_name);
   if (j.count("ue4_setting")) {
     j["ue4_setting"].at("ue4_path").get_to(p.ue4_path);
     j["ue4_setting"].at("ue4_version").get_to(p.ue4_version);
   }
-  if (j.count("ue4_path"))
-    j["ue4_path"].get_to(p.ue4_path);
-  if (j.count("ue4_version"))
-    j["ue4_version"].get_to(p.ue4_version);
+  if (j.count("ue4_path")) j["ue4_path"].get_to(p.ue4_path);
+  if (j.count("ue4_version")) j["ue4_version"].get_to(p.ue4_version);
   j.at("mayaPath").get_to(p.p_mayaPath);
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("timeout").get_to(p.timeout);
-  if (j.contains("project_root"))
-    j.at("project_root").get_to(p.project_root);
-  if (j.contains("maya_replace_save_dialog"))
-    j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
-  if (j.contains("maya_force_resolve_link"))
-    j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
+  if (j.contains("project_root")) j.at("project_root").get_to(p.project_root);
+  if (j.contains("maya_replace_save_dialog")) j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
+  if (j.contains("maya_force_resolve_link")) j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
   if (j.contains("user_id"))
     j.at("user_id").get_to(p.user_id);
   else
     p.user_id = p.get_uuid();
   /// \brief 兼容旧版本段配置文件
-  if (j.contains("user_"))
-    j.at("user_").get_to(p.user_name);
-  if (j.contains("user_name"))
-    j.at("user_name").get_to(p.user_name);
+  if (j.contains("user_")) j.at("user_").get_to(p.user_name);
+  if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
   if (j.contains("program_location_attr")) {
     auto l_path = j.at("program_location_attr").get<FSys::path>();
-    if (l_path.filename() == "DoodleExe.exe")
-      p.program_location_attr = l_path;
+    if (l_path.filename() == "DoodleExe.exe") p.program_location_attr = l_path;
   }
+
+  if (j.contains("user_phone_number")) j.at("").get_to(p.user_phone_number);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
@@ -264,8 +235,6 @@ void core_set::add_recent_project(const FSys::path &in) {
     project_root[0] = in;
   }
 }
-std::string core_set::get_uuid_str(const std::string &in_add) {
-  return get_uuid_str() + in_add;
-}
+std::string core_set::get_uuid_str(const std::string &in_add) { return get_uuid_str() + in_add; }
 
 }  // namespace doodle

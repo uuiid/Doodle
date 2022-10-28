@@ -2,46 +2,33 @@
 // Created by TD on 2021/5/7.
 //
 
-#include <doodle_core/metadata/user.h>
-#include <doodle_core/metadata/detail/user_set_data.h>
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/metadata/detail/user_set_data.h>
+#include <doodle_core/metadata/user.h>
+
 #include <pin_yin/convert.h>
 
 namespace doodle {
 
-void to_json(nlohmann::json& j, const user& p) {
-  j["string_"] = p.p_string_;
-}
+void to_json(nlohmann::json& j, const user& p) { j["string_"] = p.p_string_; }
 void from_json(const nlohmann::json& j, user& p) {
   j.at("string_").get_to(p.p_string_);
   p.p_ENUS = convert::Get().toEn(p.p_string_);
 }
-user::user()
-    : p_string_(),
-      p_ENUS() {}
 
-user::user(const std::string& in_string)
-    : user() {
-  set_name(in_string);
-}
+user::user() : p_string_(), p_ENUS() {}
 
-const std::string& user::get_name() const {
-  return p_string_;
-}
+user::user(const std::string& in_string) : user() { set_name(in_string); }
+
+const std::string& user::get_name() const { return p_string_; }
 void user::set_name(const std::string& in_string) {
   p_string_ = in_string;
   p_ENUS    = convert::Get().toEn(p_string_);
 }
 
-const std::string& user::get_enus() const {
-  return p_ENUS;
-}
-bool user::operator==(const user& in_rhs) const {
-  return p_string_ == in_rhs.p_string_;
-}
-bool user::operator<(const user& in_rhs) const {
-  return p_string_ < in_rhs.p_string_;
-}
+const std::string& user::get_enus() const { return p_ENUS; }
+bool user::operator==(const user& in_rhs) const { return p_string_ == in_rhs.p_string_; }
+bool user::operator<(const user& in_rhs) const { return p_string_ < in_rhs.p_string_; }
 
 class user::user_cache {
  public:
@@ -65,9 +52,7 @@ entt::handle user::find_by_user_name(const std::string& in_name) {
   return l_r;
 }
 
-user::current_user::operator entt::handle() {
-  return get_handle();
-}
+user::current_user::operator entt::handle() { return get_handle(); }
 entt::handle user::current_user::get_handle() {
   if (!user_handle) {
     user_handle = database::find_by_uuid(uuid);
@@ -100,11 +85,22 @@ void user::current_user::user_name_attr(const std::string& in_name) {
   core_set::get_set().user_name = in_name;
   database::save(user_handle);
 }
+void user::current_user::user_phone_number(const std::string& in_num) {
+  if (!*this) get_handle();
+  user_handle.get<dingding::user>().phone_number = in_num;
+  core_set::get_set().user_phone_number          = in_num;
+  database::save(user_handle);
+}
+
+std::string user::current_user::user_phone_number() {
+  if (!*this) get_handle();
+  return user_handle.get_or_emplace<dingding::user>().phone_number;
+}
+
 user::current_user::operator bool() const {
   return user_handle && user_handle.all_of<database, user>() && user_handle.get<database>() == uuid;
 }
-user::current_user::current_user()
-    : uuid(core_set::get_set().user_id) {}
+user::current_user::current_user() : uuid(core_set::get_set().user_id) {}
 
 user::current_user::~current_user() = default;
 void user::current_user::create_user() {
@@ -117,4 +113,16 @@ void user::current_user::create_user() {
 
   database::save(l_create_h);
 }
+
+namespace dingding {
+void to_json(nlohmann::json& j, const user& p) {
+  j["user_id"]      = p.user_id;
+  j["phone_number"] = p.phone_number;
+}
+void from_json(const nlohmann::json& j, user& p) {
+  j.at("user_id").get_to(p.user_id);
+  j.at("phone_number").get_to(p.phone_number);
+}
+}  // namespace dingding
+
 }  // namespace doodle

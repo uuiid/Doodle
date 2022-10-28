@@ -11,7 +11,6 @@
 #include <doodle_dingding/metadata/attendance.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/request_base.h>
-#include <doodle_dingding/metadata/user.h>
 
 #include <boost/asio.hpp>
 

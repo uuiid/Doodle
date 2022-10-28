@@ -12,8 +12,9 @@ namespace doodle::business {
 class work_clock;
 }
 
-namespace doodle::dingding {
-
+namespace doodle {
+namespace dingding {
+class dingding_api;
 namespace department_ns {
 class department_query;
 class user_to_dep_query;
@@ -39,4 +40,6 @@ class get_user_info;
 }  // namespace user_dd_ns
 
 class user_dd;
-}  // namespace doodle::dingding
+}  // namespace dingding
+using dingding_api_ptr = std::shared_ptr<dingding::dingding_api>;
+}  // namespace doodle

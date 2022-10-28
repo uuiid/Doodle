@@ -6,8 +6,6 @@ target_sources(doodle_dingding
         user_dd.h
         attendance.h
         dingding_tool.h
-        user.h
-
 
         PRIVATE
         access_token.cpp
@@ -16,6 +14,4 @@ target_sources(doodle_dingding
         user_dd.cpp
         attendance.cpp
         dingding_tool.cpp
-        user.cpp
-
         )
