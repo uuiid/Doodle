@@ -12,7 +12,7 @@ namespace doodle::gui {
 
 namespace csv_export_widgets_ns {
 
-class csv_line {
+class csv_line : boost::totally_ordered<csv_line> {
  public:
   csv_line() = default;
   explicit csv_line(
@@ -20,33 +20,36 @@ class csv_line {
       bool in_use_first_as_project_name, const std::string_view& in_season_fmt_str,
       const std::string_view& in_episodes_fmt_str, const std::string_view& in_shot_fmt_str
   );
+  /// 按照 季数 -> 集数 -> 镜头 排序
+  bool operator<(const csv_line& in_l) const;
+  bool operator==(const csv_line& in_l) const;
 
   /// @brief 部门
-  std::string organization_;
+  std::string organization_{};
   /// @brief 用户
-  std::string user_;
+  std::string user_{};
   /// @brief 项目和季数
-  std::string project_season_name_;
+  std::string project_season_name_{};
   /// @brief 集数
-  std::string episodes_;
+  std::string episodes_{};
   /// @brief 镜头
-  std::string shot_;
+  std::string shot_{};
   /// @brief 开始时间
-  time_point_wrap start_time_;
+  time_point_wrap start_time_{};
   /// @brief 结束时间
-  time_point_wrap end_time_;
+  time_point_wrap end_time_{};
   /// 时间长度
-  chrono::seconds len_time_;
+  chrono::seconds len_time_{};
   /// 时间信息
-  std::string time_info_;
+  std::string time_info_{};
   /// 提交信息
-  std::string comment_info_;
+  std::string comment_info_{};
   /// 路径
-  std::string file_path_;
+  std::string file_path_{};
   /// 名称
-  std::string name_attr_;
+  std::string name_attr_{};
   /// 等级
-  std::string cutoff_attr_;
+  std::string cutoff_attr_{};
 
  private:
   template <typename T1, typename Char, typename Enable>
@@ -59,8 +62,12 @@ class csv_table {
 
   void computing_time();
 
+  void sort_line();
+
   std::vector<csv_line> line_list;
   std::map<std::string, chrono::seconds> time_statistics;
+
+  std::string to_str();
 };
 
 }  // namespace csv_export_widgets_ns
@@ -83,13 +90,6 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
    */
   entt::handle get_user_up_time(const entt::handle& in_user, const entt::handle& in);
 
-  /**
-   * @brief 导出单张表使用的函数
-   *
-   * @param in_list
-   */
-  void export_csv(const std::vector<entt::handle>& in_list, const FSys::path& in_export_file_path);
-
   void generate_table();
   void export_csv();
 
@@ -109,37 +109,6 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
 }  // namespace doodle::gui
 
 namespace fmt {
-/**
- * @brief 集数格式化程序
- *
- * @tparam
- */
-template <>
-struct formatter<::doodle::gui::csv_export_widgets::csv_line> : formatter<std::string> {
-  template <typename FormatContext>
-  auto format(const ::doodle::gui::csv_export_widgets::csv_line& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    fmt::format_to(
-        ctx.out(),
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{},"
-        "{}",
-        in_.organization_, in_.user_, in_.season_name_, in_.episodes_, in_.shot_, in_.start_time_, in_.end_time_,
-        in_.len_time_, in_.time_info_, in_.comment_info_, in_.file_path_, in_.name_attr_, in_.cutoff_attr_
-    );
-    return ctx.out();
-  }
-};
-
 /**
  * 格式化csv line 行
  */

@@ -95,6 +95,15 @@ csv_line::csv_line(
   cutoff_attr_  = in_handle.any_of<importance>() ? in_handle.get<importance>().cutoff_p : ""s;
   DOODLE_LOG_INFO("计算时间为 {}", len_time_);
 }
+bool csv_line::operator<(const csv_line &in_l) const {
+  return std::tie(project_season_name_, episodes_, shot_) <
+         std::tie(in_l.project_season_name_, in_l.episodes_, in_l.shot_);
+}
+bool csv_line::operator==(const csv_line &in_l) const {
+  return std::tie(project_season_name_, episodes_, shot_) ==
+         std::tie(in_l.project_season_name_, in_l.episodes_, in_l.shot_);
+}
+
 void csv_table::computing_time() {
   ranges::for_each(line_list, [&](const csv_export_widgets_ns::csv_line &in_line) {
     time_statistics[in_line.user_] += in_line.len_time_;
@@ -102,6 +111,7 @@ void csv_table::computing_time() {
 
   DOODLE_LOG_INFO("计算时间总计 {}", fmt::join(time_statistics, " "));
 }
+void csv_table::sort_line() { line_list |= ranges::actions::sort; }
 }  // namespace csv_export_widgets_ns
 
 class csv_line_gui {
@@ -225,40 +235,8 @@ void csv_export_widgets::render() {
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->export_table)) {
-    if (p_i->list.empty()) {
-      DOODLE_LOG_INFO("选择为空, 不导出");
-      return;
-    }
     export_csv();
   }
-}
-void csv_export_widgets::export_csv(const std::vector<entt::handle> &in_list, const FSys::path &in_export_file_path) {
-  FSys::ofstream l_f{in_export_file_path};
-  l_f << fmt::format(
-      "{}\n", fmt::join(
-                  std::vector<std::string>{
-                      "部门"s, "制作人"s, "项目"s, "集数"s, "镜头"s, "开始时间"s, "结束时间"s, "持续时间/day"s,
-                      "时间备注"s, "备注"s, "类别"s, "名称"s, "等级"s},
-                  ","
-              )
-  );  /// @brief 标题
-
-  std::vector<entt::handle> l_h{in_list};
-  /// 按照 季数 -> 集数 -> 镜头 排序
-  l_h |= ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
-           return (in_r.all_of<season>() && in_l.all_of<season>()) && (in_r.get<season>() > in_l.get<season>());
-         }) |
-         ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
-           return (in_r.all_of<episodes>() && in_l.all_of<episodes>()) && (in_r.get<episodes>() > in_l.get<episodes>());
-         }) |
-         ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) {
-           return (in_r.all_of<shot>() && in_l.all_of<shot>()) && (in_r.get<shot>() > in_l.get<shot>());
-         });
-
-  for (auto &&h : l_h) {
-    l_f << fmt::format("{}\n", to_csv_line(h.get<assets_file>().user_attr(), h));
-  }
-  DOODLE_LOG_INFO("导入完成表 {}", in_export_file_path);
 }
 
 entt::handle csv_export_widgets::get_user_up_time(const entt::handle &in_user, const entt::handle &in_handle) {
@@ -293,39 +271,52 @@ void csv_export_widgets::generate_table() {
                                              in_handle,
                                              get_user_up_time(l_user, in_handle),
                                              l_user,
-                                             p_i->use_first_as_project_name.data(),
+                                             p_i->use_first_as_project_name(),
                                              p_i->season_fmt_str(),
                                              p_i->episodes_fmt_str(),
                                              p_i->shot_fmt_str()};
                                        }) |
                                        ranges::to_vector;
+
+  p_i->csv_table_gui_().computing_time();
+  p_i->csv_table_gui_().sort_line();
 }
-void csv_export_widgets::export_csv() {}
+void csv_export_widgets::export_csv() {
+  if (p_i->list.empty()) {
+    DOODLE_LOG_INFO("选择为空, 不导出");
+    return;
+  }
+  FSys::ofstream l_f{p_i->export_path()};
+  l_f << p_i->csv_table_gui_().to_str();
+}
 void csv_export_widgets::get_work_time() {
   switch (p_i->work_clock_method_gui_.method) {
     case work_clock_method::form_dingding: {
-    } break;
-    case work_clock_method::form_rule: {
-      if (!p_i->attendance_ptr) p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
-
-      /// \brief 这里设置一下时钟规则
-      auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
-      auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
-      for (auto &&l_u : p_i->list_sort_time) {
-        auto l_user = l_u.get<assets_file>().user_attr();
-        /// \brief 收集用户的配置
-        p_i->user_handle[l_user].emplace_back(l_u);
-        if (!l_user.all_of<business::rules, business::work_clock>()) {
-          p_i->attendance_ptr->async_get_work_clock(
-              l_user, l_begin, l_end,
-              [&, l_user](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-                l_user.get_or_emplace<business::work_clock>() = in_clock;
-                DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
-              }
-          );
-        }
-      }
+      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_dingding>(p_i->attendance_ptr))
+        p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
       break;
+    }
+    case work_clock_method::form_rule: {
+      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_rule>(p_i->attendance_ptr))
+        p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
+      break;
+    }
+  }
+  /// \brief 这里设置一下时钟规则
+  auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
+  auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
+  for (auto &&l_u : p_i->list_sort_time) {
+    auto l_user = l_u.get<assets_file>().user_attr();
+    /// \brief 收集用户的配置
+    p_i->user_handle[l_user].emplace_back(l_u);
+    if (!l_user.all_of<business::rules, business::work_clock>()) {
+      p_i->attendance_ptr->async_get_work_clock(
+          l_user, l_begin, l_end,
+          [&, l_user](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+            l_user.get_or_emplace<business::work_clock>() = in_clock;
+            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
+          }
+      );
     }
   }
 }
