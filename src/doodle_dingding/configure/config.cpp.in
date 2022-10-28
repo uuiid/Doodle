@@ -1,26 +1,26 @@
 
 
 #include <doodle_dingding/configure/config.h>
-#include <string>
+
 #include <chrono>
+#include <string>
 namespace doodle::dingding {
 
-// clang-format off
+dingding_config::dingding_config() {
+  // clang-format off
 #define DINGDING_NAME "@DINGDING_NAME@"
 #define DINGDING_KEY "@DINGDING_KEY@"
 #define DINGDING_VALUE "@DINGDING_VALUE@"
-// clang-format on
-
-dingding_config::dingding_config() {
+  // clang-format on
   app_key   = DINGDING_KEY;
   app_value = DINGDING_VALUE;
+#undef DINGDING_KEY
+#undef DINGDING_VALUE
+#undef DINGDING_NAME
 }
-
 dingding_config& dingding_config::get() {
   static dingding_config local_{};
   return local_;
 }
-#undef DINGDING_KEY
-#undef DINGDING_VALUE
 
 }  // namespace doodle::dingding
