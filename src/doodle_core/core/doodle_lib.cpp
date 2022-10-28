@@ -11,7 +11,6 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
 
-#include <boost/asio/ssl.hpp>
 #include <boost/locale.hpp>
 
 #include <core/status_info.h>
