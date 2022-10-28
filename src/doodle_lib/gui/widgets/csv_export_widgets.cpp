@@ -1,12 +1,10 @@
 //
 // Created by TD on 2022/2/17.
 //
-///@brief 表格导出的界面///
 #include "csv_export_widgets.h"
 
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/lib_warp/boost_fmt_rational.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -31,8 +29,7 @@
 
 #include <fmt/chrono.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 namespace csv_export_widgets_ns {
 csv_line::csv_line(
@@ -110,6 +107,29 @@ void csv_table::computing_time() {
   });
 
   DOODLE_LOG_INFO("计算时间总计 {}", fmt::join(time_statistics, " "));
+  std::map<std::string, std::vector<std::size_t>> user_index;
+
+  for (std::size_t l = 0; l < line_list.size(); ++l) {
+    user_index[line_list[l].user_].emplace_back(l);
+  }
+
+  // 这里我们需要进行求整
+  for (auto &&item : time_statistics) {
+    using time_rational = boost::rational<std::uint64_t>;
+    time_rational l_time_rational{item.second.count(), 60ull * 60ull * 8ull};
+
+    auto l_round_value = std::round(boost::rational_cast<std::float_t>(l_time_rational));
+
+    if (auto l_val = l_time_rational - time_rational{boost::numeric_cast<std::uint64_t>(l_round_value)}; l_val) {
+      auto l_se = (l_val * 60ull * 60ull * 8ull).numerator();
+      while (l_se) {
+        for (auto i : user_index[item.first]) {
+          line_list[i].len_time_++;
+          if (--l_se) break;
+        }
+      }
+    }
+  }
 }
 void csv_table::sort_line() { line_list |= ranges::actions::sort; }
 
@@ -363,5 +383,4 @@ void csv_export_widgets::get_work_time() {
   }
 }
 
-}  // namespace gui
 }  // namespace doodle
