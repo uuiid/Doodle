@@ -112,6 +112,48 @@ void csv_table::computing_time() {
   DOODLE_LOG_INFO("计算时间总计 {}", fmt::join(time_statistics, " "));
 }
 void csv_table::sort_line() { line_list |= ranges::actions::sort; }
+
+std::string csv_table::to_str() const {
+  std::ostringstream l_str{};
+  l_str << fmt::format(
+      "{}\n", fmt::join(
+                  {"部门"s, "制作人"s, "项目"s, "集数"s, "镜头"s, "开始时间"s, "结束时间"s, "持续时间/day"s,
+                   "时间备注"s, "备注"s, "类别"s, "名称"s, "等级"s},
+                  ","
+              )
+  );  /// @brief 标题
+  l_str << fmt::format(
+      "{}\n", fmt::join(
+                  line_list | ranges::view::transform([](const csv_line &in_line) -> std::string {
+                    // using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
+                    using time_rational = boost::rational<std::uint64_t>;
+                    time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
+
+                    return fmt::format(
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{},"
+                        "{}",
+                        in_line.organization_, in_line.user_, in_line.project_season_name_, in_line.episodes_,
+                        in_line.shot_, in_line.start_time_, in_line.end_time_,
+                        boost::rational_cast<std::double_t>(l_time_rational), in_line.time_info_, in_line.comment_info_,
+                        in_line.file_path_, in_line.name_attr_, in_line.cutoff_attr_
+                    );
+                  }),
+                  "\n"
+              )
+  );
+  return l_str.str();
+}
 }  // namespace csv_export_widgets_ns
 
 class csv_line_gui {

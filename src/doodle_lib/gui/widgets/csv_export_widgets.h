@@ -67,7 +67,7 @@ class csv_table {
   std::vector<csv_line> line_list;
   std::map<std::string, chrono::seconds> time_statistics;
 
-  std::string to_str();
+  std::string to_str() const;
 };
 
 }  // namespace csv_export_widgets_ns
