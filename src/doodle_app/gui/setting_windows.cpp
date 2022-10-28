@@ -15,6 +15,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_dingding/client/dingding_api.h>
+#include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/user_dd.h>
 
 #include <lib_warp/imgui_warp.h>
@@ -52,6 +53,7 @@ class setting_windows::impl {
   std::string title_name_;
 
   doodle::dingding_api_ptr dingding{};
+  std::int32_t department_id{};
 };
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
@@ -137,14 +139,37 @@ void setting_windows::get_dingding_info() {
       p_i->p_phone_number(),
       [&](const boost::system::error_code& in_code, const dingding::user_dd& in_user) {
         if (in_code) {
-          // TODO: 添加错误消息框;
           DOODLE_LOG_ERROR(in_code.to_string());
+          show_error(in_code.to_string());
+          return;
         };
         p_i->p_user = in_user.name;
         auto&& l_u  = g_reg()->ctx().at<doodle::user::current_user>();
         l_u.user_name_attr(in_user.name);
         l_u.get_handle().get_or_emplace<dingding::user>().user_id = in_user.userid;
+        p_i->department_id                                        = in_user.dept_id_list.back();
+        this->get_dingding_dep();
+        database::save(l_u.get_handle());
       }
   );
+}
+void setting_windows::get_dingding_dep() {
+  p_i->dingding->async_get_departments(
+      p_i->department_id,
+      [&](const boost::system::error_code& in_code, const dingding::department& in_dep) {
+        if (in_code) {
+          DOODLE_LOG_ERROR(in_code.to_string());
+          show_error(in_code.to_string());
+          return;
+        };
+        auto&& l_u = g_reg()->ctx().at<doodle::user::current_user>();
+        l_u.get_handle().get_or_emplace<dingding::user>().department_name = in_dep.name;
+        p_i->p_org_name                                                   = in_dep.name;
+        database::save(l_u.get_handle());
+      }
+  );
+}
+void setting_windows::show_error(const std::string& in_meg) {
+  // TODO: 添加错误消息框;
 }
 }  // namespace doodle::gui

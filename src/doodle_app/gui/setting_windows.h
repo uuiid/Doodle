@@ -66,6 +66,8 @@ class DOODLE_APP_API setting_windows
 
  private:
   void get_dingding_info();
+  void get_dingding_dep();
+  void show_error(const std::string& in_meg);
 };
 
 }  // namespace doodle::gui
