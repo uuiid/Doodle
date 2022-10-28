@@ -85,6 +85,18 @@ void user::current_user::user_name_attr(const std::string& in_name) {
   core_set::get_set().user_name = in_name;
   database::save(user_handle);
 }
+void user::current_user::user_phone_number(const std::string& in_num) {
+  if (!*this) get_handle();
+  user_handle.get<dingding::user>().phone_number = in_num;
+  core_set::get_set().user_phone_number          = in_num;
+  database::save(user_handle);
+}
+
+std::string user::current_user::user_phone_number() {
+  if (!*this) get_handle();
+  return user_handle.get_or_emplace<dingding::user>().phone_number;
+}
+
 user::current_user::operator bool() const {
   return user_handle && user_handle.all_of<database, user>() && user_handle.get<database>() == uuid;
 }

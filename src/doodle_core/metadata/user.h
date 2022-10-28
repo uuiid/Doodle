@@ -47,6 +47,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
     entt::handle get_handle();
     std::string user_name_attr();
     void user_name_attr(const std::string& in_name);
+    void user_phone_number(const std::string& in_num);
+    std::string user_phone_number();
 
     void create_user();
 
