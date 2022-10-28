@@ -18,7 +18,7 @@ namespace doodle::business {
 
 class attendance_dingding::impl {
  public:
-  std::shared_ptr<ddoodle::dingding_api_ptr> client{};
+  doodle::dingding_api_ptr client{};
 
   work_clock work_clock_attr{};
   entt::handle user_handle{};
