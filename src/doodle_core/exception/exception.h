@@ -25,6 +25,7 @@ enum class error_enum : std::int32_t {
   time_to_tm_error,
   nullptr_error,
   null_string,
+  parse_string,
 };
 
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
