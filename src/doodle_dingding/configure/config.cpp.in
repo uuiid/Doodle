@@ -1,26 +1,55 @@
 
 
+#include <doodle_core/exception/exception.h>
+
 #include <doodle_dingding/configure/config.h>
+#include <doodle_dingding/error_code/dingding_error.h>
+
+#include <boost/algorithm/string.hpp>
 
 #include <chrono>
 #include <string>
 namespace doodle::dingding {
 
 dingding_config::dingding_config() {
+  std::vector<std::string> l_names{};
+  std::vector<std::string> l_key{};
+  std::vector<std::string> l_value{};
   // clang-format off
 #define DINGDING_NAME "@DINGDING_NAME@"
 #define DINGDING_KEY "@DINGDING_KEY@"
 #define DINGDING_VALUE "@DINGDING_VALUE@"
   // clang-format on
-  app_key   = DINGDING_KEY;
-  app_value = DINGDING_VALUE;
+  boost::split(l_names, DINGDING_NAME, boost::is_any_of(";"));
+  boost::split(l_key, DINGDING_KEY, boost::is_any_of(";"));
+  boost::split(l_value, DINGDING_VALUE, boost::is_any_of(";"));
 #undef DINGDING_KEY
 #undef DINGDING_VALUE
 #undef DINGDING_NAME
+  l_names.size() == l_key.size() && l_key.size() == l_value.size()
+      ? void()
+      : doodle::throw_error(doodle::error_enum::parse_string, "解析钉钉 key 错误");
+
+  for (int l = 0; l < l_names.size(); ++l) {
+    app_keys.emplace(l_names[l], app_key_appsecret{l_names[l], l_key[l], l_value[l]});
+  }
+  using namespace std::literals;
+  key_name  = l_names.empty() ? ""s : l_names.front();
+  app_key   = l_key.empty() ? ""s : l_key.front();
+  app_value = l_value.empty() ? ""s : l_value.front();
 }
 dingding_config& dingding_config::get() {
   static dingding_config local_{};
   return local_;
+}
+void dingding_config::switch_key(const std::string& in_key) {
+  if (ranges::any_of(app_keys, [&](const std::pair<std::string, app_key_appsecret>& in_pair) {
+        return in_pair.first == in_key;
+      })) {
+    key_name  = app_keys[in_key].name;
+    app_key   = app_keys[in_key].app_key;
+    app_value = app_keys[in_key].app_value;
+  }
 }
 
 }  // namespace doodle::dingding
