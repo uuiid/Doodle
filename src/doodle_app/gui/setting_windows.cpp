@@ -15,6 +15,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_dingding/client/dingding_api.h>
+#include <doodle_dingding/metadata/user_dd.h>
 
 #include <lib_warp/imgui_warp.h>
 #include <magic_enum.hpp>
@@ -50,7 +51,7 @@ class setting_windows::impl {
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
 
-  std::shared_ptr<doodle::dingding_api_ptr> dingding{};
+  doodle::dingding_api_ptr dingding{};
 };
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
@@ -129,6 +130,20 @@ void setting_windows::render() {
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
 void setting_windows::get_dingding_info() {
-  if (!p_i->dingding) p_i->dingding = g_reg()->ctx().at<dingding_api_ptr>();
+  if (!p_i->dingding) p_i->dingding = g_reg()->ctx().at<doodle::dingding_api_ptr>();
+
+  p_i->dingding->async_find_mobile_user(
+      p_i->p_phone_number(),
+      [&](const boost::system::error_code& in_code, const dingding::user_dd& in_user) {
+        if (in_code) {
+          // TODO: 添加错误消息框;
+          DOODLE_LOG_ERROR(in_code.to_string());
+        };
+        p_i->p_user = in_user.name;
+        auto&& l_u  = g_reg()->ctx().at<doodle::user::current_user>();
+        l_u.user_name_attr(in_user.name);
+        l_u.get_handle().get_or_emplace<dingding::user>().user_id = in_user.userid;
+      }
+  );
 }
 }  // namespace doodle::gui

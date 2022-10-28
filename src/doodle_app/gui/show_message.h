@@ -10,7 +10,7 @@
 namespace doodle {
 namespace gui {
 
-class show_message : public base_windows<dear::PopupModal, show_message> {};
+// class show_message : public base_windows<dear::PopupModal, show_message> {};
 
 }  // namespace gui
 }  // namespace doodle
