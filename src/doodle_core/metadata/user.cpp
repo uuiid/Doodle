@@ -116,12 +116,14 @@ void user::current_user::create_user() {
 
 namespace dingding {
 void to_json(nlohmann::json& j, const user& p) {
-  j["user_id"]      = p.user_id;
-  j["phone_number"] = p.phone_number;
+  j["user_id"]         = p.user_id;
+  j["phone_number"]    = p.phone_number;
+  j["department_name"] = p.department_name;
 }
 void from_json(const nlohmann::json& j, user& p) {
   j.at("user_id").get_to(p.user_id);
   j.at("phone_number").get_to(p.phone_number);
+  j.at("department_name").get_to(p.department_name);
 }
 }  // namespace dingding
 

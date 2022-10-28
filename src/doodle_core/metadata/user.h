@@ -65,6 +65,7 @@ class DOODLE_CORE_API user {
  public:
   std::string phone_number{};
   std::string user_id{};
+  std::string department_name{};
 
  public:
   user()  = default;
