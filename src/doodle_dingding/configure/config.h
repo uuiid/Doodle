@@ -9,6 +9,11 @@ namespace doodle::dingding {
 class dingding_config {
  private:
   dingding_config();
+  struct app_key_appsecret {
+    std::string name;
+    std::string app_key;
+    std::string app_value;
+  };
 
  public:
   virtual ~dingding_config() = default;
@@ -19,6 +24,7 @@ class dingding_config {
   dingding_config(dingding_config&&) noexcept                 = delete;
   dingding_config& operator=(const dingding_config&) noexcept = delete;
   dingding_config& operator=(dingding_config&&) noexcept      = delete;
+  std::map<std::string, app_key_appsecret> app_keys;
 
   std::string app_key;
   std::string app_value;
