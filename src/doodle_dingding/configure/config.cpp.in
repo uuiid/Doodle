@@ -6,6 +6,7 @@
 namespace doodle::dingding {
 
 // clang-format off
+#define DINGDING_NAME "@DINGDING_NAME@"
 #define DINGDING_KEY "@DINGDING_KEY@"
 #define DINGDING_VALUE "@DINGDING_VALUE@"
 // clang-format on
