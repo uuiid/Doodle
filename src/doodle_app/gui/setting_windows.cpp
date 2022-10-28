@@ -105,6 +105,7 @@ void setting_windows::render() {
     l_h.create_user();
     p_i->user_uuid = fmt::format("用户id: {}", l_h.uuid);
   }
+  ImGui::Checkbox(*p_i->use_dingding, &p_i->use_dingding);
   if (p_i->use_dingding()) {
     ImGui::InputText(*p_i->p_phone_number, &p_i->p_phone_number);
     ImGui::SameLine();
