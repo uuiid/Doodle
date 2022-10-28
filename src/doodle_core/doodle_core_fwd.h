@@ -81,4 +81,7 @@ class session_manager;
 namespace business {
 class work_clock;
 }
+namespace dingding {
+class user;
+}
 };  // namespace doodle

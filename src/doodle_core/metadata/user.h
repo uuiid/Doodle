@@ -58,6 +58,22 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
 
+namespace dingding {
+class DOODLE_CORE_API user {
+ public:
+  std::string phone_number{};
+  std::string user_id{};
+
+ public:
+  user()  = default;
+  ~user() = default;
+
+ private:
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
+};
+}  // namespace dingding
+
 }  // namespace doodle
 namespace fmt {
 /**
