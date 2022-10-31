@@ -66,7 +66,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
     in_clock += l_t;
     in_clock -= std::make_tuple(
         std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time - chrono::hours{1},
-        std::get<1>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
+        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
     );
 
   } else if (attendance_result_list.size() == 1) {
