@@ -172,7 +172,7 @@ class DOODLE_DINGDING_API attendance {
   class DOODLE_DINGDING_API class_setting_info {
    public:
     /// @brief 班次内休息信息
-    rest_time_vo_list rest_time_vo_list_attr{};
+    std::vector<rest_time_vo_list> rest_time_vo_list_attr{};
     friend void DOODLE_DINGDING_API
     to_json(nlohmann::json& nlohmann_json_j, const attendance::class_setting_info& nlohmann_json_t);
     friend void DOODLE_DINGDING_API

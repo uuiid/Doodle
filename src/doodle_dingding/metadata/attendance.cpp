@@ -64,15 +64,14 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       }
     });
     in_clock += l_t;
-    auto l_sub_t = std::make_tuple(
-        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time - chrono::hours{1},
-        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
-    );
-    DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
-    in_clock -= std::make_tuple(
-        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time - chrono::hours{1},
-        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
-    );
+    if (!class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+      auto l_sub_t = std::make_tuple(
+          std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_begin_time - chrono::hours{1},
+          std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_end_time - chrono::hours{1}
+      );
+      DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
+      in_clock -= l_sub_t;
+    }
 
   } else if (attendance_result_list.size() == 1) {
     DOODLE_LOG_INFO("打卡列表不是两次");
