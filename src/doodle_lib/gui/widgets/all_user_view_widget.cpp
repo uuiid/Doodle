@@ -3,21 +3,25 @@
 //
 
 #include "all_user_view_widget.h"
-#include <doodle_core/metadata/user.h>
+
 #include <doodle_core/metadata/rules.h>
+#include <doodle_core/metadata/user.h>
 
 #include <doodle_app/gui/base/ref_base.h>
+
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
 namespace doodle::gui {
 class all_user_view_widget::impl {
  public:
   struct user_gui_data {
-    user_gui_data(const std::string& in_basic_string, entt::handle in_handle)
+    user_gui_data(const std::string& in_basic_string, const std::string& in_phone_number, entt::handle in_handle)
         : show_name(in_basic_string),
+          phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
           handle(in_handle) {}
 
     gui_cache_name_id show_name;
+    gui_cache<std::string> phone_number;
     entt::handle handle;
   };
 
@@ -35,7 +39,11 @@ class all_user_view_widget::impl {
   void get_all_user_data() {
     auto l_v = g_reg()->view<database, user>();
     for (auto&& [e, l_d, l_u] : l_v.each()) {
-      user_name_list.emplace_back(fmt::to_string(l_u), make_handle(e));
+      auto l_h = make_handle(e);
+      user_name_list.emplace_back(
+          fmt::to_string(l_u), l_h.all_of<dingding::user>() ? l_h.get<dingding::user>().phone_number : ""s,
+          make_handle(e)
+      );
     }
   };
 
@@ -55,9 +63,8 @@ class all_user_view_widget::impl {
     database::save(select_user);
   }
   void delete_user_fun() {
-    auto l_it = ranges::find_if(user_name_list, [&](const user_gui_data& in) -> bool {
-      return in.handle == select_user;
-    });
+    auto l_it =
+        ranges::find_if(user_name_list, [&](const user_gui_data& in) -> bool { return in.handle == select_user; });
     if (l_it != user_name_list.end()) {
       database::delete_(l_it->handle);
       user_name_list.erase(l_it);
@@ -66,15 +73,18 @@ class all_user_view_widget::impl {
   }
 };
 
-all_user_view_widget::all_user_view_widget()
-    : ptr(std::make_unique<impl>()) {
-}
+all_user_view_widget::all_user_view_widget() : ptr(std::make_unique<impl>()) {}
 void all_user_view_widget::render() {
   if (!ptr->has_init) {
     ptr->get_all_user_data();
     ptr->has_init = true;
   }
-
+  for (auto& item : ptr->user_name_list) {
+    if (dear::InputText(*item.phone_number, &item.phone_number)) {
+      item.handle.get_or_emplace<dingding::user>().phone_number = item.phone_number;
+      database::save(item.handle);
+    }
+  }
   dear::Combo{*ptr->combox_user_id, ptr->combox_user_id().data()} && [this]() {
     for (auto&& l_u : ptr->user_name_list) {
       if (dear::Selectable(*l_u.show_name)) {
@@ -91,9 +101,7 @@ void all_user_view_widget::render() {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
   }
 }
-const std::string& all_user_view_widget::title() const {
-  return ptr->title_name_;
-}
+const std::string& all_user_view_widget::title() const { return ptr->title_name_; }
 
 all_user_view_widget::~all_user_view_widget() = default;
 }  // namespace doodle::gui
