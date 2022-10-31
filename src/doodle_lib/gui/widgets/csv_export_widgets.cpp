@@ -449,6 +449,7 @@ void csv_export_widgets::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->filter)) {
     filter_();
+    if (get_work_time()) generate_table();
   }
 
   if (ImGui::Button(*p_i->gen_table)) {
