@@ -263,9 +263,8 @@ class csv_table_gui {
                  [](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
                    using time_rational = boost::rational<std::uint64_t>;
                    time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
-                   return csv_line_statistics_gui {
-                     in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))
-                   }
+                   return csv_line_statistics_gui{
+                       in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
                  }
              ) |
              ranges::to_vector;
