@@ -4,8 +4,6 @@
 
 #include "dingding_error.h"
 
-#include <>
-
 namespace doodle::dingding {
 const char* dingding_category::name() const noexcept { return ""; }
 std::string dingding_category::message(int ev) const {
