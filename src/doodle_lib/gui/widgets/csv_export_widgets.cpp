@@ -538,7 +538,7 @@ bool csv_export_widgets::get_work_time() {
                            }
                        ) |
                        ranges::to_vector;
-        l_msg->set_message(fmt::format("缺失一下人员的电话号码:\n {}", fmt::join(l_users, "\n")));
+        l_msg->set_message(fmt::format("缺失一下人员的电话号码:\n{}", fmt::join(l_users, "\n")));
         make_handle().emplace<gui_windows>() = l_msg;
         return false;
       }
