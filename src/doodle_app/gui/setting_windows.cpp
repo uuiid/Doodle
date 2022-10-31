@@ -15,6 +15,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_dingding/client/dingding_api.h>
+#include <doodle_dingding/configure/config.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/user_dd.h>
 
@@ -48,6 +49,7 @@ class setting_windows::impl {
   gui::gui_cache<std::string> p_phone_number{"电话号码"s, ""s};
   gui::gui_cache<bool> p_maya_replace_save_dialog{"替换maya默认对话框"s, core_set::get_set().maya_replace_save_dialog};
   gui::gui_cache<bool> p_maya_force_resolve_link{"强制maya解析链接"s, core_set::get_set().maya_force_resolve_link};
+  gui::gui_cache<std::string> p_switch_key{"所在公司", std::string{dingding::dingding_config::suoyi}};
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
@@ -109,6 +111,15 @@ void setting_windows::render() {
   }
   ImGui::Checkbox(*p_i->use_dingding, &p_i->use_dingding);
   if (p_i->use_dingding()) {
+    dear::Combo{*p_i->p_switch_key, p_i->p_switch_key.data.c_str()} && [this]() {
+      for (const auto& item : {dingding::dingding_config::suoyi, dingding::dingding_config::congxin}) {
+        if (ImGui::Selectable(item.data())) {
+          p_i->p_switch_key.data = std::string{item};
+          dingding::dingding_config::get().switch_key(std::string{item});
+        }
+      }
+    };
+
     ImGui::InputText(*p_i->p_phone_number, &p_i->p_phone_number);
     ImGui::SameLine();
     if (ImGui::Button(*p_i->get_dingding_info)) {

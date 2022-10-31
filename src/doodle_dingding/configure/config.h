@@ -16,7 +16,9 @@ class dingding_config {
   };
 
  public:
-  virtual ~dingding_config() = default;
+  const static constexpr std::string_view suoyi   = {"索以文化"};
+  const static constexpr std::string_view congxin = {"从心动漫"};
+  virtual ~dingding_config()                      = default;
 
   static dingding_config& get();
 
