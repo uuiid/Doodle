@@ -101,13 +101,6 @@
 
 将上一步创建的**蓝图类**拖入**Sequencer**中![](image_/crowd_148.png ':size=30*30'),
 点击**轨道按钮**![](image_/crowd_149.png ':size=30*30'),
-弹出动作菜单,并点击拖入的骨骼物体,将骨骼物体添加到轨道中![](image_/crowd_150.png ':size=30*30'),
-在骨骼物体的右侧再次点击**轨道按钮**, ![](image_/crowd_151.png ':size=30*30'),
-选中第四步创建的**动画实例**![](image_/crowd_153.png ':size=30*30'),
-> [!NOTE]
-> 如果是选中多个, 可以点击轨道中的 **add anim** 选项完成批量添加
-
-在动画实例中再次点击**轨道按钮**![](image_/crowd_154.png ':size=30*30'),在轨道菜单中,
 选择事件子菜单**Doodle Cluster**选项添加自定义轨道![](image_/img_4.png ':size=30*30'),
 之后点击右键![](image_/img_5.png ':size=30*30'),调整 **doodle lock at object** 属性为看向目标
 
