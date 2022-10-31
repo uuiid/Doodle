@@ -26,8 +26,45 @@
 #include <doodle_lib/attendance/attendance_rule.h>
 
 #include <boost/contract.hpp>
+#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
 
 #include <fmt/chrono.h>
+
+namespace doodle::gui {
+class csv_line_gui {
+ public:
+  csv_line_gui() = default;
+
+  std::string organization_{};
+  std::string user_{};
+  std::string project_season_name_{};
+  std::string episodes_{};
+  std::string shot_{};
+  std::string start_time_{};
+  std::string end_time_{};
+  std::string len_time_{};
+  std::string time_info_{};
+  std::string comment_info_{};
+  std::string file_path_{};
+  std::string name_attr_{};
+  std::string cutoff_attr_{};
+};
+
+class csv_line_statistics_gui {
+ public:
+  csv_line_statistics_gui() = default;
+  std::string user_name;
+  std::string len_time;
+};
+
+}  // namespace doodle::gui
+BOOST_FUSION_ADAPT_STRUCT(
+    ::doodle::gui::csv_line_gui, organization_, user_, project_season_name_, episodes_, shot_, start_time_, end_time_,
+    len_time_, time_info_, comment_info_, file_path_, name_attr_, cutoff_attr_
+);
+
+BOOST_FUSION_ADAPT_STRUCT(::doodle::gui::csv_line_statistics_gui, user_name, len_time);
 
 namespace doodle::gui {
 
@@ -178,28 +215,104 @@ std::string csv_table::to_str() const {
 }
 }  // namespace csv_export_widgets_ns
 
-class csv_line_gui {
+class csv_table_gui {
  public:
-  csv_line_gui() = default;
+  gui_cache<csv_export_widgets::csv_table> gui_data{"预览"s};
+  gui_cache_name_id show_details{"显示详细"};
+  gui_cache_name_id show_statistics{"显示统计"};
 
-  std::string organization_{};
-  std::string user_{};
-  std::string project_season_name_{};
-  std::string episodes_{};
-  std::string shot_{};
-  std::string start_time_{};
-  std::string end_time_{};
-  std::string len_time_{};
-  std::string time_info_{};
-  std::string comment_info_{};
-  std::string file_path_{};
-  std::string name_attr_{};
-  std::string cutoff_attr_{};
-};
+  std::variant<std::vector<csv_line_gui>, std::vector<csv_line_statistics_gui>> list;
 
-class csv_table_gui : public gui_cache<csv_export_widgets::csv_table> {
- public:
-  std::vector<csv_line_gui> list;
+  void set_table_data(const std::vector<csv_export_widgets::csv_line> &in_csv_line) {
+    gui_data().line_list = in_csv_line;
+    gui_data().computing_time();
+    gui_data().sort_line();
+  }
+
+  [[nodiscard]] constexpr std::int32_t size() const {
+    return std::holds_alternative<std::vector<csv_line_gui>>(list) ? 13 : 2;
+  }
+
+  void render() {
+    if (ImGui::Button(*show_details)) {
+      list = gui_data().line_list |
+             ranges::view::transform([](const csv_export_widgets_ns::csv_line &in_line) -> csv_line_gui {
+               using time_rational = boost::rational<std::uint64_t>;
+               time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
+
+               return csv_line_gui{
+                   in_line.organization_,
+                   in_line.user_,
+                   in_line.project_season_name_,
+                   in_line.episodes_,
+                   in_line.shot_,
+                   fmt::to_string(in_line.start_time_),
+                   fmt::to_string(in_line.end_time_),
+                   fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)),
+                   in_line.time_info_,
+                   in_line.comment_info_,
+                   in_line.file_path_,
+                   in_line.name_attr_,
+                   in_line.cutoff_attr_};
+             }) |
+             ranges::to_vector;
+    }
+    if (ImGui::Button(*show_statistics)) {
+      list = gui_data().time_statistics |
+             ranges::view::transform(
+                 [](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
+                   using time_rational = boost::rational<std::uint64_t>;
+                   time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
+                   return csv_line_statistics_gui {
+                     in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))
+                   }
+                 }
+             ) |
+             ranges::to_vector;
+    }
+
+    dear::Table{*gui_data, size()} && [this]() { std::visit(*this, list); };
+  }
+  void operator()(const std::vector<csv_line_gui> &in_line) const {
+    ImGui::TableSetupScrollFreeze(0, 1);  // 顶行可见
+    ImGui::TableSetupColumn("部门");
+    ImGui::TableSetupColumn("用户");
+    ImGui::TableSetupColumn("项目和季数");
+    ImGui::TableSetupColumn("集数");
+    ImGui::TableSetupColumn("镜头");
+    ImGui::TableSetupColumn("开始时间");
+    ImGui::TableSetupColumn("结束时间");
+    ImGui::TableSetupColumn("时间长度");
+    ImGui::TableSetupColumn("时间信息");
+    ImGui::TableSetupColumn("提交信息");
+    ImGui::TableSetupColumn("路径");
+    ImGui::TableSetupColumn("名称");
+    ImGui::TableSetupColumn("等级");
+    ImGui::TableHeadersRow();
+    ranges::for_each(in_line, [](const csv_line_gui &in_gui) {
+      ImGui::TableNextRow();
+
+      boost::fusion::for_each(in_gui, [](const std::string &in_string) {
+        ImGui::TableNextColumn();
+        dear::Text(in_string);
+      });
+    });
+  }
+
+  void operator()(const std::vector<csv_line_statistics_gui> &in_vector) const {
+    ImGui::TableSetupScrollFreeze(0, 1);  // 顶行可见
+    ImGui::TableSetupColumn("用户");
+    ImGui::TableSetupColumn("总时间");
+    ImGui::TableHeadersRow();
+    ranges::for_each(in_line, [](const csv_line_statistics_gui &in_gui) {
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      dear::Text(in_gui.user_name);
+      ImGui::TableNextColumn();
+      dear::Text(in_gui.len_time);
+    });
+  }
 };
 
 class work_clock_method_gui {
@@ -301,6 +414,9 @@ void csv_export_widgets::render() {
   if (ImGui::Button(*p_i->export_table)) {
     export_csv();
   }
+
+  // 渲染表格
+  p_i->csv_table_gui_.render();
 }
 
 entt::handle csv_export_widgets::get_user_up_time(const entt::handle &in_user, const entt::handle &in_handle) {
@@ -327,23 +443,20 @@ void csv_export_widgets::generate_table() {
     return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
   });
   p_i->user_handle.clear();
-
-  p_i->csv_table_gui_.data.line_list = p_i->list |
-                                       ranges::view::transform([this](const entt::handle &in_handle) -> csv_line {
-                                         auto l_user = in_handle.get<assets_file>().user_attr();
-                                         return csv_line{
-                                             in_handle,
-                                             get_user_up_time(l_user, in_handle),
-                                             l_user,
-                                             p_i->use_first_as_project_name(),
-                                             p_i->season_fmt_str(),
-                                             p_i->episodes_fmt_str(),
-                                             p_i->shot_fmt_str()};
-                                       }) |
-                                       ranges::to_vector;
-
-  p_i->csv_table_gui_().computing_time();
-  p_i->csv_table_gui_().sort_line();
+  p_i->csv_table_gui_.set_table_data(
+      p_i->list | ranges::view::transform([this](const entt::handle &in_handle) -> csv_line {
+        auto l_user = in_handle.get<assets_file>().user_attr();
+        return csv_line{
+            in_handle,
+            get_user_up_time(l_user, in_handle),
+            l_user,
+            p_i->use_first_as_project_name(),
+            p_i->season_fmt_str(),
+            p_i->episodes_fmt_str(),
+            p_i->shot_fmt_str()};
+      }) |
+      ranges::to_vector
+  );
 }
 void csv_export_widgets::export_csv() {
   if (p_i->list.empty()) {
@@ -351,7 +464,7 @@ void csv_export_widgets::export_csv() {
     return;
   }
   FSys::ofstream l_f{p_i->export_path()};
-  l_f << p_i->csv_table_gui_().to_str();
+  l_f << p_i->csv_table_gui_.gui_data().to_str();
 }
 void csv_export_widgets::get_work_time() {
   switch (p_i->work_clock_method_gui_.method) {

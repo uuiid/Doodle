@@ -24,19 +24,19 @@ class csv_line : boost::totally_ordered<csv_line> {
   bool operator<(const csv_line& in_l) const;
   bool operator==(const csv_line& in_l) const;
 
-  /// @brief 部门
+  /// 部门
   std::string organization_{};
-  /// @brief 用户
+  /// 用户
   std::string user_{};
-  /// @brief 项目和季数
+  /// 项目和季数
   std::string project_season_name_{};
-  /// @brief 集数
+  /// 集数
   std::string episodes_{};
-  /// @brief 镜头
+  /// 镜头
   std::string shot_{};
-  /// @brief 开始时间
+  /// 开始时间
   time_point_wrap start_time_{};
-  /// @brief 结束时间
+  /// 结束时间
   time_point_wrap end_time_{};
   /// 时间长度
   chrono::seconds len_time_{};
