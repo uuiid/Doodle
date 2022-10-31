@@ -363,7 +363,7 @@ void dingding_api::async_get_user_updatedata_attendance_list_impl(
                 in_time_begin + chrono::days{1}, in_time_end, in_user_id, in_call, l_list
             );
           } else {
-            boost::asio::post(g_io_context(), [=]() { (*in_call)({}, *l_list); });
+            boost::asio::post(g_io_context(), [=]() { (*in_call)(in_code, *l_list); });
           }
         }
     );
