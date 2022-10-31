@@ -280,6 +280,7 @@ void gui_facet::post_constructor() {
 }
 void gui_facet::close_windows() {
   boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
+    p_i->timer_.cancel();
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
     doodle::app_base::Get().stop_app();
