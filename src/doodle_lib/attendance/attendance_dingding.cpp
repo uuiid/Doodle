@@ -16,12 +16,6 @@
 
 namespace doodle::business {
 
-class queue_data {
- public:
-  std::function<void()> call_fun{};
-  bool is_run{};
-};
-
 class attendance_dingding::impl {
  public:
   doodle::dingding_api_ptr client{};
@@ -33,7 +27,8 @@ class attendance_dingding::impl {
   std::string user_id{};
 
   detail::attendance_interface::call_type_ptr call_fun{};
-  std::queue<queue_data> call_queue;
+  std::queue<std::shared_ptr<std::function<void()>>> call_queue;
+  std::shared_ptr<std::function<void()>> current_run{};
 };
 
 attendance_dingding::attendance_dingding() : ptr(std::make_unique<impl>()) {}
@@ -58,52 +53,46 @@ void attendance_dingding::async_run(
     ptr->client = g_reg()->ctx().at<dingding_api_ptr>();
   }
 
-  ptr->call_queue.emplace(
-      [in_handle, in_begin, in_end, in_call_type_ptr, this]() {
-        set_user(in_handle);
-        set_range(in_begin, in_end);
-        auto l_user   = in_handle.get<doodle::dingding::user>();
-        ptr->call_fun = in_call_type_ptr;
-        if (l_user.user_id.empty() && l_user.phone_number.empty()) {
-          (*in_call_type_ptr)({error_enum::null_string}, {});
-          do_pop();
-          do_work();
-        }
+  ptr->call_queue.emplace(std::make_shared<std::function<void()>>([in_handle, in_begin, in_end, in_call_type_ptr,
+                                                                   this]() {
+    set_user(in_handle);
+    set_range(in_begin, in_end);
+    auto l_user   = in_handle.get<doodle::dingding::user>();
+    ptr->call_fun = in_call_type_ptr;
+    if (l_user.user_id.empty() && l_user.phone_number.empty()) {
+      (*in_call_type_ptr)({error_enum::null_string}, {});
+      ptr->current_run.reset();
+      do_work();
+    }
 
-        if (l_user.user_id.empty()) {
-          ptr->client->async_find_mobile_user(
-              l_user.phone_number,
-              [this, in_handle](const boost::system::error_code& in_code, const dingding::user_dd& in_user_dd) {
-                auto& l_user = in_handle.get<doodle::dingding::user>();
-                database::save(ptr->user_handle);
-                l_user.user_id = in_user_dd.userid;
-                ptr->user_id   = in_user_dd.userid;
-                this->get_work_time();
-              }
-          );
+    if (l_user.user_id.empty()) {
+      ptr->client->async_find_mobile_user(
+          l_user.phone_number,
+          [this, in_handle](const boost::system::error_code& in_code, const dingding::user_dd& in_user_dd) {
+            auto& l_user = in_handle.get<doodle::dingding::user>();
+            database::save(ptr->user_handle);
+            l_user.user_id = in_user_dd.userid;
+            ptr->user_id   = in_user_dd.userid;
+            this->get_work_time();
+          }
+      );
 
-        } else {
-          ptr->user_id = l_user.user_id;
-          get_work_time();
-        }
-      },
-      false
-  );
+    } else {
+      ptr->user_id = l_user.user_id;
+      get_work_time();
+    }
+  }));
   do_work();
 }
 
 void attendance_dingding::do_work() {
-  if (!ptr->call_queue.empty())
-    if (!ptr->call_queue.front().is_run) {
-      ptr->call_queue.front().call_fun();
-      ptr->call_queue.front().is_run = true;
-    }
-}
-void attendance_dingding::do_pop() {
-  if (!ptr->call_queue.empty())
-    if (ptr->call_queue.front().is_run) {
+  if (!ptr->call_queue.empty() && !ptr->current_run) {
+    if (ptr->call_queue.front()) {
+      ptr->current_run = ptr->call_queue.front();
+      (*ptr->current_run)();
       ptr->call_queue.pop();
     }
+  }
 }
 
 void attendance_dingding::get_work_time() {
@@ -116,7 +105,7 @@ void attendance_dingding::get_work_time() {
           item.add_clock_data(ptr->work_clock_attr);
         }
         (*ptr->call_fun)(in_code, ptr->work_clock_attr);
-        do_pop();
+        ptr->current_run.reset();
         do_work();
       }
   );

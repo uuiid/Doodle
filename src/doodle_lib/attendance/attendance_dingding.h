@@ -19,7 +19,6 @@ class attendance_dingding : public detail::attendance_interface {
   void get_work_time();
 
   void do_work();
-  void do_pop();
 
  protected:
   void async_run(
