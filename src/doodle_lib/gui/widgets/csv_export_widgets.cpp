@@ -593,6 +593,12 @@ void csv_export_widgets::filter_() {
                 }
               }) |
               ranges::to_vector;
+
+  auto l_v = g_reg()->view<database, user>();
+  for (auto &&[e, l_d, l_u] : l_v.each()) {
+    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
+  }
+  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
 }
 
 }  // namespace doodle::gui
