@@ -224,7 +224,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
     if (l_path.filename() == "DoodleExe.exe") p.program_location_attr = l_path;
   }
 
-  if (j.contains("user_phone_number")) j.at("").get_to(p.user_phone_number);
+  if (j.contains("user_phone_number")) j.at("user_phone_number").get_to(p.user_phone_number);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);

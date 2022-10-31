@@ -12,6 +12,7 @@
 #include <doodle_core/metadata/rules.h>
 
 #include <boost/locale.hpp>
+
 #include <core/status_info.h>
 #include <date/tz.h>
 #include <exception/exception.h>

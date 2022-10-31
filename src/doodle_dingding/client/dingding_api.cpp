@@ -22,14 +22,17 @@ class dingding_api::impl {
  public:
   access_token tocken{};
   chrono::time_point<chrono::system_clock> tocken_time{};
+  std::string access_tocken_name{};
 };
 
 void dingding_api::tocken_delay() const { ptr->tocken_time = chrono::system_clock::now(); }
 
 void dingding_api::async_run(const std::shared_ptr<std::function<void()>>& in_call) {
-  if ((chrono::system_clock::now() - ptr->tocken_time) > chrono::seconds{ptr->tocken.expires_in})
+  if ((chrono::system_clock::now() - ptr->tocken_time) > chrono::seconds{ptr->tocken.expires_in} ||
+      dingding::dingding_config::get().key_name != ptr->access_tocken_name)
     async_get_token([this, l_fun = in_call](const access_token& in_t) {
-      ptr->tocken = in_t;
+      ptr->tocken             = in_t;
+      ptr->access_tocken_name = dingding::dingding_config::get().key_name;
       tocken_delay();
       boost::asio::post(g_io_context(), [=]() { (*l_fun)(); });
     });

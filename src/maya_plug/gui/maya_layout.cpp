@@ -4,7 +4,6 @@
 
 #include "maya_layout.h"
 
-#include <doodle_app/gui/setting_windows.h>
 #include <maya_plug/configure/static_value.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>
@@ -103,8 +102,6 @@ bool maya_layout::tick() {
 maya_layout::~maya_layout() = default;
 void maya_menu::menu_windows() {
   namespace dgui = doodle::gui;
-  if (dear::MenuItem(dgui::setting_windows::name.data()))
-    make_handle().emplace<dgui::gui_windows>(std::make_shared<dgui::setting_windows>());
   if (dear::MenuItem(comm_check_scenes::name.data()))
     make_handle().emplace<dgui::gui_windows>(std::make_shared<comm_check_scenes>());
   if (dear::MenuItem(reference_attr_setting::name.data()))

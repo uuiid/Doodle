@@ -25,6 +25,7 @@ class DOODLE_DINGDING_API request_base {
   virtual ~request_base() = default;
   [[nodiscard("")]] doodle_error get_error() const { return doodle_error{"code: {} {}", errcode, errmsg}; }
   [[nodiscard]] boost::system::error_code get_code() const {
+    dingding::dingding_category::get_().set_message(errcode, errmsg);
     return boost::system::error_code{errcode, dingding::dingding_category::get()};
   }
   [[nodiscard("s")]] explicit operator bool() const { return errcode != 0; }

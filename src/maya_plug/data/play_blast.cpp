@@ -217,7 +217,6 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
       DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
-      /// @todo 创建同步合成视频需要在这里
       bool l_ok{};
       g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [l_r = &l_ok, this, k_f]() {
         *l_r = true;

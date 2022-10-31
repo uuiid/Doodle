@@ -75,13 +75,11 @@ void app_base::stop_app(bool in_stop) {
       g_io_context(),
       [=]() {
     g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
-        run_facet->deconstruction();
-        core_set_init{}.write_file();
-
-        g_reg()->ctx().at<program_info>().is_stop = true;
-        this->stop_                               = true;
-      }
-  );
+    g_reg()->ctx().at<program_info>().is_stop = true;
+    this->stop_                               = true;
+    run_facet->deconstruction();
+    core_set_init{}.write_file();
+  });
 
 }
 

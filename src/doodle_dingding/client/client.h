@@ -4,18 +4,19 @@
 
 #pragma once
 
-#include <doodle_dingding/doodle_dingding_fwd.h>
+#include <doodle_core/doodle_core.h>
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/entt_warp.h>
+
+#include <doodle_dingding/doodle_dingding_fwd.h>
 
 #include <boost/asio/any_io_executor.hpp>
-#include <boost/asio/ssl.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/system.hpp>
 #include <boost/url/urls.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast.hpp>
-#include <doodle_core/lib_warp/entt_warp.h>
-#include <doodle_core/doodle_core.h>
 namespace doodle::dingding {
 class client;
 
@@ -28,14 +29,8 @@ struct async_http_req_res_data {
   boost::beast::flat_buffer buffer_;
   boost::asio::ip::tcp::resolver::results_type results_attr{};
 
-  explicit async_http_req_res_data(
-      Req in_req_attr,
-      boost::url in_url_attr
-  ) : req_attr(std::move(in_req_attr)),
-      res_attr(),
-      url_attr(std::move(in_url_attr)),
-      buffer_() {
-  }
+  explicit async_http_req_res_data(Req in_req_attr, boost::url in_url_attr)
+      : req_attr(std::move(in_req_attr)), res_attr(), url_attr(std::move(in_url_attr)), buffer_() {}
 };
 
 template <typename Req, typename Res>
@@ -59,19 +54,13 @@ struct async_http_req_res {
   } state_;
 
   explicit async_http_req_res(
-      Req in_req_attr,
-      boost::url in_url_attr,
-      boost::beast::ssl_stream<boost::beast::tcp_stream>& in_ssl_stream,
+      Req in_req_attr, boost::url in_url_attr, boost::beast::ssl_stream<boost::beast::tcp_stream>& in_ssl_stream,
       std::shared_ptr<client> in_self_attr
-  ) : ssl_stream(in_ssl_stream),
-      self_attr(std::move(in_self_attr)),
-      p_data(
-          std::make_shared<data_type>(
-              std::move(in_req_attr),
-              std::move(in_url_attr)
-          )
-      ),
-      state_(on_starting){};
+  )
+      : ssl_stream(in_ssl_stream),
+        self_attr(std::move(in_self_attr)),
+        p_data(std::make_shared<data_type>(std::move(in_req_attr), std::move(in_url_attr))),
+        state_(on_starting){};
 
   void write_prepare() {
     auto l_data = p_data;
@@ -82,53 +71,43 @@ struct async_http_req_res {
     //    req_attr.method(boost::beast::http::verb::get);
     l_data->req_attr.target(l_url.c_str());
     l_data->req_attr.set(boost::beast::http::field::host, l_data->url_attr.host());
-    l_data->req_attr.set(
-        boost::beast::http::field::user_agent,
-        BOOST_BEAST_VERSION_STRING
-    );
+    l_data->req_attr.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     l_data->req_attr.prepare_payload();
   }
 
   template <typename Self>
-  void operator()(
-      Self& self,
-      boost::system::error_code error = {},
-      const Res& in_res               = {}
-  ) {
+  void operator()(Self& self, boost::system::error_code error = {}, const Res& in_res = {}) {
     /// 检查错误
-    if (error) {
-      throw_exception(boost::system::system_error{error});
-    }
     using namespace std::literals;
-    boost::beast::get_lowest_layer(ssl_stream)
-        .expires_after(30s);  /// 更新超时
+    boost::beast::get_lowest_layer(ssl_stream).expires_after(30s);  /// 更新超时
     auto l_data = p_data;     /// 在这里复制一次内部数据, 放置移动时数据无法访问
     auto l_c    = self_attr;  /// 在这里复制一次客户端,放置客户端被移动时无法访问
+    if (error) {
+      boost::asio::post(l_c->get_executor(), [l_self = std::move(self), error, l_data]() mutable {
+        l_self.complete(error, {});
+      });
+    }
 
     switch (state_) {
       case on_starting: {
         if (l_c->is_connect()) {
           state_ = on_handshake;  /// 如果已经连接,直接跳转到握手完成开始写入
-          boost::asio::post(
-              l_c->get_executor(),
-              [l_self = std::move(self), error]() mutable {
-                l_self(error);
-              }
-          );  /// 直接开始下一步调用
+          boost::asio::post(l_c->get_executor(), [l_self = std::move(self), error]() mutable {
+            l_self(error);
+          });  /// 直接开始下一步调用
         } else {
           state_ = on_resolve;  /// 开始进行ip解析已经各种证书验证, 和握手
           const std::string host{l_data->url_attr.host()};
           l_c->set_openssl(host);
           using namespace std::literals;
-          const std::string port{l_data->url_attr.has_port()  //
-                                     ? std::string{l_data->url_attr.port()}
-                                     : "443"s};
+          const std::string port{
+              l_data->url_attr.has_port()  //
+                  ? std::string{l_data->url_attr.port()}
+                  : "443"s};
           l_c->resolver().async_resolve(
-              host,
-              port,
+              host, port,
               [self = std::move(self), l_c, l_data](
-                  boost::system::error_code ec,
-                  const boost::asio::ip::tcp::resolver::results_type& results
+                  boost::system::error_code ec, const boost::asio::ip::tcp::resolver::results_type& results
               ) mutable {
                 l_data->results_attr = results;
                 self(ec, Res{});
@@ -141,27 +120,21 @@ struct async_http_req_res {
       case on_resolve: {
         state_ = on_connected;
         ssl_stream.set_verify_mode(boost::asio::ssl::verify_peer);
-        ssl_stream.set_verify_callback(
-            [](bool preverified,
-               boost::asio::ssl::verify_context& ctx) -> bool {
-              char subject_name[256];
-              X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-              X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-              DOODLE_LOG_INFO("Verifying {}", subject_name);
+        ssl_stream.set_verify_callback([](bool preverified, boost::asio::ssl::verify_context& ctx) -> bool {
+          char subject_name[256];
+          X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+          X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+          DOODLE_LOG_INFO("Verifying {}", subject_name);
 
-              return true;
-            }
-        );
+          return true;
+        });
 
         boost::beast::get_lowest_layer(ssl_stream)
             .async_connect(
                 l_data->results_attr,
-                [self = std::move(self)](
-                    boost::system::error_code ec,
-                    const boost::asio::ip::tcp::resolver::results_type::endpoint_type&
-                ) mutable {
-                  self(ec);
-                }
+                [self = std::move(self
+                 )](boost::system::error_code ec,
+                    const boost::asio::ip::tcp::resolver::results_type::endpoint_type&) mutable { self(ec); }
             );
         break;
       }
@@ -169,11 +142,7 @@ struct async_http_req_res {
         state_ = on_handshake;
         ssl_stream.async_handshake(
             boost::asio::ssl::stream_base::client,
-            [self = std::move(self)](
-                boost::system::error_code ec
-            ) mutable {
-              self(ec);
-            }
+            [self = std::move(self)](boost::system::error_code ec) mutable { self(ec); }
         );
         break;
       }
@@ -183,10 +152,7 @@ struct async_http_req_res {
         this->write_prepare();
         boost::beast::http::async_write(
             ssl_stream, l_data->req_attr,
-            [l_self = std::move(self)](
-                boost::system::error_code ec,
-                std::size_t bytes_transferred
-            ) mutable {
+            [l_self = std::move(self)](boost::system::error_code ec, std::size_t bytes_transferred) mutable {
               boost::ignore_unused(bytes_transferred);
               l_self(ec);
             }
@@ -198,13 +164,8 @@ struct async_http_req_res {
       case on_writing: {
         state_ = on_reading;
         boost::beast::http::async_read(
-            ssl_stream,
-            l_data->buffer_,
-            l_data->res_attr,
-            [l_self = std::move(self)](
-                boost::system::error_code ec,
-                std::size_t bytes_transferred
-            ) mutable {
+            ssl_stream, l_data->buffer_, l_data->res_attr,
+            [l_self = std::move(self)](boost::system::error_code ec, std::size_t bytes_transferred) mutable {
               boost::ignore_unused(bytes_transferred);
               l_self(ec);
             }
@@ -213,14 +174,10 @@ struct async_http_req_res {
         break;
       }
       case on_reading: {
-        if (!l_data->res_attr.keep_alive())
-          self_attr->async_shutdown();
-        boost::asio::post(
-            l_c->get_executor(),
-            [l_self = std::move(self), error, l_data]() mutable {
-              l_self.complete(error, l_data->res_attr);
-            }
-        );
+        if (!l_data->res_attr.keep_alive()) self_attr->async_shutdown();
+        boost::asio::post(l_c->get_executor(), [l_self = std::move(self), error, l_data]() mutable {
+          l_self.complete(error, l_data->res_attr);
+        });
         break;
       }
     }
@@ -233,8 +190,7 @@ struct async_http_req_res {
  * @brief 一个特别基础的https客户端
  * 使用方法 run("www.example.com","443","/")
  */
-class DOODLE_DINGDING_API client
-    : public std::enable_shared_from_this<client> {
+class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
  public:
   using executor_type = typename boost::asio::any_io_executor;
 
@@ -255,42 +211,19 @@ class DOODLE_DINGDING_API client
   void async_shutdown();
 
  public:
-  explicit client(
-      const boost::asio::any_io_executor& in_executor,
-      boost::asio::ssl::context& in_ssl_context
-  );
+  explicit client(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
 
   executor_type get_executor() noexcept;
 
   template <typename Response, typename CompletionToken, typename Request>
-  auto async_write_read(
-      Request in_request,
-      boost::url in_url,
-      CompletionToken&& in_token
-  )
+  auto async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
       -> decltype(boost::asio::async_compose<
-                  CompletionToken, void(
-                                       boost::system::error_code,
-                                       const std::decay_t<Response>&
-                                   )>(
-          std::declval<client_ns::async_http_req_res<Request, Response>>(),
-          in_token,
-          ssl_stream()
+                  CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+          std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
       )) {
     using http_req_res = client_ns::async_http_req_res<Request, Response>;
-    return boost::asio::async_compose<
-        CompletionToken,
-        void(
-            boost::system::error_code,
-            const std::decay_t<Response>&
-        )>(
-        http_req_res{
-            std::move(in_request),
-            std::move(in_url),
-            ssl_stream(),
-            shared_from_this()},
-        in_token,
-        ssl_stream()
+    return boost::asio::async_compose<CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+        http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
     );
   };
 

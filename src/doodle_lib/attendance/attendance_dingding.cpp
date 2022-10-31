@@ -18,8 +18,7 @@ namespace doodle::business {
 
 class attendance_dingding::impl {
  public:
-  std::unique_ptr<doodle::dingding::dingding_api> client{};
-  std::unique_ptr<boost::asio::ssl::context> ssl_context{};
+  doodle::dingding_api_ptr client{};
 
   work_clock work_clock_attr{};
   entt::handle user_handle{};
@@ -45,9 +44,7 @@ void attendance_dingding::set_range(const time_point_wrap& in_begin, const time_
 
 const work_clock& attendance_dingding::work_clock_attr() const {
   if (!ptr->client) {
-    ptr->ssl_context = std::move(std::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23));
-    ptr->client =
-        std::move(std::make_unique<doodle::dingding::dingding_api>(g_io_context().get_executor(), *ptr->ssl_context));
+    ptr->client = g_reg()->ctx().at<dingding_api_ptr>();
   }
 
   auto l_user = ptr->user_handle.get<doodle::dingding::user>();
@@ -60,9 +57,7 @@ const work_clock& attendance_dingding::work_clock_attr() const {
 }
 void attendance_dingding::async_run(const detail::attendance_interface::call_type_ptr& in_call_type_ptr) {
   if (!ptr->client) {
-    ptr->ssl_context = std::move(std::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23));
-    ptr->client =
-        std::move(std::make_unique<doodle::dingding::dingding_api>(g_io_context().get_executor(), *ptr->ssl_context));
+    ptr->client = g_reg()->ctx().at<dingding_api_ptr>();
   }
 
   auto l_user = ptr->user_handle.get<doodle::dingding::user>();

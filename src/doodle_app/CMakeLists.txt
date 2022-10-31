@@ -38,6 +38,7 @@ target_link_libraries(
         dxgi.lib
         DoodleLibResourceFont
         implot::implot
+        ${OPENSSL_LIBRARIES}
 )
 
 target_compile_options(doodle_app
