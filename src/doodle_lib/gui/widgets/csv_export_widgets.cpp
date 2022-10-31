@@ -303,7 +303,7 @@ class csv_table_gui {
     ImGui::TableSetupColumn("用户");
     ImGui::TableSetupColumn("总时间");
     ImGui::TableHeadersRow();
-    ranges::for_each(in_line, [](const csv_line_statistics_gui &in_gui) {
+    ranges::for_each(in_vector, [](const csv_line_statistics_gui &in_gui) {
       ImGui::TableNextRow();
 
       ImGui::TableNextColumn();
