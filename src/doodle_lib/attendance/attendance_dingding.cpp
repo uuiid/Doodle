@@ -32,7 +32,7 @@ class attendance_dingding::impl {
 attendance_dingding::attendance_dingding() : ptr(std::make_unique<impl>()) {}
 
 void attendance_dingding::set_user(const entt::handle& in_handle) {
-  if (in_handle.all_of<doodle::dingding::user>())
+  if (!in_handle.all_of<doodle::dingding::user>())
     doodle::throw_error(doodle::error_enum::component_missing_error, fmt::format("句柄 {} 缺少用户组件", in_handle));
 
   ptr->user_handle = in_handle;
