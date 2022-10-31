@@ -12,13 +12,14 @@
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
 
+#include "doodle_app/gui/base/ref_base.h"
+#include "doodle_app/lib_warp/imgui_warp.h"
+
 #include "doodle_dingding/client/dingding_api.h"
 #include "doodle_dingding/configure/config.h"
-#include "doodle_dingding/gui/base/ref_base.h"
 #include "doodle_dingding/metadata/department.h"
 #include "doodle_dingding/metadata/user_dd.h"
 
-#include "lib_warp/imgui_warp.h"
 #include <magic_enum.hpp>
 namespace doodle::gui {
 
