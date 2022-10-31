@@ -19,8 +19,13 @@ namespace doodle {
 class DOODLELIB_API main_facet : public facet::gui_facet {
  public:
   main_facet();
+
  protected:
   void load_windows() override;
+
+ public:
+  void operator()() override;
+  void deconstruction() override;
 };
 
 class DOODLELIB_API main_app : public doodle_main_app {

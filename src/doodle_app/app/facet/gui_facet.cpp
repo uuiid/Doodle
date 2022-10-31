@@ -21,7 +21,6 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include <doodle_dingding/client/dingding_api.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
@@ -79,18 +78,9 @@ void gui_facet::operator()() {
 
   p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
   p_i->timer_.async_wait(s_fun);
-  /// 初始化上下文
-  auto l_ssl = g_reg()->ctx().emplace<std::shared_ptr<boost::asio::ssl::context>>(
-      std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23)
-  );
-  g_reg()->ctx().emplace<doodle::dingding_api_ptr>(
-      std::make_shared<doodle::dingding_api_ptr::element_type>(g_io_context().get_executor(), *l_ssl)
-  );
 }
 void gui_facet::deconstruction() {
   p_i->timer_.cancel();
-  g_reg()->ctx().erase<std::shared_ptr<boost::asio::ssl::context>>();
-  g_reg()->ctx().erase<doodle::dingding_api_ptr>();
 
   // Cleanup
   ImGui_ImplDX11_Shutdown();
