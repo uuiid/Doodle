@@ -2,11 +2,13 @@
 // Created by TD on 2022/9/8.
 //
 #pragma once
+#include <doodle_dingding/configure/doodle_dingding_export.h>
+
 #include <map>
 #include <string>
 namespace doodle::dingding {
 
-class dingding_config {
+class DOODLE_DINGDING_API dingding_config {
  private:
   dingding_config();
   struct app_key_appsecret {
