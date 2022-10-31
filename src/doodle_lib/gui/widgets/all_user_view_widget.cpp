@@ -21,6 +21,7 @@ class all_user_view_widget::impl {
           handle(in_handle) {}
 
     gui_cache_name_id show_name;
+    gui_cache_name_id get_chork;
     gui_cache<std::string> phone_number;
     entt::handle handle;
   };
@@ -79,12 +80,14 @@ void all_user_view_widget::render() {
     ptr->get_all_user_data();
     ptr->has_init = true;
   }
+  ImGui::PushItemWidth(260);
   for (auto& item : ptr->user_name_list) {
     if (dear::InputText(*item.phone_number, &item.phone_number)) {
       item.handle.get_or_emplace<dingding::user>().phone_number = item.phone_number;
       database::save(item.handle);
     }
   }
+  ImGui::PopItemWidth();
   dear::Combo{*ptr->combox_user_id, ptr->combox_user_id().data()} && [this]() {
     for (auto&& l_u : ptr->user_name_list) {
       if (dear::Selectable(*l_u.show_name)) {
