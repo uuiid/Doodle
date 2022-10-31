@@ -449,11 +449,13 @@ void csv_export_widgets::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->filter)) {
     filter_();
-    if (get_work_time()) generate_table();
+    if (get_work_time())
+      ;
   }
 
   if (ImGui::Button(*p_i->gen_table)) {
-    if (get_work_time()) generate_table();
+    if (get_work_time())
+      ;
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->export_table)) {
@@ -557,15 +559,13 @@ bool csv_export_widgets::get_work_time() {
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
   for (const auto &item : p_i->user_handle) {
-    if (!item.first.all_of<business::work_clock>()) {
-      p_i->attendance_ptr->async_get_work_clock(
-          item.first, l_begin, l_end,
-          [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-            l_handle.get_or_emplace<business::work_clock>() = in_clock;
-            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
-          }
-      );
-    }
+    p_i->attendance_ptr->async_get_work_clock(
+        item.first, l_begin, l_end,
+        [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+          l_handle.get_or_emplace<business::work_clock>() = in_clock;
+          DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
+        }
+    );
   }
   return true;
 }
