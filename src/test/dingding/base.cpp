@@ -3,6 +3,9 @@
 //
 
 #include <doodle_core/doodle_core.h>
+#include <doodle_core/metadata/user.h>
+
+#include <doodle_lib/attendance/attendance_dingding.h>
 
 #include <doodle_dingding/client/client.h>
 #include <doodle_dingding/client/dingding_api.h>
@@ -141,4 +144,21 @@ BOOST_AUTO_TEST_CASE(
   g_io_context().run();
   BOOST_TEST(is_run_chick);
 }
+
+BOOST_AUTO_TEST_CASE(client_user_clock) {
+  using namespace std::literals;
+  auto l_st = boost::asio::make_strand(g_io_context());
+  time_point_wrap l_end_day{2022, 10, 1};
+  auto l_c                                   = std::make_shared<business::attendance_dingding>();
+  auto l_h                                   = make_handle();
+  l_h.emplace<dingding::user>().phone_number = "18957618185"s;
+  l_c->async_get_work_clock(
+      l_h, l_end_day.current_month_start(), l_end_day.current_month_end(),
+      [](const boost::system::error_code& in_code, const business::work_clock& in) {
+        DOODLE_LOG_INFO(in.debug_print());
+      }
+  );
+}
+)
+
 BOOST_AUTO_TEST_SUITE_END()
