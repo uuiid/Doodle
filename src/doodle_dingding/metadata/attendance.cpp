@@ -64,6 +64,11 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       }
     });
     in_clock += l_t;
+    auto l_sub_t = std::make_tuple(
+        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time - chrono::hours{1},
+        std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
+    );
+    DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
     in_clock -= std::make_tuple(
         std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_begin_time - chrono::hours{1},
         std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.rest_end_time - chrono::hours{1}
@@ -199,6 +204,7 @@ void to_json(nlohmann::json& nlohmann_json_j, const attendance& nlohmann_json_t)
   nlohmann_json_j["userid"]                 = nlohmann_json_t.userid;
   nlohmann_json_j["approve_list"]           = nlohmann_json_t.approve_list;
   nlohmann_json_j["corpId"]                 = nlohmann_json_t.corpId;
+  nlohmann_json_j["class_setting_info"]     = nlohmann_json_t.class_setting_info_attr;
   //  nlohmann_json_j["check_record_list"]      = nlohmann_json_t.check_record_list;
 }
 
@@ -208,6 +214,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance& nlohmann_json_
   nlohmann_json_j.at("userid").get_to(nlohmann_json_t.userid);
   nlohmann_json_j.at("approve_list").get_to(nlohmann_json_t.approve_list);
   nlohmann_json_j.at("corpId").get_to(nlohmann_json_t.corpId);
+  if (nlohmann_json_j.contains("class_setting_info"))
+    nlohmann_json_j.at("class_setting_info").get_to(nlohmann_json_t.class_setting_info_attr);
   //  nlohmann_json_j.at("check_record_list").get_to(nlohmann_json_t.check_record_list);
 }
 
