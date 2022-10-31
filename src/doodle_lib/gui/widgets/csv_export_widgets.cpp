@@ -20,6 +20,7 @@
 
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
+#include <doodle_app/gui/show_message.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/attendance/attendance_dingding.h>
@@ -325,6 +326,19 @@ class work_clock_method_gui {
 
 class csv_export_widgets::impl {
  public:
+  class time_cache : public gui_cache<std::int32_t> {
+   public:
+    time_cache() : gui_cache<std::int32_t>("月份"s, 0){};
+    time_point_wrap time_data{};
+  };
+
+  class user_list_cache : public gui_cache<std::string> {
+   public:
+    user_list_cache() : gui_cache<std::string>("过滤用户"s, "all"s){};
+    std::map<std::string, entt::handle> user_list{};
+    entt::handle current_user{};
+  };
+
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
@@ -347,6 +361,10 @@ class csv_export_widgets::impl {
   csv_table_gui csv_table_gui_{};
   work_clock_method_gui work_clock_method_gui_{};
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
+
+  user_list_cache combox_user_id{};
+  time_cache combox_month{};
+  gui_cache_name_id filter{"过滤"};
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -366,12 +384,19 @@ void csv_export_widgets::init() {
                                          BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
                                        });
 
-  g_reg()->ctx().emplace<csv_export_widgets &>(*this);  // 如果没有被列表列进去把指针指向的数据传进列表？？
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) p_i->list = g_reg()->ctx().at<std::vector<entt::handle>>();
   p_i->con.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
                                                                              ) { p_i->list = in; }));
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
   p_i->export_path.data = p_i->export_path.path.generic_string();
+
+  auto l_v              = g_reg()->view<database, user>();
+  for (auto &&[e, l_d, l_u] : l_v.each()) {
+    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
+  }
+  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
+  auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+  p_i->combox_month()                     = l_m;
 }
 
 void csv_export_widgets::render() {
@@ -405,6 +430,27 @@ void csv_export_widgets::render() {
       }
     };
   };
+  ImGui::PushItemWidth(100);
+  if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
+    auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+    p_i->combox_month.time_data             = time_point_wrap{l_y, p_i->combox_month(), l_d, l_h, l_mim, l_s};
+  }
+  ImGui::SameLine();
+  dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
+    for (auto &&l_u : p_i->combox_user_id.user_list) {
+      if (dear::Selectable(l_u.first.c_str())) {
+        p_i->combox_user_id()            = l_u.first;
+        p_i->combox_user_id.current_user = l_u.second;
+      }
+    }
+  };
+
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  if (ImGui::Button(*p_i->filter)) {
+    filter_();
+  }
+
   if (ImGui::Button(*p_i->gen_table)) {
     get_work_time();
     generate_table();
@@ -434,14 +480,9 @@ void csv_export_widgets::generate_table() {
       p_i->list |
       ranges::views::filter([](const entt::handle &in_h) { return in_h.all_of<time_point_wrap, assets_file>(); }) |
       ranges::to_vector;
-  p_i->list_sort_time =
-      ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
-        return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
-      });
   p_i->list |= ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
     return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
   });
-  p_i->user_handle.clear();
   p_i->csv_table_gui_.set_table_data(
       p_i->list | ranges::view::transform([this](const entt::handle &in_handle) -> csv_line {
         auto l_user = in_handle.get<assets_file>().user_attr();
@@ -466,10 +507,43 @@ void csv_export_widgets::export_csv() {
   l_f << p_i->csv_table_gui_.gui_data().to_str();
 }
 void csv_export_widgets::get_work_time() {
+  p_i->list_sort_time =
+      ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
+        return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
+      });
+  for (auto &&l_u : p_i->list_sort_time) {
+    auto l_user = l_u.get<assets_file>().user_attr();
+    /// \brief 收集用户的配置
+    p_i->user_handle[l_user].emplace_back(l_u);
+  }
+
   switch (p_i->work_clock_method_gui_.method) {
     case work_clock_method::form_dingding: {
       if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_dingding>(p_i->attendance_ptr))
         p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+
+      if (!std::all_of(
+              p_i->user_handle.begin(), p_i->user_handle.end(),
+              [](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) {
+                return in_handle.first.all_of<dingding::user>();
+              }
+          )) {
+        auto l_msg   = std::make_shared<show_message>();
+        auto l_users = p_i->user_handle |
+                       ranges::view::filter([](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) {
+                         return !in_handle.first.all_of<dingding::user>();
+                       }) |
+                       ranges::view::transform(
+                           [](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) -> std::string {
+                             return in_handle.first.get<user>().get_name();
+                           }
+                       ) |
+                       ranges::to_vector;
+        l_msg->set_message(fmt::format("缺失一下人员的电话号码:\n {}", fmt::join(l_users, "\n")));
+        make_handle().emplace<gui_windows>() = l_msg;
+        return;
+      }
+
       break;
     }
     case work_clock_method::form_rule: {
@@ -478,23 +552,47 @@ void csv_export_widgets::get_work_time() {
       break;
     }
   }
+
   /// \brief 这里设置一下时钟规则
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
-  for (auto &&l_u : p_i->list_sort_time) {
-    auto l_user = l_u.get<assets_file>().user_attr();
-    /// \brief 收集用户的配置
-    p_i->user_handle[l_user].emplace_back(l_u);
-    if (!l_user.all_of<business::rules, business::work_clock>()) {
+  for (const auto &item : p_i->user_handle) {
+    if (!item.first.all_of<business::work_clock>()) {
       p_i->attendance_ptr->async_get_work_clock(
-          l_user, l_begin, l_end,
-          [&, l_user](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-            l_user.get_or_emplace<business::work_clock>() = in_clock;
-            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
+          item.first, l_begin, l_end,
+          [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+            l_handle.get_or_emplace<business::work_clock>() = in_clock;
+            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
           }
       );
     }
   }
+}
+void csv_export_widgets::filter_() {
+  auto l_view  = g_reg()->view<database, assets_file, time_point_wrap>();
+
+  auto l_begin = p_i->combox_month.time_data.current_month_start();
+  auto l_end   = p_i->combox_month.time_data.current_month_end();
+  DOODLE_LOG_INFO("开始日期 {} 结束日期 {}", l_begin, l_end);
+
+  p_i->list =
+      l_view |
+      ranges::view::transform([](const entt::entity &in_tuple) -> entt::handle { return make_handle(in_tuple); }) |
+      ranges::to_vector;
+
+  p_i->list = p_i->list | ranges::view::filter([&](const entt::handle &in_handle) -> bool {
+                auto &&l_t = in_handle.get<time_point_wrap>();
+                return l_t <= l_end && l_t >= l_begin;
+              }) |
+              ranges::view::filter([&](const entt::handle &in_handle) -> bool {
+                if (p_i->combox_user_id.data == "all")
+                  return true;
+                else {
+                  auto l_user = p_i->combox_user_id.current_user;
+                  return in_handle.get<assets_file>().user_attr() == l_user;
+                }
+              }) |
+              ranges::to_vector;
 }
 
 }  // namespace doodle::gui

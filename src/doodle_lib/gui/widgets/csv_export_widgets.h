@@ -95,6 +95,8 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
 
   void get_work_time();
 
+  void filter_();
+
  public:
   csv_export_widgets();
   ~csv_export_widgets() override;
