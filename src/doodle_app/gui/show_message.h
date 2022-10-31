@@ -7,10 +7,9 @@
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
-class show_message : public base_windows<dear::PopupModal, show_message> {
+class DOODLE_APP_API show_message : public base_windows<dear::PopupModal, show_message> {
   class impl;
   std::unique_ptr<impl> p_i;
   std::string Message;
@@ -21,10 +20,9 @@ class show_message : public base_windows<dear::PopupModal, show_message> {
   void set_attr() const;
   std::int32_t flags() const;
   void render();
-
+  const std::string& title() const override;
   void set_message(const std::string& in_msg);  /// 设置消息内容
   std::string get_message();
 };
 
-}  // namespace gui
 }  // namespace doodle

@@ -15,6 +15,8 @@ class show_message::impl {
   gui::gui_cache_name_id button_{"确认"};
 };
 
+show_message::show_message() : p_i(std::make_unique<impl>()){};
+
 std::int32_t show_message::flags() const {
   boost::ignore_unused(this);
   return ImGuiWindowFlags_NoSavedSettings;
@@ -35,5 +37,7 @@ void show_message::render() {
     show_attr = false;
   }
 }
+const std::string& show_message::title() const { return p_i->title; }
+show_message::~show_message() = default;
 
 }  // namespace doodle::gui
