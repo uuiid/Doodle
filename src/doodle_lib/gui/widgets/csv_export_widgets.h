@@ -93,7 +93,7 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
   void generate_table();
   void export_csv();
 
-  void get_work_time();
+  bool get_work_time();
 
   void filter_();
 

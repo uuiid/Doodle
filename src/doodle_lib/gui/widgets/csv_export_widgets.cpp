@@ -452,8 +452,7 @@ void csv_export_widgets::render() {
   }
 
   if (ImGui::Button(*p_i->gen_table)) {
-    get_work_time();
-    generate_table();
+    if (get_work_time()) generate_table();
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->export_table)) {
@@ -506,7 +505,7 @@ void csv_export_widgets::export_csv() {
   FSys::ofstream l_f{p_i->export_path()};
   l_f << p_i->csv_table_gui_.gui_data().to_str();
 }
-void csv_export_widgets::get_work_time() {
+bool csv_export_widgets::get_work_time() {
   p_i->list_sort_time =
       ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
         return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
@@ -541,7 +540,7 @@ void csv_export_widgets::get_work_time() {
                        ranges::to_vector;
         l_msg->set_message(fmt::format("缺失一下人员的电话号码:\n {}", fmt::join(l_users, "\n")));
         make_handle().emplace<gui_windows>() = l_msg;
-        return;
+        return false;
       }
 
       break;
@@ -567,6 +566,7 @@ void csv_export_widgets::get_work_time() {
       );
     }
   }
+  return true;
 }
 void csv_export_widgets::filter_() {
   auto l_view  = g_reg()->view<database, assets_file, time_point_wrap>();
