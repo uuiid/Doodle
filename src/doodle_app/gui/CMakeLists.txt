@@ -5,7 +5,6 @@ target_sources(doodle_app
         main_proc_handle.h
         main_status_bar.h
         open_file_dialog.h
-        setting_windows.h
         show_message.h
 
         PRIVATE
@@ -14,7 +13,6 @@ target_sources(doodle_app
         main_proc_handle.cpp
         main_status_bar.cpp
         open_file_dialog.cpp
-        setting_windows.cpp
         show_message.cpp
         )
 add_subdirectory(base)

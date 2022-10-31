@@ -4,7 +4,8 @@
 
 #include "maya_layout.h"
 
-#include <doodle_app/gui/setting_windows.h>
+#include "doodle_lib/gui/setting_windows.h"
+
 #include <maya_plug/configure/static_value.h>
 #include <maya_plug/gui/action/comm_check_scenes.h>
 #include <maya_plug/gui/action/create_sim_cloth.h>

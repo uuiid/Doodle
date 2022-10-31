@@ -5,21 +5,20 @@
 
 #include "setting_windows.h"
 
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/init_register.h>
-#include <doodle_core/doodle_core.h>
-#include <doodle_core/metadata/metadata.h>
-#include <doodle_core/metadata/user.h>
+#include "doodle_core/core/core_set.h"
+#include "doodle_core/core/doodle_lib.h"
+#include "doodle_core/core/init_register.h"
+#include "doodle_core/doodle_core.h"
+#include "doodle_core/metadata/metadata.h"
+#include "doodle_core/metadata/user.h"
 
-#include <doodle_app/gui/base/ref_base.h>
+#include "doodle_dingding/client/dingding_api.h"
+#include "doodle_dingding/configure/config.h"
+#include "doodle_dingding/metadata/department.h"
+#include "doodle_dingding/metadata/user_dd.h"
 
-#include <doodle_dingding/client/dingding_api.h>
-#include <doodle_dingding/configure/config.h>
-#include <doodle_dingding/metadata/department.h>
-#include <doodle_dingding/metadata/user_dd.h>
-
-#include <lib_warp/imgui_warp.h>
+#include "gui/base/ref_base.h"
+#include "lib_warp/imgui_warp.h"
 #include <magic_enum.hpp>
 namespace doodle::gui {
 

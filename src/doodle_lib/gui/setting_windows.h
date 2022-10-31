@@ -3,9 +3,11 @@
 //
 
 #pragma once
-#include <doodle_core/core/core_set.h>
-#include <doodle_app/doodle_app_fwd.h>
-#include <doodle_app/gui/base/base_window.h>
+#include "doodle_core/core/core_set.h"
+
+#include "doodle_app_fwd.h"
+
+#include "gui/base/base_window.h"
 
 namespace doodle::gui {
 /**
@@ -49,8 +51,7 @@ namespace doodle::gui {
  * @brief 设置主窗口
  *
  */
-class DOODLE_APP_API setting_windows
-    : public base_windows<dear::Begin, setting_windows> {
+class setting_windows : public base_windows<dear::Begin, setting_windows> {
   class impl;
   std::unique_ptr<impl> p_i;
 
