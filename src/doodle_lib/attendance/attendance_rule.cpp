@@ -63,7 +63,13 @@ void attendance_rule::gen_work_clock() {
     });
   }
 }
-void attendance_rule::async_run(const detail::attendance_interface::call_type_ptr& in_call_type_ptr) {
+void attendance_rule::async_run(
+    const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,
+    const detail::attendance_interface::call_type_ptr& in_call_type_ptr
+) {
+  set_user(in_handle);
+  set_range(in_begin, in_end);
+
   gen_work_clock();
   (*in_call_type_ptr)({}, ptr->time_clock);
 }

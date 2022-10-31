@@ -17,7 +17,10 @@ class attendance_rule : public detail::attendance_interface {
   void gen_work_clock();
 
  protected:
-  void async_run(const call_type_ptr& in_call_type_ptr) override;
+  void async_run(
+      const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,
+      const call_type_ptr& in_call_type_ptr
+  ) override;
 
  public:
   attendance_rule();

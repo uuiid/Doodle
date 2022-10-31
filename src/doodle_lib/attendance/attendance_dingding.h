@@ -18,8 +18,14 @@ class attendance_dingding : public detail::attendance_interface {
 
   void get_work_time();
 
+  void do_work();
+  void do_pop();
+
  protected:
-  void async_run(const call_type_ptr& in_call_type_ptr) override;
+  void async_run(
+      const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,
+      const call_type_ptr& in_call_type_ptr
+  ) override;
 
  public:
   attendance_dingding();
