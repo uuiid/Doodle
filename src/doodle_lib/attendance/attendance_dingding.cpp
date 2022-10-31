@@ -101,10 +101,11 @@ void attendance_dingding::get_work_time() {
       [this](const boost::system::error_code& in_code, const std::vector<dingding::attendance::attendance>& in_list) {
         if (in_code) (*ptr->call_fun)(in_code, {});
 
+        work_clock l_w{};
         for (const auto& item : in_list) {
-          item.add_clock_data(ptr->work_clock_attr);
+          item.add_clock_data(l_w);
         }
-        (*ptr->call_fun)(in_code, ptr->work_clock_attr);
+        (*ptr->call_fun)(in_code, l_w);
         ptr->current_run.reset();
         do_work();
       }

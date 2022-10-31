@@ -21,7 +21,6 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
-
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
 #include <boost/asio/ssl.hpp>
@@ -67,7 +66,7 @@ void gui_facet::operator()() {
       return;
     }
     if (g_reg()->ctx().at<::doodle::program_info>().stop_attr()) return;
-    this->tick_begin();
+    if (!this->tick_begin()) return;
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
     if (!g_reg()->ctx().at<::doodle::program_info>().stop_attr()) {
@@ -117,7 +116,7 @@ void gui_facet::tick() {
   delete_entt |= ranges::action::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
   g_reg()->destroy(delete_entt.begin(), delete_entt.end());
 }
-void gui_facet::tick_begin() {
+bool gui_facet::tick_begin() {
   MSG msg;
   while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
@@ -125,7 +124,7 @@ void gui_facet::tick_begin() {
     /// 如果时退出消息, 直接设置停止
     if (msg.message == WM_QUIT) {
       DOODLE_LOG_INFO("开始退出");
-      return;
+      return false;
     }
   }
 
@@ -133,6 +132,7 @@ void gui_facet::tick_begin() {
   ImGui_ImplDX11_NewFrame();
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
+  return true;
 }
 void gui_facet::tick_end() {
   // Rendering

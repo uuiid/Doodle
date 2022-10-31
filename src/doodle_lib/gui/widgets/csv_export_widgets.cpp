@@ -339,6 +339,17 @@ class csv_export_widgets::impl {
     entt::handle current_user{};
   };
 
+  class user_clock {
+   public:
+    explicit user_clock(const std::string &in_basic_string, const std::string &in_phone_number, entt::handle in_handle)
+        : user_handle_attr(in_handle),
+          phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
+          get_chork("获取时钟"s){};
+    entt::handle user_handle_attr{};
+    gui_cache<std::string> phone_number;
+    gui_cache_name_id get_chork{"获取时钟"s};
+  };
+
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
@@ -361,10 +372,13 @@ class csv_export_widgets::impl {
   csv_table_gui csv_table_gui_{};
   work_clock_method_gui work_clock_method_gui_{};
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
-
+  /// 过滤用户
   user_list_cache combox_user_id{};
+  /// 过滤月份
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
+  /// 用户时钟缓存
+  std::vector<user_clock> user_clock_attr;
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -390,11 +404,7 @@ void csv_export_widgets::init() {
   p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
   p_i->export_path.data = p_i->export_path.path.generic_string();
 
-  auto l_v              = g_reg()->view<database, user>();
-  for (auto &&[e, l_d, l_u] : l_v.each()) {
-    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
-  }
-  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
+  gen_user();
   auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
   p_i->combox_month()                     = l_m;
 }
@@ -445,12 +455,21 @@ void csv_export_widgets::render() {
     }
   };
 
+  for (auto &item : p_i->user_clock_attr) {
+    if (dear::InputText(*item.phone_number, &item.phone_number)) {
+      item.user_handle_attr.get_or_emplace<dingding::user>().phone_number = item.phone_number;
+      database::save(item.user_handle_attr);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(*item.get_chork)) {
+      get_work_time(item.user_handle_attr);
+    }
+  }
+
   ImGui::PopItemWidth();
   ImGui::SameLine();
   if (ImGui::Button(*p_i->filter)) {
     filter_();
-    if (get_work_time())
-      ;
   }
 
   if (ImGui::Button(*p_i->gen_table)) {
@@ -595,11 +614,64 @@ void csv_export_widgets::filter_() {
               }) |
               ranges::to_vector;
 
+  gen_user();
+}
+void csv_export_widgets::gen_user() {
   auto l_v = g_reg()->view<database, user>();
   for (auto &&[e, l_d, l_u] : l_v.each()) {
+    auto l_h = make_handle(e);
     p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
+    p_i->user_clock_attr.emplace_back(
+        l_u.get_name(), l_h.all_of<dingding::user>() ? l_h.get<dingding::user>().phone_number : ""s, l_h
+    );
   }
   p_i->combox_user_id.user_list.emplace("all", entt::handle{});
+}
+bool csv_export_widgets::get_work_time(const entt::handle &in_handle) {
+  p_i->list_sort_time =
+      ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
+        return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
+      });
+  p_i->user_handle.clear();
+  for (auto &&l_u : p_i->list_sort_time) {
+    auto l_user = l_u.get<assets_file>().user_attr();
+    /// \brief 收集用户的配置
+    p_i->user_handle[l_user].emplace_back(l_u);
+  }
+
+  switch (p_i->work_clock_method_gui_.method) {
+    case work_clock_method::form_dingding: {
+      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_dingding>(p_i->attendance_ptr))
+        p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+
+      if (!in_handle.all_of<dingding::user>()) {
+        auto l_msg = std::make_shared<show_message>();
+        l_msg->set_message(fmt::format("缺失人员的电话号码: {}", in_handle.get<user>().get_name()));
+        make_handle().emplace<gui_windows>() = l_msg;
+        return false;
+      }
+
+      break;
+    }
+    case work_clock_method::form_rule: {
+      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_rule>(p_i->attendance_ptr))
+        p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
+      break;
+    }
+  }
+
+  /// \brief 这里设置一下时钟规则
+  auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
+  auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
+  p_i->attendance_ptr->async_get_work_clock(
+      in_handle, l_begin, l_end,
+      [l_handle = in_handle](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+        l_handle.get_or_emplace<business::work_clock>() = in_clock;
+        DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
+      }
+  );
+
+  return true;
 }
 
 }  // namespace doodle::gui

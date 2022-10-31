@@ -94,6 +94,8 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
   void export_csv();
 
   bool get_work_time();
+  bool get_work_time(const entt::handle& in_handle);
+  void gen_user();
 
   void filter_();
 
