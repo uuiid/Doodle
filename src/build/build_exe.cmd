@@ -6,14 +6,14 @@ echo "Current Location is %my_pwd%"
 echo -----------------config main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release
+--preset %Ninja_release%
 
 if %errorlevel% NEQ 0 exit 1
 
 echo -----------------build main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_exe
+--preset %Ninja_release_exe%
 
 
 if %errorlevel% NEQ 0 exit 1

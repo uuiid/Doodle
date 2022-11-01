@@ -4,13 +4,13 @@ echo -----------------------------------------------------
 echo -----------------config maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release -DMaya_Version=2018
+--preset  %Ninja_release% -DMaya_Version=2018
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------build maya 2018--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_exe --target doodle_maya
+--preset %Ninja_release_exe% --target doodle_maya
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------install maya 2018--------------------
@@ -28,13 +28,13 @@ echo -----------------------------------------------------
 echo -----------------config maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release -DMaya_Version=2019
+--preset  %Ninja_release% -DMaya_Version=2019
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------build maya 2019--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_exe --target doodle_maya
+--preset %Ninja_release_exe% --target doodle_maya
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------install maya 2019--------------------
@@ -52,13 +52,13 @@ echo -----------------------------------------------------
 echo -----------------config maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release -DMaya_Version=2020
+--preset  %Ninja_release% -DMaya_Version=2020
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------build maya 2020--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 --build ^
---preset release_exe --target doodle_maya
+--preset %Ninja_release_exe% --target doodle_maya
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------install maya 2020--------------------

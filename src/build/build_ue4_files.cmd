@@ -4,7 +4,7 @@ call %~dp0/set_venv.cmd
 echo -----------------config ue4--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release
+--preset %Ninja_release%
 
 if %errorlevel% NEQ 0 exit 1
 
