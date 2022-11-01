@@ -84,12 +84,27 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
             std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
         break;
       case detail::approve_type::business_travel:
-        break;                                   /// 出差不管
-      case detail::approve_type::work_overtime:  /// 加班
-        in_clock +=
-            std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
+        break;                                     /// 出差不管
+      case detail::approve_type::work_overtime: {  /// 加班
+        if (in_approve_for_open.duration_unit == "HOUR") {
+          /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
+          auto l_h = chrono::hours_double{std::stof(in_approve_for_open.duration)};
+
+          in_clock += std::make_tuple(
+              in_approve_for_open.begin_time,
+              in_approve_for_open.begin_time + chrono::duration_cast<chrono::seconds>(l_h), in_approve_for_open.tag_name
+          );
+          in_clock.add_info(std::make_tuple(
+              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+          ));
+        } else {
+          in_clock += std::make_tuple(
+              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+          );
+        }
 
         break;
+      }
     }
   });
 }
@@ -193,12 +208,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_op
   else
     DOODLE_LOG_INFO("无法找到 {} 对应的枚举变量", l_bix_type);
 
-  if (nlohmann_json_t.duration_unit == "HOUR") {
-    auto l_h                 = chrono::hours_double{std::stof(nlohmann_json_t.duration)};
-    nlohmann_json_t.end_time = nlohmann_json_t.begin_time + chrono::duration_cast<chrono::seconds>(l_h);
-  } else {
-    nlohmann_json_t.end_time = tool::parse_dingding_time(nlohmann_json_j.at("end_time"));
-  }
+  nlohmann_json_t.end_time     = tool::parse_dingding_time(nlohmann_json_j.at("end_time"));
 
   nlohmann_json_t.gmt_finished = tool::parse_dingding_time(nlohmann_json_j.at("gmt_finished"));
 }
