@@ -97,9 +97,10 @@ namespace doodle::gui {
 class main_status_bar::impl {
  public:
   std::shared_ptr<boost::asio::high_resolution_timer> timer{};
+  bool call;
 };
 
-main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) {}
+main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) { init(); }
 
 void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
 
@@ -127,21 +128,23 @@ bool main_status_bar::tick() {
       /// \brief 渲染进度条
       if (g_reg()->ctx().contains<process_message>()) {
         auto& l_msg = g_reg()->ctx().at<process_message>();
-        if (l_msg.is_success() || l_msg.is_fail()) {
+        if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
+          p_i->call = true;
+          p_i->timer->expires_after(1s);
           p_i->timer->async_wait([](const boost::system::error_code& in_code) {
-            if (in_code) {
+            p_i->call = false;
+            if (in_code == boost::asio::error::operation_aborted) {
               return;
             }
             if (g_reg()->ctx().contains<process_message>()) {
               g_reg()->ctx().erase<process_message>();
             }
           });
-          p_i->timer->expires_from_now(1s);
         }
 
         dear::Text(l_msg.get_name());
         ImGui::SameLine();
-        dear::Text(l_msg.log());
+        dear::Text(l_msg.err());
         ImGui::ProgressBar(
             boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
             fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
