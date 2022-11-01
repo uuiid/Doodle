@@ -100,12 +100,11 @@ entt::handle assets_file::user_attr() const {
       if (p_i->p_user.empty()) {
         p_i->p_user = "null";
       }
-      DOODLE_LOG_WARN("无法寻找到用户 {}", p_i->ref_user.uuid);
       if (auto l_user = user::find_by_user_name(p_i->p_user);
           l_user) {
         p_i->handle_cache = l_user;
-        if (p_i->handle_cache.any_of<database>())
-          p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
+        if (p_i->handle_cache.any_of<database>()) p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
+        DOODLE_LOG_WARN("按名称寻找到用户 {}", p_i->p_user);
       }
 
       if (!p_i->handle_cache) {
