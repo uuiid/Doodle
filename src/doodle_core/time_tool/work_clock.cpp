@@ -149,7 +149,9 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
 
   std::string l_r{};
   for (auto&& i : l_item) {
-    l_r += fmt::format(R"("从 {} 到 {} 信息 {}")", i.first.lower(), i.first.bounds(), fmt::join(i.second, " "));
+    l_r += fmt::format(
+        R"("从 {} 到 {} 信息 {}")", boost::icl::first(i.first), boost::icl::last(i.first), fmt::join(i.second, " ")
+    );
   }
 
   return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
@@ -185,6 +187,11 @@ work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_
   interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
 
   return *this;
+}
+void work_clock::add_info(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
+  auto&& [l_time_1, l_time_2, l_info] = in_time;
+  auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
+  interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
 }
 }  // namespace business
 

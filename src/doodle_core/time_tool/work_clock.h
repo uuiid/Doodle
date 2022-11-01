@@ -77,6 +77,11 @@ class DOODLE_CORE_API work_clock {
    * @return 可选段备注
    */
   std::optional<std::string> get_time_info(const time_type& in_min, const time_type& in_max);
+  /**
+   * 这个是添加额外的信息, 并不会加入到计算时间中, 只会添加一个额外的辅助信息时间
+   * @param in_time
+   */
+  void add_info(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
 
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
