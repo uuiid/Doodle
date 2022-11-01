@@ -16,8 +16,8 @@ class csv_line : boost::totally_ordered<csv_line> {
  public:
   csv_line() = default;
   explicit csv_line(
-      const entt::handle& in_handle, const entt::handle& in_up_time_handle, const entt::handle& in_user_handle,
-      bool in_use_first_as_project_name, const std::string_view& in_season_fmt_str,
+      const entt::handle& in_handle, const std::vector<entt::handle>& in_up_time_handle_list,
+      const entt::handle& in_user_handle, bool in_use_first_as_project_name, const std::string_view& in_season_fmt_str,
       const std::string_view& in_episodes_fmt_str, const std::string_view& in_shot_fmt_str
   );
   /// 按照 季数 -> 集数 -> 镜头 排序
