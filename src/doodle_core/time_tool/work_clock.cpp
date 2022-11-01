@@ -149,7 +149,7 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
 
   std::string l_r{};
   for (auto&& i : l_item) {
-    l_r += fmt::to_string(fmt::join(i.second, " "));
+    l_r += fmt::format(R"("时间段 {} 信息 {}")", i.first, fmt::join(i.second, " "));
   }
 
   return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
