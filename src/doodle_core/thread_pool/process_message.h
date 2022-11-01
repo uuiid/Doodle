@@ -67,6 +67,7 @@ class DOODLE_CORE_API process_message {
   [[nodiscard]] inline bool is_run() const { return get_state() == state::run; }
   [[nodiscard]] inline bool is_wait() const { return get_state() == state::wait; }
   [[nodiscard]] inline bool is_success() const { return get_state() == state::success; }
+  [[nodiscard]] inline bool is_fail() const { return get_state() == state::fail; }
 
   inline void aborted() const {
     if (aborted_function) aborted_function();
