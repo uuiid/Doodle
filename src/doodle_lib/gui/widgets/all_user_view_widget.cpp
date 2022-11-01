@@ -11,6 +11,8 @@
 
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
+#include "doodle_dingding/configure/config.h"
+
 namespace doodle::gui {
 class all_user_view_widget::impl {
  public:
@@ -25,6 +27,7 @@ class all_user_view_widget::impl {
     gui_cache<std::string> phone_number;
     gui_cache_name_id delete_user{"删除用户"};
     entt::handle handle;
+    gui::gui_cache<std::string> p_switch_key{"所在公司", std::string{dingding::dingding_config::suoyi}};
   };
 
   std::string title_name_{std::string{name}};
@@ -91,6 +94,16 @@ void all_user_view_widget::render() {
       item.handle.get_or_emplace<dingding::user>().phone_number = item.phone_number;
       database::save(item.handle);
     }
+    ImGui::SameLine();
+    dear::Combo{*item.p_switch_key, item.p_switch_key.data.c_str()} && [&]() {
+      for (const auto& l_item_s : {dingding::dingding_config::suoyi, dingding::dingding_config::congxin}) {
+        if (ImGui::Selectable(l_item_s.data())) {
+          item.p_switch_key.data                               = std::string{l_item_s};
+          item.handle.get_or_emplace<dingding::user>().company = std::string{l_item_s};
+        }
+      }
+    };
+
     ImGui::SameLine();
     if (ImGui::Button(*item.delete_user)) {
       ptr->delete_user_fun(item.handle);
