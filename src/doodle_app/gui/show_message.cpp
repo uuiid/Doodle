@@ -10,7 +10,7 @@
 namespace doodle::gui {
 class show_message::impl {
  public:
-  std::string title{"消息"};
+  gui_cache_name_id title{"消息"};
   std::string message{};
   gui::gui_cache_name_id button_{"确认"};
 };
@@ -30,14 +30,14 @@ void show_message::set_attr() const {
 }
 
 void show_message::render() {
-  ImGui::Text(p_i->message.c_str());
+  dear::Text(p_i->message);
 
   if (ImGui::Button(*p_i->button_)) {
     ImGui::CloseCurrentPopup();
     show_attr = false;
   }
 }
-const std::string& show_message::title() const { return p_i->title; }
+const std::string& show_message::title() const { return p_i->title.name_id; }
 show_message::~show_message() = default;
 
 }  // namespace doodle::gui
