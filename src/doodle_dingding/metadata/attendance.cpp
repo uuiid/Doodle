@@ -192,7 +192,13 @@ void from_json(const nlohmann::json& nlohmann_json_j, attendance::approve_for_op
     nlohmann_json_t.biz_type = *l_enum;
   else
     DOODLE_LOG_INFO("无法找到 {} 对应的枚举变量", l_bix_type);
-  nlohmann_json_t.end_time     = tool::parse_dingding_time(nlohmann_json_j.at("end_time"));
+
+  if (nlohmann_json_t.duration_unit == "HOUR") {
+    auto l_h                 = chrono::hours_double{std::stof(nlohmann_json_t.duration)};
+    nlohmann_json_t.end_time = nlohmann_json_t.begin_time + chrono::duration_cast<chrono::seconds>(l_h);
+  } else {
+    nlohmann_json_t.end_time = tool::parse_dingding_time(nlohmann_json_j.at("end_time"));
+  }
 
   nlohmann_json_t.gmt_finished = tool::parse_dingding_time(nlohmann_json_j.at("gmt_finished"));
 }

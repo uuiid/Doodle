@@ -65,14 +65,14 @@ enum class time_result : std::uint16_t {
   NotSigned     /// @brief 未打卡
 };
 enum class check_type : std::uint16_t {
-  OnDuty,   /// @brief 上班
-  OffDuty,  /// @brief下班
+  OnDuty = 0,  /// @brief 上班
+  OffDuty,     /// @brief下班
 };
 
 enum class approve_type : std::uint16_t {
-  leave,            /// @brief 请假
-  business_travel,  /// @brief 出差
-  work_overtime     /// @brief 加班
+  work_overtime   = 1,  /// @brief 加班
+  business_travel = 2,  /// @brief 出差
+  leave           = 3,  /// @brief 请假
 };
 
 }  // namespace detail
