@@ -58,7 +58,6 @@ const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 void gui_facet::operator()() {
   post_constructor();
   make_handle().emplace<::doodle::gui::gui_tick>(std::make_shared<gui::short_cut>());
-  p_i->timer_.cancel();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
@@ -281,6 +280,7 @@ void gui_facet::post_constructor() {
 void gui_facet::close_windows() {
   boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
     p_i->timer_.cancel();
+    boost::asio::post(g_io_context(), [this]() { this->tick_begin(); });
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
     doodle::app_base::Get().stop_app();
