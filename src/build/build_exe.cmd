@@ -19,7 +19,7 @@ echo -----------------build main exe--------------------
 if %errorlevel% NEQ 0 exit 1
 echo -----------------install main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
---install %my_pwd%\build\Ninja_release ^
+--install %my_pwd%\build\%Ninja_release% ^
 --component exe_com
 
 call  %my_pwd%\src\build\doc.cmd > %tmp%/doodle_doc_info.txt
