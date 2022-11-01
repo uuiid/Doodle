@@ -5,7 +5,7 @@
 #include "dingding_error.h"
 
 namespace doodle::dingding {
-const char* dingding_category::name() const noexcept { return ""; }
+const char* dingding_category::name() const noexcept { return "dingding"; }
 std::string dingding_category::message(int ev) const {
   if (map_err.find(ev) != map_err.end())
     return map_err.at(ev);
