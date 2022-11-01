@@ -82,19 +82,12 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-  /**
-   * @brief Get the user next time object 获取上一次人物提交时的实体文件
-   *
-   * @param in
-   * @return entt::handle
-   */
-  entt::handle get_user_up_time(const entt::handle& in_user, const entt::handle& in);
 
   void generate_table();
+  /// 导出表
   void export_csv();
 
   bool get_work_time();
-  bool get_work_time(const entt::handle& in_handle);
   void gen_user();
 
   void filter_();

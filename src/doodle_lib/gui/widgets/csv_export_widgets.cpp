@@ -482,18 +482,10 @@ void csv_export_widgets::render() {
   p_i->csv_table_gui_.render();
 }
 
-entt::handle csv_export_widgets::get_user_up_time(const entt::handle &in_user, const entt::handle &in_handle) {
-  auto &&l_time_list = p_i->user_handle[in_user];
-
-  auto l_it          = ranges::find(l_time_list, in_handle);
-  if (l_it == l_time_list.begin()) {
-    return in_handle;
-  } else {
-    return *(--l_it);
-  }
-}
 const std::string &csv_export_widgets::title() const { return p_i->title_name_; }
 void csv_export_widgets::generate_table() {
+  auto &l_p = g_reg()->ctx().emplace<process_message>();
+  l_p.set_state(l_p.run);
   p_i->list =
       p_i->list |
       ranges::views::filter([](const entt::handle &in_h) { return in_h.all_of<time_point_wrap, assets_file>(); }) |
@@ -516,9 +508,13 @@ void csv_export_widgets::generate_table() {
       ranges::to_vector
   );
 }
+
 void csv_export_widgets::export_csv() {
   if (p_i->list.empty()) {
-    DOODLE_LOG_INFO("选择为空, 不导出");
+    auto l_msg = std::make_shared<show_message>();
+    l_msg->set_message("过滤后为空, 不导出");
+    make_handle().emplace<gui_windows>() = l_msg;
+    DOODLE_LOG_INFO("过滤后为空, 不导出");
     return;
   }
   FSys::ofstream l_f{p_i->export_path()};
@@ -581,7 +577,11 @@ bool csv_export_widgets::get_work_time() {
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
   auto l_size  = p_i->user_handle.size();
-  g_reg()->ctx().at<process_message>().set_name("开始获取dingding数据");
+  /// 显示一下进度条
+  auto &l_p    = g_reg()->ctx().emplace<process_message>();
+  l_p.set_name("开始获取dingding数据");
+  l_p.set_state(l_p.run);
+
   p_i->user_size = l_size;
   for (const auto &item : p_i->user_handle) {
     if (!item.first.all_of<business::work_clock>() || p_i->force_get_work_time())
@@ -589,7 +589,7 @@ bool csv_export_widgets::get_work_time() {
           item.first, l_begin, l_end,
           [l_handle = item.first, l_size,
            this](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-            auto &l_p = g_reg()->ctx().at<process_message>();
+            auto &l_p = g_reg()->ctx().emplace<process_message>();
             l_p.message(fmt::format("完成用户 {} 时间获取", l_handle.get<user>().get_name()));
             l_p.progress_step({1, l_size});
 
@@ -645,59 +645,6 @@ void csv_export_widgets::gen_user() {
     p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
   }
   p_i->combox_user_id.user_list.emplace("all", entt::handle{});
-}
-bool csv_export_widgets::get_work_time(const entt::handle &in_handle) {
-  p_i->list_sort_time =
-      ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
-        return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
-      });
-  p_i->user_handle.clear();
-  for (auto &&l_u : p_i->list_sort_time) {
-    auto l_user = l_u.get<assets_file>().user_attr();
-    /// \brief 收集用户的配置
-    p_i->user_handle[l_user].emplace_back(l_u);
-  }
-
-  switch (p_i->work_clock_method_gui_.method) {
-    case work_clock_method::form_dingding: {
-      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_dingding>(p_i->attendance_ptr))
-        p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
-
-      if (!in_handle.all_of<dingding::user>()) {
-        auto l_msg = std::make_shared<show_message>();
-        l_msg->set_message(fmt::format("缺失人员的电话号码: {}", in_handle.get<user>().get_name()));
-        make_handle().emplace<gui_windows>() = l_msg;
-        return false;
-      }
-
-      break;
-    }
-    case work_clock_method::form_rule: {
-      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_rule>(p_i->attendance_ptr))
-        p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
-      break;
-    }
-  }
-
-  /// \brief 这里设置一下时钟规则
-  auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
-  auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
-  p_i->attendance_ptr->async_get_work_clock(
-      in_handle, l_begin, l_end,
-      [l_handle = in_handle](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-        if (in_code) {
-          auto l_msg = std::make_shared<show_message>();
-          l_msg->set_message(fmt::format("{}", in_code.what()));
-          make_handle().emplace<gui_windows>() = l_msg;
-          return;
-        }
-
-        l_handle.get_or_emplace<business::work_clock>() = in_clock;
-        DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
-      }
-  );
-
-  return true;
 }
 
 }  // namespace doodle::gui
