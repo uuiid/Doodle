@@ -377,8 +377,6 @@ class csv_export_widgets::impl {
   /// 过滤月份
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
-  /// 用户时钟缓存
-  std::vector<user_clock> user_clock_attr;
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -447,6 +445,7 @@ void csv_export_widgets::render() {
   }
   ImGui::SameLine();
   dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
+    gen_user();
     for (auto &&l_u : p_i->combox_user_id.user_list) {
       if (dear::Selectable(l_u.first.c_str())) {
         p_i->combox_user_id()            = l_u.first;
@@ -455,26 +454,15 @@ void csv_export_widgets::render() {
     }
   };
 
-  for (auto &item : p_i->user_clock_attr) {
-    if (dear::InputText(*item.phone_number, &item.phone_number)) {
-      item.user_handle_attr.get_or_emplace<dingding::user>().phone_number = item.phone_number;
-      database::save(item.user_handle_attr);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button(*item.get_chork)) {
-      get_work_time(item.user_handle_attr);
-    }
-  }
-
   ImGui::PopItemWidth();
   ImGui::SameLine();
   if (ImGui::Button(*p_i->filter)) {
     filter_();
+    get_work_time();
   }
 
   if (ImGui::Button(*p_i->gen_table)) {
-    if (get_work_time())
-      ;
+    generate_table();
   }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->export_table)) {
@@ -560,7 +548,7 @@ bool csv_export_widgets::get_work_time() {
                            }
                        ) |
                        ranges::to_vector;
-        l_msg->set_message(fmt::format("缺失一下人员的电话号码:\n{}", fmt::join(l_users, "\n")));
+        l_msg->set_message(fmt::format("缺失以下人员的电话号码:\n{}", fmt::join(l_users, "\n")));
         make_handle().emplace<gui_windows>() = l_msg;
         return false;
       }
@@ -572,6 +560,11 @@ bool csv_export_widgets::get_work_time() {
         p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
       break;
     }
+  }
+  if (p_i->list.empty()) {
+    l_msg->set_message("筛选后为空");
+    make_handle().emplace<gui_windows>() = l_msg;
+    return;
   }
 
   /// \brief 这里设置一下时钟规则
@@ -613,17 +606,14 @@ void csv_export_widgets::filter_() {
                 }
               }) |
               ranges::to_vector;
-
-  gen_user();
 }
 void csv_export_widgets::gen_user() {
+  p_i->combox_user_id.user_list.clear();
+
   auto l_v = g_reg()->view<database, user>();
   for (auto &&[e, l_d, l_u] : l_v.each()) {
     auto l_h = make_handle(e);
     p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
-    p_i->user_clock_attr.emplace_back(
-        l_u.get_name(), l_h.all_of<dingding::user>() ? l_h.get<dingding::user>().phone_number : ""s, l_h
-    );
   }
   p_i->combox_user_id.user_list.emplace("all", entt::handle{});
 }
@@ -668,7 +658,7 @@ bool csv_export_widgets::get_work_time(const entt::handle &in_handle) {
       [l_handle = in_handle](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
         if (in_code) {
           auto l_msg = std::make_shared<show_message>();
-          l_msg->set_message(fmt::format("缺失人员的电话号码: {}", in_code.to_string()));
+          l_msg->set_message(fmt::format("{}", in_code.what()));
           make_handle().emplace<gui_windows>() = l_msg;
           return;
         }
