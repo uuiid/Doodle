@@ -20,14 +20,18 @@ class all_user_view_widget::impl {
     user_gui_data(const std::string& in_basic_string, const std::string& in_phone_number, entt::handle in_handle)
         : show_name(in_basic_string),
           phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
-          handle(in_handle) {}
+          handle(in_handle),
+          p_switch_key(
+              "所在公司"s, in_handle.all_of<dingding::user>() ? in_handle.get<dingding::user>().company
+                                                              : std::string{dingding::dingding_config::suoyi}
+          ) {}
 
     gui_cache_name_id show_name;
     gui_cache_name_id get_chork;
     gui_cache<std::string> phone_number;
     gui_cache_name_id delete_user{"删除用户"};
     entt::handle handle;
-    gui::gui_cache<std::string> p_switch_key{"所在公司", std::string{dingding::dingding_config::suoyi}};
+    gui::gui_cache<std::string> p_switch_key;
   };
 
   std::string title_name_{std::string{name}};
