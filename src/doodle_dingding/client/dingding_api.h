@@ -71,8 +71,14 @@ class DOODLE_DINGDING_API dingding_api : public client {
  public:
   constexpr static const std::string_view dingding_host{"https://oapi.dingtalk.com"};
 
-  explicit dingding_api(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
+  explicit dingding_api(
+      const std::string& in_company, const boost::asio::any_io_executor& in_executor,
+      boost::asio::ssl::context& in_ssl_context
+  );
   virtual ~dingding_api();
+
+  const std::string& company_name() const;
+
   /**
    * @brief 获取钉钉的授权令牌
    * @param in  回调
@@ -191,6 +197,11 @@ class DOODLE_DINGDING_API dingding_api : public client {
         in_handler
     );
   }
+};
+
+class DOODLE_DINGDING_API dingding_api_factory {
+ public:
+  std::shared_ptr<dingding_api> create_api(const std::string& in_company);
 };
 
 }  // namespace doodle::dingding

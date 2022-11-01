@@ -28,11 +28,9 @@ class dingding_api::impl {
 void dingding_api::tocken_delay() const { ptr->tocken_time = chrono::system_clock::now(); }
 
 void dingding_api::async_run(const std::shared_ptr<std::function<void()>>& in_call) {
-  if ((chrono::system_clock::now() - ptr->tocken_time) > chrono::seconds{ptr->tocken.expires_in} ||
-      dingding::dingding_config::get().key_name != ptr->access_tocken_name)
+  if ((chrono::system_clock::now() - ptr->tocken_time) > chrono::seconds{ptr->tocken.expires_in})
     async_get_token([this, l_fun = in_call](const access_token& in_t) {
-      ptr->tocken             = in_t;
-      ptr->access_tocken_name = dingding::dingding_config::get().key_name;
+      ptr->tocken = in_t;
       tocken_delay();
       boost::asio::post(g_io_context(), [=]() { (*l_fun)(); });
     });
@@ -153,10 +151,15 @@ void dingding_api::async_find_mobile_user_impl(
   );
 }
 
-dingding_api::dingding_api(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context)
+dingding_api::dingding_api(
+    const std::string& in_company, const boost::asio::any_io_executor& in_executor,
+    boost::asio::ssl::context& in_ssl_context
+)
     : client(in_executor, in_ssl_context), ptr(std::make_unique<impl>()) {
   static boost::url l_dinding{dingding_host};
   set_openssl(l_dinding.host());
+
+  ptr->access_tocken_name = in_company.empty() ? dingding::dingding_config::get().key_name : in_company;
 }
 void dingding_api::async_get_token(read_access_token_fun&& in) {
   using req_type = boost::beast::http::request<boost::beast::http::empty_body>;
@@ -167,8 +170,12 @@ void dingding_api::async_get_token(read_access_token_fun&& in) {
   req_type l_req{};  /// 初始化l_req{}类
   boost::url l_method{"gettoken"};
 
-  l_method.params().set("appkey", dingding_config::get().app_key);       /// 设置App的关键字
-  l_method.params().set("appsecret", dingding_config::get().app_value);  /// 设置App密码的值
+  l_method.params().set(
+      "appkey", dingding_config::get().app_keys[ptr->access_tocken_name].app_key
+  );  /// 设置App的关键字
+  l_method.params().set(
+      "appsecret", dingding_config::get().app_keys[ptr->access_tocken_name].app_value
+  );  /// 设置App密码的值
 
   l_req.method(boost::beast::http::verb::get);  /// 方法用get方法
   boost::urls::resolve(boost::urls::url_view{dingding_host}, l_method, l_url);
@@ -371,6 +378,19 @@ void dingding_api::async_get_user_updatedata_attendance_list_impl(
     boost::asio::post(g_io_context(), [=]() { (*in_call)({}, *l_list); });
   }
 }
+const std::string& dingding_api::company_name() const { return ptr->access_tocken_name; }
 
 dingding_api::~dingding_api() = default;
+std::shared_ptr<dingding_api> dingding_api_factory::create_api(const std::string& in_company) {
+  using dingding_api_ptr = std::shared_ptr<dingding_api>;
+  for (const auto& [e, i] : g_reg()->view<dingding_api_ptr>().each()) {
+    if (in_company == i->company_name()) {
+      return i;
+    }
+  }
+
+  return make_handle().emplace<dingding_api_ptr>(std::make_shared<dingding_api_ptr::element_type>(
+      in_company, g_io_context().get_executor(), *g_reg()->ctx().at<std::shared_ptr<boost::asio::ssl::context>>()
+  ));
+}
 }  // namespace doodle::dingding
