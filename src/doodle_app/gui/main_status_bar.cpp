@@ -131,7 +131,7 @@ bool main_status_bar::tick() {
         if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
           p_i->call = true;
           p_i->timer->expires_after(1s);
-          p_i->timer->async_wait([](const boost::system::error_code& in_code) {
+          p_i->timer->async_wait([this](const boost::system::error_code& in_code) {
             p_i->call = false;
             if (in_code == boost::asio::error::operation_aborted) {
               return;
