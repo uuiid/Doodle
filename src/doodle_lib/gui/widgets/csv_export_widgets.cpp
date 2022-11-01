@@ -666,6 +666,13 @@ bool csv_export_widgets::get_work_time(const entt::handle &in_handle) {
   p_i->attendance_ptr->async_get_work_clock(
       in_handle, l_begin, l_end,
       [l_handle = in_handle](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+        if (in_code) {
+          auto l_msg = std::make_shared<show_message>();
+          l_msg->set_message(fmt::format("缺失人员的电话号码: {}", in_code.to_string()));
+          make_handle().emplace<gui_windows>() = l_msg;
+          return;
+        }
+
         l_handle.get_or_emplace<business::work_clock>() = in_clock;
         DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
       }

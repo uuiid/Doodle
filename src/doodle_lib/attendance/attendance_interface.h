@@ -26,7 +26,6 @@ class attendance_interface {
   virtual ~attendance_interface()                                                        = default;
   virtual void set_user(const entt::handle& in_handle)                                   = 0;
   virtual void set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) = 0;
-  virtual const doodle::business::work_clock& work_clock_attr() const                    = 0;
 
   /**
    * 异步获取时钟, 主要针对网络数据

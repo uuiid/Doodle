@@ -20,7 +20,6 @@ class attendance_dingding::impl {
  public:
   doodle::dingding_api_ptr client{};
 
-  work_clock work_clock_attr{};
   entt::handle user_handle{};
   time_point_wrap begin_time{};
   time_point_wrap end_time{};
@@ -44,7 +43,6 @@ void attendance_dingding::set_range(const time_point_wrap& in_begin, const time_
   ptr->end_time   = in_end;
 }
 
-const work_clock& attendance_dingding::work_clock_attr() const { return ptr->work_clock_attr; }
 void attendance_dingding::async_run(
     const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,
     const detail::attendance_interface::call_type_ptr& in_call_type_ptr
