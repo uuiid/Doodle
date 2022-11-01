@@ -562,9 +562,10 @@ bool csv_export_widgets::get_work_time() {
     }
   }
   if (p_i->list.empty()) {
+    auto l_msg = std::make_shared<show_message>();
     l_msg->set_message("筛选后为空");
     make_handle().emplace<gui_windows>() = l_msg;
-    return;
+    return false;
   }
 
   /// \brief 这里设置一下时钟规则
