@@ -13,6 +13,7 @@
 #include "doodle_core/metadata/user.h"
 
 #include "doodle_app/gui/base/ref_base.h"
+#include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 
 #include "doodle_dingding/client/dingding_api.h"
@@ -81,10 +82,13 @@ void setting_windows::save() {
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  auto l_user                          = g_reg()->ctx().at<user::current_user>().get_handle();
-  p_i->p_user.data                     = l_user.get<user>().get_name();
-  p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
-  p_i->p_phone_number                  = l_user.get_or_emplace<dingding::user>().phone_number;
+  auto l_user         = g_reg()->ctx().at<user::current_user>().get_handle();
+  p_i->p_user.data    = l_user.get<user>().get_name();
+  p_i->use_dingding   = l_user.all_of<dingding::user>();
+  p_i->user_uuid      = fmt::format("用户id: {}", l_user.get<database>().uuid());
+  auto& l_dingding    = l_user.get_or_emplace<dingding::user>();
+  p_i->p_phone_number = l_dingding.phone_number;
+  p_i->p_switch_key   = l_dingding.company.empty() ? std::string{dingding::dingding_config::suoyi} : l_dingding.company;
 
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();
@@ -115,7 +119,8 @@ void setting_windows::render() {
       for (const auto& item : {dingding::dingding_config::suoyi, dingding::dingding_config::congxin}) {
         if (ImGui::Selectable(item.data())) {
           p_i->p_switch_key.data = std::string{item};
-          dingding::dingding_config::get().switch_key(std::string{item});
+          g_reg()->ctx().at<user::current_user>().get_handle().get_or_emplace<dingding::user>().company =
+              std::string{item};
         }
       }
     };
@@ -144,7 +149,7 @@ void setting_windows::render() {
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
 void setting_windows::get_dingding_info() {
-  if (!p_i->dingding) p_i->dingding = g_reg()->ctx().at<doodle::dingding_api_ptr>();
+  p_i->dingding = g_reg()->ctx().at<doodle::dingding_api_factory>().create_api(p_i->p_switch_key.data);
 
   p_i->dingding->async_find_mobile_user(
       p_i->p_phone_number(),
@@ -181,6 +186,8 @@ void setting_windows::get_dingding_dep() {
   );
 }
 void setting_windows::show_error(const std::string& in_meg) {
-  // TODO: 添加错误消息框;
+  auto l_msg = std::make_shared<show_message>();
+  l_msg->set_message(fmt::format("可能是所属公司不正确, 请修正 {}", in_meg));
+  make_handle().emplace<gui_windows>() = l_msg;
 }
 }  // namespace doodle::gui
