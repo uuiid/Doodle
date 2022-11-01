@@ -651,6 +651,7 @@ void csv_export_widgets::gen_user() {
 
   auto l_v = g_reg()->view<database, user>();
   for (auto &&[e, l_d, l_u] : l_v.each()) {
+    if (l_u.get_name().empty()) continue;
     auto l_h = make_handle(e);
     p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
   }
