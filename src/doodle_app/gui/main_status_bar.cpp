@@ -128,7 +128,6 @@ bool main_status_bar::tick() {
       if (g_reg()->ctx().contains<process_message>()) {
         auto& l_msg = g_reg()->ctx().at<process_message>();
         if (l_msg.is_success() || l_msg.is_fail()) {
-          p_i->timer->expires_from_now(1s);
           p_i->timer->async_wait([](const boost::system::error_code& in_code) {
             if (in_code) {
               return;
@@ -137,6 +136,7 @@ bool main_status_bar::tick() {
               g_reg()->ctx().erase<process_message>();
             }
           });
+          p_i->timer->expires_from_now(1s);
         }
 
         dear::Text(l_msg.get_name());
