@@ -100,6 +100,7 @@ void all_user_view_widget::render() {
         if (ImGui::Selectable(l_item_s.data())) {
           item.p_switch_key.data                               = std::string{l_item_s};
           item.handle.get_or_emplace<dingding::user>().company = std::string{l_item_s};
+          database::save(item.handle);
         }
       }
     };
