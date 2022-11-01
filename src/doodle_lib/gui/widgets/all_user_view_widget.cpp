@@ -22,8 +22,9 @@ class all_user_view_widget::impl {
           phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
           handle(in_handle),
           p_switch_key(
-              "所在公司"s, in_handle.all_of<dingding::user>() ? in_handle.get<dingding::user>().company
-                                                              : std::string{dingding::dingding_config::suoyi}
+              "所在公司"s, in_handle.all_of<dingding::user>() && !in_handle.get<dingding::user>().company.empty()
+                               ? in_handle.get<dingding::user>().company
+                               : std::string{dingding::dingding_config::suoyi}
           ) {}
 
     gui_cache_name_id show_name;
