@@ -386,6 +386,8 @@ class csv_export_widgets::impl {
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
   gui_cache<bool> force_get_work_time{"强制刷新", false};
+
+  std::size_t user_size{};
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -471,9 +473,6 @@ void csv_export_widgets::render() {
     get_work_time();
   }
 
-  if (ImGui::Button(*p_i->gen_table)) {
-    generate_table();
-  }
   ImGui::SameLine();
   if (ImGui::Button(*p_i->export_table)) {
     export_csv();
@@ -581,17 +580,29 @@ bool csv_export_widgets::get_work_time() {
   /// \brief 这里设置一下时钟规则
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
+  auto l_size  = p_i->user_handle.size();
+  g_reg()->ctx().at<process_message>().set_name("开始获取dingding数据");
+  p_i->user_size = l_size;
   for (const auto &item : p_i->user_handle) {
     if (!item.first.all_of<business::work_clock>() || p_i->force_get_work_time())
       p_i->attendance_ptr->async_get_work_clock(
           item.first, l_begin, l_end,
-          [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+          [l_handle = item.first, l_size,
+           this](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+            auto &l_p = g_reg()->ctx().at<process_message>();
+            l_p.message(fmt::format("完成用户 {} 时间获取", l_handle.get<user>().get_name()));
+            l_p.progress_step({1, l_size});
+
             if (in_code) {
               auto l_msg = std::make_shared<show_message>();
               l_msg->set_message(fmt::format("{}", in_code.what()));
               make_handle().emplace<gui_windows>() = l_msg;
               return;
             }
+            if ((--p_i->user_size) == 0) {
+              boost::asio::post(g_io_context(), [this]() { generate_table(); });
+            }
+
             l_handle.get_or_emplace<business::work_clock>() = in_clock;
             DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
           }
