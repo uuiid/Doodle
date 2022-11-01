@@ -494,7 +494,7 @@ void csv_export_widgets::render() {
 const std::string &csv_export_widgets::title() const { return p_i->title_name_; }
 void csv_export_widgets::generate_table() {
   auto &l_p = g_reg()->ctx().emplace<process_message>();
-  l_p.set_state(l_p.run);
+  l_p.set_state(l_p.success);
   p_i->list =
       p_i->list |
       ranges::views::filter([](const entt::handle &in_h) { return in_h.all_of<time_point_wrap, assets_file>(); }) |
@@ -603,6 +603,7 @@ bool csv_export_widgets::get_work_time() {
             l_p.progress_step({1, l_size});
 
             if (in_code) {
+              l_p.set_state(l_p.fail);
               auto l_msg = std::make_shared<show_message>();
               l_msg->set_message(fmt::format("{}", in_code.what()));
               make_handle().emplace<gui_windows>() = l_msg;
