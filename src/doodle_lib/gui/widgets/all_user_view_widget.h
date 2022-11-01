@@ -18,6 +18,7 @@ class all_user_view_widget : public base_windows<dear::Begin, all_user_view_widg
   all_user_view_widget();
   virtual ~all_user_view_widget();
   constexpr static std::string_view name{gui::config::menu_w::all_user_view_widget};
+
   const std::string& title() const;
   virtual void render();
 };
