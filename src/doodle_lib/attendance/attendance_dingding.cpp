@@ -66,7 +66,14 @@ void attendance_dingding::async_run(
     if (l_user.user_id.empty()) {
       ptr->client->async_find_mobile_user(
           l_user.phone_number,
-          [this, in_handle](const boost::system::error_code& in_code, const dingding::user_dd& in_user_dd) {
+          [this, in_handle,
+           in_call_type_ptr](const boost::system::error_code& in_code, const dingding::user_dd& in_user_dd) {
+            if (in_code) {
+              (*in_call_type_ptr)(in_code, {});
+              ptr->current_run.reset();
+              do_work();
+              return;
+            }
             auto& l_user = in_handle.get<doodle::dingding::user>();
             database::save(ptr->user_handle);
             l_user.user_id = in_user_dd.userid;
