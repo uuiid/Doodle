@@ -127,7 +127,7 @@ void from_json(const nlohmann::json& j, user& p) {
   j.at("phone_number").get_to(p.phone_number);
   j.at("department_name").get_to(p.department_name);
 
-  j.contains("company") j.at("company").get_to(p.company);
+  if (j.contains("company")) j.at("company").get_to(p.company);
 }
 }  // namespace dingding
 
