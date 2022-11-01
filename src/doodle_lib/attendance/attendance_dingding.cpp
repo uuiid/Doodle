@@ -47,13 +47,10 @@ void attendance_dingding::async_run(
     const entt::handle& in_handle, const time_point_wrap& in_begin, const time_point_wrap& in_end,
     const detail::attendance_interface::call_type_ptr& in_call_type_ptr
 ) {
-  if (!ptr->client) {
-    ptr->client = g_reg()->ctx().at<dingding_api_ptr>();
-  }
-
   ptr->call_queue.emplace(std::make_shared<std::function<void()>>([in_handle, in_begin, in_end, in_call_type_ptr,
                                                                    this]() {
     set_user(in_handle);
+    ptr->client = g_reg()->ctx().at<dingding_api_factory>().create_api(in_handle.get<dingding::user>().company);
     set_range(in_begin, in_end);
     auto l_user   = in_handle.get<doodle::dingding::user>();
     ptr->call_fun = in_call_type_ptr;

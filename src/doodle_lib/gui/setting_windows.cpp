@@ -55,7 +55,6 @@ class setting_windows::impl {
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
 
-  doodle::dingding_api_ptr dingding{};
   std::int32_t department_id{};
 };
 
@@ -149,9 +148,9 @@ void setting_windows::render() {
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
 void setting_windows::get_dingding_info() {
-  p_i->dingding = g_reg()->ctx().at<doodle::dingding_api_factory>().create_api(p_i->p_switch_key.data);
+  auto dingding = g_reg()->ctx().at<doodle::dingding_api_factory>().create_api(p_i->p_switch_key.data);
 
-  p_i->dingding->async_find_mobile_user(
+  dingding->async_find_mobile_user(
       p_i->p_phone_number(),
       [&](const boost::system::error_code& in_code, const dingding::user_dd& in_user) {
         if (in_code) {
@@ -170,7 +169,8 @@ void setting_windows::get_dingding_info() {
   );
 }
 void setting_windows::get_dingding_dep() {
-  p_i->dingding->async_get_departments(
+  auto dingding = g_reg()->ctx().at<doodle::dingding_api_factory>().create_api(p_i->p_switch_key.data);
+  dingding->async_get_departments(
       p_i->department_id,
       [&](const boost::system::error_code& in_code, const dingding::department& in_dep) {
         if (in_code) {
