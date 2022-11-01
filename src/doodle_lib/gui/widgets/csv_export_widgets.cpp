@@ -71,8 +71,8 @@ namespace doodle::gui {
 
 namespace csv_export_widgets_ns {
 csv_line::csv_line(
-    const entt::handle &in_handle, const entt::handle &in_up_time_handle, const entt::handle &in_user_handle,
-    bool in_use_first_as_project_name, const std::string_view &in_season_fmt_str,
+    const entt::handle &in_handle, const std::vector<entt::handle> &in_up_time_handle_list,
+    const entt::handle &in_user_handle, bool in_use_first_as_project_name, const std::string_view &in_season_fmt_str,
     const std::string_view &in_episodes_fmt_str, const std::string_view &in_shot_fmt_str
 ) {
   in_user_handle.any_of<user, dingding::user>() ? void()
@@ -82,11 +82,17 @@ csv_line::csv_line(
   /// \brief 工作时间计算
   auto &work_clock  = in_user_handle.get<business::work_clock>();
   auto project_root = g_reg()->ctx().at<project>().p_path;
-  auto start_time   = in_up_time_handle == in_handle ? in_up_time_handle.get<time_point_wrap>().current_month_start()
-                                                     : in_up_time_handle.get<time_point_wrap>();
-  auto end_time     = in_handle.get<time_point_wrap>();
+  /// 寻找上一个用户
+  auto start_time   = in_handle.get<time_point_wrap>().current_month_start();
+  auto l_it         = ranges::find(in_up_time_handle_list, in_handle);
+  if (l_it != in_up_time_handle_list.begin()) {
+    start_time = (--l_it)->get<time_point_wrap>();
+  }
+
+  auto end_time = (in_up_time_handle_list.back() == in_handle) ? in_handle.get<time_point_wrap>().current_month_end()
+                                                               : in_handle.get<time_point_wrap>();
   /// \brief 计算持续时间
-  auto k_time       = work_clock(start_time, end_time);
+  auto k_time   = work_clock(start_time, end_time);
 
   comment k_comm{};
   if (auto l_c = in_handle.try_get<comment>(); l_c) k_comm = *l_c;
@@ -159,9 +165,11 @@ void csv_table::computing_time() {
     time_rational l_time_rational{item.second.count(), 60ull * 60ull * 8ull};
 
     auto l_round_value = std::round(boost::rational_cast<std::float_t>(l_time_rational));
+    if (l_round_value == 0) continue;
 
     if (auto l_val = l_time_rational - time_rational{boost::numeric_cast<std::uint64_t>(l_round_value)}; l_val) {
       auto l_se = (l_val * 60ull * 60ull * 8ull).numerator();
+      if (l_se > 360) continue;
       while (l_se) {
         for (auto i : user_index[item.first]) {
           line_list[i].len_time_++;
@@ -377,6 +385,7 @@ class csv_export_widgets::impl {
   /// 过滤月份
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
+  gui_cache<bool> force_get_work_time{"强制刷新", false};
 };
 
 csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
@@ -425,6 +434,7 @@ void csv_export_widgets::render() {
     ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
     ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
     ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
+    ImGui::Checkbox(*p_i->force_get_work_time, &p_i->force_get_work_time);
     dear::Combo{*p_i->work_clock_method_gui_.data, p_i->work_clock_method_gui_.data().c_str()} && [&]() {
       for (const auto &item : {work_clock_method_gui::dingding, work_clock_method_gui::rule_method}) {
         if (ImGui::Selectable(item.data())) {
@@ -497,7 +507,7 @@ void csv_export_widgets::generate_table() {
         auto l_user = in_handle.get<assets_file>().user_attr();
         return csv_line{
             in_handle,
-            get_user_up_time(l_user, in_handle),
+            p_i->user_handle[l_user],
             l_user,
             p_i->use_first_as_project_name(),
             p_i->season_fmt_str(),
@@ -572,13 +582,20 @@ bool csv_export_widgets::get_work_time() {
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
   for (const auto &item : p_i->user_handle) {
-    p_i->attendance_ptr->async_get_work_clock(
-        item.first, l_begin, l_end,
-        [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-          l_handle.get_or_emplace<business::work_clock>() = in_clock;
-          DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
-        }
-    );
+    if (!item.first.all_of<business::work_clock>() || p_i->force_get_work_time())
+      p_i->attendance_ptr->async_get_work_clock(
+          item.first, l_begin, l_end,
+          [l_handle = item.first](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+            if (in_code) {
+              auto l_msg = std::make_shared<show_message>();
+              l_msg->set_message(fmt::format("{}", in_code.what()));
+              make_handle().emplace<gui_windows>() = l_msg;
+              return;
+            }
+            l_handle.get_or_emplace<business::work_clock>() = in_clock;
+            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
+          }
+      );
   }
   return true;
 }

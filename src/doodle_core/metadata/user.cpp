@@ -119,11 +119,15 @@ void to_json(nlohmann::json& j, const user& p) {
   j["user_id"]         = p.user_id;
   j["phone_number"]    = p.phone_number;
   j["department_name"] = p.department_name;
+
+  j["company"]         = p.company;
 }
 void from_json(const nlohmann::json& j, user& p) {
   j.at("user_id").get_to(p.user_id);
   j.at("phone_number").get_to(p.phone_number);
   j.at("department_name").get_to(p.department_name);
+
+  j.contains("company") j.at("company").get_to(p.company);
 }
 }  // namespace dingding
 

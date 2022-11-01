@@ -63,6 +63,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
 namespace dingding {
 class DOODLE_CORE_API user {
  public:
+  std::string company;
   std::string phone_number{};
   std::string user_id{};
   std::string department_name{};
