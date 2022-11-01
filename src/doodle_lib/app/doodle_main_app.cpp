@@ -52,13 +52,10 @@ void main_facet::operator()() {
   auto l_ssl = g_reg()->ctx().emplace<std::shared_ptr<boost::asio::ssl::context>>(
       std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23)
   );
-  g_reg()->ctx().emplace<doodle::dingding_api_ptr>(
-      std::make_shared<doodle::dingding_api_ptr::element_type>(g_io_context().get_executor(), *l_ssl)
-  );
+  g_reg()->ctx().emplace<doodle::dingding_api_factory>();
 }
 void main_facet::deconstruction() {
   g_reg()->ctx().erase<std::shared_ptr<boost::asio::ssl::context>>();
-  g_reg()->ctx().erase<doodle::dingding_api_ptr>();
   gui_facet::deconstruction();
 }
 }  // namespace doodle
