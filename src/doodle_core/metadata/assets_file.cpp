@@ -171,5 +171,12 @@ const std::string& assets_file::organization_attr() const noexcept {
 void assets_file::organization_attr(const std::string& in_organization) noexcept {
   p_i->organization_p = in_organization;
 }
+void assets_file::destruction_user(entt::registry& in_reg, entt::entity in_entt) {
+  for (auto&& [e, ass] : in_reg.view<assets_file>().each()) {
+    if (ass.p_i->handle_cache == in_entt) {
+      ass.p_i->p_user.clear();
+    }
+  }
+}
 assets_file::~assets_file() = default;
 }  // namespace doodle

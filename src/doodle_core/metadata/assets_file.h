@@ -73,6 +73,8 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   bool operator<(const assets_file& in_rhs) const;
   bool operator==(const assets_file& in_rhs) const;
 
+  static void destruction_user(entt::registry& in_reg, entt::entity in_entt);
+
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const assets_file& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, assets_file& p);
