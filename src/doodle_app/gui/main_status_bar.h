@@ -17,6 +17,7 @@ class DOODLE_APP_API main_status_bar : public detail::windows_tick_interface {
   main_status_bar();
   virtual ~main_status_bar();
 
+  void init();
   main_status_bar(const main_status_bar& in) noexcept;
   main_status_bar(main_status_bar&& in) noexcept;
   main_status_bar& operator=(const main_status_bar& in) noexcept;

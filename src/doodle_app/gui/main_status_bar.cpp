@@ -3,17 +3,19 @@
 //
 
 #include "main_status_bar.h"
-#include <lib_warp/imgui_warp.h>
-#include <lib_warp/imgui_warp.h>
+
 #include <doodle_core/core/status_info.h>
 #include <doodle_core/thread_pool/process_message.h>
+
+#include <boost/asio.hpp>
+
+#include <lib_warp/imgui_warp.h>
 
 /// \brief to https://github.com/ocornut/imgui/issues/1901
 namespace ImGui {
 bool BufferingBar(const char* label, float value, const ImVec2& size_arg, const ImU32& bg_col, const ImU32& fg_col) {
   ImGuiWindow* window = GetCurrentWindow();
-  if (window->SkipItems)
-    return false;
+  if (window->SkipItems) return false;
 
   ImGuiContext& g         = *GImGui;
   const ImGuiStyle& style = g.Style;
@@ -25,8 +27,7 @@ bool BufferingBar(const char* label, float value, const ImVec2& size_arg, const 
 
   const ImRect bb(pos, ImVec2(pos.x + size.x, pos.y + size.y));
   ItemSize(bb, style.FramePadding.y);
-  if (!ItemAdd(bb, id))
-    return false;
+  if (!ItemAdd(bb, id)) return false;
 
   // Render
   const float circleStart = size.x * 0.7f;
@@ -56,8 +57,7 @@ bool BufferingBar(const char* label, float value, const ImVec2& size_arg, const 
 
 bool Spinner(const char* label, float radius, int thickness, const ImU32& color) {
   ImGuiWindow* window = GetCurrentWindow();
-  if (window->SkipItems)
-    return false;
+  if (window->SkipItems) return false;
 
   ImGuiContext& g         = *GImGui;
   const ImGuiStyle& style = g.Style;
@@ -68,8 +68,7 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 
   const ImRect bb(pos, ImVec2(pos.x + size.x, pos.y + size.y));
   ItemSize(bb, style.FramePadding.y);
-  if (!ItemAdd(bb, id))
-    return false;
+  if (!ItemAdd(bb, id)) return false;
 
   // Render
   window->DrawList->PathClear();
@@ -84,7 +83,9 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 
   for (int i = 0; i < num_segments; i++) {
     const float a = a_min + ((float)i / (float)num_segments) * (a_max - a_min);
-    window->DrawList->PathLineTo(ImVec2(centre.x + ImCos(a + g.Time * 8) * radius, centre.y + ImSin(a + g.Time * 8) * radius));
+    window->DrawList->PathLineTo(
+        ImVec2(centre.x + ImCos(a + g.Time * 8) * radius, centre.y + ImSin(a + g.Time * 8) * radius)
+    );
   }
 
   window->DrawList->PathStroke(color, false, thickness);
@@ -95,14 +96,17 @@ bool Spinner(const char* label, float radius, int thickness, const ImU32& color)
 namespace doodle::gui {
 class main_status_bar::impl {
  public:
+  std::shared_ptr<boost::asio::high_resolution_timer> timer{};
 };
 
-main_status_bar::main_status_bar()
-    : p_i(std::make_unique<impl>()) {}
+main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) {}
+
+void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
 
 bool main_status_bar::tick() {
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
-  float height                  = ImGui::GetFrameHeight();
+  ImGuiWindowFlags window_flags =
+      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+  float height = ImGui::GetFrameHeight();
   dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
     dear::MenuBar{} && [&]() {
       /// \brief 渲染信息
@@ -123,21 +127,33 @@ bool main_status_bar::tick() {
       /// \brief 渲染进度条
       if (g_reg()->ctx().contains<process_message>()) {
         auto& l_msg = g_reg()->ctx().at<process_message>();
+        if (l_msg.is_success() || l_msg.is_fail()) {
+          p_i->timer->expires_from_now(1s);
+          p_i->timer->async_wait([](const boost::system::error_code& in_code) {
+            if (in_code) {
+              return;
+            }
+            if (g_reg()->ctx().contains<process_message>()) {
+              g_reg()->ctx().erase<process_message>();
+            }
+          });
+        }
+
         dear::Text(l_msg.get_name());
         ImGui::SameLine();
-        ImGui::ProgressBar(boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f}, fmt::format("{:04f}%", l_msg.get_progress_f()).c_str());
+        dear::Text(l_msg.log());
+        ImGui::ProgressBar(
+            boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
+            fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
+        );
       }
     };
   };
   return false;
 }
 
-main_status_bar::main_status_bar(const main_status_bar& in) noexcept
-    : p_i(std::make_unique<impl>(*in.p_i)) {
-}
-main_status_bar::main_status_bar(main_status_bar&& in) noexcept {
-  p_i = std::move(in.p_i);
-}
+main_status_bar::main_status_bar(const main_status_bar& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
+main_status_bar::main_status_bar(main_status_bar&& in) noexcept { p_i = std::move(in.p_i); }
 main_status_bar& main_status_bar::operator=(const main_status_bar& in) noexcept {
   *p_i = *p_i;
   return *this;
@@ -148,4 +164,4 @@ main_status_bar& main_status_bar::operator=(main_status_bar&& in) noexcept {
 }
 
 main_status_bar::~main_status_bar() = default;
-}  // namespace doodle
+}  // namespace doodle::gui
