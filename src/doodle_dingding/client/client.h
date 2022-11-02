@@ -21,6 +21,53 @@ namespace doodle::dingding {
 class client;
 
 namespace client_ns {
+
+template <typename Req, typename Res>
+struct async_http_req_res;
+}
+
+/**
+ * @brief 一个特别基础的https客户端
+ * 使用方法 run("www.example.com","443","/")
+ */
+class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
+ public:
+  using executor_type = typename boost::asio::any_io_executor;
+
+ protected:
+  [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
+
+  class impl;
+  std::unique_ptr<impl> ptr;
+
+ public:
+  void set_openssl(const std::string& host);
+  bool is_connect() const;
+  void is_connect(bool in_connect);
+
+  [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
+  [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
+
+  void async_shutdown();
+
+ public:
+  explicit client(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
+
+  executor_type get_executor() noexcept;
+
+  template <typename Response, typename CompletionToken, typename Request>
+  auto async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
+      -> decltype(boost::asio::async_compose<
+                  CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+          std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
+      ));
+
+ protected:
+ public:
+  virtual ~client() noexcept;
+};
+
+namespace client_ns {
 template <typename Req, typename Res>
 struct async_http_req_res_data {
   Req req_attr;
@@ -186,50 +233,18 @@ struct async_http_req_res {
 
 }  // namespace client_ns
 
-/**
- * @brief 一个特别基础的https客户端
- * 使用方法 run("www.example.com","443","/")
- */
-class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
- public:
-  using executor_type = typename boost::asio::any_io_executor;
+/// 此处是定义
 
- protected:
-  [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
-
-  class impl;
-  std::unique_ptr<impl> ptr;
-
- public:
-  void set_openssl(const std::string& host);
-  bool is_connect() const;
-  void is_connect(bool in_connect);
-
-  [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
-  [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
-
-  void async_shutdown();
-
- public:
-  explicit client(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
-
-  executor_type get_executor() noexcept;
-
-  template <typename Response, typename CompletionToken, typename Request>
-  auto async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
-      -> decltype(boost::asio::async_compose<
-                  CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
-          std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
-      )) {
-    using http_req_res = client_ns::async_http_req_res<Request, Response>;
-    return boost::asio::async_compose<CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
-        http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
-    );
-  };
-
- protected:
- public:
-  virtual ~client() noexcept;
-};
+template <typename Response, typename CompletionToken, typename Request>
+auto client::async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
+    -> decltype(boost::asio::async_compose<
+                CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+        std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
+    )) {
+  using http_req_res = client_ns::async_http_req_res<Request, Response>;
+  return boost::asio::async_compose<CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+      http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
+  );
+}
 
 }  // namespace doodle::dingding
