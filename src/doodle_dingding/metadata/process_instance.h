@@ -6,14 +6,17 @@
 
 #include "doodle_core/metadata/time_point_wrap.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 namespace doodle::dingding::workflow_instances {
 namespace deatil {
-enum class approval_status { NEW = 0, RUNNING, TERMINATED, COMPLETED, CANCELED };
-enum class approval_result { agree = 0, refuse };
-enum class approval_action { MODIFY = 0, REVOKE, NONE };
+enum class approval_status : std::int16_t { NEW = 0, RUNNING, TERMINATED, COMPLETED, CANCELED };
+enum class approval_result : std::int16_t { agree = 0, refuse };
+enum class approval_action : std::int16_t { MODIFY = 0, REVOKE, NONE };
+enum class task_status : std::int16_t { NEW = 0, RUNNING, PAUSED, CANCELED, COMPLETED, TERMINATED };
+enum class task_result : std::int16_t { AGREE, REFUSE, REDIRECTED };
 
 class form_component_values {
  public:
@@ -29,24 +32,32 @@ class task {
  public:
   std::string taskId;
   std::string userId;
-  std::string status;
-  std::string result;
-  std::string createTime;
-  std::string finishTime;
+  task_status status;
+  task_result result;
+  time_point_wrap createTime;
+  time_point_wrap finishTime;
   std::string mobileUrl;
   std::string pcUrl;
   std::string processInstanceId;
   std::string activityId;
 };
 
+class attachment {
+ public:
+  std::string fileName;
+  std::string fileSize;
+  std::string fileId;
+  std::string fileType;
+};
+
 class operation_records {
  public:
   std::string userId;
-  std::string date;
+  time_point_wrap date;
   std::string type;
   std::string result;
   std::string remark;
-  std::vector<std::string> attachments;
+  std::vector<attachment> attachments;
 };
 
 }  // namespace deatil
@@ -57,7 +68,7 @@ class approval_form {
   ~approval_form() = default;
 
   std::string title{};
-  std::string finishTime{};
+  time_point_wrap finishTime{};
   std::string originatorUserId{};
   std::string originatorDeptId{};
   std::string originatorDeptName{};
