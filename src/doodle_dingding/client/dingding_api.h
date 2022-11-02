@@ -197,6 +197,9 @@ class DOODLE_DINGDING_API dingding_api : public client {
         in_handler
     );
   }
+
+  
+
 };
 
 class DOODLE_DINGDING_API dingding_api_factory {

@@ -52,29 +52,34 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   if (attendance_result_list.size() == 2) {
-    auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
-    ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
-      switch (in_r.check_type) {
-        case detail::check_type::OnDuty:
-          std::get<0>(l_t) = in_r.plan_check_time;
-          break;
-        case detail::check_type::OffDuty:
-          std::get<1>(l_t) = in_r.plan_check_time;
-          break;
+    /// 正常打卡, 并且审批单为空
+    if (approve_list.empty() || !class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+      auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
+      ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
+        switch (in_r.check_type) {
+          case detail::check_type::OnDuty:
+            std::get<0>(l_t) = in_r.plan_check_time;
+            break;
+          case detail::check_type::OffDuty:
+            std::get<1>(l_t) = in_r.plan_check_time;
+            break;
+        }
+      });
+      in_clock += l_t;
+      if (!class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+        auto l_sub_t = std::make_tuple(
+            std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_begin_time -
+                chrono::hours{1},
+            std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_end_time - chrono::hours{1}
+        );
+        DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
+        in_clock -= l_sub_t;
       }
-    });
-    in_clock += l_t;
-    if (!class_setting_info_attr.rest_time_vo_list_attr.empty()) {
-      auto l_sub_t = std::make_tuple(
-          std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_begin_time - chrono::hours{1},
-          std::get<0>(l_t) + class_setting_info_attr.rest_time_vo_list_attr.front().rest_end_time - chrono::hours{1}
-      );
-      DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
-      in_clock -= l_sub_t;
     }
+    /// 有审批单, 并且没有午休, 认为是周末, 跳过
 
   } else if (attendance_result_list.size() == 1) {
-    DOODLE_LOG_INFO("打卡列表不是两次");
+    DOODLE_LOG_INFO("打卡列表不是两次, 跳过");
   }
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
@@ -102,8 +107,9 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
               in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
           );
         }
-
         break;
+        case detail::approve_type::card:  /// 补卡, 不要管
+          break;
       }
     }
   });
