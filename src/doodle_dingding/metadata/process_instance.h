@@ -6,7 +6,7 @@
 
 #include "doodle_core/metadata/time_point_wrap.h"
 
-#include "configure/doodle_dingding_export.h"
+#include "doodle_dingding/configure/doodle_dingding_export.h"
 
 #include <cstdint>
 #include <string>

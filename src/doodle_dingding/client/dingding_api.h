@@ -14,7 +14,6 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 
-#include "metadata/process_instance.h"
 #include <functional>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
