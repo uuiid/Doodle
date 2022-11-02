@@ -7,6 +7,7 @@
 
 #include <doodle_lib/attendance/attendance_dingding.h>
 
+#include "doodle_dingding/metadata/process_instance.h"
 #include <doodle_dingding/client/client.h>
 #include <doodle_dingding/client/dingding_api.h>
 #include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
@@ -18,6 +19,7 @@
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/test/unit_test_suite.hpp>
 
 #include <main_fixtures/lib_fixtures.h>
 using namespace doodle;
@@ -145,6 +147,28 @@ BOOST_AUTO_TEST_CASE(
   BOOST_TEST(is_run_chick);
 }
 
+BOOST_AUTO_TEST_CASE(client_get_workflow1) {
+  using namespace std::literals;
+  auto l_st = boost::asio::make_strand(g_io_context());
+  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+
+  bool is_run_chick{};
+  l_c->async_get_workflow_process_instances(
+      "_MviUfLOTAKPeqg_7vpPRg09701667054275"s,
+      [=, l_run = &is_run_chick](
+          const boost::system::error_code& in_err, const dingding::workflow_instances::approval_form& in_approval
+      ) mutable {
+        BOOST_TEST(!in_err);
+        nlohmann::json l_json{};
+        l_json = in_approval;
+        DOODLE_LOG_INFO(l_json.dump());
+        *l_run = true;
+      }
+  );
+  g_io_context().run();
+  BOOST_TEST(is_run_chick);
+}
+
 BOOST_AUTO_TEST_CASE(client_user_clock) {
   using namespace std::literals;
   auto l_st = boost::asio::make_strand(g_io_context());
@@ -159,6 +183,5 @@ BOOST_AUTO_TEST_CASE(client_user_clock) {
       }
   );
 }
-)
 
 BOOST_AUTO_TEST_SUITE_END()
