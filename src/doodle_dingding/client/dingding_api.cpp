@@ -7,12 +7,16 @@
 #include <doodle_core/core/chrono_.h>
 #include <doodle_core/doodle_core.h>
 
+#include "doodle_dingding/metadata/process_instance.h"
 #include <doodle_dingding/configure/config.h>
 #include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
 #include <doodle_dingding/metadata/department.h>
 #include <doodle_dingding/metadata/request_base.h>
 
 #include <boost/asio.hpp>
+#include <boost/beast/http/empty_body.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -378,6 +382,44 @@ void dingding_api::async_get_user_updatedata_attendance_list_impl(
     boost::asio::post(g_io_context(), [=]() { (*in_call)({}, *l_list); });
   }
 }
+
+void dingding_api::async_get_workflow_process_instances_impl(
+    const std::string& in_procInst_id,
+    const std::shared_ptr<
+        std::function<void(const boost::system::error_code&, const dingding::workflow_instances::approval_form&)>>&
+        in_call
+) {
+  boost::url l_url{};
+  boost::url l_method{"/v1.0/workflow/processInstances"};
+  l_method.params().set("processInstanceId", in_procInst_id);
+  using req_type = boost::beast::http::request<boost::beast::http::empty_body>;
+  using res_type = boost::beast::http::response<boost::beast::http::string_body>;
+  req_type l_req{};
+
+  l_req.method(boost::beast::http::verb::get);  /// post方法
+  l_req.set("x-acs-dingtalk-access-token", ptr->tocken.token);
+  l_req.set("Content-Type", "application/json");
+
+  DOODLE_LOG_INFO(l_req);
+
+  boost::urls::resolve(boost::urls::url_view{dingding_host_new}, l_method, l_url);
+
+  async_write_read<res_type>(
+      l_req, l_url,
+      [=, l_c = shared_from_this()](boost::system::error_code in_code, const res_type& in_res_type) {
+        DOODLE_LOG_INFO(in_res_type);
+        if (in_res_type.body().empty()) return;
+        auto l_j    = nlohmann::json::parse(in_res_type.body());
+        auto l_body = dingding::request_base<true, workflow_instances::approval_form>{l_j};
+        if (l_body) {
+          (*in_call)(l_body.get_code(), {});
+        } else {
+          (*in_call)({}, l_body.result_type());
+        }
+      }
+  );
+}
+
 const std::string& dingding_api::company_name() const { return ptr->access_tocken_name; }
 
 dingding_api::~dingding_api() = default;

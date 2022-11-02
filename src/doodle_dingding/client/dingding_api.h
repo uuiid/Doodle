@@ -14,7 +14,11 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 
+#include "metadata/process_instance.h"
+#include <functional>
+#include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
 
 namespace doodle {
 class time_point_wrap;
@@ -68,8 +72,16 @@ class DOODLE_DINGDING_API dingding_api : public client {
       const std::shared_ptr<std::vector<dingding::attendance::attendance>>& in_list = {}
   );
 
+  void async_get_workflow_process_instances_impl(
+      const std::string& in_procInst_id,
+      const std::shared_ptr<
+          std::function<void(const boost::system::error_code&, const dingding::workflow_instances::approval_form&)>>&
+          in_call
+  );
+
  public:
   constexpr static const std::string_view dingding_host{"https://oapi.dingtalk.com"};
+  constexpr static const std::string_view dingding_host_new{"https://api.dingtalk.com"};
 
   explicit dingding_api(
       const std::string& in_company, const boost::asio::any_io_executor& in_executor,
@@ -198,8 +210,32 @@ class DOODLE_DINGDING_API dingding_api : public client {
     );
   }
 
-  
+  /**
+   * @brief 获取单个审批单详细信息
+   * https://open.dingtalk.com/document/orgapp-server/obtains-the-details-of-a-single-approval-instance-pop
+   *
+   * @tparam CompletionHandler 处理程序类型
+   * @param in_procInst_id 审批单id
+   * @param in_handler 处理程序实例
+   * @return auto
+   */
+  template <typename CompletionHandler>
+  auto async_get_workflow_process_instances(const std::string& in_procInst_id, CompletionHandler&& in_handler) {
+    using call_type = void(const boost::system::error_code&, const dingding::workflow_instances::approval_form&);
 
+    return boost::asio::async_initiate<CompletionHandler, call_type>(
+        [&in_procInst_id, this](auto&& in_completion_handler) {
+          auto l_fun = std::make_shared<std::function<call_type>>(
+              std::forward<decltype(in_completion_handler)>(in_completion_handler)
+          );
+          auto l_call = std::make_shared<std::function<void()>>([l_fun, in_procInst_id, this]() {
+            async_get_workflow_process_instances_impl(in_procInst_id, l_fun);
+          });
+          async_run(l_call);
+        },
+        in_handler
+    );
+  }
 };
 
 class DOODLE_DINGDING_API dingding_api_factory {
