@@ -50,7 +50,8 @@ class request_base<true, Result_Type> : public detail::request_base {
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
-            in_json.at("errcode").get<std::int32_t>(), in_json.at("errmsg").get<std::string>(), in_json
+            in_json.at("errcode").get<std::int32_t>(),
+            in_json.contains("errmsg") ? in_json.at("errmsg").get<std::string>() : ""s, in_json
         ) {}
 };
 template <typename Result_Type>
@@ -61,7 +62,8 @@ class request_base<false, Result_Type> : public detail::request_base {
  public:
   explicit request_base(const nlohmann::json& in_json)
       : detail::request_base(
-            in_json.at("errcode").get<std::int32_t>(), in_json.at("errmsg").get<std::string>(), in_json
+            in_json.at("errcode").get<std::int32_t>(),
+            in_json.contains("errmsg") ? in_json.at("errmsg").get<std::string>() : ""s, in_json
         ) {}
 };
 namespace detail {
