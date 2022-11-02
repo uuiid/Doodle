@@ -10,6 +10,17 @@
             "cwd": "${workspaceFolder}/build",
             "sourcePrefix": "${workspaceFolder}",
             "debugConfig": ""
+        },
+        {
+            "testExecutables": [
+                {
+                    "path": "build/Ninja_build_DD/bin/dingding_base.exe",
+                    "label": "test_2"
+                }
+            ],
+            "cwd": "${workspaceFolder}/build",
+            "sourcePrefix": "${workspaceFolder}",
+            "debugConfig": ""
         }
     ]
 }
