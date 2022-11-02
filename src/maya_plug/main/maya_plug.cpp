@@ -93,24 +93,25 @@ MStatus initializePlugin(MObject obj) {
     DOODLE_LOG_ERROR(status);
 
   /// \brief  自定义hud回调
-  maya_reg->register_callback(MSceneMessage::addCallback(
-      MSceneMessage::Message::kAfterOpen,
-      [](void* clientData) {
-        ::doodle::maya_plug::create_hud_node k_c{};
-        k_c();
-      },
-      nullptr, &status
-  ));
-  CHECK_MSTATUS(status);
-  maya_reg->register_callback(MSceneMessage::addCallback(
-      MSceneMessage::Message::kAfterNew,
-      [](void* clientData) {
-        ::doodle::maya_plug::create_hud_node k_c{};
-        k_c();
-      },
-      nullptr, &status
-  ));
-  CHECK_MSTATUS(status);
+  // maya_reg->register_callback(MSceneMessage::addCallback(
+  //     MSceneMessage::Message::kAfterOpen,
+  //     [](void* clientData) {
+  //       ::doodle::maya_plug::create_hud_node k_c{};
+  //       k_c();
+  //     },
+  //     nullptr, &status
+  // ));
+  // CHECK_MSTATUS(status);
+  // maya_reg->register_callback(MSceneMessage::addCallback(
+  //     MSceneMessage::Message::kAfterNew,
+  //     [](void* clientData) {
+  //       ::doodle::maya_plug::create_hud_node k_c{};
+  //       k_c();
+  //     },
+  //     nullptr, &status
+  // ));
+  // CHECK_MSTATUS(status);
+
   if (doodle::core_set::get_set().maya_replace_save_dialog) {
     maya_reg->register_callback(MSceneMessage::addCheckCallback(
         MSceneMessage::Message::kBeforeSaveCheck,
