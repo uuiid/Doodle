@@ -16,6 +16,11 @@ namespace doodle {
 namespace dingding {
 class dingding_api;
 class dingding_api_factory;
+
+namespace workflow_instances {
+class approval_form;
+}
+
 namespace department_ns {
 class department_query;
 class user_to_dep_query;
