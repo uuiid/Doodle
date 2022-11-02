@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
   using namespace std::literals;
 
   auto l_st = boost::asio::make_strand(g_io_context());
-  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  auto l_c  = std::make_shared<dingding::dingding_api>("索以文化"s, l_st, context_attr);
 
   l_c->async_find_mobile_user(
       "17376570239"s,
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(client_find_user_by_mobile) {
 BOOST_AUTO_TEST_CASE(client_get_dep, *boost::unit_test::depends_on("dingding_base/client_find_user_by_mobile")) {
   using namespace std::literals;
   auto l_st          = boost::asio::make_strand(g_io_context());
-  auto l_c           = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  auto l_c           = std::make_shared<dingding::dingding_api>("索以文化"s, l_st, context_attr);
   std::int32_t l_dep = globe_department_id{};
   l_c->async_get_departments(l_dep, [=](const boost::system::error_code& in_err, const dingding::department& in_dep) {
     BOOST_TEST(!in_err);
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(
 ) {
   using namespace std::literals;
   auto l_st = boost::asio::make_strand(g_io_context());
-  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  auto l_c  = std::make_shared<dingding::dingding_api>("索以文化"s, l_st, context_attr);
   time_point_wrap l_end_day{};
   time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{6}};
   std::string l_user_id = globe_user_id{};
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(
 ) {
   using namespace std::literals;
   auto l_st = boost::asio::make_strand(g_io_context());
-  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  auto l_c  = std::make_shared<dingding::dingding_api>("索以文化"s, l_st, context_attr);
   time_point_wrap l_end_day{2022, 10, 1};
   time_point_wrap l_begin_day{l_end_day - doodle::chrono::days{30}};
   std::string l_user_id = globe_user_id{};
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(
 BOOST_AUTO_TEST_CASE(client_get_workflow1) {
   using namespace std::literals;
   auto l_st = boost::asio::make_strand(g_io_context());
-  auto l_c  = std::make_shared<dingding::dingding_api>(l_st, context_attr);
+  auto l_c  = std::make_shared<dingding::dingding_api>("索以文化"s, l_st, context_attr);
 
   bool is_run_chick{};
   l_c->async_get_workflow_process_instances(

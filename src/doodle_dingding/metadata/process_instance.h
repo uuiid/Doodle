@@ -37,7 +37,7 @@ class form_component_values {
 
 class task {
  public:
-  std::string taskId;
+  std::int32_t taskId;
   std::string userId;
   task_status status;
   task_result result;
@@ -65,7 +65,7 @@ class attachment {
 class operation_records {
  public:
   std::string userId;
-  time_point_wrap date;
+  std::string date;
   std::string type;
   std::string result;
   std::string remark;
