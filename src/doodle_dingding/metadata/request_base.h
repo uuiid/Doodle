@@ -53,7 +53,7 @@ class request_base<true, Result_Type> : public detail::request_base {
       : detail::request_base(0, in_json.contains("errmsg") ? in_json.at("errmsg").get<std::string>() : ""s, in_json) {
     errcode = in_json.contains("errcode")
                   ? in_json.at("errcode").get<std::int32_t>()
-                  : (in_json.contains("success") ? in_json.at("success").get<std::string>() == "true" : 400);
+                  : (in_json.contains("success") ? (in_json.at("success").get<bool>() ? 0 : 1) : 400);
   }
 };
 template <typename Result_Type>
@@ -66,7 +66,7 @@ class request_base<false, Result_Type> : public detail::request_base {
       : detail::request_base(0, in_json.contains("errmsg") ? in_json.at("errmsg").get<std::string>() : ""s, in_json) {
     errcode = in_json.contains("errcode")
                   ? in_json.at("errcode").get<std::int32_t>()
-                  : (in_json.contains("success") ? in_json.at("success").get<std::string>() == "true" : 400);
+                  : (in_json.contains("success") ? (in_json.at("success").get<bool>() ? 0 : 1) : 400);
   }
 };
 namespace detail {

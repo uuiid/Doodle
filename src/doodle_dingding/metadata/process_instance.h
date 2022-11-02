@@ -37,7 +37,7 @@ class form_component_values {
 
 class task {
  public:
-  std::string taskId;
+  std::int32_t taskId;
   std::string userId;
   task_status status;
   task_result result;
