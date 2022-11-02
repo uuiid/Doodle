@@ -108,7 +108,6 @@
 			"**/resource/**",
 			"**/.venv/**",
 		],
-		"boost-test-adapter-feher.tests": [],
 		"todo-tree.tree.disableCompactFolders": true,
 		"C_Cpp.autocompleteAddParentheses": true,
 		"C_Cpp.experimentalFeatures": "Enabled",

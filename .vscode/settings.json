@@ -1,0 +1,15 @@
+{
+    "boost-test-adapter-feher.tests": [
+        {
+            "testExecutables": [
+                {
+                    "path": "build/Ninja_build_DD/bin/test_core.exe",
+                    "label": "test_1"
+                }
+            ],
+            "cwd": "${workspaceFolder}/build",
+            "sourcePrefix": "${workspaceFolder}",
+            "debugConfig": ""
+        }
+    ]
+}
