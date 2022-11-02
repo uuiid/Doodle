@@ -1,15 +1,17 @@
 #include "logger.h"
 
 #include <doodle_core/core/core_set.h>
-#include <Windows.h>
-#include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/daily_file_sink.h>
-#include <spdlog/sinks/stdout_sinks.h>
 
 #include <boost/locale.hpp>
+
+#include <Windows.h>
 #include <date/date.h>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
+
 namespace doodle {
 namespace details {
 template <class Mutex>
@@ -55,7 +57,8 @@ void logger_ctrl::init_temp_log() {
   try {
     using namespace std::chrono_literals;
     spdlog::init_thread_pool(8192, 1);
-    auto l_file   = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
+    auto l_file =
+        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
     auto l_logger = std::make_shared<spdlog::async_logger>(
         "doodle_lib", l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
@@ -81,12 +84,9 @@ void logger_ctrl::init_temp_log() {
 }
 void logger_ctrl::init_log() {
   p_log_path = FSys::temp_directory_path() / "doodle" / "log";
-  if (!FSys::exists(p_log_path))
-    FSys::create_directories(p_log_path);
+  if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
 }
-logger_ctrl &logger_ctrl::get_log() {
-  return *core_set::get_set().log_ptr;
-}
+logger_ctrl &logger_ctrl::get_log() { return *core_set::get_set().log_ptr; }
 bool logger_ctrl::set_log_name(const std::string &in_name) {
   init_log();
   p_log_name  = in_name;
@@ -108,7 +108,5 @@ bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_pt
   spdlog::get("doodle_lib")->sinks().push_back(in_ptr);
   return true;
 }
-void logger_ctrl::refresh() {
-  spdlog::get("doodle_lib")->flush();
-}
+void logger_ctrl::refresh() { spdlog::get("doodle_lib")->flush(); }
 }  // namespace doodle
