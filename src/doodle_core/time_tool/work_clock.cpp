@@ -150,7 +150,7 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
   std::string l_r{};
   for (auto&& i : l_item) {
     l_r += fmt::format(
-        R"("从 {} 到 {} 信息 {}")", boost::icl::first(i.first), boost::icl::last(i.first), fmt::join(i.second, " ")
+        R"("从 {} 到 {} 信息 {}")", boost::icl::upper(i.first), ++boost::icl::lower(i.first), fmt::join(i.second, " ")
     );
   }
 
