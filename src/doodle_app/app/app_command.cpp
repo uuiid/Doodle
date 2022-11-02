@@ -71,7 +71,10 @@ void app_command_base::post_constructor() {
   boost::asio::post(g_io_context(), [l_f = run_facet]() { (*l_f)(); });
 }
 
-bool app_command_base::chick_authorization() { return chick_build_time(); }
+bool app_command_base::chick_authorization() {
+  DOODLE_LOG_INFO("开始检查授权");
+  return chick_build_time();
+}
 
 app_command_base& app_command_base::Get() { return *(dynamic_cast<app_command_base*>(self)); }
 
