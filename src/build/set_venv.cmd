@@ -15,10 +15,10 @@ cd %~dp0/../..
 set my_pwd=%cd%
 call %my_pwd%/.venv/Scripts/activate.bat
 
-if exist "%my_pwd%/CMakeUserPresets.json" (set Ninja_release=Ninja_release_DD&& set Ninja_release_exe=release_exe_DD) else (set Ninja_release=Ninja_release&& set Ninja_release_exe=release_exe)
+if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)
 
 :end
 
 echo "Current Location is %my_pwd%"
-echo "build config %Ninja_release%"
-echo "build target %Ninja_release_exe%"
+echo "build config Ninja_release%Doodle_suffix%"
+echo "build target release_exe%Doodle_suffix%"
