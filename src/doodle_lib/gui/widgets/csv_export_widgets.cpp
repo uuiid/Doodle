@@ -534,6 +534,7 @@ bool csv_export_widgets::get_work_time() {
       ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
         return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
       });
+  p_i->user_handle.clear();
   for (auto &&l_u : p_i->list_sort_time) {
     auto l_user = l_u.get<assets_file>().user_attr();
     /// \brief 收集用户的配置
@@ -638,7 +639,7 @@ void csv_export_widgets::filter_() {
               }) |
               ranges::view::filter([&](const entt::handle &in_handle) -> bool {
                 if (p_i->combox_user_id.data == "all")
-                  return true;
+                  return in_handle.get<assets_file>().user_attr().all_of<dingding::user>();
                 else {
                   auto l_user = p_i->combox_user_id.current_user;
                   return in_handle.get<assets_file>().user_attr() == l_user;
