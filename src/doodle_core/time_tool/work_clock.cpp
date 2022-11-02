@@ -18,9 +18,7 @@
 #include <date/tz.h>
 #include <range/v3/range.hpp>
 
-namespace doodle {
-
-namespace business {
+namespace doodle::business {
 
 work_clock::work_clock() = default;
 
@@ -193,6 +191,4 @@ void work_clock::add_info(const std::tuple<time_point_wrap, time_point_wrap, std
   auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
   interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
 }
-}  // namespace business
-
-}  // namespace doodle
+}  // namespace doodle::business
