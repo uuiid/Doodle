@@ -65,7 +65,7 @@ class attachment {
 class operation_records {
  public:
   std::string userId;
-  time_point_wrap date;
+  std::string date;
   std::string type;
   std::string result;
   std::string remark;

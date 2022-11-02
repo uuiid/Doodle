@@ -17,11 +17,11 @@ void to_json(nlohmann::json& nlohmann_json_j, const form_component_values& nlohm
 }
 void from_json(const nlohmann::json& nlohmann_json_j, form_component_values& nlohmann_json_t) {
   nlohmann_json_j.at("id").get_to(nlohmann_json_t.id);
-  nlohmann_json_j.at("name").get_to(nlohmann_json_t.name);
-  nlohmann_json_j.at("value").get_to(nlohmann_json_t.value);
-  nlohmann_json_j.at("extValue").get_to(nlohmann_json_t.extValue);
   nlohmann_json_j.at("componentType").get_to(nlohmann_json_t.componentType);
-  nlohmann_json_j.at("bizAlias").get_to(nlohmann_json_t.bizAlias);
+  if (nlohmann_json_j.contains("name")) nlohmann_json_j.at("name").get_to(nlohmann_json_t.name);
+  if (nlohmann_json_j.contains("value")) nlohmann_json_j.at("value").get_to(nlohmann_json_t.value);
+  if (nlohmann_json_j.contains("extValue")) nlohmann_json_j.at("extValue").get_to(nlohmann_json_t.extValue);
+  if (nlohmann_json_j.contains("bizAlias")) nlohmann_json_j.at("bizAlias").get_to(nlohmann_json_t.bizAlias);
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const task& nlohmann_json_t) {
@@ -52,7 +52,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, task& nlohmann_json_t) {
   nlohmann_json_j.at("finishTime").get_to(nlohmann_json_t.finishTime);
   nlohmann_json_j.at("mobileUrl").get_to(nlohmann_json_t.mobileUrl);
   nlohmann_json_j.at("pcUrl").get_to(nlohmann_json_t.pcUrl);
-  nlohmann_json_j.at("processInstanceId").get_to(nlohmann_json_t.processInstanceId);
+  if (nlohmann_json_j.contains("processInstanceId"))
+    nlohmann_json_j.at("processInstanceId").get_to(nlohmann_json_t.processInstanceId);
   nlohmann_json_j.at("activityId").get_to(nlohmann_json_t.activityId);
 }
 
@@ -78,10 +79,11 @@ void to_json(nlohmann::json& nlohmann_json_j, const operation_records& nlohmann_
 }
 void from_json(const nlohmann::json& nlohmann_json_j, operation_records& nlohmann_json_t) {
   nlohmann_json_j.at("userId").get_to(nlohmann_json_t.userId);
-  nlohmann_json_t.date = dingding::detail::tool::parse_dingding_Date(nlohmann_json_j.at("date"));
+  // nlohmann_json_t.date = dingding::detail::tool::parse_dingding_Date(nlohmann_json_j.at("date"));
+  nlohmann_json_j.at("date").get_to(nlohmann_json_t.date);
   nlohmann_json_j.at("type").get_to(nlohmann_json_t.type);
   nlohmann_json_j.at("result").get_to(nlohmann_json_t.result);
-  nlohmann_json_j.at("remark").get_to(nlohmann_json_t.remark);
+  if (nlohmann_json_j.contains("remark")) nlohmann_json_j.at("remark").get_to(nlohmann_json_t.remark);
 }
 }  // namespace deatil
 
@@ -114,8 +116,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, approval_form& nlohmann_js
   if (auto l_e =
           magic_enum::enum_cast<decltype(nlohmann_json_t.status)>(nlohmann_json_j.at("status").get<std::string>()))
     nlohmann_json_t.status = *l_e;
-
-  nlohmann_json_j.at("approverUserIds").get_to(nlohmann_json_t.approverUserIds);
+  if (nlohmann_json_j.contains("approverUserIds"))
+    nlohmann_json_j.at("approverUserIds").get_to(nlohmann_json_t.approverUserIds);
   nlohmann_json_j.at("ccUserIds").get_to(nlohmann_json_t.ccUserIds);
 
   if (auto l_e =
@@ -132,7 +134,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, approval_form& nlohmann_js
     nlohmann_json_t.bizAction = *l_e;
 
   nlohmann_json_j.at("attachedProcessInstanceIds").get_to(nlohmann_json_t.attachedProcessInstanceIds);
-  nlohmann_json_j.at("mainProcessInstanceId").get_to(nlohmann_json_t.mainProcessInstanceId);
+  if (nlohmann_json_j.contains("mainProcessInstanceId"))
+    nlohmann_json_j.at("mainProcessInstanceId").get_to(nlohmann_json_t.mainProcessInstanceId);
   nlohmann_json_j.at("formComponentValues").get_to(nlohmann_json_t.formComponentValues);
   nlohmann_json_j.at("createTime").get_to(nlohmann_json_t.createTime);
 }
