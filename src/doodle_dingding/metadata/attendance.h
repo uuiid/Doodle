@@ -73,6 +73,7 @@ enum class approve_type : std::uint16_t {
   work_overtime   = 1,  /// @brief 加班
   business_travel = 2,  /// @brief 出差
   leave           = 3,  /// @brief 请假
+  card            = 4,  /// 补卡
 };
 
 }  // namespace detail
