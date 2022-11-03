@@ -84,7 +84,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     switch (in_approve_for_open.biz_type) {
-      case detail::approve_type::leave: {
+      case detail::approve_type::leave: {  ///  请假
         if (in_approve_for_open.duration_unit == "HOUR") {
           /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
           auto l_h   = chrono::hours_double{std::stof(in_approve_for_open.duration)};
