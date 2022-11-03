@@ -187,7 +187,8 @@ void dingding_api::async_get_token(read_access_token_fun&& in) {
   async_write_read<res_type>(  /// 异步读写
       l_req, l_url,
       [l_fu = std::move(in), l_c = shared_from_this()](boost::system::error_code in_code, const res_type& in_res_type) {
-        auto l_j                 = nlohmann::json::parse(in_res_type.body());
+        auto l_j = nlohmann::json::parse(in_res_type.body());
+        DOODLE_LOG_INFO(in_res_type);
         auto l_access_token_body = access_token_body{l_j};  /// 访问令牌
         if (l_access_token_body) {
           throw_exception(l_access_token_body.get_error());
@@ -344,7 +345,11 @@ void dingding_api::async_get_user_updatedata_attendance_impl(
       l_req, l_url,
       [=, l_c = shared_from_this()](boost::system::error_code in_code, const res_type& in_res_type) {
         DOODLE_LOG_INFO(in_res_type);
-        if (in_res_type.body().empty()) return;
+        if (in_res_type.body().empty()) {
+          DOODLE_LOG_INFO("返回内容为空");
+          (*in_call)({}, {});
+          return;
+        }
         auto l_j    = nlohmann::json::parse(in_res_type.body());
         auto l_body = attendance::user_attendance_body{l_j};
         if (l_body) {
