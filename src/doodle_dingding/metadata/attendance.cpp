@@ -12,9 +12,7 @@
 
 #include <fmt/chrono.h>
 #include <magic_enum.hpp>
-namespace doodle {
-namespace dingding {
-namespace attendance {
+namespace doodle::dingding::attendance {
 
 namespace query {
 
@@ -283,7 +281,4 @@ void from_json(const nlohmann::json& nlohmann_json_j, day_data& nlohmann_json_t)
   nlohmann_json_j.at("id").get_to(nlohmann_json_t.id);
 }
 
-}  // namespace attendance
-
-}  // namespace dingding
-}  // namespace doodle
+}  // namespace doodle::dingding::attendance
