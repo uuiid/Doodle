@@ -90,6 +90,19 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
           auto l_h   = chrono::hours_double{std::stof(in_approve_for_open.duration)};
           auto l_end = in_clock.next_time(in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(l_h));
           in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name);
+        } else if (in_approve_for_open.duration_unit == "DAY") {  /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是
+                                                                  /// DAY 时, 也他妈返回的是 4.0 靠
+          auto l_t   = std::stof(in_approve_for_open.duration);
+          auto l_h   = chrono::hours_double{l_t == 4.0f ? 3.0f : l_t};
+          auto l_end = in_clock.next_time(
+              in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t})
+          );
+          auto l_end_show = in_clock.next_time(
+              in_approve_for_open.begin_time,
+              chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t == 4.0f ? 3.0f : l_t})
+          );
+          in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end);
+          in_clock.add_info(std::make_tuple(in_approve_for_open.begin_time, l_end_show, in_approve_for_open.tag_name));
         } else {
           in_clock -= std::make_tuple(
               in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
