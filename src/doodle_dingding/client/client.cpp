@@ -88,10 +88,16 @@ void client::async_shutdown() {
 boost::beast::ssl_stream<boost::beast::tcp_stream>& client::ssl_stream() { return ptr->ssl_stream; }
 bool client::is_connect() const { return ptr->is_connect; }
 void client::is_connect(bool in_connect) {
-  if (in_connect) {
-    ptr->timer.expires_after(10s);
-    ptr->timer.async_wait([this](auto) { ptr->is_connect = false; });
-  }
+  //  if (in_connect) {
+  //    ptr->timer.expires_after(10s);
+  //    ptr->timer.async_wait([this](const boost::system::error_code& in_code) {
+  //      if (in_code == boost::asio::error::operation_aborted) {
+  //        DOODLE_LOG_INFO(in_code.message());
+  //        return;
+  //      }
+  //      ptr->is_connect = false;
+  //    });
+  //  }
 
   ptr->is_connect = in_connect;
 }
