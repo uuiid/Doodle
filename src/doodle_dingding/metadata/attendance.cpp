@@ -51,7 +51,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   if (attendance_result_list.size() == 2) {
     /// 正常打卡, 并且审批单为空
-    if (approve_list.empty() && !class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+    if (!class_setting_info_attr.rest_time_vo_list_attr.empty()) {
       auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
       ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
         switch (in_r.check_type) {
@@ -84,10 +84,19 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     switch (in_approve_for_open.biz_type) {
-      case detail::approve_type::leave:
-        in_clock -=
-            std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
+      case detail::approve_type::leave: {
+        if (in_approve_for_open.duration_unit == "HOUR") {
+          /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
+          auto l_h   = chrono::hours_double{std::stof(in_approve_for_open.duration)};
+          auto l_end = in_clock.next_time(in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(l_h));
+          in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name);
+        } else {
+          in_clock -= std::make_tuple(
+              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+          );
+        }
         break;
+      }
       case detail::approve_type::business_travel:
         break;                                     /// 出差不管
       case detail::approve_type::work_overtime: {  /// 加班
@@ -108,9 +117,9 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
           );
         }
         break;
-        case detail::approve_type::card:  /// 补卡, 不要管
-          break;
       }
+      case detail::approve_type::card:  /// 补卡, 不要管
+        break;
     }
   });
 }
