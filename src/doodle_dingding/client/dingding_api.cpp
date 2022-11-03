@@ -17,6 +17,7 @@
 #include <boost/beast/http/empty_body.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -424,6 +425,8 @@ const std::string& dingding_api::company_name() const { return ptr->access_tocke
 
 dingding_api::~dingding_api() = default;
 std::shared_ptr<dingding_api> dingding_api_factory::create_api(const std::string& in_company) {
+  boost::ignore_unused(this);
+
   using dingding_api_ptr = std::shared_ptr<dingding_api>;
   for (const auto& [e, i] : g_reg()->view<dingding_api_ptr>().each()) {
     if (in_company == i->company_name()) {

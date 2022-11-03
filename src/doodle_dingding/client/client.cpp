@@ -4,9 +4,6 @@
 
 #include "client.h"
 
-#include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/doodle_core.h>
-
 #include <doodle_dingding/configure/config.h>
 #include <doodle_dingding/fmt_lib/boost_beast_fmt.h>
 
