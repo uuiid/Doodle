@@ -11,9 +11,14 @@
 #include <boost/asio/ts/netfwd.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/container/container_fwd.hpp>
+#include <boost/container/devector.hpp>
 #include <boost/system.hpp>
 #include <boost/url.hpp>
 
+#include "client/client.h"
+#include <functional>
+#include <memory>
 #include <utility>
 
 namespace doodle::dingding {
@@ -34,7 +39,20 @@ class client::impl {
   bool is_connect{false};
 
   boost::asio::high_resolution_timer timer{io_executor_};
+  boost::container::devector<std::shared_ptr<std::function<void()>>> queue{};
 };
+
+void client::add_work_impl(const std::shared_ptr<std::function<void()>>& in_work) {
+  ptr->queue.emplace_back(in_work);
+  do_work();
+}
+
+void client::do_work() {
+  if (!mutex) {
+    (*ptr->queue.front())();
+    ptr->queue.pop_front();
+  }
+}
 
 void client::set_openssl(const std::string& host) {
   if (!ptr->init_) {

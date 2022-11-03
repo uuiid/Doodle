@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/core/util.h"
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/entt_warp.h>
@@ -11,12 +12,19 @@
 #include <doodle_dingding/doodle_dingding_fwd.h>
 
 #include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/async_result.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/system.hpp>
+#include <boost/system/detail/error_code.hpp>
 #include <boost/url/urls.hpp>
+
+#include <functional>
+#include <memory>
+#include <type_traits>
+
 namespace doodle::dingding {
 class client;
 
@@ -37,8 +45,19 @@ class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
  protected:
   [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
 
+ private:
   class impl;
   std::unique_ptr<impl> ptr;
+  doodle::core::bool_mutex mutex;
+
+  void add_work_impl(const std::shared_ptr<std::function<void()>>& in_work);
+
+  template <typename T>
+  void add_work(T&& in){
+
+  };
+
+  void do_work();
 
  public:
   void set_openssl(const std::string& host);
@@ -241,8 +260,19 @@ auto client::async_write_read(Request in_request, boost::url in_url, CompletionT
                 CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
         std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
     )) {
+  using call_type    = void(boost::system::error_code, const std::decay_t<Response>&);
   using http_req_res = client_ns::async_http_req_res<Request, Response>;
-  return boost::asio::async_compose<CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+
+  // boost::asio::async_initiate<CompletionToken, call_type>(
+  //     [&](auto in_token) {
+  //       auto l_tocken = std::make_shared<std::function<call_type>>(in_token);
+  //       add_work([=]() {
+  //       });
+  //     },
+  //     in_token
+  // );
+
+  return boost::asio::async_compose<CompletionToken, call_type>(
       http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
   );
 }
