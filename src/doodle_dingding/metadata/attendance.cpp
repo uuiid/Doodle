@@ -51,7 +51,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   if (attendance_result_list.size() == 2) {
     /// 正常打卡, 并且审批单为空
-    if (approve_list.empty() || !class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+    if (approve_list.empty() && !class_setting_info_attr.rest_time_vo_list_attr.empty()) {
       auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
       ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
         switch (in_r.check_type) {
@@ -73,6 +73,8 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
         DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
         in_clock -= l_sub_t;
       }
+    } else {
+      DOODLE_LOG_INFO(" {} 中午休息为空, 认为是在节假日", work_date);
     }
     /// 有审批单, 并且没有午休, 认为是周末, 跳过
 
