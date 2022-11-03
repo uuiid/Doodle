@@ -12,9 +12,7 @@
 
 #include <fmt/chrono.h>
 #include <magic_enum.hpp>
-namespace doodle {
-namespace dingding {
-namespace attendance {
+namespace doodle::dingding::attendance {
 
 namespace query {
 
@@ -53,7 +51,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   if (attendance_result_list.size() == 2) {
     /// 正常打卡, 并且审批单为空
-    if (approve_list.empty() || !class_setting_info_attr.rest_time_vo_list_attr.empty()) {
+    if (!class_setting_info_attr.rest_time_vo_list_attr.empty()) {
       auto l_t = std::make_tuple(time_point_wrap{}, time_point_wrap{});
       ranges::for_each(attendance_result_list, [&](const attendance_result& in_r) {
         switch (in_r.check_type) {
@@ -75,6 +73,8 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
         DOODLE_LOG_INFO("去除午休时间 {} -> {}", std::get<0>(l_sub_t), std::get<0>(l_sub_t));
         in_clock -= l_sub_t;
       }
+    } else {
+      DOODLE_LOG_INFO(" {} 中午休息为空, 认为是在节假日", work_date);
     }
     /// 有审批单, 并且没有午休, 认为是周末, 跳过
 
@@ -84,10 +84,32 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     switch (in_approve_for_open.biz_type) {
-      case detail::approve_type::leave:
-        in_clock -=
-            std::make_tuple(in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name);
+      case detail::approve_type::leave: {  ///  请假
+        if (in_approve_for_open.duration_unit == "HOUR") {
+          /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
+          auto l_h   = chrono::hours_double{std::stof(in_approve_for_open.duration)};
+          auto l_end = in_clock.next_time(in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(l_h));
+          in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name);
+        } else if (in_approve_for_open.duration_unit == "DAY") {  /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是
+                                                                  /// DAY 时, 也他妈返回的是 4.0 靠
+          auto l_t   = std::stof(in_approve_for_open.duration);
+          auto l_h   = chrono::hours_double{l_t == 4.0f ? 3.0f : l_t};
+          auto l_end = in_clock.next_time(
+              in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t})
+          );
+          auto l_end_show = in_clock.next_time(
+              in_approve_for_open.begin_time,
+              chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t == 4.0f ? 3.0f : l_t})
+          );
+          in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end);
+          in_clock.add_info(std::make_tuple(in_approve_for_open.begin_time, l_end_show, in_approve_for_open.tag_name));
+        } else {
+          in_clock -= std::make_tuple(
+              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+          );
+        }
         break;
+      }
       case detail::approve_type::business_travel:
         break;                                     /// 出差不管
       case detail::approve_type::work_overtime: {  /// 加班
@@ -108,9 +130,9 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
           );
         }
         break;
-        case detail::approve_type::card:  /// 补卡, 不要管
-          break;
       }
+      case detail::approve_type::card:  /// 补卡, 不要管
+        break;
     }
   });
 }
@@ -283,7 +305,4 @@ void from_json(const nlohmann::json& nlohmann_json_j, day_data& nlohmann_json_t)
   nlohmann_json_j.at("id").get_to(nlohmann_json_t.id);
 }
 
-}  // namespace attendance
-
-}  // namespace dingding
-}  // namespace doodle
+}  // namespace doodle::dingding::attendance

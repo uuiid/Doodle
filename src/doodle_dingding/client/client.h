@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/core/util.h"
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/entt_warp.h>
@@ -11,14 +12,79 @@
 #include <doodle_dingding/doodle_dingding_fwd.h>
 
 #include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/async_result.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/system.hpp>
+#include <boost/system/detail/error_code.hpp>
 #include <boost/url/urls.hpp>
+
+#include <functional>
+#include <memory>
+#include <type_traits>
+
 namespace doodle::dingding {
 class client;
+
+namespace client_ns {
+
+template <typename Req, typename Res>
+struct async_http_req_res;
+}
+
+/**
+ * @brief 一个特别基础的https客户端
+ * 使用方法 run("www.example.com","443","/")
+ */
+class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
+ public:
+  using executor_type = typename boost::asio::any_io_executor;
+
+ protected:
+  [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
+
+ private:
+  class impl;
+  std::unique_ptr<impl> ptr;
+  doodle::core::bool_mutex mutex;
+
+  void add_work_impl(const std::shared_ptr<std::function<void()>>& in_work);
+
+  template <typename T>
+  void add_work(T&& in){
+
+  };
+
+  void do_work();
+
+ public:
+  void set_openssl(const std::string& host);
+  bool is_connect() const;
+  void is_connect(bool in_connect);
+
+  [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
+  [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
+
+  void async_shutdown();
+
+ public:
+  explicit client(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
+
+  executor_type get_executor() noexcept;
+
+  template <typename Response, typename CompletionToken, typename Request>
+  auto async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
+      -> decltype(boost::asio::async_compose<
+                  CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+          std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
+      ));
+
+ protected:
+ public:
+  virtual ~client() noexcept;
+};
 
 namespace client_ns {
 template <typename Req, typename Res>
@@ -186,50 +252,29 @@ struct async_http_req_res {
 
 }  // namespace client_ns
 
-/**
- * @brief 一个特别基础的https客户端
- * 使用方法 run("www.example.com","443","/")
- */
-class DOODLE_DINGDING_API client : public std::enable_shared_from_this<client> {
- public:
-  using executor_type = typename boost::asio::any_io_executor;
+/// 此处是定义
 
- protected:
-  [[nodiscard("")]] boost::beast::ssl_stream<boost::beast::tcp_stream>& ssl_stream();
+template <typename Response, typename CompletionToken, typename Request>
+auto client::async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
+    -> decltype(boost::asio::async_compose<
+                CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
+        std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
+    )) {
+  using call_type    = void(boost::system::error_code, const std::decay_t<Response>&);
+  using http_req_res = client_ns::async_http_req_res<Request, Response>;
 
-  class impl;
-  std::unique_ptr<impl> ptr;
+  // boost::asio::async_initiate<CompletionToken, call_type>(
+  //     [&](auto in_token) {
+  //       auto l_tocken = std::make_shared<std::function<call_type>>(in_token);
+  //       add_work([=]() {
+  //       });
+  //     },
+  //     in_token
+  // );
 
- public:
-  void set_openssl(const std::string& host);
-  bool is_connect() const;
-  void is_connect(bool in_connect);
-
-  [[nodiscard("")]] boost::asio::ssl::context& ssl_context();
-  [[nodiscard("")]] boost::asio::ip::tcp::resolver& resolver();
-
-  void async_shutdown();
-
- public:
-  explicit client(const boost::asio::any_io_executor& in_executor, boost::asio::ssl::context& in_ssl_context);
-
-  executor_type get_executor() noexcept;
-
-  template <typename Response, typename CompletionToken, typename Request>
-  auto async_write_read(Request in_request, boost::url in_url, CompletionToken&& in_token)
-      -> decltype(boost::asio::async_compose<
-                  CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
-          std::declval<client_ns::async_http_req_res<Request, Response>>(), in_token, ssl_stream()
-      )) {
-    using http_req_res = client_ns::async_http_req_res<Request, Response>;
-    return boost::asio::async_compose<CompletionToken, void(boost::system::error_code, const std::decay_t<Response>&)>(
-        http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
-    );
-  };
-
- protected:
- public:
-  virtual ~client() noexcept;
-};
+  return boost::asio::async_compose<CompletionToken, call_type>(
+      http_req_res{std::move(in_request), std::move(in_url), ssl_stream(), shared_from_this()}, in_token, ssl_stream()
+  );
+}
 
 }  // namespace doodle::dingding

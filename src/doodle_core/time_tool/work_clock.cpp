@@ -29,7 +29,7 @@ work_clock::duration_type work_clock::operator()(const time_type& in_min, const 
   for (const auto& l_i : l_l) {
     l_len += (l_i.upper() - l_i.lower());
     //    l_len += (boost::icl::upper(l_i).get_sys_time() - boost::icl::lower(l_i).get_sys_time());
-    //    DOODLE_LOG_INFO("{} -> {} = {}", l_i.upper(), l_i.lower(), chrono::floor<chrono::seconds>(l_len));
+    DOODLE_LOG_INFO("{} - {} = {}", l_i.upper(), l_i.lower(), chrono::ceil<chrono::seconds>(l_len));
   }
   return l_len;
 }
@@ -41,7 +41,7 @@ work_clock::time_type work_clock::next_time(const time_type& in_begin, const dur
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::upper(l_i) - boost::icl::lower(l_i);
     if ((l_en_t + l_len) > in_du) {
-      return boost::icl::first(l_i) + doodle::chrono::floor<doodle::chrono::seconds>(in_du - l_len);
+      return boost::icl::first(l_i) + doodle::chrono::ceil<doodle::chrono::seconds>(in_du - l_len);
     } else {
       l_len += l_en_t;
     }

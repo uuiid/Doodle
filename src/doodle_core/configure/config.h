@@ -3,12 +3,7 @@
 //
 
 #pragma once
-// clang-format off
-//#define Doodle_VERSION_MAJOR 3
-//#define Doodle_VERSION_MINOR 4
-//#define Doodle_VERSION_PATCH 19
-//#define Doodle_VERSION_TWEAK 31
-// clang-format on
+
 #include <cstdint>
 #include <string>
 #include <chrono>

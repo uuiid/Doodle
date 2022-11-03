@@ -115,10 +115,6 @@ csv_line::csv_line(
       in_handle.all_of<season>()                                           //
           ? fmt::format(in_season_fmt_str, in_handle.get<season>().p_int)  //
           : ""s;
-
-  using time_rational = boost::rational<std::uint64_t>;
-  time_rational l_time_rational{chrono::floor<chrono::seconds>(k_time).count(), 60ull * 60ull * 8ull};
-
   organization_        = in_user_handle.all_of<dingding::user>() ? in_user_handle.get<dingding::user>().department_name
                                                                  : k_ass.organization_attr();
   user_                = in_user_handle.get<user>().get_name();
@@ -130,7 +126,7 @@ csv_line::csv_line(
                       : ""s;
   start_time_   = start_time;
   end_time_     = end_time;
-  len_time_     = chrono::floor<chrono::seconds>(k_time);
+  len_time_     = chrono::ceil<chrono::seconds>(k_time);
   time_info_    = k_comm.p_time_info;
   comment_info_ = k_comm.get_comment();
   file_path_    = k_ass_path.generic_string();
@@ -148,6 +144,7 @@ bool csv_line::operator==(const csv_line &in_l) const {
 }
 
 void csv_table::computing_time() {
+  time_statistics.clear();
   ranges::for_each(line_list, [&](const csv_export_widgets_ns::csv_line &in_line) {
     time_statistics[in_line.user_] += in_line.len_time_;
   });
@@ -161,21 +158,20 @@ void csv_table::computing_time() {
 
   // 这里我们需要进行求整
   for (auto &&item : time_statistics) {
-    using time_rational = boost::rational<std::uint64_t>;
-    time_rational l_time_rational{item.second.count(), 60ull * 60ull * 8ull};
+    using time_rational = boost::rational<std::int64_t>;
+    time_rational l_time_rational{item.second.count(), 60ll * 60ll * 8ll};
 
     auto l_round_value = std::round(boost::rational_cast<std::float_t>(l_time_rational));
     if (l_round_value == 0) continue;
 
-    if (auto l_val = l_time_rational - time_rational{boost::numeric_cast<std::uint64_t>(l_round_value)}; l_val) {
-      auto l_se = (l_val * 60ull * 60ull * 8ull).numerator();
-      if (l_se > 360) continue;
-      while (l_se) {
-        for (auto i : user_index[item.first]) {
-          line_list[i].len_time_++;
-          if (--l_se) break;
-        }
-      }
+    if (auto l_val = l_time_rational - time_rational{boost::numeric_cast<std::int64_t>(l_round_value)}; l_val != 0) {
+      auto l_se = (l_val * 60ll * 60ll * 8ll).numerator();
+      //      if (std::abs(l_se) > 360) continue;
+      //      while (l_se) {
+      //        for (auto i : user_index[item.first]) {
+      //
+      //        }
+      //      }
     }
   }
 }
@@ -583,6 +579,13 @@ bool csv_export_widgets::get_work_time() {
     return false;
   }
 
+  if (ranges::all_of(p_i->user_handle, [](const decltype(p_i->user_handle)::value_type &in_type) {
+        return in_type.first.all_of<business::work_clock>();
+      })) {
+    generate_table();
+    return true;
+  };
+
   /// \brief 这里设置一下时钟规则
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
@@ -619,6 +622,7 @@ bool csv_export_widgets::get_work_time() {
           }
       );
   }
+
   return true;
 }
 void csv_export_widgets::filter_() {

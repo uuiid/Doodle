@@ -21,7 +21,7 @@ class DOODLE_CORE_API program_info {
   std::string title{};
 
  public:
-  program_info()  = default;
+  program_info();
   ~program_info() = default;
   [[nodiscard]] const std::atomic_bool& stop_attr() const;
   [[nodiscard]] ::doodle::win::wnd_instance handle_attr() const;
