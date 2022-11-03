@@ -33,6 +33,7 @@ class bool_mutex {
 
   inline void lock() { data = true; }
   inline void unlock() { data = false; }
+  /// 锁定时返回 true
   [[nodiscard]] inline explicit operator bool() const { return data; }
 };
 
