@@ -360,12 +360,12 @@ void time_sequencer_widget::render() {
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
     ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_::ImPlotScale_Time);
-    const double t_min = boost::numeric_cast<std::double_t>(
+    auto t_min = boost::numeric_cast<std::double_t>(
         doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.front().time_point_.get_sys_time())
             .time_since_epoch()
             .count()
     );  // 01/01/2021 @ 12:00:00am (UTC)
-    const double t_max = boost::numeric_cast<std::double_t>(
+    auto t_max = boost::numeric_cast<std::double_t>(
         doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.back().time_point_.get_sys_time())
             .time_since_epoch()
             .count()
@@ -378,7 +378,10 @@ void time_sequencer_widget::render() {
       p_i->view2_.set_other_view = false;
     }
     /// \brief 时间折线
-    ImPlot::PlotLine("Time Series", p_i->time_list_x.data(), p_i->time_list_y.data(), p_i->time_list.size());
+    ImPlot::PlotLine(
+        "Time Series", p_i->time_list_x.data(), p_i->time_list_y.data(),
+        boost::numeric_cast<std::int32_t>(p_i->time_list.size())
+    );
     //    ImPlot::PlotVLines("HLines", p_i->shaded_works_time.data(), p_i->shaded_works_time.size());
 
     //    {
@@ -401,7 +404,7 @@ void time_sequencer_widget::render() {
     {
       if (ImPlot::IsPlotHovered()) {
         auto l_point            = ImPlot::GetPlotMousePos();
-        p_i->drag_point_current = p_i->get_iter_DragPoint(l_point.x);
+        p_i->drag_point_current = boost::numeric_cast<std::int32_t>(p_i->get_iter_DragPoint(l_point.x));
       }
       auto l_guard = p_i->edit_chick();
       for (std::int32_t l_i = p_i->drag_point_current;
@@ -427,7 +430,9 @@ void time_sequencer_widget::render() {
       ImPlot::SetupAxesLimits(l_rect.X.Min, l_rect.X.Max, l_rect.Y.Min, l_rect.Y.Max, ImGuiCond_Always);
       p_i->view1_.set_other_view = false;
     }
-    ImPlot::PlotBars("Bars", p_i->work_time_plots.data(), p_i->work_time_plots.size());
+    ImPlot::PlotBars(
+        "Bars", p_i->work_time_plots.data(), boost::numeric_cast<std::int32_t>(p_i->work_time_plots.size())
+    );
     if (ImPlot::IsPlotSelected()) {
       //      auto l_e   = ImPlot::GetPlotLimits().X;
       p_i->view2_.rect_select_ = ImPlot::GetPlotSelection();
