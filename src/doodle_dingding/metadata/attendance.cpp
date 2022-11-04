@@ -65,6 +65,14 @@ time_point_wrap time_ounding(const time_point_wrap& in) {
   return time_point_wrap{l_y, l_m, l_d, l_h, l_m1, l_s};
 }
 
+time_point_wrap time_13_30_to_12_00(const time_point_wrap& in) {
+  auto&& [l_y, l_m, l_d, l_h, l_mm, l_s] = in.compose();
+  if (l_h == 13 && l_mm == 30) {
+    return time_point_wrap{l_y, l_m, l_d, 12, 0, l_s};
+  }
+  return in;
+}
+
 }  // namespace
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
@@ -103,26 +111,22 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     time_point_wrap l_end{};
-
+    auto l_begin = time_13_30_to_12_00(in_approve_for_open.begin_time);
     if (in_approve_for_open.duration_unit == "HOUR") {
       /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
       /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
 
       auto l_t = std::stoi(in_approve_for_open.duration);
 
-      l_end    = in_clock.next_time(
-          in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours{l_t})
-      );
+      l_end    = l_begin + chrono::hours{l_t};
 
     } else if (in_approve_for_open.duration_unit == "DAY") {
       auto l_t       = std::stod(in_approve_for_open.duration);
       auto l_t_zheng = std::round(l_t / 8);
-      auto l_t_xiao  = l_t - l_t_zheng;
-      auto l_t2      = l_t_zheng * 8 + (l_t_xiao == 0.5 ? 3 : (l_t_xiao * 8));
+      auto l_t_xiao  = (l_t / 8) - l_t_zheng;
+      auto l_t2      = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
 
-      l_end          = in_clock.next_time(
-          in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t2})
-      );
+      l_end = l_end = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
     }
 
     switch (in_approve_for_open.biz_type) {
@@ -131,8 +135,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
         /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
 
         in_clock -= std::make_tuple(
-            time_ounding(in_approve_for_open.begin_time), time_ounding(l_end),
-            in_approve_for_open.tag_name + in_approve_for_open.sub_type
+            time_ounding(l_begin), time_ounding(l_end), in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );
         break;
       }
@@ -141,8 +144,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::work_overtime: {  /// 加班
         /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
         in_clock += std::make_tuple(
-            time_ounding(in_approve_for_open.begin_time), time_ounding(l_end),
-            in_approve_for_open.tag_name + in_approve_for_open.sub_type
+            time_ounding(l_begin), time_ounding(l_end), in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );
         break;
       }
