@@ -107,12 +107,20 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
                   in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours_double{5.0f})
               );
             }
+            in_clock -= std::make_tuple(
+                in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name + in_approve_for_open.sub_type
+            );
+          } else {
+            in_clock -= std::make_tuple(
+                in_approve_for_open.begin_time, in_approve_for_open.end_time,
+                in_approve_for_open.tag_name + in_approve_for_open.sub_type
+            );
           }
 
-          in_clock -= std::make_tuple(in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name);
         } else {
           in_clock -= std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+              in_approve_for_open.begin_time, in_approve_for_open.end_time,
+              in_approve_for_open.tag_name + in_approve_for_open.sub_type
           );
         }
         break;
@@ -126,14 +134,17 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
           in_clock += std::make_tuple(
               in_approve_for_open.begin_time,
-              in_approve_for_open.begin_time + chrono::duration_cast<chrono::seconds>(l_h), in_approve_for_open.tag_name
+              in_approve_for_open.begin_time + chrono::duration_cast<chrono::seconds>(l_h),
+              in_approve_for_open.tag_name + in_approve_for_open.sub_type
           );
           in_clock.add_info(std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+              in_approve_for_open.begin_time, in_approve_for_open.end_time,
+              in_approve_for_open.tag_name + in_approve_for_open.sub_type
           ));
         } else {
           in_clock += std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time, in_approve_for_open.tag_name
+              in_approve_for_open.begin_time, in_approve_for_open.end_time,
+              in_approve_for_open.tag_name + in_approve_for_open.sub_type
           );
         }
         break;
