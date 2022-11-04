@@ -6,6 +6,8 @@
 
 // #include "DoodleSourceControl.generated.h"
 
+/// 这个类是模块的开始, 注册我们自己的源码控制
+
 class FDoodleSourceControlModule : public IModuleInterface
 {
 public:
