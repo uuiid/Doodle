@@ -65,8 +65,8 @@ void logger_ctrl::init_temp_log() {
 #if !defined(NDEBUG)
     auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
     l_logger->sinks().push_back(l_k_debug);
-    auto l_stdout_sink_mt = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-    l_logger->sinks().push_back(l_stdout_sink_mt);
+    // auto l_stdout_sink_mt = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+    // l_logger->sinks().push_back(l_stdout_sink_mt);
 #endif
 
     spdlog::register_logger(l_logger);
