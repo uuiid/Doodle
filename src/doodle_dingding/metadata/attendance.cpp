@@ -85,53 +85,22 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     switch (in_approve_for_open.biz_type) {
       case detail::approve_type::leave: {  ///  请假
-        if (in_approve_for_open.duration_unit == "HOUR" || in_approve_for_open.duration_unit == "DAY") {
-          /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
-          /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
-
-          auto l_t       = std::stof(in_approve_for_open.duration);
-          auto l_t_zheng = std::round(l_t / 8);
-          auto l_t_xiao  = l_t - l_t_zheng;
-          auto l_t2      = l_t_zheng * 8 + (l_t_xiao == 0.5 ? 3 : (l_t_xiao * 8));
-
-          auto l_end     = in_clock.next_time(
-              in_approve_for_open.begin_time, chrono::duration_cast<chrono::seconds>(chrono::hours_double{l_t2})
-          );
-          /// 草他妈的, 4.0 算半天, 还要看是下午还是上午, 上午时候3个小时, 下午5个小时 草
-          in_clock -= std::make_tuple(
-              in_approve_for_open.begin_time, l_end, in_approve_for_open.tag_name + in_approve_for_open.sub_type
-          );
-
-        } else {
-          in_clock -= std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time,
-              in_approve_for_open.tag_name + in_approve_for_open.sub_type
-          );
-        }
+        /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
+        /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
+        in_clock -= std::make_tuple(
+            in_approve_for_open.begin_time, in_approve_for_open.end_time,
+            in_approve_for_open.tag_name + in_approve_for_open.sub_type
+        );
         break;
       }
       case detail::approve_type::business_travel:
         break;                                     /// 出差不管
       case detail::approve_type::work_overtime: {  /// 加班
-        if (in_approve_for_open.duration_unit == "HOUR") {
-          /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
-          auto l_h = chrono::hours_double{std::stof(in_approve_for_open.duration)};
-
-          in_clock += std::make_tuple(
-              in_approve_for_open.begin_time,
-              in_approve_for_open.begin_time + chrono::duration_cast<chrono::seconds>(l_h),
-              in_approve_for_open.tag_name + in_approve_for_open.sub_type
-          );
-          in_clock.add_info(std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time,
-              in_approve_for_open.tag_name + in_approve_for_open.sub_type
-          ));
-        } else {
-          in_clock += std::make_tuple(
-              in_approve_for_open.begin_time, in_approve_for_open.end_time,
-              in_approve_for_open.tag_name + in_approve_for_open.sub_type
-          );
-        }
+        /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
+        in_clock += std::make_tuple(
+            in_approve_for_open.begin_time, in_approve_for_open.end_time,
+            in_approve_for_open.tag_name + in_approve_for_open.sub_type
+        );
         break;
       }
       case detail::approve_type::card:  /// 补卡, 不要管
