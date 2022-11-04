@@ -579,9 +579,11 @@ bool csv_export_widgets::get_work_time() {
     return false;
   }
 
-  if (ranges::all_of(p_i->user_handle, [](const decltype(p_i->user_handle)::value_type &in_type) {
-        return in_type.first.all_of<business::work_clock>();
-      })) {
+  if (ranges::all_of(
+          p_i->user_handle, [](const decltype(p_i->user_handle)::value_type &in_type
+                            ) { return in_type.first.all_of<business::work_clock>(); }
+      ) &&
+      !p_i->force_get_work_time()) {
     generate_table();
     return true;
   };
