@@ -83,6 +83,14 @@ class DOODLE_CORE_API work_clock {
    */
   void add_info(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
 
+  /**
+   * @brief 寻找下一段工作开始的时间点
+   *
+   * @param in_point
+   * @return time_point_wrap
+   */
+  time_type next_point(const time_point_wrap& in_point);
+
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
   work_clock& operator-=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);

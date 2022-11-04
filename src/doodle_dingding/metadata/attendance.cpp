@@ -14,6 +14,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include "metadata/attendance.h"
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -111,19 +112,23 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     time_point_wrap l_end{};
-    auto l_begin = time_13_30_to_12_00(in_approve_for_open.begin_time);
+    auto l_begin = in_approve_for_open.begin_time;
     if (in_approve_for_open.duration_unit == "HOUR") {
       /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
-      /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
-
       auto l_t = std::stoi(in_approve_for_open.duration);
 
-      l_end    = l_begin + chrono::hours{l_t};
+      /// 加班的时候有的人是填的八点多到12点什么的, 需要转换为从9点开始
+      if (in_approve_for_open.biz_type == detail::approve_type::leave) l_begin = in_clock.next_point(l_begin);
+      l_end = l_begin + chrono::hours{l_t};
 
     } else if (in_approve_for_open.duration_unit == "DAY") {
+      /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
+      /// 这里必须的, 不知道为什么,钉钉在半天的时候, 中午会返回13:30分, 要转换为 12点
+      l_begin        = time_13_30_to_12_00(l_begin);
       auto l_t       = std::stod(in_approve_for_open.duration);
       auto l_t_zheng = std::round(l_t / 8);
       auto l_t_xiao  = (l_t / 8) - l_t_zheng;
+      /// 这里将天数转换为小时
       auto l_t2      = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
 
       l_end = l_end = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
@@ -131,8 +136,6 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
     switch (in_approve_for_open.biz_type) {
       case detail::approve_type::leave: {  ///  请假
-        /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
-        /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
 
         in_clock -= std::make_tuple(
             time_ounding(l_begin), time_ounding(l_end), in_approve_for_open.tag_name + in_approve_for_open.sub_type
@@ -142,7 +145,6 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::business_travel:
         break;                                     /// 出差不管
       case detail::approve_type::work_overtime: {  /// 加班
-        /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
         in_clock += std::make_tuple(
             time_ounding(l_begin), time_ounding(l_end), in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );

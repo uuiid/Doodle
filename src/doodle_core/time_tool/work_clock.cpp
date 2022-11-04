@@ -10,11 +10,14 @@
 #include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <boost/contract.hpp>
+#include <boost/icl/concept/interval.hpp>
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/split_interval_set.hpp>
 
+#include "metadata/time_point_wrap.h"
+#include "time_tool/work_clock.h"
 #include <date/tz.h>
 #include <range/v3/range.hpp>
 
@@ -190,5 +193,15 @@ void work_clock::add_info(const std::tuple<time_point_wrap, time_point_wrap, std
   auto&& [l_time_1, l_time_2, l_info] = in_time;
   auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
   interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
+}
+
+work_clock::time_type work_clock::next_point(const work_clock::time_type& in_point) {
+  auto l_d = discrete_interval_time::right_open(in_point, time_type::max());
+  auto l_l = interval_set_time_ & l_d;
+  for (auto&& l_i : l_l) {
+    return boost::icl::lower(l_i);
+  }
+
+  return {};
 }
 }  // namespace doodle::business

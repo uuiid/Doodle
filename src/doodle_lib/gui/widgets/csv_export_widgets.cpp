@@ -334,8 +334,8 @@ class work_clock_method_gui {
   constexpr static std::string_view dingding{"钉钉软件"};
   constexpr static std::string_view rule_method{"规则生成"};
 
-  gui_cache<std::string> data{"获取工作时间方法"s, std::string{rule_method}};
-  csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_rule};
+  gui_cache<std::string> data{"获取工作时间方法"s, std::string{dingding}};
+  csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_dingding};
 };
 
 class csv_export_widgets::impl {
