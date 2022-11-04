@@ -30,16 +30,6 @@
 			]
 		},
 		"todo-tree.tree.scanMode": "workspace only",
-		"cmake.useCMakePresets": "always",
-		"testMate.cpp.log.logSentry": "disable_3",
-		"testMate.cpp.test.advancedExecutables": [
-			{
-				"name": "doodle_test",
-				"pattern": "build/Ninja_debug/bin/doodle_test_*.exe",
-				"cwd": "${absDirpath}"
-			}
-		],
-		"cmake.buildDirectory": "${workspaceFolder}/build/b_${generator}_${buildKit}_${buildType}",
 		"python.envFile": "${workspaceFolder}/env.env",
 		"python.formatting.autopep8Args": [
 			"--ignore",
@@ -110,10 +100,7 @@
 		],
 		"todo-tree.tree.disableCompactFolders": true,
 		"C_Cpp.autocompleteAddParentheses": true,
-		"C_Cpp.experimentalFeatures": "Enabled",
-		"redhat.telemetry.enabled": false,
 		"todo-tree.highlights.useColourScheme": true,
-		"C_Cpp.errorSquiggles": "Enabled",
 		"terminal.integrated.scrollback": 9999,
 		"powershell.integratedConsole.forceClearScrollbackBuffer": false,
 		"terminal.integrated.profiles.windows": {
