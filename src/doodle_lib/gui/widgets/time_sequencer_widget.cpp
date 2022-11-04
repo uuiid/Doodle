@@ -23,9 +23,11 @@
 #include "gui/widgets/time_sequencer_widget.h"
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
+#include <imgui.h>
 #include <implot.h>
 #include <implot_internal.h>
 #include <memory>
+#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
 #include <utility>
 #include <vector>
@@ -114,6 +116,16 @@ class time_sequencer_widget::impl {
   time_cache combox_month{};
   /// 获取日期的接口
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
+
+  void refresh_work_clock_() {
+    if (!time_list.empty()) {
+      refresh_cache(time_list);
+      refresh_work_time(time_list);
+      set_shaded_works_time(work_clock_.get_work_du(
+          time_list.front().time_point_.current_month_start(), time_list.back().time_point_.current_month_end()
+      ));
+    }
+  }
 
   void set_shaded_works_time(const std::vector<std::pair<time_point_wrap, time_point_wrap>>& in_works) {
     shaded_works_time.clear();
@@ -303,6 +315,9 @@ time_sequencer_widget::time_sequencer_widget() : p_i(std::make_unique<impl>()) {
     );
     p_i->set_time_point(std::get<0>(in), std::get<1>(in));
   });
+
+  auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+  p_i->combox_month()                     = l_m;
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -311,7 +326,6 @@ void time_sequencer_widget::render() {
   ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
-  if (p_i->time_list.size() < 3) return;
 
   ImGui::PushItemWidth(100);
   if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
@@ -330,10 +344,18 @@ void time_sequencer_widget::render() {
   };
   ImGui::SameLine();
   if (ImGui::Button("过滤")) fliter_select();
+  if (ImGui::Button("刷新")) p_i->refresh_work_clock_();
 
   if (ImGui::Button("提交更新")) p_i->save();
 
   ImGui::PopItemWidth();
+
+  /// 如果时间个数不到三个, 不显示
+  if (p_i->time_list.size() < 3) {
+    ImGui::Text("项目小于 3 不显示");
+    return;
+  }
+  if (p_i->time_list_x.empty() || p_i->time_list_y.empty() || p_i->time_list.empty()) return;
 
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
@@ -434,6 +456,7 @@ void time_sequencer_widget::fliter_select() {
   auto l_list  = l_view | ranges::view::transform([](const entt::entity& in_tuple) -> entt::handle {
                   return make_handle(in_tuple);
                 });
+  /// 过滤
   auto l_list2 = l_list | ranges::view::filter([&](const entt::handle& in_handle) -> bool {
                    auto&& l_t = in_handle.get<time_point_wrap>();
                    return l_t <= l_end && l_t >= l_begin;
@@ -441,7 +464,13 @@ void time_sequencer_widget::fliter_select() {
                  ranges::view::filter([&](const entt::handle& in_handle) -> bool {
                    auto l_user = p_i->combox_user_id.current_user;
                    return in_handle.get<assets_file>().user_attr() == l_user;
-                 });
+                 }) |
+                 ranges::to_vector;
+  /// 排序
+  l_list2 |= ranges::actions::sort([](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+    return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
+  });
+
   p_i->time_list = l_list2 | ranges::view::transform([](const entt::handle& in_handle) -> impl::point_cache {
                      return impl::point_cache{in_handle, in_handle.get<time_point_wrap>()};
                    }) |
@@ -476,8 +505,11 @@ void time_sequencer_widget::fliter_select() {
             make_handle().emplace<gui_windows>() = l_msg;
             return;
           }
+
+          l_p.set_state(l_p.success);
           l_user.get_or_emplace<business::work_clock>() = in_clock;
           p_i->work_clock_                              = in_clock;
+          p_i->refresh_work_clock_();
           DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
         }
     );
