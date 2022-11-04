@@ -334,8 +334,8 @@ class work_clock_method_gui {
   constexpr static std::string_view dingding{"钉钉软件"};
   constexpr static std::string_view rule_method{"规则生成"};
 
-  gui_cache<std::string> data{"获取工作时间方法"s, std::string{dingding}};
-  csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_dingding};
+  gui_cache<std::string> data{"获取工作时间方法"s, std::string{rule_method}};
+  csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_rule};
 };
 
 class csv_export_widgets::impl {
@@ -376,7 +376,6 @@ class csv_export_widgets::impl {
   gui_cache<std::string> season_fmt_str{"季数格式化"s, "第{}季"s};
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
-  gui_cache<bool> average_time{"平均时间"s, false};
   std::string title_name_;
 
   gui_cache_name_id gen_table{"生成表"};
@@ -384,6 +383,7 @@ class csv_export_widgets::impl {
   gui_cache_name_id advanced_setting{"高级设置"};
 
   csv_table_gui csv_table_gui_{};
+  /// 使用规则还是dingding获取
   work_clock_method_gui work_clock_method_gui_{};
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户

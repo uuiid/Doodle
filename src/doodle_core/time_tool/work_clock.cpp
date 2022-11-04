@@ -28,8 +28,8 @@ work_clock::duration_type work_clock::operator()(const time_type& in_min, const 
   duration_type l_len{};
   for (const auto& l_i : l_l) {
     l_len += (l_i.upper() - l_i.lower());
-    //    l_len += (boost::icl::upper(l_i).get_sys_time() - boost::icl::lower(l_i).get_sys_time());
-    DOODLE_LOG_INFO("{} - {} = {}", l_i.upper(), l_i.lower(), chrono::ceil<chrono::seconds>(l_len));
+    // l_len += (boost::icl::upper(l_i).get_sys_time() - boost::icl::lower(l_i).get_sys_time());
+    // DOODLE_LOG_INFO("{} - {} = {}", l_i.upper(), l_i.lower(), chrono::ceil<chrono::seconds>(l_len));
   }
   return l_len;
 }
