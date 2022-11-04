@@ -36,10 +36,10 @@
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:debug_target}",
+            "program": "${command:cmake.getLaunchTargetPath}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
@@ -53,7 +53,7 @@
             "name": "debug_test",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_build_DD/bin/${input:debug_target}.exe",
+            "program": "",
             "args": [
                 "--logger=HRF,all",
                 "--color_output=true"

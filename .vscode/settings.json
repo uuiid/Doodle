@@ -9,7 +9,7 @@
             ],
             "cwd": "${workspaceFolder}/build",
             "sourcePrefix": "${workspaceFolder}",
-            "debugConfig": ""
+            "debugConfig": "Doodle_debug"
         },
         {
             "testExecutables": [
@@ -20,7 +20,7 @@
             ],
             "cwd": "${workspaceFolder}/build",
             "sourcePrefix": "${workspaceFolder}",
-            "debugConfig": ""
+            "debugConfig": "Doodle_debug"
         }
     ]
 }
