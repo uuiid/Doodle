@@ -4,14 +4,20 @@
 
 #include "attendance.h"
 
+#include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/time_tool/work_clock.h>
 
 #include <doodle_dingding/metadata/dingding_tool.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <cmath>
+#include <cstdint>
 #include <fmt/chrono.h>
 #include <magic_enum.hpp>
+
 namespace doodle::dingding::attendance {
 
 namespace query {
@@ -47,6 +53,16 @@ void from_json(const nlohmann::json& nlohmann_json_j, get_update_data& nlohmann_
   nlohmann_json_j.get_to(nlohmann_json_t.userid);
 }
 }  // namespace query
+
+namespace {
+
+time_point_wrap time_ounding(const time_point_wrap& in) {
+  auto&& [l_y, l_m, l_d, l_h, l_mm, l_s] = in.compose();
+  auto l_m1 = boost::numeric_cast<std::uint16_t>(std::round(boost::numeric_cast<std::float_t>(l_mm) / 10) * 10);
+  return time_point_wrap{l_y, l_m, l_d, l_h, l_m1, l_s};
+}
+
+}  // namespace
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   if (attendance_result_list.size() == 2) {
@@ -87,8 +103,9 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::leave: {  ///  请假
         /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
         /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
+
         in_clock -= std::make_tuple(
-            in_approve_for_open.begin_time, in_approve_for_open.end_time,
+            time_ounding(in_approve_for_open.begin_time), time_ounding(in_approve_for_open.end_time),
             in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );
         break;
@@ -98,7 +115,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::work_overtime: {  /// 加班
         /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
         in_clock += std::make_tuple(
-            in_approve_for_open.begin_time, in_approve_for_open.end_time,
+            time_ounding(in_approve_for_open.begin_time), time_ounding(in_approve_for_open.end_time),
             in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );
         break;

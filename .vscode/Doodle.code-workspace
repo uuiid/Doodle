@@ -112,6 +112,7 @@
 		"C_Cpp.autocompleteAddParentheses": true,
 		"C_Cpp.experimentalFeatures": "Enabled",
 		"redhat.telemetry.enabled": false,
+		"todo-tree.highlights.useColourScheme": true,
 		"C_Cpp.errorSquiggles": "Enabled",
 		"terminal.integrated.scrollback": 9999,
 		"powershell.integratedConsole.forceClearScrollbackBuffer": false,
@@ -136,7 +137,31 @@
 			"Git Bash": {
 				"source": "Git Bash"
 			}
-		}
+		},
+		"boost-test-adapter-feher.tests": [
+			{
+				"testExecutables": [
+					{
+						"path": "build/Ninja_build_DD/bin/test_core.exe",
+						"label": "test_1"
+							}
+					],
+					"cwd": "${workspaceFolder}/build",
+					"sourcePrefix": "${workspaceFolder}",
+					"debugConfig": "Doodle_debug"
+				},
+				{
+					"testExecutables": [
+						{
+							"path": "build/Ninja_build_DD/bin/dingding_base.exe",
+							"label": "test_2"
+						}
+					],
+					"cwd": "${workspaceFolder}/build",
+					"sourcePrefix": "${workspaceFolder}",
+					"debugConfig": "Doodle_debug"
+				}
+			]
 	},
 	"launch": {
 		"version": "0.2.0",
