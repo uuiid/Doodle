@@ -1,5 +1,7 @@
 #include "time_sequencer_widget.h"
 
+#include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/metadata/assets_file.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
@@ -7,15 +9,26 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/time_tool/work_clock.h>
 
+#include "doodle_app/gui/show_message.h"
 #include <doodle_app/gui/base/cross_frame_check.h>
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include "attendance/attendance_dingding.h"
+#include "attendance/attendance_interface.h"
+#include "gui/widgets/time_sequencer_widget.h"
+#include <entt/entity/fwd.hpp>
+#include <fmt/core.h>
 #include <implot.h>
 #include <implot_internal.h>
+#include <memory>
+#include <range/v3/view/transform.hpp>
 #include <utility>
+#include <vector>
 
 namespace doodle::gui {
 
@@ -25,8 +38,8 @@ class time_sequencer_widget::impl {
  public:
   class point_cache {
    public:
-    explicit point_cache(const entt::handle& in_h, const time_point_wrap& in_time)
-        : handle_(in_h), time_point_(in_time), has_select(false){};
+    explicit point_cache(const entt::handle& in_h, time_point_wrap in_time)
+        : handle_(in_h), time_point_(std::move(in_time)), has_select(false){};
     entt::handle handle_{};
     time_point_wrap time_point_{};
     bool has_select;
@@ -51,6 +64,19 @@ class time_sequencer_widget::impl {
   };
 
  public:
+  class time_cache : public gui_cache<std::int32_t> {
+   public:
+    time_cache() : gui_cache<std::int32_t>("月份"s, 0){};
+    time_point_wrap time_data{};
+  };
+
+  class user_list_cache : public gui_cache<std::string> {
+   public:
+    user_list_cache() : gui_cache<std::string>("过滤用户"s, "all"s){};
+    std::map<std::string, entt::handle> user_list{};
+    entt::handle current_user{};
+  };
+
   impl() = default;
   ;
   ~impl() = default;
@@ -61,9 +87,7 @@ class time_sequencer_widget::impl {
   std::vector<doodle::chrono::hours_double> work_time;
   std::vector<std::double_t> work_time_plots;
 
-  /// \brief 时间规则
-  doodle::business::rules rules_{doodle::business::rules::get_default()};
-  /// \brief 工作时间计算
+  /// \brief 工作时间计算时钟
   doodle::business::work_clock work_clock_{};
 
   view_cache view1_{};
@@ -84,6 +108,13 @@ class time_sequencer_widget::impl {
   detail::cross_frame_check<ImPlotRect> chick_view2{};
   std::string title_name_;
 
+  /// 过滤用户
+  user_list_cache combox_user_id{};
+  /// 过滤月份
+  time_cache combox_month{};
+  /// 获取日期的接口
+  std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
+
   void set_shaded_works_time(const std::vector<std::pair<time_point_wrap, time_point_wrap>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<time_point_wrap, time_point_wrap>& in_pair) {
@@ -96,28 +127,14 @@ class time_sequencer_widget::impl {
     });
   }
 
-  void refresh_work_clock_() {
-    if (!time_list.empty()) {
-      work_clock_.set_interval(
-          time_list.front().time_point_.current_month_start() - chrono::days{4},
-          time_list.back().time_point_.current_month_end() + chrono::days{4}
-      );
-      DOODLE_LOG_INFO(work_clock_.debug_print());
-      refresh_cache(time_list);
-      refresh_work_time(time_list);
-      set_shaded_works_time(work_clock_.get_work_du(
-          time_list.front().time_point_.current_month_start(), time_list.back().time_point_.current_month_end()
-      ));
-    }
-  }
-
   void refresh_cache(const decltype(time_list)& in_list) {
-    time_list_x = in_list | ranges::views::transform([](const impl::point_cache& in) -> double {
-                    return doodle::chrono::floor<doodle::chrono::seconds>(in.time_point_.get_sys_time())
-                        .time_since_epoch()
-                        .count();
-                  }) |
-                  ranges::to_vector;
+    time_list_x =
+        in_list | ranges::views::transform([](const impl::point_cache& in) -> double {
+          return boost::numeric_cast<std::double_t>(
+              doodle::chrono::floor<doodle::chrono::seconds>(in.time_point_.get_sys_time()).time_since_epoch().count()
+          );
+        }) |
+        ranges::to_vector;
 
     time_list_y = in_list | ranges::views::enumerate |
                   ranges::views::transform([](const auto& in) -> double { return in.first; }) | ranges::to_vector;
@@ -230,7 +247,7 @@ class time_sequencer_widget::impl {
         time_list_y[index_view_end] + 1};
     return l_r;
   }
-  ImPlotRect get_view2_rect() {
+  [[nodiscard]] ImPlotRect get_view2_rect() const {
     auto l_tmp = work_time_plots;
     if (0 <= index_begin_ && index_begin_ < index_view_end && index_view_end < l_tmp.size()) {
       auto l_list = l_tmp | ranges::views::slice(index_begin_, index_view_end);
@@ -279,20 +296,6 @@ time_sequencer_widget::time_sequencer_widget() : p_i(std::make_unique<impl>()) {
   ImPlot::GetStyle().UseLocalTime   = true;
   ImPlot::GetStyle().Use24HourClock = true;
 
-  p_i->l_select_conn =
-      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_vector) {
-        p_i->time_list =
-            in_vector |
-            ranges::views::filter([](const entt::handle& in) -> bool { return in.any_of<time_point_wrap>(); }) |
-            ranges::views::transform([](const entt::handle& in) -> impl::point_cache {
-              return impl::point_cache{in, in.get<time_point_wrap>()};
-            }) |
-            ranges::to_vector;
-        p_i->time_list |= ranges::actions::sort;
-        p_i->rules_ = g_reg()->ctx().at<user::current_user>().get_handle().get<business::rules>();
-        p_i->work_clock_.set_rules(p_i->rules_);
-        p_i->refresh_work_clock_();
-      });
   p_i->edit_chick.connect([this](const std::tuple<std::int32_t, std::double_t>& in) {
     DOODLE_LOG_INFO(
         "开始设置时间点 {} 增量 {}", std::get<0>(in),
@@ -310,17 +313,41 @@ void time_sequencer_widget::render() {
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
   if (p_i->time_list.size() < 3) return;
 
+  ImGui::PushItemWidth(100);
+  if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
+    auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
+    p_i->combox_month.time_data             = time_point_wrap{l_y, p_i->combox_month(), l_d, l_h, l_mim, l_s};
+  }
+  ImGui::SameLine();
+  dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
+    gen_user();
+    for (auto&& l_u : p_i->combox_user_id.user_list) {
+      if (dear::Selectable(l_u.first.c_str())) {
+        p_i->combox_user_id()            = l_u.first;
+        p_i->combox_user_id.current_user = l_u.second;
+      }
+    }
+  };
+  ImGui::SameLine();
+  if (ImGui::Button("过滤")) fliter_select();
+
   if (ImGui::Button("提交更新")) p_i->save();
+
+  ImGui::PopItemWidth();
 
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
     ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_::ImPlotScale_Time);
-    double t_min = doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.front().time_point_.get_sys_time())
-                       .time_since_epoch()
-                       .count();  // 01/01/2021 @ 12:00:00am (UTC)
-    double t_max = doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.back().time_point_.get_sys_time())
-                       .time_since_epoch()
-                       .count();  // 01/01/2022 @ 12:00:00am (UTC)
+    const double t_min = boost::numeric_cast<std::double_t>(
+        doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.front().time_point_.get_sys_time())
+            .time_since_epoch()
+            .count()
+    );  // 01/01/2021 @ 12:00:00am (UTC)
+    const double t_max = boost::numeric_cast<std::double_t>(
+        doodle::chrono::floor<doodle::chrono::seconds>(p_i->time_list.back().time_point_.get_sys_time())
+            .time_since_epoch()
+            .count()
+    );  // 01/01/2022 @ 12:00:00am (UTC)
     ImPlot::SetupAxisLimits(ImAxis_X1, t_min, t_max);
     ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
     if (p_i->view2_.set_other_view) {
@@ -396,4 +423,76 @@ void time_sequencer_widget::render() {
   if (ImGui::Button("平均时间")) p_i->average_time();
 }
 const std::string& time_sequencer_widget::title() const { return p_i->title_name_; }
+
+void time_sequencer_widget::fliter_select() {
+  auto l_view  = g_reg()->view<database, assets_file, time_point_wrap>();
+
+  auto l_begin = p_i->combox_month.time_data.current_month_start();
+  auto l_end   = p_i->combox_month.time_data.current_month_end();
+  DOODLE_LOG_INFO("开始日期 {} 结束日期 {}", l_begin, l_end);
+
+  auto l_list  = l_view | ranges::view::transform([](const entt::entity& in_tuple) -> entt::handle {
+                  return make_handle(in_tuple);
+                });
+  auto l_list2 = l_list | ranges::view::filter([&](const entt::handle& in_handle) -> bool {
+                   auto&& l_t = in_handle.get<time_point_wrap>();
+                   return l_t <= l_end && l_t >= l_begin;
+                 }) |
+                 ranges::view::filter([&](const entt::handle& in_handle) -> bool {
+                   auto l_user = p_i->combox_user_id.current_user;
+                   return in_handle.get<assets_file>().user_attr() == l_user;
+                 });
+  p_i->time_list = l_list2 | ranges::view::transform([](const entt::handle& in_handle) -> impl::point_cache {
+                     return impl::point_cache{in_handle, in_handle.get<time_point_wrap>()};
+                   }) |
+                   ranges::to_vector;
+  auto l_user = p_i->combox_user_id.current_user;
+  if (!l_user.all_of<dingding::user>()) {
+    auto l_msg = std::make_shared<show_message>();
+    l_msg->set_message(fmt::format("未找到人员 {} 的电话号码", l_user.get<user>().get_name()));
+    make_handle().emplace<gui_windows>() = l_msg;
+  }
+
+  if (!l_user.all_of<business::work_clock>()) {
+    if (!p_i->attendance_ptr) {
+      p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+    }
+
+    /// 显示一下进度条
+    auto& l_p = g_reg()->ctx().emplace<process_message>();
+    l_p.set_name("开始获取dingding数据");
+    l_p.set_state(l_p.run);
+
+    p_i->attendance_ptr->async_get_work_clock(
+        l_user, l_begin, l_end,
+        [=](const boost::system::error_code& in_code, const business::work_clock& in_clock) {
+          auto& l_p = g_reg()->ctx().emplace<process_message>();
+          l_p.message(fmt::format("完成用户 {} 时间获取", l_user.get<user>().get_name()));
+          l_p.progress_step(1);
+          if (in_code) {
+            l_p.set_state(l_p.fail);
+            auto l_msg = std::make_shared<show_message>();
+            l_msg->set_message(fmt::format("{}", in_code.what()));
+            make_handle().emplace<gui_windows>() = l_msg;
+            return;
+          }
+          l_user.get_or_emplace<business::work_clock>() = in_clock;
+          p_i->work_clock_                              = in_clock;
+          DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
+        }
+    );
+  }
+};
+
+void time_sequencer_widget::gen_user() {
+  p_i->combox_user_id.user_list.clear();
+
+  auto l_v = g_reg()->view<database, user>();
+  for (auto&& [e, l_d, l_u] : l_v.each()) {
+    if (l_u.get_name().empty()) continue;
+    auto l_h = make_handle(e);
+    p_i->combox_user_id.user_list.emplace(l_u.get_name(), make_handle(e));
+  }
+  p_i->combox_user_id.user_list.emplace("all", entt::handle{});
+}
 }  // namespace doodle::gui
