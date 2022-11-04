@@ -285,7 +285,6 @@ void to_json(nlohmann::json& nlohmann_json_j, const day_data& nlohmann_json_t) {
 
   nlohmann_json_j["workDate"] =
       chrono::floor<chrono::seconds>(nlohmann_json_t.workDate.get_local_time()).time_since_epoch().count();
-  ;
   nlohmann_json_j["recordId"] = nlohmann_json_t.recordId;
   nlohmann_json_j["planId"]   = nlohmann_json_t.planId;
   nlohmann_json_j["groupId"]  = nlohmann_json_t.groupId;
