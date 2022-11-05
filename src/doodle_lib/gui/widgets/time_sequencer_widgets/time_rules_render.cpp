@@ -17,9 +17,7 @@
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
 
-namespace doodle {
-namespace gui {
-namespace time_sequencer_widget_ns {
+namespace doodle::gui::time_sequencer_widget_ns {
 
 namespace {
 class work_gui_data {
@@ -416,6 +414,4 @@ bool time_rules_render::render() {
   return modify_guard_.current_frame_modify();
 }
 time_rules_render::~time_rules_render() = default;
-}  // namespace time_sequencer_widget_ns
-}  // namespace gui
-}  // namespace doodle
+}  // namespace doodle::gui::time_sequencer_widget_ns
