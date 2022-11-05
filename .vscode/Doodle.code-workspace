@@ -148,7 +148,8 @@
 					"sourcePrefix": "${workspaceFolder}",
 					"debugConfig": "Doodle_debug"
 				}
-			]
+			],
+			"C_Cpp.intelliSenseEngine": "disabled"
 	},
 	"launch": {
 		"version": "0.2.0",
