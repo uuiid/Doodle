@@ -67,7 +67,7 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
   /**
    * @brief 执行同步命令
    *
-   * @param InCommand 传入的命令 
+   * @param InCommand 传入的命令
    * @param Task task
    * @return ECommandResult::Type
    */
@@ -77,7 +77,7 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
   /**
    * @brief 发布命令
    *
-   * @param InCommand 传入的命令 
+   * @param InCommand 传入的命令
    * @return ECommandResult::Type
    */
   ECommandResult::Type IssueCommand(FDoodleSourceControlCommand &InCommand);
@@ -90,4 +90,7 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
   TMap<FString, TSharedRef<class FDoodleSourceControlState, ESPMode::ThreadSafe>> StateCache;
   /** For notifying when the source control states in the cache have changed */
   FSourceControlStateChanged OnSourceControlStateChanged;
+
+  /// @brief 命令队列
+  TArray<FDoodleSourceControlCommand *> CommandQueue;
 };

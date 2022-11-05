@@ -49,9 +49,16 @@ class FDoodleSourceControlCommand : public IQueuedWork {
  public:
   TSharedRef<class ISourceControlOperation, ESPMode::ThreadSafe> Operation;
 
-  TSharedRef<class IGitSourceControlWorker, ESPMode::ThreadSafe> Worker;
+  TSharedRef<class IDoodleSourceControlWorker, ESPMode::ThreadSafe> Worker;
   FSourceControlOperationComplete OperationCompleteDelegate;
 
   TArray<FString> Files;
+  /// @brief 自动删除命令
   bool bAutoDelete;
+
+  /// 已经在执行
+  bool bExecuteProcessed;
+
+  /// 执行成功?
+  bool bCommandSuccessful;
 };

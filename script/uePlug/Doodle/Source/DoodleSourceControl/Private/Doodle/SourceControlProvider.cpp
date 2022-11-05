@@ -3,6 +3,7 @@
 #include "SourceControlHelpers.h"
 #include "SourceControlOperations.h"
 #include "Logging/MessageLog.h"
+#include "ScopedSourceControlProgress.h"
 
 #include "Doodle/SDoodleSourceControlSettings.h"
 #include "Doodle/DoodleSourceControlState.h"
@@ -165,11 +166,65 @@ ECommandResult::Type FDoodleSourceControlProvider::Execute(
 ECommandResult::Type FDoodleSourceControlProvider::ExecuteSynchronousCommand(
     FDoodleSourceControlCommand &InCommand, const FText &Task
 ) {
-  // TODO: 同步执行命令
+  /// 同步执行命令
+
+  ECommandResult::Type Result = ECommandResult::Failed;
+
+  // 提供了字符串则显示进度
+  {
+    FScopedSourceControlProgress Progress(Task);
+
+    // 异步发出命令
+    IssueCommand(InCommand);
+
+    // 等待完成, 使同步
+    while (!InCommand.bExecuteProcessed) {
+      // 更新进度
+      Tick();
+
+      Progress.Tick();
+
+      // 停止一会
+      FPlatformProcess::Sleep(0.01f);
+    }
+
+    // 最后执行一次确保清理
+    Tick();
+
+    if (InCommand.bCommandSuccessful) {
+      Result = ECommandResult::Succeeded;
+    }
+  }
+
+  // 立即删除命令, 异步的话在 task 中删除
+  check(!InCommand.bAutoDelete);
+
+  // 确认删除的命令没有在队列中
+  if (CommandQueue.Contains(&InCommand)) {
+    CommandQueue.Remove(&InCommand);
+  }
+  delete &InCommand;
+
+  return Result;
 }
 
 ECommandResult::Type FDoodleSourceControlProvider::IssueCommand(FDoodleSourceControlCommand &InCommand) {
-  // TODO: 发布命令
+  // 发布命令
+
+  if (GThreadPool != nullptr) {
+    // 排队到全局线程池中开始运行
+    GThreadPool->AddQueuedWork(&InCommand);
+    CommandQueue.Add(&InCommand);
+    return ECommandResult::Succeeded;
+  } else {
+    FText Message(LOCTEXT("NoSCCThreads", "There are no threads available to process the source control command."));
+
+    FMessageLog("SourceControl").Error(Message);
+    InCommand.bCommandSuccessful = false;
+    InCommand.Operation->AddErrorMessge(Message);
+
+    return InCommand.ReturnResults();
+  }
 }
 
 TSharedPtr<IDoodleSourceControlWorker, ESPMode::ThreadSafe> FDoodleSourceControlProvider::CreateWorker(
@@ -206,6 +261,37 @@ bool FDoodleSourceControlProvider::UsesCheckout() const {
 
 void FDoodleSourceControlProvider::Tick() {
   ///  TODO: 这里要实现
+
+  bool bStatesUpdated = false;
+  for (int32 CommandIndex = 0; CommandIndex < CommandQueue.Num(); ++CommandIndex) {
+    FDoodleSourceControlCommand &Command = *CommandQueue[CommandIndex];
+    if (Command.bExecuteProcessed) {
+      // 移出队列
+      CommandQueue.RemoveAt(CommandIndex);
+
+      // 更新文件状态
+      bStatesUpdated |= Command.Worker->UpdateStates();
+
+      // dump any messages to output log
+      // OutputCommandMessages(Command);
+
+      Command.ReturnResults();
+
+      // commands that are left in the array during a tick need to be deleted
+      if (Command.bAutoDelete) {
+        // Only delete commands that are not running 'synchronously'
+        delete &Command;
+      }
+
+      // only do one command per tick loop, as we dont want concurrent modification
+      // of the command queue (which can happen in the completion delegate)
+      break;
+    }
+  }
+
+  if (bStatesUpdated) {
+    OnSourceControlStateChanged.Broadcast();
+  }
 }
 
 TArray<TSharedRef<class ISourceControlLabel>> FDoodleSourceControlProvider::GetLabels(
