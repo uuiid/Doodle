@@ -20,7 +20,9 @@
 #include <cstdint>
 #include <fmt/chrono.h>
 #include <magic_enum.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include <string>
+#include <utility>
 
 namespace doodle::dingding::attendance {
 
@@ -113,12 +115,20 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     time_point_wrap l_end{};
     auto l_begin = in_approve_for_open.begin_time;
+    std::vector<std::tuple<time_point_wrap, time_point_wrap>> sub_time{};
+
     if (in_approve_for_open.duration_unit == "HOUR") {
       /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
       auto l_t = std::stoi(in_approve_for_open.duration);
 
-      /// 加班的时候有的人是填的八点多到12点什么的, 需要转换为从9点开始
+      /// 加班(或者调休的时候)的时候有的人是填的八点多到12点什么的, 需要转换为从9点开始
       if (in_approve_for_open.biz_type == detail::approve_type::leave) l_begin = in_clock.next_point(l_begin);
+      /// 八小时加班(或者调休)必须分开为三个小时以及五个小时, 中间加上午休的一个小时
+      if (l_t > 3) {
+        l_t = l_t + 1;
+        sub_time.emplace_back(l_begin + chrono::hours{3}, l_begin + chrono::hours{4});
+      }
+
       l_end = l_begin + chrono::hours{l_t};
 
     } else if (in_approve_for_open.duration_unit == "DAY") {
@@ -153,6 +163,10 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::card:  /// 补卡, 不要管
         break;
     }
+
+    ranges::for_each(sub_time, [&](const std::tuple<time_point_wrap, time_point_wrap>& in_pair) {
+      in_clock -= in_pair;
+    });
   });
 }
 

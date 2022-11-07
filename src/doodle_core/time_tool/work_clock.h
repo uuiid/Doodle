@@ -91,6 +91,12 @@ class DOODLE_CORE_API work_clock {
    */
   time_type next_point(const time_point_wrap& in_point);
 
+  // /**
+  //  * @brief 这个绝对扣除是扣除的每天 12:00 到13:00 还有 6:00 到 6:30
+  //  *
+  //  */
+  // void absolute_deduction();
+
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
   work_clock& operator+=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time);
   work_clock& operator-=(const std::tuple<time_point_wrap, time_point_wrap>& in_time);
