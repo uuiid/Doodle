@@ -126,22 +126,27 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       /// 八小时加班(或者调休)必须分开为三个小时以及五个小时, 中间加上午休的一个小时
       if (l_t > 3) {
         l_t = l_t + 1;
+        /// 如果是超过半天, 那么还需要减去中间的午休
         sub_time.emplace_back(l_begin + chrono::hours{3}, l_begin + chrono::hours{4});
       }
 
       l_end = l_begin + chrono::hours{l_t};
 
     } else if (in_approve_for_open.duration_unit == "DAY") {
+      /// @warning 这个逻辑只使用于调休或者请假, 加班不行
       /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
-      /// 这里必须的, 不知道为什么,钉钉在半天的时候, 中午会返回13:30分, 要转换为 12点
+      /// 钉钉在半天的时候, 中午会返回13:30分, 要转换为 12点
       l_begin        = time_13_30_to_12_00(l_begin);
       auto l_t       = std::stod(in_approve_for_open.duration);
       auto l_t_zheng = std::round(l_t / 8);
       auto l_t_xiao  = (l_t / 8) - l_t_zheng;
       /// 这里将天数转换为小时
       auto l_t2      = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
+      /// 天数的话还要减去一些时间
 
-      l_end = l_end = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
+      l_end          = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
+      if (in_approve_for_open.biz_type == detail::approve_type::leave) {
+      }
     }
 
     switch (in_approve_for_open.biz_type) {
