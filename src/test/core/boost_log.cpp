@@ -1,5 +1,5 @@
 // #include <boost/log/core.hpp>
-#define BOOST_USE_WINAPI_VERSION BOOST_WINAPI_VERSION_WIN6
+#define BOOST_USE_WINAPI_VERSION BOOST_WINAPI_VERSION_WIN7
 #include <boost/log/trivial.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
