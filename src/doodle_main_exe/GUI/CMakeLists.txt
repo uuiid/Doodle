@@ -15,7 +15,6 @@ target_link_libraries(DoodleExe
         )
 target_compile_definitions(DoodleExe
         PUBLIC
-        #            _WIN32_WINNT=0x0A00
         #            WIN32_LEAN_AND_MEAN
         #        ISOLATION_AWARE_ENABLED
         # ENTT_API_IMPORT

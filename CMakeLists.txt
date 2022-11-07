@@ -51,6 +51,8 @@ find_package(Boost REQUIRED COMPONENTS
         filesystem
         coroutine
         unit_test_framework
+        log 
+        log_setup 
         )
 
 find_package(Catch2 CONFIG)
