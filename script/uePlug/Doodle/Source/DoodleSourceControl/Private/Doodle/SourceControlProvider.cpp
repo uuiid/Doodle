@@ -79,7 +79,7 @@ ECommandResult::Type FDoodleSourceControlProvider::GetState(
     OutState.Add(GetStateInternal(Files));
   }
 
-  return ECommandResult::Type::Failed;
+  return ECommandResult::Type::Succeeded;
 }
 TSharedRef<FDoodleSourceControlState, ESPMode::ThreadSafe> FDoodleSourceControlProvider::GetStateInternal(const FString &Filename) {
   TSharedRef<FDoodleSourceControlState, ESPMode::ThreadSafe> *State = StateCache.Find(Filename);
@@ -134,10 +134,10 @@ ECommandResult::Type FDoodleSourceControlProvider::Execute(
 
   TArray<FString> AbsoluteFiles                                      = SourceControlHelpers::AbsoluteFilenames(InFiles);
 
-  // Query to see if we allow this operation
+  // 查询是否有此操作
   TSharedPtr<IDoodleSourceControlWorker, ESPMode::ThreadSafe> Worker = CreateWorker(InOperation->GetName());
   if (!Worker.IsValid()) {
-    // this operation is unsupported by this source control provider
+    // 不支持的情况下, 直接返回失败
     FFormatNamedArguments Arguments;
     Arguments.Add(TEXT("OperationName"), FText::FromName(InOperation->GetName()));
     Arguments.Add(TEXT("ProviderName"), FText::FromName(GetName()));
@@ -230,7 +230,10 @@ ECommandResult::Type FDoodleSourceControlProvider::IssueCommand(FDoodleSourceCon
 TSharedPtr<IDoodleSourceControlWorker, ESPMode::ThreadSafe> FDoodleSourceControlProvider::CreateWorker(
     const FName &InOperationName
 ) const {
-  /// TODO: 这里我们需呀根据传入的操作名称进行创建
+  const FGetDoodleSourceControlWorker *Operation = WorkersMap.Find(InOperationName);
+  if (Operation != nullptr) {
+    return Operation->Execute();
+  }
 
   return nullptr;
 }
@@ -260,8 +263,6 @@ bool FDoodleSourceControlProvider::UsesCheckout() const {
 }
 
 void FDoodleSourceControlProvider::Tick() {
-  ///  TODO: 这里要实现
-
   bool bStatesUpdated = false;
   for (int32 CommandIndex = 0; CommandIndex < CommandQueue.Num(); ++CommandIndex) {
     FDoodleSourceControlCommand &Command = *CommandQueue[CommandIndex];
@@ -272,25 +273,36 @@ void FDoodleSourceControlProvider::Tick() {
       // 更新文件状态
       bStatesUpdated |= Command.Worker->UpdateStates();
 
-      // dump any messages to output log
-      // OutputCommandMessages(Command);
+      // 输出日志
+      OutputCommandMessages(Command);
 
       Command.ReturnResults();
 
-      // commands that are left in the array during a tick need to be deleted
+      // 删除命令
       if (Command.bAutoDelete) {
-        // Only delete commands that are not running 'synchronously'
+        // 仅删除未“同步”运行的命令
         delete &Command;
       }
 
-      // only do one command per tick loop, as we dont want concurrent modification
-      // of the command queue (which can happen in the completion delegate)
+      // 每个tick循环只执行一个命令，因为我们不希望并发修改命令队列（这可能发生在完成委托中）
       break;
     }
   }
 
   if (bStatesUpdated) {
     OnSourceControlStateChanged.Broadcast();
+  }
+}
+
+void FDoodleSourceControlProvider::OutputCommandMessages(const FDoodleSourceControlCommand &InCommand) const {
+  FMessageLog SourceControlLog("DooldeSourceControl");
+
+  for (int32 ErrorIndex = 0; ErrorIndex < InCommand.ErrorMessages.Num(); ++ErrorIndex) {
+    SourceControlLog.Error(FText::FromString(InCommand.ErrorMessages[ErrorIndex]));
+  }
+
+  for (int32 InfoIndex = 0; InfoIndex < InCommand.InfoMessages.Num(); ++InfoIndex) {
+    SourceControlLog.Info(FText::FromString(InCommand.InfoMessages[InfoIndex]));
   }
 }
 

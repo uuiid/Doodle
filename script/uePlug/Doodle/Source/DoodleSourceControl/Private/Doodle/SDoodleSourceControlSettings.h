@@ -22,6 +22,11 @@ class SDoodleSourceControlSettings : public SCompoundWidget {
   ~SDoodleSourceControlSettings();
 
  private:
+  void SetPathToRepositoryRoot(const FString& InPath);
+
   void AddNewFileRoot();
   SVerticalBox::FSlot* AddFileRootWidget_Expose;
+  /// 显示的同步路径
+  FString PathToRepositoryRoot;
+
 };

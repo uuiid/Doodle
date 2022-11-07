@@ -47,18 +47,26 @@ class FDoodleSourceControlCommand : public IQueuedWork {
   ECommandResult::Type ReturnResults();
 
  public:
+  /// @brief 源代码管理选项
   TSharedRef<class ISourceControlOperation, ESPMode::ThreadSafe> Operation;
-
+  /// @brief 工作线程
   TSharedRef<class IDoodleSourceControlWorker, ESPMode::ThreadSafe> Worker;
+  /// @brief 完成后委托
   FSourceControlOperationComplete OperationCompleteDelegate;
-
+  /// @brief 文件列表
   TArray<FString> Files;
   /// @brief 自动删除命令
   bool bAutoDelete;
-
-  /// 已经在执行
-  bool bExecuteProcessed;
-
-  /// 执行成功?
-  bool bCommandSuccessful;
+  /// 由源代码管理线程执行
+  volatile int32 bExecuteProcessed;
+  /// @brief 命令成功
+  int32 bCommandSuccessful;
+  /// 信息消息
+  TArray<FString> InfoMessages;
+  /// 错误消息
+  TArray<FString> ErrorMessages;
+  /// @brief 运行方式, 同步或者异步
+  EConcurrency::Type Concurrency;
+  /// @brief 主要的项目根路径
+  FString PathToRepositoryRoot;
 };

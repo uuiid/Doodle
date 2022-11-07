@@ -22,12 +22,15 @@
 #include "Widgets/Notifications/SNotificationList.h"
 #include "SourceControlOperations.h"
 
+#include "Doodle/SourceControlProvider.h"
+#include "DoodleSourceControl.h"
+
 #define LOCTEXT_NAMESPACE "SDoodleSourceControlSettings"
 void SDoodleSourceControlSettings::Construct(const FArguments& InArgs) {
   const FSlateFontInfo Font  = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
   const FText FileFilterType = LOCTEXT("Executables", "Executables");
 #if PLATFORM_WINDOWS
-  const FString FileFilterText = FString::Printf(TEXT("%s (*.exe)|*.exe"), *FileFilterType.ToString());
+  const FString FileFilterText = FString::Printf(TEXT("%s (*.uproject)|*.uproject"), *FileFilterType.ToString());
 #else
   const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
@@ -71,9 +74,14 @@ void SDoodleSourceControlSettings::Construct(const FArguments& InArgs) {
                     .BrowseButtonToolTip(LOCTEXT("BinaryPathLabel_Tooltip", "Path to Doodle DataBase binary"))
                     .BrowseDirectory(FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_OPEN))
                     .BrowseTitle(LOCTEXT("BinaryPathBrowseTitle", "File picker..."))
-                    // .FilePath_Lambda([]()->FString{return FString{};})
+                    .FilePath_Lambda([this]()->FString{
+                      return this->PathToRepositoryRoot;
+                    })
                     .FileTypeFilter(FileFilterText)
-                    .OnPathPicked_Lambda([this](const FString& PickedPath){})
+                    .OnPathPicked_Lambda([this](const FString& PickedPath){
+                      this->SetPathToRepositoryRoot(PickedPath);
+
+                    })
                 ]
             ]
         ]
@@ -138,6 +146,14 @@ void SDoodleSourceControlSettings::AddNewFileRoot() {
 
     // clang-format on
   }
+}
+
+void SDoodleSourceControlSettings::SetPathToRepositoryRoot(const FString& InPath) {
+  FString LP = FPaths::ConvertRelativePathToFull(FPaths::GetPath(InPath));
+  UE_LOG(LogTemp, Log, TEXT("获取路径 %s"), *(LP));
+  FDoodleSourceControlModule& LModle        = FModuleManager::LoadModuleChecked<FDoodleSourceControlModule>("DoodleSourceControl");
+  LModle.GetProvider().PathToRepositoryRoot = LP;
+  this->PathToRepositoryRoot                = LP;
 }
 
 SDoodleSourceControlSettings::~SDoodleSourceControlSettings() = default;

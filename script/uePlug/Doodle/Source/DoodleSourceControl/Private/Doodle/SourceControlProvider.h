@@ -9,11 +9,12 @@
 class FDoodleSourceControlState;
 class FDoodleSourceControlCommand;
 
-/**
- * @brief 这个类是源代码控制的接口
- *
- */
-class FDoodleSourceControlProvider : public ISourceControlProvider {
+DECLARE_DELEGATE_RetVal(FDoodleSourceControlWorkerRef, FGetDoodleSourceControlWorker)
+    /**
+     * @brief 这个类是源代码控制的接口
+     *
+     */
+    class FDoodleSourceControlProvider : public ISourceControlProvider {
  public:
   FDoodleSourceControlProvider();
   /* ISourceControlProvider implementation */
@@ -50,12 +51,21 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
   virtual TSharedRef<class SWidget> MakeSettingsWidget() const override;
 #endif
 
- private:
   /// @brief 获取缓存状态
   /// @param Filename
   /// @return 缓存状态共享指针
   TSharedRef<FDoodleSourceControlState, ESPMode::ThreadSafe> GetStateInternal(const FString &Filename);
 
+  /**
+   * @brief 获取同步的根目录
+   *
+   * @return const FString&
+   */
+  inline const FString &GetPathToRepositoryRoot() const {
+    return PathToRepositoryRoot;
+  }
+
+ private:
   /**
    * @brief 创建工作
    *
@@ -82,9 +92,19 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
    */
   ECommandResult::Type IssueCommand(FDoodleSourceControlCommand &InCommand);
 
+  /**
+   * @brief 打印log日志
+   *
+   * @param InCommand
+   */
+  void OutputCommandMessages(const FDoodleSourceControlCommand &InCommand) const;
+
  private:
+  friend class SDoodleSourceControlSettings;
+
   FName NameAttr;
   bool bAvailable;
+  friend class FDoodleSourceControlModule;
 
   /// @brief 缓存的文件状态
   TMap<FString, TSharedRef<class FDoodleSourceControlState, ESPMode::ThreadSafe>> StateCache;
@@ -93,4 +113,8 @@ class FDoodleSourceControlProvider : public ISourceControlProvider {
 
   /// @brief 命令队列
   TArray<FDoodleSourceControlCommand *> CommandQueue;
+
+  /** The currently registered source control operations */
+  TMap<FName, FGetDoodleSourceControlWorker> WorkersMap;
+  FString PathToRepositoryRoot;
 };
