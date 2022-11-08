@@ -28,13 +28,13 @@ class FDoodleSourceControlCommand : public IQueuedWork {
   bool DoWork();
 
   /**
-   * @brief 停止工作时调用
+   * @brief 主动停止工作时调用
    *
    */
   virtual void Abandon() override;
 
   /**
-   * @brief 清理工作, 如果运行不要进行清理
+   * @brief 在这里完成工作
    *
    */
   virtual void DoThreadedWork() override;
@@ -57,7 +57,7 @@ class FDoodleSourceControlCommand : public IQueuedWork {
   TArray<FString> Files;
   /// @brief 自动删除命令
   bool bAutoDelete;
-  /// 由源代码管理线程执行
+  /// 由源代码管理线程执行(已执行)
   volatile int32 bExecuteProcessed;
   /// @brief 命令成功
   int32 bCommandSuccessful;

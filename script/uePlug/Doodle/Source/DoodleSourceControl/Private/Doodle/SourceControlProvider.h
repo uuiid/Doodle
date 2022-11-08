@@ -10,11 +10,11 @@ class FDoodleSourceControlState;
 class FDoodleSourceControlCommand;
 
 DECLARE_DELEGATE_RetVal(FDoodleSourceControlWorkerRef, FGetDoodleSourceControlWorker)
-    /**
-     * @brief 这个类是源代码控制的接口
-     *
-     */
-    class FDoodleSourceControlProvider : public ISourceControlProvider {
+/**
+ * @brief 这个类是源代码控制的接口
+ *
+ */
+class FDoodleSourceControlProvider : public ISourceControlProvider {
  public:
   FDoodleSourceControlProvider();
   /* ISourceControlProvider implementation */

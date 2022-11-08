@@ -16,7 +16,8 @@ FDoodleSourceControlCommand::FDoodleSourceControlCommand(
 
 bool FDoodleSourceControlCommand::DoWork() {
   bCommandSuccessful = Worker->Execute(*this);
-  FPlatformAtomics::InterlockedExchange(&bCommandSuccessful, 1);
+  /// 这个要原子更新, 防止多线程
+  FPlatformAtomics::InterlockedExchange(&bExecuteProcessed, 1);
   return {};
 }
 

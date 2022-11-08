@@ -151,6 +151,12 @@ void SDoodleSourceControlSettings::AddNewFileRoot() {
 void SDoodleSourceControlSettings::SetPathToRepositoryRoot(const FString& InPath) {
   FString LP = FPaths::ConvertRelativePathToFull(FPaths::GetPath(InPath));
   UE_LOG(LogTemp, Log, TEXT("获取路径 %s"), *(LP));
+
+  /// 测试一些路径函数
+  // FString LTmp = LP / "tset" / "dddddd";
+  // LTmp.RemoveFromStart(LP);
+  // UE_LOG(LogTemp, Log, TEXT("FPaths::ConvertRelativePathToFull %s"), *LTmp);
+
   FDoodleSourceControlModule& LModle        = FModuleManager::LoadModuleChecked<FDoodleSourceControlModule>("DoodleSourceControl");
   LModle.GetProvider().PathToRepositoryRoot = LP;
   this->PathToRepositoryRoot                = LP;

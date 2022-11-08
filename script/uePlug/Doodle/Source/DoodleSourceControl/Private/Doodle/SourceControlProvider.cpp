@@ -12,7 +12,7 @@
 #define LOCTEXT_NAMESPACE "DoodleSourceControl"
 
 FDoodleSourceControlProvider::FDoodleSourceControlProvider() {
-  NameAttr = TEXT("doodle");
+  NameAttr = TEXT("Doodle");
 }
 
 void FDoodleSourceControlProvider::Init(bool bForceConnection) {
@@ -26,7 +26,7 @@ void FDoodleSourceControlProvider::Close() {
 
 FText FDoodleSourceControlProvider::GetStatusText() const {
   /// 直接返回一个字符串即可
-  return FText::FromString(TEXT("doodle file"));
+  return FText::FromString(TEXT("Doodle File"));
 }
 
 bool FDoodleSourceControlProvider::IsEnabled() const {
@@ -167,7 +167,6 @@ ECommandResult::Type FDoodleSourceControlProvider::ExecuteSynchronousCommand(
     FDoodleSourceControlCommand &InCommand, const FText &Task
 ) {
   /// 同步执行命令
-
   ECommandResult::Type Result = ECommandResult::Failed;
 
   // 提供了字符串则显示进度
