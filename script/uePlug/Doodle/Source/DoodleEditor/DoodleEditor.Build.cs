@@ -90,7 +90,8 @@ public class doodleEditor : ModuleRules
                 "Sequencer",//修改定序器
                 "MovieScene",//更新定序器场景
                 "CinematicCamera",// 相机模块
-                "MovieSceneTools"// /更新定序器场景
+                "MovieSceneTools",// /更新定序器场景
+                "DesktopWidgets",// 打开文件对话框小步件
             }
             );
 

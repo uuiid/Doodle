@@ -13,8 +13,9 @@
 
 #define LOCTEXT_NAMESPACE "FdoodleModule"
 
-void FdoodleCommands::RegisterCommands() {
-  UI_COMMAND(OpenPluginWindow, "doodle", "Bring up doodle window", EUserInterfaceActionType::Button, FInputGesture());
+void FDoodleCommands::RegisterCommands() {
+  UI_COMMAND(OpenPluginWindow, "Doodle", "Bring up doodle window", EUserInterfaceActionType::Button, FInputGesture());
+  UI_COMMAND(DoodleImportFbxWindow, "Doodle Import Fbx", "Open Import Fbx Windows", EUserInterfaceActionType::Button, FInputGesture());
 }
 
 #undef LOCTEXT_NAMESPACE

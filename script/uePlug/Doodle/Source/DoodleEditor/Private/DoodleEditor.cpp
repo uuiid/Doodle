@@ -8,6 +8,7 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "doodleCopyMaterial.h"
+#include "Doodle/DoodleImportFbxUI.h"
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
 // #include "DoodleCopySpline.h"
@@ -23,28 +24,41 @@ void FdoodleEditorModule::StartupModule() {
   FdoodleStyle::Initialize();
   FdoodleStyle::ReloadTextures();
 
-  FdoodleCommands::Register();
+  FDoodleCommands::Register();
 
   PluginCommands = MakeShareable(new FUICommandList);
-
+  /// @brief 注册命令
   PluginCommands->MapAction(
-      FdoodleCommands::Get().OpenPluginWindow,
+      FDoodleCommands::Get().OpenPluginWindow,
       FExecuteAction::CreateRaw(this, &FdoodleEditorModule::PluginButtonClicked),
       FCanExecuteAction()
   );
-
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleImportFbxWindow,
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name); }),
+      FCanExecuteAction()
+  );
+  /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
       FSimpleMulticastDelegate::FDelegate::CreateRaw(
           this, &FdoodleEditorModule::RegisterMenus
       )
   );
 
+  /// @brief 注册tab
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(
           doodleTabName,
           FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab)
       )
-      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "doodle"))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "Doodle"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  FGlobalTabmanager::Get()
+      ->RegisterNomadTabSpawner(
+          SDoodleImportFbxUI::Name,
+          FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction)
+      )
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "Doodle Import Fbx"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
@@ -63,20 +77,15 @@ void FdoodleEditorModule::ShutdownModule() {
 
   FdoodleStyle::Shutdown();
 
-  FdoodleCommands::Unregister();
+  FDoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
   // AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs
 ) {
-  FText WidgetText = FText::Format(
-      LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-      FText::FromString(TEXT("FdoodleEditorModule::OnSpawnPluginTab")),
-      FText::FromString(TEXT("doodle.cpp"))
-  );
-
   return SNew(SDockTab).TabRole(ETabRole::NomadTab)[
       // Put your tab content here!
       SNew(SBox)
@@ -103,7 +112,10 @@ void FdoodleEditorModule::RegisterMenus() {
     {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
       Section.AddMenuEntryWithCommandList(
-          FdoodleCommands::Get().OpenPluginWindow, PluginCommands
+          FDoodleCommands::Get().OpenPluginWindow, PluginCommands
+      );
+      Section.AddMenuEntryWithCommandList(
+          FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands
       );
     }
   }
@@ -116,7 +128,7 @@ void FdoodleEditorModule::RegisterMenus() {
       {
         FToolMenuEntry &Entry =
             Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-                FdoodleCommands::Get().OpenPluginWindow
+                FDoodleCommands::Get().OpenPluginWindow
             ));
         Entry.SetCommandList(PluginCommands);
       }
