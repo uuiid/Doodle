@@ -11,7 +11,6 @@ FDoodleSourceControlCommand::FDoodleSourceControlCommand(
   check(IsInGameThread());
   FDoodleSourceControlModule& LModle = FModuleManager::LoadModuleChecked<FDoodleSourceControlModule>("DoodleSourceControl");
   PathToRepositoryRoot               = LModle.GetProvider().GetPathToRepositoryRoot();
-  ;
 }
 
 bool FDoodleSourceControlCommand::DoWork() {

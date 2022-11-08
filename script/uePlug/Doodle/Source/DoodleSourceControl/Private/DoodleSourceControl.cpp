@@ -15,6 +15,10 @@ void FDoodleSourceControlModule::StartupModule() {
       "Connect",
       FGetDoodleSourceControlWorker::CreateStatic(&CreateWorker<FDoodleConnectWorker>)
   );
+  SourceControlProvider.WorkersMap.Emplace(
+      "UpdateStatus",
+      FGetDoodleSourceControlWorker::CreateStatic(&CreateWorker<FDoodleUpdateStatusWorker>)
+  );
 
   IModularFeatures::Get().RegisterModularFeature("SourceControl", &SourceControlProvider);
 }

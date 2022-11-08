@@ -19,6 +19,8 @@ enum class WorkingCopyState_Type {
   Conflicted,     // 冲突
   NotControlled,  // 不受控制
   Ignored,        // 忽略
+  NeedDown,       // 需要下载
+  
 };
 }
 /// @brief 表示文件状态

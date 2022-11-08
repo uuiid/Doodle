@@ -4,6 +4,9 @@
 #include "DoodleSourceControl.h"
 #include "Doodle/DoodleSourceControlState.h"
 
+// 文件信息平台包装
+#include "HAL/FileManager.h"
+
 #define LOCTEXT_NAMESPACE "DoodleSourceControl"
 
 namespace doodle_ue4 {
@@ -25,18 +28,41 @@ bool UpdateCachedStates(const TArray<FDoodleSourceControlState>& InStates) {
   return (NbStatesUpdated > 0);
 }
 
-bool CompareFiles(const FString& InLocal, const FString& InOrigin, FDoodleSourceControlState& OutState){
-    /**
-     *           |   本地     |    远端   |  本地时间戳  |     远端时间戳   |
-     *-----------------------------------------------------------------------------------------
-     * 文件状态  |   不存在   |   存在    |     无       |        有        |      需要下载
-     * 文件状态  |   存在     |   不存在  |     有       |        无        |      需要上传
-     *
-     * 文件状态  |   存在     |   存在    |     新       |        旧        |      需要上传
-     * 文件状态  |   存在     |   存在    |     旧       |        新        |      需要上传
-     *
-     */
+bool CompareFiles(const FString& InLocal, const FString& InOrigin, FDoodleSourceControlState& OutState) {
+  /**
+   *           |   本地     |    远端   |  本地时间戳  |     远端时间戳   |
+   *-----------------------------------------------------------------------------------------
+   * 文件状态  |   不存在   |   存在    |     无       |        有        |      需要下载(丢失)
+   * 文件状态  |   存在     |   不存在  |     有       |        无        |      需要上传(添加后)
+   *
+   * 文件状态  |   存在     |   存在    |     新       |        旧        |      需要上传(修改)
+   * 文件状态  |   存在     |   存在    |     旧       |        新        |      需要下载
+   *
+   */
+  bool LL_Exit = FPaths::FileExists(InLocal);
+  bool LO_Exit = FPaths::FileExists(InOrigin);
 
+  if (LL_Exit && !LO_Exit) {
+    OutState.WorkingCopyState = doodle_ue4::WorkingCopyState_Type::NeedDown;
+    return true;
+  } else if (!LL_Exit && LO_Exit) {
+    OutState.WorkingCopyState = doodle_ue4::WorkingCopyState_Type::Added;
+    return true;
+  }
+
+  if (LL_Exit && LO_Exit) {
+    FDateTime LL_Time = IFileManager::Get().GetTimeStamp(*InLocal);
+    FDateTime LO_Time = IFileManager::Get().GetTimeStamp(*InOrigin);
+
+    if (LL_Time == LO_Time) {
+      OutState.WorkingCopyState = doodle_ue4::WorkingCopyState_Type::Unchanged;
+    } else if (LL_Time < LO_Time) {
+      OutState.WorkingCopyState = doodle_ue4::WorkingCopyState_Type::NeedDown;
+    } else {
+      OutState.WorkingCopyState = doodle_ue4::WorkingCopyState_Type::Modified;
+    }
+  }
+  return true;
 };
 
 }  // namespace doodle_ue4
@@ -48,10 +74,11 @@ bool FDoodleConnectWorker::Execute(class FDoodleSourceControlCommand& InCommand)
   check(InCommand.Operation->GetName() == GetName());
 
   InCommand.bCommandSuccessful = !InCommand.PathToRepositoryRoot.IsEmpty() &&
-                                 FPaths::FileExists(InCommand.PathToRepositoryRoot) &&
-                                 FPaths::FileExists(InCommand.PathToRepositoryRoot / "Content");
+                                 IFileManager::Get().DirectoryExists(*InCommand.PathToRepositoryRoot) &&
+                                 IFileManager::Get().DirectoryExists(*(InCommand.PathToRepositoryRoot / "Content"));
+
   if (!InCommand.bCommandSuccessful) {
-    StaticCastSharedRef<FConnect>(InCommand.Operation)->SetErrorText(LOCTEXT("NotAGitRepository", "Failed to enable Git source control. You need to initialize the project as a Git repository first."));
+    StaticCastSharedRef<FConnect>(InCommand.Operation)->SetErrorText(LOCTEXT("NotUe4Project", "The content folder for the target item was not found"));
   }
   /// @brief 开始获取远程目录中的所有文件
   /// todo: 这里要获取远程的所有文件状态
