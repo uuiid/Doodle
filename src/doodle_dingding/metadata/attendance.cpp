@@ -160,7 +160,6 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
 
     switch (in_approve_for_open.biz_type) {
       case detail::approve_type::leave: {  ///  请假
-
         in_clock -= std::make_tuple(
             time_ounding(l_begin), time_ounding(l_end), in_approve_for_open.tag_name + in_approve_for_open.sub_type
         );
