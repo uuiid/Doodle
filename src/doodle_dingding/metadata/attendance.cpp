@@ -76,6 +76,12 @@ time_point_wrap time_13_30_to_12_00(const time_point_wrap& in) {
   return in;
 }
 
+bool is_am_time(const time_point_wrap& in) {
+  auto&& [l_y, l_m, l_d, l_h, l_mm, l_s] = in.compose();
+  auto l_m1 = boost::numeric_cast<std::uint16_t>(std::round(boost::numeric_cast<std::float_t>(l_mm) / 10) * 10);
+  return l_h < 12;
+}
+
 }  // namespace
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
@@ -138,13 +144,16 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       /// 钉钉在半天的时候, 中午会返回13:30分, 要转换为 12点
       l_begin        = time_13_30_to_12_00(l_begin);
       auto l_t       = std::stod(in_approve_for_open.duration);
-      auto l_t_zheng = std::round(l_t / 8);
-      auto l_t_xiao  = (l_t / 8) - l_t_zheng;
-      /// 这里将天数转换为小时
-      auto l_t2      = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
-      /// 天数的话还要减去一些时间
-
-      l_end          = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
+      auto l_t_zheng = std::floor(l_t / 8);
+      if (l_t_zheng == 0) {  /// 只有一天
+        l_end = in_clock.next_time(l_begin, chrono::hours{is_am_time(l_begin) ? 3 : 5});
+      } else {  /// 有好几天
+        auto l_t_xiao = (l_t / 8) - l_t_zheng;
+        /// 这里将天数转换为小时
+        auto l_t2     = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
+        /// 天数的话还要减去一些时间
+        l_end         = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
+      }
       if (in_approve_for_open.biz_type == detail::approve_type::leave) {
       }
     }
