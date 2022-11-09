@@ -9,6 +9,7 @@
 #include "Widgets/Text/STextBlock.h"
 #include "doodleCopyMaterial.h"
 #include "Doodle/DoodleImportFbxUI.h"
+#include "Doodle/ContentBrowserMenuExtension.h"
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
 // #include "DoodleCopySpline.h"
@@ -16,9 +17,14 @@
 // #include "IPlacementModeModule.h"
 // #include "AssetRegistry/IAssetRegistry.h"
 // #include "AssetRegistry/AssetRegistryModule.h"
-
+#include "ContentBrowserModule.h"  ///内容游览器
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
+
+namespace {
+void DoodleDebug(const TArray<FString> &InPaths) {
+}
+}  // namespace
 
 void FdoodleEditorModule::StartupModule() {
   FdoodleStyle::Initialize();
@@ -60,6 +66,21 @@ void FdoodleEditorModule::StartupModule() {
       )
       .SetDisplayName(LOCTEXT("FdoodleTabTitle", "Doodle Import Fbx"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
+
+  FContentBrowserModule &ContentBrowserModule                              = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+  TArray<FContentBrowserMenuExtender_SelectedAssets> &MenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
+  MenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this](const TArray<FAssetData> &Path) -> TSharedRef<FExtender> {
+    // 创建一个扩展并保存数据
+    Extension                          = MakeShareable(new FContentBrowserMenuExtension(Path));
+    // 创建一个扩展 创建包含委托的扩展程序，该委托将被调用以获取有关新上下文菜单项的信息
+    TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+    // 创建一个共享指针委托，该委托保留对对象“NewFolder”的弱引用。这是一个钩子名称，由扩展器用来标识将扩展路径上下文菜单的外部对象
+    MenuExtender->AddMenuExtension(
+        "GetAssetActions", EExtensionHook::After, TSharedPtr<FUICommandList>(),
+        FMenuExtensionDelegate::CreateSP(Extension.ToSharedRef(), &FContentBrowserMenuExtension::AddMenuEntry)
+    );
+    return MenuExtender.ToSharedRef();
+  }));
 
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
   //    GetTransientPackage(), "doodle_AssetData"));

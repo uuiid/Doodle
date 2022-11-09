@@ -7,6 +7,7 @@
 class FToolBarBuilder;
 class FMenuBuilder;
 class UContentBrowserAssetDataSource;
+class FContentBrowserMenuExtension;
 
 class FdoodleEditorModule : public IModuleInterface {
  public:
@@ -27,5 +28,6 @@ class FdoodleEditorModule : public IModuleInterface {
 
  private:
   TSharedPtr<class FUICommandList> PluginCommands;
+  TSharedPtr<FContentBrowserMenuExtension> Extension;
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
 };
