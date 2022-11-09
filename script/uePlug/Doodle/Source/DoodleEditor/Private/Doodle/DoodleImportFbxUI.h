@@ -31,4 +31,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
  private:
   TSharedPtr<class SListView<TSharedPtr<doodle_ue4::FFbxImport>>> ListImportFbx;
+
+  void SearchPath(const FString& in);
 };
