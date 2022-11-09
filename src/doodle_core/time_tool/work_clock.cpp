@@ -44,7 +44,7 @@ work_clock::time_type work_clock::next_time(const time_type& in_begin, const dur
   duration_type l_len{};
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::upper(l_i) - boost::icl::lower(l_i);
-    if ((l_en_t + l_len) > in_du) {
+    if ((l_en_t + l_len) >= in_du) {
       return boost::icl::first(l_i) + doodle::chrono::ceil<doodle::chrono::seconds>(in_du - l_len);
     } else {
       l_len += l_en_t;
@@ -154,8 +154,8 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
     auto l_d = boost::icl::upper(i.first) - boost::icl::lower(i.first);
 
     l_r += fmt::format(
-        R"("{:%Y-%m-%d} 到 {:%Y-%m-%d}  信息 {}")", ++boost::icl::lower(i.first), boost::icl::upper(i.first),
-        fmt::join(i.second, " ")
+        R"("{:L%Y-%m-%d %H:%M} 到 {:L%Y-%m-%d %H:%M}  信息 {}")", ++boost::icl::lower(i.first),
+        boost::icl::upper(i.first), fmt::join(i.second, " ")
     );
   }
 

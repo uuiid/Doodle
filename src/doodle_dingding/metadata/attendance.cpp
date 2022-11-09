@@ -5,6 +5,7 @@
 #include "attendance.h"
 
 #include "doodle_core/core/chrono_.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/logger/logger.h>
@@ -22,6 +23,7 @@
 #include <magic_enum.hpp>
 #include <range/v3/algorithm/for_each.hpp>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace doodle::dingding::attendance {
@@ -82,6 +84,13 @@ bool is_am_time(const time_point_wrap& in) {
   return l_h < 12;
 }
 
+void sub_day_rest_time(const time_point_wrap& in_day, doodle::business::work_clock& in_clock) {
+  auto&& [l_y, l_m, l_d, l_h, l_mm, l_s] = in_day.compose();
+
+  in_clock -= std::make_tuple(time_point_wrap{l_y, l_m, l_d, 12}, time_point_wrap{l_y, l_m, l_d, 13});
+  in_clock -= std::make_tuple(time_point_wrap{l_y, l_m, l_d, 18}, time_point_wrap{l_y, l_m, l_d, 18, 30});
+}
+
 }  // namespace
 
 void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
@@ -121,53 +130,69 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
   ranges::for_each(approve_list, [&](const approve_for_open& in_approve_for_open) {
     time_point_wrap l_end{};
     auto l_begin = in_approve_for_open.begin_time;
-    std::vector<std::tuple<time_point_wrap, time_point_wrap>> sub_time{};
 
-    if (in_approve_for_open.duration_unit == "HOUR") {
+    if (in_approve_for_open.duration_unit == "HOUR") {  /// 以小时计算认为只有不到一天
       /// 如果为时间段, 我们使用特殊的方法添加时间, 主要是持续时间和信息时间不一致
       auto l_t = std::stoi(in_approve_for_open.duration);
-
-      /// 加班(或者调休的时候)的时候有的人是填的八点多到12点什么的, 需要转换为从9点开始
-      if (in_approve_for_open.biz_type == detail::approve_type::leave) l_begin = in_clock.next_point(l_begin);
-      /// 八小时加班(或者调休)从上午开始必须分开为三个小时以及五个小时, 中间加上午休的一个小时
-      if (l_t > 3 && is_am_time(l_begin)) {
-        l_t = l_t + 1;
-        /// 如果是超过半天, 那么还需要减去中间的午休
-        sub_time.emplace_back(l_begin + chrono::hours{3}, l_begin + chrono::hours{4});
+      if (l_t > 8) {
+        throw_exception(doodle_error{"错误的时间段长度"});
+      }
+      switch (in_approve_for_open.biz_type) {
+        case detail::approve_type::leave: {  /// 请假
+          /// 调休的时候的时候有的人是填的八点多到12点什么的, 需要转换为从9点开始
+          l_begin = in_clock.next_point(l_begin);
+          /// 八小时加班(或者调休)从上午开始必须分开为三个小时以及五个小时, 中间加上午休的一个小时
+          if (is_am_time(l_begin) && l_t == 4) {  /// 开始时间是上午 4个小时需要回退到3个小时
+            l_t = 3;
+          }
+          l_end = in_clock.next_time(l_begin, chrono::hours{l_t});
+        }
+        case detail::approve_type::work_overtime: {  /// 加班的时间还是可以信任的
+          auto l_tmp_work = in_clock;                /// 创建临时时钟
+          l_tmp_work += std::make_tuple(
+              in_approve_for_open.begin_time, in_approve_for_open.end_time + chrono::hours{12}
+          );  /// 将所有的加班时间全部添加到时钟中去
+          sub_day_rest_time(in_approve_for_open.begin_time, l_tmp_work);  /// 添加当天的休息时间
+          // auto l_t =
+          //     chrono::floor<chrono::hours>(l_tmp_work(in_approve_for_open.begin_time, in_approve_for_open.end_time)
+          //     );                                       /// 计算并销去多余时间
+          l_end = l_tmp_work.next_time(l_begin, chrono::hours{l_t});  /// 重新计算开始时间
+        }
+        default:
+          break;
       }
 
-      l_end = l_begin + chrono::hours{l_t};
-
-    } else if (in_approve_for_open.duration_unit == "DAY") {
+    } else if (in_approve_for_open.duration_unit == "DAY") {  /// 这里我们认为只有小数 0.5或0
       /// @warning 这个逻辑只使用于调休或者请假, 加班不行
       /// @warning 这里钉钉不知道为什么很鸡巴操蛋, 单位是 DAY 时, 也他妈返回的是 4.0 靠 然后半天还是按照 3 小时算
       /// 钉钉在半天的时候, 中午会返回13:30分, 要转换为 12点
 
       switch (in_approve_for_open.biz_type) {
         case detail::approve_type::leave: {
-          // 这里又变了, 变成了按照小时计算
-          l_end = in_clock.next_time(l_begin, chrono::hours{std::stoi(in_approve_for_open.duration)});
+          l_begin        = time_13_30_to_12_00(l_begin);  /// 是中午的话直接返回 12点
+          auto l_t       = std::stod(in_approve_for_open.duration);
+          auto l_t_zheng = std::floor(l_t / 8);
+          auto l_t_xiao  = (l_t / 8) - l_t_zheng;
+          if (l_t_xiao != 0 && l_t_xiao != 0.5) {
+            throw_exception(doodle_error{"错误的时间段长度"});
+          }
+          if (l_t_zheng == 0) {  /// 只有一天(小数只可能是0.5)
+            l_end = in_clock.next_time(l_begin, chrono::hours{is_am_time(l_begin) ? 3 : 5});
+          } else {  /// 有好几天
+            auto l_hours_du = boost::numeric_cast<std::chrono::hours::rep>(l_t);
+            l_end           = in_clock.next_time(l_begin, chrono::hours{l_hours_du});
+          }
+
           break;
         }
         case detail::approve_type::work_overtime: {
-          l_begin        = time_13_30_to_12_00(l_begin);
-          auto l_t       = std::stod(in_approve_for_open.duration);
-          auto l_t_zheng = std::floor(l_t / 8);
-          if (l_t_zheng == 0) {  /// 只有一天
-            l_end = in_clock.next_time(l_begin, chrono::hours{is_am_time(l_begin) ? 3 : 5});
-          } else {  /// 有好几天
-            auto l_t_xiao = (l_t / 8) - l_t_zheng;
-            /// 这里将天数转换为小时
-            auto l_t2     = l_t_zheng * 24 + (l_t_xiao == 0.5 ? 12 : (l_t_xiao * 24));
-            /// 天数的话还要减去一些时间
-            l_end         = l_begin + chrono::ceil<chrono::hours>(chrono::hours_double{l_t2});
-          }
-          if (in_approve_for_open.biz_type == detail::approve_type::leave) {
-          }
+          throw_exception(doodle_error{"加班超过一天, 无法计算"});
         }
+        default:
+          break;
       }
     }
-
+    DOODLE_LOG_INFO("审批单时间 {} {} ", l_begin, l_end);
     switch (in_approve_for_open.biz_type) {
       case detail::approve_type::leave: {  ///  请假
         in_clock -= std::make_tuple(
@@ -186,10 +211,7 @@ void attendance::add_clock_data(doodle::business::work_clock& in_clock) const {
       case detail::approve_type::card:  /// 补卡, 不要管
         break;
     }
-
-    ranges::for_each(sub_time, [&](const std::tuple<time_point_wrap, time_point_wrap>& in_pair) {
-      in_clock -= in_pair;
-    });
+    sub_day_rest_time(l_begin, in_clock);
   });
 }
 
