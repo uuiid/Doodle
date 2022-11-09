@@ -18,6 +18,7 @@
 
 #include "metadata/time_point_wrap.h"
 #include "time_tool/work_clock.h"
+#include <chrono>
 #include <date/tz.h>
 #include <range/v3/range.hpp>
 
@@ -150,8 +151,11 @@ std::optional<std::string> work_clock::get_time_info(const time_type& in_min, co
 
   std::string l_r{};
   for (auto&& i : l_item) {
+    auto l_d = boost::icl::upper(i.first) - boost::icl::lower(i.first);
+
     l_r += fmt::format(
-        R"("从 {} 到 {} 信息 {}")", ++boost::icl::lower(i.first), boost::icl::upper(i.first), fmt::join(i.second, " ")
+        R"("{:%Y-%m-%d} 到 {:%Y-%m-%d}  信息 {}")", ++boost::icl::lower(i.first), boost::icl::upper(i.first),
+        fmt::join(i.second, " ")
     );
   }
 
