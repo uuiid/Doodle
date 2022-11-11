@@ -16,15 +16,15 @@
 namespace doodle::detail {
 class this_rpc_exe::impl {
  public:
-  FSys::path this_exe_path;
+  FSys::path this_exe_path{};
 
-  boost::process::child this_exe_proces;
+  boost::process::child this_exe_proces{};
 
   boost::process::async_pipe out_attr{g_io_context()};
   boost::process::async_pipe err_attr{g_io_context()};
-  std::string out_io_out_attr;
-  std::string out_io_err_attr;
-  ::doodle::process_message* msg;
+  std::string out_io_out_attr{};
+  std::string out_io_err_attr{};
+  ::doodle::process_message* msg{};
   //  std::shared_ptr<json_rpc_client> rpc_child;
 };
 

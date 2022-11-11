@@ -4,11 +4,11 @@
 
 #include "maya_create_movie.h"
 
+#include "doodle_core/logger/logger.h"
+
 #include <doodle_app/app/this_rpc_exe.h>
 
-namespace doodle {
-namespace maya_plug {
-namespace detail {
+namespace doodle::maya_plug::detail {
 
 class maya_create_movie::impl {
  public:
@@ -20,6 +20,7 @@ maya_create_movie::maya_create_movie() : ptr(std::make_unique<impl>()) {}
 void maya_create_movie::create_move(
     const FSys::path& in_out_path, process_message& in_msg, const std::vector<image_attr>& in_vector
 ) {
+  DOODLE_LOG_INFO("开始doodle 进程合成视频");
   ptr->doodle_exe_attr.create_move(in_out_path, in_vector, in_msg);
   ptr->doodle_exe_attr.wait();
 }
@@ -44,6 +45,4 @@ FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
   return l_out;
 }
 maya_create_movie::~maya_create_movie() = default;
-}  // namespace detail
-}  // namespace maya_plug
-}  // namespace doodle
+}  // namespace doodle::maya_plug::detail

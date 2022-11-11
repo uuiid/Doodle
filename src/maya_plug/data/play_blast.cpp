@@ -4,11 +4,13 @@
 
 #include "play_blast.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/image_to_movie.h>
 
+#include "main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 
 #include <fmt/chrono.h>
@@ -216,6 +218,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_msg.emplace<shot>(p_shot);
 
     if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+      DOODLE_MAYA_CHICK(k_s);
       DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
       bool l_ok{};
       g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [l_r = &l_ok, this, k_f]() {
@@ -228,6 +231,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       }
 
     } else {
+      DOODLE_MAYA_CHICK(k_s);
       g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [this, k_f]() {
         DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
         FSys::remove_all(k_f);
