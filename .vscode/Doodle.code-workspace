@@ -48,7 +48,6 @@
 			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
 		"editor.tabSize": 2,
-		"editor.fontFamily": " 'Fira Code',Consolas, monospace",
 		"editor.fontLigatures": true,
 		"files.exclude": {
 			".idea": true,
@@ -123,7 +122,8 @@
 					"debugConfig": "Doodle_debug"
 				}
 			],
-			"C_Cpp.intelliSenseEngine": "disabled"
+			"C_Cpp.intelliSenseEngine": "disabled",
+			"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
 	},
 	"launch": {
 		"version": "0.2.0",

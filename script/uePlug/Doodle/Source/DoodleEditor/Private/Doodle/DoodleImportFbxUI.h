@@ -10,9 +10,19 @@ struct FFbxImport {
   FFbxImport(){};
   FFbxImport(const FString& InString) : ImportFbxPath(InString), SkinObj() {}
   FString ImportFbxPath;
+  TSet<FString> FbxNodeNames;
   USkeleton* SkinObj;
+  FString ImportPathDir;
 };
 
+struct FUSkeletonData {
+ public:
+  FUSkeletonData(){};
+  FUSkeletonData(const TSet<FString>& InString, USkeleton* InSkin)
+      : BoneNames(InString), SkinObj(InSkin) {}
+  TSet<FString> BoneNames;
+  USkeleton* SkinObj;
+};
 }  // namespace doodle_ue4
 
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
@@ -34,11 +44,17 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   TSharedPtr<class SListView<TSharedPtr<doodle_ue4::FFbxImport>>> ListImportFbx;
   TArray<TSharedPtr<doodle_ue4::FFbxImport>> ListImportFbxData;
 
-  TArray<USkeleton*> AllSkinObjs;
+  TArray<doodle_ue4::FUSkeletonData> AllSkinObjs;
   TMap<FString, USkeleton*> AllSkinObjs_Map;
 
   void SearchPath(const FString& in);
 
   void GetAllSkinObjs();
   void MatchFbx();
+  void ImportFbx();
+  FString GetImportPath(const FString& In_Path);
+  void GenPathPrefix(const FString& In_Path_Prefix);
+
+  /// 导入路径的前缀
+  FString Path_Prefix;
 };
