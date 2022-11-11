@@ -31,9 +31,7 @@ class this_rpc_exe::impl {
   //  std::shared_ptr<json_rpc_client> rpc_child;
 };
 
-this_rpc_exe::this_rpc_exe() : ptr(std::make_unique<impl>()) {
-  ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
-}
+this_rpc_exe::this_rpc_exe() : ptr(std::make_unique<impl>()) {}
 void this_rpc_exe::stop_exit() {
   //  if (ptr->this_exe_proces.valid() && ptr->rpc_child) {
   //    ptr->rpc_child->stop_app();
@@ -43,7 +41,8 @@ void this_rpc_exe::create_move(
     const FSys::path& in_out_path, const std::vector<doodle::movie::image_attr>& in_move,
     ::doodle::process_message& in_msg
 ) {
-  ptr->msg = &in_msg;
+  ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
+  ptr->msg           = &in_msg;
   nlohmann::json l_json{};
   auto l_h             = make_handle();
 
