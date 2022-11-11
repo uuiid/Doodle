@@ -240,49 +240,37 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
   });
   LFilter.ClassNames.Add(FName{USkeletalMesh::StaticClass()->GetName()});
 
-  FString DeBug_Str{};
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [&, this](const FAssetData& InAss) -> bool {
     USkeletalMesh* L_SK = Cast<USkeletalMesh>(InAss.GetAsset());
     if (L_SK && L_SK->GetSkeleton()) {
       FString L_BaseName = FPaths::GetBaseFilename(L_SK->GetAssetImportData()->GetFirstFilename());
       this->AllSkinObjs_Map.Add(MakeTuple(L_BaseName, L_SK->GetSkeleton()));
-      DeBug_Str += L_SK->GetAssetImportData()->GetFirstFilename();
-      DeBug_Str += " ";
-      DeBug_Str += L_BaseName;
-      DeBug_Str += "\n";
     }
     return true;
   });
-  Debug_To_File(DeBug_Str);
 }
 
 void SDoodleImportFbxUI::MatchFbx() {
   UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
   FbxImporter->ClearAllCaches();
 
+  TArray<TSharedPtr<doodle_ue4::FFbxImport>> RemoveList;
+
   for (auto&& L_Fbx_Path : ListImportFbxData) {
     grop_SDoodleImportFbxUI L_grop_SDoodleImportFbxUI{FbxImporter};
     FbxImporter->ImportFromFile(L_Fbx_Path->ImportFbxPath, FPaths::GetExtension(L_Fbx_Path->ImportFbxPath));
 
-    FString DeBug_Str{};
     TArray<fbxsdk::FbxNode*> L_Fbx_Node_list{};
     FindSkeletonNode(FbxImporter->Scene->GetRootNode(), L_Fbx_Node_list);
-    for (auto&& L_1 : L_Fbx_Node_list) {
-      L_1->GetNameSpaceOnly();
-      FString L_Name = FSkeletalMeshImportData::FixupBoneName(MakeName(L_1->GetName()));
-      DeBug_Str += "\n";
-      DeBug_Str += L_Name;
-      DeBug_Str += " ";
-      FString L_NameSpace = GetNamepace(L_1->GetName());
-      DeBug_Str += L_NameSpace;
-      DeBug_Str += " ";
-      DeBug_Str += L_1->GetName();
-      if (this->AllSkinObjs_Map.Contains(L_NameSpace)) {
-        L_Fbx_Path->SkinObj = this->AllSkinObjs_Map[L_NameSpace];
-        break;
-      }
+    FString L_NameSpace{};
+    fbxsdk::FbxNode** L_Item = L_Fbx_Node_list.FindByPredicate([L_Ptr_Namespace = &L_NameSpace](const fbxsdk::FbxNode* InNode) -> bool {
+      *L_Ptr_Namespace = GetNamepace(InNode->GetName());
+      return !L_Ptr_Namespace->IsEmpty();
+    });
+
+    if (L_Item && AllSkinObjs_Map.Contains(L_NameSpace)) {
+      L_Fbx_Path->SkinObj = this->AllSkinObjs_Map[L_NameSpace];
     }
-    Debug_To_File(DeBug_Str);
   }
 }
 
