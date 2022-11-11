@@ -7,6 +7,8 @@
 namespace doodle_ue4 {
 struct FFbxImport {
  public:
+  FFbxImport(){};
+  FFbxImport(const FString& InString) : ImportFbxPath(InString), SkinObj() {}
   FString ImportFbxPath;
   USkeleton* SkinObj;
 };
@@ -21,16 +23,22 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   // 这里是内容创建函数
   void Construct(const FArguments& Arg);
 
-  // 知道了原因, 感觉用不到(垃圾回收)
+  // 垃圾回收
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
 
   const static FName Name;
 
-  static void CreateDoodleUI(FMenuBuilder& MenuBuilder);
   static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
  private:
   TSharedPtr<class SListView<TSharedPtr<doodle_ue4::FFbxImport>>> ListImportFbx;
+  TArray<TSharedPtr<doodle_ue4::FFbxImport>> ListImportFbxData;
+
+  TArray<USkeleton*> AllSkinObjs;
+  TMap<FString, USkeleton*> AllSkinObjs_Map;
 
   void SearchPath(const FString& in);
+
+  void GetAllSkinObjs();
+  void MatchFbx();
 };
