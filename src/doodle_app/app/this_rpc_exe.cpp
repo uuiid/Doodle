@@ -13,6 +13,9 @@
 
 #include <boost/asio.hpp>
 #include <boost/process.hpp>
+
+#include "app/this_rpc_exe.h"
+
 namespace doodle::detail {
 class this_rpc_exe::impl {
  public:
@@ -47,6 +50,7 @@ void this_rpc_exe::create_move(
   l_json["out_path"]   = in_out_path;
   l_json["image_attr"] = in_move;
   auto l_tmp           = FSys::write_tmp_file("create_move", l_json.dump(), ".json");
+  DOODLE_LOG_INFO("开始 doodle 进程 {} ", ptr->this_exe_path);
   ptr->this_exe_proces = boost::process::child{
       boost::process::exe  = ptr->this_exe_path,
       boost::process::args = {"--json_rpc"s, fmt::format(R"(--create_move="{}")", l_tmp)},
