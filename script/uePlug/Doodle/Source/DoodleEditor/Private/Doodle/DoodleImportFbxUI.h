@@ -9,9 +9,13 @@ struct FFbxImport {
  public:
   FFbxImport(){};
   FFbxImport(const FString& InString) : ImportFbxPath(InString), SkinObj() {}
+  /// @brief 导入的文件路径
   FString ImportFbxPath;
+  /// @brief fbx文件中包含的节点
   TSet<FString> FbxNodeNames;
+  /// @brief 寻找到的骨骼
   USkeleton* SkinObj;
+  /// @brief fbx 导入后的路径
   FString ImportPathDir;
 };
 
@@ -22,6 +26,7 @@ struct FUSkeletonData {
       : BoneNames(InString), SkinObj(InSkin) {}
   TSet<FString> BoneNames;
   USkeleton* SkinObj;
+  FString SkinTag;
 };
 }  // namespace doodle_ue4
 
@@ -45,8 +50,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   TArray<TSharedPtr<doodle_ue4::FFbxImport>> ListImportFbxData;
 
   TArray<doodle_ue4::FUSkeletonData> AllSkinObjs;
-  TMap<FString, USkeleton*> AllSkinObjs_Map;
-
   void SearchPath(const FString& in);
 
   void GetAllSkinObjs();
@@ -54,6 +57,13 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   void ImportFbx();
   FString GetImportPath(const FString& In_Path);
   void GenPathPrefix(const FString& In_Path_Prefix);
+
+  /**
+   * @brief 提取所有的标签
+   * 暂时是 使用 SK_(\w+)_Skeleton 捕获
+   *
+   */
+  void SetAllSkinTag();
 
   /// 导入路径的前缀
   FString Path_Prefix;

@@ -38,7 +38,14 @@
 #include "Factories/FbxTextureImportData.h"
 #include "Factories/ImportSettings.h"
 #include "Factories/MaterialImportHelpers.h"
-
+/// 进度框
+#include "Misc/ScopedSlowTask.h"
+/// 属性按钮
+#include "PropertyCustomizationHelpers.h"
+/// 内容游览器模块
+#include "ContentBrowserModule.h"
+/// 内容游览器
+#include "IContentBrowserSingleton.h"
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
@@ -122,7 +129,9 @@ void Debug_To_File(const FStringView& In_String) {
 class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4::FFbxImport>> {
  public:
   SLATE_BEGIN_ARGS(SDoodleImportFbxUiItem) : _ItemShow() {}
+
   SLATE_ARGUMENT(TSharedPtr<doodle_ue4::FFbxImport>, ItemShow)
+
   SLATE_END_ARGS()
 
  public:
@@ -142,12 +151,72 @@ class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
       return SNew(STextBlock)
           .Text(FText::FromString(ItemShow->ImportPathDir));
     } else {
-      if (ItemShow->SkinObj)
-        return SNew(STextBlock)
-            .Text(FText::FromString(FString::Printf(TEXT("%s"), *ItemShow->SkinObj->GetPackage()->GetPathName())));
-      else
-        return SNew(STextBlock).Text(FText::FromString(TEXT(" ")));
+      // clang-format off
+       return SNew(SHorizontalBox) 
+        + SHorizontalBox::Slot()
+        .Padding(1.f)
+        .HAlign(HAlign_Left)
+        [
+          SNew(STextBlock)
+          .Text_Lambda([this]() -> FText {
+            return FText::FromString(FString::Printf(TEXT("%s"), *( ItemShow->SkinObj != nullptr ?
+                                                                    ItemShow->SkinObj->GetPackage()->GetPathName() : FString{TEXT("")})));
+          })
+        ]
+        + SHorizontalBox::Slot()///  
+        .AutoWidth()
+        .HAlign(HAlign_Right)
+        [
+          SNew(SHorizontalBox) 
+          + SHorizontalBox::Slot()/// ⬅️, 将选中的给到属性上
+          .HAlign(HAlign_Right)
+          [
+            PropertyCustomizationHelpers::MakeUseSelectedButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleUseSelected))/// 委托转发
+          ]
+          + SHorizontalBox::Slot()/// 🔍 将属性显示在资产编辑器中
+          .HAlign(HAlign_Right)
+          [
+            PropertyCustomizationHelpers::MakeBrowseButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleBrowse))/// 委托转发
+          ]
+          + SHorizontalBox::Slot()/// 重置, 将属性给空
+          .HAlign(HAlign_Right)
+          [
+            PropertyCustomizationHelpers::MakeResetButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleReset))/// 委托转发
+          ]
+        ]
+          // clang-format on
+          ;
+      // return SNew(STextBlock)
+      //     .Text(FText::FromString(FString::Printf(TEXT("%s"), *ItemShow->SkinObj->GetPackage()->GetPathName())));
     }
+  }
+
+  void DoodleUseSelected() {
+    FContentBrowserModule& L_ContentBrowserModle =
+        FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
+            "ContentBrowser"
+        );
+    TArray<FAssetData> L_SelectedAss;
+    L_ContentBrowserModle.Get().GetSelectedAssets(L_SelectedAss);
+
+    FAssetData* L_It = Algo::FindByPredicate(L_SelectedAss, [](const FAssetData& InAss) -> bool {
+      return Cast<USkeleton>(InAss.GetAsset()) != nullptr;
+    });
+    if (L_It != nullptr) {
+      ItemShow->SkinObj = Cast<USkeleton>(L_It->GetAsset());
+    }
+  }
+  void DoodleBrowse() {
+    if (ItemShow->SkinObj != nullptr) {
+      FContentBrowserModule& L_ContentBrowserModle =
+          FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
+              "ContentBrowser"
+          );
+      L_ContentBrowserModle.Get().SyncBrowserToAssets(TArray<FAssetData>{FAssetData{ItemShow->SkinObj}});
+    }
+  }
+  void DoodleReset() {
+    ItemShow->SkinObj = nullptr;
   }
 
  private:
@@ -304,6 +373,10 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
 
 void SDoodleImportFbxUI::SearchPath(const FString& in) {
   ListImportFbxData.Empty();
+  AllSkinObjs.Empty();
+  FScopedSlowTask L_Task_Scoped{5.0f, LOCTEXT("Import_Fbx", "加载Fbx")};
+  L_Task_Scoped.MakeDialog();
+
   IFileManager::Get().IterateDirectoryRecursively(*in, [this](const TCHAR* InPath, bool in_) -> bool {
     if (FPaths::FileExists(InPath) && !IFileManager::Get().DirectoryExists(InPath) &&
         FPaths::GetExtension(InPath, true) == TEXT(".fbx")) {
@@ -322,8 +395,11 @@ void SDoodleImportFbxUI::SearchPath(const FString& in) {
     }
     return true;
   });
+  L_Task_Scoped.EnterProgressFrame(1.0f);
   GetAllSkinObjs();
+  L_Task_Scoped.EnterProgressFrame(3.0f);
   MatchFbx();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
   ListImportFbx->RebuildList();
 }
 void SDoodleImportFbxUI::AddReferencedObjects(FReferenceCollector& collector) {}
@@ -333,8 +409,10 @@ TSharedRef<SDockTab> SDoodleImportFbxUI::OnSpawnAction(const FSpawnTabArgs& Spaw
 }
 
 void SDoodleImportFbxUI::GetAllSkinObjs() {
+  FScopedSlowTask L_Task_Scoped{2.0f, LOCTEXT("Import_Fbx2", "扫描所有的Skin")};
+  L_Task_Scoped.MakeDialog();
+
   this->AllSkinObjs.Empty();
-  this->AllSkinObjs_Map.Empty();
   FARFilter LFilter{};
   LFilter.bIncludeOnlyOnDiskAssets = false;
   LFilter.bRecursivePaths          = true;
@@ -352,6 +430,9 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
     }
     return true;
   });
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  SetAllSkinTag();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
   // LFilter.ClassNames.Add(FName{USkeletalMesh::StaticClass()->GetName()});
   // IAssetRegistry::Get()->EnumerateAssets(LFilter, [&, this](const FAssetData& InAss) -> bool {
   //   USkeletalMesh* L_SK = Cast<USkeletalMesh>(InAss.GetAsset());
@@ -368,7 +449,8 @@ void SDoodleImportFbxUI::MatchFbx() {
   FbxImporter->ClearAllCaches();
 
   TArray<TSharedPtr<doodle_ue4::FFbxImport>> L_RemoveList;
-
+  FScopedSlowTask L_Task_Scoped{(float_t)ListImportFbxData.Num(), LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
+  L_Task_Scoped.MakeDialog();
   // FString L_Debug_str{};
 
   for (auto&& L_Fbx_Path : ListImportFbxData) {
@@ -377,12 +459,17 @@ void SDoodleImportFbxUI::MatchFbx() {
 
     TArray<fbxsdk::FbxNode*> L_Fbx_Node_list{};
     FString L_NameSpace{};
+    L_Task_Scoped.EnterProgressFrame(1.0f);
+
+    FScopedSlowTask L_Task_Scoped2{(float_t)FbxImporter->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
     for (size_t i = 0; i < FbxImporter->Scene->GetNodeCount(); ++i) {
       FString L_Name = MakeName(FbxImporter->Scene->GetNode(i)->GetName());
       L_Fbx_Path->FbxNodeNames.Add(L_Name);
       // 获取名称空间
       if (L_NameSpace.IsEmpty())
         L_NameSpace = GetNamepace(FbxImporter->Scene->GetNode(i)->GetName());
+
+      L_Task_Scoped2.EnterProgressFrame(1.0f);
     }
 
     if (L_NameSpace.IsEmpty()) {
@@ -390,12 +477,22 @@ void SDoodleImportFbxUI::MatchFbx() {
       continue;
     }
 
+    FScopedSlowTask L_Task_Scoped3{(float_t)FbxImporter->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork3", "寻找 fbx 文件骨骼匹配的SK中...")};
     for (auto&& L_SK_Data : this->AllSkinObjs) {
+      FString L_BaseName = FPaths::GetBaseFilename(L_Fbx_Path->ImportFbxPath);
       if (L_Fbx_Path->FbxNodeNames.Num() >= L_SK_Data.BoneNames.Num()) {
-        if (Algo::AllOf(L_SK_Data.BoneNames, [&](const FString& IN_Str) {
-              return L_Fbx_Path->FbxNodeNames.Contains(IN_Str);
-            }))
+        if (
+            (
+                L_SK_Data.SkinTag.IsEmpty()
+                    ? true
+                    : L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE
+            )  /// 先确认字串节省资源
+            && Algo::AllOf(L_SK_Data.BoneNames, [&](const FString& IN_Str) {
+                 return L_Fbx_Path->FbxNodeNames.Contains(IN_Str);
+               })  /// 进一步确认骨骼内容
+        )
           L_Fbx_Path->SkinObj = L_SK_Data.SkinObj;
+        L_Task_Scoped3.EnterProgressFrame(1.0f);
       }
     }
   }
@@ -499,6 +596,15 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix) {
   for (auto&& L_Fbx : ListImportFbxData) {
     L_Fbx->ImportPathDir = GetImportPath(L_Fbx->ImportFbxPath);
   }
+  ListImportFbx->RebuildList();
 }
 
+void SDoodleImportFbxUI::SetAllSkinTag() {
+  FRegexPattern L_Reg_Ep_Pattern{LR"(SK_(\w+)_Skeleton)"};
+  for (auto&& L_Sk : AllSkinObjs) {
+    FRegexMatcher L_Reg{L_Reg_Ep_Pattern, L_Sk.SkinObj->GetName()};
+    if (L_Reg.FindNext())
+      L_Sk.SkinTag = L_Reg.GetCaptureGroup(1);
+  }
+}
 #undef LOCTEXT_NAMESPACE
