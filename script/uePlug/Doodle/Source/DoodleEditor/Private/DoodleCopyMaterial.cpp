@@ -21,6 +21,7 @@
 #include "ObjectTools.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Doodle/DoodleImportFbxUI.h"
 
 /// 设置使用
 #include "DoodleEditorSetting.h"
@@ -91,8 +92,10 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
                1.f,
                1.f
            ))[SNew(SButton)
-                  .OnClicked(this,
-                             &DoodleCopyMat::BathImport)  // 批量导入
+                  .OnClicked_Lambda([]() -> FReply {
+                    FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
+                    return FReply::Handled();
+                  })  // 批量导入
                       [SNew(STextBlock)
                            .Text(FText::FromString(TEXT("批量导入")))]
                   .ToolTipText_Lambda([=]() -> FText { return FText::FromString(
