@@ -44,6 +44,10 @@ class maya_node(object):
                 self.dc=cmds.disconnectAttr(source, in_target_plug)
             else:
                 raise My_Exception('source and target is a one-to-many relationship')
+
+    def delete_node(self):
+        self.delete=cmds.delete(self)
+
     def __repr__(self):
         return self.name
 
@@ -62,6 +66,7 @@ class Locator(maya_node):
         self.__parent__ = None
         pass
     #Set locator properties
+
     @property
     def parent(self):
         return self.__parent__
@@ -217,7 +222,12 @@ def backeProcess():
     list1 = [(arr_locator[4], arr_Circle[0])]
     with constraint_mg(list1, True)as f3:
         back_anim(arr_Circle[0])
+    #Delete the locator
+    arr_locator[0].delete_node()
+    arr_locator[4].delete_node()
+   
 
+  
 
 
 
