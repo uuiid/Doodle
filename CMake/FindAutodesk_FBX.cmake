@@ -63,7 +63,7 @@ find_path(FBX_INCLUDE_DIR
     )
 
 find_library(FBX_LIBRARY
-  lib/vs2017/x64/${CMAKE_BUILD_TYPE}/libfbxsdk.lib
+  lib/vs2017/x64/${CMAKE_BUILD_TYPE}/libfbxsdk-md.lib
   HINTS
   ${MAYA_FBX_LOCATION}
   DOC
@@ -84,11 +84,10 @@ find_package_handle_standard_args(Autodesk_FBX
 )
 
 
-add_library(Autodesk_FBX STATIC IMPORTED GLOBAL)
-
+add_library(Autodesk_FBX STATIC IMPORTED)
 
 set_target_properties(Autodesk_FBX PROPERTIES
 IMPORTED_LOCATION "${FBX_LIBRARY}"
 INTERFACE_INCLUDE_DIRECTORIES "${FBX_INCLUDE_DIR}"
 )
-  
+add_library(maya::Fbx ALIAS Autodesk_FBX)
