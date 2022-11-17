@@ -7,6 +7,7 @@ import scripts.Doodle_clear as Doodle_clear
 import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
+import Doodle_blend_keyframe
 import scripts.create_hair_uv as hair_uv
 from PySide2 import QtCore
 from PySide2 import QtGui
@@ -86,6 +87,8 @@ class DlsShelf(shelfBase._shelf):
                       command=self.deleteAttr)
         self.addButon("mesh to hair uv", icon="icons/hair_to_uv.png",
                       command=lambda: hair_uv.main())
+        self.addButon("blend",icon="icons/blend.png",
+                      command=self.blendkeyframe)
 
     def polyremesh(self):
         self.re()
@@ -109,6 +112,9 @@ class DlsShelf(shelfBase._shelf):
     def set_cache(self):
         cmds.doodle_create_ref_file()
         cmds.doodle_set_cloth_cache_path()
+
+    def blendkeyframe(self):
+        Doodle_blend_keyframe.backeProcess()
 
     @staticmethod
     def print_r(str_list):
