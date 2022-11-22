@@ -126,4 +126,11 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    *
    */
   void SetAllSkinTag();
+
+  /**
+   * @brief 追加一部份文件
+   *
+   * @param In_Files
+   */
+  void AddFiles(const TArray<FString>& In_Files);
 };

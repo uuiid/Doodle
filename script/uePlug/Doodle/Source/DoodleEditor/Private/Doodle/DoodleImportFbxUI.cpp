@@ -1,7 +1,12 @@
 #include "DoodleImportFbxUI.h"
 #include "Widgets/SCanvas.h"
+// 目录选择器
 #include "Widgets/Input/SDirectoryPicker.h"
+// 文件选择器
+#include "Widgets/Input/SFilePathPicker.h"
 #include "AssetRegistry/IAssetRegistry.h"
+// 我们自己的多路径文件选择器
+#include "Doodle/FilePathsPicker.h"
 
 // fbx读取需要
 #include "FbxImporter.h"
@@ -268,6 +273,11 @@ class SDoodleImportAbcUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
 void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
   const FSlateFontInfo Font = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
 
+#if PLATFORM_WINDOWS
+  const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
+#else
+  const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
+#endif
   // clang-format off
   ChildSlot
   [
@@ -298,6 +308,36 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           [
             SNew(SDirectoryPicker)
             .OnDirectoryChanged_Raw(this,&SDoodleImportFbxUI::SearchPath)
+          ]
+        ]
+        // 添加文件槽
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+          // 添加文件
+          SNew(SHorizontalBox)
+          +SHorizontalBox::Slot()
+          .FillWidth(1.0f)
+          [
+            SNew(STextBlock)
+            .Text(LOCTEXT("add file path", "add file path"))
+            .ToolTipText(LOCTEXT("add_files_Tooltip", "add files"))
+            .Font(Font)
+          ]
+          +SHorizontalBox::Slot()
+          .FillWidth(2.0f)
+          [
+            SNew(SFilePathsPicker)
+            // .FilePath_Lambda([this]()->FString{})
+            .BrowseButtonImage(FEditorStyle::GetBrush("PropertyWindow.Button_Ellipsis"))
+            .BrowseButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
+            .BrowseButtonToolTip(LOCTEXT("添加导入文件路径", "添加导入文件路径"))
+            .FileTypeFilter(FileFilterText)
+            .OnPathPicked_Lambda([this](const TArray<FString>& PickedPaths){
+              this->AddFiles(PickedPaths);
+            })
           ]
         ]
         // 前缀槽
@@ -439,10 +479,21 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                return FReply::Handled();
             })
           ]
-
-
-
-
+        ]
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+        [
+          SNew(SButton)
+          .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
+          .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
+          .OnClicked_Lambda([this](){
+             this->ListImportFbxData.Empty();
+             this->ListImportAbcData.Empty();
+             ListImportFbx->RebuildList();
+             return FReply::Handled();
+          })
         ]
       ]
 
@@ -778,6 +829,68 @@ TTuple<int32_t, int32_t> SDoodleImportFbxUI::GenStartAndEndTime(const FString& I
     L_End   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
   }
   return MakeTuple(L_Start, L_End);
+}
+
+void SDoodleImportFbxUI::AddFiles(const TArray<FString>& In_Files) {
+  AllSkinObjs.Empty();
+
+  FScopedSlowTask L_Task_Scoped{5.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
+  L_Task_Scoped.MakeDialog();
+
+  /// @brief 先扫描前缀
+  if (this->Path_Prefix.IsEmpty()) {
+    for (auto&& L_Path : In_Files) {
+      int32 L_Index      = INDEX_NONE;
+      FString L_FileName = FPaths::GetBaseFilename(L_Path);
+      if (L_FileName.FindChar('_', L_Index)) {
+        L_FileName.LeftChopInline(L_FileName.Len() - L_Index, true);
+        this->Path_Prefix = L_FileName;
+        break;
+      }
+    }
+  }
+  /// 扫描fbx 和abc 文件
+  for (auto&& L_Path : In_Files) {
+    if (FPaths::FileExists(L_Path) &&
+        FPaths::GetExtension(L_Path, true) == TEXT(".fbx")) {
+      /// @brief 寻找到相同的就跳过
+      if (ListImportFbxData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FFbxImport>& In_FBx) {
+            return In_FBx->ImportFbxPath == L_Path;
+          })) {
+        continue;
+      };
+
+      TSharedPtr<doodle_ue4::FFbxImport> L_ptr = MakeShared<doodle_ue4::FFbxImport>(L_Path);
+      L_ptr->ImportPathDir                     = this->GetImportPath(L_Path);
+      ListImportFbxData.Emplace(L_ptr);
+    }
+    if (FPaths::FileExists(L_Path) &&
+        FPaths::GetExtension(L_Path, true) == TEXT(".abc")) {
+      /// @brief 寻找到相同的就跳过
+      if (ListImportAbcData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FAbcImport>& In_Abc) {
+            return In_Abc->ImportAbcPath == L_Path;
+          })) {
+        continue;
+      };
+      
+      TSharedPtr<doodle_ue4::FAbcImport> L_ptr = MakeShared<doodle_ue4::FAbcImport>(L_Path);
+      L_ptr->ImportPathDir                     = this->GetImportPath(L_Path);
+
+      TTuple<int32_t, int32_t> L_Time_Ranges   = this->GenStartAndEndTime(L_Path);
+      L_ptr->StartTime                         = L_Time_Ranges.Get<0>();
+      L_ptr->EndTime                           = L_Time_Ranges.Get<1>();
+
+      ListImportAbcData.Emplace(L_ptr);
+    }
+  }
+
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  GetAllSkinObjs();
+  L_Task_Scoped.EnterProgressFrame(3.0f);
+  MatchFbx();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  ListImportFbx->RebuildList();
+  ListImportAbc->RebuildList();
 }
 
 #undef LOCTEXT_NAMESPACE
