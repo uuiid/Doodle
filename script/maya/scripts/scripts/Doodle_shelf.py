@@ -7,7 +7,7 @@ import scripts.Doodle_clear as Doodle_clear
 import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
-import Doodle_blend_keyframe
+import scripts.Doodle_blend_keyframe
 import scripts.create_hair_uv as hair_uv
 from PySide2 import QtCore
 from PySide2 import QtGui
