@@ -178,7 +178,7 @@ find_package_handle_standard_args(Maya
         MAYA_INCLUDE_DIR MAYA_LIBRARY_DIR
         REASON_FAILURE_MESSAGE "maya 库中的组件没有找到"
         )
-if (MAYA_FOUND)
+if (Maya_FOUND)
     # 这些宏选项都在 maya devkit.cmake 文件中有, 需要复制过来
     target_compile_definitions(
             maya_all

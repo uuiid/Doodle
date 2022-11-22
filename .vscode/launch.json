@@ -11,7 +11,7 @@
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2019/bin/maya.exe",
+            "program": "C:/Program Files/Autodesk/Maya2018/bin/maya.exe",
             "args": [
                 "-noAutoloadPlugins"
             ],
@@ -20,7 +20,7 @@
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/maya_2019/plug/maya"
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
                 }
             ],
             "console": "internalConsole",
