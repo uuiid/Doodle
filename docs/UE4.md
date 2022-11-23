@@ -36,6 +36,6 @@ SnapToTargetIncludingScale（随目标的缩放）
 
 ## ue4 发布构建
 Engine\Build\BatchFiles\RunUAT.bat BuildGraph -target="Make Installed Build Win64" -script=Engine/Build/InstalledEngineBuild.xml -set:HostPlatformOnly=true -set:WithDDC=false
-或者加入 -clear
-
+或者加入 
+Engine\Build\BatchFiles\RunUAT.bat BuildGraph -target="Make Installed Build Win64" -script=Engine/Build/InstalledEngineBuild.xml -clean -set:HostPlatformOnly=true -set:WithDDC=false
 其中windows sdk 必须是 Windows 10.0.18362.0 SDK, 这个是针对 rtx-dlss-4.27分支的
