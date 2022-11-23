@@ -13,6 +13,7 @@
 #include <boost/icl/concept/interval.hpp>
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/gregorian.hpp>
+#include <boost/icl/interval_bounds.hpp>
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/split_interval_set.hpp>
 
@@ -145,18 +146,17 @@ std::string work_clock::debug_print() const {
   //  return fmt::format("{}", interval_map_time_);
 }
 std::optional<std::string> work_clock::get_time_info(const time_type& in_min, const time_type& in_max) {
-  auto l_d    = discrete_interval_time::closed(in_min, in_max);
-
-  auto l_item = interval_map_time_ & l_d;
+  auto l_d = discrete_interval_time::closed(in_min, in_max);
+  // auto l_item                          = interval_map_time_ & l_d;
 
   std::string l_r{};
-  for (auto&& i : l_item) {
-    auto l_d = boost::icl::upper(i.first) - boost::icl::lower(i.first);
-
-    l_r += fmt::format(
-        R"("{:L%Y-%m-%d %H:%M} 到 {:L%Y-%m-%d %H:%M}  信息 {}")", ++boost::icl::lower(i.first),
-        boost::icl::upper(i.first), fmt::join(i.second, " ")
-    );
+  for (auto&& i : interval_map_time_) {
+    auto l_t1 = i.first & l_d;
+    if (!boost::icl::is_empty(l_t1))
+      l_r += fmt::format(
+          R"("{:L%Y-%m-%d %H:%M} 到 {:L%Y-%m-%d %H:%M}  信息 {}")", ++boost::icl::lower(i.first),
+          boost::icl::upper(i.first), fmt::join(i.second, " ")
+      );
   }
 
   return l_r.empty() ? std::optional<std::string>{} : std::optional{l_r};
