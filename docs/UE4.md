@@ -33,3 +33,9 @@ KeepWorldTransform（保持连个物体在世界的位置不变）
 SnapToTargetNotIncludingScale（保持物体的缩放对齐到目标上）
 SnapToTargetIncludingScale（随目标的缩放）
 
+
+## ue4 发布构建
+Engine\Build\BatchFiles\RunUAT.bat BuildGraph -target="Make Installed Build Win64" -script=Engine/Build/InstalledEngineBuild.xml -set:HostPlatformOnly=true -set:WithDDC=false
+或者加入 -clear
+
+其中windows sdk 必须是 Windows 10.0.18362.0 SDK, 这个是针对 rtx-dlss-4.27分支的
