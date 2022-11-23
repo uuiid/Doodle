@@ -9,7 +9,7 @@ get_git_version(
         WORK_DIR ${CMAKE_SOURCE_DIR}
 )
 
-MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE} OS SDK ${CMAKE_SYSTEM_VERSION}")
 # 创建一个项目
 project(Doodle
         VERSION "${v_short}"
