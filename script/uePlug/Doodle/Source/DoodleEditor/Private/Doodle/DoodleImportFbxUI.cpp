@@ -771,7 +771,7 @@ void SDoodleImportFbxUI::ImportAbc() {
 }
 
 FString SDoodleImportFbxUI::GetImportPath(const FString& In_Path) {
-  FRegexPattern L_Reg_Ep_Pattern{LR"(ep_?(\d+))"};
+  FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
   FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_Path};
   int64 L_eps{};
   int64 L_sc{};
@@ -781,7 +781,7 @@ FString SDoodleImportFbxUI::GetImportPath(const FString& In_Path) {
     L_eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
   }
 
-  FRegexPattern L_Reg_ScPattern{LR"(sc_?(\d+)([a-z])?)"};
+  FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-z])?)"};
   FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, In_Path};
 
   if (L_Reg_Sc.FindNext()) {
@@ -872,7 +872,7 @@ void SDoodleImportFbxUI::AddFiles(const TArray<FString>& In_Files) {
           })) {
         continue;
       };
-      
+
       TSharedPtr<doodle_ue4::FAbcImport> L_ptr = MakeShared<doodle_ue4::FAbcImport>(L_Path);
       L_ptr->ImportPathDir                     = this->GetImportPath(L_Path);
 
