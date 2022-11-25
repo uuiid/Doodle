@@ -93,6 +93,7 @@ public class doodleEditor : ModuleRules
                 "MovieSceneTools",// /更新定序器场景
                 "DesktopWidgets",// 打开文件对话框小步件
                 "FBX", // fbx读取需要
+                "ImageCore",// 调整图像使用
             }
             );
 

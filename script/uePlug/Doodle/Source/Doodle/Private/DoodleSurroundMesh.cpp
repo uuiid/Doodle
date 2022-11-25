@@ -15,11 +15,11 @@ ADoodleSurroundMeshActor::ADoodleSurroundMeshActor()
   k_rootComponent->SetupAttachment(RootComponent);
 
   SetRootComponent(k_rootComponent);
-  ConstructorHelpers::FObjectFinder<UStaticMesh> k_mesh(
-      TEXT("/Game/StarterContent/Shapes/Shape_Cylinder.Shape_Cylinder")
-  );
+  // ConstructorHelpers::FObjectFinder<UStaticMesh> k_mesh(
+  //     TEXT("/Game/StarterContent/Shapes/Shape_Cylinder.Shape_Cylinder")
+  // );
 
-  p_mesh      = k_mesh.Object;
+  // p_mesh      = k_mesh.Object;
 
   p_instanced = CreateDefaultSubobject<UInstancedStaticMeshComponent>(
       "InstancedStaticMeshComponent"

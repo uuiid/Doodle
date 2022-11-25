@@ -6,6 +6,8 @@
 #include "GeometryCache.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
+// 测试使用
+#include "Doodle/ResizeTexture.h"
 
 // 批量导入
 #include "AssetImportTask.h"
@@ -135,11 +137,24 @@ void DoodleCopyMat::Construct(const FArguments &Arg) {
            .Padding(FMargin{1.f, 1.f})
                [SNew(SButton)
                     .OnClicked_Lambda([this]() -> FReply {
-                                        // GEditor->NewMap();
-                                        // UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_level"));
-                                        // UEditorAssetLibrary::DeleteAsset(TEXT("/Game/tmp/test/doodle_test_word"));
-                      doodle::init_ue4_project::tmp();
-                      return FReply::Handled(); })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
+                      FContentBrowserModule &contentBrowserModle =
+                          FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
+                              "ContentBrowser"
+                          );
+                      TArray<FAssetData> selectedAss;
+                      contentBrowserModle.Get().GetSelectedAssets(selectedAss);
+                      FResizeTexture L_r{};
+                      for (auto &&item : selectedAss) {
+                        UObject *loadObj = item.GetAsset();
+                        if (loadObj == nullptr)
+                          continue;
+                        if (UTexture2D *l_tex = Cast<UTexture2D>(loadObj)) {
+                          L_r.Resize(l_tex);
+                        }
+                      }
+
+                      return FReply::Handled();
+                    })[SNew(STextBlock).Text(FText::FromString(TEXT("test")))]
                     .ToolTipText_Lambda([]() -> FText { return FText::FromString(
                                                             TEXT("测试使用")
                                                         ); })]];
