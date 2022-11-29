@@ -77,3 +77,4 @@ CMakeUserPresets.json
 /imgui.ini
 *.sqlite
 **/PluginMenu/Intermediate/*
+*.modules
