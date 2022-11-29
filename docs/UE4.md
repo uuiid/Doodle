@@ -41,6 +41,6 @@ Engine\Build\BatchFiles\RunUAT.bat BuildGraph -target="Make Installed Build Win6
 其中windows sdk 必须是 Windows 10.0.18362.0 SDK, 这个是针对 rtx-dlss-4.27分支的
 
 ## 复制
-Robocopy {来源} {目标} /MIR /ETA /Log:log.txt /MT:32 
-Robocopy {来源} {目标} /MOVE /Log:log.txt /MT:32 
+Robocopy {来源} {目标} /MIR /ETA /unilog:log.txt /MT:32 
+Robocopy {来源} {目标} /MIR /MOVE /unilog:log.txt /MT:32 
 /XD {排除}
