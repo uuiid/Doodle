@@ -69,6 +69,9 @@ void FResizeTexture::Resize(UTexture2D* In_Texture) {
     int32 L_Max_Size       = FMath::Pow(2.0, L_Max_Size_Count);
     if (L_Max_Size == L_Soure.GetSizeX() && L_Max_Size == L_Soure.GetSizeY())
       return;
+    /// 释放以前的显卡资源
+    In_Texture->ReleaseResource();
+
     L_Task_Scoped.EnterProgressFrame(1.0f);
     L_Soure.GetMipData(L_Image.RawData, 0);
     // TArray64<uint8> L_Data{};
@@ -88,6 +91,7 @@ void FResizeTexture::Resize(UTexture2D* In_Texture) {
     L_Soure.Init(L_Max_Size, L_Max_Size, 1, 1, L_Soure.GetFormat(), L_Dest.RawData.GetData());
     L_Task_Scoped.EnterProgressFrame(1.0f);
     In_Texture->MipGenSettings = TextureMipGenSettings::TMGS_FromTextureGroup;
+
     In_Texture->MarkPackageDirty();
     In_Texture->PostEditChange();
     L_Task_Scoped.EnterProgressFrame(1.0f);
