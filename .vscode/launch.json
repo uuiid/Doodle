@@ -8,6 +8,23 @@
     ],
     "configurations": [
         {
+            "name": "Doodle_debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "MAYA_MODULE_PATH",
+                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
@@ -31,23 +48,6 @@
             "type": "cppvsdbg",
             "request": "attach",
             "processId": "${command:pickProcess}"
-        },
-        {
-            "name": "Doodle_debug",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
-            "environment": [
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
-                }
-            ],
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
             "name": "debug_test",
