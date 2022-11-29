@@ -5,6 +5,7 @@ if (DEFINED Maya_Version)
     # 模块的寻找文件名称 Find + 包名称 + .cmake
     # 开始运行 `FindMaya.cmake`
     find_package(Maya ${Maya_Version} MODULE)
+    find_package(Autodesk_FBX 2020 MODULE)
     find_package(OpenMP REQUIRED)
 
     cmake_print_variables(MAYA_BASE_DIR)
