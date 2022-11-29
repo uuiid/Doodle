@@ -3,8 +3,7 @@
 //
 #pragma once
 #include <main/maya_plug_fwd.h>
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 namespace sequence_to_blend_shape_comm_ns {
 constexpr char name[] = "doodle_sequence_to_blend_shape";
@@ -34,5 +33,4 @@ class sequence_to_blend_shape_comm : public doodle::TemplateAction<
   [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 };
 
-}  // namespace maya_plug
 }  // namespace doodle

@@ -6,8 +6,7 @@
 
 #include <maya_plug/main/maya_plug_fwd.h>
 
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 /**
  * @brief 将一系列网格变形动画转换为混合变形节点
@@ -96,5 +95,4 @@ class sequence_to_blend_shape {
   void delete_bind_mesh();
 };
 
-}  // namespace maya_plug
-}  // namespace doodle
+}  // namespace doodle::maya_plug

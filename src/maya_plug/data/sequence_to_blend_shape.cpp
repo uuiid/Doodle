@@ -39,8 +39,7 @@
 
 // #define DOODLE_USE_SELECT_MODEL_COPY_AS_BIND_MODEL
 
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 class sequence_to_blend_shape::impl {
  public:
@@ -54,23 +53,6 @@ class sequence_to_blend_shape::impl {
   MPoint bind_center{};
   MMatrix bind_matrix{};
   MObject blend_shape_obj{};
-
-  class bounding_box_ {
-   public:
-    std::double_t x_min;
-    std::double_t y_min;
-    std::double_t z_min;
-
-    std::double_t x_max;
-    std::double_t y_max;
-    std::double_t z_max;
-
-    void add_point(const MPoint& in_point) {
-    }
-
-    void get_center() const {
-    }
-  };
 };
 
 sequence_to_blend_shape::sequence_to_blend_shape()
@@ -290,6 +272,7 @@ void sequence_to_blend_shape::create_blend_shape() {
   MStatus l_s{};
 
   std::vector<std::string> l_names{};
+  l_names.reserve(ptr->create_matrix_list.length());
   for (int l_i = 0; l_i < ptr->create_mesh_list.length(); ++l_i) {
     l_names.emplace_back(get_node_full_name(ptr->create_mesh_list[l_i]));
   }
@@ -445,5 +428,4 @@ void sequence_to_blend_shape::delete_select_node() {
 }
 
 sequence_to_blend_shape::~sequence_to_blend_shape() = default;
-}  // namespace maya_plug
-}  // namespace doodle
+}  // namespace doodle::maya_plug
