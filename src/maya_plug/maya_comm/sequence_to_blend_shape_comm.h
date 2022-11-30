@@ -22,6 +22,7 @@ class sequence_to_blend_shape_comm : public doodle::TemplateAction<
   void create_anim();
   void run_blend_shape_comm();
   void add_to_parent();
+  void run_pca();
 
  public:
   sequence_to_blend_shape_comm();

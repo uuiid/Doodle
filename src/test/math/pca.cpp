@@ -9,11 +9,14 @@
 #include "Eigen/Eigen"
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/SVD/JacobiSVD.h>
+#include <cmath>
 #include <crtdbg.h>
+#include <cstddef>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <main_fixtures/lib_fixtures.h>
+#include <ostream>
 
 Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
   // 计算平均
@@ -39,8 +42,30 @@ Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
   return {};
 };
 
+Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
+  Eigen::JacobiSVD<Eigen::MatrixXf> l_svd{in_mat, Eigen::ComputeThinU | Eigen::ComputeThinV};
+
+  Eigen::MatrixXf l_u = l_svd.matrixU();
+  Eigen::MatrixXf l_v = l_svd.matrixV();
+  Eigen::VectorXf l_s = l_svd.singularValues();
+  std::size_t l_com   = l_s.size();
+
+  std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
+
+  auto l_rows = in_mat.rows() / 2;
+
+  for (auto i = 0ll; i < l_com; ++i) {
+    const std::float_t l_muliplier = l_s(i);
+    for (auto j = 0ll; j < l_rows; ++j) {
+      l_u(i, j) *= l_muliplier;
+    }
+  }
+  std::cout << "U: \n" << l_u << std::endl;
+  return {};
+}
+
 BOOST_AUTO_TEST_CASE(test_pca) {
   Eigen::MatrixXf l_mat{3, 3};
-  l_mat << 1, 2, 3, 4, 5, 6, 7, 8, 9;
-  pca_fun(l_mat);
+  l_mat << 2, 2, 3, 4, 5, 7, 2, 1, 4;
+  pca_fun2(l_mat);
 }

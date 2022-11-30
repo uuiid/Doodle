@@ -175,10 +175,17 @@ MStatus sequence_to_blend_shape_comm::undoIt() {
 MStatus sequence_to_blend_shape_comm::redoIt() {
   try {
     this->create_mesh();
+    // #define DOODLE_PCA
+
+#ifdef DOODLE_PCA
+    this->run_pca();
+#else
     this->run_blend_shape_comm();
     this->create_anim();
     this->add_to_parent();
     this->delete_node();
+#endif
+
   } catch (const std::runtime_error& err) {
     DOODLE_LOG_WARN(boost::diagnostic_information(err));
     return MStatus::kFailure;
@@ -224,6 +231,12 @@ void sequence_to_blend_shape_comm::create_anim() {
 void sequence_to_blend_shape_comm::run_blend_shape_comm() {
   for (auto&& ctx : p_i->blend_list) {
     ctx.create_blend_shape();
+  }
+}
+
+void sequence_to_blend_shape_comm::run_pca() {
+  for (auto&& ctx : p_i->blend_list) {
+    ctx.pca_compress();
   }
 }
 

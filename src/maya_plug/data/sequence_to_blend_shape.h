@@ -93,6 +93,12 @@ class sequence_to_blend_shape {
    * @brief 删除创建的绑定节点
    */
   void delete_bind_mesh();
+
+  /**
+   * @brief 将动画变形序列进行pca压缩(节省变形目标)
+   *
+   */
+  void pca_compress();
 };
 
 }  // namespace doodle::maya_plug
