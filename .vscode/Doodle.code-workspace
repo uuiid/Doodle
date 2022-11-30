@@ -102,28 +102,22 @@
 			{
 				"testExecutables": [
 					{
-						"path": "build/Ninja_build_DD/bin/test_core.exe",
-						"label": "test_1"
-							}
-					],
-					"cwd": "${workspaceFolder}/build",
-					"sourcePrefix": "${workspaceFolder}",
-					"debugConfig": "Doodle_debug"
-				},
-				{
-					"testExecutables": [
-						{
-							"path": "build/Ninja_build_DD/bin/dingding_base.exe",
-							"label": "test_2"
-						}
-					],
-					"cwd": "${workspaceFolder}/build",
-					"sourcePrefix": "${workspaceFolder}",
-					"debugConfig": "Doodle_debug"
-				}
-			],
-			"C_Cpp.intelliSenseEngine": "disabled",
-			"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
+						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/test_core.exe",
+					},
+					{
+						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/dingding_base.exe",
+					},
+					{
+						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/test_math.exe",
+					}
+				],
+				"cwd": "${workspaceFolder}/build",
+				"sourcePrefix": "${workspaceFolder}",
+				"debugConfig": "Doodle_debug"
+			},
+		],
+		"C_Cpp.intelliSenseEngine": "disabled",
+		"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
 	},
 	"launch": {
 		"version": "0.2.0",

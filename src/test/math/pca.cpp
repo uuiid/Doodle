@@ -17,12 +17,14 @@
 
 Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
   // 计算平均
+  std::cout << "mat " << in_mat << std::endl;
   Eigen::VectorXf Average = in_mat.colwise().mean();
-
+  std::cout << "Average " << Average << std::endl;
   Eigen::VectorXf ones{in_mat.rows()};
   ones.setOnes();
 
   in_mat -= ones * Average.transpose();
+  std::cout << "org " << in_mat << std::endl;
 
   auto k = in_mat.rows() / 3;
   // svd 采样
@@ -32,12 +34,13 @@ Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
 
   Eigen::MatrixXf ONB = svd.matrixV().block(0, k - 1, k, 1);
   std::cout << ONB;
-  Eigen::VectorXf proj = ONB.transpose() * in_mat;
-  return ONB * proj + Average;
+  // Eigen::VectorXf proj = ONB.transpose() * in_mat;
+  // return ONB * proj + Average;
+  return {};
 };
 
 BOOST_AUTO_TEST_CASE(test_pca) {
-  Eigen::MatrixXf l_mat{2, 3};
-  l_mat << 1, 2, 3, 4, 5, 6;
+  Eigen::MatrixXf l_mat{3, 3};
+  l_mat << 1, 2, 3, 4, 5, 6, 7, 8, 9;
   pca_fun(l_mat);
 }
