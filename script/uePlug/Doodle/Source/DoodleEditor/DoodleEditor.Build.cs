@@ -94,6 +94,7 @@ public class doodleEditor : ModuleRules
                 "DesktopWidgets",// 打开文件对话框小步件
                 "FBX", // fbx读取需要
                 "ImageCore",// 调整图像使用
+                "SkeletalMeshUtilitiesCommon",// 简化骨骼
             }
             );
 
