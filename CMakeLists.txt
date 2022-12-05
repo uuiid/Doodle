@@ -76,7 +76,11 @@ find_package(range-v3 CONFIG REQUIRED)
 find_package(wil CONFIG REQUIRED)
 # this is heuristically generated, and may not be correct
 find_package(implot CONFIG REQUIRED)
-#target_link_libraries(main PRIVATE implot::implot)
+
+# 寻找反射
+find_package(rttr CONFIG REQUIRED)
+
+
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)
 
@@ -112,13 +116,13 @@ git config --global --unset https.proxy
 "D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
 "D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-install alembic range-v3 eigen3 boost sqlpp11[sqlite3-connector] directxtk catch2 wil date spdlog cryptopp magic-enum nlohmann-json winreg opencv[ffmpeg,contrib,freetype] imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
-imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
-install imguiwrap --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
-install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
-upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
-upgrade entt --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports" --no-dry-run
-sqlpp11[sqlite3-connector] --overlay-ports="C:\Users\TD\Source\Doodle\vcpkg\ports"
+install alembic range-v3 eigen3 boost sqlpp11[sqlite3-connector] directxtk catch2 wil date spdlog cryptopp magic-enum nlohmann-json winreg opencv[ffmpeg,contrib,freetype] imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
+imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="F:\Doodle\vcpkg\ports"
+install imguiwrap --overlay-ports="F:\Doodle\vcpkg\ports"
+install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
+upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports"
+upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports" --no-dry-run
+sqlpp11[sqlite3-connector] --overlay-ports="F:\Doodle\vcpkg\ports"
 
 
 remove boost-uninstall --recurse
