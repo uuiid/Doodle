@@ -4,11 +4,14 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <utility>
 #include <opencv2/core.hpp>
+#include <rttr/rttr_enable.h>
+#include <utility>
 
 namespace doodle {
 class DOODLE_CORE_API image_icon {
+  RTTR_ENABLE();
+
  public:
   /**
    * @brief 这个路径是相对于根目录的

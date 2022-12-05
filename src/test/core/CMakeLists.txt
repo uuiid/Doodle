@@ -7,6 +7,7 @@ add_executable(
         bvh.cpp
         create_move.cpp
         boost_log.cpp
+        rttr.cpp
 
 )
 target_link_libraries(

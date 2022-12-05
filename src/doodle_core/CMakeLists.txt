@@ -100,6 +100,7 @@ target_compile_definitions(doodle_core
         PRIVATE
 
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_EXPORT>
+        RTTR_DLL
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
         )
 

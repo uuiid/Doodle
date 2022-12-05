@@ -2,9 +2,12 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
+#include <rttr/rttr_enable.h>
 namespace doodle {
 
 class DOODLE_CORE_API episodes {
+  RTTR_ENABLE();
+
  public:
   int64_t p_episodes;
   episodes();
@@ -21,9 +24,7 @@ class DOODLE_CORE_API episodes {
   bool operator>=(const episodes &in_rhs) const;
   bool operator==(const episodes &in_rhs) const;
   bool operator!=(const episodes &in_rhs) const;
-  inline bool analysis(const FSys::path &in_path) {
-    return analysis(in_path.generic_string());
-  };
+  inline bool analysis(const FSys::path &in_path) { return analysis(in_path.generic_string()); };
   bool analysis(const std::string &in_path);
 
   static bool analysis_static(const entt::handle &in_handle, const FSys::path &in_path);
@@ -31,12 +32,8 @@ class DOODLE_CORE_API episodes {
   static bool conjecture_season(const entt::handle &in_handle);
 
  private:
-  friend void to_json(nlohmann::json &j, const episodes &p) {
-    j["episodes"] = p.p_episodes;
-  }
-  friend void from_json(const nlohmann::json &j, episodes &p) {
-    j.at("episodes").get_to(p.p_episodes);
-  }
+  friend void to_json(nlohmann::json &j, const episodes &p) { j["episodes"] = p.p_episodes; }
+  friend void from_json(const nlohmann::json &j, episodes &p) { j.at("episodes").get_to(p.p_episodes); }
 };
 
 }  // namespace doodle
@@ -52,10 +49,7 @@ struct formatter<::doodle::episodes> : formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
     format_to(ctx.out(), "ep_");
-    return formatter<std::int64_t>::format(
-        in_.p_episodes,
-        ctx
-    );
+    return formatter<std::int64_t>::format(in_.p_episodes, ctx);
   }
 };
 }  // namespace fmt

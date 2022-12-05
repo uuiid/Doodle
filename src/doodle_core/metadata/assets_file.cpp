@@ -12,6 +12,10 @@
 #include <doodle_core/pin_yin/convert.h>
 
 #include <core/core_set.h>
+#include <entt/entity/fwd.hpp>
+#include <functional>
+#include <rttr/registration.h>
+#include <rttr/registration>
 
 namespace doodle {
 
@@ -41,33 +45,26 @@ void to_json(nlohmann::json& j, const assets_file& p) {
   j["user"]           = p.p_i->p_user;
 }
 void from_json(const nlohmann::json& j, assets_file& p) {
-  if (j.contains("user"))
-    j.at("user").get_to(p.p_i->p_user);
+  if (j.contains("user")) j.at("user").get_to(p.p_i->p_user);
 
   j.at("name").get_to(p.p_i->p_name);
   j.at("version").get_to(p.p_i->p_version);
-  if (j.contains("organization_p"))
-    j.at("organization_p").get_to(p.p_i->organization_p);
-  if (j.contains("path"))
-    j.at("path").get_to(p.p_i->path);
+  if (j.contains("organization_p")) j.at("organization_p").get_to(p.p_i->organization_p);
+  if (j.contains("path")) j.at("path").get_to(p.p_i->path);
 
-  if (j.contains("user_ref"))
-    j.at("user_ref").get_to(p.p_i->ref_user);
+  if (j.contains("user_ref")) j.at("user_ref").get_to(p.p_i->ref_user);
 }
 
-assets_file::assets_file()
-    : p_i(std::make_unique<impl>()){};
+assets_file::assets_file() : p_i(std::make_unique<impl>()){};
 
-assets_file::assets_file(const FSys::path& in_path)
-    : assets_file() {
+assets_file::assets_file(const FSys::path& in_path) : assets_file() {
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
   user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
   p_i->organization_p = core_set::get_set().organization_name;
 }
 
-assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version)
-    : assets_file() {
+assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::uint64_t in_version) : assets_file() {
   p_i->path           = in_path;
   p_i->p_name         = std::move(in_name);
   p_i->p_version      = in_version;
@@ -75,12 +72,8 @@ assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::ui
   user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
 }
 
-std::string assets_file::str() const {
-  return p_i->p_name;
-}
-const std::string& assets_file::name_attr() const {
-  return p_i->p_name;
-}
+std::string assets_file::str() const { return p_i->p_name; }
+const std::string& assets_file::name_attr() const { return p_i->p_name; }
 bool assets_file::operator<(const assets_file& in_rhs) const {
   return std::tie(p_i->p_name, p_i->p_version) < std::tie(in_rhs.p_i->p_name, in_rhs.p_i->p_version);
 }
@@ -89,10 +82,8 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 }
 
 entt::handle assets_file::user_attr() const {
-  if (p_i->handle_cache &&
-      p_i->handle_cache.all_of<database, user>() &&
-      p_i->handle_cache.get<database>() == p_i->ref_user &&
-      p_i->handle_cache.get<user>().get_name() == p_i->p_user) {
+  if (p_i->handle_cache && p_i->handle_cache.all_of<database, user>() &&
+      p_i->handle_cache.get<database>() == p_i->ref_user && p_i->handle_cache.get<user>().get_name() == p_i->p_user) {
     return p_i->handle_cache;
   } else {
     auto l_handle = p_i->ref_user.handle();
@@ -100,8 +91,7 @@ entt::handle assets_file::user_attr() const {
       if (p_i->p_user.empty()) {
         p_i->p_user = "null";
       }
-      if (auto l_user = user::find_by_user_name(p_i->p_user);
-          l_user) {
+      if (auto l_user = user::find_by_user_name(p_i->p_user); l_user) {
         p_i->handle_cache = l_user;
         if (p_i->handle_cache.any_of<database>()) p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
         DOODLE_LOG_WARN("按名称寻找到用户 {}", p_i->p_user);
@@ -130,13 +120,9 @@ void assets_file::user_attr(const entt::handle& in_user) {
   p_i->p_user       = in_user.get<user>().get_name();
 }
 
-const std::uint64_t& assets_file::version_attr() const noexcept {
-  return p_i->p_version;
-}
+const std::uint64_t& assets_file::version_attr() const noexcept { return p_i->p_version; }
 
-void assets_file::version_attr(const std::uint64_t& in_Version) noexcept {
-  p_i->p_version = in_Version;
-}
+void assets_file::version_attr(const std::uint64_t& in_Version) noexcept { p_i->p_version = in_Version; }
 FSys::path assets_file::get_path_normal() const {
   DOODLE_CHICK(g_reg()->ctx().contains<project>(), doodle_error{"缺失项目上下文"});
   if (p_i->path.has_root_path())
@@ -146,36 +132,33 @@ FSys::path assets_file::get_path_normal() const {
     return l_p.lexically_normal();
   }
 }
-const FSys::path& assets_file::path_attr() const {
-  return p_i->path;
-}
-void assets_file::path_attr(const FSys::path& in_path) {
-  p_i->path = in_path;
-}
-void assets_file::name_attr(const std::string& in_name) const {
-  p_i->p_name = in_name;
-}
+const FSys::path& assets_file::path_attr() const { return p_i->path; }
+void assets_file::path_attr(const FSys::path& in_path) { p_i->path = in_path; }
+void assets_file::name_attr(const std::string& in_name) const { p_i->p_name = in_name; }
 assets_file::assets_file(assets_file&&) noexcept            = default;
 assets_file& assets_file::operator=(assets_file&&) noexcept = default;
-assets_file::assets_file(const assets_file& in) noexcept
-    : p_i(std::make_unique<impl>(*in.p_i)) {
-}
+assets_file::assets_file(const assets_file& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
 assets_file& assets_file::operator=(const assets_file& in) noexcept {
   *p_i = *in.p_i;
   return *this;
 }
-const std::string& assets_file::organization_attr() const noexcept {
-  return p_i->organization_p;
-}
+const std::string& assets_file::organization_attr() const noexcept { return p_i->organization_p; }
 void assets_file::organization_attr(const std::string& in_organization) noexcept {
   p_i->organization_p = in_organization;
 }
-void assets_file::destruction_user(entt::registry& in_reg, entt::entity in_entt) {
-  for (auto&& [e, ass] : in_reg.view<assets_file>().each()) {
-    if (ass.p_i->handle_cache == in_entt) {
-      ass.p_i->p_user.clear();
-    }
-  }
-}
 assets_file::~assets_file() = default;
 }  // namespace doodle
+
+RTTR_REGISTRATION {
+  rttr::registration::class_<doodle::assets_file>("assets_file")
+      .constructor();
+  /**
+   *
+  .property(
+      "ref_data", [](const doodle::assets_file& in) -> doodle::database::ref_data { return in.p_i->ref_user; },
+      [](const doodle::assets_file& in, const doodle::database::ref_data& in_ref) { in.p_i->ref_user = in_ref; },
+      rttr::registration::private_access
+  )
+   *
+   */
+}

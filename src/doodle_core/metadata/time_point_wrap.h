@@ -9,7 +9,9 @@
 #include <boost/operators.hpp>
 #include <boost/pfr.hpp>
 #include <boost/pfr/functions_for.hpp>
+
 #include <fmt/chrono.h>
+#include <rttr/rttr_enable.h>
 
 namespace doodle {
 class time_point_wrap;
@@ -46,6 +48,8 @@ class DOODLE_CORE_API time_point_wrap
     : boost::totally_ordered<time_point_wrap>,
       boost::additive<time_point_wrap, time_point_wrap_ns::duration>,
       boost::unit_steppable<time_point_wrap> {
+  RTTR_ENABLE();
+
  public:
   using time_point       = chrono::sys_time_pos;
   using time_duration    = time_point::duration;

@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <rttr/rttr_enable.h>
 namespace doodle {
 class user;
 
@@ -37,6 +38,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
    * @brief 在打开数据库后, 注册表中保存的所有用户中寻找到当前用户,  如果未寻找到将创建一个新段用户
    */
   class DOODLE_CORE_API current_user {
+    RTTR_ENABLE();
+
    public:
     current_user();
     virtual ~current_user();
@@ -62,6 +65,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
 
 namespace dingding {
 class DOODLE_CORE_API user {
+  RTTR_ENABLE();
+
  public:
   std::string company;
   std::string phone_number{};

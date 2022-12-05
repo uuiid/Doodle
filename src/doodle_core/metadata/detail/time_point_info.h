@@ -7,15 +7,16 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
+#include <rttr/rttr_enable.h>
 #include <utility>
 
-namespace doodle {
-namespace business {
-namespace rules_ns {
+namespace doodle::business::rules_ns {
 class time_point_info;
 void to_json(nlohmann::json& j, const time_point_info& p);
 void from_json(const nlohmann::json& j, time_point_info& p);
 class time_point_info {
+  RTTR_ENABLE();
+
  public:
   time_point_info() = default;
   time_point_info(time_point_wrap in_b, time_point_wrap in_e, std::string in_indo)
@@ -34,9 +35,7 @@ class time_point_info {
   friend void from_json(const nlohmann::json& j, time_point_info& p);
 };
 
-}  // namespace rules_ns
-}  // namespace business
-}  // namespace doodle
+}  // namespace doodle::business::rules_ns
 
 namespace fmt {
 /**

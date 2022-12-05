@@ -6,6 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <rttr/rttr_enable.h>
+
 namespace doodle {
 /**
  * @brief 资产类, 这个时候资产分类
@@ -21,6 +23,7 @@ class DOODLE_CORE_API assets {
   void set_path_component();
 
   std::vector<std::string> p_component;
+  RTTR_ENABLE();
 
  public:
   /**

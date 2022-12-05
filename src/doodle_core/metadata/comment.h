@@ -6,9 +6,12 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/leaf_meta.h>
 
+#include <rttr/rttr_enable.h>
 namespace doodle {
 
 class DOODLE_CORE_API comment {
+  RTTR_ENABLE();
+
  public:
   std::string p_comment;
   std::string p_time_info;
@@ -24,8 +27,7 @@ class DOODLE_CORE_API comment {
   }
   friend void from_json(const nlohmann::json& j, comment& p) {
     j.at("comment").get_to(p.p_comment);
-    if (j.contains("time_info"))
-      j.at("time_info").get_to(p.p_time_info);
+    if (j.contains("time_info")) j.at("time_info").get_to(p.p_time_info);
   }
 };
 
@@ -36,10 +38,7 @@ template <>
 struct formatter<doodle::comment> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const doodle::comment& in_, FormatContext& ctx) const {
-    formatter<string_view>::format(
-        in_.get_comment(),
-        ctx
-    );
+    formatter<string_view>::format(in_.get_comment(), ctx);
   }
 };
 }  // namespace fmt

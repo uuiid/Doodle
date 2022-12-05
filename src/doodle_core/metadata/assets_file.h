@@ -7,6 +7,9 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
+#include "rttr/registration_friend"
+#include "rttr/rttr_enable.h"
+
 namespace doodle {
 /**
  * @brief 文件代表的类型
@@ -28,6 +31,9 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
+
+  RTTR_ENABLE();
+  RTTR_REGISTRATION_FRIEND;
 
  public:
   /**
@@ -73,11 +79,11 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
   bool operator<(const assets_file& in_rhs) const;
   bool operator==(const assets_file& in_rhs) const;
 
-  static void destruction_user(entt::registry& in_reg, entt::entity in_entt);
-
  private:
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const assets_file& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, assets_file& p);
+
+  void rttr_user_attr();
 };
 
 }  // namespace doodle
@@ -91,10 +97,7 @@ template <>
 struct formatter<::doodle::assets_file> : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::assets_file& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string_view>::format(
-        in_.name_attr(),
-        ctx
-    );
+    return formatter<std::string_view>::format(in_.name_attr(), ctx);
   }
 };
 }  // namespace fmt

@@ -2,6 +2,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <rttr/rttr_enable.h>
+
 namespace doodle {
 namespace project_config {
 class base_config;
@@ -13,6 +15,7 @@ class organization {
   friend void from_json(const nlohmann::json &j, organization &p);
 
   std::unique_ptr<project_config::base_config> p_config;
+  RTTR_ENABLE();
 
  public:
   std::string org_p;

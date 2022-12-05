@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/metadata.h>
 
 #include <magic_enum.hpp>
+#include <rttr/rttr_enable.h>
+
 namespace doodle {
 class DOODLE_CORE_API shot {
  public:
@@ -11,6 +13,7 @@ class DOODLE_CORE_API shot {
 
   int64_t p_shot;
   shot_ab_enum p_shot_enum;
+  RTTR_ENABLE();
 
  public:
   std::string p_shot_ab;

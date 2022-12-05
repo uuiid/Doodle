@@ -5,10 +5,15 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+
+#include <rttr/rttr_enable.h>
+
 namespace doodle {
 class redirection_path_info;
 
 class DOODLE_CORE_API redirection_path_info {
+  RTTR_ENABLE();
+
  public:
   redirection_path_info();
   explicit redirection_path_info(

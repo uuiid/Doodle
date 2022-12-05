@@ -5,9 +5,14 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
+
+#include <rttr/rttr_enable.h>
+
 namespace doodle {
 
 class DOODLE_CORE_API season {
+  RTTR_ENABLE();
+
  public:
   std::int32_t p_int;
   season();

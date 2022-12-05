@@ -5,12 +5,17 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+
 #include <boost/signals2.hpp>
+
 #include <optional>
+#include <rttr/rttr_enable.h>
 
 namespace doodle {
 
 class DOODLE_CORE_API database_info {
+  RTTR_ENABLE();
+
  public:
   FSys::path path_;
 };
@@ -22,6 +27,7 @@ class database;
 
 namespace database_ns {
 class DOODLE_CORE_API ref_data {
+  RTTR_ENABLE();
   friend void to_json(nlohmann::json &j, const ref_data &p);
   friend void from_json(const nlohmann::json &j, ref_data &p);
 
@@ -46,6 +52,8 @@ class DOODLE_CORE_API database
     : boost::equality_comparable<database>,
       boost::equality_comparable<boost::uuids::uuid>,
       boost::equality_comparable<database_ns::ref_data> {
+  RTTR_ENABLE();
+
  private:
   friend class database_n::insert;
   friend class database_n::select;
