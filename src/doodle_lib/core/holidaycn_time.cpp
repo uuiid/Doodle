@@ -23,7 +23,11 @@ void from_json(const nlohmann::json &in_j, holidaycn_time::info &in_p) {
 }
 
 holidaycn_time::holidaycn_time() {
-  auto l_file = cmrc::doodle_holidaycn::get_filesystem().open("2022.json");
+  auto l_y = time_point_wrap{}.compose();
+
+  if (!cmrc::doodle_holidaycn::get_filesystem().exists(fmt::format("{}.json", l_y.year))) return;
+
+  auto l_file = cmrc::doodle_holidaycn::get_filesystem().open(fmt::format("{}.json", l_y.year));
 
   auto l_json = nlohmann::json::parse(std::string_view{l_file.begin(), l_file.size()});
   for (const auto &i : l_json.at("days").get<std::vector<info>>()) {

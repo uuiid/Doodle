@@ -4,11 +4,15 @@
 
 #include "attendance_rule.h"
 
+#include "doodle_core/metadata/time_point_wrap.h"
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/time_tool/work_clock.h>
 
-namespace doodle {
-namespace business {
+#include "doodle_lib/core/holidaycn_time.h"
+
+#include <fmt/core.h>
+
+namespace doodle::business {
 
 class attendance_rule::impl {
  public:
@@ -61,6 +65,8 @@ void attendance_rule::gen_work_clock() {
     ranges::for_each(l_rule.extra_work(), [&](const std::decay_t<decltype(l_rule.extra_work())>::value_type& in_) {
       ptr->time_clock += std::make_tuple(in_.first, in_.second, in_.info);
     });
+
+    holidaycn_time{}.set_clock(ptr->time_clock);
   }
 }
 void attendance_rule::async_run(
@@ -74,5 +80,4 @@ void attendance_rule::async_run(
   (*in_call_type_ptr)({}, ptr->time_clock);
 }
 attendance_rule::~attendance_rule() = default;
-}  // namespace business
-}  // namespace doodle
+}  // namespace doodle::business
