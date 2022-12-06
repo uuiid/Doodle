@@ -15,40 +15,41 @@
 
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
+#include <boost/signals2/connection.hpp>
+
+#include <chrono>
+#include <fmt/core.h>
+#include <range/v3/algorithm/for_each.hpp>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace doodle::gui::time_sequencer_widget_ns {
 
 namespace {
 class work_gui_data {
  public:
-  using base_type   = gui_cache<std::array<gui_cache<bool>, 7>>;
+  using base_type   = std::array<std::pair<std::string, bool>, 7>;
 
   using friend_type = business::rules::work_day_type;
 
   base_type gui_attr;
   work_gui_data() : work_gui_data(business::rules::work_Monday_to_Friday){};
   explicit work_gui_data(const friend_type& in_work_day_type)
-      : gui_attr(
-            "工作周"s,
-            std::array<gui::gui_cache<bool>, 7>{
-                gui::gui_cache<bool>{"星期日"s, in_work_day_type[0]},
-                gui::gui_cache<bool>{"星期一"s, in_work_day_type[1]},
-                gui::gui_cache<bool>{"星期二"s, in_work_day_type[2]},
-                gui::gui_cache<bool>{"星期三"s, in_work_day_type[3]},
-                gui::gui_cache<bool>{"星期四"s, in_work_day_type[4]},
-                gui::gui_cache<bool>{"星期五"s, in_work_day_type[5]},
-                gui::gui_cache<bool>{"星期六"s, in_work_day_type[6]}}
-        ){};
+      : gui_attr{std::make_pair("星期日"s, in_work_day_type[0]), std::make_pair("星期一"s, in_work_day_type[1]),
+                 std::make_pair("星期二"s, in_work_day_type[2]), std::make_pair("星期三"s, in_work_day_type[3]),
+                 std::make_pair("星期四"s, in_work_day_type[4]), std::make_pair("星期五"s, in_work_day_type[5]),
+                 std::make_pair("星期六"s, in_work_day_type[6])} {};
 
   explicit operator friend_type() {
     friend_type l_r{};
-    l_r[0] = gui_attr.data[0]();
-    l_r[1] = gui_attr.data[1]();
-    l_r[2] = gui_attr.data[2]();
-    l_r[3] = gui_attr.data[3]();
-    l_r[4] = gui_attr.data[4]();
-    l_r[5] = gui_attr.data[5]();
-    l_r[6] = gui_attr.data[6]();
+    l_r[0] = gui_attr[0].second;
+    l_r[1] = gui_attr[1].second;
+    l_r[2] = gui_attr[2].second;
+    l_r[3] = gui_attr[3].second;
+    l_r[4] = gui_attr[4].second;
+    l_r[5] = gui_attr[5].second;
+    l_r[6] = gui_attr[6].second;
     return l_r;
   }
 };
@@ -139,14 +140,15 @@ class time_info_gui_data : boost::equality_comparable<time_info_gui_data> {
 
 class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
  public:
-  time_hh_mm_ss_gui_data begin;
-  time_hh_mm_ss_gui_data end;
+  chrono::hours begin;
+  chrono::hours end;
   gui_cache_name_id name_id_delete{"删除"s};
   time_work_gui_data() = default;
 
   using friend_type    = std::pair<chrono::seconds, chrono::seconds>;
 
-  explicit time_work_gui_data(const friend_type& in_pair) : begin(in_pair.first), end(in_pair.second) {}
+  explicit time_work_gui_data(const friend_type& in_pair)
+      : begin(chrono::round<chrono::hours>(in_pair.first)), end(chrono::round<chrono::hours>(in_pair.second)) {}
 
   explicit operator friend_type() {
     return std::make_pair(friend_type::first_type{begin}, friend_type::second_type{end});
@@ -164,13 +166,13 @@ class work_gui_data_render {
   bool render() {
     modify_guard_.begin_flag();
 
-    dear::CollapsingHeader{*gui_data.gui_attr} && [this]() {
-      dear::HelpMarker{"按星期去计算工作时间"};
-      ranges::for_each(gui_data.gui_attr(), [this](decltype(gui_data.gui_attr().front()) in_value) {
-        modify_guard_ = ImGui::Checkbox(*in_value, &in_value);
-      });
-    };
-    if (modify_guard_) modify_guard_(get());
+    std::string l_show_text{};
+    ranges::for_each(gui_data.gui_attr, [l_text = &l_show_text](decltype(gui_data.gui_attr.front()) in_value) {
+      if (in_value.second) *l_text = fmt::format("{} {}", *l_text, in_value.first);
+    });
+
+    dear::Text(fmt::format("基本计算工作周期为 {}", l_show_text));
+
     return modify_guard_.current_frame_modify();
   }
   gui_data_type::friend_type get() { return gui_data_type::friend_type{gui_data}; }
@@ -183,35 +185,22 @@ class time_work_gui_data_render {
   std::vector<gui_data_type> gui_data{};
   gui_cache_name_id name_id{"每日工作时间"};
 
-  gui_cache_name_id name_id_add{"添加"s};
-  gui_cache_name_id name_id_delete{"删除"s};
   modify_guard<std::vector<gui_data_type::friend_type>> modify_guard_;
 
   bool render() {
     if (modify_guard_) modify_guard_(get());
 
     modify_guard_.begin_flag();
-
-    dear::CollapsingHeader{*name_id} && [this]() {
-      dear::HelpMarker{"每天的开始和结束时间段"};
-      if (modify_guard_ = imgui::Button(*name_id_add); modify_guard_.current_modify()) {
-        boost::asio::post(g_io_context(), [this]() { this->add(); });
-      }
-      ranges::for_each(gui_data, [this](gui_data_type& in_type) {
-        modify_guard_ = ImGui::SliderInt3(*in_type.begin, in_type.begin.data.data(), 0, 59);
-        modify_guard_ = ImGui::SliderInt3(*in_type.end, in_type.end.data.data(), 0, 59);
-        if (modify_guard_ = imgui::Button(*in_type.name_id_delete); modify_guard_.current_modify()) {
-          boost::asio::post(g_io_context(), [this, in_type]() { this->delete_node(in_type); });
-        }
-      });
-    };
+    ranges::for_each(gui_data, [](const decltype(gui_data)::value_type& in) {
+      dear::Text(fmt::format("每日工作时间为 {} 到 {}", in.begin, in.end));
+    });
 
     modify_guard_.async_begin_flag();
     return modify_guard_.current_frame_modify();
   };
 
   void add() {
-    gui_data.emplace_back(gui_data_type{std::make_pair(9h, 12h)});
+    gui_data.emplace_back(std::make_pair(9h, 12h));
     this->modify_guard_ = true;
   }
   void delete_node(const gui_data_type& in_data_type) {
@@ -303,6 +292,7 @@ class time_rules_render::impl {
   rules_type rules_attr;
 
   render_time_rules render_time{};
+  std::vector<boost::signals2::scoped_connection> sig_scoped;
 };
 
 time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
@@ -328,13 +318,13 @@ time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
     p_i->rules_attr.extra_rest() = in;
     this->modify_guard_          = true;
   });
+  p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+    this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
+  }));
 
-  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+  p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) {
     this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
-  });
-  g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) {
-    this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
-  });
+  }));
 }
 const time_rules_render::rules_type& time_rules_render::rules_attr() const { return p_i->rules_attr; }
 void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules_type) {
