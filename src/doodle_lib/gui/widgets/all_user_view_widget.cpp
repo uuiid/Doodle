@@ -11,28 +11,18 @@
 
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
-#include "doodle_dingding/configure/config.h"
+#include <imgui.h>
+
 
 namespace doodle::gui {
 class all_user_view_widget::impl {
  public:
   struct user_gui_data {
-    user_gui_data(const std::string& in_basic_string, const std::string& in_phone_number, entt::handle in_handle)
-        : show_name(in_basic_string),
-          phone_number(fmt::format("{}电话", in_basic_string), in_phone_number),
-          handle(in_handle),
-          p_switch_key(
-              "所在公司"s, in_handle.all_of<dingding::user>() && !in_handle.get<dingding::user>().company.empty()
-                               ? in_handle.get<dingding::user>().company
-                               : std::string{dingding::dingding_config::suoyi}
-          ) {}
+    user_gui_data(const std::string& in_basic_string, entt::handle in_handle)
+        : show_name(in_basic_string), handle(in_handle) {}
 
     gui_cache_name_id show_name;
-    gui_cache_name_id get_chork;
-    gui_cache<std::string> phone_number;
-    gui_cache_name_id delete_user{"删除用户"};
     entt::handle handle;
-    gui::gui_cache<std::string> p_switch_key;
   };
 
   std::string title_name_{std::string{name}};
@@ -44,17 +34,13 @@ class all_user_view_widget::impl {
   business::rules rules_attr{};
   time_sequencer_widget_ns::time_rules_render time_rules_render_attr{};
   bool has_init{false};
-
-  entt::observer del_user{};
+  gui_cache_name_id delete_user{"删除用户"};
 
   void get_all_user_data() {
     auto l_v = g_reg()->view<database, user>();
     for (auto&& [e, l_d, l_u] : l_v.each()) {
       auto l_h = make_handle(e);
-      user_name_list.emplace_back(
-          fmt::to_string(l_u), l_h.all_of<dingding::user>() ? l_h.get<dingding::user>().phone_number : ""s,
-          make_handle(e)
-      );
+      user_name_list.emplace_back(fmt::to_string(l_u), make_handle(e));
     }
     user_name_list |= ranges::action::sort([](const user_gui_data& in_l, const user_gui_data& in_r) {
       return in_l.show_name.name < in_r.show_name.name;
@@ -93,29 +79,7 @@ void all_user_view_widget::render() {
     ptr->get_all_user_data();
     ptr->has_init = true;
   }
-  ImGui::PushItemWidth(260);
-  for (auto& item : ptr->user_name_list) {
-    if (dear::InputText(*item.phone_number, &item.phone_number)) {
-      item.handle.get_or_emplace<dingding::user>().phone_number = item.phone_number;
-      database::save(item.handle);
-    }
-    ImGui::SameLine();
-    dear::Combo{*item.p_switch_key, item.p_switch_key.data.c_str()} && [&]() {
-      for (const auto& l_item_s : {dingding::dingding_config::suoyi, dingding::dingding_config::congxin}) {
-        if (ImGui::Selectable(l_item_s.data())) {
-          item.p_switch_key.data                               = std::string{l_item_s};
-          item.handle.get_or_emplace<dingding::user>().company = std::string{l_item_s};
-          database::save(item.handle);
-        }
-      }
-    };
 
-    ImGui::SameLine();
-    if (ImGui::Button(*item.delete_user)) {
-      ptr->delete_user_fun(item.handle);
-    }
-  }
-  ImGui::PopItemWidth();
   dear::Combo{*ptr->combox_user_id, ptr->combox_user_id().data()} && [this]() {
     for (auto&& l_u : ptr->user_name_list) {
       if (dear::Selectable(*l_u.show_name)) {
@@ -123,6 +87,11 @@ void all_user_view_widget::render() {
       }
     }
   };
+
+  ImGui::SameLine();
+  if (ImGui::Button(*ptr->delete_user)) {
+    ptr->delete_user_fun(ptr->select_user);
+  }
 
   if (ptr->time_rules_render_attr.render()) {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
