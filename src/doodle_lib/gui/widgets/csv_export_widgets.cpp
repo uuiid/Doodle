@@ -30,6 +30,8 @@
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <fmt/chrono.h>
 
 namespace doodle::gui {
@@ -126,7 +128,7 @@ csv_line::csv_line(
                       : ""s;
   start_time_   = start_time;
   end_time_     = end_time;
-  len_time_     = chrono::ceil<chrono::seconds>(k_time);
+  len_time_     = chrono::round<chrono::seconds>(k_time);
   time_info_    = k_comm.p_time_info;
   comment_info_ = k_comm.get_comment();
   file_path_    = k_ass_path.generic_string();
@@ -158,22 +160,27 @@ void csv_table::computing_time() {
 
   // 这里我们需要进行求整
   for (auto &&item : time_statistics) {
-    using time_rational = boost::rational<std::int64_t>;
-    time_rational l_time_rational{item.second.count(), 60ll * 60ll * 8ll};
+    /// 先使用小时取整
+    auto l_hours      = chrono::round<chrono::hours>(item.second);
+    /// 再转换为秒
+    auto l_second     = chrono::round<chrono::seconds>(l_hours);
+    /// 得出误差
+    auto l_mean_error = std::max(item.second, l_second) - std::min(item.second, l_second);
+    if (l_mean_error == 0s) continue;
 
-    auto l_round_value = std::round(boost::rational_cast<std::float_t>(l_time_rational));
-    if (l_round_value == 0) continue;
-
-    if (auto l_val = l_time_rational - time_rational{boost::numeric_cast<std::int64_t>(l_round_value)}; l_val != 0) {
-      auto l_se = (l_val * 60ll * 60ll * 8ll).numerator();
-      //      if (std::abs(l_se) > 360) continue;
-      //      while (l_se) {
-      //        for (auto i : user_index[item.first]) {
-      //
-      //        }
-      //      }
-    }
+    /// 直接选中第一个调整误差
+    /// 多了
+    if (item.second > l_second) line_list[user_index[item.first].front()].len_time_ -= l_mean_error;
+    /// 少了
+    else
+      line_list[user_index[item.first].front()].len_time_ += l_mean_error;
   }
+  /// 重新统计
+  time_statistics.clear();
+  ranges::for_each(line_list, [&](const csv_export_widgets_ns::csv_line &in_line) {
+    time_statistics[in_line.user_] += in_line.len_time_;
+  });
+  DOODLE_LOG_INFO("计算时间调整后总计 {}", fmt::join(time_statistics, " "));
 }
 void csv_table::sort_line() { line_list |= ranges::actions::sort; }
 
