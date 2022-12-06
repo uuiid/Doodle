@@ -9,7 +9,6 @@
 
 #include <entt/entity/fwd.hpp>
 
-
 using namespace doodle;
 BOOST_AUTO_TEST_CASE(create_lib)
 /* Compare with void free_test_function() */

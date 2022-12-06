@@ -144,7 +144,7 @@ bool main_status_bar::tick() {
 
         dear::Text(l_msg.get_name());
         ImGui::SameLine();
-        dear::Text(l_msg.err());
+        dear::Text(l_msg.message_back());
         ImGui::ProgressBar(
             boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
             fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
