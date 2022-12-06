@@ -198,6 +198,7 @@ class DOODLE_DINGDING_API attendance {
   std::string corpId{};
 
   void add_clock_data(doodle::business::work_clock& in_clock) const;
+  void add_clock_data_rest(doodle::business::work_clock& in_clock) const;
   //  std::vector<std::pair<time_point_wrap,
   //                        time_point_wrap>>
   /// @brief 当前排班对应的休息时间段 -> 班次内休息信息

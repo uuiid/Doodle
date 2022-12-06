@@ -114,6 +114,9 @@ void attendance_dingding::get_work_time() {
           for (const auto& item : in_list) {
             item.add_clock_data(l_w);
           }
+          for (const auto& item : in_list) {
+            item.add_clock_data_rest(l_w);
+          }
 
         } catch (const doodle_error& in_err) {
           l_err_code = boost::system::error_code{error_enum::parse_string};
