@@ -115,7 +115,7 @@ void create_video::render() {
     //                    ranges::views::filter([](const FSys::directory_entry& in_file) {
     //                      return FSys::is_regular_file(in_file);
     //                    }) |
-    //                    ranges::view::transform([](const FSys::directory_entry& in_file) -> FSys::path {
+    //                    ranges::views::transform([](const FSys::directory_entry& in_file) -> FSys::path {
     //                      return in_file.path();
     //                    }) |
     //                    ranges::to_vector;

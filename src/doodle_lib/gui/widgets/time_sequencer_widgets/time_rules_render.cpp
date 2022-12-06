@@ -220,13 +220,13 @@ class time_work_gui_data_render {
   }
 
   std::vector<gui_data_type::friend_type> get() {
-    return gui_data | ranges::view::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
+    return gui_data | ranges::views::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
            ranges::to_vector;
   }
 
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
     gui_data =
-        in_type | ranges::view::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
+        in_type | ranges::views::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
   }
 };
 
@@ -281,10 +281,10 @@ class time_info_gui_data_render {
   }
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
     gui_data =
-        in_type | ranges::view::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
+        in_type | ranges::views::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
   }
   std::vector<gui_data_type::friend_type> get() {
-    return gui_data | ranges::view::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
+    return gui_data | ranges::views::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
            ranges::to_vector;
   }
 };

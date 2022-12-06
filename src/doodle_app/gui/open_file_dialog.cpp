@@ -132,7 +132,7 @@ void file_panel::render() {
     p_i->path_list.clear();
     p_i->p_pwd.clear();
     p_i->path_list = k_dir |
-                     ranges::view::transform([](auto &in_path) -> path_info { return path_info{}.init(in_path); }) |
+                     ranges::views::transform([](auto &in_path) -> path_info { return path_info{}.init(in_path); }) |
                      ranges::to_vector;
   }
   /// 输入路径按钮

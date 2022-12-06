@@ -119,7 +119,7 @@ class insert::impl {
    * @brief 创建实体数据(多线程)
    */
   void create_entt_data() {
-    main_tabls = entt_list | ranges::view::transform([](const entt::entity &in) {
+    main_tabls = entt_list | ranges::views::transform([](const entt::entity &in) {
                    auto l_i   = std::make_shared<entity_data>();
                    l_i->entt_ = in;
                    return std::make_pair(in, l_i);

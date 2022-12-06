@@ -211,7 +211,7 @@ k_f()
 }
 
 std::string replace_file_arg::to_str() const {
-  auto l_list_entt = save_handle | ranges::view::transform([](const entt::handle &in) -> std::string {
+  auto l_list_entt = save_handle | ranges::views::transform([](const entt::handle &in) -> std::string {
                        nlohmann::json l_j{};
                        entt_tool::save_comm<assets_file, redirection_path_info>(in, l_j);
                        return fmt::format(R"(cmds.doodle_add_entt(josndata="""{}"""))", l_j.dump());

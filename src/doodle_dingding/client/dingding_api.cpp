@@ -228,7 +228,7 @@ void dingding_api::async_get_token(read_access_token_fun&& in) {
 //           throw_exception(l_body.get_error());
 //         }
 //         auto l_res = l_body.result_type().list;
-//         auto l_msg = l_res | ranges::view::transform([](const user_dd& in) -> entt::handle {
+//         auto l_msg = l_res | ranges::views::transform([](const user_dd& in) -> entt::handle {
 //                        auto l_handle = doodle::make_handle();
 //                        l_handle.emplace<user_dd>(in);
 //                        return l_handle;
@@ -310,7 +310,7 @@ void dingding_api::async_get_user_info(  /// 找到用户信息
 //           throw_exception(l_body.get_error());
 //         }
 //         auto l_res = l_body.result_type();
-//         auto l_msg = l_res | ranges::view::transform([](const attendance::day_data& in) -> entt::handle {
+//         auto l_msg = l_res | ranges::views::transform([](const attendance::day_data& in) -> entt::handle {
 //                        auto l_h = make_handle();
 //                        l_h.emplace<attendance::day_data>(in);
 //                        return l_h;

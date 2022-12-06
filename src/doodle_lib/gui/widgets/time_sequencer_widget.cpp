@@ -458,15 +458,15 @@ void time_sequencer_widget::fliter_select() {
   auto l_end   = p_i->combox_month.time_data.current_month_end();
   DOODLE_LOG_INFO("开始日期 {} 结束日期 {}", l_begin, l_end);
 
-  auto l_list  = l_view | ranges::view::transform([](const entt::entity& in_tuple) -> entt::handle {
+  auto l_list  = l_view | ranges::views::transform([](const entt::entity& in_tuple) -> entt::handle {
                   return make_handle(in_tuple);
                 });
   /// 过滤
-  auto l_list2 = l_list | ranges::view::filter([&](const entt::handle& in_handle) -> bool {
+  auto l_list2 = l_list | ranges::views::filter([&](const entt::handle& in_handle) -> bool {
                    auto&& l_t = in_handle.get<time_point_wrap>();
                    return l_t <= l_end && l_t >= l_begin;
                  }) |
-                 ranges::view::filter([&](const entt::handle& in_handle) -> bool {
+                 ranges::views::filter([&](const entt::handle& in_handle) -> bool {
                    auto l_user = p_i->combox_user_id.current_user;
                    return in_handle.get<assets_file>().user_attr() == l_user;
                  }) |
@@ -476,7 +476,7 @@ void time_sequencer_widget::fliter_select() {
     return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
   });
 
-  p_i->time_list = l_list2 | ranges::view::transform([](const entt::handle& in_handle) -> impl::point_cache {
+  p_i->time_list = l_list2 | ranges::views::transform([](const entt::handle& in_handle) -> impl::point_cache {
                      return impl::point_cache{in_handle, in_handle.get<time_point_wrap>()};
                    }) |
                    ranges::to_vector;

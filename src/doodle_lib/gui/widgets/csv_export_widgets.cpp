@@ -192,7 +192,7 @@ std::string csv_table::to_str() const {
   );  /// @brief 标题
   l_str << fmt::format(
       "{}\n", fmt::join(
-                  line_list | ranges::view::transform([](const csv_line &in_line) -> std::string {
+                  line_list | ranges::views::transform([](const csv_line &in_line) -> std::string {
                     // using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
                     using time_rational = boost::rational<std::uint64_t>;
                     time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
@@ -239,7 +239,7 @@ class csv_table_gui {
     /// 添加初始化显示
     list =
         gui_data().time_statistics |
-        ranges::view::transform([](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
+        ranges::views::transform([](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
           using time_rational = boost::rational<std::uint64_t>;
           time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
           return csv_line_statistics_gui{
@@ -255,7 +255,7 @@ class csv_table_gui {
   void render() {
     if (ImGui::Button(*show_details)) {
       list = gui_data().line_list |
-             ranges::view::transform([](const csv_export_widgets_ns::csv_line &in_line) -> csv_line_gui {
+             ranges::views::transform([](const csv_export_widgets_ns::csv_line &in_line) -> csv_line_gui {
                using time_rational = boost::rational<std::uint64_t>;
                time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
 
@@ -278,7 +278,7 @@ class csv_table_gui {
     }
     if (ImGui::Button(*show_statistics)) {
       list = gui_data().time_statistics |
-             ranges::view::transform(
+             ranges::views::transform(
                  [](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
                    using time_rational = boost::rational<std::uint64_t>;
                    time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
@@ -479,7 +479,7 @@ void csv_export_widgets::generate_table() {
     return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
   });
   p_i->csv_table_gui_.set_table_data(
-      p_i->list | ranges::view::transform([this](const entt::handle &in_handle) -> csv_line {
+      p_i->list | ranges::views::transform([this](const entt::handle &in_handle) -> csv_line {
         auto l_user = in_handle.get<assets_file>().user_attr();
         return csv_line{
             in_handle,
@@ -574,14 +574,14 @@ void csv_export_widgets::filter_() {
 
   p_i->list =
       l_view |
-      ranges::view::transform([](const entt::entity &in_tuple) -> entt::handle { return make_handle(in_tuple); }) |
+      ranges::views::transform([](const entt::entity &in_tuple) -> entt::handle { return make_handle(in_tuple); }) |
       ranges::to_vector;
 
-  p_i->list = p_i->list | ranges::view::filter([&](const entt::handle &in_handle) -> bool {
+  p_i->list = p_i->list | ranges::views::filter([&](const entt::handle &in_handle) -> bool {
                 auto &&l_t = in_handle.get<time_point_wrap>();
                 return l_t <= l_end && l_t >= l_begin;
               }) |
-              ranges::view::filter([&](const entt::handle &in_handle) -> bool {
+              ranges::views::filter([&](const entt::handle &in_handle) -> bool {
                 if (p_i->combox_user_id.data == "all")
                   return in_handle.get<assets_file>().user_attr().all_of<user>();
                 else {

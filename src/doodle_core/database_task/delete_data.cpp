@@ -33,7 +33,7 @@ class delete_data::impl {
   std::size_t size{};
 
   void create_id() {
-    delete_id_list = entt_list | ranges::view::transform([this](const entt::entity &in) {
+    delete_id_list = entt_list | ranges::views::transform([this](const entt::entity &in) {
                        if (stop) return std::uint64_t{};
                        g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
                        return g_reg()->get<database>(in).get_id();

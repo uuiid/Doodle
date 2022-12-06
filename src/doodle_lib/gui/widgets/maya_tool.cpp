@@ -201,11 +201,12 @@ void maya_tool::render() {
       auto k_arg             = maya_exe_ns::replace_file_arg{};
       k_arg.file_path        = i;
       k_arg.replace_file_all = true;
-      k_arg.save_handle      = ptr_attr->ref_attr.ref_attr() |
-                          ranges::view::transform([](const maya_tool_ns::maya_reference_info& in_info) -> entt::handle {
-                            return in_info.save_handle;
-                          }) |
-                          ranges::to_vector;
+      k_arg.save_handle =
+          ptr_attr->ref_attr.ref_attr() |
+          ranges::views::transform([](const maya_tool_ns::maya_reference_info& in_info) -> entt::handle {
+            return in_info.save_handle;
+          }) |
+          ranges::to_vector;
       k_arg.project_         = g_reg()->ctx().at<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;

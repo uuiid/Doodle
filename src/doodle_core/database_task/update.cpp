@@ -117,7 +117,7 @@ class update_data::impl {
   }
 
   void create_entt_data() {
-    main_tabls = entt_list | ranges::view::transform([](const entt::entity &in) {
+    main_tabls = entt_list | ranges::views::transform([](const entt::entity &in) {
                    return std::make_pair(in, g_reg()->get<database>(in).get_id());
                  }) |
                  ranges::to<std::map<entt::entity, std::int64_t>>();
