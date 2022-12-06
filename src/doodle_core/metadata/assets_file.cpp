@@ -14,6 +14,8 @@
 #include <core/core_set.h>
 #include <entt/entity/fwd.hpp>
 #include <functional>
+#include <rttr/constructor.h>
+#include <rttr/policy.h>
 #include <rttr/registration.h>
 #include <rttr/registration>
 
@@ -25,14 +27,14 @@ class assets_file::impl {
 
   entt::handle handle_cache{};
 
-  FSys::path path;
-  std::string p_name;
+  FSys::path path{};
+  std::string p_name{};
   std::uint64_t p_version{};
 
-  std::string organization_p;
+  std::string organization_p{};
 
   /// \brief 不要使用, 已经是过期段属性 保留只是兼容性更改
-  std::string p_user;
+  std::string p_user{};
 };
 
 void to_json(nlohmann::json& j, const assets_file& p) {
@@ -150,8 +152,7 @@ assets_file::~assets_file() = default;
 }  // namespace doodle
 
 RTTR_REGISTRATION {
-  rttr::registration::class_<doodle::assets_file>("assets_file")
-      .constructor();
+  rttr::registration::class_<doodle::assets_file>("doodle::assets_file").constructor()(rttr::policy::ctor::as_object);
   /**
    *
   .property(
