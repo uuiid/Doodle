@@ -5,7 +5,6 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/user.h>
 
-#include <doodle_lib/attendance/attendance_dingding.h>
 
 #include "doodle_dingding/metadata/process_instance.h"
 #include <doodle_dingding/client/client.h>

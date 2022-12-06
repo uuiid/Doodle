@@ -18,7 +18,6 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include "attendance/attendance_dingding.h"
 #include "attendance/attendance_interface.h"
 #include "gui/widgets/time_sequencer_widget.h"
 #include <entt/entity/fwd.hpp>

@@ -23,7 +23,7 @@
 #include <doodle_app/gui/show_message.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_lib/attendance/attendance_dingding.h>
+
 #include <doodle_lib/attendance/attendance_rule.h>
 
 #include <boost/contract.hpp>
