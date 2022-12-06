@@ -80,7 +80,6 @@ target_link_libraries(doodle_lib
         dxgi.lib
         Microsoft::DirectXTK
         implot::implot
-        doodle_dingding
         DoodleLibResourceFont
         Eigen3::Eigen
         doodle_holidaycn
