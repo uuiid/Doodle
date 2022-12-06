@@ -76,8 +76,7 @@ csv_line::csv_line(
     const entt::handle &in_user_handle, bool in_use_first_as_project_name, const std::string_view &in_season_fmt_str,
     const std::string_view &in_episodes_fmt_str, const std::string_view &in_shot_fmt_str
 ) {
-  in_user_handle.any_of<user, dingding::user>() ? void()
-                                                : throw_error(error_enum::component_missing_error, "缺失用户组件"s);
+  in_user_handle.any_of<user>() ? void() : throw_error(error_enum::component_missing_error, "缺失用户组件"s);
   DOODLE_CHICK(in_handle.any_of<assets_file>(), doodle_error{"缺失文件组件"});
   auto &k_ass       = in_handle.get<assets_file>();
   /// \brief 工作时间计算
@@ -116,8 +115,7 @@ csv_line::csv_line(
       in_handle.all_of<season>()                                           //
           ? fmt::format(in_season_fmt_str, in_handle.get<season>().p_int)  //
           : ""s;
-  organization_        = in_user_handle.all_of<dingding::user>() ? in_user_handle.get<dingding::user>().department_name
-                                                                 : k_ass.organization_attr();
+  organization_        = k_ass.organization_attr();
   user_                = in_user_handle.get<user>().get_name();
   project_season_name_ = fmt::format("《{}》 {}", l_prj_name, l_season);
   episodes_ =
@@ -606,7 +604,7 @@ void csv_export_widgets::filter_() {
               }) |
               ranges::view::filter([&](const entt::handle &in_handle) -> bool {
                 if (p_i->combox_user_id.data == "all")
-                  return in_handle.get<assets_file>().user_attr().all_of<dingding::user>();
+                  return in_handle.get<assets_file>().user_attr().all_of<user>();
                 else {
                   auto l_user = p_i->combox_user_id.current_user;
                   return in_handle.get<assets_file>().user_attr() == l_user;

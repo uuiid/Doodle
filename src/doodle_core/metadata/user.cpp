@@ -85,17 +85,6 @@ void user::current_user::user_name_attr(const std::string& in_name) {
   core_set::get_set().user_name = in_name;
   database::save(user_handle);
 }
-void user::current_user::user_phone_number(const std::string& in_num) {
-  if (!*this) get_handle();
-  user_handle.get<dingding::user>().phone_number = in_num;
-  core_set::get_set().user_phone_number          = in_num;
-  database::save(user_handle);
-}
-
-std::string user::current_user::user_phone_number() {
-  if (!*this) get_handle();
-  return user_handle.get_or_emplace<dingding::user>().phone_number;
-}
 
 user::current_user::operator bool() const {
   return user_handle && user_handle.all_of<database, user>() && user_handle.get<database>() == uuid;
@@ -113,22 +102,5 @@ void user::current_user::create_user() {
 
   database::save(l_create_h);
 }
-
-namespace dingding {
-void to_json(nlohmann::json& j, const user& p) {
-  j["user_id"]         = p.user_id;
-  j["phone_number"]    = p.phone_number;
-  j["department_name"] = p.department_name;
-
-  j["company"]         = p.company;
-}
-void from_json(const nlohmann::json& j, user& p) {
-  j.at("user_id").get_to(p.user_id);
-  j.at("phone_number").get_to(p.phone_number);
-  j.at("department_name").get_to(p.department_name);
-
-  if (j.contains("company")) j.at("company").get_to(p.company);
-}
-}  // namespace dingding
 
 }  // namespace doodle

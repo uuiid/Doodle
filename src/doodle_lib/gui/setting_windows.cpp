@@ -74,7 +74,6 @@ void setting_windows::init() {
   auto l_user                          = g_reg()->ctx().at<user::current_user>().get_handle();
   p_i->p_user.data                     = l_user.get<user>().get_name();
   p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
-  auto& l_dingding                     = l_user.get_or_emplace<dingding::user>();
 
   p_i->p_org_name.data                 = core_set::get_set().organization_name;
   p_i->p_cache.data                    = core_set::get_set().get_cache_root().generic_string();

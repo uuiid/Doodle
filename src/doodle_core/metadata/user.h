@@ -50,8 +50,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
     entt::handle get_handle();
     std::string user_name_attr();
     void user_name_attr(const std::string& in_name);
-    void user_phone_number(const std::string& in_num);
-    std::string user_phone_number();
 
     void create_user();
 
@@ -62,26 +60,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
-
-namespace dingding {
-class DOODLE_CORE_API user {
-  RTTR_ENABLE();
-
- public:
-  std::string company;
-  std::string phone_number{};
-  std::string user_id{};
-  std::string department_name{};
-
- public:
-  user()  = default;
-  ~user() = default;
-
- private:
-  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
-  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
-};
-}  // namespace dingding
 
 }  // namespace doodle
 namespace fmt {

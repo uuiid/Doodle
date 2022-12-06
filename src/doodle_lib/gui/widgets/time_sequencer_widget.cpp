@@ -481,9 +481,9 @@ void time_sequencer_widget::fliter_select() {
                    }) |
                    ranges::to_vector;
   auto l_user = p_i->combox_user_id.current_user;
-  if (!l_user.all_of<dingding::user>()) {
+  if (!l_user || !l_user.all_of<user>()) {
     auto l_msg = std::make_shared<show_message>();
-    l_msg->set_message(fmt::format("未找到人员 {} 的电话号码", l_user.get<user>().get_name()));
+    l_msg->set_message(fmt::format("未找到人员 {}", l_user.get<user>().get_name()));
     make_handle().emplace<gui_windows>() = l_msg;
   }
 
