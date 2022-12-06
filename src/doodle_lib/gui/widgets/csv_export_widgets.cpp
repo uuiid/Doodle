@@ -333,15 +333,6 @@ class csv_table_gui {
   }
 };
 
-class work_clock_method_gui {
- public:
-  constexpr static std::string_view dingding{"钉钉软件"};
-  constexpr static std::string_view rule_method{"规则生成"};
-
-  gui_cache<std::string> data{"获取工作时间方法"s, std::string{dingding}};
-  csv_export_widgets::work_clock_method method{csv_export_widgets::work_clock_method::form_dingding};
-};
-
 class csv_export_widgets::impl {
  public:
   class time_cache : public gui_cache<std::int32_t> {
@@ -387,15 +378,13 @@ class csv_export_widgets::impl {
   gui_cache_name_id advanced_setting{"高级设置"};
 
   csv_table_gui csv_table_gui_{};
-  /// 使用规则还是dingding获取
-  work_clock_method_gui work_clock_method_gui_{};
+
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
   user_list_cache combox_user_id{};
   /// 过滤月份
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
-  gui_cache<bool> force_get_work_time{"强制刷新", false};
 
   std::size_t user_size{};
 };
@@ -446,7 +435,6 @@ void csv_export_widgets::render() {
     ImGui::InputText(*p_i->season_fmt_str.gui_name, &p_i->season_fmt_str.data);
     ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
     ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
-    ImGui::Checkbox(*p_i->force_get_work_time, &p_i->force_get_work_time);
   };
   ImGui::PushItemWidth(100);
   if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
@@ -538,15 +526,6 @@ bool csv_export_widgets::get_work_time() {
     return false;
   }
 
-  if (ranges::all_of(
-          p_i->user_handle, [](const decltype(p_i->user_handle)::value_type &in_type
-                            ) { return in_type.first.all_of<business::work_clock>(); }
-      ) &&
-      !p_i->force_get_work_time()) {
-    generate_table();
-    return true;
-  };
-
   /// \brief 这里设置一下时钟规则
   auto l_begin = p_i->list_sort_time.front().get<time_point_wrap>().current_month_start();
   auto l_end   = p_i->list_sort_time.back().get<time_point_wrap>().current_month_end();
@@ -558,7 +537,7 @@ bool csv_export_widgets::get_work_time() {
 
   p_i->user_size = l_size;
   for (const auto &item : p_i->user_handle) {
-    if (!item.first.all_of<business::work_clock>() || p_i->force_get_work_time())
+    if (!item.first.all_of<business::work_clock>())
       p_i->attendance_ptr->async_get_work_clock(
           item.first, l_begin, l_end,
           [l_handle = item.first, l_size,
