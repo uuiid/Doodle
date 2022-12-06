@@ -9,7 +9,6 @@ class base_config;
 
 }  // namespace project_config
 
-class organization;
 
 /**
  * 项目信息类

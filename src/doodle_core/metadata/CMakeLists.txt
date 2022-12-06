@@ -11,7 +11,6 @@ target_sources(
         leaf_meta.h
         metadata.h
         metadata_state.h
-        organization.h
         project.h
         season.h
         shot.h
@@ -32,7 +31,6 @@ target_sources(
         leaf_meta.cpp
         metadata.cpp
         metadata_cpp.h
-        organization.cpp
         project.cpp
         season.cpp
         shot.cpp

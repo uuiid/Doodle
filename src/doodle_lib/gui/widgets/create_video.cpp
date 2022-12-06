@@ -10,7 +10,6 @@
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/metadata/organization.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>

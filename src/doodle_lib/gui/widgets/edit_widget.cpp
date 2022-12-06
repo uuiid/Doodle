@@ -20,7 +20,6 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
-#include <doodle_core/metadata/organization.h>
 #include <core/tree_node.h>
 namespace doodle::gui {
 namespace edit_widgets_ns {

@@ -17,7 +17,6 @@
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
 #include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/metadata/organization.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
@@ -136,7 +135,7 @@ class select::impl {
               entt_tool::load_comm<
                   doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
                   doodle::time_point_wrap, doodle::comment, doodle::project_config::base_config, doodle::image_icon,
-                  doodle::importance, doodle::organization_list, doodle::redirection_path_info>(l_h, k_json);
+                  doodle::importance, doodle::redirection_path_info>(l_h, k_json);
               database::save(l_h);
               process_message_->message("开始旧版本兼容转换"s);
               process_message_->progress_step({1, l_size});
