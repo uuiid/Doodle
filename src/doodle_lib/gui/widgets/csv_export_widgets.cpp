@@ -23,7 +23,6 @@
 #include <doodle_app/gui/show_message.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-
 #include <doodle_lib/attendance/attendance_rule.h>
 
 #include <boost/contract.hpp>
@@ -450,18 +449,6 @@ void csv_export_widgets::render() {
     ImGui::InputText(*p_i->episodes_fmt_str.gui_name, &p_i->episodes_fmt_str.data);
     ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
     ImGui::Checkbox(*p_i->force_get_work_time, &p_i->force_get_work_time);
-    dear::Combo{*p_i->work_clock_method_gui_.data, p_i->work_clock_method_gui_.data().c_str()} && [&]() {
-      for (const auto &item : {work_clock_method_gui::dingding, work_clock_method_gui::rule_method}) {
-        if (ImGui::Selectable(item.data())) {
-          p_i->work_clock_method_gui_.data = std::string{
-              item == work_clock_method_gui::dingding ? work_clock_method_gui::dingding
-                                                      : work_clock_method_gui::rule_method};
-          p_i->work_clock_method_gui_.method = item == work_clock_method_gui::dingding
-                                                   ? csv_export_widgets::work_clock_method::form_dingding
-                                                   : csv_export_widgets::work_clock_method::form_rule;
-        }
-      }
-    };
   };
   ImGui::PushItemWidth(100);
   if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
@@ -544,41 +531,8 @@ bool csv_export_widgets::get_work_time() {
     p_i->user_handle[l_user].emplace_back(l_u);
   }
 
-  switch (p_i->work_clock_method_gui_.method) {
-    case work_clock_method::form_dingding: {
-      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_dingding>(p_i->attendance_ptr))
-        p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+  if (!p_i->attendance_ptr) p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
 
-      if (!std::all_of(
-              p_i->user_handle.begin(), p_i->user_handle.end(),
-              [](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) {
-                return in_handle.first.all_of<dingding::user>();
-              }
-          )) {
-        auto l_msg   = std::make_shared<show_message>();
-        auto l_users = p_i->user_handle |
-                       ranges::view::filter([](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) {
-                         return !in_handle.first.all_of<dingding::user>();
-                       }) |
-                       ranges::view::transform(
-                           [](const std::pair<entt::handle, std::vector<entt::handle>> &in_handle) -> std::string {
-                             return in_handle.first.get<user>().get_name();
-                           }
-                       ) |
-                       ranges::to_vector;
-        l_msg->set_message(fmt::format("缺失以下人员的电话号码:\n{}", fmt::join(l_users, "\n")));
-        make_handle().emplace<gui_windows>() = l_msg;
-        return false;
-      }
-
-      break;
-    }
-    case work_clock_method::form_rule: {
-      if (!p_i->attendance_ptr || !std::dynamic_pointer_cast<business::attendance_rule>(p_i->attendance_ptr))
-        p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
-      break;
-    }
-  }
   if (p_i->list.empty()) {
     auto l_msg = std::make_shared<show_message>();
     l_msg->set_message("筛选后为空");

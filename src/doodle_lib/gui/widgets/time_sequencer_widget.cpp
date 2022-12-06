@@ -19,6 +19,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 #include "attendance/attendance_interface.h"
+#include "attendance/attendance_rule.h"
 #include "gui/widgets/time_sequencer_widget.h"
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
@@ -488,12 +489,12 @@ void time_sequencer_widget::fliter_select() {
 
   if (!l_user.all_of<business::work_clock>()) {
     if (!p_i->attendance_ptr) {
-      p_i->attendance_ptr = std::make_shared<business::attendance_dingding>();
+      p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
     }
 
     /// 显示一下进度条
     auto& l_p = g_reg()->ctx().emplace<process_message>();
-    l_p.set_name("开始获取dingding数据");
+    l_p.set_name("开始计算数据");
     l_p.set_state(l_p.run);
 
     p_i->attendance_ptr->async_get_work_clock(
