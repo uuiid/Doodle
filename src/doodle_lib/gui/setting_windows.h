@@ -66,8 +66,6 @@ class setting_windows : public base_windows<dear::Begin, setting_windows> {
   void save();
 
  private:
-  void get_dingding_info();
-  void get_dingding_dep();
   void show_error(const std::string& in_meg);
 };
 
