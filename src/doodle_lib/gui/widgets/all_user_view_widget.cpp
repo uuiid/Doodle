@@ -42,7 +42,7 @@ class all_user_view_widget::impl {
       auto l_h = make_handle(e);
       user_name_list.emplace_back(fmt::to_string(l_u), make_handle(e));
     }
-    user_name_list |= ranges::action::sort([](const user_gui_data& in_l, const user_gui_data& in_r) {
+    user_name_list |= ranges::actions::sort([](const user_gui_data& in_l, const user_gui_data& in_r) {
       return in_l.show_name.name < in_r.show_name.name;
     });
   };
@@ -67,7 +67,7 @@ class all_user_view_widget::impl {
 
     boost::asio::post(g_io_context(), [=]() {
       user_name_list |=
-          ranges::action::remove_if([&](const user_gui_data& in) -> bool { return in.handle == in_user; });
+          ranges::actions::remove_if([&](const user_gui_data& in) -> bool { return in.handle == in_user; });
     });
   }
 };

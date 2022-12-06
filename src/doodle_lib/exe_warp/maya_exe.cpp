@@ -313,7 +313,7 @@ void maya_exe::notify_run() {
   for (auto &&l_i : p_i->run_attr) {
     if (!l_i->child_attr.running()) {
       boost::asio::post(g_io_context(), [l_i, this]() {
-        this->p_i->run_attr |= ranges::action::remove_if([&](auto &&j) -> bool { return l_i == j; });
+        this->p_i->run_attr |= ranges::actions::remove_if([&](auto &&j) -> bool { return l_i == j; });
       });
     }
   }

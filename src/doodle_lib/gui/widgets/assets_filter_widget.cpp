@@ -536,7 +536,7 @@ void assets_filter_widget::refresh_(bool force) {
     ranges::partition(list, [](const entt::handle& in) -> bool {
       return in.any_of<assets_file>();
     });
-    list |= ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+    list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
       if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
         return in_r.get<assets_file>() < in_l.get<assets_file>();
       return false;
@@ -546,15 +546,13 @@ void assets_filter_widget::refresh_(bool force) {
     ranges::partition(list, [](const entt::handle& in) -> bool {
       return in.any_of<episodes>();
     });
-    list |=
-        ranges::action::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
-          if (in_r.any_of<episodes>() && in_l.any_of<episodes>())
-            return in_r.get<episodes>() < in_l.get<episodes>();
-          return false;
-        });
+    list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
+      if (in_r.any_of<episodes>() && in_l.any_of<episodes>()) return in_r.get<episodes>() < in_l.get<episodes>();
+      return false;
+    });
   }
   if (p_impl->p_sorts[2].data) {
-    list |= ranges::action::reverse;
+    list |= ranges::actions::reverse;
   }
 
   g_reg()->ctx().at<core_sig>().filter_handle(list);

@@ -94,7 +94,7 @@ bool reference_attr_setting::get_file_info() {
     k_status = MGlobal::getActiveSelectionList(l_selection_list);
     DOODLE_MAYA_CHICK(k_status);
     MObject l_obj{};
-    p_i->p_handles |= ranges::action::remove_if([&](entt::handle& in) -> bool {
+    p_i->p_handles |= ranges::actions::remove_if([&](entt::handle& in) -> bool {
       if (!in.get<reference_file>().has_node(l_selection_list)) {
         in.destroy();
         return true;

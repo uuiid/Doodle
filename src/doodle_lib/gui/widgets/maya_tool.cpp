@@ -140,7 +140,7 @@ void maya_tool::render() {
       if (ImGui::Button(*l_i.de_button_attr)) {
         boost::asio::post(g_io_context(), [l_i, this]() {
           ptr_attr->ref_attr.ref_attr() |=
-              ranges::action::remove_if([&](const maya_tool_ns::maya_reference_info& i) -> bool { return l_i == i; });
+              ranges::actions::remove_if([&](const maya_tool_ns::maya_reference_info& i) -> bool { return l_i == i; });
         });
       }
     }

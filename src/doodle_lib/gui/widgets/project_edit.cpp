@@ -296,9 +296,8 @@ void project_edit::render() {
           ImGui::TableNextColumn();
           if (ImGui::Button(*in.delete_button))
             boost::asio::post(g_io_context(), [in, this]() {
-              p_i->camera_judge_gui_attr.camera_judge_list_gui |= ranges::action::remove_if([&](const camera_judge_gui& in_) -> bool {
-                return in_ == in;
-              });
+              p_i->camera_judge_gui_attr.camera_judge_list_gui |=
+                  ranges::actions::remove_if([&](const camera_judge_gui& in_) -> bool { return in_ == in; });
             });
         });
       };

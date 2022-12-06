@@ -112,7 +112,7 @@ void gui_facet::tick() {
       delete_entt.emplace_back(l_e);
     }
   }
-  delete_entt |= ranges::action::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
+  delete_entt |= ranges::actions::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
   g_reg()->destroy(delete_entt.begin(), delete_entt.end());
 }
 bool gui_facet::tick_begin() {

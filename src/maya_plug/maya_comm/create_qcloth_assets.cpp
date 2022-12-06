@@ -72,9 +72,7 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
     p_i->coll_p = make_handle(num_to_enum<entt::entity>(l_value));
   }
 
-  p_i->cloth_list |= ranges::action::remove_if([](const entt::handle& in) {
-    return !in;
-  });
+  p_i->cloth_list |= ranges::actions::remove_if([](const entt::handle& in) { return !in; });
   DOODLE_CHICK(!p_i->cloth_list.empty(), doodle_error{"传入了空的布料列表"s});
   if (!p_i->coll_p.valid())
     p_i->coll_p = {};
@@ -138,7 +136,7 @@ void create_qcloth_assets::filter_create_node(
     const std::vector<MObject>& in_obj
 ) {
   //  p_i->create_nodes = get_all_node();
-  //  p_i->create_nodes |= ranges::action::remove_if([&](const MObject& in) -> bool {
+  //  p_i->create_nodes |= ranges::actions::remove_if([&](const MObject& in) -> bool {
   //    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {
   //      return in == in_item;
   //    });
