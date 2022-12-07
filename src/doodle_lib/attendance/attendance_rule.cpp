@@ -66,6 +66,16 @@ void attendance_rule::gen_work_clock() {
       ptr->time_clock += std::make_tuple(in_.first, in_.second, in_.info);
     });
 
+    // 去除绝对排除时间
+    for (auto l_b = ptr->begin; l_b <= ptr->end; l_b += chrono::days{1}) {
+      ranges::for_each(
+          l_rule.absolute_deduction[l_b.get_week_int()],
+          [&](const std::pair<chrono::seconds, chrono::seconds>& in_pair) {
+            ptr->time_clock -= std::make_tuple(l_b + in_pair.first, l_b + in_pair.second);
+          }
+      );
+    }
+
     holidaycn_time{}.set_clock(ptr->time_clock);
   }
 }

@@ -15,7 +15,6 @@ macro(doodle_link_test)
     target_link_libraries(${ARGV0}
             PUBLIC
             doodle_lib
-            doodle_dingding
             Boost::unit_test_framework
             )
     target_compile_definitions(${ARGV0}

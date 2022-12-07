@@ -8,6 +8,7 @@ add_executable(
         create_move.cpp
         boost_log.cpp
         rttr.cpp
+        range.cpp
 
 )
 target_link_libraries(

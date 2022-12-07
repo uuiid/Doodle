@@ -4,15 +4,19 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/modify_guard.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
+
+#include <iterator>
+#include <string>
+
 namespace doodle {
 namespace business {
 class rules;
 }
 
-namespace gui {
-namespace time_sequencer_widget_ns {
+namespace gui::time_sequencer_widget_ns {
 
 class DOODLELIB_API time_rules_render {
  public:
@@ -21,6 +25,9 @@ class DOODLELIB_API time_rules_render {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
+
+  void print_show_str();
+  std::string get_work_str(std::size_t in_index);
 
  public:
   modify_guard<rules_type> modify_guard_{};
@@ -33,6 +40,5 @@ class DOODLELIB_API time_rules_render {
   bool render();
 };
 
-}  // namespace time_sequencer_widget_ns
-}  // namespace gui
+}  // namespace gui::time_sequencer_widget_ns
 }  // namespace doodle

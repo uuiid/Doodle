@@ -4,10 +4,13 @@
 #pragma once
 
 #include <doodle_core/doodle_core.h>
+#include <doodle_core/metadata/detail/time_point_info.h>
 
 #include <bitset>
+#include <chrono>
 #include <rttr/rttr_enable.h>
 #include <utility>
+
 
 namespace doodle {
 class time_point_wrap;
@@ -41,25 +44,34 @@ class DOODLE_CORE_API rules {
  private:
   friend void to_json(nlohmann::json& j, const rules& p);
   friend void from_json(const nlohmann::json& j, rules& p);
-  class impl;
-  std::unique_ptr<impl> p_i;
 
  public:
   /// \brief 周六 ->周日(index 6->0)
   constexpr static work_day_type work_Monday_to_Friday{0b0111110};
+  /// @brief 周六到周日每日必然会排除的时间
+  std::array<std::vector<std::pair<chrono::seconds, chrono::seconds>>, 7> absolute_deduction;
+
+  using time_point_info = ::doodle::business::rules_ns::time_point_info;
+
+  work_day_type work_weekdays_p{};
+  std::vector<std::pair<chrono::seconds, chrono::seconds>> work_pair_p{};
+
+  std::vector<time_point_info> extra_holidays_p{};
+  std::vector<time_point_info> extra_work_p{};
+  std::vector<time_point_info> extra_rest_p{};
 
   rules();
   virtual ~rules();
 
-  rules(const rules& in_rules) noexcept;
-  rules& operator=(const rules& in_rules) noexcept;
-  rules(rules&& in_rules) noexcept;
-  rules& operator=(rules&& in_rules) noexcept;
+  rules(const rules& in_rules) noexcept            = default;
+  rules& operator=(const rules& in_rules) noexcept = default;
+  rules(rules&& in_rules) noexcept                 = default;
+  rules& operator=(rules&& in_rules) noexcept      = default;
   /**
    * @brief 获取每周 1-5工作, 每天9-12 13-18 工作时间的默认时间段
    * @return 默认段规则
    */
-  [[nodiscard("")]] static rules get_default();
+  [[nodiscard("")]] static const rules& get_default();
 
   void work_weekdays(const work_day_type& in_work_weekdays);
   [[nodiscard("")]] const work_day_type& work_weekdays() const;
@@ -99,10 +111,7 @@ template <>
 struct formatter<::doodle::business::rules> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::business::rules& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        in_.fmt_str(),
-        ctx
-    );
+    return formatter<string_view>::format(in_.fmt_str(), ctx);
   }
 };
 }  // namespace fmt
