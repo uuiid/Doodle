@@ -20,7 +20,6 @@
 namespace doodle::business {
 
 class DOODLE_CORE_API work_clock {
-  rules rules_;
   using time_type              = doodle::time_point_wrap;
   using duration_type          = doodle::time_point_wrap::duration;
   using info_type              = std::set<std::string>;
@@ -35,8 +34,6 @@ class DOODLE_CORE_API work_clock {
 
  public:
   work_clock();
-
-  void set_rules(const rules& in_rules);
 
   /**
    * @brief 设置工作时间时钟的开始和结束(缓存)

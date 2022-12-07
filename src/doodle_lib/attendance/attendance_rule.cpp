@@ -52,11 +52,9 @@ void attendance_rule::gen_work_clock() {
       }
     }
 
-    /// \brief 减去节假日
-    ranges::for_each(
-        l_rule.extra_holidays(), [&](const std::decay_t<decltype(l_rule.extra_holidays())>::value_type& in_
-                                 ) { ptr->time_clock -= std::make_tuple(in_.first, in_.second, in_.info); }
-    );
+    /// \brief 调整节假日
+    holidaycn_time{}.set_clock(ptr->time_clock);
+
     /// \brief 减去调休
     ranges::for_each(l_rule.extra_rest(), [&](const std::decay_t<decltype(l_rule.extra_rest())>::value_type& in_) {
       ptr->time_clock -= std::make_tuple(in_.first, in_.second, in_.info);
@@ -75,8 +73,6 @@ void attendance_rule::gen_work_clock() {
           }
       );
     }
-
-    holidaycn_time{}.set_clock(ptr->time_clock);
   }
 }
 void attendance_rule::async_run(

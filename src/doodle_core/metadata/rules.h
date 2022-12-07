@@ -11,7 +11,6 @@
 #include <rttr/rttr_enable.h>
 #include <utility>
 
-
 namespace doodle {
 class time_point_wrap;
 }
@@ -56,7 +55,6 @@ class DOODLE_CORE_API rules {
   work_day_type work_weekdays_p{};
   std::vector<std::pair<chrono::seconds, chrono::seconds>> work_pair_p{};
 
-  std::vector<time_point_info> extra_holidays_p{};
   std::vector<time_point_info> extra_work_p{};
   std::vector<time_point_info> extra_rest_p{};
 
@@ -80,10 +78,6 @@ class DOODLE_CORE_API rules {
   void add_work_time(const duration_type& in_begin, const duration_type& in_end);
   [[nodiscard("")]] const time_duration_vector& work_time() const;
   [[nodiscard("")]] time_duration_vector& work_time();
-
-  void add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end);
-  [[nodiscard("")]] const time_point_vector& extra_holidays() const;
-  [[nodiscard("")]] time_point_vector& extra_holidays();
 
   void add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
   [[nodiscard("")]] const time_point_vector& extra_work() const;

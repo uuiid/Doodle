@@ -19,7 +19,6 @@ namespace doodle::business {
 void to_json(nlohmann::json& j, const rules& p) {
   j["work_weekdays"]      = p.work_weekdays_p;
   j["work_pair"]          = p.work_pair_p;
-  j["extra_holidays"]     = p.extra_holidays_p;
   j["extra_work"]         = p.extra_work_p;
   j["extra_rest"]         = p.extra_rest_p;
   j["absolute_deduction"] = p.absolute_deduction;
@@ -27,7 +26,6 @@ void to_json(nlohmann::json& j, const rules& p) {
 void from_json(const nlohmann::json& j, rules& p) {
   j.at("work_weekdays").get_to(p.work_weekdays_p);
   j.at("work_pair").get_to(p.work_pair_p);
-  j.at("extra_holidays").get_to(p.extra_holidays_p);
   j.at("extra_work").get_to(p.extra_work_p);
   j.at("extra_rest").get_to(p.extra_rest_p);
   if (j.contains("absolute_deduction"))
@@ -90,24 +88,19 @@ const rules& rules::get_default() {
 std::string rules::debug_print() {
   return fmt::format(
       "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}", work_weekdays_p,
-      fmt::join(work_pair_p, "->"), fmt::join(extra_holidays_p, "->"), fmt::join(extra_rest_p, "->"),
-      fmt::join(extra_work_p, "->")
+      fmt::join(work_pair_p, "->"), fmt::join(extra_rest_p, "->"), fmt::join(extra_work_p, "->")
   );
 }
-void rules::add_extra_holidays(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
-  extra_holidays_p.emplace_back(in_begin, in_end);
-}
-const rules::time_point_vector& rules::extra_holidays() const { return extra_holidays_p; }
+
 rules::work_day_type& rules::work_weekdays() { return work_weekdays_p; }
 rules::time_duration_vector& rules::work_time() { return work_pair_p; }
-rules::time_point_vector& rules::extra_holidays() { return extra_holidays_p; }
+
 rules::time_point_vector& rules::extra_work() { return extra_work_p; }
 rules::time_point_vector& rules::extra_rest() { return extra_rest_p; }
 std::string rules::fmt_str() const {
   return fmt::format(
       "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}", work_weekdays_p,
-      fmt::join(work_pair_p, "->"), fmt::join(extra_holidays_p, "->"), fmt::join(extra_rest_p, "->"),
-      fmt::join(extra_work_p, "->")
+      fmt::join(work_pair_p, "->"), fmt::join(extra_rest_p, "->"), fmt::join(extra_work_p, "->")
   );
 }
 rules::~rules() = default;

@@ -4,7 +4,6 @@
 
 #include "time_rules_render.h"
 
-#include "doodle_core/core/chrono_.h"
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/time_point_wrap.h>
@@ -239,13 +238,13 @@ class time_work_gui_data_render {
   }
 
   std::vector<gui_data_type::friend_type> get() {
-    return gui_data | ranges::view::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
+    return gui_data | ranges::views::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
            ranges::to_vector;
   }
 
   void set(const std::vector<gui_data_type::friend_type>& in_type) {
     gui_data =
-        in_type | ranges::view::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
+        in_type | ranges::views::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
   }
 };
 
@@ -364,7 +363,7 @@ time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
 
 void time_rules_render::print_show_str() {
   p_i->show_str = fmt::format(
-      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n加班:\n{}\n调休:\n{}",
+      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n(节假日会自动扣除)\n加班:\n{}\n调休:\n{}",
       fmt::join(
           ranges::views::ints(0, 7) | ranges::views::filter([&](std::int32_t in_index) {
             return p_i->rules_attr.work_weekdays()[in_index];
@@ -418,8 +417,8 @@ bool time_rules_render::render() {
 
   dear::Text(p_i->show_str);
 
-  // modify_guard_ = p_i->render_time.work_gui_data_attr.render();
-  // modify_guard_ = p_i->render_time.time_work_gui_data_attr.render();
+  modify_guard_ = p_i->render_time.work_gui_data_attr.render();
+  modify_guard_ = p_i->render_time.time_work_gui_data_attr.render();
   modify_guard_ = p_i->render_time.extra_work_attr.render();
   modify_guard_ = p_i->render_time.extra_rest_attr.render();
 
