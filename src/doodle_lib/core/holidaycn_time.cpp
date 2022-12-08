@@ -32,13 +32,11 @@ holidaycn_time::holidaycn_time() {
   auto l_json = nlohmann::json::parse(std::string_view{l_file.begin(), l_file.size()});
   for (const auto &i : l_json.at("days").get<std::vector<info>>()) {
     if (i.is_odd_day)
-      holidaycn_list_rest.emplace_back(
-          std::make_tuple(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name)
-      );
+      holidaycn_list_rest.emplace_back(time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, i.name);
     else
-      holidaycn_list_work.emplace_back(std::make_tuple(
+      holidaycn_list_work.emplace_back(
           time_point_wrap{i.date}, time_point_wrap{i.date + chrono::days{1}}, fmt::format("{}补班", i.name)
-      ));
+      );
   };
 }
 holidaycn_time::~holidaycn_time() = default;
