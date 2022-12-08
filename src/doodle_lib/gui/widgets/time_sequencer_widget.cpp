@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/metadata/assets_file.h"
+#include "doodle_core/metadata/rules.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
@@ -116,7 +117,9 @@ class time_sequencer_widget::impl {
   time_cache combox_month{};
   /// 获取日期的接口
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
+  /// 日期规则小部件
 
+  time_sequencer_widget_ns::time_rules_render rules_render{};
   void refresh_work_clock_() {
     if (!time_list.empty()) {
       refresh_cache(time_list);
@@ -339,6 +342,9 @@ void time_sequencer_widget::render() {
       if (dear::Selectable(l_u.first.c_str())) {
         p_i->combox_user_id()            = l_u.first;
         p_i->combox_user_id.current_user = l_u.second;
+        p_i->rules_render.rules_attr(p_i->combox_user_id.current_user.get_or_emplace<doodle::business::rules>(
+            doodle::business::rules::get_default()
+        ));
       }
     }
   };
@@ -448,6 +454,10 @@ void time_sequencer_widget::render() {
   }
 
   if (ImGui::Button("平均时间")) p_i->average_time();
+
+  if (p_i->rules_render.render())
+    if (p_i->combox_user_id.current_user)
+      p_i->combox_user_id.current_user.emplace_or_replace<doodle::business::rules>(p_i->rules_render.rules_attr());
 }
 const std::string& time_sequencer_widget::title() const { return p_i->title_name_; }
 
@@ -487,38 +497,36 @@ void time_sequencer_widget::fliter_select() {
     make_handle().emplace<gui_windows>() = l_msg;
   }
 
-  if (!l_user.all_of<business::work_clock>()) {
-    if (!p_i->attendance_ptr) {
-      p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
-    }
-
-    /// 显示一下进度条
-    auto& l_p = g_reg()->ctx().emplace<process_message>();
-    l_p.set_name("开始计算数据");
-    l_p.set_state(l_p.run);
-
-    p_i->attendance_ptr->async_get_work_clock(
-        l_user, l_begin, l_end,
-        [=](const boost::system::error_code& in_code, const business::work_clock& in_clock) {
-          auto& l_p = g_reg()->ctx().emplace<process_message>();
-          l_p.message(fmt::format("完成用户 {} 时间获取", l_user.get<user>().get_name()));
-          l_p.progress_step(1);
-          if (in_code) {
-            l_p.set_state(l_p.fail);
-            auto l_msg = std::make_shared<show_message>();
-            l_msg->set_message(fmt::format("{}", in_code.what()));
-            make_handle().emplace<gui_windows>() = l_msg;
-            return;
-          }
-
-          l_p.set_state(l_p.success);
-          l_user.get_or_emplace<business::work_clock>() = in_clock;
-          p_i->work_clock_                              = in_clock;
-          p_i->refresh_work_clock_();
-          DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
-        }
-    );
+  if (!p_i->attendance_ptr) {
+    p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
   }
+
+  /// 显示一下进度条
+  auto& l_p = g_reg()->ctx().emplace<process_message>();
+  l_p.set_name("开始计算数据");
+  l_p.set_state(l_p.run);
+
+  p_i->attendance_ptr->async_get_work_clock(
+      l_user, l_begin, l_end,
+      [=](const boost::system::error_code& in_code, const business::work_clock& in_clock) {
+        auto& l_p = g_reg()->ctx().emplace<process_message>();
+        l_p.message(fmt::format("完成用户 {} 时间获取", l_user.get<user>().get_name()));
+        l_p.progress_step(1);
+        if (in_code) {
+          l_p.set_state(l_p.fail);
+          auto l_msg = std::make_shared<show_message>();
+          l_msg->set_message(fmt::format("{}", in_code.what()));
+          make_handle().emplace<gui_windows>() = l_msg;
+          return;
+        }
+
+        l_p.set_state(l_p.success);
+        l_user.get_or_emplace<business::work_clock>() = in_clock;
+        p_i->work_clock_                              = in_clock;
+        p_i->refresh_work_clock_();
+        DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_user.get<user>().get_name(), in_clock.debug_print());
+      }
+  );
 };
 
 void time_sequencer_widget::gen_user() {

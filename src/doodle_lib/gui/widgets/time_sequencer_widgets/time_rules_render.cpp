@@ -14,7 +14,6 @@
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include "boost/lambda2.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/lambda2/lambda2.hpp>
