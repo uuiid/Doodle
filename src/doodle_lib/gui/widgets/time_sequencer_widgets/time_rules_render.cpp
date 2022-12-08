@@ -201,7 +201,7 @@ class work_gui_data_render {
     }
     return modify_guard_;
   }
-  gui_data_type::friend_type get() const { return gui_data_type::friend_type{gui_data}; }
+  [[nodiscard]] gui_data_type::friend_type get() const { return gui_data_type::friend_type{gui_data}; }
 
   void set(const gui_data_type::friend_type& in_type) { gui_data = gui_data_type{in_type}; }
 };
@@ -235,7 +235,7 @@ class time_work_gui_data_render : boost::equality_comparable<time_work_gui_data_
     return modify_guard_;
   };
 
-  friend_type get() const {
+  [[nodiscard]] friend_type get() const {
     return {time_hh_mm_ss_gui_data::friend_type{begin}, time_hh_mm_ss_gui_data::friend_type{end}};
   }
 
