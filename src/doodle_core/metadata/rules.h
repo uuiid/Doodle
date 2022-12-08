@@ -48,12 +48,12 @@ class DOODLE_CORE_API rules {
   /// \brief 周六 ->周日(index 6->0)
   constexpr static work_day_type work_Monday_to_Friday{0b0111110};
   /// @brief 周六到周日每日必然会排除的时间
-  std::array<std::vector<std::pair<chrono::seconds, chrono::seconds>>, 7> absolute_deduction;
 
   using time_point_info = ::doodle::business::rules_ns::time_point_info;
 
   work_day_type work_weekdays_p{};
-  std::vector<std::pair<chrono::seconds, chrono::seconds>> work_pair_p{};
+  time_duration_vector work_pair_p{};
+  std::array<time_duration_vector, 7> absolute_deduction{};
 
   std::vector<time_point_info> extra_work_p{};
   std::vector<time_point_info> extra_rest_p{};

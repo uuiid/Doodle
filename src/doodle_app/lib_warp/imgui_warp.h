@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <cmath>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
+#include <imgui_internal.h>
 #include <imgui_stdlib.h>
+
 namespace doodle {
 namespace imgui {
 using namespace ::ImGui;
@@ -43,8 +45,7 @@ struct ScopeWrapper {
   // destructor always invokes the supplied destructor function.
   virtual ~ScopeWrapper() noexcept {
     if constexpr (!force_dtor) {
-      if (!ok_)
-        return;
+      if (!ok_) return;
     }
     wrapped_type::dtor();
   }
@@ -53,8 +54,7 @@ struct ScopeWrapper {
   // construction was true.
   template <typename PassthruFn>
   constexpr bool operator&&(PassthruFn passthru) const {
-    if (ok_)
-      passthru();
+    if (ok_) passthru();
     return ok_;
   }
 
@@ -66,23 +66,13 @@ struct ScopeWrapper {
 };
 
 struct IDScope : public ScopeWrapper<IDScope, true> {
-  IDScope(const char* str_id)
-      : ScopeWrapper(true) {
-    ImGui::PushID(str_id);
-  }
+  IDScope(const char* str_id) : ScopeWrapper(true) { ImGui::PushID(str_id); }
 
-  IDScope(const char* str_id_begin, const char* str_id_end)
-      : ScopeWrapper(true) {
+  IDScope(const char* str_id_begin, const char* str_id_end) : ScopeWrapper(true) {
     ImGui::PushID(str_id_begin, str_id_end);
   }
-  IDScope(const void* ptr_id)
-      : ScopeWrapper(true) {
-    ImGui::PushID(ptr_id);
-  }
-  IDScope(int int_id)
-      : ScopeWrapper(true) {
-    ImGui::PushID(int_id);
-  }
+  IDScope(const void* ptr_id) : ScopeWrapper(true) { ImGui::PushID(ptr_id); }
+  IDScope(int int_id) : ScopeWrapper(true) { ImGui::PushID(int_id); }
 
   static void dtor() noexcept { ImGui::PopID(); }
 };
@@ -107,8 +97,7 @@ struct Child : public ScopeWrapper<Child, true> {
 // Wrapper for ImGui::BeginChildFrame ... EndChildFrame, which will always call EndChildFrame.
 struct ChildFrame : public ScopeWrapper<ChildFrame, true> {
   template <typename... Args>
-  ChildFrame(Args&&... args) noexcept
-      : ScopeWrapper(ImGui::BeginChildFrame(std::forward<Args>(args)...)) {}
+  ChildFrame(Args&&... args) noexcept : ScopeWrapper(ImGui::BeginChildFrame(std::forward<Args>(args)...)) {}
   static void dtor() noexcept { ImGui::EndChildFrame(); }
 };
 
@@ -127,8 +116,7 @@ struct Combo : public ScopeWrapper<Combo> {
 
 // Wrapper for ImGui::Begin...EndListBox.
 struct ListBox : public ScopeWrapper<ListBox> {
-  ListBox(const char* label, const ImVec2& size = Zero) noexcept
-      : ScopeWrapper(ImGui::BeginListBox(label, size)) {}
+  ListBox(const char* label, const ImVec2& size = Zero) noexcept : ScopeWrapper(ImGui::BeginListBox(label, size)) {}
   static void dtor() noexcept { ImGui::EndListBox(); }
 };
 
@@ -146,15 +134,17 @@ struct MainMenuBar : public ScopeWrapper<MainMenuBar> {
 
 // Wrapper for ImGui::BeginMenu...ImGui::EndMenu.
 struct Menu : public ScopeWrapper<Menu> {
-  Menu(const char* label, bool enabled = true) noexcept
-      : ScopeWrapper(ImGui::BeginMenu(label, enabled)) {}
+  Menu(const char* label, bool enabled = true) noexcept : ScopeWrapper(ImGui::BeginMenu(label, enabled)) {}
   static void dtor() noexcept { ImGui::EndMenu(); }
 };
 
 // Wrapper for ImGui::BeginTable...ImGui::EndTable.
 // See also EditTableFlags.
 struct Table : public ScopeWrapper<Table> {
-  Table(const char* str_id, int column, ImGuiTableFlags flags = 0, const ImVec2& outer_size = Zero, float inner_width = 0.0f) noexcept
+  Table(
+      const char* str_id, int column, ImGuiTableFlags flags = 0, const ImVec2& outer_size = Zero,
+      float inner_width = 0.0f
+  ) noexcept
       : ScopeWrapper(ImGui::BeginTable(str_id, column, flags, outer_size, inner_width)) {}
   static void dtor() noexcept { ImGui::EndTable(); }
 };
@@ -176,16 +166,14 @@ struct CollapsingHeader : public ScopeWrapper<CollapsingHeader> {
 // See also SeparatedTreeNode.
 struct TreeNode : public ScopeWrapper<TreeNode> {
   template <typename... Args>
-  TreeNode(Args&&... args) noexcept
-      : ScopeWrapper(ImGui::TreeNode(std::forward<Args>(args)...)) {}
+  TreeNode(Args&&... args) noexcept : ScopeWrapper(ImGui::TreeNode(std::forward<Args>(args)...)) {}
   static void dtor() noexcept { ImGui::TreePop(); }
 };
 
 // Wrapper around a TreeNode followed by a Separator (it's a fairly common sequence).
 struct SeparatedTreeNode : public ScopeWrapper<SeparatedTreeNode> {
   template <typename... Args>
-  SeparatedTreeNode(Args&&... args) noexcept
-      : ScopeWrapper(ImGui::TreeNode(std::forward<Args>(args)...)) {}
+  SeparatedTreeNode(Args&&... args) noexcept : ScopeWrapper(ImGui::TreeNode(std::forward<Args>(args)...)) {}
   static void dtor() noexcept {
     ImGui::TreePop();
     ImGui::Separator();
@@ -197,8 +185,7 @@ struct SeparatedTreeNode : public ScopeWrapper<SeparatedTreeNode> {
 // rather than a discrete type.
 struct Popup : public ScopeWrapper<Popup> {
   // Non-modal Popup.
-  Popup(const char* str_id, ImGuiWindowFlags flags = 0) noexcept
-      : ScopeWrapper(ImGui::BeginPopup(str_id, flags)) {}
+  Popup(const char* str_id, ImGuiWindowFlags flags = 0) noexcept : ScopeWrapper(ImGui::BeginPopup(str_id, flags)) {}
 
   // Modal popups.
 
@@ -207,13 +194,11 @@ struct Popup : public ScopeWrapper<Popup> {
   // - Use Popup(modal{}, ...)
   // - Use the static method Popup::Modal(...)
 
-  struct modal {
-  };
+  struct modal {};
   Popup(modal, const char* name, bool* p_open = nullptr, ImGuiWindowFlags flags = 0) noexcept
       : ScopeWrapper(ImGui::BeginPopupModal(name, p_open, flags)) {}
 
-  static Popup
-  Modal(const char* name, bool* p_open = nullptr, ImGuiWindowFlags flags = 0) noexcept {
+  static Popup Modal(const char* name, bool* p_open = nullptr, ImGuiWindowFlags flags = 0) noexcept {
     return Popup(modal{}, name, p_open, flags);
   }
 
@@ -236,8 +221,7 @@ struct PopupContextItem : public ScopeWrapper<PopupContextItem> {
 
 // Wrapper for ImGui::BeginTabBar ... EndTabBar
 struct TabBar : public ScopeWrapper<TabBar> {
-  TabBar(const char* name, ImGuiTabBarFlags flags = 0) noexcept
-      : ScopeWrapper(ImGui::BeginTabBar(name, flags)) {}
+  TabBar(const char* name, ImGuiTabBarFlags flags = 0) noexcept : ScopeWrapper(ImGui::BeginTabBar(name, flags)) {}
   static void dtor() noexcept { ImGui::EndTabBar(); }
 };
 
@@ -251,12 +235,8 @@ struct TabItem : public ScopeWrapper<TabItem> {
 // Wrapper around pushing a style var onto ImGui's stack and popping it back off.
 /// TODO: Support nesting so we can do a single pop operation.
 struct WithStyleVar : public ScopeWrapper<WithStyleVar> {
-  WithStyleVar(ImGuiStyleVar idx, const ImVec2& val) noexcept : ScopeWrapper(true) {
-    ImGui::PushStyleVar(idx, val);
-  }
-  WithStyleVar(ImGuiStyleVar idx, float val = 0.0f) noexcept : ScopeWrapper(true) {
-    ImGui::PushStyleVar(idx, val);
-  }
+  WithStyleVar(ImGuiStyleVar idx, const ImVec2& val) noexcept : ScopeWrapper(true) { ImGui::PushStyleVar(idx, val); }
+  WithStyleVar(ImGuiStyleVar idx, float val = 0.0f) noexcept : ScopeWrapper(true) { ImGui::PushStyleVar(idx, val); }
   static void dtor() noexcept { ImGui::PopStyleVar(); }
 };
 
@@ -264,10 +244,8 @@ struct WithStyleVar : public ScopeWrapper<WithStyleVar> {
 
 // Wrapper for BeginTooltip predicated on the previous item being hovered.
 struct ItemTooltip : public ScopeWrapper<ItemTooltip> {
-  ItemTooltip(ImGuiHoveredFlags flags = 0) noexcept
-      : ScopeWrapper(ImGui::IsItemHovered(flags)) {
-    if (ok_)
-      ImGui::BeginTooltip();
+  ItemTooltip(ImGuiHoveredFlags flags = 0) noexcept : ScopeWrapper(ImGui::IsItemHovered(flags)) {
+    if (ok_) ImGui::BeginTooltip();
   }
   static void dtor() noexcept { ImGui::EndTooltip(); }
 };
@@ -287,39 +265,43 @@ inline void TextUnformatted(const std::string& str) noexcept {
 }
 #endif
 
-static inline bool
-MenuItem(const char* text, bool selected = false, bool enabled = true) noexcept {
+static inline bool MenuItem(const char* text, bool selected = false, bool enabled = true) noexcept {
   return ImGui::MenuItem(text, nullptr, selected, enabled);
 }
 static inline bool MenuItem(const char* text, bool* selected, bool enabled = true) noexcept {
   return ImGui::MenuItem(text, nullptr, selected, enabled);
 }
 #ifndef DEAR_NO_STRING
-static inline bool MenuItem(const std::string& str, const char* shortcut = nullptr, bool selected = false, bool enabled = true) noexcept {
+static inline bool MenuItem(
+    const std::string& str, const char* shortcut = nullptr, bool selected = false, bool enabled = true
+) noexcept {
   return ImGui::MenuItem(str.c_str(), shortcut, selected, enabled);
 }
-static inline bool
-MenuItem(const std::string& text, bool* selected, bool enabled = true) noexcept {
+static inline bool MenuItem(const std::string& text, bool* selected, bool enabled = true) noexcept {
   return ImGui::MenuItem(text.c_str(), nullptr, selected, enabled);
 }
 #endif
 
 // static inline bool Selectable(const char *text) noexcept { return ImGui::Selectable(text); }
-static inline bool
-Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
+static inline bool Selectable(
+    const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+) noexcept {
   return ImGui::Selectable(label, selected, flags, size);
 }
-static inline bool
-Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
+static inline bool Selectable(
+    const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+) noexcept {
   return ImGui::Selectable(label, p_selected, flags, size);
 }
 #ifndef DEAR_NO_STRING
-static inline bool
-Selectable(const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
+static inline bool Selectable(
+    const std::string& label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+) noexcept {
   return ImGui::Selectable(label.c_str(), selected, flags, size);
 }
-static inline bool
-Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero) noexcept {
+static inline bool Selectable(
+    const std::string& label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = Zero
+) noexcept {
   return ImGui::Selectable(label.c_str(), p_selected, flags, size);
 }
 #endif
@@ -332,17 +314,15 @@ Selectable(const std::string& label, bool* p_selected, ImGuiSelectableFlags flag
  *                   ImGuiViewport* viewport = ImGui::GetMainViewport();
  *       但是你可以只传递NULL，因为主视口是默认的。
  * @warning ImGui::BeginViewportSideBar 使用 ImGui::Begin 因此对 ImGui::End 的调用应该超出 {if 范围}
- *   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
- *   float height = ImGui::GetFrameHeight();
+ *   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+ * ImGuiWindowFlags_MenuBar; float height = ImGui::GetFrameHeight();
  */
 struct ViewportSideBar : public ScopeWrapper<ViewportSideBar, true> {
   explicit ViewportSideBar(
-      const std::string& in_name,
-      ImGuiViewport* viewport, const ImGuiDir& dir, const float& size, const ImGuiWindowFlags& window_flags
+      const std::string& in_name, ImGuiViewport* viewport, const ImGuiDir& dir, const float& size,
+      const ImGuiWindowFlags& window_flags
   )
-      : ScopeWrapper<ViewportSideBar, true>(
-            BeginViewportSideBar(in_name.c_str(), viewport, dir, size, window_flags)
-        ) {}
+      : ScopeWrapper<ViewportSideBar, true>(BeginViewportSideBar(in_name.c_str(), viewport, dir, size, window_flags)) {}
   static void dtor() noexcept { ImGui::End(); }
 };
 
@@ -360,60 +340,42 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   };
   template <class... Args>
   TreeNodeEx(Args&&... in_args) noexcept
-      : ScopeWrapper<TreeNodeEx>(
-            ::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)
-        ),
+      : ScopeWrapper<TreeNodeEx>(::ImGui::TreeNodeEx(std::forward<Args>(in_args)...)),
         use_dtor(find_flags(std::forward<Args>(in_args)...)) {}
   static void dtor() noexcept {};
   ~TreeNodeEx() {
-    if (!ok_)
-      return;
+    if (!ok_) return;
 
-    if (!use_dtor)
-      ImGui::TreePop();
+    if (!use_dtor) ImGui::TreePop();
   };
 };
 
 struct OpenPopup : public ScopeWrapper<OpenPopup> {
   template <class... Args>
-  OpenPopup(Args&&... in_args) noexcept
-      : ScopeWrapper<OpenPopup>(
-            true
-        ) {
+  OpenPopup(Args&&... in_args) noexcept : ScopeWrapper<OpenPopup>(true) {
     ::ImGui::OpenPopup(std::forward<Args>(in_args)...);
   }
 
-  static void dtor() noexcept {
-    ImGui::EndPopup();
-  };
+  static void dtor() noexcept { ImGui::EndPopup(); };
 };
 
 struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
-  TextWrapPos(float wrap_pos_x)
-      : ScopeWrapper<TextWrapPos, true>(true) {
-    ImGui::PushTextWrapPos(wrap_pos_x);
-  }
-  static void dtor() noexcept {
-    ImGui::PopTextWrapPos();
-  };
+  TextWrapPos(float wrap_pos_x) : ScopeWrapper<TextWrapPos, true>(true) { ImGui::PushTextWrapPos(wrap_pos_x); }
+  static void dtor() noexcept { ImGui::PopTextWrapPos(); };
 };
 
 struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
  private:
-  HelpMarker(const char* in_show_str, const char* in_args) noexcept
-      : ScopeWrapper<HelpMarker, true>(false) {
+  HelpMarker(const char* in_show_str, const char* in_args) noexcept : ScopeWrapper<HelpMarker, true>(false) {
     ::ImGui::SameLine();
     ::ImGui::TextDisabled(in_show_str);
     ItemTooltip{} && [&in_args]() {
-      TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() {
-        ImGui::TextUnformatted(in_args);
-      };
+      TextWrapPos{ImGui::GetFontSize() * 35.0f} && [&in_args]() { ImGui::TextUnformatted(in_args); };
     };
   }
 
  public:
-  explicit HelpMarker(const std::string& in_args) noexcept
-      : HelpMarker("(?)", in_args.c_str()){};
+  explicit HelpMarker(const std::string& in_args) noexcept : HelpMarker("(?)", in_args.c_str()){};
 
   explicit HelpMarker(const std::string& in_show_str, const std::string& in_args) noexcept
       : HelpMarker(in_show_str.c_str(), in_args.c_str()){};
@@ -421,34 +383,30 @@ struct HelpMarker : public ScopeWrapper<HelpMarker, true> {
 };
 
 struct Disabled : public ScopeWrapper<Disabled> {
-  Disabled(bool in_disabled = true) noexcept
-      : ScopeWrapper(in_disabled) {
+  Disabled(bool in_disabled = true) noexcept : ScopeWrapper(in_disabled) {
     if (in_disabled) {
       ImGui::BeginDisabled(in_disabled);
     }
   };
 
-  static void dtor() noexcept {
-    ImGui::EndDisabled();
-  };
+  static void dtor() noexcept { ImGui::EndDisabled(); };
 };
 
 struct DragDropSource : public ScopeWrapper<DragDropSource> {
  public:
-  DragDropSource(ImGuiDragDropFlags flags = 0)
-      : ScopeWrapper<DragDropSource>(ImGui::BeginDragDropSource(flags)) {}
-  static void dtor() noexcept {
-    ImGui::EndDragDropSource();
-  }
+  DragDropSource(ImGuiDragDropFlags flags = 0) : ScopeWrapper<DragDropSource>(ImGui::BeginDragDropSource(flags)) {}
+  static void dtor() noexcept { ImGui::EndDragDropSource(); }
 };
 
 struct DragDropTarget : public ScopeWrapper<DragDropTarget> {
  public:
-  DragDropTarget()
-      : ScopeWrapper<DragDropTarget>(ImGui::BeginDragDropTarget()) {}
-  static void dtor() noexcept {
-    ImGui::EndDragDropTarget();
-  }
+  DragDropTarget() : ScopeWrapper<DragDropTarget>(ImGui::BeginDragDropTarget()) {}
+  static void dtor() noexcept { ImGui::EndDragDropTarget(); }
+};
+struct ItemWidth : public ScopeWrapper<ItemWidth, true> {
+ public:
+  explicit ItemWidth(std::float_t in_width) : ScopeWrapper(true) { ImGui::PushItemWidth(in_width); }
+  static void dtor() noexcept { ImGui::PopItemWidth(); }
 };
 
 // bool InputText(const char* label,

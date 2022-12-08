@@ -23,7 +23,11 @@
 #include <fmt/compile.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/algorithm/for_each_n.hpp>
+#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
 #include <range/v3/view/transform.hpp>
@@ -57,7 +61,7 @@ class work_gui_data {
                 gui::gui_cache<bool>{"星期六"s, in_work_day_type[6]}}
         ){};
 
-  explicit operator friend_type() {
+  explicit operator friend_type() const {
     friend_type l_r{};
     l_r[0] = gui_attr.data[0]();
     l_r[1] = gui_attr.data[1]();
@@ -75,18 +79,15 @@ class time_hh_mm_ss_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
   using base_type   = gui_cache<std::array<std::int32_t, 3>>;
 
   using friend_type = chrono::seconds;
-  time_hh_mm_ss_gui_data()
-      : base_type("时分秒", std::array<std::int32_t, 3>{}){
+  time_hh_mm_ss_gui_data() : base_type("时分秒", std::array<std::int32_t, 3>{}){};
 
-        };
   explicit time_hh_mm_ss_gui_data(const friend_type& in_seconds) : time_hh_mm_ss_gui_data() {
     chrono::hh_mm_ss l_hh_mm_ss{in_seconds};
     data[0] = boost::numeric_cast<std::int32_t>(l_hh_mm_ss.hours().count());
     data[1] = boost::numeric_cast<std::int32_t>(l_hh_mm_ss.minutes().count());
-    data[2] = boost::numeric_cast<std::int32_t>(l_hh_mm_ss.seconds().count());
   };
 
-  explicit operator friend_type() {
+  explicit operator friend_type() const {
     return chrono::hours{data[0]} + chrono::minutes{data[1]} + chrono::seconds{data[2]};
   }
 };
@@ -102,7 +103,7 @@ class time_yy_mm_dd_gui_data : public gui_cache<std::array<std::int32_t, 3>> {
     data[2] = boost::numeric_cast<std::int32_t>((std::uint32_t)l_year_month_day.day());
   };
 
-  explicit operator chrono::local_days() {
+  explicit operator chrono::local_days() const {
     return chrono::local_days{chrono::year_month_day{
         chrono::year{data[0]}, chrono::month{boost::numeric_cast<std::uint32_t>(data[1])},
         chrono::day{boost::numeric_cast<std::uint32_t>(data[2])}}};
@@ -124,7 +125,7 @@ class time_warp_gui_data : boost::equality_comparable<time_warp_gui_data> {
     ymd               = time_yy_mm_dd_gui_data{l_y};
     hms               = time_hh_mm_ss_gui_data{l_s};
   };
-  explicit operator friend_type() { return friend_type{chrono::local_days{ymd} + chrono::seconds{hms}}; }
+  explicit operator friend_type() const { return friend_type{chrono::local_days{ymd} + chrono::seconds{hms}}; }
   bool operator==(const time_warp_gui_data& in) const { return std::tie(ymd, hms) == std::tie(in.ymd, in.hms); }
 };
 
@@ -144,7 +145,7 @@ class time_info_gui_data : boost::equality_comparable<time_info_gui_data> {
     end_time   = time_warp_gui_data{"结束时间"s, in_point_type.second};
   };
 
-  explicit operator friend_type() {
+  explicit operator friend_type() const {
     return friend_type{time_point_wrap{begin_time}, time_point_wrap{end_time}, info()};
   }
 
@@ -165,7 +166,7 @@ class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
 
   explicit time_work_gui_data(const friend_type& in_pair) : begin(in_pair.first), end(in_pair.second) {}
 
-  explicit operator friend_type() {
+  explicit operator friend_type() const {
     return std::make_pair(friend_type::first_type{begin}, friend_type::second_type{end});
   }
   bool operator==(const time_work_gui_data& in_rhs) const {
@@ -176,134 +177,117 @@ class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
 class work_gui_data_render {
  public:
   using gui_data_type = work_gui_data;
-  modify_guard<gui_data_type::friend_type> modify_guard_{};
+  modify_guard modify_guard_{};
   gui_data_type gui_data{};
   bool render() {
     modify_guard_.begin_flag();
-
-    dear::CollapsingHeader{*gui_data.gui_attr} && [this]() {
-      dear::HelpMarker{"按星期去计算工作时间"};
+    {
       ranges::for_each(gui_data.gui_attr(), [this](decltype(gui_data.gui_attr().front()) in_value) {
         modify_guard_ = ImGui::Checkbox(*in_value, &in_value);
+        if (in_value.gui_name != gui_data.gui_attr().back().gui_name) ImGui::SameLine();
       });
-    };
-    if (modify_guard_) modify_guard_(get());
-    return modify_guard_.current_frame_modify();
+    }
+    return modify_guard_;
   }
-  gui_data_type::friend_type get() { return gui_data_type::friend_type{gui_data}; }
+  gui_data_type::friend_type get() const { return gui_data_type::friend_type{gui_data}; }
 
   void set(const gui_data_type::friend_type& in_type) { gui_data = gui_data_type{in_type}; }
 };
 
 class time_work_gui_data_render {
  public:
-  using gui_data_type = time_work_gui_data;
-  std::vector<gui_data_type> gui_data{};
-  gui_cache_name_id name_id{"每日工作时间"};
+  using friend_type = std::pair<chrono::seconds, chrono::seconds>;
+  time_hh_mm_ss_gui_data begin{};
+  time_hh_mm_ss_gui_data end{};
 
+  gui_cache_name_id name_id{"每日工作时间"};
   gui_cache_name_id name_id_add{"添加"s};
   gui_cache_name_id name_id_delete{"删除"s};
-  modify_guard<std::vector<gui_data_type::friend_type>> modify_guard_;
+  modify_guard modify_guard_;
 
   bool render() {
-    if (modify_guard_) modify_guard_(get());
-
     modify_guard_.begin_flag();
 
-    dear::CollapsingHeader{*name_id} && [this]() {
-      dear::HelpMarker{"每天的开始和结束时间段"};
-      if (modify_guard_ = imgui::Button(*name_id_add); modify_guard_.current_modify()) {
-        boost::asio::post(g_io_context(), [this]() { this->add(); });
-      }
-      ranges::for_each(gui_data, [this](gui_data_type& in_type) {
-        modify_guard_ = ImGui::SliderInt3(*in_type.begin, in_type.begin.data.data(), 0, 59);
-        modify_guard_ = ImGui::SliderInt3(*in_type.end, in_type.end.data.data(), 0, 59);
-        if (modify_guard_ = imgui::Button(*in_type.name_id_delete); modify_guard_.current_modify()) {
-          boost::asio::post(g_io_context(), [this, in_type]() { this->delete_node(in_type); });
-        }
-      });
+    dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 3} && [&]() {
+      modify_guard_ = ImGui::SliderInt3(*begin, begin.data.data(), 0, 59);
+      ImGui::SameLine();
+      auto l_size = ImGui::GetItemRectSize();
+      l_size.x /= 5;
+      l_size.y /= 5;
+      ImGui::Dummy(l_size);
+      ImGui::SameLine();
+
+      modify_guard_ = ImGui::SliderInt3(*end, end.data.data(), 0, 59);
     };
 
-    modify_guard_.async_begin_flag();
-    return modify_guard_.current_frame_modify();
+    return modify_guard_;
   };
 
-  void add() {
-    gui_data.emplace_back(std::make_pair(9h, 12h));
-    this->modify_guard_ = true;
-  }
-  void delete_node(const gui_data_type& in_data_type) {
-    gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data_type; });
-    this->modify_guard_ = true;
+  friend_type get() const {
+    return {time_hh_mm_ss_gui_data::friend_type{begin}, time_hh_mm_ss_gui_data::friend_type{end}};
   }
 
-  std::vector<gui_data_type::friend_type> get() {
-    return gui_data | ranges::views::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
-           ranges::to_vector;
-  }
-
-  void set(const std::vector<gui_data_type::friend_type>& in_type) {
-    gui_data =
-        in_type | ranges::views::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
+  void set(const friend_type& in_type) {
+    begin = time_hh_mm_ss_gui_data{in_type.first};
+    end   = time_hh_mm_ss_gui_data{in_type.second};
   }
 };
 
 class time_info_gui_data_render {
  public:
-  using gui_data_type = time_info_gui_data;
+  std::string show_str{};
+  business::rules::time_point_info data{};
+  gui_cache_name_id edit_buiion{};
+  gui_cache_name_id fulfil{};
+  bool use_edit{};
 
-  std::vector<time_info_gui_data> gui_data{};
+  using friend_type = time_info_gui_data::friend_type;
+  time_warp_gui_data begin_time;
+  time_warp_gui_data end_time;
+  gui_cache<std::string> info;
 
   gui_cache_name_id gui_name{};
-  gui_cache_name_id gui_name_add{"添加"s};
 
-  modify_guard<std::vector<gui_data_type::friend_type>> modify_guard_{};
+  modify_guard modify_guard_{};
 
   bool render() {
-    if (modify_guard_) modify_guard_(get());
-
     modify_guard_.begin_flag();
 
-    dear::CollapsingHeader{*gui_name} && [this]() {
-      if (modify_guard_ = ImGui::Button(*gui_name_add); modify_guard_.current_modify()) {
-        boost::asio::post(g_io_context(), [this]() { this->add(); });
-      }
-      ranges::for_each(gui_data, [this](gui_data_type& in_data) {
+    dear::Text(show_str);
+    ImGui::SameLine();
+    if (ImGui::Button(*edit_buiion)) use_edit = true;
+
+    if (use_edit)
+      dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 4} && [&]() {
         dear::Text("开始时间"s);
-        modify_guard_ = ImGui::InputInt3(*in_data.begin_time.ymd.gui_name, in_data.begin_time.ymd.data.data());
-        modify_guard_ = ImGui::InputInt3(*in_data.begin_time.hms.gui_name, in_data.begin_time.hms.data.data());
+        ImGui::SameLine();
+        modify_guard_ = ImGui::InputInt3(*begin_time.ymd.gui_name, begin_time.ymd.data.data());
+        ImGui::SameLine();
+        modify_guard_ = ImGui::InputInt3(*begin_time.hms.gui_name, begin_time.hms.data.data());
 
         dear::Text("结束时间"s);
-        modify_guard_ = ImGui::InputInt3(*in_data.end_time.ymd.gui_name, in_data.end_time.ymd.data.data());
-        modify_guard_ = ImGui::InputInt3(*in_data.end_time.hms.gui_name, in_data.end_time.hms.data.data());
-        modify_guard_ = ImGui::InputText(*in_data.info, &in_data.info);
+        ImGui::SameLine();
+        modify_guard_ = ImGui::InputInt3(*end_time.ymd.gui_name, end_time.ymd.data.data());
+        ImGui::SameLine();
+        modify_guard_ = ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
 
-        if (modify_guard_ = ImGui::Button(*in_data.delete_node); modify_guard_.current_modify()) {
-          boost::asio::post(g_io_context(), [this, in_data]() { this->delete_node(in_data); });
-        }
-      });
-    };
+        modify_guard_ = ImGui::InputText(*info, &info);
+        ImGui::SameLine();
+        if (ImGui::Button(*fulfil)) use_edit = false;
+      };
 
-    modify_guard_.async_begin_flag();
-    return modify_guard_.current_frame_modify();
+    return modify_guard_;
   }
 
-  void add() {
-    gui_data.emplace_back(gui_data_type::friend_type{});
-    modify_guard_ = true;
-  }
+  void set(const friend_type& in_type) {
+    show_str   = fmt::to_string(in_type);
 
-  void delete_node(const gui_data_type& in_data) {
-    gui_data |= ranges::actions::remove_if([&](auto&& in_item) { return in_item == in_data; });
-    modify_guard_ = true;
+    begin_time = time_warp_gui_data{in_type.first};
+    end_time   = time_warp_gui_data{in_type.second};
+    info       = in_type.info;
   }
-  void set(const std::vector<gui_data_type::friend_type>& in_type) {
-    gui_data =
-        in_type | ranges::views::transform([](auto&& in_item) { return gui_data_type{in_item}; }) | ranges::to_vector;
-  }
-  std::vector<gui_data_type::friend_type> get() {
-    return gui_data | ranges::views::transform([](auto&& in_item) { return gui_data_type::friend_type{in_item}; }) |
-           ranges::to_vector;
+  [[nodiscard]] friend_type get() const {
+    return {time_warp_gui_data::friend_type{begin_time}, time_warp_gui_data::friend_type{end_time}, std::string{info}};
   }
 };
 
@@ -311,47 +295,29 @@ class time_info_gui_data_render {
 
 class time_rules_render::impl {
  public:
-  class render_time_rules {
-   public:
-    work_gui_data_render work_gui_data_attr{};
-    time_work_gui_data_render time_work_gui_data_attr{};
-    time_info_gui_data_render extra_work_attr{};
-    time_info_gui_data_render extra_rest_attr{};
-  };
-
   constexpr const static std::array<std::string_view, 7> work_show{"星期日", "星期一", "星期二", "星期三",
                                                                    "星期四", "星期五", "星期六"};
 
   rules_type rules_attr;
 
-  render_time_rules render_time{};
   std::vector<boost::signals2::scoped_connection> sig_scoped;
   std::string show_str{};
+
+  gui_cache_name_id setting{"高级设置"};
+
+  work_gui_data_render work_gui_data_attr{};
+  std::vector<time_work_gui_data_render> time_work_gui_data_attr{};
+  std::vector<std::vector<time_work_gui_data_render>> absolute_deduction_attr{};
+  std::vector<time_info_gui_data_render> extra_work_attr{};
+  std::vector<time_info_gui_data_render> extra_rest_attr{};
 };
 
 time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
   p_i->rules_attr = rules_type::get_default();
   rules_attr(p_i->rules_attr);
-  p_i->render_time.extra_work_attr.gui_name = gui_cache_name_id{"加班时间"s};
-  p_i->render_time.extra_rest_attr.gui_name = gui_cache_name_id{"调休时间"s};
+  // p_i->render_time.extra_work_attr.gui_name = gui_cache_name_id{"添加加班时间"s};
+  // p_i->render_time.extra_rest_attr.gui_name = gui_cache_name_id{"添加调休时间"s};
 
-  p_i->render_time.work_gui_data_attr.modify_guard_.connect([this](const auto& in) {
-    p_i->rules_attr.work_weekdays() = in;
-    this->modify_guard_             = true;
-  });
-  p_i->render_time.time_work_gui_data_attr.modify_guard_.connect([this](const auto& in) {
-    p_i->rules_attr.work_time() = in;
-    this->modify_guard_         = true;
-  });
-
-  p_i->render_time.extra_work_attr.modify_guard_.connect([this](const auto& in) {
-    p_i->rules_attr.extra_work() = in;
-    this->modify_guard_          = true;
-  });
-  p_i->render_time.extra_rest_attr.modify_guard_.connect([this](const auto& in) {
-    p_i->rules_attr.extra_rest() = in;
-    this->modify_guard_          = true;
-  });
   p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
     this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
   }));
@@ -363,7 +329,7 @@ time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
 
 void time_rules_render::print_show_str() {
   p_i->show_str = fmt::format(
-      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n(节假日会自动扣除)\n加班:\n{}\n调休:\n{}",
+      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n(节假日会自动扣除)",
       fmt::join(
           ranges::views::ints(0, 7) | ranges::views::filter([&](std::int32_t in_index) {
             return p_i->rules_attr.work_weekdays()[in_index];
@@ -395,36 +361,75 @@ void time_rules_render::print_show_str() {
             );
           }),
           "\n"
-      ),
-      fmt::join(p_i->rules_attr.extra_work(), "\n"), fmt::join(p_i->rules_attr.extra_rest(), "\n")
+      )
   );
 }
 
 const time_rules_render::rules_type& time_rules_render::rules_attr() const { return p_i->rules_attr; }
 void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules_type) {
-  p_i->rules_attr                              = in_rules_type;
+  p_i->rules_attr = in_rules_type;
 
-  p_i->render_time.work_gui_data_attr.gui_data = work_gui_data{in_rules_type.work_weekdays()};
-  p_i->render_time.time_work_gui_data_attr.set(in_rules_type.work_time());
-  p_i->render_time.extra_work_attr.set(in_rules_type.extra_work());
-  p_i->render_time.extra_rest_attr.set(in_rules_type.extra_rest());
+  p_i->work_gui_data_attr.set(in_rules_type.work_weekdays());
+  p_i->time_work_gui_data_attr = in_rules_type.work_time() |
+                                 ranges::views::transform(
+                                     [&](const decltype(in_rules_type.work_pair_p)::value_type& in
+                                     ) -> decltype(p_i->time_work_gui_data_attr)::value_type {
+                                       decltype(p_i->time_work_gui_data_attr)::value_type l_a{};
+                                       l_a.set(in);
+                                       return l_a;
+                                     }
+                                 ) |
+                                 ranges::to_vector;
+
+  p_i->extra_work_attr = in_rules_type.extra_work() |
+                         ranges::views::transform(
+                             [&](const decltype(in_rules_type.extra_work_p)::value_type& in
+                             ) -> decltype(p_i->extra_work_attr)::value_type {
+                               decltype(p_i->extra_work_attr)::value_type l_a{};
+                               l_a.set(in);
+                               return l_a;
+                             }
+                         ) |
+                         ranges::to_vector;
+  p_i->extra_rest_attr = in_rules_type.extra_rest() |
+                         ranges::views::transform(
+                             [&](const decltype(in_rules_type.extra_rest_p)::value_type& in
+                             ) -> decltype(p_i->extra_rest_attr)::value_type {
+                               decltype(p_i->extra_rest_attr)::value_type l_a{};
+                               l_a.set(in);
+                               return l_a;
+                             }
+                         ) |
+                         ranges::to_vector;
+
+  // p_i->render_time.work_gui_data_attr.gui_data = work_gui_data{in_rules_type.work_weekdays()};
+  // p_i->render_time.time_work_gui_data_attr.set(in_rules_type.work_time());
+  // p_i->render_time.extra_work_attr.set(in_rules_type.extra_work());
+  // p_i->render_time.extra_rest_attr.set(in_rules_type.extra_rest());
   print_show_str();
 }
 bool time_rules_render::render() {
-  if (modify_guard_) modify_guard_(p_i->rules_attr);
-
   modify_guard_.begin_flag();
 
   dear::Text(p_i->show_str);
 
-  modify_guard_ = p_i->render_time.work_gui_data_attr.render();
-  modify_guard_ = p_i->render_time.time_work_gui_data_attr.render();
-  modify_guard_ = p_i->render_time.extra_work_attr.render();
-  modify_guard_ = p_i->render_time.extra_rest_attr.render();
+  dear::TreeNode{*p_i->setting} && [&]() {
+    modify_guard_ = p_i->work_gui_data_attr.render();
+    ranges::for_each(p_i->time_work_gui_data_attr, [&](decltype(p_i->time_work_gui_data_attr)::value_type& in) {
+      modify_guard_ = in.render();
+    });
+  };
 
-  auto l_m      = modify_guard_.current_frame_modify();
-  if (l_m) print_show_str();
-  return l_m;
+  ranges::for_each(p_i->extra_work_attr, [&](decltype(p_i->extra_work_attr)::value_type& in) {
+    modify_guard_ = in.render();
+  });
+  ranges::for_each(p_i->extra_rest_attr, [&](decltype(p_i->extra_rest_attr)::value_type& in) {
+    modify_guard_ = in.render();
+  });
+
+  if (modify_guard_) print_show_str();
+
+  return modify_guard_;
 }
 time_rules_render::~time_rules_render() = default;
 }  // namespace doodle::gui::time_sequencer_widget_ns

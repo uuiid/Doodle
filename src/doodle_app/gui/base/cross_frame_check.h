@@ -7,6 +7,7 @@
 #include <doodle_app/doodle_app_fwd.h>
 
 #include <bitset>
+#include "boost/signals2.hpp"
 namespace doodle::gui::detail {
 
 /**

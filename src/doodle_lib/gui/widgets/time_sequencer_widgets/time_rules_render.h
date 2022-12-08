@@ -30,12 +30,12 @@ class DOODLELIB_API time_rules_render {
   std::string get_work_str(std::size_t in_index);
 
  public:
-  modify_guard<rules_type> modify_guard_{};
+  modify_guard modify_guard_{};
 
   time_rules_render();
   virtual ~time_rules_render();
 
-  const rules_type& rules_attr() const;
+  [[nodiscard]] const rules_type& rules_attr() const;
   void rules_attr(const rules_type& in_rules_type);
   bool render();
 };
