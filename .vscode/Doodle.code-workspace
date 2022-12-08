@@ -54,16 +54,6 @@
 			".venv": true,
 			".vs": true,
 			".vscode": false,
-			"**/.git": true,
-			"**/.hg": true,
-			"**/.svn": true,
-			"b_Ninja_VS19_Ni_64_qt515_Debug": false,
-			"b_Ninja_VS19_Ni_64_qt515_Release": true,
-			"build": true,
-			"cmake-build-debug-vs2019": true,
-			"cmake-build-release-vs2019": true,
-			"external": true,
-			"install*": true
 		},
 		"C_Cpp.exclusionPolicy": "checkFolders",
 		"editor.formatOnSaveMode": "modifications",
@@ -118,24 +108,5 @@
 		],
 		"C_Cpp.intelliSenseEngine": "disabled",
 		"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
-	},
-	"launch": {
-		"version": "0.2.0",
-		"configurations": [
-			{
-				"name": "PowerShell Launch Current File",
-				"type": "PowerShell",
-				"request": "launch",
-				"script": "${file}",
-				"cwd": "${file}"
-			},
-			{
-				"name": "PowerShell: Launch Script",
-				"type": "PowerShell",
-				"request": "launch",
-				"script": "enter path or command to execute e.g.: ${workspaceFolder}/src/foo.ps1 or Invoke-Pester",
-				"cwd": "${workspaceFolder}"
-			}
-		]
 	}
 }
