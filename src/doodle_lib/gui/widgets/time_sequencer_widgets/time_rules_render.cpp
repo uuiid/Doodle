@@ -290,13 +290,17 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
         ImGui::SameLine();
         if (ImGui::Button(*fulfil)) use_edit = false;
       };
-    if (modify_guard_) show_str = fmt::to_string(get());
+
+    if (modify_guard_) {
+      auto l_f = get();
+      show_str = fmt::format("{:%F %H:%M} {:%F %H:%M} {}", l_f.first, l_f.second, l_f.info);
+    }
 
     return modify_guard_;
   }
 
   void set(const friend_type& in_type) {
-    show_str   = fmt::to_string(in_type);
+    show_str   = fmt::format("{:%F %H:%M} {:%F %H:%M} {}", in_type.first, in_type.second, in_type.info);
 
     begin_time = time_warp_gui_data{in_type.first};
     end_time   = time_warp_gui_data{in_type.second};
@@ -473,16 +477,17 @@ bool time_rules_render::render() {
       p_i->rules_attr.extra_work_p[in] = l_r.get();
       modify_guard_.modifyed();
     }
+    if (!l_r.use_edit) {
+      ImGui::SameLine();
 
-    ImGui::SameLine();
-
-    if (ImGui::Button(*l_r.delete_buttton)) {
-      boost::asio::post(g_io_context(), [this, in]() {
-        p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
-        p_i->rules_attr.extra_work_p |=
-            ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_work_p[in]);
-        modify_guard_.modifyed();
-      });
+      if (ImGui::Button(*l_r.delete_buttton)) {
+        boost::asio::post(g_io_context(), [this, in]() {
+          p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
+          p_i->rules_attr.extra_work_p |=
+              ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_work_p[in]);
+          modify_guard_.modifyed();
+        });
+      }
     }
   });
 
@@ -498,16 +503,17 @@ bool time_rules_render::render() {
       p_i->rules_attr.extra_rest_p[in] = l_r.get();
       modify_guard_.modifyed();
     }
+    if (!l_r.use_edit) {
+      ImGui::SameLine();
 
-    ImGui::SameLine();
-
-    if (ImGui::Button(*l_r.delete_buttton)) {
-      boost::asio::post(g_io_context(), [this, in]() {
-        p_i->extra_rest_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_rest_attr[in]);
-        p_i->rules_attr.extra_rest_p |=
-            ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_rest_p[in]);
-        modify_guard_.modifyed();
-      });
+      if (ImGui::Button(*l_r.delete_buttton)) {
+        boost::asio::post(g_io_context(), [this, in]() {
+          p_i->extra_rest_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_rest_attr[in]);
+          p_i->rules_attr.extra_rest_p |=
+              ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_rest_p[in]);
+          modify_guard_.modifyed();
+        });
+      }
     }
   });
 
