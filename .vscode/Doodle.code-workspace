@@ -108,5 +108,16 @@
 		],
 		"C_Cpp.intelliSenseEngine": "disabled",
 		"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "发布版本",
+				"type": "shell",
+				"command": "${workspaceFolder}\\src\\build\\build_exe.cmd;${workspaceFolder}\\src\\build\\build_maya_plug.cmd;${workspaceFolder}\\src\\build\\install.cmd",
+				"problemMatcher": []
+			}
+		]
 	}
 }
