@@ -4,6 +4,7 @@
 
 #include "time_rules_render.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/time_point_wrap.h>
@@ -13,20 +14,31 @@
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
+#include "boost/lambda2.hpp"
 #include <boost/asio.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/lambda2/lambda2.hpp>
+#include <boost/operators.hpp>
 #include <boost/optional.hpp>
 #include <boost/signals2/connection.hpp>
 
 #include "gui/widgets/time_sequencer_widgets/time_rules_render.h"
+#include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <fmt/compile.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <functional>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <range/v3/action/erase.hpp>
+#include <range/v3/action/remove_if.hpp>
+#include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/for_each_n.hpp>
+#include <range/v3/algorithm/remove_if.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
@@ -194,7 +206,7 @@ class work_gui_data_render {
   void set(const gui_data_type::friend_type& in_type) { gui_data = gui_data_type{in_type}; }
 };
 
-class time_work_gui_data_render {
+class time_work_gui_data_render : boost::equality_comparable<time_work_gui_data_render> {
  public:
   using friend_type = std::pair<chrono::seconds, chrono::seconds>;
   time_hh_mm_ss_gui_data begin{};
@@ -231,20 +243,24 @@ class time_work_gui_data_render {
     begin = time_hh_mm_ss_gui_data{in_type.first};
     end   = time_hh_mm_ss_gui_data{in_type.second};
   }
+  bool operator==(const time_work_gui_data_render& in_rhs) const {
+    return begin == in_rhs.begin && end == in_rhs.end && name_id_delete == in_rhs.name_id_delete;
+  }
 };
 
-class time_info_gui_data_render {
+class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_render> {
  public:
   std::string show_str{};
   business::rules::time_point_info data{};
-  gui_cache_name_id edit_buiion{};
-  gui_cache_name_id fulfil{};
+  gui_cache_name_id edit_buiion{"编辑"};
+  gui_cache_name_id fulfil{"完成"};
+  gui_cache_name_id delete_buttton{"删除"};
   bool use_edit{};
 
   using friend_type = time_info_gui_data::friend_type;
-  time_warp_gui_data begin_time;
-  time_warp_gui_data end_time;
-  gui_cache<std::string> info;
+  time_warp_gui_data begin_time{};
+  time_warp_gui_data end_time{};
+  gui_cache<std::string> info{};
 
   gui_cache_name_id gui_name{};
 
@@ -275,6 +291,7 @@ class time_info_gui_data_render {
         ImGui::SameLine();
         if (ImGui::Button(*fulfil)) use_edit = false;
       };
+    if (modify_guard_) show_str = fmt::to_string(get());
 
     return modify_guard_;
   }
@@ -288,6 +305,10 @@ class time_info_gui_data_render {
   }
   [[nodiscard]] friend_type get() const {
     return {time_warp_gui_data::friend_type{begin_time}, time_warp_gui_data::friend_type{end_time}, std::string{info}};
+  }
+
+  bool operator==(const time_info_gui_data_render& in_rhs) const {
+    return begin_time == in_rhs.begin_time && end_time == in_rhs.end_time && delete_buttton == in_rhs.delete_buttton;
   }
 };
 
@@ -307,9 +328,12 @@ class time_rules_render::impl {
 
   work_gui_data_render work_gui_data_attr{};
   std::vector<time_work_gui_data_render> time_work_gui_data_attr{};
+  gui_cache_name_id time_work_gui_data_attr_add_button{"添加"s};
   std::vector<std::vector<time_work_gui_data_render>> absolute_deduction_attr{};
   std::vector<time_info_gui_data_render> extra_work_attr{};
+  gui_cache_name_id extra_work_attr_add_button{"添加"s};
   std::vector<time_info_gui_data_render> extra_rest_attr{};
+  gui_cache_name_id extra_rest_attr_add_button{"添加"s};
 };
 
 time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
@@ -401,11 +425,6 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
                              }
                          ) |
                          ranges::to_vector;
-
-  // p_i->render_time.work_gui_data_attr.gui_data = work_gui_data{in_rules_type.work_weekdays()};
-  // p_i->render_time.time_work_gui_data_attr.set(in_rules_type.work_time());
-  // p_i->render_time.extra_work_attr.set(in_rules_type.extra_work());
-  // p_i->render_time.extra_rest_attr.set(in_rules_type.extra_rest());
   print_show_str();
 }
 bool time_rules_render::render() {
@@ -414,17 +433,83 @@ bool time_rules_render::render() {
   dear::Text(p_i->show_str);
 
   dear::TreeNode{*p_i->setting} && [&]() {
-    modify_guard_ = p_i->work_gui_data_attr.render();
-    ranges::for_each(p_i->time_work_gui_data_attr, [&](decltype(p_i->time_work_gui_data_attr)::value_type& in) {
-      modify_guard_ = in.render();
+    if (p_i->work_gui_data_attr.render()) {
+      p_i->rules_attr.work_weekdays_p = p_i->work_gui_data_attr.get();
+      modify_guard_.modifyed();
+    };
+
+    if (ImGui::Button(*p_i->time_work_gui_data_attr_add_button)) {
+      p_i->time_work_gui_data_attr.emplace_back().set(p_i->rules_attr.work_pair_p.emplace_back());
+      modify_guard_.modifyed();
+    }
+
+    ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
+      auto& l_r = p_i->time_work_gui_data_attr[in_index];
+      if (l_r.render()) {
+        p_i->rules_attr.work_pair_p[in_index] = l_r.get();
+        modify_guard_.modifyed();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(*l_r.name_id_delete)) {
+        boost::asio::post(g_io_context(), [this, in_index]() {
+          p_i->time_work_gui_data_attr |=
+              ranges::actions::remove_if(boost::lambda2::_1 == p_i->time_work_gui_data_attr[in_index]);
+
+          p_i->rules_attr.work_pair_p |=
+              ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.work_pair_p[in_index]);
+          modify_guard_.modifyed();
+        });
+      }
     });
   };
+  ImGui::Text("加班时间");
+  ImGui::SameLine();
+  if (ImGui::Button(*p_i->extra_work_attr_add_button)) {
+    p_i->extra_work_attr.emplace_back().set(p_i->rules_attr.extra_work_p.emplace_back());
+    modify_guard_.modifyed();
+  }
+  ranges::for_each(ranges::views::ints(0ull, p_i->extra_work_attr.size()), [&](std::size_t in) {
+    auto& l_r = p_i->extra_work_attr[in];
+    if (l_r.render()) {
+      p_i->rules_attr.extra_work_p[in] = l_r.get();
+      modify_guard_.modifyed();
+    }
 
-  ranges::for_each(p_i->extra_work_attr, [&](decltype(p_i->extra_work_attr)::value_type& in) {
-    modify_guard_ = in.render();
+    ImGui::SameLine();
+
+    if (ImGui::Button(*l_r.delete_buttton)) {
+      boost::asio::post(g_io_context(), [this, in]() {
+        p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
+        p_i->rules_attr.extra_work_p |=
+            ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_work_p[in]);
+        modify_guard_.modifyed();
+      });
+    }
   });
-  ranges::for_each(p_i->extra_rest_attr, [&](decltype(p_i->extra_rest_attr)::value_type& in) {
-    modify_guard_ = in.render();
+
+  ImGui::Text("调休时间");
+  ImGui::SameLine();
+  if (ImGui::Button(*p_i->extra_rest_attr_add_button)) {
+    p_i->extra_rest_attr.emplace_back().set(p_i->rules_attr.extra_rest_p.emplace_back());
+    modify_guard_.modifyed();
+  }
+  ranges::for_each(ranges::views::ints(0ull, p_i->extra_rest_attr.size()), [&](std::size_t in) {
+    auto& l_r = p_i->extra_rest_attr[in];
+    if (l_r.render()) {
+      p_i->rules_attr.extra_rest_p[in] = l_r.get();
+      modify_guard_.modifyed();
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(*l_r.delete_buttton)) {
+      boost::asio::post(g_io_context(), [this, in]() {
+        p_i->extra_rest_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_rest_attr[in]);
+        p_i->rules_attr.extra_rest_p |=
+            ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_rest_p[in]);
+        modify_guard_.modifyed();
+      });
+    }
   });
 
   if (modify_guard_) print_show_str();

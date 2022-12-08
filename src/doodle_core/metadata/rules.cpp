@@ -87,7 +87,7 @@ const rules& rules::get_default() {
 
 std::string rules::debug_print() {
   return fmt::format(
-      "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}", work_weekdays_p,
+      "规则 周六日规则 {} 每日规则 {} 调休规则 {}  加班规则 {}", work_weekdays_p,
       fmt::join(work_pair_p, "->"), fmt::join(extra_rest_p, "->"), fmt::join(extra_work_p, "->")
   );
 }
@@ -99,7 +99,7 @@ rules::time_point_vector& rules::extra_work() { return extra_work_p; }
 rules::time_point_vector& rules::extra_rest() { return extra_rest_p; }
 std::string rules::fmt_str() const {
   return fmt::format(
-      "规则 周六日规则 {} 每日规则 {}  节假日规则 {}  调休规则 {}  加班规则 {}", work_weekdays_p,
+      "规则 周六日规则 {} 每日规则 {} 调休规则 {}  加班规则 {}", work_weekdays_p,
       fmt::join(work_pair_p, "->"), fmt::join(extra_rest_p, "->"), fmt::join(extra_work_p, "->")
   );
 }

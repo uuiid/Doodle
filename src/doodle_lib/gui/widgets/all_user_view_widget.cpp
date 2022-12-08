@@ -12,6 +12,7 @@
 #include <doodle_lib/gui/widgets/time_sequencer_widgets/time_rules_render.h>
 
 #include <imgui.h>
+#include <string>
 
 namespace doodle::gui {
 class all_user_view_widget::impl {
