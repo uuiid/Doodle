@@ -1,4 +1,4 @@
-﻿#include "DoodleCommandlet.h"
+#include "DoodleCommandlet.h"
 
 #include "AssetImportTask.h"
 #include "AssetToolsModule.h"
@@ -19,7 +19,7 @@
 #include "Misc/FileHelper.h"
 #include "Modules/ModuleManager.h"
 #include "SourceControlHelpers.h"
-
+#include "UObject/SavePackage.h"  // 保存包
 UDoodleAssCreateCommandlet::UDoodleAssCreateCommandlet(
     const FObjectInitializer &ObjectInitializer
 )
@@ -37,7 +37,14 @@ bool UDoodleAssCreateCommandlet::parse_params(const FString &in_params) {
 }
 
 static bool SavePackage(UPackage *Package, const FString &PackageFilename) {
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   return GEditor->SavePackage(Package, nullptr, RF_Standalone, *PackageFilename, GWarn);
+#else if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+  FSavePackageArgs L_Arg{};
+  L_Arg.Error         = GWarn;
+  L_Arg.TopLevelFlags = RF_Standalone;
+  return GEditor->SavePackage(Package, nullptr, *PackageFilename, L_Arg);
+#endif  // ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
 }
 
 // void UDoodleAssCreateCommandlet::ClearDirtyPackages()

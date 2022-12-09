@@ -1,4 +1,5 @@
 #include "DoodleAnimInstance.h"
+#include "KismetAnimationLibrary.h"
 
 UDoodleAnimInstance::UDoodleAnimInstance() : Super() {}
 void UDoodleAnimInstance::NativeUpdateAnimation(float DeltaTimeX) {
@@ -10,8 +11,12 @@ void UDoodleAnimInstance::DoodleCalculateSpeed() {
 
   if (LPawn) {
     FVector LVelocity = LPawn->GetVelocity();
-    DirectionAttrXY   = CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
-    VelocityAttr      = LVelocity.Size();
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
+    DirectionAttrXY = CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+    DirectionAttrXY = UKismetAnimationLibrary::CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
+#endif
+    VelocityAttr = LVelocity.Size();
   }
 }
 
@@ -104,7 +109,11 @@ void UDoodleAnimInstance::DoodleRandom() {
 
 void UDoodleAnimInstance::NativeBeginPlay() {
   UAnimInstance::NativeBeginPlay();
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   RandomAttr_InstallValue = FMath::RandRange(0.0, 256.0f);
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+  RandomAttr_InstallValue = FMath::RandRange(0.0f, 256.0f);
+#endif
   UE_LOG(LogTemp, Log, TEXT("RandomAttr_InstallValue: %f"), RandomAttr_InstallValue);
   DoodleRandom();
 }

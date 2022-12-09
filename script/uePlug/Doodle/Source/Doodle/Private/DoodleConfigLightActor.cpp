@@ -138,10 +138,10 @@ void ADoodleConfigLightActor::SaveConfig() {
   }
   const FString NewAssetName =
       FPackageName::GetLongPackageAssetName(NewPackageName);
-#if ENGINE_MINOR_VERSION >= 26
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 26
   UPackage* NewPackage = CreatePackage(*NewPackageName);
 
-#else if ENGINE_MINOR_VERSION < 26
+#else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION < 26
   UPackage* NewPackage = CreatePackage(nullptr, *NewPackageName);
 #endif
 

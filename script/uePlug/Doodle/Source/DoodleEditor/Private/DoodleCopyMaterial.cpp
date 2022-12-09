@@ -1,4 +1,4 @@
-﻿#include "DoodleCopyMaterial.h"
+#include "DoodleCopyMaterial.h"
 
 #include "Editor/ContentBrowser/Public/ContentBrowserModule.h"
 #include "Editor/ContentBrowser/Public/IContentBrowserSingleton.h"
@@ -231,7 +231,7 @@ FReply DoodleCopyMat::CopyMateral() {
 
       UE_LOG(LogTemp, Log, TEXT("确认并加载为几何物体 %s"), *(copyTrange->GetPathName()));
       ENGINE_MINOR_VERSION;
-#if ENGINE_MINOR_VERSION == 27
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
       TArray<FSkeletalMaterial> trangeMat = copyTrange->GetMaterials();
       if (copySoureSkinObj)
         for (int m = 0; m < trangeMat.Num(); m++) {
@@ -240,7 +240,7 @@ FReply DoodleCopyMat::CopyMateral() {
           // 材质插槽命名
         }
       copyTrange->SetMaterials(trangeMat);
-#else if ENGINE_MINOR_VERSION <= 26
+#else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 26
       TArray<FSkeletalMaterial> trangeMat = copyTrange->Materials;
       if (copySoureSkinObj)
         for (int m = 0; m < trangeMat.Num(); m++) {
@@ -351,14 +351,14 @@ FReply DoodleCopyMat::BathReameAss() {
         UE_LOG(LogTemp, Log, TEXT("不是静态网格体 %s"), *(k_st->GetPathName()));
         continue;
       }
-#if ENGINE_MINOR_VERSION == 27
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
       for (auto &mat : k_st->GetStaticMaterials()) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
         }
       }
 
-#else if ENGINE_MINOR_VERSION <= 26
+#else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 26
       for (auto &mat : k_st->StaticMaterials) {
         if (mat.ImportedMaterialSlotName.IsValid()) {
           set_material_attr(mat.MaterialInterface, mat.ImportedMaterialSlotName.ToString());
@@ -381,47 +381,47 @@ FReply DoodleCopyMat::set_marteral_deep() {
   TArray<FAssetData> selectedAss;
   contentBrowserModle.Get().GetSelectedAssets(selectedAss);
 
-  for (auto &&item : selectedAss) {
-    UObject *loadObj = item.GetAsset();
-    if (loadObj == nullptr)
-      continue;
-    if (loadObj->GetClass()->IsChildOf<UParticleSystem>()) {
-      auto *k_par = Cast<UParticleSystem>(loadObj);
-      for (auto *k_em : k_par->Emitters) {
-        for (auto *k_mat_i : k_em->MeshMaterials) {
-          auto *k_mat = k_mat_i->GetMaterial();
-          if (k_mat) {
-            UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
-            k_mat->bEnableSeparateTranslucency =
-                this->bEnableSeparateTranslucency;
-            k_mat->ForceRecompileForRendering();
-          }
-        }
-        k_em->UpdateModuleLists();
-        for (auto *k_mod : k_em->ModulesNeedingInstanceData) {
-          if (k_mod->GetClass()->IsChildOf<UParticleModuleRequired>()) {
-            auto k_mod_req = Cast<UParticleModuleRequired>(k_mod);
-            auto *k_mat    = k_mod_req->Material->GetMaterial();
-            if (k_mat) {
-              UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
-              k_mat->bEnableSeparateTranslucency =
-                  this->bEnableSeparateTranslucency;
-              k_mat->ForceRecompileForRendering();
-            }
-          }
-        }
-      }
-      for (auto &k_mat_s : k_par->NamedMaterialSlots) {
-        auto *k_mat = k_mat_s.Material->GetMaterial();
-        if (k_mat) {
-          UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
-          k_mat->bEnableSeparateTranslucency =
-              this->bEnableSeparateTranslucency;
-          k_mat->ForceRecompileForRendering();
-        }
-      }
-    }
-  }
+  //for (auto &&item : selectedAss) {
+  //  UObject *loadObj = item.GetAsset();
+  //  if (loadObj == nullptr)
+  //    continue;
+  //  if (loadObj->GetClass()->IsChildOf<UParticleSystem>()) {
+  //    auto *k_par = Cast<UParticleSystem>(loadObj);
+  //    for (auto *k_em : k_par->Emitters) {
+  //      for (auto *k_mat_i : k_em->MeshMaterials) {
+  //        auto *k_mat = k_mat_i->GetMaterial();
+  //        if (k_mat) {
+  //          UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
+  //          k_mat->bEnableSeparateTranslucency =
+  //              this->bEnableSeparateTranslucency;
+  //          k_mat->ForceRecompileForRendering();
+  //        }
+  //      }
+  //      k_em->UpdateModuleLists();
+  //      for (auto *k_mod : k_em->ModulesNeedingInstanceData) {
+  //        if (k_mod->GetClass()->IsChildOf<UParticleModuleRequired>()) {
+  //          auto k_mod_req = Cast<UParticleModuleRequired>(k_mod);
+  //          auto *k_mat    = k_mod_req->Material->GetMaterial();
+  //          if (k_mat) {
+  //            UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
+  //            k_mat->bEnableSeparateTranslucency =
+  //                this->bEnableSeparateTranslucency;
+  //            k_mat->ForceRecompileForRendering();
+  //          }
+  //        }
+  //      }
+  //    }
+  //    for (auto &k_mat_s : k_par->NamedMaterialSlots) {
+  //      auto *k_mat = k_mat_s.Material->GetMaterial();
+  //      if (k_mat) {
+  //        UE_LOG(LogTemp, Log, TEXT("开始设置材质景深后渲染属性 %s"), *k_mat->GetName());
+  //        k_mat->bEnableSeparateTranslucency =
+  //            this->bEnableSeparateTranslucency;
+  //        k_mat->ForceRecompileForRendering();
+  //      }
+  //    }
+  //  }
+  //}
 
   return FReply::Handled();
 }

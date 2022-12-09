@@ -43,8 +43,14 @@ void AfireLight::Tick(float DeltaTime) {
   // 获得最大和最小猪
   auto tmp_min = FMath::Min(luminanceMin, luminanceMax);
   auto tmp_max = FMath::Max(luminanceMin, luminanceMax);
-  noise        = FMath::GetMappedRangeValueClamped({0, 1}, {tmp_min, tmp_max}, noise) *
+
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
+  noise = FMath::GetMappedRangeValueClamped({0.0f, 1.0f}, {tmp_min, tmp_max}, noise) *
           tmp_max;
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+  noise = FMath::GetMappedRangeValueClamped(UE::Math::TVector2{0.0f, 1.0f}, UE::Math::TVector2{tmp_min, tmp_max}, noise) *
+          tmp_max;
+#endif
 
   // 获得曲线变化
   float tmp{1.0};

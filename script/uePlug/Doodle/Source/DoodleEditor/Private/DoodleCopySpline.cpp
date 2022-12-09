@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "DoodleCopySpline.h"
 
@@ -69,7 +69,11 @@ void ADoodleCopySpline::PostEditChangeProperty(struct FPropertyChangedEvent &Pro
 
       FTransform k_tran_{k_rot, k_ver, p_actor->GetActorScale()};
       // 添加预览网格体
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
       p_preview->AddInstanceWorldSpace(k_tran_);
+#else if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+      p_preview->AddInstance(k_tran_, true);
+#endif
     }
   } else if (name == GET_MEMBER_NAME_CHECKED(ThisClass, p_preview_mesh)) {
     p_preview->SetStaticMesh(p_preview_mesh);

@@ -60,6 +60,8 @@
 /// 导入相机的设置
 #include "MovieSceneToolsUserSettings.h"
 
+/// 关卡编辑器子系统
+#include "LevelEditorSubsystem.h"
 namespace doodle {
 bool init_ue4_project::load_all_blueprint() {
   UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
@@ -131,9 +133,19 @@ bool init_ue4_project::create_world(const FString &in_path) {
         FPaths::GetBaseFilename(in_path), FPaths::GetPath(in_path), UWorld::StaticClass(),
         UWorldFactory::StaticClass()->GetDefaultObject<UFactory>()
     );
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+    ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
+    LevelEditorSubsystem->LoadLevel(in_path);
+#endif
   } else {
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
+#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+    ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
+    LevelEditorSubsystem->LoadLevel(in_path);
+#endif
     p_world_ = GEditor->GetEditorWorldContext().World();
   }
   if (p_world_ != nullptr)
