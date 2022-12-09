@@ -54,11 +54,6 @@
 			"WhitelistPlatforms": [
 				"Win64"
 			]
-		},
-				{
-			"Name" : "DoodleSourceControl",
-			"Type" : "Editor",
-			"LoadingPhase" : "Default"
 		}
 	],
 	"Plugins": [
