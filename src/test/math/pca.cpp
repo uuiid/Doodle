@@ -41,7 +41,7 @@ Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
   // return ONB * proj + Average;
   return {};
 };
-
+// https://github.com/ihar/EigenPCA/blob/master/pca.cpp
 Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
   Eigen::JacobiSVD<Eigen::MatrixXf> l_svd{in_mat, Eigen::ComputeThinU | Eigen::ComputeThinV};
 

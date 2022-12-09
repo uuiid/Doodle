@@ -92,13 +92,13 @@
 			{
 				"testExecutables": [
 					{
-						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/test_core.exe",
+						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_core.exe",
 					},
 					{
-						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/dingding_base.exe",
+						"path": "${workspaceFolder}/build/Ninja_debug/bin/dingding_base.exe",
 					},
 					{
-						"path": "${workspaceFolder}/build/Ninja_build_DD/bin/test_math.exe",
+						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_math.exe",
 					}
 				],
 				"cwd": "${workspaceFolder}/build",
