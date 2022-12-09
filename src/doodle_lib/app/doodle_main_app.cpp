@@ -14,9 +14,9 @@
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include <doodle_dingding/client/dingding_api.h>
-
+#include "boost/asio/ssl.hpp"
 #include <boost/asio.hpp>
+
 
 namespace doodle {
 
@@ -74,7 +74,6 @@ void main_facet::operator()() {
   auto l_ssl = g_reg()->ctx().emplace<std::shared_ptr<boost::asio::ssl::context>>(
       std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23)
   );
-  g_reg()->ctx().emplace<doodle::dingding_api_factory>();
 }
 void main_facet::deconstruction() {
   g_reg()->ctx().erase<std::shared_ptr<boost::asio::ssl::context>>();
