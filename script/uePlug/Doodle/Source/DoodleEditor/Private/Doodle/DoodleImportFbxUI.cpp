@@ -349,26 +349,27 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         [
           /// 生成的前缀
           SNew(SEditableTextBox)
-          .Text_Lambda([this]()->FText{
+          .Text_Lambda([this]()-> FText {
             return FText::FromString(this->Path_Prefix);
           })
-          .OnTextChanged_Lambda([this](const FText& In_Text){
+          .OnTextChanged_Lambda([this](const FText& In_Text) {
             GenPathPrefix(In_Text.ToString());
           })
-          .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type){
+          .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
             GenPathPrefix(In_Text.ToString());
           })
         ]
 
         /// 主要的列表小部件(Fbx)
         + SVerticalBox::Slot()
-        .AutoHeight()
+        .MaxHeight(800.f)
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
           SAssignNew(ListImportFbx,SListView<TSharedPtr<doodle_ue4::FFbxImport>>)
           .ItemHeight(80) // 小部件高度
           .ListItemsSource(&ListImportFbxData)
+          .ScrollbarVisibility(EVisibility::All)
           .OnGenerateRow_Lambda(// 生成小部件
             [](TSharedPtr<doodle_ue4::FFbxImport> InItem, 
                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
@@ -399,13 +400,14 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
 
         /// 主要的列表小部件(Abc)
         + SVerticalBox::Slot()
-        .AutoHeight()
+        .MaxHeight(800.f)
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
           SAssignNew(ListImportAbc,SListView<TSharedPtr<doodle_ue4::FAbcImport>>)
           .ItemHeight(80) // 小部件高度
           .ListItemsSource(&ListImportAbcData)
+          .ScrollbarVisibility(EVisibility::All)
           .OnGenerateRow_Lambda(// 生成小部件
             [](TSharedPtr<doodle_ue4::FAbcImport> InItem, 
                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
