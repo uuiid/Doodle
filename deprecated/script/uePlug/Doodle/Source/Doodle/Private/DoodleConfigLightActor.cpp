@@ -10,7 +10,7 @@
 #include "Engine/World.h"
 
 #if WITH_EDITOR
-#if ENGINE_MINOR_VERSION >= 26
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
 #include "AssetRegistry/AssetRegistryModule.h"
 #endif
 #include "AssetToolsModule.h"
@@ -138,7 +138,7 @@ void ADoodleConfigLightActor::SaveConfig() {
   }
   const FString NewAssetName =
       FPackageName::GetLongPackageAssetName(NewPackageName);
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 26
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   UPackage* NewPackage = CreatePackage(*NewPackageName);
 
 #else if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION < 26

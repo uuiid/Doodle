@@ -71,7 +71,7 @@ void ADoodleCopySpline::PostEditChangeProperty(struct FPropertyChangedEvent &Pro
       // 添加预览网格体
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
       p_preview->AddInstanceWorldSpace(k_tran_);
-#else if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
       p_preview->AddInstance(k_tran_, true);
 #endif
     }

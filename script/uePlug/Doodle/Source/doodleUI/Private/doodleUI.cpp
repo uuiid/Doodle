@@ -1,6 +1,5 @@
 #include "DoodleUI.h"
 
-#include "DoodleConfigLightActor.h"
 #include "DoodleCopySpline.h"
 #include "DoodleDirectionalLightDome.h"
 #include "IPlacementModeModule.h"
@@ -32,12 +31,6 @@ void FdoodleUIModule::StartupModule() {
       info.UniqueHandle,
       MakeShareable(new FPlaceableItem(
           nullptr, FAssetData{ADoodleCopySpline::StaticClass()}
-      ))
-  );
-  IPlacementModeModule::Get().RegisterPlaceableItem(
-      info.UniqueHandle,
-      MakeShareable(new FPlaceableItem(
-          nullptr, FAssetData{ADoodleConfigLightActor::StaticClass()}
       ))
   );
   IPlacementModeModule::Get().RegisterPlaceableItem(

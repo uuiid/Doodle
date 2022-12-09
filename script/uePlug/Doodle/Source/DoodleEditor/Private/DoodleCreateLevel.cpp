@@ -60,8 +60,10 @@
 /// 导入相机的设置
 #include "MovieSceneToolsUserSettings.h"
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
 /// 关卡编辑器子系统
 #include "LevelEditorSubsystem.h"
+#endif
 namespace doodle {
 bool init_ue4_project::load_all_blueprint() {
   UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
@@ -135,14 +137,14 @@ bool init_ue4_project::create_world(const FString &in_path) {
     );
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
-#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
     ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif
   } else {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     UEditorLevelLibrary::LoadLevel(in_path);
-#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
     ULevelEditorSubsystem *LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
     LevelEditorSubsystem->LoadLevel(in_path);
 #endif

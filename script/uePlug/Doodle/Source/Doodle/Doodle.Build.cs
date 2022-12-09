@@ -67,6 +67,7 @@ public class doodle : ModuleRules
                 // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
                 "NavigationSystem",// 导航网格
+                "AnimGraphRuntime"// 动画评估模块
                 // "Projects",
                 // "InputCore",
                 // "CoreUObject",

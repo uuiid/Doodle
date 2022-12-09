@@ -13,7 +13,7 @@ void UDoodleAnimInstance::DoodleCalculateSpeed() {
     FVector LVelocity = LPawn->GetVelocity();
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
     DirectionAttrXY = CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
-#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
     DirectionAttrXY = UKismetAnimationLibrary::CalculateDirection(LVelocity, LPawn->GetBaseAimRotation());
 #endif
     VelocityAttr = LVelocity.Size();
@@ -111,7 +111,7 @@ void UDoodleAnimInstance::NativeBeginPlay() {
   UAnimInstance::NativeBeginPlay();
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   RandomAttr_InstallValue = FMath::RandRange(0.0, 256.0f);
-#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   RandomAttr_InstallValue = FMath::RandRange(0.0f, 256.0f);
 #endif
   UE_LOG(LogTemp, Log, TEXT("RandomAttr_InstallValue: %f"), RandomAttr_InstallValue);

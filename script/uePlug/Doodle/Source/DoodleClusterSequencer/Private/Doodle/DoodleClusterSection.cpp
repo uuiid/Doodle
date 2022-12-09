@@ -6,7 +6,7 @@
 #include "Fonts/FontMeasure.h"
 
 #include "Doodle/DoodleClusterSectionRuntime.h"
-
+#include "EditorStyleSet.h"
 FDoodleClusterSection::FDoodleClusterSection(
     UMovieSceneSection &InSection, TWeakPtr<ISequencer> InSequencer)
     : ISequencerSection(),

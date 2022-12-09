@@ -47,7 +47,7 @@ void AfireLight::Tick(float DeltaTime) {
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
   noise = FMath::GetMappedRangeValueClamped({0.0f, 1.0f}, {tmp_min, tmp_max}, noise) *
           tmp_max;
-#elif ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   noise = FMath::GetMappedRangeValueClamped(UE::Math::TVector2{0.0f, 1.0f}, UE::Math::TVector2{tmp_min, tmp_max}, noise) *
           tmp_max;
 #endif

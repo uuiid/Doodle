@@ -53,7 +53,8 @@
 #include "IContentBrowserSingleton.h"
 /// 导入abc
 #include "AbcImportSettings.h"
-
+/// 编辑器笔刷效果
+#include "EditorStyleSet.h"
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 

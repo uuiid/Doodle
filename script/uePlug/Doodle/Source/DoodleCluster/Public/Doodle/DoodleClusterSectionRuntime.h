@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MovieSceneSection.h"
+#include "MovieSceneObjectBindingID.h"
 #include "EntitySystem/IMovieSceneEntityProvider.h"
 #include "DoodleClusterSectionRuntime.generated.h"
 
