@@ -18,6 +18,8 @@ wix_heat_gen(bin ${CMAKE_INSTALL_PREFIX})
 
 wix_heat_gen(maya ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(ue427_Plug ${CMAKE_INSTALL_PREFIX})
+wix_heat_gen(ue50_Plug ${CMAKE_INSTALL_PREFIX})
+wix_heat_gen(ue51_Plug ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(houdini ${CMAKE_INSTALL_PREFIX})
 wix_heat_gen(SideFX_Labs ${CMAKE_INSTALL_PREFIX})
 
@@ -25,6 +27,8 @@ wix_candle_gen(main ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(bin ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(maya ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(ue427_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
+wix_candle_gen(ue50_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
+wix_candle_gen(ue51_Plug ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(houdini ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 wix_candle_gen(SideFX_Labs ${CMAKE_INSTALL_PREFIX} gen_wixobj_files)
 
@@ -42,7 +46,7 @@ add_custom_target(gen_light_file
         -cc "${CMAKE_INSTALL_PREFIX}"
         -reusecab
 
-        #        -b ${CMAKE_INSTALL_PREFIX}/bin
+        # -b ${CMAKE_INSTALL_PREFIX}/bin
         -spdb # 取消pdb文件输出
         ${gen_wixobj_files}
 
@@ -51,12 +55,12 @@ add_custom_target(gen_light_file
         "${CMAKE_INSTALL_PREFIX}/bin"
         "${CMAKE_INSTALL_PREFIX}/maya"
         "${CMAKE_INSTALL_PREFIX}/ue427_Plug"
+        "${CMAKE_INSTALL_PREFIX}/ue50_Plug"
+        "${CMAKE_INSTALL_PREFIX}/ue51_Plug"
         "${CMAKE_INSTALL_PREFIX}/houdini"
         "${CMAKE_INSTALL_PREFIX}/SideFX_Labs"
         -x!bin/doodle_limited_exe.exe
 
         DEPENDS ${gen_wixobj_files}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
-
-
-        )
+)
