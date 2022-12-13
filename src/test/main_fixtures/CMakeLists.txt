@@ -30,3 +30,11 @@ target_sources(
         PRIVATE
         lib_fixtures.cpp
 )
+target_sources(
+        test_ai
+        PUBLIC
+        lib_fixtures.h
+
+        PRIVATE
+        lib_fixtures.cpp
+)

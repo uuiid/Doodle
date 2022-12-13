@@ -43,8 +43,15 @@ Eigen::MatrixXf pca_fun(Eigen::MatrixXf& in_mat) {
 };
 // https://github.com/ihar/EigenPCA/blob/master/pca.cpp
 Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
-  Eigen::JacobiSVD<Eigen::MatrixXf> l_svd{in_mat, Eigen::ComputeThinU | Eigen::ComputeThinV};
+  Eigen::VectorXf Average = in_mat.colwise().mean();
 
+  std::cout << "Average: \n" << Average << std::endl;
+  // std::cout << " Eigen::VectorXf::Ones(3): \n" << Eigen::VectorXf::Ones(in_mat.rows()) << std::endl;
+
+  Eigen::MatrixXf l_org = in_mat - Eigen::VectorXf::Ones(in_mat.rows()) * Average.transpose();
+  std::cout << "l_org: \n" << l_org << std::endl;
+
+  Eigen::JacobiSVD<Eigen::MatrixXf> l_svd{l_org, Eigen::ComputeThinU | Eigen::ComputeThinV};
   Eigen::MatrixXf l_u = l_svd.matrixU();
   Eigen::MatrixXf l_v = l_svd.matrixV();
   Eigen::VectorXf l_s = l_svd.singularValues();
@@ -52,7 +59,7 @@ Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
 
   std::cout << "U: \n" << l_u << "\nV: \n" << l_v << "\nS: \n" << l_s << std::endl;
 
-  auto l_rows = in_mat.rows() / 2;
+  auto l_rows = l_org.rows();
 
   for (auto i = 0ll; i < l_com; ++i) {
     const std::float_t l_muliplier = l_s(i);
@@ -60,12 +67,25 @@ Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
       l_u(i, j) *= l_muliplier;
     }
   }
-  std::cout << "U: \n" << l_u << std::endl;
+
+  
+  // Eigen::MatrixXf l_org = l_u * l_s * l_v;
+  // std::cout << "org: \n" << l_org << std::endl;
+
+  std::cout << "mu U: \n" << l_u << std::endl;
   return {};
 }
 
 BOOST_AUTO_TEST_CASE(test_pca) {
-  Eigen::MatrixXf l_mat{3, 3};
-  l_mat << 2, 2, 3, 4, 5, 7, 2, 1, 4;
+  Eigen::MatrixXf l_mat{3, 10};
+  l_mat = Eigen::MatrixXf::Random(3, 10);
+
+  // l_mat << 2, 2, 3, 4, 5, 7, 2, 1, 4, 1,  //
+  //     2, 5, 3, 3, 5, 1, 1, 1, 4, 1,       //
+  //     2, 5, 3, 3, 5, 1, 1, 1, 4, 1
+
+  //     ;
+  std::cout << "org : \n" << l_mat << std::endl;
+
   pca_fun2(l_mat);
 }

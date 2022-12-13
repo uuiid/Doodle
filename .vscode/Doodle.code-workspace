@@ -99,6 +99,9 @@
 					},
 					{
 						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_math.exe",
+					},
+					{
+						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_ai.exe",
 					}
 				],
 				"cwd": "${workspaceFolder}/build",

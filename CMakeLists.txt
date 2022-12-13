@@ -1,8 +1,10 @@
 ﻿# 确定最低版本
 cmake_minimum_required(VERSION 3.20)
+
 # 添加模块文件(辅助cmake寻找需要的动态库)
 # CMAKE_SOURCE_DIR 代表当前文件的路径
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
 # 寻找git版本标签🏷️
 include(GetGitVersion)
 get_git_version(
@@ -10,6 +12,7 @@ get_git_version(
 )
 
 MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE} OS SDK ${CMAKE_SYSTEM_VERSION}")
+
 # 创建一个项目
 project(Doodle
         VERSION "${v_short}"
@@ -19,16 +22,21 @@ project(Doodle
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-
 # 项目中所有的 std::string 类都是utf-8字节  认为 char -> char8
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
-#add_compile_options(/W4)
+
+# add_compile_options(/W4)
+# message("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/debug/libtorch)
+else()
+        list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/libtorch)
+endif()
 
 # 设置 c++ 版本
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 
 # 使用中文
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
@@ -38,8 +46,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 option(Boost_NO_WARN_NEW_VERSIONS "boost warn OFF " ON)
 
-
-#首先搜索我们的自定义函数
+# 首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
 # 寻找包
@@ -51,17 +58,20 @@ find_package(Boost REQUIRED COMPONENTS
         filesystem
         coroutine
         unit_test_framework
-        log 
-        log_setup 
-        )
+        log
+        log_setup
+)
 
 find_package(Catch2 CONFIG)
 find_package(Doxygen)
+
 # 寻找 opencv
 find_package(OpenCV CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+
 # 寻找 openssl
 find_package(OpenSSL REQUIRED)
+
 # 仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -74,12 +84,12 @@ find_package(Sqlpp11 CONFIG REQUIRED
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(wil CONFIG REQUIRED)
+
 # this is heuristically generated, and may not be correct
 find_package(implot CONFIG REQUIRED)
 
 # 寻找反射
 find_package(rttr CONFIG REQUIRED)
-
 
 # 压缩库
 find_package(cryptopp CONFIG REQUIRED)
@@ -87,20 +97,17 @@ find_package(cryptopp CONFIG REQUIRED)
 # 寻找abc库
 find_package(Alembic CONFIG REQUIRED)
 
-
 # 寻找d3d辅助工具库
 find_package(directxtk CONFIG REQUIRED)
-
 
 # 启用测试
 enable_testing()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 cmake_print_variables(DOODLE_PACKAGE_NAME)
 
-#=====================安装打包过程===============================
+# =====================安装打包过程===============================
 add_subdirectory(script)
 add_subdirectory(src)
-
 
 #[==[
 一些杂项工具和命令
@@ -149,4 +156,15 @@ find_package(modules CONFIG REQUIRED)
 target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
 
 GenerateProjectFiles.bat -projectfiles -vscode -project=F:\doodle_plug_dev_4.27\doodle_plug.uproject -game -engine
+
+
+
+ai库安装:
+安装python库
+https://pytorch.org/get-started/locally/
+安装cuda和cudnn库
+https://caffe2.ai/docs/getting-started.html?platform=windows&configuration=compile
+
+
+
 ]==]
