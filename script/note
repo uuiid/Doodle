@@ -1,6 +1,6 @@
 #!/bin/bash                                                                                                             
-cd /mnt/d/wsl/cpp-books
+cd /mnt/d/wsl/cpp_books
 source ~/miniconda3/etc/profile.d/conda.sh 
 conda activate cpp
-export BROWSER="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"                                                   
+export BROWSER="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"                                                   
 jupyter notebook
