@@ -22,7 +22,7 @@ target_sources(doodle_lib
         maya_tool.h
         create_video.h
         database_edit.h
-
+        work_hour_filling.h
 
         PRIVATE
         edit_widget.cpp
@@ -42,6 +42,5 @@ target_sources(doodle_lib
         maya_tool.cpp
         create_video.cpp
         database_edit.cpp
-
-        )
-
+        work_hour_filling.cpp
+)
