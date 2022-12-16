@@ -19,6 +19,7 @@ target_sources(
         redirection_path_info.h
         move_create.h
         rules.h
+        work_task.h
 
         PRIVATE
         assets.cpp
@@ -39,7 +40,7 @@ target_sources(
         redirection_path_info.cpp
         move_create.cpp
         rules.cpp
-
+        work_task.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(detail)
