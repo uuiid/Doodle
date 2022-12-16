@@ -9,6 +9,7 @@
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
+#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <database_task/details/com_data.h>

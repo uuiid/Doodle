@@ -4,26 +4,26 @@
 
 #include "sqlite_client.h"
 
+#include <doodle_core/core/core_sig.h>
+#include <doodle_core/core/core_sql.h>
+#include <doodle_core/gui_template/show_windows.h>
+#include <doodle_core/metadata/work_task.h>
+#include <doodle_core/thread_pool/process_message.h>
+
+#include <boost/asio.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+
+#include <core/core_set.h>
+#include <core/status_info.h>
+#include <database_task/delete_data.h>
+#include <database_task/details/update_ctx.h>
 #include <database_task/insert.h>
 #include <database_task/select.h>
 #include <database_task/update.h>
-#include <database_task/delete_data.h>
-#include <database_task/details/update_ctx.h>
-#include <doodle_core/core/core_sql.h>
-
-#include <doodle_core/core/core_sig.h>
 #include <metadata/metadata.h>
-
 #include <range/v3/all.hpp>
-#include <core/status_info.h>
-
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <utility>
-#include <core/core_set.h>
-#include <doodle_core/thread_pool/process_message.h>
 
-#include <doodle_core/gui_template/show_windows.h>
-#include <boost/asio.hpp>
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
@@ -113,11 +113,8 @@ class sqlite_file::impl {
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
-sqlite_file::sqlite_file()
-    : sqlite_file(g_reg()) {
-}
-sqlite_file::sqlite_file(registry_ptr in_registry)
-    : ptr(std::make_unique<impl>()) {
+sqlite_file::sqlite_file() : sqlite_file(g_reg()) {}
+sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
 }
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
@@ -170,9 +167,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     details::db_compatible::add_component_table(*l_k_con);
     details::db_compatible::add_version_table(*l_k_con);
     details::db_compatible::delete_metadatatab_table(*l_k_con);
-    if (delete_list.empty() &&
-        install_list.empty() &&
-        update_list.empty()) {
+    if (delete_list.empty() && install_list.empty() && update_list.empty()) {
       /// \brief 只更新上下文
       database_n::details::update_ctx::ctx(*ptr->registry_attr, *l_k_con);
     } else {
@@ -196,8 +191,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
     auto l_journal_file{in_path};
     l_journal_file += "-journal";
-    if (FSys::exists(l_journal_file))
-      try {
+    if (FSys::exists(l_journal_file)) try {
         FSys::remove(l_journal_file);
       } catch (const FSys::filesystem_error& in_error2) {
         DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));

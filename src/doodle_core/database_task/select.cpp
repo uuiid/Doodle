@@ -20,6 +20,7 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio.hpp>
@@ -184,7 +185,7 @@ class select::impl {
           l_s, std::packaged_task<Type()>{[in_json = row.jsonData.value(), in_id = l_id, l_size, this]() {
             auto l_json = nlohmann::json::parse(in_json);
             process_message_->progress_step({1, l_size * 2});
-            return l_json.get<Type>();
+            return l_json.template get<Type>();
           }}
       );
 
@@ -223,9 +224,7 @@ class select::impl {
             return l_database;
           }}
       );
-      l_future_data->data.emplace_back(
-          std::make_tuple(boost::numeric_cast<std::int64_t>(enum_to_num(l_e)), std::move(l_fut))
-      );
+      l_future_data->data.emplace_back(boost::numeric_cast<std::int64_t>(enum_to_num(l_e)), std::move(l_fut));
     }
 
     list_install.emplace_back([l_future_data = std::move(l_future_data), this](const registry_ptr& in) mutable {

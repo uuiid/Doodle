@@ -15,9 +15,11 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio.hpp>
+
 #include <database_task/details/com_data.h>
 #include <database_task/details/update_ctx.h>
 #include <range/v3/all.hpp>

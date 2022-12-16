@@ -4,11 +4,19 @@
 #include <string>
 
 namespace doodle {
+/**
+ * @brief 任务类
+ *
+ */
 class DOODLE_CORE_API work_task_info {
  public:
+  /// 时间
   time_point_wrap time;
+  /// 名称
   std::string task_name;
+  /// 地点
   std::string region;
+  /// 概述
   std::string abstract;
 
  private:

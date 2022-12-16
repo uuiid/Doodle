@@ -17,9 +17,12 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
 #include <boost/asio.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <database_task/details/com_data.h>
 #include <range/v3/all.hpp>
 #include <sqlpp11/sqlite3/sqlite3.h>
@@ -42,16 +45,16 @@ class entity_data {
 class insert::impl {
  public:
   /// @brief 线程未来数据获取
-  std::vector<std::future<void>> futures_;
+  std::vector<std::future<void>> futures_{};
   using com_data = details::com_data;
   /// @brief 传入的实体列表
   std::vector<entt::entity> entt_list{};
   /// @brief 实体数据生成
-  std::map<entt::entity, std::shared_ptr<entity_data>> main_tabls;
+  std::map<entt::entity, std::shared_ptr<entity_data>> main_tabls{};
   /// @brief 组件数据生成
-  std::vector<com_data> com_tabls;
+  std::vector<com_data> com_tabls{};
 
-  std::vector<std::pair<std::int32_t, std::string>> ctx_tabls;
+  std::vector<std::pair<std::int32_t, std::string>> ctx_tabls{};
 
   using boost_strand = boost::asio::strand<boost::asio::thread_pool::executor_type>;
 
@@ -61,10 +64,10 @@ class insert::impl {
   std::atomic_bool stop{false};
 
   ///@brief 线程未来数据获取
-  std::future<void> future_;
-  std::size_t size;
+  std::future<void> future_{};
+  std::size_t size{};
 
-  void create_db(sqlpp::sqlite3::connection &in_db) {
+  static void create_db(sqlpp::sqlite3::connection &in_db) {
     details::db_compatible::add_entity_table(in_db);
     details::db_compatible::add_ctx_table(in_db);
     details::db_compatible::add_component_table(in_db);
@@ -102,7 +105,7 @@ class insert::impl {
       if (stop) return;
       l_pre.params.jsonData = j.json_data;
       l_pre.params.comHash  = j.com_id;
-      l_pre.params.entityId = main_tabls.at(j.entt_)->l_id;
+      l_pre.params.entityId = boost::numeric_cast<decltype(l_pre.params.entityId)>(main_tabls.at(j.entt_)->l_id);
       auto l_size           = in_db(l_pre);
       DOODLE_LOG_INFO("插入数据 id {}", l_size);
       g_reg()->ctx().emplace<process_message>().progress_step({1, com_tabls.size() * 4});

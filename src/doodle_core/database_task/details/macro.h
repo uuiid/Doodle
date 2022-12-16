@@ -10,7 +10,7 @@
   DOODLE_SQLITE_TYPE_(                                                                                                 \
       doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,            \
       doodle::time_point_wrap, doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info, \
-      doodle::business::rules, doodle::user                                                                            \
+      doodle::business::rules, doodle::user, doodle::work_task_info                                                    \
   )
 
 #define DOODLE_SQLITE_TYPE_CTX DOODLE_SQLITE_TYPE_(doodle::project, doodle::project_config::base_config)
