@@ -3,6 +3,7 @@
 //
 
 #include "layout_window.h"
+#include "doodle_core/configure/static_value.h"
 
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
@@ -89,6 +90,7 @@ class layout_window::impl {
         ImGui::DockBuilderDockWindow(menu_w::long_time_tasks.data(), dock_id_main);       /// \brief 主窗口的停靠
         ImGui::DockBuilderDockWindow(menu_w::time_edit.data(), dock_id_main);             /// \brief 主窗口的停靠
         ImGui::DockBuilderDockWindow(menu_w::all_user_view_widget.data(), dock_id_main);  /// \brief 主窗口的停靠
+        ImGui::DockBuilderDockWindow(menu_w::work_hour_filling.data(), dock_id_main);  /// \brief 主窗口的停靠
         ImGui::DockBuilderFinish(dockspace_id);
       }
     }

@@ -31,6 +31,7 @@
 #include <doodle_lib/gui/widgets/ue4_widget.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
+#include "gui/widgets/work_hour_filling.h"
 #include <fmt/core.h>
 #include <implot.h>
 
@@ -50,6 +51,7 @@ void menu_bar::menu_windows() {
   if (dear::MenuItem(time_sequencer_widget::name.data())) show_windows<time_sequencer_widget>();
   if (dear::MenuItem(all_user_view_widget::name.data())) show_windows<all_user_view_widget>();
   if (dear::MenuItem(ue4_widget::name.data())) show_windows<ue4_widget>();
+  if (dear::MenuItem(work_hour_filling::name.data())) show_windows<work_hour_filling>();
 }
 void menu_bar::message(const std::string &in_m) {
   auto in_s = std::make_shared<show_message>();
