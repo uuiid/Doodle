@@ -15,6 +15,7 @@
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
+#include <boost/numeric/conversion/cast.hpp>
 
 #include <magic_enum.hpp>
 namespace doodle::gui {
@@ -29,8 +30,8 @@ class setting_windows::impl {
         p_maya_path("maya路径"s, ""s),
         p_ue_path("ue路径"s, ""s),
         p_ue_version("ue版本"s, ""s),
-        p_batch_max("最大任务数"s, core_set::get_set().p_max_thread),
-        p_timeout("任务超时时间"s, core_set::get_set().timeout) {}
+        p_batch_max("最大任务数"s, std::int32_t{core_set::get_set().p_max_thread}),
+        p_timeout("任务超时时间"s, boost::numeric_cast<std::int32_t>(core_set::get_set().timeout)) {}
   gui::gui_cache<std::string> p_user;
   gui::gui_cache<std::string> p_org_name;
   gui::gui_cache<std::string> p_cache;

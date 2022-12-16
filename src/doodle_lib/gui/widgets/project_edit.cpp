@@ -83,8 +83,8 @@ class project_edit::impl {
   gui_cache<bool> use_divide_group_export{"使用组划分导出"s, false};
   gui_cache<bool> use_rename_material{"重命名材质"s, true};
   gui_cache<bool> use_merge_mesh{"合并网格体"s, true};
-  gui_cache<std::int32_t> t_post{"TPost时间"s, 950u};
-  gui_cache<std::int32_t> export_anim_time{"导出动画开始帧"s, 1001u};
+  gui_cache<std::int32_t> t_post{"TPost时间"s, 950};
+  gui_cache<std::int32_t> export_anim_time{"导出动画开始帧"s, 1001};
 
   gui_cache<bool> abc_arg_uvWrite{"uv写入", false};
   gui_cache<bool> abc_arg_writeColorSets{"写入颜色集", false};
