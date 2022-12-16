@@ -1,6 +1,7 @@
-#include "doodle_core/doodle_core_fwd.h"
+#pragma once
 
-#include "metadata/time_point_wrap.h"
+#include "doodle_core/metadata/time_point_wrap.h"
+
 #include <string>
 
 namespace doodle {
