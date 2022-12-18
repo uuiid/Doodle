@@ -3,9 +3,18 @@
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/user.h"
 
+#include "exception/exception.h"
+#include "metadata/metadata.h"
+
 namespace doodle {
 
-void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {}
+void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
+  user_ref_attr.uuid = in_data_uuid;
+  if (auto l_h = user_ref_attr.handle()) {
+    handle_cache = l_h;
+    cache_name   = l_h.get<user>().get_name();
+  }
+}
 const boost::uuids::uuid& user_ref::get_uuid() const { return user_ref_attr.uuid; }
 
 entt::handle user_ref::user_attr() {
@@ -38,6 +47,13 @@ entt::handle user_ref::user_attr() {
   }
 }
 entt::handle user_ref::user_attr() const { return handle_cache; }
-void user_ref::user_attr(const entt::handle& in_user) {}
+
+void user_ref::user_attr(const entt::handle& in_user) {
+  if (!in_user) throw_error(doodle_error{"无效句柄"});
+  if (!in_user.all_of<user>()) throw_error(doodle_error{"缺失user组件"});
+  handle_cache = in_user;
+  cache_name   = in_user.get<user>().get_name();
+  if (in_user.all_of<database>()) user_ref_attr = database::ref_data{in_user.get<database>()};
+}
 
 }  // namespace doodle
