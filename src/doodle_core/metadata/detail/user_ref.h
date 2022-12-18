@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "configure/doodle_core_export.h"
+#include "doodle_core/configure/doodle_core_export.h"
 #include "doodle_core/metadata/metadata.h"
 #include <doodle_core/doodle_core_fwd.h>
 
