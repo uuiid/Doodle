@@ -66,12 +66,13 @@ struct table_line : boost::totally_ordered<table_line> {
         region{"##region"s},
         abstract{"##abstract"s} {}
 
-  explicit operator work_task_info() const { return {cache_time, task, region, abstract}; }
+  explicit operator work_task_info() const { return {user_handle, cache_time, task, region, abstract}; }
 
   bool operator==(const table_line& in) const { return cache_time == in.cache_time; }
   bool operator<(const table_line& in) const { return cache_time < in.cache_time; }
 
   time_point_wrap cache_time{};
+  entt::handle user_handle;
 
   std::string time_day{};
   std::string week{};
@@ -131,9 +132,10 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   }
 
   ptr->table_list =
-      ptr->time_cache | ranges::views::transform([](const decltype(ptr->time_cache)::value_type& in) -> table_line {
-        return (in.second && in.second.any_of<work_task_info>()) ? table_line{in.second.get<work_task_info>()}
-                                                                 : table_line{in.first};
+      ptr->time_cache | ranges::views::transform([&](const decltype(ptr->time_cache)::value_type& in) -> table_line {
+        auto l_line = (in.second && in.second.any_of<work_task_info>()) ? table_line{in.second.get<work_task_info>()}
+                                                                        : table_line{in.first};
+        l_line.user_handle = ptr->current_user;
       }) |
       ranges::to_vector;
   /// 排序

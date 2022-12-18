@@ -5,6 +5,8 @@
 
 #include "exception/exception.h"
 #include "metadata/metadata.h"
+#include <entt/entity/fwd.hpp>
+#include <utility>
 
 namespace doodle {
 void to_json(nlohmann::json& j, const user_ref& p) {
@@ -15,6 +17,14 @@ void from_json(const nlohmann::json& j, user_ref& p) {
   j.at("uuid").get_to(p.user_ref_attr);
   j.at("cache_name").get_to(p.cache_name);
 }
+
+user_ref::user_ref(const entt::handle& in_handle)
+    : user_ref_attr(
+          std::move(in_handle.all_of<database>() ? database::ref_data{in_handle.get<database>()} : database::ref_data{})
+      ),
+      handle_cache(in_handle),
+      cache_name(in_handle.all_of<user>() ? in_handle.get<user>().get_name() : ""s) {}
+
 void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
   user_ref_attr.uuid = in_data_uuid;
   if (auto l_h = user_ref_attr.handle()) {
@@ -22,6 +32,7 @@ void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
     cache_name   = l_h.get<user>().get_name();
   }
 }
+
 const boost::uuids::uuid& user_ref::get_uuid() const { return user_ref_attr.uuid; }
 
 entt::handle user_ref::user_attr() {
@@ -56,8 +67,8 @@ entt::handle user_ref::user_attr() {
 entt::handle user_ref::user_attr() const { return handle_cache; }
 
 void user_ref::user_attr(const entt::handle& in_user) {
-  if (!in_user) throw_error(doodle_error{"无效句柄"});
-  if (!in_user.all_of<user>()) throw_error(doodle_error{"缺失user组件"});
+  if (!in_user) throw_exception(doodle_error{"无效句柄"});
+  if (!in_user.all_of<user>()) throw_exception(doodle_error{"缺失user组件"});
   handle_cache = in_user;
   cache_name   = in_user.get<user>().get_name();
   if (in_user.all_of<database>()) user_ref_attr = database::ref_data{in_user.get<database>()};

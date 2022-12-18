@@ -22,6 +22,8 @@ class DOODLE_CORE_API user_ref {
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user_ref& p);
 
  public:
+  user_ref() = default;
+  explicit user_ref(const entt::handle& in_handle);
   std::string cache_name;
   void set_uuid(const boost::uuids::uuid& in_data_uuid);
   [[nodiscard]] const boost::uuids::uuid& get_uuid() const;
