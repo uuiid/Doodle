@@ -85,7 +85,7 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
   return std::tie(p_i->p_name, p_i->p_version) == std::tie(in_rhs.p_i->p_name, in_rhs.p_i->p_version);
 }
 
-entt::handle assets_file::user_attr() const { user_ref.user_attr(); }
+entt::handle assets_file::user_attr() const { return user_ref.user_attr(); }
 void assets_file::user_attr(const entt::handle& in_user) {
   DOODLE_CHICK(in_user.any_of<user>(), doodle_error{"句柄 {} 缺失必要组件 user", in_user});
   user_ref.user_attr(in_user);
