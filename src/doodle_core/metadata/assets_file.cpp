@@ -11,6 +11,8 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/pin_yin/convert.h>
 
+#include <boost/uuid/uuid.hpp>
+
 #include <core/core_set.h>
 #include <entt/entity/fwd.hpp>
 #include <functional>
@@ -42,19 +44,19 @@ void to_json(nlohmann::json& j, const assets_file& p) {
   j["organization_p"] = p.p_i->organization_p;
   j["version"]        = p.p_i->p_version;
   j["path"]           = p.p_i->path;
-
-  j["user_ref"]       = p.p_i->ref_user;
-  j["user"]           = p.p_i->p_user;
+  j["user_ref2"]      = p.user_ref;
 }
 void from_json(const nlohmann::json& j, assets_file& p) {
-  if (j.contains("user")) j.at("user").get_to(p.p_i->p_user);
-
   j.at("name").get_to(p.p_i->p_name);
   j.at("version").get_to(p.p_i->p_version);
   if (j.contains("organization_p")) j.at("organization_p").get_to(p.p_i->organization_p);
   if (j.contains("path")) j.at("path").get_to(p.p_i->path);
-
-  if (j.contains("user_ref")) j.at("user_ref").get_to(p.p_i->ref_user);
+  if (j.contains("user_ref2")) {
+    j.at("user_ref2").get_to(p.user_ref);
+  } else {
+    if (j.contains("user")) j.at("user").get_to(p.user_ref.cache_name);
+    if (j.contains("user_ref")) p.user_ref.set_uuid(j.at("user_ref").at("uuid").get<boost::uuids::uuid>());
+  }
 }
 
 assets_file::assets_file() : p_i(std::make_unique<impl>()){};
@@ -83,43 +85,10 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
   return std::tie(p_i->p_name, p_i->p_version) == std::tie(in_rhs.p_i->p_name, in_rhs.p_i->p_version);
 }
 
-entt::handle assets_file::user_attr() const {
-  if (p_i->handle_cache && p_i->handle_cache.all_of<database, user>() &&
-      p_i->handle_cache.get<database>() == p_i->ref_user && p_i->handle_cache.get<user>().get_name() == p_i->p_user) {
-    return p_i->handle_cache;
-  } else {
-    auto l_handle = p_i->ref_user.handle();
-    if (!l_handle) {
-      if (p_i->p_user.empty()) {
-        p_i->p_user = "null";
-      }
-      if (auto l_user = user::find_by_user_name(p_i->p_user); l_user) {
-        p_i->handle_cache = l_user;
-        if (p_i->handle_cache.any_of<database>()) p_i->ref_user = database::ref_data{p_i->handle_cache.get<database>()};
-        DOODLE_LOG_WARN("按名称寻找到用户 {}", p_i->p_user);
-      }
-
-      if (!p_i->handle_cache) {
-        DOODLE_LOG_WARN("创建临时虚拟用户 {}", p_i->p_user);
-        l_handle = make_handle();
-        l_handle.emplace<user>(p_i->p_user);
-        p_i->handle_cache = l_handle;
-      }
-
-    } else {
-      p_i->handle_cache = l_handle;
-    }
-    return p_i->handle_cache;
-  }
-}
+entt::handle assets_file::user_attr() const { user_ref.user_attr(); }
 void assets_file::user_attr(const entt::handle& in_user) {
   DOODLE_CHICK(in_user.any_of<user>(), doodle_error{"句柄 {} 缺失必要组件 user", in_user});
-  if (in_user.any_of<database>())
-    p_i->ref_user = database::ref_data{in_user.get<database>()};
-  else
-    p_i->ref_user = {};
-  p_i->handle_cache = in_user;
-  p_i->p_user       = in_user.get<user>().get_name();
+  user_ref.user_attr(in_user);
 }
 
 const std::uint64_t& assets_file::version_attr() const noexcept { return p_i->p_version; }

@@ -4,6 +4,7 @@
 
 #include "doodle_app/gui/base/base_window.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -17,6 +18,7 @@ class work_hour_filling : public base_windows<dear::Begin, work_hour_filling> {
   std::unique_ptr<impl> ptr;
 
   void list_time(std::int32_t in_y, std::int32_t in_m);
+  void modify_item(std::size_t in_index);
 
  public:
   work_hour_filling();

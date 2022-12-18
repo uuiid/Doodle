@@ -7,7 +7,14 @@
 #include "metadata/metadata.h"
 
 namespace doodle {
-
+void to_json(nlohmann::json& j, const user_ref& p) {
+  j["uuid"]       = p.user_ref_attr;
+  j["cache_name"] = p.cache_name;
+}
+void from_json(const nlohmann::json& j, user_ref& p) {
+  j.at("uuid").get_to(p.user_ref_attr);
+  j.at("cache_name").get_to(p.cache_name);
+}
 void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
   user_ref_attr.uuid = in_data_uuid;
   if (auto l_h = user_ref_attr.handle()) {

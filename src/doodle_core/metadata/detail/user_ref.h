@@ -18,6 +18,8 @@ class DOODLE_CORE_API user_ref {
   database::ref_data user_ref_attr{};
 
   entt::handle handle_cache;
+  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user_ref& p);
+  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user_ref& p);
 
  public:
   std::string cache_name;

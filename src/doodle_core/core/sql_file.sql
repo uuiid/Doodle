@@ -21,6 +21,7 @@ create table if not exists entity
 );
 create index if not exists entity_index
     on entity (id);
+
 create table if not exists com_entity
 (
     id        integer auto_increment
@@ -67,13 +68,4 @@ create table if not exists doodle_info
 (
     version_major integer not null,
     version_minor integer not null
-);
-
-create table sqlite_master
-(
-    type     text,
-    name     text,
-    tbl_name text,
-    rootpage int,
-    sql      text
 );

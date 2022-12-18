@@ -7,6 +7,7 @@ void to_json(nlohmann::json& j, const work_task_info& p) {
   j["task_name"] = p.task_name;
   j["region"]    = p.region;
   j["abstract"]  = p.abstract;
+  j["user"]      = p.user_ref;
 }
 void from_json(const nlohmann::json& j, work_task_info& p) {
   j.at("time").get_to(p.time);

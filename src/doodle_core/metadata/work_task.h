@@ -1,7 +1,11 @@
 #pragma once
 
+#include "doodle_core/metadata/detail/user_ref.h"
+#include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/time_point_wrap.h"
+#include "doodle_core_fwd.h"
 
+#include <entt/entity/fwd.hpp>
 #include <string>
 
 namespace doodle {
@@ -11,6 +15,8 @@ namespace doodle {
  */
 class DOODLE_CORE_API work_task_info {
  public:
+  /// 任务人引用
+  user_ref user_ref;
   /// 时间
   time_point_wrap time;
   /// 名称

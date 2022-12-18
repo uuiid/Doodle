@@ -33,6 +33,7 @@ class doodle_error;
 class nullptr_error;
 class serialization_error;
 class file_error;
+class user_ref;
 
 using namespace std::literals;
 using namespace date::literals;

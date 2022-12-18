@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/metadata/detail/user_ref.h"
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
@@ -31,6 +32,7 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
+  user_ref user_ref{};
 
   RTTR_ENABLE();
   RTTR_REGISTRATION_FRIEND;

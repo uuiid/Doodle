@@ -4,9 +4,13 @@
 
 #include "show_message.h"
 
+#include "doodle_core/logger/logger.h"
+
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <lib_warp/imgui_warp.h>
+#include <string>
+
 namespace doodle::gui {
 class show_message::impl {
  public:
@@ -16,12 +20,17 @@ class show_message::impl {
 };
 
 show_message::show_message() : p_i(std::make_unique<impl>()){};
+show_message::show_message(const std::string& in_msg) : p_i(std::make_unique<impl>()) { set_message(in_msg); };
 
 std::int32_t show_message::flags() const {
   boost::ignore_unused(this);
   return ImGuiWindowFlags_NoSavedSettings;
 }
-void show_message::set_message(const std::string& in_msg) { p_i->message = in_msg; }
+show_message& show_message::set_message(const std::string& in_msg) {
+  p_i->message = in_msg;
+  DOODLE_LOG_WARN(in_msg);
+  return *this;
+}
 std::string show_message::get_message() { return p_i->message; }
 
 void show_message::set_attr() const {
