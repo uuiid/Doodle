@@ -3,9 +3,12 @@
 //
 
 #pragma once
+#include "configure/doodle_core_export.h"
+#include "doodle_core/metadata/metadata.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <rttr/rttr_enable.h>
+
 namespace doodle {
 class user;
 
@@ -60,6 +63,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
+
+
 
 }  // namespace doodle
 namespace fmt {
