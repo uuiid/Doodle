@@ -4,6 +4,8 @@
 
 #include "doodle_app/gui/base/base_window.h"
 
+#include <boost/filesystem/path.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -19,6 +21,8 @@ class work_hour_filling : public base_windows<dear::Begin, work_hour_filling> {
 
   void list_time(std::int32_t in_y, std::int32_t in_m);
   void modify_item(std::size_t in_index);
+
+  void export_table(const FSys::path& in_path);
 
  public:
   work_hour_filling();

@@ -21,7 +21,6 @@
 
 #include "gui/widgets/derail/all_user_combox.h"
 #include "gui/widgets/work_hour_filling.h"
-#include <__msvc_chrono.hpp>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -103,20 +102,35 @@ class work_hour_filling::impl {
  public:
   std::string title{};
 
-  std::vector<entt::handle> work_list;
+  /// @brief 时间和句柄对应关系
   std::map<chrono::local_time<chrono::hours>, entt::handle> time_cache;
+  /// @brief 过滤当前用户使用
   entt::handle current_user;
+  /// @brief 使用时间过滤表id
   gui_cache<std::array<std::int32_t, 2>> time_month{"年.月", std::int32_t{1}, std::int32_t{1}};
+  /// 表id
   gui_cache_name_id table{"工时信息"};
+  /// 主要表的列表
   std::vector<table_line> table_list;
+
+  /// 表头
   const std::array<std::string, 6> table_head{"日期"s, "星期"s, "时段"s, "项目"s, "地区"s, "工作内容摘要"s};
 
+  /// 是否显示高级设置
   bool show_advanced_setting{};
+  /// 高级设置id
   gui_cache_name_id advanced_setting{"高级设置"};
 
+  /// 绘制用户组合框的类
   all_user_combox combox{true};
 
+  /// 子窗口
   std::map<std::string, entt::handle> sub_windows{};
+  /// 导出表格路径
+  gui_cache<std::string> export_file_path{};
+  /// 选择路径按钮
+  gui_cache_name_id export_button;
+  /// 导出表按钮
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
