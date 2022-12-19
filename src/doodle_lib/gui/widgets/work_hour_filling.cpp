@@ -246,10 +246,23 @@ void work_hour_filling::render() {
 
 void work_hour_filling::show_advanced_setting(bool in_) { ptr->show_advanced_setting = in_; }
 
+std::int32_t work_hour_filling::flags() {
+  if (!ptr->show_advanced_setting)
+    return ImGuiWindowFlags_NoSavedSettings;
+  else
+    return {};
+}
+
+void work_hour_filling::set_attr() {
+  if (!ptr->show_advanced_setting) {
+    ImGui::SetNextWindowSize({640, 360});
+  }
+}
+
 work_hour_filling::~work_hour_filling() {
   boost::asio::post(g_io_context(), [l_sub = ptr->sub_windows]() {
     for (auto l_h : l_sub) {
-      l_h.second.destroy();
+      if (l_h.second) l_h.second.destroy();
     }
   });
 }

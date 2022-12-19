@@ -31,6 +31,8 @@ class work_hour_filling : public base_windows<dear::Begin, work_hour_filling> {
   void render();
 
   void show_advanced_setting(bool in_);
+  std::int32_t flags() override;
+  void set_attr();
 };
 
 }  // namespace doodle::gui
