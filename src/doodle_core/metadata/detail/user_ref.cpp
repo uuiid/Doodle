@@ -40,7 +40,7 @@ entt::handle user_ref::user_attr() {
       handle_cache.get<user>().get_name() == cache_name) {
     return handle_cache;
   } else {
-    auto l_handle = user_ref_attr.handle();
+    auto l_handle = user_ref_attr.handle<user>();
     if (!l_handle) {
       if (cache_name.empty()) {
         cache_name = "null";

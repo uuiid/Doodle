@@ -4,8 +4,11 @@
 
 #pragma once
 
-#include <entt/entt.hpp>
+#include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/core/template_util.h>
+
+#include <entt/entt.hpp>
+
 namespace entt {
 /**
  * @brief entt 中自定义hash检查

@@ -14,5 +14,6 @@ void from_json(const nlohmann::json& j, work_task_info& p) {
   j.at("task_name").get_to(p.task_name);
   j.at("region").get_to(p.region);
   j.at("abstract").get_to(p.abstract);
+  j.at("user").get_to(p.user_ref);
 }
 }  // namespace doodle

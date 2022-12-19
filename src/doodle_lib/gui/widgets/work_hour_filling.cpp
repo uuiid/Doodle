@@ -18,10 +18,12 @@
 #include <boost/operators.hpp>
 
 #include "gui/widgets/work_hour_filling.h"
+#include <__msvc_chrono.hpp>
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <date/date.h>
+#include <date/tz.h>
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
 #include <imgui.h>
@@ -33,8 +35,10 @@
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/merge.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/cache1.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
+#include <range/v3/view/take.hpp>
 #include <range/v3/view/transform.hpp>
 #include <string>
 #include <string_view>
@@ -57,8 +61,17 @@ struct table_line : boost::totally_ordered<table_line> {
         region{"##region"s, in_task.region},
         abstract{"##abstract"s, in_task.abstract} {}
 
-  explicit table_line(time_point_wrap in_task)
-      : cache_time{std::move(in_task)},
+  // explicit table_line(const time_point_wrap& in_task)
+  //     : cache_time{chrono::round<chrono::hours>(in_task.get_local_time())},
+  //       time_day{fmt::format("{:%F}", cache_time)},
+  //       week{fmt::format("星期 {:%w}", cache_time)},
+  //       am_or_pm{fmt::format("{:%p}", cache_time)},
+  //       task{"##task"s},
+  //       region{"##region"s},
+  //       abstract{"##abstract"s} {}
+
+  explicit table_line(const chrono::local_time<chrono::hours>& in_task)
+      : cache_time{in_task},
         time_day{fmt::format("{:%F}", cache_time)},
         week{fmt::format("星期 {:%w}", cache_time)},
         am_or_pm{fmt::format("{:%p}", cache_time)},
@@ -66,13 +79,12 @@ struct table_line : boost::totally_ordered<table_line> {
         region{"##region"s},
         abstract{"##abstract"s} {}
 
-  explicit operator work_task_info() const { return {user_handle, cache_time, task, region, abstract}; }
+  explicit operator work_task_info() const { return work_task_info{user_handle, cache_time, task, region, abstract}; }
 
   bool operator==(const table_line& in) const { return cache_time == in.cache_time; }
   bool operator<(const table_line& in) const { return cache_time < in.cache_time; }
 
-  time_point_wrap cache_time{};
-  entt::handle user_handle;
+  chrono::local_time<chrono::hours> cache_time{};
 
   std::string time_day{};
   std::string week{};
@@ -80,6 +92,7 @@ struct table_line : boost::totally_ordered<table_line> {
   gui_cache<std::string> task{"##task"s};
   gui_cache<std::string> region{"##region"s};
   gui_cache<std::string> abstract{"##abstract"s};
+  entt::handle user_handle;
 };
 }  // namespace
 
@@ -88,7 +101,7 @@ class work_hour_filling::impl {
   std::string title{};
 
   std::vector<entt::handle> work_list;
-  std::map<time_point_wrap, entt::handle> time_cache;
+  std::map<chrono::local_time<chrono::hours>, entt::handle> time_cache;
   entt::handle current_user;
   gui_cache<std::array<std::int32_t, 2>> time_month{"年.月", std::int32_t{1}, std::int32_t{1}};
   gui_cache_name_id table{"工时信息"};
@@ -100,42 +113,40 @@ work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) { ptr->ti
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   using work_tub_t  = decltype(*g_reg()->view<work_task_info>().each().begin());
-  auto l_list       = g_reg()->view<work_task_info>().each();
+
   auto l_time       = time_point_wrap{in_y, in_m, 1};
-  auto l_begin_time = l_time.current_month_start();
-  auto l_end_time   = l_time.current_month_end();
+  auto l_begin_time = chrono::time_point_cast<chrono::hours>(
+      chrono::clock_cast<chrono::local_t>(l_time.current_month_start().get_sys_time())
+  );
+  auto l_end_time = chrono::time_point_cast<chrono::hours>(
+      chrono::clock_cast<chrono::local_t>(l_time.current_month_end().get_sys_time())
+  );
   /// 先生成
   ptr->time_cache.clear();
   for (auto i = l_begin_time; i <= l_end_time; i += chrono::hours{12}) {
+    // DOODLE_LOG_INFO("生成时间 {}", i);
     ptr->time_cache[i] = {};
   }
-  std::size_t l_szie{};
-  ranges::for_each(
-      l_list | ranges::views::filter([&](const work_tub_t& in) -> bool {
-        auto&& [l_e, l_w] = in;
-        auto l_h          = make_handle(l_e);
-        if (ptr->current_user)
-          return l_w.time > l_begin_time && l_w.time < l_end_time && l_h.all_of<user>() &&
-                 l_h.get<user>() == ptr->current_user.get<user>();
-        else
-          return false;
-      }),
-      [&, l_s = &l_szie](const work_tub_t& in) {
-        ++(*l_s);
-        auto&& [l_e, l_w]         = in;
-        ptr->time_cache[l_w.time] = make_handle(l_e);
-      }
-  );
-
-  if (l_szie > ptr->time_cache.size()) {
-    make_handle().emplace<gui_windows>() = std::make_shared<show_message>("有多余的句柄");
+  for (auto&& [l_e, l_w] : g_reg()->view<work_task_info>().each()) {
+    if (l_w.time >= l_begin_time && l_w.time <= l_end_time && l_w.user_ref.user_attr() == ptr->current_user) {
+      DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
+      auto l_t = make_handle(l_e).get<work_task_info>();
+      DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
+      ptr->time_cache[l_w.time] = make_handle(l_e);
+    }
   }
 
   ptr->table_list =
       ptr->time_cache | ranges::views::transform([&](const decltype(ptr->time_cache)::value_type& in) -> table_line {
+        if (in.second && in.second.any_of<work_task_info>()) {
+          auto l_t = in.second.get<work_task_info>();
+          DOODLE_LOG_INFO("原始时间 {} 信息 {}", l_t.time, l_t.task_name);
+        }
         auto l_line = (in.second && in.second.any_of<work_task_info>()) ? table_line{in.second.get<work_task_info>()}
                                                                         : table_line{in.first};
+        DOODLE_LOG_INFO("时间 {} 信息 {}", l_line.time_day, l_line.task());
         l_line.user_handle = ptr->current_user;
+        return l_line;
       }) |
       ranges::to_vector;
   /// 排序
@@ -144,6 +155,8 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
 
 void work_hour_filling::modify_item(std::size_t in_index) {
   auto&& l_i = ptr->table_list[in_index];
+
+  DOODLE_LOG_INFO("编辑时间 {}", l_i.cache_time);
   if (!ptr->time_cache[l_i.cache_time]) ptr->time_cache[l_i.cache_time] = make_handle();
   auto l_h      = ptr->time_cache[l_i.cache_time];
 
@@ -170,29 +183,32 @@ void work_hour_filling::render() {
 
   ImGui::Text("工时信息");
 
-  dear::Table{*ptr->table, boost::numeric_cast<std::int32_t>(ptr->table_head.size())} && [&]() {
-    ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-    ranges::for_each(ptr->table_head, [](const std::string& in) { ImGui::TableSetupColumn(in.c_str()); });
-    ImGui::TableHeadersRow();
+  dear::Table{
+      *ptr->table, boost::numeric_cast<std::int32_t>(ptr->table_head.size()),
+      ImGuiTableFlags_::ImGuiTableFlags_RowBg} &&
+      [&]() {
+        ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
+        ranges::for_each(ptr->table_head, [](const std::string& in) { ImGui::TableSetupColumn(in.c_str()); });
+        ImGui::TableHeadersRow();
 
-    for (auto i = 0ull; i < ptr->table_list.size(); ++i) {
-      auto&& in = ptr->table_list[i];
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      dear::Text(in.time_day);
-      ImGui::TableNextColumn();
-      dear::Text(in.week);
-      ImGui::TableNextColumn();
-      dear::Text(in.am_or_pm);
+        for (auto i = 0ull; i < ptr->table_list.size(); ++i) {
+          auto&& in = ptr->table_list[i];
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          dear::Text(in.time_day);
+          ImGui::TableNextColumn();
+          dear::Text(in.week);
+          ImGui::TableNextColumn();
+          dear::Text(in.am_or_pm);
 
-      ImGui::TableNextColumn();
-      if (dear::InputText(*in.task, &in.task)) modify_item(i);
-      ImGui::TableNextColumn();
-      if (dear::InputText(*in.region, &in.region)) modify_item(i);
-      ImGui::TableNextColumn();
-      if (dear::InputText(*in.abstract, &in.abstract)) modify_item(i);
-    }
-  };
+          ImGui::TableNextColumn();
+          if (dear::InputText(*in.task, &in.task)) modify_item(i);
+          ImGui::TableNextColumn();
+          if (dear::InputText(*in.region, &in.region)) modify_item(i);
+          ImGui::TableNextColumn();
+          if (dear::InputText(*in.abstract, &in.abstract)) modify_item(i);
+        }
+      };
 }
 
 work_hour_filling::~work_hour_filling() = default;

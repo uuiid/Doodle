@@ -10,11 +10,27 @@
 #include <boost/pfr.hpp>
 #include <boost/pfr/functions_for.hpp>
 
+#include <chrono>
 #include <fmt/chrono.h>
 #include <rttr/rttr_enable.h>
 
 namespace doodle {
 class time_point_wrap;
+
+namespace chrono_ns {
+struct current_clock {
+  using rep                       = long long;
+  using period                    = std::ratio<1, 10'000'000>;  // 100 nanoseconds
+  using duration                  = std::chrono::duration<rep, period>;
+  using time_point                = std::chrono::time_point<current_clock>;
+  static constexpr bool is_steady = false;
+
+  _NODISCARD static time_point now() noexcept {  // get current time
+    return time_point(std::chrono::system_clock::now().time_since_epoch());
+  }
+};
+
+}  // namespace chrono_ns
 
 namespace time_point_wrap_ns {
 using time_point       = chrono::sys_time_pos;
@@ -44,10 +60,9 @@ class compose_2_type {
  * @brief 这是一个小的时间类
  * @warning 这个类中的设置时间的函数和都是设置本地日期的，并不是utc时间， 他会自动在内部转换为utc
  */
-class DOODLE_CORE_API time_point_wrap
-    : boost::totally_ordered<time_point_wrap>,
-      boost::additive<time_point_wrap, time_point_wrap_ns::duration>,
-      boost::unit_steppable<time_point_wrap> {
+class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
+                                        boost::additive<time_point_wrap, time_point_wrap_ns::duration>,
+                                        boost::unit_steppable<time_point_wrap> {
   RTTR_ENABLE();
 
  public:
@@ -71,12 +86,8 @@ class DOODLE_CORE_API time_point_wrap
   explicit time_point_wrap(time_point in_utc_timePoint);
   explicit time_point_wrap(time_local_point in_utc_timePoint);
   explicit time_point_wrap(
-      std::int32_t in_year,
-      std::int32_t in_month,
-      std::int32_t in_day,
-      std::int32_t in_hours   = 0,
-      std::int32_t in_minutes = 0,
-      std::int32_t in_seconds = 0
+      std::int32_t in_year, std::int32_t in_month, std::int32_t in_day, std::int32_t in_hours = 0,
+      std::int32_t in_minutes = 0, std::int32_t in_seconds = 0
   );
 
   /**
@@ -91,8 +102,7 @@ class DOODLE_CORE_API time_point_wrap
    * @warning 本地时间段分解
    * @return 转换为天数和秒数
    */
-  [[nodiscard("")]] compose_2_type
-  compose_1() const;
+  [[nodiscard("")]] compose_2_type compose_1() const;
 
   /// @brief 复制构造
   time_point_wrap(const time_point_wrap& in_other) noexcept;
@@ -196,13 +206,8 @@ namespace fmt {
  * @tparam 资产类
  */
 template <typename Char>
-struct formatter<::doodle::time_point_wrap, Char>
-    : formatter<
-          ::doodle::time_point_wrap::time_point,
-          Char> {
-  using base_type = formatter<
-      ::doodle::time_point_wrap::time_point,
-      Char>;
+struct formatter<::doodle::time_point_wrap, Char> : formatter<::doodle::time_point_wrap::time_point, Char> {
+  using base_type   = formatter<::doodle::time_point_wrap::time_point, Char>;
 
   char presentation = 'L';
 
@@ -229,10 +234,7 @@ struct formatter<::doodle::time_point_wrap, Char>
   template <typename FormatContext>
   auto format(const ::doodle::time_point_wrap& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return base_type::format(
-        presentation == 'L'
-            ? in_.get_local_point_to_fmt_lib()
-            : in_.get_sys_point_to_fmt_lib(),
-        ctx
+        presentation == 'L' ? in_.get_local_point_to_fmt_lib() : in_.get_sys_point_to_fmt_lib(), ctx
     );
   }
 };
@@ -241,8 +243,11 @@ struct formatter<::doodle::time_point_wrap, Char>
 
 namespace doodle {
 template <typename CharType, typename CharTraits>
-std::basic_ostream<CharType, CharTraits>&
-operator<<(std::basic_ostream<CharType, CharTraits>& stream, const time_point_wrap& in_point_wrap) {
+std::basic_ostream<CharType, CharTraits>& operator<<(
+    std::basic_ostream<CharType, CharTraits>& stream, const time_point_wrap& in_point_wrap
+) {
   return stream << fmt::to_string(in_point_wrap);
 }
 }  // namespace doodle
+
+#include "doodle_core/lib_warp/chrono_fmt.h"

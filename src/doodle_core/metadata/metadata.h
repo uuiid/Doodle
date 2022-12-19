@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "doodle_core/core/core_help_impl.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/signals2.hpp>
 
+#include <entt/core/type_info.hpp>
 #include <optional>
 #include <rttr/rttr_enable.h>
 
@@ -38,6 +40,19 @@ class DOODLE_CORE_API ref_data {
   boost::uuids::uuid uuid{};
 
   explicit operator bool() const;
+  /**
+   * @brief 遍历所有的 带有数据库组件的实体
+   *
+   * @return entt::handle
+   */
+  [[nodiscard("")]] entt::handle handle() const;
+  /**
+   * @brief 遍历所有的 带有数据库组件的实体, 并使用模板类进行二次筛选加速迭代
+   *
+   * @tparam Args
+   * @return entt::handle
+   */
+  template <typename... Args>
   [[nodiscard("")]] entt::handle handle() const;
 
   bool operator==(const ref_data &in_rhs) const;
@@ -47,11 +62,9 @@ class DOODLE_CORE_API ref_data {
 void DOODLE_CORE_API to_json(nlohmann::json &j, const database &p);
 void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
-
-class DOODLE_CORE_API database
-    : boost::equality_comparable<database>,
-      boost::equality_comparable<boost::uuids::uuid>,
-      boost::equality_comparable<database_ns::ref_data> {
+class DOODLE_CORE_API database : boost::equality_comparable<database>,
+                                 boost::equality_comparable<boost::uuids::uuid>,
+                                 boost::equality_comparable<database_ns::ref_data> {
   RTTR_ENABLE();
 
  private:
@@ -111,5 +124,22 @@ class DOODLE_CORE_API database
   constexpr const static fun_save_ save{};
   constexpr const static fun_delete_ delete_{};
 };
+
+namespace database_ns {
+template <typename... Args>
+entt::handle ref_data::handle() const {
+  entt::handle l_r{};
+  //  ranges::make_subrange(g_reg()->view<database>().each());
+  if (!uuid.is_nil())
+    for (auto &&e : g_reg()->view<database, Args...>()) {
+      if (g_reg()->get<database>(e) == uuid) {
+        l_r = entt::handle{*g_reg(), e};
+        break;
+      }
+    }
+  return l_r;
+}
+
+}  // namespace database_ns
 
 }  // namespace doodle
