@@ -17,9 +17,13 @@ namespace doodle::gui {
 class DOODLELIB_API all_user_combox {
   class impl;
   std::unique_ptr<impl> ptr;
+  void get_all_user_data();
+
+  void delete_user(const entt::handle& in_user);
 
  public:
   all_user_combox();
+  explicit all_user_combox(bool show_delete_button);
   ~all_user_combox();
 
   bool render();
