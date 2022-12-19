@@ -1,6 +1,7 @@
 #include "work_hour_filling.h"
 
 #include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/time_point_wrap.h"
@@ -110,14 +111,18 @@ class work_hour_filling::impl {
   std::vector<table_line> table_list;
   const std::array<std::string, 6> table_head{"日期"s, "星期"s, "时段"s, "项目"s, "地区"s, "工作内容摘要"s};
 
+  bool show_advanced_setting{};
   gui_cache_name_id advanced_setting{"高级设置"};
 
   all_user_combox combox{true};
+
+  std::map<std::string, entt::handle> sub_windows{};
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
-  ptr->title        = std::string{name};
-  ptr->current_user = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
+  ptr->title                 = std::string{name};
+  ptr->show_advanced_setting = true;
+  ptr->current_user          = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
 }
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
@@ -188,17 +193,26 @@ void work_hour_filling::render() {
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
     list_time(ptr->time_month()[0], ptr->time_month()[1]);
   };
-
-  dear::TreeNode{*ptr->advanced_setting} && [&]() {
-    /// 打开新的窗口显示用户
-    if (ptr->combox.render()) {
-      auto l_u      = std::make_shared<work_hour_filling>();
-      auto l_user_h = l_u->ptr->current_user = ptr->combox.get_user();
-      l_u->ptr->title = l_user_h.get<user>().get_name().empty() ? fmt::format("匿名用户 {}", l_user_h)
+  if (ptr->show_advanced_setting)
+    dear::TreeNode{*ptr->advanced_setting} && [&]() {
+      /// 打开新的窗口显示用户
+      if (ptr->combox.render()) {
+        auto l_user_h = ptr->combox.get_user();
+        auto l_title  = l_user_h.get<user>().get_name().empty() ? fmt::format("匿名用户 {}", l_user_h)
                                                                 : l_user_h.get<user>().get_name();
-      boost::asio::post([l_u]() { make_handle().emplace<gui_windows>(l_u); });
-    }
-  };
+        if (!ptr->sub_windows[l_title]) {
+          auto l_u               = std::make_shared<work_hour_filling>();
+          l_u->ptr->current_user = l_user_h;
+          l_u->ptr->title        = l_title;
+          l_u->show_advanced_setting(false);
+          boost::asio::post(g_io_context(), [this, l_title, l_u]() {
+            auto l_h = make_handle();
+            l_h.emplace<gui_windows>(l_u);
+            ptr->sub_windows[l_title] = l_h;
+          });
+        }
+      }
+    };
 
   ImGui::Text("工时信息");
 
@@ -230,6 +244,14 @@ void work_hour_filling::render() {
       };
 }
 
-work_hour_filling::~work_hour_filling() = default;
+void work_hour_filling::show_advanced_setting(bool in_) { ptr->show_advanced_setting = in_; }
+
+work_hour_filling::~work_hour_filling() {
+  boost::asio::post(g_io_context(), [l_sub = ptr->sub_windows]() {
+    for (auto l_h : l_sub) {
+      l_h.second.destroy();
+    }
+  });
+}
 
 }  // namespace doodle::gui

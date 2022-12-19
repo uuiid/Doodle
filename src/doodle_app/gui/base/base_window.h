@@ -49,7 +49,7 @@ class windows_tack_warp : public detail::windows_render_interface {
  public:
   virtual ~windows_tack_warp() = default;
 
-  bool tick() {
+  bool tick() override {
     if (state_attr == state_enum::none) {
       call_self(std::integral_constant<state_enum, state_enum::set_attr>{});
       state_attr = state_enum::set_attr;
@@ -58,12 +58,15 @@ class windows_tack_warp : public detail::windows_render_interface {
 
     dear_type l_dear_{title().data(), &show_attr, self_().flags()};
 
-    if (static_cast<bool>(l_dear_) && state_attr == state_enum::set_attr) {
-      call_self(std::integral_constant<state_enum, state_enum::init>{});
-      state_attr = state_enum::init;
-    }
+    l_dear_&& [this]() {
+      if (state_attr == state_enum::set_attr) {
+        call_self(std::integral_constant<state_enum, state_enum::init>{});
+        state_attr = state_enum::init;
+      } else {
+        self_().render();
+      }
+    };
 
-    l_dear_&& [this]() { self_().render(); };
     //    show_attr = ImGui::IsWindowAppearing();
 
     /// 显示时返回 false 不删除
