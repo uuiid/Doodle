@@ -30,16 +30,6 @@ const std::string& user::get_enus() const { return p_ENUS; }
 bool user::operator==(const user& in_rhs) const { return p_string_ == in_rhs.p_string_; }
 bool user::operator<(const user& in_rhs) const { return p_string_ < in_rhs.p_string_; }
 
-class user::user_cache {
- public:
-  entt::handle user_handle;
-  boost::uuids::uuid uuid;
-
-  explicit operator bool() const {
-    return user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid;
-  }
-};
-
 entt::handle user::find_by_user_name(const std::string& in_name) {
   entt::handle l_r{};
   for (auto&& [e, u] : g_reg()->view<user>().each()) {

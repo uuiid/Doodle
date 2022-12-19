@@ -16,7 +16,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
   std::string p_string_;
   std::string p_ENUS;
-  class user_cache;
 
  public:
   user();
@@ -63,8 +62,6 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
 };
-
-
 
 }  // namespace doodle
 namespace fmt {
