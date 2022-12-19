@@ -51,23 +51,28 @@
 namespace doodle::gui {
 
 namespace {
+
 struct table_line : boost::totally_ordered<table_line> {
+  inline const static std::map<std::string, std::string> tran{
+      {"Monday"s, "星期一"s},  {"Tuesday", "星期二"s}, {"Wednesday", "星期三"s},
+      {"Thursday", "星期四"s}, {"Friday", "星期五"s},  {"Saturday", "星期六"s},
+      {"Sunday", "星期日"s},   {"AM", "上午"s},        {"PM", "下午"s}};
   table_line() = default;
 
   explicit table_line(const work_task_info& in_task)
       : cache_time{in_task.time},
         time_day{fmt::format("{:%F}", cache_time)},
-        week{fmt::format("星期 {:%w}", cache_time)},
-        am_or_pm{fmt::format("{:%p}", cache_time)},
+        week{tran.at(fmt::format("{:%A}", cache_time))},
+        am_or_pm{tran.at(fmt::format("{:%p}", cache_time))},
         task{"##task"s, in_task.task_name},
         region{"##region"s, in_task.region},
         abstract{"##abstract"s, in_task.abstract} {}
 
   // explicit table_line(const time_point_wrap& in_task)
   //     : cache_time{chrono::round<chrono::hours>(in_task.get_local_time())},
-  //       time_day{fmt::format("{:%F}", cache_time)},
-  //       week{fmt::format("星期 {:%w}", cache_time)},
-  //       am_or_pm{fmt::format("{:%p}", cache_time)},
+  //       time_day{ fmt::format("{:%F}", cache_time)},
+  //       week{ tran.at(fmt::format("星期 {:%w})", cache_time)},
+  //       am_or_pm{ tran.at(fmt::format("{:%p}", cache_time))},
   //       task{"##task"s},
   //       region{"##region"s},
   //       abstract{"##abstract"s} {}
@@ -75,8 +80,8 @@ struct table_line : boost::totally_ordered<table_line> {
   explicit table_line(const chrono::local_time<chrono::hours>& in_task)
       : cache_time{in_task},
         time_day{fmt::format("{:%F}", cache_time)},
-        week{fmt::format("星期 {:%w}", cache_time)},
-        am_or_pm{fmt::format("{:%p}", cache_time)},
+        week{tran.at(fmt::format("{:%A}", cache_time))},
+        am_or_pm{tran.at(fmt::format("{:%p}", cache_time))},
         task{"##task"s},
         region{"##region"s},
         abstract{"##abstract"s} {}
@@ -198,6 +203,8 @@ void work_hour_filling::init() {
   ptr->time_month() = {l_time.year, l_time.month};
   list_time(l_time.year, l_time.month);
 }
+
+void work_hour_filling::export_table(const FSys::path& in_path) {}
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
 
