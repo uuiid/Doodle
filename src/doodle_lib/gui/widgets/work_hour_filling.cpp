@@ -129,22 +129,22 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   }
   for (auto&& [l_e, l_w] : g_reg()->view<work_task_info>().each()) {
     if (l_w.time >= l_begin_time && l_w.time <= l_end_time && l_w.user_ref.user_attr() == ptr->current_user) {
-      DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
-      auto l_t = make_handle(l_e).get<work_task_info>();
-      DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
+      // DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
+      // auto l_t = make_handle(l_e).get<work_task_info>();
+      // DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
       ptr->time_cache[l_w.time] = make_handle(l_e);
     }
   }
 
   ptr->table_list =
       ptr->time_cache | ranges::views::transform([&](const decltype(ptr->time_cache)::value_type& in) -> table_line {
-        if (in.second && in.second.any_of<work_task_info>()) {
-          auto l_t = in.second.get<work_task_info>();
-          DOODLE_LOG_INFO("原始时间 {} 信息 {}", l_t.time, l_t.task_name);
-        }
+        // if (in.second && in.second.any_of<work_task_info>()) {
+        //   auto l_t = in.second.get<work_task_info>();
+        //   DOODLE_LOG_INFO("原始时间 {} 信息 {}", l_t.time, l_t.task_name);
+        // }
         auto l_line = (in.second && in.second.any_of<work_task_info>()) ? table_line{in.second.get<work_task_info>()}
                                                                         : table_line{in.first};
-        DOODLE_LOG_INFO("时间 {} 信息 {}", l_line.time_day, l_line.task());
+        // DOODLE_LOG_INFO("时间 {} 信息 {}", l_line.time_day, l_line.task());
         l_line.user_handle = ptr->current_user;
         return l_line;
       }) |
