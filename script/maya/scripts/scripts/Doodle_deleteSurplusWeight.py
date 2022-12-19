@@ -18,6 +18,21 @@ mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtWidgets.QWidget)
 
 
+# def select_max_weiget():
+#   import pymel.core
+#   limt = 3
+#   select = pymel.core.ls(selection=True, flatten=True, type="float3")
+#   if not len(select) :
+#      pymel.core.warning("No selected point")
+#      return
+#   skCluster = None
+#   for node in select[0]._node.listHistory():
+#       if node.type() == "skinCluster":
+#           skCluster = node
+#           break
+#   selectList = [v for v in select if len([w for w in  pymel.core.skinPercent(skCluster, v, query=True, value=True) if w >0]) >limt]
+#   pymel.core.select(selectList)
+
 class deleteSurplusWeight(QtWidgets.QMainWindow):
 
     def __init__(self):
