@@ -8,6 +8,7 @@
 #include "doodle_app/lib_warp/imgui_warp.h"
 
 #include <entt/entity/fwd.hpp>
+#include <fmt/core.h>
 #include <fmt/format.h>
 #include <imgui.h>
 #include <memory>
@@ -32,9 +33,10 @@ class all_user_combox::impl {
   std::vector<user_gui_data> user_name_list{};
 
   entt::handle current_select_user;
-  gui_cache_name_id delete_id;
+  gui_cache_name_id delete_id{"删除用户"};
 
   std::string user_id;
+  bool init{};
 };
 
 all_user_combox::all_user_combox() : ptr(std::make_unique<impl>()) {}
@@ -43,9 +45,12 @@ all_user_combox::all_user_combox(bool show_delete_button) : all_user_combox() { 
 
 void all_user_combox::get_all_user_data() {
   auto l_v = g_reg()->view<database, user>();
+  ptr->user_name_list.clear();
   for (auto&& [e, l_d, l_u] : l_v.each()) {
-    auto l_h = make_handle(e);
-    ptr->user_name_list.emplace_back(fmt::to_string(l_u), make_handle(e));
+    auto l_h    = make_handle(e);
+    auto l_name = fmt::to_string(l_u);
+    if (l_name.empty()) l_name = fmt::to_string(l_d.uuid());
+    ptr->user_name_list.emplace_back(l_name, make_handle(e));
   }
   ptr->user_name_list |= ranges::actions::sort([](const user_gui_data& in_l, const user_gui_data& in_r) {
     return in_l.show_name.name < in_r.show_name.name;
@@ -62,9 +67,13 @@ void all_user_combox::delete_user(const entt::handle& in_user) {
 }
 
 bool all_user_combox::render() {
+  if (!ptr->init) {
+    get_all_user_data();
+    ptr->init = true;
+  }
+
   bool l_r{};
   dear::Combo{*ptr->combox_user_id, ptr->combox_user_id().data()} && [this, l_r = &l_r]() {
-    get_all_user_data();
     for (auto&& l_u : ptr->user_name_list) {
       if (dear::Selectable(*l_u.show_name)) {
         ptr->combox_user_id()    = l_u.show_name.name;
@@ -81,8 +90,11 @@ bool all_user_combox::render() {
       delete_user(ptr->current_select_user);
     }
   }
-  ImGui::SameLine();
-  if (!ptr->user_id.empty()) dear::Text(ptr->user_id);
+
+  if (!ptr->user_id.empty()) {
+    ImGui::SameLine();
+    dear::Text(ptr->user_id);
+  }
 
   return l_r;
 }

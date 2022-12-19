@@ -13,10 +13,12 @@
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 
+#include <boost/asio/post.hpp>
 #include <boost/lambda2/lambda2.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/operators.hpp>
 
+#include "gui/widgets/derail/all_user_combox.h"
 #include "gui/widgets/work_hour_filling.h"
 #include <__msvc_chrono.hpp>
 #include <array>
@@ -109,7 +111,8 @@ class work_hour_filling::impl {
   const std::array<std::string, 6> table_head{"日期"s, "星期"s, "时段"s, "项目"s, "地区"s, "工作内容摘要"s};
 
   gui_cache_name_id advanced_setting{"高级设置"};
-  gui_cache<std::string> user_combox{"用户选择"};
+
+  all_user_combox combox{true};
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
@@ -187,7 +190,14 @@ void work_hour_filling::render() {
   };
 
   dear::TreeNode{*ptr->advanced_setting} && [&]() {
-    
+    /// 打开新的窗口显示用户
+    if (ptr->combox.render()) {
+      auto l_u      = std::make_shared<work_hour_filling>();
+      auto l_user_h = l_u->ptr->current_user = ptr->combox.get_user();
+      l_u->ptr->title = l_user_h.get<user>().get_name().empty() ? fmt::format("匿名用户 {}", l_user_h)
+                                                                : l_user_h.get<user>().get_name();
+      boost::asio::post([l_u]() { make_handle().emplace<gui_windows>(l_u); });
+    }
   };
 
   ImGui::Text("工时信息");
