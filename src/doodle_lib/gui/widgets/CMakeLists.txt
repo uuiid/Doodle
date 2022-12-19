@@ -1,7 +1,7 @@
 add_subdirectory(assets_filter_widgets)
 add_subdirectory(edit_widgets)
 add_subdirectory(time_sequencer_widgets)
-
+add_subdirectory(derail)
 target_sources(doodle_lib
 
         PUBLIC

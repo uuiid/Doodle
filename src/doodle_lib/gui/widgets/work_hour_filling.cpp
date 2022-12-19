@@ -107,9 +107,15 @@ class work_hour_filling::impl {
   gui_cache_name_id table{"工时信息"};
   std::vector<table_line> table_list;
   const std::array<std::string, 6> table_head{"日期"s, "星期"s, "时段"s, "项目"s, "地区"s, "工作内容摘要"s};
+
+  gui_cache_name_id advanced_setting{"高级设置"};
+  gui_cache<std::string> user_combox{"用户选择"};
 };
 
-work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) { ptr->title = std::string{name}; }
+work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
+  ptr->title        = std::string{name};
+  ptr->current_user = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
+}
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   using work_tub_t  = decltype(*g_reg()->view<work_task_info>().each().begin());
@@ -166,7 +172,6 @@ void work_hour_filling::modify_item(std::size_t in_index) {
 }
 
 void work_hour_filling::init() {
-  ptr->current_user = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
   auto l_time       = time_point_wrap{}.compose();
   ptr->time_month() = {l_time.year, l_time.month};
   list_time(l_time.year, l_time.month);
@@ -179,6 +184,10 @@ void work_hour_filling::render() {
 
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
     list_time(ptr->time_month()[0], ptr->time_month()[1]);
+  };
+
+  dear::TreeNode{*ptr->advanced_setting} && [&]() {
+    
   };
 
   ImGui::Text("工时信息");
