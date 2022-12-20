@@ -95,7 +95,7 @@ class menu_bar : public doodle::gui::menu_bar {
   void menu_tool() override{};
 };
 
-class main_facet : public doodle::facet::gui_facet {
+class main_facet : public doodle::main_facet {
  public:
  protected:
   void load_windows() override {
@@ -111,7 +111,7 @@ class main_facet : public doodle::facet::gui_facet {
   }
 };
 
-class main_app : public doodle::doodle_main_app {
+class main_app : public doodle::main_app {
  public:
   main_app() {
     run_facet = std::make_shared<main_facet>();

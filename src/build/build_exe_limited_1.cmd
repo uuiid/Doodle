@@ -1,7 +1,7 @@
 call %~dp0/set_venv.cmd
 
 echo "Current Location is %my_pwd%"
-set doodle_install_prefix=install_1
+set doodle_install_prefix=limited_1
 
 echo -----------------config main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
@@ -41,5 +41,5 @@ mkdir %my_pwd%\build\html\file
 
 :copy_file
 
-robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\install_1\ *.msi > %tmp%/doodle_install_copy1.txt
-robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\install_1\ *.7z > %tmp%/doodle_install_copy2.txt
+robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\%doodle_install_prefix%\ *.msi 
+robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\%doodle_install_prefix%\ *.7z  

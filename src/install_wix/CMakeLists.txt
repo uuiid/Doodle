@@ -1,39 +1,36 @@
 
 macro(wix_heat_gen dir work_dir)
-    add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
-            COMMAND py ${CMAKE_CURRENT_LIST_DIR}/../fix_main_wxs.py
-            --input_dir ${CMAKE_INSTALL_PREFIX}/${dir}
+        if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/${dir})
+                file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${dir})
+                file(TOUCH ${CMAKE_INSTALL_PREFIX}/${dir}/not_exit.txt)
+        endif()
 
-            DEPENDS ${CMAKE_INSTALL_PREFIX}/${dir}
-            WORKING_DIRECTORY ${work_dir}
-            )
+        add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
+                COMMAND py ${CMAKE_CURRENT_LIST_DIR}/../fix_main_wxs.py
+                --input_dir ${CMAKE_INSTALL_PREFIX}/${dir}
+
+                DEPENDS ${CMAKE_INSTALL_PREFIX}/${dir}
+                WORKING_DIRECTORY ${work_dir}
+        )
 endmacro()
 
 macro(wix_candle_gen file work_dir gen_wixobj_files)
-    add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj
-            COMMAND wix_candle
-            -nologo
-            -arch x64
-            -d${file}_dir=${CMAKE_INSTALL_PREFIX}/${file}
-            -out "${work_dir}/wix/${file}.wixobj"
-            "-I${work_dir}/wix"
-            "-I${work_dir}"
-            ${CMAKE_INSTALL_PREFIX}/wix/${file}.wxs
+        add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj
+                COMMAND wix_candle
+                -nologo
+                -arch x64
+                -d${file}_dir=${CMAKE_INSTALL_PREFIX}/${file}
+                -out "${work_dir}/wix/${file}.wixobj"
+                "-I${work_dir}/wix"
+                "-I${work_dir}"
+                ${CMAKE_INSTALL_PREFIX}/wix/${file}.wxs
 
-            DEPENDS ${CMAKE_INSTALL_PREFIX}/wix/${file}.wxs
-            WORKING_DIRECTORY ${work_dir}
-            )
+                DEPENDS ${CMAKE_INSTALL_PREFIX}/wix/${file}.wxs
+                WORKING_DIRECTORY ${work_dir}
+        )
 
-    list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
+        list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
 endmacro(wix_candle_gen)
-
-install(CODE [[
-file(COPY  ${CMAKE_INSTALL_PREFIX}/bin/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/maya/plug-ins
-        FILES_MATCHING PATTERN  *.dll)
-]]
-        COMPONENT exe_com)
-
 
 find_package(Wix REQUIRED)
 
