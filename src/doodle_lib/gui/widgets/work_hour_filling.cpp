@@ -9,7 +9,6 @@
 #include "doodle_core/metadata/work_task.h"
 
 #include "doodle_app/gui/base/base_window.h"
-#include "doodle_app/gui/base/modify_guard.h"
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/gui/open_file_dialog.h"
 #include "doodle_app/gui/show_message.h"
@@ -255,6 +254,7 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   }
   FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
+  make_handle().emplace<gui_windows>(std::make_shared<show_message>(fmt::format("完成导出表格 {}"s, l_path)));
 }
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
