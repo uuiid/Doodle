@@ -53,6 +53,7 @@
 #include <utility>
 #include <vector>
 #include <xlnt/cell/cell_reference.hpp>
+#include <xlnt/utils/date.hpp>
 #include <xlnt/utils/path.hpp>
 #include <xlnt/workbook/workbook.hpp>
 
@@ -144,9 +145,9 @@ class work_hour_filling::impl {
   /// 导出路径
   FSys::path export_path;
   /// 选择路径按钮
-  gui_cache_name_id select_path_button;
+  gui_cache_name_id select_path_button{"选择路径"};
   /// 导出表按钮
-  gui_cache_name_id export_button;
+  gui_cache_name_id export_button{"导出表格"};
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
@@ -224,30 +225,35 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   const static std::vector<std::string> s_csv_header{"用户"s, "日期"s, "星期"s,        "时段"s,
                                                      "项目"s, "地区"s, "工作内容摘要"s};
 
-  FSys::ofstream l_f{l_path};
   xlnt::workbook l_w{};
 
   auto l_table = l_w.active_sheet();
   l_w.title("工作内容"s);
   /// 添加头
   for (auto i = 0; i < s_csv_header.size(); ++i) {
-    l_table.cell(xlnt::cell_reference(1, 1 + i)).value(s_csv_header[i]);
+    l_table.cell(xlnt::cell_reference(1 + i, 1)).value(s_csv_header[i]);
   }
   std::size_t l_index{2};
   auto l_task_ = g_reg()->view<database, work_task_info>();
   for (auto&& [l_e, l_d, l_w] : l_task_.each()) {
     /// 获取用户
     auto&& l_user = l_w.user_ref.user_attr().get<user>();
-    l_table.cell(xlnt::cell_reference(l_index, 1))
+    l_table.cell(xlnt::cell_reference(1, l_index))
         .value(l_user.get_name().empty() ? fmt::format("匿名用户 {}", l_d.uuid()) : l_user.get_name());
     /// 其他几个
-    l_table.cell(xlnt::cell_reference(l_index, 2)).value(fmt::format("{:%F}", l_w.time));
-    l_table.cell(xlnt::cell_reference(l_index, 3)).value(table_line::tran.at(fmt::format("{:%A}", l_w.time)));
-    l_table.cell(xlnt::cell_reference(l_index, 4)).value(table_line::tran.at(fmt::format("{:%p}", l_w.time)));
-    l_table.cell(xlnt::cell_reference(l_index, 5)).value(l_w.task_name);
-    l_table.cell(xlnt::cell_reference(l_index, 6)).value(l_w.region);
-    l_table.cell(xlnt::cell_reference(l_index, 7)).value(l_w.abstract);
+    chrono::year_month_day l_t{chrono::floor<chrono::days>(l_w.time)};
+    l_table.cell(xlnt::cell_reference(2, l_index))
+        .value(xlnt::date{
+            (std::int32_t)l_t.year(), boost::numeric_cast<std::int32_t>((std::uint32_t)l_t.month()),
+            boost::numeric_cast<std::int32_t>((std::uint32_t)l_t.day())});
+    l_table.cell(xlnt::cell_reference(3, l_index)).value(table_line::tran.at(fmt::format("{:%A}", l_w.time)));
+    l_table.cell(xlnt::cell_reference(4, l_index)).value(table_line::tran.at(fmt::format("{:%p}", l_w.time)));
+    l_table.cell(xlnt::cell_reference(5, l_index)).value(l_w.task_name);
+    l_table.cell(xlnt::cell_reference(6, l_index)).value(l_w.region);
+    l_table.cell(xlnt::cell_reference(7, l_index)).value(l_w.abstract);
+    ++l_index;
   }
+  FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
 }
 
