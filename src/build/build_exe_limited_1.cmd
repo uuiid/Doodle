@@ -23,3 +23,23 @@ echo -----------------install main exe--------------------
 --component exe_com
 
 call  %my_pwd%\src\build\doc.cmd > %tmp%/doodle_doc_info.txt
+
+if %errorlevel% NEQ 0 exit 1
+echo -----------------pack---------------------
+"C:\Program Files\CMake\bin\cmake.exe" ^
+--build ^
+--preset cmake_pack%Doodle_suffix%
+
+if %errorlevel% NEQ 0 exit 1
+
+echo -----------------copy file--------------------
+if not exist "%my_pwd%\build\html\file" goto create_file_dir
+goto copy_file
+
+:create_file_dir
+mkdir %my_pwd%\build\html\file
+
+:copy_file
+
+robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\install_1\ *.msi > %tmp%/doodle_install_copy1.txt
+robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\install_1\ *.7z > %tmp%/doodle_install_copy2.txt
