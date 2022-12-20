@@ -61,11 +61,6 @@ if(DEFINED Maya_Version)
 
                 configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
 
-                # 添加依赖文件
-                file(GLOB_RECURSE maya_script_files FOLLOW_SYMLINKS
-                        LIST_DIRECTORIES false
-                        CONFIGURE_DEPENDS
-                        "${PROJECT_SOURCE_DIR}/script/maya/*.*")
                 list(APPEND maya_script_files ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py)
 
                 # message("${maya_script_files}")
@@ -73,7 +68,6 @@ if(DEFINED Maya_Version)
                         doodle_maya_python_files
                         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
                         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
-                        DEPENDS ${maya_script_files}
                 )
 
                 add_dependencies(doodle_maya doodle_maya_python_files)
