@@ -34,6 +34,10 @@ class DOODLE_APP_API app_command_base : public app_base {
   virtual void post_constructor() override;
 };
 
+/**
+ * @brief 这个类是有基本的gui
+ * 
+ */
 class DOODLE_APP_API doodle_main_app : public app_command_base {
  public:
   class in_gui_arg : public app_base::in_app_args {
