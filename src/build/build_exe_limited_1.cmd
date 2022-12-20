@@ -43,3 +43,5 @@ mkdir %my_pwd%\build\html\file
 
 robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\%doodle_install_prefix%\ *.msi 
 robocopy %my_pwd%\build\install\%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\%doodle_install_prefix%\ *.7z  
+
+set errorlevel =0
