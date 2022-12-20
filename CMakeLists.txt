@@ -44,7 +44,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 # 添加选项
 option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
-option(BUILD_LIMITED_1 "受限构建" ON)
+option(BUILD_LIMITED_1 "受限构建" OFF)
 
 # 首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)

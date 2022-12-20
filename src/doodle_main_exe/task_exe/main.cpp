@@ -62,14 +62,6 @@ class layout : public doodle::gui::detail::layout_tick_interface {
         ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
         ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 
-        /**
-         * 分裂给节点 其中 *返回值* 和 out_id_at_dir是相同的, 而另一个是剩下的
-         */
-        auto dock_id_tools  = dockspace_id;
-        auto dock_id_filter = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id_tools);
-        auto dock_id_edit = ImGui::DockBuilderSplitNode(dock_id_filter, ImGuiDir_Down, 0.5f, nullptr, &dock_id_filter);
-        auto dock_id_main = ImGui::DockBuilderSplitNode(dock_id_tools, ImGuiDir_Down, 0.75f, nullptr, &dock_id_tools);
-
         // 开始将窗口停靠在创建的窗口中
         namespace menu_w  = gui::config::menu_w;
 
@@ -89,6 +81,7 @@ class layout : public doodle::gui::detail::layout_tick_interface {
       first_time = false;
       doodle::gui::show_windows<doodle::gui::work_hour_filling>();
     }
+    return false;
   };
 };
 
@@ -128,7 +121,7 @@ class main_app : public doodle::doodle_main_app {
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {
-  doodle::main_app app{};
+  main_app app{};
   try {
     return app.run();
   } catch (const std::exception &err) {
