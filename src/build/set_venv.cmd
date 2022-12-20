@@ -14,6 +14,7 @@ cd %~dp0/../..
 
 set my_pwd=%cd%
 set doodle_install_prefix=all
+set cache_file=%my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
 call %my_pwd%/.venv/Scripts/activate.bat
 
 if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)

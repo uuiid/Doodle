@@ -20,9 +20,9 @@ echo -----------------install maya 2018--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2018--------------------
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\src\maya_plug
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\plug
-del  %my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
+powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
+
+ 
 
 echo -----------------------------------------------------
 echo -----------------config maya 2019--------------------
@@ -44,9 +44,7 @@ echo -----------------install maya 2019--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2019--------------------
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\src\maya_plug
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\plug
-del  %my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
+powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
 
 echo -----------------------------------------------------
 echo -----------------config maya 2020--------------------
@@ -68,6 +66,4 @@ echo -----------------install maya 2020--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2020--------------------
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\src\maya_plug
-rmdir /q /s %my_pwd%\build\Ninja_release%Doodle_suffix%\plug
-del  %my_pwd%\build\Ninja_release%Doodle_suffix%\CMakeCache.txt
+powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
