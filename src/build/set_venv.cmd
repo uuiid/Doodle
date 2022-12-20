@@ -13,6 +13,7 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary
 cd %~dp0/../..
 
 set my_pwd=%cd%
+set doodle_install_prefix=all
 call %my_pwd%/.venv/Scripts/activate.bat
 
 if exist "%my_pwd%/CMakeUserPresets.json" (set Doodle_suffix=_DD)

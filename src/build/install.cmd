@@ -21,14 +21,14 @@ goto copy_file
 mkdir %my_pwd%\build\html\file
 
 :copy_file
-echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install"
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.msi > %tmp%/doodle_install_copy1.txt
+echo "%my_pwd%\build\html\file *.msi -> %my_pwd%\build\install%doodle_install_prefix%"
+robocopy %my_pwd%\build\install%doodle_install_prefix% %my_pwd%\build\html\file *.msi > %tmp%/doodle_install_copy1.txt
 
-echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install "
-robocopy %my_pwd%\build\install %my_pwd%\build\html\file *.7z > %tmp%/doodle_install_copy2.txt
+echo "%my_pwd%\build\html\file *.7z -> %my_pwd%\build\install%doodle_install_prefix% "
+robocopy %my_pwd%\build\install%doodle_install_prefix% %my_pwd%\build\html\file *.7z > %tmp%/doodle_install_copy2.txt
 
-robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.msi > %tmp%/doodle_install_copy1.txt
-robocopy %my_pwd%\build\install \\192.168.10.250\public\Prism_projects\doodle\ *.7z > %tmp%/doodle_install_copy2.txt
+robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\ *.msi > %tmp%/doodle_install_copy1.txt
+robocopy %my_pwd%\build\install%doodle_install_prefix% \\192.168.10.250\public\Prism_projects\doodle\ *.7z > %tmp%/doodle_install_copy2.txt
 
 echo "generate %my_pwd%/build/html/file/index.html"
 py %my_pwd%/docs/generate_directory_index_caddystyle.py %my_pwd%/build/html/file
