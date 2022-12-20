@@ -11,16 +11,20 @@
 #include "doodle_app/gui/base/base_window.h"
 #include "doodle_app/gui/base/modify_guard.h"
 #include "doodle_app/gui/base/ref_base.h"
+#include "doodle_app/gui/open_file_dialog.h"
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 
 #include <boost/asio/post.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/lambda2/lambda2.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/operators.hpp>
 
 #include "gui/widgets/derail/all_user_combox.h"
 #include "gui/widgets/work_hour_filling.h"
+#include "xlnt/xlnt.hpp"
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -28,6 +32,7 @@
 #include <date/tz.h>
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <map>
@@ -47,6 +52,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <xlnt/cell/cell_reference.hpp>
+#include <xlnt/utils/path.hpp>
+#include <xlnt/workbook/workbook.hpp>
 
 namespace doodle::gui {
 
@@ -132,10 +140,13 @@ class work_hour_filling::impl {
   /// 子窗口
   std::map<std::string, entt::handle> sub_windows{};
   /// 导出表格路径
-  gui_cache<std::string> export_file_path{};
+  gui_cache<std::string> export_file_text{};
+  /// 导出路径
+  FSys::path export_path;
   /// 选择路径按钮
-  gui_cache_name_id export_button;
+  gui_cache_name_id select_path_button;
   /// 导出表按钮
+  gui_cache_name_id export_button;
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
@@ -204,7 +215,41 @@ void work_hour_filling::init() {
   list_time(l_time.year, l_time.month);
 }
 
-void work_hour_filling::export_table(const FSys::path& in_path) {}
+void work_hour_filling::export_table(const FSys::path& in_path) {
+  auto l_path = in_path;
+  if (l_path.extension() != ".xlsx") {
+    l_path.replace_extension(".xlsx");
+  }
+
+  const static std::vector<std::string> s_csv_header{"用户"s, "日期"s, "星期"s,        "时段"s,
+                                                     "项目"s, "地区"s, "工作内容摘要"s};
+
+  FSys::ofstream l_f{l_path};
+  xlnt::workbook l_w{};
+
+  auto l_table = l_w.active_sheet();
+  l_w.title("工作内容"s);
+  /// 添加头
+  for (auto i = 0; i < s_csv_header.size(); ++i) {
+    l_table.cell(xlnt::cell_reference(1, 1 + i)).value(s_csv_header[i]);
+  }
+  std::size_t l_index{2};
+  auto l_task_ = g_reg()->view<database, work_task_info>();
+  for (auto&& [l_e, l_d, l_w] : l_task_.each()) {
+    /// 获取用户
+    auto&& l_user = l_w.user_ref.user_attr().get<user>();
+    l_table.cell(xlnt::cell_reference(l_index, 1))
+        .value(l_user.get_name().empty() ? fmt::format("匿名用户 {}", l_d.uuid()) : l_user.get_name());
+    /// 其他几个
+    l_table.cell(xlnt::cell_reference(l_index, 2)).value(fmt::format("{:%F}", l_w.time));
+    l_table.cell(xlnt::cell_reference(l_index, 3)).value(table_line::tran.at(fmt::format("{:%A}", l_w.time)));
+    l_table.cell(xlnt::cell_reference(l_index, 4)).value(table_line::tran.at(fmt::format("{:%p}", l_w.time)));
+    l_table.cell(xlnt::cell_reference(l_index, 5)).value(l_w.task_name);
+    l_table.cell(xlnt::cell_reference(l_index, 6)).value(l_w.region);
+    l_table.cell(xlnt::cell_reference(l_index, 7)).value(l_w.abstract);
+  }
+  l_w.save(l_f);
+}
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
 
@@ -214,6 +259,7 @@ void work_hour_filling::render() {
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
     list_time(ptr->time_month()[0], ptr->time_month()[1]);
   };
+
   if (ptr->show_advanced_setting)
     dear::TreeNode{*ptr->advanced_setting} && [&]() {
       /// 打开新的窗口显示用户
@@ -232,6 +278,24 @@ void work_hour_filling::render() {
             ptr->sub_windows[l_title] = l_h;
           });
         }
+      }
+
+      /// 导出表格功能
+      if (ImGui::InputText(*ptr->export_file_text, &ptr->export_file_text)) {
+        ptr->export_path = ptr->export_file_text();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(*ptr->select_path_button)) {
+        auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
+        l_file->async_read([this](const FSys::path& in) {
+          ptr->export_path        = in / "tmp.xlsx";
+          ptr->export_file_text() = ptr->export_path.generic_string();
+        });
+        make_handle().emplace<gui_windows>(l_file);
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(*ptr->export_button)) {
+        export_table(ptr->export_path);
       }
     };
 

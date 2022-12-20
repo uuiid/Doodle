@@ -71,6 +71,8 @@ find_package(imgui CONFIG REQUIRED)
 
 # 寻找 openssl
 find_package(OpenSSL REQUIRED)
+# 寻找 表格库
+find_package(Xlnt CONFIG REQUIRED)
 
 # 仅头库
 find_package(magic_enum CONFIG REQUIRED)
@@ -125,7 +127,7 @@ git config --global --unset https.proxy
 "D:\Program Files\Epic Games\UE_5.0\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\5.0\Plugins\Doodle 
 "D:\Program Files\Epic Games\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\5.1\Plugins\Doodle 
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-install alembic range-v3 eigen3 boost sqlpp11[sqlite3-connector] directxtk catch2 wil date spdlog cryptopp magic-enum nlohmann-json winreg opencv[ffmpeg,contrib,freetype] imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
+install xlnt alembic range-v3 eigen3 boost sqlpp11[sqlite3-connector] directxtk catch2 wil date spdlog cryptopp magic-enum nlohmann-json winreg opencv[ffmpeg,contrib,freetype] imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
 imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="F:\Doodle\vcpkg\ports"
 install imguiwrap --overlay-ports="F:\Doodle\vcpkg\ports"
 install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
