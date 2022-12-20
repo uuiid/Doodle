@@ -6,7 +6,7 @@ set doodle_install_prefix=install_1
 echo -----------------config main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
 -S%my_pwd% ^
---preset Ninja_release%Doodle_suffix%
+--preset Ninja_release%Doodle_suffix% -DBUILD_LIMITED_1=ON
 
 if %errorlevel% NEQ 0 exit 1
 
