@@ -20,7 +20,7 @@ echo -----------------install maya 2018--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2018--------------------
-powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
+powershell -command "$value = Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch; Set-Content -Path %cache_file% -Value $value" 
 
  
 
@@ -44,7 +44,7 @@ echo -----------------install maya 2019--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2019--------------------
-powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
+powershell -command "$value = Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch; Set-Content -Path %cache_file% -Value $value" 
 
 echo -----------------------------------------------------
 echo -----------------config maya 2020--------------------
@@ -66,4 +66,4 @@ echo -----------------install maya 2020--------------------
 
 if %errorlevel% NEQ 0 exit 1
 echo -----------------clear maya 2020--------------------
-powershell -command "Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch | Out-File %cache_file%"
+powershell -command "$value = Get-Content %cache_file% -Encoding UTF8 | Select-String -Pattern 'maya' -NotMatch; Set-Content -Path %cache_file% -Value $value" 
