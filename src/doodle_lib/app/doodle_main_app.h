@@ -4,17 +4,19 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle {
 
-//namespace detail {
-//class DOODLELIB_API rpc_server_facet : public ::doodle::facet::json_rpc_facet {
+// namespace detail {
+// class DOODLELIB_API rpc_server_facet : public ::doodle::facet::json_rpc_facet {
 //
-// public:
-//};
-//}  // namespace detail
+//  public:
+// };
+// }  // namespace detail
 
 class DOODLELIB_API main_facet : public facet::gui_facet {
  public:
@@ -22,8 +24,6 @@ class DOODLELIB_API main_facet : public facet::gui_facet {
 
  protected:
   void load_windows() override;
-
- 
 };
 
 class DOODLELIB_API main_app : public doodle_main_app {
