@@ -17,7 +17,6 @@
 #include "boost/asio/ssl.hpp"
 #include <boost/asio.hpp>
 
-
 namespace doodle {
 
 main_app::main_app(const doodle_main_app::in_gui_arg& in_arg) : doodle_main_app(in_arg) {
@@ -67,16 +66,5 @@ void main_facet::load_windows() {
   make_handle().emplace<gui::gui_tick>()                 = std::make_shared<gui::menu_bar>();
   make_handle().emplace<gui::gui_tick>()                 = std::make_shared<gui::main_status_bar>();
 }
-void main_facet::operator()() {
-  gui_facet::operator()();
 
-  /// 初始化上下文
-  auto l_ssl = g_reg()->ctx().emplace<std::shared_ptr<boost::asio::ssl::context>>(
-      std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23)
-  );
-}
-void main_facet::deconstruction() {
-  g_reg()->ctx().erase<std::shared_ptr<boost::asio::ssl::context>>();
-  gui_facet::deconstruction();
-}
 }  // namespace doodle
