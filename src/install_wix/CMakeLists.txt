@@ -1,7 +1,7 @@
 
 macro(wix_heat_gen dir work_dir)
         add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
-                COMMAND ${CMAKE_COMMAND} make_directory ${CMAKE_INSTALL_PREFIX}/${dir}
+                COMMAND -E ${CMAKE_COMMAND} make_directory ${CMAKE_INSTALL_PREFIX}/${dir}
                 COMMAND py ${CMAKE_CURRENT_LIST_DIR}/../fix_main_wxs.py
                 --input_dir ${CMAKE_INSTALL_PREFIX}/${dir}
 
