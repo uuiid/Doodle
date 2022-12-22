@@ -25,18 +25,11 @@ namespace doodle {
 
 class assets_file::impl {
  public:
-  database::ref_data ref_user{};
-
-  entt::handle handle_cache{};
-
   FSys::path path{};
   std::string p_name{};
   std::uint64_t p_version{};
 
   std::string organization_p{};
-
-  /// \brief 不要使用, 已经是过期段属性 保留只是兼容性更改
-  std::string p_user{};
 };
 
 void to_json(nlohmann::json& j, const assets_file& p) {
@@ -86,6 +79,7 @@ bool assets_file::operator==(const assets_file& in_rhs) const {
 }
 
 entt::handle assets_file::user_attr() const { return user_ref.user_attr(); }
+entt::handle assets_file::user_attr() { return user_ref.user_attr(); }
 void assets_file::user_attr(const entt::handle& in_user) {
   DOODLE_CHICK(in_user.any_of<user>(), doodle_error{"句柄 {} 缺失必要组件 user", in_user});
   user_ref.user_attr(in_user);
@@ -119,16 +113,3 @@ void assets_file::organization_attr(const std::string& in_organization) noexcept
 }
 assets_file::~assets_file() = default;
 }  // namespace doodle
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<doodle::assets_file>("doodle::assets_file").constructor()(rttr::policy::ctor::as_object);
-  /**
-   *
-  .property(
-      "ref_data", [](const doodle::assets_file& in) -> doodle::database::ref_data { return in.p_i->ref_user; },
-      [](const doodle::assets_file& in, const doodle::database::ref_data& in_ref) { in.p_i->ref_user = in_ref; },
-      rttr::registration::private_access
-  )
-   *
-   */
-}

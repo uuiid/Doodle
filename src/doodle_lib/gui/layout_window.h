@@ -9,8 +9,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-namespace doodle {
-namespace gui {
+namespace doodle::gui {
 
 class DOODLELIB_API layout_window : public detail::layout_tick_interface {
   class impl;
@@ -23,6 +22,5 @@ class DOODLELIB_API layout_window : public detail::layout_tick_interface {
   bool tick() override;
 };
 
-}  // namespace gui
 }  // namespace doodle
 

@@ -10,10 +10,14 @@
 
 namespace doodle {
 
-void to_json(nlohmann::json& j, const user& p) { j["string_"] = p.p_string_; }
+void to_json(nlohmann::json& j, const user& p) {
+  j["string_"] = p.p_string_;
+  j["power"]   = p.power;
+}
 void from_json(const nlohmann::json& j, user& p) {
   j.at("string_").get_to(p.p_string_);
   p.p_ENUS = convert::Get().toEn(p.p_string_);
+  if (j.contains("power")) j.at("power").get_to(p.power);
 }
 
 user::user() : p_string_(), p_ENUS() {}

@@ -6,10 +6,20 @@
 #include "doodle_core/configure/doodle_core_export.h"
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <cstdint>
 #include <rttr/rttr_enable.h>
 
 namespace doodle {
 class user;
+/**
+ * @brief 用户权限配置
+ *
+ */
+enum class power_enum : std::uint32_t {
+  none               = 0,
+  modify_other_users = 1,
+
+};
 
 class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
@@ -18,6 +28,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
 
  public:
   user();
+
+  power_enum power{power_enum::none};
 
   explicit user(const std::string& in_string);
 

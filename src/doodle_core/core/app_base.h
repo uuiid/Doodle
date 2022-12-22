@@ -6,6 +6,8 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
+#include <thread>
+
 namespace doodle {
 /**
  * @brief 基础的事件循环类,  只有事件循环可以使用
@@ -33,6 +35,8 @@ class DOODLE_CORE_API app_base {
    * 此处是正在运行的构面,  同时可以初始化,  作为命令行中没有指定时的后备选项
    */
   app_facet_ptr run_facet;
+  /// @brief 在初始化中获取的id为主id(也是渲染线程id)
+  std::thread::id run_id{std::this_thread::get_id()};
 
   void init();
 
@@ -65,14 +69,15 @@ class DOODLE_CORE_API app_base {
    */
   virtual std::int32_t run();
 
+  bool is_main_thread() const;
+
   virtual std::int32_t poll_one();
   std::atomic_bool& stop();
   void stop_app(bool in_stop = false);
 
   template <typename T>
   std::shared_ptr<T> find_facet(const std::string& in_name) {
-    if (auto l_it = facet_list.find(in_name);
-        l_it != std::end(facet_list)) {
+    if (auto l_it = facet_list.find(in_name); l_it != std::end(facet_list)) {
       return std::dynamic_pointer_cast<T>(l_it->second);
     }
     return {};
