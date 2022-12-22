@@ -11,8 +11,8 @@
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
 
-#include "doodle_lib/gui/layout_window.h"
 #include "doodle_lib/gui/menu_bar.h"
+#include "doodle_lib/gui/setting_windows.h"
 #include "doodle_lib/gui/widgets/work_hour_filling.h"
 #include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_lib/app/rpc_server_facet.h>
@@ -91,6 +91,7 @@ class menu_bar : public doodle::gui::menu_bar {
   void menu_windows() override {
     using namespace doodle;
     if (dear::MenuItem(gui::work_hour_filling::name.data())) gui::show_windows<gui::work_hour_filling>();
+    if (dear::MenuItem(gui::setting_windows::name.data())) gui::show_windows<gui::setting_windows>();
   };
   void menu_tool() override{};
 };
