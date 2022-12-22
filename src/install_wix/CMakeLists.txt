@@ -1,11 +1,7 @@
 
 macro(wix_heat_gen dir work_dir)
-        if(NOT EXISTS ${CMAKE_INSTALL_PREFIX}/${dir})
-                file(MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${dir})
-                file(TOUCH ${CMAKE_INSTALL_PREFIX}/${dir}/not_exit.txt)
-        endif()
-
         add_custom_command(OUTPUT ${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
+                COMMAND ${CMAKE_COMMAND} make_directory ${CMAKE_INSTALL_PREFIX}/${dir}
                 COMMAND py ${CMAKE_CURRENT_LIST_DIR}/../fix_main_wxs.py
                 --input_dir ${CMAKE_INSTALL_PREFIX}/${dir}
 

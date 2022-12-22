@@ -29,6 +29,8 @@ class wix_run():
 
     def make_root_xml(self, path: pathlib.Path):
         self.root_path = path
+        if not self.root_path.exists():
+            self.root_path.mkdir()
         l_fr = et.SubElement(self.root_node, "Fragment")
         l_dir__ref = et.SubElement(l_fr, "DirectoryRef")
         l_dir__ref.attrib["Id"] = "DOODLE_ROOT"
