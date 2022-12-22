@@ -299,9 +299,11 @@ void work_hour_filling::render() {
         });
         make_handle().emplace<gui_windows>(l_file);
       }
-      ImGui::SameLine();
-      if (ImGui::Button(*ptr->export_button)) {
-        export_table(ptr->export_path);
+      if (!ptr->export_path.empty()) {
+        ImGui::SameLine();
+        if (ImGui::Button(*ptr->export_button)) {
+          export_table(ptr->export_path);
+        }
       }
     };
 
