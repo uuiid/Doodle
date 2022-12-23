@@ -47,7 +47,7 @@ void server::run() {
   // boost::asio::post(g_thread(), [this]() {
   //   zmq_proxy(socket_frontend->native_handle(), socket_backend->native_handle(), nullptr);
   // });
-  create_backend();
+  boost::asio::post(g_io_context(), [&]() { create_backend(); });
 }
 
 void server::create_backend() {

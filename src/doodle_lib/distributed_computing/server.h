@@ -8,7 +8,6 @@
 #include <string>
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
-#include <zmq_utils.h>
 
 namespace doodle::distributed_computing {
 

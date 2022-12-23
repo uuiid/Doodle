@@ -4,6 +4,7 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/logger/logger.h"
 
+#include <boost/asio/post.hpp>
 #include <boost/system/detail/error_code.hpp>
 
 #include "distributed_computing/client.h"
@@ -20,8 +21,10 @@ client::client() : socket(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_
 
 void client::call(const std::string& in) {
   socket.send(zmq::message_t{in.data(), in.size()}, zmq::send_flags::none);
-  zmq::message_t l_msg;
-  auto l_r = socket.recv(l_msg);
-  std::cout << l_msg.to_string() << std::endl;
+  boost::asio::post([&]() {
+    zmq::message_t l_msg;
+    auto l_r = socket.recv(l_msg);
+    std::cout << l_msg.to_string() << std::endl;
+  });
 }
 }  // namespace doodle::distributed_computing
