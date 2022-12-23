@@ -45,6 +45,7 @@ add_subdirectory(lib_warp)
 add_subdirectory(platform/win)
 add_subdirectory(toolkit)
 add_subdirectory(gui)
+add_subdirectory(distributed_computing)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
