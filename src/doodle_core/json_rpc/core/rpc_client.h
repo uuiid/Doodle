@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
-
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_request.h>
 
 #include <boost/signals2.hpp>
+
+#include <nlohmann/json.hpp>
+
 namespace boost::asio {
 class io_context;
 }
@@ -33,11 +34,10 @@ class rpc_client {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = false;
-    l_rpc_request.params_   = args;
+    l_rpc_request.method_ = in_name;
+    l_rpc_request.params_ = args;
 
-    l_json                  = l_rpc_request;
+    l_json                = l_rpc_request;
     std::string l_json_str{};
     l_json_str         = call_server(l_json.dump(), false);
 
@@ -56,10 +56,9 @@ class rpc_client {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = false;
+    l_rpc_request.method_ = in_name;
 
-    l_json                  = l_rpc_request;
+    l_json                = l_rpc_request;
     std::string l_json_str{};
     l_json_str         = call_server(l_json.dump(), false);
 
@@ -73,16 +72,17 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type, bool is_notice_type, typename Arg, std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <
+      typename Result_Type, bool is_notice_type, typename Arg,
+      std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name, Arg args) {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = is_notice_type;
-    l_rpc_request.params_   = args;
+    l_rpc_request.method_ = in_name;
+    l_rpc_request.params_ = args;
 
-    l_json                  = l_rpc_request;
+    l_json                = l_rpc_request;
     std::string l_json_str{};
     if constexpr (is_notice_type) {
       call_server(l_json.dump(), is_notice_type);
@@ -99,15 +99,15 @@ class rpc_client {
     }
   }
 
-  template <typename Result_Type, bool is_notice_type, std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
+  template <
+      typename Result_Type, bool is_notice_type, std::enable_if_t<std::is_same_v<void, Result_Type>, std::int32_t> = 0>
   auto call_fun(const std::string& in_name) {
     nlohmann::json l_json{};
 
     rpc_request l_rpc_request{};
-    l_rpc_request.method_   = in_name;
-    l_rpc_request.is_notice = is_notice_type;
+    l_rpc_request.method_ = in_name;
 
-    l_json                  = l_rpc_request;
+    l_json                = l_rpc_request;
     std::string l_json_str{};
     if constexpr (is_notice_type) {
       call_server(l_json.dump(), is_notice_type);

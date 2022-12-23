@@ -4,22 +4,21 @@
 
 #include "doodle_lib/configure/doodle_lib_export.h"
 
-#include <azmq/actor.hpp>
-#include <azmq/context.hpp>
-#include <azmq/message.hpp>
-#include <azmq/socket.hpp>
 #include <memory>
 #include <string>
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+#include <zmq_utils.h>
 
 namespace doodle::distributed_computing {
 
 class DOODLELIB_API server {
-  /// 请求
-  std::shared_ptr<azmq::dealer_socket> socket_frontend;
-  /// 后端
-  std::shared_ptr<azmq::router_socket> socket_backend;
+  /// 请求(异步)
+  std::shared_ptr<zmq::socket_t> socket_backend;
+  /// 后端(路由)
+  std::shared_ptr<zmq::socket_t> socket_frontend;
   /// 工作组
-  azmq::rep_socket socket_server;
+  std::shared_ptr<zmq::socket_t> socket_server;
 
  public:
   server();

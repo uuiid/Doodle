@@ -2,14 +2,16 @@
 
 #pragma once
 
-#include "configure/doodle_lib_export.h"
+#include "doodle_lib/configure/doodle_lib_export.h"
 
 #include <azmq/socket.hpp>
 #include <string>
-
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+#include <zmq_utils.h>
 namespace doodle::distributed_computing {
 class DOODLELIB_API client {
-  azmq::req_socket socket;
+  zmq::socket_t socket;
 
  public:
   client();

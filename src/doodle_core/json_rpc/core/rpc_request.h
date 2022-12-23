@@ -40,7 +40,7 @@ class DOODLE_CORE_API rpc_reply {
   /// @brief rpc结果(成功时包含,失败时包含error)
   std::variant<nlohmann::json, rpc_error> result{};
   /// @brief id(数值, 字符串, 空值等)
-  std::variant<std::int64_t, std::string, std::monostate> id_{};
+  std::variant<std::int64_t, std::string> id_{};
   constexpr static const std::size_t err_index{1};
 };
 

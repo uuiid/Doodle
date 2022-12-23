@@ -48,10 +48,7 @@ void to_json(nlohmann::json& nlohmann_json_j, const rpc_reply& nlohmann_json_t) 
   std::visit(
       detail::overloaded{
           [&](const std::int64_t& in_id) { nlohmann_json_j["id"] = in_id; },
-          [&](const std::string& in_str_id) { nlohmann_json_j["id"] = in_str_id; },
-          [&](const std::monostate& in_null_id) {
-            nlohmann_json_j["id"] = nlohmann::json{nlohmann::json::value_t::null};
-          }},
+          [&](const std::string& in_str_id) { nlohmann_json_j["id"] = in_str_id; }},
       nlohmann_json_t.id_
   );
 }

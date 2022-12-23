@@ -3,8 +3,10 @@
 //
 
 #include "parser_rpc.h"
-#include <json_rpc/core/rpc_server.h>
+
 #include <doodle_core/json_rpc/core/rpc_request.h>
+
+#include <json_rpc/core/rpc_server.h>
 
 namespace doodle::json_rpc {
 
@@ -22,24 +24,19 @@ std::string parser_rpc::operator()(const rpc_server& in_server) {
 
   rpc_reply l_rpc_reply{};
   l_rpc_reply.result = l_fun(rpc_requrst_.params_);
-  l_rpc_reply.id_    = rpc_requrst_.id_;
+
+  if (rpc_requrst_.id_) l_rpc_reply.id_ = *rpc_requrst_.id_;
   nlohmann::json l_json{};
   l_json = l_rpc_reply;
   return l_json.dump();
 }
 
-void parser_rpc::json_data_attr(const std::string& in_string) {
-  json_data_ = in_string;
-}
-parser_rpc::operator bool() const {
-  return is_close;
-}
+void parser_rpc::json_data_attr(const std::string& in_string) { json_data_ = in_string; }
+parser_rpc::operator bool() const { return is_close; }
 
 rpc_request::identifier& rpc_request::identifier::get() {
   static identifier identifier1;
   return identifier1;
 }
-std::uint64_t rpc_request::identifier::id() {
-  return ++id_;
-}
+std::uint64_t rpc_request::identifier::id() { return ++id_; }
 }  // namespace doodle::json_rpc

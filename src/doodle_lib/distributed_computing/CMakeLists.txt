@@ -1,3 +1,5 @@
+find_package(cppzmq CONFIG REQUIRED)
+
 target_sources(
         doodle_lib
         PUBLIC
@@ -12,5 +14,5 @@ target_sources(
 target_link_libraries(doodle_lib
         PUBLIC
 
-        libzmq
+        cppzmq
 )
