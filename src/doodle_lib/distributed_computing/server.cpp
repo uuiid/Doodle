@@ -15,6 +15,7 @@
 #include <azmq/message.hpp>
 #include <azmq/socket.hpp>
 #include <cstddef>
+#include <fmt/core.h>
 #include <memory>
 #include <vector>
 #include <zmq.h>
@@ -37,6 +38,10 @@ void server::run() {
 void server::create_backend() {
   socket_server.connect("tcp://*:23334");
   socket_server.async_receive([&](const boost::system::error_code& in_e, azmq::message& in_msg,
-                                  std::size_t bytes_transferred) { DOODLE_LOG_ERROR(in_msg.string()); });
+                                  std::size_t bytes_transferred) {
+    DOODLE_LOG_ERROR(in_msg.string());
+
+    socket_server.send(fmt::format("server: {}", in_msg.string()));
+  });
 }
 }  // namespace doodle::distributed_computing

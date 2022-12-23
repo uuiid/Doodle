@@ -17,10 +17,19 @@
 #include <boost/test/unit_test.hpp>
 
 #include <main_fixtures/lib_fixtures.h>
+#include <doodle_lib/distributed_computing/server.h>
 
 using namespace doodle;
 struct loop_rpc {};
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
-BOOST_AUTO_TEST_CASE(base) {}
+BOOST_AUTO_TEST_CASE(base) {
+
+
+
+
+
+
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()
