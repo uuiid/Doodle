@@ -8,15 +8,16 @@
 #include <azmq/context.hpp>
 #include <azmq/message.hpp>
 #include <azmq/socket.hpp>
+#include <memory>
 #include <string>
 
 namespace doodle::distributed_computing {
 
 class DOODLELIB_API server {
   /// 请求
-  azmq::dealer_socket socket_frontend;
+  std::shared_ptr<azmq::dealer_socket> socket_frontend;
   /// 后端
-  azmq::router_socket socket_backend;
+  std::shared_ptr<azmq::router_socket> socket_backend;
   /// 工作组
   azmq::rep_socket socket_server;
 
