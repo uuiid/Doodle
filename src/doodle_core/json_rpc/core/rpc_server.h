@@ -3,21 +3,24 @@
 //
 #pragma once
 
-#include <map>
-#include <string>
-#include <functional>
-#include <optional>
-
-#include <doodle_core/json_rpc/exception/json_rpc_error.h>
 #include <doodle_core/json_rpc/core/rpc_reply.h>
+#include <doodle_core/json_rpc/exception/json_rpc_error.h>
 
-#include <boost/function_types/function_type.hpp>
-#include <boost/function_types/function_arity.hpp>
-#include <boost/function_types/result_type.hpp>
-#include <boost/function_types/parameter_types.hpp>
 #include <boost/callable_traits.hpp>
+#include <boost/function_types/function_arity.hpp>
+#include <boost/function_types/function_type.hpp>
+#include <boost/function_types/parameter_types.hpp>
+#include <boost/function_types/result_type.hpp>
 #include <boost/mpl/erase.hpp>
 #include <boost/signals2.hpp>
+
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+
 
 namespace doodle::json_rpc {
 namespace detail {
@@ -62,7 +65,8 @@ class DOODLE_CORE_API rpc_server {
    */
   template <typename Fun_T>
   void register_fun_t(const std::string& in_name, Fun_T&& in_fun_t) {
-    register_fun(in_name, [&](const std::optional<nlohmann::json>& in_arg) -> nlohmann::json {
+    auto l_call_fun = std::make_shared<Fun_T>(std::forward<Fun_T>(in_fun_t));
+    register_fun(in_name, [l_call_fun](const std::optional<nlohmann::json>& in_arg) -> nlohmann::json {
       /// @brief 分解注册函数中的类型
       using Fun_Result                  = typename boost::callable_traits::return_type_t<Fun_T>;
       //      using Fun_Result = typename decltype(std::function<typename Fun_T>{})::result_type;
@@ -76,17 +80,17 @@ class DOODLE_CORE_API rpc_server {
       if constexpr (Fun_Parameter_Size == 0) {
         /// @brief 测试函数返回值, 返回为 void 时, 不进行序列化
         if constexpr (std::is_same_v<Fun_Result, void>) {
-          in_fun_t();
+          (*l_call_fun)();
         } else {
-          json_l = in_fun_t();
+          json_l = (*l_call_fun)();
         }
 
       } else {
         using Fun_Parameter_Decay = decltype(decay_types(std::declval<Fun_Parameter>()));
         if constexpr (std::is_same_v<Fun_Result, void>) {
-          std::apply(in_fun_t, in_arg->template get<Fun_Parameter_Decay>());
+          std::apply((*l_call_fun), in_arg->template get<Fun_Parameter_Decay>());
         } else {
-          json_l = std::apply(in_fun_t, in_arg->template get<Fun_Parameter_Decay>());
+          json_l = std::apply((*l_call_fun), in_arg->template get<Fun_Parameter_Decay>());
         }
       }
       return json_l;

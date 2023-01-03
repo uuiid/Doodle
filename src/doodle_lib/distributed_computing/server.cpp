@@ -43,8 +43,8 @@ void task::run_task() {
         return this->get_user_work_task_info(in_tocken.find_by_uuid(), in_user.find_by_uuid());
       }
   );
-  register_fun_t("rpc.close"s, [this]() {
-    is_stop = true;
+  register_fun_t("rpc.close"s, [this, self = weak_from_this()]() {
+    self.lock()->is_stop = true;
     // if (socket_server) socket_server->close();
   });
   // strand = boost::asio::make_strand(g_thread());

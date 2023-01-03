@@ -2,6 +2,7 @@
 // Created by TD on 2022/9/29.
 //
 #include "doodle_core/core/app_base.h"
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/doodle_core.h>
@@ -41,11 +42,12 @@ BOOST_AUTO_TEST_CASE(base) {
   auto l_w = boost::asio::make_work_guard(g_io_context());
   boost::asio::post(g_thread(), [this]() {
     distributed_computing::client l_c{};
-    l_c.list_users();
+    // l_c.list_users();
     l_c.close();
     std::cout << "stop run"
               << "\n";
     l_s.work_guard->reset();
+    g_io_context().stop();
   });
   // auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
   // l_timer->expires_after(1s);
@@ -55,22 +57,38 @@ BOOST_AUTO_TEST_CASE(base) {
 }
 
 BOOST_AUTO_TEST_CASE(list_users) {
-  doodle_lib l_ib{};
-
-  distributed_computing::server l_s{};
   l_s.run();
-  boost::asio::post(g_thread(), []() {
+
+  auto l_h = make_handle();
+  l_h.emplace<user>().set_name("t1");
+  l_h.emplace<database>();
+
+  l_h = make_handle();
+  l_h.emplace<user>().set_name("t2");
+  l_h.emplace<database>();
+
+  l_h = make_handle();
+  l_h.emplace<user>().set_name("t3");
+  l_h.emplace<database>();
+
+  l_h = make_handle();
+  l_h.emplace<user>().set_name("t4");
+  l_h.emplace<database>();
+
+  l_h = make_handle();
+  l_h.emplace<user>().set_name("t5");
+  l_h.emplace<database>();
+
+  auto l_w = boost::asio::make_work_guard(g_io_context());
+  boost::asio::post(g_thread(), [this]() {
     distributed_computing::client l_c{};
     for (auto&& l_f : l_c.list_users()) {
       std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
     }
     l_c.close();
-  });
-  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  l_timer->expires_after(1ms);
-  l_timer->async_wait([l_timer, this](auto) {
     std::cout << "stop run"
               << "\n";
+    l_s.work_guard->reset();
     g_io_context().stop();
   });
   g_io_context().run();
