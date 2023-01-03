@@ -6,6 +6,7 @@
 
 #include <doodle_app/app/program_options.h>
 
+#include "doodle_lib/distributed_computing/server.h"
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/program_options.hpp>
@@ -22,6 +23,7 @@ class rpc_server_facet::impl {
 
   boost::program_options::options_description opt{"rpc"};
   std::string files_attr;
+  bool run_rpc{};
   std::shared_ptr<program_options> program_options;
 
   void redirect_io_to_console() {
@@ -91,6 +93,9 @@ void rpc_server_facet::operator()() {
     process_message l_msg;
     g_reg()->ctx().at<image_to_move>()->create_move(l_out_path, l_msg, l_move);
   }
+  if (p_i->run_rpc){
+    
+  }
 
   //  p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());
   //  p_i->server_attr->set_rpc_server(p_i->rpc_server_attr);
@@ -106,6 +111,7 @@ std::shared_ptr<json_rpc::server> rpc_server_facet::server_attr() const {
 }
 void rpc_server_facet::add_program_options(const std::shared_ptr<program_options>& in_opt) {
   p_i->opt.add_options()("create_move", boost::program_options::value(&p_i->files_attr), "创建视频的序列json选项");
+  p_i->opt.add_options()("zmq_rpc", boost::program_options::value(&p_i->run_rpc), "运行rpc服务");
   in_opt->add_opt(p_i->opt);
   p_i->program_options = in_opt;
 }

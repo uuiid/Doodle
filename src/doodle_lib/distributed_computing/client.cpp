@@ -70,5 +70,5 @@ std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in
   };
   return l_r;
 }
-
+void client::close() { call_fun<void, true>("rpc.close"s); }
 }  // namespace doodle::distributed_computing

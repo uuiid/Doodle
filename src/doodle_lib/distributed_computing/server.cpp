@@ -7,6 +7,7 @@
 #include "doodle_core/metadata/work_task.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -42,21 +43,29 @@ void task::run_task() {
         return this->get_user_work_task_info(in_tocken.find_by_uuid(), in_user.find_by_uuid());
       }
   );
-
+  register_fun_t("rpc.close"s, [this]() {
+    is_stop = true;
+    // if (socket_server) socket_server->close();
+  });
+  // strand = boost::asio::make_strand(g_thread());
   connect();
 }
 
 void task::connect() {
-  boost::asio::post(g_thread(), [this]() {
+  boost::asio::post(g_io_context(), [this, self = shared_from_this()]() {
     zmq::message_t l_msg{};
-    auto l_r = socket_server->recv(l_msg);
-    boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this]() mutable {
-      auto l_call_r = (*this)(l_msg.to_string());
+    auto l_r = self->socket_server->recv(l_msg, zmq::recv_flags::none);
+    // auto l_call_r = (*this)(l_msg.to_string());
+    // l_msg.rebuild(l_call_r.data(), l_call_r.size());
+    // self->socket_server->send(l_msg, zmq::send_flags::none);
+    // if (!is_stop) connect();
 
+    boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
+      auto l_call_r = (*self)(l_msg.to_string());
       l_msg.rebuild(l_call_r.data(), l_call_r.size());
-      boost::asio::post(g_thread(), [l_msg = std::move(l_msg), this]() mutable {
-        socket_server->send(l_msg, zmq::send_flags::none);
-        connect();
+      boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
+        self->socket_server->send(l_msg, zmq::send_flags::none);
+        if (!self->is_stop) connect();
       });
     });
   });
@@ -88,12 +97,17 @@ std::vector<std::tuple<database, doodle::work_task_info>> task::get_user_work_ta
 
 task::~task() = default;
 
-server::server() : socket_frontend(), socket_backend(), socket_server_list() {}
+server::server() : socket_frontend(), socket_backend(), socket_server_list() {
+  g_reg()->ctx().emplace<zmq::context_t>();
+}
 
 void server::run() {
-  socket_frontend = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::router);
-  socket_backend  = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::dealer);
+  work_guard = std::make_shared<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
+      boost::asio::make_work_guard(g_io_context())
+  );
   boost::asio::post(g_thread(), [this]() {
+    socket_frontend = std::make_shared<zmq::socket_t>(g_reg()->ctx().at<zmq::context_t>(), zmq::socket_type::router);
+    socket_backend  = std::make_shared<zmq::socket_t>(g_reg()->ctx().at<zmq::context_t>(), zmq::socket_type::dealer);
     socket_frontend->bind("tcp://*:23333");
     socket_backend->bind("tcp://*:23334");
     zmq_proxy(socket_frontend->handle(), socket_backend->handle(), nullptr);
@@ -101,5 +115,6 @@ void server::run() {
   boost::asio::post(g_io_context(), [&]() { create_backend(); });
 }
 
-void server::create_backend() { socket_server_list.emplace_back().run_task(); }
+void server::create_backend() { socket_server_list.emplace_back(std::make_shared<task>())->run_task(); }
+server::~server() = default;
 }  // namespace doodle::distributed_computing

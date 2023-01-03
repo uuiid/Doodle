@@ -8,6 +8,11 @@
 
 #include "doodle_lib/configure/doodle_lib_export.h"
 
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+
 #include <entt/entity/fwd.hpp>
 #include <memory>
 #include <string>
@@ -17,9 +22,11 @@
 
 namespace doodle::distributed_computing {
 
-class task : public doodle::json_rpc::rpc_server {
+class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from_this<task> {
   /// 工作组
   std::shared_ptr<zmq::socket_t> socket_server;
+  bool is_stop{};
+  // boost::asio::strand<boost::asio::any_io_executor> strand{};
 
  public:
   task();
@@ -42,10 +49,13 @@ class DOODLELIB_API server {
   /// 后端(路由)
   std::shared_ptr<zmq::socket_t> socket_frontend;
   /// 工作组
-  std::vector<task> socket_server_list;
+  std::vector<std::shared_ptr<task>> socket_server_list;
 
  public:
+  std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard;
+
   server();
+  ~server();
 
   void run();
 

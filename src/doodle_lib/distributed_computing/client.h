@@ -24,6 +24,8 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
 
   std::vector<entt::handle> get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
 
+  void close();
+
  private:
   std::string call_server(const std::string& in_string, bool is_notice) override;
 };
