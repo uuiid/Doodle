@@ -2,7 +2,6 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
 #include "doodle_core/metadata/work_task.h"
@@ -86,6 +85,8 @@ std::vector<std::tuple<database, doodle::work_task_info>> task::get_user_work_ta
   }
   return l_r;
 }
+
+task::~task() = default;
 
 server::server() : socket_frontend(), socket_backend(), socket_server_list() {}
 

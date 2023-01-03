@@ -23,6 +23,7 @@ class task : public doodle::json_rpc::rpc_server {
 
  public:
   task();
+  ~task();
 
   void run_task();
 
