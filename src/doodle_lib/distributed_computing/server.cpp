@@ -23,37 +23,20 @@ namespace doodle::distributed_computing {
 server::server() : socket_frontend(), socket_backend(), socket_server() {}
 
 void server::run() {
-  // socket_frontend = std::make_shared<azmq::router_socket>(g_io_context());
-  // socket_backend  = std::make_shared<azmq::dealer_socket>(g_io_context());
-  // socket_frontend->bind("tcp://*:23333");
-  // socket_backend->bind("tcp://*:23334");
-
-  // socket_backend->async_receive([&](const boost::system::error_code& in_e, azmq::message& in_msg,
-  //                                   std::size_t bytes_transferred) {
-  //   if (in_e)
-  //     DOODLE_LOG_ERROR(in_e.what());
-  //   else
-  //     socket_frontend->send(in_msg);
-  // });
-  // socket_frontend->async_receive([&](const boost::system::error_code& in_e, azmq::message& in_msg,
-  //                                    std::size_t bytes_transferred) {
-  //   if (in_e)
-  //     DOODLE_LOG_ERROR(in_e.what());
-  //   else {
-  //     socket_backend->send(in_msg);
-  //   }
-  // });
-
-  // boost::asio::post(g_thread(), [this]() {
-  //   zmq_proxy(socket_frontend->native_handle(), socket_backend->native_handle(), nullptr);
-  // });
+  socket_frontend = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::router);
+  socket_backend  = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::dealer);
+  boost::asio::post(g_thread(), [this]() {
+    socket_frontend->bind("tcp://*:23333");
+    socket_backend->bind("tcp://*:23334");
+    zmq_proxy(socket_frontend->handle(), socket_backend->handle(), nullptr);
+  });
   boost::asio::post(g_io_context(), [&]() { create_backend(); });
 }
 
 void server::create_backend() {
   socket_server = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::rep);
-  socket_server->bind("tcp://*:23333");
-  // socket_server->connect("tcp://127.0.0.1:23334");
+  // socket_server->bind("tcp://*:23333");
+  socket_server->connect("tcp://127.0.0.1:23334");
   zmq::message_t l_msg{};
   auto l_r = socket_server->recv(l_msg);
   std::cout << l_msg.to_string() << std::endl;

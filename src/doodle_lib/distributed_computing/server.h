@@ -18,7 +18,7 @@ class DOODLELIB_API server {
   std::shared_ptr<zmq::socket_t> socket_frontend;
   /// 工作组
   std::shared_ptr<zmq::socket_t> socket_server;
-
+  
  public:
   server();
 
