@@ -11,9 +11,9 @@
 #include <entt/entity/fwd.hpp>
 #include <memory>
 #include <string>
+#include <vector>
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
-
 
 namespace doodle::distributed_computing {
 
@@ -31,6 +31,8 @@ class task : public doodle::json_rpc::rpc_server {
   std::vector<std::tuple<database, doodle::work_task_info>> get_user_work_task_info(
       const entt::handle& in_tocken, const entt::handle& in_user
   );
+
+  void connect();
 };
 
 class DOODLELIB_API server {
@@ -39,7 +41,7 @@ class DOODLELIB_API server {
   /// 后端(路由)
   std::shared_ptr<zmq::socket_t> socket_frontend;
   /// 工作组
-  std::shared_ptr<zmq::socket_t> socket_server;
+  std::vector<task> socket_server_list;
 
  public:
   server();

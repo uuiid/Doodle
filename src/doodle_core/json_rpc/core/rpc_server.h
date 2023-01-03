@@ -96,7 +96,9 @@ class DOODLE_CORE_API rpc_server {
   };
 
  public:
-  virtual call_ operator()(const std::string& in_name) const;
+  virtual std::string operator()(const std::string& in_data) const;
+
+
 };
 class session;
 
