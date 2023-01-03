@@ -26,7 +26,6 @@ client::client() : socket(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_
   socket.connect("tcp://127.0.0.1:23333");
 }
 
-void client::call(const std::string& in) { socket.send(zmq::message_t{in.data(), in.size()}, zmq::send_flags::none); }
 std::string client::call_server(const std::string& in_string, bool is_notice) {
   socket.send(zmq::message_t{in_string}, zmq::send_flags::none);
   zmq::message_t l_msg;

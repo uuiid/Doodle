@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/file_sys.h>
-#include <doodle_core/json_rpc/json_rpc_client.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/platform/win/get_prot.h>

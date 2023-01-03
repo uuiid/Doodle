@@ -6,6 +6,7 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/json_rpc/core/server.h>
+#include <doodle_core/metadata/user.h>
 #include <doodle_core/platform/win/get_prot.h>
 
 #include <doodle_app/app/app_command.h>
@@ -22,6 +23,7 @@
 #include <boost/process.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <fmt/format.h>
 #include <iostream>
 #include <main_fixtures/lib_fixtures.h>
 
@@ -33,16 +35,38 @@ BOOST_AUTO_TEST_CASE(base) {
 
   distributed_computing::server l_s{};
   l_s.run();
-  distributed_computing::client l_c{};
-
+  boost::asio::post(g_thread(), []() {
+    distributed_computing::client l_c{};
+    l_c.list_users();
+  });
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  l_timer->expires_after(10s);
+  l_timer->expires_after(1ms);
   l_timer->async_wait([l_timer, this](auto) {
     std::cout << "stop run"
               << "\n";
     g_io_context().stop();
   });
-  l_c.call("test");
+  g_io_context().run();
+}
+
+BOOST_AUTO_TEST_CASE(list_users) {
+  doodle_lib l_ib{};
+
+  distributed_computing::server l_s{};
+  l_s.run();
+  boost::asio::post(g_thread(), []() {
+    distributed_computing::client l_c{};
+    for (auto&& l_f : l_c.list_users()) {
+      std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
+    }
+  });
+  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  l_timer->expires_after(1ms);
+  l_timer->async_wait([l_timer, this](auto) {
+    std::cout << "stop run"
+              << "\n";
+    g_io_context().stop();
+  });
   g_io_context().run();
 }
 

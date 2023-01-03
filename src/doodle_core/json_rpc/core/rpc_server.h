@@ -51,8 +51,6 @@ class DOODLE_CORE_API rpc_server {
   rpc_server();
   virtual ~rpc_server();
 
-  virtual void init_register() = 0;
-
   void register_fun(const std::string& in_name, const call_fun& in_call);
 
  protected:

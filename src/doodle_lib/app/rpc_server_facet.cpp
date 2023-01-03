@@ -3,13 +3,15 @@
 //
 
 #include "rpc_server_facet.h"
-#include <doodle_lib/json_rpc/json_rpc_server.h>
-#include <doodle_core/json_rpc/core/server.h>
+
 #include <doodle_app/app/program_options.h>
+
 #include <doodle_lib/long_task/image_to_move.h>
+
 #include <boost/program_options.hpp>
 
 #include <wil/result.h>
+
 namespace doodle::facet {
 
 class rpc_server_facet::impl {
@@ -25,7 +27,7 @@ class rpc_server_facet::impl {
   void redirect_io_to_console() {
     boost::ignore_unused(this);
     /// 释放控制台
-    CONSOLE_SCREEN_BUFFER_INFO conInfo;///控制台信息
+    CONSOLE_SCREEN_BUFFER_INFO conInfo;  /// 控制台信息
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &conInfo);
     //    if (conInfo.dwSize.Y < minLength)
     //      conInfo.dwSize.Y = minLength;
@@ -71,14 +73,11 @@ class rpc_server_facet::impl {
   }
 };
 
-rpc_server_facet::rpc_server_facet()
-    : p_i(std::make_unique<impl>()) {
+rpc_server_facet::rpc_server_facet() : p_i(std::make_unique<impl>()) {
   //  p_i->redirect_io_to_console();
   //  p_i->rpc_server_attr = std::make_shared<json_rpc_server>();
 }
-const std::string& rpc_server_facet::name() const noexcept {
-  return p_i->name;
-}
+const std::string& rpc_server_facet::name() const noexcept { return p_i->name; }
 void rpc_server_facet::operator()() {
   /// 开始创建视频
   if ((*p_i->program_options)["create_move"]) {
@@ -90,11 +89,7 @@ void rpc_server_facet::operator()() {
     auto l_out_path = l_json["out_path"].get<FSys::path>();
     auto l_move     = l_json["image_attr"].get<std::vector<doodle::movie::image_attr>>();
     process_message l_msg;
-    g_reg()->ctx().at<image_to_move>()->create_move(
-        l_out_path,
-        l_msg,
-        l_move
-    );
+    g_reg()->ctx().at<image_to_move>()->create_move(l_out_path, l_msg, l_move);
   }
 
   //  p_i->server_attr = std::make_shared<json_rpc::server>(g_io_context());

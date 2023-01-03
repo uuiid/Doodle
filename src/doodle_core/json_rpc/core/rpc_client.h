@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/configure/doodle_core_export.h"
 #include <doodle_core/json_rpc/core/parser_rpc.h>
 #include <doodle_core/json_rpc/core/rpc_request.h>
 
@@ -17,10 +18,7 @@ class io_context;
 
 namespace doodle::json_rpc {
 
-class rpc_client {
-  class impl;
-  std::unique_ptr<impl> ptr;
-
+class DOODLE_CORE_API rpc_client {
  public:
   using string_sig = boost::signals2::signal<void(const std::string&)>;
   rpc_client();
