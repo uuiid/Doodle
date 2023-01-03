@@ -5,13 +5,16 @@
 #pragma once
 
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
+
+#include <boost/rational.hpp>
 #include <boost/uuid/uuid.hpp>
+
 #include <chrono>
+#include <entt/entt.hpp>
 #include <filesystem>
 #include <nlohmann/json.hpp>
 #include <optional>
-#include <entt/entt.hpp>
-#include <boost/rational.hpp>
+
 // partial specialization (full specialization works too)
 namespace nlohmann {
 
@@ -23,9 +26,7 @@ struct [[maybe_unused]] adl_serializer<boost::rational<T>> {
     j["denominator"] = in_rational.denominator();
   }
   static void from_json(const json& j, rational& in_rational) {
-    in_rational = rational{
-        j.at("numerator").template get<T>(),
-        j.at("denominator").template get<T>()};
+    in_rational = rational{j.at("numerator").template get<T>(), j.at("denominator").template get<T>()};
   }
 };
 
@@ -66,9 +67,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
 template <class Clock, class Duration>
 struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>> {
   using time_point = std::chrono::time_point<Clock, Duration>;
-  static void to_json(json& j, const time_point& in_time) {
-    j["time_since_epoch"] = in_time.time_since_epoch();
-  }
+  static void to_json(json& j, const time_point& in_time) { j["time_since_epoch"] = in_time.time_since_epoch(); }
 
   static void from_json(const json& j, time_point& in_time) {
     Duration time_since_epoch;
@@ -99,9 +98,7 @@ struct [[maybe_unused]] adl_serializer<std::optional<T>> {
 };
 template <>
 struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
-  static void to_json(json& j, const boost::uuids::uuid& in_uuid) {
-    j["uuid"] = boost::uuids::to_string(in_uuid);
-  }
+  static void to_json(json& j, const boost::uuids::uuid& in_uuid) { j["uuid"] = boost::uuids::to_string(in_uuid); }
 
   static void from_json(const json& j, boost::uuids::uuid& in_uuid) {
     if (j["uuid"].is_string()) {
@@ -119,10 +116,7 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
   using index_t = std::size_t;
   static void to_json(json& j, const var_t& in_variant) {
     j["index"] = in_variant.index();
-    std::visit([&](const auto& in_item) {
-      j["data"] = in_item;
-    },
-               in_variant);
+    std::visit([&](const auto& in_item) { j["data"] = in_item; }, in_variant);
   }
 
   static void from_json(const json& j, var_t& in_variant) {
@@ -147,8 +141,11 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
     //          ? (void)j["data"].get_to(std::get<Index>(in_var))
     //          : void()),
     //     ...);
+
     (((in_index == Index)
-          ? (void)in_var.emplace<Index>(j["data"].get<std::decay_t<decltype(std::get<Index>(std::declval<var_t>()))>>())
+          ? (void)in_var.template emplace<std::decay_t<decltype(std::get<Index>(std::declval<var_t>()))>>(
+                j["data"].get<std::decay_t<decltype(std::get<Index>(std::declval<var_t>()))>>()
+            )
           : void()),
      ...);
   }

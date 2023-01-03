@@ -34,6 +34,8 @@ class nullptr_error;
 class serialization_error;
 class file_error;
 class user_ref;
+class user;
+class work_task_info;
 
 using namespace std::literals;
 using namespace date::literals;
@@ -81,8 +83,5 @@ class session_manager;
 
 namespace business {
 class work_clock;
-}
-namespace dingding {
-class user;
 }
 };  // namespace doodle

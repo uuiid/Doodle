@@ -109,6 +109,7 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
   friend void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
   static entt::handle find_by_uuid(const boost::uuids::uuid &in);
+  [[nodiscard]] entt::handle find_by_uuid() const;
 
   class DOODLE_CORE_API fun_save_ {
    public:

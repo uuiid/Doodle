@@ -5,7 +5,7 @@ target_sources(doodle_core
         rpc_reply.h
         rpc_server.h
         server.h
-        session_manager.h
+
         session.h
         rpc_request.h
 
@@ -16,6 +16,6 @@ target_sources(doodle_core
         rpc_server.cpp
         server.cpp
         session.cpp
-        session_manager.cpp
+
         rpc_request.cpp
         )
