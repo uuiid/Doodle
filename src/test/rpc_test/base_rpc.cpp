@@ -41,10 +41,10 @@ using namespace doodle;
 struct loop_rpc {
   doodle_lib l_ib{};
   distributed_computing::server l_s{};
+  loop_rpc() { l_s.run(); }
 };
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
-  l_s.run();
   auto l_w = boost::asio::make_work_guard(g_io_context());
   bool run{};
   boost::asio::post(g_thread(), [this, l_run = &run]() {
@@ -63,7 +63,6 @@ BOOST_AUTO_TEST_CASE(base) {
 }
 
 BOOST_AUTO_TEST_CASE(list_users) {
-  l_s.run();
   for (auto i = 0u; i < 10; ++i) {
     auto l_h = make_handle();
     l_h.emplace<user>().set_name(fmt::format("user{}", i));
@@ -87,7 +86,6 @@ BOOST_AUTO_TEST_CASE(list_users) {
 }
 
 BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
-  l_s.run();
   std::vector<entt::handle> users{};
 
   auto l_main = users.emplace_back(make_handle());
