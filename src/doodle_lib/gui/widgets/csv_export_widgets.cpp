@@ -30,8 +30,10 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <fmt/chrono.h>
+#include <imgui.h>
 
 namespace doodle::gui {
 class csv_line_gui {
@@ -335,9 +337,10 @@ class csv_table_gui {
 
 class csv_export_widgets::impl {
  public:
-  class time_cache : public gui_cache<std::int32_t> {
+  class time_cache {
    public:
-    time_cache() : gui_cache<std::int32_t>("月份"s, 0){};
+    time_cache(){};
+    gui_cache<std::array<std::int32_t, 2>> cache{"年,月", 0, 0};
     time_point_wrap time_data{};
   };
 
@@ -382,7 +385,8 @@ class csv_export_widgets::impl {
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
   user_list_cache combox_user_id{};
-  /// 过滤月份
+
+  /// 过滤年份,月份
   time_cache combox_month{};
   gui_cache_name_id filter{"过滤"};
 
@@ -414,7 +418,7 @@ void csv_export_widgets::init() {
 
   gen_user();
   auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-  p_i->combox_month()                     = l_m;
+  p_i->combox_month.cache()               = {l_y, l_m};
 }
 
 void csv_export_widgets::render() {
@@ -437,9 +441,11 @@ void csv_export_widgets::render() {
     ImGui::InputText(*p_i->shot_fmt_str.gui_name, &p_i->shot_fmt_str.data);
   };
   ImGui::PushItemWidth(100);
-  if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
+
+  if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
     auto &&[l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-    p_i->combox_month.time_data             = time_point_wrap{l_y, p_i->combox_month(), l_d, l_h, l_mim, l_s};
+    p_i->combox_month.time_data =
+        time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
   }
   ImGui::SameLine();
   dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
