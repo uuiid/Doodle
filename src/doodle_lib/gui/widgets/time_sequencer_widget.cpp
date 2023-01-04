@@ -42,8 +42,8 @@ class time_sequencer_widget::impl {
  public:
   class point_cache {
    public:
-    explicit point_cache(const entt::handle& in_h, time_point_wrap in_time)
-        : handle_(in_h), time_point_(std::move(in_time)), has_select(false){};
+    explicit point_cache(const entt::handle& in_h, const time_point_wrap& in_time)
+        : handle_(in_h), time_point_(in_time), has_select(false){};
     entt::handle handle_{};
     time_point_wrap time_point_{};
     bool has_select;
