@@ -77,14 +77,16 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
   void set_time(const time_local_point& in);
   void set_time(const time_point& in);
 
-  class impl;
-  std::unique_ptr<impl> p_i;
+  time_point sys_point{};
 
  public:
   time_point_wrap();
   virtual ~time_point_wrap();
-  explicit time_point_wrap(time_point in_utc_timePoint);
-  explicit time_point_wrap(time_local_point in_utc_timePoint);
+  template <class Clock, class Duration>
+  explicit time_point_wrap(const chrono::time_point<Clock, Duration>& in_time_point) {
+    set_time(chrono::round<time_point_wrap::time_point::duration>(in_time_point));
+  }
+
   explicit time_point_wrap(
       std::int32_t in_year, std::int32_t in_month, std::int32_t in_day, std::int32_t in_hours = 0,
       std::int32_t in_minutes = 0, std::int32_t in_seconds = 0
@@ -103,15 +105,6 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
    * @return 转换为天数和秒数
    */
   [[nodiscard("")]] compose_2_type compose_1() const;
-
-  /// @brief 复制构造
-  time_point_wrap(const time_point_wrap& in_other) noexcept;
-  /// @brief 移动构造
-  time_point_wrap(time_point_wrap&& in_other) noexcept;
-  /// @brief 赋值运算
-  time_point_wrap& operator=(const time_point_wrap& in_other) noexcept;
-  /// @brief 移动运算
-  time_point_wrap& operator=(time_point_wrap&& in_other) noexcept;
 
   /**
    * @brief 本地时间转换段周索引

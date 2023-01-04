@@ -58,8 +58,8 @@ doodle_lib::doodle_lib() : ptr(std::make_unique<impl>()) {
   ptr->reg->ctx().emplace<user::current_user>();
   ptr->reg->ctx().emplace<program_info>();
 
-  auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
   ptr->reg->ctx().emplace<status_info>();
+  auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
   k_sig.save.connect(2, []() {
     std::make_shared<database_n::sqlite_file>()->async_save(
         g_reg()->ctx().at<::doodle::database_info>().path_,
@@ -71,21 +71,21 @@ doodle_lib::doodle_lib() : ptr(std::make_unique<impl>()) {
 }
 
 FSys::path doodle_lib::create_time_database() {
-  auto k_local_path = core_set::get_set().get_cache_root("tzdata");
-  if (FSys::is_empty(k_local_path)) {
-    auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
-    for (const auto& i : k_path) {
-      FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
-      DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
+  // auto k_local_path = core_set::get_set().get_cache_root("tzdata");
+  // if (FSys::is_empty(k_local_path)) {
+  //   auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
+  //   for (const auto& i : k_path) {
+  //     FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
+  //     DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
 
-      DOODLE_CHICK(k_ofstream, doodle_error{"无法创建数据库 {}", k_local_path / i.filename()});
-      auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
-      k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
-    }
-  }
-  date::set_install(k_local_path.generic_string());
-  DOODLE_LOG_INFO("初始化时区数据库: {}", k_local_path.generic_string());
-  return k_local_path;
+  //     DOODLE_CHICK(k_ofstream, doodle_error{"无法创建数据库 {}", k_local_path / i.filename()});
+  //     auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
+  //     k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
+  //   }
+  // }
+  // date::set_install(k_local_path.generic_string());
+  // DOODLE_LOG_INFO("初始化时区数据库: {}", k_local_path.generic_string());
+  return {};
 }
 doodle_lib& doodle_lib::Get() { return *static_value::get().p_lib; }
 
