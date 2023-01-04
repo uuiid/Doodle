@@ -95,7 +95,13 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   l_main.emplace<user>().set_name(fmt::format("user_{}", "main"s));
   l_main.get<user>().power = power_enum::modify_other_users;
   l_main.emplace<database>();
-
+  for (auto j = 0u; j < 10; ++j) {
+    auto l_h2 = make_handle();
+    auto& l_w = l_h2.emplace<work_task_info>();
+    l_w.user_ref.user_attr(l_main);
+    l_w.task_name = fmt::format("work main_{} ", j);
+    l_h2.emplace<database>();
+  }
   for (auto i = 0u; i < 10; ++i) {
     auto l_h = users.emplace_back(make_handle());
 
@@ -117,6 +123,7 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
     for (auto&& l_f : l_users) {
       std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
       auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
+      BOOST_TEST(l_work_.size() == 10);
       for (auto&& l_w : l_work_) {
         std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
       }
