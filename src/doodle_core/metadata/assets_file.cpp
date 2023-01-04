@@ -100,11 +100,16 @@ FSys::path assets_file::get_path_normal() const {
 const FSys::path& assets_file::path_attr() const { return p_i->path; }
 void assets_file::path_attr(const FSys::path& in_path) { p_i->path = in_path; }
 void assets_file::name_attr(const std::string& in_name) const { p_i->p_name = in_name; }
+
 assets_file::assets_file(assets_file&&) noexcept            = default;
 assets_file& assets_file::operator=(assets_file&&) noexcept = default;
-assets_file::assets_file(const assets_file& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
+
+assets_file::assets_file(const assets_file& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {
+  user_ref = in.user_ref;
+}
 assets_file& assets_file::operator=(const assets_file& in) noexcept {
   *p_i = *in.p_i;
+  user_ref = in.user_ref;
   return *this;
 }
 const std::string& assets_file::organization_attr() const noexcept { return p_i->organization_p; }
