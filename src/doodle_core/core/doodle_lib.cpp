@@ -11,22 +11,16 @@
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
 
+#include "core/doodle_lib.h"
+
 #include <boost/locale.hpp>
 
 #include <core/status_info.h>
 #include <date/tz.h>
 #include <exception/exception.h>
 #include <logger/logger.h>
-namespace doodle {
 
-class static_value {
- public:
-  doodle_lib* p_lib;
-  static static_value& get() {
-    static static_value install{};
-    return install;
-  }
-};
+namespace doodle {
 
 class doodle_lib::impl {
  public:
@@ -38,8 +32,6 @@ class doodle_lib::impl {
 };
 
 doodle_lib::doodle_lib() : ptr(std::make_unique<impl>()) {
-  /// @brief 最先初始化的局部静态变量
-  static_value::get().p_lib = this;
   /// @brief 初始化其他
   ptr->p_set.reset(new core_set{});
   ptr->io_context_ = std::make_shared<boost::asio::io_context>();
@@ -70,24 +62,12 @@ doodle_lib::doodle_lib() : ptr(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::sqlite_file>());
 }
 
-FSys::path doodle_lib::create_time_database() {
-  // auto k_local_path = core_set::get_set().get_cache_root("tzdata");
-  // if (FSys::is_empty(k_local_path)) {
-  //   auto k_path = cmrc::DoodleLibResource::get_filesystem().iterate_directory("resource/tzdata");
-  //   for (const auto& i : k_path) {
-  //     FSys::ofstream k_ofstream{k_local_path / i.filename(), std::ios::out | std::ios::binary};
-  //     DOODLE_LOG_INFO("开始创建数据库 {}", k_local_path / i.filename());
-
-  //     DOODLE_CHICK(k_ofstream, doodle_error{"无法创建数据库 {}", k_local_path / i.filename()});
-  //     auto k_file = cmrc::DoodleLibResource::get_filesystem().open("resource/tzdata/" + i.filename());
-  //     k_ofstream.write(k_file.begin(), boost::numeric_cast<std::int64_t>(k_file.size()));
-  //   }
-  // }
-  // date::set_install(k_local_path.generic_string());
-  // DOODLE_LOG_INFO("初始化时区数据库: {}", k_local_path.generic_string());
-  return {};
+doodle_lib& doodle_lib::Get() {
+  static doodle_lib install{};
+  return install;
 }
-doodle_lib& doodle_lib::Get() { return *static_value::get().p_lib; }
+
+void doodle_lib::clear() { ptr.reset(); }
 
 registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 
@@ -96,10 +76,8 @@ boost::asio::io_context& doodle_lib::io_context_attr() const { return *ptr->io_c
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 core_set& doodle_lib::core_set_attr() const { return *ptr->p_set; }
 
-doodle_lib::~doodle_lib() {
-  /// @brief  清理变量
-  static_value::get().p_lib = nullptr;
-}
+doodle_lib::~doodle_lib() = default;
+
 boost::asio::thread_pool& doodle_lib::thread_attr() const { return ptr->thread_pool_attr; }
 
 registry_ptr& g_reg() { return doodle_lib::Get().reg_attr(); }

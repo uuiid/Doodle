@@ -1,6 +1,7 @@
 #include "lib_fixtures.h"
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+
 #include <spdlog/sinks/base_sink.h>
 
 namespace detail {
@@ -23,11 +24,8 @@ class boost_test_sink : public spdlog::sinks::base_sink<Mutex> {
 using boost_test_sink_mt = detail::boost_test_sink<std::mutex>;
 
 lib_fixtures::lib_fixtures() {
-  doodle_lib_attr.create_time_database();
   //  doodle::logger_ctrl::get_log().add_log_sink(
   //      std::make_shared<boost_test_sink_mt>()
   //  );
 }
-lib_fixtures::~lib_fixtures() {
-  doodle::logger_ctrl::get_log().refresh();
-}
+lib_fixtures::~lib_fixtures() { doodle::logger_ctrl::get_log().refresh(); }

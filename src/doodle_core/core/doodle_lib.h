@@ -12,8 +12,7 @@ class thread_pool;
 
 namespace doodle {
 
-class DOODLE_CORE_API doodle_lib : public details::no_copy,
-                                   boost::equality_comparable<doodle_lib> {
+class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comparable<doodle_lib> {
  private:
   class impl;
   std::unique_ptr<impl> ptr;
@@ -21,12 +20,18 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy,
 
   core_set& core_set_attr() const;
 
+  void clear();
+
+  struct guard {
+    
+    ~guard() { doodle_lib::Get().clear(); }
+  };
+
  public:
   doodle_lib();
   virtual ~doodle_lib();
 
   static doodle_lib& Get();
-  static FSys::path create_time_database();
 
   [[nodiscard]] registry_ptr& reg_attr() const;
   [[nodiscard]] boost::asio::io_context& io_context_attr() const;

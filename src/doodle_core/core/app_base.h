@@ -28,7 +28,6 @@ class DOODLE_CORE_API app_base {
  protected:
   static app_base* self;
 
-  doodle_lib_ptr p_lib;
   std::wstring p_title;
   std::map<std::string, app_facet_ptr> facet_list{};
   /**

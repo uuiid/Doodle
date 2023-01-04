@@ -2,17 +2,16 @@
 // Created by TD on 2022/9/23.
 //
 
+#include <doodle_core/doodle_core.h>
 
-#include <cstdlib>
+#include <boost/test/unit_test.hpp>
+
 #include <crtdbg.h>
-
-#include <iostream>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
-
 #include <main_fixtures/lib_fixtures.h>
-#include <boost/test/unit_test.hpp>
-#include <doodle_core/doodle_core.h>
+
 // #include <doodle_core/metadata/bvh/detail/row.h>
 
 // #include <boost/spirit/include/classic.hpp>
@@ -22,19 +21,20 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/support.hpp>
 // #include <boost/spirit/home/classic.hpp>
+#include <boost/phoenix.hpp>
+#include <boost/phoenix/core.hpp>
+#include <boost/phoenix/operator.hpp>
+#include <boost/phoenix/stl.hpp>
 #include <boost/spirit/home/karma.hpp>
 #include <boost/spirit/home/lex.hpp>
 #include <boost/spirit/home/qi.hpp>
 #include <boost/spirit/home/support.hpp>
 #include <boost/spirit/version.hpp>
-#include <boost/phoenix.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
-#include <boost/phoenix/stl.hpp>
 
 using namespace doodle;
 
 #include <doodle_core/doodle_core_fwd.h>
+
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/sequence.hpp>
@@ -48,20 +48,22 @@ using namespace doodle;
 #include <boost/spirit/include/support.hpp>
 #include <boost/spirit/repository/include/qi_kwd.hpp>
 // #include <boost/spirit/home/classic.hpp>
+#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+#include <boost/mpl/for_each.hpp>
+#include <boost/mpl/range_c.hpp>
+#include <boost/phoenix.hpp>
+#include <boost/phoenix/core.hpp>
+#include <boost/phoenix/operator.hpp>
+#include <boost/phoenix/stl.hpp>
 #include <boost/spirit/home/karma.hpp>
 #include <boost/spirit/home/lex.hpp>
 #include <boost/spirit/home/qi.hpp>
 #include <boost/spirit/home/support.hpp>
 #include <boost/spirit/version.hpp>
-#include <boost/phoenix.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
-#include <boost/phoenix/stl.hpp>
-#include <boost/mpl/range_c.hpp>
-#include <boost/mpl/for_each.hpp>
 #include <boost/variant/recursive_variant.hpp>
+
 #include <utility>
-#include <boost/fusion/adapted/struct/adapt_struct.hpp>
+
 // #include <boost/>
 
 class bvh_data {
@@ -91,13 +93,8 @@ struct node {
 struct bvh_tree {
   bvh_tree() = default;
 
-  explicit bvh_tree(
-      std::size_t in_frames,
-      rational_int in_frame_time,
-      node in_root
-  ) : frames(in_frames),
-      frame_time(in_frame_time),
-      root(std::move(in_root)) {}
+  explicit bvh_tree(std::size_t in_frames, rational_int in_frame_time, node in_root)
+      : frames(in_frames), frame_time(in_frame_time), root(std::move(in_root)) {}
 
   std::size_t frames;
   rational_int frame_time;
@@ -132,20 +129,14 @@ template <>
 struct formatter<doodle::bvh::detail::bvh_tree> : formatter<std::int64_t> {
   template <typename FormatContext>
   auto format(const doodle::bvh::detail::bvh_tree& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::int64_t>::format(
-        in_.frames,
-        ctx
-    );
+    return formatter<std::int64_t>::format(in_.frames, ctx);
   }
 };
 template <>
 struct formatter<doodle::bvh::detail::node> : formatter<std::string> {
   template <typename FormatContext>
   auto format(const doodle::bvh::detail::node& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string>::format(
-        in_.name,
-        ctx
-    );
+    return formatter<std::string>::format(in_.name, ctx);
   }
 };
 }  // namespace fmt
@@ -175,17 +166,12 @@ struct bvh_node_impl : qi::grammar<Iterator, node(), ascii::space_type> {
 
     join_name %= lexeme[+qi::alnum];
 
-    start = qi::string("HIERARCHY") >>
-            (qi::string("ROOT") | qi::string("JOINT") | qi::string("End")) >>
+    start = qi::string("HIERARCHY") >> (qi::string("ROOT") | qi::string("JOINT") | qi::string("End")) >>
             join_name[phoe::at_c<0>(qi::_val) = qi::_1] >>
 
-            qi::char_('{') >>
-            qi::string("OFFSET") >>
-            double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
-            double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
-            double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
-            qi::string("CHANNELS") >> int_ >>
-            *join_name[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)] >>
+            qi::char_('{') >> qi::string("OFFSET") >> double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
+            double_[phoe::at_c<2>(qi::_val) = qi::_1] >> double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
+            qi::string("CHANNELS") >> int_ >> *join_name[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)] >>
 
             qi::char_('}');
 
@@ -205,36 +191,23 @@ struct bvh_tree_impl : qi::grammar<Iterator, bvh_tree(), ascii::space_type> {
 
     name_str %= qi::lexeme[+qi::alnum];
 
-    end_node = qi::string("End") >>
-               name_str[phoe::at_c<0>(qi::_val) = qi::_1] >>
-               qi::char_('{') >>
-               qi::string("OFFSET") >>
-               qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
-               qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
-               qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
+    end_node = qi::string("End") >> name_str[phoe::at_c<0>(qi::_val) = qi::_1] >> qi::char_('{') >>
+               qi::string("OFFSET") >> qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
+               qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >> qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
                qi::char_('}');
     int n;
-    node_rule =
-        (qi::string("ROOT") | qi::string("JOINT")) >>
-        name_str[phoe::at_c<0>(qi::_val) = qi::_1] >>
+    node_rule = (qi::string("ROOT") | qi::string("JOINT")) >> name_str[phoe::at_c<0>(qi::_val) = qi::_1] >>
 
-        qi::char_('{') >>
-        qi::string("OFFSET") >>
-        qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
-        qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >>
-        qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
-        qi::string("CHANNELS") >> qi::int_[phoe::ref(n) = qi::_1] >>
-        qi::repeat(phoe::ref(n))[name_str[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)]] >>
-        *(node_rule | end_node)[phoe::push_back(phoe::at_c<5>(qi::_val), qi::_1)] >>
-        qi::char_('}');
+                qi::char_('{') >> qi::string("OFFSET") >> qi::double_[phoe::at_c<1>(qi::_val) = qi::_1] >>
+                qi::double_[phoe::at_c<2>(qi::_val) = qi::_1] >> qi::double_[phoe::at_c<3>(qi::_val) = qi::_1] >>
+                qi::string("CHANNELS") >> qi::int_[phoe::ref(n) = qi::_1] >>
+                qi::repeat(phoe::ref(n))[name_str[phoe::push_back(phoe::at_c<4>(qi::_val), qi::_1)]] >>
+                *(node_rule | end_node)[phoe::push_back(phoe::at_c<5>(qi::_val), qi::_1)] >> qi::char_('}');
 
-    start = qi::string("HIERARCHY") >>
-            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
+    start = qi::string("HIERARCHY") >> node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
             //            node_rule[phoe::at_c<2>(qi::_val) = qi::_1] >>
-            qi::string("MOTION") >>
-            qi::string("Frames:") >> qi::int_[phoe::at_c<0>(qi::_val) = qi::_1] >>
-            qi::string("Frame") >> qi::string("Time:") >>
-            qi::float_[phoe::at_c<1>(qi::_val) = rational_int{}] >>
+            qi::string("MOTION") >> qi::string("Frames:") >> qi::int_[phoe::at_c<0>(qi::_val) = qi::_1] >>
+            qi::string("Frame") >> qi::string("Time:") >> qi::float_[phoe::at_c<1>(qi::_val) = rational_int{}] >>
             *qi::float_;  // std::float_t(qi::_1 * 1000), 1000.0f
 
     BOOST_SPIRIT_DEBUG_NODE(start);
@@ -259,7 +232,7 @@ struct loop_fixtures {
   // std::shared_ptr<doodle_lib> l_lib{};
   void setup() {
     // l_lib = std::make_shared<doodle_lib>();
-    // doodle_lib::create_time_database();
+
     BOOST_TEST_MESSAGE("完成夹具设置");
   };
   void teardown(){
@@ -284,7 +257,9 @@ BOOST_AUTO_TEST_CASE(test_base_spirit) {
 
   {
     std::vector<std::double_t> l_num;
-    auto l_p = (double_[push_back(boost::phoenix::ref(l_num), _1)] >> *(',' >> double_[push_back(boost::phoenix::ref(l_num), _1)]));
+    auto l_p =
+        (double_[push_back(boost::phoenix::ref(l_num), _1)] >>
+         *(',' >> double_[push_back(boost::phoenix::ref(l_num), _1)]));
     boost::spirit::qi::phrase_parse(l_p_str.begin(), l_p_str.end(), l_p, space);
     BOOST_TEST((l_num == l_r));
   }
@@ -305,10 +280,7 @@ BOOST_AUTO_TEST_CASE(test_base_spirit) {
 }
 
 BOOST_AUTO_TEST_CASE(bvh_mpl) {
-  doodle::bvh::detail::bvh_tree l_w{
-      100ull,
-      doodle::bvh::detail::rational_int{60},
-      doodle::bvh::detail::node{}};
+  doodle::bvh::detail::bvh_tree l_w{100ull, doodle::bvh::detail::rational_int{60}, doodle::bvh::detail::node{}};
   auto l_str = boost::fusion::as_vector(l_w);
 
   BOOST_TEST_MESSAGE(boost::fusion::at_c<0>(l_str));

@@ -25,8 +25,11 @@ BOOST_FIXTURE_TEST_SUITE(fmt_print, loop_fixtures)
 BOOST_AUTO_TEST_CASE(date_) {
   using namespace date::literals;
   using namespace std::literals;
+  /// utc时间为 2022/05/07 3:46:55
   auto l_time_l = time_point_wrap{date::local_days{2022_y / 5 / 7_d} + 11h + 46min + 55s};
+  /// utc时间为 2022/05/07 11:46:55
   auto l_time_s = time_point_wrap{date::sys_days{2022_y / 5 / 7_d} + 11h + 46min + 55s};
+  /// utc时间为 2022/05/07 11:46:55
   auto l_time_3 = chrono::time_point<chrono::system_clock, chrono::seconds>{
       chrono::round<chrono::seconds>(l_time_l.get_local_time().time_since_epoch())};
   BOOST_TEST(

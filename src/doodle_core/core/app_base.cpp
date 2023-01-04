@@ -26,8 +26,7 @@ app_base* app_base::self = nullptr;
 app_base::app_base()
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
       ),
-      stop_(false),
-      p_lib(std::make_shared<doodle_lib>()) {
+      stop_(false) {
   self                                      = this;
   g_reg()->ctx().at<program_info>().handle_ = ::GetModuleHandleW(nullptr);
   boost::asio::post(g_io_context(), [this]() { this->init(); });
@@ -41,7 +40,6 @@ void app_base::init() {
 
   core_set_init k_init{};
 
-  p_lib->create_time_database();
   DOODLE_LOG_INFO("寻找用户配置文件目录");
   k_init.config_to_user();
   k_init.find_maya();
