@@ -101,22 +101,25 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
 
     l_h.emplace<user>().set_name(fmt::format("user{}", i));
     l_h.emplace<database>();
-    for (auto i = 0u; i < 10; ++i) {
+    for (auto j = 0u; j < 10; ++j) {
       auto l_h2 = make_handle();
-      l_h2.emplace<work_task_info>().user_ref.user_attr(l_h);
+      auto& l_w = l_h2.emplace<work_task_info>();
+      l_w.user_ref.user_attr(l_h);
+      l_w.task_name = fmt::format("work {}_{} ", i, j);
       l_h2.emplace<database>();
     }
   }
 
-  boost::asio::post(g_thread(), [this]() {
+  boost::asio::post(g_thread(), [this, l_main]() {
     distributed_computing::client l_c{};
     auto l_users = l_c.list_users();
-    BOOST_TEST(l_users.size() == 10);
+    BOOST_TEST(l_users.size() == 11);
     for (auto&& l_f : l_users) {
       std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
-      
-
-
+      auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
+      for (auto&& l_w : l_work_) {
+        std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
+      }
     }
     l_c.close();
     std::cout << "stop run"
