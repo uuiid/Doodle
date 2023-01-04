@@ -4,18 +4,21 @@
 
 #include "assets_file_widgets.h"
 
-#include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_core/metadata/metadata_cpp.h>
-#include <doodle_core/metadata/image_icon.h>
-#include <doodle_lib/core/image_loader.h>
-#include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_core/core/core_sig.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/status_info.h>
-#include <doodle_lib/long_task/image_load_task.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/metadata_cpp.h>
 
 #include <doodle_app/gui/base/ref_base.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_core/core/init_register.h>
+#include <doodle_lib/core/image_loader.h>
+#include <doodle_lib/gui/widgets/screenshot_widget.h>
+#include <doodle_lib/long_task/image_load_task.h>
+
+#include <memory>
+
 namespace doodle::gui {
 
 class assets_file_widgets::impl {
@@ -40,39 +43,30 @@ class assets_file_widgets::impl {
   };
   class base_data {
    public:
-    explicit base_data(const entt::handle& in_h)
-        : handle_(in_h),
-          select(std::string{}, false) {}
+    explicit base_data(const entt::handle& in_h) : handle_(in_h), select(std::string{}, false) {}
     explicit base_data(const entt::handle& in_h, const std::string& in_string)
-        : handle_(in_h),
-          select(in_string, false) {}
+        : handle_(in_h), select(in_string, false) {}
     virtual ~base_data() = default;
     entt::handle handle_;
     cache_select select;
   };
 
-  class icon_data : public base_data {
+  class icon_data : public base_data, public std::enable_shared_from_this<icon_data> {
    public:
     cache_image image;
     cache_name name;
 
-    explicit icon_data(const entt::handle& in_h)
-        : base_data(in_h),
-          image("image"s, nullptr),
-          name("null"s, "name"s) {
+    explicit icon_data(const entt::handle& in_h) : base_data(in_h), image("image"s, nullptr), name("null"s, "name"s) {
       this->init(in_h);
     };
 
     void init(const entt::handle& in_h) {
       if (handle_.any_of<assets_file, episodes, shot>()) {
         /// @brief 渲染名称
-        if (auto [l_ass, l_ep, l_shot] =
-                handle_.try_get<assets_file, episodes, shot>();
-            l_ass || l_ep || l_shot) {
+        if (auto [l_ass, l_ep, l_shot] = handle_.try_get<assets_file, episodes, shot>(); l_ass || l_ep || l_shot) {
           if (l_ass) {
             name.data = l_ass->name_attr();
-            if (l_ep || l_shot)
-              name.data.push_back('\n');
+            if (l_ep || l_shot) name.data.push_back('\n');
           }
 
           if (l_ep) {
@@ -85,8 +79,7 @@ class assets_file_widgets::impl {
         }
       } else {
         /// @brief 否则渲染id
-        if (handle_.all_of<database>())
-          name = fmt::to_string(handle_.get<database>().get_id());
+        if (handle_.all_of<database>()) name = fmt::to_string(handle_.get<database>().get_id());
       }
     }
 
@@ -113,9 +106,9 @@ class assets_file_widgets::impl {
         if (!k_icon.image && !handle_.any_of<image_icon::image_load_tag>()) {
           handle_.emplace_or_replace<image_icon::image_load_tag>();
           g_reg()->ctx().at<image_load_task>().async_read(
-              handle_, [handle_ = handle_, self = this, max_length]() {
-                if (!self)
-                  return;
+              handle_,
+              [handle_ = handle_, self = shared_from_this(), max_length]() {
+                if (!self) return;
                 auto&& k_icon       = handle_.get<image_icon>();
                 self->image         = k_icon.image;
                 self->image.size2d_ = k_icon.size2d_;
@@ -137,8 +130,7 @@ class assets_file_widgets::impl {
 
   class info_data : public base_data {
    public:
-    explicit info_data(const entt::handle& in_h)
-        : base_data(in_h, fmt::to_string(in_h.get<database>().get_id())) {
+    explicit info_data(const entt::handle& in_h) : base_data(in_h, fmt::to_string(in_h.get<database>().get_id())) {
       init(in_h);
     }
     template <typename T>
@@ -182,8 +174,7 @@ class assets_file_widgets::impl {
   std::string title_name_;
 };
 
-assets_file_widgets::assets_file_widgets()
-    : p_i(std::make_unique<impl>()) {
+assets_file_widgets::assets_file_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   g_reg()->ctx().emplace<image_load_task>();
   this->switch_rander();
@@ -200,19 +191,15 @@ void assets_file_widgets::switch_rander() {
 void assets_file_widgets::init() {
   g_reg()->ctx().emplace<assets_file_widgets&>(*this);
   auto& l_sig = g_reg()->ctx().at<core_sig>();
-  p_i->p_sc.emplace_back(l_sig.filter_handle.connect(
-      [this](const std::vector<entt::handle>& in) {
-        p_i->handle_list = in;
-        generate_lists(p_i->handle_list);
-      }
-  ));
-  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
-      [&](const FSys::path&) {
-        p_i->handle_list.clear();
-        p_i->lists.clear();
-        p_i->select_index = 0;
-      }
-  ));
+  p_i->p_sc.emplace_back(l_sig.filter_handle.connect([this](const std::vector<entt::handle>& in) {
+    p_i->handle_list = in;
+    generate_lists(p_i->handle_list);
+  }));
+  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect([&](const FSys::path&) {
+    p_i->handle_list.clear();
+    p_i->lists.clear();
+    p_i->select_index = 0;
+  }));
 
   //  p_i->observer_h.connect();
 }
@@ -221,12 +208,10 @@ void assets_file_widgets::render() {
   /// 渲染数据
 
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} &&
-      [&]() {
-        if (p_i->lists.empty())
-          return;
-        p_i->render_list();
-      };
+  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
+    if (p_i->lists.empty()) return;
+    p_i->render_list();
+  };
 
   if (ImGui::Button(ICON_FA_ATOM)) {
     p_i->render_icon = !p_i->render_icon;
@@ -243,41 +228,26 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
   if (dear::MenuItem("截图")) {
     auto l_image = std::make_shared<screenshot_widget>();
-    l_image->async_save_image(in_, [](const entt::handle& in) {
-      database::save(in);
-    });
+    l_image->async_save_image(in_, [](const entt::handle& in) { database::save(in); });
     make_handle().emplace<gui_windows>(l_image);
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {
     std::vector<entt::handle> l_list =
-        p_i->lists |
-        ranges::views::indirect |
-        ranges::views::filter([](const impl::base_data& in_data) {
-          return in_data.select && in_data.handle_;
-        }) |
-        ranges::views::transform([](const impl::base_data& in_data) -> entt::handle {
-          return in_data.handle_;
-        }) |
-        ranges::to_vector |
-        ranges::actions::push_back(in_) |
-        ranges::actions::unique |
-        ranges::to_vector;
-    ranges::for_each(l_list, [](const entt::handle& in_handle) {
-      database::delete_(in_handle);
-    });
+        p_i->lists | ranges::views::indirect |
+        ranges::views::filter([](const impl::base_data& in_data) { return in_data.select && in_data.handle_; }) |
+        ranges::views::transform([](const impl::base_data& in_data) -> entt::handle { return in_data.handle_; }) |
+        ranges::to_vector | ranges::actions::push_back(in_) | ranges::actions::unique | ranges::to_vector;
+    ranges::for_each(l_list, [](const entt::handle& in_handle) { database::delete_(in_handle); });
 
-    g_reg()->ctx().at<core_sig>().save_begin.connect(
-        [this, in_, l_list]() {
-          boost::asio::post(g_io_context(), [this, in_, l_list]() {
-            p_i->lists = p_i->lists |
-                         ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
-                           return ranges::contains(l_list, in_data->handle_);
-                         }) |
-                         ranges::to_vector;
-          });
-        }
-    );
+    g_reg()->ctx().at<core_sig>().save_begin.connect([this, in_, l_list]() {
+      boost::asio::post(g_io_context(), [this, in_, l_list]() {
+        p_i->lists = p_i->lists | ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
+                       return ranges::contains(l_list, in_data->handle_);
+                     }) |
+                     ranges::to_vector;
+      });
+    });
   }
 }
 void assets_file_widgets::set_select(std::size_t in_size) {
@@ -290,31 +260,20 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
-      l_handle_list = p_i->lists |
-                      ranges::views::indirect |
-                      ranges::views::filter([](impl::base_data& in) {
-                        return in.select;
-                      }) |
-                      ranges::views::transform([](impl::base_data& in) {
-                        return in.handle_;
-                      }) |
-                      ranges::to_vector;
+      l_handle_list = p_i->lists | ranges::views::indirect |
+                      ranges::views::filter([](impl::base_data& in) { return in.select; }) |
+                      ranges::views::transform([](impl::base_data& in) { return in.handle_; }) | ranges::to_vector;
     } else if (k_io.KeyShift) {
-      l_handle_list = p_i->lists |
-                      ranges::views::slice(
-                          std::min(p_i->select_index, in_size),
-                          std::max(p_i->select_index, in_size) + 1
-                      ) |
-                      ranges::views::indirect |
-                      ranges::views::transform([](impl::base_data& in) {
-                        in.select = true;
-                        return in.handle_;
-                      }) |
-                      ranges::to_vector;
+      l_handle_list =
+          p_i->lists |
+          ranges::views::slice(std::min(p_i->select_index, in_size), std::max(p_i->select_index, in_size) + 1) |
+          ranges::views::indirect | ranges::views::transform([](impl::base_data& in) {
+            in.select = true;
+            return in.handle_;
+          }) |
+          ranges::to_vector;
     } else {
-      ranges::for_each(p_i->lists | ranges::views::indirect, [](impl::base_data& in) {
-        in.select = false;
-      });
+      ranges::for_each(p_i->lists | ranges::views::indirect, [](impl::base_data& in) { in.select = false; });
       i.select = true;
       l_handle_list.push_back(i.handle_);
     }
@@ -334,25 +293,16 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
   auto&& l_item = *p_i->lists[in_size];
   std::vector<entt::handle> l_lists{};
   l_lists = ranges::to_vector(
-      this->p_i->lists |
-      ranges::views::indirect |
-      ranges::views::filter([](const impl::base_data& in) -> bool {
-        return in.select;
-      }) |
-      ranges::views::transform(
-          [](const impl::base_data& in) -> entt::handle {
-            return in.handle_;
-          }
-      )
+      this->p_i->lists | ranges::views::indirect |
+      ranges::views::filter([](const impl::base_data& in) -> bool { return in.select; }) |
+      ranges::views::transform([](const impl::base_data& in) -> entt::handle { return in.handle_; })
   );
-  if (ranges::find(l_lists, l_item.handle_) == l_lists.end())
-    l_lists.emplace_back(l_item.handle_);
+  if (ranges::find(l_lists, l_item.handle_) == l_lists.end()) l_lists.emplace_back(l_item.handle_);
   g_reg()->ctx().erase<std::vector<entt::handle>>();
   g_reg()->ctx().emplace<std::vector<entt::handle>>(l_lists);
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) {
     ImGui::SetDragDropPayload(
-        doodle_config::drop_handle_list.data(),
-        &(g_reg()->ctx().at<std::vector<entt::handle>>()),
+        doodle_config::drop_handle_list.data(), &(g_reg()->ctx().at<std::vector<entt::handle>>()),
         sizeof(g_reg()->ctx().at<std::vector<entt::handle>>())
     );
     ImGui::Text("拖拽实体");
@@ -362,7 +312,8 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
 void assets_file_widgets::render_by_icon() {
   const static auto l_size{5u};
   ImGui::Columns(l_size, "assets_file_widgets", false);
-  auto k_length = (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
+  auto k_length =
+      (ImGui::GetCurrentWindow()->InnerClipRect.GetWidth() / l_size) - ImGui::GetStyle().ItemInnerSpacing.x * 3;
   ImGuiListClipper clipper{};
   clipper.Begin((boost::numeric_cast<std::int32_t>(p_i->lists.size() / l_size)) + 1);
   while (clipper.Step()) {
@@ -376,17 +327,15 @@ void assets_file_widgets::render_by_icon() {
 
           ImGui::PushStyleColor(ImGuiCol_Header, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.8f));
 
-          if (ImGui::Selectable(*i.select.gui_name, i.select.data, ImGuiSelectableFlags_AllowDoubleClick, {k_length, k_length})) {
+          if (ImGui::Selectable(
+                  *i.select.gui_name, i.select.data, ImGuiSelectableFlags_AllowDoubleClick, {k_length, k_length}
+              )) {
             set_select(l_index);
           }
-          dear::PopupContextItem{} && [this, &i]() {
-            render_context_menu(i.handle_);
-          };
+          dear::PopupContextItem{} && [this, &i]() { render_context_menu(i.handle_); };
           ImGui::PopStyleColor();
 
-          dear::DragDropSource{} && [this, l_index]() {
-            this->open_drag(l_index);
-          };
+          dear::DragDropSource{} && [this, l_index]() { this->open_drag(l_index); };
           auto l_pos_select = ImGui::GetCursorPos();
           ImGui::SetCursorPos(l_pos_image);
           ImGui::Image(i.image.data.get(), {i.image.icon_size2d_.width - 2, i.image.icon_size2d_.height - 2});
@@ -398,22 +347,17 @@ void assets_file_widgets::render_by_icon() {
     }
   }
 }
-void assets_file_widgets::render_by_icon(std::size_t in_index) {
-}
+void assets_file_widgets::render_by_icon(std::size_t in_index) {}
 void assets_file_widgets::render_by_info() {
   const static auto l_size{8u};
 
   dear::Table{
       "list",
       l_size,
-      ImGuiTableFlags_::ImGuiTableFlags_ScrollY |
-          ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
-          ImGuiTableFlags_::ImGuiTableFlags_RowBg |
-          ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
-          ImGuiTableFlags_::ImGuiTableFlags_BordersV |
-          ImGuiTableFlags_::ImGuiTableFlags_Resizable |
-          ImGuiTableFlags_::ImGuiTableFlags_Reorderable |
-          ImGuiTableFlags_::ImGuiTableFlags_Hideable,
+      ImGuiTableFlags_::ImGuiTableFlags_ScrollY | ImGuiTableFlags_::ImGuiTableFlags_ScrollX |
+          ImGuiTableFlags_::ImGuiTableFlags_RowBg | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter |
+          ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+          ImGuiTableFlags_::ImGuiTableFlags_Reorderable | ImGuiTableFlags_::ImGuiTableFlags_Hideable,
   } && [&]() {
     ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
     ImGui::TableSetupColumn("id", ImGuiTableColumnFlags_NoHide);
@@ -434,15 +378,15 @@ void assets_file_widgets::render_by_info() {
         auto&& i = *std::dynamic_pointer_cast<impl::info_data>(p_i->lists[l_index]);
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        if (ImGui::Selectable(*i.select.gui_name, i.select.data, ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick)) {
+        if (ImGui::Selectable(
+                *i.select.gui_name, i.select.data,
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns |
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick
+            )) {
           set_select(l_index);
         }
-        dear::PopupContextItem{} && [this, &i]() {
-          render_context_menu(i.handle_);
-        };
-        dear::DragDropSource{} && [this, l_index]() {
-          this->open_drag(l_index);
-        };
+        dear::PopupContextItem{} && [this, &i]() { render_context_menu(i.handle_); };
+        dear::DragDropSource{} && [this, l_index]() { this->open_drag(l_index); };
 
         ImGui::TableNextColumn();
         dear::Text(i.ass_p);
@@ -462,28 +406,21 @@ void assets_file_widgets::render_by_info() {
     }
   };
 }
-void assets_file_widgets::render_by_info(std::size_t in_index) {
-}
+void assets_file_widgets::render_by_info(std::size_t in_index) {}
 void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_list) {
   if (p_i->render_icon)
-    p_i->lists =
-        in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
-          return std::make_shared<impl::icon_data>(in);
-        }) |
-        ranges::to_vector;
+    p_i->lists = in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+                   return std::make_shared<impl::icon_data>(in);
+                 }) |
+                 ranges::to_vector;
   else
-    p_i->lists =
-        in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
-          return std::make_shared<impl::info_data>(in);
-        }) |
-        ranges::to_vector;
+    p_i->lists = in_list | ranges::views::transform([](const entt::handle& in) -> impl::base_data_ptr {
+                   return std::make_shared<impl::info_data>(in);
+                 }) |
+                 ranges::to_vector;
 }
 
-const std::string& assets_file_widgets::title() const {
-  return p_i->title_name_;
-}
-assets_file_widgets::~assets_file_widgets() {
-  p_i->observer_h.disconnect();
-}
+const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
+assets_file_widgets::~assets_file_widgets() { p_i->observer_h.disconnect(); }
 
 }  // namespace doodle::gui

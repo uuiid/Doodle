@@ -8,14 +8,17 @@
 
 #include <boost/asio/basic_io_object.hpp>
 #include <boost/asio/io_context.hpp>
+
+#include <memory>
+
 namespace doodle {
 
 class DOODLELIB_API image_load_task {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-
-  void read_image(const entt::handle& in_handle);
+  using call_ptr = std::shared_ptr<std::function<void()>>;
+  void read_image(const entt::handle& in_handle, const call_ptr& in_call);
 
  public:
   explicit image_load_task();
@@ -32,9 +35,8 @@ class DOODLELIB_API image_load_task {
     return boost::asio::async_initiate<CompletionHandler, void()>(
         [this, in_handle](auto&& in_completion_handler) {
           auto l_f = std::make_shared<l_call>(std::forward<decltype(in_completion_handler)>(in_completion_handler));
-          boost::asio::post([this, l_f, in_handle]() {
-            this->read_image(in_handle);
-            boost::asio::post(g_io_context(), [l_f]() { (*l_f)(); });
+          boost::asio::post(g_io_context(), [this, l_f, in_handle]() {
+            this->read_image(in_handle, l_f);
           });
         },
         in_completion
