@@ -538,35 +538,34 @@ bool csv_export_widgets::get_work_time() {
   auto l_size  = p_i->user_handle.size();
   /// 显示一下进度条
   auto &l_p    = g_reg()->ctx().emplace<process_message>();
-  l_p.set_name("开始获取dingding数据");
+  l_p.set_name("开始计算数据");
   l_p.set_state(l_p.run);
 
   p_i->user_size = l_size;
   for (const auto &item : p_i->user_handle) {
-    if (!item.first.all_of<business::work_clock>())
-      p_i->attendance_ptr->async_get_work_clock(
-          item.first, l_begin, l_end,
-          [l_handle = item.first, l_size,
-           this](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
-            auto &l_p = g_reg()->ctx().emplace<process_message>();
-            l_p.message(fmt::format("完成用户 {} 时间获取", l_handle.get<user>().get_name()));
-            l_p.progress_step({1, l_size});
+    p_i->attendance_ptr->async_get_work_clock(
+        item.first, l_begin, l_end,
+        [l_handle = item.first, l_size,
+         this](const boost::system::error_code &in_code, const business::work_clock &in_clock) {
+          auto &l_p = g_reg()->ctx().emplace<process_message>();
+          l_p.message(fmt::format("完成用户 {} 时间获取", l_handle.get<user>().get_name()));
+          l_p.progress_step({1, l_size});
 
-            if (in_code) {
-              l_p.set_state(l_p.fail);
-              auto l_msg = std::make_shared<show_message>();
-              l_msg->set_message(fmt::format("{}", in_code.what()));
-              make_handle().emplace<gui_windows>() = l_msg;
-              return;
-            }
-            if ((--p_i->user_size) == 0) {
-              boost::asio::post(g_io_context(), [this]() { generate_table(); });
-            }
-
-            l_handle.get_or_emplace<business::work_clock>() = in_clock;
-            DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
+          if (in_code) {
+            l_p.set_state(l_p.fail);
+            auto l_msg = std::make_shared<show_message>();
+            l_msg->set_message(fmt::format("{}", in_code.what()));
+            make_handle().emplace<gui_windows>() = l_msg;
+            return;
           }
-      );
+          if ((--p_i->user_size) == 0) {
+            boost::asio::post(g_io_context(), [this]() { generate_table(); });
+          }
+
+          l_handle.get_or_emplace<business::work_clock>() = in_clock;
+          DOODLE_LOG_INFO("用户 {} 时间规则 {}", l_handle.get<user>().get_name(), in_clock.debug_print());
+        }
+    );
   }
 
   return true;
