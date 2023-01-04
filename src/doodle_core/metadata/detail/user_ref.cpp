@@ -2,7 +2,6 @@
 
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/user.h"
-#include "doodle_core_fwd.h"
 
 #include "core/app_base.h"
 #include "exception/exception.h"
