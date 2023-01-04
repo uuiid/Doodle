@@ -339,7 +339,7 @@ class csv_export_widgets::impl {
  public:
   class time_cache {
    public:
-    time_cache(){};
+    time_cache() = default;
     gui_cache<std::array<std::int32_t, 2>> cache{"年,月", 0, 0};
     time_point_wrap time_data{};
   };

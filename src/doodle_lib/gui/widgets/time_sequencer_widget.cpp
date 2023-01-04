@@ -67,9 +67,11 @@ class time_sequencer_widget::impl {
   };
 
  public:
-  class time_cache : public gui_cache<std::int32_t> {
+  class time_cache {
    public:
-    time_cache() : gui_cache<std::int32_t>("月份"s, 0){};
+    time_cache() = default;
+
+    gui_cache<std::array<std::int32_t, 2>> cache{"年,月", 0, 0};
     time_point_wrap time_data{};
   };
 
@@ -320,7 +322,7 @@ time_sequencer_widget::time_sequencer_widget() : p_i(std::make_unique<impl>()) {
   });
 
   auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-  p_i->combox_month()                     = l_m;
+  p_i->combox_month.cache()               = {l_y, l_m};
 }
 
 time_sequencer_widget::~time_sequencer_widget() = default;
@@ -331,9 +333,10 @@ void time_sequencer_widget::render() {
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
 
   ImGui::PushItemWidth(100);
-  if (ImGui::InputInt(*p_i->combox_month, &p_i->combox_month)) {
+  if (ImGui::InputInt2(*p_i->combox_month.cache, p_i->combox_month.cache().data())) {
     auto&& [l_y, l_m, l_d, l_h, l_mim, l_s] = p_i->combox_month.time_data.compose();
-    p_i->combox_month.time_data             = time_point_wrap{l_y, p_i->combox_month(), l_d, l_h, l_mim, l_s};
+    p_i->combox_month.time_data =
+        time_point_wrap{p_i->combox_month.cache()[0], p_i->combox_month.cache()[1], l_d, l_h, l_mim, l_s};
   }
   ImGui::SameLine();
   dear::Combo{*p_i->combox_user_id, p_i->combox_user_id().c_str()} && [this]() {
