@@ -18,12 +18,10 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   std::unique_ptr<impl> ptr;
   friend class core_set;
 
-  core_set& core_set_attr() const;
-
   void clear();
+  void init();
 
   struct guard {
-    
     ~guard() { doodle_lib::Get().clear(); }
   };
 

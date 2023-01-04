@@ -8,6 +8,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 
+#include "core/core_set.h"
+
 #ifdef _WIN32
 #include <ShlObj.h>
 #else
@@ -50,7 +52,10 @@ FSys::path win::get_font() {
   return k_path;
 }
 
-core_set &core_set::get_set() { return doodle_lib::Get().core_set_attr(); }
+core_set &core_set::get_set() {
+  static core_set install{};
+  return install;
+}
 
 bool core_set::has_maya() const noexcept { return !p_mayaPath.empty(); }
 

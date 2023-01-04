@@ -13,6 +13,7 @@
 #include <boost/asio.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
+#include "core/core_help_impl.h"
 #include <core/core_set.h>
 #include <core/status_info.h>
 #include <database_task/delete_data.h>
@@ -113,11 +114,12 @@ class sqlite_file::impl {
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
-sqlite_file::sqlite_file() : sqlite_file(g_reg()) {}
+sqlite_file::sqlite_file() : ptr(std::make_unique<impl>()) {}
 sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
 }
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
+  ptr->registry_attr   = g_reg();
   constexpr auto l_loc = BOOST_CURRENT_LOCATION;
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
@@ -127,6 +129,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   return {};
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
+  ptr->registry_attr = g_reg();
   std::vector<entt::entity> delete_list;
   std::vector<entt::entity> install_list;
   std::vector<entt::entity> update_list;

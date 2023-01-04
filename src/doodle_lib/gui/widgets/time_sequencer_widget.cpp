@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/metadata/assets_file.h"
+#include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/rules.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/metadata/comment.h>
@@ -459,8 +460,10 @@ void time_sequencer_widget::render() {
   if (ImGui::Button("平均时间")) p_i->average_time();
 
   if (p_i->rules_render.render())
-    if (p_i->combox_user_id.current_user)
+    if (p_i->combox_user_id.current_user) {
       p_i->combox_user_id.current_user.emplace_or_replace<doodle::business::rules>(p_i->rules_render.rules_attr());
+      if (p_i->combox_user_id.current_user.all_of<database>()) database::save(p_i->combox_user_id.current_user);
+    }
 }
 const std::string& time_sequencer_widget::title() const { return p_i->title_name_; }
 
