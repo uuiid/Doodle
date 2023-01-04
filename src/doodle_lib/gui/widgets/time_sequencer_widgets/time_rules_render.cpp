@@ -276,13 +276,19 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
       dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 4} && [&]() {
         dear::Text("开始时间"s);
         ImGui::SameLine();
-        modify_guard_ = ImGui::InputInt3(*begin_time.ymd.gui_name, begin_time.ymd.data.data());
+        if (ImGui::InputInt3(*begin_time.ymd.gui_name, begin_time.ymd.data.data())) {
+          begin_time.ymd.data[0] = std::clamp(begin_time.ymd.data[0], 2000, 2100);
+          modify_guard_.modifyed();
+        };
         ImGui::SameLine();
         modify_guard_ = ImGui::InputInt3(*begin_time.hms.gui_name, begin_time.hms.data.data());
 
         dear::Text("结束时间"s);
         ImGui::SameLine();
-        modify_guard_ = ImGui::InputInt3(*end_time.ymd.gui_name, end_time.ymd.data.data());
+        if (ImGui::InputInt3(*end_time.ymd.gui_name, end_time.ymd.data.data())) {
+          end_time.ymd.data[0] = std::clamp(end_time.ymd.data[0], 2000, 2100);
+          modify_guard_.modifyed();
+        };
         ImGui::SameLine();
         modify_guard_ = ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
 
