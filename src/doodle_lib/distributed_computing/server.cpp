@@ -19,6 +19,7 @@
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -47,7 +48,7 @@ void task::run_task() {
     self.lock()->is_stop = true;
     // if (socket_server) socket_server->close();
   });
-  // strand = boost::asio::make_strand(g_thread());
+
   connect();
 }
 

@@ -39,17 +39,16 @@
 
 using namespace doodle;
 struct loop_rpc {
-  doodle_lib l_ib{};
   distributed_computing::server l_s{};
   loop_rpc() { l_s.run(); }
 };
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
+
 BOOST_AUTO_TEST_CASE(base) {
-  auto l_w = boost::asio::make_work_guard(g_io_context());
   bool run{};
   boost::asio::post(g_thread(), [this, l_run = &run]() {
     distributed_computing::client l_c{};
-    // l_c.list_users();
+
     l_c.close();
     std::cout << "stop run"
               << "\n";
@@ -58,7 +57,26 @@ BOOST_AUTO_TEST_CASE(base) {
     *l_run = true;
   });
 
-  l_ib.io_context_attr().run();
+  g_io_context().run();
+  BOOST_TEST(run);
+}
+
+BOOST_AUTO_TEST_CASE(base_touch) {
+  bool run{};
+  boost::asio::post(g_thread(), [this, l_run = &run]() {
+    distributed_computing::client l_c{};
+
+    auto l_tset = l_c.touch("test");
+    BOOST_TEST(l_tset == "success test");
+    l_c.close();
+    std::cout << "stop run"
+              << "\n";
+    l_s.work_guard->reset();
+    g_io_context().stop();
+    *l_run = true;
+  });
+
+  g_io_context().run();
   BOOST_TEST(run);
 }
 
