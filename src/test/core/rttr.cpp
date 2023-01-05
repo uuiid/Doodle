@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/pin_yin/convert.h>
 
+#include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 
@@ -38,6 +39,7 @@ BOOST_AUTO_TEST_CASE(test_rttr_base) {
   if (l_as_var.is_type<std::shared_ptr<doodle::assets_file>>()) {
     auto l_ass = l_as_var.get_value<std::shared_ptr<doodle::assets_file>>();
     BOOST_TEST_MESSAGE("as std::shared_ptr");
+    BOOST_TEST(l_ass);
     l_ass->name_attr("test");
     BOOST_TEST_MESSAGE(l_ass->str());
   }

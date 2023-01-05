@@ -108,7 +108,7 @@ assets_file::assets_file(const assets_file& in) noexcept : p_i(std::make_unique<
   user_ref = in.user_ref;
 }
 assets_file& assets_file::operator=(const assets_file& in) noexcept {
-  *p_i = *in.p_i;
+  *p_i     = *in.p_i;
   user_ref = in.user_ref;
   return *this;
 }
@@ -117,4 +117,11 @@ void assets_file::organization_attr(const std::string& in_organization) noexcept
   p_i->organization_p = in_organization;
 }
 assets_file::~assets_file() = default;
+
 }  // namespace doodle
+
+RTTR_REGISTRATION {
+  using namespace rttr;
+  using namespace doodle;
+  registration::class_<doodle::assets_file>("doodle::assets_file").constructor()();
+}
