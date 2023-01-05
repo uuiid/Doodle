@@ -47,16 +47,15 @@ using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 
 logger_ctrl::logger_ctrl()
     : p_log_path(FSys::temp_directory_path() / "doodle" / "log"),
-      p_log_name(fmt::format("tmp_log_{}.txt", core_set::get_set().get_uuid())) {
+      p_log_name(fmt::format("{}.txt", core_set::get_set().get_uuid())) {
   core_set::get_set().log_ptr = this;
   init_temp_log();
 }
 void logger_ctrl::init_temp_log() {
-  init_log();
-
+  if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
   auto l_path = p_log_path / p_log_name;
+
   try {
-    using namespace std::chrono_literals;
     spdlog::init_thread_pool(8192, 1);
     auto l_file =
         std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
@@ -83,10 +82,7 @@ void logger_ctrl::init_temp_log() {
   SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
   SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
 }
-void logger_ctrl::init_log() {
-  p_log_path = FSys::temp_directory_path() / "doodle" / "log";
-  if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
-}
+
 logger_ctrl &logger_ctrl::get_log() { return *core_set::get_set().log_ptr; }
 
 logger_ctrl::~logger_ctrl() {
