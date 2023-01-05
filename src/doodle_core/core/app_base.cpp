@@ -29,7 +29,7 @@ app_base::app_base()
       stop_(false) {
   self                                      = this;
   g_reg()->ctx().at<program_info>().handle_ = ::GetModuleHandleW(nullptr);
-  boost::asio::post(g_io_context(), [this]() { this->init(); });
+  init();
 }
 
 app_base::app_base(const app_base::in_app_args& in_arg) : app_base() {
@@ -46,7 +46,7 @@ void app_base::init() {
   DOODLE_LOG_INFO("读取配置文件");
   k_init.read_file();
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
-  this->post_constructor();
+  boost::asio::post(g_io_context(), [this]() { this->post_constructor(); });
 }
 app_base::~app_base() = default;
 
