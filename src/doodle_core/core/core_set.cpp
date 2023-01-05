@@ -224,9 +224,8 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("user_")) j.at("user_").get_to(p.user_name);
   if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
-  if (j.contains("program_location_attr")) {
-    auto l_path = j.at("program_location_attr").get<FSys::path>();
-    if (l_path.filename() == "DoodleExe.exe") p.program_location_attr = l_path;
+  if (j.contains("program_location_attr") && p.program_location_attr.empty()) {
+    p.program_location_attr = j.at("program_location_attr").get<FSys::path>();
   }
 
   if (j.contains("user_phone_number")) j.at("user_phone_number").get_to(p.user_phone_number);

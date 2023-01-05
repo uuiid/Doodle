@@ -47,8 +47,6 @@ void app_base::init() {
   k_init.read_file();
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
   this->post_constructor();
-
-  boost::asio::post(g_io_context(), []() { init_register::instance().reg_class(); });
 }
 app_base::~app_base() = default;
 
