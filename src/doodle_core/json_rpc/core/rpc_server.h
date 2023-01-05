@@ -56,7 +56,7 @@ class DOODLE_CORE_API rpc_server {
 
   void register_fun(const std::string& in_name, const call_fun& in_call);
 
- protected:
+ public:
   /**
    * 模板注册方法
    * @tparam Fun_T 传入的函数模板
