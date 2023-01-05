@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/json_rpc/core/rpc_client.h"
+#include "doodle_core/metadata/work_task.h"
 
 #include "doodle_lib/configure/doodle_lib_export.h"
 
@@ -21,8 +23,12 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   client();
 
   std::vector<entt::handle> list_users();
+  entt::handle new_user(const entt::handle& in_user);
 
   std::vector<entt::handle> get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
+  // entt::handle add_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
+  // entt::handle set_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
+  // entt::handle delete_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
 
   void close();
 

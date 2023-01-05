@@ -51,6 +51,7 @@ std::vector<entt::handle> client::list_users() {
   };
   return l_r;
 }
+entt::handle client::new_user(const entt::handle& in_user) { return {}; }
 
 std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
   auto l_user = call_fun<std::vector<std::tuple<database, work_task_info>>>(
