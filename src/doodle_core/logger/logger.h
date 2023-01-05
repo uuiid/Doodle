@@ -26,8 +26,6 @@ class DOODLE_CORE_API logger_ctrl {
 
   void init_temp_log();
 
-  void init_log();
-
  public:
   logger_ctrl();
   virtual ~logger_ctrl();

@@ -1,35 +1,4 @@
 set(DOODLE_RE_FILES_LIST
-        resource/tzdata/africa
-        resource/tzdata/antarctica
-        resource/tzdata/asia
-        resource/tzdata/australasia
-        resource/tzdata/backward
-        resource/tzdata/backzone
-        resource/tzdata/calendars
-        resource/tzdata/checklinks.awk
-        resource/tzdata/checktab.awk
-        resource/tzdata/CONTRIBUTING
-        resource/tzdata/etcetera
-        resource/tzdata/europe
-        resource/tzdata/factory
-        resource/tzdata/iso3166.tab
-        resource/tzdata/leap-seconds.list
-        resource/tzdata/leapseconds
-        resource/tzdata/leapseconds.awk
-        resource/tzdata/LICENSE
-        resource/tzdata/Makefile
-        resource/tzdata/NEWS
-        resource/tzdata/northamerica
-        resource/tzdata/README
-        resource/tzdata/southamerica
-        resource/tzdata/theory.html
-        resource/tzdata/version
-        resource/tzdata/windowsZones.xml
-        resource/tzdata/ziguard.awk
-        resource/tzdata/zishrink.awk
-        resource/tzdata/zone.tab
-        resource/tzdata/zone1970.tab
-        resource/tzdata/zoneinfo2tdf.pl
         resource/maya_fun_tool.py
         resource/mayaIcon.png
         resource/Ue4CraeteLevel.py
