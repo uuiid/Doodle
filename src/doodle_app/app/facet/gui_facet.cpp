@@ -253,15 +253,6 @@ void gui_facet::post_constructor() {
     );
   }
 
-  g_reg()->ctx().at<core_sig>().init_end.connect([this]() {
-    auto l_op = g_reg()->ctx().at<program_options_ptr>();
-    /// 在这里我们加载项目
-    ::doodle::app_base::Get().load_project(
-        l_op && !l_op->p_project_path.empty() ? l_op->p_project_path : core_set::get_set().project_root[0]
-    );
-    boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
-  });
-
   DOODLE_CHICK(::IsWindowUnicode(p_hwnd), doodle_error{"错误的窗口"});
 
   static std::function<void()> s_set_title_fun{};
@@ -276,6 +267,12 @@ void gui_facet::post_constructor() {
   };
   g_reg()->ctx().at<core_sig>().project_end_open.connect(s_set_title_fun);
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
+  auto l_op = g_reg()->ctx().at<program_options_ptr>();
+  /// 在这里我们加载项目
+  ::doodle::app_base::Get().load_project(
+      l_op && !l_op->p_project_path.empty() ? l_op->p_project_path : core_set::get_set().project_root[0]
+  );
+  boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
 void gui_facet::close_windows() {
   boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {

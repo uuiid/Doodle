@@ -23,7 +23,6 @@ void init_register::reg_class() {
   DOODLE_LOG_INFO("结束开始反射注册");
   boost::asio::post(l_s, [l_s]() {
     for (auto&& mat : entt::resolve()) DOODLE_LOG_INFO(fmt::format("{}", mat.info().name()));
-    g_reg()->ctx().at<core_sig>().init_end();
   });
 }
 init_register& init_register::instance() noexcept {

@@ -4,19 +4,16 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <entt/entt.hpp>
+
 #include <boost/signals2.hpp>
+
+#include <entt/entt.hpp>
 
 namespace doodle {
 class project;
 
 class DOODLE_CORE_API core_sig {
  public:
-  /**
-   * @brief 软件初始化完成
-   */
-  boost::signals2::signal<void()> init_end;
-
   /**
    * @brief 开始打开项目时发出的信号
    */
