@@ -80,13 +80,13 @@ csv_line::csv_line(
 ) {
   in_user_handle.any_of<user>() ? void() : throw_error(error_enum::component_missing_error, "缺失用户组件"s);
   DOODLE_CHICK(in_handle.any_of<assets_file>(), doodle_error{"缺失文件组件"});
-  auto &k_ass       = in_handle.get<assets_file>();
+  auto &k_ass            = in_handle.get<assets_file>();
   /// \brief 工作时间计算
-  auto &work_clock  = in_user_handle.get<business::work_clock>();
-  auto project_root = g_reg()->ctx().at<project>().p_path;
+  const auto &work_clock = in_user_handle.get<business::work_clock>();
+  auto project_root      = g_reg()->ctx().at<project>().p_path;
   /// 寻找上一个用户
-  auto start_time   = in_handle.get<time_point_wrap>().current_month_start();
-  auto l_it         = ranges::find(in_up_time_handle_list, in_handle);
+  auto start_time        = in_handle.get<time_point_wrap>().current_month_start();
+  auto l_it              = ranges::find(in_up_time_handle_list, in_handle);
   if (l_it != in_up_time_handle_list.begin()) {
     start_time = (--l_it)->get<time_point_wrap>();
   }

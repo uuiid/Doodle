@@ -31,17 +31,20 @@ void attendance_rule::set_user(const entt::handle& in_handle) {
   if (!ptr->user_handle.any_of<rules>()) {
     ptr->user_handle.emplace<rules>(rules::get_default());
   }
+  ptr->time_clock = {};
 }
 
 void attendance_rule::set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
-  ptr->begin = in_begin;
-  ptr->end   = in_end;
+  ptr->begin      = in_begin;
+  ptr->end        = in_end;
+  ptr->time_clock = {};
 }
 
 const work_clock& attendance_rule::work_clock_attr() const { return ptr->time_clock; }
 void attendance_rule::gen_work_clock() {
+  ptr->time_clock = {};
   if (ptr->user_handle && ptr->user_handle.any_of<rules>()) {
-    auto& l_rule = ptr->user_handle.get<rules>();
+    const auto& l_rule = ptr->user_handle.get<rules>();
 
     for (auto l_b = ptr->begin; l_b <= ptr->end; l_b += chrono::days{1}) {
       /// \brief 加入工作日规定时间

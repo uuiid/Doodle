@@ -78,7 +78,7 @@ std::string work_clock::debug_print() const {
   //
   //  return fmt::format("{}", interval_map_time_);
 }
-std::optional<std::string> work_clock::get_time_info(const time_type& in_min, const time_type& in_max) {
+std::optional<std::string> work_clock::get_time_info(const time_type& in_min, const time_type& in_max) const {
   auto l_d = discrete_interval_time::closed(in_min, in_max);
   // auto l_item                          = interval_map_time_ & l_d;
 
