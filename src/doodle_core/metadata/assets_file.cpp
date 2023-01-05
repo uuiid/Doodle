@@ -118,10 +118,9 @@ void assets_file::organization_attr(const std::string& in_organization) noexcept
 }
 assets_file::~assets_file() = default;
 
-}  // namespace doodle
-
 RTTR_REGISTRATION {
   using namespace rttr;
   using namespace doodle;
   registration::class_<doodle::assets_file>("doodle::assets_file").constructor()();
 }
+}  // namespace doodle

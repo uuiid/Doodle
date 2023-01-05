@@ -35,7 +35,7 @@ class DOODLE_APP_API app_command_base : public app_base {
 };
 
 /**
- * @brief 这个类是有基本的gui
+ * @brief 
  * 
  */
 class DOODLE_APP_API doodle_main_app : public app_command_base {

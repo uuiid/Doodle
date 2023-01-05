@@ -2,6 +2,8 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
+#include "doodle_core/json_rpc/exception/json_rpc_error.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
 #include "doodle_core/metadata/work_task.h"
@@ -27,6 +29,66 @@
 #include <zmq.hpp>
 
 namespace doodle::distributed_computing {
+
+template <typename T>
+class list_fun {
+ public:
+  std::string get_name(){};
+
+  std::vector<std::tuple<database, T>> operator()() {
+    std::vector<std::tuple<database, T>> l_r{};
+    for (auto&& [e, d, u] : g_reg()->view<database, T>().each()) {
+      l_r.emplace_back(d, u);
+    }
+    return l_r;
+  };
+};
+
+template <typename T>
+class get_fun {
+ public:
+  std::string get_name(){};
+
+  std::tuple<database, T> operator()(const database& in) {
+    auto l_h = in.find_by_uuid();
+    if (l_h)
+      return std::make_tuple(in, l_h.get<T>());
+    else
+      throw_exception(json_rpc::invalid_handle_exception{});
+  };
+};
+
+template <typename T>
+class set_fun {
+ public:
+  std::string get_name(){};
+
+  void operator()(const database& in, const T& in_t) {
+    auto l_h = in.find_by_uuid();
+    if (l_h) {
+      l_h.emplace_or_replace<T>(in_t);
+      database::save(l_h);
+    } else
+      throw_exception(json_rpc::invalid_handle_exception{});
+  };
+};
+
+template <typename T>
+class delete_fun {
+ public:
+  std::string get_name(){};
+
+  void operator()(const database& in) {
+    auto l_h = in.find_by_uuid();
+    if (l_h) {
+      if (l_h.all_of<T>()) {
+        l_h.erase<T>();
+        database::save(l_h);
+      }
+    } else
+      throw_exception(json_rpc::invalid_handle_exception{});
+  };
+};
 
 task::task() : socket_server() {}
 
@@ -64,6 +126,7 @@ void task::connect() {
     boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
       auto l_call_r = (*self)(l_msg.to_string());
       l_msg.rebuild(l_call_r.data(), l_call_r.size());
+
       boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
         self->socket_server->send(l_msg, zmq::send_flags::none);
         if (!self->is_stop) connect();
