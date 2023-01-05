@@ -31,7 +31,7 @@ class doodle_lib::impl {
   logger_ctr_ptr p_log{};
   registry_ptr reg{};
 
-  static doodle_lib* self;
+  inline static doodle_lib* self;
 };
 
 doodle_lib::doodle_lib() : ptr() {
@@ -70,8 +70,6 @@ void doodle_lib::init() {
   core_set::get_set().lib_ptr = this;
   ptr->reg->ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::sqlite_file>());
 }
-
-void doodle_lib::clear() { ptr.reset(); }
 
 registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 

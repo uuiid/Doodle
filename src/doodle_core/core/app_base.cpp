@@ -50,7 +50,7 @@ void app_base::init() {
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
   boost::asio::post(g_io_context(), [this]() { this->post_constructor(); });
 }
-app_base::~app_base() { doodle_lib::Get().clear(); }
+app_base::~app_base() = default;
 
 std::atomic_bool& app_base::stop() { return stop_; }
 app_base& app_base::Get() { return *self; }
