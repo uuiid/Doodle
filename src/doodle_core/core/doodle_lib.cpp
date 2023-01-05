@@ -60,13 +60,6 @@ void doodle_lib::init() {
   ptr->reg->ctx().emplace<program_info>();
 
   ptr->reg->ctx().emplace<status_info>();
-  auto& k_sig = ptr->reg->ctx().emplace<core_sig>();
-  k_sig.save.connect(2, [this]() {
-    std::make_shared<database_n::sqlite_file>()->async_save(
-        ptr->reg->ctx().at<::doodle::database_info>().path_,
-        [this](auto) { DOODLE_LOG_INFO("保存项目 {}", ptr->reg->ctx().at<::doodle::database_info>().path_); }
-    );
-  });
   core_set::get_set().lib_ptr = this;
   ptr->reg->ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::sqlite_file>());
 }

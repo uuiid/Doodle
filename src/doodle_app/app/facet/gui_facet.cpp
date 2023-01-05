@@ -9,6 +9,7 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
+#include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/platform/win/drop_manager.h>
 
@@ -32,6 +33,7 @@
 #include <gui/main_status_bar.h>
 #include <implot.h>
 #include <implot_internal.h>
+
 // Helper functions
 #include <d3d11.h>
 #include <tchar.h>
@@ -267,6 +269,13 @@ void gui_facet::post_constructor() {
   };
   g_reg()->ctx().at<core_sig>().project_end_open.connect(s_set_title_fun);
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
+  auto& k_sig = g_reg()->ctx().emplace<core_sig>();
+  k_sig.save.connect(2, [this]() {
+    std::make_shared<database_n::sqlite_file>()->async_save(
+        g_reg()->ctx().at<::doodle::database_info>().path_,
+        [this](auto) { DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_); }
+    );
+  });
   auto l_op = g_reg()->ctx().at<program_options_ptr>();
   /// 在这里我们加载项目
   ::doodle::app_base::Get().load_project(
