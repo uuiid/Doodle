@@ -17,6 +17,7 @@
 #include <boost/locale.hpp>
 
 #include "core/app_base.h"
+#include <memory>
 #include <thread>
 
 namespace doodle {
@@ -26,7 +27,8 @@ app_base* app_base::self = nullptr;
 app_base::app_base()
     : p_title(boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
       ),
-      stop_(false) {
+      stop_(false),
+      lib_ptr(std::make_shared<doodle_lib>()) {
   self                                      = this;
   g_reg()->ctx().at<program_info>().handle_ = ::GetModuleHandleW(nullptr);
   init();

@@ -30,14 +30,16 @@ class doodle_lib::impl {
   boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
   logger_ctr_ptr p_log{};
   registry_ptr reg{};
+
+  static doodle_lib* self;
 };
 
-doodle_lib::doodle_lib() : ptr() { init(); }
-
-doodle_lib& doodle_lib::Get() {
-  static doodle_lib install{};
-  return install;
+doodle_lib::doodle_lib() : ptr() {
+  impl::self = this;
+  init();
 }
+
+doodle_lib& doodle_lib::Get() { return *impl::self; }
 void doodle_lib::init() {
   ptr              = std::move(std::make_unique<impl>());
   /// @brief 初始化其他
@@ -68,6 +70,7 @@ void doodle_lib::init() {
   core_set::get_set().lib_ptr = this;
   ptr->reg->ctx().emplace<database_n::file_translator_ptr>(std::make_shared<database_n::sqlite_file>());
 }
+
 void doodle_lib::clear() { ptr.reset(); }
 
 registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
@@ -75,7 +78,7 @@ registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 boost::asio::io_context& doodle_lib::io_context_attr() const { return *ptr->io_context_; }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
- 
+
 doodle_lib::~doodle_lib() = default;
 
 boost::asio::thread_pool& doodle_lib::thread_attr() const { return ptr->thread_pool_attr; }

@@ -5,6 +5,9 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+
+#include <memory>
+
 namespace boost::asio {
 class io_context;
 class thread_pool;
@@ -17,17 +20,11 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   class impl;
   std::unique_ptr<impl> ptr;
   friend class core_set;
-
-
-  struct guard {
-    ~guard() { doodle_lib::Get().clear(); }
-  };
+  void init();
 
  public:
   doodle_lib();
   virtual ~doodle_lib();
-  void clear();
-  void init();
 
   static doodle_lib& Get();
 
