@@ -10,8 +10,9 @@
 
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
-#include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/core/file_sys.h>
+#include <doodle_core/doodle_core_pch.h>
+
 #include <spdlog/spdlog.h>
 
 namespace doodle {
@@ -38,26 +39,16 @@ class DOODLE_CORE_API logger_ctrl {
   };
   static logger_ctrl& get_log();
 
-  /**
-   * @brief 这个是在运行app时重新调整日志， 这样可以正确的记录在app指定的位置上
-   * @param in_name log的文件名称， 不要使用路径， 路径使用 core_set::set_root 修改
-   * @return 是否成功
-   */
-  bool set_log_name(const std::string& in_name);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr);
 
   void refresh();
 };
 
 }  // namespace doodle
-#define DOODLE_LOG_DEBUG(...) \
-  SPDLOG_DEBUG(__VA_ARGS__)
+#define DOODLE_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
 
-#define DOODLE_LOG_INFO(...) \
-  SPDLOG_INFO(__VA_ARGS__)
+#define DOODLE_LOG_INFO(...) SPDLOG_INFO(__VA_ARGS__)
 
-#define DOODLE_LOG_WARN(...) \
-  SPDLOG_WARN(__VA_ARGS__)
+#define DOODLE_LOG_WARN(...) SPDLOG_WARN(__VA_ARGS__)
 
-#define DOODLE_LOG_ERROR(...) \
-  SPDLOG_ERROR(__VA_ARGS__)
+#define DOODLE_LOG_ERROR(...) SPDLOG_ERROR(__VA_ARGS__)

@@ -21,11 +21,7 @@ class boost_test_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 }  // namespace detail
 
-using boost_test_sink_mt = detail::boost_test_sink<std::mutex>;
+using boost_test_sink_mt     = detail::boost_test_sink<std::mutex>;
 
-lib_fixtures::lib_fixtures() {
-  //  doodle::logger_ctrl::get_log().add_log_sink(
-  //      std::make_shared<boost_test_sink_mt>()
-  //  );
-}
+lib_fixtures::lib_fixtures() = default;
 lib_fixtures::~lib_fixtures() { doodle::logger_ctrl::get_log().refresh(); }

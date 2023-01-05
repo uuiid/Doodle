@@ -6,6 +6,7 @@
 
 #include <Windows.h>
 #include <date/date.h>
+#include <fmt/core.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
@@ -46,7 +47,7 @@ using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 
 logger_ctrl::logger_ctrl()
     : p_log_path(FSys::temp_directory_path() / "doodle" / "log"),
-      p_log_name("tmp_logfile" + date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()) + ".txt") {
+      p_log_name(fmt::format("tmp_log_{}.txt", core_set::get_set().get_uuid())) {
   core_set::get_set().log_ptr = this;
   init_temp_log();
 }
@@ -87,24 +88,14 @@ void logger_ctrl::init_log() {
   if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
 }
 logger_ctrl &logger_ctrl::get_log() { return *core_set::get_set().log_ptr; }
-bool logger_ctrl::set_log_name(const std::string &in_name) {
-  init_log();
-  p_log_name  = in_name;
-
-  auto l_log  = spdlog::get("doodle_lib");
-  auto &l_v   = l_log->sinks();
-  auto l_path = p_log_path / p_log_name;
-  /// 去除掉临时的的文件记录器
-  l_v[0]      = std::make_shared<spdlog::sinks::daily_file_sink_mt>(l_path.generic_string(), 0u, 0u);
-  return true;
-}
 
 logger_ctrl::~logger_ctrl() {
   refresh();
-  spdlog::shutdown();
   spdlog::drop_all();
+  spdlog::shutdown();
 }
 bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr) {
+  refresh();
   spdlog::get("doodle_lib")->sinks().push_back(in_ptr);
   return true;
 }
