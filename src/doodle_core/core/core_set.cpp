@@ -96,8 +96,8 @@ boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }
 
 FSys::path core_set::get_doc() const { return p_doc; }
 
-void core_set::set_root(const FSys::path &in_path) {
-  p_root      = in_path;
+void core_set::set_root(const FSys::path &in_root) {
+  p_root      = in_root;
   _root_cache = p_root / "cache";
   _root_data  = p_root / "data";
 }
