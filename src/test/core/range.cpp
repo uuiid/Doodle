@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(ranges_ints) {
   auto l_view = ranges::views::ints(0, 10);
 
   BOOST_TEST(l_view.size() == 10);
-  DOODLE_LOG_INFO(l_view);
+  BOOST_TEST_MESSAGE(l_view);
 }
 
 BOOST_AUTO_TEST_CASE(ranges_ints_phoenix) {
@@ -35,5 +35,5 @@ BOOST_AUTO_TEST_CASE(ranges_ints_phoenix) {
   // boost::phoenix::placeholders::
 
   BOOST_TEST(l_view.size() == 10);
-  DOODLE_LOG_INFO(l_view);
+  BOOST_TEST_MESSAGE(l_view);
 }

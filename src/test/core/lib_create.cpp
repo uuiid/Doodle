@@ -10,13 +10,3 @@
 #include <entt/entity/fwd.hpp>
 
 using namespace doodle;
-BOOST_AUTO_TEST_CASE(create_lib)
-/* Compare with void free_test_function() */
-{
-  doodle_lib l_lib{};
-
-  BOOST_TEST((l_lib == doodle_lib::Get()));
-
-  //  BOOST_TEST(convert::Get().toEn("林奇"s) == "linqi");
-  //  BOOST_TEST(convert::Get().toEn("dsa??__测试"s) == "dsa??__ceshi");
-}

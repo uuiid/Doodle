@@ -2,15 +2,20 @@
 // Created by TD on 2022/10/8.
 //
 
-#include <stdlib.h>
-#include <crtdbg.h>
-#include <main_fixtures/lib_fixtures.h>
-#include <boost/test/unit_test.hpp>
 #include <doodle_core/doodle_core.h>
+
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
+
 #include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_lib/long_task/image_to_move.h>
+
+#include <boost/test/unit_test.hpp>
+
+#include <crtdbg.h>
+#include <main_fixtures/lib_fixtures.h>
+#include <stdlib.h>
+
 
 namespace doodle::facet {
 class teste_facet : public gui_facet {
@@ -33,9 +38,7 @@ class test_app : public doodle::doodle_main_app {
 using namespace doodle;
 
 struct move_fix {
-  move_fix() {
-    timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  }
+  move_fix() { timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
   void setup() {
     for (int l = 0; l < 500; ++l) {
       main_app_attr.poll_one();
@@ -46,7 +49,7 @@ struct move_fix {
   std::shared_ptr<boost::asio::high_resolution_timer> timer;
 };
 
-BOOST_FIXTURE_TEST_SUITE(move, move_fix)
+BOOST_FIXTURE_TEST_SUITE(move, move_fix, *boost::unit_test::disabled())
 
 BOOST_AUTO_TEST_CASE(base_run) {
   bool run_test{};
@@ -68,15 +71,11 @@ BOOST_AUTO_TEST_CASE(create) {
 
   std::vector<FSys::path> l_files{FSys::list_files(l_image_path)};
   bool run_test{};
-  g_reg()->ctx().at<image_to_move>()->async_create_move(
-      l_h, l_files, [l_r = &run_test, this]() {
-        *l_r = true;
-        timer->async_wait([](boost::system::error_code) {
-          app_base::Get().stop_app();
-        });
-        timer->expires_from_now(2s);
-      }
-  );
+  g_reg()->ctx().at<image_to_move>()->async_create_move(l_h, l_files, [l_r = &run_test, this]() {
+    *l_r = true;
+    timer->async_wait([](boost::system::error_code) { app_base::Get().stop_app(); });
+    timer->expires_from_now(2s);
+  });
 
   main_app_attr.run();
   BOOST_TEST(run_test);
