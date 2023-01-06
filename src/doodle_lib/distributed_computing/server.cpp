@@ -16,12 +16,16 @@
 #include <boost/core/ignore_unused.hpp>
 #include <boost/system/system_error.hpp>
 
+#include "distributed_computing/server.h"
 #include <azmq/message.hpp>
 #include <azmq/socket.hpp>
 #include <cstddef>
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <rttr/type.h>
 #include <string>
 #include <tuple>
@@ -37,7 +41,7 @@ class list_fun {
  public:
   std::string get_name() {
     std::string l_type = rttr::type::get<T>().get_name().to_string();
-    l_type             = l_type.substr(l_type.find_first_of("::"));
+    l_type             = l_type.substr(l_type.find_first_of("::") + 2);
     boost::replace_all(l_type, "::", ".");
     return fmt::format("list.{}", l_type);
   };
@@ -56,7 +60,7 @@ class get_fun {
  public:
   std::string get_name() {
     std::string l_type = rttr::type::get<T>().get_name().to_string();
-    l_type             = l_type.substr(l_type.find_first_of("::"));
+    l_type             = l_type.substr(l_type.find_first_of("::") + 2);
     boost::replace_all(l_type, "::", ".");
     return fmt::format("get.{}", l_type);
   };
@@ -75,7 +79,7 @@ class set_fun {
  public:
   std::string get_name() {
     std::string l_type = rttr::type::get<T>().get_name().to_string();
-    l_type             = l_type.substr(l_type.find_first_of("::"));
+    l_type             = l_type.substr(l_type.find_first_of("::") + 2);
     boost::replace_all(l_type, "::", ".");
     return fmt::format("set.{}", l_type);
   };
@@ -95,7 +99,7 @@ class delete_fun {
  public:
   std::string get_name() {
     std::string l_type = rttr::type::get<T>().get_name().to_string();
-    l_type             = l_type.substr(l_type.find_first_of("::"));
+    l_type             = l_type.substr(l_type.find_first_of("::") + 2);
     boost::replace_all(l_type, "::", ".");
     return fmt::format("delete.{}", l_type);
   };
@@ -145,6 +149,14 @@ void task::run_task() {
   register_fun_t("rpc.close"s, [this, self = weak_from_this()]() {
     self.lock()->is_stop = true;
     // if (socket_server) socket_server->close();
+  });
+  register_fun_t("rpc.list_fun"s, [this, self = weak_from_this()]() -> std::vector<std::string> {
+    auto l_list = fun_list_ |
+                  ranges::views::transform([](const std::pair<std::string, task::call_fun>& in) -> std::string {
+                    return in.first;
+                  }) |
+                  ranges::to_vector;
+    return l_list;
   });
 
   connect();

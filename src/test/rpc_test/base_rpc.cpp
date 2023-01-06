@@ -28,6 +28,7 @@
 #include <boost/process.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/test/unit_test_log.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
 #include <entt/entity/fwd.hpp>
@@ -62,13 +63,15 @@ BOOST_AUTO_TEST_CASE(base) {
   BOOST_TEST(run);
 }
 
-BOOST_AUTO_TEST_CASE(base_touch) {
+BOOST_AUTO_TEST_CASE(list_fun1) {
   bool run{};
   boost::asio::post(g_thread(), [this, l_run = &run]() {
     distributed_computing::client l_c{};
 
-    // auto l_tset = l_c.touch("test");
-    // BOOST_TEST(l_tset == "success test");
+    auto l_tset = l_c.list_fun();
+    for (auto&& i : l_tset) {
+      BOOST_TEST_MESSAGE(i);
+    }
     l_c.close();
     std::cout << "stop run"
               << "\n";

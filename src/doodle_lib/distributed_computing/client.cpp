@@ -35,7 +35,7 @@ std::string client::call_server(const std::string& in_string, bool is_notice) {
 }
 
 std::vector<entt::handle> client::list_users() {
-  auto l_user = call_fun<std::vector<std::tuple<database, user>>>("list_users"s);
+  auto l_user = call_fun<std::vector<std::tuple<database, user>>>("list.user"s);
 
   std::vector<entt::handle> l_r{};
   for (auto&& [data, l_u] : l_user) {
@@ -51,6 +51,9 @@ std::vector<entt::handle> client::list_users() {
   };
   return l_r;
 }
+
+std::vector<std::string> client::list_fun() { return call_fun<std::vector<std::string>>("rpc.list_fun"s); }
+
 entt::handle client::new_user(const entt::handle& in_user) { return {}; }
 
 std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {

@@ -24,6 +24,7 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
 
   std::vector<entt::handle> list_users();
   entt::handle new_user(const entt::handle& in_user);
+  std::vector<std::string> list_fun();
 
   std::vector<entt::handle> get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
   // entt::handle add_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
