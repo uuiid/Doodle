@@ -8,6 +8,7 @@
 #include "doodle_core/metadata/user.h"
 #include "doodle_core/metadata/work_task.h"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/post.hpp>
@@ -21,6 +22,7 @@
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
+#include <rttr/type.h>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -33,9 +35,14 @@ namespace doodle::distributed_computing {
 template <typename T>
 class list_fun {
  public:
-  std::string get_name(){};
+  std::string get_name() {
+    std::string l_type = rttr::type::get<T>().get_name().to_string();
+    l_type             = l_type.substr(l_type.find_first_of("::"));
+    boost::replace_all(l_type, "::", ".");
+    return fmt::format("list.{}", l_type);
+  };
 
-  std::vector<std::tuple<database, T>> operator()() {
+  std::vector<std::tuple<database, T>> operator()() const {
     std::vector<std::tuple<database, T>> l_r{};
     for (auto&& [e, d, u] : g_reg()->view<database, T>().each()) {
       l_r.emplace_back(d, u);
@@ -47,9 +54,14 @@ class list_fun {
 template <typename T>
 class get_fun {
  public:
-  std::string get_name(){};
+  std::string get_name() {
+    std::string l_type = rttr::type::get<T>().get_name().to_string();
+    l_type             = l_type.substr(l_type.find_first_of("::"));
+    boost::replace_all(l_type, "::", ".");
+    return fmt::format("get.{}", l_type);
+  };
 
-  std::tuple<database, T> operator()(const database& in) {
+  std::tuple<database, T> operator()(const database& in) const {
     auto l_h = in.find_by_uuid();
     if (l_h)
       return std::make_tuple(in, l_h.get<T>());
@@ -61,9 +73,14 @@ class get_fun {
 template <typename T>
 class set_fun {
  public:
-  std::string get_name(){};
+  std::string get_name() {
+    std::string l_type = rttr::type::get<T>().get_name().to_string();
+    l_type             = l_type.substr(l_type.find_first_of("::"));
+    boost::replace_all(l_type, "::", ".");
+    return fmt::format("set.{}", l_type);
+  };
 
-  void operator()(const database& in, const T& in_t) {
+  void operator()(const database& in, const T& in_t) const {
     auto l_h = in.find_by_uuid();
     if (l_h) {
       l_h.emplace_or_replace<T>(in_t);
@@ -76,9 +93,14 @@ class set_fun {
 template <typename T>
 class delete_fun {
  public:
-  std::string get_name(){};
+  std::string get_name() {
+    std::string l_type = rttr::type::get<T>().get_name().to_string();
+    l_type             = l_type.substr(l_type.find_first_of("::"));
+    boost::replace_all(l_type, "::", ".");
+    return fmt::format("delete.{}", l_type);
+  };
 
-  void operator()(const database& in) {
+  void operator()(const database& in) const {
     auto l_h = in.find_by_uuid();
     if (l_h) {
       if (l_h.all_of<T>()) {
@@ -91,11 +113,24 @@ class delete_fun {
 };
 
 task::task() : socket_server() {}
-
+template <typename T>
+void task::register_fun_t2() {
+  list_fun<T> l_t{};
+  register_fun_t(l_t.get_name(), l_t);
+  set_fun<T> l_set_t{};
+  register_fun_t(l_set_t.get_name(), l_set_t);
+  get_fun<T> l_get_t{};
+  register_fun_t(l_get_t.get_name(), l_get_t);
+  delete_fun<T> l_delte_t{};
+  register_fun_t(l_delte_t.get_name(), l_delte_t);
+}
 void task::run_task() {
   socket_server = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::rep);
   // socket_server->bind("tcp://*:23333");
   socket_server->connect("tcp://127.0.0.1:23334");
+
+  register_fun_t2<user>();
+  register_fun_t2<work_task_info>();
 
   register_fun_t("list_users"s, [this]() -> std::vector<std::tuple<database, user>> { return this->list_users(); });
   register_fun_t(
@@ -106,6 +141,7 @@ void task::run_task() {
         return this->get_user_work_task_info(in_tocken.find_by_uuid(), in_user.find_by_uuid());
       }
   );
+
   register_fun_t("rpc.close"s, [this, self = weak_from_this()]() {
     self.lock()->is_stop = true;
     // if (socket_server) socket_server->close();

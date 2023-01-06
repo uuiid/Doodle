@@ -34,6 +34,10 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
 
   void run_task();
 
+ private:
+  template <typename T>
+  void register_fun_t2();
+
  protected:
   std::vector<std::tuple<database, doodle::user>> list_users();
   std::vector<std::tuple<database, doodle::work_task_info>> get_user_work_task_info(
