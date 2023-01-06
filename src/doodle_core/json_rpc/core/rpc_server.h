@@ -85,7 +85,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> == 0 &&
                         std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     (in_fun)();
   }
 
@@ -93,7 +95,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> == 0 &&
                         !std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     out_json = (in_fun)();
   }
 
@@ -101,7 +105,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> == 1 &&
                         std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     using Fun_Parameter_Decay = decltype(decay_types(std::declval<boost::callable_traits::args_t<Fun>>()));
     (in_fun)(in_json->template get<std::decay_t<decltype(std::get<0>(std::declval<Fun_Parameter_Decay>()))>>());
   }
@@ -110,7 +116,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> == 1 &&
                         !std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     using Fun_Parameter_Decay = decltype(decay_types(std::declval<boost::callable_traits::args_t<Fun>>()));
     out_json =
         (in_fun)(in_json->template get<std::decay_t<decltype(std::get<0>(std::declval<Fun_Parameter_Decay>()))>>());
@@ -120,7 +128,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         (std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> > 1) &&
                         std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     using Fun_Parameter_Decay = decltype(decay_types(std::declval<boost::callable_traits::args_t<Fun>>()));
     std::apply((in_fun), in_json->template get<Fun_Parameter_Decay>());
   }
@@ -129,7 +139,9 @@ class DOODLE_CORE_API rpc_server {
       typename Fun, std::enable_if_t<
                         (std::tuple_size_v<typename boost::callable_traits::args_t<Fun>> > 1) &&
                         !std::is_same_v<typename boost::callable_traits::return_type_t<Fun>, void>>* = nullptr>
-  static void impl_call_fun(Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json) {
+  inline static void impl_call_fun(
+      Fun& in_fun, const std::optional<nlohmann::json>& in_json, nlohmann::json& out_json
+  ) {
     using Fun_Parameter_Decay = decltype(decay_types(std::declval<boost::callable_traits::args_t<Fun>>()));
     out_json                  = std::apply((in_fun), in_json->template get<Fun_Parameter_Decay>());
   }
