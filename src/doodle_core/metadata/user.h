@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <cstdint>
+#include <rttr/registration_friend.h>
 #include <rttr/rttr_enable.h>
 
 namespace doodle {
@@ -25,6 +26,8 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
  private:
   std::string p_string_;
   std::string p_ENUS;
+
+  RTTR_REGISTRATION_FRIEND;
 
  public:
   user();

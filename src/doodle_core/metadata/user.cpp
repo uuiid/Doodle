@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/user.h>
 
 #include <pin_yin/convert.h>
+#include <rttr/registration>
 
 namespace doodle {
 
@@ -96,5 +97,12 @@ void user::current_user::create_user() {
 
   database::save(l_create_h);
 }
+
+RTTR_REGISTRATION {
+  using namespace rttr;
+  using namespace doodle;
+
+  registration::class_<doodle::user>("doodle::user").constructor()();
+};
 
 }  // namespace doodle

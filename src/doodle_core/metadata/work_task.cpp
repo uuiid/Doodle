@@ -1,5 +1,7 @@
 #include "doodle_core/metadata/work_task.h"
 
+#include <rttr/registration>
+
 namespace doodle {
 
 void to_json(nlohmann::json& j, const work_task_info& p) {
@@ -16,4 +18,7 @@ void from_json(const nlohmann::json& j, work_task_info& p) {
   j.at("abstract").get_to(p.abstract);
   j.at("user").get_to(p.user_ref);
 }
+
+RTTR_REGISTRATION { rttr::registration::class_<doodle::work_task_info>("doodle::work_task_info").constructor()(); };
+
 }  // namespace doodle
