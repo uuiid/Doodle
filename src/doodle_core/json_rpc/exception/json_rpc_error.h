@@ -62,6 +62,16 @@ class invalid_handle_exception : public rpc_error_exception {
   invalid_handle_exception() : rpc_error_exception(-32000, "无效的句柄"s, "传入的句柄无效"s) {}
 };
 
+class invalid_id_exception : public rpc_error_exception {
+ public:
+  invalid_id_exception() : rpc_error_exception(-32001, "无效的id"s, "传入的id无效"s) {}
+};
+
+class missing_components_exception : public rpc_error_exception {
+ public:
+  missing_components_exception() : rpc_error_exception(-32002, "缺失组件"s, "传入的句柄缺失组件"s) {}
+};
+
 class rpc_error {
  private:
   friend void to_json(nlohmann::json& nlohmann_json_j, const rpc_error& nlohmann_json_t) {

@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
@@ -34,44 +35,60 @@ std::string client::call_server(const std::string& in_string, bool is_notice) {
   return l_msg.to_string();
 }
 
+std::vector<std::string> client::list_fun() { return call_fun<std::vector<std::string>>("rpc.list_fun"s); }
+
 std::vector<entt::handle> client::list_users() {
-  auto l_user = call_fun<std::vector<std::tuple<database, user>>>("list.user"s);
+  auto l_user = call_fun<std::vector<std::tuple<entt::entity, user>>>("list.user"s);
 
   std::vector<entt::handle> l_r{};
-  for (auto&& [data, l_u] : l_user) {
-    if (auto l_user = data.find_by_uuid()) {
-      l_user.emplace_or_replace<user>(l_u);
-      l_r.emplace_back(l_user);
-    } else {
-      l_user = make_handle();
-      l_user.emplace<database>(data);
-      l_user.emplace<user>(l_u);
-      l_r.emplace_back(l_user);
+  for (auto&& [l_h, l_u] : l_user) {
+    auto l_r_h = entt::handle{*g_reg(), l_h};
+    if (!l_r_h) {
+      l_r_h = entt::handle{*g_reg(), g_reg()->create(l_h)};
     }
+    l_r_h.emplace_or_replace<user>(l_u);
+    l_r.emplace_back(l_r_h);
   };
   return l_r;
 }
 
-std::vector<std::string> client::list_fun() { return call_fun<std::vector<std::string>>("rpc.list_fun"s); }
+entt::handle client::set_user(const entt::handle& in_user) {
+  if (!in_user) throw_exception(doodle_error{"无效的句柄"});
 
-entt::handle client::new_user(const entt::handle& in_user) { return {}; }
+  auto l_data = call_fun<database>("set.user"s, std::make_tuple(in_user.entity(), in_user.get<user>()));
+  in_user.emplace_or_replace<database>(l_data);
+
+  return in_user;
+}
+entt::handle client::new_user(const user& in_user) {
+  auto&& [e, l_data] = call_fun<std::tuple<entt::entity, database>>("new.user"s, in_user);
+  auto l_h           = entt::handle{*g_reg(), g_reg()->create(e)};
+  l_h.emplace<database>(l_data);
+  l_h.emplace<user>(in_user);
+  return l_h;
+}
+entt::handle client::get_user(const boost::uuids::uuid& in_user) {
+  auto [l_e, l_u, l_d] = call_fun<std::tuple<entt::entity, user, database>>("get.user"s, in_user);
+
+  auto l_h             = entt::handle{*g_reg(), g_reg()->valid(l_e) ? g_reg()->create(l_e) : l_e};
+  l_h.emplace<database>(l_d);
+  l_h.emplace<user>(l_u);
+  return l_h;
+}
 
 std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
-  auto l_user = call_fun<std::vector<std::tuple<database, work_task_info>>>(
-      "get_user_work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.get<database>())
+  auto l_user = call_fun<std::vector<std::tuple<entt::entity, work_task_info>>>(
+      "get_user_work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.entity())
   );
 
   std::vector<entt::handle> l_r{};
-  for (auto&& [data, l_u] : l_user) {
-    if (auto l_user = data.find_by_uuid()) {
-      l_user.emplace_or_replace<work_task_info>(l_u);
-      l_r.emplace_back(l_user);
-    } else {
-      l_user = make_handle();
-      l_user.emplace<database>(data);
-      l_user.emplace<work_task_info>(l_u);
-      l_r.emplace_back(l_user);
+  for (auto&& [l_h, l_u] : l_user) {
+    auto l_r_h = entt::handle{*g_reg(), l_h};
+    if (!l_r_h) {
+      l_r_h = entt::handle{*g_reg(), g_reg()->create(l_h)};
     }
+    l_r_h.emplace_or_replace<work_task_info>(l_u);
+    l_r.emplace_back(l_r_h);
   };
   return l_r;
 }

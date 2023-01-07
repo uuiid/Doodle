@@ -5,6 +5,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/work_task.h"
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/json_rpc/core/server.h>
@@ -44,6 +45,20 @@ struct loop_rpc {
   distributed_computing::server l_s{};
   loop_rpc() { l_s.run(); }
 };
+
+namespace doodle {
+std::ostream& boost_test_print_type(std::ostream& ostr, database const& right) {
+  ostr << "id: " << right.get_id() << " uuid: " << right.uuid();
+
+  return ostr;
+}
+std::ostream& boost_test_print_type(std::ostream& ostr, user const& right) {
+  ostr << "name: " << right.get_name() << "(" << right.get_enus() << ")";
+
+  return ostr;
+}
+}  // namespace doodle
+
 BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
@@ -148,6 +163,41 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
         std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
       }
     }
+    l_c.close();
+    std::cout << "stop run"
+              << "\n";
+    l_s.work_guard->reset();
+    g_io_context().stop();
+  });
+  g_io_context().run();
+}
+
+BOOST_AUTO_TEST_CASE(new_user) {
+  std::vector<entt::handle> users{};
+
+  auto l_main = users.emplace_back(make_handle());
+
+  l_main.emplace<user>().set_name(fmt::format("user_{}", "main"s));
+  l_main.get<user>().power = power_enum::modify_other_users;
+  l_main.emplace<database>();
+
+  boost::asio::post(g_thread(), [this, l_main]() {
+    distributed_computing::client l_c{};
+    auto l_users = l_c.new_user(user{"tset"s});
+    BOOST_TEST((l_users.all_of<database, user>()));
+    BOOST_TEST(l_users.get<user>().get_name() == "tset"s);
+    BOOST_TEST(!l_users.get<database>().uuid().is_nil());
+    BOOST_TEST_MESSAGE(l_users.get<user>());
+
+    auto l_user_g = l_c.get_user(l_users.get<database>().uuid());
+    BOOST_TEST(l_user_g.get<database>() == l_users.get<database>());
+    BOOST_TEST(l_user_g.get<user>() == l_users.get<user>());
+    l_user_g.get<user>().set_name("tset_m");
+    l_c.set_user(l_user_g);
+
+
+    
+
     l_c.close();
     std::cout << "stop run"
               << "\n";

@@ -20,6 +20,7 @@
 #include <azmq/message.hpp>
 #include <azmq/socket.hpp>
 #include <cstddef>
+#include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
@@ -133,16 +134,23 @@ void task::run_task() {
   // socket_server->bind("tcp://*:23333");
   socket_server->connect("tcp://127.0.0.1:23334");
 
-  register_fun_t2<user>();
-  register_fun_t2<work_task_info>();
+  register_fun_t("list.user"s, [this]() -> std::vector<std::tuple<entt::entity, user>> { return this->list_users(); });
+  register_fun_t(
+      "set.user"s,
+      [this](const database& in_tocken, const entt::entity& in_e, const user& in_user) -> database {
+        return this->set_user(in_tocken.find_by_uuid(), in_e, in_user);
+      }
+  );
+  register_fun_t("new.user", [this](const user& in_user) { return this->new_user(in_user); });
 
-  register_fun_t("list_users"s, [this]() -> std::vector<std::tuple<database, user>> { return this->list_users(); });
+  register_fun_t("get.user", [this](const boost::uuids::uuid& in_uuid) { return this->get_user(in_uuid); });
+
   register_fun_t(
       "get_user_work_task_info"s,
       [this](
-          const database& in_tocken, const database& in_user
-      ) -> std::vector<std::tuple<database, doodle::work_task_info>> {
-        return this->get_user_work_task_info(in_tocken.find_by_uuid(), in_user.find_by_uuid());
+          const database& in_tocken, const entt::entity& in_user
+      ) -> std::vector<std::tuple<entt::entity, doodle::work_task_info>> {
+        return this->get_user_work_task_info(in_tocken.find_by_uuid(), entt::handle{*g_reg(), in_user});
       }
   );
 
@@ -183,26 +191,67 @@ void task::connect() {
   });
 }
 
-std::vector<std::tuple<database, doodle::user>> task::list_users() {
+std::vector<std::tuple<entt::entity, doodle::user>> task::list_users() {
   boost::ignore_unused(this);
-  std::vector<std::tuple<database, doodle::user>> l_r{};
-  for (auto&& [e, d, u] : g_reg()->view<database, user>().each()) {
-    l_r.emplace_back(d, u);
+  std::vector<std::tuple<entt::entity, doodle::user>> l_r{};
+  for (auto&& [e, u] : g_reg()->view<user>().each()) {
+    l_r.emplace_back(e, u);
   }
   return l_r;
 }
-std::vector<std::tuple<database, doodle::work_task_info>> task::get_user_work_task_info(
+
+database task::set_user(const entt::handle& in_tocken, const entt::entity& in_e, const user& in_user) {
+  boost::ignore_unused(this);
+  auto l_h = entt::handle{*g_reg(), in_e};
+  if (!l_h) throw_exception(json_rpc::invalid_handle_exception{});
+  /// 本身用户
+  auto& l_tocken = in_tocken.get<user>();
+  if (in_tocken == l_h) {
+    auto l_user = in_user;
+    if (l_tocken.power == power_enum::none) l_user.power = power_enum::none;
+    l_h.emplace_or_replace<user>(l_user);
+  } else {
+    /// 检查授权
+    if (l_tocken.power == power_enum::modify_other_users) {
+      l_h.emplace_or_replace<user>(in_user);
+    }
+  }
+
+  database::save(l_h);
+  return l_h.get<database>();
+}
+
+std::tuple<entt::entity, database> task::new_user(const user& in) {
+  boost::ignore_unused(this);
+  auto l_h                               = entt::handle{*g_reg(), g_reg()->create()};
+  l_h.emplace_or_replace<user>(in).power = power_enum::none;
+  auto&& l_d                             = l_h.emplace<database>();
+  database::save(l_h);
+  return std::make_tuple(l_h.entity(), l_d);
+}
+
+std::tuple<entt::entity, user, database> task::get_user(const boost::uuids::uuid& in_uuid) {
+  boost::ignore_unused(this);
+  database l_d{in_uuid};
+  auto l_h = l_d.find_by_uuid();
+  if (!l_h) throw_exception(json_rpc::invalid_id_exception{});
+  if (!l_h.all_of<user, database>()) throw_exception(json_rpc::missing_components_exception{});
+  database::save(l_h);
+  return std::make_tuple(l_h.entity(), l_h.get<user>(), l_h.get<database>());
+};
+
+std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_work_task_info(
     const entt::handle& in_tocken, const entt::handle& in_user
 ) {
   boost::ignore_unused(this);
-  std::vector<std::tuple<database, doodle::work_task_info>> l_r{};
+  std::vector<std::tuple<entt::entity, doodle::work_task_info>> l_r{};
   // 当没有权限或者只查询自身时, 直接返回错误
   if (in_tocken.get<user>().power != power_enum::modify_other_users && in_tocken != in_user) {
     return l_r;
   }
 
-  for (auto&& [e, d, u] : g_reg()->view<database, work_task_info>().each()) {
-    if (u.user_ref.user_attr() == in_user) l_r.emplace_back(d, u);
+  for (auto&& [e, u] : g_reg()->view<work_task_info>().each()) {
+    if (u.user_ref.user_attr() == in_user) l_r.emplace_back(e, u);
   }
   return l_r;
 }
