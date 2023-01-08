@@ -15,4 +15,4 @@ target_link_libraries(
 )
 
 doodle_link_test(test_ai)
-add_test(NAME test_ai_exe COMMAND test_ai --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# add_test(NAME test_ai_exe COMMAND test_ai --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

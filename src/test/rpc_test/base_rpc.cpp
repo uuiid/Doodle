@@ -60,7 +60,7 @@ std::ostream& boost_test_print_type(std::ostream& ostr, user const& right) {
 }
 }  // namespace doodle
 
-BOOST_FIXTURE_TEST_SUITE(rpc, loop_rpc)
+BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
   bool run{};

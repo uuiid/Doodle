@@ -1,7 +1,10 @@
-add_executable(
-        test_json_rpc
-        EXCLUDE_FROM_ALL
+
+
+target_sources(test_main
+        PRIVATE
         base_rpc.cpp
 )
-doodle_link_test(test_json_rpc)
-add_test(NAME test_json_rpc_exe COMMAND test_json_rpc --logger=HRF,all --color_output=true WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_test(NAME rpc_client_1
+        COMMAND test_main --log_level=message --color_output=true --run_test=rpc_client
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

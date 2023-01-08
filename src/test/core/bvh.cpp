@@ -30,6 +30,7 @@
 #include <boost/spirit/home/qi.hpp>
 #include <boost/spirit/home/support.hpp>
 #include <boost/spirit/version.hpp>
+#include <boost/test/unit_test_suite.hpp>
 
 using namespace doodle;
 
@@ -225,22 +226,7 @@ using bvh_tree_parse = bvh_tree_impl<std::string::const_iterator>;
 using bvh_node_parse = bvh_node_impl<std::string::const_iterator>;
 }  // namespace doodle::bvh::detail
 
-struct loop_fixtures {
-  loop_fixtures()  = default;
-  ~loop_fixtures() = default;
-
-  // std::shared_ptr<doodle_lib> l_lib{};
-  void setup() {
-    // l_lib = std::make_shared<doodle_lib>();
-
-    BOOST_TEST_MESSAGE("完成夹具设置");
-  };
-  void teardown(){
-      // l_lib.reset();
-  };
-};
-
-BOOST_FIXTURE_TEST_SUITE(spirit_test, loop_fixtures)
+BOOST_AUTO_TEST_SUITE(bvh_test)
 
 BOOST_AUTO_TEST_CASE(test_base_spirit) {
   namespace qi    = boost::spirit::qi;

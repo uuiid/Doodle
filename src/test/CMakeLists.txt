@@ -32,6 +32,11 @@ macro(doodle_link_test)
     target_compile_options(${ARGV0} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
 endmacro()
 
+add_executable(
+        test_main
+        EXCLUDE_FROM_ALL
+)
+
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(rpc_test)

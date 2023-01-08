@@ -92,19 +92,7 @@
 			{
 				"testExecutables": [
 					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_core.exe",
-					},
-					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/dingding_base.exe",
-					},
-					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_math.exe",
-					},
-					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_ai.exe",
-					},
-					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_json_rpc.exe",
+						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
 					}
 				],
 				"cwd": "${workspaceFolder}/build",
@@ -113,7 +101,8 @@
 			},
 		],
 		"C_Cpp.intelliSenseEngine": "disabled",
-		"editor.fontFamily": "'sarasa mono sc',Consolas, monospace"
+		"editor.fontFamily": "'sarasa mono sc',Consolas, monospace",
+		"cmake.configureOnEdit": false
 	},
 	"tasks": {
 		"version": "2.0.0",

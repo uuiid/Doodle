@@ -20,7 +20,7 @@ struct loop_fixtures : lib_fixtures {
   void teardown(){};
 };
 
-BOOST_FIXTURE_TEST_SUITE(fmt_print, loop_fixtures)
+BOOST_FIXTURE_TEST_SUITE(tset_time, loop_fixtures)
 
 BOOST_AUTO_TEST_CASE(date_) {
   using namespace date::literals;
