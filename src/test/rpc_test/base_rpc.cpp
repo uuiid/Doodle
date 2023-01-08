@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(new_user) {
     BOOST_TEST(l_users.get<user>().get_name() == "tset"s);
     BOOST_TEST(!l_users.get<database>().uuid().is_nil());
     auto l_all_reg_view1 = g_reg()->view<user>();
-    BOOST_TEST(l_all_reg_view1.size() == 1);
+    BOOST_TEST(l_all_reg_view1.size() == 2);
     BOOST_TEST_MESSAGE(l_users.get<user>());
     auto l_uuid = l_users.get<database>().uuid();
     l_reg->clear();
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(new_user) {
     BOOST_TEST(l_user_v2.size() == 1);
     BOOST_TEST(l_user_g.get<database>() == l_users.get<database>());
     BOOST_TEST(l_user_g.get<user>() == l_users.get<user>());
-    BOOST_TEST(l_all_reg_view1.size() == 1);
+    BOOST_TEST(l_all_reg_view1.size() == 2);
     /// 设置用户
     l_user_g.get<user>().set_name("tset_m");
     l_c.set_user(l_user_g);
@@ -220,10 +220,11 @@ BOOST_AUTO_TEST_CASE(new_user) {
     BOOST_TEST(l_user_v3.size() == 1);
     auto l_h1 = entt::handle{*g_reg(), l_user_v3[0]};
     BOOST_TEST(l_h1.get<user>().get_name() == "tset_m"s);
-    BOOST_TEST(l_all_reg_view1.size() == 1);
+    BOOST_TEST(l_all_reg_view1.size() == 2);
     auto l_all_h1 = entt::handle{*g_reg(), l_all_reg_view1[0]};
     BOOST_TEST(l_all_h1.get<user>().get_name() == "tset_m"s);
     BOOST_TEST_MESSAGE(l_h1.get<user>());
+    BOOST_TEST_MESSAGE(l_all_h1.get<user>());
     /// 关闭
     l_c.close();
     l_s.work_guard->reset();

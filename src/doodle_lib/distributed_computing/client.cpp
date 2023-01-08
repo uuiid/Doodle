@@ -58,10 +58,12 @@ std::vector<entt::handle> client::list_users() {
 
 entt::handle client::set_user(const entt::handle& in_user) {
   if (!in_user) throw_exception(doodle_error{"无效的句柄"});
-  if (reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
-  reg->ctx().at<user::current_user>().get_handle();
+  if (!reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
+  auto l_current_user = reg->ctx().at<user::current_user>().get_handle();
 
-  auto l_data = call_fun<database>("set.user"s, std::make_tuple(in_user.entity(), in_user.get<user>()));
+  auto l_data         = call_fun<database>(
+      "set.user"s, std::make_tuple(l_current_user.get<database>(), in_user.entity(), in_user.get<user>())
+  );
   in_user.emplace_or_replace<database>(l_data);
 
   return in_user;
