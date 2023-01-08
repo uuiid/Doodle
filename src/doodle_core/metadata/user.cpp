@@ -6,6 +6,8 @@
 #include <doodle_core/metadata/detail/user_set_data.h>
 #include <doodle_core/metadata/user.h>
 
+#include "exception/exception.h"
+#include "metadata/metadata.h"
 #include <pin_yin/convert.h>
 #include <rttr/registration>
 
@@ -79,6 +81,15 @@ void user::current_user::user_name_attr(const std::string& in_name) {
   user_handle.get<user>().set_name(in_name);
   core_set::get_set().user_name = in_name;
   database::save(user_handle);
+}
+
+void user::current_user::set_user(const entt::handle& in) {
+  if (!in.all_of<user, database>()) throw_exception(doodle_error{"句柄缺失"});
+  const auto& [l_user, l_d]     = in.get<const user, const database>();
+  core_set::get_set().user_id   = l_d.uuid();
+  core_set::get_set().user_name = l_user.get_name();
+  user_handle                   = in;
+  uuid                          = l_d.uuid();
 }
 
 user::current_user::operator bool() const {

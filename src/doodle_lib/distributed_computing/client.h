@@ -2,15 +2,18 @@
 
 #pragma once
 
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/json_rpc/core/rpc_client.h"
 #include "doodle_core/metadata/work_task.h"
 
 #include "doodle_lib/configure/doodle_lib_export.h"
+
 #include <boost/uuid/uuid.hpp>
 
 #include <azmq/socket.hpp>
 #include <entt/entity/fwd.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 #include <zmq.hpp>
@@ -18,10 +21,13 @@
 
 namespace doodle::distributed_computing {
 class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
-  zmq::socket_t socket;
+  registry_ptr reg{};
+  zmq::socket_t socket{};
 
  public:
   client();
+  explicit client(const registry_ptr& in_reg);
+
   /// 列出所有注册的功能
   std::vector<std::string> list_fun();
   /// 列出所有的user

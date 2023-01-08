@@ -24,7 +24,11 @@
 
 namespace doodle::distributed_computing {
 
-client::client() : socket(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::req) {
+client::client() : reg(g_reg()), socket(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::req) {
+  socket.connect("tcp://127.0.0.1:23333");
+}
+client::client(const registry_ptr& in_reg)
+    : reg(in_reg), socket(in_reg->ctx().emplace<zmq::context_t>(), zmq::socket_type::req) {
   socket.connect("tcp://127.0.0.1:23333");
 }
 
@@ -42,9 +46,9 @@ std::vector<entt::handle> client::list_users() {
 
   std::vector<entt::handle> l_r{};
   for (auto&& [l_h, l_u] : l_user) {
-    auto l_r_h = entt::handle{*g_reg(), l_h};
+    auto l_r_h = entt::handle{*reg, l_h};
     if (!l_r_h) {
-      l_r_h = entt::handle{*g_reg(), g_reg()->create(l_h)};
+      l_r_h = entt::handle{*reg, reg->create(l_h)};
     }
     l_r_h.emplace_or_replace<user>(l_u);
     l_r.emplace_back(l_r_h);
@@ -54,6 +58,8 @@ std::vector<entt::handle> client::list_users() {
 
 entt::handle client::set_user(const entt::handle& in_user) {
   if (!in_user) throw_exception(doodle_error{"无效的句柄"});
+  if (reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
+  reg->ctx().at<user::current_user>().get_handle();
 
   auto l_data = call_fun<database>("set.user"s, std::make_tuple(in_user.entity(), in_user.get<user>()));
   in_user.emplace_or_replace<database>(l_data);
@@ -62,7 +68,7 @@ entt::handle client::set_user(const entt::handle& in_user) {
 }
 entt::handle client::new_user(const user& in_user) {
   auto&& [e, l_data] = call_fun<std::tuple<entt::entity, database>>("new.user"s, in_user);
-  auto l_h           = entt::handle{*g_reg(), g_reg()->create(e)};
+  auto l_h           = entt::handle{*reg, reg->create(e)};
   l_h.emplace<database>(l_data);
   l_h.emplace<user>(in_user);
   return l_h;
@@ -70,7 +76,7 @@ entt::handle client::new_user(const user& in_user) {
 entt::handle client::get_user(const boost::uuids::uuid& in_user) {
   auto [l_e, l_u, l_d] = call_fun<std::tuple<entt::entity, user, database>>("get.user"s, in_user);
 
-  auto l_h             = entt::handle{*g_reg(), g_reg()->valid(l_e) ? g_reg()->create(l_e) : l_e};
+  auto l_h             = entt::handle{*reg, reg->valid(l_e) ? l_e : reg->create(l_e)};
   l_h.emplace<database>(l_d);
   l_h.emplace<user>(l_u);
   return l_h;
@@ -83,9 +89,9 @@ std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in
 
   std::vector<entt::handle> l_r{};
   for (auto&& [l_h, l_u] : l_user) {
-    auto l_r_h = entt::handle{*g_reg(), l_h};
+    auto l_r_h = entt::handle{*reg, l_h};
     if (!l_r_h) {
-      l_r_h = entt::handle{*g_reg(), g_reg()->create(l_h)};
+      l_r_h = entt::handle{*reg, reg->create(l_h)};
     }
     l_r_h.emplace_or_replace<work_task_info>(l_u);
     l_r.emplace_back(l_r_h);

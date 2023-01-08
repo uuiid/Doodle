@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <cstdint>
+#include <entt/entity/fwd.hpp>
 #include <rttr/registration_friend.h>
 #include <rttr/rttr_enable.h>
 
@@ -68,6 +69,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
     void user_name_attr(const std::string& in_name);
 
     void create_user();
+    void set_user(const entt::handle& in);
 
     explicit operator bool() const;
   };
