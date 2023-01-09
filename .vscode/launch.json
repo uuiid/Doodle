@@ -103,7 +103,8 @@
             "type": "pickString",
             "description": "test分类",
             "options": [
-                "rpc_server/base"
+                "rpc_server/base",
+                "rpc_server/list_fun1"
             ],
             "default": "rpc_server/base"
         }

@@ -59,5 +59,19 @@ BOOST_AUTO_TEST_CASE(base) {
 
   BOOST_TEST(run);
 }
+BOOST_AUTO_TEST_CASE(list_users) {
+  bool run{true};
+  for (auto i = 0u; i < 10; ++i) {
+    auto l_h = make_handle();
+    l_h.emplace<user>().set_name(fmt::format("user{}", i));
+    l_h.emplace<database>();
+  }
+  
+  distributed_computing::server l_s{};
+  l_s.run();
 
+  g_io_context().run();
+
+  BOOST_TEST(run);
+}
 BOOST_AUTO_TEST_SUITE_END()

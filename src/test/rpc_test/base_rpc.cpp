@@ -74,46 +74,26 @@ BOOST_AUTO_TEST_CASE(base) {
 }
 
 BOOST_AUTO_TEST_CASE(list_fun1) {
-  bool run{};
-  boost::asio::post(g_thread(), [this, l_run = &run]() {
-    distributed_computing::client l_c{};
+  distributed_computing::client l_c{};
 
-    auto l_tset = l_c.list_fun();
-    for (auto&& i : l_tset) {
-      BOOST_TEST_MESSAGE(i);
-    }
-    l_c.close();
-    std::cout << "stop run"
-              << "\n";
-
-    g_io_context().stop();
-    *l_run = true;
-  });
+  auto l_tset = l_c.list_fun();
+  for (auto&& i : l_tset) {
+    BOOST_TEST_MESSAGE(i);
+  }
+  l_c.close();
 
   g_io_context().run();
-  BOOST_TEST(run);
 }
 
 BOOST_AUTO_TEST_CASE(list_users) {
-  for (auto i = 0u; i < 10; ++i) {
-    auto l_h = make_handle();
-    l_h.emplace<user>().set_name(fmt::format("user{}", i));
-    l_h.emplace<database>();
+  distributed_computing::client l_c{};
+  auto l_users = l_c.list_users();
+  BOOST_TEST(l_users.size() == 10);
+  for (auto&& l_f : l_users) {
+    std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
   }
+  l_c.close();
 
-  boost::asio::post(g_thread(), [this]() {
-    distributed_computing::client l_c{};
-    auto l_users = l_c.list_users();
-    BOOST_TEST(l_users.size() == 10);
-    for (auto&& l_f : l_users) {
-      std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
-    }
-    l_c.close();
-    std::cout << "stop run"
-              << "\n";
-
-    g_io_context().stop();
-  });
   g_io_context().run();
 }
 
