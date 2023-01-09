@@ -31,6 +31,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 #include <boost/test/unit_test_suite.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
@@ -144,35 +145,52 @@ BOOST_AUTO_TEST_CASE(new_user) {
   BOOST_TEST(!l_users.get<database>().uuid().is_nil());
 
   BOOST_TEST_MESSAGE(l_users.get<user>());
-  auto l_uuid = l_users.get<database>().uuid();
-  l_reg->clear();
 
-  /// 登录用户
-  auto l_user_g        = l_c.get_user(l_uuid);
-  auto& l_user_current = l_reg->ctx().emplace<user::current_user>();
-  l_user_current.set_user(l_user_g);
-
-  auto l_user_v2 = l_reg->view<user>();
-
-  BOOST_TEST(l_user_v2.size() == 1);
-  BOOST_TEST(l_user_g.get<database>() == l_users.get<database>());
-  BOOST_TEST(l_user_g.get<user>() == l_users.get<user>());
-  /// 设置用户
-  l_user_g.get<user>().set_name("tset_m");
-  l_c.set_user(l_user_g);
-
-  auto l_user_v3 = l_reg->view<user>();
-
-  BOOST_TEST(l_user_v3.size() == 1);
-  auto l_h1 = entt::handle{*g_reg(), l_user_v3[0]};
-  BOOST_TEST(l_h1.get<user>().get_name() == "tset_m"s);
-
-  BOOST_TEST_MESSAGE(l_h1.get<user>());
   /// 关闭
   l_c.close();
 
   g_io_context().run();
   BOOST_TEST(l_run);
+}
+
+BOOST_AUTO_TEST_CASE(get_user) {
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/get_user");
+
+  bool l_run{};
+  auto l_reg = std::make_shared<entt::registry>();
+  distributed_computing::client l_c{l_reg};
+
+  auto l_user_g = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
+
+  BOOST_TEST(l_user_g.get<user>().get_name() == "test1");
+  BOOST_TEST(
+      l_user_g.get<database>().uuid() ==
+      boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s)
+  );
+
+  BOOST_TEST_MESSAGE(l_user_g.get<user>());
+}
+
+BOOST_AUTO_TEST_CASE(set_user) {
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/set_user");
+
+  bool l_run{};
+  auto l_reg = std::make_shared<entt::registry>();
+  distributed_computing::client l_c{l_reg};
+
+  auto l_user_g = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
+
+  BOOST_TEST(l_user_g.get<user>().get_name() == "test1");
+  BOOST_TEST(
+      l_user_g.get<database>().uuid() ==
+      boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s)
+  );
+  l_user_g.get<user>().set_name("tset_m");
+  l_c.set_user(l_user_g);
+
+  BOOST_TEST_MESSAGE(l_user_g.get<user>());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

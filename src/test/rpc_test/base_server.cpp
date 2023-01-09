@@ -119,24 +119,47 @@ BOOST_AUTO_TEST_CASE(new_user) {
   bool run{true};
   distributed_computing::server l_s{};
 
-  for (auto&& l_work : l_s.socket_server_list) {
-    l_work->register_sig([](const std::string& in) {
-      auto l_all_reg_view1 = g_reg()->view<user>();
-      if (in == "new.user") {
-        BOOST_TEST(l_all_reg_view1.size() == 1);
-      } else if (in == "set.user") {
-        auto l_all_h1 = entt::handle{*g_reg(), l_all_reg_view1[0]};
-        BOOST_TEST(l_all_h1.get<user>().get_name() == "tset_m"s);
-        BOOST_TEST_MESSAGE(l_all_h1.get<user>());
-      }
-    });
-  }
+  l_s.run();
+
+  g_io_context().run();
+
+  BOOST_TEST(run);
+
+  auto l_all_reg_view1 = g_reg()->view<user>();
+  BOOST_TEST(l_all_reg_view1.size() == 1);
+  auto l_users = entt::handle{*g_reg(), l_all_reg_view1[0]};
+  BOOST_TEST(l_users.get<user>().get_name() == "tset"s);
+}
+
+BOOST_AUTO_TEST_CASE(get_user) {
+  bool run{true};
+  distributed_computing::server l_s{};
+  auto l_main = make_handle();
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+  l_main.emplace<user>().set_name("test1");
 
   l_s.run();
 
   g_io_context().run();
 
   BOOST_TEST(run);
+}
+
+BOOST_AUTO_TEST_CASE(set_user) {
+  bool run{true};
+  distributed_computing::server l_s{};
+  auto l_main = make_handle();
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+  l_main.emplace<user>().set_name("test1");
+
+  l_s.run();
+
+  g_io_context().run();
+
+  BOOST_TEST(run);
+
+  BOOST_TEST(l_main.get<user>().get_name() == "tset_m"s);
+  BOOST_TEST_MESSAGE(l_main.get<user>());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
