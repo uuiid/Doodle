@@ -104,7 +104,7 @@
             "description": "test分类",
             "options": [
                 "rpc_server/base",
-                "rpc_server/list_fun1"
+                "rpc_server/list_users"
             ],
             "default": "rpc_server/base"
         }
