@@ -64,6 +64,8 @@ BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
   bool run{true};
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/base");
   distributed_computing::client l_c{};
 
   l_c.close();
@@ -75,6 +77,8 @@ BOOST_AUTO_TEST_CASE(base) {
 
 BOOST_AUTO_TEST_CASE(list_fun1) {
   distributed_computing::client l_c{};
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/base");
 
   auto l_tset = l_c.list_fun();
   for (auto&& i : l_tset) {
@@ -87,6 +91,9 @@ BOOST_AUTO_TEST_CASE(list_fun1) {
 
 BOOST_AUTO_TEST_CASE(list_users) {
   distributed_computing::client l_c{};
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/list_users");
+
   auto l_users = l_c.list_users();
   BOOST_TEST(l_users.size() == 10);
   for (auto&& l_f : l_users) {

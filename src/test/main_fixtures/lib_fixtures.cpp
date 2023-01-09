@@ -39,7 +39,13 @@ using boost_test_sink_mt     = detail::boost_test_sink<std::mutex>;
 lib_fixtures::lib_fixtures() = default;
 lib_fixtures::~lib_fixtures() { doodle::logger_ctrl::get_log().refresh(); }
 
-run_subprocess::run_subprocess(boost::asio::io_context& in_io) : io(in_io), child(), out_attr(), err_attr() {}
+run_subprocess::run_subprocess(boost::asio::io_context& in_io)
+    : io(in_io),
+      child(),
+      out_attr(),
+      err_attr(),
+      out_str(std::make_shared<boost::asio::streambuf>()),
+      err_str(std::make_shared<boost::asio::streambuf>()) {}
 
 void run_subprocess::run(const std::string& in_run_fun) {
   out_attr = std::make_shared<boost::process::async_pipe>(io);

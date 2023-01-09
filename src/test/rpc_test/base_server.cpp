@@ -59,6 +59,7 @@ BOOST_AUTO_TEST_CASE(base) {
 
   BOOST_TEST(run);
 }
+
 BOOST_AUTO_TEST_CASE(list_users) {
   bool run{true};
   for (auto i = 0u; i < 10; ++i) {
