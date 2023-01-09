@@ -122,11 +122,11 @@ work_clock& work_clock::operator+=(const std::tuple<time_point_wrap, time_point_
 work_clock& work_clock::operator-=(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {
   auto&& [l_time_1, l_time_2, l_info] = in_time;
   auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
-  DOODLE_LOG_INFO("减去时间 {} -> {} {}", l_time_1, l_time_2, l_info);
-  DOODLE_LOG_INFO("减去时间2 {} ", l_dis);
+  // DOODLE_LOG_INFO("减去时间 {} -> {} {}", l_time_1, l_time_2, l_info);
+  // DOODLE_LOG_INFO("减去时间2 {} ", l_dis);
   interval_set_time_ -= l_dis;
   interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
-  DOODLE_LOG_INFO("时间段 {}", interval_set_time_);
+  // DOODLE_LOG_INFO("时间段 {}", interval_set_time_);
   return *this;
 }
 void work_clock::add_info(const std::tuple<time_point_wrap, time_point_wrap, std::string>& in_time) {

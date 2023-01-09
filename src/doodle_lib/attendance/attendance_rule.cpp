@@ -31,13 +31,11 @@ void attendance_rule::set_user(const entt::handle& in_handle) {
   if (!ptr->user_handle.any_of<rules>()) {
     ptr->user_handle.emplace<rules>(rules::get_default());
   }
-  ptr->time_clock = {};
 }
 
 void attendance_rule::set_range(const time_point_wrap& in_begin, const time_point_wrap& in_end) {
   ptr->begin      = in_begin;
-  ptr->end        = in_end;
-  ptr->time_clock = {};
+  ptr->end        = (in_end + chrono::days{1});
 }
 
 const work_clock& attendance_rule::work_clock_attr() const { return ptr->time_clock; }
@@ -45,7 +43,7 @@ void attendance_rule::gen_work_clock() {
   ptr->time_clock = {};
   if (ptr->user_handle && ptr->user_handle.any_of<rules>()) {
     const auto& l_rule = ptr->user_handle.get<rules>();
-    DOODLE_LOG_INFO("时间 {}", l_rule);
+    // DOODLE_LOG_INFO("时间 {}", l_rule);
 
     for (auto l_b = ptr->begin; l_b <= ptr->end; l_b += chrono::days{1}) {
       /// \brief 加入工作日规定时间
@@ -58,12 +56,17 @@ void attendance_rule::gen_work_clock() {
 
     /// \brief 调整节假日
     holidaycn_time{}.set_clock(ptr->time_clock);
-    DOODLE_LOG_INFO("时间规则 {}", ptr->time_clock.debug_print());
+    // DOODLE_LOG_INFO("时间规则 {}", ptr->time_clock.debug_print());
     /// \brief 减去调休
+    // for (auto&& [l_1, l_2, l_3] : l_rule.extra_rest()) {
+    //   ptr->time_clock -= std::make_tuple(l_1, l_2, l_3);
+    //   DOODLE_LOG_INFO("时间 {}", l_rule);
+    //   DOODLE_LOG_INFO("时间规则 {}", ptr->time_clock.debug_print());
+    // }
     ranges::for_each(l_rule.extra_rest(), [&](const std::decay_t<decltype(l_rule.extra_rest())>::value_type& in_) {
       ptr->time_clock -= std::make_tuple(in_.first, in_.second, in_.info);
     });
-    DOODLE_LOG_INFO("时间规则2 {}", ptr->time_clock.debug_print());
+    // DOODLE_LOG_INFO("时间规则2 {}", ptr->time_clock.debug_print());
     /// \brief 加上加班
     ranges::for_each(l_rule.extra_work(), [&](const std::decay_t<decltype(l_rule.extra_work())>::value_type& in_) {
       ptr->time_clock += std::make_tuple(in_.first, in_.second, in_.info);
