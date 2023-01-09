@@ -182,6 +182,7 @@ void task::connect() {
     boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
       auto l_call_r = (*self)(l_msg.to_string());
       l_msg.rebuild(l_call_r.data(), l_call_r.size());
+      if (self->is_stop) return;
 
       boost::asio::post(g_io_context(), [l_msg = std::move(l_msg), this, self = shared_from_this()]() mutable {
         self->socket_server->send(l_msg, zmq::send_flags::none);
@@ -189,6 +190,11 @@ void task::connect() {
       });
     });
   });
+}
+
+void task::close() {
+  is_stop = true;
+  socket_server->close();
 }
 
 std::vector<std::tuple<entt::entity, doodle::user>> task::list_users() {
@@ -276,6 +282,13 @@ void server::run() {
   boost::asio::post(g_io_context(), [&]() { create_backend(); });
 }
 
-void server::create_backend() { socket_server_list.emplace_back(std::make_shared<task>())->run_task(); }
+void server::create_backend() {
+  auto&& l_task = socket_server_list.emplace_back(std::make_shared<task>());
+  l_task->register_fun_t("rpc.close"s, [this, l_task]() {
+    l_task->close();
+    work_guard.reset();
+  });
+  l_task->run_task();
+}
 server::~server() = default;
 }  // namespace doodle::distributed_computing

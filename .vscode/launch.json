@@ -53,19 +53,14 @@
             "name": "debug_test",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "",
+            "program": "${command:cmake.getLaunchTargetPath}",
             "args": [
-                "--logger=HRF,all",
-                "--color_output=true"
+                "--log_level=message",
+                "--color_output=true",
+                "--run_test=${input:test_}"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_build_DD/bin",
-            "environment": [
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
-                }
-            ],
+            "cwd": "${command:cmake.launchTargetDirectory}",
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
@@ -102,6 +97,15 @@
                 "dingding_base"
             ],
             "default": "DoodleExe"
+        },
+        {
+            "id": "test_",
+            "type": "pickString",
+            "description": "test分类",
+            "options": [
+                "rpc_server/base"
+            ],
+            "default": "rpc_server/base"
         }
     ],
     "compounds": [

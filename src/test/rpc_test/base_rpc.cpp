@@ -43,8 +43,8 @@
 using namespace doodle;
 struct loop_rpc {
   doodle_lib lib{};
-  distributed_computing::server l_s{};
-  loop_rpc() { l_s.run(); }
+
+  loop_rpc() {}
 };
 
 namespace doodle {
@@ -63,17 +63,11 @@ std::ostream& boost_test_print_type(std::ostream& ostr, user const& right) {
 BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
-  bool run{};
-  boost::asio::post(g_thread(), [this, l_run = &run]() {
-    distributed_computing::client l_c{};
+  bool run{true};
+  distributed_computing::client l_c{};
 
-    l_c.close();
-    std::cout << "stop run"
-              << "\n";
-    l_s.work_guard->reset();
-    g_io_context().stop();
-    *l_run = true;
-  });
+  l_c.close();
+  BOOST_TEST_MESSAGE("stop run");
 
   g_io_context().run();
   BOOST_TEST(run);
@@ -91,7 +85,7 @@ BOOST_AUTO_TEST_CASE(list_fun1) {
     l_c.close();
     std::cout << "stop run"
               << "\n";
-    l_s.work_guard->reset();
+
     g_io_context().stop();
     *l_run = true;
   });
@@ -117,7 +111,7 @@ BOOST_AUTO_TEST_CASE(list_users) {
     l_c.close();
     std::cout << "stop run"
               << "\n";
-    l_s.work_guard->reset();
+
     g_io_context().stop();
   });
   g_io_context().run();
@@ -167,7 +161,7 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
     l_c.close();
     std::cout << "stop run"
               << "\n";
-    l_s.work_guard->reset();
+
     g_io_context().stop();
   });
   g_io_context().run();
@@ -227,7 +221,7 @@ BOOST_AUTO_TEST_CASE(new_user) {
     BOOST_TEST_MESSAGE(l_all_h1.get<user>());
     /// 关闭
     l_c.close();
-    l_s.work_guard->reset();
+
     g_io_context().stop();
     *l_ptr_run = true;
   });

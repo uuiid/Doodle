@@ -36,6 +36,7 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
   ~task();
 
   void run_task();
+  void close();
 
  private:
   template <typename T>

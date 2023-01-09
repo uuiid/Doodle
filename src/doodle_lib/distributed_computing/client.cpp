@@ -35,6 +35,9 @@ client::client(const registry_ptr& in_reg)
 std::string client::call_server(const std::string& in_string, bool is_notice) {
   socket.send(zmq::message_t{in_string}, zmq::send_flags::none);
   zmq::message_t l_msg;
+  if (is_stop) {
+    return {};
+  }
   auto l_r = socket.recv(l_msg);
   return l_msg.to_string();
 }
@@ -101,5 +104,8 @@ std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in
   return l_r;
 }
 
-void client::close() { call_fun<void, true>("rpc.close"s); }
+void client::close() {
+  is_stop = true;
+  call_fun<void, true>("rpc.close"s);
+}
 }  // namespace doodle::distributed_computing

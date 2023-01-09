@@ -23,6 +23,7 @@ namespace doodle::distributed_computing {
 class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   registry_ptr reg{};
   zmq::socket_t socket{};
+  bool is_stop{};
 
  public:
   client();
