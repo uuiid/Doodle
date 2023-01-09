@@ -101,15 +101,21 @@ class rpc_error {
   [[noreturn]] void to_throw() const {
     switch (code) {
       case -32700:
-        throw parse_error_exception{};
+        throw_exception(parse_error_exception{});
       case -32600:
-        throw invalid_request_exception{};
+        throw_exception(invalid_request_exception{});
       case -32601:
-        throw method_not_found_exception{};
+        throw_exception(method_not_found_exception{});
       case -32602:
-        throw invalid_params_exception{};
+        throw_exception(invalid_params_exception{});
       case -32603:
-        throw internal_error_exception{};
+        throw_exception(internal_error_exception{});
+      case -32000:
+        throw_exception(invalid_handle_exception{});
+      case -32001:
+        throw_exception(invalid_id_exception{});
+      case -32002:
+        throw_exception(missing_components_exception{});
       default:
         throw rpc_error_exception{code, message, data};
     }

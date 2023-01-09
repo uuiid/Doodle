@@ -5,6 +5,7 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/work_task.h"
 #include <doodle_core/doodle_core.h>
@@ -28,6 +29,7 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/process.hpp>
 #include <boost/test/tools/interface.hpp>
+#include <boost/test/tools/old/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 #include <boost/test/unit_test_suite.hpp>
@@ -48,18 +50,7 @@ struct loop_rpc {
   loop_rpc() {}
 };
 
-namespace doodle {
-std::ostream& boost_test_print_type(std::ostream& ostr, database const& right) {
-  ostr << "id: " << right.get_id() << " uuid: " << right.uuid();
 
-  return ostr;
-}
-std::ostream& boost_test_print_type(std::ostream& ostr, user const& right) {
-  ostr << "name: " << right.get_name() << "(" << right.get_enus() << ")";
-
-  return ostr;
-}
-}  // namespace doodle
 
 BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
@@ -170,6 +161,19 @@ BOOST_AUTO_TEST_CASE(get_user) {
   );
 
   BOOST_TEST_MESSAGE(l_user_g.get<user>());
+}
+
+BOOST_AUTO_TEST_CASE(get_user_f) {
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/get_user");
+
+  bool l_run{};
+  auto l_reg = std::make_shared<entt::registry>();
+  distributed_computing::client l_c{l_reg};
+
+  BOOST_CHECK_THROW(
+      (l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c0251"s))), doodle_error
+  );
 }
 
 BOOST_AUTO_TEST_CASE(set_user) {
