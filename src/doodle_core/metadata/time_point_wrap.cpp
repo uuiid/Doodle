@@ -104,19 +104,19 @@ time_point_wrap::time_local_point time_point_wrap::get_local_time() const { retu
 time_point_wrap::~time_point_wrap() = default;
 
 time_point_wrap& time_point_wrap::operator+=(const time_point_wrap::duration& in_dur) {
-  sys_point = get_sys_time() + in_dur;
+  sys_point = sys_point + in_dur;
   return *this;
 }
 time_point_wrap& time_point_wrap::operator-=(const time_point_wrap::duration& in_dur) {
-  sys_point = get_sys_time() - in_dur;
+  sys_point = sys_point - in_dur;
   return *this;
 }
 time_point_wrap& time_point_wrap::operator++() {
-  sys_point = time_point{++get_sys_time().time_since_epoch()};
+  sys_point += decltype(sys_point)::duration{1};
   return *this;
 }
 time_point_wrap& time_point_wrap::operator--() {
-  sys_point = time_point{--get_sys_time().time_since_epoch()};
+  sys_point -= decltype(sys_point)::duration{1};
   return *this;
 }
 time_point_wrap::operator std::tm() const {

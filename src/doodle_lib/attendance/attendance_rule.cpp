@@ -45,6 +45,7 @@ void attendance_rule::gen_work_clock() {
   ptr->time_clock = {};
   if (ptr->user_handle && ptr->user_handle.any_of<rules>()) {
     const auto& l_rule = ptr->user_handle.get<rules>();
+    DOODLE_LOG_INFO("时间 {}", l_rule);
 
     for (auto l_b = ptr->begin; l_b <= ptr->end; l_b += chrono::days{1}) {
       /// \brief 加入工作日规定时间
@@ -57,16 +58,17 @@ void attendance_rule::gen_work_clock() {
 
     /// \brief 调整节假日
     holidaycn_time{}.set_clock(ptr->time_clock);
-
+    DOODLE_LOG_INFO("时间规则 {}", ptr->time_clock.debug_print());
     /// \brief 减去调休
     ranges::for_each(l_rule.extra_rest(), [&](const std::decay_t<decltype(l_rule.extra_rest())>::value_type& in_) {
       ptr->time_clock -= std::make_tuple(in_.first, in_.second, in_.info);
     });
+    DOODLE_LOG_INFO("时间规则2 {}", ptr->time_clock.debug_print());
     /// \brief 加上加班
     ranges::for_each(l_rule.extra_work(), [&](const std::decay_t<decltype(l_rule.extra_work())>::value_type& in_) {
       ptr->time_clock += std::make_tuple(in_.first, in_.second, in_.info);
     });
-
+    // DOODLE_LOG_INFO("时间规则3 {}", ptr->time_clock.debug_print());
     // 去除绝对排除时间
     for (auto l_b = ptr->begin; l_b <= ptr->end; l_b += chrono::days{1}) {
       ranges::for_each(

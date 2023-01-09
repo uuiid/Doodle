@@ -87,7 +87,7 @@ class DOODLE_CORE_API rules {
   [[nodiscard("")]] const time_point_vector& extra_rest() const;
   [[nodiscard("")]] time_point_vector& extra_rest();
 
-  std::string debug_print();
+  std::string debug_print() const;
 
  private:
   friend struct ::fmt::formatter<::doodle::business::rules>;

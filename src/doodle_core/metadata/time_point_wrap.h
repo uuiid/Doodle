@@ -156,14 +156,14 @@ class DOODLE_CORE_API time_point_wrap : boost::totally_ordered<time_point_wrap>,
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator+(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = get_sys_time();
+    auto l_sys_time = sys_point;
     l_sys_time += in_dur;
     return time_point_wrap{l_sys_time};
   }
 
   template <typename Rep_T, typename Period_T>
   time_point_wrap operator-(const doodle::chrono::duration<Rep_T, Period_T>& in_dur) {
-    auto l_sys_time = get_sys_time();
+    auto l_sys_time = sys_point;
     l_sys_time -= in_dur;
     return time_point_wrap{l_sys_time};
   }

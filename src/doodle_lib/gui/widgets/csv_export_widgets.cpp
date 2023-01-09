@@ -3,6 +3,7 @@
 //
 #include "csv_export_widgets.h"
 
+#include "doodle_core/logger/logger.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_fmt_rational.h>
@@ -540,7 +541,7 @@ bool csv_export_widgets::get_work_time() {
   auto &l_p    = g_reg()->ctx().emplace<process_message>();
   l_p.set_name("开始计算数据");
   l_p.set_state(l_p.run);
-
+  DOODLE_LOG_INFO("开始计算时间 {} -> {}", l_begin, l_end);
   p_i->user_size = l_size;
   for (const auto &item : p_i->user_handle) {
     p_i->attendance_ptr->async_get_work_clock(
