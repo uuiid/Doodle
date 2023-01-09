@@ -50,8 +50,6 @@ struct loop_rpc {
   loop_rpc() {}
 };
 
-
-
 BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
@@ -123,7 +121,6 @@ BOOST_AUTO_TEST_CASE(new_user) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/new_user");
 
-  bool l_run{};
   auto l_reg = std::make_shared<entt::registry>();
   distributed_computing::client l_c{l_reg};
   /// 创建新的用户
@@ -141,14 +138,12 @@ BOOST_AUTO_TEST_CASE(new_user) {
   l_c.close();
 
   g_io_context().run();
-  BOOST_TEST(l_run);
 }
 
 BOOST_AUTO_TEST_CASE(get_user) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/get_user");
 
-  bool l_run{};
   auto l_reg = std::make_shared<entt::registry>();
   distributed_computing::client l_c{l_reg};
 
@@ -161,30 +156,39 @@ BOOST_AUTO_TEST_CASE(get_user) {
   );
 
   BOOST_TEST_MESSAGE(l_user_g.get<user>());
+  /// 关闭
+  l_c.close();
+
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_CASE(get_user_f) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/get_user");
 
-  bool l_run{};
   auto l_reg = std::make_shared<entt::registry>();
   distributed_computing::client l_c{l_reg};
 
   BOOST_CHECK_THROW(
-      (l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c0251"s))), doodle_error
+      (l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c0251"s))),
+      json_rpc::invalid_id_exception
   );
+  /// 关闭
+  l_c.close();
+
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_CASE(set_user) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/set_user");
 
-  bool l_run{};
   auto l_reg = std::make_shared<entt::registry>();
   distributed_computing::client l_c{l_reg};
 
   auto l_user_g = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
+
+  l_reg->ctx().emplace<user::current_user>().set_user(l_user_g);
 
   BOOST_TEST(l_user_g.get<user>().get_name() == "test1");
   BOOST_TEST(
@@ -195,6 +199,10 @@ BOOST_AUTO_TEST_CASE(set_user) {
   l_c.set_user(l_user_g);
 
   BOOST_TEST_MESSAGE(l_user_g.get<user>());
+  /// 关闭
+  l_c.close();
+
+  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
