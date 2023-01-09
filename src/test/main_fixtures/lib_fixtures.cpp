@@ -4,7 +4,6 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/args.hpp>
-#include <boost/process/detail/child_decl.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test_log.hpp>
 
@@ -61,6 +60,7 @@ void run_subprocess::run(const std::string& in_run_fun) {
             BOOST_TEST(!in_exit);
           }
   );
+
   read_(out_attr, out_str);
   read_(err_attr, err_str);
 }
