@@ -94,8 +94,6 @@ class DOODLELIB_API server {
   std::shared_ptr<zmq::socket_t> socket_backend;
   /// 后端(路由)
   std::shared_ptr<zmq::socket_t> socket_frontend;
-  /// 工作组
-  std::vector<std::shared_ptr<task>> socket_server_list;
 
  public:
   std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard;
@@ -104,6 +102,8 @@ class DOODLELIB_API server {
   ~server();
 
   void run();
+  /// 工作组
+  std::vector<std::shared_ptr<task>> socket_server_list;
 
  private:
   void create_backend();

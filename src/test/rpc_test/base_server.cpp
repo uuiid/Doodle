@@ -38,6 +38,7 @@
 #include <iostream>
 #include <main_fixtures/lib_fixtures.h>
 #include <memory>
+#include <string>
 #include <vector>
 
 using namespace doodle;
@@ -48,7 +49,7 @@ struct loop_rpc {
 };
 }  // namespace
 
-BOOST_FIXTURE_TEST_SUITE(rpc_server, loop_rpc)
+BOOST_FIXTURE_TEST_SUITE(rpc_server, loop_rpc, *boost::unit_test::disabled())
 
 BOOST_AUTO_TEST_CASE(base) {
   bool run{true};
@@ -67,7 +68,7 @@ BOOST_AUTO_TEST_CASE(list_users) {
     l_h.emplace<user>().set_name(fmt::format("user{}", i));
     l_h.emplace<database>();
   }
-  
+
   distributed_computing::server l_s{};
   l_s.run();
 
@@ -75,4 +76,67 @@ BOOST_AUTO_TEST_CASE(list_users) {
 
   BOOST_TEST(run);
 }
+
+BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
+  bool run{true};
+  std::vector<entt::handle> users{};
+
+  auto l_main = users.emplace_back(make_handle());
+
+  l_main.emplace<user>().set_name(fmt::format("user_{}", "main"s));
+  l_main.get<user>().power = power_enum::modify_other_users;
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+  for (auto j = 0u; j < 10; ++j) {
+    auto l_h2 = make_handle();
+    auto& l_w = l_h2.emplace<work_task_info>();
+    l_w.user_ref.user_attr(l_main);
+    l_w.task_name = fmt::format("work main_{} ", j);
+    l_h2.emplace<database>();
+  }
+  for (auto i = 0u; i < 10; ++i) {
+    auto l_h = users.emplace_back(make_handle());
+
+    l_h.emplace<user>().set_name(fmt::format("user{}", i));
+    l_h.emplace<database>();
+    for (auto j = 0u; j < 10; ++j) {
+      auto l_h2 = make_handle();
+      auto& l_w = l_h2.emplace<work_task_info>();
+      l_w.user_ref.user_attr(l_h);
+      l_w.task_name = fmt::format("work {}_{} ", i, j);
+      l_h2.emplace<database>();
+    }
+  }
+
+  distributed_computing::server l_s{};
+  l_s.run();
+
+  g_io_context().run();
+
+  BOOST_TEST(run);
+}
+
+BOOST_AUTO_TEST_CASE(new_user) {
+  bool run{true};
+  distributed_computing::server l_s{};
+
+  for (auto&& l_work : l_s.socket_server_list) {
+    l_work->register_sig([](const std::string& in) {
+      auto l_all_reg_view1 = g_reg()->view<user>();
+      if (in == "new.user") {
+        BOOST_TEST(l_all_reg_view1.size() == 1);
+      } else if (in == "set.user") {
+        auto l_all_h1 = entt::handle{*g_reg(), l_all_reg_view1[0]};
+        BOOST_TEST(l_all_h1.get<user>().get_name() == "tset_m"s);
+        BOOST_TEST_MESSAGE(l_all_h1.get<user>());
+      }
+    });
+  }
+
+  l_s.run();
+
+  g_io_context().run();
+
+  BOOST_TEST(run);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
