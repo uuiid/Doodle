@@ -5,6 +5,7 @@
 #include "rpc_server.h"
 
 #include "exception/exception.h"
+#include "json_rpc/core/rpc_server.h"
 #include "json_rpc/exception/json_rpc_error.h"
 #include <nlohmann/json_fwd.hpp>
 
@@ -29,7 +30,7 @@ std::string rpc_server::operator()(const std::string& in_data) const {
     }
 
     l_rpc_reply.result = l_call(rpc_requrst_.params_);
-
+    sig_fun(rpc_requrst_.method_);
   } catch (const json_rpc::rpc_error_exception& in) {
     l_rpc_reply.result = json_rpc::rpc_error{in};
   } catch (const nlohmann::json::exception& in) {
@@ -38,6 +39,8 @@ std::string rpc_server::operator()(const std::string& in_data) const {
   l_json = l_rpc_reply;
   return l_json.dump();
 }
+
+boost::signals2::connection rpc_server::register_sig(const slot_type& in_solt) { return sig_fun.connect(in_solt); }
 rpc_server::rpc_server() : fun_list_() {}
 rpc_server::~rpc_server() = default;
 

@@ -14,6 +14,7 @@
 #include <boost/function_types/result_type.hpp>
 #include <boost/mpl/erase.hpp>
 #include <boost/signals2.hpp>
+#include <boost/signals2/connection.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -34,13 +35,18 @@ auto unpack_params(ParamSequence, std::index_sequence<Indices...>)
 
 class DOODLE_CORE_API rpc_server {
  public:
-  using call_fun = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
+  using call_fun  = std::function<nlohmann::json(const std::optional<nlohmann::json>&)>;
 
-  using call_    = call_fun;
+  using call_     = call_fun;
+
+  using sig_type  = boost::signals2::signal<void(const std::string&)>;
+  using slot_type = sig_type::slot_type;
+  
 
  private:
  protected:
   std::map<std::string, call_> fun_list_{};
+  sig_type sig_fun{};
 
   template <typename... Ts>
   constexpr static auto decay_types(const std::tuple<Ts...>&)
@@ -51,6 +57,7 @@ class DOODLE_CORE_API rpc_server {
   virtual ~rpc_server();
 
   void register_fun(const std::string& in_name, const call_fun& in_call);
+  boost::signals2::connection register_sig(const slot_type& in_solt);
 
  public:
   /**
