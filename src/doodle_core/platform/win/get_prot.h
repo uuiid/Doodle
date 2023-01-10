@@ -7,4 +7,5 @@
 namespace doodle::win {
 
 std::uint32_t DOODLE_CORE_API get_tcp_port(std::uint32_t id);
+bool DOODLE_CORE_API has_tcp_port(std::uint32_t in_port);
 }

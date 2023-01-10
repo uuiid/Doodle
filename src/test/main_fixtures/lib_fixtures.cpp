@@ -1,5 +1,7 @@
 #include "lib_fixtures.h"
 
+#include <doodle_core/platform/win/get_prot.h>
+
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
@@ -47,6 +49,11 @@ run_subprocess::run_subprocess(boost::asio::io_context& in_io)
       err_str(std::make_shared<boost::asio::streambuf>()) {}
 
 void run_subprocess::run(const std::string& in_run_fun) {
+  // if (doodle::win::has_tcp_port(23333)) {
+  //   BOOST_TEST_MESSAGE("找到端口,不启动子进程");
+  //   return;
+  // }
+
   out_attr = std::make_shared<boost::process::async_pipe>(io);
   err_attr = std::make_shared<boost::process::async_pipe>(io);
   using namespace std::literals;

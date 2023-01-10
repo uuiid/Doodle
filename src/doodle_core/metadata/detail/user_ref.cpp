@@ -37,7 +37,7 @@ void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
 
 const boost::uuids::uuid& user_ref::get_uuid() const { return user_ref_attr.uuid; }
 
-entt::handle user_ref::user_attr() {
+entt::handle user_ref::user_attr() const {
   if (handle_cache && handle_cache.all_of<database, user>() && handle_cache.get<database>() == user_ref_attr &&
       handle_cache.get<user>().get_name() == cache_name) {
     return handle_cache;
@@ -66,7 +66,7 @@ entt::handle user_ref::user_attr() {
     return handle_cache;
   }
 }
-entt::handle user_ref::user_attr() const { return handle_cache; }
+// entt::handle user_ref::user_attr() const { return handle_cache; }
 
 void user_ref::user_attr(const entt::handle& in_user) {
   if (!in_user) throw_exception(doodle_error{"无效句柄"});

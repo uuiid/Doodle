@@ -209,9 +209,6 @@ BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/set_user_work_task_info");
 
-  auto l_main = make_handle();
-  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
-
   distributed_computing::client l_c{};
   auto l_users = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
 
@@ -229,6 +226,7 @@ BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   l_work_com.task_name = "clict_set_test1";
   l_work_com.abstract  = "clict_set_test2";
   l_work_com.region    = "clict_set_test3";
+  l_work_com.time      = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_local_time());
 
   l_c.set_work_task_info(l_users, l_whs[0]);
 

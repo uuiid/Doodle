@@ -15,21 +15,21 @@
 namespace doodle {
 
 class DOODLE_CORE_API user_ref {
-  database::ref_data user_ref_attr{};
+  mutable database::ref_data user_ref_attr{};
 
-  entt::handle handle_cache;
+  mutable entt::handle handle_cache;
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user_ref& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user_ref& p);
 
  public:
   user_ref() = default;
   explicit user_ref(const entt::handle& in_handle);
-  std::string cache_name;
+  mutable std::string cache_name;
   void set_uuid(const boost::uuids::uuid& in_data_uuid);
   [[nodiscard]] const boost::uuids::uuid& get_uuid() const;
 
   [[nodiscard]] entt::handle user_attr() const;
-  [[nodiscard]] entt::handle user_attr();
+  // [[nodiscard]] entt::handle user_attr();
   void user_attr(const entt::handle& in_user);
 };
 }  // namespace doodle

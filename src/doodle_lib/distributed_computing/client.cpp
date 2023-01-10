@@ -104,16 +104,16 @@ std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in
   return l_r;
 }
 
-entt::handle client::set_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
+entt::handle client::set_work_task_info(const entt::handle& in_token, const entt::handle& in_work) {
   if (!reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
-  if (!in_user.all_of<work_task_info>()) throw_exception(doodle_error{"缺失组件"});
+  if (!in_work.all_of<work_task_info>()) throw_exception(doodle_error{"缺失组件"});
 
   auto l_current_user = reg->ctx().at<user::current_user>().get_handle();
   call_fun<void, false>(
-      "set.work_task_info"s, std::make_tuple(in_token, l_current_user.entity(), in_user.get<work_task_info>())
+      "set.work_task_info"s, std::make_tuple(in_token.get<database>(), in_work.entity(), in_work.get<work_task_info>())
   );
 
-  return in_user;
+  return in_work;
 }
 
 void client::close() {
