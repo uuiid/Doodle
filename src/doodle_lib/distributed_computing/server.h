@@ -95,6 +95,16 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    * @param in_work 工作信息
    */
   void set_user_work_task_info(const entt::handle& in_tocken, const entt::entity& in_, const work_task_info& in_work);
+  /**
+   * @brief 删除用户组件
+   *
+   * @param in_tocken 传入的权限句柄
+   * @param in_ 实体
+   * @param in_work
+   */
+  void delete_work_task_info(const entt::handle& in_tocken, const entt::entity& in_);
+
+  
 
   void connect();
 };

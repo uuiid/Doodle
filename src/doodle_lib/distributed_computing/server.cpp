@@ -15,12 +15,15 @@
 #include <boost/asio/strand.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/system/system_error.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include "distributed_computing/server.h"
 #include <azmq/message.hpp>
 #include <azmq/socket.hpp>
 #include <cstddef>
+#include <entt/entity/entity.hpp>
 #include <entt/entity/fwd.hpp>
+#include <entt/entity/registry.hpp>
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
@@ -257,7 +260,7 @@ std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_wor
 void task::set_user_work_task_info(
     const entt::handle& in_tocken, const entt::entity& in_, const work_task_info& in_work
 ) {
-  std::ignore     = this;
+  boost::ignore_unused(this);
   auto l_ref_user = in_work.user_ref.user_attr();
   if (in_tocken.get<user>().power != power_enum::modify_other_users && in_tocken != l_ref_user) {
     throw_exception(json_rpc::insufficient_permissions_exception{});
@@ -265,6 +268,25 @@ void task::set_user_work_task_info(
 
   auto l_h = entt::handle{*g_reg(), g_reg()->valid(in_) ? in_ : g_reg()->create(in_)};
   l_h.emplace_or_replace<work_task_info>(in_work).user_ref.user_attr(l_ref_user);
+  if (!l_h.all_of<database>()) l_h.emplace<database>();
+  database::save(l_h);
+}
+
+void task::delete_work_task_info(const entt::handle& in_tocken, const entt::entity& in_) {
+  boost::ignore_unused(this);
+
+  if (in_tocken.get<user>().power != power_enum::modify_other_users) {
+    throw_exception(json_rpc::insufficient_permissions_exception{});
+  }
+  if (!g_reg()->valid(in_)) {
+    throw_exception(json_rpc::invalid_id_exception{});
+  }
+  auto l_h = entt::handle{*g_reg(), in_};
+  if (!l_h.all_of<work_task_info>()) {
+    throw_exception(json_rpc::missing_components_exception{});
+  }
+  l_h.erase<work_task_info>();
+
   if (!l_h.all_of<database>()) l_h.emplace<database>();
   database::save(l_h);
 }
