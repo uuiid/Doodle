@@ -89,7 +89,7 @@ entt::handle client::get_user(const boost::uuids::uuid& in_user) {
 
 std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
   auto l_user = call_fun<std::vector<std::tuple<entt::entity, work_task_info>>>(
-      "get_user_work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.entity())
+      "get.filter.work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.entity())
   );
 
   std::vector<entt::handle> l_r{};
@@ -102,6 +102,18 @@ std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in
     l_r.emplace_back(l_r_h);
   };
   return l_r;
+}
+
+entt::handle client::set_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
+  if (!reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
+  if (!in_user.all_of<work_task_info>()) throw_exception(doodle_error{"缺失组件"});
+
+  auto l_current_user = reg->ctx().at<user::current_user>().get_handle();
+  call_fun<void, false>(
+      "set.work_task_info"s, std::make_tuple(in_token, l_current_user.entity(), in_user.get<work_task_info>())
+  );
+
+  return in_user;
 }
 
 void client::close() {

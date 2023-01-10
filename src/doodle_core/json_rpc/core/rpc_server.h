@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/json_rpc/core/rpc_reply.h>
 #include <doodle_core/json_rpc/exception/json_rpc_error.h>
 
@@ -16,7 +17,6 @@
 #include <boost/signals2.hpp>
 #include <boost/signals2/connection.hpp>
 
-#include "exception/exception.h"
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -27,6 +27,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+
 
 namespace doodle::json_rpc {
 namespace detail {

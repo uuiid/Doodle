@@ -94,29 +94,6 @@ BOOST_AUTO_TEST_CASE(list_users) {
   g_io_context().run();
 }
 
-BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
-  run_subprocess l_sub{g_io_context()};
-  l_sub.run("rpc_server/get_user_work_task_info");
-
-  auto l_main = make_handle();
-  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
-
-  distributed_computing::client l_c{};
-  auto l_users = l_c.list_users();
-  BOOST_TEST(l_users.size() == 11);
-  for (auto&& l_f : l_users) {
-    std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
-    auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
-    BOOST_TEST(l_work_.size() == 10);
-    for (auto&& l_w : l_work_) {
-      std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
-    }
-  }
-  l_c.close();
-
-  g_io_context().run();
-}
-
 BOOST_AUTO_TEST_CASE(new_user) {
   run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/new_user");
@@ -200,6 +177,65 @@ BOOST_AUTO_TEST_CASE(set_user) {
 
   BOOST_TEST_MESSAGE(l_user_g.get<user>());
   /// 关闭
+  l_c.close();
+
+  g_io_context().run();
+}
+
+BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/get_user_work_task_info");
+
+  auto l_main = make_handle();
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+
+  distributed_computing::client l_c{};
+  auto l_users = l_c.list_users();
+  BOOST_TEST(l_users.size() == 11);
+  for (auto&& l_f : l_users) {
+    std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
+    auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
+    BOOST_TEST(l_work_.size() == 10);
+    for (auto&& l_w : l_work_) {
+      std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
+    }
+  }
+  l_c.close();
+
+  g_io_context().run();
+}
+
+BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
+  run_subprocess l_sub{g_io_context()};
+  l_sub.run("rpc_server/set_user_work_task_info");
+
+  auto l_main = make_handle();
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+
+  distributed_computing::client l_c{};
+  auto l_users = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
+
+  g_reg()->ctx().emplace<user::current_user>().set_user(l_users);
+
+  auto l_whs = l_c.get_user_work_task_info(l_users, l_users);
+  BOOST_TEST(l_whs.size() == 1);
+
+  auto& l_work_com = l_whs[0].get<work_task_info>();
+
+  BOOST_TEST(l_work_com.task_name == "clict_set_s1");
+  BOOST_TEST(l_work_com.abstract == "clict_set_s2");
+  BOOST_TEST(l_work_com.region == "clict_set_s3");
+
+  l_work_com.task_name = "clict_set_test1";
+  l_work_com.abstract  = "clict_set_test2";
+  l_work_com.region    = "clict_set_test3";
+
+  l_c.set_work_task_info(l_users, l_whs[0]);
+
+  BOOST_TEST(l_work_com.task_name == "clict_set_test1");
+  BOOST_TEST(l_work_com.abstract == "clict_set_test2");
+  BOOST_TEST(l_work_com.region == "clict_set_test3");
+
   l_c.close();
 
   g_io_context().run();

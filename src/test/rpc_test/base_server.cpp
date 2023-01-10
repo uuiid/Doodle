@@ -32,6 +32,7 @@
 #include <boost/test/unit_test_log.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
+#include <chrono>
 #include <entt/entity/fwd.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -160,6 +161,37 @@ BOOST_AUTO_TEST_CASE(set_user) {
 
   BOOST_TEST(l_main.get<user>().get_name() == "tset_m"s);
   BOOST_TEST_MESSAGE(l_main.get<user>());
+}
+
+BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
+  bool run{true};
+  distributed_computing::server l_s{};
+  auto l_main = make_handle();
+  l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
+  l_main.emplace<user>().set_name("test1");
+
+  g_reg()->ctx().emplace<user::current_user>().set_user(l_main);
+
+  auto l_work        = make_handle();
+  auto& l_work_com_b = l_work.emplace<work_task_info>();
+
+  l_work_com_b.user_ref.user_attr(l_main);
+  l_work_com_b.task_name = "clict_set_s1";
+  l_work_com_b.abstract  = "clict_set_s2";
+  l_work_com_b.region    = "clict_set_s3";
+
+  l_s.run();
+
+  g_io_context().run();
+
+  BOOST_TEST(run);
+
+  auto& l_work_com = l_work.get<work_task_info>();
+  BOOST_TEST(l_work_com.task_name == "clict_set_test1");
+  BOOST_TEST(l_work_com.abstract == "clict_set_test2");
+  BOOST_TEST(l_work_com.region == "clict_set_test3");
+  auto l_t = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_local_time());
+  BOOST_TEST(l_work_com.time == l_t);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

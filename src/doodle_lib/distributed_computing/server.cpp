@@ -257,15 +257,16 @@ std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_wor
 void task::set_user_work_task_info(
     const entt::handle& in_tocken, const entt::entity& in_, const work_task_info& in_work
 ) {
+  std::ignore     = this;
   auto l_ref_user = in_work.user_ref.user_attr();
-  if(in_tocken.get<user>().power != power_enum::modify_other_users && in_tocken != l_ref_user){
-    ;
+  if (in_tocken.get<user>().power != power_enum::modify_other_users && in_tocken != l_ref_user) {
+    throw_exception(json_rpc::insufficient_permissions_exception{});
   }
 
-
-
-
-
+  auto l_h = entt::handle{*g_reg(), g_reg()->valid(in_) ? in_ : g_reg()->create(in_)};
+  l_h.emplace_or_replace<work_task_info>(in_work).user_ref.user_attr(l_ref_user);
+  if (!l_h.all_of<database>()) l_h.emplace<database>();
+  database::save(l_h);
 }
 
 task::~task() = default;
