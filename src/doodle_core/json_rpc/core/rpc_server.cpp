@@ -34,7 +34,7 @@ std::string rpc_server::operator()(const std::string& in_data) const {
   } catch (const json_rpc::rpc_error_exception& in) {
     l_rpc_reply.result = json_rpc::rpc_error{in};
   } catch (const nlohmann::json::exception& in) {
-    l_rpc_reply.result = json_rpc::rpc_error{json_rpc::parse_error};
+    l_rpc_reply.result = json_rpc::rpc_error{json_rpc::parse_error_exception{}};
   }
   l_json = l_rpc_reply;
   return l_json.dump();

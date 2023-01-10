@@ -7,7 +7,6 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
 
-#include "json_rpc/exception/json_rpc_error.h"
 #include <cstdint>
 #include <exception>
 #include <fmt/format.h>
@@ -124,11 +123,5 @@ class rpc_error {
 #undef DOODLE_CASE_RPC
   }
 };
-inline const static rpc_error parse_error{
-    -32700, "Parse error语法解析错误"s, "服务端接收到无效的json 该错误发送于服务器尝试解析json文本"s};
-inline const static rpc_error invalid_request{-32600, "Invalid Request无效请求"s, "发送的json不是一个有效的请求对象"s};
-inline const static rpc_error method_not_found{-32601, "Method not found找不到方法"s, "该方法不存在或无效"s};
-inline const static rpc_error invalid_params{-32602, "Invalid params无效的参数"s, "无效的方法参数"s};
-inline const static rpc_error internal_error{-32603, "Internal error内部错误"s, "JSON-RPC内部错误"s};
 
 }  // namespace doodle::json_rpc

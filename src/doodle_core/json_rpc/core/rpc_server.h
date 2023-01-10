@@ -16,10 +16,12 @@
 #include <boost/signals2.hpp>
 #include <boost/signals2/connection.hpp>
 
+#include "exception/exception.h"
 #include <algorithm>
 #include <functional>
 #include <map>
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -41,7 +43,6 @@ class DOODLE_CORE_API rpc_server {
 
   using sig_type  = boost::signals2::signal<void(const std::string&)>;
   using slot_type = sig_type::slot_type;
-  
 
  private:
  protected:
@@ -82,7 +83,11 @@ class DOODLE_CORE_API rpc_server {
       //      typedef typename boost::function_types::result_type<Fun_T>::type Fun_Result;
 
       nlohmann::json json_l{};
-      impl_call_fun<Fun_D_T>(*l_call_fun, in_arg, json_l);
+      try {
+        impl_call_fun<Fun_D_T>(*l_call_fun, in_arg, json_l);
+      } catch (const nlohmann::json::parse_error& error) {
+        throw_exception(json_rpc::invalid_params_exception{});
+      }
       return json_l;
     });
   };
