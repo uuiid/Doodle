@@ -153,6 +153,10 @@ void task::run_task() {
       }
   );
 
+  register_fun_t("delete.work_task_info", [this](const database& in_tocken, const entt::entity& in_e) {
+    return this->delete_work_task_info(in_tocken.find_by_uuid(), in_e);
+  });
+
   register_fun_t("rpc.list_fun"s, [this, self = weak_from_this()]() -> std::vector<std::string> {
     auto l_list = fun_list_ |
                   ranges::views::transform([](const std::pair<std::string, task::call_fun>& in) -> std::string {
