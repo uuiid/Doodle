@@ -81,7 +81,7 @@ void run_subprocess::read_(
       std::string l_line{};
       std::istream l_istream{in_str.get()};
       std::getline(l_istream, l_line);
-      BOOST_TEST_MESSAGE(fmt::format("sub: ", l_line));
+      if (!l_line.empty()) BOOST_TEST_MESSAGE(fmt::format("sub: ", l_line));
     } else {
       BOOST_TEST_ERROR(in_code.what());
     }
