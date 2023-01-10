@@ -6,6 +6,7 @@
 #include "doodle_core/json_rpc/core/rpc_server.h"
 #include "doodle_core/lib_warp/json_warp.h"
 #include "doodle_core/metadata/metadata.h"
+#include "doodle_core/metadata/work_task.h"
 
 #include "doodle_lib/configure/doodle_lib_export.h"
 
@@ -50,16 +51,6 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    */
   std::vector<std::tuple<entt::entity, doodle::user>> list_users();
   /**
-   * @brief 获取用户的任务列表
-   *
-   * @param in_tocken 传入的权限句柄
-   * @param in_user 使用传入的用户过滤
-   * @return std::vector<std::tuple<entt::entity, doodle::work_task_info>> 实体和任务列表
-   */
-  std::vector<std::tuple<entt::entity, doodle::work_task_info>> get_user_work_task_info(
-      const entt::handle& in_tocken, const entt::handle& in_user
-  );
-  /**
    * @brief 设置user
    * @li 更新旧的用户
    *
@@ -85,6 +76,25 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    * @return std::tuple<entt::entity, user, database> 实体,用户,授权
    */
   std::tuple<entt::entity, user, database> get_user(const boost::uuids::uuid& in_uuid);
+
+  /**
+   * @brief 获取用户的任务列表
+   *
+   * @param in_tocken 传入的权限句柄
+   * @param in_user 使用传入的用户过滤
+   * @return std::vector<std::tuple<entt::entity, doodle::work_task_info>> 实体和任务列表
+   */
+  std::vector<std::tuple<entt::entity, doodle::work_task_info>> get_user_work_task_info(
+      const entt::handle& in_tocken, const entt::handle& in_user
+  );
+  /**
+   * @brief 设置实体的工作信息
+   *
+   * @param in_tocken  传入的权限句柄
+   * @param in_ 实体
+   * @param in_work 工作信息
+   */
+  void set_user_work_task_info(const entt::handle& in_tocken, const entt::entity& in_, const work_task_info& in_work);
 
   void connect();
 };

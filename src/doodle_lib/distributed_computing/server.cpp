@@ -118,17 +118,7 @@ class delete_fun {
 };
 
 task::task() : socket_server() {}
-template <typename T>
-void task::register_fun_t2() {
-  list_fun<T> l_t{};
-  register_fun_t(l_t.get_name(), l_t);
-  set_fun<T> l_set_t{};
-  register_fun_t(l_set_t.get_name(), l_set_t);
-  get_fun<T> l_get_t{};
-  register_fun_t(l_get_t.get_name(), l_get_t);
-  delete_fun<T> l_delte_t{};
-  register_fun_t(l_delte_t.get_name(), l_delte_t);
-}
+
 void task::run_task() {
   socket_server = std::make_shared<zmq::socket_t>(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::rep);
   // socket_server->bind("tcp://*:23333");
@@ -146,18 +136,20 @@ void task::run_task() {
   register_fun_t("get.user", [this](const boost::uuids::uuid& in_uuid) { return this->get_user(in_uuid); });
 
   register_fun_t(
-      "get_user_work_task_info"s,
+      "get.filter.work_task_info"s,
       [this](
           const database& in_tocken, const entt::entity& in_user
       ) -> std::vector<std::tuple<entt::entity, doodle::work_task_info>> {
         return this->get_user_work_task_info(in_tocken.find_by_uuid(), entt::handle{*g_reg(), in_user});
       }
   );
+  register_fun_t(
+      "set.work_task_info",
+      [this](const database& in_tocken, const entt::entity& in_e, const work_task_info& in_work) {
+        return this->set_user_work_task_info(in_tocken.find_by_uuid(), in_e, in_work);
+      }
+  );
 
-  register_fun_t("rpc.close"s, [this, self = weak_from_this()]() {
-    self.lock()->is_stop = true;
-    // if (socket_server) socket_server->close();
-  });
   register_fun_t("rpc.list_fun"s, [this, self = weak_from_this()]() -> std::vector<std::string> {
     auto l_list = fun_list_ |
                   ranges::views::transform([](const std::pair<std::string, task::call_fun>& in) -> std::string {
@@ -260,6 +252,20 @@ std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_wor
     if (u.user_ref.user_attr() == in_user) l_r.emplace_back(e, u);
   }
   return l_r;
+}
+
+void task::set_user_work_task_info(
+    const entt::handle& in_tocken, const entt::entity& in_, const work_task_info& in_work
+) {
+  auto l_ref_user = in_work.user_ref.user_attr();
+  if(in_tocken.get<user>().power != power_enum::modify_other_users && in_tocken != l_ref_user){
+    ;
+  }
+
+
+
+
+
 }
 
 task::~task() = default;

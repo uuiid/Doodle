@@ -5,7 +5,10 @@
 #pragma once
 
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/enum_template_tool.h>
 
+#include "json_rpc/exception/json_rpc_error.h"
+#include <cstdint>
 #include <exception>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
@@ -13,6 +16,30 @@
 using namespace std::literals;
 
 namespace doodle::json_rpc {
+
+enum class rpc_error_enum : std::int32_t {
+  /// @brief 语法解析错误
+  parse_error              = -32700,
+  /// @brief 无效请求
+  invalid_request          = -32600,
+  /// @brief 找不到方法
+  method_not_found         = -32601,
+  /// @brief 无效的参数
+  invalid_params           = -32602,
+  /// @brief 内部错误
+  internal_error           = -32603,
+
+  /// @brief 无效的句柄
+  invalid_handle           = -32000,
+  /// @brief 无效的id
+  invalid_id               = -32001,
+  /// @brief 缺失组件
+  missing_components       = -32002,
+  /// @brief 权限不足
+  insufficient_permissions = -32003,
+
+};
+
 /**
  * @brief  所有的rpc 错误基类
  *
@@ -28,49 +55,26 @@ class rpc_error_exception : public doodle_error {
         message(in_msg),
         data(in_data) {}
 };
-/**
- * @brief json解析错误
- *
- */
-class parse_error_exception : public rpc_error_exception {
- public:
-  parse_error_exception()
-      : rpc_error_exception(
-            -32700, "Parse error语法解析错误"s, "服务端接收到无效的json 该错误发送于服务器尝试解析json文本"s
-        ) {}
-};
-class invalid_request_exception : public rpc_error_exception {
- public:
-  invalid_request_exception()
-      : rpc_error_exception(-32600, "Invalid Request无效请求"s, "发送的json不是一个有效的请求对象"s) {}
-};
-class method_not_found_exception : public rpc_error_exception {
- public:
-  method_not_found_exception() : rpc_error_exception(-32601, "Method not found找不到方法"s, "该方法不存在或无效"s) {}
-};
-class invalid_params_exception : public rpc_error_exception {
- public:
-  invalid_params_exception() : rpc_error_exception(-32602, "Invalid params无效的参数"s, "无效的方法参数"s) {}
-};
-class internal_error_exception : public rpc_error_exception {
- public:
-  internal_error_exception() : rpc_error_exception(-32603, "Internal error内部错误"s, "JSON-RPC内部错误"s) {}
-};
 
-class invalid_handle_exception : public rpc_error_exception {
- public:
-  invalid_handle_exception() : rpc_error_exception(-32000, "无效的句柄"s, "传入的句柄无效"s) {}
-};
+#define DOODLE_JSON_RPC_EXCEPTION(error_enum, msg, data)                                                        \
+  class error_enum##_exception : public rpc_error_exception {                                                   \
+   public:                                                                                                      \
+    error_enum##_exception() : rpc_error_exception(enum_to_num(rpc_error_enum::error_enum), msg##s, data##s) {} \
+  };
 
-class invalid_id_exception : public rpc_error_exception {
- public:
-  invalid_id_exception() : rpc_error_exception(-32001, "无效的id"s, "传入的id无效"s) {}
-};
+DOODLE_JSON_RPC_EXCEPTION(
+    parse_error, "Parse error语法解析错误", "服务端接收到无效的json 该错误发送于服务器尝试解析json文本"
+)
+DOODLE_JSON_RPC_EXCEPTION(invalid_request, "Invalid Request无效请求", "发送的json不是一个有效的请求对象")
+DOODLE_JSON_RPC_EXCEPTION(method_not_found, "Method not found找不到方法", "该方法不存在或无效")
+DOODLE_JSON_RPC_EXCEPTION(invalid_params, "Invalid params无效的参数", "无效的方法参数")
+DOODLE_JSON_RPC_EXCEPTION(internal_error, "Internal error内部错误", "JSON-RPC内部错误")
+DOODLE_JSON_RPC_EXCEPTION(invalid_handle, "无效的句柄", "传入的句柄无效")
+DOODLE_JSON_RPC_EXCEPTION(invalid_id, "无效的id", "传入的id无效")
+DOODLE_JSON_RPC_EXCEPTION(missing_components, "缺失组件", "传入的句柄缺失组件")
+DOODLE_JSON_RPC_EXCEPTION(insufficient_permissions, "权限不足", "权限不足")
 
-class missing_components_exception : public rpc_error_exception {
- public:
-  missing_components_exception() : rpc_error_exception(-32002, "缺失组件"s, "传入的句柄缺失组件"s) {}
-};
+#undef DOODLE_JSON_RPC_EXCEPTION
 
 class rpc_error {
  private:
@@ -99,26 +103,25 @@ class rpc_error {
   std::string data{};
 
   [[noreturn]] void to_throw() const {
-    switch (code) {
-      case -32700:
-        throw_exception(parse_error_exception{});
-      case -32600:
-        throw_exception(invalid_request_exception{});
-      case -32601:
-        throw_exception(method_not_found_exception{});
-      case -32602:
-        throw_exception(invalid_params_exception{});
-      case -32603:
-        throw_exception(internal_error_exception{});
-      case -32000:
-        throw_exception(invalid_handle_exception{});
-      case -32001:
-        throw_exception(invalid_id_exception{});
-      case -32002:
-        throw_exception(missing_components_exception{});
+    auto l_enuum = num_to_enum<rpc_error_enum>(code);
+#define DOODLE_CASE_RPC(error_enum) \
+  case rpc_error_enum::error_enum:  \
+    throw_exception(error_enum##_exception{})
+
+    switch (l_enuum) {
+      DOODLE_CASE_RPC(parse_error);
+      DOODLE_CASE_RPC(invalid_request);
+      DOODLE_CASE_RPC(method_not_found);
+      DOODLE_CASE_RPC(invalid_params);
+      DOODLE_CASE_RPC(internal_error);
+      DOODLE_CASE_RPC(invalid_handle);
+      DOODLE_CASE_RPC(invalid_id);
+      DOODLE_CASE_RPC(missing_components);
+      DOODLE_CASE_RPC(insufficient_permissions);
       default:
         throw rpc_error_exception{code, message, data};
     }
+#undef DOODLE_CASE_RPC
   }
 };
 inline const static rpc_error parse_error{
