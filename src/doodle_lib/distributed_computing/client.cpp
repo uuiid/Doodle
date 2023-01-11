@@ -3,7 +3,6 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
-#include "doodle_core/logger/logger.h"
 #include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/user.h"
 #include "doodle_core/metadata/work_task.h"

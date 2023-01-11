@@ -5,7 +5,6 @@
 #include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/json_rpc/core/rpc_client.h"
-#include "doodle_core/metadata/work_task.h"
 
 #include "doodle_lib/configure/doodle_lib_export.h"
 
@@ -45,9 +44,9 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   /// 获取用户任务的信息
   std::vector<entt::handle> get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
   /// 设置任务信息(包括提交)
-  entt::handle set_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
-  /// 删除任务信息
-  entt::handle delete_work_task_info(const entt::handle& in_token, const entt::handle& in_work);
+  entt::handle set_work_task_info(const entt::handle& in_token, const entt::handle& in_work);
+  // /// 删除任务信息
+  // entt::handle delete_work_task_info(const entt::handle& in_token, const entt::handle& in_work);
 
   /// 销毁句柄
   void destroy_entity(const entt::handle& in_entt);
