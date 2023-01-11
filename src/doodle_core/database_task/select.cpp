@@ -239,8 +239,9 @@ void select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
   p_i->project          = in_project_path;
-
+#if defined(DOODLE_SQL_compatible_v2)
   this->p_i->select_old(*p_i->local_reg, *in_connect);
+#endif
 
   /// \brief 等待旧的任务完成
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) { in_.get(); });
