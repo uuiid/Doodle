@@ -29,10 +29,12 @@ struct run_subprocess {
   std::shared_ptr<boost::asio::streambuf> out_str{};
   std::shared_ptr<boost::asio::streambuf> err_str{};
 
+  bool is_stop{};
+
   explicit run_subprocess(boost::asio::io_context& in_io);
   void run(const std::string& in_run_fun);
 
-  static void read_(
+  void read_(
       const std::shared_ptr<boost::process::async_pipe>& in_pipe, const std::shared_ptr<boost::asio::streambuf>& in_str
   );
 };

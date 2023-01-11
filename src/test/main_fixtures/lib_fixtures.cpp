@@ -6,6 +6,7 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/args.hpp>
+#include <boost/system/detail/error_code.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test_log.hpp>
 
@@ -65,6 +66,7 @@ void run_subprocess::run(const std::string& in_run_fun) {
           [this](int in_exit, const std::error_code& in_error_code) {
             BOOST_TEST(!in_error_code);
             BOOST_TEST(!in_exit);
+            is_stop = true;
           }
   );
 
@@ -75,15 +77,27 @@ void run_subprocess::run(const std::string& in_run_fun) {
 void run_subprocess::read_(
     const std::shared_ptr<boost::process::async_pipe>& in_pipe, const std::shared_ptr<boost::asio::streambuf>& in_str
 ) {
-  boost::asio::async_read_until(*in_pipe, *in_str, '\n', [in_str](boost::system::error_code in_code, std::size_t in_n) {
-    BOOST_TEST(!in_code);
-    if (!in_code) {
-      std::string l_line{};
-      std::istream l_istream{in_str.get()};
-      std::getline(l_istream, l_line);
-      if (!l_line.empty()) BOOST_TEST_MESSAGE(fmt::format("sub: ", l_line));
-    } else {
-      BOOST_TEST_ERROR(in_code.what());
-    }
-  });
+  boost::asio::async_read_until(
+      *in_pipe, *in_str, '\n',
+      [this, in_pipe, in_str](boost::system::error_code in_code, std::size_t in_n) {
+        if (in_code.value() == boost::asio::error::broken_pipe) {
+          return;
+        }
+        BOOST_TEST(!in_code);
+        if (!in_code) {
+          std::string l_line{};
+          std::istream l_istream{in_str.get()};
+          std::getline(l_istream, l_line);
+
+          if (ranges::all_of(l_line, [&](const std::string::value_type& in_type) -> bool {
+                return std::isspace(in_type);
+              })) {
+            BOOST_TEST_MESSAGE(fmt::format("sub: ", l_line));
+          }
+        } else {
+          BOOST_TEST_ERROR(in_code.what());
+        }
+        if (!is_stop) read_(in_pipe, in_str);
+      }
+  );
 }
