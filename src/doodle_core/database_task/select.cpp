@@ -8,7 +8,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/details/update_ctx.h>
 #include <doodle_core/database_task/sql_file.h>
-#include <doodle_core/generate/core/metadatatab_sql.h>
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
@@ -109,7 +108,7 @@ class select::impl {
   std::vector<entt::entity> create_entt{};
   id_map_type id_map{};
   process_message* process_message_{};
-
+#if defined(DOODLE_SQL_compatible_v2)
 #pragma region "old compatible 兼容旧版函数"
   void select_old(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     if (auto [l_v, l_i] = doodle::database_n::details::get_version(in_conn);
@@ -162,7 +161,7 @@ class select::impl {
     }
   }
 #pragma endregion
-
+#endif
   template <typename Type>
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
     sql::ComEntity l_com_entity{};

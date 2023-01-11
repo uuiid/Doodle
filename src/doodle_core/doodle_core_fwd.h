@@ -69,7 +69,7 @@ class insert;
 class select;
 class update_data;
 class delete_data;
-template <typename T>
+template <typename T, bool constraint>
 struct sql_com;
 }  // namespace database_n
 

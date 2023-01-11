@@ -2,6 +2,7 @@
 
 #include "doodle_core/doodle_core_fwd.h"
 
+#include <cstdint>
 #include <entt/entity/fwd.hpp>
 
 namespace doodle::database_n {
@@ -10,13 +11,7 @@ namespace doodle::database_n {
  *
  * @tparam T
  */
-template <typename T>
-struct sql_com {
-  void create_table(conn_ptr& in_ptr);
-  void install(conn_ptr& in_ptr, const entt::handle& in_handle);
-  void update(conn_ptr& in_ptr, const entt::handle& in_handle);
-  void select(conn_ptr& in_ptr, entt::handle& in_handle);
-  void destroy(conn_ptr& in_ptr, const entt::handle& in_handle);
-};
+template <typename T, bool constraint>
+struct sql_com {};
 
 }  // namespace doodle::database_n
