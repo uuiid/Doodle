@@ -116,6 +116,12 @@ entt::handle client::set_work_task_info(const entt::handle& in_token, const entt
   return in_work;
 }
 
+void client::destroy_entity(const entt::handle& in_entt) {
+  if (!in_entt) throw_exception(doodle_error{"无效的句柄"});
+
+  call_fun<void, false>("destroy.entity"s, std::make_tuple(in_entt.entity()));
+}
+
 void client::close() {
   is_stop = true;
   call_fun<void, true>("rpc.close"s);

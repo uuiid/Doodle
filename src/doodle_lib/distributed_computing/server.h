@@ -18,6 +18,7 @@
 
 #include <entt/entity/fwd.hpp>
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -104,7 +105,12 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    */
   void delete_work_task_info(const entt::handle& in_tocken, const entt::entity& in_);
 
-  
+  /**
+   * @brief 销毁实体
+   *
+   * @param in_ 实体
+   */
+  void destroy_entity(const entt::entity& in_);
 
   void connect();
 };

@@ -47,7 +47,10 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   /// 设置任务信息(包括提交)
   entt::handle set_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
   /// 删除任务信息
-  entt::handle delete_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
+  entt::handle delete_work_task_info(const entt::handle& in_token, const entt::handle& in_work);
+
+  /// 销毁句柄
+  void destroy_entity(const entt::handle& in_entt);
 
   void close();
 

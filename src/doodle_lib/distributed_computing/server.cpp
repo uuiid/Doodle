@@ -157,6 +157,8 @@ void task::run_task() {
     return this->delete_work_task_info(in_tocken.find_by_uuid(), in_e);
   });
 
+  register_fun_t("destroy.entity"s, [this](const entt::entity& in_e) { return this->destroy_entity(in_e); });
+
   register_fun_t("rpc.list_fun"s, [this, self = weak_from_this()]() -> std::vector<std::string> {
     auto l_list = fun_list_ |
                   ranges::views::transform([](const std::pair<std::string, task::call_fun>& in) -> std::string {
@@ -293,6 +295,15 @@ void task::delete_work_task_info(const entt::handle& in_tocken, const entt::enti
 
   if (!l_h.all_of<database>()) l_h.emplace<database>();
   database::save(l_h);
+}
+
+void task::destroy_entity(const entt::entity& in_) {
+  boost::ignore_unused(this);
+  auto l_h = entt::handle{*g_reg(), in_};
+  if (!l_h) {
+    throw_exception(json_rpc::invalid_handle_exception{});
+  }
+  l_h.destroy();
 }
 
 task::~task() = default;
