@@ -5,7 +5,7 @@ target_sources(doodle_core
         select.h
         update.h
         sqlite_client.h
-
+        sql_com.h
         PRIVATE
 
         delete_data.cpp
@@ -13,6 +13,5 @@ target_sources(doodle_core
         select.cpp
         update.cpp
         sqlite_client.cpp
-
-        )
+)
 add_subdirectory(details)

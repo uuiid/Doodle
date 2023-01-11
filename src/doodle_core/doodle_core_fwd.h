@@ -69,6 +69,8 @@ class insert;
 class select;
 class update_data;
 class delete_data;
+template <typename T>
+struct sql_com;
 }  // namespace database_n
 
 using conn_ptr = std::unique_ptr<sqlpp::sqlite3::connection>;
