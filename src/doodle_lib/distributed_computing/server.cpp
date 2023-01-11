@@ -303,7 +303,7 @@ void task::destroy_entity(const entt::entity& in_) {
   if (!l_h) {
     throw_exception(json_rpc::invalid_handle_exception{});
   }
-  l_h.destroy();
+  database::delete_(l_h);
 }
 
 task::~task() = default;
