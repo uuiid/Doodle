@@ -38,12 +38,14 @@ struct current_clock {
 
 template <typename Duration_T>
 time_point<local_t, Duration_T> to_local_point(const time_point<system_clock, Duration_T>& in) {
-  return time_point<local_t, Duration_T>{(in - detail::get_local_bias()).time_since_epoch()};
+  return time_point<local_t, Duration_T>{
+      std::chrono::round<Duration_T>(in - detail::get_local_bias()).time_since_epoch()};
 }
 
 template <typename Duration_T>
 time_point<system_clock, Duration_T> to_sys_point(const time_point<local_t, Duration_T>& in) {
-  return time_point<system_clock, Duration_T>{(in + detail::get_local_bias()).time_since_epoch()};
+  return time_point<system_clock, Duration_T>{
+      std::chrono::round<Duration_T>(in + detail::get_local_bias()).time_since_epoch()};
 }
 }  // namespace chrono_ns
 
