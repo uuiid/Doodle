@@ -39,12 +39,14 @@ create table if not exists doodle_info
     version_major integer not null,
     version_minor integer not null
 );
-
-
 create table if not exists usertab
 (
     id               integer
         primary key,
+    entity_id        integer,
+    parent_id        integer,
+    parent_hash      integer,
+
     user_name        text             not null,
     permission_group bigint default 0 not null
 );

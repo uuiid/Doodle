@@ -66,6 +66,8 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
                                  boost::equality_comparable<boost::uuids::uuid>,
                                  boost::equality_comparable<database_ns::ref_data> {
   RTTR_ENABLE();
+  template <typename T, bool constraint>
+  friend struct database_n::sql_com;
 
  private:
   friend class database_n::insert;

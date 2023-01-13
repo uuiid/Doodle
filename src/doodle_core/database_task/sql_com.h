@@ -6,6 +6,7 @@
 #include <entt/entity/fwd.hpp>
 
 namespace doodle::database_n {
+
 /**
  * @brief 这是一个模板类, 用来特化数据库类型的
  *

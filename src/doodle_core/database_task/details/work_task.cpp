@@ -1,5 +1,7 @@
 #include "work_task.h"
 
+#include <doodle_core/database_task/details/tool.h>
+#include <doodle_core/database_task/sql_com.h>
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 
@@ -135,15 +137,7 @@ void sql_com<doodle::work_task_info, false>::select(
   }
 }
 void sql_com<doodle::work_task_info, false>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  sql::WorkTaskInfo l_tabl{};
-  auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
-
-  for (auto& l_id : in_handle) {
-    l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_id);
-    l_conn(l_pre);
-  }
+  detail::sql_com_destroy<sql::WorkTaskInfo>(in_ptr, in_handle);
 }
 
 }  // namespace doodle::database_n

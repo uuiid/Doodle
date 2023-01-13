@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/configure/doodle_core_export.h"
+#include <doodle_core/database_task/sql_com.h>
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <cstdint>
@@ -29,6 +30,10 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   std::string p_ENUS;
 
   RTTR_REGISTRATION_FRIEND;
+  template <typename T1, typename Char, typename Enable>
+  friend struct fmt::formatter;
+  template <typename T, bool constraint>
+  friend struct database_n::sql_com;
 
  public:
   user();

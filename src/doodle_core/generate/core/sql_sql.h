@@ -206,102 +206,138 @@ namespace doodle_database
         static constexpr const char _literal[] =  "json_data";
         using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
         template<typename T>
-        struct _member_t
-          {
+        struct _member_t {
             T jsonData;
             T& operator()() { return jsonData; }
             const T& operator()() const { return jsonData; }
-          };
+        };
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
     };
-  } // namespace ComEntity_
+    }  // namespace ComEntity_
 
-  struct ComEntity
-      : sqlpp::table_t<ComEntity, ComEntity_::Id, ComEntity_::EntityId, ComEntity_::ComHash, ComEntity_::JsonData> {
+    struct ComEntity
+        : sqlpp::table_t<ComEntity, ComEntity_::Id, ComEntity_::EntityId, ComEntity_::ComHash, ComEntity_::JsonData> {
       struct _alias_t {
-          static constexpr const char _literal[] = "com_entity";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "com_entity";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T comEntity;
             T& operator()() { return comEntity; }
             const T& operator()() const { return comEntity; }
-          };
+        };
       };
-  };
-  namespace DoodleInfo_ {
-  struct VersionMajor {
+    };
+    namespace DoodleInfo_ {
+    struct VersionMajor {
       struct _alias_t {
-          static constexpr const char _literal[] = "version_major";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "version_major";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T versionMajor;
             T& operator()() { return versionMajor; }
             const T& operator()() const { return versionMajor; }
-          };
+        };
       };
       using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::require_insert>;
-  };
-  struct VersionMinor {
+    };
+    struct VersionMinor {
       struct _alias_t {
-          static constexpr const char _literal[] = "version_minor";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "version_minor";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T versionMinor;
             T& operator()() { return versionMinor; }
             const T& operator()() const { return versionMinor; }
-          };
+        };
       };
       using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::require_insert>;
-  };
-  }  // namespace DoodleInfo_
+    };
+    }  // namespace DoodleInfo_
 
-  struct DoodleInfo : sqlpp::table_t<DoodleInfo, DoodleInfo_::VersionMajor, DoodleInfo_::VersionMinor> {
+    struct DoodleInfo : sqlpp::table_t<DoodleInfo, DoodleInfo_::VersionMajor, DoodleInfo_::VersionMinor> {
       struct _alias_t {
-          static constexpr const char _literal[] = "doodle_info";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "doodle_info";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T doodleInfo;
             T& operator()() { return doodleInfo; }
             const T& operator()() const { return doodleInfo; }
-          };
+        };
       };
-  };
-  namespace Usertab_ {
-  struct Id {
+    };
+    namespace Usertab_ {
+    struct Id {
       struct _alias_t {
-          static constexpr const char _literal[] = "id";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "id";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T id;
             T& operator()() { return id; }
             const T& operator()() const { return id; }
-          };
+        };
       };
       using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
-  };
-  struct UserName {
+    };
+    struct EntityId {
       struct _alias_t {
-          static constexpr const char _literal[] = "user_name";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
+        static constexpr const char _literal[] = "entity_id";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+        };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct ParentId {
+      struct _alias_t {
+        static constexpr const char _literal[] = "parent_id";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
+            T parentId;
+            T& operator()() { return parentId; }
+            const T& operator()() const { return parentId; }
+        };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct ParentHash {
+      struct _alias_t {
+        static constexpr const char _literal[] = "parent_hash";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
+            T parentHash;
+            T& operator()() { return parentHash; }
+            const T& operator()() const { return parentHash; }
+        };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct UserName {
+      struct _alias_t {
+        static constexpr const char _literal[] = "user_name";
+        using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template <typename T>
+        struct _member_t {
             T userName;
             T& operator()() { return userName; }
             const T& operator()() const { return userName; }
-          };
+        };
       };
       using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::require_insert>;
     };
-    struct PermissionGroup
-    {
-      struct _alias_t
-      {
+    struct PermissionGroup {
+      struct _alias_t {
         static constexpr const char _literal[] =  "permission_group";
         using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
         template<typename T>
@@ -316,11 +352,9 @@ namespace doodle_database
     };
   } // namespace Usertab_
 
-  struct Usertab: sqlpp::table_t<Usertab,
-               Usertab_::Id,
-               Usertab_::UserName,
-               Usertab_::PermissionGroup>
-  {
+  struct Usertab : sqlpp::table_t<
+                       Usertab, Usertab_::Id, Usertab_::EntityId, Usertab_::ParentId, Usertab_::ParentHash,
+                       Usertab_::UserName, Usertab_::PermissionGroup> {
       struct _alias_t {
           static constexpr const char _literal[] = "usertab";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
