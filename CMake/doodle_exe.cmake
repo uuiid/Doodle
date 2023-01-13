@@ -76,9 +76,9 @@ function(doodle_sqlpp_generate out_lists)
                 _OUT
                 ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h)
         if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat AND WIN32 )
-            file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CLEAN_NAME}_sql.cmd 
-            CONTENT "${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
-py $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql doodle_database")
+            file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CLEAN_NAME}_sql.cmd
+                    CONTENT "call ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
+python $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql doodle_database")
             add_custom_command(
                     OUTPUT "${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h"
                     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CLEAN_NAME}_sql.cmd

@@ -6,7 +6,6 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/args.hpp>
-#include <boost/system/detail/error_code.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test_log.hpp>
 

@@ -18,7 +18,7 @@ core_sql::core_sql()
 #ifdef NDEBUG
   p_i->config.debug = false;
 #else
-//  p_i->config.debug = true;
+  p_i->config.debug = true;
 #endif
 }
 

@@ -7,6 +7,7 @@ target_sources(test_main
         boost_log.cpp
         rttr.cpp
         range.cpp
+        database_sqlite3.cpp
 )
 
 target_link_libraries(
