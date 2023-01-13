@@ -133,7 +133,7 @@ install imguiwrap --overlay-ports="F:\Doodle\vcpkg\ports"
 install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
 upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports"
 upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports" --no-dry-run
-sqlpp11[sqlite3-connector] --overlay-ports="F:\Doodle\vcpkg\ports"
+sqlpp11[sqlite3]
 
 
 remove boost-uninstall --recurse
