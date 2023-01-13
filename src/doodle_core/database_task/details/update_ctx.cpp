@@ -18,8 +18,11 @@
 
 #include "sqlpp11/ppgen.h"
 #include <range/v3/all.hpp>
+#include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+
+SQLPP_DECLARE_TABLE((sqlite_master), (type, text)(name, text)(tbl_name, text)(rootpage, int)(sql, text));
 
 namespace doodle::database_n::details {
 
@@ -139,7 +142,9 @@ void db_compatible::set_version(sqlpp::sqlite3::connection& in_conn) {
   ));
 }
 bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
-  sql::SqliteMaster l_master{};
+  sqlite_master::sqlite_master sqlite_master_1{};
+
+  sqlite_master::sqlite_master l_master{};
   auto l_item = in_conn(sqlpp::select(sqlpp::all_of(l_master))
                             .from(l_master)
                             .where(l_master.type == "table" && l_master.name == "doodle_info"));
@@ -150,7 +155,7 @@ bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
 }
 
 bool db_compatible::has_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {
-  sql::SqliteMaster l_master{};
+  sqlite_master::sqlite_master l_master{};
   auto l_item = in_conn(sqlpp::select(sqlpp::all_of(l_master))
                             .from(l_master)
                             .where(l_master.type == "table" && l_master.name == "metadatatab"));

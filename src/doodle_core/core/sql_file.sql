@@ -53,36 +53,20 @@ create index if not exists usertab_id_index on usertab (id);
 
 CREATE TABLE IF NOT EXISTS work_task_info
 (
-    id        integer
+    id          integer
         primary key,
-    entity_id integer,
-    parent_id integer,
-    user_id   text,
-    task_name text,
-    region    text,
-    abstract  text,
+    entity_id   integer,
+    parent_id   integer,
+    parent_hash integer,
+
+    user_id     text,
+    task_name   text,
+    region      text,
+    abstract    text,
+    time_point  datetime,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists work_task_info_index on work_task_info (id);
-create index if not exists work_task_info_entity_id_index on work_task_info (entity_id);
-create table if not exists time_warp
-(
-    id         integer
-        primary key,
-    entity_id  integer,
-    parent_id  integer,
-    time_value datetime
-);
-create index if not exists time_warp_index on time_warp (id);
-
-
-create table sqlite_master
-(
-    type     text,
-    name     text,
-    tbl_name text,
-    rootpage int,
-    sql      text
-);
-
-
+create index if not exists work_task_info_index2 on work_task_info (entity_id);
+create index if not exists work_task_info_index3 on work_task_info (parent_id);
+create index if not exists work_task_info_index4 on work_task_info (parent_hash);

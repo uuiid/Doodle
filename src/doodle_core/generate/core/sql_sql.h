@@ -217,12 +217,8 @@ namespace doodle_database
     };
   } // namespace ComEntity_
 
-  struct ComEntity: sqlpp::table_t<ComEntity,
-               ComEntity_::Id,
-               ComEntity_::EntityId,
-               ComEntity_::ComHash,
-               ComEntity_::JsonData>
-  {
+  struct ComEntity
+      : sqlpp::table_t<ComEntity, ComEntity_::Id, ComEntity_::EntityId, ComEntity_::ComHash, ComEntity_::JsonData> {
       struct _alias_t {
           static constexpr const char _literal[] = "com_entity";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
@@ -291,11 +287,10 @@ namespace doodle_database
   };
   struct UserName {
       struct _alias_t {
-        static constexpr const char _literal[] =  "user_name";
-        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-        template<typename T>
-        struct _member_t
-          {
+          static constexpr const char _literal[] = "user_name";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
             T userName;
             T& operator()() { return userName; }
             const T& operator()() const { return userName; }
@@ -326,9 +321,8 @@ namespace doodle_database
                Usertab_::UserName,
                Usertab_::PermissionGroup>
   {
-    struct _alias_t
-    {
-      static constexpr const char _literal[] =  "usertab";
+      struct _alias_t {
+          static constexpr const char _literal[] = "usertab";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
           struct _member_t {
@@ -336,11 +330,11 @@ namespace doodle_database
             T& operator()() { return usertab; }
             const T& operator()() const { return usertab; }
           };
-    };
+      };
   };
   namespace WorkTaskInfo_ {
   struct Id {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "id";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -349,11 +343,11 @@ namespace doodle_database
             T& operator()() { return id; }
             const T& operator()() const { return id; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
   };
   struct EntityId {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "entity_id";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -362,11 +356,11 @@ namespace doodle_database
             T& operator()() { return entityId; }
             const T& operator()() const { return entityId; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
   };
   struct ParentId {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "parent_id";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -375,11 +369,24 @@ namespace doodle_database
             T& operator()() { return parentId; }
             const T& operator()() const { return parentId; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+  };
+  struct ParentHash {
+      struct _alias_t {
+          static constexpr const char _literal[] = "parent_hash";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T parentHash;
+            T& operator()() { return parentHash; }
+            const T& operator()() const { return parentHash; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
   };
   struct UserId {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "user_id";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -388,11 +395,11 @@ namespace doodle_database
             T& operator()() { return userId; }
             const T& operator()() const { return userId; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
   };
   struct TaskName {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "task_name";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -401,11 +408,11 @@ namespace doodle_database
             T& operator()() { return taskName; }
             const T& operator()() const { return taskName; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
   };
   struct Region {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "region";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -414,11 +421,11 @@ namespace doodle_database
             T& operator()() { return region; }
             const T& operator()() const { return region; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
   };
   struct Abstract {
-    struct _alias_t {
+      struct _alias_t {
           static constexpr const char _literal[] = "abstract";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -427,16 +434,29 @@ namespace doodle_database
             T& operator()() { return abstract; }
             const T& operator()() const { return abstract; }
           };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+  };
+  struct TimePoint {
+      struct _alias_t {
+          static constexpr const char _literal[] = "time_point";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T timePoint;
+            T& operator()() { return timePoint; }
+            const T& operator()() const { return timePoint; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::time_point, sqlpp::tag::can_be_null>;
   };
   }  // namespace WorkTaskInfo_
 
-  struct WorkTaskInfo
-      : sqlpp::table_t<
-            WorkTaskInfo, WorkTaskInfo_::Id, WorkTaskInfo_::EntityId, WorkTaskInfo_::ParentId, WorkTaskInfo_::UserId,
-            WorkTaskInfo_::TaskName, WorkTaskInfo_::Region, WorkTaskInfo_::Abstract> {
-    struct _alias_t {
+  struct WorkTaskInfo : sqlpp::table_t<
+                            WorkTaskInfo, WorkTaskInfo_::Id, WorkTaskInfo_::EntityId, WorkTaskInfo_::ParentId,
+                            WorkTaskInfo_::ParentHash, WorkTaskInfo_::UserId, WorkTaskInfo_::TaskName,
+                            WorkTaskInfo_::Region, WorkTaskInfo_::Abstract, WorkTaskInfo_::TimePoint> {
+      struct _alias_t {
           static constexpr const char _literal[] = "work_task_info";
           using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
           template <typename T>
@@ -445,157 +465,7 @@ namespace doodle_database
             T& operator()() { return workTaskInfo; }
             const T& operator()() const { return workTaskInfo; }
           };
-    };
-  };
-  namespace TimeWarp_ {
-  struct Id {
-    struct _alias_t {
-          static constexpr const char _literal[] = "id";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T id;
-            T& operator()() { return id; }
-            const T& operator()() const { return id; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
-  };
-  struct EntityId {
-    struct _alias_t {
-          static constexpr const char _literal[] = "entity_id";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T entityId;
-            T& operator()() { return entityId; }
-            const T& operator()() const { return entityId; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
-  };
-  struct ParentId {
-    struct _alias_t {
-          static constexpr const char _literal[] = "parent_id";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T parentId;
-            T& operator()() { return parentId; }
-            const T& operator()() const { return parentId; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
-  };
-  struct TimeValue {
-    struct _alias_t {
-          static constexpr const char _literal[] = "time_value";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T timeValue;
-            T& operator()() { return timeValue; }
-            const T& operator()() const { return timeValue; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::time_point, sqlpp::tag::can_be_null>;
-  };
-  }  // namespace TimeWarp_
-
-  struct TimeWarp
-      : sqlpp::table_t<TimeWarp, TimeWarp_::Id, TimeWarp_::EntityId, TimeWarp_::ParentId, TimeWarp_::TimeValue> {
-    struct _alias_t {
-          static constexpr const char _literal[] = "time_warp";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T timeWarp;
-            T& operator()() { return timeWarp; }
-            const T& operator()() const { return timeWarp; }
-          };
-    };
-  };
-  namespace SqliteMaster_ {
-  struct Type {
-    struct _alias_t {
-          static constexpr const char _literal[] = "type";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T type;
-            T& operator()() { return type; }
-            const T& operator()() const { return type; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-  };
-  struct Name {
-    struct _alias_t {
-          static constexpr const char _literal[] = "name";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T name;
-            T& operator()() { return name; }
-            const T& operator()() const { return name; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-  };
-  struct TblName {
-    struct _alias_t {
-          static constexpr const char _literal[] = "tbl_name";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T tblName;
-            T& operator()() { return tblName; }
-            const T& operator()() const { return tblName; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-  };
-  struct Rootpage {
-    struct _alias_t {
-          static constexpr const char _literal[] = "rootpage";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T rootpage;
-            T& operator()() { return rootpage; }
-            const T& operator()() const { return rootpage; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
-  };
-  struct Sql {
-    struct _alias_t {
-          static constexpr const char _literal[] = "sql";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T sql;
-            T& operator()() { return sql; }
-            const T& operator()() const { return sql; }
-          };
-    };
-    using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
-  };
-  }  // namespace SqliteMaster_
-
-  struct SqliteMaster : sqlpp::table_t<
-                            SqliteMaster, SqliteMaster_::Type, SqliteMaster_::Name, SqliteMaster_::TblName,
-                            SqliteMaster_::Rootpage, SqliteMaster_::Sql> {
-    struct _alias_t {
-          static constexpr const char _literal[] = "sqlite_master";
-          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
-          template <typename T>
-          struct _member_t {
-            T sqliteMaster;
-            T& operator()() { return sqliteMaster; }
-            const T& operator()() const { return sqliteMaster; }
-          };
-    };
+      };
   };
   }  // namespace doodle_database
 #endif
