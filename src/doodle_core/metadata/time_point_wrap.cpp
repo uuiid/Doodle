@@ -14,28 +14,18 @@
 // #include <timezoneapi.h>
 
 namespace doodle {
-namespace {
-time_point_wrap::time_local_point to_local_point(const time_point_wrap::time_point& in) {
+
+namespace chrono_ns::detail {
+minutes get_local_bias() {
   TIME_ZONE_INFORMATION L_time;
   auto l_err = GetTimeZoneInformation(&L_time);
   if (l_err != TIME_ZONE_ID_INVALID) {
     chrono::minutes l_m{L_time.Bias};
-    return time_point_wrap::time_local_point{(in - l_m).time_since_epoch()};
+    return l_m;
   }
-  return time_point_wrap::time_local_point{in.time_since_epoch()};
+  return {};
 }
-
-time_point_wrap::time_point to_sys_point(const time_point_wrap::time_local_point& in) {
-  TIME_ZONE_INFORMATION L_time;
-  auto l_err = GetTimeZoneInformation(&L_time);
-  if (l_err != TIME_ZONE_ID_INVALID) {
-    chrono::minutes l_m{L_time.Bias};
-    return time_point_wrap::time_point{(in + l_m).time_since_epoch()};
-  }
-  return time_point_wrap::time_point{in.time_since_epoch()};
-}
-
-}  // namespace
+}  // namespace chrono_ns::detail
 
 void to_json(nlohmann::json& j, const time_point_wrap& p) { j["time"] = p.sys_point; }
 void from_json(const nlohmann::json& j, time_point_wrap& p) { j.at("time").get_to(p.sys_point); }
@@ -94,12 +84,14 @@ time_point_wrap time_point_wrap::current_month_start(const time_point_wrap& in_t
 time_point_wrap time_point_wrap::current_month_end() const { return current_month_end(*this); }
 time_point_wrap time_point_wrap::current_month_start() const { return current_month_start(*this); }
 
-void time_point_wrap::set_time(const time_point_wrap::time_local_point& in) { sys_point = to_sys_point(in); }
+void time_point_wrap::set_time(const time_point_wrap::time_local_point& in) { sys_point = chrono_ns::to_sys_point(in); }
 void time_point_wrap::set_time(const time_point_wrap::time_point& in) { sys_point = in; }
 
 time_point_wrap time_point_wrap::now() { return time_point_wrap{time_point::clock::now()}; }
 time_point_wrap::time_point time_point_wrap::get_sys_time() const { return sys_point; }
-time_point_wrap::time_local_point time_point_wrap::get_local_time() const { return to_local_point(sys_point); }
+time_point_wrap::time_local_point time_point_wrap::get_local_time() const {
+  return chrono_ns::to_local_point(sys_point);
+}
 
 time_point_wrap::~time_point_wrap() = default;
 
@@ -130,7 +122,7 @@ time_point_wrap::time_point time_point_wrap::get_local_point_to_fmt_lib() const 
   return chrono::clock_cast<time_point::clock>(sys_point);
 }
 time_point_wrap::time_point time_point_wrap::get_sys_point_to_fmt_lib() const {
-  return to_sys_point(chrono::clock_cast<time_local_point::clock>(sys_point));
+  return chrono_ns::to_sys_point(chrono::clock_cast<time_local_point::clock>(sys_point));
 }
 
 time_point_wrap::duration operator-(const time_point_wrap& in_l, const time_point_wrap& in_r) {
