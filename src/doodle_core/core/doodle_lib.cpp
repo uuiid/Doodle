@@ -53,7 +53,7 @@ void doodle_lib::init() {
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  ptr->reg->ctx().emplace<database_info>().path_ = ":memory:"s;
+  database_info::emplace();
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
   ptr->reg->ctx().emplace<user::current_user>();
@@ -71,7 +71,7 @@ boost::asio::io_context& doodle_lib::io_context_attr() const { return *ptr->io_c
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 
-doodle_lib::~doodle_lib() = default;
+doodle_lib::~doodle_lib() { database_info::reset(); }
 
 boost::asio::thread_pool& doodle_lib::thread_attr() const { return ptr->thread_pool_attr; }
 

@@ -17,7 +17,7 @@
 using namespace doodle;
 namespace sql = doodle_database;
 BOOST_AUTO_TEST_CASE(test_sqlite3_insert) {
-  auto l_sql_conn = core_sql::Get().get_connection("D:/test.sqlite");
+  auto l_sql_conn = database_info::value_or("D:/test.sqlite").get_connection();
 
   l_sql_conn->execute(R"(
 create table if not exists entity

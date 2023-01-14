@@ -5,22 +5,14 @@
 #pragma once
 
 #include "doodle_core/core/core_help_impl.h"
+#include <doodle_core/core/core_sql.h>
 #include <doodle_core/doodle_core_fwd.h>
-
-#include <boost/signals2.hpp>
 
 #include <entt/core/type_info.hpp>
 #include <optional>
 #include <rttr/rttr_enable.h>
 
 namespace doodle {
-
-class DOODLE_CORE_API database_info {
-  RTTR_ENABLE();
-
- public:
-  FSys::path path_;
-};
 
 using data_status_save   = entt::tag<"data_status_save"_hs>;
 using data_status_delete = entt::tag<"data_status_delete"_hs>;

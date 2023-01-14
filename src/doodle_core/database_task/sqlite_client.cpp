@@ -28,7 +28,7 @@
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
-  g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
+  database_info::value().path_ = in_path;
   this->clear_scene();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
@@ -43,7 +43,7 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
 }
 
 bsys::error_code file_translator::open_end() {
-  core_set::get_set().add_recent_project(g_reg()->ctx().at<::doodle::database_info>().path_);
+  core_set::get_set().add_recent_project(database_info::value().path_);
   g_reg()->ctx().at<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -80,7 +80,7 @@ bsys::error_code file_translator::save_end() {
   return {};
 }
 void file_translator::new_file_scene(const FSys::path& in_path) {
-  g_reg()->ctx().at<::doodle::database_info>().path_ = in_path;
+  database_info::value().path_ = in_path;
   this->clear_scene();
   auto& l_s     = g_reg()->ctx().emplace<status_info>();
   l_s.message   = "创建新项目";
@@ -124,7 +124,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  auto l_k_con = core_sql::Get().get_connection_const(in_path);
+  auto l_k_con = database_info::value().get_connection_const();
   l_select(*ptr->registry_attr, in_path, l_k_con);
   return {};
 }
@@ -163,7 +163,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   }
 
   try {
-    auto l_k_con = core_sql::Get().get_connection(in_path);
+    auto l_k_con = database_info ::value().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
     details::db_compatible::add_entity_table(*l_k_con);
     details::db_compatible::add_ctx_table(*l_k_con);

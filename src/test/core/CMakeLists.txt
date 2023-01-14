@@ -8,6 +8,7 @@ target_sources(test_main
         rttr.cpp
         range.cpp
         database_sqlite3.cpp
+        entt_test.cpp
 )
 
 target_link_libraries(

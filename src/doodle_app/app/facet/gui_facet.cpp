@@ -262,8 +262,8 @@ void gui_facet::post_constructor() {
     auto& l_prj  = g_reg()->ctx().at<project>();
     auto l_title = boost::locale::conv::utf_to_utf<char>(g_reg()->ctx().at<program_info>().title_attr());
     auto l_str   = fmt::format(
-        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, g_reg()->ctx().at<database_info>().path_,
-        l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
+        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, database_info::value().path_, l_prj.p_path,
+        l_prj.show_str(), l_prj.str(), l_prj.short_str()
     );
     set_title(l_str);
   };
@@ -271,10 +271,9 @@ void gui_facet::post_constructor() {
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
   auto& k_sig = g_reg()->ctx().emplace<core_sig>();
   k_sig.save.connect(2, [this]() {
-    std::make_shared<database_n::sqlite_file>()->async_save(
-        g_reg()->ctx().at<::doodle::database_info>().path_,
-        [this](auto) { DOODLE_LOG_INFO("保存项目 {}", g_reg()->ctx().at<::doodle::database_info>().path_); }
-    );
+    std::make_shared<database_n::sqlite_file>()->async_save(database_info::value().path_, [this](auto) {
+      DOODLE_LOG_INFO("保存项目 {}", database_info::value().path_);
+    });
   });
   auto l_op = g_reg()->ctx().at<program_options_ptr>();
   /// 在这里我们加载项目
