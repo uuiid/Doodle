@@ -3,6 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <rttr/rttr_enable.h>
+#include <utility>
 
 namespace doodle {
 
@@ -17,7 +18,7 @@ class DOODLE_CORE_API database_info {
  public:
   FSys::path path_;
   database_info() : database_info(":memory:"){};
-  database_info(const FSys::path& in_path) : path_(in_path){};
+  explicit database_info(FSys::path in_path) : path_(std::move(in_path)){};
 
   [[nodiscard]] conn_ptr get_connection() const;
   [[nodiscard]] conn_ptr get_connection_const() const;
