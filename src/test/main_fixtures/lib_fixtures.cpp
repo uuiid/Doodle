@@ -88,7 +88,6 @@ void run_subprocess::read_(
         if (in_code.value() == boost::asio::error::broken_pipe) {
           return;
         }
-        BOOST_TEST(!in_code);
         if (!in_code) {
           std::string l_line{};
           std::istream l_istream{in_str.get()};
@@ -100,6 +99,7 @@ void run_subprocess::read_(
             BOOST_TEST_MESSAGE(fmt::format("sub: ", l_line));
           }
         } else {
+          BOOST_TEST(!in_code);
           BOOST_TEST_ERROR(in_code.what());
         }
         if (!is_stop) read_(in_pipe, in_str);
