@@ -55,7 +55,7 @@ void sql_com<doodle::database, false>::select(conn_ptr& in_ptr, std::map<std::in
     database l_u{row.uuidData.value()};
     l_u.set_id(row.id.value());
 
-    l_data.emplace_back(l_data);
+    l_data.emplace_back(l_u);
     l_id.emplace_back(row.id.value());
     l_entts.emplace_back(num_to_enum<entt::entity>(row.id.value()));
   }
