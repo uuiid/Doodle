@@ -63,32 +63,23 @@ entt::handle ref_data::handle() const {
 }
 }  // namespace database_ns
 
-database::database() : p_i(std::make_unique<impl>()) {}
-database::database(const boost::uuids::uuid &in_uuid) : p_i(std::make_unique<impl>(in_uuid)) {}
-database::database(const std::string &in_uuid_str) : database(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {}
+database::database() : p_id(0), p_uuid_(core_set::get_set().get_uuid()) {}
+database::database(const boost::uuids::uuid &in_uuid) : p_id(0), p_uuid_(in_uuid) {}
+database::database(const std::string &in_uuid_str)
+    : p_id(0), p_uuid_(boost::lexical_cast<boost::uuids::uuid>(in_uuid_str)) {}
 
 database::~database() = default;
 
-std::uint64_t database::get_id() const { return p_i->p_id; }
+std::uint64_t database::get_id() const { return p_id; }
 
-bool database::is_install() const { return p_i->p_id > 0; }
+bool database::is_install() const { return p_id > 0; }
 
-bool database::operator==(const database &in_rhs) const { return p_i->p_uuid_ == in_rhs.p_i->p_uuid_; }
-bool database::operator==(const boost::uuids::uuid &in_rhs) const { return p_i->p_uuid_ == in_rhs; }
-bool database::operator==(const database_ns::ref_data &in_rhs) const { return p_i->p_uuid_ == in_rhs.uuid; }
+bool database::operator==(const database &in_rhs) const { return p_uuid_ == in_rhs.p_uuid_; }
+bool database::operator==(const boost::uuids::uuid &in_rhs) const { return p_uuid_ == in_rhs; }
+bool database::operator==(const database_ns::ref_data &in_rhs) const { return p_uuid_ == in_rhs.uuid; }
 
-void database::set_id(std::uint64_t in_id) const { p_i->p_id = in_id; }
-const boost::uuids::uuid &database::uuid() const { return p_i->p_uuid_; }
-
-database::database(database &&in) noexcept            = default;
-
-database &database::operator=(database &&in) noexcept = default;
-
-database::database(const database &in) noexcept : p_i(std::make_unique<impl>()) { *p_i = *in.p_i; };
-database &database::operator=(const database &in) noexcept {
-  *p_i = *in.p_i;
-  return *this;
-};
+void database::set_id(std::uint64_t in_id) const { p_id = in_id; }
+const boost::uuids::uuid &database::uuid() const { return p_uuid_; }
 
 entt::handle database::find_by_uuid(const boost::uuids::uuid &in) {
   entt::handle l_r{};
@@ -115,12 +106,12 @@ void database::fun_save_::operator()(const entt::handle &in) const {
     DOODLE_LOG_WARN("损坏的实体 {}", in.entity());
 }
 void to_json(nlohmann::json &j, const database &p) {
-  j["uuid"] = p.p_i->p_uuid_;
-  j["id"]   = p.p_i->p_id;
+  j["uuid"] = p.p_uuid_;
+  j["id"]   = p.p_id;
 }
 void from_json(const nlohmann::json &j, database &p) {
-  j["uuid"].get_to(p.p_i->p_uuid_);
-  j["id"].get_to(p.p_i->p_id);
+  j["uuid"].get_to(p.p_uuid_);
+  j["id"].get_to(p.p_id);
 }
 
 }  // namespace doodle

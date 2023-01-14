@@ -74,8 +74,10 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
   friend class database_n::select;
   friend class database_n::update_data;
   friend class database_n::delete_data;
-  class impl;
-  std::unique_ptr<impl> p_i;
+
+  mutable std::uint64_t p_id;
+  boost::uuids::uuid p_uuid_;
+
   void set_id(std::uint64_t in_id) const;
 
  public:
@@ -87,11 +89,11 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
 
   virtual ~database();
 
-  database(database &&) noexcept;
-  database &operator=(database &&) noexcept;
+  database(database &&) noexcept                 = default;
+  database &operator=(database &&) noexcept      = default;
 
-  database(const database &) noexcept;
-  database &operator=(const database &) noexcept;
+  database(const database &) noexcept            = default;
+  database &operator=(const database &) noexcept = default;
 
   bool is_install() const;
 
