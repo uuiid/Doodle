@@ -13,7 +13,7 @@ template <>
 struct sql_com<doodle::database, false> {
   registry_ptr reg_;
 
-  void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_handle);
+  void insert(conn_ptr& in_ptr, const entt::observer& in_observer);
   /**
    *
    * @param in_ptr

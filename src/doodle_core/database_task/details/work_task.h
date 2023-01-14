@@ -9,8 +9,8 @@ struct sql_com<doodle::work_task_info, false> {
   registry_ptr reg_;
 
   void create_table(conn_ptr& in_ptr);
-  void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_handle);
-  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_handle);
+  void insert(conn_ptr& in_ptr, const entt::observer& in_observer);
+  void update(conn_ptr& in_ptr, const entt::observer& in_observer);
   /**
    *
    * @param in_ptr

@@ -11,10 +11,10 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
-void sql_com<doodle::user, false>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_handle) {
+void sql_com<doodle::user, false>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_handle | ranges::views::transform([&](entt::entity in_entity) {
+  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
@@ -37,10 +37,10 @@ void sql_com<doodle::user, false>::insert(conn_ptr& in_ptr, const std::vector<en
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<user>().get_name());
   }
 }
-void sql_com<doodle::user, false>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_handle) {
+void sql_com<doodle::user, false>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_handle | ranges::views::transform([&](entt::entity in_entity) {
+  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
