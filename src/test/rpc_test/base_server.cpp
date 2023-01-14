@@ -47,15 +47,17 @@ namespace {
 
 struct loop_rpc {
   doodle_lib lib{};
+  run_subprocess l_sub{g_io_context()};
 };
 }  // namespace
 
-BOOST_FIXTURE_TEST_SUITE(rpc_server, loop_rpc, *boost::unit_test::disabled())
+BOOST_FIXTURE_TEST_SUITE(rpc_server, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
   bool run{true};
   distributed_computing::server l_s{};
   l_s.run();
+  l_sub.run("rpc_client/base"s);
 
   g_io_context().run();
 
@@ -72,6 +74,8 @@ BOOST_AUTO_TEST_CASE(list_users) {
 
   distributed_computing::server l_s{};
   l_s.run();
+
+  l_sub.run("rpc_client/list_users"s);
 
   g_io_context().run();
 
@@ -111,6 +115,8 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   distributed_computing::server l_s{};
   l_s.run();
 
+  l_sub.run("rpc_client/get_user_work_task_info"s);
+
   g_io_context().run();
 
   BOOST_TEST(run);
@@ -121,6 +127,8 @@ BOOST_AUTO_TEST_CASE(new_user) {
   distributed_computing::server l_s{};
 
   l_s.run();
+
+  l_sub.run("rpc_client/new_user"s);
 
   g_io_context().run();
 
@@ -141,6 +149,7 @@ BOOST_AUTO_TEST_CASE(get_user) {
 
   l_s.run();
 
+  l_sub.run("rpc_client/get_user"s);
   g_io_context().run();
 
   BOOST_TEST(run);
@@ -154,7 +163,7 @@ BOOST_AUTO_TEST_CASE(set_user) {
   l_main.emplace<user>().set_name("test1");
 
   l_s.run();
-
+  l_sub.run("rpc_client/set_user"s);
   g_io_context().run();
 
   BOOST_TEST(run);
@@ -181,7 +190,7 @@ BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   l_work_com_b.region    = "clict_set_s3";
 
   l_s.run();
-
+  l_sub.run("rpc_client/set_user_work_task_info"s);
   g_io_context().run();
 
   BOOST_TEST(run);
