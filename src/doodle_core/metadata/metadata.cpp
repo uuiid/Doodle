@@ -17,15 +17,6 @@
 
 namespace doodle {
 
-class database::impl {
- public:
-  impl() : p_id(0), p_uuid_(core_set::get_set().get_uuid()) {}
-  explicit impl(const boost::uuids::uuid &in_uuid) : p_id(0), p_uuid_(in_uuid) {}
-
-  mutable std::uint64_t p_id;
-  boost::uuids::uuid p_uuid_;
-};
-
 namespace database_ns {
 ref_data::ref_data() = default;
 
