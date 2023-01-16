@@ -54,7 +54,6 @@ BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 
 BOOST_AUTO_TEST_CASE(base) {
   bool run{true};
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/base");
   distributed_computing::client l_c{};
 
@@ -67,7 +66,6 @@ BOOST_AUTO_TEST_CASE(base) {
 
 BOOST_AUTO_TEST_CASE(list_fun1) {
   distributed_computing::client l_c{};
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/base");
 
   auto l_tset = l_c.list_fun();
@@ -81,7 +79,6 @@ BOOST_AUTO_TEST_CASE(list_fun1) {
 
 BOOST_AUTO_TEST_CASE(list_users) {
   distributed_computing::client l_c{};
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/list_users");
 
   auto l_users = l_c.list_users();
@@ -95,7 +92,6 @@ BOOST_AUTO_TEST_CASE(list_users) {
 }
 
 BOOST_AUTO_TEST_CASE(new_user) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/new_user");
 
   auto l_reg = std::make_shared<entt::registry>();
@@ -118,7 +114,6 @@ BOOST_AUTO_TEST_CASE(new_user) {
 }
 
 BOOST_AUTO_TEST_CASE(get_user) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/get_user");
 
   auto l_reg = std::make_shared<entt::registry>();
@@ -140,7 +135,6 @@ BOOST_AUTO_TEST_CASE(get_user) {
 }
 
 BOOST_AUTO_TEST_CASE(get_user_f) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/get_user");
 
   auto l_reg = std::make_shared<entt::registry>();
@@ -157,7 +151,6 @@ BOOST_AUTO_TEST_CASE(get_user_f) {
 }
 
 BOOST_AUTO_TEST_CASE(set_user) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/set_user");
 
   auto l_reg = std::make_shared<entt::registry>();
@@ -183,7 +176,6 @@ BOOST_AUTO_TEST_CASE(set_user) {
 }
 
 BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/get_user_work_task_info");
 
   auto l_main = make_handle();
@@ -206,7 +198,6 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
 }
 
 BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
-  run_subprocess l_sub{g_io_context()};
   l_sub.run("rpc_server/set_user_work_task_info");
 
   distributed_computing::client l_c{};
