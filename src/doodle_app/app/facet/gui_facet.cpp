@@ -92,6 +92,7 @@ void gui_facet::deconstruction() {
   ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
+  gui::main_proc_handle::reset();
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
   gui::main_proc_handle::emplace();
