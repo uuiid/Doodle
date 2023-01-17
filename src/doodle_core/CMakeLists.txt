@@ -14,7 +14,7 @@ doodle_sqlpp_generate(
 
 # 添加配置
 add_library(doodle_core
-        SHARED
+#        SHARED
         ${OUT_LISTS_sqlpp}
         )
 

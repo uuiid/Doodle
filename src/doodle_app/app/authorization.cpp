@@ -64,7 +64,7 @@ authorization::authorization(const std::string& in_data) : p_i(std::make_unique<
   load_authorization_data(in_data);
 }
 
-authorization::authorization() {
+authorization::authorization() : p_i(std::make_unique<impl>()) {
   auto l_p  = core_set::get_set().program_location() / doodle_config::token_name.data();
   auto l_p1 = core_set::get_set().get_doc() / doodle_config::token_name.data();
 
