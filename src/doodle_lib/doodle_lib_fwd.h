@@ -36,7 +36,6 @@ class season;
 class work_task_info;
 
 class core_sig;
-class doodle_main_app;
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;

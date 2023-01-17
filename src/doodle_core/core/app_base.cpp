@@ -32,6 +32,12 @@ app_base::app_base()
   self                            = this;
   program_info::emplace().handle_ = ::GetModuleHandleW(nullptr);
   init();
+  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  l_timer->expires_after(1s);
+  l_timer->async_wait([l_timer, this](auto) {
+    /// 检查授权失败直接退出
+    if (!chick_authorization()) stop_app();
+  });
 }
 
 void app_base::init() {

@@ -47,7 +47,8 @@ class DOODLE_CORE_API app_base {
    *
    */
 
-  virtual void post_constructor() = 0;
+  virtual void post_constructor()    = 0;
+  virtual bool chick_authorization() = 0;
   std::atomic_bool stop_;
 
  public:

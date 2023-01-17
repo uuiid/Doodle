@@ -26,12 +26,4 @@ class DOODLELIB_API main_facet : public facet::gui_facet {
   void load_windows() override;
 };
 
-class DOODLELIB_API main_app : public doodle_main_app {
- public:
-  main_app();
-  explicit main_app(const in_gui_arg& in_arg);
-
- protected:
-  bool chick_authorization() override;
-};
 }  // namespace doodle

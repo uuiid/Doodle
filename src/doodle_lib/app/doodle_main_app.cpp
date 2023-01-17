@@ -19,38 +19,7 @@
 
 namespace doodle {
 
-main_app::main_app(const doodle_main_app::in_gui_arg& in_arg) : doodle_main_app(in_arg) {
-  run_facet = std::make_shared<main_facet>();
-  add_facet(run_facet);
-  add_facet(std::make_shared<facet::rpc_server_facet>());
-}
-main_app::main_app() : doodle_main_app() {
-  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
-  run_facet = std::make_shared<main_facet>();
-  add_facet(run_facet);
-  add_facet(std::make_shared<facet::rpc_server_facet>());
 
-  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
-  l_timer->expires_after(1s);
-  l_timer->async_wait([l_timer, this](auto) {
-    /// 检查授权失败直接退出
-    if (!chick_authorization()) stop_app();
-  });
-}
-bool main_app::chick_authorization() {
-  if (!doodle_main_app::chick_authorization()) {
-    if (auto l_path = find_authorization_file(); l_path) {
-      FSys::ifstream ifstream{*l_path};
-      std::string l_str{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
-      authorization l_a{l_str};
-      return l_a.is_expire();
-    } else {
-      DOODLE_LOG_INFO("无法找到授权文件");
-      return false;
-    }
-  }
-  return true;
-}
 
 main_facet::main_facet() : facet::gui_facet() {
   g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::image_to_move>();
