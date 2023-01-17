@@ -53,12 +53,11 @@ bool DOODLE_CORE_API has_tcp_port(std::uint32_t in_port) {
   l_err = GetTcpTable2(tcp_table.get(), &dwSize, true);
   THROW_IF_WIN32_ERROR(l_err);
 
-  std::uint32_t l_r_port{};
   for (auto i = 0; i < tcp_table->dwNumEntries; i++) {
     if (auto& l_row = tcp_table->table[i];
         //        l_row.dwState == MIB_TCP_STATE_ESTAB &&
         ntohs(static_cast<std::uint16_t>(l_row.dwLocalPort)) == in_port) {
-      DOODLE_LOG_INFO("找到线程port dwLocalPort {:d}", l_r_port);
+      DOODLE_LOG_INFO("找到线程port dwLocalPort {:d}", l_row.dwOwningPid);
       return true;
     }
   }

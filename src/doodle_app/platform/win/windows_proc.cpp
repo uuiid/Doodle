@@ -113,11 +113,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     }
     case WM_CLOSE: {
-      g_reg()->ctx().at<gui::main_proc_handle>().win_close();
+      gui::main_proc_handle::value().win_close();
       return 0;
     }
     case WM_DESTROY: {
-      g_reg()->ctx().at<gui::main_proc_handle>().win_destroy();
+      gui::main_proc_handle::value().win_destroy();
       return 0;
     }
       //    case WM_IME_CHAR: {

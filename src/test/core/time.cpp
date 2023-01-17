@@ -25,8 +25,13 @@
 
 using namespace doodle;
 
+namespace {
 
-BOOST_AUTO_TEST_SUITE(tset_time)
+struct time_cpp_suite {
+  doodle_lib lib{};
+};
+}  // namespace
+BOOST_FIXTURE_TEST_SUITE(tset_time, time_cpp_suite)
 
 BOOST_AUTO_TEST_CASE(date_) {
   using namespace date::literals;
@@ -51,7 +56,6 @@ BOOST_AUTO_TEST_CASE(date_) {
   BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3) == "2022/05/07 11:46:55"s);
 
   BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3 + 8h) == fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time_3));
-
 }
 
 BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {

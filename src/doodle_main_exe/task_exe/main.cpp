@@ -63,7 +63,7 @@ class layout : public doodle::gui::detail::layout_tick_interface {
         ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 
         // 开始将窗口停靠在创建的窗口中
-        namespace menu_w  = gui::config::menu_w;
+        namespace menu_w = gui::config::menu_w;
 
         ImGui::DockBuilderDockWindow(menu_w::work_hour_filling.data(), dockspace_id);  /// \brief 主窗口的停靠
         ImGui::DockBuilderFinish(dockspace_id);
@@ -102,23 +102,16 @@ class main_facet : public doodle::main_facet {
   void load_windows() override {
     /// \brief 设置窗口句柄处理
     using namespace doodle;
-    g_reg()->ctx().at<gui::main_proc_handle>().win_close = []() {
+    gui::main_proc_handle::value().win_close = []() {
       make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
     };
-    g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
-    g_reg()->ctx().at<gui::layout_tick>()                  = std::make_shared<layout>();
-    make_handle().emplace<gui::gui_tick>()                 = std::make_shared<menu_bar>();
-    make_handle().emplace<gui::gui_tick>()                 = std::make_shared<gui::main_status_bar>();
+    gui::main_proc_handle::value().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
+    g_reg()->ctx().at<gui::layout_tick>()      = std::make_shared<layout>();
+    make_handle().emplace<gui::gui_tick>()     = std::make_shared<menu_bar>();
+    make_handle().emplace<gui::gui_tick>()     = std::make_shared<gui::main_status_bar>();
   }
 };
-
-class main_app : public doodle::main_app {
- public:
-  main_app() {
-    run_facet = std::make_shared<main_facet>();
-    add_facet(run_facet);
-  };
-};
+using main_app = doodle::app_command<main_facet>;
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {

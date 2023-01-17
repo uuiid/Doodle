@@ -46,8 +46,7 @@
 using namespace doodle;
 struct loop_rpc {
   doodle_lib lib{};
-
-  loop_rpc() {}
+  run_subprocess l_sub{g_io_context()};
 };
 
 BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)

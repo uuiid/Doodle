@@ -94,7 +94,7 @@ void gui_facet::deconstruction() {
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
-  g_reg()->ctx().emplace<gui::main_proc_handle>();
+  gui::main_proc_handle::emplace();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
   g_reg()->ctx().emplace<image_to_move>();
 }

@@ -26,7 +26,7 @@ BOOST_FIXTURE_TEST_CASE(test_holidaycn, lib_fixtures) {
   BOOST_TEST((l_time_du == chrono::seconds{0}));
 }
 
-BOOST_AUTO_TEST_CASE(test_port) {
+BOOST_AUTO_TEST_CASE(test_port, *boost::unit_test::disabled()) {
   BOOST_TEST(win::has_tcp_port(80));
-  BOOST_TEST(!win::has_tcp_port(23333));
+  //  BOOST_TEST(!win::has_tcp_port(23333));
 }

@@ -21,8 +21,8 @@
 
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
-  g_reg()->ctx().at<gui::main_proc_handle>().win_close   = [this]() { this->close_windows(); };
-  g_reg()->ctx().at<gui::main_proc_handle>().win_destroy = []() {};
+  gui::main_proc_handle::value().win_close   = [this]() { this->close_windows(); };
+  gui::main_proc_handle::value().win_destroy = []() {};
   make_handle().emplace<gui::gui_tick>(std::make_shared<maya_layout>());
   make_handle().emplace<gui::gui_tick>(std::make_shared<maya_menu>());
   make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_status_bar>());
@@ -34,7 +34,7 @@ maya_facet::maya_facet() : doodle::facet::gui_facet() {
 }
 
 maya_plug_app::maya_plug_app() { set_facet(); }
-maya_plug_app::maya_plug_app(const doodle_main_app::in_gui_arg& inArg) : doodle_main_app(inArg) { set_facet(); }
+
 void maya_plug_app::set_facet() {
   switch (MGlobal::mayaState()) {
     case MGlobal::MMayaState::kBaseUIMode:
