@@ -19,7 +19,7 @@ target_compile_definitions(DoodleExe
         #        ISOLATION_AWARE_ENABLED
         # ENTT_API_IMPORT
         )
-
+#target_link_options(DoodleExe PUBLIC /MAP:test.txt)
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
