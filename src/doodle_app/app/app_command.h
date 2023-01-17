@@ -4,33 +4,35 @@
 
 #pragma once
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/core/app_facet.h>
 #include <doodle_core/doodle_core.h>
 
+#include <doodle_app/app/authorization.h>
+#include <doodle_app/app/program_options.h>
 #include <doodle_app/doodle_app_fwd.h>
-
 namespace doodle {
-
+namespace details::app_command_base {
+void run_facet(const app_base::app_facet_map& in_map);
+}
 /**
  * @brief 基本的命令行类
  *
  */
 class DOODLE_APP_API app_command_base : public app_base {
  protected:
-  std::vector<std::string> cmd_str;
-
-  virtual bool chick_authorization();
-
-  std::optional<FSys::path> find_authorization_file() const;
-  bool chick_build_time() const;
+  bool chick_authorization() {
+    DOODLE_LOG_INFO("开始检查授权");
+    return authorization{}.is_expire();
+  };
 
  public:
-  app_command_base();
+  app_command_base() : app_base() { program_options::emplace(); };
+  virtual ~app_command_base() { program_options::reset(); }
 
-  static app_command_base& Get();
-  //    std::vector<std::string> l_str{argv, argv + argc};
+  static app_command_base& Get() { return *(dynamic_cast<app_command_base*>(self)); }
 
  protected:
-  virtual void post_constructor() override;
+  virtual void post_constructor() override { details::app_command_base::run_facet(facet_list); };
 };
 
 /**

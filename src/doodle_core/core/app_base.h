@@ -24,13 +24,14 @@ class DOODLE_CORE_API app_base {
  public:
   using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
   using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet_interface>;
+  using app_facet_map   = std::map<std::string, app_facet_ptr>;
 
  protected:
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 
   std::wstring p_title;
-  std::map<std::string, app_facet_ptr> facet_list{};
+  app_facet_map facet_list{};
   /**
    * 此处是正在运行的构面,  同时可以初始化,  作为命令行中没有指定时的后备选项
    */

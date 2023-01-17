@@ -57,7 +57,6 @@ void doodle_lib::init() {
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
   ptr->reg->ctx().emplace<user::current_user>();
-  ptr->reg->ctx().emplace<program_info>();
   ptr->reg->ctx().emplace<core_sig>();
 
   ptr->reg->ctx().emplace<status_info>();

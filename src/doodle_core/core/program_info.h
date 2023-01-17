@@ -36,5 +36,5 @@ class DOODLE_CORE_API program_info {
 
 };
 }  // namespace core
-using program_info = core::program_info;
+using program_info = entt::locator<core::program_info>;
 }  // namespace doodle

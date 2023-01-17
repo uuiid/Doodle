@@ -66,11 +66,11 @@ void gui_facet::operator()() {
       DOODLE_LOG_INFO(in_code.message());
       return;
     }
-    if (g_reg()->ctx().at<::doodle::program_info>().stop_attr()) return;
+    if (program_info::value().stop_attr()) return;
     if (!this->tick_begin()) return;
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
-    if (!g_reg()->ctx().at<::doodle::program_info>().stop_attr()) {
+    if (!program_info::value().stop_attr()) {
       p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
       p_i->timer_.async_wait(s_fun);
     }
@@ -158,7 +158,7 @@ void gui_facet::tick_end() {
                                                // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 void gui_facet::post_constructor() {
-  auto l_instance = g_reg()->ctx().at<program_info>().handle_attr();
+  auto l_instance = program_info::value().handle_attr();
 
   p_win_class = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L, 0L, l_instance, nullptr, nullptr, nullptr, nullptr,
                  _T("doodle"),       nullptr};
@@ -168,10 +168,10 @@ void gui_facet::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(g_reg()->ctx().at<program_info>().title_attr());
+  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(program_info::value().title_attr());
   p_hwnd     = ::CreateWindowExW(
       0L, p_win_class.lpszClassName, l_str.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-      CW_USEDEFAULT, g_reg()->ctx().at<program_info>().parent_windows_attr(), nullptr, p_win_class.hInstance, nullptr
+      CW_USEDEFAULT, program_info::value().parent_windows_attr(), nullptr, p_win_class.hInstance, nullptr
   );
 
   // Initialize Direct3D
@@ -260,7 +260,7 @@ void gui_facet::post_constructor() {
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
-    auto l_title = boost::locale::conv::utf_to_utf<char>(g_reg()->ctx().at<program_info>().title_attr());
+    auto l_title = boost::locale::conv::utf_to_utf<char>(program_info::value().title_attr());
     auto l_str   = fmt::format(
         "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, database_info::value().path_, l_prj.p_path,
         l_prj.show_str(), l_prj.str(), l_prj.short_str()
@@ -275,10 +275,10 @@ void gui_facet::post_constructor() {
       DOODLE_LOG_INFO("保存项目 {}", database_info::value().path_);
     });
   });
-  auto l_op = g_reg()->ctx().at<program_options_ptr>();
   /// 在这里我们加载项目
+  auto& l_op = program_options::value();
   ::doodle::app_base::Get().load_project(
-      l_op && !l_op->p_project_path.empty() ? l_op->p_project_path : core_set::get_set().project_root[0]
+      !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
   );
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }

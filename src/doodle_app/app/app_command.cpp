@@ -18,25 +18,20 @@
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
 namespace doodle {
+namespace details::app_command_base {
+void run_facet(const app_base::app_facet_map& in_map) {
+  auto& l_opt = doodle::program_options::value();
 
-app_command_base::app_command_base() : app_base(), cmd_str() {
-  program_options::emplace();
-  cmd_str = win::get_command_line();
-  DOODLE_LOG_INFO("获取到命令行 {}", cmd_str);
-}
-
-void app_command_base::post_constructor() {
-  auto& l_opt = program_options::value();
-
-  for (auto&& [key, val] : facet_list) {
+  for (auto&& [key, val] : in_map) {
     val->add_program_options();
   }
+  l_opt.command_line_parser();
 
   for (auto&& [key, val] : l_opt.facet_model) {
     if (val) {
       DOODLE_LOG_INFO("开始运行 {} facet", key);
-      run_facet = facet_list[key];
-      g_reg()->ctx().emplace<app_facet_ptr>(facet_list[key]);
+      run_facet = in_map[key];
+      g_reg()->ctx().emplace<app_facet_ptr>(in_map[key]);
       break;
     }
   }
@@ -48,28 +43,7 @@ void app_command_base::post_constructor() {
   boost::asio::post(g_io_context(), [l_f = run_facet]() { (*l_f)(); });
 }
 
-bool app_command_base::chick_authorization() {
-  DOODLE_LOG_INFO("开始检查授权");
-  return chick_build_time();
-}
-
-app_command_base& app_command_base::Get() { return *(dynamic_cast<app_command_base*>(self)); }
-
-std::optional<FSys::path> app_command_base::find_authorization_file() const {
-  auto l_p = core_set::get_set().program_location() / doodle_config::token_name.data();
-  if (!exists(l_p)) {
-    l_p = core_set::get_set().get_doc() / doodle_config::token_name.data();
-  }
-  return exists(l_p) ? std::optional<FSys::path>{l_p} : std::optional<FSys::path>{};
-}
-bool app_command_base::chick_build_time() const {
-  chrono::sys_seconds l_build_time_;
-  std::istringstream l_time{version::build_info::get().build_time};
-  l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
-  chrono::sys_time_pos l_point{l_build_time_};
-  l_point += chrono::months{3};
-  return chrono::system_clock::now() < l_point;
-}
+}  // namespace details::app_command_base
 
 }  // namespace doodle
 

@@ -11,11 +11,9 @@
 
 namespace doodle::win {
 std::vector<std::string> get_command_line();
-
 }
 
 namespace doodle::details {
-
 class DOODLE_APP_API program_options : boost::noncopyable {
  public:
   FSys::path p_config_file;
@@ -63,5 +61,4 @@ class DOODLE_APP_API program_options : boost::noncopyable {
   /// @brief 测试是否存在值
   bool operator[](const std::string& in_key) const;
 };
-using program_options_ptr = std::shared_ptr<program_options>;
 }  // namespace doodle::details

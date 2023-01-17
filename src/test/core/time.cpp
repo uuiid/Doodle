@@ -25,12 +25,8 @@
 
 using namespace doodle;
 
-struct loop_fixtures : lib_fixtures {
-  void setup() { BOOST_TEST_MESSAGE("完成夹具设置"); };
-  void teardown(){};
-};
 
-BOOST_FIXTURE_TEST_SUITE(tset_time, loop_fixtures)
+BOOST_AUTO_TEST_SUITE(tset_time)
 
 BOOST_AUTO_TEST_CASE(date_) {
   using namespace date::literals;
@@ -55,6 +51,7 @@ BOOST_AUTO_TEST_CASE(date_) {
   BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3) == "2022/05/07 11:46:55"s);
 
   BOOST_TEST(date::format("%Y/%m/%d %H:%M:%S", l_time_3 + 8h) == fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time_3));
+
 }
 
 BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {

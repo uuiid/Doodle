@@ -29,14 +29,11 @@ app_base::app_base()
       ),
       stop_(false),
       lib_ptr(std::make_shared<doodle_lib>()) {
-  self                                      = this;
-  g_reg()->ctx().at<program_info>().handle_ = ::GetModuleHandleW(nullptr);
+  self                            = this;
+  program_info::emplace().handle_ = ::GetModuleHandleW(nullptr);
   init();
 }
 
-app_base::app_base(const app_base::in_app_args& in_arg) : app_base() {
-  g_reg()->ctx().at<program_info>().handle_ = in_arg.in_instance;
-}
 void app_base::init() {
   DOODLE_LOG_INFO("开始初始化基本配置");
 
@@ -50,7 +47,7 @@ void app_base::init() {
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
   boost::asio::post(g_io_context(), [this]() { this->post_constructor(); });
 }
-app_base::~app_base() = default;
+app_base::~app_base() { program_info::reset(); }
 
 std::atomic_bool& app_base::stop() { return stop_; }
 app_base& app_base::Get() { return *self; }
@@ -66,8 +63,8 @@ std::int32_t app_base::poll_one() {
 void app_base::stop_app(bool in_stop) {
   boost::asio::post(g_io_context(), [=]() {
     g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
-    g_reg()->ctx().at<program_info>().is_stop = true;
-    this->stop_                               = true;
+    program_info::value().is_stop = true;
+    this->stop_                   = true;
     run_facet->deconstruction();
     core_set_init{}.write_file();
   });
