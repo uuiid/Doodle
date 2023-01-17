@@ -27,7 +27,7 @@ class DOODLE_CORE_API app_facet_interface {
    */
   virtual void deconstruction()                                  = 0;
 
-  virtual void add_program_options(const std::shared_ptr<program_options>& in_opt){};
+  virtual void add_program_options(){};
 };
 
 }  // namespace doodle::detail

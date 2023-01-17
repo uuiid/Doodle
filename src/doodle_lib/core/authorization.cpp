@@ -7,12 +7,9 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
-#include <boost/contract.hpp>
-
 #include <cryptopp/aes.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/gcm.h>
-#include <cryptopp/modes.h>
 
 namespace doodle {
 class authorization::impl {
@@ -20,13 +17,13 @@ class authorization::impl {
   friend void from_json(const nlohmann::json& j, impl& p) { p.l_time = j.at("time").get<time_point_wrap>(); }
 
  public:
-  time_point_wrap l_time{};
+  time_point_wrap l_time{2020, 1, 1};
   std::string ciphertext_data{};
 };
 
-authorization::authorization(std::string in_data) : p_i(std::make_unique<impl>()) {
+void authorization::load_authorization_data(const std::string& in_data) {
   DOODLE_LOG_INFO("开始检查授权文件内容");
-  std::string ciphertext{std::move(in_data)};
+  std::string ciphertext{in_data};
   std::string decryptedtext{};
 
   {
@@ -61,15 +58,40 @@ authorization::authorization(std::string in_data) : p_i(std::make_unique<impl>()
   *p_i                 = nlohmann::json::parse(decryptedtext).get<impl>();
   p_i->ciphertext_data = std::move(ciphertext);
 }
+
+authorization::authorization(const std::string& in_data) : p_i(std::make_unique<impl>()) {
+  load_authorization_data(in_data);
+}
+
+authorization::authorization() {
+  auto l_p  = core_set::get_set().program_location() / doodle_config::token_name.data();
+  auto l_p1 = core_set::get_set().get_doc() / doodle_config::token_name.data();
+
+  if (FSys::exists(l_p) && FSys::exists(l_p1))
+    l_p = FSys::last_write_time_point(l_p) < FSys::last_write_time_point(l_p1) ? l_p1 : l_p;
+  else
+    l_p = FSys::exists(l_p) ? l_p : l_p1;
+
+  if (FSys::exists(l_p)) {
+    FSys::ifstream ifstream{l_p};
+    std::string l_s{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
+    load_authorization_data(l_s);
+  }
+}
 authorization::~authorization() { save(); }
 bool authorization::is_expire() const {
+  /// 优先检查构建时间
+  chrono::sys_seconds l_build_time_;
+  std::istringstream l_time{version::build_info::get().build_time};
+  l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
+  chrono::sys_time_pos l_point{l_build_time_};
+  l_point += chrono::months{3};
+
   DOODLE_LOG_INFO("检查时间授权结束时间点 {}", p_i->l_time);
-  return p_i->l_time > time_point_wrap::now();
+  return chrono::system_clock::now() < l_point || p_i->l_time > time_point_wrap::now();
 }
 void authorization::generate_token(const FSys::path& in_path) {
-  boost::contract::check l_c =
-      boost::contract::function().precondition([&]() { DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"}); });
-
+  DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
   impl l_impl{};
   l_impl.l_time           = time_point_wrap(chrono::system_clock::now() + chrono::months{3});
   nlohmann::json out_json = l_impl;

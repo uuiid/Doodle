@@ -42,7 +42,6 @@ using namespace date::literals;
 
 class logger_ctrl;
 class doodle_lib;
-class program_options;
 using logger_ctr_ptr = std::shared_ptr<logger_ctrl>;
 using string_list    = std::vector<std::string>;
 

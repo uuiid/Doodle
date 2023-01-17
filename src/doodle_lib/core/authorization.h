@@ -10,8 +10,11 @@ class DOODLELIB_API authorization {
   class impl;
   std::unique_ptr<impl> p_i;
 
+  void load_authorization_data(const std::string& in_str);
+
  public:
-  explicit authorization(std::string in_data);
+  authorization();
+  explicit authorization(const std::string& in_data);
   virtual ~authorization();
 
   [[nodiscard]] bool is_expire() const;

@@ -3,9 +3,10 @@
 //
 
 #pragma once
-#include <doodle_app/doodle_app_fwd.h>
-#include <doodle_core/doodle_core.h>
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/doodle_core.h>
+
+#include <doodle_app/doodle_app_fwd.h>
 
 namespace doodle {
 
@@ -15,17 +16,15 @@ namespace doodle {
  */
 class DOODLE_APP_API app_command_base : public app_base {
  protected:
-  cmd_string_type cmd_str;
+  std::vector<std::string> cmd_str;
 
   virtual bool chick_authorization();
-
 
   std::optional<FSys::path> find_authorization_file() const;
   bool chick_build_time() const;
 
  public:
   app_command_base();
-  explicit app_command_base(const app_base::in_app_args& in_instance);
 
   static app_command_base& Get();
   //    std::vector<std::string> l_str{argv, argv + argc};
@@ -35,8 +34,8 @@ class DOODLE_APP_API app_command_base : public app_base {
 };
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 class DOODLE_APP_API doodle_main_app : public app_command_base {
  public:
@@ -46,7 +45,6 @@ class DOODLE_APP_API doodle_main_app : public app_command_base {
     win::wnd_handle in_parent;
   };
   explicit doodle_main_app();
-  explicit doodle_main_app(const in_gui_arg& in_arg);
 
   ~doodle_main_app() override;
 

@@ -17,7 +17,6 @@ namespace doodle {
 
 namespace FSys {
 DOODLELIB_API std::string file_hash_sha224(const path &in_file);
-
 }
 
 using namespace entt::literals;
@@ -38,8 +37,6 @@ class work_task_info;
 
 class core_sig;
 class doodle_main_app;
-class program_options;
-
 class opencv_read_player;
 class opencv_player_widget;
 class image_icon;

@@ -8,9 +8,15 @@
 
 #include <boost/program_options.hpp>
 // #include <Windows.h>
-namespace doodle {
 
-class DOODLE_APP_API program_options {
+namespace doodle::win {
+std::vector<std::string> get_command_line();
+
+}
+
+namespace doodle::details {
+
+class DOODLE_APP_API program_options : boost::noncopyable {
  public:
   FSys::path p_config_file;
   std::string p_project_path;
@@ -50,18 +56,12 @@ class DOODLE_APP_API program_options {
   /**
    * @brief 解析命令行
    *
-   * @param argc 传入的命令行参数
-   * @param argv 传入的命令行参数
    * @return true 解析成功
    * @return false 解析失败
    */
-  inline bool command_line_parser(int argc, const char* argv[]) {
-    string_list k_str{argv, argv + argc};
-    return command_line_parser(k_str);
-  };
-  bool command_line_parser(const std::vector<std::string>& in_arg);
+  bool command_line_parser();
   /// @brief 测试是否存在值
   bool operator[](const std::string& in_key) const;
 };
 using program_options_ptr = std::shared_ptr<program_options>;
-}  // namespace doodle
+}  // namespace doodle::details

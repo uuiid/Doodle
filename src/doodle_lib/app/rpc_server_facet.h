@@ -22,7 +22,7 @@ class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interf
   const std::string& name() const noexcept override;
   void operator()() override;
   void deconstruction() override;
-  void add_program_options(const std::shared_ptr<program_options>& in_opt) override;
+  void add_program_options() override;
 };
 
 }  // namespace doodle::facet

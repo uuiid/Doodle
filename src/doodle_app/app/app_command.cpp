@@ -19,43 +19,20 @@
 #include <boost/locale.hpp>
 namespace doodle {
 
-app_command_base::app_command_base(const app_base::in_app_args& in_instance)
-    : app_base(in_instance), cmd_str(in_instance.in_cmd_line) {
-  g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
-}
-
 app_command_base::app_command_base() : app_base(), cmd_str() {
-  auto l_args =
-      boost::program_options::split_winmain(std::string{boost::locale::conv::utf_to_utf<char>(GetCommandLineW())});
-  l_args.erase(l_args.cbegin());
-  cmd_str = l_args;
-  DOODLE_LOG_INFO("获取到命令行 {}", l_args);
-  g_reg()->ctx().emplace<program_options_ptr>(std::make_shared<program_options_ptr::element_type>());
+  program_options::emplace();
+  cmd_str = win::get_command_line();
+  DOODLE_LOG_INFO("获取到命令行 {}", cmd_str);
 }
 
 void app_command_base::post_constructor() {
-  auto l_opt = g_reg()->ctx().at<program_options_ptr>();
+  auto& l_opt = program_options::value();
 
   for (auto&& [key, val] : facet_list) {
-    val->add_program_options(l_opt);
-    l_opt->build_opt(key);
-  }
-  try {
-    if (std::holds_alternative<win::string_type>(cmd_str)) {
-      auto&& l_comm = std::get<win::string_type>(cmd_str);
-      if (l_comm) {
-        l_opt->command_line_parser(boost::program_options::split_winmain(
-            boost::locale::conv::utf_to_utf<char>(std::get<win::string_type>(cmd_str))
-        ));
-      }
-    } else if (std::holds_alternative<std::vector<std::string>>(cmd_str)) {
-      l_opt->command_line_parser(std::get<std::vector<std::string>>(cmd_str));
-    }
-  } catch (const boost::locale::conv::conversion_error& in_err) {
-    DOODLE_LOG_ERROR("无法解析命令行 {}", in_err.what());
+    val->add_program_options();
   }
 
-  for (auto&& [key, val] : l_opt->facet_model) {
+  for (auto&& [key, val] : l_opt.facet_model) {
     if (val) {
       DOODLE_LOG_INFO("开始运行 {} facet", key);
       run_facet = facet_list[key];
@@ -83,7 +60,6 @@ std::optional<FSys::path> app_command_base::find_authorization_file() const {
   if (!exists(l_p)) {
     l_p = core_set::get_set().get_doc() / doodle_config::token_name.data();
   }
-
   return exists(l_p) ? std::optional<FSys::path>{l_p} : std::optional<FSys::path>{};
 }
 bool app_command_base::chick_build_time() const {
@@ -98,14 +74,10 @@ bool app_command_base::chick_build_time() const {
 }  // namespace doodle
 
 namespace doodle {
-
-doodle_main_app::doodle_main_app(const in_gui_arg& in_arg) : app_command_base(in_arg) {
+doodle_main_app::doodle_main_app() : app_command_base() {
   g_reg()->ctx().emplace<gui::main_proc_handle>();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
-  auto& l_p = g_reg()->ctx().at<program_info>();
-  l_p.parent_windows_attr(in_arg.in_parent);
 }
-doodle_main_app::doodle_main_app() : app_command_base() {}
 doodle_main_app& doodle_main_app::Get() { return *(dynamic_cast<doodle_main_app*>(self)); }
 bool doodle_main_app::chick_authorization() { return app_command_base::chick_authorization(); }
 
