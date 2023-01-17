@@ -21,7 +21,6 @@
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
-#include <doodle_lib/gui/widgets/opencv_player_widget.h>
 #include <doodle_lib/gui/widgets/project_edit.h>
 #include <doodle_lib/gui/widgets/screenshot_widget.h>
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
@@ -31,5 +30,4 @@
 #include <doodle_lib/lib_warp/protobuf_warp.h>
 #include <doodle_lib/lib_warp/protobuf_warp_cpp.h>
 #include <doodle_lib/long_task/image_to_move.h>
-#include <doodle_lib/long_task/join_move.h>
 #include <doodle_lib/toolkit/toolkit.h>

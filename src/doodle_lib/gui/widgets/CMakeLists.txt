@@ -11,7 +11,6 @@ target_sources(doodle_lib
         project_edit.h
         ue4_widget.h
         screenshot_widget.h
-        opencv_player_widget.h
         assets_filter_widget.h
         csv_export_widgets.h
         assets_file_widgets.h
@@ -30,7 +29,6 @@ target_sources(doodle_lib
         csv_export_widgets.cpp
         assets_filter_widget.cpp
         extract_subtitles_widgets.cpp
-        opencv_player_widget.cpp
         make_link_widget.cpp
         subtitle_processing.cpp
         long_time_tasks_widget.cpp

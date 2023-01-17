@@ -18,7 +18,6 @@
 
 #include <long_task/image_to_move.h>
 #include <doodle_app/gui/base/ref_base.h>
-#include <long_task/join_move.h>
 
 #include <utility>
 
