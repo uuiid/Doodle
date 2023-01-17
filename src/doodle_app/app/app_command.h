@@ -12,7 +12,7 @@
 #include <doodle_app/doodle_app_fwd.h>
 namespace doodle {
 namespace details::app_command_base {
-void run_facet(const app_base::app_facet_map& in_map);
+void run_facet(const app_base::app_facet_map& in_map, app_base::app_facet_ptr& in_def_facet);
 }
 /**
  * @brief 基本的命令行类
@@ -32,7 +32,7 @@ class DOODLE_APP_API app_command_base : public app_base {
   static app_command_base& Get() { return *(dynamic_cast<app_command_base*>(self)); }
 
  protected:
-  virtual void post_constructor() override { details::app_command_base::run_facet(facet_list); };
+  virtual void post_constructor() override { details::app_command_base::run_facet(facet_list, run_facet); };
 };
 
 /**

@@ -19,7 +19,7 @@
 #include <boost/locale.hpp>
 namespace doodle {
 namespace details::app_command_base {
-void run_facet(const app_base::app_facet_map& in_map) {
+void run_facet(const app_base::app_facet_map& in_map, app_base::app_facet_ptr& in_def_facet) {
   auto& l_opt = doodle::program_options::value();
 
   for (auto&& [key, val] : in_map) {
@@ -30,17 +30,17 @@ void run_facet(const app_base::app_facet_map& in_map) {
   for (auto&& [key, val] : l_opt.facet_model) {
     if (val) {
       DOODLE_LOG_INFO("开始运行 {} facet", key);
-      run_facet = in_map[key];
-      g_reg()->ctx().emplace<app_facet_ptr>(in_map[key]);
+      in_def_facet = in_map.at(key);
+      g_reg()->ctx().emplace<app_facet_ptr>(in_map.at(key));
       break;
     }
   }
 
   if (!g_reg()->ctx().contains<doodle::app_facet_ptr>()) {
-    DOODLE_LOG_INFO("运行默认构面 {}", run_facet->name());
-    g_reg()->ctx().emplace<app_facet_ptr>(run_facet);
+    DOODLE_LOG_INFO("运行默认构面 {}", in_def_facet->name());
+    g_reg()->ctx().emplace<app_facet_ptr>(in_def_facet);
   }
-  boost::asio::post(g_io_context(), [l_f = run_facet]() { (*l_f)(); });
+  boost::asio::post(g_io_context(), [l_f = in_def_facet]() { (*l_f)(); });
 }
 
 }  // namespace details::app_command_base
