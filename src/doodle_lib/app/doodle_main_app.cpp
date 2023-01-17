@@ -23,14 +23,16 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
+  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::value().win_close = []() {
     make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
   };
-  gui::main_proc_handle::value().win_destroy             = [=]() { ::DestroyWindow(p_hwnd); };
-  g_reg()->ctx().at<gui::layout_tick>()                  = std::make_shared<gui::layout_window>();
-  make_handle().emplace<gui::gui_tick>()                 = std::make_shared<gui::menu_bar>();
-  make_handle().emplace<gui::gui_tick>()                 = std::make_shared<gui::main_status_bar>();
+  gui::main_proc_handle::value().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
+  g_reg()->ctx().at<gui::layout_tick>()      = std::make_shared<gui::layout_window>();
+  make_handle().emplace<gui::gui_tick>()     = std::make_shared<gui::menu_bar>();
+  make_handle().emplace<gui::gui_tick>()     = std::make_shared<gui::main_status_bar>();
 }
 
 }  // namespace doodle

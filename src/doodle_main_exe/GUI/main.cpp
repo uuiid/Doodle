@@ -37,7 +37,6 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {
-  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
   using main_app = doodle::app_command<doodle::main_facet, doodle::facet::rpc_server_facet>;
   main_app app{};
   try {
