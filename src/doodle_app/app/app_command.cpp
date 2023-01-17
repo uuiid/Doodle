@@ -46,15 +46,3 @@ void run_facet(const app_base::app_facet_map& in_map, app_base::app_facet_ptr& i
 }  // namespace details::app_command_base
 
 }  // namespace doodle
-
-namespace doodle {
-doodle_main_app::doodle_main_app() : app_command_base() {
-  g_reg()->ctx().emplace<gui::main_proc_handle>();
-  g_reg()->ctx().emplace<gui::detail::layout_tick>();
-}
-doodle_main_app& doodle_main_app::Get() { return *(dynamic_cast<doodle_main_app*>(self)); }
-bool doodle_main_app::chick_authorization() { return app_command_base::chick_authorization(); }
-
-doodle_main_app::~doodle_main_app() = default;
-
-}  // namespace doodle

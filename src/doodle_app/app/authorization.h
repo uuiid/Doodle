@@ -3,10 +3,10 @@
 //
 #pragma once
 
-#include "doodle_lib_fwd.h"
+#include "doodle_app/doodle_app_fwd.h"
 
 namespace doodle {
-class DOODLELIB_API authorization {
+class DOODLE_APP_API authorization {
   class impl;
   std::unique_ptr<impl> p_i;
 

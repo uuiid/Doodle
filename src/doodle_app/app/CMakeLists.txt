@@ -12,6 +12,6 @@ target_sources(doodle_app
         program_options.cpp
         short_cut.cpp
         this_rpc_exe.cpp
-        app_command.cpp
+        authorization.cpp
         )
 add_subdirectory(facet)

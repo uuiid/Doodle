@@ -18,9 +18,6 @@
 #include <boost/asio.hpp>
 
 namespace doodle {
-
-
-
 main_facet::main_facet() : facet::gui_facet() {
   g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::image_to_move>();
 }

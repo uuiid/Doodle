@@ -103,7 +103,7 @@ void ue4_widget::render() {
   /// 开始导入
   if (ImGui::Button(*p_i->import_)) {
     this->import_ue4_prj();
-    doodle_main_app::Get().stop_app();
+    app_base::Get().stop_app();
   }
 }
 void ue4_widget::import_ue4_prj() {

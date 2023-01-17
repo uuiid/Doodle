@@ -7,6 +7,7 @@
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
 #include <doodle_lib/app/doodle_main_app.h>
+#include <doodle_lib/app/rpc_server_facet.h>
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
 /**
@@ -36,7 +37,9 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {
-  doodle::main_app app{};
+  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+  using main_app = doodle::app_command<doodle::main_facet, doodle::facet::rpc_server_facet>;
+  main_app app{};
   try {
     return app.run();
   } catch (const std::exception& err) {
