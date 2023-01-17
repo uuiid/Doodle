@@ -52,8 +52,6 @@ using uuid           = boost::uuids::uuid;
 
 namespace pool_n {}  // namespace pool_n
 
-template <class Derived>
-using process_t = entt::process<Derived, std::chrono::system_clock::duration>;
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
