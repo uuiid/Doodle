@@ -16,7 +16,6 @@
 #include <main_fixtures/lib_fixtures.h>
 #include <stdlib.h>
 
-
 namespace doodle::facet {
 class teste_facet : public gui_facet {
  public:
@@ -26,24 +25,18 @@ class teste_facet : public gui_facet {
 }  // namespace doodle::facet
 
 namespace doodle {
-class test_app : public doodle::doodle_main_app {
- public:
-  test_app() : doodle::doodle_main_app() {
-    run_facet = std::make_shared<facet::teste_facet>();
-    add_facet(run_facet);
-  }
-};
+using test_app = app_command<facet::teste_facet>;
 }  // namespace doodle
 
 using namespace doodle;
 
 struct move_fix {
   move_fix() { timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
-  void setup() {
-    for (int l = 0; l < 500; ++l) {
-      main_app_attr.poll_one();
-    }
-  }
+  //  void setup() {
+  //    for (int l = 0; l < 500; ++l) {
+  //      main_app_attr.poll_one();
+  //    }
+  //  }
 
   test_app main_app_attr;
   std::shared_ptr<boost::asio::high_resolution_timer> timer;
