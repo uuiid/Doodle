@@ -1,6 +1,5 @@
 target_sources(doodle_lib
         PUBLIC
-        authorization.h
         tree_node.h
         ContainerDevice.h
         filesystem_extend.h
@@ -14,7 +13,6 @@ target_sources(doodle_lib
         filesystem_extend.cpp
         image_loader.cpp
         holidaycn_time.cpp
-        authorization.cpp
         xlsx.cpp
 
 

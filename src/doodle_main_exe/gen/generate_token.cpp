@@ -4,7 +4,7 @@
 
 #include <doodle_core/core/doodle_lib.h>
 
-#include <doodle_lib/core/authorization.h>
+#include "doodle_app/app/authorization.h"
 
 int main(int argc, char *argv[]) {
   doodle::doodle_lib l_lib{};
