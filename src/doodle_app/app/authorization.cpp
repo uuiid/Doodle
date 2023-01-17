@@ -6,6 +6,7 @@
 
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/time_point_wrap.h"
+#include <doodle_core/logger/logger.h>
 
 #include <cryptopp/aes.h>
 #include <cryptopp/filters.h>
