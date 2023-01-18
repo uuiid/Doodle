@@ -7,13 +7,11 @@ target_sources(doodle_lib
         observable_container.h
 
         holidaycn_time.h
-        xlsx.h
 
         PRIVATE
         filesystem_extend.cpp
         image_loader.cpp
         holidaycn_time.cpp
-        xlsx.cpp
 
 
         )
