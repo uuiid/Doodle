@@ -8,21 +8,11 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 
-#include "core/core_set.h"
-
-#ifdef _WIN32
 #include <ShlObj.h>
-#else
-#include <pwd.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif  // _WIN32
 
 namespace doodle {
 
-FSys::path win::get_pwd()
-#ifdef _WIN32
-{
+FSys::path win::get_pwd() {
   /// 这里我们手动做一些工作
   /// 获取环境变量 FOLDERID_Documents
   PWSTR pManager;
@@ -33,12 +23,6 @@ FSys::path win::get_pwd()
   CoTaskMemFree(pManager);
   return k_path;
 }
-#else
-{
-  auto pw = getpwuid(getuid())->pw_dir;
-  return FSys::path{pw};
-};
-#endif  // _WIN32
 
 FSys::path win::get_font() {
   /// 这里我们手动做一些工作
@@ -75,7 +59,6 @@ core_set::core_set()
       _root_data(p_root / "data"),
       timeout(3600),
       json_data(std::make_shared<nlohmann::json>()) {
-#ifdef _WIN32
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
   auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
   std::unique_ptr<wchar_t[]> p_buff{new wchar_t[k_buff_size]};
@@ -89,7 +72,6 @@ core_set::core_set()
   if (boost::dll::program_location().filename() == "DoodleExe.exe") {
     program_location_attr = boost::dll::program_location();
   }
-#endif  // _WIN32
 }
 
 boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }

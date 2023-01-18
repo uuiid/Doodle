@@ -12,6 +12,7 @@ program_info::program_info()
 
 const std::atomic_bool& program_info::stop_attr() const { return is_stop; }
 ::doodle::win::wnd_instance program_info::handle_attr() const { return handle_; }
+void program_info::handle_attr(::doodle::win::wnd_instance in_instance) { handle_ = in_instance; }
 ::doodle::win::wnd_handle program_info::parent_windows_attr() const { return parent_handle_; }
 
 std::string& program_info::title_attr() { return title; }

@@ -52,17 +52,10 @@ class DOODLE_CORE_API app_base {
   std::atomic_bool stop_;
 
  public:
-  class DOODLE_CORE_API in_app_args {
-   public:
-    win::wnd_instance in_instance{};
-    cmd_string_type in_cmd_line{};
-  };
 
   explicit app_base();
-  explicit app_base(const in_app_args& in_arg);
   virtual ~app_base();
 
-  void force_run_facet(const app_facet_ptr& in_facet);
   void add_facet(const app_facet_ptr& in_facet);
 
   /**
@@ -76,14 +69,6 @@ class DOODLE_CORE_API app_base {
   virtual std::int32_t poll_one();
   std::atomic_bool& stop();
   void stop_app(bool in_stop = false);
-
-  template <typename T>
-  std::shared_ptr<T> find_facet(const std::string& in_name) {
-    if (auto l_it = facet_list.find(in_name); l_it != std::end(facet_list)) {
-      return std::dynamic_pointer_cast<T>(l_it->second);
-    }
-    return {};
-  }
 
   void load_project(const FSys::path& in_path) const;
 

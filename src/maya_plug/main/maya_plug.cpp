@@ -1,5 +1,6 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/core/program_info.h>
 
 #include <maya_plug/data/create_hud_node.h>
 #include <maya_plug/data/maya_register_main.h>
@@ -41,7 +42,7 @@ MCallbackId app_run_id{0};
 std::stack<MCallbackId> maya_call_back_id{};
 
 using namespace doodle;
-std::shared_ptr<app_command_base> p_doodle_app = nullptr;
+std::shared_ptr<app_base> p_doodle_app = nullptr;
 std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 }  // namespace
@@ -52,9 +53,10 @@ void open_windows() {
   if (auto l_main_win = MQtUtil::mainWindow()) {
     win_id = reinterpret_cast<HWND>(l_main_win->winId());
   }
-  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>(doodle::doodle_main_app::in_gui_arg{
-      doodle::app_base::in_app_args{::MhInstPlugin, nullptr}, SW_HIDE, win_id});
-  p_doodle_app      = l_doodle_app;
+  auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>();
+  doodle::program_info ::value().parent_windows_attr(win_id);
+  doodle::program_info ::value().handle_attr(::MhInstPlugin);
+  p_doodle_app = l_doodle_app;
 }
 }  // namespace doodle::maya_plug
 
