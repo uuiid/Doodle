@@ -22,7 +22,26 @@ class authorization::impl {
   std::string ciphertext_data{};
 };
 
+bool authorization::is_build_near() {
+  /// 优先检查构建时间
+  chrono::sys_seconds l_build_time_;
+  std::istringstream l_time{version::build_info::get().build_time};
+  l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
+  chrono::sys_time_pos l_point{l_build_time_};
+  l_point += chrono::months{3};
+  if (chrono::system_clock::now() < l_point) {
+    p_i->l_time = l_point;
+    return true;
+  }
+  return false;
+}
+
 void authorization::load_authorization_data(const std::string& in_data) {
+  if (is_build_near()) {
+    DOODLE_LOG_INFO("近期构建不检查授权内容");
+    return;
+  }
+
   DOODLE_LOG_INFO("开始检查授权文件内容");
   std::string ciphertext{in_data};
   std::string decryptedtext{};
@@ -74,23 +93,13 @@ authorization::authorization() : p_i(std::make_unique<impl>()) {
     l_p = FSys::exists(l_p) ? l_p : l_p1;
 
   if (FSys::exists(l_p)) {
-    FSys::ifstream ifstream{l_p};
+    FSys::ifstream ifstream{l_p, std::ifstream::binary};
     std::string l_s{std::istream_iterator<char>{ifstream}, std::istream_iterator<char>{}};
     load_authorization_data(l_s);
   }
 }
 authorization::~authorization() { save(); }
-bool authorization::is_expire() const {
-  /// 优先检查构建时间
-  chrono::sys_seconds l_build_time_;
-  std::istringstream l_time{version::build_info::get().build_time};
-  l_time >> chrono::parse("%Y %m %d %H %M %S", l_build_time_);
-  chrono::sys_time_pos l_point{l_build_time_};
-  l_point += chrono::months{3};
-
-  DOODLE_LOG_INFO("检查时间授权结束时间点 {}", p_i->l_time);
-  return chrono::system_clock::now() < l_point || p_i->l_time > time_point_wrap::now();
-}
+bool authorization::is_expire() const { return p_i->l_time > time_point_wrap::now(); }
 void authorization::generate_token(const FSys::path& in_path) {
   DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
   impl l_impl{};
@@ -126,11 +135,17 @@ void authorization::generate_token(const FSys::path& in_path) {
   }
   if (exists(in_path)) create_directories(in_path);
 
-  FSys::ofstream{in_path / FSys::path{doodle_config::token_name.data()}} << out_data;
+  {
+    FSys::ofstream l_f{
+        in_path / FSys::path{doodle_config::token_name.data()},
+        std::ofstream::binary | std::ofstream::out | std::ofstream::trunc};
+    l_f << out_data;
+  }
 }
 void authorization::save(const FSys::path& in_path) const {
+  if (p_i->ciphertext_data.empty()) return;
   if (!exists(in_path.parent_path())) create_directories(in_path.parent_path());
-  FSys::ofstream{in_path} << p_i->ciphertext_data;
+  FSys::ofstream{in_path, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc} << p_i->ciphertext_data;
 }
 void authorization::save() const { save(core_set::get_set().get_doc() / FSys::path{doodle_config::token_name.data()}); }
 

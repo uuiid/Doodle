@@ -12,6 +12,8 @@ class DOODLE_APP_API authorization {
 
   void load_authorization_data(const std::string& in_str);
 
+  bool is_build_near();
+
  public:
   authorization();
   explicit authorization(const std::string& in_data);
