@@ -101,12 +101,9 @@ endif ()
 add_subdirectory(houdini_plug)
 add_subdirectory(maya_plug)
 add_subdirectory(photoshop_plug)
-add_subdirectory(install_wix)
-add_subdirectory(test)
-
-
-include(doodle_exe)
-
 add_subdirectory(exe_authorization)
 
+find_package(Wix REQUIRED)
 
+add_subdirectory(install_wix)
+add_subdirectory(test)

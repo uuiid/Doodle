@@ -29,20 +29,23 @@ include(InstallRequiredSystemLibraries)
 #list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
 
 install(TARGETS DoodleExe
-        RUNTIME_DEPENDENCIES
+        #        RUNTIME_DEPENDENCIES
+        #        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         COMPONENT exe_com
         )
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-        DESTINATION bin/
+#install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
+#        DESTINATION bin/
+#        COMPONENT exe_com
+#        )
+
+#最后实现camke修复
+install(CODE [=[
+        include(BundleUtilities)
+        fixup_bundle("$<TARGET_FILE:DoodleExe>"   ""   "")
+]=]
         COMPONENT exe_com
         )
 
-#最后实现camke修复
-install(CODE "
-        include(BundleUtilities)
-        fixup_bundle(\"$<TARGET_FILE:DoodleExe>\"   \"\"   \"${DIRS}\")
-        "
-        COMPONENT exe_com
-        )
+doodle_install_code_wix(bin)
 
 

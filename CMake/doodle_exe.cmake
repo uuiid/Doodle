@@ -75,7 +75,7 @@ function(doodle_sqlpp_generate out_lists)
         list(APPEND
                 _OUT
                 ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql.h)
-        if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat AND WIN32 )
+        if (EXISTS ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat AND WIN32)
             file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CLEAN_NAME}_sql.cmd
                     CONTENT "call ${PROJECT_SOURCE_DIR}/.venv/Scripts/Activate.bat
 python $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/generate/core/${CLEAN_NAME}_sql doodle_database")
@@ -90,9 +90,35 @@ python $<TARGET_FILE:sqlpp11::ddl2cpp> ${_PATH} ${CMAKE_CURRENT_LIST_DIR}/genera
     set("${out_lists}"
             ${_OUT}
             PARENT_SCOPE)
-#     cmake_print_variables(_OUT)
+    #     cmake_print_variables(_OUT)
 
 
 endfunction()
 
 
+function(doodle_install_code_wix dir)
+    install(CODE
+            "
+            execute_process(
+                    COMMAND \${CMAKE_COMMAND} -E make_directory \${CMAKE_INSTALL_PREFIX}/${dir}
+                    COMMAND py ${PROJECT_SOURCE_DIR}/src/install_wix/fix_main_wxs.py
+                    --input_dir \${CMAKE_INSTALL_PREFIX}/${dir}
+
+                    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
+            )
+            execute_process(
+                    COMMAND \"$<TARGET_FILE:wix_candle>\"
+                    -nologo
+                    -arch x64
+                    -d${dir}_dir=\${CMAKE_INSTALL_PREFIX}/${dir}
+                    -out \"\${CMAKE_INSTALL_PREFIX}/wix/${dir}.wixobj\"
+                    \"-I\${CMAKE_INSTALL_PREFIX}/wix\"
+                    \"-I\${CMAKE_INSTALL_PREFIX} \"
+                    \${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
+
+                    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
+            )
+"
+            COMPONENT exe_com
+            )
+endfunction()

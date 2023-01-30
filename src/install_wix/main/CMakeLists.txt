@@ -1,6 +1,10 @@
+# 寻找 pandoc
+find_package(Pandoc)
+
 set(DOODLE_PACKAGE_VENDOR uuiid)
 configure_file(cpack_variables.wxi cpack_variables.wxi)
 configure_file(main.wxs main.wxs COPYONLY)
+
 configure_file(${PROJECT_SOURCE_DIR}/LICENSE LICENSE.rtf COPYONLY)
 #cmake_print_variables(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
 

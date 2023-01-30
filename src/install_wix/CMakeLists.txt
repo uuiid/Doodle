@@ -28,7 +28,6 @@ macro(wix_candle_gen file work_dir gen_wixobj_files)
         list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
 endmacro(wix_candle_gen)
 
-find_package(Wix REQUIRED)
 
 add_subdirectory(limited_fbx)
 add_subdirectory(main)
