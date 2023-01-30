@@ -326,7 +326,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
       if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
         auto l_f = g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, boost::asio::use_future);
         while (l_f.wait_for(0ns) != std::future_status::ready) {
-          app_command_base::Get().poll_one();
+          ::doodle::app_base::Get().poll_one();
         }
       } else {
         g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, [k_path](bsys::error_code) -> void {

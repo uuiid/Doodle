@@ -126,7 +126,7 @@ MStatus initializePlugin(MObject obj) {
   maya_reg->register_callback(MSceneMessage::addCallback(
       MSceneMessage::Message::kMayaExiting,
       [](void* in) {
-        doodle_main_app::Get().stop_app();
+        ::doodle::app_base::Get().stop_app();
         p_doodle_app->run();
         p_doodle_app.reset();
       },
