@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include <doodle_core/configure/doodle_core_export.h>
+
+#include <chrono>
 #include <cstdint>
 #include <string>
-#include <chrono>
-#include <doodle_core/configure/doodle_core_export.h>
 namespace doodle::version {
 
 class DOODLE_CORE_API build_info {
@@ -33,20 +34,6 @@ class DOODLE_CORE_API build_info {
 }  // namespace doodle::version
 
 #if defined _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#else
-#undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#else
-#undef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 
 #ifndef _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
