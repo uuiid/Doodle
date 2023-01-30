@@ -5,7 +5,7 @@ import uuid
 import xml.etree.ElementTree as et
 import argparse
 
-et.register_namespace("", "http://schemas.microsoft.com/wix/2006/wi")
+et.register_namespace("", "http://wixtoolset.org/schemas/v4/wxs")
 
 
 class wix_run():
@@ -14,7 +14,7 @@ class wix_run():
         self.root_path = pathlib.Path(__file__).parent
         self.comm_group: et.Element = None
         self.group_parent: et.Element = None
-        self.root_node = et.Element("{http://schemas.microsoft.com/wix/2006/wi}Wix")
+        self.root_node = et.Element("{http://wixtoolset.org/schemas/v4/wxs}Wix")
 
     def __get_path_id__(self, path: pathlib.Path):
         if path.suffix == ".exe":
@@ -44,7 +44,8 @@ class wix_run():
         if not path.parent.exists():
             path.parent.mkdir()
 
-        l_tree.write(path, encoding="utf-8", xml_declaration=True)
+        l_tree.write(path)
+        # l_tree.write(path, encoding="utf-8", xml_declaration=True)
 
     def iter_dir(self):
         self.group_parent = et.SubElement(self.root_node, "Fragment")

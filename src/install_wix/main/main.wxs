@@ -1,20 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <?include "cpack_variables.wxi"?>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-     RequiredVersion="3.6.3303.0">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     RequiredVersion="3.6.3303.0"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
-    <Product Id="*"
-             Name="$(var.DOODLE_PACKAGE_NAME)"
+    <Package Name="$(var.DOODLE_PACKAGE_NAME)"
              Language="1033"
              Version="$(var.DOODLE_PACKAGE_VERSION)"
              Manufacturer="$(var.DOODLE_PACKAGE_VENDOR)"
-             UpgradeCode="$(var.DOODLE_WIX_UPGRADE_GUID)">
-
-        <Package InstallerVersion="301"
-                 Compressed="yes"
-                 Comments='这是一个动画辅助开发工具包'/>
+             UpgradeCode="$(var.DOODLE_WIX_UPGRADE_GUID)"
+             InstallerVersion="301"
+             >
 
         <Media Id="1" Cabinet="media1.cab" EmbedCab="yes"/>
 
@@ -25,22 +21,19 @@
         <WixVariable Id="WixUILicenseRtf" Value="$(var.DOODLE_WIX_LICENSE_RTF)"/>
         <Property Id="WIXUI_INSTALLDIR" Value="DOODLE_ROOT"/>
 
-        <Directory Id='TARGETDIR' Name='SourceDir'>
-            <Directory Id="ProgramFiles64Folder">
-                <Directory Id="UUIID_DIR" Name="uuiid">
-                    <Directory Id="DOODLE_ROOT" Name="doodle">
-                    </Directory>
+        <StandardDirectory Id="ProgramFiles6432Folder">
+            <Directory Id="UUIID_DIR" Name="uuiid">
+                <Directory Id="DOODLE_ROOT" Name="doodle">
                 </Directory>
             </Directory>
-            <Directory Id="ProgramMenuFolder">
-                <Directory Id="ProgramMenuDir" Name="doodle">
-                </Directory>
+        </StandardDirectory>
+        <StandardDirectory Id="ProgramMenuFolder">
+            <Directory Id="ProgramMenuDir" Name="doodle">
             </Directory>
-            <Directory Id="DesktopFolder" Name="Desktop">
-            </Directory>
-        </Directory>
+        </StandardDirectory>
 
-        <!--添加主次表支持-->
+
+        <!--添加注册表支持-->
         <DirectoryRef Id="DOODLE_ROOT">
             <Component Id="RegistryEntries" Guid="354e2dc2-c36f-4735-a8f0-1204ecd42058">
                 <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\doodle.main\shell\open\command"
@@ -65,8 +58,8 @@
         </Property>
         <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
 
-        <DirectoryRef Id="DesktopFolder">
-            <Component Id="doodle_desktop" Guid="*">
+        <StandardDirectory Id="DesktopFolder">
+            <Component Id="doodle_desktop">
                 <Shortcut Id="CM_DSP_bin.DoodleExe.exe"
                           Name="Doodle"
                           Target="[#DoodleExe_exe]"
@@ -76,7 +69,7 @@
                                Name="installed_desktop" Type="integer" Value="1"
                                KeyPath="yes"/>
             </Component>
-        </DirectoryRef>
+        </StandardDirectory>
 
         <DirectoryRef Id="ProgramMenuDir">
             <Component Id="StartMenuShortcuts"
@@ -102,7 +95,7 @@
 
         <Feature Id="ProductFeature"
                  Display="expand"
-                 Absent="disallow"
+                 AllowAbsent="disallow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle"
                  Level="1">
@@ -119,7 +112,7 @@
 
         <Feature Id="MayaPlug"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Maya Plug"
                  Level="1">
@@ -129,7 +122,7 @@
 
         <Feature Id="Ue427"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue427 Plug"
                  Level="1">
@@ -138,7 +131,7 @@
         </Feature>
         <Feature Id="Ue50"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue50 Plug"
                  Level="1">
@@ -147,7 +140,7 @@
         </Feature>
         <Feature Id="Ue51"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle Ue51 Plug"
                  Level="1">
@@ -157,7 +150,7 @@
 
         <Feature Id="houdini_plug"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="Doodle houdini Plug"
                  Level="1">
@@ -168,7 +161,7 @@
 
         <Feature Id="houdini_SideFX_Labs"
                  Display="expand"
-                 Absent="allow"
+                 AllowAbsent="allow"
                  ConfigurableDirectory="DOODLE_ROOT"
                  Title="houdini SideFX Plug"
                  Level="1">
@@ -177,8 +170,8 @@
         </Feature>
         <!--        <UIRef Id="$(var.DOODLE_WIX_UI_REF)"/>-->
         <UI Id="DoodleUI">
-            <UIRef Id="WixUI_Mondo"/>
+            <ui:WixUI Id="WixUI_Mondo"/>
             <UIRef Id="WixUI_ErrorProgressText"/>
         </UI>
-    </Product>
+    </Package>
 </Wix>

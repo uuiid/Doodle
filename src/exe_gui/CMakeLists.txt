@@ -19,18 +19,19 @@ target_compile_definitions(DoodleExe
         #        ISOLATION_AWARE_ENABLED
         # ENTT_API_IMPORT
         )
+
 #target_link_options(DoodleExe PUBLIC /MAP:test.txt)
+
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
 include(InstallRequiredSystemLibraries)
 
-#list(APPEND DIRS ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin)
-#list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
 
 install(TARGETS DoodleExe
-        #        RUNTIME_DEPENDENCIES
-        #        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+        RUNTIME_DEPENDENCIES
+        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
         COMPONENT exe_com
         )
 #install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/

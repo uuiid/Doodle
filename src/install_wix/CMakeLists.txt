@@ -29,5 +29,5 @@ macro(wix_candle_gen file work_dir gen_wixobj_files)
 endmacro(wix_candle_gen)
 
 
-add_subdirectory(limited_fbx)
+#add_subdirectory(limited_fbx)
 add_subdirectory(main)

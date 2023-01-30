@@ -106,18 +106,18 @@ function(doodle_install_code_wix dir)
 
                     WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
             )
-            execute_process(
-                    COMMAND \"$<TARGET_FILE:wix_candle>\"
-                    -nologo
-                    -arch x64
-                    -d${dir}_dir=\${CMAKE_INSTALL_PREFIX}/${dir}
-                    -out \"\${CMAKE_INSTALL_PREFIX}/wix/${dir}.wixobj\"
-                    \"-I\${CMAKE_INSTALL_PREFIX}/wix\"
-                    \"-I\${CMAKE_INSTALL_PREFIX} \"
-                    \${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
-
-                    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
-            )
+#            execute_process(
+#                    COMMAND \"$<TARGET_FILE:wix_candle>\"
+#                    -nologo
+#                    -arch x64
+#                    -d${dir}_dir=\${CMAKE_INSTALL_PREFIX}/${dir}
+#                    -out \"\${CMAKE_INSTALL_PREFIX}/wix/${dir}.wixobj\"
+#                    \"-I\${CMAKE_INSTALL_PREFIX}/wix\"
+#                    \"-I\${CMAKE_INSTALL_PREFIX} \"
+#                    \${CMAKE_INSTALL_PREFIX}/wix/${dir}.wxs
+#
+#                    WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
+#            )
 "
             COMPONENT exe_com
             )
