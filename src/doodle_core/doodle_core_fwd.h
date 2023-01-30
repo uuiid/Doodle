@@ -31,18 +31,15 @@ namespace doodle {
 
 namespace details {
 class database_info;
-}
-using database_info = entt::locator<details::database_info>;
-namespace core {
 class program_info;
-}
-using program_info = entt::locator<core::program_info>;
+class identifier;
+}  // namespace details
+using database_info = entt::locator<details::database_info>;
+using program_info  = entt::locator<details::program_info>;
+using identifier    = entt::locator<details::identifier>;
 
 class convert;
 class doodle_error;
-class nullptr_error;
-class serialization_error;
-class file_error;
 class user_ref;
 class user;
 class work_task_info;

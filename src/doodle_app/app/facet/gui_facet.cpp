@@ -9,6 +9,7 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
+#include <doodle_core/core/util.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/platform/win/drop_manager.h>
@@ -95,6 +96,7 @@ void gui_facet::deconstruction() {
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
   gui::main_proc_handle::emplace();
+  identifier::emplace();
   g_reg()->ctx().emplace<gui::detail::layout_tick>();
   g_reg()->ctx().emplace<image_to_move>();
 }
@@ -299,5 +301,5 @@ void gui_facet::set_title(const std::string& in_title) const {
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
-gui_facet::~gui_facet() = default;
+gui_facet::~gui_facet() { identifier::reset(); }
 }  // namespace doodle::facet

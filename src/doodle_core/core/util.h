@@ -7,34 +7,33 @@
 
 #include <atomic>
 
-namespace doodle::core {
+namespace doodle::details {
 /**
  * @brief 标识符生成器， 线程安全
  *
  */
 class DOODLE_CORE_API identifier {
+  mutable std::atomic_uint64_t id_;
+
+ public:
   identifier();
+  ~identifier();
 
-  virtual ~identifier();
-  std::atomic_uint64_t id_;
+  std::uint64_t id() const;
 
- public:
-  static identifier& get();
-  std::uint64_t id();
+  inline explicit operator std::uint64_t() const { return id(); }
 };
 
-/**
- * @brief 这是一个bool锁定类
- *
- */
-class bool_mutex {
- public:
-  std::atomic_bool data{};
+}  // namespace doodle::details
 
-  inline void lock() { data = true; }
-  inline void unlock() { data = false; }
-  /// 锁定时返回 true
-  [[nodiscard]] inline explicit operator bool() const { return data; }
+namespace fmt {
+
+template <>
+struct formatter<::doodle::details::identifier> : formatter<std::uint64_t> {
+  template <typename FormatContext>
+  auto format(const ::doodle::details::identifier &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+    return formatter<std::uint64_t>::format(in_.id(), ctx);
+  }
 };
 
-}  // namespace doodle::core
+}  // namespace fmt

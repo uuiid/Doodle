@@ -8,7 +8,8 @@
 #include <doodle_core/platform/win/windows_alias.h>
 namespace doodle {
 class app_base;
-namespace core {
+
+namespace details {
 
 class DOODLE_CORE_API program_info {
  public:
@@ -34,5 +35,5 @@ class DOODLE_CORE_API program_info {
   std::string& title_attr();
   void title_attr(const std::string& in_str);
 };
-}  // namespace core
+}  // namespace details
 }  // namespace doodle

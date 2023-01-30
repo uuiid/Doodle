@@ -6,7 +6,7 @@
 
 #include <doodle_core/core/app_base.h>
 
-namespace doodle::core {
+namespace doodle::details {
 program_info::program_info()
     : is_stop(), handle_(), parent_handle_(), title(doodle::version::build_info::get().version_str) {}
 
@@ -19,4 +19,4 @@ std::string& program_info::title_attr() { return title; }
 void program_info::title_attr(const std::string& in_str) { title = in_str; }
 void program_info::parent_windows_attr(::doodle::win::wnd_handle in_) { parent_handle_ = in_; }
 
-}  // namespace doodle::core
+}  // namespace doodle::details
