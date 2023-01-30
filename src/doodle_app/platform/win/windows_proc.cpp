@@ -3,13 +3,14 @@
 //
 
 #include "windows_proc.h"
+
 #include <gui/main_proc_handle.h>
 // Helper functions
 #include <Windows.h>
 #include <d3d11.h>
-#include <tchar.h>
-#include <shellapi.h>
 #include <imgui_impl_win32.h>
+#include <shellapi.h>
+#include <tchar.h>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -40,7 +41,10 @@ bool d3d_device::CreateDeviceD3D(HWND hWnd) {
       D3D_FEATURE_LEVEL_11_0,
       D3D_FEATURE_LEVEL_10_0,
   };
-  if (D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK)
+  if (D3D11CreateDeviceAndSwapChain(
+          nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd,
+          &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext
+      ) != S_OK)
     return false;
 
   CreateRenderTarget();
@@ -78,14 +82,15 @@ void d3d_device::CleanupRenderTarget() {
 }
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-    return true;
+  if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam)) return true;
 
   switch (msg) {
     case WM_SIZE: {
       if (g_reg()->ctx().at<d3d_device_ptr>()->g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED) {
         g_reg()->ctx().at<d3d_device_ptr>()->CleanupRenderTarget();
-        g_reg()->ctx().at<d3d_device_ptr>()->g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
+        g_reg()->ctx().at<d3d_device_ptr>()->g_pSwapChain->ResizeBuffers(
+            0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0
+        );
         g_reg()->ctx().at<d3d_device_ptr>()->CreateRenderTarget();
       }
       return 0;
@@ -101,13 +106,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
         const RECT* suggested_rect = (RECT*)lParam;
         ::SetWindowPos(
-            hWnd,
-            nullptr,
-            suggested_rect->left,
-            suggested_rect->top,
-            suggested_rect->right - suggested_rect->left,
-            suggested_rect->bottom - suggested_rect->top,
-            SWP_NOZORDER | SWP_NOACTIVATE
+            hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left,
+            suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE
         );
       }
       break;
@@ -145,8 +145,6 @@ d3d_device::d3d_device(wnd_handle const& in_handle) {
   handle_wnd = in_handle;
   CreateDeviceD3D(in_handle);
 }
-d3d_device::~d3d_device() {
-  CleanupDeviceD3D();
-}
+d3d_device::~d3d_device() { CleanupDeviceD3D(); }
 
 }  // namespace doodle::win
