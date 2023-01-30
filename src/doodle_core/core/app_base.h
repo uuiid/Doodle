@@ -52,8 +52,7 @@ class DOODLE_CORE_API app_base {
   std::atomic_bool stop_;
 
  public:
-
-  explicit app_base();
+  app_base();
   virtual ~app_base();
 
   void add_facet(const app_facet_ptr& in_facet);

@@ -29,7 +29,7 @@ include(InstallRequiredSystemLibraries)
 #list(APPEND DIRS ${CMAKE_BINARY_DIR}/bin)
 
 install(TARGETS DoodleExe
-        #        RUNTIME_DEPENDENCIES
+        RUNTIME_DEPENDENCIES
         COMPONENT exe_com
         )
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/

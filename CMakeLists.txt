@@ -101,7 +101,8 @@ find_package(Alembic CONFIG REQUIRED)
 
 # 寻找d3d辅助工具库
 find_package(directxtk CONFIG REQUIRED)
-
+# 寻找 pandoc
+find_package(Pandoc)
 # 启用测试
 enable_testing()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
