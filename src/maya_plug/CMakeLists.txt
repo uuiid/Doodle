@@ -24,7 +24,7 @@ if(DEFINED Maya_Version)
                 add_library(doodle_maya MODULE
                         doodle_maya.manifest
                         doodle_maya.rc
-                        ${PROJECT_SOURCE_DIR}/src/doodle_main_exe/icon.ico
+                        ${PROJECT_SOURCE_DIR}/src/icon.ico
                 )
 
                 add_subdirectory(configure configure_${Maya_Version})

@@ -90,9 +90,23 @@ cmrc_add_resource_library(
 add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
-add_subdirectory(doodle_main_exe)
+if (BUILD_LIMITED_1)
+    message("build task_exe BUILD_LIMITED_1=${BUILD_LIMITED_1}")
+    add_subdirectory(exe_task)
+else ()
+    message("build GUI BUILD_LIMITED_1=${BUILD_LIMITED_1}")
+    add_subdirectory(exe_gui)
+endif ()
+
 add_subdirectory(houdini_plug)
 add_subdirectory(maya_plug)
 add_subdirectory(photoshop_plug)
 add_subdirectory(install_wix)
 add_subdirectory(test)
+
+
+include(doodle_exe)
+
+add_subdirectory(exe_authorization)
+
+

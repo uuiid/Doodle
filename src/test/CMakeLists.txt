@@ -6,9 +6,9 @@ macro(doodle_link_test)
             PUBLIC
 
             PRIVATE
-            ${PROJECT_SOURCE_DIR}/src/doodle_main_exe/DoodleExe.manifest
-            ${PROJECT_SOURCE_DIR}/src/doodle_main_exe/icon.ico
-            ${PROJECT_SOURCE_DIR}/src/doodle_main_exe/win_exe.rc
+            ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
+            ${PROJECT_SOURCE_DIR}/src/icon.ico
+            ${PROJECT_SOURCE_DIR}/src/win_exe.rc
     )
     set_target_properties(${ARGV0}
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
