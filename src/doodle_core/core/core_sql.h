@@ -26,5 +26,4 @@ class DOODLE_CORE_API database_info {
 
 }  // namespace details
 
-using database_info = entt::locator<details::database_info>;
 }  // namespace doodle

@@ -35,5 +35,4 @@ class DOODLE_CORE_API program_info {
   void title_attr(const std::string& in_str);
 };
 }  // namespace core
-using program_info = entt::locator<core::program_info>;
 }  // namespace doodle

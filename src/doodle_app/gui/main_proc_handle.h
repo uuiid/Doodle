@@ -18,5 +18,4 @@ class DOODLE_APP_API main_proc_handle {
 };
 }  // namespace details
 
-using main_proc_handle = entt::locator<details::main_proc_handle>;
 }  // namespace doodle::gui

@@ -14,7 +14,17 @@ class app_command_base;
 
 namespace details {
 class program_options;
+}  // namespace details
+
+namespace gui {
+
+namespace details {
+class main_proc_handle;
+
 }
+using main_proc_handle = entt::locator<gui::details::main_proc_handle>;
+}  // namespace gui
+
 using program_options = entt::locator<details::program_options>;
 
 }  // namespace doodle

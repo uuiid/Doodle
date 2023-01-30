@@ -28,6 +28,16 @@ class thread_pool;
 
 // #include <>
 namespace doodle {
+
+namespace details {
+class database_info;
+}
+using database_info = entt::locator<details::database_info>;
+namespace core {
+class program_info;
+}
+using program_info = entt::locator<core::program_info>;
+
 class convert;
 class doodle_error;
 class nullptr_error;
@@ -51,7 +61,6 @@ using registry_ptr   = std::shared_ptr<entt::registry>;
 using uuid           = boost::uuids::uuid;
 
 namespace pool_n {}  // namespace pool_n
-
 
 DOODLE_CORE_API boost::asio::io_context& g_io_context();
 DOODLE_CORE_API boost::asio::thread_pool& g_thread();
