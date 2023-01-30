@@ -9,8 +9,6 @@
 #include <doodle_app/configure/doodle_app_export.h>
 
 namespace doodle {
-template <typename Facet_Defaute, typename... Facet_>
-class app_command_base;
 
 namespace details {
 class program_options;
