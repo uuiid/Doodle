@@ -5,7 +5,6 @@ cmrc_add_resource_library(
         ${DOODLE_RE_FILES_LIST}
         core/sql_file.sql
 )
-include(doodle_exe)
 doodle_sqlpp_generate(
         OUT_LISTS_sqlpp
         LISTS_FILES

@@ -1,0 +1,29 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+        <Feature Id="Ue427" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue427 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue427_Plug">
+            </ComponentGroupRef>
+        </Feature>
+        <Feature Id="Ue50" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue50 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue50_Plug">
+            </ComponentGroupRef>
+        </Feature>
+        <Feature Id="Ue51" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue51 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue51_Plug">
+            </ComponentGroupRef>
+        </Feature>
+
+        <Feature Id="houdini_plug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1">
+            <ComponentGroupRef Id="com_group_houdini">
+            </ComponentGroupRef>
+        </Feature>
+
+
+        <Feature Id="houdini_SideFX_Labs" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="houdini SideFX Plug" Level="1">
+            <ComponentGroupRef Id="com_group_SideFX_Labs">
+            </ComponentGroupRef>
+        </Feature>
+  </Fragment>
+</Wix>
+
+

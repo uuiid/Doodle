@@ -47,7 +47,7 @@ install(CODE [=[
         COMPONENT exe_com
         )
 
-doodle_install_code_wix(bin)
+doodle_install_code_wix(bin exe_com)
 configure_file(install.wxs install.wxs COPYONLY)
 
 

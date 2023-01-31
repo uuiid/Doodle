@@ -74,9 +74,12 @@ if(DEFINED Maya_Version)
 
                 # 定义安装逻辑
                 install(TARGETS doodle_maya
+                        RUNTIME_DEPENDENCIES
+                        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
+                        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
                         DESTINATION maya/plug-ins
                         COMPONENT maya_plug_com
-                )
+                        )
 
                 install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
                         DESTINATION maya
@@ -84,11 +87,16 @@ if(DEFINED Maya_Version)
                 install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
                         DESTINATION maya/scripts/scripts/
                         COMPONENT maya_plug_com)
-                install(CODE [[
-                                file(COPY  ${CMAKE_INSTALL_PREFIX}/bin/
-                                        DESTINATION ${CMAKE_INSTALL_PREFIX}/maya/plug-ins
-                                        FILES_MATCHING PATTERN  *.dll)
-                                ]]
+                install(FILES maya_plug_install.wxs
+                        DESTINATION wix
                         COMPONENT maya_plug_com)
+                doodle_install_code_wix(maya maya_plug_com)
+                #                install(CODE [[
+                #                                file(COPY  ${CMAKE_INSTALL_PREFIX}/bin/
+                #                                        DESTINATION ${CMAKE_INSTALL_PREFIX}/maya/plug-ins
+                #                                        FILES_MATCHING PATTERN  *.dll)
+                #                                ]]
+                #                        COMPONENT maya_plug_com)
+
         endif()
 endif()

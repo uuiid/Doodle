@@ -22,6 +22,7 @@ include(ProcessorCount)
 ProcessorCount(DOODLE_CPU_N)
 find_package(SevenZip)
 
+
 install(CODE "
 file(GLOB WIX_FILE_LISTS
         RELATIVE \${CMAKE_INSTALL_PREFIX}/wix
@@ -37,10 +38,12 @@ set(DOODLE_PACKAGE_FEATURE_REF_ID_LIST)
 foreach (files IN LISTS WIX_FILE_LISTS)
     file(READ \${CMAKE_INSTALL_PREFIX}/wix/\${files} DOODLE_TEST_STR)
     if (DOODLE_TEST_STR MATCHES [[<Feature Id=\"([A-Za-z0-9_]+)\"]])
-        list(APPEND DOODLE_PACKAGE_FEATURE_REF_ID_LIST \"<FeatureRef Id=\\\"\${CMAKE_MATCH_1}\\\"/>\")
+        foreach (Num RANGE 1 \${CMAKE_MATCH_COUNT})
+            list(APPEND DOODLE_PACKAGE_FEATURE_REF_ID_LIST \"<FeatureRef Id=\\\"\${CMAKE_MATCH_\${Num}}\\\"/>\")
+        endforeach ()
     endif ()
 endforeach ()
-
+list(JOIN DOODLE_PACKAGE_FEATURE_REF_ID_LIST \" \" DOODLE_PACKAGE_FEATURE_REF_ID_LIST)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/main.wxs \${CMAKE_INSTALL_PREFIX}/wix/main.wxs)
 
 list(REMOVE_ITEM 7Z_FOLDER_LISTS wix)

@@ -7,7 +7,6 @@ cmrc_add_resource_library(
 )
 
 
-include(doodle_exe)
 add_library(doodle_lib
         #        SHARED
         #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
