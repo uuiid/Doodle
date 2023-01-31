@@ -48,5 +48,16 @@ install(CODE [=[
         )
 
 doodle_install_code_wix(bin)
+configure_file(install.wxs install.wxs COPYONLY)
+
+
+install(CODE
+        "
+set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:DoodleExe>)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/install.wxs \${CMAKE_INSTALL_PREFIX}/wix/doodle_gui_exe.wxs)
+        "
+        COMPONENT exe_com)
+
+
 
 

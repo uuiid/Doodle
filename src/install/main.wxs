@@ -1,0 +1,65 @@
+<?include "cpack_variables.wxi"?>
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" RequiredVersion="3.6.3303.0"
+    xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+    <Package Name="$(var.DOODLE_PACKAGE_NAME)" Language="1033" Version="$(var.DOODLE_PACKAGE_VERSION)" Manufacturer="$(var.DOODLE_PACKAGE_VENDOR)" UpgradeCode="$(var.DOODLE_WIX_UPGRADE_GUID)" InstallerVersion="301">
+
+        <Media Id="1" Cabinet="media1.cab" EmbedCab="yes"/>
+        <MajorUpgrade Schedule="afterInstallValidate" AllowDowngrades="yes"/>
+        <WixVariable Id="WixUILicenseRtf" Value="$(var.DOODLE_WIX_LICENSE_RTF)"/>
+
+
+        <StandardDirectory Id="ProgramFiles6432Folder">
+            <Directory Id="UUIID_DIR" Name="uuiid">
+                <Directory Id="DOODLE_ROOT" Name="doodle">
+                </Directory>
+            </Directory>
+        </StandardDirectory>
+        <StandardDirectory Id="ProgramMenuFolder">
+            <Directory Id="ProgramMenuDir" Name="doodle">
+            </Directory>
+        </StandardDirectory>
+
+        <Property Id="WIXUI_INSTALLDIR" Value="DOODLE_ROOT"/>
+        <Property Id="INSTALL_ROOT" Secure="yes">
+            <RegistrySearch Id="FindInstallLocation" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[WIX_UPGRADE_DETECTED]" Name="InstallLocation" Type="raw"/>
+        </Property>
+        <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
+
+
+        <Feature Id="MayaPlug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Maya Plug" Level="1">
+            <ComponentGroupRef Id="com_group_maya">
+            </ComponentGroupRef>
+        </Feature>
+
+        <Feature Id="Ue427" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue427 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue427_Plug">
+            </ComponentGroupRef>
+        </Feature>
+        <Feature Id="Ue50" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue50 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue50_Plug">
+            </ComponentGroupRef>
+        </Feature>
+        <Feature Id="Ue51" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue51 Plug" Level="1">
+            <ComponentGroupRef Id="com_group_ue51_Plug">
+            </ComponentGroupRef>
+        </Feature>
+
+        <Feature Id="houdini_plug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1">
+            <ComponentGroupRef Id="com_group_houdini">
+            </ComponentGroupRef>
+        </Feature>
+
+
+        <Feature Id="houdini_SideFX_Labs" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="houdini SideFX Plug" Level="1">
+            <ComponentGroupRef Id="com_group_SideFX_Labs">
+            </ComponentGroupRef>
+        </Feature>
+        <!--        <UIRef Id="$(var.DOODLE_WIX_UI_REF)"/>-->
+        <UI Id="DoodleUI">
+            <ui:WixUI Id="WixUI_Mondo"/>
+            <UIRef Id="WixUI_ErrorProgressText"/>
+        </UI>
+    </Package>
+</Wix>

@@ -23,11 +23,31 @@ macro(wix_candle_gen file work_dir gen_wixobj_files)
 
                 DEPENDS ${CMAKE_INSTALL_PREFIX}/wix/${file}.wxs
                 WORKING_DIRECTORY ${work_dir}
-        )
+                )
 
         list(APPEND ${gen_wixobj_files} ${CMAKE_INSTALL_PREFIX}/wix/${file}.wixobj)
 endmacro(wix_candle_gen)
 
 
 #add_subdirectory(limited_fbx)
-add_subdirectory(main)
+#add_subdirectory(main)
+find_package(Pandoc)
+
+set(DOODLE_PACKAGE_VENDOR uuiid)
+configure_file(cpack_variables.wxi cpack_variables.wxi)
+
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/cpack_variables.wxi
+        main.wxs
+        DESTINATION wix
+        COMPONENT exe_com)
+
+
+install(CODE "
+execute_process(
+        COMMAND \"$<TARGET_FILE:pandoc>\" -s ${PROJECT_SOURCE_DIR}/LICENSE -f textile -o ./wix/LICENSE.rtf
+        WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}
+)
+"
+        COMPONENT exe_com
+        )

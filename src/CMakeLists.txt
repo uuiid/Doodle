@@ -105,5 +105,5 @@ add_subdirectory(exe_authorization)
 
 find_package(Wix REQUIRED)
 
-add_subdirectory(install_wix)
+add_subdirectory(install)
 add_subdirectory(test)
