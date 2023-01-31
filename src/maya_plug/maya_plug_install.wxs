@@ -1,6 +1,6 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
-        <Feature Id="MayaPlug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Maya Plug" Level="1">
+        <Feature Id="MayaPlug" Display="expand" AllowAbsent="yes" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Maya Plug" Level="1">
             <ComponentGroupRef Id="com_group_maya">
             </ComponentGroupRef>
         </Feature>

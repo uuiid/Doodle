@@ -1,6 +1,6 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
-        <Feature Id="houdini_plug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1">
+        <Feature Id="houdini_plug" Display="expand" AllowAbsent="yes" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1">
             <ComponentGroupRef Id="com_group_houdini">
             </ComponentGroupRef>
         </Feature>
