@@ -6,7 +6,7 @@
 
     <StandardDirectory Id="DesktopFolder">
       <Component Id="doodle_desktop">
-        <Shortcut Id="CM_DSP_bin.DoodleExe_exe" Name="Doodle" Target="[#DoodleExe_exe]" WorkingDirectory="WIXUI_INSTALLDIR"/>
+        <Shortcut Id="CM_DSP_bin.DoodleExe_exe" Name="Doodle" Target="[#DoodleExe_exe]" WorkingDirectory="DOODLE_ROOT"/>
         <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle" Name="installed_desktop" Type="integer" Value="1" KeyPath="yes"/>
       </Component>
     </StandardDirectory>
@@ -30,7 +30,7 @@
       <Component Id="StartMenuShortcuts" Guid="C96D5AEF-4EBB-42E9-A238-69D2459B8740">
         <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
         <!--菜单快捷方式-->
-        <Shortcut Id="CM_SP_bin.DoodleExe_exe" Name="Doodle" Target="[#DoodleExe_exe]" WorkingDirectory="WIXUI_INSTALLDIR"/>
+        <Shortcut Id="CM_SP_bin.DoodleExe_exe" Name="Doodle" Target="[#DoodleExe_exe]" WorkingDirectory="DOODLE_ROOT"/>
 
         <!--注册表-->
         <RegistryValue Root="HKCU" Key="Software\uuiid\Doodle" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
@@ -39,7 +39,7 @@
       </Component>
     </DirectoryRef>
 
-    <Feature Id="ProductFeature" Display="expand" AllowAbsent="disallow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle" Level="1">
+    <Feature Id="ProductFeature" Display="expand" AllowAbsent="yes" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle" Level="1">
       <!--基本的 bin 文件夹 -->
       <ComponentGroupRef Id="com_group_bin"/>
       <!--基本的运行文件-->

@@ -105,7 +105,6 @@ find_package(directxtk CONFIG REQUIRED)
 # 启用测试
 enable_testing()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-cmake_print_variables(DOODLE_PACKAGE_NAME)
 
 # =====================安装打包过程===============================
 add_subdirectory(script)

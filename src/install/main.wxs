@@ -27,35 +27,38 @@
         </Property>
         <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALL_ROOT]" After="CostFinalize"/>
 
-
-        <Feature Id="MayaPlug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Maya Plug" Level="1">
-            <ComponentGroupRef Id="com_group_maya">
-            </ComponentGroupRef>
-        </Feature>
-
-        <Feature Id="Ue427" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue427 Plug" Level="1">
-            <ComponentGroupRef Id="com_group_ue427_Plug">
-            </ComponentGroupRef>
-        </Feature>
-        <Feature Id="Ue50" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue50 Plug" Level="1">
-            <ComponentGroupRef Id="com_group_ue50_Plug">
-            </ComponentGroupRef>
-        </Feature>
-        <Feature Id="Ue51" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue51 Plug" Level="1">
-            <ComponentGroupRef Id="com_group_ue51_Plug">
-            </ComponentGroupRef>
-        </Feature>
-
-        <Feature Id="houdini_plug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1">
-            <ComponentGroupRef Id="com_group_houdini">
-            </ComponentGroupRef>
-        </Feature>
+        <FeatureRef Id="ProductFeature"/>
 
 
-        <Feature Id="houdini_SideFX_Labs" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="houdini SideFX Plug" Level="1">
-            <ComponentGroupRef Id="com_group_SideFX_Labs">
-            </ComponentGroupRef>
-        </Feature>
+        @DOODLE_PACKAGE_FEATURE_REF_ID_LIST@
+<!--         <Feature Id="MayaPlug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Maya Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_maya"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
+
+<!--         <Feature Id="Ue427" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue427 Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_ue427_Plug"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
+<!--         <Feature Id="Ue50" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue50 Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_ue50_Plug"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
+<!--         <Feature Id="Ue51" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle Ue51 Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_ue51_Plug"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
+
+<!--         <Feature Id="houdini_plug" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="Doodle houdini Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_houdini"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
+
+
+<!--         <Feature Id="houdini_SideFX_Labs" Display="expand" AllowAbsent="allow" ConfigurableDirectory="DOODLE_ROOT" Title="houdini SideFX Plug" Level="1"> -->
+<!--             <ComponentGroupRef Id="com_group_SideFX_Labs"> -->
+<!--             </ComponentGroupRef> -->
+<!--         </Feature> -->
         <!--        <UIRef Id="$(var.DOODLE_WIX_UI_REF)"/>-->
         <UI Id="DoodleUI">
             <ui:WixUI Id="WixUI_Mondo"/>

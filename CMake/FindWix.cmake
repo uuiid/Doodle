@@ -36,38 +36,15 @@ The following cache variables may also be set:
 #]=======================================================================]
 
 find_program(
-        ${CMAKE_FIND_PACKAGE_NAME}_CANDLE_EXECUTABLE
-        NAMES candle
+        ${CMAKE_FIND_PACKAGE_NAME}_EXECUTABLE
+        NAMES wix
 
         HINTS
-        $ENV{WIX}
+        $ENV{USERPROFILE}/.dotnet/tools
 
         PATH_SUFFIXES
         bin
-        DOC "wix candle 工具"
-)
-
-find_program(
-        ${CMAKE_FIND_PACKAGE_NAME}_LIGHT_EXECUTABLE
-        NAMES light
-
-        HINTS
-        $ENV{WIX}
-
-        PATH_SUFFIXES
-        bin
-        DOC "wix light 工具"
-)
-find_program(
-        ${CMAKE_FIND_PACKAGE_NAME}_HEAT_EXECUTABLE
-        NAMES heat
-
-        HINTS
-        $ENV{WIX}
-
-        PATH_SUFFIXES
-        bin
-        DOC "wix heat 工具"
+        DOC "wix exe工具"
 )
 
 include(FindPackageHandleStandardArgs)
@@ -75,28 +52,15 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
         ${CMAKE_FIND_PACKAGE_NAME}
         REQUIRED_VARS
-        ${CMAKE_FIND_PACKAGE_NAME}_CANDLE_EXECUTABLE
-        ${CMAKE_FIND_PACKAGE_NAME}_LIGHT_EXECUTABLE
-        ${CMAKE_FIND_PACKAGE_NAME}_HEAT_EXECUTABLE
+        ${CMAKE_FIND_PACKAGE_NAME}_EXECUTABLE
         REASON_FAILURE_MESSAGE "没有找到 wix 工具集"
 )
 
 
-add_executable(wix_candle IMPORTED GLOBAL)
-add_executable(wix_light IMPORTED GLOBAL)
-add_executable(wix_heat IMPORTED GLOBAL)
+add_executable(wix_exe IMPORTED GLOBAL)
 set_target_properties(
-        wix_candle
+        wix_exe
         PROPERTIES
-        IMPORTED_LOCATION ${${CMAKE_FIND_PACKAGE_NAME}_CANDLE_EXECUTABLE}
+        IMPORTED_LOCATION ${${CMAKE_FIND_PACKAGE_NAME}_EXECUTABLE}
 )
-set_target_properties(
-        wix_light
-        PROPERTIES
-        IMPORTED_LOCATION ${${CMAKE_FIND_PACKAGE_NAME}_LIGHT_EXECUTABLE}
-)
-set_target_properties(
-        wix_heat
-        PROPERTIES
-        IMPORTED_LOCATION ${${CMAKE_FIND_PACKAGE_NAME}_HEAT_EXECUTABLE}
-)
+
