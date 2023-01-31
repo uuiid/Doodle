@@ -30,12 +30,12 @@ message("pack folder ${7Z_FOLDER_LISTS} to @DOODLE_PACKAGE_NAME@")
 
 
 execute_process(
-        COMMAND "$<TARGET_FILE:wix_exe>" extension add WixToolset.UI.wixext
+        COMMAND "${DOODLE_WIX_EXE_PATH}" extension add WixToolset.UI.wixext
 
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/wix
 )
 execute_process(
-        COMMAND "$<TARGET_FILE:wix_exe>" build
+        COMMAND "${DOODLE_WIX_EXE_PATH}" build
         -o "${CMAKE_INSTALL_PREFIX}/@DOODLE_PACKAGE_NAME@.msi"
         -pdb "${CMAKE_INSTALL_PREFIX}/wix/@DOODLE_PACKAGE_NAME@.wixpdb"
         -pdbType full

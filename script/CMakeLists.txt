@@ -13,6 +13,8 @@ if(DEFINED Ue4_ROOT_DIR)
                 DESTINATION ue427_Plug
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
+                PATTERN "*.pdb" EXCLUDE
+                PATTERN "Source" EXCLUDE
                 )
         doodle_install_code_wix(ue427_Plug ue4_plug)
 
@@ -20,6 +22,8 @@ if(DEFINED Ue4_ROOT_DIR)
                 DESTINATION ue50_Plug
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
+                PATTERN "*.pdb" EXCLUDE
+                PATTERN "Source" EXCLUDE
                 )
         doodle_install_code_wix(ue50_Plug ue4_plug)
 
@@ -27,6 +31,8 @@ if(DEFINED Ue4_ROOT_DIR)
                 DESTINATION ue51_Plug
                 COMPONENT ue4_plug
                 PATTERN "Intermediate" EXCLUDE
+                PATTERN "*.pdb" EXCLUDE
+                PATTERN "Source" EXCLUDE
                 )
         doodle_install_code_wix(ue51_Plug ue4_plug)
 
