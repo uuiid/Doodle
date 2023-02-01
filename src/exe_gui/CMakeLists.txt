@@ -34,26 +34,19 @@ install(TARGETS DoodleExe
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
         COMPONENT exe_com
         )
-install(FILES ${PROJECT_BINARY_DIR}/bin/token.doodle_token
-        DESTINATION bin/
-        COMPONENT exe_com
-        )
 #最后实现camke修复
-install(CODE [=[
-        include(BundleUtilities)
-        fixup_bundle("$<TARGET_FILE:DoodleExe>"   ""   "")
-]=]
-        COMPONENT exe_com
-        )
 
 doodle_install_code_wix(bin exe_com)
 configure_file(install.wxs install.wxs COPYONLY)
-
+configure_file(install_script.cmake install_script.cmake @ONLY)
 
 install(CODE
         "
 set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:DoodleExe>)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/install.wxs \${CMAKE_INSTALL_PREFIX}/wix/doodle_gui_exe.wxs)
+set(DOODLE_MAIN_EXE $<TARGET_FILE:DoodleExe>)
+set(DOODLE_GENERATE_TOKEN_RUN $<TARGET_FILE:generate_token>)
+
+include(${CMAKE_CURRENT_BINARY_DIR}/install_script.cmake)
         "
         COMPONENT exe_com)
 
