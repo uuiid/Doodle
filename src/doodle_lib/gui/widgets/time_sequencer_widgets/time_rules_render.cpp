@@ -257,7 +257,9 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
 
     if (modify_guard_) {
       auto l_f = get();
-      show_str = fmt::format("{:%F %H:%M} {:%F %H:%M} {}", l_f.first, l_f.second, l_f.info);
+      show_str = fmt::format(
+          "{}: {:%F %H:%M} {:%F %H:%M} {}", l_f.is_extra_work ? "工作" : "休息", l_f.first, l_f.second, l_f.info
+      );
     }
 
     return modify_guard_;
