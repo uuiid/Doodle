@@ -73,6 +73,9 @@ if(DEFINED Maya_Version)
                 add_dependencies(doodle_maya doodle_maya_python_files)
 
                 # 定义安装逻辑
+                #                set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+                #                set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT maya_plug_com)
+                #                include(InstallRequiredSystemLibraries)
                 install(TARGETS doodle_maya
                         RUNTIME_DEPENDENCIES
                         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
