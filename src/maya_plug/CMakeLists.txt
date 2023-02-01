@@ -91,12 +91,6 @@ if(DEFINED Maya_Version)
                         DESTINATION wix
                         COMPONENT maya_plug_com)
                 doodle_install_code_wix(maya maya_plug_com)
-                #                install(CODE [[
-                #                                file(COPY  ${CMAKE_INSTALL_PREFIX}/bin/
-                #                                        DESTINATION ${CMAKE_INSTALL_PREFIX}/maya/plug-ins
-                #                                        FILES_MATCHING PATTERN  *.dll)
-                #                                ]]
-                #                        COMPONENT maya_plug_com)
 
         endif()
 endif()
