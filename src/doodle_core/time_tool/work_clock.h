@@ -27,8 +27,6 @@ class DOODLE_CORE_API work_clock {
   using interval_set_time      = boost::icl::interval_set<time_type>;
   using interval_map_time      = boost::icl::interval_map<time_type, info_type>;
 
-  void gen_rules_(const discrete_interval_time& in_time);
-  void generate_interval_map_time_(const discrete_interval_time& in_time);
   interval_set_time interval_set_time_;
   interval_map_time interval_map_time_;
 
@@ -40,7 +38,7 @@ class DOODLE_CORE_API work_clock {
    * @param in_min
    * @param in_max
    */
-  void set_interval(const time_type& in_min, const time_type& in_max);
+  void cut_interval(const time_type& in_min, const time_type& in_max);
 
   /**
    * @brief 获取两个时间点点工作时间(按照规则获取)

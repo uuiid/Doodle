@@ -21,11 +21,13 @@ class DOODLE_CORE_API time_point_info : boost::equality_comparable<time_point_in
 
  public:
   time_point_info() = default;
-  time_point_info(time_point_wrap in_b, time_point_wrap in_e, std::string in_indo)
-      : first(std::move(in_b)), second(std::move(in_e)), info(std::move(in_indo)) {}
+  explicit time_point_info(
+      const time_point_wrap& in_b, const time_point_wrap& in_e, std::string in_indo, bool in_is_work
+  )
+      : first(std::move(in_b)), second(std::move(in_e)), info(std::move(in_indo)), is_extra_work(in_is_work) {}
 
-  time_point_info(time_point_wrap in_b, time_point_wrap in_e)
-      : time_point_info(std::move(in_b), std::move(in_e), ""s) {}
+  explicit time_point_info(const time_point_wrap& in_b, const time_point_wrap& in_e)
+      : time_point_info(std::move(in_b), std::move(in_e), ""s, false) {}
 
   time_point_wrap first{};
   time_point_wrap second{};
@@ -51,7 +53,8 @@ struct formatter<::doodle::business::rules_ns::time_point_info> : formatter<std:
   template <typename FormatContext>
   auto format(const ::doodle::business::rules_ns::time_point_info& in_, FormatContext& ctx) const
       -> decltype(ctx.out()) {
-    return format_to(ctx.out(), "{} {} {}", in_.first, in_.second, in_.info);
+    using namespace std::literals;
+    return format_to(ctx.out(), "{}: {} {} {}", in_.is_extra_work ? "工作"s : "休息"s, in_.first, in_.second, in_.info);
   }
 };
 }  // namespace fmt

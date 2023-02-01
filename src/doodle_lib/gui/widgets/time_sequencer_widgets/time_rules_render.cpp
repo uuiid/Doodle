@@ -140,51 +140,6 @@ class time_warp_gui_data : boost::equality_comparable<time_warp_gui_data> {
   bool operator==(const time_warp_gui_data& in) const { return std::tie(ymd, hms) == std::tie(in.ymd, in.hms); }
 };
 
-class time_info_gui_data : boost::equality_comparable<time_info_gui_data> {
- public:
-  time_warp_gui_data begin_time;
-  time_warp_gui_data end_time;
-  gui_cache<std::string> info;
-  gui_cache_name_id delete_node{"删除"s};
-
-  using friend_type = ::doodle::business::rules::point_type;
-
-  time_info_gui_data() : time_info_gui_data(friend_type{}) {}
-  explicit time_info_gui_data(const friend_type& in_point_type)
-      : begin_time(), end_time(), info("备注"s, in_point_type.info) {
-    begin_time = time_warp_gui_data{"开始时间"s, in_point_type.first};
-    end_time   = time_warp_gui_data{"结束时间"s, in_point_type.second};
-  };
-
-  explicit operator friend_type() const {
-    return friend_type{time_point_wrap{begin_time}, time_point_wrap{end_time}, info()};
-  }
-
-  bool operator==(const time_info_gui_data& in) const {
-    return std::tie(begin_time, end_time, info, delete_node) ==
-           std::tie(in.begin_time, in.end_time, in.info, in.delete_node);
-  }
-};
-
-class time_work_gui_data : boost::equality_comparable<time_work_gui_data> {
- public:
-  time_hh_mm_ss_gui_data begin{};
-  time_hh_mm_ss_gui_data end{};
-  gui_cache_name_id name_id_delete{"删除"s};
-  time_work_gui_data() = default;
-
-  using friend_type    = std::pair<chrono::seconds, chrono::seconds>;
-
-  explicit time_work_gui_data(const friend_type& in_pair) : begin(in_pair.first), end(in_pair.second) {}
-
-  explicit operator friend_type() const {
-    return std::make_pair(friend_type::first_type{begin}, friend_type::second_type{end});
-  }
-  bool operator==(const time_work_gui_data& in_rhs) const {
-    return begin == in_rhs.begin && end == in_rhs.end && name_id_delete == in_rhs.name_id_delete;
-  }
-};
-
 class work_gui_data_render {
  public:
   using gui_data_type = work_gui_data;
@@ -256,7 +211,8 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   gui_cache_name_id delete_buttton{"删除"};
   bool use_edit{};
 
-  using friend_type = time_info_gui_data::friend_type;
+  using friend_type = ::doodle::business::rules::point_type;
+  gui_cache<bool> is_work{"添加时间"s, false};
   time_warp_gui_data begin_time{};
   time_warp_gui_data end_time{};
   gui_cache<std::string> info{};
@@ -292,6 +248,8 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
         ImGui::SameLine();
         modify_guard_ = ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
 
+        modify_guard_ = ImGui::Checkbox(*is_work, &is_work);
+        ImGui::SameLine();
         modify_guard_ = ImGui::InputText(*info, &info);
         ImGui::SameLine();
         if (ImGui::Button(*fulfil)) use_edit = false;
@@ -306,14 +264,19 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   }
 
   void set(const friend_type& in_type) {
-    show_str   = fmt::format("{:%F %H:%M} {:%F %H:%M} {}", in_type.first, in_type.second, in_type.info);
-
+    show_str = fmt::format(
+        "{}: {:%F %H:%M} {:%F %H:%M} {}", in_type.is_extra_work ? "工作" : "休息", in_type.first, in_type.second,
+        in_type.info
+    );
+    is_work    = in_type.is_extra_work;
     begin_time = time_warp_gui_data{in_type.first};
     end_time   = time_warp_gui_data{in_type.second};
     info       = in_type.info;
   }
   [[nodiscard]] friend_type get() const {
-    return {time_warp_gui_data::friend_type{begin_time}, time_warp_gui_data::friend_type{end_time}, std::string{info}};
+    return friend_type{
+        time_warp_gui_data::friend_type{begin_time}, time_warp_gui_data::friend_type{end_time}, std::string{info},
+        is_work()};
   }
 
   bool operator==(const time_info_gui_data_render& in_rhs) const {
@@ -341,15 +304,11 @@ class time_rules_render::impl {
   std::vector<std::vector<time_work_gui_data_render>> absolute_deduction_attr{};
   std::vector<time_info_gui_data_render> extra_work_attr{};
   gui_cache_name_id extra_work_attr_add_button{"添加"s};
-  std::vector<time_info_gui_data_render> extra_rest_attr{};
-  gui_cache_name_id extra_rest_attr_add_button{"添加"s};
 };
 
 time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
   p_i->rules_attr = rules_type::get_default();
   rules_attr(p_i->rules_attr);
-  // p_i->render_time.extra_work_attr.gui_name = gui_cache_name_id{"添加加班时间"s};
-  // p_i->render_time.extra_rest_attr.gui_name = gui_cache_name_id{"添加调休时间"s};
 
   p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
     this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
@@ -362,7 +321,7 @@ time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
 
 void time_rules_render::print_show_str() {
   p_i->show_str = fmt::format(
-      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n(节假日会自动扣除)",
+      "每周工作日 {}\n每天工作时间 {}\n排除时间(必然会被扣除):\n{}\n法定节假日会自动扣除(放假)以及添加(补班)",
       fmt::join(
           ranges::views::ints(0, 7) | ranges::views::filter([&](std::int32_t in_index) {
             return p_i->rules_attr.work_weekdays()[in_index];
@@ -370,8 +329,8 @@ void time_rules_render::print_show_str() {
           " "
       ),
       fmt::join(
-          p_i->rules_attr.work_time() |
-              ranges::views::transform([&](const std::decay_t<decltype(p_i->rules_attr.work_time())>::value_type& in) {
+          p_i->rules_attr.work_pair_p |
+              ranges::views::transform([&](const std::decay_t<decltype(p_i->rules_attr.work_pair_p)>::value_type& in) {
                 return fmt::format("{:%H:%M} 到 {:%H:%M}", in.first, in.second);
               }),
           ","
@@ -403,7 +362,7 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
   p_i->rules_attr = in_rules_type;
 
   p_i->work_gui_data_attr.set(in_rules_type.work_weekdays());
-  p_i->time_work_gui_data_attr = in_rules_type.work_time() |
+  p_i->time_work_gui_data_attr = in_rules_type.work_pair_p |
                                  ranges::views::transform(
                                      [&](const decltype(in_rules_type.work_pair_p)::value_type& in
                                      ) -> decltype(p_i->time_work_gui_data_attr)::value_type {
@@ -414,26 +373,16 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
                                  ) |
                                  ranges::to_vector;
 
-  p_i->extra_work_attr = in_rules_type.extra_work() |
-                         ranges::views::transform(
-                             [&](const decltype(in_rules_type.extra_work_p)::value_type& in
-                             ) -> decltype(p_i->extra_work_attr)::value_type {
-                               decltype(p_i->extra_work_attr)::value_type l_a{};
-                               l_a.set(in);
-                               return l_a;
-                             }
-                         ) |
-                         ranges::to_vector;
-  p_i->extra_rest_attr = in_rules_type.extra_rest() |
-                         ranges::views::transform(
-                             [&](const decltype(in_rules_type.extra_rest_p)::value_type& in
-                             ) -> decltype(p_i->extra_rest_attr)::value_type {
-                               decltype(p_i->extra_rest_attr)::value_type l_a{};
-                               l_a.set(in);
-                               return l_a;
-                             }
-                         ) |
-                         ranges::to_vector;
+  p_i->extra_work_attr =
+      in_rules_type.extra_p |
+      ranges::views::transform(
+          [&](const decltype(in_rules_type.extra_p)::value_type& in) -> decltype(p_i->extra_work_attr)::value_type {
+            decltype(p_i->extra_work_attr)::value_type l_a{};
+            l_a.set(in);
+            return l_a;
+          }
+      ) |
+      ranges::to_vector;
   print_show_str();
 }
 bool time_rules_render::render() {
@@ -471,16 +420,16 @@ bool time_rules_render::render() {
       }
     });
   };
-  ImGui::Text("加班时间");
+  ImGui::Text("额外的时间");
   ImGui::SameLine();
   if (ImGui::Button(*p_i->extra_work_attr_add_button)) {
-    p_i->extra_work_attr.emplace_back().set(p_i->rules_attr.extra_work_p.emplace_back());
+    p_i->extra_work_attr.emplace_back().set(p_i->rules_attr.extra_p.emplace_back());
     modify_guard_.modifyed();
   }
-  ranges::for_each(ranges::views::ints(0ull, p_i->extra_work_attr.size()), [&](std::size_t in) {
+  ranges::for_each(ranges::views::ints(0ULL, p_i->extra_work_attr.size()), [&](std::size_t in) {
     auto& l_r = p_i->extra_work_attr[in];
     if (l_r.render()) {
-      p_i->rules_attr.extra_work_p[in] = l_r.get();
+      p_i->rules_attr.extra_p[in] = l_r.get();
       modify_guard_.modifyed();
     }
     if (!l_r.use_edit) {
@@ -489,34 +438,7 @@ bool time_rules_render::render() {
       if (ImGui::Button(*l_r.delete_buttton)) {
         boost::asio::post(g_io_context(), [this, in]() {
           p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
-          p_i->rules_attr.extra_work_p |=
-              ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_work_p[in]);
-          modify_guard_.modifyed();
-        });
-      }
-    }
-  });
-
-  ImGui::Text("调休时间");
-  ImGui::SameLine();
-  if (ImGui::Button(*p_i->extra_rest_attr_add_button)) {
-    p_i->extra_rest_attr.emplace_back().set(p_i->rules_attr.extra_rest_p.emplace_back());
-    modify_guard_.modifyed();
-  }
-  ranges::for_each(ranges::views::ints(0ull, p_i->extra_rest_attr.size()), [&](std::size_t in) {
-    auto& l_r = p_i->extra_rest_attr[in];
-    if (l_r.render()) {
-      p_i->rules_attr.extra_rest_p[in] = l_r.get();
-      modify_guard_.modifyed();
-    }
-    if (!l_r.use_edit) {
-      ImGui::SameLine();
-
-      if (ImGui::Button(*l_r.delete_buttton)) {
-        boost::asio::post(g_io_context(), [this, in]() {
-          p_i->extra_rest_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_rest_attr[in]);
-          p_i->rules_attr.extra_rest_p |=
-              ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_rest_p[in]);
+          p_i->rules_attr.extra_p |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_p[in]);
           modify_guard_.modifyed();
         });
       }
