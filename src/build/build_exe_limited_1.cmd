@@ -1,7 +1,4 @@
-call %~dp0/set_venv.cmd
-
-echo "Current Location is %my_pwd%"
-set doodle_install_prefix=limited_1
+call %~dp0/set_venv.cmd limited_1
 
 echo -----------------config main exe--------------------
 "C:\Program Files\CMake\bin\cmake.exe" ^
