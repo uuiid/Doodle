@@ -36,7 +36,10 @@ app_base::app_base()
   l_timer->expires_after(1s);
   l_timer->async_wait([l_timer, this](auto) {
     /// 检查授权失败直接退出
-    if (!chick_authorization()) stop_app();
+    if (!chick_authorization()) {
+      DOODLE_LOG_INFO("授权失败, 退出");
+      stop_app();
+    }
   });
 }
 

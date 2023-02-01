@@ -22,6 +22,7 @@
 #include <boost/signals2/connection.hpp>
 
 #include "gui/widgets/time_sequencer_widgets/time_rules_render.h"
+#include <IconsFontAwesome6.h>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -212,12 +213,15 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   bool use_edit{};
 
   using friend_type = ::doodle::business::rules::point_type;
-  gui_cache<bool> is_work{"添加时间"s, false};
+  gui_cache<bool> is_work{ICON_FA_SQUARE_CHECK "工作" ICON_FA_SQUARE_FULL "休息", false};
   time_warp_gui_data begin_time{};
   time_warp_gui_data end_time{};
   gui_cache<std::string> info{};
 
   gui_cache_name_id gui_name{};
+
+  gui_cache_name_id up_self{ICON_FA_CHEVRON_UP};
+  gui_cache_name_id dwn_self{ICON_FA_CHEVRON_DOWN};
 
   modify_guard modify_guard_{};
 
@@ -230,6 +234,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
 
     if (use_edit)
       dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 4} && [&]() {
+        modify_guard_ = ImGui::Checkbox(*is_work, &is_work);
         dear::Text("开始时间"s);
         ImGui::SameLine();
         if (ImGui::InputInt3(*begin_time.ymd.gui_name, begin_time.ymd.data.data())) {
@@ -248,8 +253,6 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
         ImGui::SameLine();
         modify_guard_ = ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
 
-        modify_guard_ = ImGui::Checkbox(*is_work, &is_work);
-        ImGui::SameLine();
         modify_guard_ = ImGui::InputText(*info, &info);
         ImGui::SameLine();
         if (ImGui::Button(*fulfil)) use_edit = false;
@@ -258,7 +261,8 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
     if (modify_guard_) {
       auto l_f = get();
       show_str = fmt::format(
-          "{}: {:%F %H:%M} {:%F %H:%M} {}", l_f.is_extra_work ? "工作" : "休息", l_f.first, l_f.second, l_f.info
+          "{}: {:%F %H:%M} {:%F %H:%M} {}",
+          l_f.is_extra_work ? ICON_FA_SQUARE_CHECK "工作" : ICON_FA_SQUARE_FULL "休息", l_f.first, l_f.second, l_f.info
       );
     }
 
@@ -267,7 +271,8 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
 
   void set(const friend_type& in_type) {
     show_str = fmt::format(
-        "{}: {:%F %H:%M} {:%F %H:%M} {}", in_type.is_extra_work ? "工作" : "休息", in_type.first, in_type.second,
+        "{}: {:%F %H:%M} {:%F %H:%M} {}",
+        in_type.is_extra_work ? ICON_FA_SQUARE_CHECK "工作" : ICON_FA_SQUARE_FULL "休息", in_type.first, in_type.second,
         in_type.info
     );
     is_work    = in_type.is_extra_work;
@@ -442,6 +447,29 @@ bool time_rules_render::render() {
           p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
           p_i->rules_attr.extra_p |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_p[in]);
           modify_guard_.modifyed();
+        });
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(*l_r.up_self)) {
+        boost::asio::post(g_io_context(), [this, in]() {
+          auto l_up = std::clamp(in ? in - 1 : 0, 0ull, p_i->extra_work_attr.size());
+          if (l_up != in) {
+            std::swap(p_i->extra_work_attr[l_up], p_i->extra_work_attr[in]);
+            std::swap(p_i->rules_attr.extra_p[l_up], p_i->rules_attr.extra_p[in]);
+            modify_guard_.modifyed();
+          }
+        });
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(*l_r.dwn_self)) {
+        boost::asio::post(g_io_context(), [this, in]() {
+          auto l_dwn = std::clamp(in + 1, 0ull, p_i->extra_work_attr.size());
+
+          if (l_dwn != in) {
+            std::swap(p_i->extra_work_attr[in], p_i->extra_work_attr[l_dwn]);
+            std::swap(p_i->rules_attr.extra_p[in], p_i->rules_attr.extra_p[l_dwn]);
+            modify_guard_.modifyed();
+          }
         });
       }
     }

@@ -37,11 +37,6 @@ bool authorization::is_build_near() {
 }
 
 void authorization::load_authorization_data(const std::string& in_data) {
-  if (is_build_near()) {
-    DOODLE_LOG_INFO("近期构建不检查授权内容");
-    return;
-  }
-
   DOODLE_LOG_INFO("开始检查授权文件内容");
   std::string ciphertext{in_data};
   std::string decryptedtext{};
@@ -91,6 +86,11 @@ authorization::authorization() : p_i(std::make_unique<impl>()) {
     l_p = FSys::last_write_time_point(l_p) < FSys::last_write_time_point(l_p1) ? l_p1 : l_p;
   else
     l_p = FSys::exists(l_p) ? l_p : l_p1;
+
+  if (is_build_near()) {
+    DOODLE_LOG_INFO("近期构建不检查授权内容");
+    return;
+  }
 
   if (FSys::exists(l_p)) {
     FSys::ifstream ifstream{l_p, std::ifstream::binary};

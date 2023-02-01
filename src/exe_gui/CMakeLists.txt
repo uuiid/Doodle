@@ -34,11 +34,10 @@ install(TARGETS DoodleExe
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
         COMPONENT exe_com
         )
-#install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
-#        DESTINATION bin/
-#        COMPONENT exe_com
-#        )
-
+install(FILES ${PROJECT_BINARY_DIR}/bin/token.doodle_token
+        DESTINATION bin/
+        COMPONENT exe_com
+        )
 #最后实现camke修复
 install(CODE [=[
         include(BundleUtilities)

@@ -244,7 +244,7 @@ void gui_facet::post_constructor() {
     io.Fonts->AddFontFromFileTTF(
         doodle_config::font_default.data(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull()
     );
-    auto l_font                         = cmrc::DoodleLibResourceFont::get_filesystem().open("fa-solid-900.ttf");
+    auto l_font                         = cmrc::DoodleLibResourceFont::get_filesystem().open(FONT_ICON_FILE_NAME_FAS);
     static const ImWchar icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
     icons_config.MergeMode            = true;
