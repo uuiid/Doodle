@@ -4,14 +4,15 @@
 
 #include "qcloth_shape.h"
 
+#include <boost/functional/factory.hpp>
+#include <boost/functional/value_factory.hpp>
+
 #include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 
-#include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MDagModifier.h>
@@ -708,10 +709,12 @@ MDagPath qcloth_shape::cloth_mesh() const {
   MStatus l_s{};
   MObject l_mesh{};
   /// \brief 获得组件点上下文
+  DOODLE_LOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
   auto l_shape = get_shape(obj);
+  auto l_plug  = get_plug(l_shape, "outputMesh");
 
   /// 寻找高模的皮肤簇
-  for (MItDependencyGraph i{l_shape, MFn::kMesh, MItDependencyGraph::Direction::kDownstream}; !i.isDone(); i.next()) {
+  for (MItDependencyGraph i{l_plug, MFn::kMesh, MItDependencyGraph::Direction::kDownstream}; !i.isDone(); i.next()) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_MAYA_CHICK(l_s);
     break;
@@ -719,7 +722,7 @@ MDagPath qcloth_shape::cloth_mesh() const {
 
   DOODLE_CHICK(!l_mesh.isNull(), doodle_error{"没有找到布料模型节点"s});
   auto l_path = get_dag_path(l_mesh);
-  DOODLE_LOG_INFO(" 找到布料节点 {}", l_path);
+  DOODLE_LOG_INFO("找到布料节点 {}", l_path);
   return l_path;
 }
 
