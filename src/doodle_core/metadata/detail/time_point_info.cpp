@@ -13,13 +13,15 @@ bool time_point_info::operator==(const time_point_info& in) const {
 }
 
 void to_json(nlohmann::json& j, const time_point_info& p) {
-  j["first"]  = p.first;
-  j["second"] = p.second;
-  j["info"]   = p.info;
+  j["first"]         = p.first;
+  j["second"]        = p.second;
+  j["info"]          = p.info;
+  j["is_extra_work"] = p.is_extra_work;
 }
 void from_json(const nlohmann::json& j, time_point_info& p) {
   j["first"].get_to(p.first);
   j["second"].get_to(p.second);
   j["info"].get_to(p.info);
+  if (j.contains("is_extra_work")) j["is_extra_work"].get_to(p.is_extra_work);
 }
 }  // namespace doodle::business::rules_ns

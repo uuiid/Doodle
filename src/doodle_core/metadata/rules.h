@@ -55,9 +55,7 @@ class DOODLE_CORE_API rules {
   time_duration_vector work_pair_p{};
   std::array<time_duration_vector, 7> absolute_deduction{};
 
-  std::vector<time_point_info> extra_work_p{};
-  std::vector<time_point_info> extra_rest_p{};
-
+  std::vector<time_point_info> extra_p{};
   rules();
   virtual ~rules();
 
@@ -74,20 +72,6 @@ class DOODLE_CORE_API rules {
   void work_weekdays(const work_day_type& in_work_weekdays);
   [[nodiscard("")]] const work_day_type& work_weekdays() const;
   [[nodiscard("")]] work_day_type& work_weekdays();
-
-  void add_work_time(const duration_type& in_begin, const duration_type& in_end);
-  [[nodiscard("")]] const time_duration_vector& work_time() const;
-  [[nodiscard("")]] time_duration_vector& work_time();
-
-  void add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
-  [[nodiscard("")]] const time_point_vector& extra_work() const;
-  [[nodiscard("")]] time_point_vector& extra_work();
-
-  void add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info);
-  [[nodiscard("")]] const time_point_vector& extra_rest() const;
-  [[nodiscard("")]] time_point_vector& extra_rest();
-
-  std::string debug_print() const;
 
  private:
   friend struct ::fmt::formatter<::doodle::business::rules>;

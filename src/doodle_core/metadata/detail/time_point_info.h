@@ -30,6 +30,7 @@ class DOODLE_CORE_API time_point_info : boost::equality_comparable<time_point_in
   time_point_wrap first{};
   time_point_wrap second{};
   std::string info{};
+  bool is_extra_work{};
 
   bool operator==(const time_point_info& in) const;
 

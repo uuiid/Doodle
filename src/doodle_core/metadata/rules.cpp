@@ -8,7 +8,6 @@
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
-#include "metadata/rules.h"
 #include <array>
 #include <mutex>
 #include <utility>
@@ -19,37 +18,38 @@ namespace doodle::business {
 void to_json(nlohmann::json& j, const rules& p) {
   j["work_weekdays"]      = p.work_weekdays_p;
   j["work_pair"]          = p.work_pair_p;
-  j["extra_work"]         = p.extra_work_p;
-  j["extra_rest"]         = p.extra_rest_p;
+  j["extra_p"]            = p.extra_p;
   j["absolute_deduction"] = p.absolute_deduction;
 }
 void from_json(const nlohmann::json& j, rules& p) {
   j.at("work_weekdays").get_to(p.work_weekdays_p);
   j.at("work_pair").get_to(p.work_pair_p);
-  j.at("extra_work").get_to(p.extra_work_p);
-  j.at("extra_rest").get_to(p.extra_rest_p);
+  if (j.contains("extra_p")) {
+    j.at("extra_p").get_to(p.extra_p);
+  }
+  if (j.contains("extra_work")) {
+    std::vector<rules::time_point_info> l_tmp{};
+    j.at("extra_work").get_to(l_tmp);
+    ranges::for_each(l_tmp, [](rules::time_point_info& in) { in.is_extra_work = true; });
+    p.extra_p |= ranges::actions::push_back(l_tmp);
+  }
+  if (j.contains("extra_rest")) {
+    std::vector<rules::time_point_info> l_tmp{};
+    j.at("extra_rest").get_to(l_tmp);
+    ranges::for_each(l_tmp, [](rules::time_point_info& in) { in.is_extra_work = false; });
+    p.extra_p |= ranges::actions::push_back(l_tmp);
+  }
+
   if (j.contains("absolute_deduction"))
     j.at("absolute_deduction").get_to(p.absolute_deduction);
   else
     p.absolute_deduction = rules::get_default().absolute_deduction;
 }
 
-using namespace rules_ns;
 rules::rules() = default;
 void rules::work_weekdays(const rules::work_day_type& in_work_weekdays) { work_weekdays_p = in_work_weekdays; }
 const rules::work_day_type& rules::work_weekdays() const { return work_weekdays_p; }
-void rules::add_work_time(const chrono::seconds& in_begin, const chrono::seconds& in_end) {
-  work_pair_p.emplace_back(in_begin, in_end);
-}
-const std::vector<std::pair<chrono::seconds, chrono::seconds>>& rules::work_time() const { return work_pair_p; }
-void rules::add_extra_work(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info) {
-  extra_work_p.emplace_back(in_begin, in_end, in_info);
-}
-const std::vector<rules_ns::time_point_info>& rules::extra_work() const { return extra_work_p; }
-void rules::add_extra_rest(const time_point_wrap& in_begin, const time_point_wrap& in_end, const std::string& in_info) {
-  extra_rest_p.emplace_back(in_begin, in_end, in_info);
-}
-const std::vector<rules_ns::time_point_info>& rules::extra_rest() const { return extra_rest_p; }
+
 const rules& rules::get_default() {
   static rules l_rules{};
   static std::once_flag l_f1;
@@ -85,22 +85,12 @@ const rules& rules::get_default() {
   return l_rules;
 }
 
-std::string rules::debug_print() const {
-  return fmt::format(
-      "规则 周六日规则 {} 每日规则 {} 调休规则 {}  加班规则 {}", work_weekdays_p, fmt::join(work_pair_p, ", "),
-      fmt::join(extra_rest_p, ", "), fmt::join(extra_work_p, ", ")
-  );
-}
-
 rules::work_day_type& rules::work_weekdays() { return work_weekdays_p; }
-rules::time_duration_vector& rules::work_time() { return work_pair_p; }
 
-rules::time_point_vector& rules::extra_work() { return extra_work_p; }
-rules::time_point_vector& rules::extra_rest() { return extra_rest_p; }
 std::string rules::fmt_str() const {
   return fmt::format(
-      "规则 周六日规则 {} 每日规则 {} 调休规则 {}  加班规则 {}", work_weekdays_p, fmt::join(work_pair_p, ", "),
-      fmt::join(extra_rest_p, ", "), fmt::join(extra_work_p, ", ")
+      "规则 周六日规则 {} 每日规则 {} 额外规则 {} ", work_weekdays_p, fmt::join(work_pair_p, ", "),
+      fmt::join(extra_p, ", ")
   );
 }
 rules::~rules() = default;
