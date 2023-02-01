@@ -126,7 +126,7 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
-        "generate_token_run"
+        "generate_token"
       ]
     },
     {
