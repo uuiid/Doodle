@@ -209,7 +209,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   business::rules::time_point_info data{};
   gui_cache_name_id edit_buiion{"编辑"};
   gui_cache_name_id fulfil{"完成"};
-  gui_cache_name_id delete_buttton{"删除"};
+  gui_cache_name_id delete_buttton{ICON_FA_TRASH};
   bool use_edit{};
 
   using friend_type = ::doodle::business::rules::point_type;
