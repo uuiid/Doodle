@@ -66,7 +66,7 @@ set(DOXYGEN_NUM_PROC_THREADS 0)
 # 创建 css 必须的一部份设置
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_DISABLE_INDEX NO)
-set(DOXYGEN_FULL_SIDEBAR  NO)
+set(DOXYGEN_FULL_SIDEBAR NO)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET ${doxygenawesomecss_SOURCE_DIR}/doxygen-awesome.css)
 
 doxygen_add_docs(Doxygen
@@ -99,7 +99,9 @@ else ()
 endif ()
 
 add_subdirectory(houdini_plug)
-add_subdirectory(maya_plug)
+if (DEFINED Maya_Version)
+    add_subdirectory(maya_plug maya_plug${Maya_Version})
+endif ()
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
