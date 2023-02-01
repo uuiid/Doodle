@@ -207,7 +207,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
  public:
   std::string show_str{};
   business::rules::time_point_info data{};
-  gui_cache_name_id edit_buiion{"编辑"};
+  gui_cache_name_id edit_buiion{ICON_FA_PEN_TO_SQUARE};
   gui_cache_name_id fulfil{"完成"};
   gui_cache_name_id delete_buttton{ICON_FA_TRASH};
   bool use_edit{};
