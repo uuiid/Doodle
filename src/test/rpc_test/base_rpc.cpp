@@ -54,7 +54,7 @@ BOOST_FIXTURE_TEST_SUITE(rpc_client, loop_rpc)
 BOOST_AUTO_TEST_CASE(base) {
   bool run{true};
   l_sub.run("rpc_server/base");
-  distributed_computing::client l_c{};
+  distributed_computing::client l_c{"127.0.0.1"};
 
   l_c.close();
   BOOST_TEST_MESSAGE("stop run");
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(base) {
 }
 
 BOOST_AUTO_TEST_CASE(list_fun1) {
-  distributed_computing::client l_c{};
+  distributed_computing::client l_c{"127.0.0.1"};
   l_sub.run("rpc_server/base");
 
   auto l_tset = l_c.list_fun();
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(list_fun1) {
 }
 
 BOOST_AUTO_TEST_CASE(list_users) {
-  distributed_computing::client l_c{};
+  distributed_computing::client l_c{"127.0.0.1"};
   l_sub.run("rpc_server/list_users");
 
   auto l_users = l_c.list_users();
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(new_user) {
   l_sub.run("rpc_server/new_user");
 
   auto l_reg = std::make_shared<entt::registry>();
-  distributed_computing::client l_c{l_reg};
+  distributed_computing::client l_c{l_reg, "127.0.0.1"};
   /// 创建新的用户
   auto l_users   = l_c.new_user(user{"tset"s});
   auto l_user_v1 = l_reg->view<user>();
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(get_user) {
   l_sub.run("rpc_server/get_user");
 
   auto l_reg = std::make_shared<entt::registry>();
-  distributed_computing::client l_c{l_reg};
+  distributed_computing::client l_c{l_reg, "127.0.0.1"};
 
   auto l_user_g = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(get_user_f) {
   l_sub.run("rpc_server/get_user");
 
   auto l_reg = std::make_shared<entt::registry>();
-  distributed_computing::client l_c{l_reg};
+  distributed_computing::client l_c{l_reg, "127.0.0.1"};
 
   BOOST_CHECK_THROW(
       (l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c0251"s))),
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(set_user) {
   l_sub.run("rpc_server/set_user");
 
   auto l_reg = std::make_shared<entt::registry>();
-  distributed_computing::client l_c{l_reg};
+  distributed_computing::client l_c{l_reg, "127.0.0.1"};
 
   auto l_user_g = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
 
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   auto l_main = make_handle();
   l_main.emplace<database>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s);
 
-  distributed_computing::client l_c{};
+  distributed_computing::client l_c{"127.0.0.1"};
   auto l_users = l_c.list_users();
   BOOST_TEST(l_users.size() == 11);
   for (auto&& l_f : l_users) {
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
 BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   l_sub.run("rpc_server/set_user_work_task_info");
 
-  distributed_computing::client l_c{};
+  distributed_computing::client l_c{"127.0.0.1"};
   auto l_users = l_c.get_user(boost::lexical_cast<boost::uuids::uuid>("19e0ed4f-0799-40b6-bf10-2a4c479c025e"s));
 
   g_reg()->ctx().emplace<user::current_user>().set_user(l_users);
