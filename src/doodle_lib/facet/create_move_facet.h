@@ -2,15 +2,21 @@
 // Created by TD on 2023/2/2.
 //
 
-#ifndef DOODLE_CREATE_MOVE_FACET_H
-#define DOODLE_CREATE_MOVE_FACET_H
+#pragma once
 
-namespace doodle {
-namespace facet {
+#include <doodle_core/core/app_facet.h>
 
-class create_move_facet {};
+namespace doodle::facet {
 
-}  // namespace facet
-}  // namespace doodle
+class create_move_facet : public doodle::detail::app_facet_interface {
+  std::string name_{"create_move"};
+  std::string files_attr;
 
-#endif  // DOODLE_CREATE_MOVE_FACET_H
+ public:
+  create_move_facet() = default;
+  [[nodiscard]] const std::string& name() const noexcept override;
+  void operator()() override;
+  void deconstruction() override;
+};
+
+}  // namespace doodle::facet

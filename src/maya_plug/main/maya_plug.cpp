@@ -50,7 +50,7 @@ std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 namespace doodle::maya_plug {
 void open_windows() {
   HWND win_id{};
-  if (auto l_main_win = MQtUtil::mainWindow()) {
+  if (auto* l_main_win = MQtUtil::mainWindow()) {
     win_id = reinterpret_cast<HWND>(l_main_win->winId());
   }
   auto l_doodle_app = std::make_shared<doodle::maya_plug::maya_plug_app>();
@@ -244,7 +244,6 @@ MStatus uninitializePlugin(MObject obj) {
 
   MFnPlugin k_plugin{obj};
 
-  auto k_st = MGlobal::mayaState(&status);
   CHECK_MSTATUS_AND_RETURN_IT(status);
   if (!::doodle::core_set::get_set().maya_force_resolve_link) {
     /// \brief

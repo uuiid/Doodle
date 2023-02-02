@@ -11,13 +11,14 @@
 
 #include <doodle_app/app/app_command.h>
 
+#include <boost/asio/use_future.hpp>
+
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sim_cover_attr.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
-#include <boost/asio/use_future.hpp>
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
@@ -323,16 +324,12 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     if (k_path_M.numChars() > 0) {
       k_path = k_path_M.asUTF8();
 
-      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        auto l_f = g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, boost::asio::use_future);
-        while (l_f.wait_for(0ns) != std::future_status::ready) {
-          ::doodle::app_base::Get().poll_one();
-        }
-      } else {
-        g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(k_path, [k_path](bsys::error_code) -> void {
-          DOODLE_LOG_INFO("完成打开项目 {}", k_path);
-        });
-      }
+      g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
+          k_path,
+          [k_path, l_w = boost::asio::make_work_guard(g_io_context())](bsys::error_code) -> void {
+            DOODLE_LOG_INFO("完成打开项目 {}", k_path);
+          }
+      );
     }
   }
   return k_s;

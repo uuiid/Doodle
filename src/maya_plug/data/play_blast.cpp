@@ -120,20 +120,16 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
   CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-  if (MGlobal::mayaState(&k_s) == MGlobal::kInteractive) {
-    auto k_view = M3dView::active3dView(&k_s);
-    if (k_s) {
-      k_s = k_view.setCamera(k_cam.p_path);
-      CHECK_MSTATUS(k_s);
-      if (!k_s) {
-        DOODLE_LOG_WARN("not set cam view");
-      }
-      k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
-      k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
-      k_view.refresh(false, true);
-    } else {
-      DOODLE_LOG_WARN("not find view");
+  if (auto k_view = M3dView::active3dView(&k_s); k_s && k_view.isVisible()) {
+    k_s = k_view.setCamera(k_cam.p_path);
+    CHECK_MSTATUS(k_s);
+    if (!k_s) {
+      DOODLE_LOG_WARN("not set cam view");
     }
+    k_view.setDisplayStyle(M3dView::DisplayStyle::kGouraudShaded);
+    k_view.setObjectDisplay(M3dView::DisplayObjects::kDisplayLocators | M3dView::DisplayObjects::kDisplayMeshes);
+    k_view.refresh(false, true);
+
     auto k_mel = fmt::format(
         R"(playblast
 -compression "H.264"
@@ -217,26 +213,14 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_msg.emplace<episodes>(p_eps);
     k_msg.emplace<shot>(p_shot);
 
-    if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-      DOODLE_MAYA_CHICK(k_s);
-      DOODLE_LOG_INFO("检查为非交互模式, 进行同步视频合成");
-      bool l_ok{};
-      g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [l_r = &l_ok, this, k_f]() {
-        *l_r = true;
-        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
-        FSys::remove_all(k_f);
-      });
-      while (!l_ok) {
-        g_io_context().poll_one();
-      }
-
-    } else {
-      DOODLE_MAYA_CHICK(k_s);
-      g_reg()->ctx().at<image_to_move>()->async_create_move(k_msg, l_handle_list, [this, k_f]() {
-        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
-        FSys::remove_all(k_f);
-      });
-    }
+    DOODLE_MAYA_CHICK(k_s);
+    g_reg()->ctx().at<image_to_move>()->async_create_move(
+        k_msg, l_handle_list,
+        [this, k_f, l_w = boost::asio::make_work_guard(g_io_context())]() {
+          DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
+          FSys::remove_all(k_f);
+        }
+    );
     return k_s;
   }
 }
