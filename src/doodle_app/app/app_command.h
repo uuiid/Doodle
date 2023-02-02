@@ -36,7 +36,7 @@ class app_command : public app_base {
     add_facet(run_facet);
     (add_facet(std::make_shared<Facet_>()), ...);
   };
-  virtual ~app_command() { program_options::reset(); }
+  virtual ~app_command() override { program_options::reset(); }
 
   static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
 
