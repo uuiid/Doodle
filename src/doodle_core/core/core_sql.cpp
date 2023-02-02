@@ -14,7 +14,7 @@ conn_ptr database_info::get_connection() const {
 #ifdef NDEBUG
   l_config.debug = false;
 #else
-  l_config.debug = true;
+  l_config.debug = false;
 #endif
 
   if (!exists(path_))
@@ -30,7 +30,7 @@ conn_ptr database_info::get_connection_const() const {
 #ifdef NDEBUG
   l_config.debug = false;
 #else
-  l_config.debug = true;
+  l_config.debug = false;
 #endif
   l_config.flags            = SQLITE_OPEN_READONLY;
   l_config.path_to_database = path_.generic_string();
