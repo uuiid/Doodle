@@ -31,8 +31,8 @@ class app_command : public app_base {
   app_command() : app_base() {
     program_options::emplace();
     auto run_facet = std::make_shared<Facet_Defaute>();
-    add_facet(run_facet);
     default_run_facet_name = run_facet->name();
+    add_facet(run_facet);
     (add_facet(std::make_shared<Facet_>()), ...);
   };
   virtual ~app_command() override { program_options::reset(); }
@@ -56,9 +56,6 @@ class app_command : public app_base {
     for (auto&& [key, val] : l_opt.facet_model) {
       if (l_opt[key]) {
         DOODLE_LOG_INFO("开始运行 {} facet", key);
-
-        g_reg()->ctx().emplace<app_facet_ptr>(facet_list.at(key));
-
         boost::asio::post(g_io_context(), [l_f = facet_list.at(key)]() { (*l_f)(); });
         run_facet = true;
       }
