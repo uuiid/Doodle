@@ -8,8 +8,6 @@
 
 #include <doodle_app/platform/win/windows_proc.h>
 
-#include <doodle_lib/app/main_facet.h>
-
 #include <d3d11.h>
 #include <opencv2/opencv.hpp>
 
@@ -22,10 +20,8 @@ struct win_ptr_delete {
 };
 
 struct frame_impl {
-  std::unique_ptr<ID3D11ShaderResourceView, win_ptr_delete<ID3D11ShaderResourceView>>
-      p_d3d_view;
-  std::unique_ptr<ID3D11Texture2D, win_ptr_delete<ID3D11Texture2D>>
-      p_d3d_tex;
+  std::unique_ptr<ID3D11ShaderResourceView, win_ptr_delete<ID3D11ShaderResourceView>> p_d3d_view;
+  std::unique_ptr<ID3D11Texture2D, win_ptr_delete<ID3D11Texture2D>> p_d3d_tex;
   mutable opencv::frame frame;
 
   frame_impl() = default;
@@ -66,8 +62,7 @@ class opencv_read_player::impl {
   FSys::path video_path;
 };
 
-opencv_read_player::opencv_read_player()
-    : p_data(new impl{}) {
+opencv_read_player::opencv_read_player() : p_data(new impl{}) {
   // p_data = std::make_unique<>();
 }
 
@@ -75,11 +70,7 @@ opencv_read_player::~opencv_read_player() = default;
 DOODLE_MOVE_CPP(opencv_read_player)
 
 bool opencv_read_player::load_frame(std::int32_t in_frame) {
-  p_data->p_video.isOpened()
-      ? void()
-      : throw_exception(doodle_error{
-            "没有打开的视频"s,
-            p_data->video_path});
+  p_data->p_video.isOpened() ? void() : throw_exception(doodle_error{"没有打开的视频"s, p_data->video_path});
 
   // 获得全局GPU渲染对象
   auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
@@ -139,13 +130,9 @@ bool opencv_read_player::load_frame(std::int32_t in_frame) {
   return true;
 }
 
-bool opencv_read_player::clear_cache() {
-  return true;
-}
+bool opencv_read_player::clear_cache() { return true; }
 
-bool opencv_read_player::is_open() const {
-  return p_data->p_video.isOpened();
-}
+bool opencv_read_player::is_open() const { return p_data->p_video.isOpened(); }
 
 bool opencv_read_player::open_file(const FSys::path& in_path) {
   auto l_r           = p_data->p_video.open(in_path.generic_string());

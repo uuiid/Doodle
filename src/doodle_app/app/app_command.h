@@ -30,7 +30,7 @@ class app_command : public app_base {
  public:
   app_command() : app_base() {
     program_options::emplace();
-    auto run_facet = std::make_shared<Facet_Defaute>();
+    auto run_facet         = std::make_shared<Facet_Defaute>();
     default_run_facet_name = run_facet->name();
     add_facet(run_facet);
     (add_facet(std::make_shared<Facet_>()), ...);
@@ -54,7 +54,7 @@ class app_command : public app_base {
 
     bool run_facet{};
     for (auto&& [key, val] : l_opt.facet_model) {
-      if (l_opt[key]) {
+      if (val) {
         DOODLE_LOG_INFO("开始运行 {} facet", key);
         boost::asio::post(g_io_context(), [l_f = facet_list.at(key)]() { (*l_f)(); });
         run_facet = true;
@@ -63,9 +63,20 @@ class app_command : public app_base {
 
     if (run_facet) {
       DOODLE_LOG_INFO("运行默认构面 {}", default_run_facet_name);
+      l_opt.facet_model[default_run_facet_name] = true;
       boost::asio::post(g_io_context(), [l_f = facet_list.at(default_run_facet_name)]() { (*l_f)(); });
     }
   };
+
+  virtual void deconstruction() override {
+    auto& l_opt = doodle::program_options::value();
+    for (auto&& [key, val] : l_opt.facet_model) {
+      if (val) {
+        DOODLE_LOG_INFO("结束 {} facet", key);
+        facet_list.at(key)->deconstruction();
+      }
+    }
+  }
 };
 
 }  // namespace doodle

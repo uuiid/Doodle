@@ -30,10 +30,13 @@ void create_move_facet::operator()() {
   l_handle.emplace<FSys::path>(l_json["out_path"].get<FSys::path>());
   g_reg()->ctx().at<image_to_move>()->async_create_move(
       l_handle, l_json["image_attr"].get<std::vector<doodle::movie::image_attr>>(),
-      [l_w = boost::asio::make_work_guard(g_io_context())](const boost::system::error_code& /*in_error_code*/) {
-        app_base::Get().stop_app();
-      }
+      [l_w = boost::asio::make_work_guard(g_io_context())]() { app_base::Get().stop_app(); }
   );
 }
 void create_move_facet::deconstruction() {}
+void create_move_facet::add_program_options() {
+  opt.add_options()("create_move", boost::program_options::value(&files_attr), "创建视频的序列json选项");
+  auto& l_p = program_options::value();
+  l_p.add_opt(opt);
+}
 }  // namespace doodle::facet

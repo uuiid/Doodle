@@ -17,7 +17,6 @@
 
 #include <boost/asio.hpp>
 
-#include <app/main_facet.h>
 #include <platform/win/get_screenshot.h>
 
 // #include <DirectXTK/ScreenGrab.h>

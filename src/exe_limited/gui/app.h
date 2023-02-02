@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 class limited_app : public doodle::app {

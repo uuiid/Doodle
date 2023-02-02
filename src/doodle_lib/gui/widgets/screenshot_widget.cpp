@@ -10,7 +10,6 @@
 #include <doodle_app/lib_warp/imgui_warp.h>
 #include <doodle_app/platform/win/windows_proc.h>
 
-#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/core/image_loader.h>
 
 #include <platform/win/get_screenshot.h>

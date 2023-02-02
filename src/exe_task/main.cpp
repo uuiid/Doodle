@@ -14,8 +14,8 @@
 #include "doodle_lib/gui/menu_bar.h"
 #include "doodle_lib/gui/setting_windows.h"
 #include "doodle_lib/gui/widgets/work_hour_filling.h"
-#include <doodle_lib/app/main_facet.h>
-#include <doodle_lib/app/rpc_server_facet.h>
+#include <doodle_lib/facet/main_facet.h>
+#include <doodle_lib/facet/rpc_server_facet.h>
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>
 

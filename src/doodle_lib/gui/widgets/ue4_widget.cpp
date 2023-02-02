@@ -4,6 +4,7 @@
 
 #include "ue4_widget.h"
 
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
@@ -13,7 +14,6 @@
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/core/filesystem_extend.h>
 
 #include <boost/contract.hpp>
