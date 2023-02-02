@@ -33,21 +33,4 @@ maya_facet::maya_facet() : doodle::facet::gui_facet() {
   g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::maya_create_movie>();
 }
 
-maya_plug_app::maya_plug_app() { set_facet(); }
-
-void maya_plug_app::set_facet() {
-  switch (MGlobal::mayaState()) {
-    case MGlobal::MMayaState::kBaseUIMode:
-    case MGlobal::MMayaState::kInteractive: {
-      run_facet = std::make_shared<maya_facet>();
-      break;
-    }
-    case MGlobal::MMayaState::kBatch:
-    case MGlobal::MMayaState::kLibraryApp:
-    default: {
-      run_facet = std::make_shared<null_facet>();
-    } break;
-  }
-  add_facet(run_facet);
-}
 }  // namespace doodle::maya_plug

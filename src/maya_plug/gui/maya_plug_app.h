@@ -18,11 +18,4 @@ class maya_facet : public doodle::facet::gui_facet {
   void close_windows() override;
 };
 
-class maya_plug_app : public doodle::app_command<maya_facet> {
-  void set_facet();
-
- public:
-  maya_plug_app();
-};
-
 }  // namespace doodle::maya_plug

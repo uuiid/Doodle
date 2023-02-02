@@ -6,8 +6,7 @@
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
-namespace doodle {
-namespace maya_plug {
+namespace doodle::maya_plug {
 
 class null_facet : public doodle::detail::app_facet_interface {
   std::optional<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_lock{};
@@ -20,5 +19,4 @@ class null_facet : public doodle::detail::app_facet_interface {
   void deconstruction() override;
 };
 
-}  // namespace maya_plug
 }  // namespace doodle
