@@ -11,8 +11,6 @@
 
 #include <maya_plug/gui/maya_plug_app.h>
 
-// #include <doodle_app/app/app_command.h>
-
 // #include <maya/MQtUtil.h>
 
 namespace doodle::maya_plug {
