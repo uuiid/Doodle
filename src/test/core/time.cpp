@@ -87,13 +87,25 @@ BOOST_AUTO_TEST_CASE(time_work) {
   auto l_user = make_handle();
   l_user.emplace<user>().set_name("test1");
   auto&& l_rules = l_user.emplace<business::rules>(business::rules::get_default());
-  l_rules.add_extra_rest(time_point_wrap{2022, 12, 18, 9}, time_point_wrap{2022, 12, 18, 10}, "18号9-10点调休一小时"s);
-  l_rules.add_extra_rest(time_point_wrap{2022, 12, 26, 9}, time_point_wrap{2022, 12, 26, 13}, "年假上午半天"s);
-  l_rules.add_extra_rest(time_point_wrap{2022, 12, 02, 9}, time_point_wrap{2022, 12, 02, 13}, "事假上午半天"s);
-  l_rules.add_extra_rest(time_point_wrap{2022, 12, 14, 9}, time_point_wrap{2022, 12, 14, 13}, "事假上午半天"s);
-  l_rules.add_extra_rest(time_point_wrap{2022, 12, 23, 9}, time_point_wrap{2022, 12, 23, 13}, "事假上午半天"s);
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 18, 9}, time_point_wrap{2022, 12, 18, 10}, "18号9-10点调休一小时"s, true
+  );
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 26, 9}, time_point_wrap{2022, 12, 26, 13}, "年假上午半天"s, false
+  );
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 02, 9}, time_point_wrap{2022, 12, 02, 13}, "事假上午半天"s, false
+  );
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 14, 9}, time_point_wrap{2022, 12, 14, 13}, "事假上午半天"s, false
+  );
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 23, 9}, time_point_wrap{2022, 12, 23, 13}, "事假上午半天"s, false
+  );
 
-  l_rules.add_extra_work(time_point_wrap{2022, 12, 18, 9}, time_point_wrap{2022, 12, 18, 18}, "18号加班一天"s);
+  l_rules.extra_p.emplace_back(
+      time_point_wrap{2022, 12, 18, 9}, time_point_wrap{2022, 12, 18, 18}, "18号加班一天"s, true
+  );
   time_point_wrap l_time{2022, 12, 1};
 
   l_r.async_get_work_clock(
