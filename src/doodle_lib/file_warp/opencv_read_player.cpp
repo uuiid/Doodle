@@ -4,11 +4,13 @@
 
 #include "opencv_read_player.h"
 
-#include <d3d11.h>
-#include <doodle_lib/app/doodle_main_app.h>
 #include <doodle_core/exception/exception.h>
+
 #include <doodle_app/platform/win/windows_proc.h>
 
+#include <doodle_lib/app/main_facet.h>
+
+#include <d3d11.h>
 #include <opencv2/opencv.hpp>
 
 namespace doodle {
@@ -16,9 +18,7 @@ namespace doodle {
 namespace {
 template <class T>
 struct win_ptr_delete {
-  void operator()(T* ptr) const {
-    ptr->Release();
-  }
+  void operator()(T* ptr) const { ptr->Release(); }
 };
 
 struct frame_impl {

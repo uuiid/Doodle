@@ -8,7 +8,7 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
 
-#include <doodle_lib/app/doodle_main_app.h>
+#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/test/unit_test.hpp>

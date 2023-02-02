@@ -6,7 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/app/doodle_main_app.h>
+#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/app/rpc_server_facet.h>
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>

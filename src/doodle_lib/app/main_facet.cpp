@@ -2,7 +2,7 @@
 // Created by TD on 2022/1/18.
 //
 
-#include "doodle_main_app.h"
+#include "main_facet.h"
 
 #include <doodle_core/core/program_info.h>
 

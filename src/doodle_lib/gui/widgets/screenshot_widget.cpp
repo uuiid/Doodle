@@ -3,12 +3,16 @@
 //
 
 #include "screenshot_widget.h"
-#include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_lib/app/doodle_main_app.h>
-#include <doodle_lib/core/image_loader.h>
-#include <doodle_app/platform/win/windows_proc.h>
+
 #include <doodle_core/metadata/image_icon.h>
+
 #include <doodle_app/gui/base/ref_base.h>
+#include <doodle_app/lib_warp/imgui_warp.h>
+#include <doodle_app/platform/win/windows_proc.h>
+
+#include <doodle_lib/app/main_facet.h>
+#include <doodle_lib/core/image_loader.h>
+
 #include <platform/win/get_screenshot.h>
 namespace doodle::gui {
 

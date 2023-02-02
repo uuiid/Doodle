@@ -3,18 +3,22 @@
 //
 
 #include "image_loader.h"
-#include <opencv2/opencv.hpp>
+
 #include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 // #include <opencv2/core/directx.hpp>
-#include <doodle_core/metadata/project.h>
-#include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/core/core_set.h>
-#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <platform/win/get_screenshot.h>
-#include <app/doodle_main_app.h>
+#include <doodle_core/core/init_register.h>
+#include <doodle_core/metadata/image_icon.h>
+#include <doodle_core/metadata/project.h>
+
 #include <doodle_app/platform/win/windows_proc.h>
+
 #include <boost/asio.hpp>
+
+#include <app/main_facet.h>
+#include <platform/win/get_screenshot.h>
 
 // #include <DirectXTK/ScreenGrab.h>
 // #include <wincodec.h>

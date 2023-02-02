@@ -1,9 +1,9 @@
 target_sources(doodle_lib
         PUBLIC
-        doodle_main_app.h
+        main_facet.h
         rpc_server_facet.h
 
         PRIVATE
-        doodle_main_app.cpp
+        main_facet.cpp
         rpc_server_facet.cpp
         )

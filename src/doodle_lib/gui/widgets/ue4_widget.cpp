@@ -13,7 +13,7 @@
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <doodle_lib/app/doodle_main_app.h>
+#include <doodle_lib/app/main_facet.h>
 #include <doodle_lib/core/filesystem_extend.h>
 
 #include <boost/contract.hpp>
