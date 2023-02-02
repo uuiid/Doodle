@@ -81,7 +81,7 @@ rpc_server_facet::rpc_server_facet() : p_i(std::make_unique<impl>()) {
 const std::string& rpc_server_facet::name() const noexcept { return p_i->name; }
 void rpc_server_facet::operator()() {
   /// 开始创建视频
-  if (program_options ::value()["create_move"]) {
+  if (program_options::value()["create_move"]) {
     if (!FSys::exists(p_i->files_attr)) {
       DOODLE_LOG_INFO("不存在文件 {}", p_i->files_attr);
     }

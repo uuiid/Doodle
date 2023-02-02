@@ -16,46 +16,17 @@
 #include <main_fixtures/lib_fixtures.h>
 #include <stdlib.h>
 
-namespace doodle::facet {
-class teste_facet : public gui_facet {
- public:
- protected:
-  void load_windows() override {}
-};
-}  // namespace doodle::facet
-
-namespace doodle {
-using test_app = app_command<facet::teste_facet>;
-}  // namespace doodle
-
 using namespace doodle;
 
-struct move_fix {
-  move_fix() { timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
-  //  void setup() {
-  //    for (int l = 0; l < 500; ++l) {
-  //      main_app_attr.poll_one();
-  //    }
-  //  }
-
-  test_app main_app_attr;
-  std::shared_ptr<boost::asio::high_resolution_timer> timer;
+namespace {
+struct loop_ {
+  doodle_lib lib{};
 };
-
-BOOST_FIXTURE_TEST_SUITE(move, move_fix, *boost::unit_test::disabled())
-
-BOOST_AUTO_TEST_CASE(base_run) {
-  bool run_test{};
-  timer->async_wait([l_r = &run_test](boost::system::error_code) {
-    app_base::Get().stop_app();
-    *l_r = true;
-  });
-  timer->expires_from_now(2s);
-  main_app_attr.run();
-  BOOST_TEST(run_test);
-}
+}  // namespace
+BOOST_FIXTURE_TEST_SUITE(move, loop_, *boost::unit_test::disabled())
 
 BOOST_AUTO_TEST_CASE(create) {
+  g_reg()->ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   auto l_h = make_handle();
   FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};
   l_h.emplace<episodes>().analysis(l_image_path);
@@ -66,11 +37,10 @@ BOOST_AUTO_TEST_CASE(create) {
   bool run_test{};
   g_reg()->ctx().at<image_to_move>()->async_create_move(l_h, l_files, [l_r = &run_test, this]() {
     *l_r = true;
-    timer->async_wait([](boost::system::error_code) { app_base::Get().stop_app(); });
-    timer->expires_from_now(2s);
+    boost::asio::post(g_io_context(), []() { app_base::Get().stop_app(); });
   });
 
-  main_app_attr.run();
+  g_io_context().run();
   BOOST_TEST(run_test);
 }
 
