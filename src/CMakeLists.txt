@@ -105,7 +105,7 @@ endif ()
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
-find_package(Wix REQUIRED)
+find_package(Wix)
 if (TARGET wix_exe)
     add_subdirectory(install)
 endif ()
