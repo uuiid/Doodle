@@ -25,8 +25,8 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   bool is_stop{};
 
  public:
-  client();
-  explicit client(const registry_ptr& in_reg);
+  explicit client(const std::string& in_server_ip);
+  explicit client(const registry_ptr& in_reg, const std::string& in_server_ip);
 
   /// 列出所有注册的功能
   std::vector<std::string> list_fun();

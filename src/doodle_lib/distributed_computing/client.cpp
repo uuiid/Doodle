@@ -23,12 +23,12 @@
 
 namespace doodle::distributed_computing {
 
-client::client() : reg(g_reg()), socket(g_reg()->ctx().emplace<zmq::context_t>(), zmq::socket_type::req) {
-  socket.connect("tcp://127.0.0.1:23333");
+client::client(const std::string& in_server_ip) : client(g_reg(), in_server_ip) {
+  socket.connect(fmt::format("tcp://{}:23333", in_server_ip));
 }
-client::client(const registry_ptr& in_reg)
+client::client(const registry_ptr& in_reg, const std::string& in_server_ip)
     : reg(in_reg), socket(in_reg->ctx().emplace<zmq::context_t>(), zmq::socket_type::req) {
-  socket.connect("tcp://127.0.0.1:23333");
+  socket.connect(fmt::format("tcp://{}:23333", in_server_ip));
 }
 
 std::string client::call_server(const std::string& in_string, bool is_notice) {
