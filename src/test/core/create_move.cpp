@@ -35,9 +35,11 @@ BOOST_AUTO_TEST_CASE(create) {
 
   std::vector<FSys::path> l_files{FSys::list_files(l_image_path)};
   bool run_test{};
-  g_reg()->ctx().at<image_to_move>()->async_create_move(l_h, l_files, [l_r = &run_test, this]() {
+  auto l_w = boost::asio::make_work_guard(g_io_context());
+  g_reg()->ctx().at<image_to_move>()->async_create_move(l_h, l_files, [l_r = &run_test, this, work = &l_w]() {
     *l_r = true;
     boost::asio::post(g_io_context(), []() { app_base::Get().stop_app(); });
+    work->reset();
   });
 
   g_io_context().run();
