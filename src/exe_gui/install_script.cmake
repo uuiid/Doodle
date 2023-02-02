@@ -4,7 +4,7 @@
 include(BundleUtilities)
 fixup_bundle("${DOODLE_MAIN_EXE}" "" "")
 # 添加安装配置
-configure_file(@CMAKE_CURRENT_LIST_DIR@/install.wxs \${CMAKE_INSTALL_PREFIX}/wix/doodle_gui_exe.wxs)
+configure_file(@CMAKE_CURRENT_LIST_DIR@/install.wxs ${CMAKE_INSTALL_PREFIX}/wix/doodle_gui_exe.wxs)
 
 # 生成授权文件
 
