@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(base_run) {
 
 BOOST_AUTO_TEST_CASE(create) {
   auto l_h = make_handle();
-  FSys::path l_image_path{R"(E:\tmp\image_test_ep002_sc001)"};
+  FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};
   l_h.emplace<episodes>().analysis(l_image_path);
   l_h.emplace<shot>().analysis(l_image_path);
   l_h.emplace<FSys::path>(l_image_path.parent_path());
