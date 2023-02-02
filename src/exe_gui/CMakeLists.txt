@@ -21,6 +21,8 @@ target_compile_definitions(DoodleExe
         )
 
 #target_link_options(DoodleExe PUBLIC /MAP:test.txt)
+target_link_options(DoodleExe PUBLIC /ENTRY:mainCRTStartup)
+target_link_options(DoodleExe PUBLIC)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
