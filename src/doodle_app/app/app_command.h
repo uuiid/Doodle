@@ -14,9 +14,7 @@
 #include <doodle_app/gui/main_proc_handle.h>
 
 namespace doodle {
-namespace details::app_command_base {
-void run_facet(const app_base::app_facet_map& in_map, app_base::app_facet_ptr& in_def_facet);
-}
+
 /**
  * @brief 基本的命令行类
  *  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
@@ -32,17 +30,45 @@ class app_command : public app_base {
  public:
   app_command() : app_base() {
     program_options::emplace();
-    run_facet = std::make_shared<Facet_Defaute>();
+    auto run_facet = std::make_shared<Facet_Defaute>();
     add_facet(run_facet);
+    default_run_facet_name = run_facet->name();
     (add_facet(std::make_shared<Facet_>()), ...);
   };
   virtual ~app_command() override { program_options::reset(); }
 
   static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
+  void add_facet(const app_facet_ptr& in_facet) {
+    program_options::value().build_opt(in_facet->name());
+    facet_list.emplace(in_facet->name(), in_facet);
+  };
 
  protected:
-  virtual void post_constructor() override { details::app_command_base::run_facet(facet_list, run_facet); };
-};
+  virtual void post_constructor() override {
+    auto& l_opt = doodle::program_options::value();
 
+    for (auto&& [key, val] : facet_list) {
+      val->add_program_options();
+    }
+    l_opt.command_line_parser();
+
+    bool run_facet{};
+    for (auto&& [key, val] : l_opt.facet_model) {
+      if (l_opt[key]) {
+        DOODLE_LOG_INFO("开始运行 {} facet", key);
+
+        g_reg()->ctx().emplace<app_facet_ptr>(facet_list.at(key));
+
+        boost::asio::post(g_io_context(), [l_f = facet_list.at(key)]() { (*l_f)(); });
+        run_facet = true;
+      }
+    }
+
+    if (run_facet) {
+      DOODLE_LOG_INFO("运行默认构面 {}", default_run_facet_name);
+      boost::asio::post(g_io_context(), [l_f = facet_list.at(default_run_facet_name)]() { (*l_f)(); });
+    }
+  };
+};
 
 }  // namespace doodle

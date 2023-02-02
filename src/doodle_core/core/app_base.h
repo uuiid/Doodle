@@ -33,9 +33,9 @@ class DOODLE_CORE_API app_base {
   std::wstring p_title;
   app_facet_map facet_list{};
   /**
-   * 此处是正在运行的构面,  同时可以初始化,  作为命令行中没有指定时的后备选项
+   * 此处更改为默认运行构面的名称
    */
-  app_facet_ptr run_facet;
+  std::string default_run_facet_name{};
   /// @brief 在初始化中获取的id为主id(也是渲染线程id)
   std::thread::id run_id{std::this_thread::get_id()};
 
@@ -54,8 +54,6 @@ class DOODLE_CORE_API app_base {
  public:
   app_base();
   virtual ~app_base();
-
-  void add_facet(const app_facet_ptr& in_facet);
 
   /**
    * @brief 直接使用默认配置运行

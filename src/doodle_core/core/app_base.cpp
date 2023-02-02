@@ -89,8 +89,6 @@ void app_base::load_project(const FSys::path& in_path) const {
   }
 }
 
-void app_base::add_facet(const app_facet_ptr& in_facet) { facet_list.emplace(in_facet->name(), in_facet); }
-
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
 
 }  // namespace doodle

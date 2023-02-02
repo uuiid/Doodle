@@ -6,8 +6,9 @@
  * @Description: In User Settings Edit
  * @FilePath: \Doodle\doodle_GUI\main.cpp
  */
-#include <doodle_lib/app/main_facet.h>
-#include <doodle_lib/app/rpc_server_facet.h>
+#include <doodle_lib/facet/create_move_facet.h>
+#include <doodle_lib/facet/main_facet.h>
+#include <doodle_lib/facet/rpc_server_facet.h>
 // #include <doodle_lib/DoodleApp.h>
 // #include <boost/locale.hpp>
 /**
@@ -37,7 +38,7 @@
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {
-  using main_app = doodle::app_command<doodle::main_facet, doodle::facet::rpc_server_facet>;
+  using main_app = doodle::app_command<doodle::main_facet, doodle::facet::create_move_facet>;
   main_app app{};
   try {
     return app.run();
