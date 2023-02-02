@@ -14,7 +14,7 @@ vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO PixarAnimationStudios/USD
         REF v23.02
-        SHA512 0
+        SHA512 2529aec788cab3ff4c47041f5bc0043fde81dcef8ca313f6390f2e5fb7a10b1b0b1dd47fd6c86e3b4cfc0a1b27bff4d9b94b96bfba6bec3d5ff8f6e2fccb9e11
         HEAD_REF release
         PATCHES
         fix_build-location.patch
