@@ -10,7 +10,6 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include <azmq/socket.hpp>
 #include <entt/entity/fwd.hpp>
 #include <memory>
 #include <string>

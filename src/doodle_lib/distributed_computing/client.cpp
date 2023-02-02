@@ -12,7 +12,6 @@
 #include <boost/system/detail/error_code.hpp>
 
 #include "distributed_computing/client.h"
-#include <azmq/message.hpp>
 #include <cstddef>
 #include <entt/entity/fwd.hpp>
 #include <iostream>
