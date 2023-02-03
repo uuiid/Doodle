@@ -64,9 +64,6 @@ class setting_windows : public base_windows<dear::Begin, setting_windows> {
   void init();
   void render();
   void save();
-
- private:
-  void show_error(const std::string& in_meg);
 };
 
 }  // namespace doodle::gui

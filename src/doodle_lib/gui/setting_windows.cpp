@@ -46,8 +46,6 @@ class setting_windows::impl {
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
-
-  std::int32_t department_id{};
 };
 
 setting_windows::setting_windows() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
@@ -116,9 +114,5 @@ void setting_windows::render() {
 }
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }
-void setting_windows::show_error(const std::string& in_meg) {
-  auto l_msg = std::make_shared<show_message>();
-  l_msg->set_message(fmt::format("可能是所属公司不正确, 请修正 {}", in_meg));
-  make_handle().emplace<gui_windows>() = l_msg;
-}
+
 }  // namespace doodle::gui
