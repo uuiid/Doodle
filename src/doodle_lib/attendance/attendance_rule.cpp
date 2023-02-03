@@ -55,7 +55,7 @@ void attendance_rule::gen_work_clock() {
     }
 
     /// \brief 调整节假日
-    holidaycn_time{}.set_clock(ptr->time_clock);
+    holidaycn_time{l_rule.work_pair_p}.set_clock(ptr->time_clock);
 
     ranges::for_each(l_rule.extra_p, [&](const std::decay_t<decltype(l_rule.extra_p)>::value_type& in_) {
       if (in_.is_extra_work)

@@ -9,9 +9,16 @@ namespace doodle {
  * 现在只有 2022 年的信息
  */
 class holidaycn_time {
+ public:
+  using duration_type        = chrono::seconds;
+  using time_duration_vector = std::vector<std::pair<duration_type, duration_type>>;
+
  private:
   std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list_rest;
   std::vector<std::tuple<time_point_wrap, time_point_wrap, std::string>> holidaycn_list_work;
+
+  void load_year(chrono::year in_year);
+  time_duration_vector work_time{};
 
  public:
   class info {
@@ -24,7 +31,7 @@ class holidaycn_time {
     friend void from_json(const nlohmann::json &in_j, info &in_p);
   };
 
-  holidaycn_time();
+  explicit holidaycn_time(time_duration_vector in_work_time);
   virtual ~holidaycn_time();
 
   void set_clock(business::work_clock &in_work_clock) const;
