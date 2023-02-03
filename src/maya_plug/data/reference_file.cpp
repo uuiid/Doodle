@@ -126,18 +126,6 @@ FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) cons
   return FSys::path{l_name};
 }
 
-// bool generate_abc_file_path::operator==(
-//     const generate_abc_file_path &in
-//) const noexcept {
-//   return *this == in;
-// }
-//
-// bool generate_abc_file_path::operator<(
-//     const generate_abc_file_path &in
-//) const noexcept {
-//   return *this < in;
-// }
-
 generate_abc_file_path::~generate_abc_file_path() = default;
 
 generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
@@ -167,9 +155,9 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
         "{}_{}-{}", l_name, begin_end_time.first.as(MTime::uiUnit()), begin_end_time.second.as(MTime::uiUnit())
     );
 
-  l_name += ".fbx";
-
-  return FSys::path{l_name};
+  FSys::path l_path{l_name};
+  l_path += ".fbx";
+  return l_path;
 }
 
 void generate_fbx_file_path::is_camera(bool in_is_camera) { is_camera_attr = in_is_camera; }
