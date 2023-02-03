@@ -49,12 +49,15 @@ void this_rpc_exe::create_move(
   auto l_tmp           = FSys::write_tmp_file("create_move", l_json.dump(), ".json");
   DOODLE_LOG_INFO("开始 doodle 进程 {} ", ptr->this_exe_path);
   ptr->this_exe_proces = boost::process::child{
-      boost::process::exe  = ptr->this_exe_path,
+      g_io_context(), boost::process::exe = ptr->this_exe_path,
       boost::process::args = {"--create_move"s, fmt::format(R"(--config_path="{}")", l_tmp)},
-      boost::process::std_out > ptr->out_attr, boost::process::std_err > ptr->err_attr};
-
-  this->read_err();
-  this->read_out();
+      //      boost::process::std_out > ptr->out_attr,
+      //      boost::process::std_err > ptr->err_attr,
+      boost::process::on_exit =
+          [l_w = boost::asio::make_work_guard(g_io_context())](std::int32_t, const std::error_code&) {}};
+  //
+  //  this->read_err();
+  //  this->read_out();
 
   //  ptr->rpc_child->create_movie({in_out_path, in_move});
   //  in_msg.message();
@@ -84,7 +87,7 @@ void this_rpc_exe::read_err() const {
             ptr->out_io_err_attr.clear();
             this->read_err();
           } else
-            DOODLE_LOG_INFO("错误 {}", in_code.message());
+            DOODLE_LOG_INFO("错误 {}", in_code.what());
         }
     );
 }
@@ -99,7 +102,7 @@ void this_rpc_exe::read_out() const {
             ptr->out_io_out_attr.clear();
             this->read_out();
           } else
-            DOODLE_LOG_INFO("错误 {}", in_code.message());
+            DOODLE_LOG_INFO("错误 {}", in_code.what());
         }
     );
 }
