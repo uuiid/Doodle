@@ -91,6 +91,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
       DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", l_ref_name, extract_reference_name, in.what());
     }
   }
+  DOODLE_LOG_INFO("提取完成引用名称 {}", l_ref_name);
   return l_ref_name;
 }
 
