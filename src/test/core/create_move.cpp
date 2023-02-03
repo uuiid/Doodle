@@ -59,7 +59,6 @@ class maya_create_movie : public doodle::detail::image_to_movie_interface {
       override {
     DOODLE_LOG_INFO("开始doodle 进程合成视频");
     run.create_move(in_out_path, in_vector, in_msg);
-    run.wait();
   };
 
  protected:
@@ -100,8 +99,8 @@ BOOST_AUTO_TEST_CASE(sub_create) {
       l_h, FSys::list_files(l_image_path),
       [l_exe, l_r = &run_test, this, work = boost::asio::make_work_guard(g_io_context())]() { *l_r = true; }
   );
-
   g_io_context().run();
+  BOOST_TEST(FSys::exists("D:/tmp/ep_2_sc_1.mp4"));
   BOOST_TEST(run_test);
 }
 

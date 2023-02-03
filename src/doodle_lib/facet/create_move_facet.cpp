@@ -61,8 +61,8 @@ void open_console() {
 
 const std::string& create_move_facet::name() const noexcept { return name_; }
 void create_move_facet::operator()() {
-  open_console();
-  logger_ctrl::get_log().add_log_sink(std::make_shared<spdlog::sinks::stdout_sink_mt>());
+  //  open_console();
+  //  logger_ctrl::get_log().add_log_sink(std::make_shared<spdlog::sinks::stdout_sink_mt>());
   if (!g_reg()->ctx().contains<image_to_move>())
     g_reg()->ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
 
