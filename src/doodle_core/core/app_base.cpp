@@ -74,9 +74,7 @@ void app_base::stop_app(bool in_stop) {
     g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
     program_info::value().is_stop = true;
     this->stop_                   = true;
-
     this->deconstruction();
-
     core_set_init{}.write_file();
   });
 }

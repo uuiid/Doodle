@@ -68,6 +68,14 @@ class DOODLE_CORE_API app_base {
   std::atomic_bool& stop();
   void stop_app(bool in_stop = false);
 
+  template <typename Facet>
+  std::shared_ptr<Facet> find_facet() {
+    for (auto&& [key, facet] : facet_list) {
+      if (std::dynamic_pointer_cast<Facet>(facet)) return std::dynamic_pointer_cast<Facet>(facet);
+    }
+    return nullptr;
+  }
+
   void load_project(const FSys::path& in_path) const;
 
   DOODLE_DIS_COPY(app_base);
