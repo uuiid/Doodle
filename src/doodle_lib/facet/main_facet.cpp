@@ -25,8 +25,6 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
-  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
-
   /// \brief 设置窗口句柄处理
   gui::main_proc_handle::value().win_close = [this]() {
     if (::GetForegroundWindow() == p_hwnd)
