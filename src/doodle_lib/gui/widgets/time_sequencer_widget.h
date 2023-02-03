@@ -16,6 +16,8 @@ class DOODLELIB_API time_sequencer_widget : public base_windows<dear::Begin, tim
 
   void fliter_select( );
   void gen_user();
+  void refresh_work_rule();
+
  public:
   time_sequencer_widget();
   ~time_sequencer_widget() override;

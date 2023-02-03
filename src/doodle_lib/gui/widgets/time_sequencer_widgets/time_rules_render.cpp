@@ -419,7 +419,7 @@ bool time_rules_render::render() {
 
           p_i->rules_attr.work_pair_p |=
               ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.work_pair_p[in_index]);
-          modify_guard_ = true;
+          refresh();
         });
       }
     });
@@ -443,7 +443,7 @@ bool time_rules_render::render() {
         boost::asio::post(g_io_context(), [this, in]() {
           p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
           p_i->rules_attr.extra_p |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_p[in]);
-          modify_guard_ = true;
+          refresh();
         });
       }
       ImGui::SameLine();
@@ -453,7 +453,7 @@ bool time_rules_render::render() {
           if (l_up != in) {
             std::swap(p_i->extra_work_attr[l_up], p_i->extra_work_attr[in]);
             std::swap(p_i->rules_attr.extra_p[l_up], p_i->rules_attr.extra_p[in]);
-            modify_guard_ = true;
+            refresh();
           }
         });
       }
@@ -465,7 +465,7 @@ bool time_rules_render::render() {
           if (l_dwn != in) {
             std::swap(p_i->extra_work_attr[in], p_i->extra_work_attr[l_dwn]);
             std::swap(p_i->rules_attr.extra_p[in], p_i->rules_attr.extra_p[l_dwn]);
-            modify_guard_ = true;
+            refresh();
           }
         });
       }
