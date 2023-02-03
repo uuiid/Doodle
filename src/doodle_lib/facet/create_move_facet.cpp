@@ -35,7 +35,7 @@ void create_move_facet::operator()() {
 }
 void create_move_facet::deconstruction() {}
 void create_move_facet::add_program_options() {
-  opt.add_options()("create_move", boost::program_options::value(&files_attr), "创建视频的序列json选项");
+  opt.add_options()("config_path", boost::program_options::value(&files_attr), "创建视频的序列json选项");
   auto& l_p = program_options::value();
   l_p.add_opt(opt);
 }

@@ -216,8 +216,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     DOODLE_MAYA_CHICK(k_s);
     g_reg()->ctx().at<image_to_move>()->async_create_move(
         k_msg, l_handle_list,
-        [this, k_f, l_w = boost::asio::make_work_guard(g_io_context())]() {
-          DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", get_out_path(), k_f);
+        [k_f, l_path = get_out_path(), l_w = boost::asio::make_work_guard(g_io_context())]() {
+          DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
           FSys::remove_all(k_f);
         }
     );

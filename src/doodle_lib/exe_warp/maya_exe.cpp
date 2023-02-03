@@ -103,14 +103,17 @@ class run_maya : public std::enable_shared_from_this<run_maya> {
         boost::process::args = l_tmp_file.generic_wstring(),
         boost::process::std_out > out_attr,
         boost::process::std_err > err_attr,
-        boost::process::on_exit = [this,
-                                   l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
-          timer_attr.cancel();
-          auto &&l_msg = mag_attr.get<process_message>();
-          l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
-          l_msg.message(fmt::format("退出代码 {}", in_exit));
-          (*call_attr)(in_error_code);
-        }};
+        boost::process::on_exit =
+            [this, l_self = shared_from_this()](int in_exit, const std::error_code &in_error_code) {
+              timer_attr.cancel();
+              auto &&l_msg = mag_attr.get<process_message>();
+              l_msg.set_state(in_exit == 0 ? l_msg.success : l_msg.fail);
+              l_msg.message(fmt::format("退出代码 {}", in_exit));
+              (*call_attr)(in_error_code);
+            },
+        boost::process::windows::hide
+
+    };
 
     read_out();
     read_err();

@@ -43,7 +43,6 @@ void this_rpc_exe::create_move(
   ptr->this_exe_path = core_set::get_set().program_location() / "DoodleExe.exe"s;
   ptr->msg           = &in_msg;
   nlohmann::json l_json{};
-  auto l_h             = make_handle();
 
   l_json["out_path"]   = in_out_path;
   l_json["image_attr"] = in_move;
@@ -51,7 +50,7 @@ void this_rpc_exe::create_move(
   DOODLE_LOG_INFO("开始 doodle 进程 {} ", ptr->this_exe_path);
   ptr->this_exe_proces = boost::process::child{
       boost::process::exe  = ptr->this_exe_path,
-      boost::process::args = {"--json_rpc"s, fmt::format(R"(--create_move="{}")", l_tmp)},
+      boost::process::args = {"--create_move"s, fmt::format(R"(--config_path="{}")", l_tmp)},
       boost::process::std_out > ptr->out_attr, boost::process::std_err > ptr->err_attr};
 
   this->read_err();
@@ -78,9 +77,10 @@ void this_rpc_exe::read_err() const {
   if (ptr->err_attr.is_open())
     boost::asio::async_read_until(
         ptr->err_attr, boost::asio::dynamic_buffer(ptr->out_io_err_attr), '\n',
-        [this](boost::system::error_code in_code, std::size_t in_size) {
+        [this](boost::system::error_code in_code, std::size_t /*in_size*/) {
           if (!in_code) {
-            if (!ptr->out_io_err_attr.empty() && ptr->msg) ptr->msg->message(ptr->out_io_err_attr);
+            if (!ptr->out_io_err_attr.empty() && ptr->msg)
+              ptr->msg->message(fmt::format("rpc {}", ptr->out_io_err_attr));
             ptr->out_io_err_attr.clear();
             this->read_err();
           } else
@@ -92,9 +92,10 @@ void this_rpc_exe::read_out() const {
   if (ptr->out_attr.is_open())
     boost::asio::async_read_until(
         ptr->out_attr, boost::asio::dynamic_buffer(ptr->out_io_out_attr), '\n',
-        [this](boost::system::error_code in_code, std::size_t in_size) {
+        [this](boost::system::error_code in_code, std::size_t /*in_size*/) {
           if (!in_code) {
-            if (!ptr->out_io_out_attr.empty() && ptr->msg) ptr->msg->message(ptr->out_io_out_attr);
+            if (!ptr->out_io_out_attr.empty() && ptr->msg)
+              ptr->msg->message(fmt::format("rpc {}", ptr->out_io_out_attr));
             ptr->out_io_out_attr.clear();
             this->read_out();
           } else
