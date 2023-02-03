@@ -11,8 +11,6 @@
 
 #include <boost/program_options.hpp>
 
-#include <wil/result.h>
-
 namespace doodle::facet {
 
 const std::string& rpc_server_facet::name() const noexcept { return name_; }
