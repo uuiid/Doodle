@@ -7,6 +7,8 @@ add_executable(
         ../win_exe.rc
 )
 
+add_subdirectory(gui)
+
 set_target_properties(DoodleExe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(DoodleExe

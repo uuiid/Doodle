@@ -14,6 +14,8 @@
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
 
+#include <doodle_lib/distributed_computing/client.h>
+
 #include <boost/asio/post.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/path.hpp>
@@ -147,11 +149,14 @@ class work_hour_filling::impl {
   gui_cache_name_id select_path_button{"选择路径"};
   /// 导出表按钮
   gui_cache_name_id export_button{"导出表格"};
+
+  /// @todo 这里需要添加一个客户端资源
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
   ptr->title                 = std::string{name};
   ptr->show_advanced_setting = true;
+  /// @todo 这里的用户需要使用客户端查询或者创建
   ptr->current_user          = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
 }
 

@@ -19,7 +19,9 @@ class work_hour_filling : public base_windows<dear::Begin, work_hour_filling> {
   class impl;
   std::unique_ptr<impl> ptr;
 
+  /// @todo 这个原先需要使用注册表获取,现在改为使用客户端查询
   void list_time(std::int32_t in_y, std::int32_t in_m);
+  /// @todo 被修改的gui数据使用客户端发送到服务器
   void modify_item(std::size_t in_index);
 
   void export_table(const FSys::path& in_path);
