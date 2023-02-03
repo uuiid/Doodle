@@ -65,7 +65,7 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
       if (k_r && k_match.size() >= 2) {
         l_scene_name.clear();
         for (auto i = ++std::begin(k_match); i != std::end(k_match); ++i) {
-          l_scene_name += i->str();
+          if (i->str().empty()) l_scene_name += i->str();
         }
       }
     } catch (const std::regex_error &in) {
@@ -157,6 +157,7 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
     );
 
   FSys::path l_path{l_name};
+  l_path = l_path.generic_path();
   l_path += ".fbx";
   return l_path;
 }
