@@ -61,7 +61,7 @@ class app_command : public app_base {
       }
     }
 
-    if (run_facet) {
+    if (!run_facet) {
       DOODLE_LOG_INFO("运行默认构面 {}", default_run_facet_name);
       l_opt.facet_model[default_run_facet_name] = true;
       boost::asio::post(g_io_context(), [l_f = facet_list.at(default_run_facet_name)]() { (*l_f)(); });
