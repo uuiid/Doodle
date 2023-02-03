@@ -79,4 +79,35 @@ class app_command : public app_base {
   }
 };
 
+/**
+ * @brief 基本的命令行类
+ *  ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+ */
+template <typename Facet_Defaute>
+class app_plug : public app_base {
+ protected:
+  bool chick_authorization() override {
+    DOODLE_LOG_INFO("开始检查授权");
+    return authorization{}.is_expire();
+  };
+
+ public:
+  app_plug() : app_base() {
+    auto run_facet         = std::make_shared<Facet_Defaute>();
+    default_run_facet_name = run_facet->name();
+    add_facet(run_facet);
+  };
+  virtual ~app_plug() override = default;
+
+  void add_facet(const app_facet_ptr& in_facet) { facet_list.emplace(in_facet->name(), in_facet); };
+
+ protected:
+  virtual void post_constructor() override {
+    DOODLE_LOG_INFO("运行默认构面 {}", default_run_facet_name);
+
+    boost::asio::post(g_io_context(), [l_f = facet_list.at(default_run_facet_name)]() { (*l_f)(); });
+  };
+
+  virtual void deconstruction() override { facet_list.at(default_run_facet_name)->deconstruction(); }
+};
 }  // namespace doodle

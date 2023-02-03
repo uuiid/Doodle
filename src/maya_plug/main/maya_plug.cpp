@@ -49,8 +49,8 @@ std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 namespace doodle::maya_plug {
 void open_windows() {
-  using maya_gui_app     = doodle::app_command<maya_facet>;
-  using maya_command_app = doodle::app_command<null_facet>;
+  using maya_gui_app     = doodle::app_plug<maya_facet>;
+  using maya_command_app = doodle::app_plug<null_facet>;
 
   HWND win_id{};
   if (auto* l_main_win = MQtUtil::mainWindow()) {
