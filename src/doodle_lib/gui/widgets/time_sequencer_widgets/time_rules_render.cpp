@@ -10,7 +10,6 @@
 #include <doodle_core/metadata/time_point_wrap.h>
 #include <doodle_core/metadata/user.h>
 
-#include <doodle_app/gui/base/modify_guard.h>
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
@@ -144,16 +143,15 @@ class time_warp_gui_data : boost::equality_comparable<time_warp_gui_data> {
 class work_gui_data_render {
  public:
   using gui_data_type = work_gui_data;
-  modify_guard modify_guard_{};
+
   gui_data_type gui_data{};
   bool render() {
-    modify_guard_.begin_flag();
-    {
-      ranges::for_each(gui_data.gui_attr(), [this](decltype(gui_data.gui_attr().front()) in_value) {
-        modify_guard_ = ImGui::Checkbox(*in_value, &in_value);
-        if (in_value.gui_name != gui_data.gui_attr().back().gui_name) ImGui::SameLine();
-      });
-    }
+    bool modify_guard_{};
+    ranges::for_each(gui_data.gui_attr(), [this, l_m = &modify_guard_](decltype(gui_data.gui_attr().front()) in_value) {
+      *l_m |= ImGui::Checkbox(*in_value, &in_value);
+      if (in_value.gui_name != gui_data.gui_attr().back().gui_name) ImGui::SameLine();
+    });
+
     return modify_guard_;
   }
   [[nodiscard]] gui_data_type::friend_type get() const { return gui_data_type::friend_type{gui_data}; }
@@ -170,10 +168,9 @@ class time_work_gui_data_render : boost::equality_comparable<time_work_gui_data_
   gui_cache_name_id name_id{"每日工作时间"};
   gui_cache_name_id name_id_add{"添加"s};
   gui_cache_name_id name_id_delete{"删除"s};
-  modify_guard modify_guard_;
 
   bool render() {
-    modify_guard_.begin_flag();
+    bool modify_guard_{};
 
     dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 3} && [&]() {
       modify_guard_ = ImGui::SliderInt3(*begin, begin.data.data(), 0, 59);
@@ -184,7 +181,7 @@ class time_work_gui_data_render : boost::equality_comparable<time_work_gui_data_
       ImGui::Dummy(l_size);
       ImGui::SameLine();
 
-      modify_guard_ = ImGui::SliderInt3(*end, end.data.data(), 0, 59);
+      modify_guard_ |= ImGui::SliderInt3(*end, end.data.data(), 0, 59);
     };
 
     return modify_guard_;
@@ -223,15 +220,13 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
   gui_cache_name_id up_self{ICON_FA_CHEVRON_UP};
   gui_cache_name_id dwn_self{ICON_FA_CHEVRON_DOWN};
 
-  modify_guard modify_guard_{};
-
   bool render() {
-    modify_guard_.begin_flag();
+    bool modify_guard_{};
 
     dear::Text(show_str);
     ImGui::SameLine();
     if (ImGui::Button(*edit_buiion)) use_edit = true;
-
+    bool re_{};
     if (use_edit)
       dear::ItemWidth{ImGui::GetCurrentWindow()->WorkRect.GetSize().x / 4} && [&]() {
         modify_guard_ = ImGui::Checkbox(*is_work, &is_work);
@@ -239,23 +234,26 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
         ImGui::SameLine();
         if (ImGui::InputInt3(*begin_time.ymd.gui_name, begin_time.ymd.data.data())) {
           begin_time.ymd.data[0] = std::clamp(begin_time.ymd.data[0], 2000, 2100);
-          modify_guard_.modifyed();
+          modify_guard_          = true;
         };
         ImGui::SameLine();
-        modify_guard_ = ImGui::InputInt3(*begin_time.hms.gui_name, begin_time.hms.data.data());
+        modify_guard_ |= ImGui::InputInt3(*begin_time.hms.gui_name, begin_time.hms.data.data());
 
         dear::Text("结束时间"s);
         ImGui::SameLine();
         if (ImGui::InputInt3(*end_time.ymd.gui_name, end_time.ymd.data.data())) {
           end_time.ymd.data[0] = std::clamp(end_time.ymd.data[0], 2000, 2100);
-          modify_guard_.modifyed();
+          modify_guard_        = true;
         };
         ImGui::SameLine();
-        modify_guard_ = ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
+        modify_guard_ |= ImGui::InputInt3(*end_time.hms.gui_name, end_time.hms.data.data());
 
-        modify_guard_ = ImGui::InputText(*info, &info);
+        modify_guard_ |= ImGui::InputText(*info, &info);
         ImGui::SameLine();
-        if (ImGui::Button(*fulfil)) use_edit = false;
+        if (ImGui::Button(*fulfil)) {
+          use_edit = false;
+          re_      = true;
+        }
       };
 
     if (modify_guard_) {
@@ -266,7 +264,7 @@ class time_info_gui_data_render : boost::equality_comparable<time_info_gui_data_
       );
     }
 
-    return modify_guard_;
+    return re_;
   }
 
   void set(const friend_type& in_type) {
@@ -392,26 +390,26 @@ void time_rules_render::rules_attr(const time_rules_render::rules_type& in_rules
   print_show_str();
 }
 bool time_rules_render::render() {
-  modify_guard_.begin_flag();
+  modify_guard_ = false;
 
   dear::Text(p_i->show_str);
 
   dear::TreeNode{*p_i->setting} && [&]() {
     if (p_i->work_gui_data_attr.render()) {
       p_i->rules_attr.work_weekdays_p = p_i->work_gui_data_attr.get();
-      modify_guard_.modifyed();
+      modify_guard_                   = true;
     };
 
     if (ImGui::Button(*p_i->time_work_gui_data_attr_add_button)) {
       p_i->time_work_gui_data_attr.emplace_back().set(p_i->rules_attr.work_pair_p.emplace_back());
-      modify_guard_.modifyed();
+      modify_guard_ = true;
     }
 
     ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
       auto& l_r = p_i->time_work_gui_data_attr[in_index];
       if (l_r.render()) {
         p_i->rules_attr.work_pair_p[in_index] = l_r.get();
-        modify_guard_.modifyed();
+        modify_guard_                         = true;
       }
       ImGui::SameLine();
       if (ImGui::Button(*l_r.name_id_delete)) {
@@ -421,7 +419,7 @@ bool time_rules_render::render() {
 
           p_i->rules_attr.work_pair_p |=
               ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.work_pair_p[in_index]);
-          modify_guard_.modifyed();
+          modify_guard_ = true;
         });
       }
     });
@@ -430,13 +428,13 @@ bool time_rules_render::render() {
   ImGui::SameLine();
   if (ImGui::Button(*p_i->extra_work_attr_add_button)) {
     p_i->extra_work_attr.emplace_back().set(p_i->rules_attr.extra_p.emplace_back());
-    modify_guard_.modifyed();
+    modify_guard_ = true;
   }
   ranges::for_each(ranges::views::ints(0ULL, p_i->extra_work_attr.size()), [&](std::size_t in) {
     auto& l_r = p_i->extra_work_attr[in];
     if (l_r.render()) {
       p_i->rules_attr.extra_p[in] = l_r.get();
-      modify_guard_.modifyed();
+      modify_guard_               = true;
     }
     if (!l_r.use_edit) {
       ImGui::SameLine();
@@ -445,7 +443,7 @@ bool time_rules_render::render() {
         boost::asio::post(g_io_context(), [this, in]() {
           p_i->extra_work_attr |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->extra_work_attr[in]);
           p_i->rules_attr.extra_p |= ranges::actions::remove_if(boost::lambda2::_1 == p_i->rules_attr.extra_p[in]);
-          modify_guard_.modifyed();
+          modify_guard_ = true;
         });
       }
       ImGui::SameLine();
@@ -455,7 +453,7 @@ bool time_rules_render::render() {
           if (l_up != in) {
             std::swap(p_i->extra_work_attr[l_up], p_i->extra_work_attr[in]);
             std::swap(p_i->rules_attr.extra_p[l_up], p_i->rules_attr.extra_p[in]);
-            modify_guard_.modifyed();
+            modify_guard_ = true;
           }
         });
       }
@@ -467,7 +465,7 @@ bool time_rules_render::render() {
           if (l_dwn != in) {
             std::swap(p_i->extra_work_attr[in], p_i->extra_work_attr[l_dwn]);
             std::swap(p_i->rules_attr.extra_p[in], p_i->rules_attr.extra_p[l_dwn]);
-            modify_guard_.modifyed();
+            modify_guard_ = true;
           }
         });
       }
