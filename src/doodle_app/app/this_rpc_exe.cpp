@@ -53,8 +53,9 @@ void this_rpc_exe::create_move(
       boost::process::args = {"--create_move"s, fmt::format(R"(--config_path="{}")", l_tmp)},
       //      boost::process::std_out > ptr->out_attr,
       //      boost::process::std_err > ptr->err_attr,
-      boost::process::on_exit =
-          [l_w = boost::asio::make_work_guard(g_io_context())](std::int32_t, const std::error_code&) {}};
+      //      boost::process::on_exit =
+      //          [l_w = boost::asio::make_work_guard(g_io_context())](std::int32_t, const std::error_code&) {}
+  };
   //
   //  this->read_err();
   //  this->read_out();
@@ -109,8 +110,6 @@ void this_rpc_exe::read_out() const {
 
 this_rpc_exe::~this_rpc_exe() {
   ptr->this_exe_proces.terminate();
-  ptr->err_attr.close();
-  ptr->out_attr.close();
 }
 void this_rpc_exe::wait() { ptr->this_exe_proces.wait(); }
 }  // namespace doodle::detail

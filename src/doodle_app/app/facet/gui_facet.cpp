@@ -102,6 +102,10 @@ gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
 }
 
 void gui_facet::tick() {
+  // Start the Dear ImGui frame
+  ImGui_ImplDX11_NewFrame();
+  ImGui_ImplWin32_NewFrame();
+  ImGui::NewFrame();
   auto l_lay = g_reg()->ctx().find<gui::detail::layout_tick>();
   if (l_lay && *l_lay) (*l_lay)->tick();
 
@@ -130,11 +134,6 @@ bool gui_facet::tick_begin() {
       return false;
     }
   }
-
-  // Start the Dear ImGui frame
-  ImGui_ImplDX11_NewFrame();
-  ImGui_ImplWin32_NewFrame();
-  ImGui::NewFrame();
   return true;
 }
 void gui_facet::tick_end() {
@@ -288,9 +287,9 @@ void gui_facet::close_windows() {
   boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
     p_i->timer_.cancel();
     p_i->timer_.wait();
-    boost::asio::post(g_io_context(), [this]() { this->tick_begin(); });
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
+    this->tick_begin();
     doodle::app_base::Get().stop_app();
   });
 }

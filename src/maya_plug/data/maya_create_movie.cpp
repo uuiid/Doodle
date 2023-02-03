@@ -23,6 +23,7 @@ void maya_create_movie::create_move(
   DOODLE_LOG_INFO("开始doodle 进程合成视频");
   ptr->doodle_exe_attr.create_move(in_out_path, in_vector, in_msg);
   ptr->doodle_exe_attr.wait();
+  DOODLE_LOG_INFO("开始doodle 进程合成视频完成");
 }
 FSys::path maya_create_movie::create_out_path(const entt::handle& in_handle) {
   boost::ignore_unused(this);

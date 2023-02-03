@@ -214,13 +214,21 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     k_msg.emplace<shot>(p_shot);
 
     DOODLE_MAYA_CHICK(k_s);
+    bool run{true};
     g_reg()->ctx().at<image_to_move>()->async_create_move(
         k_msg, l_handle_list,
-        [k_f, l_path = get_out_path(), l_w = boost::asio::make_work_guard(g_io_context())]() {
+        [k_f, l_path = get_out_path(), l_run = &run, l_w = boost::asio::make_work_guard(g_io_context())]() {
           DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
           FSys::remove_all(k_f);
+          *l_run = false;
         }
     );
+
+    if (MGlobal::mayaState() != MGlobal::MMayaState::kInteractive) {
+      while (run) {
+        g_io_context().poll_one();
+      }
+    }
     return k_s;
   }
 }
