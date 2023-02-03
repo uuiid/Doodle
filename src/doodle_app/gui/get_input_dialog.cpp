@@ -3,19 +3,19 @@
 //
 
 #include "get_input_dialog.h"
-#include <lib_warp/imgui_warp.h>
-#include <doodle_core/metadata/project.h>
-#include <doodle_core/metadata/metadata.h>
+
 #include <doodle_core/core/app_facet.h>
+#include <doodle_core/database_task/sqlite_client.h>
+#include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/project.h>
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/app/facet/gui_facet.h>
-
-#include <utility>
+#include <doodle_app/gui/open_file_dialog.h>
 
 #include <gui/base/ref_base.h>
-#include <doodle_app/gui/open_file_dialog.h>
-#include <doodle_core/database_task/sqlite_client.h>
+#include <lib_warp/imgui_warp.h>
+#include <utility>
 
 namespace doodle::gui {
 
@@ -36,17 +36,12 @@ void create_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
-    auto l_file = std::make_shared<file_dialog>(
-        file_dialog::dialog_args{}
-            .set_use_dir()
-            .set_title("选择文件夹")
-    );
+    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_use_dir().set_title("选择文件夹"));
     l_file->async_read([this](const FSys::path& in) {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
       p_i->path_gui = p_i->path.generic_string();
     });
-    p_i->select_button_id().emplace_or_replace<gui_windows>(
-        std::dynamic_pointer_cast<gui_windows::element_type>(l_file)
+    p_i->select_button_id().emplace_or_replace<gui_windows>(std::dynamic_pointer_cast<gui_windows::element_type>(l_file)
     );
   }
 
@@ -61,24 +56,19 @@ void create_project_dialog::render() {
     show_attr = false;
     p_i->prj.set_path(p_i->path.parent_path());
     p_i->select_button_id().destroy();
-    g_reg()->ctx().at<database_n::file_translator_ptr>()->new_file_scene(
-        p_i->path
-    );
+    g_reg()->ctx().at<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
     g_reg()->ctx().at<project>() = p_i->prj;
     show_attr                    = false;
   }
 }
 
-create_project_dialog::create_project_dialog()
-    : p_i(std::make_unique<impl>()) {
+create_project_dialog::create_project_dialog() : p_i(std::make_unique<impl>()) {
   p_i->path     = core_set::get_set().get_doc() / "doodle";
   p_i->path_gui = p_i->path.generic_string();
 }
 create_project_dialog::~create_project_dialog() = default;
 
-const std::string& create_project_dialog::title() const {
-  return p_i->title;
-}
+const std::string& create_project_dialog::title() const { return p_i->title; }
 void create_project_dialog::set_attr() const {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
@@ -98,13 +88,10 @@ void close_exit_dialog::render() {
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
     boost::asio::post(g_io_context(), []() {
-      if (auto l_f = std::dynamic_pointer_cast<::doodle::facet::gui_facet>(
-              g_reg()->ctx().at<::doodle::app_facet_ptr>()
-          );
-          l_f) {
+      if (auto l_f = app_base::Get().find_facet<facet::gui_facet>(); l_f) {
         l_f->close_windows();
       } else {
-        app_base::Get().stop_app(true);
+        app_base::Get().stop_app();
       }
     });
   }
@@ -118,13 +105,9 @@ void close_exit_dialog::set_attr() const {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
 }
-close_exit_dialog::close_exit_dialog()
-    : p_i(std::make_unique<impl>()) {
-}
+close_exit_dialog::close_exit_dialog() : p_i(std::make_unique<impl>()) {}
 close_exit_dialog::~close_exit_dialog() = default;
-const std::string& close_exit_dialog::title() const {
-  return p_i->title;
-}
+const std::string& close_exit_dialog::title() const { return p_i->title; }
 std::int32_t close_exit_dialog::flags() const {
   boost::ignore_unused(this);
   return ImGuiWindowFlags_NoSavedSettings;
