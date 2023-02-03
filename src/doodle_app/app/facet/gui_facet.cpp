@@ -277,10 +277,12 @@ void gui_facet::post_constructor() {
     });
   });
   /// 在这里我们加载项目
-  auto& l_op = program_options::value();
-  ::doodle::app_base::Get().load_project(
-      !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
-  );
+  if (program_options::has_value()) {
+    auto& l_op = program_options::value();
+    ::doodle::app_base::Get().load_project(
+        !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
+    );
+  }
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
 void gui_facet::close_windows() {
