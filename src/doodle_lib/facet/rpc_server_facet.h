@@ -17,8 +17,8 @@ class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interf
   std::shared_ptr<decltype(boost::asio::make_work_guard(g_io_context()))> work_{};
 
  public:
-  rpc_server_facet();
-  virtual ~rpc_server_facet() override;
+  rpc_server_facet()                   = default;
+  virtual ~rpc_server_facet() override = default;
 
   const std::string& name() const noexcept override;
   void operator()() override;

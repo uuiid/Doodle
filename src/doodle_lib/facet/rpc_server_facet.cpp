@@ -23,5 +23,4 @@ void rpc_server_facet::operator()() {
 }
 void rpc_server_facet::deconstruction() { server_attr.reset(); }
 
-rpc_server_facet::~rpc_server_facet() = default;
 }  // namespace doodle::facet
