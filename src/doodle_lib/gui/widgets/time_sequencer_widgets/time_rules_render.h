@@ -38,6 +38,7 @@ class DOODLELIB_API time_rules_render {
   [[nodiscard]] const rules_type& rules_attr() const;
   void rules_attr(const rules_type& in_rules_type);
   bool render();
+  void refresh();
 };
 
 }  // namespace gui::time_sequencer_widget_ns

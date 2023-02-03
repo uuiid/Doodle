@@ -222,6 +222,13 @@ class time_sequencer_widget::impl {
       in_.time_point_ = work_clock_.next_time(l_begin, l_du);
       l_begin         = in_.time_point_;
     });
+
+    auto beg = combox_month.time_data.current_month_start();
+    auto end = combox_month.time_data.current_month_end();
+    ranges::for_each(time_list, [&](decltype(time_list)::value_type& in_type) {
+      in_type.time_point_ = std::clamp(in_type.time_point_, beg, end);
+    });
+
     refresh_cache(time_list);
     refresh_work_time(time_list);
   }

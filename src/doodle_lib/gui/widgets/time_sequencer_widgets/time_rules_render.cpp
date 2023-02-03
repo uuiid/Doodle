@@ -478,5 +478,16 @@ bool time_rules_render::render() {
 
   return modify_guard_;
 }
+
+void time_rules_render::refresh() {
+  p_i->rules_attr.work_weekdays_p = p_i->work_gui_data_attr.get();
+
+  ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
+    p_i->rules_attr.work_pair_p[in_index] = p_i->time_work_gui_data_attr[in_index].get();
+  });
+  ranges::for_each(ranges::views::ints(0ull, p_i->time_work_gui_data_attr.size()), [&](std::size_t in_index) {
+    p_i->rules_attr.extra_p[in_index] = p_i->extra_work_attr[in_index].get();
+  });
+}
 time_rules_render::~time_rules_render() = default;
 }  // namespace doodle::gui::time_sequencer_widget_ns
