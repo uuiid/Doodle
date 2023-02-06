@@ -154,8 +154,12 @@ class DOODLE_CORE_API base_config {
 
   /// \brief 导出时重新提取引用名称
   std::string abc_export_extract_reference_name{};
+  std::string abc_export_format_reference_name{};
+
   /// \brief 导出时重新提取场景名称
   std::string abc_export_extract_scene_name{};
+  std::string abc_export_format_scene_name{};
+
   /// \brief 添加帧范围后缀
   bool abc_export_add_frame_range{true};
   /// \brief camera 文件名称后缀
