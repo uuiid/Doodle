@@ -195,7 +195,8 @@ using namespace doodle;
 // }  // namespace opencv_player_ns
 BOOST_FIXTURE_TEST_CASE(test_holidaycn, lib_fixtures) {
   business::work_clock work_clock{};
-  holidaycn_time l_time{};
+  auto l_rule = business::rules::get_default();
+  holidaycn_time l_time{l_rule.work_pair_p};
   l_time.set_clock(work_clock);
 
   DOODLE_LOG_INFO(work_clock.debug_print());
