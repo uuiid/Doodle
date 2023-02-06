@@ -3,12 +3,14 @@
 //
 
 #include "project_edit.h"
-#include <doodle_core/metadata/project.h>
-#include <doodle_app/lib_warp/imgui_warp.h>
-#include <doodle_core/core/core_sig.h>
-#include <gui/widgets/database_edit.h>
+
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/metadata/project.h>
+
+#include <doodle_app/lib_warp/imgui_warp.h>
+
+#include <gui/widgets/database_edit.h>
 
 namespace doodle::gui {
 
@@ -17,27 +19,15 @@ class camera_judge_gui : boost::equality_comparable<camera_judge_gui> {
  public:
   camera_judge_gui() = default;
   explicit camera_judge_gui(const project_config::camera_judge& in_judge)
-      : camera_regex("正则表达式", in_judge.first),
-        judge("判断优先级", in_judge.second) {}
+      : camera_regex("正则表达式", in_judge.first), judge("判断优先级", in_judge.second) {}
 
   gui_cache<std::string> camera_regex{"正则表达式", ""s};
   gui_cache<std::int32_t> judge{"判断优先级", 100};
   gui_cache_name_id delete_button{"删除"s};
-  explicit operator project_config::camera_judge() {
-    return std::make_pair(camera_regex(), judge());
-  }
+  explicit operator project_config::camera_judge() { return std::make_pair(camera_regex(), judge()); }
 
   bool operator==(const camera_judge_gui& in_l) const {
-    return std::tie(
-               camera_regex,
-               judge,
-               delete_button
-           ) ==
-           std::tie(
-               in_l.camera_regex,
-               in_l.judge,
-               in_l.delete_button
-           );
+    return std::tie(camera_regex, judge, delete_button) == std::tie(in_l.camera_regex, in_l.judge, in_l.delete_button);
   }
 };
 
@@ -54,10 +44,7 @@ class project_edit::impl {
     gui::gui_cache_name_id name;
     gui::gui_cache_name_id button_name;
     std::vector<std::pair<gui::gui_cache<std::string>, gui_cache<bool>>> list;
-    icon_extensions()
-        : name("后缀名列表"s),
-          button_name("添加"s),
-          list() {}
+    icon_extensions() : name("后缀名列表"s), button_name("添加"s), list() {}
   };
 
  public:
@@ -97,7 +84,11 @@ class project_edit::impl {
 
   camera_judge_table_gui camera_judge_gui_attr{};
   gui_cache<std::string> abc_export_extract_reference_name{"重新提取引用名称"s, ""s};
+  gui_cache<std::string> abc_export_format_reference_name{"重新格式化引用名称"s, ""s};
+
   gui_cache<std::string> abc_export_extract_scene_name{"重新提取文件名称"s, ""s};
+  gui_cache<std::string> abc_export_format_scene_name{"重新提格式化件名称"s, ""s};
+
   gui_cache<bool> abc_export_add_frame_range{"导出附加范围"s, true};
 
   gui_cache<bool> use_write_metadata{"写出元数据", true};
@@ -119,52 +110,47 @@ class project_edit::impl {
     simple_module_proxy_ = l_config.simple_module_proxy_;
 
     regex_               = l_config.find_icon_regex;
-    assets_list          = l_config.assets_list |
-                  ranges::views::transform(
-                      [](const std::string& in_str) {
-                        return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
-                      }
-                  ) |
+    assets_list          = l_config.assets_list | ranges::views::transform([](const std::string& in_str) {
+                    return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
+                  }) |
                   ranges::to_vector;
 
-    icon_list.list = l_config.icon_extensions |
-                     ranges::views::transform(
-                         [](const std::string& in_str) {
-                           return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
-                         }
-                     ) |
+    icon_list.list = l_config.icon_extensions | ranges::views::transform([](const std::string& in_str) {
+                       return std::make_pair(gui_cache<std::string>{""s, in_str}, gui_cache<bool>{"删除", false});
+                     }) |
                      ranges::to_vector;
-    upload_path                                 = l_config.upload_path.generic_string();
-    season_count                                = l_config.season_count;
+    upload_path             = l_config.upload_path.generic_string();
+    season_count            = l_config.season_count;
 
-    use_only_sim_cloth                          = l_config.use_only_sim_cloth;
-    use_divide_group_export                     = l_config.use_divide_group_export;
-    use_rename_material                         = l_config.use_rename_material;
-    use_merge_mesh                              = l_config.use_merge_mesh;
-    t_post                                      = l_config.t_post;
-    export_anim_time                            = l_config.export_anim_time;
+    use_only_sim_cloth      = l_config.use_only_sim_cloth;
+    use_divide_group_export = l_config.use_divide_group_export;
+    use_rename_material     = l_config.use_rename_material;
+    use_merge_mesh          = l_config.use_merge_mesh;
+    t_post                  = l_config.t_post;
+    export_anim_time        = l_config.export_anim_time;
 
     /// \brief 设置未集
-    abc_arg_uvWrite                             = l_config.export_abc_arg[0];
-    abc_arg_writeColorSets                      = l_config.export_abc_arg[1];
-    abc_arg_writeFaceSets                       = l_config.export_abc_arg[2];
-    abc_arg_wholeFrameGeo                       = l_config.export_abc_arg[3];
-    abc_arg_worldSpace                          = l_config.export_abc_arg[4];
-    abc_arg_writeVisibility                     = l_config.export_abc_arg[5];
-    abc_arg_writeUVSets                         = l_config.export_abc_arg[6];
-    abc_arg_stripNamespaces                     = l_config.export_abc_arg[7];
+    abc_arg_uvWrite         = l_config.export_abc_arg[0];
+    abc_arg_writeColorSets  = l_config.export_abc_arg[1];
+    abc_arg_writeFaceSets   = l_config.export_abc_arg[2];
+    abc_arg_wholeFrameGeo   = l_config.export_abc_arg[3];
+    abc_arg_worldSpace      = l_config.export_abc_arg[4];
+    abc_arg_writeVisibility = l_config.export_abc_arg[5];
+    abc_arg_writeUVSets     = l_config.export_abc_arg[6];
+    abc_arg_stripNamespaces = l_config.export_abc_arg[7];
 
-    camera_judge_gui_attr.camera_judge_list_gui = l_config.maya_camera_select |
-                                                  ranges::views::transform(
-                                                      [](const project_config::camera_judge& in_camera_judge) -> camera_judge_gui {
-                                                        return camera_judge_gui{in_camera_judge};
-                                                      }
-                                                  ) |
-                                                  ranges::to_vector;
+    camera_judge_gui_attr.camera_judge_list_gui =
+        l_config.maya_camera_select |
+        ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> camera_judge_gui {
+          return camera_judge_gui{in_camera_judge};
+        }) |
+        ranges::to_vector;
 
     use_write_metadata()                = l_config.use_write_metadata;
     abc_export_extract_reference_name() = l_config.abc_export_extract_reference_name;
+    abc_export_format_reference_name()  = l_config.abc_export_format_reference_name;
     abc_export_extract_scene_name()     = l_config.abc_export_extract_scene_name;
+    abc_export_format_scene_name()      = l_config.abc_export_format_scene_name;
     abc_export_add_frame_range()        = l_config.abc_export_add_frame_range;
     maya_camera_suffix()                = l_config.maya_camera_suffix;
     maya_out_put_abc_suffix()           = l_config.maya_out_put_abc_suffix;
@@ -179,20 +165,16 @@ class project_edit::impl {
     l_c.find_icon_regex      = regex_;
     l_c.assets_list =
         assets_list |
-        ranges::views::transform(
-            [](const decltype(p_i->assets_list)::value_type& in_part) -> std::string {
-              return in_part.first.data;
-            }
-        ) |
+        ranges::views::transform([](const decltype(p_i->assets_list)::value_type& in_part) -> std::string {
+          return in_part.first.data;
+        }) |
         ranges::to_vector;
 
     l_c.icon_extensions =
         icon_list.list |
-        ranges::views::transform(
-            [](const decltype(p_i->icon_list.list)::value_type& in_part) -> std::string {
-              return in_part.first.data;
-            }
-        ) |
+        ranges::views::transform([](const decltype(p_i->icon_list.list)::value_type& in_part) -> std::string {
+          return in_part.first.data;
+        }) |
         ranges::to_vector;
     l_c.upload_path             = upload_path.data;
     l_c.season_count            = season_count;
@@ -220,7 +202,9 @@ class project_edit::impl {
                              ranges::to_vector;
     l_c.use_write_metadata                = use_write_metadata();
     l_c.abc_export_extract_reference_name = abc_export_extract_reference_name();
+    l_c.abc_export_format_reference_name  = abc_export_format_reference_name();
     l_c.abc_export_extract_scene_name     = abc_export_extract_scene_name();
+    l_c.abc_export_format_scene_name      = abc_export_format_scene_name();
     l_c.abc_export_add_frame_range        = abc_export_add_frame_range();
     l_c.maya_camera_suffix                = maya_camera_suffix();
     l_c.maya_out_put_abc_suffix           = maya_out_put_abc_suffix();
@@ -229,27 +213,18 @@ class project_edit::impl {
   }
 };
 
-project_edit::project_edit()
-    : p_i(std::make_unique<impl>()) {
-  p_i->title_name_ = std::string{name};
-}
+project_edit::project_edit() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
 project_edit::~project_edit() = default;
 
 void project_edit::init() {
   p_i->config_init();
-  p_i->scoped_connections_.emplace_back(
-      g_reg()->ctx().at<core_sig>().project_end_open.connect(
-          [this]() {
-            p_i->config_init();
-          }
-      )
-  );
-  p_i->scoped_connections_.emplace_back(
-      g_reg()->ctx().at<core_sig>().save.connect(1, [this]() {
-        g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
-        g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
-      })
-  );
+  p_i->scoped_connections_.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+    p_i->config_init();
+  }));
+  p_i->scoped_connections_.emplace_back(g_reg()->ctx().at<core_sig>().save.connect(1, [this]() {
+    g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
+    g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
+  }));
 }
 
 void project_edit::render() {
@@ -264,8 +239,7 @@ void project_edit::render() {
   imgui::InputText(*p_i->simple_module_proxy_.gui_name, &(p_i->simple_module_proxy_.data));
   ImGui::Checkbox(*p_i->use_only_sim_cloth, &p_i->use_only_sim_cloth);
   ImGui::Checkbox(*p_i->use_divide_group_export, &p_i->use_divide_group_export);
-  if (p_i->use_divide_group_export())
-    ImGui::InputText(*p_i->maya_out_put_abc_suffix, &p_i->maya_out_put_abc_suffix);
+  if (p_i->use_divide_group_export()) ImGui::InputText(*p_i->maya_out_put_abc_suffix, &p_i->maya_out_put_abc_suffix);
 
   ImGui::Checkbox(*p_i->use_rename_material, &p_i->use_rename_material);
   ImGui::Checkbox(*p_i->use_merge_mesh, &p_i->use_merge_mesh);
@@ -279,28 +253,25 @@ void project_edit::render() {
   }
   //,
   //      ImGuiTableFlags_::ImGuiTableFlags_SizingStretchSame
-  dear::Table{
-      *p_i->camera_judge_gui_attr.table_name,
-      3} &&
-      [&]() {
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 400);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 220);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 40);
+  dear::Table{*p_i->camera_judge_gui_attr.table_name, 3} && [&]() {
+    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 400);
+    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 220);
+    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 40);
 
-        ranges::for_each(p_i->camera_judge_gui_attr.camera_judge_list_gui, [this](camera_judge_gui& in) {
-          ImGui::TableNextRow();
-          ImGui::TableNextColumn();
-          ImGui::InputText(*in.camera_regex, &in.camera_regex);
-          ImGui::TableNextColumn();
-          ImGui::InputInt(*in.judge, &in.judge);
-          ImGui::TableNextColumn();
-          if (ImGui::Button(*in.delete_button))
-            boost::asio::post(g_io_context(), [in, this]() {
-              p_i->camera_judge_gui_attr.camera_judge_list_gui |=
-                  ranges::actions::remove_if([&](const camera_judge_gui& in_) -> bool { return in_ == in; });
-            });
+    ranges::for_each(p_i->camera_judge_gui_attr.camera_judge_list_gui, [this](camera_judge_gui& in) {
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::InputText(*in.camera_regex, &in.camera_regex);
+      ImGui::TableNextColumn();
+      ImGui::InputInt(*in.judge, &in.judge);
+      ImGui::TableNextColumn();
+      if (ImGui::Button(*in.delete_button))
+        boost::asio::post(g_io_context(), [in, this]() {
+          p_i->camera_judge_gui_attr.camera_judge_list_gui |=
+              ranges::actions::remove_if([&](const camera_judge_gui& in_) -> bool { return in_ == in; });
         });
-      };
+    });
+  };
 
   imgui::InputText(*p_i->maya_camera_suffix, &(p_i->maya_camera_suffix));
 
@@ -314,7 +285,9 @@ void project_edit::render() {
   ImGui::Checkbox(*p_i->abc_arg_writeUVSets, &p_i->abc_arg_writeUVSets);
   ImGui::Checkbox(*p_i->abc_arg_stripNamespaces, &p_i->abc_arg_stripNamespaces);
   ImGui::InputText(*p_i->abc_export_extract_reference_name, &p_i->abc_export_extract_reference_name);
+  ImGui::InputText(*p_i->abc_export_format_reference_name, &p_i->abc_export_format_reference_name);
   ImGui::InputText(*p_i->abc_export_extract_scene_name, &p_i->abc_export_extract_scene_name);
+  ImGui::InputText(*p_i->abc_export_format_scene_name, &p_i->abc_export_format_scene_name);
   ImGui::Checkbox(*p_i->abc_export_add_frame_range, &p_i->abc_export_add_frame_range);
 
   ImGui::Text("其他配置:");
@@ -338,9 +311,7 @@ void project_edit::render() {
   }
   dear::ListBox{*p_i->list_name} && [&]() {
     for (auto&& i : p_i->assets_list) {
-      if (ImGui::InputText(*i.first.gui_name, &i.first.data))
-
-        ImGui::SameLine();
+      if (ImGui::InputText(*i.first.gui_name, &i.first.data)) ImGui::SameLine();
       if (ImGui::Button(*i.second.gui_name)) {
         i.second.data = true;
       }
@@ -350,17 +321,16 @@ void project_edit::render() {
       ranges::remove_if(p_i->assets_list, [](const decltype(p_i->assets_list)::value_type& in_part) -> bool {
         return in_part.second.data;
       });
-  if (l_r != p_i->assets_list.end())
-    p_i->assets_list.erase(l_r, p_i->assets_list.end());
+  if (l_r != p_i->assets_list.end()) p_i->assets_list.erase(l_r, p_i->assets_list.end());
   /// @brief 后缀名编辑
   if (ImGui::Button(*p_i->icon_list.button_name)) {
-    p_i->icon_list.list.emplace_back(std::make_pair(gui_cache<std::string>{""s, "null"s}, gui_cache<bool>{"删除", false}));
+    p_i->icon_list.list.emplace_back(
+        std::make_pair(gui_cache<std::string>{""s, "null"s}, gui_cache<bool>{"删除", false})
+    );
   }
   dear::ListBox{*p_i->icon_list.name} && [&]() {
     for (auto&& i : p_i->icon_list.list) {
-      if (ImGui::InputText(*i.first.gui_name, &i.first.data))
-
-        ImGui::SameLine();
+      if (ImGui::InputText(*i.first.gui_name, &i.first.data)) ImGui::SameLine();
       if (ImGui::Button(*i.second.gui_name)) {
         i.second.data = true;
       }
@@ -370,16 +340,12 @@ void project_edit::render() {
       ranges::remove_if(p_i->icon_list.list, [](const decltype(p_i->icon_list.list)::value_type& in_part) -> bool {
         return in_part.second.data;
       });
-  if (l_r_ != p_i->icon_list.list.end())
-    p_i->icon_list.list.erase(l_r_, p_i->icon_list.list.end());
+  if (l_r_ != p_i->icon_list.list.end()) p_i->icon_list.list.erase(l_r_, p_i->icon_list.list.end());
 
   ImGui::InputText(*p_i->upload_path.gui_name, &p_i->upload_path.data);
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
 
-  if (ImGui::Button("保存"))
-    g_reg()->ctx().at<core_sig>().save();
+  if (ImGui::Button("保存")) g_reg()->ctx().at<core_sig>().save();
 }
-const std::string& project_edit::title() const {
-  return p_i->title_name_;
-}
+const std::string& project_edit::title() const { return p_i->title_name_; }
 }  // namespace doodle::gui
