@@ -133,4 +133,15 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    * @param In_Files
    */
   void AddFiles(const TArray<FString>& In_Files);
+
+  // DragBegin
+  ///  当拖动进入一个小部件时在拖放过程中调用
+  // void OnDragEnter(const FGeometry& InGeometry,  const FDragDropEvent& InDragDropEvent) override;
+  /// 当拖动离开小部件时在拖放过程中调用
+  // void OnDragLeave(const FDragDropEvent& InDragDropEvent) override;
+  /// 当鼠标被拖动到小部件上时，在拖放过程中调用
+  FReply OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override;
+  /// 当用户把东西放到小部件上时被调用 终止拖放
+  FReply OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) override;
+  // DragEnd
 };

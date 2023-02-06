@@ -895,5 +895,22 @@ void SDoodleImportFbxUI::AddFiles(const TArray<FString>& In_Files) {
   ListImportFbx->RebuildList();
   ListImportAbc->RebuildList();
 }
+// DragBegin
+FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+  auto L_Opt = InDragDropEvent.GetOperationAs<FExternalDragOperation>();
+  if (L_Opt) {
+    for (auto&& File : L_Opt->GetFiles()) {
+      UE_LOG(LogTemp, Warning, TEXT("drag over %s"), *File);
+    }
+    return FReply::Handled();
+  }
+  return FReply::Unhandled();
+}
+
+FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+  return FReply::Unhandled();
+}
+
+// DragEnd
 
 #undef LOCTEXT_NAMESPACE
