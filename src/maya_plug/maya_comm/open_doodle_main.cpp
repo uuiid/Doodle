@@ -21,10 +21,7 @@ open_doodle_main::~open_doodle_main() = default;
 MStatus open_doodle_main::doIt(const MArgList& list) {
   // auto l_o = MQtUtil::nativeWindow(MQtUtil::mainWindow());
 
-  if (auto l_f = std::dynamic_pointer_cast<maya_facet>(
-          g_reg()->ctx().at<doodle::app_facet_ptr>()
-      );
-      l_f) {
+  if (auto l_f = app_base::Get().find_facet<doodle::facet::gui_facet>(); l_f) {
     l_f->show_windows();
   }
   return MStatus::kSuccess;
