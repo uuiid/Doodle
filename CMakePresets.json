@@ -51,8 +51,7 @@
     {
       "name": "vs2022",
       "inherits": "Ninja_build",
-      "generator": "Visual Studio 17 2022",
-      "hidden": true
+      "generator": "Visual Studio 17 2022"
     },
     {
       "name": "Ninja_release",
@@ -61,8 +60,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
         "Photoshop_Version": "120.0"
-      },
-      "hidden": true
+      }
     },
     {
       "name": "Ninja_debug",
@@ -108,7 +106,6 @@
       "description": "doc",
       "displayName": "生成日志",
       "configurePreset": "Ninja_release",
-      "hidden": true,
       "targets": [
         "Doxygen"
       ]
@@ -127,7 +124,6 @@
       "name": "release_exe",
       "configurePreset": "Ninja_release",
       "jobs": 10,
-      "hidden": true,
       "targets": [
         "DoodleExe",
         "generate_token"
