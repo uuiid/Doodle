@@ -8,7 +8,6 @@
 #include <doodle_core/lib_warp/std_warp.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/export_file_info.h>
-#include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/shot.h>
 
@@ -31,8 +30,6 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MIteratorType.h>
 #include <maya/MNamespace.h>
-#include <maya/MObjectArray.h>
-#include <maya/MPlug.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
@@ -59,7 +56,7 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
 
   if (!extract_scene_name.empty() && !format_scene_name.empty()) {
     try {
-      std::regex l_regex{extract_scene_name};
+      std::regex const l_regex{extract_scene_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_scene_name);
     } catch (const std::regex_error &in) {
       DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", extract_scene_name, in_name, in.what());
@@ -74,7 +71,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
   std::string l_out_name{};
   if (!extract_reference_name.empty()) {
     try {
-      std::regex l_regex{extract_reference_name};
+      std::regex const l_regex{extract_reference_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_reference_name);
     } catch (const std::regex_error &in) {
       DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", in_name, extract_reference_name, in.what());
