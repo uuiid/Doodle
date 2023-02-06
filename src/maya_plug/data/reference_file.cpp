@@ -65,7 +65,7 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
       if (k_r && k_match.size() >= 2) {
         l_scene_name.clear();
         for (auto i = ++std::begin(k_match); i != std::end(k_match); ++i) {
-          if (i->str().empty()) l_scene_name += i->str();
+          if (i->str().empty()) l_scene_name = fmt::format("{}{}", l_scene_name, i->str());
         }
       }
     } catch (const std::regex_error &in) {
@@ -84,7 +84,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
       if (k_r && k_match.size() >= 2) {
         l_ref_name.clear();
         for (auto i = ++std::begin(k_match); i != std::end(k_match); ++i) {
-          l_ref_name += i->str();
+          if (i->str().empty()) l_ref_name = fmt::format("{}{}", l_ref_name, i->str());
         }
       }
     } catch (const std::regex_error &in) {
