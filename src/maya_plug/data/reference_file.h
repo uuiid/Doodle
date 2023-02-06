@@ -12,7 +12,9 @@ namespace reference_file_ns {
 class generate_file_path_base : boost::less_than_comparable<generate_file_path_base> {
  protected:
   std::string extract_reference_name;
+  std::string format_reference_name;
   std::string extract_scene_name;
+  std::string format_scene_name;
   bool use_add_range;
   template <typename T1, typename Char, typename Enable>
   friend struct fmt::formatter;
