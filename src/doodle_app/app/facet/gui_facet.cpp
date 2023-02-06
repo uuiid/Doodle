@@ -282,6 +282,8 @@ void gui_facet::post_constructor() {
     ::doodle::app_base::Get().load_project(
         !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
     );
+  } else {
+    ::doodle::app_base::Get().load_project(core_set::get_set().project_root[0]);
   }
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
