@@ -12,9 +12,9 @@
 using namespace doodle;
 
 BOOST_AUTO_TEST_CASE(regex_maya) {
-  std::regex l_regex{R"(JG_(\d+)_(\d+)_AN_Final)"};
+  std::regex l_regex{R"(JG_(\d+)_(\d+)_.*)"};
   std::string l_fmt{"EP$1_$2_"};
   std::string l_string{"JG_011_084_AN_Final.ma"};
   auto l_out = std::regex_replace(l_string, l_regex, l_fmt);
-  BOOST_TEST(l_out == "EP011_084"s);
+  BOOST_TEST(l_out == "EP011_084_"s);
 }
