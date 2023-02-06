@@ -62,12 +62,12 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
       std::regex l_regex{extract_scene_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_scene_name);
     } catch (const std::regex_error &in) {
-      DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", in_name, extract_scene_name, in.what());
+      DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", extract_scene_name, in_name, in.what());
     }
   } else {
     l_out_name = in_name;
   }
-  DOODLE_LOG_INFO("正则 {} 提取完成场景名称 {}", l_out_name, extract_scene_name);
+  DOODLE_LOG_INFO("正则 {} 提取完成场景名称 {}", extract_scene_name, l_out_name);
   return l_out_name;
 }
 std::string generate_file_path_base::get_extract_reference_name(const std::string &in_name) const {
@@ -82,7 +82,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
   } else {
     l_out_name = in_name;
   }
-  DOODLE_LOG_INFO("正则 {} 提取完成引用名称 {}", l_out_name, extract_reference_name);
+  DOODLE_LOG_INFO("正则 {} 提取完成引用名称 {}", extract_reference_name, l_out_name);
   return l_out_name;
 }
 
