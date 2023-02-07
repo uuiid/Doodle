@@ -136,12 +136,12 @@ class time_sequencer_widget::impl {
   void set_shaded_works_time(const std::vector<std::pair<time_point_wrap, time_point_wrap>>& in_works) {
     shaded_works_time.clear();
     ranges::for_each(in_works, [this](const std::pair<time_point_wrap, time_point_wrap>& in_pair) {
-      shaded_works_time.emplace_back(
+      shaded_works_time.emplace_back(boost::numeric_cast<std::double_t>(
           doodle::chrono::floor<doodle::chrono::seconds>(in_pair.first.get_sys_time()).time_since_epoch().count()
-      );
-      shaded_works_time.emplace_back(
+      ));
+      shaded_works_time.emplace_back(boost::numeric_cast<std::double_t>(
           doodle::chrono::floor<doodle::chrono::seconds>(in_pair.second.get_sys_time()).time_since_epoch().count()
-      );
+      ));
     });
   }
 
