@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 //using System.IO;
@@ -88,8 +88,9 @@ public class doodleEditor : ModuleRules
                 "SourceControl",//源代码管理,
 
                 "LevelSequence",//创建定序器
+				"LevelSequenceEditor",// 导入定序器关卡
                 "Sequencer",//修改定序器
-                "MovieScene",//更新定序器场景
+				"MovieScene",//更新定序器场景
                 "CinematicCamera",// 相机模块
                 "MovieSceneTools",// /更新定序器场景
                 "DesktopWidgets",// 打开文件对话框小步件
