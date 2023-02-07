@@ -323,13 +323,17 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
     if (k_path_M.numChars() > 0) {
       k_path = k_path_M.asUTF8();
-
+      bool run{true};
       g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(
           k_path,
-          [k_path, l_w = boost::asio::make_work_guard(g_io_context())](bsys::error_code) -> void {
+          [k_path, l_run = &run](bsys::error_code) -> void {
             DOODLE_LOG_INFO("完成打开项目 {}", k_path);
+            *l_run = false;
           }
       );
+      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
+        while (run) g_io_context().poll_one();
+      }
     }
   }
   return k_s;
