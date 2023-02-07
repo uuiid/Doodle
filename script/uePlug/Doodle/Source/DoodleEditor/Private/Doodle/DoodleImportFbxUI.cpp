@@ -306,10 +306,11 @@ class SDoodleImportFbxCameraUiItem : public SMultiColumnTableRow<TSharedPtr<dood
   virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override {
     if (ColumnName == TEXT("Fbx File"))  // 判断列名为Fbx File，次名称在创建View时，通过SHeaderRow::Column指定
     {
-      return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportFbxPath));
-    } else if (ColumnName == TEXT("Import Path Dir")) {
-      return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPathDir));
+       return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportFbxPath));
+    } else {
+       return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPathDir));
     }
+    // if (ColumnName == TEXT("Import Path Dir"))
   }
 
  private:
@@ -363,9 +364,19 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           })
         ]
 
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+		[
+	      SNew(STextBlock)
+	      .Text(LOCTEXT("fbxTitle", "导入的fbx 动画文件"))
+	      .Font(Font)
+		]
+
         /// 主要的列表小部件(Fbx)
         + SVerticalBox::Slot()
-        .MaxHeight(800.f)
+		.FillHeight(3.0f)
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
@@ -400,10 +411,18 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .DefaultLabel(LOCTEXT("Import Path Dir","Import Path Dir"))
           )
         ]
-
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+		[
+	      SNew(STextBlock)
+	      .Text(LOCTEXT("fbxTitle2", "导入的fbx 摄像机文件"))
+	      .Font(Font)
+		]
         /// 主要的列表小部件(Fbx Camera)
         + SVerticalBox::Slot()
-        .MaxHeight(200.f)
+		.FillHeight(1.0f)
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
@@ -412,9 +431,9 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .ListItemsSource(&ListImportFbxCamData)
           .ScrollbarVisibility(EVisibility::All)
           .OnGenerateRow_Lambda(// 生成小部件
-            [](TSharedPtr<doodle_ue4::FFbxImport> InItem, 
+            [](TSharedPtr<doodle_ue4::FFbxCameraImport> InItem, 
                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
-              return SNew(SDoodleImportFbxUiItem, OwnerTable)
+              return SNew(SDoodleImportFbxCameraUiItem, OwnerTable)
                     .ItemShow(InItem);
             }
           )
@@ -435,9 +454,18 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .DefaultLabel(LOCTEXT("Import Path Dir","Import Path Dir"))
           )
         ]
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        .Padding(2.0f)
+		[
+	      SNew(STextBlock)
+	      .Text(LOCTEXT("fbxTitle3", "导入的abc解算文件"))
+	      .Font(Font)
+		]
         /// 主要的列表小部件(Abc)
         + SVerticalBox::Slot()
-        .MaxHeight(800.f)
+		.FillHeight(3.0f)
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
