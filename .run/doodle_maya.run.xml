@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="doodle_maya" type="CMakeRunConfiguration" factoryName="Application"
                    REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true"
-                   PROJECT_NAME="Doodle" TARGET_NAME="doodle_maya" CONFIG_NAME="Ninja_debug - debug_doodle (1)"
+                   PROJECT_NAME="Doodle" TARGET_NAME="doodle_maya" CONFIG_NAME="Ninja_debug - debug_doodle_"
                    RUN_PATH="C:/Program Files/Autodesk/Maya2019/bin/maya.exe">
         <envs>
             <env name="MAYA_MODULE_PATH" value="F:\Doodle\build\doodle_maya\plug\maya"/>
