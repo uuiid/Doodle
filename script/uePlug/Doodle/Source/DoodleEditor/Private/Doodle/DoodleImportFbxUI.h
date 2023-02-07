@@ -100,16 +100,15 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    *
    */
   void MatchFbx();
-  /**
-   * @brief 导入fbx
-   *
-   */
+
+  // @brief 导入fbx
   void ImportFbx();
-  /**
-   * @brief 导入abc
-   *
-   */
+  // @brief 导入abc
   void ImportAbc();
+  // 导入camera和创建关卡
+  void CreateWorld();
+  void ImportCamera();
+
   /**
    * @brief 根据导入的路径, 提取信息,  生成要导入ue4的路径
    *

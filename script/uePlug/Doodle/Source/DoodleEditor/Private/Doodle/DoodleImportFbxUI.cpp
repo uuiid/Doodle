@@ -57,6 +57,8 @@
 #include "EditorStyleSet.h"
 
 /// 导入相机需要的头文件
+#include "ILevelSequenceEditorToolkit.h"
+#include "LevelSequence.h"
 #include "MovieSceneToolHelpers.h"
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
@@ -124,18 +126,6 @@ void FindSkeletonNode(fbxsdk::FbxNode* Parent, TArray<fbxsdk::FbxNode*>& In_Skek
   for (int32 NodeIndex = 0; NodeIndex < NodeCount; ++NodeIndex) {
     fbxsdk::FbxNode* Child = Parent->GetChild(NodeIndex);
     FindSkeletonNode(Child, In_Skeketon);
-  }
-}
-
-void FindCameraNode(fbxsdk::FbxNode* Parent, TArray<fbxsdk::FbxCamera*>& In_Skeketon) {
-  FbxCamera* L_Cam = Parent->GetCamera();
-  if (L_Cam) {
-    In_Skeketon.Add(L_Cam);
-  }
-  int32 NodeCount = Parent->GetChildCount();
-  for (int32 NodeIndex = 0; NodeIndex < NodeCount; ++NodeIndex) {
-    fbxsdk::FbxNode* Child = Parent->GetChild(NodeIndex);
-    FindCameraNode(Child, In_Skeketon);
   }
 }
 
@@ -377,7 +367,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         /// 主要的列表小部件(Fbx)
         + SVerticalBox::Slot()
 		.FillHeight(3.0f)
-        .VAlign(VAlign_Center)
+		.VAlign(VAlign_Top)
         .Padding(2.0f)
         [
           SAssignNew(ListImportFbx,SListView<TSharedPtr<doodle_ue4::FFbxImport>>)
@@ -423,7 +413,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         /// 主要的列表小部件(Fbx Camera)
         + SVerticalBox::Slot()
 		.FillHeight(1.0f)
-        .VAlign(VAlign_Center)
+		.VAlign(VAlign_Top)
         .Padding(2.0f)
         [
           SAssignNew(ListImportFbxCam,SListView<TSharedPtr<doodle_ue4::FFbxCameraImport>>)
@@ -466,7 +456,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         /// 主要的列表小部件(Abc)
         + SVerticalBox::Slot()
 		.FillHeight(3.0f)
-        .VAlign(VAlign_Center)
+		.VAlign(VAlign_Top)
         .Padding(2.0f)
         [
           SAssignNew(ListImportAbc,SListView<TSharedPtr<doodle_ue4::FAbcImport>>)
@@ -516,6 +506,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                GetAllSkinObjs();
                MatchFbx();
                ListImportFbx->RebuildList();
+			   ListImportFbxCam->RebuildList();
+			   ListImportAbc->RebuildList();
                return FReply::Handled();
             })
           ]
@@ -531,6 +523,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                ImportFbx();
                ImportAbc();
                ListImportFbx->RebuildList();
+			   ListImportFbxCam->RebuildList();
+			   ListImportAbc->RebuildList();
                return FReply::Handled();
             })
           ]
@@ -544,6 +538,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                ImportFbx();
                ImportAbc();
                ListImportFbx->RebuildList();
+			   ListImportFbxCam->RebuildList();
+			   ListImportAbc->RebuildList();
                return FReply::Handled();
             })
           ]
@@ -559,6 +555,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .OnClicked_Lambda([this](){
              this->ListImportFbxData.Empty();
              this->ListImportAbcData.Empty();
+			 this->ListImportFbxCamData.Empty();
+			 ListImportFbxCam->RebuildList();
              ListImportFbx->RebuildList();
 			 ListImportAbc->RebuildList();
              return FReply::Handled();
@@ -649,7 +647,7 @@ void SDoodleImportFbxUI::MatchFbx() {
       L_Task_Scoped2.EnterProgressFrame(1.0f);
     }
     TArray<fbxsdk::FbxCamera*> L_Cameras{};
-    FindCameraNode(FbxImporter->Scene->GetRootNode(), L_Cameras);
+    MovieSceneToolHelpers::GetCameras(FbxImporter->Scene->GetRootNode(), L_Cameras);
     if (!L_Cameras.IsEmpty()) {
       ListImportFbxCamData.Emplace(MakeShared<doodle_ue4::FFbxCameraImport>(L_Fbx_Path->ImportFbxPath));
     }
@@ -788,10 +786,32 @@ void SDoodleImportFbxUI::ImportAbc() {
     l_task->Options                                    = k_abc_stting;
     ImportDataList.Emplace(l_task);
   }
-  FAssetToolsModule& AssetToolsModule =
-      FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
   TArray<FString> import_Paths{};
   AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
+}
+
+void SDoodleImportFbxUI::ImportCamera() {
+  for (auto&& Cam : ListImportFbxCamData) {
+    // 加载定序器
+    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(NULL, *Cam->ImportPathDir);
+    FSoftObjectPath L_LevelSequenceSoftPath{Cam->ImportPathDir};
+    UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
+    UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+    if (L_LoadedObject != nullptr) {
+      L_AssetEditorSubsystem->OpenEditorForAsset(L_LoadedObject);
+    }
+    IAssetEditorInstance* L_AssetEditor = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence, true);
+
+    ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
+    ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
+    // 打开fbx
+    TArray<FGuid>& OutBindingIDs{};
+    L_ShotSequencer->GetCameraObjectBindings(OutBindingIDs);
+
+    // MovieSceneToolHelpers::ImportFBXCameraToExisting(nullptr, L_ShotSequence, L_ShotSequencer,
+    // MovieSceneSequenceID::Root,);
+  }
 }
 
 FString SDoodleImportFbxUI::GetImportPath(const FString& In_Path) {
@@ -829,6 +849,9 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix) {
   }
   for (auto&& L_Abc : ListImportAbcData) {
     L_Abc->ImportPathDir = GetImportPath(L_Abc->ImportAbcPath) / "Abcs_Import";
+  }
+  for (auto&& L_Cam : ListImportFbxCamData) {
+    L_Cam->ImportPathDir = GetImportPath(L_Cam->ImportFbxPath) / "Abcs_Import";
   }
 }
 
@@ -901,42 +924,43 @@ FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDr
 
 FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
   auto L_Opt = InDragDropEvent.GetOperationAs<FExternalDragOperation>();
-  if (L_Opt && L_Opt->HasFiles()) {
-    FScopedSlowTask L_Task_Scoped{6.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
-    L_Task_Scoped.MakeDialog();
 
-    ListImportFbxData.Empty();
-    AllSkinObjs.Empty();
-    ListImportAbcData.Empty();
+  if (!(L_Opt && L_Opt->HasFiles())) return FReply::Unhandled();
 
-    for (auto&& Path : L_Opt->GetFiles()) {
-      if (FPaths::DirectoryExists(Path)) {
-        // 目录进行迭代
-        IFileManager::Get().IterateDirectoryRecursively(*Path, [this](const TCHAR* InPath, bool in_) -> bool {
-          AddFile(InPath);
-          return true;
-        });
-      } else if (FPaths::FileExists(Path)) {
-        // 文件直接添加
-        AddFile(Path);
-      }
+  FScopedSlowTask L_Task_Scoped{6.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
+  L_Task_Scoped.MakeDialog();
+
+  ListImportFbxData.Empty();
+  ListImportAbcData.Empty();
+  ListImportFbxCamData.Empty();
+  AllSkinObjs.Empty();
+
+  for (auto&& Path : L_Opt->GetFiles()) {
+    if (FPaths::DirectoryExists(Path)) {
+      // 目录进行迭代
+      IFileManager::Get().IterateDirectoryRecursively(*Path, [this](const TCHAR* InPath, bool in_) -> bool {
+        AddFile(InPath);
+        return true;
+      });
+    } else if (FPaths::FileExists(Path)) {
+      // 文件直接添加
+      AddFile(Path);
     }
-
-    L_Task_Scoped.EnterProgressFrame(1.0f);
-    GenPathPrefix(this->Path_Prefix);
-
-    L_Task_Scoped.EnterProgressFrame(1.0f);
-    GetAllSkinObjs();
-    L_Task_Scoped.EnterProgressFrame(3.0f);
-    MatchFbx();
-    L_Task_Scoped.EnterProgressFrame(1.0f);
-    ListImportFbx->RebuildList();
-    ListImportAbc->RebuildList();
-
-    return FReply::Handled();
   }
 
-  return FReply::Unhandled();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  GenPathPrefix(this->Path_Prefix);
+
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  GetAllSkinObjs();
+  L_Task_Scoped.EnterProgressFrame(3.0f);
+  MatchFbx();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
+  ListImportFbx->RebuildList();
+  ListImportAbc->RebuildList();
+  ListImportFbxCam->RebuildList();
+
+  return FReply::Handled();
 }
 
 // DragEnd
