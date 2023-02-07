@@ -133,6 +133,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    * @param In_Files
    */
   void AddFiles(const TArray<FString>& In_Files);
+  void AddFile(const FString& In_File);
 
   // DragBegin
   ///  当拖动进入一个小部件时在拖放过程中调用

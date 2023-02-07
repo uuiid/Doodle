@@ -294,52 +294,10 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
-          // 扫描的文件目录
-          SNew(SHorizontalBox)
-          +SHorizontalBox::Slot()
-          .FillWidth(1.0f)
-          [
-            SNew(STextBlock)
-            .Text(LOCTEXT("BinaryPathLabel", "search path"))
-            .ToolTipText(LOCTEXT("BinaryPathLabel_Tooltip", "search path"))
-            .Font(Font)
-          ]
-          +SHorizontalBox::Slot()
-          .FillWidth(2.0f)
-          [
-            SNew(SDirectoryPicker)
-            .OnDirectoryChanged_Raw(this,&SDoodleImportFbxUI::SearchPath)
-          ]
-        ]
-        // 添加文件槽
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .VAlign(VAlign_Center)
-        .Padding(2.0f)
-        [
-          // 添加文件
-          SNew(SHorizontalBox)
-          +SHorizontalBox::Slot()
-          .FillWidth(1.0f)
-          [
-            SNew(STextBlock)
-            .Text(LOCTEXT("add file path", "add file path"))
-            .ToolTipText(LOCTEXT("add_files_Tooltip", "add files"))
-            .Font(Font)
-          ]
-          +SHorizontalBox::Slot()
-          .FillWidth(2.0f)
-          [
-            SNew(SFilePathsPicker)
-            // .FilePath_Lambda([this]()->FString{})
-            .BrowseButtonImage(FEditorStyle::GetBrush("PropertyWindow.Button_Ellipsis"))
-            .BrowseButtonStyle(FEditorStyle::Get(), "HoverHintOnly")
-            .BrowseButtonToolTip(LOCTEXT("添加导入文件路径", "添加导入文件路径"))
-            .FileTypeFilter(FileFilterText)
-            .OnPathPicked_Lambda([this](const TArray<FString>& PickedPaths){
-              this->AddFiles(PickedPaths);
-            })
-          ]
+	      SNew(STextBlock)
+	      .Text(LOCTEXT("BinaryPathLabel", "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中"))
+	      .ToolTipText(LOCTEXT("BinaryPathLabel_Tooltip", "search path"))
+	      .Font(Font)
         ]
         // 前缀槽
         + SVerticalBox::Slot()
@@ -507,13 +465,6 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
 }
 
 void SDoodleImportFbxUI::SearchPath(const FString& in) {
-  ListImportFbxData.Empty();
-  AllSkinObjs.Empty();
-  ListImportAbcData.Empty();
-
-  FScopedSlowTask L_Task_Scoped{5.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
-  L_Task_Scoped.MakeDialog();
-
   /// @brief 先扫描前缀
   IFileManager::Get().IterateDirectoryRecursively(*in, [this](const TCHAR* InPath, bool in_) -> bool {
     FString L_Path{InPath};
@@ -554,13 +505,6 @@ void SDoodleImportFbxUI::SearchPath(const FString& in) {
     }
     return true;
   });
-  L_Task_Scoped.EnterProgressFrame(1.0f);
-  GetAllSkinObjs();
-  L_Task_Scoped.EnterProgressFrame(3.0f);
-  MatchFbx();
-  L_Task_Scoped.EnterProgressFrame(1.0f);
-  ListImportFbx->RebuildList();
-  ListImportAbc->RebuildList();
 }
 void SDoodleImportFbxUI::AddReferencedObjects(FReferenceCollector& collector) {}
 
@@ -895,19 +839,83 @@ void SDoodleImportFbxUI::AddFiles(const TArray<FString>& In_Files) {
   ListImportFbx->RebuildList();
   ListImportAbc->RebuildList();
 }
+
+void SDoodleImportFbxUI::AddFile(const FString& In_File) {
+  /// @brief 先扫描前缀
+  if (this->Path_Prefix.IsEmpty()) {
+    int32 L_Index      = INDEX_NONE;
+    FString L_FileName = FPaths::GetBaseFilename(In_File);
+    if (L_FileName.FindChar('_', L_Index)) {
+      L_FileName.LeftChopInline(L_FileName.Len() - L_Index, true);
+      this->Path_Prefix = L_FileName;
+    }
+  }
+  /// 扫描fbx 和abc 文件
+  if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
+    /// @brief 寻找到相同的就跳过
+    if (ListImportFbxData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FFbxImport>& In_FBx) {
+          return In_FBx->ImportFbxPath == In_File;
+        })) {
+      return;
+    };
+
+    TSharedPtr<doodle_ue4::FFbxImport> L_ptr = MakeShared<doodle_ue4::FFbxImport>(In_File);
+    L_ptr->ImportPathDir                     = this->GetImportPath(In_File);
+    ListImportFbxData.Emplace(L_ptr);
+  }
+  if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc")) {
+    /// @brief 寻找到相同的就跳过
+    if (ListImportAbcData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FAbcImport>& In_Abc) {
+          return In_Abc->ImportAbcPath == In_File;
+        })) {
+      return;
+    };
+
+    TSharedPtr<doodle_ue4::FAbcImport> L_ptr = MakeShared<doodle_ue4::FAbcImport>(In_File);
+    L_ptr->ImportPathDir                     = this->GetImportPath(In_File);
+
+    TTuple<int32_t, int32_t> L_Time_Ranges   = this->GenStartAndEndTime(In_File);
+    L_ptr->StartTime                         = L_Time_Ranges.Get<0>();
+    L_ptr->EndTime                           = L_Time_Ranges.Get<1>();
+
+    ListImportAbcData.Emplace(L_ptr);
+  }
+}
 // DragBegin
 FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
   auto L_Opt = InDragDropEvent.GetOperationAs<FExternalDragOperation>();
-  if (L_Opt) {
-    for (auto&& File : L_Opt->GetFiles()) {
-      UE_LOG(LogTemp, Warning, TEXT("drag over %s"), *File);
-    }
-    return FReply::Handled();
-  }
-  return FReply::Unhandled();
+  return L_Opt && L_Opt->HasFiles() ? FReply::Handled() : FReply::Unhandled();
 }
 
 FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
+  auto L_Opt = InDragDropEvent.GetOperationAs<FExternalDragOperation>();
+  if (L_Opt && L_Opt->HasFiles()) {
+    FScopedSlowTask L_Task_Scoped{5.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
+    L_Task_Scoped.MakeDialog();
+
+    ListImportFbxData.Empty();
+    AllSkinObjs.Empty();
+    ListImportAbcData.Empty();
+
+    for (auto&& Path : L_Opt->GetFiles()) {
+      if (FPaths::DirectoryExists(Path)) {
+        SearchPath(Path);
+      } else if (FPaths::FileExists(Path)) {
+        AddFile(Path);
+      }
+    }
+
+    L_Task_Scoped.EnterProgressFrame(1.0f);
+    GetAllSkinObjs();
+    L_Task_Scoped.EnterProgressFrame(3.0f);
+    MatchFbx();
+    L_Task_Scoped.EnterProgressFrame(1.0f);
+    ListImportFbx->RebuildList();
+    ListImportAbc->RebuildList();
+
+    return FReply::Handled();
+  }
+
   return FReply::Unhandled();
 }
 
