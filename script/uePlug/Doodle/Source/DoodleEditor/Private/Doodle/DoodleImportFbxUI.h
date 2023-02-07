@@ -19,6 +19,16 @@ struct FFbxImport {
   FString ImportPathDir;
 };
 
+struct FFbxCameraImport {
+ public:
+  FFbxCameraImport(){};
+  FFbxCameraImport(const FString& InString) : ImportFbxPath(InString) {}
+  /// @brief 导入的文件路径
+  FString ImportFbxPath;
+  /// @brief fbx 导入后的路径
+  FString ImportPathDir;
+};
+
 struct FAbcImport {
   FAbcImport(){};
   FAbcImport(const FString& InString) : ImportAbcPath(InString) {}
@@ -63,6 +73,12 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   TSharedPtr<class SListView<TSharedPtr<doodle_ue4::FFbxImport>>> ListImportFbx;
   /// @brief 导入fbx的列表数据
   TArray<TSharedPtr<doodle_ue4::FFbxImport>> ListImportFbxData;
+
+  /// @brief 导入fbx的列表
+  TSharedPtr<class SListView<TSharedPtr<doodle_ue4::FFbxCameraImport>>> ListImportFbxCam;
+  /// @brief 导入fbx的列表数据
+  TArray<TSharedPtr<doodle_ue4::FFbxCameraImport>> ListImportFbxCamData;
+
   /// @brief 扫描的骨骼数据
   TArray<doodle_ue4::FUSkeletonData> AllSkinObjs;
 
@@ -73,10 +89,6 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
   /// 导入路径的前缀
   FString Path_Prefix;
-
-  /// @brief 扫描路径(会扫描目录中的fbx和abc文件)
-  /// @param in 需要扫描的路径
-  void SearchPath(const FString& in);
 
   /**
    * @brief 获取所有的sk
@@ -128,12 +140,13 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   void SetAllSkinTag();
 
   /**
-   * @brief 追加一部份文件
+   * @brief 添加文件
    *
    * @param In_Files
    */
-  void AddFiles(const TArray<FString>& In_Files);
   void AddFile(const FString& In_File);
+
+  void CreateSequencer(const FString& In_CreatePath);
 
   // DragBegin
   ///  当拖动进入一个小部件时在拖放过程中调用
