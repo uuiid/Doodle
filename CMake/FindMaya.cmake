@@ -72,14 +72,14 @@ set(QT_LIBS_TO_FIND
 if (NOT ${FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME}} EQUAL ${Maya_FIND_VERSION})
     message("clear old maya version ${FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME}} ")
     unset(MAYA_BASE_DIR CACHE)
-    unset(MAYA_INCLUDE_DIR CACHE)
-    unset(MAYA_LIBRARY_DIR CACHE)
-    unset(MAYA_DLL_LIBRARY_DIR CACHE)
+    #    unset(MAYA_INCLUDE_DIR CACHE)
+    #    unset(MAYA_LIBRARY_DIR CACHE)
+    #    unset(MAYA_DLL_LIBRARY_DIR CACHE)
 
-    foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
-        unset(MAYA_${MAYA_LIB}_LIBRARY CACHE)
-        unset(MAYA_${MAYA_LIB}_LIBRARY_dll CACHE)
-    endforeach ()
+    #    foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
+    #        unset(MAYA_${MAYA_LIB}_LIBRARY CACHE)
+    #        unset(MAYA_${MAYA_LIB}_LIBRARY_dll CACHE)
+    #    endforeach ()
 
     foreach (QT_LIB ${QT_LIBS_TO_FIND})
         unset(${QT_LIB}_DIR CACHE)
@@ -107,60 +107,19 @@ find_path(MAYA_BASE_DIR
         )
 
 # 寻找maya 中的基本导入路径 使用 添加版本
-find_path(MAYA_INCLUDE_DIR
-        maya/MFn.h
-        HINTS
-        "${MAYA_BASE_DIR}"
-        PATH_SUFFIXES
-        "include"
-        DOC
-        "maya 导入路径"
-        )
-
-# 寻找maya 中的库路径 使用 添加版本
-find_path(MAYA_LIBRARY_DIR
-        ${OPEN_MAYA}.lib
-        HINTS
-        "${MAYA_BASE_DIR}"
-        PATH_SUFFIXES
-        "lib"
-        DOC
-        "maya 连接库"
-        )
-
-# 寻找maya 中的动态库路径 使用 添加版本
-find_path(MAYA_DLL_LIBRARY_DIR
-        ${OPEN_MAYA}.dll
-        HINTS
-        "${MAYA_BASE_DIR}"
-        PATH_SUFFIXES
-        "bin"
-        DOC
-        "maya dll 位置"
-        )
+set(MAYA_INCLUDE_DIR ${MAYA_BASE_DIR}/include)
+set(MAYA_LIBRARY_DIR ${MAYA_BASE_DIR}/lib)
+set(MAYA_DLL_LIBRARY_DIR ${MAYA_BASE_DIR}/bin)
 
 # 添加maya 接口库
 add_library(maya_all INTERFACE IMPORTED)
 target_include_directories(maya_all INTERFACE ${MAYA_INCLUDE_DIR})
 # 循环查找maya 库列表
 foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
-    find_library(MAYA_${MAYA_LIB}_LIBRARY
-            ${MAYA_LIB}
-            HINTS
-            ${MAYA_LIBRARY_DIR}
-            DOC
-            "寻找maya ${MAYA_LIB}库"
-            NO_CMAKE_SYSTEM_PATH
-            )
-    find_file(
-            MAYA_${MAYA_LIB}_LIBRARY_dll
-            ${MAYA_LIB}.dll
-            HINTS
-            ${MAYA_DLL_LIBRARY_DIR}
-            DOC
-            "寻找maya ${MAYA_LIB} dll库"
-            NO_CMAKE_SYSTEM_PATH
-    )
+    # 设置静态库路径
+    set(MAYA_${MAYA_LIB}_LIBRARY ${MAYA_LIBRARY_DIR}/${MAYA_LIB}.lib)
+    # 设置动态库路径
+    set(MAYA_${MAYA_LIB}_LIBRARY_dll ${MAYA_DLL_LIBRARY_DIR}/${MAYA_LIB}.dll)
 
     if (MAYA_${MAYA_LIB}_LIBRARY)
         list(APPEND MAYA_LIBRARY ${MAYA_${MAYA_LIB}_LIBRARY})
@@ -206,7 +165,7 @@ include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(Maya
         REQUIRED_VARS
-        MAYA_INCLUDE_DIR MAYA_LIBRARY_DIR
+        MAYA_BASE_DIR
         REASON_FAILURE_MESSAGE "maya 库中的组件没有找到"
         )
 if (Maya_FOUND)
