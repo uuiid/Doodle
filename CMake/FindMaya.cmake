@@ -46,6 +46,39 @@ if (WIN32)
     # 现在的使用默认的maya安装路径寻找， 由于工作是在 win 平台上的， 并没有兼容其他的平台
 endif ()
 
+#创建maya库列表
+set(MAYA_LIBS_TO_FIND
+        OpenMaya
+        OpenMayaAnim
+        OpenMayaFX
+        OpenMayaRender
+        OpenMayaUI
+        Image
+        Foundation
+        MetaData # 元数据连接库
+        # IMFbase
+        cg
+        cgGL
+        clew
+        )
+
+if (NOT ${FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME}} EQUAL ${Maya_FIND_VERSION})
+    unset(${MAYA_BASE_DIR} CACHE)
+    unset(${MAYA_INCLUDE_DIR} CACHE)
+    unset(${MAYA_LIBRARY_DIR} CACHE)
+    unset(${MAYA_DLL_LIBRARY_DIR} CACHE)
+
+    foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
+        unset(MAYA_${MAYA_LIB}_LIBRARY CACHE)
+        unset(MAYA_${MAYA_LIB}_LIBRARY_dll CACHE)
+    endforeach ()
+
+endif ()
+
+
+set(FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME} ${Maya_FIND_VERSION} CACHE STRING "内部缓存版本" FORCE)
+
+
 # 寻找maya 中的基本路径 使用 添加版本
 # MAYA_DEFAULT_LOCATION -> C:/Program Files/Autodesk/Maya2018
 # 验证 C:/Program Files/Autodesk/Maya2018/include/maya/MFn.h 是否存在 -> 存在 -> 设置变量 MAYA_BASE_DIR 为 C:/Program Files/Autodesk/Maya2018
@@ -93,21 +126,7 @@ find_path(MAYA_DLL_LIBRARY_DIR
         DOC
         "maya dll 位置"
         )
-#创建maya库列表
-set(MAYA_LIBS_TO_FIND
-        OpenMaya
-        OpenMayaAnim
-        OpenMayaFX
-        OpenMayaRender
-        OpenMayaUI
-        Image
-        Foundation
-        MetaData # 元数据连接库
-        # IMFbase
-        cg
-        cgGL
-        clew
-        )
+
 # 添加maya 接口库
 add_library(maya_all INTERFACE IMPORTED)
 target_include_directories(maya_all INTERFACE ${MAYA_INCLUDE_DIR})
