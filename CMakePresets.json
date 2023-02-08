@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -121,7 +121,7 @@
       ]
     },
     {
-      "name": "release_exe",
+      "name": "Release_Exe",
       "configurePreset": "Ninja_release",
       "jobs": 10,
       "targets": [
@@ -164,6 +164,37 @@
         "noTestsAction": "error",
         "stopOnFailure": true
       }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "pack_wix",
+      "configurePreset": "Ninja_release",
+      "generators": [
+        "External"
+      ]
+    },
+    {
+      "name": "pack_7z",
+      "configurePreset": "Ninja_release",
+      "generators": [
+        "7Z"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "build_and_release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Ninja_release"
+        },
+        {
+          "type": "build",
+          "name": "Release_Exe"
+        }
+      ]
     }
   ],
   "vendor": {}
