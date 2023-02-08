@@ -10,11 +10,11 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_Declare(
-        TimeLib
-        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
+#FetchContent_Declare(
+#        TimeLib
+#        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+#        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+#)
 
 FetchContent_Declare(
         fontawesome
@@ -40,7 +40,7 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-FetchContent_MakeAvailable(CMakeRCLib TimeLib fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
+FetchContent_MakeAvailable(CMakeRCLib fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
 
 #=====================文档过程===============================
 #添加文档生成
