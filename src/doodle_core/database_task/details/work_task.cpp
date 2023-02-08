@@ -42,7 +42,7 @@ void sql_com<doodle::work_task_info, false>::insert(conn_ptr& in_ptr, const entt
       l_pre.params.taskName  = l_work.task_name;
       l_pre.params.abstract  = l_work.abstract;
       l_pre.params.entityId  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-      l_pre.params.timePoint = chrono_ns::to_sys_point(l_work.time);
+      l_pre.params.timePoint = l_work.time;
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
         l_pre.params.userId = uuids::to_string(l_user_h.get<database>().uuid());
       }
@@ -78,7 +78,7 @@ void sql_com<doodle::work_task_info, false>::update(conn_ptr& in_ptr, const entt
       l_pre.params.region    = l_work.region;
       l_pre.params.taskName  = l_work.task_name;
       l_pre.params.abstract  = l_work.abstract;
-      l_pre.params.timePoint = chrono_ns::to_sys_point(l_work.time);
+      l_pre.params.timePoint = l_work.time;
       l_pre.params.entityId  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
         l_pre.params.userId = uuids::to_string(l_user_h.get<database>().uuid());
@@ -119,8 +119,7 @@ void sql_com<doodle::work_task_info, false>::select(
       l_w.abstract = row.abstract.value();
       l_w.region   = row.region.value();
 
-      l_w.time =
-          chrono_ns::round<work_task_info::time_point_type::duration>(chrono_ns::to_local_point(row.timePoint.value()));
+      l_w.time      = chrono_ns::round<work_task_info::time_point_type::duration>(row.timePoint.value());
       l_w.task_name = row.taskName.value();
       auto l_user_f = row.userId.value();
       l_w.user_ref.user_attr(database::find_by_uuid(boost::lexical_cast<uuids::uuid>(l_user_f)));

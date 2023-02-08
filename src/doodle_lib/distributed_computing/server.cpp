@@ -59,9 +59,10 @@ void task::run_task() {
   register_fun_t(
       "get.filter.work_task_info"s,
       [this](
-          const database& in_tocken, const entt::entity& in_user
+          const database& in_tocken, const entt::entity& in_user,
+          const std::pair<chrono::sys_time_pos, chrono::sys_time_pos>& in_time_range
       ) -> std::vector<std::tuple<entt::entity, doodle::work_task_info>> {
-        return this->get_user_work_task_info(in_tocken.find_by_uuid(), entt::handle{*g_reg(), in_user});
+        return this->get_user_work_task_info(in_tocken.find_by_uuid(), entt::handle{*g_reg(), in_user}, in_time_range);
       }
   );
   register_fun_t(
@@ -166,7 +167,8 @@ std::tuple<entt::entity, user, database> task::get_user(const boost::uuids::uuid
 };
 
 std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_work_task_info(
-    const entt::handle& in_tocken, const entt::handle& in_user
+    const entt::handle& in_tocken, const entt::handle& in_user,
+    const std::pair<chrono::sys_time_pos, chrono::sys_time_pos>& in_time_range
 ) {
   boost::ignore_unused(this);
   std::vector<std::tuple<entt::entity, doodle::work_task_info>> l_r{};
@@ -176,7 +178,8 @@ std::vector<std::tuple<entt::entity, doodle::work_task_info>> task::get_user_wor
   }
 
   for (auto&& [e, u] : g_reg()->view<work_task_info>().each()) {
-    if (u.user_ref.user_attr() == in_user) l_r.emplace_back(e, u);
+    if (u.user_ref.user_attr() == in_user && in_time_range.first < u.time && u.time < in_time_range.second)
+      l_r.emplace_back(e, u);
   }
   return l_r;
 }

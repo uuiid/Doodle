@@ -175,12 +175,12 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
     ptr->time_cache[i] = {};
   }
   for (auto&& [l_e, l_w] : g_reg()->view<work_task_info>().each()) {
-    if (l_w.time >= l_begin_time && l_w.time <= l_end_time && l_w.user_ref.user_attr() == ptr->current_user) {
-      // DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
-      // auto l_t = make_handle(l_e).get<work_task_info>();
-      // DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
-      ptr->time_cache[l_w.time] = make_handle(l_e);
-    }
+    //    if (l_w.time >= l_begin_time && l_w.time <= l_end_time && l_w.user_ref.user_attr() == ptr->current_user) {
+    //      // DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
+    //      // auto l_t = make_handle(l_e).get<work_task_info>();
+    //      // DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
+    //      ptr->time_cache[l_w.time] = make_handle(l_e);
+    //    }
   }
 
   ptr->table_list =

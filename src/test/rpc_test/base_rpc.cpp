@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
   l_work_com.task_name = "clict_set_test1";
   l_work_com.abstract  = "clict_set_test2";
   l_work_com.region    = "clict_set_test3";
-  l_work_com.time      = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_local_time());
+  l_work_com.time      = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_sys_time());
 
   l_c.set_work_task_info(l_users, l_whs[0]);
 

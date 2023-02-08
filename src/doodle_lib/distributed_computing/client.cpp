@@ -85,9 +85,12 @@ entt::handle client::get_user(const boost::uuids::uuid& in_user) {
   return l_h;
 }
 
-std::vector<entt::handle> client::get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user) {
+std::vector<entt::handle> client::get_user_work_task_info(
+    const entt::handle& in_token, const entt::handle& in_user,
+    const std::pair<chrono::sys_time_pos, chrono::sys_time_pos>& in_time_range
+) {
   auto l_user = call_fun<std::vector<std::tuple<entt::entity, work_task_info>>>(
-      "get.filter.work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.entity())
+      "get.filter.work_task_info"s, std::make_tuple(in_token.get<database>(), in_user.entity(), in_time_range)
   );
 
   std::vector<entt::handle> l_r{};

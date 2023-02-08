@@ -85,7 +85,8 @@ class task : public doodle::json_rpc::rpc_server, public std::enable_shared_from
    * @return std::vector<std::tuple<entt::entity, doodle::work_task_info>> 实体和任务列表
    */
   std::vector<std::tuple<entt::entity, doodle::work_task_info>> get_user_work_task_info(
-      const entt::handle& in_tocken, const entt::handle& in_user
+      const entt::handle& in_tocken, const entt::handle& in_user,
+      const std::pair<chrono::sys_time_pos, chrono::sys_time_pos>& in_time_range
   );
   /**
    * @brief 设置实体的工作信息

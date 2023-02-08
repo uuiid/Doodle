@@ -17,7 +17,7 @@ namespace doodle {
  */
 class DOODLE_CORE_API work_task_info {
  public:
-  using time_point_type = chrono::local_time<chrono::hours>;
+  using time_point_type = chrono::sys_time<chrono::hours>;
   work_task_info()      = default;
 
   explicit work_task_info(

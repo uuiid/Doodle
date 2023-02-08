@@ -41,7 +41,10 @@ class DOODLELIB_API client : public doodle::json_rpc::rpc_client {
   entt::handle delete_user(const entt::handle& in_user);
 
   /// 获取用户任务的信息
-  std::vector<entt::handle> get_user_work_task_info(const entt::handle& in_token, const entt::handle& in_user);
+  std::vector<entt::handle> get_user_work_task_info(
+      const entt::handle& in_token, const entt::handle& in_user,
+      const std::pair<chrono::sys_time_pos, chrono::sys_time_pos>& in_time_range
+  );
   /// 设置任务信息(包括提交)
   entt::handle set_work_task_info(const entt::handle& in_token, const entt::handle& in_work);
   // /// 删除任务信息
