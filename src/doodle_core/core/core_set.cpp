@@ -61,7 +61,7 @@ core_set::core_set()
       json_data(std::make_shared<nlohmann::json>()) {
   auto l_short_path = FSys::temp_directory_path().generic_wstring();
   auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
-  std::unique_ptr<wchar_t[]> p_buff{new wchar_t[k_buff_size]};
+  std::unique_ptr<wchar_t[]> const p_buff{new wchar_t[k_buff_size]};
   auto l_r = GetLongPathNameW(l_short_path.c_str(), p_buff.get(), k_buff_size);
   if (FAILED(l_r)) {
     set_root("C:/");
@@ -72,6 +72,7 @@ core_set::core_set()
   if (boost::dll::program_location().filename() == "DoodleExe.exe") {
     program_location_attr = boost::dll::program_location();
   }
+  user_id = get_uuid();
 }
 
 boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }

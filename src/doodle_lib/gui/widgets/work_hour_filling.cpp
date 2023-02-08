@@ -150,14 +150,12 @@ class work_hour_filling::impl {
   /// 导出表按钮
   gui_cache_name_id export_button{"导出表格"};
 
-  /// @todo 这里需要添加一个客户端资源
+  std::unique_ptr<distributed_computing::client> client_{};
 };
 
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
   ptr->title                 = std::string{name};
   ptr->show_advanced_setting = true;
-  /// @todo 这里的用户需要使用客户端查询或者创建
-  ptr->current_user          = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
 }
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
@@ -215,9 +213,13 @@ void work_hour_filling::modify_item(std::size_t in_index) {
 }
 
 void work_hour_filling::init() {
+  //  ptr->client_      = std::make_unique<distributed_computing::client>(core_set::get_set().server_ip);
+  //  ptr->current_user = ptr->client_->get_user(g_reg()->ctx().at<doodle::user::current_user>().uuid);
+  //  ptr->current_user          = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
   auto l_time       = time_point_wrap{}.compose();
   ptr->time_month() = {l_time.year, l_time.month};
-  list_time(l_time.year, l_time.month);
+
+  if (ptr->current_user) list_time(l_time.year, l_time.month);
 }
 
 void work_hour_filling::export_table(const FSys::path& in_path) {
