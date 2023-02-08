@@ -182,6 +182,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
   j["program_location_attr"]    = p.program_location_attr;
+  j["server_ip"]                = p.server_ip;
 }
 
 void from_json(const nlohmann::json &j, core_set &p) {
@@ -209,6 +210,7 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("program_location_attr") && p.program_location_attr.empty()) {
     p.program_location_attr = j.at("program_location_attr").get<FSys::path>();
   }
+  if (j.contains("server_ip")) j.at("server_ip").get_to(p.server_ip);
 }
 void core_set::add_recent_project(const FSys::path &in) {
   auto k_find_root = std::find(project_root.begin(), project_root.end(), in);
