@@ -63,6 +63,30 @@
       }
     },
     {
+      "name": "Ninja_release_maya_2018",
+      "inherits": "Ninja_release",
+      "cacheVariables": {
+        "Maya_Version": "2018"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Ninja_release_maya_2019",
+      "inherits": "Ninja_release",
+      "cacheVariables": {
+        "Maya_Version": "2019"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Ninja_release_maya_2020",
+      "inherits": "Ninja_release",
+      "cacheVariables": {
+        "Maya_Version": "2020"
+      },
+      "hidden": true
+    },
+    {
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
@@ -126,8 +150,36 @@
       "jobs": 10,
       "targets": [
         "DoodleExe",
-        "generate_token"
+        "generate_token",
+        "Doxygen"
       ]
+    },
+    {
+      "name": "Release_maya_2018",
+      "configurePreset": "Ninja_release_maya_2018",
+      "jobs": 10,
+      "targets": [
+        "doodle_maya"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "Release_maya_2019",
+      "configurePreset": "Ninja_release_maya_2019",
+      "jobs": 10,
+      "targets": [
+        "doodle_maya"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "Release_maya_2020",
+      "configurePreset": "Ninja_release_maya_2020",
+      "jobs": 10,
+      "targets": [
+        "doodle_maya"
+      ],
+      "hidden": true
     }
   ],
   "testPresets": [
