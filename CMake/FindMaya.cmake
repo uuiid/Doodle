@@ -62,15 +62,27 @@ set(MAYA_LIBS_TO_FIND
         clew
         )
 
+set(QT_LIBS_TO_FIND
+        Qt5
+        Qt5Core
+        Qt5Gui
+        Qt5Widgets
+        )
+
 if (NOT ${FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME}} EQUAL ${Maya_FIND_VERSION})
-    unset(${MAYA_BASE_DIR} CACHE)
-    unset(${MAYA_INCLUDE_DIR} CACHE)
-    unset(${MAYA_LIBRARY_DIR} CACHE)
-    unset(${MAYA_DLL_LIBRARY_DIR} CACHE)
+    message("clear old maya version ${FIND_PACKAGE_INTERNAL_${CMAKE_FIND_PACKAGE_NAME}} ")
+    unset(MAYA_BASE_DIR CACHE)
+    unset(MAYA_INCLUDE_DIR CACHE)
+    unset(MAYA_LIBRARY_DIR CACHE)
+    unset(MAYA_DLL_LIBRARY_DIR CACHE)
 
     foreach (MAYA_LIB ${MAYA_LIBS_TO_FIND})
         unset(MAYA_${MAYA_LIB}_LIBRARY CACHE)
         unset(MAYA_${MAYA_LIB}_LIBRARY_dll CACHE)
+    endforeach ()
+
+    foreach (QT_LIB ${QT_LIBS_TO_FIND})
+        unset(${QT_LIB}_DIR CACHE)
     endforeach ()
 
 endif ()
