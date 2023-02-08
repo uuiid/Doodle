@@ -1,6 +1,7 @@
 set(maya_plug_name doodle_maya)
 configure_file(DoodleExe.manifest.in doodle_maya.manifest)
 configure_file(maya_plug.rc.in doodle_maya.rc)
+
 add_library(doodle_maya MODULE
         doodle_maya.manifest
         doodle_maya.rc
