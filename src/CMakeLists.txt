@@ -108,12 +108,6 @@ if (DEFINED Maya_Version)
 #    find_package(Autodesk_FBX 2020 MODULE)
     find_package(OpenMP REQUIRED)
 
-    cmake_print_variables(MAYA_BASE_DIR)
-
-    # set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release)
-    # set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE Release)
-    # set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
-    # set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
     if (TARGET maya::maya_all)
         find_package(Qt5 COMPONENTS Core Widgets REQUIRED
                 HINTS ${MAYA_BASE_DIR})
