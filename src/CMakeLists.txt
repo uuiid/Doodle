@@ -99,9 +99,29 @@ else ()
 endif ()
 
 add_subdirectory(houdini_plug)
+
 if (DEFINED Maya_Version)
+    # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
+    # 模块的寻找文件名称 Find + 包名称 + .cmake
+    # 开始运行 `FindMaya.cmake`
+    find_package(Maya ${Maya_Version} MODULE)
+    find_package(Autodesk_FBX 2020 MODULE)
+    find_package(OpenMP REQUIRED)
+
+    cmake_print_variables(MAYA_BASE_DIR)
+
+    # set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release)
+    # set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE Release)
+    # set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
+    # set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
+    if (TARGET maya::maya_all)
+        find_package(Qt5 COMPONENTS Core Widgets REQUIRED
+                HINTS ${MAYA_BASE_DIR})
+        find_package(dem-bones CONFIG REQUIRED)
+    endif ()
     add_subdirectory(maya_plug maya_plug${Maya_Version})
 endif ()
+
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
