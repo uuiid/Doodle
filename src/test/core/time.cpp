@@ -68,6 +68,7 @@ BOOST_AUTO_TEST_CASE(time_warp_fmt_test) {
   BOOST_TEST(fmt::format("{:%Y/%m/%d %H:%M:%S}", l_time) == "2022/05/07 11:46:55"s);
   BOOST_TEST(fmt::format("{:S%Y/%m/%d %H:%M:%S}", l_time) == "2022/05/07 03:46:55"s);
   BOOST_TEST(fmt::format("{:L%Y/%m/%d %H:%M:%S}", l_time) == "2022/05/07 11:46:55"s);
+  BOOST_TEST_MESSAGE(fmt::format("{}", chrono::system_clock::now()));
 }
 
 BOOST_AUTO_TEST_CASE(time_warp_local_to_sys) {

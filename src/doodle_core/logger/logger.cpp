@@ -45,18 +45,21 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 }  // namespace details
 using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 
-logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") { init_temp_log(); }
-void logger_ctrl::init_temp_log() {
-  if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
-  auto l_path =
-      p_log_path / fmt::format("{}.txt", date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()));
+logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
+  spdlog::init_thread_pool(8192, 1);
 
+  init_temp_log();
+}
+
+auto make_log(const FSys::path &in_path, const std::string &in_name = "doodle_lib"s) {
+  if (!FSys::exists(in_path)) FSys::create_directories(in_path);
+  auto l_path = in_path / fmt::format("{}.txt", core_set::get_set().get_uuid());
+  std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    spdlog::init_thread_pool(8192, 1);
     auto l_file =
-        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024, 100, true);
-    auto l_logger = std::make_shared<spdlog::async_logger>(
-        "doodle_lib", l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(l_path.generic_string(), 1024 * 1024 * 1024, 100, true);
+    l_logger = std::make_shared<spdlog::async_logger>(
+        in_name, l_file, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
 #if !defined(NDEBUG)
     auto l_k_debug = std::make_shared<msvc_doodle_sink_mt>();
@@ -64,15 +67,21 @@ void logger_ctrl::init_temp_log() {
     // auto l_stdout_sink_mt = std::make_shared<spdlog::sinks::stdout_sink_mt>();
     // l_logger->sinks().push_back(l_stdout_sink_mt);
 #endif
-
     spdlog::register_logger(l_logger);
-    spdlog::set_default_logger(l_logger);
 
-    spdlog::flush_every(3s);
-    spdlog::set_level(spdlog::level::debug);
   } catch (const spdlog::spdlog_ex &spdlog_ex) {
     std::cout << "日志初始化失败" << boost::diagnostic_information(spdlog_ex) << std::endl;
   }
+
+  return l_logger;
+}
+
+void logger_ctrl::init_temp_log() {
+  auto l_logger = make_log(p_log_path);
+  spdlog::set_default_logger(l_logger);
+
+  spdlog::flush_every(3s);
+  spdlog::set_level(spdlog::level::debug);
   SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}", "ok"));
   SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));
   SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
@@ -86,9 +95,15 @@ logger_ctrl::~logger_ctrl() {
   spdlog::drop_all();
   spdlog::shutdown();
 }
-bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr) {
+bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr, const std::string &in_name) {
   refresh();
-  spdlog::get("doodle_lib")->sinks().push_back(in_ptr);
+  auto l_logger = make_log(p_log_path, in_name);
+  l_logger->sinks().emplace_back(in_ptr);
+  spdlog::set_default_logger(l_logger);
+  SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}", "ok"));
+  SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));
+  SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
+  SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
   return true;
 }
 void logger_ctrl::refresh() { spdlog::get("doodle_lib")->flush(); }

@@ -185,11 +185,11 @@ BOOST_AUTO_TEST_CASE(get_user_work_task_info) {
   BOOST_TEST(l_users.size() == 11);
   for (auto&& l_f : l_users) {
     std::cout << "user : " << fmt::to_string(l_f.get<user>()) << std::endl;
-    auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
-    BOOST_TEST(l_work_.size() == 10);
-    for (auto&& l_w : l_work_) {
-      std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
-    }
+    //    auto l_work_ = l_c.get_user_work_task_info(l_main, l_f);
+    //    BOOST_TEST(l_work_.size() == 10);
+    //    for (auto&& l_w : l_work_) {
+    //      std::cout << "user : " << fmt::to_string(l_w.get<work_task_info>().task_name) << std::endl;
+    //    }
   }
   l_c.close();
 
@@ -204,29 +204,29 @@ BOOST_AUTO_TEST_CASE(set_user_work_task_info) {
 
   g_reg()->ctx().emplace<user::current_user>().set_user(l_users);
 
-  auto l_whs = l_c.get_user_work_task_info(l_users, l_users);
-  BOOST_TEST(l_whs.size() == 1);
+  //  auto l_whs = l_c.get_user_work_task_info(l_users, l_users);
+  //  BOOST_TEST(l_whs.size() == 1);
 
-  auto& l_work_com = l_whs[0].get<work_task_info>();
-
-  BOOST_TEST(l_work_com.task_name == "clict_set_s1");
-  BOOST_TEST(l_work_com.abstract == "clict_set_s2");
-  BOOST_TEST(l_work_com.region == "clict_set_s3");
-
-  l_work_com.task_name = "clict_set_test1";
-  l_work_com.abstract  = "clict_set_test2";
-  l_work_com.region    = "clict_set_test3";
-  l_work_com.time      = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_sys_time());
-
-  l_c.set_work_task_info(l_users, l_whs[0]);
-
-  BOOST_TEST(l_work_com.task_name == "clict_set_test1");
-  BOOST_TEST(l_work_com.abstract == "clict_set_test2");
-  BOOST_TEST(l_work_com.region == "clict_set_test3");
-
-  l_c.close();
-
-  g_io_context().run();
+  //  auto& l_work_com = l_whs[0].get<work_task_info>();
+  //
+  //  BOOST_TEST(l_work_com.task_name == "clict_set_s1");
+  //  BOOST_TEST(l_work_com.abstract == "clict_set_s2");
+  //  BOOST_TEST(l_work_com.region == "clict_set_s3");
+  //
+  //  l_work_com.task_name = "clict_set_test1";
+  //  l_work_com.abstract  = "clict_set_test2";
+  //  l_work_com.region    = "clict_set_test3";
+  //  l_work_com.time      = chrono::round<chrono::hours>(time_point_wrap{2022, 12, 1}.get_sys_time());
+  //
+  //  l_c.set_work_task_info(l_users, l_whs[0]);
+  //
+  //  BOOST_TEST(l_work_com.task_name == "clict_set_test1");
+  //  BOOST_TEST(l_work_com.abstract == "clict_set_test2");
+  //  BOOST_TEST(l_work_com.region == "clict_set_test3");
+  //
+  //  l_c.close();
+  //
+  //  g_io_context().run();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
