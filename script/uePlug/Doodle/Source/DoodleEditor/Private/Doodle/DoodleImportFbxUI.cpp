@@ -57,9 +57,13 @@
 #include "EditorStyleSet.h"
 
 /// 导入相机需要的头文件
+#include "Camera/CameraComponent.h"  // 相机组件
+#include "CineCameraActor.h"         // 相机
 #include "ILevelSequenceEditorToolkit.h"
 #include "LevelSequence.h"
 #include "MovieSceneToolHelpers.h"
+#include "Sections/MovieSceneCameraCutSection.h"  // 相机剪切
+#include "SequencerUtilities.h"                   // 创建相机
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -553,12 +557,13 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
           .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
           .OnClicked_Lambda([this](){
-             this->ListImportFbxData.Empty();
-             this->ListImportAbcData.Empty();
-			 this->ListImportFbxCamData.Empty();
-			 ListImportFbxCam->RebuildList();
-             ListImportFbx->RebuildList();
-			 ListImportAbc->RebuildList();
+    //         this->ListImportFbxData.Empty();
+    //         this->ListImportAbcData.Empty();
+			 //this->ListImportFbxCamData.Empty();
+			 //ListImportFbxCam->RebuildList();
+    //         ListImportFbx->RebuildList();
+			 //ListImportAbc->RebuildList();
+			 this->ImportCamera();
              return FReply::Handled();
           })
         ]
@@ -792,34 +797,115 @@ void SDoodleImportFbxUI::ImportAbc() {
 }
 
 void SDoodleImportFbxUI::ImportCamera() {
+  ListImportFbxCamData.Empty();
+  auto& L_C          = ListImportFbxCamData.Emplace_GetRef(MakeShared<doodle_ue4::FFbxCameraImport>(
+      "F:\\doodle_plug_dev_4.27\\test_file\\ad\\RJ_EP029_SC008_AN_camera_1001-1096.fbx"
+  ));
+  L_C->ImportPathDir = "/Game/TEST/2/LV";
+
+  int32 in_start     = 1001;
+  int32 in_end       = 1200;
+
+  auto& l_ass_tool   = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   for (auto&& Cam : ListImportFbxCamData) {
-    // 加载定序器
-    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(NULL, *Cam->ImportPathDir);
-    FSoftObjectPath L_LevelSequenceSoftPath{Cam->ImportPathDir};
-    UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
-    UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-    if (L_LoadedObject != nullptr) {
-      L_AssetEditorSubsystem->OpenEditorForAsset(L_LoadedObject);
+    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *Cam->ImportPathDir);
+
+    // 创建定序器
+    if (!L_ShotSequence) {
+      for (TObjectIterator<UClass> it{}; it; ++it) {
+        if (it->IsChildOf(UFactory::StaticClass())) {
+          if (it->GetName() == "LevelSequenceFactoryNew") {
+            L_ShotSequence = CastChecked<ULevelSequence>(l_ass_tool.CreateAsset(
+                FPaths::GetBaseFilename(Cam->ImportPathDir), FPaths::GetPath(Cam->ImportPathDir),
+                ULevelSequence::StaticClass(), it->GetDefaultObject<UFactory>()
+            ));
+          }
+        }
+      }
     }
+    // 设置定序器属性
+    L_ShotSequence->GetMovieScene()->SetDisplayRate(FFrameRate{25, 1});
+    L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{25, 1});
+    L_ShotSequence->GetMovieScene()->Modify();
+
+    /// 设置范围
+    L_ShotSequence->GetMovieScene()->SetWorkingRange((in_start - 10) / 25, (in_end + 10) / 25);
+    L_ShotSequence->GetMovieScene()->SetViewRange((in_start - 10) / 25, (in_end + 10) / 25);
+    L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{in_start, in_end}, true);
+    L_ShotSequence->Modify();
+
+    // FSoftObjectPath L_LevelSequenceSoftPath{Cam->ImportPathDir};
+    // UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
+    UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+    L_AssetEditorSubsystem->OpenEditorForAsset(L_ShotSequence);
+
     IAssetEditorInstance* L_AssetEditor = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence, true);
 
     ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
     ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
-    // 打开fbx
     UMovieScene* L_Move                                = L_ShotSequence->GetMovieScene();
+    ACineCameraActor* L_CameraActor{};
+    // 相机task
+    UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
+    if (!L_Task) FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+    L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
 
-    FGuid L_Guid                                       = L_Move->GetCameraCutTrack()->GetSignature();
+    // Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
 
-    TArray<UObject*, TInlineAllocator<1>> L_Objs{};
+    UCameraComponent* L_cam{};
+    for (auto&& L_Section : L_Task->GetAllSections()) {
+      L_cam =
+          Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer, MovieSceneSequenceID::Root);
+      if (L_cam) break;
+    }
+    if (!L_cam) return;
 
-    // L_Move->Find;L_ShotSequence
+    UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_cam->GetOwner()->GetActorNameOrLabel());
+    if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_cam->GetOwner());
+
+    // MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_Move,)
+
+    FGuid l_cam_guid{};
+    for (auto i = 0; i < L_Move->GetSpawnableCount(); i++) {
+      if (L_Move->GetSpawnable(i).GetObjectTemplate()->GetClass()->IsChildOf(ACameraActor::StaticClass())) {
+        l_cam_guid = L_Move->GetSpawnable(i).GetGuid();
+        break;
+      }
+    }
+
+    for (auto i = 0; i < L_Move->GetPossessableCount(); i++) {
+      if (L_Move->GetPossessable(i).GetPossessedObjectClass()->IsChildOf(ACameraActor::StaticClass())) {
+        l_cam_guid = L_Move->GetPossessable(i).GetGuid();
+        break;
+      }
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("guid %s"), *l_cam_guid.ToString());
+
+    // L_Move->Find;
+    UE_LOG(
+        LogTemp, Log, TEXT("guid2 %s"),
+        *L_ShotSequence->FindPossessableObjectId(*L_CameraActor, L_ShotSequence).ToString()
+    );
+    UE_LOG(
+        LogTemp, Log, TEXT("guid3 %s"), *L_ShotSequence->FindBindingFromObject(L_CameraActor, L_ShotSequence).ToString()
+    );
+    UE_LOG(
+        LogTemp, Log, TEXT("guid4 %s"),
+        *L_ShotSequence->FindPossessableObjectId(*L_CameraActor, L_CameraActor->GetWorld()).ToString()
+    );
+    UE_LOG(
+        LogTemp, Log, TEXT("guid5 %s"),
+        *L_ShotSequence->FindBindingFromObject(L_CameraActor, L_CameraActor->GetWorld()).ToString()
+    );
     // L_Move->GetCameraCutTrack()->;
     TMap<FGuid, FString> L_Map{};
-    L_Map.Add(L_Guid, FString{});
+    L_Map.Add(l_cam_guid, L_cam->GetOwner()->GetActorNameOrLabel());
     // 打开fbx
     UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
     FbxImporter->ClearAllCaches();
     FbxImporter->ImportFromFile(Cam->ImportFbxPath, FPaths::GetExtension(Cam->ImportFbxPath));
+
     MovieSceneToolHelpers::ImportFBXCameraToExisting(
         FbxImporter, L_ShotSequence, L_ShotSequencer, MovieSceneSequenceID::Root, L_Map, false, true
     );
