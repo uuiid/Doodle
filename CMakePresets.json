@@ -39,7 +39,7 @@
       "hidden": true
     },
     {
-      "name": "doodle_maya",
+      "name": "Ninja_RelWithDebInfo",
       "inherits": "Ninja_build",
       "displayName": "config maya plug",
       "description": "构建maya插件 默认版本是2019",
@@ -138,7 +138,7 @@
       "name": "debug_maya_plug",
       "description": "调试 maya 插件(maya插件只能使用release调试)",
       "displayName": "调试 doodle maya",
-      "configurePreset": "doodle_maya",
+      "configurePreset": "Ninja_RelWithDebInfo",
       "inherits": "debug",
       "targets": [
         "doodle_maya"
