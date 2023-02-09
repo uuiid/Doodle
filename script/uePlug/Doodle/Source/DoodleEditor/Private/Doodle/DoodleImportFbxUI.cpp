@@ -806,11 +806,23 @@ void SDoodleImportFbxUI::ImportCamera() {
     ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
     ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
     // 打开fbx
-    TArray<FGuid>& OutBindingIDs{};
-    L_ShotSequencer->GetCameraObjectBindings(OutBindingIDs);
+    UMovieScene* L_Move                                = L_ShotSequence->GetMovieScene();
 
-    // MovieSceneToolHelpers::ImportFBXCameraToExisting(nullptr, L_ShotSequence, L_ShotSequencer,
-    // MovieSceneSequenceID::Root,);
+    FGuid L_Guid                                       = L_Move->GetCameraCutTrack()->GetSignature();
+
+    TArray<UObject*, TInlineAllocator<1>> L_Objs{};
+
+    // L_Move->Find;L_ShotSequence
+    // L_Move->GetCameraCutTrack()->;
+    TMap<FGuid, FString> L_Map{};
+    L_Map.Add(L_Guid, FString{});
+    // 打开fbx
+    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
+    FbxImporter->ClearAllCaches();
+    FbxImporter->ImportFromFile(Cam->ImportFbxPath, FPaths::GetExtension(Cam->ImportFbxPath));
+    MovieSceneToolHelpers::ImportFBXCameraToExisting(
+        FbxImporter, L_ShotSequence, L_ShotSequencer, MovieSceneSequenceID::Root, L_Map, false, true
+    );
   }
 }
 
