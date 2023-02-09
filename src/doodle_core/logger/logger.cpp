@@ -48,7 +48,8 @@ using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") { init_temp_log(); }
 void logger_ctrl::init_temp_log() {
   if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
-  auto l_path = p_log_path / fmt::format("{}.txt", core_set::get_set().get_uuid());
+  auto l_path =
+      p_log_path / fmt::format("{}.txt", date::format("_%y_%m_%d_%H_%M_%S_", std::chrono::system_clock::now()));
 
   try {
     spdlog::init_thread_pool(8192, 1);
