@@ -22,7 +22,6 @@ namespace doodle {
  */
 class DOODLE_CORE_API logger_ctrl {
   FSys::path p_log_path;
-  std::string p_log_name;
 
   void init_temp_log();
 

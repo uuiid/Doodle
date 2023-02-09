@@ -45,15 +45,10 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 }  // namespace details
 using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
 
-logger_ctrl::logger_ctrl()
-    : p_log_path(FSys::temp_directory_path() / "doodle" / "log"),
-      p_log_name(fmt::format("{}.txt", core_set::get_set().get_uuid())) {
-  core_set::get_set().log_ptr = this;
-  init_temp_log();
-}
+logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") { init_temp_log(); }
 void logger_ctrl::init_temp_log() {
   if (!FSys::exists(p_log_path)) FSys::create_directories(p_log_path);
-  auto l_path = p_log_path / p_log_name;
+  auto l_path = p_log_path / fmt::format("{}.txt", core_set::get_set().get_uuid());
 
   try {
     spdlog::init_thread_pool(8192, 1);
