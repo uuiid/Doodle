@@ -70,7 +70,8 @@ struct table_line : boost::totally_ordered<table_line> {
   table_line() = default;
 
   explicit table_line(const work_task_info& in_task)
-      : cache_time{in_task.time},
+      : data_handle(make_handle(in_task)),
+        cache_time{in_task.time},
         time_day{fmt::format("{:%F}", cache_time)},
         week{tran.at(fmt::format("{:%A}", cache_time))},
         am_or_pm{tran.at(fmt::format("{:%p}", cache_time))},
@@ -87,8 +88,9 @@ struct table_line : boost::totally_ordered<table_line> {
   //       region{"##region"s},
   //       abstract{"##abstract"s} {}
 
-  explicit table_line(const chrono::local_time<chrono::hours>& in_task)
-      : cache_time{in_task},
+  explicit table_line(const chrono::time_point<chrono::system_clock, chrono::hours>& in_task)
+      : data_handle{},
+        cache_time{in_task},
         time_day{fmt::format("{:%F}", cache_time)},
         week{tran.at(fmt::format("{:%A}", cache_time))},
         am_or_pm{tran.at(fmt::format("{:%p}", cache_time))},
@@ -101,8 +103,9 @@ struct table_line : boost::totally_ordered<table_line> {
   bool operator==(const table_line& in) const { return cache_time == in.cache_time; }
   bool operator<(const table_line& in) const { return cache_time < in.cache_time; }
 
-  chrono::local_time<chrono::hours> cache_time{};
+  chrono::time_point<chrono::system_clock, chrono::hours> cache_time{};
 
+  entt::handle data_handle{};
   std::string time_day{};
   std::string week{};
   std::string am_or_pm{};
@@ -118,7 +121,7 @@ class work_hour_filling::impl {
   std::string title{};
 
   /// @brief 时间和句柄对应关系
-  std::map<chrono::local_time<chrono::hours>, entt::handle> time_cache;
+  std::map<chrono::time_point<chrono::system_clock, chrono::hours>, entt::handle> time_cache;
   /// @brief 过滤当前用户使用
   entt::handle current_user;
   /// @brief 使用时间过滤表id
@@ -162,12 +165,8 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   using work_tub_t  = decltype(*g_reg()->view<work_task_info>().each().begin());
 
   auto l_time       = time_point_wrap{in_y, in_m, 1};
-  auto l_begin_time = chrono::time_point_cast<chrono::hours>(
-      chrono::clock_cast<chrono::local_t>(l_time.current_month_start().get_sys_time())
-  );
-  auto l_end_time = chrono::time_point_cast<chrono::hours>(
-      chrono::clock_cast<chrono::local_t>(l_time.current_month_end().get_sys_time())
-  );
+  auto l_begin_time = chrono::time_point_cast<chrono::hours>(l_time.current_month_start().get_sys_time());
+  auto l_end_time   = chrono::time_point_cast<chrono::hours>(l_time.current_month_end().get_sys_time());
   /// 先生成
   ptr->time_cache.clear();
   for (auto i = l_begin_time; i <= l_end_time; i += chrono::hours{12}) {
