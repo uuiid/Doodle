@@ -62,6 +62,7 @@
 #include "ILevelSequenceEditorToolkit.h"
 #include "LevelSequence.h"
 #include "MovieSceneToolHelpers.h"
+#include "MovieSceneToolsUserSettings.h"          // 导入相机设置
 #include "Sections/MovieSceneCameraCutSection.h"  // 相机剪切
 #include "SequencerUtilities.h"                   // 创建相机
 
@@ -847,68 +848,71 @@ void SDoodleImportFbxUI::ImportCamera() {
     ACineCameraActor* L_CameraActor{};
     // 相机task
     UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-    if (!L_Task) FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+    if (!L_Task)
+      // 添加相机时以及强制评估了, 不需要再强制评估
+      FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+    else
+      // 强制评估序列, 要不然相机指针会空
+      L_ShotSequencer->ForceEvaluate();
+
     L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
 
     // Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
-
+    // 寻找相机组件
     UCameraComponent* L_cam{};
     for (auto&& L_Section : L_Task->GetAllSections()) {
       L_cam =
           Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer, MovieSceneSequenceID::Root);
       if (L_cam) break;
     }
-    if (!L_cam) return;
 
-    UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_cam->GetOwner()->GetActorNameOrLabel());
     if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_cam->GetOwner());
+    UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CameraActor->GetActorNameOrLabel());
 
-    // MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_Move,)
-
-    FGuid l_cam_guid{};
-    for (auto i = 0; i < L_Move->GetSpawnableCount(); i++) {
-      if (L_Move->GetSpawnable(i).GetObjectTemplate()->GetClass()->IsChildOf(ACameraActor::StaticClass())) {
-        l_cam_guid = L_Move->GetSpawnable(i).GetGuid();
-        break;
-      }
-    }
-
-    for (auto i = 0; i < L_Move->GetPossessableCount(); i++) {
-      if (L_Move->GetPossessable(i).GetPossessedObjectClass()->IsChildOf(ACameraActor::StaticClass())) {
-        l_cam_guid = L_Move->GetPossessable(i).GetGuid();
-        break;
-      }
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("guid %s"), *l_cam_guid.ToString());
-
-    // L_Move->Find;
     UE_LOG(
-        LogTemp, Log, TEXT("guid2 %s"),
-        *L_ShotSequence->FindPossessableObjectId(*L_CameraActor, L_ShotSequence).ToString()
+        LogTemp, Log, TEXT("guid %s"),
+        *L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root).ToString()
     );
-    UE_LOG(
-        LogTemp, Log, TEXT("guid3 %s"), *L_ShotSequence->FindBindingFromObject(L_CameraActor, L_ShotSequence).ToString()
-    );
-    UE_LOG(
-        LogTemp, Log, TEXT("guid4 %s"),
-        *L_ShotSequence->FindPossessableObjectId(*L_CameraActor, L_CameraActor->GetWorld()).ToString()
-    );
-    UE_LOG(
-        LogTemp, Log, TEXT("guid5 %s"),
-        *L_ShotSequence->FindBindingFromObject(L_CameraActor, L_CameraActor->GetWorld()).ToString()
-    );
+
+    // 寻找相机id
+    FGuid l_cam_guid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
+
     // L_Move->GetCameraCutTrack()->;
     TMap<FGuid, FString> L_Map{};
-    L_Map.Add(l_cam_guid, L_cam->GetOwner()->GetActorNameOrLabel());
+    L_Map.Add(l_cam_guid, L_CameraActor->GetActorNameOrLabel());
     // 打开fbx
+    UMovieSceneUserImportFBXSettings* ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
+    FFBXInOutParameters InOutParams;
+    // 修改一下设置
+    ImportFBXSettings->bMatchByNameOnly       = false;
+    ImportFBXSettings->bCreateCameras         = false;
+    ImportFBXSettings->bReplaceTransformTrack = true;
+    ImportFBXSettings->bReduceKeys            = false;
+    // 这里使用包装导入
+    if (!MovieSceneToolHelpers::ReadyFBXForImport(Cam->ImportFbxPath, ImportFBXSettings, InOutParams)) {
+      return;
+    }
+    // 已经打开的fbx, 直接获取, 是一个单例
     UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-    FbxImporter->ClearAllCaches();
-    FbxImporter->ImportFromFile(Cam->ImportFbxPath, FPaths::GetExtension(Cam->ImportFbxPath));
-
-    MovieSceneToolHelpers::ImportFBXCameraToExisting(
-        FbxImporter, L_ShotSequence, L_ShotSequencer, MovieSceneSequenceID::Root, L_Map, false, true
+    fbxsdk::FbxTimeSpan L_Fbx_Time   = FbxImporter->GetAnimationTimeSpan(
+        FbxImporter->Scene->GetRootNode(), FbxImporter->Scene->GetCurrentAnimationStack()
     );
+
+    UE_LOG(
+        LogTemp, Log, TEXT("fbx time %d -> %d"), L_Fbx_Time.GetStart().GetFrameCount(fbxsdk::FbxTime::ePAL),
+        L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL)
+    );
+    MovieSceneToolHelpers::ImportFBXCameraToExisting(
+        FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
+    );
+
+    UWorld* World = Cast<UWorld>(L_ShotSequencer->GetPlaybackContext());
+    bool bValid   = MovieSceneToolHelpers::ImportFBXIfReady(
+        World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, ImportFBXSettings,
+        InOutParams
+    );
+
+    L_ShotSequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
   }
 }
 
