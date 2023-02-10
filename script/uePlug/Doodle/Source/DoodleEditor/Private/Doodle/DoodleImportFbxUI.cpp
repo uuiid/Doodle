@@ -313,7 +313,12 @@ class SDoodleImportFbxCameraUiItem : public SMultiColumnTableRow<TSharedPtr<dood
 };
 
 void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
-  const FSlateFontInfo Font = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+  const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  const FSlateFontInfo Font    = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
+#endif
 
 #if PLATFORM_WINDOWS
   const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
@@ -798,25 +803,58 @@ void SDoodleImportFbxUI::ImportAbc() {
 }
 
 void SDoodleImportFbxUI::ImportCamera() {
-  ListImportFbxCamData.Empty();
-  auto& L_C          = ListImportFbxCamData.Emplace_GetRef(MakeShared<doodle_ue4::FFbxCameraImport>(
-      "F:\\doodle_plug_dev_4.27\\test_file\\ad\\RJ_EP029_SC008_AN_camera_1001-1096.fbx"
-  ));
-  L_C->ImportPathDir = "/Game/TEST/2/LV";
+  const FFrameRate L_Rate{25, 1};
+  const FFrameNumber L_Start{1001};
+  FFrameNumber L_End{1200};
 
-  int32 in_start     = 1001;
-  int32 in_end       = 1200;
+  FScopedSlowTask L_Task_Scoped{ListImportFbxCamData.Num() * 6.0f, LOCTEXT("Import_CAm", "导入camera")};
+  L_Task_Scoped.MakeDialog();
 
-  auto& l_ass_tool   = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+  auto& L_AssTool = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   for (auto&& Cam : ListImportFbxCamData) {
-    ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *Cam->ImportPathDir);
+    L_Task_Scoped.EnterProgressFrame(
+        1, FText::Format(
+               LOCTEXT("Import_ImportingCameraFile1", "导入 \"{0}\"..."),
+               FText::FromString(FPaths::GetBaseFilename(Cam->ImportFbxPath))
+           )
+    );
+
+    ULevelSequence* L_ShotSequence                        = LoadObject<ULevelSequence>(nullptr, *Cam->ImportPathDir);
+
+    // 打开fbx
+    UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
+    FFBXInOutParameters InOutParams;
+    // 修改一下设置
+    L_ImportFBXSettings->bMatchByNameOnly       = false;
+    L_ImportFBXSettings->bCreateCameras         = false;
+    L_ImportFBXSettings->bReplaceTransformTrack = true;
+    L_ImportFBXSettings->bReduceKeys            = false;
+    // 这里使用包装导入
+    if (!MovieSceneToolHelpers::ReadyFBXForImport(Cam->ImportFbxPath, L_ImportFBXSettings, InOutParams)) {
+      return;
+    }
+
+    // 已经打开的fbx, 直接获取, 是一个单例
+    UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+    fbxsdk::FbxTimeSpan L_Fbx_Time     = L_FbxImporter->GetAnimationTimeSpan(
+        L_FbxImporter->Scene->GetRootNode(), L_FbxImporter->Scene->GetCurrentAnimationStack()
+    );
+    // 获取结束帧
+    L_End = (int32)L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL);
+    UE_LOG(LogTemp, Log, TEXT("fbx time %d -> %d"), L_Start.Value, L_End.Value);
+
+    L_Task_Scoped.EnterProgressFrame(
+        1, FText::Format(
+               LOCTEXT("Import_ImportingCameraFile2", "检查定序器 \"{0}\"..."), FText::FromString(Cam->ImportPathDir)
+           )
+    );
 
     // 创建定序器
     if (!L_ShotSequence) {
       for (TObjectIterator<UClass> it{}; it; ++it) {
         if (it->IsChildOf(UFactory::StaticClass())) {
           if (it->GetName() == "LevelSequenceFactoryNew") {
-            L_ShotSequence = CastChecked<ULevelSequence>(l_ass_tool.CreateAsset(
+            L_ShotSequence = CastChecked<ULevelSequence>(L_AssTool.CreateAsset(
                 FPaths::GetBaseFilename(Cam->ImportPathDir), FPaths::GetPath(Cam->ImportPathDir),
                 ULevelSequence::StaticClass(), it->GetDefaultObject<UFactory>()
             ));
@@ -824,21 +862,25 @@ void SDoodleImportFbxUI::ImportCamera() {
         }
       }
     }
+    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile3", "设置定序器以及相机 ..."));
+
     // 设置定序器属性
-    L_ShotSequence->GetMovieScene()->SetDisplayRate(FFrameRate{25, 1});
-    L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{25, 1});
+    L_ShotSequence->GetMovieScene()->SetDisplayRate(L_Rate);
+    L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(L_Rate);
     L_ShotSequence->GetMovieScene()->Modify();
 
     /// 设置范围
-    L_ShotSequence->GetMovieScene()->SetWorkingRange((in_start - 10) / 25, (in_end + 10) / 25);
-    L_ShotSequence->GetMovieScene()->SetViewRange((in_start - 10) / 25, (in_end + 10) / 25);
-    L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{in_start, in_end}, true);
+    L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
+    L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
+    L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start, L_End}, true);
     L_ShotSequence->Modify();
 
     // FSoftObjectPath L_LevelSequenceSoftPath{Cam->ImportPathDir};
     // UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
     UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
     L_AssetEditorSubsystem->OpenEditorForAsset(L_ShotSequence);
+
+    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile4", "尝试打开定序器 ..."));
 
     IAssetEditorInstance* L_AssetEditor = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence, true);
 
@@ -854,61 +896,39 @@ void SDoodleImportFbxUI::ImportCamera() {
     else
       // 强制评估序列, 要不然相机指针会空
       L_ShotSequencer->ForceEvaluate();
+    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile5", "刷新 ..."));
 
     L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
 
     // Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
     // 寻找相机组件
-    UCameraComponent* L_cam{};
+    UCameraComponent* L_Cam{};
     for (auto&& L_Section : L_Task->GetAllSections()) {
-      L_cam =
+      L_Cam =
           Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer, MovieSceneSequenceID::Root);
-      if (L_cam) break;
+      if (L_Cam) break;
     }
 
-    if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_cam->GetOwner());
+    if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
     UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CameraActor->GetActorNameOrLabel());
-
-    UE_LOG(
-        LogTemp, Log, TEXT("guid %s"),
-        *L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root).ToString()
-    );
-
     // 寻找相机id
-    FGuid l_cam_guid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
+    FGuid L_CamGuid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
 
-    // L_Move->GetCameraCutTrack()->;
+    UE_LOG(LogTemp, Log, TEXT("guid %s"), *L_CamGuid.ToString());
+
     TMap<FGuid, FString> L_Map{};
-    L_Map.Add(l_cam_guid, L_CameraActor->GetActorNameOrLabel());
-    // 打开fbx
-    UMovieSceneUserImportFBXSettings* ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
-    FFBXInOutParameters InOutParams;
-    // 修改一下设置
-    ImportFBXSettings->bMatchByNameOnly       = false;
-    ImportFBXSettings->bCreateCameras         = false;
-    ImportFBXSettings->bReplaceTransformTrack = true;
-    ImportFBXSettings->bReduceKeys            = false;
-    // 这里使用包装导入
-    if (!MovieSceneToolHelpers::ReadyFBXForImport(Cam->ImportFbxPath, ImportFBXSettings, InOutParams)) {
-      return;
-    }
-    // 已经打开的fbx, 直接获取, 是一个单例
-    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-    fbxsdk::FbxTimeSpan L_Fbx_Time   = FbxImporter->GetAnimationTimeSpan(
-        FbxImporter->Scene->GetRootNode(), FbxImporter->Scene->GetCurrentAnimationStack()
-    );
+    L_Map.Add(L_CamGuid, L_CameraActor->GetActorNameOrLabel());
 
-    UE_LOG(
-        LogTemp, Log, TEXT("fbx time %d -> %d"), L_Fbx_Time.GetStart().GetFrameCount(fbxsdk::FbxTime::ePAL),
-        L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL)
-    );
+    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
+
+    // 正式开始导入
     MovieSceneToolHelpers::ImportFBXCameraToExisting(
-        FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
+        L_FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
     );
 
     UWorld* World = Cast<UWorld>(L_ShotSequencer->GetPlaybackContext());
     bool bValid   = MovieSceneToolHelpers::ImportFBXIfReady(
-        World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, ImportFBXSettings,
+        World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, L_ImportFBXSettings,
         InOutParams
     );
 
@@ -953,7 +973,8 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix) {
     L_Abc->ImportPathDir = GetImportPath(L_Abc->ImportAbcPath) / "Abcs_Import";
   }
   for (auto&& L_Cam : ListImportFbxCamData) {
-    L_Cam->ImportPathDir = GetImportPath(L_Cam->ImportFbxPath) / "Abcs_Import";
+    FString L_Folder     = GetImportPath(L_Cam->ImportFbxPath);
+    L_Cam->ImportPathDir = L_Folder / FPaths::GetBaseFilename(L_Folder) + "_L";
   }
 }
 
@@ -1051,16 +1072,16 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
   }
 
   L_Task_Scoped.EnterProgressFrame(1.0f);
-  GenPathPrefix(this->Path_Prefix);
-
-  L_Task_Scoped.EnterProgressFrame(1.0f);
   GetAllSkinObjs();
   L_Task_Scoped.EnterProgressFrame(3.0f);
   MatchFbx();
   L_Task_Scoped.EnterProgressFrame(1.0f);
+
+  GenPathPrefix(this->Path_Prefix);
   ListImportFbx->RebuildList();
   ListImportAbc->RebuildList();
   ListImportFbxCam->RebuildList();
+  L_Task_Scoped.EnterProgressFrame(1.0f);
 
   return FReply::Handled();
 }

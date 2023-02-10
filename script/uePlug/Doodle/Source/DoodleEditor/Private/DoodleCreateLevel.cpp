@@ -67,29 +67,36 @@
 namespace doodle {
 bool init_ue4_project::load_all_blueprint() {
   UE_LOG(LogTemp, Log, TEXT("Loading Asset Registry..."));
-  FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+  FAssetRegistryModule &AssetRegistryModule =
+      FModuleManager::LoadModuleChecked<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
   AssetRegistryModule.Get().SearchAllAssets(/*bSynchronousSearch =*/true);
   UE_LOG(LogTemp, Log, TEXT("Finished Loading Asset Registry."));
 
   UE_LOG(LogTemp, Log, TEXT("Gathering All Blueprints From Asset Registry..."));
 
+  UBlueprint::StaticClass()->GetPathName();
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+  return AssetRegistryModule.Get().GetAssetsByClass(
+      FTopLevelAssetPath{UBlueprint::StaticClass()->GetPathName()}, blueprint_list, true
+  );
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
+    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
   return AssetRegistryModule.Get().GetAssetsByClass(UBlueprint::StaticClass()->GetFName(), blueprint_list, true);
+#endif
 }
 
 bool init_ue4_project::build_all_blueprint() {
   for (auto &&i : blueprint_list) {
-    FString const AssetPath = i.ObjectPath.ToString();
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+    FString const AssetPath = i.GetObjectPathString();
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27) || \
+    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0)
+    FString const AssetPath                     = i.ObjectPath.ToString();
+#endif
     UE_LOG(LogTemp, Log, TEXT("Loading and Compiling: '%s'..."), *AssetPath);
 
-    UBlueprint *l_b =
-        Cast<UBlueprint>(
-            StaticLoadObject(
-                i.GetClass(),
-                nullptr,
-                *AssetPath,
-                nullptr,
-                LOAD_NoWarn | LOAD_DisableCompileOnLoad
-            )
+    UBlueprint *l_b = Cast<UBlueprint>(
+        StaticLoadObject(i.GetClass(), nullptr, *AssetPath, nullptr, LOAD_NoWarn | LOAD_DisableCompileOnLoad)
         );
 
     if (l_b != nullptr) {
@@ -288,15 +295,15 @@ bool init_ue4_project::import_ass_data(const FString &in_path) {
     TArray<FString> import_Paths{};
     AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
     for (auto &ImportData : ImportDataList) {
-      if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0) {
-        for (FString &i : ImportData->ImportedObjectPaths) {
-          FString pr{i};
-          import_Paths.AddUnique(i);
-          UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *pr);
-        }
-      } else {
-        UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
-      }
+      // if (ImportData->Result.Num() > 0 || ImportData->ImportedObjectPaths.Num() > 0) {
+      //   for (FString &i : ImportData->ImportedObjectPaths) {
+      //     FString pr{i};
+      //     import_Paths.AddUnique(i);
+      //     UE_LOG(LogTemp, Log, TEXT("导入完成 %s"), *pr);
+      //   }
+      // } else {
+      //   UE_LOG(LogTemp, Error, TEXT("导入失败 %s"), *ImportData->Filename);
+      // }
     }
     UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 
