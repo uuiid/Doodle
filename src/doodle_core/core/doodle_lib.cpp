@@ -48,7 +48,9 @@ void doodle_lib::init() {
   ptr->reg         = std::make_shared<entt::registry>();
 
   boost::locale::generator k_gen{};
-  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
+  k_gen.categories(
+      boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
+  );
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();

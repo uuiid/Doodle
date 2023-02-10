@@ -35,10 +35,10 @@ class boost_test_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 }  // namespace detail
 
-using boost_test_sink_mt     = detail::boost_test_sink<std::mutex>;
+using boost_test_sink_mt      = detail::boost_test_sink<std::mutex>;
 
-lib_fixtures::lib_fixtures() = default;
-lib_fixtures::~lib_fixtures() { doodle::logger_ctrl::get_log().refresh(); }
+lib_fixtures::lib_fixtures()  = default;
+lib_fixtures::~lib_fixtures() = default;
 
 run_subprocess::run_subprocess(boost::asio::io_context& in_io)
     : io(in_io),

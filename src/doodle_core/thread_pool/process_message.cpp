@@ -6,6 +6,7 @@
 
 #include <boost/locale.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+
 #include <magic_enum.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
@@ -53,7 +54,7 @@ void process_message::message(const std::string& in_string, const level& in_leve
   auto l_msg{in_string};
 
   boost::locale::generator k_gen{};
-  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
+  //  k_gen.categories(boost::locale::all_categories ^ boost::locale::formatting_facet ^ boost::locale::parsing_facet);
 
   static auto l_local{k_gen("zh_CN.UTF-8")};
   if (ranges::all_of(l_msg, [&](const std::string::value_type& in_type) -> bool {
