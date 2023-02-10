@@ -1,11 +1,14 @@
 ﻿#include "DoodleToolPalette.h"
-#include "SlateBasics.h"
-
+// #include "SlateBasics.h"
 #include "DoodleStyle.h"
+#include "SlateCore.h"
+#include "SlateOptMacros.h"
+#include "Widgets/Layout/SScrollBorder.h"
 // 资源注册表
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "DragAndDrop/AssetDragDropOp.h"
 // #include "IPlacementModeModule.h"
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SDoodleToolPalette::Construct(const FArguments& InArgs) {
   p_list.Add(MakeShareable(new SDoodleToolListItem{nullptr, FAssetData{}}));

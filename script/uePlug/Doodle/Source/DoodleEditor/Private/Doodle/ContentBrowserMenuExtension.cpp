@@ -1,9 +1,9 @@
 #include "Doodle/ContentBrowserMenuExtension.h"
 
 /// 资产模块
-#include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetTools/Public/IAssetTools.h"
-#include "AssetRegistryModule.h"
+#include "AssetToolsModule.h"
 
 // 调整贴图大小
 #include "ResizeTexture.h"
