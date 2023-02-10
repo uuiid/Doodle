@@ -1,7 +1,8 @@
 ﻿#include "DoodleToolPalette.h"
 // #include "SlateBasics.h"
 #include "DoodleStyle.h"
-#include "SlateCore.h"
+// #include "SlateCore.h"
+
 #include "SlateOptMacros.h"
 #include "Widgets/Layout/SScrollBorder.h"
 // 资源注册表
