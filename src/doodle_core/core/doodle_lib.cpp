@@ -44,7 +44,7 @@ void doodle_lib::init() {
   ptr              = std::move(std::make_unique<impl>());
   /// @brief 初始化其他
   ptr->io_context_ = std::make_shared<boost::asio::io_context>();
-  ptr->p_log       = std::make_shared<logger_ctrl>();
+  ptr->p_log       = std::make_shared<logger_ctr_ptr::element_type>();
   ptr->reg         = std::make_shared<entt::registry>();
 
   boost::locale::generator k_gen{};
@@ -66,17 +66,13 @@ void doodle_lib::init() {
 
 registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 
-boost::asio::io_context& doodle_lib::io_context_attr() const { return *ptr->io_context_; }
-
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 
 doodle_lib::~doodle_lib() { database_info::reset(); }
 
-boost::asio::thread_pool& doodle_lib::thread_attr() const { return ptr->thread_pool_attr; }
-
-registry_ptr& g_reg() { return doodle_lib::Get().reg_attr(); }
-
-boost::asio::io_context& g_io_context() { return doodle_lib::Get().io_context_attr(); }
-boost::asio::thread_pool& g_thread() { return doodle_lib::Get().thread_attr(); }
+registry_ptr& g_reg() { return doodle_lib::Get().ptr->reg; }
+boost::asio::io_context& g_io_context() { return *doodle_lib::Get().ptr->io_context_; }
+boost::asio::thread_pool& g_thread() { return doodle_lib::Get().ptr->thread_pool_attr; }
+details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
 
 }  // namespace doodle

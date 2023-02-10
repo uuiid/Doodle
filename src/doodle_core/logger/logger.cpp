@@ -13,8 +13,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
-namespace doodle {
-namespace details {
+namespace doodle::details {
 template <class Mutex>
 class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
  public:
@@ -42,12 +41,10 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 
   void flush_() override {}
 };
-}  // namespace details
-using msvc_doodle_sink_mt = details::msvc_doodle_sink<std::mutex>;
+using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
 logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
   spdlog::init_thread_pool(8192, 1);
-
   init_temp_log();
 }
 
@@ -88,8 +85,6 @@ void logger_ctrl::init_temp_log() {
   SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
 }
 
-logger_ctrl &logger_ctrl::get_log() { return *core_set::get_set().log_ptr; }
-
 logger_ctrl::~logger_ctrl() {
   refresh();
   spdlog::drop_all();
@@ -107,4 +102,4 @@ bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_pt
   return true;
 }
 void logger_ctrl::refresh() { spdlog::get("doodle_lib")->flush(); }
-}  // namespace doodle
+}  // namespace doodle::details

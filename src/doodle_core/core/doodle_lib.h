@@ -16,6 +16,14 @@ class thread_pool;
 namespace doodle {
 
 class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comparable<doodle_lib> {
+ public:
+  using logger_ctr_ptr = std::shared_ptr<details::logger_ctrl>;
+  friend boost::asio::io_context& g_io_context();
+  friend boost::asio::thread_pool& g_thread();
+  friend registry_ptr& g_reg();
+  friend registry_ptr& g_reg();
+  friend details::logger_ctrl& g_logger_ctrl();
+
  private:
   class impl;
   std::unique_ptr<impl> ptr;
@@ -29,8 +37,6 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   static doodle_lib& Get();
 
   [[nodiscard]] registry_ptr& reg_attr() const;
-  [[nodiscard]] boost::asio::io_context& io_context_attr() const;
-  [[nodiscard]] boost::asio::thread_pool& thread_attr() const;
 
   bool operator==(const doodle_lib& in_rhs) const;
 };

@@ -8,6 +8,7 @@
 #include <doodle_core/core/chrono_.h>
 #include <doodle_core/core/core_help_impl.h>
 #include <doodle_core/core/file_sys.h>
+#include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
@@ -33,6 +34,7 @@ namespace details {
 class database_info;
 class program_info;
 class identifier;
+class logger_ctrl;
 }  // namespace details
 using database_info = entt::locator<details::database_info>;
 using program_info  = entt::locator<details::program_info>;
@@ -47,9 +49,7 @@ class work_task_info;
 using namespace std::literals;
 using namespace date::literals;
 
-class logger_ctrl;
 class doodle_lib;
-using logger_ctr_ptr = std::shared_ptr<logger_ctrl>;
 using string_list    = std::vector<std::string>;
 
 using doodle_lib_ptr = std::shared_ptr<doodle_lib>;

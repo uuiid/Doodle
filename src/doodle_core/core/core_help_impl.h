@@ -27,7 +27,6 @@ struct [[maybe_unused]] entt::type_hash<
 namespace doodle {
 using registry_ptr = std::shared_ptr<entt::registry>;
 DOODLE_CORE_API registry_ptr &g_reg();
-DOODLE_CORE_API registry_ptr &g_gui_reg();
 
 template <class Component, std::enable_if_t<!std::is_same_v<entt::entity, Component>, bool> = true>
 entt::handle make_handle(const Component &instance) {

@@ -15,7 +15,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace doodle {
+namespace doodle::details {
 
 /**
  * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
@@ -34,7 +34,6 @@ class DOODLE_CORE_API logger_ctrl {
     guiexe = 1,
     server = 2,
   };
-  static logger_ctrl& get_log();
 
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 

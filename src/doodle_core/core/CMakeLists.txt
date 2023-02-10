@@ -15,6 +15,7 @@ target_sources(
         util.h
         app_facet.h
         program_info.h
+        global_function.h
 
         PRIVATE
         core_set.cpp
