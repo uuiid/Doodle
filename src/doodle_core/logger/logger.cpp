@@ -79,27 +79,24 @@ void logger_ctrl::init_temp_log() {
 
   spdlog::flush_every(3s);
   spdlog::set_level(spdlog::level::debug);
-  SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}", "ok"));
-  SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));
-  SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
-  SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
 }
 
 logger_ctrl::~logger_ctrl() {
-  refresh();
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger> &in_ptr) { in_ptr->flush(); });
   spdlog::drop_all();
   spdlog::shutdown();
 }
 bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr, const std::string &in_name) {
-  refresh();
   auto l_logger = make_log(p_log_path, in_name);
   l_logger->sinks().emplace_back(in_ptr);
+  auto l_name = spdlog::default_logger()->name();
   spdlog::set_default_logger(l_logger);
-  SPDLOG_DEBUG(fmt::format("初始化gebug日志 {}", "ok"));
-  SPDLOG_INFO(fmt::format("初始化信息日志 {}", "ok"));
-  SPDLOG_WARN(fmt::format("初始化警告日志 {}", "ok"));
-  SPDLOG_ERROR(fmt::format("初始化错误日志 {}", "ok"));
+  /// 刷新所有
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger> &in_ptr) { in_ptr->flush(); });
+  /// 去除旧的log
+  spdlog::drop(l_name);
+
+  SPDLOG_DEBUG(fmt::format("初始化 {} 日志 {}", in_name));
   return true;
 }
-void logger_ctrl::refresh() { spdlog::get("doodle_lib")->flush(); }
 }  // namespace doodle::details

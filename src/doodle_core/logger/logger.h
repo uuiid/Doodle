@@ -37,7 +37,6 @@ class DOODLE_CORE_API logger_ctrl {
 
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 
-  void refresh();
 };
 
 }  // namespace doodle
