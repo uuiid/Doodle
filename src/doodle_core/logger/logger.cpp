@@ -83,7 +83,6 @@ void logger_ctrl::init_temp_log() {
 
 logger_ctrl::~logger_ctrl() {
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger> &in_ptr) { in_ptr->flush(); });
-  spdlog::drop_all();
   spdlog::shutdown();
 }
 bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink> &in_ptr, const std::string &in_name) {
