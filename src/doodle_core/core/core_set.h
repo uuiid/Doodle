@@ -1,6 +1,7 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+
 #include <boost/process.hpp>
 namespace doodle {
 
@@ -62,9 +63,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
   std::string ue4_version;
   bool maya_replace_save_dialog{false};
   bool maya_force_resolve_link{false};
-
-  doodle_lib *lib_ptr{};
-  logger_ctrl *log_ptr{};
 
   std::string server_ip{};
 
