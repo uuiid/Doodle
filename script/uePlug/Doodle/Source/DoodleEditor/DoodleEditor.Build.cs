@@ -9,6 +9,8 @@ public class doodleEditor : ModuleRules
 	public doodleEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		/// 启用rtti, 用来使用 std::dynamic_pointer_cast
+		//bForceEnableRTTI = true;
 
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -98,6 +100,7 @@ public class doodleEditor : ModuleRules
                 "FBX", // fbx读取需要
                 "ImageCore",// 调整图像使用
                 "SkeletalMeshUtilitiesCommon",// 简化骨骼
+				"AlembicImporter",//导入abc
             }
 			);
 

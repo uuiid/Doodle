@@ -66,6 +66,17 @@
 #include "Sections/MovieSceneCameraCutSection.h"  // 相机剪切
 #include "SequencerUtilities.h"                   // 创建相机
 
+// 创建world
+#include "AssetToolsModule.h"
+#include "EditorLevelLibrary.h"
+#include "Factories/WorldFactory.h"
+#include "IAssetTools.h"
+#include "LevelEditorSubsystem.h"
+#include "LevelSequence.h"
+#include "Modules/ModuleManager.h"
+// 导入abc
+#include "AlembicImportFactory.h"
+
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
 
@@ -146,11 +157,278 @@ void Debug_To_File(const FStringView& In_String) {
 
 }  // namespace
 
-class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4::FFbxImport>> {
- public:
-  SLATE_BEGIN_ARGS(SDoodleImportFbxUiItem) : _ItemShow() {}
+FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) {
+  FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
+  FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, ImportPath};
 
-  SLATE_ARGUMENT(TSharedPtr<doodle_ue4::FFbxImport>, ItemShow)
+  if (L_Reg_Ep.FindNext()) {
+    Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
+  }
+
+  FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-z])?)"};
+  FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, ImportPath};
+
+  if (L_Reg_Sc.FindNext()) {
+    Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
+    if (L_Reg_Sc.GetEndLimit() > 2) {
+      ShotAb = L_Reg_Sc.GetCaptureGroup(2);
+    }
+  }
+
+  FString L_Path = FString::Printf(TEXT("/Game/Shot/ep%.4d/%s%.4d_sc%.4d%s"), Eps, *In_Path_Prefix, Eps, Shot, *ShotAb);
+  return L_Path;
+}
+
+void UDoodleBaseImportData::GenStartAndEndTime() {
+  FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
+  FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, FPaths::GetBaseFilename(ImportPath)};
+  StartTime = {1000};
+  EndTime   = {1001};
+
+  if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2) {
+    StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
+    EndTime   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
+  }
+}
+
+void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix) {
+  ImportPathDir = GetImportPath(In_Path_Prefix) / "Fbx_Import";
+}
+
+void UDoodleFbxImport_1::ImportFile() {
+  UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
+  L_Data->GroupName                 = TEXT("doodle import");
+  L_Data->Filenames.Add(ImportPath);
+  L_Data->DestinationPath                          = ImportPathDir;
+  L_Data->bReplaceExisting                         = true;
+  L_Data->bSkipReadOnly                            = true;
+  L_Data->bReplaceExisting                         = true;
+
+  UFbxFactory* k_fbx_f                             = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), L_Data);
+  L_Data->Factory                                  = k_fbx_f;
+
+  k_fbx_f->ImportUI->MeshTypeToImport              = FBXIT_SkeletalMesh;
+  k_fbx_f->ImportUI->OriginalImportType            = FBXIT_SkeletalMesh;
+  k_fbx_f->ImportUI->bImportAsSkeletal             = true;
+  k_fbx_f->ImportUI->bImportMesh                   = true;
+  k_fbx_f->ImportUI->bImportAnimations             = true;
+  k_fbx_f->ImportUI->bImportRigidMesh              = true;
+  k_fbx_f->ImportUI->bImportMaterials              = false;
+  k_fbx_f->ImportUI->bImportTextures               = false;
+  k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict = false;
+
+  k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
+  k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
+  k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
+  k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
+  k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
+  k_fbx_f->ImportUI->TextureImportData->MaterialSearchLocation   = EMaterialSearchLocation::UnderRoot;
+  if (SkinObj) {
+    k_fbx_f->ImportUI->Skeleton                                    = SkinObj;
+    k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_Animation;
+    k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
+    k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
+    k_fbx_f->ImportUI->bImportMesh                                 = false;
+    k_fbx_f->ImportUI->bImportAnimations                           = true;
+    k_fbx_f->ImportUI->bImportRigidMesh                            = false;
+    k_fbx_f->ImportUI->bImportMaterials                            = false;
+    k_fbx_f->ImportUI->bImportTextures                             = false;
+    k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict               = false;
+
+    k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
+    k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
+    k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
+    k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
+    k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
+  }
+  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+
+  AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+}
+
+void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix) {
+  ImportPathDir = GetImportPath(In_Path_Prefix) / "Abcs_Import";
+}
+
+void UDoodleFbxCameraImport_1::ImportFile() {
+  const FFrameRate L_Rate{25, 1};
+  const FFrameNumber L_Start{1001};
+  FFrameNumber L_End{1200};
+
+  FScopedSlowTask L_Task_Scoped{6.0f, LOCTEXT("Import_CAm", "导入camera")};
+  L_Task_Scoped.MakeDialog();
+
+  auto& L_AssTool = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+
+  L_Task_Scoped.EnterProgressFrame(
+      1, FText::Format(
+             LOCTEXT("Import_ImportingCameraFile1", "导入 \"{0}\"..."),
+             FText::FromString(FPaths::GetBaseFilename(ImportPath))
+         )
+  );
+
+  ULevelSequence* L_ShotSequence                        = LoadObject<ULevelSequence>(nullptr, *ImportPathDir);
+
+  // 打开fbx
+  UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
+  FFBXInOutParameters InOutParams;
+  // 修改一下设置
+  L_ImportFBXSettings->bMatchByNameOnly       = false;
+  L_ImportFBXSettings->bCreateCameras         = false;
+  L_ImportFBXSettings->bReplaceTransformTrack = true;
+  L_ImportFBXSettings->bReduceKeys            = false;
+  // 这里使用包装导入
+  if (!MovieSceneToolHelpers::ReadyFBXForImport(ImportPath, L_ImportFBXSettings, InOutParams)) {
+    return;
+  }
+
+  // 已经打开的fbx, 直接获取, 是一个单例
+  UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+  fbxsdk::FbxTimeSpan L_Fbx_Time     = L_FbxImporter->GetAnimationTimeSpan(
+      L_FbxImporter->Scene->GetRootNode(), L_FbxImporter->Scene->GetCurrentAnimationStack()
+  );
+  // 获取结束帧
+  L_End = (int32)L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL);
+  UE_LOG(LogTemp, Log, TEXT("fbx time %d -> %d"), L_Start.Value, L_End.Value);
+
+  L_Task_Scoped.EnterProgressFrame(
+      1,
+      FText::Format(LOCTEXT("Import_ImportingCameraFile2", "检查定序器 \"{0}\"..."), FText::FromString(ImportPathDir))
+  );
+
+  // 创建定序器
+  if (!L_ShotSequence) {
+    for (TObjectIterator<UClass> it{}; it; ++it) {
+      if (it->IsChildOf(UFactory::StaticClass())) {
+        if (it->GetName() == "LevelSequenceFactoryNew") {
+          L_ShotSequence = CastChecked<ULevelSequence>(L_AssTool.CreateAsset(
+              FPaths::GetBaseFilename(ImportPathDir), FPaths::GetPath(ImportPathDir), ULevelSequence::StaticClass(),
+              it->GetDefaultObject<UFactory>()
+          ));
+        }
+      }
+    }
+  }
+  L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile3", "设置定序器以及相机 ..."));
+
+  // 设置定序器属性
+  L_ShotSequence->GetMovieScene()->SetDisplayRate(L_Rate);
+  L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(L_Rate);
+  L_ShotSequence->GetMovieScene()->Modify();
+
+  /// 设置范围
+  L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
+  L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
+  L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start, L_End}, true);
+  L_ShotSequence->Modify();
+
+  // FSoftObjectPath L_LevelSequenceSoftPath{ImportPathDir};
+  // UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
+  UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+  L_AssetEditorSubsystem->OpenEditorForAsset(L_ShotSequence);
+
+  L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile4", "尝试打开定序器 ..."));
+
+  IAssetEditorInstance* L_AssetEditor                = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence, true);
+
+  ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
+  ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
+  UMovieScene* L_Move                                = L_ShotSequence->GetMovieScene();
+  ACineCameraActor* L_CameraActor{};
+  // 相机task
+  UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
+  if (!L_Task)
+    // 添加相机时以及强制评估了, 不需要再强制评估
+    FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+  else
+    // 强制评估序列, 要不然相机指针会空
+    L_ShotSequencer->ForceEvaluate();
+  L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile5", "刷新 ..."));
+
+  L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
+
+  // Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
+  // 寻找相机组件
+  UCameraComponent* L_Cam{};
+  for (auto&& L_Section : L_Task->GetAllSections()) {
+    L_Cam = Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer, MovieSceneSequenceID::Root);
+    if (L_Cam) break;
+  }
+
+  if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
+  UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CameraActor->GetActorNameOrLabel());
+  // 寻找相机id
+  FGuid L_CamGuid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
+
+  UE_LOG(LogTemp, Log, TEXT("guid %s"), *L_CamGuid.ToString());
+
+  TMap<FGuid, FString> L_Map{};
+  L_Map.Add(L_CamGuid, L_CameraActor->GetActorNameOrLabel());
+
+  L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
+
+  // 正式开始导入
+  MovieSceneToolHelpers::ImportFBXCameraToExisting(
+      L_FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
+  );
+
+  UWorld* World = Cast<UWorld>(L_ShotSequencer->GetPlaybackContext());
+  bool bValid   = MovieSceneToolHelpers::ImportFBXIfReady(
+      World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, L_ImportFBXSettings,
+      InOutParams
+  );
+
+  L_ShotSequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
+}
+
+void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix) {
+  FString L_Folder = GetImportPath(In_Path_Prefix);
+  ImportPathDir    = L_Folder / FPaths::GetBaseFilename(L_Folder) + "_L";
+}
+
+void UDoodleAbcImport_1::ImportFile() {
+  UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
+  L_Data->GroupName                 = TEXT("doodle import");
+  L_Data->Filenames.Add(ImportPath);
+  L_Data->DestinationPath        = ImportPathDir;
+  L_Data->bReplaceExisting       = true;
+  L_Data->bSkipReadOnly          = true;
+  L_Data->bReplaceExisting       = true;
+
+  UAlembicImportFactory* k_abc_f = DuplicateObject<UAlembicImportFactory>(GetDefault<UAlembicImportFactory>(), L_Data);
+  L_Data->Factory                = k_abc_f;
+
+  /// 获取abc默认设置并修改
+  UAbcImportSettings* k_abc_stting                   = k_abc_f->ImportSettings;
+
+  k_abc_stting->ImportType                           = EAlembicImportType::GeometryCache;  // 导入为几何缓存
+  k_abc_stting->MaterialSettings.bCreateMaterials    = false;                              // 不创建材质
+  k_abc_stting->MaterialSettings.bFindMaterials      = true;                               // 寻找材质
+  k_abc_stting->ConversionSettings.Preset            = EAbcConversionPreset::Max;          // 导入预设为3dmax
+  k_abc_stting->ConversionSettings.bFlipV            = true;
+  k_abc_stting->ConversionSettings.Scale.X           = 1.0;
+  k_abc_stting->ConversionSettings.Scale.Y           = -1.0;
+  k_abc_stting->ConversionSettings.Scale.Z           = 1.0;
+  k_abc_stting->ConversionSettings.Rotation.X        = 90.0;
+  k_abc_stting->ConversionSettings.Rotation.Y        = 0.0;
+  k_abc_stting->ConversionSettings.Rotation.Z        = 0.0;
+
+  k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;       // 合并轨道
+  k_abc_stting->SamplingSettings.bSkipEmpty          = true;       // 跳过空白帧
+  k_abc_stting->SamplingSettings.FrameStart          = StartTime;  // 开始帧
+  k_abc_stting->SamplingSettings.FrameEnd            = EndTime;    // 结束帧
+  k_abc_stting->SamplingSettings.FrameSteps          = 1;          // 帧步数
+
+  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+
+  AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+}
+
+class SDoodleImportUiItem : public SMultiColumnTableRow<TObjectPtr<UDoodleBaseImportData>> {
+ public:
+  SLATE_BEGIN_ARGS(SDoodleImportUiItem) : _ItemShow() {}
+
+  SLATE_ARGUMENT(TObjectPtr<UDoodleBaseImportData>, ItemShow)
 
   SLATE_END_ARGS()
 
@@ -158,19 +436,34 @@ class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
   void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView) {
     ItemShow = InArgs._ItemShow;
 
+    if (auto L_FBX = Cast<UDoodleFbxImport_1>(InArgs._ItemShow.Get())) {
+      ItemShowFBX = L_FBX;
+    }
+
     FSuperRowType::Construct(FSuperRowType::FArguments().Padding(0), InOwnerTableView);
   }
 
  public:  // override SMultiColumnTableRow
   virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override {
-    if (ColumnName == TEXT("Fbx File"))  // 判断列名为Fbx File，次名称在创建View时，通过SHeaderRow::Column指定
+    // SHeaderRow::Column(TEXT("Import_File"))
+    // SHeaderRow::Column(TEXT("Time_Ranges"))
+    // SHeaderRow::Column(TEXT("Skeleton_Path"))
+    // SHeaderRow::Column(TEXT("Import_Path_Dir"))
+
+    if (ColumnName == TEXT("Import_File"))  // 判断列名为Fbx File，次名称在创建View时，通过SHeaderRow::Column指定
     {
-      return SNew(STextBlock)
-          .Text(FText::FromString(ItemShow->ImportFbxPath));
-    } else if (ColumnName == TEXT("Import Path Dir")) {
-      return SNew(STextBlock)
-          .Text(FText::FromString(ItemShow->ImportPathDir));
-    } else {
+      return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPath));
+    } else if (ColumnName == TEXT("Time_Ranges")) {
+      // clang-format off
+       return SNew(STextBlock)
+          .Text_Lambda([this]() -> FText {
+            return FText::FromString(FString::Printf(TEXT("%d - %d"), ItemShow->StartTime, ItemShow->EndTime));
+          })
+          // clang-format on
+          ;
+    } else if (ColumnName == TEXT("Import_Path_Dir")) {
+      return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPathDir));
+    } else if (ColumnName == TEXT("Skeleton_Path") && ItemShowFBX) {
       // clang-format off
        return SNew(SHorizontalBox) 
         + SHorizontalBox::Slot()
@@ -179,8 +472,8 @@ class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
         [
           SNew(STextBlock)
           .Text_Lambda([this]() -> FText {
-            return FText::FromString(FString::Printf(TEXT("%s"), *( ItemShow->SkinObj != nullptr ?
-                                                                    ItemShow->SkinObj->GetPackage()->GetPathName() : FString{TEXT("")})));
+            return FText::FromString(FString::Printf(TEXT("%s"), *( ItemShowFBX->SkinObj != nullptr ?
+                                                                    ItemShowFBX->SkinObj->GetPackage()->GetPathName() : FString{TEXT("")})));
           })
         ]
         + SHorizontalBox::Slot()///  
@@ -191,31 +484,29 @@ class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
           + SHorizontalBox::Slot()/// ⬅️, 将选中的给到属性上
           .HAlign(HAlign_Right)
           [
-            PropertyCustomizationHelpers::MakeUseSelectedButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleUseSelected))/// 委托转发
+            PropertyCustomizationHelpers::MakeUseSelectedButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportUiItem::DoodleUseSelected))/// 委托转发
           ]
           + SHorizontalBox::Slot()/// 🔍 将属性显示在资产编辑器中
           .HAlign(HAlign_Right)
           [
-            PropertyCustomizationHelpers::MakeBrowseButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleBrowse))/// 委托转发
+            PropertyCustomizationHelpers::MakeBrowseButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportUiItem::DoodleBrowse))/// 委托转发
           ]
           + SHorizontalBox::Slot()/// 重置, 将属性给空
           .HAlign(HAlign_Right)
           [
-            PropertyCustomizationHelpers::MakeResetButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportFbxUiItem::DoodleReset))/// 委托转发
+            PropertyCustomizationHelpers::MakeResetButton(FSimpleDelegate::CreateRaw(this,&SDoodleImportUiItem::DoodleReset))/// 委托转发
           ]
         ]
           // clang-format on
           ;
-      // return SNew(STextBlock)
-      //     .Text(FText::FromString(FString::Printf(TEXT("%s"), *ItemShow->SkinObj->GetPackage()->GetPathName())));
+    } else {
+      return SNew(STextBlock).Text(FText::FromString(TEXT("none")));
     }
   }
 
   void DoodleUseSelected() {
     FContentBrowserModule& L_ContentBrowserModle =
-        FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-            "ContentBrowser"
-        );
+        FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
     TArray<FAssetData> L_SelectedAss;
     L_ContentBrowserModle.Get().GetSelectedAssets(L_SelectedAss);
 
@@ -223,93 +514,21 @@ class SDoodleImportFbxUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4
       return Cast<USkeleton>(InAss.GetAsset()) != nullptr;
     });
     if (L_It != nullptr) {
-      ItemShow->SkinObj = Cast<USkeleton>(L_It->GetAsset());
+      ItemShowFBX->SkinObj = Cast<USkeleton>(L_It->GetAsset());
     }
   }
   void DoodleBrowse() {
-    if (ItemShow->SkinObj != nullptr) {
+    if (ItemShowFBX->SkinObj != nullptr) {
       FContentBrowserModule& L_ContentBrowserModle =
-          FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(
-              "ContentBrowser"
-          );
-      L_ContentBrowserModle.Get().SyncBrowserToAssets(TArray<FAssetData>{FAssetData{ItemShow->SkinObj}});
+          FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+      L_ContentBrowserModle.Get().SyncBrowserToAssets(TArray<FAssetData>{FAssetData{ItemShowFBX->SkinObj}});
     }
   }
-  void DoodleReset() {
-    ItemShow->SkinObj = nullptr;
-  }
+  void DoodleReset() { ItemShowFBX->SkinObj = nullptr; }
 
  private:
-  TSharedPtr<doodle_ue4::FFbxImport> ItemShow;
-};
-
-class SDoodleImportAbcUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4::FFbxImport>> {
- public:
-  SLATE_BEGIN_ARGS(SDoodleImportAbcUiItem) : _ItemShow() {}
-
-  SLATE_ARGUMENT(TSharedPtr<doodle_ue4::FAbcImport>, ItemShow)
-
-  SLATE_END_ARGS()
-
- public:
-  void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView) {
-    ItemShow = InArgs._ItemShow;
-
-    FSuperRowType::Construct(FSuperRowType::FArguments().Padding(0), InOwnerTableView);
-  }
-
- public:  // override SMultiColumnTableRow
-  virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override {
-    if (ColumnName == TEXT("Abc File"))  // 判断列名为Fbx File，次名称在创建View时，通过SHeaderRow::Column指定
-    {
-      return SNew(STextBlock)
-          .Text(FText::FromString(ItemShow->ImportAbcPath));
-    } else if (ColumnName == TEXT("Import Path Dir")) {
-      return SNew(STextBlock)
-          .Text(FText::FromString(ItemShow->ImportPathDir));
-    } else {
-      // clang-format off
-       return SNew(STextBlock)
-          .Text_Lambda([this]() -> FText {
-            return FText::FromString(FString::Printf(TEXT("%d - %d"), ItemShow->StartTime, ItemShow->EndTime));
-          })
-          // clang-format on
-          ;
-    }
-  }
-
- private:
-  TSharedPtr<doodle_ue4::FAbcImport> ItemShow;
-};
-
-class SDoodleImportFbxCameraUiItem : public SMultiColumnTableRow<TSharedPtr<doodle_ue4::FFbxCameraImport>> {
- public:
-  SLATE_BEGIN_ARGS(SDoodleImportFbxCameraUiItem) : _ItemShow() {}
-
-  SLATE_ARGUMENT(TSharedPtr<doodle_ue4::FFbxCameraImport>, ItemShow)
-
-  SLATE_END_ARGS()
-
- public:
-  void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView) {
-    ItemShow = InArgs._ItemShow;
-
-    FSuperRowType::Construct(FSuperRowType::FArguments().Padding(0), InOwnerTableView);
-  }
-
- public:  // override SMultiColumnTableRow
-  virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnName) override {
-    if (ColumnName == TEXT("Fbx File"))  // 判断列名为Fbx File，次名称在创建View时，通过SHeaderRow::Column指定
-    {
-       return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportFbxPath));
-    } else {
-       return SNew(STextBlock).Text(FText::FromString(ItemShow->ImportPathDir));
-    }
-    // if (ColumnName == TEXT("Import Path Dir"))
-  }
-
- private:
-  TSharedPtr<doodle_ue4::FFbxCameraImport> ItemShow;
+  TObjectPtr<UDoodleBaseImportData> ItemShow;
+  UDoodleFbxImport_1* ItemShowFBX;
 };
 
 void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
@@ -370,7 +589,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         .Padding(2.0f)
 		[
 	      SNew(STextBlock)
-	      .Text(LOCTEXT("fbxTitle", "导入的fbx 动画文件"))
+	      .Text(LOCTEXT("importTitle", "导入的fbx 动画文件, 相机, abc文件"))
 	      .Font(Font)
 		]
 
@@ -380,14 +599,14 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
 		.VAlign(VAlign_Top)
         .Padding(2.0f)
         [
-          SAssignNew(ListImportFbx,SListView<TSharedPtr<doodle_ue4::FFbxImport>>)
+          SAssignNew(ListImportGui,SListView<TObjectPtr<UDoodleBaseImportData>>)
           .ItemHeight(80) // 小部件高度
-          .ListItemsSource(&ListImportFbxData)
+          .ListItemsSource(&ListImportData)
           .ScrollbarVisibility(EVisibility::All)
           .OnGenerateRow_Lambda(// 生成小部件
-            [](TSharedPtr<doodle_ue4::FFbxImport> InItem, 
+            [](TObjectPtr<UDoodleBaseImportData> InItem, 
                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
-              return SNew(SDoodleImportFbxUiItem, OwnerTable)
+              return SNew(SDoodleImportUiItem, OwnerTable)
                     .ItemShow(InItem);
             }
           )
@@ -395,111 +614,29 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .HeaderRow ///题头元素
           (
             SNew(SHeaderRow)
-            + SHeaderRow::Column(TEXT("Fbx File"))
+            + SHeaderRow::Column(TEXT("Import_File"))
             [
               SNew(SBorder)
               .Padding(5)
               [
                 SNew(STextBlock)
-                .Text(FText::FromString(TEXT("Fbx File")))
+                .Text(FText::FromString(TEXT("Import File")))
               ]
             ]
-            +SHeaderRow::Column(TEXT("Skeleton Path"))
-            .DefaultLabel(LOCTEXT("Skeleton Path","Skeleton Path"))
+			+SHeaderRow::Column(TEXT("Ep_And_Shot"))
+            .DefaultLabel(LOCTEXT("Ep_And_Shot","集数和镜头"))
 
-            +SHeaderRow::Column(TEXT("Import Path Dir"))
-            .DefaultLabel(LOCTEXT("Import Path Dir","Import Path Dir"))
-          )
-        ]
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .VAlign(VAlign_Center)
-        .Padding(2.0f)
-		[
-	      SNew(STextBlock)
-	      .Text(LOCTEXT("fbxTitle2", "导入的fbx 摄像机文件"))
-	      .Font(Font)
-		]
-        /// 主要的列表小部件(Fbx Camera)
-        + SVerticalBox::Slot()
-		.FillHeight(1.0f)
-		.VAlign(VAlign_Top)
-        .Padding(2.0f)
-        [
-          SAssignNew(ListImportFbxCam,SListView<TSharedPtr<doodle_ue4::FFbxCameraImport>>)
-          .ItemHeight(80) // 小部件高度
-          .ListItemsSource(&ListImportFbxCamData)
-          .ScrollbarVisibility(EVisibility::All)
-          .OnGenerateRow_Lambda(// 生成小部件
-            [](TSharedPtr<doodle_ue4::FFbxCameraImport> InItem, 
-               const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
-              return SNew(SDoodleImportFbxCameraUiItem, OwnerTable)
-                    .ItemShow(InItem);
-            }
-          )
-          .SelectionMode(ESelectionMode::Type::Single) //单选
-          .HeaderRow ///题头元素
-          (
-            SNew(SHeaderRow)
-            + SHeaderRow::Column(TEXT("Fbx File"))
-            [
-              SNew(SBorder)
-              .Padding(5)
-              [
-                SNew(STextBlock)
-                .Text(FText::FromString(TEXT("Fbx File")))
-              ]
-            ]
-            +SHeaderRow::Column(TEXT("Import Path Dir"))
-            .DefaultLabel(LOCTEXT("Import Path Dir","Import Path Dir"))
-          )
-        ]
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .VAlign(VAlign_Center)
-        .Padding(2.0f)
-		[
-	      SNew(STextBlock)
-	      .Text(LOCTEXT("fbxTitle3", "导入的abc解算文件"))
-	      .Font(Font)
-		]
-        /// 主要的列表小部件(Abc)
-        + SVerticalBox::Slot()
-		.FillHeight(3.0f)
-		.VAlign(VAlign_Top)
-        .Padding(2.0f)
-        [
-          SAssignNew(ListImportAbc,SListView<TSharedPtr<doodle_ue4::FAbcImport>>)
-          .ItemHeight(80) // 小部件高度
-          .ListItemsSource(&ListImportAbcData)
-          .ScrollbarVisibility(EVisibility::All)
-          .OnGenerateRow_Lambda(// 生成小部件
-            [](TSharedPtr<doodle_ue4::FAbcImport> InItem, 
-               const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
-              return SNew(SDoodleImportAbcUiItem, OwnerTable)
-                    .ItemShow(InItem);
-            }
-          )
-          .SelectionMode(ESelectionMode::Type::Single) //单选
-          .HeaderRow ///题头元素
-          (
-            SNew(SHeaderRow)
-            + SHeaderRow::Column(TEXT("Abc File"))
-            [
-              SNew(SBorder)
-              .Padding(5)
-              [
-                SNew(STextBlock)
-                .Text(FText::FromString(TEXT("Abc File")))
-              ]
-            ]
-            +SHeaderRow::Column(TEXT("Time Ranges"))
-            .DefaultLabel(LOCTEXT("Time Ranges","Time Ranges"))
+			+SHeaderRow::Column(TEXT("Time_Ranges"))
+            .DefaultLabel(LOCTEXT("Time Ranges","时间范围"))
 
-            +SHeaderRow::Column(TEXT("Import Path Dir"))
-            .DefaultLabel(LOCTEXT("Import Path Dir","Import Path Dir"))
+            +SHeaderRow::Column(TEXT("Skeleton_Path"))
+            .DefaultLabel(LOCTEXT("Skeleton Path","骨骼路径"))
+
+            +SHeaderRow::Column(TEXT("Import_Path_Dir"))
+            .DefaultLabel(LOCTEXT("Import Path Dir","导入的目标"))
           )
         ]
+
         + SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)
@@ -513,11 +650,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .Text(LOCTEXT("Search USkeleton","Search USkeleton"))
             .ToolTipText(LOCTEXT("Search USkeleton Tip","寻找骨骼"))
             .OnClicked_Lambda([this](){
-               GetAllSkinObjs();
-               MatchFbx();
-               ListImportFbx->RebuildList();
-			   ListImportFbxCam->RebuildList();
-			   ListImportAbc->RebuildList();
+               FindSK();
                return FReply::Handled();
             })
           ]
@@ -528,13 +661,8 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .Text(LOCTEXT("Search USkeleton And Import","Search USkeleton And Import"))
             .ToolTipText(LOCTEXT("Search USkeleton Tip2","寻找骨骼并导入Fbx"))
             .OnClicked_Lambda([this](){
-               GetAllSkinObjs();
-               MatchFbx();
-               ImportFbx();
-               ImportAbc();
-               ListImportFbx->RebuildList();
-			   ListImportFbxCam->RebuildList();
-			   ListImportAbc->RebuildList();
+               FindSK();
+               ImportFile();
                return FReply::Handled();
             })
           ]
@@ -545,11 +673,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .Text(LOCTEXT("Search USkeleton Import","Search USkeleton Direct Import"))
             .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
             .OnClicked_Lambda([this](){
-               ImportFbx();
-               ImportAbc();
-               ListImportFbx->RebuildList();
-			   ListImportFbxCam->RebuildList();
-			   ListImportAbc->RebuildList();
+               ImportFile();
                return FReply::Handled();
             })
           ]
@@ -563,13 +687,9 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
           .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
           .OnClicked_Lambda([this](){
-    //         this->ListImportFbxData.Empty();
-    //         this->ListImportAbcData.Empty();
-			 //this->ListImportFbxCamData.Empty();
-			 //ListImportFbxCam->RebuildList();
-    //         ListImportFbx->RebuildList();
-			 //ListImportAbc->RebuildList();
-			 this->ImportCamera();
+    //         this->ListImportData.Empty(); 
+			 //ListImportGui->RebuildList(); 
+			 this->CreateWorld();
              return FReply::Handled();
           })
         ]
@@ -608,8 +728,8 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
   IAssetRegistry::Get()->EnumerateAssets(LFilter, [this](const FAssetData& InAss) -> bool {
     USkeleton* L_SK = Cast<USkeleton>(InAss.GetAsset());
     if (L_SK) {
-      doodle_ue4::FUSkeletonData& L_Ref_Data = this->AllSkinObjs.Emplace_GetRef();
-      L_Ref_Data.SkinObj                     = L_SK;
+      FDoodleUSkeletonData_1& L_Ref_Data = this->AllSkinObjs.Emplace_GetRef();
+      L_Ref_Data.SkinObj                 = L_SK;
 
       for (auto&& L_Item : L_SK->GetReferenceSkeleton().GetRawRefBoneInfo())
         L_Ref_Data.BoneNames.Add(L_Item.ExportName);
@@ -630,351 +750,79 @@ void SDoodleImportFbxUI::GetAllSkinObjs() {
   // });
 }
 
-void SDoodleImportFbxUI::MatchFbx() {
-  UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
-  FbxImporter->ClearAllCaches();
+bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporter* In_ImportFbx) {
+  TArray<fbxsdk::FbxNode*> L_Fbx_Node_list{};
+  FString L_NameSpace{};
 
-  TArray<TSharedPtr<doodle_ue4::FFbxImport>> L_RemoveList;
-  FScopedSlowTask L_Task_Scoped{(float_t)ListImportFbxData.Num(), LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
-  L_Task_Scoped.MakeDialog();
-  // FString L_Debug_str{};
+  FScopedSlowTask L_Task_Scoped2{
+      (float_t)In_ImportFbx->Scene->GetNodeCount() * 2, LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
 
-  for (auto&& L_Fbx_Path : ListImportFbxData) {
-    grop_SDoodleImportFbxUI L_grop_SDoodleImportFbxUI{FbxImporter};
-    FbxImporter->ImportFromFile(L_Fbx_Path->ImportFbxPath, FPaths::GetExtension(L_Fbx_Path->ImportFbxPath));
+  for (size_t i = 0; i < In_ImportFbx->Scene->GetNodeCount(); ++i) {
+    FString L_Name = MakeName(In_ImportFbx->Scene->GetNode(i)->GetName());
+    In_Fbx->FbxNodeNames.Add(L_Name);
+    // 获取名称空间
+    if (L_NameSpace.IsEmpty()) L_NameSpace = GetNamepace(In_ImportFbx->Scene->GetNode(i)->GetName());
 
-    TArray<fbxsdk::FbxNode*> L_Fbx_Node_list{};
-    FString L_NameSpace{};
-    L_Task_Scoped.EnterProgressFrame(1.0f);
+    L_Task_Scoped2.EnterProgressFrame(1.0f);
+  }
+  if (L_NameSpace.IsEmpty()) {
+    return false;
+  }
 
-    FScopedSlowTask L_Task_Scoped2{
-        (float_t)FbxImporter->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork2", "扫描 fbx 文件骨骼中...")};
-    for (size_t i = 0; i < FbxImporter->Scene->GetNodeCount(); ++i) {
-      FString L_Name = MakeName(FbxImporter->Scene->GetNode(i)->GetName());
-      L_Fbx_Path->FbxNodeNames.Add(L_Name);
-      // 获取名称空间
-      if (L_NameSpace.IsEmpty()) L_NameSpace = GetNamepace(FbxImporter->Scene->GetNode(i)->GetName());
-
-      L_Task_Scoped2.EnterProgressFrame(1.0f);
+  for (auto&& L_SK_Data : this->AllSkinObjs) {
+    L_Task_Scoped2.EnterProgressFrame(1.0f);
+    FString L_BaseName = FPaths::GetBaseFilename(In_Fbx->ImportPath);
+    if (In_Fbx->FbxNodeNames.Num() >= L_SK_Data.BoneNames.Num()) {
+      if ((L_SK_Data.SkinTag.IsEmpty() ? true : L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE
+          )  /// 先确认字串节省资源
+          && Algo::AllOf(
+                 L_SK_Data.BoneNames, [&](const FString& IN_Str) { return In_Fbx->FbxNodeNames.Contains(IN_Str); }
+             )  /// 进一步确认骨骼内容
+      )
+        In_Fbx->SkinObj = L_SK_Data.SkinObj;
+      return true;
     }
-    TArray<fbxsdk::FbxCamera*> L_Cameras{};
-    MovieSceneToolHelpers::GetCameras(FbxImporter->Scene->GetRootNode(), L_Cameras);
-    if (!L_Cameras.IsEmpty()) {
-      ListImportFbxCamData.Emplace(MakeShared<doodle_ue4::FFbxCameraImport>(L_Fbx_Path->ImportFbxPath));
-    }
-    if (L_NameSpace.IsEmpty()) {
-      L_RemoveList.Add(L_Fbx_Path);
-      continue;
-    }
+  }
 
-    FScopedSlowTask L_Task_Scoped3{
-        (float_t)FbxImporter->Scene->GetNodeCount(), LOCTEXT("DoingSlowWork3", "寻找 fbx 文件骨骼匹配的SK中...")};
-    for (auto&& L_SK_Data : this->AllSkinObjs) {
-      FString L_BaseName = FPaths::GetBaseFilename(L_Fbx_Path->ImportFbxPath);
-      if (L_Fbx_Path->FbxNodeNames.Num() >= L_SK_Data.BoneNames.Num()) {
-        if ((
-                L_SK_Data.SkinTag.IsEmpty()
-                    ? true
-                    : L_BaseName.Find(L_SK_Data.SkinTag) != INDEX_NONE
-            )  /// 先确认字串节省资源
-            && Algo::AllOf(L_SK_Data.BoneNames, [&](const FString& IN_Str) {
-                 return L_Fbx_Path->FbxNodeNames.Contains(IN_Str);
-               })  /// 进一步确认骨骼内容
-        )
-          L_Fbx_Path->SkinObj = L_SK_Data.SkinObj;
-        L_Task_Scoped3.EnterProgressFrame(1.0f);
+  return true;
+}
+
+bool SDoodleImportFbxUI::IsCamera(UnFbx::FFbxImporter* InFbx) {
+  TArray<fbxsdk::FbxCamera*> L_Cameras{};
+  MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
+  return !L_Cameras.IsEmpty();
+}
+
+void SDoodleImportFbxUI::FindSK() {
+  for (auto&& i : ListImportData) {
+    if (auto&& L_Fbx = Cast<UDoodleFbxImport_1>(i.Get())) {
+      if (FPaths::FileExists(L_Fbx->ImportPath) && FPaths::GetExtension(L_Fbx->ImportPath, true) == TEXT(".fbx")) {
+        UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
+        FbxImporter->ClearAllCaches();
+
+        TArray<TSharedPtr<UDoodleFbxImport_1>> L_RemoveList;
+        FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
+        L_Task_Scoped1.MakeDialog();
+        // FString L_Debug_str{};
+
+        grop_SDoodleImportFbxUI L_grop_SDoodleImportFbxUI{FbxImporter};
+        FbxImporter->ImportFromFile(L_Fbx->ImportPath, FPaths::GetExtension(L_Fbx->ImportPath));
+        MatchFbx(L_Fbx, FbxImporter);
       }
     }
   }
-
-  /// 删除没有名称空间的
-  for (auto&& L_R : L_RemoveList) {
-    ListImportFbxData.RemoveSingle(L_R);
-  }
 }
 
-void SDoodleImportFbxUI::ImportFbx() {
-  TArray<UAssetImportTask*> ImportDataList{};
-  for (auto&& L_Fbx : ListImportFbxData) {
-    UAssetImportTask* l_task                                       = NewObject<UAssetImportTask>();
-    l_task->bAutomated                                             = true;
-    l_task->bReplaceExisting                                       = true;
-    l_task->bReplaceExistingSettings                               = true;
-    /// @fix 此处不需要自动保存, 否则会出现一个ue4.27中发现的bug 会将
-    /// UAssetImportTask::ImportedObjectPaths 值转换为乱码
-
-    // l_task->bSave = true;
-    l_task->DestinationPath                                        = L_Fbx->ImportPathDir;
-    l_task->Filename                                               = L_Fbx->ImportFbxPath;
-
-    l_task->Factory                                                = DuplicateObject<UFbxFactory>(GetDefault<UFbxFactory>(), l_task);
-
-    UFbxFactory* k_fbx_f                                           = Cast<UFbxFactory>(l_task->Factory);
-
-    k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_SkeletalMesh;
-    k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
-    k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
-    k_fbx_f->ImportUI->bImportMesh                                 = true;
-    k_fbx_f->ImportUI->bImportAnimations                           = true;
-    k_fbx_f->ImportUI->bImportRigidMesh                            = true;
-    k_fbx_f->ImportUI->bImportMaterials                            = false;
-    k_fbx_f->ImportUI->bImportTextures                             = false;
-    k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict               = false;
-
-    k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-    k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
-    k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
-    k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
-    k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
-    k_fbx_f->ImportUI->TextureImportData->MaterialSearchLocation   = EMaterialSearchLocation::UnderRoot;
-    if (L_Fbx->SkinObj) {
-      k_fbx_f->ImportUI->Skeleton                                    = L_Fbx->SkinObj;
-      k_fbx_f->ImportUI->MeshTypeToImport                            = FBXIT_Animation;
-      k_fbx_f->ImportUI->OriginalImportType                          = FBXIT_SkeletalMesh;
-      k_fbx_f->ImportUI->bImportAsSkeletal                           = true;
-      k_fbx_f->ImportUI->bImportMesh                                 = false;
-      k_fbx_f->ImportUI->bImportAnimations                           = true;
-      k_fbx_f->ImportUI->bImportRigidMesh                            = false;
-      k_fbx_f->ImportUI->bImportMaterials                            = false;
-      k_fbx_f->ImportUI->bImportTextures                             = false;
-      k_fbx_f->ImportUI->bResetToFbxOnMaterialConflict               = false;
-
-      k_fbx_f->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
-      k_fbx_f->ImportUI->bAutomatedImportShouldDetectType            = false;
-      k_fbx_f->ImportUI->AnimSequenceImportData->AnimationLength     = FBXALIT_ExportedTime;
-      k_fbx_f->ImportUI->AnimSequenceImportData->bImportBoneTracks   = true;
-      k_fbx_f->ImportUI->bAllowContentTypeImport                     = true;
-    }
-    ImportDataList.Add(l_task);
+void SDoodleImportFbxUI::ImportFile() {
+  for (auto&& i : ListImportData) {
+    i->ImportFile();
   }
-  FAssetToolsModule& AssetToolsModule =
-      FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-  TArray<FString> import_Paths{};
-  AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
-}
-
-void SDoodleImportFbxUI::ImportAbc() {
-  TArray<UAssetImportTask*> ImportDataList{};
-  for (auto&& L_Abc : ListImportAbcData) {
-    UAssetImportTask* l_task = NewObject<UAssetImportTask>();
-    for (TObjectIterator<UClass> it{}; it; ++it) {
-      if (it->IsChildOf(UFactory::StaticClass())) {
-        if (it->GetName() == "AlembicImportFactory") {
-          l_task->Factory = it->GetDefaultObject<UFactory>();
-        }
-      }
-    }
-    l_task->bAutomated               = true;
-    l_task->bReplaceExisting         = true;
-    l_task->bReplaceExistingSettings = true;
-    l_task->DestinationPath          = L_Abc->ImportPathDir;
-    l_task->Filename                 = L_Abc->ImportAbcPath;
-
-    /// 获取abc默认设置并修改
-    UAbcImportSettings* k_abc_stting = UAbcImportSettings::Get();
-    // UAbcImportSettings *k_abc_stting = DuplicateObject<
-    //     UAbcImportSettings>(UAbcImportSettings::Get(), l_task);
-    k_abc_stting->ImportType =
-        EAlembicImportType::GeometryCache;                    // 导入为几何缓存
-    k_abc_stting->MaterialSettings.bCreateMaterials = false;  // 不创建材质
-    k_abc_stting->MaterialSettings.bFindMaterials   = true;   // 寻找材质
-    k_abc_stting->ConversionSettings.Preset =
-        EAbcConversionPreset::Max;  // 导入预设为3dmax
-    k_abc_stting->ConversionSettings.bFlipV            = true;
-    k_abc_stting->ConversionSettings.Scale.X           = 1.0;
-    k_abc_stting->ConversionSettings.Scale.Y           = -1.0;
-    k_abc_stting->ConversionSettings.Scale.Z           = 1.0;
-    k_abc_stting->ConversionSettings.Rotation.X        = 90.0;
-    k_abc_stting->ConversionSettings.Rotation.Y        = 0.0;
-    k_abc_stting->ConversionSettings.Rotation.Z        = 0.0;
-
-    k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;              // 合并轨道
-    k_abc_stting->SamplingSettings.bSkipEmpty          = true;              // 跳过空白帧
-    k_abc_stting->SamplingSettings.FrameStart          = L_Abc->StartTime;  // 开始帧
-    k_abc_stting->SamplingSettings.FrameEnd            = L_Abc->EndTime;    // 结束帧
-    k_abc_stting->SamplingSettings.FrameSteps          = 1;                 // 帧步数
-
-    l_task->Options                                    = k_abc_stting;
-    ImportDataList.Emplace(l_task);
-  }
-  FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-  TArray<FString> import_Paths{};
-  AssetToolsModule.Get().ImportAssetTasks(ImportDataList);
-}
-
-void SDoodleImportFbxUI::ImportCamera() {
-  const FFrameRate L_Rate{25, 1};
-  const FFrameNumber L_Start{1001};
-  FFrameNumber L_End{1200};
-
-  FScopedSlowTask L_Task_Scoped{ListImportFbxCamData.Num() * 6.0f, LOCTEXT("Import_CAm", "导入camera")};
-  L_Task_Scoped.MakeDialog();
-
-  auto& L_AssTool = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-  for (auto&& Cam : ListImportFbxCamData) {
-    L_Task_Scoped.EnterProgressFrame(
-        1, FText::Format(
-               LOCTEXT("Import_ImportingCameraFile1", "导入 \"{0}\"..."),
-               FText::FromString(FPaths::GetBaseFilename(Cam->ImportFbxPath))
-           )
-    );
-
-    ULevelSequence* L_ShotSequence                        = LoadObject<ULevelSequence>(nullptr, *Cam->ImportPathDir);
-
-    // 打开fbx
-    UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
-    FFBXInOutParameters InOutParams;
-    // 修改一下设置
-    L_ImportFBXSettings->bMatchByNameOnly       = false;
-    L_ImportFBXSettings->bCreateCameras         = false;
-    L_ImportFBXSettings->bReplaceTransformTrack = true;
-    L_ImportFBXSettings->bReduceKeys            = false;
-    // 这里使用包装导入
-    if (!MovieSceneToolHelpers::ReadyFBXForImport(Cam->ImportFbxPath, L_ImportFBXSettings, InOutParams)) {
-      return;
-    }
-
-    // 已经打开的fbx, 直接获取, 是一个单例
-    UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
-    fbxsdk::FbxTimeSpan L_Fbx_Time     = L_FbxImporter->GetAnimationTimeSpan(
-        L_FbxImporter->Scene->GetRootNode(), L_FbxImporter->Scene->GetCurrentAnimationStack()
-    );
-    // 获取结束帧
-    L_End = (int32)L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL);
-    UE_LOG(LogTemp, Log, TEXT("fbx time %d -> %d"), L_Start.Value, L_End.Value);
-
-    L_Task_Scoped.EnterProgressFrame(
-        1, FText::Format(
-               LOCTEXT("Import_ImportingCameraFile2", "检查定序器 \"{0}\"..."), FText::FromString(Cam->ImportPathDir)
-           )
-    );
-
-    // 创建定序器
-    if (!L_ShotSequence) {
-      for (TObjectIterator<UClass> it{}; it; ++it) {
-        if (it->IsChildOf(UFactory::StaticClass())) {
-          if (it->GetName() == "LevelSequenceFactoryNew") {
-            L_ShotSequence = CastChecked<ULevelSequence>(L_AssTool.CreateAsset(
-                FPaths::GetBaseFilename(Cam->ImportPathDir), FPaths::GetPath(Cam->ImportPathDir),
-                ULevelSequence::StaticClass(), it->GetDefaultObject<UFactory>()
-            ));
-          }
-        }
-      }
-    }
-    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile3", "设置定序器以及相机 ..."));
-
-    // 设置定序器属性
-    L_ShotSequence->GetMovieScene()->SetDisplayRate(L_Rate);
-    L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(L_Rate);
-    L_ShotSequence->GetMovieScene()->Modify();
-
-    /// 设置范围
-    L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
-    L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30) / L_Rate, (L_End + 30) / L_Rate);
-    L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start, L_End}, true);
-    L_ShotSequence->Modify();
-
-    // FSoftObjectPath L_LevelSequenceSoftPath{Cam->ImportPathDir};
-    // UObject* L_LoadedObject                       = L_LevelSequenceSoftPath.TryLoad();
-    UAssetEditorSubsystem* L_AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-    L_AssetEditorSubsystem->OpenEditorForAsset(L_ShotSequence);
-
-    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile4", "尝试打开定序器 ..."));
-
-    IAssetEditorInstance* L_AssetEditor = L_AssetEditorSubsystem->FindEditorForAsset(L_ShotSequence, true);
-
-    ILevelSequenceEditorToolkit* L_LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(L_AssetEditor);
-    ISequencer* L_ShotSequencer                        = L_LevelSequenceEditor->GetSequencer().Get();
-    UMovieScene* L_Move                                = L_ShotSequence->GetMovieScene();
-    ACineCameraActor* L_CameraActor{};
-    // 相机task
-    UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-    if (!L_Task)
-      // 添加相机时以及强制评估了, 不需要再强制评估
-      FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
-    else
-      // 强制评估序列, 要不然相机指针会空
-      L_ShotSequencer->ForceEvaluate();
-    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile5", "刷新 ..."));
-
-    L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-
-    // Cast<FStructProperty>(L_Task->GetClass()->FindPropertyByName("CameraBindingID"))->;
-    // 寻找相机组件
-    UCameraComponent* L_Cam{};
-    for (auto&& L_Section : L_Task->GetAllSections()) {
-      L_Cam =
-          Cast<UMovieSceneCameraCutSection>(L_Section)->GetFirstCamera(*L_ShotSequencer, MovieSceneSequenceID::Root);
-      if (L_Cam) break;
-    }
-
-    if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
-    UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CameraActor->GetActorNameOrLabel());
-    // 寻找相机id
-    FGuid L_CamGuid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
-
-    UE_LOG(LogTemp, Log, TEXT("guid %s"), *L_CamGuid.ToString());
-
-    TMap<FGuid, FString> L_Map{};
-    L_Map.Add(L_CamGuid, L_CameraActor->GetActorNameOrLabel());
-
-    L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
-
-    // 正式开始导入
-    MovieSceneToolHelpers::ImportFBXCameraToExisting(
-        L_FbxImporter, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, false, true
-    );
-
-    UWorld* World = Cast<UWorld>(L_ShotSequencer->GetPlaybackContext());
-    bool bValid   = MovieSceneToolHelpers::ImportFBXIfReady(
-        World, L_ShotSequence, L_ShotSequencer, L_ShotSequencer->GetFocusedTemplateID(), L_Map, L_ImportFBXSettings,
-        InOutParams
-    );
-
-    L_ShotSequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
-  }
-}
-
-FString SDoodleImportFbxUI::GetImportPath(const FString& In_Path) {
-  FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
-  FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_Path};
-  int64 L_eps{};
-  int64 L_sc{};
-  FString L_Sc_ab{};
-
-  if (L_Reg_Ep.FindNext()) {
-    L_eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
-  }
-
-  FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-z])?)"};
-  FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, In_Path};
-
-  if (L_Reg_Sc.FindNext()) {
-    L_sc = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
-    if (L_Reg_Sc.GetEndLimit() > 2) {
-      L_Sc_ab = L_Reg_Sc.GetCaptureGroup(2);
-    }
-  }
-
-  FString L_Path = FString::Printf(
-      TEXT("/Game/Shot/ep%.4d/%s%.4d_sc%.4d%s"),
-      L_eps, *Path_Prefix, L_eps, L_sc, *L_Sc_ab
-  );
-  return L_Path;
 }
 
 void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix) {
   Path_Prefix = In_Path_Prefix;
-  for (auto&& L_Fbx : ListImportFbxData) {
-    L_Fbx->ImportPathDir = GetImportPath(L_Fbx->ImportFbxPath) / "Fbx_Import";
-  }
-  for (auto&& L_Abc : ListImportAbcData) {
-    L_Abc->ImportPathDir = GetImportPath(L_Abc->ImportAbcPath) / "Abcs_Import";
-  }
-  for (auto&& L_Cam : ListImportFbxCamData) {
-    FString L_Folder     = GetImportPath(L_Cam->ImportFbxPath);
-    L_Cam->ImportPathDir = L_Folder / FPaths::GetBaseFilename(L_Folder) + "_L";
+  for (auto&& L_Fbx : ListImportData) {
+    L_Fbx->GenPathPrefix(Path_Prefix);
   }
 }
 
@@ -987,19 +835,6 @@ void SDoodleImportFbxUI::SetAllSkinTag() {
   }
 }
 
-TTuple<int32_t, int32_t> SDoodleImportFbxUI::GenStartAndEndTime(const FString& In_Path) {
-  FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
-  FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, FPaths::GetBaseFilename(In_Path)};
-  int64 L_Start{1000};
-  int64 L_End{1001};
-
-  if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2) {
-    L_Start = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
-    L_End   = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
-  }
-  return MakeTuple(L_Start, L_End);
-}
-
 void SDoodleImportFbxUI::AddFile(const FString& In_File) {
   /// @brief 先扫描前缀
   if (this->Path_Prefix.IsEmpty()) {
@@ -1010,35 +845,68 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       this->Path_Prefix = L_FileName;
     }
   }
+
+  /// @brief 寻找到相同的就跳过
+  if (ListImportData.FindByPredicate([&](const TObjectPtr<UDoodleBaseImportData>& In_FBx) {
+        return In_FBx->ImportPath == In_File;
+      })) {
+    return;
+  };
+  TObjectPtr<UDoodleBaseImportData> L_File{};
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
-    /// @brief 寻找到相同的就跳过
-    if (ListImportFbxData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FFbxImport>& In_FBx) {
-          return In_FBx->ImportFbxPath == In_File;
-        })) {
-      return;
-    };
+    UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
+    FbxImporter->ClearAllCaches();
 
-    TSharedPtr<doodle_ue4::FFbxImport> L_ptr = MakeShared<doodle_ue4::FFbxImport>(In_File);
-    ListImportFbxData.Emplace(L_ptr);
+    FScopedSlowTask L_Task_Scoped1{2.0f, LOCTEXT("DoingSlowWork1", "加载 fbx 文件中...")};
+    L_Task_Scoped1.MakeDialog();
+    // FString L_Debug_str{};
+
+    grop_SDoodleImportFbxUI L_grop_SDoodleImportFbxUI{FbxImporter};
+    FbxImporter->ImportFromFile(In_File, FPaths::GetExtension(In_File));
+
+    if (IsCamera(FbxImporter)) {
+      TObjectPtr<UDoodleFbxCameraImport_1> L_ptr = NewObject<UDoodleFbxCameraImport_1>();
+      L_ptr->ImportPath                          = In_File;
+      L_File                                     = ListImportData.Emplace_GetRef(L_ptr);
+    } else {
+      TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
+      L_ptr->ImportPath                    = In_File;
+      if (MatchFbx(L_ptr.Get(), FbxImporter)) L_File = ListImportData.Emplace_GetRef(L_ptr);
+    }
   }
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc")) {
-    /// @brief 寻找到相同的就跳过
-    if (ListImportAbcData.FindByPredicate([&](const TSharedPtr<doodle_ue4::FAbcImport>& In_Abc) {
-          return In_Abc->ImportAbcPath == In_File;
-        })) {
-      return;
-    };
-
-    TSharedPtr<doodle_ue4::FAbcImport> L_ptr = MakeShared<doodle_ue4::FAbcImport>(In_File);
-    TTuple<int32_t, int32_t> L_Time_Ranges   = this->GenStartAndEndTime(In_File);
-    L_ptr->StartTime                         = L_Time_Ranges.Get<0>();
-    L_ptr->EndTime                           = L_Time_Ranges.Get<1>();
-
-    ListImportAbcData.Emplace(L_ptr);
+    TObjectPtr<UDoodleAbcImport_1> L_ptr = NewObject<UDoodleAbcImport_1>();
+    L_ptr->ImportPath                    = In_File;
+    L_File                               = ListImportData.Emplace_GetRef(L_ptr);
   }
+  if (L_File) L_File->GenStartAndEndTime();
 }
-void SDoodleImportFbxUI::CreateSequencer(const FString& In_CreatePath) {}
+
+void SDoodleImportFbxUI::CreateWorld() {
+  auto& l_ass_tool = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+  FString L_WorldPath{"/Game/TEST/2/L_W"};
+  bool L_IsLoad{};
+
+  if (!FPackageName::DoesPackageExist(L_WorldPath)) {
+    l_ass_tool.CreateAsset(
+        FPaths::GetBaseFilename(L_WorldPath), FPaths::GetPath(L_WorldPath), UWorld::StaticClass(),
+        UWorldFactory::StaticClass()->GetDefaultObject<UFactory>()
+    );
+  }
+
+#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27
+  L_IsLoad = UEditorLevelLibrary::LoadLevel(L_WorldPath);
+  UEditorLevelLibrary::SaveAllDirtyLevels();
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+  ULevelEditorSubsystem* LevelEditorSubsystem = GEditor->GetEditorSubsystem<ULevelEditorSubsystem>();
+  L_IsLoad                                    = LevelEditorSubsystem->LoadLevel(L_WorldPath);
+#endif
+  UE_LOG(LogTemp, Log, TEXT("加载成功 %s"), L_IsLoad ? TEXT("true") : TEXT("false"));
+  LevelEditorSubsystem->SaveAllDirtyLevels();
+}
+
 // DragBegin
 FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent) {
   auto L_Opt = InDragDropEvent.GetOperationAs<FExternalDragOperation>();
@@ -1050,13 +918,10 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
 
   if (!(L_Opt && L_Opt->HasFiles())) return FReply::Unhandled();
 
-  FScopedSlowTask L_Task_Scoped{6.0f, LOCTEXT("Import_Fbx", "加载 Fbx abc")};
-  L_Task_Scoped.MakeDialog();
-
-  ListImportFbxData.Empty();
-  ListImportAbcData.Empty();
-  ListImportFbxCamData.Empty();
+  ListImportData.Empty();
   AllSkinObjs.Empty();
+  // 优先扫描内部的sk
+  GetAllSkinObjs();
 
   for (auto&& Path : L_Opt->GetFiles()) {
     if (FPaths::DirectoryExists(Path)) {
@@ -1070,18 +935,8 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
       AddFile(Path);
     }
   }
-
-  L_Task_Scoped.EnterProgressFrame(1.0f);
-  GetAllSkinObjs();
-  L_Task_Scoped.EnterProgressFrame(3.0f);
-  MatchFbx();
-  L_Task_Scoped.EnterProgressFrame(1.0f);
-
   GenPathPrefix(this->Path_Prefix);
-  ListImportFbx->RebuildList();
-  ListImportAbc->RebuildList();
-  ListImportFbxCam->RebuildList();
-  L_Task_Scoped.EnterProgressFrame(1.0f);
+  ListImportGui->RebuildList();
 
   return FReply::Handled();
 }
