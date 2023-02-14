@@ -1,1 +1,1 @@
-mklink /D F:\UnrealEngine\Engine\Plugins\Doodle .\Doodle
+mklink /J F:\UnrealEngine\Engine\Plugins\Doodle %~dp0\Doodle

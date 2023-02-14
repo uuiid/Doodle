@@ -73,11 +73,21 @@
 #include "Factories/WorldFactory.h"
 #include "FileHelpers.h"
 #include "IAssetTools.h"
+
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
 #include "LevelEditorSubsystem.h"
+#endif
+
 #include "LevelSequence.h"
 #include "Modules/ModuleManager.h"
+
 // 导入abc
 #include "AlembicImportFactory.h"
+#include "Framework/Notifications/NotificationManager.h"  //通知管理类
+#include "LevelEditorViewport.h"                          //编辑器视口
+#include "Tracks/MovieSceneCameraCutTrack.h"              //处理对电影场景中CameraCut属性的操作。
+#include "TransformData.h"                            //存储关于转换的信息，以便向转换部分添加键。
+#include "Widgets/Notifications/SNotificationList.h"  // 编辑器通知
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -156,7 +166,265 @@ void Debug_To_File(const FStringView& In_String) {
     UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Failed to write FString to file."));
   }
 }
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+void ShowReadOnlyError() {
+  FNotificationInfo Info(LOCTEXT("SequenceReadOnly", "Sequence is read only."));
+  Info.ExpireDuration = 5.0f;
+  FSlateNotificationManager::Get().AddNotification(Info)->SetCompletionState(SNotificationItem::CS_Fail);
+}
+void ShowSpawnableNotAllowedError() {
+  FNotificationInfo Info(LOCTEXT("SequenceSpawnableNotAllowed", "Spawnable object is not allowed for Sequence."));
+  Info.ExpireDuration = 5.0f;
+  FSlateNotificationManager::Get().AddNotification(Info)->SetCompletionState(SNotificationItem::CS_Fail);
+}
 
+FGuid AddSpawnable(
+    TSharedRef<ISequencer> Sequencer, UObject& Object, UActorFactory* ActorFactory = nullptr,
+    FName SpawnableName = NAME_None
+) {
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence->AllowsSpawnableObjects()) {
+    return FGuid();
+  }
+
+  // Grab the MovieScene that is currently focused.  We'll add our Blueprint as an inner of the
+  // MovieScene asset.
+  UMovieScene* OwnerMovieScene = Sequence->GetMovieScene();
+
+  TValueOrError<FNewSpawnable, FText> Result =
+      Sequencer->GetSpawnRegister().CreateNewSpawnableType(Object, *OwnerMovieScene, ActorFactory);
+  if (!Result.IsValid()) {
+    FNotificationInfo Info(Result.GetError());
+    Info.ExpireDuration = 3.0f;
+    FSlateNotificationManager::Get().AddNotification(Info);
+    return FGuid();
+  }
+
+  FNewSpawnable& NewSpawnable = Result.GetValue();
+
+  if (SpawnableName == NAME_None) {
+    NewSpawnable.Name = MovieSceneHelpers::MakeUniqueSpawnableName(OwnerMovieScene, NewSpawnable.Name);
+  } else {
+    NewSpawnable.Name = SpawnableName.ToString();
+  }
+
+  FGuid NewGuid = OwnerMovieScene->AddSpawnable(NewSpawnable.Name, *NewSpawnable.ObjectTemplate);
+
+  Sequencer->ForceEvaluate();
+
+  return NewGuid;
+}
+
+void NewCameraAdded(TSharedRef<ISequencer> Sequencer, ACameraActor* NewCamera, FGuid CameraGuid) {
+  if (Sequencer->OnCameraAddedToSequencer().IsBound() &&
+      !Sequencer->OnCameraAddedToSequencer().Execute(NewCamera, CameraGuid)) {
+    return;
+  }
+
+  MovieSceneToolHelpers::LockCameraActorToViewport(Sequencer, NewCamera);
+
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (Sequence && Sequence->IsTrackSupported(UMovieSceneCameraCutTrack::StaticClass()) == ETrackSupport::Supported) {
+    MovieSceneToolHelpers::CreateCameraCutSectionForCamera(
+        Sequence->GetMovieScene(), CameraGuid, Sequencer->GetLocalTime().Time.FloorToFrame()
+    );
+  }
+}
+
+FGuid CreateBinding(TSharedRef<ISequencer> Sequencer, UObject& InObject, const FString& InName) {
+  const FScopedTransaction Transaction(LOCTEXT("CreateBinding", "Create New Binding"));
+
+  UMovieSceneSequence* OwnerSequence = Sequencer->GetFocusedMovieSceneSequence();
+  UMovieScene* OwnerMovieScene       = OwnerSequence->GetMovieScene();
+
+  OwnerSequence->Modify();
+  OwnerMovieScene->Modify();
+
+  const FGuid PossessableGuid = OwnerMovieScene->AddPossessable(InName, InObject.GetClass());
+
+  // Attempt to use the parent as a context if necessary
+  UObject* ParentObject       = OwnerSequence->GetParentObject(&InObject);
+  UObject* BindingContext     = Sequencer->GetPlaybackContext();
+
+  AActor* ParentActorAdded    = nullptr;
+  FGuid ParentGuid;
+
+  if (ParentObject) {
+    // Ensure we have possessed the outer object, if necessary
+    ParentGuid = Sequencer->GetHandleToObject(ParentObject, false);
+    if (!ParentGuid.IsValid()) {
+      ParentGuid       = Sequencer->GetHandleToObject(ParentObject);
+      ParentActorAdded = Cast<AActor>(ParentObject);
+    }
+
+    if (OwnerSequence->AreParentContextsSignificant()) {
+      BindingContext = ParentObject;
+    }
+
+    // Set up parent/child guids for possessables within spawnables
+    if (ParentGuid.IsValid()) {
+      FMovieScenePossessable* ChildPossessable = OwnerMovieScene->FindPossessable(PossessableGuid);
+      if (ensure(ChildPossessable)) {
+        ChildPossessable->SetParent(ParentGuid);
+      }
+
+      FMovieSceneSpawnable* ParentSpawnable = OwnerMovieScene->FindSpawnable(ParentGuid);
+      if (ParentSpawnable) {
+        ParentSpawnable->AddChildPossessable(PossessableGuid);
+      }
+    }
+  }
+
+  // if (!OwnerMovieScene->FindPossessable(PossessableGuid)->BindSpawnableObject(Sequencer->GetFocusedTemplateID(),
+  // &InObject, &Sequencer.Get())) {
+  OwnerSequence->BindPossessableObject(PossessableGuid, InObject, BindingContext);
+  //}
+
+  // Broadcast if a parent actor was added as a result of adding this object
+  if (ParentActorAdded && ParentGuid.IsValid()) {
+    Sequencer->OnActorAddedToSequencer().Broadcast(ParentActorAdded, ParentGuid);
+  }
+
+  return PossessableGuid;
+}
+
+FGuid MakeNewSpawnable(
+    TSharedRef<ISequencer> Sequencer, UObject& Object, UActorFactory* ActorFactory, bool bSetupDefaults,
+    FName SpawnableName
+) {
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence) {
+    return FGuid();
+  }
+
+  UMovieScene* MovieScene = Sequence->GetMovieScene();
+  if (!MovieScene) {
+    return FGuid();
+  }
+
+  if (MovieScene->IsReadOnly()) {
+    ShowReadOnlyError();
+    return FGuid();
+  }
+
+  if (!Sequence->AllowsSpawnableObjects()) {
+    ShowSpawnableNotAllowedError();
+    return FGuid();
+  }
+
+  FGuid NewGuid = AddSpawnable(Sequencer, Object, ActorFactory, SpawnableName);
+  if (!NewGuid.IsValid()) {
+    return FGuid();
+  }
+
+  FMovieSceneSpawnable* Spawnable = MovieScene->FindSpawnable(NewGuid);
+  if (!Spawnable) {
+    return FGuid();
+  }
+
+  // Spawn the object so we can position it correctly, it's going to get spawned anyway since things default to spawned.
+  UObject* SpawnedObject = Sequencer->GetSpawnRegister().SpawnObject(
+      NewGuid, *MovieScene, Sequencer->GetFocusedTemplateID(), Sequencer.Get()
+  );
+
+  if (bSetupDefaults) {
+    FTransformData TransformData;
+    Sequencer->GetSpawnRegister().SetupDefaultsForSpawnable(
+        SpawnedObject, Spawnable->GetGuid(), TransformData, Sequencer, Sequencer->GetSequencerSettings()
+    );
+  }
+
+  if (ACameraActor* NewCamera = Cast<ACameraActor>(SpawnedObject)) {
+    NewCameraAdded(Sequencer, NewCamera, NewGuid);
+  }
+
+  return NewGuid;
+}
+
+FGuid CreateCamera(TSharedRef<ISequencer> Sequencer, const bool bSpawnable, ACineCameraActor*& OutActor) {
+  FGuid CameraGuid;
+
+  UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+  if (!Sequence) {
+    return CameraGuid;
+  }
+
+  UMovieScene* MovieScene = Sequence->GetMovieScene();
+  if (!MovieScene) {
+    return CameraGuid;
+  }
+
+  if (MovieScene->IsReadOnly()) {
+    ShowReadOnlyError();
+    return CameraGuid;
+  }
+
+  UWorld* World = GCurrentLevelEditingViewportClient ? GCurrentLevelEditingViewportClient->GetWorld() : nullptr;
+  if (!World) {
+    return CameraGuid;
+  }
+
+  const FScopedTransaction Transaction(LOCTEXT("CreateCamera", "Create Camera"));
+
+  FActorSpawnParameters SpawnParams;
+  if (bSpawnable) {
+    // Don't bother transacting this object if we're creating a spawnable since it's temporary
+    SpawnParams.ObjectFlags &= ~RF_Transactional;
+  }
+
+  // Set new camera to match viewport
+  OutActor = World->SpawnActor<ACineCameraActor>(SpawnParams);
+  if (!OutActor) {
+    return CameraGuid;
+  }
+
+  OutActor->SetActorLocation(GCurrentLevelEditingViewportClient->GetViewLocation(), false);
+  OutActor->SetActorRotation(GCurrentLevelEditingViewportClient->GetViewRotation());
+  // OutActor->CameraComponent->FieldOfView = ViewportClient->ViewFOV; //@todo set the focal length from this field of
+  // view
+
+  FMovieSceneSpawnable* Spawnable = nullptr;
+
+  if (bSpawnable) {
+    FString NewName = MovieSceneHelpers::MakeUniqueSpawnableName(
+        MovieScene, FName::NameToDisplayString(ACineCameraActor::StaticClass()->GetFName().ToString(), false)
+    );
+
+    CameraGuid = MakeNewSpawnable(Sequencer, *OutActor, nullptr, true, NAME_None);
+    Spawnable  = MovieScene->FindSpawnable(CameraGuid);
+
+    if (ensure(Spawnable)) {
+      Spawnable->SetName(NewName);
+    }
+
+    // Destroy the old actor
+    World->EditorDestroyActor(OutActor, false);
+
+    for (TWeakObjectPtr<UObject>& Object : Sequencer->FindBoundObjects(CameraGuid, Sequencer->GetFocusedTemplateID())) {
+      OutActor = Cast<ACineCameraActor>(Object.Get());
+      if (OutActor) {
+        break;
+      }
+    }
+    ensure(OutActor);
+
+    OutActor->SetActorLabel(NewName, false);
+  } else {
+    CameraGuid = CreateBinding(Sequencer, *OutActor, OutActor->GetActorLabel());
+  }
+
+  if (!CameraGuid.IsValid()) {
+    return CameraGuid;
+  }
+
+  Sequencer->OnActorAddedToSequencer().Broadcast(OutActor, CameraGuid);
+
+  NewCameraAdded(Sequencer, OutActor, CameraGuid);
+
+  return CameraGuid;
+}
+
+#endif
 }  // namespace
 
 FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) {
@@ -340,9 +608,15 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   ACineCameraActor* L_CameraActor{};
   // 相机task
   UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   if (!L_Task)
     // 添加相机时以及强制评估了, 不需要再强制评估
     FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  if (!L_Task)
+    // 添加相机时以及强制评估了, 不需要再强制评估
+    CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
+#endif
   else
     // 强制评估序列, 要不然相机指针会空
     L_ShotSequencer->ForceEvaluate();
@@ -359,14 +633,19 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   }
 
   if (!L_CameraActor) L_CameraActor = Cast<ACineCameraActor>(L_Cam->GetOwner());
-  UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CameraActor->GetActorNameOrLabel());
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+  FString L_CamLable = L_CameraActor->GetActorNameOrLabel();
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  FString L_CamLable = L_CameraActor->GetActorLabel();
+#endif
+  UE_LOG(LogTemp, Log, TEXT("camera name %s"), *L_CamLable);
   // 寻找相机id
   FGuid L_CamGuid = L_ShotSequencer->FindObjectId(*L_CameraActor, MovieSceneSequenceID::Root);
 
   UE_LOG(LogTemp, Log, TEXT("guid %s"), *L_CamGuid.ToString());
 
   TMap<FGuid, FString> L_Map{};
-  L_Map.Add(L_CamGuid, L_CameraActor->GetActorNameOrLabel());
+  L_Map.Add(L_CamGuid, L_CamLable);
 
   L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
 
@@ -392,16 +671,34 @@ void UDoodleAbcImport_1::ImportFile() {
   UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
   L_Data->GroupName                 = TEXT("doodle import");
   L_Data->Filenames.Add(ImportPath);
-  L_Data->DestinationPath        = ImportPathDir;
-  L_Data->bReplaceExisting       = true;
-  L_Data->bSkipReadOnly          = true;
-  L_Data->bReplaceExisting       = true;
-
+  L_Data->DestinationPath  = ImportPathDir;
+  L_Data->bReplaceExisting = true;
+  L_Data->bSkipReadOnly    = true;
+  L_Data->bReplaceExisting = true;
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   UAlembicImportFactory* k_abc_f = DuplicateObject<UAlembicImportFactory>(GetDefault<UAlembicImportFactory>(), L_Data);
   L_Data->Factory                = k_abc_f;
+  UAbcImportSettings* k_abc_stting = k_abc_f->ImportSettings;
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  for (TObjectIterator<UClass> it{}; it; ++it) {
+    if (it->IsChildOf(UFactory::StaticClass())) {
+      if (it->GetName() == "AlembicImportFactory") {
+        L_Data->Factory = it->GetDefaultObject<UFactory>();
+      }
+    }
+  }
+
+  // for (TFieldIterator<FProperty> It(L_Data->Factory->GetClass()); It; ++It) {
+  // }
+  UClass* L_Class                  = L_Data->Factory->GetClass();
+  FObjectProperty* L_ClassProperty = FindFProperty<FObjectProperty>(L_Class, TEXT("ImportSettings"));
+  UObject* L_Pr                    = L_ClassProperty->GetObjectPropertyValue(L_Data->Factory);
+  UAbcImportSettings* k_abc_stting = UAbcImportSettings::Get();
+  // L_ClassProperty->SetObjectPropertyValue(L_Data->Factory,k_abc_stting);
+
+#endif
 
   /// 获取abc默认设置并修改
-  UAbcImportSettings* k_abc_stting                   = k_abc_f->ImportSettings;
 
   k_abc_stting->ImportType                           = EAlembicImportType::GeometryCache;  // 导入为几何缓存
   k_abc_stting->MaterialSettings.bCreateMaterials    = false;                              // 不创建材质
@@ -426,11 +723,11 @@ void UDoodleAbcImport_1::ImportFile() {
   AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
 }
 
-class SDoodleImportUiItem : public SMultiColumnTableRow<TObjectPtr<UDoodleBaseImportData>> {
+class SDoodleImportUiItem : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType> {
  public:
   SLATE_BEGIN_ARGS(SDoodleImportUiItem) : _ItemShow() {}
 
-  SLATE_ARGUMENT(TObjectPtr<UDoodleBaseImportData>, ItemShow)
+  SLATE_ARGUMENT(SDoodleImportFbxUI::UDoodleBaseImportDataPtrType, ItemShow)
 
   SLATE_END_ARGS()
 
@@ -438,11 +735,11 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<TObjectPtr<UDoodleBaseIm
   void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView) {
     ItemShow = InArgs._ItemShow;
     ItemType = TEXT("onoe");
-    if (auto L_FBX = Cast<UDoodleFbxImport_1>(InArgs._ItemShow.Get())) {
+    if (auto L_FBX = Cast<UDoodleFbxImport_1>(InArgs._ItemShow)) {
       ItemShowFBX = L_FBX;
-    } else if (Cast<UDoodleFbxCameraImport_1>(InArgs._ItemShow.Get())) {
+    } else if (Cast<UDoodleFbxCameraImport_1>(InArgs._ItemShow)) {
       ItemType = TEXT("导入的相机");
-    } else if (Cast<UDoodleAbcImport_1>(InArgs._ItemShow.Get())) {
+    } else if (Cast<UDoodleAbcImport_1>(InArgs._ItemShow)) {
       ItemType = TEXT("abc文件");
     }
 
@@ -542,7 +839,7 @@ class SDoodleImportUiItem : public SMultiColumnTableRow<TObjectPtr<UDoodleBaseIm
   void DoodleReset() { ItemShowFBX->SkinObj = nullptr; }
 
  private:
-  TObjectPtr<UDoodleBaseImportData> ItemShow;
+  SDoodleImportFbxUI::UDoodleBaseImportDataPtrType ItemShow;
   UDoodleFbxImport_1* ItemShowFBX{};
   FString ItemType{};
 };
@@ -552,13 +849,13 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
   const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
     (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
-  const FSlateFontInfo Font    = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
+  const FSlateFontInfo Font        = FEditorStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
 #endif
 
 #if PLATFORM_WINDOWS
   const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
-  const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
+  const FString FileFilterText     = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
   // clang-format off
 
@@ -580,10 +877,10 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
-	      SNew(STextBlock)
-	      .Text(LOCTEXT("BinaryPathLabel", "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"))
-	      .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
-	      .Font(Font)
+        SNew(STextBlock)
+        .Text(LOCTEXT("BinaryPathLabel", "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"))
+        .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
+        .Font(Font)
         ]
         // 前缀槽
         + SVerticalBox::Slot()
@@ -594,14 +891,14 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           SNew(SHorizontalBox)
           +SHorizontalBox::Slot()
           .FillWidth(1.0f)
-		  [
-	        SNew(STextBlock)
-	        .Text(LOCTEXT("BinaryPathLabel1", "项目缩写"))
-	        .Font(Font)
-		  ]
+      [
+          SNew(STextBlock)
+          .Text(LOCTEXT("BinaryPathLabel1", "项目缩写"))
+          .Font(Font)
+      ]
           +SHorizontalBox::Slot()
           .FillWidth(8.0f)
-		  [
+      [
             /// 生成的前缀
             SNew(SEditableTextBox)
             .Text_Lambda([this]()-> FText {
@@ -613,9 +910,9 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) {
               GenPathPrefix(In_Text.ToString(),Path_Suffix);
             })
-		  ]
+      ]
         ]
-		// 后缀槽
+    // 后缀槽
         + SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)
@@ -624,56 +921,56 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           SNew(SHorizontalBox)
           +SHorizontalBox::Slot()
           .FillWidth(1.0f)
-		  [
-	        SNew(STextBlock)
-	        .Text(LOCTEXT("BinaryPathLabel1", "部门缩写"))
-	        .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
-	        .Font(Font)
-		  ]
+      [
+          SNew(STextBlock)
+          .Text(LOCTEXT("BinaryPathLabel1", "部门缩写"))
+          .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
+          .Font(Font)
+      ]
           +SHorizontalBox::Slot()
           .FillWidth(8.0f)
-		  [
+      [
             ///  
             SNew(SComboBox<TSharedPtr<FString>>)
             .OptionsSource(&L_DepType)
             .OnSelectionChanged_Lambda(
-			  [this](const TSharedPtr<FString>& In,ESelectInfo::Type){
-			    GenPathPrefix(Path_Prefix,*In);
-			  })
-			.OnGenerateWidget_Lambda(
-			  [this](const TSharedPtr<FString>& In){
-				return SNew(STextBlock).Text(FText::FromString(*In));
-		      })
-			.InitiallySelectedItem(L_DepType[0])
-			  [
-			    SNew(STextBlock)
-				.Text_Lambda([this](){ return FText::FromString(Path_Suffix); })
-			  ]
-		  ]
+        [this](const TSharedPtr<FString>& In,ESelectInfo::Type){
+          GenPathPrefix(Path_Prefix,*In);
+        })
+      .OnGenerateWidget_Lambda(
+        [this](const TSharedPtr<FString>& In){
+        return SNew(STextBlock).Text(FText::FromString(*In));
+          })
+      .InitiallySelectedItem(L_DepType[0])
+        [
+          SNew(STextBlock)
+        .Text_Lambda([this](){ return FText::FromString(Path_Suffix); })
+        ]
+      ]
         ]
 
         + SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)
         .Padding(2.0f)
-		[
-	      SNew(STextBlock)
-	      .Text(LOCTEXT("importTitle", "导入的fbx 动画文件, 相机, abc文件"))
-	      .Font(Font)
-		]
+    [
+        SNew(STextBlock)
+        .Text(LOCTEXT("importTitle", "导入的fbx 动画文件, 相机, abc文件"))
+        .Font(Font)
+    ]
 
         /// 主要的列表小部件(Fbx)
         + SVerticalBox::Slot()
-		.FillHeight(3.0f)
-		.VAlign(VAlign_Top)
+    .FillHeight(3.0f)
+    .VAlign(VAlign_Top)
         .Padding(2.0f)
         [
-          SAssignNew(ListImportGui,SListView<TObjectPtr<UDoodleBaseImportData>>)
+          SAssignNew(ListImportGui,SListView<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>)
           .ItemHeight(80) // 小部件高度
           .ListItemsSource(&ListImportData)
           .ScrollbarVisibility(EVisibility::All)
           .OnGenerateRow_Lambda(// 生成小部件
-            [](TObjectPtr<UDoodleBaseImportData> InItem, 
+            [](SDoodleImportFbxUI::UDoodleBaseImportDataPtrType InItem, 
                const TSharedRef<STableViewBase>& OwnerTable) -> TSharedRef<ITableRow> {
               return SNew(SDoodleImportUiItem, OwnerTable)
                     .ItemShow(InItem);
@@ -684,7 +981,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           (
             SNew(SHeaderRow)
             + SHeaderRow::Column(TEXT("Import_File"))
-			  .FillWidth(4.0f)
+        .FillWidth(4.0f)
             [
               SNew(SBorder)
               .Padding(5)
@@ -693,20 +990,20 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                 .Text(FText::FromString(TEXT("Import File")))
               ]
             ]
-			+SHeaderRow::Column(TEXT("Ep_And_Shot"))
-			.FillWidth(1.0f)
+      +SHeaderRow::Column(TEXT("Ep_And_Shot"))
+      .FillWidth(1.0f)
             .DefaultLabel(LOCTEXT("Ep_And_Shot","集数和镜头"))
 
-			+SHeaderRow::Column(TEXT("Time_Ranges"))
-			.FillWidth(1.0f)
+      +SHeaderRow::Column(TEXT("Time_Ranges"))
+      .FillWidth(1.0f)
             .DefaultLabel(LOCTEXT("Time Ranges","时间范围"))
 
             +SHeaderRow::Column(TEXT("Skeleton_Path"))
-			.FillWidth(4.0f)
+      .FillWidth(4.0f)
             .DefaultLabel(LOCTEXT("Skeleton Path","骨骼路径"))
 
             +SHeaderRow::Column(TEXT("Import_Path_Dir"))
-			.FillWidth(2.0f)
+      .FillWidth(2.0f)
             .DefaultLabel(LOCTEXT("Import Path Dir","导入的目标"))
           )
         ]
@@ -737,7 +1034,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .OnClicked_Lambda([this](){
                FindSK();
                ImportFile();
-		  	   CreateWorld();
+           CreateWorld();
                return FReply::Handled();
             })
           ]
@@ -749,11 +1046,11 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
             .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
             .OnClicked_Lambda([this](){
                ListImportData.Empty(); 
-		   	 ListImportGui->RebuildList(); 
-		   	 CreateWorld();
+         ListImportGui->RebuildList(); 
+         CreateWorld();
                return FReply::Handled();
             })
-		  ]
+      ]
         ]
         +SVerticalBox::Slot()
         .AutoHeight()
@@ -765,7 +1062,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
           .OnClicked_Lambda([this](){
              ImportFile();
-  	          CreateWorld();
+              CreateWorld();
              return FReply::Handled();
           })
         ]
@@ -866,12 +1163,16 @@ bool SDoodleImportFbxUI::MatchFbx(UDoodleFbxImport_1* In_Fbx, UnFbx::FFbxImporte
 bool SDoodleImportFbxUI::IsCamera(UnFbx::FFbxImporter* InFbx) {
   TArray<fbxsdk::FbxCamera*> L_Cameras{};
   MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   return !L_Cameras.IsEmpty();
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  return L_Cameras.Num() != 0;
+#endif
 }
 
 void SDoodleImportFbxUI::FindSK() {
   for (auto&& i : ListImportData) {
-    if (auto&& L_Fbx = Cast<UDoodleFbxImport_1>(i.Get())) {
+    if (auto&& L_Fbx = Cast<UDoodleFbxImport_1>(i)) {
       if (FPaths::FileExists(L_Fbx->ImportPath) && FPaths::GetExtension(L_Fbx->ImportPath, true) == TEXT(".fbx")) {
         UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
         FbxImporter->ClearAllCaches();
@@ -927,12 +1228,12 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
   }
 
   /// @brief 寻找到相同的就跳过
-  if (ListImportData.FindByPredicate([&](const TObjectPtr<UDoodleBaseImportData>& In_FBx) {
+  if (ListImportData.FindByPredicate([&](const SDoodleImportFbxUI::UDoodleBaseImportDataPtrType& In_FBx) {
         return In_FBx->ImportPath == In_File;
       })) {
     return;
   };
-  TObjectPtr<UDoodleBaseImportData> L_File{};
+  SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
   /// 扫描fbx 和abc 文件
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx")) {
     UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
@@ -947,21 +1248,25 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
 
     if (IsCamera(FbxImporter)) {
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork2", "确认为相机"));
-      TObjectPtr<UDoodleFbxCameraImport_1> L_ptr = NewObject<UDoodleFbxCameraImport_1>();
-      L_ptr->ImportPath                          = In_File;
-      L_File                                     = ListImportData.Emplace_GetRef(L_ptr);
+      SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
+      L_ptr->ImportPath                                      = In_File;
+      L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
-      TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
-      L_ptr->ImportPath                    = In_File;
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+      ObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+      UDoodleFbxImport_1* L_ptr = NewObject<UDoodleFbxImport_1>();
+#endif
+      L_ptr->ImportPath = In_File;
       L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork3", "寻找匹配骨骼"));
 
-      if (MatchFbx(L_ptr.Get(), FbxImporter)) L_File = ListImportData.Emplace_GetRef(L_ptr);
+      if (MatchFbx(L_ptr, FbxImporter)) L_File = ListImportData.Emplace_GetRef(L_ptr);
     }
   }
   if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc")) {
-    TObjectPtr<UDoodleAbcImport_1> L_ptr = NewObject<UDoodleAbcImport_1>();
-    L_ptr->ImportPath                    = In_File;
-    L_File                               = ListImportData.Emplace_GetRef(L_ptr);
+    SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleAbcImport_1>();
+    L_ptr->ImportPath                                      = In_File;
+    L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
   }
   if (L_File) L_File->GenStartAndEndTime();
 }

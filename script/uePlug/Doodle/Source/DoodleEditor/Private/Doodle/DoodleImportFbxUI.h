@@ -99,7 +99,11 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
  public:
   SLATE_BEGIN_ARGS(SDoodleImportFbxUI) {}
   SLATE_END_ARGS()
-
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+  using UDoodleBaseImportDataPtrType = TObjectPtr<UDoodleBaseImportData>;
+#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+  using UDoodleBaseImportDataPtrType = UDoodleBaseImportData*;
+#endif
   // 这里是内容创建函数
   void Construct(const FArguments& Arg);
 
@@ -112,9 +116,9 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
 
  private:
   /// @brief 导入的列表
-  TSharedPtr<class SListView<TObjectPtr<UDoodleBaseImportData>>> ListImportGui;
+  TSharedPtr<class SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
   /// @brief 导入的列表数据
-  TArray<TObjectPtr<UDoodleBaseImportData>> ListImportData;
+  TArray<UDoodleBaseImportDataPtrType> ListImportData;
 
   /// @brief 扫描的骨骼数据
   TArray<FDoodleUSkeletonData_1> AllSkinObjs;
