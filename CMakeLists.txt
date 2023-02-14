@@ -108,7 +108,8 @@ set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_S
 
 # =====================安装打包过程===============================
 include(doodle_exe)
-
+#include(CPack)
+#set(CPACK_EXTERNAL_ENABLE_STAGING TRUE)
 add_subdirectory(script)
 add_subdirectory(src)
 
