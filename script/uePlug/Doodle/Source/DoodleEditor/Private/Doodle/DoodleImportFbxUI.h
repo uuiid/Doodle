@@ -1,9 +1,12 @@
 #pragma once
 
-#include "DoodleImportFbxUI.generated.h"
+// clang-format off
 #include "UObject/GCObject.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
+
+#include "DoodleImportFbxUI.generated.h"
+// clang-format on
 
 namespace UnFbx {
 class FFbxImporter;
@@ -38,7 +41,7 @@ class UDoodleBaseImportData : public UObject {
    * @param In_Path 传入的路径(提取信息)
    * @return FString  返回的导入ue4的路径
    */
-  virtual void GenPathPrefix(const FString& In_Path_Prefix){};
+  virtual void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix){};
   virtual void ImportFile(){};
 };
 
@@ -53,7 +56,7 @@ class UDoodleFbxImport_1 : public UDoodleBaseImportData {
   TSet<FString> FbxNodeNames;
   /// @brief 寻找到的骨骼
   USkeleton* SkinObj;
-  void GenPathPrefix(const FString& In_Path_Prefix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
 };
 
@@ -64,7 +67,7 @@ class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData {
   UDoodleFbxCameraImport_1(){};
   UDoodleFbxCameraImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
   ~UDoodleFbxCameraImport_1() override {}
-  void GenPathPrefix(const FString& In_Path_Prefix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
 };
 
@@ -75,7 +78,7 @@ class UDoodleAbcImport_1 : public UDoodleBaseImportData {
   UDoodleAbcImport_1(){};
   UDoodleAbcImport_1(const FString& InString) : UDoodleBaseImportData(InString) {}
   ~UDoodleAbcImport_1() override {}
-  void GenPathPrefix(const FString& In_Path_Prefix) override;
+  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix) override;
   void ImportFile() override;
 };
 
@@ -116,8 +119,9 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
   /// @brief 扫描的骨骼数据
   TArray<FDoodleUSkeletonData_1> AllSkinObjs;
 
-  /// 导入路径的前缀
+  /// 导入路径的后缀
   FString Path_Prefix;
+  FString Path_Suffix;
 
   /**
    * @brief 获取所有的sk
@@ -140,7 +144,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
    *
    * @param In_Path_Prefix 传入的路径
    */
-  void GenPathPrefix(const FString& In_Path_Prefix);
+  void GenPathPrefix(const FString& In_Path_Prefix, const FString& In_Path_Suffix);
 
   /**
    * @brief 提取所有的标签
