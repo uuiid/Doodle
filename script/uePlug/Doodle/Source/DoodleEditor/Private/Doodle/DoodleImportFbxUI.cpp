@@ -741,31 +741,31 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
                return FReply::Handled();
             })
           ]
-          +SHorizontalBox::Slot()
+          + SHorizontalBox::Slot()
           .FillWidth(1.0f)
           [
             SNew(SButton)
-            .Text(LOCTEXT("Search USkeleton Import","Search USkeleton Direct Import"))
-            .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
+            .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
+            .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
             .OnClicked_Lambda([this](){
-               ImportFile();
-		  	   CreateWorld();
+               ListImportData.Empty(); 
+		   	 ListImportGui->RebuildList(); 
+		   	 CreateWorld();
                return FReply::Handled();
             })
-          ]
+		  ]
         ]
-        + SVerticalBox::Slot()
+        +SVerticalBox::Slot()
         .AutoHeight()
         .VAlign(VAlign_Center)
         .Padding(2.0f)
         [
           SNew(SButton)
-          .Text(LOCTEXT("Clear USkeleton","Clear USkeleton"))
-          .ToolTipText(LOCTEXT("Clear USkeleton Tip","清除所有"))
+          .Text(LOCTEXT("Search USkeleton Import","Search USkeleton Direct Import"))
+          .ToolTipText(LOCTEXT("Search USkeleton Tip3","不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"))
           .OnClicked_Lambda([this](){
-             ListImportData.Empty(); 
-			 ListImportGui->RebuildList(); 
-			 CreateWorld();
+             ImportFile();
+  	          CreateWorld();
              return FReply::Handled();
           })
         ]
