@@ -166,7 +166,8 @@ void Debug_To_File(const FStringView& In_String) {
     UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Failed to write FString to file."));
   }
 }
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
 void ShowReadOnlyError() {
   FNotificationInfo Info(LOCTEXT("SequenceReadOnly", "Sequence is read only."));
   Info.ExpireDuration = 5.0f;
@@ -608,11 +609,12 @@ void UDoodleFbxCameraImport_1::ImportFile() {
   ACineCameraActor* L_CameraActor{};
   // 相机task
   UMovieSceneTrack* L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   if (!L_Task)
     // 添加相机时以及强制评估了, 不需要再强制评估
     FSequencerUtilities::CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
-#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
   if (!L_Task)
     // 添加相机时以及强制评估了, 不需要再强制评估
     CreateCamera(L_ShotSequencer->AsShared(), true, L_CameraActor);
@@ -675,11 +677,12 @@ void UDoodleAbcImport_1::ImportFile() {
   L_Data->bReplaceExisting = true;
   L_Data->bSkipReadOnly    = true;
   L_Data->bReplaceExisting = true;
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   UAlembicImportFactory* k_abc_f = DuplicateObject<UAlembicImportFactory>(GetDefault<UAlembicImportFactory>(), L_Data);
   L_Data->Factory                = k_abc_f;
   UAbcImportSettings* k_abc_stting = k_abc_f->ImportSettings;
-#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
   for (TObjectIterator<UClass> it{}; it; ++it) {
     if (it->IsChildOf(UFactory::StaticClass())) {
       if (it->GetName() == "AlembicImportFactory") {
@@ -1252,9 +1255,10 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
     } else {
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
-      ObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
-#elif (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
+      TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \
+    (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27)
       UDoodleFbxImport_1* L_ptr = NewObject<UDoodleFbxImport_1>();
 #endif
       L_ptr->ImportPath = In_File;
