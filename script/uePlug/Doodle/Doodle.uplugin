@@ -67,6 +67,10 @@
 		{
 			"Name": "GeometryCache",
 			"Enabled": true
+		},
+		{
+			"Name": "LevelSequenceEditor",
+			"Enabled": true
 		}
 	]
 }
