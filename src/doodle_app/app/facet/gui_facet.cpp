@@ -47,7 +47,6 @@ class gui_facet::impl {
  public:
   /// \brief 初始化 com
   [[maybe_unused]] win::ole_guard _guard{};
-  win::wnd_handle parent{};
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
   boost::asio::high_resolution_timer timer_{g_io_context()};
