@@ -50,8 +50,6 @@ class gui_facet::impl {
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
   boost::asio::high_resolution_timer timer_{g_io_context()};
-
- public:
 };
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
