@@ -79,6 +79,16 @@ struct table_line : boost::totally_ordered<table_line> {
         region{"##region"s, in_task.region},
         abstract{"##abstract"s, in_task.abstract} {}
 
+  explicit table_line(const entt::handle& in_task)
+      : data_handle(in_task),
+        cache_time{in_task.get<work_task_info>().time},
+        time_day{fmt::format("{:%F}", cache_time)},
+        week{tran.at(fmt::format("{:%A}", cache_time))},
+        am_or_pm{tran.at(fmt::format("{:%p}", cache_time))},
+        task{"##task"s, in_task.get<work_task_info>().task_name},
+        region{"##region"s, in_task.get<work_task_info>().region},
+        abstract{"##abstract"s, in_task.get<work_task_info>().abstract} {}
+
   // explicit table_line(const time_point_wrap& in_task)
   //     : cache_time{chrono::round<chrono::hours>(in_task.get_local_time())},
   //       time_day{ fmt::format("{:%F}", cache_time)},
@@ -120,8 +130,6 @@ class work_hour_filling::impl {
  public:
   std::string title{};
 
-  /// @brief 时间和句柄对应关系
-  std::map<chrono::time_point<chrono::system_clock, chrono::hours>, entt::handle> time_cache;
   /// @brief 过滤当前用户使用
   entt::handle current_user;
   /// @brief 使用时间过滤表id
@@ -167,34 +175,16 @@ void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
   auto l_time       = time_point_wrap{in_y, in_m, 1};
   auto l_begin_time = chrono::time_point_cast<chrono::hours>(l_time.current_month_start().get_sys_time());
   auto l_end_time   = chrono::time_point_cast<chrono::hours>(l_time.current_month_end().get_sys_time());
-  /// 先生成
-  ptr->time_cache.clear();
-  for (auto i = l_begin_time; i <= l_end_time; i += chrono::hours{12}) {
-    // DOODLE_LOG_INFO("生成时间 {}", i);
-    ptr->time_cache[i] = {};
-  }
-  for (auto&& [l_e, l_w] : g_reg()->view<work_task_info>().each()) {
-    //    if (l_w.time >= l_begin_time && l_w.time <= l_end_time && l_w.user_ref.user_attr() == ptr->current_user) {
-    //      // DOODLE_LOG_INFO("时间 {} 信息 {}", l_w.time, l_w.task_name);
-    //      // auto l_t = make_handle(l_e).get<work_task_info>();
-    //      // DOODLE_LOG_INFO("句柄时间 {} 信息 {}", l_t.time, l_t.task_name);
-    //      ptr->time_cache[l_w.time] = make_handle(l_e);
-    //    }
-  }
+  if (!ptr->current_user) return;
 
-  ptr->table_list =
-      ptr->time_cache | ranges::views::transform([&](const decltype(ptr->time_cache)::value_type& in) -> table_line {
-        // if (in.second && in.second.any_of<work_task_info>()) {
-        //   auto l_t = in.second.get<work_task_info>();
-        //   DOODLE_LOG_INFO("原始时间 {} 信息 {}", l_t.time, l_t.task_name);
-        // }
-        auto l_line = (in.second && in.second.any_of<work_task_info>()) ? table_line{in.second.get<work_task_info>()}
-                                                                        : table_line{in.first};
-        // DOODLE_LOG_INFO("时间 {} 信息 {}", l_line.time_day, l_line.task());
-        l_line.user_handle = ptr->current_user;
-        return l_line;
-      }) |
-      ranges::to_vector;
+  auto l_work_list =
+      ptr->client_->get_user_work_task_info(ptr->current_user, ptr->current_user, std::pair{l_begin_time, l_end_time});
+  /// 先生成
+  ptr->table_list = l_work_list |
+                    ranges::views::transform([&](const decltype(l_work_list)::value_type& in) -> table_line {
+                      return table_line{in};
+                    }) |
+                    ranges::to_vector;
   /// 排序
   ptr->table_list |= ranges::actions::sort(boost::lambda2::_1 < boost::lambda2::_2);
 }
@@ -203,18 +193,18 @@ void work_hour_filling::modify_item(std::size_t in_index) {
   auto&& l_i = ptr->table_list[in_index];
 
   DOODLE_LOG_INFO("编辑时间 {}", l_i.cache_time);
-  if (!ptr->time_cache[l_i.cache_time]) ptr->time_cache[l_i.cache_time] = make_handle();
-  auto l_h      = ptr->time_cache[l_i.cache_time];
-
-  auto&& l_task = l_h.get_or_emplace<work_task_info>() = (work_task_info)l_i;
-  if (!l_h.all_of<database>()) l_h.emplace<database>();
-  database::save(l_h);
+  l_i.data_handle.get_or_emplace<work_task_info>() = (work_task_info)l_i;
+  /// todo:保存
 }
 
 void work_hour_filling::init() {
-  //  ptr->client_      = std::make_unique<distributed_computing::client>(core_set::get_set().server_ip);
-  //  ptr->current_user = ptr->client_->get_user(g_reg()->ctx().at<doodle::user::current_user>().uuid);
-  //  ptr->current_user          = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
+  ptr->client_ = std::make_unique<distributed_computing::client>(core_set::get_set().server_ip);
+  try {
+    ptr->current_user = ptr->client_->get_user(g_reg()->ctx().at<doodle::user::current_user>().uuid);
+    //    ptr->current_user = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
+  } catch (const json_rpc::invalid_id_exception& in_err) {
+    DOODLE_LOG_ERROR("无效的用户 {}", g_reg()->ctx().at<doodle::user::current_user>().uuid);
+  }
   auto l_time       = time_point_wrap{}.compose();
   ptr->time_month() = {l_time.year, l_time.month};
 

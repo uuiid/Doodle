@@ -21,8 +21,6 @@
 
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
-  gui::main_proc_handle::value().win_close   = [this]() { this->close_windows(); };
-  gui::main_proc_handle::value().win_destroy = []() {};
   make_handle().emplace<gui::gui_tick>(std::make_shared<maya_layout>());
   make_handle().emplace<gui::gui_tick>(std::make_shared<maya_menu>());
   make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_status_bar>());

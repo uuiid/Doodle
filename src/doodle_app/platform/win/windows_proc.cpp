@@ -4,14 +4,17 @@
 
 #include "windows_proc.h"
 
+#include <app/facet/gui_facet.h>
 #include <gui/main_proc_handle.h>
 // Helper functions
+#include <boost/winapi/tls.hpp>
+
 #include <Windows.h>
 #include <d3d11.h>
 #include <imgui_impl_win32.h>
 #include <shellapi.h>
 #include <tchar.h>
-
+#include <wil/result.h>
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace doodle::win {
@@ -113,12 +116,21 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     }
     case WM_CLOSE: {
-      gui::main_proc_handle::value().win_close();
+      auto l_gui_f = reinterpret_cast<::doodle::facet::gui_facet*>(::GetWindowLongPtr(hWnd, 0));
+      l_gui_f->close_windows();
       return 0;
     }
     case WM_DESTROY: {
-      gui::main_proc_handle::value().win_destroy();
+      auto l_gui_f = reinterpret_cast<::doodle::facet::gui_facet*>(::GetWindowLongPtr(hWnd, 0));
+      l_gui_f->destroy_windows();
       return 0;
+    }
+    case WM_NCCREATE: {
+      auto l_create_ptr = reinterpret_cast<::CREATESTRUCT*>(lParam);
+      auto l_err        = ::SetWindowLongPtr(hWnd, 0, reinterpret_cast<::LONG_PTR>(l_create_ptr->lpCreateParams));
+      LOG_IF_WIN32_ERROR(l_err);
+      //      RETURN_IF_WIN32_ERROR(l_err);
+      return true;
     }
       //    case WM_IME_CHAR: {
       //      auto& io    = ImGui::GetIO();

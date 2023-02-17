@@ -49,7 +49,7 @@ class gui_facet::impl {
   [[maybe_unused]] win::ole_guard _guard{};
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
-  boost::asio::high_resolution_timer timer_{g_io_context()};
+  boost::asio::high_resolution_timer timer_{boost::asio::make_strand(g_io_context())};
 };
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
@@ -156,10 +156,11 @@ void gui_facet::tick_end() {
                                                // g_pSwapChain->Present(0, 0); // Present without vsync
 }
 void gui_facet::post_constructor() {
-  auto l_instance = program_info::value().handle_attr();
+  auto l_instance     = program_info::value().handle_attr();
 
-  p_win_class = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L, 0L, l_instance, nullptr, nullptr, nullptr, nullptr,
-                 _T("doodle"),       nullptr};
+  p_win_class         = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L,      sizeof(std::nullptr_t),
+                         l_instance,         nullptr,    nullptr,      nullptr, nullptr,
+                         _T("doodle"),       nullptr};
   p_win_class.hIconSm = (HICON)LoadImageW(l_instance, MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
   p_win_class.hIcon   = p_win_class.hIconSm;
 
@@ -169,7 +170,7 @@ void gui_facet::post_constructor() {
   auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(program_info::value().title_attr());
   p_hwnd     = ::CreateWindowExW(
       0L, p_win_class.lpszClassName, l_str.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-      CW_USEDEFAULT, program_info::value().parent_windows_attr(), nullptr, p_win_class.hInstance, nullptr
+      CW_USEDEFAULT, program_info::value().parent_windows_attr(), nullptr, p_win_class.hInstance, this
   );
 
   // Initialize Direct3D
@@ -285,14 +286,17 @@ void gui_facet::post_constructor() {
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
 void gui_facet::close_windows() {
-  boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
-    p_i->timer_.cancel();
-    p_i->timer_.wait();
-    ::ShowWindow(l_hwnd, SW_HIDE);
-    ::DestroyWindow(l_hwnd);
-    this->tick_begin();
-    doodle::app_base::Get().stop_app();
-  });
+  if (::GetForegroundWindow() == p_hwnd)
+    make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
+  else
+    boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
+      p_i->timer_.cancel();
+      p_i->timer_.wait();
+      ::ShowWindow(l_hwnd, SW_HIDE);
+      ::DestroyWindow(l_hwnd);
+      this->tick_begin();
+      doodle::app_base::Get().stop_app();
+    });
 }
 void gui_facet::show_windows() const { ::ShowWindow(p_hwnd, SW_SHOW); }
 void gui_facet::set_title(const std::string& in_title) const {
@@ -302,4 +306,5 @@ void gui_facet::set_title(const std::string& in_title) const {
   });
 }
 gui_facet::~gui_facet() { identifier::reset(); }
+void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
 }  // namespace doodle::facet

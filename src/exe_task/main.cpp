@@ -100,12 +100,7 @@ class main_facet : public doodle::main_facet {
  public:
  protected:
   void load_windows() override {
-    /// \brief 设置窗口句柄处理
     using namespace doodle;
-    gui::main_proc_handle::value().win_close = []() {
-      make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
-    };
-    gui::main_proc_handle::value().win_destroy = [=]() { ::DestroyWindow(p_hwnd); };
     g_reg()->ctx().at<gui::layout_tick>()      = std::make_shared<layout>();
     make_handle().emplace<gui::gui_tick>()     = std::make_shared<menu_bar>();
     make_handle().emplace<gui::gui_tick>()     = std::make_shared<gui::main_status_bar>();
