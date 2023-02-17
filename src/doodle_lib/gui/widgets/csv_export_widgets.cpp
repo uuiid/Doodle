@@ -35,6 +35,7 @@
 #include <chrono>
 #include <fmt/chrono.h>
 #include <imgui.h>
+#include <xlnt/xlnt.hpp>
 
 namespace doodle::gui {
 class csv_line_gui {
