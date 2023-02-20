@@ -1,7 +1,7 @@
 //
 // Created by TD on 2022/2/17.
 //
-#include "csv_export_widgets.h"
+#include "xlsx_export_widgets.h"
 
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/core/core_sig.h>
@@ -38,9 +38,9 @@
 #include <xlnt/xlnt.hpp>
 
 namespace doodle::gui {
-class csv_line_gui {
+class xlsx_line_gui {
  public:
-  csv_line_gui() = default;
+  xlsx_line_gui() = default;
 
   std::string organization_{};
   std::string user_{};
@@ -57,25 +57,25 @@ class csv_line_gui {
   std::string cutoff_attr_{};
 };
 
-class csv_line_statistics_gui {
+class xlsx_line_statistics_gui {
  public:
-  csv_line_statistics_gui() = default;
+  xlsx_line_statistics_gui() = default;
   std::string user_name;
   std::string len_time;
 };
 
 }  // namespace doodle::gui
 BOOST_FUSION_ADAPT_STRUCT(
-    ::doodle::gui::csv_line_gui, organization_, user_, project_season_name_, episodes_, shot_, start_time_, end_time_,
+    ::doodle::gui::xlsx_line_gui, organization_, user_, project_season_name_, episodes_, shot_, start_time_, end_time_,
     len_time_, time_info_, comment_info_, file_path_, name_attr_, cutoff_attr_
 );
 
-BOOST_FUSION_ADAPT_STRUCT(::doodle::gui::csv_line_statistics_gui, user_name, len_time);
+BOOST_FUSION_ADAPT_STRUCT(::doodle::gui::xlsx_line_statistics_gui, user_name, len_time);
 
 namespace doodle::gui {
 
-namespace csv_export_widgets_ns {
-csv_line::csv_line(
+namespace xlsx_export_widgets_ns {
+xlsx_line::xlsx_line(
     const entt::handle &in_handle, const std::vector<entt::handle> &in_up_time_handle_list,
     const entt::handle &in_user_handle, bool in_use_first_as_project_name, const std::string_view &in_season_fmt_str,
     const std::string_view &in_episodes_fmt_str, const std::string_view &in_shot_fmt_str
@@ -137,18 +137,18 @@ csv_line::csv_line(
   cutoff_attr_  = in_handle.any_of<importance>() ? in_handle.get<importance>().cutoff_p : ""s;
   DOODLE_LOG_INFO("计算时间为 {}", len_time_);
 }
-bool csv_line::operator<(const csv_line &in_l) const {
+bool xlsx_line::operator<(const xlsx_line &in_l) const {
   return std::tie(project_season_name_, episodes_, shot_) <
          std::tie(in_l.project_season_name_, in_l.episodes_, in_l.shot_);
 }
-bool csv_line::operator==(const csv_line &in_l) const {
+bool xlsx_line::operator==(const xlsx_line &in_l) const {
   return std::tie(project_season_name_, episodes_, shot_) ==
          std::tie(in_l.project_season_name_, in_l.episodes_, in_l.shot_);
 }
 
-void csv_table::computing_time() {
+void xlsx_table::computing_time() {
   time_statistics.clear();
-  ranges::for_each(line_list, [&](const csv_export_widgets_ns::csv_line &in_line) {
+  ranges::for_each(line_list, [&](const xlsx_export_widgets_ns::xlsx_line &in_line) {
     time_statistics[in_line.user_] += in_line.len_time_;
   });
 
@@ -178,14 +178,14 @@ void csv_table::computing_time() {
   }
   /// 重新统计
   time_statistics.clear();
-  ranges::for_each(line_list, [&](const csv_export_widgets_ns::csv_line &in_line) {
+  ranges::for_each(line_list, [&](const xlsx_export_widgets_ns::xlsx_line &in_line) {
     time_statistics[in_line.user_] += in_line.len_time_;
   });
   DOODLE_LOG_INFO("计算时间调整后总计 {}", fmt::join(time_statistics, " "));
 }
-void csv_table::sort_line() { line_list |= ranges::actions::sort; }
+void xlsx_table::sort_line() { line_list |= ranges::actions::sort; }
 
-std::string csv_table::to_str() const {
+std::string xlsx_table::to_str() const {
   std::ostringstream l_str{};
   l_str << fmt::format(
       "{}\n", fmt::join(
@@ -196,7 +196,7 @@ std::string csv_table::to_str() const {
   );  /// @brief 标题
   l_str << fmt::format(
       "{}\n", fmt::join(
-                  line_list | ranges::views::transform([](const csv_line &in_line) -> std::string {
+                  line_list | ranges::views::transform([](const xlsx_line &in_line) -> std::string {
                     // using days_double   = chrono::duration<std::float_t, std::ratio<60ull * 60ull * 8ull>>;
                     using time_rational = boost::rational<std::uint64_t>;
                     time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
@@ -226,44 +226,45 @@ std::string csv_table::to_str() const {
   );
   return l_str.str();
 }
-}  // namespace csv_export_widgets_ns
+}  // namespace xlsx_export_widgets_ns
 
-class csv_table_gui {
+class xlsx_table_gui {
  public:
-  gui_cache<csv_export_widgets::csv_table> gui_data{"预览"s};
+  gui_cache<xlsx_export_widgets::xlsx_table> gui_data{"预览"s};
   gui_cache_name_id show_details{"显示详细"};
   gui_cache_name_id show_statistics{"显示统计"};
 
-  std::variant<std::vector<csv_line_gui>, std::vector<csv_line_statistics_gui>> list;
+  std::variant<std::vector<xlsx_line_gui>, std::vector<xlsx_line_statistics_gui>> list;
 
-  void set_table_data(const std::vector<csv_export_widgets::csv_line> &in_csv_line) {
-    gui_data().line_list = in_csv_line;
+  void set_table_data(const std::vector<xlsx_export_widgets::xlsx_line> &in_xlsx_line) {
+    gui_data().line_list = in_xlsx_line;
     gui_data().computing_time();
     gui_data().sort_line();
     /// 添加初始化显示
-    list =
-        gui_data().time_statistics |
-        ranges::views::transform([](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
-          using time_rational = boost::rational<std::uint64_t>;
-          time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
-          return csv_line_statistics_gui{
-              in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
-        }) |
-        ranges::to_vector;
+    list = gui_data().time_statistics |
+           ranges::views::transform(
+               [](const std::pair<std::string, chrono::seconds> &in_line) -> xlsx_line_statistics_gui {
+                 using time_rational = boost::rational<std::uint64_t>;
+                 time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
+                 return xlsx_line_statistics_gui{
+                     in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
+               }
+           ) |
+           ranges::to_vector;
   }
 
   [[nodiscard]] constexpr std::int32_t size() const {
-    return std::holds_alternative<std::vector<csv_line_gui>>(list) ? 13 : 2;
+    return std::holds_alternative<std::vector<xlsx_line_gui>>(list) ? 13 : 2;
   }
 
   void render() {
     if (ImGui::Button(*show_details)) {
       list = gui_data().line_list |
-             ranges::views::transform([](const csv_export_widgets_ns::csv_line &in_line) -> csv_line_gui {
+             ranges::views::transform([](const xlsx_export_widgets_ns::xlsx_line &in_line) -> xlsx_line_gui {
                using time_rational = boost::rational<std::uint64_t>;
                time_rational l_time_rational{in_line.len_time_.count(), 60ull * 60ull * 8ull};
 
-               return csv_line_gui{
+               return xlsx_line_gui{
                    in_line.organization_,
                    in_line.user_,
                    in_line.project_season_name_,
@@ -283,10 +284,10 @@ class csv_table_gui {
     if (ImGui::Button(*show_statistics)) {
       list = gui_data().time_statistics |
              ranges::views::transform(
-                 [](const std::pair<std::string, chrono::seconds> &in_line) -> csv_line_statistics_gui {
+                 [](const std::pair<std::string, chrono::seconds> &in_line) -> xlsx_line_statistics_gui {
                    using time_rational = boost::rational<std::uint64_t>;
                    time_rational l_time_rational{in_line.second.count(), 60ull * 60ull * 8ull};
-                   return csv_line_statistics_gui{
+                   return xlsx_line_statistics_gui{
                        in_line.first, fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational))};
                  }
              ) |
@@ -295,7 +296,7 @@ class csv_table_gui {
 
     dear::Table{*gui_data, size()} && [this]() { std::visit(*this, list); };
   }
-  void operator()(const std::vector<csv_line_gui> &in_line) const {
+  void operator()(const std::vector<xlsx_line_gui> &in_line) const {
     ImGui::TableSetupScrollFreeze(0, 1);  // 顶行可见
     ImGui::TableSetupColumn("部门");
     ImGui::TableSetupColumn("用户");
@@ -311,7 +312,7 @@ class csv_table_gui {
     ImGui::TableSetupColumn("名称");
     ImGui::TableSetupColumn("等级");
     ImGui::TableHeadersRow();
-    ranges::for_each(in_line, [](const csv_line_gui &in_gui) {
+    ranges::for_each(in_line, [](const xlsx_line_gui &in_gui) {
       ImGui::TableNextRow();
 
       boost::fusion::for_each(in_gui, [](const std::string &in_string) {
@@ -321,12 +322,12 @@ class csv_table_gui {
     });
   }
 
-  void operator()(const std::vector<csv_line_statistics_gui> &in_vector) const {
+  void operator()(const std::vector<xlsx_line_statistics_gui> &in_vector) const {
     ImGui::TableSetupScrollFreeze(0, 1);  // 顶行可见
     ImGui::TableSetupColumn("用户");
     ImGui::TableSetupColumn("总时间");
     ImGui::TableHeadersRow();
-    ranges::for_each(in_vector, [](const csv_line_statistics_gui &in_gui) {
+    ranges::for_each(in_vector, [](const xlsx_line_statistics_gui &in_gui) {
       ImGui::TableNextRow();
 
       ImGui::TableNextColumn();
@@ -337,7 +338,7 @@ class csv_table_gui {
   }
 };
 
-class csv_export_widgets::impl {
+class xlsx_export_widgets::impl {
  public:
   class time_cache {
    public:
@@ -382,7 +383,7 @@ class csv_export_widgets::impl {
   gui_cache_name_id export_table{"导出表"};
   gui_cache_name_id advanced_setting{"高级设置"};
 
-  csv_table_gui csv_table_gui_{};
+  xlsx_table_gui xlsx_table_gui_{};
 
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
@@ -395,12 +396,12 @@ class csv_export_widgets::impl {
   std::size_t user_size{};
 };
 
-csv_export_widgets::csv_export_widgets() : p_i(std::make_unique<impl>()) {
+xlsx_export_widgets::xlsx_export_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};  // 获取上一次人物提交时的实体name
 }
-csv_export_widgets::~csv_export_widgets() = default;  /// 析构释放内存
+xlsx_export_widgets::~xlsx_export_widgets() = default;  /// 析构释放内存
 
-void csv_export_widgets::init() {
+void xlsx_export_widgets::init() {
   boost::contract::old_ptr<FSys::path> l_old_ptr = BOOST_CONTRACT_OLDOF(p_i->export_path.path);
   boost::contract::check l_check                 = boost::contract::public_function(this)
                                        .precondition([&]() { BOOST_CONTRACT_CHECK(p_i->con.empty()); })
@@ -408,14 +409,14 @@ void csv_export_widgets::init() {
 
                                        })
                                        .postcondition([&]() {
-                                         BOOST_CONTRACT_CHECK(p_i->export_path.path.extension() == ".csv");
+                                         BOOST_CONTRACT_CHECK(p_i->export_path.path.extension() == ".xlsx");
                                          BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
                                        });
 
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) p_i->list = g_reg()->ctx().at<std::vector<entt::handle>>();
   p_i->con.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
                                                                              ) { p_i->list = in; }));
-  p_i->export_path.path = FSys::temp_directory_path() / "tset.csv";
+  p_i->export_path.path = FSys::temp_directory_path() / "test.xlsx";
   p_i->export_path.data = p_i->export_path.path.generic_string();
 
   gen_user();
@@ -423,14 +424,14 @@ void csv_export_widgets::init() {
   p_i->combox_month.cache()               = {l_y, l_m};
 }
 
-void csv_export_widgets::render() {
+void xlsx_export_widgets::render() {
   if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data))
     p_i->export_path.path = p_i->export_path.data;
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
     l_file->async_read([this](const FSys::path &in) {
-      p_i->export_path.path = in / "tmp.csv";
+      p_i->export_path.path = in / "tmp.xlsx";
       p_i->export_path.data = p_i->export_path.path.generic_string();
     });
     make_handle().emplace<gui_windows>(l_file);
@@ -468,15 +469,15 @@ void csv_export_widgets::render() {
   }
 
   if (ImGui::Button(*p_i->export_table)) {
-    export_csv();
+    export_xlsx();
   }
 
   // 渲染表格
-  p_i->csv_table_gui_.render();
+  p_i->xlsx_table_gui_.render();
 }
 
-const std::string &csv_export_widgets::title() const { return p_i->title_name_; }
-void csv_export_widgets::generate_table() {
+const std::string &xlsx_export_widgets::title() const { return p_i->title_name_; }
+void xlsx_export_widgets::generate_table() {
   auto &l_p = g_reg()->ctx().emplace<process_message>();
   l_p.set_state(l_p.success);
   p_i->list =
@@ -486,10 +487,10 @@ void csv_export_widgets::generate_table() {
   p_i->list |= ranges::actions::stable_sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
     return in_r.get<assets_file>().user_attr().get<user>() < in_l.get<assets_file>().user_attr().get<user>();
   });
-  p_i->csv_table_gui_.set_table_data(
-      p_i->list | ranges::views::transform([this](const entt::handle &in_handle) -> csv_line {
+  p_i->xlsx_table_gui_.set_table_data(
+      p_i->list | ranges::views::transform([this](const entt::handle &in_handle) -> xlsx_line {
         auto l_user = in_handle.get<assets_file>().user_attr();
-        return csv_line{
+        return xlsx_line{
             in_handle,
             p_i->user_handle[l_user],
             l_user,
@@ -502,7 +503,7 @@ void csv_export_widgets::generate_table() {
   );
 }
 
-void csv_export_widgets::export_csv() {
+void xlsx_export_widgets::export_xlsx() {
   if (p_i->list.empty()) {
     auto l_msg = std::make_shared<show_message>();
     l_msg->set_message("过滤后为空, 不导出");
@@ -510,10 +511,52 @@ void csv_export_widgets::export_csv() {
     DOODLE_LOG_INFO("过滤后为空, 不导出");
     return;
   }
-  FSys::ofstream l_f{p_i->export_path()};
-  l_f << p_i->csv_table_gui_.gui_data().to_str();
+  xlnt::workbook wbOut{};
+  xlnt::worksheet wsOut = wbOut.active_sheet();
+  wsOut.title("TEST");
+  const static std::vector<std::string> s_xlsx_header{"部门"s,     "制作人"s,   "项目"s,         "集数"s,     "镜头"s,
+                                                      "开始时间"s, "结束时间"s, "持续时间/day"s, "时间备注"s, "备注"s,
+                                                      "类别"s,     "名称"s,     "等级"s};
+  /// 添加头
+  for (auto i = 0; i < s_xlsx_header.size(); ++i) {
+    wsOut.cell(xlnt::cell_reference(1 + i, 1)).value(s_xlsx_header[i]);
+  }
+  /// 添加内容
+  std::size_t l_index{2};
+  auto l_line = p_i->xlsx_table_gui_.gui_data().line_list;
+  for (auto &l_row : l_line) {
+    auto l_s_t = l_row.start_time_.compose();
+    auto l_e_t = l_row.end_time_.compose();
+    wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row.organization_);
+    wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row.user_);
+    wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row.project_season_name_);
+    wsOut.cell(xlnt::cell_reference(4, l_index)).value(l_row.episodes_);
+    wsOut.cell(xlnt::cell_reference(5, l_index)).value(l_row.shot_);
+    wsOut.cell(xlnt::cell_reference(6, l_index))
+        .value(xlnt::datetime{l_s_t.year, l_s_t.month, l_s_t.day, l_s_t.hours, l_s_t.minutes, l_s_t.seconds});
+    wsOut.cell(xlnt::cell_reference(7, l_index))
+        .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
+    // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
+    wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::format("{}", l_row.len_time_));
+    wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row.time_info_);
+    wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row.comment_info_);
+    wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row.file_path_);
+    wsOut.cell(xlnt::cell_reference(12, l_index)).value(l_row.name_attr_);
+    wsOut.cell(xlnt::cell_reference(13, l_index)).value(l_row.cutoff_attr_);
+    ++l_index;
+  }
+  FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
+  auto l_msg = std::make_shared<show_message>();
+  if (!l_f.fail()) {
+    l_msg->set_message("成功导出");
+    make_handle().emplace<gui_windows>() = l_msg;
+    wbOut.save(l_f);
+  } else {
+    l_msg->set_message(fmt::format("导出失败,文件已打开，请关闭文件重新导入"));
+    make_handle().emplace<gui_windows>() = l_msg;
+  }
 }
-bool csv_export_widgets::get_work_time() {
+bool xlsx_export_widgets::get_work_time() {
   p_i->list_sort_time =
       ranges::copy(p_i->list) | ranges::actions::sort([](const entt::handle &in_r, const entt::handle &in_l) -> bool {
         return in_r.get<time_point_wrap>() < in_l.get<time_point_wrap>();
@@ -572,7 +615,7 @@ bool csv_export_widgets::get_work_time() {
 
   return true;
 }
-void csv_export_widgets::filter_() {
+void xlsx_export_widgets::filter_() {
   auto l_view  = g_reg()->view<database, assets_file, time_point_wrap>();
 
   auto l_begin = p_i->combox_month.time_data.current_month_start();
@@ -598,7 +641,7 @@ void csv_export_widgets::filter_() {
               }) |
               ranges::to_vector;
 }
-void csv_export_widgets::gen_user() {
+void xlsx_export_widgets::gen_user() {
   p_i->combox_user_id.user_list.clear();
 
   auto l_v = g_reg()->view<database, user>();

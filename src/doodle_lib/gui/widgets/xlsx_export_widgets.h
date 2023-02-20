@@ -10,19 +10,19 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::gui {
 
-namespace csv_export_widgets_ns {
+namespace xlsx_export_widgets_ns {
 
-class csv_line : boost::totally_ordered<csv_line> {
+class xlsx_line : boost::totally_ordered<xlsx_line> {
  public:
-  csv_line() = default;
-  explicit csv_line(
+  xlsx_line() = default;
+  explicit xlsx_line(
       const entt::handle& in_handle, const std::vector<entt::handle>& in_up_time_handle_list,
       const entt::handle& in_user_handle, bool in_use_first_as_project_name, const std::string_view& in_season_fmt_str,
       const std::string_view& in_episodes_fmt_str, const std::string_view& in_shot_fmt_str
   );
   /// 按照 季数 -> 集数 -> 镜头 排序
-  bool operator<(const csv_line& in_l) const;
-  bool operator==(const csv_line& in_l) const;
+  bool operator<(const xlsx_line& in_l) const;
+  bool operator==(const xlsx_line& in_l) const;
 
   /// 部门
   std::string organization_{};
@@ -56,26 +56,26 @@ class csv_line : boost::totally_ordered<csv_line> {
   friend struct fmt::formatter;
 };
 
-class csv_table {
+class xlsx_table {
  public:
-  csv_table() = default;
+  xlsx_table() = default;
 
   void computing_time();
 
   void sort_line();
 
-  std::vector<csv_line> line_list;
+  std::vector<xlsx_line> line_list;
   std::map<std::string, chrono::seconds> time_statistics;
 
   std::string to_str() const;
 };
 
-}  // namespace csv_export_widgets_ns
+}  // namespace xlsx_export_widgets_ns
 
-class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_export_widgets> {
+class DOODLELIB_API xlsx_export_widgets : public base_windows<dear::Begin, xlsx_export_widgets> {
  public:
-  using csv_line  = csv_export_widgets_ns::csv_line;
-  using csv_table = csv_export_widgets_ns::csv_table;
+  using xlsx_line  = xlsx_export_widgets_ns::xlsx_line;
+  using xlsx_table = xlsx_export_widgets_ns::xlsx_table;
 
   enum class work_clock_method : std::uint8_t { form_rule, form_dingding };
 
@@ -85,7 +85,7 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
 
   void generate_table();
   /// 导出表
-  void export_csv();
+  void export_xlsx();
 
   bool get_work_time();
   void gen_user();
@@ -93,10 +93,10 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
   void filter_();
 
  public:
-  csv_export_widgets();
-  ~csv_export_widgets() override;
+  xlsx_export_widgets();
+  ~xlsx_export_widgets() override;
 
-  constexpr static std::string_view name{gui::config::menu_w::csv_export};
+  constexpr static std::string_view name{gui::config::menu_w::xlsx_export};
 
   void init();
   void render();
@@ -107,12 +107,12 @@ class DOODLELIB_API csv_export_widgets : public base_windows<dear::Begin, csv_ex
 
 namespace fmt {
 /**
- * 格式化csv line 行
+ * 格式化xlsx line 行
  */
 template <>
-struct formatter<::doodle::gui::csv_export_widgets_ns::csv_line> : formatter<std::string> {
+struct formatter<::doodle::gui::xlsx_export_widgets_ns::xlsx_line> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(const ::doodle::gui::csv_export_widgets_ns::csv_line& in_, FormatContext& ctx) const
+  auto format(const ::doodle::gui::xlsx_export_widgets_ns::xlsx_line& in_, FormatContext& ctx) const
       -> decltype(ctx.out()) {
     fmt::format_to(
         ctx.out(),

@@ -12,7 +12,7 @@ target_sources(doodle_lib
         ue4_widget.h
         screenshot_widget.h
         assets_filter_widget.h
-        csv_export_widgets.h
+        xlsx_export_widgets.h
         assets_file_widgets.h
         extract_subtitles_widgets.h
         long_time_tasks_widget.h
@@ -26,7 +26,7 @@ target_sources(doodle_lib
         PRIVATE
         edit_widget.cpp
         assets_file_widgets.cpp
-        csv_export_widgets.cpp
+        xlsx_export_widgets.cpp
         assets_filter_widget.cpp
         extract_subtitles_widgets.cpp
         make_link_widget.cpp

@@ -8,7 +8,7 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
-#include <doodle_lib/gui/widgets/csv_export_widgets.h>
+#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
@@ -79,7 +79,7 @@ class layout_window::impl {
         ImGui::DockBuilderDockWindow(menu_w::assets_filter.data(), dock_id_filter);  /// \brief 过滤器的停靠
         ImGui::DockBuilderDockWindow(menu_w::edit_.data(), dock_id_edit);            /// \brief 编辑的停靠
 
-        ImGui::DockBuilderDockWindow(menu_w::csv_export.data(), dock_id_tools);           /// \brief 工具所在的id
+        ImGui::DockBuilderDockWindow(menu_w::xlsx_export.data(), dock_id_tools);           /// \brief 工具所在的id
         ImGui::DockBuilderDockWindow(menu_w::ue4_widget.data(), dock_id_tools);           /// \brief 工具所在的id
         ImGui::DockBuilderDockWindow(menu_w::comm_maya_tool.data(), dock_id_tools);       /// \brief 工具所在的id
         ImGui::DockBuilderDockWindow(menu_w::comm_create_video.data(), dock_id_tools);    /// \brief 工具所在的id
@@ -118,7 +118,7 @@ bool layout_window::tick() {
     show_windows<time_sequencer_widget>();
     show_windows<ue4_widget>();
     show_windows<assets_file_widgets>();
-    show_windows<csv_export_widgets>();
+    show_windows<xlsx_export_widgets>();
   }
 
   return false;

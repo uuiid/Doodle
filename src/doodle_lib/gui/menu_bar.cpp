@@ -20,7 +20,7 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
-#include <doodle_lib/gui/widgets/csv_export_widgets.h>
+#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
@@ -41,7 +41,7 @@ void menu_bar::menu_windows() {
   if (dear::MenuItem(project_edit::name.data())) show_windows<project_edit>();
   if (dear::MenuItem(edit_widgets::name.data())) show_windows<edit_widgets>();
   if (dear::MenuItem(assets_filter_widget::name.data())) show_windows<assets_filter_widget>();
-  if (dear::MenuItem(csv_export_widgets::name.data())) show_windows<csv_export_widgets>();
+  if (dear::MenuItem(xlsx_export_widgets::name.data())) show_windows<xlsx_export_widgets>();
   if (dear::MenuItem(maya_tool::name.data())) show_windows<maya_tool>();
   if (dear::MenuItem(create_video::name.data())) show_windows<create_video>();
   if (dear::MenuItem(extract_subtitles_widgets::name.data())) show_windows<extract_subtitles_widgets>();
