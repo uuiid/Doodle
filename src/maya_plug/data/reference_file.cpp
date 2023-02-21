@@ -365,7 +365,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
     ranges::for_each(export_path, [](MDagPath &in) { in.pop(); });
 
     auto l_suffix = g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix;
-    export_path |= ranges::actions::push_back(find_out_group_child_suffix_node(l_suffix));
+    export_path   = find_out_group_child_suffix_node(l_suffix);
     export_path |=
         ranges::actions::unique([](const MDagPath &in_r, const MDagPath &in_l) -> bool { return in_r == in_l; });
     DOODLE_LOG_INFO("按组划分导出再次收集完成 {}", fmt::join(export_path, " "));
