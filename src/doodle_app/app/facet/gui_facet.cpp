@@ -286,17 +286,20 @@ void gui_facet::post_constructor() {
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
 void gui_facet::close_windows() {
-  if (::GetForegroundWindow() == p_hwnd)
-    make_handle().emplace<gui::gui_windows>(std::make_shared<gui::close_exit_dialog>());
-  else
-    boost::asio::post(g_io_context(), [l_hwnd = p_hwnd, this]() {
-      p_i->timer_.cancel();
-      p_i->timer_.wait();
-      ::ShowWindow(l_hwnd, SW_HIDE);
-      ::DestroyWindow(l_hwnd);
-      this->tick_begin();
-      doodle::app_base::Get().stop_app();
-    });
+  auto g_quit{[l_hwnd = p_hwnd, this]() {
+    p_i->timer_.cancel();
+    p_i->timer_.wait();
+    ::ShowWindow(l_hwnd, SW_HIDE);
+    ::DestroyWindow(l_hwnd);
+    this->tick_begin();
+    doodle::app_base::Get().stop_app();
+  }};
+  if (::GetForegroundWindow() == p_hwnd) {
+    auto l_gui = std::make_shared<gui::close_exit_dialog>();
+    l_gui->quit.connect([=]() { boost::asio::post(g_io_context(), g_quit); });
+    make_handle().emplace<gui::gui_windows>(l_gui);
+  } else
+    boost::asio::post(g_io_context(), g_quit);
 }
 void gui_facet::show_windows() const { ::ShowWindow(p_hwnd, SW_SHOW); }
 void gui_facet::set_title(const std::string& in_title) const {
