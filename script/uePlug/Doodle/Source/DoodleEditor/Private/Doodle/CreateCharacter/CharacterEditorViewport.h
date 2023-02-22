@@ -9,6 +9,7 @@
 class FCharacterEditorViewportClient;
 class SCharacterEditorViewportToolBar;
 class SCharacterEditorViewport;
+class ASkeletalMeshActor;
 
 class FCharacterEditorPreviewScene : public FAdvancedPreviewScene {
  public:
@@ -37,14 +38,14 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   SLATE_BEGIN_ARGS(SCharacterEditorViewport) {}
   SLATE_END_ARGS()
 
-  // ���������ݴ�������
+  //
   void Construct(const FArguments& Arg, USkeletalMesh* InSkeletaMesh);
 
-  // ��ʼ�������ӿ�
+  // 开始工具栏接口
   TSharedRef<class SEditorViewport> GetViewportWidget() override;
   TSharedPtr<FExtender> GetExtenders() const override;
   void OnFloatingButtonClicked() override;
-  // �����������ӿ�
+  // 结束
 
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;

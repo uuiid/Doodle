@@ -9,10 +9,10 @@ class SCreateCharacterMianUI : public SCompoundWidget, FGCObject {
   SLATE_BEGIN_ARGS(SCreateCharacterMianUI) {}
   SLATE_END_ARGS()
 
-  // ÕâÀïÊÇÄÚÈÝ´´½¨º¯Êý
+  // è¿™é‡Œæ˜¯å†…å®¹åˆ›å»ºå‡½æ•°
   void Construct(const FArguments& Arg);
 
-  // À¬»ø»ØÊÕ
+  // åžƒåœ¾å›žæ”¶
   virtual void AddReferencedObjects(FReferenceCollector& collector) override;
 
   const static FName Name;

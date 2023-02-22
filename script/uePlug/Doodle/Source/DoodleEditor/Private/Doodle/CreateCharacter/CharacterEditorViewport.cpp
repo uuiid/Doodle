@@ -1,6 +1,6 @@
 #include "CharacterEditorViewport.h"
 
-#include "Animation/SkeletalMeshActor.h"  // ��������������ʹ��
+#include "Animation/SkeletalMeshActor.h"  // 创建骨骼网格体使用
 #include "GameFramework/WorldSettings.h"
 FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
     : FAdvancedPreviewScene(
@@ -9,9 +9,9 @@ FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
 
       ) {
   SetFloorVisibility(true);
-  // ʱ�䳡������
+  // 时间场景设置
 
-  // ����Ԥ����������
+  // 创建预览场景描述
 
   // UClass* L_Sk = LoadClass<AActor>(NULL,
   // TEXT("/Script/Engine.SkeletalMesh'/Game/AnimStarterPack/UE4_Mannequin/Mesh/SK_Mannequin.SK_Mannequin'")); if (L_Sk)
@@ -24,13 +24,13 @@ FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
 
   // GetWorld()->bBegunPlay         = true;
 
-  // �ƹ�����
+  // 灯光设置
 
-  // ������չ�
+  // 创建天空光
   // UStaticMeshComponent* L_SkyCom = NewObject<UStaticMeshComponent>();
 
   // AddComponent(L_SkyCom, FTransform{FRotator(0, 0, 0), FVector(0, 0, 0), FVector(1000.0f)});
-  //  ��ӹ���������
+  //  添加骨骼网格体
 }
 
 void FCharacterEditorViewportClient::Draw(FViewport* InViewport, FCanvas* Canvas) {
