@@ -1,5 +1,7 @@
 ﻿#include "DoodleEditor.h"
 
+#include "Doodle/ContentBrowserMenuExtension.h"
+#include "Doodle/DoodleImportFbxUI.h"
 #include "DoodleCommands.h"
 #include "DoodleStyle.h"
 #include "LevelEditor.h"
@@ -8,8 +10,6 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "doodleCopyMaterial.h"
-#include "Doodle/DoodleImportFbxUI.h"
-#include "Doodle/ContentBrowserMenuExtension.h"
 // #include "fireLight.h"
 // #include "DoodleDirectionalLightDome.h"
 // #include "DoodleCopySpline.h"
@@ -18,12 +18,12 @@
 // #include "AssetRegistry/IAssetRegistry.h"
 // #include "AssetRegistry/AssetRegistryModule.h"
 #include "ContentBrowserModule.h"  ///内容游览器
+#include "Doodle/CreateCharacter/CreateCharacterMianUI.h"
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
 
 namespace {
-void DoodleDebug(const TArray<FString> &InPaths) {
-}
+void DoodleDebug(const TArray<FString> &InPaths) {}
 }  // namespace
 
 void FdoodleEditorModule::StartupModule() {
@@ -36,49 +36,54 @@ void FdoodleEditorModule::StartupModule() {
   /// @brief 注册命令
   PluginCommands->MapAction(
       FDoodleCommands::Get().OpenPluginWindow,
-      FExecuteAction::CreateRaw(this, &FdoodleEditorModule::PluginButtonClicked),
-      FCanExecuteAction()
+      FExecuteAction::CreateRaw(this, &FdoodleEditorModule::PluginButtonClicked), FCanExecuteAction()
   );
   PluginCommands->MapAction(
       FDoodleCommands::Get().DoodleImportFbxWindow,
       FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name); }),
       FCanExecuteAction()
   );
+  PluginCommands->MapAction(
+      FDoodleCommands::Get().DoodleCreateCharacter,
+      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SCreateCharacterMianUI::Name); }),
+      FCanExecuteAction()
+  );
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
-      FSimpleMulticastDelegate::FDelegate::CreateRaw(
-          this, &FdoodleEditorModule::RegisterMenus
-      )
+      FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus)
   );
 
   /// @brief 注册tab
   FGlobalTabmanager::Get()
-      ->RegisterNomadTabSpawner(
-          doodleTabName,
-          FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab)
-      )
-      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "Doodle"))
+      ->RegisterNomadTabSpawner(doodleTabName, FOnSpawnTab::CreateRaw(this, &FdoodleEditorModule::OnSpawnPluginTab))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle1", "Doodle"))
+      .SetMenuType(ETabSpawnerMenuType::Hidden);
+  FGlobalTabmanager::Get()
+      ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(
-          SDoodleImportFbxUI::Name,
-          FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction)
+          SCreateCharacterMianUI::Name, FOnSpawnTab::CreateStatic(&SCreateCharacterMianUI::OnSpawnAction)
       )
-      .SetDisplayName(LOCTEXT("FdoodleTabTitle", "Doodle Import Fbx"))
+      .SetDisplayName(LOCTEXT("FdoodleTabTitle3", "Doodle Craete Character"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
-  FContentBrowserModule &ContentBrowserModule                              = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
-  TArray<FContentBrowserMenuExtender_SelectedAssets> &MenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
-  MenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateLambda([this](const TArray<FAssetData> &Path) -> TSharedRef<FExtender> {
-    // 创建一个扩展并保存数据
-    Extension                          = MakeShareable(new FContentBrowserMenuExtension(Path));
-    // 创建一个扩展 创建包含委托的扩展程序，该委托将被调用以获取有关新上下文菜单项的信息
-    TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-    // 创建一个共享指针委托，该委托保留对对象“NewFolder”的弱引用。这是一个钩子名称，由扩展器用来标识将扩展路径上下文菜单的外部对象
-    MenuExtender->AddMenuExtension(
-        "GetAssetActions", EExtensionHook::After, TSharedPtr<FUICommandList>(),
-        FMenuExtensionDelegate::CreateSP(Extension.ToSharedRef(), &FContentBrowserMenuExtension::AddMenuEntry)
-    );
+  FContentBrowserModule &ContentBrowserModule =
+      FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+  TArray<FContentBrowserMenuExtender_SelectedAssets> &MenuExtenderDelegates =
+      ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
+  MenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateLambda(
+      [this](const TArray<FAssetData> &Path) -> TSharedRef<FExtender> {
+        // 创建一个扩展并保存数据
+        Extension                          = MakeShareable(new FContentBrowserMenuExtension(Path));
+        // 创建一个扩展 创建包含委托的扩展程序，该委托将被调用以获取有关新上下文菜单项的信息
+        TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+        // 创建一个共享指针委托，该委托保留对对象“NewFolder”的弱引用。这是一个钩子名称，由扩展器用来标识将扩展路径上下文菜单的外部对象
+        MenuExtender->AddMenuExtension(
+            "GetAssetActions", EExtensionHook::After, TSharedPtr<FUICommandList>(),
+            FMenuExtensionDelegate::CreateSP(Extension.ToSharedRef(), &FContentBrowserMenuExtension::AddMenuEntry)
+        );
     return MenuExtender.ToSharedRef();
   }));
 
@@ -102,6 +107,7 @@ void FdoodleEditorModule::ShutdownModule() {
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SCreateCharacterMianUI::Name);
   // AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
@@ -132,12 +138,9 @@ void FdoodleEditorModule::RegisterMenus() {
         UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
     {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
-      Section.AddMenuEntryWithCommandList(
-          FDoodleCommands::Get().OpenPluginWindow, PluginCommands
-      );
-      Section.AddMenuEntryWithCommandList(
-          FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands
-      );
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().OpenPluginWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
+      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleCreateCharacter, PluginCommands);
     }
   }
 

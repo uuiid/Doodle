@@ -99,6 +99,7 @@ class SDoodleImportFbxUI : public SCompoundWidget, FGCObject {
  public:
   SLATE_BEGIN_ARGS(SDoodleImportFbxUI) {}
   SLATE_END_ARGS()
+
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   using UDoodleBaseImportDataPtrType = TObjectPtr<UDoodleBaseImportData>;
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || \

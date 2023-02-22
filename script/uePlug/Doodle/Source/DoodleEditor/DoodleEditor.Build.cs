@@ -101,6 +101,7 @@ public class doodleEditor : ModuleRules
                 "ImageCore",// 调整图像使用
                 "SkeletalMeshUtilitiesCommon",// 简化骨骼
 				"AlembicImporter",//导入abc
+				"AdvancedPreviewScene",// 高级预览场景, 这个需要做捏脸的时候用
             }
 			);
 
