@@ -33,8 +33,10 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <entt/entity/fwd.hpp>
 #include <fmt/chrono.h>
 #include <imgui.h>
+#include <vector>
 #include <xlnt/xlnt.hpp>
 
 namespace doodle::gui {
@@ -384,6 +386,7 @@ class xlsx_export_widgets::impl {
   gui_cache_name_id advanced_setting{"高级设置"};
 
   xlsx_table_gui xlsx_table_gui_{};
+  xlsx_line_statistics_gui xlsx_line_statistics_gui_{};
 
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 过滤用户
@@ -512,38 +515,45 @@ void xlsx_export_widgets::export_xlsx() {
     return;
   }
   xlnt::workbook wbOut{};
-  xlnt::worksheet wsOut = wbOut.active_sheet();
-  wsOut.title("TEST");
+
   const static std::vector<std::string> s_xlsx_header{"部门"s,     "制作人"s,   "项目"s,         "集数"s,     "镜头"s,
                                                       "开始时间"s, "结束时间"s, "持续时间/day"s, "时间备注"s, "备注"s,
                                                       "类别"s,     "名称"s,     "等级"s};
-  /// 添加头
-  for (auto i = 0; i < s_xlsx_header.size(); ++i) {
-    wsOut.cell(xlnt::cell_reference(1 + i, 1)).value(s_xlsx_header[i]);
-  }
-  /// 添加内容
-  std::size_t l_index{2};
+
   auto l_line = p_i->xlsx_table_gui_.gui_data().line_list;
-  for (auto &l_row : l_line) {
-    auto l_s_t = l_row.start_time_.compose();
-    auto l_e_t = l_row.end_time_.compose();
-    wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row.organization_);
-    wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row.user_);
-    wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row.project_season_name_);
-    wsOut.cell(xlnt::cell_reference(4, l_index)).value(l_row.episodes_);
-    wsOut.cell(xlnt::cell_reference(5, l_index)).value(l_row.shot_);
-    wsOut.cell(xlnt::cell_reference(6, l_index))
-        .value(xlnt::datetime{l_s_t.year, l_s_t.month, l_s_t.day, l_s_t.hours, l_s_t.minutes, l_s_t.seconds});
-    wsOut.cell(xlnt::cell_reference(7, l_index))
-        .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
-    // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
-    wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::format("{}", l_row.len_time_));
-    wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row.time_info_);
-    wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row.comment_info_);
-    wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row.file_path_);
-    wsOut.cell(xlnt::cell_reference(12, l_index)).value(l_row.name_attr_);
-    wsOut.cell(xlnt::cell_reference(13, l_index)).value(l_row.cutoff_attr_);
-    ++l_index;
+  auto l_user = p_i->xlsx_table_gui_.gui_data().time_statistics;
+  for (auto &l_u_ : l_user) {
+    auto wsOut = wbOut.create_sheet(0);
+    wsOut.title(l_u_.first);
+    std::size_t l_index{2};
+    /// 添加头
+    for (auto i = 0; i < s_xlsx_header.size(); ++i) {
+      wsOut.cell(xlnt::cell_reference(1 + i, 1)).value(s_xlsx_header[i]);
+    }
+    for (auto &l_row_ : l_line) {
+      if (l_row_.user_ == l_u_.first) {
+        /// 添加内容
+        auto l_s_t = l_row_.start_time_.compose();
+        auto l_e_t = l_row_.end_time_.compose();
+        wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row_.organization_);
+        wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row_.user_);
+        wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row_.project_season_name_);
+        wsOut.cell(xlnt::cell_reference(4, l_index)).value(l_row_.episodes_);
+        wsOut.cell(xlnt::cell_reference(5, l_index)).value(l_row_.shot_);
+        wsOut.cell(xlnt::cell_reference(6, l_index))
+            .value(xlnt::datetime{l_s_t.year, l_s_t.month, l_s_t.day, l_s_t.hours, l_s_t.minutes, l_s_t.seconds});
+        wsOut.cell(xlnt::cell_reference(7, l_index))
+            .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
+        // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
+        wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::format("{}", l_row_.len_time_));
+        wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
+        wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
+        wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
+        wsOut.cell(xlnt::cell_reference(12, l_index)).value(l_row_.name_attr_);
+        wsOut.cell(xlnt::cell_reference(13, l_index)).value(l_row_.cutoff_attr_);
+        ++l_index;
+      }
+    }
   }
   FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
   auto l_msg = std::make_shared<show_message>();
