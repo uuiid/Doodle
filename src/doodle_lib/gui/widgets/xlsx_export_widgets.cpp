@@ -19,6 +19,7 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/time_tool/work_clock.h>
 
+#include "doodle_app/gui/base/base_window.h"
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/gui/open_file_dialog.h>
 #include <doodle_app/gui/show_message.h>
@@ -27,6 +28,7 @@
 #include <doodle_lib/attendance/attendance_rule.h>
 
 #include <boost/contract.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
@@ -36,7 +38,11 @@
 #include <date/date.h>
 #include <entt/entity/fwd.hpp>
 #include <fmt/chrono.h>
+#include <fmt/core.h>
 #include <imgui.h>
+#include <memory>
+#include <string.h>
+#include <string>
 #include <vector>
 #include <xlnt/xlnt.hpp>
 
@@ -516,6 +522,7 @@ void xlsx_export_widgets::export_xlsx() {
     return;
   }
   xlnt::workbook wbOut{};
+  std::size_t l_i{0};
 
   const static std::vector<std::string> s_xlsx_header{"部门"s,     "制作人"s,   "项目"s,         "集数"s,     "镜头"s,
                                                       "开始时间"s, "结束时间"s, "持续时间/day"s, "时间备注"s, "备注"s,
@@ -523,6 +530,7 @@ void xlsx_export_widgets::export_xlsx() {
 
   auto l_line = p_i->xlsx_table_gui_.gui_data().line_list;
   auto l_user = p_i->xlsx_table_gui_.gui_data().time_statistics;
+  
   for (auto &l_u_ : l_user) {
     auto wsOut = wbOut.create_sheet(0);
     wsOut.title(l_u_.first);
@@ -547,7 +555,8 @@ void xlsx_export_widgets::export_xlsx() {
         wsOut.cell(xlnt::cell_reference(7, l_index))
             .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
         // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
-        wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
+        wsOut.cell(xlnt::cell_reference(8, l_index))
+            .value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
         wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
         wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
         wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
@@ -557,16 +566,49 @@ void xlsx_export_widgets::export_xlsx() {
       }
     }
   }
-  FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
-  auto l_msg = std::make_shared<show_message>();
-  if (!l_f.fail()) {
-    l_msg->set_message("成功导出");
+
+  auto l_msg     = std::make_shared<show_message>();
+  FSys::path l_p = p_i->export_path.path.parent_path();
+  FSys::path l_c = p_i->export_path.path.stem();
+  FSys::path l_e = p_i->export_path.path.extension();
+
+ 
+  
+  auto path = p_i->export_path.path;
+  for (auto i = 0; i < 100; ++i) {
+    FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
+    if (l_f.fail()) {
+      path = l_p / fmt::format("{}_{}{}", l_p, l_c, l_i, l_e);
+      continue;
+    }
+    p_i->export_path.path = path;
+    p_i->export_path.data = p_i->export_path.path.generic_string();
+    l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
     make_handle().emplace<gui_windows>() = l_msg;
     wbOut.save(l_f);
-  } else {
-    l_msg->set_message(fmt::format("导出失败,文件已打开，请关闭文件重新导入"));
-    make_handle().emplace<gui_windows>() = l_msg;
+    break;
   }
+
+  // {
+  //   FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
+  //   if (!l_f.fail()) {
+  //     l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
+  //     make_handle().emplace<gui_windows>() = l_msg;
+  //     wbOut.save(l_f);
+  //   }
+  // }
+  // auto path             = fmt::format("{}/{}_{}{}", l_p, l_c_1, l_i, l_e);
+  // p_i->export_path.path = path;
+  // p_i->export_path.data = p_i->export_path.path.generic_string();
+  // {
+  //   FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
+  //   l_i++;
+  //   if (!l_f.fail()) {
+  //     wbOut.save(l_f);
+  //     l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
+  //     make_handle().emplace<gui_windows>() = l_msg;
+  //   }
+  // }
 }
 bool xlsx_export_widgets::get_work_time() {
   p_i->list_sort_time =
