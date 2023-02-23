@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <date/date.h>
 #include <entt/entity/fwd.hpp>
 #include <fmt/chrono.h>
 #include <imgui.h>
@@ -535,6 +536,7 @@ void xlsx_export_widgets::export_xlsx() {
         /// 添加内容
         auto l_s_t = l_row_.start_time_.compose();
         auto l_e_t = l_row_.end_time_.compose();
+        boost::rational<std::uint64_t> l_time_rational{l_row_.len_time_.count(), 60ull * 60ull * 8ull};
         wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row_.organization_);
         wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row_.user_);
         wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row_.project_season_name_);
@@ -545,7 +547,7 @@ void xlsx_export_widgets::export_xlsx() {
         wsOut.cell(xlnt::cell_reference(7, l_index))
             .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
         // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
-        wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::format("{}", l_row_.len_time_));
+        wsOut.cell(xlnt::cell_reference(8, l_index)).value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
         wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
         wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
         wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
