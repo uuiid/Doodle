@@ -4,6 +4,8 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
 
+class SCharacterEditorViewport;
+
 class SCreateCharacterMianUI : public SCompoundWidget, FGCObject {
  public:
   SLATE_BEGIN_ARGS(SCreateCharacterMianUI) {}
@@ -18,4 +20,7 @@ class SCreateCharacterMianUI : public SCompoundWidget, FGCObject {
   const static FName Name;
 
   static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
+
+ private:
+  TSharedPtr<SCharacterEditorViewport> CharacterEditorViewport;
 };

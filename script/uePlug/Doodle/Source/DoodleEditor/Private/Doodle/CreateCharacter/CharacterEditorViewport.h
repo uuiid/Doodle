@@ -14,6 +14,8 @@ class ASkeletalMeshActor;
 class FCharacterEditorPreviewScene : public FAdvancedPreviewScene {
  public:
   FCharacterEditorPreviewScene();
+  // FAdvancedPreviewScene 接口
+  virtual void Tick(float InDeltaTime) override;
 };
 
 class FCharacterEditorViewportClient : public FEditorViewportClient {
@@ -47,6 +49,10 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   void OnFloatingButtonClicked() override;
   // 结束
 
+  // 临时接口
+
+  void doodle_test(const FName& In_Bone, float in_value);
+
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
   virtual TSharedPtr<SWidget> MakeViewportToolbar() override;
@@ -54,7 +60,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
  private:
   TSharedPtr<FEditorViewportClient> LevelViewportClient;
   TSharedPtr<FAdvancedPreviewScene> AdvancedPreviewScene;
-  ASkeletalMeshActor* PreviewActor;
+  AActor* PreviewActor;
 
   USkeletalMesh* ShowSkeletaMesh;
 };
