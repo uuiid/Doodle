@@ -28,7 +28,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
 
   [[nodiscard]] bool has_maya() const noexcept;
   [[nodiscard]] const FSys::path &maya_path() const noexcept;
-  void set_maya_path(const FSys::path &in_MayaPath) noexcept;
 
   void set_root(const FSys::path &in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
