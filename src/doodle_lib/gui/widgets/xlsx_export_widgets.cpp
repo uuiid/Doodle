@@ -40,9 +40,12 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 #include <imgui.h>
+#include <map>
 #include <memory>
+#include <range/v3/algorithm/for_each.hpp>
 #include <string.h>
 #include <string>
+#include <utility>
 #include <vector>
 #include <xlnt/xlnt.hpp>
 
@@ -374,6 +377,10 @@ class xlsx_export_widgets::impl {
     gui_cache_name_id get_chork{"获取时钟"s};
   };
 
+  struct gui_path : gui_cache_path {
+    FSys::path stem{};
+  };
+
   impl() = default;
   std::vector<entt::handle> list;
   std::vector<entt::handle> list_sort_time;
@@ -381,7 +388,7 @@ class xlsx_export_widgets::impl {
 
   std::vector<boost::signals2::scoped_connection> con;
 
-  gui_cache<std::string, gui_cache_path> export_path{"导出路径"s, ""s};
+  gui_cache<std::string, gui_path> export_path{"导出路径"s, ""s};
   gui_cache<bool> use_first_as_project_name{"分类作为项目名称", true};
   gui_cache<std::string> season_fmt_str{"季数格式化"s, "第{}季"s};
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
@@ -427,6 +434,7 @@ void xlsx_export_widgets::init() {
   p_i->con.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
                                                                              ) { p_i->list = in; }));
   p_i->export_path.path = FSys::temp_directory_path() / "test.xlsx";
+  p_i->export_path.stem = p_i->export_path.path.stem();
   p_i->export_path.data = p_i->export_path.path.generic_string();
 
   gen_user();
@@ -435,13 +443,16 @@ void xlsx_export_widgets::init() {
 }
 
 void xlsx_export_widgets::render() {
-  if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data))
+  if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data)) {
     p_i->export_path.path = p_i->export_path.data;
+    p_i->export_path.stem = p_i->export_path.path.stem();
+  }
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
     auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
     l_file->async_read([this](const FSys::path &in) {
       p_i->export_path.path = in / "tmp.xlsx";
+      p_i->export_path.stem = "tmp";
       p_i->export_path.data = p_i->export_path.path.generic_string();
     });
     make_handle().emplace<gui_windows>(l_file);
@@ -522,93 +533,69 @@ void xlsx_export_widgets::export_xlsx() {
     return;
   }
   xlnt::workbook wbOut{};
-  std::size_t l_i{0};
 
   const static std::vector<std::string> s_xlsx_header{"部门"s,     "制作人"s,   "项目"s,         "集数"s,     "镜头"s,
                                                       "开始时间"s, "结束时间"s, "持续时间/day"s, "时间备注"s, "备注"s,
                                                       "类别"s,     "名称"s,     "等级"s};
 
-  auto l_line = p_i->xlsx_table_gui_.gui_data().line_list;
-  auto l_user = p_i->xlsx_table_gui_.gui_data().time_statistics;
-  
-  for (auto &l_u_ : l_user) {
+  const auto &l_line = p_i->xlsx_table_gui_.gui_data().line_list;
+  const auto &l_user = p_i->xlsx_table_gui_.gui_data().time_statistics;
+  std::map<std::string, std::vector<std::size_t>> user_map{};
+
+  for (std::size_t i = 0; i < l_line.size(); i++) {
+    user_map[l_line[i].user_].emplace_back(i);
+  }
+
+  for (auto &&i : user_map) {
     auto wsOut = wbOut.create_sheet(0);
-    wsOut.title(l_u_.first);
-    std::size_t l_index{2};
-    /// 添加头
+    wsOut.title(i.first);
     for (auto i = 0; i < s_xlsx_header.size(); ++i) {
       wsOut.cell(xlnt::cell_reference(1 + i, 1)).value(s_xlsx_header[i]);
     }
-    for (auto &l_row_ : l_line) {
-      if (l_row_.user_ == l_u_.first) {
-        /// 添加内容
-        auto l_s_t = l_row_.start_time_.compose();
-        auto l_e_t = l_row_.end_time_.compose();
-        boost::rational<std::uint64_t> l_time_rational{l_row_.len_time_.count(), 60ull * 60ull * 8ull};
-        wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row_.organization_);
-        wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row_.user_);
-        wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row_.project_season_name_);
-        wsOut.cell(xlnt::cell_reference(4, l_index)).value(l_row_.episodes_);
-        wsOut.cell(xlnt::cell_reference(5, l_index)).value(l_row_.shot_);
-        wsOut.cell(xlnt::cell_reference(6, l_index))
-            .value(xlnt::datetime{l_s_t.year, l_s_t.month, l_s_t.day, l_s_t.hours, l_s_t.minutes, l_s_t.seconds});
-        wsOut.cell(xlnt::cell_reference(7, l_index))
-            .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
-        // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
-        wsOut.cell(xlnt::cell_reference(8, l_index))
-            .value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
-        wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
-        wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
-        wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
-        wsOut.cell(xlnt::cell_reference(12, l_index)).value(l_row_.name_attr_);
-        wsOut.cell(xlnt::cell_reference(13, l_index)).value(l_row_.cutoff_attr_);
-        ++l_index;
-      }
+    std::size_t l_index{2};
+    for (auto &&j : i.second) {
+      const auto &l_row_ = l_line[j];
+      auto l_s_t         = l_row_.start_time_.compose();
+      auto l_e_t         = l_row_.end_time_.compose();
+      boost::rational<std::uint64_t> l_time_rational{l_row_.len_time_.count(), 60ull * 60ull * 8ull};
+      wsOut.cell(xlnt::cell_reference(1, l_index)).value(l_row_.organization_);
+      wsOut.cell(xlnt::cell_reference(2, l_index)).value(l_row_.user_);
+      wsOut.cell(xlnt::cell_reference(3, l_index)).value(l_row_.project_season_name_);
+      wsOut.cell(xlnt::cell_reference(4, l_index)).value(l_row_.episodes_);
+      wsOut.cell(xlnt::cell_reference(5, l_index)).value(l_row_.shot_);
+      wsOut.cell(xlnt::cell_reference(6, l_index))
+          .value(xlnt::datetime{l_s_t.year, l_s_t.month, l_s_t.day, l_s_t.hours, l_s_t.minutes, l_s_t.seconds});
+      wsOut.cell(xlnt::cell_reference(7, l_index))
+          .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
+      // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
+      wsOut.cell(xlnt::cell_reference(8, l_index))
+          .value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
+      wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
+      wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
+      wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
+      wsOut.cell(xlnt::cell_reference(12, l_index)).value(l_row_.name_attr_);
+      wsOut.cell(xlnt::cell_reference(13, l_index)).value(l_row_.cutoff_attr_);
+      ++l_index;
     }
   }
 
+  /// 导出表格
   auto l_msg     = std::make_shared<show_message>();
   FSys::path l_p = p_i->export_path.path.parent_path();
-  FSys::path l_c = p_i->export_path.path.stem();
-  FSys::path l_e = p_i->export_path.path.extension();
-
- 
-  
-  auto path = p_i->export_path.path;
-  for (auto i = 0; i < 100; ++i) {
-    FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
+  auto path      = p_i->export_path.path;
+  for (auto i = 1; i < 100; ++i) {
+    FSys::ofstream l_f{path, FSys::ofstream::binary};
     if (l_f.fail()) {
-      path = l_p / fmt::format("{}_{}{}", l_p, l_c, l_i, l_e);
+      path = l_p / fmt::format("{}_{}.xlsx", p_i->export_path.stem, i);
       continue;
     }
     p_i->export_path.path = path;
-    p_i->export_path.data = p_i->export_path.path.generic_string();
+    p_i->export_path.data = path.generic_string();
     l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
     make_handle().emplace<gui_windows>() = l_msg;
     wbOut.save(l_f);
     break;
   }
-
-  // {
-  //   FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
-  //   if (!l_f.fail()) {
-  //     l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
-  //     make_handle().emplace<gui_windows>() = l_msg;
-  //     wbOut.save(l_f);
-  //   }
-  // }
-  // auto path             = fmt::format("{}/{}_{}{}", l_p, l_c_1, l_i, l_e);
-  // p_i->export_path.path = path;
-  // p_i->export_path.data = p_i->export_path.path.generic_string();
-  // {
-  //   FSys::ofstream l_f{p_i->export_path.path, FSys::ofstream::binary};
-  //   l_i++;
-  //   if (!l_f.fail()) {
-  //     wbOut.save(l_f);
-  //     l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
-  //     make_handle().emplace<gui_windows>() = l_msg;
-  //   }
-  // }
 }
 bool xlsx_export_widgets::get_work_time() {
   p_i->list_sort_time =
