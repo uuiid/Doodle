@@ -27,11 +27,11 @@ add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 
 # add_compile_options(/W4)
 # message("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/debug/libtorch)
-else()
-        list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/libtorch)
-endif()
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/debug/libtorch)
+else ()
+    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/libtorch)
+endif ()
 
 # 设置 c++ 版本
 set(CMAKE_CXX_STANDARD 17)
@@ -45,6 +45,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 # 添加选项
 option(BUILD_SHARED_LIBS "build doodle lib is SHARED" OFF)
 option(BUILD_LIMITED_1 "受限构建" OFF)
+option(BUILD_USD "构建usd相关" OFF)
 
 # 首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
@@ -60,7 +61,7 @@ find_package(Boost REQUIRED COMPONENTS
         unit_test_framework
         log
         log_setup
-)
+        )
 
 find_package(Catch2 CONFIG)
 find_package(Doxygen)
@@ -108,6 +109,11 @@ set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_S
 
 # =====================安装打包过程===============================
 include(doodle_exe)
+
+if (BUILD_USD)
+    include(build_usd)
+endif ()
+
 #include(CPack)
 #set(CPACK_EXTERNAL_ENABLE_STAGING TRUE)
 add_subdirectory(script)

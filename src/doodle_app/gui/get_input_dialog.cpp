@@ -87,13 +87,7 @@ void close_exit_dialog::render() {
 
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
-    boost::asio::post(g_io_context(), []() {
-      if (auto l_f = app_base::Get().find_facet<facet::gui_facet>(); l_f) {
-        l_f->close_windows();
-      } else {
-        app_base::Get().stop_app();
-      }
-    });
+    quit();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {

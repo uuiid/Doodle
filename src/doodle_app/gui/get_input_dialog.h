@@ -38,6 +38,8 @@ class DOODLE_APP_API close_exit_dialog
   virtual ~close_exit_dialog() override;
   std::int32_t flags() const;
   void render();
+
+  boost::signals2::signal<void()> quit;
 };
 
 }  // namespace doodle::gui

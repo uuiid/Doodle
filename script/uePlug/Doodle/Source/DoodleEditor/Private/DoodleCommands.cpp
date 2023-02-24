@@ -15,7 +15,14 @@
 
 void FDoodleCommands::RegisterCommands() {
   UI_COMMAND(OpenPluginWindow, "Doodle", "Bring up doodle window", EUserInterfaceActionType::Button, FInputGesture());
-  UI_COMMAND(DoodleImportFbxWindow, "Doodle Import Fbx", "Open Import Fbx Windows", EUserInterfaceActionType::Button, FInputGesture());
+  UI_COMMAND(
+      DoodleImportFbxWindow, "Doodle Import Fbx", "Open Import Fbx Windows", EUserInterfaceActionType::Button,
+      FInputGesture()
+  );
+  UI_COMMAND(
+      DoodleCreateCharacter, "Doodle Craete Character", "Open Craete Character Windows",
+      EUserInterfaceActionType::Button, FInputGesture()
+  );
 }
 
 #undef LOCTEXT_NAMESPACE

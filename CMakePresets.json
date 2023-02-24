@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -94,7 +94,9 @@
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
         "Maya_Version": "2018",
         "Photoshop_Version": "120.0",
-        "BUILD_LIMITED_1": "OFF"
+        "BUILD_LIMITED_1": "OFF",
+        "BUILD_USD": "ON",
+        "PXR_USD_ROOT": "F:/usd_install"
       }
     },
     {
@@ -216,37 +218,6 @@
         "noTestsAction": "error",
         "stopOnFailure": true
       }
-    }
-  ],
-  "packagePresets": [
-    {
-      "name": "pack_wix",
-      "configurePreset": "Ninja_release",
-      "generators": [
-        "External"
-      ]
-    },
-    {
-      "name": "pack_7z",
-      "configurePreset": "Ninja_release",
-      "generators": [
-        "7Z"
-      ]
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "build_and_release",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "Ninja_release"
-        },
-        {
-          "type": "build",
-          "name": "Release_Exe"
-        }
-      ]
     }
   ],
   "vendor": {}

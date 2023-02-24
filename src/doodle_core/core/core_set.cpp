@@ -45,8 +45,6 @@ bool core_set::has_maya() const noexcept { return !p_mayaPath.empty(); }
 
 const FSys::path &core_set::maya_path() const noexcept { return p_mayaPath; }
 
-void core_set::set_maya_path(const FSys::path &in_MayaPath) noexcept { p_mayaPath = in_MayaPath; }
-
 core_set::core_set()
     : user_id(),
       organization_name(),

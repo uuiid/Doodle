@@ -16,5 +16,5 @@ class FDoodleCommands : public TCommands<FDoodleCommands> {
   virtual void RegisterCommands() override;
 
  public:
-  TSharedPtr<FUICommandInfo> OpenPluginWindow, DoodleImportFbxWindow;
+  TSharedPtr<FUICommandInfo> OpenPluginWindow, DoodleImportFbxWindow, DoodleCreateCharacter;
 };

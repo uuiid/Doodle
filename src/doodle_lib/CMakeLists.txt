@@ -101,7 +101,6 @@ target_compile_options(doodle_lib
 target_include_directories(doodle_lib
         PUBLIC
         ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/external/csv-parser/include
         )
 #add_custom_target(genexdebug
 #        COMMAND ${CMAKE_COMMAND} -E echo "$<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:'is lib'>")

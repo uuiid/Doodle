@@ -924,31 +924,31 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           SNew(SHorizontalBox)
           +SHorizontalBox::Slot()
           .FillWidth(1.0f)
-      [
-          SNew(STextBlock)
-          .Text(LOCTEXT("BinaryPathLabel1", "部门缩写"))
-          .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
-          .Font(Font)
-      ]
+          [
+            SNew(STextBlock)
+            .Text(LOCTEXT("BinaryPathLabel1", "部门缩写"))
+            .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
+            .Font(Font)
+          ]
           +SHorizontalBox::Slot()
           .FillWidth(8.0f)
-      [
+          [
             ///  
             SNew(SComboBox<TSharedPtr<FString>>)
             .OptionsSource(&L_DepType)
             .OnSelectionChanged_Lambda(
-        [this](const TSharedPtr<FString>& In,ESelectInfo::Type){
-          GenPathPrefix(Path_Prefix,*In);
-        })
-      .OnGenerateWidget_Lambda(
-        [this](const TSharedPtr<FString>& In){
-        return SNew(STextBlock).Text(FText::FromString(*In));
-          })
-      .InitiallySelectedItem(L_DepType[0])
-        [
-          SNew(STextBlock)
-        .Text_Lambda([this](){ return FText::FromString(Path_Suffix); })
-        ]
+            [this](const TSharedPtr<FString>& In,ESelectInfo::Type){
+              GenPathPrefix(Path_Prefix,*In);
+            })
+            .OnGenerateWidget_Lambda(
+              [this](const TSharedPtr<FString>& In){
+              return SNew(STextBlock).Text(FText::FromString(*In));
+                })
+            .InitiallySelectedItem(L_DepType[0])
+              [
+                SNew(STextBlock)
+              .Text_Lambda([this](){ return FText::FromString(Path_Suffix); })
+              ]
       ]
         ]
 
@@ -1070,8 +1070,6 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           })
         ]
       ]
-
-
 
     ];
   // clang-format on
