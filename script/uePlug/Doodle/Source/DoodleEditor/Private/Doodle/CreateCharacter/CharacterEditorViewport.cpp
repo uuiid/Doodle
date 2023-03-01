@@ -11,6 +11,7 @@
 #include "CoreData/DoodleCreateCharacterInstance.h"
 #include "GameFramework/WorldSettings.h"
 #include "SequenceRecorderSettings.h"  // 镜头录制设置
+#include "ThumbnailHelpers.h"          //动画场景播放
 FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
     : FAdvancedPreviewScene(
 
@@ -95,7 +96,9 @@ void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value)
   if (!L_Anim_Ass) return;
 
   L_Anim_Ass->AddKeyToSequence(0.0f, In_Bone, FTransform{FVector::OneVector * in_value});
-
+  ShowSkeletaMesh->RefreshBoneTransforms();
+  ShowSkeletaMesh->UpdateBounds();
+  ShowSkeletaMesh->RecreateRenderState_Concurrent();
   // USkeleton* L_Skeleton = ShowSkeletaMesh->GetSkeletalMeshAsset()->GetSkeleton();
 
   // FSmartName L_Out_Name{};
@@ -124,7 +127,7 @@ void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh)
   if (!ShowSkeletaMesh) return;
 
   ShowSkeletaMesh->SetSkeletalMesh(InSkeletaMesh);
-#ifdef DOODLE_IS
+#ifdef DOODLE_DIS1
 
   USkeleton* L_Skeleton                  = ShowSkeletaMesh->GetSkeletalMeshAsset()->GetSkeleton();
   UDoodleCreateCharacterAnimAsset* L_Ass = NewObject<UDoodleCreateCharacterAnimAsset>();
@@ -138,7 +141,10 @@ void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh)
   if (L_Ass->CurveCompressionSettings)
     L_Ass->CurveCompressionSettings = FAnimationUtils::GetDefaultAnimationCurveCompressionSettings();
 
-#endif  // DOODLE_IS
+#endif  // DOODLE_DIS1
+
+#ifdef DOODLE_DIS2
+
   // 使用录制器修正资产
   TSharedPtr<FAnimationRecorder> L_Recorder    = MakeShared<FAnimationRecorder>();
   const FAnimationRecordingSettings& L_Setting = GetDefault<USequenceRecorderSettings>()->DefaultAnimationSettings;
@@ -163,7 +169,19 @@ void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh)
   UAnimSequence* L_Anim_Ass = L_Recorder->GetAnimationObject();
   L_Recorder->StopRecord(false);
 
+  ShowSkeletaMesh->Play(true);
+  ShowSkeletaMesh->PrimaryComponentTick.bCanEverTick = true;
+  ShowSkeletaMesh->PrimaryComponentTick.SetTickFunctionEnable(true);
   ShowSkeletaMesh->EnablePreview(true, L_Anim_Ass);
+  // ShowSkeletaMesh->SetPosition(AnimPosition, false);
+#endif  // DOODLE_DIS2
+  UAnimSequence* L_Ass = LoadObject<UAnimSequence>(
+      nullptr, TEXT("/Script/Engine.AnimSequence'/Game/Mannequin/Animations/ThirdPersonWalk.ThirdPersonWalk'")
+  );
+
+  ShowSkeletaMesh->EnablePreview(true, L_Ass);
+  // ShowSkeletaMesh->SetAnimInstanceClass(UAnimPreviewInstance::StaticClass());
+  // ShowSkeletaMesh->Stop();
   this->GetViewportClient()->Invalidate();
 }
 
@@ -184,11 +202,7 @@ TSharedRef<FEditorViewportClient> SCharacterEditorViewport::MakeEditorViewportCl
     );
     L_Sk_Poseable->RegisterComponent();
 
-    ShowSkeletaMesh                                    = CastChecked<UDebugSkelMeshComponent>(L_Sk_Poseable);
-    ShowSkeletaMesh->PrimaryComponentTick.bCanEverTick = true;
-    ShowSkeletaMesh->PrimaryComponentTick.SetTickFunctionEnable(true);
-    ShowSkeletaMesh->SetAnimInstanceClass(UAnimPreviewInstance::StaticClass());
-    ShowSkeletaMesh->SetSkeletalMesh(SkeletalMesh);
+    ShowSkeletaMesh = CastChecked<UDebugSkelMeshComponent>(L_Sk_Poseable);
   }
 
   // LevelViewportClient                       = MakeShareable(new FTestViewportClient(*scene, context,
