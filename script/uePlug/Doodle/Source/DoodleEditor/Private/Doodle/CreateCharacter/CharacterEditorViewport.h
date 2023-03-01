@@ -5,7 +5,6 @@
 #include "SCommonEditorViewportToolbarBase.h"
 #include "SEditorViewport.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
-
 class FCharacterEditorViewportClient;
 class SCharacterEditorViewportToolBar;
 class SCharacterEditorViewport;
@@ -41,7 +40,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   SLATE_END_ARGS()
 
   //
-  void Construct(const FArguments& Arg, USkeletalMesh* InSkeletaMesh);
+  void Construct(const FArguments& Arg);
 
   // 开始工具栏接口
   TSharedRef<class SEditorViewport> GetViewportWidget() override;
@@ -53,6 +52,8 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
 
   void doodle_test(const FName& In_Bone, float in_value);
 
+  void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh);
+
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
   virtual TSharedPtr<SWidget> MakeViewportToolbar() override;
@@ -62,5 +63,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   TSharedPtr<FAdvancedPreviewScene> AdvancedPreviewScene;
   AActor* PreviewActor;
 
-  USkeletalMesh* ShowSkeletaMesh;
+  UDebugSkelMeshComponent* ShowSkeletaMesh;
+  USkeletalMesh* SkeletalMesh;
+  static FName G_Name;
 };

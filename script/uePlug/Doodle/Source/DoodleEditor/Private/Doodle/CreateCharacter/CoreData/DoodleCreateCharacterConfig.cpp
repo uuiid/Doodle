@@ -6,6 +6,6 @@ FVector UDoodleCreateCharacterConfig::Evaluate(const FName& In_BoneName, const f
         return InNode.BoneName == In_BoneName;
       });
 
-  if (!L_Nodel) return FVector::ZeroVector;
+  if (!L_Nodel) return FVector::OneVector * InValue;
   return L_Nodel->WeightCurve.Evaluate(InValue, 1.0f);
 }

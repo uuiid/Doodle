@@ -52,12 +52,14 @@ void SCreateCharacterMianUI::Construct(const FArguments& Arg) {
       + SVerticalBox::Slot()
       .FillHeight(1.0f)
       [
-        SAssignNew(CharacterEditorViewport,SCharacterEditorViewport, L_Sk)
+        SAssignNew(CharacterEditorViewport, SCharacterEditorViewport)
         .ToolTipText(FText::FromString(TEXT("render windwos")))
       ]
     ]
   ];
   // clang-format on
+
+  CharacterEditorViewport->SetViewportSkeletal(L_Sk);
 }
 
 void SCreateCharacterMianUI::AddReferencedObjects(FReferenceCollector& collector) {}

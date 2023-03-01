@@ -6,6 +6,7 @@
 #include "DoodleCreateCharacterInstance.generated.h"
 
 class UDoodleCreateCharacterConfig;
+class UDoodleCreateCharacterInstance;
 
 /** 评估动画类 */
 USTRUCT()
@@ -21,6 +22,12 @@ struct FDoodleCreateCharacterProxy : public FAnimInstanceProxy {
   virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
   virtual bool Evaluate(FPoseContext& Output) override;
   virtual void UpdateAnimationNode(const FAnimationUpdateContext& InContext) override;
+
+  TMap<int32, FTransform> StoredTransforms;
+  TMap<SmartName::UID_Type, float> StoredCurves;
+
+ private:
+  UDoodleCreateCharacterInstance* instance;
 };
 
 UCLASS(transient, NotBlueprintable)
@@ -28,6 +35,10 @@ class UDoodleCreateCharacterInstance : public UAnimInstance {
   GENERATED_BODY()
  public:
   void SetCreateCharacterConfig(const TObjectPtr<UDoodleCreateCharacterConfig>& InConfig);
+
+  FDoodleCreateCharacterProxy* GetCreateCharacterProxyOnGameThread() {
+    return &GetProxyOnGameThread<FDoodleCreateCharacterProxy>();
+  }
 
  protected:
   virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
