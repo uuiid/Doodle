@@ -568,8 +568,7 @@ void xlsx_export_widgets::export_xlsx() {
       wsOut.cell(xlnt::cell_reference(7, l_index))
           .value(xlnt::datetime{l_e_t.year, l_e_t.month, l_e_t.day, l_e_t.hours, l_e_t.minutes, l_e_t.seconds});
       // wsOut.cell(xlnt::cell_reference(8, l_index)).number_format(xlnt::number_format::number_00());
-      wsOut.cell(xlnt::cell_reference(8, l_index))
-          .value(fmt::to_string(boost::rational_cast<std::double_t>(l_time_rational)));
+      wsOut.cell(xlnt::cell_reference(8, l_index)).value(boost::rational_cast<std::double_t>(l_time_rational));
       wsOut.cell(xlnt::cell_reference(9, l_index)).value(l_row_.time_info_);
       wsOut.cell(xlnt::cell_reference(10, l_index)).value(l_row_.comment_info_);
       wsOut.cell(xlnt::cell_reference(11, l_index)).value(l_row_.file_path_);
