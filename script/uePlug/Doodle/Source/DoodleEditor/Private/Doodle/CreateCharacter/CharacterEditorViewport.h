@@ -9,6 +9,9 @@ class FCharacterEditorViewportClient;
 class SCharacterEditorViewportToolBar;
 class SCharacterEditorViewport;
 class ASkeletalMeshActor;
+class SCreateCharacterMianUI;
+class FAssetEditorModeManager;
+class UDoodleCreateCharacterConfig;
 
 class FCharacterEditorPreviewScene : public FAdvancedPreviewScene {
  public:
@@ -19,7 +22,7 @@ class FCharacterEditorPreviewScene : public FAdvancedPreviewScene {
 
 class FCharacterEditorViewportClient : public FEditorViewportClient {
  public:
-  FCharacterEditorViewportClient(FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget);
+  FCharacterEditorViewportClient(FAssetEditorModeManager* InAssetEditorModeManager, FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget);
 
   virtual void Draw(FViewport* InViewport, FCanvas* Canvas) override;
 
@@ -37,7 +40,13 @@ class SCharacterEditorViewportToolBar : public SCommonEditorViewportToolbarBase 
 
 class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorViewportToolbarInfoProvider {
  public:
-  SLATE_BEGIN_ARGS(SCharacterEditorViewport) {}
+  SLATE_BEGIN_ARGS(SCharacterEditorViewport)
+      : _CreateCharacterMianUI(),
+        _DoodleCreateCharacterConfigAttr() {}
+
+  SLATE_ATTRIBUTE(SCreateCharacterMianUI*, CreateCharacterMianUI)
+
+  SLATE_ATTRIBUTE(UDoodleCreateCharacterConfig*, DoodleCreateCharacterConfigAttr)
   SLATE_END_ARGS()
 
   //
@@ -66,5 +75,15 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
 
   UDebugSkelMeshComponent* ShowSkeletaMesh;
   USkeletalMesh* SkeletalMesh;
+  // 模式
+  TSharedPtr<FAssetEditorModeManager> AssetEditorModeManager;
+  // 显示的动画
+  TObjectPtr<UAnimSequence> ShowAnimSequence;
+
+  // 主要窗口指针
+  TAttribute<SCreateCharacterMianUI*> CreateCharacterMianUI;
+  // 主要的配置文件
+  TAttribute<UDoodleCreateCharacterConfig*> DoodleCreateCharacterConfigAttr;
+
   static FName G_Name;
 };
