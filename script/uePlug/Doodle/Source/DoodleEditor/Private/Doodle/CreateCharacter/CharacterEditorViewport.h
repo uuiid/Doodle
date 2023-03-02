@@ -19,7 +19,8 @@ class FCharacterEditorPreviewScene : public FAdvancedPreviewScene {
 
 class FCharacterEditorViewportClient : public FEditorViewportClient {
  public:
-  using FEditorViewportClient::FEditorViewportClient;
+  FCharacterEditorViewportClient(FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget);
+
   virtual void Draw(FViewport* InViewport, FCanvas* Canvas) override;
 
   virtual void Tick(float DeltaSeconds) override;

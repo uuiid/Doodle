@@ -3,6 +3,7 @@
 #include "CharacterEditorViewport.h"
 #include "Engine/SkeletalMeshSocket.h"  // 骨骼 Socket
 #include "Widgets/Input/SSlider.h"      // 滑动条
+#include "SScrubControlPanel.h"         // 时间控制
 const FName SCreateCharacterMianUI::Name{"Doodle_CreateCharacterMianUI"};
 
 namespace {
@@ -53,6 +54,12 @@ void SCreateCharacterMianUI::Construct(const FArguments& Arg) {
       .FillHeight(1.0f)
       [
         SAssignNew(CharacterEditorViewport, SCharacterEditorViewport)
+        .ToolTipText(FText::FromString(TEXT("render windwos")))
+      ]
+      + SVerticalBox::Slot()
+      .FillHeight(1.0f)
+      [
+        SNew(SScrubControlPanel)
         .ToolTipText(FText::FromString(TEXT("render windwos")))
       ]
     ]

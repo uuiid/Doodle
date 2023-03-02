@@ -106,6 +106,7 @@ public class doodleEditor : ModuleRules
                 "AdvancedPreviewScene",// 高级预览场景, 这个需要做捏脸的时候用
                 "AnimGraph",// 捏脸K帧, 这个需要做捏脸的时候用
                 "SequenceRecorder",// 镜头录制
+                "KismetWidgets",// 时间控制
             }
             );
 

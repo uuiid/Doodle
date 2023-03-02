@@ -11,7 +11,8 @@
 #include "CoreData/DoodleCreateCharacterInstance.h"
 #include "GameFramework/WorldSettings.h"
 #include "SequenceRecorderSettings.h"  // 镜头录制设置
-#include "ThumbnailHelpers.h"          //动画场景播放
+#include "ThumbnailHelpers.h"          // 动画场景播放
+#include "AssetEditorModeManager.h"    // 工具编辑
 FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
     : FAdvancedPreviewScene(
 
@@ -54,6 +55,18 @@ void FCharacterEditorPreviewScene::Tick(float InDeltaTime) {
   }
 }
 
+FCharacterEditorViewportClient::FCharacterEditorViewportClient(FPreviewScene* InPreviewScene, const TWeakPtr<SEditorViewport>& InEditorViewportWidget)
+    : FEditorViewportClient{new FAssetEditorModeManager{}, InPreviewScene, InEditorViewportWidget} {
+  SetViewMode(VMI_Lit);
+  SetViewportType(LVT_Perspective);
+
+  SetInitialViewTransform(LVT_Perspective, EditorViewportDefs::DefaultPerspectiveViewLocation, EditorViewportDefs::DefaultPerspectiveViewRotation, EditorViewportDefs::DefaultPerspectiveFOVAngle);
+   
+  // 重要!:  在这里设置实时
+  SetRealtime(true);
+
+}
+
 void FCharacterEditorViewportClient::Draw(FViewport* InViewport, FCanvas* Canvas) {
   FEditorViewportClient::Draw(InViewport, Canvas);
 }
@@ -61,6 +74,7 @@ void FCharacterEditorViewportClient::Draw(FViewport* InViewport, FCanvas* Canvas
 void FCharacterEditorViewportClient::Tick(float DeltaSeconds) {
   // GetPreviewScene()->GetWorld()->Tick(LEVELTICK_All, DeltaSeconds);
   FEditorViewportClient::Tick(DeltaSeconds);
+  GetPreviewScene()->GetWorld()->Tick(LEVELTICK_All, DeltaSeconds);
   // if (DeltaSeconds > 0) {
   //}
 }
@@ -87,6 +101,9 @@ TSharedPtr<FExtender> SCharacterEditorViewport::GetExtenders() const {
 void SCharacterEditorViewport::OnFloatingButtonClicked() {}
 
 void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value) {
+#define DOODLE_TEST
+
+#ifndef DOODLE_TEST
   if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
 
   UAnimPreviewInstance* L_AnimAnimInstance = Cast<UAnimPreviewInstance>(ShowSkeletaMesh->GetAnimInstance());
@@ -95,7 +112,7 @@ void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value)
 
   if (!L_Anim_Ass) return;
 
-  L_Anim_Ass->AddKeyToSequence(0.0f, In_Bone, FTransform{FVector::OneVector * in_value});
+  // L_Anim_Ass->AddKeyToSequence(0.0f, In_Bone, FTransform{FVector::OneVector * in_value});
   ShowSkeletaMesh->RefreshBoneTransforms();
   ShowSkeletaMesh->UpdateBounds();
   ShowSkeletaMesh->RecreateRenderState_Concurrent();
@@ -120,6 +137,50 @@ void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value)
   // L_SK_Com->SetBoneLocationByName(In_Bone, L_TMP, EBoneSpaces::ComponentSpace);
   // L_SK_Com->MarkRefreshTransformDirty();
   this->GetViewportClient()->Invalidate();
+
+#endif  // !DOODLE_TEST
+
+#ifdef DOODLE_TEST
+
+  UAnimSequence* L_Ass = LoadObject<UAnimSequence>(
+      GetTransientPackage(), TEXT("/Script/Engine.AnimSequence'/Game/Mannequin/Animations/ThirdPersonWalk.ThirdPersonWalk'")
+  );
+  // ShowSkeletaMesh->Play(true);
+  // ShowSkeletaMesh->PrimaryComponentTick.bCanEverTick = true;
+  // ShowSkeletaMesh->PrimaryComponentTick.SetTickFunctionEnable(true);
+  // ShowSkeletaMesh->PreviewInstance->SetPosition(0.0f);
+  // ShowSkeletaMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+  // L_Ass->SetPreviewMesh(ShowSkeletaMesh->GetSkeletalMeshAsset());
+  L_Ass->SetSkeleton(SkeletalMesh->GetSkeleton());
+  // ShowSkeletaMesh->PushSelectionToProxy();
+  // ShowSkeletaMesh->InitArticulated(GetWorld()->GetPhysicsScene());
+
+  ShowSkeletaMesh->EnablePreview(true, L_Ass);
+  // ShowSkeletaMesh->PreviewInstance->SetPlaying(true);
+
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+  UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
+
+  // ShowSkeletaMesh->SetAnimInstanceClass(UAnimPreviewInstance::StaticClass());
+  // ShowSkeletaMesh->Stop();
+
+  this->GetViewportClient()->Invalidate();
+#endif  // !DOODLE_TEST
 }
 
 void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh) {
@@ -169,20 +230,32 @@ void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh)
   UAnimSequence* L_Anim_Ass = L_Recorder->GetAnimationObject();
   L_Recorder->StopRecord(false);
 
-  ShowSkeletaMesh->Play(true);
-  ShowSkeletaMesh->PrimaryComponentTick.bCanEverTick = true;
-  ShowSkeletaMesh->PrimaryComponentTick.SetTickFunctionEnable(true);
   ShowSkeletaMesh->EnablePreview(true, L_Anim_Ass);
   // ShowSkeletaMesh->SetPosition(AnimPosition, false);
 #endif  // DOODLE_DIS2
+
+#ifdef DOODLE_DIS3
   UAnimSequence* L_Ass = LoadObject<UAnimSequence>(
-      nullptr, TEXT("/Script/Engine.AnimSequence'/Game/Mannequin/Animations/ThirdPersonWalk.ThirdPersonWalk'")
+      GetTransientPackage(), TEXT("/Script/Engine.AnimSequence'/Game/Mannequin/Animations/ThirdPersonWalk.ThirdPersonWalk'")
   );
+  ShowSkeletaMesh->Play(true);
+  ShowSkeletaMesh->PrimaryComponentTick.bCanEverTick = true;
+  ShowSkeletaMesh->PrimaryComponentTick.SetTickFunctionEnable(true);
+  ShowSkeletaMesh->PreviewInstance->SetPosition(0.0f);
+  ShowSkeletaMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+  L_Ass->SetPreviewMesh(ShowSkeletaMesh->GetSkeletalMeshAsset());
+
+  ShowSkeletaMesh->PushSelectionToProxy();
+  ShowSkeletaMesh->InitArticulated(GetWorld()->GetPhysicsScene());
 
   ShowSkeletaMesh->EnablePreview(true, L_Ass);
+  ShowSkeletaMesh->PreviewInstance->SetPlaying(true);
+
   // ShowSkeletaMesh->SetAnimInstanceClass(UAnimPreviewInstance::StaticClass());
   // ShowSkeletaMesh->Stop();
+
   this->GetViewportClient()->Invalidate();
+#endif  // DOODLE_DIS3
 }
 
 TSharedRef<FEditorViewportClient> SCharacterEditorViewport::MakeEditorViewportClient() {
@@ -190,7 +263,14 @@ TSharedRef<FEditorViewportClient> SCharacterEditorViewport::MakeEditorViewportCl
 
   if (!LevelViewportClient)
     LevelViewportClient =
-        MakeShared<FCharacterEditorViewportClient>(nullptr, AdvancedPreviewScene.Get(), SharedThis(this));
+        MakeShared<FCharacterEditorViewportClient>(AdvancedPreviewScene.Get(), SharedThis(this));
+  LevelViewportClient->ViewportType         = LVT_Perspective;
+  LevelViewportClient->bSetListenerPosition = false;
+  LevelViewportClient->SetViewLocation(EditorViewportDefs::DefaultPerspectiveViewLocation);
+  LevelViewportClient->SetViewRotation(EditorViewportDefs::DefaultPerspectiveViewRotation);
+  LevelViewportClient->EngineShowFlags.SetCompositeEditorPrimitives(true);
+  // 设置实时
+  // LevelViewportClient->SetRealtime(true);
 
   if (!PreviewActor) {
     PreviewActor                   = LevelViewportClient->GetWorld()->SpawnActor<AActor>();
@@ -201,8 +281,9 @@ TSharedRef<FEditorViewportClient> SCharacterEditorViewport::MakeEditorViewportCl
         true                                     // 自动注册
     );
     L_Sk_Poseable->RegisterComponent();
-
     ShowSkeletaMesh = CastChecked<UDebugSkelMeshComponent>(L_Sk_Poseable);
+    PreviewActor->SetRootComponent(ShowSkeletaMesh);
+    AdvancedPreviewScene->AddComponent(ShowSkeletaMesh, FTransform::Identity);
   }
 
   // LevelViewportClient                       = MakeShareable(new FTestViewportClient(*scene, context,
