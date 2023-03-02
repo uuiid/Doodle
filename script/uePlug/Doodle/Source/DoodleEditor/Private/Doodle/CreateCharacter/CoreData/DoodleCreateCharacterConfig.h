@@ -8,7 +8,8 @@ struct FDoodleCreateCharacterConfigNode {
   GENERATED_BODY();
 
   UPROPERTY();
-  FVectorCurve WeightCurve{};
+  FTransformCurve WeightCurve{};
+
   UPROPERTY();
   FName BoneName{};
   UPROPERTY();
@@ -23,5 +24,5 @@ class UDoodleCreateCharacterConfig : public UObject {
   UPROPERTY();
   TArray<FDoodleCreateCharacterConfigNode> ListConfigNode;
 
-  FVector Evaluate(const FName& In_BoneName, const float InValue) const;
+  FTransform Evaluate(const FName& In_BoneName, const float InValue) const;
 };

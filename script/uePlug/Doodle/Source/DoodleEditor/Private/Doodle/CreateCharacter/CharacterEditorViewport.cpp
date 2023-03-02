@@ -110,42 +110,6 @@ TSharedPtr<FExtender> SCharacterEditorViewport::GetExtenders() const {
 void SCharacterEditorViewport::OnFloatingButtonClicked() {}
 
 void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value) {
-  // UAnimPreviewInstance* L_AnimAnimInstance = Cast<UAnimPreviewInstance>(ShowSkeletaMesh->GetAnimInstance());
-  // if (!L_AnimAnimInstance) return;
-  // UAnimSequence* L_Anim_Ass = Cast<UAnimSequence>(L_AnimAnimInstance->GetCurrentAsset());
-
-  if (!ShowSkeletaMesh) return;
-  if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
-  if (!ShowAnimSequence) return;
-
-  UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
-
-  ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, in_value) : FTransform{FVector::OneVector * in_value});
-  ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
-  // ShowSkeletaMesh->RefreshBoneTransforms();
-  // ShowSkeletaMesh->UpdateBounds();
-  // ShowSkeletaMesh->RecreateRenderState_Concurrent();
-  //  USkeleton* L_Skeleton = ShowSkeletaMesh->GetSkeletalMeshAsset()->GetSkeleton();
-
-  // FSmartName L_Out_Name{};
-  // if (!L_Skeleton->GetSmartNameByName(USkeleton::AnimTrackCurveMappingName, In_Bone, L_Out_Name)) {
-  //   L_Skeleton->AddSmartNameAndModify(USkeleton::AnimTrackCurveMappingName, In_Bone, L_Out_Name);
-  // }
-
-  // UDoodleCreateCharacterInstance* L_Anim =
-  // CastChecked<UDoodleCreateCharacterInstance>(ShowSkeletaMesh->GetAnimInstance());
-  // L_Anim->GetCreateCharacterProxyOnGameThread()->StoredCurves.Add(L_Out_Name.UID, 1);
-
-  // UPoseableMeshComponent* L_SK_Com = PreviewActor->FindComponentByClass<UPoseableMeshComponent>();
-  ////// TArray<FTransform> LTrans        = L_SK_Com->GetBoneSpaceTransforms();
-  ////// auto L_index                     =
-  ///// L_SK_Com->GetSkinnedAsset()->GetSkeleton()->GetReferenceSkeleton().FindBoneIndex(In_Bone); /
-  ///// LTrans[L_index].AddToTranslation(FVector{0, in_value, 0});
-  // static FVector L_Tran            = L_SK_Com->GetBoneLocationByName(In_Bone, EBoneSpaces::ComponentSpace);
-  // FVector L_TMP                    = L_Tran + FVector{0, in_value, 0};
-  // L_SK_Com->SetBoneLocationByName(In_Bone, L_TMP, EBoneSpaces::ComponentSpace);
-  // L_SK_Com->MarkRefreshTransformDirty();
-  this->GetViewportClient()->Invalidate();
 }
 
 void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh) {
@@ -202,6 +166,45 @@ void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh)
   // ShowSkeletaMesh->PreviewInstance->SetPlaying(true);
   // ShowSkeletaMesh->SetPosition(AnimPosition, false);
 
+  this->GetViewportClient()->Invalidate();
+}
+
+void SCharacterEditorViewport::MoveBoneTransform(const FName& In_Bone, float In_Value) {
+  // UAnimPreviewInstance* L_AnimAnimInstance = Cast<UAnimPreviewInstance>(ShowSkeletaMesh->GetAnimInstance());
+  // if (!L_AnimAnimInstance) return;
+  // UAnimSequence* L_Anim_Ass = Cast<UAnimSequence>(L_AnimAnimInstance->GetCurrentAsset());
+
+  if (!ShowSkeletaMesh) return;
+  if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
+  if (!ShowAnimSequence) return;
+
+  UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
+
+  ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, In_Value) : FTransform{FVector::OneVector * In_Value});
+  ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
+  // ShowSkeletaMesh->RefreshBoneTransforms();
+  // ShowSkeletaMesh->UpdateBounds();
+  // ShowSkeletaMesh->RecreateRenderState_Concurrent();
+  //  USkeleton* L_Skeleton = ShowSkeletaMesh->GetSkeletalMeshAsset()->GetSkeleton();
+
+  // FSmartName L_Out_Name{};
+  // if (!L_Skeleton->GetSmartNameByName(USkeleton::AnimTrackCurveMappingName, In_Bone, L_Out_Name)) {
+  //   L_Skeleton->AddSmartNameAndModify(USkeleton::AnimTrackCurveMappingName, In_Bone, L_Out_Name);
+  // }
+
+  // UDoodleCreateCharacterInstance* L_Anim =
+  // CastChecked<UDoodleCreateCharacterInstance>(ShowSkeletaMesh->GetAnimInstance());
+  // L_Anim->GetCreateCharacterProxyOnGameThread()->StoredCurves.Add(L_Out_Name.UID, 1);
+
+  // UPoseableMeshComponent* L_SK_Com = PreviewActor->FindComponentByClass<UPoseableMeshComponent>();
+  ////// TArray<FTransform> LTrans        = L_SK_Com->GetBoneSpaceTransforms();
+  ////// auto L_index                     =
+  ///// L_SK_Com->GetSkinnedAsset()->GetSkeleton()->GetReferenceSkeleton().FindBoneIndex(In_Bone); /
+  ///// LTrans[L_index].AddToTranslation(FVector{0, In_Value, 0});
+  // static FVector L_Tran            = L_SK_Com->GetBoneLocationByName(In_Bone, EBoneSpaces::ComponentSpace);
+  // FVector L_TMP                    = L_Tran + FVector{0, In_Value, 0};
+  // L_SK_Com->SetBoneLocationByName(In_Bone, L_TMP, EBoneSpaces::ComponentSpace);
+  // L_SK_Com->MarkRefreshTransformDirty();
   this->GetViewportClient()->Invalidate();
 }
 
