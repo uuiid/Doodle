@@ -28,7 +28,6 @@ void SCreateCharacterMianUI::Construct(const FArguments& Arg) {
       [
         CharacterEditorViewport.ToSharedRef()
       ]
-
     ]
   ];
   // clang-format on

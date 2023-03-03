@@ -7,7 +7,7 @@ UCreateCharacter::UCreateCharacter(const FObjectInitializer& ObjectInitializer) 
   SupportedClass = UDoodleCreateCharacterConfig::StaticClass();
 }
 
-bool UCreateCharacter::ConfigureProperties() { return false; }
+bool UCreateCharacter::ConfigureProperties() { return true; }
 
 UObject* UCreateCharacter::FactoryCreateNew(
     UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn,
