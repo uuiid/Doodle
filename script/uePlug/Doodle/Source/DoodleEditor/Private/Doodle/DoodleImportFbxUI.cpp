@@ -926,7 +926,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg) {
           .FillWidth(1.0f)
           [
             SNew(STextBlock)
-            .Text(LOCTEXT("BinaryPathLabel1", "部门缩写"))
+            .Text(LOCTEXT("BinaryPathLabel11", "部门缩写"))
             .ColorAndOpacity(FSlateColor{FLinearColor{1,0,0,1}})
             .Font(Font)
           ]
@@ -1248,7 +1248,7 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File) {
     FbxImporter->ImportFromFile(In_File, FPaths::GetExtension(In_File));
 
     if (IsCamera(FbxImporter)) {
-      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork2", "确认为相机"));
+      L_Task_Scoped1.EnterProgressFrame(1.0f, LOCTEXT("DoingSlowWork21", "确认为相机"));
       SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
       L_ptr->ImportPath                                      = In_File;
       L_File                                                 = ListImportData.Emplace_GetRef(L_ptr);
