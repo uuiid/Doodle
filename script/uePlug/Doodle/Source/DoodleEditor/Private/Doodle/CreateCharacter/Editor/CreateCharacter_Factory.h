@@ -1,10 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CreateCharacter_Factory.generated.h"
 #include "Factories/Factory.h"
 #include "Templates/SubclassOf.h"
 #include "UObject/ObjectMacros.h"
+
+// clang-format off
+#include "CreateCharacter_Factory.generated.h"
+// clang-format on
 
 UCLASS()
 class UCreateCharacter : public UFactory {
