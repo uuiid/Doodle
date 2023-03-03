@@ -63,6 +63,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   void doodle_test(const FName& In_Bone, float in_value);
 
   void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh);
+  void MoveBoneTransform(const FName& In_Bone, float In_Value);
 
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
