@@ -1,0 +1,393 @@
+﻿# Plug Chinese (Simplified) translation.
+# Copyright Epic Games, Inc. All Rights Reserved.
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: Plug\n"
+"POT-Creation-Date: 2023-03-03 05:48\n"
+"PO-Revision-Date: 2023-03-03 05:48\n"
+"Language-Team: \n"
+"Language: zh-Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. Key:	Doodle
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Public/DoodleCommands.h(12)
+#: Plugins/Doodle/Source/DoodleEditor/Public/DoodleCommands.h(12)
+msgctxt "Contexts,Doodle"
+msgid "Doodle Plugin"
+msgstr "Doodle Plugin"
+
+#. Key:	Add_Anim
+#. SourceLocation:	Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(93)
+#: Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(93)
+msgctxt "DoodleClusterSequencer,Add_Anim"
+msgid "Add Anim"
+msgstr "添加动画"
+
+#. Key:	Add_Doodle_Object
+#. SourceLocation:	Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(85)
+#: Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(85)
+msgctxt "DoodleClusterSequencer,Add_Doodle_Object"
+msgid "Add Doodle Object"
+msgstr "添加 doodle 物体"
+
+#. Key:	AddCustomSection_Transaction
+#. SourceLocation:	Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(49)
+#: Plugins/Doodle/Source/DoodleClusterSequencer/Private/DoodleClusterSequencerEditor.cpp(49)
+msgctxt "DoodleClusterSequencer,AddCustomSection_Transaction"
+msgid "Add New Section From Class %s"
+msgstr "从 %s 中添加新的片段"
+
+#. Key:	FResizeTexture
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ContentBrowserMenuExtension.cpp(71)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ContentBrowserMenuExtension.cpp(71)
+msgctxt "DoodleGameEditor,FResizeTexture"
+msgid "开始转换..."
+msgstr "开始转换..."
+
+#. Key:	PathViewOptionsMenuHeading
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ContentBrowserMenuExtension.cpp(25)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ContentBrowserMenuExtension.cpp(25)
+msgctxt "DoodleGameEditor,PathViewOptionsMenuHeading"
+msgid "Doodle"
+msgstr "Doodle"
+
+#. Key:	AssetTypeActions_MotionField
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.cpp(8)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.cpp(8)
+msgctxt "FAssetTypeActions_CreateCharacter,AssetTypeActions_MotionField"
+msgid "Create Character"
+msgstr "Create Character"
+
+#. Key:	FdoodleTabTitle1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(63)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(63)
+msgctxt "FdoodleEditorModule,FdoodleTabTitle1"
+msgid "Doodle"
+msgstr "Doodle"
+
+#. Key:	FdoodleTabTitle2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(67)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(67)
+msgctxt "FdoodleEditorModule,FdoodleTabTitle2"
+msgid "Doodle Import Fbx"
+msgstr "Doodle Import Fbx"
+
+#. Key:	FdoodleTabTitle3
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(73)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleEditor.cpp(73)
+msgctxt "FdoodleEditorModule,FdoodleTabTitle3"
+msgid "Doodle Craete Character"
+msgstr "Doodle Craete Character"
+
+#. Key:	doodle
+#. SourceLocation:	Plugins/Doodle/Source/doodleUI/Private/doodleUI.cpp(15)
+#: Plugins/Doodle/Source/doodleUI/Private/doodleUI.cpp(15)
+msgctxt "FdoodleUIModule,doodle"
+msgid "doodle"
+msgstr "doodle"
+
+#. Key:	FResizeTexture
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ResizeTexture.cpp(10)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/ResizeTexture.cpp(10)
+msgctxt "FResizeTexture,FResizeTexture"
+msgid "开始转换..."
+msgstr "开始转换..."
+
+#. Key:	BinaryPathLabel
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(884)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(884)
+msgctxt "SDoodleImportFbxUI,BinaryPathLabel"
+msgid "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"
+msgstr "将文件和文件夹拖入到这个窗口中, 会自动扫描文件夹下后缀为abc和fbx的子文件,并将所有的文件添加到导入列表中.\n同时也会根据拖入的相机以及各种文件生成关卡"
+
+#. Key:	BinaryPathLabel1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(899)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(899)
+msgctxt "SDoodleImportFbxUI,BinaryPathLabel1"
+msgid "项目缩写"
+msgstr "项目缩写"
+
+#. Key:	BinaryPathLabel11
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(929)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(929)
+msgctxt "SDoodleImportFbxUI,BinaryPathLabel11"
+msgid "部门缩写"
+msgstr "部门缩写"
+
+#. Key:	Clear USkeleton
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1048)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1048)
+msgctxt "SDoodleImportFbxUI,Clear USkeleton"
+msgid "Clear USkeleton"
+msgstr "Clear USkeleton"
+
+#. Key:	Clear USkeleton Tip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1049)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1049)
+msgctxt "SDoodleImportFbxUI,Clear USkeleton Tip"
+msgid "清除所有"
+msgstr "清除所有"
+
+#. Key:	CreateBinding
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(236)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(236)
+msgctxt "SDoodleImportFbxUI,CreateBinding"
+msgid "Create New Binding"
+msgstr "Create New Binding"
+
+#. Key:	CreateCamera
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(368)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(368)
+msgctxt "SDoodleImportFbxUI,CreateCamera"
+msgid "Create Camera"
+msgstr "Create Camera"
+
+#. Key:	DoingSlowWork1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1243)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1243)
+msgctxt "SDoodleImportFbxUI,DoingSlowWork1"
+msgid "加载 fbx 文件中..."
+msgstr "加载 fbx 文件中..."
+
+#. Key:	DoingSlowWork2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1132)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1132)
+msgctxt "SDoodleImportFbxUI,DoingSlowWork2"
+msgid "扫描 fbx 文件骨骼中..."
+msgstr "扫描 fbx 文件骨骼中..."
+
+#. Key:	DoingSlowWork21
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1251)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1251)
+msgctxt "SDoodleImportFbxUI,DoingSlowWork21"
+msgid "确认为相机"
+msgstr "确认为相机"
+
+#. Key:	DoingSlowWork3
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1263)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1263)
+msgctxt "SDoodleImportFbxUI,DoingSlowWork3"
+msgid "寻找匹配骨骼"
+msgstr "寻找匹配骨骼"
+
+#. Key:	Ep_And_Shot
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(998)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(998)
+msgctxt "SDoodleImportFbxUI,Ep_And_Shot"
+msgid "集数和镜头"
+msgstr "集数和镜头"
+
+#. Key:	FindSK1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1182)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1182)
+msgctxt "SDoodleImportFbxUI,FindSK1"
+msgid "加载 fbx 文件中..."
+msgstr "加载 fbx 文件中..."
+
+#. Key:	Import Path Dir
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1010)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1010)
+msgctxt "SDoodleImportFbxUI,Import Path Dir"
+msgid "导入的目标"
+msgstr "导入的目标"
+
+#. Key:	Import_CAm
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(530)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(530)
+msgctxt "SDoodleImportFbxUI,Import_CAm"
+msgid "导入camera"
+msgstr "导入camera"
+
+#. Key:	Import_Fbx2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1085)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1085)
+msgctxt "SDoodleImportFbxUI,Import_Fbx2"
+msgid "扫描所有的Skin"
+msgstr "扫描所有的Skin"
+
+#. Key:	Import_ImportingCameraFile1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(537)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(537)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile1"
+msgid "导入 \"{0}\"..."
+msgstr "导入 \"{0}\"..."
+
+#. Key:	Import_ImportingCameraFile2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(568)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(568)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile2"
+msgid "检查定序器 \"{0}\"..."
+msgstr "检查定序器 \"{0}\"..."
+
+#. Key:	Import_ImportingCameraFile3
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(584)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(584)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile3"
+msgid "设置定序器以及相机 ..."
+msgstr "设置定序器以及相机 ..."
+
+#. Key:	Import_ImportingCameraFile4
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(602)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(602)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile4"
+msgid "尝试打开定序器 ..."
+msgstr "尝试打开定序器 ..."
+
+#. Key:	Import_ImportingCameraFile5
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(625)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(625)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile5"
+msgid "刷新 ..."
+msgstr "刷新 ..."
+
+#. Key:	Import_ImportingCameraFile6
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(652)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(652)
+msgctxt "SDoodleImportFbxUI,Import_ImportingCameraFile6"
+msgid "开始导入帧 ..."
+msgstr "开始导入帧 ..."
+
+#. Key:	ImportFile1
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1195)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1195)
+msgctxt "SDoodleImportFbxUI,ImportFile1"
+msgid "加载 fbx 文件中..."
+msgstr "加载 fbx 文件中..."
+
+#. Key:	ImportFile2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1198)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1198)
+msgctxt "SDoodleImportFbxUI,ImportFile2"
+msgid "导入文件中"
+msgstr "导入文件中"
+
+#. Key:	importTitle
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(961)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(961)
+msgctxt "SDoodleImportFbxUI,importTitle"
+msgid "导入的fbx 动画文件, 相机, abc文件"
+msgstr "导入的fbx 动画文件, 相机, abc文件"
+
+#. Key:	Search USkeleton
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1024)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1024)
+msgctxt "SDoodleImportFbxUI,Search USkeleton"
+msgid "Search USkeleton"
+msgstr "Search USkeleton"
+
+#. Key:	Search USkeleton And Import
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1035)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1035)
+msgctxt "SDoodleImportFbxUI,Search USkeleton And Import"
+msgid "Search USkeleton And Import"
+msgstr "Search USkeleton And Import"
+
+#. Key:	Search USkeleton Import
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1064)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1064)
+msgctxt "SDoodleImportFbxUI,Search USkeleton Import"
+msgid "Search USkeleton Direct Import"
+msgstr "Search USkeleton Direct Import"
+
+#. Key:	Search USkeleton Tip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1025)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1025)
+msgctxt "SDoodleImportFbxUI,Search USkeleton Tip"
+msgid "寻找骨骼"
+msgstr "寻找骨骼"
+
+#. Key:	Search USkeleton Tip2
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1036)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1036)
+msgctxt "SDoodleImportFbxUI,Search USkeleton Tip2"
+msgid "寻找骨骼并导入Fbx"
+msgstr "寻找骨骼并导入Fbx"
+
+#. Key:	Search USkeleton Tip3
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1065)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1065)
+msgctxt "SDoodleImportFbxUI,Search USkeleton Tip3"
+msgid "不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"
+msgstr "不寻找骨骼, 直接导入 Fbx, 如果已经寻找过则使用寻找的数据"
+
+#. Key:	SequenceReadOnly
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(172)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(172)
+msgctxt "SDoodleImportFbxUI,SequenceReadOnly"
+msgid "Sequence is read only."
+msgstr "Sequence is read only."
+
+#. Key:	SequenceSpawnableNotAllowed
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(177)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(177)
+msgctxt "SDoodleImportFbxUI,SequenceSpawnableNotAllowed"
+msgid "Spawnable object is not allowed for Sequence."
+msgstr "Spawnable object is not allowed for Sequence."
+
+#. Key:	Skeleton Path
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1006)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1006)
+msgctxt "SDoodleImportFbxUI,Skeleton Path"
+msgid "骨骼路径"
+msgstr "骨骼路径"
+
+#. Key:	Time Ranges
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1002)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/DoodleImportFbxUI.cpp(1002)
+msgctxt "SDoodleImportFbxUI,Time Ranges"
+msgid "时间范围"
+msgstr "时间范围"
+
+#. Key:	BrowseButtonToolTip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/Doodle/FilePathsPicker.h(34)
+#: Plugins/Doodle/Source/DoodleEditor/Private/Doodle/FilePathsPicker.h(34)
+msgctxt "SFilePathsPicker,BrowseButtonToolTip"
+msgid "Choose a file from this computer"
+msgstr "Choose a file from this computer"
+
+#. Key:	DoodleCreateCharacter
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(22)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(22)
+msgctxt "UICommands.FdoodleModule,DoodleCreateCharacter"
+msgid "Doodle Craete Character"
+msgstr "Doodle Craete Character"
+
+#. Key:	DoodleCreateCharacter_ToolTip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(22)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(22)
+msgctxt "UICommands.FdoodleModule,DoodleCreateCharacter_ToolTip"
+msgid "Open Craete Character Windows"
+msgstr "Open Craete Character Windows"
+
+#. Key:	DoodleImportFbxWindow
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(18)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(18)
+msgctxt "UICommands.FdoodleModule,DoodleImportFbxWindow"
+msgid "Doodle Import Fbx"
+msgstr "Doodle Import Fbx"
+
+#. Key:	DoodleImportFbxWindow_ToolTip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(18)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(18)
+msgctxt "UICommands.FdoodleModule,DoodleImportFbxWindow_ToolTip"
+msgid "Open Import Fbx Windows"
+msgstr "Open Import Fbx Windows"
+
+#. Key:	OpenPluginWindow
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(17)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(17)
+msgctxt "UICommands.FdoodleModule,OpenPluginWindow"
+msgid "Doodle"
+msgstr "Doodle"
+
+#. Key:	OpenPluginWindow_ToolTip
+#. SourceLocation:	Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(17)
+#: Plugins/Doodle/Source/DoodleEditor/Private/DoodleCommands.cpp(17)
+msgctxt "UICommands.FdoodleModule,OpenPluginWindow_ToolTip"
+msgid "Bring up doodle window"
+msgstr "Bring up doodle window"
+
