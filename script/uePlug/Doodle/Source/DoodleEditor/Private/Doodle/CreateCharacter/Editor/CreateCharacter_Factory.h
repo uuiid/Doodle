@@ -15,10 +15,7 @@ class UCreateCharacter : public UFactory {
   //~MotionField_Factory();
 
   UPROPERTY(EditAnywhere, Category = CreateCharacter)
-  class USkeleton* TargetSkeleton;
-
-  UPROPERTY(EditAnywhere, Category = CreateCharacter)
-  TArray<FName> TargetMotionBones;
+  TObjectPtr<USkeletalMesh> SkeletalMesh;
 
   //~ Begin UFactory Interface
   virtual bool ConfigureProperties() override;
