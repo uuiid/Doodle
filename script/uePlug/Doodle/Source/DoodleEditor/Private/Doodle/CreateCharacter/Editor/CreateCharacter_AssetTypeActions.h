@@ -6,11 +6,14 @@
 
 /**
  * 资产动作, 打开捏脸的配置
- * 
+ *
  */
 class FAssetTypeActions_CreateCharacter : public FAssetTypeActions_Base {
+  EAssetTypeCategories::Type AssType;
+
  public:
-  //	FAssetTypeActions_CreateCharacter(EAssetTypeCategories::Type InAssetCategory);
+  FAssetTypeActions_CreateCharacter(EAssetTypeCategories::Type InAssetCategory)
+      : AssType(InAssetCategory){};
 
   // IAssetTypeActions interface
   virtual FText GetName() const override;

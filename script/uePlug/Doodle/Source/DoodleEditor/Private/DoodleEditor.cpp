@@ -92,10 +92,15 @@ void FdoodleEditorModule::StartupModule() {
       }
   ));
 
+  // 注册资产类别
+  IAssetTools &L_AssetTools         = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+  EAssetTypeCategories::Type L_Type = L_AssetTools.RegisterAdvancedAssetCategory(
+      FName{TEXT("Doodle Character")}, LOCTEXT("Doodle Character", "Doodle Character")
+  );
+
   // 注册资产动作
-  IAssetTools &L_AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
   L_AssetTools.RegisterAssetTypeActions(
-      CreateAssetActions.Add_GetRef(MakeShared<FAssetTypeActions_CreateCharacter>()).ToSharedRef()
+      CreateAssetActions.Add_GetRef(MakeShared<FAssetTypeActions_CreateCharacter>(L_Type)).ToSharedRef()
   );
 
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(

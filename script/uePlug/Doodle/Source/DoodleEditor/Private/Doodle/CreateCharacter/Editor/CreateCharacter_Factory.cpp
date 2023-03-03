@@ -1,6 +1,22 @@
 #include "CreateCharacter_Factory.h"
 
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 UCreateCharacter::UCreateCharacter(const FObjectInitializer& ObjectInitializer) {
   bCreateNew     = true;
   bEditAfterNew  = true;

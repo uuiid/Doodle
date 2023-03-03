@@ -28,6 +28,6 @@ void FAssetTypeActions_CreateCharacter::OpenAssetEditor(const TArray<UObject*>& 
 }
 
 uint32 FAssetTypeActions_CreateCharacter::GetCategories() {
-  return EAssetTypeCategories::Animation;
+  return AssType;
 }
 #undef LOCTEXT_NAMESPACE

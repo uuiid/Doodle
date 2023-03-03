@@ -23,7 +23,7 @@ struct FDoodleCreateCharacterConfigNode {
   float MaxValue;
   // 调整最小值
   UPROPERTY()
-  float MInValue;
+  float MinValue;
 };
 
 UCLASS()
