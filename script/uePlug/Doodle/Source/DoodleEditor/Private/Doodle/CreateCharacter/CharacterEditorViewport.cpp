@@ -109,9 +109,6 @@ TSharedPtr<FExtender> SCharacterEditorViewport::GetExtenders() const {
 
 void SCharacterEditorViewport::OnFloatingButtonClicked() {}
 
-void SCharacterEditorViewport::doodle_test(const FName& In_Bone, float in_value) {
-}
-
 void SCharacterEditorViewport::SetViewportSkeletal(USkeletalMesh* InSkeletaMesh) {
   SkeletalMesh = InSkeletaMesh;
   if (!ShowSkeletaMesh) return;

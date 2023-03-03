@@ -58,10 +58,6 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
   void OnFloatingButtonClicked() override;
   // 结束
 
-  // 临时接口
-
-  void doodle_test(const FName& In_Bone, float in_value);
-
   void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh);
   void MoveBoneTransform(const FName& In_Bone, float In_Value);
 
