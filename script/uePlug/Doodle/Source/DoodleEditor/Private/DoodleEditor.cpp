@@ -19,6 +19,10 @@
 // #include "AssetRegistry/AssetRegistryModule.h"
 #include "ContentBrowserModule.h"  ///内容游览器
 #include "Doodle/CreateCharacter/CreateCharacterMianUI.h"
+
+#include "AssetToolsModule.h"  // 注册资产动作
+#include "Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.h"
+
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
 
@@ -84,8 +88,15 @@ void FdoodleEditorModule::StartupModule() {
             "GetAssetActions", EExtensionHook::After, TSharedPtr<FUICommandList>(),
             FMenuExtensionDelegate::CreateSP(Extension.ToSharedRef(), &FContentBrowserMenuExtension::AddMenuEntry)
         );
-    return MenuExtender.ToSharedRef();
-  }));
+        return MenuExtender.ToSharedRef();
+      }
+  ));
+
+  // 注册资产动作
+  IAssetTools &L_AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+  L_AssetTools.RegisterAssetTypeActions(
+      CreateAssetActions.Add_GetRef(MakeShared<FAssetTypeActions_CreateCharacter>()).ToSharedRef()
+  );
 
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
   //    GetTransientPackage(), "doodle_AssetData"));
@@ -108,6 +119,17 @@ void FdoodleEditorModule::ShutdownModule() {
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SCreateCharacterMianUI::Name);
+
+  // 取消注册资产动作
+  if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
+    IAssetTools &L_AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+    for (auto &&i : CreateAssetActions)
+      L_AssetTools.UnregisterAssetTypeActions(
+          i.ToSharedRef()
+      );
+  }
+  CreateAssetActions.Empty();
+
   // AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(

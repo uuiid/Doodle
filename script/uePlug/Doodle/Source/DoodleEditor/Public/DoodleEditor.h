@@ -29,5 +29,7 @@ class FdoodleEditorModule : public IModuleInterface {
  private:
   TSharedPtr<class FUICommandList> PluginCommands;
   TSharedPtr<FContentBrowserMenuExtension> Extension;
+
+  TArray<TSharedPtr<IAssetTypeActions>> CreateAssetActions;
   // TStrongObjectPtr<UContentBrowserAssetDataSource> AssetDataSource;
 };
