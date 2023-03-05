@@ -40,8 +40,7 @@ const FName SCreateCharacterMianUI::Name{"Doodle_CreateCharacterMianUI"};
 
 void SCreateCharacterMianUI::Construct(const FArguments& Arg) {
   // clang-format off
-  CharacterEditorViewport = SNew(SCharacterEditorViewport)
-    .ToolTipText(FText::FromString(TEXT("render windwos")));
+  CharacterEditorViewport = SNew(SCharacterEditorViewport);
   // clang-format on
 
   // clang-format off
@@ -91,4 +90,5 @@ TSharedRef<class ITableRow> SCreateCharacterMianUI::CreateCharacterConfigTreeDat
 }
 
 void SCreateCharacterMianUI::CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List) {
+   
 }
