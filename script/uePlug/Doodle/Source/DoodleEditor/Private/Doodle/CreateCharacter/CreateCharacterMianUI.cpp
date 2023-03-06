@@ -161,14 +161,15 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& 
       + SVerticalBox::Slot()
       [
         SAssignNew(CreateCharacterTree, SCreateCharacterTree)
+        .CreateCharacterConfig(CreateCharacterConfig)
+        //+ SVerticalBox::Slot()
+        //.Padding(0,8,0,0)
+        //.AutoHeight()
+        //.HAlign(HAlign_Fill)
+        //[
+        //]
       ]
-      //+ SVerticalBox::Slot()
-      //.Padding(0,8,0,0)
-      //.AutoHeight()
-      //.HAlign(HAlign_Fill)
-      //[
-      //]
-    ];
+  ];
   // clang-format on
 }
 
