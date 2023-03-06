@@ -1,94 +1,175 @@
 #include "CreateCharacterMianUI.h"
 
 #include "CharacterEditorViewport.h"
-#include "Engine/SkeletalMeshSocket.h"  // 骨骼 Socket
-#include "Widgets/Input/SSlider.h"      // 滑动条
-#include "SScrubControlPanel.h"         // 时间控制
+#include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "CreateCharacterTree.h"
 
-class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterMianUI::TreeVirwWeightItemType> {
- public:
-  using Super = SMultiColumnTableRow<SCreateCharacterMianUI::TreeVirwWeightItemType>;
-  SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem)
-      : _ItemData() {}
+#define LOCTEXT_NAMESPACE "FCreateCharacterMianUI"
 
-  SLATE_ARGUMENT(SCreateCharacterMianUI::TreeVirwWeightItemType, ItemData)
+const FName FCreateCharacterMianUI::TreeID{TEXT("Doodle_TreeID")};
+const FName FCreateCharacterMianUI::ViewportID{TEXT("Doodle_ViewportID")};
+const FName FCreateCharacterMianUI::AppIdentifier{TEXT("Doodle_AppIdentifier")};
 
-  SLATE_END_ARGS()
+void FCreateCharacterMianUI::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+  WorkspaceMenuCategory = In_TabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenuCategory", "Create Character Editor"));
 
-  // 这里是内容创建函数
-  void Construct(const FArguments& Arg, const TSharedRef<STableViewBase>& OwnerTableView) {
-    ItemData = Arg._ItemData;
-    Super::Construct(Super::FArguments{}, OwnerTableView);
-  }
+  FAssetEditorToolkit::RegisterTabSpawners(In_TabManager);
 
-  TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
-    if (InColumnName == "Name") {
-      return SNew(STextBlock).Text(FText::FromString(TEXT("name")));
-    } else if (InColumnName == "Value") {
-      return SNew(SSlider).MaxValue(10.f).MinValue(-10.0f);
-    } else {
-      return SNew(STextBlock);
-    }
+  In_TabManager->RegisterTabSpawner(
+                   FCreateCharacterMianUI::ViewportID,
+                   FOnSpawnTab::CreateSP(this, &FCreateCharacterMianUI::SpawnTab_Viewport)
+  )
+      .SetDisplayName(LOCTEXT("WorkspaceMenuCategoryViewportID", "Viewport"))
+      // clang-format off
+      .SetGroup(WorkspaceMenuCategory.ToSharedRef())
+      .SetIcon(FSlateIcon{FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"})
+      // clang-format on
+      ;
 
-  }
+  In_TabManager->RegisterTabSpawner(FCreateCharacterMianUI::TreeID, FOnSpawnTab::CreateSP(this, &FCreateCharacterMianUI::SpawnTab_Tree))
+      .SetDisplayName(LOCTEXT("TreeTabLabel", "Tree"))
+      .SetGroup(WorkspaceMenuCategory.ToSharedRef())
+      .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.ContentBrowser"));
+}
 
- private:
-  SCreateCharacterMianUI::TreeVirwWeightItemType ItemData;
-};
+void FCreateCharacterMianUI::UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
+  FAssetEditorToolkit::UnregisterTabSpawners(In_TabManager);
+  In_TabManager->UnregisterTabSpawner(FCreateCharacterMianUI::ViewportID);
+  In_TabManager->UnregisterTabSpawner(FCreateCharacterMianUI::TreeID);
+}
 
-const FName SCreateCharacterMianUI::Name{"Doodle_CreateCharacterMianUI"};
+FName FCreateCharacterMianUI::GetToolkitFName() const {
+  return FName{TEXT("CreateCharacterMianUI")};
+}
 
-void SCreateCharacterMianUI::Construct(const FArguments& Arg) {
+FText FCreateCharacterMianUI::GetBaseToolkitName() const {
+  return LOCTEXT("GetBaseToolkitName", "Create Character Mian Editor");
+}
+
+FText FCreateCharacterMianUI::GetToolkitName() const {
+  auto L_Dirty = CreateCharacterConfig->GetPackage()->IsDirty();
+  FFormatNamedArguments Args{
+      {TEXT("CreateCharacterConfigName"), FText::FromString(CreateCharacterConfig->GetName())},
+      {TEXT("DirtyState"), L_Dirty ? FText::FromString(TEXT("*")) : FText::GetEmpty()}};
+
+  return FText::Format(LOCTEXT("GetToolkitName", "{CreateCharacterConfigName}{DirtyState}"), Args);
+}
+
+FText FCreateCharacterMianUI::GetToolkitToolTipText() const {
+  return FAssetEditorToolkit::GetToolTipTextForObject(CreateCharacterConfig);
+}
+
+FLinearColor FCreateCharacterMianUI::GetWorldCentricTabColorScale() const {
+  return FLinearColor::White;
+}
+
+FString FCreateCharacterMianUI::GetWorldCentricTabPrefix() const {
+  return TEXT("Create Character Mian Editor");
+}
+
+FString FCreateCharacterMianUI::GetDocumentationLink() const {
+  return TEXT("Create Character Mian UI");
+}
+
+void FCreateCharacterMianUI::AddReferencedObjects(FReferenceCollector& Collector) {
+}
+
+void FCreateCharacterMianUI::InitCreateCharacterMianUI(
+    EToolkitMode::Type Mode,
+    const TSharedPtr<IToolkitHost>& In_InitToolkitHost,
+    UDoodleCreateCharacterConfig* In_Config
+) {
+  CreateCharacterConfig                = In_Config;
+  UAssetEditorSubsystem* L_EditorAsset = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+  L_EditorAsset->CloseOtherEditors(In_Config, this);
+
+  const TSharedRef<FTabManager::FLayout> L_Layout =
+      FTabManager::NewLayout(
+          "FCreateCharacterMianUI_InitCreateCharacterMianUI_Layout"
+      )
+          ->AddArea(
+              // clang-format off
+              FTabManager::NewPrimaryArea()
+              ->SetOrientation(Orient_Vertical)
+              ->Split
+              (
+                FTabManager::NewSplitter()
+                ->SetOrientation(Orient_Horizontal)
+                ->SetSizeCoefficient(0.9f)
+                ->Split
+                (
+                  FTabManager::NewStack()
+                  ->SetSizeCoefficient(1.f)
+                  ->SetHideTabWell(true)
+                  ->AddTab(FCreateCharacterMianUI::ViewportID, ETabState::OpenedTab)
+                )
+                ->Split
+                (
+                  FTabManager::NewStack()
+                  ->SetSizeCoefficient(1.f)
+                  ->SetHideTabWell(true)
+                  ->AddTab(FCreateCharacterMianUI::TreeID, ETabState::OpenedTab)
+                )
+              )
+              // clang-format on
+          );
+
+  InitAssetEditor(Mode, In_InitToolkitHost, AppIdentifier, L_Layout, true, true, In_Config);
+
+  TSharedPtr<FExtender> L_ToolbarExtender = MakeShared<FExtender>();
+  L_ToolbarExtender->AddToolBarExtension(
+      TEXT("Asset"),
+      EExtensionHook::After,
+      GetToolkitCommands(), /*ViewportPtr->GetCommandList()*/
+      FToolBarExtensionDelegate::CreateLambda([this](FToolBarBuilder& In_ToolBarBuilder) {})
+  );
+
+  AddToolbarExtender(L_ToolbarExtender);
+
+  RegenerateMenusAndToolbars();
+}
+
+TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Viewport(const FSpawnTabArgs& Args) {
   // clang-format off
-  CharacterEditorViewport = SNew(SCharacterEditorViewport);
-  // clang-format on
-
-  // clang-format off
-  ChildSlot
-  [
-    SNew(SBorder)
-    .BorderBackgroundColor(FLinearColor(0.3, 0.3, 0.3, 0.0f))
-    .BorderImage(new FSlateBrush())
-    .HAlign(HAlign_Fill)
+  return SNew(SDockTab)
+    .Label(LOCTEXT("SpawnTab_Viewport","Viewport"))
     [
-      SNew(SHorizontalBox)
-      // 渲染槽
-      + SHorizontalBox::Slot()
-      .FillWidth(1.0f)
+      SNew(SVerticalBox)
+      
+      + SVerticalBox::Slot()
       [
-        CharacterEditorViewport.ToSharedRef()
+        SAssignNew(CharacterEditorViewport, SCharacterEditorViewport)
+        .DoodleCreateCharacterConfigAttr(CreateCharacterConfig)
       ]
-
-      // 树小部件
-      + SHorizontalBox::Slot()
-      .FillWidth(1.0f)
-      [
-        SAssignNew(CreateCharacterConfigTree, TreeVirwWeightType)
-        .TreeItemsSource(&CreateCharacterConfigTreeData)
-        .OnGenerateRow(TreeVirwWeightType::FOnGenerateRow::CreateSP(this, &SCreateCharacterMianUI::CreateCharacterConfigTreeData_Row))
-        .OnGetChildren(TreeVirwWeightType::FOnGetChildren::CreateSP(this, &SCreateCharacterMianUI::CreateCharacterConfigTreeData_GetChildren))
-        .HeaderRow
-        (
-          SNew(SHeaderRow)
-          + SHeaderRow::Column(FName{TEXT("Name")})
-          + SHeaderRow::Column(FName{TEXT("Value")})
-        )
-      ]
-    ]
-  ];
+      //+ SVerticalBox::Slot()
+      //.Padding(0,8,0,0)
+      //.AutoHeight()
+      //.HAlign(HAlign_Fill)
+      //[
+      //]
+    ];
   // clang-format on
 }
 
-void SCreateCharacterMianUI::AddReferencedObjects(FReferenceCollector& collector) {}
-
-TSharedRef<SDockTab> SCreateCharacterMianUI::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs) {
-  return SNew(SDockTab).TabRole(ETabRole::NomadTab)[SNew(SCreateCharacterMianUI)];  //
+TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& Args) {
+  // clang-format off
+  return SNew(SDockTab)
+    .Label(LOCTEXT("SpawnTab_Tree","Tree"))
+    [
+      SNew(SVerticalBox)
+      
+      + SVerticalBox::Slot()
+      [
+        SAssignNew(CreateCharacterTree, SCreateCharacterTree)
+      ]
+      //+ SVerticalBox::Slot()
+      //.Padding(0,8,0,0)
+      //.AutoHeight()
+      //.HAlign(HAlign_Fill)
+      //[
+      //]
+    ];
+  // clang-format on
 }
 
-TSharedRef<class ITableRow> SCreateCharacterMianUI::CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table) {
-  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value);
-}
-
-void SCreateCharacterMianUI::CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List) {
-   
-}
+#undef LOCTEXT_NAMESPACE

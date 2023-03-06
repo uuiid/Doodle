@@ -4,37 +4,59 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
 
+// #include "CreateCharacterMianUI.generated.h"  // 头生成
+
 class SCharacterEditorViewport;
 struct FDoodleCreateCharacterConfigNode;
+class UDoodleCreateCharacterConfig;
 
 class ITableRow;
 class STableViewBase;
+class SCreateCharacterTree;
 
-class SCreateCharacterMianUI : public SCompoundWidget, FGCObject {
+// 创建编辑器自定义界面
+class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
  public:
-  SLATE_BEGIN_ARGS(SCreateCharacterMianUI) {}
-  SLATE_END_ARGS()
+  // IToolkit 接口
+  virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
+  virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) override;
+  // 结束 of IToolkit 接口
 
-  using TreeVirwWeightItemType = TSharedPtr<FDoodleCreateCharacterConfigNode>;
-  using TreeVirwWeightType     = STreeView<TreeVirwWeightItemType>;
-  using TreeVirwWeightDataType = TArray<TreeVirwWeightItemType>;
+  // FAssetEditorToolkit 接口
+  virtual FName GetToolkitFName() const override;
+  virtual FText GetBaseToolkitName() const override;
+  virtual FText GetToolkitName() const override;
+  virtual FText GetToolkitToolTipText() const override;
+  virtual FLinearColor GetWorldCentricTabColorScale() const override;
+  virtual FString GetWorldCentricTabPrefix() const override;
+  virtual FString GetDocumentationLink() const override;
+  // 结束 of FAssetEditorToolkit 接口
 
-  // 这里是内容创建函数
-  void Construct(const FArguments& Arg);
+  // GC接口
+  virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+  // 结束 GC接口
 
-  // 垃圾回收
-  virtual void AddReferencedObjects(FReferenceCollector& collector) override;
-
-  const static FName Name;
-
-  static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
+  void InitCreateCharacterMianUI(
+      EToolkitMode::Type Mode,
+      const TSharedPtr<IToolkitHost>& In_InitToolkitHost,
+      UDoodleCreateCharacterConfig* In_Config
+  );
 
  private:
-  TSharedRef<class ITableRow> CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table);
-  void CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List);
+  // 预览场景视口
+  TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
+  // 调整人物视口
+  TSharedRef<SDockTab> SpawnTab_Tree(const FSpawnTabArgs& Args);
+  // 预览视口
   TSharedPtr<SCharacterEditorViewport> CharacterEditorViewport;
-
-  // 树部件引用
-  TSharedPtr<TreeVirwWeightType> CreateCharacterConfigTree{};
-  TreeVirwWeightDataType CreateCharacterConfigTreeData{};
+  // 滑块调整视口
+  TSharedPtr<SCreateCharacterTree> CreateCharacterTree;
+  // 细节id
+  const static FName TreeID;
+  // 视口id
+  const static FName ViewportID;
+  // 视口id
+  const static FName AppIdentifier;
+  // 创建角色配置
+  TObjectPtr<UDoodleCreateCharacterConfig> CreateCharacterConfig;
 };

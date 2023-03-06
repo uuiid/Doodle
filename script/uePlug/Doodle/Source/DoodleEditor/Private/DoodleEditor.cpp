@@ -47,11 +47,7 @@ void FdoodleEditorModule::StartupModule() {
       FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name); }),
       FCanExecuteAction()
   );
-  PluginCommands->MapAction(
-      FDoodleCommands::Get().DoodleCreateCharacter,
-      FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SCreateCharacterMianUI::Name); }),
-      FCanExecuteAction()
-  );
+
   /// @brief 注册回调(在这里出现在工具菜单中)
   UToolMenus::RegisterStartupCallback(
       FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FdoodleEditorModule::RegisterMenus)
@@ -65,12 +61,6 @@ void FdoodleEditorModule::StartupModule() {
   FGlobalTabmanager::Get()
       ->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
       .SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
-      .SetMenuType(ETabSpawnerMenuType::Hidden);
-  FGlobalTabmanager::Get()
-      ->RegisterNomadTabSpawner(
-          SCreateCharacterMianUI::Name, FOnSpawnTab::CreateStatic(&SCreateCharacterMianUI::OnSpawnAction)
-      )
-      .SetDisplayName(LOCTEXT("FdoodleTabTitle3", "Doodle Craete Character"))
       .SetMenuType(ETabSpawnerMenuType::Hidden);
 
   FContentBrowserModule &ContentBrowserModule =
@@ -122,8 +112,7 @@ void FdoodleEditorModule::ShutdownModule() {
   FDoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
-  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SCreateCharacterMianUI::Name);
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name); 
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -167,7 +156,6 @@ void FdoodleEditorModule::RegisterMenus() {
       FToolMenuSection &Section = Menu->FindOrAddSection("WindowLayout");
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().OpenPluginWindow, PluginCommands);
       Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleImportFbxWindow, PluginCommands);
-      Section.AddMenuEntryWithCommandList(FDoodleCommands::Get().DoodleCreateCharacter, PluginCommands);
     }
   }
 

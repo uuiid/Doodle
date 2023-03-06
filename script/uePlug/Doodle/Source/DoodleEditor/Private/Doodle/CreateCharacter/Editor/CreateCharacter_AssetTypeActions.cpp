@@ -1,6 +1,7 @@
 #include "CreateCharacter_AssetTypeActions.h"
 
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "Doodle/CreateCharacter/CreateCharacterMianUI.h"
 
 #define LOCTEXT_NAMESPACE "FAssetTypeActions_CreateCharacter"
 
@@ -21,6 +22,8 @@ void FAssetTypeActions_CreateCharacter::OpenAssetEditor(const TArray<UObject*>& 
 
   for (auto ObjIt = InObjects.CreateConstIterator(); ObjIt; ++ObjIt) {
     if (UDoodleCreateCharacterConfig* MotionField = Cast<UDoodleCreateCharacterConfig>(*ObjIt)) {
+      TSharedRef L_Ref = MakeShared<FCreateCharacterMianUI>();
+      L_Ref->InitCreateCharacterMianUI(Mode, EditWithinLevelEditor, MotionField);
       // TSharedRef<FMotionFieldEditor> NewFlipbookEditor(new FMotionFieldEditor());
       // NewFlipbookEditor->InitMotionFieldEditor(Mode, EditWithinLevelEditor, MotionField);
     }
