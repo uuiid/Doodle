@@ -30,10 +30,8 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
   void RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex);
   void ZoomToFit();
 
-
  private:
-  // Build the toolbar for this curve editor
-  void OnModelHasChanged(const EAnimDataModelNotifyType& NotifyType, UAnimDataModel* Model, const FAnimDataModelNotifPayload& Payload);
+  // 为这个曲线编辑器建立工具条
   TSharedRef<SWidget> MakeToolbar(TSharedRef<SCurveEditorPanel> InEditorPanel);
   TSharedPtr<SWidget> OnContextMenuOpening();
 
@@ -43,9 +41,6 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   /** The search widget for filtering curves in the Curve Editor tree. */
   TSharedPtr<SWidget> CurveEditorSearchBox;
-
-  /** The anim sequence we are editing */
-  UAnimSequenceBase* AnimSequence;
 
   /** The tree widget in the curve editor */
   TSharedPtr<SCurveEditorTree> CurveEditorTree;
