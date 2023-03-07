@@ -127,6 +127,8 @@ void FCreateCharacterMianUI::InitCreateCharacterMianUI(
   AddToolbarExtender(L_ToolbarExtender);
 
   RegenerateMenusAndToolbars();
+
+  CharacterEditorViewport->SetViewportSkeletal(CreateCharacterConfig->GetSkeletalMesh());
 }
 
 TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Viewport(const FSpawnTabArgs& Args) {
@@ -149,6 +151,8 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Viewport(const FSpawnTabAr
       //]
     ];
   // clang-format on
+
+
 }
 
 TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& Args) {

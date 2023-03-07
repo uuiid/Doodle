@@ -94,7 +94,6 @@ void SCharacterEditorViewportToolBar::Construct(
 }
 
 void SCharacterEditorViewport::Construct(const FArguments& Arg) {
-  CreateCharacterMianUI           = Arg._CreateCharacterMianUI;
   DoodleCreateCharacterConfigAttr = Arg._DoodleCreateCharacterConfigAttr;
   AssetEditorModeManager          = MakeShared<FAssetEditorModeManager>();
   SEditorViewport::Construct(SEditorViewport::FArguments());

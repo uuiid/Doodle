@@ -41,10 +41,7 @@ class SCharacterEditorViewportToolBar : public SCommonEditorViewportToolbarBase 
 class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorViewportToolbarInfoProvider {
  public:
   SLATE_BEGIN_ARGS(SCharacterEditorViewport)
-      : _CreateCharacterMianUI(),
-        _DoodleCreateCharacterConfigAttr() {}
-
-  SLATE_ATTRIBUTE(SCreateCharacterMianUI*, CreateCharacterMianUI)
+      : _DoodleCreateCharacterConfigAttr() {}
 
   SLATE_ATTRIBUTE(UDoodleCreateCharacterConfig*, DoodleCreateCharacterConfigAttr)
   SLATE_END_ARGS()
