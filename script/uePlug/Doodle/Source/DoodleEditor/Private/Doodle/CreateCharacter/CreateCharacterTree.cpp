@@ -24,17 +24,36 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   }
 
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
-    if (InColumnName == "Name") {
-      return SNew(STextBlock).Text(FText::FromString(ItemData->Name));
-    } else if (InColumnName == "Value") {
-      if (ItemData->Item)
-        return SNew(SSlider).MaxValue(ItemData->Item->MaxValue).MinValue(ItemData->Item->MinValue);
-      else
-        return SNew(STextBlock);
+    // 只是题头部件
+    TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
+    if (!ItemData->Item) {
+      if (InColumnName == "Name") {
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
+      }
     } else {
-      return SNew(STextBlock);
+      if (InColumnName == "Name") {
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
+      } else if (InColumnName == "Value") {
+        L_Box->AddSlot().AutoWidth()[SNew(SSlider).MaxValue(ItemData->Item->MaxValue).MinValue(ItemData->Item->MinValue)];
+      }
     }
+    return L_Box.ToSharedRef();
   }
+
+  virtual int32 DoesItemHaveChildren() const override {
+    if (!ItemData->Childs.IsEmpty())
+      return 1;
+
+    return Super::DoesItemHaveChildren();
+  };
+
+  virtual bool IsItemExpanded() const override {
+    return Super::IsItemExpanded() || !ItemData->Childs.IsEmpty();
+  };
+
+  virtual void ToggleExpansion() override {
+    Super::ToggleExpansion();
+  };
 
  private:
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
@@ -79,10 +98,24 @@ void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWei
 }
 
 TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
+  FMenuBuilder L_Builder{true, UICommandList, Extender};
+  {
+    L_Builder.BeginSection("Create_ContextMenuOpening_Add_Bone", LOCTEXT("Create_ContextMenuOpening_Add_Bone1", "Add"));
 
+    // 添加
+    L_Builder.AddMenuEntry(
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add"),
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Bone"),
+        FSlateIcon{"Subtitle", "EventIcon"},
+        FUIAction{FExecuteAction::CreateLambda([this]() {
+          AddBone();
+        })}
+    );
 
+    L_Builder.EndSection();
+  }
 
-  return TSharedPtr<SWidget>();
+  return L_Builder.MakeWidget();
 }
 
 void SCreateCharacterTree::On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo) {
@@ -96,23 +129,31 @@ struct CreateUIAssist {
   TMap<FString, TSharedPtr<CreateUIAssist>> Child;
 };
 
-bool AddNode(
-    FString& In_Path, TMap<FString, TSharedPtr<CreateUIAssist>>& In_Node, FDoodleCreateCharacterConfigNode* In_DataNode
+void AddNode(
+    FString& In_Path, TMap<FString, TSharedPtr<CreateUIAssist>>& In_Node, FDoodleCreateCharacterConfigNode* In_DataNode, const SCreateCharacterTree::TreeVirwWeightItemType& In_Parent = nullptr
 ) {
   FString L_Left, L_Right{};
   const bool L_B_Split = In_Path.Split(TEXT("/"), &L_Left, &L_Right);
-  if (!L_B_Split)
-    return L_B_Split;
+  if (!L_B_Split) {
+    if (!In_Node.Contains(In_Path)) {
+      In_Node.Emplace(In_Path, MakeShared<CreateUIAssist>());
+      In_Node[In_Path]->Node       = MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>();
+      In_Node[In_Path]->Node->Name = In_Path;
+    }
+    if (In_Parent)
+      In_Parent->Childs.Add(In_Node[In_Path]->Node);
+    In_Node[In_Path]->Node->Item = In_DataNode;
+    return;
+  }
 
   if (!In_Node.Contains(L_Left)) {
     In_Node.Emplace(L_Left, MakeShared<CreateUIAssist>());
     In_Node[L_Left]->Node       = MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>();
     In_Node[L_Left]->Node->Name = L_Left;
+    if (In_Parent)
+      In_Parent->Childs.Add(In_Node[L_Left]->Node);
   }
-  if (!AddNode(L_Right, In_Node[L_Left]->Child, In_DataNode)) {
-    In_Node[L_Left]->Node->Item = In_DataNode;
-  }
-  return L_B_Split;
+  AddNode(L_Right, In_Node[L_Left]->Child, In_DataNode, In_Node[L_Left]->Node);
 }
 
 }  // namespace
@@ -132,6 +173,22 @@ void SCreateCharacterTree::CreateUITree() {
   for (auto&& i : L_List) {
     CreateCharacterConfigTreeData.Emplace(i.Value->Node);
   }
+}
+
+void SCreateCharacterTree::AddBone() {
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+
+  if (!L_Config)
+    return;
+
+  FDoodleCreateCharacterConfigNode& L_Node = L_Config->ListConfigNode.Emplace_GetRef();
+  L_Node.BoneName                          = "None";
+  L_Node.ShowUIName                        = FString::Format(TEXT("{0}{1}"), FStringFormatOrderedArguments{TEXT("Root/Add_Bone"), L_Config->ListConfigNode.Num()});
+
+  L_Config->GetPackage()->MarkPackageDirty();
+
+  CreateUITree();
+  this->RebuildList();
 }
 
 #undef LOCTEXT_NAMESPACE

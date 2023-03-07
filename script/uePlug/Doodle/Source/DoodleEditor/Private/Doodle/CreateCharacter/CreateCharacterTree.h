@@ -48,12 +48,17 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo);
 
   void CreateUITree();
+
+  void AddBone();
   // 数据
   TreeVirwWeightDataType CreateCharacterConfigTreeData{};
 
   // 配置引用
   TAttribute<UDoodleCreateCharacterConfig*> Config{};
-  
+
   // 当前选择
   TreeVirwWeightItemType CurrentSelect;
+  // 上下文ui元素
+  TSharedPtr<FUICommandList> UICommandList;
+  TSharedPtr<FExtender> Extender;
 };
