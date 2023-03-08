@@ -37,7 +37,7 @@ Alias "/DOXYGEN_DOC" "${DOCROOT}/build/html"
 <Directory "${DOCROOT}/build/html">
     Options Indexes FollowSymLinks MultiViews
     AllowOverride None
-    Require all granted[development_plan.md](development_plan.md)
+    Require all granted
 </Directory>
 
 ```
