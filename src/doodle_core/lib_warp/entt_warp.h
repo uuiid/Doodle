@@ -5,10 +5,10 @@
 #pragma once
 #include <entt/entt.hpp>
 // #include <boost/range.hpp>
-#include <fmt/format.h>
-
-#include <iterator>
 #include <doodle_core/lib_warp/enum_template_tool.h>
+
+#include <fmt/format.h>
+#include <iterator>
 namespace doodle {
 using namespace entt::literals;
 namespace entt_tool {
@@ -50,7 +50,10 @@ template <typename... Component, typename Archive, std::size_t... Index>
 void _save_comm_(const entt::handle &in_handle, Archive &in_archive, std::index_sequence<Index...>) {
   std::array<std::size_t, sizeof...(Index)> size{};
   ((in_handle.template any_of<Component>() ? ++(size[Index]) : 0u), ...);
-  ((size[Index] ? _save_<Component>(in_handle, size[Index], in_archive[std::to_string(entt::type_id<Component>().hash())]) : 0u), ...);
+  ((size[Index]
+        ? _save_<Component>(in_handle, size[Index], in_archive[std::to_string(entt::type_id<Component>().hash())])
+        : 0u),
+   ...);
 }
 /**
  * @brief json加载函数
@@ -111,31 +114,25 @@ namespace fmt {
  * @tparam
  */
 template <>
-struct formatter<::entt::entity>
-    : formatter<typename ::entt::entt_traits<::entt::entity>::entity_type> {
+struct formatter<::entt::entity> : formatter<typename ::entt::entt_traits<::entt::entity>::entity_type> {
   using base_type = formatter<typename ::entt::entt_traits<::entt::entity>::entity_type>;
 
   template <typename FormatContext>
   auto format(const ::entt::entity &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
-    return base_type::format(
-        ::entt::to_integral(in_),
-        ctx
-    );
+    return base_type::format(::entt::to_integral(in_), ctx);
   }
 };
 
-template <typename Entity, typename... Type>
-struct formatter<::entt::basic_handle<Entity, Type...>>
-    : formatter<Entity> {
-  using base_type        = formatter<Entity>;
-  using entt_handle_type = ::entt::basic_handle<Entity, Type...>;
+template <typename Registry, typename... Type>
+struct formatter<::entt::basic_handle<Registry, Type...>>
+    : formatter<typename ::entt::basic_handle<Registry, Type...>::entity_type> {
+  using entt_handle_type = typename ::entt::basic_handle<Registry, Type...>;
+  using entity_type      = typename entt_handle_type::entity_type;
+  using base_type        = typename formatter<entity_type>;
 
   template <typename FormatContext>
   auto format(const entt_handle_type &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
-    return base_type::format(
-        in_.entity(),
-        ctx
-    );
+    return base_type::format(in_.entity(), ctx);
   }
 };
 

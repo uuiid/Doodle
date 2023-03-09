@@ -57,9 +57,9 @@ class DOODLE_CORE_API init_register {
   std::vector<entt::meta_type> get_derived_class() {
     std::vector<entt::meta_type> derived_list{};
     for (auto&& ref_ : entt::resolve()) {
-      for (auto&& l_base : ref_.base()) {
-        if (l_base == entt::resolve<Base_T>()) {
-          derived_list.push_back(ref_);
+      for (auto&& l_base : ref_.second.base()) {
+        if (l_base.second == entt::resolve<Base_T>()) {
+          derived_list.push_back(ref_.second);
           break;
         }
       }
@@ -71,7 +71,7 @@ class DOODLE_CORE_API init_register {
 namespace init_register_ns {
 constexpr auto meta_init_registrar_lab = []() {
   entt::meta<init_register::base_registrar>()
-      .type()
+      .type(entt::type_id<init_register::base_registrar>().hash())
       .func<&init_register::base_registrar::init>("init"_hs);
 };
 class meta_init_registrar

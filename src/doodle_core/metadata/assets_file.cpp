@@ -2,6 +2,7 @@
 // Created by TD on 2021/5/7.
 //
 
+#include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/metadata.h>

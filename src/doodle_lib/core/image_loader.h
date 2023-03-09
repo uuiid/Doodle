@@ -84,7 +84,7 @@ class image_loader_init : public init_register::base_registrar {
 
 constexpr auto reg_image_loader = []() {
   entt::meta<image_loader_init>()
-      .type()
+      .type(entt::type_id<init_register::base_registrar>().hash())
       .base<init_register::base_registrar>()
       .func<&image_loader_init::init>("init"_hs);
 };

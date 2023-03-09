@@ -18,9 +18,7 @@ template <typename Type>
 struct [[maybe_unused]] entt::type_hash<
     Type,
     std::void_t<decltype(Type::class_hash())>> {
-  static entt::id_type value() ENTT_NOEXCEPT {
-    return Type::class_hash();
-  }
+  static entt::id_type value() noexcept { return Type::class_hash(); }
 };
 }  // namespace entt
 
