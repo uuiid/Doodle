@@ -96,7 +96,8 @@
         "Photoshop_Version": "120.0",
         "BUILD_LIMITED_1": "OFF",
         "BUILD_USD": "ON",
-        "PXR_USD_ROOT": "F:/usd_install"
+        "PXR_USD_ROOT": "E:/usd_install",
+        "Boost_NO_WARN_NEW_VERSIONS": true
       }
     },
     {
