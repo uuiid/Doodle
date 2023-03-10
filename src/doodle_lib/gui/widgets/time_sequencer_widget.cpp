@@ -505,10 +505,13 @@ void time_sequencer_widget::fliter_select() {
                    }) |
                    ranges::to_vector;
   auto l_user = p_i->combox_user_id.current_user;
+
+
   if (!l_user) {
     auto l_msg = std::make_shared<show_message>();
     l_msg->set_message(fmt::format("无效的句柄"));
     make_handle().emplace<gui_windows>() = l_msg;
+    return;
   }
   if (!l_user.all_of<user>()) {
     auto l_msg = std::make_shared<show_message>();
