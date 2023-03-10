@@ -9,6 +9,7 @@
 class SCharacterEditorViewport;
 struct FDoodleCreateCharacterConfigNode;
 class UDoodleCreateCharacterConfig;
+class SCreateCharacterCurveEditor;
 
 class ITableRow;
 class STableViewBase;
@@ -37,8 +38,7 @@ class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
   // 结束 GC接口
 
   void InitCreateCharacterMianUI(
-      EToolkitMode::Type Mode,
-      const TSharedPtr<IToolkitHost>& In_InitToolkitHost,
+      EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& In_InitToolkitHost,
       UDoodleCreateCharacterConfig* In_Config
   );
 
@@ -47,16 +47,24 @@ class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
   TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
   // 调整人物视口
   TSharedRef<SDockTab> SpawnTab_Tree(const FSpawnTabArgs& Args);
+
+  TSharedRef<SDockTab> SpawnTab_CurveEditor(const FSpawnTabArgs& Args);
+
   // 预览视口
   TSharedPtr<SCharacterEditorViewport> CharacterEditorViewport;
   // 滑块调整视口
   TSharedPtr<SCreateCharacterTree> CreateCharacterTree;
-  // 细节id
+
+  TSharedPtr<SCreateCharacterCurveEditor> CreateCharacterCurveEditor;
+
+  // 树 id
   const static FName TreeID;
   // 视口id
   const static FName ViewportID;
-  // 视口id
+  // 当模式为独立时，这是应用的标识符，该应用应该承载这个工具包。
   const static FName AppIdentifier;
+
+  const static FName CurveEditor;
   // 创建角色配置
   TObjectPtr<UDoodleCreateCharacterConfig> CreateCharacterConfig;
 };

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Widgets/DeclarativeSyntaxSupport.h"
+#include "Animation/AnimCurveTypes.h"
+#include "Animation/AnimSequenceBase.h"
+#include "Animation/SmartName.h"
+#include "CurveEditorTypes.h"
 #include "EditorUndoClient.h"
 #include "RichCurveEditorModel.h"
-#include "Animation/SmartName.h"
-#include "Animation/AnimCurveTypes.h"
-#include "CurveEditorTypes.h"
-#include "Animation/AnimSequenceBase.h"
+#include "Widgets/DeclarativeSyntaxSupport.h"
 
 class FCurveEditor;
 class ITimeSliderController;
@@ -14,6 +14,8 @@ class SCurveEditorTree;
 class IPersonaPreviewScene;
 class SCurveEditorPanel;
 class FTabManager;
+
+class FDoodleCreateCharacterConfigNode;
 
 class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:
@@ -25,8 +27,13 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   void Construct(const FArguments& InArgs);
 
+  void EditCurve(FDoodleCreateCharacterConfigNode* In_Node);
+
   void ResetCurves();
-  void AddCurve(const FText& InCurveDisplayName, const FLinearColor& InCurveColor, const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex, FSimpleDelegate InOnCurveModified);
+  void AddCurve(
+      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType, int32 InCurveIndex,
+      FSimpleDelegate InOnCurveModified
+  );
   void RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex);
   void ZoomToFit();
 
