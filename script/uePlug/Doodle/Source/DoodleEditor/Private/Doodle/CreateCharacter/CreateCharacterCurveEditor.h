@@ -15,7 +15,7 @@ class IPersonaPreviewScene;
 class SCurveEditorPanel;
 class FTabManager;
 
-class FDoodleCreateCharacterConfigNode;
+struct FDoodleCreateCharacterConfigNode;
 
 class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:

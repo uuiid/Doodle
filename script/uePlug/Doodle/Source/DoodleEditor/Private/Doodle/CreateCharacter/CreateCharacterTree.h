@@ -13,10 +13,12 @@ class STableViewBase;
 
 class UCreateCharacterMianTreeItem {
  public:
-  FString Name;
-
-  FDoodleCreateCharacterConfigNode* Item;
-
+  TArray<FString> ItemKeys;
+  FName ShowName;
+  // 调整最大值
+  float MaxValue{2.0f};
+  // 调整最小值
+  float MinValue{-2.0f};
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
 };
 
@@ -30,14 +32,12 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   using TreeVirwWeightType     = STreeView<TreeVirwWeightItemType>;
   using TreeVirwWeightDataType = TArray<TreeVirwWeightItemType>;
 
-  DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, FDoodleCreateCharacterConfigNode*);
+  DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, const TSharedPtr<UCreateCharacterMianTreeItem>&);
 
-  SLATE_BEGIN_ARGS(SCreateCharacterTree)
-      : _CreateCharacterConfig(nullptr),
-        _OnEditItem() {}
+  SLATE_BEGIN_ARGS(SCreateCharacterTree) : _CreateCharacterConfig(nullptr), _OnEditItem() {}
 
   SLATE_ATTRIBUTE(UDoodleCreateCharacterConfig*, CreateCharacterConfig)
-  
+
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
 
   SLATE_END_ARGS()
