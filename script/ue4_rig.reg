@@ -2,3 +2,7 @@ Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Dwm]
 "OverlayTestMode"=dword:00000005
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\GraphicsDrivers]
+"TdrDelay"=dword:00000e10
+"TdrDdiDelay"=dword:00000e10
