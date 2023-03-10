@@ -68,6 +68,8 @@ const FName SCreateCharacterTree::G_Value{"Value"};
 
 void SCreateCharacterTree::Construct(const FArguments& Arg) {
   Config = Arg._CreateCharacterConfig;
+  OnEditItem = Arg._OnEditItem;
+
   CreateUITree();
 
   Super::Construct(

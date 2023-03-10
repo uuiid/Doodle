@@ -32,8 +32,12 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
 
   DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, FDoodleCreateCharacterConfigNode*);
 
-  SLATE_BEGIN_ARGS(SCreateCharacterTree) : _CreateCharacterConfig(nullptr) {}
+  SLATE_BEGIN_ARGS(SCreateCharacterTree)
+      : _CreateCharacterConfig(nullptr),
+        _OnEditItem() {}
+
   SLATE_ATTRIBUTE(UDoodleCreateCharacterConfig*, CreateCharacterConfig)
+  
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
 
   SLATE_END_ARGS()

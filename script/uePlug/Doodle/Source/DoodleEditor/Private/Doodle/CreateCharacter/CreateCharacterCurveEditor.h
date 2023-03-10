@@ -31,7 +31,7 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   void ResetCurves();
   void AddCurve(
-      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType, int32 InCurveIndex,
+      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType,  
       FSimpleDelegate InOnCurveModified
   );
   void RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex);
