@@ -1,14 +1,17 @@
 #include "CreateCharacterMianUI.h"
 
 #include "CharacterEditorViewport.h"
-#include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "CreateCharacterCurveEditor.h"
+#include "CreateCharacterSliderController.h"
 #include "CreateCharacterTree.h"
+#include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
 
 #define LOCTEXT_NAMESPACE "FCreateCharacterMianUI"
 
 const FName FCreateCharacterMianUI::TreeID{TEXT("Doodle_TreeID")};
 const FName FCreateCharacterMianUI::ViewportID{TEXT("Doodle_ViewportID")};
 const FName FCreateCharacterMianUI::AppIdentifier{TEXT("Doodle_AppIdentifier")};
+const FName FCreateCharacterMianUI::CurveEditor{TEXT("Doodle_CurveEditor")};
 
 void FCreateCharacterMianUI::RegisterTabSpawners(const TSharedRef<FTabManager>& In_TabManager) {
   WorkspaceMenuCategory = In_TabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenuCategory", "Create Character Editor"));
@@ -26,7 +29,19 @@ void FCreateCharacterMianUI::RegisterTabSpawners(const TSharedRef<FTabManager>& 
       // clang-format on
       ;
 
-  In_TabManager->RegisterTabSpawner(FCreateCharacterMianUI::TreeID, FOnSpawnTab::CreateSP(this, &FCreateCharacterMianUI::SpawnTab_Tree))
+  In_TabManager
+      ->RegisterTabSpawner(
+          FCreateCharacterMianUI::TreeID, FOnSpawnTab::CreateSP(this, &FCreateCharacterMianUI::SpawnTab_Tree)
+      )
+      .SetDisplayName(LOCTEXT("TreeTabLabel", "Tree"))
+      .SetGroup(WorkspaceMenuCategory.ToSharedRef())
+      .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.ContentBrowser"));
+
+  In_TabManager
+      ->RegisterTabSpawner(
+          FCreateCharacterMianUI::CurveEditor,
+          FOnSpawnTab::CreateSP(this, &FCreateCharacterMianUI::SpawnTab_CurveEditor)
+      )
       .SetDisplayName(LOCTEXT("TreeTabLabel", "Tree"))
       .SetGroup(WorkspaceMenuCategory.ToSharedRef())
       .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.ContentBrowser"));
@@ -36,6 +51,7 @@ void FCreateCharacterMianUI::UnregisterTabSpawners(const TSharedRef<FTabManager>
   FAssetEditorToolkit::UnregisterTabSpawners(In_TabManager);
   In_TabManager->UnregisterTabSpawner(FCreateCharacterMianUI::ViewportID);
   In_TabManager->UnregisterTabSpawner(FCreateCharacterMianUI::TreeID);
+  In_TabManager->UnregisterTabSpawner(FCreateCharacterMianUI::CurveEditor);
 }
 
 FName FCreateCharacterMianUI::GetToolkitFName() const {
@@ -98,10 +114,23 @@ void FCreateCharacterMianUI::InitCreateCharacterMianUI(
                 ->SetSizeCoefficient(0.9f)
                 ->Split
                 (
-                  FTabManager::NewStack()
-                  ->SetSizeCoefficient(1.f)
-                  ->SetHideTabWell(true)
-                  ->AddTab(FCreateCharacterMianUI::ViewportID, ETabState::OpenedTab)
+                  
+                  FTabManager::NewSplitter()
+                  ->SetOrientation(Orient_Vertical)
+                  ->SetSizeCoefficient(0.9f)
+                  ->Split
+                  (
+                    FTabManager::NewStack()
+                    ->SetSizeCoefficient(3.f)
+                    ->SetHideTabWell(true)
+                    ->AddTab(FCreateCharacterMianUI::ViewportID, ETabState::OpenedTab)
+                  )->Split
+                  (
+                    FTabManager::NewStack()
+                    ->SetSizeCoefficient(1.f)
+                    ->SetHideTabWell(true)
+                    ->AddTab(FCreateCharacterMianUI::CurveEditor, ETabState::OpenedTab)
+                  )
                 )
                 ->Split
                 (
@@ -151,8 +180,6 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Viewport(const FSpawnTabAr
       //]
     ];
   // clang-format on
-
-
 }
 
 TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& Args) {
@@ -166,6 +193,30 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& 
       [
         SAssignNew(CreateCharacterTree, SCreateCharacterTree)
         .CreateCharacterConfig(CreateCharacterConfig)
+        .OnEditItem_Lambda([this](FDoodleCreateCharacterConfigNode* L_Node){
+          this->CreateCharacterCurveEditor->EditorCurve(L_Node);
+         })
+        //+ SVerticalBox::Slot()
+        //.Padding(0,8,0,0)
+        //.AutoHeight()
+        //.HAlign(HAlign_Fill)
+        //[
+        //]
+      ]
+  ];
+  // clang-format on
+}
+
+TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTabArgs& Args) {
+  // clang-format off
+  return SNew(SDockTab)
+    .Label(LOCTEXT("SpawnTab_CurveEditor","CurveEditor"))
+    [
+      SNew(SVerticalBox)
+      
+      + SVerticalBox::Slot()
+      [
+        SAssignNew(CreateCharacterCurveEditor, SCreateCharacterCurveEditor)
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)
         //.AutoHeight()

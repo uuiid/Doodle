@@ -27,14 +27,15 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     // 只是题头部件
     TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
     if (!ItemData->Item) {
-      if (InColumnName == "Name") {
+      if (InColumnName == SCreateCharacterTree::G_Name) {
         L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
       }
     } else {
-      if (InColumnName == "Name") {
+      if (InColumnName == SCreateCharacterTree::G_Name) {
         L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
-      } else if (InColumnName == "Value") {
-        L_Box->AddSlot().AutoWidth()[SNew(SSlider).MaxValue(ItemData->Item->MaxValue).MinValue(ItemData->Item->MinValue)];
+      } else if (InColumnName == SCreateCharacterTree::G_Value) {
+        L_Box->AddSlot().AutoWidth(
+        )[SNew(SSlider).MaxValue(ItemData->Item->MaxValue).MinValue(ItemData->Item->MinValue)];
       }
     }
     return L_Box.ToSharedRef();
@@ -52,8 +53,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   };
 
   virtual void ToggleExpansion() override {
-    Super::ToggleExpansion();
-  };
+    Super::ToggleExpansion(); };
 
  private:
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
@@ -63,22 +63,30 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
 const FName SCreateCharacterTree::Name{"Doodle_SCreateCharacterTree"};
 
+const FName SCreateCharacterTree::G_Name{"Name"};
+const FName SCreateCharacterTree::G_Value{"Value"};
+
 void SCreateCharacterTree::Construct(const FArguments& Arg) {
   Config = Arg._CreateCharacterConfig;
   CreateUITree();
 
-  Super::Construct(Super::FArguments{}
-                       .TreeItemsSource(&CreateCharacterConfigTreeData)
-                       .OnGenerateRow(TreeVirwWeightType::FOnGenerateRow::CreateSP(this, &SCreateCharacterTree::CreateCharacterConfigTreeData_Row))
-                       .OnGetChildren(TreeVirwWeightType::FOnGetChildren::CreateSP(this, &SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren))
-                       .HeaderRow(
-                           // clang-format off
+  Super::Construct(
+      Super::FArguments{}
+          .TreeItemsSource(&CreateCharacterConfigTreeData)
+          .OnGenerateRow(TreeVirwWeightType::FOnGenerateRow::CreateSP(
+              this, &SCreateCharacterTree::CreateCharacterConfigTreeData_Row
+          ))
+          .OnGetChildren(TreeVirwWeightType::FOnGetChildren::CreateSP(
+              this, &SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren
+          ))
+          .HeaderRow(
+              // clang-format off
                            SNew(SHeaderRow) 
-                         + SHeaderRow::Column(FName{TEXT("Name")})
+                         + SHeaderRow::Column(G_Name)
                          .DefaultLabel(LOCTEXT("Construct", "Name")) 
-                         + SHeaderRow::Column(FName{TEXT("Value")})
+                         + SHeaderRow::Column(G_Value)
                          .DefaultLabel(LOCTEXT("Construct", "Value"))
-                           // clang-format on
+              // clang-format on
                        )
                        .OnContextMenuOpening(FOnContextMenuOpening::CreateSP(this, &SCreateCharacterTree::Create_ContextMenuOpening))
                        .OnSelectionChanged(TreeVirwWeightType::FOnSelectionChanged::CreateSP(this, &SCreateCharacterTree::On_SelectionChanged))
@@ -105,11 +113,17 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
     // 添加
     L_Builder.AddMenuEntry(
         LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Bone"),
-        FSlateIcon{"Subtitle", "EventIcon"},
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Bone"), FSlateIcon{"Subtitle", "EventIcon"},
+        FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
+    );
+    // 修改
+    L_Builder.AddMenuEntry(
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Edit"),
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Edit Bone"), FSlateIcon{"Subtitle", "EventIcon"},
         FUIAction{FExecuteAction::CreateLambda([this]() {
-          AddBone();
+          if (CurrentSelect->Item) this->OnEditItem.ExecuteIfBound(CurrentSelect->Item);
         })}
+
     );
 
     L_Builder.EndSection();

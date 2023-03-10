@@ -1,21 +1,23 @@
 #include "CreateCharacterCurveEditor.h"
-#include "CurveEditor.h"
-#include "RichCurveEditorModel.h"
+
+#include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimSequenceBase.h"
-#include "SCurveEditorPanel.h"
-#include "Tree/SCurveEditorTreeTextFilter.h"
-#include "Tree/SCurveEditorTreeFilterStatusBar.h"
-#include "Tree/SCurveEditorTree.h"
-#include "Tree/SCurveEditorTreeSelect.h"
-#include "Tree/SCurveEditorTreePin.h"
-#include "Widgets/Layout/SScrollBorder.h"
-#include "Tree/ICurveEditorTreeItem.h"
-#include "Tree/CurveEditorTreeFilter.h"
+#include "CurveEditor.h"
+#include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
 #include "Editor.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "RichCurveEditorModel.h"
+#include "SCurveEditorPanel.h"
 #include "Styling/AppStyle.h"
-#include "Animation/AnimData/AnimDataModel.h"
 #include "ToolMenus.h"
+#include "Tree/CurveEditorTreeFilter.h"
+#include "Tree/ICurveEditorTreeItem.h"
+#include "Tree/SCurveEditorTree.h"
+#include "Tree/SCurveEditorTreeFilterStatusBar.h"
+#include "Tree/SCurveEditorTreePin.h"
+#include "Tree/SCurveEditorTreeSelect.h"
+#include "Tree/SCurveEditorTreeTextFilter.h"
+#include "Widgets/Layout/SScrollBorder.h"
 
 #define LOCTEXT_NAMESPACE "SCreateCharacterCurveEditor"
 
@@ -38,7 +40,10 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
 
 class FRichCurveEditorModel_CreateCharacter : public FRichCurveEditorModel {
  public:
-  FRichCurveEditorModel_CreateCharacter(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex, UAnimSequenceBase* InAnimSequence, FCurveEditorTreeItemID InTreeId = FCurveEditorTreeItemID());
+  FRichCurveEditorModel_CreateCharacter(
+      const FSmartName& InName, ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
+      FCurveEditorTreeItemID InTreeId = FCurveEditorTreeItemID()
+  );
 
   virtual ~FRichCurveEditorModel_CreateCharacter();
 
@@ -51,32 +56,44 @@ class FRichCurveEditorModel_CreateCharacter : public FRichCurveEditorModel {
   virtual void SetCurveAttributes(const FCurveAttributes& InCurveAttributes) override;
 
   void CurveHasChanged();
-  void OnModelHasChanged(const EAnimDataModelNotifyType& NotifyType, UAnimDataModel* Model, const FAnimDataModelNotifPayload& Payload);
+  void OnModelHasChanged(
+      const EAnimDataModelNotifyType& NotifyType, UAnimDataModel* Model, const FAnimDataModelNotifPayload& Payload
+  );
   void UpdateCachedCurve();
 
-  FSmartName Name;
+  // FSmartName Name;
   TWeakObjectPtr<UAnimSequenceBase> AnimSequence;
-  int32 CurveIndex;
+  // int32 CurveIndex;
   ERawCurveTrackTypes Type;
   FCurveEditorTreeItemID TreeId;
 
-  FAnimationCurveIdentifier CurveId;
-  UE::Anim::FAnimDataModelNotifyCollector NotifyCollector;
+  /* FAnimationCurveIdentifier CurveId;*/
+  // UE::Anim::FAnimDataModelNotifyCollector NotifyCollector;
   FRichCurve CachedCurve;
   bool bCurveRemoved;
 
   TUniquePtr<IAnimationDataController::FScopedBracket> InteractiveBracket;
 };
 
-FRichCurveEditorModel_CreateCharacter::FRichCurveEditorModel_CreateCharacter(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex, UAnimSequenceBase* InAnimSequence, FCurveEditorTreeItemID InTreeId /*= FCurveEditorTreeItemID()*/)
-    : FRichCurveEditorModel(InAnimSequence), Name(InName), AnimSequence(InAnimSequence), CurveIndex(InCurveIndex), Type(InType), TreeId(InTreeId), CurveId(FAnimationCurveIdentifier(Name, Type)), bCurveRemoved(false) {
+FRichCurveEditorModel_CreateCharacter::FRichCurveEditorModel_CreateCharacter(
+    const FSmartName& InName, ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
+    FCurveEditorTreeItemID InTreeId /*= FCurveEditorTreeItemID()*/
+)
+    : FRichCurveEditorModel(InAnimSequence),
+      /* Name(InName),*/ AnimSequence(InAnimSequence),
+      Type(InType),
+      TreeId(InTreeId),
+      /*CurveId(FAnimationCurveIdentifier(Name, Type)),*/ bCurveRemoved(false) {
   CurveModifiedDelegate.AddRaw(this, &FRichCurveEditorModel_CreateCharacter::CurveHasChanged);
 
-  InAnimSequence->GetDataModel()->GetModifiedEvent().AddRaw(this, &FRichCurveEditorModel_CreateCharacter::OnModelHasChanged);
+  InAnimSequence->GetDataModel()->GetModifiedEvent().AddRaw(
+      this, &FRichCurveEditorModel_CreateCharacter::OnModelHasChanged
+  );
 
-  if (Type == ERawCurveTrackTypes::RCT_Transform) {
-    UAnimationCurveIdentifierExtensions::GetTransformChildCurveIdentifier(CurveId, (ETransformCurveChannel)(CurveIndex / 3), (EVectorCurveChannel)(CurveIndex % 3));
-  }
+  // if (Type == ERawCurveTrackTypes::RCT_Transform) {
+  //   UAnimationCurveIdentifierExtensions::GetTransformChildCurveIdentifier(CurveId,
+  //   (ETransformCurveChannel)(CurveIndex / 3), (EVectorCurveChannel)(CurveIndex % 3));
+  // }
 
   UpdateCachedCurve();
 }
@@ -86,7 +103,7 @@ FRichCurveEditorModel_CreateCharacter::~FRichCurveEditorModel_CreateCharacter() 
 }
 
 bool FRichCurveEditorModel_CreateCharacter::IsValid() const {
-  return AnimSequence->GetDataModel()->FindCurve(FAnimationCurveIdentifier(Name, Type)) != nullptr;
+  // return AnimSequence->GetDataModel()->FindCurve(FAnimationCurveIdentifier(Name, Type)) != nullptr;
 }
 
 FRichCurve& FRichCurveEditorModel_CreateCharacter::GetRichCurve() {
@@ -133,8 +150,8 @@ void FRichCurveEditorModel_CreateCharacter::SetKeyAttributes(TArrayView<const FK
 
 void FRichCurveEditorModel_CreateCharacter::SetCurveAttributes(const FCurveAttributes& InCurveAttributes) {
   Modify();
-  IAnimationDataController& Controller = AnimSequence->GetController();
-  Controller.SetCurveAttributes(CurveId, InCurveAttributes);
+  // IAnimationDataController& Controller = AnimSequence->GetController();
+  // Controller.SetCurveAttributes(CurveId, InCurveAttributes);
 }
 
 void FRichCurveEditorModel_CreateCharacter::CurveHasChanged() {
@@ -147,135 +164,149 @@ void FRichCurveEditorModel_CreateCharacter::CurveHasChanged() {
     }
     case ERawCurveTrackTypes::RCT_Transform:
     case ERawCurveTrackTypes::RCT_Float: {
-      Controller.SetCurveKeys(CurveId, CachedCurve.GetConstRefOfKeys());
+      // Controller.SetCurveKeys(CurveId, CachedCurve.GetConstRefOfKeys());
       break;
     }
   }
 }
 
 void FRichCurveEditorModel_CreateCharacter::OnModelHasChanged(const EAnimDataModelNotifyType& NotifyType, UAnimDataModel* Model, const FAnimDataModelNotifPayload& Payload) {
-  NotifyCollector.Handle(NotifyType);
+  // NotifyCollector.Handle(NotifyType);
 
-  switch (NotifyType) {
-    case EAnimDataModelNotifyType::CurveAdded:
-    case EAnimDataModelNotifyType::CurveChanged:
-    case EAnimDataModelNotifyType::CurveFlagsChanged:
-    case EAnimDataModelNotifyType::CurveScaled: {
-      const FCurvePayload& TypedPayload = Payload.GetPayload<FCurvePayload>();
-      if (TypedPayload.Identifier.InternalName == Name) {
-        if (NotifyCollector.IsNotWithinBracket()) {
-          UpdateCachedCurve();
-        } else {
-          // Curve was re-added after removal in same bracket
-          if (bCurveRemoved && NotifyType == EAnimDataModelNotifyType::CurveAdded) {
-            bCurveRemoved = false;
-          }
-        }
-      }
+  // switch (NotifyType) {
+  //   case EAnimDataModelNotifyType::CurveAdded:
+  //   case EAnimDataModelNotifyType::CurveChanged:
+  //   case EAnimDataModelNotifyType::CurveFlagsChanged:
+  //   case EAnimDataModelNotifyType::CurveScaled: {
+  //     const FCurvePayload& TypedPayload = Payload.GetPayload<FCurvePayload>();
+  //     if (TypedPayload.Identifier.InternalName == Name) {
+  //       if (NotifyCollector.IsNotWithinBracket()) {
+  //         UpdateCachedCurve();
+  //       } else {
+  //         // Curve was re-added after removal in same bracket
+  //         if (bCurveRemoved && NotifyType == EAnimDataModelNotifyType::CurveAdded) {
+  //           bCurveRemoved = false;
+  //         }
+  //       }
+  //     }
 
-      break;
-    }
+  //    break;
+  //  }
 
-    case EAnimDataModelNotifyType::CurveRemoved: {
-      // Curve was removed
-      const FCurveRemovedPayload& TypedPayload = Payload.GetPayload<FCurveRemovedPayload>();
-      if (TypedPayload.Identifier.InternalName == Name) {
-        bCurveRemoved = true;
-      }
-      break;
-    }
+  //  case EAnimDataModelNotifyType::CurveRemoved: {
+  //    // Curve was removed
+  //    const FCurveRemovedPayload& TypedPayload = Payload.GetPayload<FCurveRemovedPayload>();
+  //    if (TypedPayload.Identifier.InternalName == Name) {
+  //      bCurveRemoved = true;
+  //    }
+  //    break;
+  //  }
 
-    case EAnimDataModelNotifyType::CurveRenamed: {
-      const FCurveRenamedPayload& TypedPayload = Payload.GetPayload<FCurveRenamedPayload>();
-      if (TypedPayload.Identifier == CurveId) {
-        Name    = TypedPayload.NewIdentifier.InternalName;
-        CurveId = TypedPayload.NewIdentifier;
+  //  case EAnimDataModelNotifyType::CurveRenamed: {
+  //    const FCurveRenamedPayload& TypedPayload = Payload.GetPayload<FCurveRenamedPayload>();
+  //    if (TypedPayload.Identifier == CurveId) {
+  //      Name    = TypedPayload.NewIdentifier.InternalName;
+  //      CurveId = TypedPayload.NewIdentifier;
 
-        if (NotifyCollector.IsNotWithinBracket()) {
-          UpdateCachedCurve();
-        }
-      }
+  //      if (NotifyCollector.IsNotWithinBracket()) {
+  //        UpdateCachedCurve();
+  //      }
+  //    }
 
-      break;
-    }
+  //    break;
+  //  }
 
-    case EAnimDataModelNotifyType::BracketClosed: {
-      if (NotifyCollector.IsNotWithinBracket()) {
-        if (!bCurveRemoved && NotifyCollector.Contains({EAnimDataModelNotifyType::CurveAdded, EAnimDataModelNotifyType::CurveChanged, EAnimDataModelNotifyType::CurveFlagsChanged, EAnimDataModelNotifyType::CurveScaled, EAnimDataModelNotifyType::CurveRenamed})) {
-          UpdateCachedCurve();
-        }
-      }
-      break;
-    }
-  }
+  //  case EAnimDataModelNotifyType::BracketClosed: {
+  //    if (NotifyCollector.IsNotWithinBracket()) {
+  //      if (!bCurveRemoved && NotifyCollector.Contains({EAnimDataModelNotifyType::CurveAdded,
+  //      EAnimDataModelNotifyType::CurveChanged, EAnimDataModelNotifyType::CurveFlagsChanged,
+  //      EAnimDataModelNotifyType::CurveScaled, EAnimDataModelNotifyType::CurveRenamed})) {
+  //        UpdateCachedCurve();
+  //      }
+  //    }
+  //    break;
+  //  }
+  //}
 }
 
 void FRichCurveEditorModel_CreateCharacter::UpdateCachedCurve() {
-  const FAnimCurveBase* CurveBase = AnimSequence->GetDataModel()->FindCurve(CurveId);
+  // const FAnimCurveBase* CurveBase = AnimSequence->GetDataModel()->FindCurve(CurveId);
 
-  check(CurveBase);  // If this fails lifetime contracts have been violated - this curve should always be present if this model exists
+  // check(CurveBase);  // If this fails lifetime contracts have been violated - this curve should always be present if
+  // this model exists
 
-  const FRichCurve* CurveToCopyFrom = [this, CurveBase]() -> const FRichCurve* {
-    switch (Type) {
-      case ERawCurveTrackTypes::RCT_Vector: {
-        ensure(false);
-        const FVectorCurve& VectorCurve = *(static_cast<const FVectorCurve*>(CurveBase));
-        check(CurveIndex < 3);
-        return &VectorCurve.FloatCurves[CurveIndex];
-      }
-      case ERawCurveTrackTypes::RCT_Transform: {
-        const FTransformCurve& TransformCurve = *(static_cast<const FTransformCurve*>(CurveBase));
-        check(CurveIndex < 9);
-        const int32 SubCurveIndex = CurveIndex % 3;
-        switch (CurveIndex) {
-          default:
-            check(false);
-            // fall through
-          case 0:
-          case 1:
-          case 2:
-            return &TransformCurve.TranslationCurve.FloatCurves[SubCurveIndex];
-          case 3:
-          case 4:
-          case 5:
-            return &TransformCurve.RotationCurve.FloatCurves[SubCurveIndex];
-          case 6:
-          case 7:
-          case 8:
-            return &TransformCurve.ScaleCurve.FloatCurves[SubCurveIndex];
-        }
-      }
-      case ERawCurveTrackTypes::RCT_Float:
-      default: {
-        const FFloatCurve& FloatCurve = *(static_cast<const FFloatCurve*>(CurveBase));
-        check(CurveIndex == 0);
-        return &FloatCurve.FloatCurve;
-      }
-    }
+  // const FRichCurve* CurveToCopyFrom = [this, CurveBase]() -> const FRichCurve* {
+  //   switch (Type) {
+  //     case ERawCurveTrackTypes::RCT_Vector: {
+  //       ensure(false);
+  //       const FVectorCurve& VectorCurve = *(static_cast<const FVectorCurve*>(CurveBase));
+  //       check(CurveIndex < 3);
+  //       return &VectorCurve.FloatCurves[CurveIndex];
+  //     }
+  //     case ERawCurveTrackTypes::RCT_Transform: {
+  //       const FTransformCurve& TransformCurve = *(static_cast<const FTransformCurve*>(CurveBase));
+  //       check(CurveIndex < 9);
+  //       const int32 SubCurveIndex = CurveIndex % 3;
+  //       switch (CurveIndex) {
+  //         default:
+  //           check(false);
+  //           // fall through
+  //         case 0:
+  //         case 1:
+  //         case 2:
+  //           return &TransformCurve.TranslationCurve.FloatCurves[SubCurveIndex];
+  //         case 3:
+  //         case 4:
+  //         case 5:
+  //           return &TransformCurve.RotationCurve.FloatCurves[SubCurveIndex];
+  //         case 6:
+  //         case 7:
+  //         case 8:
+  //           return &TransformCurve.ScaleCurve.FloatCurves[SubCurveIndex];
+  //       }
+  //     }
+  //     case ERawCurveTrackTypes::RCT_Float:
+  //     default: {
+  //       const FFloatCurve& FloatCurve = *(static_cast<const FFloatCurve*>(CurveBase));
+  //       check(CurveIndex == 0);
+  //       return &FloatCurve.FloatCurve;
+  //     }
+  //   }
 
-    return nullptr;
-  }();
+  //  return nullptr;
+  //}();
 
-  if (ensure(CurveToCopyFrom)) {
-    CachedCurve = *CurveToCopyFrom;
-  }
+  // if (ensure(CurveToCopyFrom)) {
+  //   CachedCurve = *CurveToCopyFrom;
+  // }
 }
 
 class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
  public:
-  FCreateCharacterCurveEditorItem(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex, UAnimSequenceBase* InAnimSequence, const FText& InCurveDisplayName, const FLinearColor& InCurveColor, FSimpleDelegate InOnCurveModified, FCurveEditorTreeItemID InTreeId)
-      : Name(InName), Type(InType), CurveIndex(InCurveIndex), AnimSequence(InAnimSequence), CurveDisplayName(InCurveDisplayName), CurveColor(InCurveColor), OnCurveModified(InOnCurveModified), TreeId(InTreeId) {
-  }
+  FCreateCharacterCurveEditorItem(
+      const FSmartName& InName, ERawCurveTrackTypes InType, /*int32 InCurveIndex,*/ UAnimSequenceBase* InAnimSequence,
+      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, FSimpleDelegate InOnCurveModified,
+      FCurveEditorTreeItemID InTreeId
+  )
+      : Name(InName),
+        Type(InType),
+        /* CurveIndex(InCurveIndex),*/ AnimSequence(InAnimSequence),
+        CurveDisplayName(InCurveDisplayName),
+        CurveColor(InCurveColor),
+        OnCurveModified(InOnCurveModified),
+        TreeId(InTreeId) {}
 
-  virtual TSharedPtr<SWidget> GenerateCurveEditorTreeWidget(const FName& InColumnName, TWeakPtr<FCurveEditor> InCurveEditor, FCurveEditorTreeItemID InTreeItemID, const TSharedRef<ITableRow>& InTableRow) override {
+  virtual TSharedPtr<SWidget> GenerateCurveEditorTreeWidget(
+      const FName& InColumnName, TWeakPtr<FCurveEditor> InCurveEditor, FCurveEditorTreeItemID InTreeItemID,
+      const TSharedRef<ITableRow>& InTableRow
+  ) override {
     if (InColumnName == ColumnNames.Label) {
-      return SNew(SHorizontalBox) + SHorizontalBox::Slot()
-                                        .Padding(FMargin(4.f))
-                                        .VAlign(VAlign_Center)
-                                        .HAlign(HAlign_Right)
-                                        .AutoWidth()
-                                            [SNew(STextBlock)
-                                                 .Text(CurveDisplayName)
+      return SNew(SHorizontalBox) +
+             SHorizontalBox::Slot()
+                 .Padding(FMargin(4.f))
+                 .VAlign(VAlign_Center)
+                 .HAlign(HAlign_Right)
+                 .AutoWidth()[SNew(STextBlock).Text(CurveDisplayName)
                                                  .ColorAndOpacity(FSlateColor(CurveColor))];
     } else if (InColumnName == ColumnNames.SelectHeader) {
       return SNew(SCurveEditorTreeSelect, InCurveEditor, InTreeItemID, InTableRow);
@@ -287,7 +318,8 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
   }
 
   virtual void CreateCurveModels(TArray<TUniquePtr<FCurveModel>>& OutCurveModels) override {
-    TUniquePtr<FRichCurveEditorModel_CreateCharacter> NewCurveModel = MakeUnique<FRichCurveEditorModel_CreateCharacter>(Name, Type, CurveIndex, AnimSequence.Get(), TreeId);
+    TUniquePtr<FRichCurveEditorModel_CreateCharacter> NewCurveModel =
+        MakeUnique<FRichCurveEditorModel_CreateCharacter>(Name, Type, AnimSequence.Get(), TreeId);
     NewCurveModel->SetShortDisplayName(CurveDisplayName);
     NewCurveModel->SetLongDisplayName(CurveDisplayName);
     NewCurveModel->SetColor(CurveColor);
@@ -315,11 +347,11 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
 
   FSmartName Name;
   ERawCurveTrackTypes Type;
-  int32 CurveIndex;
+  // int32 CurveIndex;
+  TWeakObjectPtr<UAnimSequenceBase> AnimSequence;
   FText CurveDisplayName;
   FLinearColor CurveColor;
   FSimpleDelegate OnCurveModified;
-  TWeakObjectPtr<UAnimSequenceBase> AnimSequence;
   FCurveEditorTreeItemID TreeId;
 };
 
@@ -376,19 +408,29 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   // clang-format on
 }
 
+void SCreateCharacterCurveEditor::EditCurve(FDoodleCreateCharacterConfigNode* In_Node) {
+  AddCurve(FText::FromString(In_Node->ShowUIName), FLinearColor{}, ERawCurveTrackTypes::RCT_Transform, 0, {});
+}
+
 void SCreateCharacterCurveEditor::ResetCurves() {
   CurveEditor->RemoveAllTreeItems();
   CurveEditor->RemoveAllCurves();
 }
 
-void SCreateCharacterCurveEditor::AddCurve(const FText& InCurveDisplayName, const FLinearColor& InCurveColor, const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex, FSimpleDelegate InOnCurveModified) {
+void SCreateCharacterCurveEditor::AddCurve(
+    const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType, int32 InCurveIndex,
+    FSimpleDelegate InOnCurveModified
+) {
   // Ensure that curve is not already being edited
   for (const TPair<FCurveModelID, TUniquePtr<FCurveModel>>& CurvePair : CurveEditor->GetCurves()) {
     const TUniquePtr<FCurveModel>& Model = CurvePair.Value;
   }
 
   FCurveEditorTreeItem* TreeItem = CurveEditor->AddTreeItem(FCurveEditorTreeItemID());
-  TreeItem->SetStrongItem(MakeShared<FCreateCharacterCurveEditorItem>(InName, InType, InCurveIndex, nullptr /*AnimSequence*/, InCurveDisplayName, InCurveColor, InOnCurveModified, TreeItem->GetID()));
+  TreeItem->SetStrongItem(MakeShared<FCreateCharacterCurveEditorItem>(
+      InType, InCurveIndex, nullptr /*AnimSequence*/, InCurveDisplayName, InCurveColor, InOnCurveModified,
+      TreeItem->GetID()
+  ));
 
   // Update selection
   const TMap<FCurveEditorTreeItemID, ECurveEditorTreeSelectionState>& Selection = CurveEditor->GetTreeSelection();
