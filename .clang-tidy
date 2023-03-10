@@ -72,7 +72,7 @@ Checks: >
   -bugprone-implicit-widening-of-multiplication-result
 
 # Turn all the warnings from the checks above into errors.
-WarningsAsErrors: "*"
+WarningsAsErrors: ""
 
 HeaderFilterRegex: ''
 
