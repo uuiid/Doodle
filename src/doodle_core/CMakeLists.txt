@@ -82,7 +82,7 @@ target_link_libraries(
         EnTT::EnTT
         spdlog::spdlog
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
-        cryptopp-static
+        cryptopp::cryptopp
         sqlpp11::sqlite3
         sqlpp11::sqlpp11
         WIL::WIL
