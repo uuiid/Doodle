@@ -17,6 +17,8 @@ class FTabManager;
 
 struct FDoodleCreateCharacterConfigNode;
 
+class UCreateCharacterMianTreeItem;
+
 class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:
   SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor) {}
@@ -27,11 +29,11 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   void Construct(const FArguments& InArgs);
 
-  void EditCurve(FDoodleCreateCharacterConfigNode* In_Node);
+  void EditCurve(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Node);
 
   void ResetCurves();
   void AddCurve(
-      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType,  
+      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType,
       FSimpleDelegate InOnCurveModified
   );
   void RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex);

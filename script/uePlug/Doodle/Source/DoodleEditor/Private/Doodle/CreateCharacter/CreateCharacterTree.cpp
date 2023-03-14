@@ -28,11 +28,11 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
     if (ItemData->ItemKeys.IsEmpty()) {
       if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(ItemData->ShowName)];
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       }
     } else {
       if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(ItemData->ShowName)];
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       } else if (InColumnName == SCreateCharacterTree::G_Value) {
         L_Box->AddSlot().AutoWidth()[SNew(SSlider).MaxValue(ItemData->MaxValue).MinValue(ItemData->MinValue)];
       }

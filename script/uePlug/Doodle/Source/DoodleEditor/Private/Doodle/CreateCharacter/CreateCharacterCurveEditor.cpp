@@ -19,6 +19,9 @@
 #include "Tree/SCurveEditorTreeTextFilter.h"
 #include "Widgets/Layout/SScrollBorder.h"
 
+
+#include "CreateCharacterTree.h"
+
 #define LOCTEXT_NAMESPACE "SCreateCharacterCurveEditor"
 
 class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
@@ -406,8 +409,8 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   // clang-format on
 }
 
-void SCreateCharacterCurveEditor::EditCurve(FDoodleCreateCharacterConfigNode* In_Node) {
-  AddCurve(FText::FromString(In_Node->ShowUIName), FLinearColor{}, ERawCurveTrackTypes::RCT_Transform, {});
+void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Node) {
+  AddCurve(FText::FromString(In_Node->ShowName.ToString()), FLinearColor{}, ERawCurveTrackTypes::RCT_Transform, {});
 }
 
 void SCreateCharacterCurveEditor::ResetCurves() {

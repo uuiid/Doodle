@@ -21,10 +21,10 @@ struct FDoodleCreateCharacterConfigUINode {
   GENERATED_BODY();
 
   UPROPERTY();
-  TArray<FDoodleCreateCharacterConfigNode>::SizeType Parent{INDEX_NONE};
+  int32 Parent{INDEX_NONE};
 
   UPROPERTY();
-  TArray<TArray<FDoodleCreateCharacterConfigNode>::SizeType> Childs;
+  TArray<int32> Childs;
 
   // 显示ui名称
   UPROPERTY();
@@ -54,7 +54,7 @@ class UDoodleCreateCharacterConfig : public UObject {
   UPROPERTY();
   TArray<FDoodleCreateCharacterConfigUINode> ListTrees;
 
-  FTransform Evaluate(const FName& In_BoneName, const float InValue) const;
+  FTransform Evaluate(const FString& In_BoneName, const float InValue) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 
