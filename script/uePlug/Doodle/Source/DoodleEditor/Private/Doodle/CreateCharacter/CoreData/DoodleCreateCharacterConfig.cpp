@@ -14,7 +14,7 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
 
   FDoodleCreateCharacterConfigUINode& L_UI = ListTrees[In_UI_Parent];
   FString L_Key                            = In_Bone.ToString();
-  for (auto i = In_UI_Parent; In_UI_Parent != INDEX_NONE; i = ListTrees[i].Parent) {
+  for (auto i = In_UI_Parent; In_UI_Parent == INDEX_NONE; i = ListTrees[i].Parent) {
     L_Key.Append(FString::FromInt(i));
   }
 

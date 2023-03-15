@@ -156,17 +156,17 @@ void SCreateCharacterTree::AddBoneTreeMenu(FMenuBuilder& In_Builder) {
                                               .OnBoneSelectionChanged_Lambda([this](FName In_BoneName) {
                                                 this->Add_TreeNode(In_BoneName);
                                               })
-                                              .OnGetReferenceSkeleton_Lambda([L_Config]() { return L_Config->GetSkeletalMesh()->GetRefSkeleton(); });
+                                              .OnGetReferenceSkeleton_Lambda([L_Config]() -> const FReferenceSkeleton& { return L_Config->GetSkeletalMesh()->GetRefSkeleton(); });
 
-  //In_Builder.AddWidget(MenuContent, FText::GetEmpty(), true);
+  In_Builder.AddWidget(MenuContent, FText::GetEmpty(), true);
 
-  //MenuContent->RegisterActiveTimer(
-  //    0.0f,
-  //    FWidgetActiveTimerDelegate::CreateLambda([FilterTextBox = MenuContent->GetFilterTextWidget()](double, float) {
-  //      FSlateApplication::Get().SetKeyboardFocus(FilterTextBox);
-  //      return EActiveTimerReturnType::Stop;
-  //    })
-  //);
+  MenuContent->RegisterActiveTimer(
+      0.0f,
+      FWidgetActiveTimerDelegate::CreateLambda([FilterTextBox = MenuContent->GetFilterTextWidget()](double, float) {
+        FSlateApplication::Get().SetKeyboardFocus(FilterTextBox);
+        return EActiveTimerReturnType::Stop;
+      })
+  );
 }
 
 void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
@@ -195,11 +195,11 @@ struct CreateUIAssist {
 void AddNode(
     const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
     UDoodleCreateCharacterConfig* InConfig,
-    TArray<TArray<int>::SizeType> InChildIndex
+    const TArray<int32>& InChildIndex
 ) {
   for (auto i : InChildIndex) {
     auto& L_Nodes = InConfig->ListTrees[i];
-    if (!(!L_Nodes.Keys.IsEmpty() && L_Nodes.Childs.IsEmpty())) continue;
+    // if (L_Nodes.Childs.IsEmpty()) continue;
 
     SCreateCharacterTree::TreeVirwWeightItemType L_Ptr =
         InParent->Childs.Add_GetRef(MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>());
@@ -249,7 +249,7 @@ void SCreateCharacterTree::AddBone() {
       (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE
   );
   L_UI_Node->ShowUIName = L_Ptr->ShowName;
-
+  CreateUITree();
   this->RebuildList();
 }
 
