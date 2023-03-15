@@ -6,6 +6,7 @@
 #include "SScrubControlPanel.h"            // 时间控制
 #include "Framework/Docking/TabManager.h"  // 选项卡布局
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "BoneSelectionWidget.h"  // 骨骼树
 
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
@@ -111,19 +112,28 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
 
     // 添加
     L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Bone"), FSlateIcon{"Subtitle", "EventIcon"},
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add Classify"),
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
         FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
     );
-    // 修改
-    L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Edit"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Edit Bone"), FSlateIcon{"Subtitle", "EventIcon"},
-        FUIAction{FExecuteAction::CreateLambda([this]() {
-          if (CurrentSelect) this->OnEditItem.ExecuteIfBound(CurrentSelect);
-        })}
+    if (CurrentSelect) {
+      // 修改
+      L_Builder.AddMenuEntry(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Edit"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Edit Bone"), FSlateIcon{"Subtitle", "EventIcon"},
+          FUIAction{FExecuteAction::CreateLambda([this]() {
+            if (CurrentSelect) this->OnEditItem.ExecuteIfBound(CurrentSelect);
+          })}
+      );
 
-    );
+      L_Builder.AddSubMenu(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone4_Tip", "Binding Bone"),
+          FNewMenuDelegate::CreateLambda([this](FMenuBuilder& In_Builder) {
+            this->AddBoneTreeMenu(In_Builder);
+          })
+      );
+    }
 
     L_Builder.EndSection();
   }
@@ -135,6 +145,46 @@ void SCreateCharacterTree::On_SelectionChanged(TreeVirwWeightItemType TreeItem, 
   CurrentSelect = TreeItem;
 }
 
+void SCreateCharacterTree::AddBoneTreeMenu(FMenuBuilder& In_Builder) {
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+  if (!L_Config)
+    return;
+  const bool bShowVirtualBones          = false;
+  TSharedRef<SBoneTreeMenu> MenuContent = SNew(SBoneTreeMenu)
+                                              .bShowVirtualBones(bShowVirtualBones)
+                                              .Title(LOCTEXT("TargetBonePickerTitle", "Pick Target Bone..."))
+                                              .OnBoneSelectionChanged_Lambda([this](FName In_BoneName) {
+                                                this->Add_TreeNode(In_BoneName);
+                                              })
+                                              .OnGetReferenceSkeleton_Lambda([L_Config]() { return L_Config->GetSkeletalMesh()->GetRefSkeleton(); });
+
+  //In_Builder.AddWidget(MenuContent, FText::GetEmpty(), true);
+
+  //MenuContent->RegisterActiveTimer(
+  //    0.0f,
+  //    FWidgetActiveTimerDelegate::CreateLambda([FilterTextBox = MenuContent->GetFilterTextWidget()](double, float) {
+  //      FSlateApplication::Get().SetKeyboardFocus(FilterTextBox);
+  //      return EActiveTimerReturnType::Stop;
+  //    })
+  //);
+}
+
+void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
+  if (!CurrentSelect)
+    return;
+  if (!CurrentSelect->Childs.IsEmpty())
+    return;
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+  if (!L_Config) return;
+
+  TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE);
+
+  if (L_Key && !CurrentSelect->ItemKeys.Contains(*L_Key)) {
+    CurrentSelect->ItemKeys.Add(*L_Key);
+  }
+  this->RebuildList();
+}
+
 namespace {
 
 struct CreateUIAssist {
@@ -143,7 +193,8 @@ struct CreateUIAssist {
 };
 
 void AddNode(
-    const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig,
+    const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
+    UDoodleCreateCharacterConfig* InConfig,
     TArray<TArray<int>::SizeType> InChildIndex
 ) {
   for (auto i : InChildIndex) {
@@ -152,11 +203,12 @@ void AddNode(
 
     SCreateCharacterTree::TreeVirwWeightItemType L_Ptr =
         InParent->Childs.Add_GetRef(MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>());
-    L_Ptr->ShowName = L_Nodes.ShowUIName;
+    L_Ptr->ShowName   = L_Nodes.ShowUIName;
     // 添加子项
-    L_Ptr->ItemKeys = L_Nodes.Keys;
-    L_Ptr->MaxValue = L_Nodes.MaxValue;
-    L_Ptr->MinValue = L_Nodes.MinValue;
+    L_Ptr->ItemKeys   = L_Nodes.Keys;
+    L_Ptr->MaxValue   = L_Nodes.MaxValue;
+    L_Ptr->MinValue   = L_Nodes.MinValue;
+    L_Ptr->ConfigNode = &L_Nodes;
     AddNode(L_Ptr, InConfig, L_Nodes.Childs);
   }
 }
@@ -175,8 +227,9 @@ void SCreateCharacterTree::CreateUITree() {
     }
     TreeVirwWeightItemType L_Ptr =
         CreateCharacterConfigTreeData.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>());
-    L_Ptr->MaxValue = i.MaxValue;
-    L_Ptr->MinValue = i.MinValue;
+    L_Ptr->MaxValue   = i.MaxValue;
+    L_Ptr->MinValue   = i.MinValue;
+    L_Ptr->ConfigNode = &i;
     AddNode(L_Ptr, L_Config, i.Childs);
   }
 }
@@ -186,11 +239,17 @@ void SCreateCharacterTree::AddBone() {
 
   if (!L_Config)
     return;
+
   TreeVirwWeightItemType L_Ptr{
       CurrentSelect ? CurrentSelect->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>())
                     : MakeShared<TreeVirwWeightItemType::ElementType>()};
 
-  L_Ptr->ShowName = FName{"Add_Bone"};
+  L_Ptr->ShowName                               = FName{"Add_Bone"};
+  FDoodleCreateCharacterConfigUINode* L_UI_Node = L_Config->Add_TreeNode(
+      (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE
+  );
+  L_UI_Node->ShowUIName = L_Ptr->ShowName;
+
   this->RebuildList();
 }
 

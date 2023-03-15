@@ -20,7 +20,11 @@ class UCreateCharacterMianTreeItem {
   // 调整最小值
   float MinValue{-2.0f};
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+
+  FDoodleCreateCharacterConfigUINode* ConfigNode{};
 };
+
+DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
 
 class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTreeItem>> {
  private:
@@ -31,8 +35,6 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   using TreeVirwWeightItemType = TSharedPtr<UCreateCharacterMianTreeItem>;
   using TreeVirwWeightType     = STreeView<TreeVirwWeightItemType>;
   using TreeVirwWeightDataType = TArray<TreeVirwWeightItemType>;
-
-  DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, const TSharedPtr<UCreateCharacterMianTreeItem>&);
 
   SLATE_BEGIN_ARGS(SCreateCharacterTree) : _CreateCharacterConfig(nullptr), _OnEditItem() {}
 
@@ -54,6 +56,10 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List);
   TSharedPtr<SWidget> Create_ContextMenuOpening();
   void On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo);
+
+  void AddBoneTreeMenu(FMenuBuilder& In_Builder);
+
+  void Add_TreeNode(const FName& In_Bone_Name);
 
   void CreateUITree();
 
