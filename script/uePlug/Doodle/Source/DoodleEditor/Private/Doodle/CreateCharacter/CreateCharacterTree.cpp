@@ -35,7 +35,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
       if (InColumnName == SCreateCharacterTree::G_Name) {
         L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       } else if (InColumnName == SCreateCharacterTree::G_Value) {
-        L_Box->AddSlot().AutoWidth()[SNew(SSlider).MaxValue(ItemData->MaxValue).MinValue(ItemData->MinValue)];
+        L_Box->AddSlot().FillWidth(1.0f)[SNew(SSlider).Value(Slider_Value).MaxValue(ItemData->MaxValue).MinValue(ItemData->MinValue).OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))];
       }
     }
     return L_Box.ToSharedRef();
@@ -47,12 +47,18 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     return Super::DoesItemHaveChildren();
   };
 
+  void On_FloatValueChanged(float In_Value) {
+    Slider_Value = In_Value;
+    UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
+  }
+
   virtual bool IsItemExpanded() const override { return Super::IsItemExpanded() || !ItemData->Childs.IsEmpty(); };
 
   virtual void ToggleExpansion() override { Super::ToggleExpansion(); };
 
  private:
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
+  float Slider_Value;
 };
 
 #define LOCTEXT_NAMESPACE "SCreateCharacterTree"
