@@ -71,6 +71,7 @@ class FCreateCharacterSliderController : public ITimeSliderController {
  private:
   struct FDrawTickArgs;
   struct FScrubRangeToScreen;
+  FTimeSliderArgs TimeSliderArgs;
 
   /** Brush for drawing the fill area on the scrubber */
   const FSlateBrush* ScrubFillBrush;
@@ -119,7 +120,6 @@ class FCreateCharacterSliderController : public ITimeSliderController {
   /** Secondary numeric type interface for displaying 'other' numeric types */
   TSharedPtr<INumericTypeInterface<double>> SecondaryNumericTypeInterface;
 
-  FTimeSliderArgs TimeSliderArgs;
 
  private:
   /**

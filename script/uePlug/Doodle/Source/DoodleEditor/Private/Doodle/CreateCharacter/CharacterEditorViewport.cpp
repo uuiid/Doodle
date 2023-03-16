@@ -176,7 +176,7 @@ void SCharacterEditorViewport::MoveBoneTransform(const FName& In_Bone, float In_
 
   UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
 
-  ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, In_Value) : FTransform{FVector::OneVector * In_Value});
+  //ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, In_Value) : FTransform{FVector::OneVector * In_Value});
   ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
   // ShowSkeletaMesh->RefreshBoneTransforms();
   // ShowSkeletaMesh->UpdateBounds();

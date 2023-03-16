@@ -193,8 +193,8 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& 
       [
         SAssignNew(CreateCharacterTree, SCreateCharacterTree)
         .CreateCharacterConfig(CreateCharacterConfig)
-        .OnEditItem_Lambda([this](FDoodleCreateCharacterConfigNode* L_Node){
-          this->CreateCharacterCurveEditor->EditorCurve(L_Node);
+        .OnEditItem_Lambda([this](const TSharedPtr<UCreateCharacterMianTreeItem>& L_Node){
+          this->CreateCharacterCurveEditor->EditCurve(L_Node);
          })
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)

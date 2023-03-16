@@ -19,6 +19,9 @@
 #include "Tree/SCurveEditorTreeTextFilter.h"
 #include "Widgets/Layout/SScrollBorder.h"
 
+
+#include "CreateCharacterTree.h"
+
 #define LOCTEXT_NAMESPACE "SCreateCharacterCurveEditor"
 
 class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
@@ -41,7 +44,7 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
 class FRichCurveEditorModel_CreateCharacter : public FRichCurveEditorModel {
  public:
   FRichCurveEditorModel_CreateCharacter(
-      const FSmartName& InName, ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
+      ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
       FCurveEditorTreeItemID InTreeId = FCurveEditorTreeItemID()
   );
 
@@ -76,7 +79,7 @@ class FRichCurveEditorModel_CreateCharacter : public FRichCurveEditorModel {
 };
 
 FRichCurveEditorModel_CreateCharacter::FRichCurveEditorModel_CreateCharacter(
-    const FSmartName& InName, ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
+    ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence,
     FCurveEditorTreeItemID InTreeId /*= FCurveEditorTreeItemID()*/
 )
     : FRichCurveEditorModel(InAnimSequence),
@@ -104,6 +107,7 @@ FRichCurveEditorModel_CreateCharacter::~FRichCurveEditorModel_CreateCharacter() 
 
 bool FRichCurveEditorModel_CreateCharacter::IsValid() const {
   // return AnimSequence->GetDataModel()->FindCurve(FAnimationCurveIdentifier(Name, Type)) != nullptr;
+  return true;
 }
 
 FRichCurve& FRichCurveEditorModel_CreateCharacter::GetRichCurve() {
@@ -284,12 +288,10 @@ void FRichCurveEditorModel_CreateCharacter::UpdateCachedCurve() {
 class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
  public:
   FCreateCharacterCurveEditorItem(
-      const FSmartName& InName, ERawCurveTrackTypes InType, /*int32 InCurveIndex,*/ UAnimSequenceBase* InAnimSequence,
-      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, FSimpleDelegate InOnCurveModified,
-      FCurveEditorTreeItemID InTreeId
+      ERawCurveTrackTypes InType, UAnimSequenceBase* InAnimSequence, const FText& InCurveDisplayName,
+      const FLinearColor& InCurveColor, FSimpleDelegate InOnCurveModified, FCurveEditorTreeItemID InTreeId
   )
-      : Name(InName),
-        Type(InType),
+      : Type(InType),
         /* CurveIndex(InCurveIndex),*/ AnimSequence(InAnimSequence),
         CurveDisplayName(InCurveDisplayName),
         CurveColor(InCurveColor),
@@ -306,8 +308,7 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
                  .Padding(FMargin(4.f))
                  .VAlign(VAlign_Center)
                  .HAlign(HAlign_Right)
-                 .AutoWidth()[SNew(STextBlock).Text(CurveDisplayName)
-                                                 .ColorAndOpacity(FSlateColor(CurveColor))];
+                 .AutoWidth()[SNew(STextBlock).Text(CurveDisplayName).ColorAndOpacity(FSlateColor(CurveColor))];
     } else if (InColumnName == ColumnNames.SelectHeader) {
       return SNew(SCurveEditorTreeSelect, InCurveEditor, InTreeItemID, InTableRow);
     } else if (InColumnName == ColumnNames.PinHeader) {
@@ -319,7 +320,7 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
 
   virtual void CreateCurveModels(TArray<TUniquePtr<FCurveModel>>& OutCurveModels) override {
     TUniquePtr<FRichCurveEditorModel_CreateCharacter> NewCurveModel =
-        MakeUnique<FRichCurveEditorModel_CreateCharacter>(Name, Type, AnimSequence.Get(), TreeId);
+        MakeUnique<FRichCurveEditorModel_CreateCharacter>(Type, AnimSequence.Get(), TreeId);
     NewCurveModel->SetShortDisplayName(CurveDisplayName);
     NewCurveModel->SetLongDisplayName(CurveDisplayName);
     NewCurveModel->SetColor(CurveColor);
@@ -345,7 +346,7 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
     return false;
   }
 
-  FSmartName Name;
+  // FSmartName Name;
   ERawCurveTrackTypes Type;
   // int32 CurveIndex;
   TWeakObjectPtr<UAnimSequenceBase> AnimSequence;
@@ -408,8 +409,8 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   // clang-format on
 }
 
-void SCreateCharacterCurveEditor::EditCurve(FDoodleCreateCharacterConfigNode* In_Node) {
-  AddCurve(FText::FromString(In_Node->ShowUIName), FLinearColor{}, ERawCurveTrackTypes::RCT_Transform, 0, {});
+void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Node) {
+  AddCurve(FText::FromString(In_Node->ShowName.ToString()), FLinearColor{}, ERawCurveTrackTypes::RCT_Transform, {});
 }
 
 void SCreateCharacterCurveEditor::ResetCurves() {
@@ -418,7 +419,7 @@ void SCreateCharacterCurveEditor::ResetCurves() {
 }
 
 void SCreateCharacterCurveEditor::AddCurve(
-    const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType, int32 InCurveIndex,
+    const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType,
     FSimpleDelegate InOnCurveModified
 ) {
   // Ensure that curve is not already being edited
@@ -428,7 +429,7 @@ void SCreateCharacterCurveEditor::AddCurve(
 
   FCurveEditorTreeItem* TreeItem = CurveEditor->AddTreeItem(FCurveEditorTreeItemID());
   TreeItem->SetStrongItem(MakeShared<FCreateCharacterCurveEditorItem>(
-      InType, InCurveIndex, nullptr /*AnimSequence*/, InCurveDisplayName, InCurveColor, InOnCurveModified,
+      InType, nullptr, InCurveDisplayName, InCurveColor, InOnCurveModified,
       TreeItem->GetID()
   ));
 

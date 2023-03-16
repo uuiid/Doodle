@@ -13,12 +13,18 @@ class STableViewBase;
 
 class UCreateCharacterMianTreeItem {
  public:
-  FString Name;
-
-  FDoodleCreateCharacterConfigNode* Item;
-
+  TArray<FString> ItemKeys;
+  FName ShowName;
+  // 调整最大值
+  float MaxValue{2.0f};
+  // 调整最小值
+  float MinValue{-2.0f};
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+
+  FDoodleCreateCharacterConfigUINode* ConfigNode{};
 };
+
+DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
 
 class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTreeItem>> {
  private:
@@ -30,10 +36,10 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   using TreeVirwWeightType     = STreeView<TreeVirwWeightItemType>;
   using TreeVirwWeightDataType = TArray<TreeVirwWeightItemType>;
 
-  DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, FDoodleCreateCharacterConfigNode*);
+  SLATE_BEGIN_ARGS(SCreateCharacterTree) : _CreateCharacterConfig(nullptr), _OnEditItem() {}
 
-  SLATE_BEGIN_ARGS(SCreateCharacterTree) : _CreateCharacterConfig(nullptr) {}
   SLATE_ATTRIBUTE(UDoodleCreateCharacterConfig*, CreateCharacterConfig)
+
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
 
   SLATE_END_ARGS()
@@ -50,6 +56,10 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List);
   TSharedPtr<SWidget> Create_ContextMenuOpening();
   void On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo);
+
+  void AddBoneTreeMenu(FMenuBuilder& In_Builder);
+
+  void Add_TreeNode(const FName& In_Bone_Name);
 
   void CreateUITree();
 

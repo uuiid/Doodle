@@ -108,6 +108,7 @@ public class doodleEditor : ModuleRules
                 "SequenceRecorder",// 镜头录制
                 "KismetWidgets",// 时间控制
                 "CurveEditor",//添加曲线编辑模块
+                "Persona",//骨骼
             }
             );
 

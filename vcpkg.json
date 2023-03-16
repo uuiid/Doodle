@@ -1,0 +1,82 @@
+{
+  "name": "doodle",
+  "description": [
+    "this is doodle exe projet .",
+    "has maya plug ,ue plug and exe file"
+  ],
+  "version": "2.3.1.9",
+  "$default-features-explanation": "Users using this library transitively will get all backends automatically",
+  "default-features": [],
+  "features": {},
+  "dependencies": [
+    "boost-locale",
+    "boost-iostreams",
+    "boost-program-options",
+    "boost-contract",
+    "boost-filesystem",
+    "boost-coroutine",
+    "boost-test",
+    "boost-log",
+    "boost-numeric-conversion",
+    "boost-pfr",
+    "boost-uuid",
+    "boost-hana",
+    "boost-process",
+    "boost-signals2",
+    "boost-dll",
+    "boost-ptr-container",
+    "boost-callable-traits",
+    "boost-beast",
+    "boost-icl",
+    "boost-lambda2",
+    {
+      "name": "opencv",
+      "default-features":false,
+      "features": [
+        "ffmpeg",
+        "contrib",
+        "freetype"
+      ]
+    },
+    {
+      "name": "imgui",
+      "default-features":false,
+      "features": [
+        "win32-binding",
+        "dx11-binding",
+        "docking-experimental"
+      ]
+    },
+    "xlnt",
+    "magic-enum",
+    "nlohmann-json",
+    "date",
+    "spdlog",
+    "entt",
+    {
+      "name": "sqlpp11",
+      "default-features":false,
+      "features": [
+        "sqlite3"
+      ]
+    },
+
+    "eigen3",
+    "range-v3",
+
+    "wil",
+    "implot",
+    "rttr",
+    "cryptopp",
+    "alembic",
+    "directxtk",
+    "dem-bones",
+    "cppzmq",
+    "winreg"
+  ],
+  "vcpkg-configuration": {
+    "overlay-ports": [
+      "./vcpkg/ports"
+    ]
+  }
+}

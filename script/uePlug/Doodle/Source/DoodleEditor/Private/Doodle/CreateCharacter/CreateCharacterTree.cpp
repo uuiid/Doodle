@@ -6,6 +6,7 @@
 #include "SScrubControlPanel.h"            // 时间控制
 #include "Framework/Docking/TabManager.h"  // 选项卡布局
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
+#include "BoneSelectionWidget.h"  // 骨骼树
 
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
@@ -26,37 +27,46 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
     // 只是题头部件
     TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
-    if (!ItemData->Item) {
+    if (ItemData->ItemKeys.IsEmpty()) {
       if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       }
     } else {
       if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->Name))];
+        L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       } else if (InColumnName == SCreateCharacterTree::G_Value) {
-        L_Box->AddSlot().AutoWidth(
-        )[SNew(SSlider).MaxValue(ItemData->Item->MaxValue).MinValue(ItemData->Item->MinValue)];
+        L_Box->AddSlot().FillWidth(1.0f)[
+
+            SNew(SSlider)
+                .Value(Slider_Value)
+                .MaxValue(ItemData->MaxValue)
+                .MinValue(ItemData->MinValue)
+                .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
+
+        ];
       }
     }
     return L_Box.ToSharedRef();
   }
 
   virtual int32 DoesItemHaveChildren() const override {
-    if (!ItemData->Childs.IsEmpty())
-      return 1;
+    if (!ItemData->Childs.IsEmpty()) return 1;
 
     return Super::DoesItemHaveChildren();
   };
 
-  virtual bool IsItemExpanded() const override {
-    return Super::IsItemExpanded() || !ItemData->Childs.IsEmpty();
-  };
+  void On_FloatValueChanged(float In_Value) {
+    Slider_Value = In_Value;
+    UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
+  }
 
-  virtual void ToggleExpansion() override {
-    Super::ToggleExpansion(); };
+  virtual bool IsItemExpanded() const override { return Super::IsItemExpanded() || !ItemData->Childs.IsEmpty(); };
+
+  virtual void ToggleExpansion() override { Super::ToggleExpansion(); };
 
  private:
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
+  float Slider_Value;
 };
 
 #define LOCTEXT_NAMESPACE "SCreateCharacterTree"
@@ -67,7 +77,9 @@ const FName SCreateCharacterTree::G_Name{"Name"};
 const FName SCreateCharacterTree::G_Value{"Value"};
 
 void SCreateCharacterTree::Construct(const FArguments& Arg) {
-  Config = Arg._CreateCharacterConfig;
+  Config     = Arg._CreateCharacterConfig;
+  OnEditItem = Arg._OnEditItem;
+
   CreateUITree();
 
   Super::Construct(
@@ -87,9 +99,11 @@ void SCreateCharacterTree::Construct(const FArguments& Arg) {
                          + SHeaderRow::Column(G_Value)
                          .DefaultLabel(LOCTEXT("Construct", "Value"))
               // clang-format on
-                       )
-                       .OnContextMenuOpening(FOnContextMenuOpening::CreateSP(this, &SCreateCharacterTree::Create_ContextMenuOpening))
-                       .OnSelectionChanged(TreeVirwWeightType::FOnSelectionChanged::CreateSP(this, &SCreateCharacterTree::On_SelectionChanged))
+          )
+          .OnContextMenuOpening(FOnContextMenuOpening::CreateSP(this, &SCreateCharacterTree::Create_ContextMenuOpening))
+          .OnSelectionChanged(
+              TreeVirwWeightType::FOnSelectionChanged::CreateSP(this, &SCreateCharacterTree::On_SelectionChanged)
+          )
   );
 }
 
@@ -112,19 +126,28 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
 
     // 添加
     L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Bone"), FSlateIcon{"Subtitle", "EventIcon"},
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add Classify"),
+        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
         FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
     );
-    // 修改
-    L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Edit"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Edit Bone"), FSlateIcon{"Subtitle", "EventIcon"},
-        FUIAction{FExecuteAction::CreateLambda([this]() {
-          if (CurrentSelect->Item) this->OnEditItem.ExecuteIfBound(CurrentSelect->Item);
-        })}
+    if (CurrentSelect) {
+      // 修改
+      L_Builder.AddMenuEntry(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Edit"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Edit Bone"), FSlateIcon{"Subtitle", "EventIcon"},
+          FUIAction{FExecuteAction::CreateLambda([this]() {
+            if (CurrentSelect) this->OnEditItem.ExecuteIfBound(CurrentSelect);
+          })}
+      );
 
-    );
+      L_Builder.AddSubMenu(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone4_Tip", "Binding Bone"),
+          FNewMenuDelegate::CreateLambda([this](FMenuBuilder& In_Builder) {
+            this->AddBoneTreeMenu(In_Builder);
+          })
+      );
+    }
 
     L_Builder.EndSection();
   }
@@ -136,6 +159,46 @@ void SCreateCharacterTree::On_SelectionChanged(TreeVirwWeightItemType TreeItem, 
   CurrentSelect = TreeItem;
 }
 
+void SCreateCharacterTree::AddBoneTreeMenu(FMenuBuilder& In_Builder) {
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+  if (!L_Config)
+    return;
+  const bool bShowVirtualBones          = false;
+  TSharedRef<SBoneTreeMenu> MenuContent = SNew(SBoneTreeMenu)
+                                              .bShowVirtualBones(bShowVirtualBones)
+                                              .Title(LOCTEXT("TargetBonePickerTitle", "Pick Target Bone..."))
+                                              .OnBoneSelectionChanged_Lambda([this](FName In_BoneName) {
+                                                this->Add_TreeNode(In_BoneName);
+                                              })
+                                              .OnGetReferenceSkeleton_Lambda([L_Config]() -> const FReferenceSkeleton& { return L_Config->GetSkeletalMesh()->GetRefSkeleton(); });
+
+  In_Builder.AddWidget(MenuContent, FText::GetEmpty(), true);
+
+  MenuContent->RegisterActiveTimer(
+      0.0f,
+      FWidgetActiveTimerDelegate::CreateLambda([FilterTextBox = MenuContent->GetFilterTextWidget()](double, float) {
+        FSlateApplication::Get().SetKeyboardFocus(FilterTextBox);
+        return EActiveTimerReturnType::Stop;
+      })
+  );
+}
+
+void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
+  if (!CurrentSelect)
+    return;
+  if (!CurrentSelect->Childs.IsEmpty())
+    return;
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+  if (!L_Config) return;
+
+  TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE);
+
+  if (L_Key && !CurrentSelect->ItemKeys.Contains(*L_Key)) {
+    CurrentSelect->ItemKeys.Add(*L_Key);
+  }
+  this->RebuildList();
+}
+
 namespace {
 
 struct CreateUIAssist {
@@ -144,30 +207,24 @@ struct CreateUIAssist {
 };
 
 void AddNode(
-    FString& In_Path, TMap<FString, TSharedPtr<CreateUIAssist>>& In_Node, FDoodleCreateCharacterConfigNode* In_DataNode, const SCreateCharacterTree::TreeVirwWeightItemType& In_Parent = nullptr
+    const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
+    UDoodleCreateCharacterConfig* InConfig,
+    const TArray<int32>& InChildIndex
 ) {
-  FString L_Left, L_Right{};
-  const bool L_B_Split = In_Path.Split(TEXT("/"), &L_Left, &L_Right);
-  if (!L_B_Split) {
-    if (!In_Node.Contains(In_Path)) {
-      In_Node.Emplace(In_Path, MakeShared<CreateUIAssist>());
-      In_Node[In_Path]->Node       = MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>();
-      In_Node[In_Path]->Node->Name = In_Path;
-    }
-    if (In_Parent)
-      In_Parent->Childs.Add(In_Node[In_Path]->Node);
-    In_Node[In_Path]->Node->Item = In_DataNode;
-    return;
-  }
+  for (auto i : InChildIndex) {
+    auto& L_Nodes = InConfig->ListTrees[i];
+    // if (L_Nodes.Childs.IsEmpty()) continue;
 
-  if (!In_Node.Contains(L_Left)) {
-    In_Node.Emplace(L_Left, MakeShared<CreateUIAssist>());
-    In_Node[L_Left]->Node       = MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>();
-    In_Node[L_Left]->Node->Name = L_Left;
-    if (In_Parent)
-      In_Parent->Childs.Add(In_Node[L_Left]->Node);
+    SCreateCharacterTree::TreeVirwWeightItemType L_Ptr =
+        InParent->Childs.Add_GetRef(MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>());
+    L_Ptr->ShowName   = L_Nodes.ShowUIName;
+    // 添加子项
+    L_Ptr->ItemKeys   = L_Nodes.Keys;
+    L_Ptr->MaxValue   = L_Nodes.MaxValue;
+    L_Ptr->MinValue   = L_Nodes.MinValue;
+    L_Ptr->ConfigNode = &L_Nodes;
+    AddNode(L_Ptr, InConfig, L_Nodes.Childs);
   }
-  AddNode(L_Right, In_Node[L_Left]->Child, In_DataNode, In_Node[L_Left]->Node);
 }
 
 }  // namespace
@@ -175,17 +232,19 @@ void AddNode(
 void SCreateCharacterTree::CreateUITree() {
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
 
-  if (!L_Config)
-    return;
+  if (!L_Config) return;
   TMap<FString, TSharedPtr<CreateUIAssist>> L_List;
-  for (auto&& i : L_Config->ListConfigNode) {
-    FPaths::NormalizeDirectoryName(i.ShowUIName);
-    AddNode(i.ShowUIName, L_List, &i);
-  }
-
   CreateCharacterConfigTreeData.Empty(L_Config->ListConfigNode.Num());
-  for (auto&& i : L_List) {
-    CreateCharacterConfigTreeData.Emplace(i.Value->Node);
+  for (auto&& i : L_Config->ListTrees) {
+    if (i.Parent != INDEX_NONE) {
+      continue;
+    }
+    TreeVirwWeightItemType L_Ptr =
+        CreateCharacterConfigTreeData.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>());
+    L_Ptr->MaxValue   = i.MaxValue;
+    L_Ptr->MinValue   = i.MinValue;
+    L_Ptr->ConfigNode = &i;
+    AddNode(L_Ptr, L_Config, i.Childs);
   }
 }
 
@@ -195,12 +254,15 @@ void SCreateCharacterTree::AddBone() {
   if (!L_Config)
     return;
 
-  FDoodleCreateCharacterConfigNode& L_Node = L_Config->ListConfigNode.Emplace_GetRef();
-  L_Node.BoneName                          = "None";
-  L_Node.ShowUIName                        = FString::Format(TEXT("{0}{1}"), FStringFormatOrderedArguments{TEXT("Root/Add_Bone"), L_Config->ListConfigNode.Num()});
+  TreeVirwWeightItemType L_Ptr{
+      CurrentSelect ? CurrentSelect->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>())
+                    : MakeShared<TreeVirwWeightItemType::ElementType>()};
 
-  L_Config->GetPackage()->MarkPackageDirty();
-
+  L_Ptr->ShowName                               = FName{"Add_Bone"};
+  FDoodleCreateCharacterConfigUINode* L_UI_Node = L_Config->Add_TreeNode(
+      (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE
+  );
+  L_UI_Node->ShowUIName = L_Ptr->ShowName;
   CreateUITree();
   this->RebuildList();
 }

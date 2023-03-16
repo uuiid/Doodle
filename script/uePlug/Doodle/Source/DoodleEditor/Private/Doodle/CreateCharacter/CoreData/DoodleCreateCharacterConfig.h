@@ -14,9 +14,25 @@ struct FDoodleCreateCharacterConfigNode {
   // 目标骨骼名称
   UPROPERTY();
   FName BoneName{};
+};
+
+USTRUCT()
+struct FDoodleCreateCharacterConfigUINode {
+  GENERATED_BODY();
+
+  UPROPERTY();
+  int32 Parent{INDEX_NONE};
+
+  UPROPERTY();
+  TArray<int32> Childs;
+
   // 显示ui名称
   UPROPERTY();
-  FString ShowUIName{};
+  FName ShowUIName{};
+
+  // 树中配置节点id名称
+  UPROPERTY();
+  TArray<FString> Keys{};
 
   // 调整最大值
   UPROPERTY()
@@ -24,6 +40,13 @@ struct FDoodleCreateCharacterConfigNode {
   // 调整最小值
   UPROPERTY()
   float MinValue{-2.0f};
+
+  inline bool operator==(const FDoodleCreateCharacterConfigUINode& In) const {
+    return Tie(Parent, Childs, ShowUIName, Keys, MaxValue, MinValue) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys, In.MaxValue, In.MinValue);
+  }
+  inline bool operator!=(const FDoodleCreateCharacterConfigUINode& In) const {
+    return !(*this == In);
+  }
 };
 
 UCLASS()
@@ -33,17 +56,19 @@ class UDoodleCreateCharacterConfig : public UObject {
 
   // 权重配置
   UPROPERTY();
-  TArray<FDoodleCreateCharacterConfigNode> ListConfigNode;
+  TMap<FString, FDoodleCreateCharacterConfigNode> ListConfigNode;
 
-  FTransform Evaluate(const FName& In_BoneName, const float InValue) const;
+  UPROPERTY();
+  TArray<FDoodleCreateCharacterConfigUINode> ListTrees;
 
-  USkeletalMesh* GetSkeletalMesh() {
-    return SkeletalMesh;
-  }
+  FDoodleCreateCharacterConfigUINode* Add_TreeNode(int32 In_Parent);
+  TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
-  void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh) {
-    SkeletalMesh = InSkeletalMesh;
-  }
+  FTransform Evaluate(const FString& In_BoneName, const float InValue) const;
+
+  USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
+
+  void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh) { SkeletalMesh = InSkeletalMesh; }
 
  private:
   // 骨骼网格体引用

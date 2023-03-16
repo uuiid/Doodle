@@ -80,7 +80,8 @@ function Add-SymLink {
             Write-Host "目录" $item.source "没有访问权限， 取消映射"
         }
         catch {
-            Write-Host "catch all 目录 " $item.source " 没有访问权限， 取消映射"
+            $message = $_
+            Write-Warning "catch all 目录 $message"
         }
     }
 }
@@ -116,11 +117,12 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
             Write-Host "目录" $item.source "没有访问权限， 不写入"
         }
         catch {
-            Write-Host "目录" $item.source "没有访问权限， 不写入"
+            $message = $_
+            Write-Warning "catch all 目录 $message"
         }
     }
 }
 
 Add-SyDir;
 Add-SymLink;
-# ps2exe F:\Doodle\script\Cmd_tool\map_sysDir.ps1 F:\Doodle\script\Cmd_tool\run4.6.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.6.exe -requireAdmin
