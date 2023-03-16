@@ -14,6 +14,7 @@ class SCurveEditorTree;
 class IPersonaPreviewScene;
 class SCurveEditorPanel;
 class FTabManager;
+class UDoodleCreateCharacterConfig;
 
 struct FDoodleCreateCharacterConfigNode;
 
@@ -21,9 +22,13 @@ class UCreateCharacterMianTreeItem;
 
 class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:
-  SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor) {}
-  SLATE_ARGUMENT(TSharedPtr<ITimeSliderController>, ExternalTimeSliderController)
+  SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor)
+      : _CreateCharacterConfigConfig(),
+        _ExternalTimeSliderController(),
+        _TabManager() {}
 
+  SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, CreateCharacterConfigConfig)
+  SLATE_ARGUMENT(TSharedPtr<ITimeSliderController>, ExternalTimeSliderController)
   SLATE_ARGUMENT(TSharedPtr<FTabManager>, TabManager)
   SLATE_END_ARGS()
 
@@ -45,6 +50,8 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
   TSharedPtr<SWidget> OnContextMenuOpening();
 
  private:
+  TObjectPtr<UDoodleCreateCharacterConfig> CreateCharacterConfigConfig;
+
   /** The actual curve editor */
   TSharedPtr<FCurveEditor> CurveEditor;
 

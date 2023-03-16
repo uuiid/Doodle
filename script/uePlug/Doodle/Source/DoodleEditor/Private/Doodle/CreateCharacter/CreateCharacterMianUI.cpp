@@ -217,6 +217,7 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTa
       + SVerticalBox::Slot()
       [
         SAssignNew(CreateCharacterCurveEditor, SCreateCharacterCurveEditor)
+        .CreateCharacterConfigConfig(CreateCharacterConfig)
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)
         //.AutoHeight()
