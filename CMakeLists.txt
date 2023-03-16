@@ -63,7 +63,6 @@ find_package(Boost REQUIRED COMPONENTS
         log_setup
         )
 
-find_package(Catch2 CONFIG)
 find_package(Doxygen)
 
 # 寻找 opencv
