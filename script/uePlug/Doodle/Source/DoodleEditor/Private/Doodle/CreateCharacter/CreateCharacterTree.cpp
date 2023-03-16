@@ -35,7 +35,15 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
       if (InColumnName == SCreateCharacterTree::G_Name) {
         L_Box->AddSlot().AutoWidth()[SNew(STextBlock).Text(FText::FromString(ItemData->ShowName.ToString()))];
       } else if (InColumnName == SCreateCharacterTree::G_Value) {
-        L_Box->AddSlot().FillWidth(1.0f)[SNew(SSlider).Value(Slider_Value).MaxValue(ItemData->MaxValue).MinValue(ItemData->MinValue).OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))];
+        L_Box->AddSlot().FillWidth(1.0f)[
+
+            SNew(SSlider)
+                .Value(Slider_Value)
+                .MaxValue(ItemData->MaxValue)
+                .MinValue(ItemData->MinValue)
+                .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
+
+        ];
       }
     }
     return L_Box.ToSharedRef();
