@@ -64,6 +64,10 @@ class UDoodleCreateCharacterConfig : public UObject {
   FDoodleCreateCharacterConfigUINode* Add_TreeNode(int32 In_Parent);
   TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
+  bool Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const;
+  void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName);
+
+
   FTransform Evaluate(const FString& In_BoneName, const float InValue) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }

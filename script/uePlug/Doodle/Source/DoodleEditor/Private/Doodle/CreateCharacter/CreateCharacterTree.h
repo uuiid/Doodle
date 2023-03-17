@@ -10,6 +10,9 @@ class UDoodleCreateCharacterConfig;
 
 class ITableRow;
 class STableViewBase;
+class UCreateCharacterMianTreeItem;
+
+DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
 
 class UCreateCharacterMianTreeItem {
  public:
@@ -22,9 +25,11 @@ class UCreateCharacterMianTreeItem {
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
 
   FDoodleCreateCharacterConfigUINode* ConfigNode{};
-};
 
-DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
+  DECLARE_DELEGATE(FOnRenameRequested);
+
+  FOnRenameRequested OnRenameRequested;
+};
 
 class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTreeItem>> {
  private:
@@ -56,6 +61,7 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List);
   TSharedPtr<SWidget> Create_ContextMenuOpening();
   void On_SelectionChanged(TreeVirwWeightItemType TreeItem, ESelectInfo::Type SelectInfo);
+  void On_MouseButtonDoubleClick(TreeVirwWeightItemType TreeItem);
 
   void AddBoneTreeMenu(FMenuBuilder& In_Builder);
 
