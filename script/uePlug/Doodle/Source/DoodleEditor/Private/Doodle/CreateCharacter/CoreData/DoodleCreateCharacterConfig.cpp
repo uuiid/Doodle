@@ -5,6 +5,7 @@ FDoodleCreateCharacterConfigUINode* UDoodleCreateCharacterConfig::Add_TreeNode(i
 
   ListTrees[L_Index].Parent = In_Parent;
   if (In_Parent != INDEX_NONE) ListTrees[In_Parent].Childs.Add(L_Index);
+  ListTrees[L_Index].ShowUIName = {"Add_Bone"};
   return &ListTrees[L_Index];
 }
 

@@ -65,7 +65,7 @@ class UDoodleCreateCharacterConfig : public UObject {
   TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
   bool Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const;
-  void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName);
+  void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName);
 
 
   FTransform Evaluate(const FString& In_BoneName, const float InValue) const;

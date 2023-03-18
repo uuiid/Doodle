@@ -51,7 +51,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
         //.IsSelected(InIsSelected)
         ;
 
-    if (ItemData) {
+    if (ItemData && !ItemData->OnRenameRequested.IsBound()) {
       ItemData->OnRenameRequested.BindSP(L_InlineEditableTextBlock_Ptr.Get(), &SInlineEditableTextBlock::EnterEditingMode);
     }
 
@@ -112,7 +112,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     } else {
       if (InTextTrimmed != Item_Name.ToString()) {
         // 判断是否存在
-        bVerifyName = !((ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true);
+        bVerifyName = (ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true;
 
         // Needs to be checked on verify.
         if (!bVerifyName) {
@@ -237,6 +237,7 @@ void SCreateCharacterTree::On_SelectionChanged(TreeVirwWeightItemType TreeItem, 
 }
 
 void SCreateCharacterTree::On_MouseButtonDoubleClick(TreeVirwWeightItemType TreeItem) {
+  UE_LOG(LogTemp, Warning, TEXT("Edit: %s"), *TreeItem->ShowName.ToString());
   TreeItem->OnRenameRequested.ExecuteIfBound();
 }
 
@@ -288,17 +289,12 @@ void SCreateCharacterTree::CreateUITree() {
 
   if (!L_Config) return;
 
-  typedef TDelegate<
-      void(const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig, const TArray<int32>& InChildIndex)>
-      FDOODLE_IMPL_AddNode;
-  ;
-  FDOODLE_IMPL_AddNode L_IMPL{};
-
-  L_IMPL.BindLambda([L_IMPL](
-                        const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
-                        UDoodleCreateCharacterConfig* InConfig,
-                        const TArray<int32>& InChildIndex
-                    ) {
+  TFunction<void(const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig, const TArray<int32>& InChildIndex)> L_Fun{};
+  L_Fun = [L_Fun](
+              const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
+              UDoodleCreateCharacterConfig* InConfig,
+              const TArray<int32>& InChildIndex
+          ) {
     for (auto i : InChildIndex) {
       auto& L_Nodes = InConfig->ListTrees[i];
       // if (L_Nodes.Childs.IsEmpty()) continue;
@@ -311,9 +307,9 @@ void SCreateCharacterTree::CreateUITree() {
       L_Ptr->MaxValue   = L_Nodes.MaxValue;
       L_Ptr->MinValue   = L_Nodes.MinValue;
       L_Ptr->ConfigNode = &L_Nodes;
-      L_IMPL.Execute(L_Ptr, InConfig, L_Nodes.Childs);
+      L_Fun(L_Ptr, InConfig, L_Nodes.Childs);
     }
-  });
+  };
 
   CreateCharacterConfigTreeData.Empty(L_Config->ListConfigNode.Num());
   for (auto&& i : L_Config->ListTrees) {
@@ -325,7 +321,7 @@ void SCreateCharacterTree::CreateUITree() {
     L_Ptr->MaxValue   = i.MaxValue;
     L_Ptr->MinValue   = i.MinValue;
     L_Ptr->ConfigNode = &i;
-    L_IMPL.Execute(L_Ptr, L_Config, i.Childs);
+    L_Fun(L_Ptr, L_Config, i.Childs);
   }
 }
 
@@ -348,16 +344,16 @@ void SCreateCharacterTree::AddBone() {
 
   if (!L_Has_Parent) CreateCharacterConfigTreeData.Add(L_Ptr);
 
-  L_UI_Node->ShowUIName = FName{"Add_Bone"};
+  L_Ptr->ConfigNode = L_UI_Node;
+  L_Ptr->MaxValue   = L_UI_Node->MaxValue;
+  L_Ptr->MinValue   = L_UI_Node->MinValue;
+  L_Ptr->ShowName   = L_UI_Node->ShowUIName;
 
-  L_Ptr->ConfigNode     = L_UI_Node;
-  L_Ptr->MaxValue       = L_UI_Node->MaxValue;
-  L_Ptr->MinValue       = L_UI_Node->MinValue;
-  L_Ptr->ShowName       = L_UI_Node->ShowUIName;
-
-  // CreateUITree();
   this->RequestTreeRefresh();
-  // this->RebuildList();
+  if (!L_Has_Parent) {
+    CreateUITree();
+    this->RebuildList();
+  }
 }
 
 #undef LOCTEXT_NAMESPACE
