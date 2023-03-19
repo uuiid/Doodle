@@ -15,7 +15,7 @@ class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
   std::unique_ptr<impl> p_i;
 
  protected:
-  virtual bool tick_begin();
+  virtual bool translate_message();
   virtual void tick();
   virtual void tick_end();
   void drop_files();
