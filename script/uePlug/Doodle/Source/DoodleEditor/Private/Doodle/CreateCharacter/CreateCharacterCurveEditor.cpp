@@ -183,6 +183,9 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
   if (!CreateCharacterConfigConfig)
     return;
 
+  CurveEditor->RemoveAllCurves();
+  CurveEditor->RemoveAllTreeItems();
+
   for (auto&& L_Key : In_Node->ConfigNode->Keys) {
     auto& L_Tran = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.TranslationCurve;
     auto& L_Size = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.ScaleCurve;

@@ -60,10 +60,11 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
       L_Box->AddSlot().AutoWidth()[L_InlineEditableTextBlock_Ptr.ToSharedRef()];
 
       return L_Box.ToSharedRef();
-    } else if (InColumnName == SCreateCharacterTree::G_Value) {
-      if (ItemData && !ItemData->ConfigNode->Childs.IsEmpty())
-        return SNew(SHorizontalBox)
-               // clang-format off
+    }
+
+    if (InColumnName == SCreateCharacterTree::G_Value && ItemData && ItemData->ConfigNode && !ItemData->ConfigNode->Keys.IsEmpty()) {
+      return SNew(SHorizontalBox)
+             // clang-format off
                + SHorizontalBox::Slot().FillWidth(1.0f)
                [
                  SNew(SSlider)
@@ -87,8 +88,8 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
                      .Text(LOCTEXT("SCreateCharacterConfigTreeItem_Edit", "Edit"))
                    ]
                ]
-            // clang-format on
-            ;
+          // clang-format on
+          ;
     }
 
     return SNew(SHorizontalBox);
@@ -131,7 +132,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     } else {
       if (InTextTrimmed != ItemData->ConfigNode->ShowUIName.ToString()) {
         // 判断是否存在
-        bVerifyName = (ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true;
+        bVerifyName = !(ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true;
 
         // Needs to be checked on verify.
         if (!bVerifyName) {
@@ -151,10 +152,10 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
     // 通知所有到更改
 
-    if (!ItemData || !ItemData->ConfigNode || !Config_Data.IsValid())
-      return;
-
-    Config_Data.Get()->Rename_UI_ShowName(ItemData->ConfigNode, NewName);
+    // if (!ItemData || !ItemData->ConfigNode || !Config_Data.IsValid())
+    //   return;
+    if (ItemData && ItemData->ConfigNode && Config_Data.IsValid())
+      Config_Data.Get()->Rename_UI_ShowName(ItemData->ConfigNode, NewName);
   }
   FSlateFontInfo GetTextFont() const {
     return FAppStyle::GetWidgetStyle<FTextBlockStyle>("SkeletonTree.NormalFont").Font;
@@ -216,7 +217,7 @@ TSharedRef<SDockTab> SCreateCharacterTree::OnSpawnAction(const FSpawnTabArgs& Sp
 }
 
 TSharedRef<class ITableRow> SCreateCharacterTree::CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table) {
-  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value).OnEditItem(OnEditItem).OnModifyWeights(OnModifyWeights);
+  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value).OnEditItem(OnEditItem).OnModifyWeights(OnModifyWeights).InConfig(Config.Get());
 }
 
 void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List) {
