@@ -41,6 +41,7 @@
 // 启用窗口拖拽导入头文件
 #include <imgui.h>
 #include <shellapi.h>
+#include <wil/com.h>
 
 namespace doodle::facet {
 class gui_facet::impl {
@@ -50,6 +51,9 @@ class gui_facet::impl {
   win::d3d_device_ptr d3d_attr;
   std::string name_attr{"gui_windows"};
   boost::asio::high_resolution_timer timer_{boost::asio::make_strand(g_io_context())};
+  using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
+
+  drop_ptr_type dorp_manager{};
 };
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
@@ -64,7 +68,7 @@ void gui_facet::operator()() {
       return;
     }
     if (program_info::value().stop_attr()) return;
-    if (!this->tick_begin()) return;
+    if (!this->translate_message()) return;
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
     if (!program_info::value().stop_attr()) {
@@ -106,6 +110,8 @@ void gui_facet::tick() {
   auto l_lay = g_reg()->ctx().find<gui::detail::layout_tick>();
   if (l_lay && *l_lay) (*l_lay)->tick();
 
+  drop_files();
+
   std::vector<entt::entity> delete_entt{};
   for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
     if (l_render->tick()) {
@@ -120,7 +126,7 @@ void gui_facet::tick() {
   delete_entt |= ranges::actions::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
   g_reg()->destroy(delete_entt.begin(), delete_entt.end());
 }
-bool gui_facet::tick_begin() {
+bool gui_facet::translate_message() {
   MSG msg;
   while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
@@ -213,9 +219,11 @@ void gui_facet::post_constructor() {
   ImGui_ImplDX11_Init(p_i->d3d_attr->g_pd3dDevice, p_i->d3d_attr->g_pd3dDeviceContext);
 
   /// 启用文件拖拽
-  DragAcceptFiles(p_hwnd, true);
+  DragAcceptFiles(p_hwnd, 1);
   /// \brief 注册拖放对象
-  auto k_r = RegisterDragDrop(p_hwnd, new win::drop_manager{});
+  p_i->dorp_manager = new win::drop_manager{
+      [this](DWORD grfKeyState, POINTL ptl) { this->external_update_mouse_coordinates(grfKeyState, ptl); }};
+  auto k_r = ::RegisterDragDrop(p_hwnd, p_i->dorp_manager.get());
   DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
   //  HMONITOR hmon  = MonitorFromWindow(p_impl->p_hwnd,
@@ -291,7 +299,7 @@ void gui_facet::close_windows() {
     p_i->timer_.wait();
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
-    this->tick_begin();
+    this->translate_message();
     doodle::app_base::Get().stop_app();
   }};
   if (::GetForegroundWindow() == p_hwnd) {
@@ -310,4 +318,23 @@ void gui_facet::set_title(const std::string& in_title) const {
 }
 gui_facet::~gui_facet() { identifier::reset(); }
 void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
+void gui_facet::drop_files() {
+  if (*p_i->dorp_manager) {
+    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
+      ImGui::SetDragDropPayload(
+          doodle::doodle_config::drop_imgui_id.data(), &p_i->dorp_manager->GetDropFiles(), sizeof(std::nullptr_t)
+      );
+      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(p_i->dorp_manager->GetDropFiles(), "\n"))); };
+    };
+  }
+}
+
+void gui_facet::external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_point) {
+  ImGuiIO& io = ImGui::GetIO();
+  //  bool const want_absolute_pos = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
+  io.AddMousePosEvent(boost::numeric_cast<std::float_t>(in_point.x), boost::numeric_cast<std::float_t>(in_point.y));
+
+  //  io.AddKeyEvent(key, down);
+  //  io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)
+}
 }  // namespace doodle::facet

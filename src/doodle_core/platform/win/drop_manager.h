@@ -3,11 +3,16 @@
 //
 
 #include <doodle_core/configure/doodle_core_export.h>
+#include <doodle_core/core/file_sys.h>
+
 #include <oleidl.h>
 
 void OpenFilesFromDataObject(IDataObject *pdto);
-namespace doodle::win {
 
+namespace doodle::facet {
+class gui_facet;
+}
+namespace doodle::win {
 class DOODLE_CORE_API ole_guard {
  public:
   ole_guard();
@@ -15,11 +20,19 @@ class DOODLE_CORE_API ole_guard {
 };
 
 class DOODLE_CORE_API drop_manager : public IDropTarget {
+ public:
+  using drag_over_fun_type = std::function<void(DWORD grfKeyState, POINTL ptl)>;
+
  private:
-  LONG m_RefCount;
+  LONG m_RefCount{};
+
+  bool begin_drop{};
+  std::vector<FSys::path> drop_files{};
+  drag_over_fun_type drag_over_fun{};
 
  public:
-  drop_manager() : m_RefCount(0){};
+  drop_manager(drag_over_fun_type in_fun = {})
+      : m_RefCount(0), begin_drop(), drop_files(), drag_over_fun(std::move(in_fun)){};
   STDMETHODIMP_(ULONG)
   AddRef() override;
 
@@ -37,6 +50,10 @@ class DOODLE_CORE_API drop_manager : public IDropTarget {
   STDMETHODIMP DragLeave() override;
   // 当我们释放鼠标按钮完成拖放操作时发生
   STDMETHODIMP Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) override;
+
+  [[nodiscard]] explicit operator bool() const { return begin_drop; }
+
+  [[nodiscard]] const std::vector<FSys::path> &GetDropFiles() const;
 };
 
 }  // namespace doodle::win
