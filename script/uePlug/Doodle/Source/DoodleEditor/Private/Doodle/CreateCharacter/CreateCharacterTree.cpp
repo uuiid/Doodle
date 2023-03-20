@@ -116,7 +116,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   void OnItemNameEditing() {
   }
   FText Get_ItemName() {
-    return FText::FromName(ItemData ? ItemData->ConfigNode->ShowUIName : FName{});
+    return FText::FromName((ItemData && ItemData->ConfigNode) ? ItemData->ConfigNode->ShowUIName : FName{});
   }
 
   bool OnVerifyItemNameChanged(const FText& InText, FText& OutErrorMessage) {
@@ -296,8 +296,9 @@ void SCreateCharacterTree::AddBoneTreeMenu(FMenuBuilder& In_Builder) {
 void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
   if (!CurrentSelect)
     return;
-  if (!CurrentSelect->Childs.IsEmpty())
-    return;
+  //if (!CurrentSelect->Childs.IsEmpty())
+  //  return;
+
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
   if (!L_Config) return;
 
