@@ -13,7 +13,7 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
   if (In_UI_Parent == INDEX_NONE)
     return TOptional<FString>{};
   FDoodleCreateCharacterConfigUINode& L_UI = ListTrees[In_UI_Parent];
-  
+
   FString L_Key                            = In_Bone.ToString() + FString::FromInt(In_Bone.GetNumber());
 
   for (auto i = In_UI_Parent; In_UI_Parent == INDEX_NONE; i = ListTrees[i].Parent) {
@@ -62,7 +62,8 @@ void UDoodleCreateCharacterConfig::Rename_UI_ShowName(const FDoodleCreateCharact
   if (!In_Node)
     return;
 
-  if (auto L_Index = ListTrees.Find(*In_Node)) {
+  auto L_Index = ListTrees.Find(*In_Node);
+  if (L_Index != INDEX_NONE) {
     ListTrees[L_Index].ShowUIName = InName;
   }
 }
