@@ -58,7 +58,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
 
   void SetViewportSkeletal(USkeletalMesh* InSkeletaMesh);
   void MoveBoneTransform(const FName& In_Bone, float In_Value);
-  void MoveBoneTransform(const TSharedPtr<UCreateCharacterMianTreeItem>& In_EditBone, float In_Value);
+  void MoveBoneTransform(const TSharedPtr<UCreateCharacterMianTreeItem>& In_EditBone);
 
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;

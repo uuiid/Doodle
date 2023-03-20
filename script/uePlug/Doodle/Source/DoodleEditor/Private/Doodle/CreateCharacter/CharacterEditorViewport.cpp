@@ -209,18 +209,18 @@ void SCharacterEditorViewport::MoveBoneTransform(const FName& In_Bone, float In_
   this->GetViewportClient()->Invalidate();
 }
 
-void SCharacterEditorViewport::MoveBoneTransform(const TSharedPtr<UCreateCharacterMianTreeItem>& In_EditBone, float In_Value) {
+void SCharacterEditorViewport::MoveBoneTransform(const TSharedPtr<UCreateCharacterMianTreeItem>& In_EditBone) {
   UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
   if (!L_Config)
     return;
   if (!ShowSkeletaMesh) return;
   if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
   if (!ShowAnimSequence) return;
-  if (!In_EditBone) return;
+  if (!In_EditBone->ConfigNode) return;
 
   ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
-  for (auto&& i : In_EditBone->ItemKeys) {
-    auto&& [L_Name, L_Tran] = L_Config->Evaluate(i, In_Value);
+  for (auto&& i : In_EditBone->ConfigNode->Keys) {
+    auto&& [L_Name, L_Tran] = L_Config->Evaluate(i, In_EditBone->ConfigNode->Value);
     if (!L_Name.IsNone())
       ShowAnimSequence->AddKeyToSequence(0.0f, L_Name, L_Tran);
   }

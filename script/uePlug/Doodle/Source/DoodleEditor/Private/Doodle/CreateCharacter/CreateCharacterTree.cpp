@@ -24,7 +24,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   SLATE_ARGUMENT(SCreateCharacterTree::TreeVirwWeightItemType, ItemData)
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, InConfig)
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
-  SLATE_EVENT(FDoodleModifyWeights, OnModifyWeights)
+  SLATE_EVENT(FDoodleTreeEdit, OnModifyWeights)
   SLATE_END_ARGS()
 
   // 这里是内容创建函数
@@ -35,9 +35,6 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     OnModifyWeights = Arg._OnModifyWeights;
 
     Super::Construct(Super::FArguments{}, OwnerTableView);
-    if (ItemData) {
-      Item_Name = ItemData->ShowName;
-    }
   }
 
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
@@ -64,15 +61,15 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
       return L_Box.ToSharedRef();
     } else if (InColumnName == SCreateCharacterTree::G_Value) {
-      if (ItemData && !ItemData->ItemKeys.IsEmpty())
+      if (ItemData && !ItemData->ConfigNode->Childs.IsEmpty())
         return SNew(SHorizontalBox)
                // clang-format off
                + SHorizontalBox::Slot().FillWidth(1.0f)
                [
                  SNew(SSlider)
-                 .Value(Slider_Value)
-                 .MaxValue(ItemData->MaxValue)
-                 .MinValue(ItemData->MinValue)
+                 .Value(ItemData->ConfigNode->Value)
+                 .MaxValue(ItemData->ConfigNode->MaxValue)
+                 .MinValue(ItemData->ConfigNode->MinValue)
                  .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
                ] 
                + SHorizontalBox::Slot()
@@ -104,10 +101,10 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   };
 
   void On_FloatValueChanged(float In_Value) {
-    Slider_Value = In_Value;
+    ItemData->ConfigNode->Value = In_Value;
     if (ItemData)
-      OnModifyWeights.ExecuteIfBound(ItemData, Slider_Value);
-    UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
+      OnModifyWeights.ExecuteIfBound(ItemData);
+    // UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
   }
 
   virtual bool IsItemExpanded() const override { return Super::IsItemExpanded() || !ItemData->Childs.IsEmpty(); };
@@ -118,7 +115,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   void OnItemNameEditing() {
   }
   FText Get_ItemName() {
-    return FText::FromName(Item_Name);
+    return FText::FromName(ItemData ? ItemData->ConfigNode->ShowUIName : FName{});
   }
 
   bool OnVerifyItemNameChanged(const FText& InText, FText& OutErrorMessage) {
@@ -128,11 +125,11 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
     // FString NewName       = VirtualBoneNameHelpers::AddVirtualBonePrefix(InTextTrimmed);
 
-    if (InTextTrimmed.IsEmpty()) {
+    if (InTextTrimmed.IsEmpty() || !ItemData) {
       OutErrorMessage = LOCTEXT("EmptyVirtualBoneName_Error", "Virtual bones must have a name!");
       bVerifyName     = false;
     } else {
-      if (InTextTrimmed != Item_Name.ToString()) {
+      if (InTextTrimmed != ItemData->ConfigNode->ShowUIName.ToString()) {
         // 判断是否存在
         bVerifyName = (ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true;
 
@@ -153,12 +150,8 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     FName NewName(*NewNameString);
 
     // 通知所有到更改
-    Item_Name = NewName;
-    if (!ItemData)
-      return;
-    ItemData->ShowName = NewName;
 
-    if (!Config_Data.IsValid())
+    if (!ItemData || !ItemData->ConfigNode || !Config_Data.IsValid())
       return;
 
     Config_Data.Get()->Rename_UI_ShowName(ItemData->ConfigNode, NewName);
@@ -169,11 +162,9 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
   TWeakObjectPtr<UDoodleCreateCharacterConfig> Config_Data;
-  FDoodleModifyWeights OnModifyWeights;
-  float Slider_Value;
-  FDoodleTreeEdit OnEditItem;
+  FDoodleTreeEdit OnModifyWeights;
 
-  FName Item_Name;
+  FDoodleTreeEdit OnEditItem;
 };
 
 #undef LOCTEXT_NAMESPACE
@@ -303,11 +294,10 @@ void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
 
   TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE);
 
-  if (L_Key && !CurrentSelect->ItemKeys.Contains(*L_Key)) {
-    CurrentSelect->ItemKeys.Add(*L_Key);
+  if (L_Key) {
+    this->RebuildList();
+    OnEditItem.ExecuteIfBound(CurrentSelect);
   }
-  this->RebuildList();
-  OnEditItem.ExecuteIfBound(CurrentSelect);
 }
 
 void SCreateCharacterTree::CreateUITree() {
@@ -327,11 +317,7 @@ void SCreateCharacterTree::CreateUITree() {
 
       SCreateCharacterTree::TreeVirwWeightItemType L_Ptr =
           InParent->Childs.Add_GetRef(MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>());
-      L_Ptr->ShowName   = L_Nodes.ShowUIName;
       // 添加子项
-      L_Ptr->ItemKeys   = L_Nodes.Keys;
-      L_Ptr->MaxValue   = L_Nodes.MaxValue;
-      L_Ptr->MinValue   = L_Nodes.MinValue;
       L_Ptr->ConfigNode = &L_Nodes;
       L_Fun(L_Ptr, InConfig, L_Nodes.Childs);
     }
@@ -344,10 +330,7 @@ void SCreateCharacterTree::CreateUITree() {
     }
     TreeVirwWeightItemType L_Ptr =
         CreateCharacterConfigTreeData.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>());
-    L_Ptr->MaxValue   = i.MaxValue;
-    L_Ptr->MinValue   = i.MinValue;
     L_Ptr->ConfigNode = &i;
-    L_Ptr->ShowName   = i.ShowUIName;
     L_Fun(L_Ptr, L_Config, i.Childs);
   }
 }
@@ -372,9 +355,6 @@ void SCreateCharacterTree::AddBone() {
   if (!L_Has_Parent) CreateCharacterConfigTreeData.Add(L_Ptr);
 
   L_Ptr->ConfigNode = L_UI_Node;
-  L_Ptr->MaxValue   = L_UI_Node->MaxValue;
-  L_Ptr->MinValue   = L_UI_Node->MinValue;
-  L_Ptr->ShowName   = L_UI_Node->ShowUIName;
 
   this->RequestTreeRefresh();
   if (!L_Has_Parent) {

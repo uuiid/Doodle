@@ -38,8 +38,8 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
   virtual void SetInputBounds(double InMin, double InMax) override {
     if (CreateCharacterMianTreeItem.IsValid()) {
       TSharedPtr<UCreateCharacterMianTreeItem> L_Config = CreateCharacterMianTreeItem.Pin();
-      L_Config->MaxValue                                = InMax;
-      L_Config->MinValue                                = InMin;
+      L_Config->ConfigNode->MaxValue                                = InMax;
+      L_Config->ConfigNode->MinValue                    = InMin;
 
       Min_P                                             = InMin;
       Max_P                                             = InMax;
@@ -49,8 +49,8 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
 
   void Set_TreeItem(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Work) {
     CreateCharacterMianTreeItem = In_Work;
-    Min_P                       = In_Work->MinValue;
-    Max_P                       = In_Work->MaxValue;
+    Min_P                       = In_Work->ConfigNode->MinValue;
+    Max_P                       = In_Work->ConfigNode->MaxValue;
   }
 
   TWeakPtr<UCreateCharacterMianTreeItem> CreateCharacterMianTreeItem;
@@ -183,7 +183,7 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
   if (!CreateCharacterConfigConfig)
     return;
 
-  for (auto&& L_Key : In_Node->ItemKeys) {
+  for (auto&& L_Key : In_Node->ConfigNode->Keys) {
     auto& L_Tran = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.TranslationCurve;
     auto& L_Size = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.ScaleCurve;
     auto& L_Rot  = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;

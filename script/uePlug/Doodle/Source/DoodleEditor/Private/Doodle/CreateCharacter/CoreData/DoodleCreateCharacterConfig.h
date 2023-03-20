@@ -41,8 +41,11 @@ struct FDoodleCreateCharacterConfigUINode {
   UPROPERTY()
   float MinValue{-2.0f};
 
+  UPROPERTY()
+  float Value{};
+
   inline bool operator==(const FDoodleCreateCharacterConfigUINode& In) const {
-    return Tie(Parent, Childs, ShowUIName, Keys, MaxValue, MinValue) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys, In.MaxValue, In.MinValue);
+    return Tie(Parent, Childs, ShowUIName, Keys) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys);
   }
   inline bool operator!=(const FDoodleCreateCharacterConfigUINode& In) const {
     return !(*this == In);
@@ -66,7 +69,6 @@ class UDoodleCreateCharacterConfig : public UObject {
 
   bool Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const;
   void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName);
-
 
   TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
 

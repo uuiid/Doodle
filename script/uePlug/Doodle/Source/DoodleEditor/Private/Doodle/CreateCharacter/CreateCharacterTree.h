@@ -13,16 +13,9 @@ class STableViewBase;
 class UCreateCharacterMianTreeItem;
 
 DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
-DECLARE_DELEGATE_TwoParams(FDoodleModifyWeights, TSharedPtr<UCreateCharacterMianTreeItem>, float);
 
 class UCreateCharacterMianTreeItem {
  public:
-  TArray<FString> ItemKeys;
-  FName ShowName;
-  // 调整最大值
-  float MaxValue{2.0f};
-  // 调整最小值
-  float MinValue{-2.0f};
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
 
   FDoodleCreateCharacterConfigUINode* ConfigNode{};
@@ -48,7 +41,7 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
 
   SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
 
-  SLATE_EVENT(FDoodleModifyWeights, OnModifyWeights)
+  SLATE_EVENT(FDoodleTreeEdit, OnModifyWeights)
 
   SLATE_END_ARGS()
 
@@ -82,7 +75,7 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   // 当前选择
   TreeVirwWeightItemType CurrentSelect;
   FDoodleTreeEdit OnEditItem;
-  FDoodleModifyWeights OnModifyWeights;
+  FDoodleTreeEdit OnModifyWeights;
 
   // 上下文ui元素
   TSharedPtr<FUICommandList> UICommandList;
