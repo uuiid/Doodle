@@ -38,7 +38,7 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
   virtual void SetInputBounds(double InMin, double InMax) override {
     if (CreateCharacterMianTreeItem.IsValid()) {
       TSharedPtr<UCreateCharacterMianTreeItem> L_Config = CreateCharacterMianTreeItem.Pin();
-      L_Config->ConfigNode->MaxValue                                = InMax;
+      L_Config->ConfigNode->MaxValue                    = InMax;
       L_Config->ConfigNode->MinValue                    = InMin;
 
       Min_P                                             = InMin;
@@ -187,20 +187,23 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
   CurveEditor->RemoveAllTreeItems();
 
   for (auto&& L_Key : In_Node->ConfigNode->Keys) {
-    auto& L_Tran = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.TranslationCurve;
-    auto& L_Size = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.ScaleCurve;
-    auto& L_Rot  = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;
+    auto& L_Tran      = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.TranslationCurve;
+    auto& L_Size      = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.ScaleCurve;
+    auto& L_Rot       = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.RotationCurve;
+    FString Bone_Name = CreateCharacterConfigConfig->ListConfigNode[L_Key].BoneName.ToString();
 
-#define DOODLE_ADD_CURVE_IMPL(Owner, Index, Suffix)                                                                               \
-  {                                                                                                                               \
-    FRichCurveEditInfo L_Info{&Owner.FloatCurves[Index], FName{L_Key + "." + Owner.Name.DisplayName.ToString() + TEXT(#Suffix)}}; \
-    AddCurve(L_Info);                                                                                                             \
+    FVectorCurve::EIndex::X;
+
+#define DOODLE_ADD_CURVE_IMPL(Owner, Index)                                                                                                                                                 \
+  {                                                                                                                                                                                         \
+    FRichCurveEditInfo L_Info{&Owner.FloatCurves[(int32)FVectorCurve::EIndex::Index], FName{Bone_Name + "." + Owner.Name.DisplayName.ToString() + TEXT(PREPROCESSOR_TO_STRING(.##Index))}}; \
+    AddCurve(L_Info);                                                                                                                                                                       \
   }
 
-#define DOODLE_ADD_CURVE(Owner)        \
-  DOODLE_ADD_CURVE_IMPL(Owner, 0, .X); \
-  DOODLE_ADD_CURVE_IMPL(Owner, 1, .Y); \
-  DOODLE_ADD_CURVE_IMPL(Owner, 2, .Z);
+#define DOODLE_ADD_CURVE(Owner)    \
+  DOODLE_ADD_CURVE_IMPL(Owner, X); \
+  DOODLE_ADD_CURVE_IMPL(Owner, Y); \
+  DOODLE_ADD_CURVE_IMPL(Owner, Z);
 
     DOODLE_ADD_CURVE(L_Tran);
     DOODLE_ADD_CURVE(L_Size);

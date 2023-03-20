@@ -23,20 +23,18 @@ Define DOCROOT "E:/Doodle"
 DocumentRoot "${DOCROOT}/docs"
 <Directory "${DOCROOT}/docs">
     Options Indexes MultiViews FollowSymlinks
-    AllowOverride None
+    Require all granted
 </Directory>
 
 Alias "/download_files" "${DOCROOT}/build/html/file"
 <Directory "${DOCROOT}/build/html/file">
     Options Indexes FollowSymLinks MultiViews
-    AllowOverride None
     Require all granted
 </Directory>
 
 Alias "/DOXYGEN_DOC" "${DOCROOT}/build/html"
 <Directory "${DOCROOT}/build/html">
     Options Indexes FollowSymLinks MultiViews
-    AllowOverride None
     Require all granted
 </Directory>
 

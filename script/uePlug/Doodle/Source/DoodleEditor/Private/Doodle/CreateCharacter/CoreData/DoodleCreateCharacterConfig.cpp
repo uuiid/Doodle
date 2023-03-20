@@ -12,15 +12,21 @@ FDoodleCreateCharacterConfigUINode* UDoodleCreateCharacterConfig::Add_TreeNode(i
 TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent) {
   if (In_UI_Parent == INDEX_NONE)
     return TOptional<FString>{};
-
   FDoodleCreateCharacterConfigUINode& L_UI = ListTrees[In_UI_Parent];
-  FString L_Key                            = In_Bone.ToString();
+  
+  FString L_Key                            = In_Bone.ToString() + FString::FromInt(In_Bone.GetNumber());
+
   for (auto i = In_UI_Parent; In_UI_Parent == INDEX_NONE; i = ListTrees[i].Parent) {
     L_Key.Append(FString::FromInt(i));
   }
 
   if (ListConfigNode.Contains(L_Key)) {
     return L_Key;
+  }
+  // 防止添加重叠key
+  for (auto&& i : ListConfigNode) {
+    if (i.Value.BoneName == In_Bone)
+      return i.Key;
   }
 
   FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(L_Key);

@@ -316,7 +316,7 @@ void SCreateCharacterTree::CreateUITree() {
   if (!L_Config) return;
 
   TFunction<void(const SCreateCharacterTree::TreeVirwWeightItemType& InParent, UDoodleCreateCharacterConfig* InConfig, const TArray<int32>& InChildIndex)> L_Fun{};
-  L_Fun = [L_Fun](
+  L_Fun = [&](
               const SCreateCharacterTree::TreeVirwWeightItemType& InParent,
               UDoodleCreateCharacterConfig* InConfig,
               const TArray<int32>& InChildIndex
