@@ -20,6 +20,16 @@ USTRUCT()
 struct FDoodleCreateCharacterConfigUINode {
   GENERATED_BODY();
 
+  FDoodleCreateCharacterConfigUINode() = default;
+
+  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FName In_ShowUIName, TArray<FString> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
+      : Parent(In_Parent),
+        Childs(),
+        ShowUIName(MoveTemp(In_ShowUIName)),
+        Keys(MoveTemp(In_Keys)),
+        MaxValue(In_MaxValue),
+        MinValue(In_MinValue),
+        Value(In_Value){};
   UPROPERTY();
   int32 Parent{INDEX_NONE};
 
@@ -69,6 +79,7 @@ class UDoodleCreateCharacterConfig : public UObject {
 
   bool Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const;
   void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName);
+  bool Delete_Ui_Node(const FDoodleCreateCharacterConfigUINode* In_Node);
 
   TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
 

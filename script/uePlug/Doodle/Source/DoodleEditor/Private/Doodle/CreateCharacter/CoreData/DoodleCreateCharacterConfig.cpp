@@ -61,6 +61,61 @@ void UDoodleCreateCharacterConfig::Rename_UI_ShowName(const FDoodleCreateCharact
   }
 }
 
+bool UDoodleCreateCharacterConfig::Delete_Ui_Node(const FDoodleCreateCharacterConfigUINode* In_Node) {
+  if (!In_Node)
+    return false;
+
+  int32 L_Index = ListTrees.Find(*In_Node);
+
+  if (L_Index == INDEX_NONE)
+    return false;
+
+  TFunction<void(int32)> L_Get_Node_Tree_List{};
+  TArray<int32> L_Remove_List{};
+  L_Get_Node_Tree_List = [&](int32 In_Index) {
+    L_Remove_List += ListTrees[In_Index].Childs;
+    for (auto&& i : ListTrees[In_Index].Childs) {
+      L_Get_Node_Tree_List(i);
+    }
+  };
+
+  L_Get_Node_Tree_List(L_Index);
+
+  L_Remove_List.Sort();
+
+  for (auto&& i : L_Remove_List) {
+    for (auto&& j : ListTrees[i].Keys) {
+      ListConfigNode.Remove(j);
+    }
+  }
+
+  // 去除父引用
+  if (In_Node->Parent != INDEX_NONE)
+    ListTrees[In_Node->Parent].Childs.Remove(L_Index);
+
+  TFunction<void(int32, int32)> L_Build_Tree{};
+  TArray<FDoodleCreateCharacterConfigUINode> L_ListTree;
+  L_Build_Tree = [&](int32 In_Index, int32 In_New_Parent_Index) {
+    for (auto&& i : ListTrees[In_Index].Childs) {
+      auto&& L_C        = ListTrees[i];
+      auto L_Index_Temp = L_ListTree.Emplace(In_New_Parent_Index, L_C.ShowUIName, L_C.Keys, L_C.MaxValue, L_C.MinValue, L_C.Value);
+      L_ListTree[In_New_Parent_Index].Childs.Emplace(L_Index_Temp);
+
+      L_Build_Tree(i, L_Index_Temp);
+    }
+  };
+
+  for (auto i = 0; i < ListTrees.Num(); ++i) {
+    if (ListTrees[i].Parent == INDEX_NONE) {
+      auto&& L_C        = ListTrees[i];
+      auto L_Index_Temp = L_ListTree.Emplace(INDEX_NONE, L_C.ShowUIName, L_C.Keys, L_C.MaxValue, L_C.MinValue, L_C.Value);
+      L_Build_Tree(i, L_Index_Temp);
+    }
+  }
+  ListTrees = L_ListTree;
+  return true;
+}
+
 TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FString& In_BoneName, const float InValue) const {
   if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
 

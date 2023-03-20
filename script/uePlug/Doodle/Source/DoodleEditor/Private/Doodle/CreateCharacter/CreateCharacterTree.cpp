@@ -235,6 +235,7 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
         LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
         FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
     );
+    // 绑定骨骼
     if (CurrentSelect && CurrentSelect->ConfigNode && CurrentSelect->ConfigNode->Parent != INDEX_NONE) {
       L_Builder.AddSubMenu(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
@@ -243,6 +244,13 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
       );
     }
 
+    // 删除
+    if (CurrentSelect && CurrentSelect->ConfigNode)
+      L_Builder.AddMenuEntry(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Remove"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Remove"), FSlateIcon{"Subtitle", "EventIcon"},
+          FUIAction{FExecuteAction::CreateLambda([this]() { Delete_UiTreeNode(); })}
+      );
     L_Builder.EndSection();
   }
 
@@ -362,6 +370,24 @@ void SCreateCharacterTree::AddBone() {
     CreateUITree();
     this->RebuildList();
   }
+}
+
+void SCreateCharacterTree::Delete_UiTreeNode() {
+  UDoodleCreateCharacterConfig* L_Config = Config.Get();
+
+  if (!L_Config)
+    return;
+
+  if (!CurrentSelect)
+    return;
+  if (!CurrentSelect->ConfigNode)
+    return;
+
+  if (!L_Config->Delete_Ui_Node(CurrentSelect->ConfigNode))
+    return;
+
+  CreateUITree();
+  this->RebuildList();
 }
 
 #undef LOCTEXT_NAMESPACE

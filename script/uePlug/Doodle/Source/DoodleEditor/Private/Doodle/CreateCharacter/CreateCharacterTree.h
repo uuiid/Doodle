@@ -63,9 +63,11 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
 
   void Add_TreeNode(const FName& In_Bone_Name);
 
+
   void CreateUITree();
 
   void AddBone();
+  void Delete_UiTreeNode();
   // 数据
   TreeVirwWeightDataType CreateCharacterConfigTreeData{};
 
