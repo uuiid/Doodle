@@ -27,11 +27,11 @@ add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
 
 # add_compile_options(/W4)
 # message("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
-# if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-#     list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/debug/libtorch)
-# else ()
-#     list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/libtorch)
-# endif ()
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/debug/libtorch)
+else ()
+    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/external/libtorch)
+endif ()
 
 # 设置 c++ 版本
 set(CMAKE_CXX_STANDARD 17)
