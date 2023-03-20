@@ -68,7 +68,7 @@ void gui_facet::operator()() {
       return;
     }
     if (program_info::value().stop_attr()) return;
-    if (!this->tick_begin()) return;
+    if (!this->translate_message()) return;
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
     if (!program_info::value().stop_attr()) {
@@ -126,7 +126,7 @@ void gui_facet::tick() {
   delete_entt |= ranges::actions::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
   g_reg()->destroy(delete_entt.begin(), delete_entt.end());
 }
-bool gui_facet::tick_begin() {
+bool gui_facet::translate_message() {
   MSG msg;
   while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
@@ -299,7 +299,7 @@ void gui_facet::close_windows() {
     p_i->timer_.wait();
     ::ShowWindow(l_hwnd, SW_HIDE);
     ::DestroyWindow(l_hwnd);
-    this->tick_begin();
+    this->translate_message();
     doodle::app_base::Get().stop_app();
   }};
   if (::GetForegroundWindow() == p_hwnd) {
