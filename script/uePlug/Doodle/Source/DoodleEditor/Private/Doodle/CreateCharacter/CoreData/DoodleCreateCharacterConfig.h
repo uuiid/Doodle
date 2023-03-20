@@ -20,6 +20,16 @@ USTRUCT()
 struct FDoodleCreateCharacterConfigUINode {
   GENERATED_BODY();
 
+  FDoodleCreateCharacterConfigUINode() = default;
+
+  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FString In_ShowUIName, TArray<FString> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
+      : Parent(In_Parent),
+        Childs(),
+        ShowUIName(MoveTemp(In_ShowUIName)),
+        Keys(MoveTemp(In_Keys)),
+        MaxValue(In_MaxValue),
+        MinValue(In_MinValue),
+        Value(In_Value){};
   UPROPERTY();
   int32 Parent{INDEX_NONE};
 
@@ -28,7 +38,7 @@ struct FDoodleCreateCharacterConfigUINode {
 
   // 显示ui名称
   UPROPERTY();
-  FName ShowUIName{};
+  FString ShowUIName{};
 
   // 树中配置节点id名称
   UPROPERTY();
@@ -41,8 +51,11 @@ struct FDoodleCreateCharacterConfigUINode {
   UPROPERTY()
   float MinValue{-2.0f};
 
+  UPROPERTY()
+  float Value{};
+
   inline bool operator==(const FDoodleCreateCharacterConfigUINode& In) const {
-    return Tie(Parent, Childs, ShowUIName, Keys, MaxValue, MinValue) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys, In.MaxValue, In.MinValue);
+    return Tie(Parent, Childs, ShowUIName, Keys) == Tie(In.Parent, In.Childs, In.ShowUIName, In.Keys);
   }
   inline bool operator!=(const FDoodleCreateCharacterConfigUINode& In) const {
     return !(*this == In);
@@ -61,10 +74,14 @@ class UDoodleCreateCharacterConfig : public UObject {
   UPROPERTY();
   TArray<FDoodleCreateCharacterConfigUINode> ListTrees;
 
-  FDoodleCreateCharacterConfigUINode* Add_TreeNode(int32 In_Parent);
+  int32 Add_TreeNode(int32 In_Parent);
   TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
-  FTransform Evaluate(const FString& In_BoneName, const float InValue) const;
+  bool Has_UI_ShowName(int32 In_Node, const FString& InName) const;
+  void Rename_UI_ShowName(int32 In_Node, const FString& InName);
+  bool Delete_Ui_Node(int32 In_Node);
+
+  TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 
@@ -74,4 +91,6 @@ class UDoodleCreateCharacterConfig : public UObject {
   // 骨骼网格体引用
   UPROPERTY();
   TObjectPtr<USkeletalMesh> SkeletalMesh;
+
+  int32 TreeIndex;
 };

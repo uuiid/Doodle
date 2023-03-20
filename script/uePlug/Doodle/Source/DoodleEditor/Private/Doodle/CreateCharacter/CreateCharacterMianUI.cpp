@@ -196,6 +196,9 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& 
         .OnEditItem_Lambda([this](const TSharedPtr<UCreateCharacterMianTreeItem>& L_Node){
           this->CreateCharacterCurveEditor->EditCurve(L_Node);
          })
+        .OnModifyWeights_Lambda([this](const TSharedPtr<UCreateCharacterMianTreeItem>& In_Node) {
+           this->CharacterEditorViewport->MoveBoneTransform(In_Node);
+        })
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)
         //.AutoHeight()
@@ -217,6 +220,7 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTa
       + SVerticalBox::Slot()
       [
         SAssignNew(CreateCharacterCurveEditor, SCreateCharacterCurveEditor)
+        .CreateCharacterConfigConfig(CreateCharacterConfig)
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)
         //.AutoHeight()
