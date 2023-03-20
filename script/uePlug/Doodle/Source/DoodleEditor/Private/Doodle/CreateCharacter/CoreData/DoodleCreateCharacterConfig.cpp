@@ -23,12 +23,13 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
     return L_Key;
   }
 
-  FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(In_Bone.ToString());
+  FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(L_Key);
 
   L_Node.WeightCurve.Resize(4.0f, true, -2.0f, 2.0f);
   L_Node.WeightCurve.TranslationCurve.Name.DisplayName = FName{TEXT("TranslationCurve")};
   L_Node.WeightCurve.RotationCurve.Name.DisplayName    = FName{TEXT("RotationCurve")};
   L_Node.WeightCurve.ScaleCurve.Name.DisplayName       = FName{TEXT("ScaleCurve")};
+  L_Node.BoneName                                      = In_Bone;
 
   L_UI.Keys.Add(L_Key);
 
@@ -60,11 +61,8 @@ void UDoodleCreateCharacterConfig::Rename_UI_ShowName(const FDoodleCreateCharact
   }
 }
 
-FTransform UDoodleCreateCharacterConfig::Evaluate(const FString& In_BoneName, const float InValue) const {
-  const FDoodleCreateCharacterConfigNode* L_Nodel =
-      ListConfigNode.Find(In_BoneName);
+TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FString& In_BoneName, const float InValue) const {
+  if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
 
-  if (!L_Nodel) return FTransform::Identity;
-
-  return L_Nodel->WeightCurve.Evaluate(InValue, 1.0f);
+  return MakeTuple(ListConfigNode[In_BoneName].BoneName, ListConfigNode[In_BoneName].WeightCurve.Evaluate(InValue, 1.0f));
 }

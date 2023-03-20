@@ -72,7 +72,8 @@
     "directxtk",
     "dem-bones",
     "cppzmq",
-    "winreg"
+    "winreg",
+    "libtorch"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [

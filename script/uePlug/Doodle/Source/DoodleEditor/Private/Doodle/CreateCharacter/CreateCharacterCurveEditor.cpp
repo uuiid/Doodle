@@ -59,7 +59,6 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
   // TWeakPtr<ITimeSliderController> ExternalTimeSliderController;
 };
 
-
 class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
  public:
   FCreateCharacterCurveEditorItem(
@@ -127,16 +126,16 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
 };
 
 void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
-  CreateCharacterConfigConfig                = InArgs._CreateCharacterConfigConfig;
-  CurveEditor                                = MakeShared<FCurveEditor>();
+  CreateCharacterConfigConfig = InArgs._CreateCharacterConfigConfig;
+  CurveEditor                 = MakeShared<FCurveEditor>();
   FCurveEditorInitParams CurveEditorInitParams;
   CurveEditor->InitCurveEditor(CurveEditorInitParams);
   CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}s");
   CurveEditor->SetBounds(MakeUnique<FCreateCharacterCurveEditorBounds>(/*InArgs._ExternalTimeSliderController*/));
 
-  //CurveEditor->InputSnapRateAttribute = FFrameRate{1, 25};
+  // CurveEditor->InputSnapRateAttribute = FFrameRate{1, 25};
 
-  CurveEditorTree                     = SNew(SCurveEditorTree, CurveEditor)
+  CurveEditorTree = SNew(SCurveEditorTree, CurveEditor)
                         .OnContextMenuOpening(this, &SCreateCharacterCurveEditor::OnContextMenuOpening);
 
   TSharedRef<SCurveEditorPanel> CurveEditorPanel =
@@ -192,7 +191,7 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
 #define DOODLE_ADD_CURVE_IMPL(Owner, Index, Suffix)                                                                               \
   {                                                                                                                               \
     FRichCurveEditInfo L_Info{&Owner.FloatCurves[Index], FName{L_Key + "." + Owner.Name.DisplayName.ToString() + TEXT(#Suffix)}}; \
-    AddCurve(L_Info, Owner.GetColor());                                                                                           \
+    AddCurve(L_Info);                                                                                                             \
   }
 
 #define DOODLE_ADD_CURVE(Owner)        \
@@ -217,23 +216,25 @@ void SCreateCharacterCurveEditor::ResetCurves() {
 }
 
 void SCreateCharacterCurveEditor::AddCurve(
-    const FRichCurveEditInfo& In_Info, const FLinearColor& In_Color
+    const FRichCurveEditInfo& In_Info
 ) {
   FCurveEditorTreeItem* TreeItem = CurveEditor->AddTreeItem(FCurveEditorTreeItemID::Invalid());
+
   TreeItem->SetStrongItem(MakeShared<FCreateCharacterCurveEditorItem>(
-      In_Info, CreateCharacterConfigConfig, In_Color
-  ));
+      In_Info, CreateCharacterConfigConfig, FLinearColor::MakeFromHSV8((uint8)(FRandomStream{In_Info.CurveName}.FRand() * 255.0f), (uint8)196, (uint8)196)
+  )
+  );
 
   // Update selection
-  //const TMap<FCurveEditorTreeItemID, ECurveEditorTreeSelectionState>& Selection = CurveEditor->GetTreeSelection();
-  //TArray<FCurveEditorTreeItemID> NewSelection;
-  //NewSelection.Add(TreeItem->GetID());
-  //for (const auto& SelectionPair : Selection) {
+  // const TMap<FCurveEditorTreeItemID, ECurveEditorTreeSelectionState>& Selection = CurveEditor->GetTreeSelection();
+  // TArray<FCurveEditorTreeItemID> NewSelection;
+  // NewSelection.Add(TreeItem->GetID());
+  // for (const auto& SelectionPair : Selection) {
   //  if (SelectionPair.Value != ECurveEditorTreeSelectionState::None) {
   //    NewSelection.Add(SelectionPair.Key);
   //  }
   //}
-  //CurveEditor->SetTreeSelection(MoveTemp(NewSelection));
+  // CurveEditor->SetTreeSelection(MoveTemp(NewSelection));
 }
 
 void SCreateCharacterCurveEditor::RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex) {

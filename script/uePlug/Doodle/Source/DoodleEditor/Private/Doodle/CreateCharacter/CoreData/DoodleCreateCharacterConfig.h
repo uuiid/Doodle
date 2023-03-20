@@ -68,7 +68,7 @@ class UDoodleCreateCharacterConfig : public UObject {
   void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName);
 
 
-  FTransform Evaluate(const FString& In_BoneName, const float InValue) const;
+  TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
 
   USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 

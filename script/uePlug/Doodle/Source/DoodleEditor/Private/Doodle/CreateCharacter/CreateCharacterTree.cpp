@@ -17,17 +17,23 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
   SLATE_BEGIN_ARGS(SCreateCharacterConfigTreeItem)
       : _ItemData(),
-        _InConfig() {}
+        _InConfig(),
+        _OnEditItem(),
+        _OnModifyWeights() {}
 
   SLATE_ARGUMENT(SCreateCharacterTree::TreeVirwWeightItemType, ItemData)
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, InConfig)
-
+  SLATE_EVENT(FDoodleTreeEdit, OnEditItem)
+  SLATE_EVENT(FDoodleModifyWeights, OnModifyWeights)
   SLATE_END_ARGS()
 
   // 这里是内容创建函数
   void Construct(const FArguments& Arg, const TSharedRef<STableViewBase>& OwnerTableView) {
-    ItemData    = Arg._ItemData;
-    Config_Data = Arg._InConfig;
+    ItemData        = Arg._ItemData;
+    Config_Data     = Arg._InConfig;
+    OnEditItem      = Arg._OnEditItem;
+    OnModifyWeights = Arg._OnModifyWeights;
+
     Super::Construct(Super::FArguments{}, OwnerTableView);
     if (ItemData) {
       Item_Name = ItemData->ShowName;
@@ -35,46 +41,60 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   }
 
   TSharedRef<SWidget> GenerateWidgetForColumn(const FName& InColumnName) override {
-    // 只是题头部件
-    TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
+    if (InColumnName == SCreateCharacterTree::G_Name) {
+      // 只是题头部件
+      TSharedPtr<SHorizontalBox> L_Box = SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[SNew(SExpanderArrow, SharedThis(this)).ShouldDrawWires(true)];
 
-    TSharedPtr<SInlineEditableTextBlock> L_InlineEditableTextBlock_Ptr =
-        SNew(SInlineEditableTextBlock)
-            //.ColorAndOpacity(this, &FSkeletonTreeVirtualBoneItem::GetBoneTextColor, InIsSelected)
-            .Text(TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateSP(this, &SCreateCharacterConfigTreeItem::Get_ItemName)))
-            //.HighlightText(FilterText)
-            .Font(this, &SCreateCharacterConfigTreeItem::GetTextFont)
-            //.ToolTipText(ToolTip)
-            .OnEnterEditingMode(this, &SCreateCharacterConfigTreeItem::OnItemNameEditing)
-            .OnVerifyTextChanged(this, &SCreateCharacterConfigTreeItem::OnVerifyItemNameChanged)
-            .OnTextCommitted(this, &SCreateCharacterConfigTreeItem::OnCommitItemBoneName)
-        //.IsSelected(InIsSelected)
-        ;
+      TSharedPtr<SInlineEditableTextBlock> L_InlineEditableTextBlock_Ptr =
+          SNew(SInlineEditableTextBlock)
+              //.ColorAndOpacity(this, &FSkeletonTreeVirtualBoneItem::GetBoneTextColor, InIsSelected)
+              .Text(TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateSP(this, &SCreateCharacterConfigTreeItem::Get_ItemName)))
+              //.HighlightText(FilterText)
+              .Font(this, &SCreateCharacterConfigTreeItem::GetTextFont)
+              //.ToolTipText(ToolTip)
+              .OnEnterEditingMode(this, &SCreateCharacterConfigTreeItem::OnItemNameEditing)
+              .OnVerifyTextChanged(this, &SCreateCharacterConfigTreeItem::OnVerifyItemNameChanged)
+              .OnTextCommitted(this, &SCreateCharacterConfigTreeItem::OnCommitItemBoneName)
+          //.IsSelected(InIsSelected)
+          ;
+      if (ItemData && !ItemData->OnRenameRequested.IsBound()) {
+        ItemData->OnRenameRequested.BindSP(L_InlineEditableTextBlock_Ptr.Get(), &SInlineEditableTextBlock::EnterEditingMode);
+      }
+      L_Box->AddSlot().AutoWidth()[L_InlineEditableTextBlock_Ptr.ToSharedRef()];
 
-    if (ItemData && !ItemData->OnRenameRequested.IsBound()) {
-      ItemData->OnRenameRequested.BindSP(L_InlineEditableTextBlock_Ptr.Get(), &SInlineEditableTextBlock::EnterEditingMode);
+      return L_Box.ToSharedRef();
+    } else if (InColumnName == SCreateCharacterTree::G_Value) {
+      if (ItemData && !ItemData->ItemKeys.IsEmpty())
+        return SNew(SHorizontalBox)
+               // clang-format off
+               + SHorizontalBox::Slot().FillWidth(1.0f)
+               [
+                 SNew(SSlider)
+                 .Value(Slider_Value)
+                 .MaxValue(ItemData->MaxValue)
+                 .MinValue(ItemData->MinValue)
+                 .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
+               ] 
+               + SHorizontalBox::Slot()
+               .AutoWidth()
+               [
+                 SNew(SButton)
+                 .OnClicked_Lambda([this]() {
+                   if (!ItemData)
+                     return FReply::Unhandled();
+                   OnEditItem.ExecuteIfBound(ItemData);
+                   return FReply::Handled();
+                 })
+                   [
+                     SNew(STextBlock)
+                     .Text(LOCTEXT("SCreateCharacterConfigTreeItem_Edit", "Edit"))
+                   ]
+               ]
+            // clang-format on
+            ;
     }
 
-    if (ItemData->ItemKeys.IsEmpty()) {
-      if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[L_InlineEditableTextBlock_Ptr.ToSharedRef()];
-      }
-    } else {
-      if (InColumnName == SCreateCharacterTree::G_Name) {
-        L_Box->AddSlot().AutoWidth()[L_InlineEditableTextBlock_Ptr.ToSharedRef()];
-      } else if (InColumnName == SCreateCharacterTree::G_Value) {
-        L_Box->AddSlot().FillWidth(1.0f)[
-
-            SNew(SSlider)
-                .Value(Slider_Value)
-                .MaxValue(ItemData->MaxValue)
-                .MinValue(ItemData->MinValue)
-                .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
-
-        ];
-      }
-    }
-    return L_Box.ToSharedRef();
+    return SNew(SHorizontalBox);
   }
 
   virtual int32 DoesItemHaveChildren() const override {
@@ -85,6 +105,8 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
   void On_FloatValueChanged(float In_Value) {
     Slider_Value = In_Value;
+    if (ItemData)
+      OnModifyWeights.ExecuteIfBound(ItemData, Slider_Value);
     UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
   }
 
@@ -147,7 +169,9 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
   SCreateCharacterTree::TreeVirwWeightItemType ItemData;
   TWeakObjectPtr<UDoodleCreateCharacterConfig> Config_Data;
+  FDoodleModifyWeights OnModifyWeights;
   float Slider_Value;
+  FDoodleTreeEdit OnEditItem;
 
   FName Item_Name;
 };
@@ -162,8 +186,9 @@ const FName SCreateCharacterTree::G_Name{"Name"};
 const FName SCreateCharacterTree::G_Value{"Value"};
 
 void SCreateCharacterTree::Construct(const FArguments& Arg) {
-  Config     = Arg._CreateCharacterConfig;
-  OnEditItem = Arg._OnEditItem;
+  Config          = Arg._CreateCharacterConfig;
+  OnEditItem      = Arg._OnEditItem;
+  OnModifyWeights = Arg._OnModifyWeights;
 
   CreateUITree();
 
@@ -200,7 +225,7 @@ TSharedRef<SDockTab> SCreateCharacterTree::OnSpawnAction(const FSpawnTabArgs& Sp
 }
 
 TSharedRef<class ITableRow> SCreateCharacterTree::CreateCharacterConfigTreeData_Row(TreeVirwWeightItemType In_Value, const TSharedRef<class STableViewBase>& In_Table) {
-  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value);
+  return SNew(SCreateCharacterConfigTreeItem, In_Table).ItemData(In_Value).OnEditItem(OnEditItem).OnModifyWeights(OnModifyWeights);
 }
 
 void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWeightItemType In_Value, TreeVirwWeightDataType& In_List) {
@@ -237,7 +262,7 @@ void SCreateCharacterTree::On_SelectionChanged(TreeVirwWeightItemType TreeItem, 
 }
 
 void SCreateCharacterTree::On_MouseButtonDoubleClick(TreeVirwWeightItemType TreeItem) {
-  UE_LOG(LogTemp, Warning, TEXT("Edit: %s"), *TreeItem->ShowName.ToString());
+  // UE_LOG(LogTemp, Warning, TEXT("Edit: %s"), *TreeItem->ShowName.ToString());
   TreeItem->OnRenameRequested.ExecuteIfBound();
 }
 
@@ -282,6 +307,7 @@ void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
     CurrentSelect->ItemKeys.Add(*L_Key);
   }
   this->RebuildList();
+  OnEditItem.ExecuteIfBound(CurrentSelect);
 }
 
 void SCreateCharacterTree::CreateUITree() {
@@ -321,6 +347,7 @@ void SCreateCharacterTree::CreateUITree() {
     L_Ptr->MaxValue   = i.MaxValue;
     L_Ptr->MinValue   = i.MinValue;
     L_Ptr->ConfigNode = &i;
+    L_Ptr->ShowName   = i.ShowUIName;
     L_Fun(L_Ptr, L_Config, i.Childs);
   }
 }
