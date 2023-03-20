@@ -11,6 +11,11 @@
 #include "Doodle/CreateCharacter/CoreData/DoodleCreateCharacterConfig.h"
 
 #define LOCTEXT_NAMESPACE "SCreateCharacterConfigTreeItem"
+
+FDoodleCreateCharacterConfigUINode& UCreateCharacterMianTreeItem::Get() {
+  return Config->ListTrees[ConfigNode_Index];
+}
+
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
   using Super = SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType>;
@@ -62,15 +67,15 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
       return L_Box.ToSharedRef();
     }
 
-    if (InColumnName == SCreateCharacterTree::G_Value && ItemData && ItemData->ConfigNode && !ItemData->ConfigNode->Keys.IsEmpty()) {
+    if (InColumnName == SCreateCharacterTree::G_Value && ItemData && *ItemData && !ItemData->Get().Keys.IsEmpty()) {
       return SNew(SHorizontalBox)
              // clang-format off
                + SHorizontalBox::Slot().FillWidth(1.0f)
                [
                  SNew(SSlider)
-                 .Value(ItemData->ConfigNode->Value)
-                 .MaxValue(ItemData->ConfigNode->MaxValue)
-                 .MinValue(ItemData->ConfigNode->MinValue)
+                 .Value(ItemData->Get().Value)
+                 .MaxValue(ItemData->Get().MaxValue)
+                 .MinValue(ItemData->Get().MinValue)
                  .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
                ] 
                + SHorizontalBox::Slot()
@@ -102,7 +107,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   };
 
   void On_FloatValueChanged(float In_Value) {
-    ItemData->ConfigNode->Value = In_Value;
+    ItemData->Get().Value = In_Value;
     if (ItemData)
       OnModifyWeights.ExecuteIfBound(ItemData);
     // UE_LOG(LogTemp, Warning, TEXT("FileManipulation: %f"), In_Value);
@@ -116,7 +121,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   void OnItemNameEditing() {
   }
   FText Get_ItemName() {
-    return FText::FromName((ItemData && ItemData->ConfigNode) ? ItemData->ConfigNode->ShowUIName : FName{});
+    return FText::FromString((ItemData && *ItemData && !ItemData->Get().ShowUIName.IsEmpty()) ? ItemData->Get().ShowUIName : FString{TEXT("None")});
   }
 
   bool OnVerifyItemNameChanged(const FText& InText, FText& OutErrorMessage) {
@@ -130,9 +135,9 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
       OutErrorMessage = LOCTEXT("EmptyVirtualBoneName_Error", "Virtual bones must have a name!");
       bVerifyName     = false;
     } else {
-      if (InTextTrimmed != ItemData->ConfigNode->ShowUIName.ToString()) {
+      if (InTextTrimmed != ItemData->Get().ShowUIName) {
         // 判断是否存在
-        bVerifyName = !(ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->ConfigNode, InTextTrimmed) : true;
+        bVerifyName = !(ItemData && Config_Data.IsValid()) ? Config_Data.Get()->Has_UI_ShowName(ItemData->Get_Index(), InTextTrimmed) : true;
 
         // Needs to be checked on verify.
         if (!bVerifyName) {
@@ -148,14 +153,13 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
 
   void OnCommitItemBoneName(const FText& InText, ETextCommit::Type CommitInfo) {
     FString NewNameString = FText::TrimPrecedingAndTrailing(InText).ToString();
-    FName NewName(*NewNameString);
 
     // 通知所有到更改
 
     // if (!ItemData || !ItemData->ConfigNode || !Config_Data.IsValid())
     //   return;
-    if (ItemData && ItemData->ConfigNode && Config_Data.IsValid())
-      Config_Data.Get()->Rename_UI_ShowName(ItemData->ConfigNode, NewName);
+    if (ItemData && *ItemData && Config_Data.IsValid())
+      Config_Data.Get()->Rename_UI_ShowName(*ItemData, NewNameString);
   }
   FSlateFontInfo GetTextFont() const {
     return FAppStyle::GetWidgetStyle<FTextBlockStyle>("SkeletonTree.NormalFont").Font;
@@ -236,7 +240,7 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
         FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
     );
     // 绑定骨骼
-    if (CurrentSelect && CurrentSelect->ConfigNode && CurrentSelect->ConfigNode->Parent != INDEX_NONE) {
+    if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Parent != INDEX_NONE) {
       L_Builder.AddSubMenu(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4_Tip", "Binding Bone"),
@@ -245,7 +249,7 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
     }
 
     // 删除
-    if (CurrentSelect && CurrentSelect->ConfigNode)
+    if (CurrentSelect && *CurrentSelect)
       L_Builder.AddMenuEntry(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Remove"),
           LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Remove"), FSlateIcon{"Subtitle", "EventIcon"},
@@ -296,13 +300,13 @@ void SCreateCharacterTree::AddBoneTreeMenu(FMenuBuilder& In_Builder) {
 void SCreateCharacterTree::Add_TreeNode(const FName& In_Bone_Name) {
   if (!CurrentSelect)
     return;
-  //if (!CurrentSelect->Childs.IsEmpty())
-  //  return;
+  // if (!CurrentSelect->Childs.IsEmpty())
+  //   return;
 
   UDoodleCreateCharacterConfig* L_Config = Config.Get();
   if (!L_Config) return;
 
-  TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE);
+  TOptional<FString> L_Key = L_Config->Add_ConfigNode(In_Bone_Name, (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE);
 
   if (L_Key) {
     this->RebuildList();
@@ -326,22 +330,23 @@ void SCreateCharacterTree::CreateUITree() {
       // if (L_Nodes.Childs.IsEmpty()) continue;
 
       SCreateCharacterTree::TreeVirwWeightItemType L_Ptr =
-          InParent->Childs.Add_GetRef(MakeShared<SCreateCharacterTree::TreeVirwWeightItemType::ElementType>());
+          InParent->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>(L_Config));
       // 添加子项
-      L_Ptr->ConfigNode = &L_Nodes;
+      L_Ptr->Set(i);
       L_Fun(L_Ptr, InConfig, L_Nodes.Childs);
     }
   };
 
   CreateCharacterConfigTreeData.Empty(L_Config->ListConfigNode.Num());
-  for (auto&& i : L_Config->ListTrees) {
-    if (i.Parent != INDEX_NONE) {
+  for (auto i = 0; i < L_Config->ListTrees.Num(); ++i) {
+    auto&& L_Node = L_Config->ListTrees[i];
+    if (L_Node.Parent != INDEX_NONE) {
       continue;
     }
     TreeVirwWeightItemType L_Ptr =
-        CreateCharacterConfigTreeData.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>());
-    L_Ptr->ConfigNode = &i;
-    L_Fun(L_Ptr, L_Config, i.Childs);
+        CreateCharacterConfigTreeData.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>(L_Config));
+    L_Ptr->Set(i);
+    L_Fun(L_Ptr, L_Config, L_Node.Childs);
   }
 }
 
@@ -351,20 +356,21 @@ void SCreateCharacterTree::AddBone() {
   if (!L_Config)
     return;
 
-  FDoodleCreateCharacterConfigUINode* L_UI_Node = L_Config->Add_TreeNode(
-      (CurrentSelect && CurrentSelect->ConfigNode) ? L_Config->ListTrees.Find(*CurrentSelect->ConfigNode) : INDEX_NONE
+  int32 L_UI_Node = L_Config->Add_TreeNode(
+      (CurrentSelect && *CurrentSelect) ? CurrentSelect->Get_Index() : INDEX_NONE
   );
-  if (!L_UI_Node)
+
+  if (L_UI_Node == INDEX_NONE)
     return;
   const bool L_Has_Parent{CurrentSelect};
 
   TreeVirwWeightItemType L_Ptr{
-      L_Has_Parent ? CurrentSelect->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>())
-                   : MakeShared<TreeVirwWeightItemType::ElementType>()};
+      L_Has_Parent ? CurrentSelect->Childs.Add_GetRef(MakeShared<TreeVirwWeightItemType::ElementType>(L_Config))
+                   : MakeShared<TreeVirwWeightItemType::ElementType>(L_Config)};
 
   if (!L_Has_Parent) CreateCharacterConfigTreeData.Add(L_Ptr);
 
-  L_Ptr->ConfigNode = L_UI_Node;
+  L_Ptr->Set(L_UI_Node);
 
   this->RequestTreeRefresh();
   if (!L_Has_Parent) {
@@ -381,10 +387,10 @@ void SCreateCharacterTree::Delete_UiTreeNode() {
 
   if (!CurrentSelect)
     return;
-  if (!CurrentSelect->ConfigNode)
+  if (!*CurrentSelect)
     return;
 
-  if (!L_Config->Delete_Ui_Node(CurrentSelect->ConfigNode))
+  if (!L_Config->Delete_Ui_Node(CurrentSelect->Get_Index()))
     return;
 
   CreateUITree();

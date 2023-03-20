@@ -15,14 +15,29 @@ class UCreateCharacterMianTreeItem;
 DECLARE_DELEGATE_OneParam(FDoodleTreeEdit, TSharedPtr<UCreateCharacterMianTreeItem>);
 
 class UCreateCharacterMianTreeItem {
- public:
-  TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+ private:
+  TObjectPtr<UDoodleCreateCharacterConfig> Config;
+  int32 ConfigNode_Index{};
 
-  FDoodleCreateCharacterConfigUINode* ConfigNode{};
+ public:
+  UCreateCharacterMianTreeItem(UDoodleCreateCharacterConfig* In_Config) : Config(In_Config){};
+
+
+  FDoodleCreateCharacterConfigUINode& Get();
+  inline int32 Get_Index() { return ConfigNode_Index; };
+  inline void Set(int32 In_Index) {
+    ConfigNode_Index = In_Index;
+  };
+
+  operator bool() const {
+    return ConfigNode_Index != INDEX_NONE;
+  }
 
   DECLARE_DELEGATE(FOnRenameRequested);
-
   FOnRenameRequested OnRenameRequested;
+  TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+
+ private:
 };
 
 class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTreeItem>> {
@@ -62,7 +77,6 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
   void AddBoneTreeMenu(FMenuBuilder& In_Builder);
 
   void Add_TreeNode(const FName& In_Bone_Name);
-
 
   void CreateUITree();
 

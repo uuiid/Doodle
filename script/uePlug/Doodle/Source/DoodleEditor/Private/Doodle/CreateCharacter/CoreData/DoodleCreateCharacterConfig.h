@@ -22,7 +22,7 @@ struct FDoodleCreateCharacterConfigUINode {
 
   FDoodleCreateCharacterConfigUINode() = default;
 
-  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FName In_ShowUIName, TArray<FString> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
+  FDoodleCreateCharacterConfigUINode(int32 In_Parent, FString In_ShowUIName, TArray<FString> In_Keys, float In_MaxValue, float In_MinValue, float In_Value)
       : Parent(In_Parent),
         Childs(),
         ShowUIName(MoveTemp(In_ShowUIName)),
@@ -38,7 +38,7 @@ struct FDoodleCreateCharacterConfigUINode {
 
   // 显示ui名称
   UPROPERTY();
-  FName ShowUIName{};
+  FString ShowUIName{};
 
   // 树中配置节点id名称
   UPROPERTY();
@@ -74,12 +74,12 @@ class UDoodleCreateCharacterConfig : public UObject {
   UPROPERTY();
   TArray<FDoodleCreateCharacterConfigUINode> ListTrees;
 
-  FDoodleCreateCharacterConfigUINode* Add_TreeNode(int32 In_Parent);
+  int32 Add_TreeNode(int32 In_Parent);
   TOptional<FString> Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent);
 
-  bool Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const;
-  void Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName);
-  bool Delete_Ui_Node(const FDoodleCreateCharacterConfigUINode* In_Node);
+  bool Has_UI_ShowName(int32 In_Node, const FString& InName) const;
+  void Rename_UI_ShowName(int32 In_Node, const FString& InName);
+  bool Delete_Ui_Node(int32 In_Node);
 
   TTuple<FName, FTransform> Evaluate(const FString& In_BoneName, const float InValue) const;
 
@@ -91,4 +91,6 @@ class UDoodleCreateCharacterConfig : public UObject {
   // 骨骼网格体引用
   UPROPERTY();
   TObjectPtr<USkeletalMesh> SkeletalMesh;
+
+  int32 TreeIndex;
 };

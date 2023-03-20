@@ -216,11 +216,11 @@ void SCharacterEditorViewport::MoveBoneTransform(const TSharedPtr<UCreateCharact
   if (!ShowSkeletaMesh) return;
   if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
   if (!ShowAnimSequence) return;
-  if (!In_EditBone->ConfigNode) return;
+  if (!*In_EditBone) return;
 
   ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
-  for (auto&& i : In_EditBone->ConfigNode->Keys) {
-    auto&& [L_Name, L_Tran] = L_Config->Evaluate(i, In_EditBone->ConfigNode->Value);
+  for (auto&& i : In_EditBone->Get().Keys) {
+    auto&& [L_Name, L_Tran] = L_Config->Evaluate(i, In_EditBone->Get().Value);
     if (!L_Name.IsNone())
       ShowAnimSequence->AddKeyToSequence(0.0f, L_Name, L_Tran);
   }

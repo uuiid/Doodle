@@ -1,12 +1,13 @@
 #include "DoodleCreateCharacterConfig.h"
 
-FDoodleCreateCharacterConfigUINode* UDoodleCreateCharacterConfig::Add_TreeNode(int32 In_Parent) {
+int32 UDoodleCreateCharacterConfig::Add_TreeNode(int32 In_Parent) {
+  ++TreeIndex;
   int32 L_Index             = ListTrees.Emplace();
 
   ListTrees[L_Index].Parent = In_Parent;
   if (In_Parent != INDEX_NONE) ListTrees[In_Parent].Childs.Add(L_Index);
-  ListTrees[L_Index].ShowUIName = {"Add_Bone"};
-  return &ListTrees[L_Index];
+  ListTrees[L_Index].ShowUIName = {FString{"AddBone"} + FString::FromInt(TreeIndex)};
+  return L_Index;
 }
 
 TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent) {
@@ -42,39 +43,33 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
   return L_Key;
 }
 
-bool UDoodleCreateCharacterConfig::Has_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FString& InName) const {
-  if (!In_Node)
+bool UDoodleCreateCharacterConfig::Has_UI_ShowName(int32 In_Node, const FString& InName) const {
+  if (In_Node != INDEX_NONE)
     return true;
 
-  if (In_Node->Parent != INDEX_NONE) {
-    for (auto&& i : ListTrees[In_Node->Parent].Childs) {
-      if (ListTrees[i].ShowUIName.ToString() == InName) return true;
+  if (ListTrees[In_Node].Parent != INDEX_NONE) {
+    for (auto&& i : ListTrees[ListTrees[In_Node].Parent].Childs) {
+      if (ListTrees[i].ShowUIName == InName) return true;
     }
   } else {
     for (auto&& i : ListTrees) {
-      if (i.Parent == INDEX_NONE && i.ShowUIName.ToString() == InName) return true;
+      if (i.Parent == INDEX_NONE && i.ShowUIName == InName) return true;
     }
   }
   return false;
 }
 
-void UDoodleCreateCharacterConfig::Rename_UI_ShowName(const FDoodleCreateCharacterConfigUINode* In_Node, const FName& InName) {
-  if (!In_Node)
-    return;
-
-  auto L_Index = ListTrees.Find(*In_Node);
-  if (L_Index != INDEX_NONE) {
-    ListTrees[L_Index].ShowUIName = InName;
+void UDoodleCreateCharacterConfig::Rename_UI_ShowName(int32 In_Node, const FString& InName) {
+  if (In_Node != INDEX_NONE) {
+    ListTrees[In_Node].ShowUIName = InName;
   }
 }
 
-bool UDoodleCreateCharacterConfig::Delete_Ui_Node(const FDoodleCreateCharacterConfigUINode* In_Node) {
+bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
   if (!In_Node)
     return false;
 
-  int32 L_Index = ListTrees.Find(*In_Node);
-
-  if (L_Index == INDEX_NONE)
+  if (In_Node == INDEX_NONE)
     return false;
 
   TFunction<void(int32)> L_Get_Node_Tree_List{};
@@ -86,7 +81,7 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(const FDoodleCreateCharacterCo
     }
   };
 
-  L_Get_Node_Tree_List(L_Index);
+  L_Get_Node_Tree_List(In_Node);
 
   L_Remove_List.Sort();
 
@@ -97,8 +92,8 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(const FDoodleCreateCharacterCo
   }
 
   // 去除父引用
-  if (In_Node->Parent != INDEX_NONE)
-    ListTrees[In_Node->Parent].Childs.Remove(L_Index);
+  if (ListTrees[In_Node].Parent != INDEX_NONE)
+    ListTrees[ListTrees[In_Node].Parent].Childs.Remove(In_Node);
 
   TFunction<void(int32, int32)> L_Build_Tree{};
   TArray<FDoodleCreateCharacterConfigUINode> L_ListTree;
