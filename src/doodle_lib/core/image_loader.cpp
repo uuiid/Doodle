@@ -237,4 +237,10 @@ void image_loader_ns::image_loader_init::init() const {
   });
 }
 
+DOODLE_REGISTER_BEGIN(){
+  entt::meta<image_loader_ns::image_loader_init>()
+      .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
+      .func<&image_loader_ns::image_loader_init::init>("init"_hs);
+};
+
 }  // namespace doodle
