@@ -8,10 +8,7 @@ namespace doodle::maya_plug {
 namespace {
 constexpr char afterimage_comm_name[] = "doodle_afterimage";
 }
-class afterimage_comm : public TemplateAction<
-                            afterimage_comm,
-                            afterimage_comm_name,
-                            null_syntax_t> {
+class afterimage_comm : public TemplateAction<afterimage_comm, afterimage_comm_name, null_syntax_t> {
   class impl;
   std::unique_ptr<impl> p_i;
 

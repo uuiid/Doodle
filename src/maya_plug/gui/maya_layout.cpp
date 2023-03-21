@@ -30,10 +30,8 @@ class maya_layout::impl {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    window_flags |= ImGuiWindowFlags_NoTitleBar |
-                    ImGuiWindowFlags_NoCollapse |
-                    ImGuiWindowFlags_NoResize |
-                    ImGuiWindowFlags_NoMove;
+    window_flags |=
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
     // 如果使用 ImGuiDockNodeFlags_PassthruCentralNode 处理, 那么我们就不使用背景
@@ -44,11 +42,7 @@ class maya_layout::impl {
      * 都会丢失父窗口并脱离, 我们将无法保留停靠窗口和非停靠窗口之间的关系, 这将导致窗口被困在边缘,
      * 永远的不可见
      */
-    ImGui::Begin(
-        "Doodle_DockSpace",
-        nullptr,
-        window_flags
-    );
+    ImGui::Begin("Doodle_DockSpace", nullptr, window_flags);
     ImGui::PopStyleVar(3);
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
     ImGuiIO &io                               = ImGui::GetIO();
@@ -84,9 +78,7 @@ class maya_layout::impl {
     ImGui::End();
   }
 };
-maya_layout::maya_layout()
-    : p_i(std::make_unique<impl>()) {
-}
+maya_layout::maya_layout() : p_i(std::make_unique<impl>()) {}
 bool maya_layout::tick() {
   p_i->builder_dock();
   if (!p_i->inited) {
@@ -96,7 +88,7 @@ bool maya_layout::tick() {
     make_handle().emplace<gui::gui_windows>(std::make_shared<create_sim_cloth>());
     make_handle().emplace<gui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
   }
-  return false ;
+  return false;
 }
 
 maya_layout::~maya_layout() = default;
@@ -111,7 +103,6 @@ void maya_menu::menu_windows() {
   if (dear::MenuItem(dem_cloth_to_fbx::name.data()))
     make_handle().emplace<dgui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
 }
-void maya_menu::menu_tool() {
-}
+void maya_menu::menu_tool() {}
 }  // namespace maya_plug
 }  // namespace doodle

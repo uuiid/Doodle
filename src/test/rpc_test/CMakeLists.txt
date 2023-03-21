@@ -4,7 +4,7 @@ target_sources(test_main
         PRIVATE
         base_rpc.cpp
         base_server.cpp
-)
+        )
 
 add_test(NAME rpc_1
         COMMAND powershell

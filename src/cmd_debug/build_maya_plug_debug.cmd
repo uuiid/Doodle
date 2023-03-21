@@ -12,6 +12,6 @@ echo -----------------build maya 2018--------------------
 --build ^
 --preset debug_maya_plug --target doodle_maya
 
-robocopy %my_pwd%\build\doodle_maya\bin %my_pwd%\build\doodle_maya\plug\maya\plug-ins *.dll > %tmp%/build_maya_plug_debug.txt
+@REM robocopy %my_pwd%\build\doodle_maya\bin %my_pwd%\build\doodle_maya\plug\maya\plug-ins *.dll %tmp%/build_maya_plug_debug.txt
 
 exit 0

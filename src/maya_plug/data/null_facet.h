@@ -19,4 +19,4 @@ class null_facet : public doodle::detail::app_facet_interface {
   void deconstruction() override;
 };
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug

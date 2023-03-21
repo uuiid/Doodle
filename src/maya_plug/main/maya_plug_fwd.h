@@ -33,9 +33,7 @@ class TemplateAction : public MPxCommand {
  public:
   TemplateAction() = default;
 
-  static void* creator() {
-    return new ActionClass;
-  }
+  static void* creator() { return new ActionClass; }
   template <class FNPLUG>
   static MStatus registerCommand(FNPLUG& obj) {
     return obj.registerCommand(CommandName, creator, CommandSyntax);
@@ -44,9 +42,7 @@ class TemplateAction : public MPxCommand {
   static MStatus deregisterCommand(FNPLUG& obj) {
     return obj.deregisterCommand(CommandName);
   }
-  [[nodiscard]] bool hasSyntax() const override {
-    return true;
-  };
+  [[nodiscard]] bool hasSyntax() const override { return true; };
 };
 
 }  // namespace doodle
@@ -65,37 +61,27 @@ class d_str {
  public:
   std::string p_u8_str{};
   template <class MStr, std::enable_if_t<std::is_same_v<MString, MStr>, bool> = true>
-  explicit d_str(const MStr& in)
-      : p_u8_str(in.asUTF8()){};
+  explicit d_str(const MStr& in) : p_u8_str(in.asUTF8()){};
 
   //  explicit d_str(const MString& in)
   //      : p_u8_str(in.asUTF8()){};
 
-  explicit d_str(std::string in_u8_str)
-      : p_u8_str(std::move(in_u8_str)) {
-  }
+  explicit d_str(std::string in_u8_str) : p_u8_str(std::move(in_u8_str)) {}
 
   inline operator MString() const {
     MString k_r{};
     k_r.setUTF8(p_u8_str.c_str());
     return k_r;
   }
-  inline operator std::string() const {
-    return p_u8_str;
-  }
-  [[nodiscard]] inline std::string str() const {
-    return p_u8_str;
-  }
+  inline operator std::string() const { return p_u8_str; }
+  [[nodiscard]] inline std::string str() const { return p_u8_str; }
 };
 
 /**
  * @brief 检查maya的返回状态
  */
-#define DOODLE_MAYA_CHICK(in_status)      \
-  if (!in_status)                         \
-  throw_exception(maya_error{             \
-      make_error(in_status.statusCode()), \
-      fmt::to_string(in_status)})
+#define DOODLE_MAYA_CHICK(in_status) \
+  if (!in_status) throw_exception(maya_error{make_error(in_status.statusCode()), fmt::to_string(in_status)})
 
 void open_windows();
 
@@ -111,10 +97,7 @@ template <>
 struct formatter<::doodle::maya_plug::maya_error> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const ::doodle::maya_plug::maya_error& in_, FormatContext& ctx) -> decltype(ctx.out()) {
-    return formatter<string_view>::format(
-        boost::diagnostic_information(in_),
-        ctx
-    );
+    return formatter<string_view>::format(boost::diagnostic_information(in_), ctx);
   }
 };
 

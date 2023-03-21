@@ -15,6 +15,9 @@
 #include "SequenceRecorderSettings.h"  // 镜头录制设置
 #include "ThumbnailHelpers.h"          // 动画场景播放
 #include "AssetEditorModeManager.h"    // 工具编辑
+
+#include "CreateCharacterTree.h"
+
 FCharacterEditorPreviewScene::FCharacterEditorPreviewScene()
     : FAdvancedPreviewScene(
 
@@ -175,8 +178,10 @@ void SCharacterEditorViewport::MoveBoneTransform(const FName& In_Bone, float In_
   if (!ShowAnimSequence) return;
 
   UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
+  if (!L_Config)
+    return;
 
-  //ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, In_Value) : FTransform{FVector::OneVector * In_Value});
+  // ShowAnimSequence->AddKeyToSequence(0.0f, In_Bone, L_Config ? L_Config->Evaluate(In_Bone, In_Value) : FTransform{FVector::OneVector * In_Value});
   ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
   // ShowSkeletaMesh->RefreshBoneTransforms();
   // ShowSkeletaMesh->UpdateBounds();
@@ -201,6 +206,25 @@ void SCharacterEditorViewport::MoveBoneTransform(const FName& In_Bone, float In_
   // FVector L_TMP                    = L_Tran + FVector{0, In_Value, 0};
   // L_SK_Com->SetBoneLocationByName(In_Bone, L_TMP, EBoneSpaces::ComponentSpace);
   // L_SK_Com->MarkRefreshTransformDirty();
+  this->GetViewportClient()->Invalidate();
+}
+
+void SCharacterEditorViewport::MoveBoneTransform(const TSharedPtr<UCreateCharacterMianTreeItem>& In_EditBone) {
+  UDoodleCreateCharacterConfig* L_Config = DoodleCreateCharacterConfigAttr.Get();
+  if (!L_Config)
+    return;
+  if (!ShowSkeletaMesh) return;
+  if (!ShowSkeletaMesh->GetSkeletalMeshAsset()) return;
+  if (!ShowAnimSequence) return;
+  if (!*In_EditBone) return;
+
+  ShowSkeletaMesh->EnablePreview(true, ShowAnimSequence);
+  for (auto&& i : In_EditBone->Get().Keys) {
+    auto&& [L_Name, L_Tran] = L_Config->Evaluate(i, In_EditBone->Get().Value);
+    if (!L_Name.IsNone())
+      ShowAnimSequence->AddKeyToSequence(0.0f, L_Name, L_Tran);
+  }
+
   this->GetViewportClient()->Invalidate();
 }
 

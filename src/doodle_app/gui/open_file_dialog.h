@@ -11,10 +11,7 @@ namespace doodle::gui {
 /**
  * @brief
  */
-class DOODLE_APP_API file_panel
-    : public base_windows<
-          dear::PopupModal,
-          file_panel> {
+class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_panel> {
   class impl;
   class path_info;
   enum class sort_by : std::int16_t {

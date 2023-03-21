@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_app/doodle_app_fwd.h>
+
 #include <gui/base/base_window.h>
 namespace doodle::gui {
 
@@ -20,4 +21,3 @@ class short_cut : public detail::windows_tick_interface {
 };
 
 }  // namespace doodle::gui
-

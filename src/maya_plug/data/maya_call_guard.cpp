@@ -5,6 +5,5 @@
 #include "maya_call_guard.h"
 
 namespace doodle {
-namespace maya_plug {
-}  // namespace maya_plug
+namespace maya_plug {}  // namespace maya_plug
 }  // namespace doodle

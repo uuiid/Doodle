@@ -14,6 +14,7 @@ class SCurveEditorTree;
 class IPersonaPreviewScene;
 class SCurveEditorPanel;
 class FTabManager;
+class UDoodleCreateCharacterConfig;
 
 struct FDoodleCreateCharacterConfigNode;
 
@@ -21,9 +22,11 @@ class UCreateCharacterMianTreeItem;
 
 class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:
-  SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor) {}
-  SLATE_ARGUMENT(TSharedPtr<ITimeSliderController>, ExternalTimeSliderController)
+  SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor)
+      : _CreateCharacterConfigConfig(),
+        _TabManager() {}
 
+  SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, CreateCharacterConfigConfig)
   SLATE_ARGUMENT(TSharedPtr<FTabManager>, TabManager)
   SLATE_END_ARGS()
 
@@ -31,20 +34,20 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   void EditCurve(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Node);
 
-  void ResetCurves();
-  void AddCurve(
-      const FText& InCurveDisplayName, const FLinearColor& InCurveColor, ERawCurveTrackTypes InType,
-      FSimpleDelegate InOnCurveModified
-  );
-  void RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex);
   void ZoomToFit();
 
  private:
+  void ResetCurves();
+  void AddCurve(
+      const FRichCurveEditInfo& In_Info
+  );
   // 为这个曲线编辑器建立工具条
   TSharedRef<SWidget> MakeToolbar(TSharedRef<SCurveEditorPanel> InEditorPanel);
   TSharedPtr<SWidget> OnContextMenuOpening();
 
  private:
+  TObjectPtr<UDoodleCreateCharacterConfig> CreateCharacterConfigConfig;
+
   /** The actual curve editor */
   TSharedPtr<FCurveEditor> CurveEditor;
 
@@ -53,4 +56,6 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
 
   /** The tree widget in the curve editor */
   TSharedPtr<SCurveEditorTree> CurveEditorTree;
+
+  TSharedPtr<UCreateCharacterMianTreeItem> CurrentSelect;
 };

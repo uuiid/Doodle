@@ -3,9 +3,11 @@
 //
 
 #include <doodle_app/gui/base/base_window.h>
+
+#include <maya_plug/configure/static_value.h>
+
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
-#include <maya_plug/configure/static_value.h>
 
 namespace doodle::maya_plug {
 /**
@@ -23,8 +25,7 @@ namespace doodle::maya_plug {
  * * 去除贼健康错误
  *
  */
-class comm_check_scenes
-    : public gui::base_windows<dear::Begin, comm_check_scenes> {
+class comm_check_scenes : public gui::base_windows<dear::Begin, comm_check_scenes> {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;

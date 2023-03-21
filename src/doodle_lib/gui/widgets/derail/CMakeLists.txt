@@ -1,7 +1,7 @@
 target_sources(doodle_lib
-    PUBLIC
-    all_user_combox.h
+        PUBLIC
+        all_user_combox.h
 
-    PRIVATE
-    all_user_combox.cpp
-)
+        PRIVATE
+        all_user_combox.cpp
+        )

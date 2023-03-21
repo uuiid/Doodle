@@ -9,8 +9,7 @@
 
 namespace doodle::gui {
 
-class DOODLE_APP_API create_project_dialog
-    : public base_windows<dear::Begin, create_project_dialog> {
+class DOODLE_APP_API create_project_dialog : public base_windows<dear::Begin, create_project_dialog> {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -25,8 +24,7 @@ class DOODLE_APP_API create_project_dialog
   void render();
 };
 
-class DOODLE_APP_API close_exit_dialog
-    : public base_windows<dear::PopupModal, close_exit_dialog> {
+class DOODLE_APP_API close_exit_dialog : public base_windows<dear::PopupModal, close_exit_dialog> {
   class impl;
   std::unique_ptr<impl> p_i;
 

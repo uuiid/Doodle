@@ -13,10 +13,10 @@ constexpr char name[] = "doodle_sequence_to_blend_shape_ref";
 MSyntax syntax();
 }  // namespace sequence_to_blend_shape_ref_comm_ns
 
-class sequence_to_blend_shape_ref_comm : public doodle::TemplateAction<
-                                             sequence_to_blend_shape_ref_comm,
-                                             sequence_to_blend_shape_ref_comm_ns::name,
-                                             sequence_to_blend_shape_ref_comm_ns::syntax> {
+class sequence_to_blend_shape_ref_comm
+    : public doodle::TemplateAction<
+          sequence_to_blend_shape_ref_comm, sequence_to_blend_shape_ref_comm_ns::name,
+          sequence_to_blend_shape_ref_comm_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);

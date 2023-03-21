@@ -3,7 +3,9 @@
 //
 
 #include "database_edit.h"
+
 #include <doodle_core/metadata/metadata.h>
+
 #include <doodle_app/lib_warp/imgui_warp.h>
 
 namespace doodle::gui {
@@ -34,13 +36,9 @@ void database_edit::save_(const entt::handle& in) const {
   DOODLE_CHICK(in.all_of<database>(), doodle_error{"缺失数据库组件"});
   database::save(in);
 }
-database_edit::database_edit()
-    : p_i(std::make_unique<impl>()) {
-}
+database_edit::database_edit() : p_i(std::make_unique<impl>()) {}
 database_edit::~database_edit() = default;
-void database_edit::render(const entt::handle& in) {
-  dear::Text(p_i->show_text);
-}
+void database_edit::render(const entt::handle& in) { dear::Text(p_i->show_text); }
 void database_edit::link_sig(const std::unique_ptr<edit_interface>& in_unique_ptr) {
   p_i->scoped_connection_.emplace_back(in_unique_ptr->data_->edited.connect([this]() {
     this->data_->is_modify = true;
@@ -49,9 +47,11 @@ void database_edit::link_sig(const std::unique_ptr<edit_interface>& in_unique_pt
   }));
 }
 void database_edit::format_() {
-  p_i->show_text = fmt::format(R"(数据 id : {}
+  p_i->show_text = fmt::format(
+      R"(数据 id : {}
 数据状态 {} {}
 )",
-                               p_i->id, p_i->status, p_i->is_edit);
+      p_i->id, p_i->status, p_i->is_edit
+  );
 }
 }  // namespace doodle::gui

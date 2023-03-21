@@ -5,7 +5,7 @@
 
 namespace doodle::database_n {
 template <>
-struct sql_com<doodle::work_task_info, false> {
+struct sql_com<doodle::work_task_info> {
   registry_ptr reg_;
 
   void create_table(conn_ptr& in_ptr);

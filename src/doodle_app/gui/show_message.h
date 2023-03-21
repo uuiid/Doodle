@@ -6,6 +6,7 @@
 
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
+
 #include <string>
 
 namespace doodle::gui {

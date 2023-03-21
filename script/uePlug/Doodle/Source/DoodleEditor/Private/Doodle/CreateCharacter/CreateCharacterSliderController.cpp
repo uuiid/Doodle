@@ -72,14 +72,13 @@ static float GetNextSpacing(uint32 CurrentStep) {
 }
 
 FCreateCharacterSliderController::FCreateCharacterSliderController(
-    const FTimeSliderArgs& InArgs, TSharedPtr<INumericTypeInterface<double>> InSecondaryNumericTypeInterface
+    const FTimeSliderArgs& InArgs
 )
     : TimeSliderArgs(InArgs),
       DistanceDragged(0.0f),
       MouseDragType(DRAG_NONE),
       bPanning(false),
-      DraggedTimeIndex(INDEX_NONE),
-      SecondaryNumericTypeInterface(InSecondaryNumericTypeInterface) {
+      DraggedTimeIndex(INDEX_NONE) {
   ScrubFillBrush       = FAppStyle::GetBrush(TEXT("Sequencer.Timeline.ScrubFill"));
   ScrubHandleUpBrush   = FAppStyle::GetBrush(TEXT("Sequencer.Timeline.VanillaScrubHandleUp"));
   ScrubHandleDownBrush = FAppStyle::GetBrush(TEXT("Sequencer.Timeline.VanillaScrubHandleDown"));
@@ -176,8 +175,8 @@ void FCreateCharacterSliderController::DrawTicks(
   FPaintGeometry PaintGeometry   = InArgs.AllottedGeometry.ToPaintGeometry();
   FSlateFontInfo SmallLayoutFont = FCoreStyle::GetDefaultFontStyle("Regular", 8);
 
-  double MajorGridStep           = 0.0;
-  int32 MinorDivisions           = 0;
+  double MajorGridStep           = 1.0;
+  int32 MinorDivisions           = 1;
   // if (!Timeline->GetGridMetrics(InArgs.AllottedGeometry.Size.X, MajorGridStep, MinorDivisions)) {
   //   return;
   // }
@@ -226,9 +225,9 @@ void FCreateCharacterSliderController::DrawTicks(
       // Compute the size of each tick mark.  If we are half way between to visible values display a slightly larger
       // tick mark
       const float MinorTickHeight = ((MinorDivisions % 2 == 0) && (Step % (MinorDivisions / 2)) == 0) ? 6.0f : 2.0f;
-      const float MinorLinePx = RangeToScreen.InputToLocalX(CurrentMajorLine + Step * MajorGridStep / MinorDivisions);
+      const float MinorLinePx     = RangeToScreen.InputToLocalX(CurrentMajorLine + Step * MajorGridStep / MinorDivisions);
 
-      LinePoints[0]           = FVector2D(
+      LinePoints[0]               = FVector2D(
           MinorLinePx, InArgs.bMirrorLabels ? 0.0f : FMath::Abs(InArgs.AllottedGeometry.Size.Y - MinorTickHeight)
       );
       LinePoints[1] = FVector2D(MinorLinePx, LinePoints[0].Y + MinorTickHeight);
@@ -320,13 +319,6 @@ int32 FCreateCharacterSliderController::OnPaintTimeSlider(
       // Draw the current time next to the scrub handle
       FString FrameString =
           TimeSliderArgs.NumericTypeInterface->ToString(TimeSliderArgs.ScrubPosition.Get().GetFrame().Value);
-
-      if (GetDefault<UPersonaOptions>()->bTimelineDisplayFormatSecondary) {
-        // @TODO: need another numeric type interface??
-        FString SecondaryString =
-            SecondaryNumericTypeInterface->ToString(TimeSliderArgs.ScrubPosition.Get().GetFrame().Value);
-        FrameString += TEXT(" (") + SecondaryString + TEXT(")");
-      }
 
       if (GetDefault<UPersonaOptions>()->bTimelineDisplayPercentage) {
         double Percentage = FMath::Clamp(
@@ -443,7 +435,7 @@ int32 FCreateCharacterSliderController::DrawPlaybackRange(
   TRange<FFrameNumber> PlaybackRange = TimeSliderArgs.PlaybackRange.Get();
   FFrameRate TickResolution          = GetTickResolution();
   const float PlaybackRangeL         = RangeToScreen.InputToLocalX(PlaybackRange.GetLowerBoundValue() / TickResolution);
-  const float PlaybackRangeR = RangeToScreen.InputToLocalX(PlaybackRange.GetUpperBoundValue() / TickResolution) - 1;
+  const float PlaybackRangeR         = RangeToScreen.InputToLocalX(PlaybackRange.GetUpperBoundValue() / TickResolution) - 1;
 
   FSlateDrawElement::MakeBox(
       OutDrawElements, LayerId + 1,
@@ -520,7 +512,7 @@ FReply FCreateCharacterSliderController::OnMouseButtonUp(
                                  WidgetOwner.HasMouseCapture() && TimeSliderArgs.AllowZoom;
 
   FScrubRangeToScreen RangeToScreen = FScrubRangeToScreen(TimeSliderArgs.ViewRange.Get(), MyGeometry.Size);
-  FFrameTime MouseTime = ComputeFrameTimeFromMouse(MyGeometry, MouseEvent.GetScreenSpacePosition(), RangeToScreen);
+  FFrameTime MouseTime              = ComputeFrameTimeFromMouse(MyGeometry, MouseEvent.GetScreenSpacePosition(), RangeToScreen);
 
   if (bHandleRightMouseButton) {
     if (!bPanning && DistanceDragged == 0.0f) {
@@ -631,12 +623,12 @@ FReply FCreateCharacterSliderController::OnMouseMove(
         // UAnimMontage* AnimMontage        = Cast<UAnimMontage>(WeakModel.Pin()->GetAnimSequenceBase());
         // bool bChildAnimMontage           = AnimMontage && AnimMontage->HasParentAsset();
 
-        FFrameTime MouseDownFree = ComputeFrameTimeFromMouse(MyGeometry, MouseDownPosition[0], RangeToScreen, false);
+        FFrameTime MouseDownFree         = ComputeFrameTimeFromMouse(MyGeometry, MouseDownPosition[0], RangeToScreen, false);
 
         const FFrameRate FrameResolution = GetTickResolution();
         const bool bLockedPlayRange      = TimeSliderArgs.IsPlaybackRangeLocked.Get();
         const float MouseDownPixel       = RangeToScreen.InputToLocalX(MouseDownFree / FrameResolution);
-        const bool bHitScrubber = GetHitTestScrubberPixelRange(TimeSliderArgs.ScrubPosition.Get(), RangeToScreen)
+        const bool bHitScrubber          = GetHitTestScrubberPixelRange(TimeSliderArgs.ScrubPosition.Get(), RangeToScreen)
                                       .HandleRange.Contains(MouseDownPixel);
         const int32 HitTimeIndex      = HitTestTimes(RangeToScreen, MouseDownPixel);
         const bool bHitTime           = /*!bChildAnimMontage &&*/ HitTimeIndex != INDEX_NONE;
@@ -793,9 +785,9 @@ int32 FCreateCharacterSliderController::OnPaintViewArea(
 
   if (Args.PlaybackRangeArgs.IsSet()) {
     FPaintPlaybackRangeArgs PaintArgs = Args.PlaybackRangeArgs.GetValue();
-    LayerId = DrawPlaybackRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
-    PaintArgs.SolidFillOpacity = 0.2f;
-    LayerId = DrawSelectionRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
+    LayerId                           = DrawPlaybackRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
+    PaintArgs.SolidFillOpacity        = 0.2f;
+    LayerId                           = DrawSelectionRange(AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, RangeToScreen, PaintArgs);
   }
 
   if (Args.bDisplayTickLines) {
@@ -880,7 +872,7 @@ TSharedRef<SWidget> FCreateCharacterSliderController::OpenSetPlaybackRangeMenu(F
   FMenuBuilder MenuBuilder(bShouldCloseWindowAfterMenuSelection, nullptr);
 
   FText CurrentTimeText;
-  CurrentTimeText = FText::FromString(TimeSliderArgs.NumericTypeInterface->ToString(FrameNumber.Value));
+  CurrentTimeText                     = FText::FromString(TimeSliderArgs.NumericTypeInterface->ToString(FrameNumber.Value));
 
   TRange<FFrameNumber> PlaybackRange  = TimeSliderArgs.PlaybackRange.Get();
 

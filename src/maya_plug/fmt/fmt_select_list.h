@@ -3,11 +3,9 @@
 //
 #pragma once
 
-#include <maya/MSelectionList.h>
-
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-
+#include <maya/MSelectionList.h>
 #include <maya/MString.h>
 #include <maya/MStringArray.h>
 
@@ -23,10 +21,7 @@ struct formatter<MSelectionList> : formatter<string_view> {
   auto format(const MSelectionList& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     MStringArray l_array{};
     in_.getSelectionStrings(l_array);
-    return formatter<string_view>::format(
-        to_string(l_array),
-        ctx
-    );
+    return formatter<string_view>::format(to_string(l_array), ctx);
   }
 };
 }  // namespace fmt

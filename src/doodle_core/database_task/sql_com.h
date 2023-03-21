@@ -12,7 +12,22 @@ namespace doodle::database_n {
  *
  * @tparam T
  */
-template <typename T, bool constraint>
-struct sql_com {};
+template <typename T>
+struct sql_com {
+  /// 创建表
+  void create_table(conn_ptr& in_ptr);
+
+  /// 插入组件
+  void insert(conn_ptr& in_ptr, const entt::observer& in_observer);
+  void insert_id(conn_ptr& in_ptr, const entt::observer& in_observer);
+  /// 更新组件
+  void update(conn_ptr& in_ptr, const entt::observer& in_observer);
+  void update_id(conn_ptr& in_ptr, const entt::observer& in_observer);
+  /// 选择组件
+  void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);
+  void select_id(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);
+  /// 销毁组件
+  void destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle);
+};
 
 }  // namespace doodle::database_n

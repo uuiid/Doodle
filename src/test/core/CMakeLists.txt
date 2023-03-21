@@ -10,7 +10,7 @@ target_sources(test_main
         database_sqlite3.cpp
         entt_test.cpp
         regex.cpp
-)
+        )
 
 target_link_libraries(
         test_main

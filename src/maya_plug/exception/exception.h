@@ -4,8 +4,8 @@
 
 #pragma once
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
+#include <doodle_core/logger/logger.h>
 
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -35,12 +35,10 @@ inline bsys::error_code make_error(const MStatus::MStatusCode& in_code) {
 namespace boost::system {
 
 template <>
-struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {
-};
+struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {};
 }  // namespace boost::system
 namespace std {
 
 template <>
-struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {
-};
+struct is_error_code_enum< ::MStatus::MStatusCode> : std::true_type {};
 }  // namespace std

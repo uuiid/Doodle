@@ -4,21 +4,20 @@
 
 #include "maya_tool.h"
 
-#include <maya/MPlug.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MDagPath.h>
-#include <maya/MItDependencyGraph.h>
-#include <maya/MFnSet.h>
-#include <maya/MItSelectionList.h>
 #include <main/maya_plug_fwd.h>
+
+#include <maya/MDagPath.h>
+#include <maya/MFnDagNode.h>
+#include <maya/MFnSet.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
+#include <maya/MPlug.h>
 
 namespace doodle::maya_plug {
 
 MPlug get_plug(const MObject& in_node, const std::string& in_name) {
-  in_node.isNull()
-      ? throw_exception(doodle_error{"传入空节点寻找属性 {}"s, in_name})
-      : void();
+  in_node.isNull() ? throw_exception(doodle_error{"传入空节点寻找属性 {}"s, in_name}) : void();
   MStatus k_s{};
   MPlug l_plug{};
 
@@ -70,9 +69,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   DOODLE_CHICK(!l_plug.isNull(), doodle_error{" {} 无法找到属性 {}", get_node_name(in_node), in_name});
   return l_plug;
 }
-MObject get_shading_engine(const MObject& in_node) {
-  return get_shading_engine(get_dag_path(in_node));
-}
+MObject get_shading_engine(const MObject& in_node) { return get_shading_engine(get_dag_path(in_node)); }
 MObject get_shading_engine(const MDagPath& in_node) {
   MStatus k_s{};
   auto l_path = in_node;
@@ -82,9 +79,10 @@ MObject get_shading_engine(const MDagPath& in_node) {
   DOODLE_MAYA_CHICK(k_s);
 
   MObject obj{};
-  for (MItDependencyGraph i{k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
-       !i.isDone();
-       i.next()) {
+  for (MItDependencyGraph i{
+           k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream,
+           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+       !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(k_s);
     obj = i.currentItem(&k_s);
     //    DOODLE_MAYA_CHICK(k_s);
@@ -101,9 +99,10 @@ MObject get_first_mesh(const MObject& in_node) {
   MObject k_obj = in_node;
   MObject l_r{};
 
-  for (MItDependencyGraph i{k_obj, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream, MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
-       !i.isDone();
-       i.next()) {
+  for (MItDependencyGraph i{
+           k_obj, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream,
+           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+       !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(k_s);
     l_r = i.currentItem(&k_s);
     break;
@@ -149,8 +148,7 @@ void add_child(const MObject& in_praent, MObject& in_child) {
   add_child(get_dag_path(in_praent), get_dag_path(in_child));
 }
 void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
-  if (in_praent == in_child)
-    return;
+  if (in_praent == in_child) return;
 
   MStatus k_s{};
   MFnDagNode k_node{in_praent, &k_s};
@@ -245,10 +243,7 @@ std::string get_node_name_strip_name_space(const MDagPath& in_obj) {
 }
 
 namespace comm_warp {
-MDagPath marge_mesh(
-    const MSelectionList& in_marge_obj,
-    const std::string& in_marge_name
-) {
+MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name) {
   MStatus k_s{};
   MSelectionList k_select{in_marge_obj};
   if (k_select.length(&k_s) > 1) {
@@ -262,8 +257,9 @@ MDagPath marge_mesh(
     }
 
     MStringArray k_r_s{};
-    auto k_name       = fmt::format("{}_export_abc", in_marge_name);
-    std::string l_mel = fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
+    auto k_name = fmt::format("{}_export_abc", in_marge_name);
+    std::string l_mel =
+        fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
     DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
     k_s = MGlobal::executeCommand(d_str{l_mel}, k_r_s, true);
     DOODLE_MAYA_CHICK(k_s);

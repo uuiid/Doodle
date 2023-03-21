@@ -6,28 +6,28 @@
 
 #include <doodle_core/lib_warp/std_fmt_system_error.h>
 
-#include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/data/sequence_to_blend_shape.h>
 #include <maya_plug/data/qcloth_shape.h>
+#include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/sequence_to_blend_shape.h>
 
-#include <maya/MArgDatabase.h>
-#include <maya/MSelectionList.h>
 #include <maya/MAnimControl.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MFnMesh.h>
-#include <maya/MDagModifier.h>
-#include <maya/MFnIkJoint.h>
-#include <maya/MItDependencyGraph.h>
-#include <maya/MEulerRotation.h>
-#include <maya/MQuaternion.h>
-#include <maya/MDagPath.h>
-#include <maya/MNamespace.h>
-#include <maya/MMatrix.h>
+#include <maya/MArgDatabase.h>
 #include <maya/MBoundingBox.h>
 #include <maya/MDGContextGuard.h>
+#include <maya/MDagModifier.h>
+#include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MFnMesh.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MMatrix.h>
+#include <maya/MNamespace.h>
+#include <maya/MQuaternion.h>
+#include <maya/MSelectionList.h>
 
 namespace doodle::maya_plug {
 
@@ -109,8 +109,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
         for (auto&& ql_export : ref.qcloth_export_model()) {
           sequence_to_blend_shape l_blend_shape{};
           l_blend_shape.select_attr(ql_export);
-          if (l_p)
-            l_blend_shape.parent_attr(*l_p);
+          if (l_p) l_blend_shape.parent_attr(*l_p);
           p_i->blend_list.emplace_back(std::move(l_blend_shape));
         }
       }
@@ -124,8 +123,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
       for (auto&& ql_export : ref.qcloth_export_model()) {
         sequence_to_blend_shape l_blend_shape{};
         l_blend_shape.select_attr(ql_export);
-        if (l_p)
-          l_blend_shape.parent_attr(*l_p);
+        if (l_p) l_blend_shape.parent_attr(*l_p);
         p_i->blend_list.emplace_back(std::move(l_blend_shape));
       }
     }
@@ -144,9 +142,7 @@ void sequence_to_blend_shape_ref_comm::create_mesh() {
     }
   }
 
-  for (auto i = p_i->startFrame_p;
-       i <= p_i->endFrame_p;
-       ++i) {
+  for (auto i = p_i->startFrame_p; i <= p_i->endFrame_p; ++i) {
     l_s = MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
     DOODLE_MAYA_CHICK(l_s);
     for (auto&& ctx : p_i->blend_list) {
@@ -176,9 +172,7 @@ void sequence_to_blend_shape_ref_comm::add_to_parent() {
     }
   }
 }
-sequence_to_blend_shape_ref_comm::sequence_to_blend_shape_ref_comm()
-    : p_i(std::make_unique<impl>()) {
-}
+sequence_to_blend_shape_ref_comm::sequence_to_blend_shape_ref_comm() : p_i(std::make_unique<impl>()) {}
 sequence_to_blend_shape_ref_comm::~sequence_to_blend_shape_ref_comm() = default;
 MStatus sequence_to_blend_shape_ref_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
@@ -203,9 +197,7 @@ MStatus sequence_to_blend_shape_ref_comm::redoIt() {
   }
   return MStatus::kSuccess;
 }
-bool sequence_to_blend_shape_ref_comm::isUndoable() const {
-  return true;
-}
+bool sequence_to_blend_shape_ref_comm::isUndoable() const { return true; }
 void sequence_to_blend_shape_ref_comm::delete_node() {
   for (auto&& ctx : p_i->blend_list) {
     DOODLE_LOG_INFO("开始删除 {} 的原始模型", get_node_name(ctx.select_attr()));

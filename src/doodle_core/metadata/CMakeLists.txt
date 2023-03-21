@@ -8,9 +8,7 @@ target_sources(
         export_file_info.h
         image_icon.h
         importance.h
-        leaf_meta.h
         metadata.h
-        metadata_state.h
         project.h
         season.h
         shot.h
@@ -29,7 +27,6 @@ target_sources(
         export_file_info.cpp
         image_icon.cpp
         importance.cpp
-        leaf_meta.cpp
         metadata.cpp
         metadata_cpp.h
         project.cpp

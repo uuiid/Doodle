@@ -5,7 +5,9 @@
 #include "upload_files_command.h"
 
 #include <doodle_core/metadata/export_file_info.h>
+
 #include <maya_plug/data/maya_file_io.h>
+
 #include <maya/MArgParser.h>
 namespace doodle::maya_plug {
 

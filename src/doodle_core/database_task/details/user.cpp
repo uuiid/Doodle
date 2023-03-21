@@ -11,7 +11,7 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
-void sql_com<doodle::user, false>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::user>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -37,7 +37,8 @@ void sql_com<doodle::user, false>::insert(conn_ptr& in_ptr, const entt::observer
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<user>().get_name());
   }
 }
-void sql_com<doodle::user, false>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+
+void sql_com<doodle::user>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -65,7 +66,7 @@ void sql_com<doodle::user, false>::update(conn_ptr& in_ptr, const entt::observer
   }
 }
 
-void sql_com<doodle::user, false>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::user>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
 
@@ -102,7 +103,7 @@ void sql_com<doodle::user, false>::select(conn_ptr& in_ptr, const std::map<std::
   }
 }
 
-void sql_com<doodle::user, false>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::user>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<sql::Usertab>(in_ptr, in_handle);
 }
 }  // namespace doodle::database_n

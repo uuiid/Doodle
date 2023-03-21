@@ -5,7 +5,6 @@
 #include "name_filter.h"
 
 #include <doodle_core/metadata/assets_file.h>
-
 #include <doodle_core/metadata/user.h>
 namespace doodle {
 namespace gui {

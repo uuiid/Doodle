@@ -3,32 +3,33 @@
 //
 
 #include "dem_bones_comm.h"
-#include <DemBones/DemBonesExt.h>
-#include <maya/MArgDatabase.h>
-#include <maya/MTime.h>
-#include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MAnimControl.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MComputation.h>
-#include <maya/MFnMesh.h>
-#include <maya/MDagModifier.h>
-#include <maya/MFnIkJoint.h>
-#include <maya/MDoubleArray.h>
-#include <maya/MFnSet.h>
-#include <maya/MFnSkinCluster.h>
-#include <maya/MItDependencyGraph.h>
-#include <maya/MEulerRotation.h>
-#include <maya/MQuaternion.h>
-#include <maya/MDagPath.h>
-#include <maya/MTransformationMatrix.h>
-#include <maya/MMatrix.h>
+
+#include <doodle_core/lib_warp/entt_warp.h>
 
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
-#include <doodle_core/lib_warp/entt_warp.h>
+#include <DemBones/DemBonesExt.h>
+#include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MComputation.h>
+#include <maya/MDagModifier.h>
+#include <maya/MDagPath.h>
+#include <maya/MDoubleArray.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFnSet.h>
+#include <maya/MFnSkinCluster.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MMatrix.h>
+#include <maya/MQuaternion.h>
+#include <maya/MSelectionList.h>
+#include <maya/MTime.h>
+#include <maya/MTransformationMatrix.h>
 
 namespace doodle::maya_plug {
 
@@ -95,8 +96,7 @@ MSyntax syntax() {
 }  // namespace dem_bones_comm_ns
 class dem_bones_comm::impl {
  public:
-  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {
-  }
+  impl() : dem(g_reg()->ctx().emplace<dem_bones_ex>()) {}
   dem_bones_ex& dem;
   void set_parm() {
     dem.nB                = nBones_p;
@@ -165,8 +165,7 @@ class dem_bones_comm::impl {
   std::vector<MMatrix> tran_inverse_list;
 
   void push_time_tran_inverse() {
-    if (parent_tran.isNull())
-      return;
+    if (parent_tran.isNull()) return;
     MStatus k_s{};
     MFnTransform l_fn_tran{};
     k_s = l_fn_tran.setObject(parent_tran);
@@ -273,12 +272,14 @@ class dem_bones_comm::impl {
     dem.compute();
     computtation.endComputation();
 
-    dem.computeRTB(0, localRotation_p, localTranslation_p, globalBindMatrices_p, localBindPoseRotation_p, localBindPoseTranslation_p, false);
+    dem.computeRTB(
+        0, localRotation_p, localTranslation_p, globalBindMatrices_p, localBindPoseRotation_p,
+        localBindPoseTranslation_p, false
+    );
   }
 };
 
-dem_bones_comm::dem_bones_comm()
-    : p_i() {
+dem_bones_comm::dem_bones_comm() : p_i() {
   g_reg()->ctx().erase<dem_bones_ex>();
   p_i = std::make_unique<impl>();
 }
@@ -317,10 +318,10 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     p_i->bindFrame_p = l_value.value();
   }
 
-  p_i->startFrame_p <= p_i->bindFrame_p &&
-          p_i->bindFrame_p < p_i->endFrame_p
+  p_i->startFrame_p <= p_i->bindFrame_p && p_i->bindFrame_p < p_i->endFrame_p
       ? void()
-      : throw_exception(doodle_error{"绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内"s, p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p});
+      : throw_exception(doodle_error{
+            "绑定帧 {} 不在 开始帧 {} 和结束帧 {} 范围内"s, p_i->bindFrame_p, p_i->startFrame_p, p_i->endFrame_p});
 
   if (k_prase.isFlagSet(dem_bones_comm_ns::nBones_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
@@ -330,9 +331,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
     p_i->nBones_p = l_value;
   }
 
-  p_i->nBones_p > 0
-      ? void()
-      : throw_exception(doodle_error{"骨骼数小于零 {}"s, p_i->nBones_p});
+  p_i->nBones_p > 0 ? void() : throw_exception(doodle_error{"骨骼数小于零 {}"s, p_i->nBones_p});
   if (k_prase.isFlagSet(dem_bones_comm_ns::nInitIters_f, &k_s)) {
     DOODLE_MAYA_CHICK(k_s);
     std::uint32_t l_value{};
@@ -481,9 +480,8 @@ void dem_bones_comm::create_anm_curve() {
       auto l_qrot = l_erot.asQuaternion();
       l_erot      = l_qrot.asEulerRotation();
       //      MTransformationMatrix l_tran_mat = joint.transformation();
-      //      k_s                              = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()}, MSpace::Space::kWorld);
-      //      DOODLE_MAYA_CHICK(k_s);
-      //      l_tran_mat.setRotationOrientation(l_qrot);
+      //      k_s                              = l_tran_mat.setTranslation(MVector{l_tran.x(), l_tran.y(), l_tran.z()},
+      //      MSpace::Space::kWorld); DOODLE_MAYA_CHICK(k_s); l_tran_mat.setRotationOrientation(l_qrot);
       //      DOODLE_MAYA_CHICK(k_s);
       //      if (!p_i->tran_inverse_list.empty()) {
       //        auto l_matrix = l_tran_mat.asMatrix() * p_i->tran_inverse_list[l_f];

@@ -3,10 +3,11 @@
 //
 #pragma once
 
-#include <doodle_app/doodle_app_fwd.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/thread_pool/process_message.h>
+
+#include <doodle_app/doodle_app_fwd.h>
 
 namespace doodle::detail {
 

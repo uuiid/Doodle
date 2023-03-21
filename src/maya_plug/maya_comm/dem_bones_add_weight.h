@@ -13,9 +13,7 @@ MSyntax syntax();
 }  // namespace dem_bones_add_weight_ns
 
 class dem_bones_add_weight : public doodle::TemplateAction<
-                                 dem_bones_add_weight,
-                                 dem_bones_add_weight_ns::name,
-                                 dem_bones_add_weight_ns::syntax> {
+                                 dem_bones_add_weight, dem_bones_add_weight_ns::name, dem_bones_add_weight_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
 

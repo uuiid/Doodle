@@ -3,9 +3,10 @@
 //
 
 #include "find_duplicate_poly.h"
-#include <maya/MObjectArray.h>
+
 #include <data/maya_poly_info.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MObjectArray.h>
 
 namespace doodle::maya_plug {
 
@@ -18,42 +19,28 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
   }
 
   std::vector<maya_poly_info> l_multimap{};
-  l_multimap = l_obj |
-               ranges::views::transform([](const MObject& in_object) {
-                 return maya_poly_info{in_object};
-               }) |
-               ranges::views::filter([](const maya_poly_info& l_info) -> bool {
-                 return !l_info.maya_obj.isNull() && !l_info.is_intermediate_obj;
-               }) |
-               ranges::views::filter([](const maya_poly_info& l_info) -> bool {
-                 return l_info.has_cloth || l_info.has_skin;
-               }) |
-               ranges::to_vector;
+  l_multimap =
+      l_obj | ranges::views::transform([](const MObject& in_object) { return maya_poly_info{in_object}; }) |
+      ranges::views::filter([](const maya_poly_info& l_info) -> bool {
+        return !l_info.maya_obj.isNull() && !l_info.is_intermediate_obj;
+      }) |
+      ranges::views::filter([](const maya_poly_info& l_info) -> bool { return l_info.has_cloth || l_info.has_skin; }) |
+      ranges::to_vector;
   auto l_cloth = l_multimap |
-                 ranges::views::filter([](const maya_poly_info& l_info) -> bool {
-                   return l_info.has_cloth;
-                 }) |
+                 ranges::views::filter([](const maya_poly_info& l_info) -> bool { return l_info.has_cloth; }) |
                  ranges::to_vector;
-  auto l_skin = l_multimap |
-                ranges::views::filter([](const maya_poly_info& l_info) -> bool {
-                  return l_info.has_skin && !l_info.has_cloth;
-                }) |
-                ranges::to_vector;
+  auto l_skin =
+      l_multimap |
+      ranges::views::filter([](const maya_poly_info& l_info) -> bool { return l_info.has_skin && !l_info.has_cloth; }) |
+      ranges::to_vector;
 
-  l_vector = l_cloth |
-             ranges::views::transform(
-                 [&](const maya_poly_info& in_object) -> std::pair<MObject, MObject> {
-                   auto l_v_list = l_skin |
-                                   ranges::views::filter([&](const maya_poly_info& in_object_sk) -> bool {
-                                     return in_object == in_object_sk;
-                                   }) |
-                                   ranges::to_vector;
-                   return std::make_pair(
-                       l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj,
-                       in_object.maya_obj
-                   );
-                 }
-             ) |
+  l_vector = l_cloth | ranges::views::transform([&](const maya_poly_info& in_object) -> std::pair<MObject, MObject> {
+               auto l_v_list = l_skin | ranges::views::filter([&](const maya_poly_info& in_object_sk) -> bool {
+                                 return in_object == in_object_sk;
+                               }) |
+                               ranges::to_vector;
+               return std::make_pair(l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj, in_object.maya_obj);
+             }) |
              ranges::views::filter([](const std::pair<MObject, MObject>& in_pair) -> bool {
                return !in_pair.first.isNull() && !in_pair.second.isNull();
              }) |

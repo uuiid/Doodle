@@ -6,10 +6,8 @@
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <maya/MString.h>
 #include <maya/MDagPath.h>
-
-
+#include <maya/MString.h>
 
 namespace fmt {
 /**
@@ -22,10 +20,7 @@ struct formatter<MString> : formatter<string_view> {
   template <typename FormatContext>
   auto format(const MString& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     std::string k_str = in_.asUTF8();
-    return formatter<string_view>::format(
-        k_str,
-        ctx
-    );
+    return formatter<string_view>::format(k_str, ctx);
   }
 };
 

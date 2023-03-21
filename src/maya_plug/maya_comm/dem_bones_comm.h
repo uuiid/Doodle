@@ -13,10 +13,8 @@ constexpr char name[] = "doodle_comm_dem_bones";
 MSyntax syntax();
 }  // namespace dem_bones_comm_ns
 
-class dem_bones_comm : public doodle::TemplateAction<
-                           dem_bones_comm,
-                           dem_bones_comm_ns::name,
-                           dem_bones_comm_ns::syntax> {
+class dem_bones_comm
+    : public doodle::TemplateAction<dem_bones_comm, dem_bones_comm_ns::name, dem_bones_comm_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
   void get_arg(const MArgList& in_arg);

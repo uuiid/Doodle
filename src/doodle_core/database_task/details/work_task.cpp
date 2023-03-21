@@ -10,7 +10,7 @@
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
-void sql_com<doodle::work_task_info, false>::create_table(conn_ptr& in_ptr) {
+void sql_com<doodle::work_task_info>::create_table(conn_ptr& in_ptr) {
   static std::once_flag l_f{};
   std::call_once(l_f, [&]() {
     auto l_f = cmrc::DoodleLibResource::get_filesystem().open("core/sql_file.sql");
@@ -19,7 +19,7 @@ void sql_com<doodle::work_task_info, false>::create_table(conn_ptr& in_ptr) {
   });
 }
 
-void sql_com<doodle::work_task_info, false>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -53,7 +53,7 @@ void sql_com<doodle::work_task_info, false>::insert(conn_ptr& in_ptr, const entt
     }
   }
 }
-void sql_com<doodle::work_task_info, false>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -90,9 +90,7 @@ void sql_com<doodle::work_task_info, false>::update(conn_ptr& in_ptr, const entt
     }
   }
 }
-void sql_com<doodle::work_task_info, false>::select(
-    conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
-) {
+void sql_com<doodle::work_task_info>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
 
@@ -116,8 +114,8 @@ void sql_com<doodle::work_task_info, false>::select(
                     .from(l_tabl)
                     .where(l_tabl.entityId.is_null()))) {
       work_task_info l_w{};
-      l_w.abstract = row.abstract.value();
-      l_w.region   = row.region.value();
+      l_w.abstract  = row.abstract.value();
+      l_w.region    = row.region.value();
 
       l_w.time      = chrono_ns::round<work_task_info::time_point_type::duration>(row.timePoint.value());
       l_w.task_name = row.taskName.value();
@@ -135,7 +133,7 @@ void sql_com<doodle::work_task_info, false>::select(
     reg_->insert(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
-void sql_com<doodle::work_task_info, false>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::work_task_info>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<sql::WorkTaskInfo>(in_ptr, in_handle);
 }
 

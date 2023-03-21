@@ -3,8 +3,10 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/core/init_register.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
+
 #include <opencv2/core.hpp>
 
 namespace doodle {
@@ -77,19 +79,14 @@ class DOODLELIB_API image_loader {
 };
 
 namespace image_loader_ns {
-class image_loader_init : public init_register::base_registrar {
+class image_loader_init {
+  void init() const;
+  template <typename T>
+  friend struct ::doodle::details::registrar_lambda;
+
  public:
-  void init() const override;
+  image_loader_init() { init(); };
 };
 
-constexpr auto reg_image_loader = []() {
-  entt::meta<image_loader_init>()
-      .type(entt::type_id<init_register::base_registrar>().hash())
-      .base<init_register::base_registrar>()
-      .func<&image_loader_init::init>("init"_hs);
-};
-
-class reg_image_loader
-    : public init_register::registrar_lambda<reg_image_loader, 2> {};
 }  // namespace image_loader_ns
 }  // namespace doodle

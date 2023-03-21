@@ -3,29 +3,31 @@
 //
 
 #include "dem_bones_add_weight.h"
-#include <DemBones/DemBonesExt.h>
-#include <maya/MArgDatabase.h>
-#include <maya/MTime.h>
-#include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MAnimControl.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MComputation.h>
-#include <maya/MFnMesh.h>
-#include <maya/MDagModifier.h>
-#include <maya/MFnIkJoint.h>
-#include <maya/MDoubleArray.h>
-#include <maya/MFnSet.h>
-#include <maya/MFnSkinCluster.h>
-#include <maya/MItDependencyGraph.h>
-#include <maya/MEulerRotation.h>
-#include <maya/MQuaternion.h>
-#include <maya/MDagPath.h>
+
+#include <doodle_core/lib_warp/entt_warp.h>
+
 #include <maya_plug/data/dem_bones_ex.h>
 #include <maya_plug/data/maya_tool.h>
 
-#include <doodle_core/lib_warp/entt_warp.h>
+#include <DemBones/DemBonesExt.h>
+#include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MComputation.h>
+#include <maya/MDagModifier.h>
+#include <maya/MDagPath.h>
+#include <maya/MDoubleArray.h>
+#include <maya/MEulerRotation.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFnSet.h>
+#include <maya/MFnSkinCluster.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MQuaternion.h>
+#include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 
 namespace doodle::maya_plug {
 MSyntax dem_bones_add_weight_ns::syntax() {
@@ -50,9 +52,10 @@ class dem_bones_add_weight::impl {
     }
     DOODLE_CHICK(!skin_mesh_obj.isNull(), doodle_error{"未获得选中物体"s});
     auto l_obj = get_shape(skin_mesh_obj);
-    for (MItDependencyGraph l_it_dependency_graph{l_obj, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, nullptr};
-         !l_it_dependency_graph.isDone();
-         l_it_dependency_graph.next()) {
+    for (MItDependencyGraph l_it_dependency_graph{
+             l_obj, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
+             MItDependencyGraph::kNodeLevel, nullptr};
+         !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
       skin_obj = l_it_dependency_graph.currentItem();
       break;
     }
@@ -63,9 +66,7 @@ class dem_bones_add_weight::impl {
   MObject skin_obj{};
 };
 
-dem_bones_add_weight::dem_bones_add_weight()
-    : p_i(std::make_unique<impl>()) {
-}
+dem_bones_add_weight::dem_bones_add_weight() : p_i(std::make_unique<impl>()) {}
 MStatus dem_bones_add_weight::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
   p_i->init();

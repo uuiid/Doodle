@@ -10,7 +10,8 @@ namespace create_qcloth_assets_ns {
 constexpr char name[] = "doodle_create_qcloth_assets";
 MSyntax syntax();
 }  // namespace create_qcloth_assets_ns
-class create_qcloth_assets : public TemplateAction<create_qcloth_assets, create_qcloth_assets_ns::name, create_qcloth_assets_ns::syntax> {
+class create_qcloth_assets
+    : public TemplateAction<create_qcloth_assets, create_qcloth_assets_ns::name, create_qcloth_assets_ns::syntax> {
   class impl;
   std::unique_ptr<impl> p_i;
 

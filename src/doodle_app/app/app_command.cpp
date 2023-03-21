@@ -18,9 +18,6 @@
 #include <boost/contract.hpp>
 #include <boost/locale.hpp>
 namespace doodle {
-namespace details::app_command_base {
-
-
-}  // namespace details::app_command_base
+namespace details::app_command_base {}  // namespace details::app_command_base
 
 }  // namespace doodle

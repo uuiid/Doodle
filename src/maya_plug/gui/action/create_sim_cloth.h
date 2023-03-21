@@ -5,11 +5,11 @@
 #pragma once
 
 #include <doodle_app/gui/base/base_window.h>
+
 #include <maya_plug/configure/static_value.h>
 
 namespace doodle::maya_plug {
-class create_sim_cloth
-    : public gui::base_windows<dear::Begin, create_sim_cloth> {
+class create_sim_cloth : public gui::base_windows<dear::Begin, create_sim_cloth> {
   std::vector<entt::handle> p_list;
 
   entt::handle p_coll;

@@ -109,6 +109,8 @@ public class doodleEditor : ModuleRules
                 "KismetWidgets",// 时间控制
                 "CurveEditor",//添加曲线编辑模块
                 "Persona",//骨骼
+                "TimeManagement",// 添加时间管理
+
             }
             );
 

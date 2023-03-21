@@ -20,28 +20,19 @@ void to_json(nlohmann::json& j, const sim_cover_attr& p) {
   j["gravity"]            = p.gravity;
 }
 void from_json(const nlohmann::json& j, sim_cover_attr& p) {
-  if (j.contains("simple_subsampling"))
-    j.at("simple_subsampling").get_to(p.simple_subsampling);
-  if (j.contains("frame_samples"))
-    j.at("frame_samples").get_to(p.frame_samples);
-  if (j.contains("time_scale"))
-    j.at("time_scale").get_to(p.time_scale);
-  if (j.contains("length_scale"))
-    j.at("length_scale").get_to(p.length_scale);
-  if (j.contains("max_cg_iteration"))
-    j.at("max_cg_iteration").get_to(p.max_cg_iteration);
-  if (j.contains("cg_accuracy"))
-    j.at("cg_accuracy").get_to(p.cg_accuracy);
-  if (j.contains("gravity"))
-    j.at("gravity").get_to(p.gravity);
+  if (j.contains("simple_subsampling")) j.at("simple_subsampling").get_to(p.simple_subsampling);
+  if (j.contains("frame_samples")) j.at("frame_samples").get_to(p.frame_samples);
+  if (j.contains("time_scale")) j.at("time_scale").get_to(p.time_scale);
+  if (j.contains("length_scale")) j.at("length_scale").get_to(p.length_scale);
+  if (j.contains("max_cg_iteration")) j.at("max_cg_iteration").get_to(p.max_cg_iteration);
+  if (j.contains("cg_accuracy")) j.at("cg_accuracy").get_to(p.cg_accuracy);
+  if (j.contains("gravity")) j.at("gravity").get_to(p.gravity);
 }
 void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
   if (in_handle && in_handle.all_of<sim_cover_attr, reference_file>()) {
     DOODLE_LOG_INFO("开始覆盖 {} 的解算配置", in_handle.get<reference_file>().path);
     auto& self     = in_handle.get<sim_cover_attr>();
-    auto l_ql_core = qcloth_shape::get_ql_solver(
-        in_handle.get<reference_file>().get_all_object()
-    );
+    auto l_ql_core = qcloth_shape::get_ql_solver(in_handle.get<reference_file>().get_all_object());
     set_attribute(l_ql_core, "simpleSubsampling", self.simple_subsampling);
     DOODLE_LOG_INFO("开始覆盖 simpleSubsampling 值为 {}", self.simple_subsampling);
     set_attribute(l_ql_core, "frameSamples", self.frame_samples);

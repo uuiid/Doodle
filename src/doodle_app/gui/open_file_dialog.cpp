@@ -11,6 +11,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/contract.hpp>
+
 #include <lib_warp/imgui_warp.h>
 #include <magic_enum.hpp>
 namespace doodle::gui {

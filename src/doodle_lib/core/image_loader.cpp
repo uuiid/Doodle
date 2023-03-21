@@ -32,8 +32,7 @@ namespace {
 template <class T>
 struct win_ptr_delete {
   void operator()(T* ptr) const {
-    if (ptr)
-      ptr->Release();
+    if (ptr) ptr->Release();
   }
 };
 template <class T>
@@ -52,16 +51,15 @@ class image_loader::impl {
   cache cache_p;
 };
 
-image_loader::image_loader()
-    : p_i(std::make_unique<impl>()) {
+image_loader::image_loader() : p_i(std::make_unique<impl>()) {
+  const static image_loader_ns::image_loader_init loader_init{};
   if (g_reg()->ctx().contains<cache>()) {
     p_i->cache_p = g_reg()->ctx().at<cache>();
   }
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
   const auto& l_local_path = in_path;
-  if (exists(l_local_path) &&
-      is_regular_file(l_local_path)) {
+  if (exists(l_local_path) && is_regular_file(l_local_path)) {
     auto k_image = cv::imread(l_local_path.generic_string(), cv::IMREAD_REDUCED_COLOR_4);
     DOODLE_CHICK(!k_image.empty(), doodle_error{"open cv not read image"});
     static std::double_t s_image_max{512};
@@ -121,20 +119,12 @@ bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, 
   return true;
 }
 
-std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const {
-  return cv_to_d3d(in_mat, true);
-}
+std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const { return cv_to_d3d(in_mat, true); }
 
-cv::Mat image_loader::screenshot() {
-  return win::get_screenshot();
-}
+cv::Mat image_loader::screenshot() { return win::get_screenshot(); }
 
-std::shared_ptr<void> image_loader::default_image() const {
-  return p_i->cache_p.default_image;
-}
-std::shared_ptr<void> image_loader::error_image() const {
-  return p_i->cache_p.error_image;
-}
+std::shared_ptr<void> image_loader::default_image() const { return p_i->cache_p.default_image; }
+std::shared_ptr<void> image_loader::error_image() const { return p_i->cache_p.error_image; }
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
   // 获得全局GPU渲染对象
   auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
@@ -195,46 +185,50 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 
 image_loader::~image_loader() = default;
 void image_loader_ns::image_loader_init::init() const {
-  boost::asio::post(g_io_context(), []() {
-    image_loader l_loader{};
-    image_loader::cache l_cache{};
+  image_loader l_loader{};
+  image_loader::cache l_cache{};
+  {
+    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+    double fontScale = 1;
+    int thickness    = 2;
+    int baseline     = 0;
     {
-      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-      double fontScale = 1;
-      int thickness    = 2;
-      int baseline     = 0;
-      {
-        /// @brief 加载默认图片
-        auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
-        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+      /// @brief 加载默认图片
+      auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
+      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
+      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "no", textOrg, fontFace, fontScale, {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-        auto k_def            = l_loader.cv_to_d3d(k_mat);
-        l_cache.default_image = k_def;
-      }
+      cv::putText(k_mat, "no", textOrg, fontFace, fontScale, {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      auto k_def            = l_loader.cv_to_d3d(k_mat);
+      l_cache.default_image = k_def;
     }
+  }
 
+  {
+    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+    double fontScale = 1;
+    int thickness    = 2;
+    int baseline     = 0;
     {
-      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-      double fontScale = 1;
-      int thickness    = 2;
-      int baseline     = 0;
-      {
-        /// @brief 加载错误图片
-        auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
-        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+      /// @brief 加载错误图片
+      auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
+      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
+      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "err", textOrg, fontFace, fontScale, {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-        auto k_def          = l_loader.cv_to_d3d(k_mat);
-        l_cache.error_image = k_def;
-      }
+      cv::putText(k_mat, "err", textOrg, fontFace, fontScale, {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      auto k_def          = l_loader.cv_to_d3d(k_mat);
+      l_cache.error_image = k_def;
     }
-    g_reg()->ctx().emplace<image_loader::cache>(l_cache);
-  });
+  }
+  g_reg()->ctx().emplace<image_loader::cache>(l_cache);
+}
+
+DOODLE_REGISTER_BEGIN(image_loader_ns::image_loader_init) {
+  entt::meta<image_loader_ns::image_loader_init>()
+      .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
+      .func<&image_loader_ns::image_loader_init::init>("init"_hs);
 }
 
 }  // namespace doodle

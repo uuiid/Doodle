@@ -5,24 +5,27 @@
 #include "create_sim_cloth.h"
 
 #include <doodle_app/lib_warp/imgui_warp.h>
+
 #include <main/maya_plug_fwd.h>
-#include <maya/MFnDependencyNode.h>
-#include <maya/MGlobal.h>
-#include <maya/MItDependencyNodes.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MSelectionList.h>
 #include <maya_plug/data/maya_clear_scenes.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
+#include <maya/MFnDependencyNode.h>
+#include <maya/MGlobal.h>
+#include <maya/MItDependencyNodes.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MSelectionList.h>
+
 namespace doodle::maya_plug {
 
-create_sim_cloth::create_sim_cloth()
-    : p_coll(make_handle()) {
+create_sim_cloth::create_sim_cloth() : p_coll(make_handle()) {
   title_name_ = std::string{name};
   auto k_view = g_reg()->view<qcloth_shape>();
-  std::transform(k_view.begin(), k_view.end(), std::back_inserter(p_list), [](auto& in) -> entt::handle { return make_handle(in); });
+  std::transform(k_view.begin(), k_view.end(), std::back_inserter(p_list), [](auto& in) -> entt::handle {
+    return make_handle(in);
+  });
 }
 void create_sim_cloth::render() {
   if (imgui::Button("获得低模")) {
@@ -109,16 +112,15 @@ create_sim_cloth::~create_sim_cloth() {
   destroy_handle(p_list);
 }
 void create_sim_cloth::run_comm() {
-  if (p_list.empty())
-    return;
-  std::string l_comm{fmt::format(R"(
+  if (p_list.empty()) return;
+  std::string l_comm{fmt::format(
+      R"(
 doodle_create_qcloth_assets -collision {} -cloth {};
 )",
-                                 p_coll, fmt::join(p_list, " -cloth "))};
+      p_coll, fmt::join(p_list, " -cloth ")
+  )};
   MGlobal::executeCommand(d_str{l_comm}, true, true);
 }
-const std::string& create_sim_cloth::title() const {
-  return title_name_;
-}
+const std::string& create_sim_cloth::title() const { return title_name_; }
 
 }  // namespace doodle::maya_plug

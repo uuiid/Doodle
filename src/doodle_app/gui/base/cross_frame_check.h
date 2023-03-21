@@ -6,8 +6,9 @@
 
 #include <doodle_app/doodle_app_fwd.h>
 
-#include <bitset>
 #include "boost/signals2.hpp"
+
+#include <bitset>
 namespace doodle::gui::detail {
 
 /**
@@ -30,9 +31,7 @@ class cross_frame_check {
   /**
    * @brief 开始初始帧
    */
-  void begin_lock() {
-    flag <<= 1;
-  }
+  void begin_lock() { flag <<= 1; }
   /**
    * @brief 检查是否多帧连续成功
    *
@@ -48,9 +47,7 @@ class cross_frame_check {
   /**
    * @brief 在成功时记录此帧
    */
-  void modify_lock() {
-    flag |= flag_init;
-  }
+  void modify_lock() { flag |= flag_init; }
 
  public:
   /**
@@ -66,8 +63,7 @@ class cross_frame_check {
      * @brief 强制传入检查类
      * @param in_check
      */
-    explicit guard_lock(cross_frame_check& in_check)
-        : check_p(in_check) {}
+    explicit guard_lock(cross_frame_check& in_check) : check_p(in_check) {}
 
     /**
      * @brief 结束时检查守卫
@@ -80,8 +76,7 @@ class cross_frame_check {
      * @return 自身
      */
     guard_lock& operator=(bool in_bool) {
-      if (in_bool)
-        check_p.modify_lock();
+      if (in_bool) check_p.modify_lock();
       flag = in_bool;
       return *this;
     }
@@ -106,15 +101,11 @@ class cross_frame_check {
      * @brief 可以进行判断成功
      * @return
      */
-    explicit operator bool() const {
-      return flag;
-    }
+    explicit operator bool() const { return flag; }
     /**
      * @brief 进行检查
      */
-    void chick() const {
-      this->check_p.begin_unlock();
-    }
+    void chick() const { this->check_p.begin_unlock(); }
   };
 
  private:
@@ -127,9 +118,7 @@ class cross_frame_check {
     using guard_lock::operator=;
     using guard_lock::operator^;
     using guard_lock::operator bool;
-    virtual ~guard_lock_auto() override {
-      this->chick();
-    }
+    virtual ~guard_lock_auto() override { this->chick(); }
   };
 
   /**
@@ -152,9 +141,7 @@ class cross_frame_check {
    * @param in_slot_type 传入的可调用对象
    * @return 信号链接
    */
-  connect_type connect(const solt_type& in_slot_type) {
-    return call_fun.connect(in_slot_type);
-  }
+  connect_type connect(const solt_type& in_slot_type) { return call_fun.connect(in_slot_type); }
 
   /**
    * @brief 获取跨帧守卫(自动检查类型)

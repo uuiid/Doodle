@@ -14,10 +14,8 @@ constexpr char name[] = "doodle_upload_files";
 
 }  // namespace upload_files_command_ns
 
-class upload_files_command : public TemplateAction<
-                                 upload_files_command,
-                                 upload_files_command_ns::name,
-                                 upload_files_command_ns::syntax> {
+class upload_files_command
+    : public TemplateAction<upload_files_command, upload_files_command_ns::name, upload_files_command_ns::syntax> {
  public:
   MStatus doIt(const MArgList& in_list) override;
 };

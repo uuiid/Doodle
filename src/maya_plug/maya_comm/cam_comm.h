@@ -11,10 +11,8 @@ constexpr char export_camera_command_name[] = "doodle_export_camera";
 namespace details {
 MSyntax export_camera_syntax();
 }
-class export_camera_command : public TemplateAction<
-                                  export_camera_command,
-                                  export_camera_command_name,
-                                  details::export_camera_syntax> {
+class export_camera_command
+    : public TemplateAction<export_camera_command, export_camera_command_name, details::export_camera_syntax> {
  public:
   MStatus doIt(const MArgList&) override;
 };
