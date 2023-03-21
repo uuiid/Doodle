@@ -32,7 +32,7 @@ class DOODLE_CORE_API user : boost::equality_comparable<user> {
   RTTR_REGISTRATION_FRIEND;
   template <typename T1, typename Char, typename Enable>
   friend struct fmt::formatter;
-  template <typename T, bool constraint>
+  template <typename T>
   friend struct database_n::sql_com;
 
  public:

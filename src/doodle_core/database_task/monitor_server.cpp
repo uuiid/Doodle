@@ -44,15 +44,15 @@ void monitor_server::load_all() {
     auto l_conn     = sqlpp::start_transaction(*l_ptr_conn);
     std::map<std::int64_t, entt::entity> l_id_map{};
     {
-      sql_com<database, false> l_load1{reg};
+      sql_com<database> l_load1{reg};
       l_load1.select(l_ptr_conn, l_id_map);
     }
     {
-      sql_com<user, false> l_load1{reg};
+      sql_com<user> l_load1{reg};
       l_load1.select(l_ptr_conn, l_id_map);
     }
     {
-      sql_com<work_task_info, false> l_load1{reg};
+      sql_com<work_task_info> l_load1{reg};
       l_load1.select(l_ptr_conn, l_id_map);
     }
     l_conn.commit();
@@ -89,18 +89,18 @@ void monitor_server::save() {
     auto l_conn     = sqlpp::start_transaction(*l_ptr_conn);
     std::map<std::int64_t, entt::entity> l_id_map{};
     {
-      sql_com<database, false> l_load1{reg};
+      sql_com<database> l_load1{reg};
       l_load1.insert(l_ptr_conn, obs_create_database);
       l_load1.destroy(l_ptr_conn, database_on_destroy_data);
     }
     {
-      sql_com<user, false> l_load1{reg};
+      sql_com<user> l_load1{reg};
       l_load1.insert(l_ptr_conn, obs_create_user);
       l_load1.update(l_ptr_conn, obs_updata_user);
       l_load1.destroy(l_ptr_conn, database_on_destroy_data);
     }
     {
-      sql_com<work_task_info, false> l_load1{reg};
+      sql_com<work_task_info> l_load1{reg};
       l_load1.insert(l_ptr_conn, obs_create_work_task_info);
       l_load1.update(l_ptr_conn, obs_updata_work_task_info);
       l_load1.destroy(l_ptr_conn, database_on_destroy_data);

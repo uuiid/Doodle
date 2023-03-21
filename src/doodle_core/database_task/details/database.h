@@ -10,7 +10,7 @@
 namespace doodle::database_n {
 
 template <>
-struct sql_com<doodle::database, false> {
+struct sql_com<doodle::database> {
   registry_ptr reg_;
 
   void insert(conn_ptr& in_ptr, const entt::observer& in_observer);

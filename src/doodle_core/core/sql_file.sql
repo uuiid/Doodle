@@ -44,8 +44,6 @@ create table if not exists usertab
     id               integer
         primary key,
     entity_id        integer,
-    parent_id        integer,
-    parent_hash      integer,
 
     user_name        text             not null,
     permission_group bigint default 0 not null
@@ -58,8 +56,6 @@ CREATE TABLE IF NOT EXISTS work_task_info
     id          integer
         primary key,
     entity_id   integer,
-    parent_id   integer,
-    parent_hash integer,
 
     user_id     text,
     task_name   text,
@@ -70,5 +66,3 @@ CREATE TABLE IF NOT EXISTS work_task_info
 );
 create index if not exists work_task_info_index on work_task_info (id);
 create index if not exists work_task_info_index2 on work_task_info (entity_id);
-create index if not exists work_task_info_index3 on work_task_info (parent_id);
-create index if not exists work_task_info_index4 on work_task_info (parent_hash);
