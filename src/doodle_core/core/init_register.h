@@ -26,9 +26,9 @@ class DOODLE_CORE_API init_register {
 };
 }  // namespace doodle
 
-#define DOODLE_REGISTER_BEGIN()                                                                                       \
-  void BOOST_PP_CAT(doodle_reg, __LINE__)();                                                                          \
+#define DOODLE_REGISTER_BEGIN                                                                                         \
   namespace {                                                                                                         \
+  void BOOST_PP_CAT(doodle_reg, __LINE__)();                                                                          \
   struct registrar_lambda {                                                                                           \
    public:                                                                                                            \
     static bool getInstance() {                                                                                       \
@@ -41,5 +41,6 @@ class DOODLE_CORE_API init_register {
     registrar_lambda() { registered; }                                                                                \
   };                                                                                                                  \
   bool registrar_lambda::registered{registrar_lambda::getInstance()};                                                 \
-  }                                                                                                                   \
   void BOOST_PP_CAT(doodle_reg, __LINE__)()
+
+#define DOODLE_REGISTER_END }

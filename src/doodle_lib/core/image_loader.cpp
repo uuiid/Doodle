@@ -32,8 +32,7 @@ namespace {
 template <class T>
 struct win_ptr_delete {
   void operator()(T* ptr) const {
-    if (ptr)
-      ptr->Release();
+    if (ptr) ptr->Release();
   }
 };
 template <class T>
@@ -52,16 +51,14 @@ class image_loader::impl {
   cache cache_p;
 };
 
-image_loader::image_loader()
-    : p_i(std::make_unique<impl>()) {
+image_loader::image_loader() : p_i(std::make_unique<impl>()) {
   if (g_reg()->ctx().contains<cache>()) {
     p_i->cache_p = g_reg()->ctx().at<cache>();
   }
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
   const auto& l_local_path = in_path;
-  if (exists(l_local_path) &&
-      is_regular_file(l_local_path)) {
+  if (exists(l_local_path) && is_regular_file(l_local_path)) {
     auto k_image = cv::imread(l_local_path.generic_string(), cv::IMREAD_REDUCED_COLOR_4);
     DOODLE_CHICK(!k_image.empty(), doodle_error{"open cv not read image"});
     static std::double_t s_image_max{512};
@@ -121,20 +118,12 @@ bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, 
   return true;
 }
 
-std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const {
-  return cv_to_d3d(in_mat, true);
-}
+std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat) const { return cv_to_d3d(in_mat, true); }
 
-cv::Mat image_loader::screenshot() {
-  return win::get_screenshot();
-}
+cv::Mat image_loader::screenshot() { return win::get_screenshot(); }
 
-std::shared_ptr<void> image_loader::default_image() const {
-  return p_i->cache_p.default_image;
-}
-std::shared_ptr<void> image_loader::error_image() const {
-  return p_i->cache_p.error_image;
-}
+std::shared_ptr<void> image_loader::default_image() const { return p_i->cache_p.default_image; }
+std::shared_ptr<void> image_loader::error_image() const { return p_i->cache_p.error_image; }
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
   // 获得全局GPU渲染对象
   auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
@@ -237,10 +226,11 @@ void image_loader_ns::image_loader_init::init() const {
   });
 }
 
-DOODLE_REGISTER_BEGIN(){
+DOODLE_REGISTER_BEGIN {
   entt::meta<image_loader_ns::image_loader_init>()
       .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
       .func<&image_loader_ns::image_loader_init::init>("init"_hs);
-};
+}
+DOODLE_REGISTER_END
 
 }  // namespace doodle

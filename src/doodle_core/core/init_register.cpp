@@ -9,17 +9,13 @@ namespace doodle {
 
 std::vector<std::function<void()>>& init_register::registered_functions() { return init_p; }
 void init_register::reg_class() {
-  auto l_s = boost::asio::make_strand(g_io_context());
   DOODLE_LOG_INFO("开始反射注册");
-
   auto& l_map = registered_functions();
   for (auto&& l_fun : l_map) {
     l_fun();
   }
   DOODLE_LOG_INFO("结束开始反射注册");
-  boost::asio::post(l_s, [l_s]() {
-    for (auto&& mat : entt::resolve()) DOODLE_LOG_INFO(fmt::format("{}", mat.second.info().name()));
-  });
+  for (auto&& mat : entt::resolve()) DOODLE_LOG_INFO(fmt::format("{}", mat.second.info().name()));
 }
 init_register& init_register::instance() noexcept {
   static init_register l_r{};

@@ -10,6 +10,7 @@
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
+#include <doodle_core/core/init_register.h>
 
 #include "core/doodle_lib.h"
 
@@ -46,6 +47,8 @@ void doodle_lib::init() {
   ptr->io_context_ = std::make_shared<boost::asio::io_context>();
   ptr->p_log       = std::make_shared<logger_ctr_ptr::element_type>();
   ptr->reg         = std::make_shared<entt::registry>();
+
+  init_register::instance().reg_class();
 
   boost::locale::generator k_gen{};
   k_gen.categories(
