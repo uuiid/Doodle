@@ -22,7 +22,6 @@ class UCreateCharacterMianTreeItem {
  public:
   UCreateCharacterMianTreeItem(UDoodleCreateCharacterConfig* In_Config) : Config(In_Config){};
 
-
   FDoodleCreateCharacterConfigUINode& Get();
   inline int32 Get_Index() { return ConfigNode_Index; };
   inline void Set(int32 In_Index) {
@@ -62,6 +61,10 @@ class SCreateCharacterTree : public STreeView<TSharedPtr<UCreateCharacterMianTre
 
   // 这里是内容创建函数
   void Construct(const FArguments& Arg);
+
+  TreeVirwWeightItemType GetSelectItem() const {
+    return CurrentSelect;
+  };
 
   const static FName Name;
 

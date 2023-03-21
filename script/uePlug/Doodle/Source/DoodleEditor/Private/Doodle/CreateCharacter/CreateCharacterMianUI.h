@@ -14,6 +14,7 @@ class SCreateCharacterCurveEditor;
 class ITableRow;
 class STableViewBase;
 class SCreateCharacterTree;
+class FCreateCharacterSliderController;
 
 // 创建编辑器自定义界面
 class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
@@ -54,8 +55,10 @@ class FCreateCharacterMianUI : public FAssetEditorToolkit, public FGCObject {
   TSharedPtr<SCharacterEditorViewport> CharacterEditorViewport;
   // 滑块调整视口
   TSharedPtr<SCreateCharacterTree> CreateCharacterTree;
-
+  // 曲线
   TSharedPtr<SCreateCharacterCurveEditor> CreateCharacterCurveEditor;
+  // 时间
+  TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController;
 
   // 树 id
   const static FName TreeID;

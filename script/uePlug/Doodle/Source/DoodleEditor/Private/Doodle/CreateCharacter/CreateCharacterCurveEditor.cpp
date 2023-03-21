@@ -18,6 +18,11 @@
 #include "Tree/SCurveEditorTreeSelect.h"
 #include "Tree/SCurveEditorTreeTextFilter.h"
 #include "Widgets/Layout/SScrollBorder.h"
+#include "CreateCharacterTree.h"
+#include "FrameNumberNumericInterface.h"
+#include "Preferences/PersonaOptions.h"
+
+#include "CreateCharacterSliderController.h"
 
 #include "CreateCharacterTree.h"
 
@@ -38,8 +43,8 @@ class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
   virtual void SetInputBounds(double InMin, double InMax) override {
     if (CreateCharacterMianTreeItem.IsValid()) {
       TSharedPtr<UCreateCharacterMianTreeItem> L_Config = CreateCharacterMianTreeItem.Pin();
-      L_Config->Get().MaxValue                    = InMax;
-      L_Config->Get().MinValue                    = InMin;
+      L_Config->Get().MaxValue                          = InMax;
+      L_Config->Get().MinValue                          = InMin;
 
       Min_P                                             = InMin;
       Max_P                                             = InMax;
@@ -126,8 +131,48 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
 };
 
 void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
-  CreateCharacterConfigConfig = InArgs._CreateCharacterConfigConfig;
-  CurveEditor                 = MakeShared<FCurveEditor>();
+  CreateCharacterConfigConfig                            = InArgs._CreateCharacterConfigConfig;
+
+  TAttribute<EFrameNumberDisplayFormats> DisplayFormat   = MakeAttributeLambda([]() {
+    return GetDefault<UPersonaOptions>()->TimelineDisplayFormat;
+  });
+
+  TAttribute<FFrameRate> TickResolution                  = MakeAttributeLambda([]() {
+    return FFrameRate{25, 1};
+  });
+
+  TAttribute<FFrameRate> DisplayRate                     = MakeAttributeLambda([]() {
+    return FFrameRate{25, 1};
+  });
+
+  TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, TickResolution, DisplayRate});
+  TAttribute<FAnimatedRange> ViewRange                   = MakeAttributeLambda([this]() {
+    if (*this->CurrentSelect) {
+      return FAnimatedRange{this->CurrentSelect->Get().MinValue, this->CurrentSelect->Get().MaxValue};
+    } else {
+      return FAnimatedRange{-2.0f, 2.0f};
+    }
+  });
+
+  FTimeSliderArgs TimeSliderArgs;
+  {
+    TimeSliderArgs.ScrubPosition         = MakeAttributeLambda([]() { return FFrameTime(0); });
+    TimeSliderArgs.ViewRange             = ViewRange;
+    TimeSliderArgs.PlaybackRange         = MakeAttributeLambda([]() { return TRange<FFrameNumber>(0, 0); });
+    TimeSliderArgs.ClampRange            = MakeAttributeLambda([]() { return FAnimatedRange(0.0, 0.0); });
+    TimeSliderArgs.DisplayRate           = FFrameRate{27857, 1};
+    TimeSliderArgs.TickResolution        = FFrameRate{25, 1};
+    // TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleViewRangeChanged);
+    // TimeSliderArgs.OnClampRangeChanged    = FOnTimeRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleWorkingRangeChanged);
+    TimeSliderArgs.IsPlaybackRangeLocked = true;
+    TimeSliderArgs.PlaybackStatus        = EMovieScenePlayerStatus::Stopped;
+    TimeSliderArgs.NumericTypeInterface  = NumericTypeInterface;
+    // TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateSP(this, &SAnimTimeline::HandleScrubPositionChanged);
+  }
+
+  auto CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
+
+  CurveEditor                          = MakeShared<FCurveEditor>();
   FCurveEditorInitParams CurveEditorInitParams;
   CurveEditor->InitCurveEditor(CurveEditorInitParams);
   CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}s");
@@ -141,7 +186,7 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   TSharedRef<SCurveEditorPanel> CurveEditorPanel =
       SNew(SCurveEditorPanel, CurveEditor.ToSharedRef())
           .GridLineTint(FLinearColor(0.f, 0.f, 0.f, 0.3f))
-          //.ExternalTimeSliderController(InArgs._ExternalTimeSliderController)
+          .ExternalTimeSliderController(InArgs._ExternalTimeSliderController)
           .TabManager(InArgs._TabManager)
           .TreeSplitterWidth(0.2f)
           .ContentSplitterWidth(0.8f)
@@ -183,8 +228,9 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
   if (!CreateCharacterConfigConfig)
     return;
 
-  CurveEditor->RemoveAllCurves();
-  CurveEditor->RemoveAllTreeItems();
+  ResetCurves();
+
+  CurrentSelect = In_Node;
 
   for (auto&& L_Key : In_Node->Get().Keys) {
     auto& L_Tran      = CreateCharacterConfigConfig->ListConfigNode[L_Key].WeightCurve.TranslationCurve;
@@ -241,17 +287,6 @@ void SCreateCharacterCurveEditor::AddCurve(
   //  }
   //}
   // CurveEditor->SetTreeSelection(MoveTemp(NewSelection));
-}
-
-void SCreateCharacterCurveEditor::RemoveCurve(const FSmartName& InName, ERawCurveTrackTypes InType, int32 InCurveIndex) {
-  for (const auto& CurvePair : CurveEditor->GetCurves()) {
-    const TUniquePtr<FCurveModel>& Model = CurvePair.Value;
-    // Cache ID to prevent use after release
-    const FCurveEditorTreeItemID TreeId;
-    CurveEditor->RemoveCurve(CurvePair.Key);
-    CurveEditor->RemoveTreeItem(TreeId);
-    break;
-  }
 }
 
 void SCreateCharacterCurveEditor::ZoomToFit() {

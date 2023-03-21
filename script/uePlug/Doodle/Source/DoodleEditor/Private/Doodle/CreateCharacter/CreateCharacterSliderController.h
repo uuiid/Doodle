@@ -29,7 +29,7 @@ struct FSlateBrush;
 class FCreateCharacterSliderController : public ITimeSliderController {
  public:
   FCreateCharacterSliderController(
-      const FTimeSliderArgs& InArgs, TSharedPtr<INumericTypeInterface<double>> InSecondaryNumericTypeInterface
+      const FTimeSliderArgs& InArgs
   );
 
   /** 开始 ITimeSliderController 接口 */
@@ -73,19 +73,19 @@ class FCreateCharacterSliderController : public ITimeSliderController {
   struct FScrubRangeToScreen;
   FTimeSliderArgs TimeSliderArgs;
 
-  /** Brush for drawing the fill area on the scrubber */
+  /** 用于在洗地机上绘制填充区域的刷子 */
   const FSlateBrush* ScrubFillBrush;
 
-  /** Brush for drawing an upwards facing scrub handles */
+  /** 用于画一个朝上的擦洗手柄的刷子 */
   const FSlateBrush* ScrubHandleUpBrush;
 
-  /** Brush for drawing a downwards facing scrub handle */
+  /** 用于画一个朝下的刷子的手柄 */
   const FSlateBrush* ScrubHandleDownBrush;
 
-  /** Brush for drawing an editable time */
+  /** 用于绘制可编辑的时间的画笔 */
   const FSlateBrush* EditableTimeBrush;
 
-  /** Total mouse delta during dragging **/
+  /** 拖动过程中的鼠标总delta值 **/
   float DistanceDragged;
 
   /** If we are dragging a scrubber or dragging to set the time range */
@@ -102,24 +102,20 @@ class FCreateCharacterSliderController : public ITimeSliderController {
 
   DragType MouseDragType;
 
-  /** If we are currently panning the panel */
+  /** 如果我们目前正在平移面板 */
   bool bPanning;
 
-  /** Index of the current dragged time */
+  /** 当前拖动时间的索引 */
   int32 DraggedTimeIndex;
 
-  /** Mouse down position range */
+  /** 鼠标向下的位置范围 */
   FVector2D MouseDownPosition[2];
 
-  /** Geometry on mouse down */
+  /** 鼠标落下时的几何图形 */
   FGeometry MouseDownGeometry;
 
-  /** Range stack */
+  /** 范围叠加 */
   TArray<TRange<double>> ViewRangeStack;
-
-  /** Secondary numeric type interface for displaying 'other' numeric types */
-  TSharedPtr<INumericTypeInterface<double>> SecondaryNumericTypeInterface;
-
 
  private:
   /**
