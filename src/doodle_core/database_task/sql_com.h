@@ -13,7 +13,7 @@ namespace doodle::database_n {
  * @tparam T
  */
 template <typename T>
-extern struct sql_com {
+struct sql_com {
   /// 创建表
   void create_table(conn_ptr& in_ptr);
 

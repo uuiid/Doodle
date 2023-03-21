@@ -14,7 +14,7 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
-void sql_com<doodle::database, false>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -35,7 +35,7 @@ void sql_com<doodle::database, false>::insert(conn_ptr& in_ptr, const entt::obse
   }
 }
 
-void sql_com<doodle::database, false>::select(conn_ptr& in_ptr, std::map<std::int64_t, entt::entity>& in_handle) {
+void sql_com<doodle::database>::select(conn_ptr& in_ptr, std::map<std::int64_t, entt::entity>& in_handle) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
 
@@ -65,7 +65,7 @@ void sql_com<doodle::database, false>::select(conn_ptr& in_ptr, std::map<std::in
   for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], l_entts[i]);
 }
 
-void sql_com<doodle::database, false>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com<doodle::database>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
   sql::Entity l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.id == sqlpp::parameter(l_tabl.id)));

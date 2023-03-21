@@ -53,16 +53,45 @@ create index if not exists usertab_id_index on usertab (id);
 
 CREATE TABLE IF NOT EXISTS work_task_info
 (
-    id          integer
+    id         integer
         primary key,
-    entity_id   integer,
+    entity_id  integer,
 
-    user_id     text,
-    task_name   text,
-    region      text,
-    abstract    text,
-    time_point  datetime,
+    user_id    text,
+    task_name  text,
+    region     text,
+    abstract   text,
+    time_point datetime,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists work_task_info_index on work_task_info (id);
 create index if not exists work_task_info_index2 on work_task_info (entity_id);
+
+CREATE TABLE IF NOT EXISTS episodes
+(
+    id        integer
+        primary key,
+    entity_id integer,
+
+    eps       integer,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists episodes_index on episodes (id);
+create index if not exists episodes_index2 on episodes (entity_id);
+
+CREATE TABLE IF NOT EXISTS shot
+(
+    id        integer
+        primary key,
+    entity_id integer,
+
+    shot_int  integer,
+    shot_ab   text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists shot_index on shot (id);
+create index if not exists shot_index2 on shot (entity_id);
+
+
+
+
