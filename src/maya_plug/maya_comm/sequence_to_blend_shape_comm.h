@@ -34,4 +34,4 @@ class sequence_to_blend_shape_comm : public doodle::TemplateAction<
   [[maybe_unused]] [[nodiscard]] bool isUndoable() const override;
 };
 
-}  // namespace doodle
+}  // namespace doodle::maya_plug

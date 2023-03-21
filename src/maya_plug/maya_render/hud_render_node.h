@@ -42,29 +42,18 @@ class doodle_info_node_draw_override : public MPxDrawOverride {
 
   MHWRender::DrawAPI supportedDrawAPIs() const override;
 
-  bool isBounded(
-      const MDagPath& objPath,
-      const MDagPath& cameraPath
-  ) const override;
+  bool isBounded(const MDagPath& objPath, const MDagPath& cameraPath) const override;
 
-  MBoundingBox boundingBox(
-      const MDagPath& objPath,
-      const MDagPath& cameraPath
-  ) const override;
+  MBoundingBox boundingBox(const MDagPath& objPath, const MDagPath& cameraPath) const override;
 
   MUserData* prepareForDraw(
-      const MDagPath& objPath,
-      const MDagPath& cameraPath,
-      const MFrameContext& frameContext,
-      MUserData* oldData
+      const MDagPath& objPath, const MDagPath& cameraPath, const MFrameContext& frameContext, MUserData* oldData
   ) override;
 
   bool hasUIDrawables() const override { return true; }
 
   void addUIDrawables(
-      const MDagPath& objPath,
-      MHWRender::MUIDrawManager& drawManager,
-      const MHWRender::MFrameContext& frameContext,
+      const MDagPath& objPath, MHWRender::MUIDrawManager& drawManager, const MHWRender::MFrameContext& frameContext,
       const MUserData* data
   ) override;
 };

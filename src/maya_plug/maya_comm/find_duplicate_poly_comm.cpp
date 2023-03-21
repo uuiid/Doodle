@@ -3,20 +3,18 @@
 //
 
 #include "find_duplicate_poly_comm.h"
+
 #include <data/find_duplicate_poly.h>
-#include <maya/MArgParser.h>
-#include <maya/MNamespace.h>
-#include <maya/MSelectionList.h>
-#include <maya/MNamespace.h>
-
-#include <maya/MGlobal.h>
-#include <maya/MArgDatabase.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MFnDependencyNode.h>
-#include <maya/MDagPath.h>
-
 #include <data/maya_tool.h>
 #include <data/reference_file.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MArgParser.h>
+#include <maya/MDagPath.h>
+#include <maya/MFnDependencyNode.h>
+#include <maya/MGlobal.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MNamespace.h>
+#include <maya/MSelectionList.h>
 
 namespace doodle::maya_plug {
 namespace {

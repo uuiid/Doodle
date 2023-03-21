@@ -2,8 +2,9 @@
 // Created by TD on 2022/8/26.
 //
 
-#include <boost/test/unit_test.hpp>
 #include <doodle_core/pin_yin/convert.h>
+
+#include <boost/test/unit_test.hpp>
 
 using namespace doodle;
 BOOST_AUTO_TEST_CASE(test_pingyi) {

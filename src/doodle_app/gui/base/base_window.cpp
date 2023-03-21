@@ -14,4 +14,4 @@ std::tuple<entt::handle, doodle::gui::detail::windows_render> find_windows(const
   return {};
 }
 
-}  // namespace doodle::gui
+}  // namespace doodle::gui::detail

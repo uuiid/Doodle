@@ -7,8 +7,7 @@
 
 namespace doodle::gui {
 
-class make_link_widget {
-};
+class make_link_widget {};
 
 }  // namespace doodle::gui
 

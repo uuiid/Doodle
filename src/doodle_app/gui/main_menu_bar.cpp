@@ -3,15 +3,16 @@
 //
 
 #include "main_menu_bar.h"
-#include <lib_warp/imgui_warp.h>
-#include <doodle_app/app/app_command.h>
 
-#include <doodle_app/gui/open_file_dialog.h>
-#include <doodle_app/gui/get_input_dialog.h>
-#include <doodle_app/gui/base/ref_base.h>
 #include <doodle_core/core/core_sig.h>
-
 #include <doodle_core/database_task/sqlite_client.h>
+
+#include <doodle_app/app/app_command.h>
+#include <doodle_app/gui/base/ref_base.h>
+#include <doodle_app/gui/get_input_dialog.h>
+#include <doodle_app/gui/open_file_dialog.h>
+
+#include <lib_warp/imgui_warp.h>
 
 namespace doodle::gui {
 namespace main_menu_bar_ns {
@@ -23,18 +24,10 @@ void from_json(const nlohmann::json &j, layout_data &p) {
   j["imgui_data"].get_to(p.imgui_data);
   j["name"].get_to(p.name);
 }
-bool layout_data::operator==(const layout_data &in_rhs) const {
-  return name == in_rhs.name;
-}
-bool layout_data::operator!=(const layout_data &in_rhs) const {
-  return !(in_rhs == *this);
-}
-bool layout_data::operator==(const std::string &in_rhs) const {
-  return name == in_rhs;
-}
-bool layout_data::operator!=(const std::string &in_rhs) const {
-  return !(*this == in_rhs);
-}
+bool layout_data::operator==(const layout_data &in_rhs) const { return name == in_rhs.name; }
+bool layout_data::operator!=(const layout_data &in_rhs) const { return !(in_rhs == *this); }
+bool layout_data::operator==(const std::string &in_rhs) const { return name == in_rhs; }
+bool layout_data::operator!=(const std::string &in_rhs) const { return !(*this == in_rhs); }
 }  // namespace main_menu_bar_ns
 
 class main_menu_bar::impl {
@@ -50,9 +43,7 @@ class main_menu_bar::impl {
   std::vector<main_menu_bar_ns::layout_data> layout_list;
 };
 
-main_menu_bar::main_menu_bar()
-    : p_i(std::make_unique<impl>()) {
-}
+main_menu_bar::main_menu_bar() : p_i(std::make_unique<impl>()) {}
 main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
@@ -84,8 +75,7 @@ void main_menu_bar::menu_file() {
 
   ImGui::Separator();
 
-  if (dear::MenuItem("保存"s, "Ctrl+S"))
-    g_reg()->ctx().at<core_sig>().save();
+  if (dear::MenuItem("保存"s, "Ctrl+S")) g_reg()->ctx().at<core_sig>().save();
 
   ImGui::Separator();
   dear::MenuItem("调试"s, &p_i->p_debug_show);
@@ -124,12 +114,8 @@ void main_menu_bar::menu_layout() {
   //    };
   //  }
 }
-main_menu_bar::main_menu_bar(const main_menu_bar &in) noexcept
-    : p_i(std::make_unique<impl>(*in.p_i)) {
-}
-main_menu_bar::main_menu_bar(main_menu_bar &&in) noexcept {
-  p_i = std::move(in.p_i);
-}
+main_menu_bar::main_menu_bar(const main_menu_bar &in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
+main_menu_bar::main_menu_bar(main_menu_bar &&in) noexcept { p_i = std::move(in.p_i); }
 main_menu_bar &main_menu_bar::operator=(const main_menu_bar &in) noexcept {
   *p_i = *p_i;
   return *this;

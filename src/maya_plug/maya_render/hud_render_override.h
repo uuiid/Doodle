@@ -25,18 +25,13 @@ class hud_render_override : public MHWRender::MRenderOverride {
   bool nextRenderOperation() override;
 
   // UI name
-  MString uiName() const override {
-    return mUIName;
-  }
+  MString uiName() const override { return mUIName; }
 
  protected:
   // UI name
   MString mUIName;
   // Operations and operation names
-  std::array<
-      std::unique_ptr<MHWRender::MRenderOperation>,
-      2>
-      mOperations;
+  std::array<std::unique_ptr<MHWRender::MRenderOperation>, 2> mOperations;
   std::array<MString, 2> mOperationNames;
 
   // Temporary of operation iteration
@@ -48,20 +43,13 @@ class hud_render : public MHWRender::MUserRenderOperation {
   hud_render(const MString& in_name);
 
   bool hasUIDrawables() const override;
-  void addUIDrawables(
-      MHWRender::MUIDrawManager& drawManager2D,
-      const MHWRender::MFrameContext& frameContext
-  ) override;
+  void addUIDrawables(MHWRender::MUIDrawManager& drawManager2D, const MHWRender::MFrameContext& frameContext) override;
   const MFloatPoint* viewportRectangleOverride() override;
 
   /// 测试MUserRenderOperation所需覆盖方法
-  bool requiresLightData() const override {
-    return false;
-  }
+  bool requiresLightData() const override { return false; }
 
-  MStatus execute(const MHWRender::MDrawContext& drawContext) override {
-    return MStatus::kSuccess;
-  }
+  MStatus execute(const MHWRender::MDrawContext& drawContext) override { return MStatus::kSuccess; }
   // bool getInputTargetDescription(
   //     const MString& name,
   //     MRenderTargetDescription& description) override;

@@ -108,8 +108,6 @@ void this_rpc_exe::read_out() const {
     );
 }
 
-this_rpc_exe::~this_rpc_exe() {
-  ptr->this_exe_proces.terminate();
-}
+this_rpc_exe::~this_rpc_exe() { ptr->this_exe_proces.terminate(); }
 void this_rpc_exe::wait() { ptr->this_exe_proces.wait(); }
 }  // namespace doodle::detail

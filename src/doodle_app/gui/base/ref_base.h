@@ -2,9 +2,8 @@
 
 #include <doodle_app/doodle_app_fwd.h>
 
-#include <boost/signals2.hpp>
-
 #include <boost/operators.hpp>
+#include <boost/signals2.hpp>
 
 namespace doodle::gui {
 /**
@@ -165,8 +164,7 @@ class gui_cache_name_id : boost::totally_ordered<gui_cache_name_id> {
    * @brief 使用空字符串进行默认构造
    *
    */
-  gui_cache_name_id()
-      : gui_cache_name_id(std::string{}) {}
+  gui_cache_name_id() : gui_cache_name_id(std::string{}) {}
 
   /**
    * @brief 使用传入的名称作为名称构造
@@ -234,10 +232,7 @@ class gui_cache : public BaseType {
    * @brief 初始化id, 并且默认构造数据
    * @param in_name
    */
-  explicit gui_cache(const std::string &in_name)
-      : base_type(),
-        gui_name(in_name),
-        data(){};
+  explicit gui_cache(const std::string &in_name) : base_type(), gui_name(in_name), data(){};
 
   /**
    * @brief 使用传入数据的构造, 并将数据转为字符串, 作为名称
@@ -246,8 +241,7 @@ class gui_cache : public BaseType {
    * @param in_data 传入的数据
    */
   template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(IN_T &in_data)
-      : gui_cache(fmt::to_string(*in_data), in_data) {}
+  explicit gui_cache(IN_T &in_data) : gui_cache(fmt::to_string(*in_data), in_data) {}
   /**
    * @brief 使用传入数据的构造, 并将数据转为字符串, 作为名称
    *
@@ -255,35 +249,22 @@ class gui_cache : public BaseType {
    * @param in_data 传入的数据
    */
   template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(const IN_T &in_data)
-      : gui_cache(fmt::to_string(in_data), in_data) {}
+  explicit gui_cache(const IN_T &in_data) : gui_cache(fmt::to_string(in_data), in_data) {}
 
   /**
    * @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
    */
-  bool operator<(const gui_cache &in_rhs) const {
-    return data < in_rhs.data;
-  }
+  bool operator<(const gui_cache &in_rhs) const { return data < in_rhs.data; }
   /// @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
-  bool operator>(const gui_cache &in_rhs) const {
-    return in_rhs < *this;
-  }
+  bool operator>(const gui_cache &in_rhs) const { return in_rhs < *this; }
   /// @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
-  bool operator<=(const gui_cache &in_rhs) const {
-    return !(in_rhs < *this);
-  }
+  bool operator<=(const gui_cache &in_rhs) const { return !(in_rhs < *this); }
   /// @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
-  bool operator>=(const gui_cache &in_rhs) const {
-    return !(*this < in_rhs);
-  }
+  bool operator>=(const gui_cache &in_rhs) const { return !(*this < in_rhs); }
   /// @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
-  bool operator==(const gui_cache &in_rhs) const {
-    return data == in_rhs.data;
-  }
+  bool operator==(const gui_cache &in_rhs) const { return data == in_rhs.data; }
   /// @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name
-  bool operator!=(const gui_cache &in_rhs) const {
-    return !(in_rhs == *this);
-  }
+  bool operator!=(const gui_cache &in_rhs) const { return !(in_rhs == *this); }
 
   /**
    * @brief 方便的赋值运算符重载
@@ -300,9 +281,7 @@ class gui_cache : public BaseType {
    * @brief 返回 gui id (包括显示名称)
    * @return
    */
-  const char *operator*() const {
-    return *gui_name;
-  }
+  const char *operator*() const { return *gui_name; }
   const char *operator*() { return *gui_name; }
   /**
    * @brief 返回gui 内容
@@ -318,12 +297,8 @@ class gui_cache : public BaseType {
   const T &operator()() const { return data; }
 
   /// @brief 隐式转换 T 运算符
-  operator T &() {
-    return data;
-  }
+  operator T &() { return data; }
   /// @brief 隐式转换 T 运算符
-  operator const T &() const {
-    return data;
-  }
+  operator const T &() const { return data; }
 };
 }  // namespace doodle::gui

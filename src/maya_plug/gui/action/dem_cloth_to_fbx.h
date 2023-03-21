@@ -11,8 +11,7 @@
 
 namespace doodle::maya_plug {
 
-class dem_cloth_to_fbx
-    : public doodle::gui::base_windows<dear::Begin, dem_cloth_to_fbx> {
+class dem_cloth_to_fbx : public doodle::gui::base_windows<dear::Begin, dem_cloth_to_fbx> {
   class impl;
   std::unique_ptr<impl> p_i;
 

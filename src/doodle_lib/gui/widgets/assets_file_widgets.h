@@ -3,8 +3,9 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
 
@@ -17,8 +18,7 @@ class assets_file_widgets;
  * @note 每次上传文件都会递增版本号， 如果需要新的条目请创建新条目
  *
  */
-class DOODLELIB_API assets_file_widgets
-    : public base_windows<dear::Begin, assets_file_widgets> {
+class DOODLELIB_API assets_file_widgets : public base_windows<dear::Begin, assets_file_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
 

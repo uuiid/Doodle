@@ -68,7 +68,6 @@ Eigen::MatrixXf pca_fun2(const Eigen::MatrixXf& in_mat) {
     }
   }
 
-  
   // Eigen::MatrixXf l_org = l_u * l_s * l_v;
   // std::cout << "org: \n" << l_org << std::endl;
 

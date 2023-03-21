@@ -6,27 +6,19 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+
 #include <maya/MDagPath.h>
 #include <maya/MFnMesh.h>
 #include <maya/MItDependencyGraph.h>
 namespace doodle::maya_plug {
 
 maya_poly_info::maya_poly_info()
-    : maya_obj(),
-      has_skin(false),
-      is_intermediate_obj(false),
-      has_cloth(false),
-      node_name(),
-      node_org_name(){};
-maya_poly_info::maya_poly_info(const MObject &in_mesh_object) : maya_poly_info() {
-  set_mesh_info(in_mesh_object);
-}
+    : maya_obj(), has_skin(false), is_intermediate_obj(false), has_cloth(false), node_name(), node_org_name(){};
+maya_poly_info::maya_poly_info(const MObject &in_mesh_object) : maya_poly_info() { set_mesh_info(in_mesh_object); }
 bool maya_poly_info::operator==(const maya_poly_info &in_rhs) const {
   return this->node_org_name == in_rhs.node_org_name;
 }
-bool maya_poly_info::operator!=(const maya_poly_info &in_rhs) const {
-  return !(in_rhs == *this);
-}
+bool maya_poly_info::operator!=(const maya_poly_info &in_rhs) const { return !(in_rhs == *this); }
 void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
   if (in_mesh_object.hasFn(MFn::kMesh)) {
     MFnDagNode l_mesh{};
@@ -46,12 +38,8 @@ void maya_poly_info::set_mesh_info(const MObject &in_mesh_object) {
     this->has_skin  = has_skin_cluster(maya_obj);
     this->has_cloth = has_cloth_link(maya_obj);
 
-    node_org_name   = boost::erase_head_copy(
-        node_name,
-        boost::numeric_cast<std::int32_t>(
-            this->node_name.find_last_of(':')
-        )
-    );
+    node_org_name =
+        boost::erase_head_copy(node_name, boost::numeric_cast<std::int32_t>(this->node_name.find_last_of(':')));
 
     std::string l_find_str{};
     if (has_cloth) {
@@ -80,9 +68,10 @@ bool maya_poly_info::has_skin_cluster(const MObject &in_object) {
   //       l_it_dependency_graph.next()) {
   //    return true;
   //  }
-  for (MItDependencyGraph l_it_dependency_graph{l_object, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst, MItDependencyGraph::kNodeLevel, nullptr};
-       !l_it_dependency_graph.isDone();
-       l_it_dependency_graph.next()) {
+  for (MItDependencyGraph l_it_dependency_graph{
+           l_object, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
+           MItDependencyGraph::kNodeLevel, nullptr};
+       !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
     return true;
   }
 

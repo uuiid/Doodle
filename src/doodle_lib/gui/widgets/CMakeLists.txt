@@ -41,4 +41,4 @@ target_sources(doodle_lib
         create_video.cpp
         database_edit.cpp
         work_hour_filling.cpp
-)
+        )

@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/ref_base.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
 class filter_base;

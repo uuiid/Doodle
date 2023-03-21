@@ -7,11 +7,11 @@
 #include <maya_plug/data/qcloth_shape.h>
 
 #include <maya/MArgDatabase.h>
-#include <maya/MGlobal.h>
-#include <maya/MItDependencyNodes.h>
-#include <maya/MItDag.h>
 #include <maya/MArgList.h>
 #include <maya/MDGModifier.h>
+#include <maya/MGlobal.h>
+#include <maya/MItDag.h>
+#include <maya/MItDependencyNodes.h>
 
 namespace doodle::maya_plug {
 namespace create_qcloth_assets_ns {
@@ -45,9 +45,7 @@ class create_qcloth_assets::impl {
   std::vector<MObject> create_nodes{};
 };
 
-create_qcloth_assets::create_qcloth_assets()
-    : p_i(std::make_unique<impl>()) {
-}
+create_qcloth_assets::create_qcloth_assets() : p_i(std::make_unique<impl>()) {}
 void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
   DOODLE_LOG_INFO(in_arg);
   MStatus l_s{};
@@ -74,8 +72,7 @@ void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
 
   p_i->cloth_list |= ranges::actions::remove_if([](const entt::handle& in) { return !in; });
   DOODLE_CHICK(!p_i->cloth_list.empty(), doodle_error{"传入了空的布料列表"s});
-  if (!p_i->coll_p.valid())
-    p_i->coll_p = {};
+  if (!p_i->coll_p.valid()) p_i->coll_p = {};
 }
 MStatus create_qcloth_assets::doIt(const MArgList& in_arg) {
   parse_arg(in_arg);
@@ -108,15 +105,11 @@ MStatus create_qcloth_assets::redoIt() {
   filter_create_node(l_org_list);
   return MStatus::kSuccess;
 }
-bool create_qcloth_assets::isUndoable() const {
-  return true;
-}
+bool create_qcloth_assets::isUndoable() const { return true; }
 std::vector<MObject> create_qcloth_assets::get_all_node() {
   std::vector<MObject> l_r{};
   MStatus l_s{};
-  for (MItDag l_it{};
-       !l_it.isDone();
-       l_it.next()) {
+  for (MItDag l_it{}; !l_it.isDone(); l_it.next()) {
     l_r.emplace_back(l_it.currentItem(&l_s));
     DOODLE_MAYA_CHICK(l_s);
   }
@@ -132,9 +125,7 @@ void create_qcloth_assets::delete_node() {
 
   MGlobal::deleteNode(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
 }
-void create_qcloth_assets::filter_create_node(
-    const std::vector<MObject>& in_obj
-) {
+void create_qcloth_assets::filter_create_node(const std::vector<MObject>& in_obj) {
   //  p_i->create_nodes = get_all_node();
   //  p_i->create_nodes |= ranges::actions::remove_if([&](const MObject& in) -> bool {
   //    auto it = ranges::find_if(in_obj, [&](const MObject& in_item) -> bool {

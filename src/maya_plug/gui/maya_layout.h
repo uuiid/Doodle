@@ -8,8 +8,7 @@
 namespace doodle {
 namespace maya_plug {
 
-class maya_layout
-    : public doodle::gui::detail::layout_tick_interface {
+class maya_layout : public doodle::gui::detail::layout_tick_interface {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -20,8 +19,7 @@ class maya_layout
   bool tick() override;
 };
 
-
-class maya_menu : public  doodle::gui::main_menu_bar{
+class maya_menu : public doodle::gui::main_menu_bar {
  protected:
   void menu_windows() override;
   void menu_tool() override;

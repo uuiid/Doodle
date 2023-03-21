@@ -3,11 +3,11 @@
 //
 
 #pragma once
-#include <maya/MApiNamespace.h>
-#include <maya/MPlug.h>
-
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
+
+#include <maya/MApiNamespace.h>
+#include <maya/MPlug.h>
 namespace doodle::maya_plug {
 /**
  * @brief 这个插件会寻找节点的属性, 并在找到时返回
@@ -22,15 +22,13 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name);
 template <typename T>
 void set_attribute(const MObject& in_node, const std::string& in_name, const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
-  if (!l_s)
-    throw_exception(doodle_error{fmt::to_string(l_s)});
+  if (!l_s) throw_exception(doodle_error{fmt::to_string(l_s)});
 }
 template <typename T>
 T get_attribute(const MObject& in_node, const std::string& in_name) {
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
-  if (!l_s)
-    throw_exception(doodle_error{fmt::to_string(l_s)});
+  if (!l_s) throw_exception(doodle_error{fmt::to_string(l_s)});
   return result;
 }
 
@@ -56,10 +54,7 @@ std::string get_node_name_strip_name_space(const MDagPath& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 
 namespace comm_warp {
-MDagPath marge_mesh(
-    const MSelectionList& in_marge_obj,
-    const std::string& in_marge_name
-);
+MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name);
 }
 
 }  // namespace doodle::maya_plug

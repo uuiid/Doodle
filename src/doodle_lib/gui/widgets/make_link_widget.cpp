@@ -5,6 +5,5 @@
 #include "make_link_widget.h"
 
 namespace doodle {
-namespace gui {
-}  // namespace gui
+namespace gui {}  // namespace gui
 }  // namespace doodle

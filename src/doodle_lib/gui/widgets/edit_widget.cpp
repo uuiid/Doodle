@@ -6,25 +6,25 @@
 #include "edit_widget.h"
 
 #include <doodle_core/core/core_sig.h>
-#include <doodle_lib/gui/widgets/assets_file_widgets.h>
-#include <doodle_app/gui/base/ref_base.h>
-#include <gui/widgets/database_edit.h>
-#include <doodle_lib/gui/widgets/assets_filter_widget.h>
-#include <doodle_lib/core/image_loader.h>
 #include <doodle_core/core/init_register.h>
-#include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
-#include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
-
-#include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
-#include <core/tree_node.h>
-namespace doodle::gui {
-namespace edit_widgets_ns {
+#include <doodle_core/metadata/metadata.h>
+#include <doodle_core/metadata/metadata_cpp.h>
 
-}
+#include <doodle_app/gui/base/ref_base.h>
+
+#include <doodle_lib/core/image_loader.h>
+#include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
+#include <doodle_lib/gui/widgets/edit_widgets/edit_user.h>
+#include <doodle_lib/gui/widgets/edit_widgets/redirection_path_info_edit.h>
+
+#include <core/tree_node.h>
+#include <gui/widgets/database_edit.h>
+namespace doodle::gui {
+namespace edit_widgets_ns {}
 
 class assets_edit : public edit_interface {
   using gui_list_item_type = gui_cache<std::string, gui_cache_path>;
@@ -34,8 +34,7 @@ class assets_edit : public edit_interface {
   edit_widgets_ns::edit_assets_data edit_data;
 
  public:
-  assets_edit()
-      : path_list("标签列表"s, std::vector<gui_list_item_type>{}) {
+  assets_edit() : path_list("标签列表"s, std::vector<gui_list_item_type>{}) {
     // p_obs.connect(*g_reg(), entt::collector.update<data_type>());
   }
 
@@ -45,26 +44,17 @@ class assets_edit : public edit_interface {
     edit_data = {};
 
     auto l_r =
-        in |
-        ranges::views::filter(
-            [](const entt::handle &in_handle) -> bool {
-              return in_handle && in_handle.any_of<assets>();
-            }
-        ) |
-        ranges::views::transform(
-            [](const entt::handle &in_handle) -> std::vector<std::string> {
-              return in_handle.get<assets>().get_path_component();
-            }
-        ) |
+        in | ranges::views::filter([](const entt::handle &in_handle) -> bool {
+          return in_handle && in_handle.any_of<assets>();
+        }) |
+        ranges::views::transform([](const entt::handle &in_handle) -> std::vector<std::string> {
+          return in_handle.get<assets>().get_path_component();
+        }) |
         ranges::to_vector |
-        ranges::actions::sort(
-            [](const std::vector<std::string> &l_l,
-               const std::vector<std::string> &l_r) -> bool {
-              return l_l.size() < l_r.size();
-            }
-        );
-    if (l_r.empty())
-      return;
+        ranges::actions::sort([](const std::vector<std::string> &l_l, const std::vector<std::string> &l_r) -> bool {
+          return l_l.size() < l_r.size();
+        });
+    if (l_r.empty()) return;
     auto l_list = l_r.front();
     FSys::path l_p_root{};
     ranges::for_each(l_list, [&](const std::string &in_string) {
@@ -121,12 +111,9 @@ class season_edit : public gui::edit_interface {
       p_season = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("季数", &p_season, 1, 9999))
-      set_modify(true);
+    if (imgui::InputInt("季数", &p_season, 1, 9999)) set_modify(true);
   }
-  void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<season>(p_season);
-  }
+  void save_(const entt::handle &in) const override { in.emplace_or_replace<season>(p_season); }
 };
 class episodes_edit : public gui::edit_interface {
  public:
@@ -139,13 +126,10 @@ class episodes_edit : public gui::edit_interface {
       p_eps = 0;
   }
   void render(const entt::handle &in) override {
-    if (imgui::InputInt("集数", &p_eps, 1, 9999))
-      set_modify(true);
+    if (imgui::InputInt("集数", &p_eps, 1, 9999)) set_modify(true);
     ;
   }
-  void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<episodes>(p_eps);
-  }
+  void save_(const entt::handle &in) const override { in.emplace_or_replace<episodes>(p_eps); }
 };
 class shot_edit : public gui::edit_interface {
  public:
@@ -175,9 +159,7 @@ class shot_edit : public gui::edit_interface {
       }
     };
   }
-  void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<shot>(p_shot, p_shot_ab_str);
-  }
+  void save_(const entt::handle &in) const override { in.emplace_or_replace<shot>(p_shot, p_shot_ab_str); }
 };
 class assets_file_edit : public gui::edit_interface {
   class fun_cache {
@@ -190,10 +172,7 @@ class assets_file_edit : public gui::edit_interface {
   gui::gui_cache<std::string, fun_cache> p_path_cache;
   gui::gui_cache<std::string, fun_cache> p_name_cache;
   gui::gui_cache<std::int32_t, fun_cache> p_version_cache;
-  assets_file_edit()
-      : p_path_cache("路径"s, ""s),
-        p_name_cache("名称"s, ""s),
-        p_version_cache("版本"s, 0) {
+  assets_file_edit() : p_path_cache("路径"s, ""s), p_name_cache("名称"s, ""s), p_version_cache("版本"s, 0) {
     p_path_cache.patch = [this](assets_file &l_ass) {
       l_ass.path_attr(p_path_cache.data);
       p_path_cache.select = false;
@@ -267,13 +246,13 @@ class time_edit : public gui::edit_interface {
   }
 
   void render(const entt::handle &in) override {
-    if (ImGui::InputInt3(*time_ymd.gui_name, time_ymd.data.data()))
-      set_modify(true);
-    if (ImGui::InputInt3(*time_hms.gui_name, time_hms.data.data()))
-      set_modify(true);
+    if (ImGui::InputInt3(*time_ymd.gui_name, time_ymd.data.data())) set_modify(true);
+    if (ImGui::InputInt3(*time_hms.gui_name, time_hms.data.data())) set_modify(true);
   }
   void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<time_point_wrap>(time_ymd.data[0], time_ymd.data[1], time_ymd.data[2], time_hms.data[0], time_hms.data[1], time_hms.data[2]);
+    in.emplace_or_replace<time_point_wrap>(
+        time_ymd.data[0], time_ymd.data[1], time_ymd.data[2], time_hms.data[0], time_hms.data[1], time_hms.data[2]
+    );
   }
 };
 
@@ -281,8 +260,7 @@ class importance_edit : public edit_interface {
   gui_cache<std::string> p_importance;
 
  public:
-  importance_edit()
-      : p_importance("等级"s, ""s) {}
+  importance_edit() : p_importance("等级"s, ""s) {}
   void init_(const entt::handle &in) override {
     if (in.any_of<importance>())
       p_importance.data = in.get<importance>().cutoff_p;
@@ -294,17 +272,14 @@ class importance_edit : public edit_interface {
       set_modify(true);
     }
   }
-  void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<importance>(p_importance.data);
-  }
+  void save_(const entt::handle &in) const override { in.emplace_or_replace<importance>(p_importance.data); }
 };
 
 class command_edit : public edit_interface {
   gui_cache<std::string> p_command;
 
  public:
-  command_edit()
-      : p_command("备注"s, ""s) {}
+  command_edit() : p_command("备注"s, ""s) {}
   void init_(const entt::handle &in) override {
     if (in.any_of<comment>())
       p_command.data = in.get<comment>().get_comment();
@@ -316,9 +291,7 @@ class command_edit : public edit_interface {
       set_modify(true);
     }
   }
-  void save_(const entt::handle &in) const override {
-    in.emplace_or_replace<comment>(p_command.data);
-  }
+  void save_(const entt::handle &in) const override { in.emplace_or_replace<comment>(p_command.data); }
 };
 
 class add_assets_for_file : public base_render {
@@ -334,8 +307,7 @@ class add_assets_for_file : public base_render {
     auto &l_config = g_reg()->ctx().at<project_config::base_config>();
     std::regex l_regex{l_config.find_icon_regex};
     FSys::path l_path{in_path};
-    if (FSys::is_regular_file(l_path) &&
-        l_config.match_icon_extensions(l_path)) {
+    if (FSys::is_regular_file(l_path) && l_config.match_icon_extensions(l_path)) {
       l_image_load.save(in_handle, l_path);
       return;
     } else if (FSys::is_regular_file(l_path))
@@ -345,10 +317,7 @@ class add_assets_for_file : public base_render {
 
     if (FSys::is_directory(l_path)) {
       auto k_imghe_path = ranges::find_if(
-          ranges::make_subrange(
-              FSys::directory_iterator{l_path},
-              FSys::directory_iterator{}
-          ),
+          ranges::make_subrange(FSys::directory_iterator{l_path}, FSys::directory_iterator{}),
           [&](const FSys::path &in_file) {
             return l_config.match_icon_extensions(in_file) &&
                    std::regex_search(in_file.filename().generic_string(), l_regex);
@@ -362,8 +331,7 @@ class add_assets_for_file : public base_render {
 
   void add_assets(const std::vector<FSys::path> &in_list) {
     image_loader l_image_load{};
-    p_list.data = in_list |
-                  ranges::views::transform([&](const FSys::path &in_path) -> entt::handle {
+    p_list.data = in_list | ranges::views::transform([&](const FSys::path &in_path) -> entt::handle {
                     auto k_h        = make_handle();
                     auto l_prj_path = g_reg()->ctx().at<project>().p_path;
                     /// \brief 这里使用 lexically_proximate 防止相对路径失败
@@ -380,10 +348,8 @@ class add_assets_for_file : public base_render {
                     shot::analysis_static(k_h, in_path);
                     episodes::conjecture_season(k_h);
 
-                    if (use_time.data)
-                      this->add_time(k_h, in_path);
-                    if (use_icon.data)
-                      this->find_icon(k_h, in_path);
+                    if (use_time.data) this->add_time(k_h, in_path);
+                    if (use_icon.data) this->find_icon(k_h, in_path);
                     k_h.emplace<database>();
                     database::save(k_h);
                     return k_h;
@@ -412,41 +378,28 @@ class add_assets_for_file : public base_render {
         use_icon("寻找图标"s, true),
         assets_list("分类"s, std::vector<std::string>{}) {
     auto &l_sig = g_reg()->ctx().at<core_sig>();
-    l_sig.project_end_open.connect(
-        [this]() {
-          auto &prj         = g_reg()->ctx().at<project_config::base_config>();
-          this->assets_list = prj.assets_list;
+    l_sig.project_end_open.connect([this]() {
+      auto &prj                   = g_reg()->ctx().at<project_config::base_config>();
+      this->assets_list           = prj.assets_list;
 
-          this->assets_list.show_name =
-              this->assets_list.data.empty()
-                  ? "null"s
-                  : this->assets_list.data.front();
-        }
-    );
+      this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
+    });
     l_sig.save_end.connect([this]() {
       auto &prj         = g_reg()->ctx().at<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
             return this->assets_list.show_name == in;
           })) {
-        this->assets_list.show_name =
-            this->assets_list.data.empty()
-                ? "null"s
-                : this->assets_list.data.front();
+        this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
       }
     });
-    l_sig.drop_files.connect([this](const auto &in_file_list) {
-      this->add_assets(in_file_list);
-    });
+    l_sig.drop_files.connect([this](const auto &in_file_list) { this->add_assets(in_file_list); });
     auto &prj         = g_reg()->ctx().at<project_config::base_config>();
     this->assets_list = prj.assets_list;
     if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
           return this->assets_list.show_name == in;
         })) {
-      this->assets_list.show_name =
-          this->assets_list.data.empty()
-              ? "null"s
-              : this->assets_list.data.front();
+      this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
     }
   }
 
@@ -458,8 +411,7 @@ class add_assets_for_file : public base_render {
 
     dear::Combo{*assets_list.gui_name, assets_list.show_name.data()} && [this]() {
       for (auto &&i : assets_list.data)
-        if (ImGui::Selectable(i.data()))
-          assets_list.show_name = i;
+        if (ImGui::Selectable(i.data())) assets_list.show_name = i;
     };
 
     {
@@ -484,9 +436,7 @@ class add_entt_base : public base_render {
   gui_cache<std::vector<entt::handle>> list_handle;
 
  public:
-  add_entt_base()
-      : add_size("添加个数", 1),
-        list_handle("添加"s, std::vector<entt::handle>{}){};
+  add_entt_base() : add_size("添加个数", 1), list_handle("添加"s, std::vector<entt::handle>{}){};
   bool render(const entt::handle &in) override {
     bool result{false};
     ImGui::InputInt(*add_size.gui_name, &add_size.data);
@@ -532,14 +482,10 @@ class edit_widgets::impl {
   std::string title_name_;
 };
 
-edit_widgets::edit_widgets()
-    : p_i(std::make_unique<impl>()) {
-  p_i->title_name_ = std::string{name};
-}
+edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
 edit_widgets::~edit_widgets() = default;
 
 void edit_widgets::init() {
-
   p_i->p_edit.emplace_back("季数编辑"s, std::make_unique<season_edit>());
   p_i->p_edit.emplace_back("集数编辑"s, std::make_unique<episodes_edit>());
   p_i->p_edit.emplace_back("镜头编辑"s, std::make_unique<shot_edit>());
@@ -555,50 +501,37 @@ void edit_widgets::init() {
   p_i->p_edit.emplace_back("替换规则"s, std::make_unique<redirection_path_info_edit>());
 
   /// \brief 连接信号
-  ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) {
-    p_i->data_edit.link_sig(in_edit.data);
-  });
+  ranges::for_each(p_i->p_edit, [this](impl::gui_edit_cache &in_edit) { p_i->data_edit.link_sig(in_edit.data); });
 
   p_i->p_add.emplace_back("添加"s, std::make_unique<add_entt_base>());
   p_i->p_add.emplace_back("文件添加"s, std::make_unique<add_assets_for_file>());
 
   g_reg()->ctx().emplace<edit_widgets &>(*this);
   auto &l_sig = g_reg()->ctx().at<core_sig>();
-  p_i->p_sc.emplace_back(l_sig.select_handles.connect(
-      [&](const std::vector<entt::handle> &in) {
-        p_i->p_h = in;
-        p_i->data_edit.init(p_i->p_h);
-        ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
-          in_edit.data->init(p_i->p_h);
-        });
-      }
-  ));
+  p_i->p_sc.emplace_back(l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
+    p_i->p_h = in;
+    p_i->data_edit.init(p_i->p_h);
+    ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) { in_edit.data->init(p_i->p_h); });
+  }));
   /**
    * @brief 保存时禁用编辑
    */
-  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect(
-      [&](const FSys::path &) {
-        this->p_i->add_handles.clear();
-        this->p_i->p_h = {};
-      }
-  ));
+  p_i->p_sc.emplace_back(l_sig.project_begin_open.connect([&](const FSys::path &) {
+    this->p_i->add_handles.clear();
+    this->p_i->p_h = {};
+  }));
 }
 
 void edit_widgets::render() {
-  dear::TreeNode{"添加"} && [this]() {
-    this->add_handle();
-  };
-  dear::TreeNode{"编辑"} && [this]() {
-    this->edit_handle();
-  };
+  dear::TreeNode{"添加"} && [this]() { this->add_handle(); };
+  dear::TreeNode{"编辑"} && [this]() { this->edit_handle(); };
 }
 
 void edit_widgets::edit_handle() {
   /// @brief 资产编辑
   if (!p_i->p_h.empty()) {
     const auto l_args = p_i->p_h.size();
-    if (l_args > 1)
-      dear::Text(fmt::format("同时编辑了 {}个", l_args));
+    if (l_args > 1) dear::Text(fmt::format("同时编辑了 {}个", l_args));
     p_i->data_edit.render(p_i->p_h.front());
     ranges::for_each(p_i->p_edit, [&](impl::gui_edit_cache &in_edit) {
       dear::Text(in_edit.gui_name.name);
@@ -622,8 +555,6 @@ void edit_widgets::add_handle() {
   }
 }
 
-const std::string &edit_widgets::title() const {
-  return p_i->title_name_;
-}
+const std::string &edit_widgets::title() const { return p_i->title_name_; }
 
 }  // namespace doodle::gui

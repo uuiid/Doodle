@@ -11,10 +11,8 @@ constexpr char comm_file_save_name[] = "doodle_comm_file_save";
 namespace details {
 MSyntax comm_file_save_syntax();
 }
-class comm_file_save : public doodle::TemplateAction<
-                           comm_file_save,
-                           comm_file_save_name,
-                           details::comm_file_save_syntax> {
+class comm_file_save
+    : public doodle::TemplateAction<comm_file_save, comm_file_save_name, details::comm_file_save_syntax> {
  public:
   MStatus doIt(const MArgList& in_arg) override;
 };

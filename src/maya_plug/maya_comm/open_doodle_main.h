@@ -9,9 +9,7 @@ namespace doodle::maya_plug {
 namespace {
 constexpr char doodleCreate_name[] = "doodleCreate";
 }
-class open_doodle_main : public TemplateAction<
-                             open_doodle_main,
-                             doodleCreate_name> {
+class open_doodle_main : public TemplateAction<open_doodle_main, doodleCreate_name> {
  public:
   open_doodle_main();
   ~open_doodle_main() override;

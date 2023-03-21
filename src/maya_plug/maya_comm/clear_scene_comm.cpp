@@ -4,12 +4,12 @@
 
 #include "clear_scene_comm.h"
 
+#include <maya_plug/data/maya_clear_scenes.h>
+
+#include <maya/MAnimControl.h>
 #include <maya/MArgParser.h>
 #include <maya/MSelectionList.h>
-#include <maya/MAnimControl.h>
 #include <maya/MTime.h>
-
-#include <maya_plug/data/maya_clear_scenes.h>
 
 namespace doodle::maya_plug {
 namespace {
@@ -150,7 +150,9 @@ bool clear_scene_comm::show_save_mag() {
       "6. 相机名称和结束帧"s};
 
   MString l_com_r{};
-  MGlobal::executeCommand(d_str{fmt::format(R"(
+  MGlobal::executeCommand(
+      d_str{fmt::format(
+          R"(
 confirmDialog
 -button "保存"
 -button "No"
@@ -161,8 +163,10 @@ confirmDialog
 -message "{}"
 ;
 )"s,
-                                            fmt::join(l_msg, R"(\n)"))},
-                          l_com_r, false, false);
+          fmt::join(l_msg, R"(\n)")
+      )},
+      l_com_r, false, false
+  );
   return l_com_r == d_str{"保存"};
 }
 }  // namespace doodle::maya_plug

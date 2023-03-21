@@ -43,9 +43,7 @@ class maya_camera {
    * @throw maya_error maya返回值错误
    */
   bool export_file(
-      const MTime& in_start,
-      const MTime& in_end,
-      const reference_file_ns::generate_fbx_file_path& in_name
+      const MTime& in_start, const MTime& in_end, const reference_file_ns::generate_fbx_file_path& in_name
   );
   /**
    * @brief 烘培动画关键帧

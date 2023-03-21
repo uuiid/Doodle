@@ -57,8 +57,7 @@ MStatus comm_check_scenes::unlock_normal() {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh))
-      DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
 
     /// 开始软化边
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
@@ -140,8 +139,7 @@ MStatus comm_check_scenes::multilateral_surface(bool use_select) {
       }
     }
   }
-  if (use_select)
-    MGlobal::setActiveSelectionList(k_select);
+  if (use_select) MGlobal::setActiveSelectionList(k_select);
 
   return k_s;
 }
@@ -160,8 +158,7 @@ MStatus comm_check_scenes::uv_set(bool use_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh))
-      DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
 
     MFnMesh k_mesh{k_dag_path, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
@@ -260,8 +257,7 @@ if 'leukocyte' in globals():
     MFnDependencyNode k_dag_node{k_node, &k_s};
     CHECK_MSTATUS_AND_RETURN_IT(k_s);
 
-    if (k_dag_node.name() == "vaccine_gene" ||
-        k_dag_node.name() == "breed_gene") {
+    if (k_dag_node.name() == "vaccine_gene" || k_dag_node.name() == "breed_gene") {
       k_obj_set.push_back(k_dag_node.object());
     }
   }
@@ -350,8 +346,6 @@ void comm_check_scenes::render() {
   // dear::Disabled{!p_duplicate_name} && [&]() {
   // };
 }
-const std::string& comm_check_scenes::title() const {
-  return title_name_;
-}
+const std::string& comm_check_scenes::title() const { return title_name_; }
 
 }  // namespace doodle::maya_plug

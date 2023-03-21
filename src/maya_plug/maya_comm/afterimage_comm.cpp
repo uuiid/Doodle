@@ -4,15 +4,15 @@
 
 #include "afterimage_comm.h"
 
+#include <maya_plug/data/maya_tool.h>
+
 #include <maya/MDagModifier.h>
-#include <maya/MSelectionList.h>
-#include <maya/MItSelectionList.h>
+#include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnTransform.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MSelectionList.h>
 #include <maya/MVector.h>
-#include <maya/MDagPath.h>
-
-#include <maya_plug/data/maya_tool.h>
 
 namespace doodle::maya_plug {
 
@@ -23,9 +23,7 @@ class afterimage_comm::impl {
   MSelectionList p_copy_list;
 };
 
-afterimage_comm::afterimage_comm()
-    : p_i(std::make_unique<impl>()) {
-}
+afterimage_comm::afterimage_comm() : p_i(std::make_unique<impl>()) {}
 afterimage_comm::~afterimage_comm() = default;
 
 MStatus afterimage_comm::doIt(const MArgList &) {
@@ -36,9 +34,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
   MFnDagNode k_node{};
   MObject k_obj{};
   std::vector<std::string> k_name_s{};
-  for (MItSelectionList l_it{p_i->p_select_list};
-       !l_it.isDone(&k_s);
-       l_it.next()) {
+  for (MItSelectionList l_it{p_i->p_select_list}; !l_it.isDone(&k_s); l_it.next()) {
     DOODLE_MAYA_CHICK(k_s);
     k_s = l_it.getDependNode(k_obj);
     DOODLE_MAYA_CHICK(k_s);
@@ -64,7 +60,9 @@ MStatus afterimage_comm::doIt(const MArgList &) {
   if (p_i->p_select_list.length(&k_s) > 1) {
     DOODLE_MAYA_CHICK(k_s);
     MStringArray k_r{};
-    k_s = MGlobal::executeCommand(d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot {};)", fmt::join(k_name_s, " "))}, k_r);
+    k_s = MGlobal::executeCommand(
+        d_str{fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot {};)", fmt::join(k_name_s, " "))}, k_r
+    );
     DOODLE_MAYA_CHICK(k_s);
 
     k_s = k_list.add(k_r[0], true);
@@ -128,11 +126,7 @@ MStatus afterimage_comm::doIt(const MArgList &) {
 
   return MStatus::kSuccess;
 }
-[[maybe_unused]] MStatus afterimage_comm::undoIt() {
-  return MStatus::kSuccess;
-}
-MStatus afterimage_comm::redoIt() {
-  return MStatus::kSuccess;
-}
+[[maybe_unused]] MStatus afterimage_comm::undoIt() { return MStatus::kSuccess; }
+MStatus afterimage_comm::redoIt() { return MStatus::kSuccess; }
 
 }  // namespace doodle::maya_plug

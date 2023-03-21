@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
 
+#include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle::gui {
-class DOODLELIB_API screenshot_widget
-    : public base_windows<dear::Begin, screenshot_widget> {
+class DOODLELIB_API screenshot_widget : public base_windows<dear::Begin, screenshot_widget> {
   class impl;
   std::unique_ptr<impl> p_i;
   using call_type     = std::function<void(const entt::handle&)>;
@@ -35,17 +35,10 @@ class DOODLELIB_API screenshot_widget
   std::int32_t flags() const;
 
   template <typename CompletionToken>
-  auto async_save_image(
-      const entt::handle& in,
-      CompletionToken&& token
-  ) {
-    return boost::asio::async_initiate<
-        CompletionToken,
-        void(const entt::handle& in)>(
+  auto async_save_image(const entt::handle& in, CompletionToken&& token) {
+    return boost::asio::async_initiate<CompletionToken, void(const entt::handle& in)>(
         [this, in](auto&& completion_handler) {
-          auto l_call = std::make_shared<call_type>(
-              std::forward<decltype(completion_handler)>(completion_handler)
-          );
+          auto l_call = std::make_shared<call_type>(std::forward<decltype(completion_handler)>(completion_handler));
           this->handle_attr(in);
           this->call_save(l_call);
         },

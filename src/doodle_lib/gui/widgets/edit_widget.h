@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/signals2.hpp>
 namespace doodle::gui {
@@ -25,8 +26,7 @@ class edit_assets_data {
  * 在没有计算出文件路径的时候, 其中,名称为空
  *
  */
-class DOODLELIB_API edit_widgets : public gui::base_windows<
-                                       dear::Begin, edit_widgets> {
+class DOODLELIB_API edit_widgets : public gui::base_windows<dear::Begin, edit_widgets> {
   class impl;
   std::unique_ptr<impl> p_i;
 

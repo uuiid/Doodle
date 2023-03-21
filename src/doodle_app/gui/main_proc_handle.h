@@ -14,4 +14,4 @@ class DOODLE_APP_API main_proc_handle {
   std::function<void()> win_destroy{[]() {}};
   std::function<void()> win_close{[]() {}};
 };
-}  // namespace doodle::gui
+}  // namespace doodle::gui::details

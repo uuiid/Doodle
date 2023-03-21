@@ -3,9 +3,8 @@
 //
 
 #pragma once
-#include <spdlog/sinks/base_sink.h>
-
 #include <maya/MGlobal.h>
+#include <spdlog/sinks/base_sink.h>
 namespace doodle::maya_plug {
 template <class Mutex>
 class maya_msg : public spdlog::sinks::base_sink<Mutex> {
@@ -44,9 +43,7 @@ class maya_msg : public spdlog::sinks::base_sink<Mutex> {
     }
   }
 
-  void flush_() override {
-    std::cout.flush();
-  }
+  void flush_() override { std::cout.flush(); }
 };
 using maya_msg_mt = maya_msg<std::mutex>;
 }  // namespace doodle::maya_plug
