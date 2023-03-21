@@ -24,23 +24,28 @@ class DOODLE_CORE_API init_register {
   virtual ~init_register();
   static init_register& instance() noexcept;
 };
+namespace details {
+template <typename T>
+struct registrar_lambda {};
+}  // namespace details
+
 }  // namespace doodle
 
-#define DOODLE_REGISTER_BEGIN                                                                                         \
-  namespace {                                                                                                         \
-  void BOOST_PP_CAT(doodle_reg, __LINE__)();                                                                          \
-  struct registrar_lambda {                                                                                           \
-   public:                                                                                                            \
-    static bool getInstance() {                                                                                       \
-      registered;                                                                                                     \
-      init_register::instance().registered_functions().emplace_back([&]() { BOOST_PP_CAT(doodle_reg, __LINE__)(); }); \
-      return true;                                                                                                    \
-    }                                                                                                                 \
-    static bool registered;                                                                                           \
-                                                                                                                      \
-    registrar_lambda() { registered; }                                                                                \
-  };                                                                                                                  \
-  bool registrar_lambda::registered{registrar_lambda::getInstance()};                                                 \
-  void BOOST_PP_CAT(doodle_reg, __LINE__)()
-
-#define DOODLE_REGISTER_END }
+#define DOODLE_REGISTER_BEGIN(class_name)                                                     \
+  template <>                                                                                 \
+  struct ::doodle::details::registrar_lambda<class_name> {                                    \
+    static void doodle_reg();                                                                 \
+                                                                                              \
+   public:                                                                                    \
+    static bool getInstance() {                                                               \
+      registered;                                                                             \
+      init_register::instance().registered_functions().emplace_back([&]() { doodle_reg(); }); \
+      return true;                                                                            \
+    }                                                                                         \
+    static bool registered;                                                                   \
+                                                                                              \
+    registrar_lambda() { registered; }                                                        \
+  };                                                                                          \
+  bool ::doodle::details::registrar_lambda<class_name>::registered{                           \
+      ::doodle::details::registrar_lambda<class_name>::getInstance()};                        \
+  void ::doodle::details::registrar_lambda<class_name>::doodle_reg()

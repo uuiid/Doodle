@@ -225,11 +225,10 @@ void image_loader_ns::image_loader_init::init() const {
   g_reg()->ctx().emplace<image_loader::cache>(l_cache);
 }
 
-DOODLE_REGISTER_BEGIN {
+DOODLE_REGISTER_BEGIN(image_loader_ns::image_loader_init) {
   entt::meta<image_loader_ns::image_loader_init>()
       .type(entt::type_id<image_loader_ns::image_loader_init>().hash())
       .func<&image_loader_ns::image_loader_init::init>("init"_hs);
 }
-DOODLE_REGISTER_END
 
 }  // namespace doodle

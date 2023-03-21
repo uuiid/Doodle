@@ -81,6 +81,8 @@ class DOODLELIB_API image_loader {
 namespace image_loader_ns {
 class image_loader_init {
   void init() const;
+  template <typename T>
+  friend struct ::doodle::details::registrar_lambda;
 
  public:
   image_loader_init() { init(); };
