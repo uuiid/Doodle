@@ -28,9 +28,9 @@ class UCreateCharacterMianTreeItem {
     ConfigNode_Index = In_Index;
   };
 
-  operator bool() const {
-    return ConfigNode_Index != INDEX_NONE;
-  }
+  operator bool() const;
+
+  TRange<FFrameNumber> GetPlaybackRange();
 
   DECLARE_DELEGATE(FOnRenameRequested);
   FOnRenameRequested OnRenameRequested;

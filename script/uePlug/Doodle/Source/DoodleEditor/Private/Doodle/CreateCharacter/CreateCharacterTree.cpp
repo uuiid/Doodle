@@ -16,6 +16,20 @@ FDoodleCreateCharacterConfigUINode& UCreateCharacterMianTreeItem::Get() {
   return Config->ListTrees[ConfigNode_Index];
 }
 
+UCreateCharacterMianTreeItem::operator bool() const {
+  return Config && ConfigNode_Index != INDEX_NONE && ConfigNode_Index < Config->ListTrees.Num();
+}
+
+TRange<FFrameNumber> UCreateCharacterMianTreeItem::GetPlaybackRange() {
+  if (*this) {
+    return TRange<FFrameNumber>{
+        (Get().MinValue * FFrameRate{}).FloorToFrame(),
+        (Get().MaxValue * FFrameRate{}).FloorToFrame()
+    };
+  } else
+    return TRange<FFrameNumber>();
+}
+
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
   using Super = SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType>;
@@ -73,7 +87,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
                + SHorizontalBox::Slot().FillWidth(1.0f)
                [
                  SNew(SSlider)
-                 .Value(ItemData->Get().Value)
+                 .Value_Lambda([this](){ return ItemData->Get().Value; })
                  .MaxValue(ItemData->Get().MaxValue)
                  .MinValue(ItemData->Get().MinValue)
                  .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
