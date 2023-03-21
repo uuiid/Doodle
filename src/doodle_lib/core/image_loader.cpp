@@ -52,6 +52,7 @@ class image_loader::impl {
 };
 
 image_loader::image_loader() : p_i(std::make_unique<impl>()) {
+  const static image_loader_ns::image_loader_init loader_init{};
   if (g_reg()->ctx().contains<cache>()) {
     p_i->cache_p = g_reg()->ctx().at<cache>();
   }
@@ -184,46 +185,44 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 
 image_loader::~image_loader() = default;
 void image_loader_ns::image_loader_init::init() const {
-  boost::asio::post(g_io_context(), []() {
-    image_loader l_loader{};
-    image_loader::cache l_cache{};
+  image_loader l_loader{};
+  image_loader::cache l_cache{};
+  {
+    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+    double fontScale = 1;
+    int thickness    = 2;
+    int baseline     = 0;
     {
-      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-      double fontScale = 1;
-      int thickness    = 2;
-      int baseline     = 0;
-      {
-        /// @brief 加载默认图片
-        auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
-        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+      /// @brief 加载默认图片
+      auto textSize = cv::getTextSize({"no"}, fontFace, fontScale, thickness, &baseline);
+      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
+      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "no", textOrg, fontFace, fontScale, {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-        auto k_def            = l_loader.cv_to_d3d(k_mat);
-        l_cache.default_image = k_def;
-      }
+      cv::putText(k_mat, "no", textOrg, fontFace, fontScale, {255, 255, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      auto k_def            = l_loader.cv_to_d3d(k_mat);
+      l_cache.default_image = k_def;
     }
+  }
 
+  {
+    int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
+    double fontScale = 1;
+    int thickness    = 2;
+    int baseline     = 0;
     {
-      int fontFace     = cv::HersheyFonts::FONT_HERSHEY_COMPLEX;
-      double fontScale = 1;
-      int thickness    = 2;
-      int baseline     = 0;
-      {
-        /// @brief 加载错误图片
-        auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
-        cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
+      /// @brief 加载错误图片
+      auto textSize = cv::getTextSize({"err"}, fontFace, fontScale, thickness, &baseline);
+      cv::Mat k_mat{64, 64, CV_8UC4, cv::Scalar{0, 0, 0, 255}};
 
-        cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
+      cv::Point textOrg((k_mat.cols - textSize.width) * 0.5, (k_mat.rows + textSize.height) * 0.5);
 
-        cv::putText(k_mat, "err", textOrg, fontFace, fontScale, {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
-        auto k_def          = l_loader.cv_to_d3d(k_mat);
-        l_cache.error_image = k_def;
-      }
+      cv::putText(k_mat, "err", textOrg, fontFace, fontScale, {20, 0, 255, 255}, thickness, cv::LineTypes::LINE_AA);
+      auto k_def          = l_loader.cv_to_d3d(k_mat);
+      l_cache.error_image = k_def;
     }
-    g_reg()->ctx().emplace<image_loader::cache>(l_cache);
-  });
+  }
+  g_reg()->ctx().emplace<image_loader::cache>(l_cache);
 }
 
 DOODLE_REGISTER_BEGIN {

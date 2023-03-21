@@ -80,8 +80,10 @@ class DOODLELIB_API image_loader {
 
 namespace image_loader_ns {
 class image_loader_init {
- public:
   void init() const;
+
+ public:
+  image_loader_init() { init(); };
 };
 
 }  // namespace image_loader_ns
