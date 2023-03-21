@@ -120,60 +120,14 @@ add_subdirectory(src)
 
 #[==[
 一些杂项工具和命令
+"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
+"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
+"D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
+"D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
+"D:\Program Files\Epic Games\UE_5.0\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\5.0\Plugins\Doodle
+"D:\Program Files\Epic Games\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=E:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=E:\Doodle\script\uePlug\5.1\Plugins\Doodle
 
-git config --global http.proxy http://127.0.0.1:10809
-git config --global https.proxy http://127.0.0.1:10809
-
-git config --global --unset http.proxy
-git config --global --unset https.proxy
-
-"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Rocket -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.25\Plugins -VS2019 -CreateSubFolder
-"D:\Program Files\Epic Games\UE_4.25\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.25\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_4.26\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.26\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_4.27\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\4.27\Plugins\Doodle -VS2019
-"D:\Program Files\Epic Games\UE_5.0\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\5.0\Plugins\Doodle 
-"D:\Program Files\Epic Games\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin=F:\Doodle\script\uePlug\Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=F:\Doodle\script\uePlug\5.1\Plugins\Doodle 
 $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-install xlnt alembic range-v3 eigen3 boost sqlpp11[sqlite3-connector] directxtk catch2 wil date spdlog cryptopp magic-enum nlohmann-json winreg opencv[ffmpeg,contrib,freetype] imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
-imgui[win32-binding,dx11-binding,docking-experimental]:x64-windows  --recurse --overlay-ports="F:\Doodle\vcpkg\ports"
-install imguiwrap --overlay-ports="F:\Doodle\vcpkg\ports"
-install imgui[win32-binding,dx11-binding,docking-experimental] --overlay-ports="F:\Doodle\vcpkg\ports"
-upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports"
-upgrade entt --overlay-ports="F:\Doodle\vcpkg\ports" --no-dry-run
-sqlpp11[sqlite3]
-
-
-remove boost-uninstall --recurse
-
 "$(SolutionDir)doodle_plug.uproject" -skipcompile -run=DoodleAssCreate -path="E:\Users\TD\Documents\Unreal_Projects\doodle_plug_dev_4.27\test_file\doodle_import_data_main.json"
-
-"$(SolutionDir)doodle_plug.uproject"
-
-    find_package(Simbody CONFIG REQUIRED)
-    # note: 1 targets were omitted.
-    target_link_libraries(main PRIVATE blas lapack SimTKmath SimTKcommon)
-
-        find_package(dem-bones CONFIG REQUIRED)
-    target_link_libraries(main PRIVATE DemBones::dem-bones)
-
-# this is heuristically generated, and may not be correct
-find_package(gRPC CONFIG REQUIRED)
-# note: 7 additional targets are not displayed.
-target_link_libraries(main PRIVATE gRPC::gpr gRPC::grpc gRPC::grpc++ gRPC::grpc++_alts)
-
-find_package(modules CONFIG REQUIRED)
-target_link_libraries(main PRIVATE re2::re2 c-ares::cares)
-
 GenerateProjectFiles.bat -projectfiles -vscode -project=F:\doodle_plug_dev_4.27\doodle_plug.uproject -game -engine
-
-
-
-ai库安装:
-安装python库
-https://pytorch.org/get-started/locally/
-安装cuda和cudnn库
-https://caffe2.ai/docs/getting-started.html?platform=windows&configuration=compile
-
-
-
 ]==]

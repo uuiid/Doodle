@@ -12,7 +12,6 @@
 	"SupportURL": "",
 	"EnabledByDefault": true,
 	"CanContainContent": true,
-	"Installed": false,
 	"Modules": [
 		{
 			"Name": "doodle",
