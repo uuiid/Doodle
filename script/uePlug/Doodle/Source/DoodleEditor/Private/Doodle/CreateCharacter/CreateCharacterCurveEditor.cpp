@@ -147,27 +147,35 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
 
   TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, TickResolution, DisplayRate});
   TAttribute<FAnimatedRange> ViewRange                   = MakeAttributeLambda([this]() {
-    if (*this->CurrentSelect) {
+    if (this->CurrentSelect && *this->CurrentSelect) {
       return FAnimatedRange{this->CurrentSelect->Get().MinValue, this->CurrentSelect->Get().MaxValue};
     } else {
-      return FAnimatedRange{-2.0f, 2.0f};
+      return FAnimatedRange{.0f, .0f};
     }
   });
 
   FTimeSliderArgs TimeSliderArgs;
   {
-    TimeSliderArgs.ScrubPosition         = MakeAttributeLambda([]() { return FFrameTime(0); });
+    TimeSliderArgs.ScrubPosition         = MakeAttributeLambda([this]() {
+      if (this->CurrentSelect && *this->CurrentSelect) {
+        return FFrameTime{this->CurrentSelect->Get().Value};
+      } else {
+        return FFrameTime{.0f};
+      }
+    });
     TimeSliderArgs.ViewRange             = ViewRange;
-    TimeSliderArgs.PlaybackRange         = MakeAttributeLambda([]() { return TRange<FFrameNumber>(0, 0); });
-    TimeSliderArgs.ClampRange            = MakeAttributeLambda([]() { return FAnimatedRange(0.0, 0.0); });
-    TimeSliderArgs.DisplayRate           = FFrameRate{27857, 1};
-    TimeSliderArgs.TickResolution        = FFrameRate{25, 1};
-    // TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleViewRangeChanged);
-    // TimeSliderArgs.OnClampRangeChanged    = FOnTimeRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleWorkingRangeChanged);
+    TimeSliderArgs.PlaybackRange         = MakeAttributeLambda([this]() { return TRange<FFrameNumber>(0, 0); });
+    TimeSliderArgs.ClampRange            = MakeAttributeLambda([this]() { return FAnimatedRange(0.0, 0.0); });
+    TimeSliderArgs.DisplayRate           = DisplayRate;
+    TimeSliderArgs.TickResolution        = TickResolution;
+    // TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateSP(&InModel.Get(),
+    // &FAnimModel::HandleViewRangeChanged); TimeSliderArgs.OnClampRangeChanged    =
+    // FOnTimeRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleWorkingRangeChanged);
     TimeSliderArgs.IsPlaybackRangeLocked = true;
     TimeSliderArgs.PlaybackStatus        = EMovieScenePlayerStatus::Stopped;
     TimeSliderArgs.NumericTypeInterface  = NumericTypeInterface;
-    // TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateSP(this, &SAnimTimeline::HandleScrubPositionChanged);
+    // TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateSP(this,
+    // &SAnimTimeline::HandleScrubPositionChanged);
   }
 
   auto CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
@@ -186,7 +194,7 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
   TSharedRef<SCurveEditorPanel> CurveEditorPanel =
       SNew(SCurveEditorPanel, CurveEditor.ToSharedRef())
           .GridLineTint(FLinearColor(0.f, 0.f, 0.f, 0.3f))
-          .ExternalTimeSliderController(InArgs._ExternalTimeSliderController)
+          .ExternalTimeSliderController(CreateCharacterSliderController)
           .TabManager(InArgs._TabManager)
           .TreeSplitterWidth(0.2f)
           .ContentSplitterWidth(0.8f)

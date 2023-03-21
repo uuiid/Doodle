@@ -175,8 +175,8 @@ void FCreateCharacterSliderController::DrawTicks(
   FPaintGeometry PaintGeometry   = InArgs.AllottedGeometry.ToPaintGeometry();
   FSlateFontInfo SmallLayoutFont = FCoreStyle::GetDefaultFontStyle("Regular", 8);
 
-  double MajorGridStep           = 0.0;
-  int32 MinorDivisions           = 0;
+  double MajorGridStep           = 1.0;
+  int32 MinorDivisions           = 1;
   // if (!Timeline->GetGridMetrics(InArgs.AllottedGeometry.Size.X, MajorGridStep, MinorDivisions)) {
   //   return;
   // }

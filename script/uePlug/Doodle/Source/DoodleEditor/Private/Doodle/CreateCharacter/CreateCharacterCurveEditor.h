@@ -24,11 +24,9 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
  public:
   SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor)
       : _CreateCharacterConfigConfig(),
-        _ExternalTimeSliderController(),
         _TabManager() {}
 
   SLATE_ARGUMENT(UDoodleCreateCharacterConfig*, CreateCharacterConfigConfig)
-  SLATE_ARGUMENT(TSharedPtr<ITimeSliderController>, ExternalTimeSliderController)
   SLATE_ARGUMENT(TSharedPtr<FTabManager>, TabManager)
   SLATE_END_ARGS()
 

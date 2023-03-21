@@ -214,38 +214,6 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_Tree(const FSpawnTabArgs& 
 }
 
 TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTabArgs& Args) {
-  TAttribute<EFrameNumberDisplayFormats> DisplayFormat   = MakeAttributeLambda([]() {
-    return GetDefault<UPersonaOptions>()->TimelineDisplayFormat;
-  });
-
-  TAttribute<FFrameRate> TickResolution                  = MakeAttributeLambda([]() {
-    return FFrameRate{25, 1};
-  });
-
-  TAttribute<FFrameRate> DisplayRate                     = MakeAttributeLambda([]() {
-    return FFrameRate{25, 1};
-  });
-
-  TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, TickResolution, DisplayRate});
-  TAttribute<FAnimatedRange> ViewRange                   = MakeAttributeLambda([this]() { return FAnimatedRange(0.0, 0.0); });
-
-  FTimeSliderArgs TimeSliderArgs;
-  {
-    TimeSliderArgs.ScrubPosition         = MakeAttributeLambda([]() { return FFrameTime(0); });
-    TimeSliderArgs.ViewRange             = ViewRange;
-    TimeSliderArgs.PlaybackRange         = MakeAttributeLambda([]() { return TRange<FFrameNumber>(0, 0); });
-    TimeSliderArgs.ClampRange            = MakeAttributeLambda([]() { return FAnimatedRange(0.0, 0.0); });
-    TimeSliderArgs.DisplayRate           = FFrameRate{27857, 1};
-    TimeSliderArgs.TickResolution        = FFrameRate{25, 1};
-    // TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleViewRangeChanged);
-    // TimeSliderArgs.OnClampRangeChanged    = FOnTimeRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleWorkingRangeChanged);
-    TimeSliderArgs.IsPlaybackRangeLocked = true;
-    TimeSliderArgs.PlaybackStatus        = EMovieScenePlayerStatus::Stopped;
-    TimeSliderArgs.NumericTypeInterface  = NumericTypeInterface;
-    // TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateSP(this, &SAnimTimeline::HandleScrubPositionChanged);
-  }
-
-  CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
   // clang-format off
   return SNew(SDockTab)
     .Label(LOCTEXT("SpawnTab_CurveEditor","CurveEditor"))
@@ -256,7 +224,6 @@ TSharedRef<SDockTab> FCreateCharacterMianUI::SpawnTab_CurveEditor(const FSpawnTa
       [
         SAssignNew(CreateCharacterCurveEditor, SCreateCharacterCurveEditor)
         .CreateCharacterConfigConfig(CreateCharacterConfig)
-        .ExternalTimeSliderController(CreateCharacterSliderController)
         //+ SVerticalBox::Slot()
         //.Padding(0,8,0,0)
         //.AutoHeight()
