@@ -15,25 +15,34 @@ UDoodleAiMoveToComponent::UDoodleAiMoveToComponent(const FObjectInitializer &Obj
 
 void UDoodleAiMoveToComponent::BeginPlay() {
   Super::BeginPlay();
+
   GoToRandomWaypoint();
 }
 void UDoodleAiMoveToComponent::GoToRandomWaypoint() {
+  if (UWorld *L_World = GetWorld()) {
+    L_World->GetTimerManager().SetTimer(
+        TimerHandle, this, &UDoodleAiMoveToComponent::GoToRandomWaypoint, 5.0f + FMath::RandRange(-3.0f, 2.0f), false
+    );
+  }
+
   if (!Actor || !AiController) {
     Actor = GetOwner<AActor>();
-    if (!Actor)
+    if (!Actor) {
+      UE_LOG(LogTemp, Log, TEXT("return Actor"));
       return;
+    }
     AiController = Cast<ADoodleAIController>(UAIBlueprintHelperLibrary::GetAIController(Actor));
   }
-  if (!Actor || !AiController)
+  if (!Actor || !AiController) {
+    UE_LOG(LogTemp, Log, TEXT("return Actor AiController"));
     return;
-
-  Actor->GetWorldTimerManager().SetTimer(
-      TimerHandle, this, &UDoodleAiMoveToComponent::GoToRandomWaypoint, 5.0f + FMath::RandRange(-3.0f, 2.0f), false
-  );
+  }
 
   FVector Result;
-  if (!GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result))
+  if (!GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)) {
+    UE_LOG(LogTemp, Log, TEXT("GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)"));
     return;
+  }
   FAIMoveRequest AIMoveRequest{Result};
   AIMoveRequest.SetAcceptanceRadius(AcceptanceRadius);
   AIMoveRequest.SetAllowPartialPath(true);

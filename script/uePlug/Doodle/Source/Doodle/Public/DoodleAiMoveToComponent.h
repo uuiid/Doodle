@@ -17,12 +17,12 @@ class DOODLE_API UDoodleAiMoveToComponent : public UActorComponent {
   virtual void BeginPlay() override;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "方向")
-  FVector Direction;
+  FVector Direction{1000, 0, 0};
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "随机范围")
-  float RandomRadius{100};
+  float RandomRadius{500};
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "目标接受范围")
-  float AcceptanceRadius{50};
+  float AcceptanceRadius{266};
 
  private:
   void GoToRandomWaypoint();

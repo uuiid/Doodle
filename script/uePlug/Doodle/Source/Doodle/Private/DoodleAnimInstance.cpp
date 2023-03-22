@@ -115,5 +115,5 @@ void UDoodleAnimInstance::NativeBeginPlay() {
   RandomAttr_InstallValue = FMath::RandRange(0.0f, 256.0f);
 #endif
   UE_LOG(LogTemp, Log, TEXT("RandomAttr_InstallValue: %f"), RandomAttr_InstallValue);
-  DoodleRandom();
+  //DoodleRandom();
 }

@@ -7,8 +7,8 @@ UDoodleAiDownToComponent::UDoodleAiDownToComponent(const FObjectInitializer& Obj
   auto k_curve                      = CrouchCurve.GetRichCurve();
   k_curve->AutoSetTangents();
   k_curve->SetKeyTangentMode(k_curve->AddKey(0.0f, 0.0f), ERichCurveTangentMode::RCTM_Auto);
-  k_curve->SetKeyTangentMode(k_curve->AddKey(0.5f, 0.7f), ERichCurveTangentMode::RCTM_Auto);
-  k_curve->SetKeyTangentMode(k_curve->AddKey(1.0f, 1.0f), ERichCurveTangentMode::RCTM_Auto);
+  k_curve->SetKeyTangentMode(k_curve->AddKey(0.5f, 70.0f), ERichCurveTangentMode::RCTM_Auto);
+  k_curve->SetKeyTangentMode(k_curve->AddKey(1.0f, 100.0f), ERichCurveTangentMode::RCTM_Auto);
 }
 
 void UDoodleAiDownToComponent::BeginPlay() {
