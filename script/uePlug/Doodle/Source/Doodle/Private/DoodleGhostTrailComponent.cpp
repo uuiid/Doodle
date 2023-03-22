@@ -60,14 +60,14 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
       );
 
   if (LLen > Distance) {
-    int LSize                     = FMath::DivideAndRoundDown(LLen, Distance);
+    const int LSize               = FMath::DivideAndRoundDown(LLen, Distance);
     TArray<FTransform> LTrans     = SkeletalMeshComponent_P->GetBoneSpaceTransforms();
     FTransform LSkeletalTransform = SkeletalMeshComponent_P->GetComponentTransform();
 
     FVector Stepping              = (PreviousLocation - InLocation) / LSize;
 
     for (int i = 0;
-         i < LSize;
+         i < FGenericPlatformMath::Min(LSize, MaxCount);
          ++i) {
       UPoseableMeshComponent *LPoseableMeshComponent =
           Cast<UPoseableMeshComponent>(
@@ -80,42 +80,41 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
                   )
           );
       TArray<FTransform> LTransInter;
-      if (LPoseableMeshComponent) {
-        // 设置骨骼网格体
-        LPoseableMeshComponent->SetSkeletalMesh(
-            SkeletalMeshComponent_P->SkeletalMesh
-        );
-        LPoseableMeshComponent->RegisterComponent();
+      if (!LPoseableMeshComponent) {
+        return;
+      }
+      // 设置骨骼网格体
+      LPoseableMeshComponent->SetSkeletalMesh(
+          SkeletalMeshComponent_P->SkeletalMesh
+      );
+      LPoseableMeshComponent->RegisterComponent();
 
-        for (size_t j = 0; j < LTrans.Num(); ++j) {
-          FTransform LL{};
-          LL.Blend(PreviousTransform[j], LTrans[j], i / (float)LSize);
-          LTransInter.Add(LL);
-        }
-        if (LPoseableMeshComponent->BoneSpaceTransforms.Num() ==
-            LTransInter.Num()) {
-          // LPoseableMeshComponent->BoneSpaceTransforms = LTransInter;
-          Exchange(LPoseableMeshComponent->BoneSpaceTransforms, LTransInter);
-          LPoseableMeshComponent->MarkRefreshTransformDirty();
+      for (size_t j = 0; j < LTrans.Num(); ++j) {
+        FTransform LL{};
+        LL.Blend(PreviousTransform[j], LTrans[j], i / (float)LSize);
+        LTransInter.Add(LL);
+      }
+      if (LPoseableMeshComponent->BoneSpaceTransforms.Num() ==
+          LTransInter.Num()) {
+        // LPoseableMeshComponent->BoneSpaceTransforms = LTransInter;
+        Exchange(LPoseableMeshComponent->BoneSpaceTransforms, LTransInter);
+        LPoseableMeshComponent->MarkRefreshTransformDirty();
 
-          FTransform LLF{};
-          LLF.Blend(PreviousLocationTransform, LSkeletalTransform, i / (float)LSize);
-          LPoseableMeshComponent->SetWorldTransform(LLF);
+        FTransform LLF{};
+        LLF.Blend(PreviousLocationTransform, LSkeletalTransform, i / (float)LSize);
+        LPoseableMeshComponent->SetWorldTransform(LLF);
 
-          FDoodleGhostTrailInfo LDoodleGhostTrailInfo{};
-          LDoodleGhostTrailInfo.Ghost                = LPoseableMeshComponent;
-          LDoodleGhostTrailInfo.Life                 = Life;
-          LDoodleGhostTrailInfo.Age                  = i * (DeltaTime / (float)LSize);
-          LPoseableMeshComponent->bRenderCustomDepth = bRenderCustomDepth;
+        FDoodleGhostTrailInfo LDoodleGhostTrailInfo{};
+        LDoodleGhostTrailInfo.Ghost                = LPoseableMeshComponent;
+        LDoodleGhostTrailInfo.Life                 = Life;
+        LDoodleGhostTrailInfo.Age                  = i * (DeltaTime / (float)LSize);
+        LPoseableMeshComponent->bRenderCustomDepth = bRenderCustomDepth;
 
-          SetMaterial_Doodle(LPoseableMeshComponent);
+        SetMaterial_Doodle(LPoseableMeshComponent);
 
-          GhostInfos.Add(LDoodleGhostTrailInfo);
-        } else {
-          LPoseableMeshComponent->UnregisterComponent();
-        }
-        if (GhostInfos.Num() > MaxCount)
-          return;
+        GhostInfos.Add(LDoodleGhostTrailInfo);
+      } else {
+        LPoseableMeshComponent->UnregisterComponent();
       }
     }
   }
@@ -160,5 +159,16 @@ void UDoodleGhostTrailComponent::ClearGhost() {
     }
   }
   GhostInfos.RemoveAll([](const FDoodleGhostTrailInfo &In) -> bool { return In.Age > In.Life; });
+
+  auto L_Surplus = GhostInfos.Num() - MaxCount;
+  if (L_Surplus >= 1) {
+    for (auto i = 0; i < L_Surplus; ++i) {
+      GhostInfos[i].Ghost->UnregisterComponent();
+      GetOwner()->RemoveOwnedComponent(GhostInfos[i].Ghost);
+      GhostInfos[i].Ghost->DestroyComponent();
+    }
+    GhostInfos.RemoveAt(0, L_Surplus);
+  }
+
   UE_LOG(LogTemp, Warning, TEXT("GhostInfos num %d"), GhostInfos.Num());
 }

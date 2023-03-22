@@ -4,6 +4,8 @@
 #include "CoreMinimal.h"
 
 #include "Components/ActorComponent.h"
+// 我自己定义的运行时曲线需要的头文件
+#include "Curves/CurveFloat.h"
 
 #include "DoodleAiDownToComponent.generated.h"
 
