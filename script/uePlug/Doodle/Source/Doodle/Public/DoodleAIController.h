@@ -15,13 +15,7 @@ class DOODLE_API ADoodleAIController : public AAIController {
       const FObjectInitializer &ObjectInitializer = FObjectInitializer::Get()
   );
 
-  virtual void BeginPlay() override;
+  // virtual void BeginPlay() override;
 
-  virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult &Result) override;
-
-  void GoToRandomWaypoint();
-  bool GetRandomPointInRadius(const FVector &Origin, float Radius, FVector &OutResult);
-
- private:
-  FTimerHandle TimerHandle;
+  // virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult &Result) override;
 };
