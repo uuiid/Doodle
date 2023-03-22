@@ -31,10 +31,13 @@ class UCreateCharacterMianTreeItem {
   operator bool() const;
 
   TRange<FFrameNumber> GetPlaybackRange();
+  void SetPlaybackRange(const TRange<FFrameNumber>& In_Range);
 
   DECLARE_DELEGATE(FOnRenameRequested);
   FOnRenameRequested OnRenameRequested;
   TArray<TSharedPtr<UCreateCharacterMianTreeItem>> Childs;
+
+  FSimpleDelegate OnSetRange;
 
  private:
 };

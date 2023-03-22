@@ -176,6 +176,11 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
         return TRange<FFrameNumber>{0, 0};
       }
     });
+    TimeSliderArgs.OnPlaybackRangeChanged = FOnFrameRangeChanged::CreateLambda([this](TRange<FFrameNumber> In_Range) {
+      if (this->CurrentSelect && *this->CurrentSelect) {
+        this->CurrentSelect->SetPlaybackRange(In_Range);
+      }
+    });
 
     TimeSliderArgs.ClampRange             = MakeAttributeLambda([this]() {
       if (WorkingRange_Attr.HasLowerBound() && WorkingRange_Attr.HasUpperBound())
