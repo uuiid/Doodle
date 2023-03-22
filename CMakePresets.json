@@ -59,7 +59,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
-        "Photoshop_Version": "120.0"
+        "Photoshop_Version": "120.0",
+        "ADD_VERSION_LABEL": true
       }
     },
     {

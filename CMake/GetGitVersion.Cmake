@@ -3,7 +3,7 @@ include(CMakePrintHelpers)
 # cmake函数
 function(get_git_version)
     set(options IS)
-    set(oneValueArgs WORK_DIR)
+    set(oneValueArgs WORK_DIR ADD_LABEL)
     set(multiValueArgs DIR)
     cmake_parse_arguments(
             DOODLE_GIT
@@ -48,7 +48,7 @@ function(get_git_version)
                 OUTPUT_VARIABLE GIT_BRANCH
                 RESULT_VARIABLE GIT_DESCRIBE_ERROR_CODE
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-        if (master STREQUAL GIT_BRANCH AND CMAKE_MATCH_4)
+        if (master STREQUAL GIT_BRANCH AND CMAKE_MATCH_4 AND DOODLE_GIT_ADD_LABEL)
             # 版本递增
             message("The current branch is the master branch, and the version number will be added")
             math(EXPR CMAKE_MATCH_3 "${CMAKE_MATCH_3} + 1")
