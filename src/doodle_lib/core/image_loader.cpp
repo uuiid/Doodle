@@ -52,7 +52,7 @@ class image_loader::impl {
 };
 
 image_loader::image_loader() : p_i(std::make_unique<impl>()) {
-  const static image_loader_ns::image_loader_init loader_init{};
+  //const static image_loader_ns::image_loader_init loader_init{};
   if (g_reg()->ctx().contains<cache>()) {
     p_i->cache_p = g_reg()->ctx().at<cache>();
   }
