@@ -214,7 +214,7 @@ class gui_cache : public BaseType {
   /// gui 名称
   gui_cache_name_id gui_name;
   /// 数据属性
-  T data;
+  T data{};
 
   gui_cache() = default;
 
