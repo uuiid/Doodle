@@ -15,7 +15,7 @@ class DOODLE_CORE_API windows_tick_interface_impl : public entt::type_list<bool(
   template <typename Base>
   struct type : public Base {
     bool render() { return entt::poly_call<0>(*this); }
-    const std::string& title() const { return entt::poly_call<1>(*this); }
+    //    const std::string& title() const { return entt::poly_call<1>(*this); }
   };
 
   template <typename Type>
