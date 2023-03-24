@@ -757,5 +757,75 @@ namespace doodle_database
       };
     };
   };
+  namespace Assets_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct AssetsPath
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "assets_path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T assetsPath;
+            T& operator()() { return assetsPath; }
+            const T& operator()() const { return assetsPath; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace Assets_
+
+  struct Assets: sqlpp::table_t<Assets,
+               Assets_::Id,
+               Assets_::EntityId,
+               Assets_::AssetsPath>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "assets";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T assets;
+        T& operator()() { return assets; }
+        const T& operator()() const { return assets; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

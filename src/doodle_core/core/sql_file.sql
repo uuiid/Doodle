@@ -105,6 +105,16 @@ CREATE TABLE IF NOT EXISTS redirection_path_info
 create index if not exists redirection_path_info_index on redirection_path_info(id)
 create index if not exists redirection_path_info_index2 on redirection_path_info(entity_id)
 
+CREATE TABLE IF NOT EXISTS assets
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
 
+    assets_path             text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists assets_index on assets(id)
+create index if not exists assets_index2 on assets(entity_id)
 
      
