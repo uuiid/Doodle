@@ -8,12 +8,14 @@ target_sources(doodle_core
         tool.h
         database.h
         shot.h
+        redirection_path_info.h
 
         PRIVATE
         com_data.cpp
         update_ctx.cpp
         user.cpp
-        work_task.cpp
+        work_task.cpp 
         database.cpp
         shot.cpp
+        redirection_path_info.cpp
         )

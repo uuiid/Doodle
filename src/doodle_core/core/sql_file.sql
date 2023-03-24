@@ -92,6 +92,19 @@ CREATE TABLE IF NOT EXISTS shot
 create index if not exists shot_index on shot (id);
 create index if not exists shot_index2 on shot (entity_id);
 
+CREATE TABLE IF NOT EXISTS redirection_path_info
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    redirection_path        text,
+    redirection_file_name   text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists redirection_path_info_index on redirection_path_info(id)
+create index if not exists redirection_path_info_index2 on redirection_path_info(entity_id)
 
 
 
+     

@@ -634,5 +634,74 @@ namespace doodle_database
           };
     };
   };
+    namespace Redirection_path_info_{
+    struct Id {
+    struct _alias_t {
+          static constexpr const char _literal[] = "id";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+    };
+    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+  };
+  struct EntityId {
+    struct _alias_t {
+          static constexpr const char _literal[] = "entity_id";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+    };
+    using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+  };
+  struct RedirectionPath{
+    struct _alias_t{
+      static constexpr const char _literal[] = "redirection_path";
+       using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T redirectionPath;
+            T& operator()() { return redirectionPath; }
+            const T& operator()() const { return redirectionPath; }
+          };
+    };
+     using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+  };
+  struct RedirectionFileName{
+    struct _alias_t{
+      static constexpr const char _literal[] = "redirection_file_name";
+       using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T redirectionFileName;
+            T& operator()() { return redirectionFileName; }
+            const T& operator()() const { return redirectionFileName; }
+          };
+    };
+     using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+  };
+  } //namespace redirection_path_info_database
+  struct Redirection_path_info : sqlpp::table_t<Redirection_path_info, Redirection_path_info_::Id, Redirection_path_info_::EntityId, Redirection_path_info_::RedirectionPath, Redirection_path_info_::RedirectionFileName> {
+    struct _alias_t {
+          static constexpr const char _literal[] = "redirection_path_info";
+          using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+          template <typename T>
+          struct _member_t {
+            T redirection_path_info;
+            T& operator()() { return redirection_path_info; }
+            const T& operator()() const { return redirection_path_info; }
+          };
+    };
+  };
+
   }  // namespace doodle_database
+
+
 #endif
