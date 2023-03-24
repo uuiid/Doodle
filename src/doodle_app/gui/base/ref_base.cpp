@@ -1,5 +1,6 @@
 #include "ref_base.h"
 
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/util.h>
 #include <doodle_core/metadata/metadata.h>
 namespace doodle::gui {
@@ -26,7 +27,8 @@ gui_cache_name_id::gui_cache_name_id(const std::string &in_name) : name_id(), na
   auto l_size = in_name.size();
 
   name_id     = fmt::format(
-      "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s, doodle::identifier::value()
+      "{}{}{}", in_name, (in_name.find_first_of('#') != std::string::npos) ? ""s : "##"s,
+      doodle_lib::Get().ctx().get<identifier>()
   );
   name = {name_id.c_str(), l_size};
   // name = k_v.substr(0, l_size);

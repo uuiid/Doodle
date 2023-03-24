@@ -170,7 +170,7 @@ bool maya_tool::render() {
       k_arg.upload_file      = p_upload_files;
       k_arg.export_fbx       = p_sim_export_fbx;
       k_arg.only_export      = p_sim_only_export;
-      k_arg.project_         = database_info::value().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
@@ -190,7 +190,7 @@ bool maya_tool::render() {
       k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
 
-      k_arg.project_         = database_info::value().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
       l_maya->async_run_maya(make_handle(), k_arg, [](boost::system::error_code in_code) {
         if (in_code) DOODLE_LOG_ERROR(in_code);
         DOODLE_LOG_ERROR("完成任务");
@@ -210,7 +210,7 @@ bool maya_tool::render() {
             return in_info.save_handle;
           }) |
           ranges::to_vector;
-      k_arg.project_         = database_info::value().path_;
+      k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
 
@@ -226,7 +226,7 @@ bool maya_tool::render() {
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& i) {
       auto k_arg                     = maya_exe_ns::clear_file_arg{};
       k_arg.file_path                = i;
-      k_arg.project_                 = database_info::value().path_;
+      k_arg.project_                 = doodle_lib::Get().ctx().get<database_info>().path_;
       k_arg.t_post                   = g_reg()->ctx().at<project_config::base_config>().t_post;
       k_arg.export_anim_time         = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
       k_arg.save_file_extension_attr = ptr_attr->save_maya_type_attr.show_id_attr;

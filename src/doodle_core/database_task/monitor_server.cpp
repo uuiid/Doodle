@@ -5,6 +5,7 @@
 #include "monitor_server.h"
 
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/details/database.h>
 #include <doodle_core/database_task/details/user.h>
 #include <doodle_core/database_task/details/work_task.h>
@@ -40,7 +41,7 @@ void monitor_server::load_all() {
   reg->clear();
 
   {
-    auto l_ptr_conn = database_info::value().get_connection_const();
+    auto l_ptr_conn = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
     auto l_conn     = sqlpp::start_transaction(*l_ptr_conn);
     std::map<std::int64_t, entt::entity> l_id_map{};
     {
@@ -85,7 +86,7 @@ void monitor_server::run_tick() {
 }
 void monitor_server::save() {
   try {
-    auto l_ptr_conn = database_info::value().get_connection_const();
+    auto l_ptr_conn = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
     auto l_conn     = sqlpp::start_transaction(*l_ptr_conn);
     std::map<std::int64_t, entt::entity> l_id_map{};
     {

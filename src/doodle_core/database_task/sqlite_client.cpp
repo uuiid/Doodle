@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
@@ -28,8 +29,8 @@
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
-  database_info::value().path_ = in_path;
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  auto& k_msg                                        = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
@@ -42,7 +43,7 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
 }
 
 bsys::error_code file_translator::open_end() {
-  core_set::get_set().add_recent_project(database_info::value().path_);
+  core_set::get_set().add_recent_project(doodle_lib::Get().ctx().get<database_info>().path_);
   g_reg()->ctx().at<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -79,10 +80,10 @@ bsys::error_code file_translator::save_end() {
   return {};
 }
 void file_translator::new_file_scene(const FSys::path& in_path) {
-  database_info::value().path_ = in_path;
-  auto& l_s     = g_reg()->ctx().emplace<status_info>();
-  l_s.message   = "创建新项目";
-  l_s.need_save = true;
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  auto& l_s                                          = g_reg()->ctx().emplace<status_info>();
+  l_s.message                                        = "创建新项目";
+  l_s.need_save                                      = true;
 }
 
 class sqlite_file::impl {
@@ -103,7 +104,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  auto l_k_con = database_info::value().get_connection_const();
+  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
   l_select(*ptr->registry_attr, in_path, l_k_con);
   return {};
 }
@@ -142,7 +143,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   }
 
   try {
-    auto l_k_con = database_info ::value().get_connection();
+    auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
     details::db_compatible::add_entity_table(*l_k_con);
     details::db_compatible::add_ctx_table(*l_k_con);

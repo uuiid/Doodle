@@ -102,6 +102,7 @@ bool all_user_view_widget::render() {
   if (ptr->time_rules_render_attr.render()) {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
   }
+  return ptr->open;
 }
 const std::string& all_user_view_widget::title() const { return ptr->title_name_; }
 

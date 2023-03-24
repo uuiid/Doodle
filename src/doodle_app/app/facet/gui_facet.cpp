@@ -57,19 +57,19 @@ class gui_facet::impl {
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
-void gui_facet::operator()() {
-  post_constructor();
+bool gui_facet::post() {
+  init_windows();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
       DOODLE_LOG_INFO(in_code.message());
       return;
     }
-    if (program_info::value().stop_attr()) return;
+    if (doodle_lib::Get().ctx().get<program_info>().stop_attr()) return;
     if (!this->translate_message()) return;
     this->tick();      /// 渲染
     this->tick_end();  /// 渲染结束
-    if (!program_info::value().stop_attr()) {
+    if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
       p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
       p_i->timer_.async_wait(s_fun);
     }
@@ -77,6 +77,7 @@ void gui_facet::operator()() {
 
   p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
   p_i->timer_.async_wait(s_fun);
+  return true;
 }
 void gui_facet::deconstruction() {
   p_i->timer_.cancel();
@@ -91,11 +92,11 @@ void gui_facet::deconstruction() {
   ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);
   ::UnregisterClassW(p_win_class.lpszClassName, p_win_class.hInstance);
-  gui::main_proc_handle::reset();
 }
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
-  gui::main_proc_handle::emplace();
-  identifier::emplace();
+  doodle_lib::Get().ctx().emplace<gui::main_proc_handle>();
+  doodle_lib::Get().ctx().emplace<identifier>();
+
   g_reg()->ctx().emplace<image_to_move>();
 }
 
@@ -146,8 +147,8 @@ void gui_facet::tick_end() {
   p_i->d3d_attr->g_pSwapChain->Present(1, 0);  // Present with vsync
                                                // g_pSwapChain->Present(0, 0); // Present without vsync
 }
-void gui_facet::post_constructor() {
-  auto l_instance     = program_info::value().handle_attr();
+void gui_facet::init_windows() {
+  auto l_instance     = doodle_lib::Get().ctx().get<program_info>().handle_attr();
 
   p_win_class         = {sizeof(WNDCLASSEX), CS_CLASSDC, win::WndProc, 0L,      sizeof(std::nullptr_t),
                          l_instance,         nullptr,    nullptr,      nullptr, nullptr,
@@ -158,10 +159,11 @@ void gui_facet::post_constructor() {
   // Create application window
   // ImGui_ImplWin32_EnableDpiAwareness();
   ::RegisterClassExW(&p_win_class);
-  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(program_info::value().title_attr());
+  auto l_str = boost::locale::conv::utf_to_utf<wchar_t>(doodle_lib::Get().ctx().get<program_info>().title_attr());
   p_hwnd     = ::CreateWindowExW(
       0L, p_win_class.lpszClassName, l_str.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-      CW_USEDEFAULT, program_info::value().parent_windows_attr(), nullptr, p_win_class.hInstance, this
+      CW_USEDEFAULT, doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(), nullptr, p_win_class.hInstance,
+      this
   );
 
   // Initialize Direct3D
@@ -252,10 +254,10 @@ void gui_facet::post_constructor() {
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
     auto& l_prj  = g_reg()->ctx().at<project>();
-    auto l_title = boost::locale::conv::utf_to_utf<char>(program_info::value().title_attr());
+    auto l_title = boost::locale::conv::utf_to_utf<char>(doodle_lib::Get().ctx().get<program_info>().title_attr());
     auto l_str   = fmt::format(
-        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, database_info::value().path_, l_prj.p_path,
-        l_prj.show_str(), l_prj.str(), l_prj.short_str()
+        "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, doodle_lib::Get().ctx().get<database_info>().path_,
+        l_prj.p_path, l_prj.show_str(), l_prj.str(), l_prj.short_str()
     );
     set_title(l_str);
   };
@@ -263,13 +265,14 @@ void gui_facet::post_constructor() {
   g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
   auto& k_sig = g_reg()->ctx().emplace<core_sig>();
   k_sig.save.connect(2, [this]() {
-    std::make_shared<database_n::sqlite_file>()->async_save(database_info::value().path_, [this](auto) {
-      DOODLE_LOG_INFO("保存项目 {}", database_info::value().path_);
-    });
+    std::make_shared<database_n::sqlite_file>()->async_save(
+        doodle_lib::Get().ctx().get<database_info>().path_,
+        [this](auto) { DOODLE_LOG_INFO("保存项目 {}", doodle_lib::Get().ctx().get<database_info>().path_); }
+    );
   });
   /// 在这里我们加载项目
-  if (program_options::has_value()) {
-    auto& l_op = program_options::value();
+  if (doodle_lib::Get().ctx().contains<program_options>()) {
+    auto& l_op = doodle_lib::Get().ctx().get<program_options>();
     ::doodle::app_base::Get().load_project(
         !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
     );
@@ -301,7 +304,7 @@ void gui_facet::set_title(const std::string& in_title) const {
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
-gui_facet::~gui_facet() { identifier::reset(); }
+gui_facet::~gui_facet() = default;
 void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
 void gui_facet::drop_files() {
   if (*p_i->dorp_manager) {

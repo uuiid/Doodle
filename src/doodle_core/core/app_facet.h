@@ -12,7 +12,7 @@ class DOODLE_CORE_API app_facet_interface_1 : public entt::type_list<bool(), voi
  public:
   template <typename Base>
   struct type : Base {
-    bool post() { entt::poly_call<0>(*this); }
+    bool post() { return entt::poly_call<0>(*this); }
     void add_program_options() { entt::poly_call<1>(*this); }
   };
 

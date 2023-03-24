@@ -5,6 +5,7 @@
 #include "maya_exe.h"
 
 #include <doodle_core/core/core_set.h>
+#include <doodle_core/core/program_info.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/redirection_path_info.h>
@@ -16,6 +17,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
+
 #include <stack>
 // #include <type_traits>
 
@@ -303,7 +305,7 @@ void maya_exe::add_maya_fun_tool() {
 }
 void maya_exe::notify_run() {
   add_maya_fun_tool();
-  if (!app_base::Get().stop())
+  if (!doodle_lib::Get().ctx().get<program_info>().stop_attr())
     while (p_i->run_size_attr < core_set::get_set().p_max_thread && !p_i->run_process_arg_attr.empty()) {
       auto l_run = p_i->run_process_arg_attr.top();
       p_i->run_process_arg_attr.pop();

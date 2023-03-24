@@ -14,10 +14,11 @@
 namespace doodle::facet {
 
 const std::string& rpc_server_facet::name() const noexcept { return name_; }
-void rpc_server_facet::operator()() {
+bool rpc_server_facet::post() {
   server_attr = std::make_shared<doodle::distributed_computing::server_ptr::element_type>();
   server_attr->run();
   work_ = std::make_shared<decltype(work_)::element_type>(boost::asio::make_work_guard(g_io_context()));
+  return true;
 }
 void rpc_server_facet::deconstruction() { server_attr.reset(); }
 

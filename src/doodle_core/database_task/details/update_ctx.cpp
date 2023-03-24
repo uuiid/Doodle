@@ -100,7 +100,7 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(sqlpp::sqlite3::connection&
     );
   }
 
-  throw_exception(doodle_error{"无法检查到数据库版本 {}", database_info::value().path_});
+  throw_exception(doodle_error{"无法检查到数据库版本 {}", doodle_lib::Get().ctx().get<database_info>().path_});
   return {};
 }
 

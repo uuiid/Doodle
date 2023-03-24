@@ -58,7 +58,7 @@ class DOODLE_CORE_API app_base {
   bool is_main_thread() const;
 
   virtual std::int32_t poll_one();
-  std::atomic_bool& stop();
+
   void stop_app(bool in_stop = false);
 
   void load_project(const FSys::path& in_path) const;

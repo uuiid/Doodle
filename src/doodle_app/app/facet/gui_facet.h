@@ -51,7 +51,7 @@ class DOODLE_APP_API gui_facet {
 
   ::doodle::win::wnd_handle p_hwnd;
   ::doodle::win::wnd_class p_win_class;
-  void post_constructor();
+  void init_windows();
 
   virtual void load_windows() = 0;
 
@@ -71,7 +71,8 @@ class DOODLE_APP_API gui_facet {
   void set_title(const std::string& in_title) const;
 
   [[nodiscard]] const std::string& name() const noexcept;
-  void operator()();
+  bool post();
   void deconstruction();
+  virtual void add_program_options(){};
 };
 }  // namespace doodle::facet
