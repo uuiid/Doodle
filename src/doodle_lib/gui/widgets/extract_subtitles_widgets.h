@@ -18,7 +18,7 @@ class DOODLELIB_API extract_subtitles_widgets {
 
  public:
   extract_subtitles_widgets();
-  ~extract_subtitles_widgets() override;
+  ~extract_subtitles_widgets();
 
   void init();
 

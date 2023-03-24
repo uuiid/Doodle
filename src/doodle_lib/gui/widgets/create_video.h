@@ -20,7 +20,7 @@ class DOODLELIB_API create_video {
 
  public:
   create_video();
-  ~create_video() override;
+  ~create_video();
   constexpr static std::string_view name{gui::config::menu_w::comm_create_video};
   const std::string& title() const;
   bool render();

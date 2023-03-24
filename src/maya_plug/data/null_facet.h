@@ -8,15 +8,15 @@
 #include <boost/asio/io_context.hpp>
 namespace doodle::maya_plug {
 
-class null_facet : public doodle::detail::app_facet_interface {
+class null_facet {
   std::optional<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_lock{};
 
  public:
   null_facet();
 
-  const std::string& name() const noexcept override;
-  void operator()() override;
-  void deconstruction() override;
+  const std::string& name() const noexcept;
+  void operator()();
+  void deconstruction();
 };
 
 }  // namespace doodle::maya_plug

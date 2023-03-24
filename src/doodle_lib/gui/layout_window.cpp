@@ -110,21 +110,16 @@ void layout_window::layout() {
 }
 
 void layout_window::init_windows() {
-  create_windows(windows{std::in_place_type<edit_widgets>});
-  create_windows(windows{std::in_place_type<assets_filter_widget>});
-  create_windows(windows{std::in_place_type<maya_tool>});
-  create_windows(windows{std::in_place_type<create_video>});
-  create_windows(windows{std::in_place_type<extract_subtitles_widgets>});
-  create_windows(windows{std::in_place_type<subtitle_processing>});
-  create_windows(windows{std::in_place_type<long_time_tasks_widget>});
-  create_windows(windows{std::in_place_type<time_sequencer_widget>});
-  create_windows(windows{std::in_place_type<assets_file_widgets>});
-  create_windows(windows{std::in_place_type<xlsx_export_widgets>});
-  create_windows(windows{std::in_place_type<xlsx_export_widgets>});
-}
-void layout_window::create_windows(windows &&in_windows) {
-  auto l_f = app_base::Get().find_facet<facet::gui_facet>();
-  l_f->windows_list.emplace_back(std::move(in_windows));
+  g_windows_manage().create_windows<edit_widgets>();
+  g_windows_manage().create_windows<assets_filter_widget>();
+  g_windows_manage().create_windows<maya_tool>();
+  g_windows_manage().create_windows<create_video>();
+  g_windows_manage().create_windows<extract_subtitles_widgets>();
+  g_windows_manage().create_windows<subtitle_processing>();
+  g_windows_manage().create_windows<long_time_tasks_widget>();
+  g_windows_manage().create_windows<time_sequencer_widget>();
+  g_windows_manage().create_windows<assets_file_widgets>();
+  g_windows_manage().create_windows<xlsx_export_widgets>();
 }
 
 layout_window::~layout_window() = default;

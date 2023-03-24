@@ -9,17 +9,17 @@
 #include <boost/program_options.hpp>
 namespace doodle::facet {
 
-class create_move_facet : public doodle::detail::app_facet_interface {
+class create_move_facet {
   std::string name_{"create_move"};
   std::string files_attr;
   boost::program_options::options_description opt{"rpc"};
 
  public:
   create_move_facet() = default;
-  [[nodiscard]] const std::string& name() const noexcept override;
-  void operator()() override;
-  void deconstruction() override;
-  void add_program_options() override;
+  [[nodiscard]] const std::string& name() const noexcept;
+  void post();
+  void deconstruction();
+  void add_program_options();
 };
 
 }  // namespace doodle::facet

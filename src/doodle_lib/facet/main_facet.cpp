@@ -25,11 +25,9 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
-  gui::detail::windows_tick_interface_1 l_f{std::in_place_type<gui::layout_window>};
-  ;
-  g_reg()->ctx().at<gui::layout_tick>()  = std::make_shared<gui::layout_window>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::menu_bar>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
+  this->set_layout(gui::windows{std::in_place_type<gui::layout_window>});
+  gui::g_windows_manage().create_windows<gui::menu_bar>();
+  gui::g_windows_manage().create_windows<gui::main_status_bar>();
 }
 
 }  // namespace doodle

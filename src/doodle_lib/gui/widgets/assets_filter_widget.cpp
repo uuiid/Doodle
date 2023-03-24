@@ -409,7 +409,7 @@ class assets_filter_widget::impl {
   std::array<gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
   std::string title_name_;
-  gui_cache<bool> open{assets_filter_widget::name};
+  bool open{};
 };
 
 assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
@@ -429,6 +429,8 @@ void assets_filter_widget::init() {
 
 bool assets_filter_widget::render() {
   /// 渲染数据
+  dear::Begin l_win{p_impl->title_name_.data(), &p_impl->open};
+  if (!l_win) return p_impl->open;
 
   bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {
@@ -451,6 +453,7 @@ bool assets_filter_widget::render() {
       l_is_edit) {
     refresh(false);
   }
+  return p_impl->open;
 }
 void assets_filter_widget::refresh(bool force) {
   if (!p_impl->run_edit)

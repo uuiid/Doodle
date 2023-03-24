@@ -6,32 +6,22 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle::detail {
-class DOODLE_CORE_API app_facet_interface {
+namespace doodle::details {
+
+class DOODLE_CORE_API app_facet_interface_1 : public entt::type_list<bool(), void()> {
  public:
-  virtual ~app_facet_interface()                                 = default;
+  template <typename Base>
+  struct type : Base {
+    bool post() { entt::poly_call<0>(*this); }
+    void add_program_options() { entt::poly_call<1>(*this); }
+  };
 
-  /**
-   * 返回构面的名称以用来初始化命令行
-   * @return 构面名称
-   */
-  [[nodiscard]] virtual const std::string& name() const noexcept = 0;
-
-  /**
-   * 初始化
-   */
-  virtual void operator()()                                      = 0;
-
-  /**
-   * 结束清理
-   */
-  virtual void deconstruction()                                  = 0;
-
-  virtual void add_program_options(){};
+  template <typename Type>
+  using impl = entt::value_list<&Type::post, &Type::add_program_options>;
 };
 
-}  // namespace doodle::detail
+}  // namespace doodle::details
 
 namespace doodle {
-using app_facet_ptr = std::shared_ptr<::doodle::detail::app_facet_interface>;
+using app_facet_interface = entt::poly<details::app_facet_interface_1>;
 }

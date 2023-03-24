@@ -513,15 +513,11 @@ void time_sequencer_widget::fliter_select() {
   auto l_user = p_i->combox_user_id.current_user;
 
   if (!l_user) {
-    auto l_msg = std::make_shared<show_message>();
-    l_msg->set_message(fmt::format("无效的句柄"));
-    make_handle().emplace<gui_windows>() = l_msg;
+    g_windows_manage().create_windows<show_message>(fmt::format("无效的句柄"));
     return;
   }
   if (!l_user.all_of<user>()) {
-    auto l_msg = std::make_shared<show_message>();
-    l_msg->set_message(fmt::format("未找到人员 {}", l_user.get<user>().get_name()));
-    make_handle().emplace<gui_windows>() = l_msg;
+    g_windows_manage().create_windows<show_message>(fmt::format("未找到人员 {}", l_user.get<user>().get_name()));
   }
 
   if (!p_i->attendance_ptr) {
@@ -541,9 +537,8 @@ void time_sequencer_widget::fliter_select() {
         l_p.progress_step(1);
         if (in_code) {
           l_p.set_state(l_p.fail);
-          auto l_msg = std::make_shared<show_message>();
-          l_msg->set_message(fmt::format("{}", in_code.what()));
-          make_handle().emplace<gui_windows>() = l_msg;
+
+          g_windows_manage().create_windows<show_message>(fmt::format("{}", in_code.what()));
           return;
         }
 

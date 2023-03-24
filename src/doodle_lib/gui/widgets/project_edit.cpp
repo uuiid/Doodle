@@ -228,7 +228,7 @@ void project_edit::init() {
   }));
 }
 
-void project_edit::render() {
+bool project_edit::render() {
   dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
   if (!l_win) return p_i->open;
 

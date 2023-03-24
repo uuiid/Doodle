@@ -45,7 +45,7 @@ class create_video::impl {
   std::vector<video_cache> video_list;
   entt::handle out_video_h;
   std::string title_name_;
-  gui_cache<bool> open{std::string{create_video::name}};
+  bool open{};
 };
 
 create_video::create_video() : p_i(std::make_unique<impl>()) {
@@ -54,7 +54,7 @@ create_video::create_video() : p_i(std::make_unique<impl>()) {
 }
 
 bool create_video::render() {
-  const dear::Begin l_win{*p_i->open, &p_i->open};
+  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
   if (!l_win) return p_i->open;
 
   if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {

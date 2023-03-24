@@ -227,9 +227,9 @@ class gui_cache : public BaseType {
    * @param in_name gui 的显示名称
    * @param in_data gui 数据初始化构建
    */
-  template <typename Show_Name_Type, typename... IN_T>
-  explicit gui_cache(Show_Name_Type &&in_name, IN_T &&...in_data)
-      : base_type(), gui_name(std::forward<Show_Name_Type>(in_name)), data{std::forward<IN_T>(in_data)...} {};
+  template <typename... IN_T>
+  explicit gui_cache(const std::string &in_name, IN_T &&...in_data)
+      : base_type(), gui_name(in_name), data{std::forward<IN_T>(in_data)...} {};
   /**
    * @brief 初始化id, 并且默认构造数据
    * @param in_name

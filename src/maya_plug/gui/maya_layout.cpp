@@ -83,26 +83,16 @@ bool maya_layout::tick() {
   p_i->builder_dock();
   if (!p_i->inited) {
     p_i->inited = true;
-    make_handle().emplace<gui::gui_windows>(std::make_shared<comm_check_scenes>());
-    make_handle().emplace<gui::gui_windows>(std::make_shared<reference_attr_setting>());
-    make_handle().emplace<gui::gui_windows>(std::make_shared<create_sim_cloth>());
-    make_handle().emplace<gui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
+    gui::g_windows_manage().create_windows<comm_check_scenes>();
+    gui::g_windows_manage().create_windows<reference_attr_setting>();
+    gui::g_windows_manage().create_windows<create_sim_cloth>();
+    gui::g_windows_manage().create_windows<dem_cloth_to_fbx>();
   }
   return false;
 }
 
 maya_layout::~maya_layout() = default;
-void maya_menu::menu_windows() {
-  namespace dgui = doodle::gui;
-  if (dear::MenuItem(comm_check_scenes::name.data()))
-    make_handle().emplace<dgui::gui_windows>(std::make_shared<comm_check_scenes>());
-  if (dear::MenuItem(reference_attr_setting::name.data()))
-    make_handle().emplace<dgui::gui_windows>(std::make_shared<reference_attr_setting>());
-  if (dear::MenuItem(create_sim_cloth::name.data()))
-    make_handle().emplace<dgui::gui_windows>(std::make_shared<create_sim_cloth>());
-  if (dear::MenuItem(dem_cloth_to_fbx::name.data()))
-    make_handle().emplace<dgui::gui_windows>(std::make_shared<dem_cloth_to_fbx>());
-}
+void maya_menu::menu_windows() {}
 void maya_menu::menu_tool() {}
 }  // namespace maya_plug
 }  // namespace doodle

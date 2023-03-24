@@ -10,7 +10,7 @@
 namespace doodle::gui {
 namespace details {
 
-class windows_tick_interface_impl : public entt::type_list<bool()> {
+class DOODLE_CORE_API windows_tick_interface_impl : public entt::type_list<bool()> {
  public:
   template <typename Base>
   struct type : public Base {

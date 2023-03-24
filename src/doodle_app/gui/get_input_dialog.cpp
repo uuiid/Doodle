@@ -40,13 +40,13 @@ bool create_project_dialog::render() {
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
-    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_use_dir().set_title("选择文件夹"));
+    auto* l_file =
+        g_windows_manage().create_windows<file_dialog>(file_dialog::dialog_args{}.set_use_dir().set_title("选择文件夹")
+        );
     l_file->async_read([this](const FSys::path& in) {
       p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
       p_i->path_gui = p_i->path.generic_string();
     });
-    p_i->select_button_id().emplace_or_replace<gui_windows>(std::dynamic_pointer_cast<gui_windows::element_type>(l_file)
-    );
   }
 
   if (dear::InputText("名称", &(p_i->name))) {
@@ -83,18 +83,24 @@ class close_exit_dialog::impl {
  public:
   std::string title{"退出"s};
 };
-void close_exit_dialog::render() {
+bool close_exit_dialog::render() {
+  std::call_once(once_flag, [this]() {
+    ImGui::OpenPopup(title().data());
+    ImGui::SetNextWindowSize({640, 360});
+  });
   ImGui::Text("是否退出?");
 
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
+    open = false;
     quit();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     ImGui::CloseCurrentPopup();
-    show_attr = false;
+    open = false;
   }
+  return open;
 }
 void close_exit_dialog::set_attr() const {
   ImGui::OpenPopup(title().data());

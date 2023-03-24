@@ -34,7 +34,7 @@ class assets_file_widgets::impl {
 
   std::vector<boost::signals2::scoped_connection> p_sc;
   std::vector<entt::handle> handle_list;
-  gui_cache<bool> open{assets_file_widgets::name};
+  bool open{};
 
   class image_data {
    public:
@@ -206,7 +206,7 @@ void assets_file_widgets::init() {
 }
 
 bool assets_file_widgets::render() {
-  const dear::Begin l_wind{*p_i->open, &p_i->open};
+  const dear::Begin l_wind{p_i->title_name_.data(), &p_i->open};
   if (!l_wind) return p_i->open;
 
   /// 渲染数据
@@ -233,9 +233,9 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
-    auto l_image = std::make_shared<screenshot_widget>();
-    l_image->async_save_image(in_, [](const entt::handle& in) { database::save(in); });
-    make_handle().emplace<gui_windows>(l_image);
+    g_windows_manage().create_windows<screenshot_widget>()->async_save_image(in_, [](const entt::handle& in) {
+      database::save(in);
+    });
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {

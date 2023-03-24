@@ -251,7 +251,8 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   }
   FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
-  make_handle().emplace<gui_windows>(std::make_shared<show_message>(fmt::format("完成导出表格 {}"s, l_path)));
+
+  g_windows_manage().create_windows<show_message>(fmt::format("完成导出表格 {}"s, l_path));
 }
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
@@ -273,17 +274,6 @@ bool work_hour_filling::render() {
         auto l_user_h = ptr->combox.get_user();
         auto l_title  = l_user_h.get<user>().get_name().empty() ? fmt::format("匿名用户 {}", l_user_h)
                                                                 : l_user_h.get<user>().get_name();
-        if (!ptr->sub_windows[l_title]) {
-          auto l_u               = std::make_shared<work_hour_filling>();
-          l_u->ptr->current_user = l_user_h;
-          l_u->ptr->title        = l_title;
-          l_u->show_advanced_setting(false);
-          boost::asio::post(g_io_context(), [this, l_title, l_u]() {
-            auto l_h = make_handle();
-            l_h.emplace<gui_windows>(l_u);
-            ptr->sub_windows[l_title] = l_h;
-          });
-        }
       }
 
       /// 导出表格功能
@@ -292,12 +282,12 @@ bool work_hour_filling::render() {
       }
       ImGui::SameLine();
       if (ImGui::Button(*ptr->select_path_button)) {
-        auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
-        l_file->async_read([this](const FSys::path& in) {
-          ptr->export_path        = in / "tmp.xlsx";
-          ptr->export_file_text() = ptr->export_path.generic_string();
-        });
-        make_handle().emplace<gui_windows>(l_file);
+        g_windows_manage()
+            .create_windows<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir())
+            ->async_read([this](const FSys::path& in) {
+              ptr->export_path        = in / "tmp.xlsx";
+              ptr->export_file_text() = ptr->export_path.generic_string();
+            });
       }
       if (!ptr->export_path.empty()) {
         ImGui::SameLine();

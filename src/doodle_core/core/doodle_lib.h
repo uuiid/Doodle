@@ -27,6 +27,7 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
  private:
   class impl;
   std::unique_ptr<impl> ptr;
+  entt::registry::context ctx_p{};
   friend class core_set;
   void init();
 
@@ -35,6 +36,8 @@ class DOODLE_CORE_API doodle_lib : public details::no_copy, boost::equality_comp
   virtual ~doodle_lib();
 
   static doodle_lib& Get();
+  inline entt::registry::context& ctx() { return ctx_p; };
+  inline const entt::registry::context& ctx() const { return ctx_p; };
 
   [[nodiscard]] registry_ptr& reg_attr() const;
 

@@ -25,8 +25,6 @@ class DOODLELIB_API layout_window {
 
   bool render();
   const std::string& title() const;
-
-  static void create_windows(windows&& in_windows);
 };
 
 }  // namespace doodle::gui

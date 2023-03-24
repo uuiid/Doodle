@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <doodle_core/core/app_facet.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
@@ -13,25 +14,18 @@ namespace doodle {
  * @brief 基础的事件循环类,  只有事件循环可以使用
  */
 
-namespace detail {
-class app_facet_interface;
-}  // namespace detail
 /**
  * @brief app 的基类
  *
  */
 class DOODLE_CORE_API app_base {
  public:
-  using cmd_string_type = std::variant<win::string_type, std::vector<std::string>>;
-  using app_facet_ptr   = std::shared_ptr<::doodle::detail::app_facet_interface>;
-  using app_facet_map   = std::map<std::string, app_facet_ptr>;
-
  protected:
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 
   std::wstring p_title;
-  app_facet_map facet_list{};
+  std::vector<app_facet_interface> facet_list{};
   /**
    * 此处更改为默认运行构面的名称
    */
@@ -41,7 +35,6 @@ class DOODLE_CORE_API app_base {
 
   void init();
 
- protected:
   /**
    * @brief 这个会在第一个循环中加载
    *
@@ -67,14 +60,6 @@ class DOODLE_CORE_API app_base {
   virtual std::int32_t poll_one();
   std::atomic_bool& stop();
   void stop_app(bool in_stop = false);
-
-  template <typename Facet>
-  std::shared_ptr<Facet> find_facet() {
-    for (auto&& [key, facet] : facet_list) {
-      if (std::dynamic_pointer_cast<Facet>(facet)) return std::dynamic_pointer_cast<Facet>(facet);
-    }
-    return nullptr;
-  }
 
   void load_project(const FSys::path& in_path) const;
 

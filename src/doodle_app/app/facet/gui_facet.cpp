@@ -105,10 +105,11 @@ void gui_facet::tick() {
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
 
-  layout_->tick();
+  layout_->render();
   drop_files();
 
-  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return in_->tick(); });
+  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return in_->render(); });
+  windows_list |= ranges::action::push_back(windows_list_next);
 }
 bool gui_facet::translate_message() {
   MSG msg;

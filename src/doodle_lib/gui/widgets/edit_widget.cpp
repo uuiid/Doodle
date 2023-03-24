@@ -480,7 +480,7 @@ class edit_widgets::impl {
   std::vector<gui_edit_cache> p_edit;
   std::vector<gui_add_cache> p_add;
   std::string title_name_;
-  gui_cache<bool> open{std::string{edit_widgets::name}};
+  bool open{};
 };
 
 edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
@@ -523,9 +523,12 @@ void edit_widgets::init() {
   }));
 }
 
-void edit_widgets::render() {
+bool edit_widgets::render() {
+  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
+  if (!l_win) return p_i->open;
   dear::TreeNode{"添加"} && [this]() { this->add_handle(); };
   dear::TreeNode{"编辑"} && [this]() { this->edit_handle(); };
+  return p_i->open;
 }
 
 void edit_widgets::edit_handle() {
