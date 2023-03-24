@@ -480,10 +480,13 @@ class edit_widgets::impl {
   std::vector<gui_edit_cache> p_edit;
   std::vector<gui_add_cache> p_add;
   std::string title_name_;
-  bool open{};
+  bool open{true};
 };
 
-edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
+edit_widgets::edit_widgets() : p_i(std::make_unique<impl>()) {
+  p_i->title_name_ = std::string{name};
+  init();
+}
 edit_widgets::~edit_widgets() = default;
 
 void edit_widgets::init() {

@@ -17,10 +17,11 @@ class gui_facet;
 namespace doodle::gui {
 
 class windows_manage {
-  std::weak_ptr<facet::gui_facet> gui_facet;
+  std::reference_wrapper<facet::gui_facet> gui_facet;
 
  public:
-  explicit windows_manage(const std::weak_ptr<facet::gui_facet>& in_gui_facet) : gui_facet(in_gui_facet){};
+  explicit windows_manage(std::reference_wrapper<facet::gui_facet> in_gui_facet) : gui_facet(in_gui_facet){};
+
   void create_windows_(windows&& in_windows);
   template <typename T, typename... Arg>
   T* create_windows(Arg&&... in_arg) {

@@ -21,7 +21,7 @@
 
 namespace doodle {
 main_facet::main_facet() : facet::gui_facet() {
-  g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::image_to_move>();
+  g_reg()->ctx().emplace<image_to_move>() = std::make_shared<detail::image_to_move>();
 }
 
 void main_facet::load_windows() {

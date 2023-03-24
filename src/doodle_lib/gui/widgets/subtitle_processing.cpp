@@ -64,7 +64,7 @@ class subtitle_processing::impl {
 
   gui_cache_name_id run_button{"开始处理"s};
   std::string title_name_;
-  bool open;
+  bool open{true};
 
   boost::signals2::scoped_connection sig_scoped;
 };
@@ -72,6 +72,7 @@ class subtitle_processing::impl {
 subtitle_processing::subtitle_processing()
     : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
+  init();
 }
 void subtitle_processing::init() {
   p_i->sig_scoped = g_reg()->ctx().at<core_sig>().select_handles.connect(

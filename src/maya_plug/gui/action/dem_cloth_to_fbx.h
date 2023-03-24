@@ -19,7 +19,7 @@ class dem_cloth_to_fbx {
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::dem_cloth_to_fbx;
   dem_cloth_to_fbx();
   ~dem_cloth_to_fbx();
-  virtual void init();
+  void init();
   bool render();
   const std::string& title() const;
 };

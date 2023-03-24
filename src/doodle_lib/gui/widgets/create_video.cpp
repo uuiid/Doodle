@@ -45,7 +45,7 @@ class create_video::impl {
   std::vector<video_cache> video_list;
   entt::handle out_video_h;
   std::string title_name_;
-  bool open{};
+  bool open{true};
 };
 
 create_video::create_video() : p_i(std::make_unique<impl>()) {

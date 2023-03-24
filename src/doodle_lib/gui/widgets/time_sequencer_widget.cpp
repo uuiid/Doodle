@@ -83,8 +83,8 @@ class time_sequencer_widget::impl {
     entt::handle current_user{};
   };
 
-  impl() = default;
-  ;
+  impl()  = default;
+
   ~impl() = default;
   std::vector<point_cache> time_list{};
   std::vector<double> time_list_x{};
@@ -113,7 +113,7 @@ class time_sequencer_widget::impl {
   detail::cross_frame_check<ImPlotRect> chick_view1{};
   detail::cross_frame_check<ImPlotRect> chick_view2{};
   std::string title_name_;
-  bool open{};
+  bool open{true};
 
   /// 过滤用户
   user_list_cache combox_user_id{};

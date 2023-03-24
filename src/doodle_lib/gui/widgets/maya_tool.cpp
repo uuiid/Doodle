@@ -89,6 +89,7 @@ maya_tool::maya_tool()
       ptr_attr(std::make_unique<impl>()) {
   g_reg()->ctx().emplace<maya_exe_ptr>() = std::make_shared<maya_exe>();
   title_name_                            = std::string{name};
+  init();
 }
 void maya_tool::init() {
   g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {

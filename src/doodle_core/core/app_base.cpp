@@ -73,8 +73,6 @@ void app_base::stop_app(bool in_stop) {
   lib_ptr->ctx().emplace<program_info>().is_stop = true;
   this->deconstruction();
   core_set_init{}.write_file();
-  //  boost::asio::post(g_io_context(), [=]() {
-  //  });
 }
 
 void app_base::load_project(const FSys::path& in_path) const {

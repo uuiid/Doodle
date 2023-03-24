@@ -49,10 +49,6 @@ class app_command : public app_base {
       val->add_program_options();
     }
     l_opt.command_line_parser();
-
-    for (auto&& val : facet_list) {
-      val->post();
-    }
     facet_list |= ranges::actions::remove_if([](app_facet_interface& in) { return !in->post(); });
   };
 

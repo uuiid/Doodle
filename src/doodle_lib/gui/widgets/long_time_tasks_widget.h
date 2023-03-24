@@ -15,7 +15,7 @@ namespace doodle::gui {
 class DOODLELIB_API long_time_tasks_widget {
   entt::handle p_current_select;
   std::string title_name_;
-  bool open;
+  bool open{true};
 
  public:
   long_time_tasks_widget();

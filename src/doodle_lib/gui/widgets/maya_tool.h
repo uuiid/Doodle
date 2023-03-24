@@ -23,7 +23,7 @@ class DOODLELIB_API maya_tool {
   bool p_use_all_ref;
   bool p_upload_files;
   std::string title_name_;
-  bool open;
+  bool open{true};
 
   class impl;
   std::unique_ptr<impl> ptr_attr;

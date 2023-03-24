@@ -50,7 +50,10 @@ class setting_windows::impl {
   bool open;
 };
 
-setting_windows::setting_windows() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
+setting_windows::setting_windows() : p_i(std::make_unique<impl>()) {
+  p_i->title_name_ = std::string{name};
+  init();
+}
 
 void setting_windows::save() {
   auto& set                    = core_set::get_set();

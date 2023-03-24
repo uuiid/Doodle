@@ -214,7 +214,10 @@ class project_edit::impl {
   }
 };
 
-project_edit::project_edit() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
+project_edit::project_edit() : p_i(std::make_unique<impl>()) {
+  p_i->title_name_ = std::string{name};
+  init();
+}
 project_edit::~project_edit() = default;
 
 void project_edit::init() {

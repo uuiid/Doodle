@@ -23,11 +23,12 @@ class extract_subtitles_widgets::impl {
   gui_cache<std::string> regex_find_subtitles{"正则表达式"s, R"((.+?[:|：].+?)$)"s};
   gui_cache<std::string> regex1{"正则表达式"s, R"(.+?[:|：](.+?))"s};
   std::string title_name_;
-  bool open{};
+  bool open{true};
 };
 
 extract_subtitles_widgets::extract_subtitles_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
+  init();
 }
 bool extract_subtitles_widgets::render() {
   dear::Begin l_win{p_i->title_name_.data(), &p_i->open};

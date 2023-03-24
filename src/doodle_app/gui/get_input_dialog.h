@@ -12,7 +12,7 @@ namespace doodle::gui {
 class DOODLE_APP_API create_project_dialog {
   class impl;
   std::unique_ptr<impl> p_i;
-  bool open;
+  bool open{true};
 
  public:
   explicit create_project_dialog();
@@ -33,7 +33,6 @@ class DOODLE_APP_API close_exit_dialog {
 
  protected:
  public:
-  void set_attr() const;
   virtual const std::string& title() const;
   explicit close_exit_dialog();
   virtual ~close_exit_dialog();

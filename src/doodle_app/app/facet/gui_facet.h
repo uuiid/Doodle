@@ -12,6 +12,11 @@
 
 #include <entt/entt.hpp>
 #include <tuple>
+
+namespace doodle::gui {
+class windows_manage;
+}
+
 namespace doodle::facet {
 
 namespace details {
@@ -41,6 +46,19 @@ class DOODLE_APP_API gui_facet {
   class impl;
   std::unique_ptr<impl> p_i;
   gui::windows layout_;
+  std::atomic_bool is_render_tick_p;
+
+  class render_guard {
+    gui_facet* gui_facet_ptr;
+
+   public:
+    explicit render_guard(gui_facet* in_gui_facet) : gui_facet_ptr(in_gui_facet) {
+      gui_facet_ptr->is_render_tick_p = true;
+    }
+    ~render_guard() { gui_facet_ptr->is_render_tick_p = false; }
+  };
+
+  friend class doodle::gui::windows_manage;
 
  protected:
   virtual bool translate_message();
@@ -65,7 +83,9 @@ class DOODLE_APP_API gui_facet {
   virtual void close_windows();
   virtual void destroy_windows();
 
-  inline void set_layout(const gui::windows& in_windows) { layout_ = in_windows; };
+  inline bool is_render_tick() const { return is_render_tick_p; };
+
+  inline void set_layout(gui::windows&& in_windows) { layout_ = std::move(in_windows); };
 
   std::vector<gui::windows> windows_list_next{};
   void set_title(const std::string& in_title) const;

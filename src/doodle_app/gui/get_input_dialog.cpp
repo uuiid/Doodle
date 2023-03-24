@@ -88,6 +88,10 @@ bool close_exit_dialog::render() {
     ImGui::OpenPopup(title().data());
     ImGui::SetNextWindowSize({640, 360});
   });
+
+  dear::Begin l_win{p_i->title.data(), &open};
+  if (!l_win) return open;
+
   ImGui::Text("是否退出?");
 
   if (ImGui::Button("yes")) {
@@ -101,10 +105,6 @@ bool close_exit_dialog::render() {
     open = false;
   }
   return open;
-}
-void close_exit_dialog::set_attr() const {
-  ImGui::OpenPopup(title().data());
-  ImGui::SetNextWindowSize({640, 360});
 }
 close_exit_dialog::close_exit_dialog() : p_i(std::make_unique<impl>()) {}
 close_exit_dialog::~close_exit_dialog() = default;

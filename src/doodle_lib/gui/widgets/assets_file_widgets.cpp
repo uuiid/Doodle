@@ -34,7 +34,7 @@ class assets_file_widgets::impl {
 
   std::vector<boost::signals2::scoped_connection> p_sc;
   std::vector<entt::handle> handle_list;
-  bool open{};
+  bool open{true};
 
   class image_data {
    public:
@@ -179,6 +179,7 @@ assets_file_widgets::assets_file_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   g_reg()->ctx().emplace<image_load_task>();
   this->switch_rander();
+  init();
 }
 
 void assets_file_widgets::switch_rander() {

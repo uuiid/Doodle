@@ -15,6 +15,7 @@
 #include <doodle_core/platform/win/drop_manager.h>
 
 #include <doodle_app/app/program_options.h>
+#include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
@@ -58,6 +59,7 @@ class gui_facet::impl {
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
+  doodle_lib::Get().ctx().emplace<gui::windows_manage>(std::ref(*this));
   init_windows();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
@@ -107,10 +109,14 @@ void gui_facet::tick() {
   ImGui::NewFrame();
 
   layout_->render();
+  const render_guard l_g{this};
   drop_files();
 
-  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return in_->render(); });
-  windows_list |= ranges::action::push_back(windows_list_next);
+  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return !in_->render(); });
+  for (auto&& i : windows_list_next) {
+    windows_list.emplace_back(std::move(i));
+  }
+  windows_list_next.clear();
 }
 bool gui_facet::translate_message() {
   MSG msg;
@@ -279,6 +285,7 @@ void gui_facet::init_windows() {
   } else {
     ::doodle::app_base::Get().load_project(core_set::get_set().project_root[0]);
   }
+  s_set_title_fun();
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }
 void gui_facet::close_windows() {
@@ -291,9 +298,9 @@ void gui_facet::close_windows() {
     doodle::app_base::Get().stop_app();
   }};
   if (::GetForegroundWindow() == p_hwnd) {
-    auto l_gui = std::make_shared<gui::close_exit_dialog>();
-    l_gui->quit.connect([=]() { boost::asio::post(g_io_context(), g_quit); });
-    layout_.reset();
+    gui::g_windows_manage().create_windows<gui::close_exit_dialog>()->quit.connect([=]() {
+      boost::asio::post(g_io_context(), g_quit);
+    });
   } else
     boost::asio::post(g_io_context(), g_quit);
 }

@@ -16,7 +16,7 @@ class DOODLELIB_API layout_window {
   std::unique_ptr<impl> p_i;
 
  protected:
-  virtual void layout();
+  virtual void layout(ImGuiID in_id, const ImVec2& in_size);
   virtual void init_windows();
 
  public:

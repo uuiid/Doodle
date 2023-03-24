@@ -168,6 +168,7 @@ class work_hour_filling::impl {
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
   ptr->title                 = std::string{name};
   ptr->show_advanced_setting = true;
+  init();
 }
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {

@@ -50,7 +50,10 @@ if select_list:
     MGlobal::executePythonCommandOnIdle(d_str{l_py}, true);
   }
 };
-dem_cloth_to_fbx::dem_cloth_to_fbx() : p_i(std::make_unique<impl>()) { this->p_i->title_name_ = std::string{name}; }
+dem_cloth_to_fbx::dem_cloth_to_fbx() : p_i(std::make_unique<impl>()) {
+  this->p_i->title_name_ = std::string{name};
+  init();
+}
 void dem_cloth_to_fbx::init() {
   p_i->startFrame_p = MAnimControl::minTime().value();
   p_i->endFrame_p   = MAnimControl::maxTime().value();

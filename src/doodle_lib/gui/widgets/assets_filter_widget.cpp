@@ -409,11 +409,12 @@ class assets_filter_widget::impl {
   std::array<gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
   std::string title_name_;
-  bool open{};
+  bool open{true};
 };
 
 assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
   p_impl->title_name_ = std::string{name};
+  init();
 }
 assets_filter_widget::~assets_filter_widget() = default;
 

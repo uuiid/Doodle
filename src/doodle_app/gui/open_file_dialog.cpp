@@ -112,6 +112,7 @@ file_panel::file_panel(const dialog_args &in_args) : p_i(std::make_unique<impl>(
   p_i->p_flags_             = in_args.p_flags;
   /// \brief 设置输出
   p_i->p_pwd                = in_args.pwd;
+  this->scan_director(p_i->p_pwd);
 }
 
 std::string &file_panel::title() const { return p_i->title_p.name_id; }

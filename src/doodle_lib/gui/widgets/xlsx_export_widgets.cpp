@@ -394,7 +394,7 @@ class xlsx_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   std::string title_name_;
-  bool open;
+  bool open{true};
 
   gui_cache_name_id gen_table{"生成表"};
   gui_cache_name_id export_table{"导出表"};
@@ -416,6 +416,7 @@ class xlsx_export_widgets::impl {
 
 xlsx_export_widgets::xlsx_export_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};  // 获取上一次人物提交时的实体name
+  init();
 }
 xlsx_export_widgets::~xlsx_export_widgets() = default;  /// 析构释放内存
 
