@@ -9,9 +9,10 @@
 
 namespace doodle::gui {
 
-class DOODLE_APP_API create_project_dialog : public base_windows<dear::Begin, create_project_dialog> {
+class DOODLE_APP_API create_project_dialog {
   class impl;
   std::unique_ptr<impl> p_i;
+  bool open;
 
  public:
   explicit create_project_dialog();
@@ -19,23 +20,24 @@ class DOODLE_APP_API create_project_dialog : public base_windows<dear::Begin, cr
   virtual ~create_project_dialog();
 
   void set_attr() const;
-  virtual const std::string& title() const override;
+  virtual const std::string& title() const;
   std::int32_t flags() const;
-  void render();
+  bool render();
 };
 
-class DOODLE_APP_API close_exit_dialog : public base_windows<dear::PopupModal, close_exit_dialog> {
+class DOODLE_APP_API close_exit_dialog {
   class impl;
   std::unique_ptr<impl> p_i;
+  bool open;
 
  protected:
  public:
   void set_attr() const;
-  virtual const std::string& title() const override;
+  virtual const std::string& title() const;
   explicit close_exit_dialog();
-  virtual ~close_exit_dialog() override;
+  virtual ~close_exit_dialog();
   std::int32_t flags() const;
-  void render();
+  bool render();
 
   boost::signals2::signal<void()> quit;
 };

@@ -8,7 +8,7 @@
 #include <doodle_app/gui/base/base_window.h>
 
 namespace doodle::gui {
-class DOODLE_APP_API main_status_bar : public detail::windows_tick_interface {
+class DOODLE_APP_API main_status_bar {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
@@ -23,6 +23,6 @@ class DOODLE_APP_API main_status_bar : public detail::windows_tick_interface {
   main_status_bar& operator=(const main_status_bar& in) noexcept;
   main_status_bar& operator=(main_status_bar&& in) noexcept;
 
-  [[maybe_unused]] bool tick();
+  [[maybe_unused]] bool render();
 };
 }  // namespace doodle::gui

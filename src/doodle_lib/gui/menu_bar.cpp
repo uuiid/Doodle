@@ -20,7 +20,6 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
-#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
@@ -29,6 +28,7 @@
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
 #include "gui/widgets/work_hour_filling.h"
@@ -50,7 +50,6 @@ void menu_bar::menu_windows() {
   if (dear::MenuItem(long_time_tasks_widget::name.data())) show_windows<long_time_tasks_widget>();
   if (dear::MenuItem(time_sequencer_widget::name.data())) show_windows<time_sequencer_widget>();
   if (dear::MenuItem(all_user_view_widget::name.data())) show_windows<all_user_view_widget>();
-  if (dear::MenuItem(ue4_widget::name.data())) show_windows<ue4_widget>();
   if (dear::MenuItem(work_hour_filling::name.data())) show_windows<work_hour_filling>();
 }
 void menu_bar::message(const std::string &in_m) {

@@ -3,13 +3,14 @@
 //
 
 #include "assets_filter_widget.h"
-#include <doodle_core/metadata/metadata_cpp.h>
-#include <core/tree_node.h>
-#include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
-#include <gui/widgets/assets_filter_widgets/name_filter_factory.h>
-#include <gui/widgets/assets_filter_widgets/filter_factory_template.h>
-#include <gui/widgets/assets_filter_widgets/filter_base.h>
 
+#include <doodle_core/metadata/metadata_cpp.h>
+
+#include <core/tree_node.h>
+#include <gui/widgets/assets_filter_widgets/filter_base.h>
+#include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
+#include <gui/widgets/assets_filter_widgets/filter_factory_template.h>
+#include <gui/widgets/assets_filter_widgets/name_filter_factory.h>
 #include <utility>
 namespace doodle::gui {
 
@@ -17,9 +18,7 @@ class path_filter : public filter_base {
  public:
   FSys::path p_assets;
   std::size_t len{};
-  explicit path_filter(FSys::path in_assets)
-      : p_assets(std::move(in_assets)),
-        len(ranges::distance(p_assets)){};
+  explicit path_filter(FSys::path in_assets) : p_assets(std::move(in_assets)), len(ranges::distance(p_assets)){};
   bool operator()(const entt::handle& in) const override {
     // boost::make_zip_iterator();
     //    auto l_r = ;
@@ -46,13 +45,10 @@ class path_filter : public filter_base {
 class path_filters : public filter_base {
  public:
   std::vector<path_filter> filters;
-  explicit path_filters(std::vector<path_filter> in)
-      : filters(std::move(in)) {}
+  explicit path_filters(std::vector<path_filter> in) : filters(std::move(in)) {}
 
   bool operator()(const entt::handle& in) const override {
-    return ranges::any_of(filters, [&in](const auto& in_f) {
-      return in_f(in);
-    });
+    return ranges::any_of(filters, [&in](const auto& in_f) { return in_f(in); });
   }
 };
 
@@ -75,12 +71,7 @@ class time_filter : public filter_base {
  public:
   time_point_wrap p_begin;
   time_point_wrap p_end;
-  explicit time_filter(
-      time_point_wrap in_begin,
-      time_point_wrap in_end
-  )
-      : p_begin(in_begin),
-        p_end(in_end){};
+  explicit time_filter(time_point_wrap in_begin, time_point_wrap in_end) : p_begin(in_begin), p_end(in_end){};
 
   bool operator()(const entt::handle& in) const override {
     if (in.any_of<time_point_wrap>()) {
@@ -143,7 +134,8 @@ class shot_filter_factory : public filter_factory_t<shot> {
 #if 1
 class assets_filter_factory : public filter_factory_base {
  public:
-  constexpr const static ImGuiTreeNodeFlags base_flags{ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
+  constexpr const static ImGuiTreeNodeFlags base_flags{
+      ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth};
 
   using data_type          = assets;
   using gui_cache_path     = gui_cache<FSys::path>;
@@ -157,26 +149,19 @@ class assets_filter_factory : public filter_factory_base {
   void popen_menu(tree_node_type& in_node) {
     ImGui::InputText(*p_popen.gui_name, &p_popen.data);
     if (ImGui::Button("添加")) {
-      if (auto it = ranges::find_if(in_node.child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data.gui_name.name == p_popen.data;
-          });
+      if (auto it = ranges::find_if(
+              in_node.child,
+              [&](const tree_node_type::child_type& in) -> bool { return in->data.gui_name.name == p_popen.data; }
+          );
           it == in_node.child.end()) {
         auto k_path = in_node.data.data / p_popen.data;
-        in_node.child.emplace_back(
-            std::make_shared<tree_node_type>(
-                gui_cache_path{
-                    p_popen.data,
-                    k_path}
-            )
-        );
+        in_node.child.emplace_back(std::make_shared<tree_node_type>(gui_cache_path{p_popen.data, k_path}));
         ImGui::CloseCurrentPopup();
       }
     }
   }
 
-  bool is_select(const tree_node_type::child_type& in_node) const {
-    return p_cur_selects.count(in_node) == 1;
-  }
+  bool is_select(const tree_node_type::child_type& in_node) const { return p_cur_selects.count(in_node) == 1; }
 
   void add_select(const tree_node_type::child_type& in_node) {
     if (ImGui::GetIO().KeyCtrl) {
@@ -192,12 +177,9 @@ class assets_filter_factory : public filter_factory_base {
 
   std::unique_ptr<filter_base> make_filter_() override {
     std::vector<path_filter> in_list =
-        p_cur_selects |
-        ranges::views::transform(
-            [](const tree_node_type::child_type& in_node) -> path_filter {
-              return path_filter{in_node->data};
-            }
-        ) |
+        p_cur_selects | ranges::views::transform([](const tree_node_type::child_type& in_node) -> path_filter {
+          return path_filter{in_node->data};
+        }) |
         ranges::to_vector;
     return std::make_unique<path_filters>(in_list);
   }
@@ -213,9 +195,10 @@ class assets_filter_factory : public filter_factory_base {
       } else
         l_p /= j;
 
-      if (auto it = ranges::find_if(root->child, [&](const tree_node_type::child_type& in) -> bool {
-            return in->data.gui_name.name == j.string();
-          });
+      if (auto it = ranges::find_if(
+              root->child,
+              [&](const tree_node_type::child_type& in) -> bool { return in->data.gui_name.name == j.string(); }
+          );
           it != root->child.end()) {
         root = it->get();
       } else {
@@ -228,10 +211,8 @@ class assets_filter_factory : public filter_factory_base {
   void render_node(const tree_node_type_ptr& in_root) {
     for (auto&& i : in_root->child) {
       ImGuiTreeNodeFlags k_f{base_flags};
-      if (is_select(i))
-        k_f = base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
-      if (i->child.empty())
-        k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+      if (is_select(i)) k_f = base_flags | ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+      if (i->child.empty()) k_f |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
 
       {
         dear::TreeNodeEx l_node{*i->data.gui_name, k_f};
@@ -240,9 +221,7 @@ class assets_filter_factory : public filter_factory_base {
           p_popen.data  = i->data.gui_name.name;
           this->is_edit = true;
         }
-        dear::PopupContextItem{} && [this, &i]() {
-          popen_menu(*i);
-        };
+        dear::PopupContextItem{} && [this, &i]() { popen_menu(*i); };
         dear::DragDropTarget{} && [this, &i]() {
           if (auto l_hs = ImGui::AcceptDragDropPayload(doodle_config::drop_handle_list.data()); l_hs) {
             auto l_list = reinterpret_cast<std::vector<entt::handle>*>(l_hs->Data);
@@ -253,9 +232,7 @@ class assets_filter_factory : public filter_factory_base {
             // @todo 这里要写拖拽
           }
         };
-        l_node&& [this, i]() {
-          render_node(i);
-        };
+        l_node&& [this, i]() { render_node(i); };
       }
     }
   }
@@ -286,16 +263,12 @@ class assets_filter_factory : public filter_factory_base {
   bool render() override {
     {
       dear::TreeNodeEx l_node{*p_tree->data.gui_name, ImGuiTreeNodeFlags_OpenOnArrow};
-      dear::PopupContextItem{} && [this]() {
-        popen_menu(*p_tree);
-      };
+      dear::PopupContextItem{} && [this]() { popen_menu(*p_tree); };
       if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
         this->p_cur_selects = {p_tree};
         this->is_edit       = true;
       }
-      l_node&& [&]() {
-        this->render_node(p_tree);
-      };
+      l_node&& [&]() { this->render_node(p_tree); };
     }
     return is_edit;
   }
@@ -311,13 +284,11 @@ class time_filter_factory : public filter_factory_base {
       );
     else if (use_begin.data) {
       return std::make_unique<time_filter>(
-          time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]},
-          time_point_wrap::max()
+          time_point_wrap{time_begin.data[0], time_begin.data[1], time_begin.data[2]}, time_point_wrap::max()
       );
     } else if (use_end.data) {
       return std::make_unique<time_filter>(
-          time_point_wrap::min(),
-          time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]}
+          time_point_wrap::min(), time_point_wrap{time_end.data[0], time_end.data[1], time_end.data[2]}
       );
     } else {
       return {};
@@ -337,16 +308,14 @@ class time_filter_factory : public filter_factory_base {
         time_begin("开始"s, std::array<std::int32_t, 3>{0, 0, 0}),
         time_end("结束"s, std::array<std::int32_t, 3>{0, 0, 0}) {}
   bool render() override {
-    if (ImGui::Checkbox(*use_begin.gui_name, &use_begin.data))
-      this->is_edit = true;
+    if (ImGui::Checkbox(*use_begin.gui_name, &use_begin.data)) this->is_edit = true;
     if (use_begin.data) {
       if (ImGui::InputInt3(*time_begin.gui_name, time_begin.data.data())) {
         this->is_edit = true;
       }
       dear::HelpMarker{"使用开始时间过滤任务"};
     }
-    if (ImGui::Checkbox(*use_end.gui_name, &use_end.data))
-      this->is_edit = true;
+    if (ImGui::Checkbox(*use_end.gui_name, &use_end.data)) this->is_edit = true;
     if (use_end.data) {
       if (ImGui::InputInt3(*time_end.gui_name, time_end.data.data())) {
         this->is_edit = true;
@@ -355,8 +324,7 @@ class time_filter_factory : public filter_factory_base {
     }
     return false;
   }
-  void refresh_() override {
-  }
+  void refresh_() override {}
   void init() override {
     use_begin.data                     = false;
     use_begin.data                     = false;
@@ -390,27 +358,20 @@ class file_path_filter_factory : public filter_factory_base {
   }
 
  protected:
-  void refresh_() override {
-  }
-  void init() override {
-    edit.data.clear();
-  }
+  void refresh_() override {}
+  void init() override { edit.data.clear(); }
 };
 
 class assets_filter_widget::impl {
  public:
-  using factory_gui_cache =
-      gui_cache<
-          std::unique_ptr<filter_factory_base>,
-          gui_cache_select>;
+  using factory_gui_cache = gui_cache<std::unique_ptr<filter_factory_base>, gui_cache_select>;
 
   class factory_chick : public base_render {
    public:
     const bool p_chick;
     factory_gui_cache p_factory;
     factory_chick(bool use_chick, std::string&& in_name, std::unique_ptr<filter_factory_base>&& in_factory_base)
-        : p_chick(use_chick),
-          p_factory(in_name, std::move(in_factory_base)) {}
+        : p_chick(use_chick), p_factory(in_name, std::move(in_factory_base)) {}
 
     bool render(const entt::handle& in) override {
       bool result{false};
@@ -427,21 +388,19 @@ class assets_filter_widget::impl {
       } else {
         p_factory.data->refresh(l_refresh);
         result = p_factory.data->render();
-        if (result)
-          p_factory.select = result;
+        if (result) p_factory.select = result;
       }
       return result;
     };
   };
 
-  impl() : p_conns(),
-           p_filter_factorys(),
-           p_filters(),
-           p_sorts(
-               {gui_cache<bool>{"名称排序"s, true},
-                gui_cache<bool>{"集数排序"s, false},
-                gui_cache<bool>{"反向"s, false}}
-           ) {}
+  impl()
+      : p_conns(),
+        p_filter_factorys(),
+        p_filters(),
+        p_sorts(
+            {gui_cache<bool>{"名称排序"s, true}, gui_cache<bool>{"集数排序"s, false}, gui_cache<bool>{"反向"s, false}}
+        ) {}
 
   std::vector<boost::signals2::scoped_connection> p_conns;
 
@@ -450,10 +409,10 @@ class assets_filter_widget::impl {
   std::array<gui_cache<bool>, 3> p_sorts;
   bool run_edit{false};
   std::string title_name_;
+  gui_cache<bool> open{assets_filter_widget::name};
 };
 
-assets_filter_widget::assets_filter_widget()
-    : p_impl(std::make_unique<impl>()) {
+assets_filter_widget::assets_filter_widget() : p_impl(std::make_unique<impl>()) {
   p_impl->title_name_ = std::string{name};
 }
 assets_filter_widget::~assets_filter_widget() = default;
@@ -468,7 +427,7 @@ void assets_filter_widget::init() {
   p_impl->p_filter_factorys.emplace_back(true, "制作人过滤"s, std::make_unique<gui::name_filter_factory>());
 }
 
-void assets_filter_widget::render() {
+bool assets_filter_widget::render() {
   /// 渲染数据
 
   bool l_is_edit{false};
@@ -484,9 +443,10 @@ void assets_filter_widget::render() {
     }
   }
 
-  if (ranges::any_of(p_impl->p_filter_factorys, [](const impl::factory_chick& in) {
-        return in.p_factory.select && in.p_factory.data->is_edit;
-      }) ||
+  if (ranges::any_of(
+          p_impl->p_filter_factorys,
+          [](const impl::factory_chick& in) { return in.p_factory.select && in.p_factory.data->is_edit; }
+      ) ||
 
       l_is_edit) {
     refresh(false);
@@ -503,39 +463,28 @@ void assets_filter_widget::refresh(bool force) {
 void assets_filter_widget::refresh_(bool force) {
   p_impl->p_filters.clear();
 
-  p_impl->p_filters = p_impl->p_filter_factorys |
-                      ranges::views::filter([](const impl::factory_chick& in) -> bool {
-                        return in.p_factory.select;
-                      }) |
-                      ranges::views::transform([](const impl::factory_chick& in) -> std::unique_ptr<gui::filter_base> {
-                        return in.p_factory.data->make_filter();
-                      }) |
-                      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in) -> bool {
-                        return (bool)in;
-                      }) |
-                      ranges::to_vector;
+  p_impl->p_filters =
+      p_impl->p_filter_factorys |
+      ranges::views::filter([](const impl::factory_chick& in) -> bool { return in.p_factory.select; }) |
+      ranges::views::transform([](const impl::factory_chick& in) -> std::unique_ptr<gui::filter_base> {
+        return in.p_factory.data->make_filter();
+      }) |
+      ranges::views::filter([](const std::unique_ptr<gui::filter_base>& in) -> bool { return (bool)in; }) |
+      ranges::to_vector;
 
   std::vector<entt::handle> list{};
 
   auto l_v = g_reg()->view<database>(entt::exclude<project>);
-  list     = l_v |
-         ranges::views::transform([](const entt::entity& in) -> entt::handle {
-           return make_handle(in);
-         }) |
+  list     = l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle { return make_handle(in); }) |
          ranges::views::filter([&](const entt::handle& in) -> bool {
-           return ranges::all_of(
-               p_impl->p_filters,
-               [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
-                 return (*in_f)(in);
-               }
-           );
+           return ranges::all_of(p_impl->p_filters, [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
+             return (*in_f)(in);
+           });
          }) |
          ranges::to_vector;
 
   if (p_impl->p_sorts[0].data) {
-    ranges::partition(list, [](const entt::handle& in) -> bool {
-      return in.any_of<assets_file>();
-    });
+    ranges::partition(list, [](const entt::handle& in) -> bool { return in.any_of<assets_file>(); });
     list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
       if (in_r.any_of<assets_file>() && in_l.any_of<assets_file>())
         return in_r.get<assets_file>() < in_l.get<assets_file>();
@@ -543,9 +492,7 @@ void assets_filter_widget::refresh_(bool force) {
     });
   }
   if (p_impl->p_sorts[1].data) {
-    ranges::partition(list, [](const entt::handle& in) -> bool {
-      return in.any_of<episodes>();
-    });
+    ranges::partition(list, [](const entt::handle& in) -> bool { return in.any_of<episodes>(); });
     list |= ranges::actions::stable_sort([&](const entt::handle& in_r, const entt::handle& in_l) -> bool {
       if (in_r.any_of<episodes>() && in_l.any_of<episodes>()) return in_r.get<episodes>() < in_l.get<episodes>();
       return false;
@@ -557,8 +504,6 @@ void assets_filter_widget::refresh_(bool force) {
 
   g_reg()->ctx().at<core_sig>().filter_handle(list);
 }
-const std::string& assets_filter_widget::title() const {
-  return p_impl->title_name_;
-}
+const std::string& assets_filter_widget::title() const { return p_impl->title_name_; }
 
 }  // namespace doodle::gui

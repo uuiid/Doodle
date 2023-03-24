@@ -9,9 +9,10 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
-class DOODLELIB_API screenshot_widget : public base_windows<dear::Begin, screenshot_widget> {
+class DOODLELIB_API screenshot_widget {
   class impl;
   std::unique_ptr<impl> p_i;
+  bool open;
   using call_type     = std::function<void(const entt::handle&)>;
   using call_ptr_type = std::shared_ptr<call_type>;
   void handle_attr(const entt::handle& in);
@@ -25,14 +26,13 @@ class DOODLELIB_API screenshot_widget : public base_windows<dear::Begin, screens
    * @param in_handle
    */
   screenshot_widget();
-  ~screenshot_widget() override;
+  ~screenshot_widget();
   constexpr static std::string_view name{"screenshot_widget"};
 
-  void render();
+  bool render();
 
   void set_attr();
-  const std::string& title() const override;
-  std::int32_t flags() const;
+  const std::string& title() const;
 
   template <typename CompletionToken>
   auto async_save_image(const entt::handle& in, CompletionToken&& token) {

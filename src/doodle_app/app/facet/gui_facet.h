@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_core/core/app_facet.h>
 #include <doodle_core/doodle_core.h>
+#include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/platform/win/windows_alias.h>
 
 #include <doodle_app/doodle_app_fwd.h>
@@ -13,6 +14,7 @@ namespace doodle::facet {
 class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
   class impl;
   std::unique_ptr<impl> p_i;
+  gui::windows layout_;
 
  protected:
   virtual bool translate_message();
@@ -34,6 +36,10 @@ class DOODLE_APP_API gui_facet : public ::doodle::detail::app_facet_interface {
   virtual void show_windows() const;
   virtual void close_windows();
   virtual void destroy_windows();
+
+  inline void set_layout(const gui::windows& in_windows) { layout_ = in_windows; };
+
+  std::vector<gui::windows> windows_list{};
   void set_title(const std::string& in_title) const;
 
   [[nodiscard]] const std::string& name() const noexcept override;

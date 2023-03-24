@@ -123,7 +123,8 @@ void file_panel::succeeded() {
   boost::asio::post(g_io_context(), [l_files = get_selects(), l_fun = std::move(p_i->call_fun)]() { l_fun(l_files); });
 }
 
-void file_panel::render() {
+bool file_panel::render() {
+  const dear::PopupModal l_win{*p_i->title_p};
   for (auto &&i : p_i->begin_fun_list) i();
   p_i->begin_fun_list.clear();
 
@@ -156,6 +157,7 @@ void file_panel::render() {
   /// 过滤器按钮
   imgui::SameLine();
   this->render_filter();
+  return open;
 }
 void file_panel::scan_director(const FSys::path &in_dir) {
   // boost::contract::check l_check = boost::contract::public_function
@@ -358,7 +360,7 @@ void file_panel::button_ok() {
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
     ImGui::CloseCurrentPopup();
-    show_attr = false;
+    open = false;
   }
 }
 void file_panel::generate_buffer(std::size_t in_index) {

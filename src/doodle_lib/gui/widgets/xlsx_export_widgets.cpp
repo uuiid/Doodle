@@ -394,6 +394,7 @@ class xlsx_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   std::string title_name_;
+  bool open;
 
   gui_cache_name_id gen_table{"生成表"};
   gui_cache_name_id export_table{"导出表"};
@@ -443,6 +444,9 @@ void xlsx_export_widgets::init() {
 }
 
 void xlsx_export_widgets::render() {
+  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
+  if (!l_win) return p_i->open;
+
   if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data)) {
     p_i->export_path.path = p_i->export_path.data;
     p_i->export_path.stem = p_i->export_path.path.stem();
@@ -495,6 +499,8 @@ void xlsx_export_widgets::render() {
 
   // 渲染表格
   p_i->xlsx_table_gui_.render();
+
+  return p_i->open;
 }
 
 const std::string &xlsx_export_widgets::title() const { return p_i->title_name_; }

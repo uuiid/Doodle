@@ -72,7 +72,7 @@ class xlsx_table {
 
 }  // namespace xlsx_export_widgets_ns
 
-class DOODLELIB_API xlsx_export_widgets : public base_windows<dear::Begin, xlsx_export_widgets> {
+class DOODLELIB_API xlsx_export_widgets {
  public:
   using xlsx_line  = xlsx_export_widgets_ns::xlsx_line;
   using xlsx_table = xlsx_export_widgets_ns::xlsx_table;
@@ -94,13 +94,13 @@ class DOODLELIB_API xlsx_export_widgets : public base_windows<dear::Begin, xlsx_
 
  public:
   xlsx_export_widgets();
-  ~xlsx_export_widgets() override;
+  ~xlsx_export_widgets();
 
   constexpr static std::string_view name{gui::config::menu_w::xlsx_export};
 
   void init();
-  void render();
-  const std::string& title() const override;
+  bool render();
+  const std::string& title() const;
 };
 
 }  // namespace doodle::gui

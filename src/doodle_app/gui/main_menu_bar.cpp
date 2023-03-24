@@ -87,7 +87,9 @@ void main_menu_bar::menu_file() {
   }
 }
 
-bool main_menu_bar::tick() {
+bool main_menu_bar::render() {
+  if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl) g_reg()->ctx().at<core_sig>().save();
+
   dear::MainMenuBar{} && [this]() {
     dear::Menu{"文件"} && [this]() { this->menu_file(); };
     dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
@@ -97,7 +99,7 @@ bool main_menu_bar::tick() {
     ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 #endif
   };
-  return false;
+  return true;
 }
 void main_menu_bar::menu_edit() {
   dear::Menu{"布局"} && [this]() { this->menu_layout(); };

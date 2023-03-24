@@ -15,7 +15,6 @@
 #include <doodle_core/platform/win/drop_manager.h>
 
 #include <doodle_app/app/program_options.h>
-#include <doodle_app/app/short_cut.h>
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/lib_warp/icon_font_macro.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
@@ -60,7 +59,6 @@ const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 void gui_facet::operator()() {
   post_constructor();
-  make_handle().emplace<::doodle::gui::gui_tick>(std::make_shared<gui::short_cut>());
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
@@ -98,7 +96,6 @@ void gui_facet::deconstruction() {
 gui_facet::gui_facet() : p_i(std::make_unique<impl>()) {
   gui::main_proc_handle::emplace();
   identifier::emplace();
-  g_reg()->ctx().emplace<gui::detail::layout_tick>();
   g_reg()->ctx().emplace<image_to_move>();
 }
 
@@ -107,24 +104,11 @@ void gui_facet::tick() {
   ImGui_ImplDX11_NewFrame();
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
-  auto l_lay = g_reg()->ctx().find<gui::detail::layout_tick>();
-  if (l_lay && *l_lay) (*l_lay)->tick();
 
+  layout_->tick();
   drop_files();
 
-  std::vector<entt::entity> delete_entt{};
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
-    if (l_render->tick()) {
-      delete_entt.emplace_back(l_e);
-    }
-  }
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_render>().each()) {
-    if (l_render->tick()) {
-      delete_entt.emplace_back(l_e);
-    }
-  }
-  delete_entt |= ranges::actions::remove_if([](const entt::entity in) -> bool { return !g_reg()->valid(in); });
-  g_reg()->destroy(delete_entt.begin(), delete_entt.end());
+  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return in_->tick(); });
 }
 bool gui_facet::translate_message() {
   MSG msg;
@@ -305,7 +289,7 @@ void gui_facet::close_windows() {
   if (::GetForegroundWindow() == p_hwnd) {
     auto l_gui = std::make_shared<gui::close_exit_dialog>();
     l_gui->quit.connect([=]() { boost::asio::post(g_io_context(), g_quit); });
-    make_handle().emplace<gui::gui_windows>(l_gui);
+    layout_.reset();
   } else
     boost::asio::post(g_io_context(), g_quit);
 }

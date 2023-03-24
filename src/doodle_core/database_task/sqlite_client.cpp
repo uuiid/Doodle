@@ -29,7 +29,6 @@ namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
   database_info::value().path_ = in_path;
-  this->clear_scene();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
@@ -81,29 +80,9 @@ bsys::error_code file_translator::save_end() {
 }
 void file_translator::new_file_scene(const FSys::path& in_path) {
   database_info::value().path_ = in_path;
-  this->clear_scene();
   auto& l_s     = g_reg()->ctx().emplace<status_info>();
   l_s.message   = "创建新项目";
   l_s.need_save = true;
-}
-void file_translator::clear_scene() const {
-  boost::ignore_unused(this);
-  std::vector<gui::detail::windows_tick> windows_tick_com{};
-  std::vector<gui::detail::windows_render> windows_render_com{};
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
-    windows_tick_com.emplace_back(l_render);
-  }
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_render>().each()) {
-    windows_render_com.emplace_back(l_render);
-  }
-  g_reg()->clear();
-
-  for (auto&& l_c : windows_tick_com) {
-    make_handle().emplace<gui::detail::windows_tick>(l_c);
-  }
-  for (auto&& l_c : windows_render_com) {
-    make_handle().emplace<gui::detail::windows_render>(l_c);
-  }
 }
 
 class sqlite_file::impl {

@@ -290,7 +290,10 @@ if 'leukocyte' in globals():
   return MStatus::kSuccess;
 }
 
-void comm_check_scenes::render() {
+bool comm_check_scenes::render() {
+  dear::Begin l_win{title_name_.data(), &open};
+  if (!l_win) return open;
+
   if (imgui::Button("检查所有")) {
     DOODLE_LOG_INFO("开始解锁法线");
     unlock_normal();
@@ -345,6 +348,7 @@ void comm_check_scenes::render() {
 
   // dear::Disabled{!p_duplicate_name} && [&]() {
   // };
+  return open;
 }
 const std::string& comm_check_scenes::title() const { return title_name_; }
 

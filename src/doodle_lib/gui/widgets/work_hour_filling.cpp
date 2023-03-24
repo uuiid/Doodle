@@ -129,6 +129,7 @@ struct table_line : boost::totally_ordered<table_line> {
 class work_hour_filling::impl {
  public:
   std::string title{};
+  bool open;
 
   /// @brief 过滤当前用户使用
   entt::handle current_user;
@@ -255,7 +256,10 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
 
-void work_hour_filling::render() {
+bool work_hour_filling::render() {
+  dear::Begin l_win{ptr->title.data(), &ptr->open};
+  if (!l_win) return ptr->open;
+
   ImGui::Text("基本信息:");
 
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
@@ -331,6 +335,7 @@ void work_hour_filling::render() {
           if (dear::InputText(*in.abstract, &in.abstract)) modify_item(i);
         }
       };
+  return ptr->open;
 }
 
 void work_hour_filling::show_advanced_setting(bool in_) { ptr->show_advanced_setting = in_; }

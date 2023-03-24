@@ -6,31 +6,23 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-namespace doodle::gui::detail {
+#include <entt/entt.hpp>
+namespace doodle::gui {
+namespace details {
 
-class DOODLE_CORE_API windows_tick_interface {
+class windows_tick_interface_impl : public entt::type_list<bool()> {
  public:
-  virtual ~windows_tick_interface() = default;
-  /**
-   * 当 tick 返回 true 时, 会将其在定时器中弹出并销毁
-   */
-  virtual bool tick()               = 0;
+  template <typename Base>
+  struct type : public Base {
+    bool render() { return entt::poly_call<0>(*this); }
+    const std::string& title() const { return entt::poly_call<1>(*this); }
+  };
+
+  template <typename Type>
+  using impl = entt::value_list<&Type::render>;
 };
+using windows_tick_interface = entt::poly<windows_tick_interface_impl>;
 
-class DOODLE_CORE_API windows_render_interface
-    : public windows_tick_interface {
- public:
-  virtual ~windows_render_interface() override                                   = default;
-  [[nodiscard("Back to Window Title")]] virtual const std::string& title() const = 0;
-};
-
-class DOODLE_CORE_API layout_tick_interface
-    : public windows_tick_interface {
- public:
-};
-
-using windows_tick   = std::shared_ptr<windows_tick_interface>;
-using windows_render = std::shared_ptr<windows_render_interface>;
-using layout_tick    = std::shared_ptr<layout_tick_interface>;
-
-}  // namespace doodle::gui::detail
+}  // namespace details
+using windows = details::windows_tick_interface;
+}  // namespace doodle::gui

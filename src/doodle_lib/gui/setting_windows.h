@@ -51,18 +51,18 @@ namespace doodle::gui {
  * @brief 设置主窗口
  *
  */
-class setting_windows : public base_windows<dear::Begin, setting_windows> {
+class setting_windows {
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   setting_windows();
-  ~setting_windows() override;
+  ~setting_windows();
 
   constexpr static std::string_view name{gui::config::menu_w::setting};
-  const std::string& title() const override;
+  const std::string& title() const;
   void init();
-  void render();
+  bool render();
   void save();
 };
 

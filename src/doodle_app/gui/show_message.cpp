@@ -17,6 +17,8 @@ class show_message::impl {
   gui_cache_name_id title{"消息"};
   std::string message{};
   gui::gui_cache_name_id button_{"确认"};
+  bool open;
+  std::once_flag once_flag;
 };
 
 show_message::show_message() : p_i(std::make_unique<impl>()){};
@@ -33,18 +35,20 @@ show_message& show_message::set_message(const std::string& in_msg) {
 }
 std::string show_message::get_message() { return p_i->message; }
 
-void show_message::set_attr() const {
-  ImGui::OpenPopup(title().data());
-  ImGui::SetNextWindowSize({640, 360});
-}
+bool show_message::render() {
+  std::call_once(p_i->once_flag, [this]() {
+    ImGui::OpenPopup(title().data());
+    ImGui::SetNextWindowSize({640, 360});
+  });
 
-void show_message::render() {
+  const dear::PopupModal l_win{*p_i->title};
   dear::Text(p_i->message);
 
   if (ImGui::Button(*p_i->button_)) {
     ImGui::CloseCurrentPopup();
-    show_attr = false;
+    p_i->open = false;
   }
+  return p_i->open;
 }
 const std::string& show_message::title() const { return p_i->title.name_id; }
 show_message::~show_message() = default;

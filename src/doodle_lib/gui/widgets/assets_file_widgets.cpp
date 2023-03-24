@@ -34,6 +34,7 @@ class assets_file_widgets::impl {
 
   std::vector<boost::signals2::scoped_connection> p_sc;
   std::vector<entt::handle> handle_list;
+  gui_cache<bool> open{assets_file_widgets::name};
 
   class image_data {
    public:
@@ -204,7 +205,10 @@ void assets_file_widgets::init() {
   //  p_i->observer_h.connect();
 }
 
-void assets_file_widgets::render() {
+bool assets_file_widgets::render() {
+  const dear::Begin l_wind{*p_i->open, &p_i->open};
+  if (!l_wind) return p_i->open;
+
   /// 渲染数据
 
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
@@ -219,6 +223,8 @@ void assets_file_widgets::render() {
     switch_rander();
   }
   g_reg()->ctx().at<status_info>().show_size = p_i->lists.size();
+
+  return p_i->open;
 }
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {

@@ -174,6 +174,8 @@ class gui_cache_name_id : boost::totally_ordered<gui_cache_name_id> {
    */
   explicit gui_cache_name_id(const std::string &in_name);
 
+  //  explicit gui_cache_name_id(const std::string_view &in_name) : gui_cache_name_id(std::string{in_name}){};
+
   /**
    * @brief 一个方便函数 直接返回字符串缓冲区指针
    *
@@ -225,31 +227,15 @@ class gui_cache : public BaseType {
    * @param in_name gui 的显示名称
    * @param in_data gui 数据初始化构建
    */
-  template <class... IN_T>
-  explicit gui_cache(const std::string &in_name, IN_T &&...in_data)
-      : base_type(), gui_name(in_name), data{std::forward<IN_T>(in_data)...} {};
+  template <typename Show_Name_Type, typename... IN_T>
+  explicit gui_cache(Show_Name_Type &&in_name, IN_T &&...in_data)
+      : base_type(), gui_name(std::forward<Show_Name_Type>(in_name)), data{std::forward<IN_T>(in_data)...} {};
   /**
    * @brief 初始化id, 并且默认构造数据
    * @param in_name
    */
-  explicit gui_cache(const std::string &in_name) : base_type(), gui_name(in_name), data(){};
 
-  /**
-   * @brief 使用传入数据的构造, 并将数据转为字符串, 作为名称
-   *
-   * @tparam IN_T 传入的数据类, 非指针类
-   * @param in_data 传入的数据
-   */
-  template <class IN_T, std::enable_if_t<doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(IN_T &in_data) : gui_cache(fmt::to_string(*in_data), in_data) {}
-  /**
-   * @brief 使用传入数据的构造, 并将数据转为字符串, 作为名称
-   *
-   * @tparam IN_T 传入的数据类, 指针类
-   * @param in_data 传入的数据
-   */
-  template <class IN_T, std::enable_if_t<!doodle::details::is_smart_pointer<IN_T>::value, bool> = true>
-  explicit gui_cache(const IN_T &in_data) : gui_cache(fmt::to_string(in_data), in_data) {}
+  explicit gui_cache(const std::string &in_name) : base_type(), gui_name(in_name), data(){};
 
   /**
    * @brief 排序和比较函数， 注意， 我们只关注 data 数据， 并不会比较 gui_name

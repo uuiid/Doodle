@@ -64,6 +64,7 @@ class subtitle_processing::impl {
 
   gui_cache_name_id run_button{"开始处理"s};
   std::string title_name_;
+  bool open;
 
   boost::signals2::scoped_connection sig_scoped;
 };
@@ -81,17 +82,19 @@ void subtitle_processing::init() {
               return in_handle && in_handle.any_of<assets_file>();
             }) |
             ranges::views::filter([](const entt::handle& in_handle) -> bool {
-              auto& l_p = in_handle.get<assets_file>().path_attr();
-              return l_p.extension() == ".srt";
-            }) |
-            ranges::views::transform([](const entt::handle& in_handle) -> std::string {
-              return in_handle.get<assets_file>().get_path_normal().generic_string();
-            }) |
-            ranges::to_vector;
-      }
-  );
+                               auto& l_p = in_handle.get<assets_file>().path_attr();
+                               return l_p.extension() == ".srt";
+                             }) |
+                             ranges::views::transform([](const entt::handle& in_handle) -> std::string {
+                               return in_handle.get<assets_file>().get_path_normal().generic_string();
+                             }) |
+                             ranges::to_vector;
+      });
 }
-void subtitle_processing::render() {
+bool subtitle_processing::render() {
+  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
+  if (!l_win) return p_i->open;
+
   dear::ListBox{*p_i->list_srt_file.gui_name} && [&]() {
     for (auto&& i : p_i->list_srt_file.data) {
       dear::Text(i);
@@ -116,6 +119,7 @@ void subtitle_processing::render() {
       this->run(in_path, l_out);
     });
   }
+  return p_i->open;
 }
 void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_subtitles_file) {
   boost::contract::check l_ =

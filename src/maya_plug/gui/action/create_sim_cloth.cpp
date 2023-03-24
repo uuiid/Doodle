@@ -27,7 +27,10 @@ create_sim_cloth::create_sim_cloth() : p_coll(make_handle()) {
     return make_handle(in);
   });
 }
-void create_sim_cloth::render() {
+bool create_sim_cloth::render() {
+  dear::Begin l_win{title_name_.data(), &open};
+  if (!l_win) return open;
+
   if (imgui::Button("获得低模")) {
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
@@ -106,6 +109,7 @@ void create_sim_cloth::render() {
     }
     run_comm();
   }
+  return open;
 }
 create_sim_cloth::~create_sim_cloth() {
   destroy_handle(p_coll);

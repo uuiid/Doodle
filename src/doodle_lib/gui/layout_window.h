@@ -11,16 +11,22 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API layout_window : public detail::layout_tick_interface {
+class DOODLELIB_API layout_window {
   class impl;
   std::unique_ptr<impl> p_i;
 
+ protected:
+  virtual void layout();
+  virtual void init_windows();
+
  public:
   layout_window();
-  virtual ~layout_window() override;
+  virtual ~layout_window();
 
-  bool tick() override;
+  bool render();
+  const std::string& title() const;
+
+  static void create_windows(windows&& in_windows);
 };
 
-}  // namespace doodle
-
+}  // namespace doodle::gui

@@ -97,6 +97,7 @@ class project_edit::impl {
 
   std::vector<boost::signals2::scoped_connection> scoped_connections_;
   std::string title_name_;
+  bool open;
 
   void config_init() {
     auto&& l_prj         = g_reg()->ctx().at<project>();
@@ -228,6 +229,9 @@ void project_edit::init() {
 }
 
 void project_edit::render() {
+  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
+  if (!l_win) return p_i->open;
+
   ImGui::Text("项目配置");
   imgui::InputText(*p_i->project_name.gui_name, &(p_i->project_name.data));
   dear::Text(p_i->project_path);
@@ -346,6 +350,8 @@ void project_edit::render() {
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
 
   if (ImGui::Button("保存")) g_reg()->ctx().at<core_sig>().save();
+
+  return p_i->open;
 }
 const std::string& project_edit::title() const { return p_i->title_name_; }
 }  // namespace doodle::gui

@@ -32,7 +32,11 @@ class create_project_dialog::impl {
   std::string title{"输入项目"s};
 };
 
-void create_project_dialog::render() {
+bool create_project_dialog::render() {
+  ImGui::OpenPopup(p_i->title.data());
+  ImGui::SetNextWindowSize({640, 360});
+  const dear::OpenPopup l_win{p_i->title.data()};
+
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
@@ -53,13 +57,13 @@ void create_project_dialog::render() {
   }
 
   if (imgui::Button("ok")) {
-    show_attr = false;
     p_i->prj.set_path(p_i->path.parent_path());
     p_i->select_button_id().destroy();
     g_reg()->ctx().at<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
     g_reg()->ctx().at<project>() = p_i->prj;
-    show_attr                    = false;
+    return false;
   }
+  return true;
 }
 
 create_project_dialog::create_project_dialog() : p_i(std::make_unique<impl>()) {
@@ -69,10 +73,7 @@ create_project_dialog::create_project_dialog() : p_i(std::make_unique<impl>()) {
 create_project_dialog::~create_project_dialog() = default;
 
 const std::string& create_project_dialog::title() const { return p_i->title; }
-void create_project_dialog::set_attr() const {
-  ImGui::OpenPopup(title().data());
-  ImGui::SetNextWindowSize({640, 360});
-}
+
 std::int32_t create_project_dialog::flags() const {
   boost::ignore_unused(this);
   return ImGuiWindowFlags_NoSavedSettings;

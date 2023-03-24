@@ -2,8 +2,9 @@
 // Created by TD on 2022/4/21.
 //
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
 /**
@@ -11,8 +12,7 @@ namespace doodle::gui {
  *
  * [^\u4e00-\u9fa5|\(|\)|（|）|：|:]
  */
-class DOODLELIB_API subtitle_processing
-    : public base_windows<dear::Begin, subtitle_processing> {
+class DOODLELIB_API subtitle_processing {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -22,12 +22,12 @@ class DOODLELIB_API subtitle_processing
 
  public:
   subtitle_processing();
-  ~subtitle_processing() override;
+  ~subtitle_processing();
   void init();
 
   constexpr static std::string_view name{gui::config::menu_w::subtitle_processing};
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 
 }  // namespace doodle::gui

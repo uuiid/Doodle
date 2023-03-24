@@ -113,6 +113,7 @@ class time_sequencer_widget::impl {
   detail::cross_frame_check<ImPlotRect> chick_view1{};
   detail::cross_frame_check<ImPlotRect> chick_view2{};
   std::string title_name_;
+  bool open{};
 
   /// 过滤用户
   user_list_cache combox_user_id{};
@@ -121,8 +122,8 @@ class time_sequencer_widget::impl {
   /// 获取日期的接口
   std::shared_ptr<business::detail::attendance_interface> attendance_ptr{};
   /// 日期规则小部件
-
   time_sequencer_widget_ns::time_rules_render rules_render{};
+
   void refresh_work_clock_() {
     if (!time_list.empty()) {
       refresh_cache(time_list);
@@ -335,7 +336,10 @@ time_sequencer_widget::time_sequencer_widget() : p_i(std::make_unique<impl>()) {
 
 time_sequencer_widget::~time_sequencer_widget() = default;
 
-void time_sequencer_widget::render() {
+bool time_sequencer_widget::render() {
+  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
+  if (!l_win) return p_i->open;
+
   ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
@@ -370,9 +374,9 @@ void time_sequencer_widget::render() {
   /// 如果时间个数不到三个, 不显示
   if (p_i->time_list.size() < 3) {
     ImGui::Text("项目小于 3 不显示");
-    return;
+    return p_i->open;
   }
-  if (p_i->time_list_x.empty() || p_i->time_list_y.empty() || p_i->time_list.empty()) return;
+  if (p_i->time_list_x.empty() || p_i->time_list_y.empty() || p_i->time_list.empty()) return p_i->open;
 
   if (ImPlot::BeginPlot("时间折线图")) {
     /// 设置州为时间轴
@@ -472,6 +476,8 @@ void time_sequencer_widget::render() {
 
       if (p_i->combox_user_id.current_user.all_of<database>()) database::save(p_i->combox_user_id.current_user);
     }
+
+  return p_i->open;
 }
 const std::string& time_sequencer_widget::title() const { return p_i->title_name_; }
 
@@ -505,7 +511,6 @@ void time_sequencer_widget::fliter_select() {
                    }) |
                    ranges::to_vector;
   auto l_user = p_i->combox_user_id.current_user;
-
 
   if (!l_user) {
     auto l_msg = std::make_shared<show_message>();

@@ -36,7 +36,6 @@ constexpr const std::string_view long_time_tasks{"队列"};
 constexpr const std::string_view setting{"设置窗口"};
 constexpr const std::string_view project_edit{"项目设置"};
 constexpr const std::string_view xlsx_export{"导出xlsx表格"};
-constexpr const std::string_view ue4_widget{"ue4工具"};
 constexpr const std::string_view comm_maya_tool{"maya工具"};
 constexpr const std::string_view comm_create_video{"创建视频"};
 constexpr const std::string_view extract_subtitles{"提取字幕"};

@@ -11,9 +11,10 @@ namespace doodle::gui {
 /**
  * @brief
  */
-class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_panel> {
+class DOODLE_APP_API file_panel {
   class impl;
   class path_info;
+  bool open{};
   enum class sort_by : std::int16_t {
     none = 0,
     name = 1,
@@ -82,10 +83,10 @@ class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_pan
   explicit file_panel(const dialog_args& in_args);
   virtual ~file_panel();
 
-  [[nodiscard]] std::string& title() const override;
+  [[nodiscard]] std::string& title() const;
   void init();
 
-  void render();
+  bool render();
   void set_attr();
   std::int32_t flags() const;
 
