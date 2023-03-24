@@ -27,7 +27,7 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr &in_ptr, const entt
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
-    sql::Redirection_path_info l_table{};
+    sql::RedirectionPathInfo l_table{};
 
     auto l_pre=l_conn.prepare(sqlpp::insert_into(l_table).set(
         l_table.redirectionPath=sqlpp::parameter(l_table.redirectionPath),
