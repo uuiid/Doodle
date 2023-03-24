@@ -7,6 +7,7 @@ target_sources(doodle_core
         work_task.h
         tool.h
         database.h
+        episodes.h
 
         PRIVATE
         com_data.cpp
@@ -14,4 +15,5 @@ target_sources(doodle_core
         user.cpp
         work_task.cpp
         database.cpp
+        episodes.cpp
         )
