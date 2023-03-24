@@ -827,5 +827,92 @@ namespace doodle_database
       };
     };
   };
+  namespace Comment_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct CommentString
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "comment_string";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T commentString;
+            T& operator()() { return commentString; }
+            const T& operator()() const { return commentString; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct CommentTime
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "comment_time";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T commentTime;
+            T& operator()() { return commentTime; }
+            const T& operator()() const { return commentTime; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace Comment_
+
+  struct Comment: sqlpp::table_t<Comment,
+               Comment_::Id,
+               Comment_::EntityId,
+               Comment_::CommentString,
+               Comment_::CommentTime>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "comment";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T comment;
+        T& operator()() { return comment; }
+        const T& operator()() const { return comment; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

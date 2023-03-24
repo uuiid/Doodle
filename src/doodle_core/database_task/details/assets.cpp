@@ -59,7 +59,7 @@ void sql_com<doodle::assets>::update(conn_ptr& in_ptr, const entt::observer& in_
     l_pre.params.entityId   = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r                = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<shot>().get_name());
+    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<assets>().get_name());
   }
 }
 

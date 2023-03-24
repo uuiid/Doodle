@@ -117,4 +117,17 @@ CREATE TABLE IF NOT EXISTS assets
 create index if not exists assets_index on assets(id)
 create index if not exists assets_index2 on assets(entity_id)
 
+CREATE TABLE IF NOT EXISTS comment
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    comment_string             text,
+    comment_time               text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists assets_index on assets(id)
+create index if not exists assets_index2 on assets(entity_id)
+
      

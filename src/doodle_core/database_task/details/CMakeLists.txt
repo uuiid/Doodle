@@ -9,6 +9,8 @@ target_sources(doodle_core
         database.h
         shot.h
         redirection_path_info.h
+        assets.h
+        comment.h
 
         PRIVATE
         com_data.cpp
@@ -18,4 +20,6 @@ target_sources(doodle_core
         database.cpp
         shot.cpp
         redirection_path_info.cpp
+        assets.cpp
+        comment.cpp
         )
