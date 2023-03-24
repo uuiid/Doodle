@@ -79,7 +79,7 @@ class maya_layout::impl {
   }
 };
 maya_layout::maya_layout() : p_i(std::make_unique<impl>()) {}
-bool maya_layout::tick() {
+bool maya_layout::render() {
   p_i->builder_dock();
   if (!p_i->inited) {
     p_i->inited = true;
@@ -92,7 +92,14 @@ bool maya_layout::tick() {
 }
 
 maya_layout::~maya_layout() = default;
-void maya_menu::menu_windows() {}
+void maya_menu::menu_windows() {
+  namespace dgui = doodle::gui;
+  if (dear::MenuItem(comm_check_scenes::name.data())) gui::g_windows_manage().open_windows<comm_check_scenes>();
+  if (dear::MenuItem(reference_attr_setting::name.data()))
+    gui::g_windows_manage().open_windows<reference_attr_setting>();
+  if (dear::MenuItem(create_sim_cloth::name.data())) gui::g_windows_manage().open_windows<create_sim_cloth>();
+  if (dear::MenuItem(dem_cloth_to_fbx::name.data())) gui::g_windows_manage().open_windows<dem_cloth_to_fbx>();
+}
 void maya_menu::menu_tool() {}
 }  // namespace maya_plug
 }  // namespace doodle
