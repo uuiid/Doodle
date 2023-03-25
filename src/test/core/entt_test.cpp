@@ -31,10 +31,12 @@ BOOST_AUTO_TEST_CASE(test_entt_obs) {
 
 BOOST_AUTO_TEST_CASE(test_entt_obs2) {
   entt::registry reg{};
-  entt::observer l_obs{};
+  entt::observer l_obs1{};
   entt::observer l_obs2{};
-  l_obs.connect(reg, entt::collector.group<std::int32_t, std::string>());
+  entt::observer l_obs3{};
+  l_obs1.connect(reg, entt::collector.group<std::int32_t, std::string>());
   l_obs2.connect(reg, entt::collector.update<std::string>().where<std::int32_t>());
+  l_obs3.connect(reg, entt::collector.group<std::int32_t, std::string>().update<std::string>());
 
   auto l_h = entt::handle{reg, reg.create()};
   l_h.emplace<std::int32_t>();
@@ -44,15 +46,26 @@ BOOST_AUTO_TEST_CASE(test_entt_obs2) {
   auto l_h3 = entt::handle{reg, reg.create()};
   l_h3.emplace<std::string>();
 
-  BOOST_TEST(l_obs.size() == 1);
+  BOOST_TEST(l_obs1.size() == 1);
   BOOST_TEST(l_obs2.size() == 0);
+  BOOST_TEST(l_obs3.size() == 1);
 
   l_h3.emplace_or_replace<std::string>();
+  BOOST_TEST(l_obs1.size() == 1);
+  BOOST_TEST(l_obs2.size() == 0);
+  BOOST_TEST(l_obs3.size() == 2);
+
+  for (auto i : l_obs3) {
+    BOOST_TEST_MESSAGE(enum_to_num(i));
+  }
+
   l_h.emplace_or_replace<std::string>();
-  BOOST_TEST(l_obs.size() == 1);
+  BOOST_TEST(l_obs1.size() == 1);
   BOOST_TEST(l_obs2.size() == 1);
+  BOOST_TEST(l_obs3.size() == 2);
 
   l_h.erase<std::int32_t>();
-  BOOST_TEST(l_obs.size() == 0);
+  BOOST_TEST(l_obs1.size() == 0);
   BOOST_TEST(l_obs2.size() == 0);
+  BOOST_TEST(l_obs3.size() == 2);
 }

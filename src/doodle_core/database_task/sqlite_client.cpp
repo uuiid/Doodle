@@ -90,6 +90,35 @@ class sqlite_file::impl {
  public:
   registry_ptr registry_attr;
   bool error_retry{false};
+  template <typename T>
+  class impl_obs {
+    entt::observer obs_update;
+    entt::observer obs_create;
+
+   public:
+    impl_obs(const registry_ptr& in_registry_ptr)
+        : obs_update(*in_registry_ptr, entt::collector.update<database>().where<T>()),
+          obs_create(*in_registry_ptr, entt::collector.group<database, T>()) {}
+
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
+      obs_update.disconnect();
+      obs_create.disconnect();
+      database_n::sql_com<T>{in_registry_ptr}.select(in_conn, in_handle);
+      obs_update.connect(*in_registry_ptr, entt::collector.update<database>().where<T>());
+      obs_create.connect(*in_registry_ptr, entt::collector.group<database, T>());
+    };
+
+    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+      database_n::sql_com<T> l_orm{in_registry_ptr};
+      l_orm.insert(in_conn, obs_create);
+      l_orm.update(in_conn, obs_update);
+      l_orm.destroy(in_conn, in_handle);
+      obs_update.clear();
+      obs_create.clear();
+    }
+
+    ~impl_obs() { obs_update.disconnect(); }
+  };
 
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
@@ -172,25 +201,14 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-    auto l_journal_file{in_path};
-    l_journal_file += "-journal";
-    if (FSys::exists(l_journal_file)) try {
-        FSys::remove(l_journal_file);
-      } catch (const FSys::filesystem_error& in_error2) {
-        DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));
-      }
-    if (ptr->error_retry) {  /// 重试时不进行下一步重试
-      g_reg()->ctx().at<status_info>().message = "重试失败, 不保存";
-      ptr->error_retry                         = false;
-    } else {
-      g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
-      ptr->error_retry                         = true;
-      ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
-      ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
-        this->async_save(l_path, [](boost::system::error_code in) -> void {});
-      });
-      ptr->error_timer->expires_from_now(3s);
-    }
+    g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
+    ptr->error_retry                         = true;
+    ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
+    ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
+      this->async_save(l_path, [](boost::system::error_code in) -> void {});
+    });
+    ptr->error_timer->expires_from_now(3s);
+    //    return in_error;
   }
 
   return {};
