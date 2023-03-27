@@ -8,7 +8,6 @@
 #include <doodle_core/core/init_register.h>
 
 #include <doodle_app/app/app_command.h>
-#include <doodle_app/app/facet/gui_facet.h>
 
 namespace doodle::gui {
 
@@ -23,7 +22,7 @@ class windows_manage::warp_w {
   explicit warp_w(windows_init_arg&& in_arg) : args_(std::move(in_arg)) {}
 
   bool render() {
-    auto l_win = args_.create_guard();
+    auto l_win = args_.create_guard(&args_);
 
     std::call_once(once_flag_size_, [this]() { ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]}); });
     bool l_show{};
@@ -47,7 +46,7 @@ class windows_manage::warp_w {
     if (win_render) {
       win_render->render();
     } else {
-      win_render = std::move(args_.create_factory_());
+      win_render = std::move((*args_.create_factory_)());
       win_render->render();
     }
 
@@ -55,23 +54,31 @@ class windows_manage::warp_w {
   };
 };
 
-void windows_manage::create_windows_arg(windows_init_arg& in_arg) {
-  if (gui_facet.get().is_render_tick())
-    gui_facet.get().windows_list_next.emplace_back(std::in_place_type<warp_w>, std::move(in_arg));
-  else
-    gui_facet.get().windows_list.emplace_back(std::in_place_type<warp_w>, std::move(in_arg));
+void windows_manage::tick() {
+  const render_guard l_g{this};
+  windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !in_->render(); });
+  windows_list_ |= ranges::actions::push_back(windows_list_next_);
+  windows_list_next_.clear();
 }
 
-bool windows_manage::has_windows(const entt::type_info& in_info) {
-  return ranges::any_of(gui_facet.get().windows_list_next, [&](windows& i) { return i.type() == in_info; }) ||
-         ranges::any_of(gui_facet.get().windows_list, [&](windows& i) { return i.type() == in_info; });
+void windows_manage::create_windows_arg(const windows_init_arg& in_arg) {
+  args_.emplace_back(in_arg);
+  if (is_render_tick_p_)
+    windows_list_next_.emplace_back(std::make_shared<warp_w>(in_arg));
+  else
+    windows_list_.emplace_back(std::make_shared<warp_w>(in_arg));
 }
 
-void windows_manage::create_windows_(windows&& in_windows) {
-  if (gui_facet.get().is_render_tick())
-    gui_facet.get().windows_list_next.emplace_back(std::move(in_windows));
-  else
-    gui_facet.get().windows_list.emplace_back(std::move(in_windows));
+bool windows_manage::has_windows(const std::string_view& in_info) {
+  return ranges::any_of(windows_list_next_, [&](const warp_w_ptr& i) { return i->args_.title_ == in_info; }) ||
+         ranges::any_of(windows_list_, [&](const warp_w_ptr& i) { return i->args_.title_ == in_info; });
+}
+
+void windows_manage::show_windows(const std::string_view& in_info) {
+  if (auto l_it = ranges::find_if(args_, [=](const windows_init_arg& in_arg) { return in_arg.title_ == in_info; });
+      l_it != ranges::end(args_)) {
+    create_windows_arg(*l_it);
+  }
 }
 
 }  // namespace doodle::gui

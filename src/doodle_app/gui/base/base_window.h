@@ -29,19 +29,32 @@ static constexpr bool has_name_v = has_name<type_t>::value;
 class windows_init_arg;
 
 class windows_manage {
-  std::reference_wrapper<facet::gui_facet> gui_facet;
+  std::vector<windows_init_arg> args_{};
+
+  class warp_w;
+  using warp_w_ptr = std::shared_ptr<warp_w>;
+  std::vector<warp_w_ptr> windows_list_{};
+  std::vector<warp_w_ptr> windows_list_next_{};
+
+  std::atomic_bool is_render_tick_p_;
+
+  class render_guard {
+    windows_manage* ptr_;
+
+   public:
+    explicit render_guard(windows_manage* in_gui_facet) : ptr_(in_gui_facet) { ptr_->is_render_tick_p_ = true; }
+    ~render_guard() { ptr_->is_render_tick_p_ = false; }
+  };
+
   bool has_windows(const std::string_view& in_info);
   void show_windows(const std::string_view& in_info);
-  class warp_w;
 
  public:
-  explicit windows_manage(std::reference_wrapper<facet::gui_facet> in_gui_facet) : gui_facet(in_gui_facet){};
+  windows_manage() = default;
 
-  void create_windows_(windows&& in_windows);
+  void create_windows_arg(const windows_init_arg& in_arg);
 
-  void create_windows_arg(windows_init_arg& in_arg);
-
-  //  void tick();
+  void tick();
   template <typename T>
   std::enable_if_t<details::has_name_v<T>> open_windows() {
     if (has_windows(T::name)) return;
@@ -56,10 +69,10 @@ class windows_init_arg {
   std::string title_{};
   bool init_show_{true};
 
-  std::function<windows()> create_factory_{};
+  std::shared_ptr<std::function<windows()>> create_factory_{};
 
   using dear_types = std::variant<dear::Popup, dear::Begin, dear::MainMenuBar, dear::ViewportSideBar>;
-  std::function<dear_types()> create_guard;
+  std::function<dear_types(windows_init_arg*)> create_guard;
 
   std::int32_t flags_{};
 
@@ -68,26 +81,28 @@ class windows_init_arg {
 
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Popup>>* = nullptr>
   inline windows_init_arg& set_render_type() {
-    create_guard = [this]() { return dear_types{std::in_place_type_t<dear::Popup>{}, title_.data(), flags_}; };
+    create_guard = [](windows_init_arg* in) {
+      return dear_types{std::in_place_type_t<dear::Popup>{}, in->title_.data(), in->flags_};
+    };
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Begin>>* = nullptr>
   inline windows_init_arg& set_render_type() {
-    create_guard = [this]() {
-      return dear_types{std::in_place_type_t<dear::Begin>{}, title_.data(), &init_show_, flags_};
+    create_guard = [](windows_init_arg* in) {
+      return dear_types{std::in_place_type_t<dear::Begin>{}, in->title_.data(), &in->init_show_, in->flags_};
     };
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::MainMenuBar>>* = nullptr>
   inline windows_init_arg& set_render_type() {
-    create_guard = [this]() { return dear_types{std::in_place_type_t<dear::MainMenuBar>{}}; };
+    create_guard = []() { return dear_types{std::in_place_type_t<dear::MainMenuBar>{}}; };
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::ViewportSideBar>>* = nullptr>
   inline windows_init_arg& set_render_type(ImGuiViewport* viewport, const ImGuiDir& dir) {
-    create_guard = [=]() {
+    create_guard = [viewport, dir](windows_init_arg* in) {
       float height = ImGui::GetFrameHeight();
-      return dear_types{std::in_place_type_t<dear::ViewportSideBar>{}, title_, viewport, dir, height, flags_};
+      return dear_types{std::in_place_type_t<dear::ViewportSideBar>{}, in->title_, viewport, dir, height, in->flags_};
     };
     return *this;
   };
@@ -125,14 +140,16 @@ class windows_init_arg {
 
   template <typename t, typename... arg>
   windows_init_arg& create(arg&&... in_arg) {
-    create_factory_ = [l_arg = std::make_tuple(std::move(in_arg)...)]() -> windows {
-      return std::apply(
-          [](auto&&... in_args) -> windows {
-            return windows{std::in_place_type<t>, std::move(in_args)...};
-          },
-          std::move(l_arg)
-      );
-    };
+    create_factory_ = std::make_shared<decltype(create_factory_)::element_type>(
+        [l_arg = std::make_tuple(std::move(in_arg)...)]() -> windows {
+          return std::apply(
+              [](auto&&... in_args) -> windows {
+                return windows{std::in_place_type<t>, std::move(in_args)...};
+              },
+              std::move(l_arg)
+          );
+        }
+    );
     return *this;
   };
 };

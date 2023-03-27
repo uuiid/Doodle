@@ -105,9 +105,6 @@ main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) { init(); }
 void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
 
 bool main_status_bar::render() {
-  ImGuiWindowFlags window_flags =
-      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
-  float height = ImGui::GetFrameHeight();
   dear::MenuBar{} && [&]() {
     /// \brief 渲染信息
     if (g_reg()->ctx().contains<status_info>()) {

@@ -59,7 +59,7 @@ class gui_facet::impl {
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
-  doodle_lib::Get().ctx().emplace<gui::windows_manage>(std::ref(*this));
+  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>();
   init_windows();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
@@ -111,12 +111,7 @@ void gui_facet::tick() {
   layout_->render();
   const render_guard l_g{this};
   drop_files();
-
-  windows_list |= ranges::actions::remove_if([](gui::windows& in_) { return !in_->render(); });
-  for (auto&& i : windows_list_next) {
-    windows_list.emplace_back(std::move(i));
-  }
-  windows_list_next.clear();
+  windows_manage_->tick();
 }
 bool gui_facet::translate_message() {
   MSG msg;
