@@ -33,10 +33,13 @@ class DOODLE_APP_API close_exit_dialog {
 
  protected:
  public:
-  virtual const std::string& title() const;
-  explicit close_exit_dialog();
+  using quit_slot_type = boost::signals2::signal<void()>::slot_type;
+  close_exit_dialog();
+  explicit close_exit_dialog(const quit_slot_type& in);
+
   virtual ~close_exit_dialog();
   std::int32_t flags() const;
+  virtual const std::string& title() const;
   bool render();
 
   boost::signals2::signal<void()> quit;

@@ -513,11 +513,17 @@ void time_sequencer_widget::fliter_select() {
   auto l_user = p_i->combox_user_id.current_user;
 
   if (!l_user) {
-    g_windows_manage().create_windows<show_message>(fmt::format("无效的句柄"));
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create<show_message>(fmt::format("无效的句柄")).set_title("显示消息")
+    );
     return;
   }
   if (!l_user.all_of<user>()) {
-    g_windows_manage().create_windows<show_message>(fmt::format("未找到人员 {}", l_user.get<user>().get_name()));
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<show_message>(fmt::format("未找到人员 {}", l_user.get<user>().get_name()))
+            .set_title("显示消息")
+    );
   }
 
   if (!p_i->attendance_ptr) {
@@ -537,8 +543,9 @@ void time_sequencer_widget::fliter_select() {
         l_p.progress_step(1);
         if (in_code) {
           l_p.set_state(l_p.fail);
-
-          g_windows_manage().create_windows<show_message>(fmt::format("{}", in_code.what()));
+          g_windows_manage().create_windows_arg(
+              windows_init_arg{}.create<show_message>(fmt::format("{}", in_code.what())).set_title("显示消息")
+          );
           return;
         }
 

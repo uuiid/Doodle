@@ -350,15 +350,6 @@ struct TreeNodeEx : public ScopeWrapper<TreeNodeEx> {
   };
 };
 
-struct OpenPopup : public ScopeWrapper<OpenPopup> {
-  template <class... Args>
-  OpenPopup(Args&&... in_args) noexcept : ScopeWrapper<OpenPopup>(true) {
-    ::ImGui::OpenPopup(std::forward<Args>(in_args)...);
-  }
-
-  static void dtor() noexcept { ImGui::EndPopup(); };
-};
-
 struct TextWrapPos : public ScopeWrapper<TextWrapPos, true> {
   TextWrapPos(float wrap_pos_x) : ScopeWrapper<TextWrapPos, true>(true) { ImGui::PushTextWrapPos(wrap_pos_x); }
   static void dtor() noexcept { ImGui::PopTextWrapPos(); };

@@ -398,16 +398,7 @@ std::vector<FSys::path> file_panel::get_selects() {
 
   return result;
 }
-file_panel &file_panel::async_read(one_fun &&in_fun) {
-  p_i->call_fun = [in_fun = std::move(in_fun)](const std::vector<FSys::path> &in) {
-    if (!in.empty()) in_fun(in.front());
-  };
-  return *this;
-}
-file_panel &file_panel::async_read(mult_fun &&in_fun) {
-  p_i->call_fun = in_fun;
-  return *this;
-}
+
 void file_panel::set_attr() {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
@@ -456,4 +447,16 @@ file_panel::dialog_args &file_panel::dialog_args::multiple(bool in_multiple) {
 
   return *this;
 }
+
+file_panel::dialog_args &file_panel::dialog_args::async_read(one_fun &&in_fun) {
+  call_fun = [in_fun = std::move(in_fun)](const std::vector<FSys::path> &in) {
+    if (!in.empty()) in_fun(in.front());
+  };
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::async_read(mult_fun &&in_fun) {
+  call_fun = in_fun;
+  return *this;
+}
+
 }  // namespace doodle::gui

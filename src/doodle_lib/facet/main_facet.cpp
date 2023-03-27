@@ -26,8 +26,12 @@ main_facet::main_facet() : facet::gui_facet() {
 
 void main_facet::load_windows() {
   this->set_layout(gui::windows{std::in_place_type<gui::layout_window>});
-  gui::g_windows_manage().create_windows<gui::menu_bar>();
-  gui::g_windows_manage().create_windows<gui::main_status_bar>();
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
+  );
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<gui::main_status_bar>().set_render_type<dear::ViewportSideBar>(nullptr)
+  );
 }
 
 }  // namespace doodle

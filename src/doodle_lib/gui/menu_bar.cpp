@@ -53,7 +53,9 @@ void menu_bar::menu_windows() {
   if (dear::MenuItem(all_user_view_widget::name.data())) g_windows_manage().open_windows<all_user_view_widget>();
   //  if (dear::MenuItem(work_hour_filling::name.data())) g_windows_manage().open_windows<work_hour_filling>();
 }
-void menu_bar::message(const std::string &in_m) { g_windows_manage().create_windows<show_message>(in_m); }
+void menu_bar::message(const std::string &in_m) {
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create<show_message>(in_m).set_title("显示消息"));
+}
 
 void menu_bar::menu_tool() {
   if (dear::MenuItem("安装maya插件")) {

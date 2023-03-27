@@ -35,18 +35,20 @@ class create_project_dialog::impl {
 bool create_project_dialog::render() {
   ImGui::OpenPopup(p_i->title.data());
   ImGui::SetNextWindowSize({640, 360});
-  const dear::OpenPopup l_win{p_i->title.data()};
+
+  const dear::Popup l_win{p_i->title.data()};
 
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
-    auto* l_file =
-        g_windows_manage().create_windows<file_dialog>(file_dialog::dialog_args{}.set_use_dir().set_title("选择文件夹")
-        );
-    l_file->async_read([this](const FSys::path& in) {
-      p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
-      p_i->path_gui = p_i->path.generic_string();
-    });
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<file_dialog>(file_dialog::dialog_args{}.set_use_dir().async_read([this](const FSys::path& in) {
+              p_i->path     = in / (p_i->prj.p_name + std::string{doodle_config::doodle_db_name});
+              p_i->path_gui = p_i->path.generic_string();
+            }))
+            .set_title("选择文件夹")
+    );
   }
 
   if (dear::InputText("名称", &(p_i->name))) {
@@ -107,6 +109,8 @@ bool close_exit_dialog::render() {
   return open;
 }
 close_exit_dialog::close_exit_dialog() : p_i(std::make_unique<impl>()) {}
+close_exit_dialog::close_exit_dialog(const quit_slot_type& in) : close_exit_dialog() { quit.connect(in); }
+
 close_exit_dialog::~close_exit_dialog() = default;
 const std::string& close_exit_dialog::title() const { return p_i->title; }
 std::int32_t close_exit_dialog::flags() const {

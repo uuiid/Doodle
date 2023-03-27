@@ -171,7 +171,7 @@ class assets_file_widgets::impl {
   bool render_icon{true};
 
   std::function<void()> render_list;
-  entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
+  //  entt::observer observer_h{*g_reg(), entt::collector.update<database>()};
   std::string title_name_;
 };
 
@@ -234,9 +234,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
-    g_windows_manage().create_windows<screenshot_widget>()->async_save_image(in_, [](const entt::handle& in) {
-      database::save(in);
-    });
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create<screenshot_widget>(in_));
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {
@@ -428,6 +426,7 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
 }
 
 const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
-assets_file_widgets::~assets_file_widgets() { p_i->observer_h.disconnect(); }
+assets_file_widgets::~assets_file_widgets() { /*p_i->observer_h.disconnect();*/
+}
 
 }  // namespace doodle::gui

@@ -83,10 +83,10 @@ bool maya_layout::render() {
   p_i->builder_dock();
   if (!p_i->inited) {
     p_i->inited = true;
-    gui::g_windows_manage().create_windows<comm_check_scenes>();
-    gui::g_windows_manage().create_windows<reference_attr_setting>();
-    gui::g_windows_manage().create_windows<create_sim_cloth>();
-    gui::g_windows_manage().create_windows<dem_cloth_to_fbx>();
+    gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<comm_check_scenes>());
+    gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<reference_attr_setting>());
+    gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<create_sim_cloth>());
+    gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<dem_cloth_to_fbx>());
   }
   return false;
 }

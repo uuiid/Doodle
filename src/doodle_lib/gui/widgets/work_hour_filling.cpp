@@ -253,7 +253,9 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
 
-  g_windows_manage().create_windows<show_message>(fmt::format("完成导出表格 {}"s, l_path));
+  g_windows_manage().create_windows_arg(
+      windows_init_arg{}.create<show_message>(fmt::format("完成导出表格 {}"s, l_path)).set_title("显示消息")
+  );
 }
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
@@ -283,12 +285,15 @@ bool work_hour_filling::render() {
       }
       ImGui::SameLine();
       if (ImGui::Button(*ptr->select_path_button)) {
-        g_windows_manage()
-            .create_windows<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir())
-            ->async_read([this](const FSys::path& in) {
-              ptr->export_path        = in / "tmp.xlsx";
-              ptr->export_file_text() = ptr->export_path.generic_string();
-            });
+        g_windows_manage().create_windows_arg(
+            windows_init_arg{}
+                .create<file_dialog>(file_dialog::dialog_args{}.set_use_dir().async_read([this](const FSys::path& in) {
+                  ptr->export_path        = in / "tmp.xlsx";
+                  ptr->export_file_text() = ptr->export_path.generic_string();
+                }))
+                .set_title("选择目录"s)
+
+        );
       }
       if (!ptr->export_path.empty()) {
         ImGui::SameLine();

@@ -32,7 +32,7 @@ class screenshot_widget::impl {
   gui_cache_name_id title;
 };
 
-screenshot_widget::screenshot_widget() : p_i(std::make_unique<impl>()) {
+screenshot_widget::screenshot_widget(const entt::handle& in_handle) : p_i(std::make_unique<impl>()) {
   p_i->title = gui_cache_name_id{std::string{name}};
 }
 screenshot_widget::~screenshot_widget() = default;
@@ -99,8 +99,9 @@ bool screenshot_widget::render() {
 void screenshot_widget::handle_attr(const entt::handle& in) {
   p_i->handle = in;
   if (!p_i->handle.all_of<image_icon>()) p_i->handle.emplace<image_icon>();
+  database::save(in);
 }
-void screenshot_widget::call_save(const screenshot_widget::call_ptr_type& in) { p_i->callPtrType = in; }
+
 const std::string& screenshot_widget::title() const { return p_i->title.name_id; }
 
 }  // namespace doodle::gui

@@ -61,6 +61,7 @@ class DOODLE_APP_API file_panel {
     std::vector<std::string> filter;
     std::string title;
     FSys::path pwd;
+    mult_fun call_fun;
     bool multiple_attr{false};
 
    public:
@@ -74,6 +75,8 @@ class DOODLE_APP_API file_panel {
     dialog_args& add_filter(const std::string& in_filter);
     dialog_args& set_pwd(const FSys::path& in_pwd);
     dialog_args& use_default_pwd();
+    dialog_args& async_read(one_fun&& in_fun);
+    dialog_args& async_read(mult_fun&& in_fun);
   };
   /**
    * @brief 创建文件选择对话框
@@ -89,9 +92,6 @@ class DOODLE_APP_API file_panel {
   bool render();
   void set_attr();
   std::int32_t flags() const;
-
-  file_panel& async_read(one_fun&& in_fun);
-  file_panel& async_read(mult_fun&& in_fun);
 };
 
 using file_dialog = file_panel;

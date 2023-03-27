@@ -112,16 +112,16 @@ void layout_window::layout(ImGuiID in_id, const ImVec2 &in_size) {
 }
 
 void layout_window::init_windows() {
-  g_windows_manage().create_windows<edit_widgets>();
-  g_windows_manage().create_windows<assets_filter_widget>();
-  g_windows_manage().create_windows<maya_tool>();
-  g_windows_manage().create_windows<create_video>();
-  g_windows_manage().create_windows<extract_subtitles_widgets>();
-  g_windows_manage().create_windows<subtitle_processing>();
-  g_windows_manage().create_windows<long_time_tasks_widget>();
-  g_windows_manage().create_windows<time_sequencer_widget>();
-  g_windows_manage().create_windows<assets_file_widgets>();
-  g_windows_manage().create_windows<xlsx_export_widgets>();
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_video>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<extract_subtitles_widgets>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<subtitle_processing>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<long_time_tasks_widget>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<time_sequencer_widget>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_file_widgets>());
+  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
 }
 
 layout_window::~layout_window() = default;
