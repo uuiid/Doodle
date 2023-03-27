@@ -21,7 +21,7 @@ class DOODLE_APP_API create_project_dialog {
 
   void set_attr() const;
   virtual const std::string& title() const;
-  std::int32_t flags() const;
+
   bool render();
 };
 

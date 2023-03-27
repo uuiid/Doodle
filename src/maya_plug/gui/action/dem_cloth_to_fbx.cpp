@@ -59,9 +59,6 @@ void dem_cloth_to_fbx::init() {
   p_i->endFrame_p   = MAnimControl::maxTime().value();
 }
 bool dem_cloth_to_fbx::render() {
-  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   ImGui::InputInt("开始帧", &p_i->startFrame_p);
   ImGui::InputInt("结束帧", &p_i->endFrame_p);
 

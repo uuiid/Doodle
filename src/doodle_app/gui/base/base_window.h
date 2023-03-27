@@ -119,6 +119,7 @@ class windows_init_arg {
   std::enable_if_t<details::has_name_v<t>, windows_init_arg&> create_set_title(arg&&... in_arg) {
     create<t>(std::forward<arg&&>(in_arg)...);
     set_title<t>();
+    set_render_type<dear::Begin>();
     return *this;
   }
 

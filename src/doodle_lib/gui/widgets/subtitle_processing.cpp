@@ -3,20 +3,19 @@
 //
 
 #include "subtitle_processing.h"
-#include <doodle_app/gui/base/ref_base.h>
+
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/metadata/assets_file.h>
+
+#include <doodle_app/gui/base/ref_base.h>
+
 #include <boost/contract.hpp>
 
 namespace doodle::gui {
 class subtitle_processing::subtitle_srt_line {
  public:
   subtitle_srt_line() = default;
-  explicit subtitle_srt_line(std::string in_time)
-      : time_str(std::move(in_time)),
-        time_begin(),
-        time_end(),
-        subtitle() {
+  explicit subtitle_srt_line(std::string in_time) : time_str(std::move(in_time)), time_begin(), time_end(), subtitle() {
     parse_time(time_str);
   };
   std::string time_str{};
@@ -26,14 +25,10 @@ class subtitle_processing::subtitle_srt_line {
     /// 0123456789
     auto l_beg = in_string.substr(0, 12);
     auto l_end = in_string.substr(17);
-    time_begin = chrono::hours{std::stoi(l_beg.substr(0, 2))} +
-                 chrono::minutes{std::stoi(l_beg.substr(3, 2))} +
-                 chrono::seconds{std::stoi(l_beg.substr(6, 2))} +
-                 chrono::milliseconds{std::stoi(l_beg.substr(9, 3))};
-    time_end = chrono::hours{std::stoi(l_end.substr(0, 2))} +
-               chrono::minutes{std::stoi(l_end.substr(3, 2))} +
-               chrono::seconds{std::stoi(l_end.substr(6, 2))} +
-               chrono::milliseconds{std::stoi(l_end.substr(9, 3))};
+    time_begin = chrono::hours{std::stoi(l_beg.substr(0, 2))} + chrono::minutes{std::stoi(l_beg.substr(3, 2))} +
+                 chrono::seconds{std::stoi(l_beg.substr(6, 2))} + chrono::milliseconds{std::stoi(l_beg.substr(9, 3))};
+    time_end = chrono::hours{std::stoi(l_end.substr(0, 2))} + chrono::minutes{std::stoi(l_end.substr(3, 2))} +
+               chrono::seconds{std::stoi(l_end.substr(6, 2))} + chrono::milliseconds{std::stoi(l_end.substr(9, 3))};
     time_str = in_string;
   };
 
@@ -69,20 +64,17 @@ class subtitle_processing::impl {
   boost::signals2::scoped_connection sig_scoped;
 };
 
-subtitle_processing::subtitle_processing()
-    : p_i(std::make_unique<impl>()) {
+subtitle_processing::subtitle_processing() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};
   init();
 }
 void subtitle_processing::init() {
-  p_i->sig_scoped = g_reg()->ctx().at<core_sig>().select_handles.connect(
-      [this](const std::vector<entt::handle>& in_vector) {
-        p_i->list_srt_file =
-            in_vector |
-            ranges::views::filter([](const entt::handle& in_handle) -> bool {
-              return in_handle && in_handle.any_of<assets_file>();
-            }) |
-            ranges::views::filter([](const entt::handle& in_handle) -> bool {
+  p_i->sig_scoped =
+      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_vector) {
+        p_i->list_srt_file = in_vector | ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                               return in_handle && in_handle.any_of<assets_file>();
+                             }) |
+                             ranges::views::filter([](const entt::handle& in_handle) -> bool {
                                auto& l_p = in_handle.get<assets_file>().path_attr();
                                return l_p.extension() == ".srt";
                              }) |
@@ -93,9 +85,6 @@ void subtitle_processing::init() {
       });
 }
 bool subtitle_processing::render() {
-  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   dear::ListBox{*p_i->list_srt_file.gui_name} && [&]() {
     for (auto&& i : p_i->list_srt_file.data) {
       dear::Text(i);
@@ -123,12 +112,10 @@ bool subtitle_processing::render() {
   return p_i->open;
 }
 void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_subtitles_file) {
-  boost::contract::check l_ =
-      boost::contract::function()
-          .precondition([&]() {
-            DOODLE_CHICK(FSys::exists(in_path), doodle_error{"文件 {} 不存在", in_path});
-            DOODLE_CHICK(in_path.extension() == ".srt", doodle_error{"文件 {} 扩展名错误", in_path});
-          });
+  boost::contract::check l_ = boost::contract::function().precondition([&]() {
+    DOODLE_CHICK(FSys::exists(in_path), doodle_error{"文件 {} 不存在", in_path});
+    DOODLE_CHICK(in_path.extension() == ".srt", doodle_error{"文件 {} 扩展名错误", in_path});
+  });
 
   std::vector<subtitle_srt_line> l_vector{};
   {
@@ -188,10 +175,10 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
   }
   /// \brief 将太长的字幕打断
   if (p_i->cut_off_line.data) {
-    for (auto it = l_vector.begin();
-         it != l_vector.end();) {
+    for (auto it = l_vector.begin(); it != l_vector.end();) {
       std::wstring l_str = conv::utf_to_utf<wchar_t>(it->subtitle);
-      const auto l_size  = p_i->cut_off_line_size.data * (sizeof(decltype(it->subtitle)::value_type) / sizeof(decltype(l_str)::value_type));
+      const auto l_size  = p_i->cut_off_line_size.data *
+                          (sizeof(decltype(it->subtitle)::value_type) / sizeof(decltype(l_str)::value_type));
       if (l_str.size() > l_size) {
         //        const auto l_size = p_i->cut_off_line_size.data;
         std::vector<subtitle_srt_line> l_sub_list{};
@@ -201,8 +188,7 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
         std::vector<std::wstring> l_str_list{};
         boost::split(l_str_list, l_str, boost::is_any_of(L" "s));
         /// \brief 没有空格不拆分
-        if (l_sub_list.size() == 1)
-          break;
+        if (l_sub_list.size() == 1) break;
         l_str_list |= ranges::actions::remove_if([](auto& in) { return in.empty(); });
         for (const auto& l_item : l_str_list) {
           if (l_item.size() > l_size && l_sub.empty()) {
@@ -215,14 +201,12 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
             l_sub.clear();
           }
           /// \brief 最后将剩余字符串保存
-          if (!l_sub.empty())
-            l_sub += L' ';
+          if (!l_sub.empty()) l_sub += L' ';
 
           l_sub += l_item;
         }
         /// \brief 在最有一次循环中如果还有剩余字符串直接加入字幕
-        if (!l_sub.empty())
-          l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
+        if (!l_sub.empty()) l_sub_list.emplace_back(subtitle_srt_line{}).subtitle = conv::utf_to_utf<char>(l_sub);
 
         /// \brief 设置时间
         auto l_du = (it->time_end - it->time_begin) / l_sub_list.size();
@@ -241,29 +225,21 @@ void subtitle_processing::run(const FSys::path& in_path, const FSys::path& out_s
   ranges::for_each(l_vector, [](auto& in_item) { in_item.get_time_str(); });
 
   std::vector<std::string> l_sub_str_list =
-      l_vector |
-      ranges::views::enumerate |
-      ranges::views::transform(
-          [&](const std::pair<std::size_t, subtitle_srt_line>& in_pair) -> std::string {
-            auto l_str = fmt::format(
-                R"({}
+      l_vector | ranges::views::enumerate |
+      ranges::views::transform([&](const std::pair<std::size_t, subtitle_srt_line>& in_pair) -> std::string {
+        auto l_str = fmt::format(
+            R"({}
 {}
 {})",
-                in_pair.first + 1,
-                in_pair.second.time_str,
-                in_pair.second.subtitle
-            );
-            return l_str;
-          }
-      ) |
+            in_pair.first + 1, in_pair.second.time_str, in_pair.second.subtitle
+        );
+        return l_str;
+      }) |
       ranges::to_vector;
-  if (!FSys::exists(out_subtitles_file.parent_path()))
-    FSys::create_directories(out_subtitles_file.parent_path());
+  if (!FSys::exists(out_subtitles_file.parent_path())) FSys::create_directories(out_subtitles_file.parent_path());
   DOODLE_LOG_INFO("输出文件 {}", out_subtitles_file);
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_sub_str_list, "\n\n"));
 }
-const std::string& subtitle_processing::title() const {
-  return p_i->title_name_;
-}
+const std::string& subtitle_processing::title() const { return p_i->title_name_; }
 subtitle_processing::~subtitle_processing() = default;
 }  // namespace doodle::gui

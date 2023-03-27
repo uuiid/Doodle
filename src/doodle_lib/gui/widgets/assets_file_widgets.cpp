@@ -207,11 +207,7 @@ void assets_file_widgets::init() {
 }
 
 bool assets_file_widgets::render() {
-  const dear::Begin l_wind{p_i->title_name_.data(), &p_i->open};
-  if (!l_wind) return p_i->open;
-
   /// 渲染数据
-
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
   dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
     if (p_i->lists.empty()) return;
@@ -234,7 +230,11 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
-    g_windows_manage().create_windows_arg(windows_init_arg{}.create<screenshot_widget>(in_));
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create<screenshot_widget>(in_).set_render_type<dear::Popup>().set_flags(
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+        )
+    );
   }
   ImGui::Separator();
   if (dear::MenuItem("删除")) {

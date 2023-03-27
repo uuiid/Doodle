@@ -430,8 +430,6 @@ void assets_filter_widget::init() {
 
 bool assets_filter_widget::render() {
   /// 渲染数据
-  dear::Begin l_win{p_impl->title_name_.data(), &p_impl->open};
-  if (!l_win) return p_impl->open;
 
   bool l_is_edit{false};
   for (auto&& i : p_impl->p_filter_factorys) {

@@ -20,9 +20,6 @@ namespace doodle::gui {
 long_time_tasks_widget::long_time_tasks_widget() : p_current_select() { title_name_ = std::string{name}; }
 
 bool long_time_tasks_widget::render() {
-  dear::Begin l_win{title_name_.data(), &open};
-  if (!l_win) return open;
-
   static auto flags{
       ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
       ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV |

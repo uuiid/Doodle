@@ -337,9 +337,6 @@ time_sequencer_widget::time_sequencer_widget() : p_i(std::make_unique<impl>()) {
 time_sequencer_widget::~time_sequencer_widget() = default;
 
 bool time_sequencer_widget::render() {
-  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   ImGui::Checkbox("本地时间", &ImPlot::GetStyle().UseLocalTime);
   ImGui::SameLine();
   ImGui::Checkbox("24 小时制", &ImPlot::GetStyle().Use24HourClock);
@@ -513,9 +510,10 @@ void time_sequencer_widget::fliter_select() {
   auto l_user = p_i->combox_user_id.current_user;
 
   if (!l_user) {
-    g_windows_manage().create_windows_arg(
-        windows_init_arg{}.create<show_message>(fmt::format("无效的句柄")).set_title("显示消息")
-    );
+    g_windows_manage().create_windows_arg(windows_init_arg{}
+                                              .create<show_message>(fmt::format("无效的句柄"))
+                                              .set_title("显示消息")
+                                              .set_render_type<dear::Popup>());
     return;
   }
   if (!l_user.all_of<user>()) {
@@ -543,9 +541,10 @@ void time_sequencer_widget::fliter_select() {
         l_p.progress_step(1);
         if (in_code) {
           l_p.set_state(l_p.fail);
-          g_windows_manage().create_windows_arg(
-              windows_init_arg{}.create<show_message>(fmt::format("{}", in_code.what())).set_title("显示消息")
-          );
+          g_windows_manage().create_windows_arg(windows_init_arg{}
+                                                    .create<show_message>(fmt::format("{}", in_code.what()))
+                                                    .set_title("显示消息")
+                                                    .set_render_type<dear::Popup>());
           return;
         }
 

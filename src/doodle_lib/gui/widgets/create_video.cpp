@@ -54,9 +54,6 @@ create_video::create_video() : p_i(std::make_unique<impl>()) {
 }
 
 bool create_video::render() {
-  const dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {
     ::ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
       in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);

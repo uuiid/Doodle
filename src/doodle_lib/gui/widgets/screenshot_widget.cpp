@@ -56,10 +56,6 @@ void screenshot_widget::succeeded() {
 }
 
 bool screenshot_widget::render() {
-  const dear::Begin l_win{
-      *p_i->title, &open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove};
-  if (!l_win) return open;
-
   ImGui::ImageButton(p_i->image_gui.get(), {p_i->virtual_screen.size().width, p_i->virtual_screen.size().height});
   if (imgui::IsItemActive() && p_i->mouse_state) {
     p_i->mouse_end.x = imgui::GetIO().MousePos.x;

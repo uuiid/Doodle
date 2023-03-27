@@ -527,8 +527,6 @@ void edit_widgets::init() {
 }
 
 bool edit_widgets::render() {
-  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
   dear::TreeNode{"添加"} && [this]() { this->add_handle(); };
   dear::TreeNode{"编辑"} && [this]() { this->edit_handle(); };
   return p_i->open;

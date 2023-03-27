@@ -31,9 +31,6 @@ extract_subtitles_widgets::extract_subtitles_widgets() : p_i(std::make_unique<im
   init();
 }
 bool extract_subtitles_widgets::render() {
-  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   dear::ListBox{*p_i->file_list_.gui_name} && [&]() {
     for (auto&& i : p_i->file_list_.data) {
       dear::Text(i);

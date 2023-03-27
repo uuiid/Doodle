@@ -33,11 +33,6 @@ class create_project_dialog::impl {
 };
 
 bool create_project_dialog::render() {
-  ImGui::OpenPopup(p_i->title.data());
-  ImGui::SetNextWindowSize({640, 360});
-
-  const dear::Popup l_win{p_i->title.data()};
-
   dear::Text(fmt::format("路径: {}", p_i->path_gui));
 
   if (ImGui::Button(*p_i->select_button_id)) {
@@ -48,6 +43,9 @@ bool create_project_dialog::render() {
               p_i->path_gui = p_i->path.generic_string();
             }))
             .set_title("选择文件夹")
+            .set_render_type<dear::Popup>()
+            .set_flags(ImGuiWindowFlags_NoSavedSettings)
+
     );
   }
 
@@ -76,35 +74,21 @@ create_project_dialog::~create_project_dialog() = default;
 
 const std::string& create_project_dialog::title() const { return p_i->title; }
 
-std::int32_t create_project_dialog::flags() const {
-  boost::ignore_unused(this);
-  return ImGuiWindowFlags_NoSavedSettings;
-}
-
 class close_exit_dialog::impl {
  public:
   std::string title{"退出"s};
 };
 bool close_exit_dialog::render() {
-  std::call_once(once_flag, [this]() {
-    ImGui::OpenPopup(title().data());
-    ImGui::SetNextWindowSize({640, 360});
-  });
-
-  dear::Begin l_win{p_i->title.data(), &open};
-  if (!l_win) return open;
-
   ImGui::Text("是否退出?");
 
   if (ImGui::Button("yes")) {
     ImGui::CloseCurrentPopup();
-    open = false;
+
     quit();
   }
   ImGui::SameLine();
   if (ImGui::Button("no")) {
     ImGui::CloseCurrentPopup();
-    open = false;
   }
   return open;
 }

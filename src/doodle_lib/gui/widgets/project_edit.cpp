@@ -232,9 +232,6 @@ void project_edit::init() {
 }
 
 bool project_edit::render() {
-  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-  if (!l_win) return p_i->open;
-
   ImGui::Text("项目配置");
   imgui::InputText(*p_i->project_name.gui_name, &(p_i->project_name.data));
   dear::Text(p_i->project_path);

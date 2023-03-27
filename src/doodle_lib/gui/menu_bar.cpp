@@ -54,7 +54,9 @@ void menu_bar::menu_windows() {
   //  if (dear::MenuItem(work_hour_filling::name.data())) g_windows_manage().open_windows<work_hour_filling>();
 }
 void menu_bar::message(const std::string &in_m) {
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create<show_message>(in_m).set_title("显示消息"));
+  g_windows_manage().create_windows_arg(
+      windows_init_arg{}.create<show_message>(in_m).set_title("显示消息").set_render_type<dear::Popup>()
+  );
 }
 
 void menu_bar::menu_tool() {
@@ -83,10 +85,19 @@ void menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4项目插件")) {
     std::string l_message = "安装ue4项目插件{}";
     try {
-      auto *l_file = g_windows_manage().create_windows<file_dialog>(
-          file_dialog::dialog_args{}.set_title("选择ue4项目文件").add_filter(".uproject")
+      g_windows_manage().create_windows_arg(
+          windows_init_arg{}
+              .create<file_dialog>(
+                  file_dialog::dialog_args{}.add_filter(".uproject").async_read([](const FSys::path &in) mutable {
+                    toolkit::installUePath(in);
+                  })
+              )
+              .set_title("选择ue4项目文件")
+              .set_render_type<dear::Popup>()
+              .set_flags(ImGuiWindowFlags_NoSavedSettings)
+
       );
-      l_file->async_read([](const FSys::path &in) mutable { toolkit::installUePath(in); });
+
       l_message = fmt::format(l_message, "成功");
     } catch (const FSys::filesystem_error &error) {
       l_message = fmt::format(l_message, fmt::format("失败{} ", error.what()));

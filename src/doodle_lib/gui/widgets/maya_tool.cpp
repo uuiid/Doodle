@@ -114,9 +114,6 @@ void maya_tool::init() {
 }
 
 bool maya_tool::render() {
-  dear::Begin l_win{title_name_.data(), &open};
-  if (!l_win) return open;
-
   dear::ListBox{"file_list"} && [this]() {
     for (const auto& f : p_sim_path) {
       dear::Selectable(f.generic_string());

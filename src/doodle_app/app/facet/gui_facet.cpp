@@ -303,7 +303,9 @@ void gui_facet::close_windows() {
                                                      boost::asio::post(g_io_context(), g_quit);
                                                    })
                                                    .set_title("quit")
-                                                   .set_render_type<dear::Popup>());
+                                                   .set_render_type<dear::Popup>()
+                                                   .set_flags(ImGuiWindowFlags_NoSavedSettings)
+                                                   .set_size(640, 360));
 
   } else
     boost::asio::post(g_io_context(), g_quit);

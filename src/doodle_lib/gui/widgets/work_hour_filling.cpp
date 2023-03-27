@@ -253,17 +253,15 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
 
-  g_windows_manage().create_windows_arg(
-      windows_init_arg{}.create<show_message>(fmt::format("完成导出表格 {}"s, l_path)).set_title("显示消息")
-  );
+  g_windows_manage().create_windows_arg(windows_init_arg{}
+                                            .create<show_message>(fmt::format("完成导出表格 {}"s, l_path))
+                                            .set_title("显示消息")
+                                            .set_render_type<dear::Popup>());
 }
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
 
 bool work_hour_filling::render() {
-  dear::Begin l_win{ptr->title.data(), &ptr->open};
-  if (!l_win) return ptr->open;
-
   ImGui::Text("基本信息:");
 
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
@@ -292,6 +290,8 @@ bool work_hour_filling::render() {
                   ptr->export_file_text() = ptr->export_path.generic_string();
                 }))
                 .set_title("选择目录"s)
+                .set_render_type<dear::Popup>()
+                .set_flags(ImGuiWindowFlags_NoSavedSettings)
 
         );
       }

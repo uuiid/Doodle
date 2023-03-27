@@ -403,7 +403,7 @@ void file_panel::set_attr() {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
 }
-std::int32_t file_panel::flags() const { return ImGuiWindowFlags_NoSavedSettings; }
+
 file_panel::~file_panel() = default;
 
 file_panel::dialog_args::dialog_args() : p_flags(), filter(), title("get file"), pwd() { use_default_pwd(); }

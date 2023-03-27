@@ -118,10 +118,6 @@ bool reference_attr_setting::get_file_info() {
 }
 
 bool reference_attr_setting::render() {
-  dear::Begin l_win{p_i->title_name_.data(), &p_i->open};
-
-  if (!l_win) return p_i->open;
-
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   if (imgui::Button("保存")) {
     maya_file_io::chick_channel();

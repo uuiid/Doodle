@@ -291,9 +291,6 @@ if 'leukocyte' in globals():
 }
 
 bool comm_check_scenes::render() {
-  dear::Begin l_win{title_name_.data(), &open};
-  if (!l_win) return open;
-
   if (imgui::Button("检查所有")) {
     DOODLE_LOG_INFO("开始解锁法线");
     unlock_normal();

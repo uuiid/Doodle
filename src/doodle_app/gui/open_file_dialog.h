@@ -91,7 +91,6 @@ class DOODLE_APP_API file_panel {
 
   bool render();
   void set_attr();
-  std::int32_t flags() const;
 };
 
 using file_dialog = file_panel;

@@ -92,9 +92,6 @@ void setting_windows::init() {
 }
 
 bool setting_windows::render() {
-  const dear::Begin l_wind{p_i->title_name_.data(), &p_i->open};
-  if (!l_wind) return p_i->open;
-
   ImGui::InputText(*p_i->p_org_name.gui_name, &p_i->p_org_name.data);
   imgui::InputText(*p_i->p_user.gui_name, &(p_i->p_user.data));
   dear::Text(p_i->user_uuid);
