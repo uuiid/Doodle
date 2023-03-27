@@ -127,7 +127,23 @@ CREATE TABLE IF NOT EXISTS comment
     comment_time               text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
-create index if not exists assets_index on assets(id)
-create index if not exists assets_index2 on assets(entity_id)
+create index if not exists comment_index on comment(id)
+create index if not exists comment_index2 on comment(entity_id)
+
+CREATE TABLE IF NOT EXISTS export_file_info
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    file_path               text,
+    start_frame             integer,
+    end_frame               integer,
+    ref_file                text,
+    export_type_            text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists export_file_info_index on export_file_info(id)
+create index if not exists export_file_info_index2 on export_file_info(entity_id)
 
      

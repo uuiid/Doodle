@@ -11,6 +11,7 @@ target_sources(doodle_core
         redirection_path_info.h
         assets.h
         comment.h
+        export_file_info.h
 
         PRIVATE
         com_data.cpp
@@ -22,4 +23,5 @@ target_sources(doodle_core
         redirection_path_info.cpp
         assets.cpp
         comment.cpp
+        export_file_info.cpp
         )

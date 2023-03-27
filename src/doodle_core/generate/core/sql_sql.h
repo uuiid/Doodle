@@ -914,5 +914,143 @@ namespace doodle_database
       };
     };
   };
+  namespace ExportFileInfo_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct FilePath
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "file_path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T filePath;
+            T& operator()() { return filePath; }
+            const T& operator()() const { return filePath; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct StartFrame
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "start_frame";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T startFrame;
+            T& operator()() { return startFrame; }
+            const T& operator()() const { return startFrame; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EndFrame
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "end_frame";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T endFrame;
+            T& operator()() { return endFrame; }
+            const T& operator()() const { return endFrame; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct RefFile
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "ref_file";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T refFile;
+            T& operator()() { return refFile; }
+            const T& operator()() const { return refFile; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct ExportType_
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "export_type_";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T exportType_;
+            T& operator()() { return exportType_; }
+            const T& operator()() const { return exportType_; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace ExportFileInfo_
+
+  struct ExportFileInfo: sqlpp::table_t<ExportFileInfo,
+               ExportFileInfo_::Id,
+               ExportFileInfo_::EntityId,
+               ExportFileInfo_::FilePath,
+               ExportFileInfo_::StartFrame,
+               ExportFileInfo_::EndFrame,
+               ExportFileInfo_::RefFile,
+               ExportFileInfo_::ExportType_>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "export_file_info";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T exportFileInfo;
+        T& operator()() { return exportFileInfo; }
+        const T& operator()() const { return exportFileInfo; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif
