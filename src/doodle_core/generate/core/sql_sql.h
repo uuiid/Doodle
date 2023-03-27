@@ -1052,5 +1052,75 @@ namespace doodle_database
       };
     };
   };
+  namespace ImageIcon_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct Path
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T path;
+            T& operator()() { return path; }
+            const T& operator()() const { return path; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace ImageIcon_
+
+  struct ImageIcon: sqlpp::table_t<ImageIcon,
+               ImageIcon_::Id,
+               ImageIcon_::EntityId,
+               ImageIcon_::Path>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "image_icon";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T imageIcon;
+        T& operator()() { return imageIcon; }
+        const T& operator()() const { return imageIcon; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

@@ -146,4 +146,16 @@ CREATE TABLE IF NOT EXISTS export_file_info
 create index if not exists export_file_info_index on export_file_info(id)
 create index if not exists export_file_info_index2 on export_file_info(entity_id)
 
+CREATE TABLE IF NOT EXISTS image_icon
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    path                    text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists image_icon_index on image_icon(id)
+create index if not exists image_icon_index2 on image_icon(entity_id)
+
      
