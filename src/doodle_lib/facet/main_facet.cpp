@@ -33,6 +33,7 @@ void main_facet::load_windows() {
       gui::windows_init_arg{}
           .create<gui::main_status_bar>()
           .set_render_type<dear::ViewportSideBar>(nullptr, ImGuiDir_Down)
+          .set_title("状态栏_main")
           .set_flags(ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar)
   );
 }

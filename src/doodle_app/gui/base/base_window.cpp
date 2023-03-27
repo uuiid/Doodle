@@ -62,6 +62,7 @@ void windows_manage::tick() {
 }
 
 void windows_manage::create_windows_arg(const windows_init_arg& in_arg) {
+  BOOST_ASSERT(!in_arg.title_.empty());
   args_.emplace_back(in_arg);
   if (is_render_tick_p_)
     windows_list_next_.emplace_back(std::make_shared<warp_w>(in_arg));

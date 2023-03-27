@@ -96,6 +96,7 @@ class windows_init_arg {
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::MainMenuBar>>* = nullptr>
   inline windows_init_arg& set_render_type() {
     create_guard = [](windows_init_arg*) { return dear_types{std::in_place_type_t<dear::MainMenuBar>{}}; };
+    title_       = "dear::MainMenuBar";
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::ViewportSideBar>>* = nullptr>
