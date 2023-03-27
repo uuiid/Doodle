@@ -19,7 +19,7 @@ class windows_manage::warp_w {
   std::once_flag once_flag_size_{};
   std::once_flag once_flag_popup_{};
   windows win_render{};
-  explicit warp_w(windows_init_arg&& in_arg) : args_(std::move(in_arg)) {}
+  explicit warp_w(windows_init_arg in_arg) : args_(std::move(in_arg)) {}
 
   bool render() {
     auto l_win = args_.create_guard(&args_);

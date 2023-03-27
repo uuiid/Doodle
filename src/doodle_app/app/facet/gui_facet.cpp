@@ -109,7 +109,7 @@ void gui_facet::tick() {
   ImGui::NewFrame();
 
   layout_->render();
-  const render_guard l_g{this};
+
   drop_files();
   windows_manage_->tick();
 }
