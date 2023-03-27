@@ -68,7 +68,7 @@ class windows_init_arg {
   std::array<float, 2> size_xy_{};
   std::string title_{};
   bool init_show_{true};
-
+  bool is_windows{};
   std::shared_ptr<std::function<windows()>> create_factory_{};
 
   using dear_types = std::variant<dear::Popup, dear::Begin, dear::MainMenuBar, dear::ViewportSideBar>;
@@ -84,6 +84,7 @@ class windows_init_arg {
     create_guard = [](windows_init_arg* in) {
       return dear_types{std::in_place_type_t<dear::Popup>{}, in->title_.data(), in->flags_};
     };
+    is_windows = false;
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Begin>>* = nullptr>
@@ -91,12 +92,14 @@ class windows_init_arg {
     create_guard = [](windows_init_arg* in) {
       return dear_types{std::in_place_type_t<dear::Begin>{}, in->title_.data(), &in->init_show_, in->flags_};
     };
+    is_windows = true;
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::MainMenuBar>>* = nullptr>
   inline windows_init_arg& set_render_type() {
     create_guard = [](windows_init_arg*) { return dear_types{std::in_place_type_t<dear::MainMenuBar>{}}; };
     title_       = "dear::MainMenuBar";
+    is_windows   = false;
     return *this;
   };
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::ViewportSideBar>>* = nullptr>
@@ -105,6 +108,7 @@ class windows_init_arg {
       float height = ImGui::GetFrameHeight();
       return dear_types{std::in_place_type_t<dear::ViewportSideBar>{}, in->title_, viewport, dir, height, in->flags_};
     };
+    is_windows = false;
     return *this;
   };
 
