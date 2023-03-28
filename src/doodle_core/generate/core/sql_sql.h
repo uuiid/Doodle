@@ -1434,5 +1434,483 @@ namespace doodle_database
       };
     };
   };
+  namespace ProjectConfig_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct SimPath
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "sim_path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T simPath;
+            T& operator()() { return simPath; }
+            const T& operator()() const { return simPath; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct ExportGroup
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "export_group";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T exportGroup;
+            T& operator()() { return exportGroup; }
+            const T& operator()() const { return exportGroup; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct ClothProxy
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "cloth_proxy";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T clothProxy;
+            T& operator()() { return clothProxy; }
+            const T& operator()() const { return clothProxy; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct SimpleModuleProxy
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "simple_module_proxy";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T simpleModuleProxy;
+            T& operator()() { return simpleModuleProxy; }
+            const T& operator()() const { return simpleModuleProxy; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct FindIconRegex
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "find_icon_regex";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T findIconRegex;
+            T& operator()() { return findIconRegex; }
+            const T& operator()() const { return findIconRegex; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct AssetsList
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "assets_list";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T assetsList;
+            T& operator()() { return assetsList; }
+            const T& operator()() const { return assetsList; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct IconExtensions
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "icon_extensions";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T iconExtensions;
+            T& operator()() { return iconExtensions; }
+            const T& operator()() const { return iconExtensions; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct UploadPath
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "upload_path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T uploadPath;
+            T& operator()() { return uploadPath; }
+            const T& operator()() const { return uploadPath; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct SeasonCount
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "season_count";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T seasonCount;
+            T& operator()() { return seasonCount; }
+            const T& operator()() const { return seasonCount; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct UseOnlySimCloth
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "use_only_sim_cloth";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T useOnlySimCloth;
+            T& operator()() { return useOnlySimCloth; }
+            const T& operator()() const { return useOnlySimCloth; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct UseDivideGroupExport
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "use_divide_group_export";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T useDivideGroupExport;
+            T& operator()() { return useDivideGroupExport; }
+            const T& operator()() const { return useDivideGroupExport; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct UseRenameMaterial
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "use_rename_material";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T useRenameMaterial;
+            T& operator()() { return useRenameMaterial; }
+            const T& operator()() const { return useRenameMaterial; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct UseMergeMesh
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "use_merge_mesh";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T useMergeMesh;
+            T& operator()() { return useMergeMesh; }
+            const T& operator()() const { return useMergeMesh; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct TPost
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "t_post";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T tPost;
+            T& operator()() { return tPost; }
+            const T& operator()() const { return tPost; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct ExportAnimTime
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "export_anim_time";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T exportAnimTime;
+            T& operator()() { return exportAnimTime; }
+            const T& operator()() const { return exportAnimTime; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct ExportAbcArg
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "export_abc_arg";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T exportAbcArg;
+            T& operator()() { return exportAbcArg; }
+            const T& operator()() const { return exportAbcArg; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct MayaCameraSelect
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "maya_camera_select";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T mayaCameraSelect;
+            T& operator()() { return mayaCameraSelect; }
+            const T& operator()() const { return mayaCameraSelect; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct UseWriteMetadata
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "use_write_metadata";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T useWriteMetadata;
+            T& operator()() { return useWriteMetadata; }
+            const T& operator()() const { return useWriteMetadata; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct AbcExportExtractReferenceName
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "abc_export_extract_reference_name";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T abcExportExtractReferenceName;
+            T& operator()() { return abcExportExtractReferenceName; }
+            const T& operator()() const { return abcExportExtractReferenceName; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct AbcExportFormatReferenceName
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "abc_export_format_reference_name";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T abcExportFormatReferenceName;
+            T& operator()() { return abcExportFormatReferenceName; }
+            const T& operator()() const { return abcExportFormatReferenceName; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct AbcExportExtractSceneName
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "abc_export_extract_scene_name";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T abcExportExtractSceneName;
+            T& operator()() { return abcExportExtractSceneName; }
+            const T& operator()() const { return abcExportExtractSceneName; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct AbcExportFormatSceneName
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "abc_export_format_scene_name";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T abcExportFormatSceneName;
+            T& operator()() { return abcExportFormatSceneName; }
+            const T& operator()() const { return abcExportFormatSceneName; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct AbcExportAddFrameRange
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "abc_export_add_frame_range";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T abcExportAddFrameRange;
+            T& operator()() { return abcExportAddFrameRange; }
+            const T& operator()() const { return abcExportAddFrameRange; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+    struct MayaCameraSuffix
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "maya_camera_suffix";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T mayaCameraSuffix;
+            T& operator()() { return mayaCameraSuffix; }
+            const T& operator()() const { return mayaCameraSuffix; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct MayaOutPutAbcSuffix
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "maya_out_put_abc_suffix";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T mayaOutPutAbcSuffix;
+            T& operator()() { return mayaOutPutAbcSuffix; }
+            const T& operator()() const { return mayaOutPutAbcSuffix; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace ProjectConfig_
+
+  struct ProjectConfig: sqlpp::table_t<ProjectConfig,
+               ProjectConfig_::Id,
+               ProjectConfig_::EntityId,
+               ProjectConfig_::SimPath,
+               ProjectConfig_::ExportGroup,
+               ProjectConfig_::ClothProxy,
+               ProjectConfig_::SimpleModuleProxy,
+               ProjectConfig_::FindIconRegex,
+               ProjectConfig_::AssetsList,
+               ProjectConfig_::IconExtensions,
+               ProjectConfig_::UploadPath,
+               ProjectConfig_::SeasonCount,
+               ProjectConfig_::UseOnlySimCloth,
+               ProjectConfig_::UseDivideGroupExport,
+               ProjectConfig_::UseRenameMaterial,
+               ProjectConfig_::UseMergeMesh,
+               ProjectConfig_::TPost,
+               ProjectConfig_::ExportAnimTime,
+               ProjectConfig_::ExportAbcArg,
+               ProjectConfig_::MayaCameraSelect,
+               ProjectConfig_::UseWriteMetadata,
+               ProjectConfig_::AbcExportExtractReferenceName,
+               ProjectConfig_::AbcExportFormatReferenceName,
+               ProjectConfig_::AbcExportExtractSceneName,
+               ProjectConfig_::AbcExportFormatSceneName,
+               ProjectConfig_::AbcExportAddFrameRange,
+               ProjectConfig_::MayaCameraSuffix,
+               ProjectConfig_::MayaOutPutAbcSuffix>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "project_config";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T projectConfig;
+        T& operator()() { return projectConfig; }
+        const T& operator()() const { return projectConfig; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

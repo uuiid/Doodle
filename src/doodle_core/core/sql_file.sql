@@ -200,6 +200,42 @@ CREATE TABLE IF NOT EXISTS time_point_info
 create index if not exists time_point_info_index on time_point_info(id)
 create index if not exists time_point_info_index2 on time_point_info(entity_id)
 
+CREATE TABLE IF NOT EXISTS project_config
+(
+    id                                  integer
+        primary key,            
+    entity_id                           integer,
+
+    sim_path                            text,
+    export_group                        text,
+    cloth_proxy                         text,
+    simple_module_proxy                 text,
+    find_icon_regex                     text,
+    assets_list                         text,
+    icon_extensions                     text,
+    upload_path                         text,
+    season_count                        integer,
+    use_only_sim_cloth                  bool,
+    use_divide_group_export             bool,
+    use_rename_material                 bool,
+    use_merge_mesh                      bool,
+    t_post                              integer,
+    export_anim_time                    integer,
+    export_abc_arg                      integer,
+    maya_camera_select                  bool,
+    use_write_metadata                  bool,
+    abc_export_extract_reference_name   text,
+    abc_export_format_reference_name    text,
+    abc_export_extract_scene_name       text,
+    abc_export_format_scene_name        text,
+    abc_export_add_frame_range          bool,
+    maya_camera_suffix                  text,
+    maya_out_put_abc_suffix             text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists project_config_index on project_config(id)
+create index if not exists project_config_index2 on project_config(entity_id)
+
 
 
      
