@@ -1313,5 +1313,126 @@ namespace doodle_database
       };
     };
   };
+  namespace TimePointInfo_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct FirstTime
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "first_time";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T firstTime;
+            T& operator()() { return firstTime; }
+            const T& operator()() const { return firstTime; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::time_point, sqlpp::tag::can_be_null>;
+    };
+    struct SecondTime
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "second_time";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T secondTime;
+            T& operator()() { return secondTime; }
+            const T& operator()() const { return secondTime; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::time_point, sqlpp::tag::can_be_null>;
+    };
+    struct Info
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "info";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T info;
+            T& operator()() { return info; }
+            const T& operator()() const { return info; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct IsExtraWork
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "is_extra_work";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T isExtraWork;
+            T& operator()() { return isExtraWork; }
+            const T& operator()() const { return isExtraWork; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::boolean, sqlpp::tag::can_be_null>;
+    };
+  } // namespace TimePointInfo_
+
+  struct TimePointInfo: sqlpp::table_t<TimePointInfo,
+               TimePointInfo_::Id,
+               TimePointInfo_::EntityId,
+               TimePointInfo_::FirstTime,
+               TimePointInfo_::SecondTime,
+               TimePointInfo_::Info,
+               TimePointInfo_::IsExtraWork>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "time_point_info";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T timePointInfo;
+        T& operator()() { return timePointInfo; }
+        const T& operator()() const { return timePointInfo; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif

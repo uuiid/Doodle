@@ -15,6 +15,7 @@ target_sources(doodle_core
         export_file_info.h
         image_icon.h
         assets_file.h
+        time_point_info.h
 
         PRIVATE
         com_data.cpp
@@ -30,4 +31,5 @@ target_sources(doodle_core
         export_file_info.cpp
         image_icon.cpp
         assets_file.cpp
+        time_point_info.cpp
         )

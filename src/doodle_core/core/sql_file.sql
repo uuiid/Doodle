@@ -185,6 +185,21 @@ CREATE TABLE IF NOT EXISTS assets_file
 create index if not exists assets_file_index on assets_file(id)
 create index if not exists assets_file_index2 on assets_file(entity_id)
 
+CREATE TABLE IF NOT EXISTS time_point_info
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    first_time              datetime,
+    second_time             datetime,
+    info                    text,
+    is_extra_work           bool,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists time_point_info_index on time_point_info(id)
+create index if not exists time_point_info_index2 on time_point_info(entity_id)
+
 
 
      
