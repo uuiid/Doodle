@@ -170,6 +170,21 @@ CREATE TABLE IF NOT EXISTS image_icon
 create index if not exists image_icon_index on image_icon(id)
 create index if not exists image_icon_index2 on image_icon(entity_id)
 
+CREATE TABLE IF NOT EXISTS assets_file
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    name                    text,
+    path                    text,
+    version                 integer,
+    user_ref                integer,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists assets_file_index on assets_file(id)
+create index if not exists assets_file_index2 on assets_file(entity_id)
+
 
 
      

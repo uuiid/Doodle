@@ -1192,5 +1192,126 @@ namespace doodle_database
       };
     };
   };
+  namespace AssetsFile_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct Name
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "name";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T name;
+            T& operator()() { return name; }
+            const T& operator()() const { return name; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct Path
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T path;
+            T& operator()() { return path; }
+            const T& operator()() const { return path; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+    struct Version
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "version";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T version;
+            T& operator()() { return version; }
+            const T& operator()() const { return version; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct UserRef
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "user_ref";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T userRef;
+            T& operator()() { return userRef; }
+            const T& operator()() const { return userRef; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+  } // namespace AssetsFile_
+
+  struct AssetsFile: sqlpp::table_t<AssetsFile,
+               AssetsFile_::Id,
+               AssetsFile_::EntityId,
+               AssetsFile_::Name,
+               AssetsFile_::Path,
+               AssetsFile_::Version,
+               AssetsFile_::UserRef>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "assets_file";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T assetsFile;
+        T& operator()() { return assetsFile; }
+        const T& operator()() const { return assetsFile; }
+      };
+    };
+  };
 } // namespace doodle_database
 #endif
