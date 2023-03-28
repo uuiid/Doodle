@@ -30,6 +30,8 @@ class DOODLELIB_API screenshot_widget {
    */
   screenshot_widget(const entt::handle& in_handle);
   ~screenshot_widget();
+  static constexpr std::int32_t flags{
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove};
   constexpr static std::string_view name{"screenshot_widget"};
 
   bool render();

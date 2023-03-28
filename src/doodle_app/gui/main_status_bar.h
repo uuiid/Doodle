@@ -23,6 +23,10 @@ class DOODLE_APP_API main_status_bar {
   main_status_bar& operator=(const main_status_bar& in) noexcept;
   main_status_bar& operator=(main_status_bar&& in) noexcept;
 
+  static constexpr std::int32_t flags{
+      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar};
+  static constexpr std::string_view name{"状态栏_main"};
+
   [[maybe_unused]] bool render();
 };
 }  // namespace doodle::gui

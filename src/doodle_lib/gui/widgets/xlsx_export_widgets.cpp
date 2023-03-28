@@ -461,7 +461,6 @@ bool xlsx_export_widgets::render() {
             }))
             .set_render_type<dear::Popup>()
             .set_title("选择目录"s)
-            .set_flags(ImGuiWindowFlags_NoSavedSettings)
 
     );
   }

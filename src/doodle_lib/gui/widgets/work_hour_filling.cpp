@@ -291,7 +291,6 @@ bool work_hour_filling::render() {
                 }))
                 .set_title("选择目录"s)
                 .set_render_type<dear::Popup>()
-                .set_flags(ImGuiWindowFlags_NoSavedSettings)
 
         );
       }

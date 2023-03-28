@@ -44,7 +44,6 @@ bool create_project_dialog::render() {
             }))
             .set_title("选择文件夹")
             .set_render_type<dear::Popup>()
-            .set_flags(ImGuiWindowFlags_NoSavedSettings)
 
     );
   }

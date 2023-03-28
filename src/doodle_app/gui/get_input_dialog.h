@@ -18,8 +18,10 @@ class DOODLE_APP_API create_project_dialog {
   explicit create_project_dialog();
 
   virtual ~create_project_dialog();
+  static constexpr std::int32_t flags{ImGuiWindowFlags_NoSavedSettings};
+  static constexpr std::array<float, 2> sizexy{640, 360};
+  static constexpr std::string_view name{"设置项目"};
 
-  void set_attr() const;
   virtual const std::string& title() const;
 
   bool render();

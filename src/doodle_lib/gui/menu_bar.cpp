@@ -94,7 +94,6 @@ void menu_bar::menu_tool() {
               )
               .set_title("选择ue4项目文件")
               .set_render_type<dear::Popup>()
-              .set_flags(ImGuiWindowFlags_NoSavedSettings)
 
       );
 

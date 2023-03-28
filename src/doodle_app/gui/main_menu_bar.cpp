@@ -48,12 +48,9 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
-    g_windows_manage().create_windows_arg(windows_init_arg{}
-                                              .create<create_project_dialog>()
-                                              .set_title("设置项目")
-                                              .set_render_type<dear::Popup>()
-                                              .set_size(640, 360)
-                                              .set_flags(ImGuiWindowFlags_NoSavedSettings));
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create<create_project_dialog>().set_render_type<dear::Popup>()
+    );
   }
   if (dear::MenuItem("打开项目"s)) {
     g_windows_manage().create_windows_arg(
@@ -65,7 +62,7 @@ void main_menu_bar::menu_file() {
             }))
             .set_title("打开项目")
             .set_render_type<dear::Popup>()
-            .set_flags(ImGuiWindowFlags_NoSavedSettings)
+
     );
   }
   dear::Menu{"最近的项目"} && []() {

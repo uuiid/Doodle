@@ -231,9 +231,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   }
   if (dear::MenuItem("截图")) {
     g_windows_manage().create_windows_arg(
-        windows_init_arg{}.create<screenshot_widget>(in_).set_render_type<dear::Popup>().set_flags(
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
-        )
+        windows_init_arg{}.create<screenshot_widget>(in_).set_render_type<dear::Popup>()
     );
   }
   ImGui::Separator();
