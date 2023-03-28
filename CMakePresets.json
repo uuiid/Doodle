@@ -19,7 +19,7 @@
         "strategy": "external"
       },
       "toolset": {
-        "value": "v142,host=x64,version=14.29.30133",
+        "value": "v142,host=x64,version=14",
         "strategy": "external"
       },
       "cacheVariables": {
@@ -92,7 +92,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
-        "Maya_Version": "2018",
         "Photoshop_Version": "120.0",
         "BUILD_LIMITED_1": "OFF",
         "BUILD_USD": "ON",

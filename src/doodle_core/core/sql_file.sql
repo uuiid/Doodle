@@ -92,6 +92,41 @@ CREATE TABLE IF NOT EXISTS shot
 create index if not exists shot_index on shot (id);
 create index if not exists shot_index2 on shot (entity_id);
 
+CREATE TABLE IF NOT EXISTS season
+(
+    id        integer
+        primary key,
+    entity_id integer,
 
+    p_int  integer,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists season_index on season (id);
+create index if not exists season_index2 on season (entity_id);
 
+CREATE TABLE IF NOT EXISTS importance
+(
+    id        integer
+        primary key,
+    entity_id integer,
 
+    cutoff_p  text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists importance_index on importance (id);
+create index if not exists importance_index2 on importance (entity_id);
+
+CREATE TABLE IF NOT EXISTS project
+(
+    id        integer
+        primary key,
+    entity_id integer,
+
+    p_name      text,
+    p_path      text,
+    p_en_str    text,
+    p_shor_str  text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists project_index on project (id);
+create index if not exists project_index2 on project (entity_id);

@@ -8,6 +8,9 @@ target_sources(doodle_core
         tool.h
         database.h
         episodes.h
+        season.h
+        importance.h
+        project.h
 
         PRIVATE
         com_data.cpp
@@ -16,4 +19,7 @@ target_sources(doodle_core
         work_task.cpp
         database.cpp
         episodes.cpp
+        season.cpp
+        importance.cpp
+        project.cpp
         )
