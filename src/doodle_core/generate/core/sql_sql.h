@@ -757,6 +757,76 @@ namespace doodle_database
       };
     };
   };
+  namespace RpiSearchPath_
+  {
+    struct Id
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T id;
+            T& operator()() { return id; }
+            const T& operator()() const { return id; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct EntityId
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "entity_id";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T entityId;
+            T& operator()() { return entityId; }
+            const T& operator()() const { return entityId; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::integer, sqlpp::tag::can_be_null>;
+    };
+    struct Path
+    {
+      struct _alias_t
+      {
+        static constexpr const char _literal[] =  "path";
+        using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+        template<typename T>
+        struct _member_t
+          {
+            T path;
+            T& operator()() { return path; }
+            const T& operator()() const { return path; }
+          };
+      };
+      using _traits = sqlpp::make_traits<sqlpp::text, sqlpp::tag::can_be_null>;
+    };
+  } // namespace RpiSearchPath_
+
+  struct RpiSearchPath: sqlpp::table_t<RpiSearchPath,
+               RpiSearchPath_::Id,
+               RpiSearchPath_::EntityId,
+               RpiSearchPath_::Path>
+  {
+    struct _alias_t
+    {
+      static constexpr const char _literal[] =  "rpi_search_path";
+      using _name_t = sqlpp::make_char_sequence<sizeof(_literal), _literal>;
+      template<typename T>
+      struct _member_t
+      {
+        T rpiSearchPath;
+        T& operator()() { return rpiSearchPath; }
+        const T& operator()() const { return rpiSearchPath; }
+      };
+    };
+  };
   namespace Assets_
   {
     struct Id

@@ -9,6 +9,7 @@ target_sources(doodle_core
         database.h
         shot.h
         redirection_path_info.h
+        rpi_search_path.h
         assets.h
         comment.h
         export_file_info.h
@@ -22,6 +23,7 @@ target_sources(doodle_core
         database.cpp
         shot.cpp
         redirection_path_info.cpp
+        rpi_search_path.cpp
         assets.cpp
         comment.cpp
         export_file_info.cpp

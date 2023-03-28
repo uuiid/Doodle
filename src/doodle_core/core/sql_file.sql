@@ -105,6 +105,18 @@ CREATE TABLE IF NOT EXISTS redirection_path_info
 create index if not exists redirection_path_info_index on redirection_path_info(id)
 create index if not exists redirection_path_info_index2 on redirection_path_info(entity_id)
 
+CREATE TABLE IF NOT EXISTS rpi_search_path
+(
+    id                      integer
+        primary key,
+    entity_id               integer,
+
+    path                    text,
+    foreign key (entity_id) references entity (id) on delete cascade on update cascade
+);
+create index if not exists rpi_search_path_index on rpi_search_path(id)
+create index if not exists rpi_search_path_index2 on rpi_search_path(entity_id)
+
 CREATE TABLE IF NOT EXISTS assets
 (
     id                      integer
@@ -157,5 +169,7 @@ CREATE TABLE IF NOT EXISTS image_icon
 );
 create index if not exists image_icon_index on image_icon(id)
 create index if not exists image_icon_index2 on image_icon(entity_id)
+
+
 
      
