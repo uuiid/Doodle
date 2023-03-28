@@ -3,16 +3,13 @@
 //
 #pragma once
 
-// #include <doodle_app/gui/layout_window.h>
+#include <doodle_app/gui/layout_window_base.h>
 #include <doodle_app/gui/main_menu_bar.h>
 
 namespace doodle {
 namespace maya_plug {
 
-class maya_layout {
-  class impl;
-  std::unique_ptr<impl> p_i;
-
+class maya_layout : public gui::details::layout_window_base {
  protected:
   virtual void layout(ImGuiID in_id, const ImVec2& in_size);
   virtual void init_windows();
@@ -20,8 +17,6 @@ class maya_layout {
  public:
   maya_layout();
   virtual ~maya_layout();
-
-  bool render();
 };
 
 class maya_menu : public doodle::gui::main_menu_bar {

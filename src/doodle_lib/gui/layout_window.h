@@ -6,15 +6,13 @@
 
 #include <doodle_app/doodle_app_fwd.h>
 #include <doodle_app/gui/base/base_window.h>
+#include <doodle_app/gui/layout_window_base.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
 
-class DOODLELIB_API layout_window {
-  class impl;
-  std::unique_ptr<impl> p_i;
-
+class DOODLELIB_API layout_window : public details::layout_window_base {
  protected:
   virtual void layout(ImGuiID in_id, const ImVec2& in_size);
   virtual void init_windows();
@@ -22,9 +20,6 @@ class DOODLELIB_API layout_window {
  public:
   layout_window();
   virtual ~layout_window();
-
-  bool render();
-  const std::string& title() const;
 };
 
 }  // namespace doodle::gui
