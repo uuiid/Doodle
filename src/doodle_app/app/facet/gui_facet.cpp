@@ -293,14 +293,10 @@ void gui_facet::close_windows() {
     doodle::app_base::Get().stop_app();
   }};
   if (::GetForegroundWindow() == p_hwnd) {
-    gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}
-                                                   .create<gui::close_exit_dialog>([=]() {
-                                                     boost::asio::post(g_io_context(), g_quit);
-                                                   })
-                                                   .set_title("quit")
-                                                   .set_render_type<dear::Popup>()
-                                                   .set_flags(ImGuiWindowFlags_NoSavedSettings)
-                                                   .set_size(640, 360));
+    gui::g_windows_manage().create_windows_arg(
+        gui::windows_init_arg{}.create<gui::close_exit_dialog>([=]() { boost::asio::post(g_io_context(), g_quit); }
+        ).set_render_type<dear::Popup>()
+    );
 
   } else
     boost::asio::post(g_io_context(), g_quit);

@@ -38,7 +38,9 @@ class DOODLE_APP_API close_exit_dialog {
   explicit close_exit_dialog(const quit_slot_type& in);
 
   virtual ~close_exit_dialog();
-  std::int32_t flags() const;
+  static constexpr std::int32_t flags{ImGuiWindowFlags_NoSavedSettings};
+  static constexpr std::array<float, 2> sizexy{640, 360};
+  static constexpr std::string_view name{"退出"};
   virtual const std::string& title() const;
   bool render();
 

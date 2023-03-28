@@ -97,8 +97,5 @@ close_exit_dialog::close_exit_dialog(const quit_slot_type& in) : close_exit_dial
 
 close_exit_dialog::~close_exit_dialog() = default;
 const std::string& close_exit_dialog::title() const { return p_i->title; }
-std::int32_t close_exit_dialog::flags() const {
-  boost::ignore_unused(this);
-  return ImGuiWindowFlags_NoSavedSettings;
-}
+
 }  // namespace doodle::gui

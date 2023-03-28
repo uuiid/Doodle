@@ -8,6 +8,7 @@
 #include <doodle_core/core/init_register.h>
 
 #include <doodle_app/app/app_command.h>
+#include <doodle_app/gui/base/ref_base.h>
 
 namespace doodle::gui {
 
@@ -19,12 +20,28 @@ class windows_manage::warp_w {
   std::once_flag once_flag_size_{};
   std::once_flag once_flag_popup_{};
   windows win_render{};
+  gui_cache_name_id title{};
+
   explicit warp_w(windows_init_arg in_arg) : args_(std::move(in_arg)) {}
 
   bool render() {
-    auto l_win = args_.create_guard(&args_);
+    //    std::call_once(once_flag_size_, [this]() { ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
+    //    });
 
-    std::call_once(once_flag_size_, [this]() { ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]}); });
+    switch (args_.render_enum_) {
+      case windows_init_arg::render_enum::kpopup:
+        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
+        break;
+      case windows_init_arg::render_enum::kbegin:
+        //        break;
+      case windows_init_arg::render_enum::kmain_menu_bar:
+        //      break;
+      case windows_init_arg::render_enum::kviewport_side_bar:
+        break;
+    }
+
+    auto l_win = args_.create_guard_(&args_);
+
     bool l_show{};
     std::visit(
         entt::overloaded{
@@ -63,11 +80,28 @@ void windows_manage::tick() {
 
 void windows_manage::create_windows_arg(const windows_init_arg& in_arg) {
   BOOST_ASSERT(!in_arg.title_.empty());
-  if (in_arg.is_windows) args_.emplace_back(in_arg);
+  BOOST_ASSERT(in_arg.create_factory_);
+  BOOST_ASSERT(in_arg.create_guard_);
+  auto l_arg = in_arg;
+  switch (in_arg.render_enum_) {
+    case windows_init_arg::render_enum::kpopup:
+      l_arg.title_ = gui_cache_name_id{l_arg.title_}.name_id;
+      break;
+    case windows_init_arg::render_enum::kbegin:
+      args_.emplace_back(l_arg);
+      break;
+    case windows_init_arg::render_enum::kmain_menu_bar:
+      //      break;
+    case windows_init_arg::render_enum::kviewport_side_bar:
+      break;
+  }
+  if (l_arg.render_enum_ == windows_init_arg::render_enum::kbegin) args_.emplace_back(l_arg);
+  if (!l_arg.init_show_) return;
+
   if (is_render_tick_p_)
-    windows_list_next_.emplace_back(std::make_shared<warp_w>(in_arg));
+    windows_list_next_.emplace_back(std::make_shared<warp_w>(l_arg));
   else
-    windows_list_.emplace_back(std::make_shared<warp_w>(in_arg));
+    windows_list_.emplace_back(std::make_shared<warp_w>(l_arg));
 }
 
 bool windows_manage::has_windows(const std::string_view& in_info) {
@@ -78,7 +112,12 @@ bool windows_manage::has_windows(const std::string_view& in_info) {
 void windows_manage::show_windows(const std::string_view& in_info) {
   if (auto l_it = ranges::find_if(args_, [=](const windows_init_arg& in_arg) { return in_arg.title_ == in_info; });
       l_it != ranges::end(args_)) {
-    create_windows_arg(*l_it);
+    auto l_arg       = *l_it;
+    l_arg.init_show_ = true;
+    if (is_render_tick_p_)
+      windows_list_next_.emplace_back(std::make_shared<warp_w>(l_arg));
+    else
+      windows_list_.emplace_back(std::make_shared<warp_w>(l_arg));
   }
 }
 
