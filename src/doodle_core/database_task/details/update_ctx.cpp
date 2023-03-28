@@ -22,8 +22,16 @@
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
-SQLPP_DECLARE_TABLE((sqlite_master), (type, text)(name, text)(tbl_name, text)(rootpage, int)(sql, text));
-
+// clang-format off
+SQLPP_DECLARE_TABLE(
+    (sqlite_master),
+    (type,     text, SQLPP_NULL)
+    (name,     text, SQLPP_NULL)
+    (tbl_name, text, SQLPP_NULL)
+    (rootpage, int,  SQLPP_NULL)
+    (sql,      text, SQLPP_NULL)
+);
+// clang-format on
 namespace doodle::database_n::details {
 
 namespace sql = doodle_database;
