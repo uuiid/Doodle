@@ -19,7 +19,6 @@ class DOODLELIB_API screenshot_widget {
   std::unique_ptr<impl> p_i;
   bool open;
   void handle_attr(const entt::handle& in);
-  void call_save(const call_ptr_type& in);
 
   void succeeded();
 
