@@ -200,14 +200,6 @@ class sqlite_file::impl {
   class obs_main {
     std::tuple<impl_obs<database>, arg...> obs_data_;
 
-    //    template <typename tuple_type, std::size_t... size_i>
-    //    void for_each_open(
-    //        tuple_type&& in_tuple, std::integer_sequence<std::size_t, size_i...>, const registry_ptr& in_registry_ptr,
-    //        conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle
-    //    ) {
-    //      auto l = {(std::get<size_i>(in_tuple).open(in_registry_ptr, in_conn, in_handle), 0)...};
-    //    }
-
    public:
     explicit obs_main(const registry_ptr& in_registry_ptr)
         : obs_data_{std::make_tuple(impl_obs<database>{in_registry_ptr}, impl_obs<arg>{in_registry_ptr}...)} {}
@@ -215,12 +207,12 @@ class sqlite_file::impl {
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::map<std::int64_t, entt::entity> l_map{};
 
-      std::apply([&](auto... x) { auto l_t = {(x.open(in_registry_ptr, in_conn, l_map), 0)...}; }, obs_data_);
+      std::apply([&](auto&&... x) { auto l_t = {(x.open(in_registry_ptr, in_conn, l_map), 0)...}; }, obs_data_);
     }
 
-    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::vector<std::int64_t> l_handles{};
-      std::apply([&](auto... x) { auto l_t = {(x.save(in_registry_ptr, in_conn, l_handles), 0)...}; }, obs_data_);
+      std::apply([&](auto&&... x) { auto l_t = {(x.save(in_registry_ptr, in_conn, l_handles), 0)...}; }, obs_data_);
     }
   };
 
