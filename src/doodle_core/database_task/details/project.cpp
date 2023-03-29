@@ -28,15 +28,15 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<std::i
   ));
 
   for (auto& l_h : l_handles) {
-    auto&  l_project      = l_h.get<project>();
+    auto& l_project       = l_h.get<project>();
     l_pre.params.pEnStr   = l_project.p_en_str;
     l_pre.params.pName    = l_project.p_name;
     l_pre.params.pPath    = l_project.p_path.string();
     l_pre.params.pShorStr = l_project.p_shor_str;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    
-    auto l_r                     = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),rttr::type::get<project>().get_name());
+
+    auto l_r              = l_conn(l_pre);
+    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<project>().get_name());
   }
 }
 
@@ -54,10 +54,10 @@ void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<std::i
       sqlpp::update(l_tabl)
           .set(
               l_tabl.pName = sqlpp::parameter(l_tabl.pName), l_tabl.pEnStr = sqlpp::parameter(l_tabl.pEnStr),
-              l_tabl.pPath        = sqlpp::parameter(l_tabl.pPath),
-                                      l_tabl.pShorStr     = sqlpp::parameter(l_tabl.pShorStr)
-                                  )
-                                  .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
+              l_tabl.pPath = sqlpp::parameter(l_tabl.pPath), l_tabl.pShorStr = sqlpp::parameter(l_tabl.pShorStr)
+          )
+          .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId))
+  );
 
   for (auto& l_h : l_handles) {
     auto& l_project       = l_h.get<project>();
@@ -67,7 +67,7 @@ void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<std::i
     l_pre.params.pShorStr = l_project.p_shor_str;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r                     = l_conn(l_pre);
+    auto l_r              = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<project>().get_name());
   }
 }
@@ -93,11 +93,11 @@ void sql_com<doodle::project>::select(conn_ptr& in_ptr, const std::map<std::int6
                                 .from(l_tabl)
                                 .where(l_tabl.entityId.is_null()))) {
       project l_u{};
-      l_u.p_name        = row.pName.value();
-      l_u.p_en_str      = row.pEnStr.value();
-      l_u.p_path        = row.pPath.value();
-      l_u.p_shor_str    = row.pShorStr.value();
-      auto l_id         = row.entityId.value();
+      l_u.p_name     = row.pName.value();
+      l_u.p_en_str   = row.pEnStr.value();
+      l_u.p_path     = row.pPath.value();
+      l_u.p_shor_str = row.pShorStr.value();
+      auto l_id      = row.entityId.value();
 
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));

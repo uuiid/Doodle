@@ -10,6 +10,7 @@
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
+
 #include <utility>
 namespace doodle::database_n {
 
@@ -24,7 +25,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   bsys::error_code save_begin(const FSys::path& in_path);
   bsys::error_code save(const FSys::path& in_path);
   bsys::error_code save_end();
-
 
   bool is_saving{};
   bool is_opening{};
@@ -44,10 +44,7 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   virtual bsys::error_code save_impl(const FSys::path& in_path) = 0;
 
   //  virtual bool save_impl(const FSys::path& in_path) = 0;
-  enum class state : std::uint8_t {
-    init,
-    end
-  };
+  enum class state : std::uint8_t { init, end };
 
  public:
   virtual ~file_translator() = default;
@@ -56,15 +53,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的项目文件路径
    */
   template <typename CompletionToken>
-  auto async_open(const FSys::path& in_path, CompletionToken&& token)
-      ->
-      typename boost::asio::async_result<
-          typename std::decay_t<CompletionToken>,
-          void(bsys::error_code)>::return_type {
+  auto async_open(const FSys::path& in_path, CompletionToken&& token) ->
+      typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
-          if (l_s->is_opening)
-            return;
+          if (l_s->is_opening) return;
           l_s->open_begin(in_path);
 
           std::function<void(bsys::error_code)> call{completion_handler};
@@ -85,15 +78,11 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
    * @param in_path 传入的项目文件路径
    */
   template <typename CompletionToken>
-  auto async_save(const FSys::path& in_path, CompletionToken&& token)
-      ->
-      typename boost::asio::async_result<
-          typename std::decay_t<CompletionToken>,
-          void(bsys::error_code)>::return_type {
+  auto async_save(const FSys::path& in_path, CompletionToken&& token) ->
+      typename boost::asio::async_result<typename std::decay_t<CompletionToken>, void(bsys::error_code)>::return_type {
     return boost::asio::async_initiate<CompletionToken, void(bsys::error_code)>(
         [l_s = this->shared_from_this(), in_path](auto&& completion_handler) {
-          if (l_s->is_saving)
-            return;
+          if (l_s->is_saving) return;
           l_s->save_begin(in_path);
 
           std::function<void(bsys::error_code)> call{completion_handler};

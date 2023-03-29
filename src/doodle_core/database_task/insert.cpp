@@ -58,7 +58,7 @@ class insert::impl {
 
   using boost_strand = boost::asio::strand<boost::asio::thread_pool::executor_type>;
 
-  /// @brief boost 无锁保护 
+  /// @brief boost 无锁保护
   boost_strand strand_{boost::asio::make_strand(g_thread())};
   ///@brief 原子停止指示
   std::atomic_bool stop{false};

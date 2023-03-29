@@ -99,20 +99,21 @@ void sql_com<doodle::business::rules_ns::time_point_info>::select(
   // 调整内存
   for (auto&& raw :
        l_conn(sqlpp::select(sqlpp::count(l_table.entityId)).from(l_table).where(l_table.entityId.is_not_null()))) {
-       l_time.reserve(raw.count.value());
-       l_entts.reserve(raw.count.value());
-       break;
+    l_time.reserve(raw.count.value());
+    l_entts.reserve(raw.count.value());
+    break;
   }
 
-  for (auto& row : l_conn(sqlpp::select(l_table.entityId, l_table.firstTime, l_table.secondTime,l_table.info,l_table.isExtraWork)
-                              .from(l_table)
-                              .where(l_table.entityId.is_null()))) {
+  for (auto& row :
+       l_conn(sqlpp::select(l_table.entityId, l_table.firstTime, l_table.secondTime, l_table.info, l_table.isExtraWork)
+                  .from(l_table)
+                  .where(l_table.entityId.is_null()))) {
     business::rules_ns::time_point_info l_t{};
-    l_t.first=row.firstTime.value();
-    l_t.second=row.secondTime.value();
-    l_t.info=row.info.value();
-    l_t.is_extra_work=row.isExtraWork.value();
-    auto l_id       = row.entityId.value();
+    l_t.first         = row.firstTime.value();
+    l_t.second        = row.secondTime.value();
+    l_t.info          = row.info.value();
+    l_t.is_extra_work = row.isExtraWork.value();
+    auto l_id         = row.entityId.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_time.emplace_back(std::move(l_t));
       l_entts.emplace_back(in_handle.at(l_id));

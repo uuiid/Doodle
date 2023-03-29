@@ -75,7 +75,9 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::vector<st
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     auto l_r              = l_conn(l_pre);
 
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<assets_file>().get_name());
+    DOODLE_LOG_INFO(
+        "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<assets_file>().get_name()
+    );
   }
 }
 void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
@@ -91,7 +93,7 @@ void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::
     break;
   }
 
-  for (auto& row : l_conn(sqlpp::select(l_table.entityId, l_table.name, l_table.path,l_table.version,l_table.userRef)
+  for (auto& row : l_conn(sqlpp::select(l_table.entityId, l_table.name, l_table.path, l_table.version, l_table.userRef)
                               .from(l_table)
                               .where(l_table.entityId.is_null()))) {
     assets_file l_a{};
@@ -99,7 +101,7 @@ void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::
     l_a.path_attr(row.path.value());
     l_a.version_attr(row.version.value());
     l_a.user_attr(make_handle(row.userRef.value()));
-    auto l_id       = row.entityId.value();
+    auto l_id = row.entityId.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_assets.emplace_back(std::move(l_a));
       l_entts.emplace_back(in_handle.at(l_id));

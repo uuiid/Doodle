@@ -32,11 +32,11 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<std::i
   ));
 
   for (auto& l_h : l_handles) {
-    auto& l_shot          = l_h.get<comment>();
+    auto& l_shot               = l_h.get<comment>();
     l_pre.params.commentString = l_shot.p_comment;
-    l_pre.params.commentTime  = l_shot.p_time_info;
-    l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r              = l_conn(l_pre);
+    l_pre.params.commentTime   = l_shot.p_time_info;
+    l_pre.params.entityId      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto l_r                   = l_conn(l_pre);
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<comment>().get_name());
   }
 }
@@ -58,11 +58,11 @@ void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::vector<std::i
                                   .where(l_table.entityId == sqlpp::parameter(l_table.entityId)));
   for (auto& l_h : l_handles) {
     auto& l_shot               = l_h.get<comment>();
-    l_pre.params.commentString   = l_shot.p_comment;
-    l_pre.params.commentTime  = l_shot.p_time_info;
-    l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    l_pre.params.commentString = l_shot.p_comment;
+    l_pre.params.commentTime   = l_shot.p_time_info;
+    l_pre.params.entityId      = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r              = l_conn(l_pre);
+    auto l_r                   = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<comment>().get_name());
   }
 }
@@ -83,8 +83,8 @@ void sql_com<doodle::comment>::select(conn_ptr& in_ptr, const std::map<std::int6
                               .from(l_table)
                               .where(l_table.entityId.is_null()))) {
     comment l_s{};
-    l_s.p_comment      = row.commentString.value();
-    l_s.p_time_info  = row.commentTime.value();
+    l_s.p_comment   = row.commentString.value();
+    l_s.p_time_info = row.commentTime.value();
     auto l_id       = row.entityId.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_comment.emplace_back(std::move(l_s));

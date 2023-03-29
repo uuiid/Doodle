@@ -16,10 +16,7 @@ class DOODLE_CORE_API select {
 
   virtual ~select();
 
-  void operator()(entt::registry& in_registry,
-      const FSys::path& in_project_path,
-      conn_ptr& in_connect
-  );
+  void operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect);
 };
 
 }  // namespace database_n

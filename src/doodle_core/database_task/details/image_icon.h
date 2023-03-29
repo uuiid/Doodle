@@ -1,7 +1,7 @@
 #pragma once
 
-#include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/image_icon.h>
 
 namespace doodle::database_n {
 template <>

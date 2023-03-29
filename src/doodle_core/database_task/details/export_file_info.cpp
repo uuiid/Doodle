@@ -65,7 +65,8 @@ void sql_com<doodle::export_file_info>::update(conn_ptr& in_ptr, const std::vect
                                       l_table.startFrame  = sqlpp::parameter(l_table.startFrame),
                                       l_table.endFrame    = sqlpp::parameter(l_table.endFrame),
                                       l_table.refFile     = sqlpp::parameter(l_table.refFile),
-                                      l_table.exportType_ = sqlpp::parameter(l_table.exportType_))
+                                      l_table.exportType_ = sqlpp::parameter(l_table.exportType_)
+                                  )
                                   .where(l_table.entityId == sqlpp::parameter(l_table.entityId)));
   for (auto& l_h : l_handles) {
     auto& l_file             = l_h.get<export_file_info>();
@@ -108,8 +109,9 @@ void sql_com<doodle::export_file_info>::select(
     l_f.start_frame  = row.startFrame.value();
     l_f.end_frame    = row.endFrame.value();
     l_f.ref_file     = row.refFile.value();
-    l_f.export_type_ = magic_enum::enum_cast<export_file_info::export_type>(row.exportType_.value()).value_or(export_file_info::export_type::none);
-    auto l_id        = row.entityId.value();
+    l_f.export_type_ = magic_enum::enum_cast<export_file_info::export_type>(row.exportType_.value())
+                           .value_or(export_file_info::export_type::none);
+    auto l_id = row.entityId.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_file.emplace_back(std::move(l_f));
       l_entts.emplace_back(in_handle.at(l_id));

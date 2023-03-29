@@ -27,12 +27,12 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::
   ));
 
   for (auto& l_h : l_handles) {
-    auto& l_episodes             = l_h.get<episodes>();
+    auto& l_episodes      = l_h.get<episodes>();
     l_pre.params.eps      = l_episodes.p_episodes;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    
-    auto l_r                     = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),rttr::type::get<episodes>().get_name());
+
+    auto l_r              = l_conn(l_pre);
+    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<episodes>().get_name());
   }
 }
 
@@ -55,7 +55,7 @@ void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<std::
     l_pre.params.eps      = l_episodes.get_episodes();
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r                     = l_conn(l_pre);
+    auto l_r              = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<episodes>().get_name());
   }
 }
@@ -77,12 +77,10 @@ void sql_com<doodle::episodes>::select(conn_ptr& in_ptr, const std::map<std::int
       break;
     }
 
-    for (auto& row : l_conn(sqlpp::select(l_tabl.entityId, l_tabl.eps)
-                                .from(l_tabl)
-                                .where(l_tabl.entityId.is_null()))) {
+    for (auto& row : l_conn(sqlpp::select(l_tabl.entityId, l_tabl.eps).from(l_tabl).where(l_tabl.entityId.is_null()))) {
       episodes l_u{};
       l_u.p_episodes = row.eps.value();
-      auto l_id     = row.entityId.value();
+      auto l_id      = row.entityId.value();
 
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));

@@ -75,12 +75,11 @@ void sql_com<doodle::assets>::select(conn_ptr& in_ptr, const std::map<std::int64
     l_entts.reserve(raw.count.value());
     break;
   }
-  for (auto& row : l_conn(sqlpp::select(l_table.entityId, l_table.assetsPath)
-                              .from(l_table)
-                              .where(l_table.entityId.is_null()))) {
+  for (auto& row :
+       l_conn(sqlpp::select(l_table.entityId, l_table.assetsPath).from(l_table).where(l_table.entityId.is_null()))) {
     assets l_s{};
-    l_s.p_path      = row.assetsPath.value();
-    auto l_id       = row.entityId.value();
+    l_s.p_path = row.assetsPath.value();
+    auto l_id  = row.entityId.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_assets.emplace_back(std::move(l_s));
       l_entts.emplace_back(in_handle.at(l_id));
@@ -89,7 +88,7 @@ void sql_com<doodle::assets>::select(conn_ptr& in_ptr, const std::map<std::int64
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert(l_entts.begin(), l_entts.end(),l_assets.begin());
+  reg_->insert(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
 void sql_com<doodle::assets>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<sql::Assets>(in_ptr, in_handle);

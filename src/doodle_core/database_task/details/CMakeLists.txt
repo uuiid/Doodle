@@ -26,7 +26,7 @@ target_sources(doodle_core
         com_data.cpp
         update_ctx.cpp
         user.cpp
-        work_task.cpp 
+        work_task.cpp
         database.cpp
         episodes.cpp
         season.cpp

@@ -27,12 +27,12 @@ void sql_com<doodle::season>::insert(conn_ptr& in_ptr, const std::vector<std::in
   ));
 
   for (auto& l_h : l_handles) {
-    auto& l_season               = l_h.get<season>();
-    l_pre.params.pInt      = l_season.p_int;
+    auto& l_season        = l_h.get<season>();
+    l_pre.params.pInt     = l_season.p_int;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    
-    auto l_r                     = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),rttr::type::get<season>().get_name());
+
+    auto l_r              = l_conn(l_pre);
+    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<season>().get_name());
   }
 }
 
@@ -51,11 +51,11 @@ void sql_com<doodle::season>::update(conn_ptr& in_ptr, const std::vector<std::in
                                   .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
 
   for (auto& l_h : l_handles) {
-    auto& l_season      = l_h.get<season>();
-    l_pre.params.pInt      = l_season.get_season();
+    auto& l_season        = l_h.get<season>();
+    l_pre.params.pInt     = l_season.get_season();
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r                     = l_conn(l_pre);
+    auto l_r              = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<season>().get_name());
   }
 }
@@ -77,12 +77,11 @@ void sql_com<doodle::season>::select(conn_ptr& in_ptr, const std::map<std::int64
       break;
     }
 
-    for (auto& row : l_conn(sqlpp::select(l_tabl.entityId, l_tabl.pInt)
-                                .from(l_tabl)
-                                .where(l_tabl.entityId.is_null()))) {
+    for (auto& row :
+         l_conn(sqlpp::select(l_tabl.entityId, l_tabl.pInt).from(l_tabl).where(l_tabl.entityId.is_null()))) {
       season l_u{};
       l_u.p_int = row.pInt.value();
-      auto l_id     = row.entityId.value();
+      auto l_id = row.entityId.value();
 
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));
