@@ -15,6 +15,7 @@
 #include "doodle_app/gui/base/ref_base.h"
 #include "doodle_app/gui/show_message.h"
 #include "doodle_app/lib_warp/imgui_warp.h"
+
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <magic_enum.hpp>
@@ -46,9 +47,13 @@ class setting_windows::impl {
   std::string user_uuid;
   gui::gui_cache_name_id new_user_id{"生成新id"s};
   std::string title_name_;
+  bool open;
 };
 
-setting_windows::setting_windows() : p_i(std::make_unique<impl>()) { p_i->title_name_ = std::string{name}; }
+setting_windows::setting_windows() : p_i(std::make_unique<impl>()) {
+  p_i->title_name_ = std::string{name};
+  init();
+}
 
 void setting_windows::save() {
   auto& set                    = core_set::get_set();
@@ -86,7 +91,7 @@ void setting_windows::init() {
   p_i->p_maya_force_resolve_link.data  = core_set::get_set().maya_force_resolve_link;
 }
 
-void setting_windows::render() {
+bool setting_windows::render() {
   ImGui::InputText(*p_i->p_org_name.gui_name, &p_i->p_org_name.data);
   imgui::InputText(*p_i->p_user.gui_name, &(p_i->p_user.data));
   dear::Text(p_i->user_uuid);
@@ -111,6 +116,8 @@ void setting_windows::render() {
   dear::HelpMarker{"强制maya解析硬链接, 这个是在插件中使用的选项"s};
 
   if (imgui::Button("save")) save();
+
+  return p_i->open;
 }
 
 const std::string& gui::setting_windows::title() const { return p_i->title_name_; }

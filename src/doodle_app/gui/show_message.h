@@ -11,7 +11,7 @@
 
 namespace doodle::gui {
 
-class DOODLE_APP_API show_message : public base_windows<dear::PopupModal, show_message> {
+class DOODLE_APP_API show_message {
   class impl;
   std::unique_ptr<impl> p_i;
   std::string Message;
@@ -19,11 +19,11 @@ class DOODLE_APP_API show_message : public base_windows<dear::PopupModal, show_m
  public:
   explicit show_message();
   explicit show_message(const std::string& in_msg);
-  virtual ~show_message() override;
-  void set_attr() const;
+  virtual ~show_message();
+
   std::int32_t flags() const;
-  void render();
-  const std::string& title() const override;
+  bool render();
+  const std::string& title() const;
   show_message& set_message(const std::string& in_msg);  /// 设置消息内容
   std::string get_message();
 };

@@ -10,19 +10,19 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API project_edit : public base_windows<dear::Begin, project_edit> {
+class DOODLELIB_API project_edit {
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   project_edit();
-  ~project_edit() override;
+  ~project_edit();
 
   constexpr static std::string_view name{gui::config::menu_w::project_edit};
 
   void init();
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 
 }  // namespace doodle::gui

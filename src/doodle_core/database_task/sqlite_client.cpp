@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
@@ -28,9 +29,8 @@
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
-  database_info::value().path_ = in_path;
-  this->clear_scene();
-  auto& k_msg = g_reg()->ctx().emplace<process_message>();
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  auto& k_msg                                        = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
@@ -43,7 +43,7 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
 }
 
 bsys::error_code file_translator::open_end() {
-  core_set::get_set().add_recent_project(database_info::value().path_);
+  core_set::get_set().add_recent_project(doodle_lib::Get().ctx().get<database_info>().path_);
   g_reg()->ctx().at<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
@@ -80,36 +80,45 @@ bsys::error_code file_translator::save_end() {
   return {};
 }
 void file_translator::new_file_scene(const FSys::path& in_path) {
-  database_info::value().path_ = in_path;
-  this->clear_scene();
-  auto& l_s     = g_reg()->ctx().emplace<status_info>();
-  l_s.message   = "创建新项目";
-  l_s.need_save = true;
-}
-void file_translator::clear_scene() const {
-  boost::ignore_unused(this);
-  std::vector<gui::detail::windows_tick> windows_tick_com{};
-  std::vector<gui::detail::windows_render> windows_render_com{};
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_tick>().each()) {
-    windows_tick_com.emplace_back(l_render);
-  }
-  for (auto&& [l_e, l_render] : g_reg()->view<gui::detail::windows_render>().each()) {
-    windows_render_com.emplace_back(l_render);
-  }
-  g_reg()->clear();
-
-  for (auto&& l_c : windows_tick_com) {
-    make_handle().emplace<gui::detail::windows_tick>(l_c);
-  }
-  for (auto&& l_c : windows_render_com) {
-    make_handle().emplace<gui::detail::windows_render>(l_c);
-  }
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
+  auto& l_s                                          = g_reg()->ctx().emplace<status_info>();
+  l_s.message                                        = "创建新项目";
+  l_s.need_save                                      = true;
 }
 
 class sqlite_file::impl {
  public:
   registry_ptr registry_attr;
   bool error_retry{false};
+  template <typename T>
+  class impl_obs {
+    entt::observer obs_update;
+    entt::observer obs_create;
+
+   public:
+    impl_obs(const registry_ptr& in_registry_ptr)
+        : obs_update(*in_registry_ptr, entt::collector.update<database>().where<T>()),
+          obs_create(*in_registry_ptr, entt::collector.group<database, T>()) {}
+
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
+      obs_update.disconnect();
+      obs_create.disconnect();
+      database_n::sql_com<T>{in_registry_ptr}.select(in_conn, in_handle);
+      obs_update.connect(*in_registry_ptr, entt::collector.update<database>().where<T>());
+      obs_create.connect(*in_registry_ptr, entt::collector.group<database, T>());
+    };
+
+    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
+      database_n::sql_com<T> l_orm{in_registry_ptr};
+      l_orm.insert(in_conn, obs_create);
+      l_orm.update(in_conn, obs_update);
+      l_orm.destroy(in_conn, in_handle);
+      obs_update.clear();
+      obs_create.clear();
+    }
+
+    ~impl_obs() { obs_update.disconnect(); }
+  };
 
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
@@ -124,7 +133,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  auto l_k_con = database_info::value().get_connection_const();
+  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
   l_select(*ptr->registry_attr, in_path, l_k_con);
   return {};
 }
@@ -163,7 +172,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   }
 
   try {
-    auto l_k_con = database_info ::value().get_connection();
+    auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
     details::db_compatible::add_entity_table(*l_k_con);
     details::db_compatible::add_ctx_table(*l_k_con);
@@ -192,25 +201,14 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-    auto l_journal_file{in_path};
-    l_journal_file += "-journal";
-    if (FSys::exists(l_journal_file)) try {
-        FSys::remove(l_journal_file);
-      } catch (const FSys::filesystem_error& in_error2) {
-        DOODLE_LOG_INFO("无法删除数据库日志文件 {}", boost::diagnostic_information(in_error2));
-      }
-    if (ptr->error_retry) {  /// 重试时不进行下一步重试
-      g_reg()->ctx().at<status_info>().message = "重试失败, 不保存";
-      ptr->error_retry                         = false;
-    } else {
-      g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
-      ptr->error_retry                         = true;
-      ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
-      ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
-        this->async_save(l_path, [](boost::system::error_code in) -> void {});
-      });
-      ptr->error_timer->expires_from_now(3s);
-    }
+    g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
+    ptr->error_retry                         = true;
+    ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
+    ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
+      this->async_save(l_path, [](boost::system::error_code in) -> void {});
+    });
+    ptr->error_timer->expires_from_now(3s);
+    //    return in_error;
   }
 
   return {};

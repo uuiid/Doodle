@@ -6,11 +6,11 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/core/program_info.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
-#include <doodle_core/core/init_register.h>
 
 #include "core/doodle_lib.h"
 
@@ -58,7 +58,7 @@ void doodle_lib::init() {
   /// 创建依赖性
   ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
-  database_info::emplace();
+  ctx().emplace<database_info>();
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");
   ptr->reg->ctx().emplace<project_config::base_config>();
   ptr->reg->ctx().emplace<user::current_user>();
@@ -72,7 +72,7 @@ registry_ptr& doodle_lib::reg_attr() const { return ptr->reg; }
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 
-doodle_lib::~doodle_lib() { database_info::reset(); }
+doodle_lib::~doodle_lib() = default;
 
 registry_ptr& g_reg() { return doodle_lib::Get().ptr->reg; }
 boost::asio::io_context& g_io_context() { return *doodle_lib::Get().ptr->io_context_; }

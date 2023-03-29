@@ -10,8 +10,7 @@ namespace doodle::gui {
  * (.+?[:|：].+?)$
  *
  */
-class DOODLELIB_API extract_subtitles_widgets
-    : public base_windows<dear::Begin, extract_subtitles_widgets> {
+class DOODLELIB_API extract_subtitles_widgets {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -19,13 +18,13 @@ class DOODLELIB_API extract_subtitles_widgets
 
  public:
   extract_subtitles_widgets();
-  ~extract_subtitles_widgets() override;
+  ~extract_subtitles_widgets();
 
   void init();
 
   constexpr static std::string_view name{gui::config::menu_w::extract_subtitles};
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 
 }  // namespace doodle::gui

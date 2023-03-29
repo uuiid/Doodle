@@ -21,13 +21,19 @@
 
 namespace doodle {
 main_facet::main_facet() : facet::gui_facet() {
-  g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::image_to_move>();
+  g_reg()->ctx().emplace<image_to_move>() = std::make_shared<detail::image_to_move>();
 }
 
 void main_facet::load_windows() {
-  g_reg()->ctx().at<gui::layout_tick>()  = std::make_shared<gui::layout_window>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::menu_bar>();
-  make_handle().emplace<gui::gui_tick>() = std::make_shared<gui::main_status_bar>();
+  this->set_layout(gui::windows{std::in_place_type<gui::layout_window>});
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
+  );
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<gui::main_status_bar>().set_render_type<dear::ViewportSideBar>(
+          nullptr, ImGuiDir_Down
+      )
+  );
 }
 
 }  // namespace doodle

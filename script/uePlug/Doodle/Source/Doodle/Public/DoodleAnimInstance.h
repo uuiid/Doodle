@@ -26,6 +26,10 @@ class DOODLE_API UDoodleAnimInstance : public UAnimInstance {
 
   void NativeUpdateAnimation(float DeltaTimeX) override;
 
+  inline void SetDirectionAttrZ(float In_DirectionAttrZ) {
+    DirectionAttrZ = In_DirectionAttrZ;
+  };
+
  protected:
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Doodle")
   float VelocityAttr{0.f};

@@ -7,6 +7,7 @@
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/core/file_sys.h>
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_file.h>
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
@@ -22,9 +23,20 @@
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
-SQLPP_DECLARE_TABLE((sqlite_master), (type, text)(name, text)(tbl_name, text)(rootpage, int)(sql, text));
-
 namespace doodle::database_n::details {
+
+namespace sqlite_master_123 {
+
+namespace column {
+DOODLE_SQL_COLUMN_IMP(type, sqlpp::text, doodle::database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(name, sqlpp::text, doodle::database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(tbl_name, sqlpp::text, doodle::database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(rootpage, sqlpp::text, doodle::database_n::detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(sql, sqlpp::text, doodle::database_n::detail::can_be_null);
+}  // namespace column
+
+DOODLE_SQL_TABLE_IMP(sqlite_master, column::type, column::name, column::tbl_name, column::rootpage, column::sql);
+}  // namespace sqlite_master_123
 
 namespace sql = doodle_database;
 
@@ -100,7 +112,7 @@ std::tuple<std::uint32_t, std::uint32_t> get_version(sqlpp::sqlite3::connection&
     );
   }
 
-  throw_exception(doodle_error{"无法检查到数据库版本 {}", database_info::value().path_});
+  throw_exception(doodle_error{"无法检查到数据库版本 {}", doodle_lib::Get().ctx().get<database_info>().path_});
   return {};
 }
 
@@ -142,9 +154,7 @@ void db_compatible::set_version(sqlpp::sqlite3::connection& in_conn) {
   ));
 }
 bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
-  sqlite_master::sqlite_master sqlite_master_1{};
-
-  sqlite_master::sqlite_master l_master{};
+  const sqlite_master_123::sqlite_master l_master{};
   auto l_item = in_conn(sqlpp::select(sqlpp::all_of(l_master))
                             .from(l_master)
                             .where(l_master.type == "table" && l_master.name == "doodle_info"));
@@ -155,7 +165,7 @@ bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
 }
 
 bool db_compatible::has_metadatatab_table(sqlpp::sqlite3::connection& in_conn) {
-  sqlite_master::sqlite_master l_master{};
+  const sqlite_master_123::sqlite_master l_master{};
   auto l_item = in_conn(sqlpp::select(sqlpp::all_of(l_master))
                             .from(l_master)
                             .where(l_master.type == "table" && l_master.name == "metadatatab"));

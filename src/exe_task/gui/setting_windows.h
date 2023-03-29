@@ -10,7 +10,7 @@ namespace doodle::work_task {
  *
  * 临时作为登录的窗口, 后期可以进行分离
  */
-class setting_windows : public doodle::gui::base_windows<dear::Begin, setting_windows> {
+class setting_windows {
   /// @todo 需要属性用户id(uuid)
   /// @todo 需要属性用户名称
   /// @todo 需要属性用户部门
@@ -18,14 +18,14 @@ class setting_windows : public doodle::gui::base_windows<dear::Begin, setting_wi
 
  public:
   setting_windows();
-  ~setting_windows() override;
+  ~setting_windows();
 
   /// @todo 窗口id
   constexpr static std::string_view name{};
-  const std::string& title() const override;
+  const std::string& title() const;
   void init();
   /// @todo 这里需呀编辑
-  void render();
+  bool render();
   /// @todo 保存函数
   void save();
 };

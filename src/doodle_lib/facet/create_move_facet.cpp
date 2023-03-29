@@ -60,7 +60,9 @@ void open_console() {
 }  // namespace
 
 const std::string& create_move_facet::name() const noexcept { return name_; }
-void create_move_facet::operator()() {
+bool create_move_facet::post() {
+  if (!is_run) return is_run;
+
   //  open_console();
   //  logger_ctrl::get_log().add_log_sink(std::make_shared<spdlog::sinks::stdout_sink_mt>());
   if (!g_reg()->ctx().contains<image_to_move>())
@@ -77,11 +79,14 @@ void create_move_facet::operator()() {
       l_handle, l_json["image_attr"].get<std::vector<doodle::movie::image_attr>>(),
       [l_w = boost::asio::make_work_guard(g_io_context())]() { app_base::Get().stop_app(); }
   );
+  return is_run;
 }
 void create_move_facet::deconstruction() {}
 void create_move_facet::add_program_options() {
-  opt.add_options()("config_path", boost::program_options::value(&files_attr), "创建视频的序列json选项");
-  auto& l_p = program_options::value();
+  opt.add_options()("config_path", boost::program_options::value(&files_attr), "创建视频的序列json选项")(
+      "config_path", boost::program_options::bool_switch(&is_run), "创建视屏"
+  );
+  auto& l_p = doodle_lib::Get().ctx().get<program_options>();
   l_p.add_opt(opt);
 }
 }  // namespace doodle::facet

@@ -28,7 +28,7 @@ struct loop_ {
 BOOST_FIXTURE_TEST_SUITE(move, loop_, *boost::unit_test::disabled())
 
 BOOST_AUTO_TEST_CASE(create) {
-  program_info::emplace();
+  doodle_lib::Get().ctx().emplace<program_info>();
   g_reg()->ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   auto l_h = make_handle();
   FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};
@@ -85,7 +85,7 @@ class maya_create_movie : public doodle::detail::image_to_movie_interface {
 };
 
 BOOST_AUTO_TEST_CASE(sub_create) {
-  program_info::emplace();
+  doodle_lib::Get().ctx().emplace<program_info>();
   auto l_exe = std::make_shared<maya_create_movie>();
   auto l_h   = make_handle();
   FSys::path l_image_path{R"(D:\tmp\image_test_ep002_sc001)"};

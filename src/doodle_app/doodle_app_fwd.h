@@ -20,9 +20,9 @@ namespace details {
 class main_proc_handle;
 
 }
-using main_proc_handle = entt::locator<gui::details::main_proc_handle>;
+using main_proc_handle = gui::details::main_proc_handle;
 }  // namespace gui
 
-using program_options = entt::locator<details::program_options>;
+using program_options = details::program_options;
 
 }  // namespace doodle

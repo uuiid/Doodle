@@ -29,8 +29,9 @@ app_base::app_base()
       ),
       stop_(false),
       lib_ptr(std::make_shared<doodle_lib>()) {
-  self                            = this;
-  program_info::emplace().handle_ = ::GetModuleHandleW(nullptr);
+  self                   = this;
+  auto&& l_program_info  = lib_ptr->ctx().emplace<program_info>();
+  l_program_info.handle_ = ::GetModuleHandleW(nullptr);
   init();
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
   l_timer->expires_after(1s);
@@ -56,9 +57,8 @@ void app_base::init() {
   DOODLE_LOG_INFO("寻找到自身exe {}", core_set::get_set().program_location());
   boost::asio::post(g_io_context(), [this]() { this->post_constructor(); });
 }
-app_base::~app_base() { program_info::reset(); }
+app_base::~app_base() = default;
 
-std::atomic_bool& app_base::stop() { return stop_; }
 app_base& app_base::Get() { return *self; }
 std::int32_t app_base::run() {
   g_io_context().run();
@@ -70,13 +70,9 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(bool in_stop) {
-  g_reg()->clear<gui::detail::windows_tick, gui::detail::windows_render>();
-  program_info::value().is_stop = true;
-  this->stop_                   = true;
+  lib_ptr->ctx().emplace<program_info>().is_stop = true;
   this->deconstruction();
   core_set_init{}.write_file();
-  //  boost::asio::post(g_io_context(), [=]() {
-  //  });
 }
 
 void app_base::load_project(const FSys::path& in_path) const {

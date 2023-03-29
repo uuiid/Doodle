@@ -10,20 +10,20 @@
 #include <vector>
 
 namespace doodle::gui {
-class DOODLELIB_API time_sequencer_widget : public base_windows<dear::Begin, time_sequencer_widget> {
+class DOODLELIB_API time_sequencer_widget {
   class impl;
   std::unique_ptr<impl> p_i;
 
-  void fliter_select( );
+  void fliter_select();
   void gen_user();
   void refresh_work_rule();
 
  public:
   time_sequencer_widget();
-  ~time_sequencer_widget() override;
+  ~time_sequencer_widget();
 
   constexpr static std::string_view name = config::menu_w::time_edit;
-  [[nodiscard]] const std::string& title() const override;
-  void render();
+  [[nodiscard]] const std::string& title() const;
+  bool render();
 };
 }  // namespace doodle::gui

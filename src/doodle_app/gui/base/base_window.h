@@ -12,85 +12,197 @@
 
 #include <utility>
 
+namespace doodle::facet {
+class gui_facet;
+}
 namespace doodle::gui {
-// namespace details {
-// using hock_t = boost::intrusive::list_base_hook<
-//     boost::intrusive::link_mode<
-//         boost::intrusive::auto_unlink>>;
-//
-// }
 
-namespace detail {
+namespace details {
 
-template <typename dear_type, typename windows_type>
-class windows_tack_warp : public detail::windows_render_interface {
- protected:
-  windows_type& self_() { return *dynamic_cast<windows_type*>(this); };
-  enum class state_enum : std::uint8_t { none = 0, set_attr, init };
+#define DOODLE_HAS_VALUE(name)                                                        \
+  template <typename type_t, typename = void>                                         \
+  struct has_##name : std::false_type {};                                             \
+  template <typename type_t>                                                          \
+  struct has_##name<type_t, std::void_t<decltype(type_t::name)>> : std::true_type {}; \
+  template <typename type_t>                                                          \
+  static constexpr bool has_##name##_v = has_##name<type_t>::value;
 
-  bool show_attr{};
-  state_enum state_attr{};
+DOODLE_HAS_VALUE(name);
+DOODLE_HAS_VALUE(flags);
+DOODLE_HAS_VALUE(sizexy);
 
-  template <typename T = windows_type>
-  auto call_self(std::integral_constant<state_enum, state_enum::set_attr>)
-      -> decltype(std::declval<T>().set_attr(), void()) {
-    self_().set_attr();
+#undef DOODLE_HAS_VALUE
+}  // namespace details
+
+class windows_init_arg;
+
+class windows_manage {
+  std::vector<windows_init_arg> args_{};
+
+  class warp_w;
+  using warp_w_ptr = std::shared_ptr<warp_w>;
+  std::vector<warp_w_ptr> windows_list_{};
+  std::vector<warp_w_ptr> windows_list_next_{};
+
+  std::atomic_bool is_render_tick_p_;
+
+  facet::gui_facet* gui_facet_;
+
+  class render_guard {
+    windows_manage* ptr_;
+
+   public:
+    explicit render_guard(windows_manage* in_gui_facet) : ptr_(in_gui_facet) { ptr_->is_render_tick_p_ = true; }
+    ~render_guard() { ptr_->is_render_tick_p_ = false; }
   };
 
-  template <typename T = windows_type>
-  auto call_self(std::integral_constant<state_enum, state_enum::init>) -> decltype(std::declval<T>().init(), void()) {
-    self_().init();
-  };
-  template <typename T = windows_type>
-  auto call_self(...){};
-
-  virtual std::int32_t flags() { return {}; };
+  bool has_windows(const std::string_view& in_info);
+  void show_windows(const std::string_view& in_info);
 
  public:
-  virtual ~windows_tack_warp() = default;
+  windows_manage(facet::gui_facet* in_facet) : gui_facet_(in_facet){};
 
-  bool tick() override {
-    if (state_attr == state_enum::none) {
-      call_self(std::integral_constant<state_enum, state_enum::set_attr>{});
-      state_attr = state_enum::set_attr;
-      show_attr  = true;
-    }
+  void create_windows_arg(const windows_init_arg& in_arg);
 
-    dear_type l_dear_{title().data(), &show_attr, self_().flags()};
+  void tick();
+  template <typename T>
+  std::enable_if_t<details::has_name_v<T>> open_windows() {
+    if (has_windows(T::name)) return;
+    show_windows(T::name);
+  };
 
-    l_dear_&& [this]() {
-      if (state_attr == state_enum::set_attr) {
-        call_self(std::integral_constant<state_enum, state_enum::init>{});
-        state_attr = state_enum::init;
-      } else {
-        self_().render();
-      }
+  void show_windows();
+};
+
+class windows_init_arg {
+  friend class windows_manage;
+  using dear_types = std::variant<dear::Popup, dear::Begin, dear::MainMenuBar, dear::ViewportSideBar>;
+
+  enum class render_enum : std::uint8_t {
+    kpopup = 0,
+    kbegin,
+    kmain_menu_bar,
+    kviewport_side_bar,
+  };
+
+  bool init_show_{true};
+  render_enum render_enum_{};
+  std::int32_t flags_{};
+  std::array<float, 2> size_xy_{};
+  std::string title_{};
+  std::shared_ptr<std::function<windows()>> create_factory_{};
+  std::function<dear_types(windows_init_arg*)> create_guard_{};
+
+  template <typename type_t, std::enable_if_t<details::has_flags_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_flags() {
+    flags_ = type_t::flags;
+    return *this;
+  }
+  template <typename type_t, std::enable_if_t<!details::has_flags_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_flags() {
+    return *this;
+  }
+  template <typename type_t, std::enable_if_t<details::has_sizexy_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_sizexy() {
+    size_xy_ = type_t::sizexy;
+    return *this;
+  }
+  template <typename type_t, std::enable_if_t<!details::has_sizexy_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_sizexy() {
+    return *this;
+  }
+
+  template <typename type_t, std::enable_if_t<details::has_name_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_name() {
+    title_ = std::string{type_t::name};
+    return *this;
+  }
+  template <typename type_t, std::enable_if_t<!details::has_name_v<type_t>>* = nullptr>
+  inline windows_init_arg& get_default_name() {
+    return *this;
+  }
+
+ public:
+  windows_init_arg() = default;
+
+  template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Popup>>* = nullptr>
+  inline windows_init_arg& set_render_type() {
+    create_guard_ = [](windows_init_arg* in) {
+      return dear_types{std::in_place_type_t<dear::Popup>{}, in->title_.data(), in->flags_};
     };
+    render_enum_ = render_enum::kpopup;
 
-    //    show_attr = ImGui::IsWindowAppearing();
+    return *this;
+  };
+  template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Begin>>* = nullptr>
+  inline windows_init_arg& set_render_type() {
+    create_guard_ = [](windows_init_arg* in) {
+      return dear_types{std::in_place_type_t<dear::Begin>{}, in->title_.data(), &in->init_show_, in->flags_};
+    };
+    render_enum_ = render_enum::kbegin;
+    return *this;
+  };
+  template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::MainMenuBar>>* = nullptr>
+  inline windows_init_arg& set_render_type() {
+    create_guard_ = [](windows_init_arg*) { return dear_types{std::in_place_type_t<dear::MainMenuBar>{}}; };
+    title_        = "dear::MainMenuBar";
+    render_enum_  = render_enum::kmain_menu_bar;
+    return *this;
+  };
+  template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::ViewportSideBar>>* = nullptr>
+  inline windows_init_arg& set_render_type(ImGuiViewport* viewport, const ImGuiDir& dir) {
+    create_guard_ = [viewport, dir](windows_init_arg* in) {
+      float height = ImGui::GetFrameHeight();
+      return dear_types{std::in_place_type_t<dear::ViewportSideBar>{}, in->title_, viewport, dir, height, in->flags_};
+    };
+    render_enum_ = render_enum::kviewport_side_bar;
+    return *this;
+  };
 
-    /// 显示时返回 false 不删除
-    return !show_attr;
+  inline windows_init_arg& set_init_hide(bool is_show = false) {
+    init_show_ = is_show;
+    return *this;
+  };
+  inline windows_init_arg& set_flags(std::int32_t in_flags) {
+    flags_ = in_flags;
+    return *this;
+  };
+
+  inline windows_init_arg& set_size(float in_x, float in_y) {
+    size_xy_ = {in_x, in_y};
+    return *this;
+  }
+  inline windows_init_arg& set_title(const std::string& in_string) {
+    title_ = in_string;
+    return *this;
+  }
+
+  template <typename t, typename... arg>
+  std::enable_if_t<details::has_name_v<t>, windows_init_arg&> create_set_title(arg&&... in_arg) {
+    create<t>(std::forward<arg&&>(in_arg)...);
+    set_render_type<dear::Begin>();
+    return *this;
+  }
+
+  template <typename t, typename... arg>
+  windows_init_arg& create(arg&&... in_arg) {
+    create_factory_ = std::make_shared<decltype(create_factory_)::element_type>(
+        [l_arg = std::make_tuple(std::move(in_arg)...)]() -> windows {
+          return std::apply(
+              [](auto&&... in_args) -> windows {
+                return windows{std::in_place_type<t>, std::move(in_args)...};
+              },
+              std::move(l_arg)
+          );
+        }
+    );
+    get_default_flags<t>();
+    get_default_sizexy<t>();
+    get_default_name<t>();
+    return *this;
   };
 };
 
-std::tuple<entt::handle, doodle::gui::detail::windows_render> DOODLE_APP_API find_windows(const std::string& in_name);
-}  // namespace detail
-template <typename dear_type, typename windows_type>
-using base_windows = doodle::gui::detail::windows_tack_warp<dear_type, windows_type>;
-using gui_tick     = doodle::gui::detail::windows_tick;
-using layout_tick  = doodle::gui::detail::layout_tick;
-using gui_windows  = doodle::gui::detail::windows_render;
-
-template <typename T, typename... Args>
-std::tuple<entt::handle, std::shared_ptr<T>> show_windows(Args... in_arg) {
-  if (auto&& [l_h, l_ptr] = doodle::gui::detail::find_windows(std::string{T::name}); l_h && l_ptr) {
-    return std::make_tuple(l_h, std::dynamic_pointer_cast<T>(l_ptr));
-  } else {
-    auto l_h2 = make_handle();
-    auto l_w  = l_h2.emplace<gui_windows>(std::make_shared<T>(std::forward<Args>(in_arg)...));
-    return std::make_tuple(l_h2, std::dynamic_pointer_cast<T>(l_w));
-  }
-};
+windows_manage& g_windows_manage();
 
 }  // namespace doodle::gui

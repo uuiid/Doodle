@@ -9,21 +9,22 @@
 #include <maya_plug/configure/static_value.h>
 
 namespace doodle::maya_plug {
-class create_sim_cloth : public gui::base_windows<dear::Begin, create_sim_cloth> {
+class create_sim_cloth {
   std::vector<entt::handle> p_list;
 
   entt::handle p_coll;
   std::string title_name_;
+  bool open{true};
   void run_comm();
 
  public:
   create_sim_cloth();
-  ~create_sim_cloth() override;
+  ~create_sim_cloth();
 
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::create_sim_cloth;
 
-  void render();
-  const std::string& title() const override;
+  bool render();
+  const std::string& title() const;
 };
 
 }  // namespace doodle::maya_plug

@@ -6,6 +6,7 @@
 //
 
 #include <doodle_core/core/core_sql.h>
+#include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/pin_yin/convert.h>
 
@@ -17,7 +18,7 @@
 using namespace doodle;
 namespace sql = doodle_database;
 BOOST_AUTO_TEST_CASE(test_sqlite3_insert) {
-  auto l_sql_conn = database_info::value_or().get_connection();
+  auto l_sql_conn = doodle_lib::Get().ctx().emplace<database_info>().get_connection();
 
   l_sql_conn->execute(R"(
 create table if not exists entity

@@ -394,6 +394,7 @@ class xlsx_export_widgets::impl {
   gui_cache<std::string> episodes_fmt_str{"集数格式化"s, "EP {}"s};
   gui_cache<std::string> shot_fmt_str{"镜头格式化"s, "sc {}{}"s};
   std::string title_name_;
+  bool open{true};
 
   gui_cache_name_id gen_table{"生成表"};
   gui_cache_name_id export_table{"导出表"};
@@ -415,6 +416,7 @@ class xlsx_export_widgets::impl {
 
 xlsx_export_widgets::xlsx_export_widgets() : p_i(std::make_unique<impl>()) {
   p_i->title_name_ = std::string{name};  // 获取上一次人物提交时的实体name
+  init();
 }
 xlsx_export_widgets::~xlsx_export_widgets() = default;  /// 析构释放内存
 
@@ -442,20 +444,25 @@ void xlsx_export_widgets::init() {
   p_i->combox_month.cache()               = {l_y, l_m};
 }
 
-void xlsx_export_widgets::render() {
+bool xlsx_export_widgets::render() {
   if (ImGui::InputText(*p_i->export_path.gui_name, &p_i->export_path.data)) {
     p_i->export_path.path = p_i->export_path.data;
     p_i->export_path.stem = p_i->export_path.path.stem();
   }
   ImGui::SameLine();
   if (ImGui::Button("选择")) {
-    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
-    l_file->async_read([this](const FSys::path &in) {
-      p_i->export_path.path = in / "tmp.xlsx";
-      p_i->export_path.stem = "tmp";
-      p_i->export_path.data = p_i->export_path.path.generic_string();
-    });
-    make_handle().emplace<gui_windows>(l_file);
+    g_windows_manage().create_windows_arg(
+
+        windows_init_arg{}
+            .create<file_dialog>(file_dialog::dialog_args{}.set_use_dir().async_read([this](const FSys::path &in) {
+              p_i->export_path.path = in / "tmp.xlsx";
+              p_i->export_path.stem = "tmp";
+              p_i->export_path.data = p_i->export_path.path.generic_string();
+            }))
+            .set_render_type<dear::Popup>()
+            .set_title("选择目录"s)
+
+    );
   }
 
   dear::TreeNode{*p_i->advanced_setting} && [&]() {
@@ -495,6 +502,8 @@ void xlsx_export_widgets::render() {
 
   // 渲染表格
   p_i->xlsx_table_gui_.render();
+
+  return p_i->open;
 }
 
 const std::string &xlsx_export_widgets::title() const { return p_i->title_name_; }
@@ -526,9 +535,10 @@ void xlsx_export_widgets::generate_table() {
 
 void xlsx_export_widgets::export_xlsx() {
   if (p_i->list.empty()) {
-    auto l_msg = std::make_shared<show_message>();
-    l_msg->set_message("过滤后为空, 不导出");
-    make_handle().emplace<gui_windows>() = l_msg;
+    g_windows_manage().create_windows_arg(windows_init_arg{}
+                                              .create<show_message>("过滤后为空, 不导出")
+                                              .set_title("显示消息")
+                                              .set_render_type<dear::Popup>());
     DOODLE_LOG_INFO("过滤后为空, 不导出");
     return;
   }
@@ -579,9 +589,9 @@ void xlsx_export_widgets::export_xlsx() {
   }
 
   /// 导出表格
-  auto l_msg     = std::make_shared<show_message>();
-  FSys::path l_p = p_i->export_path.path.parent_path();
-  auto path      = p_i->export_path.path;
+
+  const FSys::path l_p{p_i->export_path.path.parent_path()};
+  auto path = p_i->export_path.path;
   for (auto i = 1; i < 100; ++i) {
     FSys::ofstream l_f{path, FSys::ofstream::binary};
     if (l_f.fail()) {
@@ -590,9 +600,13 @@ void xlsx_export_widgets::export_xlsx() {
     }
     p_i->export_path.path = path;
     p_i->export_path.data = path.generic_string();
-    l_msg->set_message(fmt::format("成功导出到路径{}", p_i->export_path.data));
-    make_handle().emplace<gui_windows>() = l_msg;
     wbOut.save(l_f);
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<show_message>(fmt::format("成功导出到路径{}", p_i->export_path.data))
+            .set_title("显示消息")
+            .set_render_type<dear::Popup>()
+    );
     break;
   }
 }
@@ -611,9 +625,9 @@ bool xlsx_export_widgets::get_work_time() {
   if (!p_i->attendance_ptr) p_i->attendance_ptr = std::make_shared<business::attendance_rule>();
 
   if (p_i->list.empty()) {
-    auto l_msg = std::make_shared<show_message>();
-    l_msg->set_message("筛选后为空");
-    make_handle().emplace<gui_windows>() = l_msg;
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create<show_message>("筛选后为空").set_title("显示消息").set_render_type<dear::Popup>()
+    );
     return false;
   }
 
@@ -638,9 +652,11 @@ bool xlsx_export_widgets::get_work_time() {
 
           if (in_code) {
             l_p.set_state(l_p.fail);
-            auto l_msg = std::make_shared<show_message>();
-            l_msg->set_message(fmt::format("{}", in_code.what()));
-            make_handle().emplace<gui_windows>() = l_msg;
+
+            g_windows_manage().create_windows_arg(windows_init_arg{}
+                                                      .create<show_message>(fmt::format("{}", in_code.what()))
+                                                      .set_render_type<dear::Popup>()
+                                                      .set_title("显示消息"));
             return;
           }
           if ((--p_i->user_size) == 0) {

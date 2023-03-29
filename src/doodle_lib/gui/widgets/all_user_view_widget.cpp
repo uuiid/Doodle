@@ -35,6 +35,7 @@ class all_user_view_widget::impl {
   time_sequencer_widget_ns::time_rules_render time_rules_render_attr{};
   bool has_init{false};
   gui_cache_name_id delete_user{"删除用户"};
+  bool open;
 
   void get_all_user_data() {
     auto l_v = g_reg()->view<database, user>();
@@ -76,7 +77,7 @@ class all_user_view_widget::impl {
 
 all_user_view_widget::all_user_view_widget() : ptr(std::make_unique<impl>()) {}
 
-void all_user_view_widget::render() {
+bool all_user_view_widget::render() {
   if (!ptr->has_init) {
     ptr->get_all_user_data();
     ptr->has_init = true;
@@ -98,6 +99,7 @@ void all_user_view_widget::render() {
   if (ptr->time_rules_render_attr.render()) {
     ptr->rules_(ptr->time_rules_render_attr.rules_attr());
   }
+  return ptr->open;
 }
 const std::string& all_user_view_widget::title() const { return ptr->title_name_; }
 

@@ -11,9 +11,10 @@ namespace doodle::gui {
 /**
  * @brief
  */
-class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_panel> {
+class DOODLE_APP_API file_panel {
   class impl;
   class path_info;
+  bool open{};
   enum class sort_by : std::int16_t {
     none = 0,
     name = 1,
@@ -60,6 +61,7 @@ class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_pan
     std::vector<std::string> filter;
     std::string title;
     FSys::path pwd;
+    mult_fun call_fun;
     bool multiple_attr{false};
 
    public:
@@ -73,6 +75,8 @@ class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_pan
     dialog_args& add_filter(const std::string& in_filter);
     dialog_args& set_pwd(const FSys::path& in_pwd);
     dialog_args& use_default_pwd();
+    dialog_args& async_read(one_fun&& in_fun);
+    dialog_args& async_read(mult_fun&& in_fun);
   };
   /**
    * @brief 创建文件选择对话框
@@ -82,15 +86,15 @@ class DOODLE_APP_API file_panel : public base_windows<dear::PopupModal, file_pan
   explicit file_panel(const dialog_args& in_args);
   virtual ~file_panel();
 
-  [[nodiscard]] std::string& title() const override;
+  [[nodiscard]] std::string& title() const;
   void init();
 
-  void render();
-  void set_attr();
-  std::int32_t flags() const;
+  static constexpr std::int32_t flags{ImGuiWindowFlags_NoSavedSettings};
+  //  static constexpr std::array<float, 2> sizexy{640, 360};
+  //  static constexpr std::string_view name{"设置项目"};
 
-  file_panel& async_read(one_fun&& in_fun);
-  file_panel& async_read(mult_fun&& in_fun);
+  bool render();
+  void set_attr();
 };
 
 using file_dialog = file_panel;

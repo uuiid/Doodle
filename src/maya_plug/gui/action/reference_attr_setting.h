@@ -37,7 +37,7 @@ using data_ptr = std::shared_ptr<data>;
  * @li 在没有引用文件标记时， 使用所有载入的应用进行解算
  *
  */
-class reference_attr_setting : public gui::base_windows<dear::Begin, reference_attr_setting> {
+class reference_attr_setting {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -46,11 +46,11 @@ class reference_attr_setting : public gui::base_windows<dear::Begin, reference_a
 
  public:
   reference_attr_setting();
-  ~reference_attr_setting() override;
+  ~reference_attr_setting();
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::reference_attr_setting;
 
-  void render();
-  const std::string& title() const override;
+  bool render();
+  const std::string& title() const;
 };
 
 }  // namespace doodle::maya_plug

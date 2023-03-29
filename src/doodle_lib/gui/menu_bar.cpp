@@ -20,7 +20,6 @@
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
-#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/gui/widgets/edit_widget.h>
 #include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
 #include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
@@ -29,6 +28,7 @@
 #include <doodle_lib/gui/widgets/subtitle_processing.h>
 #include <doodle_lib/gui/widgets/time_sequencer_widget.h>
 #include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
 #include "gui/widgets/work_hour_filling.h"
@@ -37,26 +37,26 @@
 
 namespace doodle::gui {
 void menu_bar::menu_windows() {
-  if (dear::MenuItem(setting_windows::name.data())) show_windows<setting_windows>();
-  if (dear::MenuItem(project_edit::name.data())) show_windows<project_edit>();
-  if (dear::MenuItem(edit_widgets::name.data())) show_windows<edit_widgets>();
-  if (dear::MenuItem(assets_filter_widget::name.data())) show_windows<assets_filter_widget>();
-  if (dear::MenuItem(xlsx_export_widgets::name.data())) show_windows<xlsx_export_widgets>();
-  if (dear::MenuItem(maya_tool::name.data())) show_windows<maya_tool>();
-  if (dear::MenuItem(create_video::name.data())) show_windows<create_video>();
-  if (dear::MenuItem(extract_subtitles_widgets::name.data())) show_windows<extract_subtitles_widgets>();
-  if (dear::MenuItem(subtitle_processing::name.data())) show_windows<subtitle_processing>();
-  if (dear::MenuItem(assets_file_widgets::name.data())) show_windows<assets_file_widgets>();
-  if (dear::MenuItem(long_time_tasks_widget::name.data())) show_windows<long_time_tasks_widget>();
-  if (dear::MenuItem(time_sequencer_widget::name.data())) show_windows<time_sequencer_widget>();
-  if (dear::MenuItem(all_user_view_widget::name.data())) show_windows<all_user_view_widget>();
-  if (dear::MenuItem(ue4_widget::name.data())) show_windows<ue4_widget>();
-  if (dear::MenuItem(work_hour_filling::name.data())) show_windows<work_hour_filling>();
+  if (dear::MenuItem(setting_windows::name.data())) g_windows_manage().open_windows<setting_windows>();
+  if (dear::MenuItem(project_edit::name.data())) g_windows_manage().open_windows<project_edit>();
+  if (dear::MenuItem(edit_widgets::name.data())) g_windows_manage().open_windows<edit_widgets>();
+  if (dear::MenuItem(assets_filter_widget::name.data())) g_windows_manage().open_windows<assets_filter_widget>();
+  if (dear::MenuItem(xlsx_export_widgets::name.data())) g_windows_manage().open_windows<xlsx_export_widgets>();
+  if (dear::MenuItem(maya_tool::name.data())) g_windows_manage().open_windows<maya_tool>();
+  if (dear::MenuItem(create_video::name.data())) g_windows_manage().open_windows<create_video>();
+  if (dear::MenuItem(extract_subtitles_widgets::name.data()))
+    g_windows_manage().open_windows<extract_subtitles_widgets>();
+  if (dear::MenuItem(subtitle_processing::name.data())) g_windows_manage().open_windows<subtitle_processing>();
+  if (dear::MenuItem(assets_file_widgets::name.data())) g_windows_manage().open_windows<assets_file_widgets>();
+  if (dear::MenuItem(long_time_tasks_widget::name.data())) g_windows_manage().open_windows<long_time_tasks_widget>();
+  if (dear::MenuItem(time_sequencer_widget::name.data())) g_windows_manage().open_windows<time_sequencer_widget>();
+  if (dear::MenuItem(all_user_view_widget::name.data())) g_windows_manage().open_windows<all_user_view_widget>();
+  //  if (dear::MenuItem(work_hour_filling::name.data())) g_windows_manage().open_windows<work_hour_filling>();
 }
 void menu_bar::message(const std::string &in_m) {
-  auto in_s = std::make_shared<show_message>();
-  in_s->set_message(in_m);
-  make_handle().emplace<gui::gui_windows>() = in_s;
+  g_windows_manage().create_windows_arg(
+      windows_init_arg{}.create<show_message>(in_m).set_title("显示消息").set_render_type<dear::Popup>()
+  );
 }
 
 void menu_bar::menu_tool() {
@@ -85,15 +85,18 @@ void menu_bar::menu_tool() {
   if (dear::MenuItem("安装ue4项目插件")) {
     std::string l_message = "安装ue4项目插件{}";
     try {
-      auto l_file =
-          std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择ue4项目文件").add_filter(".uproject")
-          );
-      auto l_f_h = make_handle();
-      l_f_h.emplace<gui_windows>(l_file);
-      l_file->async_read([l_f_h](const FSys::path &in) mutable {
-        toolkit::installUePath(in);
-        l_f_h.destroy();
-      });
+      g_windows_manage().create_windows_arg(
+          windows_init_arg{}
+              .create<file_dialog>(
+                  file_dialog::dialog_args{}.add_filter(".uproject").async_read([](const FSys::path &in) mutable {
+                    toolkit::installUePath(in);
+                  })
+              )
+              .set_title("选择ue4项目文件")
+              .set_render_type<dear::Popup>()
+
+      );
+
       l_message = fmt::format(l_message, "成功");
     } catch (const FSys::filesystem_error &error) {
       l_message = fmt::format(l_message, fmt::format("失败{} ", error.what()));

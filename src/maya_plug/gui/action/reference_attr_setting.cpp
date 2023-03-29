@@ -39,6 +39,7 @@ class reference_attr_setting::impl {
   std::vector<entt::handle> p_handles;
   entt::handle p_current_select;
   std::string title_name_;
+  bool open{};
 
   ::doodle::gui::gui_cache<bool> simple_subsampling{"simple subsampling", true};
   ::doodle::gui::gui_cache<std::int32_t> frame_samples{"frame samples"s, 6};
@@ -116,7 +117,7 @@ bool reference_attr_setting::get_file_info() {
   return true;
 }
 
-void reference_attr_setting::render() {
+bool reference_attr_setting::render() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   if (imgui::Button("保存")) {
     maya_file_io::chick_channel();
@@ -206,6 +207,7 @@ void reference_attr_setting::render() {
       }
     }
   };
+  return p_i->open;
 }
 
 void reference_attr_setting::clear() { destroy_handle(p_i->p_handles); }

@@ -25,15 +25,5 @@ class DOODLE_API ADoodleAiCrowd : public ACharacter {
 
  public:
   // Called every frame
-  virtual void Tick(float DeltaTime) override;
-
-  /** 这个是看向(false)或者走向(true)的物体 */
-  UPROPERTY(EditAnywhere, Category = "Doodle")
-  bool MoveTo{};
-
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Doodle", DisplayName = "Org")
-  FVector Direction;
-
- private:
-  FVector p_Point;
+  // virtual void Tick(float DeltaTime) override;
 };

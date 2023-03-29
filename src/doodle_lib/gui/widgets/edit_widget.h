@@ -26,7 +26,7 @@ class edit_assets_data {
  * 在没有计算出文件路径的时候, 其中,名称为空
  *
  */
-class DOODLELIB_API edit_widgets : public gui::base_windows<dear::Begin, edit_widgets> {
+class DOODLELIB_API edit_widgets {
   class impl;
   std::unique_ptr<impl> p_i;
 
@@ -60,13 +60,13 @@ class DOODLELIB_API edit_widgets : public gui::base_windows<dear::Begin, edit_wi
    *
    */
   void init();
-  [[nodiscard("")]] const std::string& title() const override;
+  [[nodiscard("")]] const std::string& title() const;
   /**
    * @brief 每帧刷新函数
    *
    * @param data 自定义数据
    */
-  void render();
+  bool render();
 };
 
 }  // namespace doodle::gui

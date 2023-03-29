@@ -16,6 +16,27 @@ FDoodleCreateCharacterConfigUINode& UCreateCharacterMianTreeItem::Get() {
   return Config->ListTrees[ConfigNode_Index];
 }
 
+UCreateCharacterMianTreeItem::operator bool() const {
+  return Config && ConfigNode_Index != INDEX_NONE && ConfigNode_Index < Config->ListTrees.Num();
+}
+
+TRange<FFrameNumber> UCreateCharacterMianTreeItem::GetPlaybackRange() {
+  if (*this) {
+    return TRange<FFrameNumber>{
+        (Get().MinValue * FFrameRate{}).FloorToFrame(),
+        (Get().MaxValue * FFrameRate{}).FloorToFrame()};
+  } else
+    return TRange<FFrameNumber>();
+}
+
+void UCreateCharacterMianTreeItem::SetPlaybackRange(const TRange<FFrameNumber>& In_Range) {
+  if (*this) {
+    Get().MinValue = In_Range.GetLowerBoundValue() / FFrameRate{};
+    Get().MaxValue = In_Range.GetUpperBoundValue() / FFrameRate{};
+    OnSetRange.ExecuteIfBound();
+  }
+}
+
 class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType> {
  public:
   using Super = SMultiColumnTableRow<SCreateCharacterTree::TreeVirwWeightItemType>;
@@ -68,12 +89,15 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     }
 
     if (InColumnName == SCreateCharacterTree::G_Value && ItemData && *ItemData && !ItemData->Get().Keys.IsEmpty()) {
+      if (!ItemData->OnSetRange.IsBound())
+        ItemData->OnSetRange.BindLambda([this]() { Slider->SetMinAndMaxValues(ItemData->Get().MinValue, ItemData->Get().MaxValue); });
+
       return SNew(SHorizontalBox)
              // clang-format off
                + SHorizontalBox::Slot().FillWidth(1.0f)
                [
-                 SNew(SSlider)
-                 .Value(ItemData->Get().Value)
+                 SAssignNew(Slider, SSlider)
+                 .Value_Lambda([this](){ return ItemData->Get().Value; })
                  .MaxValue(ItemData->Get().MaxValue)
                  .MinValue(ItemData->Get().MinValue)
                  .OnValueChanged(FOnFloatValueChanged::CreateSP(this, &SCreateCharacterConfigTreeItem::On_FloatValueChanged))
@@ -170,6 +194,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
   FDoodleTreeEdit OnModifyWeights;
 
   FDoodleTreeEdit OnEditItem;
+  TSharedPtr<SSlider> Slider;
 };
 
 #undef LOCTEXT_NAMESPACE

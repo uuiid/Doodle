@@ -36,9 +36,9 @@ class program_info;
 class identifier;
 class logger_ctrl;
 }  // namespace details
-using database_info = entt::locator<details::database_info>;
-using program_info  = entt::locator<details::program_info>;
-using identifier    = entt::locator<details::identifier>;
+using database_info = details::database_info;
+using program_info  = details::program_info;
+using identifier    = details::identifier;
 
 class convert;
 class doodle_error;

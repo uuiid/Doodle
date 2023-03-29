@@ -129,6 +129,7 @@ struct table_line : boost::totally_ordered<table_line> {
 class work_hour_filling::impl {
  public:
   std::string title{};
+  bool open;
 
   /// @brief 过滤当前用户使用
   entt::handle current_user;
@@ -167,6 +168,7 @@ class work_hour_filling::impl {
 work_hour_filling::work_hour_filling() : ptr(std::make_unique<impl>()) {
   ptr->title                 = std::string{name};
   ptr->show_advanced_setting = true;
+  init();
 }
 
 void work_hour_filling::list_time(std::int32_t in_y, std::int32_t in_m) {
@@ -250,12 +252,16 @@ void work_hour_filling::export_table(const FSys::path& in_path) {
   }
   FSys::ofstream l_f{l_path, FSys::ofstream::binary};
   l_w.save(l_f);
-  make_handle().emplace<gui_windows>(std::make_shared<show_message>(fmt::format("完成导出表格 {}"s, l_path)));
+
+  g_windows_manage().create_windows_arg(windows_init_arg{}
+                                            .create<show_message>(fmt::format("完成导出表格 {}"s, l_path))
+                                            .set_title("显示消息")
+                                            .set_render_type<dear::Popup>());
 }
 
 const std::string& work_hour_filling::title() const { return ptr->title; }
 
-void work_hour_filling::render() {
+bool work_hour_filling::render() {
   ImGui::Text("基本信息:");
 
   if (ImGui::InputInt2(*ptr->time_month, ptr->time_month().data())) {
@@ -269,17 +275,6 @@ void work_hour_filling::render() {
         auto l_user_h = ptr->combox.get_user();
         auto l_title  = l_user_h.get<user>().get_name().empty() ? fmt::format("匿名用户 {}", l_user_h)
                                                                 : l_user_h.get<user>().get_name();
-        if (!ptr->sub_windows[l_title]) {
-          auto l_u               = std::make_shared<work_hour_filling>();
-          l_u->ptr->current_user = l_user_h;
-          l_u->ptr->title        = l_title;
-          l_u->show_advanced_setting(false);
-          boost::asio::post(g_io_context(), [this, l_title, l_u]() {
-            auto l_h = make_handle();
-            l_h.emplace<gui_windows>(l_u);
-            ptr->sub_windows[l_title] = l_h;
-          });
-        }
       }
 
       /// 导出表格功能
@@ -288,12 +283,16 @@ void work_hour_filling::render() {
       }
       ImGui::SameLine();
       if (ImGui::Button(*ptr->select_path_button)) {
-        auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("选择目录"s).set_use_dir());
-        l_file->async_read([this](const FSys::path& in) {
-          ptr->export_path        = in / "tmp.xlsx";
-          ptr->export_file_text() = ptr->export_path.generic_string();
-        });
-        make_handle().emplace<gui_windows>(l_file);
+        g_windows_manage().create_windows_arg(
+            windows_init_arg{}
+                .create<file_dialog>(file_dialog::dialog_args{}.set_use_dir().async_read([this](const FSys::path& in) {
+                  ptr->export_path        = in / "tmp.xlsx";
+                  ptr->export_file_text() = ptr->export_path.generic_string();
+                }))
+                .set_title("选择目录"s)
+                .set_render_type<dear::Popup>()
+
+        );
       }
       if (!ptr->export_path.empty()) {
         ImGui::SameLine();
@@ -331,6 +330,7 @@ void work_hour_filling::render() {
           if (dear::InputText(*in.abstract, &in.abstract)) modify_item(i);
         }
       };
+  return ptr->open;
 }
 
 void work_hour_filling::show_advanced_setting(bool in_) { ptr->show_advanced_setting = in_; }

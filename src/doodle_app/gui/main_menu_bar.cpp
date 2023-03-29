@@ -48,17 +48,22 @@ main_menu_bar::~main_menu_bar() = default;
 
 void main_menu_bar::menu_file() {
   if (dear::MenuItem("创建项目"s)) {
-    make_handle().emplace<gui_windows>(std::make_shared<create_project_dialog>());
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create<create_project_dialog>().set_render_type<dear::Popup>()
+    );
   }
   if (dear::MenuItem("打开项目"s)) {
-    auto l_file = std::make_shared<file_dialog>(file_dialog::dialog_args{}.set_title("打开项目"));
-    auto l_f_h  = make_handle();
-    l_f_h.emplace<gui_windows>(l_file);
-    l_file->async_read([](const FSys::path &in) mutable {
-      g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(in, [in](auto) {
-        DOODLE_LOG_INFO("打开项目 {}", in);
-      });
-    });
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}
+            .create<file_dialog>(file_dialog::dialog_args{}.async_read([](const FSys::path &in) mutable {
+              g_reg()->ctx().at<database_n::file_translator_ptr>()->async_open(in, [in](auto) {
+                DOODLE_LOG_INFO("打开项目 {}", in);
+              });
+            }))
+            .set_title("打开项目")
+            .set_render_type<dear::Popup>()
+
+    );
   }
   dear::Menu{"最近的项目"} && []() {
     auto &k_list = core_set::get_set().project_root;
@@ -87,17 +92,18 @@ void main_menu_bar::menu_file() {
   }
 }
 
-bool main_menu_bar::tick() {
-  dear::MainMenuBar{} && [this]() {
-    dear::Menu{"文件"} && [this]() { this->menu_file(); };
-    dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
-    dear::Menu{"编辑"} && [this]() { this->menu_edit(); };
-    dear::Menu{"工具"} && [this]() { this->menu_tool(); };
+bool main_menu_bar::render() {
+  if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::GetIO().KeyCtrl) g_reg()->ctx().at<core_sig>().save();
+
+  dear::Menu{"文件"} && [this]() { this->menu_file(); };
+  dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
+  dear::Menu{"编辑"} && [this]() { this->menu_edit(); };
+  dear::Menu{"工具"} && [this]() { this->menu_tool(); };
 #ifndef NDEBUG
-    ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 #endif
-  };
-  return false;
+
+  return true;
 }
 void main_menu_bar::menu_edit() {
   dear::Menu{"布局"} && [this]() { this->menu_layout(); };

@@ -1,6 +1,7 @@
-message("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 find_package(Torch)
-if (TARGET Torch)
+message("TORCH_LIBRARIES=${TORCH_LIBRARIES}")
+
+if (TARGET torch)
     add_executable(
             test_ai
             EXCLUDE_FROM_ALL

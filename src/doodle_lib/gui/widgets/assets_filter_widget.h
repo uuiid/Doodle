@@ -3,10 +3,12 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/core/init_register.h>
+
 #include <doodle_app/gui/base/base_window.h>
 #include <doodle_app/gui/base/ref_base.h>
-#include <doodle_core/core/init_register.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/signals2.hpp>
 
@@ -17,8 +19,7 @@ namespace doodle::gui {
  * @li 这里只显示资产树, 可以类比为文件夹树
  *
  */
-class DOODLELIB_API assets_filter_widget
-    : public gui::base_windows<dear::Begin, assets_filter_widget> {
+class DOODLELIB_API assets_filter_widget {
   class impl;
   std::unique_ptr<impl> p_impl;
 
@@ -26,13 +27,13 @@ class DOODLELIB_API assets_filter_widget
 
  public:
   assets_filter_widget();
-  ~assets_filter_widget() override;
+  ~assets_filter_widget();
 
   constexpr static std::string_view name{gui::config::menu_w::assets_filter};
 
   void init();
-  void render();
-  const std::string& title() const override;
+  bool render();
+  const std::string& title() const;
   void refresh(bool force);
 };
 

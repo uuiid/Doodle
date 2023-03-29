@@ -25,7 +25,7 @@ namespace doodle::maya_plug {
  * * 去除贼健康错误
  *
  */
-class comm_check_scenes : public gui::base_windows<dear::Begin, comm_check_scenes> {
+class comm_check_scenes {
   bool p_unlock_normal;
   bool p_duplicate_name;
   bool p_multilateral_surface;
@@ -35,6 +35,7 @@ class comm_check_scenes : public gui::base_windows<dear::Begin, comm_check_scene
   bool p_err_3;
   bool p_err_4;
   std::string title_name_;
+  bool open{};
 
   static MStatus run_maya_py_script(const std::string& in_script);
 
@@ -50,8 +51,8 @@ class comm_check_scenes : public gui::base_windows<dear::Begin, comm_check_scene
  public:
   comm_check_scenes();
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::comm_check_scenes;
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 
 }  // namespace doodle::maya_plug

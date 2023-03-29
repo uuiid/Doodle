@@ -21,6 +21,8 @@ struct FDoodleCreateCharacterConfigNode;
 class UCreateCharacterMianTreeItem;
 
 class SCreateCharacterCurveEditor : public SCompoundWidget {
+  friend class FCreateCharacterCurveEditorBounds;
+
  public:
   SLATE_BEGIN_ARGS(SCreateCharacterCurveEditor)
       : _CreateCharacterConfigConfig(),
@@ -37,6 +39,8 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
   void ZoomToFit();
 
  private:
+  void Set_ViewRange(const TRange<double>& In_Range);
+  void Set_WorkingRange(const TRange<double>& In_Range);
   void ResetCurves();
   void AddCurve(
       const FRichCurveEditInfo& In_Info
@@ -58,4 +62,9 @@ class SCreateCharacterCurveEditor : public SCompoundWidget {
   TSharedPtr<SCurveEditorTree> CurveEditorTree;
 
   TSharedPtr<UCreateCharacterMianTreeItem> CurrentSelect;
+
+  double Min_P;
+  double Max_P;
+  TRange<double> ViewRange_Attr;
+  FAnimatedRange WorkingRange_Attr;
 };

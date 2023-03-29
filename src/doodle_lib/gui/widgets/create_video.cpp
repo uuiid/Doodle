@@ -45,6 +45,7 @@ class create_video::impl {
   std::vector<video_cache> video_list;
   entt::handle out_video_h;
   std::string title_name_;
+  bool open{true};
 };
 
 create_video::create_video() : p_i(std::make_unique<impl>()) {
@@ -52,7 +53,7 @@ create_video::create_video() : p_i(std::make_unique<impl>()) {
   p_i->out_video_h = make_handle();
 }
 
-void create_video::render() {
+bool create_video::render() {
   if (ImGui::InputText(*p_i->out_path.gui_name, &p_i->out_path.data)) {
     ::ranges::for_each(p_i->image_to_video_list, [this](impl::image_cache& in_image_cache) {
       in_image_cache.out_handle.emplace_or_replace<FSys::path>(p_i->out_path.data);
@@ -193,6 +194,7 @@ void create_video::render() {
       dear::Selectable(*i.gui_name);
     }
   };
+  return p_i->open;
 }
 entt::handle create_video::create_image_to_move_handle(const FSys::path& in_path) {
   auto l_h = make_handle();

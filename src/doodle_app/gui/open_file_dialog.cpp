@@ -112,6 +112,7 @@ file_panel::file_panel(const dialog_args &in_args) : p_i(std::make_unique<impl>(
   p_i->p_flags_             = in_args.p_flags;
   /// \brief 设置输出
   p_i->p_pwd                = in_args.pwd;
+  this->scan_director(p_i->p_pwd);
 }
 
 std::string &file_panel::title() const { return p_i->title_p.name_id; }
@@ -123,7 +124,8 @@ void file_panel::succeeded() {
   boost::asio::post(g_io_context(), [l_files = get_selects(), l_fun = std::move(p_i->call_fun)]() { l_fun(l_files); });
 }
 
-void file_panel::render() {
+bool file_panel::render() {
+  const dear::PopupModal l_win{*p_i->title_p};
   for (auto &&i : p_i->begin_fun_list) i();
   p_i->begin_fun_list.clear();
 
@@ -156,6 +158,7 @@ void file_panel::render() {
   /// 过滤器按钮
   imgui::SameLine();
   this->render_filter();
+  return open;
 }
 void file_panel::scan_director(const FSys::path &in_dir) {
   // boost::contract::check l_check = boost::contract::public_function
@@ -358,7 +361,7 @@ void file_panel::button_ok() {
 void file_panel::button_cancel() {
   if (imgui::Button("cancel")) {
     ImGui::CloseCurrentPopup();
-    show_attr = false;
+    open = false;
   }
 }
 void file_panel::generate_buffer(std::size_t in_index) {
@@ -395,21 +398,12 @@ std::vector<FSys::path> file_panel::get_selects() {
 
   return result;
 }
-file_panel &file_panel::async_read(one_fun &&in_fun) {
-  p_i->call_fun = [in_fun = std::move(in_fun)](const std::vector<FSys::path> &in) {
-    if (!in.empty()) in_fun(in.front());
-  };
-  return *this;
-}
-file_panel &file_panel::async_read(mult_fun &&in_fun) {
-  p_i->call_fun = in_fun;
-  return *this;
-}
+
 void file_panel::set_attr() {
   ImGui::OpenPopup(title().data());
   ImGui::SetNextWindowSize({640, 360});
 }
-std::int32_t file_panel::flags() const { return ImGuiWindowFlags_NoSavedSettings; }
+
 file_panel::~file_panel() = default;
 
 file_panel::dialog_args::dialog_args() : p_flags(), filter(), title("get file"), pwd() { use_default_pwd(); }
@@ -453,4 +447,16 @@ file_panel::dialog_args &file_panel::dialog_args::multiple(bool in_multiple) {
 
   return *this;
 }
+
+file_panel::dialog_args &file_panel::dialog_args::async_read(one_fun &&in_fun) {
+  call_fun = [in_fun = std::move(in_fun)](const std::vector<FSys::path> &in) {
+    if (!in.empty()) in_fun(in.front());
+  };
+  return *this;
+}
+file_panel::dialog_args &file_panel::dialog_args::async_read(mult_fun &&in_fun) {
+  call_fun = in_fun;
+  return *this;
+}
+
 }  // namespace doodle::gui

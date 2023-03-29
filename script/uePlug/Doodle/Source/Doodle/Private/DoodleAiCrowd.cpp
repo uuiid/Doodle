@@ -39,16 +39,16 @@ ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
 }
 
 // Called every frame
-void ADoodleAiCrowd::Tick(float DeltaTime) {
-  Super::Tick(DeltaTime);
-  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
-  // if (!SkeletalMeshComponent)
-  //   return;
-  // auto Anim = Cast<UDoodleAnimInstance>(SkeletalMeshComponent->GetAnimInstance());
-  // if (Anim) {
-  //   Anim->DoodleCalculateSpeed();
-  //   auto Velocity = GetVelocity();
-  //   FVector Blend{Velocity.Size(), Anim->CalculateDirection(Velocity, GetBaseAimRotation()), 0.0f};
-  //   Anim->SetBlendSpaceInput(Blend);
-  // }
-}
+//void ADoodleAiCrowd::Tick(float DeltaTime) {
+//  Super::Tick(DeltaTime);
+//  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
+//  // if (!SkeletalMeshComponent)
+//  //   return;
+//  // auto Anim = Cast<UDoodleAnimInstance>(SkeletalMeshComponent->GetAnimInstance());
+//  // if (Anim) {
+//  //   Anim->DoodleCalculateSpeed();
+//  //   auto Velocity = GetVelocity();
+//  //   FVector Blend{Velocity.Size(), Anim->CalculateDirection(Velocity, GetBaseAimRotation()), 0.0f};
+//  //   Anim->SetBlendSpaceInput(Blend);
+//  // }
+//}

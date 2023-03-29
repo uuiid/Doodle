@@ -104,55 +104,50 @@ main_status_bar::main_status_bar() : p_i(std::make_unique<impl>()) { init(); }
 
 void main_status_bar::init() { p_i->timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context()); }
 
-bool main_status_bar::tick() {
-  ImGuiWindowFlags window_flags =
-      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
-  float height = ImGui::GetFrameHeight();
-  dear::ViewportSideBar{"状态栏_main", nullptr, ImGuiDir_Down, height, window_flags} && [&]() {
-    dear::MenuBar{} && [&]() {
-      /// \brief 渲染信息
-      if (g_reg()->ctx().contains<status_info>()) {
-        auto l_s = g_reg()->ctx().at<status_info>();
-        if (l_s.need_save) {
-          dear::Text("需要保存"s);
-          ImGui::SameLine();
-        }
-        if (!l_s.message.empty()) {
-          dear::Text(l_s.message);
-          ImGui::SameLine();
-        }
-        dear::Text(fmt::format("{}/{}", l_s.select_size, l_s.show_size));
+bool main_status_bar::render() {
+  dear::MenuBar{} && [&]() {
+    /// \brief 渲染信息
+    if (g_reg()->ctx().contains<status_info>()) {
+      auto l_s = g_reg()->ctx().at<status_info>();
+      if (l_s.need_save) {
+        dear::Text("需要保存"s);
         ImGui::SameLine();
       }
-
-      /// \brief 渲染进度条
-      if (g_reg()->ctx().contains<process_message>()) {
-        auto& l_msg = g_reg()->ctx().at<process_message>();
-        if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
-          p_i->call = true;
-          p_i->timer->expires_after(1s);
-          p_i->timer->async_wait([this](const boost::system::error_code& in_code) {
-            p_i->call = false;
-            if (in_code == boost::asio::error::operation_aborted) {
-              return;
-            }
-            if (g_reg()->ctx().contains<process_message>()) {
-              g_reg()->ctx().erase<process_message>();
-            }
-          });
-        }
-
-        dear::Text(l_msg.get_name());
+      if (!l_s.message.empty()) {
+        dear::Text(l_s.message);
         ImGui::SameLine();
-        dear::Text(l_msg.message_back());
-        ImGui::ProgressBar(
-            boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
-            fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
-        );
       }
-    };
+      dear::Text(fmt::format("{}/{}", l_s.select_size, l_s.show_size));
+      ImGui::SameLine();
+    }
+
+    /// \brief 渲染进度条
+    if (g_reg()->ctx().contains<process_message>()) {
+      auto& l_msg = g_reg()->ctx().at<process_message>();
+      if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
+        p_i->call = true;
+        p_i->timer->expires_after(1s);
+        p_i->timer->async_wait([this](const boost::system::error_code& in_code) {
+          p_i->call = false;
+          if (in_code == boost::asio::error::operation_aborted) {
+            return;
+          }
+          if (g_reg()->ctx().contains<process_message>()) {
+            g_reg()->ctx().erase<process_message>();
+          }
+        });
+      }
+
+      dear::Text(l_msg.get_name());
+      ImGui::SameLine();
+      dear::Text(l_msg.message_back());
+      ImGui::ProgressBar(
+          boost::rational_cast<std::float_t>(l_msg.get_progress()), ImVec2{-FLT_MIN, 0.0f},
+          fmt::format("{:04f}%", l_msg.get_progress_f()).c_str()
+      );
+    }
   };
-  return false;
+  return true;
 }
 
 main_status_bar::main_status_bar(const main_status_bar& in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}

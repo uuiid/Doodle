@@ -27,6 +27,7 @@ class dem_cloth_to_fbx::impl {
   std::double_t weightsSmoothStep_p{1};
   std::int32_t isBindUpdate_p{0};
   std::string title_name_{};
+  bool open{};
   void run() {
     auto l_py = fmt::format(
         R"(
@@ -49,12 +50,15 @@ if select_list:
     MGlobal::executePythonCommandOnIdle(d_str{l_py}, true);
   }
 };
-dem_cloth_to_fbx::dem_cloth_to_fbx() : p_i(std::make_unique<impl>()) { this->p_i->title_name_ = std::string{name}; }
+dem_cloth_to_fbx::dem_cloth_to_fbx() : p_i(std::make_unique<impl>()) {
+  this->p_i->title_name_ = std::string{name};
+  init();
+}
 void dem_cloth_to_fbx::init() {
   p_i->startFrame_p = MAnimControl::minTime().value();
   p_i->endFrame_p   = MAnimControl::maxTime().value();
 }
-void dem_cloth_to_fbx::render() {
+bool dem_cloth_to_fbx::render() {
   ImGui::InputInt("开始帧", &p_i->startFrame_p);
   ImGui::InputInt("结束帧", &p_i->endFrame_p);
 
@@ -67,6 +71,7 @@ void dem_cloth_to_fbx::render() {
   if (ImGui::Button("转换")) {
     p_i->run();
   }
+  return p_i->open;
 }
 const std::string& dem_cloth_to_fbx::title() const { return p_i->title_name_; }
 

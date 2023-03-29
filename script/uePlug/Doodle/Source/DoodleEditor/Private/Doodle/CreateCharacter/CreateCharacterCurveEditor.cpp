@@ -26,41 +26,48 @@
 
 #include "CreateCharacterTree.h"
 
+#include "ISequencerWidgetsModule.h"  // 时间范围控制
+
 #define LOCTEXT_NAMESPACE "SCreateCharacterCurveEditor"
 
 class FCreateCharacterCurveEditorBounds : public ICurveEditorBounds {
  public:
-  FCreateCharacterCurveEditorBounds() {}
+  FCreateCharacterCurveEditorBounds(SCreateCharacterCurveEditor* In_Edit) : Editor(In_Edit) {
+  }
 
   virtual void GetInputBounds(double& OutMin, double& OutMax) const override {
     // FAnimatedRange ViewRange = ExternalTimeSliderController.Pin()->GetViewRange();
     // OutMin                   = ViewRange.GetLowerBoundValue();
     // OutMax                   = ViewRange.GetUpperBoundValue();
-    OutMax = Max_P;
-    OutMin = Min_P;
+    OutMax = Editor->Min_P;
+    OutMin = Editor->Max_P;
   }
 
   virtual void SetInputBounds(double InMin, double InMax) override {
-    if (CreateCharacterMianTreeItem.IsValid()) {
-      TSharedPtr<UCreateCharacterMianTreeItem> L_Config = CreateCharacterMianTreeItem.Pin();
-      L_Config->Get().MaxValue                          = InMax;
-      L_Config->Get().MinValue                          = InMin;
-
-      Min_P                                             = InMin;
-      Max_P                                             = InMax;
-    }
+    // if (CreateCharacterMianTreeItem.IsValid()) {
+    //  TSharedPtr<UCreateCharacterMianTreeItem> L_Config = CreateCharacterMianTreeItem.Pin();
+    //  if (*L_Config) {
+    //    L_Config->Get().MaxValue = InMax;
+    //    L_Config->Get().MinValue = InMin;
+    //  }
+    // if (Editor->CurrentSelect && *Editor->CurrentSelect) {
+    //  Editor->CurrentSelect->Get().MinValue = InMin;
+    //  Editor->CurrentSelect->Get().MaxValue = InMax;
+    //}
+    Editor->Min_P = InMin;
+    Editor->Max_P = InMax;
+    //}
     // ExternalTimeSliderController.Pin()->SetViewRange(InMin, InMax, EViewRangeInterpolation::Immediate);
   }
 
-  void Set_TreeItem(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Work) {
-    CreateCharacterMianTreeItem = In_Work;
-    Min_P                       = In_Work->Get().MinValue;
-    Max_P                       = In_Work->Get().MaxValue;
-  }
+  // void Set_TreeItem(const TSharedPtr<UCreateCharacterMianTreeItem>& In_Work) {
+  //   CreateCharacterMianTreeItem = In_Work;
+  //   Min_P                       = In_Work->Get().MinValue;
+  //   Max_P                       = In_Work->Get().MaxValue;
+  // }
 
-  TWeakPtr<UCreateCharacterMianTreeItem> CreateCharacterMianTreeItem;
-  double Min_P;
-  double Max_P;
+  // TWeakPtr<UCreateCharacterMianTreeItem> CreateCharacterMianTreeItem;
+  SCreateCharacterCurveEditor* Editor;
   // TWeakPtr<ITimeSliderController> ExternalTimeSliderController;
 };
 
@@ -131,60 +138,91 @@ class FCreateCharacterCurveEditorItem : public ICurveEditorTreeItem {
 };
 
 void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
-  CreateCharacterConfigConfig                            = InArgs._CreateCharacterConfigConfig;
+  CreateCharacterConfigConfig = InArgs._CreateCharacterConfigConfig;
+  static FFrameRate G_FrameRate{};
 
-  TAttribute<EFrameNumberDisplayFormats> DisplayFormat   = MakeAttributeLambda([]() {
-    return GetDefault<UPersonaOptions>()->TimelineDisplayFormat;
-  });
-
-  TAttribute<FFrameRate> TickResolution                  = MakeAttributeLambda([]() {
-    return FFrameRate{25, 1};
-  });
-
-  TAttribute<FFrameRate> DisplayRate                     = MakeAttributeLambda([]() {
-    return FFrameRate{25, 1};
-  });
-
-  TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, TickResolution, DisplayRate});
-  TAttribute<FAnimatedRange> ViewRange                   = MakeAttributeLambda([this]() {
-    if (this->CurrentSelect && *this->CurrentSelect) {
-      return FAnimatedRange{this->CurrentSelect->Get().MinValue, this->CurrentSelect->Get().MaxValue};
-    } else {
-      return FAnimatedRange{.0f, .0f};
-    }
-  });
+  TSharedPtr<FFrameNumberInterface> NumericTypeInterface = MakeShareable(new FFrameNumberInterface{EFrameNumberDisplayFormats::Seconds, 0, G_FrameRate, G_FrameRate});
 
   FTimeSliderArgs TimeSliderArgs;
   {
-    TimeSliderArgs.ScrubPosition         = MakeAttributeLambda([this]() {
+    TimeSliderArgs.ScrubPosition          = MakeAttributeLambda([&, this]() {
       if (this->CurrentSelect && *this->CurrentSelect) {
-        return FFrameTime{this->CurrentSelect->Get().Value};
+        return FFrameTime{this->CurrentSelect->Get().Value * G_FrameRate};
       } else {
-        return FFrameTime{.0f};
+        return FFrameTime{0};
       }
     });
-    TimeSliderArgs.ViewRange             = ViewRange;
-    TimeSliderArgs.PlaybackRange         = MakeAttributeLambda([this]() { return TRange<FFrameNumber>(0, 0); });
-    TimeSliderArgs.ClampRange            = MakeAttributeLambda([this]() { return FAnimatedRange(0.0, 0.0); });
-    TimeSliderArgs.DisplayRate           = DisplayRate;
-    TimeSliderArgs.TickResolution        = TickResolution;
-    // TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateSP(&InModel.Get(),
-    // &FAnimModel::HandleViewRangeChanged); TimeSliderArgs.OnClampRangeChanged    =
-    // FOnTimeRangeChanged::CreateSP(&InModel.Get(), &FAnimModel::HandleWorkingRangeChanged);
-    TimeSliderArgs.IsPlaybackRangeLocked = true;
-    TimeSliderArgs.PlaybackStatus        = EMovieScenePlayerStatus::Stopped;
-    TimeSliderArgs.NumericTypeInterface  = NumericTypeInterface;
-    // TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateSP(this,
-    // &SAnimTimeline::HandleScrubPositionChanged);
+    TimeSliderArgs.OnScrubPositionChanged = FOnScrubPositionChanged::CreateLambda([this](FFrameTime In_Time, bool bIsScrubbing, bool bEvaluate) {
+      // UE_LOG(LogTemp, Log, TEXT("OnScrubPositionChanged %f %d %d"), In_Time.AsDecimal(), bIsScrubbing, bEvaluate);
+      if (this->CurrentSelect && *this->CurrentSelect) {
+        this->CurrentSelect->Get().Value = In_Time / G_FrameRate;
+      }
+    });
+    TimeSliderArgs.ViewRange              = MakeAttributeLambda([this]() {
+      if (ViewRange_Attr.HasLowerBound() && ViewRange_Attr.HasUpperBound())
+        return FAnimatedRange{ViewRange_Attr.GetLowerBoundValue(), ViewRange_Attr.GetUpperBoundValue()};
+      else
+        return FAnimatedRange{-2.0f, 2.0f};
+    });
+    TimeSliderArgs.OnViewRangeChanged     = FOnViewRangeChanged::CreateLambda([this](TRange<double> In_Range, EViewRangeInterpolation) {
+      Set_ViewRange(In_Range);
+    });
+
+    TimeSliderArgs.IsPlaybackRangeLocked  = false;
+    TimeSliderArgs.PlaybackRange          = MakeAttributeLambda([this]() {
+      if (this->CurrentSelect && *this->CurrentSelect) {
+        return this->CurrentSelect->GetPlaybackRange();
+      } else {
+        return TRange<FFrameNumber>{0, 0};
+      }
+    });
+    TimeSliderArgs.OnPlaybackRangeChanged = FOnFrameRangeChanged::CreateLambda([this](TRange<FFrameNumber> In_Range) {
+      if (this->CurrentSelect && *this->CurrentSelect) {
+        this->CurrentSelect->SetPlaybackRange(In_Range);
+      }
+    });
+
+    TimeSliderArgs.ClampRange             = MakeAttributeLambda([this]() {
+      if (WorkingRange_Attr.HasLowerBound() && WorkingRange_Attr.HasUpperBound())
+        return WorkingRange_Attr;
+      else
+        return FAnimatedRange{-2.0f, 2.0f};
+    });
+    TimeSliderArgs.OnClampRangeChanged    = FOnTimeRangeChanged::CreateLambda([this](TRange<double> In_Range) {
+      Set_WorkingRange(In_Range);
+    });
+
+    TimeSliderArgs.DisplayRate            = G_FrameRate;
+    TimeSliderArgs.TickResolution         = G_FrameRate;
+
+    TimeSliderArgs.PlaybackStatus         = EMovieScenePlayerStatus::Stopped;
+    TimeSliderArgs.NumericTypeInterface   = NumericTypeInterface;
+
+    // TimeSliderArgs.OnPlaybackRangeChanged =
   }
+  // 时间时间控制器渲染
+  TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
+  // 时间范围
+  ISequencerWidgetsModule& SequencerWidgets                                    = FModuleManager::Get().LoadModuleChecked<ISequencerWidgetsModule>("SequencerWidgets");
+  // TopTimeSlider                             = SequencerWidgets.CreateTimeSlider(TimeSliderControllerRef, bMirrorLabels);
 
-  auto CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
+  // Create bottom time range slider
+  TSharedRef<ITimeSlider> BottomTimeRange                                      = SequencerWidgets.CreateTimeRange(
+      FTimeRangeArgs(
+          EShowRange::ViewRange | EShowRange::WorkingRange | EShowRange::PlaybackRange,
+          EShowRange::ViewRange | EShowRange::WorkingRange,
+          CreateCharacterSliderController.ToSharedRef(),
+          EVisibility::Visible,
+          NumericTypeInterface.ToSharedRef()
+      ),
+      SequencerWidgets.CreateTimeRangeSlider(CreateCharacterSliderController.ToSharedRef())
+  );
 
-  CurveEditor                          = MakeShared<FCurveEditor>();
+  CurveEditor = MakeShared<FCurveEditor>();
   FCurveEditorInitParams CurveEditorInitParams;
   CurveEditor->InitCurveEditor(CurveEditorInitParams);
   CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}s");
-  CurveEditor->SetBounds(MakeUnique<FCreateCharacterCurveEditorBounds>(/*InArgs._ExternalTimeSliderController*/));
+  CurveEditor->SetBounds(MakeUnique<FCreateCharacterCurveEditorBounds>(this));
 
   // CurveEditor->InputSnapRateAttribute = FFrameRate{1, 25};
 
@@ -228,6 +266,8 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
     SNew(SVerticalBox) 
     + SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 3.0f)[MakeToolbar(CurveEditorPanel)] 
     + SVerticalBox::Slot().FillHeight(1.0f)[CurveEditorPanel]
+    + SVerticalBox::Slot().AutoHeight()[BottomTimeRange]
+
   ];
   // clang-format on
 }
@@ -267,7 +307,23 @@ void SCreateCharacterCurveEditor::EditCurve(const TSharedPtr<UCreateCharacterMia
 #undef DOODLE_ADD_CURVE_IMPL
   }
 
-  static_cast<FCreateCharacterCurveEditorBounds&>(CurveEditor->GetBounds()).Set_TreeItem(In_Node);
+  Min_P             = CurrentSelect->Get().MinValue;
+  Max_P             = CurrentSelect->Get().MaxValue;
+  ViewRange_Attr    = TRange<double>{Min_P, Max_P};
+  WorkingRange_Attr = FAnimatedRange{Min_P, Max_P};
+}
+
+void SCreateCharacterCurveEditor::Set_ViewRange(const TRange<double>& In_Range) {
+  ViewRange_Attr    = In_Range;
+  WorkingRange_Attr = TRange<double>::Hull(ViewRange_Attr, WorkingRange_Attr);
+}
+
+void SCreateCharacterCurveEditor::Set_WorkingRange(const TRange<double>& In_Range) {
+  WorkingRange_Attr = In_Range;
+  // if (this->CurrentSelect && *this->CurrentSelect) {
+  //   this->CurrentSelect->Get().MinValue = In_Range.GetLowerBoundValue();
+  //   this->CurrentSelect->Get().MaxValue = In_Range.GetUpperBoundValue();
+  // }
 }
 
 void SCreateCharacterCurveEditor::ResetCurves() {

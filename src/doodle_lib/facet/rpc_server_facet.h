@@ -9,7 +9,7 @@
 
 namespace doodle::facet {
 
-class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interface {
+class DOODLELIB_API rpc_server_facet final {
   doodle::distributed_computing::server_ptr server_attr;
 
   std::string name_{"json_rpc"};
@@ -17,12 +17,13 @@ class DOODLELIB_API rpc_server_facet : public ::doodle::detail::app_facet_interf
   std::shared_ptr<decltype(boost::asio::make_work_guard(g_io_context()))> work_{};
 
  public:
-  rpc_server_facet()                   = default;
-  virtual ~rpc_server_facet() override = default;
+  rpc_server_facet()          = default;
+  virtual ~rpc_server_facet() = default;
 
-  const std::string& name() const noexcept override;
-  void operator()() override;
-  void deconstruction() override;
+  const std::string& name() const noexcept;
+  bool post();
+  void deconstruction();
+  void add_program_options(){};
 };
 
 }  // namespace doodle::facet

@@ -27,7 +27,7 @@ create_sim_cloth::create_sim_cloth() : p_coll(make_handle()) {
     return make_handle(in);
   });
 }
-void create_sim_cloth::render() {
+bool create_sim_cloth::render() {
   if (imgui::Button("获得低模")) {
     MSelectionList k_list{};
     auto k_s = MGlobal::getActiveSelectionList(k_list);
@@ -101,11 +101,12 @@ void create_sim_cloth::render() {
     for (auto& l_h : p_list) {
       if (!qcloth_shape::chick_low_skin(l_h)) {
         DOODLE_LOG_ERROR("{} 是没有绑定的简模", l_h.get<qcloth_shape_n::maya_obj>().p_name);
-        return;
+        return open;
       }
     }
     run_comm();
   }
+  return open;
 }
 create_sim_cloth::~create_sim_cloth() {
   destroy_handle(p_coll);

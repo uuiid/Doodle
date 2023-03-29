@@ -11,17 +11,17 @@
 
 namespace doodle::maya_plug {
 
-class dem_cloth_to_fbx : public doodle::gui::base_windows<dear::Begin, dem_cloth_to_fbx> {
+class dem_cloth_to_fbx {
   class impl;
   std::unique_ptr<impl> p_i;
 
  public:
   constexpr static auto name = ::doodle::gui::config::maya_plug::menu::dem_cloth_to_fbx;
   dem_cloth_to_fbx();
-  ~dem_cloth_to_fbx() override;
-  virtual void init();
-  void render();
-  const std::string& title() const override;
+  ~dem_cloth_to_fbx();
+  void init();
+  bool render();
+  const std::string& title() const;
 };
 
 }  // namespace doodle::maya_plug

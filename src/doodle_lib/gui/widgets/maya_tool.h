@@ -12,7 +12,7 @@
 
 namespace doodle::gui {
 
-class DOODLELIB_API maya_tool : public gui::base_windows<dear::Begin, maya_tool> {
+class DOODLELIB_API maya_tool {
   FSys::path p_cloth_path;
   std::string p_text;
   std::vector<FSys::path> p_sim_path;
@@ -23,6 +23,7 @@ class DOODLELIB_API maya_tool : public gui::base_windows<dear::Begin, maya_tool>
   bool p_use_all_ref;
   bool p_upload_files;
   std::string title_name_;
+  bool open{true};
 
   class impl;
   std::unique_ptr<impl> ptr_attr;
@@ -33,8 +34,8 @@ class DOODLELIB_API maya_tool : public gui::base_windows<dear::Begin, maya_tool>
   constexpr static std::string_view name{gui::config::menu_w::comm_maya_tool};
 
   void init();
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 
 }  // namespace doodle::gui

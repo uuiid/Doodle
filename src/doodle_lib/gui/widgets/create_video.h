@@ -11,7 +11,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::gui {
 
-class DOODLELIB_API create_video : public gui::base_windows<dear::Begin, create_video> {
+class DOODLELIB_API create_video {
   class impl;
   class image_arg;
   std::unique_ptr<impl> p_i;
@@ -20,9 +20,9 @@ class DOODLELIB_API create_video : public gui::base_windows<dear::Begin, create_
 
  public:
   create_video();
-  ~create_video() override;
+  ~create_video();
   constexpr static std::string_view name{gui::config::menu_w::comm_create_video};
-  const std::string& title() const override;
-  void render();
+  const std::string& title() const;
+  bool render();
 };
 }  // namespace doodle::gui

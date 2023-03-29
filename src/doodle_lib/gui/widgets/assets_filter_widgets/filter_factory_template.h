@@ -39,14 +39,14 @@ class filter_factory_t : public filter_factory_base {
   }
   void init() override {
     for (auto&& [e, i] : g_reg()->view<data_type>().each()) {
-      p_edit.emplace_back(i);
+      p_edit.emplace_back(fmt::to_string(i), i);
     }
     select_name.clear();
   }
   void refresh_() override {
     for (auto&& i : p_obs) {
       auto k_h = make_handle(i);
-      p_edit.emplace_back(k_h.template get<data_type>());
+      p_edit.emplace_back(fmt::to_string(k_h.template get<data_type>()), k_h.template get<data_type>());
     }
     p_edit |= ranges::actions::sort | ranges::actions::unique;
   }

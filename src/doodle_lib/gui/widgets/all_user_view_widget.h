@@ -3,13 +3,13 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_app/gui/base/base_window.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::gui {
 
-class all_user_view_widget : public base_windows<dear::Begin, all_user_view_widget> {
+class all_user_view_widget {
  private:
   class impl;
   std::unique_ptr<impl> ptr;
@@ -20,7 +20,7 @@ class all_user_view_widget : public base_windows<dear::Begin, all_user_view_widg
   constexpr static std::string_view name{gui::config::menu_w::all_user_view_widget};
 
   const std::string& title() const;
-  virtual void render();
+  bool render();
 };
 
 }  // namespace doodle::gui

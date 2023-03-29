@@ -25,7 +25,6 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
   bsys::error_code save(const FSys::path& in_path);
   bsys::error_code save_end();
 
-  void clear_scene() const;
 
   bool is_saving{};
   bool is_opening{};

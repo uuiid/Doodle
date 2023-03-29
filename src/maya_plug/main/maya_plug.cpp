@@ -66,8 +66,8 @@ void open_windows() {
     } break;
   }
 
-  doodle::program_info::value().parent_windows_attr(win_id);
-  doodle::program_info::value().handle_attr(::MhInstPlugin);
+  doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(win_id);
+  doodle_lib::Get().ctx().get<program_info>().handle_attr(::MhInstPlugin);
 }
 }  // namespace doodle::maya_plug
 

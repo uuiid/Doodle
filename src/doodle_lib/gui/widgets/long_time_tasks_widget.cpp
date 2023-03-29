@@ -5,23 +5,25 @@
 #include "long_time_tasks_widget.h"
 
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_app/lib_warp/imgui_warp.h>
+#include <doodle_core/core/init_register.h>
 #include <doodle_core/metadata/metadata_cpp.h>
+
+#include <doodle_app/lib_warp/imgui_warp.h>
 
 #include <boost/range.hpp>
 #include <boost/range/algorithm_ext.hpp>
+
 #include <fmt/chrono.h>
-#include <doodle_core/core/init_register.h>
 
 namespace doodle::gui {
 
-long_time_tasks_widget::long_time_tasks_widget()
-    : p_current_select() {
-  title_name_ = std::string{name};
-}
+long_time_tasks_widget::long_time_tasks_widget() : p_current_select() { title_name_ = std::string{name}; }
 
-void long_time_tasks_widget::render() {
-  static auto flags{ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_::ImGuiTableFlags_Resizable | ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV | ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
+bool long_time_tasks_widget::render() {
+  static auto flags{
+      ImGuiTableFlags_::ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_::ImGuiTableFlags_Resizable |
+      ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | ImGuiTableFlags_::ImGuiTableFlags_BordersV |
+      ImGuiTableFlags_::ImGuiTableFlags_ContextMenuInBody};
   dear::Table{"long_time_tasks_widget", 6, flags} && [this]() {
     imgui::TableSetupColumn("名称");
     imgui::TableSetupColumn("进度");
@@ -35,7 +37,10 @@ void long_time_tasks_widget::render() {
       auto k_h = make_handle(e);
       imgui::TableNextRow();
       imgui::TableNextColumn();
-      if (dear::Selectable(msg.get_name_id(), p_current_select == k_h, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+      if (dear::Selectable(
+              msg.get_name_id(), p_current_select == k_h,
+              ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap
+          )) {
         p_current_select = k_h;
       }
 
@@ -53,8 +58,7 @@ void long_time_tasks_widget::render() {
       dear::Text(msg.is_wait() ? "..."s : fmt::format("{:%H:%M:%S}", msg.get_time()));
 
       ImGui::TableNextColumn();
-      if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str()))
-        msg.aborted_function();
+      if (ImGui::Button(fmt::format("关闭##{}", msg.get_name_id()).c_str())) msg.aborted_function();
     }
   };
   dear::Text("主要日志"s);
@@ -73,8 +77,7 @@ void long_time_tasks_widget::render() {
       imgui::TextUnformatted(msg_str.data(), msg_str.data() + msg_str.size());
     }
   };
+  return open;
 }
-const std::string& long_time_tasks_widget::title() const {
-  return title_name_;
-}
+const std::string& long_time_tasks_widget::title() const { return title_name_; }
 }  // namespace doodle::gui
