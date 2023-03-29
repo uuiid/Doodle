@@ -50,18 +50,17 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr &in_ptr, const entt
     }
 }
 
-void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
-  sql::RedirectionPathInfo l_table{};
+void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
+    namespace uuids = boost::uuids;
+    auto& l_conn    = *in_ptr;
+    auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
+                       return entt::handle{*reg_, in_entity};
+                     }) |
+                     ranges::to_vector;
+    sql::RedirectionPathInfo l_table{};
 
-  auto l_pre = l_conn.prepare(
-      sqlpp::update(l_table)
-          .set(l_table.redirectionPath = sqlpp::parameter(l_table.redirectionPath), l_table.redirectionFileName = sqlpp::parameter(l_table.redirectionFileName))
+    auto l_pre = l_conn.prepare(sqlpp::update(l_table)
+                                    .set(l_table.redirectionPath = sqlpp::parameter(l_table.redirectionPath), l_table.redirectionFileName = sqlpp::parameter(l_table.redirectionFileName))
           .where(l_table.entityId == sqlpp::parameter(l_table.entityId))
   );
   for (auto& l_h : l_handles) {

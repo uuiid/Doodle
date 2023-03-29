@@ -13,7 +13,7 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
-void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -22,9 +22,8 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const entt::observer& i
                    ranges::to_vector;
 
   sql::Episodes l_tabl{};
-  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(        
-      l_tabl.entityId  = sqlpp::parameter(l_tabl.entityId),
-      l_tabl.eps       = sqlpp::parameter(l_tabl.eps)
+  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
+      l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.eps       = sqlpp::parameter(l_tabl.eps)
   ));
 
   for (auto& l_h : l_handles) {
@@ -37,7 +36,7 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const entt::observer& i
   }
 }
 
-void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {

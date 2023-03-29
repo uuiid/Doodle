@@ -19,7 +19,7 @@ void sql_com<doodle::work_task_info>::create_table(conn_ptr& in_ptr) {
   });
 }
 
-void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -53,7 +53,7 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const entt::obser
     }
   }
 }
-void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {

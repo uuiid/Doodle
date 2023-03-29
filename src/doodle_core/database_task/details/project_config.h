@@ -5,12 +5,12 @@
 
 namespace doodle::database_n {
 template <>
-struct sql_com<project_config::base_config> {     
+struct sql_com<project_config::base_config> {
   registry_ptr reg_;
 
   void create_table(conn_ptr& in_ptr);
-  void insert(conn_ptr& in_ptr, const entt::observer& in_observer);
-  void update(conn_ptr& in_ptr, const entt::observer& in_observer);
+  void insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
   /**
    *
    * @param in_ptr

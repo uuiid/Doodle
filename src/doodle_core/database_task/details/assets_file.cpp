@@ -20,7 +20,7 @@
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
-void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -49,7 +49,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const entt::observer
   }
 }
 
-void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {

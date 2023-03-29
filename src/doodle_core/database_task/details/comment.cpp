@@ -17,7 +17,7 @@
 
 namespace doodle::database_n {
 namespace sql = doodle_database;
-void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -27,8 +27,8 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const entt::observer& in
   sql::Comment l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
-      l_table.commentString = sqlpp::parameter(l_table.commentString), l_table.commentTime = sqlpp::parameter(l_table.commentTime),
-      l_table.entityId = sqlpp::parameter(l_table.entityId)
+      l_table.commentString = sqlpp::parameter(l_table.commentString),
+      l_table.commentTime = sqlpp::parameter(l_table.commentTime), l_table.entityId = sqlpp::parameter(l_table.entityId)
   ));
 
   for (auto& l_h : l_handles) {
@@ -41,7 +41,7 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const entt::observer& in
   }
 }
 
-void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const entt::observer& in_observer) {
+void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
@@ -50,9 +50,8 @@ void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const entt::observer& in
                    ranges::to_vector;
   sql::Comment l_table{};
 
-  auto l_pre = l_conn.prepare(
-      sqlpp::update(l_table)
-          .set(l_table.commentString = sqlpp::parameter(l_table.commentString), l_table.commentTime= sqlpp::parameter(l_table.commentTime))
+  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
+                                  .set(l_table.commentString = sqlpp::parameter(l_table.commentString), l_table.commentTime= sqlpp::parameter(l_table.commentTime))
           .where(l_table.entityId == sqlpp::parameter(l_table.entityId))
   );
   for (auto& l_h : l_handles) {
