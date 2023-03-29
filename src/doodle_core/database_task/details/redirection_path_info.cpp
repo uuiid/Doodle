@@ -22,7 +22,7 @@
 
 namespace doodle::database_n{
 namespace sql=doodle_database;
-void sql_com<doodle::redirection_path_info>::insert(conn_ptr &in_ptr, const entt::observer &in_observer) {
+void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
   auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
