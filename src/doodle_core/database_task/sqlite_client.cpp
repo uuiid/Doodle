@@ -146,6 +146,7 @@ class sqlite_file::impl {
     entt::observer obs_update_;
     entt::observer obs_create_;
     std::vector<std::int64_t> destroy_ids_{};
+    entt::connection conn_{};
     void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
       if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
     }
@@ -154,14 +155,16 @@ class sqlite_file::impl {
     explicit impl_obs(const registry_ptr& in_registry_ptr)
         : obs_update_(*in_registry_ptr, entt::collector.update<database>().where<database>()),
           obs_create_(*in_registry_ptr, entt::collector.group<database, database>()),
-          destroy_ids_{} {
-      in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
-    }
+          destroy_ids_{},
+          conn_{in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this)} {}
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
+      obs_update_.disconnect();
+      obs_create_.disconnect();
       database_n::sql_com<database>{in_registry_ptr}.select(in_conn, in_handle);
-      obs_update_.clear();
-      obs_create_.clear();
+      obs_update_.connect(*in_registry_ptr, entt::collector.update<database>().where<database>());
+      obs_create_.connect(*in_registry_ptr, entt::collector.group<database, database>());
+      destroy_ids_.clear();
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
@@ -193,6 +196,7 @@ class sqlite_file::impl {
     ~impl_obs() {
       obs_create_.disconnect();
       obs_update_.disconnect();
+      conn_.release();
     }
   };
 
