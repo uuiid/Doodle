@@ -14,7 +14,7 @@ class create_sim_cloth {
 
   entt::handle p_coll;
   std::string title_name_;
-  bool open;
+  bool open{true};
   void run_comm();
 
  public:

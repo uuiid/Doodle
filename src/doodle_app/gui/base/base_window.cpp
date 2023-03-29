@@ -78,6 +78,13 @@ void windows_manage::tick() {
   windows_list_next_.clear();
 }
 
+void windows_manage::show_windows() {
+  if (gui_facet_)
+    gui_facet_->show_windows();
+  else
+    DOODLE_LOG_INFO("gui 构面为空, 不打开主窗口");
+}
+
 void windows_manage::create_windows_arg(const windows_init_arg& in_arg) {
   BOOST_ASSERT(!in_arg.title_.empty());
   BOOST_ASSERT(in_arg.create_factory_);

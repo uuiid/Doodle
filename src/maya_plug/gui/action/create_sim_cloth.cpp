@@ -101,7 +101,7 @@ bool create_sim_cloth::render() {
     for (auto& l_h : p_list) {
       if (!qcloth_shape::chick_low_skin(l_h)) {
         DOODLE_LOG_ERROR("{} 是没有绑定的简模", l_h.get<qcloth_shape_n::maya_obj>().p_name);
-        return;
+        return open;
       }
     }
     run_comm();

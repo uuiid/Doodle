@@ -21,9 +21,15 @@
 
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
-  make_handle().emplace<gui::gui_tick>(std::make_shared<maya_layout>());
-  make_handle().emplace<gui::gui_tick>(std::make_shared<maya_menu>());
-  make_handle().emplace<gui::gui_tick>(std::make_shared<gui::main_status_bar>());
+  set_layout(gui::windows{std::in_place_type<maya_layout>});
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<maya_menu>().set_render_type<dear::MainMenuBar>()
+  );
+  gui::g_windows_manage().create_windows_arg(
+      gui::windows_init_arg{}.create<gui::main_status_bar>().set_render_type<dear::ViewportSideBar>(
+          nullptr, ImGuiDir_Down
+      )
+  );
   boost::asio::post(g_io_context(), [this]() { close_windows(); });
 }
 void maya_facet::close_windows() { ::ShowWindow(p_hwnd, SW_HIDE); }

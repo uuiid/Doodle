@@ -15,8 +15,9 @@ class null_facet {
   null_facet();
 
   const std::string& name() const noexcept;
-  void operator()();
+  inline bool post() { return true; };
   void deconstruction();
+  void add_program_options(){};
 };
 
 }  // namespace doodle::maya_plug

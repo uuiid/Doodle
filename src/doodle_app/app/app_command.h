@@ -34,12 +34,12 @@ class app_command : public app_base {
     add_facet<Facet_Defaute>();
     (add_facet<Facet_>(), ...);
   };
-  virtual ~app_command() override {}
+  virtual ~app_command() override = default;
 
   static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
   template <typename T>
   void add_facet() {
-    facet_list.emplace_back(std::in_place_type<T>);
+    static_cast<T*>(facet_list.emplace_back(std::in_place_type<T>).data());
   };
 
  protected:

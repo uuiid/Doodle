@@ -59,7 +59,7 @@ class gui_facet::impl {
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
-  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>();
+  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>(this);
   init_windows();
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {

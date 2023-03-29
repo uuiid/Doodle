@@ -16,6 +16,8 @@
 
 #include <doodle_core/core/app_facet.h>
 
+#include <doodle_app/gui/base/base_window.h>
+
 #include <maya_plug/gui/maya_plug_app.h>
 
 namespace doodle::maya_plug {
@@ -47,9 +49,7 @@ MStatus open_doodle_main::doIt(const MArgList& list) {
   //    displayWarning(name);
   //  }
 
-  if (auto l_f = app_base::Get().find_facet<doodle::facet::gui_facet>(); l_f) {
-    l_f->show_windows();
-  }
+  gui::g_windows_manage().show_windows();
   return MStatus::kSuccess;
 }
 }  // namespace doodle::maya_plug

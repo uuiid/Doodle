@@ -46,6 +46,8 @@ class windows_manage {
 
   std::atomic_bool is_render_tick_p_;
 
+  facet::gui_facet* gui_facet_;
+
   class render_guard {
     windows_manage* ptr_;
 
@@ -58,7 +60,7 @@ class windows_manage {
   void show_windows(const std::string_view& in_info);
 
  public:
-  windows_manage() = default;
+  windows_manage(facet::gui_facet* in_facet) : gui_facet_(in_facet){};
 
   void create_windows_arg(const windows_init_arg& in_arg);
 
@@ -68,6 +70,8 @@ class windows_manage {
     if (has_windows(T::name)) return;
     show_windows(T::name);
   };
+
+  void show_windows();
 };
 
 class windows_init_arg {
