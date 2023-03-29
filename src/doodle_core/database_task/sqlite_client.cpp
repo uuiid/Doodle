@@ -90,34 +90,54 @@ class sqlite_file::impl {
  public:
   registry_ptr registry_attr;
   bool error_retry{false};
-  template <typename T>
+  template <typename type_t>
   class impl_obs {
-    entt::observer obs_update;
-    entt::observer obs_create;
+    entt::observer obs_update_;
+    entt::observer obs_create_;
 
    public:
-    impl_obs(const registry_ptr& in_registry_ptr)
-        : obs_update(*in_registry_ptr, entt::collector.update<database>().where<T>()),
-          obs_create(*in_registry_ptr, entt::collector.group<database, T>()) {}
+    explicit impl_obs(const registry_ptr& in_registry_ptr)
+        : obs_update_(*in_registry_ptr, entt::collector.update<database>().where<type_t>()),
+          obs_create_(*in_registry_ptr, entt::collector.group<database, type_t>()) {}
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      obs_update.disconnect();
-      obs_create.disconnect();
-      database_n::sql_com<T>{in_registry_ptr}.select(in_conn, in_handle);
-      obs_update.connect(*in_registry_ptr, entt::collector.update<database>().where<T>());
-      obs_create.connect(*in_registry_ptr, entt::collector.group<database, T>());
+      obs_update_.disconnect();
+      obs_create_.disconnect();
+      database_n::sql_com<type_t>{in_registry_ptr}.select(in_conn, in_handle);
+      obs_update_.connect(*in_registry_ptr, entt::collector.update<database>().where<type_t>());
+      obs_create_.connect(*in_registry_ptr, entt::collector.group<database, type_t>());
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
-      database_n::sql_com<T> l_orm{in_registry_ptr};
-      l_orm.insert(in_conn, obs_create);
-      l_orm.update(in_conn, obs_update);
+      database_n::sql_com<type_t> l_orm{in_registry_ptr};
+
+      std::vector<entt::entity> l_create{};
+      std::vector<entt::entity> l_update{};
+
+      for (auto&& i : obs_create_) {
+        if (in_registry_ptr->get<database>(i).is_install())
+          l_create.emplace_back(i);
+        else
+          l_update.emplace_back(i);
+      }
+      for (auto&& i : obs_update_) {
+        if (in_registry_ptr->get<database>(i).is_install())
+          l_create.emplace_back(i);
+        else
+          l_update.emplace_back(i);
+      }
+
+      l_orm.insert(in_conn, l_create);
+      l_orm.update(in_conn, l_update);
       l_orm.destroy(in_conn, in_handle);
-      obs_update.clear();
-      obs_create.clear();
+      obs_update_.clear();
+      obs_create_.clear();
     }
 
-    ~impl_obs() { obs_update.disconnect(); }
+    ~impl_obs() {
+      obs_create_.disconnect();
+      obs_update_.disconnect();
+    }
   };
 
   std::shared_ptr<boost::asio::system_timer> error_timer{};

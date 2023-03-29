@@ -13,11 +13,11 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 
-void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
+void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
-                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
+  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+                     return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
 
@@ -36,11 +36,11 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::
   }
 }
 
-void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
+void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
-                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
+  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+                     return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
 

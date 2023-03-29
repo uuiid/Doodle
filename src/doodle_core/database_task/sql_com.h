@@ -18,11 +18,11 @@ struct sql_com {
   void create_table(conn_ptr& in_ptr);
 
   /// 插入组件
-  void insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
-  void insert_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
+  void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void insert_id(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /// 更新组件
-  void update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
-  void update_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
+  void update_id(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /// 选择组件
   void select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);
   void select_id(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle);

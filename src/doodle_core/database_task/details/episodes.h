@@ -11,9 +11,9 @@ template <>
 struct sql_com<doodle::episodes> {
   registry_ptr reg_;
 
-  void insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
+  void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
 
-  void update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id);
+  void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
 
   /**
    *
