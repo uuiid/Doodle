@@ -18,6 +18,7 @@
 #include <core/core_set.h>
 #include <core/status_info.h>
 #include <database_task/delete_data.h>
+#include <database_task/details/database.h>
 #include <database_task/details/update_ctx.h>
 #include <database_task/insert.h>
 #include <database_task/select.h>
@@ -137,6 +138,89 @@ class sqlite_file::impl {
     ~impl_obs() {
       obs_create_.disconnect();
       obs_update_.disconnect();
+    }
+  };
+
+  template <>
+  class impl_obs<database> {
+    entt::observer obs_update_;
+    entt::observer obs_create_;
+    std::vector<std::int64_t> destroy_ids_{};
+    void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
+      if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
+    }
+
+   public:
+    explicit impl_obs(const registry_ptr& in_registry_ptr)
+        : obs_update_(*in_registry_ptr, entt::collector.update<database>().where<database>()),
+          obs_create_(*in_registry_ptr, entt::collector.group<database, database>()),
+          destroy_ids_{} {
+      in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+    }
+
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
+      database_n::sql_com<database>{in_registry_ptr}.select(in_conn, in_handle);
+      obs_update_.clear();
+      obs_create_.clear();
+    };
+
+    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+      database_n::sql_com<database> l_orm{in_registry_ptr};
+
+      std::vector<entt::entity> l_create{};
+      std::vector<entt::entity> l_update{};
+
+      for (auto&& i : obs_create_) {
+        if (in_registry_ptr->get<database>(i).is_install())
+          l_create.emplace_back(i);
+        else
+          l_update.emplace_back(i);
+      }
+      for (auto&& i : obs_update_) {
+        if (in_registry_ptr->get<database>(i).is_install())
+          l_create.emplace_back(i);
+        else
+          l_update.emplace_back(i);
+      }
+      in_handle = destroy_ids_;
+      l_orm.insert(in_conn, l_create);
+      l_orm.destroy(in_conn, destroy_ids_);
+      destroy_ids_.clear();
+      obs_update_.clear();
+      obs_create_.clear();
+    }
+
+    ~impl_obs() {
+      obs_create_.disconnect();
+      obs_update_.disconnect();
+    }
+  };
+
+  template <typename... arg>
+  class obs_main {
+    std::tuple<impl_obs<database>, arg...> obs_data_;
+
+    //    template <typename tuple_type, std::size_t... size_i>
+    //    void for_each_open(
+    //        tuple_type&& in_tuple, std::integer_sequence<std::size_t, size_i...>, const registry_ptr& in_registry_ptr,
+    //        conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle
+    //    ) {
+    //      auto l = {(std::get<size_i>(in_tuple).open(in_registry_ptr, in_conn, in_handle), 0)...};
+    //    }
+
+   public:
+    explicit obs_main(const registry_ptr& in_registry_ptr)
+        : obs_data_{std::make_tuple(impl_obs<database>{in_registry_ptr}, impl_obs<arg>{in_registry_ptr}...)} {}
+
+    void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
+      std::map<std::int64_t, entt::entity> l_map{};
+
+      std::apply([&](auto... x) { auto l_t = {(x.open(in_registry_ptr, in_conn, l_map), 0)...}; }, obs_data_);
+    }
+
+    void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
+      std::vector<std::int64_t> l_handles{};
+      std::apply([&](auto... x) { auto l_t = {(x.save(in_registry_ptr, in_conn, l_handles), 0)...}; }, obs_data_);
     }
   };
 
