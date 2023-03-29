@@ -11,15 +11,35 @@ target_sources(doodle_core
         season.h
         importance.h
         project.h
+        shot.h
+        redirection_path_info.h
+        rpi_search_path.h
+        assets.h
+        comment.h
+        export_file_info.h
+        image_icon.h
+        assets_file.h
+        time_point_info.h
+        project_config.h
 
         PRIVATE
         com_data.cpp
         update_ctx.cpp
         user.cpp
-        work_task.cpp
+        work_task.cpp 
         database.cpp
         episodes.cpp
         season.cpp
         importance.cpp
         project.cpp
+        shot.cpp
+        redirection_path_info.cpp
+        rpi_search_path.cpp
+        assets.cpp
+        comment.cpp
+        export_file_info.cpp
+        image_icon.cpp
+        assets_file.cpp
+        time_point_info.cpp
+        project_config.cpp
         )
