@@ -8,6 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
+  "builtin-baseline": "fe1e11045d6e6020fb3a1c155076741e7f9cd454",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -63,7 +64,6 @@
 
     "eigen3",
     "range-v3",
-
     "wil",
     "implot",
     "rttr",
@@ -72,7 +72,17 @@
     "directxtk",
     "dem-bones",
     "cppzmq",
-    "winreg"
+    "winreg",
+    {
+      "name": "bit7z",
+      "default-features": false,
+      "features": [
+        "auto-format",
+        "regex-matching",
+        "use-std-byte",
+        "auto-prefix-long-paths"
+      ]
+    }
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
