@@ -16,8 +16,8 @@ namespace sql = doodle_database;
 void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::Importance l_tabl{};
@@ -26,8 +26,8 @@ void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<std
   ));
 
   for (auto& l_h : l_handles) {
-    auto&  l_importance     = l_h.get<importance>();
-    l_pre.params.cutoffP    = l_importance.cutoff_p;
+    auto& l_importance           = l_h.get<importance>();
+    l_pre.params.cutoffP         = l_importance.cutoff_p;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     
     auto l_r                     = l_conn(l_pre);
@@ -38,17 +38,15 @@ void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<std
 void sql_com<doodle::importance>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
 
   sql::Importance l_tabl{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
-                                  .set(
-                                      l_tabl.cutoffP        = sqlpp::parameter(l_tabl.cutoffP)
-                                  )
+                                  .set(l_tabl.cutoffP = sqlpp::parameter(l_tabl.cutoffP))
                                   .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
 
   for (auto& l_h : l_handles) {

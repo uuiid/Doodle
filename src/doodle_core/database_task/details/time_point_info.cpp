@@ -26,8 +26,8 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
 ) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::TimePointInfo l_table{};
@@ -59,8 +59,8 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
 ) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::TimePointInfo l_table{};

@@ -19,8 +19,8 @@ namespace sql = doodle_database;
 void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::ImageIcon l_table{};
@@ -41,18 +41,17 @@ void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<std
 void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::ImageIcon l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_table)
                                   .set(l_table.path = sqlpp::parameter(l_table.path))
-          .where(l_table.entityId == sqlpp::parameter(l_table.entityId))
-  );
+                                  .where(l_table.entityId == sqlpp::parameter(l_table.entityId)));
   for (auto& l_h : l_handles) {
-    auto& l_img          = l_h.get<image_icon>();
+    auto& l_img           = l_h.get<image_icon>();
     l_pre.params.path   = l_img.path.string();
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 

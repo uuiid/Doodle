@@ -20,8 +20,8 @@ namespace sql = doodle_database;
 void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::Comment l_table{};
@@ -44,18 +44,20 @@ void sql_com<doodle::comment>::insert(conn_ptr& in_ptr, const std::vector<std::i
 void sql_com<doodle::comment>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::Comment l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.commentString = sqlpp::parameter(l_table.commentString), l_table.commentTime= sqlpp::parameter(l_table.commentTime))
-          .where(l_table.entityId == sqlpp::parameter(l_table.entityId))
-  );
+                                  .set(
+                                      l_table.commentString = sqlpp::parameter(l_table.commentString),
+                                      l_table.commentTime   = sqlpp::parameter(l_table.commentTime)
+                                  )
+                                  .where(l_table.entityId == sqlpp::parameter(l_table.entityId)));
   for (auto& l_h : l_handles) {
-    auto& l_shot          = l_h.get<comment>();
+    auto& l_shot               = l_h.get<comment>();
     l_pre.params.commentString   = l_shot.p_comment;
     l_pre.params.commentTime  = l_shot.p_time_info;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());

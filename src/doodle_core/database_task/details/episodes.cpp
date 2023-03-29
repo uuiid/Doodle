@@ -16,18 +16,18 @@ namespace sql = doodle_database;
 void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
 
   sql::Episodes l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
-      l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.eps       = sqlpp::parameter(l_tabl.eps)
+      l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.eps = sqlpp::parameter(l_tabl.eps)
   ));
 
   for (auto& l_h : l_handles) {
-    auto&  l_episodes     = l_h.get<episodes>();
+    auto& l_episodes             = l_h.get<episodes>();
     l_pre.params.eps      = l_episodes.p_episodes;
     l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     
@@ -39,17 +39,15 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<std::
 void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
 
   sql::Episodes l_tabl{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
-                                  .set(
-                                      l_tabl.eps             = sqlpp::parameter(l_tabl.eps)
-                                  )
+                                  .set(l_tabl.eps = sqlpp::parameter(l_tabl.eps))
                                   .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
 
   for (auto& l_h : l_handles) {

@@ -16,16 +16,15 @@ namespace sql = doodle_database;
 void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
   sql::Project l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
       l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.pName = sqlpp::parameter(l_tabl.pName),
-      l_tabl.pEnStr    = sqlpp::parameter(l_tabl.pEnStr),
-      l_tabl.pPath     = sqlpp::parameter(l_tabl.pPath),
-      l_tabl.pShorStr  = sqlpp::parameter(l_tabl.pShorStr)
+      l_tabl.pEnStr = sqlpp::parameter(l_tabl.pEnStr), l_tabl.pPath = sqlpp::parameter(l_tabl.pPath),
+      l_tabl.pShorStr = sqlpp::parameter(l_tabl.pShorStr)
   ));
 
   for (auto& l_h : l_handles) {
@@ -44,8 +43,8 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<std::i
 void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;
-  auto l_handles  = in_observer | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
+  auto l_handles  = in_id | ranges::views::transform([&](std::int64_t in_entity) {
+                     return entt::handle{*reg_, num_to_enum<entt::entity>(in_entity)};
                    }) |
                    ranges::to_vector;
 
@@ -54,9 +53,8 @@ void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<std::i
   auto l_pre = l_conn.prepare(
       sqlpp::update(l_tabl)
           .set(
-                                      l_tabl.pName        = sqlpp::parameter(l_tabl.pName),
-                                      l_tabl.pEnStr       = sqlpp::parameter(l_tabl.pEnStr),
-                                      l_tabl.pPath        = sqlpp::parameter(l_tabl.pPath),
+              l_tabl.pName = sqlpp::parameter(l_tabl.pName), l_tabl.pEnStr = sqlpp::parameter(l_tabl.pEnStr),
+              l_tabl.pPath        = sqlpp::parameter(l_tabl.pPath),
                                       l_tabl.pShorStr     = sqlpp::parameter(l_tabl.pShorStr)
                                   )
                                   .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
