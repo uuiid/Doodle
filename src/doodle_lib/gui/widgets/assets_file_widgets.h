@@ -24,16 +24,12 @@ class DOODLELIB_API assets_file_widgets {
 
   void render_context_menu(const entt::handle& in_);
   void render_by_icon();
-  void render_by_icon(std::size_t in_index);
   void render_by_info();
-  void render_by_info(std::size_t in_index);
   void switch_rander();
   void generate_lists(const std::vector<entt::handle>& in_list);
 
   void set_select(std::size_t in_size);
   void open_drag(std::size_t in_size);
-
-  void add_assets(const std::vector<FSys::path>& in_list);
 
  public:
   assets_file_widgets();
