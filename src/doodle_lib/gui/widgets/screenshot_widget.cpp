@@ -12,6 +12,7 @@
 
 #include <doodle_lib/core/image_loader.h>
 
+#include "imgui.h"
 #include <platform/win/get_screenshot.h>
 namespace doodle::gui {
 
