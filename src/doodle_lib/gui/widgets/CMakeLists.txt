@@ -22,6 +22,7 @@ target_sources(doodle_lib
         create_video.h
         database_edit.h
         work_hour_filling.h
+        create_entry.h
 
         PRIVATE
         edit_widget.cpp
@@ -41,4 +42,5 @@ target_sources(doodle_lib
         create_video.cpp
         database_edit.cpp
         work_hour_filling.cpp
+        create_entry.cpp
         )

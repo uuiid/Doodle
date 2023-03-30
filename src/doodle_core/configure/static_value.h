@@ -30,6 +30,7 @@ constexpr const std::string_view ue4_shot{R"(Shot)"};
 namespace gui::config::menu_w {
 constexpr const std::string_view project_widget{"项目"};
 constexpr const std::string_view edit_{"编辑"};
+constexpr const std::string_view create_entry_{"创建条目"};
 constexpr const std::string_view assets_filter{"过滤"};
 constexpr const std::string_view assets_file{"文件列表"};
 constexpr const std::string_view long_time_tasks{"队列"};
