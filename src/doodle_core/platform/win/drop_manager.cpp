@@ -8,6 +8,7 @@
 #include <doodle_core/logger/logger.h>
 
 #include <Windows.h>
+#include <imgui.h>
 #include <shellapi.h>
 #include <tchar.h>
 
@@ -101,6 +102,7 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
   }
 
   // 为 ImGui 中的按钮 1 触发 MouseUp
+  ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Left, false);
   begin_drop = false;
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;

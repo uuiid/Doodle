@@ -23,6 +23,7 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include "boost/filesystem/path.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
 #include <boost/asio/ssl.hpp>
@@ -37,10 +38,13 @@
 
 // Helper functions
 #include <d3d11.h>
+#include <memory>
+#include <optional>
 #include <tchar.h>
 // 启用窗口拖拽导入头文件
 #include <imgui.h>
 #include <shellapi.h>
+#include <vector>
 #include <wil/com.h>
 
 namespace doodle::facet {
@@ -54,6 +58,7 @@ class gui_facet::impl {
   using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
 
   drop_ptr_type dorp_manager{};
+  std::vector<FSys::path> drop_list_files{};
 };
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
@@ -312,9 +317,11 @@ gui_facet::~gui_facet() = default;
 void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
 void gui_facet::drop_files() {
   if (*p_i->dorp_manager) {
+    //    ImGui::UpdateHoveredWindowAndCaptureFlags();
     dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
+      p_i->drop_list_files = p_i->dorp_manager->GetDropFiles();
       ImGui::SetDragDropPayload(
-          doodle::doodle_config::drop_imgui_id.data(), &p_i->dorp_manager->GetDropFiles(), sizeof(std::nullptr_t)
+          doodle::doodle_config::drop_imgui_id.data(), &p_i->drop_list_files, sizeof(std::vector<FSys::path>)
       );
       dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(p_i->dorp_manager->GetDropFiles(), "\n"))); };
     };
@@ -324,7 +331,10 @@ void gui_facet::drop_files() {
 void gui_facet::external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_point) {
   ImGuiIO& io = ImGui::GetIO();
   //  bool const want_absolute_pos = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
+  io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
   io.AddMousePosEvent(boost::numeric_cast<std::float_t>(in_point.x), boost::numeric_cast<std::float_t>(in_point.y));
+  io.AddFocusEvent(true);
+
   //  io.AddMouseButtonEvent(ImGuiButtonFlags_MouseButtonLeft, true);
 
   //  io.AddKeyEvent(key, down);

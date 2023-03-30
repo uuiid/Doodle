@@ -20,6 +20,7 @@
 
 #include "create_entry.h"
 #include "entt/entity/fwd.hpp"
+#include "imgui.h"
 #include <memory>
 #include <vector>
 
@@ -215,7 +216,8 @@ bool assets_file_widgets::render() {
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
   auto* l_win_main                     = ImGui::GetCurrentWindow();
   if (auto l_drag = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
-    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data())) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
+        l_data && l_data->IsDelivery()) {
       auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
       g_windows_manage().create_windows_arg(
           windows_init_arg{}
@@ -227,11 +229,13 @@ bool assets_file_widgets::render() {
     }
   }
 
-  dear::Child l_win{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false};
-  l_win&& [&]() {
-    if (p_i->lists.empty()) return;
-    p_i->render_list();
-  };
+  {
+    dear::Child l_win{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false};
+    l_win&& [&]() {
+      if (p_i->lists.empty()) return;
+      p_i->render_list();
+    };
+  }
 
   if (ImGui::Button(ICON_FA_ATOM)) {
     p_i->render_icon = !p_i->render_icon;
