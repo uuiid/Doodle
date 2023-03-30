@@ -132,21 +132,21 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       //      RETURN_IF_WIN32_ERROR(l_err);
       return true;
     }
-      //    case WM_IME_CHAR: {
-      //      auto& io    = ImGui::GetIO();
-      //      DWORD wChar = wParam;
-      //      if (wChar <= 127) {
-      //        io.AddInputCharacter(wChar);
-      //      } else {
-      //        // swap lower and upper part.
-      //        BYTE low  = (BYTE)(wChar & 0x00FF);
-      //        BYTE high = (BYTE)((wChar & 0xFF00) >> 8);
-      //        wChar     = MAKEWORD(high, low);
-      //        wchar_t ch[6];
-      //        MultiByteToWideChar(CP_OEMCP, 0, (LPCSTR)&wChar, 4, ch, 3);
-      //        io.AddInputCharacter(ch[0]);
-      //      }
-      //    }
+    case WM_IME_CHAR: {
+      auto& io    = ImGui::GetIO();
+      DWORD wChar = wParam;
+      if (wChar <= 127) {
+        io.AddInputCharacter(wChar);
+      } else {
+        // swap lower and upper part.
+        BYTE low  = (BYTE)(wChar & 0x00FF);
+        BYTE high = (BYTE)((wChar & 0xFF00) >> 8);
+        wChar     = MAKEWORD(high, low);
+        wchar_t ch[6];
+        MultiByteToWideChar(CP_OEMCP, 0, (LPCSTR)&wChar, 4, ch, 3);
+        io.AddInputCharacter(ch[0]);
+      }
+    }
     default:
       break;
   }
