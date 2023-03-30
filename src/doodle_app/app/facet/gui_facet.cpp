@@ -210,7 +210,7 @@ void gui_facet::init_windows() {
   DragAcceptFiles(p_hwnd, 1);
   /// \brief 注册拖放对象
   p_i->dorp_manager = new win::drop_manager{
-      [this](DWORD grfKeyState, POINTL ptl) { this->external_update_mouse_coordinates(grfKeyState, ptl); }};
+      [this](DWORD grfKeyState, POINTL ptl) { external_update_mouse_coordinates(grfKeyState, ptl); }};
   auto k_r = ::RegisterDragDrop(p_hwnd, p_i->dorp_manager.get());
   DOODLE_CHICK(k_r == S_OK, doodle_error{"无法注册拖拽com"});
 
@@ -325,6 +325,7 @@ void gui_facet::external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_p
   ImGuiIO& io = ImGui::GetIO();
   //  bool const want_absolute_pos = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
   io.AddMousePosEvent(boost::numeric_cast<std::float_t>(in_point.x), boost::numeric_cast<std::float_t>(in_point.y));
+  //  io.AddMouseButtonEvent(ImGuiButtonFlags_MouseButtonLeft, true);
 
   //  io.AddKeyEvent(key, down);
   //  io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)

@@ -209,7 +209,16 @@ void assets_file_widgets::init() {
 bool assets_file_widgets::render() {
   /// 渲染数据
   const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-  dear::Child{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false} && [&]() {
+  auto* l_win_main                     = ImGui::GetCurrentWindow();
+  if (auto l_drag = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
+    if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data())) {
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+      DOODLE_LOG_INFO("接受拖放项目", *l_list);
+    }
+  }
+
+  dear::Child l_win{"ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false};
+  l_win&& [&]() {
     if (p_i->lists.empty()) return;
     p_i->render_list();
   };
@@ -424,6 +433,38 @@ void assets_file_widgets::generate_lists(const std::vector<entt::handle>& in_lis
 }
 
 const std::string& assets_file_widgets::title() const { return p_i->title_name_; }
+
+void assets_file_widgets::add_assets(const std::vector<FSys::path>& in_list) {
+  image_loader l_image_load{};
+  auto l_list = in_list | ranges::views::transform([&](const FSys::path& in_path) -> entt::handle {
+                  auto k_h        = make_handle();
+                  auto l_prj_path = g_reg()->ctx().at<project>().p_path;
+                  /// \brief 这里使用 lexically_proximate 防止相对路径失败
+                  auto l_path     = in_path.lexically_proximate(l_prj_path);
+
+                  k_h.emplace<assets_file>(l_path);
+                  k_h.emplace<assets>(""s);
+
+                  /**
+                   * @brief 从路径中寻找各个组件
+                   */
+                  season::analysis_static(k_h, in_path);
+                  episodes::analysis_static(k_h, in_path);
+                  shot::analysis_static(k_h, in_path);
+                  episodes::conjecture_season(k_h);
+
+                  //                  if (use_time.data) this->add_time(k_h, in_path);
+                  //                  if (use_icon.data) this->find_icon(k_h, in_path);
+                  k_h.emplace<database>();
+                  database::save(k_h);
+                  return k_h;
+                }) |
+                ranges::to_vector;
+
+  DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
+  //  g_reg()->ctx().at<core_sig>().filter_handle(p_list.data);
+}
+
 assets_file_widgets::~assets_file_widgets() { /*p_i->observer_h.disconnect();*/
 }
 

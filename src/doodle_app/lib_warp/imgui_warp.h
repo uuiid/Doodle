@@ -394,6 +394,14 @@ struct DragDropTarget : public ScopeWrapper<DragDropTarget> {
   DragDropTarget() : ScopeWrapper<DragDropTarget>(ImGui::BeginDragDropTarget()) {}
   static void dtor() noexcept { ImGui::EndDragDropTarget(); }
 };
+
+struct DragDropTargetCustom : public ScopeWrapper<DragDropTargetCustom> {
+ public:
+  DragDropTargetCustom(const ImRect& bb, ImGuiID id)
+      : ScopeWrapper<DragDropTargetCustom>(ImGui::BeginDragDropTargetCustom(bb, id)) {}
+  static void dtor() noexcept { ImGui::EndDragDropTarget(); }
+};
+
 struct ItemWidth : public ScopeWrapper<ItemWidth, true> {
  public:
   explicit ItemWidth(std::float_t in_width) : ScopeWrapper(true) { ImGui::PushItemWidth(in_width); }

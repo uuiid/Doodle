@@ -33,6 +33,8 @@ class DOODLELIB_API assets_file_widgets {
   void set_select(std::size_t in_size);
   void open_drag(std::size_t in_size);
 
+  void add_assets(const std::vector<FSys::path>& in_list);
+
  public:
   assets_file_widgets();
   ~assets_file_widgets();
