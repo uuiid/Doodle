@@ -21,29 +21,29 @@
 namespace doodle::database_n {
 namespace sql = doodle_database;
 void sql_com<doodle::export_file_info>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
-  sql::ExportFileInfo l_table{};
-
+  tables::export_file_info l_table{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
-      l_table.filePath = sqlpp::parameter(l_table.filePath), l_table.startFrame = sqlpp::parameter(l_table.startFrame),
-      l_table.endFrame = sqlpp::parameter(l_table.endFrame), l_table.refFile = sqlpp::parameter(l_table.refFile),
-      l_table.exportType_ = sqlpp::parameter(l_table.exportType_), l_table.entityId = sqlpp::parameter(l_table.entityId)
+      l_table.file_path   = sqlpp::parameter(l_table.file_path),
+      l_table.start_frame = sqlpp::parameter(l_table.start_frame),
+      l_table.end_frame = sqlpp::parameter(l_table.end_frame), l_table.ref_file = sqlpp::parameter(l_table.ref_file),
+      l_table.export_type_ = sqlpp::parameter(l_table.export_type_),
+      l_table.entity_id    = sqlpp::parameter(l_table.entity_id)
   ));
 
   for (auto& l_h : l_handles) {
-    auto& l_file             = l_h.get<export_file_info>();
-    l_pre.params.filePath    = l_file.file_path.string();
-    l_pre.params.startFrame  = l_file.start_frame;
-    l_pre.params.endFrame    = l_file.end_frame;
-    l_pre.params.refFile     = l_file.ref_file.string();
-    l_pre.params.exportType_ = std::string{magic_enum::enum_name(l_file.export_type_)};
-    l_pre.params.entityId    = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-    auto l_r                 = l_conn(l_pre);
+    auto& l_file              = l_h.get<export_file_info>();
+    l_pre.params.file_path    = l_file.file_path.string();
+    l_pre.params.start_frame  = l_file.start_frame;
+    l_pre.params.end_frame    = l_file.end_frame;
+    l_pre.params.ref_file     = l_file.ref_file.string();
+    l_pre.params.export_type_ = std::string{magic_enum::enum_name(l_file.export_type_)};
+    l_pre.params.entity_id    = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto l_r                  = l_conn(l_pre);
     DOODLE_LOG_INFO(
         "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<export_file_info>().get_name()
     );
@@ -51,33 +51,32 @@ void sql_com<doodle::export_file_info>::insert(conn_ptr& in_ptr, const std::vect
 }
 
 void sql_com<doodle::export_file_info>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
-  sql::ExportFileInfo l_table{};
+  tables::export_file_info l_table{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_table)
                                   .set(
-                                      l_table.filePath    = sqlpp::parameter(l_table.filePath),
-                                      l_table.startFrame  = sqlpp::parameter(l_table.startFrame),
-                                      l_table.endFrame    = sqlpp::parameter(l_table.endFrame),
-                                      l_table.refFile     = sqlpp::parameter(l_table.refFile),
-                                      l_table.exportType_ = sqlpp::parameter(l_table.exportType_)
+                                      l_table.file_path    = sqlpp::parameter(l_table.file_path),
+                                      l_table.start_frame  = sqlpp::parameter(l_table.start_frame),
+                                      l_table.end_frame    = sqlpp::parameter(l_table.end_frame),
+                                      l_table.ref_file     = sqlpp::parameter(l_table.ref_file),
+                                      l_table.export_type_ = sqlpp::parameter(l_table.export_type_)
                                   )
-                                  .where(l_table.entityId == sqlpp::parameter(l_table.entityId)));
+                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
   for (auto& l_h : l_handles) {
-    auto& l_file             = l_h.get<export_file_info>();
-    l_pre.params.filePath    = l_file.file_path.string();
-    l_pre.params.startFrame  = l_file.start_frame;
-    l_pre.params.endFrame    = l_file.end_frame;
-    l_pre.params.refFile     = l_file.ref_file.string();
-    l_pre.params.exportType_ = std::string{magic_enum::enum_name(l_file.export_type_)};
-    l_pre.params.entityId    = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto& l_file              = l_h.get<export_file_info>();
+    l_pre.params.file_path    = l_file.file_path.string();
+    l_pre.params.start_frame  = l_file.start_frame;
+    l_pre.params.end_frame    = l_file.end_frame;
+    l_pre.params.ref_file     = l_file.ref_file.string();
+    l_pre.params.export_type_ = std::string{magic_enum::enum_name(l_file.export_type_)};
+    l_pre.params.entity_id    = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r                 = l_conn(l_pre);
+    auto l_r                  = l_conn(l_pre);
     DOODLE_LOG_INFO(
         "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<export_file_info>().get_name()
     );
@@ -87,31 +86,31 @@ void sql_com<doodle::export_file_info>::select(
     conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
 ) {
   auto& l_conn = *in_ptr;
-  sql::ExportFileInfo l_table{};
+  tables::export_file_info l_table{};
   std::vector<export_file_info> l_file;
   std::vector<entt::entity> l_entts;
   // 调整内存
   for (auto&& raw :
-       l_conn(sqlpp::select(sqlpp::count(l_table.entityId)).from(l_table).where(l_table.entityId.is_not_null()))) {
+       l_conn(sqlpp::select(sqlpp::count(l_table.entity_id)).from(l_table).where(l_table.entity_id.is_not_null()))) {
     l_file.reserve(raw.count.value());
     l_entts.reserve(raw.count.value());
     break;
   }
 
   for (auto& row : l_conn(sqlpp::select(
-                              l_table.entityId, l_table.filePath, l_table.startFrame, l_table.endFrame, l_table.refFile,
-                              l_table.exportType_
+                              l_table.entity_id, l_table.file_path, l_table.start_frame, l_table.end_frame,
+                              l_table.ref_file, l_table.export_type_
        )
                               .from(l_table)
-                              .where(l_table.entityId.is_null()))) {
+                              .where(l_table.entity_id.is_null()))) {
     export_file_info l_f{};
-    l_f.file_path    = row.filePath.value();
-    l_f.start_frame  = row.startFrame.value();
-    l_f.end_frame    = row.endFrame.value();
-    l_f.ref_file     = row.refFile.value();
-    l_f.export_type_ = magic_enum::enum_cast<export_file_info::export_type>(row.exportType_.value())
+    l_f.file_path    = row.file_path.value();
+    l_f.start_frame  = row.start_frame.value();
+    l_f.end_frame    = row.end_frame.value();
+    l_f.ref_file     = row.ref_file.value();
+    l_f.export_type_ = magic_enum::enum_cast<export_file_info::export_type>(row.export_type_.value())
                            .value_or(export_file_info::export_type::none);
-    auto l_id = row.entityId.value();
+    auto l_id = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_file.emplace_back(std::move(l_f));
       l_entts.emplace_back(in_handle.at(l_id));
@@ -123,7 +122,7 @@ void sql_com<doodle::export_file_info>::select(
   reg_->insert(l_entts.begin(), l_entts.end(), l_file.begin());
 }
 void sql_com<doodle::export_file_info>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
-  detail::sql_com_destroy<sql::ExportFileInfo>(in_ptr, in_handle);
+  detail::sql_com_destroy<tables::export_file_info>(in_ptr, in_handle);
 }
 
 }  // namespace doodle::database_n
