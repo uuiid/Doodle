@@ -90,7 +90,7 @@ class DOODLE_APP_API file_panel {
   void init();
 
   static constexpr std::int32_t flags{ImGuiWindowFlags_NoSavedSettings};
-  //  static constexpr std::array<float, 2> sizexy{640, 360};
+  static constexpr std::array<float, 2> sizexy{640, 360};
   //  static constexpr std::string_view name{"设置项目"};
 
   bool render();

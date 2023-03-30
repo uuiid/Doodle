@@ -38,7 +38,7 @@ class create_entry {
   explicit create_entry(const init_args& in_args) : args_(in_args) {}
 
   constexpr static std::string_view name{gui::config::menu_w::create_entry_};
-
+  static constexpr std::array<float, 2> sizexy{640, 360};
   bool render();
 };
 
