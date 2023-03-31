@@ -23,6 +23,20 @@ void sql_com_destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handl
     l_conn(l_pre);
   }
 }
+
+template <typename T>
+void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+  auto& l_conn = *in_ptr;
+  T l_tabl{};
+  auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
+
+  for (auto& l_id : in_handle) {
+    l_pre.params.parent_id = boost::numeric_cast<std::int64_t>(l_id);
+    l_conn(l_pre);
+  }
+}
+
+
 template <typename T>
 inline sqlpp::make_traits<T, sqlpp::tag::can_be_null> can_be_null();
 
@@ -125,6 +139,7 @@ DOODLE_SQL_COLUMN_IMP(p_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(p_path, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(p_en_str, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(p_shor_str, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
 DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data, column::update_time);
@@ -136,7 +151,7 @@ DOODLE_SQL_TABLE_IMP(
 DOODLE_SQL_TABLE_IMP(episodes, column::id, column::entity_id, column::eps);
 DOODLE_SQL_TABLE_IMP(shot, column::id, column::entity_id, column::shot_int, column::shot_ab);
 DOODLE_SQL_TABLE_IMP(redirection_path_info, column::id, column::entity_id, column::redirection_file_name);
-DOODLE_SQL_TABLE_IMP(rpi_search_path, column::id, column::entity_id, column::redirection_path);
+DOODLE_SQL_TABLE_IMP(rpi_search_path, column::id,column::parent_id,column::redirection_path);
 DOODLE_SQL_TABLE_IMP(assets, column::id, column::entity_id, column::assets_path);
 DOODLE_SQL_TABLE_IMP(comment, column::id, column::entity_id, column::comment_string, column::comment_time);
 DOODLE_SQL_TABLE_IMP(
