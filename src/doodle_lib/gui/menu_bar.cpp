@@ -4,6 +4,7 @@
 
 #include "menu_bar.h"
 
+#include "doodle_core/gui_template/show_windows.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/doodle_core_fwd.h>
@@ -16,6 +17,8 @@
 #include <doodle_app/gui/show_message.h>
 
 #include "doodle_lib/gui/setting_windows.h"
+#include <doodle_lib/gui/asset_library_layout.h>
+#include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/widgets/all_user_view_widget.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
@@ -31,9 +34,12 @@
 #include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
 #include <doodle_lib/toolkit/toolkit.h>
 
+#include "asset_library_layout.h"
 #include "gui/widgets/work_hour_filling.h"
+#include "layout_window.h"
 #include <fmt/core.h>
 #include <implot.h>
+#include <utility>
 
 namespace doodle::gui {
 void menu_bar::menu_windows() {
@@ -135,6 +141,14 @@ void menu_bar::menu_tool() {
       l_message = fmt::format(l_message, fmt::format("失败{} ", error.what()));
     }
     menu_bar::message(l_message);
+  }
+}
+void menu_bar::menu_layout() {
+  if (dear::MenuItem("默认布局")) {
+    g_windows_manage().set_layout(windows_layout{std::in_place_type<layout_window>});
+  }
+  if (dear::MenuItem("资产库布局")) {
+    g_windows_manage().set_layout(windows_layout{std::in_place_type<asset_library_layout>});
   }
 }
 }  // namespace doodle::gui

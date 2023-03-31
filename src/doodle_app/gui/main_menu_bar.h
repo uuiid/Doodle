@@ -27,13 +27,13 @@ class DOODLE_APP_API main_menu_bar {
  private:
   class impl;
   std::unique_ptr<impl> p_i;
-  void menu_layout();
 
  protected:
   virtual void menu_file();
   virtual void menu_edit();
   virtual void menu_windows() = 0;
   virtual void menu_tool()    = 0;
+  virtual void menu_layout();
 
  public:
  public:

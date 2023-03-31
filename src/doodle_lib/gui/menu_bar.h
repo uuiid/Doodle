@@ -14,5 +14,6 @@ class DOODLELIB_API menu_bar : public main_menu_bar {
  protected:
   void menu_windows() override;
   void menu_tool() override;
+  void menu_layout() override;
 };
 }  // namespace doodle::gui

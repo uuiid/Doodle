@@ -10,6 +10,7 @@
 
 #include <boost/signals2.hpp>
 
+#include <functional>
 #include <utility>
 
 namespace doodle::win {
@@ -50,10 +51,11 @@ class windows_manage {
 
   std::atomic_bool is_render_tick_p_{};
   gui::windows_layout layout_{};
+  gui::windows_layout layout_next_{};
   facet::gui_facet* gui_facet_{};
   win::drop_manager* drop_manger_{};
   std::vector<FSys::path> drop_list_files_{};
-  std::function<void()> swap_layout_;
+  std::vector<std::function<void()>> close_fun_lists_{};
 
   class render_guard {
     windows_manage* ptr_;

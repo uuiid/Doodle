@@ -12,6 +12,7 @@
 #include <doodle_app/gui/base/ref_base.h>
 
 #include "range/v3/action/remove_if.hpp"
+#include <any>
 
 namespace doodle::gui {
 
@@ -75,12 +76,12 @@ class windows_manage::warp_w {
 };
 
 void windows_manage::tick() {
-  layout_->render();
-
-  if (swap_layout_) {
-    swap_layout_();
-    swap_layout_ = nullptr;
+  if (layout_next_) {
+    std::swap(layout_next_, layout_);
+    layout_next_.reset();
+    layout_->set_show();
   }
+  layout_->render();
 
   if (*drop_manger_) {
     dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
@@ -96,6 +97,11 @@ void windows_manage::tick() {
   windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !in_->render(); });
   windows_list_ |= ranges::actions::push_back(windows_list_next_);
   windows_list_next_.clear();
+
+  for (auto&& i : close_fun_lists_) {
+    i();
+  }
+  close_fun_lists_.clear();
 }
 
 windows_manage::windows_manage(facet::gui_facet* in_facet)
@@ -140,13 +146,11 @@ bool windows_manage::has_windows(const std::string_view& in_info) {
 }
 
 void windows_manage::set_layout(gui::windows_layout&& in_windows) {
+  BOOST_ASSERT(in_windows);
   if (!layout_)
     layout_ = std::move(in_windows);
   else {
-    swap_layout_ = [l_lay = std::move(in_windows), this]() {
-      layout_ = std::move(l_lay);
-      layout_->set_show();
-    };
+    layout_next_ = std::move(in_windows);
   }
 }
 
@@ -171,6 +175,10 @@ void windows_manage::close_windows(const std::string_view& in_info) {
   }
   windows_list_next_ |=
       ranges::actions::remove_if([=](const warp_w_ptr& in_arg) { return in_arg->args_.title_ == in_info; });
+  close_fun_lists_.emplace_back([=]() {
+    //    windows_list_ |=
+    //        ranges::actions::remove_if([=](const warp_w_ptr& in_arg) { return in_arg->args_.title_ == in_info; });
+  });
 }
 
 }  // namespace doodle::gui
