@@ -88,11 +88,6 @@ class layout : public doodle::gui::detail::layout_tick_interface {
 class menu_bar : public doodle::gui::menu_bar {
  public:
  protected:
-  void menu_windows() override {
-    using namespace doodle;
-    if (dear::MenuItem(gui::work_hour_filling::name.data())) gui::show_windows<gui::work_hour_filling>();
-    if (dear::MenuItem(gui::setting_windows::name.data())) gui::show_windows<gui::setting_windows>();
-  };
   void menu_tool() override{};
 };
 

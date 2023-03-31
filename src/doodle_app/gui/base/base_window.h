@@ -11,6 +11,7 @@
 #include <boost/signals2.hpp>
 
 #include <functional>
+#include <memory>
 #include <utility>
 
 namespace doodle::win {
@@ -56,7 +57,9 @@ class windows_manage {
   win::drop_manager* drop_manger_{};
   std::vector<FSys::path> drop_list_files_{};
   std::vector<std::function<void()>> close_fun_lists_{};
-
+  std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>> menu_list_{};
+  void gen_windows_list();
+  void set_menu_list(const warp_w_ptr& win_ptr);
   class render_guard {
     windows_manage* ptr_;
 
@@ -65,10 +68,6 @@ class windows_manage {
     ~render_guard() { ptr_->is_render_tick_p_ = false; }
   };
 
-  bool has_windows(const std::string_view& in_info);
-  void show_windows(const std::string_view& in_info);
-  void close_windows(const std::string_view& in_info);
-
  public:
   explicit windows_manage(facet::gui_facet* in_facet);
 
@@ -76,6 +75,11 @@ class windows_manage {
   void set_layout(gui::windows_layout&& in_windows);
 
   void tick();
+  bool has_windows(const std::string_view& in_info);
+  void show_windows(const std::string_view& in_info);
+  void close_windows(const std::string_view& in_info);
+  void open_windows(const std::string_view& in_info);
+
   template <typename win_type>
   std::enable_if_t<details::has_name_v<win_type>> open_windows() {
     if (has_windows(win_type::name)) return;
@@ -86,6 +90,8 @@ class windows_manage {
     if (!has_windows(win_type::name)) return;
     close_windows(win_type::name);
   };
+
+  std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>>& get_menu_windows_list();
 
   void show_windows();
 };
@@ -101,7 +107,7 @@ class windows_init_arg {
     kviewport_side_bar,
   };
 
-  bool init_show_{true};
+  std::shared_ptr<bool> init_show_{std::make_shared<bool>(true)};
   render_enum render_enum_{};
   std::int32_t flags_{};
   std::array<float, 2> size_xy_{};
@@ -153,7 +159,7 @@ class windows_init_arg {
   template <typename render_type, std::enable_if_t<std::is_same_v<render_type, dear::Begin>>* = nullptr>
   inline windows_init_arg& set_render_type() {
     create_guard_ = [](windows_init_arg* in) {
-      return dear_types{std::in_place_type_t<dear::Begin>{}, in->title_.data(), &in->init_show_, in->flags_};
+      return dear_types{std::in_place_type_t<dear::Begin>{}, in->title_.data(), in->init_show_.get(), in->flags_};
     };
     render_enum_ = render_enum::kbegin;
     return *this;
@@ -176,7 +182,7 @@ class windows_init_arg {
   };
 
   inline windows_init_arg& set_init_hide(bool is_show = false) {
-    init_show_ = is_show;
+    *init_show_ = is_show;
     return *this;
   };
   inline windows_init_arg& set_flags(std::int32_t in_flags) {

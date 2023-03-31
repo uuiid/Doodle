@@ -31,8 +31,8 @@ class DOODLE_APP_API main_menu_bar {
  protected:
   virtual void menu_file();
   virtual void menu_edit();
-  virtual void menu_windows() = 0;
-  virtual void menu_tool()    = 0;
+  void menu_windows();
+  virtual void menu_tool() = 0;
   virtual void menu_layout();
 
  public:

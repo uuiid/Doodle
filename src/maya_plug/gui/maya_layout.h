@@ -21,7 +21,6 @@ class maya_layout : public gui::details::layout_window_base {
 
 class maya_menu : public doodle::gui::main_menu_bar {
  protected:
-  void menu_windows() override;
   void menu_tool() override;
 };
 }  // namespace maya_plug

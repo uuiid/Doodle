@@ -12,6 +12,7 @@
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/gui/open_file_dialog.h>
 
+#include "base/base_window.h"
 #include <lib_warp/imgui_warp.h>
 
 namespace doodle::gui {
@@ -97,7 +98,7 @@ bool main_menu_bar::render() {
 
   dear::Menu{"文件"} && [this]() { this->menu_file(); };
   dear::Menu{"窗口"} && [this]() { this->menu_windows(); };
-  dear::Menu{"编辑"} && [this]() { this->menu_edit(); };
+  //  dear::Menu{"编辑"} && [this]() { this->menu_edit(); };
   dear::Menu{"工具"} && [this]() { this->menu_tool(); };
 #ifndef NDEBUG
   ImGui::Text("%.3f ms/%.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -105,8 +106,18 @@ bool main_menu_bar::render() {
 
   return true;
 }
-void main_menu_bar::menu_edit() {
+void main_menu_bar::menu_edit() {}
+void main_menu_bar::menu_windows() {
   dear::Menu{"布局"} && [this]() { this->menu_layout(); };
+  for (auto &&[name, open] : g_windows_manage().get_menu_windows_list()) {
+    if (dear::MenuItem(name.get().data(), open)) {
+      if (*open)
+        g_windows_manage().open_windows(name.get());
+      else
+        g_windows_manage().close_windows(name.get());
+    }
+    // g_windows_manage().show_windows(name.get());
+  }
 }
 void main_menu_bar::menu_layout() {
   //  ImGui::InputText(*p_i->layout_name_.gui_name, &p_i->layout_name_.data);
