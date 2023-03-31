@@ -28,23 +28,23 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
                    ranges::to_vector;
 
   {
-    sql::WorkTaskInfo l_tabl{};
-
+    // sql::WorkTaskInfo l_tabl{};
+    tables::work_task_info l_tabl{};
     auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
-        l_tabl.userId = sqlpp::parameter(l_tabl.userId), l_tabl.taskName = sqlpp::parameter(l_tabl.taskName),
+        l_tabl.user_id = sqlpp::parameter(l_tabl.user_id), l_tabl.task_name = sqlpp::parameter(l_tabl.task_name),
         l_tabl.region = sqlpp::parameter(l_tabl.region), l_tabl.abstract = sqlpp::parameter(l_tabl.abstract),
-        l_tabl.timePoint = sqlpp::parameter(l_tabl.timePoint), l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)
+        l_tabl.time_point = sqlpp::parameter(l_tabl.time_point), l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id)
     ));
 
     for (auto& l_h : l_handles) {
-      auto& l_work           = l_h.get<work_task_info>();
-      l_pre.params.region    = l_work.region;
-      l_pre.params.taskName  = l_work.task_name;
-      l_pre.params.abstract  = l_work.abstract;
-      l_pre.params.entityId  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-      l_pre.params.timePoint = l_work.time;
+      auto& l_work            = l_h.get<doodle::work_task_info>();
+      l_pre.params.region     = l_work.region;
+      l_pre.params.task_name  = l_work.task_name;
+      l_pre.params.abstract   = l_work.abstract;
+      l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+      l_pre.params.time_point = l_work.time;
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
-        l_pre.params.userId = uuids::to_string(l_user_h.get<database>().uuid());
+        l_pre.params.user_id = uuids::to_string(l_user_h.get<database>().uuid());
       }
       auto l_r = l_conn(l_pre);
       DOODLE_LOG_INFO(
@@ -61,27 +61,27 @@ void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector
                    }) |
                    ranges::to_vector;
   {
-    sql::WorkTaskInfo l_tabl{};
+    tables::work_task_info l_tabl{};
 
-    auto l_pre = l_conn.prepare(
-        sqlpp::update(l_tabl)
-            .set(
-                l_tabl.userId = sqlpp::parameter(l_tabl.userId), l_tabl.taskName = sqlpp::parameter(l_tabl.taskName),
-                l_tabl.region = sqlpp::parameter(l_tabl.region), l_tabl.abstract = sqlpp::parameter(l_tabl.abstract),
-                l_tabl.timePoint = sqlpp::parameter(l_tabl.timePoint)
-            )
-            .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId))
-    );
+    auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
+                                    .set(
+                                        l_tabl.user_id    = sqlpp::parameter(l_tabl.user_id),
+                                        l_tabl.task_name  = sqlpp::parameter(l_tabl.task_name),
+                                        l_tabl.region     = sqlpp::parameter(l_tabl.region),
+                                        l_tabl.abstract   = sqlpp::parameter(l_tabl.abstract),
+                                        l_tabl.time_point = sqlpp::parameter(l_tabl.time_point)
+                                    )
+                                    .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
 
     for (auto& l_h : l_handles) {
-      auto& l_work           = l_h.get<work_task_info>();
-      l_pre.params.region    = l_work.region;
-      l_pre.params.taskName  = l_work.task_name;
-      l_pre.params.abstract  = l_work.abstract;
-      l_pre.params.timePoint = l_work.time;
-      l_pre.params.entityId  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+      auto& l_work            = l_h.get<doodle::work_task_info>();
+      l_pre.params.region     = l_work.region;
+      l_pre.params.task_name  = l_work.task_name;
+      l_pre.params.abstract   = l_work.abstract;
+      l_pre.params.time_point = l_work.time;
+      l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
-        l_pre.params.userId = uuids::to_string(l_user_h.get<database>().uuid());
+        l_pre.params.user_id = uuids::to_string(l_user_h.get<database>().uuid());
       }
       auto l_r = l_conn(l_pre);
       DOODLE_LOG_INFO(
@@ -95,33 +95,33 @@ void sql_com<doodle::work_task_info>::select(conn_ptr& in_ptr, const std::map<st
   auto& l_conn    = *in_ptr;
 
   {
-    sql::WorkTaskInfo l_tabl{};
+    tables::work_task_info l_tabl{};
     std::vector<work_task_info> l_works{};
     std::vector<entt::entity> l_entts{};
 
     /// 选择大小并进行调整内存
     for (auto&& raw :
-         l_conn(sqlpp::select(sqlpp::count(l_tabl.entityId)).from(l_tabl).where(l_tabl.entityId.is_not_null()))) {
+         l_conn(sqlpp::select(sqlpp::count(l_tabl.entity_id)).from(l_tabl).where(l_tabl.entity_id.is_not_null()))) {
       l_works.reserve(raw.count.value());
       l_entts.reserve(raw.count.value());
       break;
     }
 
-    for (auto& row :
-         l_conn(sqlpp::select(
-                    l_tabl.entityId, l_tabl.userId, l_tabl.taskName, l_tabl.region, l_tabl.abstract, l_tabl.timePoint
+    for (auto& row : l_conn(sqlpp::select(
+                                l_tabl.entity_id, l_tabl.user_id, l_tabl.task_name, l_tabl.region, l_tabl.abstract,
+                                l_tabl.time_point
          )
-                    .from(l_tabl)
-                    .where(l_tabl.entityId.is_null()))) {
+                                .from(l_tabl)
+                                .where(l_tabl.entity_id.is_null()))) {
       work_task_info l_w{};
       l_w.abstract  = row.abstract.value();
       l_w.region    = row.region.value();
 
-      l_w.time      = chrono_ns::round<work_task_info::time_point_type::duration>(row.timePoint.value());
-      l_w.task_name = row.taskName.value();
-      auto l_user_f = row.userId.value();
+      l_w.time      = chrono_ns::round<doodle::work_task_info::time_point_type::duration>(row.time_point.value());
+      l_w.task_name = row.task_name.value();
+      auto l_user_f = row.user_id.value();
       l_w.user_ref.user_attr(database::find_by_uuid(boost::lexical_cast<uuids::uuid>(l_user_f)));
-      auto l_id = row.entityId.value();
+      auto l_id = row.entity_id.value();
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_w));
         l_entts.emplace_back(in_handle.at(l_id));
@@ -134,7 +134,7 @@ void sql_com<doodle::work_task_info>::select(conn_ptr& in_ptr, const std::map<st
   }
 }
 void sql_com<doodle::work_task_info>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
-  detail::sql_com_destroy<sql::WorkTaskInfo>(in_ptr, in_handle);
+  detail::sql_com_destroy<tables::work_task_info>(in_ptr, in_handle);
 }
 
 }  // namespace doodle::database_n

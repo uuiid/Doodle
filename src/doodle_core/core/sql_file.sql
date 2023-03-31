@@ -98,7 +98,6 @@ CREATE TABLE IF NOT EXISTS redirection_path_info
         primary key,
     entity_id             integer,
 
-    redirection_path      text,
     redirection_file_name text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
@@ -111,7 +110,7 @@ CREATE TABLE IF NOT EXISTS rpi_search_path
         primary key,
     entity_id integer,
 
-    path      text,
+    redirection_path     text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists rpi_search_path_index on rpi_search_path (id);
@@ -194,7 +193,7 @@ CREATE TABLE IF NOT EXISTS time_point_info
     first_time    datetime,
     second_time   datetime,
     info          text,
-    is_extra_work bool,
+    is_extra_work boolean,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists time_point_info_index on time_point_info (id);
@@ -215,20 +214,20 @@ CREATE TABLE IF NOT EXISTS project_config
     icon_extensions                   text,
     upload_path                       text,
     season_count                      integer,
-    use_only_sim_cloth                bool,
-    use_divide_group_export           bool,
-    use_rename_material               bool,
-    use_merge_mesh                    bool,
+    use_only_sim_cloth                boolean,
+    use_divide_group_export           boolean,
+    use_rename_material               boolean,
+    use_merge_mesh                    boolean,
     t_post                            integer,
     export_anim_time                  integer,
     export_abc_arg                    integer,
-    maya_camera_select                bool,
-    use_write_metadata                bool,
+    maya_camera_select                boolean,
+    use_write_metadata                boolean,
     abc_export_extract_reference_name text,
     abc_export_format_reference_name  text,
     abc_export_extract_scene_name     text,
     abc_export_format_scene_name      text,
-    abc_export_add_frame_range        bool,
+    abc_export_add_frame_range        boolean,
     maya_camera_suffix                text,
     maya_out_put_abc_suffix           text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
