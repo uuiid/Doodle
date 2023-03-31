@@ -38,13 +38,6 @@ void maya_layout::layout(ImGuiID in_id, const ImVec2 &in_size) {
   ImGui::DockBuilderFinish(in_id);
 }
 
-void maya_layout::init_windows() {
-  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<comm_check_scenes>());
-  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<reference_attr_setting>());
-  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<create_sim_cloth>());
-  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<dem_cloth_to_fbx>());
-}
-
 maya_layout::~maya_layout() = default;
 void maya_menu::menu_windows() {
   namespace dgui = doodle::gui;
@@ -53,6 +46,10 @@ void maya_menu::menu_windows() {
     gui::g_windows_manage().open_windows<reference_attr_setting>();
   if (dear::MenuItem(create_sim_cloth::name.data())) gui::g_windows_manage().open_windows<create_sim_cloth>();
   if (dear::MenuItem(dem_cloth_to_fbx::name.data())) gui::g_windows_manage().open_windows<dem_cloth_to_fbx>();
+  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<comm_check_scenes>());
+  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<reference_attr_setting>());
+  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<create_sim_cloth>());
+  gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<dem_cloth_to_fbx>());
 }
 void maya_menu::menu_tool() {}
 }  // namespace maya_plug

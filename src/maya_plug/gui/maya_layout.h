@@ -11,8 +11,7 @@ namespace maya_plug {
 
 class maya_layout : public gui::details::layout_window_base {
  protected:
-  virtual void layout(ImGuiID in_id, const ImVec2& in_size);
-  virtual void init_windows();
+  virtual void layout(ImGuiID in_id, const ImVec2& in_size) override;
 
  public:
   maya_layout();

@@ -32,19 +32,18 @@ bool layout_window_base::render() {
    * 都会丢失父窗口并脱离, 我们将无法保留停靠窗口和非停靠窗口之间的关系, 这将导致窗口被困在边缘,
    * 永远的不可见
    */
-  ImGui::Begin("Doodle_DockSpace", nullptr, window_flags);
-  ImGui::PopStyleVar(3);
   const ImGuiIO &io = ImGui::GetIO();
   if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable)) return true;
+  ImGui::Begin(name().c_str(), nullptr, window_flags);
   const static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
   const ImGuiID dockspace_id                      = ImGui::GetID("DOODLE_DockSpace_Root");
   ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
   std::call_once(once_flag_, [this, dockspace_id, viewport]() { this->layout(dockspace_id, viewport->Size); });
   ImGui::End();
-  std::call_once(once_flag_show_, [this]() { this->init_windows(); });
+  ImGui::PopStyleVar(3);
 
   return true;
 }
-
+std::string &layout_window_base::name() { return name_; }
 }  // namespace doodle::gui::details

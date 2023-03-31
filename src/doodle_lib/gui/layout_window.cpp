@@ -8,20 +8,6 @@
 
 #include <doodle_app/app/app_command.h>
 
-#include <doodle_lib/gui/setting_windows.h>
-#include <doodle_lib/gui/widgets/assets_file_widgets.h>
-#include <doodle_lib/gui/widgets/assets_filter_widget.h>
-#include <doodle_lib/gui/widgets/create_video.h>
-#include <doodle_lib/gui/widgets/edit_widget.h>
-#include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
-#include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
-#include <doodle_lib/gui/widgets/maya_tool.h>
-#include <doodle_lib/gui/widgets/project_edit.h>
-#include <doodle_lib/gui/widgets/subtitle_processing.h>
-#include <doodle_lib/gui/widgets/time_sequencer_widget.h>
-#include <doodle_lib/gui/widgets/ue4_widget.h>
-#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
-
 #include <utility>
 namespace doodle::gui {
 
@@ -63,24 +49,7 @@ void layout_window::layout(ImGuiID in_id, const ImVec2 &in_size) {
   ImGui::DockBuilderFinish(in_id);
 }
 
-void layout_window::init_windows() {
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_video>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<extract_subtitles_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<subtitle_processing>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<long_time_tasks_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<time_sequencer_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_file_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
-  g_windows_manage().create_windows_arg(
-      windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
-  );
-  g_windows_manage().create_windows_arg(
-      windows_init_arg{}.create_set_title<project_edit>().set_init_hide().set_size(640, 320)
-  );
-}
+std::string &layout_window::name() { return name_; }
 
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui

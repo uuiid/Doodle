@@ -6,15 +6,17 @@
 #include <doodle_app/doodle_app_fwd.h>
 
 #include <imgui.h>
+#include <string>
 namespace doodle::gui::details {
 
 class layout_window_base {
  private:
   std::once_flag once_flag_{};
-  std::once_flag once_flag_show_{};
+  std::string name_{"Doodle_DockSpace"};
 
+ protected:
   virtual void layout(ImGuiID in_id, const ImVec2& in_size) = 0;
-  virtual void init_windows()                               = 0;
+  virtual std::string& name();
 
  public:
   layout_window_base() = default;
