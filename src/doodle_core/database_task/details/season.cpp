@@ -14,74 +14,71 @@ namespace doodle::database_n {
 namespace sql = doodle_database;
 
 void sql_com<doodle::season>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
 
-  sql::Season l_tabl{};
+  tables::season l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
-      l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.pInt = sqlpp::parameter(l_tabl.pInt)
+      l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id), l_tabl.p_int = sqlpp::parameter(l_tabl.p_int)
   ));
 
   for (auto& l_h : l_handles) {
-    auto& l_season        = l_h.get<season>();
-    l_pre.params.pInt     = l_season.p_int;
-    l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto& l_season         = l_h.get<season>();
+    l_pre.params.p_int     = l_season.p_int;
+    l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r              = l_conn(l_pre);
+    auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<season>().get_name());
   }
 }
 
 void sql_com<doodle::season>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
-  auto l_handles  = in_id | ranges::views::transform([&](entt::entity in_entity) {
+  auto& l_conn   = *in_ptr;
+  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
                      return entt::handle{*reg_, in_entity};
                    }) |
                    ranges::to_vector;
 
-  sql::Season l_tabl{};
+  tables::season l_tabl{};
 
   auto l_pre = l_conn.prepare(sqlpp::update(l_tabl)
-                                  .set(l_tabl.pInt = sqlpp::parameter(l_tabl.pInt))
-                                  .where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
+                                  .set(l_tabl.p_int = sqlpp::parameter(l_tabl.p_int))
+                                  .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
 
   for (auto& l_h : l_handles) {
-    auto& l_season        = l_h.get<season>();
-    l_pre.params.pInt     = l_season.get_season();
-    l_pre.params.entityId = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    auto& l_season         = l_h.get<season>();
+    l_pre.params.p_int     = l_season.get_season();
+    l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
-    auto l_r              = l_conn(l_pre);
+    auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<season>().get_name());
   }
 }
 
 void sql_com<doodle::season>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
-  namespace uuids = boost::uuids;
-  auto& l_conn    = *in_ptr;
+  auto& l_conn = *in_ptr;
 
   {
-    sql::Season l_tabl{};
+    tables::season l_tabl{};
     std::vector<season> l_works{};
     std::vector<entt::entity> l_entts{};
 
     /// 选择大小并进行调整内存
     for (auto&& raw :
-         l_conn(sqlpp::select(sqlpp::count(l_tabl.entityId)).from(l_tabl).where(l_tabl.entityId.is_not_null()))) {
+         l_conn(sqlpp::select(sqlpp::count(l_tabl.entity_id)).from(l_tabl).where(l_tabl.entity_id.is_not_null()))) {
       l_works.reserve(raw.count.value());
       l_entts.reserve(raw.count.value());
       break;
     }
 
     for (auto& row :
-         l_conn(sqlpp::select(l_tabl.entityId, l_tabl.pInt).from(l_tabl).where(l_tabl.entityId.is_null()))) {
+         l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.p_int).from(l_tabl).where(l_tabl.entity_id.is_null()))) {
       season l_u{};
-      l_u.p_int = row.pInt.value();
-      auto l_id = row.entityId.value();
+      l_u.p_int = row.p_int.value();
+      auto l_id = row.entity_id.value();
 
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_u));
@@ -96,7 +93,7 @@ void sql_com<doodle::season>::select(conn_ptr& in_ptr, const std::map<std::int64
 }
 
 void sql_com<doodle::season>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
-  detail::sql_com_destroy<sql::Season>(in_ptr, in_handle);
+  detail::sql_com_destroy<tables::season>(in_ptr, in_handle);
 }
 
 }  // namespace doodle::database_n
