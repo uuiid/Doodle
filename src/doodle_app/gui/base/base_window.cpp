@@ -6,9 +6,12 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/init_register.h>
+#include <doodle_core/platform/win/drop_manager.h>
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/base/ref_base.h>
+
+#include "range/v3/action/remove_if.hpp"
 
 namespace doodle::gui {
 
@@ -72,11 +75,31 @@ class windows_manage::warp_w {
 };
 
 void windows_manage::tick() {
+  layout_->render();
+
+  if (swap_layout_) {
+    swap_layout_();
+    swap_layout_ = nullptr;
+  }
+
+  if (*drop_manger_) {
+    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
+      drop_list_files_ = drop_manger_->GetDropFiles();
+      ImGui::SetDragDropPayload(
+          doodle::doodle_config::drop_imgui_id.data(), &drop_list_files_, sizeof(std::vector<FSys::path>)
+      );
+      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(drop_list_files_, "\n"))); };
+    };
+  }
+
   const render_guard l_g{this};
   windows_list_ |= ranges::actions::remove_if([](const warp_w_ptr& in_) { return !in_->render(); });
   windows_list_ |= ranges::actions::push_back(windows_list_next_);
   windows_list_next_.clear();
 }
+
+windows_manage::windows_manage(facet::gui_facet* in_facet)
+    : gui_facet_(in_facet), drop_manger_(in_facet ? in_facet->drop_manager() : nullptr) {}
 
 void windows_manage::show_windows() {
   if (gui_facet_)
@@ -116,6 +139,17 @@ bool windows_manage::has_windows(const std::string_view& in_info) {
          ranges::any_of(windows_list_, [&](const warp_w_ptr& i) { return i->args_.title_ == in_info; });
 }
 
+void windows_manage::set_layout(gui::windows_layout&& in_windows) {
+  if (!layout_)
+    layout_ = std::move(in_windows);
+  else {
+    swap_layout_ = [l_lay = std::move(in_windows), this]() {
+      layout_ = std::move(l_lay);
+      layout_->set_show();
+    };
+  }
+}
+
 void windows_manage::show_windows(const std::string_view& in_info) {
   if (auto l_it = ranges::find_if(args_, [=](const windows_init_arg& in_arg) { return in_arg.title_ == in_info; });
       l_it != ranges::end(args_)) {
@@ -126,6 +160,17 @@ void windows_manage::show_windows(const std::string_view& in_info) {
     else
       windows_list_.emplace_back(std::make_shared<warp_w>(l_arg));
   }
+}
+
+void windows_manage::close_windows(const std::string_view& in_info) {
+  if (auto l_it =
+          ranges::find_if(windows_list_, [=](const warp_w_ptr& in_arg) { return in_arg->args_.title_ == in_info; });
+      l_it != ranges::end(windows_list_)) {
+    auto l_arg              = *l_it;
+    l_arg->args_.init_show_ = false;
+  }
+  windows_list_next_ |=
+      ranges::actions::remove_if([=](const warp_w_ptr& in_arg) { return in_arg->args_.title_ == in_info; });
 }
 
 }  // namespace doodle::gui

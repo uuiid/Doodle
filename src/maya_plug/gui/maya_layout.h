@@ -16,6 +16,7 @@ class maya_layout : public gui::details::layout_window_base {
  public:
   maya_layout();
   virtual ~maya_layout();
+  void set_show(){};
 };
 
 class maya_menu : public doodle::gui::main_menu_bar {

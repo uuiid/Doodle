@@ -34,7 +34,7 @@ bool layout_window_base::render() {
    */
   const ImGuiIO &io = ImGui::GetIO();
   if (!(io.ConfigFlags & ImGuiConfigFlags_DockingEnable)) return true;
-  ImGui::Begin(name().c_str(), nullptr, window_flags);
+  ImGui::Begin("doodle_layout", nullptr, window_flags);
   const static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
   const ImGuiID dockspace_id                      = ImGui::GetID("DOODLE_DockSpace_Root");
   ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);

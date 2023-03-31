@@ -12,6 +12,10 @@
 
 #include <utility>
 
+namespace doodle::win {
+class drop_manager;
+}
+
 namespace doodle::facet {
 class gui_facet;
 }
@@ -44,9 +48,12 @@ class windows_manage {
   std::vector<warp_w_ptr> windows_list_{};
   std::vector<warp_w_ptr> windows_list_next_{};
 
-  std::atomic_bool is_render_tick_p_;
-
-  facet::gui_facet* gui_facet_;
+  std::atomic_bool is_render_tick_p_{};
+  gui::windows_layout layout_{};
+  facet::gui_facet* gui_facet_{};
+  win::drop_manager* drop_manger_{};
+  std::vector<FSys::path> drop_list_files_{};
+  std::function<void()> swap_layout_;
 
   class render_guard {
     windows_manage* ptr_;
@@ -58,17 +65,24 @@ class windows_manage {
 
   bool has_windows(const std::string_view& in_info);
   void show_windows(const std::string_view& in_info);
+  void close_windows(const std::string_view& in_info);
 
  public:
-  windows_manage(facet::gui_facet* in_facet) : gui_facet_(in_facet){};
+  explicit windows_manage(facet::gui_facet* in_facet);
 
   void create_windows_arg(const windows_init_arg& in_arg);
+  void set_layout(gui::windows_layout&& in_windows);
 
   void tick();
-  template <typename T>
-  std::enable_if_t<details::has_name_v<T>> open_windows() {
-    if (has_windows(T::name)) return;
-    show_windows(T::name);
+  template <typename win_type>
+  std::enable_if_t<details::has_name_v<win_type>> open_windows() {
+    if (has_windows(win_type::name)) return;
+    show_windows(win_type::name);
+  };
+  template <typename win_type>
+  std::enable_if_t<details::has_name_v<win_type>> close_windows() {
+    if (!has_windows(win_type::name)) return;
+    close_windows(win_type::name);
   };
 
   void show_windows();

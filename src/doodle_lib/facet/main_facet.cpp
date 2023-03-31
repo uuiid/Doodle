@@ -4,6 +4,7 @@
 
 #include "main_facet.h"
 
+#include "doodle_core/gui_template/show_windows.h"
 #include <doodle_core/core/program_info.h>
 
 #include "doodle_app/app/authorization.h"
@@ -37,7 +38,7 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
-  this->set_layout(gui::windows{std::in_place_type<gui::layout_window>});
+  gui::g_windows_manage().set_layout(gui::windows_layout{std::in_place_type<gui::layout_window>});
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
   );
@@ -46,22 +47,25 @@ void main_facet::load_windows() {
           nullptr, ImGuiDir_Down
       )
   );
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_video>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<extract_subtitles_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<subtitle_processing>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<long_time_tasks_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<time_sequencer_widget>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_file_widgets>());
-  g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
-  g_windows_manage().create_windows_arg(
-      windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
-  );
-  g_windows_manage().create_windows_arg(
-      windows_init_arg{}.create_set_title<project_edit>().set_init_hide().set_size(640, 320)
-  );
+  {
+    using namespace gui;
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<edit_widgets>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_filter_widget>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<maya_tool>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<create_video>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<extract_subtitles_widgets>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<subtitle_processing>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<long_time_tasks_widget>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<time_sequencer_widget>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<assets_file_widgets>());
+    g_windows_manage().create_windows_arg(windows_init_arg{}.create_set_title<xlsx_export_widgets>());
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create_set_title<setting_windows>().set_init_hide().set_size(640, 320)
+    );
+    g_windows_manage().create_windows_arg(
+        windows_init_arg{}.create_set_title<project_edit>().set_init_hide().set_size(640, 320)
+    );
+  }
 }
 
 }  // namespace doodle

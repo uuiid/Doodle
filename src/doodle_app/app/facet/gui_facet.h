@@ -13,6 +13,10 @@
 #include <entt/entt.hpp>
 #include <tuple>
 
+namespace doodle::win {
+class drop_manager;
+}
+
 namespace doodle::gui {
 class windows_manage;
 }
@@ -45,7 +49,6 @@ class gui_facet_interface_1 : public entt::type_list_cat<
 class DOODLE_APP_API gui_facet {
   class impl;
   std::unique_ptr<impl> p_i;
-  gui::windows layout_;
 
   gui::windows_manage* windows_manage_;
 
@@ -54,8 +57,6 @@ class DOODLE_APP_API gui_facet {
  protected:
   virtual bool translate_message();
   virtual void tick();
-  virtual void tick_end();
-  void drop_files();
   void external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_point);
 
   ::doodle::win::wnd_handle p_hwnd;
@@ -71,8 +72,9 @@ class DOODLE_APP_API gui_facet {
   virtual void show_windows() const;
   virtual void close_windows();
   virtual void destroy_windows();
+  win::drop_manager* drop_manager();
 
-  inline void set_layout(gui::windows&& in_windows) { layout_ = std::move(in_windows); };
+  ;
 
   void set_title(const std::string& in_title) const;
 

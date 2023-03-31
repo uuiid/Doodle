@@ -15,12 +15,12 @@ namespace doodle::gui {
 class DOODLELIB_API layout_window : public details::layout_window_base {
  protected:
   virtual void layout(ImGuiID in_id, const ImVec2& in_size);
-  std::string name_{"Doodle_Layout1"};
-  std::string& name() override;
 
  public:
   layout_window();
   virtual ~layout_window();
+
+  void set_show();
 };
 
 }  // namespace doodle::gui

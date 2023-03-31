@@ -8,6 +8,23 @@
 
 #include <doodle_app/app/app_command.h>
 
+#include <doodle_lib/gui/layout_window.h>
+#include <doodle_lib/gui/menu_bar.h>
+#include <doodle_lib/gui/setting_windows.h>
+#include <doodle_lib/gui/widgets/assets_file_widgets.h>
+#include <doodle_lib/gui/widgets/assets_filter_widget.h>
+#include <doodle_lib/gui/widgets/create_video.h>
+#include <doodle_lib/gui/widgets/edit_widget.h>
+#include <doodle_lib/gui/widgets/extract_subtitles_widgets.h>
+#include <doodle_lib/gui/widgets/long_time_tasks_widget.h>
+#include <doodle_lib/gui/widgets/maya_tool.h>
+#include <doodle_lib/gui/widgets/project_edit.h>
+#include <doodle_lib/gui/widgets/subtitle_processing.h>
+#include <doodle_lib/gui/widgets/time_sequencer_widget.h>
+#include <doodle_lib/gui/widgets/ue4_widget.h>
+#include <doodle_lib/gui/widgets/xlsx_export_widgets.h>
+#include <doodle_lib/long_task/image_to_move.h>
+
 #include <utility>
 namespace doodle::gui {
 
@@ -48,8 +65,22 @@ void layout_window::layout(ImGuiID in_id, const ImVec2 &in_size) {
   ImGui::DockBuilderDockWindow(menu_w::work_hour_filling.data(), dock_id_main);     /// \brief 主窗口的停靠
   ImGui::DockBuilderFinish(in_id);
 }
+void layout_window::set_show() {
+  g_windows_manage().open_windows<edit_widgets>();
+  g_windows_manage().open_windows<assets_filter_widget>();
+  g_windows_manage().open_windows<assets_file_widgets>();
 
-std::string &layout_window::name() { return name_; }
+  g_windows_manage().open_windows<maya_tool>();
+  g_windows_manage().open_windows<create_video>();
+  g_windows_manage().open_windows<extract_subtitles_widgets>();
+  g_windows_manage().open_windows<subtitle_processing>();
+  g_windows_manage().open_windows<long_time_tasks_widget>();
+  g_windows_manage().open_windows<time_sequencer_widget>();
+  g_windows_manage().open_windows<xlsx_export_widgets>();
+
+  g_windows_manage().close_windows<setting_windows>();
+  g_windows_manage().close_windows<project_edit>();
+}
 
 layout_window::~layout_window() = default;
 }  // namespace doodle::gui

@@ -51,6 +51,7 @@ void maya_menu::menu_windows() {
   gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<create_sim_cloth>());
   gui::g_windows_manage().create_windows_arg(gui::windows_init_arg{}.create_set_title<dem_cloth_to_fbx>());
 }
+
 void maya_menu::menu_tool() {}
 }  // namespace maya_plug
 }  // namespace doodle

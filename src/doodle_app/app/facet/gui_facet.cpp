@@ -58,14 +58,13 @@ class gui_facet::impl {
   using drop_ptr_type = wil::com_ptr_t<win::drop_manager>;
 
   drop_ptr_type dorp_manager{};
-  std::vector<FSys::path> drop_list_files{};
 };
 
 const std::string& gui_facet::name() const noexcept { return p_i->name_attr; }
 
 bool gui_facet::post() {
-  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>(this);
   init_windows();
+  windows_manage_ = &doodle_lib::Get().ctx().emplace<gui::windows_manage>(this);
   static std::function<void(const boost::system::error_code& in_code)> s_fun{};
   s_fun = [&](const boost::system::error_code& in_code) {
     if (in_code == boost::asio::error::operation_aborted) {
@@ -74,8 +73,7 @@ bool gui_facet::post() {
     }
     if (doodle_lib::Get().ctx().get<program_info>().stop_attr()) return;
     if (!this->translate_message()) return;
-    this->tick();      /// 渲染
-    this->tick_end();  /// 渲染结束
+    this->tick();  /// 渲染
     if (!doodle_lib::Get().ctx().get<program_info>().stop_attr()) {
       p_i->timer_.expires_after(doodle::chrono::seconds{1} / 60);
       p_i->timer_.async_wait(s_fun);
@@ -113,25 +111,7 @@ void gui_facet::tick() {
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
 
-  layout_->render();
-
-  drop_files();
   windows_manage_->tick();
-}
-bool gui_facet::translate_message() {
-  MSG msg;
-  while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
-    ::TranslateMessage(&msg);
-    ::DispatchMessage(&msg);
-    /// 如果时退出消息, 直接设置停止
-    if (msg.message == WM_QUIT) {
-      DOODLE_LOG_INFO("开始退出");
-      return false;
-    }
-  }
-  return true;
-}
-void gui_facet::tick_end() {
   // Rendering
   ImGui::Render();
   static ImVec4 clear_color             = ImVec4(0.0f, 0.0f, 0.0f, 0.00f);
@@ -153,6 +133,20 @@ void gui_facet::tick_end() {
   p_i->d3d_attr->g_pSwapChain->Present(1, 0);  // Present with vsync
                                                // g_pSwapChain->Present(0, 0); // Present without vsync
 }
+bool gui_facet::translate_message() {
+  MSG msg;
+  while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+    ::TranslateMessage(&msg);
+    ::DispatchMessage(&msg);
+    /// 如果时退出消息, 直接设置停止
+    if (msg.message == WM_QUIT) {
+      DOODLE_LOG_INFO("开始退出");
+      return false;
+    }
+  }
+  return true;
+}
+
 void gui_facet::init_windows() {
   auto l_instance     = doodle_lib::Get().ctx().get<program_info>().handle_attr();
 
@@ -315,18 +309,6 @@ void gui_facet::set_title(const std::string& in_title) const {
 }
 gui_facet::~gui_facet() = default;
 void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
-void gui_facet::drop_files() {
-  if (*p_i->dorp_manager) {
-    //    ImGui::UpdateHoveredWindowAndCaptureFlags();
-    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
-      p_i->drop_list_files = p_i->dorp_manager->GetDropFiles();
-      ImGui::SetDragDropPayload(
-          doodle::doodle_config::drop_imgui_id.data(), &p_i->drop_list_files, sizeof(std::vector<FSys::path>)
-      );
-      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(p_i->dorp_manager->GetDropFiles(), "\n"))); };
-    };
-  }
-}
 
 void gui_facet::external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_point) {
   ImGuiIO& io = ImGui::GetIO();
@@ -340,4 +322,6 @@ void gui_facet::external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_p
   //  io.AddKeyEvent(key, down);
   //  io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)
 }
+
+win::drop_manager* gui_facet::drop_manager() { return p_i->dorp_manager.get(); }
 }  // namespace doodle::facet
