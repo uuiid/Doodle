@@ -15,6 +15,7 @@
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
+  AIControllerClass = ADoodleAIController::StaticClass();
 
   // p_spline = NewObject<USplineComponent>(this, "Spline");
   // p_spline->RegisterComponent();

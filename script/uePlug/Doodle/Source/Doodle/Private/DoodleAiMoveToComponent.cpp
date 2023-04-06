@@ -40,7 +40,7 @@ void UDoodleAiMoveToComponent::GoToRandomWaypoint() {
 
   FVector Result;
   if (!GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)) {
-    UE_LOG(LogTemp, Log, TEXT("GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)"));
+    //UE_LOG(LogTemp, Log, TEXT("GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)"));
     return;
   }
   FAIMoveRequest AIMoveRequest{Result};

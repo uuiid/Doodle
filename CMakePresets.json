@@ -49,11 +49,6 @@
       }
     },
     {
-      "name": "vs2022",
-      "inherits": "Ninja_build",
-      "generator": "Visual Studio 17 2022"
-    },
-    {
       "name": "Ninja_release",
       "inherits": "Ninja_build",
       "cacheVariables": {
@@ -111,6 +106,11 @@
         "Photoshop_Version": "120.0",
         "BUILD_LIMITED_1": "ON"
       }
+    },
+    {
+      "name": "vs2022",
+      "inherits": "Ninja_debug",
+      "generator": "Visual Studio 17 2022"
     }
   ],
   "buildPresets": [
