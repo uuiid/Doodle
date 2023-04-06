@@ -23,8 +23,6 @@ ADoodleAiSplineCrowd::ADoodleAiSplineCrowd() {
 
   SkeletalMeshComponent->SetRelativeLocation(FVector{0.000000, 0.000000, -80.000000});
   SkeletalMeshComponent->SetRelativeRotation(FRotator{0.000000, -90.000000, 0.000000});
-
-
 }
 
 void ADoodleAiSplineCrowd::BeginPlay() {
@@ -50,6 +48,7 @@ void ADoodleAiSplineCrowd::Tick(float DeltaTime) {
   auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
   if (!Anim)
     return;
-
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 0) || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 1)
   Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
+#endif
 }
