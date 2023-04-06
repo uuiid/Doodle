@@ -16,35 +16,32 @@ UDoodleAiSplineMoveToComponent::UDoodleAiSplineMoveToComponent() {
 void UDoodleAiSplineMoveToComponent::BeginPlay() {
   Super::BeginPlay();
 
-  TimeToPoint = 1;
   GoToRandomWaypoint();
   // GetDistance() / ;
 
   SpeedMax = GetOwner<APawn>()->FindComponentByClass<UMovementComponent>()->GetMaxSpeed();
 }
 
-void UDoodleAiSplineMoveToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) {
-  Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-  TimeToPoint += (DeltaTime * SpeedMax);
-  if (TimeToPoint >= GetSplineLength()) TimeToPoint -= GetSplineLength();
-}
+//void UDoodleAiSplineMoveToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) {
+//  Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+//}
 
-void UDoodleAiSplineMoveToComponent::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult) {
-  FVector Result;
-  if (!GetRandomPointInRadius(Actor->GetActorLocation(), Result)) {
-    return;
-  }
-  if (MovementResult == EPathFollowingResult::Success)
-    ++TimeToPoint;
-
-  if (TimeToPoint >= GetNumberOfSplinePoints()) TimeToPoint -= GetNumberOfSplinePoints();
-
-  FAIMoveRequest AIMoveRequest{Result};
-  AIMoveRequest.SetAcceptanceRadius(AcceptanceRadius);
-  AIMoveRequest.SetAllowPartialPath(true);
-
-  FPathFollowingRequestResult L_R = AiController->MoveTo(AIMoveRequest);
-}
+//void UDoodleAiSplineMoveToComponent::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult) {
+//  FVector Result;
+//  if (!GetRandomPointInRadius(Actor->GetActorLocation(), Result)) {
+//    return;
+//  }
+//  if (MovementResult == EPathFollowingResult::Success)
+//    ++TimeToPoint;
+//
+//  if (TimeToPoint >= GetNumberOfSplinePoints()) TimeToPoint -= GetNumberOfSplinePoints();
+//
+//  FAIMoveRequest AIMoveRequest{Result};
+//  AIMoveRequest.SetAcceptanceRadius(AcceptanceRadius);
+//  AIMoveRequest.SetAllowPartialPath(true);
+//
+//  FPathFollowingRequestResult L_R = AiController->MoveTo(AIMoveRequest);
+//}
 
 void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
   if (!Actor || !AiController) {
@@ -66,9 +63,6 @@ void UDoodleAiSplineMoveToComponent::GoToRandomWaypoint() {
   FVector Result;
   ;
   if (!GetRandomPointInRadius(Actor->GetActorLocation(), Result)) {
-    // L_World->GetTimerManager().SetTimer(
-    //     TimerHandle, this, &UDoodleAiSplineMoveToComponent::GoToRandomWaypoint, 0.1f, false
-    //);
     return;
   }
   FAIMoveRequest AIMoveRequest{Result};
