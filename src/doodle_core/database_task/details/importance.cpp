@@ -1,7 +1,6 @@
 #include "importance.h"
 
 #include <doodle_core/database_task/details/tool.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/importance.h>
 
@@ -11,7 +10,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 
 void sql_com<doodle::importance>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   auto& l_conn   = *in_ptr;

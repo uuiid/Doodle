@@ -7,7 +7,6 @@
 
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/pin_yin/convert.h>
 
 #include <boost/test/unit_test.hpp>
@@ -16,7 +15,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 using namespace doodle;
-namespace sql = doodle_database;
 BOOST_AUTO_TEST_CASE(test_sqlite3_insert) {
   auto l_sql_conn = doodle_lib::Get().ctx().emplace<database_info>().get_connection();
 

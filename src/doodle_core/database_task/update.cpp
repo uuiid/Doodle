@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/image_icon.h>
@@ -27,7 +26,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 
 class update_data::impl {
  public:
@@ -60,63 +58,7 @@ class update_data::impl {
     doodle::database_n::details::db_compatible::delete_metadatatab_table(in_db);
   }
 
-  void updata_db(sqlpp::sqlite3::connection &in_db) {
-    using install_map_type = std::map<std::reference_wrapper<details::com_data>, bool, std::less<details::com_data>>;
-
-    install_map_type inster_map{};
-
-    sql::ComEntity l_tabl{};
-    /// \brief 检查是否存在组件
-    auto l_pre_select = in_db.prepare(sqlpp::select(l_tabl.id).from(l_tabl).where(
-        l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) && l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)
-    ));
-    for (auto &&i : com_tabls) {
-      l_pre_select.params.comHash  = i.com_id;
-      l_pre_select.params.entityId = main_tabls[i.entt_];
-      inster_map[std::ref(i)]      = false;
-      for (auto &&row : in_db(l_pre_select)) {
-        inster_map[std::ref(i)] = true;
-        break;
-      }
-      DOODLE_LOG_INFO("检查实体 {} 组件 {}  --> {}", i.entt_, i.com_id, inster_map[std::ref(i)]);
-    }
-
-    /// \brief 不存在就插入
-    for (auto &&i : inster_map) {
-      if (!i.second) {
-        auto l_pre_inster = in_db.prepare(sqlpp::insert_into(l_tabl).set(
-            l_tabl.entityId = sqlpp::parameter(l_tabl.entityId), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash),
-            l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData)
-        ));
-        if (stop) return;
-        l_pre_inster.params.comHash  = i.first.get().com_id;
-        l_pre_inster.params.entityId = main_tabls[i.first.get().entt_];
-        l_pre_inster.params.jsonData = i.first.get().json_data;
-        auto l_s                     = in_db(l_pre_inster);
-        DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_s, i.first.get().entt_, i.first.get().com_id);
-        g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
-      }
-    }
-
-    /// \brief 存在则更新
-    for (auto &&i : inster_map) {
-      if (i.second) {
-        auto l_pre = in_db.prepare(sqlpp::update(l_tabl)
-                                       .set(l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData))
-                                       .where(
-                                           l_tabl.entityId == sqlpp::parameter(l_tabl.entityId) &&
-                                           l_tabl.comHash == sqlpp::parameter(l_tabl.comHash)
-                                       ));
-        if (stop) return;
-        l_pre.params.jsonData = i.first.get().json_data;
-        l_pre.params.comHash  = i.first.get().com_id;
-        l_pre.params.entityId = main_tabls[i.first.get().entt_];
-        auto l_s              = in_db(l_pre);
-        DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_s, i.first.get().entt_, i.first.get().com_id);
-        g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
-      }
-    }
-  }
+  void updata_db(sqlpp::sqlite3::connection &in_db) {}
 
   void create_entt_data() {
     main_tabls = entt_list | ranges::views::transform([](const entt::entity &in) {

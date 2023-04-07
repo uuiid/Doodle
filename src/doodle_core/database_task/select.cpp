@@ -8,7 +8,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/details/update_ctx.h>
 #include <doodle_core/database_task/sql_file.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/lib_warp/entt_warp.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
 #include <doodle_core/logger/logger.h>
@@ -24,6 +23,7 @@
 
 #include <boost/asio.hpp>
 
+#include "details/tool.h"
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
 #include <range/v3/range_for.hpp>
@@ -32,7 +32,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 template <class T>
 struct future_data {
   using id_map_type                                 = std::map<std::int64_t, entt::entity>;
@@ -164,7 +163,7 @@ class select::impl {
 #endif
   template <typename Type>
   void _select_com_(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
-    sql::ComEntity l_com_entity{};
+    tables::com_entity l_com_entity{};
 
     auto&& l_s = strands_.emplace_back(boost::asio::make_strand(g_thread()));
     std::size_t l_size{1};
@@ -175,13 +174,13 @@ class select::impl {
 
     auto l_future_data = std::make_shared<future_data<Type>>();
 
-    for (auto&& row : in_conn(sqlpp::select(l_com_entity.entityId, l_com_entity.jsonData)
+    for (auto&& row : in_conn(sqlpp::select(l_com_entity.entity_id, l_com_entity.json_data)
                                   .from(l_com_entity)
-                                  .where(l_com_entity.comHash == entt::type_id<Type>().hash()))) {
+                                  .where(l_com_entity.com_hash == entt::type_id<Type>().hash()))) {
       if (stop) return;
-      auto l_id  = row.entityId.value();
+      auto l_id  = row.entity_id.value();
       auto l_fut = boost::asio::post(
-          l_s, std::packaged_task<Type()>{[in_json = row.jsonData.value(), in_id = l_id, l_size, this]() {
+          l_s, std::packaged_task<Type()>{[in_json = row.json_data.value(), in_id = l_id, l_size, this]() {
             auto l_json = nlohmann::json::parse(in_json);
             process_message_->progress_step({1, l_size * 2});
             return l_json.template get<Type>();
@@ -200,7 +199,7 @@ class select::impl {
   }
 
   void select_entt(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
-    sql::Entity l_entity{};
+    tables::entity l_entity{};
 
     std::size_t l_size{1};
     for (auto&& raw : in_conn(sqlpp::select(sqlpp::count(l_entity.id)).from(l_entity).unconditionally())) {
@@ -216,7 +215,7 @@ class select::impl {
 
       auto l_fut = boost::asio::post(
           strand_,
-          std::packaged_task<database()>{[in_json = row.uuidData.value(), in_id = row.id, l_size, this]() -> database {
+          std::packaged_task<database()>{[in_json = row.uuid_data.value(), in_id = row.id, l_size, this]() -> database {
             database l_database{in_json};
             l_database.set_id(in_id);
             process_message_->progress_step({1, l_size * 2});

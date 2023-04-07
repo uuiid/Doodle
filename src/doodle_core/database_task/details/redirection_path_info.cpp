@@ -2,7 +2,6 @@
 
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_com.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 
 #include <boost/filesystem/path.hpp>
@@ -33,7 +32,6 @@
 #include <vector>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   auto& l_conn   = *in_ptr;
   auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {

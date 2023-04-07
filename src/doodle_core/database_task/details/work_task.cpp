@@ -2,14 +2,12 @@
 
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_com.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 void sql_com<doodle::work_task_info>::create_table(conn_ptr& in_ptr) {
   static std::once_flag l_f{};
   std::call_once(l_f, [&]() {

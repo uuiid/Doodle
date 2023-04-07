@@ -9,7 +9,6 @@
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_file.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/image_icon.h>
 #include <doodle_core/metadata/importance.h>
@@ -38,7 +37,6 @@ DOODLE_SQL_COLUMN_IMP(sql, sqlpp::text, doodle::database_n::detail::can_be_null)
 DOODLE_SQL_TABLE_IMP(sqlite_master, column::type, column::name, column::tbl_name, column::rootpage, column::sql);
 }  // namespace sqlite_master_123
 
-namespace sql = doodle_database;
 
 namespace {
 template <typename Type_T>
@@ -58,13 +56,14 @@ void _select_ctx_(
     entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn,
     const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list
 ) {
-  sql::Context l_context{};
-
-  for (auto&& row : in_conn(sqlpp::select(l_context.comHash, l_context.jsonData).from(l_context).unconditionally())) {
-    if (auto l_f = in_fun_list.find(row.comHash.value()); l_f != in_fun_list.end()) {
-      in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
-    }
-  }
+  //  sql::Context l_context{};
+  //
+  //  for (auto&& row : in_conn(sqlpp::select(l_context.comHash, l_context.jsonData).from(l_context).unconditionally()))
+  //  {
+  //    if (auto l_f = in_fun_list.find(row.comHash.value()); l_f != in_fun_list.end()) {
+  //      in_fun_list.at(row.comHash.value())(in_reg, row.jsonData.value());
+  //    }
+  //  }
 }
 template <typename... Type>
 void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
@@ -86,16 +85,16 @@ void update_ctx::ctx(const entt::registry& in_registry, sqlpp::sqlite3::connecti
 #include "macro.h"
   get_ctx_sql_data<DOODLE_SQLITE_TYPE_CTX>(in_registry, data);
 
-  sql::Context l_table{};
-
-  auto l_par = in_connection.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
-      l_table.comHash = sqlpp::parameter(l_table.comHash), l_table.jsonData = sqlpp::parameter(l_table.jsonData)
-  ));
-  for (auto&& i : data) {
-    l_par.params.comHash  = i.first;
-    l_par.params.jsonData = i.second;
-    in_connection(l_par);
-  }
+  //  sql::Context l_table{};
+  //
+  //  auto l_par = in_connection.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
+  //      l_table.comHash = sqlpp::parameter(l_table.comHash), l_table.jsonData = sqlpp::parameter(l_table.jsonData)
+  //  ));
+  //  for (auto&& i : data) {
+  //    l_par.params.comHash  = i.first;
+  //    l_par.params.jsonData = i.second;
+  //    in_connection(l_par);
+  //  }
 }
 
 void update_ctx::select_ctx(entt::registry& in_registry, sqlpp::sqlite3::connection& in_connection) {
@@ -103,16 +102,16 @@ void update_ctx::select_ctx(entt::registry& in_registry, sqlpp::sqlite3::connect
 }
 
 std::tuple<std::uint32_t, std::uint32_t> get_version(sqlpp::sqlite3::connection& in_conn) {
-  sql::DoodleInfo l_info{};
+  //  sql::DoodleInfo l_info{};
+  //
+  //  for (auto&& row : in_conn(sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
+  //    return std::make_tuple(
+  //        boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
+  //        boost::numeric_cast<std::uint32_t>(row.versionMinor.value())
+  //    );
+  //  }
 
-  for (auto&& row : in_conn(sqlpp::select(all_of(l_info)).from(l_info).unconditionally())) {
-    return std::make_tuple(
-        boost::numeric_cast<std::uint32_t>(row.versionMajor.value()),
-        boost::numeric_cast<std::uint32_t>(row.versionMinor.value())
-    );
-  }
-
-  throw_exception(doodle_error{"无法检查到数据库版本 {}", doodle_lib::Get().ctx().get<database_info>().path_});
+  //  throw_exception(doodle_error{"无法检查到数据库版本 {}", doodle_lib::Get().ctx().get<database_info>().path_});
   return {};
 }
 
@@ -139,19 +138,19 @@ void db_compatible::add_version_table(sqlpp::sqlite3::connection& in_conn) {
     return;
   }
   in_conn.execute(std::string{::doodle::database_n::create_version_table});
-  sql::DoodleInfo l_info{};
-  in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
-      l_info.versionMajor = version::build_info::get().version_major,
-      l_info.versionMinor = version::build_info::get().version_minor
-  ));
+  //  sql::DoodleInfo l_info{};
+  //  in_conn(sqlpp::sqlite3::insert_or_replace_into(l_info).set(
+  //      l_info.versionMajor = version::build_info::get().version_major,
+  //      l_info.versionMinor = version::build_info::get().version_minor
+  //  ));
 }
 
 void db_compatible::set_version(sqlpp::sqlite3::connection& in_conn) {
-  sql::DoodleInfo l_info{};
-  in_conn(sqlpp::update(l_info).unconditionally().set(
-      l_info.versionMajor = version::build_info::get().version_major,
-      l_info.versionMinor = version::build_info::get().version_minor
-  ));
+  //  sql::DoodleInfo l_info{};
+  //  in_conn(sqlpp::update(l_info).unconditionally().set(
+  //      l_info.versionMajor = version::build_info::get().version_major,
+  //      l_info.versionMinor = version::build_info::get().version_minor
+  //  ));
 }
 bool db_compatible::has_version_table(sqlpp::sqlite3::connection& in_conn) {
   const sqlite_master_123::sqlite_master l_master{};

@@ -36,7 +36,6 @@ void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>
   }
 }
 
-
 template <typename T>
 inline sqlpp::make_traits<T, sqlpp::tag::can_be_null> can_be_null();
 
@@ -77,6 +76,8 @@ inline sqlpp::make_traits<T, sqlpp::tag::require_insert> require_insert();
 namespace doodle::database_n::tables {
 namespace column {
 DOODLE_SQL_COLUMN_IMP(id, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(com_hash, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(json_data, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(uuid_data, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(update_time, sqlpp::time_point, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(entity_id, sqlpp::integer, detail::can_be_null);
@@ -143,6 +144,8 @@ DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
 DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data, column::update_time);
+DOODLE_SQL_TABLE_IMP(com_entity, column::id, column::entity_id, column::com_hash, column::json_data);
+
 DOODLE_SQL_TABLE_IMP(usertab, column::id, column::entity_id, column::user_name, column::permission_group);
 DOODLE_SQL_TABLE_IMP(
     work_task_info, column::id, column::entity_id, column::user_id, column::task_name, column::region, column::abstract,
@@ -151,7 +154,7 @@ DOODLE_SQL_TABLE_IMP(
 DOODLE_SQL_TABLE_IMP(episodes, column::id, column::entity_id, column::eps);
 DOODLE_SQL_TABLE_IMP(shot, column::id, column::entity_id, column::shot_int, column::shot_ab);
 DOODLE_SQL_TABLE_IMP(redirection_path_info, column::id, column::entity_id, column::redirection_file_name);
-DOODLE_SQL_TABLE_IMP(rpi_search_path, column::id,column::parent_id,column::redirection_path);
+DOODLE_SQL_TABLE_IMP(rpi_search_path, column::id, column::parent_id, column::redirection_path);
 DOODLE_SQL_TABLE_IMP(assets, column::id, column::entity_id, column::assets_path);
 DOODLE_SQL_TABLE_IMP(comment, column::id, column::entity_id, column::comment_string, column::comment_time);
 DOODLE_SQL_TABLE_IMP(

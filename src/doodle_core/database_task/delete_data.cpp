@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/work_task.h>
@@ -18,7 +17,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 
 class delete_data::impl {
  public:
@@ -43,26 +41,26 @@ class delete_data::impl {
   }
 
   void delete_db_entt(sqlpp::sqlite3::connection &in_db) {
-    sql::Entity l_tabl{};
-    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.id == sqlpp::parameter(l_tabl.id)));
-    for (auto &&i : delete_id_list) {
-      if (stop) return;
-      l_pre.params.id = i;
-      in_db(l_pre);
-      DOODLE_LOG_INFO("删除数据库id {}", i);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
-    }
+    //    sql::Entity l_tabl{};
+    //    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.id == sqlpp::parameter(l_tabl.id)));
+    //    for (auto &&i : delete_id_list) {
+    //      if (stop) return;
+    //      l_pre.params.id = i;
+    //      in_db(l_pre);
+    //      DOODLE_LOG_INFO("删除数据库id {}", i);
+    //      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+    //    }
   }
   void delete_db_com(sqlpp::sqlite3::connection &in_db) {
-    sql::ComEntity l_tabl{};
-    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entityId == sqlpp::parameter(l_tabl.entityId)));
-    for (auto &&i : delete_id_list) {
-      if (stop) return;
-      l_pre.params.entityId = i;
-      in_db(l_pre);
-      DOODLE_LOG_INFO("删除数据库 com id {}", i);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
-    }
+    //    sql::ComEntity l_tabl{};
+    //    auto l_pre = in_db.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entityId ==
+    //    sqlpp::parameter(l_tabl.entityId))); for (auto &&i : delete_id_list) {
+    //      if (stop) return;
+    //      l_pre.params.entityId = i;
+    //      in_db(l_pre);
+    //      DOODLE_LOG_INFO("删除数据库 com id {}", i);
+    //      g_reg()->ctx().emplace<process_message>().progress_step({1, size * 2});
+    //    }
   }
 
   void th_delete() {}

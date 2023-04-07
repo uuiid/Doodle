@@ -2,7 +2,6 @@
 
 #include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/database_task/sql_com.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 
 #include <boost/locale/date_time.hpp>
@@ -20,7 +19,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 void sql_com<doodle::business::rules_ns::time_point_info>::insert(
     conn_ptr& in_ptr, const std::vector<entt::entity>& in_id
 ) {

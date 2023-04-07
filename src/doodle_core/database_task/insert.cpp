@@ -8,7 +8,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/details/update_ctx.h>
 #include <doodle_core/database_task/sql_file.h>
-#include <doodle_core/generate/core/sql_sql.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
 #include <doodle_core/metadata/image_icon.h>
@@ -29,7 +28,6 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-namespace sql = doodle_database;
 namespace {
 
 /**
@@ -79,38 +77,12 @@ class insert::impl {
    * @brief 在注册表中插入实体
    * @param in_db 传入的插入数据库连接
    */
-  void insert_db_entity(sqlpp::sqlite3::connection &in_db) {
-    sql::Entity l_tabl{};
-    auto l_pre = in_db.prepare(sqlpp::insert_into(l_tabl).set(l_tabl.uuidData = sqlpp::parameter(l_tabl.uuidData)));
-
-    for (auto &&i : main_tabls) {
-      if (stop) return;
-      l_pre.params.uuidData = i.second->uuid_data;
-      i.second->l_id        = in_db(l_pre);
-      DOODLE_LOG_INFO("插入数据 id {}", i.second->l_id);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, main_tabls.size() * 4});
-    }
-  }
+  void insert_db_entity(sqlpp::sqlite3::connection &in_db) {}
   /**
    * @brief 在数据库中插入组件
    * @param in_db 传入的插入数据库连接
    */
-  void insert_db_com(sqlpp::sqlite3::connection &in_db) {
-    sql::ComEntity l_tabl{};
-    auto l_pre = in_db.prepare(sqlpp::insert_into(l_tabl).set(
-        l_tabl.jsonData = sqlpp::parameter(l_tabl.jsonData), l_tabl.comHash = sqlpp::parameter(l_tabl.comHash),
-        l_tabl.entityId = sqlpp::parameter(l_tabl.entityId)
-    ));
-    for (auto &&j : com_tabls) {
-      if (stop) return;
-      l_pre.params.jsonData = j.json_data;
-      l_pre.params.comHash  = j.com_id;
-      l_pre.params.entityId = boost::numeric_cast<decltype(l_pre.params.entityId)>(main_tabls.at(j.entt_)->l_id);
-      auto l_size           = in_db(l_pre);
-      DOODLE_LOG_INFO("插入数据 id {}", l_size);
-      g_reg()->ctx().emplace<process_message>().progress_step({1, com_tabls.size() * 4});
-    }
-  }
+  void insert_db_com(sqlpp::sqlite3::connection &in_db) {}
 
   void set_database_id() {
     ranges::for_each(entt_list, [this](entt::entity &in_) {
