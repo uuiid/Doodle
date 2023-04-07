@@ -1,4 +1,4 @@
-find_package(Torch)
+#find_package(Torch)
 message("TORCH_LIBRARIES=${TORCH_LIBRARIES}")
 
 if (TARGET torch)
