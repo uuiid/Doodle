@@ -66,12 +66,6 @@ class DOODLE_CORE_API assets {
    * @return const FSys::path& p_path
    */
   [[nodiscard]] const FSys::path& get_path() const;
-  /**
-   * @brief 弃用
-   *
-   * @return std::string
-   */
-  [[deprecated("返回始终为空")]] std::string show_str() const;
 
   /**
    * @brief 排序类, 使用 p_paht 排序

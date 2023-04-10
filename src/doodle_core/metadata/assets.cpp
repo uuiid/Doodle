@@ -25,8 +25,6 @@ void assets::set_path(const FSys::path& in_path) {
 }
 const FSys::path& assets::get_path() const { return p_path; }
 
-std::string assets::show_str() const { return {}; }
-
 bool assets::operator<(const assets& in_rhs) const {
   //  return std::tie(static_cast<const doodle::metadata&>(*this), p_name) < std::tie(static_cast<const
   //  doodle::metadata&>(in_rhs), in_rhs.p_name);
