@@ -47,7 +47,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
     auto l_r                   = l_conn(l_pre);
     DOODLE_LOG_INFO(
         "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),
-        rttr::type::get<business::rules_ns::time_point_info>().get_name()
+        entt::type_id<business::rules_ns::time_point_info>().name()
     );
   }
 }
@@ -82,7 +82,7 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
 
     DOODLE_LOG_INFO(
         "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(),
-        rttr::type::get<business::rules_ns::time_point_info>().get_name()
+        entt::type_id<business::rules_ns::time_point_info>().name()
     );
   }
 }

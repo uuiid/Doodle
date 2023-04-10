@@ -45,9 +45,7 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
         l_pre.params.user_id = uuids::to_string(l_user_h.get<database>().uuid());
       }
       auto l_r = l_conn(l_pre);
-      DOODLE_LOG_INFO(
-          "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<work_task_info>().get_name()
-      );
+      DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<work_task_info>().name());
     }
   }
 }
@@ -82,9 +80,7 @@ void sql_com<doodle::work_task_info>::update(conn_ptr& in_ptr, const std::vector
         l_pre.params.user_id = uuids::to_string(l_user_h.get<database>().uuid());
       }
       auto l_r = l_conn(l_pre);
-      DOODLE_LOG_INFO(
-          "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<work_task_info>().get_name()
-      );
+      DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<work_task_info>().name());
     }
   }
 }

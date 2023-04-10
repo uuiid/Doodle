@@ -54,7 +54,7 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std:
     auto l_r                           = l_conn(l_pre);
     map_id.emplace(l_h, l_r);
     DOODLE_LOG_INFO(
-        "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<redirection_path_info>().get_name()
+        "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<redirection_path_info>().name()
     );
   }
 
@@ -72,8 +72,7 @@ void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std:
     }
     auto l_r_p = l_conn(l_path_pre);
     DOODLE_LOG_INFO(
-        "插入数据库id {} -> 实体 {} 组件 {} ", l_r_p, l_h.entity(),
-        rttr::type::get<tables::rpi_search_path>().get_name()
+        "插入数据库id {} -> 实体 {} 组件 {} ", l_r_p, l_h.entity(), entt::type_id<tables::rpi_search_path>().name()
     );
   }
 }
@@ -96,7 +95,7 @@ void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const std:
     l_pre.params.entity_id             = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     auto l_r                           = l_conn(l_pre);
     DOODLE_LOG_INFO(
-        "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<redirection_path_info>().get_name()
+        "插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<redirection_path_info>().name()
     );
   }
   auto map_id = detail::sql_com_destroy_parent_id_return_id<tables::redirection_path_info, tables::rpi_search_path>(
@@ -117,8 +116,7 @@ void sql_com<doodle::redirection_path_info>::update(conn_ptr& in_ptr, const std:
     }
     auto l_r_p = l_conn(l_path_pre);
     DOODLE_LOG_INFO(
-        "插入数据库id {} -> 实体 {} 组件 {} ", l_r_p, l_h.entity(),
-        rttr::type::get<tables::rpi_search_path>().get_name()
+        "插入数据库id {} -> 实体 {} 组件 {} ", l_r_p, l_h.entity(), entt::type_id<tables::rpi_search_path>().name()
     );
   }
 }

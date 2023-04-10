@@ -29,7 +29,7 @@ void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt:
     l_pre.params.uuid_data = uuids::to_string(l_data.uuid());
     auto l_r               = l_conn(l_pre);
     l_data.set_id(boost::numeric_cast<std::uint64_t>(l_r));
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<database>().get_name());
+    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<database>().name());
   }
 }
 

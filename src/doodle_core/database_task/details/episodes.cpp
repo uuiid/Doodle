@@ -29,7 +29,7 @@ void sql_com<doodle::episodes>::insert(conn_ptr& in_ptr, const std::vector<entt:
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r               = l_conn(l_pre);
-    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<episodes>().get_name());
+    DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<episodes>().name());
   }
 }
 
@@ -52,7 +52,7 @@ void sql_com<doodle::episodes>::update(conn_ptr& in_ptr, const std::vector<entt:
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
 
     auto l_r               = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), rttr::type::get<episodes>().get_name());
+    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<episodes>().name());
   }
 }
 
