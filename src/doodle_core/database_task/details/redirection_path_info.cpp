@@ -127,10 +127,8 @@ void sql_com<doodle::redirection_path_info>::select(
     conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
 ) {
   auto& l_conn = *in_ptr;
-  tables::redirection_path_info l_table{};
-  tables::rpi_search_path l_path_table{};
+  const tables::redirection_path_info l_table{};
   std::vector<redirection_path_info> l_r_p_i{};
-  std::vector<FSys::path> l_path{};
   std::vector<entt::entity> l_entts{};
   std::map<entt::entity, std::int64_t> path_map{};
   // 调整内存
@@ -146,9 +144,8 @@ void sql_com<doodle::redirection_path_info>::select(
                               .from(l_table)
                               .where(l_table.entity_id.is_null()))) {
     doodle::redirection_path_info l_r{};
-    l_r.search_path_ = l_path;
-    l_r.file_name_   = row.redirection_file_name.value();
-    auto l_id        = row.entity_id.value();
+    l_r.file_name_ = row.redirection_file_name.value();
+    auto l_id      = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_r_p_i.emplace_back(std::move(l_r));
       l_entts.emplace_back(in_handle.at(l_id));
@@ -158,6 +155,8 @@ void sql_com<doodle::redirection_path_info>::select(
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
+
+  const tables::rpi_search_path l_path_table{};
   auto l_pre_select = l_conn.prepare(sqlpp::select(l_path_table.redirection_path)
                                          .from(l_path_table)
                                          .where(l_path_table.parent_id == sqlpp::parameter(l_path_table.parent_id)));

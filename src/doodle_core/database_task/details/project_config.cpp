@@ -9,6 +9,7 @@
 #include "metadata/metadata.h"
 #include "metadata/project.h"
 #include "sqlpp11/custom_query.h"
+#include "sqlpp11/select.h"
 #include "sqlpp11/verbatim_table.h"
 #include <algorithm>
 #include <entt/entity/fwd.hpp>
@@ -239,64 +240,107 @@ void sql_com<project_config::base_config>::select(
     conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle
 ) {
   auto& l_conn = *in_ptr;
-  tables::project_config l_table{};
   std::vector<project_config::base_config> l_config;
   std::vector<entt::entity> l_entts;
-  // 调整内存
-  for (auto&& raw :
-       l_conn(sqlpp::select(sqlpp::count(l_table.entity_id)).from(l_table).where(l_table.entity_id.is_not_null()))) {
-    l_config.reserve(raw.count.value());
-    l_entts.reserve(raw.count.value());
-    break;
-  }
+  std::map<entt::entity, std::int64_t> path_map{};
+  {
+    tables::project_config l_table{};
+    // 调整内存
+    for (auto&& raw :
+         l_conn(sqlpp::select(sqlpp::count(l_table.entity_id)).from(l_table).where(l_table.entity_id.is_not_null()))) {
+      l_config.reserve(raw.count.value());
+      l_entts.reserve(raw.count.value());
+      break;
+    }
 
-  for (auto& row : l_conn(sqlpp::select(
-                              l_table.sim_path, l_table.export_group, l_table.cloth_proxy, l_table.simple_module_proxy,
-                              l_table.find_icon_regex, l_table.upload_path, l_table.season_count,
-                              l_table.use_only_sim_cloth, l_table.use_divide_group_export, l_table.use_rename_material,
-                              l_table.use_merge_mesh, l_table.t_post, l_table.export_anim_time, l_table.export_abc_arg,
-                              l_table.use_write_metadata, l_table.abc_export_extract_reference_name,
-                              l_table.abc_export_format_reference_name, l_table.abc_export_extract_scene_name,
-                              l_table.abc_export_format_scene_name, l_table.abc_export_add_frame_range,
-                              l_table.maya_camera_suffix, l_table.maya_out_put_abc_suffix, l_table.entity_id
-       )
-                              .from(l_table)
-                              .where(l_table.entity_id.is_null()))) {
-    project_config::base_config l_p_c{};
-    l_p_c.vfx_cloth_sim_path                = row.sim_path.value();
-    l_p_c.export_group                      = row.export_group.value();
-    l_p_c.cloth_proxy_                      = row.cloth_proxy.value();
-    l_p_c.simple_module_proxy_              = row.simple_module_proxy.value();
-    l_p_c.find_icon_regex                   = row.find_icon_regex.value();
-    // l_p_c.assets_list=row.assets_list.value();
-    // l_p_c.icon_extensions=row.icon_extensions.value();
-    l_p_c.upload_path                       = row.upload_path.value();
-    l_p_c.season_count                      = row.season_count.value();
-    l_p_c.use_only_sim_cloth                = row.use_only_sim_cloth.value();
-    l_p_c.use_divide_group_export           = row.use_divide_group_export.value();
-    l_p_c.use_rename_material               = row.use_rename_material.value();
-    l_p_c.use_merge_mesh                    = row.use_merge_mesh.value();
-    l_p_c.t_post                            = row.t_post.value();
-    l_p_c.export_anim_time                  = row.export_anim_time.value();
-    l_p_c.export_abc_arg                    = decltype(l_p_c.export_abc_arg){row.export_abc_arg.value()};
-    // l_p_c.maya_camera_select=row.maya_camera_select.value();
-    l_p_c.use_write_metadata                = row.use_write_metadata.value();
-    l_p_c.abc_export_extract_reference_name = row.abc_export_extract_reference_name.value();
-    l_p_c.abc_export_format_reference_name  = row.abc_export_format_reference_name.value();
-    l_p_c.abc_export_extract_scene_name     = row.abc_export_extract_scene_name.value();
-    l_p_c.abc_export_format_scene_name      = row.abc_export_format_scene_name.value();
-    l_p_c.abc_export_add_frame_range        = row.abc_export_add_frame_range.value();
-    l_p_c.maya_camera_suffix                = row.maya_camera_suffix.value();
-    l_p_c.maya_out_put_abc_suffix           = row.maya_out_put_abc_suffix.value();
-    auto l_id                               = row.entity_id.value();
-    if (in_handle.find(l_id) != in_handle.end()) {
-      l_config.emplace_back(std::move(l_p_c));
-      l_entts.emplace_back(in_handle.at(l_id));
-      DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
-    } else {
-      DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+    for (auto& row :
+         l_conn(sqlpp::select(
+                    l_table.id, l_table.sim_path, l_table.export_group, l_table.cloth_proxy,
+                    l_table.simple_module_proxy, l_table.find_icon_regex, l_table.upload_path, l_table.season_count,
+                    l_table.use_only_sim_cloth, l_table.use_divide_group_export, l_table.use_rename_material,
+                    l_table.use_merge_mesh, l_table.t_post, l_table.export_anim_time, l_table.export_abc_arg,
+                    l_table.use_write_metadata, l_table.abc_export_extract_reference_name,
+                    l_table.abc_export_format_reference_name, l_table.abc_export_extract_scene_name,
+                    l_table.abc_export_format_scene_name, l_table.abc_export_add_frame_range,
+                    l_table.maya_camera_suffix, l_table.maya_out_put_abc_suffix, l_table.entity_id
+         )
+                    .from(l_table)
+                    .where(l_table.entity_id.is_null()))) {
+      project_config::base_config l_p_c{};
+      l_p_c.vfx_cloth_sim_path                = row.sim_path.value();
+      l_p_c.export_group                      = row.export_group.value();
+      l_p_c.cloth_proxy_                      = row.cloth_proxy.value();
+      l_p_c.simple_module_proxy_              = row.simple_module_proxy.value();
+      l_p_c.find_icon_regex                   = row.find_icon_regex.value();
+      l_p_c.upload_path                       = row.upload_path.value();
+      l_p_c.season_count                      = row.season_count.value();
+      l_p_c.use_only_sim_cloth                = row.use_only_sim_cloth.value();
+      l_p_c.use_divide_group_export           = row.use_divide_group_export.value();
+      l_p_c.use_rename_material               = row.use_rename_material.value();
+      l_p_c.use_merge_mesh                    = row.use_merge_mesh.value();
+      l_p_c.t_post                            = row.t_post.value();
+      l_p_c.export_anim_time                  = row.export_anim_time.value();
+      l_p_c.export_abc_arg                    = decltype(l_p_c.export_abc_arg){row.export_abc_arg.value()};
+      l_p_c.use_write_metadata                = row.use_write_metadata.value();
+      l_p_c.abc_export_extract_reference_name = row.abc_export_extract_reference_name.value();
+      l_p_c.abc_export_format_reference_name  = row.abc_export_format_reference_name.value();
+      l_p_c.abc_export_extract_scene_name     = row.abc_export_extract_scene_name.value();
+      l_p_c.abc_export_format_scene_name      = row.abc_export_format_scene_name.value();
+      l_p_c.abc_export_add_frame_range        = row.abc_export_add_frame_range.value();
+      l_p_c.maya_camera_suffix                = row.maya_camera_suffix.value();
+      l_p_c.maya_out_put_abc_suffix           = row.maya_out_put_abc_suffix.value();
+      auto l_id                               = row.entity_id.value();
+      if (in_handle.find(l_id) != in_handle.end()) {
+        l_config.emplace_back(std::move(l_p_c));
+        l_entts.emplace_back(in_handle.at(l_id));
+        path_map.emplace(in_handle.at(l_id), row.id);
+        DOODLE_LOG_INFO("选择数据库id {} 插入实体 {}", l_id, in_handle.at(l_id));
+      } else {
+        DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
+      }
     }
   }
+
+  {
+    const tables::project_config_assets_list l_table{};
+    auto l_pre = l_conn.prepare(
+        sqlpp::select(l_table.assets_list).from(l_table).where(l_table.parent_id == sqlpp::parameter(l_table.parent_id))
+    );
+    for (auto i = 0; i < l_config.size(); ++i) {
+      l_pre.params.parent_id = path_map[l_entts[i]];
+      for (auto&& row : l_conn(l_pre)) {
+        l_config[i].assets_list.emplace_back(row.assets_list.value());
+      }
+    }
+  }
+
+  {
+    const tables::project_config_icon_extensions l_table{};
+    auto l_pre = l_conn.prepare(sqlpp::select(l_table.icon_extensions)
+                                    .from(l_table)
+                                    .where(l_table.parent_id == sqlpp::parameter(l_table.parent_id)));
+    for (auto i = 0; i < l_config.size(); ++i) {
+      l_pre.params.parent_id = path_map[l_entts[i]];
+      for (auto&& row : l_conn(l_pre)) {
+        l_config[i].icon_extensions.emplace_back(row.icon_extensions.value());
+      }
+    }
+  }
+  {
+    const tables::project_config_maya_camera_select l_table{};
+    auto l_pre = l_conn.prepare(sqlpp::select(l_table.maya_camera_select_reg, l_table.maya_camera_select_num)
+                                    .from(l_table)
+                                    .where(l_table.parent_id == sqlpp::parameter(l_table.parent_id)));
+    for (auto i = 0; i < l_config.size(); ++i) {
+      l_pre.params.parent_id = path_map[l_entts[i]];
+      for (auto&& row : l_conn(l_pre)) {
+        l_config[i].maya_camera_select.emplace_back(
+            row.maya_camera_select_reg.value(), row.maya_camera_select_num.value()
+        );
+      }
+    }
+  }
+
   reg_->insert(l_entts.begin(), l_entts.end(), l_config.begin());
 }
 void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
