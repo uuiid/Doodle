@@ -4,6 +4,7 @@
 #include <doodle_core/database_task/sql_com.h>
 #include <doodle_core/logger/logger.h>
 
+#include "boost/numeric/conversion/cast.hpp"
 #include <boost/winapi/error_codes.hpp>
 
 #include "metadata/metadata.h"
@@ -334,7 +335,7 @@ void sql_com<project_config::base_config>::select(
       l_pre.params.parent_id = path_map[l_entts[i]];
       for (auto&& row : l_conn(l_pre)) {
         l_config[i].maya_camera_select.emplace_back(
-            row.maya_camera_select_reg.value(), row.maya_camera_select_num.value()
+            row.maya_camera_select_reg.value(), boost::numeric_cast<std::int32_t>(row.maya_camera_select_num.value())
         );
       }
     }
