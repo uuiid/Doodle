@@ -1,7 +1,9 @@
 #pragma once
 
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/metadata.h>
 
+#include "fmt/format.h"
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <sqlpp11/data_types/boolean/data_type.h>
@@ -10,6 +12,7 @@
 #include <sqlpp11/data_types/time_point/data_type.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+#include <vector>
 namespace doodle::database_n::detail {
 
 template <typename T>
@@ -25,15 +28,43 @@ void sql_com_destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handl
 }
 
 template <typename T>
-void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::map<entt::handle, std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
-  T l_tabl{};
+  const T l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
 
-  for (auto& l_id : in_handle) {
+  for (auto&& [l_k, l_id] : in_handle) {
     l_pre.params.parent_id = boost::numeric_cast<std::int64_t>(l_id);
     l_conn(l_pre);
   }
+}
+template <typename T>
+void sql_com_destroy_parent_id(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
+  auto& l_conn = *in_ptr;
+  const T l_tabl{};
+  auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.parent_id == sqlpp::parameter(l_tabl.parent_id)));
+
+  for (auto&& l_id : in_handle) {
+    l_pre.params.parent_id = boost::numeric_cast<std::int64_t>(l_id);
+    l_conn(l_pre);
+  }
+}
+template <typename T, typename... sub_types>
+auto sql_com_destroy_parent_id_return_id(conn_ptr& in_ptr, const std::vector<entt::handle>& in_handle) {
+  auto& l_conn = *in_ptr;
+  const T l_table{};
+  std::map<entt::handle, std::int64_t> map_id{};
+  auto l_pre_select = l_conn.prepare(
+      sqlpp::select(l_table.id).from(l_table).where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
+  );
+  for (auto& l_h : in_handle) {
+    l_pre_select.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
+    for (auto&& row : l_conn(l_pre_select)) {
+      map_id.emplace(l_h, row.id.value());
+    }
+  }
+  ((sql_com_destroy_parent_id<sub_types>(in_ptr, map_id), void()), ...);
+  return map_id;
 }
 
 template <typename T>
@@ -42,7 +73,20 @@ inline sqlpp::make_traits<T, sqlpp::tag::can_be_null> can_be_null();
 template <typename T>
 inline sqlpp::make_traits<T, sqlpp::tag::require_insert> require_insert();
 
-}  // namespace doodle::database_n::detail
+template <typename table_t>
+struct vector_database {
+  template <typename vector_value_t>
+  auto insert_prepare(conn_ptr& in_ptr) {
+    auto& l_conn = *in_ptr;
+    const table_t l_table{};
+
+    return l_conn.prepare(sqlpp::insert_into(l_table).set(
+        l_table.value = sqlpp::parameter(l_table.value), l_table.parent_id = sqlpp::parameter(l_table.parent_id)
+    ));
+  }
+};
+
+};  // namespace doodle::database_n::detail
 
 #define DOODLE_SQL_COLUMN_IMP(column_name, type, tag)                                                 \
   struct column_name {                                                                                \
@@ -124,8 +168,9 @@ DOODLE_SQL_COLUMN_IMP(use_rename_material, sqlpp::boolean, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(use_merge_mesh, sqlpp::boolean, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(t_post, sqlpp::integer, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(export_anim_time, sqlpp::integer, detail::can_be_null);
-DOODLE_SQL_COLUMN_IMP(export_abc_arg, sqlpp::integer, detail::can_be_null);
-DOODLE_SQL_COLUMN_IMP(maya_camera_select, sqlpp::boolean, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(export_abc_arg, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(maya_camera_select_reg, sqlpp::text, detail::require_insert);
+DOODLE_SQL_COLUMN_IMP(maya_camera_select_num, sqlpp::integer, detail::require_insert);
 DOODLE_SQL_COLUMN_IMP(use_write_metadata, sqlpp::boolean, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abc_export_extract_reference_name, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(abc_export_format_reference_name, sqlpp::text, detail::can_be_null);
@@ -171,14 +216,20 @@ DOODLE_SQL_TABLE_IMP(
 );
 DOODLE_SQL_TABLE_IMP(
     project_config, column::id, column::entity_id, column::sim_path, column::export_group, column::cloth_proxy,
-    column::simple_module_proxy, column::find_icon_regex, column::assets_list, column::icon_extensions,
-    column::upload_path, column::season_count, column::use_only_sim_cloth, column::use_divide_group_export,
-    column::use_rename_material, column::use_merge_mesh, column::t_post, column::export_anim_time,
-    column::export_abc_arg, column::maya_camera_select, column::use_write_metadata,
+    column::simple_module_proxy, column::find_icon_regex, column::upload_path, column::season_count,
+    column::use_only_sim_cloth, column::use_divide_group_export, column::use_rename_material, column::use_merge_mesh,
+    column::t_post, column::export_anim_time, column::export_abc_arg, column::use_write_metadata,
     column::abc_export_extract_reference_name, column::abc_export_format_reference_name,
     column::abc_export_extract_scene_name, column::abc_export_format_scene_name, column::abc_export_add_frame_range,
     column::maya_camera_suffix, column::maya_out_put_abc_suffix
 );
+DOODLE_SQL_TABLE_IMP(project_config_assets_list, column::id, column::parent_id, column::assets_list);
+DOODLE_SQL_TABLE_IMP(project_config_icon_extensions, column::id, column::parent_id, column::icon_extensions);
+DOODLE_SQL_TABLE_IMP(
+    project_config_maya_camera_select, column::id, column::parent_id, column::maya_camera_select_num,
+    column::maya_camera_select_reg
+);
+
 DOODLE_SQL_TABLE_IMP(season, column::id, column::entity_id, column::p_int);
 DOODLE_SQL_TABLE_IMP(importance, column::id, column::entity_id, column::cutoff_p);
 DOODLE_SQL_TABLE_IMP(

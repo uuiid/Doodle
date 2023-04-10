@@ -8,6 +8,7 @@
 
 #include "metadata/detail/time_point_info.h"
 #include "metadata/metadata.h"
+#include "metadata/time_point_wrap.h"
 #include <algorithm>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
@@ -38,9 +39,8 @@ void sql_com<doodle::business::rules_ns::time_point_info>::insert(
 
   for (auto& l_h : l_handles) {
     auto& l_time               = l_h.get<doodle::business::rules_ns::time_point_info>();
-    // todo:时间转换
-    //  l_pre.params.first_time  = l_time.first.get_local_time();
-    //  l_pre.params.second_time=l_time.second;
+    l_pre.params.first_time    = chrono_ns::round<chrono_ns::microseconds>(l_time.first.get_sys_time());
+    l_pre.params.second_time   = chrono_ns::round<chrono_ns::microseconds>(l_time.second.get_sys_time());
     l_pre.params.info          = l_time.info;
     l_pre.params.is_extra_work = l_time.is_extra_work;
     l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
@@ -72,9 +72,9 @@ void sql_com<doodle::business::rules_ns::time_point_info>::update(
                                   .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
   for (auto& l_h : l_handles) {
     auto& l_time               = l_h.get<doodle::business::rules_ns::time_point_info>();
-    // todo:时间转换
-    //  l_pre.params.first_time  = l_time.first.get_local_time();
-    //  l_pre.params.second_time=l_time.second;
+
+    l_pre.params.first_time    = chrono_ns::round<chrono_ns::microseconds>(l_time.first.get_sys_time());
+    l_pre.params.second_time   = chrono_ns::round<chrono_ns::microseconds>(l_time.second.get_sys_time());
     l_pre.params.info          = l_time.info;
     l_pre.params.is_extra_work = l_time.is_extra_work;
     l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());

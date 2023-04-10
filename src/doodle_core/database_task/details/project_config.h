@@ -3,10 +3,16 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/project.h>
 
+#include "entt/entity/fwd.hpp"
+
 namespace doodle::database_n {
 template <>
 struct sql_com<project_config::base_config> {
   registry_ptr reg_;
+
+  void install_sub(
+      conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
+  );
 
   void create_table(conn_ptr& in_ptr);
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
