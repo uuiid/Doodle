@@ -16,6 +16,7 @@ target_sources(
         app_facet.h
         program_info.h
         global_function.h
+        init_register_macro.h
 
         PRIVATE
         core_set.cpp

@@ -49,3 +49,4 @@ struct registrar_lambda {};
   bool ::doodle::details::registrar_lambda<class_name>::registered{                           \
       ::doodle::details::registrar_lambda<class_name>::getInstance()};                        \
   void ::doodle::details::registrar_lambda<class_name>::doodle_reg()
+
