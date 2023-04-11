@@ -78,7 +78,7 @@ target_link_libraries(doodle_lib
         PRIVATE
         d3d11.lib
         dxgi.lib
-        Microsoft::DirectXTK
+#        Microsoft::DirectXTK
         implot::implot
         DoodleLibResourceFont
         Eigen3::Eigen
