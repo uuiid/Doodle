@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "fe1e11045d6e6020fb3a1c155076741e7f9cd454",
+  "builtin-baseline": "dafff8267e0685baa86140e5a5dcf4d9d7383592",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
