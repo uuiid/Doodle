@@ -52,6 +52,12 @@ FolderType=
 Logo =
 
 "@;
+    foreach ($i in Get-Childitem -Path "C:\sy" ) {
+        $path = "C:\sy\" + $i
+        (Get-Item -Path $path).Delete()
+        Write-Host "删除 " $path  
+    }
+    # Remove-Item -Path "C:\sy" -Recurse -Confirm -ErrorAction Stop
     if ( Test-Path -Path "C:\sy") {
     }
     else {
@@ -67,7 +73,11 @@ function Add-SymLink {
         $item -is [map_dir]
         
         try {
+
+            $test_file_path = $item.source + "\test.run_txt"
             Get-Childitem -Path $item.source -ErrorAction Stop
+            New-Item -Path $test_file_path -ItemType File -Force -ErrorAction Stop
+            # Remove-Item -Path $test_file_path -ErrorAction Stop
             if (Test-Path $item.source) {
                 if (Test-Path $item.link) {
                     $fod = Get-Item -Path $item.link
@@ -125,4 +135,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.6.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.7.exe -requireAdmin
