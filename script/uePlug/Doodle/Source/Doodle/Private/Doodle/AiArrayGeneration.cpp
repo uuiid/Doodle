@@ -5,6 +5,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "NavigationSystem.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "Animation/AnimSingleNodeInstance.h"
 
 ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   SplineComponent           = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
@@ -61,10 +63,35 @@ void ADoodleAiArrayGeneration::PostActorCreated() {
   UMaterialInstanceDynamic* L_Material = UMaterialInstanceDynamic::Create(L_CraneBaseMaterial, this);
   L_Material->SetVectorParameterValue(TEXT("Color"), FColor::Red);
   Target->SetMaterial(0, L_Material);
-  /// Script/Engine.StaticMesh'/Niagara/DefaultAssets/S_Gnomon.S_Gnomon'
+  // GenPoint();
+}
+
+void ADoodleAiArrayGeneration::BeginPlay() {
+  if (AnimAssets.IsEmpty() || SkinAssets.IsEmpty())
+    return;
+
+  int32 L_Max_Anim = FMath::Max(0, AnimAssets.Num() - 1);
+  int32 L_Max_Skin = FMath::Max(0, SkinAssets.Num() - 1);
+  for (auto&& i : Points) {
+    ASkeletalMeshActor* L_Actor      = GetWorld()->SpawnActor<ASkeletalMeshActor>(i.GetLocation(), i.GetRotation().Rotator());
+    // L_Actor->SetActorTransform(i);
+    TObjectPtr L_Anim                = AnimAssets[RandomStream_Anim.RandRange(0, L_Max_Anim)];
+    TObjectPtr L_Skin                = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
+    USkeletalMeshComponent* L_Sk_Com = L_Actor->GetSkeletalMeshComponent();
+    L_Sk_Com->SetSkeletalMesh(L_Skin);
+    L_Sk_Com->PlayAnimation(L_Anim, true);
+
+    L_Sk_Com->AnimationData.SavedPlayRate = ((float)RandomStream_Anim_Rate.RandRange(950, 1050)) / 1000;
+  }
 }
 
 void ADoodleAiArrayGeneration::GenPoint() {
+  UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+  if (!NavSys) {
+    return;
+  }
+  if (NavSys->MainNavData == nullptr)
+    return;
   // RandomStream.Initialize();
   // RandomStream.RandRange(0, 10);
   Points.Empty(Row * Column);
@@ -76,7 +103,7 @@ void ADoodleAiArrayGeneration::GenPoint() {
   double L_Max                 = L_Row_Step.GetAbsMax() / FMath::Clamp((double)FMath::Max(Row, Column), 1.0, 1000.0);
 
   const FVector L_Preview_Size = FVector{L_Max, L_Max, L_Max} / 20;
-  UE_LOG(LogTemp, Log, TEXT("L_Preview_Size %s, L_Max %f"), *L_Preview_Size.ToString(), L_Max);
+  // UE_LOG(LogTemp, Log, TEXT("L_Preview_Size %s, L_Max %f"), *L_Preview_Size.ToString(), L_Max);
 
   // DrawDebugLine(GetWorld(), GetActorTransform().GetLocation(), GetActorTransform().GetLocation() + L_Vector * 50,
   // FColor::Red, false, 10.f);
@@ -86,6 +113,7 @@ void ADoodleAiArrayGeneration::GenPoint() {
       FVector L_Point       = L_Box_.Min + FVector{L_Row_Step_X * x, L_Row_Step_Y * y, 0};
       const float L_Param   = SplineComponent->FindInputKeyClosestToWorldLocation(L_Point);
       FVector L_RightVector = SplineComponent->GetRightVectorAtSplineInputKey(L_Param, ESplineCoordinateSpace::World);
+      L_RightVector.Z       = L_Box_.Min.Z;
       FVector L_Vector      = SplineComponent->GetLocationAtSplineInputKey(L_Param, ESplineCoordinateSpace::World) - L_Point;
       if (L_Vector.Dot(L_RightVector) < 0.0) {
         FHitResult L_HitR{};
@@ -97,9 +125,10 @@ void ADoodleAiArrayGeneration::GenPoint() {
           FVector L_Point_Out{};
           // DrawDebugPoint(GetWorld(), L_HitR.ImpactPoint, 10.0f, FColor::Red, false, 1.0f);
           if (GetRandomPointInRadius(L_HitR.ImpactPoint, L_Point_Out)) {
-            Points.Add(L_Point_Out);
+            FTransform L_Ftran{FQuat::Identity, L_Point_Out, L_Preview_Size};
+            Points.Add(L_Ftran);
 
-            Preview_InstancedStaticMeshComponent->AddInstance(FTransform{FQuat::Identity, L_Point_Out, L_Preview_Size}, true);
+            Preview_InstancedStaticMeshComponent->AddInstance(L_Ftran, true);
             DrawDebugPoint(GetWorld(), L_Point_Out, 10.0f, FColor::Green, false, 1.0f);
           }
         }
@@ -108,6 +137,10 @@ void ADoodleAiArrayGeneration::GenPoint() {
       }
     }
   }
+}
+
+FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin) {
+  return;
 }
 
 bool ADoodleAiArrayGeneration::GetRandomPointInRadius(const FVector& Origin, FVector& OutResult) {
@@ -126,6 +159,17 @@ bool ADoodleAiArrayGeneration::GetRandomPointInRadius(const FVector& Origin, FVe
 
 void ADoodleAiArrayGeneration::OnConstruction(const FTransform& Transform) {
   Super::OnConstruction(Transform);
-
+  // if (SplineComponent->bSplineHasBeenEdited)
   GenPoint();
 }
+
+#if WITH_EDITOR
+void ADoodleAiArrayGeneration::PostEditChangeProperty(
+    FPropertyChangedEvent& PropertyChangeEvent
+) {
+  Super::PostEditChangeProperty(PropertyChangeEvent);
+  // FName name2 = PropertyChangeEvent.GetPropertyName();
+  // FName name  = PropertyChangeEvent.MemberProperty ? PropertyChangeEvent.MemberProperty->GetFName() : NAME_None;
+  // UE_LOG(LogTemp, Log, TEXT("chick name: %s MemberProperty: %s"), *name2.ToString(), *name.ToString());
+}
+#endif  // WITH_EDITOR

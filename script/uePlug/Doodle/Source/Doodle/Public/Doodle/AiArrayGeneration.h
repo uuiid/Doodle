@@ -21,7 +21,6 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   TObjectPtr<class USplineComponent> SplineComponent;
 
  public:
-  FRandomStream RandomStream;
   UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "行", meta = (ClampMin = 1, ClampMax = 1000)
   )
@@ -37,12 +36,37 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   )
   float RandomRadius;
 
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle
+  )
+  TArray<TObjectPtr<UAnimationAsset>> AnimAssets;
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle
+  )
+  TArray<TObjectPtr<USkeletalMesh>> SkinAssets;
+
   virtual void Tick(float DeltaTime) override;
   virtual void PostActorCreated() override;
 
+  virtual void BeginPlay() override;
+
+#if WITH_EDITOR
+  void PostEditChangeProperty(
+      FPropertyChangedEvent &PropertyChangeEvent
+  ) override;
+#endif  // WITH_EDITOR
+
  private:
   UPROPERTY()
-  TArray<FVector> Points;
+  FRandomStream RandomStream_Orient;
+  UPROPERTY()
+  FRandomStream RandomStream_Anim;
+  UPROPERTY()
+  FRandomStream RandomStream_Skin;
+  UPROPERTY()
+  FRandomStream RandomStream_Anim_Rate;
+  UPROPERTY()
+  TArray<FTransform> Points;
 
   UPROPERTY()
   TArray<TObjectPtr<UArrowComponent>> ArrowComponents;
@@ -57,6 +81,8 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   TObjectPtr<UInstancedStaticMeshComponent> Preview_InstancedStaticMeshComponent;
 
   void GenPoint();
+  FQuat GetRandomOrient(const FVector &In_Origin);
+
   bool GetRandomPointInRadius(const FVector &Origin, FVector &OutResult);
 
   virtual void OnConstruction(const FTransform &Transform) override;
