@@ -8,6 +8,9 @@ public class doodle : ModuleRules
     public doodle(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        AddEngineThirdPartyPrivateStaticDependencies(Target,
+            "Eigen"
+        );
 
         PublicIncludePaths.AddRange(
             new string[] {
@@ -67,7 +70,8 @@ public class doodle : ModuleRules
                 // "SequencerScriptingEditor", // 编辑器
                 "MovieSceneTracks", // 骨骼物体轨道需要
                 "NavigationSystem",// 导航网格
-                "AnimGraphRuntime"// 动画评估模块
+                "AnimGraphRuntime",// 动画评估模块
+                "Eigen"//数学
                 // "Projects",
                 // "InputCore",
                 // "CoreUObject",
