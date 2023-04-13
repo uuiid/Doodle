@@ -6,6 +6,8 @@
 #include "DoodleMatrixLight.h"
 #include "fireLight.h"
 #include "DoodleSurroundMesh.h"
+#include "Doodle/AiArrayGeneration.h"
+#include "DoodleAiSplineCrowd.h"
 
 static const FName doodleTabName("doodleUI");
 #define LOCTEXT_NAMESPACE "FdoodleUIModule"
@@ -43,6 +45,20 @@ void FdoodleUIModule::StartupModule() {
       info.UniqueHandle,
       MakeShareable(new FPlaceableItem(
           nullptr, FAssetData{ADoodleSurroundMeshActor::StaticClass()}
+      ))
+  );
+
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(
+          nullptr, FAssetData{ADoodleAiSplineCrowd::StaticClass()}
+      ))
+  );
+
+  IPlacementModeModule::Get().RegisterPlaceableItem(
+      info.UniqueHandle,
+      MakeShareable(new FPlaceableItem(
+          nullptr, FAssetData{ADoodleAiArrayGeneration::StaticClass()}
       ))
   );
 }

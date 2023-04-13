@@ -63,14 +63,15 @@ ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
 
 void ADoodleAiArrayGeneration::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
-  if (Target_Transform != SceneComponentTarget->GetComponentTransform().GetLocation()) {
-    for (auto i = 0; i < Points.Num(); ++i) {
-      auto&& L_Tran = Points[i];
-      L_Tran.SetRotation(GetRandomOrient(L_Tran.GetLocation()));
-      Preview_InstancedStaticMeshComponent->UpdateInstanceTransform(i, L_Tran, true, true, true);
+  if (!bCluster)
+    if (Target_Transform != SceneComponentTarget->GetComponentTransform().GetLocation()) {
+      for (auto i = 0; i < Points.Num(); ++i) {
+        auto&& L_Tran = Points[i];
+        L_Tran.SetRotation(GetRandomOrient(L_Tran.GetLocation()));
+        Preview_InstancedStaticMeshComponent->UpdateInstanceTransform(i, L_Tran, true, true, true);
+      }
+      Target_Transform = SceneComponentTarget->GetComponentTransform().GetLocation();
     }
-    Target_Transform = SceneComponentTarget->GetComponentTransform().GetLocation();
-  }
 }
 
 void ADoodleAiArrayGeneration::PostActorCreated() {
@@ -165,11 +166,15 @@ void ADoodleAiArrayGeneration::GenPoint() {
 }
 
 FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin) {
+  return GetRandomOrient(In_Origin, SceneComponentTarget->GetComponentTransform().GetLocation());
+}
+
+FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin, const FVector& In_Look) {
   static constexpr double Pi = 3.1415926535897932384626433832795;
   FQuat L_R{FQuat::Identity};
 
   FVector L_Origin{In_Origin.X, In_Origin.Y, 0.0};
-  FVector L_Loc = SceneComponentTarget->GetComponentTransform().GetLocation();
+  FVector L_Loc = In_Look;
   L_Loc         = {L_Loc.X, L_Loc.Y, 0};
   L_Loc -= L_Origin;
 
@@ -204,18 +209,37 @@ void ADoodleAiArrayGeneration::OnConstruction(const FTransform& Transform) {
 
 void ADoodleAiArrayGeneration::K_Means_Clustering() {
   Eigen::MatrixX3d L_Points{Points.Num(), 3};
-  for (auto& i : Points) {
-    L_Points << Eigen::Vector3d{i.GetLocation().X, i.GetLocation().Y, i.GetLocation().Z};
+  for (auto k = 0; k < L_Points.rows(); ++k) {
+    FVector L_Loc   = Points[k].GetLocation();
+    L_Points.row(k) = Eigen::Vector3d{L_Loc.X, L_Loc.Y, L_Loc.Z};
+    // L_Points << Eigen::Vector3d{L_Loc.X, L_Loc.Y, L_Loc.Z};
+  }
+
+  // for (auto k = 0; k < L_Points.rows(); ++k) {
+  //   Eigen::Vector3d L_point = L_Points.row(k);
+  //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
+  // }
+  // for (auto k = 0; k < L_Points.rows(); ++k)
+  //   UE_LOG(LogTemp, Log, TEXT("UE %s, Eigen %s"), *Points[k].GetLocation().ToString(), *Doodle::EigenMatrixToString(L_Points.row(k)));
+
+  Eigen::Vector3d L_Norm = L_Points.colwise().mean();
+  L_Points.rowwise() -= L_Norm.transpose();
+  double L_max = L_Points.colwise().maxCoeff().norm();
+  L_Points /= L_max;
+
+  for (auto k = 0; k < L_Points.rows(); ++k) {
+    Eigen::Vector3d L_point = L_Points.row(k);
+    DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
   }
   Eigen::MatrixX3d L_Centroids = Eigen::MatrixX3d::Random(ClusterPointNum, 3);
 
+  Eigen::VectorXd L_Labels{L_Points.rows(), 1};
   for (auto i = 0; i < ClusterIter; ++i) {
-    Eigen::VectorXd L_Labels{L_Points.rows(), 1};
     for (auto j = 0; j < L_Points.rows(); ++j) {
       double L_min_dist = std::numeric_limits<double>::max();
       int L_Label{0};
 
-      for (auto k = 0; k < ClusterPointNum; k++) {
+      for (auto k = 0; k < L_Centroids.rows(); ++k) {
         double L_Dist = (L_Points.row(j) - L_Centroids.row(k)).norm();
         if (L_Dist < L_min_dist) {
           L_min_dist = L_Dist;
@@ -226,11 +250,11 @@ void ADoodleAiArrayGeneration::K_Means_Clustering() {
       L_Labels[j] = L_Label;
     }
 
-    for (auto k = 0; k < ClusterPointNum; k++) {
+    for (auto k = 0; k < L_Centroids.rows(); ++k) {
       Eigen::MatrixX3d LL_Centroids;
-      for (auto j = 0; j < L_Labels.rows(); j++) {
+      for (auto j = 0; j < L_Labels.rows(); ++j) {
         if (L_Labels[j] == k) {
-          LL_Centroids.conservativeResize(LL_Centroids.rows() + 1, LL_Centroids.cols());
+          LL_Centroids.conservativeResize(LL_Centroids.rows() + 1, Eigen::NoChange);
           LL_Centroids.row(LL_Centroids.rows() - 1) = L_Points.row(j);
         }
       }
@@ -239,9 +263,26 @@ void ADoodleAiArrayGeneration::K_Means_Clustering() {
         L_Centroids.row(k) = LL_Centroids.colwise().mean();
       }
     }
+
+    // for (auto k = 0; k < L_Centroids.rows(); ++k) {
+    //   Eigen::Vector3d L_point = L_Centroids.row(k);
+    //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Red, false, 1.0f);
+    // }
   }
 
-  UE_LOG(LogTemp, Log, TEXT("ADoodleAiArrayGeneration::K_Means_Clustering():\n %s"), *Doodle::EigenMatrixToString(L_Points));
+  for (auto j = 0; j < L_Points.rows(); ++j) {
+    Eigen::Vector3d L_point = L_Centroids.row(L_Labels[j]);
+    L_point *= L_max;
+    L_point += L_Norm;
+
+    auto&& L_Tran = Points[j];
+    FVector L_Look{L_point.x(), L_point.y(), L_point.z()};
+    L_Tran.SetRotation(GetRandomOrient(L_Tran.GetLocation(), L_Look));
+    Preview_InstancedStaticMeshComponent->UpdateInstanceTransform(j, L_Tran, true, true, true);
+
+    DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Red, false, 1.0f);
+    // UE_LOG(LogTemp, Log, TEXT("point %s"), *Doodle::EigenMatrixToString(L_point));
+  }
 }
 
 #if WITH_EDITOR

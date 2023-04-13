@@ -30,25 +30,26 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   )
   int32 Column;
 
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "集群点", meta = (ClampMin = 1, ClampMax = 100)
-  )
-  int32 ClusterPointNum;
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群", meta = (ClampMin = 1, ClampMax = 100)
-  )
-  bool bCluster;
-
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数", meta = (ClampMin = 1, ClampMax = 100)
-  )
-  int32 ClusterIter;
 
   UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围",
       meta = (ClampMin = 0.0, ClampMax = 200)
   )
   float RandomRadius;
+
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  bool bCluster;
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "集群点", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  int32 ClusterPointNum;
+
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  int32 ClusterIter;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机方向范围", meta = (ClampMin = -1.0, ClampMax = 1.0))
   FVector2D RandomOrient;
@@ -108,6 +109,7 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
 
   void GenPoint();
   FQuat GetRandomOrient(const FVector &In_Origin);
+  FQuat GetRandomOrient(const FVector &In_Origin, const FVector &In_Look);
 
   bool GetRandomPointInRadius(const FVector &Origin, FVector &OutResult);
 
