@@ -31,23 +31,49 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   int32 Column;
 
   UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "集群点", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  int32 ClusterPointNum;
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  bool bCluster;
+
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数", meta = (ClampMin = 1, ClampMax = 100)
+  )
+  int32 ClusterIter;
+
+  UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围",
-      meta = (ClampMin = 0.0, ClampMax = 1000)
+      meta = (ClampMin = 0.0, ClampMax = 200)
   )
   float RandomRadius;
 
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle
-  )
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机方向范围", meta = (ClampMin = -1.0, ClampMax = 1.0))
+  FVector2D RandomOrient;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
   TArray<TObjectPtr<UAnimationAsset>> AnimAssets;
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle
-  )
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
   TArray<TObjectPtr<USkeletalMesh>> SkinAssets;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
+  TObjectPtr<UStaticMesh> Preview_Mesh;
+
+  UPROPERTY()
+  TObjectPtr<UInstancedStaticMeshComponent> Preview_InstancedStaticMeshComponent;
+
+  /**
+   * Channels that this light should affect.
+   * These channels only apply to opaque materials, direct lighting, and dynamic lighting and shadowing.
+   */
+  UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadOnly, Category = Light)
+  FLightingChannels LightingChannels;
 
   virtual void Tick(float DeltaTime) override;
   virtual void PostActorCreated() override;
-
+  virtual bool ShouldTickIfViewportsOnly() const override;
   virtual void BeginPlay() override;
 
 #if WITH_EDITOR
@@ -65,6 +91,7 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   FRandomStream RandomStream_Skin;
   UPROPERTY()
   FRandomStream RandomStream_Anim_Rate;
+
   UPROPERTY()
   TArray<FTransform> Points;
 
@@ -77,8 +104,7 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   UPROPERTY(EditDefaultsOnly, Category = "Crane Components")
   TObjectPtr<USceneComponent> SceneComponentTarget;
 
-  UPROPERTY()
-  TObjectPtr<UInstancedStaticMeshComponent> Preview_InstancedStaticMeshComponent;
+  FVector Target_Transform;
 
   void GenPoint();
   FQuat GetRandomOrient(const FVector &In_Origin);
@@ -86,4 +112,5 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   bool GetRandomPointInRadius(const FVector &Origin, FVector &OutResult);
 
   virtual void OnConstruction(const FTransform &Transform) override;
+  void K_Means_Clustering();
 };
