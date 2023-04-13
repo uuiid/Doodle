@@ -226,14 +226,12 @@ void ADoodleAiArrayGeneration::K_Means_Clustering() {
 
   Eigen::Vector3d L_Norm = L_Points.colwise().mean();
   L_Points.rowwise() -= L_Norm.transpose();
-  double L_max = L_Points.colwise().maxCoeff().norm();
-  L_Points /= L_max;
 
-  for (auto k = 0; k < L_Points.rows(); ++k) {
-    Eigen::Vector3d L_point = L_Points.row(k);
-    DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
-  }
-  Eigen::MatrixX3d L_Centroids = Eigen::MatrixX3d::Random(ClusterPointNum, 3);
+  // for (auto k = 0; k < L_Points.rows(); ++k) {
+  //   Eigen::Vector3d L_point = L_Points.row(k);
+  //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
+  // }
+  Eigen::MatrixX3d L_Centroids = Eigen::MatrixX3d::Random(ClusterPointNum, 3) * L_Points.colwise().maxCoeff().norm();
 
   Eigen::VectorXd L_Labels{L_Points.rows(), 1};
   for (auto i = 0; i < ClusterIter; ++i) {
@@ -274,7 +272,6 @@ void ADoodleAiArrayGeneration::K_Means_Clustering() {
 
   for (auto j = 0; j < L_Points.rows(); ++j) {
     Eigen::Vector3d L_point = L_Centroids.row(L_Labels[j]);
-    L_point *= L_max;
     L_point += L_Norm;
 
     auto&& L_Tran = Points[j];
