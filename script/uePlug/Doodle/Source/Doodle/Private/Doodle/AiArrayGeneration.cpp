@@ -205,6 +205,8 @@ void ADoodleAiArrayGeneration::OnConstruction(const FTransform& Transform) {
   GenPoint();
   if (bCluster)
     K_Means_Clustering();
+
+  Preview_InstancedStaticMeshComponent->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
 }
 
 void ADoodleAiArrayGeneration::K_Means_Clustering() {
