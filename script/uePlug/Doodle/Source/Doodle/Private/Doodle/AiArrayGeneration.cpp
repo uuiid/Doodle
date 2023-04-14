@@ -39,7 +39,9 @@ ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   Target = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
   Target->SetupAttachment(SceneComponentTarget);
   Target->SetStaticMesh(CraneBaseMesh.Object);
+#if WITH_EDITOR
   Target->SetIsVisualizationComponent(true);
+#endif
   Target->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
   Target->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
   Target->SetCanEverAffectNavigation(false);
@@ -50,8 +52,9 @@ ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   static ConstructorHelpers::FObjectFinder<UStaticMesh> Preview_InstancedStaticMeshComponent_Mesh(TEXT("/Niagara/DefaultAssets/S_Gnomon.S_Gnomon"));
   Preview_Mesh = Preview_InstancedStaticMeshComponent_Mesh.Object;
   Preview_InstancedStaticMeshComponent->SetStaticMesh(Preview_InstancedStaticMeshComponent_Mesh.Object);
-
+#if WITH_EDITOR
   Preview_InstancedStaticMeshComponent->SetIsVisualizationComponent(true);
+#endif
   Preview_InstancedStaticMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
   Preview_InstancedStaticMeshComponent->SetCanEverAffectNavigation(false);
   Preview_InstancedStaticMeshComponent->bHiddenInGame = true;

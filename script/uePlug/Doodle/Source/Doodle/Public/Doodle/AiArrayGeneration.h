@@ -3,12 +3,20 @@
 // DoodleAiArrayGeneration.h
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Math/RandomStream.h"
 
 // 这个必须最后导入
 #include "AiArrayGeneration.generated.h"
 
 class USplineComponent;
 class UArrowComponent;
+class UAnimationAsset;
+class USkeletalMesh;
+class UStaticMesh;
+class UInstancedStaticMeshComponent;
+class UStaticMeshComponent;
+class USceneComponent;
 
 UCLASS()
 class DOODLE_API ADoodleAiArrayGeneration : public AActor {
@@ -29,7 +37,6 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "列", meta = (ClampMin = 1, ClampMax = 1000)
   )
   int32 Column;
-
 
   UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围",
@@ -99,10 +106,10 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   UPROPERTY()
   TArray<TObjectPtr<UArrowComponent>> ArrowComponents;
 
-  UPROPERTY(EditDefaultsOnly)
+  UPROPERTY(EditDefaultsOnly, Category = "Doodle")
   TObjectPtr<UStaticMeshComponent> Target;
   /** Component to control Pitch. */
-  UPROPERTY(EditDefaultsOnly, Category = "Crane Components")
+  UPROPERTY(EditDefaultsOnly, Category = "Doodle")
   TObjectPtr<USceneComponent> SceneComponentTarget;
 
   FVector Target_Transform;
