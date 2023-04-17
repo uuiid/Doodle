@@ -5,7 +5,7 @@
 #pragma once
 
 namespace doodle::details {
-template <typename T>
+template <typename t>
 struct registrar_lambda;
 
 }  // namespace doodle::details

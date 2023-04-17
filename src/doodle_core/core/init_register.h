@@ -25,7 +25,7 @@ class DOODLE_CORE_API init_register {
   static init_register& instance() noexcept;
 };
 namespace details {
-template <typename T>
+template <typename t>
 struct registrar_lambda {};
 }  // namespace details
 
