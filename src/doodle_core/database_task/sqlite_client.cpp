@@ -7,6 +7,27 @@
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/database_task/details/assets.h>
+#include <doodle_core/database_task/details/assets_file.h>
+#include <doodle_core/database_task/details/com_data.h>
+#include <doodle_core/database_task/details/comment.h>
+#include <doodle_core/database_task/details/database.h>
+#include <doodle_core/database_task/details/episodes.h>
+#include <doodle_core/database_task/details/export_file_info.h>
+#include <doodle_core/database_task/details/image_icon.h>
+#include <doodle_core/database_task/details/importance.h>
+#include <doodle_core/database_task/details/macro.h>
+#include <doodle_core/database_task/details/project.h>
+#include <doodle_core/database_task/details/project_config.h>
+#include <doodle_core/database_task/details/redirection_path_info.h>
+#include <doodle_core/database_task/details/rpi_search_path.h>
+#include <doodle_core/database_task/details/season.h>
+#include <doodle_core/database_task/details/shot.h>
+#include <doodle_core/database_task/details/time_point_info.h>
+#include <doodle_core/database_task/details/tool.h>
+#include <doodle_core/database_task/details/update_ctx.h>
+#include <doodle_core/database_task/details/user.h>
+#include <doodle_core/database_task/details/work_task.h>
 #include <doodle_core/gui_template/show_windows.h>
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
@@ -90,7 +111,6 @@ void file_translator::new_file_scene(const FSys::path& in_path) {
 class sqlite_file::impl {
  public:
   registry_ptr registry_attr;
-  bool error_retry{false};
   template <typename type_t>
   class impl_obs {
     entt::observer obs_update_;
@@ -219,7 +239,13 @@ class sqlite_file::impl {
       std::apply([&](auto&&... x) { auto l_t = {(x.save(in_registry_ptr, in_conn, l_handles), 0)...}; }, obs_data_);
     }
   };
+#include "details/macro.h"
 
+  obs_main<
+      doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
+      doodle::time_point_wrap, doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info,
+      /*doodle::business::rules,*/ doodle::user, doodle::work_task_info>
+      obs_save;
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
@@ -302,7 +328,6 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
     g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
-    ptr->error_retry                         = true;
     ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
     ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
       this->async_save(l_path, [](boost::system::error_code in) -> void {});

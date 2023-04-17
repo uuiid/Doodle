@@ -236,4 +236,25 @@ DOODLE_SQL_TABLE_IMP(
     project, column::id, column::entity_id, column::p_name, column::p_path, column::p_en_str, column::p_shor_str
 );
 
+namespace column {
+DOODLE_SQL_COLUMN_IMP(work_weekdays, sqlpp::text, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(first_time_seconds, sqlpp::integer, detail::can_be_null);
+DOODLE_SQL_COLUMN_IMP(second_time_seconds, sqlpp::integer, detail::can_be_null);
+
+DOODLE_SQL_COLUMN_IMP(work_index, sqlpp::integer, detail::can_be_null);
+
+}  // namespace column
+
+DOODLE_SQL_TABLE_IMP(business_rules, column::id, column::entity_id, column::work_weekdays);
+DOODLE_SQL_TABLE_IMP(
+    business_rules_work_pair, column::id, column::parent_id, column::first_time_seconds, column::second_time_seconds
+);
+DOODLE_SQL_TABLE_IMP(
+    business_rules_work_abs_pair, column::work_index, column::id, column::parent_id, column::first_time_seconds,
+    column::second_time_seconds
+);
+DOODLE_SQL_TABLE_IMP(
+    business_rules_time_info_time_info, column::id, column::parent_id, column::first_time, column::second_time,
+    column::info, column::is_extra_work
+);
 }  // namespace doodle::database_n::tables

@@ -36,7 +36,6 @@ class DOODLE_CORE_API rules {
   using point_type           = rules_ns::time_point_info;
 
   using time_duration_vector = std::vector<std::pair<duration_type, duration_type>>;
-  using time_point_vector    = std::vector<rules_ns::time_point_info>;
   /// \brief 周六 ->周日(index 6->0)
   using work_day_type        = std::bitset<7>;
 

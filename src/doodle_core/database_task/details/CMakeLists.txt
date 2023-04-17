@@ -21,6 +21,7 @@ target_sources(doodle_core
         assets_file.h
         time_point_info.h
         project_config.h
+        rules.h
 
         PRIVATE
         com_data.cpp
@@ -42,4 +43,5 @@ target_sources(doodle_core
         assets_file.cpp
         time_point_info.cpp
         project_config.cpp
+        rules.cpp
         )
