@@ -44,6 +44,9 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   )
   float RandomRadius;
 
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "偏移值")
+  float OffsetValue;
+
   UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群", meta = (ClampMin = 1, ClampMax = 100)
   )
