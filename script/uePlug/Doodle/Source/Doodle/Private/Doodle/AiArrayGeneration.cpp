@@ -143,7 +143,9 @@ void ADoodleAiArrayGeneration::GenPoint() {
       const float L_Param   = SplineComponent->FindInputKeyClosestToWorldLocation(L_Point);
       FVector L_RightVector = SplineComponent->GetRightVectorAtSplineInputKey(L_Param, ESplineCoordinateSpace::World);
       L_RightVector.Z       = L_Box_.Min.Z;
+      L_RightVector.Normalize();
       FVector L_Vector      = SplineComponent->GetLocationAtSplineInputKey(L_Param, ESplineCoordinateSpace::World) - L_Point;
+      L_Vector.Normalize();
       if (L_Vector.Dot(L_RightVector) < 0.0) {
         FHitResult L_HitR{};
         if (UKismetSystemLibrary::LineTraceSingleForObjects(
