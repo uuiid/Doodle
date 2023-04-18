@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/metadata.h>
 
 #include "fmt/format.h"
+#include "sqlpp11/all_of.h"
+#include "sqlpp11/type_traits.h"
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <sqlpp11/data_types/boolean/data_type.h>
@@ -12,12 +14,17 @@
 #include <sqlpp11/data_types/time_point/data_type.h>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 namespace doodle::database_n::detail {
+#include <string_view>
 
 template <typename T>
 void sql_com_destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   auto& l_conn = *in_ptr;
+#include <string_view>
   T l_tabl{};
   auto l_pre = l_conn.prepare(sqlpp::remove_from(l_tabl).where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id)));
 
@@ -86,6 +93,79 @@ struct vector_database {
   }
 };
 
+struct create_table_ctx {};
+
+template <typename table_t>
+struct create_table_t {
+  std::string sql_data{};
+
+ private:
+  template <typename column_t, std::enable_if_t<sqlpp::is_integral_t<column_t>::value>* = nullptr>
+  constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
+    return "INTEGER";
+  }
+  template <typename column_t, std::enable_if_t<sqlpp::is_text_t<column_t>::value>* = nullptr>
+  constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
+    return "TEXT";
+  }
+  template <typename column_t, std::enable_if_t<sqlpp::is_time_point_t<column_t>::value>* = nullptr>
+  constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
+    return "DATETIME";
+  }
+
+  template <typename column_t>
+  auto impl_primary_key_column(const column_t& in_column) {
+    sql_data += fmt::format("{} {} PRIMARY KEY", sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>());
+    return *this;
+  }
+  template <typename column_t>
+  auto impl_column(const column_t& /*in_column*/) {
+    sql_data += fmt::format(", {} {}", sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>());
+    return *this;
+  }
+
+ public:
+  explicit create_table_t() {
+    sql_data =
+        fmt::format("CREATE TABLE IF NOT EXISTS {} ( ", sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>());
+    table_t l_table{};
+    std::apply([this](auto&&... x) { column(x...); }, sqlpp::all_of(l_table));
+  }
+
+  template <typename primary_column_t, typename... columns_t>
+  auto column(const primary_column_t& in_primary_column, const columns_t&... in_columns) {
+    impl_primary_key_column<primary_column_t>(in_primary_column);
+    (impl_column<columns_t>(in_columns), ...);
+    return *this;
+  }
+
+  template <typename self_column_t, typename foreign_column_t>
+  auto foreign_column(const self_column_t& in_self_column, const foreign_column_t& in_foreign_column) {
+    sql_data += fmt::format(
+        R"(, FOREIGN KEY ({}) REFERENCES {} ({})  ON DELETE CASCADE ON UPDATE CASCADE)",
+        sqlpp::name_of<self_column_t>::template char_ptr<create_table_ctx>(),
+        sqlpp::name_of<decltype(in_foreign_column.table())>::template char_ptr<create_table_ctx>(),
+        sqlpp::name_of<foreign_column_t>::template char_ptr<create_table_ctx>()
+    );
+    return *this;
+  }
+
+  operator std::string() const { return sql_data + ");"; }
+};
+template <typename column_t>
+std::string create_index(const column_t& in_column) {
+  return fmt::format(
+      "CREATE INDEX IF NOT EXISTS {0}_ix_{1} ON {0} ({1})",
+      sqlpp::name_of<decltype(in_column.table())>::template char_ptr<create_table_ctx>(),
+      sqlpp::name_of<column_t>::template char_ptr<create_table_ctx>()
+  );
+}
+
+template <typename table_t>
+create_table_t<table_t> create_table(const table_t& in_table) {
+  return create_table_t<table_t>{};
+}
+
 };  // namespace doodle::database_n::detail
 
 #define DOODLE_SQL_COLUMN_IMP(column_name, type, tag)                                                 \
@@ -103,19 +183,23 @@ struct vector_database {
     using _traits = decltype(tag<type>());                                                            \
   }
 
-#define DOODLE_SQL_TABLE_IMP(table_name, ...)                                                         \
-  struct table_name : sqlpp::table_t<table_name, __VA_ARGS__> {                                       \
-    struct _alias_t {                                                                                 \
-      static constexpr const char _literal[] = #table_name;                                           \
-      using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>; \
-      template <typename T>                                                                           \
-      struct _member_t {                                                                              \
-        T table_name;                                                                                 \
-        T& operator()() { return table_name; }                                                        \
-        const T& operator()() const { return table_name; }                                            \
-      };                                                                                              \
-    };                                                                                                \
-  }
+#define DOODLE_SQL_TABLE_IMP(table_name, ...)                                                                          \
+  struct table_name : sqlpp::table_t<table_name, __VA_ARGS__> {                                                        \
+    struct _alias_t {                                                                                                  \
+      static constexpr const char _literal[] = #table_name;                                                            \
+      using _name_t                          = sqlpp::make_char_sequence<sizeof(_literal), _literal>;                  \
+      template <typename T>                                                                                            \
+      struct _member_t {                                                                                               \
+        T table_name;                                                                                                  \
+        T& operator()() { return table_name; }                                                                         \
+        const T& operator()() const { return table_name; }                                                             \
+      };                                                                                                               \
+    };                                                                                                                 \
+  };                                                                                                                   \
+  static_assert(                                                                                                       \
+      std::is_same_v<std::tuple_element<0, decltype(sqlpp::all_of(table_name{}))>::type::_spec_t, tables::column::id>, \
+      "ID is the primary key and must be placed first"                                                                 \
+  )
 
 namespace doodle::database_n::tables {
 namespace column {
@@ -250,7 +334,7 @@ DOODLE_SQL_TABLE_IMP(
     business_rules_work_pair, column::id, column::parent_id, column::first_time_seconds, column::second_time_seconds
 );
 DOODLE_SQL_TABLE_IMP(
-    business_rules_work_abs_pair, column::work_index, column::id, column::parent_id, column::first_time_seconds,
+    business_rules_work_abs_pair, column::id, column::work_index, column::parent_id, column::first_time_seconds,
     column::second_time_seconds
 );
 DOODLE_SQL_TABLE_IMP(
@@ -259,5 +343,4 @@ DOODLE_SQL_TABLE_IMP(
 );
 
 DOODLE_SQL_TABLE_IMP(time_point_wrap, column::id, column::entity_id, column::time_point);
-
 }  // namespace doodle::database_n::tables
