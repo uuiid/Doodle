@@ -6,6 +6,7 @@
 
 #include "metadata/metadata.h"
 #include "metadata/rules.h"
+#include "metadata/time_point_wrap.h"
 #include "sqlpp11/data_types/time_point/data_type.h"
 #include "sqlpp11/insert.h"
 #include "sqlpp11/parameter.h"
@@ -233,7 +234,8 @@ void sql_com<doodle::business::rules>::select(conn_ptr& in_ptr, const std::map<s
       l_pre.params.parent_id = l_map_id.at(l_entts[i]);
       for (auto&& row : l_conn(l_pre)) {
         l_assets[i].extra_p.emplace_back(
-            row.first_time.value(), row.second_time.value(), row.info.value(), row.is_extra_work.value()
+            time_point_wrap{row.first_time.value()}, time_point_wrap{row.second_time.value()}, row.info.value(),
+            row.is_extra_work.value()
         );
       }
     }

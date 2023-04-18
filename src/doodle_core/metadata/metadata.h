@@ -62,11 +62,7 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
   friend struct database_n::sql_com;
 
  private:
-  friend class database_n::insert;
   friend class database_n::select;
-  friend class database_n::update_data;
-  friend class database_n::delete_data;
-
   mutable std::uint64_t p_id;
   boost::uuids::uuid p_uuid_;
 

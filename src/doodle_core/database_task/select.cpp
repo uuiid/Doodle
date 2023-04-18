@@ -246,29 +246,27 @@ void select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) { in_.get(); });
   p_i->results.clear();
 
-  if (auto [l_v, l_i] = doodle::database_n::details::get_version(*in_connect); l_v >= 3 && l_i > 4) {
-    if (!p_i->only_ctx) {
-      /// \brief 选中实体
-      p_i->select_entt(*p_i->local_reg, *in_connect);
-      /// \brief 等待实体创建完成
+  if (!p_i->only_ctx) {
+    /// \brief 选中实体
+    p_i->select_entt(*p_i->local_reg, *in_connect);
+    /// \brief 等待实体创建完成
 
 #include "details/macro.h"
-      /// @brief 选中组件
-      p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
-    }
-    /// \brief 选中上下文
-    doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *in_connect);
+    /// @brief 选中组件
+    p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
+  }
+  /// \brief 选中上下文
+  doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *in_connect);
 
-    /// \brief 开始修改注册表
-    auto l_id = p_i->create_entt;
-    p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
-    for (int l_j = 0; l_j < l_id.size(); ++l_j) {
-      p_i->id_map.emplace(boost::numeric_cast<std::int64_t>(enum_to_num(l_id[l_j])), p_i->create_entt[l_j]);
-    }
+  /// \brief 开始修改注册表
+  auto l_id = p_i->create_entt;
+  p_i->local_reg->create(p_i->create_entt.begin(), p_i->create_entt.end());
+  for (int l_j = 0; l_j < l_id.size(); ++l_j) {
+    p_i->id_map.emplace(boost::numeric_cast<std::int64_t>(enum_to_num(l_id[l_j])), p_i->create_entt[l_j]);
+  }
 
-    for (auto&& l_f : p_i->list_install) {
-      l_f(p_i->local_reg);
-    }
+  for (auto&& l_f : p_i->list_install) {
+    l_f(p_i->local_reg);
   }
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());

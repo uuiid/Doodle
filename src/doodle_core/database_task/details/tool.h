@@ -257,4 +257,7 @@ DOODLE_SQL_TABLE_IMP(
     business_rules_time_info_time_info, column::id, column::parent_id, column::first_time, column::second_time,
     column::info, column::is_extra_work
 );
+
+DOODLE_SQL_TABLE_IMP(time_point_wrap, column::id, column::entity_id, column::time_point);
+
 }  // namespace doodle::database_n::tables

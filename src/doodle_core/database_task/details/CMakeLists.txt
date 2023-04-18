@@ -22,6 +22,7 @@ target_sources(doodle_core
         time_point_info.h
         project_config.h
         rules.h
+        time_point_wrap.h
 
         PRIVATE
         com_data.cpp
@@ -44,4 +45,5 @@ target_sources(doodle_core
         time_point_info.cpp
         project_config.cpp
         rules.cpp
+        time_point_wrap.cpp
         )
