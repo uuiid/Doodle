@@ -6,8 +6,11 @@
 namespace doodle::database_n {
 
 template <>
-struct sql_com<doodle::user> : detail::sql_create_table_base<tables::user> {
+struct sql_com<doodle::user> : detail::sql_create_table_base<tables::usertab> {
   registry_ptr reg_;
+
+  sql_com() = default;
+  sql_com(registry_ptr reg) : reg_{std::move(reg)} {}
 
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
 

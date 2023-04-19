@@ -238,12 +238,12 @@ class sqlite_file::impl {
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::map<std::int64_t, entt::entity> l_map{};
 
-      std::apply([&](auto&&... x) { auto l_t = {(x.open(in_registry_ptr, in_conn, l_map), 0)...}; }, obs_data_);
+      std::apply([&](auto&&... x) { ((x.open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
     }
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::vector<std::int64_t> l_handles{};
-      std::apply([&](auto&&... x) { auto l_t = {(x.save(in_registry_ptr, in_conn, l_handles), 0)...}; }, obs_data_);
+      std::apply([&](auto&&... x) { (x.save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
     }
   };
 #include "details/macro.h"

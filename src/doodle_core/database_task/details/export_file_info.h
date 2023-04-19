@@ -7,7 +7,8 @@ namespace doodle::database_n {
 template <>
 struct sql_com<doodle::export_file_info> : detail::sql_create_table_base<tables::export_file_info> {
   registry_ptr reg_;
-
+  sql_com() = default;
+  sql_com(registry_ptr reg) : reg_{std::move(reg)} {}
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**
