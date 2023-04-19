@@ -23,7 +23,13 @@
 #include <string>
 
 namespace doodle::database_n {
+void sql_com<project_config::base_config>::create_table(doodle::conn_ptr& in_ptr) {
+  detail::sql_create_table_base<tables::project_config>::create_table(in_ptr);
 
+  create_table_parent_id<
+      tables::project_config_assets_list, tables::project_config_icon_extensions,
+      tables::project_config_maya_camera_select>(in_ptr);
+}
 void sql_com<project_config::base_config>::install_sub(
     conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
 ) {

@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace doodle::database_n {
+
 void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   auto& l_conn   = *in_ptr;
   auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {

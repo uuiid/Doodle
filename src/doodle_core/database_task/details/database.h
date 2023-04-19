@@ -13,6 +13,7 @@ template <>
 struct sql_com<doodle::database> {
   registry_ptr reg_;
 
+  void create_table(conn_ptr& in_ptr);
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**
    *

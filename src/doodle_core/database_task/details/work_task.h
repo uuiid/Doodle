@@ -1,11 +1,12 @@
 #pragma once
 
-#include "doodle_core/metadata/work_task.h"
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/work_task.h>
 
 namespace doodle::database_n {
 template <>
-struct sql_com<doodle::work_task_info> {
+struct sql_com<doodle::work_task_info> : detail::sql_create_table_base<tables::work_task_info> {
   registry_ptr reg_;
 
   void create_table(conn_ptr& in_ptr);

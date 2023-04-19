@@ -1,5 +1,6 @@
 #pragma once
 
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/project.h>
 
@@ -7,7 +8,7 @@
 
 namespace doodle::database_n {
 template <>
-struct sql_com<project_config::base_config> {
+struct sql_com<project_config::base_config> : detail::sql_create_table_base<tables::project_config> {
   registry_ptr reg_;
 
   void install_sub(

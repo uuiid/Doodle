@@ -1,14 +1,13 @@
 #pragma once
 
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/time_point_wrap.h>
-
 namespace doodle::database_n {
 template <>
-struct sql_com<doodle::time_point_wrap> {
+struct sql_com<doodle::time_point_wrap> : detail::sql_create_table_base<tables::time_point_wrap> {
   registry_ptr reg_;
 
-  void create_table(conn_ptr& in_ptr);
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   void update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);
   /**

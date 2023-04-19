@@ -1,12 +1,12 @@
 #pragma once
 
-#include "doodle_core/metadata/work_task.h"
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/doodle_core_fwd.h>
-
+#include <doodle_core/metadata/work_task.h>
 namespace doodle::database_n {
 
 template <>
-struct sql_com<doodle::user> {
+struct sql_com<doodle::user> : detail::sql_create_table_base<tables::user> {
   registry_ptr reg_;
 
   void insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id);

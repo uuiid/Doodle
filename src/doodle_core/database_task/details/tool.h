@@ -1,5 +1,6 @@
 #pragma once
 
+#include "doodle_core/database_task/sql_com.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/metadata.h>
 
@@ -267,6 +268,11 @@ struct create_table_t {
   std::string sql_data{};
 
  private:
+  template <typename column_t, typename>
+  constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
+    static_assert(wrong_v<column_t>, "missing type name for column");
+    return "";
+  }
   template <typename column_t, std::enable_if_t<sqlpp::is_integral_t<column_t>::value>* = nullptr>
   constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
     return "INTEGER";
@@ -278,6 +284,10 @@ struct create_table_t {
   template <typename column_t, std::enable_if_t<sqlpp::is_time_point_t<column_t>::value>* = nullptr>
   constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
     return "DATETIME";
+  }
+  template <typename column_t, std::enable_if_t<sqlpp::is_boolean_t<column_t>::value>* = nullptr>
+  constexpr static std::string_view get_type_name(const column_t& /*in_column*/) {
+    return "BOOLEAN";
   }
 
   template <typename column_t>
@@ -336,6 +346,32 @@ template <typename table_t>
 create_table_t<table_t> create_table(const table_t& /*in_table*/) {
   return create_table_t<table_t>{};
 }
+
+template <typename table_t>
+struct sql_create_table_base {
+ private:
+  template <typename table_sub_t>
+  void impl_create_table_parent_id(doodle::conn_ptr& in_ptr) {
+    const table_sub_t l_table{};
+    in_ptr->execute(detail::create_table(l_table).foreign_column(l_table.parent_id, table_t{}.id).end());
+    in_ptr->execute(detail::create_index(l_table.parent_id));
+    in_ptr->execute(detail::create_index(l_table.id));
+  };
+
+ protected:
+  template <typename... table_subs_t>
+  void create_table_parent_id(doodle::conn_ptr& in_ptr) {
+    (impl_create_table_parent_id<table_subs_t>(in_ptr), ...);
+  }
+
+ public:
+  virtual void create_table(doodle::conn_ptr& in_ptr) {
+    const table_t l_tables{};
+    in_ptr->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id).end());
+    in_ptr->execute(detail::create_index(l_tables.id));
+    in_ptr->execute(detail::create_index(l_tables.entity_id));
+  };
+};
 
 };  // namespace doodle::database_n::detail
 

@@ -32,6 +32,12 @@
 #include <vector>
 
 namespace doodle::database_n {
+
+void sql_com<doodle::redirection_path_info>::create_table(doodle::conn_ptr& in_ptr) {
+  detail::sql_create_table_base<tables::redirection_path_info>::create_table(in_ptr);
+  create_table_parent_id<tables::rpi_search_path>(in_ptr);
+}
+
 void sql_com<doodle::redirection_path_info>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   auto& l_conn   = *in_ptr;
   auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {

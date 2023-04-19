@@ -13,6 +13,7 @@ struct wrong : std::false_type {};
 
 template <typename... t>
 static constexpr auto wrong_v = detail::wrong<t...>::value_type();
+
 }  // namespace detail
 
 /**

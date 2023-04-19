@@ -12,6 +12,12 @@
 
 namespace doodle::database_n {
 
+void sql_com<doodle::database>::create_table(doodle::conn_ptr& in_ptr) {
+  const tables::entity l_tabl{};
+  in_ptr->execute(detail::create_table(l_tabl).end());
+  in_ptr->execute(detail::create_index(l_tabl.id));
+}
+
 void sql_com<doodle::database>::insert(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
   namespace uuids = boost::uuids;
   auto& l_conn    = *in_ptr;

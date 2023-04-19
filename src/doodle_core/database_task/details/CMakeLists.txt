@@ -1,6 +1,5 @@
 target_sources(doodle_core
         PUBLIC
-        com_data.h
         macro.h
         user.h
         work_task.h
@@ -12,7 +11,6 @@ target_sources(doodle_core
         project.h
         shot.h
         redirection_path_info.h
-        rpi_search_path.h
         assets.h
         comment.h
         export_file_info.h
@@ -24,7 +22,6 @@ target_sources(doodle_core
         time_point_wrap.h
 
         PRIVATE
-        com_data.cpp
         user.cpp
         work_task.cpp
         database.cpp
@@ -34,7 +31,6 @@ target_sources(doodle_core
         project.cpp
         shot.cpp
         redirection_path_info.cpp
-        rpi_search_path.cpp
         assets.cpp
         comment.cpp
         export_file_info.cpp

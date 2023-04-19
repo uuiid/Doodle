@@ -27,6 +27,13 @@
 
 namespace doodle::database_n {
 
+void sql_com<doodle::business::rules>::create_table(doodle::conn_ptr& in_ptr) {
+  detail::sql_create_table_base<tables::business_rules>::create_table(in_ptr);
+  create_table_parent_id<
+      tables::business_rules_work_pair, tables::business_rules_work_abs_pair,
+      tables::business_rules_time_info_time_info>(in_ptr);
+}
+
 void sql_com<doodle::business::rules>::insert_sub(
     conn_ptr& in_ptr, const std::vector<entt::handle>& in_handles, const std::map<entt::handle, std::int64_t>& in_map
 ) {

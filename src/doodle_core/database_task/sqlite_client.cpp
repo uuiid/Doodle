@@ -9,7 +9,6 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/database_task/details/assets.h>
 #include <doodle_core/database_task/details/assets_file.h>
-#include <doodle_core/database_task/details/com_data.h>
 #include <doodle_core/database_task/details/comment.h>
 #include <doodle_core/database_task/details/database.h>
 #include <doodle_core/database_task/details/episodes.h>
@@ -20,7 +19,6 @@
 #include <doodle_core/database_task/details/project.h>
 #include <doodle_core/database_task/details/project_config.h>
 #include <doodle_core/database_task/details/redirection_path_info.h>
-#include <doodle_core/database_task/details/rpi_search_path.h>
 #include <doodle_core/database_task/details/rules.h>
 #include <doodle_core/database_task/details/season.h>
 #include <doodle_core/database_task/details/shot.h>
