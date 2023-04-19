@@ -27,7 +27,6 @@
 #include <doodle_core/database_task/details/time_point_info.h>
 #include <doodle_core/database_task/details/time_point_wrap.h>
 #include <doodle_core/database_task/details/tool.h>
-#include <doodle_core/database_task/details/update_ctx.h>
 #include <doodle_core/database_task/details/user.h>
 #include <doodle_core/database_task/details/work_task.h>
 #include <doodle_core/gui_template/show_windows.h>
