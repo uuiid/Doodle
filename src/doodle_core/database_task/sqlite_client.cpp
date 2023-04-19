@@ -188,7 +188,8 @@ class sqlite_file::impl {
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
       obs_update_->disconnect();
       obs_create_->disconnect();
-      database_n::sql_com<database>{in_registry_ptr}.select(in_conn, in_handle);
+      database_n::sql_com<database> l_table{in_registry_ptr};
+      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
       obs_update_->connect(*in_registry_ptr, entt::collector.update<database>().where<database>());
       obs_create_->connect(*in_registry_ptr, entt::collector.group<database, database>());
       destroy_ids_.clear();
@@ -196,6 +197,7 @@ class sqlite_file::impl {
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
       database_n::sql_com<database> l_orm{in_registry_ptr};
+      l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
       std::vector<entt::entity> l_update{};

@@ -453,6 +453,7 @@ DOODLE_SQL_COLUMN_IMP(p_shor_str, sqlpp::text, detail::can_be_null);
 DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
+DOODLE_SQL_TABLE_IMP(entity1, column::id, column::entity_id);
 DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data, column::update_time);
 DOODLE_SQL_TABLE_IMP(com_entity, column::id, column::entity_id, column::com_hash, column::json_data);
 
@@ -589,6 +590,11 @@ struct sql_create_table_base {
     in_ptr->execute(detail::create_index(l_tables.id));
     in_ptr->execute(detail::create_index(l_tables.entity_id));
   };
+
+  bool has_table(doodle::conn_ptr& in_ptr) {
+    const table_t l_tables{};
+    return doodle::database_n::detail::has_table(l_tables, *in_ptr);
+  }
 };
 
 }  // namespace doodle::database_n::detail
