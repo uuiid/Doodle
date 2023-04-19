@@ -263,7 +263,7 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 
 }  // namespace
 
-void select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
+bool select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
   p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
   p_i->project          = in_project_path;
@@ -273,7 +273,7 @@ void select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) { in_.get(); });
   p_i->results.clear();
 #endif
-  if (!detail::has_table(tables::com_entity{}, *in_connect)) return;
+  if (!detail::has_table(tables::com_entity{}, *in_connect)) return false;
 
   /// \brief 选中实体
   p_i->select_entt(*p_i->local_reg, *in_connect);
@@ -298,6 +298,7 @@ void select::operator()(entt::registry& in_registry, const FSys::path& in_projec
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
+  return true;
 }
 
 }  // namespace doodle::database_n

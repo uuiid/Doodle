@@ -248,7 +248,6 @@ class sqlite_file::impl {
       std::apply([&](auto&&... x) { (x.save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
     }
   };
-#include "details/macro.h"
 
   obs_main<
       doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
@@ -269,9 +268,8 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
 
   database_n::select l_select{};
   auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
-  l_select(*ptr->registry_attr, in_path, l_k_con);
+  if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save.open(ptr->registry_attr, l_k_con);
 
-  ptr->obs_save.open(ptr->registry_attr, l_k_con);
   return {};
 }
 bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
