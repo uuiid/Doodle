@@ -42,11 +42,8 @@
 #include "entt/signal/sigh.hpp"
 #include <core/core_set.h>
 #include <core/status_info.h>
-#include <database_task/delete_data.h>
 #include <database_task/details/database.h>
-#include <database_task/insert.h>
 #include <database_task/select.h>
-#include <database_task/update.h>
 #include <metadata/metadata.h>
 #include <range/v3/all.hpp>
 #include <utility>
