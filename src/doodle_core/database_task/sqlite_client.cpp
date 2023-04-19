@@ -185,9 +185,12 @@ class sqlite_file::impl {
           ),
           obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database, database>())),
           destroy_ids_{},
-          conn_{std::make_shared<entt::scoped_connection>(
-              in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this)
-          )} {}
+          conn_{} {
+      // std::make_shared<entt::scoped_connection>(
+      //               in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this)
+      //           )
+      in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+    }
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
       obs_update_->disconnect();
@@ -225,6 +228,7 @@ class sqlite_file::impl {
     }
 
     ~impl_obs() {
+      conn_.reset();
       obs_create_->disconnect();
       obs_update_->disconnect();
     }

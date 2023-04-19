@@ -7,41 +7,26 @@
 
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
+#include <doodle_core/database_task/details/tool.h>
 #include <doodle_core/pin_yin/convert.h>
 
 #include <boost/test/unit_test.hpp>
 
+#include "sqlpp11/all_of.h"
+#include "sqlpp11/select.h"
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
 using namespace doodle;
-BOOST_AUTO_TEST_CASE(test_sqlite3_insert) {
+using namespace doodle::database_n;
+BOOST_AUTO_TEST_CASE(test_sqlite3_create_table) {
+  doodle_lib l_lib{};
   auto l_sql_conn = doodle_lib::Get().ctx().emplace<database_info>().get_connection();
+  tables::work_task_info l_tables;
+  l_sql_conn->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id).end());
+  l_sql_conn->execute(detail::create_index(l_tables.entity_id));
+  l_sql_conn->execute(detail::create_index(l_tables.id));
+  (*l_sql_conn)(sqlpp::select(sqlpp::all_of(l_tables)).from(l_tables).unconditionally());
 
-  l_sql_conn->execute(R"(
-create table if not exists entity
-(
-    id          integer
-        primary key,
-    uuid_data   text,
-    update_time datetime default CURRENT_TIMESTAMP not null
-);
-)"s);
-  std::uint64_t l_r{};
-  {
-    auto l_t = sqlpp::start_transaction(*l_sql_conn);
-    sql::Entity l_info{};
-    auto l_pre =
-        l_sql_conn->prepare(sqlpp::insert_into(l_info).set(l_info.uuidData = sqlpp::parameter(l_info.uuidData)));
-
-    for (auto i = 0; i < 10; ++i) {
-      l_pre.params.uuidData = fmt::format("tset {}", i);
-
-      l_r                   = (*l_sql_conn)(l_pre);
-      BOOST_TEST(l_r == (i + 1));
-    }
-    l_t.commit();
-  }
-
-  l_sql_conn.reset();
+  (*l_sql_conn)(sqlpp::sqlite3::drop_if_exists_table(l_tables));
 }

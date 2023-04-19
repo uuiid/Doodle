@@ -32,7 +32,7 @@
 #include <sqlpp11/sqlpp11.h>
 
 namespace doodle::database_n {
-template <class T>
+template <class t>
 struct future_data {
   using id_map_type                                 = std::map<std::int64_t, entt::entity>;
 
@@ -42,12 +42,12 @@ struct future_data {
   future_data(future_data&& in) noexcept            = default;
   future_data& operator=(future_data&& in) noexcept = default;
 
-  std::vector<std::tuple<std::int64_t, std::future<T>>> data{};
+  std::vector<std::tuple<std::int64_t, std::future<t>>> data{};
 
   void install_reg(const registry_ptr& in_reg, const id_map_type& in_map_type) {
     std::vector<entt::entity> l_entt_list{};
     std::set<entt::entity> l_entt_set;
-    std::vector<T> l_data_list{};
+    std::vector<t> l_data_list{};
     std::vector<entt::entity> l_not_valid_entity;
     std::vector<entt::entity> l_duplicate_entity;
     for (auto&& [l_id, l_t] : data) {
@@ -72,7 +72,7 @@ struct future_data {
       l_entt_set.emplace(l_entt);
     }
     if (!l_not_valid_entity.empty()) {
-      DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(T).name(), l_not_valid_entity, l_duplicate_entity);
+      DOODLE_LOG_WARN("{} 无效的实体: {} 重复的实体 {}", typeid(t).name(), l_not_valid_entity, l_duplicate_entity);
       // for (auto&& d : l_not_valid_entity) {
       //   doodle::database::delete_(entt::handle{*in_reg, d});
       // }
@@ -80,8 +80,8 @@ struct future_data {
     DOODLE_CHICK(
         ranges::all_of(l_entt_list, [&](const entt::entity& in) { return in_reg->valid(in); }), doodle_error{"无效实体"}
     );
-    in_reg->remove<T>(l_entt_list.begin(), l_entt_list.end());
-    in_reg->insert<T>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+    in_reg->remove<t>(l_entt_list.begin(), l_entt_list.end());
+    in_reg->insert<t>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
   };
 };
 
@@ -234,29 +234,58 @@ class select::impl {
 select::select() : p_i(std::make_unique<impl>()) {}
 select::~select() = default;
 
+namespace {
+#include "details/macro.h"
+
+DOODLE_SQL_TABLE_IMP(context, tables::column::id, tables::column::com_hash, tables::column::json_data);
+
+void _select_ctx_(
+    entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn,
+    const std::map<std::uint32_t, std::function<void(entt::registry& in_reg, const std::string& in_str)>>& in_fun_list
+) {
+  context l_context{};
+
+  for (auto&& row : in_conn(sqlpp::select(l_context.com_hash, l_context.json_data).from(l_context).unconditionally())) {
+    if (auto l_f = in_fun_list.find(row.com_hash.value()); l_f != in_fun_list.end()) {
+      in_fun_list.at(row.com_hash.value())(in_reg, row.json_data.value());
+    }
+  }
+}
+template <typename... Type>
+void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_conn) {
+  std::map<std::uint32_t, std::function<void(entt::registry & in_reg, const std::string& in_str)>> l_fun{
+      std::make_pair(entt::type_id<Type>().hash(), [&](entt::registry& in_reg, const std::string& in_str) {
+        auto l_h    = entt::handle{in_reg, in_reg.create()};
+        auto l_json = nlohmann::json::parse(in_str);
+        l_h.emplace<Type>(std::move(l_json.get<Type>()));
+      })...};
+
+  _select_ctx_(in_reg, in_conn, l_fun);
+}
+
+}  // namespace
+
 void select::operator()(entt::registry& in_registry, const FSys::path& in_project_path, conn_ptr& in_connect) {
   p_i->process_message_ = g_reg()->ctx().find<process_message>();
   p_i->only_ctx         = false;
   p_i->project          = in_project_path;
 #if defined(DOODLE_SQL_compatible_v2)
   this->p_i->select_old(*p_i->local_reg, *in_connect);
-#endif
-
   /// \brief 等待旧的任务完成
   ranges::for_each(p_i->results, [](const decltype(p_i->results)::value_type& in_) { in_.get(); });
   p_i->results.clear();
+#endif
+  if (!detail::has_table(tables::com_entity{}, *in_connect)) return;
 
-  if (!p_i->only_ctx) {
-    /// \brief 选中实体
-    p_i->select_entt(*p_i->local_reg, *in_connect);
-    /// \brief 等待实体创建完成
+  /// \brief 选中实体
+  p_i->select_entt(*p_i->local_reg, *in_connect);
+  /// \brief 等待实体创建完成
 
-#include "details/macro.h"
-    /// @brief 选中组件
-    p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
-  }
+  /// @brief 选中组件
+  p_i->select_com<DOODLE_SQLITE_TYPE>(*p_i->local_reg, *in_connect);
+
   /// \brief 选中上下文
-  doodle::database_n::details::update_ctx::select_ctx(*p_i->local_reg, *in_connect);
+  select_ctx_template<DOODLE_SQLITE_TYPE_CTX>(in_registry, *in_connect);
 
   /// \brief 开始修改注册表
   auto l_id = p_i->create_entt;
@@ -270,6 +299,7 @@ void select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   }
 
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
+  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
 }
 
 }  // namespace doodle::database_n
