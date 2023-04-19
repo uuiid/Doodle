@@ -13,8 +13,8 @@
 
 namespace doodle::database_n {
 void sql_com<doodle::work_task_info>::create_table(conn_ptr& in_ptr) {
-  tables::work_task_info l_tables;
-  in_ptr->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id));
+  const tables::work_task_info l_tables;
+  in_ptr->execute(detail::create_table(l_tables).foreign_column(l_tables.entity_id, tables::entity{}.id).end());
   in_ptr->execute(detail::create_index(l_tables.entity_id));
   in_ptr->execute(detail::create_index(l_tables.id));
 }

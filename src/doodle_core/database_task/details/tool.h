@@ -300,7 +300,7 @@ struct create_table_t {
     sql_data =
         fmt::format("CREATE TABLE IF NOT EXISTS {} ( ", sqlpp::name_of<table_t>::template char_ptr<create_table_ctx>());
     table_t l_table{};
-    std::apply([this](auto&&... x) { column(x...); }, sqlpp::all_of(l_table));
+    std::apply([=](auto&&... x) { column(x...); }, sqlpp::all_of(l_table));
   }
 
   template <typename primary_column_t, typename... columns_t>

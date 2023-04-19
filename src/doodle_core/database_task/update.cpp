@@ -20,7 +20,6 @@
 #include <boost/asio.hpp>
 
 #include <database_task/details/com_data.h>
-#include <database_task/details/update_ctx.h>
 #include <range/v3/all.hpp>
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>

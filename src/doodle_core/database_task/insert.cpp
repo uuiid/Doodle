@@ -6,7 +6,6 @@
 
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/database_task/details/update_ctx.h>
 #include <doodle_core/database_task/sql_file.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/detail/time_point_info.h>
