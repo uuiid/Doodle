@@ -1,32 +1,42 @@
 //
 // Created by TD on 2023/1/14.
 //
+#include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/core/doodle_lib.h"
+#include "doodle_core/metadata/metadata.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/test/unit_test.hpp>
 
+#include "entt/entity/fwd.hpp"
+#include <cstdint>
+#include <memory>
+
 using namespace doodle;
 
 BOOST_AUTO_TEST_CASE(test_entt_obs) {
-  entt::registry reg{};
-  entt::observer l_obs{};
-  entt::observer l_obs2{};
-  l_obs.connect(reg, entt::collector.group<std::int32_t>());
-  l_obs2.connect(reg, entt::collector.update<std::int32_t>());
+  doodle_lib l_lib{};
+  entt::observer l_obs{*g_reg(), entt::collector.group<database>()};
+  entt::observer l_obs2{*g_reg(), entt::collector.update<database>()};
+  auto l_obs3 = std::make_shared<entt::observer>(*g_reg(), entt::collector.group<database>());
 
-  auto l_h = entt::handle{reg, reg.create()};
-  l_h.emplace<std::int32_t>();
+  auto l_h    = make_handle();
+  l_h.emplace<database>();
+  l_h.emplace<std::int64_t>();
 
   BOOST_TEST(l_obs.size() == 1);
   BOOST_TEST(l_obs2.size() == 0);
+  BOOST_TEST(l_obs3->size() == 1);
 
-  l_h.emplace_or_replace<std::int32_t>();
+  l_h.emplace_or_replace<database>();
   BOOST_TEST(l_obs.size() == 1);
   BOOST_TEST(l_obs2.size() == 1);
+  BOOST_TEST(l_obs3->size() == 1);
 
-  l_h.erase<std::int32_t>();
+  l_h.erase<database>();
   BOOST_TEST(l_obs.size() == 0);
   BOOST_TEST(l_obs2.size() == 0);
+  BOOST_TEST(l_obs3->size() == 0);
 }
 
 BOOST_AUTO_TEST_CASE(test_entt_obs2) {

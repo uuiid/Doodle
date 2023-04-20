@@ -98,6 +98,19 @@ class DOODLE_CORE_API file_translator : public std::enable_shared_from_this<file
     );
   };
 
+  inline void save_(const FSys::path& in_path) {
+    if (is_saving) return;
+    save_begin(in_path);
+    save(in_path);
+    save_end();
+  }
+  inline void open_(const FSys::path& in_path) {
+    if (is_opening) return;
+    open_begin(in_path);
+    open(in_path);
+    open_end();
+  }
+
   virtual void new_file_scene(const FSys::path& in_path);
 };
 

@@ -63,11 +63,12 @@ void sql_com<doodle::assets_file>::update(conn_ptr& in_ptr, const std::vector<en
           .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id))
   );
   for (auto& l_h : l_handles) {
-    auto& l_assets         = l_h.get<assets_file>();
-    l_pre.params.name      = l_assets.name_attr();
-    l_pre.params.path      = l_assets.path_attr().string();
-    l_pre.params.version   = l_assets.version_attr();
-    l_pre.params.user_ref  = l_assets.user_attr().get<database>().get_id();
+    auto& l_assets       = l_h.get<assets_file>();
+    l_pre.params.name    = l_assets.name_attr();
+    l_pre.params.path    = l_assets.path_attr().string();
+    l_pre.params.version = l_assets.version_attr();
+    auto l_user          = l_assets.user_attr();
+    if (l_user && l_user.any_of<database>()) l_pre.params.user_ref = l_user.get<database>().get_id();
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     auto l_r               = l_conn(l_pre);
 

@@ -14,7 +14,7 @@ conn_ptr database_info::get_connection() const {
 #ifdef NDEBUG
   l_config.debug = false;
 #else
-  l_config.debug = false;
+  l_config.debug = true;
 #endif
 
   if (!exists(path_))

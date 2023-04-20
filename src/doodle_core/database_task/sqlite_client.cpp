@@ -77,7 +77,7 @@ bsys::error_code file_translator::save_begin(const FSys::path& in_path) {
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("保存数据");
   k_msg.set_state(k_msg.run);
-  g_reg()->ctx().at<core_sig>().save_begin();
+  g_reg()->ctx().get<core_sig>().save_begin();
   is_saving = true;
   return {};
 }
@@ -88,8 +88,8 @@ bsys::error_code file_translator::save(const FSys::path& in_path) {
 }
 
 bsys::error_code file_translator::save_end() {
-  g_reg()->ctx().at<status_info>().need_save = false;
-  g_reg()->ctx().at<core_sig>().save_end();
+  g_reg()->ctx().get<status_info>().need_save = false;
+  g_reg()->ctx().get<core_sig>().save_end();
   g_reg()->clear<data_status_save>();
   g_reg()->clear<data_status_delete>();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
@@ -121,16 +121,24 @@ class sqlite_file::impl {
           ),
           obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database, type_t>())) {}
 
+    impl_obs(const impl_obs&)            = default;
+    impl_obs(impl_obs&&)                 = default;
+    impl_obs& operator=(const impl_obs&) = default;
+    impl_obs& operator=(impl_obs&&)      = default;
+
+    ~impl_obs()                          = default;
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
       obs_update_->disconnect();
       obs_create_->disconnect();
-      database_n::sql_com<type_t>{in_registry_ptr}.select(in_conn, in_handle);
+      database_n::sql_com<type_t> l_table{in_registry_ptr};
+      if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
       obs_update_->connect(*in_registry_ptr, entt::collector.update<database>().where<type_t>());
       obs_create_->connect(*in_registry_ptr, entt::collector.group<database, type_t>());
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
       database_n::sql_com<type_t> l_orm{in_registry_ptr};
+      l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
       std::vector<entt::entity> l_update{};
@@ -154,16 +162,10 @@ class sqlite_file::impl {
       obs_update_->clear();
       obs_create_->clear();
     }
-
-    ~impl_obs() {
-      obs_create_->disconnect();
-      obs_update_->disconnect();
-    }
   };
 
   template <>
   class impl_obs<database> {
-    std::shared_ptr<entt::observer> obs_update_;
     std::shared_ptr<entt::observer> obs_create_;
     std::vector<std::int64_t> destroy_ids_{};
     std::shared_ptr<entt::scoped_connection> conn_{};
@@ -173,10 +175,7 @@ class sqlite_file::impl {
 
    public:
     explicit impl_obs(const registry_ptr& in_registry_ptr)
-        : obs_update_(
-              std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.update<database>().where<database>())
-          ),
-          obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database, database>())),
+        : obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database>())),
           destroy_ids_{},
           conn_{} {
       // std::make_shared<entt::scoped_connection>(
@@ -184,14 +183,17 @@ class sqlite_file::impl {
       //           )
       in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
     }
+    impl_obs(const impl_obs&)            = default;
+    impl_obs(impl_obs&&)                 = default;
+    impl_obs& operator=(const impl_obs&) = default;
+    impl_obs& operator=(impl_obs&&)      = default;
+    ~impl_obs()                          = default;
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      obs_update_->disconnect();
       obs_create_->disconnect();
       database_n::sql_com<database> l_table{in_registry_ptr};
       if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
-      obs_update_->connect(*in_registry_ptr, entt::collector.update<database>().where<database>());
-      obs_create_->connect(*in_registry_ptr, entt::collector.group<database, database>());
+      obs_create_->connect(*in_registry_ptr, entt::collector.group<database>());
       destroy_ids_.clear();
     };
 
@@ -200,32 +202,16 @@ class sqlite_file::impl {
       l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
-      std::vector<entt::entity> l_update{};
 
       for (auto&& i : *obs_create_) {
-        if (in_registry_ptr->get<database>(i).is_install())
-          l_create.emplace_back(i);
-        else
-          l_update.emplace_back(i);
+        if (in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(i);
       }
-      for (auto&& i : *obs_update_) {
-        if (in_registry_ptr->get<database>(i).is_install())
-          l_create.emplace_back(i);
-        else
-          l_update.emplace_back(i);
-      }
+
       in_handle = destroy_ids_;
       l_orm.insert(in_conn, l_create);
       l_orm.destroy(in_conn, destroy_ids_);
       destroy_ids_.clear();
-      obs_update_->clear();
       obs_create_->clear();
-    }
-
-    ~impl_obs() {
-      conn_.reset();
-      obs_create_->disconnect();
-      obs_update_->disconnect();
     }
   };
 
@@ -276,7 +262,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   ptr->registry_attr = g_reg();
 
   DOODLE_LOG_INFO("文件位置 {}", in_path);
-
+  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
   try {
     auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);

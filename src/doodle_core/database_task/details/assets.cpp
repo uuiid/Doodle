@@ -6,6 +6,8 @@
 
 #include "metadata/assets.h"
 #include "metadata/metadata.h"
+#include "sqlpp11/sqlite3/insert_or.h"
+#include "sqlpp11/update.h"
 #include <algorithm>
 #include <entt/entity/fwd.hpp>
 #include <lib_warp/enum_template_tool.h>
@@ -25,7 +27,7 @@ void sql_com<doodle::assets>::insert(conn_ptr& in_ptr, const std::vector<entt::e
                    }) |
                    ranges::to_vector;
   tables::assets l_table{};
-
+  //  sqlpp::insert_into(l_table).c
   auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
       l_table.assets_path = sqlpp::parameter(l_table.assets_path),
       l_table.entity_id   = sqlpp::parameter(l_table.entity_id)
