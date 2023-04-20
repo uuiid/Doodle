@@ -97,7 +97,7 @@ void ADoodleAiArrayGeneration::BeginPlay() {
   TMap<USkeleton*, TArray<UAnimationAsset*>> L_Map{};
   for (auto&& i : AnimAssets) {
     if (i && i->GetSkeleton()) {
-      if (L_Map.Find(i->GetSkeleton())) {
+      if (!L_Map.Find(i->GetSkeleton())) {
         L_Map.Add(i->GetSkeleton(), TArray<UAnimationAsset*>{});
       }
       L_Map[i->GetSkeleton()].Add(i);
