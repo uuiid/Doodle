@@ -39,16 +39,16 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   int32 Column;
 
   UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围",
-      meta = (ClampMin = 0.0, ClampMax = 200)
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围", meta = (ClampMin = 0.0, Max = 200)
   )
   float RandomRadius;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "偏移值")
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "上下偏移值")
   float OffsetValue;
 
   UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群", meta = (ClampMin = 1, ClampMax = 100)
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群",
+      meta = (ClampMin = 1, ClampMax = 100)
   )
   bool bCluster;
   UPROPERTY(
