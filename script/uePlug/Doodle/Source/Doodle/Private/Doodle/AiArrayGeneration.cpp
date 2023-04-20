@@ -97,11 +97,10 @@ void ADoodleAiArrayGeneration::BeginPlay() {
   TMap<USkeleton*, TArray<UAnimationAsset*>> L_Map{};
   for (auto&& i : AnimAssets) {
     if (i && i->GetSkeleton()) {
-      if (auto L_Array = L_Map.Find(i->GetSkeleton())) {
-        L_Array->Add(i);
-      } else {
+      if (L_Map.Find(i->GetSkeleton())) {
         L_Map.Add(i->GetSkeleton(), TArray<UAnimationAsset*>{});
       }
+      L_Map[i->GetSkeleton()].Add(i);
     }
   }
 
@@ -113,8 +112,7 @@ void ADoodleAiArrayGeneration::BeginPlay() {
     auto L_Array      = L_Map.Find(L_Skin->GetSkeleton());
     if (!L_Array) continue;
     if (L_Array->IsEmpty()) continue;
-    TObjectPtr<UAnimationAsset> L_Anim = (*L_Array
-    )[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];  // AnimAssets[RandomStream_Anim.RandRange(0, L_Max_Anim)];
+    TObjectPtr<UAnimationAsset> L_Anim = (*L_Array)[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];
     USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetSkeletalMeshComponent();
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
