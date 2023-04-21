@@ -104,7 +104,8 @@ void ADoodleAiArrayGeneration::BeginPlay() {
       L_Map[i->GetSkeleton()].Add(i);
     }
   }
-  FVector2D L_Anim_Speed{FMath::Clamp(RandomAnimSpeed, FVector2D{0.001, 10000}, FVector2D{0.001, 100000})};
+
+  FVector2D L_Anim_Speed{RandomAnimSpeed.ClampAxes(0.01, 100)};
   for (auto&& i : Points) {
     ASkeletalMeshActor* L_Actor =
         GetWorld()->SpawnActor<ASkeletalMeshActor>(i.GetLocation(), i.GetRotation().Rotator());
