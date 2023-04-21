@@ -38,6 +38,7 @@
 #include "core/core_help_impl.h"
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/sigh.hpp"
+#include "metadata/project.h"
 #include "range/v3/algorithm/any_of.hpp"
 #include <core/core_set.h>
 #include <core/status_info.h>
@@ -233,9 +234,9 @@ class sqlite_file::impl {
   };
 
   obs_main<
-      doodle::project, doodle::episodes, doodle::shot, doodle::season, doodle::assets, doodle::assets_file,
-      doodle::time_point_wrap, doodle::comment, doodle::image_icon, doodle::importance, doodle::redirection_path_info,
-      doodle::business::rules, doodle::user, doodle::work_task_info>
+      doodle::project, doodle::project_config::base_config, doodle::episodes, doodle::shot, doodle::season,
+      doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::image_icon,
+      doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>
       obs_save;
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
@@ -252,6 +253,14 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   database_n::select l_select{};
   auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
   if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save.open(ptr->registry_attr, l_k_con);
+
+  for (auto&& [e, p] : ptr->registry_attr->view<project>().each()) {
+    ptr->registry_attr->ctx().emplace<project>() = p;
+  }
+  for (auto&& [e, p] : ptr->registry_attr->view<project_config::base_config>().each()) {
+    ptr->registry_attr->ctx().emplace<project_config::base_config>() = p;
+  }
+  ptr->registry_attr->ctx().at<project>().set_path(in_path);
 
   return {};
 }

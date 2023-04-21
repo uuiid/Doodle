@@ -604,5 +604,39 @@ struct sql_create_table_base {
     return doodle::database_n::detail::has_table(l_tables, *in_ptr);
   }
 };
+template <>
+struct sql_create_table_base<tables::entity> {
+ private:
+  template <typename table_sub_t>
+  void impl_create_table_parent_id(doodle::conn_ptr& in_ptr) {
+    const table_sub_t l_table{};
+    in_ptr->execute(detail::create_table(l_table).foreign_column(l_table.parent_id, table_t{}.id).end());
+    in_ptr->execute(detail::create_index(l_table.parent_id));
+    in_ptr->execute(detail::create_index(l_table.id));
+  };
+
+ protected:
+  template <typename... table_subs_t>
+  void create_table_parent_id(doodle::conn_ptr& in_ptr) {
+    (impl_create_table_parent_id<table_subs_t>(in_ptr), ...);
+  }
+
+ public:
+  sql_create_table_base() = default;
+  virtual void create_table(doodle::conn_ptr& in_ptr) {
+    const table_t l_tables{};
+    in_ptr->execute(detail::create_table(l_tables)
+                        .foreign_column(l_tables.entity_id, tables::entity{}.id)
+                        .unique_column(l_tables.entity_id)
+                        .end());
+    in_ptr->execute(detail::create_index(l_tables.id));
+    in_ptr->execute(detail::create_index(l_tables.entity_id));
+  };
+
+  bool has_table(doodle::conn_ptr& in_ptr) {
+    const table_t l_tables{};
+    return doodle::database_n::detail::has_table(l_tables, *in_ptr);
+  }
+};
 
 }  // namespace doodle::database_n::detail
