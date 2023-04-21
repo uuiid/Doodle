@@ -10,7 +10,7 @@
 namespace doodle::database_n {
 
 template <>
-struct sql_com<doodle::database> : detail::sql_create_table_base<tables::entity1> {
+struct sql_com<doodle::database> : detail::sql_create_table_base<tables::entity> {
   registry_ptr reg_;
   sql_com() = default;
   sql_com(registry_ptr reg) : reg_{std::move(reg)} {}
