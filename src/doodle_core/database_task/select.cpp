@@ -22,6 +22,7 @@
 #include <boost/asio.hpp>
 
 #include "details/tool.h"
+#include "metadata/metadata.h"
 #include "metadata/project.h"
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
@@ -81,6 +82,10 @@ struct future_data {
     );
     in_reg->remove<t>(l_entt_list.begin(), l_entt_list.end());
     in_reg->insert<t>(l_entt_list.begin(), l_entt_list.end(), l_data_list.begin());
+    for (auto&& e : l_entt_list) {
+      // 触发更改
+      in_reg->patch<t>(e);
+    }
   };
 };
 
@@ -296,6 +301,13 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   for (auto&& l_f : p_i->list_install) {
     l_f(p_i->local_reg);
   }
+  for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
+    p_i->local_reg->emplace_or_replace<database>(e);
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
+    p_i->local_reg->emplace_or_replace<database>(e);
+  }
+
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
   return true;
 }

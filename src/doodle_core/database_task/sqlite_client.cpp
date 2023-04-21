@@ -39,6 +39,7 @@
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/sigh.hpp"
 #include "metadata/project.h"
+#include "range/v3/algorithm/all_of.hpp"
 #include "range/v3/algorithm/any_of.hpp"
 #include <core/core_set.h>
 #include <core/status_info.h>
@@ -151,7 +152,7 @@ class sqlite_file::impl {
         l_create.emplace_back(i);
       }
 
-      BOOST_ASSERT(ranges::any_of(l_create, [&](entt::entity& i) {
+      BOOST_ASSERT(ranges::all_of(l_create, [&](entt::entity& i) {
         return in_registry_ptr->get<database>(i).is_install();
       }));
 

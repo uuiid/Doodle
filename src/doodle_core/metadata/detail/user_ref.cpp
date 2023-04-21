@@ -28,11 +28,11 @@ user_ref::user_ref(const entt::handle& in_handle)
 
 void user_ref::set_uuid(const boost::uuids::uuid& in_data_uuid) {
   user_ref_attr.uuid = in_data_uuid;
-  if (app_base::Get().is_main_thread())
-    if (auto l_h = user_ref_attr.handle()) {
-      handle_cache = l_h;
-      cache_name   = l_h.get<user>().get_name();
-    }
+  //  if (app_base::Get().is_main_thread())
+  if (auto l_h = user_ref_attr.handle()) {
+    handle_cache = l_h;
+    cache_name   = l_h.get<user>().get_name();
+  }
 }
 
 const boost::uuids::uuid& user_ref::get_uuid() const { return user_ref_attr.uuid; }

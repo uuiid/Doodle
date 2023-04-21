@@ -149,3 +149,19 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   }
   BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
 }
+
+BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
+  FSys::copy(
+      R"(D:/test_file/cloth_test/JG_back_up.doodle_db)", "D:/test_file/cloth_test/JG.doodle_db",
+      FSys::copy_options::overwrite_existing
+  );
+  doodle_lib l_lib{};
+
+  g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG.doodle_db");
+
+  for (auto&& [e, i] : g_reg()->view<database>().each()) {
+    BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
+  }
+  g_reg()->ctx().get<file_translator_ptr>()->save_("D:/test_file/cloth_test/JG2.doodle_db");
+  g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG2.doodle_db");
+}
