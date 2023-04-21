@@ -57,12 +57,19 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   int32 ClusterPointNum;
 
   UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数", meta = (ClampMin = 1, ClampMax = 100)
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数",
+      meta = (ClampMin = 1, ClampMax = 100)
   )
   int32 ClusterIter;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机方向范围", meta = (ClampMin = -1.0, ClampMax = 1.0))
+  UPROPERTY(
+      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机方向范围",
+      meta = (ClampMin = -1.0, ClampMax = 1.0)
+  )
   FVector2D RandomOrient;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机动画速率")
+  FVector2D RandomAnimSpeed;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
   TArray<TObjectPtr<UAnimationAsset>> AnimAssets;
