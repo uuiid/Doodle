@@ -22,6 +22,7 @@
 #include <boost/asio.hpp>
 
 #include "details/tool.h"
+#include "metadata/project.h"
 #include <range/v3/all.hpp>
 #include <range/v3/range.hpp>
 #include <range/v3/range_for.hpp>
@@ -296,6 +297,12 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
     l_f(p_i->local_reg);
   }
 
+  for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
+    p_i->local_reg->ctx().emplace<project>() = p;
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
+    p_i->local_reg->ctx().emplace<project_config::base_config>() = p;
+  }
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
   return true;
