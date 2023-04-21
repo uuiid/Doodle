@@ -74,19 +74,16 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
               GetOwner()
                   ->AddComponentByClass(
                       UPoseableMeshComponent::StaticClass(),  // 创建的类
-                      true,                                   // 自动附加
-                      LSkeletalTransform,                     // 附加变换
-                      true                                    // 自动注册
-                  )
-          );
+          true,                                   // 自动附加
+          LSkeletalTransform,                     // 附加变换
+          true                                    // 自动注册
+      ));
       TArray<FTransform> LTransInter;
       if (!LPoseableMeshComponent) {
         return;
       }
       // 设置骨骼网格体
-      LPoseableMeshComponent->SetSkeletalMesh(
-          SkeletalMeshComponent_P->SkeletalMesh
-      );
+      LPoseableMeshComponent->SetSkinnedAssetAndUpdate(SkeletalMeshComponent_P->GetSkeletalMeshAsset());
       LPoseableMeshComponent->RegisterComponent();
 
       for (size_t j = 0; j < LTrans.Num(); ++j) {
@@ -94,8 +91,7 @@ void UDoodleGhostTrailComponent::CreateGhost(FVector InLocation, float DeltaTime
         LL.Blend(PreviousTransform[j], LTrans[j], i / (float)LSize);
         LTransInter.Add(LL);
       }
-      if (LPoseableMeshComponent->BoneSpaceTransforms.Num() ==
-          LTransInter.Num()) {
+      if (LPoseableMeshComponent->BoneSpaceTransforms.Num() == LTransInter.Num()) {
         // LPoseableMeshComponent->BoneSpaceTransforms = LTransInter;
         Exchange(LPoseableMeshComponent->BoneSpaceTransforms, LTransInter);
         LPoseableMeshComponent->MarkRefreshTransformDirty();
