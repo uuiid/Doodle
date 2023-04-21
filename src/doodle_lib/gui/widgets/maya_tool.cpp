@@ -18,6 +18,8 @@
 
 #include <doodle_lib/exe_warp/maya_exe.h>
 
+#include "boost/signals2/connection.hpp"
+
 #include <utility>
 
 namespace doodle::gui {
@@ -75,6 +77,7 @@ class maya_tool::impl {
 
   maya_tool_ns::maya_file_type_gui save_maya_type_attr{};
   maya_tool_ns::ref_attr_gui ref_attr{};
+  boost::signals2::scoped_connection scoped_connection_1{}, scoped_connection_2{};
 };
 
 maya_tool::maya_tool()
@@ -92,22 +95,23 @@ maya_tool::maya_tool()
   init();
 }
 void maya_tool::init() {
-  g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+  ptr_attr->scoped_connection_1 = g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
     p_text = g_reg()->ctx().at<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   });
-  g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
-    p_sim_path = in_list | ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                   return in_handle && in_handle.any_of<assets_file>();
-                 }) |
-                 ranges::views::filter([](const entt::handle& in_handle) -> bool {
-                   auto l_ex = in_handle.get<assets_file>().path_attr().extension();
-                   return l_ex == ".ma" || l_ex == ".mb";
-                 }) |
-                 ranges::views::transform([](const entt::handle& in_handle) -> FSys::path {
-                   return in_handle.get<assets_file>().get_path_normal();
-                 }) |
-                 ranges::to_vector;
-  });
+  ptr_attr->scoped_connection_2 =
+      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
+        p_sim_path = in_list | ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                       return in_handle && in_handle.any_of<assets_file>();
+                     }) |
+                     ranges::views::filter([](const entt::handle& in_handle) -> bool {
+                       auto l_ex = in_handle.get<assets_file>().path_attr().extension();
+                       return l_ex == ".ma" || l_ex == ".mb";
+                     }) |
+                     ranges::views::transform([](const entt::handle& in_handle) -> FSys::path {
+                       return in_handle.get<assets_file>().get_path_normal();
+                     }) |
+                     ranges::to_vector;
+      });
 
   p_text = g_reg()->ctx().at<project_config::base_config>().vfx_cloth_sim_path.generic_string();
   g_reg()->ctx().emplace<maya_tool&>(*this);

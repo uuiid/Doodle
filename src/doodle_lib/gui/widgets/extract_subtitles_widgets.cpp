@@ -10,6 +10,7 @@
 
 #include <doodle_app/gui/base/ref_base.h>
 
+#include "boost/signals2/connection.hpp"
 #include <boost/contract.hpp>
 
 namespace doodle::gui {
@@ -24,6 +25,8 @@ class extract_subtitles_widgets::impl {
   gui_cache<std::string> regex1{"正则表达式"s, R"(.+?[:|：](.+?))"s};
   std::string title_name_;
   bool open{true};
+
+  boost::signals2::scoped_connection scoped_connection_{};
 };
 
 extract_subtitles_widgets::extract_subtitles_widgets() : p_i(std::make_unique<impl>()) {
@@ -84,17 +87,18 @@ void extract_subtitles_widgets::write_subtitles(
   FSys::ofstream{out_subtitles_file} << fmt::to_string(fmt::join(l_subtitles, "\n\n"));
 }
 void extract_subtitles_widgets::init() {
-  g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
-    p_i->file_list_.data = in_list | ranges::views::filter([](const entt::handle& in_handle) {
-                             return in_handle.any_of<assets_file>() &&
-                                    in_handle.get<assets_file>().path_attr().extension() == ".txt" &&
-                                    FSys::exists(in_handle.get<assets_file>().get_path_normal());
-                           }) |
-                           ranges::views::transform([](const entt::handle& in_handle) -> std::string {
-                             return in_handle.get<assets_file>().get_path_normal().generic_string();
-                           }) |
-                           ranges::to_vector;
-  });
+  p_i->scoped_connection_ =
+      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
+        p_i->file_list_.data = in_list | ranges::views::filter([](const entt::handle& in_handle) {
+                                 return in_handle.any_of<assets_file>() &&
+                                        in_handle.get<assets_file>().path_attr().extension() == ".txt" &&
+                                        FSys::exists(in_handle.get<assets_file>().get_path_normal());
+                               }) |
+                               ranges::views::transform([](const entt::handle& in_handle) -> std::string {
+                                 return in_handle.get<assets_file>().get_path_normal().generic_string();
+                               }) |
+                               ranges::to_vector;
+      });
 }
 const std::string& extract_subtitles_widgets::title() const { return p_i->title_name_; }
 extract_subtitles_widgets::~extract_subtitles_widgets() = default;
