@@ -304,6 +304,7 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
     p_i->local_reg->ctx().emplace<project_config::base_config>() = p;
   }
   p_i->local_reg->ctx().at<project>().set_path(p_i->project.parent_path());
+
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
   return true;
 }

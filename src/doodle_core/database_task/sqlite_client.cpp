@@ -250,7 +250,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
   if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save.open(ptr->registry_attr, l_k_con);
 
   return {};
