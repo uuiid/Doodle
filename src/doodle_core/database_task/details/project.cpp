@@ -18,7 +18,7 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::
                    }) |
                    ranges::to_vector;
   tables::project l_tabl{};
-  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_tabl).set(
+  auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_tabl).set(
       l_tabl.entity_id = sqlpp::parameter(l_tabl.entity_id), l_tabl.p_name = sqlpp::parameter(l_tabl.p_name),
       l_tabl.p_en_str = sqlpp::parameter(l_tabl.p_en_str), l_tabl.p_path = sqlpp::parameter(l_tabl.p_path),
       l_tabl.p_shor_str = sqlpp::parameter(l_tabl.p_shor_str)
@@ -34,37 +34,6 @@ void sql_com<doodle::project>::insert(conn_ptr& in_ptr, const std::vector<entt::
 
     auto l_r                = l_conn(l_pre);
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
-  }
-}
-
-void sql_com<doodle::project>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
-
-  tables::project l_tabl{};
-
-  auto l_pre = l_conn.prepare(
-      sqlpp::update(l_tabl)
-          .set(
-              l_tabl.p_name = sqlpp::parameter(l_tabl.p_name), l_tabl.p_en_str = sqlpp::parameter(l_tabl.p_en_str),
-              l_tabl.p_path = sqlpp::parameter(l_tabl.p_path), l_tabl.p_shor_str = sqlpp::parameter(l_tabl.p_shor_str)
-          )
-          .where(l_tabl.entity_id == sqlpp::parameter(l_tabl.entity_id))
-  );
-
-  for (auto& l_h : l_handles) {
-    auto& l_project         = l_h.get<project>();
-    l_pre.params.p_name     = l_project.p_name;
-    l_pre.params.p_en_str   = l_project.p_en_str;
-    l_pre.params.p_path     = l_project.p_path.string();
-    l_pre.params.p_shor_str = l_project.p_shor_str;
-    l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-
-    auto l_r                = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<project>().name());
   }
 }
 

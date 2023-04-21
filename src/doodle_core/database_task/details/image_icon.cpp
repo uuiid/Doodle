@@ -23,7 +23,7 @@ void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<ent
                    ranges::to_vector;
   tables::image_icon l_table{};
 
-  auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
+  auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
       l_table.path = sqlpp::parameter(l_table.path), l_table.entity_id = sqlpp::parameter(l_table.entity_id)
   ));
 
@@ -36,26 +36,6 @@ void sql_com<doodle::image_icon>::insert(conn_ptr& in_ptr, const std::vector<ent
   }
 }
 
-void sql_com<doodle::image_icon>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
-  tables::image_icon l_table{};
-
-  auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                  .set(l_table.path = sqlpp::parameter(l_table.path))
-                                  .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-  for (auto& l_h : l_handles) {
-    auto& l_img            = l_h.get<image_icon>();
-    l_pre.params.path      = l_img.path.string();
-    l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-
-    auto l_r               = l_conn(l_pre);
-    DOODLE_LOG_INFO("更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<image_icon>().name());
-  }
-}
 void sql_com<doodle::image_icon>::select(conn_ptr& in_ptr, const std::map<std::int64_t, entt::entity>& in_handle) {
   auto& l_conn = *in_ptr;
   tables::image_icon l_table{};

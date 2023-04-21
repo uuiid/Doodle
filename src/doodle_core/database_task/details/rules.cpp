@@ -110,10 +110,8 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
                    }) |
                    ranges::to_vector;
   tables::business_rules l_table{};
-  std::map<entt::handle, std::int64_t> l_map_id{};
-
   {
-    auto l_pre = l_conn.prepare(sqlpp::insert_into(l_table).set(
+    auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
         l_table.work_weekdays = sqlpp::parameter(l_table.work_weekdays),
         l_table.entity_id     = sqlpp::parameter(l_table.entity_id)
     ));
@@ -129,37 +127,9 @@ void sql_com<doodle::business::rules>::insert(conn_ptr& in_ptr, const std::vecto
       );
     }
   }
-  insert_sub(in_ptr, l_handles, l_map_id);
-}
-
-void sql_com<doodle::business::rules>::update(conn_ptr& in_ptr, const std::vector<entt::entity>& in_id) {
-  auto& l_conn   = *in_ptr;
-  auto l_handles = in_id | ranges::views::transform([&](entt::entity in_entity) {
-                     return entt::handle{*reg_, in_entity};
-                   }) |
-                   ranges::to_vector;
-  tables::business_rules l_table{};
-
-  {
-    auto l_pre = l_conn.prepare(sqlpp::update(l_table)
-                                    .set(l_table.work_weekdays = sqlpp::parameter(l_table.work_weekdays))
-                                    .where(l_table.entity_id == sqlpp::parameter(l_table.entity_id)));
-    for (auto& l_h : l_handles) {
-      auto& l_rules              = l_h.get<business::rules>();
-      l_pre.params.work_weekdays = l_rules.work_weekdays_p.to_string();
-      l_pre.params.entity_id     = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
-
-      auto l_r                   = l_conn(l_pre);
-      DOODLE_LOG_INFO(
-          "更新数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<business::rules>().name()
-      );
-    }
-  }
-
   auto l_map_id = detail::sql_com_destroy_parent_id_return_id<
       tables::business_rules, tables::business_rules_work_pair, tables::business_rules_work_abs_pair,
       tables::business_rules_time_info_time_info>(in_ptr, l_handles);
-
   insert_sub(in_ptr, l_handles, l_map_id);
 }
 

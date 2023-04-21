@@ -106,11 +106,11 @@ create index if not exists redirection_path_info_index2 on redirection_path_info
 
 CREATE TABLE IF NOT EXISTS rpi_search_path
 (
-    id        integer
+    id               integer
         primary key,
-    entity_id integer,
+    entity_id        integer,
 
-    redirection_path     text,
+    redirection_path text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists rpi_search_path_index on rpi_search_path (id);
@@ -260,14 +260,14 @@ create index if not exists importance_index2 on importance (entity_id);
 
 CREATE TABLE IF NOT EXISTS project
 (
-    id        integer
+    id         integer
         primary key,
-    entity_id integer,
+    entity_id  integer,
 
-    p_name      text,
-    p_path      text,
-    p_en_str    text,
-    p_shor_str  text,
+    p_name     text,
+    p_path     text,
+    p_en_str   text,
+    p_shor_str text,
     foreign key (entity_id) references entity (id) on delete cascade on update cascade
 );
 create index if not exists project_index on project (id);
