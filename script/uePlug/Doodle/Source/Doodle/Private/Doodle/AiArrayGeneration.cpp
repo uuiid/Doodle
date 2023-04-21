@@ -119,9 +119,7 @@ void ADoodleAiArrayGeneration::BeginPlay() {
     L_Sk_Com->PlayAnimation(L_Anim, true);
     // L_Sk_Com->LightingChannels = LightingChannels;
     L_Sk_Com->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
-
-    L_Sk_Com->AnimationData.SavedPlayRate =
-        ((float)RandomStream_Anim_Rate.RandRange(L_Anim_Speed.X * 1000, L_Anim_Speed.Y * 1000)) / 1000;
+    L_Sk_Com->AnimationData.SavedPlayRate = FMath::RandRange(L_Anim_Speed.X, L_Anim_Speed.Y);
   }
 }
 

@@ -107,8 +107,6 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   FRandomStream RandomStream_Anim;
   UPROPERTY()
   FRandomStream RandomStream_Skin;
-  UPROPERTY()
-  FRandomStream RandomStream_Anim_Rate;
 
   UPROPERTY()
   TArray<FTransform> Points;
