@@ -459,7 +459,7 @@ DOODLE_SQL_COLUMN_IMP(parent_id, sqlpp::integer, detail::can_be_null);
 
 }  // namespace column
 DOODLE_SQL_TABLE_IMP(entity1, column::id, column::entity_id);
-DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data, column::update_time);
+DOODLE_SQL_TABLE_IMP(entity, column::id, column::uuid_data);
 DOODLE_SQL_TABLE_IMP(com_entity, column::id, column::entity_id, column::com_hash, column::json_data);
 
 DOODLE_SQL_TABLE_IMP(usertab, column::id, column::entity_id, column::user_name, column::permission_group);

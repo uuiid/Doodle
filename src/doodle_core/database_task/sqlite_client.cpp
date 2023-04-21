@@ -38,6 +38,7 @@
 #include "core/core_help_impl.h"
 #include "entt/entity/fwd.hpp"
 #include "entt/signal/sigh.hpp"
+#include "range/v3/algorithm/any_of.hpp"
 #include <core/core_set.h>
 #include <core/status_info.h>
 #include <database_task/details/database.h>
@@ -141,23 +142,19 @@ class sqlite_file::impl {
       l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
-      std::vector<entt::entity> l_update{};
 
       for (auto&& i : *obs_create_) {
-        if (in_registry_ptr->get<database>(i).is_install())
-          l_create.emplace_back(i);
-        else
-          l_update.emplace_back(i);
+        l_create.emplace_back(i);
       }
       for (auto&& i : *obs_update_) {
-        if (in_registry_ptr->get<database>(i).is_install())
-          l_create.emplace_back(i);
-        else
-          l_update.emplace_back(i);
+        l_create.emplace_back(i);
       }
 
+      BOOST_ASSERT(ranges::any_of(l_create, [&](entt::entity& i) {
+        return in_registry_ptr->get<database>(i).is_install();
+      }));
+
       l_orm.insert(in_conn, l_create);
-      l_orm.update(in_conn, l_update);
       l_orm.destroy(in_conn, in_handle);
       obs_update_->clear();
       obs_create_->clear();
@@ -204,7 +201,7 @@ class sqlite_file::impl {
       std::vector<entt::entity> l_create{};
 
       for (auto&& i : *obs_create_) {
-        if (in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(i);
+        if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(i);
       }
 
       in_handle = destroy_ids_;
