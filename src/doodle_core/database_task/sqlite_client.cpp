@@ -114,15 +114,15 @@ class sqlite_file::impl {
   registry_ptr registry_attr;
   template <typename type_t>
   class impl_obs {
-    std::shared_ptr<entt::observer> obs_update_;
-    std::shared_ptr<entt::observer> obs_create_;
+    entt::observer obs_update_;
+    entt::observer obs_create_;
 
    public:
     explicit impl_obs(const registry_ptr& in_registry_ptr)
         : obs_update_(
-              std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.update<type_t>().where<database>())
+
           ),
-          obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database, type_t>())) {}
+          obs_create_() {}
 
     impl_obs(const impl_obs&)            = default;
     impl_obs(impl_obs&&)                 = default;
@@ -130,13 +130,25 @@ class sqlite_file::impl {
     impl_obs& operator=(impl_obs&&)      = default;
 
     ~impl_obs()                          = default;
+
+    void connect(const registry_ptr& in_registry_ptr) {
+      obs_update_.connect(*in_registry_ptr, entt::collector.update<type_t>().where<database>());
+      obs_create_.connect(*in_registry_ptr, entt::collector.group<database, type_t>());
+    }
+
+    void disconnect(const registry_ptr& in_registry_ptr) {
+      obs_update_.disconnect();
+      obs_create_.disconnect();
+    }
+
+    void clear() {
+      obs_update_.clear();
+      obs_create_.clear();
+    }
+
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      obs_update_->disconnect();
-      obs_create_->disconnect();
       database_n::sql_com<type_t> l_table{in_registry_ptr};
       if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
-      obs_update_->connect(*in_registry_ptr, entt::collector.update<database>().where<type_t>());
-      obs_create_->connect(*in_registry_ptr, entt::collector.group<database, type_t>());
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, const std::vector<std::int64_t>& in_handle) {
@@ -145,10 +157,10 @@ class sqlite_file::impl {
 
       std::vector<entt::entity> l_create{};
 
-      for (auto&& i : *obs_create_) {
+      for (auto&& i : obs_create_) {
         l_create.emplace_back(i);
       }
-      for (auto&& i : *obs_update_) {
+      for (auto&& i : obs_update_) {
         l_create.emplace_back(i);
       }
 
@@ -158,42 +170,45 @@ class sqlite_file::impl {
 
       l_orm.insert(in_conn, l_create);
       l_orm.destroy(in_conn, in_handle);
-      obs_update_->clear();
-      obs_create_->clear();
     }
   };
 
   template <>
   class impl_obs<database> {
-    std::shared_ptr<entt::observer> obs_create_;
+    entt::observer obs_create_;
     std::vector<std::int64_t> destroy_ids_{};
-    std::shared_ptr<entt::scoped_connection> conn_{};
+    entt::scoped_connection conn_{};
     void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
       if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
     }
 
    public:
-    explicit impl_obs(const registry_ptr& in_registry_ptr)
-        : obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database>())),
-          destroy_ids_{},
-          conn_{} {
-      // std::make_shared<entt::scoped_connection>(
-      //               in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this)
-      //           )
-      in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
-    }
+    explicit impl_obs(const registry_ptr& in_registry_ptr) : obs_create_(), destroy_ids_{}, conn_{} {}
+
     impl_obs(const impl_obs&)            = default;
     impl_obs(impl_obs&&)                 = default;
     impl_obs& operator=(const impl_obs&) = default;
     impl_obs& operator=(impl_obs&&)      = default;
     ~impl_obs()                          = default;
 
+    void connect(const registry_ptr& in_registry_ptr) {
+      obs_create_.connect(*in_registry_ptr, entt::collector.group<database>());
+      conn_ = in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+    }
+
+    void disconnect(const registry_ptr& in_registry_ptr) {
+      obs_create_.disconnect();
+      conn_ = entt::scoped_connection{};
+    }
+
+    void clear() {
+      obs_create_.clear();
+      destroy_ids_.clear();
+    }
+
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::map<std::int64_t, entt::entity>& in_handle) {
-      obs_create_->disconnect();
       database_n::sql_com<database> l_table{in_registry_ptr};
       if (l_table.has_table(in_conn)) l_table.select(in_conn, in_handle);
-      obs_create_->connect(*in_registry_ptr, entt::collector.group<database>());
-      destroy_ids_.clear();
     };
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
@@ -202,15 +217,13 @@ class sqlite_file::impl {
 
       std::vector<entt::entity> l_create{};
 
-      for (auto&& i : *obs_create_) {
+      for (auto&& i : obs_create_) {
         if (!in_registry_ptr->get<database>(i).is_install()) l_create.emplace_back(i);
       }
 
       in_handle = destroy_ids_;
       l_orm.insert(in_conn, l_create);
       l_orm.destroy(in_conn, destroy_ids_);
-      destroy_ids_.clear();
-      obs_create_->clear();
     }
   };
 
@@ -226,13 +239,16 @@ class sqlite_file::impl {
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::map<std::int64_t, entt::entity> l_map{};
-
+      std::apply([&](auto&&... x) { ((x->disconnect(in_registry_ptr), ...)); }, obs_data_);
+      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
       std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
+      std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
     }
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::vector<std::int64_t> l_handles{};
       std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
+      std::apply([&](auto&&... x) { ((x->clear(), ...)); }, obs_data_);
     }
   };
   using obs_all = obs_main<
