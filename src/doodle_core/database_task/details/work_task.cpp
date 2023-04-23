@@ -4,6 +4,7 @@
 #include <doodle_core/database_task/sql_com.h>
 #include <doodle_core/logger/logger.h>
 
+#include "metadata/metadata.h"
 #include "sqlpp11/insert_value_list.h"
 #include "sqlpp11/is_not_null.h"
 #include "sqlpp11/sqlite3/connection.h"
@@ -30,10 +31,12 @@ void sql_com<doodle::work_task_info>::insert(conn_ptr& in_ptr, const std::vector
     ));
 
     for (auto& l_h : l_handles) {
-      auto& l_work            = l_h.get<doodle::work_task_info>();
-      l_pre.params.region     = l_work.region;
-      l_pre.params.task_name  = l_work.task_name;
-      l_pre.params.abstract   = l_work.abstract;
+      auto& l_work           = l_h.get<doodle::work_task_info>();
+      l_pre.params.region    = l_work.region;
+      l_pre.params.task_name = l_work.task_name;
+      l_pre.params.abstract  = l_work.abstract;
+      if (auto l_user = l_work.user_ref.user_attr(); l_user && l_user.all_of<database, user>())
+        l_pre.params.user_id = l_work.user_ref.user_attr().get<database>().get_id();
       l_pre.params.entity_id  = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
       l_pre.params.time_point = l_work.time;
       if (auto l_user_h = l_work.user_ref.user_attr(); l_user_h.all_of<database>()) {
