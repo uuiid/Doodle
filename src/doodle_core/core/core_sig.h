@@ -49,9 +49,5 @@ class DOODLE_CORE_API core_sig {
    * @brief 结束保存
    */
   boost::signals2::signal<void()> save_end;
-  /**
-   * @brief 外部文件拖入
-   */
-  boost::signals2::signal<void(const std::vector<FSys::path>&)> drop_files;
 };
 }  // namespace doodle
