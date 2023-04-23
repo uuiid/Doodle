@@ -67,7 +67,7 @@ void sql_com<doodle::user>::select(conn_ptr& in_ptr, const std::map<std::int64_t
         DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
       }
     }
-    reg_->insert(l_entts.begin(), l_entts.end(), l_works.begin());
+    reg_->insert<doodle::user>(l_entts.begin(), l_entts.end(), l_works.begin());
   }
 }
 

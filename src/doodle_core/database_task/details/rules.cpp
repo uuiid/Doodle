@@ -217,7 +217,7 @@ void sql_com<doodle::business::rules>::select(conn_ptr& in_ptr, const std::map<s
     }
   }
 
-  reg_->insert(l_entts.begin(), l_entts.end(), l_assets.begin());
+  reg_->insert<doodle::business::rules>(l_entts.begin(), l_entts.end(), l_assets.begin());
 }
 void sql_com<doodle::business::rules>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::assets>(in_ptr, in_handle);

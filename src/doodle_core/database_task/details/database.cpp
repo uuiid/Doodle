@@ -7,6 +7,7 @@
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata.h>
 
+#include "range/v3/algorithm/all_of.hpp"
 #include <sqlpp11/sqlite3/sqlite3.h>
 #include <sqlpp11/sqlpp11.h>
 
@@ -63,7 +64,9 @@ void sql_com<doodle::database>::select(conn_ptr& in_ptr, std::map<std::int64_t, 
     l_entts.emplace_back(num_to_enum<entt::entity>(row.id.value()));
   }
   reg_->create(l_entts.begin(), l_entts.end());
-  reg_->insert(l_entts.begin(), l_entts.end(), l_data.begin());
+  reg_->insert<database>(l_entts.begin(), l_entts.end(), l_data.begin());
+
+  BOOST_ASSERT(l_entts.size() == reg_->view<database>().size());
 
   for (auto i = 0; i < l_id.size(); ++i) in_handle.emplace(l_id[i], l_entts[i]);
 }

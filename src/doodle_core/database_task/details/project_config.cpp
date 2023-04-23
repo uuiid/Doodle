@@ -267,7 +267,7 @@ void sql_com<project_config::base_config>::select(
     }
   }
 
-  reg_->insert(l_entts.begin(), l_entts.end(), l_config.begin());
+  reg_->insert<project_config::base_config>(l_entts.begin(), l_entts.end(), l_config.begin());
 }
 void sql_com<project_config::base_config>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::project_config>(in_ptr, in_handle);

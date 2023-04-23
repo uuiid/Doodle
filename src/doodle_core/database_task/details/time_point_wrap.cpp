@@ -66,7 +66,7 @@ void sql_com<doodle::time_point_wrap>::select(conn_ptr& in_ptr, const std::map<s
       DOODLE_LOG_INFO("选择数据库id {} 未找到实体", l_id);
     }
   }
-  reg_->insert(l_entts.begin(), l_entts.end(), l_time.begin());
+  reg_->insert<doodle::time_point_wrap>(l_entts.begin(), l_entts.end(), l_time.begin());
 }
 void sql_com<doodle::time_point_wrap>::destroy(conn_ptr& in_ptr, const std::vector<std::int64_t>& in_handle) {
   detail::sql_com_destroy<tables::time_point_wrap>(in_ptr, in_handle);

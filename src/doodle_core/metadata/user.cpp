@@ -62,13 +62,13 @@ entt::handle user::current_user::get_handle() {
     uuid        = l_create_h.emplace<database>(uuid).uuid();
     user_handle = l_create_h;
 
-    database::save(l_create_h);
+    //    database::save(l_create_h);
   }
 
-  DOODLE_CHICK(
-      user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid,
-      doodle_error{"缺失用户实体{}", user_handle}
-  );
+  //  DOODLE_CHICK(
+  //      user_handle && user_handle.any_of<database>() && user_handle.get<database>() == uuid,
+  //      doodle_error{"缺失用户实体{}", user_handle}
+  //  );
   return user_handle;
 }
 

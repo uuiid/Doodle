@@ -135,16 +135,17 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_save) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
 
-  g_reg()->ctx().get<file_translator_ptr>()->save_("D:/test.sqlite");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->save_("D:/test.sqlite");
 }
 
 BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   FSys::remove("D:/test.sqlite");
   doodle_lib l_lib{};
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_(FSys::path{});
   create_test_database();
-  g_reg()->ctx().get<file_translator_ptr>()->save_("D:/test.sqlite");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->save_("D:/test.sqlite");
 
-  g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test.sqlite");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test.sqlite");
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
@@ -169,11 +170,11 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
       FSys::copy_options::overwrite_existing
   );
   //  doodle_lib l_lib{};
-  g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG.doodle_db");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG.doodle_db");
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-  g_reg()->ctx().get<file_translator_ptr>()->save_("D:/test_file/cloth_test/JG2.doodle_db");
-  g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG2.doodle_db");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->save_("D:/test_file/cloth_test/JG2.doodle_db");
+  doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG2.doodle_db");
 }

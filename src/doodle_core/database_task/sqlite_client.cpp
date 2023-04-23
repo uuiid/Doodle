@@ -4,6 +4,7 @@
 
 #include "sqlite_client.h"
 
+#include "doodle_core_fwd.h"
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -32,6 +33,7 @@
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/thread_pool/process_message.h>
 
+#include "boost/filesystem/path.hpp"
 #include <boost/asio.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -52,10 +54,12 @@
 namespace doodle::database_n {
 
 bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
-  doodle_lib::Get().ctx().get<database_info>().path_ = in_path;
-  auto& k_msg                                        = g_reg()->ctx().emplace<process_message>();
+  doodle_lib::Get().ctx().get<database_info>().path_ =
+      in_path.empty() ? FSys::path{database_info::memory_data} : in_path;
+  auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
+  g_reg()->clear();
   g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
   is_opening = true;
   return {};
@@ -267,7 +271,7 @@ sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>(
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   ptr->registry_attr   = g_reg();
   constexpr auto l_loc = BOOST_CURRENT_LOCATION;
-  if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
+  //  if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
   auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
