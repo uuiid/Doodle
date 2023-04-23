@@ -99,12 +99,11 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
     ReleaseStgMedium(&stgm);
 
     std::swap(drop_files, l_vector);
-    // 以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
-    //    g_reg()->ctx().at<core_sig>().drop_files(l_vector);
   }
 
   // 为 ImGui 中的按钮 1 触发 MouseUp
   ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+  // 以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
   begin_drop = false;
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;

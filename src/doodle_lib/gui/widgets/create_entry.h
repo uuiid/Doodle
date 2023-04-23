@@ -35,6 +35,8 @@ class create_entry {
  private:
   std::shared_ptr<init_args> args_{};
 
+  void find_icon(const entt::handle& in_handle, const FSys::path& in_path) const;
+
  public:
   explicit create_entry(const init_args& in_args) : args_(std::make_shared<init_args>(in_args)) {}
 

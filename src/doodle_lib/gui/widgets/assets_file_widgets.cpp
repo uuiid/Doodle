@@ -208,7 +208,6 @@ void assets_file_widgets::init() {
     p_i->select_index = 0;
   }));
 
-  //  p_i->observer_h.connect();
 }
 
 bool assets_file_widgets::render() {
@@ -222,7 +221,10 @@ bool assets_file_widgets::render() {
       g_windows_manage().create_windows_arg(
           windows_init_arg{}
               .create<create_entry>(create_entry::init_args{}.set_paths(*l_list).set_create_call(
-                  [this](const std::vector<entt::handle>& in_handle) {}
+                  [this](const std::vector<entt::handle>& in_handle) {
+                    p_i->handle_list = in_handle;
+                    generate_lists(p_i->handle_list);
+                  }
               ))
               .set_render_type<dear::Popup>()
       );

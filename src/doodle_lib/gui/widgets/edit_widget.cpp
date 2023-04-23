@@ -295,71 +295,6 @@ class command_edit : public edit_interface {
 };
 
 class add_assets_for_file : public base_render {
-  void add_time(const entt::handle &in_handle, const FSys::path &in_path) {
-    if (FSys::exists(in_path)) {
-      in_handle.emplace_or_replace<time_point_wrap>(FSys::last_write_time_point(in_path));
-    }
-  };
-
-  void find_icon(const entt::handle &in_handle, const FSys::path &in_path) {
-    image_loader l_image_load{};
-
-    auto &l_config = g_reg()->ctx().at<project_config::base_config>();
-    std::regex l_regex{l_config.find_icon_regex};
-    FSys::path l_path{in_path};
-    if (FSys::is_regular_file(l_path) && l_config.match_icon_extensions(l_path)) {
-      l_image_load.save(in_handle, l_path);
-      return;
-    } else if (FSys::is_regular_file(l_path))
-      l_path = in_path.parent_path();
-    else
-      l_path = in_path;
-
-    if (FSys::is_directory(l_path)) {
-      auto k_imghe_path = ranges::find_if(
-          ranges::make_subrange(FSys::directory_iterator{l_path}, FSys::directory_iterator{}),
-          [&](const FSys::path &in_file) {
-            return l_config.match_icon_extensions(in_file) &&
-                   std::regex_search(in_file.filename().generic_string(), l_regex);
-          }
-      );
-      if (k_imghe_path != FSys::directory_iterator{}) {
-        l_image_load.save(in_handle, k_imghe_path->path());
-      }
-    }
-  };
-
-  void add_assets(const std::vector<FSys::path> &in_list) {
-    image_loader l_image_load{};
-    p_list.data = in_list | ranges::views::transform([&](const FSys::path &in_path) -> entt::handle {
-                    auto k_h        = make_handle();
-                    auto l_prj_path = g_reg()->ctx().at<project>().p_path;
-                    /// \brief 这里使用 lexically_proximate 防止相对路径失败
-                    auto l_path     = in_path.lexically_proximate(l_prj_path);
-
-                    k_h.emplace<assets_file>(l_path);
-                    k_h.emplace<assets>(assets_list.show_name);
-
-                    /**
-                     * @brief 从路径中寻找各个组件
-                     */
-                    season::analysis_static(k_h, in_path);
-                    episodes::analysis_static(k_h, in_path);
-                    shot::analysis_static(k_h, in_path);
-                    episodes::conjecture_season(k_h);
-
-                    if (use_time.data) this->add_time(k_h, in_path);
-                    if (use_icon.data) this->find_icon(k_h, in_path);
-                    k_h.emplace<database>();
-                    database::save(k_h);
-                    return k_h;
-                  }) |
-                  ranges::to_vector;
-
-    DOODLE_LOG_INFO("检查到拖入文件:\n{}", fmt::join(in_list, "\n"));
-    g_reg()->ctx().at<core_sig>().filter_handle(p_list.data);
-  }
-
   class combox_show_name {
    public:
     std::string show_name;
@@ -393,7 +328,7 @@ class add_assets_for_file : public base_render {
         this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
       }
     });
-    l_sig.drop_files.connect([this](const auto &in_file_list) { this->add_assets(in_file_list); });
+
     auto &prj         = g_reg()->ctx().at<project_config::base_config>();
     this->assets_list = prj.assets_list;
     if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
