@@ -194,7 +194,7 @@ class assets_file_edit : public gui::edit_interface {
       p_name_cache    = l_ass.name_attr();
       p_version_cache = l_ass.version_attr();
     } else {
-      p_path_cache      = g_reg()->ctx().at<project>().p_path.generic_string();
+      p_path_cache      = g_reg()->ctx().get<project>().p_path.generic_string();
       p_name_cache.data = {};
       p_version_cache   = {};
     }
@@ -312,15 +312,15 @@ class add_assets_for_file : public base_render {
         use_time("检查时间"s, true),
         use_icon("寻找图标"s, true),
         assets_list("分类"s, std::vector<std::string>{}) {
-    auto &l_sig = g_reg()->ctx().at<core_sig>();
+    auto &l_sig = g_reg()->ctx().get<core_sig>();
     l_sig.project_end_open.connect([this]() {
-      auto &prj                   = g_reg()->ctx().at<project_config::base_config>();
+      auto &prj                   = g_reg()->ctx().get<project_config::base_config>();
       this->assets_list           = prj.assets_list;
 
       this->assets_list.show_name = this->assets_list.data.empty() ? "null"s : this->assets_list.data.front();
     });
     l_sig.save_end.connect([this]() {
-      auto &prj         = g_reg()->ctx().at<project_config::base_config>();
+      auto &prj         = g_reg()->ctx().get<project_config::base_config>();
       this->assets_list = prj.assets_list;
       if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
             return this->assets_list.show_name == in;
@@ -329,7 +329,7 @@ class add_assets_for_file : public base_render {
       }
     });
 
-    auto &prj         = g_reg()->ctx().at<project_config::base_config>();
+    auto &prj         = g_reg()->ctx().get<project_config::base_config>();
     this->assets_list = prj.assets_list;
     if (!ranges::any_of(this->assets_list.data, [this](const auto &in) -> bool {
           return this->assets_list.show_name == in;
@@ -382,7 +382,7 @@ class add_entt_base : public base_render {
         l_h.emplace<database>();
         database::save(l_h);
       }
-      g_reg()->ctx().at<core_sig>().filter_handle(list_handle);
+      g_reg()->ctx().get<core_sig>().filter_handle(list_handle);
     }
     return result;
   }
@@ -446,7 +446,7 @@ void edit_widgets::init() {
   p_i->p_add.emplace_back("文件添加"s, std::make_unique<add_assets_for_file>());
 
   g_reg()->ctx().emplace<edit_widgets &>(*this);
-  auto &l_sig = g_reg()->ctx().at<core_sig>();
+  auto &l_sig = g_reg()->ctx().get<core_sig>();
   p_i->p_sc.emplace_back(l_sig.select_handles.connect([&](const std::vector<entt::handle> &in) {
     p_i->p_h = in;
     p_i->data_edit.init(p_i->p_h);

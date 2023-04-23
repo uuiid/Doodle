@@ -123,7 +123,7 @@ void create_qcloth_assets::delete_node() {
   //  }
   //  DOODLE_MAYA_CHICK(l_modifier.doIt());
 
-  MGlobal::deleteNode(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
+  MGlobal::deleteNode(g_reg()->ctx().get<qcloth_shape::cloth_group>().cfx_grp);
 }
 void create_qcloth_assets::filter_create_node(const std::vector<MObject>& in_obj) {
   //  p_i->create_nodes = get_all_node();
@@ -133,7 +133,7 @@ void create_qcloth_assets::filter_create_node(const std::vector<MObject>& in_obj
   //    });
   //    return it != in_obj.end();
   //  });
-  p_i->create_nodes.emplace_back(g_reg()->ctx().at<qcloth_shape::cloth_group>().cfx_grp);
+  p_i->create_nodes.emplace_back(g_reg()->ctx().get<qcloth_shape::cloth_group>().cfx_grp);
 }
 void create_qcloth_assets::reset_properties() {
   for (auto& l_h : p_i->cloth_list) {

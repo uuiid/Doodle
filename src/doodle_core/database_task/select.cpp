@@ -151,8 +151,8 @@ class select::impl {
                                        auto l_view = local_reg->view<doodle::project>();
                                        if (!l_view.empty()) {
                                          auto l_h = entt::handle{*local_reg, l_view.front()};
-                                         local_reg->ctx().at<doodle::project>() = l_h.get<doodle::project>();
-                                         local_reg->ctx().at<doodle::project_config::base_config>() =
+                                         local_reg->ctx().get<doodle::project>() = l_h.get<doodle::project>();
+                                         local_reg->ctx().get<doodle::project_config::base_config>() =
                                              l_h.any_of<doodle::project_config::base_config>()
                                                  ? l_h.get<doodle::project_config::base_config>()
                                                  : doodle::project_config::base_config{};

@@ -123,7 +123,7 @@ std::vector<image_attr> image_attr::make_default_attr(
                      fmt::to_string(in_handle.get<episodes>()), 0.1, 0.15, image_watermark::rgb_default
                  );
                l_attribute.watermarks_attr.emplace_back(
-                   g_reg()->ctx().at<user::current_user>().user_name_attr(), 0.1, 0.2, image_watermark::rgb_default
+                   g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.1, 0.2, image_watermark::rgb_default
                );
                l_attribute.watermarks_attr.emplace_back(
                    core_set::get_set().organization_name, 0.1, 0.25, image_watermark::rgb_default

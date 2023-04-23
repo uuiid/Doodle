@@ -60,7 +60,7 @@ std::vector<entt::handle> client::list_users() {
 entt::handle client::set_user(const entt::handle& in_user) {
   if (!in_user) throw_exception(doodle_error{"无效的句柄"});
   if (!reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
-  auto l_current_user = reg->ctx().at<user::current_user>().get_handle();
+  auto l_current_user = reg->ctx().get<user::current_user>().get_handle();
 
   auto l_data         = call_fun<database>(
       "set.user"s, std::make_tuple(l_current_user.get<database>(), in_user.entity(), in_user.get<user>())
@@ -109,7 +109,7 @@ entt::handle client::set_work_task_info(const entt::handle& in_token, const entt
   if (!reg->ctx().contains<user::current_user>()) throw_exception(doodle_error{"没有当前用户"});
   if (!in_work.all_of<work_task_info>()) throw_exception(doodle_error{"缺失组件"});
 
-  auto l_current_user = reg->ctx().at<user::current_user>().get_handle();
+  auto l_current_user = reg->ctx().get<user::current_user>().get_handle();
   call_fun<void, false>(
       "set.work_task_info"s, std::make_tuple(in_token.get<database>(), in_work.entity(), in_work.get<work_task_info>())
   );

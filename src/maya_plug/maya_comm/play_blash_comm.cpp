@@ -66,7 +66,7 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     k_start_time = l_database.flagArgumentMTime(doodle_startTime, 0, &k_s);
     DOODLE_MAYA_CHICK(k_s);
   } else {
-    auto l_time  = g_reg()->ctx().at<project_config::base_config>().export_anim_time;
+    auto l_time  = g_reg()->ctx().get<project_config::base_config>().export_anim_time;
     k_start_time = MTime{boost::numeric_cast<std::double_t>(l_time), MTime::uiUnit()};
   }
 

@@ -73,7 +73,7 @@ bool opencv_read_player::load_frame(std::int32_t in_frame) {
   p_data->p_video.isOpened() ? void() : throw_exception(doodle_error{"没有打开的视频"s, p_data->video_path});
 
   // 获得全局GPU渲染对象
-  auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
+  auto k_g = g_reg()->ctx().get<win::d3d_device_ptr>()->g_pd3dDevice;
 
   frame_impl k_f{};
   k_f.frame.height    = boost::numeric_cast<std::int32_t>(p_data->p_video.get(cv::CAP_PROP_FRAME_HEIGHT));

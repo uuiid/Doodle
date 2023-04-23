@@ -241,7 +241,7 @@ MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
     DOODLE_MAYA_CHICK(k_s);
   } else {
     k_start = MTime{
-        boost::numeric_cast<std::double_t>(g_reg()->ctx().at<project_config::base_config>().export_anim_time),
+        boost::numeric_cast<std::double_t>(g_reg()->ctx().get<project_config::base_config>().export_anim_time),
         MTime::uiUnit()};
   }
   if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
@@ -324,7 +324,7 @@ MStatus load_project::doIt(const MArgList& in_arg) {
     if (k_path_M.numChars() > 0) {
       k_path = k_path_M.asUTF8();
       bool run{true};
-      doodle_lib::Get().ctx().at<database_n::file_translator_ptr>()->async_open(
+      doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(
           k_path,
           [k_path, l_run = &run](bsys::error_code) -> void {
             DOODLE_LOG_INFO("完成打开项目 {}", k_path);
@@ -359,7 +359,7 @@ MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
     DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
-    k_qs.set_cache_folder(g_reg()->ctx().at<user::current_user>().user_name_attr());
+    k_qs.set_cache_folder(g_reg()->ctx().get<user::current_user>().user_name_attr());
   }
   return l_status;
 }

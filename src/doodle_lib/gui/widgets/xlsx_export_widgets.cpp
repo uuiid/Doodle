@@ -97,7 +97,7 @@ xlsx_line::xlsx_line(
   auto &k_ass            = in_handle.get<assets_file>();
   /// \brief 工作时间计算
   const auto &work_clock = in_user_handle.get<business::work_clock>();
-  auto project_root      = g_reg()->ctx().at<project>().p_path;
+  auto project_root      = g_reg()->ctx().get<project>().p_path;
   /// 寻找上一个用户
   auto start_time        = in_handle.get<time_point_wrap>().current_month_start();
   auto l_it              = ranges::find(in_up_time_handle_list, in_handle);
@@ -119,7 +119,7 @@ xlsx_line::xlsx_line(
     k_comm.p_time_info.clear();
   }
 
-  auto l_prj_name = g_reg()->ctx().at<project>().p_name;
+  auto l_prj_name = g_reg()->ctx().get<project>().p_name;
   if (in_use_first_as_project_name)
     l_prj_name = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path.begin()->generic_string() : ""s;
   auto k_ass_path = in_handle.all_of<assets>() ? in_handle.get<assets>().p_path : FSys::path{};
@@ -432,9 +432,9 @@ void xlsx_export_widgets::init() {
                                          BOOST_CONTRACT_CHECK(p_i->con.size() == 1);
                                        });
 
-  if (g_reg()->ctx().contains<std::vector<entt::handle>>()) p_i->list = g_reg()->ctx().at<std::vector<entt::handle>>();
-  p_i->con.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
-                                                                             ) { p_i->list = in; }));
+  if (g_reg()->ctx().contains<std::vector<entt::handle>>()) p_i->list = g_reg()->ctx().get<std::vector<entt::handle>>();
+  p_i->con.emplace_back(g_reg()->ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle> &in
+                                                                              ) { p_i->list = in; }));
   p_i->export_path.path = FSys::temp_directory_path() / "test.xlsx";
   p_i->export_path.stem = p_i->export_path.path.stem();
   p_i->export_path.data = p_i->export_path.path.generic_string();

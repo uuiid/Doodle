@@ -367,7 +367,7 @@ std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_
       ? void()
       : throw_exception(doodle_error{"缺失组件 qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list"});
 
-  auto& k_ref = g_reg()->ctx().at<project_config::base_config>();
+  auto& k_ref = g_reg()->ctx().get<project_config::base_config>();
   MAnimControl::setMinTime(MTime{950, MTime::uiUnit()});
   auto l_group = get_cloth_group();
 
@@ -440,7 +440,7 @@ qcloth_shape::cloth_group qcloth_shape::get_cloth_group() {
 
   auto k_reg = g_reg();
   if (k_reg->ctx().contains<qcloth_shape::cloth_group>()) {
-    return k_reg->ctx().at<qcloth_shape::cloth_group>();
+    return k_reg->ctx().get<qcloth_shape::cloth_group>();
   }
 
   for (MItDag i{MItDag::kDepthFirst, MFn::Type::kTransform, &k_s}; !i.isDone(); i.next()) {

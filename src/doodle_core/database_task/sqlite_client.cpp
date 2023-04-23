@@ -60,7 +60,7 @@ bsys::error_code file_translator::open_begin(const FSys::path& in_path) {
   k_msg.set_name("加载数据");
   k_msg.set_state(k_msg.run);
   g_reg()->clear();
-  g_reg()->ctx().at<core_sig>().project_begin_open(in_path);
+  g_reg()->ctx().get<core_sig>().project_begin_open(in_path);
   is_opening = true;
   return {};
 }
@@ -71,7 +71,7 @@ bsys::error_code file_translator::open(const FSys::path& in_path) {
 
 bsys::error_code file_translator::open_end() {
   core_set::get_set().add_recent_project(doodle_lib::Get().ctx().get<database_info>().path_);
-  g_reg()->ctx().at<core_sig>().project_end_open();
+  g_reg()->ctx().get<core_sig>().project_end_open();
   auto& k_msg = g_reg()->ctx().emplace<process_message>();
   k_msg.set_name("完成写入数据");
   k_msg.set_state(k_msg.success);
@@ -285,7 +285,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   for (auto&& [e, p] : ptr->registry_attr->view<project_config::base_config>().each()) {
     ptr->registry_attr->ctx().emplace<project_config::base_config>() = p;
   }
-  ptr->registry_attr->ctx().at<project>().set_path(in_path);
+  ptr->registry_attr->ctx().get<project>().set_path(in_path);
 
   return {};
 }
@@ -301,8 +301,8 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));
-    g_reg()->ctx().at<status_info>().message = "保存失败 3s 后重试";
-    ptr->error_timer                         = std::make_shared<boost::asio::system_timer>(g_io_context());
+    g_reg()->ctx().get<status_info>().message = "保存失败 3s 后重试";
+    ptr->error_timer                          = std::make_shared<boost::asio::system_timer>(g_io_context());
     ptr->error_timer->async_wait([l_path = in_path, this](auto&& in) {
       this->async_save(l_path, [](boost::system::error_code in) -> void {});
     });

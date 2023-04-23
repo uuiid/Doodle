@@ -88,7 +88,7 @@ void extract_subtitles_widgets::write_subtitles(
 }
 void extract_subtitles_widgets::init() {
   p_i->scoped_connection_ =
-      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
+      g_reg()->ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_list) {
         p_i->file_list_.data = in_list | ranges::views::filter([](const entt::handle& in_handle) {
                                  return in_handle.any_of<assets_file>() &&
                                         in_handle.get<assets_file>().path_attr().extension() == ".txt" &&

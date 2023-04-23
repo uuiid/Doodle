@@ -75,7 +75,7 @@ bool create_move_facet::post() {
   entt::handle l_handle{make_handle()};
   auto l_json = nlohmann::json::parse(l_file);
   l_handle.emplace<FSys::path>(l_json["out_path"].get<FSys::path>());
-  g_reg()->ctx().at<image_to_move>()->async_create_move(
+  g_reg()->ctx().get<image_to_move>()->async_create_move(
       l_handle, l_json["image_attr"].get<std::vector<doodle::movie::image_attr>>(),
       [l_w = boost::asio::make_work_guard(g_io_context())]() { app_base::Get().stop_app(); }
   );

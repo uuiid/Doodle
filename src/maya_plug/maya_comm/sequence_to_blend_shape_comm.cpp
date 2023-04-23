@@ -145,7 +145,7 @@ void sequence_to_blend_shape_comm::get_arg(const MArgList& in_arg) {
       MSelectionList l_selection_list{};
       try {
         auto l_select_str =
-            fmt::format("{}:{}", l_namespace, g_reg()->ctx().at<project_config::base_config>().export_group);
+            fmt::format("{}:{}", l_namespace, g_reg()->ctx().get<project_config::base_config>().export_group);
         DOODLE_LOG_INFO("选择 {}", l_select_str);
         k_s = l_selection_list.add(d_str{l_select_str}, true);
         DOODLE_MAYA_CHICK(k_s);

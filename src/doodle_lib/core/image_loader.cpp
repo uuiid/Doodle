@@ -54,7 +54,7 @@ class image_loader::impl {
 image_loader::image_loader() : p_i(std::make_unique<impl>()) {
   //const static image_loader_ns::image_loader_init loader_init{};
   if (g_reg()->ctx().contains<cache>()) {
-    p_i->cache_p = g_reg()->ctx().at<cache>();
+    p_i->cache_p = g_reg()->ctx().get<cache>();
   }
 }
 std::tuple<cv::Mat, std::shared_ptr<void>> image_loader::load_mat(const FSys::path& in_path) {
@@ -111,7 +111,7 @@ bool image_loader::save(const entt::handle& in_handle, const cv::Mat& in_image, 
   auto k_image = in_image(in_rect).clone();
 
   k_icon.path  = core_set::get_set().get_uuid_str() + ".png";
-  auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
+  auto k_path  = k_reg->ctx().get<project>().make_path("image") / k_icon.path;
 
   cv::imwrite(k_path.generic_string(), k_image);
   k_icon.image   = cv_to_d3d(k_image);
@@ -127,7 +127,7 @@ std::shared_ptr<void> image_loader::default_image() const { return p_i->cache_p.
 std::shared_ptr<void> image_loader::error_image() const { return p_i->cache_p.error_image; }
 std::shared_ptr<void> image_loader::cv_to_d3d(const cv::Mat& in_mat, bool convert_toRGBA) const {
   // 获得全局GPU渲染对象
-  auto k_g = g_reg()->ctx().at<win::d3d_device_ptr>()->g_pd3dDevice;
+  auto k_g = g_reg()->ctx().get<win::d3d_device_ptr>()->g_pd3dDevice;
   if (convert_toRGBA)
     /// \brief 转换图像
     cv::cvtColor(in_mat, in_mat, cv::COLOR_BGR2RGBA);
@@ -174,7 +174,7 @@ bool image_loader::save(const entt::handle& in_handle, const FSys::path& in_path
 
   auto& k_icon = in_handle.get_or_emplace<image_icon>();
   k_icon.path  = core_set::get_set().get_uuid_str() + in_path.extension().generic_string();
-  auto k_path  = k_reg->ctx().at<project>().make_path("image") / k_icon.path;
+  auto k_path  = k_reg->ctx().get<project>().make_path("image") / k_icon.path;
 
   FSys::copy(in_path, k_path, FSys::copy_options::overwrite_existing);
   auto&& [l_mat, l_d3d] = load_mat(k_path);

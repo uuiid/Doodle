@@ -314,12 +314,12 @@ time_rules_render::time_rules_render() : p_i(std::make_unique<impl>()) {
   p_i->rules_attr = rules_type::get_default();
   rules_attr(p_i->rules_attr);
 
-  p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
-    this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
+  p_i->sig_scoped.emplace_back(g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
+    this->rules_attr(g_reg()->ctx().get<user::current_user>().get_handle().get<rules_type>());
   }));
 
-  p_i->sig_scoped.emplace_back(g_reg()->ctx().at<core_sig>().select_handles.connect([this](auto) {
-    this->rules_attr(g_reg()->ctx().at<user::current_user>().get_handle().get<rules_type>());
+  p_i->sig_scoped.emplace_back(g_reg()->ctx().get<core_sig>().select_handles.connect([this](auto) {
+    this->rules_attr(g_reg()->ctx().get<user::current_user>().get_handle().get<rules_type>());
   }));
 }
 

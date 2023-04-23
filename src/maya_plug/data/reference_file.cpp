@@ -84,7 +84,7 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
 }
 
 generate_abc_file_path::generate_abc_file_path(const entt::registry &in) : generate_file_path_base() {
-  auto &l_cong           = in.ctx().at<project_config::base_config>();
+  auto &l_cong           = in.ctx().get<project_config::base_config>();
 
   extract_reference_name = l_cong.abc_export_extract_reference_name;
   format_reference_name  = l_cong.abc_export_format_reference_name;
@@ -120,7 +120,7 @@ FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) cons
 generate_abc_file_path::~generate_abc_file_path() = default;
 
 generate_fbx_file_path::generate_fbx_file_path(const entt::registry &in) : generate_file_path_base() {
-  auto &l_cong           = in.ctx().at<project_config::base_config>();
+  auto &l_cong           = in.ctx().get<project_config::base_config>();
   camera_suffix          = l_cong.maya_camera_suffix;
   extract_reference_name = l_cong.abc_export_extract_reference_name;
   format_reference_name  = l_cong.abc_export_format_reference_name;
@@ -261,7 +261,7 @@ bool reference_file::replace_sim_assets_file() {
     return false;
   }
 
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   FSys::path k_m_str{get_path()};
   DOODLE_MAYA_CHICK(k_s);
   auto k_vfx_path = k_cfg.vfx_cloth_sim_path /
@@ -326,7 +326,7 @@ bool reference_file::rename_material() const {
 
 FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_endl) const {
   MStatus k_s{};
-  auto &k_cfg        = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg        = g_reg()->ctx().get<project_config::base_config>();
   auto l_export_root = this->export_group_attr();
 
   if (!l_export_root) {
@@ -364,7 +364,7 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   if (k_cfg.use_divide_group_export) {
     ranges::for_each(export_path, [](MDagPath &in) { in.pop(); });
 
-    auto l_suffix = g_reg()->ctx().at<project_config::base_config>().maya_out_put_abc_suffix;
+    auto l_suffix = g_reg()->ctx().get<project_config::base_config>().maya_out_put_abc_suffix;
     export_path   = find_out_group_child_suffix_node(l_suffix);
     export_path |=
         ranges::actions::unique([](const MDagPath &in_r, const MDagPath &in_l) -> bool { return in_r == in_l; });
@@ -417,7 +417,7 @@ bool reference_file::add_collision() const {
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   MSelectionList k_select{};
   MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   try {
     k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
     DOODLE_MAYA_CHICK(k_s);
@@ -516,7 +516,7 @@ bool reference_file::find_ref_node() {
   return true;
 }
 bool reference_file::has_ue4_group() const {
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   try {
     chick_mobject();
     MStatus k_s{};
@@ -561,7 +561,7 @@ entt::handle reference_file::export_file(const reference_file::export_arg &in_ar
       l_path = export_fbx(in_arg.start_p, in_arg.end_p);
     } break;
   }
-  if (!l_path.empty() && g_reg()->ctx().at<project_config::base_config>().use_write_metadata) {
+  if (!l_path.empty() && g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
     out_ = make_handle();
     FSys::path l_ref_file{this->path};
     if (l_ref_file.empty()) {
@@ -603,7 +603,7 @@ entt::handle reference_file::export_file_select(
       l_path                  = export_fbx(in_arg.start_p, in_arg.end_p, in_list, l_export);
     } break;
   }
-  if (!l_path.empty() && g_reg()->ctx().at<project_config::base_config>().use_write_metadata) {
+  if (!l_path.empty() && g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
     out_ = make_handle();
     FSys::path l_ref_file{this->path};
     if (l_ref_file.empty()) {
@@ -688,7 +688,7 @@ FSys::path reference_file::export_abc(
     const reference_file_ns::generate_abc_file_path &in_abc_name
 ) const {
   FSys::path out_{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
 
   if (k_cfg.use_rename_material) rename_material();
   MStatus k_s{};
@@ -737,7 +737,7 @@ FSys::path reference_file::export_fbx(
   DOODLE_CHICK(is_loaded(), doodle_error{"需要导出fbx的引用必须加载"});
 
   MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
 
   if (in_export_obj.isEmpty()) {
     DOODLE_LOG_WARN("没有选中的物体, 不进行输出");
@@ -793,7 +793,7 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
 
   DOODLE_MAYA_CHICK(k_s);
   MSelectionList k_select{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   MDagPath l_path;
   try {
     k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
@@ -849,7 +849,7 @@ void reference_file::bake_results(const MTime &in_start, const MTime &in_end) co
   }
 
   MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   /**
    *
    * @brief
@@ -902,7 +902,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   }
 }
 std::string reference_file::get_abc_exprt_arg() {
-  auto &k_cfg = g_reg()->ctx().at<project_config::base_config>();
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   std::string l_r{};
   if (k_cfg.export_abc_arg[0]) l_r += "-uvWrite ";
   if (k_cfg.export_abc_arg[1]) l_r += "-writeColorSets ";

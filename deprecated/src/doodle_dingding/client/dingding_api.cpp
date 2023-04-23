@@ -440,7 +440,7 @@ std::shared_ptr<dingding_api> dingding_api_factory::create_api(const std::string
   }
 
   return make_handle().emplace<dingding_api_ptr>(std::make_shared<dingding_api_ptr::element_type>(
-      in_company, g_io_context().get_executor(), *g_reg()->ctx().at<std::shared_ptr<boost::asio::ssl::context>>()
+      in_company, g_io_context().get_executor(), *g_reg()->ctx().get<std::shared_ptr<boost::asio::ssl::context>>()
   ));
 }
 }  // namespace doodle::dingding

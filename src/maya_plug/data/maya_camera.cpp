@@ -73,7 +73,7 @@ bool maya_camera::export_file(
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
-  if (g_reg()->ctx().at<project_config::base_config>().use_write_metadata) {
+  if (g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
     auto l_h = make_handle();
     episodes::analysis_static(l_h, k_file_path);
     shot::analysis_static(l_h, k_file_path);
@@ -168,7 +168,7 @@ void maya_camera::conjecture() {
   DOODLE_LOG_INFO("开始测量相机优先级");
 
   auto l_reg_list =
-      g_reg()->ctx().at<project_config::base_config>().maya_camera_select |
+      g_reg()->ctx().get<project_config::base_config>().maya_camera_select |
       ranges::views::transform([](const project_config::camera_judge& in_camera_judge) -> regex_priority_pair {
         return regex_priority_pair{std::regex{in_camera_judge.first, std::regex::icase}, in_camera_judge.second};
       }) |
@@ -204,7 +204,7 @@ void maya_camera::conjecture() {
   DOODLE_CHICK(!k_list.empty(), doodle_error{"没有找到任何相机"s});
 
   if (g_reg()->ctx().contains<maya_camera>()) {
-    g_reg()->ctx().at<maya_camera>().p_path = k_list.front().p_dag_path;
+    g_reg()->ctx().get<maya_camera>().p_path = k_list.front().p_dag_path;
   } else {
     this->p_path = k_list.front().p_dag_path;
     g_reg()->ctx().emplace<maya_camera>(*this);

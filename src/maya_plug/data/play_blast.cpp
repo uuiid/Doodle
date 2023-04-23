@@ -112,7 +112,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     g_reg()->ctx().emplace<maya_camera>().conjecture();
   }
 
-  auto& k_cam = g_reg()->ctx().at<maya_camera>();
+  auto& k_cam = g_reg()->ctx().get<maya_camera>();
   k_cam.set_render_cam();
   k_cam.set_play_attr();
 
@@ -202,7 +202,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       );
       /// \brief 制作人姓名
       k_image.watermarks_attr.emplace_back(
-          g_reg()->ctx().at<user::current_user>().user_name_attr(), 0.5, 0.91,
+          g_reg()->ctx().get<user::current_user>().user_name_attr(), 0.5, 0.91,
           movie::image_watermark::rgba_t{25, 220, 2}
       );
       l_handle_list.push_back(std::move(k_image));
@@ -215,7 +215,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     DOODLE_MAYA_CHICK(k_s);
     bool run{true};
-    g_reg()->ctx().at<image_to_move>()->async_create_move(
+    g_reg()->ctx().get<image_to_move>()->async_create_move(
         k_msg, l_handle_list,
         [k_f, l_path = get_out_path(), l_run = &run, l_w = boost::asio::make_work_guard(g_io_context())]() {
           DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);

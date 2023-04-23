@@ -67,15 +67,15 @@ void setting_windows::save() {
   set.maya_replace_save_dialog = p_i->p_maya_replace_save_dialog.data;
   set.maya_force_resolve_link  = p_i->p_maya_force_resolve_link.data;
 
-  auto&& l_u                   = g_reg()->ctx().at<user::current_user>();
+  auto&& l_u                   = g_reg()->ctx().get<user::current_user>();
   l_u.user_name_attr(p_i->p_user());
-  g_reg()->ctx().at<core_sig>().save();
+  g_reg()->ctx().get<core_sig>().save();
   core_set_init{}.write_file();
 }
 setting_windows::~setting_windows() = default;
 
 void setting_windows::init() {
-  auto l_user                          = g_reg()->ctx().at<user::current_user>().get_handle();
+  auto l_user                          = g_reg()->ctx().get<user::current_user>().get_handle();
   p_i->p_user.data                     = l_user.get<user>().get_name();
   p_i->user_uuid                       = fmt::format("用户id: {}", l_user.get<database>().uuid());
 
@@ -97,8 +97,8 @@ bool setting_windows::render() {
   dear::Text(p_i->user_uuid);
   ImGui::SameLine();
   if (ImGui::Button(*p_i->new_user_id)) {
-    g_reg()->ctx().at<user::current_user>() = {};
-    auto& l_h                               = g_reg()->ctx().at<user::current_user>();
+    g_reg()->ctx().get<user::current_user>() = {};
+    auto& l_h                                = g_reg()->ctx().get<user::current_user>();
     l_h.create_user();
     p_i->user_uuid = fmt::format("用户id: {}", l_h.uuid);
   }

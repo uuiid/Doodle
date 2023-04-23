@@ -70,7 +70,7 @@ subtitle_processing::subtitle_processing() : p_i(std::make_unique<impl>()) {
 }
 void subtitle_processing::init() {
   p_i->sig_scoped =
-      g_reg()->ctx().at<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_vector) {
+      g_reg()->ctx().get<core_sig>().select_handles.connect([this](const std::vector<entt::handle>& in_vector) {
         p_i->list_srt_file = in_vector | ranges::views::filter([](const entt::handle& in_handle) -> bool {
                                return in_handle && in_handle.any_of<assets_file>();
                              }) |

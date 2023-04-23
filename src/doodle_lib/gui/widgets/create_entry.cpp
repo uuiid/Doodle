@@ -20,7 +20,7 @@ bool create_entry::render() {
   args_->fun_(
       args_->paths_ | ranges::views::transform([=](const FSys::path &in_path) -> entt::handle {
         auto l_ent      = entt::handle{*g_reg(), g_reg()->create()};
-        auto l_prj_path = g_reg()->ctx().at<project>().p_path;
+        auto l_prj_path = g_reg()->ctx().get<project>().p_path;
         /// \brief 这里使用 lexically_proximate 防止相对路径失败
         auto l_path     = in_path.lexically_proximate(l_prj_path);
 
@@ -45,7 +45,7 @@ bool create_entry::render() {
 void create_entry::find_icon(const entt::handle &in_handle, const FSys::path &in_path) const {
   image_loader l_image_load{};
 
-  auto &l_config = g_reg()->ctx().at<project_config::base_config>();
+  auto &l_config = g_reg()->ctx().get<project_config::base_config>();
   std::regex l_regex{l_config.find_icon_regex};
   FSys::path l_path{in_path};
   if (FSys::is_regular_file(l_path) && l_config.match_icon_extensions(l_path)) {

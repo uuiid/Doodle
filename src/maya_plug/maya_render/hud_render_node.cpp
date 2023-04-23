@@ -101,7 +101,7 @@ void doodle_info_node_draw_override::addUIDrawables(
     DOODLE_MAYA_CHICK(k_s);
   } else {
     if (g_reg()->ctx().contains<maya_camera>())
-      k_cam = g_reg()->ctx().at<maya_camera>().p_path;
+      k_cam = g_reg()->ctx().get<maya_camera>().p_path;
     else
       return;
   }
@@ -162,7 +162,7 @@ void doodle_info_node_draw_override::addUIDrawables(
 
   /// 制作人姓名
   {
-    auto _k_s_ = fmt::format("{}", g_reg()->ctx().at<user::current_user>().user_name_attr());
+    auto _k_s_ = fmt::format("{}", g_reg()->ctx().get<user::current_user>().user_name_attr());
     MString k_str{};
     k_str.setUTF8(_k_s_.c_str());
     std::int32_t k_size[] = {(std::int32_t)k_str.numChars() * s_font_size_ * 2, 35};

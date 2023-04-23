@@ -108,7 +108,7 @@ bool main_status_bar::render() {
   dear::MenuBar{} && [&]() {
     /// \brief 渲染信息
     if (g_reg()->ctx().contains<status_info>()) {
-      auto l_s = g_reg()->ctx().at<status_info>();
+      auto l_s = g_reg()->ctx().get<status_info>();
       if (l_s.need_save) {
         dear::Text("需要保存"s);
         ImGui::SameLine();
@@ -123,7 +123,7 @@ bool main_status_bar::render() {
 
     /// \brief 渲染进度条
     if (g_reg()->ctx().contains<process_message>()) {
-      auto& l_msg = g_reg()->ctx().at<process_message>();
+      auto& l_msg = g_reg()->ctx().get<process_message>();
       if (!p_i->call && (l_msg.is_success() || l_msg.is_fail())) {
         p_i->call = true;
         p_i->timer->expires_after(1s);

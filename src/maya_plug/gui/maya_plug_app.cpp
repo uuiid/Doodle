@@ -35,7 +35,7 @@ void maya_facet::load_windows() {
 }
 void maya_facet::close_windows() { ::ShowWindow(p_hwnd, SW_HIDE); }
 maya_facet::maya_facet() : doodle::facet::gui_facet() {
-  g_reg()->ctx().at<image_to_move>() = std::make_shared<detail::maya_create_movie>();
+  g_reg()->ctx().get<image_to_move>() = std::make_shared<detail::maya_create_movie>();
 }
 
 }  // namespace doodle::maya_plug

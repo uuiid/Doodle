@@ -100,11 +100,11 @@ class project_edit::impl {
   bool open;
 
   void config_init() {
-    auto&& l_prj         = g_reg()->ctx().at<project>();
+    auto&& l_prj         = g_reg()->ctx().get<project>();
     project_name         = l_prj.get_name();
     project_path         = fmt::format("项目路径: {}", l_prj.get_path());
 
-    auto& l_config       = g_reg()->ctx().at<project_config::base_config>();
+    auto& l_config       = g_reg()->ctx().get<project_config::base_config>();
     path_                = l_config.vfx_cloth_sim_path.generic_string();
     ue4_name             = l_config.export_group;
     cloth_proxy_         = l_config.cloth_proxy_;
@@ -222,12 +222,12 @@ project_edit::~project_edit() = default;
 
 void project_edit::init() {
   p_i->config_init();
-  p_i->scoped_connections_.emplace_back(g_reg()->ctx().at<core_sig>().project_end_open.connect([this]() {
+  p_i->scoped_connections_.emplace_back(g_reg()->ctx().get<core_sig>().project_end_open.connect([this]() {
     p_i->config_init();
   }));
-  p_i->scoped_connections_.emplace_back(g_reg()->ctx().at<core_sig>().save.connect(1, [this]() {
-    g_reg()->ctx().at<project_config::base_config>() = p_i->get_config_();
-    g_reg()->ctx().at<project>().set_name(p_i->project_name.data);
+  p_i->scoped_connections_.emplace_back(g_reg()->ctx().get<core_sig>().save.connect(1, [this]() {
+    g_reg()->ctx().get<project_config::base_config>() = p_i->get_config_();
+    g_reg()->ctx().get<project>().set_name(p_i->project_name.data);
   }));
 }
 
@@ -349,7 +349,7 @@ bool project_edit::render() {
   ImGui::InputText(*p_i->upload_path.gui_name, &p_i->upload_path.data);
   ImGui::InputInt(*p_i->season_count.gui_name, &p_i->season_count.data);
 
-  if (ImGui::Button("保存")) g_reg()->ctx().at<core_sig>().save();
+  if (ImGui::Button("保存")) g_reg()->ctx().get<core_sig>().save();
 
   return p_i->open;
 }

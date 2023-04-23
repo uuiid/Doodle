@@ -58,7 +58,7 @@ assets_file::assets_file() : p_i(std::make_unique<impl>()){};
 assets_file::assets_file(const FSys::path& in_path) : assets_file() {
   p_i->path   = in_path;
   p_i->p_name = in_path.stem().generic_string();
-  user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
+  user_attr(g_reg()->ctx().get<user::current_user>().get_handle());
   p_i->organization_p = core_set::get_set().organization_name;
 }
 
@@ -67,7 +67,7 @@ assets_file::assets_file(const FSys::path& in_path, std::string in_name, std::ui
   p_i->p_name         = std::move(in_name);
   p_i->p_version      = in_version;
   p_i->organization_p = core_set::get_set().organization_name;
-  user_attr(g_reg()->ctx().at<user::current_user>().get_handle());
+  user_attr(g_reg()->ctx().get<user::current_user>().get_handle());
 }
 
 std::string assets_file::str() const { return p_i->p_name; }
@@ -94,7 +94,7 @@ FSys::path assets_file::get_path_normal() const {
   if (p_i->path.has_root_path())
     return p_i->path;
   else {
-    auto l_p = g_reg()->ctx().at<project>().p_path / p_i->path;
+    auto l_p = g_reg()->ctx().get<project>().p_path / p_i->path;
     return l_p.lexically_normal();
   }
 }

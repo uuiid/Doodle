@@ -238,8 +238,8 @@ void server::run() {
       boost::asio::make_work_guard(g_io_context())
   );
   boost::asio::post(g_thread(), [this]() {
-    socket_frontend = std::make_shared<zmq::socket_t>(g_reg()->ctx().at<zmq::context_t>(), zmq::socket_type::router);
-    socket_backend  = std::make_shared<zmq::socket_t>(g_reg()->ctx().at<zmq::context_t>(), zmq::socket_type::dealer);
+    socket_frontend = std::make_shared<zmq::socket_t>(g_reg()->ctx().get<zmq::context_t>(), zmq::socket_type::router);
+    socket_backend  = std::make_shared<zmq::socket_t>(g_reg()->ctx().get<zmq::context_t>(), zmq::socket_type::dealer);
     socket_frontend->bind("tcp://*:23333");
     socket_backend->bind("tcp://*:23334");
     zmq_proxy(socket_frontend->handle(), socket_backend->handle(), nullptr);

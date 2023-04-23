@@ -59,8 +59,8 @@ bool create_project_dialog::render() {
   if (imgui::Button("ok")) {
     p_i->prj.set_path(p_i->path.parent_path());
     p_i->select_button_id().destroy();
-    doodle_lib::Get().ctx().at<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
-    g_reg()->ctx().at<project>() = p_i->prj;
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->new_file_scene(p_i->path);
+    g_reg()->ctx().get<project>() = p_i->prj;
     return false;
   }
   return true;

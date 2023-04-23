@@ -92,7 +92,7 @@ void gui_facet::deconstruction() {
   ImGui_ImplWin32_Shutdown();
   ImPlot::DestroyContext();
   ImGui::DestroyContext();
-  g_reg()->ctx().at<std::shared_ptr<win::d3d_device>>().reset();
+  g_reg()->ctx().get<std::shared_ptr<win::d3d_device>>().reset();
 
   ::RevokeDragDrop(p_hwnd);
   ::DestroyWindow(p_hwnd);
@@ -253,7 +253,7 @@ void gui_facet::init_windows() {
 
   static std::function<void()> s_set_title_fun{};
   s_set_title_fun = [this]() {
-    auto& l_prj  = g_reg()->ctx().at<project>();
+    auto& l_prj  = g_reg()->ctx().get<project>();
     auto l_title = boost::locale::conv::utf_to_utf<char>(doodle_lib::Get().ctx().get<program_info>().title_attr());
     auto l_str   = fmt::format(
         "{0} 文件 {1} 项目路径 {2} 名称: {3}({4})({5})", l_title, doodle_lib::Get().ctx().get<database_info>().path_,
@@ -261,8 +261,8 @@ void gui_facet::init_windows() {
     );
     set_title(l_str);
   };
-  g_reg()->ctx().at<core_sig>().project_end_open.connect(s_set_title_fun);
-  g_reg()->ctx().at<core_sig>().save.connect(3, s_set_title_fun);
+  g_reg()->ctx().get<core_sig>().project_end_open.connect(s_set_title_fun);
+  g_reg()->ctx().get<core_sig>().save.connect(3, s_set_title_fun);
   auto& k_sig = g_reg()->ctx().emplace<core_sig>();
   k_sig.save.connect(2, [this]() {
     doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_save(

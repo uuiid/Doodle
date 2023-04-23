@@ -111,7 +111,7 @@ class assets_file_widgets::impl {
         auto&& k_icon = handle_.get<image_icon>();
         if (!k_icon.image && !handle_.any_of<image_icon::image_load_tag>()) {
           handle_.emplace_or_replace<image_icon::image_load_tag>();
-          g_reg()->ctx().at<image_load_task>().async_read(
+          g_reg()->ctx().get<image_load_task>().async_read(
               handle_,
               [handle_ = handle_, self = shared_from_this(), max_length]() {
                 if (!self) return;
@@ -197,7 +197,7 @@ void assets_file_widgets::switch_rander() {
 
 void assets_file_widgets::init() {
   g_reg()->ctx().emplace<assets_file_widgets&>(*this);
-  auto& l_sig = g_reg()->ctx().at<core_sig>();
+  auto& l_sig = g_reg()->ctx().get<core_sig>();
   p_i->p_sc.emplace_back(l_sig.filter_handle.connect([this](const std::vector<entt::handle>& in) {
     p_i->handle_list = in;
     generate_lists(p_i->handle_list);
@@ -244,14 +244,14 @@ bool assets_file_widgets::render() {
     generate_lists(p_i->handle_list);
     switch_rander();
   }
-  g_reg()->ctx().at<status_info>().show_size = p_i->lists.size();
+  g_reg()->ctx().get<status_info>().show_size = p_i->lists.size();
 
   return p_i->open;
 }
 
 void assets_file_widgets::render_context_menu(const entt::handle& in_) {
   if (dear::MenuItem("打开") && in_.all_of<assets_file>()) {
-    auto k_path = g_reg()->ctx().at<project>().get_path() / in_.get<assets_file>().path_attr();
+    auto k_path = g_reg()->ctx().get<project>().get_path() / in_.get<assets_file>().path_attr();
     FSys::open_explorer(FSys::is_directory(k_path) ? k_path : k_path.parent_path());
   }
   if (dear::MenuItem("截图")) {
@@ -268,7 +268,7 @@ void assets_file_widgets::render_context_menu(const entt::handle& in_) {
         ranges::to_vector | ranges::actions::push_back(in_) | ranges::actions::unique | ranges::to_vector;
     ranges::for_each(l_list, [](const entt::handle& in_handle) { database::delete_(in_handle); });
 
-    g_reg()->ctx().at<core_sig>().save_begin.connect([this, in_, l_list]() {
+    g_reg()->ctx().get<core_sig>().save_begin.connect([this, in_, l_list]() {
       boost::asio::post(g_io_context(), [this, in_, l_list]() {
         p_i->lists = p_i->lists | ranges::views::remove_if([l_list](const impl::base_data_ptr& in_data) {
                        return ranges::contains(l_list, in_data->handle_);
@@ -284,7 +284,7 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   std::vector<entt::handle> l_handle_list{};
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {  /// 双击鼠标时
     if (i.handle_.all_of<image_icon>())
-      FSys::open_explorer(g_reg()->ctx().at<project>().make_path("image") / i.handle_.get<image_icon>().path);
+      FSys::open_explorer(g_reg()->ctx().get<project>().make_path("image") / i.handle_.get<image_icon>().path);
   } else {  /// 单击鼠标时
     if (k_io.KeyCtrl) {
       i.select.data = !i.select.data;
@@ -311,10 +311,10 @@ void assets_file_widgets::set_select(std::size_t in_size) {
   if (!l_handle_list.empty()) {
     g_reg()->ctx().erase<std::vector<entt::handle>>();
     g_reg()->ctx().emplace<std::vector<entt::handle>>(l_handle_list);
-    auto& l_sig = g_reg()->ctx().at<core_sig>();
+    auto& l_sig = g_reg()->ctx().get<core_sig>();
     l_sig.select_handles(l_handle_list);
     l_sig.select_handle(i.handle_);
-    g_reg()->ctx().at<status_info>().select_size = l_handle_list.size();
+    g_reg()->ctx().get<status_info>().select_size = l_handle_list.size();
   }
 }
 void assets_file_widgets::open_drag(std::size_t in_size) {
@@ -330,8 +330,8 @@ void assets_file_widgets::open_drag(std::size_t in_size) {
   g_reg()->ctx().emplace<std::vector<entt::handle>>(l_lists);
   if (g_reg()->ctx().contains<std::vector<entt::handle>>()) {
     ImGui::SetDragDropPayload(
-        doodle_config::drop_handle_list.data(), &(g_reg()->ctx().at<std::vector<entt::handle>>()),
-        sizeof(g_reg()->ctx().at<std::vector<entt::handle>>())
+        doodle_config::drop_handle_list.data(), &(g_reg()->ctx().get<std::vector<entt::handle>>()),
+        sizeof(g_reg()->ctx().get<std::vector<entt::handle>>())
     );
     ImGui::Text("拖拽实体");
   }

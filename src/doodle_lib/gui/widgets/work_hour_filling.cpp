@@ -202,10 +202,10 @@ void work_hour_filling::modify_item(std::size_t in_index) {
 void work_hour_filling::init() {
   ptr->client_ = std::make_unique<distributed_computing::client>(core_set::get_set().server_ip);
   try {
-    ptr->current_user = ptr->client_->get_user(g_reg()->ctx().at<doodle::user::current_user>().uuid);
-    //    ptr->current_user = g_reg()->ctx().at<doodle::user::current_user>().get_handle();
+    ptr->current_user = ptr->client_->get_user(g_reg()->ctx().get<doodle::user::current_user>().uuid);
+    //    ptr->current_user = g_reg()->ctx().get<doodle::user::current_user>().get_handle();
   } catch (const json_rpc::invalid_id_exception& in_err) {
-    DOODLE_LOG_ERROR("无效的用户 {}", g_reg()->ctx().at<doodle::user::current_user>().uuid);
+    DOODLE_LOG_ERROR("无效的用户 {}", g_reg()->ctx().get<doodle::user::current_user>().uuid);
   }
   auto l_time       = time_point_wrap{}.compose();
   ptr->time_month() = {l_time.year, l_time.month};

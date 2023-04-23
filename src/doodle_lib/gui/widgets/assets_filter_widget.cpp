@@ -510,7 +510,7 @@ void assets_filter_widget::refresh_(bool force) {
     list |= ranges::actions::reverse;
   }
 
-  g_reg()->ctx().at<core_sig>().filter_handle(list);
+  g_reg()->ctx().get<core_sig>().filter_handle(list);
 }
 const std::string& assets_filter_widget::title() const { return p_impl->title_name_; }
 

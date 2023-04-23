@@ -99,7 +99,7 @@ bool maya_file_io::upload_file(const FSys::path& in_source_path, const FSys::pat
   DOODLE_CHICK(FSys::is_regular_file(in_source_path), doodle_error{"{} 路径不存在或者不是文件"});
   bool result{false};
 
-  auto l_upload_path = g_reg()->ctx().at<project_config::base_config>().get_upload_path();
+  auto l_upload_path = g_reg()->ctx().get<project_config::base_config>().get_upload_path();
   l_upload_path /= in_prefix;
   l_upload_path /= maya_file_io::get_current_path().stem();
   if (!FSys::exists(l_upload_path)) FSys::create_directories(l_upload_path);
