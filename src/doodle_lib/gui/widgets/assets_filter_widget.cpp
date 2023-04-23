@@ -4,8 +4,12 @@
 
 #include "assets_filter_widget.h"
 
+#include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/metadata/assets_file.h"
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/metadata/metadata_cpp.h>
 
+#include "entt/entity/fwd.hpp"
 #include <core/tree_node.h>
 #include <gui/widgets/assets_filter_widgets/filter_base.h>
 #include <gui/widgets/assets_filter_widgets/filter_factory_base.h>
@@ -476,8 +480,10 @@ void assets_filter_widget::refresh_(bool force) {
 
   std::vector<entt::handle> list{};
 
-  auto l_v = g_reg()->view<database>(entt::exclude<project>);
-  list     = l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle { return make_handle(in); }) |
+  auto l_v = g_reg()->view<database, assets_file>(entt::exclude<project, project_config::base_config>);
+  list     = l_v | ranges::views::transform([](const entt::entity& in) -> entt::handle {
+           return entt::handle{*g_reg(), in};
+         }) |
          ranges::views::filter([&](const entt::handle& in) -> bool {
            return ranges::all_of(p_impl->p_filters, [&](const std::unique_ptr<doodle::gui::filter_base>& in_f) {
              return (*in_f)(in);
