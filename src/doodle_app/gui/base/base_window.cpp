@@ -84,14 +84,7 @@ void windows_manage::tick() {
   }
   layout_->render();
 
-  if (*drop_manger_) {
-    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
-      ImGui::SetDragDropPayload(
-          doodle::doodle_config::drop_imgui_id.data(), &drop_manger_->GetDropFiles(), sizeof(std::vector<FSys::path>)
-      );
-      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(drop_manger_->GetDropFiles(), "\n"))); };
-    };
-  }
+  drop_manger_->render();
 
   const render_guard l_g{this};
   const auto l_org_list = windows_list_.size();
