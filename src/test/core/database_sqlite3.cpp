@@ -69,7 +69,7 @@ void create_test_database() {
   {
     auto l_h = make_handle();
     l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::shot>();
+    l_h.emplace<doodle::shot>(100, shot::shot_ab_enum::A);
   }
   {
     auto l_h = make_handle();
@@ -119,7 +119,7 @@ void create_test_database() {
   {
     auto l_h = make_handle();
     l_h.emplace<doodle::database>();
-    l_h.emplace<doodle::user>();
+    l_h.emplace<doodle::user>("test_user");
   }
   {
     auto l_h = make_handle();
@@ -146,11 +146,21 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   doodle_lib::Get().ctx().get<file_translator_ptr>()->save_("D:/test.sqlite");
 
   doodle_lib::Get().ctx().get<file_translator_ptr>()->open_("D:/test.sqlite");
+  BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
+  BOOST_TEST_CHECK(g_reg()->view<user>().size() == 1);
+  BOOST_TEST_CHECK(g_reg()->view<shot>().size() == 1);
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
     BOOST_TEST_INFO(fmt::format("{}", i.uuid()));
   }
-  BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
+
+  for (auto&& [e, i] : g_reg()->view<user>().each()) {
+    BOOST_TEST_CHECK(i.get_name() == "test_user");
+  }
+
+  for (auto&& [e, i] : g_reg()->view<shot>().each()) {
+    BOOST_TEST_CHECK(i.get_shot() == 100ll);
+  }
 }
 
 class null_facet {

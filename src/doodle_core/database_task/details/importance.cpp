@@ -49,7 +49,7 @@ void sql_com<doodle::importance>::select(conn_ptr& in_ptr, const std::map<std::i
     }
 
     for (auto& row :
-         l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.cutoff_p).from(l_tabl).where(l_tabl.entity_id.is_null()))) {
+         l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.cutoff_p).from(l_tabl).where(l_tabl.entity_id.is_not_null()))) {
       importance l_u{};
       l_u.cutoff_p = row.cutoff_p.value();
       auto l_id    = row.entity_id.value();

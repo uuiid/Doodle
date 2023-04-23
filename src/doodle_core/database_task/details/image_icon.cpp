@@ -50,7 +50,7 @@ void sql_com<doodle::image_icon>::select(conn_ptr& in_ptr, const std::map<std::i
   }
 
   for (auto& row :
-       l_conn(sqlpp::select(l_table.entity_id, l_table.path).from(l_table).where(l_table.entity_id.is_null()))) {
+       l_conn(sqlpp::select(l_table.entity_id, l_table.path).from(l_table).where(l_table.entity_id.is_not_null()))) {
     image_icon l_i{};
     l_i.path  = row.path.value();
     auto l_id = row.entity_id.value();

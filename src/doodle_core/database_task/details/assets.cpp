@@ -54,7 +54,8 @@ void sql_com<doodle::assets>::select(conn_ptr& in_ptr, const std::map<std::int64
     break;
   }
   for (auto& row :
-       l_conn(sqlpp::select(l_table.entity_id, l_table.assets_path).from(l_table).where(l_table.entity_id.is_null()))) {
+       l_conn(sqlpp::select(l_table.entity_id, l_table.assets_path).from(l_table).where(l_table.entity_id.is_not_null())
+       )) {
     assets l_s{};
     l_s.p_path = row.assets_path.value();
     auto l_id  = row.entity_id.value();

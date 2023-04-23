@@ -53,7 +53,7 @@ void sql_com<doodle::comment>::select(conn_ptr& in_ptr, const std::map<std::int6
 
   for (auto& row : l_conn(sqlpp::select(l_table.entity_id, l_table.comment_string, l_table.comment_time)
                               .from(l_table)
-                              .where(l_table.entity_id.is_null()))) {
+                              .where(l_table.entity_id.is_not_null()))) {
     comment l_s{};
     l_s.p_comment   = row.comment_string.value();
     l_s.p_time_info = row.comment_time.value();

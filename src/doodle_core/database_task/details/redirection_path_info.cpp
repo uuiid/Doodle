@@ -103,7 +103,7 @@ void sql_com<doodle::redirection_path_info>::select(
   }
   for (auto& row : l_conn(sqlpp::select(l_table.id, l_table.entity_id, l_table.redirection_file_name)
                               .from(l_table)
-                              .where(l_table.entity_id.is_null()))) {
+                              .where(l_table.entity_id.is_not_null()))) {
     doodle::redirection_path_info l_r{};
     l_r.file_name_ = row.redirection_file_name.value();
     auto l_id      = row.entity_id.value();

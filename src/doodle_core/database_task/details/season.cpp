@@ -50,7 +50,7 @@ void sql_com<doodle::season>::select(conn_ptr& in_ptr, const std::map<std::int64
     }
 
     for (auto& row :
-         l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.p_int).from(l_tabl).where(l_tabl.entity_id.is_null()))) {
+         l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.p_int).from(l_tabl).where(l_tabl.entity_id.is_not_null()))) {
       season l_u{};
       l_u.p_int = row.p_int.value();
       auto l_id = row.entity_id.value();

@@ -69,13 +69,14 @@ void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::
   for (auto& row :
        l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.user_ref)
                   .from(l_table)
-                  .where(l_table.entity_id.is_null()))) {
+                  .where(l_table.entity_id.is_not_null()))) {
     assets_file l_a{};
     l_a.name_attr(row.name.value());
     l_a.path_attr(row.path.value());
     l_a.version_attr(row.version.value());
-    l_a.user_attr(l_user_h[row.user_ref.value()]);
-    auto l_id = row.entity_id.value();
+    l_a.user_ref.handle_cache = l_user_h[row.user_ref.value()];
+
+    auto l_id                 = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_assets.emplace_back(std::move(l_a));
       l_entts.emplace_back(in_handle.at(l_id));

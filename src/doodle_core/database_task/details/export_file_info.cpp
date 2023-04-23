@@ -66,7 +66,7 @@ void sql_com<doodle::export_file_info>::select(
                               l_table.ref_file, l_table.export_type_
        )
                               .from(l_table)
-                              .where(l_table.entity_id.is_null()))) {
+                              .where(l_table.entity_id.is_not_null()))) {
     export_file_info l_f{};
     l_f.file_path    = row.file_path.value();
     l_f.start_frame  = row.start_frame.value();

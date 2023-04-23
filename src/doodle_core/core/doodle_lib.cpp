@@ -55,8 +55,6 @@ void doodle_lib::init() {
       boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
   );
   FSys::path::imbue(k_gen("zh_CN.UTF-8"));
-  /// 创建依赖性
-  ptr->reg->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
 
   ctx().emplace<database_info>();
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");

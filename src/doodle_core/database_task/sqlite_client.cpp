@@ -181,7 +181,7 @@ class sqlite_file::impl {
   class impl_obs<database> {
     entt::observer obs_create_;
     std::vector<std::int64_t> destroy_ids_{};
-    entt::scoped_connection conn_{};
+    entt::connection conn_{}, conn_2{};
     void on_destroy(entt::registry& in_reg, entt::entity in_entt) {
       if (auto& l_data = in_reg.get<database>(in_entt); l_data.is_install()) destroy_ids_.emplace_back(l_data.get_id());
     }
@@ -197,12 +197,14 @@ class sqlite_file::impl {
 
     void connect(const registry_ptr& in_registry_ptr) {
       obs_create_.connect(*in_registry_ptr, entt::collector.group<database>());
-      conn_ = in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+      conn_  = in_registry_ptr->on_destroy<database>().connect<&impl_obs<database>::on_destroy>(*this);
+      conn_2 = in_registry_ptr->on_construct<assets_file>().connect<&entt::registry::get_or_emplace<time_point_wrap>>();
     }
 
     void disconnect(const registry_ptr& in_registry_ptr) {
       obs_create_.disconnect();
-      conn_ = entt::scoped_connection{};
+      conn_.release();
+      conn_2.release();
     }
 
     void clear() {

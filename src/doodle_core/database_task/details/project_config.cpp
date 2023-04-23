@@ -191,7 +191,7 @@ void sql_com<project_config::base_config>::select(
                     l_table.maya_camera_suffix, l_table.maya_out_put_abc_suffix, l_table.entity_id
          )
                     .from(l_table)
-                    .where(l_table.entity_id.is_null()))) {
+                    .where(l_table.entity_id.is_not_null()))) {
       project_config::base_config l_p_c{};
       l_p_c.vfx_cloth_sim_path                = row.sim_path.value();
       l_p_c.export_group                      = row.export_group.value();

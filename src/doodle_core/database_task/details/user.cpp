@@ -53,7 +53,7 @@ void sql_com<doodle::user>::select(conn_ptr& in_ptr, const std::map<std::int64_t
 
     for (auto& row : l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.user_name, l_tabl.permission_group)
                                 .from(l_tabl)
-                                .where(l_tabl.entity_id.is_null()))) {
+                                .where(l_tabl.entity_id.is_not_null()))) {
       user l_u{};
       l_u.p_string_ = row.user_name.value();
       l_u.power     = num_to_enum<power_enum>(row.permission_group.value());

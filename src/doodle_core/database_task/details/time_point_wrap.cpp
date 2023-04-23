@@ -56,7 +56,8 @@ void sql_com<doodle::time_point_wrap>::select(conn_ptr& in_ptr, const std::map<s
   }
 
   for (auto& row :
-       l_conn(sqlpp::select(l_table.entity_id, l_table.time_point).from(l_table).where(l_table.entity_id.is_null()))) {
+       l_conn(sqlpp::select(l_table.entity_id, l_table.time_point).from(l_table).where(l_table.entity_id.is_not_null())
+       )) {
     auto l_id = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_time.emplace_back(row.time_point.value());

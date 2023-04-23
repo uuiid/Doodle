@@ -36,6 +36,8 @@ class DOODLE_CORE_API assets_file : boost::equality_comparable<assets_file> {
 
   RTTR_ENABLE();
   RTTR_REGISTRATION_FRIEND;
+  template <typename T>
+  friend struct database_n::sql_com;
 
  public:
   /**

@@ -16,10 +16,11 @@ namespace doodle {
 
 class DOODLE_CORE_API user_ref {
   mutable database::ref_data user_ref_attr{};
-
   mutable entt::handle handle_cache;
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user_ref& p);
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user_ref& p);
+  template <typename T>
+  friend struct database_n::sql_com;
 
  public:
   user_ref() = default;

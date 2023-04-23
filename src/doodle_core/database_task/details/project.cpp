@@ -56,7 +56,7 @@ void sql_com<doodle::project>::select(conn_ptr& in_ptr, const std::map<std::int6
     for (auto& row :
          l_conn(sqlpp::select(l_tabl.entity_id, l_tabl.p_name, l_tabl.p_en_str, l_tabl.p_path, l_tabl.p_shor_str)
                     .from(l_tabl)
-                    .where(l_tabl.entity_id.is_null()))) {
+                    .where(l_tabl.entity_id.is_not_null()))) {
       project l_u{};
       l_u.p_name     = row.p_name.value();
       l_u.p_en_str   = row.p_en_str.value();

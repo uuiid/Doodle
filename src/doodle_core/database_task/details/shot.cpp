@@ -53,7 +53,7 @@ void sql_com<doodle::shot>::select(conn_ptr& in_ptr, const std::map<std::int64_t
 
   for (auto& row : l_conn(sqlpp::select(l_table.entity_id, l_table.shot_ab, l_table.shot_int)
                               .from(l_table)
-                              .where(l_table.entity_id.is_null()))) {
+                              .where(l_table.entity_id.is_not_null()))) {
     shot l_s{};
     l_s.p_shot      = row.shot_int.value();
     l_s.p_shot_ab   = row.shot_ab.value();
