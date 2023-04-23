@@ -74,9 +74,9 @@ void sql_com<doodle::work_task_info>::select(conn_ptr& in_ptr, const std::map<st
 
       l_w.time      = chrono_ns::round<doodle::work_task_info::time_point_type::duration>(row.time_point.value());
       l_w.task_name = row.task_name.value();
-      auto l_user_f = row.user_id.value();
-      l_w.user_ref.handle_cache = database::find_by_uuid(boost::lexical_cast<uuids::uuid>(l_user_f));
-      auto l_id                 = row.entity_id.value();
+      if (!row.user_id.is_null())
+        l_w.user_ref.handle_cache = database::find_by_uuid(boost::lexical_cast<uuids::uuid>(row.user_id.value()));
+      auto l_id = row.entity_id.value();
       if (in_handle.find(l_id) != in_handle.end()) {
         l_works.emplace_back(std::move(l_w));
         l_entts.emplace_back(in_handle.at(l_id));
