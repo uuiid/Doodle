@@ -30,7 +30,7 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
   tables::assets_file l_table{};
   auto l_pre = l_conn.prepare(sqlpp::sqlite3::insert_or_replace_into(l_table).set(
       l_table.name = sqlpp::parameter(l_table.name), l_table.path = sqlpp::parameter(l_table.path),
-      l_table.version = sqlpp::parameter(l_table.version), l_table.user_ref = sqlpp::parameter(l_table.user_ref),
+      l_table.version = sqlpp::parameter(l_table.version), l_table.user_id = sqlpp::parameter(l_table.user_id),
       l_table.entity_id = sqlpp::parameter(l_table.entity_id)
   ));
 
@@ -39,8 +39,8 @@ void sql_com<doodle::assets_file>::insert(conn_ptr& in_ptr, const std::vector<en
     l_pre.params.name    = l_assets.name_attr();
     l_pre.params.path    = l_assets.path_attr().string();
     l_pre.params.version = l_assets.version_attr();
-    if (auto l_h = l_assets.user_attr(); l_h && l_h.any_of<database>())
-      l_pre.params.user_ref = l_h.get<database>().get_id();
+    if (auto l_h_user = l_assets.user_attr(); l_h_user && l_h_user.any_of<database>())
+      l_pre.params.user_id = fmt::to_string(l_h_user.get<database>().uuid());
     l_pre.params.entity_id = boost::numeric_cast<std::int64_t>(l_h.get<database>().get_id());
     auto l_r               = l_conn(l_pre);
     DOODLE_LOG_INFO("插入数据库id {} -> 实体 {} 组件 {} ", l_r, l_h.entity(), entt::type_id<assets_file>().name());
@@ -61,22 +61,16 @@ void sql_com<doodle::assets_file>::select(conn_ptr& in_ptr, const std::map<std::
     break;
   }
 
-  std::map<std::int64_t, entt::handle> l_user_h{};
-  for (auto&& [e, data] : reg_->view<database>().each()) {
-    l_user_h.emplace(data.get_id(), entt::handle{*reg_, e});
-  }
-
-  for (auto& row :
-       l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.user_ref)
-                  .from(l_table)
-                  .where(l_table.entity_id.is_not_null()))) {
+  for (auto& row : l_conn(sqlpp::select(l_table.entity_id, l_table.name, l_table.path, l_table.version, l_table.user_id)
+                              .from(l_table)
+                              .where(l_table.entity_id.is_not_null()))) {
     assets_file l_a{};
     l_a.name_attr(row.name.value());
     l_a.path_attr(row.path.value());
     l_a.version_attr(row.version.value());
-    l_a.user_ref.handle_cache = l_user_h[row.user_ref.value()];
+    if (!row.user_id.is_null()) l_a.user_ref.handle_cache = database::find_by_uuid(row.user_id.value());
 
-    auto l_id                 = row.entity_id.value();
+    auto l_id = row.entity_id.value();
     if (in_handle.find(l_id) != in_handle.end()) {
       l_assets.emplace_back(std::move(l_a));
       l_entts.emplace_back(in_handle.at(l_id));

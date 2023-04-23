@@ -8,6 +8,9 @@
 #include <doodle_core/core/core_sql.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include "boost/lexical_cast.hpp"
+#include "boost/uuid/uuid.hpp"
+
 #include <entt/core/type_info.hpp>
 #include <optional>
 #include <rttr/rttr_enable.h>
@@ -101,6 +104,9 @@ class DOODLE_CORE_API database : boost::equality_comparable<database>,
   friend void DOODLE_CORE_API from_json(const nlohmann::json &j, database &p);
 
   static entt::handle find_by_uuid(const boost::uuids::uuid &in);
+  inline static entt::handle find_by_uuid(const std::string &in) {
+    return find_by_uuid(boost::lexical_cast<boost::uuids::uuid>(in));
+  };
   [[nodiscard]] entt::handle find_by_uuid() const;
 
   class DOODLE_CORE_API fun_save_ {
