@@ -120,7 +120,7 @@ class sqlite_file::impl {
    public:
     explicit impl_obs(const registry_ptr& in_registry_ptr)
         : obs_update_(
-              std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.update<database>().where<type_t>())
+              std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.update<type_t>().where<database>())
           ),
           obs_create_(std::make_shared<entt::observer>(*in_registry_ptr, entt::collector.group<database, type_t>())) {}
 
@@ -198,7 +198,7 @@ class sqlite_file::impl {
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn, std::vector<std::int64_t>& in_handle) {
       database_n::sql_com<database> l_orm{in_registry_ptr};
-      l_orm.create_table(in_conn);
+      if (!l_orm.has_table(in_conn)) l_orm.create_table(in_conn);
 
       std::vector<entt::entity> l_create{};
 
@@ -216,35 +216,37 @@ class sqlite_file::impl {
 
   template <typename... arg>
   class obs_main {
-    std::tuple<impl_obs<database>, impl_obs<arg>...> obs_data_;
+    std::tuple<std::shared_ptr<impl_obs<database>>, std::shared_ptr<impl_obs<arg>>...> obs_data_;
 
    public:
     explicit obs_main(const registry_ptr& in_registry_ptr = g_reg())
-        : obs_data_{std::move(impl_obs<database>{in_registry_ptr}), std::move(impl_obs<arg>{in_registry_ptr})...} {}
+        : obs_data_{
+              std::make_shared<impl_obs<database>>(in_registry_ptr),
+              std::make_shared<impl_obs<arg>>(in_registry_ptr)...} {}
 
     void open(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::map<std::int64_t, entt::entity> l_map{};
 
-      std::apply([&](auto&&... x) { ((x.open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
+      std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
     }
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::vector<std::int64_t> l_handles{};
-      std::apply([&](auto&&... x) { (x.save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
+      std::apply([&](auto&&... x) { (x->save(in_registry_ptr, in_conn, l_handles), ...); }, obs_data_);
     }
   };
-
-  obs_main<
+  using obs_all = obs_main<
       doodle::project, doodle::project_config::base_config, doodle::episodes, doodle::shot, doodle::season,
       doodle::assets, doodle::assets_file, doodle::time_point_wrap, doodle::comment, doodle::image_icon,
-      doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>
-      obs_save;
+      doodle::importance, doodle::redirection_path_info, doodle::business::rules, doodle::user, doodle::work_task_info>;
+  std::shared_ptr<obs_all> obs_save;
   std::shared_ptr<boost::asio::system_timer> error_timer{};
 };
 
 sqlite_file::sqlite_file() : ptr(std::make_unique<impl>()) {}
 sqlite_file::sqlite_file(registry_ptr in_registry) : ptr(std::make_unique<impl>()) {
   ptr->registry_attr = std::move(in_registry);
+  ptr->obs_save      = std::make_shared<impl::obs_all>(ptr->registry_attr);
 }
 bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   ptr->registry_attr   = g_reg();
@@ -253,7 +255,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
 
   database_n::select l_select{};
   auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
-  if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save.open(ptr->registry_attr, l_k_con);
+  if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save->open(ptr->registry_attr, l_k_con);
 
   for (auto&& [e, p] : ptr->registry_attr->view<project>().each()) {
     ptr->registry_attr->ctx().emplace<project>() = p;
@@ -273,7 +275,7 @@ bsys::error_code sqlite_file::save_impl(const FSys::path& in_path) {
   try {
     auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
     auto l_tx    = sqlpp::start_transaction(*l_k_con);
-    ptr->obs_save.save(ptr->registry_attr, l_k_con);
+    ptr->obs_save->save(ptr->registry_attr, l_k_con);
     l_tx.commit();
   } catch (const sqlpp::exception& in_error) {
     DOODLE_LOG_INFO(boost::diagnostic_information(in_error));

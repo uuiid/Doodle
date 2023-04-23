@@ -8,6 +8,7 @@
 
 #include "entt/entity/fwd.hpp"
 #include <functional>
+#include <memory>
 #include <vector>
 namespace doodle::gui {
 
@@ -32,10 +33,10 @@ class create_entry {
   };
 
  private:
-  init_args args_{};
+  std::shared_ptr<init_args> args_{};
 
  public:
-  explicit create_entry(const init_args& in_args) : args_(in_args) {}
+  explicit create_entry(const init_args& in_args) : args_(std::make_shared<init_args>(in_args)) {}
 
   constexpr static std::string_view name{gui::config::menu_w::create_entry_};
   static constexpr std::array<float, 2> sizexy{640, 360};

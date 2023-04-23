@@ -307,8 +307,23 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
+  for (auto&& [e, p] : p_i->local_reg->view<doodle::episodes>().each()) {
+    p_i->local_reg->patch<doodle::episodes>(e);
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<doodle::shot>().each()) {
+    p_i->local_reg->patch<doodle::shot>(e);
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<doodle::season>().each()) {
+    p_i->local_reg->patch<doodle::season>(e);
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<doodle::assets>().each()) {
+    p_i->local_reg->patch<doodle::assets>(e);
+  }
+  for (auto&& [e, p] : p_i->local_reg->view<doodle::assets_file>().each()) {
+    p_i->local_reg->patch<doodle::assets_file>(e);
+  }
 
-  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
+  //  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
   return true;
 }
 

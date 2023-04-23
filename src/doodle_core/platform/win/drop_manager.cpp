@@ -62,6 +62,8 @@ STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINT
 STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   *pdwEffect &= DROPEFFECT_COPY;
   if (drag_over_fun) drag_over_fun(grfKeyState, ptl);
+
+  begin_drop = true;
   return S_OK;
 }
 
@@ -98,7 +100,7 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
 
     std::swap(drop_files, l_vector);
     // 以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
-    g_reg()->ctx().at<core_sig>().drop_files(l_vector);
+    //    g_reg()->ctx().at<core_sig>().drop_files(l_vector);
   }
 
   // 为 ImGui 中的按钮 1 触发 MouseUp

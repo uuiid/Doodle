@@ -110,6 +110,7 @@ file_panel::file_panel(const dialog_args &in_args) : p_i(std::make_unique<impl>(
   p_i->filter_list.show_str = p_i->filter_list.data.front();
   /// \brief 设置标志
   p_i->p_flags_             = in_args.p_flags;
+  p_i->call_fun             = in_args.call_fun;
   /// \brief 设置输出
   p_i->p_pwd                = in_args.pwd;
   this->scan_director(p_i->p_pwd);

@@ -218,14 +218,14 @@ bool assets_file_widgets::render() {
   if (auto l_drag = dear::DragDropTargetCustom{l_win_main->ContentRegionRect, l_win_main->ID}) {
     if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
         l_data && l_data->IsDelivery()) {
-      //      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
-      //      g_windows_manage().create_windows_arg(
-      //          windows_init_arg{}
-      //              .create<create_entry>(create_entry::init_args{}.set_paths(*l_list).set_create_call(
-      //                  [this](const std::vector<entt::handle>& in_handle) {}
-      //              ))
-      //              .set_render_type<dear::Popup>()
-      //      );
+      auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+      g_windows_manage().create_windows_arg(
+          windows_init_arg{}
+              .create<create_entry>(create_entry::init_args{}.set_paths(*l_list).set_create_call(
+                  [this](const std::vector<entt::handle>& in_handle) {}
+              ))
+              .set_render_type<dear::Popup>()
+      );
     }
   }
 

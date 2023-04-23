@@ -30,6 +30,8 @@
 #include <doodle_core/metadata/work_task.h>
 #include <doodle_core/pin_yin/convert.h>
 
+#include "doodle_app/app/app_command.h"
+
 #include <boost/test/unit_test.hpp>
 
 #include "sqlpp11/all_of.h"
@@ -150,13 +152,23 @@ BOOST_AUTO_TEST_CASE(test_sqlite3_open) {
   BOOST_TEST_CHECK(g_reg()->view<database>().size() == 14);
 }
 
+class null_facet {
+ public:
+  const std::string& name() const noexcept {
+    static std::string l_i{"null_facet"};
+    return l_i;
+  };
+  inline bool post() { return true; };
+  void deconstruction(){};
+  void add_program_options(){};
+};
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {
+  app_command<null_facet> l_App{};
   FSys::copy(
       R"(D:/test_file/cloth_test/JG_back_up.doodle_db)", "D:/test_file/cloth_test/JG.doodle_db",
       FSys::copy_options::overwrite_existing
   );
-  doodle_lib l_lib{};
-
+  //  doodle_lib l_lib{};
   g_reg()->ctx().get<file_translator_ptr>()->open_("D:/test_file/cloth_test/JG.doodle_db");
 
   for (auto&& [e, i] : g_reg()->view<database>().each()) {
