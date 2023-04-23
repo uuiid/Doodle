@@ -11,6 +11,7 @@
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/base/ref_base.h>
 
+#include "imgui.h"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/action/sort.hpp"
 #include <any>
@@ -31,12 +32,10 @@ class windows_manage::warp_w {
   explicit warp_w(windows_init_arg in_arg) : args_(std::move(in_arg)) {}
 
   bool render() {
-    //    std::call_once(once_flag_size_, [this]() { ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
-    //    });
-
     switch (args_.render_enum_) {
       case windows_init_arg::render_enum::kpopup:
-        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
+        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]}, ImGuiCond_Once);
+        //        ImGui::SetNextWindowSize({args_.size_xy_[0], args_.size_xy_[1]});
         break;
       case windows_init_arg::render_enum::kbegin:
         //        break;
