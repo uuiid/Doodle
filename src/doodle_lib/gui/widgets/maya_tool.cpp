@@ -4,6 +4,7 @@
 
 #include "maya_tool.h"
 
+#include "doodle_core/configure/static_value.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/core_sig.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -14,6 +15,7 @@
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
 
+#include "doodle_app/lib_warp/imgui_warp.h"
 #include <doodle_app/gui/base/ref_base.h>
 
 #include <doodle_lib/exe_warp/maya_exe.h>
@@ -118,11 +120,23 @@ void maya_tool::init() {
 }
 
 bool maya_tool::render() {
-  dear::ListBox{"file_list"} && [this]() {
-    for (const auto& f : p_sim_path) {
-      dear::Selectable(f.generic_string());
+  {
+    if (dear::ListBox l_list_files{"file_list"}) {
+      for (const auto& f : p_sim_path) {
+        dear::Selectable(f.generic_string());
+      }
     }
-  };
+    if (auto l_drag = dear::DragDropTarget{}) {
+      if (const auto* l_data = ImGui::AcceptDragDropPayload(doodle::doodle_config::drop_imgui_id.data());
+          l_data && l_data->IsDelivery()) {
+        auto* l_list = static_cast<std::vector<FSys::path>*>(l_data->Data);
+        p_sim_path   = *l_list | ranges::views::filter([](const FSys::path& in_handle) -> bool {
+          auto l_ex = in_handle.extension();
+          return l_ex == ".ma" || l_ex == ".mb";
+        }) | ranges::to_vector;
+      }
+    }
+  }
 
   dear::Text(fmt::format("解算资产: {}", p_text));
 

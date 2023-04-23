@@ -86,11 +86,10 @@ void windows_manage::tick() {
 
   if (*drop_manger_) {
     dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
-      drop_list_files_ = drop_manger_->GetDropFiles();
       ImGui::SetDragDropPayload(
-          doodle::doodle_config::drop_imgui_id.data(), &drop_list_files_, sizeof(std::vector<FSys::path>)
+          doodle::doodle_config::drop_imgui_id.data(), &drop_manger_->GetDropFiles(), sizeof(std::vector<FSys::path>)
       );
-      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(drop_list_files_, "\n"))); };
+      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(drop_manger_->GetDropFiles(), "\n"))); };
     };
   }
 

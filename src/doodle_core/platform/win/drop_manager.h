@@ -21,18 +21,14 @@ class DOODLE_CORE_API ole_guard {
 
 class DOODLE_CORE_API drop_manager : public IDropTarget {
  public:
-  using drag_over_fun_type = std::function<void(DWORD grfKeyState, POINTL ptl)>;
-
  private:
   LONG m_RefCount{};
 
   bool begin_drop{};
   std::vector<FSys::path> drop_files{};
-  drag_over_fun_type drag_over_fun{};
 
  public:
-  drop_manager(drag_over_fun_type in_fun = {})
-      : m_RefCount(0), begin_drop(), drop_files(), drag_over_fun(std::move(in_fun)){};
+  drop_manager() : m_RefCount(0), begin_drop(), drop_files(){};
   STDMETHODIMP_(ULONG)
   AddRef() override;
 

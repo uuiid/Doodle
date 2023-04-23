@@ -55,7 +55,6 @@ class windows_manage {
   gui::windows_layout layout_next_{};
   facet::gui_facet* gui_facet_{};
   win::drop_manager* drop_manger_{};
-  std::vector<FSys::path> drop_list_files_{};
   std::vector<std::function<void()>> close_fun_lists_{};
   std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>> menu_list_{};
   void gen_windows_list();

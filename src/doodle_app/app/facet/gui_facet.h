@@ -57,7 +57,6 @@ class DOODLE_APP_API gui_facet {
  protected:
   virtual bool translate_message();
   virtual void tick();
-  void external_update_mouse_coordinates(DWORD grfKeyState, POINTL in_point);
 
   ::doodle::win::wnd_handle p_hwnd;
   ::doodle::win::wnd_class p_win_class;
