@@ -9,6 +9,7 @@
 #include "doodle_core/metadata/metadata.h"
 
 #include "entt/entity/fwd.hpp"
+#include "imgui.h"
 #include "range/v3/view/transform.hpp"
 
 namespace doodle::gui {
@@ -22,7 +23,7 @@ bool create_entry::render() {
       }) |
       ranges::to_vector
   );
-
+  ImGui::CloseCurrentPopup();
   return true;
 }
 }  // namespace doodle::gui
