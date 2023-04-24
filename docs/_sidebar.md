@@ -3,6 +3,7 @@
 * [主页](README.md)
 * [xgen 导入ue4](xgen_to_ue/README.md)
 * [ue4人群制作](crowd/README.md)
+  * [ue人群制作要求](crowd/要求.md)
   * [ue4人群制作2](crowd/create_ai.md)
 * [导入ue4 fbx和abc面板](Ue4_import_fbx/README.md)
 * [ue4优化](Ue4_/README.md)
