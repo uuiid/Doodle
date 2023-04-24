@@ -14,6 +14,7 @@
 #include "platform/win/drop_manager.h"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/action/sort.hpp"
+#include "range/v3/algorithm/none_of.hpp"
 #include <any>
 #include <string_view>
 #include <utility>
@@ -165,6 +166,11 @@ void windows_manage::set_layout(gui::windows_layout&& in_windows) {
 }
 
 void windows_manage::register_layout(gui::layout_init_arg& in_windows) {
+  BOOST_ASSERT(in_windows.layout_factory_);
+  BOOST_ASSERT(ranges::none_of(layout_list_, [&](const decltype(layout_list_)::value_type& in) -> bool {
+    return in->init_arg_->name_ == in_windows.name_;
+  }));
+
   layout_list_.emplace_back(std::make_shared<layout_info>(in_windows));
 }
 void windows_manage::switch_layout(std::string_view in_name) {

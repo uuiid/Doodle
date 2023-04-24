@@ -18,6 +18,7 @@
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/gui/setting_windows.h>
+#include <doodle_lib/gui/solving_fabric_layout.h>
 #include <doodle_lib/gui/widgets/assets_file_widgets.h>
 #include <doodle_lib/gui/widgets/assets_filter_widget.h>
 #include <doodle_lib/gui/widgets/create_video.h>
@@ -34,6 +35,8 @@
 
 #include "boost/asio/ssl.hpp"
 #include <boost/asio.hpp>
+
+#include "gui/solving_fabric_layout.h"
 namespace doodle {
 main_facet::main_facet() : facet::gui_facet() {
   g_reg()->ctx().emplace<image_to_move>() = std::make_shared<detail::image_to_move>();
@@ -44,6 +47,7 @@ void main_facet::load_windows() {
     using namespace gui;
     g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());
     g_windows_manage().register_layout(layout_init_arg{}.create<asset_library_layout>());
+    g_windows_manage().register_layout(layout_init_arg{}.create<solving_fabric_layout>());
     g_windows_manage().switch_layout(layout_window::name);
   }
   gui::g_windows_manage().create_windows_arg(

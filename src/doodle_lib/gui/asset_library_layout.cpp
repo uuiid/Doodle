@@ -27,8 +27,6 @@
 namespace doodle::gui {
 
 void asset_library_layout::layout(ImGuiID in_id, const ImVec2& in_size) {
-  const ImGuiIO& io                               = ImGui::GetIO();
-
   const static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
   ImGui::DockBuilderAddNode(in_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
