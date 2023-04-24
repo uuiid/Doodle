@@ -135,9 +135,6 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
-drop_manager::operator bool() const { return begin_drop_; }
-
-const std::vector<FSys::path> &drop_manager::GetDropFiles() const { return *drop_files; }
 
 void drop_manager::render() {
   if (begin_drop_)

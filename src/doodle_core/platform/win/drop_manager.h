@@ -49,10 +49,6 @@ class DOODLE_CORE_API drop_manager : public IDropTarget {
   // 当我们释放鼠标按钮完成拖放操作时发生
   STDMETHODIMP Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) override;
 
-  [[nodiscard]] explicit operator bool() const;
-
-  [[nodiscard]] const std::vector<FSys::path> &GetDropFiles() const;
-
   void render();
 };
 
