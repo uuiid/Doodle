@@ -127,12 +127,5 @@ void menu_bar::menu_tool() {
     menu_bar::message(l_message);
   }
 }
-void menu_bar::menu_layout() {
-  if (dear::MenuItem("默认布局")) {
-    g_windows_manage().set_layout(windows_layout{std::in_place_type<layout_window>});
-  }
-  if (dear::MenuItem("资产库布局")) {
-    g_windows_manage().set_layout(windows_layout{std::in_place_type<asset_library_layout>});
-  }
-}
+
 }  // namespace doodle::gui

@@ -12,6 +12,8 @@
 
 #include <functional>
 #include <memory>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 
 namespace doodle::win {
@@ -41,8 +43,22 @@ DOODLE_HAS_VALUE(sizexy);
 }  // namespace details
 
 class windows_init_arg;
+class layout_init_arg;
 
 class windows_manage {
+ public:
+  class layout_info {
+    friend windows_manage;
+
+    std::shared_ptr<layout_init_arg> init_arg_;
+
+   public:
+    layout_info() = default;
+    explicit layout_info(layout_init_arg& arg);
+    std::string& name();
+  };
+
+ private:
   std::vector<windows_init_arg> args_{};
 
   class warp_w;
@@ -57,6 +73,9 @@ class windows_manage {
   win::drop_manager* drop_manger_{};
   std::vector<std::function<void()>> close_fun_lists_{};
   std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>> menu_list_{};
+  std::vector<std::shared_ptr<layout_info>> layout_list_{};
+  std::string_view render_layout_name_{};
+
   void gen_windows_list();
   void set_menu_list(const warp_w_ptr& win_ptr);
   class render_guard {
@@ -67,11 +86,15 @@ class windows_manage {
     ~render_guard() { ptr_->is_render_tick_p_ = false; }
   };
 
+  void set_layout(gui::windows_layout&& in_windows);
+
  public:
   explicit windows_manage(facet::gui_facet* in_facet);
 
   void create_windows_arg(const windows_init_arg& in_arg);
-  void set_layout(gui::windows_layout&& in_windows);
+
+  void register_layout(gui::layout_init_arg& in_windows);
+  void switch_layout(std::string_view in_name);
 
   void tick();
   bool has_windows(const std::string_view& in_info);
@@ -91,6 +114,7 @@ class windows_manage {
   };
 
   std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>>& get_menu_windows_list();
+  std::vector<std::tuple<std::string_view, bool>> get_layout_list();
 
   void show_windows();
 };
@@ -222,6 +246,30 @@ class windows_init_arg {
     get_default_name<t>();
     return *this;
   };
+};
+class layout_init_arg {
+ private:
+  friend windows_manage;
+  std::string name_{};
+  std::function<windows_layout()> layout_factory_{};
+
+ public:
+  layout_init_arg()                                  = default;
+  layout_init_arg(const layout_init_arg&)            = default;
+  layout_init_arg(layout_init_arg&&)                 = default;
+  layout_init_arg& operator=(const layout_init_arg&) = default;
+  layout_init_arg& operator=(layout_init_arg&&)      = default;
+
+  template <typename layout_t>
+  inline layout_init_arg& create(const std::string& in_name) {
+    name_           = in_name;
+    layout_factory_ = []() -> windows_layout { return windows_layout{std::in_place_type<layout_t>}; };
+    return *this;
+  }
+  template <typename layout_t>
+  inline std::enable_if_t<doodle::gui::details::has_name_v<layout_t>, layout_init_arg&> create() {
+    return create<layout_t>(std::string{layout_t::name});
+  }
 };
 
 windows_manage& g_windows_manage();

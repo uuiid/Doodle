@@ -15,11 +15,17 @@
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/action/sort.hpp"
 #include <any>
+#include <string_view>
 #include <utility>
 
 namespace doodle::gui {
 
 windows_manage& g_windows_manage() { return doodle_lib::Get().ctx().get<windows_manage>(); }
+
+windows_manage::layout_info::layout_info(doodle::gui::layout_init_arg& arg)
+    : init_arg_(std::make_shared<layout_init_arg>(std::move(arg))) {}
+
+std::string& windows_manage::layout_info::name() { return init_arg_->name_; }
 
 class windows_manage::warp_w {
  public:
@@ -158,6 +164,20 @@ void windows_manage::set_layout(gui::windows_layout&& in_windows) {
   }
 }
 
+void windows_manage::register_layout(gui::layout_init_arg& in_windows) {
+  layout_list_.emplace_back(std::make_shared<layout_info>(in_windows));
+}
+void windows_manage::switch_layout(std::string_view in_name) {
+  if (auto l_it = ranges::find_if(
+          layout_list_,
+          [&](const decltype(layout_list_)::value_type& in) -> bool { return in->init_arg_->name_ == in_name; }
+      );
+      l_it != layout_list_.end()) {
+    render_layout_name_ = in_name;
+    set_layout((*l_it)->init_arg_->layout_factory_());
+  }
+}
+
 void windows_manage::show_windows(const std::string_view& in_info) {
   if (auto l_it = ranges::find_if(args_, [=](const windows_init_arg& in_arg) { return in_arg.title_ == in_info; });
       l_it != ranges::end(args_)) {
@@ -189,6 +209,14 @@ void windows_manage::open_windows(const std::string_view& in_info) {
 std::vector<std::tuple<std::reference_wrapper<std::string>, bool*>>& windows_manage::get_menu_windows_list() {
   return menu_list_;
 }
+
+std::vector<std::tuple<std::string_view, bool>> windows_manage::get_layout_list() {
+  return layout_list_ | ranges::views::transform([this](const decltype(layout_list_)::value_type& i) {
+           return std::make_tuple(std::string_view{i->init_arg_->name_}, render_layout_name_ == i->init_arg_->name_);
+         }) |
+         ranges::to_vector;
+}
+
 void windows_manage::gen_windows_list() {
   menu_list_.clear();
   for (auto&& i : args_) {

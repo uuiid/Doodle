@@ -120,16 +120,11 @@ void main_menu_bar::menu_windows() {
   }
 }
 void main_menu_bar::menu_layout() {
-  //  ImGui::InputText(*p_i->layout_name_.gui_name, &p_i->layout_name_.data);
-  //  ImGui::SameLine();
-  //  if (ImGui::Button(*p_i->button_save_layout_name_))
-
-  //
-  //  for (auto &&i : p_i->layout_list) {
-  //    if (ImGui::MenuItem(i.name.c_str())) {
-
-  //    };
-  //  }
+  for (auto &&[name, open] : g_windows_manage().get_layout_list()) {
+    if (dear::MenuItem(name.data(), open)) {
+      if (!open) g_windows_manage().switch_layout(name);
+    }
+  }
 }
 main_menu_bar::main_menu_bar(const main_menu_bar &in) noexcept : p_i(std::make_unique<impl>(*in.p_i)) {}
 main_menu_bar::main_menu_bar(main_menu_bar &&in) noexcept { p_i = std::move(in.p_i); }

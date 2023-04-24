@@ -8,11 +8,13 @@
 #include <doodle_core/core/program_info.h>
 
 #include "doodle_app/app/authorization.h"
+#include "doodle_app/gui/base/base_window.h"
 #include <doodle_app/gui/get_input_dialog.h>
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
 
 #include <doodle_lib/facet/rpc_server_facet.h>
+#include <doodle_lib/gui/asset_library_layout.h>
 #include <doodle_lib/gui/layout_window.h>
 #include <doodle_lib/gui/menu_bar.h>
 #include <doodle_lib/gui/setting_windows.h>
@@ -38,7 +40,12 @@ main_facet::main_facet() : facet::gui_facet() {
 }
 
 void main_facet::load_windows() {
-  gui::g_windows_manage().set_layout(gui::windows_layout{std::in_place_type<gui::layout_window>});
+  {
+    using namespace gui;
+    g_windows_manage().register_layout(layout_init_arg{}.create<layout_window>());
+    g_windows_manage().register_layout(layout_init_arg{}.create<asset_library_layout>());
+    g_windows_manage().switch_layout(layout_window::name);
+  }
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<gui::menu_bar>().set_render_type<dear::MainMenuBar>()
   );
