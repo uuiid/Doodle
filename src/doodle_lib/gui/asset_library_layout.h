@@ -11,6 +11,8 @@ class asset_library_layout : public details::layout_window_base {
 
   void set_show();
 
+  static constexpr auto name{"资产库工作区"};
+
  protected:
   void layout(ImGuiID in_id, const ImVec2& in_size) override;
 };

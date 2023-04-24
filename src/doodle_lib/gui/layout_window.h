@@ -21,6 +21,7 @@ class DOODLELIB_API layout_window : public details::layout_window_base {
   virtual ~layout_window();
 
   void set_show();
+  static constexpr auto name{"默认布局"};
 };
 
 }  // namespace doodle::gui
