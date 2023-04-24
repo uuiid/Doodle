@@ -3,14 +3,18 @@
 //
 
 #include "list_drive.h"
+
+#include "wil/result_macros.h"
 #include <Windows.h>
+#include <wil/result.h>
 namespace doodle::win {
 
 std::vector<FSys::path> list_drive() {
   std::vector<FSys::path> l_r{};
   auto k_buff_size = GetLogicalDriveStringsW(0, nullptr);
   std::unique_ptr<wchar_t[]> p_buff{new wchar_t[k_buff_size]};
-  GetLogicalDriveStringsW(k_buff_size, p_buff.get());
+
+  THROW_LAST_ERROR_IF(ERROR_SUCCESS == GetLogicalDriveStringsW(k_buff_size, p_buff.get()));
 
   for (auto l_i = p_buff.get(); *l_i != 0; l_i += (sizeof(wchar_t) * 2)) {
     auto driveType = GetDriveTypeW(l_i);
