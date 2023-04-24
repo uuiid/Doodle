@@ -38,7 +38,7 @@ STDMETHODIMP drop_manager::QueryInterface(const IID &riid, void **ppv) {
 
 STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   DOODLE_LOG_INFO("开始 DragEnter");
-  begin_drop_ |= {0b01};
+  begin_drop_    = true;
   // 使用 fmte
   FORMATETC fmte = {CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
   STGMEDIUM stgm{};
@@ -71,7 +71,7 @@ STDMETHODIMP drop_manager::DragEnter(IDataObject *pdto, DWORD grfKeyState, POINT
 
 STDMETHODIMP drop_manager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
   *pdwEffect &= DROPEFFECT_COPY;
-  begin_drop_ |= {0b01};
+  begin_drop_ = true;
 
   ImGuiIO &io = ImGui::GetIO();
   //  bool const want_absolute_pos = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
@@ -89,9 +89,9 @@ STDMETHODIMP drop_manager::DragLeave() {
 
   ImGuiIO &io = ImGui::GetIO();
   //  bool const want_absolute_pos = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
-  io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
   io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
-  begin_drop_ = {0b10};
+  io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+  begin_drop_ = false;
   return S_OK;
 }
 
@@ -130,30 +130,23 @@ STDMETHODIMP drop_manager::Drop(IDataObject *pdto, DWORD grfKeyState, POINTL ptl
   io.AddMousePosEvent(boost::numeric_cast<std::float_t>(ptl.x), boost::numeric_cast<std::float_t>(ptl.y));
 
   // 以某种方式通知我们的应用程序我们已经完成了文件的拖动（以某种方式提供数据）
-  begin_drop_ = {0b00};
+  begin_drop_ = false;
 
   *pdwEffect &= DROPEFFECT_COPY;
   return S_OK;
 }
-drop_manager::operator bool() const { return begin_drop_[1]; }
+drop_manager::operator bool() const { return begin_drop_; }
 
 const std::vector<FSys::path> &drop_manager::GetDropFiles() const { return *drop_files; }
 
 void drop_manager::render() {
-  constexpr std::bitset<2> kl_drag_leave_next{0b10};
-  if (begin_drop_.any()) {
-    DOODLE_LOG_INFO("render {}", begin_drop_);
-    if (begin_drop_[0])
-      dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
-        ImGui::SetDragDropPayload(
-            doodle::doodle_config::drop_imgui_id.data(), drop_files.get(), sizeof(std::vector<FSys::path>)
-        );
-        dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(*drop_files, "\n"))); };
-      };
-    else if (begin_drop_ == kl_drag_leave_next) {
-      ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Left, false);
-    }
-  }
+  if (begin_drop_)
+    dear::DragDropSource{ImGuiDragDropFlags_SourceExtern} && [&]() {
+      ImGui::SetDragDropPayload(
+          doodle::doodle_config::drop_imgui_id.data(), drop_files.get(), sizeof(std::vector<FSys::path>)
+      );
+      dear::Tooltip{} && [&]() { dear::Text(fmt::format("{}", fmt::join(*drop_files, "\n"))); };
+    };
 }
 
 ole_guard::ole_guard() {

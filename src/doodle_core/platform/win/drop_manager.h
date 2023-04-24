@@ -26,7 +26,7 @@ class DOODLE_CORE_API drop_manager : public IDropTarget {
  private:
   LONG m_RefCount{};
 
-  std::bitset<2> begin_drop_{};
+  bool begin_drop_{};
   std::shared_ptr<std::vector<FSys::path>> drop_files;
 
  public:
