@@ -285,7 +285,7 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   for (auto&& [e, p] : ptr->registry_attr->view<project_config::base_config>().each()) {
     ptr->registry_attr->ctx().emplace<project_config::base_config>() = p;
   }
-  ptr->registry_attr->ctx().get<project>().set_path(in_path);
+  ptr->registry_attr->ctx().get<project>().set_path(in_path.parent_path());
 
   return {};
 }
