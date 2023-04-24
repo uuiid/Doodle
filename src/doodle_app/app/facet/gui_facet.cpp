@@ -12,7 +12,6 @@
 #include <doodle_core/core/util.h>
 #include <doodle_core/database_task/sqlite_client.h>
 #include <doodle_core/gui_template/show_windows.h>
-#include <doodle_core/platform/win/drop_manager.h>
 
 #include <doodle_app/app/program_options.h>
 #include <doodle_app/gui/base/base_window.h>
@@ -29,6 +28,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/locale.hpp>
 
+#include "platform/win/drop_manager.h"
 #include <gui/get_input_dialog.h>
 #include <gui/main_menu_bar.h>
 #include <gui/main_proc_handle.h>

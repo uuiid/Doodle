@@ -6,12 +6,12 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/core/init_register.h>
-#include <doodle_core/platform/win/drop_manager.h>
 
 #include <doodle_app/app/app_command.h>
 #include <doodle_app/gui/base/ref_base.h>
 
 #include "imgui.h"
+#include "platform/win/drop_manager.h"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/action/sort.hpp"
 #include <any>
