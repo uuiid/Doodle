@@ -29,7 +29,9 @@ macro(doodle_link_test)
             PRIVATE
             ${PROJECT_SOURCE_DIR}/src/test
     )
-    target_compile_options(${ARGV0} PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
+    target_compile_options(${ARGV0} PRIVATE
+            $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+            $<$<CXX_COMPILER_ID:MSVC>:/MP>)
 endmacro()
 
 add_executable(

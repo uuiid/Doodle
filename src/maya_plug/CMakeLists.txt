@@ -28,12 +28,17 @@ target_link_libraries(doodle_maya
         doodle_core
         doodle_app
         maya::maya_all
-        Qt5::Core
-        Qt5::Widgets
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
         )
+target_compile_options(
+        doodle_maya
+        PRIVATE
+
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>
+        $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
+)
 
 # 设置maya插件后缀名
 set_target_properties(

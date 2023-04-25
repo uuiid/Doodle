@@ -13,7 +13,7 @@ doodle_sqlpp_generate(
 
 # 添加配置
 add_library(doodle_core
-#        SHARED
+        #        SHARED
         ${OUT_LISTS_sqlpp}
         )
 
@@ -109,6 +109,7 @@ target_compile_options(doodle_core
         PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /EHs >
         PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/MP>
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj >
 
 

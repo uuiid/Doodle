@@ -78,7 +78,7 @@ target_link_libraries(doodle_lib
         PRIVATE
         d3d11.lib
         dxgi.lib
-#        Microsoft::DirectXTK
+        #        Microsoft::DirectXTK
         implot::implot
         DoodleLibResourceFont
         Eigen3::Eigen
@@ -97,6 +97,7 @@ target_compile_definitions(doodle_lib
 target_compile_options(doodle_lib
         PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /EHs>
+        $<$<CXX_COMPILER_ID:MSVC>: /MP>
         )
 
 target_include_directories(doodle_lib
