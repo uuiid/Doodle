@@ -1,15 +1,15 @@
-set(DOODLE_MAYA doodle_maya_${Maya_Version})
+
 add_executable(
-        ${DOODLE_MAYA}
+        doodle_maya_exe
         main.cpp
 )
 
 add_subdirectory(facet)
 
 
-set_target_properties(${DOODLE_MAYA}
+set_target_properties(doodle_maya_exe
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(${DOODLE_MAYA}
+target_link_libraries(doodle_maya_exe
         PUBLIC
         doodle_lib
         doodle_app
@@ -21,7 +21,7 @@ target_link_libraries(${DOODLE_MAYA}
         OpenMP::OpenMP_CXX
         )
 
-target_compile_definitions(${DOODLE_MAYA}
+target_compile_definitions(doodle_maya_exe
         PUBLIC
         #            WIN32_LEAN_AND_MEAN
         #        ISOLATION_AWARE_ENABLED
@@ -36,8 +36,8 @@ target_compile_options(
         $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 )
 
-#target_link_options(${DOODLE_MAYA} PUBLIC /MAP:test.txt)
-target_link_options(${DOODLE_MAYA} PUBLIC /ENTRY:mainCRTStartup)
+#target_link_options(doodle_maya_exe PUBLIC /MAP:test.txt)
+target_link_options(doodle_maya_exe PUBLIC /ENTRY:mainCRTStartup)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
@@ -45,7 +45,7 @@ set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT exe_com)
 include(InstallRequiredSystemLibraries)
 
 
-install(TARGETS ${DOODLE_MAYA}
+install(TARGETS doodle_maya_exe
         RUNTIME_DEPENDENCIES
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
@@ -58,8 +58,8 @@ install(TARGETS ${DOODLE_MAYA}
 #
 #install(CODE
 #        "
-#set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:${DOODLE_MAYA}>)
-#set(DOODLE_MAIN_EXE $<TARGET_FILE:${DOODLE_MAYA}>)
+#set(DOODLE_RUN_NAME $<TARGET_FILE_NAME:doodle_maya_exe>)
+#set(DOODLE_MAIN_EXE $<TARGET_FILE:doodle_maya_exe>)
 #
 #include(${CMAKE_CURRENT_BINARY_DIR}/install_script.cmake)
 #        "

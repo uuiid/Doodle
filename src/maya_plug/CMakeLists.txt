@@ -1,10 +1,12 @@
 
+set(maya_plug_name doodle_maya_lib)
 configure_file(DoodleExe.manifest.in doodle_maya_lib.manifest)
-configure_file(maya_plug.rc.in doodle_maya_lib.rc)
+
+#configure_file(maya_plug.rc.in doodle_maya_lib.rc)
 
 add_library(doodle_maya_lib
         doodle_maya_lib.manifest
-        doodle_maya_lib.rc
+        #        doodle_maya_lib.rc
         ${PROJECT_SOURCE_DIR}/src/icon.ico
         )
 

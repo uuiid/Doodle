@@ -6,13 +6,18 @@
 #include <doodle_lib/facet/rpc_server_facet.h>
 
 #include "maya/MApiNamespace.h"
-#include <maya/MGlobal.h>
-#include <maya/MLibrary.h>
+#include <exe_maya/facet/cloth_sim.h>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main() try {
-  MLibrary::initialize(true, "maya_doodle");
-  MLibrary::cleanup(0, false);
+  using main_app = doodle::app_command<doodle::cloth_sim>;
+  main_app app{};
+  try {
+    return app.run();
+  } catch (const std::exception& err) {
+    DOODLE_LOG_WARN(boost::diagnostic_information(boost::diagnostic_information(err)));
+    return 1;
+  }
 } catch (...) {
   return 1;
 }

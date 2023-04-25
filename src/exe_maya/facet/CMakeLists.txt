@@ -1,5 +1,5 @@
 target_sources(
-        ${DOODLE_MAYA}
+        doodle_maya_exe
         PUBLIC
         cloth_sim.h
 
