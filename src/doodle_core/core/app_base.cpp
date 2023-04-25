@@ -75,16 +75,6 @@ void app_base::stop_app(bool in_stop) {
   core_set_init{}.write_file();
 }
 
-void app_base::load_project(const FSys::path& in_path) const {
-  boost::ignore_unused(this);
-  if (!in_path.empty() && FSys::exists(in_path) && FSys::is_regular_file(in_path) &&
-      in_path.extension() == doodle_config::doodle_db_name.data()) {
-    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(in_path, [](bsys::error_code) -> void {
-      DOODLE_LOG_INFO("完成打开项目");
-    });
-  }
-}
-
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }
 
 }  // namespace doodle

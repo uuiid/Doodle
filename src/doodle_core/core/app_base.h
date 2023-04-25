@@ -61,8 +61,6 @@ class DOODLE_CORE_API app_base {
 
   void stop_app(bool in_stop = false);
 
-  void load_project(const FSys::path& in_path) const;
-
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
 };

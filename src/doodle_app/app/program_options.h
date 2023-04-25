@@ -18,6 +18,6 @@ class DOODLE_APP_API program_options : boost::noncopyable {
   program_options() = default;
   program_options(int argc, const char* const argv[]) : arg{argc, argv} {};
 
-  void init_project()
+  void init_project() const
 };
 }  // namespace doodle::details

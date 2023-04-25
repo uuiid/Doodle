@@ -17,7 +17,7 @@
 
 namespace doodle::details {
 
-void program_options::init_project() {
+void program_options::init_project() const {
   if (auto l_path = FSys::from_quotation_marks(arg(1).str());
       !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
       l_path.extension() == doodle_config::doodle_db_name.data()) {
