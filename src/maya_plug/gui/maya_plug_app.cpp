@@ -8,6 +8,7 @@
 #include "doodle_core/gui_template/show_windows.h"
 #include <doodle_core/core/core_set.h>
 
+#include "doodle_app/gui/base/base_window.h"
 #include <doodle_app/gui/main_menu_bar.h>
 #include <doodle_app/gui/main_proc_handle.h>
 #include <doodle_app/gui/main_status_bar.h>
@@ -22,7 +23,9 @@
 
 namespace doodle::maya_plug {
 void maya_facet::load_windows() {
-  gui::g_windows_manage().set_layout(gui::windows_layout{std::in_place_type<maya_layout>});
+  gui::g_windows_manage().register_layout(gui::layout_init_arg{}.create<maya_layout>());
+  gui::g_windows_manage().switch_layout(maya_layout::name);
+
   gui::g_windows_manage().create_windows_arg(
       gui::windows_init_arg{}.create<maya_menu>().set_render_type<dear::MainMenuBar>()
   );

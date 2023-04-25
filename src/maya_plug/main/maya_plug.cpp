@@ -25,14 +25,13 @@
 #include <maya_plug/maya_comm/upload_files_command.h>
 #include <maya_plug/maya_render/hud_render_node.h>
 
-#include <QtCore/QtCore>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QWidget>
 #include <maya/MFnPlugin.h>
 #include <maya/MQtUtil.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MTimerMessage.h>
 #include <stack>
+#include <wil/result.h>
+
 namespace {
 const constexpr std::string_view doodle_windows{"doodle_windows"};
 const constexpr std::string_view doodle_win_path{"MayaWindow|mainWindowMenu"};
@@ -42,21 +41,41 @@ std::shared_ptr<app_base> p_doodle_app = nullptr;
 std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 }  // namespace
-
 namespace doodle::maya_plug {
+
+struct find_windows_call {
+  HWND maya_wnd{};
+};
+
+HWND find_windows() {
+  find_windows_call l_data{};
+  // THROW_IF_WIN32_BOOL_FALSE();
+
+  ::EnumWindows(
+      [](HWND hwnd, LPARAM lParam) -> BOOL {
+        if (boost::this_process::get_id() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
+          auto* l_data     = reinterpret_cast<find_windows_call*>(lParam);
+          l_data->maya_wnd = hwnd;
+          return FALSE;
+        } else {
+          return TRUE;
+        }
+      },
+      reinterpret_cast<LPARAM>(&l_data)
+  );
+  return l_data.maya_wnd;
+}
+
 void open_windows() {
   using maya_gui_app     = doodle::app_plug<maya_facet>;
   using maya_command_app = doodle::app_plug<null_facet>;
 
-  HWND win_id{};
-  if (auto* l_main_win = MQtUtil::mainWindow()) {
-    win_id = reinterpret_cast<HWND>(l_main_win->winId());
-  }
-
   switch (MGlobal::mayaState()) {
     case MGlobal::MMayaState::kBaseUIMode:
     case MGlobal::MMayaState::kInteractive: {
+      HWND win_id  = find_windows();
       p_doodle_app = std::make_shared<maya_gui_app>();
+      doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(win_id);
       break;
     }
     case MGlobal::MMayaState::kBatch:
@@ -66,7 +85,6 @@ void open_windows() {
     } break;
   }
 
-  doodle_lib::Get().ctx().get<program_info>().parent_windows_attr(win_id);
   doodle_lib::Get().ctx().get<program_info>().handle_attr(::MhInstPlugin);
 }
 }  // namespace doodle::maya_plug
