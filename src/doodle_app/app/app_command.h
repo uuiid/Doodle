@@ -29,13 +29,6 @@ class app_command : public app_base {
     return authorization{}.is_expire();
   };
 
-  struct args_t {
-    int argc;
-    const char* const argv[];
-  };
-
-  args_t args_;
-
  public:
   app_command() : app_base() {
     doodle_lib::Get().ctx().emplace<program_options>();
@@ -43,7 +36,13 @@ class app_command : public app_base {
     add_facet<Facet_Defaute>();
     (add_facet<Facet_>(), ...);
   };
-  app_command(int argc, const char* const argv[]) : app_command(), args_(argc, argv) {}
+
+  app_command(int argc, const char* const argv[]) : app_command() {
+    for (auto&& val : facet_list) {
+      val->add_program_options();
+    }
+    doodle_lib::Get().ctx().get<program_options>().arg.parse(argc, argv);
+  }
   virtual ~app_command() override = default;
 
   static app_command& Get() { return *(dynamic_cast<app_command*>(self)); }
@@ -54,11 +53,6 @@ class app_command : public app_base {
 
  protected:
   virtual void post_constructor() override {
-    for (auto&& val : facet_list) {
-      val->add_program_options();
-    }
-    doodle_lib::Get().ctx().get<program_options>().arg.parse(args_.argc, args_.argv);
-
     facet_list |= ranges::actions::remove_if([](app_facet_interface& in) { return !in->post(); });
   };
 
