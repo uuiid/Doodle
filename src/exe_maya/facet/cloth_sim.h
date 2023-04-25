@@ -13,8 +13,8 @@ class cloth_sim final {
   std::string files_attr{};
 
  public:
-  cloth_sim()  = default;
-  ~cloth_sim() = default;
+  cloth_sim() = default;
+  ~cloth_sim();
 
   const std::string& name() const noexcept;
   bool post();
