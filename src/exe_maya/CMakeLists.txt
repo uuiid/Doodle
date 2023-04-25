@@ -5,6 +5,7 @@ add_executable(
 )
 
 add_subdirectory(facet)
+add_subdirectory(cloth_sim)
 
 
 set_target_properties(doodle_maya_exe

@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace doodle {
+namespace doodle::maya_plug {
 class cloth_sim final {
   std::string files_attr{};
   bool is_init{};
