@@ -50,7 +50,7 @@ MStatus comm_play_blast_maya::doIt(const MArgList& in_arg) {
     k_p.set_save_path(k_path.asUTF8());
   } else {
     auto l_str = fmt::format(
-        "{}_playblast_{}-{}.mp4", maya_file_io::get_current_path().stem().generic_path(), MAnimControl::minTime(),
+        "{}_playblast_{}-{}.mp4", maya_file_io::get_current_path().stem(), MAnimControl::minTime(),
         MAnimControl::maxTime()
     );
     auto l_path = maya_file_io::work_path("mov") / l_str;

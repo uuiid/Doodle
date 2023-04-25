@@ -149,7 +149,7 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
     );
 
   FSys::path l_path{l_name};
-  l_path = l_path.generic_path();
+  l_path = l_path.generic_string();
   l_path += ".fbx";
   return l_path;
 }

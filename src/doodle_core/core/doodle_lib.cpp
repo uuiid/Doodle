@@ -50,11 +50,11 @@ void doodle_lib::init() {
 
   init_register::instance().reg_class();
 
-  boost::locale::generator k_gen{};
-  k_gen.categories(
-      boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
-  );
-  FSys::path::imbue(k_gen("zh_CN.UTF-8"));
+  //boost::locale::generator k_gen{};
+  //k_gen.categories(
+  //    boost::locale::all_categories ^ boost::locale::category_t::formatting ^ boost::locale::category_t::parsing
+  //);
+  //FSys::path::imbue(k_gen("zh_CN.UTF-8"));
 
   ctx().emplace<database_info>();
   ptr->reg->ctx().emplace<project>("C:/", "tmp_project");

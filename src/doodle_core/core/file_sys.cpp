@@ -7,9 +7,10 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 
-#include <Windows.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/dll.hpp>
+
+#include <Windows.h>
 #include <nlohmann/json.hpp>
 #include <shellapi.h>
 #include <tchar.h>
@@ -137,6 +138,8 @@ FSys::path write_tmp_file(
 
 }  // namespace doodle::FSys
 
+#ifndef USE_STD_FSYS
+
 namespace nlohmann {
 // template <>
 void adl_serializer<boost::filesystem::path>::to_json(json &j, const boost::filesystem::path &in_path) {
@@ -146,3 +149,5 @@ void adl_serializer<boost::filesystem::path>::from_json(const json &j, boost::fi
   in_path = j.get<std::string>();
 }
 }  // namespace nlohmann
+
+#endif

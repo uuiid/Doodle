@@ -8,6 +8,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+
 #include <filesystem>
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
@@ -16,6 +17,8 @@
 namespace doodle::chrono {
 using namespace std::chrono;
 }
+
+#define USE_STD_FSYS
 
 namespace doodle::FSys {
 #ifdef USE_STD_FSYS
@@ -47,6 +50,9 @@ FSys::path DOODLE_CORE_API write_tmp_file(
     const std::optional<std::string>& in_file_name = {}, std::int32_t in_model = std::ios::out
 );
 }  // namespace doodle::FSys
+
+#ifndef USE_STD_FSYS
+
 namespace fmt {
 /**
  * @brief 格式化资产类
@@ -78,3 +84,5 @@ struct DOODLE_CORE_API adl_serializer<boost::filesystem::path> {
   static void from_json(const json& j, boost::filesystem::path& in_path);
 };
 }  // namespace nlohmann
+
+#endif

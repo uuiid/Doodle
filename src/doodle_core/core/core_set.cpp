@@ -68,12 +68,7 @@ core_set::core_set()
   }
 
   if (boost::dll::program_location().filename() == "DoodleExe.exe") {
-    program_location_attr = boost::dll::program_location();
-  }
-  /// 这里循环十次, 以防 windows 延迟
-  /// https://www.boost.org/doc/libs/1_73_0/libs/uuid/doc/uuid.html#boost/uuid/random_generator.hpp
-  for (int l = 0; l < 10; ++l) {
-    get_uuid();
+    program_location_attr = boost::dll::program_location().generic_string();
   }
   user_id = get_uuid();
 }

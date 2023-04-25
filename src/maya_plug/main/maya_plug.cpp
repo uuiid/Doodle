@@ -269,7 +269,7 @@ scripts.Doodle_shelf.DoodleUIManage.creation()
 }
 
 MStatus uninitializePlugin(MObject obj) {
-  MStatus status = MStatus::MStatusCode::kFailure;
+  MStatus status{};
 
   MFnPlugin k_plugin{obj};
 
@@ -281,6 +281,7 @@ MStatus uninitializePlugin(MObject obj) {
   }
   // 这里要停止app
   p_doodle_app->stop_app();
+  p_doodle_app->run();
   /// 先删除工具架
   status = MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
 scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
