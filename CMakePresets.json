@@ -19,7 +19,7 @@
         "strategy": "external"
       },
       "toolset": {
-        "value": "v142,host=x64,version=14.29.30133",
+        "value": "v142,host=x64,version=14",
         "strategy": "external"
       },
       "cacheVariables": {
