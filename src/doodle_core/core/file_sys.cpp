@@ -136,6 +136,12 @@ FSys::path write_tmp_file(
   return k_tmp_path;
 }
 
+FSys::path from_quotation_marks(const std::string &in_string) {
+  if (*in_string.begin() == '"' && *(--in_string.end()) == '"') {
+    return FSys::path{in_string.substr(1, in_string.size() - 1)};
+  }
+  return FSys::path{in_string};
+}
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS

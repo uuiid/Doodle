@@ -270,14 +270,8 @@ void gui_facet::init_windows() {
     );
   });
   /// 在这里我们加载项目
-  if (doodle_lib::Get().ctx().contains<program_options>()) {
-    auto& l_op = doodle_lib::Get().ctx().get<program_options>();
-    ::doodle::app_base::Get().load_project(
-        !l_op.p_project_path.empty() ? l_op.p_project_path : core_set::get_set().project_root[0]
-    );
-  } else {
-    ::doodle::app_base::Get().load_project(core_set::get_set().project_root[0]);
-  }
+  doodle_lib::Get().ctx().get<program_options>().init_project();
+
   s_set_title_fun();
   boost::asio::post(g_io_context(), [this]() { this->load_windows(); });
 }

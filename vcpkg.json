@@ -12,7 +12,6 @@
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
-    "boost-program-options",
     "boost-contract",
     "boost-filesystem",
     "boost-coroutine",
@@ -30,9 +29,10 @@
     "boost-beast",
     "boost-icl",
     "boost-lambda2",
+    "argh",
     {
       "name": "opencv",
-      "default-features":false,
+      "default-features": false,
       "features": [
         "ffmpeg",
         "contrib",
@@ -41,7 +41,7 @@
     },
     {
       "name": "imgui",
-      "default-features":false,
+      "default-features": false,
       "features": [
         "win32-binding",
         "dx11-binding",
@@ -56,12 +56,11 @@
     "entt",
     {
       "name": "sqlpp11",
-      "default-features":false,
+      "default-features": false,
       "features": [
         "sqlite3"
       ]
     },
-
     "eigen3",
     "range-v3",
     "wil",

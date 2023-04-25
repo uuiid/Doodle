@@ -31,7 +31,6 @@ target_link_libraries(
         PUBLIC
         doodle_core
         imgui::imgui
-        Boost::program_options
 
 
         PRIVATE

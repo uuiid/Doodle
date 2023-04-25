@@ -11,7 +11,6 @@
 
 #include <maya/MGlobal.h>
 #include <maya/MLibrary.h>
-// #include <maya/
 
 namespace doodle {
 const std::string& cloth_sim::name() const noexcept {
@@ -19,20 +18,17 @@ const std::string& cloth_sim::name() const noexcept {
   return name;
 }
 bool cloth_sim::post() {
-  MLibrary::initialize(true, "maya_doodle");
-  if (files_attr.empty()) {
+  if (auto l_str = doodle_lib::Get().ctx().get<program_options>().arg(config).str(); l_str.empty()) {
+    return false;
   }
+  MLibrary::initialize(true, "maya_doodle");
 
   return true;
 }
-void cloth_sim::deconstruction() {}
+void cloth_sim::deconstruction() { MLibrary::cleanup(0, false); }
 
-void cloth_sim::add_program_options() {
-  opt.add_options()("cloth_sim_path", boost::program_options::value(&files_attr), "创建视频的序列json选项");
-  auto& l_p = doodle_lib::Get().ctx().get<program_options>();
-  l_p.add_opt(opt);
-}
+void cloth_sim::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
 
-cloth_sim::~cloth_sim() { MLibrary::cleanup(0, false); }
+cloth_sim::~cloth_sim() = default;
 
 };  // namespace doodle

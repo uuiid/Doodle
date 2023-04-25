@@ -55,7 +55,6 @@ list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 find_package(Boost REQUIRED COMPONENTS
         locale
         iostreams
-        program_options
         contract
         filesystem
         coroutine

@@ -62,7 +62,6 @@ target_link_libraries(doodle_lib
         DoodleLibResource
         magic_enum::magic_enum
         Boost::locale
-        Boost::program_options
         Boost::contract
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}

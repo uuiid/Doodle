@@ -49,6 +49,8 @@ FSys::path DOODLE_CORE_API write_tmp_file(
     const std::string& in_falg, const std::string& in_string, const std::string& in_extension,
     const std::optional<std::string>& in_file_name = {}, std::int32_t in_model = std::ios::out
 );
+FSys::path DOODLE_CORE_API from_quotation_marks(const std::string& in_string);
+
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS

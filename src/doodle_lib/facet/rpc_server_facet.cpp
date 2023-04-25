@@ -9,8 +9,6 @@
 #include "doodle_lib/distributed_computing/server.h"
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include <boost/program_options.hpp>
-
 namespace doodle::facet {
 
 const std::string& rpc_server_facet::name() const noexcept { return name_; }

@@ -9,8 +9,9 @@
 
 namespace doodle {
 class cloth_sim final {
-  boost::program_options::options_description opt{"cloth_sim"};
   std::string files_attr{};
+
+  static constexpr char* config{"cloth_sim_config"};
 
  public:
   cloth_sim() = default;
