@@ -170,7 +170,6 @@ class null_facet {
     return l_i;
   };
   inline bool post() { return true; };
-  void deconstruction(){};
   void add_program_options(){};
 };
 BOOST_AUTO_TEST_CASE(test_sqlite3_old_open_save) {

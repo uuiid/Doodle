@@ -17,12 +17,11 @@ class DOODLELIB_API rpc_server_facet final {
   std::shared_ptr<decltype(boost::asio::make_work_guard(g_io_context()))> work_{};
 
  public:
-  rpc_server_facet()          = default;
-  virtual ~rpc_server_facet() = default;
+  rpc_server_facet() = default;
+  virtual ~rpc_server_facet();
 
   const std::string& name() const noexcept;
   bool post();
-  void deconstruction();
   void add_program_options(){};
 };
 

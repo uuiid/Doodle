@@ -30,7 +30,6 @@ bool cloth_sim::post() {
 
   return true;
 }
-void cloth_sim::deconstruction(){};
 
 void cloth_sim::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
 

@@ -18,6 +18,6 @@ bool rpc_server_facet::post() {
   work_ = std::make_shared<decltype(work_)::element_type>(boost::asio::make_work_guard(g_io_context()));
   return true;
 }
-void rpc_server_facet::deconstruction() { server_attr.reset(); }
+rpc_server_facet::~rpc_server_facet() { server_attr.reset(); }
 
 }  // namespace doodle::facet

@@ -17,7 +17,6 @@ class cloth_sim final {
 
   const std::string& name() const noexcept;
   bool post();
-  void deconstruction();
   void add_program_options();
 };
 

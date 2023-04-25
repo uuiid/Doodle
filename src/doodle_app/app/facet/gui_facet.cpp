@@ -300,7 +300,7 @@ void gui_facet::set_title(const std::string& in_title) const {
     SetWindowTextW(p_hwnd, l_str.c_str());
   });
 }
-gui_facet::~gui_facet() = default;
+gui_facet::~gui_facet() { deconstruction(); };
 void gui_facet::destroy_windows() { ::PostQuitMessage(0); }
 
 win::drop_manager* gui_facet::drop_manager() { return p_i->dorp_manager.get(); }
