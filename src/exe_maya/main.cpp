@@ -9,9 +9,9 @@
 #include <exe_maya/facet/cloth_sim.h>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-extern "C" int main() try {
+extern "C" int main(int argc, const char* const argv[]) try {
   using main_app = doodle::app_command<doodle::cloth_sim>;
-  main_app app{};
+  main_app app{argc, argv};
   try {
     return app.run();
   } catch (const std::exception& err) {

@@ -3,15 +3,13 @@
 //
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include <string>
 
 namespace doodle {
 class cloth_sim final {
   std::string files_attr{};
-
-  static constexpr char* config{"cloth_sim_config"};
+  bool is_init{};
+  static constexpr auto config{"cloth_sim_config"};
 
  public:
   cloth_sim() = default;
