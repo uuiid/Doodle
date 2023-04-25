@@ -3,6 +3,10 @@ add_executable(
         ${DOODLE_MAYA}
         main.cpp
 )
+
+add_subdirectory(facet)
+
+
 set_target_properties(${DOODLE_MAYA}
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(${DOODLE_MAYA}
