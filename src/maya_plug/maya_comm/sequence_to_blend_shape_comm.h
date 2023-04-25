@@ -2,7 +2,7 @@
 // Created by TD on 2022/7/29.
 //
 #pragma once
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 
 namespace sequence_to_blend_shape_comm_ns {

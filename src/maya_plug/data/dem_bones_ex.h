@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <DemBones/DemBonesExt.h>
 namespace doodle::maya_plug {

@@ -11,13 +11,13 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/shot.h>
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

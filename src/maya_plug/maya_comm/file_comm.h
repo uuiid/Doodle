@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 namespace {
 constexpr char comm_file_save_name[] = "doodle_comm_file_save";

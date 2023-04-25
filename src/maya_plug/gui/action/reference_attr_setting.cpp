@@ -10,10 +10,10 @@
 #include <doodle_app/gui/base/ref_base.h>
 #include <doodle_app/lib_warp/imgui_warp.h>
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sim_cover_attr.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>

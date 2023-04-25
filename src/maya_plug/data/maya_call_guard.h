@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MMessage.h>
 namespace doodle {

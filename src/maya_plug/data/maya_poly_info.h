@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 namespace doodle::maya_plug {
 /**
  * @brief 获取maya中的多边形的信息类, 在初始化中就会获取

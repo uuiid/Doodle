@@ -1,6 +1,6 @@
 set(maya_plug_name doodle_maya)
 
-add_library(doodle_maya MODULE)
+add_library(doodle_maya MODULE main.cpp)
 
 
 target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

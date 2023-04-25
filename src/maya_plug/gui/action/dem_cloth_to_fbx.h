@@ -6,8 +6,8 @@
 
 #include <doodle_app/gui/base/base_window.h>
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/configure/static_value.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 namespace doodle::maya_plug {
 

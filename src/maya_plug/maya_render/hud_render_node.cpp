@@ -6,9 +6,9 @@
 
 #include <doodle_core/metadata/user.h>
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/play_blast.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MAnimControl.h>
 #include <maya/MFnCamera.h>

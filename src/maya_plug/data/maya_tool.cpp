@@ -4,7 +4,7 @@
 
 #include "maya_tool.h"
 
-#include <main/maya_plug_fwd.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>

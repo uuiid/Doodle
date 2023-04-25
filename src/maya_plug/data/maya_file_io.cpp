@@ -4,8 +4,8 @@
 
 #include "maya_file_io.h"
 
-#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/main/maya_plug_fwd.h>
 
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
