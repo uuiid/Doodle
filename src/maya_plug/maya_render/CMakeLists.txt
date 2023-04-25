@@ -1,4 +1,4 @@
-target_sources(doodle_maya
+target_sources(doodle_maya_lib
         PUBLIC
         hud_render_node.h
         hud_render_override.h

@@ -1,4 +1,4 @@
-target_sources(doodle_maya
+target_sources(doodle_maya_lib
         PUBLIC
         fmt_select_list.h
         fmt_warp.h

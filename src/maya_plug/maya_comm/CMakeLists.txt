@@ -1,4 +1,4 @@
-target_sources(doodle_maya
+target_sources(doodle_maya_lib
         PUBLIC
         replace_rig_file_command.h
         find_duplicate_poly_comm.h

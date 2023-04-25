@@ -1,10 +1,10 @@
-set(maya_plug_name doodle_maya)
-configure_file(DoodleExe.manifest.in doodle_maya.manifest)
-configure_file(maya_plug.rc.in doodle_maya.rc)
 
-add_library(doodle_maya MODULE
-        doodle_maya.manifest
-        doodle_maya.rc
+configure_file(DoodleExe.manifest.in doodle_maya_lib.manifest)
+configure_file(maya_plug.rc.in doodle_maya_lib.rc)
+
+add_library(doodle_maya_lib
+        doodle_maya_lib.manifest
+        doodle_maya_lib.rc
         ${PROJECT_SOURCE_DIR}/src/icon.ico
         )
 
@@ -18,66 +18,25 @@ add_subdirectory(main main_${Maya_Version})
 add_subdirectory(maya_comm maya_comm_${Maya_Version})
 add_subdirectory(maya_render maya_render_${Maya_Version})
 
-target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-set_target_properties(doodle_maya PROPERTIES
+target_include_directories(doodle_maya_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(doodle_maya_lib PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
         )
-target_link_libraries(doodle_maya
+target_link_libraries(doodle_maya_lib
         PRIVATE
         doodle_core
         doodle_app
+
         maya::maya_all
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
         )
 target_compile_options(
-        doodle_maya
+        doodle_maya_lib
         PRIVATE
 
         $<$<CXX_COMPILER_ID:MSVC>:/MP>
         $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 )
-
-# 设置maya插件后缀名
-set_target_properties(
-        doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.mll"
-)
-
-configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
-
-list(APPEND maya_script_files ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py)
-
-# message("${maya_script_files}")
-add_custom_target(
-        doodle_maya_python_files
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py ${PROJECT_BINARY_DIR}/plug/maya/scripts/scripts/
-)
-
-add_dependencies(doodle_maya doodle_maya_python_files)
-
-# 定义安装逻辑
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT maya_plug_com)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION maya/plug-ins)
-include(InstallRequiredSystemLibraries)
-install(TARGETS doodle_maya
-        RUNTIME_DEPENDENCIES
-        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
-        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
-        DESTINATION maya/plug-ins
-        COMPONENT maya_plug_com
-        )
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
-        DESTINATION maya
-        COMPONENT maya_plug_com)
-install(FILES ${CMAKE_CURRENT_LIST_DIR}/../doodle_core/resource/maya_fun_tool.py
-        DESTINATION maya/scripts/scripts/
-        COMPONENT maya_plug_com)
-install(FILES maya_plug_install.wxs
-        DESTINATION wix
-        COMPONENT maya_plug_com)
-doodle_install_code_wix(maya maya_plug_com)

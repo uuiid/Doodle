@@ -1,4 +1,4 @@
-target_sources(doodle_maya
+target_sources(doodle_maya_lib
         PUBLIC
         comm_check_scenes.h
         create_sim_cloth.h

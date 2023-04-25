@@ -1,4 +1,4 @@
-target_sources(doodle_maya
+target_sources(doodle_maya_lib
         PUBLIC
         create_hud_node.h
         dem_bones_ex.h
