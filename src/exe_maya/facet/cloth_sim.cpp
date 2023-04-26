@@ -22,13 +22,13 @@
 #include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
 #include "maya/MStatus.h"
 #include <cmath>
 #include <maya/MAnimControl.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
-#include <maya/MLibrary.h>
 
 namespace doodle::maya_plug {
 const std::string& cloth_sim::name() const noexcept {
@@ -36,11 +36,11 @@ const std::string& cloth_sim::name() const noexcept {
   return name;
 }
 bool cloth_sim::post() {
+  bool l_ret = false;
   auto l_str = FSys::from_quotation_marks(doodle_lib::Get().ctx().get<program_options>().arg(config).str());
   if (l_str.empty()) {
-    return false;
+    return l_ret;
   }
-  is_init = true;
   DOODLE_LOG_INFO("开始初始化配置文件 {}", l_str);
   maya_exe_ns::qcloth_arg l_arg{};
 
@@ -48,13 +48,14 @@ bool cloth_sim::post() {
     l_arg = nlohmann::json::parse(FSys::ifstream{l_str}).get<maya_exe_ns::qcloth_arg>();
   } catch (const nlohmann::json::exception& e) {
     DOODLE_LOG_ERROR("解析配置失败 {}", e.what());
-    return false;
+    return l_ret;
   }
 
-  if (l_arg.file_path.empty()) return false;
+  if (l_arg.file_path.empty()) return l_ret;
 
   anim_begin_time_ = l_arg.export_anim_time;
-  MLibrary::initialize(true, "maya_doodle");
+  lib_guard_       = std::make_shared<maya_lib_guard>();
+
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "renderSetup";)"));
@@ -105,13 +106,9 @@ bool cloth_sim::post() {
     boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
   }
 
-  return true;
+  return l_ret;
 }
 
 void cloth_sim::add_program_options() { doodle_lib::Get().ctx().get<program_options>().arg.add_param(config); }
-
-cloth_sim::~cloth_sim() {
-  if (is_init) MLibrary::cleanup(0, false);
-}
 
 };  // namespace doodle::maya_plug
