@@ -55,7 +55,9 @@ class DOODLE_CORE_API doodle_category : public bsys::error_category {
 [[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_enum e);
 
 template <typename exception_type>
-[[noreturn]] void throw_exception(exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION) {
+[[noreturn]] inline void throw_exception(
+    exception_type&& in_exception_type, ::boost::source_location const& in_loc = BOOST_CURRENT_LOCATION
+) {
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
 

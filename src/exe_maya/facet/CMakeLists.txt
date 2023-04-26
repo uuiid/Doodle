@@ -5,4 +5,5 @@ target_sources(
 
         PRIVATE
         cloth_sim.cpp
+        cloth_sim_main.cpp
 )

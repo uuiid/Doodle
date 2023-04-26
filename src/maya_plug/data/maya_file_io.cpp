@@ -132,4 +132,22 @@ void maya_file_io::import_reference_file(const reference_file& in_ref, bool pres
     DOODLE_MAYA_CHICK(l_s);
   }
 }
+void maya_file_io::set_workspace(const FSys::path& in_path) {
+  FSys::path l_path{in_path.parent_path()};
+  if (!FSys::exists(l_path / "workspace.mel")) {
+    l_path = l_path.parent_path();
+  }
+
+  if (!FSys::exists(l_path / "workspace.mel")) {
+    std::string const l_s{
+        fmt::format(R"(workspace -baseWorkspace "default" -openWorkspace "{}")", l_path.generic_string())};
+
+    maya_chick(MGlobal::executeCommand(d_str{l_s}));
+    maya_chick(MGlobal::executeCommand(R"(workspace -saveWorkspace)"));
+  } else {
+    std::string const l_s{fmt::format(R"(workspace -openWorkspace "{}")", l_path.generic_string())};
+    maya_chick(MGlobal::executeCommand(d_str{l_s}));
+  }
+}
+
 }  // namespace doodle::maya_plug
