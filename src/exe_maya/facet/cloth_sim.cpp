@@ -55,45 +55,31 @@ bool cloth_sim::post() {
 
   anim_begin_time_ = l_arg.export_anim_time;
   MLibrary::initialize(true, "maya_doodle");
-  MStatus l_status{};
-  l_status = MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "renderSetup";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "mayaHIK";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "OneClick";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "xgenToolkit";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "Unfold3D";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "MASH";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "mtoa";)");
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executeCommand(R"(loadPlugin "Substance";)");
-  DOODLE_MAYA_CHICK(l_status);
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "renderSetup";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "mayaHIK";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "OneClick";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "xgenToolkit";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "Unfold3D";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "MASH";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "mtoa";)"));
+  maya_chick(MGlobal::executeCommand(R"(loadPlugin "Substance";)"));
 
-  l_status = MFileIO::newFile(true);
-  DOODLE_MAYA_CHICK(l_status);
-  l_status = MGlobal::executePythonCommand(R"(import pymel.core)");
-  DOODLE_MAYA_CHICK(l_status);
+  maya_chick(MFileIO::newFile(true));
+  maya_chick(MGlobal::executePythonCommand(R"(import pymel.core)"));
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
 
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
   MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)});
 
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
 
-  MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()});
+  maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
 
   auto l_s = boost::asio::make_strand(g_io_context());
 
