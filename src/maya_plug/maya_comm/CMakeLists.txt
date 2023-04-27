@@ -7,7 +7,6 @@ target_sources(doodle_maya_lib
         upload_files_command.h
         file_comm.h
         cam_comm.h
-        play_blash_comm.h
         dem_bones_add_weight.h
         open_doodle_main.h
         clear_scene_comm.h
@@ -30,7 +29,6 @@ target_sources(doodle_maya_lib
         dem_bones_add_weight.cpp
         sequence_to_blend_shape_comm.cpp
         find_duplicate_poly_comm.cpp
-        play_blash_comm.cpp
         auto_chick_call_back.cpp
         create_qcloth_assets.cpp
         clear_scene_comm.cpp

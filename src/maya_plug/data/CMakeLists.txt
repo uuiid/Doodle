@@ -10,7 +10,6 @@ target_sources(doodle_maya_lib
         maya_poly_info.h
         maya_register_main.h
         maya_tool.h
-        play_blast.h
         qcloth_shape.h
         reference_file.h
         sim_cloth_tools.h
@@ -29,7 +28,6 @@ target_sources(doodle_maya_lib
         maya_file_io.cpp
         maya_poly_info.cpp
         maya_tool.cpp
-        play_blast.cpp
         qcloth_shape.cpp
         reference_file.cpp
         sim_cloth_tools.cpp

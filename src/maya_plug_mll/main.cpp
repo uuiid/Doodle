@@ -17,7 +17,6 @@
 #include <maya_plug/maya_comm/file_comm.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
-#include <maya_plug/maya_comm/play_blash_comm.h>
 #include <maya_plug/maya_comm/reference_comm.h>
 #include <maya_plug/maya_comm/replace_rig_file_command.h>
 #include <maya_plug/maya_comm/sequence_to_blend_shape_comm.h>
