@@ -56,6 +56,7 @@ bool cloth_sim::post() {
 
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   lib_guard_       = std::make_shared<maya_lib_guard>();
+  l_ret            = true;
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
 

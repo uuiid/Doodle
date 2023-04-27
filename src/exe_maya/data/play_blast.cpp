@@ -10,10 +10,14 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/image_to_movie.h>
 
+#include "boost/numeric/conversion/cast.hpp"
+
+#include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 
 #include "maya/MApiNamespace.h"
 #include "maya/MRenderTargetManager.h"
+#include "maya/MStatus.h"
 #include "maya/MString.h"
 #include "maya/MTextureManager.h"
 #include <fmt/chrono.h>
@@ -26,7 +30,7 @@
 #include <wil/registry.h>
 namespace doodle::maya_plug {
 
-MString play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
+MString play_blast::p_post_render_notification_name{"doodle_maya_notification"};
 MString play_blast::k_play_blast_tex{"doodle_maya_play_blast_tex"};
 
 void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
@@ -130,39 +134,43 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) return MStatus::kFailure;
 
-    renderer->addNotification(
-        captureCallback, p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic,
-        reinterpret_cast<void*>(this)
-    );
+    //    renderer->addNotification(
+    //        &play_blast::captureCallback, p_post_render_notification_name,
+    //        MHWRender::MPassContext::kEndRenderSemantic, reinterpret_cast<void*>(this)
+    //    );
 
     renderer->setOutputTargetOverrideSize(1920, 1080);
     renderer->setPresentOnScreen(false);
-    using target_ptr_t   = std::shared_ptr<MHWRender::MRenderTarget>;
-    using tex_ptr_t      = std::shared_ptr<MTexture>;
-    using tex_data_ptr_t = std::shared_ptr<void>;
+    const auto l_cam_path  = k_cam.get_full_name();
 
-    auto* l_tex_manager  = renderer->getTextureManager();
+    using target_ptr_t     = std::shared_ptr<MHWRender::MRenderTarget>;
+    using tex_ptr_t        = std::shared_ptr<MTexture>;
+    using tex_data_ptr_t   = std::shared_ptr<void>;
 
+    auto* l_tex_manager    = renderer->getTextureManager();
+    auto* l_target_manager = renderer->getRenderTargetManager();
+    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTarget(MRenderTargetDescription{
+        k_play_blast_tex, 1920, 1080, 1, ::MHWRender::MRasterFormat ::kB8G8R8A8, 1, false})};
+    target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
+                             if (in_target) l_target_manager->releaseRenderTarget(in_target);
+                           }};
+    //    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTargetFromScreen(k_play_blast_tex)};
+
+    DOODLE_LOG_INFO("set output camera: {}", l_cam_path);
     for (MTime i{in_start}; i < in_end; ++i) {
       MAnimControl::setCurrentTime(i);
-      //      maya_chick(MGlobal::executeCommand(d_str{fmt::format(
-      //          R"(hwRender -camera "{}" -frame {} -notWriteToFile false;)", k_cam.get_full_name(),
-      //          i.as(MTime::uiUnit())
-      //      )}));
-      MHWRender::MRenderTarget* l_rt{};
-      renderer->render(d_str{fmt::format("batch:{}", k_cam.get_full_name())}, &l_rt, 1);
-      target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
-                               if (in_target) renderer->getRenderTargetManager()->releaseRenderTarget(in_target);
-                             }};
-      if (l_t) {
+
+      renderer->render(d_str{fmt::format("batch:{}", l_cam_path)}, &l_rt, 1);
+
+      if (l_rt) {
         int l_row_pitch      = 0;
         size_t l_slice_pitch = 0;
         MHWRender::MRenderTargetDescription l_target_desc;
-        tex_data_ptr_t const l_target_data{l_t->rawData(l_row_pitch, l_slice_pitch), [](void* in_data) {
+        tex_data_ptr_t const l_target_data{l_rt->rawData(l_row_pitch, l_slice_pitch), [](void* in_data) {
                                              MHWRender::MRenderTarget::freeRawData(in_data);
                                            }};
 
-        l_t->targetDescription(l_target_desc);
+        l_rt->targetDescription(l_target_desc);
         MHWRender::MTextureDescription l_texture_desc;
         l_texture_desc.fWidth         = l_target_desc.width();
         l_texture_desc.fHeight        = l_target_desc.height();
@@ -184,8 +192,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
         l_tex_manager->saveTexture(l_tex.get(), k_path);
       }
     }
-
-    renderer->removeNotification(p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic);
+    //    renderer->removeNotification(p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic);
     // 恢复关闭屏幕上的更新
     renderer->setPresentOnScreen(true);
     // 禁用目标尺寸覆盖
