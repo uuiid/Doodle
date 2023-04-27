@@ -56,20 +56,7 @@ bool cloth_sim::post() {
   anim_begin_time_ = l_arg.export_anim_time;
   lib_guard_       = std::make_shared<maya_lib_guard>();
 
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "ik2Bsolver";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "renderSetup";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "mayaHIK";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "OneClick";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "xgenToolkit";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "Unfold3D";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "MASH";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "mtoa";)"));
-  maya_chick(MGlobal::executeCommand(R"(loadPlugin "Substance";)"));
 
-  maya_chick(MFileIO::newFile(true));
-  maya_chick(MGlobal::executePythonCommand(R"(import maya.cmds as cmds)"));
-  maya_chick(MGlobal::executePythonCommand(R"(import pymel.core)"));
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
 
