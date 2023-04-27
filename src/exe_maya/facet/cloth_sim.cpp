@@ -68,6 +68,7 @@ bool cloth_sim::post() {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "Substance";)"));
 
   maya_chick(MFileIO::newFile(true));
+  maya_chick(MGlobal::executePythonCommand(R"(import maya.cmds as cmds)"));
   maya_chick(MGlobal::executePythonCommand(R"(import pymel.core)"));
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
@@ -87,22 +88,27 @@ bool cloth_sim::post() {
   boost::asio::post(l_s, [l_s, this]() { this->create_ref_file(); });
 
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
+    DOODLE_LOG_INFO("开始替换引用");
     boost::asio::post(l_s, [l_s, this]() { this->replace_ref_file(); });
   }
 
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_sim_file).any()) {
+    DOODLE_LOG_INFO("开始解算布料");
     boost::asio::post(l_s, [l_s, this]() {
       this->create_cloth();
       this->sim();
     });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_create_play_blast).any()) {
+    DOODLE_LOG_INFO("开始排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_fbx_type).any()) {
+    DOODLE_LOG_INFO("开始导出fbx");
     boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_abc_type).any()) {
+    DOODLE_LOG_INFO("开始导出abc");
     boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
   }
 

@@ -54,6 +54,11 @@ install(TARGETS doodle_maya_exe
         COMPONENT exe_com
         )
 
+add_custom_target(
+        copy_doodle_maya_exe_to
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle_maya_exe> ${MAYA_BASE_DIR}/bin/
+)
+
 #doodle_install_code_wix(bin exe_com)
 #configure_file(install.wxs install.wxs COPYONLY)
 #configure_file(install_script.cmake install_script.cmake @ONLY)
