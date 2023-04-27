@@ -4,6 +4,4 @@
 
 #include "export_file_abc.h"
 
-namespace doodle {
-namespace maya_plug {}  // namespace maya_plug
-}  // namespace doodle
+namespace doodle::maya_plug {}  // namespace doodle::maya_plug
