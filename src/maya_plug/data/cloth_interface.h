@@ -14,9 +14,9 @@ class cloth_interface
  public:
   template <typename base_t>
   struct type : base_t {
-    void set_cache_folder(const FSys::path& path) const { return entt::poly_call<0>(*this); };
+    void set_cache_folder(const FSys::path& in_path) const { return entt::poly_call<0>(*this, in_path); };
     void sim_cloth() const { return entt::poly_call<1>(*this); };
-    void add_field(const entt::handle& in_handle) const { return entt::poly_call<2>(*this); };
+    void add_field(const entt::handle& in_handle) const { return entt::poly_call<2>(*this, in_handle); };
   };
 
   template <typename type_t>

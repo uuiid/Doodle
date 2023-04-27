@@ -968,6 +968,39 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
 }
 const std::string &reference_file::get_field_string() const { return field_attr; }
 
-std::vector<entt::handle> reference_file_factory::create_ref() const {}
+std::vector<entt::handle> reference_file_factory::create_ref() const {
+  g_reg()->clear<reference_file>();
+  g_reg()->clear<qcloth_shape>();
+  MStatus k_s;
+  auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
+  maya_chick(k_s);
+
+  for (int l_i = 0; l_i < k_names.length(); ++l_i) {
+    auto &&k_name = k_names[l_i];
+    reference_file k_ref{};
+
+    if (l_face_all) {
+      k_ref.set_namespace(d_str{k_name});
+      if (!k_ref.p_m_object.isNull()) {
+        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+        auto k_h = make_handle();
+        k_h.emplace<reference_file>(k_ref);
+      }
+    } else {
+      if (k_ref.set_namespace(d_str{k_name})) {
+        if (k_ref.is_loaded()) {
+          DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+          auto k_h = make_handle();
+          k_h.emplace<reference_file>(k_ref);
+        } else {
+          DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+        }
+      }
+    }
+  }
+
+  return {};
+}
+void reference_file_factory::save_to_files() const {}
 
 }  // namespace doodle::maya_plug

@@ -278,7 +278,8 @@ class reference_file_factory {
   reference_file_factory()  = default;
   ~reference_file_factory() = default;
 
-  std::vector<entt::handle> create_ref() const;
+  [[nodiscard]] std::vector<entt::handle> create_ref() const;
+  void save_to_files() const;
 };
 
 }  // namespace doodle::maya_plug

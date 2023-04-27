@@ -20,6 +20,8 @@ target_sources(doodle_maya_lib
         maya_create_movie.h
         ncloth_factory.h
         qcloth_factory.h
+        export_file_abc.h
+        export_file_fbx.h
 
         PRIVATE
         create_hud_node.cpp
@@ -40,4 +42,6 @@ target_sources(doodle_maya_lib
         maya_create_movie.cpp
         ncloth_factory.cpp
         qcloth_factory.cpp
+        export_file_fbx.cpp
+        export_file_abc.cpp
         )
