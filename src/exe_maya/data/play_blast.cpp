@@ -150,7 +150,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
       //          i.as(MTime::uiUnit())
       //      )}));
       MHWRender::MRenderTarget* l_rt{};
-      renderer->render(MString{}, &l_rt, 1);
+      renderer->render(d_str{fmt::format("batch:{}", k_cam.get_full_name())}, &l_rt, 1);
       target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
                                if (in_target) renderer->getRenderTargetManager()->releaseRenderTarget(in_target);
                              }};
