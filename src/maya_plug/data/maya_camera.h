@@ -2,6 +2,7 @@
 // Created by TD on 2021/12/13.
 //
 
+#include "maya/MApiNamespace.h"
 #include <maya/MDagPath.h>
 #include <regex>
 
@@ -63,6 +64,7 @@ class maya_camera {
   void set_play_attr();
   std::double_t focalLength() const;
   std::string get_transform_name() const;
+  std::string get_full_name() const;
 };
 
 }  // namespace doodle::maya_plug

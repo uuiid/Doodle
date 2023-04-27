@@ -10,6 +10,7 @@
 
 #include "doodle_lib/doodle_lib_fwd.h"
 
+#include "maya/MApiNamespace.h"
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -27,8 +28,8 @@ class play_blast {
   MTime p_current_time;
   std::string p_uuid;
 
-  static std::string p_post_render_notification_name;
-  //  static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
+  static MString p_post_render_notification_name;
+  static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
 
   FSys::path get_file_path(const MTime& in_time) const;
   FSys::path get_file_path() const;

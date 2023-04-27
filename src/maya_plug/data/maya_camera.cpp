@@ -265,6 +265,14 @@ std::string maya_camera::get_transform_name() const {
   DOODLE_MAYA_CHICK(k_s);
   return d_str{k_str};
 }
+std::string maya_camera::get_full_name() const {
+  MStatus k_s{};
+  auto k_obj = p_path.transform(&k_s);
+  maya_chick(k_s);
+
+  return get_node_full_name(k_obj);
+}
+
 bool maya_camera::fix_group_camera(const MTime& in_start, const MTime& in_end) {
   MFnDagNode l_node{};
   MStatus l_s{};
