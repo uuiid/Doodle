@@ -56,8 +56,6 @@ bool cloth_sim::post() {
   anim_begin_time_ = l_arg.export_anim_time;
   lib_guard_       = std::make_shared<maya_lib_guard>();
 
-
-
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
 
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
