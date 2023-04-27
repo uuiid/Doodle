@@ -6,6 +6,7 @@
 
 #include <maya_plug/maya_render/hud_render_node.h>
 
+#include "cloth_interface.h"
 #include <maya/MFnDagNode.h>
 #include <maya/MItDag.h>
 namespace doodle::maya_plug {

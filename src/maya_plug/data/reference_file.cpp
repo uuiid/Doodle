@@ -968,4 +968,6 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
 }
 const std::string &reference_file::get_field_string() const { return field_attr; }
 
+std::vector<entt::handle> reference_file_factory::create_ref() const {}
+
 }  // namespace doodle::maya_plug

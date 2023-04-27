@@ -4,8 +4,10 @@
 #pragma once
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "entt/entity/fwd.hpp"
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>
+#include <vector>
 namespace doodle::maya_plug {
 class reference_file;
 namespace reference_file_ns {
@@ -269,6 +271,14 @@ class reference_file {
     }
     p.chick_mobject();
   }
+};
+
+class reference_file_factory {
+ public:
+  reference_file_factory()  = default;
+  ~reference_file_factory() = default;
+
+  std::vector<entt::handle> create_ref() const;
 };
 
 }  // namespace doodle::maya_plug

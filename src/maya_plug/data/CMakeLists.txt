@@ -1,6 +1,7 @@
 target_sources(doodle_maya_lib
         PUBLIC
         create_hud_node.h
+        cloth_interface.h
         dem_bones_ex.h
         find_duplicate_poly.h
         maya_call_guard.h
@@ -17,6 +18,8 @@ target_sources(doodle_maya_lib
         sequence_to_blend_shape.h
         null_facet.h
         maya_create_movie.h
+        ncloth_factory.h
+        qcloth_factory.h
 
         PRIVATE
         create_hud_node.cpp
@@ -35,4 +38,6 @@ target_sources(doodle_maya_lib
         sequence_to_blend_shape.cpp
         null_facet.cpp
         maya_create_movie.cpp
+        ncloth_factory.cpp
+        qcloth_factory.cpp
         )
