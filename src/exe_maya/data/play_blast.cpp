@@ -10,7 +10,6 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/thread_pool/image_to_movie.h>
 
-#include "main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 
 #include "maya/MApiNamespace.h"
@@ -47,6 +46,9 @@ void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientD
                             }};
   if (l_tex_ptr) {
     k_s = l_tex_manager->saveTexture(l_tex_ptr.get(), k_path);
+    if (!k_s) {
+      MGlobal::displayError(k_s.errorString());
+    }
   }
 
   DOODLE_LOG_INFO("save texture: {}", k_path);
@@ -127,7 +129,8 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     if (!renderer) return MStatus::kFailure;
 
     renderer->addNotification(
-        captureCallback, p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic, (void*)this
+        captureCallback, p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic,
+        reinterpret_cast<void*>(this)
     );
 
     renderer->setOutputTargetOverrideSize(1920, 1080);
@@ -197,16 +200,16 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   k_msg.emplace<episodes>(p_eps);
   k_msg.emplace<shot>(p_shot);
 
-  DOODLE_MAYA_CHICK(k_s);
-  bool run{true};
-  g_reg()->ctx().get<image_to_move>()->async_create_move(
-      k_msg, l_handle_list,
-      [k_f, l_path = get_out_path(), l_run = &run, l_w = boost::asio::make_work_guard(g_io_context())]() {
-        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
-        FSys::remove_all(k_f);
-        *l_run = false;
-      }
-  );
+  //  DOODLE_MAYA_CHICK(k_s);
+  //  bool run{true};
+  //  g_reg()->ctx().get<image_to_move>()->async_create_move(
+  //      k_msg, l_handle_list,
+  //      [k_f, l_path = get_out_path(), l_run = &run, l_w = boost::asio::make_work_guard(g_io_context())]() {
+  //        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
+  //        FSys::remove_all(k_f);
+  //        *l_run = false;
+  //      }
+  //  );
 }
 
 bool play_blast::conjecture_ep_sc() {
