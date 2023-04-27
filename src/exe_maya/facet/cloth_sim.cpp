@@ -88,27 +88,27 @@ bool cloth_sim::post() {
   boost::asio::post(l_s, [l_s, this]() { this->create_ref_file(); });
 
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
-    DOODLE_LOG_INFO("开始替换引用");
+    DOODLE_LOG_INFO("安排替换引用");
     boost::asio::post(l_s, [l_s, this]() { this->replace_ref_file(); });
   }
 
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_sim_file).any()) {
-    DOODLE_LOG_INFO("开始解算布料");
+    DOODLE_LOG_INFO("安排解算布料");
     boost::asio::post(l_s, [l_s, this]() {
       this->create_cloth();
       this->sim();
     });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_create_play_blast).any()) {
-    DOODLE_LOG_INFO("开始排屏");
+    DOODLE_LOG_INFO("安排排屏");
     boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_fbx_type).any()) {
-    DOODLE_LOG_INFO("开始导出fbx");
+    DOODLE_LOG_INFO("安排导出fbx");
     boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_abc_type).any()) {
-    DOODLE_LOG_INFO("开始导出abc");
+    DOODLE_LOG_INFO("安排导出abc");
     boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
   }
 
