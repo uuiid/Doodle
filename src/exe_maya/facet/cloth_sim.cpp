@@ -14,6 +14,12 @@
 
 #include "doodle_lib/exe_warp/maya_exe.h"
 
+#ifdef fsin
+#undef fsin
+#endif
+
+#include <doodle_lib/long_task/image_to_move.h>
+
 #include "boost/asio/post.hpp"
 #include "boost/asio/strand.hpp"
 #include "boost/numeric/conversion/cast.hpp"
@@ -59,7 +65,7 @@ bool cloth_sim::post() {
   l_ret            = true;
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
-
+  doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcExport";)"));
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
   MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)});

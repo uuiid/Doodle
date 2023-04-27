@@ -20,6 +20,7 @@
 #include "maya/MStatus.h"
 #include "maya/MString.h"
 #include "maya/MTextureManager.h"
+#include <cstdint>
 #include <fmt/chrono.h>
 #include <fmt/ostream.h>
 #include <maya/M3dView.h>
@@ -213,7 +214,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
     /// \brief 当前帧和总帧数
     auto k_len = in_end - in_start + 1;
     k_image.watermarks_attr.emplace_back(
-        fmt::format("{}/{}", in_start.value() + k_frame, k_len.value()), 0.5, 0.1,
+        fmt::format("{}/{}", in_start.value() + k_frame, boost::numeric_cast<std::int32_t>(k_len.value())), 0.5, 0.1,
         movie::image_watermark::rgba_t{25, 220, 2}
     );
     ++k_frame;
@@ -238,16 +239,13 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
   k_msg.emplace<episodes>(p_eps);
   k_msg.emplace<shot>(p_shot);
 
-  //  DOODLE_MAYA_CHICK(k_s);
-  //  bool run{true};
-  //  g_reg()->ctx().get<image_to_move>()->async_create_move(
-  //      k_msg, l_handle_list,
-  //      [k_f, l_path = get_out_path(), l_run = &run, l_w = boost::asio::make_work_guard(g_io_context())]() {
-  //        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
-  //        FSys::remove_all(k_f);
-  //        *l_run = false;
-  //      }
-  //  );
+  doodle_lib::Get().ctx().get<image_to_move>()->async_create_move(
+      k_msg, l_handle_list,
+      [k_f, l_path = get_out_path(), l_w = boost::asio::make_work_guard(g_io_context())]() {
+        DOODLE_LOG_INFO("完成视频合成 {} , 并删除图片 {}", l_path, k_f);
+        FSys::remove_all(k_f);
+      }
+  );
 }
 
 bool play_blast::conjecture_ep_sc() {
