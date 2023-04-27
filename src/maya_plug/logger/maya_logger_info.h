@@ -3,18 +3,20 @@
 //
 
 #pragma once
+#include <boost/algorithm/string.hpp>
+
 #include <maya/MGlobal.h>
 #include <spdlog/sinks/base_sink.h>
 namespace doodle::maya_plug {
-template <class Mutex>
-class maya_msg : public spdlog::sinks::base_sink<Mutex> {
+template <class mutex_t>
+class maya_msg : public spdlog::sinks::base_sink<mutex_t> {
  public:
   maya_msg() = default;
 
  protected:
   void sink_it_(const spdlog::details::log_msg &msg) override {
     spdlog::memory_buf_t formatted;
-    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    spdlog::sinks::base_sink<mutex_t>::formatter_->format(msg, formatted);
     auto k_str = fmt::to_string(formatted);
     boost::erase_all(k_str, "\n");
     MString k_m_str{};
