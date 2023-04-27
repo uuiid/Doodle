@@ -25,6 +25,7 @@
 #include "core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
 #include "maya/MStatus.h"
+#include "maya/MTime.h"
 #include <cmath>
 #include <maya/MAnimControl.h>
 #include <maya/MFileIO.h>
@@ -53,7 +54,7 @@ bool cloth_sim::post() {
 
   if (l_arg.file_path.empty()) return l_ret;
 
-  anim_begin_time_ = l_arg.export_anim_time;
+  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
   lib_guard_       = std::make_shared<maya_lib_guard>();
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);

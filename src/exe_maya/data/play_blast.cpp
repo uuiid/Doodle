@@ -15,6 +15,7 @@
 #include "maya/MApiNamespace.h"
 #include "maya/MRenderTargetManager.h"
 #include "maya/MString.h"
+#include "maya/MTextureManager.h"
 #include <fmt/chrono.h>
 #include <fmt/ostream.h>
 #include <maya/M3dView.h>
@@ -26,6 +27,7 @@
 namespace doodle::maya_plug {
 
 MString play_blast::p_post_render_notification_name{"doodle_lib_maya_notification_name"};
+MString play_blast::k_play_blast_tex{"doodle_maya_play_blast_tex"};
 
 void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientData) {
   using tex_ptr_t = std::shared_ptr<MTexture>;
@@ -135,23 +137,52 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
 
     renderer->setOutputTargetOverrideSize(1920, 1080);
     renderer->setPresentOnScreen(false);
-    //    using target_ptr_t  = std::shared_ptr<MHWRender::MRenderTarget>;
-    //    using tex_ptr_t     = std::shared_ptr<MTexture>;
+    using target_ptr_t   = std::shared_ptr<MHWRender::MRenderTarget>;
+    using tex_ptr_t      = std::shared_ptr<MTexture>;
+    using tex_data_ptr_t = std::shared_ptr<void>;
 
-    //    auto* l_tex_manager = renderer->getTextureManager();
-    //    l_tex_manager->acquireTexture(MString{},)
+    auto* l_tex_manager  = renderer->getTextureManager();
+
     for (MTime i{in_start}; i < in_end; ++i) {
       MAnimControl::setCurrentTime(i);
-      maya_chick(MGlobal::executeCommand(d_str{fmt::format(
-          R"(hwRender -camera "{}" -frame {} -notWriteToFile false;)", k_cam.get_full_name(), i.as(MTime::uiUnit())
-      )}));
-      //      MHWRender::MRenderTarget* l_rt{};
-      //      renderer->render(MString{}, &l_rt, 1);
-      //      target_ptr_t l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
-      //                         if (in_target) renderer->getRenderTargetManager()->releaseRenderTarget(in_target);
-      //                       }};
-      //      if (l_t) {
-      //      }
+      //      maya_chick(MGlobal::executeCommand(d_str{fmt::format(
+      //          R"(hwRender -camera "{}" -frame {} -notWriteToFile false;)", k_cam.get_full_name(),
+      //          i.as(MTime::uiUnit())
+      //      )}));
+      MHWRender::MRenderTarget* l_rt{};
+      renderer->render(MString{}, &l_rt, 1);
+      target_ptr_t const l_t{l_rt, [=](MHWRender::MRenderTarget* in_target) {
+                               if (in_target) renderer->getRenderTargetManager()->releaseRenderTarget(in_target);
+                             }};
+      if (l_t) {
+        int l_row_pitch      = 0;
+        size_t l_slice_pitch = 0;
+        MHWRender::MRenderTargetDescription l_target_desc;
+        tex_data_ptr_t const l_target_data{l_t->rawData(l_row_pitch, l_slice_pitch), [](void* in_data) {
+                                             MHWRender::MRenderTarget::freeRawData(in_data);
+                                           }};
+
+        l_t->targetDescription(l_target_desc);
+        MHWRender::MTextureDescription l_texture_desc;
+        l_texture_desc.fWidth         = l_target_desc.width();
+        l_texture_desc.fHeight        = l_target_desc.height();
+        l_texture_desc.fDepth         = 1;
+        l_texture_desc.fBytesPerRow   = l_row_pitch;
+        l_texture_desc.fBytesPerSlice = l_slice_pitch;
+        l_texture_desc.fMipmaps       = 1;
+        l_texture_desc.fArraySlices   = l_target_desc.arraySliceCount();
+        l_texture_desc.fFormat        = l_target_desc.rasterFormat();
+        l_texture_desc.fTextureType   = MHWRender::kImage2D;
+        l_texture_desc.fEnvMapType    = MHWRender::MEnvironmentMapType::kEnvNone;
+        tex_ptr_t const l_tex{
+            l_tex_manager->acquireTexture({}, l_texture_desc, l_target_data.get()), [=](MTexture* in_texture) {
+              if (in_texture) l_tex_manager->releaseTexture(in_texture);
+            }};
+        auto k_p = get_file_path(i);
+
+        MString const k_path{d_str{k_p.generic_string()}};
+        l_tex_manager->saveTexture(l_tex.get(), k_path);
+      }
     }
 
     renderer->removeNotification(p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic);
