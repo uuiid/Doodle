@@ -16,6 +16,7 @@ namespace doodle::maya_plug {
 
 bool ncloth_factory::has_cloth() {
   MStatus l_status{};
+  // nucleus nCloth
   for (MItDependencyNodes i{MFn::kNucleus, &l_status}; !i.isDone(); i.next()) {
     for (MItDependencyNodes i{MFn::kNCloth, &l_status}; !i.isDone(); i.next()) {
       return true;
@@ -24,5 +25,6 @@ bool ncloth_factory::has_cloth() {
   }
   return false;
 }
+std::vector<entt::handle> ncloth_factory::create_cloth() const {}
 
 }  // namespace doodle::maya_plug
