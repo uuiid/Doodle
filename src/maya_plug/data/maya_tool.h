@@ -31,7 +31,7 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name);
 template <typename T>
 void set_attribute(const MObject& in_node, const std::string& in_name, const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
-  maya_chick(l_s);
+  doodle::maya_plug::maya_chick(l_s);
 }
 
 inline void set_attribute(const MObject& in_node, const std::string& in_name, const std::string& in_t) {
