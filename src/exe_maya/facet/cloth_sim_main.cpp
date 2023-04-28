@@ -89,12 +89,13 @@ void cloth_sim::create_cloth() {
               ranges::to<decltype(l_ref_map)>;
 
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
-    auto l_c = in_handle.get<cloth_interface>();
-    l_c->add_collision({});
-    l_c->add_field({});
-    l_c->rest(l_ref_map[l_c->get_namespace()]);
+    auto l_c     = in_handle.get<cloth_interface>();
+    auto l_ref_h = l_ref_map[l_c->get_namespace()];
+    l_c->add_collision(l_ref_h);
+    l_c->add_field(l_ref_h);
+    l_c->rest(l_ref_h);
     /// 指向引用
-    l_c->set_cache_folder(l_ref_map[l_c->get_namespace()]);
+    l_c->set_cache_folder(l_ref_h);
   });
 }
 void cloth_sim::sim() {
