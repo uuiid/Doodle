@@ -90,14 +90,14 @@ class qcloth_shape : public cloth_interface::element_type {
   void sim_cloth() const override;
   void add_field(const entt::handle& in_handle) const override;
   void add_collision(const entt::handle& in_handle) const override;
-  void rest() const override;
+  void rest(const entt::handle& in_handle) const override;
   void clear_cache() const override;
 
   /**
    * @brief 设置qcloth缓存路径,如果存在缓存文件,还会删除缓存文件
    * @return 完成设置
    */
-  void set_cache_folder(const FSys::path& in_path) const override;
+  void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
   /**
    * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
    * 没有gui的情况下包装解算的正常
@@ -110,11 +110,6 @@ class qcloth_shape : public cloth_interface::element_type {
    */
   bool create_cache() const;
 
-  /**
-   * @brief 使用配置添加风场
-   *
-   */
-  void add_field() const;
   /**
    * @brief 获取布料形状（这个是一个tran）
    * @return 布料dag路径
@@ -164,7 +159,6 @@ class qcloth_shape : public cloth_interface::element_type {
    * @param in_ref_file 传入的引用文件句柄
    * @return 完成布料网格的创建的句柄
    */
-  static std::vector<entt::handle> create(const entt::handle& in_ref_file);
 
   static MObject get_ql_solver(const MSelectionList& in_selection_list);
   static MObject get_ql_solver();

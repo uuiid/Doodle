@@ -9,6 +9,7 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 
+#include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/reference_file.h>
@@ -494,27 +495,9 @@ void qcloth_shape::add_collider(const entt::handle& in_handle) {
     add_child(l_group.collider_grp, l_col_off_tran);
   }
 }
-std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) {
-  /// 这里我们使用节点类名称寻找 qlClothShape ;
-  MStatus k_s{};
-  std::vector<entt::handle> result{};
-  auto&& l_ref = in_ref_file.get<reference_file>();
-  for (MItDependencyNodes i{MFn::Type::kPluginLocatorNode}; !i.isDone(); i.next()) {
-    auto k_obj = i.thisNode(&k_s);
-    DOODLE_MAYA_CHICK(k_s);
-    MFnDependencyNode k_dep{k_obj};
-    if (k_dep.typeName(&k_s) == "qlClothShape" && l_ref.has_node(k_obj)) {
-      DOODLE_MAYA_CHICK(k_s);
-      auto k_h = make_handle();
-      DOODLE_LOG_INFO("获取布料物体 {}", get_node_name(k_obj));
-      k_h.emplace<qcloth_shape>(in_ref_file, k_obj);
-      result.emplace_back(k_h);
-    }
-  }
-  return result;
-}
-void qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
-  std::string k_namespace = find_ref_file().get<reference_file>().get_namespace();
+
+void qcloth_shape::set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const {
+  std::string k_namespace = in_handle.get<reference_file>().get_namespace();
   std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
 
   auto k_cache            = get_plug(obj, "cacheFolder");
@@ -661,30 +644,6 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
 }
 MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
 
-void qcloth_shape::add_field() const {
-  auto l_f = find_ref_file().get<reference_file>().get_field_dag();
-  if (l_f) {
-    auto l_mesh = cloth_mesh();
-    DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
-    MStatus l_status{};
-    MSelectionList l_select_list{};
-
-    MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
-    DOODLE_MAYA_CHICK(l_status);
-    for (; !l_it.isDone(); l_it.next()) {
-      auto l_obj = l_it.currentItem(&l_status);
-      DOODLE_MAYA_CHICK(l_status);
-      l_status = l_select_list.add(l_mesh, l_obj);
-      DOODLE_MAYA_CHICK(l_status);
-    }
-    /// @brief  这里必须要最后加入
-    l_status = l_select_list.add(*l_f);
-    DOODLE_MAYA_CHICK(l_status);
-    MGlobal::setActiveSelectionList(l_select_list);
-    DOODLE_LOG_INFO("设置布料风场 {}", *l_f);
-    l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
-  }
-}
 MDagPath qcloth_shape::cloth_mesh() const {
   MStatus l_s{};
   MObject l_mesh{};
@@ -719,10 +678,58 @@ entt::handle_view<reference_file> qcloth_shape::find_ref_file() const {
   return p_ref_file;
 }
 
-void qcloth_shape::sim_cloth() const {}
-void qcloth_shape::add_field(const entt::handle& in_handle) const {}
-void qcloth_shape::add_collision(const entt::handle& in_handle) const {}
-void qcloth_shape::rest() const {}
+void qcloth_shape::sim_cloth() const {
+  DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
+  MStatus k_s{};
+  MFnDependencyNode l_node{obj, &k_s};
+  auto k_plug = get_plug(obj, "outputMesh");
+  /// \brief 使用这种方式评估网格
+  k_plug.asMObject(&k_s).isNull();
+}
+void qcloth_shape::add_field(const entt::handle& in_handle) const {
+  auto l_f = in_handle.get<reference_file>().get_field_dag();
+  if (l_f) {
+    auto l_mesh = cloth_mesh();
+    DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
+    MStatus l_status{};
+    MSelectionList l_select_list{};
+
+    MItMeshVertex l_it{l_mesh, MObject::kNullObj, &l_status};
+    DOODLE_MAYA_CHICK(l_status);
+    for (; !l_it.isDone(); l_it.next()) {
+      auto l_obj = l_it.currentItem(&l_status);
+      DOODLE_MAYA_CHICK(l_status);
+      l_status = l_select_list.add(l_mesh, l_obj);
+      DOODLE_MAYA_CHICK(l_status);
+    }
+    /// @brief  这里必须要最后加入
+    l_status = l_select_list.add(*l_f);
+    DOODLE_MAYA_CHICK(l_status);
+    MGlobal::setActiveSelectionList(l_select_list);
+    DOODLE_LOG_INFO("设置布料风场 {}", *l_f);
+    l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
+  }
+}
+void qcloth_shape::add_collision(const entt::handle& in_handle) const {
+  MStatus k_s{};
+  auto l_item = in_handle.get<reference_file>().get_collision_model();
+  k_s         = l_item.add(get_solver(in_handle), true);
+  DOODLE_MAYA_CHICK(k_s);
+  k_s = MGlobal::setActiveSelectionList(l_item);
+  DOODLE_MAYA_CHICK(k_s);
+  k_s = MGlobal::executeCommand(d_str{"qlCreateCollider;"});
+  DOODLE_MAYA_CHICK(k_s);
+}
+void qcloth_shape::rest(const entt::handle& in_handle) const {
+  DOODLE_LOG_INFO("开始更新解算的布料 {} 初始化姿势 ", get_node_full_name(obj));
+  auto l_rest_obj = in_handle.get<find_duplicate_poly>()[obj];
+
+  MSelectionList l_list{};
+  maya_chick(l_list.add(obj));
+  maya_chick(l_list.add(l_rest_obj));
+  maya_chick(MGlobal::setActiveSelectionList(l_list));
+  maya_chick(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
+}
 void qcloth_shape::clear_cache() const {}
 
 }  // namespace doodle::maya_plug
