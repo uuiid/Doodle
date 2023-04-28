@@ -64,6 +64,7 @@ void cloth_sim::replace_ref_file() {
   ref_files_ |= ranges::action::remove_if(!boost::lambda2::_1);
 }
 void cloth_sim::create_cloth() {
+  maya_chick(MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"}));
   DOODLE_LOG_INFO("开始创建布料");
   cloth_factory_interface l_cf{};
   if (qcloth_factory::has_cloth())
@@ -81,6 +82,7 @@ void cloth_sim::create_cloth() {
     l_c->add_field({});
     l_c->clear_cache();
     l_c->rest();
+    /// 指向引用
     l_c->set_cache_folder();
   });
 }
