@@ -4,14 +4,22 @@
 
 #include "find_duplicate_poly.h"
 
+#include "maya/MApiNamespace.h"
 #include "maya/MObject.h"
+#include "maya_conv_str.h"
 #include "range/v3/algorithm/find_if.hpp"
+#include "reference_file.h"
 #include <data/maya_poly_info.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MNamespace.h>
 #include <maya/MObjectArray.h>
 #include <utility>
 
 namespace doodle::maya_plug {
+
+find_duplicate_poly::find_duplicate_poly(const entt::handle& in_handle) {
+  (*this)(MNamespace::getNamespaceObjects(conv::to_ms(in_handle.get<reference_file>().get_namespace())));
+}
 
 std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const MObjectArray& in_array) {
   std::vector<std::pair<MObject, MObject>> l_vector{};
