@@ -5,6 +5,7 @@
 #pragma once
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "maya/MApiNamespace.h"
 #include <maya/MObject.h>
 
 // #include <maya/MDagPath.h>
@@ -71,6 +72,7 @@ class qcloth_shape {
   MObject obj;
 
  public:
+  inline static MString qlSolverShape{L"qlSolverShape"};
   qcloth_shape();
   /**
    * @brief Construct a new qcloth shape object

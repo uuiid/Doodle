@@ -627,7 +627,7 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
     l_status = i.getDependNode(l_object);
     DOODLE_MAYA_CHICK(l_status);
     MFnDependencyNode k_dep{l_object};
-    if (k_dep.typeName(&l_status) == "qlSolverShape") {
+    if (k_dep.typeName(&l_status) == qlSolverShape) {
       break;
     }
   }
@@ -641,7 +641,7 @@ MObject qcloth_shape::get_ql_solver() {
   for (MItDependencyNodes i{MFn::kPluginLocatorNode, &l_status}; !i.isDone(); i.next()) {
     l_object = i.thisNode(&l_status);
     MFnDependencyNode k_dep{l_object};
-    if (k_dep.typeName(&l_status) == "qlSolverShape") {
+    if (k_dep.typeName(&l_status) == qlSolverShape) {
       break;
     }
   }

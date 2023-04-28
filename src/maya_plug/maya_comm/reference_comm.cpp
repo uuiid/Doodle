@@ -90,43 +90,6 @@ MSyntax set_cloth_cache_path_syntax() {
   return l_syntax;
 }
 
-MStatus ref_file_load_command::doIt(const MArgList& in_arg_list) {
-  MStatus k_s{};
-  auto k_j_str = maya_file_io::get_channel_date();
-  std::vector<entt::entity> k_delete{};
-
-  nlohmann::json k_j{};
-  try {
-    k_j = nlohmann::json::parse(k_j_str);
-  } catch (const nlohmann::json::exception& error) {
-    DOODLE_LOG_WARN("解析元数据错误 {}, 取消解析元数据，使用默认元数据", boost::diagnostic_information(error));
-  }
-  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    auto l_i = make_handle(k_e);
-    auto l_p = k_ref.path;
-    if (k_j.contains(l_p)) {
-      DOODLE_LOG_INFO("加载元数据 {}", l_p);
-      entt_tool::load_comm<reference_file, sim_cover_attr>(l_i, k_j.at(l_p));
-    } else {
-      l_i.get<reference_file>().use_sim = true;
-    }
-
-    if (!l_i.get<reference_file>().use_sim) {
-      DOODLE_LOG_INFO("引用文件{}不解算", l_i.get<reference_file>().path);
-      k_delete.push_back(l_i);
-    }
-  }
-  g_reg()->destroy(k_delete.begin(), k_delete.end());
-
-  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    if (k_ref.replace_sim_assets_file()) {
-    } else {
-      k_delete.push_back(k_e);
-    }
-  }
-  g_reg()->destroy(k_delete.begin(), k_delete.end());
-  return k_s;
-}
 MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   MStatus k_s{};
   MArgParser k_prase{syntax(), in_arg, &k_s};
@@ -146,7 +109,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
   DOODLE_LOG_INFO("解算开始时间 {}  结束时间 {}  ", k_start.value(), k_end.value());
 
   for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.path);
+    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.get_key_path());
     /// \brief 生成需要的 布料实体
     qcloth_shape::create(make_handle(k_e));
     /// \brief 添加碰撞体
@@ -154,7 +117,7 @@ MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
     /// \brief 更新ql初始化状态
     k_ref.qlUpdateInitialPose();
     /// \brief 更新元配置数据
-    DOODLE_LOG_INFO("开始测试 {} 覆盖属性", k_ref.path);
+    DOODLE_LOG_INFO("开始测试 {} 覆盖属性", k_ref.get_key_path());
     sim_cover_attr::cover_qcloth_attr(make_handle(k_e));
   }
   for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {

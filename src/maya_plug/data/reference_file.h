@@ -130,16 +130,17 @@ class reference_file {
   bool has_chick_group() const;
 
   std::vector<MObject> ref_objs{};
+  /**
+   * @brief 这个路径是显示的路径,  带有后缀以区分相同路径的多个引用
+   */
+  std::string path;
 
  public:
   /**
    * @brief 引用maya obj 节点
    */
   MObject p_m_object;
-  /**
-   * @brief 这个路径是显示的路径,  带有后缀以区分相同路径的多个引用
-   */
-  std::string path;
+
   /**
    * @brief 引用文件是否解算
    */
@@ -176,7 +177,6 @@ class reference_file {
    * @return
    */
   [[nodiscard]] FSys::path get_abs_path() const;
-  bool has_sim_cloth();
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */

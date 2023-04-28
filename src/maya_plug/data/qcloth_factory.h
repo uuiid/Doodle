@@ -7,6 +7,8 @@ namespace doodle::maya_plug {
 
 class qcloth_factory {
  public:
+  /// 整个场景
+  static bool has_cloth();
 };
 
 }  // namespace doodle::maya_plug
