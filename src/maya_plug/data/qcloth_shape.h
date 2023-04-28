@@ -67,10 +67,6 @@ class qcloth_shape : public cloth_interface::element_type {
   static void rest_skin_custer_attr(const MObject& in_anim_node);
 
  private:
-  mutable entt::handle p_ref_file;
-
-  entt::handle_view<reference_file> find_ref_file() const;
-
   /**
    * @brief qlClothShape 类型 节点
    */
@@ -91,12 +87,9 @@ class qcloth_shape : public cloth_interface::element_type {
   void add_field(const entt::handle& in_handle) const override;
   void add_collision(const entt::handle& in_handle) const override;
   void rest(const entt::handle& in_handle) const override;
-
-  /**
-   * @brief 设置qcloth缓存路径,如果存在缓存文件,还会删除缓存文件
-   * @return 完成设置
-   */
+  MObject get_solver() const override;
   void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
+
   /**
    * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
    * 没有gui的情况下包装解算的正常

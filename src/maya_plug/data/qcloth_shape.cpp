@@ -665,19 +665,6 @@ MDagPath qcloth_shape::cloth_mesh() const {
   return l_path;
 }
 
-entt::handle_view<reference_file> qcloth_shape::find_ref_file() const {
-  if (p_ref_file) return p_ref_file;
-  const std::string l_name_s = d_str{MNamespace::getNamespaceFromName(d_str{get_node_full_name(obj)})};
-  DOODLE_LOG_INFO("寻找名称空间 {} 对应的引用配置", l_name_s);
-  for (auto [e, ref] : g_reg()->view<reference_file>().each()) {
-    if (ref.get_namespace() == l_name_s) {
-      p_ref_file = entt::handle{*g_reg(), e};
-      break;
-    }
-  }
-  return p_ref_file;
-}
-
 void qcloth_shape::sim_cloth() const {
   DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
   MStatus k_s{};
@@ -721,14 +708,31 @@ void qcloth_shape::add_collision(const entt::handle& in_handle) const {
   DOODLE_MAYA_CHICK(k_s);
 }
 void qcloth_shape::rest(const entt::handle& in_handle) const {
-  DOODLE_LOG_INFO("开始更新解算的布料 {} 初始化姿势 ", get_node_full_name(obj));
   auto l_rest_obj = in_handle.get<find_duplicate_poly>()[obj];
+  if (l_rest_obj.isNull()) return;
 
+  DOODLE_LOG_INFO("开始更新解算的布料 {} 初始化姿势 ", get_node_full_name(obj));
   MSelectionList l_list{};
   maya_chick(l_list.add(obj));
   maya_chick(l_list.add(l_rest_obj));
   maya_chick(MGlobal::setActiveSelectionList(l_list));
   maya_chick(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
+}
+MObject qcloth_shape::get_solver() const {
+  MStatus l_status{};
+  MObject l_object{};
+  for (MItDependencyGraph l_it_dependency_graph{
+           l_object, MFn::kPluginLocatorNode, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
+           MItDependencyGraph::kNodeLevel, nullptr};
+       !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
+    l_object = l_it_dependency_graph.currentItem(&l_status);
+    const MFnDependencyNode k_dep{l_object};
+    if (k_dep.typeName(&l_status) == qlSolverShape) {
+      return l_object;
+    }
+  }
+  DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
+  return l_object;
 }
 
 }  // namespace doodle::maya_plug

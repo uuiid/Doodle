@@ -7,6 +7,7 @@
 #include <boost/lambda2.hpp>
 
 #include "maya_plug/data/cloth_interface.h"
+#include "maya_plug/data/find_duplicate_poly.h"
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
 #include "maya_plug/main/maya_plug_fwd.h"
@@ -20,10 +21,13 @@
 #include "entt/entity/fwd.hpp"
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/algorithm/for_each.hpp"
+#include "range/v3/view/transform.hpp"
 #include <exe_maya/data/play_blast.h>
 #include <filesystem>
+#include <map>
 #include <maya/MAnimControl.h>
 #include <memory>
+#include <utility>
 namespace doodle::maya_plug {
 
 void cloth_sim::create_ref_file() {
@@ -74,15 +78,23 @@ void cloth_sim::create_cloth() {
 
   if (!l_cf) return;
 
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { in_handle.emplace<find_duplicate_poly>(in_handle); });
+
   cloth_lists_ = l_cf->create_cloth();
+  std::map<std::string, entt::handle> l_ref_map{};
+  l_ref_map = ref_files_ |
+              ranges::views::transform([](const entt::handle& in_handle) -> std::pair<std::string, entt::handle> {
+                return {in_handle.get<reference_file>().get_namespace(), in_handle};
+              }) |
+              ranges::to<decltype(l_ref_map)>;
 
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
     auto l_c = in_handle.get<cloth_interface>();
     l_c->add_collision({});
     l_c->add_field({});
-    l_c->rest();
+    l_c->rest(l_ref_map[l_c->get_namespace()]);
     /// 指向引用
-    l_c->set_cache_folder();
+    l_c->set_cache_folder(l_ref_map[l_c->get_namespace()]);
   });
 }
 void cloth_sim::sim() {
