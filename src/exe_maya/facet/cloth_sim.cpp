@@ -62,6 +62,7 @@ bool cloth_sim::post() {
   if (l_arg.file_path.empty()) return l_ret;
 
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
+  t_post_time_     = MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()};
   lib_guard_       = std::make_shared<maya_lib_guard>();
   l_ret            = true;
 

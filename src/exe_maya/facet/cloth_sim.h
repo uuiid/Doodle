@@ -16,6 +16,7 @@ class cloth_sim final {
   static constexpr auto config{"cloth_sim_config"};
 
   MTime anim_begin_time_{};
+  MTime t_post_time_{};
 
   void create_ref_file();
   void replace_ref_file();
@@ -26,6 +27,7 @@ class cloth_sim final {
   void play_blast();
   std::shared_ptr<maya_lib_guard> lib_guard_{};
   std::vector<entt::handle> ref_files_{};
+  std::vector<entt::handle> cloth_lists_{};
 
  public:
   cloth_sim()  = default;
