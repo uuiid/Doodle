@@ -514,36 +514,22 @@ std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) 
   return result;
 }
 void qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
-  MStatus k_s{};
-  /// \brief 获得解算节点fn
-  MFnDependencyNode k_node{obj, &k_s};
-  DOODLE_MAYA_CHICK(k_s);
   std::string k_namespace = find_ref_file().get<reference_file>().get_namespace();
-
-  DOODLE_MAYA_CHICK(k_s);
   std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
-  DOODLE_MAYA_CHICK(k_s);
-  {
-    auto k_cache        = get_plug(obj, "cacheFolder");
-    auto k_file_name    = maya_file_io::get_current_path();
-    /// \brief 使用各种信息确认缓存相对路径
-    FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
-    l_string /= in_path;
-    DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
-    /// \brief 删除已经缓存的目录
-    auto k_path = maya_file_io::work_path(l_string);
-    if (FSys::exists(k_path)) {
-      DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
-      FSys::remove_all(k_path);
-    }
-    FSys::create_directories(k_path);
-    set_attribute(obj, "cacheFolder", l_string.generic_string());
+
+  auto k_cache            = get_plug(obj, "cacheFolder");
+  auto k_file_name        = maya_file_io::get_current_path();
+  FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
+  l_string /= in_path;
+  DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
+  auto k_path = maya_file_io::work_path(l_string);
+  if (FSys::exists(k_path)) {
+    DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
+    FSys::remove_all(k_path);
   }
-  {
-    auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
-    DOODLE_MAYA_CHICK(k_s);
-    k_cache.setString(d_str{k_node_name});
-  }
+  FSys::create_directories(k_path);
+  set_attribute(obj, "cacheFolder", l_string.generic_string());
+  set_attribute(obj, "cacheName", k_node_name);
 }
 void qcloth_shape::sort_group() {
   auto l_group = get_cloth_group();
