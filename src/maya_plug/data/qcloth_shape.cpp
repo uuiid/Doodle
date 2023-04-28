@@ -4,6 +4,8 @@
 
 #include "qcloth_shape.h"
 
+#include "doodle_core/core/core_help_impl.h"
+
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 
@@ -13,6 +15,7 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "entt/entity/fwd.hpp"
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MDagModifier.h>
@@ -28,6 +31,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
 #include <maya/MPlug.h>
+#include <string>
 
 namespace doodle::maya_plug {
 
@@ -346,13 +350,6 @@ MObject make_group(MDagModifier& in_modifier, const std::string& in_name, const 
 
 qcloth_shape::qcloth_shape() = default;
 
-qcloth_shape::qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object) : qcloth_shape() {
-  p_ref_file = in_ref_file;
-  obj        = in_object;
-  DOODLE_CHICK(p_ref_file.any_of<reference_file>(), doodle_error{"缺失组件"});
-}
-bool qcloth_shape::set_cache_folder() const { return set_cache_folder(FSys::path{}); }
-
 bool qcloth_shape::create_cache() const {
   DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
   MStatus k_s{};
@@ -516,19 +513,18 @@ std::vector<entt::handle> qcloth_shape::create(const entt::handle& in_ref_file) 
   }
   return result;
 }
-bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
+void qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
   MStatus k_s{};
   /// \brief 获得解算节点fn
   MFnDependencyNode k_node{obj, &k_s};
   DOODLE_MAYA_CHICK(k_s);
-  std::string k_namespace = p_ref_file.get<reference_file>().get_namespace();
+  std::string k_namespace = find_ref_file().get<reference_file>().get_namespace();
 
   DOODLE_MAYA_CHICK(k_s);
-  std::string k_node_name = d_str{MNamespace::stripNamespaceFromName(k_node.name(), &k_s)};
+  std::string k_node_name = m_namespace::strip_namespace_from_name(get_node_full_name(obj));
   DOODLE_MAYA_CHICK(k_s);
   {
-    auto k_cache = k_node.findPlug(d_str{"cacheFolder"}, false, &k_s);
-    DOODLE_MAYA_CHICK(k_s);
+    auto k_cache        = get_plug(obj, "cacheFolder");
     auto k_file_name    = maya_file_io::get_current_path();
     /// \brief 使用各种信息确认缓存相对路径
     FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
@@ -541,15 +537,13 @@ bool qcloth_shape::set_cache_folder(const FSys::path& in_path) const {
       FSys::remove_all(k_path);
     }
     FSys::create_directories(k_path);
-    k_s = k_cache.setString(d_str{l_string.generic_string()});
-    DOODLE_MAYA_CHICK(k_s);
+    set_attribute(obj, "cacheFolder", l_string.generic_string());
   }
   {
     auto k_cache = k_node.findPlug(d_str{"cacheName"}, true, &k_s);
     DOODLE_MAYA_CHICK(k_s);
     k_cache.setString(d_str{k_node_name});
   }
-  return true;
 }
 void qcloth_shape::sort_group() {
   auto l_group = get_cloth_group();
@@ -682,7 +676,7 @@ void qcloth_shape::rest_skin_custer_attr(const MObject& in_anim_node) {
 MDagPath qcloth_shape::ql_cloth_shape() const { return get_dag_path(obj); }
 
 void qcloth_shape::add_field() const {
-  auto l_f = p_ref_file.get<reference_file>().get_field_dag();
+  auto l_f = find_ref_file().get<reference_file>().get_field_dag();
   if (l_f) {
     auto l_mesh = cloth_mesh();
     DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
@@ -725,5 +719,24 @@ MDagPath qcloth_shape::cloth_mesh() const {
   DOODLE_LOG_INFO("找到布料节点 {}", l_path);
   return l_path;
 }
+
+entt::handle_view<reference_file> qcloth_shape::find_ref_file() const {
+  if (p_ref_file) return p_ref_file;
+  const std::string l_name_s = d_str{MNamespace::getNamespaceFromName(d_str{get_node_full_name(obj)})};
+  DOODLE_LOG_INFO("寻找名称空间 {} 对应的引用配置", l_name_s);
+  for (auto [e, ref] : g_reg()->view<reference_file>().each()) {
+    if (ref.get_namespace() == l_name_s) {
+      p_ref_file = entt::handle{*g_reg(), e};
+      break;
+    }
+  }
+  return p_ref_file;
+}
+
+void qcloth_shape::sim_cloth() const {}
+void qcloth_shape::add_field(const entt::handle& in_handle) const {}
+void qcloth_shape::add_collision(const entt::handle& in_handle) const {}
+void qcloth_shape::rest() const {}
+void qcloth_shape::clear_cache() const {}
 
 }  // namespace doodle::maya_plug

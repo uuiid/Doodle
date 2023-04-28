@@ -3,8 +3,10 @@
 //
 
 #pragma once
+#include <maya_plug/data/cloth_interface.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "entt/entity/fwd.hpp"
 #include "maya/MApiNamespace.h"
 #include <maya/MObject.h>
 
@@ -35,7 +37,7 @@ using shape_list = std::vector<maya_obj>;
 
 }  // namespace qcloth_shape_n
 
-class qcloth_shape {
+class qcloth_shape : public cloth_interface::element_type {
  public:
   class cloth_group {
    public:
@@ -65,7 +67,10 @@ class qcloth_shape {
   static void rest_skin_custer_attr(const MObject& in_anim_node);
 
  private:
-  entt::handle p_ref_file;
+  mutable entt::handle p_ref_file;
+
+  entt::handle_view<reference_file> find_ref_file() const;
+
   /**
    * @brief qlClothShape 类型 节点
    */
@@ -73,21 +78,26 @@ class qcloth_shape {
 
  public:
   inline static MString qlSolverShape{L"qlSolverShape"};
+  inline static MString qlClothShape{L"qlClothShape"};
   qcloth_shape();
+
   /**
-   * @brief Construct a new qcloth shape object
    *
-   * @param in_ref_file 在哪个引用文件中
-   * @param in_object 传入的maya obj
+   * @param in_object qcloth shape object
    */
-  explicit qcloth_shape(const entt::handle& in_ref_file, const MObject& in_object);
+  explicit qcloth_shape(const MObject& in_object);
+
+  void sim_cloth() const override;
+  void add_field(const entt::handle& in_handle) const override;
+  void add_collision(const entt::handle& in_handle) const override;
+  void rest() const override;
+  void clear_cache() const override;
 
   /**
    * @brief 设置qcloth缓存路径,如果存在缓存文件,还会删除缓存文件
    * @return 完成设置
    */
-  bool set_cache_folder() const;
-  bool set_cache_folder(const FSys::path& in_path) const;
+  void set_cache_folder(const FSys::path& in_path) const override;
   /**
    * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
    * 没有gui的情况下包装解算的正常
