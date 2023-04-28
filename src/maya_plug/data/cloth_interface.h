@@ -19,7 +19,7 @@ namespace details {
 class cloth_interface {
  public:
   virtual void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const = 0;
-  virtual MObject get_solver(const entt::handle_view<reference_file>& in_handle) const          = 0;
+  virtual MObject get_solver() const                                                            = 0;
   virtual void sim_cloth() const                                                                = 0;
   virtual void add_field(const entt::handle& in_handle) const                                   = 0;
   virtual void add_collision(const entt::handle& in_handle) const                               = 0;

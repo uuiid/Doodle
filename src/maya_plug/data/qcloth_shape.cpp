@@ -713,7 +713,7 @@ void qcloth_shape::add_field(const entt::handle& in_handle) const {
 void qcloth_shape::add_collision(const entt::handle& in_handle) const {
   MStatus k_s{};
   auto l_item = in_handle.get<reference_file>().get_collision_model();
-  k_s         = l_item.add(get_solver(in_handle), true);
+  k_s         = l_item.add(get_solver(), true);
   DOODLE_MAYA_CHICK(k_s);
   k_s = MGlobal::setActiveSelectionList(l_item);
   DOODLE_MAYA_CHICK(k_s);

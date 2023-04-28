@@ -80,7 +80,6 @@ void cloth_sim::create_cloth() {
     auto l_c = in_handle.get<cloth_interface>();
     l_c->add_collision({});
     l_c->add_field({});
-    l_c->clear_cache();
     l_c->rest();
     /// 指向引用
     l_c->set_cache_folder();
