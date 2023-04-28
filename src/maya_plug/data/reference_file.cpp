@@ -400,22 +400,6 @@ FSys::path reference_file::export_abc(const MTime &in_start, const MTime &in_end
   }
   return l_path;
 }
-bool reference_file::add_collision() const {
-  if (collision_model.empty()) return true;
-
-  MStatus k_s{};
-  k_s = MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"});
-  DOODLE_MAYA_CHICK(k_s);
-
-  auto l_item = this->get_collision_model();
-  k_s         = l_item.add(d_str{fmt::format("{}:qlSolver1", get_namespace())}, true);
-  DOODLE_MAYA_CHICK(k_s);
-  k_s = MGlobal::setActiveSelectionList(l_item);
-  DOODLE_MAYA_CHICK(k_s);
-  k_s = MGlobal::executeCommand(d_str{"qlCreateCollider;"});
-  DOODLE_MAYA_CHICK(k_s);
-  return true;
-}
 
 FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
   MSelectionList k_select{};
@@ -953,12 +937,12 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     auto &&k_name = k_names[l_i];
     reference_file k_ref{k_name};
     if (k_ref) {
-      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
       auto l_h = make_handle();
       l_h.emplace<reference_file>(k_ref);
       l_ret.emplace_back(l_h);
     } else {
-      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
     }
   }
 

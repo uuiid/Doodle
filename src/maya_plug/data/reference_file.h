@@ -224,14 +224,6 @@ class reference_file {
   entt::handle export_file_select(const export_arg &in_arg, const MSelectionList &in_list);
 
   /**
-   * @brief 在这个解算引用中添加一些标记的碰撞
-   * @return 返回值只有true , 就算标记碰撞体为空也会返回true 这种情况我们认为正常
-   * @throw maya_error maya返回值非成功
-   *
-   */
-  bool add_collision() const;
-
-  /**
    * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
    * @return 导出配置文件中对应的组
    */
