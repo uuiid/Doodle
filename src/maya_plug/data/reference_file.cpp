@@ -19,6 +19,8 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "entt/entity/fwd.hpp"
+#include "exception/exception.h"
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
@@ -33,6 +35,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
+#include <vector>
 
 namespace doodle::maya_plug {
 
@@ -463,7 +466,7 @@ bool reference_file::is_loaded() const {
     return k_r;
   } catch (const maya_error &in_err) {
     DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", boost::diagnostic_information(in_err));
-    return has_ue4_group();
+    return has_chick_group();
   }
 }
 bool reference_file::has_sim_cloth() {
@@ -486,7 +489,7 @@ bool reference_file::set_namespace(const std::string &in_namespace) {
   DOODLE_CHICK(!in_namespace.empty(), doodle_error{"空名称空间"});
   file_namespace = in_namespace.substr(1);
   find_ref_node();
-  return has_ue4_group();
+  return has_chick_group();
 }
 bool reference_file::find_ref_node() {
   chick_mobject();
@@ -515,22 +518,7 @@ bool reference_file::find_ref_node() {
   DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
   return true;
 }
-bool reference_file::has_ue4_group() const {
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  try {
-    chick_mobject();
-    MStatus k_s{};
-    MObjectArray k_objs = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-    DOODLE_MAYA_CHICK(k_s);
-    MSelectionList k_select{};
-    k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_MAYA_CHICK(k_s);
-    return true;
-  } catch (const std::runtime_error &err) {
-    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", file_namespace, k_cfg.export_group);
-    return false;
-  }
-}
+bool reference_file::has_ue4_group() const { return has_chick_group(); }
 void reference_file::qlUpdateInitialPose() const {
   DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
   MStatus l_status{};
@@ -663,7 +651,7 @@ bool reference_file::replace_file(const entt::handle &in_handle) {
   DOODLE_MAYA_CHICK(k_s);
   file_namespace = l_name_d;
   DOODLE_CHICK(find_ref_node(), doodle_error{"没有在新的名称空间中查询到引用节点"});
-  if (!has_ue4_group()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
+  if (!has_chick_group()) DOODLE_LOG_WARN("没有在引用文件中找到 导出 组");
   return false;
 }
 FSys::path reference_file::get_path() const {
@@ -811,7 +799,7 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
   MStatus l_status{};
   MObject l_return{};
   std::vector<MDagPath> l_all_path{};
-  if (!has_ue4_group()) return l_all_path;
+  if (!has_chick_group()) return l_all_path;
 
   MFnDagNode l_child{};
   MObject l_export_group{export_group_attr()->node(&l_status)};
@@ -843,7 +831,7 @@ std::vector<MDagPath> reference_file::qcloth_export_model() const {
   return l_all_path;
 }
 void reference_file::bake_results(const MTime &in_start, const MTime &in_end) const {
-  if (!has_ue4_group()) {
+  if (!has_chick_group()) {
     DOODLE_LOG_INFO("{} 没有ue4组", path);
     return;
   }
@@ -967,8 +955,24 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
   }
 }
 const std::string &reference_file::get_field_string() const { return field_attr; }
+bool reference_file::has_chick_group() const {
+  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
+  try {
+    chick_mobject();
+    MStatus k_s{};
+
+    MSelectionList k_select{};
+    k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
+    maya_chick(k_s);
+    return true;
+  } catch (const maya_error &err) {
+    DOODLE_LOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组 {}", file_namespace, k_cfg.export_group, err.what());
+    return false;
+  }
+}
 
 std::vector<entt::handle> reference_file_factory::create_ref() const {
+  std::vector<entt::handle> l_ret{};
   g_reg()->clear<reference_file>();
   g_reg()->clear<qcloth_shape>();
   MStatus k_s;
@@ -977,25 +981,14 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
 
   for (int l_i = 0; l_i < k_names.length(); ++l_i) {
     auto &&k_name = k_names[l_i];
-    reference_file k_ref{};
-
-    if (l_face_all) {
-      k_ref.set_namespace(d_str{k_name});
-      if (!k_ref.p_m_object.isNull()) {
-        DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
-        auto k_h = make_handle();
-        k_h.emplace<reference_file>(k_ref);
-      }
+    reference_file k_ref{k_name};
+    if (k_ref) {
+      DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+      auto l_h = make_handle();
+      l_h.emplace<reference_file>(k_ref);
+      l_ret.emplace_back(l_h);
     } else {
-      if (k_ref.set_namespace(d_str{k_name})) {
-        if (k_ref.is_loaded()) {
-          DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
-          auto k_h = make_handle();
-          k_h.emplace<reference_file>(k_ref);
-        } else {
-          DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
-        }
-      }
+      DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
     }
   }
 

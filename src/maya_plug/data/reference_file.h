@@ -5,6 +5,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
+#include "maya/MString.h"
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>
 #include <vector>
@@ -126,6 +127,10 @@ class reference_file {
       const reference_file_ns::generate_fbx_file_path &in_fbx_name
   ) const;
 
+  bool has_chick_group() const;
+
+  std::vector<MObject> ref_objs{};
+
  public:
   /**
    * @brief 引用maya obj 节点
@@ -144,6 +149,7 @@ class reference_file {
 
   reference_file();
   explicit reference_file(const std::string &in_maya_namespace);
+  explicit reference_file(const MString &in_maya) : reference_file(std::string{in_maya.asUTF8()}) {}
   void init_show_name();
   void set_path(const MObject &in_ref_node);
   bool set_namespace(const std::string &in_namespace);
@@ -228,7 +234,7 @@ class reference_file {
    * @brief 寻找是否有ue4组(作为导出标志)
    * @return
    */
-  bool has_ue4_group() const;
+  [[deprecated("Please use operator bool() const;")]] bool has_ue4_group() const;
 
   /**
    * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
@@ -248,6 +254,8 @@ class reference_file {
    * @return 选中所有的obj
    */
   MSelectionList get_all_object() const;
+
+  explicit inline operator bool() const { return has_chick_group(); }
 
  private:
   friend void to_json(nlohmann::json &j, const reference_file &p) {
