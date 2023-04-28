@@ -228,14 +228,6 @@ class reference_file {
    */
   bool add_collision() const;
 
-  [[deprecated("Please use operator bool() const;")]] bool is_loaded() const;
-
-  /**
-   * @brief 寻找是否有ue4组(作为导出标志)
-   * @return
-   */
-  [[deprecated("Please use operator bool() const;")]] bool has_ue4_group() const;
-
   /**
    * @brief 从配置文件中查找需要导出组名称对应的 maya 组 (名称空间为引用空间)
    * @return 导出配置文件中对应的组

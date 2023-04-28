@@ -42,7 +42,7 @@ namespace doodle::maya_plug {
 namespace reference_file_ns {
 
 FSys::path generate_file_path_base::operator()(const reference_file &in_ref) const {
-  return get_path() / get_name(in_ref.is_loaded() ? in_ref.get_namespace() : ""s);
+  return get_path() / get_name(in_ref ? in_ref.get_namespace() : ""s);
 }
 
 bool generate_file_path_base::operator==(const generate_file_path_base &in) const noexcept {
@@ -455,7 +455,6 @@ bool reference_file::has_node(const MObject &in_node) const {
 
   return false;
 }
-bool reference_file::is_loaded() const { return true; }
 bool reference_file::has_sim_cloth() {
   chick_mobject();
   MStatus k_s{};
@@ -505,7 +504,6 @@ bool reference_file::find_ref_node() {
   DOODLE_LOG_INFO("获得引用路径 {} 名称空间 {}", path, file_namespace);
   return true;
 }
-bool reference_file::has_ue4_group() const { return has_chick_group(); }
 void reference_file::qlUpdateInitialPose() const {
   DOODLE_LOG_INFO("开始更新解算文件 {} 中的布料初始化姿势 {}", get_namespace());
   MStatus l_status{};
@@ -709,7 +707,7 @@ FSys::path reference_file::export_fbx(
 ) const {
   FSys::path out_{};
 
-  DOODLE_CHICK(is_loaded(), doodle_error{"需要导出fbx的引用必须加载"});
+  DOODLE_CHICK(*this, doodle_error{"需要有效的引用"});
 
   MStatus k_s{};
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();

@@ -116,7 +116,7 @@ MStatus create_ref_file_command::doIt(const MArgList& in_arg) {
       }
     } else {
       if (k_ref.set_namespace(d_str{k_name})) {
-        if (k_ref.is_loaded()) {
+        if (k_ref) {
           DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
           auto k_h = make_handle();
           k_h.emplace<reference_file>(k_ref);
