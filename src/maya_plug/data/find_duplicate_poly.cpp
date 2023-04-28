@@ -4,9 +4,12 @@
 
 #include "find_duplicate_poly.h"
 
+#include "maya/MObject.h"
+#include "range/v3/algorithm/find_if.hpp"
 #include <data/maya_poly_info.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MObjectArray.h>
+#include <utility>
 
 namespace doodle::maya_plug {
 
@@ -34,17 +37,18 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
       ranges::views::filter([](const maya_poly_info& l_info) -> bool { return l_info.has_skin && !l_info.has_cloth; }) |
       ranges::to_vector;
 
-  l_vector = l_cloth | ranges::views::transform([&](const maya_poly_info& in_object) -> std::pair<MObject, MObject> {
-               auto l_v_list = l_skin | ranges::views::filter([&](const maya_poly_info& in_object_sk) -> bool {
-                                 return in_object == in_object_sk;
-                               }) |
-                               ranges::to_vector;
-               return std::make_pair(l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj, in_object.maya_obj);
-             }) |
-             ranges::views::filter([](const std::pair<MObject, MObject>& in_pair) -> bool {
-               return !in_pair.first.isNull() && !in_pair.second.isNull();
-             }) |
-             ranges::to_vector;
+  duplicate_objs_ =
+      l_cloth | ranges::views::transform([&](const maya_poly_info& in_object) -> std::pair<MObject, MObject> {
+        auto l_v_list = l_skin | ranges::views::filter([&](const maya_poly_info& in_object_sk) -> bool {
+                          return in_object == in_object_sk;
+                        }) |
+                        ranges::to_vector;
+        return std::make_pair(l_v_list.empty() ? MObject{} : l_v_list.front().maya_obj, in_object.maya_obj);
+      }) |
+      ranges::views::filter([](const std::pair<MObject, MObject>& in_pair) -> bool {
+        return !in_pair.first.isNull() && !in_pair.second.isNull();
+      }) |
+      ranges::to_vector;
 
   //  auto l_v = l_multimap |
   //             ranges::views::group_by(std::equal_to<maya_poly_info>{}) |
@@ -85,6 +89,15 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const M
   //             }) |
   //             ranges::to_vector;
 
-  return l_vector;
+  return duplicate_objs_;
 }
+MObject find_duplicate_poly::operator[](const MObject& in_obj) {
+  auto l_it = ranges::find_if(duplicate_objs_, [=](const std::pair<MObject, MObject>& in_par) -> bool {
+    return in_obj == in_par.first || in_obj == in_par.second;
+  });
+  if (l_it == duplicate_objs_.end()) return {};
+
+  return l_it->first == in_obj ? l_it->second : l_it->second;
+}
+
 }  // namespace doodle::maya_plug

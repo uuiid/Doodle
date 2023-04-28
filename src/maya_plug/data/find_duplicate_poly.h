@@ -14,6 +14,8 @@ namespace doodle::maya_plug {
  * 会擦找 maya_poly_info 相等的哦比较 对, 并且第一个是 有皮肤簇节点的, 第二个是有 布料解算节点的obj 对
  */
 class find_duplicate_poly {
+  std::vector<std::pair<MObject, MObject>> duplicate_objs_{};
+
  public:
   /**
    * @brief 将 传入的obj列表中寻找符合条件的maya obj mesh 对
@@ -21,6 +23,7 @@ class find_duplicate_poly {
    * @return 寻找到的obj对
    */
   std::vector<std::pair<MObject, MObject>> operator()(const MObjectArray& in_array);
+  MObject operator[](const MObject& in_obj);
 };
 
 }  // namespace doodle::maya_plug
