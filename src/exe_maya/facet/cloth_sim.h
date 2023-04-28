@@ -3,12 +3,14 @@
 //
 #pragma once
 
+#include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
 #include "maya/MApiNamespace.h"
 #include <cstdint>
 #include <maya/MTime.h>
 #include <memory>
 #include <string>
+#include <vector>
 namespace doodle::maya_plug {
 class cloth_sim final {
   static constexpr auto config{"cloth_sim_config"};
@@ -23,6 +25,7 @@ class cloth_sim final {
   void export_abc();
   void play_blast();
   std::shared_ptr<maya_lib_guard> lib_guard_{};
+  std::vector<entt::handle> ref_files_{};
 
  public:
   cloth_sim()  = default;

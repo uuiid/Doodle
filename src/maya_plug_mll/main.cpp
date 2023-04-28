@@ -188,18 +188,6 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::create_hud_node_maya>(k_plugin);
   CHECK_MSTATUS(status);
 
-  /// 注册一些引用命令
-  status = maya_reg->register_command<::doodle::maya_plug::create_ref_file_command>(k_plugin);
-  CHECK_MSTATUS(status);
-  status = maya_reg->register_command<::doodle::maya_plug::ref_file_load_command>(k_plugin);
-  CHECK_MSTATUS(status);
-  status = maya_reg->register_command<::doodle::maya_plug::ref_file_sim_command>(k_plugin);
-  CHECK_MSTATUS(status);
-  status = maya_reg->register_command<::doodle::maya_plug::ref_file_export_command>(k_plugin);
-  CHECK_MSTATUS(status);
-  status = maya_reg->register_command<::doodle::maya_plug::load_project>(k_plugin);
-  CHECK_MSTATUS(status);
-
   /// 导出相机命令注册
   status = maya_reg->register_command<::doodle::maya_plug::export_camera_command>(k_plugin);
   CHECK_MSTATUS(status);

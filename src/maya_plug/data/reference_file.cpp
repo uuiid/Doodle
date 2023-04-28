@@ -940,6 +940,7 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
   }
 }
 const std::string &reference_file::get_field_string() const { return field_attr; }
+const std::string &reference_file::get_key_path() const { return path; }
 bool reference_file::has_chick_group() const {
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   try {
@@ -977,7 +978,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
     }
   }
 
-  return {};
+  return l_ret;
 }
 void reference_file_factory::save_to_files() const {}
 

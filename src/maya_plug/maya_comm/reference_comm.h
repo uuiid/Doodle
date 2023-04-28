@@ -25,14 +25,6 @@ MSyntax ref_file_export_syntax();
 MSyntax load_project_syntax();
 MSyntax set_cloth_cache_path_syntax();
 /**
- * @brief 创建并扫描引用文件句柄
- */
-class create_ref_file_command
-    : public TemplateAction<create_ref_file_command, create_ref_file_command_name, create_ref_file_command_ns::syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
-/**
  * @brief @li 尝试从引用文件的元数据节点中加载以前的保存数据
  * @li 并且替换引用文件
  */

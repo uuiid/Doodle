@@ -4,6 +4,7 @@
 
 #include "cloth_sim.h"
 
+#include "doodle_core/core/core_help_impl.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/database_task/sqlite_client.h"
@@ -17,7 +18,6 @@
 #ifdef fsin
 #undef fsin
 #endif
-
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include "boost/asio/post.hpp"
@@ -26,6 +26,7 @@
 
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/main/maya_plug_fwd.h"
+#include <maya_plug/data/reference_file.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "core/maya_lib_guard.h"
@@ -73,6 +74,8 @@ bool cloth_sim::post() {
   maya_file_io::set_workspace(l_arg.file_path);
 
   maya_file_io::open_file(l_arg.file_path);
+
+  doodle_lib::Get().ctx().emplace<reference_file_factory>();
 
   maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
 
