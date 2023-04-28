@@ -228,7 +228,7 @@ class reference_file {
    */
   bool add_collision() const;
 
-  [[nodiscard]] bool is_loaded() const;
+  [[deprecated("Please use operator bool() const;")]] bool is_loaded() const;
 
   /**
    * @brief 寻找是否有ue4组(作为导出标志)
