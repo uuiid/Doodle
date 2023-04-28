@@ -22,6 +22,7 @@ target_sources(doodle_maya_lib
         qcloth_factory.h
         export_file_abc.h
         export_file_fbx.h
+        maya_conv_str.h
 
         PRIVATE
         create_hud_node.cpp
