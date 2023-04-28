@@ -351,15 +351,6 @@ MObject make_group(MDagModifier& in_modifier, const std::string& in_name, const 
 
 qcloth_shape::qcloth_shape() = default;
 
-bool qcloth_shape::create_cache() const {
-  DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
-  MStatus k_s{};
-  MFnDependencyNode l_node{obj, &k_s};
-  auto k_plug = get_plug(obj, "outputMesh");
-  /// \brief 使用这种方式评估网格
-  return !k_plug.asMObject(&k_s).isNull();
-}
-
 std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   in_handle.all_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>()
       ? void()

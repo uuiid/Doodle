@@ -91,18 +91,6 @@ class qcloth_shape : public cloth_interface::element_type {
   void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
 
   /**
-   * @brief 使用 MPlug::asMObject 作为强行评估节点属性的方法, 在
-   * 没有gui的情况下包装解算的正常
-   *
-   *
-   * @throw maya_error 有可能找不到需要评估的属性, 抛出异常
-   * @throw doodle_error 也可能属性 mobj 为空, 抛出异常
-   * @return true MObject 不空
-   * @return false 空mobj(有可能没有完成评估)
-   */
-  bool create_cache() const;
-
-  /**
    * @brief 获取布料形状（这个是一个tran）
    * @return 布料dag路径
    */

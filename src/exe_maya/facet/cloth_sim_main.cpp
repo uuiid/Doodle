@@ -7,10 +7,13 @@
 #include <boost/lambda2.hpp>
 
 #include "maya_plug/data/cloth_interface.h"
+#include "maya_plug/data/export_file_abc.h"
 #include "maya_plug/data/find_duplicate_poly.h"
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
 #include "maya_plug/main/maya_plug_fwd.h"
+#include <maya_plug/data/export_file_abc.h>
+#include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/ncloth_factory.h>
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>
@@ -121,7 +124,15 @@ void cloth_sim::play_blast() {
   l_p.play_blast_(anim_begin_time_, k_end_time);
 }
 
-void cloth_sim::export_abc() { DOODLE_LOG_INFO("开始导出abc"); }
+void cloth_sim::export_abc() {
+  DOODLE_LOG_INFO("开始导出abc");
+  export_file_abc l_ex{};
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { l_ex.export_sim(in_handle); });
+}
 
-void cloth_sim::export_fbx() { DOODLE_LOG_INFO("开始导出fbx"); }
+void cloth_sim::export_fbx() {
+  DOODLE_LOG_INFO("开始导出fbx");
+  export_file_fbx l_ex{};
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { l_ex.export_sim(in_handle); });
+}
 }  // namespace doodle::maya_plug
