@@ -3,12 +3,21 @@
 //
 
 #pragma once
+
+#include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include <maya/MApiNamespace.h>
 #include <maya/MPlug.h>
+#include <type_traits>
 namespace doodle::maya_plug {
+
+namespace m_namespace {
+std::string strip_namespace_from_name(const std::string& in_full_name);
+}
+}  // namespace m_mamespace
+
 /**
  * @brief 这个插件会寻找节点的属性, 并在找到时返回
  * @param in_node 节点obj
@@ -22,13 +31,19 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name);
 template <typename T>
 void set_attribute(const MObject& in_node, const std::string& in_name, const T& in_t) {
   auto l_s = get_plug(in_node, in_name).setValue(in_t);
-  if (!l_s) throw_exception(doodle_error{fmt::to_string(l_s)});
+  maya_chick(l_s);
 }
+
+inline void set_attribute(const MObject& in_node, const std::string& in_name, const std::string& in_t) {
+  auto l_s = get_plug(in_node, in_name).setValue(conv::to_ms(in_t));
+  maya_chick(l_s);
+}
+
 template <typename T>
 T get_attribute(const MObject& in_node, const std::string& in_name) {
   T result;
   auto l_s = get_plug(in_node, in_name).getValue(result);
-  if (!l_s) throw_exception(doodle_error{fmt::to_string(l_s)});
+  maya_chick(l_s);
   return result;
 }
 
