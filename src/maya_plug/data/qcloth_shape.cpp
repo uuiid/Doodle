@@ -730,6 +730,5 @@ void qcloth_shape::rest(const entt::handle& in_handle) const {
   maya_chick(MGlobal::setActiveSelectionList(l_list));
   maya_chick(MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"}));
 }
-void qcloth_shape::clear_cache() const {}
 
 }  // namespace doodle::maya_plug

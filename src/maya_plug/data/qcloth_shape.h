@@ -91,7 +91,6 @@ class qcloth_shape : public cloth_interface::element_type {
   void add_field(const entt::handle& in_handle) const override;
   void add_collision(const entt::handle& in_handle) const override;
   void rest(const entt::handle& in_handle) const override;
-  void clear_cache() const override;
 
   /**
    * @brief 设置qcloth缓存路径,如果存在缓存文件,还会删除缓存文件

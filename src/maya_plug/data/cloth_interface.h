@@ -24,7 +24,6 @@ class cloth_interface {
   virtual void add_field(const entt::handle& in_handle) const                                   = 0;
   virtual void add_collision(const entt::handle& in_handle) const                               = 0;
   virtual void rest(const entt::handle& in_handle) const                                        = 0;
-  virtual void clear_cache() const                                                              = 0;
   inline void set_cache_folder(const entt::handle& in_handle) const { set_cache_folder(in_handle, FSys::path{}); }
 };
 
