@@ -461,8 +461,8 @@ bool reference_file::is_loaded() const {
     auto k_r = k_ref.isLoaded(&k_s);
     DOODLE_MAYA_CHICK(k_s);
     return k_r;
-  } catch (const std::runtime_error &inerr) {
-    DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", boost::diagnostic_information(inerr));
+  } catch (const maya_error &in_err) {
+    DOODLE_LOG_INFO("查询引用方法 {} 错误, 使用寻找配置导出组的方式确认 ", boost::diagnostic_information(in_err));
     return has_ue4_group();
   }
 }
