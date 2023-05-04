@@ -110,7 +110,7 @@ bool reference_attr_setting::get_file_info() {
 
   for (auto& l_i : p_i->p_handles) {
     auto& k_ref = l_i.get<reference_file>();
-    auto l_p    = k_ref.path;
+    auto l_p    = k_ref.get_key_path();
     if (k_j.contains(l_p)) entt_tool::load_comm<reference_file, sim_cover_attr>(l_i, k_j.at(l_p));
     l_i.get<reference_file>().init_show_name();
   }
@@ -123,7 +123,7 @@ bool reference_attr_setting::render() {
     maya_file_io::chick_channel();
     nlohmann::json k_j{};
     for (auto& k : p_i->p_handles) {
-      entt_tool::save_comm<reference_file, sim_cover_attr>(k, k_j[k.get<reference_file>().path]);
+      entt_tool::save_comm<reference_file, sim_cover_attr>(k, k_j[k.get<reference_file>().get_key_path()]);
     }
     maya_file_io::replace_channel_date(k_j.dump());
   }
@@ -139,7 +139,7 @@ bool reference_attr_setting::render() {
     for (auto k_e : k_ref_view) {
       auto& k_ref = k_ref_view.get<reference_file>(k_e);
 
-      dear::TreeNode l_node{k_ref.path.c_str()};
+      dear::TreeNode l_node{k_ref.get_key_path().c_str()};
       if (ImGui::IsItemClicked() /*&& !ImGui::IsItemToggledOpen()*/) {
         p_i->p_current_select = make_handle(k_e);
         l_ref_value           = true;
@@ -173,7 +173,7 @@ bool reference_attr_setting::render() {
   };
   dear::Child{"sim_attr"} && [&]() {
     if (p_i->p_current_select) {
-      dear::Text(p_i->p_current_select.get<reference_file>().path);
+      dear::Text(p_i->p_current_select.get<reference_file>().get_key_path());
 
       if (p_i->p_current_select.any_of<sim_cover_attr>()) {
         if (l_ref_value) {

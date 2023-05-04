@@ -94,12 +94,27 @@ void cloth_sim::create_cloth() {
   ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
     auto l_c     = in_handle.get<cloth_interface>();
     auto l_ref_h = l_ref_map[l_c->get_namespace()];
-    l_c->add_collision(l_ref_h);
-    l_c->add_field(l_ref_h);
-    l_c->rest(l_ref_h);
-    /// 指向引用
-    l_c->set_cache_folder(l_ref_h);
+    l_c->add_collision(l_ref_h);     /// 添加碰撞
+    l_c->rest(l_ref_h);              /// 添加rest
+    l_c->cover_cloth_attr(l_ref_h);  /// 添加布料属性
+    l_c->add_field(l_ref_h);         /// 添加场力
+    l_c->set_cache_folder(l_ref_h);  /// 设置缓存文件夹
   });
+
+  /// \brief 在这里我们保存引用
+  auto k_save_file = maya_file_io::work_path("ma");
+  if (!FSys::exists(k_save_file)) {
+    FSys::create_directories(k_save_file);
+  }
+
+  k_save_file /= maya_file_io::get_current_path().filename();
+  try {
+    maya_file_io::save_file(k_save_file);
+    DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
+
+  } catch (const maya_error& error) {
+    DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
+  }
 }
 void cloth_sim::sim() {
   DOODLE_LOG_INFO("开始解算");

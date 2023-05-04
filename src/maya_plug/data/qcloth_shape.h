@@ -9,6 +9,7 @@
 #include "entt/entity/fwd.hpp"
 #include "maya/MApiNamespace.h"
 #include <maya/MObject.h>
+#include <string>
 
 // #include <maya/MDagPath.h>
 
@@ -89,6 +90,7 @@ class qcloth_shape : public cloth_interface::element_type {
   void rest(const entt::handle& in_handle) const override;
   MObject get_solver() const override;
   void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
+  std::string get_namespace() const override;
 
   /**
    * @brief 获取布料形状（这个是一个tran）

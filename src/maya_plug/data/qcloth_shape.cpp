@@ -725,5 +725,7 @@ MObject qcloth_shape::get_solver() const {
   DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
   return l_object;
 }
-
+std::string qcloth_shape::get_namespace() const {
+  return m_namespace::strip_namespace_from_name(get_node_full_name(obj));
+};
 }  // namespace doodle::maya_plug

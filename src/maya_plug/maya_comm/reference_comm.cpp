@@ -50,23 +50,7 @@ constexpr const char doodle_export_use_select_long[] = "-select";
 constexpr const char doodle_export_force_long[]      = "-force";
 
 };  // namespace
-namespace create_ref_file_command_ns {
-constexpr const char face_all[]     = "-a";
-constexpr const char face_all_log[] = "-allload";
-MSyntax syntax() {
-  MSyntax l_syntax{};
-  l_syntax.addFlag(face_all, face_all_log, MSyntax::kBoolean);
-  return l_syntax;
-}
 
-}  // namespace create_ref_file_command_ns
-
-MSyntax ref_file_sim_syntax() {
-  MSyntax syntax{};
-  syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
-  syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
-  return syntax;
-}
 MSyntax ref_file_export_syntax() {
   MSyntax syntax{};
   syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
@@ -77,11 +61,6 @@ MSyntax ref_file_export_syntax() {
   return syntax;
 }
 
-MSyntax load_project_syntax() {
-  MSyntax syntax{};
-  syntax.addFlag(doodle_project_path, doodle_project_path_long, MSyntax::kString);
-  return syntax;
-}
 MSyntax set_cloth_cache_path_syntax() {
   MSyntax l_syntax{};
   l_syntax.addArg(MSyntax::MArgType::kSelectionItem);
@@ -90,201 +69,114 @@ MSyntax set_cloth_cache_path_syntax() {
   return l_syntax;
 }
 
-MStatus ref_file_sim_command::doIt(const MArgList& in_arg) {
-  MStatus k_s{};
-  MArgParser k_prase{syntax(), in_arg, &k_s};
-  auto k_start = MAnimControl::minTime();
-  auto k_end   = MAnimControl::maxTime();
-
-  if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-    DOODLE_MAYA_CHICK(k_s);
-  }
-  if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-    DOODLE_MAYA_CHICK(k_s);
-  }
-  DOODLE_LOG_INFO("解算开始时间 {}  结束时间 {}  ", k_start.value(), k_end.value());
-
-  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    DOODLE_LOG_INFO("引用文件{}发现需要设置解算碰撞体", k_ref.get_key_path());
-    /// \brief 生成需要的 布料实体
-    qcloth_shape::create(make_handle(k_e));
-    /// \brief 添加碰撞体
-    k_ref.add_collision();
-    /// \brief 更新ql初始化状态
-    k_ref.qlUpdateInitialPose();
-    /// \brief 更新元配置数据
-    DOODLE_LOG_INFO("开始测试 {} 覆盖属性", k_ref.get_key_path());
-    sim_cover_attr::cover_qcloth_attr(make_handle(k_e));
-  }
-  for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
-    /// @brief 添加风场
-    k_qs.add_field();
-
-    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
-    k_qs.set_cache_folder();
-  }
-
-  /// \brief 在这里我们保存引用
-  auto k_save_file = maya_file_io::work_path("ma");
-  if (!FSys::exists(k_save_file)) {
-    FSys::create_directories(k_save_file);
-  }
-  k_save_file /= maya_file_io::get_current_path().filename();
-  try {
-    k_s = MFileIO::saveAs(d_str{k_save_file.generic_string()}, nullptr, true);
-    DOODLE_LOG_INFO("保存文件到 {}", k_save_file);
-    DOODLE_MAYA_CHICK(k_s);
-  } catch (const maya_error& error) {
-    DOODLE_LOG_WARN("无法保存文件 {} : {}", k_save_file, error);
-  }
-
-  for (MTime k_t = k_start; k_t <= k_end; ++k_t) {
-    MAnimControl::setCurrentTime(k_t);
-    for (auto&& [k_e, k_ref] : g_reg()->view<qcloth_shape>().each()) {
-      k_ref.create_cache();
-    }
-  }
-  return k_s;
-}
 MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
   MStatus k_s{};
-  MArgParser k_prase{syntax(), in_arg, &k_s};
-  MTime k_start{MAnimControl::minTime()};
-  MTime k_end = MAnimControl::maxTime();
-  bool use_select{false};
-  bool is_force{false};
-  reference_file::export_type k_export_type{};
+  // MArgParser k_prase{syntax(), in_arg, &k_s};
+  // MTime k_start{MAnimControl::minTime()};
+  // MTime k_end = MAnimControl::maxTime();
+  // bool use_select{false};
+  // bool is_force{false};
+  // reference_file::export_type k_export_type{};
 
-  if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-    DOODLE_MAYA_CHICK(k_s);
-  } else {
-    k_start = MTime{
-        boost::numeric_cast<std::double_t>(g_reg()->ctx().get<project_config::base_config>().export_anim_time),
-        MTime::uiUnit()};
-  }
-  if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-    DOODLE_MAYA_CHICK(k_s);
-  }
-  if (k_prase.isFlagSet(doodle_export_type, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    MString k_k_export_type_s{};
-    k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
-    DOODLE_MAYA_CHICK(k_s);
-    k_export_type = magic_enum::enum_cast<reference_file::export_type>(d_str{k_k_export_type_s}.str()).value();
-  }
-  if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_use_select, 0, use_select);
-    DOODLE_MAYA_CHICK(k_s);
-  }
+  // if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
+  //   DOODLE_MAYA_CHICK(k_s);
+  // } else {
+  //   k_start = MTime{
+  //       boost::numeric_cast<std::double_t>(g_reg()->ctx().get<project_config::base_config>().export_anim_time),
+  //       MTime::uiUnit()};
+  // }
+  // if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
+  //   DOODLE_MAYA_CHICK(k_s);
+  // }
+  // if (k_prase.isFlagSet(doodle_export_type, &k_s)) {
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   MString k_k_export_type_s{};
+  //   k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   k_export_type = magic_enum::enum_cast<reference_file::export_type>(d_str{k_k_export_type_s}.str()).value();
+  // }
+  // if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   k_s = k_prase.getFlagArgument(doodle_export_use_select, 0, use_select);
+  //   DOODLE_MAYA_CHICK(k_s);
+  // }
 
-  if (k_prase.isFlagSet(doodle_export_force, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    k_s = k_prase.getFlagArgument(doodle_export_force, 0, is_force);
-    DOODLE_MAYA_CHICK(k_s);
-    if (!use_select) {
-      DOODLE_LOG_ERROR("错误, 强制导出时必须使用选择标志并选中导出物体");
-      return {MStatus::kFailure};
-    }
-  }
+  // if (k_prase.isFlagSet(doodle_export_force, &k_s)) {
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   k_s = k_prase.getFlagArgument(doodle_export_force, 0, is_force);
+  //   DOODLE_MAYA_CHICK(k_s);
+  //   if (!use_select) {
+  //     DOODLE_LOG_ERROR("错误, 强制导出时必须使用选择标志并选中导出物体");
+  //     return {MStatus::kFailure};
+  //   }
+  // }
 
-  DOODLE_LOG_INFO(
-      "导出开始时间 {}  结束时间 {} 导出类型 {} ", k_start.value(), k_end.value(), magic_enum::enum_name(k_export_type)
-  );
+  // DOODLE_LOG_INFO(
+  //     "导出开始时间 {}  结束时间 {} 导出类型 {} ", k_start.value(), k_end.value(),
+  //     magic_enum::enum_name(k_export_type)
+  // );
 
-  if (is_force) {
-    DOODLE_LOG_INFO("开始使用交互式导出");
-    MSelectionList k_select{};
-    k_s = MGlobal::getActiveSelectionList(k_select);
-    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      if (k_r.has_node(k_select)) {
-        reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-        k_r.export_file_select(l_export_arg, k_select);
-        return k_s;
-      }
-    }
-  }
-  if (use_select) {
-    MSelectionList k_select{};
-    k_s = MGlobal::getActiveSelectionList(k_select);
-    DOODLE_LOG_INFO("获取选中物体 {}", k_select);
-    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      if (k_r.has_node(k_select)) {
-        DOODLE_LOG_INFO("开始导出 {}", k_r.path);
-        reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-        k_r.export_file(l_export_arg);
-      }
-    }
-  } else {
-    DOODLE_LOG_INFO("全部的引用文件导出");
-    for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-      DOODLE_LOG_INFO("开始导出 {}", k_r.path);
-      reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-      k_r.export_file(l_export_arg);
-    }
-  }
+  // if (is_force) {
+  //   DOODLE_LOG_INFO("开始使用交互式导出");
+  //   MSelectionList k_select{};
+  //   k_s = MGlobal::getActiveSelectionList(k_select);
+  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+  //     if (k_r.has_node(k_select)) {
+  //       reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+  //       k_r.export_file_select(l_export_arg, k_select);
+  //       return k_s;
+  //     }
+  //   }
+  // }
+  // if (use_select) {
+  //   MSelectionList k_select{};
+  //   k_s = MGlobal::getActiveSelectionList(k_select);
+  //   DOODLE_LOG_INFO("获取选中物体 {}", k_select);
+  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+  //     if (k_r.has_node(k_select)) {
+  //       DOODLE_LOG_INFO("开始导出 {}", k_r.path);
+  //       reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+  //       k_r.export_file(l_export_arg);
+  //     }
+  //   }
+  // } else {
+  //   DOODLE_LOG_INFO("全部的引用文件导出");
+  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
+  //     DOODLE_LOG_INFO("开始导出 {}", k_r.path);
+  //     reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
+  //     k_r.export_file(l_export_arg);
+  //   }
+  // }
 
-  return k_s;
-}
-
-MStatus load_project::doIt(const MArgList& in_arg) {
-  MStatus k_s{};
-  MArgParser k_prase{syntax(), in_arg, &k_s};
-  FSys::path k_path{};
-
-  if (k_prase.isFlagSet(doodle_project_path, &k_s)) {
-    DOODLE_MAYA_CHICK(k_s);
-    MString k_path_M{};
-    k_s = k_prase.getFlagArgument(doodle_project_path, 0, k_path_M);
-    DOODLE_LOG_INFO("开始打开项目 {}", k_path_M);
-    if (k_path_M.numChars() > 0) {
-      k_path = k_path_M.asUTF8();
-      bool run{true};
-      doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(
-          k_path,
-          [k_path, l_run = &run](bsys::error_code) -> void {
-            DOODLE_LOG_INFO("完成打开项目 {}", k_path);
-            *l_run = false;
-          }
-      );
-      if (MGlobal::mayaState(&k_s) != MGlobal::kInteractive) {
-        while (run) g_io_context().poll_one();
-      }
-    }
-  }
   return k_s;
 }
 
 MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {
   MStatus l_status{};
-  MArgDatabase k_prase{syntax(), in_list, &l_status};
-  MSelectionList l_list{};
-  DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
+  // MArgDatabase k_prase{syntax(), in_list, &l_status};
+  // MSelectionList l_list{};
+  // DOODLE_MAYA_CHICK(k_prase.getObjects(l_list));
 
-  MObject l_object{};
-  for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
-    DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path);
-    /// \brief 生成需要的 布料实体
-    if (!l_list.isEmpty())
-      for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
-        DOODLE_MAYA_CHICK(l_i.getDependNode(l_object));
-        if (k_ref.has_node(l_object)) qcloth_shape::create(make_handle(k_e));
-      }
-    else
-      qcloth_shape::create(make_handle(k_e));
-  }
-  for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
-    DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
-    k_qs.set_cache_folder(g_reg()->ctx().get<user::current_user>().user_name_attr());
-  }
+  // MObject l_object{};
+  // for (auto&& [k_e, k_ref] : g_reg()->view<reference_file>().each()) {
+  //   DOODLE_LOG_INFO("引用文件{}被发现需要设置解算碰撞体", k_ref.path);
+  //   /// \brief 生成需要的 布料实体
+  //   if (!l_list.isEmpty())
+  //     for (auto l_i = MItSelectionList{l_list}; !l_i.isDone(); l_i.next()) {
+  //       DOODLE_MAYA_CHICK(l_i.getDependNode(l_object));
+  //       if (k_ref.has_node(l_object)) qcloth_shape::create(make_handle(k_e));
+  //     }
+  //   else
+  //     qcloth_shape::create(make_handle(k_e));
+  // }
+  // for (auto&& [k_e, k_qs] : g_reg()->view<qcloth_shape>().each()) {
+  //   DOODLE_LOG_INFO("开始设置解算布料的缓存文件夹");
+  //   k_qs.set_cache_folder(g_reg()->ctx().get<user::current_user>().user_name_attr());
+  // }
   return l_status;
 }
 

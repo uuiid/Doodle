@@ -101,9 +101,9 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   if (p_i->select_list.length() > 0) {
     DOODLE_LOG_INFO("使用交互式创建混合变形");
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-      DOODLE_LOG_INFO("测试引用文件 {}", ref.path);
+      DOODLE_LOG_INFO("测试引用文件 {}", ref.get_key_path());
       if (ref.has_node(p_i->select_list)) {
-        DOODLE_LOG_INFO("测试选择命中引用文件 {}", ref.path);
+        DOODLE_LOG_INFO("测试选择命中引用文件 {}", ref.get_key_path());
         maya_file_io::import_reference_file(ref, false);
         auto l_p = ref.export_group_attr();
         for (auto&& ql_export : ref.qcloth_export_model()) {
@@ -117,7 +117,7 @@ void sequence_to_blend_shape_ref_comm::get_arg(const MArgList& in_arg) {
   } else {
     DOODLE_LOG_INFO("使用批量自动运行创建混合变形");
     for (auto&& [e, ref] : g_reg()->view<reference_file>().each()) {
-      DOODLE_LOG_INFO("开始转换引用文件 {}", ref.path);
+      DOODLE_LOG_INFO("开始转换引用文件 {}", ref.get_key_path());
       maya_file_io::import_reference_file(ref, false);
       auto l_p = ref.export_group_attr();
       for (auto&& ql_export : ref.qcloth_export_model()) {

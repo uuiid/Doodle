@@ -747,39 +747,40 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
 }
 std::vector<MDagPath> reference_file::qcloth_export_model() const {
-  auto l_cloth = qcloth_shape::create(make_handle(*this));
+  // @TODO: 调整导出模型的方式
+  // auto l_cloth = qcloth_shape::create(make_handle(*this));
 
-  MStatus l_status{};
-  MObject l_return{};
+  // MStatus l_status{};
+  // MObject l_return{};
   std::vector<MDagPath> l_all_path{};
-  if (!has_chick_group()) return l_all_path;
+  // if (!has_chick_group()) return l_all_path;
 
-  MFnDagNode l_child{};
-  MObject l_export_group{export_group_attr()->node(&l_status)};
-  DOODLE_MAYA_CHICK(l_status);
+  // MFnDagNode l_child{};
+  // MObject l_export_group{export_group_attr()->node(&l_status)};
+  // DOODLE_MAYA_CHICK(l_status);
 
-  for (auto &&qlc : l_cloth) {
-    auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
-    DOODLE_MAYA_CHICK(l_status);
-    for (MItDependencyGraph l_it{
-             l_object, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream,
-             MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
-         !l_it.isDone() && l_status; l_it.next()) {
-      auto l_temp_sp = get_dag_path(l_it.currentItem(&l_status));
-      DOODLE_MAYA_CHICK(l_status);
-      auto l_current_path = get_dag_path(l_temp_sp.transform(&l_status));
-      DOODLE_MAYA_CHICK(l_status);
-      l_status = l_child.setObject(l_current_path);
-      DOODLE_MAYA_CHICK(l_status);
-      if (l_child.hasParent(l_export_group)) {
-        auto l_path = l_current_path;
-        if (auto l_it_j = ranges::find_if(l_all_path, [&](const MDagPath &in) { return l_path == in; });
-            l_it_j == l_all_path.end()) {
-          l_all_path.emplace_back(l_current_path);
-        }
-      }
-    }
-  }
+  // for (auto &&qlc : l_cloth) {
+  //   auto l_object = qlc.get<qcloth_shape>().ql_cloth_shape().node(&l_status);
+  //   DOODLE_MAYA_CHICK(l_status);
+  //   for (MItDependencyGraph l_it{
+  //            l_object, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream,
+  //            MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
+  //        !l_it.isDone() && l_status; l_it.next()) {
+  //     auto l_temp_sp = get_dag_path(l_it.currentItem(&l_status));
+  //     DOODLE_MAYA_CHICK(l_status);
+  //     auto l_current_path = get_dag_path(l_temp_sp.transform(&l_status));
+  //     DOODLE_MAYA_CHICK(l_status);
+  //     l_status = l_child.setObject(l_current_path);
+  //     DOODLE_MAYA_CHICK(l_status);
+  //     if (l_child.hasParent(l_export_group)) {
+  //       auto l_path = l_current_path;
+  //       if (auto l_it_j = ranges::find_if(l_all_path, [&](const MDagPath &in) { return l_path == in; });
+  //           l_it_j == l_all_path.end()) {
+  //         l_all_path.emplace_back(l_current_path);
+  //       }
+  //     }
+  //   }
+  // }
 
   return l_all_path;
 }

@@ -25,6 +25,6 @@ bool ncloth_factory::has_cloth() {
   }
   return false;
 }
-std::vector<entt::handle> ncloth_factory::create_cloth() const {}
+std::vector<entt::handle> ncloth_factory::create_cloth() const { return {}; }
 
 }  // namespace doodle::maya_plug

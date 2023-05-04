@@ -15,23 +15,11 @@ constexpr char load_project_name[]            = "doodle_load_project";
 constexpr char set_cloth_cache_path_name[]    = "doodle_set_cloth_cache_path";
 }  // namespace
 
-namespace create_ref_file_command_ns {
-MSyntax syntax();
 
-}
 
-MSyntax ref_file_sim_syntax();
 MSyntax ref_file_export_syntax();
-MSyntax load_project_syntax();
 MSyntax set_cloth_cache_path_syntax();
-/**
- * @brief 开始进行解算
- */
-class ref_file_sim_command
-    : public TemplateAction<ref_file_sim_command, ref_file_sim_command_name, ref_file_sim_syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
+
 /**
  * @brief 导出文件中需要导出的集合体(abc或者fbx)
  */
@@ -44,10 +32,6 @@ class ref_file_export_command
 /**
  * @brief 打开并加载文件
  */
-class load_project : public TemplateAction<load_project, load_project_name, load_project_syntax> {
- public:
-  MStatus doIt(const MArgList&) override;
-};
 
 class set_cloth_cache_path
     : public TemplateAction<set_cloth_cache_path, set_cloth_cache_path_name, set_cloth_cache_path_syntax> {
