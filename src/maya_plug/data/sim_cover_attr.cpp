@@ -30,7 +30,7 @@ void from_json(const nlohmann::json& j, sim_cover_attr& p) {
 }
 void sim_cover_attr::cover_qcloth_attr(const entt::handle& in_handle) {
   if (in_handle && in_handle.all_of<sim_cover_attr, reference_file>()) {
-    DOODLE_LOG_INFO("开始覆盖 {} 的解算配置", in_handle.get<reference_file>().path);
+    DOODLE_LOG_INFO("开始覆盖 {} 的解算配置", in_handle.get<reference_file>().get_key_path());
     auto& self     = in_handle.get<sim_cover_attr>();
     auto l_ql_core = qcloth_shape::get_ql_solver(in_handle.get<reference_file>().get_all_object());
     set_attribute(l_ql_core, "simpleSubsampling", self.simple_subsampling);

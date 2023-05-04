@@ -15,7 +15,6 @@ namespace doodle::maya_plug {
 
 namespace m_namespace {
 std::string strip_namespace_from_name(const std::string& in_full_name);
-}
 }  // namespace m_mamespace
 
 /**
