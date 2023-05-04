@@ -16,6 +16,7 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "data/qcloth_shape.h"
 #include "entt/entity/fwd.hpp"
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
@@ -728,4 +729,9 @@ MObject qcloth_shape::get_solver() const {
 std::string qcloth_shape::get_namespace() const {
   return m_namespace::strip_namespace_from_name(get_node_full_name(obj));
 };
+
+void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
+  /// todo: 未作处理
+}
+
 }  // namespace doodle::maya_plug

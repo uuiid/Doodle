@@ -91,6 +91,7 @@ class qcloth_shape : public cloth_interface::element_type {
   MObject get_solver() const override;
   void set_cache_folder(const entt::handle& in_handle, const FSys::path& in_path) const override;
   std::string get_namespace() const override;
+  void cover_cloth_attr(const entt::handle& in_handle) const override;
 
   /**
    * @brief 获取布料形状（这个是一个tran）

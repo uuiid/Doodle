@@ -56,10 +56,10 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
 
         if (k_ref.set_namespace(d_str{k_name})) {
           if (k_ref) {
-            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
             k_ref.qlUpdateInitialPose();
           } else {
-            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
           }
         } else {
           DOODLE_LOG_INFO("命名空间 {} 中无有效引用", k_name);
@@ -89,10 +89,10 @@ MStatus find_duplicate_poly_comm::doIt(const MArgList& in_list) {
 
         if (k_ref.set_namespace(i_ns)) {
           if (k_ref) {
-            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.path);
+            DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());
             k_ref.qlUpdateInitialPose();
           } else {
-            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.path);
+            DOODLE_LOG_INFO("引用文件 {} 未加载", k_ref.get_key_path());
           }
         } else {
           DOODLE_LOG_INFO("命名空间 {} 中无有效引用", i_ns);
