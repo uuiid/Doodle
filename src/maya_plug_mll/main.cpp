@@ -184,10 +184,6 @@ MStatus initializePlugin(MObject obj) {
       doodle::maya_plug::doodle_info_node, doodle::maya_plug::doodle_info_node_draw_override>();
   CHECK_MSTATUS(status);
 
-  /// 注册创建hud命令
-  status = maya_reg->register_command<::doodle::maya_plug::create_hud_node_maya>(k_plugin);
-  CHECK_MSTATUS(status);
-
   /// 导出相机命令注册
   status = maya_reg->register_command<::doodle::maya_plug::export_camera_command>(k_plugin);
   CHECK_MSTATUS(status);

@@ -69,7 +69,7 @@ class DlsShelf(shelfBase._shelf):
                       command=lambda x: self.print_r(cmds.doodle_clear_scene(uv=True, sl=True)))
 
         self.addButon("hud", "icons/create_hud.png",
-                      command=cmds.create_hud_node_maya)
+                      command="")
         self.addButon("af", "icons/doodle_afterimage.png",
                       command=cmds.doodle_afterimage)
         self.addButon("ql_rest", "icons/ql_rest.png",
