@@ -9,10 +9,16 @@
 #include "Doodle/AiArrayGeneration.h"
 #include "DoodleAiSplineCrowd.h"
 
+#include "UnrealEdGlobals.h"
+#include "Editor/UnrealEdEngine.h"
+
 static const FName doodleTabName("doodleUI");
 #define LOCTEXT_NAMESPACE "FdoodleUIModule"
 
 void FdoodleUIModule::StartupModule() {
+  Map_Lists               = GUnrealEd->GetProjectDefaultMapTemplates();
+  FTemplateMapInfo& l_ref = Map_Lists.Emplace_GetRef();
+  l_ref.Map               = TEXT("/Doodle/lock_dev/main_lock_dev.main_lock_dev");
   // 在我们这里添加自定义放置类
   FPlacementCategoryInfo info{LOCTEXT("doodle", "doodle"), "DoodleCategoryInfo", TEXT("Adoodle"), 55, true};
   IPlacementModeModule::Get().RegisterPlacementCategory(info);
@@ -61,6 +67,10 @@ void FdoodleUIModule::StartupModule() {
           nullptr, FAssetData{ADoodleAiArrayGeneration::StaticClass()}
       ))
   );
+
+   GUnrealEd->OnGetTemplateMapInfos().BindLambda([this]() -> const TArray<FTemplateMapInfo>& {
+     return Map_Lists;
+   });
 }
 
 void FdoodleUIModule::ShutdownModule() {
