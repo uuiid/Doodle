@@ -47,6 +47,9 @@
 			"${workspaceFolder}/script/maya/scripts",
 			"${workspaceFolder}/script/maya/scripts/scripts"
 		],
+		"clangd.arguments": [
+			"--compile-commands-dir=E:/Doodle/build/Ninja_RelWithDebInfo"
+		],
 		"editor.tabSize": 2,
 		"editor.fontLigatures": true,
 		"files.exclude": {
