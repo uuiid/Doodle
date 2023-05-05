@@ -60,8 +60,16 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods")
   bool EnableChecker;
   // 转灯
-  UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Moods")
-  bool TurnLight;
+  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods")
+  float TurnLighting;
+
+#if WITH_EDITOR
+  void PostEditChangeProperty(
+      FPropertyChangedEvent &PropertyChangeEvent
+  ) override;
+#endif  // WITH_EDITOR
+
+  virtual void Tick(float DeltaTime) override;
 
  private:
   UPROPERTY()
@@ -76,12 +84,16 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
   TObjectPtr<USceneComponent> RootStaticMeshs;
   UPROPERTY()
   TArray<TObjectPtr<UStaticMeshComponent>> StaticMeshs;
-
+  UPROPERTY()
   TObjectPtr<UMaterialInstanceDynamic> PBR_Mat_Inst;
+  UPROPERTY()
   TObjectPtr<UMaterialInstanceDynamic> SkyDome_Mat_Inst;
 
   void SwitchLight(TEnumAsByte<EDoodleAssetsPreviewLightModel> InModel);
   void PBRChecker(bool InIsEnable);
   void SetBackgroundValue(double InBackgroundValue, double InFarValue);
   void ViewCalibrator();
+  void SwitchStaticMeshs(bool InIsEnable);
+  void SwitchConsole();
+  void TurnLighting_Fun();
 };
