@@ -2,6 +2,11 @@
     "recommendations": [
         "ms-vscode.cmake-tools",
         "llvm-vs-code-extensions.vscode-clangd",
-        "ms-vscode.cpptools"
+        "ms-vscode.cpptools",
+        "jeff-hykin.better-cpp-syntax",
+        "twxs.cmake",
+        "josetr.cmake-language-support-vscode",
+        "pkief.material-icon-theme",
+        "gruntfuggly.todo-tree"
     ]
 }
