@@ -206,7 +206,7 @@ void ADoodleAssetsPreview::PostActorCreated() {
   SwitchStaticMeshs(Calibrator);
 }
 
-void ADoodleAssetsPreview::SwitchLight(TEnumAsByte<EDoodleAssetsPreviewLightModel> InModel) {
+void ADoodleAssetsPreview::SwitchLight(EDoodleAssetsPreviewLightModel InModel) {
   switch (InModel) {
     case EDoodleAssetsPreviewLightModel::LowContrast: {
       //(Pitch=-71.685211,Yaw=250.879517,Roll=32.971264)

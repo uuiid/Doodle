@@ -18,7 +18,7 @@ class USceneComponent;
 
 UENUM()
 enum class EDoodleAssetsPreviewLightModel : uint8 {
-  LowContrast UMETA(DisplayName = "LowContrast"),  // 如果想要显示中文，需要设置编码格式为UTF-8
+  LowContrast UMETA(DisplayName = "LowContrast"),
   MidContrast UMETA(DisplayName = "MidContrast"),
   HighContrast UMETA(DisplayName = "HighContrast"),
 };
@@ -33,7 +33,7 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
 
   /// 强度
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods", meta = (MultiLine = "true"))
-  TEnumAsByte<EDoodleAssetsPreviewLightModel> LightingScenarios;
+  EDoodleAssetsPreviewLightModel LightingScenarios;
   // 背景
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Moods")
   double BackgroundValueCompensation;
@@ -89,7 +89,7 @@ class DOODLEEDITOR_API ADoodleAssetsPreview : public AActor {
   UPROPERTY()
   TObjectPtr<UMaterialInstanceDynamic> SkyDome_Mat_Inst;
 
-  void SwitchLight(TEnumAsByte<EDoodleAssetsPreviewLightModel> InModel);
+  void SwitchLight(EDoodleAssetsPreviewLightModel InModel);
   void PBRChecker(bool InIsEnable);
   void SetBackgroundValue(double InBackgroundValue, double InFarValue);
   void ViewCalibrator();
