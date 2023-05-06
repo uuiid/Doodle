@@ -7,6 +7,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "HAL/IConsoleManager.h"
+
+#include "EngineUtils.h"
+
 ADoodleAssetsPreview::ADoodleAssetsPreview() {
   static ConstructorHelpers::FObjectFinder<UTextureCube> CubemapMap(TEXT("/Doodle/lock_dev/Assets/HDRI/EpicQuadPanorama_Gray.EpicQuadPanorama_Gray"));
 
@@ -14,7 +17,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
   SkyLight                      = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLightComponent"));
 
   SkyLight->SetCubemap(CubemapMap.Object);
-  SkyLight->SourceType = ESkyLightSourceType::SLS_CapturedScene;
+  SkyLight->SourceType = ESkyLightSourceType::SLS_SpecifiedCubemap;
   SkyLight->SetSourceCubemapAngle(60.f);
   SkyLight->SkyDistanceThreshold    = 1.f;
   SkyLight->bLowerHemisphereIsBlack = false;
@@ -169,7 +172,8 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
 }
 
 void ADoodleAssetsPreview::OnConstruction(const FTransform& Transform) {
-  Super::OnConstruction({});
+  Super::OnConstruction(Transform);
+  SetActorLocation({});
 }
 
 void ADoodleAssetsPreview::PostActorCreated() {
@@ -216,7 +220,7 @@ void ADoodleAssetsPreview::SwitchLight(EDoodleAssetsPreviewLightModel InModel) {
       DirectionalLight->Intensity            = 0.8f;
       DirectionalLight->ShadowBias           = 0.25f;
       DirectionalLight->ShadowSlopeBias      = 0.25f;
-      SkyLight->SetIntensity(0.42f);
+      SkyLight->SetIntensity(2.5f);
       SetBackgroundValue(BackgroundValueCompensation, 0.18);
     } break;
     case EDoodleAssetsPreviewLightModel::MidContrast: {
@@ -236,7 +240,7 @@ void ADoodleAssetsPreview::SwitchLight(EDoodleAssetsPreviewLightModel InModel) {
       DirectionalLight->Intensity            = 7.f;
       DirectionalLight->ShadowBias           = 1.0f;
       DirectionalLight->ShadowSlopeBias      = 1.0f;
-      SkyLight->SetIntensity(2.5f);
+      SkyLight->SetIntensity(0.42f);
       SetBackgroundValue(BackgroundValueCompensation, 0.1);
     } break;
     default:
@@ -287,6 +291,31 @@ void ADoodleAssetsPreview::SwitchStaticMeshs(bool InIsEnable) {
 }
 
 void ADoodleAssetsPreview::SwitchConsole() {
+#if WITH_EDITOR
+  if (RaytracingShadow) {
+    bool Has_Translucent{};
+    FString L_MatName{TEXT("半透明材质 :")};
+    for (TActorIterator<AActor> LActor{GetWorld()}; LActor; ++LActor) {
+      TArray<UMeshComponent*> L_StaticMesh{};
+      LActor->GetComponents(L_StaticMesh, true);
+      for (auto&& i : L_StaticMesh) {
+        for (auto&& mat : i->GetMaterials()) {
+          if (mat && mat->GetBlendMode() == BLEND_Translucent) {
+            Has_Translucent = true;
+            L_MatName += mat->GetPathName();
+            L_MatName += TEXT('\n');
+          }
+        }
+      }
+    }
+
+    if (Has_Translucent && GEngine) {
+      L_MatName += TEXT(" 会在光追中出错.");
+      FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(L_MatName));
+    }
+  }
+#endif
+
   if (auto L_Var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.RayTracing.Shadows"))) {
     L_Var->Set(RaytracingShadow, ECVF_SetByConsole);
   }
