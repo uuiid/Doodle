@@ -6,5 +6,3 @@ InlayHints:
   DeducedTypes: No
 Hover:
   ShowAKA: Yes
-CompileFlags: 
-  CompilationDatabase: build/Ninja_debug
