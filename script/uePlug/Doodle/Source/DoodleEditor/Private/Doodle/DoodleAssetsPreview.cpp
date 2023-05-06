@@ -136,7 +136,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
     auto& L_S = StaticMeshs.Emplace_GetRef(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SM_ColorCalibrator")));
     L_S->SetStaticMesh(L_StaticMesh_Obj.Object);
     L_S->SetupAttachment(RootComponent);
-    L_S->SetRelativeLocation({-160.f, 0.f, L_StaticMesh_Obj.Object->GetBounds().GetBox().GetExtent().Z });
+    L_S->SetRelativeLocation({-160.f, 0.f, L_StaticMesh_Obj.Object->GetBounds().GetBox().GetExtent().Z});
   }
 
   {  // [1]
@@ -145,7 +145,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
     auto& L_S = StaticMeshs.Emplace_GetRef(CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Character_STM")));
     L_S->SetStaticMesh(L_StaticMesh_Obj.Object);
     L_S->SetupAttachment(RootComponent);
-    L_S->SetRelativeLocation({-245.f, 0.f, 0.f });
+    L_S->SetRelativeLocation({-245.f, 0.f, 0.f});
   }
 
   {  // [2]
@@ -155,7 +155,7 @@ ADoodleAssetsPreview::ADoodleAssetsPreview() {
     L_S->SetStaticMesh(L_StaticMesh_Obj.Object);
     L_S->SetupAttachment(RootComponent);
     L_S->SetRelativeLocation({-350.f, 0.f, 0.f});
-	//L_S->SetRelativeScale3D(FVector{ 100.f,100.f,100.f });
+    // L_S->SetRelativeScale3D(FVector{ 100.f,100.f,100.f });
   }
   {  // [3]
     static ConstructorHelpers::FObjectFinder<UStaticMesh> L_StaticMesh_Obj(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
@@ -195,9 +195,9 @@ void ADoodleAssetsPreview::PostActorCreated() {
   L_Base_MatInst->SetScalarParameterValue(TEXT("AO"), 1.0f);
   StaticMeshs[2]->SetMaterial(0, L_Base_MatInst);
   StaticMeshs[3]->SetMaterial(0, L_Base_MatInst);
-  
+
   LightingScenarios = EDoodleAssetsPreviewLightModel::MidContrast;
-  //this->Mark
+  // this->Mark
   SwitchLight(EDoodleAssetsPreviewLightModel::MidContrast);
 
   DirectionalLight->SetTransmission(EnableTransmission);
@@ -288,35 +288,29 @@ void ADoodleAssetsPreview::SwitchStaticMeshs(bool InIsEnable) {
 
 void ADoodleAssetsPreview::SwitchConsole() {
   if (auto L_Var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.RayTracing.Shadows"))) {
-    auto L_F = L_Var->GetFlags();
-    L_Var->SetFlags(EConsoleVariableFlags::ECVF_SetByCode);
-    L_Var->Set(RaytracingShadow);
-    L_Var->SetFlags(L_F);
+    L_Var->Set(RaytracingShadow, ECVF_SetByConsole);
   }
   if (auto L_Var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Lumen.HardwareRayTracing"))) {
-    auto L_F = L_Var->GetFlags();
-    L_Var->SetFlags(EConsoleVariableFlags::ECVF_SetByCode);
-    L_Var->Set(UseHardWareRaytracing);
-    L_Var->SetFlags(L_F);
+    L_Var->Set(UseHardWareRaytracing, ECVF_SetByConsole);
   }
 }
 
 void ADoodleAssetsPreview::TurnLighting_Fun() {
   SkyLight->SetSourceCubemapAngle(60.f - TurnLighting);
   SkyLight->MarkRenderStateDirty();
-  FQuat L_Quat{ FVector::ZAxisVector, TurnLighting };
+  FQuat L_Quat{FVector::ZAxisVector, TurnLighting};
   switch (LightingScenarios) {
-  case EDoodleAssetsPreviewLightModel::LowContrast: {
-	  L_Quat *= FQuat::MakeFromRotator({ -71.685211f, 250.879517f, 32.971264f });
-  } break;
-  case EDoodleAssetsPreviewLightModel::MidContrast: {
-	  L_Quat *= FQuat::MakeFromRotator({ -45.999348f, 250.000214f, 0.000088f });
-  } break;
-  case EDoodleAssetsPreviewLightModel::HighContrast: {
-	  L_Quat *= FQuat::MakeFromRotator({ -60.f, -110.500160f, 12.080514f });
-  } break;
-  default:
-	  break;
+    case EDoodleAssetsPreviewLightModel::LowContrast: {
+      L_Quat *= FQuat::MakeFromRotator({-71.685211f, 250.879517f, 32.971264f});
+    } break;
+    case EDoodleAssetsPreviewLightModel::MidContrast: {
+      L_Quat *= FQuat::MakeFromRotator({-45.999348f, 250.000214f, 0.000088f});
+    } break;
+    case EDoodleAssetsPreviewLightModel::HighContrast: {
+      L_Quat *= FQuat::MakeFromRotator({-60.f, -110.500160f, 12.080514f});
+    } break;
+    default:
+      break;
   }
   DirectionalLight->SetRelativeRotation(L_Quat);
   DirectionalLight->MarkRenderStateDirty();
