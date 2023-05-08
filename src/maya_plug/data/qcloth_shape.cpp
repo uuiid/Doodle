@@ -351,6 +351,7 @@ MObject make_group(MDagModifier& in_modifier, const std::string& in_name, const 
 }  // namespace
 
 qcloth_shape::qcloth_shape() = default;
+qcloth_shape::qcloth_shape(const MObject& in_object) : obj(in_object){};
 
 std::vector<entt::handle> qcloth_shape::create_sim_cloth(const entt::handle& in_handle) {
   in_handle.all_of<qcloth_shape_n::maya_obj, qcloth_shape_n::shape_list>()
