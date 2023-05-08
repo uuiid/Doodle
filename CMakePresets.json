@@ -149,6 +149,16 @@
       ]
     },
     {
+      "name": "debug_maya_exe",
+      "description": "调试 maya 库连接的exe(maya只能使用release调试)",
+      "displayName": "调试 doodle maya exe",
+      "configurePreset": "Ninja_RelWithDebInfo",
+      "inherits": "debug",
+      "targets": [
+        "doodle_maya_exe"
+      ]
+    },
+    {
       "name": "Release_Exe",
       "configurePreset": "Ninja_release",
       "jobs": 10,
