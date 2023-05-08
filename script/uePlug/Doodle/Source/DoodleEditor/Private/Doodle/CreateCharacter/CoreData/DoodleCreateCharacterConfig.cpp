@@ -2,22 +2,25 @@
 
 int32 UDoodleCreateCharacterConfig::Add_TreeNode(int32 In_Parent) {
   ++TreeIndex;
+  ClearNullKeys();
   int32 L_Index             = ListTrees.Emplace();
 
   ListTrees[L_Index].Parent = In_Parent;
   if (In_Parent != INDEX_NONE) ListTrees[In_Parent].Childs.Add(L_Index);
   ListTrees[L_Index].ShowUIName = {FString{"AddBone"} + FString::FromInt(TreeIndex)};
+  MarkPackageDirty();
   return L_Index;
 }
 
 TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_Bone, int32 In_UI_Parent) {
   if (In_UI_Parent == INDEX_NONE)
     return TOptional<FString>{};
+  ClearNullKeys();
   FDoodleCreateCharacterConfigUINode& L_UI = ListTrees[In_UI_Parent];
 
   FString L_Key                            = In_Bone.ToString() + FString::FromInt(In_Bone.GetNumber());
 
-  for (auto i = In_UI_Parent; In_UI_Parent == INDEX_NONE; i = ListTrees[i].Parent) {
+  for (auto i = In_UI_Parent; i != INDEX_NONE && ListTrees[i].Parent != INDEX_NONE; i = ListTrees[i].Parent) {
     L_Key.Append(FString::FromInt(i));
   }
 
@@ -39,7 +42,7 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
   L_Node.BoneName                                      = In_Bone;
 
   L_UI.Keys.Add(L_Key);
-
+  MarkPackageDirty();
   return L_Key;
 }
 
@@ -62,6 +65,7 @@ bool UDoodleCreateCharacterConfig::Has_UI_ShowName(int32 In_Node, const FString&
 void UDoodleCreateCharacterConfig::Rename_UI_ShowName(int32 In_Node, const FString& InName) {
   if (In_Node != INDEX_NONE) {
     ListTrees[In_Node].ShowUIName = InName;
+    MarkPackageDirty();
   }
 }
 
@@ -71,6 +75,7 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
 
   if (In_Node == INDEX_NONE)
     return false;
+  ClearNullKeys();
 
   TFunction<void(int32)> L_Get_Node_Tree_List{};
   TArray<int32> L_Remove_List{};
@@ -115,6 +120,7 @@ bool UDoodleCreateCharacterConfig::Delete_Ui_Node(int32 In_Node) {
     }
   }
   ListTrees = L_ListTree;
+  MarkPackageDirty();
   return true;
 }
 
@@ -122,4 +128,20 @@ TTuple<FName, FTransform> UDoodleCreateCharacterConfig::Evaluate(const FString& 
   if (!ListConfigNode.Contains(In_BoneName)) return MakeTuple(FName{NAME_None}, FTransform::Identity);
 
   return MakeTuple(ListConfigNode[In_BoneName].BoneName, ListConfigNode[In_BoneName].WeightCurve.Evaluate(InValue, 1.0f));
+}
+
+void UDoodleCreateCharacterConfig::ClearNullKeys() {
+  TSet<FString> L_All_Key{};
+  ListConfigNode.GetKeys(L_All_Key);
+  TSet<FString> L_Has_Key{};
+  for (auto&& i : ListTrees) {
+    for (auto&& j : i.Keys)
+      L_Has_Key.Add(j);
+  }
+
+  TSet<FString> L_Del_Key = L_All_Key.Difference(L_Has_Key);
+  for (auto&& i : L_Del_Key) {
+    ListConfigNode.Remove(i);
+  }
+  MarkPackageDirty();
 }

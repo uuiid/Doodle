@@ -88,9 +88,11 @@ class UDoodleCreateCharacterConfig : public UObject {
   void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh) { SkeletalMesh = InSkeletalMesh; }
 
  private:
+  void ClearNullKeys();
+
   // 骨骼网格体引用
   UPROPERTY();
   TObjectPtr<USkeletalMesh> SkeletalMesh;
-
+  UPROPERTY();
   int32 TreeIndex;
 };
