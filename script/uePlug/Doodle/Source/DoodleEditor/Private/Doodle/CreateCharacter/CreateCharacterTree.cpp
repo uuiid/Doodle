@@ -259,11 +259,12 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
     L_Builder.BeginSection("Create_ContextMenuOpening_Add_Bone", LOCTEXT("Create_ContextMenuOpening_Add_Bone1", "Add"));
 
     // 添加
-    L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add Classify"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
-        FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
-    );
+    if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Keys.IsEmpty())
+      L_Builder.AddMenuEntry(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add Classify"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
+          FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
+      );
     // 绑定骨骼
     if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Parent != INDEX_NONE && CurrentSelect->Get().Childs.IsEmpty()) {
       L_Builder.AddSubMenu(
