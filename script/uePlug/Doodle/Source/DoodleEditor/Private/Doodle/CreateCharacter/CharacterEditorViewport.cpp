@@ -99,6 +99,7 @@ void SCharacterEditorViewportToolBar::Construct(
 void SCharacterEditorViewport::Construct(const FArguments& Arg) {
   DoodleCreateCharacterConfigAttr = Arg._DoodleCreateCharacterConfigAttr;
   AssetEditorModeManager          = MakeShared<FAssetEditorModeManager>();
+  AssetEditorModeManager->SetWidgetModeOverride(UE::Widget::EWidgetMode::WM_Translate);
   SEditorViewport::Construct(SEditorViewport::FArguments());
 }
 
