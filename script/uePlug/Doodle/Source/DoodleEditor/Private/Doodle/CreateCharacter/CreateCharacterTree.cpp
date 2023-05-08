@@ -117,6 +117,21 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
                      .Text(LOCTEXT("SCreateCharacterConfigTreeItem_Edit", "Edit"))
                    ]
                ]
+               + SHorizontalBox::Slot()
+               .AutoWidth()
+               [
+                 SNew(SButton)
+                 .OnClicked_Lambda([this]() {
+                   if (!ItemData)
+                     return FReply::Unhandled();
+                   On_FloatValueChanged(0.0f);
+                   return FReply::Handled();
+                 })
+                   [
+                     SNew(STextBlock)
+                     .Text(LOCTEXT("SCreateCharacterConfigTreeItem_Edit", "Rest"))
+                   ]
+               ]
           // clang-format on
           ;
     }
@@ -254,6 +269,10 @@ void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWei
 }
 
 TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
+  if (CurrentSelect || *CurrentSelect) {
+    return;
+  }
+
   FMenuBuilder L_Builder{true, UICommandList, Extender};
   {
     L_Builder.BeginSection("Create_ContextMenuOpening_Add_Bone", LOCTEXT("Create_ContextMenuOpening_Add_Bone1", "Add"));
