@@ -265,7 +265,7 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
         FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
     );
     // 绑定骨骼
-    if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Parent != INDEX_NONE) {
+    if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Parent != INDEX_NONE && CurrentSelect->Get().Childs.IsEmpty()) {
       L_Builder.AddSubMenu(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4_Tip", "Binding Bone"),

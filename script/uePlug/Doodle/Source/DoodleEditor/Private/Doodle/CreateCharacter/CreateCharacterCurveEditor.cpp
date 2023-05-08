@@ -197,8 +197,6 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
 
     TimeSliderArgs.PlaybackStatus         = EMovieScenePlayerStatus::Stopped;
     TimeSliderArgs.NumericTypeInterface   = NumericTypeInterface;
-
-    // TimeSliderArgs.OnPlaybackRangeChanged =
   }
   // 时间时间控制器渲染
   TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
