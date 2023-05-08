@@ -183,7 +183,7 @@ class SCreateCharacterConfigTreeItem : public SMultiColumnTableRow<SCreateCharac
     // if (!ItemData || !ItemData->ConfigNode || !Config_Data.IsValid())
     //   return;
     if (ItemData && *ItemData && Config_Data.IsValid())
-      Config_Data.Get()->Rename_UI_ShowName(*ItemData, NewNameString);
+      Config_Data.Get()->Rename_UI_ShowName(ItemData->Get_Index(), NewNameString);
   }
   FSlateFontInfo GetTextFont() const {
     return FAppStyle::GetWidgetStyle<FTextBlockStyle>("SkeletonTree.NormalFont").Font;
