@@ -46,10 +46,10 @@ struct FDoodleCreateCharacterConfigUINode {
 
   // 调整最大值
   UPROPERTY()
-  float MaxValue{2.0f};
+  float MaxValue{1.0f};
   // 调整最小值
   UPROPERTY()
-  float MinValue{-2.0f};
+  float MinValue{-1.0f};
 
   UPROPERTY()
   float Value{};
