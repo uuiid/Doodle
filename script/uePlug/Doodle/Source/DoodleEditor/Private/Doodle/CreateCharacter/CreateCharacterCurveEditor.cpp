@@ -199,38 +199,39 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
     TimeSliderArgs.NumericTypeInterface   = NumericTypeInterface;
   }
   // 时间时间控制器渲染
-  TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
+  // TSharedPtr<FCreateCharacterSliderController> CreateCharacterSliderController = MakeShared<FCreateCharacterSliderController>(TimeSliderArgs);
   // 时间范围
-  ISequencerWidgetsModule& SequencerWidgets                                    = FModuleManager::Get().LoadModuleChecked<ISequencerWidgetsModule>("SequencerWidgets");
+  ISequencerWidgetsModule& SequencerWidgets = FModuleManager::Get().LoadModuleChecked<ISequencerWidgetsModule>("SequencerWidgets");
   // TopTimeSlider                             = SequencerWidgets.CreateTimeSlider(TimeSliderControllerRef, bMirrorLabels);
 
   // Create bottom time range slider
-  TSharedRef<ITimeSlider> BottomTimeRange                                      = SequencerWidgets.CreateTimeRange(
-      FTimeRangeArgs(
-          EShowRange::ViewRange | EShowRange::WorkingRange | EShowRange::PlaybackRange,
-          EShowRange::ViewRange | EShowRange::WorkingRange,
-          CreateCharacterSliderController.ToSharedRef(),
-          EVisibility::Visible,
-          NumericTypeInterface.ToSharedRef()
-      ),
-      SequencerWidgets.CreateTimeRangeSlider(CreateCharacterSliderController.ToSharedRef())
-  );
+  // TSharedRef<ITimeSlider> BottomTimeRange                                      = SequencerWidgets.CreateTimeRange(
+  //    FTimeRangeArgs{
+  //        EShowRange::ViewRange | EShowRange::WorkingRange | EShowRange::PlaybackRange,
+  //        EShowRange::ViewRange | EShowRange::WorkingRange,
+  //
+  //        // CreateCharacterSliderController.ToSharedRef(),
+  //        EVisibility::Visible,
+  //        NumericTypeInterface.ToSharedRef()}
+  //    //,
+  //    //SequencerWidgets.CreateTimeRangeSlider(CreateCharacterSliderController.ToSharedRef())
+  //);
 
-  CurveEditor = MakeShared<FCurveEditor>();
+  CurveEditor                               = MakeShared<FCurveEditor>();
   FCurveEditorInitParams CurveEditorInitParams;
   CurveEditor->InitCurveEditor(CurveEditorInitParams);
-  CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}s");
-  CurveEditor->SetBounds(MakeUnique<FCreateCharacterCurveEditorBounds>(this));
+  CurveEditor->GridLineLabelFormatXAttribute = LOCTEXT("GridXLabelFormat", "{0}");
+  // CurveEditor->SetBounds(MakeUnique<FCreateCharacterCurveEditorBounds>(this));
 
   // CurveEditor->InputSnapRateAttribute = FFrameRate{1, 25};
 
-  CurveEditorTree = SNew(SCurveEditorTree, CurveEditor)
+  CurveEditorTree                            = SNew(SCurveEditorTree, CurveEditor)
                         .OnContextMenuOpening(this, &SCreateCharacterCurveEditor::OnContextMenuOpening);
 
   TSharedRef<SCurveEditorPanel> CurveEditorPanel =
       SNew(SCurveEditorPanel, CurveEditor.ToSharedRef())
           .GridLineTint(FLinearColor(0.f, 0.f, 0.f, 0.3f))
-          .ExternalTimeSliderController(CreateCharacterSliderController)
+          //.ExternalTimeSliderController(CreateCharacterSliderController)
           .TabManager(InArgs._TabManager)
           .TreeSplitterWidth(0.2f)
           .ContentSplitterWidth(0.8f)
@@ -264,7 +265,7 @@ void SCreateCharacterCurveEditor::Construct(const FArguments& InArgs) {
     SNew(SVerticalBox) 
     + SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 3.0f)[MakeToolbar(CurveEditorPanel)] 
     + SVerticalBox::Slot().FillHeight(1.0f)[CurveEditorPanel]
-    + SVerticalBox::Slot().AutoHeight()[BottomTimeRange]
+    //+ SVerticalBox::Slot().AutoHeight()[BottomTimeRange]
 
   ];
   // clang-format on
