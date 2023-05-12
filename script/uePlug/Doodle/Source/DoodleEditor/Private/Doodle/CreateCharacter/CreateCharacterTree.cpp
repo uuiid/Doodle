@@ -270,9 +270,10 @@ void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWei
 
 TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
   FMenuBuilder L_Builder{true, UICommandList, Extender};
-  if (CurrentSelect || *CurrentSelect) {
+  if (!CurrentSelect || !*CurrentSelect) {
     return L_Builder.MakeWidget();
   }
+ 
   {
     L_Builder.BeginSection("Create_ContextMenuOpening_Add_Bone", LOCTEXT("Create_ContextMenuOpening_Add_Bone1", "Add"));
 
