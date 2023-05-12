@@ -35,11 +35,21 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
 
   FDoodleCreateCharacterConfigNode& L_Node = ListConfigNode.Emplace(L_Key);
 
-  L_Node.WeightCurve.Resize(4.0f, true, -2.0f, 2.0f);
+  L_Node.WeightCurve.Resize(4.0f, true, -1.0f, 1.0f);
   L_Node.WeightCurve.TranslationCurve.Name.DisplayName = FName{TEXT("TranslationCurve")};
-  L_Node.WeightCurve.RotationCurve.Name.DisplayName    = FName{TEXT("RotationCurve")};
-  L_Node.WeightCurve.ScaleCurve.Name.DisplayName       = FName{TEXT("ScaleCurve")};
-  L_Node.BoneName                                      = In_Bone;
+  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
+  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
+  L_Node.WeightCurve.TranslationCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
+  L_Node.WeightCurve.RotationCurve.Name.DisplayName = FName{TEXT("RotationCurve")};
+  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
+  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
+  L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
+  L_Node.WeightCurve.ScaleCurve.Name.DisplayName = FName{TEXT("ScaleCurve")};
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
+
+  L_Node.BoneName = In_Bone;
 
   L_UI.Keys.Add(L_Key);
   MarkPackageDirty();
