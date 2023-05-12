@@ -17,9 +17,11 @@
 // #include "IPlacementModeModule.h"
 // #include "AssetRegistry/IAssetRegistry.h"
 // #include "AssetRegistry/AssetRegistryModule.h"
+
 #include "ContentBrowserModule.h"  ///内容游览器
 #include "Doodle/CreateCharacter/CreateCharacterMianUI.h"
-
+#include "Doodle/CreateCharacter/CoreData/CreateCharacterActor.h"
+#include "Doodle/CreateCharacter/Editor/CreateCharacterActor_Customization.h"
 #include "AssetToolsModule.h"  // 注册资产动作
 #include "Doodle/CreateCharacter/Editor/CreateCharacter_AssetTypeActions.h"
 
@@ -93,6 +95,11 @@ void FdoodleEditorModule::StartupModule() {
       CreateAssetActions.Add_GetRef(MakeShared<FAssetTypeActions_CreateCharacter>(L_Type)).ToSharedRef()
   );
 
+  // 注册详细面板
+  FPropertyEditorModule &L_Module = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+  L_Module.RegisterCustomClassLayout(ADoodleCreateCharacterActor::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&CreateCharacterActor_Customization::MakeInstance));
+  L_Module.NotifyCustomizationModuleChanged();
+
   // AssetDataSource.Reset(NewObject<UContentBrowserAssetDataSource>(
   //    GetTransientPackage(), "doodle_AssetData"));
   // AssetDataSource->Initialize(R"(/doodle/test)");
@@ -112,7 +119,7 @@ void FdoodleEditorModule::ShutdownModule() {
   FDoodleCommands::Unregister();
 
   FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name); 
+  FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
 
   // 取消注册资产动作
   if (FModuleManager::Get().IsModuleLoaded("AssetTools")) {
@@ -123,7 +130,12 @@ void FdoodleEditorModule::ShutdownModule() {
       );
   }
   CreateAssetActions.Empty();
-
+  // 详细面板
+  if (FModuleManager::Get().IsModuleLoaded("PropertyEditor")) {
+    FPropertyEditorModule &L_Module = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+    L_Module.UnregisterCustomClassLayout(ADoodleCreateCharacterActor::StaticClass()->GetFName());
+    L_Module.NotifyCustomizationModuleChanged();
+  }
   // AssetDataSource.Reset();
 }
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
