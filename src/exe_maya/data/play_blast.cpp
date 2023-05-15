@@ -246,6 +246,7 @@ MStatus play_blast::play_blast_(const MTime& in_start, const MTime& in_end) {
         FSys::remove_all(k_f);
       }
   );
+  return k_s;
 }
 
 bool play_blast::conjecture_ep_sc() {

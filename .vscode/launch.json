@@ -25,6 +25,29 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
+            "name": "Doodle_maya_debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.getLaunchTargetPath}",
+            "args": [
+                "--cloth_sim_config=D:/test_file/test.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${command:cmake.launchTargetDirectory}",
+            "environment": [
+                {
+                    "name": "MAYA_LOCATION",
+                    "value": "C:/Program Files/Autodesk/Maya2019"
+                },
+                {
+                    "name": "PATH",
+                    "value": "%PATH%;C:/Program Files/Autodesk/Maya2019/bin"
+                }
+            ],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
+        },
+        {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
