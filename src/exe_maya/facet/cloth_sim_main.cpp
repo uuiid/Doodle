@@ -60,7 +60,7 @@ void cloth_sim::replace_ref_file() {
       in_handle.destroy();
     }
   });
-  ref_files_ |= ranges::action::remove_if(!boost::lambda2::_1);
+  ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
 
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     if (in_handle.get<reference_file>().replace_sim_assets_file()) {

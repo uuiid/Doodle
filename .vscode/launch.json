@@ -28,7 +28,7 @@
             "name": "Doodle_maya_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${command:cmake.getLaunchTargetPath}",
+            "program": "C:/Program Files/Autodesk/Maya2019/bin/${command:cmake.getLaunchTargetFilename}",
             "args": [
                 "--cloth_sim_config=D:/test_file/test.json"
             ],

@@ -21,6 +21,7 @@
 
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
+#include <array>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
@@ -35,6 +36,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
+#include <string_view>
 #include <vector>
 
 namespace doodle::maya_plug {
@@ -934,8 +936,12 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
   maya_chick(k_s);
 
+  constexpr static std::array<std::string_view, 2> g_not_find_ui{"UI", "shared"};
   for (int l_i = 0; l_i < k_names.length(); ++l_i) {
     auto &&k_name = k_names[l_i];
+    if (std::find(g_not_find_ui.begin(), g_not_find_ui.end(), k_name.asUTF8()) != g_not_find_ui.end()) {
+      continue;
+    }
     reference_file k_ref{k_name};
     if (k_ref) {
       DOODLE_LOG_INFO("获得引用文件 {}", k_ref.get_key_path());

@@ -4,8 +4,6 @@
 #include <doodle_lib/facet/create_move_facet.h>
 #include <doodle_lib/facet/main_facet.h>
 #include <doodle_lib/facet/rpc_server_facet.h>
-
-#include "maya/MApiNamespace.h"
 #include <exe_maya/facet/cloth_sim.h>
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
