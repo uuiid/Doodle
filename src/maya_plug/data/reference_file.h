@@ -63,7 +63,7 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
   [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
 
  public:
-  explicit generate_fbx_file_path(const entt::registry &in);
+  explicit generate_fbx_file_path(const entt::registry &in = *g_reg());
 
   void is_camera(bool in_is_camera);
 

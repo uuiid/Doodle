@@ -51,108 +51,12 @@ constexpr const char doodle_export_force_long[]      = "-force";
 
 };  // namespace
 
-MSyntax ref_file_export_syntax() {
-  MSyntax syntax{};
-  syntax.addFlag(doodle_startTime, doodle_startTime_long, MSyntax::kTime);
-  syntax.addFlag(doodle_endTime, doodle_endTime_long, MSyntax::kTime);
-  syntax.addFlag(doodle_export_type, doodle_export_type_long, MSyntax::kString);
-  syntax.addFlag(doodle_export_use_select, doodle_export_use_select_long, MSyntax::kBoolean);
-  syntax.addFlag(doodle_export_force, doodle_export_force_long, MSyntax::kBoolean);
-  return syntax;
-}
-
 MSyntax set_cloth_cache_path_syntax() {
   MSyntax l_syntax{};
   l_syntax.addArg(MSyntax::MArgType::kSelectionItem);
   l_syntax.useSelectionAsDefault(true);
   l_syntax.setObjectType(MSyntax::MObjectFormat::kSelectionList);
   return l_syntax;
-}
-
-MStatus ref_file_export_command::doIt(const MArgList& in_arg) {
-  MStatus k_s{};
-  // MArgParser k_prase{syntax(), in_arg, &k_s};
-  // MTime k_start{MAnimControl::minTime()};
-  // MTime k_end = MAnimControl::maxTime();
-  // bool use_select{false};
-  // bool is_force{false};
-  // reference_file::export_type k_export_type{};
-
-  // if (k_prase.isFlagSet(doodle_startTime, &k_s)) {
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   k_s = k_prase.getFlagArgument(doodle_startTime, 0, k_start);
-  //   DOODLE_MAYA_CHICK(k_s);
-  // } else {
-  //   k_start = MTime{
-  //       boost::numeric_cast<std::double_t>(g_reg()->ctx().get<project_config::base_config>().export_anim_time),
-  //       MTime::uiUnit()};
-  // }
-  // if (k_prase.isFlagSet(doodle_endTime, &k_s)) {
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   k_s = k_prase.getFlagArgument(doodle_endTime, 0, k_end);
-  //   DOODLE_MAYA_CHICK(k_s);
-  // }
-  // if (k_prase.isFlagSet(doodle_export_type, &k_s)) {
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   MString k_k_export_type_s{};
-  //   k_s = k_prase.getFlagArgument(doodle_export_type, 0, k_k_export_type_s);
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   k_export_type = magic_enum::enum_cast<reference_file::export_type>(d_str{k_k_export_type_s}.str()).value();
-  // }
-  // if (k_prase.isFlagSet(doodle_export_use_select, &k_s)) {
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   k_s = k_prase.getFlagArgument(doodle_export_use_select, 0, use_select);
-  //   DOODLE_MAYA_CHICK(k_s);
-  // }
-
-  // if (k_prase.isFlagSet(doodle_export_force, &k_s)) {
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   k_s = k_prase.getFlagArgument(doodle_export_force, 0, is_force);
-  //   DOODLE_MAYA_CHICK(k_s);
-  //   if (!use_select) {
-  //     DOODLE_LOG_ERROR("错误, 强制导出时必须使用选择标志并选中导出物体");
-  //     return {MStatus::kFailure};
-  //   }
-  // }
-
-  // DOODLE_LOG_INFO(
-  //     "导出开始时间 {}  结束时间 {} 导出类型 {} ", k_start.value(), k_end.value(),
-  //     magic_enum::enum_name(k_export_type)
-  // );
-
-  // if (is_force) {
-  //   DOODLE_LOG_INFO("开始使用交互式导出");
-  //   MSelectionList k_select{};
-  //   k_s = MGlobal::getActiveSelectionList(k_select);
-  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-  //     if (k_r.has_node(k_select)) {
-  //       reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-  //       k_r.export_file_select(l_export_arg, k_select);
-  //       return k_s;
-  //     }
-  //   }
-  // }
-  // if (use_select) {
-  //   MSelectionList k_select{};
-  //   k_s = MGlobal::getActiveSelectionList(k_select);
-  //   DOODLE_LOG_INFO("获取选中物体 {}", k_select);
-  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-  //     if (k_r.has_node(k_select)) {
-  //       DOODLE_LOG_INFO("开始导出 {}", k_r.path);
-  //       reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-  //       k_r.export_file(l_export_arg);
-  //     }
-  //   }
-  // } else {
-  //   DOODLE_LOG_INFO("全部的引用文件导出");
-  //   for (auto&& [k_e, k_r] : g_reg()->view<reference_file>().each()) {
-  //     DOODLE_LOG_INFO("开始导出 {}", k_r.path);
-  //     reference_file::export_arg l_export_arg{k_export_type, k_start, k_end};
-  //     k_r.export_file(l_export_arg);
-  //   }
-  // }
-
-  return k_s;
 }
 
 MStatus set_cloth_cache_path::doIt(const MArgList& in_list) {

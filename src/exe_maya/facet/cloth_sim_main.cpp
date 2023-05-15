@@ -12,6 +12,7 @@
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/data/qcloth_factory.h"
 #include "maya_plug/main/maya_plug_fwd.h"
+#include "maya_plug/maya_plug_fwd.h"
 #include <maya_plug/data/export_file_abc.h>
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/ncloth_factory.h>
@@ -68,7 +69,7 @@ void cloth_sim::replace_ref_file() {
     }
   });
 
-  ref_files_ |= ranges::action::remove_if(!boost::lambda2::_1);
+  ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
 }
 void cloth_sim::create_cloth() {
   maya_chick(MGlobal::executeCommand(d_str{R"(lockNode -l false -lu false ":initialShadingGroup";)"}));
@@ -148,6 +149,9 @@ void cloth_sim::export_abc() {
 void cloth_sim::export_fbx() {
   DOODLE_LOG_INFO("开始导出fbx");
   export_file_fbx l_ex{};
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { l_ex.export_sim(in_handle); });
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
+    in_handle.emplace<generate_file_path_ptr>(std::make_shared<reference_file_ns::generate_fbx_file_path>());
+    l_ex.export_sim(in_handle);
+  });
 }
 }  // namespace doodle::maya_plug

@@ -65,7 +65,7 @@ bool maya_camera::export_file(
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
-  k_comm = std::string{"FBXExportConstraints -v true;"};
+  k_comm = std::string{"FBXExportConstraints -v false;"};
   k_s    = MGlobal::executeCommand(d_str{k_comm});
   DOODLE_MAYA_CHICK(k_s);
 
