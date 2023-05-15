@@ -9,7 +9,6 @@
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
 #include <maya_plug/maya_comm/afterimage_comm.h>
-#include <maya_plug/maya_comm/cam_comm.h>
 #include <maya_plug/maya_comm/clear_scene_comm.h>
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
@@ -184,9 +183,6 @@ MStatus initializePlugin(MObject obj) {
       doodle::maya_plug::doodle_info_node, doodle::maya_plug::doodle_info_node_draw_override>();
   CHECK_MSTATUS(status);
 
-  /// 导出相机命令注册
-  status = maya_reg->register_command<::doodle::maya_plug::export_camera_command>(k_plugin);
-  CHECK_MSTATUS(status);
   /// 保存文件命令
   status = maya_reg->register_command<::doodle::maya_plug::comm_file_save>(k_plugin);
   CHECK_MSTATUS(status);

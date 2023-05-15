@@ -6,7 +6,6 @@ target_sources(doodle_maya_lib
         sequence_to_blend_shape_comm.h
         upload_files_command.h
         file_comm.h
-        cam_comm.h
         dem_bones_add_weight.h
         open_doodle_main.h
         clear_scene_comm.h
@@ -21,7 +20,6 @@ target_sources(doodle_maya_lib
         open_doodle_main.cpp
         upload_files_command.cpp
         file_comm.cpp
-        cam_comm.cpp
         afterimage_comm.cpp
         reference_comm.cpp
         replace_rig_file_command.cpp
