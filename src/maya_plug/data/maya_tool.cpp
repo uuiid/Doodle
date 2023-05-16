@@ -17,11 +17,7 @@
 #include <maya/MPlug.h>
 
 namespace doodle::maya_plug {
-namespace m_namespace {
-std::string strip_namespace_from_name(const std::string& in_full_name) {
-  return conv::to_s(MNamespace::stripNamespaceFromName(conv::to_ms(in_full_name)));
-}
-}  // namespace m_namespace
+
 MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   in_node.isNull() ? throw_exception(doodle_error{"传入空节点寻找属性 {}"s, in_name}) : void();
   MStatus k_s{};

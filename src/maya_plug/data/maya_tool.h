@@ -13,10 +13,6 @@
 #include <type_traits>
 namespace doodle::maya_plug {
 
-namespace m_namespace {
-std::string strip_namespace_from_name(const std::string& in_full_name);
-}  // namespace m_mamespace
-
 /**
  * @brief 这个插件会寻找节点的属性, 并在找到时返回
  * @param in_node 节点obj
