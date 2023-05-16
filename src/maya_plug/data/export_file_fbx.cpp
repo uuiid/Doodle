@@ -22,7 +22,7 @@ void export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>
   auto& l_cam = g_reg()->ctx().get<maya_camera>();
   l_cam.unlock_attr();
   l_cam.back_camera(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
-  DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", k_cam.get_transform_name());
+  DOODLE_LOG_INFO("开始检查相机是否在世界下方 {}", l_cam.get_transform_name());
   if (l_cam.camera_parent_is_word()) {
     l_cam.fix_group_camera(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
   }

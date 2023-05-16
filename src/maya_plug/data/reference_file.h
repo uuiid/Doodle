@@ -90,8 +90,7 @@ class reference_file {
   void chick_mobject() const;
 
   static std::string get_abc_exprt_arg();
-
-  std::vector<MDagPath> find_out_group_child_suffix_node(const std::string &in_suffix) const;
+ 
 
   /**
    * @brief
@@ -101,20 +100,7 @@ class reference_file {
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
   void bake_results(const MTime &in_start, const MTime &in_end) const;
-  /**
-   * @brief 导出到abc文件中
-   * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
-   * @param in_start 开始时间
-   * @param in_endl 结束时间
-   * @param in_export_obj 需要导出的选中列表
-   * @return 导出文件的路径
-   * @throw maya_error maya返回值非成功
-   *
-   */
-  FSys::path export_abc(
-      const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj,
-      const reference_file_ns::generate_abc_file_path &in_abc_name
-  ) const;
+
   /**
    * @brief 导出文件到fbx中, 这个函数会烘培动画帧进行导出
    * @param in_start 开始时间
@@ -195,16 +181,6 @@ class reference_file {
    * @return
    */
   bool rename_material() const;
-  /**
-   * @brief 导出到abc文件中
-   * 这个函数会修改模型和材质名称, 使导出的abc符合ue4导入的标准
-   * @param in_start 开始时间
-   * @param in_endl 结束时间
-   * @return 只有在使用maya选择时没有选中物体时返回失败，即推测的导出列表为空时会返回false
-   * @throw maya_error maya返回值非成功
-   *
-   */
-  FSys::path export_abc(const MTime &in_start, const MTime &in_end) const;
 
   FSys::path export_fbx(const MTime &in_start, const MTime &in_end) const;
 
@@ -220,7 +196,6 @@ class reference_file {
     MTime &end_p;
   };
 
-  entt::handle export_file(const export_arg &in_arg);
   entt::handle export_file_select(const export_arg &in_arg, const MSelectionList &in_list);
 
   /**
@@ -228,13 +203,6 @@ class reference_file {
    * @return 导出配置文件中对应的组
    */
   std::optional<MDagPath> export_group_attr() const;
-
-  /**
-   * @brief 获取所有需要导出布料所包裹的高模,
-   * @warning 必须使用maya 节点连接到导出模型, 从解算节点开始查找(qcloth或者ncloth)
-   * @return 所有需要导出的路径
-   */
-  std::vector<MDagPath> qcloth_export_model() const;
 
   /**
    * @brief 获取这个抽象引用中所有的 obj
@@ -292,7 +260,8 @@ struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path
       -> decltype(ctx.out()) {
     return fmt::format_to(
         ctx.out(), "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
-        in_.extract_scene_name, in_.extract_reference_name, in_.use_add_range, in_.add_external_string
+        in_.extract_scene_name, in_.extract_reference_name, in_.use_add_range,
+        in_.add_external_string ? std::string{} : *in_.add_external_string
     );
   }
 };

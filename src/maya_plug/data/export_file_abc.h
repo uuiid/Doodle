@@ -6,13 +6,26 @@
 #include <maya_plug/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
+#include <filesystem>
+#include <maya/MTime.h>
+#include <string>
 #include <vector>
 
 namespace doodle::maya_plug {
 class reference_file;
 class export_file_abc {
  private:
-  std::vector<MDagPath> cloth_export_model(const entt::handle_view<reference_file>& in_handle);
+  std::vector<MDagPath> cloth_export_model(const MDagPath& in_root, const std::string& in_namespace);
+  std::vector<MDagPath> child_export_model(const MDagPath& in_root);
+  std::vector<MDagPath> find_out_group_child_suffix_node(const MDagPath& in_root, const std::string& in_suffix);
+
+  void rename_material(const std::string& in_namespace);
+  [[nodiscard]] std::string get_abc_exprt_arg() const;
+
+  void export_abc(const MSelectionList& in_select, const FSys::path& in_path);
+  std::string m_name{};
+  MTime begin_time{};
+  MTime end_time{};
 
  public:
   export_file_abc() = default;

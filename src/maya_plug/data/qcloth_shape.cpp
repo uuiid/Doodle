@@ -10,6 +10,7 @@
 #include <boost/functional/value_factory.hpp>
 
 #include <maya_plug/data/find_duplicate_poly.h>
+#include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/reference_file.h>
@@ -34,6 +35,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MPlug.h>
 #include <string>
+
 
 namespace doodle::maya_plug {
 
