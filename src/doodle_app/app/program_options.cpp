@@ -24,6 +24,12 @@ void program_options::init_project() const {
     doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_path, [](bsys::error_code) -> void {
       DOODLE_LOG_INFO("完成打开项目");
     });
+  } else if (auto l_set_path = core_set::get_set().project_root[0];
+             !l_path.empty() && FSys::exists(l_path) && FSys::is_regular_file(l_path) &&
+             l_path.extension() == doodle_config::doodle_db_name.data()) {
+    doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->async_open(l_path, [](bsys::error_code) -> void {
+      DOODLE_LOG_INFO("完成打开项目");
+    });
   }
 }
 
