@@ -21,6 +21,7 @@
 
 #include <boost/asio.hpp>
 
+#include "database_task/details/tool.h"
 #include "details/tool.h"
 #include "metadata/metadata.h"
 #include "metadata/project.h"
@@ -323,7 +324,8 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
     p_i->local_reg->patch<doodle::assets_file>(e);
   }
 
-  //  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
+  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
+  (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::usertab{}));
   return true;
 }
 
