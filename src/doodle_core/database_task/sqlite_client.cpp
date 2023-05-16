@@ -250,6 +250,9 @@ class sqlite_file::impl {
       std::apply([&](auto&&... x) { ((x->open(in_registry_ptr, in_conn, l_map), ...)); }, obs_data_);
       std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
     }
+    void connect(const registry_ptr& in_registry_ptr) {
+      std::apply([&](auto&&... x) { ((x->connect(in_registry_ptr), ...)); }, obs_data_);
+    }
 
     void save(const registry_ptr& in_registry_ptr, conn_ptr& in_conn) {
       std::vector<std::int64_t> l_handles{};
@@ -276,8 +279,15 @@ bsys::error_code sqlite_file::open_impl(const FSys::path& in_path) {
   //  if (!FSys::exists(in_path)) return bsys::error_code{error_enum::file_not_exists, &l_loc};
 
   database_n::select l_select{};
-  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
-  if (!l_select(*ptr->registry_attr, in_path, l_k_con)) ptr->obs_save->open(ptr->registry_attr, l_k_con);
+  auto l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection_const();
+  if (!l_select(*ptr->registry_attr, in_path, l_k_con))
+    ptr->obs_save->open(ptr->registry_attr, l_k_con);
+  else {
+    l_k_con = doodle_lib::Get().ctx().get<database_info>().get_connection();
+    /// 先监听
+    ptr->obs_save->connect(ptr->registry_attr);
+    l_select.patch(l_k_con);
+  }
 
   for (auto&& [e, p] : ptr->registry_attr->view<project>().each()) {
     ptr->registry_attr->ctx().emplace<project>() = p;

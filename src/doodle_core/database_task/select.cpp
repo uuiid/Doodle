@@ -267,6 +267,17 @@ void select_ctx_template(entt::registry& in_reg, sqlpp::sqlite3::connection& in_
 
   _select_ctx_(in_reg, in_conn, l_fun);
 }
+template <typename Type>
+void patch_old_sig(entt::registry& in_reg) {
+  for (auto&& [e, p] : in_reg.view<Type>().each()) {
+    in_reg.patch<Type>(e);
+  }
+}
+
+template <typename... Type>
+void patch_old(entt::registry& in_reg) {
+  (patch_old_sig<Type>(in_reg), ...);
+};
 
 }  // namespace
 
@@ -302,31 +313,20 @@ bool select::operator()(entt::registry& in_registry, const FSys::path& in_projec
   for (auto&& l_f : p_i->list_install) {
     l_f(p_i->local_reg);
   }
+  return true;
+}
+
+void select::patch(conn_ptr& in_connect) {
   for (auto&& [e, p] : p_i->local_reg->view<project>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
   for (auto&& [e, p] : p_i->local_reg->view<project_config::base_config>().each()) {
     p_i->local_reg->emplace_or_replace<database>(e);
   }
-  for (auto&& [e, p] : p_i->local_reg->view<doodle::episodes>().each()) {
-    p_i->local_reg->patch<doodle::episodes>(e);
-  }
-  for (auto&& [e, p] : p_i->local_reg->view<doodle::shot>().each()) {
-    p_i->local_reg->patch<doodle::shot>(e);
-  }
-  for (auto&& [e, p] : p_i->local_reg->view<doodle::season>().each()) {
-    p_i->local_reg->patch<doodle::season>(e);
-  }
-  for (auto&& [e, p] : p_i->local_reg->view<doodle::assets>().each()) {
-    p_i->local_reg->patch<doodle::assets>(e);
-  }
-  for (auto&& [e, p] : p_i->local_reg->view<doodle::assets_file>().each()) {
-    p_i->local_reg->patch<doodle::assets_file>(e);
-  }
+  patch_old<DOODLE_SQLITE_TYPE>(*p_i->local_reg);
 
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::com_entity{}));
   (*in_connect)(sqlpp::sqlite3::drop_if_exists_table(tables::usertab{}));
-  return true;
 }
 
 }  // namespace doodle::database_n
