@@ -32,6 +32,7 @@
 #include <maya/MAnimControl.h>
 #include <memory>
 #include <utility>
+
 namespace doodle::maya_plug {
 
 void cloth_sim::create_ref_file() {
@@ -143,14 +144,19 @@ void cloth_sim::play_blast() {
 void cloth_sim::export_abc() {
   DOODLE_LOG_INFO("开始导出abc");
   export_file_abc l_ex{};
-  ranges::for_each(ref_files_, [&](entt::handle& in_handle) { l_ex.export_sim(in_handle); });
+  auto l_gen = std::make_shared<reference_file_ns::generate_abc_file_path>();
+  ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
+    in_handle.emplace<generate_file_path_ptr>(l_gen);
+    l_ex.export_sim(in_handle);
+  });
 }
 
 void cloth_sim::export_fbx() {
   DOODLE_LOG_INFO("开始导出fbx");
   export_file_fbx l_ex{};
+  auto l_gen = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    in_handle.emplace<generate_file_path_ptr>(std::make_shared<reference_file_ns::generate_fbx_file_path>());
+    in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
   });
 }

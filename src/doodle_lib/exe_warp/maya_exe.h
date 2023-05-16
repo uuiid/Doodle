@@ -49,26 +49,13 @@ class arg {
 
 class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
  public:
-  bool only_sim;
-  bool upload_file;
-  bool export_fbx;
-  bool only_export;
-
   [[nodiscard]] std::string to_str() const;
 
   friend void to_json(nlohmann::json &nlohmann_json_j, const qcloth_arg &nlohmann_json_t) {
     to_json(nlohmann_json_j, dynamic_cast<const arg &>(nlohmann_json_t));
-    nlohmann_json_j["only_sim"]    = nlohmann_json_t.only_sim;
-    nlohmann_json_j["upload_file"] = nlohmann_json_t.upload_file;
-    nlohmann_json_j["export_fbx"]  = nlohmann_json_t.export_fbx;
-    nlohmann_json_j["only_export"] = nlohmann_json_t.only_export;
   };
   friend void from_json(const nlohmann::json &nlohmann_json_j, qcloth_arg &nlohmann_json_t) {
     from_json(nlohmann_json_j, dynamic_cast<arg &>(nlohmann_json_t));
-    nlohmann_json_j["only_sim"].get_to(nlohmann_json_t.only_sim);
-    nlohmann_json_j["upload_file"].get_to(nlohmann_json_t.upload_file);
-    nlohmann_json_j["export_fbx"].get_to(nlohmann_json_t.export_fbx);
-    nlohmann_json_j["only_export"].get_to(nlohmann_json_t.only_export);
   };
 };
 
