@@ -137,6 +137,7 @@ FSys::path write_tmp_file(
 }
 
 FSys::path from_quotation_marks(const std::string &in_string) {
+  if (in_string.empty()) return FSys::path{};
   if (*in_string.begin() == '"' && *(--in_string.end()) == '"') {
     return FSys::path{in_string.substr(1, in_string.size() - 1)};
   }
