@@ -8,6 +8,7 @@
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/database_task/sqlite_client.h"
+#include "doodle_core/logger/logger.h"
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/doodle_core.h>
 
@@ -63,10 +64,9 @@ bool cloth_sim::post() {
 
   if (l_arg.file_path.empty()) return l_ret;
 
-  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
-  t_post_time_     = MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()};
-  lib_guard_       = std::make_shared<maya_lib_guard>();
-  l_ret            = true;
+  lib_guard_ = std::make_shared<maya_lib_guard>();
+
+  l_ret      = true;
 
   doodle_lib::Get().ctx().get<database_n::file_translator_ptr>()->open_(l_arg.project_);
   doodle_lib::Get().ctx().emplace<image_to_move>(std::make_shared<detail::image_to_move>());
@@ -79,19 +79,24 @@ bool cloth_sim::post() {
       fmt::format(R"(loadPlugin "qualoth_{}_x64")", fmt::to_string(MAYA_API_VERSION).substr(0, 4))});
 #endif
 
-    maya_file_io::set_workspace(l_arg.file_path);
+  maya_file_io::set_workspace(l_arg.file_path);
 
-    maya_file_io::open_file(l_arg.file_path);
+  maya_file_io::open_file(l_arg.file_path);
+  anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(l_arg.export_anim_time), MTime::uiUnit()};
+  t_post_time_     = MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()};
+  DOODLE_LOG_INFO("tpost 开始时间 {}", t_post_time_);
+  maya_chick(MAnimControl::setMinTime(t_post_time_));
+  maya_chick(MAnimControl::setAnimationStartTime(t_post_time_));
 
-    doodle_lib::Get().ctx().emplace<reference_file_factory>();
+  doodle_lib::Get().ctx().emplace<reference_file_factory>();
 
-    maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
+  maya_chick(MAnimControl::setCurrentTime(MTime{boost::numeric_cast<std::double_t>(l_arg.t_post), MTime::uiUnit()}));
 
-    auto l_s = boost::asio::make_strand(g_io_context());
+  auto l_s = boost::asio::make_strand(g_io_context());
 
-    boost::asio::post(l_s, [l_s, this]() { this->create_ref_file(); });
+  boost::asio::post(l_s, [l_s, this]() { this->create_ref_file(); });
 
-    if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
+  if ((l_arg.bitset_ & maya_exe_ns::flags::k_replace_ref_file).any()) {
     DOODLE_LOG_INFO("安排替换引用");
     boost::asio::post(l_s, [l_s, this]() { this->replace_ref_file(); });
   }
@@ -109,11 +114,11 @@ bool cloth_sim::post() {
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_fbx_type).any()) {
     DOODLE_LOG_INFO("安排导出fbx");
-    boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
+    boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
   }
   if ((l_arg.bitset_ & maya_exe_ns::flags::k_export_abc_type).any()) {
     DOODLE_LOG_INFO("安排导出abc");
-    boost::asio::post(l_s, [l_s, this]() { this->export_fbx(); });
+    boost::asio::post(l_s, [l_s, this]() { this->export_abc(); });
   }
 
   return l_ret;

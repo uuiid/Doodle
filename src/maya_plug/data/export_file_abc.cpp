@@ -23,6 +23,7 @@
 #include "data/maya_tool.h"
 #include "data/reference_file.h"
 #include "exception/exception.h"
+#include <fmt/format.h>
 #include <map>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
@@ -250,7 +251,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
     l_name.begin_end_time = l_arg->begin_end_time;
     export_map[l_name]    = l_list;
   }
-  DOODLE_LOG_INFO("导出划分完成 {}", export_map);
+  DOODLE_LOG_INFO("导出划分完成 {}", fmt::join(export_map, " "));
 
   for (auto&& [name, s_l] : export_map) {
     export_abc(s_l, name(L_ref));

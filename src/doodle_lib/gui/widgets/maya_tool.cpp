@@ -182,10 +182,7 @@ bool maya_tool::render() {
     std::for_each(p_sim_path.begin(), p_sim_path.end(), [this, l_maya](const FSys::path& in_path) {
       auto k_arg             = maya_exe_ns::qcloth_arg{};
       k_arg.file_path        = in_path;
-      k_arg.only_sim         = p_only_sim;
-      k_arg.upload_file      = p_upload_files;
-      k_arg.export_fbx       = p_sim_export_fbx;
-      k_arg.only_export      = p_sim_only_export;
+      // todo: 添加配置
       k_arg.project_         = doodle_lib::Get().ctx().get<database_info>().path_;
       k_arg.t_post           = g_reg()->ctx().get<project_config::base_config>().t_post;
       k_arg.export_anim_time = g_reg()->ctx().get<project_config::base_config>().export_anim_time;

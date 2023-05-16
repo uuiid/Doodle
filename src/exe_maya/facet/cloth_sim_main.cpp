@@ -2,6 +2,7 @@
 // Created by td_main on 2023/4/26.
 //
 #include "doodle_core/core/doodle_lib.h"
+#include "doodle_core/logger/logger.h"
 
 #include "boost/lambda2/lambda2.hpp"
 #include <boost/lambda2.hpp>
@@ -65,7 +66,7 @@ void cloth_sim::replace_ref_file() {
   ref_files_ |= ranges::actions::remove_if(!boost::lambda2::_1);
 
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
-    if (in_handle.get<reference_file>().replace_sim_assets_file()) {
+    if (!in_handle.get<reference_file>().replace_sim_assets_file()) {
       in_handle.destroy();
     }
   });
@@ -123,6 +124,7 @@ void cloth_sim::sim() {
   const MTime k_end_time = MAnimControl::maxTime();
   for (auto&& i = t_post_time_; i < k_end_time; ++i) {
     maya_chick(MAnimControl::setCurrentTime(i));
+    DOODLE_LOG_INFO("解算帧 {}", i);
     ranges::for_each(cloth_lists_, [&](entt::handle& in_handle) {
       auto l_c = in_handle.get<cloth_interface>();
       l_c->sim_cloth();
@@ -144,7 +146,9 @@ void cloth_sim::play_blast() {
 void cloth_sim::export_abc() {
   DOODLE_LOG_INFO("开始导出abc");
   export_file_abc l_ex{};
-  auto l_gen = std::make_shared<reference_file_ns::generate_abc_file_path>();
+  auto l_gen             = std::make_shared<reference_file_ns::generate_abc_file_path>();
+  const MTime k_end_time = MAnimControl::maxTime();
+  l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
@@ -154,7 +158,9 @@ void cloth_sim::export_abc() {
 void cloth_sim::export_fbx() {
   DOODLE_LOG_INFO("开始导出fbx");
   export_file_fbx l_ex{};
-  auto l_gen = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+  auto l_gen             = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+  const MTime k_end_time = MAnimControl::maxTime();
+  l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);

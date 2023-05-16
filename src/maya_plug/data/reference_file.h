@@ -47,7 +47,7 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
   friend struct fmt::formatter<generate_file_path_base>;
 
  public:
-  explicit generate_abc_file_path(const entt::registry &in);
+  explicit generate_abc_file_path(const entt::registry &in = *g_reg());
   virtual ~generate_abc_file_path();
 };
 
@@ -90,7 +90,6 @@ class reference_file {
   void chick_mobject() const;
 
   static std::string get_abc_exprt_arg();
- 
 
   /**
    * @brief
@@ -261,7 +260,7 @@ struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path
     return fmt::format_to(
         ctx.out(), "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
         in_.extract_scene_name, in_.extract_reference_name, in_.use_add_range,
-        in_.add_external_string ? std::string{} : *in_.add_external_string
+        in_.add_external_string ? *in_.add_external_string : std::string{}
     );
   }
 };

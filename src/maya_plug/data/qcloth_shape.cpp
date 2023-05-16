@@ -5,6 +5,7 @@
 #include "qcloth_shape.h"
 
 #include "doodle_core/core/core_help_impl.h"
+#include "doodle_core/logger/logger.h"
 
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -19,6 +20,7 @@
 
 #include "data/qcloth_shape.h"
 #include "entt/entity/fwd.hpp"
+#include "exception/exception.h"
 #include <magic_enum.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MDagModifier.h>
@@ -35,7 +37,6 @@
 #include <maya/MNamespace.h>
 #include <maya/MPlug.h>
 #include <string>
-
 
 namespace doodle::maya_plug {
 
@@ -667,6 +668,7 @@ void qcloth_shape::sim_cloth() const {
   auto k_plug = get_plug(obj, "outputMesh");
   /// \brief 使用这种方式评估网格
   k_plug.asMObject(&k_s).isNull();
+  maya_chick(k_s);
 }
 void qcloth_shape::add_field(const entt::handle& in_handle) const {
   auto l_f = in_handle.get<reference_file>().get_field_dag();
@@ -695,12 +697,14 @@ void qcloth_shape::add_field(const entt::handle& in_handle) const {
 void qcloth_shape::add_collision(const entt::handle& in_handle) const {
   MStatus k_s{};
   auto l_item = in_handle.get<reference_file>().get_collision_model();
-  k_s         = l_item.add(get_solver(), true);
-  DOODLE_MAYA_CHICK(k_s);
+  if (l_item.isEmpty()) return;
+
+  k_s = l_item.add(get_solver(), true);
+  maya_chick(k_s);
   k_s = MGlobal::setActiveSelectionList(l_item);
-  DOODLE_MAYA_CHICK(k_s);
+  maya_chick(k_s);
   k_s = MGlobal::executeCommand(d_str{"qlCreateCollider;"});
-  DOODLE_MAYA_CHICK(k_s);
+  maya_chick(k_s);
 }
 void qcloth_shape::rest(const entt::handle& in_handle) const {
   auto l_rest_obj = in_handle.get<find_duplicate_poly>()[obj];
@@ -716,8 +720,9 @@ void qcloth_shape::rest(const entt::handle& in_handle) const {
 MObject qcloth_shape::get_solver() const {
   MStatus l_status{};
   MObject l_object{};
+  auto l_root = obj;
   for (MItDependencyGraph l_it_dependency_graph{
-           l_object, MFn::kPluginLocatorNode, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
+           l_root, MFn::kPluginLocatorNode, MItDependencyGraph::kUpstream, MItDependencyGraph::kDepthFirst,
            MItDependencyGraph::kNodeLevel, nullptr};
        !l_it_dependency_graph.isDone(); l_it_dependency_graph.next()) {
     l_object = l_it_dependency_graph.currentItem(&l_status);
@@ -729,9 +734,7 @@ MObject qcloth_shape::get_solver() const {
   DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
   return l_object;
 }
-std::string qcloth_shape::get_namespace() const {
-  return m_namespace::strip_namespace_from_name(get_node_full_name(obj));
-};
+std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
 
 void qcloth_shape::cover_cloth_attr(const entt::handle& in_handle) const {
   /// todo: 未作处理

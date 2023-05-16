@@ -708,7 +708,7 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
   auto k_names = MNamespace::getNamespaces(MNamespace::rootNamespace(), false, &k_s);
   maya_chick(k_s);
 
-  constexpr static std::array<std::string_view, 2> g_not_find_ui{"UI", "shared"};
+  constexpr static std::array<std::string_view, 2> g_not_find_ui{":UI", ":shared"};
   for (int l_i = 0; l_i < k_names.length(); ++l_i) {
     auto &&k_name = k_names[l_i];
     if (std::find(g_not_find_ui.begin(), g_not_find_ui.end(), k_name.asUTF8()) != g_not_find_ui.end()) {
