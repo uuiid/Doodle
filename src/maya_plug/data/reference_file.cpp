@@ -483,66 +483,6 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
 }
 
-void reference_file::bake_results(const MTime &in_start, const MTime &in_end) const {
-  if (!has_chick_group()) {
-    DOODLE_LOG_INFO("{} 没有ue4组", path);
-    return;
-  }
-
-  MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  /**
-   *
-   * @brief
-   * bakeResults(simulation=True,
-   *  time=(doodle_work_space.raneg.start,
-   *        doodle_work_space.raneg.end),
-   *  hierarchy="below",
-   *  sampleBy=1,
-   *  disableImplicitControl=True,
-   *  preserveOutsideKeys=False,
-   *  sparseAnimCurveBake=False)
-   *
-   *  preserveOutsideKeys 这个选项会导致眼睛出现问题
-   */
-  static std::string maya_bakeResults_str{R"(
-bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:*{}";)"};
-  auto l_comm = fmt::format(
-      maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_namespace(), k_cfg.export_group
-  );
-  DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
-  try {
-    k_s = MGlobal::executeCommand(d_str{l_comm});
-    DOODLE_MAYA_CHICK(k_s);
-  } catch (const std::runtime_error &in) {
-    DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
-    try {
-      l_comm = fmt::format(
-          maya_bakeResults_str, in_start.value(), in_end.value(), "true"s, get_namespace(), k_cfg.export_group
-      );
-      DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
-      k_s = MGlobal::executeCommand(d_str{l_comm});
-      DOODLE_MAYA_CHICK(k_s);
-    } catch (const std::runtime_error &in2) {
-      DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", boost::diagnostic_information(in2));
-
-      try {
-        l_comm = fmt::format(
-            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:*{}";)", in_start.value(), in_end.value(),
-            get_namespace(), k_cfg.export_group
-        );
-        DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
-        k_s = MGlobal::executeCommand(d_str{l_comm});
-        DOODLE_MAYA_CHICK(k_s);
-      } catch (const std::runtime_error &in3) {
-        DOODLE_LOG_INFO("烘培失败, 直接导出 {}", boost::diagnostic_information(in3));
-      }
-    }
-
-    DOODLE_LOG_INFO("完成烘培, 不检查结果, 直接进行输出");
-  }
-}
-
 std::optional<MDagPath> reference_file::get_field_dag() const {
   MSelectionList l_select{};
   auto l_status = l_select.add(d_str{field_attr}, false);
@@ -614,6 +554,5 @@ std::vector<entt::handle> reference_file_factory::create_ref() const {
 
   return l_ret;
 }
-void reference_file_factory::save_to_files() const {}
 
 }  // namespace doodle::maya_plug

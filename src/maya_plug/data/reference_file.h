@@ -98,19 +98,6 @@ class reference_file {
    */
   void find_ref_node(const std::string &in_ref_uuid);
   bool find_ref_node();
-  void bake_results(const MTime &in_start, const MTime &in_end) const;
-
-  /**
-   * @brief 导出文件到fbx中, 这个函数会烘培动画帧进行导出
-   * @param in_start 开始时间
-   * @param in_end 结束时间
-   * @param in_export_obj 需要导出的选中列表
-   * @return 导出文件的路径
-   */
-  FSys::path export_fbx(
-      const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj,
-      const reference_file_ns::generate_fbx_file_path &in_fbx_name
-  ) const;
 
   bool has_chick_group() const;
 
@@ -233,7 +220,6 @@ class reference_file_factory {
   ~reference_file_factory() = default;
 
   [[nodiscard]] std::vector<entt::handle> create_ref() const;
-  void save_to_files() const;
 };
 
 }  // namespace doodle::maya_plug
