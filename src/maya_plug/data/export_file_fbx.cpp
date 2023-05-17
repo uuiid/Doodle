@@ -34,7 +34,7 @@ void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end) {
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
   static std::string maya_bakeResults_str{R"(
-bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:*{}";)"};
+bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:{}";)"};
   auto l_comm =
       fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, m_namespace_, k_cfg.export_group);
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
@@ -55,7 +55,7 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 
       try {
         l_comm = fmt::format(
-            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:*{}";)", in_start.value(), in_end.value(),
+            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:{}";)", in_start.value(), in_end.value(),
             m_namespace_, k_cfg.export_group
         );
         DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
@@ -73,15 +73,16 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 void export_file_fbx::export_anim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {
   MSelectionList l_select{};
   MStatus l_satus{};
-  auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  auto& l_ref = in_handle_view.get<reference_file>();
-  try {
-    l_satus = l_select.add(d_str{fmt::format("{}:{}", l_ref.get_namespace(), k_cfg.export_group)}, true);
-    maya_chick(l_satus);
-  } catch (const std::runtime_error& err) {
+  auto& k_cfg         = g_reg()->ctx().get<project_config::base_config>();
+  auto& l_ref         = in_handle_view.get<reference_file>();
+  auto l_export_group = l_ref.export_group_attr();
+  if (!l_export_group) {
     DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return;
   }
+  l_satus = l_select.add(*l_export_group);
+  maya_chick(l_satus);
+
   m_namespace_ = l_ref.get_namespace();
 
   maya_chick(MGlobal::setActiveSelectionList(l_select));
@@ -107,11 +108,7 @@ void export_file_fbx::export_anim(const entt::handle_view<reference_file, genera
   maya_chick(MGlobal::executeCommand(d_str{k_comm}));
 }
 
-void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {
-
-
-  
-}
+void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {}
 
 void export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
   auto& l_arg = in_handle_view.get<generate_file_path_ptr>();
