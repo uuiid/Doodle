@@ -10,10 +10,18 @@
 #include "maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/sequence_to_blend_shape.h>
 
 #include "data/maya_tool.h"
 #include "exception/exception.h"
+#include <maya/MAnimControl.h>
+#include <maya/MApiNamespace.h>
+#include <maya/MDagModifier.h>
+#include <maya/MDagPath.h>
 #include <memory>
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/view/transform.hpp>
+#include <vector>
 
 namespace doodle::maya_plug {
 
@@ -87,7 +95,7 @@ void export_file_fbx::export_anim(const entt::handle_view<reference_file, genera
 
   maya_chick(MGlobal::setActiveSelectionList(l_select));
   auto l_arg = in_handle_view.get<generate_file_path_ptr>();
-  bake_anim(l_arg->begin_end_time.first, l_arg->begin_end_time.second);
+  bake_anim(l_arg->begin_end_time.first, l_arg->begin_end_time.second, *l_export_group);
 
   auto k_file_path = (*l_arg)(l_ref);
   DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
@@ -106,6 +114,59 @@ void export_file_fbx::export_anim(const entt::handle_view<reference_file, genera
 
   k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
   maya_chick(MGlobal::executeCommand(d_str{k_comm}));
+}
+
+void export_file_fbx::cloth_to_blendshape(
+    const MTime& in_start, const MTime& in_end, const std::vector<MDagPath>& in_path,
+    const std::optional<MDagPath>& in_parent_path
+) {
+  blend_list = ranges::views::transform(
+                   in_path,
+                   [&](const MDagPath& in_path) -> sequence_to_blend_shape {
+                     sequence_to_blend_shape l_blend_shape{};
+                     l_blend_shape.select_attr(in_path);
+                     if (in_parent_path) {
+                       l_blend_shape.parent_attr(*in_parent_path);
+                     }
+                   }
+               ) |
+               ranges::to_vector;
+
+  MAnimControl::setCurrentTime(in_start);
+
+  for (auto&& ctx : blend_list) {
+    DOODLE_LOG_INFO("开始创建绑定网格 {}", get_node_name(ctx.select_attr()));
+    ctx.create_bind_mesh();
+  }
+
+  for (auto i = in_start; i <= in_end; ++i) {
+    maya_chick(MAnimControl::setCurrentTime(in_start));
+    for (auto&& ctx : blend_list) {
+      ctx.create_blend_shape_mesh();
+    }
+  }
+
+  for (auto&& ctx : blend_list) {
+    DOODLE_LOG_INFO("开始创建绑定网格 {} 的混合变形", get_node_name(ctx.select_attr()));
+    ctx.create_blend_shape();
+  }
+  MDagModifier dg_modidier{};
+  for (auto&& ctx : blend_list) {
+    DOODLE_LOG_INFO("开始创建绑定网格 {} 的动画", get_node_name(ctx.select_attr()));
+
+    ctx.create_blend_shape_anim(in_start, in_end, dg_modidier);
+  }
+  for (auto&& ctx : blend_list) {
+    try {
+      ctx.attach_parent();
+    } catch (const std::runtime_error& error) {
+      DOODLE_LOG_WARN("由于错误 {} 取消附加", error);
+    }
+  }
+  for (auto&& ctx : blend_list) {
+    DOODLE_LOG_INFO("开始删除 {} 的原始模型", get_node_name(ctx.select_attr()));
+    ctx.delete_select_node();
+  }
 }
 
 void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {}

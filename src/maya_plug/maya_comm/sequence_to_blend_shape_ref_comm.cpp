@@ -6,11 +6,14 @@
 
 #include <doodle_core/lib_warp/std_fmt_system_error.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/qcloth_shape.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sequence_to_blend_shape.h>
 
+#include <cmath>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MBoundingBox.h>
@@ -28,6 +31,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 
 namespace doodle::maya_plug {
 
@@ -154,7 +158,10 @@ void sequence_to_blend_shape_ref_comm::create_anim() {
   for (auto&& ctx : p_i->blend_list) {
     DOODLE_LOG_INFO("开始创建绑定网格 {} 的动画", get_node_name(ctx.select_attr()));
 
-    ctx.create_blend_shape_anim(p_i->startFrame_p, p_i->endFrame_p, p_i->dg_modidier);
+    ctx.create_blend_shape_anim(
+        MTime{boost::numeric_cast<std::double_t>(p_i->startFrame_p), MTime::uiUnit()},
+        MTime{boost::numeric_cast<std::double_t>(p_i->endFrame_p), MTime::uiUnit()}, p_i->dg_modidier
+    );
   }
 }
 void sequence_to_blend_shape_ref_comm::run_blend_shape_comm() {

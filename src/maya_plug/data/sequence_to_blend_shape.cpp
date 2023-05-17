@@ -314,7 +314,7 @@ void sequence_to_blend_shape::create_blend_shape() {
 }
 
 void sequence_to_blend_shape::create_blend_shape_anim(
-    std::int64_t in_begin_time, std::int64_t in_end_time, MDagModifier& in_dg_modidier
+    const MTime& in_begin_time, const MTime& in_end_time, MDagModifier& in_dg_modidier
 ) {
   MStatus l_s{};
 
@@ -342,8 +342,8 @@ void sequence_to_blend_shape::create_blend_shape_anim(
 
   for (auto i = in_begin_time; i <= in_end_time; ++i) {
 #define DOODLE_ADD_ANM_set(axis) l_value_tran_##axis.append(l_point.axis);
-    auto l_point = ptr->create_point_list[i - in_begin_time];
-    l_time.append(MTime{boost::numeric_cast<std::double_t>(i), MTime::uiUnit()});
+    auto l_point = ptr->create_point_list[(i - in_begin_time).value()];
+    l_time.append(i);
     DOODLE_ADD_ANM_set(x);
     DOODLE_ADD_ANM_set(y);
     DOODLE_ADD_ANM_set(z);
@@ -367,7 +367,7 @@ void sequence_to_blend_shape::create_blend_shape_anim(
     /// \brief 开始循环每一帧
     for (auto i = in_begin_time; i <= in_end_time; ++i) {
       const auto l_current_index = i - in_begin_time;
-      l_value_weight.append(l_current_index == j ? 1 : 0);
+      l_value_weight.append(l_current_index.value() == j ? 1 : 0);
     }
     aim.create(plug_weight[j], MFnAnimCurve::AnimCurveType::kAnimCurveTL, &in_dg_modidier);
     l_s = aim.addKeys(&l_time, &l_value_weight);
