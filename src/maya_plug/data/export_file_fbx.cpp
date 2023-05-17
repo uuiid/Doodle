@@ -11,12 +11,13 @@
 #include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/reference_file.h>
 
+#include "data/maya_tool.h"
 #include "exception/exception.h"
 #include <memory>
 
 namespace doodle::maya_plug {
 
-void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end) {
+void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, const MDagPath& in_path) {
   MStatus k_s{};
   auto& k_cfg = g_reg()->ctx().get<project_config::base_config>();
   /**
@@ -34,9 +35,9 @@ void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end) {
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
   static std::string maya_bakeResults_str{R"(
-bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}:{}";)"};
+bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}";)"};
   auto l_comm =
-      fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, m_namespace_, k_cfg.export_group);
+      fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_node_full_name(in_path));
   DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
@@ -44,9 +45,8 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   } catch (const std::runtime_error& in) {
     DOODLE_LOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
     try {
-      l_comm = fmt::format(
-          maya_bakeResults_str, in_start.value(), in_end.value(), "true"s, m_namespace_, k_cfg.export_group
-      );
+      l_comm =
+          fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "true"s, get_node_full_name(in_path));
       DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
       k_s = MGlobal::executeCommand(d_str{l_comm});
       DOODLE_MAYA_CHICK(k_s);
@@ -55,8 +55,8 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
 
       try {
         l_comm = fmt::format(
-            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}:{}";)", in_start.value(), in_end.value(),
-            m_namespace_, k_cfg.export_group
+            R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}";)", in_start.value(), in_end.value(),
+            get_node_full_name(in_path)
         );
         DOODLE_LOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
         k_s = MGlobal::executeCommand(d_str{l_comm});

@@ -8,6 +8,7 @@
 #include <maya_plug/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"
+#include <maya/MApiNamespace.h>
 #include <maya/MTime.h>
 #include <string>
 
@@ -16,7 +17,7 @@ namespace doodle::maya_plug {
 class reference_file;
 class export_file_fbx {
  private:
-  void bake_anim(const MTime& in_start, const MTime& in_end);
+  void bake_anim(const MTime& in_start, const MTime& in_end, const MDagPath& in_path);
   std::string m_namespace_;
  public:
   export_file_fbx() = default;
