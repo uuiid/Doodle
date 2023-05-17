@@ -293,57 +293,6 @@ bool reference_file::replace_sim_assets_file() {
   return true;
 }
 
-bool reference_file::rename_material() const {
-  chick_mobject();
-  MStatus k_s{};
-  MObjectArray k_list = MNamespace::getNamespaceObjects(d_str{file_namespace}, false, &k_s);
-  MFnDependencyNode k_node;
-  for (auto i = 0; i < k_list.length(); ++i) {
-    auto k_obj = k_list[i];
-    if (k_obj.hasFn(MFn::Type::kShadingEngine)) {  /// \brief 找到符合的着色集
-      k_node.setObject(k_obj);
-      auto k_plug = k_node.findPlug(d_str{"surfaceShader"}, true, &k_s);
-      DOODLE_MAYA_CHICK(k_s);
-      MPlugArray l_m_plug_array{};
-      auto k_source = k_plug.source(&k_s);
-      DOODLE_MAYA_CHICK(k_s);
-      if (k_source.isNull(&k_s)) {
-        continue;
-      }
-      DOODLE_MAYA_CHICK(k_s);
-      auto k_mat = k_source.node(&k_s);  /// \brief 从属性链接获得材质名称
-      DOODLE_MAYA_CHICK(k_s);
-      MFnDependencyNode k_mat_node{};
-      k_mat_node.setObject(k_mat);
-      std::string k_mat_node_name = d_str{k_mat_node.name(&k_s)};
-      DOODLE_MAYA_CHICK(k_s);
-      /// \brief 重命名材质名称
-      k_mat_node.setName(d_str{fmt::format("{}_mat", k_mat_node_name)}, false, &k_s);
-      DOODLE_MAYA_CHICK(k_s);
-      DOODLE_LOG_INFO("重命名材质 {} -> {}", d_str{k_node.name()}.str(), k_mat_node_name);
-
-      k_node.setName(d_str{k_mat_node_name}, false, &k_s);
-    }
-  }
-
-  return true;
-}
-
-FSys::path reference_file::export_fbx(const MTime &in_start, const MTime &in_end) const {
-  MSelectionList k_select{};
-  MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-  try {
-    k_s = k_select.add(d_str{fmt::format("{}:{}", get_namespace(), k_cfg.export_group)}, true);
-    DOODLE_MAYA_CHICK(k_s);
-  } catch (const std::runtime_error &err) {
-    DOODLE_LOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
-    return {};
-  }
-  reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
-  l_export.begin_end_time = std::make_pair(in_start, in_end);
-  return export_fbx(in_start, in_end, k_select, l_export);
-}
 bool reference_file::has_node(const MSelectionList &in_list) {
   chick_mobject();
   MStatus k_s{};
@@ -422,21 +371,7 @@ entt::handle reference_file::export_file_select(
   FSys::path l_path{};
 
   export_file_info::export_type l_type{};
-  switch (in_arg.export_type_p) {
-    case export_type::abc: {
-      l_type = export_file_info::export_type::abc;
-      reference_file_ns::generate_abc_file_path l_name{*g_reg()};
-      l_name.begin_end_time = std::make_pair(in_arg.start_p, in_arg.end_p);
-      // l_path                = export_abc(in_arg.start_p, in_arg.end_p, in_list, l_name);
 
-    } break;
-    case export_type::fbx: {
-      l_type = export_file_info::export_type::fbx;
-      reference_file_ns::generate_fbx_file_path l_export{*g_reg()};
-      l_export.begin_end_time = std::make_pair(in_arg.start_p, in_arg.end_p);
-      l_path                  = export_fbx(in_arg.start_p, in_arg.end_p, in_list, l_export);
-    } break;
-  }
   if (!l_path.empty() && g_reg()->ctx().get<project_config::base_config>().use_write_metadata) {
     out_ = make_handle();
     FSys::path l_ref_file{this->path};
@@ -518,54 +453,6 @@ FSys::path reference_file::get_abs_path() const {
   return l_path;
 }
 
-FSys::path reference_file::export_fbx(
-    const MTime &in_start, const MTime &in_end, const MSelectionList &in_export_obj,
-    const reference_file_ns::generate_fbx_file_path &in_fbx_name
-) const {
-  FSys::path out_{};
-
-  DOODLE_CHICK(*this, doodle_error{"需要有效的引用"});
-
-  MStatus k_s{};
-  auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
-
-  if (in_export_obj.isEmpty()) {
-    DOODLE_LOG_WARN("没有选中的物体, 不进行输出");
-    return out_;
-  }
-
-  k_s = MGlobal::setActiveSelectionList(in_export_obj);
-
-  boost::system::system_error l_err{make_error(k_s.statusCode()), k_s.errorString().asUTF8()};
-
-  DOODLE_MAYA_CHICK(k_s);
-
-  this->bake_results(in_start, in_end);
-
-  auto k_file_path = in_fbx_name(*this);
-  DOODLE_LOG_INFO("导出fbx文件路径 {}", k_file_path);
-
-  auto k_comm = fmt::format("FBXExportBakeComplexStart -v {};", in_start.value());
-  k_s         = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = fmt::format("FBXExportBakeComplexEnd -v {};", in_end.value());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportBakeComplexAnimation -v true;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = std::string{"FBXExportConstraints -v true;"};
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-
-  k_comm = fmt::format(R"(FBXExport -f "{}" -s;)", k_file_path.generic_string());
-  k_s    = MGlobal::executeCommand(d_str{k_comm});
-  DOODLE_MAYA_CHICK(k_s);
-  return k_file_path;
-}
 MSelectionList reference_file::get_all_object() const {
   MStatus k_s{};
   MSelectionList l_select;

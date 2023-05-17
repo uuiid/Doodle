@@ -9,11 +9,15 @@
 
 #include "entt/entity/fwd.hpp"
 #include <maya/MTime.h>
+#include <string>
 
 namespace doodle::maya_plug {
 
 class reference_file;
 class export_file_fbx {
+ private:
+  void bake_anim(const MTime& in_start, const MTime& in_end);
+  std::string m_namespace_;
  public:
   export_file_fbx() = default;
 

@@ -175,14 +175,6 @@ class reference_file {
   const std::string &get_field_string() const;
   void add_field_dag(const MSelectionList &in_list);
 
-  /**
-   * @brief 将着色集和材质名称调换为导出abc做准备
-   * @return
-   */
-  bool rename_material() const;
-
-  FSys::path export_fbx(const MTime &in_start, const MTime &in_end) const;
-
   enum class export_type : std::uint32_t {
     abc = 1,
     fbx = 2,
