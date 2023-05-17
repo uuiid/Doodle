@@ -169,7 +169,11 @@ void export_file_fbx::cloth_to_blendshape(
   }
 }
 
-void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {}
+void export_file_fbx::export_sim(const entt::handle_view<reference_file, generate_file_path_ptr>& in_handle_view) {
+  
+
+
+}
 
 void export_file_fbx::export_cam(const entt::handle_view<generate_file_path_ptr>& in_handle_view) {
   auto& l_arg = in_handle_view.get<generate_file_path_ptr>();

@@ -11,6 +11,8 @@
 #include <doodle_core/metadata/redirection_path_info.h>
 #include <doodle_core/metadata/shot.h>
 
+#include <boost/lambda2.hpp>
+
 #include <maya_plug/data/find_duplicate_poly.h>
 #include <maya_plug/data/maya_call_guard.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -38,6 +40,7 @@
 #include <maya/MUuid.h>
 #include <string_view>
 #include <vector>
+
 
 namespace doodle::maya_plug {
 
@@ -511,6 +514,39 @@ void reference_file::add_field_dag(const MSelectionList &in_list) {
 }
 const std::string &reference_file::get_field_string() const { return field_attr; }
 const std::string &reference_file::get_key_path() const { return path; }
+
+std::vector<MDagPath> reference_file::get_alll_cloth_obj() const {
+  std::vector<MDagPath> l_export_path{};
+  MStatus l_status{};
+  MFnDagNode l_child_dag{};
+  auto l_root = export_group_attr();
+  if (!l_root) return {};
+
+  MObject l_export_group{l_root->node(&l_status)};
+  maya_chick(l_status);
+  for (auto &&[e, l_cloth] : g_reg()->view<cloth_interface>().each()) {
+    if (l_cloth->get_namespace() == get_namespace()) {
+      for (MItDependencyGraph l_it{
+               l_export_group, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
+               MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
+           !l_it.isDone(); l_it.next()) {
+        auto l_current_path = get_dag_path(get_transform(l_it.currentItem(&l_status)));
+        maya_chick(l_status);
+        l_status = l_child_dag.setObject(l_current_path);
+        maya_chick(l_status);
+        if (l_child_dag.hasParent(l_export_group)) {
+          auto l_path = l_current_path;
+          if (auto l_it_j = ranges::find_if(l_export_path, boost::lambda2::_1 == l_path);
+              l_it_j == l_export_path.end()) {
+            l_export_path.emplace_back(l_current_path);
+          }
+        }
+      }
+    }
+  }
+  return l_export_path;
+}
+
 bool reference_file::has_chick_group() const {
   auto &k_cfg = g_reg()->ctx().get<project_config::base_config>();
   try {

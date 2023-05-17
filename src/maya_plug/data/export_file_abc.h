@@ -15,7 +15,6 @@ namespace doodle::maya_plug {
 class reference_file;
 class export_file_abc {
  private:
-  std::vector<MDagPath> cloth_export_model(const MDagPath& in_root, const std::string& in_namespace);
   std::vector<MDagPath> child_export_model(const MDagPath& in_root);
   std::vector<MDagPath> find_out_group_child_suffix_node(const MDagPath& in_root, const std::string& in_suffix);
 

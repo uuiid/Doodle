@@ -39,35 +39,6 @@
 
 namespace doodle::maya_plug {
 
-std::vector<MDagPath> export_file_abc::cloth_export_model(const MDagPath& in_root, const std::string& in_namespace) {
-  std::vector<MDagPath> l_export_path{};
-  MStatus l_status{};
-  MFnDagNode l_child_dag{};
-  MObject l_export_group{in_root.node(&l_status)};
-  maya_chick(l_status);
-  for (auto&& [e, l_cloth] : g_reg()->view<cloth_interface>().each()) {
-    if (l_cloth->get_namespace() == in_namespace) {
-      for (MItDependencyGraph l_it{
-               l_export_group, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
-               MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status};
-           !l_it.isDone(); l_it.next()) {
-        auto l_current_path = get_dag_path(get_transform(l_it.currentItem(&l_status)));
-        maya_chick(l_status);
-        l_status = l_child_dag.setObject(l_current_path);
-        maya_chick(l_status);
-        if (l_child_dag.hasParent(l_export_group)) {
-          auto l_path = l_current_path;
-          if (auto l_it_j = ranges::find_if(l_export_path, boost::lambda2::_1 == l_path);
-              l_it_j == l_export_path.end()) {
-            l_export_path.emplace_back(l_current_path);
-          }
-        }
-      }
-    }
-  }
-  return l_export_path;
-}
-
 std::vector<MDagPath> export_file_abc::child_export_model(const MDagPath& in_root) {
   std::vector<MDagPath> l_export_path{};
   MStatus l_status{};
@@ -238,7 +209,7 @@ void export_file_abc::export_sim(const entt::handle_view<reference_file, generat
   } else {
     if (k_cfg.use_only_sim_cloth) {
       DOODLE_LOG_INFO("只导出解算物体");
-      export_path = cloth_export_model(*l_root, m_name);
+      export_path = L_ref.get_alll_cloth_obj();
     } else {
       export_path = child_export_model(*l_root);
     }

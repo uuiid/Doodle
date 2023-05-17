@@ -188,6 +188,8 @@ class reference_file {
    */
   MSelectionList get_all_object() const;
 
+  std::vector<MDagPath> get_alll_cloth_obj() const;
+
   explicit inline operator bool() const { return has_chick_group(); }
 
  private:
