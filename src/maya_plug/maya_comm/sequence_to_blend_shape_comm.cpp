@@ -4,8 +4,11 @@
 
 #include "sequence_to_blend_shape_comm.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <maya_plug/data/sequence_to_blend_shape.h>
 
+#include <cmath>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MBoundingBox.h>
@@ -22,6 +25,7 @@
 #include <maya/MNamespace.h>
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
+#include <maya/MTime.h>
 
 namespace doodle::maya_plug {
 
@@ -224,7 +228,10 @@ void sequence_to_blend_shape_comm::add_to_parent() {
 }
 void sequence_to_blend_shape_comm::create_anim() {
   for (auto&& ctx : p_i->blend_list) {
-    ctx.create_blend_shape_anim(p_i->startFrame_p, p_i->endFrame_p, p_i->dg_modidier);
+    ctx.create_blend_shape_anim(
+        MTime{boost::numeric_cast<std::double_t>(p_i->startFrame_p), MTime::uiUnit()},
+        MTime{boost::numeric_cast<std::double_t>(p_i->endFrame_p), MTime::uiUnit()}, p_i->dg_modidier
+    );
   }
 }
 

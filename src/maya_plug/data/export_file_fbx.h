@@ -5,6 +5,7 @@
 
 #include <doodle_core/core/file_sys.h>
 
+#include <maya_plug/data/sequence_to_blend_shape.h>
 #include <maya_plug/maya_plug_fwd.h>
 
 #include "entt/entity/fwd.hpp"

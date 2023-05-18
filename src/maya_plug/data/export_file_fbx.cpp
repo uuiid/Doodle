@@ -128,6 +128,7 @@ void export_file_fbx::cloth_to_blendshape(
                      if (in_parent_path) {
                        l_blend_shape.parent_attr(*in_parent_path);
                      }
+                     return l_blend_shape;
                    }
                ) |
                ranges::to_vector;
@@ -160,7 +161,7 @@ void export_file_fbx::cloth_to_blendshape(
     try {
       ctx.attach_parent();
     } catch (const std::runtime_error& error) {
-      DOODLE_LOG_WARN("由于错误 {} 取消附加", error);
+      DOODLE_LOG_WARN("由于错误 {} 取消附加", boost::diagnostic_information(error));
     }
   }
   for (auto&& ctx : blend_list) {
