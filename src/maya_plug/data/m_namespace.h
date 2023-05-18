@@ -4,7 +4,6 @@
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/maya_plug_fwd.h>
 
-#include "exception/exception.h"
 #include <maya/MNamespace.h>
 #include <maya/MStatus.h>
 #include <string>

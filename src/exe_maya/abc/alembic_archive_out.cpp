@@ -4,12 +4,15 @@
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/exception/exception.h>
 
+#include "maya_plug/data/m_namespace.h"
 #include "maya_plug/data/maya_tool.h"
+#include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
 
 #include <Alembic/Abc/ArchiveInfo.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/AbcGeom/All.h>
+#include <Alembic/AbcGeom/OXform.h>
 #include <fmt/core.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
@@ -23,11 +26,10 @@
 namespace doodle::alembic {
 
 void archive_out::wirte_transform(const MDagPath& in_path) {
+  MFnTransform l_fn_transform{in_path};
 
-
-
-
-
+  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path));
+  Alembic::AbcGeom::OXform l_oxform{*o_archive_, l_name, transform_time_index_};
   
 }
 
