@@ -6,6 +6,7 @@
 
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include "exception/exception.h"
 #include "maya/MApiNamespace.h"
 #include "maya_conv_str.h"
 #include <maya/MDagPath.h>
@@ -15,6 +16,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
 #include <maya/MPlug.h>
+#include <maya/MStatus.h>
 
 namespace doodle::maya_plug {
 
@@ -71,6 +73,31 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
   DOODLE_CHICK(!l_plug.isNull(), doodle_error{" {} 无法找到属性 {}", get_node_name(in_node), in_name});
   return l_plug;
 }
+
+bool is_intermediate(const MObject& in_node) {
+  auto l_plug = get_plug(in_node, "intermediateObject"s);
+  return !l_plug.isNull() && l_plug.asBool();
+}
+bool is_renderable(const MObject& in_node) {
+  auto l_template = get_plug(in_node, "template"s);
+  if (!l_template.isNull() && l_template.asBool()) {
+    return false;
+  }
+
+  auto l_plug = get_plug(in_node, "visibility"s);
+  if (!l_plug.isNull()) {
+    if (!l_plug.asBool()) return false;
+
+    MPlugArray l_plug_array{};
+    MStatus l_s;
+    l_plug.connectedTo(l_plug_array, true, false, &l_s);
+    maya_chick(l_s);
+    if (l_plug_array.length() == 0) return false;
+  }
+  auto l_lod = get_plug(in_node, "lodVisibility"s);
+  return l_lod.isNull() || l_lod.asBool();
+}
+
 MObject get_shading_engine(const MObject& in_node) { return get_shading_engine(get_dag_path(in_node)); }
 MObject get_shading_engine(const MDagPath& in_node) {
   MStatus k_s{};

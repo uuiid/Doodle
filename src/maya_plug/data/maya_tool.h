@@ -8,9 +8,13 @@
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include "data/maya_tool.h"
 #include <maya/MApiNamespace.h>
+#include <maya/MDagPath.h>
+#include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <type_traits>
+
 namespace doodle::maya_plug {
 
 /**
@@ -33,6 +37,11 @@ inline void set_attribute(const MObject& in_node, const std::string& in_name, co
   auto l_s = get_plug(in_node, in_name).setValue(doodle::maya_plug::conv::to_ms(in_t));
   doodle::maya_plug::maya_chick(l_s);
 }
+
+bool is_intermediate(const MObject& in_node);
+inline bool is_intermediate(const MDagPath& in_node) { return is_intermediate(in_node.node()); }
+bool is_renderable(const MObject& in_node);
+inline bool is_renderable(const MDagPath& in_node) { return is_renderable(in_node.node()); }
 
 template <typename T>
 T get_attribute(const MObject& in_node, const std::string& in_name) {
