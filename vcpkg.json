@@ -68,6 +68,13 @@
     "rttr",
     "cryptopp",
     "alembic",
+    {
+      "name": "alembic",
+      "default-features": false,
+      "features": [
+        "hdf5"
+      ]
+    },
     "dem-bones",
     "cppzmq",
     "winreg",
