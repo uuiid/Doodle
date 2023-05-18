@@ -3,7 +3,7 @@ add_executable(
         doodle_maya_exe
         main.cpp
 )
-
+add_subdirectory(abc)
 add_subdirectory(facet)
 add_subdirectory(cloth_sim)
 add_subdirectory(core)
