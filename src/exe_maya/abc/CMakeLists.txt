@@ -3,6 +3,7 @@
 target_sources(
         doodle_maya_exe
         PUBLIC
+        alembic_archive_out.h
 
         # AbcExport.h
         AbcWriteJob.h
@@ -18,6 +19,7 @@ target_sources(
         MayaUtility.h
 
         PRIVATE
+        alembic_archive_out.cpp
 
         # AbcExport.cpp
         MayaUtility.cpp
