@@ -10,12 +10,11 @@ FetchContent_Declare(
         GIT_TAG master
 )
 
-#FetchContent_Declare(
-#        TimeLib
-#        URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
-#        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-#)
-
+# FetchContent_Declare(
+# TimeLib
+# URL https://www.iana.org/time-zones/repository/tzdata-latest.tar.gz
+# DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+# )
 FetchContent_Declare(
         fontawesome
         GIT_REPOSITORY https://github.com/FortAwesome/Font-Awesome.git
@@ -42,8 +41,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(CMakeRCLib fontawesome IconFontCppHeaders doxygenAwesomeCss holidaycn)
 
-#=====================文档过程===============================
-#添加文档生成
+# =====================文档过程===============================
+# 添加文档生成
 set(DOXYGEN_WARNINGS YES)
 set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
 set(DOXYGEN_WARN_IF_DOC_ERROR YES)
@@ -53,8 +52,9 @@ set(DOXYGEN_EXCLUDE
         doodle_lib/resource
         doodle_core/generate
         doodle_lib/rpc
-        )
+)
 set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+
 # set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 
 # set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 0)
@@ -75,7 +75,7 @@ doxygen_add_docs(Doxygen
         doodle_lib
         doodle_dingding
         maya_plug
-        )
+)
 
 list(APPEND CMAKE_MODULE_PATH ${cmakerclib_SOURCE_DIR})
 include(CMakeRC)
@@ -90,38 +90,41 @@ cmrc_add_resource_library(
 add_subdirectory(doodle_app)
 add_subdirectory(doodle_core)
 add_subdirectory(doodle_lib)
-if (BUILD_LIMITED_1)
-    message("build task_exe BUILD_LIMITED_1=${BUILD_LIMITED_1}")
-    add_subdirectory(exe_task)
-else ()
-    message("build GUI BUILD_LIMITED_1=${BUILD_LIMITED_1}")
-    add_subdirectory(exe_gui)
-endif ()
+
+if(BUILD_LIMITED_1)
+        message("build task_exe BUILD_LIMITED_1=${BUILD_LIMITED_1}")
+        add_subdirectory(exe_task)
+else()
+        message("build GUI BUILD_LIMITED_1=${BUILD_LIMITED_1}")
+        add_subdirectory(exe_gui)
+endif()
 
 add_subdirectory(houdini_plug)
 
-if (DEFINED Maya_Version)
-    # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
-    # 模块的寻找文件名称 Find + 包名称 + .cmake
-    # 开始运行 `FindMaya.cmake`
-    find_package(Maya ${Maya_Version} MODULE)
-    find_package(OpenMP REQUIRED)
+if(DEFINED Maya_Version)
+        # 寻找 maya 包(包括各种动态库) 会在 ${CMAKE_PREFIX_PATH} 这里找 -> 找到 `FindMaya.cmake`
+        # 模块的寻找文件名称 Find + 包名称 + .cmake
+        # 开始运行 `FindMaya.cmake`
+        find_package(Maya ${Maya_Version} MODULE)
 
-    if (TARGET maya::maya_all)
-        find_package(dem-bones CONFIG REQUIRED)
-    endif ()
-    add_subdirectory(maya_plug_mll maya_plug_mll${Maya_Version})
+        if(TARGET maya::maya_all)
+                find_package(OpenMP REQUIRED)
+                find_package(Alembic CONFIG REQUIRED)
+                find_package(dem-bones CONFIG REQUIRED)
+                add_subdirectory(maya_plug_mll maya_plug_mll${Maya_Version})
 
-    add_subdirectory(maya_plug maya_plug${Maya_Version})
-    add_subdirectory(exe_maya exe_maya${Maya_Version})
-endif ()
+                add_subdirectory(maya_plug maya_plug${Maya_Version})
+                add_subdirectory(exe_maya exe_maya${Maya_Version})
+        endif()
+endif()
 
 add_subdirectory(photoshop_plug)
 add_subdirectory(exe_authorization)
 
 find_package(Wix)
-if (TARGET wix_exe)
-    add_subdirectory(install)
-endif ()
+
+if(TARGET wix_exe)
+        add_subdirectory(install)
+endif()
 
 add_subdirectory(test)

@@ -21,6 +21,7 @@ target_link_libraries(doodle_maya_exe
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
+        Alembic::Alembic
 )
 
 target_compile_definitions(doodle_maya_exe
