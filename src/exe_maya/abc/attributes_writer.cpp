@@ -9,7 +9,6 @@
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
-
 namespace doodle::alembic {
 bool attributes_writer::has_any_attr(const MFnDependencyNode &in_fn_transform) {
   const auto l_size = in_fn_transform.attributeCount();

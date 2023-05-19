@@ -6,6 +6,7 @@
 #include <Alembic/Abc/OArchive.h>
 #include <Alembic/Abc/OTypedScalarProperty.h>
 #include <Alembic/AbcCoreAbstract/TimeSampling.h>
+#include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/Util/All.h>
 #include <cstdint>
 #include <filesystem>
@@ -14,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
 
 namespace doodle::alembic {
 
@@ -46,7 +46,9 @@ class archive_out {
 
   void write(const frame& in_frame);
 
-  void wirte_transform(const MDagPath& in_path);
+  static std::tuple<std::uint16_t, std::uint16_t, std::uint16_t> get_rot_order();
+
+  Alembic::AbcGeom::OXform wirte_transform(const MDagPath& in_path);
   void wirte_mesh(const MDagPath& in_path);
 
  public:
