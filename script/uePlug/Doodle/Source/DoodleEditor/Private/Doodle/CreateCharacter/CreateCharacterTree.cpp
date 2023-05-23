@@ -270,22 +270,19 @@ void SCreateCharacterTree::CreateCharacterConfigTreeData_GetChildren(TreeVirwWei
 
 TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
   FMenuBuilder L_Builder{true, UICommandList, Extender};
-  if (!CurrentSelect || !*CurrentSelect) {
-    return L_Builder.MakeWidget();
-  }
- 
+
   {
     L_Builder.BeginSection("Create_ContextMenuOpening_Add_Bone", LOCTEXT("Create_ContextMenuOpening_Add_Bone1", "Add"));
 
     // 添加
-    if (CurrentSelect->Get().Keys.IsEmpty())
+    if (!CurrentSelect || (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Keys.IsEmpty()))
       L_Builder.AddMenuEntry(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone2", "Add Classify"),
           LOCTEXT("Create_ContextMenuOpening_Add_Bone2_Tip", "Add Classify"), FSlateIcon{"Subtitle", "EventIcon"},
           FUIAction{FExecuteAction::CreateLambda([this]() { AddBone(); })}
       );
     // 绑定骨骼
-    if (CurrentSelect->Get().Parent != INDEX_NONE && CurrentSelect->Get().Childs.IsEmpty()) {
+    if (CurrentSelect && *CurrentSelect && CurrentSelect->Get().Parent != INDEX_NONE && CurrentSelect->Get().Childs.IsEmpty()) {
       L_Builder.AddSubMenu(
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4", "Binding"),
           LOCTEXT("Create_ContextMenuOpening_Add_Bone4_Tip", "Binding Bone"),
@@ -294,12 +291,12 @@ TSharedPtr<SWidget> SCreateCharacterTree::Create_ContextMenuOpening() {
     }
 
     // 删除
-
-    L_Builder.AddMenuEntry(
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Remove"),
-        LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Remove"), FSlateIcon{"Subtitle", "EventIcon"},
-        FUIAction{FExecuteAction::CreateLambda([this]() { Delete_UiTreeNode(); })}
-    );
+    if (CurrentSelect && *CurrentSelect)
+      L_Builder.AddMenuEntry(
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3", "Remove"),
+          LOCTEXT("Create_ContextMenuOpening_Add_Bone3_Tip", "Remove"), FSlateIcon{"Subtitle", "EventIcon"},
+          FUIAction{FExecuteAction::CreateLambda([this]() { Delete_UiTreeNode(); })}
+      );
     L_Builder.EndSection();
   }
 
