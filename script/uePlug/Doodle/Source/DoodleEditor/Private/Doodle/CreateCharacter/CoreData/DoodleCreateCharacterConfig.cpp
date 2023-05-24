@@ -45,9 +45,9 @@ TOptional<FString> UDoodleCreateCharacterConfig::Add_ConfigNode(const FName& In_
   L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
   L_Node.WeightCurve.RotationCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
   L_Node.WeightCurve.ScaleCurve.Name.DisplayName = FName{TEXT("ScaleCurve")};
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, -1.f);
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, 0.f);
-  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::ZeroVector, 1.0f);
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, -1.f);
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, 0.f);
+  L_Node.WeightCurve.ScaleCurve.UpdateOrAddKey(FVector::OneVector, 1.0f);
 
   L_Node.BoneName = In_Bone;
 
