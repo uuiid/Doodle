@@ -1,4 +1,4 @@
-#include "Doodle/AiArrayGeneration.h"
+#include "Doodle/AiArrayGenerationMove.h"
 
 #include "AI/NavigationSystemBase.h"
 #include "Components/SplineComponent.h"
@@ -7,10 +7,13 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Animation/SkeletalMeshActor.h"
 #include "Animation/AnimSingleNodeInstance.h"
-
+#include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "Doodle/DoodleEigenHelper.h"
+#include "DoodleAiMoveToComponent.h"
 
-ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
+#include "DoodleAiCrowd.h"
+
+ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   PrimaryActorTick.bCanEverTick = true;
   SplineComponent               = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
   SplineComponent->Mobility     = EComponentMobility::Static;
@@ -60,25 +63,14 @@ ADoodleAiArrayGeneration::ADoodleAiArrayGeneration() {
   Preview_InstancedStaticMeshComponent->bHiddenInGame = true;
   Preview_InstancedStaticMeshComponent->CastShadow    = false;
 
-  ClusterPointNum                                     = 5;
-  ClusterIter                                         = 20;
-  RandomAnimSpeed                                     = {1.0, 1.1};
+  RandomAnimSpeed                                     = {150.0f, 200.0f};
 }
 
-void ADoodleAiArrayGeneration::Tick(float DeltaTime) {
+void ADoodleAiArrayGenerationMove::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
-  if (!bCluster)
-    if (Target_Transform != SceneComponentTarget->GetComponentTransform().GetLocation()) {
-      for (auto i = 0; i < Points.Num(); ++i) {
-        auto&& L_Tran = Points[i];
-        L_Tran.SetRotation(GetRandomOrient(L_Tran.GetLocation()));
-        Preview_InstancedStaticMeshComponent->UpdateInstanceTransform(i, L_Tran, true, true, true);
-      }
-      Target_Transform = SceneComponentTarget->GetComponentTransform().GetLocation();
-    }
 }
 
-void ADoodleAiArrayGeneration::PostActorCreated() {
+void ADoodleAiArrayGenerationMove::PostActorCreated() {
   Super::PostActorCreated();
   UMaterial* L_CraneBaseMaterial       = LoadObject<UMaterial>(this, TEXT("/ControlRig/Controls/ControlRigGizmoMaterial.ControlRigGizmoMaterial"));
   UMaterialInstanceDynamic* L_Material = UMaterialInstanceDynamic::Create(L_CraneBaseMaterial, this);
@@ -87,11 +79,11 @@ void ADoodleAiArrayGeneration::PostActorCreated() {
   // GenPoint();
 }
 
-bool ADoodleAiArrayGeneration::ShouldTickIfViewportsOnly() const {
+bool ADoodleAiArrayGenerationMove::ShouldTickIfViewportsOnly() const {
   return true;
 }
 
-void ADoodleAiArrayGeneration::BeginPlay() {
+void ADoodleAiArrayGenerationMove::BeginPlay() {
   if (AnimAssets.IsEmpty() || SkinAssets.IsEmpty()) return;
 
   int32 L_Max_Skin = FMath::Max(0, SkinAssets.Num() - 1);
@@ -105,26 +97,41 @@ void ADoodleAiArrayGeneration::BeginPlay() {
     }
   }
 
-  FVector2D L_Anim_Speed{RandomAnimSpeed.ClampAxes(0.01, 100)};
   for (auto&& i : Points) {
-    ASkeletalMeshActor* L_Actor =
-        GetWorld()->SpawnActor<ASkeletalMeshActor>(i.GetLocation(), i.GetRotation().Rotator());
+    ADoodleAiCrowd* L_Actor =
+        GetWorld()->SpawnActor<ADoodleAiCrowd>(i.GetLocation(), i.GetRotation().Rotator());
+    UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
+    if (L_Com) {
+      L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation();
+    }
     // L_Actor->SetActorTransform(i);
     TObjectPtr L_Skin = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
     auto L_Array      = L_Map.Find(L_Skin->GetSkeleton());
     if (!L_Array) continue;
     if (L_Array->IsEmpty()) continue;
     TObjectPtr<UAnimationAsset> L_Anim = (*L_Array)[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];
-    USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetSkeletalMeshComponent();
+    USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetMesh();
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
     // L_Sk_Com->LightingChannels = LightingChannels;
     L_Sk_Com->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
-    L_Sk_Com->AnimationData.SavedPlayRate = FMath::RandRange(L_Anim_Speed.X, L_Anim_Speed.Y);
+
+    UCharacterMovementComponent* CharacterMovementComponent = Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
+    if (CharacterMovementComponent) {
+      CharacterMovementComponent->MaxAcceleration              = 50.f;
+
+      CharacterMovementComponent->MaxWalkSpeed                 = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
+      CharacterMovementComponent->GroundFriction               = 0.2f;
+      CharacterMovementComponent->RotationRate                 = {0.0f, 180.0f, 0.0f};
+      CharacterMovementComponent->bOrientRotationToMovement    = true;
+      CharacterMovementComponent->bUseRVOAvoidance             = true;
+      CharacterMovementComponent->AvoidanceConsiderationRadius = 100.0f;
+      CharacterMovementComponent->AvoidanceWeight              = 5.0f;
+    }
   }
 }
 
-void ADoodleAiArrayGeneration::GenPoint() {
+void ADoodleAiArrayGenerationMove::GenPoint() {
   UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
   if (!NavSys) {
     return;
@@ -185,11 +192,11 @@ void ADoodleAiArrayGeneration::GenPoint() {
   }
 }
 
-FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin) {
+FQuat ADoodleAiArrayGenerationMove::GetRandomOrient(const FVector& In_Origin) {
   return GetRandomOrient(In_Origin, SceneComponentTarget->GetComponentTransform().GetLocation());
 }
 
-FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin, const FVector& In_Look) {
+FQuat ADoodleAiArrayGenerationMove::GetRandomOrient(const FVector& In_Origin, const FVector& In_Look) {
   static constexpr double Pi = 3.1415926535897932384626433832795;
   FQuat L_R{FQuat::Identity};
 
@@ -205,7 +212,7 @@ FQuat ADoodleAiArrayGeneration::GetRandomOrient(const FVector& In_Origin, const 
   return G_R * L_Loc.ToOrientationQuat();
 }
 
-bool ADoodleAiArrayGeneration::GetRandomPointInRadius(const FVector& Origin, FVector& OutResult) {
+bool ADoodleAiArrayGenerationMove::GetRandomPointInRadius(const FVector& Origin, FVector& OutResult) {
   UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
   if (!NavSys) {
     return false;
@@ -219,87 +226,10 @@ bool ADoodleAiArrayGeneration::GetRandomPointInRadius(const FVector& Origin, FVe
   return bSuccess;
 }
 
-void ADoodleAiArrayGeneration::OnConstruction(const FTransform& Transform) {
+void ADoodleAiArrayGenerationMove::OnConstruction(const FTransform& Transform) {
   Super::OnConstruction(Transform);
   // if (SplineComponent->bSplineHasBeenEdited)
   GenPoint();
-  if (bCluster)
-    K_Means_Clustering();
 
   Preview_InstancedStaticMeshComponent->SetLightingChannels(LightingChannels.bChannel0, LightingChannels.bChannel1, LightingChannels.bChannel2);
-}
-
-void ADoodleAiArrayGeneration::K_Means_Clustering() {
-  Eigen::MatrixX3d L_Points{Points.Num(), 3};
-  for (auto k = 0; k < L_Points.rows(); ++k) {
-    FVector L_Loc   = Points[k].GetLocation();
-    L_Points.row(k) = Eigen::Vector3d{L_Loc.X, L_Loc.Y, L_Loc.Z};
-    // L_Points << Eigen::Vector3d{L_Loc.X, L_Loc.Y, L_Loc.Z};
-  }
-
-  // for (auto k = 0; k < L_Points.rows(); ++k) {
-  //   Eigen::Vector3d L_point = L_Points.row(k);
-  //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
-  // }
-  // for (auto k = 0; k < L_Points.rows(); ++k)
-  //   UE_LOG(LogTemp, Log, TEXT("UE %s, Eigen %s"), *Points[k].GetLocation().ToString(), *Doodle::EigenMatrixToString(L_Points.row(k)));
-
-  Eigen::Vector3d L_Norm = L_Points.colwise().mean();
-  L_Points.rowwise() -= L_Norm.transpose();
-
-  // for (auto k = 0; k < L_Points.rows(); ++k) {
-  //   Eigen::Vector3d L_point = L_Points.row(k);
-  //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Green, false, 1.0f);
-  // }
-  Eigen::MatrixX3d L_Centroids = Eigen::MatrixX3d::Random(ClusterPointNum, 3) * L_Points.colwise().maxCoeff().norm();
-
-  Eigen::VectorXd L_Labels{L_Points.rows(), 1};
-  for (auto i = 0; i < ClusterIter; ++i) {
-    for (auto j = 0; j < L_Points.rows(); ++j) {
-      double L_min_dist = std::numeric_limits<double>::max();
-      int L_Label{0};
-
-      for (auto k = 0; k < L_Centroids.rows(); ++k) {
-        double L_Dist = (L_Points.row(j) - L_Centroids.row(k)).norm();
-        if (L_Dist < L_min_dist) {
-          L_min_dist = L_Dist;
-          L_Label    = k;
-        }
-      }
-
-      L_Labels[j] = L_Label;
-    }
-
-    for (auto k = 0; k < L_Centroids.rows(); ++k) {
-      Eigen::MatrixX3d LL_Centroids;
-      for (auto j = 0; j < L_Labels.rows(); ++j) {
-        if (L_Labels[j] == k) {
-          LL_Centroids.conservativeResize(LL_Centroids.rows() + 1, Eigen::NoChange);
-          LL_Centroids.row(LL_Centroids.rows() - 1) = L_Points.row(j);
-        }
-      }
-
-      if (LL_Centroids.rows() > 0) {
-        L_Centroids.row(k) = LL_Centroids.colwise().mean();
-      }
-    }
-
-    // for (auto k = 0; k < L_Centroids.rows(); ++k) {
-    //   Eigen::Vector3d L_point = L_Centroids.row(k);
-    //   DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Red, false, 1.0f);
-    // }
-  }
-
-  for (auto j = 0; j < L_Points.rows(); ++j) {
-    Eigen::Vector3d L_point = L_Centroids.row(L_Labels[j]);
-    L_point += L_Norm;
-
-    auto&& L_Tran = Points[j];
-    FVector L_Look{L_point.x(), L_point.y(), L_point.z()};
-    L_Tran.SetRotation(GetRandomOrient(L_Tran.GetLocation(), L_Look));
-    Preview_InstancedStaticMeshComponent->UpdateInstanceTransform(j, L_Tran, true, true, true);
-
-    DrawDebugPoint(GetWorld(), FVector{L_point.x(), L_point.y(), L_point.z()}, 10.0f, FColor::Red, false, 1.0f);
-    // UE_LOG(LogTemp, Log, TEXT("point %s"), *Doodle::EigenMatrixToString(L_point));
-  }
 }

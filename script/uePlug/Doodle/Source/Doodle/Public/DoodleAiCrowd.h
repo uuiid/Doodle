@@ -10,6 +10,7 @@
 
 class USplineComponent;
 class UAnimationAsset;
+class UDoodleAiMoveToComponent;
 
 UCLASS()
 class DOODLE_API ADoodleAiCrowd : public ACharacter {
@@ -19,7 +20,13 @@ class DOODLE_API ADoodleAiCrowd : public ACharacter {
   // Sets default values for this character's properties
   ADoodleAiCrowd();
 
+  inline UDoodleAiMoveToComponent* GetDoodleMoveToComponent() {
+    return MoveToCom;
+  }
+
  protected:
+  UPROPERTY()
+  TObjectPtr<UDoodleAiMoveToComponent> MoveToCom{};
   // Called when the game starts or when spawned
   // virtual void BeginPlay() override;
 

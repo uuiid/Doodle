@@ -7,7 +7,7 @@
 #include "Math/RandomStream.h"
 
 // 这个必须最后导入
-#include "AiArrayGeneration.generated.h"
+#include "AiArrayGenerationMove.generated.h"
 
 class USplineComponent;
 class UArrowComponent;
@@ -19,10 +19,10 @@ class UStaticMeshComponent;
 class USceneComponent;
 
 UCLASS()
-class DOODLE_API ADoodleAiArrayGeneration : public AActor {
+class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
   GENERATED_BODY()
  public:
-  ADoodleAiArrayGeneration();
+  ADoodleAiArrayGenerationMove();
 
  private:
   UPROPERTY(Category = Collision, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -47,28 +47,12 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   float OffsetValue;
 
   UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "启用集群",
-      meta = (ClampMin = 1, ClampMax = 100)
-  )
-  bool bCluster;
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "集群点", meta = (ClampMin = 1, ClampMax = 100)
-  )
-  int32 ClusterPointNum;
-
-  UPROPERTY(
-      EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "迭代次数",
-      meta = (ClampMin = 1, ClampMax = 100)
-  )
-  int32 ClusterIter;
-
-  UPROPERTY(
       EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机方向范围",
       meta = (ClampMin = -1.0, ClampMax = 1.0)
   )
   FVector2D RandomOrient;
 
-  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机动画速率")
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机最大速度")
   FVector2D RandomAnimSpeed;
 
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
@@ -123,5 +107,4 @@ class DOODLE_API ADoodleAiArrayGeneration : public AActor {
   bool GetRandomPointInRadius(const FVector &Origin, FVector &OutResult);
 
   virtual void OnConstruction(const FTransform &Transform) override;
-  void K_Means_Clustering();
 };

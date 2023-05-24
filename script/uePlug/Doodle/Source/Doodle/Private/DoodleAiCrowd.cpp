@@ -10,12 +10,14 @@
 #include "DoodleAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "NavigationSystem.h"
+#include "DoodleAiDownToComponent.h"
 
 // Sets default values
 ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
-  AIControllerClass = ADoodleAIController::StaticClass();
+  AIControllerClass             = ADoodleAIController::StaticClass();
+  MoveToCom                     = CreateDefaultSubobject<UDoodleAiMoveToComponent>(TEXT("DoodleAiMoveToComponent"));
 
   // p_spline = NewObject<USplineComponent>(this, "Spline");
   // p_spline->RegisterComponent();
@@ -40,7 +42,7 @@ ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
 }
 
 // Called every frame
-//void ADoodleAiCrowd::Tick(float DeltaTime) {
+// void ADoodleAiCrowd::Tick(float DeltaTime) {
 //  Super::Tick(DeltaTime);
 //  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
 //  // if (!SkeletalMeshComponent)
