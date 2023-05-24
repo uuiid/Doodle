@@ -5,6 +5,8 @@
 #include "FbxImporter.h"
 #include "EngineUtils.h"
 #include "Engine/StaticMeshActor.h"
+#include "Components/InstancedStaticMeshComponent.h"
+
 class Doodle_CustomFbxExporter {
   // copy to FbxMainExport.cpp
   static void DetermineVertsToWeld(TArray<int32>& VertRemap, TArray<int32>& UniqueVerts, const FStaticMeshLODResources& RenderMesh) {
@@ -166,24 +168,6 @@ class Doodle_CustomFbxExporter {
     Exporter->Destroy();
   }
 
-  void ExportStaticMesh(AActor* In_Actor, UStaticMeshComponent* In_StaticMesh) {
-    if (In_Actor == nullptr || In_StaticMesh == nullptr || Scene == nullptr) {
-      return;
-    }
-
-    UStaticMesh* StaticMesh = In_StaticMesh->GetStaticMesh();
-    if (StaticMesh == NULL || !StaticMesh->HasValidRenderData()) {
-      return;
-    }
-
-    FString L_FbxNodeName = GetActorNodeName(In_Actor);
-    FString L_FbxMeshName = StaticMesh->GetName().Replace(TEXT("-"), TEXT("_"));
-    // not chick lod
-
-    FbxNode* L_FbxActor   = ExportActor(In_Actor, L_FbxNodeName);
-    ExportStaticMeshToFbx(StaticMesh, L_FbxMeshName, L_FbxActor);
-  }
-
   FbxNode* ExportStaticMeshToFbx(const UStaticMesh* In_StaticMesh, const FString& In_MeshName, FbxNode* FbxActor) {
     FbxMesh* L_Mesh = FbxMeshes.FindRef(In_StaticMesh);
 
@@ -325,6 +309,7 @@ class Doodle_CustomFbxExporter {
 
         AccountedTriangles += TriangleCount;
       }
+      FbxMeshes.Emplace(In_StaticMesh, L_Mesh);
     } else {
       FbxActor->AddMaterial(CreateDefaultMaterial());
     }
@@ -333,10 +318,34 @@ class Doodle_CustomFbxExporter {
     return FbxActor;
   }
 
-  FbxNode* ExportActor(AActor* In_Actor, const FString& In_NodeName) {
-    FbxNode* ActorNode = FindActor(In_Actor);
+  void ExportInstancedMeshToFbx(const UInstancedStaticMeshComponent* InstancedMeshComp, const FString& MeshName, FbxNode* FbxActor) {
+    const UStaticMesh* StaticMesh = InstancedMeshComp->GetStaticMesh();
+    check(StaticMesh);
+
+    const int32 NumInstances = InstancedMeshComp->GetInstanceCount();
+    for (int32 InstanceIndex = 0; InstanceIndex < NumInstances; ++InstanceIndex) {
+      FTransform RelativeTransform;
+      if (ensure(InstancedMeshComp->GetInstanceTransform(InstanceIndex, RelativeTransform, /*bWorldSpace=*/false))) {
+        FString L_Node_Name = StaticMesh->GetName().Replace(TEXT("-"), TEXT("_"));
+        FbxNode* InstNode   = FbxNode::Create(Scene, TCHAR_TO_UTF8(*FString::Printf(TEXT("%s_%d"), *L_Node_Name, InstanceIndex)));
+
+        InstNode->LclTranslation.Set(Converter.ConvertToFbxPos(RelativeTransform.GetTranslation()));
+        InstNode->LclRotation.Set(Converter.ConvertToFbxRot(RelativeTransform.GetRotation().Euler()));
+        InstNode->LclScaling.Set(Converter.ConvertToFbxScale(RelativeTransform.GetScale3D()));
+
+        ExportStaticMeshToFbx(StaticMesh, L_Node_Name, InstNode);
+        FbxActor->AddChild(InstNode);
+      }
+    }
+  }
+
+  auto CreateActorNode(AActor* In_Actor) {
+    FString L_FbxNodeName = GetActorNodeName(In_Actor);
+
+    FbxNode* ActorNode    = FindActor(In_Actor);
+    FTransform L_Out{};
     if (ActorNode == nullptr) {
-      ActorNode             = FbxNode::Create(Scene, TCHAR_TO_UTF8(*In_NodeName));
+      ActorNode             = FbxNode::Create(Scene, TCHAR_TO_UTF8(*L_FbxNodeName));
 
       AActor* L_ParentActor = In_Actor->GetAttachParentActor();
       FbxNode* ParentNode   = FindActor(L_ParentActor);
@@ -350,6 +359,7 @@ class Doodle_CustomFbxExporter {
         ActorLocation                      = RelativeTransform.GetTranslation();
         ActorRotation                      = RelativeTransform.GetRotation().Euler();
         ActorScale                         = RelativeTransform.GetScale3D();
+        L_Out                              = RelativeTransform;
       } else {
         ParentNode = Scene->GetRootNode();
         if (ParentNode != NULL) {
@@ -358,11 +368,13 @@ class Doodle_CustomFbxExporter {
           ActorLocation                      = AbsoluteTransform.GetTranslation();
           ActorRotation                      = AbsoluteTransform.GetRotation().Euler();
           ActorScale                         = AbsoluteTransform.GetScale3D();
+          L_Out                              = AbsoluteTransform;
         } else {
           const FTransform ConvertedTransform = RotationDirectionConvert * In_Actor->GetTransform();
           ActorLocation                       = ConvertedTransform.GetTranslation();
           ActorRotation                       = ConvertedTransform.GetRotation().Euler();
           ActorScale                          = ConvertedTransform.GetScale3D();
+          L_Out                               = ConvertedTransform;
         }
       }
 
@@ -373,7 +385,78 @@ class Doodle_CustomFbxExporter {
       ActorNode->LclRotation.Set(Converter.ConvertToFbxRot(ActorRotation));
       ActorNode->LclScaling.Set(Converter.ConvertToFbxScale(ActorScale));
     }
-    return ActorNode;
+    return MakeTuple(ActorNode, L_Out);
+  }
+
+  void ExportActor(AActor* In_Actor) {
+    auto [ActorNode, L_ActorNode_Tran] = CreateActorNode(In_Actor);
+
+    // if (In_Actor->IsA(AStaticMeshActor::StaticClass())) {
+    //   UStaticMesh* L_StaticMesh = CastChecked<AStaticMeshActor>(In_Actor)->GetStaticMeshComponent()->GetStaticMesh();
+    //   FString L_FbxMeshName     = L_StaticMesh->GetName().Replace(TEXT("-"), TEXT("_"));
+
+    //  ExportStaticMeshToFbx(L_StaticMesh, L_FbxMeshName, ActorNode);
+    //} else {
+    //}
+
+    TArray L_Coms                      = GetExportComponent(In_Actor);
+
+    for (auto&& Component : L_Coms) {
+      FbxNode* ExportNode = ActorNode;
+      if (L_Coms.Num() > 1) {
+        // This actor has multiple components
+        // create a child node under the actor for each component
+        FbxNode* CompNode = FbxNode::Create(Scene, TCHAR_TO_UTF8(*Component->GetName()));
+
+        if (Component != In_Actor->GetRootComponent()) {
+          // Transform is relative to the root component
+          const FTransform RelativeTransform = FTransform::Identity * Component->GetComponentToWorld().GetRelativeTransform(In_Actor->GetTransform());
+          CompNode->LclTranslation.Set(Converter.ConvertToFbxPos(RelativeTransform.GetTranslation()));
+          CompNode->LclRotation.Set(Converter.ConvertToFbxRot(RelativeTransform.GetRotation().Euler()));
+          CompNode->LclScaling.Set(Converter.ConvertToFbxScale(RelativeTransform.GetScale3D()));
+        }
+
+        ExportNode = CompNode;
+        ActorNode->AddChild(CompNode);
+      } else if (Component != In_Actor->GetRootComponent()) {
+        // 在ActorNode变换中合并组件的相对变换，因为这是唯一要输出的组件，而且它不是根。
+        const FTransform RelativeTransform = FTransform::Identity * Component->GetComponentToWorld().GetRelativeTransform(In_Actor->GetTransform());
+
+        FTransform TotalTransform          = RelativeTransform * L_ActorNode_Tran;
+
+        ActorNode->LclTranslation.Set(Converter.ConvertToFbxPos(TotalTransform.GetLocation()));
+        ActorNode->LclRotation.Set(Converter.ConvertToFbxRot(TotalTransform.GetRotation().Euler()));
+        ActorNode->LclScaling.Set(Converter.ConvertToFbxScale(TotalTransform.GetScale3D()));
+      }
+
+      UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(Component);
+
+      if (StaticMeshComp && StaticMeshComp->GetStaticMesh()) {
+        // if (USplineMeshComponent* SplineMeshComp = Cast<USplineMeshComponent>(StaticMeshComp)) {
+        //   ExportSplineMeshToFbx(SplineMeshComp, *SplineMeshComp->GetName(), ExportNode);
+        // } else
+        if (UInstancedStaticMeshComponent* InstancedMeshComp = Cast<UInstancedStaticMeshComponent>(StaticMeshComp)) {
+          ExportInstancedMeshToFbx(InstancedMeshComp, InstancedMeshComp->GetName(), ExportNode);
+        } else {
+          UStaticMesh* L_StaticMesh = StaticMeshComp->GetStaticMesh();
+          FString L_FbxMeshName     = L_StaticMesh->GetName().Replace(TEXT("-"), TEXT("_"));
+
+          ExportStaticMeshToFbx(L_StaticMesh, L_FbxMeshName, ActorNode);
+        }
+      }
+    }
+  }
+
+  static TArray<USceneComponent*> GetExportComponent(const AActor* In_Actor) {
+    TArray<USceneComponent*> L_Out{};
+    TSet L_Coms = In_Actor->GetComponents();
+    for (auto&& L_Com : In_Actor->GetComponents()) {
+      if (auto L_Sub = Cast<UStaticMeshComponent>(L_Com)) {
+        if (L_Sub->GetStaticMesh())
+          L_Out.Emplace(L_Sub);
+      }
+    }
+    return L_Out;
   }
 };
 
@@ -402,10 +485,18 @@ bool UDoodleCustomFbxExporter::ExportBinary(UObject* Object, const TCHAR* Type, 
 
     GWarn->StatusUpdate(0, 1, NSLOCTEXT("UnrealEd", "ExportingLevelToFBX", "Exporting Level To FBX"));
 
+    TArray<AActor*> L_Export_Actor{};
+
     for (TActorIterator<AActor> it{L_World}; it; ++it) {
-      if (it->IsA(AStaticMeshActor::StaticClass())) {
-        Impl_Data->ExportStaticMesh(*it, CastChecked<AStaticMeshActor>(*it)->GetStaticMeshComponent());
+      if (IsExport(*it)) {
+        L_Export_Actor.Emplace(*it);
       }
+    }
+
+    SortActorsHierarchy(L_Export_Actor);
+
+    for (auto&& i : L_Export_Actor) {
+      Impl_Data->ExportActor(i);
     }
 
     WriteToFile(UExporter::CurrentFilename);
@@ -422,4 +513,37 @@ void UDoodleCustomFbxExporter::CreateDocument() {
 
 void UDoodleCustomFbxExporter::WriteToFile(const FString& In_FilePath) {
   Impl_Data->WriteToFile(In_FilePath);
+}
+
+bool UDoodleCustomFbxExporter::IsExport(const AActor* In_Actor) {
+  if (In_Actor->IsA(AStaticMeshActor::StaticClass()))
+    return true;
+  for (auto&& L_Com : In_Actor->GetComponents()) {
+    if (auto L_Sub = Cast<UStaticMeshComponent>(L_Com)) {
+      if (L_Sub->GetStaticMesh())
+        return true;
+    }
+  }
+
+  return false;
+}
+
+void UDoodleCustomFbxExporter::SortActorsHierarchy(TArray<AActor*>& In_Actors) {
+  auto CalcAttachDepth = [](AActor& InActor) -> int32 {
+    int32 Depth{0};
+    if (InActor.GetRootComponent()) {
+      for (const USceneComponent* Test = InActor.GetRootComponent()->GetAttachParent(); Test != nullptr; Test = Test->GetAttachParent(), Depth++)
+        ;
+    }
+
+    return Depth;
+  };
+  // TArray.StableSort假设数组中没有空项
+  In_Actors.StableSort([&](AActor& L, AActor& R) -> bool {
+    return CalcAttachDepth(L) < CalcAttachDepth(R);
+  });
+  // 不幸的是，TArray.StableSort假设数组中没有空项，所以它迫使我使用内部的非限制性版本
+  // StableSortInternal(Actors.GetData(), Actors.Num(), [&](AActor* L, AActor* R) {
+  //  return CalcAttachDepth(L) < CalcAttachDepth(R);
+  //});
 }

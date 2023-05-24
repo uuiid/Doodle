@@ -25,5 +25,8 @@ class UDoodleCustomFbxExporter : public UExporter {
   void CreateDocument();
   void WriteToFile(const FString& In_FilePath);
 
+  static bool IsExport(const AActor* In_Actor);
+  void SortActorsHierarchy(TArray<AActor*>& In_Actors);
+
   TSharedPtr<Doodle_CustomFbxExporter> Impl_Data;
 };
