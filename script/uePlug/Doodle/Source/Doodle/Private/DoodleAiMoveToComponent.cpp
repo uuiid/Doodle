@@ -21,7 +21,7 @@ void UDoodleAiMoveToComponent::BeginPlay() {
 void UDoodleAiMoveToComponent::GoToRandomWaypoint() {
   if (UWorld *L_World = GetWorld()) {
     L_World->GetTimerManager().SetTimer(
-        TimerHandle, this, &UDoodleAiMoveToComponent::GoToRandomWaypoint, 5.0f + FMath::RandRange(-3.0f, 2.0f), false
+        TimerHandle, this, &UDoodleAiMoveToComponent::GoToRandomWaypoint, 1.5f + FMath::RandRange(-1.5f, 2.0f), true
     );
   }
 
@@ -40,7 +40,7 @@ void UDoodleAiMoveToComponent::GoToRandomWaypoint() {
 
   FVector Result;
   if (!GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)) {
-    //UE_LOG(LogTemp, Log, TEXT("GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)"));
+    // UE_LOG(LogTemp, Log, TEXT("GetRandomPointInRadius(Actor->GetActorLocation() + Direction, Result)"));
     return;
   }
   FAIMoveRequest AIMoveRequest{Result};
