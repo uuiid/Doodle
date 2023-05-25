@@ -64,6 +64,7 @@ ADoodleAiArrayGenerationMove::ADoodleAiArrayGenerationMove() {
   Preview_InstancedStaticMeshComponent->CastShadow    = false;
 
   RandomAnimSpeed                                     = {150.0f, 200.0f};
+  MaxAcceleration                                     = 300.0f;
 }
 
 void ADoodleAiArrayGenerationMove::Tick(float DeltaTime) {
@@ -106,6 +107,7 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
         GetWorld()->SpawnActor<ADoodleAiCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
     UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
     if (L_Com) {
+      //DrawDebugLine(GetWorld(), SceneComponentTarget->GetComponentTransform().GetLocation(), L_Loc, FColor::Red, false, 10.f);
       L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation() - L_Loc;
     }
     // L_Actor->SetActorTransform(i);
@@ -124,8 +126,7 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
 
     UCharacterMovementComponent* CharacterMovementComponent = Cast<UCharacterMovementComponent>(L_Actor->GetMovementComponent());
     if (CharacterMovementComponent) {
-      CharacterMovementComponent->MaxAcceleration              = 50.f;
-
+      CharacterMovementComponent->MaxAcceleration              = MaxAcceleration;
       CharacterMovementComponent->MaxWalkSpeed                 = RandomStream_Anim.RandRange(RandomAnimSpeed.X, RandomAnimSpeed.Y);
       CharacterMovementComponent->GroundFriction               = 0.2f;
       CharacterMovementComponent->RotationRate                 = {0.0f, 180.0f, 0.0f};

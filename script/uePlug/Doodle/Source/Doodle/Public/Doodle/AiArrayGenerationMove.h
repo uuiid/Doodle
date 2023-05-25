@@ -55,6 +55,12 @@ class DOODLE_API ADoodleAiArrayGenerationMove : public AActor {
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机最大速度")
   FVector2D RandomAnimSpeed;
 
+  UPROPERTY(Category = Doodle, EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
+  float MaxAcceleration;
+
+  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle, DisplayName = "随机范围")
+  float RandomRadius{500};
+
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
   TArray<TObjectPtr<UAnimationAsset>> AnimAssets;
   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Doodle)
