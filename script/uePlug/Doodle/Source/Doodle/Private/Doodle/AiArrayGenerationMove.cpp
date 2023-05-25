@@ -109,6 +109,7 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
     if (L_Com) {
       //DrawDebugLine(GetWorld(), SceneComponentTarget->GetComponentTransform().GetLocation(), L_Loc, FColor::Red, false, 10.f);
       L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation() - L_Loc;
+      L_Com->RandomRadius = RandomRadius_Move;
     }
     // L_Actor->SetActorTransform(i);
     TObjectPtr L_Skin = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
