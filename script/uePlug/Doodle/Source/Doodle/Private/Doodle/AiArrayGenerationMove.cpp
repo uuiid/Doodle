@@ -96,13 +96,17 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
       L_Map[i->GetSkeleton()].Add(i);
     }
   }
-
+  FActorSpawnParameters L_ActorSpawnParameters{};
+  L_ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
   for (auto&& i : Points) {
+    auto L_Loc = i.GetLocation();
+    // L_Loc.Z += 70;
+
     ADoodleAiCrowd* L_Actor =
-        GetWorld()->SpawnActor<ADoodleAiCrowd>(i.GetLocation(), i.GetRotation().Rotator());
+        GetWorld()->SpawnActor<ADoodleAiCrowd>(L_Loc, i.GetRotation().Rotator(), L_ActorSpawnParameters);
     UDoodleAiMoveToComponent* L_Com = L_Actor->GetDoodleMoveToComponent();
     if (L_Com) {
-      L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation();
+      L_Com->Direction = SceneComponentTarget->GetComponentTransform().GetLocation() - L_Loc;
     }
     // L_Actor->SetActorTransform(i);
     TObjectPtr L_Skin = SkinAssets[RandomStream_Skin.RandRange(0, L_Max_Skin)];
@@ -111,6 +115,8 @@ void ADoodleAiArrayGenerationMove::BeginPlay() {
     if (L_Array->IsEmpty()) continue;
     TObjectPtr<UAnimationAsset> L_Anim = (*L_Array)[RandomStream_Anim.RandRange(0, L_Array->Num() - 1)];
     USkeletalMeshComponent* L_Sk_Com   = L_Actor->GetMesh();
+    FVector::ZAxisVector;
+    L_Sk_Com->SetRelativeLocationAndRotation({0.f, 0.f, -85.f}, FQuat{FVector::ZAxisVector, -90.f});
     L_Sk_Com->SetSkeletalMesh(L_Skin);
     L_Sk_Com->PlayAnimation(L_Anim, true);
     // L_Sk_Com->LightingChannels = LightingChannels;

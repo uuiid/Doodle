@@ -17,6 +17,7 @@ ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
   // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
   PrimaryActorTick.bCanEverTick = true;
   AIControllerClass             = ADoodleAIController::StaticClass();
+  AutoPossessAI                 = EAutoPossessAI::PlacedInWorldOrSpawned;
   MoveToCom                     = CreateDefaultSubobject<UDoodleAiMoveToComponent>(TEXT("DoodleAiMoveToComponent"));
 
   // p_spline = NewObject<USplineComponent>(this, "Spline");
@@ -42,16 +43,14 @@ ADoodleAiCrowd::ADoodleAiCrowd() : ACharacter() {
 }
 
 // Called every frame
-// void ADoodleAiCrowd::Tick(float DeltaTime) {
-//  Super::Tick(DeltaTime);
-//  // USkeletalMeshComponent *SkeletalMeshComponent = FindComponentByClass<USkeletalMeshComponent>();
-//  // if (!SkeletalMeshComponent)
-//  //   return;
-//  // auto Anim = Cast<UDoodleAnimInstance>(SkeletalMeshComponent->GetAnimInstance());
-//  // if (Anim) {
-//  //   Anim->DoodleCalculateSpeed();
-//  //   auto Velocity = GetVelocity();
-//  //   FVector Blend{Velocity.Size(), Anim->CalculateDirection(Velocity, GetBaseAimRotation()), 0.0f};
-//  //   Anim->SetBlendSpaceInput(Blend);
-//  // }
-//}
+void ADoodleAiCrowd::Tick(float DeltaTime) {
+  Super::Tick(DeltaTime);
+  USkeletalMeshComponent *SkeletalMeshComponent = GetMesh();
+  if (!SkeletalMeshComponent)
+    return;
+
+  auto Anim = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+  if (!Anim)
+    return;
+  Anim->SetBlendSpacePosition(FVector{this->GetVelocity().Size(), .0f, .0f});
+}
