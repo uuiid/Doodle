@@ -27,8 +27,8 @@
 #include "range/v3/action/remove_if.hpp"
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/transform.hpp"
+#include <exe_maya/data/export_abc_native.h>
 #include <exe_maya/data/play_blast.h>
-#include <exe_maya/abc/alembic_archive_out.h>
 #include <filesystem>
 #include <map>
 #include <maya/MAnimControl.h>
@@ -146,23 +146,16 @@ void cloth_sim::play_blast() {
 
 void cloth_sim::export_abc() {
   DOODLE_LOG_INFO("开始导出abc");
-  export_file_abc l_ex{};
+  // export_file_abc l_ex{};
+  export_abc_native l_ex{};
   auto l_gen             = std::make_shared<reference_file_ns::generate_abc_file_path>();
   const MTime k_end_time = MAnimControl::maxTime();
   l_gen->begin_end_time  = std::make_pair(anim_begin_time_, k_end_time);
+
   ranges::for_each(ref_files_, [&](entt::handle& in_handle) {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
   });
-
-  // std::vector<MDagPath> l_dag_path{};
-  // l_dag_path.reserve(in_select.length());
-  // for (auto i = 0; i < in_select.length(); ++i) {
-  //   MDagPath k_path{};
-  //   in_select.getDagPath(i, k_path);
-  //   l_dag_path.emplace_back(k_path);
-  // }
-  // alembic::archive_out l_out{in_path, l_dag_path};
 }
 
 void cloth_sim::export_fbx() {

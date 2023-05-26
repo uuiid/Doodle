@@ -8,9 +8,9 @@
 
 namespace doodle::maya_plug {
 class reference_file;
-class export_abc_native : export_file_abc {
+class export_abc_native : public export_file_abc {
  protected:
-  virtual void export_abc(const MSelectionList& in_select, const FSys::path& in_path) override;
+  void export_abc(const MSelectionList& in_select, const FSys::path& in_path) override;
 
  public:
   using export_file_abc::export_file_abc;
