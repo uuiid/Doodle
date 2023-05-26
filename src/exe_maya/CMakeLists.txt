@@ -34,6 +34,9 @@ target_compile_definitions(doodle_maya_exe
 
 # target_link_options(doodle_maya_exe PUBLIC /MAP:test.txt)
 target_link_options(doodle_maya_exe PUBLIC /ENTRY:mainCRTStartup)
+set_target_properties(
+        doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.exe"
+)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
@@ -45,11 +48,6 @@ install(TARGETS doodle_maya_exe
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
         COMPONENT exe_com
-)
-
-add_custom_target(
-        copy_doodle_maya_exe_to
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:doodle_maya_exe> ${MAYA_BASE_DIR}/bin/
 )
 
 # doodle_install_code_wix(bin exe_com)
