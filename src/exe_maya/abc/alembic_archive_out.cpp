@@ -91,9 +91,9 @@ Alembic::AbcGeom::OXform archive_out::wirte_transform(const MDagPath& in_path) {
     MQuaternion l_rotate{};
     maya_plug::maya_chick(l_fn_transform.getRotation(l_rotate, MSpace::Space::kWorld));
     const auto l_rot = l_rotate.asEulerRotation().reorderIt(MEulerRotation::kXYZ);
-    l_op.setXRotation(Alembic::AbcGeom::RadiansToDegrees(l_rot.x));
-    l_op.setXRotation(Alembic::AbcGeom::RadiansToDegrees(l_rot.y));
-    l_op.setXRotation(Alembic::AbcGeom::RadiansToDegrees(l_rot.z));
+    l_op.setChannelValue(0, Alembic::AbcGeom::RadiansToDegrees(l_rot.x));
+    l_op.setChannelValue(1, Alembic::AbcGeom::RadiansToDegrees(l_rot.y));
+    l_op.setChannelValue(2, Alembic::AbcGeom::RadiansToDegrees(l_rot.z));
     l_sample.addOp(l_op);
   }
   {
@@ -314,12 +314,17 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
 
 void archive_out::create_time_sampling_1() {
   MTime l_time{1.0, MTime::kSeconds};
-  shape_time_sampling_ =
-      std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(Alembic::AbcCoreAbstract::TimeSamplingType{
-          1, 1.0 / l_time.as(MTime::uiUnit())});
-  transform_time_sampling_ =
-      std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(Alembic::AbcCoreAbstract::TimeSamplingType{
-          1, 1.0 / l_time.as(MTime::uiUnit())});
+  std::vector<std::double_t>{1.0};
+  shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+      Alembic::AbcCoreAbstract::TimeSamplingType{
+          1u, 1.0 / boost::numeric_cast<std::double_t>(l_time.as(MTime::uiUnit()))},
+      std::vector<std::double_t>{1.0}
+  );
+  transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+      Alembic::AbcCoreAbstract::TimeSamplingType{
+          1u, 1.0 / boost::numeric_cast<std::double_t>(l_time.as(MTime::uiUnit()))},
+      std::vector<std::double_t>{1.0}
+  );
 }
 
 void archive_out::open() {
@@ -328,7 +333,7 @@ void archive_out::open() {
       maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
   )));
 
-  if (o_archive_->valid()) {
+  if (!o_archive_->valid()) {
     throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
   }
 
@@ -351,9 +356,9 @@ void archive_out::open() {
     MStatus l_status{};
     if (in_dag.hasFn(MFn::kTransform)) {
       MFnTransform transform{in_dag, &l_status};
-      if (l_status) {
-        wirte_transform(in_dag);
-      }
+      // if (l_status) {
+      //   wirte_transform(in_dag);
+      // }
     } else if (in_dag.hasFn(MFn::kMesh)) {
       wirte_mesh(in_dag);
     } else {

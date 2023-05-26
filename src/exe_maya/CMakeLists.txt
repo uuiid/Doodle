@@ -35,7 +35,7 @@ target_compile_definitions(doodle_maya_exe
 # target_link_options(doodle_maya_exe PUBLIC /MAP:test.txt)
 target_link_options(doodle_maya_exe PUBLIC /ENTRY:mainCRTStartup)
 set_target_properties(
-        doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.exe"
+        doodle_maya_exe PROPERTIES SUFFIX "_${Maya_Version}.exe"
 )
 
 # 定义安装逻辑

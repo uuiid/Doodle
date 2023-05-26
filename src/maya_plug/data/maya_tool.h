@@ -8,7 +8,6 @@
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
-#include "data/maya_tool.h"
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <maya/MObject.h>
