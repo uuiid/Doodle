@@ -21,10 +21,11 @@ class export_file_abc {
   void rename_material(const std::string& in_namespace);
   [[nodiscard]] std::string get_abc_exprt_arg() const;
 
-  void export_abc(const MSelectionList& in_select, const FSys::path& in_path);
+ protected:
   std::string m_name{};
   MTime begin_time{};
   MTime end_time{};
+  virtual void export_abc(const MSelectionList& in_select, const FSys::path& in_path);
 
  public:
   export_file_abc() = default;

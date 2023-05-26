@@ -14,6 +14,7 @@
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <type_traits>
+#include <vector>
 
 namespace doodle::maya_plug {
 
@@ -53,6 +54,7 @@ T get_attribute(const MObject& in_node, const std::string& in_name) {
 
 MObject get_shading_engine(const MObject& in_node);
 MObject get_shading_engine(const MDagPath& in_node);
+std::vector<MObject> get_shading_engines(const MDagPath& in_node);
 
 MObject get_first_mesh(const MObject& in_node);
 
@@ -71,6 +73,10 @@ std::string get_node_name(const MObject& in_obj);
 std::string get_node_name(const MDagPath& in_obj);
 std::string get_node_name_strip_name_space(const MDagPath& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
+
+namespace details {
+MObject shading_engine_to_mat(const MObject& in_shading_engine);
+}
 
 namespace comm_warp {
 MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name);

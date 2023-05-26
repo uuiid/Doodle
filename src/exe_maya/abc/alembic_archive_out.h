@@ -51,6 +51,8 @@ class archive_out {
   Alembic::AbcGeom::OXform wirte_transform(const MDagPath& in_path);
   void wirte_mesh(const MDagPath& in_path);
 
+  void create_time_sampling_1();
+
  public:
   explicit archive_out(
       FSys::path in_path, time_sampling_ptr in_transform_time_sampling, time_sampling_ptr in_shape_time_sampling,
@@ -63,6 +65,11 @@ class archive_out {
     open();
   }
 
+  explicit archive_out(FSys::path in_path, std::vector<MDagPath> in_dag_path)
+      : out_path_(std::move(in_path)), out_dag_path_(std::move(in_dag_path)) {
+    create_time_sampling_1();
+    open();
+  }
   archive_out& operator<<(const frame& in_path) { return *this; }
 };
 

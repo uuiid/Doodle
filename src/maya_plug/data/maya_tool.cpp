@@ -15,8 +15,10 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
+#include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
+#include <vector>
 
 namespace doodle::maya_plug {
 
@@ -123,6 +125,29 @@ MObject get_shading_engine(const MDagPath& in_node) {
   DOODLE_CHICK(!obj.isNull(), doodle_error{"没有找到节点"});
   return obj;
 }
+
+std::vector<MObject> get_shading_engines(const MDagPath& in_node) {
+  MStatus k_s{};
+  auto l_path = in_node;
+  k_s         = l_path.extendToShape();
+  DOODLE_MAYA_CHICK(k_s);
+  MObject k_obj = l_path.node(&k_s);
+  DOODLE_MAYA_CHICK(k_s);
+  std::vector<MObject> l_list_out{};
+  MObject obj{};
+  {
+    for (MItDependencyGraph i{
+             k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream,
+             MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+         !i.isDone(); i.next()) {
+      obj = i.currentItem(&k_s);
+      maya_chick(k_s);
+      l_list_out.push_back(obj);
+    }
+  }
+  return l_list_out;
+}
+
 MObject get_first_mesh(const MObject& in_node) {
   MStatus k_s{};
   MObject k_obj = in_node;
@@ -270,6 +295,24 @@ std::string get_node_name_strip_name_space(const MDagPath& in_obj) {
   DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
 }
+
+namespace details {
+MObject shading_engine_to_mat(const MObject& in_shading_engine) {
+  MStatus k_s{};
+  auto k_plug = get_plug(in_shading_engine, "surfaceShader"s);
+
+  MPlugArray l_m_plug_array{};
+  auto k_source = k_plug.source(&k_s);
+  maya_chick(k_s);
+  if (k_source.isNull(&k_s)) {
+    return {};
+  }
+  maya_chick(k_s);
+  auto k_mat = k_source.node(&k_s);  /// \brief 从属性链接获得材质名称
+  maya_chick(k_s);
+  return k_mat;
+}
+}  // namespace details
 
 namespace comm_warp {
 MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name) {

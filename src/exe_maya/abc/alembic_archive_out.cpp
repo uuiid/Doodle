@@ -2,7 +2,8 @@
 
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
-#include <doodle_core/exception/exception.h>
+
+#include <boost/numeric/conversion/cast.hpp>
 
 #include "maya_plug/data/m_namespace.h"
 #include "maya_plug/data/maya_conv_str.h"
@@ -13,14 +14,20 @@
 
 #include "abc/alembic_archive_out.h"
 #include <Alembic/Abc/ArchiveInfo.h>
+#include <Alembic/Abc/Foundation.h>
 #include <Alembic/Abc/TypedArraySample.h>
+#include <Alembic/AbcCoreAbstract/TimeSampling.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/AbcGeom/All.h>
+#include <Alembic/AbcGeom/FaceSetExclusivity.h>
 #include <Alembic/AbcGeom/Foundation.h>
 #include <Alembic/AbcGeom/GeometryScope.h>
+#include <Alembic/AbcGeom/OFaceSet.h>
 #include <Alembic/AbcGeom/OGeomParam.h>
+#include <Alembic/AbcGeom/OPolyMesh.h>
 #include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/AbcGeom/XformOp.h>
+#include <Alembic/Util/PlainOldDataType.h>
 #include <ImathVec.h>
 #include <cmath>
 #include <cstdint>
@@ -29,13 +36,22 @@
 #include <maya/MDagPath.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
+#include <maya/MFloatPointArray.h>
+#include <maya/MFn.h>
 #include <maya/MFnAttribute.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnSet.h>
+#include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnTransform.h>
+#include <maya/MIntArray.h>
 #include <maya/MItMeshFaceVertex.h>
+#include <maya/MItSelectionList.h>
 #include <maya/MObject.h>
 #include <maya/MQuaternion.h>
+#include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
+#include <maya/MTime.h>
 #include <maya/MVector.h>
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
@@ -44,6 +60,8 @@
 #include <vector>
 
 namespace doodle::alembic {
+
+// std::vector<float> get_normals() {}
 
 Alembic::AbcGeom::OXform archive_out::wirte_transform(const MDagPath& in_path) {
   MFnTransform l_fn_transform{in_path};
@@ -126,9 +144,47 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
 
   // 这里是布料, 不使用细分网格
   Alembic::AbcGeom::OPolyMesh l_o_ploy_mesh{*o_archive_, l_name, shape_time_index_};
-  auto l_ploy_mesh = l_o_ploy_mesh.getSchema();
-  Alembic::AbcGeom::OV2fGeomParam l_uv_param{};
+  auto l_ploy_schema = l_o_ploy_mesh.getSchema();
 
+  Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_sample{};
+  Alembic::AbcGeom::ON3fGeomParam::Sample l_normals_samp{};
+  Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{};
+  // write polygon
+  {
+    std::vector<Alembic::Abc::V3f> l_point{};
+    std::vector<Alembic::Util::int32_t> l_face_point{};
+    std::vector<Alembic::Util::int32_t> l_point_counts{};
+    MFloatPointArray l_m_point{};
+    l_mesh.getPoints(l_m_point);
+    if (l_m_point.length() < 3 && l_m_point.length() > 0) {
+      MString err = l_mesh.fullPathName() + " is not a valid mesh, because it only has ";
+      err += l_m_point.length();
+      err += " points.";
+      MGlobal::displayError(err);
+      return;
+    }
+    l_point.reserve(l_m_point.length());
+    for (auto i = 0; i < l_m_point.length(); ++i) {
+      l_point.emplace_back(l_m_point[i].x, l_m_point[i].y, l_m_point[i].z);
+    }
+    l_face_point.reserve(l_mesh.numPolygons());
+    MIntArray l_m_face{};
+    for (auto i = 0; i < l_mesh.numPolygons(); ++i) {
+      l_mesh.getPolygonVertices(i, l_m_face);
+      if (l_m_face.length() < 3) {
+        MGlobal::displayWarning("Skipping degenerate polygon");
+        continue;
+      }
+      int l_face_len = l_m_face.length() - 1;
+      ///  倒着写，因为Maya中的多边形与Renderman的顺序不同（顺时针与逆时针？）
+      for (auto j = 0; j > -1; ++j) l_face_point.emplace_back(l_m_face[j]);
+      l_point_counts.emplace_back(l_m_face.length());
+    }
+
+    l_poly_samp.setPositions(l_point);
+    l_poly_samp.setFaceIndices(l_face_point);
+    l_poly_samp.setFaceCounts(l_point_counts);
+  }
   // write uvs
   {
     MFloatArray l_u_array{};
@@ -163,11 +219,107 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
     // Alembic::AbcGeom::V2fArraySample l_uv_sample{l_uv_array.data(), l_uv_array.size()};
 
     auto l_uv_name = maya_plug::conv::to_s(l_mesh.currentUVSetName());
-    Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_sample{
-        Alembic::Abc::V2fArraySample{l_uv_array.data(), l_uv_array.size()},
-        Alembic::Abc::UInt32ArraySample{l_index_array.data(), l_index_array.size()},
-        Alembic::AbcGeom::kFacevaryingScope};
+    l_ploy_schema.setUVSourceName(l_uv_name);
+    l_uv_sample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+    l_uv_sample.setVals(Alembic::AbcGeom::V2fArraySample{l_uv_array.data(), l_uv_array.size()});
+    l_uv_sample.setIndices(Alembic::Abc::UInt32ArraySample{l_index_array.data(), l_index_array.size()});
+    l_poly_samp.setUVs(l_uv_sample);
   }
+
+  // write normals
+  {
+    MFloatVectorArray l_normal_array{};
+    l_mesh.getNormals(l_normal_array);
+    std::vector<Imath::V3f> l_normal{};
+    l_normal.reserve(l_normal_array.length());
+    const auto l_flip_normals = maya_plug::get_plug(in_path.node(), "flipNormals").asBool();
+    MIntArray l_poly_ver{};
+    for (auto i = 0u; i < l_mesh.numPolygons(); ++i) {
+      l_mesh.getPolygonVertices(i, l_poly_ver);
+      // 在写进之前，重新打包这个向量中的法线顺序，以便Renderman也可以使用它
+      unsigned int l_num_vertices = l_poly_ver.length();
+      for (int v = l_num_vertices - 1; v >= 0; v--) {
+        unsigned int vertexIndex = l_poly_ver[v];
+        MVector normal;
+        l_mesh.getFaceVertexNormal(i, vertexIndex, normal);
+
+        if (l_flip_normals) normal = -normal;
+
+        l_normal.emplace_back(
+            boost::numeric_cast<float>(normal[0]), boost::numeric_cast<float>(normal[1]),
+            boost::numeric_cast<float>(normal[2])
+        );
+      }
+    }
+    for (auto i = 0; i < l_normal_array.length(); ++i) {
+      if (l_flip_normals)
+        l_normal.emplace_back(-l_normal_array[i].x, -l_normal_array[i].y, -l_normal_array[i].z);
+      else
+        l_normal.emplace_back(l_normal_array[i].x, l_normal_array[i].y, l_normal_array[i].z);
+    }
+    l_normals_samp.setScope(Alembic::AbcGeom::kFacevaryingScope);
+    l_normals_samp.setVals(Alembic::AbcGeom::N3fArraySample{l_normal.data(), l_normal.size()});
+
+    l_poly_samp.setNormals(l_normals_samp);
+  }
+
+  {  // write face set
+    MFnSet l_set{};
+    MSelectionList l_select_list{};
+    MObject l_com_obj{};
+    MDagPath l_com_path{};
+    for (auto&& l_obj : maya_plug::get_shading_engines(in_path)) {
+      maya_plug::maya_chick(l_set.setObject(l_obj));
+      auto l_mat      = maya_plug::details::shading_engine_to_mat(l_obj);
+      auto l_mat_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_full_name(l_mat));
+      l_set.getMembers(l_select_list, true);
+      for (MItSelectionList l_it{l_select_list}; !l_it.isDone(); l_it.next()) {
+        if (l_it.hasComponents()) {
+          l_it.getDagPath(l_com_path, l_com_obj);
+          if (l_com_path == in_path && !l_com_obj.isNull()) {
+            break;
+          }
+        }
+      }
+
+      MIntArray l_indices{};
+      MFnSingleIndexedComponent l_comp{l_com_obj};
+      l_comp.getElements(l_indices);
+
+      if (l_indices.length() == 0) continue;
+      std::vector<Alembic::Util::int32_t> l_face_set_data{};
+      l_face_set_data.reserve(l_indices.length());
+      for (auto j = 0u; j < l_indices.length(); ++j) {
+        l_face_set_data.emplace_back(l_indices[j]);
+      }
+      Alembic::AbcGeom::OFaceSet l_face_set{};
+      if (l_ploy_schema.hasFaceSet(l_mat_name)) {
+        l_face_set = l_ploy_schema.getFaceSet(l_mat_name);
+      } else {
+        l_face_set = l_ploy_schema.createFaceSet(l_mat_name);
+      };
+
+      Alembic::AbcGeom::OFaceSetSchema::Sample l_sample{};
+      l_sample.setFaces(Alembic::Abc::Int32ArraySample{l_face_set_data.data(), l_face_set_data.size()});
+
+      Alembic::AbcGeom::OFaceSetSchema l_face_set_schema{l_face_set.getSchema()};
+      l_face_set_schema.set(l_sample);
+      l_face_set_schema.setFaceExclusivity(Alembic::AbcGeom::kFaceSetExclusive);
+    }
+    // l_ploy_schema.getf
+  }
+
+  l_ploy_schema.set(l_poly_samp);
+}
+
+void archive_out::create_time_sampling_1() {
+  MTime l_time{1.0, MTime::kSeconds};
+  shape_time_sampling_ =
+      std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(Alembic::AbcCoreAbstract::TimeSamplingType{
+          1, 1.0 / l_time.as(MTime::uiUnit())});
+  transform_time_sampling_ =
+      std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(Alembic::AbcCoreAbstract::TimeSamplingType{
+          1, 1.0 / l_time.as(MTime::uiUnit())});
 }
 
 void archive_out::open() {
@@ -198,10 +350,10 @@ void archive_out::open() {
   ranges::for_each(out_dag_path_, [&](const MDagPath& in_dag) {
     MStatus l_status{};
     if (in_dag.hasFn(MFn::kTransform)) {
-      // MFnTransform transform{in_dag, &l_status};
-      // if (l_status) {
-      //   wirte_transform(in_dag);
-      // }
+      MFnTransform transform{in_dag, &l_status};
+      if (l_status) {
+        wirte_transform(in_dag);
+      }
     } else if (in_dag.hasFn(MFn::kMesh)) {
       wirte_mesh(in_dag);
     } else {

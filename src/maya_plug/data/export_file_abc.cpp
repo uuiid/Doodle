@@ -10,19 +10,19 @@
 #include <boost/core/ignore_unused.hpp>
 #include <boost/lambda2/lambda2.hpp>
 
+#include "maya_plug/data/cloth_interface.h"
+#include "maya_plug/data/export_file_abc.h"
+#include "maya_plug/data/m_namespace.h"
+#include "maya_plug/data/maya_conv_str.h"
+#include "maya_plug/data/maya_tool.h"
+#include "maya_plug/data/reference_file.h"
+#include "maya_plug/exception/exception.h"
 #include <maya_plug/data/cloth_interface.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
-#include "data/cloth_interface.h"
-#include "data/export_file_abc.h"
-#include "data/m_namespace.h"
-#include "data/maya_conv_str.h"
-#include "data/maya_tool.h"
-#include "data/reference_file.h"
-#include "exception/exception.h"
 #include <fmt/format.h>
 #include <map>
 #include <maya/MApiNamespace.h>

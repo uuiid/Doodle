@@ -28,6 +28,7 @@
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/transform.hpp"
 #include <exe_maya/data/play_blast.h>
+#include <exe_maya/abc/alembic_archive_out.h>
 #include <filesystem>
 #include <map>
 #include <maya/MAnimControl.h>
@@ -153,6 +154,15 @@ void cloth_sim::export_abc() {
     in_handle.emplace<generate_file_path_ptr>(l_gen);
     l_ex.export_sim(in_handle);
   });
+
+  // std::vector<MDagPath> l_dag_path{};
+  // l_dag_path.reserve(in_select.length());
+  // for (auto i = 0; i < in_select.length(); ++i) {
+  //   MDagPath k_path{};
+  //   in_select.getDagPath(i, k_path);
+  //   l_dag_path.emplace_back(k_path);
+  // }
+  // alembic::archive_out l_out{in_path, l_dag_path};
 }
 
 void cloth_sim::export_fbx() {
