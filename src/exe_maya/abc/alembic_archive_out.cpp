@@ -46,6 +46,8 @@
 #include <maya/MFnTransform.h>
 #include <maya/MIntArray.h>
 #include <maya/MItMeshFaceVertex.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MItMeshVertex.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MObject.h>
 #include <maya/MQuaternion.h>
@@ -64,34 +66,188 @@ namespace doodle::alembic {
 // std::vector<float> get_normals() {}
 namespace archive_out_ns {
 Alembic::AbcGeom::OV2fGeomParam::Sample get_mesh_uv(const MFnMesh& in_mesh) {
-  MFloatArray l_u_array{};
-  MFloatArray l_v_array{};
-  {  // get uv set name
-    auto l_uv_name = in_mesh.currentUVSetName();
-    in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
-    if (l_u_array.length() != l_v_array.length()) {
-      throw_exception(doodle_error{"{} uv length not equal", l_name});
-    }
-  }
+  auto l_uv_name = in_mesh.currentUVSetName();
+  auto l_uv_len  = in_mesh.numUVs(l_uv_name);
+
   std::vector<Imath::V2f> l_uv_array{};
-  l_uv_array.reserve(l_u_array.length());
+  l_uv_array.reserve(l_uv_len);
   std::vector<std::uint32_t> l_index_array{};
   l_index_array.reserve(in_mesh.numFaceVertices());
 
-  {
-    for (auto i = 0; i < l_u_array.length(); ++i) {
-      l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
-    }
-    std::int32_t l_uv_id{};
-    for (auto i = 0; i < in_mesh.numPolygons(); ++i) {
-      auto l_len = in_mesh.polygonVertexCount(i);
+#define DOODLE_1
+  // #define DOODLE_8
 
-      for (auto j = 0; j < l_len; ++j) {
-        in_mesh.getPolygonUVid(i, j, l_uv_id);
-        l_index_array.emplace_back(l_uv_id);
+#ifdef DOODLE_1
+  MStatus l_s{};
+  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+  maya_plug::maya_chick(l_s);
+  std::int32_t l_uv_index{};
+  std::float_t l_uv[2]{};
+  for (; !it.isDone(); it.next()) {
+    it.getUV(l_uv, &l_uv_name);
+    l_uv_array.emplace_back(l_uv);
+    // l_index_array.emplace_back(it.index());
+  }
+#endif
+
+#ifdef DOODLE_2
+  MStatus l_s{};
+  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+  maya_plug::maya_chick(l_s);
+  MFloatArray l_u_a{};
+  MFloatArray l_v_a{};
+  MIntArray l_face_id{};
+  std::int32_t l_uv_id{};
+  for (; !it.isDone(); it.next()) {
+    it.getUVs(l_u_a, l_v_a, l_face_id);
+    auto l_len = l_u_a.length();
+    for (auto i = 0; i < l_len; ++i) {
+      l_uv_array.emplace_back(l_u_a[i], l_v_a[i]);
+      // l_index_array.emplace_back(it.index());
+    }
+    for (auto i = 0; i < l_face_id.length(); ++i) {
+      maya_plug::maya_chick(in_mesh.getPolygonUVid(l_face_id[i], it.index(), l_uv_id));
+      l_index_array.emplace_back(l_uv_id);
+    }
+  }
+#endif
+
+#ifdef DOODLE_3
+  // MFloatArray l_u_array{};
+  // MFloatArray l_v_array{};
+  // in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
+  // if (l_u_array.length() != l_v_array.length()) {
+  //   throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
+  // }
+  // for (auto i = 0; i < l_u_array.length(); ++i) {
+  //   l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
+  // }
+  std::int32_t l_uv_id{};
+  int faceCount = in_mesh.numPolygons();
+  for (auto f = 0; f < faceCount; ++f) {
+    auto l_len = in_mesh.polygonVertexCount(f);
+
+    for (int i = l_len - 1; i >= 0; --i) {
+      maya_plug::maya_chick(in_mesh.getPolygonUVid(f, i, l_uv_id, &l_uv_name));
+      l_index_array.push_back(l_uv_id);
+    }
+  }
+#endif
+
+#ifdef DOODLE_4
+  MFloatArray l_u_array{};
+  MFloatArray l_v_array{};
+  in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
+  if (l_u_array.length() != l_v_array.length()) {
+    throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
+  }
+  for (auto i = 0; i < l_u_array.length(); ++i) {
+    l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
+  }
+  std::int32_t l_uv_id{};
+
+  for (auto f = 0; f < in_mesh.numPolygons(); ++f) {
+    auto l_len = in_mesh.polygonVertexCount(f);
+
+    for (int i = l_len - 1; i >= 0; i--) {
+      maya_plug::maya_chick(in_mesh.getPolygonUVid(f, i, l_uv_id, &l_uv_name));
+      l_index_array.emplace_back(l_uv_id);
+    }
+  }
+#endif
+
+#ifdef DOODLE_5
+  MStatus l_s{};
+  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+  maya_plug::maya_chick(l_s);
+  MFloatArray l_u_a{};
+  MFloatArray l_v_a{};
+  MIntArray l_face_id{};
+  std::int32_t l_uv_id{};
+  for (; !it.isDone(); it.next()) {
+    it.getUVs(l_u_a, l_v_a, l_face_id);
+    auto l_len = l_u_a.length();
+    for (auto i = 0; i < l_len; ++i) {
+      l_uv_array.emplace_back(l_u_a[i], l_v_a[i]);
+    }
+    l_index_array.emplace_back(it.index());
+  }
+#endif
+
+#ifdef DOODLE_6
+  MStatus l_s{};
+  MItMeshFaceVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+  maya_plug::maya_chick(l_s);
+  std::int32_t l_index{};
+  std::float_t l_uv[2]{};
+  for (; !it.isDone(); it.next()) {
+    it.getUV(l_uv, &l_uv_name);
+    it.getUVIndex(l_index, &l_uv_name);
+    l_uv_array.emplace_back(l_uv);
+    l_index_array.emplace_back(l_index);
+  }
+#endif
+
+#ifdef DOODLE_7
+  {
+    MStatus l_s{};
+    MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+    maya_plug::maya_chick(l_s);
+    std::int32_t l_uv_index{};
+    std::float_t l_uv[2]{};
+    for (; !it.isDone(); it.next()) {
+      it.getUV(l_uv, &l_uv_name);
+      l_uv_array.emplace_back(l_uv);
+      // l_index_array.emplace_back(it.index());
+    }
+  }
+  // MStatus l_s{};
+  // MItMeshFaceVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+  // maya_plug::maya_chick(l_s);
+  // std::int32_t l_index{};
+  // std::float_t l_uv[2]{};
+  // for (; !it.isDone(); it.next()) {
+  //   // it.getUV(l_uv, &l_uv_name);
+  //   // l_uv_array.emplace_back(l_uv);
+  //   // it.vertId();
+  //   // it.getUVIndex(l_index, &l_uv_name);
+  //   // l_index_array.emplace_back(l_index);
+  //   l_index_array.emplace_back(it.faceVertId());
+  //   // l_index_array.emplace_back(it.faceId());
+  //   // l_index_array.emplace_back(it.vertId());
+  // }
+#endif
+#ifdef DOODLE_8
+  {
+    MStatus l_s{};
+    MItMeshPolygon it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
+    maya_plug::maya_chick(l_s);
+    std::int32_t l_index{};
+    std::float_t l_uv[2]{};
+    MFloatArray l_u_a{};
+    MFloatArray l_v_a{};
+    for (; !it.isDone(); it.next()) {
+      it.getUVs(l_u_a, l_v_a);
+      MIntArray l_ver_array{};
+      it.getVertices(l_ver_array);
+      int len = it.polygonVertexCount();
+      // for (int i = len - 1; i >= 0; i--) {
+      //   it.getUVIndex(i, l_index, &l_uv_name);
+      //   // in_mesh.getPolygonUVid(f, i, uvId, &uvSetName);
+      //   // l_index_array.push_back(uvId);
+      //   l_index_array.emplace_back(l_index);
+      // }
+      for (int i = 0; i < len; i--) {
+        it.getUVIndex(i, l_index, &l_uv_name);
+        // in_mesh.getPolygonUVid(f, i, uvId, &uvSetName);
+        // l_index_array.push_back(uvId);
+        l_index_array.emplace_back(l_index);
       }
     }
   }
+#endif
+  DOODLE_LOG_INFO("uv nums {} index {}", l_uv_array.size(), l_index_array.size());
+  DOODLE_LOG_INFO("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
   return {l_uv_array, l_index_array, Alembic::AbcGeom::kFacevaryingScope};
 }
 
@@ -105,7 +261,7 @@ Alembic::AbcGeom::ON3fGeomParam::Sample get_mesh_normals(const MFnMesh& in_mesh)
   for (auto i = 0u; i < in_mesh.numPolygons(); ++i) {
     in_mesh.getPolygonVertices(i, l_poly_ver);
     // 在写进之前，重新打包这个向量中的法线顺序，以便Renderman也可以使用它
-    unsigned int l_num_vertices = l_poly_ver.length();
+    int l_num_vertices = l_poly_ver.length();
     for (int v = l_num_vertices - 1; v >= 0; v--) {
       unsigned int vertexIndex = l_poly_ver[v];
       MVector normal;
