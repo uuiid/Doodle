@@ -70,6 +70,7 @@ class archive_out {
     create_time_sampling_1();
     open();
   }
+  ~archive_out() = default;
   archive_out& operator<<(const frame& in_path) { return *this; }
 };
 

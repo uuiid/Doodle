@@ -52,7 +52,7 @@
       "name": "Ninja_release",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "Debug",
         "Ue4_ROOT_DIR": "D:/Program Files/Epic Games/UE_4.27",
         "Photoshop_Version": "120.0",
         "ADD_VERSION_LABEL": true
