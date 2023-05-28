@@ -4,7 +4,10 @@
 #include <doodle_lib/facet/create_move_facet.h>
 #include <doodle_lib/facet/main_facet.h>
 #include <doodle_lib/facet/rpc_server_facet.h>
+
 #include <exe_maya/facet/cloth_sim.h>
+#include <iostream>
+
 
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 extern "C" int main(int argc, const char* const argv[]) try {
@@ -17,5 +20,6 @@ extern "C" int main(int argc, const char* const argv[]) try {
     return 1;
   }
 } catch (...) {
+  std::cout << boost::current_exception_diagnostic_information() << std::endl;
   return 1;
 }
