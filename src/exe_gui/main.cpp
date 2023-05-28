@@ -22,7 +22,7 @@ extern "C" int main(int argc, const char* const argv[]) try {
   try {
     return app.run();
   } catch (const std::exception& err) {
-    DOODLE_LOG_WARN(boost::diagnostic_information(boost::diagnostic_information(err)));
+    DOODLE_LOG_WARN(boost::diagnostic_information(err));
   } catch (...) {
     DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information(true));
   }
