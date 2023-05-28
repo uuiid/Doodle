@@ -17,7 +17,7 @@
 #include <Alembic/Abc/Foundation.h>
 #include <Alembic/Abc/TypedArraySample.h>
 #include <Alembic/AbcCoreAbstract/TimeSampling.h>
-#include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcGeom/FaceSetExclusivity.h>
 #include <Alembic/AbcGeom/Foundation.h>
@@ -65,7 +65,13 @@ namespace doodle::alembic {
 
 // std::vector<float> get_normals() {}
 namespace archive_out_ns {
-Alembic::AbcGeom::OV2fGeomParam::Sample get_mesh_uv(const MFnMesh& in_mesh) {
+/**
+ * @brief 获取网格的uv
+ * @param in_mesh 传入的网格
+ * @return 返回uv的数组和索引数组
+ * @warning Alembic::AbcGeom::OV2fGeomParam::Sample 测试中会发现移动构造有问题, 这里无法返回这个类型
+ */
+std::tuple<std::vector<Imath::V2f>, std::vector<std::uint32_t>> get_mesh_uv(const MFnMesh& in_mesh) {
   auto l_uv_name = in_mesh.currentUVSetName();
   auto l_uv_len  = in_mesh.numUVs(l_uv_name);
 
@@ -74,54 +80,16 @@ Alembic::AbcGeom::OV2fGeomParam::Sample get_mesh_uv(const MFnMesh& in_mesh) {
   std::vector<std::uint32_t> l_index_array{};
   l_index_array.reserve(in_mesh.numFaceVertices());
 
-#define DOODLE_1
-  // #define DOODLE_8
-
-#ifdef DOODLE_1
-  MStatus l_s{};
-  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-  maya_plug::maya_chick(l_s);
-  std::int32_t l_uv_index{};
-  std::float_t l_uv[2]{};
-  for (; !it.isDone(); it.next()) {
-    it.getUV(l_uv, &l_uv_name);
-    l_uv_array.emplace_back(l_uv);
-    // l_index_array.emplace_back(it.index());
+  MFloatArray l_u_array{};
+  MFloatArray l_v_array{};
+  in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
+  if (l_u_array.length() != l_v_array.length()) {
+    throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
   }
-#endif
-
-#ifdef DOODLE_2
-  MStatus l_s{};
-  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-  maya_plug::maya_chick(l_s);
-  MFloatArray l_u_a{};
-  MFloatArray l_v_a{};
-  MIntArray l_face_id{};
-  std::int32_t l_uv_id{};
-  for (; !it.isDone(); it.next()) {
-    it.getUVs(l_u_a, l_v_a, l_face_id);
-    auto l_len = l_u_a.length();
-    for (auto i = 0; i < l_len; ++i) {
-      l_uv_array.emplace_back(l_u_a[i], l_v_a[i]);
-      // l_index_array.emplace_back(it.index());
-    }
-    for (auto i = 0; i < l_face_id.length(); ++i) {
-      maya_plug::maya_chick(in_mesh.getPolygonUVid(l_face_id[i], it.index(), l_uv_id));
-      l_index_array.emplace_back(l_uv_id);
-    }
+  for (auto i = 0; i < l_u_array.length(); ++i) {
+    l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
   }
-#endif
 
-#ifdef DOODLE_3
-  // MFloatArray l_u_array{};
-  // MFloatArray l_v_array{};
-  // in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
-  // if (l_u_array.length() != l_v_array.length()) {
-  //   throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
-  // }
-  // for (auto i = 0; i < l_u_array.length(); ++i) {
-  //   l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
-  // }
   std::int32_t l_uv_id{};
   int faceCount = in_mesh.numPolygons();
   for (auto f = 0; f < faceCount; ++f) {
@@ -132,123 +100,15 @@ Alembic::AbcGeom::OV2fGeomParam::Sample get_mesh_uv(const MFnMesh& in_mesh) {
       l_index_array.push_back(l_uv_id);
     }
   }
-#endif
 
-#ifdef DOODLE_4
-  MFloatArray l_u_array{};
-  MFloatArray l_v_array{};
-  in_mesh.getUVs(l_u_array, l_v_array, &l_uv_name);
-  if (l_u_array.length() != l_v_array.length()) {
-    throw_exception(doodle_error{"{} uv length not equal", maya_plug::get_node_name(in_mesh.object())});
-  }
-  for (auto i = 0; i < l_u_array.length(); ++i) {
-    l_uv_array.emplace_back(l_u_array[i], l_v_array[i]);
-  }
-  std::int32_t l_uv_id{};
+  // DOODLE_LOG_INFO("uv nums {} index {} ,{} ", l_uv_array.size(), l_index_array.size(), l_index_array);
+  // DOODLE_LOG_INFO("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
+  // Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_array_sample{};
+  // l_uv_array_sample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+  // l_uv_array_sample.setVals(l_uv_array);
+  // l_uv_array_sample.setIndices(l_index_array);
 
-  for (auto f = 0; f < in_mesh.numPolygons(); ++f) {
-    auto l_len = in_mesh.polygonVertexCount(f);
-
-    for (int i = l_len - 1; i >= 0; i--) {
-      maya_plug::maya_chick(in_mesh.getPolygonUVid(f, i, l_uv_id, &l_uv_name));
-      l_index_array.emplace_back(l_uv_id);
-    }
-  }
-#endif
-
-#ifdef DOODLE_5
-  MStatus l_s{};
-  MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-  maya_plug::maya_chick(l_s);
-  MFloatArray l_u_a{};
-  MFloatArray l_v_a{};
-  MIntArray l_face_id{};
-  std::int32_t l_uv_id{};
-  for (; !it.isDone(); it.next()) {
-    it.getUVs(l_u_a, l_v_a, l_face_id);
-    auto l_len = l_u_a.length();
-    for (auto i = 0; i < l_len; ++i) {
-      l_uv_array.emplace_back(l_u_a[i], l_v_a[i]);
-    }
-    l_index_array.emplace_back(it.index());
-  }
-#endif
-
-#ifdef DOODLE_6
-  MStatus l_s{};
-  MItMeshFaceVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-  maya_plug::maya_chick(l_s);
-  std::int32_t l_index{};
-  std::float_t l_uv[2]{};
-  for (; !it.isDone(); it.next()) {
-    it.getUV(l_uv, &l_uv_name);
-    it.getUVIndex(l_index, &l_uv_name);
-    l_uv_array.emplace_back(l_uv);
-    l_index_array.emplace_back(l_index);
-  }
-#endif
-
-#ifdef DOODLE_7
-  {
-    MStatus l_s{};
-    MItMeshVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-    maya_plug::maya_chick(l_s);
-    std::int32_t l_uv_index{};
-    std::float_t l_uv[2]{};
-    for (; !it.isDone(); it.next()) {
-      it.getUV(l_uv, &l_uv_name);
-      l_uv_array.emplace_back(l_uv);
-      // l_index_array.emplace_back(it.index());
-    }
-  }
-  // MStatus l_s{};
-  // MItMeshFaceVertex it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-  // maya_plug::maya_chick(l_s);
-  // std::int32_t l_index{};
-  // std::float_t l_uv[2]{};
-  // for (; !it.isDone(); it.next()) {
-  //   // it.getUV(l_uv, &l_uv_name);
-  //   // l_uv_array.emplace_back(l_uv);
-  //   // it.vertId();
-  //   // it.getUVIndex(l_index, &l_uv_name);
-  //   // l_index_array.emplace_back(l_index);
-  //   l_index_array.emplace_back(it.faceVertId());
-  //   // l_index_array.emplace_back(it.faceId());
-  //   // l_index_array.emplace_back(it.vertId());
-  // }
-#endif
-#ifdef DOODLE_8
-  {
-    MStatus l_s{};
-    MItMeshPolygon it{in_mesh.dagPath(), MObject::kNullObj, &l_s};
-    maya_plug::maya_chick(l_s);
-    std::int32_t l_index{};
-    std::float_t l_uv[2]{};
-    MFloatArray l_u_a{};
-    MFloatArray l_v_a{};
-    for (; !it.isDone(); it.next()) {
-      it.getUVs(l_u_a, l_v_a);
-      MIntArray l_ver_array{};
-      it.getVertices(l_ver_array);
-      int len = it.polygonVertexCount();
-      // for (int i = len - 1; i >= 0; i--) {
-      //   it.getUVIndex(i, l_index, &l_uv_name);
-      //   // in_mesh.getPolygonUVid(f, i, uvId, &uvSetName);
-      //   // l_index_array.push_back(uvId);
-      //   l_index_array.emplace_back(l_index);
-      // }
-      for (int i = 0; i < len; i--) {
-        it.getUVIndex(i, l_index, &l_uv_name);
-        // in_mesh.getPolygonUVid(f, i, uvId, &uvSetName);
-        // l_index_array.push_back(uvId);
-        l_index_array.emplace_back(l_index);
-      }
-    }
-  }
-#endif
-  DOODLE_LOG_INFO("uv nums {} index {}", l_uv_array.size(), l_index_array.size());
-  DOODLE_LOG_INFO("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
-  return {l_uv_array, l_index_array, Alembic::AbcGeom::kFacevaryingScope};
+  return {l_uv_array, l_index_array};
 }
 
 Alembic::AbcGeom::ON3fGeomParam::Sample get_mesh_normals(const MFnMesh& in_mesh) {
@@ -408,9 +268,11 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
   l_ploy_schema.setUVSourceName(l_uv_name);
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
-
+  auto [l_uv, l_uv_i]   = archive_out_ns::get_mesh_uv(l_mesh);
+  DOODLE_LOG_INFO("uvi {}", l_uv_i);
+  Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_s{l_uv, l_uv_i, Alembic::AbcGeom::kFacevaryingScope};
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{
-      l_p, l_f, l_pc, archive_out_ns::get_mesh_uv(l_mesh), archive_out_ns::get_mesh_normals(l_mesh)};
+      l_p, l_f, l_pc, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)};
   l_ploy_schema.set(l_poly_samp);
   // {  // write face set
   //   MFnSet l_set{};
@@ -478,7 +340,7 @@ void archive_out::create_time_sampling_1() {
 
 void archive_out::open() {
   o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(Alembic::Abc::v12::CreateArchiveWithInfo(
-      Alembic::AbcCoreHDF5::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
+      Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
       maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
   )));
 

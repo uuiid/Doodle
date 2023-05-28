@@ -10,13 +10,15 @@ target_sources(test_main
         database_sqlite3.cpp
         entt_test.cpp
         regex.cpp
-        )
+        abc.cpp
+)
 
 target_link_libraries(
         test_main
         PUBLIC
         Boost::log
         Boost::log_setup
+        Alembic::Alembic
 )
 
 # target_compile_definitions(
@@ -32,5 +34,6 @@ add_test(NAME test_pingyi COMMAND test_main --log_level=message --color_output=t
 add_test(NAME test_renges COMMAND test_main --log_level=message --color_output=true --run_test=renges WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_test(NAME test_rttr_base COMMAND test_main --log_level=message --color_output=true --run_test=test_rttr_base WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_test(NAME tset_time COMMAND test_main --log_level=message --color_output=true --run_test=tset_time WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+add_test(NAME test_maya_abc_r COMMAND test_main --log_level=message --color_output=true --run_test=maya_abc_r WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # error:

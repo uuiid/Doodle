@@ -46,7 +46,7 @@
 			{
 				"testExecutables": [
 					{
-						"path": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
+						"path": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin/test_main.exe",
 					}
 				],
 				"cwd": "${workspaceFolder}/build",
