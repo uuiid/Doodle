@@ -27,6 +27,7 @@
 #include <Alembic/AbcGeom/OPolyMesh.h>
 #include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/AbcGeom/XformOp.h>
+#include <Alembic/Util/Naming.h>
 #include <Alembic/Util/PlainOldDataType.h>
 #include <ImathVec.h>
 #include <cmath>
@@ -58,6 +59,8 @@
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/iota.hpp>
 #include <utility>
 #include <vector>
 
@@ -178,6 +181,51 @@ get_mesh_poly(const MFnMesh& in_mesh) {
   }
   return {l_point, l_face_point, l_point_counts};
 }
+/**
+ * @brief 获取网格的面集
+ *
+ * @param in_path 传入的着色集
+ * @return std::tuple<std::string, std::vector<std::int32_t>> 对应的材质名称, 面列表
+ */
+std::tuple<std::string, std::vector<std::int32_t>> get_face_set(const MObject& in_path, const MDagPath& in_obj_path) {
+  MSelectionList l_select_list{};
+  MObject l_com_obj{};
+  MDagPath l_com_path{};
+  MFnSet l_set{};
+  maya_plug::maya_chick(l_set.setObject(in_path));
+  auto l_mat      = maya_plug::details::shading_engine_to_mat(in_path);
+  auto l_mat_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_full_name(l_mat));
+  l_set.getMembers(l_select_list, true);
+  std::vector<Alembic::Util::int32_t> l_face_set_data{};
+  for (MItSelectionList l_it{l_select_list}; !l_it.isDone(); l_it.next()) {
+    if (l_it.hasComponents()) {
+      l_it.getDagPath(l_com_path, l_com_obj);
+      if (l_com_path == in_obj_path && !l_com_obj.isNull()) {
+        MStatus l_s{};
+        MIntArray l_indices{};
+        MFnSingleIndexedComponent l_comp{l_com_obj, &l_s};
+        maya_plug::maya_chick(l_s);
+        maya_plug::maya_chick(l_comp.getElements(l_indices));
+
+        l_face_set_data.reserve(l_indices.length());
+        for (auto j = 0u; j < l_indices.length(); ++j) {
+          l_face_set_data.emplace_back(l_indices[j]);
+        }
+        break;
+      }
+    } else {
+      l_it.getDagPath(l_com_path);
+      if (l_com_path == in_obj_path) {
+        MFnMesh l_mesh{l_com_path};
+
+        l_face_set_data = ranges::views::ints(0, l_mesh.numPolygons()) | ranges::to_vector;
+      }
+    }
+  }
+
+  return l_face_set_data.empty() ? std::tuple<std::string, std::vector<std::int32_t>>{}
+                                 : std::tuple<std::string, std::vector<std::int32_t>>{l_mat_name, l_face_set_data};
+}
 
 }  // namespace archive_out_ns
 
@@ -274,53 +322,16 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{
       l_p, l_f, l_pc, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)};
   l_ploy_schema.set(l_poly_samp);
-  // {  // write face set
-  //   MFnSet l_set{};
-  //   MSelectionList l_select_list{};
-  //   MObject l_com_obj{};
-  //   MDagPath l_com_path{};
-  //   for (auto&& l_obj : maya_plug::get_shading_engines(in_path)) {
-  //     maya_plug::maya_chick(l_set.setObject(l_obj));
-  //     auto l_mat      = maya_plug::details::shading_engine_to_mat(l_obj);
-  //     auto l_mat_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_full_name(l_mat));
-  //     l_set.getMembers(l_select_list, true);
-  //     for (MItSelectionList l_it{l_select_list}; !l_it.isDone(); l_it.next()) {
-  //       if (l_it.hasComponents()) {
-  //         l_it.getDagPath(l_com_path, l_com_obj);
-  //         if (l_com_path == in_path && !l_com_obj.isNull()) {
-  //           break;
-  //         }
-  //       }
-  //     }
-
-  //     MIntArray l_indices{};
-  //     MFnSingleIndexedComponent l_comp{l_com_obj};
-  //     l_comp.getElements(l_indices);
-
-  //     if (l_indices.length() == 0) continue;
-  //     std::vector<Alembic::Util::int32_t> l_face_set_data{};
-  //     l_face_set_data.reserve(l_indices.length());
-  //     for (auto j = 0u; j < l_indices.length(); ++j) {
-  //       l_face_set_data.emplace_back(l_indices[j]);
-  //     }
-  //     Alembic::AbcGeom::OFaceSet l_face_set{};
-  //     if (l_ploy_schema.hasFaceSet(l_mat_name)) {
-  //       l_face_set = l_ploy_schema.getFaceSet(l_mat_name);
-  //     } else {
-  //       l_face_set = l_ploy_schema.createFaceSet(l_mat_name);
-  //     };
-
-  //     Alembic::AbcGeom::OFaceSetSchema::Sample l_sample{};
-  //     l_sample.setFaces(Alembic::Abc::Int32ArraySample{l_face_set_data.data(), l_face_set_data.size()});
-
-  //     Alembic::AbcGeom::OFaceSetSchema l_face_set_schema{l_face_set.getSchema()};
-  //     l_face_set_schema.set(l_sample);
-  //     l_face_set_schema.setFaceExclusivity(Alembic::AbcGeom::kFaceSetExclusive);
-  //   }
-  //   // l_ploy_schema.getf
-  // }
-
-  // l_ploy_schema.set(l_poly_samp);
+  // write face set
+  for (auto&& l_obj : maya_plug::get_shading_engines(in_path)) {
+    auto [l_name, l_list] = archive_out_ns::get_face_set(l_obj, in_path);
+    if (l_name.empty()) continue;
+    Alembic::AbcGeom::OFaceSet l_face_set =
+        l_ploy_schema.hasFaceSet(l_name) ? l_ploy_schema.getFaceSet(l_name) : l_ploy_schema.createFaceSet(l_name);
+    Alembic::AbcGeom::OFaceSetSchema l_face_set_schema = l_face_set.getSchema();
+    l_face_set_schema.set(Alembic::AbcGeom::OFaceSetSchema::Sample{l_list});
+    l_face_set_schema.setFaceExclusivity(Alembic::AbcGeom::kFaceSetExclusive);
+  }
 }
 
 void archive_out::create_time_sampling_1() {

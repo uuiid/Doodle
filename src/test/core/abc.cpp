@@ -61,4 +61,19 @@ BOOST_AUTO_TEST_CASE(maya_abc_r) {
       BOOST_TEST_MESSAGE(i << " : " << l_index_ll[i]);
     }
   }
+
+  {
+    std::vector<std::string> l_names;
+    l_s.getFaceSetNames(l_names);
+    for (auto& l_name : l_names) {
+      BOOST_TEST_MESSAGE("face set name " << l_name);
+
+      auto l_f   = l_s.getFaceSet(l_name);
+
+      auto l_f_s = *l_f.getSchema().getValue().getFaces();
+      for (auto i = 0; i < l_f_s.size(); ++i) {
+        BOOST_TEST_MESSAGE(i << " : " << l_f_s[i]);
+      }
+    }
+  }
 }
