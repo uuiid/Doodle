@@ -60,7 +60,9 @@
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
+#include <range/v3/view/transform.hpp>
 #include <utility>
 #include <vector>
 
@@ -229,12 +231,14 @@ std::tuple<std::string, std::vector<std::int32_t>> get_face_set(const MObject& i
 
 }  // namespace archive_out_ns
 
-Alembic::AbcGeom::OXform archive_out::wirte_transform(const MDagPath& in_path) {
-  MFnTransform l_fn_transform{in_path};
+void archive_out::wirte_transform(dag_path_out_data& in_path) {
+  MFnTransform l_fn_transform{in_path.dag_path_};
 
-  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path));
-  Alembic::AbcGeom::OXform l_oxform{o_archive_->getTop(), l_name, transform_time_index_};
-  auto l_xform = l_oxform.getSchema();
+  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
+  in_path.o_xform_ptr_ =
+      std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), l_name, transform_time_index_);
+
+  auto l_xform = in_path.o_xform_ptr_->getSchema();
   Alembic::AbcGeom::XformSample l_sample{};
 
   {
@@ -297,22 +301,21 @@ Alembic::AbcGeom::OXform archive_out::wirte_transform(const MDagPath& in_path) {
   //   }
   //   auto l_attr_name = maya_plug::conv::to_s(l_plug.partialName(false, false, false, false, false, false));
   // }
-  return l_oxform;
 }
 
-void archive_out::wirte_mesh(const MDagPath& in_path) {
-  MFnMesh l_mesh{in_path};
-  MDagPath l_path_parent = in_path;
+void archive_out::wirte_mesh(dag_path_out_data& in_path) {
+  MFnMesh l_mesh{in_path.dag_path_};
+  MDagPath l_path_parent = in_path.dag_path_;
   l_path_parent.pop();
-  auto l_tran = wirte_transform(l_path_parent);
+  wirte_transform(in_path);
 
-  auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path));
+  auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
 
   // 这里是布料, 不使用细分网格
-  Alembic::AbcGeom::OPolyMesh l_o_ploy_mesh{l_tran, l_name, shape_time_index_};
-  auto l_ploy_schema = l_o_ploy_mesh.getSchema();
+  in_path.o_mesh_ptr_ = std::make_shared<Alembic::AbcGeom::OPolyMesh>(*in_path.o_xform_ptr_, l_name, shape_time_index_);
+  auto l_ploy_schema  = in_path.o_mesh_ptr_->getSchema();
 
-  auto l_uv_name     = maya_plug::conv::to_s(l_mesh.currentUVSetName());
+  auto l_uv_name      = maya_plug::conv::to_s(l_mesh.currentUVSetName());
   l_ploy_schema.setUVSourceName(l_uv_name);
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
@@ -323,8 +326,8 @@ void archive_out::wirte_mesh(const MDagPath& in_path) {
       l_p, l_f, l_pc, l_uv_s, archive_out_ns::get_mesh_normals(l_mesh)};
   l_ploy_schema.set(l_poly_samp);
   // write face set
-  for (auto&& l_obj : maya_plug::get_shading_engines(in_path)) {
-    auto [l_name, l_list] = archive_out_ns::get_face_set(l_obj, in_path);
+  for (auto&& l_obj : maya_plug::get_shading_engines(in_path.dag_path_)) {
+    auto [l_name, l_list] = archive_out_ns::get_face_set(l_obj, in_path.dag_path_);
     if (l_name.empty()) continue;
     Alembic::AbcGeom::OFaceSet l_face_set =
         l_ploy_schema.hasFaceSet(l_name) ? l_ploy_schema.getFaceSet(l_name) : l_ploy_schema.createFaceSet(l_name);
@@ -349,7 +352,7 @@ void archive_out::create_time_sampling_1() {
   );
 }
 
-void archive_out::open() {
+void archive_out::open(const std::vector<MDagPath>& in_out_path) {
   o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(Alembic::Abc::v12::CreateArchiveWithInfo(
       Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
       maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
@@ -374,21 +377,16 @@ void archive_out::open() {
     return maya_plug::is_intermediate(in_dag) /* || !maya_plug::is_renderable(in_dag) */;
   });
 
-  ranges::for_each(out_dag_path_, [&](const MDagPath& in_dag) {
-    MStatus l_status{};
-    if (in_dag.hasFn(MFn::kTransform)) {
-      // MFnTransform transform{in_dag, &l_status};
-      // if (l_status) {
-      //   wirte_transform(in_dag);
-      // }
-    } else if (in_dag.hasFn(MFn::kMesh)) {
-      wirte_mesh(in_dag);
-    } else {
-      DOODLE_LOG_WARN(
-          "Does not export nodes other than transformation and grid nodes {} ", maya_plug::get_node_full_name(in_dag)
-      );
-    }
-  });
+  dag_path_out_data_ = in_out_path | ranges::views::filter([](const MDagPath& in_dag) -> bool {
+                         return maya_plug::is_intermediate(in_dag) &&
+                                in_dag.hasFn(MFn::kMesh) /* || !maya_plug::is_renderable(in_dag) */;
+                       }) |
+                       ranges::views::transform([](const MDagPath& in_dag) -> dag_path_out_data {
+                         return {in_dag, {}, {}};
+                       }) |
+                       ranges::to_vector;
+
+  ranges::for_each(dag_path_out_data_, [&](dag_path_out_data& in_dag) { wirte_mesh(in_dag); });
 }
 
 void archive_out::write(const frame& in_frame) {}
