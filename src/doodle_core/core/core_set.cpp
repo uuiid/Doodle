@@ -8,6 +8,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
 
+#include "configure/static_value.h"
 #include <ShlObj.h>
 
 namespace doodle {
@@ -94,10 +95,7 @@ FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
 FSys::path core_set::get_data_root() const { return _root_data; }
 
 FSys::path core_set::program_location() { return program_location_attr.parent_path(); }
-std::string core_set::config_file_name() {
-  static std::string str{"doodle_config_v2"};
-  return str;
-}
+ 
 std::string core_set::get_uuid_str() { return boost::uuids::to_string(get_uuid()); }
 
 /// ----------------------------------------------------------------------------
@@ -131,7 +129,7 @@ bool core_set_init::find_maya() {
 }
 
 void core_set_init::read_file() {
-  FSys::path l_k_setting_file_name = p_set.get_doc() / p_set.config_file_name();
+  FSys::path l_k_setting_file_name = p_set.get_doc() / doodle_config::config_name;
   DOODLE_LOG_INFO("读取配置文件 {}", l_k_setting_file_name);
   if (FSys::exists(l_k_setting_file_name)) {
     FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
@@ -150,9 +148,9 @@ void core_set_init::read_file() {
   g_reg()->ctx().get<user::current_user>().uuid = p_set.user_id;
 }
 bool core_set_init::write_file() {
-  DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / p_set.config_file_name());
+  DOODLE_LOG_INFO("写入配置文件 {}", p_set.p_doc / doodle_config::config_name);
 
-  FSys::ofstream l_ofstream{p_set.p_doc / p_set.config_file_name(), std::ios::out | std::ios::binary};
+  FSys::ofstream l_ofstream{p_set.p_doc / doodle_config::config_name, std::ios::out | std::ios::binary};
   (*p_set.json_data)["setting"] = p_set;
 
   l_ofstream << p_set.json_data->dump();

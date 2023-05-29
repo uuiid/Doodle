@@ -75,8 +75,6 @@ class DOODLE_CORE_API core_set : public details::no_copy {
    */
   core_set();
 
-  static std::string config_file_name();
-
  private:
   boost::uuids::random_generator p_uuid_gen;
   FSys::path program_location_attr{};
